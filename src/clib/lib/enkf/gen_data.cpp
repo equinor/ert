@@ -65,8 +65,9 @@ int gen_data_get_size(const gen_data_type *gen_data) {
    It is a bug to call this before some function has set the size.
 */
 void gen_data_realloc_data(gen_data_type *gen_data) {
-    int byte_size = gen_data_config_get_byte_size(
-        gen_data->config, gen_data->current_report_step);
+    int byte_size = gen_data_config_get_data_size(
+                        gen_data->config, gen_data->current_report_step) *
+                    sizeof(double);
     gen_data->data = (char *)util_realloc(gen_data->data, byte_size);
 }
 
@@ -85,8 +86,9 @@ void gen_data_copy(const gen_data_type *src, gen_data_type *target) {
         target->current_report_step = src->current_report_step;
 
         if (src->data != NULL) {
-            int byte_size = gen_data_config_get_byte_size(
-                src->config, src->current_report_step);
+            size_t byte_size = gen_data_config_get_data_size(
+                                   src->config, src->current_report_step) *
+                               sizeof(double);
             target->data =
                 (char *)util_realloc_copy(target->data, src->data, byte_size);
         }
@@ -122,8 +124,9 @@ C_USED bool gen_data_write_to_buffer(const gen_data_type *gen_data,
             write = true;
 
         if (write) {
-            int byte_size =
-                gen_data_config_get_byte_size(gen_data->config, report_step);
+            size_t byte_size =
+                gen_data_config_get_data_size(gen_data->config, report_step) *
+                sizeof(double);
             buffer_fwrite_int(buffer, GEN_DATA);
             buffer_fwrite_int(buffer, size);
             buffer_fwrite_int(
@@ -146,10 +149,7 @@ C_USED void gen_data_read_from_buffer(gen_data_type *gen_data,
     buffer_fskip_int(
         buffer); /* Skipping report_step from the buffer - was a mistake to store it - I think ... */
     {
-        size_t byte_size =
-            size *
-            ecl_type_get_sizeof_ctype(
-                gen_data_config_get_internal_data_type(gen_data->config));
+        size_t byte_size = size * sizeof(double);
         size_t compressed_size = buffer_get_remaining_size(buffer);
         gen_data->data = (char *)util_realloc(gen_data->data, byte_size);
         buffer_fread_compressed(buffer, compressed_size, gen_data->data,
@@ -168,9 +168,8 @@ void gen_data_serialize(const gen_data_type *gen_data, node_id_type node_id,
     const gen_data_config_type *config = gen_data->config;
     const int data_size = gen_data_config_get_data_size(
         gen_data->config, gen_data->current_report_step);
-    ecl_data_type data_type = gen_data_config_get_internal_data_type(config);
 
-    enkf_matrix_serialize(gen_data->data, data_size, data_type, active_list, A,
+    enkf_matrix_serialize(gen_data->data, data_size, ECL_DOUBLE, active_list, A,
                           row_offset, column);
 }
 
@@ -182,10 +181,8 @@ void gen_data_deserialize(gen_data_type *gen_data, node_id_type node_id,
         const gen_data_config_type *config = gen_data->config;
         const int data_size = gen_data_config_get_data_size(
             gen_data->config, gen_data->current_report_step);
-        ecl_data_type data_type =
-            gen_data_config_get_internal_data_type(config);
 
-        enkf_matrix_deserialize(gen_data->data, data_size, data_type,
+        enkf_matrix_deserialize(gen_data->data, data_size, ECL_DOUBLE,
                                 active_list, A, row_offset, column);
     }
 }
@@ -195,8 +192,8 @@ void gen_data_deserialize(gen_data_type *gen_data, node_id_type node_id,
   data has been loaded from file.
 */
 static void gen_data_set_data__(gen_data_type *gen_data, int size,
-                                int report_step, ecl_data_type load_data_type,
-                                const void *data, enkf_fs_type *sim_fs) {
+                                int report_step, const void *data,
+                                enkf_fs_type *sim_fs) {
     gen_data_assert_size(gen_data, size, report_step);
     if (gen_data_config_is_dynamic(gen_data->config))
         gen_data_config_update_active(gen_data->config, report_step,
@@ -205,20 +202,9 @@ static void gen_data_set_data__(gen_data_type *gen_data, int size,
     gen_data_realloc_data(gen_data);
 
     if (size > 0) {
-        ecl_data_type internal_type =
-            gen_data_config_get_internal_data_type(gen_data->config);
-        int byte_size = ecl_type_get_sizeof_ctype(internal_type) * size;
+        int byte_size = sizeof(double) * size;
 
-        if (ecl_type_is_equal(load_data_type, internal_type))
-            memcpy(gen_data->data, data, byte_size);
-        else {
-            if (ecl_type_is_float(load_data_type))
-                util_float_to_double((double *)gen_data->data,
-                                     (const float *)data, size);
-            else
-                util_double_to_float((float *)gen_data->data,
-                                     (const double *)data, size);
-        }
+        memcpy(gen_data->data, data, byte_size);
     }
 }
 
@@ -294,27 +280,19 @@ bool gen_data_fload_with_report_step(gen_data_type *gen_data,
                                      const char *filename, int report_step,
                                      enkf_fs_type *sim_fs) {
     bool file_exists = fs::exists(filename);
-    void *buffer = NULL;
     if (file_exists) {
-        ecl_type_enum load_type;
-        ecl_data_type internal_type =
-            gen_data_config_get_internal_data_type(gen_data->config);
         gen_data_file_format_type input_format =
             gen_data_config_get_input_format(gen_data->config);
-        int size = 0;
-        buffer = gen_common_fload_alloc(filename, input_format, internal_type,
-                                        &load_type, &size);
+        auto vec = gen_common_fload_alloc(filename, input_format);
         logger->info("GEN_DATA({}): loading from: {}   size:{}",
-                     gen_data_get_key(gen_data), filename, size);
-        if (size > 0) {
-            gen_data_fload_active__(gen_data, filename, size);
+                     gen_data_get_key(gen_data), filename, vec.size());
+        if (vec.size() > 0) {
+            gen_data_fload_active__(gen_data, filename, vec.size());
         } else {
             bool_vector_reset(gen_data->active_mask);
         }
-        gen_data_set_data__(gen_data, size, report_step,
-                            ecl_type_create_from_type(load_type), buffer,
+        gen_data_set_data__(gen_data, vec.size(), report_step, vec.data(),
                             sim_fs);
-        free(buffer);
     } else
         logger->warning("GEN_DATA({}): missing file: {}",
                         gen_data_get_key(gen_data), filename);
@@ -370,21 +348,12 @@ static void gen_data_ecl_write_ASCII(const gen_data_type *gen_data,
     }
 
     {
-        ecl_data_type internal_type =
-            gen_data_config_get_internal_data_type(gen_data->config);
         const int size = gen_data_config_get_data_size(
             gen_data->config, gen_data->current_report_step);
         int i;
-        if (ecl_type_is_float(internal_type)) {
-            float *float_data = (float *)gen_data->data;
-            for (i = 0; i < size; i++)
-                fprintf(stream, "%g\n", float_data[i]);
-        } else if (ecl_type_is_double(internal_type)) {
-            double *double_data = (double *)gen_data->data;
-            for (i = 0; i < size; i++)
-                fprintf(stream, "%lg\n", double_data[i]);
-        } else
-            util_abort("%s: internal error - wrong type \n", __func__);
+        double *double_data = (double *)gen_data->data;
+        for (i = 0; i < size; i++)
+            fprintf(stream, "%lg\n", double_data[i]);
     }
 
     if (export_format == ASCII_TEMPLATE) {
@@ -449,33 +418,14 @@ static void gen_data_assert_index(const gen_data_type *gen_data, int index) {
 
 double gen_data_iget_double(const gen_data_type *gen_data, int index) {
     gen_data_assert_index(gen_data, index);
-    {
-        ecl_data_type internal_type =
-            gen_data_config_get_internal_data_type(gen_data->config);
-        if (ecl_type_is_double(internal_type)) {
-            double *data = (double *)gen_data->data;
-            return data[index];
-        } else {
-            float *data = (float *)gen_data->data;
-            return data[index];
-        }
-    }
+    double *data = (double *)gen_data->data;
+    return data[index];
 }
 
 void gen_data_export_data(const gen_data_type *gen_data,
                           double_vector_type *export_data) {
-    ecl_data_type internal_type =
-        gen_data_config_get_internal_data_type(gen_data->config);
-    if (ecl_type_is_double(internal_type))
-        double_vector_memcpy_from_data(export_data,
-                                       (const double *)gen_data->data,
-                                       gen_data_get_size(gen_data));
-    else {
-        double_vector_reset(export_data);
-        float *float_data = (float *)gen_data->data;
-        for (int i = 0; i < gen_data_get_size(gen_data); i++)
-            double_vector_iset(export_data, i, float_data[i]);
-    }
+    double_vector_memcpy_from_data(export_data, (const double *)gen_data->data,
+                                   gen_data_get_size(gen_data));
 }
 
 /**
@@ -509,37 +459,19 @@ const char *gen_data_get_key(const gen_data_type *gen_data) {
 
 C_USED void gen_data_clear(gen_data_type *gen_data) {
     const gen_data_config_type *config = gen_data->config;
-    ecl_data_type internal_type =
-        gen_data_config_get_internal_data_type(config);
     const int data_size = gen_data_config_get_data_size(
         gen_data->config, gen_data->current_report_step);
 
-    if (ecl_type_is_float(internal_type)) {
-        float *data = (float *)gen_data->data;
-        for (int i = 0; i < data_size; i++)
-            data[i] = 0;
-    } else if (ecl_type_is_double(internal_type)) {
-        double *data = (double *)gen_data->data;
-        for (int i = 0; i < data_size; i++)
-            data[i] = 0;
-    }
+    double *data = (double *)gen_data->data;
+    for (int i = 0; i < data_size; i++)
+        data[i] = 0;
 }
 
 void gen_data_copy_to_double_vector(const gen_data_type *gen_data,
                                     double_vector_type *vector) {
-    const ecl_data_type internal_type =
-        gen_data_config_get_internal_data_type(gen_data->config);
     int size = gen_data_get_size(gen_data);
-    if (ecl_type_is_float(internal_type)) {
-        float *data = (float *)gen_data->data;
-        double_vector_reset(vector);
-        for (int i = 0; i < size; i++) {
-            double_vector_append(vector, data[i]);
-        }
-    } else if (ecl_type_is_double(internal_type)) {
-        double *data = (double *)gen_data->data;
-        double_vector_memcpy_from_data(vector, data, size);
-    }
+    double *data = (double *)gen_data->data;
+    double_vector_memcpy_from_data(vector, data, size);
 }
 
 UTIL_SAFE_CAST_FUNCTION_CONST(gen_data, GEN_DATA)

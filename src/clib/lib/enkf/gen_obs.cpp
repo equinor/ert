@@ -2,7 +2,9 @@
    See the overview documentation of the observation system in
    enkf_obs.c
 */
-#include <stdlib.h>
+#include <cstdlib>
+#include <fstream>
+#include <vector>
 
 #include <ert/util/string_util.h>
 #include <ert/util/util.h>
@@ -13,8 +15,8 @@
 #include <ert/enkf/gen_common.hpp>
 #include <ert/enkf/gen_data.hpp>
 #include <ert/enkf/gen_obs.hpp>
-
-#include "ert/python.hpp"
+#include <ert/except.hpp>
+#include <ert/python.hpp>
 
 #define GEN_OBS_TYPE_ID 77619
 
@@ -43,7 +45,7 @@ struct gen_obs_struct {
     int obs_size;
     /** The indexes which are observed in the corresponding gen_data instance -
      * of length obs_size. */
-    int *data_index_list;
+    std::vector<int> data_index_list;
     /** Flag which indiactes whether all data in the gen_data instance should
      * be observed - in that case we must do a size comparizon-check at use time.*/
     bool observe_all_data;
@@ -69,11 +71,10 @@ static UTIL_SAFE_CAST_FUNCTION_CONST(
     void gen_obs_free(gen_obs_type *gen_obs) {
     free(gen_obs->obs_data);
     free(gen_obs->obs_std);
-    free(gen_obs->data_index_list);
     free(gen_obs->obs_key);
     free(gen_obs->std_scaling);
 
-    free(gen_obs);
+    delete gen_obs;
 }
 
 static double IGET_SCALED_STD(const gen_obs_type *gen_obs, int index) {
@@ -101,9 +102,7 @@ static void gen_obs_set_data(gen_obs_type *gen_obs, int buffer_size,
         gen_obs->obs_std, gen_obs->obs_size * sizeof *gen_obs->obs_std);
     gen_obs->std_scaling = (double *)util_realloc(
         gen_obs->std_scaling, gen_obs->obs_size * sizeof *gen_obs->std_scaling);
-    gen_obs->data_index_list = (int *)util_realloc(
-        gen_obs->data_index_list,
-        gen_obs->obs_size * sizeof *gen_obs->data_index_list);
+    gen_obs->data_index_list.resize(gen_obs->obs_size);
 
     for (int iobs = 0; iobs < gen_obs->obs_size; iobs++) {
         gen_obs->obs_data[iobs] = buffer[2 * iobs];
@@ -114,23 +113,8 @@ static void gen_obs_set_data(gen_obs_type *gen_obs, int buffer_size,
 }
 
 void gen_obs_load_observation(gen_obs_type *gen_obs, const char *obs_file) {
-    ecl_type_enum load_type;
-    void *buffer;
-    int buffer_size = 0;
-    buffer = gen_common_fload_alloc(obs_file, gen_obs->obs_format, ECL_DOUBLE,
-                                    &load_type, &buffer_size);
-
-    /* Ensure that the data is of type double. */
-    if (load_type == ECL_FLOAT_TYPE) {
-        double *double_data =
-            (double *)util_calloc(gen_obs->obs_size, sizeof *double_data);
-        util_float_to_double(double_data, (const float *)buffer, buffer_size);
-        free(buffer);
-        buffer = double_data;
-    }
-
-    gen_obs_set_data(gen_obs, buffer_size, (double *)buffer);
-    free(buffer);
+    auto vec = gen_common_fload_alloc(obs_file, gen_obs->obs_format);
+    gen_obs_set_data(gen_obs, vec.size(), vec.data());
 }
 
 void gen_obs_set_scalar(gen_obs_type *gen_obs, double scalar_value,
@@ -141,16 +125,31 @@ void gen_obs_set_scalar(gen_obs_type *gen_obs, double scalar_value,
 
 void gen_obs_attach_data_index(gen_obs_type *obs,
                                const int_vector_type *data_index) {
-    free(obs->data_index_list);
-    obs->data_index_list = int_vector_alloc_data_copy(data_index);
+    size_t size = int_vector_size(data_index);
+    obs->data_index_list.resize(size);
+    for (size_t i{}; i < size; ++i)
+        obs->data_index_list[i] = int_vector_iget(data_index, i);
     obs->observe_all_data = false;
 }
 
 void gen_obs_load_data_index(gen_obs_type *obs, const char *data_index_file) {
-    /* Parsing an a file with integers. */
-    free(obs->data_index_list);
-    obs->data_index_list = (int *)gen_common_fscanf_alloc(
-        data_index_file, ECL_INT, &obs->obs_size);
+    std::ifstream stream{data_index_file};
+    stream.imbue(std::locale::classic());
+
+    obs->data_index_list.clear();
+    while (stream) {
+        int value;
+        if (!(stream >> value))
+            break;
+        obs->data_index_list.emplace_back(value);
+        stream >> std::ws;
+    }
+    if (!stream.eof())
+        throw exc::runtime_error{
+            "Failure during parsing of gen_obs data index file {}",
+            data_index_file};
+
+    obs->obs_size = obs->data_index_list.size();
     obs->observe_all_data = false;
 }
 
@@ -166,12 +165,11 @@ void gen_obs_parse_data_index(gen_obs_type *obs,
 
 gen_obs_type *gen_obs_alloc__(const gen_data_config_type *data_config,
                               const char *obs_key) {
-    gen_obs_type *obs = (gen_obs_type *)util_malloc(sizeof *obs);
+    auto obs = new gen_obs_type;
     UTIL_TYPE_ID_INIT(obs, GEN_OBS_TYPE_ID);
     obs->obs_data = NULL;
     obs->obs_std = NULL;
     obs->std_scaling = NULL;
-    obs->data_index_list = NULL;
     obs->obs_format = ASCII; /* Hardcoded for now. */
     obs->obs_key = util_alloc_string_copy(obs_key);
     obs->data_config =
