@@ -82,11 +82,6 @@ def test_cases_list(facade):
     assert ["default_0", "default_1"] == cases
 
 
-def test_case_is_hidden(facade):
-    assert not facade.is_case_hidden("default_0")
-    assert not facade.is_case_hidden("nocase")
-
-
 def test_case_has_data(facade):
     assert facade.case_has_data("default_0")
     assert not facade.case_has_data("default")

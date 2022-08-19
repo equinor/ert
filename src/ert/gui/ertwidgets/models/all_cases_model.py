@@ -1,6 +1,5 @@
 from qtpy.QtCore import Qt, QAbstractItemModel, QModelIndex
 
-from ert.gui.ertwidgets.models.ertmodel import getAllCases
 from ert.libres_facade import LibresFacade
 
 
@@ -44,7 +43,7 @@ class AllCasesModel(QAbstractItemModel):
         return None
 
     def getAllItems(self):
-        return getAllCases(self.facade)
+        return self.facade.cases()
 
     def indexOf(self, item):
         items = self.getAllItems()

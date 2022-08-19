@@ -222,9 +222,6 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
     def cases(self) -> List[str]:
         return self._enkf_main.getCaseList()
 
-    def is_case_hidden(self, case: str) -> bool:
-        return self._enkf_main.isCaseHidden(case)
-
     def case_has_data(self, case: str) -> bool:
         return self._enkf_main.caseHasData(case)
 

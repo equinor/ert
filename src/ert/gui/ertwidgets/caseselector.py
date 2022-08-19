@@ -2,9 +2,6 @@ from qtpy.QtWidgets import QComboBox
 
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets import addHelpToWidget
-from ert.gui.ertwidgets.models.ertmodel import (
-    getAllCases,
-)
 from ert.libres_facade import LibresFacade
 
 
@@ -40,11 +37,11 @@ class CaseSelector(QComboBox):
         if self._show_only_initialized:
             return [
                 case
-                for case in getAllCases(self.facade)
+                for case in self.facade.cases()
                 if self.facade.case_initialized(case)
             ]
         else:
-            return getAllCases(self.facade)
+            return self.facade.cases()
 
     def selectionChanged(self, index):
         if self._update_ert:
