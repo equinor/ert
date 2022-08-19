@@ -43,8 +43,6 @@ extern "C" gen_data_file_format_type
 gen_data_config_get_input_format(const gen_data_config_type *);
 extern "C" gen_data_file_format_type
 gen_data_config_get_output_format(const gen_data_config_type *);
-ecl_data_type
-gen_data_config_get_internal_data_type(const gen_data_config_type *);
 extern "C" void gen_data_config_free(gen_data_config_type *);
 extern "C" PY_USED int
 gen_data_config_get_initial_size(const gen_data_config_type *config);
@@ -59,8 +57,6 @@ void gen_data_config_get_template_data(const gen_data_config_type *, char **,
                                        int *, int *, int *);
 extern "C" const char *
 gen_data_config_get_key(const gen_data_config_type *config);
-int gen_data_config_get_byte_size(const gen_data_config_type *config,
-                                  int report_step);
 int gen_data_config_get_data_size(const gen_data_config_type *config,
                                   int report_step);
 gen_data_file_format_type
