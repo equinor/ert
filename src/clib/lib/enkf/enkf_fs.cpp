@@ -163,47 +163,12 @@ struct enkf_fs_struct {
     path_fmt_type *case_member_fmt;
     path_fmt_type *case_tstep_fmt;
     path_fmt_type *case_tstep_member_fmt;
-
-    int refcount;
 };
 
 UTIL_SAFE_CAST_FUNCTION(enkf_fs, ENKF_FS_TYPE_ID)
 UTIL_IS_INSTANCE_FUNCTION(enkf_fs, ENKF_FS_TYPE_ID)
 
-void enkf_fs_umount(enkf_fs_type *fs);
-
-int enkf_fs_incref(enkf_fs_type *fs) {
-    fs->refcount++;
-
-    logger->debug("Calling incref on: {} . Refcount after incref:{}",
-                  fs->mount_point, fs->refcount);
-
-    return fs->refcount;
-}
-
-int enkf_fs_decref(enkf_fs_type *fs) {
-    fs->refcount--;
-    int refcount = fs->refcount;
-
-    if (refcount < 0)
-        util_abort("%s: Internal inconsistency in file system. The filesystem "
-                   "refcount:%d is < 0 \n",
-                   __func__, refcount);
-
-    logger->debug("Calling decref on: {} . Refcount after decref:{}",
-                  fs->mount_point, refcount);
-    if (refcount == 0)
-        enkf_fs_umount(fs);
-
-    return refcount;
-}
-
-int enkf_fs_get_refcount(const enkf_fs_type *fs) { return fs->refcount; }
-
-enkf_fs_type *enkf_fs_get_ref(enkf_fs_type *fs) {
-    enkf_fs_incref(fs);
-    return fs;
-}
+enkf_fs_type *enkf_fs_get_ref(enkf_fs_type *fs) { return fs; }
 
 enkf_fs_type *enkf_fs_alloc_empty(const char *mount_point, bool read_only) {
     enkf_fs_type *fs = new enkf_fs_type;
@@ -214,7 +179,6 @@ enkf_fs_type *enkf_fs_alloc_empty(const char *mount_point, bool read_only) {
     fs->misfit_ensemble = misfit_ensemble_alloc();
     fs->read_only = true;
     fs->mount_point = strdup(mount_point);
-    fs->refcount = 0;
     fs->lock_fd = 0;
     auto mount_path = fs::path(mount_point);
     fs->case_name = mount_path.filename();
@@ -454,13 +418,7 @@ void enkf_fs_sync(enkf_fs_type *fs) {
 
 void enkf_fs_umount(enkf_fs_type *fs) {
 
-    int refcount = fs->refcount;
-    if (refcount > 0)
-        util_abort("%s: Internal inconsistency - "
-                   "tried to umount a filesystem with refcount:%d\n",
-                   __func__, refcount);
-
-    logger->debug("{} umount filesystem {}", __func__, fs->mount_point);
+    logger->info("{} umount filesystem {}", __func__, fs->mount_point);
 
     if (fs->lock_fd > 0) {
         close(

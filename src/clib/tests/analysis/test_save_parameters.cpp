@@ -108,7 +108,7 @@ TEST_CASE("Write and read a matrix to enkf_fs instance",
 
         //cleanup
         ensemble_config_free(ensemble_config);
-        enkf_fs_decref(fs);
+        enkf_fs_umount(fs);
     }
 }
 
@@ -186,6 +186,6 @@ TEST_CASE("Reading and writing matrices with rowscaling attached",
 
         //cleanup
         ensemble_config_free(ensemble_config);
-        enkf_fs_decref(fs);
+        enkf_fs_umount(fs);
     }
 }

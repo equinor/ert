@@ -407,9 +407,6 @@ class EnKFMain(BaseCClass):
         """Returns the currently selected file system"""
         return self.storage
 
-    def umount(self) -> None:
-        self._fs_rotator.umount()
-
     def getFileSystemCount(self) -> int:
         return len(self._fs_rotator)
 

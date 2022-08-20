@@ -34,8 +34,7 @@ class FileSystemRotator:
         return full_case_name in self._fs_list
 
     def __get_fs(self, name: str) -> EnkfFs:
-        fs = self._fs_map[name]
-        return fs.copy()
+        return self._fs_map[name]
 
     def __getitem__(self, case: Union[int, str]) -> EnkfFs:
         if isinstance(case, str):

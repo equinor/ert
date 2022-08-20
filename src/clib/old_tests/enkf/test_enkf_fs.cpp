@@ -77,30 +77,17 @@ void test_mount() {
         enkf_fs_type *fs = enkf_fs_mount("mnt");
         test_assert_true(fs::exists("mnt/mnt.lock"));
         test_assert_true(enkf_fs_is_instance(fs));
-        enkf_fs_decref(fs);
+        enkf_fs_umount(fs);
         test_assert_false(fs::exists("mnt/mnt.lock"));
     }
     {
         enkf_fs_type *fs = enkf_fs_create_fs("mnt2", BLOCK_FS_DRIVER_ID, true);
         test_assert_true(enkf_fs_is_instance(fs));
-        enkf_fs_decref(fs);
+        enkf_fs_umount(fs);
     }
 }
 
-void test_refcount() {
-    ecl::util::TestArea ta("ref_count");
-    enkf_fs_create_fs("mnt", BLOCK_FS_DRIVER_ID, false);
-    {
-        enkf_fs_type *fs = enkf_fs_mount("mnt");
-        test_assert_int_equal(1, enkf_fs_get_refcount(fs));
-        enkf_fs_decref(fs);
-    }
-}
-
-void mount(void *args) {
-    enkf_fs_type *fs2 = enkf_fs_mount("mnt");
-    enkf_fs_decref(fs2);
-}
+void mount(void *args) { enkf_fs_type *fs2 = enkf_fs_mount("mnt"); }
 
 void test_mount_filesystem_readwrite_twice() {
     ecl::util::TestArea ta("test_mount_filesystem_readwrite_twice");
@@ -119,11 +106,11 @@ void test_mount_filesystem_readwrite_twice() {
         waitpid(pid, &child_status, 0);
         test_assert_true(child_status == 0);
     }
+    enkf_fs_umount(fs);
 }
 
 int main(int argc, char **argv) {
     test_mount();
-    test_refcount();
     test_mount_filesystem_readwrite_twice();
     test_block_fs_driver_create_fs();
     exit(0);

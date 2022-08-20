@@ -53,7 +53,7 @@ void test_queue_index() {
         test_assert_util_abort("run_arg_set_queue_index", call_set_queue_index,
                                run_arg);
         run_arg_free(run_arg);
-        enkf_fs_decref(fs);
+        enkf_fs_umount(fs);
     }
 }
 
@@ -78,9 +78,8 @@ void test_SMOOTHER_RUN() {
         test_assert_true(run_arg_is_instance(run_arg));
         test_assert_ptr_equal(run_arg_get_sim_fs(run_arg), sim_fs);
         run_arg_free(run_arg);
-
-        enkf_fs_decref(sim_fs);
-        enkf_fs_decref(target_fs);
+        enkf_fs_umount(sim_fs);
+        enkf_fs_umount(target_fs);
     }
 }
 
@@ -96,8 +95,7 @@ void test_INIT_ONLY() {
         test_assert_ptr_equal(run_arg_get_sim_fs(run_arg), init_fs);
 
         run_arg_free(run_arg);
-
-        enkf_fs_decref(init_fs);
+        enkf_fs_umount(init_fs);
     }
 }
 
@@ -114,7 +112,7 @@ void test_ENSEMBLE_EXPERIMENT() {
 
         test_assert_string_equal(run_arg_get_run_id(run_arg), "run_id");
         run_arg_free(run_arg);
-        enkf_fs_decref(fs);
+        enkf_fs_umount(fs);
     }
 }
 

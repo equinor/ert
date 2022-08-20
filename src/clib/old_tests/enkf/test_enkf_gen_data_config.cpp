@@ -85,10 +85,10 @@ void test_gendata_fload(const char *filename) {
     gen_data_fload_with_report_step(gen_data, filename, 0, write_fs);
     int data_size = gen_data_config_get_data_size(config, 0);
     test_assert_true(data_size > 0);
-    enkf_fs_decref(write_fs);
 
     gen_data_free(gen_data);
     gen_data_config_free(config);
+    enkf_fs_umount(write_fs);
 }
 
 void test_gendata_fload_empty_file(const char *filename) {
@@ -101,10 +101,10 @@ void test_gendata_fload_empty_file(const char *filename) {
     gen_data_fload_with_report_step(gen_data, filename, 0, write_fs);
     int data_size = gen_data_config_get_data_size(config, 0);
     test_assert_true(data_size == 0);
-    enkf_fs_decref(write_fs);
 
     gen_data_free(gen_data);
     gen_data_config_free(config);
+    enkf_fs_umount(write_fs);
 }
 
 void test_result_format() {

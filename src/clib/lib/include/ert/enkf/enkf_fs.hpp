@@ -39,9 +39,6 @@ extern "C" bool enkf_fs_is_read_only(const enkf_fs_type *fs);
 extern "C" void enkf_fs_fsync(enkf_fs_type *fs);
 
 enkf_fs_type *enkf_fs_get_ref(enkf_fs_type *fs);
-extern "C" int enkf_fs_decref(enkf_fs_type *fs);
-extern "C" int enkf_fs_incref(enkf_fs_type *fs);
-extern "C" int enkf_fs_get_refcount(const enkf_fs_type *fs);
 extern "C" enkf_fs_type *enkf_fs_mount(const char *path,
                                        bool read_only = false);
 void enkf_fs_fwrite_node(enkf_fs_type *enkf_fs, buffer_type *buffer,
@@ -72,6 +69,8 @@ bool enkf_fs_has_node(enkf_fs_type *enkf_fs, const char *node_key,
 extern "C" enkf_fs_type *enkf_fs_create_fs(const char *mount_point,
                                            fs_driver_impl driver_id,
                                            bool mount);
+
+extern "C" void enkf_fs_umount(enkf_fs_type *fs);
 
 char *enkf_fs_alloc_case_filename(const enkf_fs_type *fs,
                                   const char *input_name);

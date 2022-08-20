@@ -99,7 +99,7 @@ void test_write_gen_kw_export_file(enkf_main_type *enkf_main) {
     }
     enkf_node_free(enkf_node);
     enkf_node_free(enkf_node2);
-    enkf_fs_decref(init_fs);
+    enkf_fs_umount(init_fs);
     verify_parameters_txt();
 }
 
