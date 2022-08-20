@@ -96,10 +96,6 @@ misfit_ensemble_type *enkf_fs_get_misfit_ensemble(const enkf_fs_type *fs);
 extern "C" summary_key_set_type *
 enkf_fs_get_summary_key_set(const enkf_fs_type *fs);
 
-void enkf_fs_increase_run_count(enkf_fs_type *fs);
-void enkf_fs_decrease_run_count(enkf_fs_type *fs);
-extern "C" PY_USED bool enkf_fs_is_running(const enkf_fs_type *fs);
-
 UTIL_SAFE_CAST_HEADER(enkf_fs);
 UTIL_IS_INSTANCE_HEADER(enkf_fs);
 

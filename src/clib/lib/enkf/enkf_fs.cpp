@@ -165,9 +165,6 @@ struct enkf_fs_struct {
     path_fmt_type *case_tstep_member_fmt;
 
     int refcount;
-    /** Counts the number of simulations currently writing to this enkf_fs; the
-     * purpose is to be able to answer the question: Is this case currently 'running'? */
-    int runcount;
 };
 
 UTIL_SAFE_CAST_FUNCTION(enkf_fs, ENKF_FS_TYPE_ID)
@@ -218,7 +215,6 @@ enkf_fs_type *enkf_fs_alloc_empty(const char *mount_point, bool read_only) {
     fs->read_only = true;
     fs->mount_point = strdup(mount_point);
     fs->refcount = 0;
-    fs->runcount = 0;
     fs->lock_fd = 0;
     auto mount_path = fs::path(mount_point);
     fs->case_name = mount_path.filename();
@@ -664,16 +660,6 @@ summary_key_set_type *enkf_fs_get_summary_key_set(const enkf_fs_type *fs) {
 misfit_ensemble_type *enkf_fs_get_misfit_ensemble(const enkf_fs_type *fs) {
     return fs->misfit_ensemble;
 }
-
-void enkf_fs_increase_run_count(enkf_fs_type *fs) {
-    fs->runcount = fs->runcount + 1;
-}
-
-void enkf_fs_decrease_run_count(enkf_fs_type *fs) {
-    fs->runcount = fs->runcount - 1;
-}
-
-bool enkf_fs_is_running(const enkf_fs_type *fs) { return (fs->runcount > 0); }
 
 ERT_CLIB_SUBMODULE("enkf_fs", m) {
     using namespace py::literals;
