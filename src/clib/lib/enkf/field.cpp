@@ -101,7 +101,6 @@ void field_export3D(const field_type *field, void *_target_data,
                     bool rms_index_order, ecl_data_type target_data_type,
                     void *fill_value, const char *init_file) {
     const field_config_type *config = field->config;
-    ecl_data_type data_type = field_config_get_ecl_data_type(config);
     int sizeof_ctype_target = ecl_type_get_sizeof_ctype(target_data_type);
 
     field_type *initial_field = NULL;
@@ -115,65 +114,20 @@ void field_export3D(const field_type *field, void *_target_data,
 
         field_fload_keep_inactive(initial_field, init_file);
     }
-    switch (ecl_type_get_type(data_type)) {
-    case (ECL_DOUBLE_TYPE): {
-        const double *src_data = (const double *)field->data;
-        const double *initial_src_data =
-            initial_field ? (const double *)initial_field->data : NULL;
 
-        if (ecl_type_is_float(target_data_type)) {
-            float *target_data = (float *)_target_data;
-            EXPORT_MACRO;
-        } else if (ecl_type_is_double(target_data_type)) {
-            double *target_data = (double *)_target_data;
-            EXPORT_MACRO;
-        } else {
-            fprintf(stderr,
-                    "%s: double field can only export to double/float\n",
-                    __func__);
-            abort();
-        }
-    } break;
-    case (ECL_FLOAT_TYPE): {
-        const float *src_data = (const float *)field->data;
-        const float *initial_src_data =
-            initial_field ? (const float *)initial_field->data : NULL;
-        if (ecl_type_is_float(target_data_type)) {
-            float *target_data = (float *)_target_data;
-            EXPORT_MACRO;
-        } else if (ecl_type_is_double(target_data_type)) {
-            double *target_data = (double *)_target_data;
-            EXPORT_MACRO;
-        } else {
-            fprintf(stderr, "%s: float field can only export to double/float\n",
-                    __func__);
-            abort();
-        }
-    } break;
-    case (ECL_INT_TYPE): {
-        const int *src_data = (const int *)field->data;
-        const int *initial_src_data =
-            initial_field ? (const int *)initial_field->data : NULL;
-        if (ecl_type_is_float(target_data_type)) {
-            float *target_data = (float *)_target_data;
-            EXPORT_MACRO;
-        } else if (ecl_type_is_double(target_data_type)) {
-            double *target_data = (double *)_target_data;
-            EXPORT_MACRO;
-        } else if (ecl_type_is_int(target_data_type)) {
-            int *target_data = (int *)_target_data;
-            EXPORT_MACRO;
-        } else {
-            fprintf(stderr,
-                    "%s: int field can only export to int/double/float\n",
-                    __func__);
-            abort();
-        }
-    } break;
-    default:
-        fprintf(stderr, "%s: Sorry field has unexportable type ... \n",
+    const float *src_data = (const float *)field->data;
+    const float *initial_src_data =
+        initial_field ? (const float *)initial_field->data : NULL;
+    if (ecl_type_is_float(target_data_type)) {
+        float *target_data = (float *)_target_data;
+        EXPORT_MACRO;
+    } else if (ecl_type_is_double(target_data_type)) {
+        double *target_data = (double *)_target_data;
+        EXPORT_MACRO;
+    } else {
+        fprintf(stderr, "%s: float field can only export to double/float\n",
                 __func__);
-        break;
+        abort();
     }
 
     if (initial_field) {
@@ -235,60 +189,22 @@ static void field_import3D(field_type *field, const void *_src_data,
                            bool rms_index_order, bool keep_inactive_cells,
                            ecl_data_type src_type) {
     const field_config_type *config = field->config;
-    ecl_data_type data_type = field_config_get_ecl_data_type(config);
 
-    switch (ecl_type_get_type(data_type)) {
-    case (ECL_DOUBLE_TYPE): {
-        double *target_data = (double *)field->data;
-        if (ecl_type_is_float(src_type)) {
-            float *src_data = (float *)_src_data;
-            IMPORT_MACRO;
-        } else if (ecl_type_is_double(src_type)) {
-            double *src_data = (double *)_src_data;
-            IMPORT_MACRO;
-        } else if (ecl_type_is_int(src_type)) {
-            int *src_data = (int *)_src_data;
-            IMPORT_MACRO;
-        } else {
-            fprintf(stderr,
-                    "%s: double field can only import from int/double/float\n",
-                    __func__);
-            abort();
-        }
-    } break;
-    case (ECL_FLOAT_TYPE): {
-        float *target_data = (float *)field->data;
-        if (ecl_type_is_float(src_type)) {
-            float *src_data = (float *)_src_data;
-            IMPORT_MACRO;
-        } else if (ecl_type_is_double(src_type)) {
-            double *src_data = (double *)_src_data;
-            IMPORT_MACRO;
-        } else if (ecl_type_is_int(src_type)) {
-            int *src_data = (int *)_src_data;
-            IMPORT_MACRO;
-        } else {
-            fprintf(stderr,
-                    "%s: double field can only import from int/double/float\n",
-                    __func__);
-            abort();
-        }
-    } break;
-    case (ECL_INT_TYPE): {
-        int *target_data = (int *)field->data;
-        if (ecl_type_is_int(src_type)) {
-            int *src_data = (int *)_src_data;
-            IMPORT_MACRO;
-        } else {
-            fprintf(stderr, "%s: int field can only import from int\n",
-                    __func__);
-            abort();
-        }
-    } break;
-    default:
-        fprintf(stderr, "%s: Sorry field has unimportable type ... \n",
+    float *target_data = (float *)field->data;
+    if (ecl_type_is_float(src_type)) {
+        float *src_data = (float *)_src_data;
+        IMPORT_MACRO;
+    } else if (ecl_type_is_double(src_type)) {
+        double *src_data = (double *)_src_data;
+        IMPORT_MACRO;
+    } else if (ecl_type_is_int(src_type)) {
+        int *src_data = (int *)_src_data;
+        IMPORT_MACRO;
+    } else {
+        fprintf(stderr,
+                "%s: double field can only import from int/double/float\n",
                 __func__);
-        break;
+        abort();
     }
 }
 #undef IMPORT_MACRO
@@ -300,30 +216,10 @@ static void field_import3D(field_type *field, const void *_src_data,
             (d)[k] = 0;                                                        \
     }
 C_USED void field_clear(field_type *field) {
-    const ecl_data_type data_type =
-        field_config_get_ecl_data_type(field->config);
     const int data_size = field_config_get_data_size(field->config);
 
-    switch (data_type.type) {
-    case (ECL_DOUBLE_TYPE): {
-        double *data = (double *)field->data;
-        CLEAR_MACRO(data, data_size);
-        break;
-    }
-    case (ECL_FLOAT_TYPE): {
-        float *data = (float *)field->data;
-        CLEAR_MACRO(data, data_size);
-        break;
-    }
-    case (ECL_INT_TYPE): {
-        int *data = (int *)field->data;
-        CLEAR_MACRO(data, data_size);
-        break;
-    }
-    default:
-        util_abort("%s: not implemeneted for data_type: %d \n", __func__,
-                   data_type.type);
-    }
+    float *data = (float *)field->data;
+    CLEAR_MACRO(data, data_size);
 }
 #undef CLEAR_MACRO
 
@@ -457,15 +353,11 @@ static void field_ROFF_export__(const field_type *field,
                                 rms_file_type *rms_file,
                                 const char *init_file) {
     const int data_size = field_config_get_volume(field->config);
-    const ecl_data_type target_type = field_config_get_ecl_data_type(
-        field->config); /* Could/should in principle be input */
-    const ecl_data_type data_type =
-        field_config_get_ecl_data_type(field->config);
 
-    void *data = __field_alloc_3D_data(field, data_size, true, data_type,
-                                       target_type, init_file);
+    void *data = __field_alloc_3D_data(field, data_size, true, ECL_FLOAT,
+                                       ECL_FLOAT, init_file);
     rms_tagkey_type *data_key = rms_tagkey_alloc_complete(
-        "data", data_size, rms_util_convert_ecl_type(target_type), data, true);
+        "data", data_size, rms_float_type, data, true);
     rms_tag_fwrite_parameter(field_config_get_ecl_kw_name(field->config),
                              data_key, rms_file_get_FILE(rms_file));
     rms_tagkey_free(data_key);
@@ -526,39 +418,30 @@ bool field_write_to_buffer(const field_type *field, buffer_type *buffer,
 
 void field_ecl_write1D_fortio(const field_type *field, fortio_type *fortio) {
     const int data_size = field_config_get_data_size(field->config);
-    const ecl_data_type data_type =
-        field_config_get_ecl_data_type(field->config);
-
     ecl_kw_fwrite_param_fortio(fortio,
                                field_config_get_ecl_kw_name(field->config),
-                               data_type, data_size, field->data);
+                               ECL_FLOAT, data_size, field->data);
 }
 
 void field_ecl_write3D_fortio(const field_type *field, fortio_type *fortio,
                               const char *init_file) {
     const int data_size = field_config_get_volume(field->config);
-    const ecl_data_type target_type = field_config_get_ecl_data_type(
-        field->config); /* Could/should in principle be input */
-    const ecl_data_type data_type =
-        field_config_get_ecl_data_type(field->config);
-    void *data = __field_alloc_3D_data(field, data_size, false, data_type,
-                                       target_type, init_file);
+    void *data = __field_alloc_3D_data(field, data_size, false, ECL_FLOAT,
+                                       ECL_FLOAT, init_file);
 
     ecl_kw_fwrite_param_fortio(fortio,
                                field_config_get_ecl_kw_name(field->config),
-                               data_type, data_size, data);
+                               ECL_FLOAT, data_size, data);
     free(data);
 }
 
 static ecl_kw_type *field_alloc_ecl_kw_wrapper__(const field_type *field,
                                                  void *data) {
     const int data_size = field_config_get_volume(field->config);
-    const ecl_data_type target_type = field_config_get_ecl_data_type(
-        field->config); /* Could/should in principle be input */
 
     ecl_kw_type *ecl_kw =
         ecl_kw_alloc_new_shared(field_config_get_ecl_kw_name(field->config),
-                                data_size, target_type, data);
+                                data_size, ECL_FLOAT, data);
 
     return ecl_kw;
 }
@@ -566,12 +449,8 @@ static ecl_kw_type *field_alloc_ecl_kw_wrapper__(const field_type *field,
 void field_ecl_grdecl_export(const field_type *field, FILE *stream,
                              const char *init_file) {
     const int data_size = field_config_get_volume(field->config);
-    const ecl_data_type target_type = field_config_get_ecl_data_type(
-        field->config); /* Could/should in principle be input */
-    const ecl_data_type data_type =
-        field_config_get_ecl_data_type(field->config);
-    void *data = __field_alloc_3D_data(field, data_size, false, data_type,
-                                       target_type, init_file);
+    void *data = __field_alloc_3D_data(field, data_size, false, ECL_FLOAT,
+                                       ECL_FLOAT, init_file);
     ecl_kw_type *ecl_kw = field_alloc_ecl_kw_wrapper__(field, data);
     ecl_kw_fprintf_grdecl(ecl_kw, stream);
     ecl_kw_free(ecl_kw);
@@ -579,41 +458,23 @@ void field_ecl_grdecl_export(const field_type *field, FILE *stream,
 }
 
 static void field_apply(field_type *field, field_func_type *func) {
-    field_config_assert_unary(field->config, __func__);
     {
         const int data_size = field_config_get_data_size(field->config);
-        const ecl_data_type data_type =
-            field_config_get_ecl_data_type(field->config);
 
-        if (ecl_type_is_float(data_type)) {
-            float *data = (float *)field->data;
-            for (int i = 0; i < data_size; i++)
-                data[i] = func(data[i]);
-        } else if (ecl_type_is_double(data_type)) {
-            double *data = (double *)field->data;
-            for (int i = 0; i < data_size; i++)
-                data[i] = func(data[i]);
-        }
+        float *data = (float *)field->data;
+        for (int i = 0; i < data_size; i++)
+            data[i] = func(data[i]);
     }
 }
 
 static bool field_check_finite(const field_type *field) {
     const int data_size = field_config_get_data_size(field->config);
-    const ecl_data_type data_type =
-        field_config_get_ecl_data_type(field->config);
     bool ok = true;
 
-    if (ecl_type_is_float(data_type)) {
-        float *data = (float *)field->data;
-        for (int i = 0; i < data_size; i++)
-            if (!std::isfinite(data[i]))
-                ok = false;
-    } else if (ecl_type_is_double(data_type)) {
-        double *data = (double *)field->data;
-        for (int i = 0; i < data_size; i++)
-            if (!std::isfinite(data[i]))
-                ok = false;
-    }
+    float *data = (float *)field->data;
+    for (int i = 0; i < data_size; i++)
+        if (!std::isfinite(data[i]))
+            ok = false;
     return ok;
 }
 
@@ -641,17 +502,8 @@ static void field_apply_truncation(field_type *field) {
         double max_value = field_config_get_truncation_max(field->config);
 
         const int data_size = field_config_get_data_size(field->config);
-        const ecl_data_type data_type =
-            field_config_get_ecl_data_type(field->config);
-        if (ecl_type_is_float(data_type)) {
-            float *data = (float *)field->data;
-            TRUNCATE_MACRO(data_size, data, truncation, min_value, max_value);
-        } else if (ecl_type_is_double(data_type)) {
-            double *data = (double *)field->data;
-            TRUNCATE_MACRO(data_size, data, truncation, min_value, max_value);
-        } else
-            util_abort("%s: Field type not supported for truncation \n",
-                       __func__);
+        float *data = (float *)field->data;
+        TRUNCATE_MACRO(data_size, data, truncation, min_value, max_value);
     }
 }
 
@@ -808,9 +660,8 @@ void field_serialize(const field_type *field, node_id_type node_id,
                      int row_offset, int column) {
     const field_config_type *config = field->config;
     const int data_size = field_config_get_data_size(config);
-    ecl_data_type data_type = field_config_get_ecl_data_type(config);
 
-    enkf_matrix_serialize(field->data, data_size, data_type, active_list, A,
+    enkf_matrix_serialize(field->data, data_size, ECL_FLOAT, active_list, A,
                           row_offset, column);
 }
 
@@ -819,9 +670,8 @@ void field_deserialize(field_type *field, node_id_type node_id,
                        int row_offset, int column) {
     const field_config_type *config = field->config;
     const int data_size = field_config_get_data_size(config);
-    ecl_data_type data_type = field_config_get_ecl_data_type(config);
 
-    enkf_matrix_deserialize(field->data, data_size, data_type, active_list, A,
+    enkf_matrix_deserialize(field->data, data_size, ECL_FLOAT, active_list, A,
                             row_offset, column);
 }
 
@@ -829,12 +679,6 @@ static int __get_index(const field_type *field, int i, int j, int k) {
     return field_config_keep_inactive_cells(field->config)
                ? field_config_global_index(field->config, i, j, k)
                : field_config_active_index(field->config, i, j, k);
-}
-
-void field_ijk_get(const field_type *field, int i, int j, int k, void *value) {
-    int index = __get_index(field, i, j, k);
-    int sizeof_ctype = field_config_get_sizeof_ctype(field->config);
-    memcpy(value, &field->data[index * sizeof_ctype], sizeof_ctype);
 }
 
 double field_ijk_get_double(const field_type *field, int i, int j, int k) {
@@ -846,50 +690,16 @@ double field_ijk_get_double(const field_type *field, int i, int j, int k) {
    Takes an active or global index as input, and returns a double.
 */
 double field_iget_double(const field_type *field, int index) {
-    ecl_data_type data_type = field_config_get_ecl_data_type(field->config);
-    int sizeof_ctype = field_config_get_sizeof_ctype(field->config);
     char __buffer[8];
     char *buffer = &__buffer[0];
-    memcpy(buffer, &field->data[index * sizeof_ctype], sizeof_ctype);
-    if (ecl_type_is_double(data_type))
-        return *((double *)buffer);
-    else if (ecl_type_is_float(data_type)) {
-        double double_value;
-        float float_value;
+    memcpy(buffer, &field->data[index * sizeof(float)], sizeof(float));
+    double double_value;
+    float float_value;
 
-        float_value = *((float *)buffer);
-        double_value = float_value;
+    float_value = *((float *)buffer);
+    double_value = float_value;
 
-        return double_value;
-    } else {
-        util_abort("%s: failed - wrong internal type \n", __func__);
-        return -1;
-    }
-}
-
-/**
-   Takes an active or global index as input, and returns a double.
-*/
-float field_iget_float(const field_type *field, int index) {
-    ecl_data_type data_type = field_config_get_ecl_data_type(field->config);
-    int sizeof_ctype = field_config_get_sizeof_ctype(field->config);
-    char __buffer[8];
-    char *buffer = &__buffer[0];
-    memcpy(buffer, &field->data[index * sizeof_ctype], sizeof_ctype);
-    if (ecl_type_is_float(data_type))
-        return *((float *)buffer);
-    else if (ecl_type_is_double(data_type)) {
-        double double_value;
-        float float_value;
-
-        double_value = *((double *)buffer);
-        float_value = double_value;
-
-        return float_value;
-    } else {
-        util_abort("%s: failed - wrong internal type \n", __func__);
-        return -1;
-    }
+    return double_value;
 }
 
 #define INDEXED_UPDATE_MACRO(t, s, n, index, add)                              \
@@ -909,7 +719,6 @@ float field_iget_float(const field_type *field, int index) {
 void field_copy_ecl_kw_data(field_type *field, const ecl_kw_type *ecl_kw) {
     const field_config_type *config = field->config;
     const int data_size = field_config_get_data_size(config);
-    ecl_data_type field_type = field_config_get_ecl_data_type(field->config);
     ecl_data_type kw_type = ecl_kw_get_data_type(ecl_kw);
 
     if (data_size != ecl_kw_get_size(ecl_kw)) {
@@ -925,7 +734,7 @@ void field_copy_ecl_kw_data(field_type *field, const ecl_kw_type *ecl_kw) {
     }
 
     ecl_util_memcpy_typed_data(field->data, ecl_kw_get_void_ptr(ecl_kw),
-                               field_type, kw_type, ecl_kw_get_size(ecl_kw));
+                               ECL_FLOAT, kw_type, ecl_kw_get_size(ecl_kw));
 }
 
 bool field_fload_rms(field_type *field, const char *filename,
@@ -1013,14 +822,13 @@ static bool field_fload_ecl_grdecl(field_type *field, const char *filename,
                                    bool keep_inactive) {
     const char *key = field_config_get_ecl_kw_name(field->config);
     int size = field_config_get_volume(field->config);
-    ecl_data_type data_type = field_config_get_ecl_data_type(field->config);
     ecl_kw_type *ecl_kw = NULL;
     {
         FILE *stream = util_fopen__(filename, "r");
         if (stream) {
             if (ecl_kw_grdecl_fseek_kw(key, false, stream))
                 ecl_kw =
-                    ecl_kw_fscanf_alloc_grdecl_data(stream, size, data_type);
+                    ecl_kw_fscanf_alloc_grdecl_data(stream, size, ECL_FLOAT);
             else
                 util_exit("%s: Can not locate %s keyword in %s \n", __func__,
                           key, filename);

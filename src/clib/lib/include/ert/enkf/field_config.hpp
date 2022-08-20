@@ -97,7 +97,6 @@ field_config_alloc_empty(const char *ecl_kw_name, ecl_grid_type *ecl_grid,
 
 C_USED const char *field_config_default_extension(field_file_format_type, bool);
 extern "C" field_file_format_type field_config_guess_file_type(const char *);
-ecl_data_type field_config_get_ecl_data_type(const field_config_type *);
 void field_config_get_dims(const field_config_type *, int *, int *, int *);
 extern "C" PY_USED int field_config_get_nx(const field_config_type *config);
 extern "C" PY_USED int field_config_get_ny(const field_config_type *config);
@@ -106,9 +105,7 @@ extern "C" void field_config_free(field_config_type *);
 int field_config_get_volume(const field_config_type *);
 extern "C" int
 field_config_get_data_size_from_grid(const field_config_type *config);
-void field_config_set_ecl_data_type(field_config_type *, ecl_data_type);
 int field_config_get_byte_size(const field_config_type *);
-int field_config_get_sizeof_ctype(const field_config_type *);
 int field_config_active_index(const field_config_type *, int, int, int);
 int field_config_global_index(const field_config_type *, int, int, int);
 bool field_config_ijk_valid(const field_config_type *, int, int, int);
@@ -127,7 +124,6 @@ field_func_type *field_config_get_output_transform(const field_config_type *);
 bool field_config_is_valid(const field_config_type *field_config);
 void field_config_assert_binary(const field_config_type *,
                                 const field_config_type *, const char *);
-void field_config_assert_unary(const field_config_type *, const char *);
 
 void field_config_set_truncation(field_config_type *, int, double, double);
 extern "C" int

@@ -4,15 +4,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <ert/ecl/ecl_util.h>
-
 #include <ert/rms/rms_type.hpp>
 
 #define RMS_INACTIVE_DOUBLE -999.00
 #define RMS_INACTIVE_FLOAT -999.00
 #define RMS_INACTIVE_INT -999
 
-rms_type_enum rms_util_convert_ecl_type(ecl_data_type);
 int rms_util_global_index_from_eclipse_ijk(int, int, int, int, int, int);
 void rms_util_translate_undef(void *, int, int, const void *, const void *);
 void rms_util_fskip_string(FILE *);

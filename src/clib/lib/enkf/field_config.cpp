@@ -115,7 +115,6 @@ struct field_config_struct {
 
     field_file_format_type export_format;
     field_file_format_type import_format;
-    ecl_data_type internal_data_type;
     /** See doc of functions field_config_set_key() / field_config_enkf_OFF() */
     bool __enkf_mode;
     bool write_compressed;
@@ -139,11 +138,6 @@ struct field_config_struct {
 };
 
 UTIL_IS_INSTANCE_FUNCTION(field_config, FIELD_CONFIG_ID)
-
-void field_config_set_ecl_data_type(field_config_type *config,
-                                    ecl_data_type data_type) {
-    memcpy(&config->internal_data_type, &data_type, sizeof data_type);
-}
 
 /**
    This function takes a field_file_format_type variable, and returns
@@ -318,9 +312,6 @@ field_config_type *field_config_alloc_empty(const char *ecl_kw_name,
     field_config_set_grid(
         config, ecl_grid,
         false); /* The grid is (currently) set on allocation and can NOT be updated afterwards. */
-    field_config_set_ecl_data_type(
-        config,
-        ECL_FLOAT); /* This is the internal type - currently not exported any API to change it. */
     return config;
 }
 
@@ -547,10 +538,6 @@ int field_config_get_volume(const field_config_type *config) {
     return config->nx * config->ny * config->nz;
 }
 
-ecl_data_type field_config_get_ecl_data_type(const field_config_type *config) {
-    return config->internal_data_type;
-}
-
 int field_config_get_data_size_from_grid(const field_config_type *config) {
     return config->keep_inactive_cells ? ecl_grid_get_global_size(config->grid)
                                        : ecl_grid_get_active_size(config->grid);
@@ -558,11 +545,7 @@ int field_config_get_data_size_from_grid(const field_config_type *config) {
 
 int field_config_get_byte_size(const field_config_type *config) {
     int num_cells = field_config_get_data_size_from_grid(config);
-    return num_cells * field_config_get_sizeof_ctype(config);
-}
-
-int field_config_get_sizeof_ctype(const field_config_type *config) {
-    return ecl_type_get_sizeof_ctype(config->internal_data_type);
+    return num_cells * sizeof(float);
 }
 
 /**
@@ -653,34 +636,15 @@ field_config_get_init_transform(const field_config_type *config) {
 }
 
 /**
-  This function asserts that a unary function can be applied
-  to the field - i.e. that the underlying data_type is ecl_float or ecl_double.
-*/
-void field_config_assert_unary(const field_config_type *field_config,
-                               const char *caller) {
-    const ecl_data_type data_type =
-        field_config_get_ecl_data_type(field_config);
-    if (ecl_type_is_float(data_type) || ecl_type_is_double(data_type))
-        return;
-    else
-        util_abort("%s: error in:%s unary functions can only be applied on "
-                   "fields of type ecl_float / ecl_double \n",
-                   __func__, caller);
-}
-
-/**
    Asserts that two fields can be combined in a binary operation.
 */
 void field_config_assert_binary(const field_config_type *config1,
                                 const field_config_type *config2,
                                 const char *caller) {
-    field_config_assert_unary(config1, caller);
-    const ecl_data_type data_type1 = config1->internal_data_type;
-    const ecl_data_type data_type2 = config2->internal_data_type;
     const int size1 = config1->data_size;
     const int size2 = config2->data_size;
 
-    if (!ecl_type_is_equal(data_type1, data_type2) || size1 != size2)
+    if (size1 != size2)
         util_abort("%s: fields not equal enough - failure in:%s \n", __func__,
                    caller);
 }
