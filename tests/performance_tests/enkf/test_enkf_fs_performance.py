@@ -3,9 +3,7 @@ from ert._c_wrappers.enkf import EnKFMain, ResConfig
 
 def mount_and_umount(ert, case_name):
     fs_manager = ert.getEnkfFsManager()
-    assert not fs_manager.isCaseMounted(case_name)
     mount_point = fs_manager.getFileSystem(case_name)
-    assert fs_manager.isCaseMounted(case_name)
     del mount_point
 
 

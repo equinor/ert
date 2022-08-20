@@ -121,7 +121,7 @@ def test_field_param(tmpdir, config_str, expected):
         # forward init was not set correctly
         assert load_from_forward_model(ert) == 1
 
-        fs = ert.getEnkfFsManager().getFileSystem("default_0", read_only=True)
+        fs = ert.getEnkfFsManager().getFileSystem("default_0")
         if expected:
             arr = fs.load_parameter(
                 ert.ensembleConfig(), [0], update.Parameter("MY_PARAM")
@@ -188,7 +188,7 @@ def test_surface_param(
         assert load_from_forward_model(ert) == expect_loaded
         assert error in "".join(caplog.messages)
 
-        fs = ert.getEnkfFsManager().getFileSystem("default_0", read_only=True)
+        fs = ert.getEnkfFsManager().getFileSystem("default_0")
         if expected and expect_loaded:
             arr = fs.load_parameter(
                 ert.ensembleConfig(), [0], update.Parameter("MY_PARAM")

@@ -219,7 +219,9 @@ class EnsembleSmoother(BaseRunModel):
         update_id = self._post_update_data(ensemble_id, analysis_module_name)
 
         self.setPhase(1, "Running simulations...")
-        self.ert().getEnkfFsManager().switchFileSystem(prior_context.target_fs)
+        self.ert().getEnkfFsManager().switchFileSystem(
+            prior_context.target_fs.case_name
+        )
 
         self.setPhaseName("Pre processing...")
 

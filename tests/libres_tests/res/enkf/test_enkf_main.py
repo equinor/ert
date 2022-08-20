@@ -144,10 +144,8 @@ def test_that_current_case_file_is_written():
     )
     Path("config.ert").write_text(config_text)
     res_config = ResConfig("config.ert")
-    ert = EnKFMain(res_config)
-    new_fs = EnkfFs.createFileSystem("new_fs", True, ert._ensemble_size)
-    ert.switchFileSystem(new_fs)
-    assert (Path("storage") / "current_case").read_text() == "new_fs"
+    EnKFMain(res_config)
+    assert (Path("storage") / "current_case").read_text() == "default"
 
 
 @pytest.mark.usefixtures("use_tmpdir")

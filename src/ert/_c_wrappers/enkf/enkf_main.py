@@ -10,11 +10,11 @@ import numpy as np
 
 from ert import _clib
 from ert._c_wrappers.analysis.configuration import UpdateConfiguration
+from ert._c_wrappers.enkf import EnkfFs
 from ert._c_wrappers.enkf.analysis_config import AnalysisConfig
 from ert._c_wrappers.enkf.data import EnkfNode
 from ert._c_wrappers.enkf.ecl_config import EclConfig
-from ert._c_wrappers.enkf.enkf_fs import EnkfFs
-from ert._c_wrappers.enkf.enkf_fs_manager import FileSystemRotator
+from ert._c_wrappers.enkf.enkf_fs_manager import FileSystemManager
 from ert._c_wrappers.enkf.enkf_obs import EnkfObs
 from ert._c_wrappers.enkf.ensemble_config import EnsembleConfig
 from ert._c_wrappers.enkf.enums import RealizationStateEnum
@@ -98,23 +98,16 @@ class EnKFMain:
             self.substituter.substitute,
         )
 
-        # Initalize storage
-        self._fs_rotator = FileSystemRotator(5)
+        # Initialize storage
         ens_path = Path(config.model_config.getEnspath())
-        current_case_file = ens_path / "current_case"
-        if current_case_file.exists():
-            fs = EnkfFs(
-                ens_path / current_case_file.read_text("utf-8").strip(),
-                read_only=read_only,
-                ensemble_size=self._ensemble_size,
-            )
-        else:
-            fs = EnkfFs.createFileSystem(
-                ens_path / "default",
-                read_only=read_only,
-                ensemble_size=self._ensemble_size,
-            )
-        self.storage = fs
+        self._fs_rotator = FileSystemManager(
+            5,
+            ens_path,
+            config.ensemble_config,
+            self.getEnsembleSize(),
+            read_only=read_only,
+        )
+        self.switchFileSystem(self._fs_rotator.active_case)
 
         # Set up RNG
         config_seed = self.resConfig().random_seed
@@ -181,27 +174,6 @@ class EnKFMain:
     def runpath_list_filename(self):
         return self._runpaths.runpath_list_filename
 
-    @property
-    def storage(self):
-        return self._fs
-
-    @storage.setter
-    def storage(self, file_system):
-        self.addDataKW("<ERT-CASE>", file_system.getCaseName())
-        self.addDataKW("<ERTCASE>", file_system.getCaseName())
-        if self.res_config.ecl_config.refcase:
-            time_map = file_system.getTimeMap()
-            time_map.attach_refcase(self.res_config.ecl_config.refcase)
-        case_name = file_system.getCaseName()
-        full_name = os.path.join(self.getMountPoint(), case_name)
-        if full_name not in self._fs_rotator:
-            self._fs_rotator.append(file_system)
-        # On setting a new file system we write the current_case file
-        (Path(self.getModelConfig().getEnspath()) / "current_case").write_text(
-            file_system.getCaseName()
-        )
-        self._fs = file_system
-
     def getEnkfFsManager(self) -> "EnKFMain":
         return self
 
@@ -209,7 +181,7 @@ class EnKFMain:
         return self.update_configuration
 
     def loadFromForwardModel(
-        self, realization: List[bool], iteration: int, fs: EnkfFs
+        self, realization: List[bool], iteration: int, fs: "EnkfFs"
     ) -> int:
         """Returns the number of loaded realizations"""
         run_context = self.create_ensemble_experiment_run_context(
@@ -418,58 +390,54 @@ class EnKFMain:
         "Will return the random number generator used for updates."
         return self._shared_rng
 
-    def getFileSystem(
-        self, case_name: str, mount_root: str = None, read_only: bool = False
-    ) -> EnkfFs:
-        if mount_root is None:
-            mount_root = self.getMountPoint()
-
-        full_case_name = os.path.join(mount_root, case_name)
-
-        if full_case_name not in self._fs_rotator:
-            if not os.path.exists(full_case_name):
-                new_fs = EnkfFs.createFileSystem(
-                    full_case_name, read_only, self._ensemble_size
-                )
-            else:
-                new_fs = EnkfFs(full_case_name, read_only, self._ensemble_size)
-            self._fs_rotator.append(new_fs)
-
-        fs = self._fs_rotator[full_case_name]
-
-        return fs
+    def getFileSystem(self, case_name: str) -> "EnkfFs":
+        try:
+            case = self._fs_rotator[case_name]
+        except KeyError:
+            case = self._fs_rotator.add_case(case_name)
+        if self.res_config.ecl_config.refcase:
+            time_map = case.getTimeMap()
+            time_map.attach_refcase(self.res_config.ecl_config.refcase)
+        return case
 
     def caseExists(self, case_name: str) -> bool:
-        return case_name in self.getCaseList()
+        return case_name in self._fs_rotator
 
     def caseHasData(self, case_name: str) -> bool:
-        state_map = self.getStateMapForCase(case_name)
+        if case_name not in self._fs_rotator:
+            return False
+        state_map = self._fs_rotator.state_map(case_name)
 
         return any(state == RealizationStateEnum.STATE_HAS_DATA for state in state_map)
 
-    def getCurrentFileSystem(self) -> EnkfFs:
+    def getCurrentFileSystem(self) -> "EnkfFs":
         """Returns the currently selected file system"""
-        return self.storage
+        return self.getFileSystem(self._fs_rotator.active_case)
 
-    def getFileSystemCount(self) -> int:
-        return len(self._fs_rotator)
+    def getStateMapForCase(self, case_name: str):
+        return self._fs_rotator.state_map(case_name)
 
-    def switchFileSystem(self, file_system: EnkfFs) -> None:
-        self.storage = file_system
-
-    def isCaseInitialized(self, case: str) -> bool:
-        case = os.path.join(self.getMountPoint(), case)
-        if case not in self._fs_rotator:
-            return False
-        return self._fs_rotator[case].is_initalized(
-            self.ensembleConfig(), self._parameter_keys, self.getEnsembleSize()
+    def switchFileSystem(self, case_name: str) -> None:
+        if isinstance(case_name, EnkfFs):
+            case_name = case_name.case_name
+        if case_name not in self._fs_rotator.cases:
+            raise KeyError(
+                f"Unknown case: {case_name}, valid: {self._fs_rotator.cases}"
+            )
+        self.addDataKW("<ERT-CASE>", case_name)
+        self.addDataKW("<ERTCASE>", case_name)
+        self._fs_rotator.active_case = case_name
+        (Path(self.getModelConfig().getEnspath()) / "current_case").write_text(
+            case_name
         )
 
+    def isCaseInitialized(self, case: str) -> bool:
+        if case not in self._fs_rotator:
+            return False
+        return self._fs_rotator[case].is_initalized
+
     def getCaseList(self) -> List[str]:
-        caselist = [
-            str(x.stem) for x in Path(self.getMountPoint()).iterdir() if x.is_dir()
-        ]
-        return sorted(caselist, key=naturalSortKey)
+        return sorted(self._fs_rotator.cases, key=naturalSortKey)
 
     def customInitializeCurrentFromExistingCase(
         self,
@@ -478,36 +446,15 @@ class EnKFMain:
         member_mask: List[bool],
         node_list: List[str],
     ) -> None:
-        if source_case not in self.getCaseList():
-            raise KeyError(
-                f"No such source case: {source_case} in {self.getCaseList()}"
-            )
-        source_case_fs = self.getFileSystem(source_case)
+        source_case_fs = self._fs_rotator[source_case]
         _clib.enkf_main.init_current_case_from_existing_custom(
             self.ensembleConfig(),
             source_case_fs,
-            self._fs,
+            self.getCurrentFileSystem(),
             source_report_step,
             node_list,
             member_mask,
         )
-
-    def isCaseMounted(self, case_name: str, mount_root: str = None) -> bool:
-        if mount_root is None:
-            mount_root = self.getMountPoint()
-
-        full_case_name = os.path.join(mount_root, case_name)
-
-        return full_case_name in self._fs_rotator
-
-    def getStateMapForCase(self, case: str) -> "StateMap":
-        if self.isCaseMounted(case):
-            fs = self.getFileSystem(case)
-            return fs.getStateMap()
-        else:
-            mount_root = self.getMountPoint()
-            full_case_name = os.path.join(mount_root, case)
-            return self.storage.read_state_map(full_case_name)
 
     def createRunPath(self, run_context: RunContext) -> None:
         self.initRun(run_context)

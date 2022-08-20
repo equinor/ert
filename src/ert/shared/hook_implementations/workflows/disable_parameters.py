@@ -1,4 +1,4 @@
-from ert._c_wrappers.job_queue import ErtScript
+from ert import ErtScript
 
 
 class DisableParametersUpdate(ErtScript):

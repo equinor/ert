@@ -14,20 +14,14 @@ def test_enkf_fs_manager_create(snake_oil_case):
     fsm = ert.getEnkfFsManager()
 
     fsm.getCurrentFileSystem()
-    assert fsm.isCaseMounted("default_0")
     assert fsm.caseExists("default_0")
     assert fsm.caseHasData("default_0")
 
-    assert fsm.getFileSystemCount() == 1
-
-    assert not fsm.isCaseMounted("newFS")
     assert not fsm.caseExists("newFS")
     assert not fsm.caseHasData("newFS")
 
     fsm.getFileSystem("newFS")
-    assert fsm.getFileSystemCount() == 2
 
-    assert fsm.isCaseMounted("newFS")
     assert fsm.caseExists("newFS")
     assert not fsm.caseHasData("newFS")
 
@@ -35,19 +29,19 @@ def test_enkf_fs_manager_create(snake_oil_case):
 def test_rotate(snake_oil_case):
     ert = snake_oil_case
     fsm = ert.getEnkfFsManager()
-    assert fsm.getFileSystemCount() == 1
+    assert len(fsm._fs_rotator) == 2
 
     fs_list = []
     for index in range(5):
         fs_list.append(fsm.getFileSystem(f"fs_fill_{index}"))
 
-    assert fsm.getFileSystemCount() == 5
+    assert len(fsm._fs_rotator) == 7
 
     for index in range(3 * 5):
         fs_name = f"fs_test_{index}"
         sys.stderr.write(f"Mounting: {fs_name}\n")
         fsm.getFileSystem(fs_name)
-        assert fsm.getFileSystemCount() == 5
+        assert len(fsm._fs_rotator) == 8 + index
 
 
 @pytest.mark.parametrize(
