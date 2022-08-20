@@ -38,12 +38,18 @@ class EnkfFs(BaseCClass):
     _umount = ResPrototype("void enkf_fs_umount(enkf_fs)")
 
     def __init__(
-        self, mount_point: Union[str, Path], read_only: bool, ensemble_size: int
+        self,
+        mount_point: Union[str, Path],
+        ensemble_config: "EnsembleConfig",
+        ensemble_size: int,
+        read_only: bool = False,
     ):
         self.mount_point = Path(mount_point).absolute()
         self.case_name = self.mount_point.stem
         c_ptr = self._mount(self.mount_point.as_posix(), ensemble_size, read_only)
         super().__init__(c_ptr)
+        self._ensemble_config = ensemble_config
+        self._ensemble_size = ensemble_size
 
     def getTimeMap(self) -> TimeMap:
         return self._get_time_map().setParent(self)
@@ -51,7 +57,8 @@ class EnkfFs(BaseCClass):
     def getStateMap(self) -> "StateMap":
         return _clib.enkf_fs.get_state_map(self)
 
-    def read_state_map(self, case_path) -> "StateMap":
+    @staticmethod
+    def read_state_map(case_path) -> "StateMap":
         return _clib.enkf_fs.read_state_map(case_path)
 
     def getCaseName(self) -> str:
@@ -60,24 +67,27 @@ class EnkfFs(BaseCClass):
     def isReadOnly(self) -> bool:
         return self._is_read_only()
 
-    def is_initalized(
-        self,
-        ensemble_config: "EnsembleConfig",
-        parameters: List[str],
-        ensemble_size: int,
-    ) -> bool:
+    @property
+    def is_initalized(self) -> bool:
         return _clib.enkf_fs.is_initialized(
-            self, ensemble_config, parameters, ensemble_size
+            self,
+            self._ensemble_config,
+            self._ensemble_config.parameters,
+            self._ensemble_size,
         )
 
     @classmethod
     def createFileSystem(
-        cls, path: Union[str, Path], read_only: bool, ensemble_size: int
+        cls,
+        path: Union[str, Path],
+        ensemble_config: "EnsembleConfig",
+        ensemble_size: int,
+        read_only: bool = False,
     ) -> "EnkfFs":
         path = Path(path).absolute()
         fs_type = EnKFFSType.BLOCK_FS_DRIVER_ID
-        cls._create(path.as_posix(), fs_type, ensemble_size, False)
-        return cls(path, read_only=read_only, ensemble_size=ensemble_size)
+        cls._create(path.as_posix(), fs_type, ensemble_size, True)
+        return cls(path, ensemble_config, ensemble_size, read_only=read_only)
 
     def sync(self):
         self._sync()

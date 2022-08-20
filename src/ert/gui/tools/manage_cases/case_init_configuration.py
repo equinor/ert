@@ -11,15 +11,11 @@ from qtpy.QtWidgets import (
     QWidget,
 )
 
-from ert._c_wrappers.enkf import EnkfVarType
+from ert._c_wrappers.enkf import EnkfVarType, RunContext
 from ert.gui.ertwidgets import addHelpToWidget, showWaitCursorWhileWaiting
 from ert.gui.ertwidgets.caselist import CaseList
 from ert.gui.ertwidgets.caseselector import CaseSelector
 from ert.gui.ertwidgets.checklist import CheckList
-from ert.gui.ertwidgets.models.ertmodel import (
-    initializeCurrentCaseFromExisting,
-    initializeCurrentCaseFromScratch,
-)
 from ert.gui.ertwidgets.models.selectable_list_model import SelectableListModel
 from ert.libres_facade import LibresFacade
 
@@ -107,10 +103,17 @@ class CaseInitializationConfigurationPanel(QTabWidget):
         initialize_button.setMinimumWidth(75)
         initialize_button.setMaximumWidth(150)
 
-        def initializeFromScratch():
+        @showWaitCursorWhileWaiting
+        def initializeFromScratch(_):
             parameters = parameter_model.getSelectedItems()
             members = members_model.getSelectedItems()
-            initializeCurrentCaseFromScratch(parameters, members, self.ert)
+            mask = [False] * self.ert.getEnsembleSize()
+            for member in members:
+                mask[int(member.strip())] = True
+            case_manager = self.ert.getEnkfFsManager()
+            sim_fs = case_manager.current_case
+            run_context = RunContext(sim_fs=sim_fs, mask=mask)
+            self.ert.initRun(run_context, parameters=parameters)
 
         initialize_button.clicked.connect(initializeFromScratch)
         layout.addWidget(initialize_button, 0, Qt.AlignCenter)
@@ -151,20 +154,26 @@ class CaseInitializationConfigurationPanel(QTabWidget):
         initialize_button.setMinimumWidth(75)
         initialize_button.setMaximumWidth(150)
 
-        def initializeFromExisting():
+        @showWaitCursorWhileWaiting
+        def initializeFromExisting(_):
             source_case_name = str(source_case.currentText())
             target_case_name = str(target_case.currentText())
             report_step = history_length_spinner.value()
             parameters = parameter_model.getSelectedItems()
             members = members_model.getSelectedItems()
-            initializeCurrentCaseFromExisting(
-                source_case_name,
-                target_case_name,
-                report_step,
-                parameters,
-                members,
-                self.ert,
-            )
+            case_manager = self.ert.getEnkfFsManager()
+            if (
+                source_case in case_manager
+                and case_manager[source_case_name].is_initalized
+                and self.ert.caseExists(target_case_name)
+            ):
+                member_mask = [False] * self.ert.getEnsembleSize()
+                for member in members:
+                    member_mask[int(member)] = True
+
+                self.ert.getEnkfFsManager().customInitializeCurrentFromExistingCase(
+                    source_case_name, report_step, member_mask, parameters
+                )
 
         initialize_button.clicked.connect(initializeFromExisting)
         layout.addWidget(initialize_button, 0, Qt.AlignCenter)
@@ -240,7 +249,7 @@ class CaseInitializationConfigurationPanel(QTabWidget):
         if case_name is None:
             case_name = self.ert.getEnkfFsManager().getCurrentFileSystem().getCaseName()
 
-        states = list(self.ert.getEnkfFsManager().getStateMapForCase(case_name))
+        states = list(self.ert._fs_rotator.state_map(case_name))
 
         html = "<table>"
         for index, value in enumerate(states):

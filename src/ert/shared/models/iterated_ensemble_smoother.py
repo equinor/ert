@@ -70,9 +70,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
         return ensemble_id
 
     def createTargetCaseFileSystem(self, phase: int, target_case_format: str) -> EnkfFs:
-        target_fs = (
-            self.ert().getEnkfFsManager().getFileSystem(target_case_format % phase)
-        )
+        target_fs = self.ert().getFileSystem(target_case_format % phase)
         return target_fs
 
     def analyzeStep(self, run_context: RunContext, ensemble_id: str) -> str:
@@ -196,7 +194,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
         )
         self._run_context = run_context
         self._last_run_iteration = run_context.iteration
-        self.ert().getEnkfFsManager().switchFileSystem(sim_fs)
+        self.ert().getEnkfFsManager().switchFileSystem(sim_fs.case_name)
         return run_context
 
     @classmethod

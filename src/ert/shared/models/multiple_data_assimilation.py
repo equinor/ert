@@ -334,7 +334,7 @@ class MultipleDataAssimilation(BaseRunModel):
         )
         self._run_context = run_context
         self._last_run_iteration = run_context.iteration
-        self.ert().getEnkfFsManager().switchFileSystem(sim_fs)
+        self.ert().getEnkfFsManager().switchFileSystem(sim_fs.case_name)
         return run_context
 
     @classmethod

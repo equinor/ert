@@ -139,7 +139,7 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
         return str(self._enkf_main.getCurrentFileSystem().getCaseName())
 
     def get_active_realizations(self, case_name: str) -> List[int]:
-        fs = self._enkf_main.getFileSystem(case_name, read_only=True)
+        fs = self._enkf_main.getFileSystem(case_name)
         state_map = fs.getStateMap()
         ens_mask = state_map.selectMatching(RealizationStateEnum.STATE_HAS_DATA)
         return [index for index, element in enumerate(ens_mask) if element]
@@ -207,7 +207,7 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
         report_step: int,
         realization_index: Optional[int] = None,
     ) -> DataFrame:
-        fs = self._enkf_main.getFileSystem(case_name, read_only=True)
+        fs = self._enkf_main.getFileSystem(case_name)
         realizations = fs.realizationList(RealizationStateEnum.STATE_HAS_DATA)
         if realization_index:
             if realization_index not in realizations:
@@ -268,7 +268,7 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
     def select_or_create_new_case(self, case_name: str) -> None:
         if self.get_current_case_name() != case_name:
             fs = self._enkf_main.getFileSystem(case_name)
-            self._enkf_main.switchFileSystem(fs)
+            self._enkf_main.switchFileSystem(fs.case_name)
 
     def cases(self) -> List[str]:
         return self._enkf_main.getCaseList()
@@ -338,7 +338,7 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
         keys: Optional[List[str]] = None,
         realization_index: Optional[int] = None,
     ) -> DataFrame:
-        fs = self._enkf_main.getFileSystem(case_name, read_only=True)
+        fs = self._enkf_main.getFileSystem(case_name)
 
         ens_mask = fs.getStateMap().selectMatching(
             RealizationStateEnum.STATE_INITIALIZED
@@ -390,7 +390,7 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
         keys: Optional[List[str]] = None,
         realization_index: Optional[int] = None,
     ) -> DataFrame:
-        fs = self._enkf_main.getFileSystem(case_name, read_only=True)
+        fs = self._enkf_main.getFileSystem(case_name)
 
         time_map = fs.getTimeMap()
         dates = [time_map[index].datetime() for index in range(1, len(time_map))]
@@ -459,7 +459,7 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
 
             for realization_index, realization_number in enumerate(realizations):
                 misfit = obs_vector.getTotalChi2(
-                    self._enkf_main.getFileSystem(case_name, read_only=True),
+                    self._enkf_main.getFileSystem(case_name),
                     realization_number,
                 )
 
