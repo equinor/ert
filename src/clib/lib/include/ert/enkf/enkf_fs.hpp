@@ -34,7 +34,6 @@
 #include <ert/enkf/time_map.hpp>
 
 const char *enkf_fs_get_mount_point(const enkf_fs_type *fs);
-extern "C" const char *enkf_fs_get_case_name(const enkf_fs_type *fs);
 extern "C" bool enkf_fs_is_read_only(const enkf_fs_type *fs);
 extern "C" void enkf_fs_fsync(enkf_fs_type *fs);
 
