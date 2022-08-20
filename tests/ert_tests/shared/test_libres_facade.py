@@ -87,11 +87,6 @@ def test_case_has_data(facade):
     assert not facade.case_has_data("default")
 
 
-def test_case_is_running(facade):
-    assert not facade.is_case_running("default_0")
-    assert not facade.is_case_running("nocase")
-
-
 def test_all_data_type_keys(facade):
     keys = facade.all_data_type_keys()
 

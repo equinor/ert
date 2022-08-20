@@ -395,13 +395,6 @@ class EnKFMain(BaseCClass):
 
         return fs
 
-    def isCaseRunning(self, case_name: str, mount_root: str = None) -> bool:
-        """Returns true if case is mounted and write_count > 0"""
-        if self.isCaseMounted(case_name, mount_root):
-            case_fs = self.getFileSystem(case_name, mount_root)
-            return case_fs.is_running()
-        return False
-
     def caseExists(self, case_name: str) -> bool:
         return case_name in self.getCaseList()
 

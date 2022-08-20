@@ -44,7 +44,6 @@ class EnkfFs(BaseCClass):
     _get_refcount = ResPrototype("int   enkf_fs_get_refcount(enkf_fs)")
     _get_case_name = ResPrototype("char* enkf_fs_get_case_name(enkf_fs)")
     _is_read_only = ResPrototype("bool  enkf_fs_is_read_only(enkf_fs)")
-    _is_running = ResPrototype("bool  enkf_fs_is_running(enkf_fs)")
     _fsync = ResPrototype("void  enkf_fs_fsync(enkf_fs)")
     _create = ResPrototype(
         "enkf_fs_obj   enkf_fs_create_fs(char* , enkf_fs_type_enum , bool)",
@@ -91,9 +90,6 @@ class EnkfFs(BaseCClass):
 
     def refCount(self) -> int:
         return self._get_refcount()
-
-    def is_running(self) -> bool:
-        return self._is_running()
 
     def is_initalized(
         self,

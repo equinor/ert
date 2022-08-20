@@ -14,14 +14,12 @@ def test_enkf_fs_manager_create(setup_case):
     assert fsm.isCaseMounted("default_0")
     assert fsm.caseExists("default_0")
     assert fsm.caseHasData("default_0")
-    assert not fsm.isCaseRunning("default_0")
 
     assert fsm.getFileSystemCount() == 1
 
     assert not fsm.isCaseMounted("newFS")
     assert not fsm.caseExists("newFS")
     assert not fsm.caseHasData("newFS")
-    assert not fsm.isCaseRunning("newFS")
 
     fsm.getFileSystem("newFS")
     assert fsm.getFileSystemCount() == 2
@@ -29,4 +27,3 @@ def test_enkf_fs_manager_create(setup_case):
     assert fsm.isCaseMounted("newFS")
     assert fsm.caseExists("newFS")
     assert not fsm.caseHasData("newFS")
-    assert not fsm.isCaseRunning("newFS")
