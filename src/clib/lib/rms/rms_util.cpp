@@ -91,23 +91,3 @@ void rms_util_fwrite_comment(const char *comment, FILE *stream) {
 }
 
 void rms_util_fwrite_newline(FILE *stream) { return; }
-
-rms_type_enum rms_util_convert_ecl_type(ecl_data_type data_type) {
-    rms_type_enum rms_type = rms_int_type; /* Shut up the compiler */
-    switch (ecl_type_get_type(data_type)) {
-    case (ECL_INT_TYPE):
-        rms_type = rms_int_type;
-        break;
-    case (ECL_FLOAT_TYPE):
-        rms_type = rms_float_type;
-        break;
-    case (ECL_DOUBLE_TYPE):
-        rms_type = rms_double_type;
-        break;
-    default:
-        util_abort("%s: Conversion ecl_type -> rms_type not supported for "
-                   "ecl_type:%s \n",
-                   __func__, ecl_type_alloc_name(data_type));
-    }
-    return rms_type;
-}
