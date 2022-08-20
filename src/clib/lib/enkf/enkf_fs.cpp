@@ -181,8 +181,8 @@ enkf_fs_type *enkf_fs_alloc_empty(const char *mount_point, bool read_only) {
     fs->mount_point = strdup(mount_point);
     fs->lock_fd = 0;
     auto mount_path = fs::path(mount_point);
-    fs->case_name = mount_path.filename();
-    fs->lock_file = strdup((mount_path / (fs->case_name + ".lock")).c_str());
+    std::string case_name = mount_path.filename();
+    fs->lock_file = strdup((mount_path / (case_name + ".lock")).c_str());
 
     if (util_try_lockf(fs->lock_file, S_IWUSR + S_IWGRP, &fs->lock_fd)) {
         fs->read_only = false;
@@ -539,10 +539,6 @@ void enkf_fs_fwrite_vector(enkf_fs_type *enkf_fs, buffer_type *buffer,
 
 const char *enkf_fs_get_mount_point(const enkf_fs_type *fs) {
     return fs->mount_point;
-}
-
-const char *enkf_fs_get_case_name(const enkf_fs_type *fs) {
-    return fs->case_name.data();
 }
 
 bool enkf_fs_is_read_only(const enkf_fs_type *fs) { return fs->read_only; }

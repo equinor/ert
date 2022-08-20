@@ -39,7 +39,6 @@ class EnkfFs(BaseCClass):
 
     _mount = ResPrototype("void* enkf_fs_mount(char*, bool)", bind=False)
     _sync = ResPrototype("void enkf_fs_sync(enkf_fs)")
-    _get_case_name = ResPrototype("char* enkf_fs_get_case_name(enkf_fs)")
     _is_read_only = ResPrototype("bool  enkf_fs_is_read_only(enkf_fs)")
     _fsync = ResPrototype("void  enkf_fs_fsync(enkf_fs)")
     _create = ResPrototype(
@@ -54,6 +53,7 @@ class EnkfFs(BaseCClass):
 
     def __init__(self, mount_point: Union[str, Path], read_only: bool = False):
         mount_point = Path(mount_point).absolute()
+        self.case_name = mount_point.stem
         c_ptr = self._mount(mount_point.as_posix(), read_only)
         super().__init__(c_ptr)
 
@@ -76,7 +76,7 @@ class EnkfFs(BaseCClass):
         return _clib.enkf_fs.read_state_map(case_path)
 
     def getCaseName(self) -> str:
-        return self._get_case_name()
+        return self.case_name
 
     def isReadOnly(self) -> bool:
         return self._is_read_only()
