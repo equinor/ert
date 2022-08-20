@@ -39,9 +39,6 @@ class EnkfFs(BaseCClass):
 
     _mount = ResPrototype("void* enkf_fs_mount(char*, bool)", bind=False)
     _sync = ResPrototype("void enkf_fs_sync(enkf_fs)")
-    _decref = ResPrototype("int   enkf_fs_decref(enkf_fs)")
-    _incref = ResPrototype("int   enkf_fs_incref(enkf_fs)")
-    _get_refcount = ResPrototype("int   enkf_fs_get_refcount(enkf_fs)")
     _get_case_name = ResPrototype("char* enkf_fs_get_case_name(enkf_fs)")
     _is_read_only = ResPrototype("bool  enkf_fs_is_read_only(enkf_fs)")
     _fsync = ResPrototype("void  enkf_fs_fsync(enkf_fs)")
@@ -53,16 +50,12 @@ class EnkfFs(BaseCClass):
     _summary_key_set = ResPrototype(
         "summary_key_set_ref enkf_fs_get_summary_key_set(enkf_fs)"
     )
+    _umount = ResPrototype("void enkf_fs_umount(enkf_fs)")
 
     def __init__(self, mount_point: Union[str, Path], read_only: bool = False):
         mount_point = Path(mount_point).absolute()
         c_ptr = self._mount(mount_point.as_posix(), read_only)
         super().__init__(c_ptr)
-
-    def copy(self) -> "EnkfFs":
-        fs = self.createPythonObject(self._address())
-        self._incref()
-        return fs
 
     # This method will return a new Python object which shares the underlying
     # enkf_fs instance as self. The name weakref is used because the Python
@@ -88,9 +81,6 @@ class EnkfFs(BaseCClass):
     def isReadOnly(self) -> bool:
         return self._is_read_only()
 
-    def refCount(self) -> int:
-        return self._get_refcount()
-
     def is_initalized(
         self,
         ensemble_config: "EnsembleConfig",
@@ -113,26 +103,8 @@ class EnkfFs(BaseCClass):
     def sync(self):
         self._sync()
 
-    # The umount( ) method should not normally be called explicitly by
-    # downstream code, but in situations where file descriptors is at premium
-    # it might be beneficial to call it explicitly. In that case it is solely
-    # the responsability of the calling scope to ensure that it is not called
-    # repeatedly - that will lead to hard failure!
-    def umount(self):
-        if self.isReference():
-            raise AssertionError(
-                "Calling umount() on a reference is an application error"
-            )
-
-        if self:
-            self._decref()
-            self._invalidateCPointer()
-        else:
-            raise AssertionError("Tried to umount for second time - application error")
-
     def free(self):
-        if self:
-            self.umount()
+        self._umount()
 
     def __repr__(self):
         return f"EnkfFs(case_name = {self.getCaseName()}) {self._ad_str()}"

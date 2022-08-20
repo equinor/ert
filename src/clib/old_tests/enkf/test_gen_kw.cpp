@@ -54,6 +54,7 @@ void test_write_gen_kw_export_file(enkf_main_type *enkf_main) {
         "simulations/run0", 0, init_fs);
     test_assert_true(fs::exists("simulations/run0/parameters.txt"));
     test_assert_true(fs::exists("simulations/run0/parameters.json"));
+    enkf_fs_umount(init_fs);
 }
 
 static void read_erroneous_gen_kw_file(void *arg) {

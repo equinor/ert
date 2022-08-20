@@ -7,7 +7,6 @@ def mount_and_umount(ert, case_name):
     mount_point = fs_manager.getFileSystem(case_name)
     assert fs_manager.isCaseMounted(case_name)
     del mount_point
-    fs_manager.umount()
 
 
 def test_mount_fs(benchmark, template_config):

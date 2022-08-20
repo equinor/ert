@@ -153,10 +153,7 @@ TEST_CASE("block_fs", "[enkf_fs]") {
     }
 }
 
-void mount(void *args) {
-    enkf_fs_type *fs2 = enkf_fs_mount("mnt");
-    enkf_fs_decref(fs2);
-}
+void mount(void *args) { enkf_fs_type *fs2 = enkf_fs_mount("mnt"); }
 
 TEST_CASE("Mount filesystem read/write twice", "[enkf_fs]") {
     WITH_TMPDIR;
@@ -175,4 +172,5 @@ TEST_CASE("Mount filesystem read/write twice", "[enkf_fs]") {
         waitpid(pid, &child_status, 0);
         REQUIRE(child_status == 0);
     }
+    enkf_fs_umount(fs);
 }

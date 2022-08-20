@@ -89,7 +89,7 @@ TEST_CASE("Copy parameters from one source-fs to target-fs",
 
         //cleanup
         ensemble_config_free(ensemble_config);
-        enkf_fs_decref(fs_source);
-        enkf_fs_decref(fs_target);
+        enkf_fs_umount(fs_source);
+        enkf_fs_umount(fs_target);
     }
 }

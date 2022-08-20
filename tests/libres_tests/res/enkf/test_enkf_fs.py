@@ -11,8 +11,6 @@ def test_create(copy_case):
 
     assert os.path.exists(mount_point)
     fs = EnkfFs(mount_point)
-    assert fs.refCount() == 1
-    fs.umount()
 
     assert not os.path.exists("newFS")
     fs = EnkfFs.createFileSystem("newFS")

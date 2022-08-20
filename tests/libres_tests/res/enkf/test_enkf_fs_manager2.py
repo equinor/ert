@@ -25,19 +25,10 @@ class TestEnKFFSManager2(ResTest):
             for index in range(5):
                 fs_list.append(fsm.getFileSystem(f"fs_fill_{index}"))
 
-            for fs in fs_list:
-                self.assertEqual(2, fs.refCount())
-                fs_copy = fs.copy()
-                self.assertEqual(3, fs.refCount())
-                self.assertEqual(3, fs_copy.refCount())
-
-                del fs_copy
-                self.assertEqual(2, fs.refCount())
-
             self.assertEqual(5, fsm.getFileSystemCount())
 
             for index in range(3 * 5):
                 fs_name = f"fs_test_{index}"
                 sys.stderr.write(f"Mounting: {fs_name}\n")
-                fs = fsm.getFileSystem(fs_name)
+                fsm.getFileSystem(fs_name)
                 self.assertEqual(5, fsm.getFileSystemCount())
