@@ -87,11 +87,6 @@ class EnKFMain(BaseCClass):
     _get_res_config = ResPrototype("res_config_ref enkf_main_get_res_config(enkf_main)")
     _get_shared_rng = ResPrototype("rng_ref enkf_main_get_shared_rng(enkf_main)")
 
-    # FS operations
-    _initialize_case_from_existing = ResPrototype(
-        "void enkf_main_init_case_from_existing(enkf_main, enkf_fs, int, enkf_fs)"
-    )
-
     def __init__(
         self, config: "ResConfig", strict: bool = True, read_only: bool = False
     ):
@@ -447,16 +442,6 @@ class EnKFMain(BaseCClass):
             node_list,
             member_mask,
         )
-
-    def initializeCurrentCaseFromExisting(
-        self, source_fs: EnkfFs, source_report_step: int
-    ) -> None:
-        self._initialize_case_from_existing(source_fs, source_report_step, self._fs)
-
-    def initializeCaseFromExisting(
-        self, source_fs: EnkfFs, source_report_step: int, target_fs: EnkfFs
-    ) -> None:
-        self._initialize_case_from_existing(source_fs, source_report_step, target_fs)
 
     def initializeFromScratch(
         self, parameter_list: List[str], run_context: RunContext
