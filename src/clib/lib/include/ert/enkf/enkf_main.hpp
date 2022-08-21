@@ -89,10 +89,6 @@ int enkf_main_load_from_run_context(enkf_main_type *enkf_main,
                                     enkf_fs_type *sim_fs,
                                     std::vector<run_arg_type *> run_args);
 
-extern "C" void enkf_main_init_case_from_existing(
-    const enkf_main_type *enkf_main, enkf_fs_type *source_case_fs,
-    int source_report_step, enkf_fs_type *target_case);
-
 rng_manager_type *enkf_main_get_rng_manager(const enkf_main_type *enkf_main);
 extern "C" const res_config_type *
 enkf_main_get_res_config(const enkf_main_type *enkf_main);

@@ -410,22 +410,6 @@ static void enkf_main_copy_ensemble(const ensemble_config_type *ensemble_config,
     }
 }
 
-void enkf_main_init_case_from_existing(const enkf_main_type *enkf_main,
-                                       enkf_fs_type *source_case_fs,
-                                       int source_report_step,
-                                       enkf_fs_type *target_case_fs) {
-
-    std::vector<std::string> param_list = ensemble_config_keylist_from_var_type(
-        res_config_get_ensemble_config(enkf_main->res_config),
-        PARAMETER); /* Select only paramters - will fail for GEN_DATA of type DYNAMIC_STATE. */
-    std::vector<bool> iactive(enkf_main_get_ensemble_size(enkf_main), true);
-    enkf_main_copy_ensemble(
-        res_config_get_ensemble_config(enkf_main->res_config), source_case_fs,
-        source_report_step, target_case_fs, iactive, param_list);
-
-    enkf_fs_fsync(target_case_fs);
-}
-
 static void enkf_main_write_current_case_file(const enkf_main_type *enkf_main,
                                               const char *case_path) {
     const char *ens_path = model_config_get_enspath(
