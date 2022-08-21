@@ -185,6 +185,10 @@ class EnKFMain(BaseCClass):
         full_name = self._createFullCaseName(self.getMountPoint(), case_name)
         if full_name not in self._fs_rotator:
             self._fs_rotator.addFileSystem(file_system, full_name)
+        # On setting a new file system we write the current_case file
+        (Path(self.getModelConfig().getEnspath()) / "current_case").write_text(
+            file_system.getCaseName()
+        )
         self._fs = file_system
 
     def getEnkfFsManager(self) -> "EnKFMain":

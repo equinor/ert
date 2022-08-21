@@ -410,18 +410,6 @@ static void enkf_main_copy_ensemble(const ensemble_config_type *ensemble_config,
     }
 }
 
-static void enkf_main_write_current_case_file(const enkf_main_type *enkf_main,
-                                              const char *case_path) {
-    const char *ens_path = model_config_get_enspath(
-        res_config_get_model_config(enkf_main->res_config));
-    const char *base = CURRENT_CASE_FILE;
-    char *current_case_file = util_alloc_filename(ens_path, base, NULL);
-    FILE *stream = util_fopen(current_case_file, "w");
-    fprintf(stream, "%s", case_path);
-    fclose(stream);
-    free(current_case_file);
-}
-
 /**
    This function boots everything needed for running a EnKF
    application from the provided res_config.
