@@ -1,7 +1,8 @@
 import os
 from pathlib import Path
+from textwrap import dedent
 
-from ert._c_wrappers.enkf import ResConfig
+from ert._c_wrappers.enkf import ResConfig, EnkfFs
 from ert._c_wrappers.enkf.enkf_main import EnKFMain
 import pytest
 from unittest.mock import MagicMock
@@ -110,3 +111,19 @@ def test_create_set_geo_id(enkf_main):
         enkf_main.substituter.get_substitutions(realization, iteration)["<GEO_ID>"]
         == geo_id
     )
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_current_case_file_is_written():
+    config_text = dedent(
+        """
+        NUM_REALIZATIONS 1
+        JOBNAME my_case%d
+        """
+    )
+    Path("config.ert").write_text(config_text)
+    res_config = ResConfig("config.ert")
+    ert = EnKFMain(res_config)
+    new_fs = EnkfFs.createFileSystem("new_fs")
+    ert.switchFileSystem(new_fs)
+    assert (Path("storage") / "current_case").read_text() == "new_fs"
