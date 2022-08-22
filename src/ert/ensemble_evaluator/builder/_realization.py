@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Generator, List, Optional, Sequence, Tuple
 
 from ._stage import _StageBuilder
 from ._step import _Step, _StepBuilder
-from ._template import _SOURCE_TEMPLATE_BASE, _SOURCE_TEMPLATE_REAL
+from ._template import _SOURCE_TEMPLATE_REAL
 
 if TYPE_CHECKING:
     import ert
@@ -79,8 +79,8 @@ class _Realization:
     def set_active(self, active: bool) -> None:
         self.active = active
 
-    def source(self, ens_id: str) -> str:
-        return self._source.format(ens_id=ens_id)
+    def source(self) -> str:
+        return self._source
 
     def get_steps_sorted_topologically(self) -> Generator[_Step, None, None]:
         steps = self.steps
@@ -96,6 +96,7 @@ class _RealizationBuilder:
         self._stages: List[_StageBuilder] = []
         self._active: Optional[bool] = None
         self._iens: Optional[int] = None
+        self._parent_source: Optional[str] = None
 
     def active(self, active: bool) -> "_RealizationBuilder":
         self._active = active
@@ -113,20 +114,23 @@ class _RealizationBuilder:
         self._iens = iens
         return self
 
+    def set_parent_source(self, source: str) -> "_RealizationBuilder":
+        self._parent_source = source
+        return self
+
     def build(self) -> _Realization:
         if not self._iens:
             # assume this is being used as a forward model, thus should be 0
             self._iens = 0
-        realization_source = _SOURCE_TEMPLATE_REAL.format(iens=self._iens)
-        source = _SOURCE_TEMPLATE_BASE + realization_source
+        if not self._parent_source:
+            raise ValueError(f"need parent_source for realization: {self._iens}")
+
+        source = self._parent_source + _SOURCE_TEMPLATE_REAL.format(iens=self._iens)
 
         if self._active is None:
             raise ValueError(f"realization {self._iens}: active should be set")
 
-        steps = [
-            builder.set_parent_source(realization_source).build()
-            for builder in self._steps
-        ]
+        steps = [builder.set_parent_source(source).build() for builder in self._steps]
 
         ts_sorted_steps = _sort_steps(steps)
 

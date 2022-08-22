@@ -1,7 +1,7 @@
 import pathlib
 import re
 from graphlib import CycleError
-from unittest.mock import MagicMock, Mock
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -19,29 +19,34 @@ def test_build_ensemble(active_real):
         ee.EnsembleBuilder()
         .add_realization(
             ee.RealizationBuilder()
-            .set_iens(0)
+            .set_iens(2)
             .add_step(
                 ee.StepBuilder()
                 .add_job(
-                    ee.LegacyJobBuilder()
-                    .set_id("0")
-                    .set_index("0")
+                    ee.JobBuilder()
+                    .set_id("4")
+                    .set_index("5")
                     .set_name("echo_command")
-                    .set_ext_job(Mock())
+                    .set_executable(pathlib.Path("some_path_object"))
                 )
-                .set_id("0")
+                .set_id("3")
                 .set_name("some_step")
                 .set_dummy_io()
                 .set_type("unix")
             )
             .active(active_real)
         )
-        .set_id("0")
+        .set_id("1")
     )
     ensemble = ensemble.build()
 
     real = ensemble.reals[0]
     assert real.active == active_real
+    assert real.source() == "/ert/ensemble/1/real/2"
+    step = real.steps[0]
+    assert step.source() == "/ert/ensemble/1/real/2/step/3"
+    job = step.jobs[0]
+    assert job.source() == "/ert/ensemble/1/real/2/step/3/job/4/index/5"
 
 
 def test_build_ensemble_legacy():

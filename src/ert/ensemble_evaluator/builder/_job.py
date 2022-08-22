@@ -5,7 +5,7 @@ from typing import Any, Callable, List, Optional, Tuple, TypeVar, Union
 
 from ert._c_wrappers.job_queue.ext_job import ExtJob
 
-from ._template import _SOURCE_TEMPLATE_BASE, _SOURCE_TEMPLATE_JOB
+from ._template import _SOURCE_TEMPLATE_JOB
 
 _BaseJobBuilder_TV = TypeVar("_BaseJobBuilder_TV", bound="_BaseJobBuilder")
 
@@ -19,8 +19,8 @@ class _BaseJob:
         self.index = index
         self._source = source
 
-    def source(self, ens_id: str) -> str:
-        return self._source.format(ens_id=ens_id)
+    def source(self) -> str:
+        return self._source
 
 
 class _UnixJob(_BaseJob):
@@ -115,10 +115,8 @@ class _JobBuilder(_BaseJobBuilder):
             raise ValueError("job needs a name")
         if self._parent_source is None:
             raise ValueError("job need source of parent")
-        source = (
-            _SOURCE_TEMPLATE_BASE
-            + self._parent_source
-            + _SOURCE_TEMPLATE_JOB.format(job_id=self._id, job_index=self._index)
+        source = self._parent_source + _SOURCE_TEMPLATE_JOB.format(
+            job_id=self._id, job_index=self._index
         )
         try:
             cmd_is_callable = isinstance(self._executable, bytes) and callable(

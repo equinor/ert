@@ -93,7 +93,7 @@ class UnixTask(prefect.Task):  # type: ignore
             self.logger.error(cmd_exec.stderr)
             _send_event(
                 EVTYPE_FM_JOB_FAILURE,
-                job.source(self._ens_id),
+                job.source(),
                 {ERROR_MSG: cmd_exec.stderr},
             )
             raise OSError(
@@ -106,14 +106,14 @@ class UnixTask(prefect.Task):  # type: ignore
             self.logger.info(f"Running command {job.name}")
             _send_event(
                 EVTYPE_FM_JOB_START,
-                job.source(self._ens_id),
+                job.source(),
             )
             if not isinstance(job, _UnixJob):
                 raise TypeError(f"unexpected job {type(job)} in unix task")
             self.run_job(job, run_path)
             _send_event(
                 EVTYPE_FM_JOB_SUCCESS,
-                job.source(self._ens_id),
+                job.source(),
             )
 
     def _load_and_dump_input(
@@ -158,7 +158,7 @@ class UnixTask(prefect.Task):  # type: ignore
                 self._load_and_dump_input(transmitters=inputs, runpath=run_path)
             _send_event(
                 EVTYPE_FM_STEP_RUNNING,
-                self.step.source(self._ens_id),
+                self.step.source(),
             )
 
             outputs: _stage_transmitter_mapping = {}
@@ -187,6 +187,6 @@ class UnixTask(prefect.Task):  # type: ignore
             get_event_loop().run_until_complete(asyncio.gather(*futures))
             _send_event(
                 EVTYPE_FM_STEP_SUCCESS,
-                self.step.source(self._ens_id),
+                self.step.source(),
             )
         return outputs
