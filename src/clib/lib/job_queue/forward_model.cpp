@@ -43,7 +43,6 @@ struct forward_model_struct {
 };
 
 #define DEFAULT_JOB_JSON "jobs.json"
-#define DEFAULT_STATUS_JSON "status.json"
 #define DEFAULT_JOB_MODULE "jobs.py"
 #define DEFAULT_JOBLIST_NAME "jobList"
 
@@ -189,11 +188,6 @@ static void forward_model_json_fprintf(const forward_model_type *forward_model,
     fprintf(stream, "}\n");
     fclose(stream);
     free(json_file);
-
-    char *status_file =
-        (char *)util_alloc_filename(path, DEFAULT_STATUS_JSON, NULL);
-    remove(status_file);
-    free(status_file);
 }
 
 void forward_model_formatted_fprintf(const forward_model_type *forward_model,

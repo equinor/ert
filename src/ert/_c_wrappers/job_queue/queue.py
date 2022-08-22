@@ -39,7 +39,7 @@ from ert.constant_filenames import (
     JOBS_FILE,
     ERROR_file,
     OK_file,
-    STATUS_file,
+    C_QUEUE_STATUS_file,
 )
 from ert._c_wrappers import ResPrototype
 from ert._c_wrappers.job_queue.job_queue_node import JobQueueNode
@@ -164,7 +164,7 @@ class JobQueue(BaseCClass):
 
         self.job_list = []
         self._stopped = False
-        c_ptr = self._alloc(max_submit, OK_file, STATUS_file, ERROR_file)
+        c_ptr = self._alloc(max_submit, OK_file, C_QUEUE_STATUS_file, ERROR_file)
         super().__init__(c_ptr)
         self.size = size
 

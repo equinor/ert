@@ -10,6 +10,7 @@ from ert.constant_filenames import (
     LOG_file,
     OK_file,
     STATUS_file,
+    C_QUEUE_STATUS_file,
     STATUS_json,
 )
 from ert.job_runner.io import cond_unlink
@@ -50,6 +51,7 @@ class File(Reporter):
             logger.debug("Init Message Instance")
             self._delete_old_status_files()
             self._init_status_file()
+            self._init_c_queue_status_file()
             self.status_dict = self._init_job_status_dict(
                 msg.timestamp, msg.run_id, msg.jobs
             )
@@ -111,17 +113,26 @@ class File(Reporter):
                     msg.timestamp
                 )
                 self._dump_ok_file()
+        self._touch_c_queue_status_file()
         self._dump_status_json()
 
     def _delete_old_status_files(self):
         logger.debug("Deleting old status files")
         cond_unlink(ERROR_file)
         cond_unlink(STATUS_file)
+        cond_unlink(C_QUEUE_STATUS_file)
         cond_unlink(OK_file)
+
+    def _touch_c_queue_status_file(self) -> None:
+        with append(file=STATUS_file) as _:
+            pass
 
     def _write_status_file(self, msg: str) -> None:
         with append(file=STATUS_file) as status_file:
             status_file.write(msg)
+
+    def _init_c_queue_status_file(self):
+        self._touch_c_queue_status_file()
 
     def _init_status_file(self):
         self._write_status_file(f"{'Current host':32}: {self.node}/{os.uname()[4]}\n")
@@ -138,6 +149,7 @@ class File(Reporter):
     def _start_status_file(self, msg):
         timestamp = msg.timestamp.strftime(TIME_FORMAT)
         job_name = msg.job.name()
+        self._touch_c_queue_status_file()
         self._write_status_file(f"{job_name:32}: {timestamp} .... ")
         logger.info(
             f"Append {job_name} job starting timestamp {timestamp} to STATUS_file."
@@ -152,6 +164,7 @@ class File(Reporter):
             exit_code = -10 if isinstance(msg, Start) else msg.exit_code
             status = f" EXIT: {exit_code}/{msg.error_message}"
             logger.error(f"{msg.job.name()} job, {timestamp} {status}")
+        self._touch_c_queue_status_file()
         self._write_status_file(f"{timestamp}  {status}\n")
 
     def _add_log_line(self, job):
