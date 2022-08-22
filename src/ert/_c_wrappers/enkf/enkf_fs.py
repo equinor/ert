@@ -60,15 +60,6 @@ class EnkfFs(BaseCClass):
         c_ptr = self._mount(self.mount_point.as_posix(), ensemble_size, read_only)
         super().__init__(c_ptr)
 
-    # This method will return a new Python object which shares the underlying
-    # enkf_fs instance as self. The name weakref is used because the Python
-    # object returned from this method does *not* manipulate the reference
-    # count of the underlying enkf_fs instance, and specifically it does not
-    # inhibit destruction of this object.
-    def weakref(self):
-        fs = self.createCReference(self._address())
-        return fs
-
     def getTimeMap(self) -> TimeMap:
         return self._get_time_map().setParent(self)
 
