@@ -121,7 +121,8 @@ class EnKFMain(BaseCClass):
         current_case_file = ens_path / "current_case"
         if current_case_file.exists():
             fs = EnkfFs(
-                ens_path / current_case_file.read_text("utf-8"), read_only=read_only
+                ens_path / current_case_file.read_text("utf-8").strip(),
+                read_only=read_only,
             )
         else:
             fs = EnkfFs.createFileSystem(ens_path / "default", read_only=read_only)

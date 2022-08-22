@@ -127,3 +127,21 @@ def test_that_current_case_file_is_written():
     new_fs = EnkfFs.createFileSystem("new_fs")
     ert.switchFileSystem(new_fs)
     assert (Path("storage") / "current_case").read_text() == "new_fs"
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_current_case_file_can_have_newline():
+    config_text = dedent(
+        """
+        NUM_REALIZATIONS 1
+        JOBNAME my_case%d
+        """
+    )
+    Path("config.ert").write_text(config_text)
+    res_config = ResConfig("config.ert")
+    EnKFMain(res_config)
+    assert (Path("storage") / "current_case").read_text() == "default"
+    del res_config
+    (Path("storage") / "current_case").write_text("default\n")
+    res_config = ResConfig("config.ert")
+    EnKFMain(res_config)
