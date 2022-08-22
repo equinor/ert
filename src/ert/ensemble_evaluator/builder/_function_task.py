@@ -91,7 +91,7 @@ class FunctionTask(prefect.Task):  # type: ignore
         self.logger.info(f"Running function {job.name}")
         client.send_event(
             ev_type=ids.EVTYPE_FM_JOB_START,
-            ev_source=job.source(self._ens_id),
+            ev_source=job.source(),
         )
         try:
             function: Callable[..., Any] = pickle.loads(job.command)
@@ -100,14 +100,14 @@ class FunctionTask(prefect.Task):  # type: ignore
             self.logger.error(str(e))
             client.send_event(
                 ev_type=ids.EVTYPE_FM_JOB_FAILURE,
-                ev_source=job.source(self._ens_id),
+                ev_source=job.source(),
                 ev_data={ids.ERROR_MSG: str(e)},
             )
             raise e
         else:
             client.send_event(
                 ev_type=ids.EVTYPE_FM_JOB_SUCCESS,
-                ev_source=job.source(self._ens_id),
+                ev_source=job.source(),
             )
         return output
 
@@ -119,7 +119,7 @@ class FunctionTask(prefect.Task):  # type: ignore
         ) as ee_client:
             ee_client.send_event(
                 ev_type=ids.EVTYPE_FM_STEP_RUNNING,
-                ev_source=self.step.source(self._ens_id),
+                ev_source=self.step.source(),
             )
 
             job = self.step.jobs[0]
@@ -130,7 +130,7 @@ class FunctionTask(prefect.Task):  # type: ignore
 
             ee_client.send_event(
                 ev_type=ids.EVTYPE_FM_STEP_SUCCESS,
-                ev_source=self.step.source(self._ens_id),
+                ev_source=self.step.source(),
             )
 
         return output

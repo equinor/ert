@@ -141,7 +141,7 @@ def _on_task_failure(
             event = CloudEvent(
                 {
                     "type": EVTYPE_FM_STEP_FAILURE,
-                    "source": task.step.source(ens_id),
+                    "source": task.step.source(),
                     "datacontenttype": "application/json",
                 },
                 {"error_msg": state.message},

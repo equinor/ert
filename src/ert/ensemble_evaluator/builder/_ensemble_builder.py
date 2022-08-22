@@ -18,6 +18,7 @@ from ._legacy import _LegacyEnsemble
 from ._prefect import PrefectEnsemble
 from ._realization import _RealizationBuilder
 from ._step import _StepBuilder
+from ._template import _SOURCE_TEMPLATE_ENS
 
 if TYPE_CHECKING:
     import ert
@@ -210,7 +211,9 @@ class _EnsembleBuilder:  # pylint: disable=too-many-instance-attributes
         if not self._legacy_dependencies:
             self._build_io_maps(real_builders)
 
-        reals = [builder.build() for builder in real_builders]
+        source = _SOURCE_TEMPLATE_ENS.format(ens_id=self._id)
+
+        reals = [builder.set_parent_source(source).build() for builder in real_builders]
 
         if self._legacy_dependencies:
             return _LegacyEnsemble(

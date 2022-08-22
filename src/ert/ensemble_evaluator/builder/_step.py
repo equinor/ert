@@ -23,7 +23,7 @@ from ._job import (
     _UnixJob,
 )
 from ._stage import _Stage, _StageBuilder
-from ._template import _SOURCE_TEMPLATE_BASE, _SOURCE_TEMPLATE_STEP
+from ._template import _SOURCE_TEMPLATE_STEP
 from ._unix_task import UnixTask
 
 if TYPE_CHECKING:
@@ -46,8 +46,8 @@ class _Step(_Stage):
         self.jobs = jobs
         self._source = source
 
-    def source(self, ens_id: str) -> str:
-        return self._source.format(ens_id=ens_id)
+    def source(self) -> str:
+        return self._source
 
 
 class _UnixStep(_Step):
@@ -220,17 +220,14 @@ class _StepBuilder(_StageBuilder):  # pylint: disable=too-many-instance-attribut
         stage = super().build()
         if not self._parent_source:
             raise ValueError(f"need parent_source for {self._name}")
-        step_source = self._parent_source + _SOURCE_TEMPLATE_STEP.format(
-            step_id=stage.id_
-        )
-        source = _SOURCE_TEMPLATE_BASE + step_source
+        source = self._parent_source + _SOURCE_TEMPLATE_STEP.format(step_id=stage.id_)
 
         # only legacy has _run_arg, so assume it is a legacy step
         if self._run_arg:
             legacy_jobs: List[_LegacyJob] = []
             for builder in self._jobs:
                 if isinstance(builder, _LegacyJobBuilder):
-                    legacy_jobs.append(builder.set_parent_source(step_source).build())
+                    legacy_jobs.append(builder.set_parent_source(source).build())
             if self._callback_arguments is None:
                 raise ValueError(f"{self} needs callback_arguments")
             if self._done_callback is None:
@@ -269,7 +266,7 @@ class _StepBuilder(_StageBuilder):  # pylint: disable=too-many-instance-attribut
         if self._type == "function":
             function_jobs: List[_FunctionJob] = []
             for builder in self._jobs:
-                job = builder.set_parent_source(step_source).build()
+                job = builder.set_parent_source(source).build()
                 if isinstance(job, _FunctionJob):
                     function_jobs.append(job)
 
@@ -294,7 +291,7 @@ class _StepBuilder(_StageBuilder):  # pylint: disable=too-many-instance-attribut
 
             unix_jobs: List[_UnixJob] = []
             for builder in self._jobs:
-                job = builder.set_parent_source(step_source).build()
+                job = builder.set_parent_source(source).build()
                 if isinstance(job, _UnixJob):
                     unix_jobs.append(job)
 
