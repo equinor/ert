@@ -107,7 +107,8 @@ void deserialize_node(enkf_fs_type *fs,
     // deserialize the matrix into the node (and writes it to the fs)
     enkf_node_deserialize(node, fs, node_id, active_list, A, row_offset,
                           column);
-    enkf_fs_get_state_map(fs).update_undefined(iens, STATE_INITIALIZED);
+    enkf_fs_get_state_map(fs).update_matching(iens, STATE_UNDEFINED,
+                                              STATE_INITIALIZED);
     enkf_node_free(node);
 }
 

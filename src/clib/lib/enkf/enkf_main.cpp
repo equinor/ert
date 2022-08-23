@@ -230,8 +230,8 @@ int enkf_main_load_from_run_context(enkf_main_type *enkf_main,
 
                         auto &state_map = enkf_fs_get_state_map(sim_fs);
 
-                        state_map.update_undefined(realisation,
-                                                   STATE_INITIALIZED);
+                        state_map.update_matching(realisation, STATE_UNDEFINED,
+                                                  STATE_INITIALIZED);
                         auto status = enkf_state_load_from_forward_model(
                             enkf_main_iget_state(enkf_main, realisation),
                             run_args[iens]);

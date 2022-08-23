@@ -53,17 +53,6 @@ public:
                          realisation_state_enum new_state);
 
     /**
-     * Change the value at index to new_state iff. the value was previously
-     * STATE_UNDEFINED (ie. no flags set).
-     *
-     * @param index Index in the internal state array
-     * @param new_state Flag that we want to add at the given position index
-     */
-    void update_undefined(size_t index, realisation_state_enum new_state) {
-        update_matching(index, STATE_UNDEFINED, new_state);
-    }
-
-    /**
      * Write data to disk, creating directories as needed
      *
      * @param path Path to file

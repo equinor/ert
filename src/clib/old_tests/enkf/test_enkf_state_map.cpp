@@ -113,20 +113,6 @@ void test_io() {
     }
 }
 
-void test_update_undefined() {
-    StateMap state_map;
-
-    state_map.set(10, STATE_INITIALIZED);
-    test_assert_int_equal(STATE_UNDEFINED, state_map.get(5));
-    test_assert_int_equal(STATE_INITIALIZED, state_map.get(10));
-
-    state_map.update_undefined(5, STATE_INITIALIZED);
-    test_assert_int_equal(STATE_INITIALIZED, state_map.get(5));
-
-    state_map.update_undefined(10, STATE_INITIALIZED);
-    test_assert_int_equal(STATE_INITIALIZED, state_map.get(10));
-}
-
 void test_update_matching() {
     StateMap state_map;
 
@@ -146,7 +132,7 @@ void test_update_matching() {
     test_assert_int_equal(STATE_INITIALIZED, state_map.get(10));
     test_assert_int_equal(STATE_PARENT_FAILURE, state_map.get(3));
 
-    state_map.update_undefined(10, STATE_INITIALIZED);
+    state_map.update_matching(10, STATE_UNDEFINED, STATE_INITIALIZED);
     test_assert_int_equal(STATE_INITIALIZED, state_map.get(10));
 }
 
@@ -265,7 +251,6 @@ int main(int argc, char **argv) {
     test_equal();
     test_copy();
     test_io();
-    test_update_undefined();
     test_select_matching();
     test_count_matching();
     test_transitions();
