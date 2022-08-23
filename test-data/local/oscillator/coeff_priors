@@ -1,0 +1,2 @@
+COEFF_omega UNIFORM 2.5e-2 4.5e-2
+COEFF_lmbda UNIFORM 2.0e-4 4.0e-4
