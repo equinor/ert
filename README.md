@@ -56,8 +56,7 @@ Documentation for ert is located at [https://ert.readthedocs.io/en/latest/](http
 
 ## Developing
 
-*ERT* uses Python for user-facing code and C++ for some backend code. Python is
-the easiest to work with and is likely what most developers will work with.
+ERT was originally written in C/C++ but most new code is Python. 
 
 ### Developing Python
 
@@ -95,10 +94,10 @@ pip install --editable .
 
 ### Trouble with setup
 
-If you encounter problems during install and attempt to fix them, it might be
-wise to delete the `_skbuild` folder before retrying an install.
+If you encounter problems during install, try deleting the `_skbuild` folder before reinstalling.
 
 Additional development packages must be installed to run the test suite:
+
 ```sh
 pip install -r dev-requirements.txt
 pytest tests/
@@ -127,7 +126,7 @@ shell).
 
 ### Developing C++
 
-C++ is the backbone of ERT 2 as in used extensively in important parts of ERT.
+C++ is the backbone of ERT as in used extensively in important parts of ERT.
 There's a combination of legacy code and newer refactored code. The end goal is
 likely that some core performance-critical functionality will be implemented in
 C++ and the rest of the business logic will be implemented in Python.
@@ -166,7 +165,7 @@ build a release build for development, use `script/build --release`.
 
 2. The default maximum number of open files is normally relatively low on MacOS
 and some Linux distributions. This is likely to make tests crash with mysterious
-error-messages. You can inspect the current limits in your shell by issuing he
+error-messages. You can inspect the current limits in your shell by issuing the
 command `ulimit -a`. In order to increase maximum number of open files, run
 `ulimit -n 16384` (or some other large number) and put the command in your
 `.profile` to make it persist.
@@ -176,9 +175,10 @@ command `ulimit -a`. In order to increase maximum number of open files, run
 Install [*ecl*](https://github.com/Equinor/ecl) using CMake as a C library. Then:
 
 ``` sh
+$ cd src
 $ mkdir build
 $ cd build
-$ cmake ../libres -DBUILD_TESTS=ON
+$ cmake ../clib -DBUILD_TESTS=ON
 $ cmake --build .
 $ ctest --output-on-failure
 ```
