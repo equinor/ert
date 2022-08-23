@@ -12,7 +12,6 @@ pipeline {
         }
         stage('build libres') {
             steps {
-                sh 'sh ci/jenkins/test_libres_jenkins.sh build_libecl'
                 sh 'sh ci/jenkins/test_libres_jenkins.sh build_ert_clib'
             }
         }

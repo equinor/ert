@@ -1,36 +1,8 @@
-install_libecl () {
-    INSTALL=$WORKSPACE/install
-    mkdir -p $INSTALL
-    LIBECL_ROOT=$WORKSPACE/libecl
-    LIBECL_BUILD=$LIBECL_ROOT/build
-    git clone https://github.com/equinor/libecl $LIBECL_ROOT
-    mkdir -p $LIBECL_BUILD
-    pushd $LIBECL_BUILD
-    cmake .. -DCMAKE_INSTALL_PREFIX=$INSTALL -DCMAKE_BUILD_TYPE=RelWithDebInfo
-    ninja install
-    popd
-}
-
-build_ert_clib () {
-    INSTALL=$WORKSPACE/install
-    ERT_CLIB_BUILD=$CI_SOURCE_ROOT/src/clib/build
-    mkdir -p $ERT_CLIB_BUILD
-    pushd $ERT_CLIB_BUILD
-    KOMODO_PATH=/prog/res/komodo/${CI_KOMODO_RELEASE}
-    cmake .. \
-          -DCMAKE_PREFIX_PATH=$INSTALL \
-          -DCMAKE_INSTALL_PREFIX=$INSTALL \
-          -DBUILD_TESTS=ON
-    ninja
-    popd
-}
-
-run_ert_clib_tests() {
-    pushd $ERT_CLIB_BUILD
-    export ERT_SITE_CONFIG=${CI_SOURCE_ROOT}/src/ert/shared/share/ert/site-config
-
-    ctest -j 6 -E Lint --output-on-failure
-    popd
+build() {
+    mkdir build
+    cmake -S src/clib -B build -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+          -DEQUINOR_TESTDATA_ROOT=/project/res-testdata/ErtTestData
+    cmake --build build
 }
 
 copy_test_files () {
@@ -39,8 +11,8 @@ copy_test_files () {
 }
 
 install_test_dependencies () {
-    # empty to aviod running default install
-    echo "no test deps"
+    # empty to avoid running default install
+    :
 }
 
 install_package () {
@@ -48,11 +20,10 @@ install_package () {
     ci_install_conan
 
     python -m pip install pybind11
-    install_libecl
-    build_ert_clib
+    build
 }
 
 start_tests () {
-    # build and run c tests
-    run_ert_clib_tests
+    export ERT_SITE_CONFIG=${CI_SOURCE_ROOT}/src/ert/shared/share/ert/site-config
+    ctest -j $(nproc) -E Lint --output-on-failure
 }

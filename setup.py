@@ -66,12 +66,6 @@ if "CONAN_CACERT_PATH" not in os.environ:
         break
 
 
-def get_ecl_include():
-    from ecl import get_include
-
-    return get_include()
-
-
 def package_files(directory):
     paths = []
     for (path, _, filenames) in os.walk(directory):
@@ -162,12 +156,11 @@ args = dict(
         ]
     },
     cmake_args=[
-        "-DECL_INCLUDE_DIRS=" + get_ecl_include(),
+        "-DBUILD_TESTS=OFF",
         # we can safely pass OSX_DEPLOYMENT_TARGET as it's ignored on
         # everything not OS X. We depend on C++17, which makes our minimum
         # supported OS X release 10.15
         "-DCMAKE_OSX_DEPLOYMENT_TARGET=10.15",
-        f"-DPYTHON_EXECUTABLE={sys.executable}",
     ],
     cmake_source_dir="src/clib/",
     classifiers=[
