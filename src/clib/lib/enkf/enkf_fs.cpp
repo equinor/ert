@@ -417,9 +417,6 @@ void enkf_fs_sync(enkf_fs_type *fs) {
 }
 
 void enkf_fs_umount(enkf_fs_type *fs) {
-
-    logger->info("{} umount filesystem {}", __func__, fs->mount_point);
-
     if (fs->lock_fd > 0) {
         close(
             fs->lock_fd); // Closing the lock_file file descriptor - and releasing the lock.
