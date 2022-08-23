@@ -21,75 +21,19 @@ set -x
 # point at the ert source root (where .git is).
 
 build_and_test () {
-	rm -rf jenkinsbuild
-	mkdir jenkinsbuild
-	run setup
-	run build_libecl
-	run build_ert_clib
-	run build_ert_dev
-	run run_ctest
-}
-
-setup () {
-	run setup_variables
-	run create_directories
-	run create_virtualenv
-	run source_build_tools
-	run clone_repos
-}
-
-build_libecl () {
-	run enable_environment
-
-	pushd $LIBECL_BUILD
-	cmake .. -DCMAKE_INSTALL_PREFIX=$INSTALL -DCMAKE_BUILD_TYPE=RelWithDebInfo
-	make -j 6 install
-	popd
-}
-
-build_ert_clib () {
-	run enable_environment
-
-	pushd $ERT_CLIB_BUILD
-	cmake ${ERT_SOURCE_ROOT}/src/clib \
-		  -DCMAKE_PREFIX_PATH=$INSTALL \
-		  -DCMAKE_INSTALL_PREFIX=$INSTALL \
-		  -DCMAKE_BUILD_TYPE=RelWithDebInfo \
-		  -DBUILD_TESTS=ON
-	make -j 6 install
-	popd
-}
-
-build_ert_dev () {
-	run enable_environment
-	pip install ${ERT_SOURCE_ROOT}
-	pip install -r dev-requirements.txt
-}
-
-source_build_tools() {
-	export PATH=/opt/rh/devtoolset-8/root/bin:$PATH
-	python --version
-	gcc --version
-	cmake --version
-
-	set -e
-}
-
-setup_variables () {
-	ENV=$WORKING_DIR/venv
-	INSTALL=$WORKING_DIR/venv
-
-	LIBECL_ROOT=$WORKING_DIR/libecl
-	LIBECL_BUILD=$LIBECL_ROOT/build
-
-	ERT_CLIB_ROOT=$WORKING_DIR/_ert_clib
-	ERT_CLIB_BUILD=$ERT_CLIB_ROOT/build
+	setup
+	build_ert_clib
+	build_ert_dev
+	run_ctest
 }
 
 enable_environment () {
-	run setup_variables
-	source $ENV/bin/activate
-	run source_build_tools
+	source /opt/rh/devtoolset-8/enable
+	source ${ERT_SOURCE_ROOT}/venv/bin/activate
+
+	python --version
+	gcc --version
+	cmake --version
 
 	export ERT_SHOW_BACKTRACE=Y
 	export RMS_SITE_CONFIG=/prog/res/komodo/bleeding-py38-rhel7/root/lib/python3.8/site-packages/ert_configurations/resources/rms_config.yml
@@ -99,64 +43,36 @@ enable_environment () {
 	export CONAN_CACERT_PATH=/etc/pki/tls/cert.pem
 }
 
-create_directories () {
-	mkdir $INSTALL
+setup () {
+	/opt/rh/rh-python38/root/usr/bin/python -m venv ${ERT_SOURCE_ROOT}/venv
+	${ERT_SOURCE_ROOT}/venv/bin/pip install -U pip wheel setuptools cmake pybind11 conan ecl
 }
 
-clone_repos () {
-	echo "Cloning into $LIBECL_ROOT"
-	git clone https://github.com/equinor/libecl $LIBECL_ROOT
-	mkdir -p $LIBECL_BUILD
+build_ert_clib () {
+	enable_environment
 
-	echo "Cloning into $ERT_CLIB_ROOT"
-	git clone . $ERT_CLIB_ROOT
-	mkdir -p $ERT_CLIB_BUILD
-}
-
-create_virtualenv () {
-	mkdir $ENV
-	source /opt/rh/rh-python38/enable
-	python3 -m venv $ENV
-	source $ENV/bin/activate
-	pip install -U pip wheel setuptools cmake pybind11
-
-	# Conan is a C++ package manager and is required by ecl
-	pip install conan
-}
-
-run_ctest () {
-	run enable_environment
-	pushd $ERT_CLIB_BUILD
-	export ERT_SITE_CONFIG=${ERT_SOURCE_ROOT}/src/ert/shared/share/ert/site-config
-	ctest -j $CTEST_JARG -E Lint --output-on-failure
+	mkdir ${ERT_SOURCE_ROOT}/build
+	pushd ${ERT_SOURCE_ROOT}/build
+	cmake ${ERT_SOURCE_ROOT}/src/clib \
+		  -DCMAKE_BUILD_TYPE=RelWithDebInfo
+	make -j$(nproc)
 	popd
 }
 
-run () {
-	echo ""
-	echo "----- Running step: $1 -----"
-	echo ""
-	$1
-
-	echo ""
-	echo "----- $1 finished -----"
-	echo ""
+build_ert_dev () {
+	enable_environment
+	pip install ${ERT_SOURCE_ROOT}
+	pip install -r ${ERT_SOURCE_ROOT}/dev-requirements.txt
 }
 
-if [ -z "$CTEST_JARG" ]
-	then
-		CTEST_JARG="6"
-fi
+run_ctest () {
+	enable_environment
+	pushd ${ERT_SOURCE_ROOT}/build
+	export ERT_SITE_CONFIG=${ERT_SOURCE_ROOT}/src/ert/shared/share/ert/site-config
+	ctest -j$(nproc) -E Lint --output-on-failure
+	popd
+}
 
-if [ -z "$WORKING_DIR" ]
-	then
-		WORKING_DIR=$(pwd)/jenkinsbuild
-		ERT_SOURCE_ROOT=$(pwd)
-	else
-		ERT_SOURCE_ROOT=${WORKING_DIR}
-fi
+ERT_SOURCE_ROOT=$(pwd)
 
-if [ $# -ne 0 ]
-	then
-		run $1
-fi
+[[ $# != 0 ]] && $1

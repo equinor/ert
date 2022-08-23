@@ -34,6 +34,7 @@ foreach(
   trans_func)
   add_executable(${test} ${TESTS_EXCLUDE_FROM_ALL} test_${test}.cpp)
   target_link_libraries(${test} ert)
+  fix_install_names(${test})
   add_test(NAME ${test} COMMAND ${test})
 endforeach()
 

@@ -19,5 +19,6 @@ add_executable(
   job_queue/test_lsf_driver.cpp)
 
 target_link_libraries(ert_test_suite ert Catch2::Catch2WithMain fmt::fmt)
+fix_install_names(ert_test_suite)
 
 catch_discover_tests(ert_test_suite)

@@ -24,12 +24,14 @@ foreach(
 
   add_executable(${name} ${TESTS_EXCLUDE_FROM_ALL} test_${name}.cpp)
   target_link_libraries(${name} ert)
+  fix_install_names(${name})
   add_test(NAME ${name} COMMAND ${name})
 endforeach()
 
 foreach(name job_slurm_submit job_slurm_runtest)
   add_executable(${name} ${TESTS_EXCLUDE_FROM_ALL} test_${name}.cpp)
   target_link_libraries(${name} ert)
+  fix_install_names(${name})
   if(SBATCH)
     add_test(NAME ${name} COMMAND ${name})
   endif()
@@ -47,11 +49,13 @@ foreach(
 
   add_executable(${name} ${TESTS_EXCLUDE_FROM_ALL} test_${name}.cpp)
   target_link_libraries(${name} ert)
+  fix_install_names(${name})
 endforeach()
 
 if(NOT APPLE)
   add_executable(job_list ${TESTS_EXCLUDE_FROM_ALL} test_job_list.cpp)
   target_link_libraries(job_list ert)
+  fix_install_names(job_list)
 
   add_test(NAME job_list COMMAND $<TARGET_FILE:job_list>)
 endif()

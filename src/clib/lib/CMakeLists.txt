@@ -1,10 +1,3 @@
-if(NOT SKBUILD)
-  # Link directly to libecl if not using `pip install`
-  find_package(ecl REQUIRED)
-  set(ECL ecl)
-  set(RES res)
-endif()
-
 pybind11_add_module(
   _clib
   SHARED
@@ -103,16 +96,10 @@ pybind11_add_module(
 # Target: Python C Extension 'ert._clib'
 # -----------------------------------------------------------------
 
-target_link_libraries(_clib PUBLIC ${ECL} std::filesystem cJSON::cJSON fmt::fmt
-                                   Eigen3::Eigen)
-target_include_directories(
-  _clib
-  PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-         $<INSTALL_INTERFACE:include>
-  PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/private-include>
-  PRIVATE
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/private-include/ext/json>
-  PRIVATE "${ECL_INCLUDE_DIRS}")
+target_link_libraries(_clib PUBLIC std::filesystem cJSON::cJSON fmt::fmt
+                                   Eigen3::Eigen Threads::Threads)
+target_include_directories(_clib PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include"
+                                        "${ECL_INCLUDE_DIRS}")
 
 set_target_properties(_clib PROPERTIES CXX_VISIBILITY_PRESET "default")
 install(TARGETS _clib LIBRARY DESTINATION src/ert)
@@ -129,6 +116,7 @@ file(
 # -----------------------------------------------------------------
 
 if(BUILD_TESTS)
-  add_library(ert $<TARGET_OBJECTS:_clib>)
-  target_link_libraries(ert _clib pybind11::embed)
+  add_library(ert SHARED $<TARGET_OBJECTS:_clib>)
+  target_link_libraries(ert _clib pybind11::embed ecl)
+  fix_install_names(ert)
 endif()

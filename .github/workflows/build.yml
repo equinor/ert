@@ -43,24 +43,15 @@ jobs:
 
     - name: Install dependencies from PyPI
       run: |
-        python3 -m pip install conan pybind11
+        python3 -m pip install conan pybind11 ecl
         echo "PIP_PKGS_PATH=$(python3 -m pip show conan | grep Location | cut -d ' ' -f 2 | sed -e 's@/lib/.*site-packages$@/bin@')" >> "$GITHUB_ENV"
-
-    - name: Build libecl
-      run: |
-        export PATH=$PATH:${{ env.PIP_PKGS_PATH }}
-        git clone https://github.com/equinor/libecl
-        mkdir libecl/build
-        cmake -S libecl -B libecl/build -DCMAKE_BUILD_TYPE=RelWithDebInfo
-        sudo cmake --build libecl/build --target install
-        sudo rm -rf libecl
 
     - name: Build ert clib
       run: |
         export PATH=$PATH:${{ env.PIP_PKGS_PATH }}
         mkdir cmake-build
         cmake -S src/clib -B cmake-build -DCMAKE_BUILD_TYPE=RelWithDebInfo -DBUILD_TESTS=ON -DCOVERAGE=ON
-        cmake --build cmake-build -j2
+        cmake --build cmake-build "-j$(nproc)"
 
     - name: Run tests
       run: |

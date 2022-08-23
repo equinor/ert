@@ -132,7 +132,7 @@ likely that some core performance-critical functionality will be implemented in
 C++ and the rest of the business logic will be implemented in Python.
 
 While running `--editable` will create the necessary Python extension module
-(`res/_lib.cpython-*.so`), changing C++ code will not take effect even when
+(`src/ert/_clib.cpython-*.so`), changing C++ code will not take effect even when
 reloading ERT. This requires recompilation, which means reinstalling ERT from
 scratch.
 
@@ -153,9 +153,9 @@ do a full rebuild, delete the `_skbuild` directory.
 Note: This will create a debug build, which is faster to compile and comes with
 debugging functionality enabled. This means that, for example, Eigen
 computations will be checked and will abort if preconditions aren't met (eg.
-when inverting a matrix, it will first check that the matrix is square). The
-downside is that this makes the code unoptimised and slow. Debugging flags are
-therefore not present in builds of ERT that we release on Komodo or PyPI. To
+when inverting a matrix, it will explicitly check that the matrix is square).
+The downside is that this makes the code unoptimised and slow. Debugging flags
+are therefore not present in builds of ERT that we release on Komodo or PyPI. To
 build a release build for development, use `script/build --release`.
 
 ### Notes
@@ -170,38 +170,27 @@ command `ulimit -a`. In order to increase maximum number of open files, run
 `ulimit -n 16384` (or some other large number) and put the command in your
 `.profile` to make it persist.
 
-### Testing C code
+### Running C++ tests
 
-Install [*ecl*](https://github.com/Equinor/ecl) using CMake as a C library. Then:
+The C++ code and tests require [libecl](https://github.com/Equinor/ecl). As long
+as you have `pip install ecl`'d into your Python virtualenv all should work.
 
 ``` sh
-$ cd src
-$ mkdir build
-$ cd build
-$ cmake ../clib -DBUILD_TESTS=ON
-$ cmake --build .
-$ ctest --output-on-failure
+# Create and enable a virtualenv
+python3 -m venv my_virtualenv
+source my_virtualenv/bin/activate
+
+# Install build dependencies
+pip install pybind11 conan cmake ecl
+
+# Build ERT and tests
+mkdir build && cd build
+cmake ../src/clib -DCMAKE_BUILD_TYPE=Debug
+make -j$(nproc)
+
+# Run tests
+ctest --output-on-failure
 ```
-
-### Building
-
-Use the following commands to start developing from a clean virtualenv
-```
-$ pip install -r requirements.txt
-$ python setup.py develop
-```
-
-Alternatively, `pip install -e .` will also setup ERT for development, but
-it will be more difficult to recompile the C library.
-
-[scikit-build](https://scikit-build.readthedocs.io/en/latest/index.html) is used
-for compiling the C library. It creates a directory named `_skbuild` which is
-reused upon future invocations of either `python setup.py develop`, or `python
-setup.py build_ext`. The latter only rebuilds the C library. In some cases this
-directory must be removed in order for compilation to succeed.
-
-The C library files get installed into `res/.libs`, which is where the
-`res` module will look for them.
 
 ### Compiling protocol buffers
 

@@ -7,6 +7,7 @@ foreach(name config_content_node config_path_elm config_error config_content
 
   add_executable(${name} ${TESTS_EXCLUDE_FROM_ALL} test_${name}.cpp)
   target_link_libraries(${name} ert)
+  fix_install_names(${name})
   add_test(NAME ${name} COMMAND ${name})
 endforeach()
 
@@ -23,6 +24,7 @@ foreach(
 
   add_executable(${name} ${TESTS_EXCLUDE_FROM_ALL} test_${name}.cpp)
   target_link_libraries(${name} ert)
+  fix_install_names(${name})
 endforeach()
 
 config_test(config_append append_test)
