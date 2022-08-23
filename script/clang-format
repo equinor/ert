@@ -7,7 +7,7 @@ from subprocess import check_output, CalledProcessError, STDOUT
 from argparse import ArgumentParser
 
 
-DIRECTORIES = ["src"]
+DIRECTORIES = ["src/clib"]
 
 
 def find_clang_format_binary(clang_format: Optional[str]) -> Path:
