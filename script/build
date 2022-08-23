@@ -41,7 +41,7 @@ def check_cxx_version() -> None:
     """
     Check that the user's compiler is compatible with ERT.
     """
-    cxx = shutil.which(os.environ.get("CXX", "c++"))
+    cxx = Path(shutil.which(os.environ.get("CXX", "c++"))).resolve()
     print_info(f"Using C++ compiler: {cxx}")
 
     version_line = subprocess.check_output([cxx, "--version"]).splitlines()[0].decode()
@@ -51,7 +51,7 @@ def check_cxx_version() -> None:
         sys.exit(1)
     version = tuple(int(version_match[x + 1]) for x in range(3))
 
-    if "GCC" in version_line:
+    if "GCC" in version_line or "g++" in version_line:
         min_version = MIN_GCC_VERSION
     elif "clang" in version_line:
         min_version = MIN_CLANG_VERSION
