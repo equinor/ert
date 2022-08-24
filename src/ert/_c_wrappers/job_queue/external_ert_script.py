@@ -18,10 +18,10 @@ class ExternalErtScript(ErtScript):
         self.__job = Popen(command, stdout=PIPE, stderr=PIPE)
 
         # The job will complete before stdout and stderr is returned
-        self._stdoutdata, self._stderrdata = self.__job.communicate()
+        stdoutdata, stderrdata = self.__job.communicate()
 
-        self._stdoutdata = codecs.decode(self._stdoutdata, "utf8", "replace")
-        self._stderrdata = codecs.decode(self._stderrdata, "utf8", "replace")
+        self._stdoutdata = codecs.decode(stdoutdata, "utf8", "replace")
+        self._stderrdata = codecs.decode(stderrdata, "utf8", "replace")
 
         sys.stdout.write(self._stdoutdata)
 

@@ -1,5 +1,5 @@
 import os
-from typing import TYPE_CHECKING, Any, List, Optional
+from typing import TYPE_CHECKING, Any, List, Optional, Type, Union
 
 from cwrap import BaseCClass
 
@@ -14,6 +14,8 @@ from ert._c_wrappers.job_queue import (
 
 if TYPE_CHECKING:
     from ert._c_wrappers.enkf import EnKFMain
+
+    ContentTypes = Union[Type[int], Type[bool], Type[float], Type[str]]
 
 
 class WorkflowJob(BaseCClass):
@@ -99,8 +101,8 @@ class WorkflowJob(BaseCClass):
 
         return False
 
-    def argumentTypes(self) -> List[Optional[ContentTypeEnum]]:
-        result = []
+    def argumentTypes(self) -> List[Optional["ContentTypes"]]:
+        result: List[Optional["ContentTypes"]] = []
         for index in range(self.maximumArgumentCount()):
             t = self._arg_type(index)
             if t == ContentTypeEnum.CONFIG_BOOL:
@@ -179,18 +181,26 @@ class WorkflowJob(BaseCClass):
         return self.__running
 
     def isCancelled(self) -> bool:
+        if self.__script is None:
+            raise ValueError("The job must be run before calling isCancelled")
         return self.__script.isCancelled()
 
     def hasFailed(self) -> bool:
+        if self.__script is None:
+            raise ValueError("The job must be run before calling hasFailed")
         return self.__script.hasFailed()
 
     def free(self):
         self._free()
 
     def stdoutdata(self) -> str:
+        if self.__script is None:
+            raise ValueError("The job must be run before getting stdoutdata")
         return self.__script.stdoutdata
 
     def stderrdata(self) -> str:
+        if self.__script is None:
+            raise ValueError("The job must be run before getting stderrdata")
         return self.__script.stderrdata
 
     @classmethod
@@ -211,9 +221,11 @@ class WorkflowJob(BaseCClass):
         if self._is_internal_script() != other._is_internal_script():
             return False
 
-        if self._is_internal_script():
-            if self._get_internal_script() != other._get_internal_script():
-                return False
+        if (
+            self._is_internal_script()
+            and self._get_internal_script() != other._get_internal_script()
+        ):
+            return False
 
         if self._name() != other._name():
             return False

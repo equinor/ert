@@ -166,19 +166,20 @@ class GenKwConfig(BaseCClass):
             }
         ]
         """
-        priors = []
+        priors: List["PriorDict"] = []
         keys = self.getKeyWords()
         for i, key in enumerate(keys):
             function_type = self._get_function_type(i)
             parameter_names = self._get_function_parameter_names(i)
             parameter_values = self._get_function_parameter_values(i)
-            el = {
-                "key": key,
-                "function": function_type,
-                "parameters": {
-                    name: value
-                    for (name, value) in zip(parameter_names, parameter_values)
-                },
-            }
-            priors.append(el)
+            priors.append(
+                {
+                    "key": key,
+                    "function": function_type,
+                    "parameters": {
+                        name: value
+                        for (name, value) in zip(parameter_names, parameter_values)
+                    },
+                }
+            )
         return priors
