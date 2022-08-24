@@ -1,12 +1,11 @@
 import contextlib
-from argparse import ArgumentParser
-
-import pytest
+import gc
 import os
 import shutil
-import py
-import gc
+from argparse import ArgumentParser
 
+import py
+import pytest
 from starlette.testclient import TestClient
 
 from ert.shared.cli import ENSEMBLE_SMOOTHER_MODE

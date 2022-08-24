@@ -17,14 +17,14 @@ from functools import partial
 from typing import TYPE_CHECKING
 
 from qtpy.QtWidgets import (
-    QDoubleSpinBox,
-    QWidget,
-    QFormLayout,
     QCheckBox,
-    QLineEdit,
+    QDoubleSpinBox,
+    QFormLayout,
     QHBoxLayout,
-    QSpinBox,
     QLabel,
+    QLineEdit,
+    QSpinBox,
+    QWidget,
 )
 
 from ert.gui.ertwidgets.models.analysismodulevariablesmodel import (

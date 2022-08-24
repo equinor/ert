@@ -1,6 +1,6 @@
-import pandas as pd
 import io
 
+import pandas as pd
 from requests import Response
 
 

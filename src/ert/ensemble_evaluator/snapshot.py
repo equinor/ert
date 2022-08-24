@@ -4,11 +4,12 @@ import typing
 from collections import defaultdict
 from typing import Any, Dict, Mapping, Optional, Sequence, Union, cast
 
-from cloudevents.http import CloudEvent
 import pyrsistent
-from pyrsistent.typing import PMap as TPMap
+from cloudevents.http import CloudEvent
 from dateutil.parser import parse
 from pydantic import BaseModel
+from pyrsistent.typing import PMap as TPMap
+
 from ert.ensemble_evaluator import identifiers as ids
 from ert.ensemble_evaluator import state
 from ert.ensemble_evaluator.util._tool import (

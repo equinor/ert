@@ -1,4 +1,5 @@
 import logging
+
 import pytest
 
 from ert._c_wrappers.enkf import EnKFMain

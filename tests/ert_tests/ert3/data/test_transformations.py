@@ -10,6 +10,7 @@ from typing import Callable, ContextManager, List, Type
 import numpy as np
 import pytest
 from ecl.summary import EclSum
+
 from ert.data import (
     BlobRecord,
     CopyTransformation,

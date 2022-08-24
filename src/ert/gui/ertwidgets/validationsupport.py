@@ -1,7 +1,8 @@
-from qtpy.QtCore import Qt, QPoint, QObject, Signal
-from qtpy.QtGui import QColor
-from qtpy.QtWidgets import QWidget, QVBoxLayout, QSizePolicy, QFrame, QLabel
 import html
+
+from qtpy.QtCore import QObject, QPoint, Qt, Signal
+from qtpy.QtGui import QColor
+from qtpy.QtWidgets import QFrame, QLabel, QSizePolicy, QVBoxLayout, QWidget
 
 
 class ErrorPopup(QWidget):

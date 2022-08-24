@@ -19,6 +19,7 @@ import unittest
 
 from ecl.util.test import TestAreaContext
 from pytest import MonkeyPatch
+
 from ert._c_wrappers.fm.rms import RMSConfig
 
 from ...libres_utils import ResTest

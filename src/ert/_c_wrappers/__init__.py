@@ -17,9 +17,9 @@
 Ert - Ensemble Reservoir Tool - a package for reservoir modeling.
 """
 import os.path
-import ecl  # This needs to be here for ... reasons
-
 import warnings
+
+import ecl  # This needs to be here for ... reasons
 
 warnings.filterwarnings(action="always", category=DeprecationWarning, module=r"res|ert")
 
@@ -32,8 +32,9 @@ except ImportError:
 
 
 def _load_lib():
-    import ert._clib
     import ctypes
+
+    import ert._clib
 
     lib = ctypes.CDLL(ert._clib.__file__)
 

@@ -1,4 +1,4 @@
-from qtpy.QtCore import Signal, Slot, QObject, QTimer
+from qtpy.QtCore import QObject, QTimer, Signal, Slot
 
 
 class FileUpdateWorker(QObject):

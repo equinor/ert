@@ -2,7 +2,7 @@ import logging
 import os
 import sys
 import time
-from typing import Any, Dict, TYPE_CHECKING, Tuple, Optional
+from typing import TYPE_CHECKING, Any, Dict, Optional, Tuple
 
 from cwrap import BaseCClass  # pylint: disable=import-error
 
@@ -10,8 +10,8 @@ from ert._c_wrappers import ResPrototype
 from ert._c_wrappers.job_queue.workflow_joblist import WorkflowJoblist
 
 if TYPE_CHECKING:
-    from ert._c_wrappers.job_queue import WorkflowJob
     from ert._c_wrappers.enkf import EnKFMain
+    from ert._c_wrappers.job_queue import WorkflowJob
     from ert._c_wrappers.util import SubstitutionList
 
 

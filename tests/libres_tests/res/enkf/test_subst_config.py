@@ -13,12 +13,13 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
+import datetime
 import os
 import os.path
 import unittest
-import datetime
 
 from ecl.util.test import TestAreaContext
+
 from ert._c_wrappers.enkf import ConfigKeys, ResConfig, SubstConfig
 
 from ...libres_utils import ResTest

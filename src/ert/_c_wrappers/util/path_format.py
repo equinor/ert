@@ -14,9 +14,11 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 
-from cwrap import BaseCClass
-from ert._c_wrappers import ResPrototype
 import os
+
+from cwrap import BaseCClass
+
+from ert._c_wrappers import ResPrototype
 
 # The path_fmt implementation hinges strongly on variable length
 # argument lists in C  not clear if/how that maps over to Python,

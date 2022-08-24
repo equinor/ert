@@ -1,7 +1,7 @@
 from functools import partial
-import pandas as pd
 
 import deprecation  # type: ignore
+import pandas as pd
 
 # importlib.metadata added in python 3.8
 try:

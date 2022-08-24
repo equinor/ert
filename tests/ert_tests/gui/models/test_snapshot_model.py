@@ -1,9 +1,10 @@
-from ert.ensemble_evaluator.snapshot import Job, PartialSnapshot
-from ert.ensemble_evaluator.state import COLOR_PENDING, COLOR_RUNNING, JOB_STATE_RUNNING
-from ert.gui.model.snapshot import RealJobColorHint, SnapshotModel
 from pytestqt.qt_compat import qt_api
 from qtpy.QtCore import QModelIndex
 from qtpy.QtGui import QColor
+
+from ert.ensemble_evaluator.snapshot import Job, PartialSnapshot
+from ert.ensemble_evaluator.state import COLOR_PENDING, COLOR_RUNNING, JOB_STATE_RUNNING
+from ert.gui.model.snapshot import RealJobColorHint, SnapshotModel
 
 from .gui_models_utils import partial_snapshot
 

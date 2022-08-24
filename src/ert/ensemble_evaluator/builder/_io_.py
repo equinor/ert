@@ -1,12 +1,5 @@
 import logging
-from typing import (
-    TYPE_CHECKING,
-    Dict,
-    Optional,
-    Type,
-    TypeVar,
-    cast,
-)
+from typing import TYPE_CHECKING, Dict, Optional, Type, TypeVar, cast
 
 from ert.data import TransformationDirection
 

@@ -9,11 +9,11 @@ import time
 from collections import namedtuple
 from contextlib import contextmanager
 
+from ecl.summary import EclSum
 from packaging import version
+
 from ert._c_wrappers.fm.ecl.ecl_config import EclrunConfig
 from ert._c_wrappers.util.subprocess import await_process_tee
-
-from ecl.summary import EclSum
 
 EclipseResult = namedtuple("EclipseResult", "errors bugs")
 body_sub_pattern = r"(\s^\s@.+$)*"

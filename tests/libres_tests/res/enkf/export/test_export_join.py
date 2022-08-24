@@ -1,8 +1,6 @@
 import numpy as np
 import pytest
 
-from ....libres_utils import ResTest
-
 from ert._c_wrappers.enkf.export import (
     DesignMatrixReader,
     GenKwCollector,
@@ -10,6 +8,8 @@ from ert._c_wrappers.enkf.export import (
     SummaryCollector,
 )
 from ert._c_wrappers.test import ErtTestContext
+
+from ....libres_utils import ResTest
 
 
 def dumpDesignMatrix(path):

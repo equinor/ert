@@ -3,8 +3,8 @@ import threading
 from http import HTTPStatus
 
 import pytest
-from websockets.server import serve
 from cloudevents.http import from_json
+from websockets.server import serve
 
 from ert.async_utils import get_event_loop
 from ert.ensemble_evaluator import wait_for_evaluator

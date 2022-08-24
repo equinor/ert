@@ -1,17 +1,17 @@
 import math
-from qtpy.QtCore import QSize, QModelIndex, Slot, Qt
+
+from qtpy.QtCore import QModelIndex, QSize, Qt, Slot
+from qtpy.QtGui import QColor, QPainter
 from qtpy.QtWidgets import (
-    QTreeView,
+    QProgressBar,
     QStyledItemDelegate,
     QStyleOptionViewItem,
-    QWidget,
+    QTreeView,
     QVBoxLayout,
-    QProgressBar,
+    QWidget,
 )
-from qtpy.QtGui import QPainter, QColor
 
 from ert.ensemble_evaluator.state import REAL_STATE_TO_COLOR
-
 from ert.gui.model.snapshot import ProgressRole
 
 

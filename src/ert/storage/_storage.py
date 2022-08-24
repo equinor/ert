@@ -1,21 +1,13 @@
 import io
-import logging
 import json
+import logging
 from functools import partial
 from http import HTTPStatus
-from typing import (
-    Any,
-    Awaitable,
-    Dict,
-    Iterable,
-    List,
-    Optional,
-    Set,
-    Tuple,
-    Union,
-)
+from typing import Any, Awaitable, Dict, Iterable, List, Optional, Set, Tuple, Union
+
 import httpx
 import pandas as pd
+
 import ert.data
 import ert.exceptions
 from ert.async_utils import get_event_loop

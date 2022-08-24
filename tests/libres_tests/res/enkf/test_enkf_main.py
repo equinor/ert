@@ -1,11 +1,12 @@
 import os
 from pathlib import Path
 from textwrap import dedent
-
-from ert._c_wrappers.enkf import ResConfig, EnkfFs
-from ert._c_wrappers.enkf.enkf_main import EnKFMain
-import pytest
 from unittest.mock import MagicMock
+
+import pytest
+
+from ert._c_wrappers.enkf import EnkfFs, ResConfig
+from ert._c_wrappers.enkf.enkf_main import EnKFMain
 
 
 @pytest.fixture

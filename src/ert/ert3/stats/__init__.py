@@ -3,8 +3,8 @@ from ert.ert3.stats._stats import (
     Discrete,
     Distribution,
     Gaussian,
-    Uniform,
     LogUniform,
+    Uniform,
 )
 
 __all__ = [

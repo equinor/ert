@@ -1,10 +1,9 @@
-from typing import TYPE_CHECKING
+import importlib.util
 import inspect
+import logging
 import sys
 import traceback
-import logging
-
-import importlib.util
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from ert._c_wrappers.enkf import EnKFMain

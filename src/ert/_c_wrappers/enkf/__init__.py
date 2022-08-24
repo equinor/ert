@@ -53,12 +53,7 @@ from .hook_manager import HookManager
 from .hook_workflow import HookWorkflow
 from .model_config import ModelConfig
 from .node_id import NodeId
-from .observations import (
-    BlockDataConfig,
-    GenObservation,
-    ObsVector,
-    SummaryObservation,
-)
+from .observations import BlockDataConfig, GenObservation, ObsVector, SummaryObservation
 from .queue_config import QueueConfig
 from .res_config import ResConfig
 from .rng_config import RNGConfig

@@ -16,10 +16,11 @@
 
 
 from ecl.util.test import TestAreaContext
-from ...libres_utils import ResTest, tmpdir
 
 from ert._c_wrappers.enkf import RunContext
 from ert._c_wrappers.enkf.runpaths import Runpaths
+
+from ...libres_utils import ResTest, tmpdir
 
 
 class ErtRunContextTest(ResTest):

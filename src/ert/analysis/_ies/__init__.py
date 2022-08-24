@@ -1,5 +1,7 @@
-from typing import Optional, Union, Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Optional, Union
+
 import numpy as np
+
 import ert._c_wrappers
 
 # pylint: disable=import-error

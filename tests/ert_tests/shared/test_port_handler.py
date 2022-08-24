@@ -1,7 +1,9 @@
-import sys
 import socket
+import sys
 import threading
+
 import pytest
+
 from ert.shared import port_handler
 
 

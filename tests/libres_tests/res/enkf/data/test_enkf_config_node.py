@@ -1,6 +1,6 @@
-from ....libres_utils import ResTest
-
 from ert._c_wrappers.enkf.config import EnkfConfigNode
+
+from ....libres_utils import ResTest
 
 
 class EnkfConfigNodeTest(ResTest):

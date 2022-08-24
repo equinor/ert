@@ -1,6 +1,6 @@
+import logging
 from collections import defaultdict
 from typing import Dict, List
-import logging
 
 logger = logging.getLogger(__name__)
 

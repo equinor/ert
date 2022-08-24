@@ -1,24 +1,24 @@
+import logging
 import queue
 import threading
-import logging
 from pathlib import Path
-from typing import Dict, Any
+from typing import Any, Dict
 
 from cloudevents.conversion import to_json
 from cloudevents.http import CloudEvent
 
+from ert.job_runner.reporting.base import Reporter
 from ert.job_runner.reporting.message import (
+    _JOB_EXIT_FAILED_STRING,
     Exited,
     Finish,
     Init,
+    Message,
     Running,
     Start,
-    Message,
-    _JOB_EXIT_FAILED_STRING,
 )
-from ert.job_runner.reporting.base import Reporter
-from ert.shared.ensemble_evaluator.client import Client
 from ert.job_runner.reporting.statemachine import StateMachine
+from ert.shared.ensemble_evaluator.client import Client
 
 _FM_JOB_START = "com.equinor.ert.forward_model_job.start"
 _FM_JOB_RUNNING = "com.equinor.ert.forward_model_job.running"

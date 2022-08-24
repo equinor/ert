@@ -4,10 +4,11 @@ from argparse import ArgumentParser
 
 import py
 import pytest
+from pytest import fixture
+
 from ert.shared.cli import ENSEMBLE_EXPERIMENT_MODE
 from ert.shared.cli.main import run_cli
 from ert.shared.main import ert_parser
-from pytest import fixture
 
 from .performance_utils import make_poly_template
 

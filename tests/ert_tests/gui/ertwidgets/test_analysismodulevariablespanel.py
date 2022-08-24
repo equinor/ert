@@ -1,8 +1,9 @@
+from unittest.mock import patch
+
 from ert.gui.ertwidgets.analysismodulevariablespanel import AnalysisModuleVariablesPanel
 from ert.gui.ertwidgets.models.analysismodulevariablesmodel import (
     AnalysisModuleVariablesModel,
 )
-from unittest.mock import patch
 
 
 def test_createSpinBox(qtbot):

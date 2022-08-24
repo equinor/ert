@@ -1,6 +1,7 @@
 from typing import Any, List, Optional
 
 import pluggy
+
 from ert.ert3.config import ConfigPluginRegistry
 
 _PLUGIN_NAMESPACE = "ert3"

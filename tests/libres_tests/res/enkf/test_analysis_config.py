@@ -16,11 +16,11 @@
 #  for more details.
 
 import pytest
-
 from ecl.util.test import TestAreaContext
-from ...libres_utils import ResTest
 
 from ert._c_wrappers.enkf import AnalysisConfig, ConfigKeys
+
+from ...libres_utils import ResTest
 
 
 class AnalysisConfigTest(ResTest):

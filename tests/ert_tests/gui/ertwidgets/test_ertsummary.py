@@ -1,8 +1,8 @@
 from unittest.mock import MagicMock
 
 import pytest
-
 from ecl.util.util import StringList
+
 from ert.gui.ertwidgets.models.ertsummary import ErtSummary
 
 

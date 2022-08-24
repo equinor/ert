@@ -1,42 +1,30 @@
 from itertools import chain
-from typing import (
-    List,
-    Any,
-    Callable,
-    Optional,
-    Sequence,
-    Union,
-    TYPE_CHECKING,
-)
-
 from pathlib import Path
-
+from typing import TYPE_CHECKING, Any, Callable, List, Optional, Sequence, Union
 
 from ert._c_wrappers.enkf import RunArg
 
+from ._function_task import FunctionTask
 from ._io_ import (
     _IO,
     _DummyIO,
-    _IOBuilder,
     _DummyIOBuilder,
-    _OutputBuilder,
     _InputBuilder,
+    _IOBuilder,
+    _OutputBuilder,
 )
 from ._io_map import _stage_transmitter_mapping
 from ._job import (
     _BaseJob,
+    _FunctionJob,
     _JobBuilder,
     _LegacyJob,
     _LegacyJobBuilder,
-    _FunctionJob,
     _UnixJob,
 )
-from ._stage import _Stage
-from ._unix_task import UnixTask
-from ._function_task import FunctionTask
-from ._stage import _StageBuilder
-
+from ._stage import _Stage, _StageBuilder
 from ._template import _SOURCE_TEMPLATE_BASE, _SOURCE_TEMPLATE_STEP
+from ._unix_task import UnixTask
 
 if TYPE_CHECKING:
     import ert

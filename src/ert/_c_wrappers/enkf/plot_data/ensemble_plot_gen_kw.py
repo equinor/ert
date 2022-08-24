@@ -18,6 +18,7 @@ from typing import List, Optional
 
 from cwrap import BaseCClass
 from ecl.util.util import BoolVector
+
 from ert._c_wrappers import ResPrototype
 from ert._c_wrappers.enkf.config import EnkfConfigNode
 from ert._c_wrappers.enkf.enkf_fs import EnkfFs

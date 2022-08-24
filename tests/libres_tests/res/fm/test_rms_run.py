@@ -21,8 +21,8 @@ import subprocess
 import sys
 import unittest
 from unittest.mock import patch
-import pkg_resources
 
+import pkg_resources
 import pytest
 from ecl.util.test import TestAreaContext
 from pytest import MonkeyPatch

@@ -1,12 +1,7 @@
 import asyncio
 import pickle
-from typing import (
-    Any,
-    Callable,
-    Dict,
-    Tuple,
-    TYPE_CHECKING,
-)
+from typing import TYPE_CHECKING, Any, Callable, Dict, Tuple
+
 import prefect
 
 from ert.async_utils import get_event_loop
@@ -20,6 +15,7 @@ from ._job import _FunctionJob
 
 if TYPE_CHECKING:
     import ert
+
     from ._step import _Step
 
 

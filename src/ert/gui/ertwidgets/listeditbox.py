@@ -13,14 +13,14 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
-from qtpy.QtCore import Qt, QSize
+from qtpy.QtCore import QSize, Qt
 from qtpy.QtWidgets import (
-    QHBoxLayout,
-    QLineEdit,
     QCompleter,
-    QToolButton,
+    QHBoxLayout,
     QInputDialog,
+    QLineEdit,
     QMessageBox,
+    QToolButton,
     QWidget,
 )
 

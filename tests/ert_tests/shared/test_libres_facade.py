@@ -1,13 +1,13 @@
 import logging
-import pytest
 import shutil
 
 import pandas as pd
+import pytest
 from pandas.core.base import PandasObject
 
-from ert.libres_facade import LibresFacade
 from ert._c_wrappers.enkf import EnKFMain, ResConfig
 from ert._c_wrappers.enkf.export import SummaryCollector
+from ert.libres_facade import LibresFacade
 
 
 @pytest.fixture

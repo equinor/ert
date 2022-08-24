@@ -1,16 +1,17 @@
-from uuid import UUID
 from typing import Any, Mapping
+from uuid import UUID
 
-from fastapi import APIRouter, Body, Depends
 from ert_storage import json_schema as js
+from fastapi import APIRouter, Body, Depends
+
+from ert.shared.dark_storage.common import ensemble_parameter_names, get_response_names
 from ert.shared.dark_storage.enkf import (
     LibresFacade,
-    get_res,
     get_id,
     get_name,
+    get_res,
     get_size,
 )
-from ert.shared.dark_storage.common import get_response_names, ensemble_parameter_names
 
 router = APIRouter(tags=["ensemble"])
 

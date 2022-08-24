@@ -1,6 +1,6 @@
 import os
-import pkg_resources
 
+import pkg_resources
 from jinja2 import Template
 
 from ert.shared.plugins.plugin_manager import hook_implementation

@@ -1,8 +1,6 @@
 import unittest
 
-from ert.shared.status.utils import (
-    format_running_time,
-)
+from ert.shared.status.utils import format_running_time
 
 
 class TrackerUtilsTest(unittest.TestCase):

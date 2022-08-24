@@ -1,8 +1,4 @@
-from ert.ensemble_evaluator.snapshot import (
-    Job,
-    PartialSnapshot,
-    Realization,
-)
+from ert.ensemble_evaluator.snapshot import Job, PartialSnapshot, Realization
 from ert.ensemble_evaluator.state import JOB_STATE_FINISHED
 
 

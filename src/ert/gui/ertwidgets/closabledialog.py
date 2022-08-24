@@ -15,7 +15,7 @@
 #  for more details.
 
 from qtpy.QtCore import Qt
-from qtpy.QtWidgets import QDialog, QVBoxLayout, QLayout, QPushButton, QHBoxLayout
+from qtpy.QtWidgets import QDialog, QHBoxLayout, QLayout, QPushButton, QVBoxLayout
 
 
 class ClosableDialog(QDialog):

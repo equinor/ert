@@ -1,10 +1,11 @@
 from unittest.mock import MagicMock
 
 import pytest
-from ert.shared.models import BaseRunModel
+
 from ert._c_wrappers.enkf import RunContext
 from ert._c_wrappers.job_queue import RunStatusType
 from ert._c_wrappers.test import ErtTestContext
+from ert.shared.models import BaseRunModel
 
 from ..ert_utils import ErtTest
 

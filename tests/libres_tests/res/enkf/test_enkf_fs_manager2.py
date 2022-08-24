@@ -1,8 +1,8 @@
 import sys
 
-from ...libres_utils import ResTest, tmpdir
-
 from ert._c_wrappers.test import ErtTestContext
+
+from ...libres_utils import ResTest, tmpdir
 
 
 class TestEnKFFSManager2(ResTest):

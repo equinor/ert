@@ -1,9 +1,10 @@
 from typing import List, Union
+
 import pandas as pd
 
-from ert.data import loader, MeasuredData
-from ert.libres_facade import LibresFacade
 from ert._c_wrappers.enkf import EnkfObservationImplementationType
+from ert.data import MeasuredData, loader
+from ert.libres_facade import LibresFacade
 
 
 def ensemble_parameter_names(res: LibresFacade) -> List[str]:

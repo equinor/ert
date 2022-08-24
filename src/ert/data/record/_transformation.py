@@ -1,24 +1,19 @@
-from enum import Flag, auto
 import io
 import stat
 import tarfile
 from abc import ABC, abstractmethod
 from concurrent import futures
+from enum import Flag, auto
 from pathlib import Path
 from typing import Dict, List, Optional
 
 import aiofiles
 from ecl.summary import EclSum
 
-from ert.data import (
-    BlobRecord,
-    NumericalRecord,
-    NumericalRecordTree,
-    Record,
-)
-from ert.serialization import get_serializer, has_serializer
-from ert.exceptions import FileExistsException
 from ert.async_utils import get_event_loop
+from ert.data import BlobRecord, NumericalRecord, NumericalRecordTree, Record
+from ert.exceptions import FileExistsException
+from ert.serialization import get_serializer, has_serializer
 
 _BIN_FOLDER = "bin"
 

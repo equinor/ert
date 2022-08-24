@@ -55,8 +55,9 @@ external commands.
 
 import os
 
-import ert._c_wrappers
 from cwrap import Prototype
+
+import ert._c_wrappers
 
 
 def setenv(var, value):

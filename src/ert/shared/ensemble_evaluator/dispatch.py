@@ -1,8 +1,7 @@
-import logging
 import asyncio
+import logging
 import time
-
-from collections import defaultdict, OrderedDict
+from collections import OrderedDict, defaultdict
 
 from ert.ensemble_evaluator import identifiers
 

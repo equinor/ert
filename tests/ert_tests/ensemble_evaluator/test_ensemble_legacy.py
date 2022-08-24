@@ -2,12 +2,11 @@ import os
 from unittest.mock import patch
 
 import pytest
+from websockets.exceptions import ConnectionClosed
 
-from ert.ensemble_evaluator import identifiers
-from ert.ensemble_evaluator import state
+from ert.ensemble_evaluator import identifiers, state
 from ert.shared.ensemble_evaluator.config import EvaluatorServerConfig
 from ert.shared.ensemble_evaluator.evaluator import EnsembleEvaluator
-from websockets.exceptions import ConnectionClosed
 
 
 @pytest.mark.timeout(60)

@@ -1,5 +1,4 @@
-from typing import TYPE_CHECKING, List
-from typing import Generator
+from typing import TYPE_CHECKING, Generator, List
 
 from .plugin import Plugin
 

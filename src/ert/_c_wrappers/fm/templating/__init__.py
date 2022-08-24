@@ -1,5 +1,4 @@
-from .template_render import render_template
-from .template_render import load_data
+from .template_render import load_data, render_template
 
 
 def load_parameters():

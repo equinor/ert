@@ -2,10 +2,10 @@ import os
 from unittest import TestCase
 from unittest.mock import PropertyMock, patch
 
-from ..libres_utils import tmpdir
-
 from ert.job_runner.job import Job
 from ert.job_runner.reporting.message import Exited, Running, Start
+
+from ..libres_utils import tmpdir
 
 
 class JobTests(TestCase):

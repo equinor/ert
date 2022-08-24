@@ -1,10 +1,12 @@
-import uuid
 import os
+import uuid
 from typing import Optional
-from fastapi import Depends
+
 from ert_storage.security import security
-from ert.libres_facade import LibresFacade
+from fastapi import Depends
+
 from ert._c_wrappers.enkf import EnKFMain, ResConfig
+from ert.libres_facade import LibresFacade
 
 __all__ = ["LibresFacade", "get_res"]
 

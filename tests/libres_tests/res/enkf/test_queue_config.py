@@ -17,6 +17,7 @@
 import os
 
 from ecl.util.test import TestAreaContext
+
 from ert._c_wrappers.config import ConfigContent
 from ert._c_wrappers.enkf import ConfigKeys, QueueConfig
 from ert._c_wrappers.job_queue import QueueDriverEnum

@@ -21,19 +21,14 @@ import shutil
 
 import numpy as np
 from ecl.grid import EclGridGenerator
-from ...libres_utils import ResTest, tmpdir
-from ert._clib.local.row_scaling import RowScaling
 
-from ert.analysis import ESUpdate
-from ert._c_wrappers.enkf import (
-    EnKFMain,
-    EnkfNode,
-    RunContext,
-    NodeId,
-    ResConfig,
-)
+from ert._c_wrappers.enkf import EnKFMain, EnkfNode, NodeId, ResConfig, RunContext
 from ert._c_wrappers.enkf.enums import RealizationStateEnum
 from ert._c_wrappers.test import ErtTestContext
+from ert._clib.local.row_scaling import RowScaling
+from ert.analysis import ESUpdate
+
+from ...libres_utils import ResTest, tmpdir
 
 # This function will initialize the data in the case before the actual row
 # scaling test can be performed. The function will initialize the PORO field

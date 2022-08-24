@@ -2,10 +2,10 @@ import os
 import os.path
 from unittest import TestCase
 
-from ..libres_utils import tmpdir
-
 from ert.job_runner.reporting.message import Exited, Finish, Start
 from ert.job_runner.runner import JobRunner
+
+from ..libres_utils import tmpdir
 
 
 class JobManagerTestRuntimeKW(TestCase):

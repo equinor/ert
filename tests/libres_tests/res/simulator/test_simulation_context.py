@@ -1,8 +1,8 @@
-from ...libres_utils import wait_until
-
 from ert._c_wrappers.enkf import EnKFMain
 from ert._c_wrappers.enkf.enums import RealizationStateEnum
 from ert.simulator import SimulationContext
+
+from ...libres_utils import wait_until
 
 
 def test_simulation_context(setup_case):

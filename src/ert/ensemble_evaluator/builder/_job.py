@@ -1,20 +1,11 @@
-from pathlib import Path
 import pickle
 import uuid
-from typing import (
-    Callable,
-    List,
-    Tuple,
-    Any,
-    Optional,
-    TypeVar,
-    Union,
-)
+from pathlib import Path
+from typing import Any, Callable, List, Optional, Tuple, TypeVar, Union
+
 from ert._c_wrappers.job_queue.ext_job import ExtJob
 
-
 from ._template import _SOURCE_TEMPLATE_BASE, _SOURCE_TEMPLATE_JOB
-
 
 _BaseJobBuilder_TV = TypeVar("_BaseJobBuilder_TV", bound="_BaseJobBuilder")
 

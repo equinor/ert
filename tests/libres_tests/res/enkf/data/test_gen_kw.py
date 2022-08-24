@@ -1,10 +1,11 @@
 import os.path
 
 from ecl.util.test import TestAreaContext
-from ....libres_utils import ResTest
 
 from ert._c_wrappers.enkf.config import GenKwConfig
 from ert._c_wrappers.enkf.data import GenKw
+
+from ....libres_utils import ResTest
 
 
 def create_gen_kw():

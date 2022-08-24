@@ -17,6 +17,7 @@ from os.path import abspath
 
 from ecl.grid import EclGridGenerator
 from ecl.util.test import TestAreaContext
+
 from ert._c_wrappers.enkf.config import FieldConfig, FieldTypeEnum
 from ert._c_wrappers.enkf.enums import EnkfFieldFileFormatEnum
 

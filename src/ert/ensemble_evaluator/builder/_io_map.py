@@ -1,4 +1,5 @@
-from typing import Dict, List, Optional, TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, Dict, List, Optional, cast
+
 from beartype import beartype
 
 if TYPE_CHECKING:

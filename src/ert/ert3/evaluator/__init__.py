@@ -1,5 +1,5 @@
+from ._builder import add_commands, add_step_inputs, add_step_outputs, build_ensemble
 from ._evaluator import evaluate
-from ._builder import add_step_inputs, add_commands, add_step_outputs, build_ensemble
 
 __all__ = [
     "evaluate",

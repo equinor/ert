@@ -1,11 +1,13 @@
+import io
 import os
 import shutil
-import pandas as pd
-import io
-import pytest
 from unittest.mock import MagicMock
-from ert.shared.services import Storage
+
+import pandas as pd
+import pytest
+
 from ert.gui.tools.plot.plot_api import PlotApi
+from ert.shared.services import Storage
 
 
 class MockResponse:

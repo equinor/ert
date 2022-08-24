@@ -3,9 +3,10 @@ import resource
 import shutil
 from unittest.mock import MagicMock
 
-from hypothesis import HealthCheck, settings
 import pkg_resources
 import pytest
+from hypothesis import HealthCheck, settings
+
 from ert._c_wrappers.enkf import ResConfig
 from ert.shared.services import Storage
 

@@ -1,5 +1,5 @@
 from qtpy.QtCore import Qt, Signal
-from qtpy.QtWidgets import QDialog, QVBoxLayout, QLayout, QPushButton, QHBoxLayout
+from qtpy.QtWidgets import QDialog, QHBoxLayout, QLayout, QPushButton, QVBoxLayout
 
 
 class WorkflowDialog(QDialog):

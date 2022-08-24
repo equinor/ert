@@ -1,39 +1,41 @@
+import atexit
 import json
 import logging
 import logging.config
 import os
-import sys
 import re
-import requests
-import yaml
-import atexit
-import ert.shared
+import sys
 from argparse import ArgumentParser, ArgumentTypeError
 from contextlib import contextmanager
-from ert.logging._log_util_abort import _log_util_abort
+
+import requests
+import yaml
 from ecl import set_abort_handler
+
+import ert.shared
 from ert.logging import LOGGING_CONFIG
-from ert.shared.cli.main import run_cli, ErtCliError
+from ert.logging._log_util_abort import _log_util_abort
 from ert.shared.cli import (
-    ENSEMBLE_SMOOTHER_MODE,
     ENSEMBLE_EXPERIMENT_MODE,
-    ITERATIVE_ENSEMBLE_SMOOTHER_MODE,
+    ENSEMBLE_SMOOTHER_MODE,
     ES_MDA_MODE,
+    ITERATIVE_ENSEMBLE_SMOOTHER_MODE,
     TEST_RUN_MODE,
     WORKFLOW_MODE,
 )
+from ert.shared.cli.main import ErtCliError, run_cli
+from ert.shared.feature_toggling import FeatureToggling
 from ert.shared.ide.keywords.definitions import (
-    RangeStringArgument,
+    IntegerArgument,
+    NumberListStringArgument,
     ProperNameArgument,
     ProperNameFormatArgument,
-    NumberListStringArgument,
-    IntegerArgument,
+    RangeStringArgument,
 )
 from ert.shared.models.multiple_data_assimilation import MultipleDataAssimilation
 from ert.shared.plugins.plugin_manager import ErtPluginContext
-from ert.shared.feature_toggling import FeatureToggling
-from ert.shared.storage.command import add_parser_options as ert_api_add_parser_options
 from ert.shared.services import Storage, WebvizErt
+from ert.shared.storage.command import add_parser_options as ert_api_add_parser_options
 
 
 def run_ert_storage(args):

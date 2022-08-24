@@ -1,8 +1,8 @@
+import logging
 from contextlib import contextmanager
-from qtpy.QtWidgets import QVBoxLayout, QPlainTextEdit
 
 from qtpy import QtCore
-import logging
+from qtpy.QtWidgets import QPlainTextEdit, QVBoxLayout
 
 
 class GUILogHandler(logging.Handler, QtCore.QObject):

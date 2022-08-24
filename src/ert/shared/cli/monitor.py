@@ -2,8 +2,9 @@
 import sys
 from datetime import datetime
 
-from tqdm import tqdm
 from colors import color as ansi_color
+from tqdm import tqdm
+
 from ert.ensemble_evaluator.event import (
     EndEvent,
     FullSnapshotEvent,
@@ -13,8 +14,8 @@ from ert.ensemble_evaluator.state import (
     ALL_REALIZATION_STATES,
     COLOR_FAILED,
     COLOR_FINISHED,
-    REAL_STATE_TO_COLOR,
     JOB_STATE_FAILURE,
+    REAL_STATE_TO_COLOR,
 )
 from ert.shared.status.utils import format_running_time
 

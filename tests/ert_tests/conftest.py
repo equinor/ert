@@ -1,5 +1,6 @@
 # This conftest still exists so that tests files can import ert_utils
 import logging
+
 import pytest
 
 from ert.shared.ensemble_evaluator.config import EvaluatorServerConfig

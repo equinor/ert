@@ -1,15 +1,16 @@
 import math
+
 from PyQt5.QtWidgets import QListView
 from qtpy.QtCore import QModelIndex, Qt
+from qtpy.QtGui import QColor, QPainter, QPalette
 from qtpy.QtWidgets import (
+    QApplication,
+    QFrame,
     QStyledItemDelegate,
     QStyleOptionViewItem,
-    QFrame,
-    QApplication,
 )
-from qtpy.QtGui import QPainter, QColor, QPalette
-from ert.ensemble_evaluator.state import REAL_STATE_TO_COLOR
 
+from ert.ensemble_evaluator.state import REAL_STATE_TO_COLOR
 from ert.gui.model.progress_proxy import ProgressRole
 
 

@@ -1,7 +1,8 @@
 from ecl.util.test import TestAreaContext
-from ...libres_utils import ResTest
+
 from ert._c_wrappers.job_queue import WorkflowJob
 
+from ...libres_utils import ResTest
 from .workflow_common import WorkflowCommon
 
 

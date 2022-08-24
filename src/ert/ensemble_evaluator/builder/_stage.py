@@ -1,12 +1,8 @@
 import logging
 import uuid
-from typing import (
-    MutableSequence,
-    Sequence,
-)
+from typing import MutableSequence, Sequence
 
-from ._io_ import _IO, _IOBuilder, _DummyIOBuilder
-
+from ._io_ import _IO, _DummyIOBuilder, _IOBuilder
 
 logger = logging.getLogger(__name__)
 

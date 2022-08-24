@@ -1,10 +1,10 @@
 from qtpy.QtWidgets import (
     QDialog,
-    QStyle,
     QDialogButtonBox,
-    QTextEdit,
-    QLabel,
     QGridLayout,
+    QLabel,
+    QStyle,
+    QTextEdit,
 )
 
 

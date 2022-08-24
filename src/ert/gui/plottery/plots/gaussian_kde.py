@@ -1,5 +1,6 @@
 import numpy
 from scipy.stats import gaussian_kde
+
 from .plot_tools import PlotTools
 
 

@@ -2,6 +2,7 @@ import os
 from textwrap import dedent
 
 import pytest
+
 from ert._c_wrappers.enkf import EnKFMain, ResConfig
 
 

@@ -1,9 +1,11 @@
+from typing import List
+
 import numpy
 from pandas import DataFrame
+
 from ert._c_wrappers.enkf import EnKFMain
-from ert._c_wrappers.enkf.enums import RealizationStateEnum
 from ert._c_wrappers.enkf.enkf_fs import EnkfFs
-from typing import List
+from ert._c_wrappers.enkf.enums import RealizationStateEnum
 
 
 class MisfitCollector:

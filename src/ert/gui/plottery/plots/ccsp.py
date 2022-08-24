@@ -1,7 +1,8 @@
-from matplotlib.patches import Rectangle
-from matplotlib.lines import Line2D
-from .plot_tools import PlotTools
 import pandas as pd
+from matplotlib.lines import Line2D
+from matplotlib.patches import Rectangle
+
+from .plot_tools import PlotTools
 
 
 class CrossCaseStatisticsPlot:

@@ -1,9 +1,7 @@
 from ecl.util.util import DoubleVector
 
-from ert._c_wrappers.enkf.plot_data import (
-    PlotBlockData,
-    PlotBlockVector,
-)
+from ert._c_wrappers.enkf.plot_data import PlotBlockData, PlotBlockVector
+
 from ....libres_utils import ResTest
 
 

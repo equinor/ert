@@ -1,8 +1,8 @@
 from typing import List
 
-from ert._c_wrappers.enkf import EnKFMain, RealizationStateEnum
-from ert._c_wrappers.enkf import RunContext
 from ecl.util.util import StringList
+
+from ert._c_wrappers.enkf import EnKFMain, RealizationStateEnum, RunContext
 from ert.gui.ertwidgets import showWaitCursorWhileWaiting
 
 

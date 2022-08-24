@@ -1,11 +1,12 @@
-import pytest
-from ert.async_utils import run_in_loop
-import pandas as pd
 import io
 
-from ert.libres_facade import LibresFacade
+import pandas as pd
+import pytest
+
 from ert._c_wrappers.enkf import EnKFMain, ResConfig
-from ert.shared.dark_storage.endpoints import experiments, ensembles, records, responses
+from ert.async_utils import run_in_loop
+from ert.libres_facade import LibresFacade
+from ert.shared.dark_storage.endpoints import ensembles, experiments, records, responses
 
 
 def get_single_record_csv(ert, ensemble_id1, keyword, poly_ran):

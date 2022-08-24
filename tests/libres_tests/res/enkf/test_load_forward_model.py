@@ -10,8 +10,8 @@ import pytest
 from ecl.summary import EclSum
 from ecl.util.util import BoolVector
 
+from ert._c_wrappers.enkf import EnKFMain, ResConfig
 from ert.libres_facade import LibresFacade
-from ert._c_wrappers.enkf import ResConfig, EnKFMain
 
 
 @pytest.fixture

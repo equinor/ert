@@ -1,12 +1,12 @@
 import logging
 from os import PathLike
-import requests
 from typing import Any, Optional, Tuple
 
 import httpx
+import requests
+from ert_storage.client import Client, ConnInfo
 
 from ert.shared.services._base_service import BaseService, local_exec_args
-from ert_storage.client import Client, ConnInfo
 
 
 class Storage(BaseService):

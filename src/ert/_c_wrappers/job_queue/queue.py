@@ -34,6 +34,11 @@ from websockets.client import connect
 from websockets.datastructures import Headers
 from websockets.exceptions import ConnectionClosedError
 
+from ert._c_wrappers import ResPrototype
+from ert._c_wrappers.job_queue.job_queue_node import JobQueueNode
+from ert._c_wrappers.job_queue.job_status_type_enum import JobStatusType
+from ert._c_wrappers.job_queue.queue_differ import QueueDiffer
+from ert._c_wrappers.job_queue.thread_status_type_enum import ThreadStatus
 from ert.constant_filenames import (
     CERT_FILE,
     JOBS_FILE,
@@ -41,11 +46,6 @@ from ert.constant_filenames import (
     OK_file,
     STATUS_file,
 )
-from ert._c_wrappers import ResPrototype
-from ert._c_wrappers.job_queue.job_queue_node import JobQueueNode
-from ert._c_wrappers.job_queue.job_status_type_enum import JobStatusType
-from ert._c_wrappers.job_queue.queue_differ import QueueDiffer
-from ert._c_wrappers.job_queue.thread_status_type_enum import ThreadStatus
 
 if TYPE_CHECKING:
     from ert._c_wrappers.enkf.res_config import ResConfig

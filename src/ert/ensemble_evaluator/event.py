@@ -2,7 +2,7 @@ from typing import Optional
 
 from pydantic import BaseModel
 
-from .snapshot import Snapshot, PartialSnapshot
+from .snapshot import PartialSnapshot, Snapshot
 
 
 class _UpdateEvent(BaseModel):

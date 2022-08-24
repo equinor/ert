@@ -24,10 +24,11 @@ from unittest import mock
 import pytest
 import yaml
 from ecl.summary import EclSum
-from ...libres_utils import ResTest, tmpdir
 from pytest import MonkeyPatch
 
 from ert._c_wrappers.fm.ecl import Ecl100Config, EclRun, EclrunConfig, run
+
+from ...libres_utils import ResTest, tmpdir
 
 
 def find_version(output):

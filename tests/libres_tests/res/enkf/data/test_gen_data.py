@@ -1,8 +1,8 @@
-from ....libres_utils import ResTest
-
 from ert._c_wrappers.enkf.data.enkf_node import EnkfNode
 from ert._c_wrappers.enkf.node_id import NodeId
 from ert._c_wrappers.test import ErtTestContext
+
+from ....libres_utils import ResTest
 
 
 class GenDataTest(ResTest):

@@ -1,4 +1,4 @@
-from typing import List, Tuple, TYPE_CHECKING
+from typing import TYPE_CHECKING, List, Tuple
 
 from qtpy.QtCore import Qt
 from qtpy.QtWidgets import (

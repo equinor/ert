@@ -1,5 +1,6 @@
-from ert import ert3
-
+from ert.ert3.config import ConfigPluginRegistry, create_plugged_model
+from ert.ert3.config.plugins import TransformationConfigBase
+from ert.ert3.plugins import ErtPluginManager
 
 _modified_classes = {
     ("ert3.config", "StageIO"): ["transformation"],
@@ -19,21 +20,21 @@ def process_docstring_callback(app, what, name, obj, options, lines):
         return
 
     for (module, modified_cls), categories in _modified_classes.items():
-        plugin_registry = ert3.config.ConfigPluginRegistry()
+        plugin_registry = ConfigPluginRegistry()
         for category in categories:
             plugin_registry.register_category(
                 category=category,
-                base_config=ert3.config.plugins.TransformationConfigBase,
+                base_config=TransformationConfigBase,
                 optional=True,
             )
-        plugin_manager = ert3.plugins.ErtPluginManager()
+        plugin_manager = ErtPluginManager()
         plugin_manager.collect(registry=plugin_registry)
 
         if name != module:
             continue
 
         base_cls = getattr(obj, modified_cls)
-        cls_transformed = ert3.config.create_plugged_model(
+        cls_transformed = create_plugged_model(
             model_name=modified_cls,
             categories=categories,
             plugin_registry=plugin_registry,

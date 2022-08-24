@@ -5,6 +5,10 @@ from pathlib import Path
 from typing import Union
 
 from ert.experiment_server._schema_pb2 import (
+    JOB_FAILURE,
+    JOB_RUNNING,
+    JOB_START,
+    JOB_SUCCESS,
     DispatcherMessage,
     EnsembleId,
     ExperimentId,
@@ -12,12 +16,7 @@ from ert.experiment_server._schema_pb2 import (
     JobId,
     RealizationId,
     StepId,
-    JOB_START,
-    JOB_RUNNING,
-    JOB_FAILURE,
-    JOB_SUCCESS,
 )
-from ert.shared.ensemble_evaluator.client import Client
 from ert.job_runner.reporting.base import Reporter
 from ert.job_runner.reporting.message import (
     _JOB_EXIT_FAILED_STRING,
@@ -28,6 +27,7 @@ from ert.job_runner.reporting.message import (
     Start,
 )
 from ert.job_runner.reporting.statemachine import StateMachine
+from ert.shared.ensemble_evaluator.client import Client
 
 logger = logging.getLogger(__name__)
 

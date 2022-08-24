@@ -1,13 +1,15 @@
-import logging
-import requests
 import io
-import httpx
-import pandas as pd
-from typing import List
-from ert.shared.services import Storage
-from pandas.errors import ParserError
+import logging
 from itertools import combinations as combi
 from json.decoder import JSONDecodeError
+from typing import List
+
+import httpx
+import pandas as pd
+import requests
+from pandas.errors import ParserError
+
+from ert.shared.services import Storage
 
 logger = logging.getLogger(__name__)
 

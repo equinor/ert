@@ -1,4 +1,5 @@
 import pytest
+
 from ert.gui.ertwidgets.summarypanel import _runlength_encode_list
 
 

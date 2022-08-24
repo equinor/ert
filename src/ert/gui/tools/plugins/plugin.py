@@ -1,4 +1,5 @@
 from typing import TYPE_CHECKING
+
 from ert._c_wrappers.job_queue import ErtScript
 
 if TYPE_CHECKING:

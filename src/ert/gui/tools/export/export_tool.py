@@ -13,15 +13,16 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
+import logging
 from weakref import ref
+
+from qtpy.QtWidgets import QMessageBox
 
 from ert.gui.ertwidgets import resourceIcon
 from ert.gui.ertwidgets.closabledialog import ClosableDialog
 from ert.gui.tools import Tool
 from ert.gui.tools.export import ExportPanel
 from ert.shared.exporter import Exporter
-from qtpy.QtWidgets import QMessageBox
-import logging
 
 
 class ExportTool(Tool):

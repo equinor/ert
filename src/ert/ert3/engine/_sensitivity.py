@@ -1,4 +1,4 @@
-from typing import Dict, List, Tuple, TYPE_CHECKING
+from typing import TYPE_CHECKING, Dict, List, Tuple
 
 import ert.data
 import ert.storage
@@ -7,9 +7,9 @@ from ert.ert3 import algorithms
 from ._entity import TransmitterCoroutine
 
 if TYPE_CHECKING:
-    from ert.ert3.config import ExperimentConfig, ParametersConfig, LinkedInput
-    from ert.ert3.workspace import Workspace
+    from ert.ert3.config import ExperimentConfig, LinkedInput, ParametersConfig
     from ert.ert3.stats import Distribution
+    from ert.ert3.workspace import Workspace
 
 
 # pylint: disable=too-many-arguments

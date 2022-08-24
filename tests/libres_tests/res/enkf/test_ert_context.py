@@ -1,8 +1,8 @@
 from distutils.errors import DistutilsFileError
 
-from ...libres_utils import ResTest
-
 from ert._c_wrappers.test import ErtTestContext
+
+from ...libres_utils import ResTest
 
 
 class ErtTestContextTest(ResTest):

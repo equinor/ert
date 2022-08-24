@@ -4,6 +4,7 @@ from functools import partial
 from typing import Callable, Dict, List, Optional, Tuple, Type, cast
 
 import cloudpickle
+
 import ert.data
 import ert.ensemble_evaluator
 import ert.storage

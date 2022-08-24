@@ -1,9 +1,11 @@
+import json
+import os
+
 import pytest
 import requests
-import os
-import json
-from ert.shared.services import Storage, _storage_main
+
 from ert.shared import port_handler
+from ert.shared.services import Storage, _storage_main
 
 
 @pytest.mark.skip

@@ -1,6 +1,6 @@
 from qtpy.QtCore import QSize
 from qtpy.QtGui import QPainter
-from qtpy.QtWidgets import QWidget, QHBoxLayout, QLabel
+from qtpy.QtWidgets import QHBoxLayout, QLabel, QWidget
 
 
 class LegendMarker(QWidget):

@@ -1,10 +1,11 @@
 import asyncio
 import ssl
-from typing import AnyStr, Optional, Any, Dict, Union
+from typing import Any, AnyStr, Dict, Optional, Union
+
 import cloudevents
 from websockets.client import WebSocketClientProtocol, connect
-from websockets.exceptions import ConnectionClosed, ConnectionClosedOK
 from websockets.datastructures import Headers
+from websockets.exceptions import ConnectionClosed, ConnectionClosedOK
 
 
 class Client:  # pylint: disable=too-many-instance-attributes

@@ -1,4 +1,5 @@
 from ecl.util.test import TestAreaContext
+
 from ert._c_wrappers.job_queue import Workflow, WorkflowJoblist
 from ert._c_wrappers.util.substitution_list import SubstitutionList
 

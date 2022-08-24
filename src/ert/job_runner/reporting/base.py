@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+
 from ert.job_runner.reporting.message import Message
 
 

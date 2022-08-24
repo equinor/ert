@@ -6,15 +6,15 @@ from pathlib import Path
 from typing import Dict
 
 import cloudpickle
+import prefect
+import pytest
+from prefect import Flow
+
 import ert
 import ert.ensemble_evaluator as ee
-import pytest
+from ert.async_utils import get_event_loop
 from ert.ensemble_evaluator import identifiers as ids
 from ert.ensemble_evaluator.builder._prefect import _on_task_failure
-from ert.async_utils import get_event_loop
-
-import prefect
-from prefect import Flow
 
 from ...ert_utils import tmp
 

@@ -13,7 +13,7 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
-from qtpy.QtCore import Qt, QSortFilterProxyModel
+from qtpy.QtCore import QSortFilterProxyModel, Qt
 
 
 class DataTypeProxyModel(QSortFilterProxyModel):

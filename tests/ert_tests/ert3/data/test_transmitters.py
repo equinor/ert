@@ -4,8 +4,9 @@ from typing import Callable, ContextManager
 
 import aiofiles
 import cloudpickle
-import ert
 import pytest
+
+import ert
 from ert.data import (
     BlobRecord,
     BlobRecordTree,

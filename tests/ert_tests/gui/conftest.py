@@ -5,10 +5,7 @@ from unittest.mock import MagicMock, Mock
 
 import pytest
 
-from ert.ensemble_evaluator.identifiers import (
-    MAX_MEMORY_USAGE,
-    CURRENT_MEMORY_USAGE,
-)
+from ert.ensemble_evaluator.identifiers import CURRENT_MEMORY_USAGE, MAX_MEMORY_USAGE
 from ert.ensemble_evaluator.snapshot import (
     Job,
     Realization,

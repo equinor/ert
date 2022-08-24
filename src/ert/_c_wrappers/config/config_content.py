@@ -16,6 +16,7 @@
 from typing import TYPE_CHECKING, Any, Dict, List
 
 from cwrap import BaseCClass
+
 from ert._c_wrappers import ResPrototype
 from ert._c_wrappers.config.config_error import ConfigError
 from ert._c_wrappers.config.config_path_elm import ConfigPathElm

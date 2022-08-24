@@ -1,7 +1,7 @@
 import importlib.util
+import pathlib
 from collections import OrderedDict
 from importlib.abc import Loader
-import pathlib
 from types import MappingProxyType
 from typing import (
     Any,
@@ -9,26 +9,19 @@ from typing import (
     Dict,
     List,
     Mapping,
+    Optional,
     Tuple,
+    Type,
     Union,
     cast,
-    Type,
-    Optional,
 )
 
-from pydantic import (
-    BaseModel,
-    FilePath,
-    ValidationError,
-    root_validator,
-    validator,
-)
-
+from pydantic import BaseModel, FilePath, ValidationError, root_validator, validator
 
 import ert.data
 import ert.exceptions
-from ._config_plugin_registry import ConfigPluginRegistry, create_plugged_model
 
+from ._config_plugin_registry import ConfigPluginRegistry, create_plugged_model
 from ._validator import ensure_mime
 
 

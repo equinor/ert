@@ -1,18 +1,18 @@
-import aiohttp
 import asyncio
 import queue
 import threading
 from contextlib import contextmanager
 from http import HTTPStatus
 
+import aiohttp
 import websockets
 
 from ert.async_utils import get_event_loop
+from ert.shared import port_handler
 from ert.shared.ensemble_evaluator.narratives.narrative import (
     InteractionDirection,
     _Narrative,
 )
-from ert.shared import port_handler
 
 
 class NarrativeProxy:

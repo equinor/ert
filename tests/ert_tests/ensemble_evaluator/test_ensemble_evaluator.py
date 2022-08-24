@@ -2,6 +2,9 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 from aiohttp import ServerTimeoutError
+from websockets.exceptions import ConnectionClosedError
+from websockets.version import version as websockets_version
+
 from ert.ensemble_evaluator import Snapshot, identifiers, wait_for_evaluator
 from ert.ensemble_evaluator.state import (
     ENSEMBLE_STATE_FAILED,
@@ -20,8 +23,6 @@ from ert.shared.ensemble_evaluator.narratives import (
     monitor_failing_evaluation,
     monitor_successful_ensemble,
 )
-from websockets.exceptions import ConnectionClosedError
-from websockets.version import version as websockets_version
 
 from .ensemble_evaluator_utils import (
     AutorunTestEnsemble,

@@ -15,7 +15,6 @@
 #  for more details.
 
 from ecl.util.test import TestAreaContext
-from ...libres_utils import ResTest, tmpdir
 
 from ert._c_wrappers.enkf import (
     AnalysisConfig,
@@ -36,6 +35,8 @@ from ert._c_wrappers.enkf.enums import (
     LoadFailTypeEnum,
 )
 from ert._c_wrappers.enkf.observations.summary_observation import SummaryObservation
+
+from ...libres_utils import ResTest, tmpdir
 
 
 class EnKFTest(ResTest):

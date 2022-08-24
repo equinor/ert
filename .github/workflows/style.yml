@@ -35,6 +35,10 @@ jobs:
     - name: CMake Format
       run: ./script/cmake-format --check
 
+    - name: Run isort
+      run: |
+        isort --check src/ tests/
+
     - name: Lint with flake8
       run: |
         flake8

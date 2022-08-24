@@ -1,5 +1,6 @@
-from typing import Any, Dict, Optional, Literal
-from pydantic import root_validator, BaseModel
+from typing import Any, Dict, Literal, Optional
+
+from pydantic import BaseModel, root_validator
 from pydantic.class_validators import validator
 
 

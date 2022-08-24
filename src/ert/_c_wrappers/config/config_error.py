@@ -13,8 +13,9 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
-from ert._c_wrappers import ResPrototype
 from cwrap import BaseCClass
+
+from ert._c_wrappers import ResPrototype
 
 
 class ConfigError(BaseCClass):

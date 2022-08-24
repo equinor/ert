@@ -1,6 +1,7 @@
 import collections
 import re
-from typing import Any, Union, Mapping
+from typing import Any, Mapping, Union
+
 from pyrsistent import freeze
 from pyrsistent.typing import PMap as TPMap
 

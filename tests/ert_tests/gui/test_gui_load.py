@@ -9,7 +9,7 @@ from qtpy.QtCore import Qt
 import ert.gui
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets.message_box import ErtMessageBox
-from ert.gui.gert_main import _start_window, run_gui, GUILogHandler
+from ert.gui.gert_main import GUILogHandler, _start_window, run_gui
 
 
 @pytest.fixture()

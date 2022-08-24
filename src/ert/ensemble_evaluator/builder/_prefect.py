@@ -31,6 +31,7 @@ from prefect import context as prefect_context  # type: ignore
 from prefect.engine.state import State
 from prefect.executors import DaskExecutor, LocalDaskExecutor  # type: ignore
 
+from ert.async_utils import get_event_loop
 from ert.ensemble_evaluator.evaluator_connection_info import EvaluatorConnectionInfo
 from ert.ensemble_evaluator.identifiers import (
     EVTYPE_ENSEMBLE_CANCELLED,
@@ -39,7 +40,6 @@ from ert.ensemble_evaluator.identifiers import (
     EVTYPE_ENSEMBLE_STOPPED,
     EVTYPE_FM_STEP_FAILURE,
 )
-from ert.async_utils import get_event_loop
 from ert.shared.ensemble_evaluator.client import Client
 from ert.shared.port_handler import find_available_port
 
