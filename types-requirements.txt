@@ -7,3 +7,4 @@ types-python-dateutil
 types-six
 types-decorator
 types-docutils
+types-protobuf
