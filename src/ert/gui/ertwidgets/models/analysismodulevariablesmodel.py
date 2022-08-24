@@ -13,10 +13,13 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
-from typing import List
+from typing import TYPE_CHECKING, List, Union
 
-from ert.libres_facade import LibresFacade
 from ert._c_wrappers.analysis.analysis_module import AnalysisModule
+from ert.libres_facade import LibresFacade
+
+if TYPE_CHECKING:
+    from ert._c_wrappers.analysis.analysis_module import VariableName
 
 
 class AnalysisModuleVariablesModel:
@@ -26,7 +29,7 @@ class AnalysisModuleVariablesModel:
     @classmethod
     def getVariableNames(
         cls, facade: LibresFacade, analysis_module_name: str
-    ) -> List[str]:
+    ) -> List["VariableName"]:
         analysis_module = facade.get_analysis_module(analysis_module_name)
         return analysis_module.getVariableNames()
 
@@ -59,8 +62,7 @@ class AnalysisModuleVariablesModel:
 
     @classmethod
     def getVariableValue(
-        cls, facade: LibresFacade, analysis_module_name: str, name: str
-    ):
-        """@rtype: int or float or bool or str"""
+        cls, facade: LibresFacade, analysis_module_name: str, name: "VariableName"
+    ) -> Union[int, float, bool]:
         analysis_module = facade.get_analysis_module(analysis_module_name)
         return analysis_module.getVariableValue(name)

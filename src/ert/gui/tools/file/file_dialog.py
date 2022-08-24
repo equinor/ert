@@ -77,16 +77,16 @@ class FileDialog(QDialog):
         return floor(screen_height * max_ratio_of_screen)
 
     def _init_layout(self):
-        dialog_buttons = QDialogButtonBox(QDialogButtonBox.Ok)
+        dialog_buttons = QDialogButtonBox(QDialogButtonBox.Ok)  # type: ignore
         dialog_buttons.accepted.connect(self.accept)
 
         self._copy_all_button = dialog_buttons.addButton(
-            "Copy all", QDialogButtonBox.ActionRole
+            "Copy all", QDialogButtonBox.ActionRole  # type: ignore
         )
         self._copy_all_button.clicked.connect(self._copy_all)
 
         self._follow_button = dialog_buttons.addButton(
-            "Follow", QDialogButtonBox.ActionRole
+            "Follow", QDialogButtonBox.ActionRole  # type: ignore
         )
         self._follow_button.setCheckable(True)
         self._follow_button.toggled.connect(self._enable_follow_mode)
@@ -112,7 +112,7 @@ class FileDialog(QDialog):
 
     def _copy_all(self) -> None:
         text = self._view.toPlainText()
-        QApplication.clipboard().setText(text, QClipboard.Clipboard)
+        QApplication.clipboard().setText(text, QClipboard.Clipboard)  # type: ignore
         pass
 
     def _update_cursor(self, value: int) -> None:
@@ -123,16 +123,16 @@ class FileDialog(QDialog):
 
     def _enable_follow_mode(self, enable: bool) -> None:
         if enable:
-            self._view.moveCursor(QTextCursor.End)
-            self._view.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+            self._view.moveCursor(QTextCursor.End)  # type: ignore
+            self._view.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)  # type: ignore
             self._view.verticalScrollBar().setDisabled(True)
-            self._view.setTextInteractionFlags(Qt.NoTextInteraction)
+            self._view.setTextInteractionFlags(Qt.NoTextInteraction)  # type: ignore
             self._follow_mode = True
         else:
             self._view.verticalScrollBar().setDisabled(False)
-            self._view.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+            self._view.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)  # type: ignore
             self._view.setTextInteractionFlags(
-                Qt.TextSelectableByMouse | Qt.TextSelectableByKeyboard
+                Qt.TextSelectableByMouse | Qt.TextSelectableByKeyboard  # type: ignore
             )
             self._follow_mode = False
 
@@ -141,7 +141,7 @@ class FileDialog(QDialog):
         if text[-1:] == "\n":
             text = text[:-1]
         if self._follow_mode:
-            self._view.moveCursor(QTextCursor.End)
+            self._view.moveCursor(QTextCursor.End)  # type: ignore
         self._view.appendPlainText(text)
         self.adjustSize()
 

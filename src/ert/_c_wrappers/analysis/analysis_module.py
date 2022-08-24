@@ -14,11 +14,28 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 
-from typing import List, Type, Union
+from typing import TYPE_CHECKING, Dict, List, Literal, Type, TypedDict, Union
 
 from cwrap import BaseCClass
 
 from ert._c_wrappers import ResPrototype
+
+if TYPE_CHECKING:
+
+    class VariableInfo(TypedDict):
+        type: Union[Type[float], Type[int]]
+        min: float
+        max: float
+        step: float
+        labelname: str
+
+    VariableName = Literal[
+        "IES_MAX_STEPLENGTH",
+        "IES_MIN_STEPLENGTH",
+        "IES_DEC_STEPLENGTH",
+        "IES_INVERSION",
+        "ENKF_TRUNCATION",
+    ]
 
 
 class AnalysisModule(BaseCClass):
@@ -37,7 +54,7 @@ class AnalysisModule(BaseCClass):
     _get_int = ResPrototype("int analysis_module_get_int(analysis_module, char*)")
     _get_bool = ResPrototype("bool analysis_module_get_bool(analysis_module, char*)")
 
-    VARIABLE_NAMES = {
+    VARIABLE_NAMES: Dict["VariableName", "VariableInfo"] = {
         "IES_MAX_STEPLENGTH": {
             "type": float,
             "min": 0.1,
@@ -82,14 +99,14 @@ class AnalysisModule(BaseCClass):
 
         super().__init__(c_ptr)
 
-    def getVariableNames(self) -> List[str]:
+    def getVariableNames(self) -> List["VariableName"]:
         items = []
         for name in AnalysisModule.VARIABLE_NAMES:
             if self.hasVar(name):
                 items.append(name)
         return items
 
-    def getVariableValue(self, name: str) -> Union[int, float, bool]:
+    def getVariableValue(self, name: "VariableName") -> Union[int, float, bool]:
         self.__assertVar(name)
         variable_type = self.getVariableType(name)
         if variable_type == float:
@@ -101,7 +118,9 @@ class AnalysisModule(BaseCClass):
         else:
             raise ValueError(f"Variable of type {variable_type} is not supported")
 
-    def getVariableType(self, name: str) -> Union[Type[int], Type[float], Type[bool]]:
+    def getVariableType(
+        self, name: "VariableName"
+    ) -> Union[Type[int], Type[float], Type[bool]]:
         return AnalysisModule.VARIABLE_NAMES[name]["type"]
 
     def free(self):

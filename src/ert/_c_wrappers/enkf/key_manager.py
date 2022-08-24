@@ -5,8 +5,8 @@ from ert._c_wrappers.enkf.config import GenKwConfig
 from ert._c_wrappers.enkf.enums import EnkfObservationImplementationType, ErtImplType
 
 if TYPE_CHECKING:
-    from ert._c_wrappers.enkf.config import PriorDict
     from ert._c_wrappers.enkf import EnKFMain, EnsembleConfig
+    from ert._c_wrappers.enkf.config.gen_kw_config import PriorDict
 
 
 class KeyManager:

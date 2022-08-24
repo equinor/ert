@@ -8,12 +8,12 @@ from ert._clib.update import RowScalingParameter, Parameter
 from ert._c_wrappers.enkf.row_scaling import RowScaling
 
 
-@classmethod
+@classmethod  # type: ignore
 def __get_validators__(cls):
     yield cls.validate
 
 
-@classmethod
+@classmethod  # type: ignore
 def validate_parameter(cls, v):
     if isinstance(v, str):
         return cls(v)
@@ -21,7 +21,7 @@ def validate_parameter(cls, v):
         return cls(*v)
 
 
-@classmethod
+@classmethod  # type: ignore
 def validate_row_scaling_parameter(cls, v):
     if not isinstance(v[1], RowScaling):
         raise TypeError(f"Expected RowScaling type, got: {type(v[1])}")
@@ -45,7 +45,7 @@ class Observation(BaseModel):
 
 class UpdateStep(BaseModel):
     name: str
-    observations: conlist(Observation, min_items=1)
+    observations: conlist(Observation, min_items=1)  # type: ignore
     parameters: List[Parameter] = []
     row_scaling_parameters: List[RowScalingParameter] = []
 
@@ -83,7 +83,7 @@ class UpdateStep(BaseModel):
 
 
 class UpdateConfiguration(BaseModel):
-    update_steps: conlist(UpdateStep, min_items=1)
+    update_steps: conlist(UpdateStep, min_items=1)  # type: ignore
 
     def __iter__(self):
         yield from self.update_steps
