@@ -502,7 +502,13 @@ class EnKFMain(BaseCClass):
                         run_arg.iens,
                         run_context.iteration,
                     )
-                    (Path(run_arg.runpath) / target_file).write_text(result)
+                    target = Path(run_arg.runpath) / target_file
+                    if not target.parent.exists():
+                        os.makedirs(
+                            target.parent,
+                            exist_ok=True,
+                        )
+                    target.write_text(result)
 
                 enkf_main.init_active_run(
                     res_config=self.resConfig(),
