@@ -118,6 +118,7 @@ def test_run_template_replace_in_file(key, expected):
     "ecl_base, expected_file",
     (
         ("MY_ECL_BASE", "MY_ECL_BASE.DATA"),
+        ("relative/path/MY_ECL_BASE", "relative/path/MY_ECL_BASE.DATA"),
         ("MY_ECL_BASE%d", "MY_ECL_BASE0.DATA"),
         ("MY_ECL_BASE<IENS>", "MY_ECL_BASE0.DATA"),
     ),
