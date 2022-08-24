@@ -441,6 +441,8 @@ static std::pair<fw_load_status, std::string> enkf_state_internalize_results(
                                         run_arg_get_job_name(run_arg))};
             }
         } catch (std::invalid_argument const &ex) {
+            if (summary)
+                ecl_sum_free(summary);
             return {LOAD_FAILURE,
                     ex.what() + fmt::format(" from: {}/{}.UNSMRY",
                                             run_arg_get_runpath(run_arg),
