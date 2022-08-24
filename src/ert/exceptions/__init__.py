@@ -3,12 +3,12 @@ from ert.exceptions._exceptions import (
     ElementExistsError,
     ElementMissingError,
     ErtError,
+    ExperimentError,
     FileExistsException,
     IllegalWorkspaceOperation,
     IllegalWorkspaceState,
     NonExistentExperiment,
     StorageError,
-    ExperimentError,
 )
 
 # Explicitly export again, otherwise mypy is unhappy.

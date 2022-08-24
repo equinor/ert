@@ -7,7 +7,6 @@ from typing import Callable, List, TypedDict
 
 import pytest
 
-from ert._clib.model_callbacks import LoadStatus
 from ert._c_wrappers.job_queue import (
     Driver,
     JobQueue,
@@ -16,6 +15,7 @@ from ert._c_wrappers.job_queue import (
     JobStatusType,
     QueueDriverEnum,
 )
+from ert._clib.model_callbacks import LoadStatus
 
 
 @dataclass

@@ -1,4 +1,5 @@
 import pytest
+
 from ert.ensemble_evaluator import identifiers
 from ert.ensemble_evaluator.state import ENSEMBLE_STATE_FAILED, ENSEMBLE_STATE_STOPPED
 from ert.shared.ensemble_evaluator.evaluator import EnsembleEvaluator, ee_monitor

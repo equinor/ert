@@ -1,18 +1,11 @@
-from pathlib import Path
-
 import sys
+from pathlib import Path
 
 import pytest
 
-from ert.analysis import ESUpdate, ErtAnalysisError
-from ert._c_wrappers.enkf import (
-    EnkfNode,
-    RunContext,
-    NodeId,
-    EnKFMain,
-    ResConfig,
-)
+from ert._c_wrappers.enkf import EnKFMain, EnkfNode, NodeId, ResConfig, RunContext
 from ert._clib import ies
+from ert.analysis import ErtAnalysisError, ESUpdate
 
 
 @pytest.fixture()

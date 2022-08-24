@@ -1,6 +1,7 @@
+from typing import List
+
 from ert._c_wrappers.enkf import EnKFMain
 from ert._c_wrappers.enkf.enums import EnkfObservationImplementationType
-from typing import List
 
 
 class GenDataObservationCollector:

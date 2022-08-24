@@ -1,12 +1,13 @@
+import asyncio
 import os
 import shutil
 import threading
-import asyncio
 from argparse import ArgumentParser
 from unittest.mock import Mock, call
 
-import ert.shared
 import pytest
+
+import ert.shared
 from ert.shared.cli import (
     ENSEMBLE_EXPERIMENT_MODE,
     ENSEMBLE_SMOOTHER_MODE,

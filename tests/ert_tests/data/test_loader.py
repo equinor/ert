@@ -3,6 +3,7 @@ from unittest.mock import MagicMock, Mock
 import deprecation
 import pandas as pd
 import pytest
+
 from ert.data import loader
 
 

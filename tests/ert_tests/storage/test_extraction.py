@@ -9,11 +9,11 @@ import pandas as pd
 import pytest
 from numpy.testing import assert_almost_equal, assert_array_equal
 
-from ert.libres_facade import LibresFacade
-from ert.shared.storage import extraction
 from ert._c_wrappers.enkf import RunContext
 from ert._c_wrappers.enkf.enkf_main import EnKFMain
 from ert._c_wrappers.enkf.res_config import ResConfig
+from ert.libres_facade import LibresFacade
+from ert.shared.storage import extraction
 
 
 @pytest.mark.parametrize(

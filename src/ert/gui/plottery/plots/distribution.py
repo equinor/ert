@@ -1,5 +1,6 @@
-from .plot_tools import PlotTools
 import pandas as pd
+
+from .plot_tools import PlotTools
 
 
 class DistributionPlot:

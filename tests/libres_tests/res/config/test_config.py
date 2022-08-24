@@ -16,7 +16,6 @@
 import os
 
 from ecl.util.test import TestAreaContext
-from ...libres_utils import ResTest, tmpdir
 
 from ert._c_wrappers import ResPrototype
 from ert._c_wrappers.config import (
@@ -27,6 +26,8 @@ from ert._c_wrappers.config import (
     SchemaItem,
     UnrecognizedEnum,
 )
+
+from ...libres_utils import ResTest, tmpdir
 
 
 class _TestConfigPrototype(ResPrototype):

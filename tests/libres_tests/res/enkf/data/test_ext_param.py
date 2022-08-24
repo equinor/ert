@@ -1,10 +1,11 @@
 import json
 
 from ecl.util.test import TestAreaContext
-from ....libres_utils import ResTest
 
 from ert._c_wrappers.enkf.config import ExtParamConfig
 from ert._c_wrappers.enkf.data import ExtParam
+
+from ....libres_utils import ResTest
 
 
 class ExtParamTest(ResTest):

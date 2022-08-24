@@ -1,8 +1,10 @@
-import shutil
 import os
+import shutil
+
 import pytest
-from ert._c_wrappers.enkf import ResConfig, EnKFMain, RunContext
 from ecl.util.util import StringList
+
+from ert._c_wrappers.enkf import EnKFMain, ResConfig, RunContext
 
 
 @pytest.fixture()

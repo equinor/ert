@@ -1,6 +1,7 @@
 import codecs
 import sys
-from subprocess import Popen, PIPE
+from subprocess import PIPE, Popen
+
 from ert._c_wrappers.job_queue import ErtScript
 
 

@@ -1,6 +1,7 @@
-import jinja2
 import json
 import os
+
+import jinja2
 import yaml
 
 from ert._clib.enkf_defaults import DEFAULT_GEN_KW_EXPORT_NAME

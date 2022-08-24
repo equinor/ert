@@ -1,4 +1,5 @@
 import pytest
+
 from ert._c_wrappers.enkf import RunContext
 from ert._c_wrappers.enkf.enkf_main import EnKFMain
 from ert._c_wrappers.enkf.res_config import ResConfig

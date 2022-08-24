@@ -4,9 +4,10 @@ import tempfile
 import unittest
 from unittest.mock import Mock
 
+from pytest import MonkeyPatch
+
 import tests.ert_tests.all.plugins.dummy_plugins as dummy_plugins
 from ert.shared.plugins import ErtPluginContext
-from pytest import MonkeyPatch
 
 env_vars = [
     "ECL100_SITE_CONFIG",

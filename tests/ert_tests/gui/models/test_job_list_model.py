@@ -3,6 +3,9 @@ from unittest.mock import patch
 
 import pytest
 from dateutil import tz
+from PyQt5.QtCore import QModelIndex
+from pytestqt.qt_compat import qt_api
+
 from ert.ensemble_evaluator import identifiers as ids
 from ert.ensemble_evaluator.snapshot import Job, PartialSnapshot
 from ert.ensemble_evaluator.state import (
@@ -13,8 +16,6 @@ from ert.ensemble_evaluator.state import (
 from ert.gui.model.job_list import JobListProxyModel
 from ert.gui.model.node import NodeType
 from ert.gui.model.snapshot import COLUMNS, DURATION, SnapshotModel
-from PyQt5.QtCore import QModelIndex
-from pytestqt.qt_compat import qt_api
 
 from .gui_models_utils import partial_snapshot
 

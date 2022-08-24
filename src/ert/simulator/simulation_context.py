@@ -3,15 +3,15 @@ from threading import Thread
 from time import sleep
 from typing import TYPE_CHECKING, Any, List, Optional, Tuple
 
-from ert._clib import model_callbacks  # pylint: disable=import-error
-
 from ert._c_wrappers.enkf.enums import HookRuntime
 from ert._c_wrappers.job_queue import JobQueueManager, RunStatusType
+from ert._clib import model_callbacks  # pylint: disable=import-error
+
 from .forward_model_status import ForwardModelStatus
 
 if TYPE_CHECKING:
     from ert._c_wrappers.enkf import EnkfFs, EnKFMain, RunArg, RunContext
-    from ert._c_wrappers.job_queue import JobStatusType, JobQueue
+    from ert._c_wrappers.job_queue import JobQueue, JobStatusType
 
 
 def _run_forward_model(

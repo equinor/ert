@@ -1,7 +1,8 @@
 import os
 import os.path
-import yaml
 import shutil
+
+import yaml
 
 
 class RMSConfig:

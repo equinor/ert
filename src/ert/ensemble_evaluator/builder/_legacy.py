@@ -16,12 +16,13 @@ from typing import (
 )
 
 from cloudevents.http.event import CloudEvent
-from ert.ensemble_evaluator import identifiers
-from ert.ensemble_evaluator.util._network import wait_for_evaluator
-from ert.async_utils import get_event_loop
+
 from ert._c_wrappers.enkf import RunArg
 from ert._c_wrappers.enkf.analysis_config import AnalysisConfig
 from ert._c_wrappers.enkf.queue_config import QueueConfig
+from ert.async_utils import get_event_loop
+from ert.ensemble_evaluator import identifiers
+from ert.ensemble_evaluator.util._network import wait_for_evaluator
 
 from ._ensemble import _Ensemble
 from ._realization import _Realization

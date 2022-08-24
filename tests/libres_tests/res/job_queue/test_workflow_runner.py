@@ -1,6 +1,7 @@
 from unittest.mock import patch
 
 from ecl.util.test import TestAreaContext
+
 from ert._c_wrappers.job_queue import Workflow, WorkflowJoblist, WorkflowRunner
 from ert._c_wrappers.util.substitution_list import SubstitutionList
 

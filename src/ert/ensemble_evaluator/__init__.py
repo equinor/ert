@@ -5,7 +5,7 @@ from .builder._job import _JobBuilder, _LegacyJobBuilder
 from .builder._realization import _RealizationBuilder
 from .builder._step import _StepBuilder
 from .evaluator_connection_info import EvaluatorConnectionInfo
-from .event import EndEvent, SnapshotUpdateEvent, FullSnapshotEvent
+from .event import EndEvent, FullSnapshotEvent, SnapshotUpdateEvent
 from .snapshot import PartialSnapshot, Snapshot
 from .tracker.ensemble_state_tracker import EnsembleStateTracker
 from .tracker.evaluator_tracker import EvaluatorTracker

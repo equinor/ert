@@ -15,7 +15,9 @@
 #  for more details.
 
 from cwrap import BaseCClass
+
 from ert._c_wrappers import ResPrototype
+
 from .enums import UIReturnStatusEnum
 
 

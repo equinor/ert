@@ -1,9 +1,9 @@
 import pytest
 
-from ....libres_utils import ResTest
-
 from ert._c_wrappers.enkf.export import SummaryObservationCollector
 from ert._c_wrappers.test import ErtTestContext
+
+from ....libres_utils import ResTest
 
 
 class SummaryObservationCollectorTest(ResTest):

@@ -1,6 +1,7 @@
 import json
 
 import pytest
+
 from ert.serialization import _serializer
 
 OBJECTS = [None, {}, {"foo": "bar"}]

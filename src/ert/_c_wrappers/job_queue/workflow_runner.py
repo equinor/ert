@@ -1,5 +1,4 @@
 from concurrent import futures
-
 from typing import TYPE_CHECKING, Optional
 
 from ert._c_wrappers.job_queue import Workflow

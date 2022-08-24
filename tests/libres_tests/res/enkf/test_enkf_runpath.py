@@ -1,7 +1,7 @@
-import os
-from pathlib import Path
 import fileinput
+import os
 import shutil
+from pathlib import Path
 
 from ert._c_wrappers.enkf import ResConfig
 from ert._c_wrappers.enkf.enkf_main import EnKFMain

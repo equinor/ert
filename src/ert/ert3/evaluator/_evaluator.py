@@ -2,20 +2,15 @@ import pickle
 import sys
 import time
 from concurrent import futures
-from typing import Dict, Optional, Union, Any
+from typing import Any, Dict, Optional, Union
 
 import ert
-from ert.ensemble_evaluator import EvaluatorTracker, Ensemble
+from ert.ensemble_evaluator import Ensemble, EvaluatorTracker
+from ert.ensemble_evaluator.identifiers import EVTYPE_EE_TERMINATED
+from ert.ensemble_evaluator.state import ENSEMBLE_STATE_FAILED, ENSEMBLE_STATE_STOPPED
 from ert.shared.cli.monitor import Monitor
 from ert.shared.ensemble_evaluator.config import EvaluatorServerConfig
 from ert.shared.ensemble_evaluator.evaluator import EnsembleEvaluator
-from ert.ensemble_evaluator.state import (
-    ENSEMBLE_STATE_STOPPED,
-    ENSEMBLE_STATE_FAILED,
-)
-from ert.ensemble_evaluator.identifiers import (
-    EVTYPE_EE_TERMINATED,
-)
 
 
 class ERT3RunModel:

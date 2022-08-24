@@ -1,15 +1,17 @@
-import os
 import asyncio
+import os
 import ssl
 import threading
 import time
-from typing import Optional, Union, Generator
 from concurrent.futures import CancelledError
+from typing import Generator, Optional, Union
+
 import websockets
-import ert.ensemble_evaluator
+from cloudevents.http import CloudEvent
 from websockets.client import WebSocketClientProtocol  # type: ignore
 from websockets.datastructures import Headers
-from cloudevents.http import CloudEvent
+
+import ert.ensemble_evaluator
 
 
 class SyncWebsocketDuplexer:

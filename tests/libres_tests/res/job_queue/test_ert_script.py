@@ -1,4 +1,5 @@
 from ecl.util.test import TestAreaContext
+
 from ert._c_wrappers.job_queue import ErtScript
 
 from ...libres_utils import ResTest

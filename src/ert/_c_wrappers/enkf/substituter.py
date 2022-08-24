@@ -1,5 +1,5 @@
-from typing import Dict, Tuple
 from collections import defaultdict
+from typing import Dict, Tuple
 
 
 class Substituter:

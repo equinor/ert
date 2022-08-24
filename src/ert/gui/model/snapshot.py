@@ -2,15 +2,16 @@ import datetime
 import logging
 from contextlib import ExitStack
 from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
-from dateutil import tz
-import pyrsistent
 
+import pyrsistent
+from dateutil import tz
 from qtpy.QtCore import QAbstractItemModel, QModelIndex, QSize, Qt, QVariant
 from qtpy.QtGui import QColor, QFont
 
-from ert.gui.model.node import Node, NodeType
-from ert.ensemble_evaluator import state, PartialSnapshot, Snapshot
+from ert.ensemble_evaluator import PartialSnapshot, Snapshot
 from ert.ensemble_evaluator import identifiers as ids
+from ert.ensemble_evaluator import state
+from ert.gui.model.node import Node, NodeType
 from ert.shared.status.utils import byte_with_unit
 
 logger = logging.getLogger(__name__)

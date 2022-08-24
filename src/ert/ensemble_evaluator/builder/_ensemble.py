@@ -1,9 +1,10 @@
-from abc import abstractmethod
 import logging
+from abc import abstractmethod
 from typing import TYPE_CHECKING, Any, Dict, List, Mapping, Optional, Sequence, Union
 
 from cloudevents.conversion import to_json
 from cloudevents.http import CloudEvent
+
 from ert.ensemble_evaluator import state
 from ert.ensemble_evaluator.snapshot import (
     Job,
@@ -21,6 +22,7 @@ from ._realization import _Realization
 
 if TYPE_CHECKING:
     import asyncio
+
     from ert.shared.ensemble_evaluator.config import EvaluatorServerConfig
 
 logger = logging.getLogger(__name__)

@@ -2,9 +2,9 @@ from collections import defaultdict
 
 import pandas as pd
 
-from ert.exceptions import StorageError
 from ert._c_wrappers.enkf import RealizationStateEnum
 from ert._c_wrappers.job_queue import ErtScript
+from ert.exceptions import StorageError
 
 
 class ExportMisfitDataJob(ErtScript):

@@ -1,18 +1,18 @@
 import io
+import json
 import os
+import signal
 import sys
 import threading
-import json
 import time
-import signal
-
-from select import select, PIPE_BUF
-from subprocess import Popen, TimeoutExpired
-from pathlib import Path
-from time import sleep
 from logging import Logger, getLogger
+from pathlib import Path
+from select import PIPE_BUF, select
+from subprocess import Popen, TimeoutExpired
+from time import sleep
 from types import FrameType
 from typing import (
+    TYPE_CHECKING,
     Any,
     Callable,
     Generic,
@@ -20,11 +20,10 @@ from typing import (
     Mapping,
     Optional,
     Sequence,
+    Set,
     Type,
     TypeVar,
     Union,
-    TYPE_CHECKING,
-    Set,
 )
 
 if TYPE_CHECKING:

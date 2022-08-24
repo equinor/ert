@@ -1,17 +1,18 @@
-import logging
-import concurrent
 import asyncio
-from ert.shared.models.base_run_model import ErtRunError
-from ert._c_wrappers.enkf.enkf_main import EnKFMain, QueueConfig
-from ert._c_wrappers.enkf.enums import HookRuntime
-from ert._c_wrappers.enkf import RunContext
+import concurrent
+import logging
 import uuid
-from ert.shared.models import BaseRunModel
-from ert.shared.ensemble_evaluator.config import EvaluatorServerConfig
-from typing import Dict, Any
-from ert.ensemble_evaluator import identifiers
+from typing import Any, Dict
 
 from cloudevents.http import CloudEvent
+
+from ert._c_wrappers.enkf import RunContext
+from ert._c_wrappers.enkf.enkf_main import EnKFMain, QueueConfig
+from ert._c_wrappers.enkf.enums import HookRuntime
+from ert.ensemble_evaluator import identifiers
+from ert.shared.ensemble_evaluator.config import EvaluatorServerConfig
+from ert.shared.models import BaseRunModel
+from ert.shared.models.base_run_model import ErtRunError
 
 experiment_logger = logging.getLogger("ert.experiment_server.ensemble_experiment")
 

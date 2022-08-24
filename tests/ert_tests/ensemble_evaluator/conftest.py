@@ -5,16 +5,17 @@ from dataclasses import dataclass
 from pathlib import Path
 from unittest.mock import Mock
 
-import ert.ensemble_evaluator
 import pytest
-from ert.ensemble_evaluator.snapshot import SnapshotBuilder
-from ert.shared.ensemble_evaluator.config import EvaluatorServerConfig
-from ert.shared.ensemble_evaluator.evaluator import EnsembleEvaluator
-from ert._clib.model_callbacks import LoadStatus
+
+import ert.ensemble_evaluator
 from ert._c_wrappers.enkf import ConfigKeys
 from ert._c_wrappers.enkf.queue_config import QueueConfig
 from ert._c_wrappers.job_queue.driver import LOCAL_DRIVER
 from ert._c_wrappers.job_queue.ext_job import ExtJob
+from ert._clib.model_callbacks import LoadStatus
+from ert.ensemble_evaluator.snapshot import SnapshotBuilder
+from ert.shared.ensemble_evaluator.config import EvaluatorServerConfig
+from ert.shared.ensemble_evaluator.evaluator import EnsembleEvaluator
 
 from .ensemble_evaluator_utils import TestEnsemble
 

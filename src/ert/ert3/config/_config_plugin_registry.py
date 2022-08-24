@@ -2,25 +2,20 @@ import importlib
 from collections import defaultdict
 from functools import partialmethod
 from typing import (
+    TYPE_CHECKING,
     Any,
     Callable,
     DefaultDict,
     Dict,
+    List,
     NamedTuple,
     Optional,
     Type,
     Union,
-    List,
-    TYPE_CHECKING,
 )
+
+from pydantic import BaseModel, Field, create_model
 from typing_extensions import Literal
-
-
-from pydantic import (
-    BaseModel,
-    create_model,
-    Field,
-)
 
 
 class _RegisteredConfig(NamedTuple):

@@ -1,5 +1,6 @@
-from os import path
 import math
+from os import path
+
 import pytest
 from qtpy.QtWidgets import QApplication
 

@@ -1,18 +1,18 @@
 import sys
+from contextlib import ExitStack as does_not_raise
 from pathlib import Path
 from textwrap import dedent
-from contextlib import ExitStack as does_not_raise
 
 import cwrap
 import pytest
-
 from ecl import EclDataType
 from ecl.eclfile import EclKW
 from ecl.grid import EclGrid
 from ecl.util.geometry import Surface
 from ecl.util.util import BoolVector
-from ert.libres_facade import LibresFacade
+
 from ert._c_wrappers.enkf import EnKFMain, ResConfig
+from ert.libres_facade import LibresFacade
 
 
 def write_file(fname, contents):

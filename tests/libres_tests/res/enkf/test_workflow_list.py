@@ -17,6 +17,7 @@
 import os
 
 from ecl.util.test import TestAreaContext
+
 from ert._c_wrappers.enkf import ConfigKeys, ErtWorkflowList, ResConfig, SiteConfig
 
 from ...libres_utils import ResTest

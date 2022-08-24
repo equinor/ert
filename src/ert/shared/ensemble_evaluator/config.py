@@ -1,13 +1,10 @@
 import ipaddress
 import logging
-
-from ert.shared import port_handler
-import tempfile
-
 import os
 import pathlib
 import socket
 import ssl
+import tempfile
 import typing
 from base64 import b64encode
 from datetime import datetime, timedelta
@@ -17,10 +14,10 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.x509.oid import NameOID
-from dns import resolver, reversename, exception
+from dns import exception, resolver, reversename
 
 from ert.ensemble_evaluator import EvaluatorConnectionInfo
-
+from ert.shared import port_handler
 
 logger = logging.getLogger(__name__)
 

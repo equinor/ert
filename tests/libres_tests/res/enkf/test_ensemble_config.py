@@ -1,8 +1,9 @@
 from ecl.util.test import TestAreaContext
-from ...libres_utils import ResTest
 
 from ert._c_wrappers.enkf import ConfigKeys, EnsembleConfig, ResConfig
 from ert._c_wrappers.enkf.enums import GenDataFileType
+
+from ...libres_utils import ResTest
 
 
 class EnsembleConfigTest(ResTest):

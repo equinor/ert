@@ -5,21 +5,21 @@ from typing import TYPE_CHECKING, Any, Dict, List
 
 import numpy as np
 
-from ert.analysis import _ies as ies
-from ert._clib import analysis_module, update
 from ert._c_wrappers.enkf.enums import RealizationStateEnum
+from ert._clib import analysis_module, update
+from ert.analysis import _ies as ies
 
 if TYPE_CHECKING:
     import numpy.typing as npt
     from ecl.util.util import RandomNumberGenerator
 
-    from ert._clib.enkf_analysis import UpdateSnapshot
     from ert._c_wrappers.analysis.configuration import UpdateConfiguration
     from ert._c_wrappers.enkf import EnKFMain, RunContext
     from ert._c_wrappers.enkf.analysis_config import AnalysisConfig
     from ert._c_wrappers.enkf.enkf_fs import EnkfFs
     from ert._c_wrappers.enkf.enkf_obs import EnkfObs
     from ert._c_wrappers.enkf.ensemble_config import EnsembleConfig
+    from ert._clib.enkf_analysis import UpdateSnapshot
 
 logger = logging.getLogger(__name__)
 

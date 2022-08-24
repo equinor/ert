@@ -1,8 +1,8 @@
+import distutils.dir_util
 import os
 import os.path
 import shutil
 import sys
-import distutils.dir_util
 
 
 class Shell:

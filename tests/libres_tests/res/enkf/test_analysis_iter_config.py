@@ -15,9 +15,9 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 
-from ...libres_utils import ResTest
-
 from ert._c_wrappers.enkf import AnalysisIterConfig
+
+from ...libres_utils import ResTest
 
 
 class AnalysisIterConfigTest(ResTest):

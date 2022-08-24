@@ -1,4 +1,5 @@
 import pytest
+
 from ert._c_wrappers.enkf.runpaths import Runpaths
 
 

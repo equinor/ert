@@ -5,6 +5,7 @@ import subprocess
 
 from ecl.util.test import TestAreaContext
 from pytest import MonkeyPatch
+
 from ert._c_wrappers.fm.shell import (
     careful_copy_file,
     copy_directory,

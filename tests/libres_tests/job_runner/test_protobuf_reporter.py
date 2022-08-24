@@ -1,7 +1,7 @@
 import os
+
 import pytest
 
-from ..libres_utils import _mock_ws_thread
 from ert.experiment_server._schema_pb2 import (
     JOB_FAILURE,
     JOB_RUNNING,
@@ -13,6 +13,8 @@ from ert.job_runner.job import Job
 from ert.job_runner.reporting import Protobuf
 from ert.job_runner.reporting.message import Exited, Finish, Init, Running, Start
 from ert.job_runner.reporting.statemachine import TransitionError
+
+from ..libres_utils import _mock_ws_thread
 
 
 def test_report_with_successful_start_message_argument(unused_tcp_port):

@@ -2,11 +2,11 @@ import datetime
 
 from qtpy.QtCore import QDate
 from qtpy.QtWidgets import (
-    QWidget,
-    QHBoxLayout,
     QCalendarWidget,
-    QToolButton,
+    QHBoxLayout,
     QMenu,
+    QToolButton,
+    QWidget,
     QWidgetAction,
 )
 

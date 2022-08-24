@@ -8,13 +8,13 @@ from cloudevents.exceptions import DataUnmarshallerError
 from cloudevents.http import from_json
 from websockets.legacy.server import WebSocketServerProtocol
 from websockets.server import serve
+
+from ert._c_wrappers.enkf.enkf_main import EnKFMain
 from ert.serialization import evaluator_unmarshaller
 from ert.shared.ensemble_evaluator.config import EvaluatorServerConfig
-from ert._c_wrappers.enkf.enkf_main import EnKFMain
 
 from ._experiment_protocol import Experiment
 from ._registry import _Registry
-
 
 logger = logging.getLogger(__name__)
 event_logger = logging.getLogger("ert.event_log")

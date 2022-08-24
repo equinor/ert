@@ -1,4 +1,5 @@
 import logging
+
 from ert.shared.main import log_process_usage
 
 

@@ -1,17 +1,18 @@
+import io
+from typing import Any, List, Mapping, Optional
 from uuid import UUID, uuid4
-from typing import Any, Mapping, Optional, List
+
+import pandas as pd
+from ert_storage import json_schema as js
 from fastapi import APIRouter, Body, Depends, File, Header, Request, UploadFile, status
+from fastapi.responses import Response
+
 from ert.shared.dark_storage.common import (
     data_for_key,
     ensemble_parameters,
     observations_for_obs_keys,
 )
-from ert_storage import json_schema as js
-from ert.shared.dark_storage.enkf import LibresFacade, get_res, get_id, get_name
-from fastapi.responses import Response
-import pandas as pd
-import io
-
+from ert.shared.dark_storage.enkf import LibresFacade, get_id, get_name, get_res
 
 router = APIRouter(tags=["record"])
 

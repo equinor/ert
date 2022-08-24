@@ -2,8 +2,8 @@ from unittest.mock import Mock
 
 import pytest
 
-from ert.shared.ensemble_evaluator.dispatch import BatchingDispatcher
 from ert.ensemble_evaluator import identifiers as ids
+from ert.shared.ensemble_evaluator.dispatch import BatchingDispatcher
 
 
 class DummyEventHandler:

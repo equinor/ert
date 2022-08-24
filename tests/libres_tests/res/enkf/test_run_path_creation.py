@@ -2,12 +2,12 @@ import os
 from datetime import datetime
 from pathlib import Path
 from textwrap import dedent
-import packaging
 
+import packaging
 import pytest
 
+from ert._c_wrappers.enkf import EnKFMain, ResConfig
 from ert.shared.version import version
-from ert._c_wrappers.enkf import ResConfig, EnKFMain
 
 
 @pytest.mark.usefixtures("use_tmpdir")

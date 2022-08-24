@@ -14,6 +14,7 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 from ecl.util.test import TestAreaContext
+
 from ert._c_wrappers.enkf import ConfigKeys, ModelConfig, ResConfig
 from ert._c_wrappers.sched import HistorySourceEnum
 

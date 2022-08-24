@@ -3,16 +3,16 @@ from typing import List, Optional, Type
 
 from pydantic import BaseModel, validator
 
+from ert.data import (
+    CopyTransformation,
+    EclSumTransformation,
+    SerializationTransformation,
+    TarTransformation,
+)
 from ert.ert3.config import ConfigPluginRegistry
-from ert.ert3.config.plugins import TransformationConfigBase
 from ert.ert3.config._validator import ensure_mime
-
+from ert.ert3.config.plugins import TransformationConfigBase
 from ert.ert3.plugins.plugin_manager import hook_implementation
-
-from ert.data import CopyTransformation
-from ert.data import SerializationTransformation
-from ert.data import TarTransformation
-from ert.data import EclSumTransformation
 
 
 def transformation_factory(

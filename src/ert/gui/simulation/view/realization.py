@@ -1,21 +1,19 @@
 import math
-from qtpy.QtCore import QRect, QSize, QModelIndex, Qt, Signal
+
+from qtpy.QtCore import QModelIndex, QRect, QSize, Qt, Signal
+from qtpy.QtGui import QColorConstants, QImage, QPainter, QPen
 from qtpy.QtWidgets import (
+    QAbstractItemView,
+    QListView,
+    QStyle,
     QStyledItemDelegate,
     QStyleOptionViewItem,
-    QListView,
-    QAbstractItemView,
-    QStyle,
-    QWidget,
     QVBoxLayout,
+    QWidget,
 )
-from qtpy.QtGui import QPainter, QColorConstants, QPen, QImage
-from ert.gui.model.snapshot import (
-    RealJobColorHint,
-    RealStatusColorHint,
-    RealLabelHint,
-)
+
 from ert.gui.model.real_list import RealListModel
+from ert.gui.model.snapshot import RealJobColorHint, RealLabelHint, RealStatusColorHint
 
 
 class RealizationWidget(QWidget):

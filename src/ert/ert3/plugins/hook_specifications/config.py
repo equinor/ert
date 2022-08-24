@@ -1,5 +1,5 @@
-from ert.ert3.plugins.plugin_manager import hook_specification
 from ert.ert3.config import ConfigPluginRegistry
+from ert.ert3.plugins.plugin_manager import hook_specification
 
 
 @hook_specification  # type: ignore

@@ -31,3 +31,6 @@ markers = [
 ]
 log_cli = "false"
 asyncio_mode = "auto"
+
+[tool.isort]
+profile = "black"

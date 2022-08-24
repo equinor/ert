@@ -1,13 +1,15 @@
+import inspect
 import logging
 import sys
-import inspect
+from os.path import basename
+
 from docutils import nodes, statemachine
 from docutils.parsers.rst import Directive
-from os.path import basename
 from sphinx.application import Sphinx
 
-
-from ert import ert3
+from ert.ert3.config import ConfigPluginRegistry
+from ert.ert3.config.plugins import TransformationConfigBase
+from ert.ert3.plugins import ErtPluginManager
 
 HEADER_TMPL = """{name_capitalized}s
 {title_line}-
@@ -27,13 +29,13 @@ TMPL = """.. autoclass:: {path}::{config_cls}
 
 
 def _load_all_plugins_for_category(category: str):
-    plugin_registry = ert3.config.ConfigPluginRegistry()
+    plugin_registry = ConfigPluginRegistry()
     plugin_registry.register_category(
         category=category,
-        base_config=ert3.config.plugins.TransformationConfigBase,
+        base_config=TransformationConfigBase,
         optional=True,
     )
-    plugin_manager = ert3.plugins.ErtPluginManager()
+    plugin_manager = ErtPluginManager()
     plugin_manager.collect(registry=plugin_registry)
     return plugin_registry
 

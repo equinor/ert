@@ -3,33 +3,30 @@ import logging
 import pickle
 import threading
 import time
-from contextlib import contextmanager
+from contextlib import asynccontextmanager, contextmanager
 from http import HTTPStatus
 from typing import Optional, Set
 
 import cloudevents.exceptions
 import cloudpickle
 import websockets
+from aiohttp import ClientError
 from cloudevents.conversion import to_json
 from cloudevents.http import CloudEvent, from_json
-from contextlib import asynccontextmanager
 from websockets.exceptions import ConnectionClosedError
-from aiohttp import ClientError
 from websockets.legacy.server import WebSocketServerProtocol
 
 import ert.shared.ensemble_evaluator.monitor as ee_monitor
 from ert.ensemble_evaluator import identifiers
 from ert.ensemble_evaluator.builder._ensemble import _Ensemble
-from ert.serialization import evaluator_marshaller, evaluator_unmarshaller
-from ert.shared.ensemble_evaluator.dispatch import BatchingDispatcher
-from ert.shared.ensemble_evaluator.config import EvaluatorServerConfig
-
 from ert.ensemble_evaluator.state import (
     ENSEMBLE_STATE_CANCELLED,
     ENSEMBLE_STATE_FAILED,
     ENSEMBLE_STATE_STOPPED,
 )
-
+from ert.serialization import evaluator_marshaller, evaluator_unmarshaller
+from ert.shared.ensemble_evaluator.config import EvaluatorServerConfig
+from ert.shared.ensemble_evaluator.dispatch import BatchingDispatcher
 
 logger = logging.getLogger(__name__)
 

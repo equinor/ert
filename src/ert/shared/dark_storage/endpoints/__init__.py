@@ -1,12 +1,13 @@
 from fastapi import APIRouter
+
+from .compute.misfits import router as misfits_router
 from .ensembles import router as ensembles_router
-from .records import router as records_router
 from .experiments import router as experiments_router
 from .observations import router as observations_router
-from .updates import router as updates_router
-from .compute.misfits import router as misfits_router
+from .records import router as records_router
 from .responses import router as response_router
 from .server import router as server_router
+from .updates import router as updates_router
 
 router = APIRouter()
 router.include_router(experiments_router)

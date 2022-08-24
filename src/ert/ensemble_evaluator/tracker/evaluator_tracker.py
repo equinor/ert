@@ -8,17 +8,18 @@ from typing import TYPE_CHECKING, Dict, Generator, Union
 from aiohttp import ClientError
 from websockets.exceptions import ConnectionClosedError
 
-from ert.ensemble_evaluator.identifiers import (
-    EVTYPE_EE_SNAPSHOT_UPDATE,
-    EVTYPE_EE_SNAPSHOT,
-    EVTYPE_EE_TERMINATED,
-    STATUS,
-)
+from ert.async_utils import get_event_loop
 from ert.ensemble_evaluator.evaluator_connection_info import EvaluatorConnectionInfo
 from ert.ensemble_evaluator.event import (
     EndEvent,
     FullSnapshotEvent,
     SnapshotUpdateEvent,
+)
+from ert.ensemble_evaluator.identifiers import (
+    EVTYPE_EE_SNAPSHOT,
+    EVTYPE_EE_SNAPSHOT_UPDATE,
+    EVTYPE_EE_TERMINATED,
+    STATUS,
 )
 from ert.ensemble_evaluator.snapshot import PartialSnapshot, Snapshot
 from ert.ensemble_evaluator.state import (
@@ -29,11 +30,11 @@ from ert.ensemble_evaluator.state import (
     REALIZATION_STATE_FINISHED,
 )
 from ert.ensemble_evaluator.util._network import wait_for_evaluator
-from ert.async_utils import get_event_loop
 from ert.shared.ensemble_evaluator.monitor import create as create_ee_monitor
 
 if TYPE_CHECKING:
     from cloudevents.http.event import CloudEvent
+
     from ert.ert3.evaluator._evaluator import ERT3RunModel
     from ert.shared.models.base_run_model import BaseRunModel
 

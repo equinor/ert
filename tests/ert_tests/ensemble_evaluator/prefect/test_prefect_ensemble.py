@@ -1,8 +1,8 @@
-import sys
 import asyncio
+import pickle
+import sys
 from itertools import permutations
 from pathlib import Path
-import pickle
 from typing import Set
 
 import cloudpickle

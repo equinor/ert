@@ -1,16 +1,18 @@
-import numpy
-from jinja2 import Environment, FileSystemLoader
-import tempfile
-import shutil
 import contextlib
-from ert.shared.dark_storage import enkf
-import os
-from ecl.summary import EclSum
 import datetime
-import py
-import ecl_data_io as eclio
-from numpy import array
+import os
+import shutil
 import sys
+import tempfile
+
+import ecl_data_io as eclio
+import numpy
+import py
+from ecl.summary import EclSum
+from jinja2 import Environment, FileSystemLoader
+from numpy import array
+
+from ert.shared.dark_storage import enkf
 
 
 def write_summary_spec(file, keywords):

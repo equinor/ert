@@ -1,6 +1,6 @@
 import os
-import re
 import pathlib
+import re
 import stat
 from typing import Any, Callable, Dict, List, Tuple, Type
 from unittest.mock import patch

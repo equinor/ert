@@ -1,28 +1,23 @@
-import uuid
 import json
+import uuid
 from abc import abstractmethod
 from enum import Enum, auto
 from pathlib import Path
-from typing import Callable, Dict, List, Optional, Union, Any
-import aiofiles
+from typing import Any, Callable, Dict, List, Optional, Union
 
-from pydantic import (
-    StrictBytes,
-    StrictFloat,
-    StrictInt,
-    StrictStr,
-)
+import aiofiles
+from pydantic import StrictBytes, StrictFloat, StrictInt, StrictStr
+
 from ert.serialization import get_serializer
 
 from ._record import (
+    BlobRecord,
+    BlobRecordTree,
+    NumericalRecord,
+    NumericalRecordTree,
     Record,
     RecordType,
-    NumericalRecord,
-    BlobRecord,
-    NumericalRecordTree,
-    BlobRecordTree,
 )
-
 
 strict_number = Union[StrictInt, StrictFloat]
 numerical_record_data = Union[

@@ -14,9 +14,9 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 from cwrap import BaseCClass
+from ecl.util.util import StringList
 
 from ert._c_wrappers import ResPrototype
-from ecl.util.util import StringList
 
 
 class ExtParamConfig(BaseCClass):

@@ -1,4 +1,5 @@
 from ecl.util.test import TestAreaContext
+
 from ert._c_wrappers.enkf.enums.realization_state_enum import RealizationStateEnum
 from ert._c_wrappers.enkf.state_map import StateMap
 

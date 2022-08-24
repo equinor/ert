@@ -2,12 +2,13 @@ import pathlib
 import re
 from graphlib import CycleError
 from unittest.mock import MagicMock, Mock
+
 import pytest
 
 import ert.ensemble_evaluator as ee
 from ert.data import (
-    SerializationTransformation,
     CopyTransformation,
+    SerializationTransformation,
     TransformationDirection,
 )
 

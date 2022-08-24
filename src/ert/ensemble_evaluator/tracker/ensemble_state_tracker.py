@@ -1,5 +1,5 @@
 import logging
-from typing import Callable, Dict, Any
+from typing import Any, Callable, Dict
 
 from ert.ensemble_evaluator import state
 

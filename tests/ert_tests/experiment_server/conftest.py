@@ -1,10 +1,12 @@
 import asyncio
+from contextlib import asynccontextmanager
 from typing import AsyncGenerator, Awaitable, Callable, Optional
+
 import pytest
 from websockets.client import WebSocketClientProtocol, connect
+
 import ert.experiment_server
 from ert.shared.ensemble_evaluator.config import EvaluatorServerConfig
-from contextlib import asynccontextmanager
 
 
 @pytest.fixture

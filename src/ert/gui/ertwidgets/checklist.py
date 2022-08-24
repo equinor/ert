@@ -1,17 +1,17 @@
 from qtpy.QtCore import QSize, Qt
 from qtpy.QtWidgets import (
-    QToolButton,
+    QAbstractItemView,
     QHBoxLayout,
     QLabel,
     QListWidget,
-    QWidget,
-    QVBoxLayout,
     QListWidgetItem,
     QMenu,
-    QAbstractItemView,
+    QToolButton,
+    QVBoxLayout,
+    QWidget,
 )
 
-from ert.gui.ertwidgets import addHelpToWidget, SearchBox, resourceIcon
+from ert.gui.ertwidgets import SearchBox, addHelpToWidget, resourceIcon
 
 
 class CheckList(QWidget):

@@ -5,9 +5,10 @@ import os
 import sys
 import threading
 from typing import Any
-from ert.ensemble_evaluator import EvaluatorTracker
-from ert.shared.feature_toggling import FeatureToggling
 
+from ert._c_wrappers.enkf import EnKFMain, ResConfig
+from ert.ensemble_evaluator import EvaluatorTracker
+from ert.libres_facade import LibresFacade
 from ert.shared.cli import (
     ENSEMBLE_SMOOTHER_MODE,
     ES_MDA_MODE,
@@ -18,8 +19,7 @@ from ert.shared.cli.model_factory import create_model
 from ert.shared.cli.monitor import Monitor
 from ert.shared.cli.workflow import execute_workflow
 from ert.shared.ensemble_evaluator.config import EvaluatorServerConfig
-from ert.libres_facade import LibresFacade
-from ert._c_wrappers.enkf import EnKFMain, ResConfig
+from ert.shared.feature_toggling import FeatureToggling
 
 
 class ErtCliError(Exception):

@@ -17,6 +17,7 @@
 from typing import Optional
 
 from cwrap import BaseCClass
+
 from ert._c_wrappers import ResPrototype
 from ert._c_wrappers.config import ConfigContent
 from ert._c_wrappers.enkf.config_keys import ConfigKeys

@@ -1,6 +1,7 @@
+from ert.gui.plottery.plots.history import plotHistory
+
 from .observations import plotObservations
 from .plot_tools import PlotTools
-from ert.gui.plottery.plots.history import plotHistory
 
 
 class EnsemblePlot:

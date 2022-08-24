@@ -2,12 +2,13 @@ import logging
 import pickle
 import uuid
 from contextlib import ExitStack
-from typing import Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
+
+from cloudevents.conversion import to_json
+from cloudevents.exceptions import DataUnmarshallerError
+from cloudevents.http import CloudEvent, from_json
 
 from ert.ensemble_evaluator import identifiers
-from cloudevents.exceptions import DataUnmarshallerError
-from cloudevents.conversion import to_json
-from cloudevents.http import CloudEvent, from_json
 from ert.serialization import evaluator_marshaller, evaluator_unmarshaller
 from ert.shared.ensemble_evaluator.sync_ws_duplexer import SyncWebsocketDuplexer
 

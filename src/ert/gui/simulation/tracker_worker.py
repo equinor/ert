@@ -1,13 +1,14 @@
-from ert.gui.model.snapshot import SnapshotModel
+import logging
+
+from qtpy.QtCore import QObject, Signal, Slot
+
 from ert.ensemble_evaluator import EvaluatorTracker
 from ert.ensemble_evaluator.event import (
     EndEvent,
     FullSnapshotEvent,
     SnapshotUpdateEvent,
 )
-from qtpy.QtCore import QObject, Signal, Slot
-import logging
-
+from ert.gui.model.snapshot import SnapshotModel
 
 logger = logging.getLogger(__name__)
 

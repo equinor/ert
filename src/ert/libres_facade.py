@@ -4,8 +4,6 @@ from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Union
 import numpy as np
 from pandas import DataFrame
 
-from ert.analysis import ESUpdate, SmootherSnapshot
-from ert.data import MeasuredData
 from ert._c_wrappers.enkf import EnKFMain, EnkfNode, ErtImplType, ResConfig, RunContext
 from ert._c_wrappers.enkf.export import (
     GenDataCollector,
@@ -15,20 +13,22 @@ from ert._c_wrappers.enkf.export import (
     SummaryCollector,
     SummaryObservationCollector,
 )
+from ert.analysis import ESUpdate, SmootherSnapshot
+from ert.data import MeasuredData
 
 _logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     from ecl.grid import EclGrid
 
-    from ert.analysis import ModuleData
     from ert._c_wrappers.analysis.analysis_module import AnalysisModule
     from ert._c_wrappers.analysis.configuration import UpdateConfiguration
-    from ert._c_wrappers.enkf import AnalysisConfig, ObsVector, QueueConfig
+    from ert._c_wrappers.enkf import AnalysisConfig, QueueConfig
     from ert._c_wrappers.enkf.config.gen_kw_config import PriorDict
     from ert._c_wrappers.enkf.enkf_fs import EnkfFs
     from ert._c_wrappers.enkf.enkf_obs import EnkfObs
     from ert._c_wrappers.job_queue import WorkflowJob
+    from ert.analysis import ModuleData
 
 
 class LibresFacade:  # pylint: disable=too-many-public-methods

@@ -1,3 +1,6 @@
+from PyQt5.QtCore import QModelIndex
+from pytestqt.qt_compat import qt_api
+
 from ert.ensemble_evaluator.snapshot import PartialSnapshot, Realization
 from ert.ensemble_evaluator.state import (
     REALIZATION_STATE_FINISHED,
@@ -5,8 +8,6 @@ from ert.ensemble_evaluator.state import (
 )
 from ert.gui.model.progress_proxy import ProgressProxyModel
 from ert.gui.model.snapshot import ProgressRole, SnapshotModel
-from PyQt5.QtCore import QModelIndex
-from pytestqt.qt_compat import qt_api
 
 from .gui_models_utils import partial_snapshot
 

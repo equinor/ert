@@ -4,10 +4,11 @@ import os
 import subprocess
 import tempfile
 from pathlib import Path
-from typing import Any, Dict, Iterator, Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Dict, Iterator, Optional
 
 import prefect
 
+from ert.async_utils import get_event_loop
 from ert.data import FileTransformation
 from ert.ensemble_evaluator.identifiers import (
     ERROR_MSG,
@@ -17,15 +18,15 @@ from ert.ensemble_evaluator.identifiers import (
     EVTYPE_FM_STEP_RUNNING,
     EVTYPE_FM_STEP_SUCCESS,
 )
-from ert.async_utils import get_event_loop
 from ert.shared.ensemble_evaluator.client import Client
 
-from ._job import _UnixJob
 from ._io_map import _stage_transmitter_mapping
+from ._job import _UnixJob
 
 if TYPE_CHECKING:
-    from ._step import _Step
     import ert
+
+    from ._step import _Step
 
 _BIN_FOLDER = "bin"
 

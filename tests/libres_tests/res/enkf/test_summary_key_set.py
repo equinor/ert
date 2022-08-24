@@ -1,6 +1,7 @@
 import os
 
 from ecl.util.test.test_area import TestAreaContext
+
 from ert._c_wrappers.enkf import EnKFMain, ResConfig, SummaryKeySet
 from ert._c_wrappers.enkf.enkf_fs import EnkfFs
 

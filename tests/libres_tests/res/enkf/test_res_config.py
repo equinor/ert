@@ -22,6 +22,7 @@ import pytest
 from cwrap import Prototype, load
 from ecl.util.enums import RngAlgTypeEnum
 from ecl.util.test import TestAreaContext
+
 from ert._c_wrappers.enkf import (
     AnalysisConfig,
     ConfigKeys,

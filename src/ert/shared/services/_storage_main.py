@@ -1,20 +1,20 @@
-from typing import Any, List, Dict, Optional, Union
+import argparse
+import json
 import logging
 import logging.config
 import os
-import sys
 import socket
-import json
-import argparse
+import sys
 from pathlib import Path
+from typing import Any, Dict, List, Optional, Union
 
 import uvicorn
 import yaml
 from uvicorn.supervisors import ChangeReload
 
 from ert.logging import STORAGE_LOG_CONFIG
-from ert.shared import port_handler
 from ert.shared import __file__ as ert_shared_path
+from ert.shared import port_handler
 from ert.shared.plugins import ErtPluginContext
 from ert.shared.storage.command import add_parser_options
 
@@ -170,8 +170,8 @@ def terminate_on_parent_death() -> None:
     if sys.platform != "linux" or "ERT_COMM_FD" not in os.environ:
         return
 
-    from ctypes import CDLL, c_int, c_ulong
     import signal
+    from ctypes import CDLL, c_int, c_ulong
 
     lib = CDLL(None)
 

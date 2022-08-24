@@ -15,14 +15,14 @@
 #  for more details.
 import os
 
-from qtpy.QtWidgets import QWidget, QFormLayout, QComboBox, QTextEdit
+from qtpy.QtWidgets import QComboBox, QFormLayout, QTextEdit, QWidget
 
 from ert.gui.ertwidgets.models.activerealizationsmodel import ActiveRealizationsModel
 from ert.gui.ertwidgets.models.all_cases_model import AllCasesModel
 from ert.gui.ertwidgets.models.valuemodel import ValueModel
 from ert.gui.ertwidgets.stringbox import StringBox
-from ert.shared.ide.keywords.definitions import RangeStringArgument, IntegerArgument
 from ert.libres_facade import LibresFacade
+from ert.shared.ide.keywords.definitions import IntegerArgument, RangeStringArgument
 
 
 class LoadResultsPanel(QWidget):

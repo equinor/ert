@@ -9,16 +9,15 @@ from enum import Enum
 from http import HTTPStatus
 from typing import Any, Callable, Dict, List, Optional, Tuple, TypedDict, Union
 
+from cloudevents.conversion import to_json
+from cloudevents.http import CloudEvent, from_json
 from cloudevents.sdk import types
+from websockets.client import connect
 from websockets.server import WebSocketServer  # type: ignore
+from websockets.server import serve
 
 from ert.async_utils import get_event_loop
 from ert.ensemble_evaluator import wait_for_evaluator
-
-from websockets.client import connect
-from websockets.server import serve
-from cloudevents.conversion import to_json
-from cloudevents.http import CloudEvent, from_json
 
 _DATACONTENTTYPE = "datacontenttype"
 

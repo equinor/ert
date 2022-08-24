@@ -1,19 +1,10 @@
 import logging
-from typing import (
-    TYPE_CHECKING,
-    Generator,
-    List,
-    Sequence,
-    Tuple,
-    Optional,
-)
 from collections import defaultdict
 from graphlib import TopologicalSorter
+from typing import TYPE_CHECKING, Generator, List, Optional, Sequence, Tuple
 
-
-from ._step import _Step, _StepBuilder
 from ._stage import _StageBuilder
-
+from ._step import _Step, _StepBuilder
 from ._template import _SOURCE_TEMPLATE_BASE, _SOURCE_TEMPLATE_REAL
 
 if TYPE_CHECKING:

@@ -8,9 +8,10 @@ from pathlib import Path
 from typing import Callable, ContextManager, Type
 
 import cloudpickle
+import pytest
+
 import ert
 import ert.ensemble_evaluator as ee
-import pytest
 from ert.async_utils import get_event_loop
 from ert.shared.ensemble_evaluator.client import Client
 from ert.shared.ensemble_evaluator.config import EvaluatorServerConfig

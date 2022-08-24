@@ -1,6 +1,7 @@
 from typing import TYPE_CHECKING
-from typing_extensions import Protocol
+
 from cloudevents.http import CloudEvent
+from typing_extensions import Protocol
 
 if TYPE_CHECKING:
     from ert.shared.ensemble_evaluator.config import EvaluatorServerConfig

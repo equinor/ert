@@ -1,14 +1,14 @@
 from qtpy.QtWidgets import (
-    QFormLayout,
-    QWidget,
     QDialog,
-    QPushButton,
+    QFormLayout,
     QHBoxLayout,
+    QPushButton,
     QToolButton,
+    QWidget,
 )
 
 from ert.gui.ertwidgets import CheckList, resourceIcon
-from ert.gui.tools.plot import FilterPopup, FilterableKwListModel
+from ert.gui.tools.plot import FilterableKwListModel, FilterPopup
 
 
 class CopyStyleToDialog(QDialog):

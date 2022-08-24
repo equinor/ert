@@ -2,7 +2,7 @@ from textwrap import dedent
 
 import pytest
 
-from ert._c_wrappers.enkf import ResConfig, EnKFMain
+from ert._c_wrappers.enkf import EnKFMain, ResConfig
 from ert._c_wrappers.enkf.export import GenDataObservationCollector
 
 

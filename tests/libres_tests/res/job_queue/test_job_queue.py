@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from threading import BoundedSemaphore
 from typing import Any, Dict, Optional
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
 from ert._clib.model_callbacks import LoadStatus
 

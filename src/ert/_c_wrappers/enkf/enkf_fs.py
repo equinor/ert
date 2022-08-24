@@ -14,22 +14,23 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 from pathlib import Path
-from typing import List, Union, TYPE_CHECKING
+from typing import TYPE_CHECKING, List, Union
 
-from cwrap import BaseCClass
 import numpy as np
 import numpy.typing as npt
+from cwrap import BaseCClass
 
 from ert import _clib
-from ert._clib import update
 from ert._c_wrappers import ResPrototype
 from ert._c_wrappers.enkf.enums import EnKFFSType
 from ert._c_wrappers.enkf.res_config import EnsembleConfig
 from ert._c_wrappers.enkf.summary_key_set import SummaryKeySet
 from ert._c_wrappers.enkf.util import TimeMap
+from ert._clib import update
 
 if TYPE_CHECKING:
     from ecl.util.util import IntVector
+
     from ert._c_wrappers.enkf.state_map import StateMap
     from ert._clib.state_map import RealizationStateEnum
 

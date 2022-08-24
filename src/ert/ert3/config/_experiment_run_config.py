@@ -2,14 +2,10 @@ from typing import Dict, NamedTuple, Optional, cast
 
 import ert
 
-from . import (
-    EnsembleConfig,
-    ExperimentConfig,
-    ParametersConfig,
-    SourceNS,
-    StagesConfig,
-    Step,
-)
+from ._ensemble_config import EnsembleConfig, SourceNS
+from ._experiment_config import ExperimentConfig
+from ._parameters_config import ParametersConfig
+from ._stages_config import StagesConfig, Step
 
 
 class LinkedInput(NamedTuple):

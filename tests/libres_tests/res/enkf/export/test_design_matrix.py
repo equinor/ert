@@ -1,7 +1,8 @@
 from ecl.util.test.test_area import TestAreaContext
-from ....libres_utils import ResTest
 
 from ert._c_wrappers.enkf.export import DesignMatrixReader
+
+from ....libres_utils import ResTest
 
 
 def dumpDesignMatrix1(path):

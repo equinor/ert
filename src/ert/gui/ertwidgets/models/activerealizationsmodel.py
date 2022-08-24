@@ -1,9 +1,9 @@
 from typing import List
 
-from ert.gui.ertwidgets.models.valuemodel import ValueModel
-from ert.libres_facade import LibresFacade
 from ert._c_wrappers.config.active_range import ActiveRange
 from ert._c_wrappers.config.rangestring import mask_to_rangestring
+from ert.gui.ertwidgets.models.valuemodel import ValueModel
+from ert.libres_facade import LibresFacade
 
 
 class ActiveRealizationsModel(ValueModel):

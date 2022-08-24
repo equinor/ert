@@ -1,21 +1,21 @@
-import os
-import sys
-import signal
 import logging
+import os
+import signal
+import sys
+import threading
+import time
 from pathlib import Path
 from textwrap import dedent
 
 import pytest
-import threading
 
 from ert.shared.services._base_service import (
-    ServerBootFail,
-    BaseService,
-    local_exec_args,
-    cleanup_service_files,
     SERVICE_NAMES,
+    BaseService,
+    ServerBootFail,
+    cleanup_service_files,
+    local_exec_args,
 )
-import time
 
 
 class _DummyService(BaseService):

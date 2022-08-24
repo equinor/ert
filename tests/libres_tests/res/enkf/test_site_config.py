@@ -20,6 +20,7 @@ from pathlib import Path
 
 from ecl.util.test import TestAreaContext
 from pytest import MonkeyPatch
+
 from ert._c_wrappers.enkf import ConfigKeys, EnKFMain, ResConfig, SiteConfig
 
 from ...libres_utils import ResTest, tmpdir

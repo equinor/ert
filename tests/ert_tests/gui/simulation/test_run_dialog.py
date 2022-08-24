@@ -1,19 +1,17 @@
 from unittest.mock import patch
 
-from ert.ensemble_evaluator import identifiers as ids
 import pytest
-from ert.gui.simulation.run_dialog import RunDialog
-from ert.ensemble_evaluator.snapshot import (
-    PartialSnapshot,
-    SnapshotBuilder,
-)
+from qtpy.QtCore import Qt
+
+from ert.ensemble_evaluator import identifiers as ids
 from ert.ensemble_evaluator import state
 from ert.ensemble_evaluator.event import (
     EndEvent,
     FullSnapshotEvent,
     SnapshotUpdateEvent,
 )
-from qtpy.QtCore import Qt
+from ert.ensemble_evaluator.snapshot import PartialSnapshot, SnapshotBuilder
+from ert.gui.simulation.run_dialog import RunDialog
 
 
 def test_success(runmodel, qtbot, mock_tracker):

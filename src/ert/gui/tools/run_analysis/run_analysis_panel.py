@@ -13,7 +13,7 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
-from qtpy.QtWidgets import QWidget, QFormLayout, QLineEdit
+from qtpy.QtWidgets import QFormLayout, QLineEdit, QWidget
 
 from ert.gui.ertwidgets.analysismoduleedit import AnalysisModuleEdit
 from ert.gui.ertwidgets.caseselector import CaseSelector

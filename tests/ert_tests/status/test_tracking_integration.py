@@ -1,9 +1,9 @@
+import fileinput
 import logging
 import os
 import re
 import shutil
 import threading
-import fileinput
 from argparse import ArgumentParser
 from datetime import datetime
 from pathlib import Path
@@ -13,13 +13,21 @@ import pytest
 from ecl.summary import EclSum
 from jsonpath_ng import parse
 
+from ert._c_wrappers.enkf.enkf_main import EnKFMain
+from ert._c_wrappers.enkf.res_config import ResConfig
+from ert.ensemble_evaluator import EvaluatorTracker
+from ert.ensemble_evaluator.event import (
+    EndEvent,
+    FullSnapshotEvent,
+    SnapshotUpdateEvent,
+)
 from ert.ensemble_evaluator.state import (
     JOB_STATE_FAILURE,
     JOB_STATE_FINISHED,
     JOB_STATE_START,
     REALIZATION_STATE_FINISHED,
 )
-from ert.ensemble_evaluator import EvaluatorTracker
+from ert.libres_facade import LibresFacade
 from ert.shared.cli import (
     ENSEMBLE_EXPERIMENT_MODE,
     ENSEMBLE_SMOOTHER_MODE,
@@ -28,15 +36,7 @@ from ert.shared.cli import (
 from ert.shared.cli.model_factory import create_model
 from ert.shared.ensemble_evaluator.config import EvaluatorServerConfig
 from ert.shared.feature_toggling import FeatureToggling
-from ert.libres_facade import LibresFacade
 from ert.shared.main import ert_parser
-from ert.ensemble_evaluator.event import (
-    EndEvent,
-    FullSnapshotEvent,
-    SnapshotUpdateEvent,
-)
-from ert._c_wrappers.enkf.enkf_main import EnKFMain
-from ert._c_wrappers.enkf.res_config import ResConfig
 
 
 def check_expression(original, path_expression, expected, msg_start):

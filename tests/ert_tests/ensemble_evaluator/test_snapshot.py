@@ -3,15 +3,15 @@ from datetime import datetime
 import pytest
 from cloudevents.http.event import CloudEvent
 
-from ert.ensemble_evaluator import state
 from ert.ensemble_evaluator import identifiers as ids
-from ert.ensemble_evaluator.util import _tool as tool
+from ert.ensemble_evaluator import state
 from ert.ensemble_evaluator.snapshot import (
     Job,
     PartialSnapshot,
     Snapshot,
     SnapshotBuilder,
 )
+from ert.ensemble_evaluator.util import _tool as tool
 
 
 def test_snapshot_merge(snapshot: Snapshot):

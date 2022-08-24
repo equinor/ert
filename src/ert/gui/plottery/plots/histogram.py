@@ -1,8 +1,10 @@
-from math import sqrt, ceil, floor, log10
-from matplotlib.patches import Rectangle
+from math import ceil, floor, log10, sqrt
+
 import numpy
-from .plot_tools import PlotTools
 import pandas as pd
+from matplotlib.patches import Rectangle
+
+from .plot_tools import PlotTools
 
 
 class HistogramPlot:

@@ -1,11 +1,11 @@
 # pylint: disable=import-error,no-member,not-callable
 # (false positives)
-from typing import List, Dict
+from typing import Dict, List
 
-from pydantic import validator, BaseModel, root_validator, conlist
-from ert._clib.update import RowScalingParameter, Parameter
+from pydantic import BaseModel, conlist, root_validator, validator
 
 from ert._c_wrappers.enkf.row_scaling import RowScaling
+from ert._clib.update import Parameter, RowScalingParameter
 
 
 @classmethod  # type: ignore

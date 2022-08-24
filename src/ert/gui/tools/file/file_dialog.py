@@ -1,14 +1,15 @@
 from math import floor
-from qtpy.QtCore import QThread, Slot, Qt, QSize
+
+from qtpy.QtCore import QSize, Qt, QThread, Slot
+from qtpy.QtGui import QClipboard, QFontDatabase, QTextCursor, QTextOption
 from qtpy.QtWidgets import (
-    QDialog,
-    QMessageBox,
-    QDialogButtonBox,
-    QVBoxLayout,
-    QPlainTextEdit,
     QApplication,
+    QDialog,
+    QDialogButtonBox,
+    QMessageBox,
+    QPlainTextEdit,
+    QVBoxLayout,
 )
-from qtpy.QtGui import QTextOption, QTextCursor, QClipboard, QFontDatabase
 
 from .file_update_worker import FileUpdateWorker
 

@@ -1,15 +1,15 @@
-from qtpy.QtCore import Qt, Signal, QSize
+from qtpy.QtCore import QSize, Qt, Signal
 from qtpy.QtWidgets import (
     QDialog,
-    QVBoxLayout,
-    QLayout,
-    QPushButton,
     QHBoxLayout,
-    QWidget,
     QLabel,
+    QLayout,
     QMessageBox,
+    QPushButton,
     QSizePolicy,
     QSpacerItem,
+    QVBoxLayout,
+    QWidget,
 )
 
 from ert.gui.ertwidgets import resourceMovie

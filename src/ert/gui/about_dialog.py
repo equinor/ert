@@ -13,11 +13,11 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
-from qtpy.QtCore import Qt, QSize
-from qtpy.QtWidgets import QDialog, QVBoxLayout, QPushButton, QHBoxLayout, QLabel
-from qtpy.QtGui import QFont
-
 import ecl
+from qtpy.QtCore import QSize, Qt
+from qtpy.QtGui import QFont
+from qtpy.QtWidgets import QDialog, QHBoxLayout, QLabel, QPushButton, QVBoxLayout
+
 import ert.gui as ert_gui
 
 

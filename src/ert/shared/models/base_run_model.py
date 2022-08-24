@@ -8,21 +8,22 @@ from contextlib import contextmanager
 from typing import Any, Dict, Iterator, List, Optional, Union
 
 from cloudevents.http import CloudEvent
+
+from ert._c_wrappers.enkf import EnKFMain, QueueConfig
+from ert._c_wrappers.enkf.ert_run_context import RunContext
+from ert._c_wrappers.job_queue import ForwardModel, RunStatusType
 from ert.ensemble_evaluator import Ensemble, EnsembleBuilder, identifiers
 from ert.ensemble_evaluator.util._tool import get_real_id
 from ert.experiment_server import ExperimentStateMachine
+from ert.libres_facade import LibresFacade
 from ert.shared.ensemble_evaluator.config import EvaluatorServerConfig
 from ert.shared.ensemble_evaluator.evaluator import EnsembleEvaluator
 from ert.shared.feature_toggling import feature_enabled
-from ert.libres_facade import LibresFacade
 from ert.shared.storage.extraction import (
     post_ensemble_data,
     post_ensemble_results,
     post_update_data,
 )
-from ert._c_wrappers.enkf import EnKFMain, QueueConfig
-from ert._c_wrappers.enkf.ert_run_context import RunContext
-from ert._c_wrappers.job_queue import ForwardModel, RunStatusType
 
 event_logger = logging.getLogger("ert.event_log")
 experiment_logger = logging.getLogger("ert.experiment_server.base_run_model")

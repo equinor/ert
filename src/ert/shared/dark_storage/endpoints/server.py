@@ -1,7 +1,9 @@
-from typing import Mapping, Any
-from fastapi import APIRouter, Depends
-from ert.shared.dark_storage.enkf import LibresFacade, get_res
 from pathlib import Path
+from typing import Any, Mapping
+
+from fastapi import APIRouter, Depends
+
+from ert.shared.dark_storage.enkf import LibresFacade, get_res
 
 router = APIRouter(tags=["info"])
 

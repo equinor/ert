@@ -1,11 +1,10 @@
 import sys
 import traceback
 
-from qtpy.QtCore import Qt, Signal
-from qtpy.QtWidgets import QWidget, QVBoxLayout, QAction
-
-from matplotlib.figure import Figure
 from matplotlib.backends.backend_qt5agg import FigureCanvas, NavigationToolbar2QT
+from matplotlib.figure import Figure
+from qtpy.QtCore import Qt, Signal
+from qtpy.QtWidgets import QAction, QVBoxLayout, QWidget
 
 from ert.gui.ertwidgets import resourceIcon
 

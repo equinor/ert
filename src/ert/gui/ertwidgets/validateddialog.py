@@ -13,16 +13,16 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
-from qtpy.QtCore import Qt, QSize
+from qtpy.QtCore import QSize, Qt
 from qtpy.QtGui import QColor
 from qtpy.QtWidgets import (
     QDialog,
+    QDialogButtonBox,
     QFormLayout,
     QLabel,
-    QWidget,
-    QDialogButtonBox,
-    QLineEdit,
     QLayout,
+    QLineEdit,
+    QWidget,
 )
 
 

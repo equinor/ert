@@ -1,7 +1,6 @@
 import pytest
 from ecl.summary import EclSum
 from ecl.util.test import TestAreaContext
-from ...libres_utils import ResTest, tmpdir
 
 from ert._c_wrappers.enkf import (
     AnalysisConfig,
@@ -11,6 +10,8 @@ from ert._c_wrappers.enkf import (
     ResConfig,
 )
 from ert._c_wrappers.enkf.util import TimeMap
+
+from ...libres_utils import ResTest, tmpdir
 
 
 @pytest.mark.unstable

@@ -1,8 +1,8 @@
-import pytest
 import logging
 
-from ert._clib import _test_logger
+import pytest
 
+from ert._clib import _test_logger
 
 RECORDS = [
     ("res._test_logger", logging.DEBUG, "debug: foo"),

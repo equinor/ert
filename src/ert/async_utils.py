@@ -1,5 +1,5 @@
 import asyncio
-from typing import TypeVar, Awaitable
+from typing import Awaitable, TypeVar
 
 
 def get_event_loop() -> asyncio.AbstractEventLoop:

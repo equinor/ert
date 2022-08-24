@@ -11,11 +11,12 @@ from unittest.mock import mock_open, patch
 
 import psutil
 import pytest
-from ..libres_utils import _mock_ws_thread, tmpdir, wait_until
 
 from ert.job_runner.cli import _setup_reporters, main
 from ert.job_runner.reporting import Event, Interactive
 from ert.job_runner.reporting.message import Finish, Init
+
+from ..libres_utils import _mock_ws_thread, tmpdir, wait_until
 
 
 class JobDispatchTest(unittest.TestCase):

@@ -1,7 +1,8 @@
+from qtpy.QtCore import QObject, Slot
+
 from ert.gui.ertwidgets import resourceIcon
 from ert.gui.tools import Tool
 from ert.gui.tools.event_viewer import EventViewerPanel
-from qtpy.QtCore import QObject, Slot
 
 
 class EventViewerTool(Tool, QObject):

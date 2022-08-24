@@ -1,7 +1,7 @@
-from ._run import get_ensemble_size, run, run_sensitivity_analysis
+from ._clean import clean
 from ._export import export
 from ._record import load_record, sample_record
-from ._clean import clean
+from ._run import get_ensemble_size, run, run_sensitivity_analysis
 
 __all__ = [
     "run",

@@ -3,6 +3,7 @@ import os.path
 import stat
 
 from ecl.util.test import TestAreaContext
+
 from ert._c_wrappers.config import ContentTypeEnum
 from ert._c_wrappers.job_queue.ext_job import ExtJob
 

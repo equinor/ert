@@ -1,14 +1,14 @@
 from qtpy.QtCore import Qt, Signal
+from qtpy.QtGui import QCursor
 from qtpy.QtWidgets import (
-    QWidget,
-    QFrame,
-    QDialog,
-    QVBoxLayout,
     QCheckBox,
+    QDialog,
+    QFrame,
     QLabel,
     QLayout,
+    QVBoxLayout,
+    QWidget,
 )
-from qtpy.QtGui import QCursor
 
 
 class FilterPopup(QDialog):

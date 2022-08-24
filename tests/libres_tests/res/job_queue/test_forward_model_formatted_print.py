@@ -5,12 +5,13 @@ import os.path
 import stat
 
 from ecl.util.test import TestAreaContext
+
 from ert._c_wrappers.job_queue.environment_varlist import EnvironmentVarlist
 from ert._c_wrappers.job_queue.ext_job import ExtJob
 from ert._c_wrappers.job_queue.ext_joblist import ExtJoblist
 from ert._c_wrappers.job_queue.forward_model import ForwardModel
-from ert.simulator.forward_model_status import ForwardModelStatus
 from ert._c_wrappers.util.substitution_list import SubstitutionList
+from ert.simulator.forward_model_status import ForwardModelStatus
 
 from ...libres_utils import ResTest
 

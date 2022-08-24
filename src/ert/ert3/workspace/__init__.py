@@ -20,8 +20,7 @@ and input data is initialized via a separate initialization function
 creating workspace objects.
 """
 
-from ert.ert3.workspace._workspace import Workspace
-from ert.ert3.workspace._workspace import initialize
+from ert.ert3.workspace._workspace import Workspace, initialize
 
 __all__ = [
     "Workspace",
