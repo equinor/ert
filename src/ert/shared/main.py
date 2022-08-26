@@ -4,17 +4,14 @@ import logging.config
 import os
 import sys
 import re
-
 import requests
 import yaml
 import atexit
+import ert.shared
 from argparse import ArgumentParser, ArgumentTypeError
 from contextlib import contextmanager
-
 from ert.logging._log_util_abort import _log_util_abort
-
 from ecl import set_abort_handler
-
 from ert.logging import LOGGING_CONFIG
 from ert.shared.cli.main import run_cli, ErtCliError
 from ert.shared.cli import (
@@ -37,7 +34,6 @@ from ert.shared.plugins.plugin_manager import ErtPluginContext
 from ert.shared.feature_toggling import FeatureToggling
 from ert.shared.storage.command import add_parser_options as ert_api_add_parser_options
 from ert.shared.services import Storage, WebvizErt
-import ert.shared
 
 
 def run_ert_storage(args):
@@ -191,9 +187,7 @@ def range_limited_int(user_input):
 def run_gui_wrapper(args):
     from ert.gui.gert_main import run_gui
 
-    os.environ["ERT_LOG_DIR"] = os.getcwd()
     run_gui(args)
-    os.environ.pop("ERT_LOG_DIR")
 
 
 def get_ert_parser(parser=None):
@@ -204,6 +198,14 @@ def get_ert_parser(parser=None):
         "--version",
         action="version",
         version=f"{ert.shared.__version__}",
+    )
+
+    parser.add_argument(
+        "--logdir",
+        required=False,
+        type=str,
+        default="./logs",
+        help="Directory where ERT will store the logs. Default is ./logs",
     )
 
     subparsers = parser.add_subparsers(
@@ -533,14 +535,24 @@ def log_process_usage():
 
 
 def main():
-    with open(LOGGING_CONFIG, encoding="utf-8") as conf_file:
-        logging.config.dictConfig(yaml.safe_load(conf_file))
-    set_abort_handler(_log_util_abort)
     import locale
 
     locale.setlocale(locale.LC_NUMERIC, "C")
 
     args = ert_parser(None, sys.argv[1:])
+
+    log_dir = os.path.abspath(args.logdir)
+    try:
+        os.makedirs(log_dir, exist_ok=True)
+    except PermissionError as err:
+        sys.exit(err)
+
+    os.environ["ERT_LOG_DIR"] = log_dir
+
+    with open(LOGGING_CONFIG, encoding="utf-8") as conf_file:
+        logging.config.dictConfig(yaml.safe_load(conf_file))
+    set_abort_handler(_log_util_abort)
+
     logger = logging.getLogger(__name__)
     if args.verbose:
         root_logger = logging.getLogger()
@@ -577,6 +589,8 @@ def main():
         msg += "\n   " + "\n   ".join(logfiles)
 
         sys.exit(msg)
+    finally:
+        os.environ.pop("ERT_LOG_DIR")
 
 
 if __name__ == "__main__":
