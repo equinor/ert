@@ -1,30 +1,32 @@
-from pandas import DataFrame
+import logging
+import os
+
 from httpx import RequestError
+from pandas import DataFrame
 from qtpy.QtCore import Qt
 from qtpy.QtWidgets import (
-    QMainWindow,
     QDockWidget,
-    QTabWidget,
-    QWidget,
-    QVBoxLayout,
+    QMainWindow,
     QMessageBox,
+    QTabWidget,
+    QVBoxLayout,
+    QWidget,
 )
-import os
-import logging
 
+from ert.gui.ertwidgets import showWaitCursorWhileWaiting
+from ert.gui.plottery import PlotConfig, PlotContext
 from ert.gui.plottery.plots.ccsp import CrossCaseStatisticsPlot
 from ert.gui.plottery.plots.distribution import DistributionPlot
 from ert.gui.plottery.plots.ensemble import EnsemblePlot
 from ert.gui.plottery.plots.gaussian_kde import GaussianKDEPlot
 from ert.gui.plottery.plots.histogram import HistogramPlot
 from ert.gui.plottery.plots.statistics import StatisticsPlot
-from ert.gui.ertwidgets import showWaitCursorWhileWaiting
-from ert.gui.plottery import PlotContext, PlotConfig
 
-from ert.gui.tools.plot import DataTypeKeysWidget, CaseSelectionWidget, PlotWidget
-from ert.gui.tools.plot.customize import PlotCustomizer
-
-from ert.gui.tools.plot.plot_api import PlotApi
+from .customize import PlotCustomizer
+from .data_type_keys_widget import DataTypeKeysWidget
+from .plot_api import PlotApi
+from .plot_case_selection_widget import CaseSelectionWidget
+from .plot_widget import PlotWidget
 
 CROSS_CASE_STATISTICS = "Cross case statistics"
 DISTRIBUTION = "Distribution"

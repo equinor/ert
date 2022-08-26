@@ -1,26 +1,25 @@
-from qtpy.QtCore import Qt, Signal, QObject
+from qtpy.QtCore import QObject, Qt, Signal
 from qtpy.QtWidgets import (
     QDialog,
-    QVBoxLayout,
-    QLayout,
-    QTabWidget,
     QHBoxLayout,
-    QPushButton,
-    QToolButton,
-    QMenu,
-    QWidgetAction,
+    QLayout,
     QListWidget,
+    QMenu,
+    QPushButton,
+    QTabWidget,
+    QToolButton,
+    QVBoxLayout,
+    QWidgetAction,
 )
 
-from ert.gui.tools.plot.widgets import CopyStyleToDialog
 from ert.gui.ertwidgets import resourceIcon
-from ert.gui.plottery import PlotConfig, PlotConfigHistory, PlotConfigFactory
-from ert.gui.tools.plot.customize import (
-    DefaultCustomizationView,
-    StyleCustomizationView,
-    StatisticsCustomizationView,
-    LimitsCustomizationView,
-)
+from ert.gui.plottery import PlotConfig, PlotConfigFactory, PlotConfigHistory
+from ert.gui.tools.plot.widgets import CopyStyleToDialog
+
+from .default_customization_view import DefaultCustomizationView
+from .limits_customization_view import LimitsCustomizationView
+from .statistics_customization_view import StatisticsCustomizationView
+from .style_customization_view import StyleCustomizationView
 
 
 class PlotCustomizer(QObject):

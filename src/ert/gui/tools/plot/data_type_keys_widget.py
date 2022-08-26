@@ -1,8 +1,11 @@
 from qtpy.QtCore import Signal
-from qtpy.QtWidgets import QWidget, QVBoxLayout, QListView, QHBoxLayout, QToolButton
+from qtpy.QtWidgets import QHBoxLayout, QListView, QToolButton, QVBoxLayout, QWidget
 
-from ert.gui.ertwidgets import SearchBox, resourceIcon, Legend
-from ert.gui.tools.plot import DataTypeKeysListModel, DataTypeProxyModel, FilterPopup
+from ert.gui.ertwidgets import Legend, SearchBox, resourceIcon
+
+from .data_type_keys_list_model import DataTypeKeysListModel
+from .data_type_proxy_model import DataTypeProxyModel
+from .filter_popup import FilterPopup
 
 
 class DataTypeKeysWidget(QWidget):
