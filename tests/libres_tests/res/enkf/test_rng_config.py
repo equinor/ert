@@ -38,7 +38,7 @@ class RNGConfigTest(ResTest):
             },
         }
 
-    def test_dict_constructor(self):
+    def test_compare_config_content_and_dict_constructor(self):
         config = self.create_base_config()
 
         case_directory = self.createTestPath("local/simple_config")
@@ -46,11 +46,19 @@ class RNGConfigTest(ResTest):
             work_area.copy_directory(case_directory)
 
             random_seed = "abcdefghijklmnop"
-            config["SIMULATION"]["SEED"] = {ConfigKeys.RANDOM_SEED: random_seed}
+            rng_config_dict = {ConfigKeys.RANDOM_SEED: random_seed}
+            config["SIMULATION"]["SEED"] = rng_config_dict
 
-            rng_config = RNGConfig(config_dict=config["SIMULATION"]["SEED"])
-            res_config = ResConfig(config=config)
-            self.assertEqual(rng_config, res_config.rng_config)
+            # we instantiate an `RNGConfig` class using a config dict
+            rng_config_from_dict = RNGConfig(config_dict=rng_config_dict)
+            # NB: We are using the `config` argument, which essentially
+            # passes a config content directly to the init function of the
+            # `ResConfig` class
+            res_config_from_config_content = ResConfig(config=config)
+
+            self.assertEqual(
+                rng_config_from_dict, res_config_from_config_content.rng_config
+            )
 
     def test_random_seed(self):
         config = self.create_base_config()
