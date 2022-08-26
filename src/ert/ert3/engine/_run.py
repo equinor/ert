@@ -4,24 +4,32 @@ import os
 import tempfile
 import uuid
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import TYPE_CHECKING, Dict, List, Optional, Tuple
 
-import ert.storage
-import ert.exceptions
 import ert.data
 import ert.ensemble_evaluator
-
-from ert import ert3
-from ert.ert3.config import SourceNS
-from ert.async_utils import get_event_loop
+import ert.exceptions
+import ert.storage
 from ert._c_wrappers.config.active_range import ActiveRange
+from ert.async_utils import get_event_loop
+from ert.ert3 import config, evaluator
 
 from ._entity import TransmitterCoroutine
+from ._record import sample_record
 from ._sensitivity import (
     analyze_sensitivity,
     prepare_sensitivity,
     transmitter_map_sensitivity,
 )
+
+if TYPE_CHECKING:
+    from ert.ert3.config import (
+        EnsembleConfig,
+        ExperimentRunConfig,
+        LinkedInput,
+        ParametersConfig,
+    )
+    from ert.ert3.workspace import Workspace
 
 logger = logging.getLogger(__name__)
 
@@ -29,7 +37,7 @@ logger = logging.getLogger(__name__)
 def _prepare_experiment(
     workspace_name: str,
     experiment_name: str,
-    ensemble: ert3.config.EnsembleConfig,
+    ensemble: "EnsembleConfig",
     ensemble_size: int,
 ) -> None:
     if experiment_name in ert.storage.get_experiment_names(
@@ -65,7 +73,7 @@ def _gather_transmitter_maps(
 
 
 def _transmitter_map_storage(
-    inputs: Tuple[ert3.config.LinkedInput, ...],
+    inputs: Tuple["LinkedInput", ...],
     ensemble_size: int,
     records_url: str,
 ) -> List[TransmitterCoroutine]:
@@ -82,10 +90,10 @@ def _transmitter_map_storage(
 
 
 def _transmitter_map_resources(
-    inputs: Tuple[ert3.config.LinkedInput, ...],
+    inputs: Tuple["LinkedInput", ...],
     ensemble_size: int,
     experiment_name: str,
-    workspace: ert3.workspace.Workspace,
+    workspace: "Workspace",
 ) -> List[TransmitterCoroutine]:
     futures: List[TransmitterCoroutine] = []
     for input_ in inputs:
@@ -104,15 +112,15 @@ def _transmitter_map_resources(
 
 
 def _transmitter_map_stochastic(
-    inputs: Tuple[ert3.config.LinkedInput, ...],
-    parameters_config: ert3.config.ParametersConfig,
+    inputs: Tuple["LinkedInput", ...],
+    parameters_config: "ParametersConfig",
     ensemble_size: int,
     experiment_name: str,
     workspace_name: str,
 ) -> List[TransmitterCoroutine]:
     futures: List[TransmitterCoroutine] = []
     for input_ in inputs:
-        collection = ert3.engine.sample_record(
+        collection = sample_record(
             parameters_config,
             input_.source_location,
             ensemble_size=ensemble_size,
@@ -128,8 +136,8 @@ def _transmitter_map_stochastic(
 
 
 def _get_storage_path(
-    ensemble_config: ert3.config.EnsembleConfig,
-    workspace: ert3.workspace.Workspace,
+    ensemble_config: "EnsembleConfig",
+    workspace: "Workspace",
     experiment_name: str,
 ) -> str:
     if ensemble_config.storage_type == "ert_storage":
@@ -144,8 +152,8 @@ def _get_storage_path(
 
 # pylint: disable=too-many-arguments
 def run(
-    experiment_run_config: ert3.config.ExperimentRunConfig,
-    workspace: ert3.workspace.Workspace,
+    experiment_run_config: "ExperimentRunConfig",
+    workspace: "Workspace",
     experiment_name: str,
     local_test_run: bool = False,
     use_gui: bool = False,
@@ -187,7 +195,7 @@ def run(
     step_builder = (
         ert.ensemble_evaluator.StepBuilder()
         .set_name(f"{stage.name}-only_step")
-        .set_type("function" if isinstance(stage, ert3.config.Function) else "unix")
+        .set_type("function" if isinstance(stage, config.Function) else "unix")
     )
 
     local_run_path: Optional[Path] = None
@@ -197,9 +205,9 @@ def run(
 
     inputs = experiment_run_config.get_linked_inputs()
 
-    storage_inputs = tuple(inputs[SourceNS.storage].values())
-    resource_inputs = tuple(inputs[SourceNS.resources].values())
-    stochastic_inputs = tuple(inputs[SourceNS.stochastic].values())
+    storage_inputs = tuple(inputs[config.SourceNS.storage].values())
+    resource_inputs = tuple(inputs[config.SourceNS.resources].values())
+    stochastic_inputs = tuple(inputs[config.SourceNS.stochastic].values())
     transmitters = _gather_transmitter_maps(
         _transmitter_map_storage(storage_inputs, ensemble_size, records_url)
         + _transmitter_map_resources(
@@ -218,13 +226,13 @@ def run(
     )
 
     for records in (storage_inputs, resource_inputs, stochastic_inputs):
-        ert3.evaluator.add_step_inputs(
+        evaluator.add_step_inputs(
             records,
             transmitters,
             step_builder,
         )
 
-    ert3.evaluator.add_step_outputs(
+    evaluator.add_step_outputs(
         experiment_run_config.ensemble_config.storage_type,
         stage,
         storage_path,
@@ -232,8 +240,8 @@ def run(
         step_builder,
     )
 
-    if isinstance(stage, ert3.config.Unix):
-        ert3.evaluator.add_commands(
+    if isinstance(stage, config.Unix):
+        evaluator.add_commands(
             stage,
             experiment_run_config.ensemble_config.storage_type,
             storage_path,
@@ -248,7 +256,7 @@ def run(
             rangestring=experiment_run_config.ensemble_config.active_range,
             length=ensemble_size,
         ).mask
-    ensemble = ert3.evaluator.build_ensemble(
+    ensemble = evaluator.build_ensemble(
         stage,
         experiment_run_config.ensemble_config.forward_model.driver,
         ensemble_size,
@@ -256,7 +264,7 @@ def run(
         active_mask,
         ens_id="0",
     )
-    ert3.evaluator.evaluate(ensemble, use_gui=use_gui)
+    evaluator.evaluate(ensemble, use_gui=use_gui)
 
     if local_test_run:
         print("Run")
@@ -266,15 +274,15 @@ def run(
 
 # pylint: disable=too-many-arguments
 def run_sensitivity_analysis(
-    experiment_run_config: ert3.config.ExperimentRunConfig,
-    workspace: ert3.workspace.Workspace,
+    experiment_run_config: "ExperimentRunConfig",
+    workspace: "Workspace",
     experiment_name: str,
     use_gui: bool = False,
 ) -> None:
     inputs = experiment_run_config.get_linked_inputs()
-    storage_inputs = tuple(inputs[SourceNS.storage].values())
-    resource_inputs = tuple(inputs[SourceNS.resources].values())
-    stochastic_inputs = tuple(inputs[SourceNS.stochastic].values())
+    storage_inputs = tuple(inputs[config.SourceNS.storage].values())
+    resource_inputs = tuple(inputs[config.SourceNS.resources].values())
+    stochastic_inputs = tuple(inputs[config.SourceNS.stochastic].values())
     sensitivity_input_records = prepare_sensitivity(
         stochastic_inputs,
         experiment_run_config.experiment_config,
@@ -298,7 +306,7 @@ def run_sensitivity_analysis(
     step_builder = (
         ert.ensemble_evaluator.StepBuilder()
         .set_name(f"{stage.name}-only_step")
-        .set_type("function" if isinstance(stage, ert3.config.Function) else "unix")
+        .set_type("function" if isinstance(stage, config.Function) else "unix")
     )
 
     transmitters = _gather_transmitter_maps(
@@ -317,13 +325,13 @@ def run_sensitivity_analysis(
         )
     )
     for records in (storage_inputs, resource_inputs, stochastic_inputs):
-        ert3.evaluator.add_step_inputs(
+        evaluator.add_step_inputs(
             records,
             transmitters,
             step_builder,
         )
 
-    ert3.evaluator.add_step_outputs(
+    evaluator.add_step_outputs(
         experiment_run_config.ensemble_config.storage_type,
         stage,
         storage_path,
@@ -331,15 +339,15 @@ def run_sensitivity_analysis(
         step_builder,
     )
 
-    if isinstance(stage, ert3.config.Unix):
-        ert3.evaluator.add_commands(
+    if isinstance(stage, config.Unix):
+        evaluator.add_commands(
             stage,
             experiment_run_config.ensemble_config.storage_type,
             storage_path,
             step_builder,
         )
 
-    ensemble = ert3.evaluator.build_ensemble(
+    ensemble = evaluator.build_ensemble(
         stage,
         experiment_run_config.ensemble_config.forward_model.driver,
         ensemble_size,
@@ -347,7 +355,7 @@ def run_sensitivity_analysis(
         ens_id="0",
     )
 
-    output_transmitters = ert3.evaluator.evaluate(ensemble, use_gui=use_gui)
+    output_transmitters = evaluator.evaluate(ensemble, use_gui=use_gui)
     analyze_sensitivity(
         stochastic_inputs,
         experiment_run_config.experiment_config,
@@ -359,11 +367,13 @@ def run_sensitivity_analysis(
 
 
 def get_ensemble_size(
-    experiment_run_config: ert3.config.ExperimentRunConfig,
+    experiment_run_config: "ExperimentRunConfig",
 ) -> int:
     if experiment_run_config.experiment_config.type == "sensitivity":
         stochastic_inputs = tuple(
-            experiment_run_config.get_linked_inputs()[SourceNS.stochastic].values()
+            experiment_run_config.get_linked_inputs()[
+                config.SourceNS.stochastic
+            ].values()
         )
         return len(
             prepare_sensitivity(

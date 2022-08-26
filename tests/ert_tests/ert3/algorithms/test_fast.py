@@ -4,9 +4,10 @@ from typing import Any, Dict, List, MutableMapping
 import numpy as np
 import pytest
 
-import ert
-from ert import ert3
 from ert.async_utils import get_event_loop
+from ert.data import InMemoryRecordTransmitter, NumericalRecord
+from ert.ert3 import algorithms
+from ert.ert3.stats import Distribution, Gaussian, Uniform
 
 # Expected values for S1 and ST for ishigami function
 # sample_size = 15000, harmonics = 4, bounds = [-pi, pi]
@@ -34,7 +35,7 @@ def assert_samples(
     samples: List[Dict[str, Any]],
     sample_size: int,
     param_size: int,
-    parameters: MutableMapping[str, ert3.stats.Distribution],
+    parameters: MutableMapping[str, Distribution],
 ):
     """Verifies dimensions of computed samples."""
     assert sample_size * param_size == len(samples)
@@ -68,14 +69,10 @@ def assert_analysis(analysis, analysis_size, param_size, param_index):
 @pytest.mark.parametrize(
     ("distribution"),
     (
-        (ert3.stats.Gaussian(mean=-np.pi, std=np.pi)),
-        (ert3.stats.Uniform(lower_bound=-np.pi, upper_bound=np.pi)),
-        (ert3.stats.Gaussian(mean=-np.pi, std=np.pi, index=tuple(["x", "y", "z"]))),
-        (
-            ert3.stats.Uniform(
-                lower_bound=-np.pi, upper_bound=np.pi, index=tuple(["x", "y", "z"])
-            )
-        ),
+        (Gaussian(mean=-np.pi, std=np.pi)),
+        (Uniform(lower_bound=-np.pi, upper_bound=np.pi)),
+        (Gaussian(mean=-np.pi, std=np.pi, index=tuple(["x", "y", "z"]))),
+        (Uniform(lower_bound=-np.pi, upper_bound=np.pi, index=tuple(["x", "y", "z"]))),
     ),
 )
 def test_single_evaluation(distribution):
@@ -84,7 +81,7 @@ def test_single_evaluation(distribution):
     analysis_size = 1
     parameters = {"xs": distribution}
 
-    samples = ert3.algorithms.fast_sample(parameters, harmonics, sample_size)
+    samples = algorithms.fast_sample(parameters, harmonics, sample_size)
 
     # Verify dimensions of returned samples:
     assert_samples(samples, sample_size, distribution.size, parameters)
@@ -101,14 +98,14 @@ def test_single_evaluation(distribution):
         x = sample["xs"].data["x"]
         y = sample["xs"].data["y"]
         z = sample["xs"].data["z"]
-        t = ert.data.InMemoryRecordTransmitter("output")
+        t = InMemoryRecordTransmitter("output")
         futures.append(
-            t.transmit_record(ert.data.NumericalRecord(data=[ishigami_single(x, y, z)]))
+            t.transmit_record(NumericalRecord(data=[ishigami_single(x, y, z)]))
         )
         model_output[iens] = {"output": t}
     get_event_loop().run_until_complete(asyncio.gather(*futures))
 
-    analysis = ert3.algorithms.fast_analyze(parameters, model_output, harmonics)
+    analysis = algorithms.fast_analyze(parameters, model_output, harmonics)
     assert_analysis(analysis, analysis_size, distribution.size, parameters["xs"].index)
 
     if distribution.type == "uniform":
@@ -121,8 +118,8 @@ def test_single_evaluation(distribution):
 @pytest.mark.parametrize(
     ("distribution"),
     (
-        (ert3.stats.Gaussian(mean=-np.pi, std=np.pi)),
-        (ert3.stats.Uniform(lower_bound=-np.pi, upper_bound=np.pi)),
+        (Gaussian(mean=-np.pi, std=np.pi)),
+        (Uniform(lower_bound=-np.pi, upper_bound=np.pi)),
     ),
 )
 def test_scalar_distributions(distribution):
@@ -130,7 +127,7 @@ def test_scalar_distributions(distribution):
     harmonics = 4
     analysis_size = 1
     parameters = {"x": distribution, "y": distribution, "z": distribution}
-    samples = ert3.algorithms.fast_sample(parameters, harmonics, sample_size)
+    samples = algorithms.fast_sample(parameters, harmonics, sample_size)
     assert_samples(samples, sample_size, len(parameters), parameters)
 
     model_output = {}
@@ -140,14 +137,14 @@ def test_scalar_distributions(distribution):
         x = sample["x"].data
         y = sample["y"].data
         z = sample["z"].data
-        t = ert.data.InMemoryRecordTransmitter("output")
+        t = InMemoryRecordTransmitter("output")
         futures.append(
-            t.transmit_record(ert.data.NumericalRecord(data=ishigami_single(x, y, z)))
+            t.transmit_record(NumericalRecord(data=ishigami_single(x, y, z)))
         )
         model_output[iens] = {"output": t}
     get_event_loop().run_until_complete(asyncio.gather(*futures))
 
-    analysis = ert3.algorithms.fast_analyze(parameters, model_output, harmonics)
+    analysis = algorithms.fast_analyze(parameters, model_output, harmonics)
     assert_analysis(analysis, analysis_size, len(parameters), parameters.keys())
 
     if distribution.type == "uniform":
@@ -162,11 +159,9 @@ def test_parameter_array():
     harmonics = 4
     param_size = 3
     analysis_size = 1
-    parameters = {
-        "xs": ert3.stats.Uniform(lower_bound=-np.pi, upper_bound=np.pi, size=3)
-    }
+    parameters = {"xs": Uniform(lower_bound=-np.pi, upper_bound=np.pi, size=3)}
 
-    samples = ert3.algorithms.fast_sample(parameters, harmonics, sample_size)
+    samples = algorithms.fast_sample(parameters, harmonics, sample_size)
     assert_samples(samples, sample_size, param_size, parameters)
 
     model_output = {}
@@ -175,14 +170,14 @@ def test_parameter_array():
         x = sample["xs"].data[0]
         y = sample["xs"].data[1]
         z = sample["xs"].data[2]
-        t = ert.data.InMemoryRecordTransmitter("output")
+        t = InMemoryRecordTransmitter("output")
         futures.append(
-            t.transmit_record(ert.data.NumericalRecord(data=[ishigami_single(x, y, z)]))
+            t.transmit_record(NumericalRecord(data=[ishigami_single(x, y, z)]))
         )
         model_output[iens] = {"output": t}
     get_event_loop().run_until_complete(asyncio.gather(*futures))
 
-    analysis = ert3.algorithms.fast_analyze(parameters, model_output, harmonics)
+    analysis = algorithms.fast_analyze(parameters, model_output, harmonics)
     assert_analysis(analysis, analysis_size, param_size, parameters["xs"].index)
 
     S1 = analysis[0]["S1"]
@@ -197,11 +192,11 @@ def test_multiple_evaluations():
     param_size = 3
     analysis_size = 10
     parameters = {
-        "xs": ert3.stats.Uniform(
+        "xs": Uniform(
             lower_bound=-np.pi, upper_bound=np.pi, index=tuple(["x", "y", "z"])
         )
     }
-    samples = ert3.algorithms.fast_sample(parameters, harmonics, sample_size)
+    samples = algorithms.fast_sample(parameters, harmonics, sample_size)
     assert_samples(samples, sample_size, param_size, parameters)
 
     model_output = {}
@@ -210,14 +205,14 @@ def test_multiple_evaluations():
         x = sample["xs"].data["x"]
         y = sample["xs"].data["y"]
         z = sample["xs"].data["z"]
-        t = ert.data.InMemoryRecordTransmitter("output")
+        t = InMemoryRecordTransmitter("output")
         futures.append(
-            t.transmit_record(ert.data.NumericalRecord(data=ishigami_multiple(x, y, z)))
+            t.transmit_record(NumericalRecord(data=ishigami_multiple(x, y, z)))
         )
         model_output[iens] = {"output": t}
     get_event_loop().run_until_complete(asyncio.gather(*futures))
 
-    analysis = ert3.algorithms.fast_analyze(parameters, model_output, harmonics)
+    analysis = algorithms.fast_analyze(parameters, model_output, harmonics)
     assert_analysis(analysis, analysis_size, param_size, parameters["xs"].index)
 
     for i in range(analysis_size):
@@ -233,12 +228,10 @@ def test_mixed_record_type():
     param_size = 3
     analysis_size = 10
     parameters = {
-        "x": ert3.stats.Uniform(lower_bound=-np.pi, upper_bound=np.pi),
-        "yz": ert3.stats.Uniform(
-            lower_bound=-np.pi, upper_bound=np.pi, index=tuple(["y", "z"])
-        ),
+        "x": Uniform(lower_bound=-np.pi, upper_bound=np.pi),
+        "yz": Uniform(lower_bound=-np.pi, upper_bound=np.pi, index=tuple(["y", "z"])),
     }
-    samples = ert3.algorithms.fast_sample(parameters, harmonics, sample_size)
+    samples = algorithms.fast_sample(parameters, harmonics, sample_size)
     assert_samples(samples, sample_size, param_size, parameters)
 
     model_output = {}
@@ -247,14 +240,14 @@ def test_mixed_record_type():
         x = sample["x"].data
         y = sample["yz"].data["y"]
         z = sample["yz"].data["z"]
-        t = ert.data.InMemoryRecordTransmitter("output")
+        t = InMemoryRecordTransmitter("output")
         futures.append(
-            t.transmit_record(ert.data.NumericalRecord(data=ishigami_multiple(x, y, z)))
+            t.transmit_record(NumericalRecord(data=ishigami_multiple(x, y, z)))
         )
         model_output[iens] = {"output": t}
     get_event_loop().run_until_complete(asyncio.gather(*futures))
 
-    analysis = ert3.algorithms.fast_analyze(parameters, model_output, harmonics)
+    analysis = algorithms.fast_analyze(parameters, model_output, harmonics)
     assert_analysis(analysis, analysis_size, param_size, ["x", "y", "z"])
 
     for i in range(analysis_size):
@@ -270,10 +263,10 @@ def test_analyse_multiple_groups():
     param_size = 5
     analysis_size = 1
     parameters = {
-        "xs": ert3.stats.Uniform(lower_bound=0, upper_bound=1, index=tuple(["x", "y"])),
-        "coeffs": ert3.stats.Gaussian(mean=0, std=1, index=tuple(["a", "b", "c"])),
+        "xs": Uniform(lower_bound=0, upper_bound=1, index=tuple(["x", "y"])),
+        "coeffs": Gaussian(mean=0, std=1, index=tuple(["a", "b", "c"])),
     }
-    samples = ert3.algorithms.fast_sample(parameters, harmonics, sample_size)
+    samples = algorithms.fast_sample(parameters, harmonics, sample_size)
     assert_samples(samples, sample_size, param_size, parameters)
 
     model_output = {}
@@ -285,13 +278,13 @@ def test_analyse_multiple_groups():
         b = sample["coeffs"].data["b"]
         c = sample["coeffs"].data["c"]
         evaluation = polynomial(x, y, a, b, c)
-        t = ert.data.InMemoryRecordTransmitter("output")
-        futures.append(t.transmit_record(ert.data.NumericalRecord(data=evaluation)))
+        t = InMemoryRecordTransmitter("output")
+        futures.append(t.transmit_record(NumericalRecord(data=evaluation)))
         model_output[iens] = {"output": t}
 
     get_event_loop().run_until_complete(asyncio.gather(*futures))
 
-    analysis = ert3.algorithms.fast_analyze(parameters, model_output, harmonics)
+    analysis = algorithms.fast_analyze(parameters, model_output, harmonics)
     assert_analysis(
         analysis,
         analysis_size,
@@ -306,11 +299,11 @@ def test_sample_size(sample_size):
     param_size = 3
     analysis_size = 1
     parameters = {
-        "xs": ert3.stats.Uniform(
+        "xs": Uniform(
             lower_bound=-np.pi, upper_bound=np.pi, index=tuple(["x", "y", "z"])
         )
     }
-    samples = ert3.algorithms.fast_sample(parameters, harmonics, sample_size)
+    samples = algorithms.fast_sample(parameters, harmonics, sample_size)
     assert_samples(samples, sample_size, param_size, parameters)
 
     model_output = {}
@@ -319,12 +312,12 @@ def test_sample_size(sample_size):
         x = sample["xs"].data["x"]
         y = sample["xs"].data["y"]
         z = sample["xs"].data["z"]
-        t = ert.data.InMemoryRecordTransmitter("output")
+        t = InMemoryRecordTransmitter("output")
         futures.append(
-            t.transmit_record(ert.data.NumericalRecord(data=[ishigami_single(x, y, z)]))
+            t.transmit_record(NumericalRecord(data=[ishigami_single(x, y, z)]))
         )
         model_output[iens] = {"output": t}
     get_event_loop().run_until_complete(asyncio.gather(*futures))
 
-    analysis = ert3.algorithms.fast_analyze(parameters, model_output, harmonics)
+    analysis = algorithms.fast_analyze(parameters, model_output, harmonics)
     assert_analysis(analysis, analysis_size, param_size, parameters["xs"].index)

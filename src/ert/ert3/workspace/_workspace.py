@@ -7,7 +7,7 @@ from typing import Any, Dict, List, Optional, Set, Union
 import yaml
 
 import ert
-from ert import ert3
+from ert.ert3 import config
 
 _WORKSPACE_DATA_ROOT = ".ert"
 _EXPERIMENTS_BASE = "experiments"
@@ -104,8 +104,8 @@ class Workspace:
     def load_experiment_run_config(
         self,
         experiment_name: str,
-        plugin_registry: ert3.config.ConfigPluginRegistry,
-    ) -> ert3.config.ExperimentRunConfig:
+        plugin_registry: config.ConfigPluginRegistry,
+    ) -> config.ExperimentRunConfig:
         """Load the configuration objects needed to run an experiment.
 
         This method loads, validates and returns a configuration object that
@@ -125,14 +125,14 @@ class Workspace:
         with open(stages_config_path, encoding="utf-8") as f:
             config_dict = yaml.safe_load(f)
         sys.path.append(str(self._path))
-        stage_config = ert3.config.load_stages_config(
+        stage_config = config.load_stages_config(
             config_dict, plugin_registry=plugin_registry
         )
 
         ensemble_config_path = self._path / _EXPERIMENTS_BASE / f"{experiment_name}.yml"
         with open(ensemble_config_path, encoding="utf-8") as f:
             config_dict = yaml.safe_load(f)
-        ensemble_config = ert3.config.load_ensemble_config(
+        ensemble_config = config.load_ensemble_config(
             config_dict, plugin_registry=plugin_registry
         )
         self._validate_resources(ensemble_config)
@@ -140,13 +140,13 @@ class Workspace:
         parameters_config_path = self._path / "parameters.yml"
         with open(parameters_config_path, encoding="utf-8") as f:
             config_dict = yaml.safe_load(f)
-        parameters_config = ert3.config.load_parameters_config(config_dict)
+        parameters_config = config.load_parameters_config(config_dict)
 
-        return ert3.config.ExperimentRunConfig(
+        return config.ExperimentRunConfig(
             stage_config, ensemble_config, parameters_config
         )
 
-    def load_parameters_config(self) -> ert3.config.ParametersConfig:
+    def load_parameters_config(self) -> config.ParametersConfig:
         """Load the parameters configuration.
 
         Returns:
@@ -154,11 +154,11 @@ class Workspace:
         """
         with open(self._path / "parameters.yml", encoding="utf-8") as f:
             config_dict = yaml.safe_load(f)
-        return ert3.config.load_parameters_config(config_dict)
+        return config.load_parameters_config(config_dict)
 
     async def load_resource(
         self,
-        linked_input: ert3.config.LinkedInput,
+        linked_input: config.LinkedInput,
         ensemble_size: int = 1,
     ) -> ert.data.RecordCollection:
         transformation = linked_input.source_transformation
@@ -203,11 +203,11 @@ class Workspace:
     def delete(self) -> None:
         shutil.rmtree(self._path / _WORKSPACE_DATA_ROOT)
 
-    def _validate_resources(self, ensemble_config: ert3.config.EnsembleConfig) -> None:
+    def _validate_resources(self, ensemble_config: config.EnsembleConfig) -> None:
         resource_inputs = [
             item
             for item in ensemble_config.input
-            if item.source_namespace == ert3.config.SourceNS.resources
+            if item.source_namespace == config.SourceNS.resources
         ]
         for resource in resource_inputs:
             path = self._path / _RESOURCES_BASE / resource.source_location

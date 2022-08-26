@@ -9,14 +9,15 @@ import typing
 
 import pytest
 
-from ert import ert3
 import ert.storage
 from ert.data import InMemoryRecordTransmitter, SharedDiskRecordTransmitter
+from ert.ert3 import config
+from ert.ert3 import workspace as workspace_module
+from ert.ert3.plugins import ErtPluginManager
+from ert.ert3.workspace._workspace import _EXPERIMENTS_BASE
 from ert.storage import StorageRecordTransmitter
 
 from ..ert_utils import chdir
-
-_EXPERIMENTS_BASE = ert3.workspace._workspace._EXPERIMENTS_BASE
 
 POLY_SCRIPT = """#!/usr/bin/env python3
 import json
@@ -131,7 +132,7 @@ def workspace_integration(tmpdir):
 
         # timeout=None means non-blocking: on ci, timing is unreliable
         with Storage.start_server(timeout=120):
-            workspace_obj = ert3.workspace.initialize(workspace_dir)
+            workspace_obj = workspace_module.initialize(workspace_dir)
             ert.storage.init(workspace_name=workspace_obj.name)
             yield workspace_obj
 
@@ -147,7 +148,7 @@ def workspace(tmpdir, ert_storage):
     workspace_dir = pathlib.Path(tmpdir / "polynomial")
     workspace_dir.mkdir()
     with chdir(workspace_dir):
-        workspace_obj = ert3.workspace.initialize(workspace_dir)
+        workspace_obj = workspace_module.initialize(workspace_dir)
         ert.storage.init(workspace_name=workspace_obj.name)
         yield workspace_obj
 
@@ -217,7 +218,7 @@ def base_ensemble_dict():
 
 @pytest.fixture()
 def ensemble(base_ensemble_dict, plugin_registry):
-    yield ert3.config.load_ensemble_config(
+    yield config.load_ensemble_config(
         base_ensemble_dict, plugin_registry=plugin_registry
     )
 
@@ -263,9 +264,7 @@ def stages_config(stages_config_list, plugin_registry):
     st = os.stat(script_file)
     os.chmod(script_file, st.st_mode | stat.S_IEXEC)
 
-    yield ert3.config.load_stages_config(
-        stages_config_list, plugin_registry=plugin_registry
-    )
+    yield config.load_stages_config(stages_config_list, plugin_registry=plugin_registry)
 
     script_file.unlink()
 
@@ -331,7 +330,7 @@ def double_stages_config(double_stages_config_list, plugin_registry):
     st = os.stat(script_file)
     os.chmod(script_file, st.st_mode | stat.S_IEXEC)
 
-    yield ert3.config.load_stages_config(
+    yield config.load_stages_config(
         double_stages_config_list, plugin_registry=plugin_registry
     )
 
@@ -385,7 +384,7 @@ def x_uncertainty_stages_config(plugin_registry):
     st = os.stat(script_file)
     os.chmod(script_file, st.st_mode | stat.S_IEXEC)
 
-    yield ert3.config.load_stages_config(config_list, plugin_registry=plugin_registry)
+    yield config.load_stages_config(config_list, plugin_registry=plugin_registry)
 
     script_file.unlink()
 
@@ -414,7 +413,7 @@ def function_stages_config(plugin_registry):
     (func_dir / "functions.py").write_text(POLY_FUNCTION)
     sys.path.append(os.getcwd())
 
-    yield ert3.config.load_stages_config(config_list, plugin_registry=plugin_registry)
+    yield config.load_stages_config(config_list, plugin_registry=plugin_registry)
 
 
 @pytest.fixture
@@ -422,8 +421,9 @@ def ert_storage(ert_storage_client, monkeypatch):
     # ert_storage_client fixture is defined in ert-storage repo.
     from contextlib import contextmanager
 
-    from ert.storage import _storage
     from httpx import AsyncClient
+
+    from ert.storage import _storage
 
     @contextmanager
     def _client():
@@ -460,15 +460,13 @@ def raw_ensrec_to_records():
 
 @pytest.fixture()
 def plugin_registry():
-    plugin_registry = ert3.config.ConfigPluginRegistry()
+    plugin_registry = config.ConfigPluginRegistry()
     plugin_registry.register_category(
         category="transformation",
         descriminator="type",
         optional=True,
-        base_config=ert3.config.plugins.TransformationConfigBase,
+        base_config=config.plugins.TransformationConfigBase,
     )
-    plugin_manager = ert3.plugins.ErtPluginManager(
-        plugins=[ert3.config.plugins.implementations]
-    )
+    plugin_manager = ErtPluginManager(plugins=[config.plugins.implementations])
     plugin_manager.collect(registry=plugin_registry)
     yield plugin_registry

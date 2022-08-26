@@ -1,18 +1,23 @@
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, TYPE_CHECKING
 
 import ert.data
-from ert import ert3
 import ert.storage
+from ert.ert3 import algorithms
 
 from ._entity import TransmitterCoroutine
+
+if TYPE_CHECKING:
+    from ert.ert3.config import ExperimentConfig, ParametersConfig, LinkedInput
+    from ert.ert3.workspace import Workspace
+    from ert.ert3.stats import Distribution
 
 
 # pylint: disable=too-many-arguments
 def analyze_sensitivity(
-    stochastic_inputs: Tuple[ert3.config.LinkedInput, ...],
-    experiment_config: ert3.config.ExperimentConfig,
-    parameters_config: ert3.config.ParametersConfig,
-    workspace: ert3.workspace.Workspace,
+    stochastic_inputs: Tuple["LinkedInput", ...],
+    experiment_config: "ExperimentConfig",
+    parameters_config: "ParametersConfig",
+    workspace: "Workspace",
     experiment_name: str,
     model_output: Dict[int, Dict[str, ert.data.RecordTransmitter]],
 ) -> None:
@@ -23,7 +28,7 @@ def analyze_sensitivity(
         sensitivity_parameters = _load_sensitivity_parameters(
             stochastic_inputs, parameters_config
         )
-        analysis = ert3.algorithms.fast_analyze(
+        analysis = algorithms.fast_analyze(
             sensitivity_parameters, model_output, experiment_config.harmonics
         )
         workspace.export_json(
@@ -40,10 +45,10 @@ def analyze_sensitivity(
 
 
 def transmitter_map_sensitivity(
-    stochastic_inputs: Tuple[ert3.config.LinkedInput, ...],
+    stochastic_inputs: Tuple["LinkedInput", ...],
     sensitivity_records: List[Dict[str, ert.data.Record]],
     experiment_name: str,
-    workspace: ert3.workspace.Workspace,
+    workspace: "Workspace",
 ) -> List[TransmitterCoroutine]:
     sensitivity_parameters: Dict[str, List[ert.data.Record]] = {
         input_.name: [] for input_ in stochastic_inputs
@@ -70,9 +75,9 @@ def transmitter_map_sensitivity(
 
 
 def _load_sensitivity_parameters(
-    stochastic_inputs: Tuple[ert3.config.LinkedInput, ...],
-    parameters_config: ert3.config.ParametersConfig,
-) -> Dict[str, ert3.stats.Distribution]:
+    stochastic_inputs: Tuple["LinkedInput", ...],
+    parameters_config: "ParametersConfig",
+) -> Dict[str, "Distribution"]:
     all_distributions = {
         param.name: param.as_distribution() for param in parameters_config
     }
@@ -85,20 +90,20 @@ def _load_sensitivity_parameters(
 
 
 def prepare_sensitivity(
-    stochastic_inputs: Tuple[ert3.config.LinkedInput, ...],
-    experiment_config: ert3.config.ExperimentConfig,
-    parameters_config: ert3.config.ParametersConfig,
+    stochastic_inputs: Tuple["LinkedInput", ...],
+    experiment_config: "ExperimentConfig",
+    parameters_config: "ParametersConfig",
 ) -> List[Dict[str, ert.data.Record]]:
     sensitivity_distributions = _load_sensitivity_parameters(
         stochastic_inputs, parameters_config
     )
 
     if experiment_config.algorithm == "one-at-a-time":
-        sensitivity_input_records = ert3.algorithms.one_at_a_time(
+        sensitivity_input_records = algorithms.one_at_a_time(
             sensitivity_distributions, tail=experiment_config.tail
         )
     elif experiment_config.algorithm == "fast":
-        sensitivity_input_records = ert3.algorithms.fast_sample(
+        sensitivity_input_records = algorithms.fast_sample(
             sensitivity_distributions,
             experiment_config.harmonics,
             experiment_config.sample_size,
