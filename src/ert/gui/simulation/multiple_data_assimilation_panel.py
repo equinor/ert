@@ -13,32 +13,33 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
+from dataclasses import dataclass
+from typing import List
+
 from qtpy.QtWidgets import QFormLayout, QLabel
 
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets import (
-    addHelpToWidget,
-    CaseSelector,
     ActiveLabel,
     AnalysisModuleEdit,
+    CaseSelector,
+    addHelpToWidget,
 )
 from ert.gui.ertwidgets.models.activerealizationsmodel import ActiveRealizationsModel
 from ert.gui.ertwidgets.models.init_iter_value import IterValueModel
 from ert.gui.ertwidgets.models.targetcasemodel import TargetCaseModel
 from ert.gui.ertwidgets.models.valuemodel import ValueModel
 from ert.gui.ertwidgets.stringbox import StringBox
-from ert.shared.ide.keywords.definitions import (
-    NumberListStringArgument,
-    RangeStringArgument,
-    ProperNameFormatArgument,
-    IntegerArgument,
-)
-from ert.gui.simulation import SimulationConfigPanel
-from ert.shared.models import MultipleDataAssimilation
 from ert.libres_facade import LibresFacade
+from ert.shared.ide.keywords.definitions import (
+    IntegerArgument,
+    NumberListStringArgument,
+    ProperNameFormatArgument,
+    RangeStringArgument,
+)
+from ert.shared.models import MultipleDataAssimilation
 
-from dataclasses import dataclass
-from typing import List
+from .simulation_config_panel import SimulationConfigPanel
 
 
 @dataclass

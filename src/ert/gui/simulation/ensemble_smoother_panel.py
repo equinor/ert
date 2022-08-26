@@ -1,21 +1,20 @@
+from dataclasses import dataclass
+
 from qtpy.QtWidgets import QFormLayout, QLabel
 
+from ert._c_wrappers.enkf import EnKFMain
 from ert.gui.ertnotifier import ErtNotifier
-from ert.gui.ertwidgets import addHelpToWidget, AnalysisModuleEdit
+from ert.gui.ertwidgets import AnalysisModuleEdit, addHelpToWidget
 from ert.gui.ertwidgets.caseselector import CaseSelector
 from ert.gui.ertwidgets.models.activerealizationsmodel import ActiveRealizationsModel
-from ert.gui.ertwidgets.models.ertmodel import (
-    get_runnable_realizations_mask,
-)
+from ert.gui.ertwidgets.models.ertmodel import get_runnable_realizations_mask
 from ert.gui.ertwidgets.models.targetcasemodel import TargetCaseModel
 from ert.gui.ertwidgets.stringbox import StringBox
-from ert.shared.ide.keywords.definitions import RangeStringArgument, ProperNameArgument
-from ert.gui.simulation import SimulationConfigPanel
 from ert.libres_facade import LibresFacade
+from ert.shared.ide.keywords.definitions import ProperNameArgument, RangeStringArgument
 from ert.shared.models import EnsembleSmoother
-from ert._c_wrappers.enkf import EnKFMain
 
-from dataclasses import dataclass
+from .simulation_config_panel import SimulationConfigPanel
 
 
 @dataclass

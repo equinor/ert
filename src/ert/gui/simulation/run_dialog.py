@@ -1,51 +1,48 @@
-import logging
 import asyncio
+import logging
 import pickle
-from threading import Thread
 from concurrent import futures
-from PyQt5.QtWidgets import QAbstractItemView
+from threading import Thread
+from typing import TYPE_CHECKING, Dict, cast
 
-from ert.gui.ertwidgets import resourceMovie
-from ert.gui.ertwidgets.message_box import ErtMessageBox
-from ert.gui.model.job_list import JobListProxyModel
-from ert.gui.model.snapshot import RealIens, SnapshotModel, FileRole
-from ert.gui.simulation.tracker_worker import TrackerWorker
-from ert.gui.tools.file import FileDialog
-from ert.gui.tools.plot.plot_tool import PlotTool
-from ert.shared.ensemble_evaluator.config import EvaluatorServerConfig
-from ert.shared.models import BaseRunModel
+from PyQt5.QtWidgets import QAbstractItemView
+from qtpy.QtCore import QModelIndex, QSize, Qt, QThread, QTimer, Signal, Slot
+from qtpy.QtWidgets import (
+    QApplication,
+    QDialog,
+    QHBoxLayout,
+    QHeaderView,
+    QLabel,
+    QMessageBox,
+    QProgressBar,
+    QPushButton,
+    QTableView,
+    QTabWidget,
+    QVBoxLayout,
+    QWidget,
+)
+
 from ert.ensemble_evaluator import (
     EndEvent,
     EvaluatorTracker,
     FullSnapshotEvent,
     SnapshotUpdateEvent,
 )
-from ert.shared.status.utils import format_running_time
-from qtpy.QtCore import QModelIndex, QSize, Qt, QThread, QTimer, Signal, Slot
-from qtpy.QtWidgets import (
-    QApplication,
-    QDialog,
-    QHBoxLayout,
-    QLabel,
-    QMessageBox,
-    QPushButton,
-    QTableView,
-    QVBoxLayout,
-    QWidget,
-    QTabWidget,
-    QHeaderView,
-    QProgressBar,
-)
-from ert.ensemble_evaluator.state import (
-    ENSEMBLE_STATE_FAILED,
-    ENSEMBLE_STATE_STOPPED,
-)
 from ert.ensemble_evaluator.identifiers import EVTYPE_EE_TERMINATED
-from ert.gui.simulation.view.progress import ProgressView
-from ert.gui.simulation.view.legend import LegendView
-from ert.gui.simulation.view.realization import RealizationWidget
+from ert.ensemble_evaluator.state import ENSEMBLE_STATE_FAILED, ENSEMBLE_STATE_STOPPED
+from ert.gui.ertwidgets import resourceMovie
+from ert.gui.ertwidgets.message_box import ErtMessageBox
+from ert.gui.model.job_list import JobListProxyModel
 from ert.gui.model.progress_proxy import ProgressProxyModel
-from typing import Dict, TYPE_CHECKING, cast
+from ert.gui.model.snapshot import FileRole, RealIens, SnapshotModel
+from ert.gui.tools.file import FileDialog
+from ert.gui.tools.plot.plot_tool import PlotTool
+from ert.shared.ensemble_evaluator.config import EvaluatorServerConfig
+from ert.shared.models import BaseRunModel
+from ert.shared.status.utils import format_running_time
+
+from .tracker_worker import TrackerWorker
+from .view import LegendView, ProgressView, RealizationWidget
 
 if TYPE_CHECKING:
     from ert.data import RecordTransmitter
