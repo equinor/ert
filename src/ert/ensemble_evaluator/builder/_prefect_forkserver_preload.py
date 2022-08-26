@@ -34,7 +34,7 @@ def _preload_scproxy() -> None:
     import requests  # pylint: disable=import-outside-toplevel
 
     try:
-        requests.get("http://localhost")
+        requests.get("http://localhost")  # pylint: diable=missing-timeout
     except requests.RequestException:
         pass
 
