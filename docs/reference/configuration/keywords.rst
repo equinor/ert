@@ -891,8 +891,6 @@ and/or history matching project.
                 GEN_KW PAR_MULTPV multpv_template.txt multpv.txt multpv_priors.txt
 
         
-        Note that naming a :code:`GEN_KW` parameter :code:`PRED` will prevent the parameter from being
-        being updated.
 
         In the GRID or EDIT section of the ECLIPSE data file, we would insert the
         following include statement:

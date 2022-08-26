@@ -280,17 +280,8 @@ std::vector<std::string> get_observation_keys(py::object self) {
 
 std::vector<std::string> get_parameter_keys(py::object self) {
     auto enkf_main = ert::from_cwrap<enkf_main_type>(self);
-
-    std::vector<std::string> parameters;
-    std::vector<std::string> keylist = ensemble_config_keylist_from_var_type(
+    return ensemble_config_keylist_from_var_type(
         res_config_get_ensemble_config(enkf_main->res_config), PARAMETER);
-
-    // Add all GEN_KW keywords to parameters that is not
-    // the SCHEDULE_PREDICTION_FILE
-    std::copy_if(keylist.begin(), keylist.end(), std::back_inserter(parameters),
-                 [](auto key) { return key != "PRED"; });
-
-    return parameters;
 }
 
 namespace enkf_main {
