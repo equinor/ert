@@ -1,4 +1,4 @@
-Ensemble Based Methods
+Ensemble based methods
 ======================
 
 The reservoir model for a greenfield is based on a range of subsurface inputs such as seismic
@@ -13,19 +13,19 @@ petroleum industry; in this manual, we will use the term *model updating*. Befor
 updating process can start, you will need:
 
 
-1. A reservoir model which has been *parameterized* with a parameter set :math:`\{x\}` 
+1. A reservoir model which has been *parameterized* with a parameter set :math:`\{x\}`
    that can produce simulated response :math:`y`.
 
 2. Observation data, :math:`d`, from the producing field.
 
 From a superficial point of view, model updating goes like this:
 
-1. Simulate the behavior of the field and assemble simulated data :math:`y`. 
+1. Simulate the behavior of the field and assemble simulated data :math:`y`.
 
-2. Compare the simulated data :math:`y` with the observed data :math:`d`. 
+2. Compare the simulated data :math:`y` with the observed data :math:`d`.
 
-3. Based on the misfit between :math:`y` and :math:`d` updated parameters 
-   :math:`\{x'\}` are calculated.   
+3. Based on the misfit between :math:`y` and :math:`d` updated parameters
+   :math:`\{x'\}` are calculated.
 
 Model updating falls into the general category of *inverse problems* - i.e., we know the results
 and want to determine the input parameters which reproduce these results. In the statistical
@@ -86,13 +86,13 @@ illustration in figure :numref:`ensemble`).
 All the plots show simulations pressure in a cell as a function of time, with measurements. Plots
 (1) and (3) show simulations before the model updating (i.e. the *prior*) and plots (2) and (4)
 show the plots after the update process (the *posterior*). The dashed vertical line is meant to
-illustrate the change from history to prediction. 
- 
+illustrate the change from history to prediction.
+
 The left case with plots (1) and (2) is a successful history matching project. The simulations
 from the posterior distribution are centered around the observed values, and the spread, i.e.,
 the uncertainty, is of the same order of magnitude as the observation uncertainty. From this
 case, we can reasonably expect that predictions will be unbiased with a reasonable estimate of
-the uncertainty. 
+the uncertainty.
 
 For the right-hand case shown in plots (3) and (4) the model updating has *not* been successful
 and more work is required. In the posterior solution, the simulations are not centered around the
@@ -103,13 +103,13 @@ the observations. This result does not make sense; although our goal is to reduc
 uncertainty, it should not be reduced significantly beyond the uncertainty of the observations.
 The predictions from (4) will most probably be biased and significantly underestimate future
 uncertainty [#]_.
- 
+
 .. [#] : (UNCLEAR) It should be emphasized that plots (3) and (4) show a simulated quantity from an
          assumed, more extensive set of observations. In general, there has been a different set of
          observations which has induced these large and unwanted updates.
 
 
-Ensemble Kalman Filter - EnKF
+Ensemble Kalman filter - EnKF
 -----------------------------
 ERT was initially created to do model updating of reservoir models with the EnKF algorithm. The
 experience from real-world models was that EnKF was not very suitable for reservoir applications.
@@ -118,7 +118,7 @@ simplified version of the EnKF. But the characteristics of the EnKF algorithm st
 many of the design decisions in ERT. It, therefore, makes sense to give a short introduction to
 the Kalman Filter and EnKF.
 
-The Kalman Filter
+The Kalman filter
 ~~~~~~~~~~~~~~~~~
 
 
@@ -143,20 +143,20 @@ equation for how the boat moves in time, and at selected points in time :math:`t
 :math:`x_k`: The estimated position at time :math:`t_k`.
 
 :math:`\sigma_k`: The uncertainty in the position at time :math:`t_k`.
-   
-:math:`x_k^{\ast}`: The *estimated/forecasted* position at time :math:`t_k`. 
+
+:math:`x_k^{\ast}`: The *estimated/forecasted* position at time :math:`t_k`.
    This is the position estimated from :math:`x_{k-1}` and :math:`g(x,t)`, but
    before the observed data :math:`d_k` are taken into account.
 
-:math:`d_k`: The observed values that are used in the updating process. 
+:math:`d_k`: The observed values that are used in the updating process.
    The :math:`d_k` values are measured with a process external to the model updating.
 
-:math:`\sigma_d`: The uncertainty in the measurements :math:`d_k`. 
+:math:`\sigma_d`: The uncertainty in the measurements :math:`d_k`.
       A reliable estimate of this uncertainty is essential for the algorithm to place a
       "correct" weight on the measured values.
 
 :math:`g(x,t)`: The equation of motion - *forward model* - which propagates
-       :math:`x_{k-1} \to x_k^{\ast}` 
+       :math:`x_{k-1} \to x_k^{\ast}`
 
 
 The purpose of the Kalman Filter is to determine an updated :math:`x_k` from
@@ -169,7 +169,7 @@ and uncertainty are:
    x_k = x_k^{\ast}\frac{\sigma_d^2}{\sigma_k^2 + \sigma_d^2} + x_d
    \frac{\sigma_k^2}{\sigma_k^2 + \sigma_d^2}
 
-.. math::          
+.. math::
 
    \sigma_k^2 = \sigma_k^i{2\ast}\left(1 - \frac{\sigma_k^{2\ast}}{\sigma_d^2 + \sigma_k^{2\ast}}\right)
 
@@ -180,9 +180,9 @@ For the updated uncertainty, the key takeaway message is that the updated uncert
 be smaller than the forecasted uncertainty: :math:`\sigma_k < \sigma_k^{\ast}`.
 
 
-Kalman Smoothers
+Kalman smoothers
 ------------------
-We can derive the Kalman Filter updating equations starting from Bayes' theorem.  Assume
+We can derive the Kalman filter updating equations starting from Bayes' theorem.  Assume
 that we have a deterministic forward model, :math:`g(x)`, so that the predicted response
 :math:`y` only depend on the model parameterized by the state vector :math:`x`
 
@@ -190,22 +190,22 @@ that we have a deterministic forward model, :math:`g(x)`, so that the predicted 
 
    y = g(x).
 
-In the classical history matching setting, :math:`x` represents the uncertainty 
-parameters, :math:`g(x)` the forward model, and :math:`y` the simulated responses 
-corresponding to the observed data, :math:`d`, from our oil field. From evaluating 
-the model forward operator :math:`g(x)` of the uncertainty model parameters 
-:math:`x \in \Re^n`, we determine a prediction :math:`y \in \Re^m`, which corresponds 
-to the real measurements :math:`d \in \Re^m`. Here :math:`n` is the number of 
+In the classical history matching setting, :math:`x` represents the uncertainty
+parameters, :math:`g(x)` the forward model, and :math:`y` the simulated responses
+corresponding to the observed data, :math:`d`, from our oil field. From evaluating
+the model forward operator :math:`g(x)` of the uncertainty model parameters
+:math:`x \in \Re^n`, we determine a prediction :math:`y \in \Re^m`, which corresponds
+to the real measurements :math:`d \in \Re^m`. Here :math:`n` is the number of
 uncertainty parameters and :math:`m` is the number of observed measurements.
 
 We introduce the mismatch :math:`e`
-  
+
 .. math::
 
    d = y + e.
 
-We are interested in the posterior marginal distribution :math:`f(x|d)` which, according 
-to Bayes theorem, can be expressed as  
+We are interested in the posterior marginal distribution :math:`f(x|d)` which, according
+to Bayes theorem, can be expressed as
 
 .. math::
 
@@ -223,22 +223,22 @@ and assume that the data mismatch is normally distributed
 
    f(d|g(x))=f(e)=\mathcal{N}(0,C_{dd}),
 
-where :math:`x^f \in \Re^n` is the prior estimate of :math:`x` with covariance matrix 
-:math:`C_{xx} \in \Re^{n \times n}`, and :math:`C_{dd} \in \Re^{m \times m}` is the 
+where :math:`x^f \in \Re^n` is the prior estimate of :math:`x` with covariance matrix
+:math:`C_{xx} \in \Re^{n \times n}`, and :math:`C_{dd} \in \Re^{m \times m}` is the
 error covariance for the measurements. We can then write the posterior distribution as
 
 .. math::
-   
+
    \begin{align}
    f(x|d) & \propto \exp\{-\frac{1}{2}(x-x^f)^T C_{xx}^{-1}(x-x^f)\} \\
           & \times \exp\{-\frac{1}{2}(g(x)-d)^T C_{dd}^{-1}(g(x)-d)\}.
    \end{align}
 
-The smoother methods in ERT approximately sample the posterior PDF through various routes. 
+The smoother methods in ERT approximately sample the posterior PDF through various routes.
 These are derived exploiting the fact that maximizing f(x|d) is equivalent to minimizing
 
 .. math::
-   
+
    \begin{align}
    \mathcal{J}(x) & = -\frac{1}{2}(x-x^f)^T C_{xx}^{-1}(x-x^f) \\
           & + \frac{1}{2}(g(x)-d)^T C_{dd}^{-1}(g(x)-d).
@@ -259,20 +259,20 @@ where :math:`G = \nabla g(x)` yields
 Thus, the update of :math:`x^f` is a linear and weighted correction, which in the linear case
 would result in the minimum variance estimate.
 
- 
-Ensemble Smoother (ES)
+
+Ensemble smoother (ES)
 ----------------------
-Ensemble methods attempt to sample the posterior Bayes's solution, by minimizing the ensemble of 
+Ensemble methods attempt to sample the posterior Bayes's solution, by minimizing the ensemble of
 cost functions
 
 .. math::
-   
+
    \begin{align}
    \mathcal{J}(x_j) & = -\frac{1}{2}(x_j-x_j^f)^T C_{xx}^{-1}(x_j-x_j^f) \\
           & + \frac{1}{2}(g(x_j)-d_j)^T C_{dd}^{-1}(g(x_j)-d_j).
    \end{align}
 
-Here probability distributions are represented by a collection of realizations, called an 
+Here probability distributions are represented by a collection of realizations, called an
 ensemble. Specifically, we introduce the prior ensemble
 
 .. math::
@@ -283,7 +283,7 @@ an :math:`n\times N` matrix sampled from the prior distribution. We also represe
 .. math::
    D = [d_1,\dots,d_n] = [d_j],
 
-so that the columns consist of the data vector plus a random vector from the normal distribution  
+so that the columns consist of the data vector plus a random vector from the normal distribution
 
 .. math::
 
@@ -304,7 +304,7 @@ where :math:`G_j = \nabla g(x_j)`.  The clever trick in ensemble methods is to r
 .. math::
    C_{yx} = G C_{xx}.
 
-Covariances :math:`\bar{C}_{xy}`, :math:`\bar{C}_{xx}`, and :math:`\bar{C}_{dd}` are 
+Covariances :math:`\bar{C}_{xy}`, :math:`\bar{C}_{xx}`, and :math:`\bar{C}_{dd}` are
 estimated from the ensemble and the state vector is updated according to:
 
 .. math::
@@ -328,7 +328,7 @@ The pseudo algorithm for ES:
 
 4) Calculate :math:`X_a` using equation above
 
-5) Run the forward model :math:`Y_a = g(X_a)` to obtain the posterior simulated responses 
+5) Run the forward model :math:`Y_a = g(X_a)` to obtain the posterior simulated responses
 
 
 Numerical schemes
@@ -338,13 +338,13 @@ There are several nummerical schemes, i.e. methods to estimate the Kalman gain m
 .. math::
    \bar{C}_{xy}(\bar{C}_{xy}^{f}\bar{C}_{xx}^{-1}\bar{C}_{xy}+\bar{C}_{dd})^{-1}
 
-implemented in ERT. 
+implemented in ERT.
 
 
 STD EnKF
 ~~~~~~~~
 
-The recommended scheme. 
+The recommended scheme.
 
 
 SQRT EnKF
@@ -372,10 +372,10 @@ BOOTSTRAP ENKF
 
 
 
-Ensemble Smoother - Multiple Data Assimilation (ES MDA)
+Ensemble smoother - multiple data assimilation (ES MDA)
 -------------------------------------------------------
-While the Ensemble smoother attempts to solve the minimization equation in one go, the 
-ES MDA iterates by introducing the observations gradually. The posterior distribution 
+While the Ensemble smoother attempts to solve the minimization equation in one go, the
+ES MDA iterates by introducing the observations gradually. The posterior distribution
 can be rewritten:
 
 .. math::
@@ -387,21 +387,21 @@ can be rewritten:
 
 with :math:`\sum_{i=1}^N \frac{1}{\alpha_i} = 1`.
 
-In plain English, the ES MDA consist of several consecutive smoother updates with inflated 
-error bars. The ES MDA with one iteration is identical to the Ensemble smoother. 
+In plain English, the ES MDA consist of several consecutive smoother updates with inflated
+error bars. The ES MDA with one iteration is identical to the Ensemble smoother.
 
 
-Iterative Ensemble Smoother - Ensemble subspace version
+Iterative ensemble smoother - Ensemble subspace version
 -------------------------------------------------------
 
 The algorithm implemented is described in the article [Efficient Implementation of an Iterative Ensemble Smoother for Data Assimilation and Reservoir History Matching]( https://www.frontiersin.org/articles/10.3389/fams.2019.00047/full ).
 
 
-Kalman Posterior Properties
+Kalman posterior properties
 ---------------------------
 
-The updating from the prior :math:`p(\psi)=N\left(\mu_\psi,\Sigma_\psi\right)` 
-to the posterior :math:`p(\psi|d)=N\left(\mu_{\psi|d},\Sigma_{\psi|d}\right)`, 
+The updating from the prior :math:`p(\psi)=N\left(\mu_\psi,\Sigma_\psi\right)`
+to the posterior :math:`p(\psi|d)=N\left(\mu_{\psi|d},\Sigma_{\psi|d}\right)`,
 in the process assimilating measurements :math:`d` that are linear in :math:`\psi`,
 is performed by the Kalman methods by employing the following equations
 
@@ -425,8 +425,8 @@ is called tha Kalman gain, and :math:`M` is the linear measurement operator (i.e
    \hat{d} = M\mu_{\psi}
    \end{align}
 
-is the best estimate of :math:`d` under the prior knowledge, and the error is assumed Gaussian with covariance :math:`\Sigma_d`. 
-The ensemble variants draw an :math:`N`-sample :math:`\{\psi\}_{i=1}^N` from the prior, 
+is the best estimate of :math:`d` under the prior knowledge, and the error is assumed Gaussian with covariance :math:`\Sigma_d`.
+The ensemble variants draw an :math:`N`-sample :math:`\{\psi\}_{i=1}^N` from the prior,
 and perturb observations :math:`d` using the distributions of measurements creating a corresponding observation-sample :math:`\{d\}_{i=1}^N`.
 The perturbations are guaranteed to sum to zero over the sample.
 A posterior sample is then formed from updating the prior with the equation for the posterior mean above
@@ -450,11 +450,11 @@ From this, it is seen that when the sample size tends to infinity and estimates 
 then the ensemble variants converge to the standard Kalman filter in the linear Gaussian case.
 This convergence is however of a stochastic nature.
 
-More deterministic properties of the posterior are observed when the belief in measurements :math:`d` is varied. 
+More deterministic properties of the posterior are observed when the belief in measurements :math:`d` is varied.
 Intuitively, when measurements have zero belief, i.e. unbounded variance, then the posterior should equal the prior.
 At the other end of the spectrum, if the measurements are perfect with zero variance,
-then the posterior estimate should equal the maximum-likelihood estimate, corresponding to a flat prior, 
-and as we are certain of the belief in this estimate (because the measurements are so amazing), 
+then the posterior estimate should equal the maximum-likelihood estimate, corresponding to a flat prior,
+and as we are certain of the belief in this estimate (because the measurements are so amazing),
 the determinant of the posterior covariance tends to zero from above.
 The maximum likelihood estimate is found by minimizing the relevant part of the negative log-likelihood of the data
 
@@ -465,10 +465,10 @@ The maximum likelihood estimate is found by minimizing the relevant part of the 
 
 Furthermore, for a strictly decreasing sequence in belief in measurements, the distance between the
 posterior and the maximum likelihood estimate will be strictly decreasing as well.
-To summarize: 
+To summarize:
 
 - For the posterior estimate, we require that
-  
+
   a. The information in :math:`d` has been assimilated, creating a better estimate, so that :math:`|\hat{\mu}_{\psi|d}-\hat{\mu}_{ml}|_2<|\hat{\mu}_{\psi}-\hat{\mu}_{ml}|_2` and :math:`|\hat{\mu}_{\psi|d}-\hat{\mu}_{\psi}|_2<|\hat{\mu}_{\psi}-\hat{\mu}_{ml}|_2`.
   b. The estimate improves at better quality data: Let :math:`\Sigma_d=\sigma_d I`. If a sequence of :math:`\sigma_d` decreases strictly, then so will the corresponding sequence of :math:`|\hat{\mu}_{\psi|d}-\hat{\mu}_{ml}|_2`.
   c. The estimate does not move from the prior at no information: When :math:`\sigma_d\to \infty` then :math:`|\hat{\mu}_{\psi|d}-\hat{\mu}_{\psi}|_2\to 0`.
@@ -481,15 +481,15 @@ To summarize:
   c. The certainty of our estimate does not move from the priors when assimilated data contains no information: When :math:`\sigma_d\to \infty` then :math:`\det(\Sigma_{\psi|d})\to\det(\Sigma_{\psi})` from below.
   d. If assimilated data is perfect, i.e., without noise, then we are fully certain of the posterior estiamte: When :math:`\sigma_d\to 0` then :math:`\det(\Sigma_{\psi|d})\to 0` from above.
 
-In ert, the exact moments of the posterior are not calculated but can instead be estimated from the updated ensemble. 
+In ert, the exact moments of the posterior are not calculated but can instead be estimated from the updated ensemble.
 The sample mean from the updated ensemble is guaranteed to equal the exact first moment of the posterior, due to the perturbations of :math:`d` summing to zero.
 As a consequence, the maximum likelihood estimate is preserved.
 This guarantees the path of the posterior estimate as below in Figure :numref:`posterior_path`.
-Note however that this adjusts the sample slightly in both the case of measurements and posterior, but that this error is asymptotically negligible. 
+Note however that this adjusts the sample slightly in both the case of measurements and posterior, but that this error is asymptotically negligible.
 
 .. _posterior_path:
 .. figure:: images/posterior_path.png
    :scale: 100%
 
-   Illustration of the deterministic path of the posterior estimate from 
+   Illustration of the deterministic path of the posterior estimate from
    the priors to the likelihood estimate for :math:`\psi=[a,b]^\top`.

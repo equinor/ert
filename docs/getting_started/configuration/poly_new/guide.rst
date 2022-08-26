@@ -1,4 +1,4 @@
-Configuration Guide
+Configuration guide
 ===================
 ERT runs a set of simulations with a prior set of parameters sampled from
 distributions. Everything involved in running a particular simulation is called
@@ -288,7 +288,7 @@ Let us also increase the number of realizations now, so that we get a larger
 sample size, and thus have more data to inspect in the graphical user
 interface.
 
-Increase the ``NUM_REALIZATIONS`` value to ``100``, which tells ERT how many simulations to run. 
+Increase the ``NUM_REALIZATIONS`` value to ``100``, which tells ERT how many simulations to run.
 We can also specify that we want to run more simultaneous
 simulations, so it will run faster. This is configured in the queue system by
 specifying a :ref:`queue option <queue_option>` ``MAX_RUNNING`` for the
@@ -402,10 +402,10 @@ the following observations in the file ``poly_obs_data.txt``:
 There is one observation per line, with the first number
 signifying the observed value, and the second number signifying the uncertainty.
 
-We make ERT aware of observations using the :ref:`OBS_CONFIG <obs_config>` keyword, 
+We make ERT aware of observations using the :ref:`OBS_CONFIG <obs_config>` keyword,
 which refers to a file where the ``GENERAL_OBSERVATION`` keyword is used to define observations.
 
-First, make a file called ``observations`` in the project folder 
+First, make a file called ``observations`` in the project folder
 with the following content:
 
     .. literalinclude:: with_observations/observations
@@ -435,7 +435,7 @@ these lines::
 The :ref:`OBS_CONFIG <obs_config>` line simply tells ERT that there is a
 description of an observation set in the file ``observations``. The
 :ref:`TIME_MAP <time_map>` is legacy, and not used anymore, but it is still
-required to create a `time_map` file (e.g. containing 2006-06-01) when 
+required to create a `time_map` file (e.g. containing 2006-06-01) when
 we have an observation set.
 
 The final config file should look like this:

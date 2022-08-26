@@ -1,7 +1,7 @@
 .. _ert_kw_full_doc:
 
-List of Keywords
-====================
+List of keywords
+================
 
 For your convenience, the description of the keywords in the ERT configuration file
 are divided into the following groups:
@@ -18,8 +18,8 @@ are divided into the following groups:
   in :ref:`Advanced optional keywords<advanced_optional_keywords>`.
 
 
-List of keywords
-----------------
+Table of keywords
+-----------------
 
 =====================================================================   ======================================  ==============================  ==============================================================================================================================================
 Keyword name                                                            Required                                Default value                   Purpose
@@ -176,29 +176,29 @@ These keywords must be set to make ERT function properly.
 
 	A new way of handling property values for the FIELD keyword is to use a
         help grid called ERTBOX grid. The GRID keyword should in this case specify
-        the ERTBOX filename (which is in EGRID format). The ERTBOX grid 
-        is a grid with the same spatial location and rotation (x,y location) as the 
-	modelling grid, but it is a regular grid in a rectangular box. The dimensions 
-	of the ERTBOX grid laterally is the same as the modelling grid, but the number 
-	of layers is only large enough to store the properties for one zone, not the 
+        the ERTBOX filename (which is in EGRID format). The ERTBOX grid
+        is a grid with the same spatial location and rotation (x,y location) as the
+	modelling grid, but it is a regular grid in a rectangular box. The dimensions
+	of the ERTBOX grid laterally is the same as the modelling grid, but the number
+	of layers is only large enough to store the properties for one zone, not the
 	whole modelling grid.
-	
-	The number of layers must at least be as large as the number of layers 
+
+	The number of layers must at least be as large as the number of layers
         in the zone in the modelling grid with most layers. The properties used in
-	the FIELD keyword have the dimension of the ERTBOX grid and represents 
-	properties of one zone from the modelling grid. Each grid cell in the modelling 
-	grid for a given zone corresponds to one unique grid cell 
-	in the ERTBOX grid. Inactive grid cells in the modelling grid also corresponds 
-	to grid cells in the ERTBOX grid. There may exists layers of grid cells in the 
-	ERTBOX grid that does not corresponds to grid cells in the modelling grid. 
+	the FIELD keyword have the dimension of the ERTBOX grid and represents
+	properties of one zone from the modelling grid. Each grid cell in the modelling
+	grid for a given zone corresponds to one unique grid cell
+	in the ERTBOX grid. Inactive grid cells in the modelling grid also corresponds
+	to grid cells in the ERTBOX grid. There may exists layers of grid cells in the
+	ERTBOX grid that does not corresponds to grid cells in the modelling grid.
 	It is recommended to let all grid cells in the ERTBOX grid be active and have
-	realistic values and not a 'missing code'. For cases where the modelling grid 
-	is kept fixed for all realisations, this is not important, but for cases where 
-	the number of layers for the zones in the modelling grid may vary from 
-	realisation to realisation, this approach is more robust. It avoids mixing real 
-	physical values from one realisation with missing code value from another 
+	realistic values and not a 'missing code'. For cases where the modelling grid
+	is kept fixed for all realisations, this is not important, but for cases where
+	the number of layers for the zones in the modelling grid may vary from
+	realisation to realisation, this approach is more robust. It avoids mixing real
+	physical values from one realisation with missing code value from another
 	realization when calculating updated ensemble vectors.
-	 
+
 
         *Example:*
 
@@ -722,15 +722,15 @@ and/or history matching project.
                 FIELD  ID PARAMETER   <ECLIPSE_FILE>  INIT_FILES:/path/%d  MIN:X MAX:Y OUTPUT_TRANSFORM:FUNC INIT_TRANSFORM:FUNC  FORWARD_INIT:True
 
 	Here ID must be the same as the name of the parameter in the INIT_FILES.
-        ECLIPSE_FILE is the name of the file ERT will export this field to when 
-        running simulations. Note that there should be an IMPORT statement in 
+        ECLIPSE_FILE is the name of the file ERT will export this field to when
+        running simulations. Note that there should be an IMPORT statement in
         the ECLIPSE data file corresponding to the name given with ECLIPSE_FILE in case
-        the field parameter is a field used in ECLIPSE data file like perm or poro. 
+        the field parameter is a field used in ECLIPSE data file like perm or poro.
         INIT_FILES is a filename (with an embedded %d if FORWARD_INIT is set to False)
         to load the initial field from. Can be RMS ROFF format, ECLIPSE restart format
         or ECLIPSE GRDECL format.
 
-        FORWARD_INIT:True means that the files specified in the INIT_FILES are expected 
+        FORWARD_INIT:True means that the files specified in the INIT_FILES are expected
         to be created by a forward model, and does not need any embedded %d.
 	FORWARD_INIT:False means that the files must have been created before running
         ERT and need an embedded %d.
@@ -778,7 +778,7 @@ and/or history matching project.
         is faster than for plain text files. If you give the ECLIPSE_FILE with the
         extension .grdecl (arbitrary case), ERT will produce ordinary .grdecl files,
         which are loaded with an INCLUDE statement. This is probably what most users
-        are used to beforehand - but we recommend the IMPORT form. When using RMS APS 
+        are used to beforehand - but we recommend the IMPORT form. When using RMS APS
         plugin to create Gaussian Random Fields, the recommended file format is ROFF binary.
 
         *Example C:*
@@ -790,8 +790,8 @@ and/or history matching project.
 		-- ERT will read the INIT_FILES in iteration 0 and write the updated GRF
 		-- fields to the files following the keyword PARAMETER after updating.
 		-- NOTE: The ERTBOX grid is a container for GRF values (or perm or poro values) and
-		-- is used to define the dimension of the fields. It is NOT the modelling grid 
-		-- used in RMS or the simulation grid used by ECLIPSE. 
+		-- is used to define the dimension of the fields. It is NOT the modelling grid
+		-- used in RMS or the simulation grid used by ECLIPSE.
                 FIELD  aps_Volon_GRF1  PARAMETER  aps_Volon_GRF1.roff  INIT_FILES:rms/output/aps/aps_Volon_GRF1.roff   MIN:-5.5  MAX:5.5  FORWARD_INIT:True
                 FIELD  aps_Volon_GRF2  PARAMETER  aps_Volon_GRF2.roff  INIT_FILES:rms/output/aps/aps_Volon_GRF2.roff   MIN:-5.5  MAX:5.5  FORWARD_INIT:True
                 FIELD  aps_Volon_GRF3  PARAMETER  aps_Volon_GRF3.roff  INIT_FILES:rms/output/aps/aps_Volon_GRF3.roff   MIN:-5.5  MAX:5.5  FORWARD_INIT:True
@@ -878,7 +878,7 @@ and/or history matching project.
 
         where :code:`ID` is an arbitrary unique identifier,
         :code:`templates/template.txt` is the name of a template file,
-        :code:`include.txt` is the name of the file created for each realization 
+        :code:`include.txt` is the name of the file created for each realization
         based on the template file,
         and :code:`priors.txt` is a file contatining a list of parametrized keywords
         and a prior distribution for each.
@@ -889,8 +889,6 @@ and/or history matching project.
         ::
 
                 GEN_KW PAR_MULTPV multpv_template.txt multpv.txt multpv_priors.txt
-
-        
 
         In the GRID or EDIT section of the ECLIPSE data file, we would insert the
         following include statement:

@@ -1,6 +1,6 @@
 .. _Data_types_available_in_ERT:
 
-Data Types
+Data types
 ==========
 
 Very briefly described the purpose of ERT is to pass uncertain paramater values
@@ -50,7 +50,7 @@ Prior distributions available for use with GEN_KW
 .........................................................
 .. _prior_distributions:
 
-The algorithms used for updating parameters expect normally distributed variables. 
+The algorithms used for updating parameters expect normally distributed variables.
 ERT supports other types of distributions by transforming normal variables as outlined next.
 
   1. ERT samples a random variable ``x ~ N(0,1)`` - before outputing to the
