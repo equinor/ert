@@ -78,12 +78,12 @@ class BatchingDispatcher:
             self._LOOKUP_MAP[event_type].append((function, batching))
 
     async def handle_event(self, event):
-        for f, batching in self._LOOKUP_MAP[event["type"]]:
+        for function, batching in self._LOOKUP_MAP[event["type"]]:
             if batching:
                 if self._task.done():
                     raise asyncio.InvalidStateError(
                         "trying to handle event after batcher is done"
                     )
-                self._buffer.append((f, event))
+                self._buffer.append((function, event))
             else:
-                await f(event)
+                await function(event)
