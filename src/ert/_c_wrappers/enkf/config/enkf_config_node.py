@@ -21,13 +21,6 @@ from ecl.grid import EclGrid
 from ecl.util.util import IntVector, StringList
 
 from ert._c_wrappers import ResPrototype
-from ert._c_wrappers.enkf.config import (
-    ExtParamConfig,
-    FieldConfig,
-    GenDataConfig,
-    GenKwConfig,
-    SummaryConfig,
-)
 from ert._c_wrappers.enkf.config_keys import ConfigKeys
 from ert._c_wrappers.enkf.enums import (
     EnkfTruncationType,
@@ -35,6 +28,12 @@ from ert._c_wrappers.enkf.enums import (
     ErtImplType,
     LoadFailTypeEnum,
 )
+
+from .ext_param_config import ExtParamConfig
+from .field_config import FieldConfig
+from .gen_data_config import GenDataConfig
+from .gen_kw_config import GenKwConfig
+from .summary_config import SummaryConfig
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
