@@ -209,32 +209,48 @@ class EnsembleEvaluator:
         # pylint: disable=not-async-context-manager
         # (false positive)
         async with self.count_dispatcher():
-            async for msg in websocket:
-                try:
-                    event = from_json(msg, data_unmarshaller=evaluator_unmarshaller)
-                except cloudevents.exceptions.DataUnmarshallerError:
-                    event = from_json(msg, data_unmarshaller=pickle.loads)
-                if self._get_ens_id(event["source"]) != self.ensemble.id_:
-                    logger.info(
-                        f"Got event from evaluator {self._get_ens_id(event['source'])} "
-                        f"with source {event['source']}, "
-                        f"ignoring since I am {self.ensemble.id_}"
-                    )
-                    continue
-                try:
-                    await self._dispatcher.handle_event(event)
-                except BaseException as ex:
-                    logger.warning(
-                        f"cannot handle event - closing connection to dispatcher: {ex}"
-                    )
-                    await websocket.close(code=1011, reason=f"failed handling {event}")
-                    return
+            try:
+                async for msg in websocket:
+                    try:
+                        event = from_json(msg, data_unmarshaller=evaluator_unmarshaller)
+                    except cloudevents.exceptions.DataUnmarshallerError:
+                        event = from_json(msg, data_unmarshaller=pickle.loads)
+                    if self._get_ens_id(event["source"]) != self.ensemble.id_:
+                        logger.info(
+                            "Got event from evaluator "
+                            f"{self._get_ens_id(event['source'])} "
+                            f"with source {event['source']}, "
+                            f"ignoring since I am {self.ensemble.id_}"
+                        )
+                        continue
+                    try:
+                        await self._dispatcher.handle_event(event)
+                    except BaseException as ex:  # pylint: disable=broad-except
+                        # Exceptions include asyncio.InvalidStateError, and
+                        # anything that self._*_handler() can raise (updates
+                        # snapshots)
+                        logger.warning(
+                            "cannot handle event - "
+                            f"closing connection to dispatcher: {ex}"
+                        )
+                        await websocket.close(
+                            code=1011, reason=f"failed handling {event}"
+                        )
+                        return
 
-                if event["type"] in [
-                    identifiers.EVTYPE_ENSEMBLE_STOPPED,
-                    identifiers.EVTYPE_ENSEMBLE_FAILED,
-                ]:
-                    return
+                    if event["type"] in [
+                        identifiers.EVTYPE_ENSEMBLE_STOPPED,
+                        identifiers.EVTYPE_ENSEMBLE_FAILED,
+                    ]:
+                        return
+            except ConnectionClosedError as connection_error:
+                # Dispatchers my close the connection apruptly in the case of
+                #  * flaky network (then the dispatcher will try to reconnect)
+                #  * job being killed due to MAX_RUNTIME
+                #  * job being killed by user
+                logger.error(
+                    f"a dispatcher abruptly closed a websocket: {str(connection_error)}"
+                )
 
     async def connection_handler(self, websocket, path):
         elements = path.split("/")
@@ -265,7 +281,8 @@ class EnsembleEvaluator:
             await self._done
             if self._dispatchers_connected is not None:
                 logger.debug(
-                    f"Got done signal. {self._dispatchers_connected.qsize()} dispatchers to disconnect..."  # noqa: E501
+                    f"Got done signal. {self._dispatchers_connected.qsize()} "
+                    "dispatchers to disconnect..."
                 )
                 try:  # Wait for dispatchers to disconnect
                     await asyncio.wait_for(
@@ -369,7 +386,7 @@ class EnsembleEvaluator:
                     f"Sleeping for {sleep_time} seconds before attempting to reconnect"
                 )
                 time.sleep(sleep_time)
-            except (BaseException):  # pylint: disable=broad-except
+            except BaseException:  # pylint: disable=broad-except
                 logger.exception("unexpected error: ")
                 # We really don't know what happened...  shut down and
                 # get out of here. Monitor is stopped by context-mgr

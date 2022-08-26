@@ -5,7 +5,7 @@ from typing import Any, AnyStr, Dict, Optional, Union
 import cloudevents
 from websockets.client import WebSocketClientProtocol, connect
 from websockets.datastructures import Headers
-from websockets.exceptions import ConnectionClosed, ConnectionClosedOK
+from websockets.exceptions import ConnectionClosedError, ConnectionClosedOK
 
 
 class Client:  # pylint: disable=too-many-instance-attributes
@@ -75,7 +75,7 @@ class Client:  # pylint: disable=too-many-instance-attributes
                 # Connection was closed no point in trying to send more messages
                 raise
             except (
-                ConnectionClosed,
+                ConnectionClosedError,
                 ConnectionRefusedError,
                 OSError,
                 asyncio.TimeoutError,
