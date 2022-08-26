@@ -2,7 +2,8 @@ from qtpy.QtWidgets import QMenu
 
 from ert.gui.ertwidgets import resourceIcon
 from ert.gui.tools import Tool
-from ert.gui.tools.plugins import PluginRunner
+
+from .plugin_runner import PluginRunner
 
 
 class PluginsTool(Tool):
