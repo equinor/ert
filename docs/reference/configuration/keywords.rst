@@ -176,29 +176,29 @@ These keywords must be set to make ERT function properly.
 
 	A new way of handling property values for the FIELD keyword is to use a
         help grid called ERTBOX grid. The GRID keyword should in this case specify
-        the ERTBOX filename (which is in EGRID format). The ERTBOX grid 
-        is a grid with the same spatial location and rotation (x,y location) as the 
-	modelling grid, but it is a regular grid in a rectangular box. The dimensions 
-	of the ERTBOX grid laterally is the same as the modelling grid, but the number 
-	of layers is only large enough to store the properties for one zone, not the 
+        the ERTBOX filename (which is in EGRID format). The ERTBOX grid
+        is a grid with the same spatial location and rotation (x,y location) as the
+	modelling grid, but it is a regular grid in a rectangular box. The dimensions
+	of the ERTBOX grid laterally is the same as the modelling grid, but the number
+	of layers is only large enough to store the properties for one zone, not the
 	whole modelling grid.
-	
-	The number of layers must at least be as large as the number of layers 
+
+	The number of layers must at least be as large as the number of layers
         in the zone in the modelling grid with most layers. The properties used in
-	the FIELD keyword have the dimension of the ERTBOX grid and represents 
-	properties of one zone from the modelling grid. Each grid cell in the modelling 
-	grid for a given zone corresponds to one unique grid cell 
-	in the ERTBOX grid. Inactive grid cells in the modelling grid also corresponds 
-	to grid cells in the ERTBOX grid. There may exists layers of grid cells in the 
-	ERTBOX grid that does not corresponds to grid cells in the modelling grid. 
+	the FIELD keyword have the dimension of the ERTBOX grid and represents
+	properties of one zone from the modelling grid. Each grid cell in the modelling
+	grid for a given zone corresponds to one unique grid cell
+	in the ERTBOX grid. Inactive grid cells in the modelling grid also corresponds
+	to grid cells in the ERTBOX grid. There may exists layers of grid cells in the
+	ERTBOX grid that does not corresponds to grid cells in the modelling grid.
 	It is recommended to let all grid cells in the ERTBOX grid be active and have
-	realistic values and not a 'missing code'. For cases where the modelling grid 
-	is kept fixed for all realisations, this is not important, but for cases where 
-	the number of layers for the zones in the modelling grid may vary from 
-	realisation to realisation, this approach is more robust. It avoids mixing real 
-	physical values from one realisation with missing code value from another 
+	realistic values and not a 'missing code'. For cases where the modelling grid
+	is kept fixed for all realisations, this is not important, but for cases where
+	the number of layers for the zones in the modelling grid may vary from
+	realisation to realisation, this approach is more robust. It avoids mixing real
+	physical values from one realisation with missing code value from another
 	realization when calculating updated ensemble vectors.
-	 
+
 
         *Example:*
 
@@ -722,15 +722,15 @@ and/or history matching project.
                 FIELD  ID PARAMETER   <ECLIPSE_FILE>  INIT_FILES:/path/%d  MIN:X MAX:Y OUTPUT_TRANSFORM:FUNC INIT_TRANSFORM:FUNC  FORWARD_INIT:True
 
 	Here ID must be the same as the name of the parameter in the INIT_FILES.
-        ECLIPSE_FILE is the name of the file ERT will export this field to when 
-        running simulations. Note that there should be an IMPORT statement in 
+        ECLIPSE_FILE is the name of the file ERT will export this field to when
+        running simulations. Note that there should be an IMPORT statement in
         the ECLIPSE data file corresponding to the name given with ECLIPSE_FILE in case
-        the field parameter is a field used in ECLIPSE data file like perm or poro. 
+        the field parameter is a field used in ECLIPSE data file like perm or poro.
         INIT_FILES is a filename (with an embedded %d if FORWARD_INIT is set to False)
         to load the initial field from. Can be RMS ROFF format, ECLIPSE restart format
         or ECLIPSE GRDECL format.
 
-        FORWARD_INIT:True means that the files specified in the INIT_FILES are expected 
+        FORWARD_INIT:True means that the files specified in the INIT_FILES are expected
         to be created by a forward model, and does not need any embedded %d.
 	FORWARD_INIT:False means that the files must have been created before running
         ERT and need an embedded %d.
@@ -778,7 +778,7 @@ and/or history matching project.
         is faster than for plain text files. If you give the ECLIPSE_FILE with the
         extension .grdecl (arbitrary case), ERT will produce ordinary .grdecl files,
         which are loaded with an INCLUDE statement. This is probably what most users
-        are used to beforehand - but we recommend the IMPORT form. When using RMS APS 
+        are used to beforehand - but we recommend the IMPORT form. When using RMS APS
         plugin to create Gaussian Random Fields, the recommended file format is ROFF binary.
 
         *Example C:*
@@ -790,8 +790,8 @@ and/or history matching project.
 		-- ERT will read the INIT_FILES in iteration 0 and write the updated GRF
 		-- fields to the files following the keyword PARAMETER after updating.
 		-- NOTE: The ERTBOX grid is a container for GRF values (or perm or poro values) and
-		-- is used to define the dimension of the fields. It is NOT the modelling grid 
-		-- used in RMS or the simulation grid used by ECLIPSE. 
+		-- is used to define the dimension of the fields. It is NOT the modelling grid
+		-- used in RMS or the simulation grid used by ECLIPSE.
                 FIELD  aps_Volon_GRF1  PARAMETER  aps_Volon_GRF1.roff  INIT_FILES:rms/output/aps/aps_Volon_GRF1.roff   MIN:-5.5  MAX:5.5  FORWARD_INIT:True
                 FIELD  aps_Volon_GRF2  PARAMETER  aps_Volon_GRF2.roff  INIT_FILES:rms/output/aps/aps_Volon_GRF2.roff   MIN:-5.5  MAX:5.5  FORWARD_INIT:True
                 FIELD  aps_Volon_GRF3  PARAMETER  aps_Volon_GRF3.roff  INIT_FILES:rms/output/aps/aps_Volon_GRF3.roff   MIN:-5.5  MAX:5.5  FORWARD_INIT:True
@@ -878,9 +878,9 @@ and/or history matching project.
 
         where :code:`ID` is an arbitrary unique identifier,
         :code:`templates/template.txt` is the name of a template file,
-        :code:`include.txt` is the name of the file created for each realization 
+        :code:`include.txt` is the name of the file created for each realization
         based on the template file,
-        and :code:`priors.txt` is a file contatining a list of parametrized keywords
+        and :code:`priors.txt` is a file containing a list of parametrized keywords
         and a prior distribution for each.
 
         As a more concrete example, let's configure :code:`GEN_KW` to estimate pore volume multipliers,
@@ -889,8 +889,6 @@ and/or history matching project.
         ::
 
                 GEN_KW PAR_MULTPV multpv_template.txt multpv.txt multpv_priors.txt
-
-        
 
         In the GRID or EDIT section of the ECLIPSE data file, we would insert the
         following include statement:
@@ -917,9 +915,10 @@ and/or history matching project.
                  300*<MULTPV_BOX2> /
                 ENDBOX
 
-        Here, <MULTPV_BOX1> and <MULTPV_BOX2> will act as magic strings. Note that the
-        '<' '>' must be present around the magic strings. In this case, the parameter
-        configuration file :code:`multpv_priors.txt` could look like this:
+        Here, :code:`<MULTPV_BOX1>` and :code:`<MULTPV_BOX2>`` will act as magic
+        strings. Note that the ``<`` and ``>`` must be present around the magic
+        strings. In this case, the parameter configuration file
+        :code:`multpv_priors.txt` could look like this:
 
         ::
 
@@ -927,7 +926,7 @@ and/or history matching project.
                 MULTPV_BOX1 UNIFORM 0.85 1.00
 
         In general, the first keyword on each line in the parameter configuration file
-        defines a key, which when found in the template file enclosed in '<' and '>',
+        defines a key, which when found in the template file enclosed in ``<`` and ``>``,
         is replaced with a value. The rest of the line defines a prior distribution
         for the key. The various prior distributions available for the ``GEN_KW``
         keyword are described :ref:`here <prior_distributions>`.
@@ -943,8 +942,8 @@ and/or history matching project.
 
                 GEN_KW  MY-FAULTS   MULTFLT.tmpl   MULTFLT.INC   MULTFLT.txt
 
-        Here MY-FAULTS is the (arbitrary) key assigned to the fault multiplers,
-        MULTFLT.tmpl is the template file, which can look like this:
+        Here ``MY-FAULTS`` is the (arbitrary) key assigned to the fault multiplers,
+        ``MULTFLT.tmpl`` is the template file, which can look like this:
 
         ::
 
@@ -954,7 +953,7 @@ and/or history matching project.
                 /
 
         and finally the initial distribution of the parameters FAULT1 and FAULT2 are
-        defined in the file MULTFLT.txt:
+        defined in the file ``MULTFLT.txt``:
 
         ::
 
@@ -962,7 +961,7 @@ and/or history matching project.
                 FAULT2   UNIFORM   0.00      1.0
 
 
-        Loading GEN_KW values from an external file
+        **Loading GEN_KW values from an external file**
 
         The default use of the GEN_KW keyword is to let the ERT application sample
         random values for the elements in the GEN_KW instance, but it is also possible
@@ -975,10 +974,10 @@ and/or history matching project.
 
                 GEN_KW  MY-FAULTS   MULTFLT.tmpl   MULTFLT.INC   MULTFLT.txt    INIT_FILES:priors/multflt/faults%d
 
-        In the example above you must prepare files priors/multflt/faults0,
-        priors/multflt/faults1, ... priors/multflt/faultsn which ERT will load when
-        you initialize the case. The format of the GEN_KW input files can be of two
-        varieties:
+        In the example above you must prepare files ``priors/multflt/faults0``,
+        ``priors/multflt/faults1``, ... ``priors/multflt/faultsn`` which ERT
+        will load when you initialize the case. The format of the GEN_KW input
+        files can be of two varieties:
 
         1. The files can be plain ASCII text files with a list of numbers:
 
@@ -988,7 +987,7 @@ and/or history matching project.
                 2.67
 
         The numbers will be assigned to parameters in the order found in the
-        MULTFLT.txt file.
+        ``MULTFLT.txt`` file.
 
         2. Alternatively values and keywords can be interleaved as in:
 
@@ -1016,7 +1015,7 @@ and/or history matching project.
         really fit into any of the other categories. As an example, consider the
         following situation:
 
-        Some external Software (e.g. Cohiba) makes a large vector of random numbers
+        Some external software (e.g. Cohiba) makes a large vector of random numbers
         which will serve as input to the forward model. It is no requirement that the
         parameter set is large, but if it only consists of a few parameters the GEN_KW
         type will be easier to use. We want to update this parameter with ERT. In
@@ -1046,8 +1045,7 @@ and/or history matching project.
         #. The format ASCII_TEMPLATE can only be used as output format.
         #. If you use the output format ASCII_TEMPLATE you must also supply a
            TEMPLATE:X and KEY:Y option. See documentation of this below.
-        #. For the binary formats files generated by Fortran can not be used - can
-           easily be supported on request.
+        #. Binary formats files generated by Fortran can not be used.
 
         **Regarding templates:** If you use OUTPUT_FORMAT:ASCII_TEMPLATE you must also
         supply the arguments TEMPLATE:/template/file and KEY:MaGiCKEY. The template
@@ -1125,7 +1123,7 @@ and/or history matching project.
                 ....
 
         The surface data will typically be fed into other programs like Cohiba or RMS.
-        The data can be updated using e.g. the Smoother.
+        The data can be updated using e.g. the smoother.
 
         **Initializing from the FORWARD MODEL**
 
@@ -1140,7 +1138,7 @@ and/or history matching project.
            based on files created by the forward model. If the init fails the job as a
            whole will fail.
         #. If a node has been initialized, it will not be initialized again if you run
-           again. [Should be possible to force this ....]
+           again.
 
         When using FORWARD_INIT:True ERT will consider the INIT_FILES setting to find
         which file to initialize from. If the INIT_FILES setting contains a relative
@@ -1183,12 +1181,15 @@ and/or history matching project.
                 SUMMARY RPR:8
                 SUMMARY F*          -- Use of wildcards requires that you have entered a REFCASE.
 
+
         The SUMMARY keyword has limited support for '*' wildcards, if your key
         contains one or more '*' characters all matching variables from the refcase
         are selected. Observe that if your summary key contains wildcards you must
         supply a refcase with the REFCASE key - otherwise it will fail hard.
 
-        **Note:** Properties added using the SUMMARY keyword are only diagnostic. I.e. they have no effect on the sensitivity analysis or history match.
+        **Note:** Properties added using the SUMMARY keyword are only
+        diagnostic. I.e. they have no effect on the sensitivity analysis or
+        history match.
 
 
 .. _keywords_controlling_the_es_algorithm:
