@@ -14,30 +14,31 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 import argparse
-import os
 import logging
+import os
 import sys
 
-from qtpy.QtCore import Qt, QLocale
+from qtpy.QtCore import QLocale, Qt
 from qtpy.QtWidgets import QApplication, QMessageBox
 
+from ert._c_wrappers.enkf import EnKFMain, ResConfig
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets import SummaryPanel, resourceIcon
 from ert.gui.main_window import GertMainWindow
-from ert.gui.simulation.simulation_panel import SimulationPanel
+from ert.gui.simulation import SimulationPanel
+from ert.gui.tools.event_viewer import (
+    EventViewerTool,
+    GUILogHandler,
+    add_gui_log_handler,
+)
 from ert.gui.tools.export import ExportTool
 from ert.gui.tools.load_results import LoadResultsTool
-from ert.gui.tools.event_viewer import EventViewerTool
-from ert.gui.tools.event_viewer import GUILogHandler, add_gui_log_handler
 from ert.gui.tools.manage_cases import ManageCasesTool
 from ert.gui.tools.plot import PlotTool
 from ert.gui.tools.plugins import PluginHandler, PluginsTool
 from ert.gui.tools.run_analysis import RunAnalysisTool
 from ert.gui.tools.workflows import WorkflowsTool
 from ert.libres_facade import LibresFacade
-
-from ert._c_wrappers.enkf import EnKFMain, ResConfig
-
 from ert.shared.services import Storage
 
 

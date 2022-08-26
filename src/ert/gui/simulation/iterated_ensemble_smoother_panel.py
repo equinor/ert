@@ -1,19 +1,20 @@
+from dataclasses import dataclass
+
 from qtpy.QtWidgets import QFormLayout, QLabel, QSpinBox
 
 from ert.gui.ertnotifier import ErtNotifier
-from ert.gui.ertwidgets import addHelpToWidget, AnalysisModuleEdit, CaseSelector
+from ert.gui.ertwidgets import AnalysisModuleEdit, CaseSelector, addHelpToWidget
 from ert.gui.ertwidgets.models.activerealizationsmodel import ActiveRealizationsModel
 from ert.gui.ertwidgets.models.targetcasemodel import TargetCaseModel
 from ert.gui.ertwidgets.stringbox import StringBox
-from ert.shared.ide.keywords.definitions import (
-    RangeStringArgument,
-    ProperNameFormatArgument,
-)
-from ert.gui.simulation import SimulationConfigPanel
-from ert.shared.models import IteratedEnsembleSmoother
 from ert.libres_facade import LibresFacade
+from ert.shared.ide.keywords.definitions import (
+    ProperNameFormatArgument,
+    RangeStringArgument,
+)
+from ert.shared.models import IteratedEnsembleSmoother
 
-from dataclasses import dataclass
+from .simulation_config_panel import SimulationConfigPanel
 
 
 @dataclass
