@@ -1,6 +1,7 @@
 from ert.gui.ertwidgets import resourceIcon
 from ert.gui.tools import Tool
-from ert.gui.tools.plot import PlotWindow
+
+from .plot_window import PlotWindow
 
 
 class PlotTool(Tool):

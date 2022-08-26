@@ -3,7 +3,8 @@ from qtpy.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QToolButton, QComb
 
 
 from ert.gui.ertwidgets import resourceIcon
-from ert.gui.tools.plot import PlotCaseModel
+
+from .plot_case_model import PlotCaseModel
 
 
 class CaseSelectionWidget(QWidget):

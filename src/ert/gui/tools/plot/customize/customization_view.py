@@ -1,17 +1,15 @@
 from qtpy.QtWidgets import (
-    QWidget,
-    QFormLayout,
-    QSpacerItem,
     QCheckBox,
+    QFormLayout,
     QHBoxLayout,
+    QSpacerItem,
     QSpinBox,
+    QWidget,
 )
 
-
-from ert.gui.tools.plot import StyleChooser
 from ert.gui.tools.plot.widgets.clearable_line_edit import ClearableLineEdit
 
-from ert.gui.tools.plot import style_chooser as sc
+from .. import style_chooser as sc
 
 
 class CustomizationView(QWidget):
@@ -96,7 +94,7 @@ class CustomizationView(QWidget):
     def addStyleChooser(
         self, attribute_name, title, tool_tip=None, line_style_set=sc.STYLESET_DEFAULT
     ):
-        style_chooser = StyleChooser(line_style_set=line_style_set)
+        style_chooser = sc.StyleChooser(line_style_set=line_style_set)
         self[attribute_name] = style_chooser
         self.addRow(title, self[attribute_name])
 

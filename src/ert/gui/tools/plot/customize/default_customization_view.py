@@ -1,4 +1,4 @@
-from ert.gui.tools.plot.customize import CustomizationView, WidgetProperty
+from .customization_view import CustomizationView, WidgetProperty
 
 
 class DefaultCustomizationView(CustomizationView):
