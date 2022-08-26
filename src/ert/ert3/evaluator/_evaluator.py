@@ -5,6 +5,7 @@ from concurrent import futures
 from typing import Dict, Optional, Union, Any
 
 import ert
+from ert.ensemble_evaluator import EvaluatorTracker, Ensemble
 from ert.shared.cli.monitor import Monitor
 from ert.shared.ensemble_evaluator.config import EvaluatorServerConfig
 from ert.shared.ensemble_evaluator.evaluator import EnsembleEvaluator
@@ -120,7 +121,7 @@ def _run(
 
 
 def evaluate(
-    ensemble: ert.ensemble_evaluator.Ensemble,
+    ensemble: Ensemble,
     custom_port_range: Optional[range] = None,
     use_gui: bool = False,
 ) -> Dict[int, Dict[str, ert.data.RecordTransmitter]]:
@@ -136,7 +137,7 @@ def evaluate(
     result: Dict[int, Dict[str, ert.data.RecordTransmitter]] = {}
     with futures.ThreadPoolExecutor() as executor:
         run_model = ERT3RunModel()
-        tracker = ert.ensemble_evaluator.EvaluatorTracker(
+        tracker = EvaluatorTracker(
             run_model,
             config.get_connection_info(),
         )

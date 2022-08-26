@@ -7,12 +7,12 @@ import cloudpickle
 import ert.data
 import ert.ensemble_evaluator
 import ert.storage
-from ert import ert3
 from ert.async_utils import get_event_loop
+from ert.ert3 import config
 
 
 def add_step_inputs(
-    inputs: Tuple[ert3.config.LinkedInput, ...],
+    inputs: Tuple[config.LinkedInput, ...],
     transmitters: Dict[int, Dict[str, ert.data.RecordTransmitter]],
     step: ert.ensemble_evaluator.StepBuilder,
 ) -> None:
@@ -32,7 +32,7 @@ def add_step_inputs(
 
 
 def add_commands(
-    stage: ert3.config.Unix,
+    stage: config.Unix,
     storage_type: str,
     storage_path: str,
     step: ert.ensemble_evaluator.StepBuilder,
@@ -81,7 +81,7 @@ def add_commands(
 
 def add_step_outputs(
     storage_type: str,
-    step_config: ert3.config.Step,
+    step_config: config.Step,
     storage_path: str,
     ensemble_size: int,
     step: ert.ensemble_evaluator.StepBuilder,
@@ -119,7 +119,7 @@ def add_step_outputs(
 
 
 def build_ensemble(  # pylint: disable=too-many-arguments
-    stage: ert3.config.Step,
+    stage: config.Step,
     driver: str,
     ensemble_size: int,
     step_builder: ert.ensemble_evaluator.StepBuilder,
@@ -130,14 +130,14 @@ def build_ensemble(  # pylint: disable=too-many-arguments
         active_mask = [True] * ensemble_size
     if ens_id is None:
         ens_id = "0"
-    if isinstance(stage, ert3.config.Function):
+    if isinstance(stage, config.Function):
         step_builder.add_job(
             ert.ensemble_evaluator.JobBuilder()
             .set_name(stage.function.__name__)
             .set_index("0")
             .set_executable(cloudpickle.dumps(stage.function))
         )
-    if isinstance(stage, ert3.config.Unix):
+    if isinstance(stage, config.Unix):
         for index, script in enumerate(stage.script):
             name, *args = shlex.split(script)
             step_builder.add_job(

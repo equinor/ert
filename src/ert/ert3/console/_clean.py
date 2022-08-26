@@ -1,12 +1,11 @@
 from typing import Set
 
 import ert.storage
-from ert import ert3
+from ert.ert3 import engine
+from ert.ert3.workspace import Workspace
 
 
-def clean(
-    workspace: ert3.workspace.Workspace, experiment_names: Set[str], clean_all: bool
-) -> None:
+def clean(workspace: Workspace, experiment_names: Set[str], clean_all: bool) -> None:
     if clean_all:
         non_existent = []
     else:
@@ -17,7 +16,7 @@ def clean(
             not in ert.storage.get_experiment_names(workspace_name=workspace.name)
         ]
 
-    ert3.engine.clean(workspace, experiment_names, clean_all)
+    engine.clean(workspace, experiment_names, clean_all)
 
     if non_existent:
         print("Following experiment(s) did not exist:")

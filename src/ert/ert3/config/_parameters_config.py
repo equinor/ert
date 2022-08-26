@@ -3,7 +3,7 @@ from typing import Any, Dict, Iterator, List, Literal, Optional, Union
 from pydantic import BaseModel, ValidationError, root_validator, validator
 
 import ert
-from ert import ert3
+from ert.ert3 import stats
 
 
 class _ParametersConfig(BaseModel):
@@ -190,7 +190,7 @@ class _ParameterConfig(_ParametersConfig):
     def _ensure_valid_parameter_size(cls, value: Any) -> Optional[int]:
         return _ensure_valid_size(value)
 
-    def as_distribution(self) -> ert3.stats.Distribution:
+    def as_distribution(self) -> stats.Distribution:
         dist_config = self.distribution
         if self.variables is not None:
             index: Optional[ert.data.RecordIndex] = tuple(self.variables)
@@ -203,7 +203,7 @@ class _ParameterConfig(_ParametersConfig):
             assert dist_config.input.mean is not None
             assert dist_config.input.std is not None
 
-            return ert3.stats.Gaussian(
+            return stats.Gaussian(
                 dist_config.input.mean,
                 dist_config.input.std,
                 index=index,
@@ -213,7 +213,7 @@ class _ParameterConfig(_ParametersConfig):
             assert dist_config.input.lower_bound is not None
             assert dist_config.input.upper_bound is not None
 
-            return ert3.stats.Uniform(
+            return stats.Uniform(
                 dist_config.input.lower_bound,
                 dist_config.input.upper_bound,
                 index=index,
@@ -223,7 +223,7 @@ class _ParameterConfig(_ParametersConfig):
             assert dist_config.input.lower_bound is not None
             assert dist_config.input.upper_bound is not None
 
-            return ert3.stats.LogUniform(
+            return stats.LogUniform(
                 dist_config.input.lower_bound,
                 dist_config.input.upper_bound,
                 index=index,
@@ -232,7 +232,7 @@ class _ParameterConfig(_ParametersConfig):
         elif dist_config.type == "discrete":
             assert dist_config.input.values is not None
 
-            return ert3.stats.Discrete(
+            return stats.Discrete(
                 dist_config.input.values,
                 index=index,
                 size=size,
@@ -240,7 +240,7 @@ class _ParameterConfig(_ParametersConfig):
         elif dist_config.type == "constant":
             assert dist_config.input.value is not None
 
-            return ert3.stats.Constant(
+            return stats.Constant(
                 dist_config.input.value,
                 index=index,
                 size=size,

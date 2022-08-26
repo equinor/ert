@@ -1,8 +1,8 @@
 import ert.storage
-from ert import ert3
+from ert.ert3.workspace import Workspace
 
 
-def status(workspace: ert3.workspace.Workspace) -> None:
+def status(workspace: Workspace) -> None:
     experiments = workspace.get_experiment_names()
     done = ert.storage.get_experiment_names(workspace_name=workspace.name)
     pending = [experiment for experiment in experiments if experiment not in done]

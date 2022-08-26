@@ -9,11 +9,19 @@ from typing import Any, List, Union
 
 import pkg_resources as pkg
 
-from ert import ert3
 import ert.storage
-from ert.ert3.config import DEFAULT_RECORD_MIME_TYPE, ConfigPluginRegistry
-from ert.ert3.workspace import Workspace
 from ert.async_utils import get_event_loop
+from ert.ert3 import console, engine
+from ert.ert3.config import (
+    DEFAULT_RECORD_MIME_TYPE,
+    ConfigPluginRegistry,
+    ExperimentRunConfig,
+    load_ensemble_config,
+)
+from ert.ert3.config.plugins import TransformationConfigBase
+from ert.ert3.plugins import ErtPluginManager
+from ert.ert3.workspace import Workspace
+from ert.ert3.workspace import initialize as initialize_workspace
 from ert.shared.services import Storage
 
 _ERT3_DESCRIPTION = (
@@ -222,7 +230,7 @@ def _init(args: Any) -> None:
     assert args.sub_cmd == "init"
 
     if args.example is None:
-        workspace = ert3.workspace.initialize(pathlib.Path.cwd())
+        workspace = initialize_workspace(pathlib.Path.cwd())
     else:
         example_name = args.example
         pkg_examples_path = _get_ert3_examples_path()
@@ -238,7 +246,7 @@ def _init(args: Any) -> None:
 
         # If we can create a workspace, it existed already:
         try:
-            ert3.workspace.Workspace(pathlib.Path.cwd())
+            Workspace(pathlib.Path.cwd())
         except ert.exceptions.IllegalWorkspaceOperation:
             pass
         else:
@@ -254,7 +262,7 @@ def _init(args: Any) -> None:
                 f"Your working directory already contains example {example_name}."
             )
 
-        workspace = ert3.workspace.initialize(wd_example_path)
+        workspace = initialize_workspace(wd_example_path)
 
     try:
         ert.storage.init(workspace_name=workspace.name)
@@ -269,10 +277,10 @@ def _init(args: Any) -> None:
 
 
 def _build_local_test_run_config(
-    experiment_run_config: ert3.config.ExperimentRunConfig,
+    experiment_run_config: ExperimentRunConfig,
     plugin_registry: ConfigPluginRegistry,
     realization: int = 0,
-) -> ert3.config.ExperimentRunConfig:
+) -> ExperimentRunConfig:
     """Validate and modify a run configuration for a local test run scenario.
 
     Only the supplied realization index is set active in the ensemble.
@@ -291,11 +299,9 @@ def _build_local_test_run_config(
 
     raw_ensemble_config["forward_model"]["driver"] = "local"
 
-    return ert3.config.ExperimentRunConfig(
+    return ExperimentRunConfig(
         experiment_run_config.stages_config,
-        ert3.config.load_ensemble_config(
-            raw_ensemble_config, plugin_registry=plugin_registry
-        ),
+        load_ensemble_config(raw_ensemble_config, plugin_registry=plugin_registry),
         experiment_run_config.parameters_config,
     )
 
@@ -303,7 +309,7 @@ def _build_local_test_run_config(
 def _run(
     workspace: Workspace,
     args: Any,
-    plugin_registry: ert3.config.ConfigPluginRegistry,
+    plugin_registry: ConfigPluginRegistry,
 ) -> None:
     assert args.sub_cmd == "run"
     workspace.assert_experiment_exists(args.experiment_name)
@@ -330,7 +336,7 @@ def _run(
             )
 
     if experiment_run_config.experiment_config.type == "evaluation":
-        ert3.engine.run(
+        engine.run(
             experiment_run_config,
             workspace,
             args.experiment_name,
@@ -338,7 +344,7 @@ def _run(
             use_gui=args.gui,
         )
     elif experiment_run_config.experiment_config.type == "sensitivity":
-        ert3.engine.run_sensitivity_analysis(
+        engine.run_sensitivity_analysis(
             experiment_run_config,
             workspace,
             args.experiment_name,
@@ -349,20 +355,20 @@ def _run(
 def _export(
     workspace: Workspace,
     args: Any,
-    plugin_registry: ert3.config.ConfigPluginRegistry,
+    plugin_registry: ConfigPluginRegistry,
 ) -> None:
     assert args.sub_cmd == "export"
     experiment_run_config = workspace.load_experiment_run_config(
         args.experiment_name, plugin_registry=plugin_registry
     )
-    ert3.engine.export(workspace, args.experiment_name, experiment_run_config)
+    engine.export(workspace, args.experiment_name, experiment_run_config)
 
 
 def _record(workspace: Workspace, args: Any) -> None:
     assert args.sub_cmd == "record"
     if args.sub_record_cmd == "sample":
         parameters_config = workspace.load_parameters_config()
-        collection = ert3.engine.sample_record(
+        collection = engine.sample_record(
             parameters_config,
             args.parameter,
             args.ensemble_size,
@@ -403,7 +409,7 @@ def _record(workspace: Workspace, args: Any) -> None:
             )
 
         get_event_loop().run_until_complete(
-            ert3.engine.load_record(workspace, args.record_name, transformation)
+            engine.load_record(workspace, args.record_name, transformation)
         )
     else:
         raise NotImplementedError(
@@ -413,12 +419,12 @@ def _record(workspace: Workspace, args: Any) -> None:
 
 def _status(workspace: Workspace, args: Any) -> None:
     assert args.sub_cmd == "status"
-    ert3.console.status(workspace)
+    console.status(workspace)
 
 
 def _clean(workspace: Workspace, args: Any) -> None:
     assert args.sub_cmd == "clean"
-    ert3.console.clean(workspace, args.experiment_names, args.all)
+    console.clean(workspace, args.experiment_names, args.all)
 
 
 def _visualise(args: Any) -> None:
@@ -464,10 +470,10 @@ def main() -> None:
     try:
         _main()
     except ert.exceptions.ConfigValidationError as e:
-        ert3.console.report_validation_errors(e)
+        console.report_validation_errors(e)
         sys.exit(1)
     except ert.exceptions.ExperimentError as e:
-        ert3.console.report_experiment_error(e)
+        console.report_experiment_error(e)
         sys.exit(2)
     except ert.exceptions.ErtError as e:
         sys.exit(e)
@@ -494,13 +500,13 @@ def _main() -> None:
     # The remaining commands require an existing ert workspace:
     workspace = Workspace(pathlib.Path.cwd())
 
-    plugin_registry = ert3.config.ConfigPluginRegistry()
+    plugin_registry = ConfigPluginRegistry()
     plugin_registry.register_category(
         category="transformation",
         optional=True,
-        base_config=ert3.config.plugins.TransformationConfigBase,
+        base_config=TransformationConfigBase,
     )
-    plugin_manager = ert3.plugins.ErtPluginManager()
+    plugin_manager = ErtPluginManager()
     plugin_manager.collect(registry=plugin_registry)
 
     if args.sub_cmd == "run":
@@ -519,5 +525,5 @@ def _main() -> None:
 
 if __name__ == "__main__":
     workspace_ = Workspace(pathlib.Path.cwd())
-    ert3.console.clean(workspace_, set(), True)
+    console.clean(workspace_, set(), True)
     _main()
