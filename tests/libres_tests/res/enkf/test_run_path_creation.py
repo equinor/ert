@@ -167,7 +167,7 @@ def test_run_template_replace_in_ecl_data_file(key, expected):
     do substitutions and rename it from the DATA_FILE name
     to ECLBASE
     """
-    if packaging.version.parse(version) > packaging.version.parse("2.43"):
+    if packaging.version.parse(version) > packaging.version.parse("4.0"):
         pytest.fail("DATA_FILE has passed deprecation period and should be removed")
     config_text = dedent(
         """
