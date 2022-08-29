@@ -347,7 +347,7 @@ class EnKFMain(BaseCClass):
             self, run_context.run_args, run_context.mask, fs
         )
 
-    def initRun(self, run_context):
+    def initRun(self, run_context: "RunContext"):
         for realization_nr in range(self.getEnsembleSize()):
             if run_context.is_active(realization_nr):
                 enkf_state.state_initialize(
