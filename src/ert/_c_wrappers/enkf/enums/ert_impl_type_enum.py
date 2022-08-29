@@ -26,7 +26,6 @@ class ErtImplType(BaseCEnum):
     SUMMARY = None  # TPGZONE has been removed
     GEN_DATA = None  # PILOT_POINT has been removed
     SURFACE = None
-    CONTAINER = None
     EXT_PARAM = None
 
 
@@ -38,5 +37,4 @@ ErtImplType.addEnum("GEN_KW", 107)
 ErtImplType.addEnum("SUMMARY", 110)
 ErtImplType.addEnum("GEN_DATA", 113)
 ErtImplType.addEnum("SURFACE", 114)
-ErtImplType.addEnum("CONTAINER", 115)
 ErtImplType.addEnum("EXT_PARAM", 116)

@@ -21,16 +21,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <ert/util/string_util.h>
-#include <ert/util/stringlist.h>
-#include <ert/util/vector.h>
-
 #include <ert/ecl/ecl_grid.h>
-
-#include <ert/res_util/path_fmt.hpp>
-
 #include <ert/enkf/config_keys.hpp>
-#include <ert/enkf/container_config.hpp>
 #include <ert/enkf/enkf_defaults.hpp>
 #include <ert/enkf/enkf_macros.hpp>
 #include <ert/enkf/enkf_node.hpp>
@@ -40,6 +32,10 @@
 #include <ert/enkf/gen_kw_config.hpp>
 #include <ert/enkf/gen_obs.hpp>
 #include <ert/enkf/surface_config.hpp>
+#include <ert/res_util/path_fmt.hpp>
+#include <ert/util/string_util.h>
+#include <ert/util/stringlist.h>
+#include <ert/util/vector.h>
 
 namespace fs = std::filesystem;
 
@@ -74,8 +70,6 @@ struct enkf_config_node_struct {
     enkf_node_type *min_std;
     char *min_std_file;
 
-    /** Function pointers to methods working on the underlying config object. */
-    vector_type *container_nodes;
     /** Function pointer to ask the underlying config object of the size - i.e.
      * number of elements. */
     get_data_size_ftype *get_data_size;
@@ -84,36 +78,11 @@ struct enkf_config_node_struct {
 
 UTIL_IS_INSTANCE_FUNCTION(enkf_config_node, ENKF_CONFIG_NODE_TYPE_ID)
 
-static bool enkf_config_node_has_container(const enkf_config_node_type *node,
-                                           enkf_fs_type *fs,
-                                           node_id_type node_id) {
-    bool has_container = true;
-    for (int inode = 0; inode < vector_get_size(node->container_nodes);
-         inode++) {
-        enkf_config_node_type *child_node =
-            (enkf_config_node_type *)vector_iget(node->container_nodes, inode);
-        bool has_child;
-        if (child_node->vector_storage)
-            has_child =
-                enkf_config_node_has_vector(child_node, fs, node_id.iens);
-        else
-            has_child = enkf_config_node_has_node(child_node, fs, node_id);
-
-        if (!has_child) {
-            has_container = false;
-            break;
-        }
-    }
-    return has_container;
-}
-
 bool enkf_config_node_has_node(const enkf_config_node_type *node,
                                enkf_fs_type *fs, node_id_type node_id) {
-    if (node->impl_type == CONTAINER)
-        return enkf_config_node_has_container(node, fs, node_id);
-    else
-        return enkf_fs_has_node(fs, node->key, node->var_type,
-                                node_id.report_step, node_id.iens);
+
+    return enkf_fs_has_node(fs, node->key, node->var_type, node_id.report_step,
+                            node_id.iens);
 }
 
 bool enkf_config_node_has_vector(const enkf_config_node_type *node,
@@ -133,7 +102,6 @@ static enkf_config_node_type *enkf_config_node_alloc__(enkf_var_type var_type,
     node->var_type = var_type;
     node->impl_type = impl_type;
     node->key = util_alloc_string_copy(key);
-    node->container_nodes = vector_alloc_new();
     node->vector_storage = false;
 
     node->init_file_abs_path = NULL, node->init_file_fmt = NULL;
@@ -169,10 +137,6 @@ static enkf_config_node_type *enkf_config_node_alloc__(enkf_var_type var_type,
     case (SURFACE):
         node->freef = surface_config_free__;
         node->get_data_size = surface_config_get_data_size__;
-        break;
-    case (CONTAINER):
-        node->freef = container_config_free__;
-        node->get_data_size = container_config_get_data_size__;
         break;
     case (EXT_PARAM):
         node->freef = ext_param_config_free__;
@@ -355,30 +319,6 @@ enkf_config_node_alloc_GEN_DATA_result(const char *key,
     return config_node;
 }
 
-enkf_config_node_type *enkf_config_node_new_container(const char *key) {
-    enkf_config_node_type *config_node =
-        enkf_config_node_alloc__(INVALID_VAR, CONTAINER, key, false);
-    config_node->data = container_config_alloc(key);
-    return config_node;
-}
-
-void enkf_config_node_update_container(
-    enkf_config_node_type *config_node,
-    const enkf_config_node_type *child_node) {
-    vector_append_ref(config_node->container_nodes, child_node);
-    container_config_add_node((container_config_type *)config_node->data,
-                              child_node);
-}
-
-const char *
-enkf_config_node_iget_container_key(const enkf_config_node_type *config_node,
-                                    int index) {
-    const enkf_config_node_type *child_node =
-        (const enkf_config_node_type *)vector_iget_const(
-            config_node->container_nodes, index);
-    return child_node->key;
-}
-
 /**
    This will create a new gen_kw_config instance which is NOT yet
    valid. Mainly support code for the GUI.
@@ -440,15 +380,6 @@ void enkf_config_node_update_general_field(
                             enkf_infile_fmt, min_std_file);
 }
 
-enkf_config_node_type *
-enkf_config_node_container_iget(const enkf_config_node_type *node, int index) {
-    return (enkf_config_node_type *)vector_iget(node->container_nodes, index);
-}
-
-int enkf_config_node_container_size(const enkf_config_node_type *node) {
-    return vector_get_size(node->container_nodes);
-}
-
 /**
    Invokes the get_data_size() function of the underlying node object.
 */
@@ -485,7 +416,6 @@ void enkf_config_node_free(enkf_config_node_type *node) {
     if (node->min_std != NULL)
         enkf_node_free(node->min_std);
 
-    vector_free(node->container_nodes);
     free(node);
 }
 
@@ -526,19 +456,9 @@ enkf_config_node_get_init_file_fmt(const enkf_config_node_type *config_node) {
 void enkf_config_node_set_internalize(enkf_config_node_type *node,
                                       int report_step) {
     ert_impl_type impl_type = enkf_config_node_get_impl_type(node);
-    if (impl_type == CONTAINER) {
-        int inode;
-        int container_size = enkf_config_node_container_size(node);
-        for (inode = 0; inode < container_size; inode++) {
-            enkf_config_node_type *child_node =
-                enkf_config_node_container_iget(node, inode);
-            enkf_config_node_set_internalize(child_node, report_step);
-        }
-    } else {
-        if (node->internalize == NULL)
-            node->internalize = bool_vector_alloc(0, false);
-        bool_vector_iset(node->internalize, report_step, true);
-    }
+    if (node->internalize == NULL)
+        node->internalize = bool_vector_alloc(0, false);
+    bool_vector_iset(node->internalize, report_step, true);
 }
 
 /** @return whether the given config node should be internalized at the given

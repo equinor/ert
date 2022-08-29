@@ -322,11 +322,6 @@ void ensemble_config_add_config_items(config_parser_type *config) {
         false); /* can have several summary keys on each line. */
     config_schema_item_set_argc_minmax(item, 1, CONFIG_DEFAULT_ARG_MAX);
 
-    item = config_add_schema_item(
-        config, CONTAINER_KEY,
-        false); /* can have several summary keys on each line. */
-    config_schema_item_set_argc_minmax(item, 2, CONFIG_DEFAULT_ARG_MAX);
-
     item = config_add_schema_item(config, SURFACE_KEY, false);
     config_schema_item_set_argc_minmax(item, 4, 5);
 
@@ -681,25 +676,6 @@ static void ensemble_config_init(ensemble_config_type *ensemble_config,
     ensemble_config_init_SUMMARY(ensemble_config, config, refcase);
     ensemble_config_init_FIELD(ensemble_config, config, grid);
     ensemble_config_init_PRED(ensemble_config, config);
-
-    /* Containers - this must come last, to ensure that the other nodes have been added. */
-    {
-        for (int i = 0;
-             i < config_content_get_occurences(config, CONTAINER_KEY); i++) {
-            const stringlist_type *container_kw_list =
-                config_content_iget_stringlist_ref(config, CONTAINER_KEY, i);
-            const char *container_key = stringlist_iget(container_kw_list, 0);
-            enkf_config_node_type *container_node =
-                ensemble_config_add_container(ensemble_config, container_key);
-
-            for (int j = 1; j < stringlist_get_size(container_kw_list); j++) {
-                const char *child_key = stringlist_iget(container_kw_list, j);
-                enkf_config_node_update_container(
-                    container_node,
-                    ensemble_config_get_node(ensemble_config, child_key));
-            }
-        }
-    }
 }
 
 /**
@@ -911,28 +887,6 @@ ensemble_config_add_surface(ensemble_config_type *ensemble_config,
                             const char *key, bool forward_init) {
     enkf_config_node_type *config_node =
         enkf_config_node_new_surface(key, forward_init);
-    ensemble_config_add_node(ensemble_config, config_node);
-    return config_node;
-}
-
-/**
-  If key == NULL the function will create a random key.
-*/
-enkf_config_node_type *
-ensemble_config_add_container(ensemble_config_type *ensemble_config,
-                              const char *key) {
-    std::string local_key;
-    bool random_key = false;
-    if (key == NULL) {
-        local_key = std::string("ensemble_config_random") +
-                    std::to_string(random() % 10000000);
-        random_key = true;
-    } else {
-        local_key = std::string(key);
-    }
-
-    enkf_config_node_type *config_node =
-        enkf_config_node_new_container(local_key.c_str());
     ensemble_config_add_node(ensemble_config, config_node);
     return config_node;
 }

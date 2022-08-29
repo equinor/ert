@@ -106,9 +106,6 @@ class EnsembleConfigTest(ResTest):
                     ConfigKeys.PARAMETER_KEY: None,
                 }
             ],
-            ConfigKeys.CONTAINER_KEY: [
-                {ConfigKeys.NAME: "CXX", ConfigKeys.ARGLIST: ["PERMX", "MULTFLT"]}
-            ],
         }
 
         self.case_directory = self.createTestPath("local/configuration_tests/")
