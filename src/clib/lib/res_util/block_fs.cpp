@@ -167,6 +167,19 @@ public:
         buffer_stream_fread(buffer, data_size, stream);
     }
 
+    std::vector<char> read(FILE *stream) {
+        char *key = NULL;
+        fseek(stream, node_offset, SEEK_SET);
+        auto at_node = Block::read_header(stream, &key);
+        if (!at_node.has_value() || at_node.value().data_size != data_size ||
+            at_node.value().node_offset != node_offset)
+            throw std::runtime_error("Block in file does not match index.");
+        std::vector<char> data;
+        data.resize(data_size);
+        fread(data.data(), 1, data_size, stream);
+        return data;
+    }
+
     void write(const char *filename, FILE *data_stream, const void *ptr) {
         write_active_markers(data_stream);
         long data_offset = write_header(filename, data_stream);
@@ -500,6 +513,14 @@ void block_fs_fread_realloc_buffer(block_fs_type *block_fs,
     block.read_data(block_fs->data_stream, buffer);
 
     buffer_rewind(buffer); /* Setting: pos = 0; */
+}
+
+
+std::vector<char> block_fs_fread(block_fs_type *block_fs,
+                                 const std::string &key) {
+    std::lock_guard guard{block_fs->mutex};
+    Block &block = block_fs->index.at(key);
+    return block.read(block_fs->data_stream);
 }
 
 /**

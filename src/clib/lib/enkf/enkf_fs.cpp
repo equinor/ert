@@ -16,7 +16,9 @@
    for more details.
 */
 
+#include "ert/enkf/enkf_fs_type.hpp"
 #include "ert/python.hpp"
+#include <bytesobject.h>
 #include <filesystem>
 #include <memory>
 #include <string>
@@ -612,6 +614,17 @@ misfit_ensemble_type *enkf_fs_get_misfit_ensemble(const enkf_fs_type *fs) {
     return fs->misfit_ensemble;
 }
 
+namespace {
+void py_save_record(py::handle self, const std::string &name, int iens, py::bytes data) {
+    auto enkf_fs = ert::from_cwrap<enkf_fs_type>(self);
+
+    char *buf;
+    ssize_t len;
+    PyBytes_AsStringAndSize(data.ptr(), &buf, &len);
+    enkf_fs->parameter->save_vector(name, iens, buf, len);
+}
+}
+
 ERT_CLIB_SUBMODULE("enkf_fs", m) {
     using namespace py::literals;
 
@@ -652,4 +665,6 @@ ERT_CLIB_SUBMODULE("enkf_fs", m) {
         },
         py::arg("self"), py::arg("ensemble_config"), py::arg("parameter_names"),
         py::arg("ensemble_size"));
+
+    m.def("save_record", &py_save_record, "self"_a, "name"_a, "iens"_a, "data"_a)
 }

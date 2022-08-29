@@ -18,6 +18,7 @@
 
 #include <cstdio>
 #include <filesystem>
+#include <fmt/core.h>
 #include <future>
 #include <vector>
 
@@ -151,6 +152,13 @@ void ert::block_fs_driver::save_vector(const char *node_key, int iens,
     bfs_type *bfs = this->get_fs(iens);
     block_fs_fwrite_buffer(bfs->block_fs, key, buffer);
     free(key);
+}
+
+void ert::block_fs_driver::save_vector(const std::string &node_key, int iens,
+                                       const char *data, size_t size) {
+    auto bfs = this->get_fs(iens);
+    auto key = fmt::format("{}.{}", node_key, iens);
+    block_fs_fwrite_file(bfs->block_fs, key.c_str(), data, size);
 }
 
 bool ert::block_fs_driver::has_node(const char *node_key, int report_step,

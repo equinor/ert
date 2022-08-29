@@ -19,8 +19,9 @@
 #ifndef ERT_BLOCK_FS_DRIVER_H
 #define ERT_BLOCK_FS_DRIVER_H
 
-#include <stdbool.h>
-#include <stdio.h>
+#include <cstdio>
+#include <string>
+#include <vector>
 
 #include <ert/enkf/fs_types.hpp>
 
@@ -52,7 +53,10 @@ public:
 
     bool has_vector(const char *node_key, int iens);
     void load_vector(const char *node_key, int iens, buffer_type *buffer);
+    std::vector<char> load_vector(const std::string &node_key, int iens);
     void save_vector(const char *node_key, int iens, buffer_type *buffer);
+    void save_vector(const std::string &node_key, int iens, const char *data,
+                     size_t size);
 
     void fsync();
 

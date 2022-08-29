@@ -19,6 +19,8 @@
 #ifndef ERT_BLOCK_FS
 #define ERT_BLOCK_FS
 #include <filesystem>
+#include <string>
+#include <vector>
 
 #include <ert/util/buffer.hpp>
 #include <ert/util/type_macros.hpp>
@@ -38,6 +40,8 @@ void block_fs_fwrite_buffer(block_fs_type *block_fs, const char *filename,
                             const buffer_type *buffer);
 void block_fs_fread_realloc_buffer(block_fs_type *block_fs,
                                    const char *filename, buffer_type *buffer);
+std::vector<char> block_fs_fread(block_fs_type *block_fs,
+                                 const std::string &key);
 bool block_fs_has_file(block_fs_type *block_fs, const char *filename);
 
 UTIL_IS_INSTANCE_HEADER(block_fs);

@@ -13,12 +13,14 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
+import io
 from pathlib import Path
-from typing import List, Union, TYPE_CHECKING
+from typing import List, Optional, Union, TYPE_CHECKING
 
 from cwrap import BaseCClass
 import numpy as np
 import numpy.typing as npt
+import pandas as pd
 
 from ert import _clib
 from ert._clib import update
@@ -90,6 +92,17 @@ class EnkfFs(BaseCClass):
         return _clib.enkf_fs.is_initialized(
             self, ensemble_config, parameters, ensemble_size
         )
+
+    def save_record(
+        self, name: str, realization_index: int, dataframe: pd.DataFrame
+    ) -> None:
+        buf = io.BytesIO()
+        dataframe.to_parquet(buf, compression=None)
+
+        _clib.enkf_fs.save_record(self, name, buf.getvalue(), realization_index)
+
+    def load_record(self, realizations: Optional[List[int]] = None) -> pd.DataFrame:
+        ...
 
     @classmethod
     def createFileSystem(
