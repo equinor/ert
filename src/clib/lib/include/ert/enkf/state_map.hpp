@@ -91,14 +91,6 @@ public:
                        realisation_state_enum state);
 
     /**
-     * Count the states that have all of flags set in state_mask
-     *
-     * @param state_mask Set of state flags
-     * @return Count
-     */
-    size_t count_matching(int state_mask) const;
-
-    /**
      * Determine whether it is possible to change from state1 to state2.
      *
      * For example, it isn't permitted to go from STATE_PARENT_FAILURE to

@@ -162,25 +162,6 @@ void test_select_matching() {
     test_assert_int_equal(mask.size(), 51);
 }
 
-void test_count_matching() {
-    StateMap state_map;
-    state_map.set(10, STATE_INITIALIZED);
-
-    state_map.set(15, STATE_INITIALIZED);
-    state_map.set(15, STATE_HAS_DATA);
-
-    state_map.set(16, STATE_INITIALIZED);
-    state_map.set(16, STATE_HAS_DATA);
-    state_map.set(16, STATE_LOAD_FAILURE);
-
-    test_assert_int_equal(1, state_map.count_matching(STATE_HAS_DATA));
-    test_assert_int_equal(
-        2, state_map.count_matching(STATE_HAS_DATA | STATE_LOAD_FAILURE));
-    test_assert_int_equal(3, state_map.count_matching(STATE_HAS_DATA |
-                                                      STATE_LOAD_FAILURE |
-                                                      STATE_INITIALIZED));
-}
-
 // Probably means that the target should be explicitly set to
 // undefined before workflows which automatically change case.
 void test_transitions() {
@@ -252,7 +233,6 @@ int main(int argc, char **argv) {
     test_copy();
     test_io();
     test_select_matching();
-    test_count_matching();
     test_transitions();
     exit(0);
 }
