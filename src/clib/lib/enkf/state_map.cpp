@@ -191,12 +191,6 @@ void StateMap::set_from_mask(const std::vector<bool> &mask,
             set(i, state);
 }
 
-size_t StateMap::count_matching(int mask) const {
-    std::lock_guard lock{m_mutex};
-    return std::count_if(m_state.begin(), m_state.end(),
-                         [mask](int value) { return value & mask; });
-}
-
 ERT_CLIB_SUBMODULE("state_map", m) {
     using namespace py::literals;
 
