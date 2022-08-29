@@ -195,15 +195,6 @@ class EnsembleConfig(BaseCClass):
                 )
                 self.addNode(schedule_file_node)
 
-            container_list = config_dict.get(ConfigKeys.CONTAINER_KEY, [])
-            for container in container_list:
-                container_node = EnkfConfigNode.create_container(
-                    container.get(ConfigKeys.NAME)
-                )
-                for child_key in container.get(ConfigKeys.ARGLIST):
-                    container_node._update_container(self.getNode(child_key))
-                self.addNode(container_node)
-
             return
 
         c_ptr = self._alloc(config_content, grid, refcase)

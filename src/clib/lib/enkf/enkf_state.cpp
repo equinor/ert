@@ -130,7 +130,6 @@ void enkf_state_initialize(enkf_state_type *enkf_state, rng_type *rng,
 
 static void enkf_state_add_nodes(enkf_state_type *enkf_state,
                                  const ensemble_config_type *ensemble_config) {
-    stringlist_type *container_keys = stringlist_alloc_new();
     stringlist_type *keylist = ensemble_config_alloc_keylist(ensemble_config);
     int keys = stringlist_get_size(keylist);
 
@@ -139,24 +138,10 @@ static void enkf_state_add_nodes(enkf_state_type *enkf_state,
         const char *key = stringlist_iget(keylist, ik);
         const enkf_config_node_type *config_node =
             ensemble_config_get_node(ensemble_config, key);
-        if (enkf_config_node_get_impl_type(config_node) == CONTAINER) {
-            stringlist_append_copy(container_keys, key);
-        } else
-            enkf_state_add_node(enkf_state, key, config_node);
-    }
-
-    // 2: Add container nodes - must ensure that all other nodes have
-    //    been added already (this implies that containers of containers
-    //    will be victim of hash retrieval order problems ....
-    for (int ik = 0; ik < stringlist_get_size(container_keys); ik++) {
-        const char *key = stringlist_iget(container_keys, ik);
-        const enkf_config_node_type *config_node =
-            ensemble_config_get_node(ensemble_config, key);
         enkf_state_add_node(enkf_state, key, config_node);
     }
 
     stringlist_free(keylist);
-    stringlist_free(container_keys);
 }
 
 ecl_sum_type *load_ecl_sum(const ecl_config_type *ecl_config,

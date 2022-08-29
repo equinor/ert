@@ -35,9 +35,6 @@ if TYPE_CHECKING:
 class EnkfNode(BaseCClass):
     TYPE_NAME = "enkf_node"
     _alloc = ResPrototype("void* enkf_node_alloc(enkf_config_node)", bind=False)
-    _alloc_private = ResPrototype(
-        "void* enkf_node_alloc_private_container(enkf_config_node)", bind=False
-    )
     _free = ResPrototype("void  enkf_node_free(enkf_node)")
     _get_name = ResPrototype("char* enkf_node_get_key(enkf_node)")
     _value_ptr = ResPrototype("void* enkf_node_value_ptr(enkf_node)")

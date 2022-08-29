@@ -86,7 +86,6 @@ typedef enum {
     SUMMARY = 110,  /* TPGZONE has been removed */
     GEN_DATA = 113, /* PILOT_POINT has been removed */
     SURFACE = 114,
-    CONTAINER = 115,
     EXT_PARAM = 116
 } ert_impl_type;
 

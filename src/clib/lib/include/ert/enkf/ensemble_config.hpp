@@ -43,9 +43,7 @@ void ensemble_config_set_refcase(ensemble_config_type *ensemble_config,
                                  const ecl_sum_type *refcase);
 void ensemble_config_set_gen_kw_format(ensemble_config_type *ensemble_config,
                                        const char *gen_kw_format_string);
-enkf_config_node_type *
-ensemble_config_add_container(ensemble_config_type *ensemble_config,
-                              const char *key);
+
 enkf_config_node_type *
 ensemble_config_add_surface(ensemble_config_type *ensemble_config,
                             const char *key, bool forward_init);

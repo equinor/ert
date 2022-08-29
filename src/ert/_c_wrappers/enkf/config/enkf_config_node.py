@@ -148,18 +148,6 @@ class EnkfConfigNode(BaseCClass):
         bind=False,
     )
 
-    _alloc_container = ResPrototype(
-        "enkf_config_node_obj enkf_config_node_new_container(char*)", bind=False
-    )
-    _update_container = ResPrototype(
-        "void enkf_config_node_update_container(enkf_config_node, enkf_config_node)"
-    )
-    _get_container_size = ResPrototype(
-        "int enkf_config_node_container_size(enkf_config_node)"
-    )
-    _iget_container_key = ResPrototype(
-        "char* enkf_config_node_iget_container_key(enkf_config_node, int)"
-    )
     _update_parameter_field = ResPrototype(
         "void enkf_config_node_update_parameter_field(enkf_config_node, \
                                                       char*, \
@@ -189,12 +177,6 @@ class EnkfConfigNode(BaseCClass):
 
     def __init__(self):
         raise NotImplementedError("Class can not be instantiated directly!")
-
-    def get_container_size(self):
-        return self._get_container_size()
-
-    def get_container_key(self, index):
-        return self._iget_container_key(index)
 
     def getImplementationType(self) -> ErtImplType:
         return self._get_impl_type()
@@ -468,16 +450,6 @@ class EnkfConfigNode(BaseCClass):
 
         return config_node
 
-    # CONTAINER creation
-    @classmethod
-    def create_container(cls, key):
-        config_node = cls._alloc_container(key)
-
-        if config_node is None:
-            raise ValueError(f"Failed to create CONTAINER node for:{key}")
-
-        return config_node
-
     def free(self):
         self._free()
 
@@ -555,11 +527,6 @@ class EnkfConfigNode(BaseCClass):
             if self.get_enkf_outfile() != other.get_enkf_outfile():
                 return False
             if self.getUseForwardInit() != other.getUseForwardInit():
-                return False
-        elif self.getImplementationType() == ErtImplType.CONTAINER:
-            a = [self.get_container_key(i) for i in range(self.get_container_size())]
-            b = [other.get_container_key(i) for i in range(other.get_container_size())]
-            if a != b:
                 return False
         elif self.getImplementationType() == ErtImplType.SUMMARY:
             if self.getSummaryModelConfig() != other.getSummaryModelConfig():

@@ -154,11 +154,7 @@ extern "C" bool enkf_node_try_load(enkf_node_type *enkf_node, enkf_fs_type *fs,
 bool enkf_node_try_load_vector(enkf_node_type *enkf_node, enkf_fs_type *fs,
                                int iens);
 bool enkf_node_vector_storage(const enkf_node_type *node);
-enkf_node_type *
-enkf_node_alloc_shared_container(const enkf_config_node_type *config,
-                                 hash_type *node_hash);
-extern "C" enkf_node_type *
-enkf_node_alloc_private_container(const enkf_config_node_type *config);
+
 const enkf_config_node_type *enkf_node_get_config(const enkf_node_type *);
 extern "C" const char *enkf_node_get_key(const enkf_node_type *);
 bool enkf_node_has_func(const enkf_node_type *, node_function_type);

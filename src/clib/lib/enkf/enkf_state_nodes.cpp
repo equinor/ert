@@ -1,3 +1,6 @@
+#include <ert/enkf/enkf_state.hpp>
+#include <stdio.h>
+
 static bool enkf_state_has_node(const enkf_state_type *enkf_state,
                                 const char *node_key) {
     bool has_node = hash_has_key(enkf_state->node_hash, node_key);
@@ -31,13 +34,7 @@ void enkf_state_add_node(enkf_state_type *enkf_state, const char *node_key,
             enkf_state,
             node_key); /* Deleting the old instance (if we had one). */
     {
-        enkf_node_type *enkf_node;
-        if (enkf_config_node_get_impl_type(config) == CONTAINER)
-            enkf_node =
-                enkf_node_alloc_shared_container(config, enkf_state->node_hash);
-        else
-            enkf_node = enkf_node_alloc(config);
-
+        enkf_node_type *enkf_node = enkf_node_alloc(config);
         hash_insert_hash_owned_ref(enkf_state->node_hash, node_key, enkf_node,
                                    enkf_node_free__);
     }

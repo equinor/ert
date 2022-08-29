@@ -150,19 +150,7 @@ bool enkf_config_node_internalize(const enkf_config_node_type *node,
 
 void enkf_config_node_fprintf_config(const enkf_config_node_type *config_node,
                                      FILE *stream);
-enkf_config_node_type *
-enkf_config_node_container_iget(const enkf_config_node_type *node, int index);
-extern "C" int
-enkf_config_node_container_size(const enkf_config_node_type *node);
 
-extern "C" enkf_config_node_type *
-enkf_config_node_new_container(const char *key);
-extern "C" void
-enkf_config_node_update_container(enkf_config_node_type *config_node,
-                                  const enkf_config_node_type *child_node);
-extern "C" PY_USED const char *
-enkf_config_node_iget_container_key(const enkf_config_node_type *config_node,
-                                    int index);
 /*
     The enkf_node_free() function declaration is in the enkf_config_node.h header,
     because the enkf_config_node needs to know how to free the min_std node.
