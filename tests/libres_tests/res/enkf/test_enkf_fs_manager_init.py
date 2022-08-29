@@ -40,7 +40,5 @@ def test_fs_init_from_scratch():
     mask = [True] * 6 + [False] * 19
     run_context = RunContext(sim_fs=sim_fs, mask=mask)
 
-    ert.getEnkfFsManager().initializeFromScratch(
-        StringList(["SNAKE_OIL_PARAM"]), run_context
-    )
+    ert.getEnkfFsManager().initRun(run_context, ["SNAKE_OIL_PARAM"])
     assert len(ert.getEnkfFsManager().getStateMapForCase("new_case")) == 6

@@ -18,9 +18,10 @@
 
 #include <stdlib.h>
 
-#include <ert/util/util.h>
-
 #include <ert/config/config_parser.hpp>
+#include <ert/python.hpp>
+#include <ert/util/rng.h>
+#include <ert/util/util.h>
 
 #include <ert/logging.hpp>
 
@@ -41,25 +42,6 @@ static void rng_config_set_random_seed(rng_config_type *rng_config,
         util_realloc_string_copy(rng_config->random_seed, random_seed);
 }
 
-static char *
-rng_config_alloc_formatted_random_seed(const rng_config_type *rng_config) {
-    unsigned int *fseed =
-        (unsigned int *)malloc(RNG_STATE_SIZE * sizeof(unsigned int *));
-
-    int seed_len = strlen(rng_config->random_seed);
-    int seed_pos = 0;
-    for (int i = 0; i < RNG_STATE_SIZE; ++i) {
-        fseed[i] = 0;
-        for (int k = 0; k < RNG_STATE_DIGITS; ++k) {
-            fseed[i] *= 10;
-            fseed[i] += rng_config->random_seed[seed_pos] - '0';
-            seed_pos = (seed_pos + 1) % seed_len;
-        }
-    }
-
-    return (char *)fseed;
-}
-
 const char *rng_config_get_random_seed(const rng_config_type *rng_config) {
     return rng_config->random_seed;
 }
@@ -78,22 +60,6 @@ static rng_config_type *rng_config_alloc_default(void) {
 
     rng_config_set_type(rng_config, MZRAN); /* Only type ... */
     rng_config->random_seed = NULL;
-
-    return rng_config;
-}
-
-rng_config_type *
-rng_config_alloc_load_user_config(const char *user_config_file) {
-    config_parser_type *config_parser = config_alloc();
-    config_content_type *config_content = NULL;
-    if (user_config_file)
-        config_content =
-            model_config_alloc_content(user_config_file, config_parser);
-
-    rng_config_type *rng_config = rng_config_alloc(config_content);
-
-    config_content_free(config_content);
-    config_free(config_parser);
 
     return rng_config;
 }
@@ -119,23 +85,6 @@ void rng_config_free(rng_config_type *rng) {
     free(rng);
 }
 
-rng_manager_type *
-rng_config_alloc_rng_manager(const rng_config_type *rng_config) {
-    rng_manager_type *rng_manager;
-
-    if (rng_config->random_seed) {
-        char *formatted_seed =
-            rng_config_alloc_formatted_random_seed(rng_config);
-        rng_manager = rng_manager_alloc(formatted_seed);
-    } else {
-        rng_manager = rng_manager_alloc_random();
-    }
-
-    rng_manager_log_state(rng_manager);
-
-    return rng_manager;
-}
-
 void rng_config_add_config_items(config_parser_type *parser) {
     config_add_key_value(parser, RANDOM_SEED_KEY, false, CONFIG_STRING);
 }
@@ -148,4 +97,28 @@ void rng_config_init(rng_config_type *rng_config,
         rng_config_set_random_seed(rng_config, random_seed);
         logger->critical("Using RANDOM_SEED: {}", random_seed);
     }
+}
+
+ERT_CLIB_SUBMODULE("rng_config", m) {
+    using namespace py::literals;
+    m.def("log_seed", [](py::object rng_) {
+        auto rng = ert::from_cwrap<rng_type>(rng_);
+        unsigned int random_seed[4];
+        rng_get_state(rng, (char *)random_seed);
+
+        char random_seed_str[10 * 4 + 1];
+        random_seed_str[0] = '\0';
+        char *uint_fmt = util_alloc_sprintf("%%0%du", 10);
+
+        for (int i = 0; i < 4; ++i) {
+            char *elem = util_alloc_sprintf(uint_fmt, random_seed[i]);
+            strcat(random_seed_str, elem);
+            free(elem);
+        }
+        free(uint_fmt);
+        logger->info(
+            "To repeat this experiment, add the following random seed to "
+            "your config file:");
+        logger->info("RANDOM_SEED {}", random_seed_str);
+    });
 }

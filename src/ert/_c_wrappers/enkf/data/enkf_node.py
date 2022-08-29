@@ -40,6 +40,7 @@ class EnkfNode(BaseCClass):
     _value_ptr = ResPrototype("void* enkf_node_value_ptr(enkf_node)")
     _try_load = ResPrototype("bool  enkf_node_try_load(enkf_node, enkf_fs, node_id)")
     _store = ResPrototype("bool  enkf_node_store(enkf_node, enkf_fs, node_id)")
+    _has_data = ResPrototype("bool  enkf_node_has_data(enkf_node, enkf_fs, node_id)")
     _get_impl_type = ResPrototype(
         "ert_impl_type_enum enkf_node_get_impl_type(enkf_node)"
     )
@@ -89,6 +90,9 @@ class EnkfNode(BaseCClass):
             return field_node.export(filename, file_type=file_type, init_file=arg)
         else:
             raise NotImplementedError("The export method is only implemented for field")
+
+    def has_data(self, fs, node_id):
+        return self._has_data(fs, node_id)
 
     def valuePointer(self):
         return self._value_ptr()

@@ -116,8 +116,8 @@ enkf_node_type *enkf_node_copyc(const enkf_node_type *);
 
 bool enkf_node_forward_init(enkf_node_type *enkf_node, const char *run_path,
                             int iens);
-bool enkf_node_has_data(enkf_node_type *enkf_node, enkf_fs_type *fs,
-                        node_id_type node_id);
+extern "C" bool enkf_node_has_data(enkf_node_type *enkf_node, enkf_fs_type *fs,
+                                   node_id_type node_id);
 //void             enkf_node_free_data(enkf_node_type * );
 void enkf_node_free__(void *);
 extern "C" void *enkf_node_value_ptr(const enkf_node_type *);

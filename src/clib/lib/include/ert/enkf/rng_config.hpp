@@ -21,8 +21,7 @@
 
 #include <ert/config/config_content.hpp>
 #include <ert/config/config_parser.hpp>
-
-#include <ert/enkf/rng_manager.hpp>
+#include <ert/util/rng.h>
 
 typedef struct rng_config_struct rng_config_type;
 
@@ -40,7 +39,5 @@ extern "C" PY_USED rng_config_type *
 rng_config_alloc_full(const char *random_seed);
 extern "C" void rng_config_free(rng_config_type *rng);
 void rng_config_add_config_items(config_parser_type *config);
-rng_manager_type *
-rng_config_alloc_rng_manager(const rng_config_type *rng_config);
 
 #endif

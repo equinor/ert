@@ -1,7 +1,5 @@
 from typing import List
 
-from ecl.util.util import StringList
-
 from ert._c_wrappers.enkf import EnKFMain, RealizationStateEnum, RunContext
 from ert.gui.ertwidgets import showWaitCursorWhileWaiting
 
@@ -32,7 +30,6 @@ def get_runnable_realizations_mask(ert, casename):
 def initializeCurrentCaseFromScratch(
     parameters: List[str], members: List[str], ert: EnKFMain
 ):
-    selected_parameters = StringList(parameters)
     mask = [False] * ert.getEnsembleSize()
     for member in members:
         member = int(member.strip())
@@ -40,7 +37,7 @@ def initializeCurrentCaseFromScratch(
 
     sim_fs = ert.getEnkfFsManager().getCurrentFileSystem()
     run_context = RunContext(sim_fs=sim_fs, mask=mask)
-    ert.getEnkfFsManager().initializeFromScratch(selected_parameters, run_context)
+    ert.getEnkfFsManager().initRun(run_context, parameters=parameters)
 
 
 @showWaitCursorWhileWaiting

@@ -30,7 +30,6 @@
 #include <ert/util/bool_vector.h>
 #include <ert/util/hash.h>
 #include <ert/util/int_vector.h>
-#include <ert/util/rng.h>
 #include <ert/util/type_vector_functions.h>
 #include <ert/util/vector.hpp>
 
@@ -63,50 +62,14 @@ namespace fs = std::filesystem;
 
 #define ENKF_MAIN_ID 8301
 
-struct enkf_state_deleter {
-    void operator()(enkf_state_type *p) const { enkf_state_free(p); };
-};
-using enkf_state = std::shared_ptr<enkf_state_type>;
-
-/**
-   This object should contain **everything** needed to run a enkf
-   simulation. A way to wrap up all available information/state and
-   pass it around. An attempt has been made to collect various pieces
-   of related information together in a couple of objects
-   (model_config, ecl_config, site_config and ensemble_config). When
-   it comes to these holding objects the following should be observed:
-
-    1. It not always obvious where a piece of information should be
-       stored, i.e. the grid is a property of the model, however it is
-       an eclipse grid, and hence also belongs to eclipse
-       configuration?? [In this case ecl_config wins out.]
-
-    2. The information stored in these objects is typically passed on
-       to the enkf_state object, where it is used.
-
-    3. At enkf_state level it is not really consequent - in some cases
-       the enkf_state object takes a scalar copy ,
-       and in other cases only a pointer down to the underlying
-       enkf_main object is taken. In the former case it is no way to
-       change global behaviour by modifying the enkf_main objects.
-
-       In the enkf_state object the fields of the member_config,
-       ecl_config, site_config and ensemble_config objects are mixed
-       and matched into other small holding objects defined in
-       enkf_state.c.
-*/
 struct enkf_main_struct {
     UTIL_TYPE_ID_DECLARATION;
     /** The internalized information. */
 
     const res_config_type *res_config;
-    rng_manager_type *rng_manager;
-    rng_type *shared_rng;
 
     enkf_obs_type *obs;
 
-    /** The ensemble */
-    std::vector<enkf_state> ensemble;
     /** The size of the ensemble */
     int ens_size;
 };
@@ -138,20 +101,11 @@ enkf_main_get_hook_manager(const enkf_main_type *enkf_main) {
 }
 
 void enkf_main_free(enkf_main_type *enkf_main) {
-    if (enkf_main->rng_manager)
-        rng_manager_free(enkf_main->rng_manager);
-
-    if (enkf_main->shared_rng)
-        rng_free(enkf_main->shared_rng);
 
     if (enkf_main->obs)
         enkf_obs_free(enkf_main->obs);
 
     delete enkf_main;
-}
-
-rng_type *enkf_main_get_shared_rng(enkf_main_type *enkf_main) {
-    return enkf_main->shared_rng;
 }
 
 int enkf_main_get_ensemble_size(const enkf_main_type *enkf_main) {
@@ -172,12 +126,13 @@ ert_workflow_list_type *enkf_main_get_workflow_list(enkf_main_type *enkf_main) {
     return res_config_get_workflow_list(enkf_main->res_config);
 }
 
-int enkf_main_load_from_run_context(enkf_main_type *enkf_main,
+int enkf_main_load_from_run_context(const int ens_size,
+                                    ensemble_config_type *ensemble_config,
+                                    model_config_type *model_config,
+                                    ecl_config_type *ecl_config,
                                     std::vector<bool> active_mask,
                                     enkf_fs_type *sim_fs,
                                     std::vector<run_arg_type *> run_args) {
-    auto const ens_size = enkf_main_get_ensemble_size(enkf_main);
-
     // Loading state from a fwd-model is mainly io-bound so we can
     // allow a lot more than #cores threads to execute in parallel.
     // The number 100 is quite arbitrarily chosen though and should
@@ -215,7 +170,7 @@ int enkf_main_load_from_run_context(enkf_main_type *enkf_main,
                         state_map.update_matching(realisation, STATE_UNDEFINED,
                                                   STATE_INITIALIZED);
                         auto status = enkf_state_load_from_forward_model(
-                            enkf_main_iget_state(enkf_main, realisation),
+                            ensemble_config, model_config, ecl_config,
                             run_args[iens]);
                         state_map.set(realisation,
                                       status.first == LOAD_SUCCESSFUL
@@ -241,10 +196,6 @@ int enkf_main_load_from_run_context(enkf_main_type *enkf_main,
         PyEval_RestoreThread(state);
 
     return loaded;
-}
-
-rng_manager_type *enkf_main_get_rng_manager(const enkf_main_type *enkf_main) {
-    return enkf_main->rng_manager;
 }
 
 std::vector<std::string> get_observation_keys(py::object self) {
@@ -346,11 +297,6 @@ void init_active_run(const res_config_type *res_config, char *run_path,
 }
 } // namespace enkf_main
 
-enkf_state_type *enkf_main_iget_state(const enkf_main_type *enkf_main,
-                                      int iens) {
-    return enkf_main->ensemble.at(iens).get();
-}
-
 static void enkf_main_copy_ensemble(const ensemble_config_type *ensemble_config,
                                     enkf_fs_type *source_case_fs,
                                     int source_report_step,
@@ -383,10 +329,6 @@ static void enkf_main_copy_ensemble(const ensemble_config_type *ensemble_config,
     }
 }
 
-/**
-   This function boots everything needed for running a EnKF
-   application from the provided res_config.
-*/
 enkf_main_type *enkf_main_alloc(const res_config_type *res_config,
                                 bool read_only) {
     const ecl_config_type *ecl_config = res_config_get_ecl_config(res_config);
@@ -397,11 +339,6 @@ enkf_main_type *enkf_main_alloc(const res_config_type *res_config,
     UTIL_TYPE_ID_INIT(enkf_main, ENKF_MAIN_ID);
 
     enkf_main->res_config = res_config;
-
-    // Init rng
-    enkf_main->rng_manager = rng_config_alloc_rng_manager(
-        res_config_get_rng_config(enkf_main->res_config));
-    enkf_main->shared_rng = rng_manager_alloc_rng(enkf_main->rng_manager);
 
     // Init observations
     auto obs = enkf_obs_alloc(model_config_get_history(model_config),
@@ -417,21 +354,7 @@ enkf_main_type *enkf_main_alloc(const res_config_type *res_config,
                           res_config_get_analysis_config(res_config)));
     enkf_main->obs = obs;
 
-    // Add ensemble
-    int num_realizations = model_config_get_num_realizations(model_config);
-    std::vector<enkf_state> ensemble;
-    for (int iens = 0; iens < num_realizations; iens++)
-        // Observe that due to the initialization of the rng - this function is currently NOT thread safe.
-        ensemble.emplace_back(
-            enkf_state_alloc(iens,
-                             rng_manager_iget(enkf_main->rng_manager, iens),
-                             res_config_get_model_config(res_config),
-                             res_config_get_ensemble_config(res_config),
-                             res_config_get_site_config(res_config),
-                             res_config_get_ecl_config(res_config)),
-            enkf_state_deleter());
-    enkf_main->ensemble = ensemble;
-    enkf_main->ens_size = num_realizations;
+    enkf_main->ens_size = model_config_get_num_realizations(model_config);
 
     return enkf_main;
 }
@@ -458,16 +381,20 @@ ERT_CLIB_SUBMODULE("enkf_main", m) {
     m.def("get_observation_keys", get_observation_keys);
     m.def("get_parameter_keys", get_parameter_keys);
     m.def("load_from_run_context",
-          [](py::object self, std::vector<py::object> run_args_,
+          [](int ens_size, py::object ensemble_config, py::object model_config,
+             py::object ecl_config, std::vector<py::object> run_args_,
              std::vector<bool> active_mask, py::object sim_fs_) {
-              auto enkf_main = ert::from_cwrap<enkf_main_type>(self);
               auto sim_fs = ert::from_cwrap<enkf_fs_type>(sim_fs_);
               std::vector<run_arg_type *> run_args;
               for (auto &run_arg : run_args_) {
                   run_args.push_back(ert::from_cwrap<run_arg_type>(run_arg));
               }
-              return enkf_main_load_from_run_context(enkf_main, active_mask,
-                                                     sim_fs, run_args);
+              return enkf_main_load_from_run_context(
+                  ens_size,
+                  ert::from_cwrap<ensemble_config_type>(ensemble_config),
+                  ert::from_cwrap<model_config_type>(model_config),
+                  ert::from_cwrap<ecl_config_type>(ecl_config), active_mask,
+                  sim_fs, run_args);
           });
     m.def(
         "init_active_run",

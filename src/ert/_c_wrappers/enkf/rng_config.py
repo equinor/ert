@@ -13,12 +13,13 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
-
+import struct
 
 from cwrap import BaseCClass
 
 from ert._c_wrappers import ResPrototype
 from ert._c_wrappers.enkf.config_keys import ConfigKeys
+from ert._clib.rng_config import log_seed
 
 
 class RNGConfig(BaseCClass):
@@ -70,3 +71,17 @@ class RNGConfig(BaseCClass):
             return False
 
         return True
+
+
+def format_seed(random_seed: str):
+    state_size = 4
+    state_digits = 10
+    fseed = [0] * state_size
+    seed_pos = 0
+    for i in range(state_size):
+        for k in range(state_digits):
+            fseed[i] *= 10
+            fseed[i] += int(random_seed[seed_pos])
+            seed_pos = (seed_pos + 1) % len(random_seed)
+
+    return b"".join(struct.pack("I", x) for x in fseed)

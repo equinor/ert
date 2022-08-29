@@ -22,8 +22,7 @@ class StateMapTest(ResTest):
         with self.assertRaises(IOError):
             state_map.load("/file/does/not/exist")
 
-        with self.assertRaises(IndexError):
-            state_map[0]
+        state_map[0]
 
         with self.assertRaises(TypeError):
             state_map["r"] = RealizationStateEnum.STATE_INITIALIZED

@@ -13,17 +13,21 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
+import logging
 import os
 import re
+import struct
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, List, Union
 
 from cwrap import BaseCClass
+from ecl.util.enums import RngInitModeEnum
 from ecl.util.util import RandomNumberGenerator
 
 from ert._c_wrappers import ResPrototype
 from ert._c_wrappers.analysis.configuration import UpdateConfiguration
 from ert._c_wrappers.enkf.analysis_config import AnalysisConfig
+from ert._c_wrappers.enkf.data import EnkfNode
 from ert._c_wrappers.enkf.ecl_config import EclConfig
 from ert._c_wrappers.enkf.enkf_fs import EnkfFs
 from ert._c_wrappers.enkf.enkf_fs_manager import FileSystemRotator
@@ -35,12 +39,20 @@ from ert._c_wrappers.enkf.ert_workflow_list import ErtWorkflowList
 from ert._c_wrappers.enkf.hook_manager import HookManager
 from ert._c_wrappers.enkf.key_manager import KeyManager
 from ert._c_wrappers.enkf.model_config import ModelConfig
+from ert._c_wrappers.enkf.node_id import NodeId
 from ert._c_wrappers.enkf.queue_config import QueueConfig
+from ert._c_wrappers.enkf.rng_config import format_seed, log_seed
 from ert._c_wrappers.enkf.runpaths import Runpaths
 from ert._c_wrappers.enkf.site_config import SiteConfig
 from ert._c_wrappers.enkf.substituter import Substituter
 from ert._c_wrappers.util.substitution_list import SubstitutionList
 from ert._clib import enkf_main, enkf_state
+from ert._clib.state_map import (
+    STATE_INITIALIZED,
+    STATE_LOAD_FAILURE,
+    STATE_PARENT_FAILURE,
+    STATE_UNDEFINED,
+)
 
 if TYPE_CHECKING:
     from ert._c_wrappers.enkf.res_config import ResConfig
@@ -52,6 +64,10 @@ def naturalSortKey(s: str) -> List[Union[int, str]]:
     return [
         int(text) if text.isdigit() else text.lower() for text in re.split(_nsre, s)
     ]
+
+
+def _forward_rng(rng):
+    return b"".join(struct.pack("I", (rng.forward())) for _ in range(rng.stateSize()))
 
 
 class EnKFMain(BaseCClass):
@@ -81,7 +97,6 @@ class EnKFMain(BaseCClass):
         "hook_manager_ref enkf_main_get_hook_manager(enkf_main)"
     )
     _get_res_config = ResPrototype("res_config_ref enkf_main_get_res_config(enkf_main)")
-    _get_shared_rng = ResPrototype("rng_ref enkf_main_get_shared_rng(enkf_main)")
 
     def __init__(self, config: "ResConfig", read_only: bool = False):
         self.config_file = config
@@ -121,6 +136,23 @@ class EnKFMain(BaseCClass):
         else:
             fs = EnkfFs.createFileSystem(ens_path / "default", read_only=read_only)
         self.storage = fs
+        global_rng = RandomNumberGenerator()
+        self._shared_rng = RandomNumberGenerator(init_mode=RngInitModeEnum.INIT_DEFAULT)
+        random_seed = self.resConfig().rng_config.random_seed
+        if random_seed:
+            global_rng.setState(format_seed(random_seed))
+            self._shared_rng.setState(format_seed(random_seed))
+            self._shared_rng.setState(_forward_rng(self._shared_rng))
+            self._shared_rng.setState(_forward_rng(self._shared_rng))
+        else:
+            log_seed(global_rng)
+        self.realizations = [
+            RandomNumberGenerator(init_mode=RngInitModeEnum.INIT_DEFAULT)
+            for _ in range(self.getEnsembleSize())
+        ]
+
+        for rng in self.realizations:
+            rng.setState(_forward_rng(global_rng))
 
     @property
     def update_configuration(self) -> UpdateConfiguration:
@@ -344,23 +376,46 @@ class EnKFMain(BaseCClass):
     def loadFromRunContext(self, run_context: RunContext, fs) -> int:
         """Returns the number of loaded realizations"""
         return enkf_main.load_from_run_context(
-            self, run_context.run_args, run_context.mask, fs
+            self.getEnsembleSize(),
+            self.ensembleConfig(),
+            self.getModelConfig(),
+            self.eclConfig(),
+            run_context.run_args,
+            run_context.mask,
+            fs,
         )
 
-    def initRun(self, run_context: "RunContext"):
+    def initRun(self, run_context: "RunContext", parameters: List[str] = None):
+        if parameters is None:
+            parameters = self._parameter_keys
+        state_map = run_context.sim_fs.getStateMap()
         for realization_nr in range(self.getEnsembleSize()):
-            if run_context.is_active(realization_nr):
-                enkf_state.state_initialize(
-                    self,
-                    self.ensembleConfig(),
-                    run_context.sim_fs,
-                    self._parameter_keys,
-                    realization_nr,
-                )
+            current_status = state_map[realization_nr]
+            if (
+                run_context.is_active(realization_nr)
+                and not current_status == STATE_PARENT_FAILURE
+            ):
+                for parameter in parameters:
+                    node = self.ensembleConfig().getNode(parameter)
+                    enkf_node = EnkfNode(node)
+                    if not enkf_node.has_data(
+                        run_context.sim_fs,
+                        NodeId(0, realization_nr)
+                        or current_status == STATE_LOAD_FAILURE,
+                    ):
+                        enkf_state.state_initialize(
+                            self.realizations[realization_nr],
+                            enkf_node,
+                            run_context.sim_fs,
+                            realization_nr,
+                        )
+                if state_map[realization_nr] in [STATE_UNDEFINED, STATE_LOAD_FAILURE]:
+                    state_map[realization_nr] = RealizationStateEnum.STATE_INITIALIZED
+        run_context.sim_fs.sync()
 
     def rng(self) -> RandomNumberGenerator:
         "Will return the random number generator used for updates."
-        return self._get_shared_rng()
+        return self._shared_rng
 
     def _createFullCaseName(self, mount_root: str, case_name: str) -> str:
         return os.path.join(mount_root, case_name)
@@ -439,20 +494,6 @@ class EnKFMain(BaseCClass):
             node_list,
             member_mask,
         )
-
-    def initializeFromScratch(
-        self, parameter_list: List[str], run_context: RunContext
-    ) -> None:
-        for realization_nr in range(self.getEnsembleSize()):
-            if run_context.is_active(realization_nr):
-                enkf_state.state_initialize(
-                    self,
-                    self.ensembleConfig(),
-                    run_context.sim_fs,
-                    parameter_list,
-                    run_context.init_mode.value,
-                    realization_nr,
-                )
 
     def isCaseMounted(self, case_name: str, mount_root: str = None) -> bool:
         if mount_root is None:
