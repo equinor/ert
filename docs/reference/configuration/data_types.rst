@@ -573,8 +573,8 @@ Summary: SUMMARY
 ~~~~~~~~~~~~~~~~
 
 The ``SUMMARY`` keyword is used to configure which summary vectors you want to
-load from the (Eclipse) reservoir simulation. In it's simplest form the
-``SUMMARY`` keyword just lists the vectors you wish to load, you can have
+load from the (Eclipse) reservoir simulation. In its simplest form, the
+``SUMMARY`` keyword just lists the vectors you wish to load. You can have
 multiple ``SUMMARY`` keywords in your config file, and each keyword can mention
 multiple vectors:
 
@@ -586,8 +586,8 @@ multiple vectors:
 
 If you in the observation use the ``SUMMARY_OBSERVATION`` or
 ``HISTORY_OBSERVATION`` keyword to compare simulatons and observations for a
-particular summary vector *that vector is automatically added* to the ERT
-configuration.
+particular summary vector you need to add this vector after SUMMARY in the ERT
+configuration to have it plotted.
 
 If you use the keyword ``REFCASE`` to configure an Eclipse reference case you
 can use wildcard notation to all summary vectors matching a pattern, i.e. this:
@@ -595,12 +595,13 @@ can use wildcard notation to all summary vectors matching a pattern, i.e. this:
 ::
 
    REFCASE eclipse/refcase/CASE
-   SUMMARY WWCT:* WGOR:*
+   SUMMARY WWCT*:* WGOR*:*
    SUMMARY F*
    SUMMARY G*:NORTH
 
-will load the ``WWCT`` and ``WGOR`` vectors for all wells, all field related
-vectors and all group vectors from the ``NORTH`` group.
+will load the ``WWCT`` and ``WWCTH``, as well as ``WGOR`` and ``WGORH`` vectors 
+for all wells, all field related vectors and all group vectors from the ``NORTH`` 
+group.
 
 
 General data: GEN_DATA
