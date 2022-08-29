@@ -1,7 +1,6 @@
 from .active_mode_enum import ActiveMode
 from .enkf_field_file_format_enum import EnkfFieldFileFormatEnum
 from .enkf_fs_type_enum import EnKFFSType
-from .enkf_init_modes_enum import EnkfInitModeEnum
 from .enkf_obs_impl_type_enum import EnkfObservationImplementationType
 from .enkf_truncation_type import EnkfTruncationType
 from .enkf_var_type_enum import EnkfVarType
@@ -17,7 +16,6 @@ __all__ = [
     "EnkfVarType",
     "EnkfObservationImplementationType",
     "ErtImplType",
-    "EnkfInitModeEnum",
     "RealizationStateEnum",
     "EnkfTruncationType",
     "EnKFFSType",

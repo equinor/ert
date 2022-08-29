@@ -96,13 +96,9 @@ static void shared_info_free(shared_info_type *shared_info) {
   This function does not acces the nodes of the enkf_state object.
 */
 void enkf_state_initialize(rng_type *rng, enkf_fs_type *fs,
-                           const std::vector<std::string> &param_list,
-                           init_mode_type init_mode, int iens,
+                           const std::vector<std::string> &param_list, int iens,
                            const ensemble_config_type *ensemble_config) {
     auto &state_map = enkf_fs_get_state_map(fs);
-    realisation_state_enum current_state = state_map.get(iens);
-    if ((current_state == STATE_PARENT_FAILURE) && (init_mode != INIT_FORCE))
-        return;
     else {
         for (auto &param : param_list) {
             const enkf_config_node_type *config_node =
@@ -111,8 +107,7 @@ void enkf_state_initialize(rng_type *rng, enkf_fs_type *fs,
             node_id_type node_id = {.report_step = 0, .iens = iens};
             bool has_data = enkf_node_has_data(param_node, fs, node_id);
 
-            if ((init_mode == INIT_FORCE) || (has_data == false) ||
-                (current_state == STATE_LOAD_FAILURE)) {
+            if ((has_data == false) || (current_state == STATE_LOAD_FAILURE)) {
                 if (enkf_node_initialize(param_node, iens, rng))
                     enkf_node_store(param_node, fs, node_id);
             }
@@ -522,14 +517,12 @@ bool enkf_state_complete_forward_model_EXIT_handler__(run_arg_type *run_arg) {
 ERT_CLIB_SUBMODULE("enkf_state", m) {
     m.def("state_initialize",
           [](py::object enkf_main, py::object ensemble_config, py::object fs,
-             std::vector<std::string> &param_list, int init_mode, int iens) {
+             std::vector<std::string> &param_list, int iens) {
               auto enkf_main_ = ert::from_cwrap<enkf_main_type>(enkf_main);
               auto fs_ = ert::from_cwrap<enkf_fs_type>(fs);
-              init_mode_type init_mode_ =
-                  static_cast<init_mode_type>(init_mode);
               return enkf_state_initialize(
                   rng_manager_iget(enkf_main_get_rng_manager(enkf_main_), iens),
-                  fs_, param_list, init_mode_, iens,
+                  fs_, param_list, iens,
                   ert::from_cwrap<ensemble_config_type>(ensemble_config));
           });
 }
