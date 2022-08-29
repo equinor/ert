@@ -95,18 +95,15 @@ static void shared_info_free(shared_info_type *shared_info) {
 /**
   This function does not acces the nodes of the enkf_state object.
 */
-void enkf_state_initialize(enkf_state_type *enkf_state, rng_type *rng,
-                           enkf_fs_type *fs,
+void enkf_state_initialize(rng_type *rng, enkf_fs_type *fs,
                            const std::vector<std::string> &param_list,
-                           init_mode_type init_mode) {
-    int iens = enkf_state->__iens;
+                           init_mode_type init_mode, int iens,
+                           const ensemble_config_type *ensemble_config) {
     auto &state_map = enkf_fs_get_state_map(fs);
     realisation_state_enum current_state = state_map.get(iens);
     if ((current_state == STATE_PARENT_FAILURE) && (init_mode != INIT_FORCE))
         return;
     else {
-        const ensemble_config_type *ensemble_config =
-            enkf_state->ensemble_config;
         for (auto &param : param_list) {
             const enkf_config_node_type *config_node =
                 ensemble_config_get_node(ensemble_config, param.c_str());
@@ -514,15 +511,16 @@ bool enkf_state_complete_forward_model_EXIT_handler__(run_arg_type *run_arg) {
 #include "enkf_state_nodes.cpp"
 
 ERT_CLIB_SUBMODULE("enkf_state", m) {
-    m.def("state_initialize", [](py::object enkf_main, py::object fs,
-                                 std::vector<std::string> &param_list,
-                                 int init_mode, int iens) {
-        auto enkf_main_ = ert::from_cwrap<enkf_main_type>(enkf_main);
-        auto fs_ = ert::from_cwrap<enkf_fs_type>(fs);
-        init_mode_type init_mode_ = static_cast<init_mode_type>(init_mode);
-        return enkf_state_initialize(
-            enkf_main_iget_state(enkf_main_, iens),
-            rng_manager_iget(enkf_main_get_rng_manager(enkf_main_), iens), fs_,
-            param_list, init_mode_);
-    });
+    m.def("state_initialize",
+          [](py::object enkf_main, py::object ensemble_config, py::object fs,
+             std::vector<std::string> &param_list, int init_mode, int iens) {
+              auto enkf_main_ = ert::from_cwrap<enkf_main_type>(enkf_main);
+              auto fs_ = ert::from_cwrap<enkf_fs_type>(fs);
+              init_mode_type init_mode_ =
+                  static_cast<init_mode_type>(init_mode);
+              return enkf_state_initialize(
+                  rng_manager_iget(enkf_main_get_rng_manager(enkf_main_), iens),
+                  fs_, param_list, init_mode_, iens,
+                  ert::from_cwrap<ensemble_config_type>(ensemble_config));
+          });
 }

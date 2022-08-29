@@ -352,6 +352,7 @@ class EnKFMain(BaseCClass):
             if run_context.is_active(realization_nr):
                 enkf_state.state_initialize(
                     self,
+                    self.ensembleConfig(),
                     run_context.sim_fs,
                     self._parameter_keys,
                     run_context.init_mode.value,
@@ -447,6 +448,7 @@ class EnKFMain(BaseCClass):
             if run_context.is_active(realization_nr):
                 enkf_state.state_initialize(
                     self,
+                    self.ensembleConfig(),
                     run_context.sim_fs,
                     parameter_list,
                     run_context.init_mode.value,
