@@ -126,15 +126,12 @@ static void gen_obs_set_data(gen_obs_type *gen_obs, int buffer_size,
     gen_obs->data_index_list = (int *)util_realloc(
         gen_obs->data_index_list,
         gen_obs->obs_size * sizeof *gen_obs->data_index_list);
-    {
-        int iobs;
-        double *double_buffer = (double *)buffer;
-        for (iobs = 0; iobs < gen_obs->obs_size; iobs++) {
-            gen_obs->obs_data[iobs] = double_buffer[2 * iobs];
-            gen_obs->obs_std[iobs] = double_buffer[2 * iobs + 1];
-            gen_obs->std_scaling[iobs] = 1.0;
-            gen_obs->data_index_list[iobs] = iobs;
-        }
+
+    for (int iobs = 0; iobs < gen_obs->obs_size; iobs++) {
+        gen_obs->obs_data[iobs] = buffer[2 * iobs];
+        gen_obs->obs_std[iobs] = buffer[2 * iobs + 1];
+        gen_obs->std_scaling[iobs] = 1.0;
+        gen_obs->data_index_list[iobs] = iobs;
     }
 }
 
