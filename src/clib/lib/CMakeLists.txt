@@ -14,11 +14,9 @@ pybind11_add_module(
   res_util/ui_return.cpp
   res_util/subst_list.cpp
   res_util/subst_func.cpp
-  res_util/template.cpp
   res_util/path_fmt.cpp
   res_util/res_env.cpp
   res_util/block_fs.cpp
-  res_util/template_loop.cpp # Highly deprecated
   python/init.cpp
   python/logging.cpp
   python/ensemble_config.cpp
