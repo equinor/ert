@@ -4,7 +4,6 @@ from datetime import datetime
 from typing import Generator, List
 
 from ert._c_wrappers.enkf.enkf_fs import EnkfFs
-from ert._c_wrappers.enkf.enums import EnkfInitModeEnum
 from ert._c_wrappers.enkf.run_arg import RunArg
 
 
@@ -16,7 +15,6 @@ class RunContext:
     paths: List[str] = field(default_factory=list)
     jobnames: List[str] = field(default_factory=list)
     iteration: int = 0
-    init_mode: EnkfInitModeEnum = EnkfInitModeEnum.INIT_CONDITIONAL
 
     def __post_init__(self):
         self.run_id = f"{uuid.uuid4()}:{datetime.now().strftime('%Y-%m-%dT%H%M')}"

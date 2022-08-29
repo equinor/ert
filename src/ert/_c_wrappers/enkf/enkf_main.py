@@ -355,7 +355,6 @@ class EnKFMain(BaseCClass):
                     self.ensembleConfig(),
                     run_context.sim_fs,
                     self._parameter_keys,
-                    run_context.init_mode.value,
                     realization_nr,
                 )
 
