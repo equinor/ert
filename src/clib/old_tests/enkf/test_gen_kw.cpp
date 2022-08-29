@@ -37,26 +37,6 @@ void ecl_write(const ensemble_config_type *ens_config,
                enkf_fs_type *fs);
 } // namespace enkf_main
 
-void test_write_gen_kw_export_file(enkf_main_type *enkf_main) {
-    std::vector<std::string> key_list = ensemble_config_keylist_from_var_type(
-        res_config_get_ensemble_config(enkf_main_get_res_config(enkf_main)),
-        PARAMETER);
-    enkf_state_type *state = enkf_main_iget_state(enkf_main, 0);
-    enkf_fs_type *init_fs =
-        enkf_fs_create_fs("my_storage", BLOCK_FS_DRIVER_ID, true);
-    rng_manager_type *rng_manager = enkf_main_get_rng_manager(enkf_main);
-    rng_type *rng = rng_manager_iget(rng_manager, 0);
-    enkf_state_initialize(state, rng, init_fs, key_list);
-    enkf_main::ecl_write(
-        res_config_get_ensemble_config(enkf_main_get_res_config(enkf_main)),
-        model_config_get_gen_kw_export_name(
-            res_config_get_model_config(enkf_main_get_res_config(enkf_main))),
-        "simulations/run0", 0, init_fs);
-    test_assert_true(fs::exists("simulations/run0/parameters.txt"));
-    test_assert_true(fs::exists("simulations/run0/parameters.json"));
-    enkf_fs_umount(init_fs);
-}
-
 static void read_erroneous_gen_kw_file(void *arg) {
     vector_type *arg_vector = vector_safe_cast(arg);
     gen_kw_config_type *gen_kw_config =
@@ -98,8 +78,6 @@ int main(int argc, char **argv) {
         ert_test_context_alloc("gen_kw_test", config_file);
     enkf_main_type *enkf_main = ert_test_context_get_main(test_context);
     test_assert_not_NULL(enkf_main);
-
-    test_write_gen_kw_export_file(enkf_main);
     test_read_erroneous_gen_kw_file();
     ert_test_context_free(test_context);
     exit(0);

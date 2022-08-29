@@ -48,8 +48,6 @@ class RunpathListDumpTest(ResTest):
                 iteration=itr,
             )
 
-            ert.initRun(run_context)
-
             ert.createRunPath(run_context)
 
             for i, run_arg in enumerate(run_context):

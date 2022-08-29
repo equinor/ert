@@ -131,7 +131,7 @@ args = dict(
         "decorator",
         "deprecation",
         "dnspython >= 2",
-        "ecl >= 2.13.0",
+        "ecl >= 2.14.0",
         "ert-storage >= 0.3.16",
         "fastapi",
         "graphlib_backport; python_version < '3.9'",

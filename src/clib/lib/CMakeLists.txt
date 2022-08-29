@@ -123,7 +123,6 @@ pybind11_add_module(
   enkf/rng_config.cpp
   enkf/run_arg.cpp
   enkf/site_config.cpp
-  enkf/rng_manager.cpp
   enkf/res_config.cpp
   enkf/row_scaling.cpp
   enkf/state_map.cpp

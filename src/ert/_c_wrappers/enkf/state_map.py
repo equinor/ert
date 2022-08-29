@@ -5,9 +5,7 @@ from ert._clib.state_map import StateMap
 
 
 def __getitem__(self, iens: int) -> RealizationStateEnum:
-    if iens < len(self):
-        return self._get(iens)
-    raise IndexError(f"StateMap index out of range: {iens} not in [0, {len(self)})")
+    return self._get(iens)
 
 
 def __iter__(self):

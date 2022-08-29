@@ -18,7 +18,7 @@ def _run_forward_model(
     ert: "EnKFMain", job_queue: "JobQueue", run_context: "RunContext"
 ) -> int:
     # run simplestep
-    ert.initRun(run_context)  # type: ignore
+    ert.initRun(run_context)
 
     # start queue
     max_runtime: Optional[int] = ert.analysisConfig().get_max_runtime()

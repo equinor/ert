@@ -1,3 +1,5 @@
+import logging
+import os
 import sys
 from contextlib import ExitStack as does_not_raise
 from pathlib import Path
@@ -297,3 +299,75 @@ def test_gen_kw_forward_init(tmpdir, load_forward_init):
         else:
             assert Path("simulations/realization0/kw.txt").exists()
         assert load_from_forward_model(ert) == 1
+
+
+@pytest.mark.parametrize(
+    "check_random_seed, expectation",
+    [
+        pytest.param(
+            True,
+            does_not_raise(),
+            id=(
+                "The second initialization we extract the random seed from the first "
+                "case and set that in the second case to make sure the sampling can "
+                "be reproduced"
+            ),
+        ),
+        pytest.param(
+            False,
+            pytest.raises(AssertionError, match="MY_KEYWORD "),
+            id=(
+                "We initialize twice without setting the random seed either time so "
+                "expect the result to be different both times"
+            ),
+        ),
+    ],
+)
+def test_initialize_random_seed(tmpdir, caplog, check_random_seed, expectation):
+    """
+    This test initializes a case twice, the first time without a random
+    seed.
+    """
+    with caplog.at_level(logging.INFO):
+        with tmpdir.as_cwd():
+            config = dedent(
+                """
+            JOBNAME my_name%d
+            NUM_REALIZATIONS 1
+            GEN_KW KW_NAME template.txt kw.txt prior.txt
+            """
+            )
+            with open("config.ert", "w") as fh:
+                fh.writelines(config)
+            with open("template.txt", "w") as fh:
+                fh.writelines("MY_KEYWORD <MY_KEYWORD>")
+            with open("prior.txt", "w") as fh:
+                fh.writelines("MY_KEYWORD NORMAL 0 1")
+            create_runpath("config.ert")
+            # We read the first parameter value as a reference value
+            expected = Path("simulations/realization0/kw.txt").read_text("utf-8")
+
+            # Make a clean directory for the second case, which is identical
+            # to the first, except that it uses the random seed from the first
+            os.makedirs("second")
+            os.chdir("second")
+            random_seed = next(
+                message
+                for message in caplog.messages
+                if message.startswith("RANDOM_SEED")
+            ).split()[1]
+            if check_random_seed:
+                config += f"RANDOM_SEED {random_seed}"
+            with open("config_2.ert", "w") as fh:
+                fh.writelines(config)
+            with open("template.txt", "w") as fh:
+                fh.writelines("MY_KEYWORD <MY_KEYWORD>")
+            with open("prior.txt", "w") as fh:
+                fh.writelines("MY_KEYWORD NORMAL 0 1")
+
+            create_runpath("config_2.ert")
+            with expectation:
+                assert (
+                    Path("simulations/realization0/kw.txt").read_text("utf-8")
+                    == expected
+                )

@@ -45,25 +45,12 @@
 #include <ert/enkf/run_arg.hpp>
 #include <ert/enkf/site_config.hpp>
 
-typedef struct enkf_state_struct enkf_state_type;
+void enkf_state_initialize(rng_type *rng, enkf_fs_type *fs,
+                           enkf_node_type *param_node, int iens);
 
-void enkf_state_initialize(enkf_state_type *enkf_state, rng_type *rng,
-                           enkf_fs_type *fs,
-                           const std::vector<std::string> &param_list,
-                           init_mode_type init_mode);
-
-std::pair<fw_load_status, std::string>
-enkf_state_load_from_forward_model(enkf_state_type *enkf_state,
-                                   run_arg_type *run_arg);
-
-enkf_state_type *enkf_state_alloc(int, rng_type *main_rng, model_config_type *,
-                                  ensemble_config_type *,
-                                  const site_config_type *,
-                                  const ecl_config_type *);
-
-void enkf_state_add_node(enkf_state_type *, const char *,
-                         const enkf_config_node_type *);
-void enkf_state_free(enkf_state_type *);
+std::pair<fw_load_status, std::string> enkf_state_load_from_forward_model(
+    ensemble_config_type *ens_config, model_config_type *model_config,
+    const ecl_config_type *ecl_config, const run_arg_type *run_arg);
 
 std::pair<fw_load_status, std::string>
 enkf_state_complete_forward_modelOK(const res_config_type *res_config,

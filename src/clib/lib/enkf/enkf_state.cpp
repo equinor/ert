@@ -42,82 +42,12 @@
 #include <ert/res_util/memory.hpp>
 
 static auto logger = ert::get_logger("enkf");
-#define ENKF_STATE_TYPE_ID 78132
 
-/**
-   This struct contains various objects which the enkf_state needs
-   during operation, which the enkf_state_object *DOES NOT* own. The
-   struct only contains pointers to objects owned by (typically) the
-   enkf_main object.
-
-   If the enkf_state object writes to any of the objects in this
-   struct that can be considered a serious *BUG*.
-
-   The elements in this struct should not change during the
-   application lifetime?
-*/
-typedef struct shared_info_struct {
-    model_config_type *model_config;
-    /** The list of external jobs which are installed - and *how* they should
-     * be run (with Python code) */
-    ext_joblist_type *joblist;
-    const site_config_type *site_config;
-    const ecl_config_type *ecl_config;
-} shared_info_type;
-
-struct enkf_state_struct {
-    UTIL_TYPE_ID_DECLARATION;
-    hash_type *node_hash;
-    /** The config nodes for the enkf_node objects contained in node_hash. */
-    ensemble_config_type *ensemble_config;
-    /** Pointers to shared objects which is needed by the enkf_state object (read only). */
-    shared_info_type *shared_info;
-    int __iens;
-};
-
-static shared_info_type *shared_info_alloc(const site_config_type *site_config,
-                                           model_config_type *model_config,
-                                           const ecl_config_type *ecl_config) {
-    shared_info_type *shared_info =
-        (shared_info_type *)util_malloc(sizeof *shared_info);
-    shared_info->joblist = site_config_get_installed_jobs(site_config);
-    shared_info->site_config = site_config;
-    shared_info->model_config = model_config;
-    shared_info->ecl_config = ecl_config;
-    return shared_info;
-}
-
-static void shared_info_free(shared_info_type *shared_info) {
-    // Adding something here is a BUG - this object does not own anything.
-    free(shared_info);
-}
-
-/**
-  This function does not acces the nodes of the enkf_state object.
-*/
 void enkf_state_initialize(rng_type *rng, enkf_fs_type *fs,
-                           const std::vector<std::string> &param_list, int iens,
-                           const ensemble_config_type *ensemble_config) {
-    auto &state_map = enkf_fs_get_state_map(fs);
-    else {
-        for (auto &param : param_list) {
-            const enkf_config_node_type *config_node =
-                ensemble_config_get_node(ensemble_config, param.c_str());
-            enkf_node_type *param_node = enkf_node_alloc(config_node);
-            node_id_type node_id = {.report_step = 0, .iens = iens};
-            bool has_data = enkf_node_has_data(param_node, fs, node_id);
-
-            if ((has_data == false) || (current_state == STATE_LOAD_FAILURE)) {
-                if (enkf_node_initialize(param_node, iens, rng))
-                    enkf_node_store(param_node, fs, node_id);
-            }
-
-            enkf_node_free(param_node);
-        }
-        state_map.update_matching(iens, STATE_UNDEFINED | STATE_LOAD_FAILURE,
-                                  STATE_INITIALIZED);
-        enkf_fs_fsync(fs);
-    }
+                           enkf_node_type *param_node, int iens) {
+    node_id_type node_id = {.report_step = 0, .iens = iens};
+    if (enkf_node_initialize(param_node, iens, rng))
+        enkf_node_store(param_node, fs, node_id);
 }
 
 ecl_sum_type *load_ecl_sum(const ecl_config_type *ecl_config,
@@ -169,52 +99,6 @@ ecl_sum_type *load_ecl_sum(const ecl_config_type *ecl_config,
     free(header_file);
     free(unified_file);
     return summary;
-}
-
-enkf_state_type *enkf_state_alloc(int iens, rng_type *rng,
-                                  model_config_type *model_config,
-                                  ensemble_config_type *ensemble_config,
-                                  const site_config_type *site_config,
-                                  const ecl_config_type *ecl_config) {
-
-    enkf_state_type *enkf_state =
-        (enkf_state_type *)util_malloc(sizeof *enkf_state);
-    UTIL_TYPE_ID_INIT(enkf_state, ENKF_STATE_TYPE_ID);
-
-    enkf_state->ensemble_config = ensemble_config;
-    enkf_state->shared_info =
-        shared_info_alloc(site_config, model_config, ecl_config);
-    enkf_state->node_hash = hash_alloc();
-
-    enkf_state->__iens = iens;
-    stringlist_type *container_keys = stringlist_alloc_new();
-    stringlist_type *keylist = ensemble_config_alloc_keylist(ensemble_config);
-
-    // 1: Add all regular nodes
-    for (int ik = 0; ik < stringlist_get_size(keylist); ik++) {
-        const char *key = stringlist_iget(keylist, ik);
-        const enkf_config_node_type *config_node =
-            ensemble_config_get_node(ensemble_config, key);
-        if (enkf_config_node_get_impl_type(config_node) == CONTAINER) {
-            stringlist_append_copy(container_keys, key);
-        } else
-            enkf_state_add_node(enkf_state, key, config_node);
-    }
-
-    // 2: Add container nodes - must ensure that all other nodes have
-    //    been added already (this implies that containers of containers
-    //    will be victim of hash retrieval order problems ....
-    for (int ik = 0; ik < stringlist_get_size(container_keys); ik++) {
-        const char *key = stringlist_iget(container_keys, ik);
-        const enkf_config_node_type *config_node =
-            ensemble_config_get_node(ensemble_config, key);
-        enkf_state_add_node(enkf_state, key, config_node);
-    }
-
-    stringlist_free(keylist);
-    stringlist_free(container_keys);
-
-    return enkf_state;
 }
 
 /**
@@ -445,11 +329,9 @@ static std::pair<fw_load_status, std::string> enkf_state_internalize_results(
     return {LOAD_SUCCESSFUL, ""};
 }
 
-static std::pair<fw_load_status, std::string>
-enkf_state_load_from_forward_model__(ensemble_config_type *ens_config,
-                                     model_config_type *model_config,
-                                     const ecl_config_type *ecl_config,
-                                     const run_arg_type *run_arg) {
+std::pair<fw_load_status, std::string> enkf_state_load_from_forward_model(
+    ensemble_config_type *ens_config, model_config_type *model_config,
+    const ecl_config_type *ecl_config, const run_arg_type *run_arg) {
     std::pair<fw_load_status, std::string> result;
     if (ensemble_config_have_forward_init(ens_config))
         result = ensemble_config_forward_init(ens_config, run_arg);
@@ -468,24 +350,6 @@ enkf_state_load_from_forward_model__(ensemble_config_type *ens_config,
 }
 
 std::pair<fw_load_status, std::string>
-enkf_state_load_from_forward_model(enkf_state_type *enkf_state,
-                                   run_arg_type *run_arg) {
-
-    ensemble_config_type *ens_config = enkf_state->ensemble_config;
-    model_config_type *model_config = enkf_state->shared_info->model_config;
-    const ecl_config_type *ecl_config = enkf_state->shared_info->ecl_config;
-
-    return enkf_state_load_from_forward_model__(ens_config, model_config,
-                                                ecl_config, run_arg);
-}
-
-void enkf_state_free(enkf_state_type *enkf_state) {
-    hash_free(enkf_state->node_hash);
-    shared_info_free(enkf_state->shared_info);
-    free(enkf_state);
-}
-
-std::pair<fw_load_status, std::string>
 enkf_state_complete_forward_modelOK(const res_config_type *res_config,
                                     run_arg_type *run_arg) {
 
@@ -493,8 +357,8 @@ enkf_state_complete_forward_modelOK(const res_config_type *res_config,
         res_config_get_ensemble_config(res_config);
     const ecl_config_type *ecl_config = res_config_get_ecl_config(res_config);
     model_config_type *model_config = res_config_get_model_config(res_config);
-    auto result = enkf_state_load_from_forward_model__(ens_config, model_config,
-                                                       ecl_config, run_arg);
+    auto result = enkf_state_load_from_forward_model(ens_config, model_config,
+                                                     ecl_config, run_arg);
 
     if (result.first == LOAD_SUCCESSFUL) {
         result.second = "Results loaded successfully.";
@@ -512,17 +376,11 @@ bool enkf_state_complete_forward_model_EXIT_handler__(run_arg_type *run_arg) {
     return false;
 }
 
-#include "enkf_state_nodes.cpp"
-
 ERT_CLIB_SUBMODULE("enkf_state", m) {
-    m.def("state_initialize",
-          [](py::object enkf_main, py::object ensemble_config, py::object fs,
-             std::vector<std::string> &param_list, int iens) {
-              auto enkf_main_ = ert::from_cwrap<enkf_main_type>(enkf_main);
-              auto fs_ = ert::from_cwrap<enkf_fs_type>(fs);
-              return enkf_state_initialize(
-                  rng_manager_iget(enkf_main_get_rng_manager(enkf_main_), iens),
-                  fs_, param_list, iens,
-                  ert::from_cwrap<ensemble_config_type>(ensemble_config));
-          });
+    m.def("state_initialize", [](py::object rng, py::object param_node,
+                                 py::object fs, int iens) {
+        return enkf_state_initialize(
+            ert::from_cwrap<rng_type>(rng), ert::from_cwrap<enkf_fs_type>(fs),
+            ert::from_cwrap<enkf_node_type>(param_node), iens);
+    });
 }
