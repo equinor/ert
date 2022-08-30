@@ -13,7 +13,7 @@ class KeyManagerTest(ResTest):
             ert = testContext.getErt()
             key_man = KeyManager(ert)
 
-            self.assertEqual(len(key_man.summaryKeys()), 47)
+            self.assertEqual(len(key_man.summaryKeys()), 46)
             self.assertTrue("FOPT" in key_man.summaryKeys())
 
             self.assertEqual(len(key_man.summaryKeysWithObservations()), 2)
