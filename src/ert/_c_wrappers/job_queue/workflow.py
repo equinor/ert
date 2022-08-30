@@ -141,7 +141,7 @@ class Workflow(BaseCClass):
         return workflow
 
     def __ne__(self, other):
-        return not (self == other)
+        return not self == other
 
     def __eq__(self, other):
         return os.path.realpath(self.src_file) == os.path.realpath(other.src_file)

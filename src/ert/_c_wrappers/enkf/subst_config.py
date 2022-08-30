@@ -35,7 +35,7 @@ class SubstConfig(BaseCClass):
     _get_num_cpu = EclPrototype("int ecl_util_get_num_cpu(char*)", bind=False)
 
     def __init__(self, config_content=None, config_dict=None):
-        if not ((config_content is not None) ^ (config_dict is not None)):
+        if not (config_content is not None) ^ (config_dict is not None):
             raise ValueError(
                 "SubstConfig must be instansiated with exactly one"
                 " of config_content or config_dict"

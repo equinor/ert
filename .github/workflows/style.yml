@@ -91,6 +91,7 @@ jobs:
             simplifiable-if-statement, \
             subprocess-run-check, \
             super-with-arguments, \
+            superfluous-parens, \
             too-many-lines, \
             undefined-all-variable, \
             undefined-loop-variable, \

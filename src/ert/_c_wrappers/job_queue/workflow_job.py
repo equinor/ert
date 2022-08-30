@@ -211,7 +211,7 @@ class WorkflowJob(BaseCClass):
         return workflow
 
     def __ne__(self, other) -> bool:
-        return not (self == other)
+        return not self == other
 
     def __eq__(self, other) -> bool:
 

@@ -160,7 +160,7 @@ class ErtWorkflowList(BaseCClass):
         self._free()
 
     def __ne__(self, other):
-        return not (self == other)
+        return not self == other
 
     def __repr__(self):
         job_dicts = [
