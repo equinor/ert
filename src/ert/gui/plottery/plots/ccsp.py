@@ -19,7 +19,6 @@ def plotCrossCaseStatistics(figure, plot_context, case_to_data_map, _observation
     """@type plot_context: ert.gui.plottery.PlotContext"""
     config = plot_context.plotConfig()
     axes = figure.add_subplot(111)
-    """:type: matplotlib.axes.Axes """
 
     plot_context.deactivateDateSupport()
 
@@ -252,7 +251,6 @@ def _plotConnectionLines(axes, plot_config, ccs):
     """
     line_style = plot_config.distributionLineStyle()
     index_list = ccs["index"]
-    """ :type: list[int] """
     for index in range(len(index_list) - 1):
         from_index = index_list[index]
         to_index = index_list[index + 1]

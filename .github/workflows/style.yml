@@ -87,6 +87,7 @@ jobs:
             not-callable, \
             parse-error, \
             pointless-statement, \
+            pointless-string-statement, \
             redundant-unittest-assert, \
             reimported, \
             simplifiable-if-statement, \

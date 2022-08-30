@@ -51,10 +51,8 @@ class CheckList(QWidget):
         layout.addLayout(check_button_layout)
         layout.addWidget(self._list)
 
-        """
-        Inserts the custom filter button, if provided. The caller is responsible
-        for all related actions.
-        """
+        # Inserts the custom filter button, if provided. The caller is
+        # responsible for all related actions.
         if custom_filter_button is not None:
             search_bar_layout = QHBoxLayout()
             search_bar_layout.addWidget(self._search_box)

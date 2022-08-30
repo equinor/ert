@@ -18,15 +18,13 @@ class MockJob:
         self.status = status
 
 
-"""
-NOTE: The test below is for the old job-status mechanism no
-longer used in ERT. The mechanism is, however, used in Everest
-so we leave this test in place.
-
-If Everest at some point updates how it tracks job-status, this
-test as well as BaseRunModel.is_forward_model_finished() can be
-removed.
-"""
+# NOTE: The test below is for the old job-status mechanism no
+# longer used in ERT. The mechanism is, however, used in Everest
+# so we leave this test in place.
+#
+# If Everest at some point updates how it tracks job-status, this
+# test as well as BaseRunModel.is_forward_model_finished() can be
+# removed.
 
 
 @pytest.mark.parametrize(

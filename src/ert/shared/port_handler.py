@@ -95,14 +95,13 @@ def _bind_socket(
         family = get_family(host=host)
         sock = socket.socket(family=family, type=socket.SOCK_STREAM)
 
-        """
-        Setting flags like SO_REUSEADDR and/or SO_REUSEPORT may have undesirable
-        side-effects but we allow it if caller insists. Refer to comment on
-        find_available_port()
+        # Setting flags like SO_REUSEADDR and/or SO_REUSEPORT may have
+        # undesirable side-effects but we allow it if caller insists. Refer to
+        # comment on find_available_port()
+        #
+        # See e.g.  https://stackoverflow.com/a/14388707 for an extensive
+        # explanation of these flags, in particular the part about TIME_WAIT
 
-        See e.g.  https://stackoverflow.com/a/14388707 for an extensive
-        explanation of these flags, in particular the part about TIME_WAIT
-        """
         if will_close_then_reopen_socket:
             sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         else:

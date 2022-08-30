@@ -81,7 +81,6 @@ def plotHistogram(figure, plot_context, case_to_data_map, _observation_data):
     bin_count = int(ceil(sqrt(max_element_count)))
 
     axes = {}
-    """:type: dict of (str, matplotlib.axes.Axes) """
     for index, case in enumerate(case_list):
         axes[case] = figure.add_subplot(case_count, 1, index + 1)
 
