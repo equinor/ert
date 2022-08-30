@@ -15,7 +15,6 @@
 #  for more details.
 import os
 import re
-from functools import partial
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, List, Union
 
@@ -30,7 +29,7 @@ from ert._c_wrappers.enkf.enkf_fs import EnkfFs
 from ert._c_wrappers.enkf.enkf_fs_manager import FileSystemRotator
 from ert._c_wrappers.enkf.enkf_obs import EnkfObs
 from ert._c_wrappers.enkf.ensemble_config import EnsembleConfig
-from ert._c_wrappers.enkf.enums import ErtImplType, RealizationStateEnum
+from ert._c_wrappers.enkf.enums import RealizationStateEnum
 from ert._c_wrappers.enkf.ert_run_context import RunContext
 from ert._c_wrappers.enkf.ert_workflow_list import ErtWorkflowList
 from ert._c_wrappers.enkf.hook_manager import HookManager
@@ -40,15 +39,12 @@ from ert._c_wrappers.enkf.queue_config import QueueConfig
 from ert._c_wrappers.enkf.runpaths import Runpaths
 from ert._c_wrappers.enkf.site_config import SiteConfig
 from ert._c_wrappers.enkf.substituter import Substituter
-from ert._c_wrappers.job_queue import JobQueueManager, RunStatusType
 from ert._c_wrappers.util.substitution_list import SubstitutionList
-from ert._clib import enkf_main, enkf_state, model_callbacks
+from ert._clib import enkf_main, enkf_state
 
 if TYPE_CHECKING:
-    from ert._c_wrappers.enkf.hook_manager import HookRuntime
     from ert._c_wrappers.enkf.res_config import ResConfig
     from ert._c_wrappers.enkf.state_map import StateMap
-    from ert._c_wrappers.job_queue.queue import JobQueue
 
 
 def naturalSortKey(s: str) -> List[Union[int, str]]:
