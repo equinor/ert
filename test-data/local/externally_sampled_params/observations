@@ -1,6 +1,0 @@
-GENERAL_OBSERVATION OBS {
-   DATA       = RES;
-   INDEX_LIST = 0,2,4,6,8;
-   RESTART    = 0;
-   OBS_FILE   = obs_data.txt;
-};
