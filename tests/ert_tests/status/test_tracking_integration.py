@@ -178,7 +178,7 @@ def test_tracking(
 
         res_config = ResConfig(parsed.config)
         os.chdir(res_config.config_path)
-        ert = EnKFMain(res_config, strict=True)
+        ert = EnKFMain(res_config)
         facade = LibresFacade(ert)
 
         model = create_model(
@@ -302,7 +302,7 @@ def test_tracking_time_map(
 
         res_config = ResConfig(parsed.config)
         os.chdir(res_config.config_path)
-        ert = EnKFMain(res_config, strict=True)
+        ert = EnKFMain(res_config)
         facade = LibresFacade(ert)
 
         model = create_model(
@@ -388,7 +388,7 @@ def test_tracking_missing_ecl(
 
         res_config = ResConfig(parsed.config)
         os.chdir(res_config.config_path)
-        ert = EnKFMain(res_config, strict=True)
+        ert = EnKFMain(res_config)
         facade = LibresFacade(ert)
 
         model = create_model(

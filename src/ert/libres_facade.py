@@ -409,6 +409,6 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
 
     @classmethod
     def from_config_file(
-        cls, config_file: str, strict: bool = True, read_only: bool = False
+        cls, config_file: str, read_only: bool = False
     ) -> "LibresFacade":
-        return cls(EnKFMain(ResConfig(config_file), strict, read_only))
+        return cls(EnKFMain(ResConfig(config_file), read_only))

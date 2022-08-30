@@ -87,9 +87,7 @@ class EnKFMain(BaseCClass):
     _get_res_config = ResPrototype("res_config_ref enkf_main_get_res_config(enkf_main)")
     _get_shared_rng = ResPrototype("rng_ref enkf_main_get_shared_rng(enkf_main)")
 
-    def __init__(
-        self, config: "ResConfig", strict: bool = True, read_only: bool = False
-    ):
+    def __init__(self, config: "ResConfig", read_only: bool = False):
         self.config_file = config
         self.update_snapshots = {}
         self._update_configuration = None

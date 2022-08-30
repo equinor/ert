@@ -144,7 +144,7 @@ def test_direct_dark_performance(
 
     with template_config["folder"].as_cwd():
         config = ResConfig("poly.ert")
-        ert = EnKFMain(config, strict=True)
+        ert = EnKFMain(config)
         enkf_facade = LibresFacade(ert)
         experiment_json = experiments.get_experiments(res=enkf_facade)
         ensemble_json_default = None

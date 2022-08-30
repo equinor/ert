@@ -12,5 +12,5 @@ def mount_and_umount(ert, case_name):
 def test_mount_fs(benchmark, template_config):
     with template_config["folder"].as_cwd():
         config = ResConfig("poly.ert")
-        ert = EnKFMain(config, strict=True)
+        ert = EnKFMain(config)
         benchmark(mount_and_umount, ert, "default")
