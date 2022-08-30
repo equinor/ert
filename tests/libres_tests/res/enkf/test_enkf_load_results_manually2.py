@@ -15,7 +15,7 @@ def test_load_results_manually2(setup_case, caplog, monkeypatch, lazy_load):
     if lazy_load:
         monkeypatch.setenv("ERT_LAZY_LOAD_SUMMARYDATA", str(lazy_load))
     res_config = setup_case("local/snake_oil", "snake_oil.ert")
-    ert = EnKFMain(res_config, strict=True)
+    ert = EnKFMain(res_config)
     load_from = ert.getEnkfFsManager().getFileSystem("default_0")
     ert.getEnkfFsManager().switchFileSystem(load_from)
     realisations = [False] * 25

@@ -27,7 +27,7 @@ def init_facade() -> None:
 
     _config = ResConfig(configfile)
     os.chdir(_config.config_path)
-    _ert = EnKFMain(_config, strict=True, read_only=True)
+    _ert = EnKFMain(_config, read_only=True)
     _libres_facade = LibresFacade(_ert)
 
 

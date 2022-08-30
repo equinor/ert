@@ -40,7 +40,7 @@ def run_cli(args):
     )
 
     os.chdir(res_config.config_path)
-    ert = EnKFMain(res_config, strict=True)
+    ert = EnKFMain(res_config)
     facade = LibresFacade(ert)
 
     if args.mode == WORKFLOW_MODE:

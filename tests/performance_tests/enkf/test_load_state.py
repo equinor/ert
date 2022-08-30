@@ -4,7 +4,7 @@ from ert._c_wrappers.enkf import EnKFMain, ResConfig
 def test_load_from_context(benchmark, template_config):
     with template_config["folder"].as_cwd():
         config = ResConfig("poly.ert")
-        ert = EnKFMain(config, strict=True)
+        ert = EnKFMain(config)
         load_into = ert.getEnkfFsManager().getFileSystem("A1")
         ert.getEnkfFsManager().getFileSystem("default")
         expected_reals = template_config["reals"]
@@ -19,7 +19,7 @@ def test_load_from_context(benchmark, template_config):
 def test_load_from_fs(benchmark, template_config):
     with template_config["folder"].as_cwd():
         config = ResConfig("poly.ert")
-        ert = EnKFMain(config, strict=True)
+        ert = EnKFMain(config)
         load_from = ert.getEnkfFsManager().getFileSystem("default")
         expected_reals = template_config["reals"]
         realisations = [True] * expected_reals

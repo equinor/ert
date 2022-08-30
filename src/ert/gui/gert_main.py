@@ -61,7 +61,7 @@ def run_gui(args):
     # Changing current working directory means we need to update the config file to
     # be the base name of the original config
     args.config = os.path.basename(args.config)
-    ert = EnKFMain(res_config, strict=True)
+    ert = EnKFMain(res_config)
     with Storage.connect_or_start_server(
         res_config=os.path.basename(args.config)
     ), add_gui_log_handler() as log_handler:
