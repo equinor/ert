@@ -100,6 +100,7 @@ jobs:
             undefined-variable, \
             ungrouped-imports, \
             unidiomatic-typecheck, \
+            unnecessary-comprehension, \
             unnecessary-dunder-call, \
             unnecessary-lambda, \
             unnecessary-lambda-assignment, \

@@ -35,12 +35,7 @@ class KeyManager:
     def summaryKeys(self) -> List[str]:
         if self.__summary_keys is None:
             self.__summary_keys = sorted(
-                [
-                    key
-                    for key in self.ensembleConfig().getKeylistFromImplType(
-                        ErtImplType.SUMMARY
-                    )
-                ],
+                list(self.ensembleConfig().getKeylistFromImplType(ErtImplType.SUMMARY)),
                 key=lambda k: k.lower(),
             )
 
@@ -61,10 +56,9 @@ class KeyManager:
 
     def genKwKeys(self) -> List[str]:
         if self.__gen_kw_keys is None:
-            gen_kw_keys = self.ensembleConfig().getKeylistFromImplType(
-                ErtImplType.GEN_KW
+            gen_kw_keys = list(
+                self.ensembleConfig().getKeylistFromImplType(ErtImplType.GEN_KW)
             )
-            gen_kw_keys = [key for key in gen_kw_keys]
 
             gen_kw_list = []
             for key in gen_kw_keys:

@@ -176,10 +176,7 @@ class GenKwConfig(BaseCClass):
                 {
                     "key": key,
                     "function": function_type,
-                    "parameters": {
-                        name: value
-                        for (name, value) in zip(parameter_names, parameter_values)
-                    },
+                    "parameters": dict(zip(parameter_names, parameter_values)),
                 }
             )
         return priors

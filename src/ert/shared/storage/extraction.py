@@ -169,7 +169,7 @@ def create_observations(ert) -> List[Mapping[str, dict]]:
         grouped_obs[key]["x_axis"] = x_axis
         grouped_obs[key]["values"] = values
         grouped_obs[key]["errors"] = error
-    return [obs for obs in grouped_obs.values()]
+    return list(grouped_obs.values())
 
 
 def _get_status(status):

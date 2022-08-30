@@ -59,10 +59,7 @@ def test_config_with_suffixes():
     with pytest.raises(IndexError):
         _ = config["no_such_key"]
 
-    assert set(config.keys()) == set(input_dict.keys())
-
-    d = {k: s for k, s in config.items()}
-    assert d == input_dict
+    assert dict(config.items()) == input_dict
 
 
 def test_data(tmp_path):

@@ -259,7 +259,7 @@ class _Interaction:
 
     def json(self) -> dict:
         ret = {
-            "provider_states": [state for state in self.provider_states],
+            "provider_states": list(self.provider_states),
             "type": self.__class__.__name__[1:].lower(),
             "events": [event.json() for event in self.events],
         }

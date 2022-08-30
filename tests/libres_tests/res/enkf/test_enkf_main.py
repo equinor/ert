@@ -395,7 +395,7 @@ def test_load_results_manually(setup_case):
 
     load_into_case_state_map = load_into.getStateMap()
 
-    load_into_states = [state for state in load_into_case_state_map]
+    load_into_states = list(load_into_case_state_map)
 
     expected = [
         RealizationStateEnum.STATE_HAS_DATA,
