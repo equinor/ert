@@ -177,14 +177,14 @@ class EclRun:
 
         if not os.path.isfile(data_file):
             raise IOError(f"No such file: {data_file}")
-        else:
-            (self.run_path, self.data_file) = os.path.split(data_file)
-            (self.base_name, ext) = os.path.splitext(self.data_file)
 
-            if self.run_path is None:
-                self.run_path = os.getcwd()
-            else:
-                self.run_path = os.path.abspath(self.run_path)
+        (self.run_path, self.data_file) = os.path.split(data_file)
+        (self.base_name, ext) = os.path.splitext(self.data_file)
+
+        if self.run_path is None:
+            self.run_path = os.getcwd()
+        else:
+            self.run_path = os.path.abspath(self.run_path)
 
     def runPath(self):
         return self.run_path

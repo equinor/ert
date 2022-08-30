@@ -75,6 +75,7 @@ def observations_for_obs_keys(res: LibresFacade, case, obs_keys):
     except loader.ObservationError:
         data = pd.DataFrame()
     expected_keys = ["OBS", "STD"]
+
     if not isinstance(data, pd.DataFrame):
         raise TypeError(f"Invalid type: {type(data)}, should be type: {pd.DataFrame}")
     if data.empty:
@@ -84,6 +85,7 @@ def observations_for_obs_keys(res: LibresFacade, case, obs_keys):
             '["OBS", "STD"] should be present in DataFrame index, '
             f"missing: {set(expected_keys) - set(data.index)}"
         )
+
     observation_vectors = res.get_observations()
     observations = data.loc[["OBS", "STD"]]
     grouped_obs = {}

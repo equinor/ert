@@ -51,14 +51,13 @@ class MeasuredData:
             raise TypeError(
                 f"Invalid type: {type(data)}, should be type: {pd.DataFrame}"
             )
-        elif not expected_keys.issubset(data.index):
+        if not expected_keys.issubset(data.index):
             missing = expected_keys - set(data.index)
             raise ValueError(
                 f"{expected_keys} should be present in DataFrame index, \
                 missing: {missing}"
             )
-        else:
-            self._data = data
+        self._data = data
 
     def remove_failed_realizations(self) -> None:
         """Removes rows with no simulated data, leaving observations and

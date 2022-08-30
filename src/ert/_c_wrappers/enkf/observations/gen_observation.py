@@ -78,8 +78,7 @@ class GenObservation(BaseCClass):
                 raise IOError(
                     f"The file with observation data:{obs_file} does not exist"
                 )
-            else:
-                self._load(obs_file)
+            self._load(obs_file)
         else:
             obs_value, obs_std = scalar_value
             self._scalar_set(obs_value, obs_std)
