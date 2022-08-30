@@ -346,9 +346,9 @@ class BaseService:
         is_ready = self.wait_until_ready(self._timeout)
         if isinstance(self._conn_info, Exception):
             raise self._conn_info
-        elif not is_ready:
+        if not is_ready:
             raise TimeoutError()
-        elif self._conn_info is None:
+        if self._conn_info is None:
             raise ValueError("conn_info is None")
         return self._conn_info
 

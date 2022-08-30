@@ -38,8 +38,7 @@ class WorkflowRunner:
     def run(self):
         if self.isRunning():
             raise AssertionError("An instance of workflow is already running!")
-        else:
-            self._workflow_job = self._workflow_executor.submit(self.__runWorkflow)
+        self._workflow_job = self._workflow_executor.submit(self.__runWorkflow)
 
     def __runWorkflow(self):
         self.__workflow_result = self.__workflow.run(self.__ert, context=self.__context)

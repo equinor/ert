@@ -80,8 +80,7 @@ class GenDataConfig(BaseCClass):
                 f"No data has been loaded for {self.getName()} "
                 f"at report step:{report_step} "
             )
-        else:
-            return data_size
+        return data_size
 
     def getActiveMask(self):
         return self._get_active_mask()

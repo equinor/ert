@@ -173,7 +173,7 @@ class ModelConfig(BaseCClass):
                 os.path.realpath(time_map_file)
             ):
                 raise ValueError("Error: Time map is not a file")
-            elif time_map_file is not None:
+            if time_map_file is not None:
                 time_map = TimeMap()
                 time_map.fload(filename=os.path.realpath(time_map_file))
 
