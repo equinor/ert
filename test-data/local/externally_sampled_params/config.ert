@@ -8,7 +8,7 @@ RUNPATH out/realization-%d/iter-%d
 OBS_CONFIG observations
 TIME_MAP time_map
 
-NUM_REALIZATIONS 10
+NUM_REALIZATIONS 20
 
 GEN_KW COEFFS coeff.tmpl params.json coeff_priors FORWARD_INIT:True INIT_FILES:externally_sampled_params0
 GEN_DATA RES RESULT_FILE:external_samples_%d.out REPORT_STEPS:0 INPUT_FORMAT:ASCII
