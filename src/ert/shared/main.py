@@ -161,7 +161,7 @@ def attemp_int_conversion(val: str) -> int:
 
 def convert_port(val: str) -> int:
     int_val = attemp_int_conversion(val)
-    if not (0 <= int_val <= 65535):
+    if not 0 <= int_val <= 65535:
         raise ArgumentTypeError(f"{int_val} is not in valid port range 0-65535")
     return int_val
 

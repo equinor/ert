@@ -26,7 +26,7 @@ class HookManager(BaseCClass):
     _size = ResPrototype("int hook_manager_get_size(hook_manager)")
 
     def __init__(self, workflow_list, config_content=None, config_dict=None):
-        if not ((config_content is not None) ^ (config_dict is not None)):
+        if not (config_content is not None) ^ (config_dict is not None):
             raise ValueError("HookManager expects one of config_content or config dict")
 
         if config_dict is not None:
