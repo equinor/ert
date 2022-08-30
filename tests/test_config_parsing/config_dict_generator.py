@@ -10,9 +10,16 @@ from ert._c_wrappers.util.enums import MessageLevelEnum
 
 from .egrid_generator import egrids
 
-words = st.text(
-    min_size=4, max_size=8, alphabet=st.characters(min_codepoint=65, max_codepoint=90)
-)
+
+@st.composite
+def words(draw, min_size=4, max_size=8):
+    return draw(
+        st.text(
+            min_size=min_size,
+            max_size=max_size,
+            alphabet=st.characters(min_codepoint=65, max_codepoint=90),
+        )
+    )
 
 
 @st.composite
@@ -24,7 +31,7 @@ def define_keys(draw):
     are upper case and define keys are prefixed with the lower case
     'key'.
     """
-    return "key" + draw(words)
+    return "key" + draw(words())
 
 
 def touch(filename):
@@ -32,12 +39,17 @@ def touch(filename):
         fh.write(" ")
 
 
-file_names = words
+file_names = words(10, 15)
+
+
+@st.composite
+def small_lists(draw, *args, max_size=5, **kwargs):
+    return draw(st.lists(*args, max_size=max_size, **kwargs))
 
 
 @st.composite
 def directory_names(draw):
-    return "dir" + draw(words)
+    return "dir" + draw(words())
 
 
 small_floats = st.floats(min_value=1.0, max_value=10.0, allow_nan=False)
@@ -150,7 +162,7 @@ def valid_queue_values(option_name):
         ConfigKeys.SLURM_EXCLUDE_HOST_OPTION,
         ConfigKeys.SLURM_INCLUDE_HOST_OPTION,
     ]:
-        return words
+        return words()
     if option_name in [
         "SUBMIT_SLEEP",
         ConfigKeys.SLURM_SQUEUE_TIMEOUT_OPTION,
@@ -188,10 +200,10 @@ def config_dicts(draw):
     config_dict = draw(
         st.fixed_dictionaries(
             {
-                ConfigKeys.ECLBASE: st.just(draw(words) + "%d"),
+                ConfigKeys.ECLBASE: st.just(draw(words()) + "%d"),
                 ConfigKeys.RUNPATH_FILE: file_names,
                 ConfigKeys.ALPHA_KEY: small_floats,
-                ConfigKeys.ITER_CASE: words,
+                ConfigKeys.ITER_CASE: words(),
                 ConfigKeys.ITER_COUNT: positives,
                 ConfigKeys.ITER_RETRY_COUNT: positives,
                 ConfigKeys.RERUN_KEY: st.booleans(),
@@ -203,25 +215,27 @@ def config_dicts(draw):
                 ConfigKeys.MIN_REALIZATIONS: positives,
                 ConfigKeys.CONFIG_DIRECTORY: st.just("."),
                 ConfigKeys.CONFIG_FILE_KEY: file_names,
-                ConfigKeys.DEFINE_KEY: st.dictionaries(define_keys(), words),
-                ConfigKeys.DATA_KW_KEY: st.dictionaries(words, words),
+                ConfigKeys.DEFINE_KEY: st.dictionaries(define_keys(), words()),
+                ConfigKeys.DATA_KW_KEY: st.dictionaries(words(), words()),
                 ConfigKeys.DATA_FILE: file_names,
-                ConfigKeys.GRID: st.just(draw(words) + ".EGRID"),
+                ConfigKeys.GRID: st.just(draw(words()) + ".EGRID"),
                 ConfigKeys.JOB_SCRIPT: file_names,
                 ConfigKeys.USER_MODE: st.booleans(),
                 ConfigKeys.MAX_SUBMIT: positives,
                 ConfigKeys.NUM_CPU: positives,
                 ConfigKeys.QUEUE_SYSTEM: st.just(queue_system),
-                ConfigKeys.QUEUE_OPTION: st.lists(queue_options(st.just(queue_system))),
-                ConfigKeys.ANALYSIS_COPY: st.lists(
+                ConfigKeys.QUEUE_OPTION: small_lists(
+                    queue_options(st.just(queue_system))
+                ),
+                ConfigKeys.ANALYSIS_COPY: small_lists(
                     st.fixed_dictionaries(
                         {
                             ConfigKeys.SRC_NAME: st.just("STD_ENKF"),
-                            ConfigKeys.DST_NAME: words,
+                            ConfigKeys.DST_NAME: words(),
                         }
                     )
                 ),
-                ConfigKeys.ANALYSIS_SET_VAR: st.lists(
+                ConfigKeys.ANALYSIS_SET_VAR: small_lists(
                     st.fixed_dictionaries(
                         {
                             ConfigKeys.MODULE_NAME: st.just("STD_ENKF"),
@@ -231,21 +245,21 @@ def config_dicts(draw):
                     )
                 ),
                 ConfigKeys.ANALYSIS_SELECT: st.just("STD_ENKF"),
-                ConfigKeys.INSTALL_JOB: st.lists(
+                ConfigKeys.INSTALL_JOB: small_lists(
                     st.fixed_dictionaries(
                         {
-                            ConfigKeys.NAME: words,
+                            ConfigKeys.NAME: words(),
                             ConfigKeys.PATH: file_names,
                         }
                     ),
                 ),
-                ConfigKeys.INSTALL_JOB_DIRECTORY: st.lists(directory_names()),
+                ConfigKeys.INSTALL_JOB_DIRECTORY: small_lists(directory_names()),
                 ConfigKeys.LICENSE_PATH: directory_names(),
                 ConfigKeys.UMASK: st.just(0x007),
-                ConfigKeys.RANDOM_SEED: words,
-                ConfigKeys.SETENV: st.lists(
+                ConfigKeys.RANDOM_SEED: words(),
+                ConfigKeys.SETENV: small_lists(
                     st.fixed_dictionaries(
-                        {ConfigKeys.NAME: words, ConfigKeys.VALUE: words}
+                        {ConfigKeys.NAME: words(), ConfigKeys.VALUE: words()}
                     )
                 ),
             }
