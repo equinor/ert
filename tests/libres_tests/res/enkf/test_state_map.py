@@ -43,7 +43,7 @@ def test_state_map(tmp_path):
         assert state == state_map[index]
         index += 1
 
-    states = [state for state in state_map]
+    states = list(state_map)
 
     assert states == [
         RealizationStateEnum.STATE_INITIALIZED,

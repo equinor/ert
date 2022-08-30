@@ -7,11 +7,11 @@ from ert._c_wrappers.enkf.enums import EnkfObservationImplementationType
 class GenDataObservationCollector:
     @staticmethod
     def getAllObservationKeys(ert: EnKFMain) -> List[str]:
-        enkf_obs = ert.getObservations()
-        observation_keys = enkf_obs.getTypedKeylist(
-            EnkfObservationImplementationType.GEN_OBS
+        return list(
+            ert.getObservations().getTypedKeylist(
+                EnkfObservationImplementationType.GEN_OBS
+            )
         )
-        return [key for key in observation_keys]
 
     @staticmethod
     def getObservationKeyForDataKey(

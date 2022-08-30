@@ -231,7 +231,7 @@ class ExtJob(BaseCClass):
         if self.name() != other.name():
             return False
 
-        if [x for x in self.get_arglist()] != [x for x in other.get_arglist()]:
+        if self.get_arglist() != other.get_arglist():
             return False
 
         if self.get_config_file() != other.get_config_file():

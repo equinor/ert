@@ -150,9 +150,7 @@ class RunWorkflowWidget(QWidget):
         workflow_name = self.getCurrentWorkflowName()
         jobs_msg = "successfully!"
         if failed_jobs:
-            jobs_msg = "\nThe following jobs failed: " + ", ".join(
-                [j for j in failed_jobs]
-            )
+            jobs_msg = "\nThe following jobs failed: " + ", ".join(list(failed_jobs))
 
         QMessageBox.information(
             self,

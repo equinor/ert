@@ -115,7 +115,7 @@ class ErtWorkflowList(BaseCClass):
                 self.addWorkflow(job[ConfigKeys.PATH], job[ConfigKeys.NAME])
 
     def getWorkflowNames(self) -> List[str]:
-        return [name for name in self._alloc_namelist()]
+        return list(self._alloc_namelist())
 
     def __contains__(self, workflow_name: str) -> bool:
         assert isinstance(workflow_name, str)
@@ -123,7 +123,7 @@ class ErtWorkflowList(BaseCClass):
 
     def __getitem__(self, item) -> Workflow:
         if item not in self:
-            raise KeyError(f"Item '{item}' is not in the list of available workflows.")
+            raise KeyError(f"Item '{item}'  is not in the list of available workflows.")
 
         return self._get_workflow(item).setParent(self)
 
@@ -146,7 +146,7 @@ class ErtWorkflowList(BaseCClass):
         return self._get_job(job_name)
 
     def getJobNames(self) -> List[str]:
-        return [name for name in self._get_job_names()]
+        return list(self._get_job_names())
 
     def getPluginJobs(self) -> List[WorkflowJob]:
         plugins = []
