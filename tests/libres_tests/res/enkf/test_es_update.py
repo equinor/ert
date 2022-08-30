@@ -1,16 +1,11 @@
 import sys
-from argparse import ArgumentParser
 from pathlib import Path
 
 import pytest
 
 from ert._c_wrappers.enkf import EnKFMain, EnkfNode, NodeId, ResConfig, RunContext
-from ert._c_wrappers.enkf.export import GenKwCollector
 from ert._clib import ies
 from ert.analysis import ErtAnalysisError, ESUpdate
-from ert.shared.cli import ENSEMBLE_SMOOTHER_MODE
-from ert.shared.cli.main import run_cli
-from ert.shared.main import ert_parser
 
 
 @pytest.fixture()
@@ -120,7 +115,7 @@ def test_update_report(setup_case, snapshot):
         ),
     ],
 )
-def test_update_snapshot(setup_case, module, expected_gen_kw):
+def test_update(setup_case, module, expected_gen_kw):
     """
     Note that this is now a snapshot test, so there is no guarantee that the
     snapshots are correct, they are just documenting the current behavior.
@@ -170,44 +165,6 @@ def test_update_snapshot(setup_case, module, expected_gen_kw):
     )
 
     assert target_gen_kw == pytest.approx(expected_gen_kw)
-
-
-@pytest.mark.integration_test
-def test_that_posterior_has_lower_variance_than_prior_with_init_files(copy_case):
-    """This is the poly-case but with initialization with INIT_FILES.
-    See,
-    https://ert.readthedocs.io/en/latest/reference/configuration/data_types.html?highlight=FORWARD_INIT#initialization-with-init-files
-    This is done such that the callback functions are called.
-    """
-    copy_case("local/externally_sampled_params")
-
-    parser = ArgumentParser(prog="test_main")
-    parsed = ert_parser(
-        parser,
-        [
-            ENSEMBLE_SMOOTHER_MODE,
-            "--current-case",
-            "default",
-            "--target-case",
-            "target",
-            "config.ert",
-            "--port-range",
-            "1024-65535",
-        ],
-    )
-
-    run_cli(parsed)
-
-    res_config = ResConfig("config.ert")
-
-    ert = EnKFMain(res_config)
-
-    df_default = GenKwCollector.loadAllGenKwData(ert, "default")
-    df_target = GenKwCollector.loadAllGenKwData(ert, "target")
-
-    assert df_default["COEFFS:COEFF_A"].var() > df_target["COEFFS:COEFF_A"].var()
-    assert df_default["COEFFS:COEFF_B"].var() > df_target["COEFFS:COEFF_B"].var()
-    assert df_default["COEFFS:COEFF_C"].var() > df_target["COEFFS:COEFF_C"].var()
 
 
 @pytest.mark.parametrize(
