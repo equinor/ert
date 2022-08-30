@@ -117,7 +117,6 @@ def test_all_data_type_keys(facade):
         "FWPRH",
         "FWPT",
         "FWPTH",
-        "TIME",
         "WGOR:OP1",
         "WGOR:OP2",
         "WGORH:OP1",

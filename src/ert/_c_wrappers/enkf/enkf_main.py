@@ -171,8 +171,6 @@ class EnKFMain(BaseCClass):
     def storage(self, file_system):
         self.addDataKW("<ERT-CASE>", file_system.getCaseName())
         self.addDataKW("<ERTCASE>", file_system.getCaseName())
-        for key in file_system.getSummaryKeySet().keys():
-            self.ensembleConfig().add_summary(key)
         if self.config_file.ecl_config.getRefcase():
             time_map = file_system.getTimeMap()
             time_map.attach_refcase(self.config_file.ecl_config.getRefcase())
