@@ -13,9 +13,7 @@ class EnsemblePlot:
         @type plot_context: ert.gui.plottery.PlotContext
         """
         config = plot_context.plotConfig()
-        """:type: ert.gui.plottery.PlotConfig """
         axes = figure.add_subplot(111)
-        """:type: matplotlib.axes.Axes """
 
         plot_context.y_axis = plot_context.VALUE_AXIS
         plot_context.x_axis = plot_context.DATE_AXIS

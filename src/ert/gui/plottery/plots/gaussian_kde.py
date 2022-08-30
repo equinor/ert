@@ -18,7 +18,6 @@ def plotGaussianKDE(figure, plot_context, case_to_data_map, _observation_data):
     """
     config = plot_context.plotConfig()
     axes = figure.add_subplot(111)
-    """:type: matplotlib.axes.Axes """
 
     plot_context.deactivateDateSupport()
     plot_context.x_axis = plot_context.VALUE_AXIS

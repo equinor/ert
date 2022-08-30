@@ -15,9 +15,7 @@ class StatisticsPlot:
     def plot(self, figure, plot_context, case_to_data_map, _observation_data):
         """@type plot_context: ert.gui.plottery.PlotContext"""
         config = plot_context.plotConfig()
-        """:type: ert.gui.plotter.PlotConfig """
         axes = figure.add_subplot(111)
-        """:type: matplotlib.axes.Axes """
 
         plot_context.y_axis = plot_context.VALUE_AXIS
         plot_context.x_axis = plot_context.DATE_AXIS

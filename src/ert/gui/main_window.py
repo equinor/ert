@@ -77,9 +77,6 @@ class GertMainWindow(QMainWindow):
     def __createMenu(self):
         self.__view_menu = self.menuBar().addMenu("&View")
         self.__help_menu = self.menuBar().addMenu("&Help")
-        """:type: QMenu"""
-
-        """ @rtype: list of QAction """
         show_about = self.__help_menu.addAction("About")
         show_about.setMenuRole(QAction.ApplicationSpecificRole)
         show_about.triggered.connect(self.__showAboutMessage)

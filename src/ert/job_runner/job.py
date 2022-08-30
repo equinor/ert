@@ -103,11 +103,10 @@ class Job:
             try:
                 memory = process.memory_info().rss
             except (NoSuchProcess, AccessDenied, ZombieProcess):
-                """In case of a process that has died and is in some
-                transitional state, we ignore any failures. Only seen on OSX
-                thus far.
-                See https://github.com/giampaolo/psutil/issues/1044#issuecomment-298745532
-                """  # noqa
+                # In case of a process that has died and is in some transitional
+                # state, we ignore any failures. Only seen on OSX thus far.
+                #
+                # See https://github.com/giampaolo/psutil/issues/1044#issuecomment-298745532  # noqa
                 memory = 0
             if memory > max_memory_usage:
                 max_memory_usage = memory
@@ -122,14 +121,13 @@ class Job:
                     max_running_minutes is not None
                     and run_time.seconds > max_running_minutes * 60
                 ):
-                    """
-                    If the spawned process is not in the same process group
-                    as the callee (job_dispatch), we will kill the process
-                    group explicitly.
 
-                    Propagating the unsuccessful Exited message will kill the
-                    callee group. See job_dispatch.py.
-                    """
+                    # If the spawned process is not in the same process group as
+                    # the callee (job_dispatch), we will kill the process group
+                    # explicitly.
+                    #
+                    # Propagating the unsuccessful Exited message will kill the
+                    # callee group. See job_dispatch.py.
                     process_group_id = os.getpgid(proc.pid)
                     this_group_id = os.getpgid(os.getpid())
                     if process_group_id != this_group_id:

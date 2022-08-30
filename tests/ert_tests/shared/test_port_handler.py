@@ -115,55 +115,53 @@ def _simulate_server(host, port, sock):
     assert getattr(dummy_server, "data", None) == "Hi there"
 
 
-"""
-Tests below checks results of trying to get a new socket on an
-already used port over permutations of 3 (boolean) parameters:
-
-    - mode when obtaining the first socket (default/reuse)
-    - activity on original socket or whether it is never used
-    - original socket live or closed
-
-The test-names encodes the permutation, the platform and finally
-whether subsequent calls to find_available_port() succeeds with
-default-mode and/or reuse-mode. For example:
-
-    test_def_active_close_macos_nok_ok
-
-means obtaining first socket in default-mode, activate it and
-then close it. On MacOS, trying to obtain it in default mode
-fails (nok) whereas obtaining it with reuse-flag succeeds (ok)
-
-
-Test identifier                           | mode  | activated | live
-------------------------------------------+-------+-----------+------
-test_def_passive_live_nok_nok_close_ok_ok | def   | false     | both
-
-test_def_active_live_nok_nok              | def   | true      | true
-test_def_active_close_macos_nok_ok        | def   | true      | false
-test_def_active_close_linux_nok_nok       | def   | true      | false
-
-test_reuse_passive_live_macos_nok_nok     | reuse | false     | true
-test_reuse_passive_live_linux_nok_ok      | reuse | false     | true
-test_reuse_passive_close_ok_ok            | reuse | false     | false
-test_reuse_active_live_nok_nok            | reuse | true      | true
-test_reuse_active_close_nok_ok            | reuse | true      | false
-
-
-Note the behaviour of the first test: The recommended practice
-is to obtain the port/socket in default mode, keep the socket
-alive as long as the port is needed and provide dup() of the
-socket-object to other modules. If the other module cannot use
-an already bound socket, close the UN-ACTIVATED socket, give
-the port-number to the module and hope that no-one else grabs
-the port in the meantime. :)
-
-If you (for whatever obscure reason) activated the socket (i.e.
-some communication happened on the socket) and THEN provides
-the port-number to another module, you're on the last test and
-have to use reuse-mode when obtaining the first socket, and pray
-that the other module set SO_REUSEADDR before attempting to bind
-its socket.
-"""
+# Tests below checks results of trying to get a new socket on an
+# already used port over permutations of 3 (boolean) parameters:
+#
+#     - mode when obtaining the first socket (default/reuse)
+#     - activity on original socket or whether it is never used
+#     - original socket live or closed
+#
+# The test-names encodes the permutation, the platform and finally
+# whether subsequent calls to find_available_port() succeeds with
+# default-mode and/or reuse-mode. For example:
+#
+#     test_def_active_close_macos_nok_ok
+#
+# means obtaining first socket in default-mode, activate it and
+# then close it. On MacOS, trying to obtain it in default mode
+# fails (nok) whereas obtaining it with reuse-flag succeeds (ok)
+#
+#
+# Test identifier                           | mode  | activated | live
+# ------------------------------------------+-------+-----------+------
+# test_def_passive_live_nok_nok_close_ok_ok | def   | false     | both
+#
+# test_def_active_live_nok_nok              | def   | true      | true
+# test_def_active_close_macos_nok_ok        | def   | true      | false
+# test_def_active_close_linux_nok_nok       | def   | true      | false
+#
+# test_reuse_passive_live_macos_nok_nok     | reuse | false     | true
+# test_reuse_passive_live_linux_nok_ok      | reuse | false     | true
+# test_reuse_passive_close_ok_ok            | reuse | false     | false
+# test_reuse_active_live_nok_nok            | reuse | true      | true
+# test_reuse_active_close_nok_ok            | reuse | true      | false
+#
+#
+# Note the behaviour of the first test: The recommended practice
+# is to obtain the port/socket in default mode, keep the socket
+# alive as long as the port is needed and provide dup() of the
+# socket-object to other modules. If the other module cannot use
+# an already bound socket, close the UN-ACTIVATED socket, give
+# the port-number to the module and hope that no-one else grabs
+# the port in the meantime. :)
+#
+# If you (for whatever obscure reason) activated the socket (i.e.
+# some communication happened on the socket) and THEN provides
+# the port-number to another module, you're on the last test and
+# have to use reuse-mode when obtaining the first socket, and pray
+# that the other module set SO_REUSEADDR before attempting to bind
+# its socket.
 
 
 def test_def_passive_live_nok_nok_close_ok_ok(unused_tcp_port):
