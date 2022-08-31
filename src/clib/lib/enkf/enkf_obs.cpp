@@ -28,8 +28,6 @@
 #include <ert/ecl/ecl_grid.h>
 #include <ert/ecl/ecl_sum.h>
 
-#include <ert/analysis/enkf_linalg.hpp>
-
 #include <ert/enkf/enkf_analysis.hpp>
 #include <ert/enkf/enkf_fs.hpp>
 #include <ert/enkf/enkf_obs.hpp>

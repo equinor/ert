@@ -3,10 +3,10 @@ from argparse import ArgumentParser
 from pathlib import Path
 
 import pytest
+from iterative_ensemble_smoother import IterativeEnsembleSmoother
 
 from ert._c_wrappers.enkf import EnKFMain, EnkfNode, NodeId, ResConfig, RunContext
 from ert._c_wrappers.enkf.export import GenKwCollector
-from ert._clib import ies
 from ert.analysis import ErtAnalysisError, ESUpdate
 from ert.shared.cli import ENSEMBLE_SMOOTHER_MODE
 from ert.shared.cli.main import run_cli
@@ -136,7 +136,7 @@ def test_update_snapshot(setup_case, module, expected_gen_kw):
     run_context = RunContext(sim_fs, target_fs)
 
     if module == "IES_ENKF":
-        w_container = ies.ModuleData(ert.getEnsembleSize())
+        w_container = IterativeEnsembleSmoother(ert.getEnsembleSize())
         es_update.iterative_smoother_update(run_context, w_container)
     else:
         es_update.smootherUpdate(run_context)
@@ -358,8 +358,7 @@ SUMMARY_OBSERVATION EXTREMELY_HIGH_STD
     target_fs = fsm.getFileSystem("target")
     run_context = RunContext(sim_fs, target_fs)
     ert.analysisConfig().setEnkfAlpha(alpha)
-    w_container = ies.ModuleData(ert.getEnsembleSize())
-    w_container.iteration_nr += 1
+    w_container = IterativeEnsembleSmoother(ert.getEnsembleSize())
     es_update.iterative_smoother_update(run_context, w_container)
     result_snapshot = es_update.update_snapshots[run_context.run_id]
     assert result_snapshot.alpha == alpha

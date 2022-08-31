@@ -28,7 +28,6 @@
 #include <stdexcept>
 
 #include <ert/analysis/analysis_module.hpp>
-#include <ert/analysis/ies/ies.hpp>
 #include <ert/analysis/ies/ies_config.hpp>
 
 #include <ert/logging.hpp>
@@ -106,8 +105,7 @@ static bool analysis_module_set_int(analysis_module_type *module,
         module->module_config->subspace_dimension(value);
 
     else if (strcmp(flag, ies::IES_INVERSION_KEY) == 0)
-        module->module_config->inversion =
-            static_cast<ies::inversion_type>(value);
+        module->module_config->inversion = value;
 
     else
         return false;
@@ -171,14 +169,13 @@ static bool analysis_module_set_string(analysis_module_type *module,
     bool valid_set = true;
     if (strcmp(var, ies::INVERSION_KEY) == 0) {
         if (strcmp(value, ies::STRING_INVERSION_SUBSPACE_EXACT_R) == 0)
-            module->module_config->inversion =
-                ies::IES_INVERSION_SUBSPACE_EXACT_R;
+            module->module_config->inversion = 1;
 
         else if (strcmp(value, ies::STRING_INVERSION_SUBSPACE_EE_R) == 0)
-            module->module_config->inversion = ies::IES_INVERSION_SUBSPACE_EE_R;
+            module->module_config->inversion = 2;
 
         else if (strcmp(value, ies::STRING_INVERSION_SUBSPACE_RE) == 0)
-            module->module_config->inversion = ies::IES_INVERSION_SUBSPACE_RE;
+            module->module_config->inversion = 3;
 
         else if (strcmp(var, ies::IES_LOGFILE_KEY) == 0)
             logger->warning("The key {} is ignored", ies::IES_LOGFILE_KEY);

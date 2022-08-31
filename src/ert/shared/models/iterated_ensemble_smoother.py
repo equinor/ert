@@ -1,11 +1,13 @@
 from typing import Any, Dict, Optional
 
+from iterative_ensemble_smoother import IterativeEnsembleSmoother
+
 from ert._c_wrappers.analysis.analysis_module import AnalysisModule
 from ert._c_wrappers.enkf import RunContext
 from ert._c_wrappers.enkf.enkf_fs import EnkfFs
 from ert._c_wrappers.enkf.enkf_main import EnKFMain, QueueConfig
 from ert._c_wrappers.enkf.enums import HookRuntime, RealizationStateEnum
-from ert.analysis import ErtAnalysisError, ModuleData
+from ert.analysis import ErtAnalysisError
 from ert.shared.ensemble_evaluator.config import EvaluatorServerConfig
 from ert.shared.models import BaseRunModel, ErtRunError
 
@@ -19,7 +21,9 @@ class IteratedEnsembleSmoother(BaseRunModel):
     ):
         super().__init__(simulation_arguments, ert, queue_config, phase_count=2)
         self.support_restart = False
-        self._w_container = ModuleData(len(simulation_arguments["active_realizations"]))
+        self._w_container = IterativeEnsembleSmoother(
+            len(simulation_arguments["active_realizations"])
+        )
 
     def setAnalysisModule(self, module_name: str) -> AnalysisModule:
         module_load_success = self.ert().analysisConfig().selectModule(module_name)
@@ -72,7 +76,6 @@ class IteratedEnsembleSmoother(BaseRunModel):
 
         try:
             self.facade.iterative_smoother_update(run_context, self._w_container)
-            self._w_container.iteration_nr += 1
         except ErtAnalysisError as e:
             raise ErtRunError(
                 f"Analysis of simulation failed with the following error: {e}"

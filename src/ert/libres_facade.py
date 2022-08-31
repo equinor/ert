@@ -20,6 +20,7 @@ _logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     from ecl.grid import EclGrid
+    from iterative_ensemble_smoother import IterativeEnsembleSmoother
 
     from ert._c_wrappers.analysis.analysis_module import AnalysisModule
     from ert._c_wrappers.analysis.configuration import UpdateConfiguration
@@ -28,7 +29,6 @@ if TYPE_CHECKING:
     from ert._c_wrappers.enkf.enkf_fs import EnkfFs
     from ert._c_wrappers.enkf.enkf_obs import EnkfObs
     from ert._c_wrappers.job_queue import WorkflowJob
-    from ert.analysis import ModuleData
 
 
 class LibresFacade:  # pylint: disable=too-many-public-methods
@@ -47,9 +47,9 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
         self._es_update.smootherUpdate(prior_context)
 
     def iterative_smoother_update(
-        self, run_context: RunContext, module_data: "ModuleData"
+        self, run_context: RunContext, ies: "IterativeEnsembleSmoother"
     ) -> None:
-        self._es_update.iterative_smoother_update(run_context, module_data)
+        self._es_update.iterative_smoother_update(run_context, ies)
 
     def set_global_std_scaling(self, weight: float) -> None:
         self._enkf_main.analysisConfig().setGlobalStdScaling(weight)

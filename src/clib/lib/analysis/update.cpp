@@ -5,8 +5,6 @@
 #include <vector>
 
 #include <ert/analysis/analysis_module.hpp>
-#include <ert/analysis/ies/ies.hpp>
-#include <ert/analysis/ies/ies_data.hpp>
 #include <ert/analysis/update.hpp>
 #include <ert/enkf/enkf_analysis.hpp>
 #include <ert/enkf/enkf_config_node.hpp>

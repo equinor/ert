@@ -74,6 +74,16 @@ def test_hook_call_order_es_mda(monkeypatch):
     assert ert_mock.runWorkflows.mock_calls == expected_calls
 
 
+class MockWContainer:
+    def __init__(self):
+        self.iteration_nr = 1
+
+
+class MockEsUpdate:
+    def iterative_smoother_update(self, _, w_container):
+        w_container.iteration_nr += 1
+
+
 def test_hook_call_order_iterative_ensemble_smoother(monkeypatch):
     """
     The goal of this test is to assert that the hook call order is the same
@@ -96,7 +106,8 @@ def test_hook_call_order_iterative_ensemble_smoother(monkeypatch):
 
     test_class.setPhase = MagicMock()
     test_class.facade.get_number_of_iterations = MagicMock(return_value=1)
-    test_class.facade._es_update = MagicMock()
+    test_class.facade._es_update = MockEsUpdate()
+    test_class._w_container = MockWContainer()
     test_class.runSimulations(MagicMock())
 
     expected_calls = [

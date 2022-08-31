@@ -396,16 +396,3 @@ ERT script function                                                        Purpo
       georegion.deselect_above(line)
       georegion.select_below(line)
       georegion.select_halfspace(line, above=False, select=False)  # deselect below
-
-
-History Matching
-----------------
-
-General overview
-~~~~~~~~~~~~~~~~
-
-ERT supports an API for performing history matching based on data represented as numpy arrays.
-
-`Example using polynomial function <../_static/Polynomial.html>`_
-
-`Example using Oscillator function <../_static/Oscillator.html>`_

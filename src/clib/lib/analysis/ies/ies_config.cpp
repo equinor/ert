@@ -28,11 +28,10 @@
 #define DEFAULT_IES_MIN_STEPLENGTH 0.30
 #define DEFAULT_IES_DEC_STEPLENGTH 2.50
 #define MIN_IES_DEC_STEPLENGTH 1.1
-#define DEFAULT_IES_INVERSION ies::IES_INVERSION_EXACT
 
 ies::Config::Config(bool ies_mode)
-    : m_truncation(DEFAULT_TRUNCATION), inversion(DEFAULT_IES_INVERSION),
-      iterable(ies_mode), max_steplength(DEFAULT_IES_MAX_STEPLENGTH),
+    : m_truncation(DEFAULT_TRUNCATION), inversion(0), iterable(ies_mode),
+      max_steplength(DEFAULT_IES_MAX_STEPLENGTH),
       min_steplength(DEFAULT_IES_MIN_STEPLENGTH),
       m_dec_steplength(DEFAULT_IES_DEC_STEPLENGTH) {}
 
@@ -80,17 +79,10 @@ double ies::Config::get_steplength(int iteration_nr) const {
 
 ERT_CLIB_SUBMODULE("ies", m) {
     using namespace py::literals;
-    py::class_<ies::Config, std::shared_ptr<ies::Config>>(m, "Config")
+    py::class_<ies::Config, std::shared_ptr<ies::Config>>(m, "IesConfig")
         .def(py::init<bool>())
         .def("get_steplength", &ies::Config::get_steplength)
         .def("get_truncation", &ies::Config::get_truncation)
         .def_readwrite("iterable", &ies::Config::iterable)
         .def_readwrite("inversion", &ies::Config::inversion);
-
-    py::enum_<ies::inversion_type>(m, "inversion_type")
-        .value("EXACT", ies::inversion_type::IES_INVERSION_EXACT)
-        .value("EE_R", ies::inversion_type::IES_INVERSION_SUBSPACE_EE_R)
-        .value("EXACT_R", ies::inversion_type::IES_INVERSION_SUBSPACE_EXACT_R)
-        .value("SUBSPACE_RE", ies::inversion_type::IES_INVERSION_SUBSPACE_RE)
-        .export_values();
 }

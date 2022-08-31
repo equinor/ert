@@ -40,7 +40,6 @@
 #include <ert/sched/history.hpp>
 
 #include <ert/analysis/analysis_module.hpp>
-#include <ert/analysis/enkf_linalg.hpp>
 #include <ert/analysis/update.hpp>
 
 #include <ert/enkf/enkf_analysis.hpp>

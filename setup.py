@@ -135,6 +135,7 @@ args = dict(
         "ert-storage >= 0.3.16",
         "fastapi",
         "graphlib_backport; python_version < '3.9'",
+        "iterative_ensemble_smoother>=0.0.3",
         "jinja2",
         "matplotlib",
         "numpy",
