@@ -44,12 +44,8 @@ pybind11_add_module(
   rms/rms_util.cpp
   sched/history.cpp
   analysis/analysis_module.cpp
-  analysis/enkf_linalg.cpp
   analysis/update.cpp
-  # IES_ENKF
-  analysis/ies/ies.cpp
   analysis/ies/ies_config.cpp
-  analysis/ies/ies_data.cpp
   job_queue/ext_job.cpp
   job_queue/ext_joblist.cpp
   job_queue/forward_model.cpp

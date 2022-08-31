@@ -3,14 +3,18 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, List
 
+import iterative_ensemble_smoother as ies
 import numpy as np
+from iterative_ensemble_smoother.experimental import (
+    ensemble_smoother_update_step_row_scaling,
+)
 
 from ert._c_wrappers.enkf.enums import RealizationStateEnum
 from ert._clib import analysis_module, update
-from ert.analysis import _ies as ies
+
+from ._ies import IesConfig
 
 if TYPE_CHECKING:
-    import numpy.typing as npt
     from ecl.util.util import RandomNumberGenerator
 
     from ert._c_wrappers.analysis.configuration import UpdateConfiguration
@@ -43,7 +47,7 @@ def analysis_ES(
     updatestep: "UpdateConfiguration",
     obs: "EnkfObs",
     shared_rng: "RandomNumberGenerator",
-    module_config: ies.Config,
+    module_config: IesConfig,
     alpha: float,
     std_cutoff: float,
     global_scaling: float,
@@ -91,25 +95,16 @@ def analysis_ES(
             update_step.row_scaling_parameters,
         )
         noise = update.generate_noise(len(observation_values), S.shape[1], shared_rng)
-        E = ies.make_E(observation_errors, noise)
-        R = np.identity(len(observation_errors), dtype=np.double)
-        D = ies.make_D(observation_values, E, S)
-        D = (D.T / observation_errors).T
-        E = (E.T / observation_errors).T
-        S = (S.T / observation_errors).T
-
         if A is not None:
-            X = ies.make_X(
+            A = ies.ensemble_smoother_update_step(
                 S,
-                R,
-                E,
-                D,
                 A,
-                ies_inversion=module_config.inversion,
-                truncation=module_config.get_truncation(),
+                observation_errors,
+                observation_values,
+                noise,
+                module_config.get_truncation(),
+                ies.InversionType(module_config.inversion),
             )
-            A = A @ X
-
             target_fs.save_parameters(
                 ensemble_config,
                 iens_active_index,
@@ -118,18 +113,15 @@ def analysis_ES(
             )
 
         if A_with_rowscaling:
-            for (A, row_scaling) in A_with_rowscaling:
-                X = ies.make_X(
-                    S,
-                    R,
-                    E,
-                    D,
-                    A,
-                    ies_inversion=module_config.inversion,
-                    truncation=module_config.get_truncation(),
-                )
-                row_scaling.multiply(A, X)
-
+            A_with_rowscaling = ensemble_smoother_update_step_row_scaling(
+                S,
+                A_with_rowscaling,
+                observation_errors,
+                observation_values,
+                noise,
+                module_config.get_truncation(),
+                ies.InversionType(module_config.inversion),
+            )
             update.save_row_scaling_parameters(
                 target_fs,
                 ensemble_config,
@@ -143,7 +135,7 @@ def analysis_IES(
     updatestep: "UpdateConfiguration",
     obs: "EnkfObs",
     shared_rng: "RandomNumberGenerator",
-    module_config: ies.Config,
+    module_config: IesConfig,
     alpha: float,
     std_cutoff: float,
     global_scaling: float,
@@ -152,7 +144,7 @@ def analysis_IES(
     ensemble_config: "EnsembleConfig",
     source_fs: "EnkfFs",
     target_fs: "EnkfFs",
-    w_container: ies.ModuleData,
+    iterative_ensemble_smoother: ies.IterativeEnsembleSmoother,
 ) -> None:
 
     iens_active_index = [i for i in range(len(ens_mask)) if ens_mask[i]]
@@ -188,27 +180,16 @@ def analysis_IES(
         )
 
         noise = update.generate_noise(len(observation_values), S.shape[1], shared_rng)
-        E = ies.make_E(observation_errors, noise)
-        R = np.identity(len(observation_errors), dtype=np.double)
-        D = ies.make_D(observation_values, E, S)
-        D = (D.T / observation_errors).T
-        E = (E.T / observation_errors).T
-        S = (S.T / observation_errors).T
-
-        if A is None:
-            raise ErtAnalysisError("Trying to run IES with no parameters")
-        ies.init_update(w_container, ens_mask, observation_mask)
-
-        ies.update_A(
-            w_container,
-            A,
+        A = iterative_ensemble_smoother.update_step(
             S,
-            R,
-            E,
-            D,
-            ies_inversion=module_config.inversion,
+            A,
+            observation_errors,
+            observation_values,
+            noise,
+            ensemble_mask=np.array(ens_mask),
+            observation_mask=observation_mask,
+            inversion=ies.InversionType(module_config.inversion),
             truncation=module_config.get_truncation(),
-            step_length=module_config.get_steplength(w_container.iteration_nr),
         )
         target_fs.save_parameters(
             ensemble_config,
@@ -329,7 +310,7 @@ class ESUpdate:
         self.update_snapshots[run_context.run_id] = smoother_snapshot
 
     def iterative_smoother_update(
-        self, run_context: "RunContext", w_container: ies.ModuleData
+        self, run_context: "RunContext", w_container: ies.IterativeEnsembleSmoother
     ) -> None:
         source_fs = run_context.sim_fs
         target_fs = run_context.target_fs

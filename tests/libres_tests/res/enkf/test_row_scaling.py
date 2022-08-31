@@ -1,35 +1,14 @@
-#  Copyright (C) 2020  Equinor ASA, Norway.
-#
-#  The file 'test_row_scaling.py' is part of ERT - Ensemble based Reservoir Tool.
-#
-#  ERT is free software: you can redistribute it and/or modify
-#  it under the terms of the GNU General Public License as published by
-#  the Free Software Foundation, either version 3 of the License, or
-#  (at your option) any later version.
-#
-#  ERT is distributed in the hope that it will be useful, but WITHOUT ANY
-#  WARRANTY; without even the implied warranty of MERCHANTABILITY or
-#  FITNESS FOR A PARTICULAR PURPOSE.
-#
-#  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
-#  for more details.
-
-import math
 import random
 from functools import partial
 
+import numpy as np
 import pytest
-from ecl.grid import EclGridGenerator
+from iterative_ensemble_smoother import ensemble_smoother_update_step
+from iterative_ensemble_smoother.experimental import (
+    ensemble_smoother_update_step_row_scaling,
+)
 
-from ert._c_wrappers.enkf import FieldConfig, RowScaling
-
-
-def row_scaling_one(data_index):
-    return 1.0
-
-
-def row_scaling_inverse_size(size, data_index):
-    return data_index / size
+from ert._c_wrappers.enkf.row_scaling import RowScaling
 
 
 def row_scaling_coloumb(nx, ny, data_index):
@@ -43,46 +22,45 @@ def row_scaling_coloumb(nx, ny, data_index):
     return 0.50 / r2
 
 
-def gaussian_decay(obs_pos, length_scale, grid, data_index):
-    x, y, z = grid.get_xyz(active_index=data_index)
-    dx = (obs_pos[0] - x) / length_scale[0]
-    dy = (obs_pos[1] - y) / length_scale[1]
-    dz = (obs_pos[2] - z) / length_scale[2]
-
-    exp_arg = -0.5 * (dx * dx + dy * dy + dz * dz)
-    return math.exp(exp_arg)
-
-
-def test_basic():
+def test_length_of_rowscaling_is_initially_zero():
     row_scaling = RowScaling()
     assert len(row_scaling) == 0
 
+
+def test_row_scaling_automatically_grows_on_set():
+    row_scaling = RowScaling()
     row_scaling[9] = 0.25
     assert len(row_scaling) == 10
     assert row_scaling[0] == 0
     assert row_scaling[9] == 0.25
 
-    with pytest.raises(IndexError):
-        # pylint: disable=pointless-statement
-        row_scaling[10]
 
+def test_row_scaling_throws_index_error_on_get():
+    with pytest.raises(IndexError):
+        _ = RowScaling()[10]
+
+
+def test_assigning_to_index_in_row_scaling_clamps_the_value():
+    row_scaling = RowScaling()
     for index, _ in enumerate(row_scaling):
         r = random.random()
         row_scaling[index] = r
         assert row_scaling[index] == row_scaling.clamp(r)
 
-    nx = 10
+
+def test_assigning_with_function_applies_function_to_each_index():
+    row_scaling = RowScaling()
+    row_scaling.assign(100, lambda _: 1)
+    assert len(row_scaling) == 100
+    for i in range(100):
+        row_scaling[i] = 1
+
+    row_scaling.assign(100, lambda x: x / 100)
+    for i in range(100):
+        assert row_scaling[i] == row_scaling.clamp(i / 100)
+
     ny = 10
-    row_scaling.assign(nx * ny, row_scaling_one)
-    assert len(row_scaling) == nx * ny
-    assert row_scaling[0] == 1
-    assert row_scaling[nx * ny - 1] == 1
-
-    inverse_size = partial(row_scaling_inverse_size, nx * ny)
-    row_scaling.assign(nx * ny, inverse_size)
-    for g in range(nx * ny):
-        assert row_scaling[g] == row_scaling.clamp(g / (nx * ny))
-
+    nx = 10
     coloumb = partial(row_scaling_coloumb, nx, ny)
     row_scaling.assign(nx * ny, coloumb)
     for j in range(ny):
@@ -90,28 +68,52 @@ def test_basic():
             g = j * nx + i
             assert row_scaling[g] == row_scaling.clamp(row_scaling_coloumb(nx, ny, g))
 
+
+def test_assigning_a_non_vector_value_with_assign_vector_raises_value_error():
+    row_scaling = RowScaling()
     with pytest.raises(ValueError):
         row_scaling.assign_vector(123.0)
 
 
-def test_field_config():
-    nx = 10
-    ny = 10
-    nz = 5
-    actnum = [1] * nx * ny * nz
-    actnum[0] = 0
-    actnum[3] = 0
-    actnum[10] = 0
-
-    grid = EclGridGenerator.create_rectangular((nx, ny, nz), (1, 1, 1), actnum)
-    FieldConfig("PORO", grid)
+def test_row_scaling_factor_0_for_all_parameters():
     row_scaling = RowScaling()
-    obs_pos = grid.get_xyz(ijk=(5, 5, 1))
-    length_scale = (2, 1, 0.50)
+    A = np.asfortranarray(np.array([[1.0, 2.0], [4.0, 5.0]]))
+    observations = np.array([5.0, 6.0])
+    S = np.array([[1.0, 2.0], [3.0, 4.0]])
 
-    gaussian = partial(gaussian_decay, obs_pos, length_scale, grid)
-    row_scaling.assign(grid.get_num_active(), gaussian)
-    for g in range(grid.get_num_active()):
-        assert row_scaling[g] == row_scaling.clamp(
-            gaussian_decay(obs_pos, length_scale, grid, g)
-        )
+    for i in range(A.shape[0]):
+        row_scaling[i] = 0.0
+
+    A_copy = A.copy()
+    ((A, row_scaling),) = ensemble_smoother_update_step_row_scaling(
+        S, [(A, row_scaling)], np.full(observations.shape, 0.5), observations
+    )
+    assert np.all(A == A_copy)
+
+
+def test_row_scaling_factor_1_for_either_parameter():
+    row_scaling = RowScaling()
+    A = np.asfortranarray(np.array([[1.0, 2.0], [4.0, 5.0]]))
+    observations = np.array([5.0, 6.0])
+    S = np.array([[1.0, 2.0], [3.0, 4.0]])
+    noise = np.random.rand(*S.shape)
+
+    row_scaling[0] = 0.0
+    row_scaling[1] = 1.0
+
+    A_prior = A.copy()
+    A_no_row_scaling = A.copy()
+    ((A, row_scaling),) = ensemble_smoother_update_step_row_scaling(
+        S,
+        [(A, row_scaling)],
+        np.full(observations.shape, 0.5),
+        observations,
+        noise=noise,
+    )
+
+    A_no_row_scaling = ensemble_smoother_update_step(
+        S, A_no_row_scaling, np.full(observations.shape, 0.5), observations, noise=noise
+    )
+
+    assert np.all(A[0] == A_prior[0])
+    np.testing.assert_allclose(A[1], A_no_row_scaling[1])

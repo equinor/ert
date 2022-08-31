@@ -39,13 +39,6 @@ constexpr const char *STRING_INVERSION_SUBSPACE_EXACT_R = "SUBSPACE_EXACT_R";
 constexpr const char *STRING_INVERSION_SUBSPACE_EE_R = "SUBSPACE_EE_R";
 constexpr const char *STRING_INVERSION_SUBSPACE_RE = "SUBSPACE_RE";
 
-typedef enum {
-    IES_INVERSION_EXACT = 0,
-    IES_INVERSION_SUBSPACE_EXACT_R = 1,
-    IES_INVERSION_SUBSPACE_EE_R = 2,
-    IES_INVERSION_SUBSPACE_RE = 3
-} inversion_type;
-
 class Config {
 public:
     explicit Config(bool ies_mode);
@@ -59,7 +52,7 @@ public:
     double get_steplength(int iteration_nr) const;
 
     /** Controlled by config key: DEFAULT_IES_INVERSION */
-    inversion_type inversion;
+    int inversion;
     bool iterable;
     /** Controlled by config key: DEFAULT_IES_MAX_STEPLENGTH_KEY */
     double max_steplength;

@@ -9,8 +9,6 @@ add_executable(
   ert_test_suite
   ${TESTS_EXCLUDE_FROM_ALL}
   tmpdir.cpp
-  analysis/ies/test_ies_enkf_main.cpp
-  analysis/test_enkf_linalg.cpp
   analysis/test_save_parameters.cpp
   analysis/test_copy_parameters.cpp
   enkf/enkf_obs_paths_detailed.cpp
@@ -22,7 +20,6 @@ add_executable(
   res_util/test_memory.cpp
   res_util/test_string.cpp
   res_util/test_metric.cpp
-  analysis/test_update.cpp
   job_queue/test_lsf_driver.cpp
   job_queue/test_rsh_driver.cpp
   job_queue/test_ext_job_executable.cpp)
