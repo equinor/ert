@@ -26,7 +26,9 @@ class FileDialog(QDialog):
         )
 
         try:
-            self._file = open(file_name, "r")
+            # pylint: disable=consider-using-with
+            # We take care to close this file in _quit_thread()
+            self._file = open(file_name, "r", encoding="utf-8")
         except OSError as error:
             self._mb = QMessageBox(
                 QMessageBox.Critical,
@@ -57,7 +59,8 @@ class FileDialog(QDialog):
         self.show()
 
     @Slot()
-    def _stop_thread(self):
+    def _quit_thread(self):
+        self._file.close()
         self._thread.quit()
         self._thread.wait()
 
@@ -71,11 +74,6 @@ class FileDialog(QDialog):
             + extra_bit_of_margin_space
             + extra_space_for_vertical_scroll_bar
         ) * font_metrics.averageCharWidth()
-
-    def _calculate_screen_size_based_height(self):
-        screen_height = QApplication.primaryScreen().geometry().height()
-        max_ratio_of_screen = 1.0 / 3.0
-        return floor(screen_height * max_ratio_of_screen)
 
     def _init_layout(self):
         dialog_buttons = QDialogButtonBox(QDialogButtonBox.Ok)  # type: ignore
@@ -107,14 +105,13 @@ class FileDialog(QDialog):
         self._thread.started.connect(self._worker.setup)
         self._thread.finished.connect(self._worker.stop)
         self._thread.finished.connect(self._worker.deleteLater)
-        self.finished.connect(self._stop_thread)
+        self.finished.connect(self._quit_thread)
 
         self._thread.start()
 
     def _copy_all(self) -> None:
         text = self._view.toPlainText()
         QApplication.clipboard().setText(text, QClipboard.Clipboard)  # type: ignore
-        pass
 
     def _update_cursor(self, value: int) -> None:
         if not self._view.textCursor().hasSelection():
@@ -149,5 +146,11 @@ class FileDialog(QDialog):
     def sizeHint(self) -> QSize:
         return QSize(
             self._calculate_font_based_width(),
-            self._calculate_screen_size_based_height(),
+            _calculate_screen_size_based_height(),
         )
+
+
+def _calculate_screen_size_based_height():
+    screen_height = QApplication.primaryScreen().geometry().height()
+    max_ratio_of_screen = 1.0 / 3.0
+    return floor(screen_height * max_ratio_of_screen)

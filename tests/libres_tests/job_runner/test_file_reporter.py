@@ -181,7 +181,8 @@ def test_dump_error_file_with_stderr(reporter):
 def test_old_file_deletion(reporter):
     # touch all files that are to be removed
     for f in [ERROR_file, STATUS_file, OK_file]:
-        open(f, "a").close()
+        with open(f, "a", encoding="utf-8"):
+            pass
 
     reporter._delete_old_status_files()
 

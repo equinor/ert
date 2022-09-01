@@ -16,6 +16,8 @@ class ExternalErtScript(ErtScript):
         command = [self.__executable]
         command.extend([str(arg) for arg in args])
 
+        # pylint: disable=consider-using-with
+        # we take care to terminate the process in cancel()
         self.__job = Popen(command, stdout=PIPE, stderr=PIPE)
 
         # The job will complete before stdout and stderr is returned

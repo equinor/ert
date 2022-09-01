@@ -7,14 +7,14 @@ if __name__ == "__main__":
         "PERLIN_3": "perlin_3.txt",
     }
 
-    with open("aggregated.txt", "w") as output_file:
+    with open("aggregated.txt", "w", encoding="utf-8") as output_file:
         sum_of_sum = 0.0
-        for key in files:
+        for key, filename in files.items():
             sum = 0.0
-            with open(files[key], "r") as input_file:
+            with open(filename, "r", encoding="utf-8") as input_file:
                 sum += float(input_file.readline())
             sum_of_sum += sum
-            output_file.write("%s %f\n" % (key, sum))
+            output_file.write(f"{key} {sum:f}\n")
 
         if sum_of_sum < 0:
             state = "Negative"
@@ -23,4 +23,4 @@ if __name__ == "__main__":
         else:
             state = "Positive"
 
-        output_file.write("STATE %s" % state)
+        output_file.write(f"STATE {state}")

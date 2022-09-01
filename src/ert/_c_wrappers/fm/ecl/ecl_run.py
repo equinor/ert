@@ -27,7 +27,7 @@ def make_LSB_MCPU_machine_list(LSB_MCPU_HOSTS):
     for index in range(len(host_numcpu_list) // 2):
         machine = host_numcpu_list[2 * index]
         host_numcpu = int(host_numcpu_list[2 * index + 1])
-        for icpu in range(host_numcpu):
+        for _ in range(host_numcpu):
             host_list.append(machine)
     return host_list
 
@@ -166,7 +166,7 @@ class EclRun:
 
         # Dechipher the ecl_case argument.
         input_arg = ecl_case
-        (base, ext) = os.path.splitext(input_arg)
+        (_, ext) = os.path.splitext(input_arg)
         if ext and ext in [".data", ".DATA"]:
             data_file = input_arg
         else:
@@ -246,9 +246,9 @@ class EclRun:
             machine_list = [localhost] * self.num_cpu
 
         self.machine_file = f"{self.base_name}.mpi"
-        with open(self.machine_file, "w") as fileH:
+        with open(self.machine_file, "w", encoding="utf-8") as filehandle:
             for host in machine_list:
-                fileH.write(f"{host}\n")
+                filehandle.write(f"{host}\n")
 
     def _get_run_command(self, eclrun_config: EclrunConfig):
         summary_conversion = "yes" if self.summary_conversion else "no"
@@ -307,6 +307,8 @@ class EclRun:
             )
             env = eclrun_config.run_env if use_eclrun else self._get_legacy_run_env()
 
+            # pylint: disable=consider-using-with
+            # await_process_tee() ensures the process is terminated.
             process = subprocess.Popen(
                 command,
                 env=env,
@@ -319,7 +321,7 @@ class EclRun:
 
         OK_file = os.path.join(self.run_path, f"{self.base_name}.OK")
         if not self.check_status:
-            with open(OK_file, "w") as f:
+            with open(OK_file, "w", encoding="utf-8") as f:
                 f.write("ECLIPSE simulation complete - NOT checked for errors.")
         else:
             if return_code != 0:
@@ -331,7 +333,7 @@ class EclRun:
             if self.num_cpu > 1:
                 self.summary_block()
 
-            with open(OK_file, "w") as f:
+            with open(OK_file, "w", encoding="utf-8") as f:
                 f.write("ECLIPSE simulation OK")
 
     def summary_block(self):
@@ -387,8 +389,8 @@ class EclRun:
         if not os.path.isfile(report_file):
             report_file = os.path.join(self.run_path, f"{self.base_name}.PRT")
 
-        with open(report_file, "r") as fileH:
-            for line in fileH.readlines():
+        with open(report_file, "r", encoding="utf-8") as filehandle:
+            for line in filehandle.readlines():
                 error_match = re.match(error_regexp, line)
                 if error_match:
                     errors = int(error_match.group(1))
@@ -403,8 +405,8 @@ class EclRun:
         prt_file = os.path.join(self.runPath(), f"{self.baseName()}.PRT")
         error_list = []
         error_regexp = re.compile(error_pattern, re.MULTILINE)
-        with open(prt_file) as f:
-            content = f.read()
+        with open(prt_file, "r", encoding="utf-8") as filehandle:
+            content = filehandle.read()
 
         offset = 0
         while True:

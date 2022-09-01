@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import asyncio
+import contextlib
 import logging
 import os
 import sys
@@ -101,17 +102,18 @@ def run_cli(args):
         model, ee_con_info=evaluator_server_config.get_connection_info()
     )
 
-    out = open(os.devnull, "w") if args.disable_monitoring else sys.stderr
-    monitor = Monitor(out=out, color_always=args.color_always)
+    with contextlib.ExitStack() as exit_stack:
+        if args.disable_monitoring:
+            out = exit_stack.enter_context(open(os.devnull, "w", encoding="utf-8"))
+        else:
+            out = sys.stderr
+        monitor = Monitor(out=out, color_always=args.color_always)
 
-    try:
-        monitor.monitor(tracker)
-    except (SystemExit, KeyboardInterrupt):
-        print("\nKilling simulations...")
-        tracker.request_termination()
-
-    if args.disable_monitoring:
-        out.close()
+        try:
+            monitor.monitor(tracker)
+        except (SystemExit, KeyboardInterrupt):
+            print("\nKilling simulations...")
+            tracker.request_termination()
 
     thread.join()
 

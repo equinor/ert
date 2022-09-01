@@ -29,7 +29,8 @@ def without_key(a_dict, key):
 def workflows_config_dict(copy_case):
     copy_case("local/config/workflows")
     # create empty runpath file
-    open("runpath", "a").close()
+    with open("runpath", "a", encoding="utf-8"):
+        pass
     config_dict = {
         ConfigKeys.RUNPATH_FILE: "runpath",
         ConfigKeys.CONFIG_DIRECTORY: ".",

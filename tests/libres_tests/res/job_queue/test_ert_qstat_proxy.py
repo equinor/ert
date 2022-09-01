@@ -217,6 +217,8 @@ def test_many_concurrent_qstat_invocations(tmpdir):
     subprocesses = []
     with testpath.MockCommand("qstat", python=MOCKED_QSTAT_BACKEND_LOGGING):
         for _ in range(invocations):
+            # pylint: disable=consider-using-with
+            # process.wait() is called below
             subprocesses.append(
                 subprocess.Popen(
                     [PROXYSCRIPT, "15399", PROXYFILE_FOR_TESTS],
