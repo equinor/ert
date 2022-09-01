@@ -177,7 +177,8 @@ def test_assert_symlink_deleted(snake_oil_field_example):
     # replace field file with symlink
     linkpath = f"{run_context[0].runpath}/permx.grdcel"
     targetpath = f"{run_context[0].runpath}/permx.grdcel.target"
-    open(targetpath, "a").close()
+    with open(targetpath, "a", encoding="utf-8"):
+        pass
     os.remove(linkpath)
     os.symlink(targetpath, linkpath)
 

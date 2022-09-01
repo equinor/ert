@@ -40,4 +40,4 @@ def test_filedialog_size(textFile, qtbot):
             expectedHeight, abs=0.05 * screenHeight
         )
         assert textField.width() == pytest.approx(expectedWidth, abs=charWidth * 10)
-        fileDialog._stop_thread()
+        fileDialog._quit_thread()

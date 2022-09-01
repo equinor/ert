@@ -157,14 +157,13 @@ def _generate_job(
         str_none_sensitive(max_running_minutes),
     ]
 
-    conf = open(config_file, "w")
-    for key, val in zip(ext_job_keywords, values):
-        if val is not None:
-            conf.write(f"{key} {val}\n")
-    conf.close()
+    with open(config_file, "w", encoding="utf-8") as conf:
+        for key, val in zip(ext_job_keywords, values):
+            if val is not None:
+                conf.write(f"{key} {val}\n")
 
-    exec_file = open(executable, "w")
-    exec_file.close()
+    with open(executable, "w", encoding="utf-8"):
+        pass
     mode = os.stat(executable).st_mode
     mode |= stat.S_IXUSR | stat.S_IXGRP
     os.chmod(executable, stat.S_IMODE(mode))

@@ -119,10 +119,9 @@ class RMSRun:
                 exec_env.pop(var)
 
         with pushd(self.run_path):
-            fileH = open("RMS_SEED_USED", "a+")
             now = time.strftime("%d-%m-%Y %H:%M:%S", time.localtime(time.time()))
-            fileH.write(f"{now} ... {self.seed}\n")
-            fileH.close()
+            with open("RMS_SEED_USED", "a+", encoding="utf-8") as filehandle:
+                filehandle.write(f"{now} ... {self.seed}\n")
 
             if not os.path.exists(self.export_path):
                 os.makedirs(self.export_path)

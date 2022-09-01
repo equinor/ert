@@ -85,6 +85,8 @@ else:
     os.chmod("setsid", 0o755)
 
     job_dispatch_script = importlib.util.find_spec("ert.job_runner.job_dispatch").origin
+    # pylint: disable=consider-using-with
+    # (we wait for the process below)
     job_dispatch_process = Popen(
         [
             os.getcwd() + "/setsid",
@@ -207,6 +209,8 @@ def test_job_dispatch_run_subset_specified_as_parmeter():
     os.chmod("setsid", 0o755)
 
     job_dispatch_script = importlib.util.find_spec("ert.job_runner.job_dispatch").origin
+    # pylint: disable=consider-using-with
+    # (we wait for the process below)
     job_dispatch_process = Popen(
         [
             os.getcwd() + "/setsid",

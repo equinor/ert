@@ -71,14 +71,14 @@ def test_data(tmp_path):
     data = ExtParam(config)
 
     with pytest.raises(IndexError):
-        d = data[100]
+        _ = data[100]
     with pytest.raises(IndexError):
-        d = data[-4]
+        _ = data[-4]
 
     with pytest.raises(KeyError):
-        d = data["NoSuchKey"]
+        _ = data["NoSuchKey"]
     with pytest.raises(KeyError):
-        d = data["key1", "a_suffix"]
+        _ = data["key1", "a_suffix"]
 
     assert "key1" in data
     data[0] = 177
@@ -95,9 +95,10 @@ def test_data(tmp_path):
         assert index + 1 == value
 
     data.export(str(tmp_path / "file.json"))
-    d = json.load(open(tmp_path / "file.json"))
+    with open(tmp_path / "file.json", encoding="utf-8") as filehandle:
+        datafromfile = json.load(filehandle)
     for key in data.config.keys():
-        assert data[key] == d[key]
+        assert data[key] == datafromfile[key]
 
 
 def test_data_with_suffixes():

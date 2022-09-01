@@ -30,6 +30,7 @@ from ert._c_wrappers.fm.ecl.ecl_run import make_SLURM_machine_list
 
 def flow_install():
     try:
+        # pylint: disable=consider-using-with
         Popen(["flow"])
         return True
     except OSError:
@@ -95,26 +96,26 @@ def init_ecl100_config(monkeypatch, tmpdir):
 def init_flow_config(monkeypatch, tmpdir):
     version = "2018.10"
 
-    p = Popen(["flow", "--version"], stdin=PIPE, stdout=PIPE, stderr=PIPE)
-    output, err = p.communicate()
-    rc = p.returncode
-    if rc == 0:
-        version = find_version(output)
-    path_to_exe = find_executable("flow")
+    with Popen(["flow", "--version"], stdin=PIPE, stdout=PIPE, stderr=PIPE) as process:
+        output, _ = process.communicate()
+        rc = process.returncode
+        if rc == 0:
+            version = find_version(output)
+        path_to_exe = find_executable("flow")
 
-    conf = {
-        "default_version": version,
-        "versions": {
-            version: {
-                "scalar": {"executable": path_to_exe},
-            }
-        },
-    }
-    with tmpdir.as_cwd():
-        with open("flow_config.yml", "w") as f:
-            f.write(yaml.dump(conf))
-        monkeypatch.setenv("FLOW_SITE_CONFIG", "flow_config.yml")
-        yield
+        conf = {
+            "default_version": version,
+            "versions": {
+                version: {
+                    "scalar": {"executable": path_to_exe},
+                }
+            },
+        }
+        with tmpdir.as_cwd():
+            with open("flow_config.yml", "w", encoding="utf-8") as filehandle:
+                filehandle.write(yaml.dump(conf))
+            monkeypatch.setenv("FLOW_SITE_CONFIG", "flow_config.yml")
+            yield
 
 
 def test_make_LSB_MCPU_machine_list():
