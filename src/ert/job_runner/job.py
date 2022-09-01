@@ -22,6 +22,7 @@ class Job:
         self.std_out = job_data.get("stdout")
 
     def run(self):
+        # pylint: disable=consider-using-with
         start_message = Start(self)
 
         errors = self._check_job_files()
@@ -44,7 +45,7 @@ class Job:
             arg_list += self.job_data["argList"]
 
         if self.job_data.get("stdin"):
-            stdin = open(self.job_data.get("stdin"))
+            stdin = open(self.job_data.get("stdin"), encoding="utf-8")
         else:
             stdin = None
 
@@ -53,7 +54,7 @@ class Job:
                 os.path.dirname(os.path.abspath(self.std_err)),
                 exist_ok=True,
             )
-            stderr = open(self.std_err, "w")
+            stderr = open(self.std_err, "w", encoding="utf-8")
         else:
             stderr = None
 
@@ -62,7 +63,7 @@ class Job:
                 os.path.dirname(os.path.abspath(self.std_out)),
                 exist_ok=True,
             )
-            stdout = open(self.std_out, "w")
+            stdout = open(self.std_out, "w", encoding="utf-8")
         else:
             stdout = None
 
@@ -78,8 +79,8 @@ class Job:
             exec_name, _ = os.path.splitext(
                 os.path.basename(self.job_data.get("executable"))
             )
-            with open(f"{exec_name}_exec_env.json", "w") as f:
-                f.write(json.dumps(exec_env, indent=4))
+            with open(f"{exec_name}_exec_env.json", "w", encoding="utf-8") as f_handle:
+                f_handle.write(json.dumps(exec_env, indent=4))
 
         max_running_minutes = self.job_data.get("max_running_minutes")
         run_start_time = dt.now()
@@ -151,18 +152,26 @@ class Job:
 
         # exit_code is 0
 
-        if self.job_data.get("error_file"):
-            if os.path.exists(self.job_data["error_file"]):
-                yield exited_message.with_error(
-                    f'Found the error file:{self.job_data["error_file"]} - job failed.'
-                )
-                return
+        if self.job_data.get("error_file") and os.path.exists(
+            self.job_data["error_file"]
+        ):
+            yield exited_message.with_error(
+                f'Found the error file:{self.job_data["error_file"]} - job failed.'
+            )
+            return
 
         if target_file:
             target_file_error = self._check_target_file_is_written(target_file_mtime)
             if target_file_error:
                 yield exited_message.with_error(target_file_error)
                 return
+
+        if stdin is not None:
+            stdin.close()
+        if stdout is not None:
+            stdout.close()
+        if stderr is not None:
+            stderr.close()
 
         yield exited_message
 
@@ -200,8 +209,8 @@ class Job:
             exec_name, _ = os.path.splitext(
                 os.path.basename(self.job_data.get("executable"))
             )
-            with open(f"{exec_name}_exec_env.json", "w") as f:
-                f.write(json.dumps(exec_env))
+            with open(f"{exec_name}_exec_env.json", "w", encoding="utf-8") as f_handle:
+                f_handle.write(json.dumps(exec_env))
 
     def _check_job_files(self):
         """
@@ -213,15 +222,15 @@ class Job:
             if not os.path.exists(self.job_data["stdin"]):
                 errors.append(f'Could not locate stdin file: {self.job_data["stdin"]}')
 
-        if self.job_data.get("start_file"):
-            if not os.path.exists(self.job_data["start_file"]):
-                errors.append(
-                    f'Could not locate start_file:{self.job_data["start_file"]}'
-                )
+        if self.job_data.get("start_file") and not os.path.exists(
+            self.job_data["start_file"]
+        ):
+            errors.append(f'Could not locate start_file:{self.job_data["start_file"]}')
 
-        if self.job_data.get("error_file"):
-            if os.path.exists(self.job_data.get("error_file")):
-                os.unlink(self.job_data.get("error_file"))
+        if self.job_data.get("error_file") and os.path.exists(
+            self.job_data.get("error_file")
+        ):
+            os.unlink(self.job_data.get("error_file"))
 
         return errors
 
