@@ -32,14 +32,14 @@ class PluginRunner:
             run_function = partial(self.__runWorkflowJob, plugin, arguments)
 
             workflow_job_thread = Thread(name="ert_gui_workflow_job_thread")
-            workflow_job_thread.setDaemon(True)
+            workflow_job_thread.daemon = True
             workflow_job_thread.run = run_function
             workflow_job_thread.start()
 
             poll_function = partial(self.__pollRunner, plugin, dialog)
 
             poll_thread = Thread(name="ert_gui_workflow_job_poll_thread")
-            poll_thread.setDaemon(True)
+            poll_thread.daemon = True
             poll_thread.run = poll_function
             poll_thread.start()
 
