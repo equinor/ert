@@ -208,9 +208,6 @@ class EnkfConfigNode(BaseCClass):
     def getUseForwardInit(self):
         return self._use_forward_init()
 
-    def getInitFile(self, model_config):
-        return self._enkf_config_node_get_init_file(model_config.getRunpathFormat())
-
     def get_min_std_file(self):
         return self._get_min_std_file()
 

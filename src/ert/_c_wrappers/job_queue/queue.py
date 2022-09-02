@@ -242,9 +242,6 @@ class JobQueue(BaseCClass):
     def free(self):
         self._free()
 
-    def __len__(self):
-        return self._get_active_size()
-
     def is_active(self):
         for job in self.job_list:
             if job.thread_status in (
