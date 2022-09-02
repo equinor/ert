@@ -108,10 +108,6 @@ void enkf_main_free(enkf_main_type *enkf_main) {
     delete enkf_main;
 }
 
-int enkf_main_get_ensemble_size(const enkf_main_type *enkf_main) {
-    return enkf_main->ens_size;
-}
-
 void enkf_main_get_observations(const enkf_main_type *enkf_main,
                                 const char *user_key, int obs_count,
                                 time_t *obs_time, double *y, double *std) {
@@ -353,8 +349,6 @@ enkf_main_type *enkf_main_alloc(const res_config_type *res_config,
                       analysis_config_get_std_cutoff(
                           res_config_get_analysis_config(res_config)));
     enkf_main->obs = obs;
-
-    enkf_main->ens_size = model_config_get_num_realizations(model_config);
 
     return enkf_main;
 }

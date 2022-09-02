@@ -78,7 +78,6 @@ class EnKFMain(BaseCClass):
     _alloc = ResPrototype("void* enkf_main_alloc(res_config, bool)", bind=False)
 
     _free = ResPrototype("void enkf_main_free(enkf_main)")
-    _get_ensemble_size = ResPrototype("int enkf_main_get_ensemble_size( enkf_main )")
     _get_data_kw = ResPrototype("subst_list_ref enkf_main_get_data_kw(enkf_main)")
     _get_obs = ResPrototype("enkf_obs_ref enkf_main_get_obs(enkf_main)")
     _get_observations = ResPrototype(
@@ -113,6 +112,7 @@ class EnKFMain(BaseCClass):
             raise ValueError(
                 f"Failed to construct EnKFMain instance from config {config}."
             )
+        self._ensemble_size = self.config_file.model_config.num_realizations
         self.__key_manager = KeyManager(self)
         self._substituter = Substituter(
             {key: value for (key, value, _) in self.getDataKW()}
@@ -150,7 +150,6 @@ class EnKFMain(BaseCClass):
             RandomNumberGenerator(init_mode=RngInitModeEnum.INIT_DEFAULT)
             for _ in range(self.getEnsembleSize())
         ]
-
         for rng in self.realizations:
             rng.setState(_forward_rng(global_rng))
 
@@ -317,7 +316,7 @@ class EnKFMain(BaseCClass):
         return self._create_repr(cnt)
 
     def getEnsembleSize(self) -> int:
-        return self._get_ensemble_size()
+        return self._ensemble_size
 
     def ensembleConfig(self) -> EnsembleConfig:
         return self.resConfig().ensemble_config.setParent(self)

@@ -58,7 +58,6 @@ extern "C" void enkf_main_free(enkf_main_type *);
 extern "C" enkf_main_type *enkf_main_alloc(const res_config_type *,
                                            bool read_only = false);
 
-extern "C" int enkf_main_get_ensemble_size(const enkf_main_type *enkf_main);
 extern "C" enkf_obs_type *enkf_main_get_obs(const enkf_main_type *);
 extern "C" bool enkf_main_have_obs(const enkf_main_type *enkf_main);
 
