@@ -126,10 +126,14 @@ def _bind_socket(
 
 
 def get_family_for_localhost() -> socket.AddressFamily:
+    # pylint: disable=no-member
+    # (false positive on socket.AddressFamily)
     return get_family(_get_ip_address())
 
 
 def get_family(host: str) -> socket.AddressFamily:
+    # pylint: disable=no-member
+    # (false positive on socket.AddressFamily)
     try:
         socket.inet_pton(socket.AF_INET6, host)
         return socket.AF_INET6

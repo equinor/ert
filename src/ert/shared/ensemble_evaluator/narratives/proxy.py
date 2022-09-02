@@ -39,7 +39,7 @@ class NarrativeProxy:
         async def handle_client(client, _path):
             msg_q = asyncio.Queue()
             if _path == "/client":
-                async with websockets.connect(url + _path) as server:
+                async with websockets.client.connect(url + _path) as server:
                     msg_task = asyncio.ensure_future(handle_messages(msg_q, self.done))
                     server_task = asyncio.ensure_future(
                         handle_server(server, client, msg_q)
@@ -48,12 +48,11 @@ class NarrativeProxy:
                     async for msg in client:
                         await msg_q.put((InteractionDirection.REQUEST, msg))
                         await server.send(msg)
-
                     server_task.cancel()
                     await server_task
                     await msg_task
 
-        async with websockets.serve(
+        async with websockets.server.serve(
             handle_client,
             host="localhost",
             port=0,

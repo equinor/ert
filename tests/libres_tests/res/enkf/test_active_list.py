@@ -18,6 +18,7 @@ from ert._c_wrappers.enkf import ActiveList, ActiveMode
 
 
 def test_active_mode_enum():
+    # pylint: disable=no-member
     assert ActiveMode.ALL_ACTIVE == 1
     assert ActiveMode.PARTLY_ACTIVE == 3
     assert ActiveMode(1).name == "ALL_ACTIVE"

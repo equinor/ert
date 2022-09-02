@@ -22,7 +22,7 @@ def _setup_reporters(
     ee_cert_path=None,
     experiment_id=None,
 ):
-    reporters: typing.List[reporting.Report] = []
+    reporters: typing.List[reporting.Reporter] = []
     if is_interactive_run:
         reporters.append(reporting.Interactive())
     elif ens_id and experiment_id is None:

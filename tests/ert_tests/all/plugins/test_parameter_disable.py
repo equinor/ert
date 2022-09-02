@@ -37,6 +37,9 @@ def test_that_we_can_disable_a_parameter():
         fh.writelines("MY_KEYWORD NORMAL 0 1")
     ert = EnKFMain(ResConfig("poly.ert"))
 
+    # pylint: disable=no-member
+    # (pylint is unable to read the members of update_step objects)
+
     parameters = [
         parameter.name
         for parameter in ert.update_configuration.update_steps[0].parameters

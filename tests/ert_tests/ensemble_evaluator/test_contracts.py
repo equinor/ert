@@ -25,7 +25,7 @@ async def test_interaction(unused_tcp_port):
         .on_uri(f"ws://localhost:{unused_tcp_port}")
     )
     async with narrative:
-        async with websockets.connect(narrative.uri) as websocket:
+        async with websockets.client.connect(narrative.uri) as websocket:
             await websocket.send(
                 to_json(CloudEvent({"id": "0", "source": "/consumer", "type": "start"}))
             )

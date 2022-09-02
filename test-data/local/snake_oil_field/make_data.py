@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# pylint: disable=no-member
 import os
 import os.path
 

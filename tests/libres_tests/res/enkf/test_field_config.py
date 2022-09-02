@@ -40,6 +40,7 @@ def test_field_guess_filetype(tmp_path):
 
     ft = FieldConfig.guessFiletype(fname)
     grdecl_type = EnkfFieldFileFormatEnum(5)
+    # pylint: disable=no-member
     assert grdecl_type.name == "ECL_GRDECL_FILE"
     assert grdecl_type == ft
 

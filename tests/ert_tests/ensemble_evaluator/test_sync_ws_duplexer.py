@@ -33,7 +33,7 @@ def ws(event_loop: asyncio.AbstractEventLoop):
             kwargs["port"] = port
         event_loop.call_soon_threadsafe(
             asyncio.ensure_future,
-            websockets.serve(
+            websockets.server.serve(
                 handler,
                 **kwargs,
             ),

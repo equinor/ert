@@ -510,7 +510,7 @@ class ResConfig:
         return config_content
 
     def free(self):
-        self._free()
+        self._free()  # pylint: disable=no-member
 
     @property
     def errors(self):
