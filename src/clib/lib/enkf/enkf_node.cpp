@@ -611,19 +611,15 @@ void enkf_node_deserialize(enkf_node_type *enkf_node, enkf_fs_type *fs,
    necessary to internalize anything.
 */
 bool enkf_node_initialize(enkf_node_type *enkf_node, int iens, rng_type *rng) {
-    if (enkf_node_use_forward_init(enkf_node))
-        return false; // This node will be initialized by loading results from the forward model.
-    else {
-        if (enkf_node->initialize != NULL) {
-            char *init_file =
-                enkf_config_node_alloc_initfile(enkf_node->config, NULL, iens);
-            bool init =
-                enkf_node->initialize(enkf_node->data, iens, init_file, rng);
-            free(init_file);
-            return init;
-        } else
-            return false; /* No init performed */
-    }
+    if (enkf_node->initialize != NULL) {
+        char *init_file =
+            enkf_config_node_alloc_initfile(enkf_node->config, NULL, iens);
+        bool init =
+            enkf_node->initialize(enkf_node->data, iens, init_file, rng);
+        free(init_file);
+        return init;
+    } else
+        return false; /* No init performed */
 }
 
 void enkf_node_clear(enkf_node_type *enkf_node) {

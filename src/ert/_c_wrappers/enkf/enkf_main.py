@@ -396,6 +396,8 @@ class EnKFMain(BaseCClass):
                 for parameter in parameters:
                     node = self.ensembleConfig().getNode(parameter)
                     enkf_node = EnkfNode(node)
+                    if node.getUseForwardInit():
+                        continue
                     if not enkf_node.has_data(
                         run_context.sim_fs,
                         NodeId(0, realization_nr)
