@@ -335,6 +335,7 @@ class MockedJob:
         self.status = status
         self._start_time = 0
         self._current_time = 0
+        self._end_time = None
 
     @property
     def runtime(self):

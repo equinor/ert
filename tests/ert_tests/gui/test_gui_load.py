@@ -5,6 +5,7 @@ from unittest.mock import Mock, PropertyMock
 import pytest
 import qtpy
 from qtpy.QtCore import Qt
+from qtpy.QtWidgets import QWidget
 
 import ert.gui
 from ert.gui.ertnotifier import ErtNotifier
@@ -95,20 +96,16 @@ def test_gui_load(monkeypatch, tmpdir, qtbot, patch_enkf_main):
     gui = _start_window(patch_enkf_main, notifier, args_mock, GUILogHandler())
     qtbot.addWidget(gui)
 
-    sim_panel = gui.findChild(qtpy.QtWidgets.QWidget, name="Simulation_panel")
-    single_run_panel = gui.findChild(
-        qtpy.QtWidgets.QWidget, name="Single_test_run_panel"
-    )
+    sim_panel = gui.findChild(QWidget, name="Simulation_panel")
+    single_run_panel = gui.findChild(QWidget, name="Single_test_run_panel")
     assert (
         sim_panel.getCurrentSimulationModel() == single_run_panel.getSimulationModel()
     )
 
-    sim_mode = gui.findChild(qtpy.QtWidgets.QWidget, name="Simulation_mode")
+    sim_mode = gui.findChild(QWidget, name="Simulation_mode")
     qtbot.keyClick(sim_mode, Qt.Key_Down)
 
-    ensemble_panel = gui.findChild(
-        qtpy.QtWidgets.QWidget, name="Ensemble_experiment_panel"
-    )
+    ensemble_panel = gui.findChild(QWidget, name="Ensemble_experiment_panel")
     assert sim_panel.getCurrentSimulationModel() == ensemble_panel.getSimulationModel()
 
 
@@ -155,20 +152,18 @@ def test_gui_iter_num(monkeypatch, tmpdir, qtbot, patch_enkf_main):
     gui = _start_window(patch_enkf_main, notifier, args_mock, GUILogHandler())
     qtbot.addWidget(gui)
 
-    sim_mode = gui.findChild(qtpy.QtWidgets.QWidget, name="Simulation_mode")
+    sim_mode = gui.findChild(QWidget, name="Simulation_mode")
     qtbot.keyClick(sim_mode, Qt.Key_Down)
 
-    sim_panel = gui.findChild(qtpy.QtWidgets.QWidget, name="Simulation_panel")
+    sim_panel = gui.findChild(QWidget, name="Simulation_panel")
 
-    ensemble_panel = gui.findChild(
-        qtpy.QtWidgets.QWidget, name="Ensemble_experiment_panel"
-    )
+    ensemble_panel = gui.findChild(QWidget, name="Ensemble_experiment_panel")
     # simulate entering number 10 as iter_num
     qtbot.keyClick(ensemble_panel._iter_field, Qt.Key_Backspace)
     qtbot.keyClicks(ensemble_panel._iter_field, "10")
     qtbot.keyClick(ensemble_panel._iter_field, Qt.Key_Enter)
 
-    start_simulation = gui.findChild(qtpy.QtWidgets.QWidget, name="start_simulation")
+    start_simulation = gui.findChild(QWidget, name="start_simulation")
     qtbot.mouseClick(start_simulation, Qt.LeftButton)
     assert sim_panel.getSimulationArguments().iter_num == 10
 

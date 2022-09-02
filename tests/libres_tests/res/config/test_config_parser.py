@@ -277,7 +277,10 @@ def test_add_unknown_keyowrds():
         fileH.write("SETTINGS D False\n")
 
     content = parser.parse(
-        "config", unrecognized=UnrecognizedEnum.CONFIG_UNRECOGNIZED_ADD
+        # pylint: disable=no-member
+        # (not able to parse the C Enum object)
+        "config",
+        unrecognized=UnrecognizedEnum.CONFIG_UNRECOGNIZED_ADD,
     )
 
     assert "SETTINGS" in content

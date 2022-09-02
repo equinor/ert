@@ -332,7 +332,7 @@ async def load_record(url: str, record_type: ert.data.RecordType) -> ert.data.Re
         dataframe: pd.DataFrame = read_csv(io.BytesIO(content))
         if record_type == ert.data.RecordType.SCALAR_FLOAT:
             return ert.data.NumericalRecord(data=float(dataframe.iloc[0, 0]))
-        for _, row in dataframe.iterrows():  # pylint: disable=no-member
+        for _, row in dataframe.iterrows():
             return ert.data.NumericalRecord(
                 data=_interpret_series(row=row, record_type=record_type)
             )

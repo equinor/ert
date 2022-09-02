@@ -36,7 +36,7 @@ def _load_lib():
 
     import ert._clib
 
-    lib = ctypes.CDLL(ert._clib.__file__)
+    lib = ctypes.CDLL(ert._clib.__file__)  # pylint: disable=no-member
 
     # Configure site_config to be a ctypes.CFUNCTION with type:
     # void set_site_config(char *);

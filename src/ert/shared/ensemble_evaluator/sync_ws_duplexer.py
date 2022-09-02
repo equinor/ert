@@ -65,7 +65,7 @@ class SyncWebsocketDuplexer:
             raise
 
     async def _connect(self) -> None:
-        connect = websockets.connect(
+        connect = websockets.client.connect(
             self._uri,
             ssl=self._ssl_context,
             extra_headers=self._extra_headers,

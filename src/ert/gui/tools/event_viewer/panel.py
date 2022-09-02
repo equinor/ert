@@ -3,10 +3,11 @@ from contextlib import contextmanager
 from typing import Generator
 
 from qtpy import QtCore
+from qtpy.QtCore import QObject
 from qtpy.QtWidgets import QPlainTextEdit, QVBoxLayout
 
 
-class GUILogHandler(logging.Handler, QtCore.QObject):
+class GUILogHandler(logging.Handler, QObject):
     """
     Log handler which will emit a qt signal every time a
     log is emitted
@@ -19,7 +20,7 @@ class GUILogHandler(logging.Handler, QtCore.QObject):
         self.setFormatter(logging.Formatter("%(levelname)-8s %(message)s"))
         self.setLevel(logging.INFO)
 
-        QtCore.QObject.__init__(self)
+        QObject.__init__(self)
 
     def emit(self, record):
         msg = self.format(record)

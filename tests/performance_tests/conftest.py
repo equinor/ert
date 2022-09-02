@@ -2,8 +2,8 @@ import hashlib
 import json
 from argparse import ArgumentParser
 
-import py
 import pytest
+from py import path
 from pytest import fixture
 
 from ert.shared.cli import ENSEMBLE_EXPERIMENT_MODE
@@ -58,9 +58,9 @@ cases_to_run = [
 )
 def template_config(request, source_root, tmp_path_factory):
     if template_config_path:
-        tmpdir = py.path.local(template_config_path)
+        tmpdir = path.local(template_config_path)
     else:
-        tmpdir = py.path.local(tmp_path_factory.mktemp("my_poly_tmp"))
+        tmpdir = path.local(tmp_path_factory.mktemp("my_poly_tmp"))
 
     params = request.param
     params.update()

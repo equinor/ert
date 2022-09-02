@@ -19,6 +19,8 @@ import ert.shared.hook_implementations  # noqa
 import ert.shared.plugins.hook_specifications  # noqa
 
 
+# pylint: disable=no-member
+# (pylint does not know what the plugins offer)
 class ErtPluginManager(pluggy.PluginManager):
     def __init__(self, plugins=None):
         super().__init__(_PLUGIN_NAMESPACE)
@@ -277,7 +279,7 @@ class ErtPluginContext:
                 )
 
     def _reset_environment(self):
-        for name, value in self.env.items():
+        for name in self.env.keys():
             if self.backup_env.get(name) is None and name in os.environ:
                 logging.debug(f"Resetting environment variable {name}")
                 del os.environ[name]

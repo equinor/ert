@@ -82,6 +82,7 @@ jobs:
             no-else-break, \
             no-else-continue, \
             no-else-raise, \
+            no-member, \
             no-method-argument, \
             not-async-context-manager, \
             not-callable, \

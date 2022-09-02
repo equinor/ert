@@ -15,11 +15,13 @@ def test_executing_workflow():
             wf_file.write("EXPORT_RUNPATH")
 
         config_file = "poly.ert"
-        with open(config_file, "a") as file:
-            file.write("LOAD_WORKFLOW test_wf")
+        with open(config_file, "a") as file_handle:
+            file_handle.write("LOAD_WORKFLOW test_wf")
 
         rc = ResConfig(user_config_file=config_file)
         ert = EnKFMain(rc)
         args = Namespace(name="test_wf")
+        # pylint: disable=no-member
+        # (pylint not able to verify contents of Namespace)
         execute_workflow(ert, args.name)
         assert os.path.isfile(".ert_runpath_list")

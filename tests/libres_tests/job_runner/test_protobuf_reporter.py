@@ -41,6 +41,7 @@ def test_report_with_successful_start_message_argument(unused_tcp_port):
     event = DispatcherMessage()
     event.ParseFromString(lines[0])
     assert event.WhichOneof("object") == "job"
+    # pylint: disable=no-member
     assert event.job.status == JOB_START
     assert event.job.id.index == 0
     assert event.job.id.step.step == 0
@@ -80,6 +81,7 @@ def test_report_with_failed_start_message_argument(unused_tcp_port):
     assert len(lines) == 2
     event = DispatcherMessage()
     event.ParseFromString(lines[1])
+    # pylint: disable=no-member
     assert event.job.status == JOB_FAILURE
     assert event.job.error == "massive_failure"
 
@@ -110,6 +112,7 @@ def test_report_with_successful_exit_message_argument(unused_tcp_port):
     event = DispatcherMessage()
     event.ParseFromString(lines[0])
     assert event.WhichOneof("object") == "job"
+    # pylint: disable=no-member
     assert event.job.status == JOB_SUCCESS
 
 
@@ -139,6 +142,7 @@ def test_report_with_failed_exit_message_argument(unused_tcp_port):
     event = DispatcherMessage()
     event.ParseFromString(lines[0])
     assert event.WhichOneof("object") == "job"
+    # pylint: disable=no-member
     assert event.job.status == JOB_FAILURE
     assert event.job.error == "massive_failure"
     assert event.job.exit_code == 1
@@ -170,6 +174,7 @@ def test_report_with_running_message_argument(unused_tcp_port):
     event = DispatcherMessage()
     event.ParseFromString(lines[0])
     assert event.WhichOneof("object") == "job"
+    # pylint: disable=no-member
     assert event.job.status == JOB_RUNNING
     assert event.job.max_memory == 100
     assert event.job.current_memory == 10
