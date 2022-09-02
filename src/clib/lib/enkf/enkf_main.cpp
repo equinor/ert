@@ -137,24 +137,6 @@ enkf_main_get_hook_manager(const enkf_main_type *enkf_main) {
     return res_config_get_hook_manager(enkf_main->res_config);
 }
 
-bool enkf_main_load_obs(enkf_main_type *enkf_main, const char *obs_config_file,
-                        bool clear_existing) {
-    if (clear_existing)
-        enkf_obs_clear(enkf_main->obs);
-
-    if (!enkf_obs_is_valid(enkf_main->obs)) {
-        fprintf(stderr,
-                "** Warning: failed to load observation data from: %s \n",
-                obs_config_file);
-        return false;
-    }
-
-    enkf_obs_load(enkf_main->obs, obs_config_file,
-                  analysis_config_get_std_cutoff(
-                      res_config_get_analysis_config(enkf_main->res_config)));
-    return true;
-}
-
 void enkf_main_free(enkf_main_type *enkf_main) {
     if (enkf_main->rng_manager)
         rng_manager_free(enkf_main->rng_manager);

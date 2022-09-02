@@ -63,7 +63,6 @@ extern "C" enkf_main_type *enkf_main_alloc(const res_config_type *,
 extern "C" enkf_state_type *enkf_main_iget_state(const enkf_main_type *, int);
 
 extern "C" int enkf_main_get_ensemble_size(const enkf_main_type *enkf_main);
-extern "C" bool enkf_main_load_obs(enkf_main_type *, const char *, bool);
 extern "C" enkf_obs_type *enkf_main_get_obs(const enkf_main_type *);
 extern "C" bool enkf_main_have_obs(const enkf_main_type *enkf_main);
 
