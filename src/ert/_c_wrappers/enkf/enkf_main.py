@@ -78,7 +78,6 @@ class EnKFMain(BaseCClass):
     _alloc = ResPrototype("void* enkf_main_alloc(res_config, bool)", bind=False)
 
     _free = ResPrototype("void enkf_main_free(enkf_main)")
-    _get_data_kw = ResPrototype("subst_list_ref enkf_main_get_data_kw(enkf_main)")
     _get_obs = ResPrototype("enkf_obs_ref enkf_main_get_obs(enkf_main)")
     _get_observations = ResPrototype(
         "void enkf_main_get_observations(enkf_main, \
@@ -325,19 +324,19 @@ class EnKFMain(BaseCClass):
         return self.resConfig().analysis_config.setParent(self)
 
     def getModelConfig(self) -> ModelConfig:
-        return self.resConfig().model_config.setParent(self)
+        return self.config_file.model_config.setParent(self)
 
     def siteConfig(self) -> SiteConfig:
-        return self.resConfig().site_config.setParent(self)
+        return self.config_file.site_config
 
     def resConfig(self) -> "ResConfig":
-        return self._get_res_config().setParent(self)
+        return self.config_file
 
     def eclConfig(self) -> EclConfig:
-        return self.resConfig().ecl_config
+        return self.config_file.ecl_config
 
     def getDataKW(self) -> SubstitutionList:
-        return self._get_data_kw()
+        return self.config_file.subst_config.subst_list
 
     def addDataKW(self, key: str, value: str) -> None:
         # Substitution should be the responsibility of
