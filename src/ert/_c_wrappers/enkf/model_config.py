@@ -125,7 +125,7 @@ class ModelConfig(BaseCClass):
             )
         else:
             # MAX_RESAMPLE_KEY
-            max_resample = config_dict.get(ConfigKeys.MAX_RESAMPLE)
+            max_resample = config_dict.get(ConfigKeys.MAX_RESAMPLE, 1)
 
             # NUM_REALIZATIONS_KEY
             num_realizations = config_dict.get(ConfigKeys.NUM_REALIZATIONS)
@@ -182,7 +182,9 @@ class ModelConfig(BaseCClass):
             gen_kw_export_name = config_dict.get(ConfigKeys.GEN_KW_EXPORT_NAME)
 
             # HISTORY_SOURCE_KEY
-            history_source = config_dict.get(ConfigKeys.HISTORY_SOURCE)
+            history_source = config_dict.get(
+                ConfigKeys.HISTORY_SOURCE, HistorySourceEnum.REFCASE_HISTORY
+            )
 
             c_ptr = self._alloc_full(
                 max_resample,
