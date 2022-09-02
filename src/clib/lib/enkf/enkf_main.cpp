@@ -82,11 +82,6 @@ enkf_main_get_res_config(const enkf_main_type *enkf_main) {
     return enkf_main->res_config;
 }
 
-subst_list_type *enkf_main_get_data_kw(const enkf_main_type *enkf_main) {
-    return subst_config_get_subst_list(
-        res_config_get_subst_config(enkf_main_get_res_config(enkf_main)));
-}
-
 enkf_obs_type *enkf_main_get_obs(const enkf_main_type *enkf_main) {
     return enkf_main->obs;
 }

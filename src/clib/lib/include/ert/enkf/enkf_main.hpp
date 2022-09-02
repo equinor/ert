@@ -61,8 +61,6 @@ extern "C" enkf_main_type *enkf_main_alloc(const res_config_type *,
 extern "C" enkf_obs_type *enkf_main_get_obs(const enkf_main_type *);
 extern "C" bool enkf_main_have_obs(const enkf_main_type *enkf_main);
 
-extern "C" subst_list_type *
-enkf_main_get_data_kw(const enkf_main_type *enkf_main);
 extern "C" void enkf_main_get_observations(const enkf_main_type *enkf_main,
                                            const char *user_key, int obs_count,
                                            time_t *obs_time, double *y,
