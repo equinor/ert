@@ -44,9 +44,7 @@ jobs:
         flake8
 
     - name: Run black
-      run: |
-        pip install black[jupyter]
-        black . --check
+      uses: psf/black@stable
 
     - name: Run pylint
       run: |
