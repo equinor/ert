@@ -7,6 +7,7 @@ from textwrap import dedent
 
 import cwrap
 import numpy as np
+import pandas as pd
 import pytest
 from ecl import EclDataType
 from ecl.eclfile import EclKW
@@ -14,6 +15,8 @@ from ecl.grid import EclGrid
 from ecl.util.geometry import Surface
 
 from ert._c_wrappers.enkf import EnKFMain, ResConfig
+from ert._c_wrappers.enkf.export import GenKwCollector
+from ert._clib import update
 from ert._clib.update import Parameter
 from ert.libres_facade import LibresFacade
 
@@ -146,6 +149,20 @@ def test_field_param(tmpdir, config_str, expected):
         # forward init was not set correctly
         assert load_from_forward_model(ert) == 1
 
+        fs = ert.getEnkfFsManager().getFileSystem("default_0", read_only=True)
+        if expected:
+            arr = fs.load_parameters(
+                ert.ensembleConfig(), [0], [update.Parameter("MY_PARAM")]
+            )
+            assert len(arr) == 16
+        else:
+            # load_parameters should probably handle errors better than
+            # to throw an exception.
+            with pytest.raises(IndexError):
+                fs.load_parameters(
+                    ert.ensembleConfig(), [0], [update.Parameter("MY_PARAM")]
+                )
+
 
 @pytest.mark.parametrize(
     "config_str, expected, expect_loaded, error",
@@ -198,6 +215,20 @@ def test_surface_param(
         # forward init was not set correctly
         assert load_from_forward_model(ert) == expect_loaded
         assert error in "".join(caplog.messages)
+
+        fs = ert.getEnkfFsManager().getFileSystem("default_0", read_only=True)
+        if expected and expect_loaded:
+            arr = fs.load_parameters(
+                ert.ensembleConfig(), [0], [update.Parameter("MY_PARAM")]
+            )
+            assert len(arr) == 4
+        else:
+            # load_parameters should probably handle errors better than
+            # to throw an exception.
+            with pytest.raises(IndexError):
+                fs.load_parameters(
+                    ert.ensembleConfig(), [0], [update.Parameter("MY_PARAM")]
+                )
 
 
 @pytest.mark.integration_test
@@ -269,6 +300,20 @@ def test_gen_param_forward_init(tmpdir, load_forward_init):
             assert Path("simulations/realization0/kw.txt").exists()
         assert load_from_forward_model(ert) == 1
 
+        fs = ert.getEnkfFsManager().getFileSystem("default_0", read_only=True)
+        if load_forward_init:
+            arr = fs.load_parameters(
+                ert.ensembleConfig(), [0], [update.Parameter("MY_PARAM")]
+            )
+            assert arr == [1.01]
+        else:
+            # load_parameters should probably handle errors better than
+            # to throw an exception.
+            with pytest.raises(IndexError):
+                fs.load_parameters(
+                    ert.ensembleConfig(), [0], [update.Parameter("MY_PARAM")]
+                )
+
 
 @pytest.mark.integration_test
 @pytest.mark.parametrize("load_forward_init", [True, False])
@@ -299,6 +344,12 @@ def test_gen_kw_forward_init(tmpdir, load_forward_init):
         else:
             assert Path("simulations/realization0/kw.txt").exists()
         assert load_from_forward_model(ert) == 1
+
+        df = GenKwCollector.loadAllGenKwData(ert, "default_0")
+        if load_forward_init:
+            assert df["KW_NAME:MY_KEYWORD"][0] == 1.01
+        else:
+            assert pd.isna(df["KW_NAME:MY_KEYWORD"][0])
 
 
 @pytest.mark.parametrize(
