@@ -209,15 +209,17 @@ load_row_scaling_parameters(
     int active_ens_size = iens_active_index.size();
     if (!config_parameters.empty()) {
         int matrix_start_size = 250000;
-        Eigen::MatrixXd A = Eigen::MatrixXd::Zero(250000, active_ens_size);
+        Eigen::MatrixXd A =
+            Eigen::MatrixXd::Zero(matrix_start_size, active_ens_size);
 
         for (const auto &parameter : config_parameters) {
             const auto *config_node = ensemble_config_get_node(
                 ensemble_config, parameter.name.c_str());
             const int node_size =
                 enkf_config_node_get_data_size(config_node, 0);
+
             if (A.rows() < node_size)
-                A.conservativeResize(node_size, active_ens_size);
+                A.conservativeResize(node_size, A.cols());
             for (int column = 0; column < iens_active_index.size(); column++) {
                 int iens = iens_active_index[column];
                 serialize_node(target_fs, config_node, iens, 0, column,
