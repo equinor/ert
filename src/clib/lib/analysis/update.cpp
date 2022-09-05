@@ -80,7 +80,7 @@ void serialize_parameter(const ensemble_config_type *ens_config,
             enkf_config_node_get_data_size(config_node, 0));
 
         if ((active_size + current_row) > A.rows())
-            A.conservativeResize(A.rows() + 2 * active_size, ens_size);
+            A.conservativeResize(A.rows() + active_size, ens_size);
         if (active_size > 0) {
             for (int column = 0; column < ens_size; column++) {
                 int iens = iens_active_index[column];
