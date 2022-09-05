@@ -45,7 +45,9 @@ class _Ensemble:
     def evaluate(self, config: "EvaluatorServerConfig") -> None:
         pass
 
-    async def evaluate_async(self, config: "EvaluatorServerConfig") -> None:
+    async def evaluate_async(
+        self, config: "EvaluatorServerConfig", experiment_id: str
+    ) -> None:
         pass
 
     def cancel(self) -> None:

@@ -131,17 +131,23 @@ class _LegacyEnsemble(_Ensemble):
         finally:
             get_event_loop().close()
 
-    async def evaluate_async(self, config: "EvaluatorServerConfig") -> None:
+    async def evaluate_async(
+        self,
+        config: "EvaluatorServerConfig",
+        experiment_id: str,
+    ) -> None:
         self._config = config
         await self._evaluate_inner(
             cloudevent_unary_send=self.queue_cloudevent,
             output_bus=self.output_bus,
+            experiment_id=experiment_id,
         )
 
     async def _evaluate_inner(
         self,
         cloudevent_unary_send: Callable[[CloudEvent], Awaitable[None]],
         output_bus: Optional["asyncio.Queue[CloudEvent]"] = None,
+        experiment_id: Optional[str] = None,
     ) -> None:
         """
         This (inner) coroutine does the actual work of evaluating the ensemble. It
@@ -213,13 +219,15 @@ class _LegacyEnsemble(_Ensemble):
             # Tell queue to pass info to the jobs-file
             # NOTE: This touches files on disk...
             sema = threading.BoundedSemaphore(value=CONCURRENT_INTERNALIZATION)
-            if output_bus:  # when running experiment server
+            if (
+                output_bus and experiment_id is not None
+            ):  # when running experiment server
                 self._job_queue.add_dispatch_information_to_jobs_file(
                     ens_id=self.id_,
                     dispatch_url=self._config.dispatch_uri,
                     cert=self._config.cert,
                     token=self._config.token,
-                    experiment_id=self.id_,
+                    experiment_id=experiment_id,
                 )
                 # Finally, run the queue-loop until it finishes or raises
                 await self._job_queue.execute_queue_comms_via_bus(

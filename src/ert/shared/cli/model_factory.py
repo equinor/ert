@@ -8,21 +8,23 @@ from ert.shared.models.multiple_data_assimilation import MultipleDataAssimilatio
 from ert.shared.models.single_test_run import SingleTestRun
 
 
-def create_model(ert, ensemble_size, current_case_name, args):
+def create_model(ert, ensemble_size, current_case_name, args, id_):
     # Setup model
     if args.mode == "test_run":
-        model = _setup_single_test_run(ert)
+        model = _setup_single_test_run(ert, id_)
     elif args.mode == "ensemble_experiment":
-        model = _setup_ensemble_experiment(ert, args, ensemble_size)
+        model = _setup_ensemble_experiment(ert, args, ensemble_size, id_)
     elif args.mode == "ensemble_smoother":
-        model = _setup_ensemble_smoother(ert, args, ensemble_size, current_case_name)
+        model = _setup_ensemble_smoother(
+            ert, args, ensemble_size, current_case_name, id_
+        )
     elif args.mode == "es_mda":
         model = _setup_multiple_data_assimilation(
-            ert, args, ensemble_size, current_case_name
+            ert, args, ensemble_size, current_case_name, id_
         )
     elif args.mode == "iterative_ensemble_smoother":
         model = _setup_iterative_ensemble_smoother(
-            ert, args, ensemble_size, current_case_name
+            ert, args, ensemble_size, current_case_name, id_
         )
 
     else:
@@ -31,22 +33,22 @@ def create_model(ert, ensemble_size, current_case_name, args):
     return model
 
 
-def _setup_single_test_run(ert):
+def _setup_single_test_run(ert, id_):
     simulations_argument = {"active_realizations": [True]}
-    model = SingleTestRun(simulations_argument, ert)
+    model = SingleTestRun(simulations_argument, ert, id_)
     return model
 
 
-def _setup_ensemble_experiment(ert, args, ensemble_size):
+def _setup_ensemble_experiment(ert, args, ensemble_size, id_):
     simulations_argument = {
         "active_realizations": _realizations(args, ensemble_size),
         "iter_num": int(args.iter_num),
     }
-    model = EnsembleExperiment(simulations_argument, ert, ert.get_queue_config())
+    model = EnsembleExperiment(simulations_argument, ert, ert.get_queue_config(), id_)
     return model
 
 
-def _setup_ensemble_smoother(ert, args, ensemble_size, current_case_name):
+def _setup_ensemble_smoother(ert, args, ensemble_size, current_case_name, id_):
     simulations_argument = {
         "active_realizations": _realizations(args, ensemble_size),
         "target_case": _target_case_name(
@@ -54,11 +56,11 @@ def _setup_ensemble_smoother(ert, args, ensemble_size, current_case_name):
         ),
         "analysis_module": "STD_ENKF",
     }
-    model = EnsembleSmoother(simulations_argument, ert, ert.get_queue_config())
+    model = EnsembleSmoother(simulations_argument, ert, ert.get_queue_config(), id_)
     return model
 
 
-def _setup_multiple_data_assimilation(ert, args, ensemble_size, current_case_name):
+def _setup_multiple_data_assimilation(ert, args, ensemble_size, current_case_name, id_):
     simulations_argument = {
         "active_realizations": _realizations(args, ensemble_size),
         "target_case": _target_case_name(
@@ -68,11 +70,15 @@ def _setup_multiple_data_assimilation(ert, args, ensemble_size, current_case_nam
         "weights": args.weights,
         "start_iteration": int(args.start_iteration),
     }
-    model = MultipleDataAssimilation(simulations_argument, ert, ert.get_queue_config())
+    model = MultipleDataAssimilation(
+        simulations_argument, ert, ert.get_queue_config(), id_
+    )
     return model
 
 
-def _setup_iterative_ensemble_smoother(ert, args, ensemble_size, current_case_name):
+def _setup_iterative_ensemble_smoother(
+    ert, args, ensemble_size, current_case_name, id_
+):
     simulations_argument = {
         "active_realizations": _realizations(args, ensemble_size),
         "target_case": _target_case_name(
@@ -81,7 +87,9 @@ def _setup_iterative_ensemble_smoother(ert, args, ensemble_size, current_case_na
         "analysis_module": "IES_ENKF",
         "num_iterations": _num_iterations(ert, args),
     }
-    model = IteratedEnsembleSmoother(simulations_argument, ert, ert.get_queue_config())
+    model = IteratedEnsembleSmoother(
+        simulations_argument, ert, ert.get_queue_config(), id_
+    )
     return model
 
 

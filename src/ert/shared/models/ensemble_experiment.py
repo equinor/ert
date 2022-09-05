@@ -23,8 +23,9 @@ class EnsembleExperiment(BaseRunModel):
         simulation_arguments: Dict[str, Any],
         ert: EnKFMain,
         queue_config: QueueConfig,
+        id_: str,
     ):
-        super().__init__(simulation_arguments, ert, queue_config)
+        super().__init__(simulation_arguments, ert, queue_config, id_)
 
     async def run(self, evaluator_server_config: EvaluatorServerConfig) -> None:
 

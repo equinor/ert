@@ -15,7 +15,7 @@ class BaseRunModelTest(ErtTest):
         config_file = self.createTestPath("local/simple_config/minimum_config")
         with ErtTestContext(config_file) as work_area:
             ert = work_area.getErt()
-            brm = BaseRunModel(None, ert, ert.get_queue_config())
+            brm = BaseRunModel(None, ert, ert.get_queue_config(), "experiment_id")
             assert brm.support_restart
 
 
@@ -60,7 +60,7 @@ def test_is_forward_model_finished(test_input, expected):
     ],
 )
 def test_active_realizations(initials, expected):
-    brm = BaseRunModel(None, None, None)
+    brm = BaseRunModel(None, None, None, None)
     brm._initial_realizations_mask = initials
     assert brm._active_realizations == expected
     assert brm._ensemble_size == len(initials)
@@ -79,7 +79,7 @@ def test_active_realizations(initials, expected):
     ],
 )
 def test_failed_realizations(initials, completed, any_failed, failures):
-    brm = BaseRunModel(None, None, None)
+    brm = BaseRunModel(None, None, None, None)
     brm._initial_realizations_mask = initials
     brm._completed_realizations_mask = completed
 

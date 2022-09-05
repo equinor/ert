@@ -63,6 +63,7 @@ class BaseRunModel:
         simulation_arguments: Dict[str, Any],
         ert: EnKFMain,
         queue_config: QueueConfig,
+        id_: str,
         phase_count: int = 1,
     ):
         """
@@ -94,10 +95,10 @@ class BaseRunModel:
         self._ert = ert
         self.facade = LibresFacade(ert)
         self._simulation_arguments = simulation_arguments
+        self._id: str = id_
         self.reset()
 
         # experiment-server
-        self._id: Optional[str] = None
         self._state_machine = ExperimentStateMachine()
 
     def ert(self) -> EnKFMain:
@@ -362,7 +363,7 @@ class BaseRunModel:
                 run_context,
             )
 
-            await ensemble.evaluate_async(ee_config)
+            await ensemble.evaluate_async(ee_config, self.id_)
 
             await ensemble_listener
 
