@@ -186,6 +186,7 @@ def test_tracking(
             facade.get_ensemble_size(),
             facade.get_current_case_name(),
             parsed,
+            "experiment_id",
         )
 
         evaluator_server_config = EvaluatorServerConfig(
@@ -310,6 +311,7 @@ def test_tracking_time_map(
             facade.get_ensemble_size(),
             facade.get_current_case_name(),
             parsed,
+            "experiment_id",
         )
 
         evaluator_server_config = EvaluatorServerConfig(
@@ -396,6 +398,7 @@ def test_tracking_missing_ecl(
             facade.get_ensemble_size(),
             facade.get_current_case_name(),
             parsed,
+            "experiment_id",
         )
 
         evaluator_server_config = EvaluatorServerConfig(

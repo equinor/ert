@@ -66,7 +66,7 @@ class ModelFactoryTest(ErtTest):
             ert = work_area.getErt()
             args = Namespace(iter_num=10, realizations=None)
             model = model_factory._setup_ensemble_experiment(
-                ert, args, ert.getEnsembleSize()
+                ert, args, ert.getEnsembleSize(), "experiment_id"
             )
             run_context = model.create_context()
             self.assertEqual(model._simulation_arguments["iter_num"], 10)
@@ -89,7 +89,7 @@ class ModelFactoryTest(ErtTest):
         with ErtTestContext(config_file) as work_area:
             ert = work_area.getErt()
 
-            model = model_factory._setup_single_test_run(ert)
+            model = model_factory._setup_single_test_run(ert, "experiment_id")
             self.assertTrue(isinstance(model, SingleTestRun))
             self.assertEqual(1, len(model._simulation_arguments.keys()))
             self.assertTrue("active_realizations" in model._simulation_arguments)
@@ -100,7 +100,7 @@ class ModelFactoryTest(ErtTest):
         with ErtTestContext(config_file) as work_area:
             ert = work_area.getErt()
 
-            model = model_factory._setup_single_test_run(ert)
+            model = model_factory._setup_single_test_run(ert, "experiment_id")
             self.assertTrue(isinstance(model, EnsembleExperiment))
             self.assertEqual(1, len(model._simulation_arguments.keys()))
             self.assertTrue("active_realizations" in model._simulation_arguments)
@@ -118,6 +118,7 @@ class ModelFactoryTest(ErtTest):
                 args,
                 facade.get_ensemble_size(),
                 facade.get_current_case_name(),
+                "experiment_id",
             )
             self.assertTrue(isinstance(model, EnsembleSmoother))
             self.assertEqual(3, len(model._simulation_arguments.keys()))
@@ -143,6 +144,7 @@ class ModelFactoryTest(ErtTest):
                 args,
                 facade.get_ensemble_size(),
                 facade.get_current_case_name(),
+                "experiment_id",
             )
             self.assertTrue(isinstance(model, MultipleDataAssimilation))
             self.assertEqual(5, len(model._simulation_arguments.keys()))
@@ -169,6 +171,7 @@ class ModelFactoryTest(ErtTest):
                 args,
                 facade.get_ensemble_size(),
                 facade.get_current_case_name(),
+                "experiment_id",
             )
             self.assertTrue(isinstance(model, IteratedEnsembleSmoother))
             self.assertEqual(4, len(model._simulation_arguments.keys()))

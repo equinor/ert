@@ -18,8 +18,9 @@ class IteratedEnsembleSmoother(BaseRunModel):
         simulation_arguments: Dict[str, Any],
         ert: EnKFMain,
         queue_config: QueueConfig,
+        id_: str,
     ):
-        super().__init__(simulation_arguments, ert, queue_config, phase_count=2)
+        super().__init__(simulation_arguments, ert, queue_config, id_, phase_count=2)
         self.support_restart = False
         self._w_container = IterativeEnsembleSmoother(
             len(simulation_arguments["active_realizations"])

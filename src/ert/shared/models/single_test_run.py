@@ -7,13 +7,11 @@ from ert.shared.models import EnsembleExperiment, ErtRunError
 
 
 class SingleTestRun(EnsembleExperiment):
-    def __init__(self, simulation_arguments: Dict[str, Any], ert: EnKFMain, *_: Any):
+    def __init__(
+        self, simulation_arguments: Dict[str, Any], ert: EnKFMain, id_: str, *_: Any
+    ):
         local_queue_config = ert.get_queue_config().create_local_copy()
-        super().__init__(
-            simulation_arguments,
-            ert,
-            local_queue_config,
-        )
+        super().__init__(simulation_arguments, ert, local_queue_config, id_)
 
     def checkHaveSufficientRealizations(self, num_successful_realizations: int) -> None:
         # Should only have one successful realization

@@ -127,9 +127,10 @@ class ExperimentServer:
         ensemble_size: int,
         current_case_name: str,
         args: Any,
-        factory: Callable[[EnKFMain, int, str, Any], Experiment],
+        factory: Callable[[EnKFMain, int, str, Any, str], Experiment],
+        experiment_id: str,
     ) -> str:
-        """add_legacy_experiment(self, ert, ensemble_size: int,current_case_name: str, factory: Callable[[Any, int, str, Any], Experiment])
+        """add_legacy_experiment(self, ert, ensemble_size: int,current_case_name: str, factory: Callable[[Any, int, str, Any, str], Experiment], experiment_id: str)
 
         The ert parameter, as well as the first input parameter in the factory
         :class:`Callable`, refers to the EnkfMain type.
@@ -141,12 +142,13 @@ class ExperimentServer:
             ensemble_size,
             current_case_name,
             args,
+            experiment_id,
         )
-        experiment.id_ = self._registry.add_experiment(experiment)
+        self._registry.add_experiment(experiment)
         return experiment.id_
 
     def add_experiment(self, experiment: Experiment) -> str:
-        experiment.id_ = self._registry.add_experiment(experiment)
+        self._registry.add_experiment(experiment)
         return experiment.id_
 
     async def run_experiment(self, experiment_id: str) -> None:

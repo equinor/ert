@@ -26,7 +26,7 @@ def test_hook_call_order_ensemble_smoother(monkeypatch):
     """
     ert_mock = MagicMock()
     minimum_args = MagicMock()
-    test_class = EnsembleSmoother(minimum_args, ert_mock, MagicMock())
+    test_class = EnsembleSmoother(minimum_args, ert_mock, MagicMock(), "experiment_id")
     test_class.create_context = MagicMock()
     test_class.run_ensemble_evaluator = MagicMock(return_value=1)
     ert_mock.runWorkflows = MagicMock()
@@ -54,7 +54,9 @@ def test_hook_call_order_es_mda(monkeypatch):
         custom_port_range=range(1024, 65535), use_token=False, generate_cert=False
     )
     ert_mock = MagicMock()
-    test_class = MultipleDataAssimilation(minimum_args, ert_mock, MagicMock())
+    test_class = MultipleDataAssimilation(
+        minimum_args, ert_mock, MagicMock(), "experiment_id"
+    )
     ert_mock.runWorkflows = MagicMock()
 
     test_class.create_context = MagicMock()
@@ -95,7 +97,9 @@ def test_hook_call_order_iterative_ensemble_smoother(monkeypatch):
     )
     ert_mock.runWorkflows = MagicMock()
 
-    test_class = IteratedEnsembleSmoother(MagicMock(), ert_mock, MagicMock())
+    test_class = IteratedEnsembleSmoother(
+        MagicMock(), ert_mock, MagicMock(), "experiment_id"
+    )
     test_class.create_context = MagicMock()
     test_class._checkMinimumActiveRealizations = MagicMock()
     test_class._ert = ert_mock

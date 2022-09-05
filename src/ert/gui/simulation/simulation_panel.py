@@ -1,3 +1,4 @@
+import uuid
 from collections import OrderedDict
 
 from qtpy.QtCore import QSize, Qt
@@ -136,6 +137,7 @@ class SimulationPanel(QWidget):
                     self.facade.get_ensemble_size(),
                     self.facade.get_current_case_name(),
                     arguments,
+                    str(uuid.uuid4()),
                 ),
             )
             dialog.startSimulation()

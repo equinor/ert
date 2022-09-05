@@ -4,6 +4,7 @@ import logging
 import os
 import sys
 import threading
+import uuid
 from typing import Any
 
 from ert._c_wrappers.enkf import EnKFMain, ResConfig
@@ -48,6 +49,7 @@ def run_cli(args):
         return
 
     evaluator_server_config = EvaluatorServerConfig(custom_port_range=args.port_range)
+    experiment_id = str(uuid.uuid4())
 
     if FeatureToggling.is_enabled("experiment-server"):
         # TODO: need to perform same case checks as for non-experiment-server.
@@ -60,6 +62,7 @@ def run_cli(args):
                 facade.get_current_case_name(),
                 args,
                 evaluator_server_config,
+                experiment_id,
             ),
             debug=False,
         )
@@ -70,6 +73,7 @@ def run_cli(args):
         facade.get_ensemble_size(),
         facade.get_current_case_name(),
         args,
+        experiment_id,
     )
     # Test run does not have a current_case
     if "current_case" in args and args.current_case:
@@ -121,11 +125,12 @@ async def _run_cli_async(
     current_case_name: str,
     args: Any,
     ee_config: EvaluatorServerConfig,
+    experiment_id: str,
 ):
     from ert.experiment_server import ExperimentServer  # noqa
 
     experiment_server = ExperimentServer(ee_config)
-    experiment_id = experiment_server.add_legacy_experiment(
-        ert, ensemble_size, current_case_name, args, create_model
+    experiment_server.add_legacy_experiment(
+        ert, ensemble_size, current_case_name, args, create_model, experiment_id
     )
     await experiment_server.run_experiment(experiment_id=experiment_id)
