@@ -1,0 +1,51 @@
+from unittest.mock import MagicMock
+
+import pytest
+
+from ert._c_wrappers.enkf import EnKFMain, ResConfig
+from ert.shared.hook_implementations.workflows.disable_parameters import (
+    DisableParametersUpdate,
+)
+from ert.shared.plugins import ErtPluginManager
+
+
+@pytest.mark.parametrize(
+    "input_string, expected", [("a", ["b", "c"]), ("a,b", ["c"]), ("a, b", ["c"])]
+)
+def test_parse_comma_list(tmpdir, monkeypatch, input_string, expected):
+
+    ert_mock = MagicMock()
+    ert_mock._observation_keys = ["OBSERVATION"]
+    ert_mock._parameter_keys = ["a", "b", "c"]
+
+    DisableParametersUpdate(ert_mock).run(input_string)
+    assert ert_mock.update_configuration[0]["parameters"] == expected
+
+
+def test_disable_parameters_is_loaded():
+    pm = ErtPluginManager()
+    assert "DISABLE_PARAMETERS" in pm.get_installable_workflow_jobs().keys()
+
+
+def test_that_we_can_disable_a_parameter(copy_case):
+    copy_case("local/poly_example")
+    with open("poly.ert", "a") as fh:
+        fh.writelines("GEN_KW DONT_UPDATE_KW template.txt kw.txt prior.txt")
+    with open("template.txt", "w") as fh:
+        fh.writelines("MY_KEYWORD <MY_KEYWORD>")
+    with open("prior.txt", "w") as fh:
+        fh.writelines("MY_KEYWORD NORMAL 0 1")
+    ert = EnKFMain(ResConfig("poly.ert"))
+
+    parameters = [
+        parameter.name
+        for parameter in ert.update_configuration.update_steps[0].parameters
+    ]
+    assert "DONT_UPDATE_KW" in parameters
+    DisableParametersUpdate(ert).run("DONT_UPDATE_KW")
+
+    parameters = [
+        parameter.name
+        for parameter in ert.update_configuration.update_steps[0].parameters
+    ]
+    assert "DONT_UPDATE_KW" not in parameters
