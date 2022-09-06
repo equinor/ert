@@ -185,11 +185,7 @@ void analysis_config_set_log_path(analysis_config_type *config,
     config->log_path = util_realloc_string_copy(config->log_path, log_path);
 }
 
-/**
-   Will in addition create the path.
-*/
 const char *analysis_config_get_log_path(const analysis_config_type *config) {
-    util_make_path(config->log_path);
     return config->log_path;
 }
 
