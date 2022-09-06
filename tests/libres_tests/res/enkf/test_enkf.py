@@ -13,7 +13,9 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
+from textwrap import dedent
 
+import pytest
 from ecl.util.test import TestAreaContext
 
 from ert._c_wrappers.enkf import (
@@ -228,3 +230,27 @@ class EnKFTest(ResTest):
             rng2 = main.rng()
             d2 = rng2.getDouble()
             self.assertEqual(d1, d2)
+
+
+@pytest.mark.parametrize(
+    "random_seed", ["0", "1234", "123ABC", "123456789ABCDEFGHIJKLMNOPGRST", "123456"]
+)
+def test_random_seed_initialization_of_rngs(random_seed, tmpdir):
+    """
+    This is a regression test to make sure the seed can be sampled correctly,
+    and that it wraps on int32 overflow.
+    """
+    with tmpdir.as_cwd():
+        config = dedent(
+            f"""
+        JOBNAME my_name%d
+        NUM_REALIZATIONS 10
+        RANDOM_SEED {random_seed}
+        """
+        )
+        with open("config.ert", "w") as fh:
+            fh.writelines(config)
+
+        res_config = ResConfig("config.ert")
+        EnKFMain(res_config)
+        assert res_config.rng_config.random_seed == str(random_seed)

@@ -81,7 +81,9 @@ def format_seed(random_seed: str):
     for i in range(state_size):
         for k in range(state_digits):
             fseed[i] *= 10
-            fseed[i] += int(random_seed[seed_pos])
+            fseed[i] += ord(random_seed[seed_pos]) - ord("0")
             seed_pos = (seed_pos + 1) % len(random_seed)
 
-    return b"".join(struct.pack("I", x) for x in fseed)
+    # The function this was derived from had integer overflow, so we
+    # allow for the same here
+    return b"".join(struct.pack("I", x % (2**32)) for x in fseed)
