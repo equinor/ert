@@ -18,7 +18,7 @@ import os.path
 import sys
 
 from cwrap import BaseCClass
-from ecl.util.util import StringHash, StringList
+from ecl.util.util import StringHash
 
 from ert._c_wrappers import ResPrototype
 from ert._c_wrappers.config.config_content import ConfigContent
