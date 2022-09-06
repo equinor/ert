@@ -24,7 +24,6 @@ foreach(
   enkf_active_list
   enkf_analysis_config
   enkf_config_node
-  enkf_enkf_config_node_gen_data
   enkf_ensemble
   enkf_ensemble_config
   enkf_fs
@@ -55,14 +54,11 @@ foreach(
   add_test(NAME ${test} COMMAND ${test})
 endforeach()
 
-foreach(test enkf_ert_workflow_list enkf_ecl_config enkf_ensemble_GEN_PARAM)
+foreach(test enkf_ert_workflow_list enkf_ecl_config)
 
   add_executable(${test} ${TESTS_EXCLUDE_FROM_ALL} test_${test}.cpp)
   target_link_libraries(${test} ert)
 endforeach()
-
-add_config_test(enkf_ensemble_GEN_PARAM enkf_ensemble_GEN_PARAM
-                "${TEST_DATA_DIR}/enkf/ensemble/GEN_PARAM")
 
 add_config_test(enkf_ecl_config1 enkf_ecl_config)
 add_config_test(enkf_ecl_config2 enkf_ecl_config

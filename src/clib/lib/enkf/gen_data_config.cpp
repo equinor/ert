@@ -191,27 +191,6 @@ static gen_data_config_type *gen_data_config_alloc(const char *key,
 }
 
 gen_data_config_type *
-gen_data_config_alloc_GEN_PARAM(const char *key,
-                                gen_data_file_format_type output_format,
-                                gen_data_file_format_type input_format) {
-    gen_data_config_type *config = gen_data_config_alloc(key, false);
-
-    if (input_format == ASCII_TEMPLATE)
-        util_abort("%s: Sorry can not use INPUT_FORMAT:ASCII_TEMPLATE\n",
-                   __func__);
-
-    if (output_format == GEN_DATA_UNDEFINED ||
-        input_format == GEN_DATA_UNDEFINED)
-        util_abort("%s: Sorry must specify valid values for both input and "
-                   "output format\n",
-                   __func__);
-
-    config->output_format = output_format;
-    config->input_format = input_format;
-    return config;
-}
-
-gen_data_config_type *
 gen_data_config_alloc_GEN_DATA_result(const char *key,
                                       gen_data_file_format_type input_format) {
     gen_data_config_type *config = gen_data_config_alloc(key, true);
@@ -254,7 +233,7 @@ gen_data_config_get_active_mask(const gen_data_config_type *config) {
     if (config->dynamic)
         return config->active_mask;
     else
-        return NULL; /* GEN_PARAM instance will never be deactivated by the forward model. */
+        return NULL;
 }
 
 bool gen_data_config_set_template(gen_data_config_type *config,
@@ -365,7 +344,7 @@ gen_data_config_check_format(const char *format_string) {
    OUTPUT_FORMAT:(ASCII|ASCII_TEMPLATE)
    TEMPLATE:/some/template/file
    KEY:<SomeKeyFoundInTemplate>
-   ECL_FILE:<filename to write EnKF ==> Forward model>  (In the case of gen_param - this is extracted in the calling scope).
+   ECL_FILE:<filename to write EnKF ==> Forward model>  
    RESULT_FILE:<filename to read EnKF <== Forward model>
 
 */
@@ -491,7 +470,7 @@ bool gen_data_config_has_active_mask(const gen_data_config_type *config,
 void gen_data_config_load_active(gen_data_config_type *config, enkf_fs_type *fs,
                                  int report_step, bool force_load) {
     if (!config->dynamic)
-        return; /* Used as GEN_PARAM instance; loading of mask is not an option. */
+        return;
 
     bool fs_changed = false;
     if (fs != config->last_read_fs) {

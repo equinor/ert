@@ -19,19 +19,6 @@ def test_ensemble_config_constructor(setup_case):
     assert res_config.ensemble_config == EnsembleConfig(
         config_dict={
             ConfigKeys.GEN_KW_TAG_FORMAT: "<%s>",
-            ConfigKeys.GEN_PARAM: [
-                {
-                    ConfigKeys.NAME: "GP",
-                    ConfigKeys.FORWARD_INIT: False,
-                    ConfigKeys.INPUT_FORMAT: GenDataFileType.ASCII,
-                    ConfigKeys.OUTPUT_FORMAT: GenDataFileType.ASCII,
-                    ConfigKeys.INIT_FILES: "GP/GP.txt",
-                    ConfigKeys.ECL_FILE: "GP.txt",
-                    ConfigKeys.MIN_STD: None,
-                    ConfigKeys.TEMPLATE: None,
-                    ConfigKeys.KEY_KEY: None,
-                },
-            ],
             ConfigKeys.GEN_DATA: [
                 {
                     ConfigKeys.NAME: "SNAKE_OIL_OPR_DIFF",

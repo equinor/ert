@@ -100,21 +100,6 @@ class EnsembleConfig(BaseCClass):
 
             super().__init__(c_ptr)
 
-            gen_param_list = config_dict.get(ConfigKeys.GEN_PARAM, [])
-            for gene_param in gen_param_list:
-                gen_param_node = EnkfConfigNode.create_gen_param(
-                    gene_param.get(ConfigKeys.NAME),
-                    gene_param.get(ConfigKeys.FORWARD_INIT),
-                    gene_param.get(ConfigKeys.INPUT_FORMAT),
-                    gene_param.get(ConfigKeys.OUTPUT_FORMAT),
-                    gene_param.get(ConfigKeys.INIT_FILES),
-                    gene_param.get(ConfigKeys.ECL_FILE),
-                    gene_param.get(ConfigKeys.MIN_STD),
-                    gene_param.get(ConfigKeys.TEMPLATE),
-                    gene_param.get(ConfigKeys.KEY_KEY),
-                )
-                self.addNode(gen_param_node)
-
             gen_data_list = config_dict.get(ConfigKeys.GEN_DATA, [])
             for gene_data in gen_data_list:
                 gen_data_node = EnkfConfigNode.create_gen_data_full(
@@ -215,14 +200,6 @@ class EnsembleConfig(BaseCClass):
                 f"{self.getNode(key)}"
                 for key in self.alloc_keylist()
                 if self.getNode(key).getImplementationType() == ErtImplType.GEN_KW
-            )
-            + "], "
-            + f"{ConfigKeys.GEN_PARAM}: ["
-            + ", ".join(
-                f"{self.getNode(key)}"
-                for key in self.alloc_keylist()
-                if self.getNode(key).getImplementationType() == ErtImplType.GEN_DATA
-                and self.getNode(key).getVariableType() == EnkfVarType.PARAMETER
             )
             + "], "
             + f"{ConfigKeys.GEN_DATA}: ["

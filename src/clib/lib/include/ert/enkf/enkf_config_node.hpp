@@ -51,13 +51,6 @@ void enkf_config_node_update_min_std(enkf_config_node_type *config_node,
                                      const char *min_std_file);
 
 enkf_config_node_type *
-enkf_config_node_alloc_GEN_PARAM(const char *node_key, bool forward_init,
-                                 gen_data_file_format_type input_format,
-                                 gen_data_file_format_type output_format,
-                                 const char *init_file_fmt,
-                                 const char *ert_outfile_fmt);
-
-enkf_config_node_type *
 enkf_config_node_alloc_GEN_DATA_result(const char *key,
                                        gen_data_file_format_type input_format,
                                        const char *enkf_infile_fmt);
@@ -162,17 +155,10 @@ enkf_config_node_get_min_std(const enkf_config_node_type *config_node);
 extern "C" bool
 enkf_config_node_use_forward_init(const enkf_config_node_type *config_node);
 
-enkf_config_node_type *enkf_config_node_alloc_GEN_PARAM_from_config(
-    const config_content_node_type *config_node);
+void enkf_config_node_add_GEN_DATA_config_schema(config_parser_type *config);
+
 enkf_config_node_type *enkf_config_node_alloc_GEN_DATA_from_config(
     const config_content_node_type *node);
-
-extern "C" PY_USED enkf_config_node_type *enkf_config_node_alloc_GEN_PARAM_full(
-    const char *node_key, bool forward_init,
-    gen_data_file_format_type input_format,
-    gen_data_file_format_type output_format, const char *init_file_fmt,
-    const char *ecl_file, const char *min_std_file, const char *template_file,
-    const char *data_key);
 
 extern "C" PY_USED enkf_config_node_type *enkf_config_node_alloc_GEN_DATA_full(
     const char *node_key, const char *result_file,

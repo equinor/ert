@@ -100,20 +100,6 @@ class EnkfConfigNode(BaseCClass):
         "bool enkf_config_node_use_forward_init(enkf_config_node)"
     )
 
-    # ensemble config aux
-    _alloc_gen_param_full = ResPrototype(
-        "enkf_config_node_obj enkf_config_node_alloc_GEN_PARAM_full(char*, \
-                                                                    bool, \
-                                                                    gen_data_file_format_type, \
-                                                                    gen_data_file_format_type, \
-                                                                    char*, \
-                                                                    char*, \
-                                                                    char*, \
-                                                                    char*, \
-                                                                    char*)",  # noqa
-        bind=False,
-    )
-
     _alloc_gen_data_full = ResPrototype(
         "enkf_config_node_obj enkf_config_node_alloc_GEN_DATA_full(char*, \
                                                                    char*, \
@@ -298,37 +284,6 @@ class EnkfConfigNode(BaseCClass):
             raise ValueError(
                 f"Failed to create GEN_DATA with FULL specs node for:{key}"
             )
-
-        return config_node
-
-    # GEN PARAM FULL creation
-    @classmethod
-    def create_gen_param(
-        cls,
-        key,
-        forward_init,
-        input_format,
-        output_format,
-        init_file_fmt,
-        ecl_file,
-        min_std_file,
-        template_file,
-        data_key,
-    ):
-
-        config_node = cls._alloc_gen_param_full(
-            key,
-            forward_init,
-            input_format,
-            output_format,
-            init_file_fmt,
-            ecl_file,
-            min_std_file,
-            template_file,
-            data_key,
-        )
-        if config_node is None:
-            raise ValueError(f"Failed to create GEN_PARAM node for:{key}")
 
         return config_node
 

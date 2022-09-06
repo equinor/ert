@@ -239,11 +239,6 @@ static void add_field_keyword(config_parser_type *config_parser) {
     config_schema_item_add_required_children(item, GRID_KEY);
 }
 
-static void add_gen_param_keyword(config_parser_type *config) {
-    auto item = config_add_schema_item(config, GEN_PARAM_KEY, false);
-    config_schema_item_set_argc_minmax(item, 2, CONFIG_DEFAULT_ARG_MAX);
-}
-
 static void add_gen_data_keyword(config_parser_type *config) {
     auto item = config_add_schema_item(config, GEN_DATA_KEY, false);
     config_schema_item_set_argc_minmax(item, 1, CONFIG_DEFAULT_ARG_MAX);
@@ -295,7 +290,6 @@ ERT_CLIB_SUBMODULE("config_keywords", m) {
             add_gen_kw_keyword(config_parser);
             add_schedule_prediction_file_keyword(config_parser);
             add_string_keyword(config_parser, GEN_KW_TAG_FORMAT_KEY);
-            add_gen_param_keyword(config_parser);
             add_gen_data_keyword(config_parser);
             add_summary_keyword(config_parser);
             add_surface_keyword(config_parser);

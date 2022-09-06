@@ -120,8 +120,8 @@ Here are two examples:
 GENERAL_OBSERVATION keyword
 ---------------------------
 
-The GENERAL_OBSERVATION keyword is used together with the GEN_DATA and
-GEN_PARAM type. This pair of observation and data types are typically
+The GENERAL_OBSERVATION keyword is used together with the GEN_DATA
+type. This pair of observation and data types are typically
 used when you want to update something special which does not fit into
 any of the predefined types. The ERT application just treats
 GENERAL_OBSERVATION (and also GEN_DATA) as a range of numbers with no
