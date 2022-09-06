@@ -46,7 +46,6 @@ from ert._c_wrappers.enkf.substituter import Substituter
 from ert._c_wrappers.util.substitution_list import SubstitutionList
 from ert._clib import enkf_main, enkf_state
 from ert._clib.state_map import (
-    STATE_INITIALIZED,
     STATE_LOAD_FAILURE,
     STATE_PARENT_FAILURE,
     STATE_UNDEFINED,
