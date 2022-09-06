@@ -2,6 +2,7 @@ import sys
 from argparse import ArgumentParser
 from pathlib import Path
 
+import numpy as np
 import pytest
 from iterative_ensemble_smoother import IterativeEnsembleSmoother
 
@@ -205,9 +206,13 @@ def test_that_posterior_has_lower_variance_than_prior_with_init_files(copy_case)
     df_default = GenKwCollector.loadAllGenKwData(ert, "default")
     df_target = GenKwCollector.loadAllGenKwData(ert, "target")
 
-    assert df_default["COEFFS:COEFF_A"].var() > df_target["COEFFS:COEFF_A"].var()
-    assert df_default["COEFFS:COEFF_B"].var() > df_target["COEFFS:COEFF_B"].var()
-    assert df_default["COEFFS:COEFF_C"].var() > df_target["COEFFS:COEFF_C"].var()
+    # We expect that ERT's update step lowers the
+    # generalized variance for the parameters.
+    assert (
+        0
+        < np.linalg.det(df_target.cov().to_numpy())
+        < np.linalg.det(df_default.cov().to_numpy())
+    )
 
 
 @pytest.mark.parametrize(
