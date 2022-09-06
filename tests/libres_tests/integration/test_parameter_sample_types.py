@@ -313,14 +313,6 @@ def test_gen_kw_forward_init(tmpdir, load_forward_init):
                 "be reproduced"
             ),
         ),
-        pytest.param(
-            False,
-            pytest.raises(AssertionError, match="MY_KEYWORD "),
-            id=(
-                "We initialize twice without setting the random seed either time so "
-                "expect the result to be different both times"
-            ),
-        ),
     ],
 )
 def test_initialize_random_seed(tmpdir, caplog, check_random_seed, expectation):
