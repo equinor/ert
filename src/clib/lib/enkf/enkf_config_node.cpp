@@ -262,25 +262,6 @@ enkf_config_node_alloc_summary(const char *key, load_fail_type load_fail) {
 }
 
 enkf_config_node_type *
-enkf_config_node_alloc_GEN_PARAM(const char *node_key, bool forward_init,
-                                 gen_data_file_format_type input_format,
-                                 gen_data_file_format_type output_format,
-                                 const char *init_file_fmt,
-                                 const char *ert_outfile_fmt) {
-
-    enkf_config_node_type *config_node =
-        enkf_config_node_alloc__(PARAMETER, GEN_DATA, node_key, forward_init);
-    config_node->data =
-        gen_data_config_alloc_GEN_PARAM(node_key, output_format, input_format);
-
-    enkf_config_node_update(
-        config_node, /* Generic update - needs the format settings from the special.*/
-        init_file_fmt, ert_outfile_fmt, NULL, NULL);
-
-    return config_node;
-}
-
-enkf_config_node_type *
 enkf_config_node_alloc_GEN_DATA_everest(const char *key,
                                         const char *result_file_fmt,
                                         const int_vector_type *report_steps) {
@@ -665,12 +646,7 @@ void enkf_config_node_fprintf_config(const enkf_config_node_type *config_node,
             config_node->min_std_file, stream);
         break;
     case (GEN_DATA):
-
-        if (config_node->var_type == PARAMETER)
-            fprintf(stream, CONFIG_KEY_FORMAT, GEN_PARAM_KEY);
-        else
-            fprintf(stream, CONFIG_KEY_FORMAT, GEN_DATA_KEY);
-
+        fprintf(stream, CONFIG_KEY_FORMAT, GEN_DATA_KEY);
         gen_data_config_fprintf_config(
             (const gen_data_config_type *)config_node->data,
             config_node->var_type,
@@ -684,6 +660,12 @@ void enkf_config_node_fprintf_config(const enkf_config_node_type *config_node,
                    __func__, enkf_types_get_impl_name(config_node->impl_type));
     }
     fprintf(stream, "\n");
+}
+
+void enkf_config_node_add_GEN_DATA_config_schema(config_parser_type *config) {
+    config_schema_item_type *item;
+    item = config_add_schema_item(config, GEN_DATA_KEY, false);
+    config_schema_item_set_argc_minmax(item, 1, CONFIG_DEFAULT_ARG_MAX);
 }
 
 enkf_config_node_type *enkf_config_node_alloc_GEN_DATA_from_config(
@@ -808,107 +790,6 @@ enkf_config_node_type *enkf_config_node_alloc_GEN_DATA_from_config(
         }
         hash_free(options);
     }
-
-    return config_node;
-}
-
-enkf_config_node_type *enkf_config_node_alloc_GEN_PARAM_from_config(
-    const config_content_node_type *node) {
-    enkf_config_node_type *config_node = NULL;
-    const char *node_key = config_content_node_iget(node, 0);
-    const char *ecl_file = config_content_node_iget(node, 1);
-    {
-        hash_type *options = hash_alloc();
-
-        config_content_node_init_opt_hash(node, options, 2);
-        {
-            gen_data_file_format_type input_format =
-                gen_data_config_check_format(
-                    (const char *)hash_safe_get(options, INPUT_FORMAT_KEY));
-            gen_data_file_format_type output_format =
-                gen_data_config_check_format(
-                    (const char *)hash_safe_get(options, OUTPUT_FORMAT_KEY));
-            const char *init_file_fmt =
-                (const char *)hash_safe_get(options, INIT_FILES_KEY);
-            const char *template_file =
-                (const char *)hash_safe_get(options, TEMPLATE_KEY);
-            const char *data_key =
-                (const char *)hash_safe_get(options, KEY_KEY);
-            const char *min_std_file =
-                (const char *)hash_safe_get(options, MIN_STD_KEY);
-            const char *forward_string =
-                (const char *)hash_safe_get(options, FORWARD_INIT_KEY);
-            bool forward_init = false;
-            bool valid_input = true;
-
-            if (input_format == GEN_DATA_UNDEFINED)
-                valid_input = false;
-
-            if (input_format == ASCII_TEMPLATE)
-                valid_input = false;
-
-            if (output_format == GEN_DATA_UNDEFINED)
-                valid_input = false;
-
-            if (init_file_fmt == NULL)
-                valid_input = false;
-
-            if (valid_input) {
-
-                if (forward_string) {
-                    if (!util_sscanf_bool(forward_string, &forward_init))
-                        fprintf(stderr,
-                                "** Warning: parsing %s as bool failed - using "
-                                "FALSE \n",
-                                forward_string);
-                }
-
-                config_node = enkf_config_node_alloc_GEN_PARAM(
-                    node_key, forward_init, input_format, output_format,
-                    init_file_fmt, ecl_file);
-
-                if (template_file) {
-                    bool template_set_ok = gen_data_config_set_template(
-                        (gen_data_config_type *)enkf_config_node_get_ref(
-                            config_node),
-                        template_file, data_key);
-                    if (!template_set_ok)
-                        fprintf(stderr,
-                                "** Warning: the template settings were not "
-                                "applied correctly - ignored\n");
-                }
-
-                if (min_std_file)
-                    enkf_config_node_update_min_std(config_node, min_std_file);
-            }
-        }
-        hash_free(options);
-    }
-    return config_node;
-}
-
-enkf_config_node_type *enkf_config_node_alloc_GEN_PARAM_full(
-    const char *node_key, bool forward_init,
-    gen_data_file_format_type input_format,
-    gen_data_file_format_type output_format, const char *init_file_fmt,
-    const char *ecl_file, const char *min_std_file, const char *template_file,
-    const char *data_key) {
-    enkf_config_node_type *config_node = NULL;
-    config_node = enkf_config_node_alloc_GEN_PARAM(node_key, forward_init,
-                                                   input_format, output_format,
-                                                   init_file_fmt, ecl_file);
-
-    if (template_file) {
-        bool template_set_ok = gen_data_config_set_template(
-            (gen_data_config_type *)enkf_config_node_get_ref(config_node),
-            template_file, data_key);
-        if (!template_set_ok)
-            fprintf(stderr, "** Warning: the template settings were not "
-                            "applied correctly - ignored\n");
-    }
-
-    if (min_std_file)
-        enkf_config_node_update_min_std(config_node, min_std_file);
 
     return config_node;
 }

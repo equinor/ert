@@ -28,22 +28,6 @@
 #include <ert/util/test_util.h>
 #include <ert/util/test_work_area.hpp>
 
-void test_report_steps_param() {
-
-    gen_data_config_type *config =
-        gen_data_config_alloc_GEN_PARAM("KEY", ASCII, ASCII);
-    test_assert_false(gen_data_config_is_dynamic(config));
-    test_assert_int_equal(0, gen_data_config_num_report_step(config));
-    test_assert_false(gen_data_config_has_report_step(config, 0));
-
-    /* Add to parameter should fail. */
-    gen_data_config_add_report_step(config, 10);
-    test_assert_int_equal(0, gen_data_config_num_report_step(config));
-    test_assert_false(gen_data_config_has_report_step(config, 10));
-
-    gen_data_config_free(config);
-}
-
 void test_report_steps_dynamic() {
     gen_data_config_type *config =
         gen_data_config_alloc_GEN_DATA_result("KEY", ASCII);
@@ -143,19 +127,11 @@ void alloc_invalid_io_format2(void *arg) {
     gen_data_config_free(config);
 }
 
-void alloc_invalid_io_format3(void *arg) {
-    gen_data_config_type *config =
-        gen_data_config_alloc_GEN_PARAM("KEY", ASCII, ASCII_TEMPLATE);
-    gen_data_config_free(config);
-}
-
 void test_set_invalid_format() {
     test_assert_util_abort("gen_data_config_alloc_GEN_DATA_result",
                            alloc_invalid_io_format1, NULL);
     test_assert_util_abort("gen_data_config_alloc_GEN_DATA_state",
                            alloc_invalid_io_format2, NULL);
-    test_assert_util_abort("gen_data_config_alloc_GEN_PARAM",
-                           alloc_invalid_io_format3, NULL);
 }
 
 void test_format_check() {
@@ -168,183 +144,13 @@ void test_format_check() {
                           gen_data_config_check_format("ASCII_TEMPLATE"));
 }
 
-void test_set_template_invalid() {
-    ecl::util::TestArea ta("invalid");
-    gen_data_config_type *config =
-        gen_data_config_alloc_GEN_PARAM("KEY", ASCII, ASCII);
-
-    test_assert_false(
-        gen_data_config_set_template(config, "does/not/exist", NULL));
-
-    {
-        FILE *stream = util_fopen("template.txt", "w");
-        fprintf(stream, "Header1\n<KEY>\nHeader2\n");
-        fclose(stream);
-
-        gen_data_config_set_template(config, "template.txt", "<KEY>");
-        test_assert_string_equal("template.txt",
-                                 gen_data_config_get_template_file(config));
-        test_assert_string_equal("<KEY>",
-                                 gen_data_config_get_template_key(config));
-
-        {
-            char *buffer;
-            int data_offset, buffer_size, data_skip;
-            gen_data_config_get_template_data(config, &buffer, &data_offset,
-                                              &buffer_size, &data_skip);
-
-            test_assert_string_equal(buffer, "Header1\n<KEY>\nHeader2\n");
-            test_assert_int_equal(data_offset, 8);
-            test_assert_int_equal(buffer_size, 22);
-            test_assert_int_equal(data_skip, 5);
-        }
-    }
-
-    {
-        FILE *stream = util_fopen("template2.txt", "w");
-        fprintf(stream, "Template XYZ \n");
-        fclose(stream);
-
-        test_assert_false(
-            gen_data_config_set_template(config, "template2.txt", "<KEY>"));
-
-        test_assert_string_equal("template.txt",
-                                 gen_data_config_get_template_file(config));
-        test_assert_string_equal("<KEY>",
-                                 gen_data_config_get_template_key(config));
-        {
-            char *buffer;
-            int data_offset, buffer_size, data_skip;
-            gen_data_config_get_template_data(config, &buffer, &data_offset,
-                                              &buffer_size, &data_skip);
-
-            test_assert_string_equal(buffer, "Header1\n<KEY>\nHeader2\n");
-            test_assert_int_equal(data_offset, 8);
-            test_assert_int_equal(buffer_size, 22);
-            test_assert_int_equal(data_skip, 5);
-        }
-    }
-
-    gen_data_config_free(config);
-}
-
-void test_set_template() {
-    ecl::util::TestArea ta("set_template");
-    {
-        gen_data_config_type *config =
-            gen_data_config_alloc_GEN_PARAM("KEY", ASCII, ASCII);
-
-        test_assert_true(gen_data_config_set_template(config, NULL, NULL));
-        test_assert_NULL(gen_data_config_get_template_file(config));
-        test_assert_NULL(gen_data_config_get_template_key(config));
-
-        {
-            char *buffer;
-            int data_offset, buffer_size, data_skip;
-            gen_data_config_get_template_data(config, &buffer, &data_offset,
-                                              &buffer_size, &data_skip);
-
-            test_assert_NULL(buffer);
-            test_assert_int_equal(data_offset, 0);
-            test_assert_int_equal(buffer_size, 0);
-            test_assert_int_equal(data_skip, 0);
-        }
-
-        {
-            FILE *stream = util_fopen("template.txt", "w");
-            fprintf(stream, "Header\n");
-            fclose(stream);
-
-            test_assert_true(
-                gen_data_config_set_template(config, "template.txt", NULL));
-            test_assert_string_equal("template.txt",
-                                     gen_data_config_get_template_file(config));
-            test_assert_NULL(gen_data_config_get_template_key(config));
-
-            {
-                char *buffer;
-                int data_offset, buffer_size, data_skip;
-                gen_data_config_get_template_data(config, &buffer, &data_offset,
-                                                  &buffer_size, &data_skip);
-
-                test_assert_string_equal(buffer, "Header\n");
-                test_assert_int_equal(data_offset, 7);
-                test_assert_int_equal(buffer_size, 7);
-                test_assert_int_equal(data_skip, 0);
-            }
-        }
-
-        {
-            FILE *stream = util_fopen("template.txt", "w");
-            fprintf(stream, "Header1\n<KEY>\nHeader2\n");
-            fclose(stream);
-
-            gen_data_config_set_template(config, "template.txt", "<KEY>");
-            test_assert_string_equal("template.txt",
-                                     gen_data_config_get_template_file(config));
-            test_assert_string_equal("<KEY>",
-                                     gen_data_config_get_template_key(config));
-
-            {
-                char *buffer;
-                int data_offset, buffer_size, data_skip;
-                gen_data_config_get_template_data(config, &buffer, &data_offset,
-                                                  &buffer_size, &data_skip);
-
-                test_assert_string_equal(buffer, "Header1\n<KEY>\nHeader2\n");
-                test_assert_int_equal(data_offset, 8);
-                test_assert_int_equal(buffer_size, 22);
-                test_assert_int_equal(data_skip, 5);
-            }
-        }
-
-        gen_data_config_set_template(config, NULL, NULL);
-        test_assert_NULL(gen_data_config_get_template_file(config));
-        test_assert_NULL(gen_data_config_get_template_key(config));
-
-        {
-            char *buffer;
-            int data_offset, buffer_size, data_skip;
-            gen_data_config_get_template_data(config, &buffer, &data_offset,
-                                              &buffer_size, &data_skip);
-
-            test_assert_NULL(buffer);
-            test_assert_int_equal(data_offset, 0);
-            test_assert_int_equal(buffer_size, 0);
-            test_assert_int_equal(data_skip, 0);
-        }
-
-        test_assert_true(gen_data_config_set_template(config, NULL, "KEY"));
-        test_assert_NULL(gen_data_config_get_template_file(config));
-        test_assert_NULL(gen_data_config_get_template_key(config));
-
-        {
-            char *buffer;
-            int data_offset, buffer_size, data_skip;
-            gen_data_config_get_template_data(config, &buffer, &data_offset,
-                                              &buffer_size, &data_skip);
-
-            test_assert_NULL(buffer);
-            test_assert_int_equal(data_offset, 0);
-            test_assert_int_equal(buffer_size, 0);
-            test_assert_int_equal(data_skip, 0);
-        }
-
-        gen_data_config_free(config);
-    }
-}
-
 int main(int argc, char **argv) {
 
     const char *gendata_file = argv[1];
     const char *gendata_file_empty = argv[2];
     util_install_signals();
-
-    test_report_steps_param();
     test_report_steps_dynamic();
     test_result_format();
-    test_set_template();
-    test_set_template_invalid();
     test_set_invalid_format();
     test_format_check();
     test_gendata_fload();

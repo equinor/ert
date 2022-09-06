@@ -49,14 +49,6 @@ bool gen_data_config_set_template(gen_data_config_type *config,
 bool gen_data_config_has_active_mask(const gen_data_config_type *config,
                                      enkf_fs_type *fs, int report_step);
 
-/*
-     Observe that the format ASCII_template can *NOT* be used for
-     loading files.
-  */
-gen_data_config_type *
-gen_data_config_alloc_GEN_PARAM(const char *key,
-                                gen_data_file_format_type output_format,
-                                gen_data_file_format_type input_format);
 extern "C" gen_data_config_type *
 gen_data_config_alloc_GEN_DATA_result(const char *key,
                                       gen_data_file_format_type input_format);
