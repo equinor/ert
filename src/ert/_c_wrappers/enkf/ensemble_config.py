@@ -205,6 +205,56 @@ class EnsembleConfig(BaseCClass):
     def __len__(self):
         return self._size()
 
+    def __repr__(self):
+        return (
+            "EnsembleConfig(config_dict={"
+            + f"{ConfigKeys.GEN_KW}: ["
+            + ", ".join(
+                f"{self.getNode(key)}"
+                for key in self.alloc_keylist()
+                if self.getNode(key).getImplementationType() == ErtImplType.GEN_KW
+            )
+            + "], "
+            + f"{ConfigKeys.GEN_PARAM}: ["
+            + ", ".join(
+                f"{self.getNode(key)}"
+                for key in self.alloc_keylist()
+                if self.getNode(key).getImplementationType() == ErtImplType.GEN_DATA
+                and self.getNode(key).getVariableType() == EnkfVarType.PARAMETER
+            )
+            + "], "
+            + f"{ConfigKeys.GEN_DATA}: ["
+            + ", ".join(
+                f"{self.getNode(key)}"
+                for key in self.alloc_keylist()
+                if self.getNode(key).getImplementationType() == ErtImplType.GEN_DATA
+                and self.getNode(key).getVariableType() == EnkfVarType.DYNAMIC_RESULT
+            )
+            + "], "
+            + f"{ConfigKeys.SURFACE_KEY}: ["
+            + ", ".join(
+                f"{self.getNode(key)}"
+                for key in self.alloc_keylist()
+                if self.getNode(key).getImplementationType() == ErtImplType.SURFACE
+            )
+            + "], "
+            + f"{ConfigKeys.SUMMARY}: ["
+            + ", ".join(
+                f"{self.getNode(key)}"
+                for key in self.alloc_keylist()
+                if self.getNode(key).getImplementationType() == ErtImplType.SUMMARY
+            )
+            + "], "
+            + f"{ConfigKeys.FIELD_KEY}: ["
+            + ", ".join(
+                f"{self.getNode(key)}"
+                for key in self.alloc_keylist()
+                if self.getNode(key).getImplementationType() == ErtImplType.FIELD
+            )
+            + "]"
+            + "}"
+        )
+
     def __getitem__(self, key: str) -> EnkfConfigNode:
         if key in self:
             return self._get_node(key).setParent(self)
