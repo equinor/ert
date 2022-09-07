@@ -54,8 +54,6 @@ extensions = [
     "sphinxcontrib.datatemplates",
     "ert_jobs",
     "ert_narratives",
-    "ert3_plugin_configs",
-    "ert3_plugin_references",
 ]
 
 # Autodoc settings:

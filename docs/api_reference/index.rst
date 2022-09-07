@@ -3,8 +3,5 @@
   :hidden:
 
   exceptions
-  config
-  config_plugins
-  workspace
   data
   experiment_server

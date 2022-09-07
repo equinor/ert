@@ -103,7 +103,6 @@ args = dict(
     package_data={
         "ert": package_files("src/ert/gui/resources/")
         + package_files("src/ert/shared/share/")
-        + package_files("src/ert/ert3/examples/")
         + ["logging/logger.conf", "logging/storage_log.conf"]
         + [
             "_c_wrappers/fm/rms/rms_config.yml",
@@ -162,7 +161,6 @@ args = dict(
     ],
     entry_points={
         "console_scripts": [
-            "ert3=ert.ert3.console:main",
             "ert=ert.shared.main:main",
             "job_dispatch.py = ert.job_runner.job_dispatch:main",
         ]

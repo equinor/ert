@@ -118,8 +118,6 @@ def pytest_collection_modifyitems(config, items):
         for item in items:
             if "quick_only" in item.keywords:
                 item.add_marker(skip_quick)
-            if "ert3" in str(item.fspath):
-                item.add_marker(pytest.mark.ert3)
             if item.get_closest_marker("requires_eclipse") and not config.getoption(
                 "--eclipse_simulator"
             ):
@@ -130,8 +128,6 @@ def pytest_collection_modifyitems(config, items):
         for item in items:
             if "slow" in item.keywords:
                 item.add_marker(skip_slow)
-            if "ert3" in str(item.fspath):
-                item.add_marker(pytest.mark.ert3)
             if item.get_closest_marker("requires_eclipse") and not config.getoption(
                 "--eclipse-simulator"
             ):

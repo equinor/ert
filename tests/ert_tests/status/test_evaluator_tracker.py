@@ -1,4 +1,4 @@
-from typing import Any, List, Optional, Tuple, Union
+from typing import Any, List, Optional, Tuple
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -8,7 +8,6 @@ import ert.ensemble_evaluator.identifiers as ids
 from ert.ensemble_evaluator import EvaluatorTracker, state
 from ert.ensemble_evaluator.event import EndEvent, SnapshotUpdateEvent
 from ert.ensemble_evaluator.snapshot import PartialSnapshot, SnapshotBuilder, Step
-from ert.ert3.evaluator._evaluator import ERT3RunModel
 from ert.shared.ensemble_evaluator.config import EvaluatorServerConfig
 from ert.shared.models.base_run_model import BaseRunModel
 
@@ -50,79 +49,6 @@ def make_mock_ee_monitor():
 @pytest.mark.parametrize(
     "run_model, monitor_events,brm_mutations,expected_progress",
     [
-        pytest.param(
-            ERT3RunModel,
-            [
-                CloudEvent(
-                    # zero realizations completed
-                    {"source": "/", "type": ids.EVTYPE_EE_SNAPSHOT},
-                    data={
-                        **(build_snapshot(["0", "1", "2"]).to_dict()),
-                        "iter": 0,
-                    },
-                ),
-                CloudEvent(
-                    {"source": "/", "type": ids.EVTYPE_EE_SNAPSHOT_UPDATE},
-                    data={
-                        **(
-                            build_partial(["0"])
-                            # Complete one realizations completed
-                            .update_step(
-                                "0", "0", Step(status=state.STEP_STATE_SUCCESS)
-                            ).to_dict()
-                        ),
-                        "iter": 0,
-                    },
-                ),
-                CloudEvent(
-                    {"source": "/", "type": ids.EVTYPE_EE_SNAPSHOT_UPDATE},
-                    data={
-                        **(
-                            build_partial(["0", "1"])
-                            # Complete two realizations
-                            .update_step(
-                                "0", "0", Step(status=state.STEP_STATE_SUCCESS)
-                            )
-                            .update_step(
-                                "1", "0", Step(status=state.STEP_STATE_SUCCESS)
-                            )
-                            .to_dict()
-                        ),
-                        "iter": 0,
-                    },
-                ),
-                CloudEvent(
-                    {"source": "/", "type": ids.EVTYPE_EE_SNAPSHOT_UPDATE},
-                    data={
-                        **(
-                            build_partial(["0", "2"])
-                            # Complete all three realizations
-                            .update_step(
-                                "0", "0", Step(status=state.STEP_STATE_SUCCESS)
-                            )
-                            .update_step(
-                                "2", "0", Step(status=state.STEP_STATE_SUCCESS)
-                            )
-                            .to_dict()
-                        ),
-                        "iter": 0,
-                    },
-                ),
-            ],
-            [("_phase_count", 1)],
-            # Expected progress matches combination of yielded snapshotevents
-            # It is calculated as sum i=1:#phases of
-            # (phase i completed realizations / phase i #realizations) / #phases.
-            # When a phase is in the past (current phase > phase),
-            # phase progress is set to 1.0
-            [
-                (0 / 3) / 1,
-                (1 / 3) / 1,
-                (2 / 3) / 1,
-                (3 / 3) / 1,
-            ],
-            id="ensemble_experiment_100",
-        ),
         pytest.param(
             BaseRunModel,
             [
@@ -356,7 +282,7 @@ def make_mock_ee_monitor():
     ],
 )
 def test_tracking_progress(
-    run_model: Union[BaseRunModel, ERT3RunModel],
+    run_model: BaseRunModel,
     monitor_events: List[CloudEvent],
     brm_mutations: List[Tuple[str, Any]],
     expected_progress: float,
@@ -375,10 +301,7 @@ def test_tracking_progress(
 
     The final update event and end event is also tested."""
 
-    if issubclass(run_model, ERT3RunModel):
-        brm = run_model()
-    else:
-        brm = run_model(None, None, None)
+    brm = run_model(None, None, None)
     ee_config = EvaluatorServerConfig(
         custom_port_range=range(1024, 65535),
         custom_host="127.0.0.1",

@@ -16,8 +16,7 @@ class RangeStringArgumentTest(ErtTest):
         self.assertTrue(argument.validate("1-10,11,12,13,14,15,16-20"))
 
         # The empty string is invalid in ERT2. However, it is the only way to
-        # specify that all realizations are inactive, in ERT3 it will be a valid
-        # string.
+        # specify that all realizations are inactive
         self.assertFalse(argument.validate(""))
 
         self.assertFalse(argument.validate("s5"))

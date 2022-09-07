@@ -35,7 +35,6 @@ from ert.shared.ensemble_evaluator.monitor import create as create_ee_monitor
 if TYPE_CHECKING:
     from cloudevents.http.event import CloudEvent
 
-    from ert.ert3.evaluator._evaluator import ERT3RunModel
     from ert.shared.models.base_run_model import BaseRunModel
 
 
@@ -48,7 +47,7 @@ class EvaluatorTracker:
 
     def __init__(
         self,
-        model: Union["BaseRunModel", "ERT3RunModel"],
+        model: "BaseRunModel",
         ee_con_info: EvaluatorConnectionInfo,
         next_ensemble_evaluator_wait_time: int = 5,
     ):
