@@ -825,8 +825,8 @@ and/or history matching project.
 .. topic:: GEN_DATA
 
         The GEN_DATA keyword is used when estimating data types which ERT does not
-        know anything about. GEN_DATA is used for data which are updated/created by the 
-        forward model like e.g. seismic data. In the main configuration file the input 
+        know anything about. GEN_DATA is used for data which are updated/created by the
+        forward model like e.g. seismic data. In the main configuration file the input
         for a GEN_DATA instance is as follows:
 
         ::
@@ -1783,9 +1783,9 @@ Available TORQUE configuration options
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. _torque_sub_stat_del_cmd:
-.. topic:: QSUB_CMD|QSTAT_CMD|QDEL_CMD
+.. topic:: QSUB_CMD, QSTAT_CMD, QDEL_CMD
 
-        By default ERT will use the shell commands qsub,qstat and qdel to interact with
+        By default ERT will use the shell commands qsub, qstat and qdel to interact with
         the queue system, i.e. whatever binaries are first in your PATH will be used.
         For fine grained control of the shell based submission you can tell ERT which
         programs to use:
@@ -1800,6 +1800,12 @@ Available TORQUE configuration options
 In this example we tell ERT to submit jobs using custom binaries for bsub and
 bjobs.
 
+
+.. _torque_qstat_options:
+.. topic:: QSTAT_OPTIONS
+
+        Options to be supplied to the qstat command. This is defaulted to :code:`-x`,
+        which would tell the qstat command to include exited processes.
 
 .. _torque_queue:
 .. topic:: QUEUE
@@ -1836,7 +1842,7 @@ bjobs.
 
 
 .. _torque_nodes_cpus:
-.. topic:: NUM_NODES|NUM_CPUS_PER_NODE
+.. topic:: NUM_NODES, NUM_CPUS_PER_NODE
 
         When using TORQUE, you must specify how many nodes a single job should
         use, and how many CPUs per node. The default setup in ERT will use one node and

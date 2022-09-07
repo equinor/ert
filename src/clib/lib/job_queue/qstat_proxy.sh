@@ -15,9 +15,10 @@
 #    second.
 #
 # Usage:
-#  qstat_proxy.sh [job_id] [proxyfile]
+#  qstat_proxy.sh [options] [job_id] [proxyfile]
 #
-# ERTs torque driver will always call qstat with the job_id as the only argument.
+# ERTs torque driver will always call qstat with (any) options (starting
+# with a '-'-character) and then the job_id
 
 # Cache age that will trigger a cache update, in seconds:
 CACHE_TIMEOUT=2
@@ -27,6 +28,13 @@ CACHE_TIMEOUT=2
 CACHE_INVALID=10
 
 QSTAT=`which qstat 2>/dev/null`
+
+QSTAT_OPTIONS=""
+# while the first arg starts with a - character:
+while [ "$1" != "${1#-}" ]; do
+    QSTAT_OPTIONS="$QSTAT_OPTIONS $1"
+    shift
+done
 
 if [ -z $QSTAT ]; then
     # clib/old_tests/job_queue tests require the backend in current working directory
@@ -60,7 +68,7 @@ if [ ! -e "$proxyfile" ]; then
     flock --nonblock \
         --conflict-exit-code 1 \
         $proxyfile \
-        --command "$QSTAT > $proxyfile" || exit 1
+        --command "$QSTAT $QSTAT_OPTIONS > $proxyfile" || exit 1
 fi
 proxyage_seconds=`file_age_seconds $proxyfile`
 
@@ -70,7 +78,7 @@ if [ $proxyage_seconds -gt $CACHE_TIMEOUT ]; then
     flock --nonblock \
         --conflict-exit-code 0 \
         $proxyfile \
-        --command "$QSTAT > $proxyfile.tmp; mv $proxyfile.tmp $proxyfile"
+        --command "$QSTAT $QSTAT_OPTIONS > $proxyfile.tmp; mv $proxyfile.tmp $proxyfile"
 fi
 
 # The file is potentially updated:
@@ -106,7 +114,9 @@ exit 0
 # 15400.s034-lcam   DROGON-2         droger                   0 E hb120
 # 15402.s034-lcam   DROGON-3         droger                   0 R hb120
 # 15401.s034-lcam   DROGON-0         droger                   0 H hb120
-# 15403.s034-lcam   DROGON-10        droger                   0 H hb120
+# 15403.s034-lcam   DROGON-10        droger                   0 F hb120
 
 # NB: The torque driver *always* asserts that the relevant info it looks
 # for is on the third line only.
+# NB: The F(inished) state is only reported if the "-x" option is supplied,
+#     (this is also the default option to qstat in the driver)

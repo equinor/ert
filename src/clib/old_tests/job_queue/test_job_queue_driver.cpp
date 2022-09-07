@@ -75,6 +75,8 @@ void get_driver_option_lists() {
         test_assert_true(stringlist_contains(option_list, MAX_RUNNING));
         test_assert_true(stringlist_contains(option_list, TORQUE_QSUB_CMD));
         test_assert_true(stringlist_contains(option_list, TORQUE_QSTAT_CMD));
+        test_assert_true(
+            stringlist_contains(option_list, TORQUE_QSTAT_OPTIONS));
         test_assert_true(stringlist_contains(option_list, TORQUE_QDEL_CMD));
         test_assert_true(stringlist_contains(option_list, TORQUE_QUEUE));
         test_assert_true(

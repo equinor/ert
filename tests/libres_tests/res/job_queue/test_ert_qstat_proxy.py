@@ -1,6 +1,7 @@
 import datetime
 import enum
 import fcntl
+import json
 import os
 import shutil
 import subprocess
@@ -33,6 +34,9 @@ MOCKED_QSTAT_BACKEND_FAILS = "import sys; sys.exit(1)"
 MOCKED_QSTAT_BACKEND_LOGGING = (
     "import uuid; open('log/' + str(uuid.uuid4()), 'w').write('.'); "
     + MOCKED_QSTAT_BACKEND
+)
+MOCKED_QSTAT_ECHO_ARGS = (
+    "import sys; open('args', 'w').write(str(sys.argv[1:])); " + MOCKED_QSTAT_BACKEND
 )
 
 
@@ -183,6 +187,38 @@ def test_proxyfile_not_existing_but_locked(tmpdir):
             print(str(result.stdout))
             print(str(result.stderr))
         fcntl.flock(proxy_fd, fcntl.LOCK_UN)
+
+
+@pytest.mark.parametrize(
+    "options, expected",
+    [
+        ("", []),
+        ("-x", ["-x"]),
+        ("--long-option", ["--long-option"]),
+        ("--long1 --long2", ["--long1", "--long2"]),
+        ("-x -f", ["-x", "-f"]),
+        ("no_go", None),
+    ],
+)
+@pytest.mark.skipif(sys.platform.startswith("darwin"), reason="No flock on MacOS")
+def test_options_passed_through_proxy(tmpdir, options, expected):
+    os.chdir(tmpdir)
+    with testpath.MockCommand("qstat", python=MOCKED_QSTAT_ECHO_ARGS):
+        # pylint: disable=subprocess-run-check
+        # (the return value from subprocess is manually checked)
+        result = subprocess.run(
+            [PROXYSCRIPT, options, "15399", PROXYFILE_FOR_TESTS],
+            capture_output=True,
+        )
+        if expected is None:
+            assert result.returncode == 1
+            assert result.stdout.strip().decode() == f"Unknown Job Id {options}"
+            return
+        assert result.returncode == 0
+
+    cmdline = Path("args").read_text(encoding="utf-8").replace("'", '"')
+    assert json.loads(cmdline) == expected
+    # (the output from the mocked qstat happens to adhere to json syntax)
 
 
 @pytest.mark.skipif(sys.platform.startswith("darwin"), reason="No flock on MacOS")
