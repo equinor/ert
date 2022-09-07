@@ -20,6 +20,7 @@ struct torque_driver_struct {
     char *queue_name;
     char *qsub_cmd;
     char *qstat_cmd;
+    char *qstat_opts;
     char *qdel_cmd;
     char *num_cpus_per_node_char;
     char *job_prefix;
@@ -51,6 +52,7 @@ void *torque_driver_alloc() {
     torque_driver->queue_name = NULL;
     torque_driver->qsub_cmd = NULL;
     torque_driver->qstat_cmd = NULL;
+    torque_driver->qstat_opts = NULL;
     torque_driver->qdel_cmd = NULL;
     torque_driver->num_cpus_per_node_char = NULL;
     torque_driver->num_nodes_char = NULL;
@@ -65,6 +67,8 @@ void *torque_driver_alloc() {
                              TORQUE_DEFAULT_QSUB_CMD);
     torque_driver_set_option(torque_driver, TORQUE_QSTAT_CMD,
                              TORQUE_DEFAULT_QSTAT_CMD);
+    torque_driver_set_option(torque_driver, TORQUE_QSTAT_OPTIONS,
+                             TORQUE_DEFAULT_QSTAT_OPTIONS);
     torque_driver_set_option(torque_driver, TORQUE_QDEL_CMD,
                              TORQUE_DEFAULT_QDEL_CMD);
     torque_driver_set_option(torque_driver, TORQUE_NUM_CPUS_PER_NODE, "1");
@@ -94,6 +98,12 @@ static void torque_driver_set_qsub_cmd(torque_driver_type *driver,
 static void torque_driver_set_qstat_cmd(torque_driver_type *driver,
                                         const char *qstat_cmd) {
     driver->qstat_cmd = util_realloc_string_copy(driver->qstat_cmd, qstat_cmd);
+}
+
+static void torque_driver_set_qstat_opts(torque_driver_type *driver,
+                                         const char *qstat_opts) {
+    driver->qstat_opts =
+        util_realloc_string_copy(driver->qstat_opts, qstat_opts);
 }
 
 static void torque_driver_set_qdel_cmd(torque_driver_type *driver,
@@ -179,6 +189,8 @@ bool torque_driver_set_option(void *__driver, const char *option_key,
             torque_driver_set_qsub_cmd(driver, value);
         else if (strcmp(TORQUE_QSTAT_CMD, option_key) == 0)
             torque_driver_set_qstat_cmd(driver, value);
+        else if (strcmp(TORQUE_QSTAT_OPTIONS, option_key) == 0)
+            torque_driver_set_qstat_opts(driver, value);
         else if (strcmp(TORQUE_QDEL_CMD, option_key) == 0)
             torque_driver_set_qdel_cmd(driver, value);
         else if (strcmp(TORQUE_QUEUE, option_key) == 0)
@@ -211,6 +223,8 @@ const void *torque_driver_get_option(const void *__driver,
             return driver->qsub_cmd;
         else if (strcmp(TORQUE_QSTAT_CMD, option_key) == 0)
             return driver->qstat_cmd;
+        else if (strcmp(TORQUE_QSTAT_OPTIONS, option_key) == 0)
+            return driver->qstat_opts;
         else if (strcmp(TORQUE_QDEL_CMD, option_key) == 0)
             return driver->qdel_cmd;
         else if (strcmp(TORQUE_QUEUE, option_key) == 0)
@@ -236,6 +250,7 @@ const void *torque_driver_get_option(const void *__driver,
 void torque_driver_init_option_list(stringlist_type *option_list) {
     stringlist_append_copy(option_list, TORQUE_QSUB_CMD);
     stringlist_append_copy(option_list, TORQUE_QSTAT_CMD);
+    stringlist_append_copy(option_list, TORQUE_QSTAT_OPTIONS);
     stringlist_append_copy(option_list, TORQUE_QDEL_CMD);
     stringlist_append_copy(option_list, TORQUE_QUEUE);
     stringlist_append_copy(option_list, TORQUE_NUM_CPUS_PER_NODE);
@@ -590,24 +605,31 @@ job_status_type torque_driver_parse_status(const char *qstat_file,
 
                         switch (string_status[0]) {
                         case 'R':
+                            /* Job is running */
                             status = JOB_QUEUE_RUNNING;
                             break;
-
                         case 'E':
+                            /* Job is exiting after having run */
                             status = JOB_QUEUE_DONE;
                             break;
-
+                        case 'F':
+                            /* PBS specific value: Job is finished */
+                            /* This is only returned in the alternative qstat format
+                            triggered with '-x' or '-H' option to qstat */
+                            status = JOB_QUEUE_DONE;
+                            break;
                         case 'C':
+                            /* Job is completed after having run */
                             status = JOB_QUEUE_DONE;
                             break;
-
                         case 'H':
+                            /* Job is held */
                             status = JOB_QUEUE_PENDING;
                             break;
                         case 'Q':
+                            /* Job is queued, eligible to run or routed */
                             status = JOB_QUEUE_PENDING;
                             break;
-
                         default:
                             break;
                         }
@@ -647,6 +669,7 @@ void torque_driver_free(torque_driver_type *driver) {
     free(driver->queue_name);
     free(driver->qdel_cmd);
     free(driver->qstat_cmd);
+    free(driver->qstat_opts);
     free(driver->qsub_cmd);
     free(driver->num_cpus_per_node_char);
     free(driver->num_nodes_char);

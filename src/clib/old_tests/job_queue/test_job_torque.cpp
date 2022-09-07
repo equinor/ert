@@ -17,6 +17,7 @@ void setoption_setalloptions_optionsset() {
 
     test_option(driver, TORQUE_QSUB_CMD, "XYZaaa");
     test_option(driver, TORQUE_QSTAT_CMD, "xyZfff");
+    test_option(driver, TORQUE_QSTAT_OPTIONS, "-magic");
     test_option(driver, TORQUE_QDEL_CMD, "ZZyfff");
     test_option(driver, TORQUE_QUEUE, "superhigh");
     test_option(driver, TORQUE_NUM_CPUS_PER_NODE, "42");
@@ -53,6 +54,7 @@ void setoption_setalloptions_optionsset() {
 
     test_option(driver, TORQUE_QSUB_CMD, NULL);
     test_option(driver, TORQUE_QSTAT_CMD, NULL);
+    test_option(driver, TORQUE_QSTAT_OPTIONS, NULL);
     test_option(driver, TORQUE_QDEL_CMD, NULL);
     test_option(driver, TORQUE_QUEUE, NULL);
     test_option(driver, TORQUE_CLUSTER_LABEL, NULL);
@@ -106,6 +108,9 @@ void getoption_nooptionsset_defaultoptionsreturned() {
     test_assert_string_equal(
         (const char *)torque_driver_get_option(driver, TORQUE_QSTAT_CMD),
         TORQUE_DEFAULT_QSTAT_CMD);
+    test_assert_string_equal(
+        (const char *)torque_driver_get_option(driver, TORQUE_QSTAT_OPTIONS),
+        TORQUE_DEFAULT_QSTAT_OPTIONS);
     test_assert_string_equal(
         (const char *)torque_driver_get_option(driver, TORQUE_QDEL_CMD),
         TORQUE_DEFAULT_QDEL_CMD);
