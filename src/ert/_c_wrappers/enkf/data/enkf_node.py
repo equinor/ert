@@ -45,20 +45,13 @@ class EnkfNode(BaseCClass):
         "ert_impl_type_enum enkf_node_get_impl_type(enkf_node)"
     )
 
-    def __init__(self, config_node: "EnkfConfigNode", private: bool = False):
-        self._private = private
-        if private:
-            c_pointer = self._alloc_private(config_node)
-        else:
-            c_pointer = self._alloc(config_node)
+    def __init__(self, config_node: "EnkfConfigNode"):
+        c_pointer = self._alloc(config_node)
 
         if c_pointer:
             super().__init__(c_pointer, config_node, True)
         else:
-            p_err = "private " if private else ""
-            raise ValueError(
-                f"Unable to create {p_err}EnkfNode from given config node."
-            )
+            raise ValueError("Unable to create EnkfNode from given config node.")
 
     @classmethod
     def exportMany(
@@ -158,5 +151,4 @@ class EnkfNode(BaseCClass):
         self._free()
 
     def __repr__(self):
-        pp = ", private" if self._private else ""
-        return f'EnkfNode(name = "{self.name()}"{pp}) {self._ad_str()}'
+        return f'EnkfNode(name = "{self.name()}") {self._ad_str()}'
