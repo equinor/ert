@@ -56,6 +56,13 @@ class RNGConfig(BaseCClass):
     def alg_type(self):
         return self._rng_alg_type()
 
+    def __repr__(self):
+        return (
+            "RNGConfig(config_dict={"
+            f"{ConfigKeys.RANDOM_SEED}: {self.random_seed}"
+            "})"
+        )
+
     @property
     def random_seed(self):
         return self._random_seed()
