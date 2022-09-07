@@ -45,7 +45,7 @@ site_config_set_license_root_path(site_config_type *site_config,
 extern "C" void site_config_free(site_config_type *);
 extern "C" ext_joblist_type *
 site_config_get_installed_jobs(const site_config_type *);
-const env_varlist_type *
+extern "C" const env_varlist_type *
 site_config_get_env_varlist(const site_config_type *site_config);
 int site_config_install_job(site_config_type *site_config, const char *job_name,
                             const char *install_file);

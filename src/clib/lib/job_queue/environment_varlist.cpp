@@ -22,6 +22,8 @@
 
 #include <map>
 
+#include <ert/python.hpp>
+
 #define ENV_VAR_KEY_STRING "global_environment"
 #define UPDATE_PATH_KEY_STRING "global_update_path"
 
@@ -66,3 +68,21 @@ void env_varlist_json_fprintf(const env_varlist_type *list, FILE *stream) {
 }
 
 void env_varlist_free(env_varlist_type *list) { delete list; }
+
+ERT_CLIB_SUBMODULE("env_varlist", m) {
+    using namespace py::literals;
+    m.def(
+        "_get_varlist",
+        [](py::object self_py) {
+            auto self = ert::from_cwrap<env_varlist_type>(self_py);
+            return self->varlist;
+        },
+        py::arg("self"));
+    m.def(
+        "_get_updatelist",
+        [](py::object self_py) {
+            auto self = ert::from_cwrap<env_varlist_type>(self_py);
+            return self->updatelist;
+        },
+        py::arg("self"));
+}
