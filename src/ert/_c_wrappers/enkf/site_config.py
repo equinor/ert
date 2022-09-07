@@ -45,6 +45,9 @@ class SiteConfig(BaseCClass):
     _get_location = ResPrototype("char* site_config_get_location()", bind=False)
     _get_config_file = ResPrototype("char* site_config_get_config_file(site_config)")
     _get_umask = ResPrototype("int site_config_get_umask(site_config)")
+    _get_env_var_list = ResPrototype(
+        "env_varlist_ref site_config_get_env_varlist(site_config)"
+    )
 
     def __init__(self, user_config_file=None, config_content=None, config_dict=None):
 
@@ -139,7 +142,15 @@ class SiteConfig(BaseCClass):
         super().__init__(c_ptr)
 
     def __repr__(self):
-        return f"Site Config {SiteConfig.getLocation()}"
+        return (
+            "SiteConfig(config_dict={"
+            + f"{ConfigKeys.UMASK}: {self.umask},"
+            + f"{ConfigKeys.INSTALL_JOB}: ["
+            + ", ".join(str(job) for job in self.get_installed_jobs())
+            + "],"
+            + f"{ConfigKeys.SETENV}: {self._get_env_var_list()}"
+            + "})"
+        )
 
     @property
     def config_file(self):
@@ -171,6 +182,9 @@ class SiteConfig(BaseCClass):
 
         self_job_list = self.get_installed_jobs()
         other_job_list = other.get_installed_jobs()
+
+        if self._get_env_var_list() != other._get_env_var_list():
+            return False
 
         if set(other_job_list.getAvailableJobNames()) != set(
             self_job_list.getAvailableJobNames()
