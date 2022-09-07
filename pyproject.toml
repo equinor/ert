@@ -19,7 +19,6 @@ addopts = "-ra --strict-markers"
 markers = [
     "consumer_driven_contract_test",
     "consumer_driven_contract_verification",
-    "ert3",
     "integration_test",
     "quick_only",
     "requires_eclipse",

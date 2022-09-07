@@ -49,34 +49,3 @@ ERT are:
 All of the three modules described above should be independent of each other.
 That is, neither should dependent directly on another. Instead the business
 logic that utilises the above capabilities should reside in the engine.
-
-The ERT engine
-~~~~~~~~~~~~~~
-The evaluator, storage and analysis is joined in an experiment concept that
-given a user configuration ensures that evaluation and analysis is invoked
-in alternating fashion with the relevant results persisted in storage. The ERT
-engine represents the business logic of ERT.
-
-ert2 vs ert3
-~~~~~~~~~~~~
-
-Shared disk
-"""""""""""
-The user experience of ert2 is built upon the assumption that a shared disk
-between the client and the compute nodes are available. Still, in large parts
-of the codebase this assumption can be lifted or at the very least isolated.
-ert3 will not assume the presence of such a disk.
-
-Data model
-""""""""""
-ert3 is to be developed such that the data model of ert2 is a subset of the
-ert3 data model.
-
-Difference
-""""""""""
-Hence, the main difference in implementation between ert2 and ert3 should occur
-in configuration, engine and user interface. In addition to the above
-differences ert3 will introduce sensitivity analysis and optimization as
-experiment types similarly to history matching and evaluation. Furthermore, a
-workspace concept will be introduced to more naturally allow for multiple
-experiments side by side.
