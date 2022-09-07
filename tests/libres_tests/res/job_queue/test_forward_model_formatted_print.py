@@ -411,11 +411,9 @@ class ForwardModelFormattedPrintTest(ResTest):
         second_value = "TheSecondValue"
         third_value = "$FIRST:$SECOND"
         third_value_correct = f"{first_value}:{second_value}"
-        varlist = EnvironmentVarlist()
-        varlist[first] = first_value
-        varlist[second] = second_value
-        varlist[third] = third_value
-        self.assertEqual(len(varlist), 3)
+        varlist = EnvironmentVarlist(
+            {first: first_value, second: second_value, third: third_value}
+        )
         with TestAreaContext("python/job_queue/env_varlist"):
             forward_model = self.set_up_forward_model([])
             run_id = "test_no_jobs_id"

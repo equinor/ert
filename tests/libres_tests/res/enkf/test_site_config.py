@@ -87,7 +87,7 @@ class SiteConfigTest(ResTest):
                     ERT_SHARE_PATH + "/forward-models/old_style",
                 ],
                 ConfigKeys.SETENV: [
-                    {ConfigKeys.NAME: "SILLY_VAR", ConfigKeys.VALUE: "silly-value"},
+                    {ConfigKeys.NAME: "SILLY_VAR", ConfigKeys.VALUE: "silly-valye"},
                     {
                         ConfigKeys.NAME: "OPTIONAL_VAR",
                         ConfigKeys.VALUE: "optional-value",

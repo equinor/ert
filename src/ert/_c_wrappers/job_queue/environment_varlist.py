@@ -15,9 +15,12 @@
 #  for more details.
 
 
+from typing import Dict, Optional
+
 from cwrap import BaseCClass
 
 from ert._c_wrappers import ResPrototype
+from ert._clib.env_varlist import _get_updatelist, _get_varlist
 
 
 class EnvironmentVarlist(BaseCClass):
@@ -26,20 +29,39 @@ class EnvironmentVarlist(BaseCClass):
     _alloc = ResPrototype("void* env_varlist_alloc()", bind=False)
     _free = ResPrototype("void env_varlist_free( env_varlist )")
     _setenv = ResPrototype("void env_varlist_setenv(env_varlist, char*, char*)")
-    _get_size = ResPrototype("int env_varlist_get_size(env_varlist)")
+    _update_path = ResPrototype(
+        "void env_varlist_update_path(env_varlist, char*, char*)"
+    )
 
-    def __init__(self):
+    def __init__(
+        self,
+        vars: Optional[Dict[str, str]] = None,
+        paths: Optional[Dict[str, str]] = None,
+    ):
+        if vars is None:
+            vars = dict()
+        if paths is None:
+            paths = dict()
         c_ptr = self._alloc()
         super().__init__(c_ptr)
 
-    def __len__(self):
-        """
-        Returns the number of elements. Implements len()
-        """
-        return self._get_size()
+        for key, value in vars.items():
+            self._setenv(key, value)
+        for key, value in paths.items():
+            self._update_path(key, value)
 
-    def __setitem__(self, var, value):
-        self._setenv(var, value)
+    def __repr__(self) -> str:
+        return (
+            f"EnvironmentVarlist(varlist={_get_varlist(self)},"
+            f" updatelist={_get_updatelist(self)})"
+        )
+
+    def __eq__(self, other) -> bool:
+        return (
+            isinstance(other, EnvironmentVarlist)
+            and _get_varlist(self) == _get_varlist(other)
+            and _get_updatelist(self) == _get_updatelist(other)
+        )
 
     def free(self):
         self._free()

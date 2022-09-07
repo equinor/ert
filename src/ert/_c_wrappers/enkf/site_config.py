@@ -120,9 +120,13 @@ class SiteConfig(BaseCClass):
             ext_job_list.convertToCReference(None)
 
             # Create varlist
-            env_var_list = EnvironmentVarlist()
-            for (var, value) in config_dict.get(ConfigKeys.SETENV, []):
-                env_var_list[var] = value
+            environment_vars = config_dict.get(ConfigKeys.SETENV, [])
+            env_var_list = EnvironmentVarlist(
+                vars={
+                    elem[ConfigKeys.NAME]: elem[ConfigKeys.VALUE]
+                    for elem in environment_vars
+                }
+            )
 
             env_var_list.convertToCReference(None)
             umask = config_dict.get(ConfigKeys.UMASK)
