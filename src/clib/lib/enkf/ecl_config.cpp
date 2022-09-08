@@ -379,11 +379,10 @@ void ecl_config_init(ecl_config_type *ecl_config,
     if (ecl_config->can_restart)
         fprintf(
             stderr,
-            "** Warning: The ECLIPSE data file contains a <INIT> section, the "
-            "support\n"
-            "            for this functionality has been removed. libres will "
-            "not\n"
-            "            be able to properly initialize the ECLIPSE MODEL.\n");
+            "** Warning: The ECLIPSE data file contains a <INIT> section, the\n"
+            "            support for this functionality has been removed. Ert\n"
+            "            will not be able to properly initialize the ECLIPSE "
+            "MODEL.\n");
 
     if (config_content_has_item(config, SCHEDULE_PREDICTION_FILE_KEY))
         handle_has_schedule_prediction_file_key(ecl_config, config);

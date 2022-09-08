@@ -7,7 +7,7 @@ copy_test_files () {
     # Trick ERT to find a fake source root
     mkdir ${CI_TEST_ROOT}/.git
 
-    # libres
+    # clib
     mkdir -p ${CI_TEST_ROOT}/src/clib/res/fm/rms
     ln -s ${CI_SOURCE_ROOT}/src/ert/_c_wrappers/fm/rms/rms_config.yml ${CI_TEST_ROOT}/src/clib/res/fm/rms/rms_config.yml
 

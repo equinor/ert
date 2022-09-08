@@ -29,7 +29,7 @@ CACHE_INVALID=10
 QSTAT=`which qstat 2>/dev/null`
 
 if [ -z $QSTAT ]; then
-    # libres/old_tests/job_queue tests require the backend in current working directory
+    # clib/old_tests/job_queue tests require the backend in current working directory
     export PATH=.:$PATH
     QSTAT=`which qstat 2>/dev/null`
 fi
