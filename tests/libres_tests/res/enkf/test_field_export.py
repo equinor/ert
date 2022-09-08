@@ -1,92 +1,63 @@
 import os
 
 import pytest
-from ecl.util.util import IntVector
 
 from ert._c_wrappers.enkf import NodeId, RunContext
 from ert._c_wrappers.enkf.config import FieldTypeEnum
 from ert._c_wrappers.enkf.data import EnkfNode
-from ert._c_wrappers.test import ErtTestContext
-
-from ...libres_utils import ResTest
 
 
-class FieldExportTest(ResTest):
-    def setUp(self):
-        self.config_file = self.createTestPath("local/snake_oil_field/snake_oil.ert")
+def test_field_type_enum(snake_oil_field_example):
+    ert = snake_oil_field_example
+    ens_config = ert.ensembleConfig()
+    fc = ens_config["PERMX"].getFieldModelConfig()
+    assert fc.get_type() == FieldTypeEnum.ECLIPSE_PARAMETER
 
-    def test_field_type_enum(self):
-        with ErtTestContext(self.config_file) as test_context:
-            ert = test_context.getErt()
-            ens_config = ert.ensembleConfig()
-            fc = ens_config["PERMX"].getFieldModelConfig()
-            self.assertEqual(FieldTypeEnum.ECLIPSE_PARAMETER, fc.get_type())
 
-    @pytest.mark.skip(reason="Aborts")
-    def test_field_basics(self):
-        with ErtTestContext(self.config_file) as test_context:
-            ert = test_context.getErt()
-            ens_config = ert.ensembleConfig()
-            fc = ens_config["PERMX"].getFieldModelConfig()
-            pfx = "FieldConfig(type"
-            rep = repr(fc)
-            self.assertEqual(pfx, rep[: len(pfx)])
-            fc_xyz = fc.get_nx(), fc.get_ny(), fc.get_nz()
-            ex_xyz = 40, 64, 14
-            self.assertEqual(ex_xyz, fc_xyz)
-            self.assertEqual(1, fc.get_truncation_mode())
-            self.assertEqual(0.001, fc.get_truncation_min())
-            self.assertEqual(-1.0, fc.get_truncation_max())
-            self.assertEqual("LOG", fc.get_init_transform_name())
-            self.assertEqual(None, fc.get_output_transform_name())
-            grid = fc.get_grid()
-            self.assertEqual(ex_xyz, (grid.getNX(), grid.getNY(), grid.getNZ()))
+def test_field_basics(snake_oil_field_example):
+    ert = snake_oil_field_example
+    ens_config = ert.ensembleConfig()
+    fc = ens_config["PERMX"].getFieldModelConfig()
+    grid = fc.get_grid()
 
-            field_node = EnkfNode(fc)
-            self.assertEqual(grid.get_num_active(), len(field_node))
-            # pylint: disable=pointless-statement,unsubscriptable-object
-            # pylint: disable=expression-not-assigned
-            with self.assertRaises(IndexError):
-                field_node[grid.get_num_active()]
-            field_node[0]
+    assert repr(fc).startswith("FieldConfig(type")
+    assert (fc.get_nx(), fc.get_ny(), fc.get_nz()) == (10, 10, 5)
+    assert (grid.getNX(), grid.getNY(), grid.getNZ()) == (10, 10, 5)
+    assert fc.get_truncation_mode() == 0
+    assert fc.get_truncation_min() == -1.0
+    assert fc.get_truncation_max() == -1.0
+    assert fc.get_init_transform_name() == None
+    assert fc.get_output_transform_name() == None
 
-    def test_field_export(self):
-        with ErtTestContext(self.config_file) as test_context:
-            ert = test_context.getErt()
-            fs_manager = ert.getEnkfFsManager()
-            ens_config = ert.ensembleConfig()
-            config_node = ens_config["PERMX"]
-            data_node = EnkfNode(config_node)
-            node_id = NodeId(0, 0)
-            fs = fs_manager.getCurrentFileSystem()
-            data_node.tryLoad(fs, node_id)
 
-            data_node.export("export/with/path/PERMX.grdecl")
-            self.assertTrue(os.path.isfile("export/with/path/PERMX.grdecl"))
+def test_field_export(snake_oil_field_example):
+    ert = snake_oil_field_example
+    fs_manager = ert.getEnkfFsManager()
+    ens_config = ert.ensembleConfig()
+    config_node = ens_config["PERMX"]
+    data_node = EnkfNode(config_node)
+    node_id = NodeId(0, 0)
+    fs = fs_manager.getCurrentFileSystem()
+    data_node.tryLoad(fs, node_id)
 
-    def test_field_export_many(self):
-        with ErtTestContext(self.config_file) as test_context:
-            ert = test_context.getErt()
-            fs_manager = ert.getEnkfFsManager()
-            ens_config = ert.ensembleConfig()
-            config_node = ens_config["PERMX"]
-            iens_list = IntVector()
-            iens_list.append(0)
-            iens_list.append(2)
-            iens_list.append(4)
+    data_node.export("export/with/path/PERMX.grdecl")
+    assert os.path.isfile("export/with/path/PERMX.grdecl")
 
-            fs = fs_manager.getCurrentFileSystem()
-            run_context = RunContext(fs, mask=[True] * ert.getEnsembleSize())
-            ert.initRun(run_context)
-            # Filename without embedded %d - TypeError
-            with self.assertRaises(TypeError):
-                EnkfNode.exportMany(
-                    config_node, "export/with/path/PERMX.grdecl", fs, iens_list
-                )
 
-            EnkfNode.exportMany(
-                config_node, "export/with/path/PERMX_%d.grdecl", fs, iens_list
-            )
-            self.assertTrue(os.path.isfile("export/with/path/PERMX_0.grdecl"))
-            self.assertTrue(os.path.isfile("export/with/path/PERMX_2.grdecl"))
-            self.assertTrue(os.path.isfile("export/with/path/PERMX_4.grdecl"))
+def test_field_export_many(snake_oil_field_example):
+    ert = snake_oil_field_example
+    fs_manager = ert.getEnkfFsManager()
+    ens_config = ert.ensembleConfig()
+    config_node = ens_config["PERMX"]
+
+    fs = fs_manager.getCurrentFileSystem()
+    run_context = RunContext(fs, mask=[True] * ert.getEnsembleSize())
+    ert.initRun(run_context)
+    # Filename without embedded %d - TypeError
+    with pytest.raises(TypeError):
+        EnkfNode.exportMany(config_node, "export/with/path/PERMX.grdecl", fs, [0, 2, 4])
+
+    EnkfNode.exportMany(config_node, "export/with/path/PERMX_%d.grdecl", fs, [0, 2, 4])
+    assert os.path.isfile("export/with/path/PERMX_0.grdecl")
+    assert os.path.isfile("export/with/path/PERMX_2.grdecl")
+    assert os.path.isfile("export/with/path/PERMX_4.grdecl")
