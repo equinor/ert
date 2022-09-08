@@ -98,7 +98,7 @@ args = dict(
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/equinor/ert",
-    packages=find_packages(where="src", exclude=["libres"]),
+    packages=find_packages(where="src"),
     package_dir={"": "src"},
     package_data={
         "ert": package_files("src/ert/gui/resources/")

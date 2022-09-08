@@ -54,6 +54,6 @@ install_package () {
 }
 
 start_tests () {
-    # build and run libres ctests
+    # build and run c tests
     run_ert_clib_tests
 }

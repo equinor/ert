@@ -25,8 +25,7 @@ class BatchSimulator:
     ):
         """Will create simulator which can be used to run multiple simulations.
 
-        The @res_config argument should be a ResConfig object, representing the
-        fully configured state of libres.
+        The @res_config argument should be a ResConfig object.
 
 
         The @controls argument configures which parameters the simulator should
@@ -62,7 +61,7 @@ class BatchSimulator:
         When later invoking the start() method the simulator expects to get
         values for all parameters configured with the @controls argument,
         otherwise an exception will be raised.
-        Internally in libres code the controls will be implemented as
+        Internally in ert the controls will be implemented as
         'ext_param' instances.
 
 

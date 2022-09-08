@@ -41,8 +41,7 @@ Default jobs
 ~~~~~~~~~~~~
 
 It is quite simple to *install* your own executables to be used as forward model
-job in ert, but some common jobs are distributed with the ert/libres
-distribution.
+job in ert, but some common jobs are distributed with the ert.
 
 see :doc:`../forward_models`
 
