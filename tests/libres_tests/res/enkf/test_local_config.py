@@ -15,27 +15,15 @@
 #  for more details.
 
 
-from ert._c_wrappers.test import ErtTestContext
+def test_all_active(snake_oil_field_example):
+    """ERT by default updates all parameters and observations
+    as defined in the config file.
+    """
+    update_step = snake_oil_field_example.update_configuration[0]
+    assert [param.name for param in update_step.parameters] == [
+        "PERMX",
+        "PORO",
+        "SNAKE_OIL_PARAM",
+    ]
 
-from ...libres_utils import ResTest
-
-
-class LocalConfigTest(ResTest):
-    def setUp(self):
-        self.config = self.createTestPath("local/snake_oil_field/snake_oil.ert")
-
-    def test_all_active(self):
-        """ERT by default updates all parameters and observations
-        as defined in the config file.
-        """
-        with ErtTestContext(self.config) as test_context:
-            main = test_context.getErt()
-
-            update_step = main.update_configuration[0]
-            assert [param.name for param in update_step.parameters] == [
-                "PERMX",
-                "PORO",
-                "SNAKE_OIL_PARAM",
-            ]
-
-            assert len(update_step.observations) == 8
+    assert len(update_step.observations) == 8

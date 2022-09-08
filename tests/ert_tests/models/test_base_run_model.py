@@ -2,21 +2,15 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from ert._c_wrappers.enkf import RunContext
+from ert._c_wrappers.enkf import EnKFMain, RunContext
 from ert._c_wrappers.job_queue import RunStatusType
-from ert._c_wrappers.test import ErtTestContext
 from ert.shared.models import BaseRunModel
 
-from ..ert_utils import ErtTest
 
-
-class BaseRunModelTest(ErtTest):
-    def test_instantiation(self):
-        config_file = self.createTestPath("local/simple_config/minimum_config")
-        with ErtTestContext(config_file) as work_area:
-            ert = work_area.getErt()
-            brm = BaseRunModel(None, ert, ert.get_queue_config(), "experiment_id")
-            assert brm.support_restart
+def test_base_run_model_supports_restart(setup_case):
+    ert = EnKFMain(setup_case("local/simple_config/", "minimum_config"))
+    brm = BaseRunModel(None, ert, ert.get_queue_config(), "experiment_id")
+    assert brm.support_restart
 
 
 class MockJob:
