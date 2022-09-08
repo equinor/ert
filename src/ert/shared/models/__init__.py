@@ -5,4 +5,12 @@ from .iterated_ensemble_smoother import IteratedEnsembleSmoother
 from .multiple_data_assimilation import MultipleDataAssimilation
 from .single_test_run import SingleTestRun
 
-__all__ = ["BaseRunModel", "ErtRunError"]
+__all__ = [
+    "BaseRunModel",
+    "ErtRunError",
+    "EnsembleExperiment",
+    "EnsembleSmoother",
+    "IteratedEnsembleSmoother",
+    "MultipleDataAssimilation",
+    "SingleTestRun",
+]
