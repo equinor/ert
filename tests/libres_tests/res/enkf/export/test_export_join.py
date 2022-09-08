@@ -7,9 +7,6 @@ from ert._c_wrappers.enkf.export import (
     MisfitCollector,
     SummaryCollector,
 )
-from ert._c_wrappers.test import ErtTestContext
-
-from ....libres_utils import ResTest
 
 
 def dumpDesignMatrix(path):
@@ -44,75 +41,61 @@ def dumpDesignMatrix(path):
         dm.write("24	0.08	725	ON\n")
 
 
-class ExportJoinTest(ResTest):
-    def setUp(self):
-        self.monkeypatch = pytest.MonkeyPatch()
-        self.monkeypatch.setenv(
-            "TZ", "CET"
-        )  # The ert_statoil case was generated in CET
-        self.config = self.createTestPath("local/snake_oil/snake_oil.ert")
+def test_join(monkeypatch, snake_oil_example):
+    ert = snake_oil_example
+    monkeypatch.setenv("TZ", "CET")  # The ert_statoil case was generated in CET
 
-    def tearDown(self):
-        self.monkeypatch.undo()
+    dumpDesignMatrix("DesignMatrix.txt")
 
-    def test_join(self):
+    summary_data = SummaryCollector.loadAllSummaryData(ert, "default_1")
+    gen_kw_data = GenKwCollector.loadAllGenKwData(ert, "default_1")
+    misfit = MisfitCollector.loadAllMisfitData(ert, "default_1")
+    dm = DesignMatrixReader.loadDesignMatrix("DesignMatrix.txt")
 
-        with ErtTestContext(self.config) as context:
-            dumpDesignMatrix("DesignMatrix.txt")
-            ert = context.getErt()
+    result = summary_data.join(gen_kw_data, how="inner")
+    result = result.join(misfit, how="inner")
+    result = result.join(dm, how="inner")
 
-            summary_data = SummaryCollector.loadAllSummaryData(ert, "default_1")
-            gen_kw_data = GenKwCollector.loadAllGenKwData(ert, "default_1")
-            misfit = MisfitCollector.loadAllMisfitData(ert, "default_1")
-            dm = DesignMatrixReader.loadDesignMatrix("DesignMatrix.txt")
+    first_date = "2010-01-10"
+    last_date = "2015-06-23"
 
-            result = summary_data.join(gen_kw_data, how="inner")
-            result = result.join(misfit, how="inner")
-            result = result.join(dm, how="inner")
+    assert (
+        pytest.approx(result["SNAKE_OIL_PARAM:OP1_OCTAVES"][0][first_date]) == 3.947766
+    )
+    assert (
+        pytest.approx(result["SNAKE_OIL_PARAM:OP1_OCTAVES"][24][first_date]) == 4.206698
+    )
+    assert (
+        pytest.approx(result["SNAKE_OIL_PARAM:OP1_OCTAVES"][24][last_date]) == 4.206698
+    )
+    assert pytest.approx(result["EXTRA_FLOAT_COLUMN"][0][first_date]) == 0.08
 
-            first_date = "2010-01-10"
-            last_date = "2015-06-23"
+    assert result["EXTRA_INT_COLUMN"][0][first_date] == 125
+    assert result["EXTRA_STRING_COLUMN"][0][first_date] == "ON"
 
-            assert (
-                pytest.approx(result["SNAKE_OIL_PARAM:OP1_OCTAVES"][0][first_date])
-                == 3.947766
-            )
-            assert (
-                pytest.approx(result["SNAKE_OIL_PARAM:OP1_OCTAVES"][24][first_date])
-                == 4.206698
-            )
-            assert (
-                pytest.approx(result["SNAKE_OIL_PARAM:OP1_OCTAVES"][24][last_date])
-                == 4.206698
-            )
-            assert pytest.approx(result["EXTRA_FLOAT_COLUMN"][0][first_date]) == 0.08
+    assert pytest.approx(result["EXTRA_FLOAT_COLUMN"][0][last_date]) == 0.08
 
-            self.assertEqual(result["EXTRA_INT_COLUMN"][0][first_date], 125)
-            self.assertEqual(result["EXTRA_STRING_COLUMN"][0][first_date], "ON")
+    assert result["EXTRA_INT_COLUMN"][0][last_date] == 125
+    assert result["EXTRA_STRING_COLUMN"][0][last_date] == "ON"
 
-            assert pytest.approx(result["EXTRA_FLOAT_COLUMN"][0][last_date]) == 0.08
+    assert pytest.approx(result["EXTRA_FLOAT_COLUMN"][1][last_date]) == 0.07
 
-            self.assertEqual(result["EXTRA_INT_COLUMN"][0][last_date], 125)
-            self.assertEqual(result["EXTRA_STRING_COLUMN"][0][last_date], "ON")
+    assert result["EXTRA_INT_COLUMN"][1][last_date] == 225
+    assert result["EXTRA_STRING_COLUMN"][1][last_date] == "OFF"
 
-            assert pytest.approx(result["EXTRA_FLOAT_COLUMN"][1][last_date]) == 0.07
+    assert pytest.approx(result["MISFIT:FOPR"][0][last_date]) == 457.500978
+    assert pytest.approx(result["MISFIT:FOPR"][24][last_date]) == 1630.813862
 
-            self.assertEqual(result["EXTRA_INT_COLUMN"][1][last_date], 225)
-            self.assertEqual(result["EXTRA_STRING_COLUMN"][1][last_date], "OFF")
+    assert pytest.approx(result["MISFIT:TOTAL"][0][first_date]) == 468.479944
+    assert pytest.approx(result["MISFIT:TOTAL"][0][last_date]) == 468.479944
+    assert pytest.approx(result["MISFIT:TOTAL"][24][last_date]) == 1714.700855
 
-            assert pytest.approx(result["MISFIT:FOPR"][0][last_date]) == 457.500978
-            assert pytest.approx(result["MISFIT:FOPR"][24][last_date]) == 1630.813862
+    # pylint: disable=pointless-statement
+    with pytest.raises(KeyError):
+        # realization 13:
+        result.loc[60]
 
-            assert pytest.approx(result["MISFIT:TOTAL"][0][first_date]) == 468.479944
-            assert pytest.approx(result["MISFIT:TOTAL"][0][last_date]) == 468.479944
-            assert pytest.approx(result["MISFIT:TOTAL"][24][last_date]) == 1714.700855
-
-            # pylint: disable=pointless-statement
-            with self.assertRaises(KeyError):
-                # realization 13:
-                result.loc[60]
-
-            column_count = len(result.columns)
-            self.assertEqual(result.dtypes[0], np.float64)
-            self.assertEqual(result.dtypes[column_count - 1], object)
-            self.assertEqual(result.dtypes[column_count - 2], np.int64)
+    column_count = len(result.columns)
+    assert result.dtypes[0] == np.float64
+    assert result.dtypes[column_count - 1] == object
+    assert result.dtypes[column_count - 2] == np.int64

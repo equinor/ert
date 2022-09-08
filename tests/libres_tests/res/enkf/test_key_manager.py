@@ -1,60 +1,45 @@
 from ert._c_wrappers.enkf.key_manager import KeyManager
-from ert._c_wrappers.test import ErtTestContext
-
-from ...libres_utils import ResTest
 
 
-class KeyManagerTest(ResTest):
-    def setUp(self):
-        self.config_file = self.createTestPath("local/snake_oil/snake_oil.ert")
+def test_summary_keys(snake_oil_example):
+    ert = snake_oil_example
+    key_man = KeyManager(ert)
 
-    def test_summary_keys(self):
-        with ErtTestContext(self.config_file) as testContext:
-            ert = testContext.getErt()
-            key_man = KeyManager(ert)
+    assert len(key_man.summaryKeys()) == 46
+    assert "FOPT" in key_man.summaryKeys()
 
-            self.assertEqual(len(key_man.summaryKeys()), 46)
-            self.assertTrue("FOPT" in key_man.summaryKeys())
+    assert len(key_man.summaryKeysWithObservations()) == 2
+    assert "FOPR" in key_man.summaryKeysWithObservations()
+    assert key_man.isKeyWithObservations("FOPR")
 
-            self.assertEqual(len(key_man.summaryKeysWithObservations()), 2)
-            self.assertTrue("FOPR" in key_man.summaryKeysWithObservations())
-            self.assertTrue(key_man.isKeyWithObservations("FOPR"))
 
-    def test_gen_data_keys(self):
-        with ErtTestContext(self.config_file) as testContext:
-            ert = testContext.getErt()
-            key_man = KeyManager(ert)
+def test_gen_data_keys(snake_oil_example):
+    ert = snake_oil_example
+    key_man = KeyManager(ert)
 
-            self.assertEqual(len(key_man.genDataKeys()), 3)
-            self.assertTrue("SNAKE_OIL_WPR_DIFF@199" in key_man.genDataKeys())
+    assert len(key_man.genDataKeys()) == 3
+    assert "SNAKE_OIL_WPR_DIFF@199" in key_man.genDataKeys()
 
-            self.assertEqual(len(key_man.genDataKeysWithObservations()), 1)
-            self.assertTrue(
-                "SNAKE_OIL_WPR_DIFF@199" in key_man.genDataKeysWithObservations()
-            )
-            self.assertTrue(key_man.isKeyWithObservations("SNAKE_OIL_WPR_DIFF@199"))
+    assert len(key_man.genDataKeysWithObservations()) == 1
+    assert "SNAKE_OIL_WPR_DIFF@199" in key_man.genDataKeysWithObservations()
+    assert key_man.isKeyWithObservations("SNAKE_OIL_WPR_DIFF@199")
 
-    def test_gen_kw_keys(self):
-        with ErtTestContext(self.config_file) as testContext:
-            ert = testContext.getErt()
-            key_man = KeyManager(ert)
 
-            self.assertEqual(len(key_man.genKwKeys()), 10)
-            self.assertTrue(
-                "SNAKE_OIL_PARAM:BPR_555_PERSISTENCE" in key_man.genKwKeys()
-            )
+def test_gen_kw_keys(snake_oil_example):
+    ert = snake_oil_example
+    key_man = KeyManager(ert)
 
-    def test_gen_kw_priors(self):
-        with ErtTestContext(self.config_file) as testContext:
-            ert = testContext.getErt()
-            key_man = KeyManager(ert)
-            priors = key_man.gen_kw_priors()
-            self.assertEqual(len(priors["SNAKE_OIL_PARAM"]), 10)
-            self.assertTrue(
-                {
-                    "key": "OP1_PERSISTENCE",
-                    "function": "UNIFORM",
-                    "parameters": {"MIN": 0.01, "MAX": 0.4},
-                }
-                in priors["SNAKE_OIL_PARAM"]
-            )
+    assert len(key_man.genKwKeys()) == 10
+    assert "SNAKE_OIL_PARAM:BPR_555_PERSISTENCE" in key_man.genKwKeys()
+
+
+def test_gen_kw_priors(snake_oil_example):
+    ert = snake_oil_example
+    key_man = KeyManager(ert)
+    priors = key_man.gen_kw_priors()
+    assert len(priors["SNAKE_OIL_PARAM"]) == 10
+    assert {
+        "key": "OP1_PERSISTENCE",
+        "function": "UNIFORM",
+        "parameters": {"MIN": 0.01, "MAX": 0.4},
+    } in priors["SNAKE_OIL_PARAM"]
