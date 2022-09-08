@@ -1,183 +1,173 @@
 from argparse import Namespace
 
-from ert._c_wrappers.config.active_range import ActiveRange
-from ert._c_wrappers.test import ErtTestContext
+import pytest
+
+from ert._c_wrappers.enkf import EnKFMain
 from ert.libres_facade import LibresFacade
 from ert.shared.cli import model_factory
-from ert.shared.models.ensemble_experiment import EnsembleExperiment
-from ert.shared.models.ensemble_smoother import EnsembleSmoother
-from ert.shared.models.iterated_ensemble_smoother import IteratedEnsembleSmoother
-from ert.shared.models.multiple_data_assimilation import MultipleDataAssimilation
-from ert.shared.models.single_test_run import SingleTestRun
+from ert.shared.models import (
+    EnsembleExperiment,
+    EnsembleSmoother,
+    IteratedEnsembleSmoother,
+    MultipleDataAssimilation,
+    SingleTestRun,
+)
 
-from ..ert_utils import ErtTest
+
+@pytest.fixture
+def poly_example(setup_case):
+    res_config = setup_case("local/poly_example", "poly.ert")
+    ert = EnKFMain(res_config)
+    facade = LibresFacade(ert)
+    return ert, facade
 
 
-class ModelFactoryTest(ErtTest):
-    def test_custom_target_case_name(self):
-        config_file = self.createTestPath("local/poly_example/poly.ert")
-        with ErtTestContext(config_file) as work_area:
-            ert = work_area.getErt()
-            facade = LibresFacade(ert)
-            custom_name = "test"
-            args = Namespace(target_case=custom_name)
-            res = model_factory._target_case_name(
-                ert, args, facade.get_current_case_name()
-            )
-            self.assertEqual(custom_name, res)
+@pytest.mark.parametrize(
+    "target_case, format_mode, expected",
+    [
+        ("test", False, "test"),
+        (None, False, "default_smoother_update"),
+        (None, True, "default_%d"),
+    ],
+)
+def test_target_case_name(target_case, expected, format_mode, poly_example):
+    ert, facade = poly_example
+    args = Namespace(target_case=target_case)
+    assert (
+        model_factory._target_case_name(
+            ert, args, facade.get_current_case_name(), format_mode=format_mode
+        )
+        == expected
+    )
 
-    def test_default_target_case_name(self):
-        config_file = self.createTestPath("local/poly_example/poly.ert")
-        with ErtTestContext(config_file) as work_area:
-            ert = work_area.getErt()
-            facade = LibresFacade(ert)
 
-            args = Namespace(target_case=None)
-            res = model_factory._target_case_name(
-                ert, args, facade.get_current_case_name()
-            )
-            self.assertEqual("default_smoother_update", res)
+def test_default_realizations(poly_example):
+    _, facade = poly_example
+    args = Namespace(realizations=None)
+    assert (
+        model_factory._realizations(args, facade.get_ensemble_size())
+        == [True] * facade.get_ensemble_size()
+    )
 
-    def test_default_target_case_name_format_mode(self):
-        config_file = self.createTestPath("local/poly_example/poly.ert")
-        with ErtTestContext(config_file) as work_area:
-            ert = work_area.getErt()
-            facade = LibresFacade(ert)
 
-            args = Namespace(target_case=None)
-            res = model_factory._target_case_name(
-                ert, args, facade.get_current_case_name(), format_mode=True
-            )
-            self.assertEqual("default_%d", res)
+def test_custom_realizations(poly_example):
+    _, facade = poly_example
+    args = Namespace(realizations="0-4,7,8")
+    ensemble_size = facade.get_ensemble_size()
+    active_mask = [False] * ensemble_size
+    active_mask[0] = True
+    active_mask[1] = True
+    active_mask[2] = True
+    active_mask[3] = True
+    active_mask[4] = True
+    active_mask[7] = True
+    active_mask[8] = True
+    assert model_factory._realizations(args, ensemble_size) == active_mask
 
-    def test_default_realizations(self):
-        config_file = self.createTestPath("local/poly_example/poly.ert")
-        with ErtTestContext(config_file) as work_area:
-            ert = work_area.getErt()
 
-            args = Namespace(realizations=None)
-            ensemble_size = ert.getEnsembleSize()
-            res = model_factory._realizations(args, ensemble_size)
-            self.assertEqual([True] * 100, res)
+def test_init_iteration_number(poly_example):
+    ert, facade = poly_example
+    args = Namespace(iter_num=10, realizations=None)
+    model = model_factory._setup_ensemble_experiment(
+        ert, args, facade.get_ensemble_size(), "experiment_id"
+    )
+    run_context = model.create_context()
+    assert model._simulation_arguments["iter_num"] == 10
+    assert run_context.iteration == 10
 
-    def test_init_iteration_number(self):
-        config_file = self.createTestPath("local/poly_example/poly.ert")
-        with ErtTestContext(config_file) as work_area:
-            ert = work_area.getErt()
-            args = Namespace(iter_num=10, realizations=None)
-            model = model_factory._setup_ensemble_experiment(
-                ert, args, ert.getEnsembleSize(), "experiment_id"
-            )
-            run_context = model.create_context()
-            self.assertEqual(model._simulation_arguments["iter_num"], 10)
-            self.assertEqual(run_context.iteration, 10)
 
-    def test_custom_realizations(self):
-        config_file = self.createTestPath("local/poly_example/poly.ert")
-        with ErtTestContext(config_file) as work_area:
-            ert = work_area.getErt()
+def test_setup_single_test_run(poly_example):
+    ert, _ = poly_example
 
-            args = Namespace(realizations="0-4,7,8")
-            ensemble_size = ert.getEnsembleSize()
-            res = model_factory._realizations(args, ensemble_size)
-            self.assertEqual(
-                ActiveRange(rangestring="0-4,7,8", length=ensemble_size).mask, res
-            )
+    model = model_factory._setup_single_test_run(ert, "experiment_id")
+    assert isinstance(model, SingleTestRun)
+    assert len(model._simulation_arguments.keys()) == 1
+    assert "active_realizations" in model._simulation_arguments
 
-    def test_setup_single_test_run(self):
-        config_file = self.createTestPath("local/poly_example/poly.ert")
-        with ErtTestContext(config_file) as work_area:
-            ert = work_area.getErt()
+    model.create_context()
 
-            model = model_factory._setup_single_test_run(ert, "experiment_id")
-            self.assertTrue(isinstance(model, SingleTestRun))
-            self.assertEqual(1, len(model._simulation_arguments.keys()))
-            self.assertTrue("active_realizations" in model._simulation_arguments)
-            model.create_context()
 
-    def test_setup_ensemble_experiment(self):
-        config_file = self.createTestPath("local/poly_example/poly.ert")
-        with ErtTestContext(config_file) as work_area:
-            ert = work_area.getErt()
+def test_setup_ensemble_experiment(poly_example):
+    ert, facade = poly_example
+    args = Namespace(realizations=None, iter_num=1)
+    model = model_factory._setup_ensemble_experiment(
+        ert, args, facade.get_ensemble_size(), "experiment_id"
+    )
+    assert isinstance(model, EnsembleExperiment)
+    assert len(model._simulation_arguments.keys()) == 2
+    assert "active_realizations" in model._simulation_arguments
 
-            model = model_factory._setup_single_test_run(ert, "experiment_id")
-            self.assertTrue(isinstance(model, EnsembleExperiment))
-            self.assertEqual(1, len(model._simulation_arguments.keys()))
-            self.assertTrue("active_realizations" in model._simulation_arguments)
-            model.create_context()
+    model.create_context()
 
-    def test_setup_ensemble_smoother(self):
-        config_file = self.createTestPath("local/poly_example/poly.ert")
-        with ErtTestContext(config_file) as work_area:
-            ert = work_area.getErt()
-            facade = LibresFacade(ert)
-            args = Namespace(realizations="0-4,7,8", target_case="test_case")
 
-            model = model_factory._setup_ensemble_smoother(
-                ert,
-                args,
-                facade.get_ensemble_size(),
-                facade.get_current_case_name(),
-                "experiment_id",
-            )
-            self.assertTrue(isinstance(model, EnsembleSmoother))
-            self.assertEqual(3, len(model._simulation_arguments.keys()))
-            self.assertTrue("active_realizations" in model._simulation_arguments)
-            self.assertTrue("target_case" in model._simulation_arguments)
-            self.assertTrue("analysis_module" in model._simulation_arguments)
-            model.create_context()
+def test_setup_ensemble_smoother(poly_example):
+    ert, facade = poly_example
 
-    def test_setup_multiple_data_assimilation(self):
-        config_file = self.createTestPath("local/poly_example/poly.ert")
-        with ErtTestContext(config_file) as work_area:
-            ert = work_area.getErt()
-            facade = LibresFacade(ert)
-            args = Namespace(
-                realizations="0-4,7,8",
-                weights="6,4,2",
-                target_case="test_case_%d",
-                start_iteration="0",
-            )
+    args = Namespace(realizations="0-4,7,8", target_case="test_case")
 
-            model = model_factory._setup_multiple_data_assimilation(
-                ert,
-                args,
-                facade.get_ensemble_size(),
-                facade.get_current_case_name(),
-                "experiment_id",
-            )
-            self.assertTrue(isinstance(model, MultipleDataAssimilation))
-            self.assertEqual(5, len(model._simulation_arguments.keys()))
-            self.assertTrue("active_realizations" in model._simulation_arguments)
-            self.assertTrue("target_case" in model._simulation_arguments)
-            self.assertTrue("analysis_module" in model._simulation_arguments)
-            self.assertTrue("weights" in model._simulation_arguments)
-            self.assertTrue("start_iteration" in model._simulation_arguments)
-            model.create_context(0)
+    model = model_factory._setup_ensemble_smoother(
+        ert,
+        args,
+        facade.get_ensemble_size(),
+        facade.get_current_case_name(),
+        "experiment_id",
+    )
+    assert isinstance(model, EnsembleSmoother)
+    assert len(model._simulation_arguments.keys()) == 3
+    assert "active_realizations" in model._simulation_arguments
+    assert "target_case" in model._simulation_arguments
+    assert "analysis_module" in model._simulation_arguments
 
-    def test_setup_iterative_ensemble_smoother(self):
-        config_file = self.createTestPath("local/poly_example/poly.ert")
-        with ErtTestContext(config_file) as work_area:
-            ert = work_area.getErt()
-            facade = LibresFacade(ert)
-            args = Namespace(
-                realizations="0-4,7,8",
-                target_case="test_case_%d",
-                num_iterations="10",
-            )
+    model.create_context()
 
-            model = model_factory._setup_iterative_ensemble_smoother(
-                ert,
-                args,
-                facade.get_ensemble_size(),
-                facade.get_current_case_name(),
-                "experiment_id",
-            )
-            self.assertTrue(isinstance(model, IteratedEnsembleSmoother))
-            self.assertEqual(4, len(model._simulation_arguments.keys()))
-            self.assertTrue("active_realizations" in model._simulation_arguments)
-            self.assertTrue("target_case" in model._simulation_arguments)
-            self.assertTrue("analysis_module" in model._simulation_arguments)
-            self.assertTrue("num_iterations" in model._simulation_arguments)
-            self.assertTrue(facade.get_number_of_iterations() == 10)
-            model.create_context(0)
+
+def test_setup_multiple_data_assimilation(poly_example):
+    ert, facade = poly_example
+    args = Namespace(
+        realizations="0-4,7,8",
+        weights="6,4,2",
+        target_case="test_case_%d",
+        start_iteration="0",
+    )
+
+    model = model_factory._setup_multiple_data_assimilation(
+        ert,
+        args,
+        facade.get_ensemble_size(),
+        facade.get_current_case_name(),
+        "experiment_id",
+    )
+    assert isinstance(model, MultipleDataAssimilation)
+    assert len(model._simulation_arguments.keys()) == 5
+    assert "active_realizations" in model._simulation_arguments
+    assert "target_case" in model._simulation_arguments
+    assert "analysis_module" in model._simulation_arguments
+    assert "weights" in model._simulation_arguments
+    assert "start_iteration" in model._simulation_arguments
+    model.create_context(0)
+
+
+def test_setup_iterative_ensemble_smoother(poly_example):
+    ert, facade = poly_example
+    args = Namespace(
+        realizations="0-4,7,8",
+        target_case="test_case_%d",
+        num_iterations="10",
+    )
+
+    model = model_factory._setup_iterative_ensemble_smoother(
+        ert,
+        args,
+        facade.get_ensemble_size(),
+        facade.get_current_case_name(),
+        "experiment_id",
+    )
+    assert isinstance(model, IteratedEnsembleSmoother)
+    assert len(model._simulation_arguments.keys()) == 4
+    assert "active_realizations" in model._simulation_arguments
+    assert "target_case" in model._simulation_arguments
+    assert "analysis_module" in model._simulation_arguments
+    assert "num_iterations" in model._simulation_arguments
+    assert facade.get_number_of_iterations() == 10
+
+    model.create_context(0)
