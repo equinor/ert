@@ -146,3 +146,24 @@ def test_that_current_case_file_can_have_newline():
     (Path("storage") / "current_case").write_text("default\n")
     res_config = ResConfig("config.ert")
     EnKFMain(res_config)
+
+
+def test_assert_symlink_deleted(snake_oil_field_example):
+    ert = snake_oil_field_example
+
+    # create directory structure
+    run_context = ert.create_ensemble_experiment_run_context(iteration=0)
+    ert.createRunPath(run_context)
+
+    # replace field file with symlink
+    linkpath = f"{run_context[0].runpath}/permx.grdcel"
+    targetpath = f"{run_context[0].runpath}/permx.grdcel.target"
+    open(targetpath, "a").close()
+    os.remove(linkpath)
+    os.symlink(targetpath, linkpath)
+
+    # recreate directory structure
+    ert.createRunPath(run_context)
+
+    # ensure field symlink is replaced by file
+    assert not os.path.islink(linkpath)
