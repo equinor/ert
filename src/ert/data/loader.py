@@ -1,7 +1,7 @@
 from functools import partial
-import pandas as pd
 
 import deprecation  # type: ignore
+import pandas as pd
 
 # importlib.metadata added in python 3.8
 try:
@@ -89,7 +89,6 @@ def _extract_data(
 
 @deprecation.deprecated(
     deprecated_in="2.19",
-    removed_in="3.0",
     current_version=__version__,
     details="Use the data_loader_factory",
 )
@@ -107,7 +106,6 @@ def load_general_data(facade, obs_keys, case_name, include_data=True):
 
 @deprecation.deprecated(
     deprecated_in="2.19",
-    removed_in="3.0",
     current_version=__version__,
     details="Use the data_loader_factory",
 )
@@ -125,7 +123,6 @@ def load_summary_data(facade, obs_keys, case_name, include_data=True):
 
 @deprecation.deprecated(
     deprecated_in="2.19",
-    removed_in="3.0",
     current_version=__version__,
     details="Use the data_loader_factory",
 )
