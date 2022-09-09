@@ -84,42 +84,6 @@ def _extract_data(
     return pd.concat(data_map, axis=1).astype(float)
 
 
-@deprecation.deprecated(
-    deprecated_in="2.19",
-    removed_in="3.0",
-    current_version=__version__,
-    details="Use the data_loader_factory",
-)
-def load_general_data(facade, obs_keys, case_name, include_data=True):
-    return _extract_data(
-        facade,
-        obs_keys,
-        case_name,
-        _load_general_response,
-        _load_general_obs,
-        "GEN_OBS",
-        include_data=include_data,
-    )
-
-
-@deprecation.deprecated(
-    deprecated_in="2.19",
-    removed_in="3.0",
-    current_version=__version__,
-    details="Use the data_loader_factory",
-)
-def load_summary_data(facade, obs_keys, case_name, include_data=True):
-    return _extract_data(
-        facade,
-        obs_keys,
-        case_name,
-        _load_summary_response,
-        _load_summary_obs,
-        "SUMMARY_OBS",
-        include_data=include_data,
-    )
-
-
 def _create_multi_index(key_index, data_index):
     arrays = [key_index, data_index]
     tuples = list(zip(*arrays))

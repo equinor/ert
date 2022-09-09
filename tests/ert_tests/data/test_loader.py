@@ -77,54 +77,10 @@ def test_load_general_obs(facade, monkeypatch):
     assert all(result.values.flatten() == [10.0, 20.0, 30.0, 1.0, 2.0, 3.0])
 
 
-@pytest.mark.parametrize("func", [loader.load_general_data])
-def test_load_general_data(facade, monkeypatch, func):
-    def side_effect(val):
-        if val == "some_key@2":
-            return True
-        return False
-
-    mock_node = MagicMock()
-    mock_node.__len__.return_value = 3
-    mock_node.get_data_points.return_value = [10.0, 20.0, 30.0]
-    mock_node.get_std.return_value = [1.0, 2.0, 3.0]
-    mock_node.getIndex.side_effect = mocked_obs_node_get_index_nr
-
-    obs_mock = Mock()
-    obs_mock.getDataKey.return_value = "test_data_key"
-    obs_mock.getStepList.return_value = [1]
-    facade.get_observations.return_value = {"some_key": obs_mock}
-
-    facade.all_data_type_keys.return_value = ["some_key@2", "not_related_key@3"]
-    facade.is_gen_data_key.side_effect = side_effect
-
-    facade.load_gen_data.return_value = pd.DataFrame(data=[9.9, 19.9, 29.9, 39.9])
-    facade.get_observations()["some_key"].getNode.return_value = mock_node
-
-    facade.get_impl_type_name_for_obs_key.return_value = "GEN_OBS"
-
-    result = func(facade, "some_key", "a_random_name")
-
-    mock_node.get_data_points.assert_called_once_with()
-    mock_node.get_std.assert_called_once_with()
-
-    assert result.columns.to_list() == [
-        ("some_key", 0, 0),
-        ("some_key", 2, 2),
-        ("some_key", 3, 3),
-    ]
-    assert result.index.to_list() == ["OBS", "STD", 0]
-    assert all(
-        result.values.flatten() == [10.0, 20.0, 30.0, 1.0, 2.0, 3.0, 9.9, 29.9, 39.9]
-    )
-
-
-@pytest.mark.parametrize(
-    "func", [loader.data_loader_factory("SUMMARY_OBS"), loader.load_summary_data]
-)
-def test_load_summary_data(facade, monkeypatch, func):
+def test_load_summary_data(facade, monkeypatch):
     obs_mock = Mock()
     obs_mock.getStepList.return_value = [1, 2]
+    summary_loader = loader.data_loader_factory("SUMMARY_OBS")
 
     facade.get_observations.return_value = {"some_key": obs_mock}
     facade.load_observation_data.return_value = pd.DataFrame(
@@ -142,7 +98,7 @@ def test_load_summary_data(facade, monkeypatch, func):
     )
     facade.get_impl_type_name_for_obs_key.return_value = "SUMMARY_OBS"
 
-    result = func(facade, "some_key", "a_random_name")
+    result = summary_loader(facade, "some_key", "a_random_name")
 
     assert result.columns.to_list() == [
         ("some_key", "2010-01-10", 0),
@@ -249,12 +205,3 @@ def test_different_data_key(facade):
             Mock(),
             "SUMMARY_OBS",
         )
-
-
-@deprecation.fail_if_not_removed
-@pytest.mark.parametrize("func", [loader.load_general_data, loader.load_summary_data])
-def test_deprecated_entry_points(facade, monkeypatch, func):
-    facade = MagicMock()
-    extract_data = MagicMock()
-    monkeypatch.setattr(loader, "_extract_data", extract_data)
-    func(facade, ["obs_1", "obs_2"], "case_name", include_data=False)
