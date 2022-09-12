@@ -14,16 +14,14 @@ from ert.job_runner.reporting import Protobuf
 from ert.job_runner.reporting.message import Exited, Finish, Init, Running, Start
 from ert.job_runner.reporting.statemachine import TransitionError
 
-from ..libres_utils import _mock_ws_thread
 
-
-def test_report_with_successful_start_message_argument(unused_tcp_port):
+def test_report_with_successful_start_message_argument(unused_tcp_port, mock_ws_thread):
     host = "localhost"
     url = f"ws://{host}:{unused_tcp_port}"
     reporter = Protobuf(experiment_url=url)
     job1 = Job({"name": "job1", "stdout": "stdout", "stderr": "stderr"}, 0)
     lines = []
-    with _mock_ws_thread(host, unused_tcp_port, lines):
+    with mock_ws_thread(host, unused_tcp_port, lines):
         reporter.report(
             Init(
                 [job1],
@@ -52,7 +50,7 @@ def test_report_with_successful_start_message_argument(unused_tcp_port):
     assert os.path.basename(event.job.stderr) == "stderr"
 
 
-def test_report_with_failed_start_message_argument(unused_tcp_port):
+def test_report_with_failed_start_message_argument(unused_tcp_port, mock_ws_thread):
     host = "localhost"
     url = f"ws://{host}:{unused_tcp_port}"
     reporter = Protobuf(experiment_url=url)
@@ -60,7 +58,7 @@ def test_report_with_failed_start_message_argument(unused_tcp_port):
     job1 = Job({"name": "job1", "stdout": "stdout", "stderr": "stderr"}, 0)
 
     lines = []
-    with _mock_ws_thread(host, unused_tcp_port, lines):
+    with mock_ws_thread(host, unused_tcp_port, lines):
         reporter.report(
             Init(
                 [job1],
@@ -85,14 +83,14 @@ def test_report_with_failed_start_message_argument(unused_tcp_port):
     assert event.job.error == "massive_failure"
 
 
-def test_report_with_successful_exit_message_argument(unused_tcp_port):
+def test_report_with_successful_exit_message_argument(unused_tcp_port, mock_ws_thread):
     host = "localhost"
     url = f"ws://{host}:{unused_tcp_port}"
     reporter = Protobuf(experiment_url=url)
     job1 = Job({"name": "job1", "stdout": "stdout", "stderr": "stderr"}, 0)
 
     lines = []
-    with _mock_ws_thread(host, unused_tcp_port, lines):
+    with mock_ws_thread(host, unused_tcp_port, lines):
         reporter.report(
             Init(
                 [job1],
@@ -114,14 +112,14 @@ def test_report_with_successful_exit_message_argument(unused_tcp_port):
     assert event.job.status == JOB_SUCCESS
 
 
-def test_report_with_failed_exit_message_argument(unused_tcp_port):
+def test_report_with_failed_exit_message_argument(unused_tcp_port, mock_ws_thread):
     host = "localhost"
     url = f"ws://{host}:{unused_tcp_port}"
     reporter = Protobuf(experiment_url=url)
     job1 = Job({"name": "job1", "stdout": "stdout", "stderr": "stderr"}, 0)
 
     lines = []
-    with _mock_ws_thread(host, unused_tcp_port, lines):
+    with mock_ws_thread(host, unused_tcp_port, lines):
         reporter.report(
             Init(
                 [job1],
@@ -145,14 +143,14 @@ def test_report_with_failed_exit_message_argument(unused_tcp_port):
     assert event.job.exit_code == 1
 
 
-def test_report_with_running_message_argument(unused_tcp_port):
+def test_report_with_running_message_argument(unused_tcp_port, mock_ws_thread):
     host = "localhost"
     url = f"ws://{host}:{unused_tcp_port}"
     reporter = Protobuf(experiment_url=url)
     job1 = Job({"name": "job1", "stdout": "stdout", "stderr": "stderr"}, 0)
 
     lines = []
-    with _mock_ws_thread(host, unused_tcp_port, lines):
+    with mock_ws_thread(host, unused_tcp_port, lines):
         reporter.report(
             Init(
                 [job1],
@@ -176,14 +174,14 @@ def test_report_with_running_message_argument(unused_tcp_port):
     assert event.job.current_memory == 10
 
 
-def test_report_only_job_running_for_successful_run(unused_tcp_port):
+def test_report_only_job_running_for_successful_run(unused_tcp_port, mock_ws_thread):
     host = "localhost"
     url = f"ws://{host}:{unused_tcp_port}"
     reporter = Protobuf(experiment_url=url)
     job1 = Job({"name": "job1", "stdout": "stdout", "stderr": "stderr"}, 0)
 
     lines = []
-    with _mock_ws_thread(host, unused_tcp_port, lines):
+    with mock_ws_thread(host, unused_tcp_port, lines):
         reporter.report(
             Init(
                 [job1],
@@ -201,14 +199,14 @@ def test_report_only_job_running_for_successful_run(unused_tcp_port):
     assert len(lines) == 1
 
 
-def test_report_with_failed_finish_message_argument(unused_tcp_port):
+def test_report_with_failed_finish_message_argument(unused_tcp_port, mock_ws_thread):
     host = "localhost"
     url = f"ws://{host}:{unused_tcp_port}"
     reporter = Protobuf(experiment_url=url)
     job1 = Job({"name": "job1", "stdout": "stdout", "stderr": "stderr"}, 0)
 
     lines = []
-    with _mock_ws_thread(host, unused_tcp_port, lines):
+    with mock_ws_thread(host, unused_tcp_port, lines):
         reporter.report(
             Init(
                 [job1],
@@ -226,13 +224,13 @@ def test_report_with_failed_finish_message_argument(unused_tcp_port):
     assert len(lines) == 1
 
 
-def test_report_inconsistent_events(unused_tcp_port):
+def test_report_inconsistent_events(unused_tcp_port, mock_ws_thread):
     host = "localhost"
     url = f"ws://{host}:{unused_tcp_port}"
     reporter = Protobuf(experiment_url=url)
 
     lines = []
-    with _mock_ws_thread(host, unused_tcp_port, lines):
+    with mock_ws_thread(host, unused_tcp_port, lines):
         with pytest.raises(
             TransitionError,
             match=r"Illegal transition None -> \(MessageType<Finish>,\)",

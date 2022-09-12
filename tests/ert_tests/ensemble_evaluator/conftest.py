@@ -17,7 +17,7 @@ from ert.ensemble_evaluator.snapshot import SnapshotBuilder
 from ert.shared.ensemble_evaluator.config import EvaluatorServerConfig
 from ert.shared.ensemble_evaluator.evaluator import EnsembleEvaluator
 
-from .ensemble_evaluator_utils import TestEnsemble
+from .ensemble_mock import EnsembleMock
 
 
 @pytest.fixture
@@ -209,7 +209,7 @@ def make_ee_config():
 
 @pytest.fixture
 def evaluator(make_ee_config):
-    ensemble = TestEnsemble(0, 2, 1, 2, id_="0")
+    ensemble = EnsembleMock(0, 2, 1, 2, id_="0")
     ee = EnsembleEvaluator(
         ensemble,
         make_ee_config(),

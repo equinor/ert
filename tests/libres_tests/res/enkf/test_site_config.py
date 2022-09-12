@@ -18,12 +18,10 @@ import json
 import os
 from pathlib import Path
 
+import pytest
 from ecl.util.test import TestAreaContext
-from pytest import MonkeyPatch
 
 from ert._c_wrappers.enkf import ConfigKeys, EnKFMain, ResConfig, SiteConfig
-
-from ...libres_utils import ResTest, tmpdir
 
 
 def test_umask_is_written_to_json(setup_case):
@@ -35,108 +33,88 @@ def test_umask_is_written_to_json(setup_case):
     assert json.load(Path("simulations/run0/jobs.json").open())["umask"] == "0022"
 
 
-class SiteConfigTest(ResTest):
-    def setUp(self):
-        self.case_directory = self.createTestPath("local/simple_config/")
-        self.snake_case_directory = self.createTestPath("local/snake_oil/")
+def test_invalid_user_config():
+    with TestAreaContext("void land"):
+        with pytest.raises(IOError):
+            SiteConfig("this/is/not/a/file")
 
-        self.monkeypatch = MonkeyPatch()
 
-    def tearDown(self):
-        self.monkeypatch.undo()
+def test_constructors(snake_oil_example):
+    ert_site_config = SiteConfig.getLocation()
+    ert_share_path = os.path.dirname(ert_site_config)
 
-    def test_invalid_user_config(self):
-        with TestAreaContext("void land"):
-            with self.assertRaises(IOError):
-                SiteConfig("this/is/not/a/file")
+    assert snake_oil_example.site_config == SiteConfig(
+        config_dict={
+            ConfigKeys.INSTALL_JOB: [
+                {
+                    ConfigKeys.NAME: "SNAKE_OIL_SIMULATOR",
+                    ConfigKeys.PATH: os.getcwd()
+                    + "/snake_oil/jobs/SNAKE_OIL_SIMULATOR",
+                },
+                {
+                    ConfigKeys.NAME: "SNAKE_OIL_NPV",
+                    ConfigKeys.PATH: os.getcwd() + "/snake_oil/jobs/SNAKE_OIL_NPV",
+                },
+                {
+                    ConfigKeys.NAME: "SNAKE_OIL_DIFF",
+                    ConfigKeys.PATH: os.getcwd() + "/snake_oil/jobs/SNAKE_OIL_DIFF",
+                },
+            ],
+            ConfigKeys.INSTALL_JOB_DIRECTORY: [
+                ert_share_path + "/forward-models/res",
+                ert_share_path + "/forward-models/shell",
+                ert_share_path + "/forward-models/templating",
+                ert_share_path + "/forward-models/old_style",
+            ],
+            ConfigKeys.SETENV: [
+                {ConfigKeys.NAME: "SILLY_VAR", ConfigKeys.VALUE: "silly-valye"},
+                {
+                    ConfigKeys.NAME: "OPTIONAL_VAR",
+                    ConfigKeys.VALUE: "optional-value",
+                },
+            ],
+            ConfigKeys.LICENSE_PATH: "some/random/path",
+            ConfigKeys.UMASK: 18,
+        }
+    )
 
-    def test_init(self):
-        with TestAreaContext("site_config_init_test") as work_area:
-            work_area.copy_directory(self.case_directory)
-            config_file = "simple_config/minimum_config"
-            site_config = SiteConfig(user_config_file=config_file)
-            self.assertIsNotNone(site_config)
 
-    def test_constructors(self):
-        with TestAreaContext("site_config_constructor_test") as work_area:
-            work_area.copy_directory(self.snake_case_directory)
-            config_file = "snake_oil/snake_oil.ert"
+def test_2_inits_raises():
+    with pytest.raises(ValueError):
+        SiteConfig(user_config_file="a_config", config_dict={"some": "config"})
 
-            ERT_SITE_CONFIG = SiteConfig.getLocation()
-            ERT_SHARE_PATH = os.path.dirname(ERT_SITE_CONFIG)
-            snake_config_dict = {
-                ConfigKeys.INSTALL_JOB: [
-                    {
-                        ConfigKeys.NAME: "SNAKE_OIL_SIMULATOR",
-                        ConfigKeys.PATH: os.getcwd()
-                        + "/snake_oil/jobs/SNAKE_OIL_SIMULATOR",
-                    },
-                    {
-                        ConfigKeys.NAME: "SNAKE_OIL_NPV",
-                        ConfigKeys.PATH: os.getcwd() + "/snake_oil/jobs/SNAKE_OIL_NPV",
-                    },
-                    {
-                        ConfigKeys.NAME: "SNAKE_OIL_DIFF",
-                        ConfigKeys.PATH: os.getcwd() + "/snake_oil/jobs/SNAKE_OIL_DIFF",
-                    },
-                ],
-                ConfigKeys.INSTALL_JOB_DIRECTORY: [
-                    ERT_SHARE_PATH + "/forward-models/res",
-                    ERT_SHARE_PATH + "/forward-models/shell",
-                    ERT_SHARE_PATH + "/forward-models/templating",
-                    ERT_SHARE_PATH + "/forward-models/old_style",
-                ],
-                ConfigKeys.SETENV: [
-                    {ConfigKeys.NAME: "SILLY_VAR", ConfigKeys.VALUE: "silly-valye"},
-                    {
-                        ConfigKeys.NAME: "OPTIONAL_VAR",
-                        ConfigKeys.VALUE: "optional-value",
-                    },
-                ],
-                ConfigKeys.LICENSE_PATH: "some/random/path",
-                ConfigKeys.UMASK: 18,
-            }
 
-            site_config_user_file = SiteConfig(user_config_file=config_file)
-            site_config_dict = SiteConfig(config_dict=snake_config_dict)
-            self.assertEqual(site_config_dict, site_config_user_file)
-
-            with self.assertRaises(ValueError):
-                SiteConfig(user_config_file=config_file, config_dict=snake_config_dict)
-
-    @tmpdir()
-    def test_site_config_hook_workflow(self):
-        site_config_filename = "test_site_config"
-        test_config_filename = "test_config"
-        site_config_content = """
+def test_site_config_hook_workflow(monkeypatch, tmp_path):
+    site_config_filename = str(tmp_path / "test_site_config")
+    test_config_filename = str(tmp_path / "test_config")
+    site_config_content = """
 QUEUE_SYSTEM LOCAL
 LOAD_WORKFLOW_JOB ECHO_WORKFLOW_JOB
 LOAD_WORKFLOW ECHO_WORKFLOW
 HOOK_WORKFLOW ECHO_WORKFLOW PRE_SIMULATION
 """
 
-        with open(site_config_filename, "w") as fh:
-            fh.write(site_config_content)
+    with open(site_config_filename, "w") as fh:
+        fh.write(site_config_content)
 
-        with open(test_config_filename, "w") as fh:
-            fh.write("NUM_REALIZATIONS 1\n")
+    with open(test_config_filename, "w") as fh:
+        fh.write("NUM_REALIZATIONS 1\n")
 
-        with open("ECHO_WORKFLOW_JOB", "w") as fh:
-            fh.write(
-                """INTERNAL False
+    with open("ECHO_WORKFLOW_JOB", "w") as fh:
+        fh.write(
+            """INTERNAL False
 EXECUTABLE echo
 MIN_ARG 1
 """
-            )
-
-        with open("ECHO_WORKFLOW", "w") as fh:
-            fh.write("ECHO_WORKFLOW_JOB hello")
-
-        self.monkeypatch.setenv("ERT_SITE_CONFIG", site_config_filename)
-
-        res_config = ResConfig(user_config_file=test_config_filename)
-        self.assertTrue(len(res_config.hook_manager) == 1)
-        self.assertEqual(
-            res_config.hook_manager[0].getWorkflow().src_file,
-            os.path.join(os.getcwd(), "ECHO_WORKFLOW"),
         )
+
+    with open(tmp_path / "ECHO_WORKFLOW", "w") as fh:
+        fh.write("ECHO_WORKFLOW_JOB hello")
+
+    monkeypatch.setenv("ERT_SITE_CONFIG", site_config_filename)
+
+    res_config = ResConfig(user_config_file=test_config_filename)
+    assert len(res_config.hook_manager) == 1
+    assert res_config.hook_manager[0].getWorkflow().src_file == os.path.join(
+        os.getcwd(), "ECHO_WORKFLOW"
+    )

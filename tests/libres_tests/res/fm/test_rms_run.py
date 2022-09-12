@@ -19,18 +19,13 @@ import shutil
 import stat
 import subprocess
 import sys
-import unittest
 from unittest.mock import patch
 
 import pkg_resources
 import pytest
-from ecl.util.test import TestAreaContext
-from pytest import MonkeyPatch
 
 from ert._c_wrappers.fm.rms import RMSRun, RMSRunException
 from ert._c_wrappers.fm.rms import run as rms_run
-
-from ...libres_utils import ResTest, tmpdir
 
 TEST_ENV_WRAPPER = """\
 #!/usr/bin/env bash
@@ -53,11 +48,7 @@ $@
 """
 
 
-def _mocked_run(**kwargs):
-    print(kwargs)
-
-
-@tmpdir()
+@pytest.mark.usefixtures("setup_tmpdir")
 @pytest.mark.parametrize(
     "test_input,expected_result",
     [
@@ -66,9 +57,7 @@ def _mocked_run(**kwargs):
         (2, 132312123),
     ],
 )
-def test_run_class_multi_seed(
-    tmpdir, monkeypatch, test_input, expected_result, source_root
-):
+def test_run_class_multi_seed(monkeypatch, test_input, expected_result, source_root):
     with open("rms_config.yml", "w") as f:
         f.write(f"executable:  {os.getcwd()}/bin/rms")
 
@@ -91,620 +80,584 @@ def test_run_class_multi_seed(
     assert r.seed == expected_result
 
 
-class RMSRunTest(ResTest):
-    def setUp(self):
-        self.monkeypatch = MonkeyPatch()
-        pass
+@pytest.mark.usefixtures("setup_tmpdir")
+def test_create():
+    with pytest.raises(OSError):
+        RMSRun(0, "/project/does/not/exist", "workflow")
 
-    def tearDown(self):
-        self.monkeypatch.undo()
+        os.mkdir("rms")
+        RMSRun(0, "rms", "workflow")
 
-    def test_create(self):
-        with self.assertRaises(OSError):
-            RMSRun(0, "/project/does/not/exist", "workflow")
 
-        with TestAreaContext("test_create"):
-            os.mkdir("rms")
-            RMSRun(0, "rms", "workflow")
+@pytest.mark.usefixtures("setup_tmpdir")
+def test_run_class(monkeypatch, source_root):
+    with open("rms_config.yml", "w") as f:
+        f.write(f"executable:  {os.getcwd()}/bin/rms")
 
-    def test_run_class(self):
-        with TestAreaContext("test_run"):
-            with open("rms_config.yml", "w") as f:
-                f.write(f"executable:  {os.getcwd()}/bin/rms")
+    os.mkdir("run_path")
+    os.mkdir("bin")
+    os.mkdir("project")
+    shutil.copy(os.path.join(source_root, "tests/libres_tests/res/fm/rms"), "bin")
+    monkeypatch.setenv("RMS_SITE_CONFIG", "rms_config.yml")
 
-            os.mkdir("run_path")
-            os.mkdir("bin")
-            os.mkdir("project")
-            shutil.copy(
-                os.path.join(self.SOURCE_ROOT, "tests/libres_tests/res/fm/rms"), "bin"
-            )
-            self.monkeypatch.setenv("RMS_SITE_CONFIG", "rms_config.yml")
+    action = {"exit_status": 0}
+    with open("run_path/action.json", "w") as f:
+        f.write(json.dumps(action))
 
-            action = {"exit_status": 0}
-            with open("run_path/action.json", "w") as f:
-                f.write(json.dumps(action))
+    r = RMSRun(0, "project", "workflow", run_path="run_path", allow_no_env=True)
+    r.run()
 
-            r = RMSRun(0, "project", "workflow", run_path="run_path", allow_no_env=True)
-            r.run()
+    action = {"exit_status": 1}
+    with open("run_path/action.json", "w") as f:
+        f.write(json.dumps(action))
 
-            # -----------------------------------------------------------------
+    r = RMSRun(0, "project", "workflow", run_path="run_path", allow_no_env=True)
+    with pytest.raises(RMSRunException):
+        r.run()
 
-            action = {"exit_status": 1}
-            with open("run_path/action.json", "w") as f:
-                f.write(json.dumps(action))
+    action = {"exit_status": 0}
+    with open("run_path/action.json", "w") as f:
+        f.write(json.dumps(action))
 
-            r = RMSRun(0, "project", "workflow", run_path="run_path", allow_no_env=True)
-            with self.assertRaises(RMSRunException):
-                r.run()
+    r = RMSRun(
+        0,
+        "project",
+        "workflow",
+        run_path="run_path",
+        target_file="some_file",
+        allow_no_env=True,
+    )
+    with pytest.raises(RMSRunException):
+        r.run()
 
-            # -----------------------------------------------------------------
+    action = {
+        "exit_status": 0,
+        "target_file": os.path.join(os.getcwd(), "some_file"),
+    }
+    with open("run_path/action.json", "w") as f:
+        f.write(json.dumps(action))
 
-            action = {"exit_status": 0}
-            with open("run_path/action.json", "w") as f:
-                f.write(json.dumps(action))
+    r = RMSRun(
+        0,
+        "project",
+        "workflow",
+        run_path="run_path",
+        target_file="some_file",
+        allow_no_env=True,
+    )
+    r.run()
 
-            r = RMSRun(
-                0,
-                "project",
-                "workflow",
-                run_path="run_path",
-                target_file="some_file",
-                allow_no_env=True,
-            )
-            with self.assertRaises(RMSRunException):
-                r.run()
 
-            # -----------------------------------------------------------------
+@pytest.mark.usefixtures("setup_tmpdir")
+def test_run(monkeypatch, source_root):
+    with open("rms_config.yml", "w") as f:
+        f.write(f"executable:  {os.getcwd()}/bin/rms")
 
-            action = {
-                "exit_status": 0,
-                "target_file": os.path.join(os.getcwd(), "some_file"),
-            }
-            with open("run_path/action.json", "w") as f:
-                f.write(json.dumps(action))
+    os.mkdir("run_path")
+    os.mkdir("bin")
+    os.mkdir("project")
+    shutil.copy(os.path.join(source_root, "tests/libres_tests/res/fm/rms"), "bin")
+    monkeypatch.setenv("RMS_SITE_CONFIG", "rms_config.yml")
 
-            r = RMSRun(
-                0,
-                "project",
-                "workflow",
-                run_path="run_path",
-                target_file="some_file",
-                allow_no_env=True,
-            )
-            r.run()
+    action = {"exit_status": 0}
+    with open("run_path/action.json", "w") as f:
+        f.write(json.dumps(action))
 
-    def test_run(self):
-        with TestAreaContext("test_run"):
-            with open("rms_config.yml", "w") as f:
-                f.write(f"executable:  {os.getcwd()}/bin/rms")
+    rms_run(0, "project", "workflow", run_path="run_path", allow_no_env=True)
 
-            os.mkdir("run_path")
-            os.mkdir("bin")
-            os.mkdir("project")
-            shutil.copy(
-                os.path.join(self.SOURCE_ROOT, "tests/libres_tests/res/fm/rms"), "bin"
-            )
-            self.monkeypatch.setenv("RMS_SITE_CONFIG", "rms_config.yml")
+    action = {"exit_status": 1}
+    with open("run_path/action.json", "w") as f:
+        f.write(json.dumps(action))
 
-            action = {"exit_status": 0}
-            with open("run_path/action.json", "w") as f:
-                f.write(json.dumps(action))
+    with pytest.raises(RMSRunException):
+        rms_run(0, "project", "workflow", run_path="run_path", allow_no_env=True)
 
-            rms_run(0, "project", "workflow", run_path="run_path", allow_no_env=True)
+    action = {"exit_status": 0}
+    with open("run_path/action.json", "w") as f:
+        f.write(json.dumps(action))
 
-            # -----------------------------------------------------------------
+    with pytest.raises(RMSRunException):
+        rms_run(
+            0,
+            "project",
+            "workflow",
+            run_path="run_path",
+            target_file="some_file",
+            allow_no_env=True,
+        )
 
-            action = {"exit_status": 1}
-            with open("run_path/action.json", "w") as f:
-                f.write(json.dumps(action))
+    action = {
+        "exit_status": 0,
+        "target_file": os.path.join(os.getcwd(), "some_file"),
+    }
 
-            with self.assertRaises(RMSRunException):
-                rms_run(
-                    0, "project", "workflow", run_path="run_path", allow_no_env=True
-                )
+    with open("run_path/action.json", "w") as f:
+        f.write(json.dumps(action))
+    rms_run(
+        0,
+        "project",
+        "workflow",
+        run_path="run_path",
+        target_file="some_file",
+        allow_no_env=True,
+    )
 
-            # -----------------------------------------------------------------
 
-            action = {"exit_status": 0}
-            with open("run_path/action.json", "w") as f:
-                f.write(json.dumps(action))
+@pytest.mark.usefixtures("setup_tmpdir")
+@pytest.mark.parametrize(
+    "val, carry_over",
+    [
+        ("    ", False),
+        ("", False),
+        (None, False),
+        ("SOME_VAL", True),
+    ],
+)
+def test_rms_load_env(monkeypatch, source_root, val, carry_over):
+    # Setup RMS project
+    with open("rms_config.yml", "w") as f:
+        json.dump(
+            {
+                "executable": os.path.realpath("bin/rms"),
+            },
+            f,
+        )
 
-            with self.assertRaises(RMSRunException):
-                rms_run(
-                    0,
-                    "project",
-                    "workflow",
-                    run_path="run_path",
-                    target_file="some_file",
-                    allow_no_env=True,
-                )
+    with open("rms_exec_env.json", "w") as f:
+        json.dump(
+            {
+                "RMS_TEST_VAR": val,
+            },
+            f,
+        )
 
-            # -----------------------------------------------------------------
+    os.mkdir("run_path")
+    os.mkdir("bin")
+    os.mkdir("project")
+    shutil.copy(
+        os.path.join(source_root, "tests/libres_tests/res/fm/rms"),
+        "bin",
+    )
+    monkeypatch.setenv("RMS_SITE_CONFIG", "rms_config.yml")
 
-            action = {
-                "exit_status": 0,
-                "target_file": os.path.join(os.getcwd(), "some_file"),
-            }
+    action = {"exit_status": 0}
+    with open("run_path/action.json", "w") as f:
+        f.write(json.dumps(action))
 
-            with open("run_path/action.json", "w") as f:
-                f.write(json.dumps(action))
-            rms_run(
-                0,
-                "project",
-                "workflow",
-                run_path="run_path",
-                target_file="some_file",
-                allow_no_env=True,
-            )
-
-    def test_rms_load_env(self):
-        test_bed = [
-            ("    ", False),
-            ("", False),
-            (None, False),
-            ("SOME_VAL", True),
+    rms_exec = pkg_resources.resource_filename(
+        "ert.shared", "share/ert/forward-models/res/script/rms"
+    )
+    subprocess.check_call(
+        [
+            rms_exec,
+            "--run-path",
+            "run_path",
+            "0",
+            "--version",
+            "10.4",
+            "project",
+            "--import-path",
+            "./",
+            "--export-path",
+            "./",
+            "workflow",
+            "-a",
         ]
-        for val, carry_over in test_bed:
-            with TestAreaContext("test_drop_path"):
-                # Setup RMS project
-                with open("rms_config.yml", "w") as f:
-                    json.dump(
-                        {
-                            "executable": os.path.realpath("bin/rms"),
-                        },
-                        f,
-                    )
+    )
 
-                with open("rms_exec_env.json", "w") as f:
-                    json.dump(
-                        {
-                            "RMS_TEST_VAR": val,
-                        },
-                        f,
-                    )
+    with open("run_path/env.json") as f:
+        env = json.load(f)
 
-                os.mkdir("run_path")
-                os.mkdir("bin")
-                os.mkdir("project")
-                shutil.copy(
-                    os.path.join(self.SOURCE_ROOT, "tests/libres_tests/res/fm/rms"),
-                    "bin",
-                )
-                self.monkeypatch.setenv("RMS_SITE_CONFIG", "rms_config.yml")
+    if carry_over:
+        assert "RMS_TEST_VAR" in env
+    else:
+        assert "RMS_TEST_VAR" not in env
 
-                action = {"exit_status": 0}
-                with open("run_path/action.json", "w") as f:
-                    f.write(json.dumps(action))
 
-                rms_exec = pkg_resources.resource_filename(
-                    "ert.shared", "share/ert/forward-models/res/script/rms"
-                )
-                subprocess.check_call(
-                    [
-                        rms_exec,
-                        "--run-path",
-                        "run_path",
-                        "0",
-                        "--version",
-                        "10.4",
-                        "project",
-                        "--import-path",
-                        "./",
-                        "--export-path",
-                        "./",
-                        "workflow",
-                        "-a",
-                    ]
-                )
+@pytest.mark.usefixtures("setup_tmpdir")
+@pytest.mark.parametrize(
+    "val, carry_over",
+    [
+        ("    ", False),
+        ("", False),
+        (None, False),
+        ("SOME_VAL", True),
+    ],
+)
+def test_rms_drop_env(monkeypatch, source_root, val, carry_over):
+    # Setup RMS project
+    with open("rms_config.yml", "w") as f:
+        json.dump(
+            {
+                "executable": os.path.realpath("bin/rms"),
+            },
+            f,
+        )
 
-                with open("run_path/env.json") as f:
-                    env = json.load(f)
+    with open("rms_exec_env.json", "w") as f:
+        json.dump(
+            {
+                "RMS_TEST_VAR": val,
+            },
+            f,
+        )
 
-                if carry_over:
-                    self.assertIn("RMS_TEST_VAR", env)
-                else:
-                    self.assertNotIn("RMS_TEST_VAR", env)
+    os.mkdir("run_path")
+    os.mkdir("bin")
+    os.mkdir("project")
+    shutil.copy(
+        os.path.join(source_root, "tests/libres_tests/res/fm/rms"),
+        "bin",
+    )
+    monkeypatch.setenv("RMS_SITE_CONFIG", "rms_config.yml")
 
-    def test_rms_drop_env(self):
-        test_bed = [
-            ("    ", False),
-            ("", False),
-            (None, False),
-            ("SOME_VAL", True),
+    action = {"exit_status": 0}
+    with open("run_path/action.json", "w") as f:
+        f.write(json.dumps(action))
+
+    rms_exec = pkg_resources.resource_filename(
+        "ert.shared", "share/ert/forward-models/res/script/rms"
+    )
+    subprocess.check_call(
+        [
+            rms_exec,
+            "--run-path",
+            "run_path",
+            "0",
+            "--version",
+            "10.4",
+            "project",
+            "--import-path",
+            "./",
+            "--export-path",
+            "./",
+            "workflow",
+            "-a",
         ]
-        for val, carry_over in test_bed:
-            with TestAreaContext("test_drop_path"):
-                # Setup RMS project
-                with open("rms_config.yml", "w") as f:
-                    json.dump(
-                        {
-                            "executable": os.path.realpath("bin/rms"),
-                        },
-                        f,
-                    )
+    )
 
-                with open("rms_exec_env.json", "w") as f:
-                    json.dump(
-                        {
-                            "RMS_TEST_VAR": val,
-                        },
-                        f,
-                    )
+    with open("run_path/env.json") as f:
+        env = json.load(f)
 
-                os.mkdir("run_path")
-                os.mkdir("bin")
-                os.mkdir("project")
-                shutil.copy(
-                    os.path.join(self.SOURCE_ROOT, "tests/libres_tests/res/fm/rms"),
-                    "bin",
-                )
-                self.monkeypatch.setenv("RMS_SITE_CONFIG", "rms_config.yml")
+    if carry_over:
+        assert "RMS_TEST_VAR" in env
+    else:
+        assert "RMS_TEST_VAR" not in env
 
-                action = {"exit_status": 0}
-                with open("run_path/action.json", "w") as f:
-                    f.write(json.dumps(action))
 
-                rms_exec = pkg_resources.resource_filename(
-                    "ert.shared", "share/ert/forward-models/res/script/rms"
-                )
-                subprocess.check_call(
-                    [
-                        rms_exec,
-                        "--run-path",
-                        "run_path",
-                        "0",
-                        "--version",
-                        "10.4",
-                        "project",
-                        "--import-path",
-                        "./",
-                        "--export-path",
-                        "./",
-                        "workflow",
-                        "-a",
-                    ]
-                )
+@pytest.mark.usefixtures("setup_tmpdir")
+def test_run_class_with_existing_target_file(monkeypatch, source_root):
+    with open("rms_config.yml", "w") as f:
+        f.write(f"executable:  {os.getcwd()}/bin/rms")
 
-                with open("run_path/env.json") as f:
-                    env = json.load(f)
+    os.mkdir("run_path")
+    os.mkdir("bin")
+    os.mkdir("project")
+    shutil.copy(os.path.join(source_root, "tests/libres_tests/res/fm/rms"), "bin")
+    monkeypatch.setenv("RMS_SITE_CONFIG", "rms_config.yml")
 
-                if carry_over:
-                    self.assertIn("RMS_TEST_VAR", env)
-                else:
-                    self.assertNotIn("RMS_TEST_VAR", env)
+    target_file = os.path.join(os.getcwd(), "rms_target_file")
+    action = {
+        "exit_status": 0,
+        "target_file": target_file,
+    }
+    with open("run_path/action.json", "w") as f:
+        f.write(json.dumps(action))
 
-    def test_run_class_with_existing_target_file(self):
-        with TestAreaContext("test_run_existing_target"):
-            with open("rms_config.yml", "w") as f:
-                f.write(f"executable:  {os.getcwd()}/bin/rms")
+    with open(target_file, "w") as f:
+        f.write("This is a dummy target file")
 
-            os.mkdir("run_path")
-            os.mkdir("bin")
-            os.mkdir("project")
-            shutil.copy(
-                os.path.join(self.SOURCE_ROOT, "tests/libres_tests/res/fm/rms"), "bin"
-            )
-            self.monkeypatch.setenv("RMS_SITE_CONFIG", "rms_config.yml")
+    r = RMSRun(
+        0,
+        "project",
+        "workflow",
+        run_path="run_path",
+        target_file=target_file,
+        allow_no_env=True,
+    )
+    r.run()
 
-            target_file = os.path.join(os.getcwd(), "rms_target_file")
-            action = {
-                "exit_status": 0,
-                "target_file": target_file,
-            }
-            with open("run_path/action.json", "w") as f:
-                f.write(json.dumps(action))
 
-            with open(target_file, "w") as f:
-                f.write("This is a dummy target file")
+@pytest.mark.usefixtures("setup_tmpdir")
+def test_run_wrapper(monkeypatch, source_root):
+    wrapper_file_name = f"{os.getcwd()}/bin/rms_wrapper"
+    with open("rms_config.yml", "w") as f:
+        f.write(f"executable:  {os.getcwd()}/bin/rms\n")
+        f.write(f"wrapper:  {wrapper_file_name}")
 
-            r = RMSRun(
-                0,
-                "project",
-                "workflow",
-                run_path="run_path",
-                target_file=target_file,
-                allow_no_env=True,
-            )
-            r.run()
+    os.mkdir("run_path")
+    os.mkdir("bin")
+    os.mkdir("project")
+    shutil.copy(os.path.join(source_root, "tests/libres_tests/res/fm/rms"), "bin")
 
-    def test_run_wrapper(self):
-        with TestAreaContext("test_run"):
-            wrapper_file_name = f"{os.getcwd()}/bin/rms_wrapper"
-            with open("rms_config.yml", "w") as f:
-                f.write(f"executable:  {os.getcwd()}/bin/rms\n")
-                f.write(f"wrapper:  {wrapper_file_name}")
+    with open(wrapper_file_name, "w") as f:
+        f.write("#!/bin/bash\n")
+        f.write("exec ${@:1}")
+    st = os.stat(wrapper_file_name)
+    os.chmod(wrapper_file_name, st.st_mode | stat.S_IEXEC)
+    monkeypatch.setenv("RMS_SITE_CONFIG", "rms_config.yml")
+    monkeypatch.setenv("PATH", f"{os.getcwd()}/bin:{os.environ['PATH']}")
 
-            os.mkdir("run_path")
-            os.mkdir("bin")
-            os.mkdir("project")
-            shutil.copy(
-                os.path.join(self.SOURCE_ROOT, "tests/libres_tests/res/fm/rms"), "bin"
-            )
+    action = {"exit_status": 0}
+    with open("run_path/action.json", "w") as f:
+        f.write(json.dumps(action))
 
-            with open(wrapper_file_name, "w") as f:
-                f.write("#!/bin/bash\n")
-                f.write("exec ${@:1}")
-            st = os.stat(wrapper_file_name)
-            os.chmod(wrapper_file_name, st.st_mode | stat.S_IEXEC)
-            self.monkeypatch.setenv("RMS_SITE_CONFIG", "rms_config.yml")
-            self.monkeypatch.setenv("PATH", f"{os.getcwd()}/bin:{os.environ['PATH']}")
+    rms_run(0, "project", "workflow", run_path="run_path", allow_no_env=True)
 
-            action = {"exit_status": 0}
-            with open("run_path/action.json", "w") as f:
-                f.write(json.dumps(action))
+    action = {"exit_status": 1}
+    with open("run_path/action.json", "w") as f:
+        f.write(json.dumps(action))
 
-            rms_run(0, "project", "workflow", run_path="run_path", allow_no_env=True)
+    with pytest.raises(RMSRunException):
+        rms_run(0, "project", "workflow", run_path="run_path", allow_no_env=True)
 
-            # -----------------------------------------------------------------
+    action = {"exit_status": 0}
+    with open("run_path/action.json", "w") as f:
+        f.write(json.dumps(action))
 
-            action = {"exit_status": 1}
-            with open("run_path/action.json", "w") as f:
-                f.write(json.dumps(action))
+    with pytest.raises(RMSRunException):
+        rms_run(
+            0,
+            "project",
+            "workflow",
+            run_path="run_path",
+            target_file="some_file",
+            allow_no_env=True,
+        )
 
-            with self.assertRaises(RMSRunException):
-                rms_run(
-                    0, "project", "workflow", run_path="run_path", allow_no_env=True
-                )
+    action = {
+        "exit_status": 0,
+        "target_file": os.path.join(os.getcwd(), "some_file"),
+    }
 
-            # -----------------------------------------------------------------
+    with open("run_path/action.json", "w") as f:
+        f.write(json.dumps(action))
+    rms_run(
+        0,
+        "project",
+        "workflow",
+        run_path="run_path",
+        target_file="some_file",
+        allow_no_env=True,
+    )
 
-            action = {"exit_status": 0}
-            with open("run_path/action.json", "w") as f:
-                f.write(json.dumps(action))
 
-            with self.assertRaises(RMSRunException):
-                rms_run(
-                    0,
-                    "project",
-                    "workflow",
-                    run_path="run_path",
-                    target_file="some_file",
-                    allow_no_env=True,
-                )
-
-            # -----------------------------------------------------------------
-
-            action = {
-                "exit_status": 0,
-                "target_file": os.path.join(os.getcwd(), "some_file"),
-            }
-
-            with open("run_path/action.json", "w") as f:
-                f.write(json.dumps(action))
-            rms_run(
-                0,
-                "project",
-                "workflow",
-                run_path="run_path",
-                target_file="some_file",
-                allow_no_env=True,
-            )
-
-    def test_run_version_env(self):
-        with TestAreaContext("test_run"):
-            wrapper_file_name = f"{os.getcwd()}/bin/rms_wrapper"
-            with open("rms_config.yml", "w") as f:
-                f.write(
-                    f"""\
+@pytest.mark.usefixtures("setup_tmpdir")
+def test_run_version_env(monkeypatch, source_root):
+    wrapper_file_name = f"{os.getcwd()}/bin/rms_wrapper"
+    with open("rms_config.yml", "w") as f:
+        f.write(
+            f"""\
 executable: {os.getcwd()}/bin/rms
 wrapper:  {wrapper_file_name}
 env:
-  10.1.3:
-    PATH_PREFIX: /some/path
-    PYTHONPATH: /some/pythonpath
+10.1.3:
+PATH_PREFIX: /some/path
+PYTHONPATH: /some/pythonpath
 """
-                )
+        )
 
-            os.mkdir("run_path")
-            os.mkdir("bin")
-            os.mkdir("project")
-            shutil.copy(
-                os.path.join(self.SOURCE_ROOT, "tests/libres_tests/res/fm/rms"), "bin"
+    os.mkdir("run_path")
+    os.mkdir("bin")
+    os.mkdir("project")
+    shutil.copy(os.path.join(source_root, "tests/libres_tests/res/fm/rms"), "bin")
+
+    with open(wrapper_file_name, "w") as f:
+        f.write(
+            TEST_ENV_WRAPPER.format(
+                expected_path_prefix="/some/path",
+                expected_pythonpath="/some/other/pythonpath",
             )
+        )
 
-            with open(wrapper_file_name, "w") as f:
-                f.write(
-                    TEST_ENV_WRAPPER.format(
-                        expected_path_prefix="/some/path",
-                        expected_pythonpath="/some/other/pythonpath",
-                    )
-                )
+    st = os.stat(wrapper_file_name)
+    os.chmod(wrapper_file_name, st.st_mode | stat.S_IEXEC)
+    monkeypatch.setenv("RMS_SITE_CONFIG", "rms_config.yml")
+    monkeypatch.setenv("PATH", f"{os.getcwd()}/bin:{os.environ['PATH']}")
+    monkeypatch.setenv("PYTHONPATH", "/some/other/pythonpath")
 
-            st = os.stat(wrapper_file_name)
-            os.chmod(wrapper_file_name, st.st_mode | stat.S_IEXEC)
-            self.monkeypatch.setenv("RMS_SITE_CONFIG", "rms_config.yml")
-            self.monkeypatch.setenv("PATH", f"{os.getcwd()}/bin:{os.environ['PATH']}")
-            self.monkeypatch.setenv("PYTHONPATH", "/some/other/pythonpath")
+    action = {
+        "exit_status": 0,
+        "target_file": os.path.join(os.getcwd(), "some_file"),
+    }
 
-            action = {
-                "exit_status": 0,
-                "target_file": os.path.join(os.getcwd(), "some_file"),
-            }
+    with open("run_path/action.json", "w") as f:
+        f.write(json.dumps(action))
+    rms_run(
+        0,
+        "project",
+        "workflow",
+        run_path="run_path",
+        target_file="some_file",
+        version="10.1.3",
+    )
 
-            with open("run_path/action.json", "w") as f:
-                f.write(json.dumps(action))
-            rms_run(
-                0,
-                "project",
-                "workflow",
-                run_path="run_path",
-                target_file="some_file",
-                version="10.1.3",
-            )
 
-    def test_run_version_env_with_user_env(self):
-        with TestAreaContext("test_run"):
-            wrapper_file_name = f"{os.getcwd()}/bin/rms_wrapper"
-            with open("rms_config.yml", "w") as f:
-                f.write(
-                    f"""\
+@pytest.mark.usefixtures("setup_tmpdir")
+def test_run_version_env_with_user_env(monkeypatch, source_root):
+    wrapper_file_name = f"{os.getcwd()}/bin/rms_wrapper"
+    with open("rms_config.yml", "w") as f:
+        f.write(
+            f"""\
 executable: {os.getcwd()}/bin/rms
 wrapper:  {wrapper_file_name}
 env:
-  10.1.3:
-    PATH_PREFIX: /some/path
-    PYTHONPATH: /some/pythonpath
+10.1.3:
+PATH_PREFIX: /some/path
+PYTHONPATH: /some/pythonpath
 """
-                )
+        )
 
-            os.mkdir("run_path")
-            os.mkdir("bin")
-            os.mkdir("project")
-            shutil.copy(
-                os.path.join(self.SOURCE_ROOT, "tests/libres_tests/res/fm/rms"), "bin"
+    os.mkdir("run_path")
+    os.mkdir("bin")
+    os.mkdir("project")
+    shutil.copy(os.path.join(source_root, "tests/libres_tests/res/fm/rms"), "bin")
+
+    with open(wrapper_file_name, "w") as f:
+        f.write(
+            TEST_ENV_WRAPPER.format(
+                expected_path_prefix="/some/other/path:/some/path",
+                expected_pythonpath="/some/other/pythonpath",
             )
-
-            with open(wrapper_file_name, "w") as f:
-                f.write(
-                    TEST_ENV_WRAPPER.format(
-                        expected_path_prefix="/some/other/path:/some/path",
-                        expected_pythonpath="/some/other/pythonpath",
-                    )
-                )
-            with open("rms_exec_env.json", "w") as f:
-                f.write(
-                    """\
+        )
+    with open("rms_exec_env.json", "w") as f:
+        f.write(
+            """\
 {
-    "PATH_PREFIX" : "/some/other/path",
-    "PYTHONPATH" : "/some/other/pythonpath"
+"PATH_PREFIX" : "/some/other/path",
+"PYTHONPATH" : "/some/other/pythonpath"
 }
 """
-                )
+        )
 
-            st = os.stat(wrapper_file_name)
-            os.chmod(wrapper_file_name, st.st_mode | stat.S_IEXEC)
-            self.monkeypatch.setenv("RMS_SITE_CONFIG", "rms_config.yml")
-            self.monkeypatch.setenv("PATH", f"{os.getcwd()}/bin:{os.environ['PATH']}")
-            self.monkeypatch.setenv("PYTHONPATH", "/some/other/pythonpath")
-            with patch.object(sys, "argv", ["rms"]):
-                action = {
-                    "exit_status": 0,
-                    "target_file": os.path.join(os.getcwd(), "some_file"),
-                }
+    st = os.stat(wrapper_file_name)
+    os.chmod(wrapper_file_name, st.st_mode | stat.S_IEXEC)
+    monkeypatch.setenv("RMS_SITE_CONFIG", "rms_config.yml")
+    monkeypatch.setenv("PATH", f"{os.getcwd()}/bin:{os.environ['PATH']}")
+    monkeypatch.setenv("PYTHONPATH", "/some/other/pythonpath")
+    with patch.object(sys, "argv", ["rms"]):
+        action = {
+            "exit_status": 0,
+            "target_file": os.path.join(os.getcwd(), "some_file"),
+        }
 
-                with open("run_path/action.json", "w") as f:
-                    f.write(json.dumps(action))
-                rms_run(
-                    0,
-                    "project",
-                    "workflow",
-                    run_path="run_path",
-                    target_file="some_file",
-                    version="10.1.3",
-                )
+        with open("run_path/action.json", "w") as f:
+            f.write(json.dumps(action))
+        rms_run(
+            0,
+            "project",
+            "workflow",
+            run_path="run_path",
+            target_file="some_file",
+            version="10.1.3",
+        )
 
-    def test_run_allow_no_env(self):
-        with TestAreaContext("test_run"):
-            with open("rms_config.yml", "w") as f:
-                f.write(
-                    f"""\
+
+@pytest.mark.usefixtures("setup_tmpdir")
+def test_run_allow_no_env(monkeypatch, source_root):
+    with open("rms_config.yml", "w") as f:
+        f.write(
+            f"""\
 executable: {os.getcwd()}/bin/rms
 env:
-  10.1.3:
-    PATH_PREFIX: /some/path
-    PYTHONPATH: /some/pythonpath
+10.1.3:
+PATH_PREFIX: /some/path
+PYTHONPATH: /some/pythonpath
 """
-                )
+        )
 
-            os.mkdir("run_path")
-            os.mkdir("bin")
-            os.mkdir("project")
-            shutil.copy(
-                os.path.join(self.SOURCE_ROOT, "tests/libres_tests/res/fm/rms"), "bin"
-            )
+    os.mkdir("run_path")
+    os.mkdir("bin")
+    os.mkdir("project")
+    shutil.copy(os.path.join(source_root, "tests/libres_tests/res/fm/rms"), "bin")
 
-            self.monkeypatch.setenv("RMS_SITE_CONFIG", "rms_config.yml")
-            self.monkeypatch.setenv("PATH", f"{os.getcwd()}/bin:{os.environ['PATH']}")
-            action = {
-                "exit_status": 0,
-                "target_file": os.path.join(os.getcwd(), "some_file"),
-            }
+    monkeypatch.setenv("RMS_SITE_CONFIG", "rms_config.yml")
+    monkeypatch.setenv("PATH", f"{os.getcwd()}/bin:{os.environ['PATH']}")
+    action = {
+        "exit_status": 0,
+        "target_file": os.path.join(os.getcwd(), "some_file"),
+    }
 
-            with open("run_path/action.json", "w") as f:
-                f.write(json.dumps(action))
+    with open("run_path/action.json", "w") as f:
+        f.write(json.dumps(action))
 
-            with self.assertRaises(RMSRunException) as e:
-                rms_run(
-                    0,
-                    "project",
-                    "workflow",
-                    run_path="run_path",
-                    target_file="some_file",
-                    version="non-existing",
-                )
-                assert "non-existing" in str(e)
+    with pytest.raises(RMSRunException) as e:
+        rms_run(
+            0,
+            "project",
+            "workflow",
+            run_path="run_path",
+            target_file="some_file",
+            version="non-existing",
+        )
+        assert "non-existing" in str(e)
 
-            rms_run(
-                0,
-                "project",
-                "workflow",
-                run_path="run_path",
-                target_file="some_file",
-                version="non-existing",
-                allow_no_env=True,
-            )
-
-    def test_rms_job_script_parser(self):
-        with TestAreaContext("test_run"):
-            # Setup RMS project
-            with open("rms_config.yml", "w") as f:
-                json.dump(
-                    {
-                        "executable": os.path.realpath("bin/rms"),
-                        "env": {"10.1.3": {"PATH": ""}},
-                    },
-                    f,
-                )
-
-            self.monkeypatch.setenv("RMS_TEST_VAR", "fdsgfdgfdsgfds")
-
-            os.mkdir("run_path")
-            os.mkdir("bin")
-            os.mkdir("project")
-            shutil.copy(
-                os.path.join(self.SOURCE_ROOT, "tests/libres_tests/res/fm/rms"), "bin"
-            )
-            self.monkeypatch.setenv("RMS_SITE_CONFIG", "rms_config.yml")
-
-            action = {"exit_status": 0}
-            with open("run_path/action.json", "w") as f:
-                f.write(json.dumps(action))
-
-            rms_exec = pkg_resources.resource_filename(
-                "ert.shared", "share/ert/forward-models/res/script/rms"
-            )
-            subprocess.check_call(
-                [
-                    rms_exec,
-                    "--run-path",
-                    "run_path",
-                    "0",
-                    "--version",
-                    "10.1.3",
-                    "project",
-                    "--import-path",
-                    "./",
-                    "--export-path",
-                    "./",
-                    "workflow",
-                    "",
-                ]
-            )
-
-            subprocess.check_call(
-                [
-                    rms_exec,
-                    "--run-path",
-                    "run_path",
-                    "0",
-                    "--version",
-                    "10.1.3",
-                    "project",
-                    "workflow",
-                    "-a",
-                ]
-            )
+    rms_run(
+        0,
+        "project",
+        "workflow",
+        run_path="run_path",
+        target_file="some_file",
+        version="non-existing",
+        allow_no_env=True,
+    )
 
 
-if __name__ == "__main__":
-    unittest.main()
+@pytest.mark.usefixtures("setup_tmpdir")
+def test_rms_job_script_parser(monkeypatch, source_root):
+    # Setup RMS project
+    with open("rms_config.yml", "w") as f:
+        json.dump(
+            {
+                "executable": os.path.realpath("bin/rms"),
+                "env": {"10.1.3": {"PATH": ""}},
+            },
+            f,
+        )
+
+    monkeypatch.setenv("RMS_TEST_VAR", "fdsgfdgfdsgfds")
+
+    os.mkdir("run_path")
+    os.mkdir("bin")
+    os.mkdir("project")
+    shutil.copy(os.path.join(source_root, "tests/libres_tests/res/fm/rms"), "bin")
+    monkeypatch.setenv("RMS_SITE_CONFIG", "rms_config.yml")
+
+    action = {"exit_status": 0}
+    with open("run_path/action.json", "w") as f:
+        f.write(json.dumps(action))
+
+    rms_exec = pkg_resources.resource_filename(
+        "ert.shared", "share/ert/forward-models/res/script/rms"
+    )
+    subprocess.check_call(
+        [
+            rms_exec,
+            "--run-path",
+            "run_path",
+            "0",
+            "--version",
+            "10.1.3",
+            "project",
+            "--import-path",
+            "./",
+            "--export-path",
+            "./",
+            "workflow",
+            "",
+        ]
+    )
+
+    subprocess.check_call(
+        [
+            rms_exec,
+            "--run-path",
+            "run_path",
+            "0",
+            "--version",
+            "10.1.3",
+            "project",
+            "workflow",
+            "-a",
+        ]
+    )

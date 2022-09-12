@@ -1,7 +1,10 @@
+import threading
 from unittest.mock import MagicMock, patch
 
 import pytest
 from aiohttp import ServerTimeoutError
+from cloudevents.conversion import to_json
+from cloudevents.http import CloudEvent
 from websockets.exceptions import ConnectionClosedError
 from websockets.version import version as websockets_version
 
@@ -24,11 +27,41 @@ from ert.shared.ensemble_evaluator.narratives import (
     monitor_successful_ensemble,
 )
 
-from .ensemble_evaluator_utils import (
-    AutorunTestEnsemble,
-    TestEnsemble,
-    send_dispatch_event,
-)
+from .ensemble_mock import EnsembleMock, send_dispatch_event
+
+
+class AutorunTestEnsemble(EnsembleMock):
+    # pylint: disable=arguments-differ
+    def _evaluate(self, client_url, dispatch_url):
+        super()._evaluate(dispatch_url)
+        with Client(client_url) as client:
+            client.send(
+                to_json(
+                    CloudEvent(
+                        {
+                            "type": identifiers.EVTYPE_EE_USER_DONE,
+                            "source": f"/ert/ensemble/{self.id_}",
+                            "id": "event-user-done",
+                        }
+                    )
+                )
+            )
+
+    def evaluate(self, config):
+        self._eval_thread = threading.Thread(
+            target=self._evaluate,
+            args=(config.client_uri, config.dispatch_uri),
+            name="AutorunTestEnsemble",
+        )
+
+        self._eval_thread.start()
+
+    def cancel(self):
+        pass
+
+    @property
+    def cancellable(self) -> bool:
+        return True
 
 
 def test_dispatchers_can_connect_and_monitor_can_shut_down_evaluator(evaluator):
@@ -237,7 +270,7 @@ def test_dying_batcher(evaluator):
 @pytest.mark.consumer_driven_contract_verification
 def test_verify_monitor_failing_ensemble(make_ee_config, event_loop):
     ee_config = make_ee_config(use_token=False, generate_cert=False)
-    ensemble = TestEnsemble(iter=1, reals=2, steps=1, jobs=2, id_="ee-0")
+    ensemble = EnsembleMock(iter=1, reals=2, steps=1, jobs=2, id_="ee-0")
     ensemble.addFailJob(real=1, step=0, job=1)
     ee = EnsembleEvaluator(
         ensemble,
@@ -253,7 +286,7 @@ def test_verify_monitor_failing_ensemble(make_ee_config, event_loop):
 @pytest.mark.consumer_driven_contract_verification
 def test_verify_monitor_failing_evaluation(make_ee_config, event_loop):
     ee_config = make_ee_config(use_token=False, generate_cert=False)
-    ensemble = TestEnsemble(iter=1, reals=2, steps=1, jobs=2, id_="ee-0")
+    ensemble = EnsembleMock(iter=1, reals=2, steps=1, jobs=2, id_="ee-0")
     ensemble.with_failure()
     ee = EnsembleEvaluator(
         ensemble,
@@ -268,7 +301,7 @@ def test_verify_monitor_failing_evaluation(make_ee_config, event_loop):
 
 @pytest.mark.consumer_driven_contract_verification
 def test_verify_monitor_successful_ensemble(make_ee_config, event_loop):
-    ensemble = TestEnsemble(iter=1, reals=2, steps=2, jobs=2, id_="ee-0").with_result(
+    ensemble = EnsembleMock(iter=1, reals=2, steps=2, jobs=2, id_="ee-0").with_result(
         b"\x80\x04\x95\x0f\x00\x00\x00\x00\x00\x00\x00\x8c\x0bhello world\x94.",
         "application/octet-stream",
     )

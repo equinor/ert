@@ -1,7 +1,5 @@
-import asyncio
 import threading
 
-import websockets
 from cloudevents.conversion import to_json
 from cloudevents.http import CloudEvent
 
@@ -13,29 +11,6 @@ from ert.ensemble_evaluator.builder._step import _Step
 from ert.shared.ensemble_evaluator.client import Client
 
 
-def _mock_ws(host, port, messages, delay_startup=0):
-    loop = asyncio.new_event_loop()
-    done = loop.create_future()
-
-    async def _handler(websocket, path):
-        while True:
-            msg = await websocket.recv()
-            messages.append(msg)
-            if msg == "stop":
-                done.set_result(None)
-                break
-
-    async def _run_server():
-        await asyncio.sleep(delay_startup)
-        async with websockets.serve(
-            _handler, host, port, ping_timeout=1, ping_interval=1
-        ):
-            await done
-
-    loop.run_until_complete(_run_server())
-    loop.close()
-
-
 def send_dispatch_event(client, event_type, source, event_id, data, **extra_attrs):
     event1 = CloudEvent(
         {"type": event_type, "source": source, "id": event_id, **extra_attrs}, data
@@ -43,7 +18,7 @@ def send_dispatch_event(client, event_type, source, event_id, data, **extra_attr
     client.send(to_json(event1))
 
 
-class TestEnsemble(_Ensemble):
+class EnsembleMock(_Ensemble):
     __test__ = False
 
     def __init__(self, iter, reals, steps, jobs, id_):
@@ -210,37 +185,3 @@ class TestEnsemble(_Ensemble):
     def with_failure(self):
         self.fails = True
         return self
-
-
-class AutorunTestEnsemble(TestEnsemble):
-    # pylint: disable=arguments-differ
-    def _evaluate(self, client_url, dispatch_url):
-        super()._evaluate(dispatch_url)
-        with Client(client_url) as client:
-            client.send(
-                to_json(
-                    CloudEvent(
-                        {
-                            "type": identifiers.EVTYPE_EE_USER_DONE,
-                            "source": f"/ert/ensemble/{self.id_}",
-                            "id": "event-user-done",
-                        }
-                    )
-                )
-            )
-
-    def evaluate(self, config):
-        self._eval_thread = threading.Thread(
-            target=self._evaluate,
-            args=(config.client_uri, config.dispatch_uri),
-            name="AutorunTestEnsemble",
-        )
-
-        self._eval_thread.start()
-
-    def cancel(self):
-        pass
-
-    @property
-    def cancellable(self) -> bool:
-        return True

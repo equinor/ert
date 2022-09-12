@@ -16,44 +16,32 @@
 
 import os
 
-from ecl.util.test import TestAreaContext
+import pytest
 
 from ert._c_wrappers.config import ConfigContent
 from ert._c_wrappers.enkf import ConfigKeys, QueueConfig
 from ert._c_wrappers.job_queue import QueueDriverEnum
 
-from ...libres_utils import ResTest
+
+def test_get_queue_config(minimum_example):
+    queue_config = minimum_example.queue_config
+    queue_config.create_job_queue()
+    queue_config_copy = queue_config.create_local_copy()
+
+    assert queue_config.has_job_script() == queue_config_copy.has_job_script()
 
 
-class QueueConfigTest(ResTest):
-    def setUp(self):
-        self.case_directory = self.createTestPath("local/simple_config/")
+def test_qeueu_not_both():
+    with pytest.raises(ValueError):
+        _ = QueueConfig(
+            user_config_file="a_file", config_content=ConfigContent("a_file")
+        )
 
-    def test_get_queue_config(self):
-        with TestAreaContext("queue_config_init_test") as work_area:
-            work_area.copy_directory(self.case_directory)
 
-            config_file = "simple_config/minimum_config"
-            queue_config = QueueConfig(config_file)
-            queue_config.create_job_queue()
-            queue_config_copy = queue_config.create_local_copy()
-
-            self.assertEqual(
-                queue_config.has_job_script(), queue_config_copy.has_job_script()
-            )
-
-            config_content = ConfigContent(config_file)
-
-            with self.assertRaises(ValueError):
-                queue_config = QueueConfig(
-                    user_config_file=config_file, config_content=config_content
-                )
-
-    def test_queue_config_constructor(self):
-        with TestAreaContext("queue_config_constructor_test") as work_area:
-            work_area.copy_directory(self.case_directory)
-            config_file = "simple_config/minimum_config"
-            config_dict = {
+def test_queue_config_constructor(minimum_example):
+    assert (
+        QueueConfig(
+            config_dict={
                 ConfigKeys.JOB_SCRIPT: os.getcwd() + "/simple_config/script.sh",
                 ConfigKeys.QUEUE_SYSTEM: QueueDriverEnum(2),
                 ConfigKeys.USER_MODE: True,
@@ -63,20 +51,16 @@ class QueueConfigTest(ResTest):
                     {ConfigKeys.NAME: "MAX_RUNNING", ConfigKeys.VALUE: "50"}
                 ],
             }
+        )
+        == minimum_example.queue_config
+    )
 
-            queue_config_file = QueueConfig(user_config_file=config_file)
-            queue_config_dict = QueueConfig(config_dict=config_dict)
-            self.assertEqual(queue_config_dict, queue_config_file)
 
-    def test_get_slurm_queue_config(self):
-        with TestAreaContext("queue_config_slurm_test") as work_area:
-            work_area.copy_directory(self.case_directory)
+def test_get_slurm_queue_config(setup_case):
+    queue_config = setup_case("local/simple_config", "slurm_config").queue_config
 
-            config_file = "simple_config/slurm_config"
-            queue_config = QueueConfig(config_file)
-            self.assertEqual(queue_config.queue_system, "SLURM")
-
-            driver = queue_config.driver
-            self.assertEqual(driver.get_option("SBATCH"), "/path/to/sbatch")
-            self.assertEqual(driver.get_option("SCONTROL"), "scontrol")
-            self.assertEqual(driver.name, "SLURM")
+    assert queue_config.queue_system == "SLURM"
+    driver = queue_config.driver
+    assert driver.get_option("SBATCH") == "/path/to/sbatch"
+    assert driver.get_option("SCONTROL") == "scontrol"
+    assert driver.name == "SLURM"

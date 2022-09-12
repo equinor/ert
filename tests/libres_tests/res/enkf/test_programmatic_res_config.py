@@ -14,79 +14,31 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 import os
-import tempfile
 from textwrap import dedent
 
-from ecl.util.test import TestAreaContext
+import pytest
 
 from ert._c_wrappers.enkf import ResConfig
 
-from ...libres_utils import ResTest
 
-
-class ProgrammaticResConfigTest(ResTest):
-    def setUp(self):
-        self.minimum_config = {
-            "INTERNALS": {
-                "CONFIG_DIRECTORY": "simple_config",
-            },
-            "SIMULATION": {
-                "QUEUE_SYSTEM": {
-                    "JOBNAME": "Job%d",
-                },
-                "RUNPATH": "/tmp/simulations/run%d",
-                "NUM_REALIZATIONS": 10,
-                "MIN_REALIZATIONS": 10,
-                "JOB_SCRIPT": "script.sh",
-                "ENSPATH": "Ensemble",
-            },
-        }
-
-        self.minimum_config_extra_key = {
-            "INTERNALS": {
-                "CONFIG_DIRECTORY": "simple_config",
-            },
-            "UNKNOWN_KEY": "Have/not/got/a/clue",
-            "SIMULATION": {
-                "QUEUE_SYSTEM": {
-                    "JOBNAME": "Job%d",
-                },
-                "RUNPATH": "/tmp/simulations/run%d",
-                "NUM_REALIZATIONS": 10,
-                "JOB_SCRIPT": "script.sh",
-                "ENSPATH": "Ensemble",
-            },
-        }
-
-        self.minimum_config_error = {
-            "INTERNALS": {
-                "CONFIG_DIRECTORY": "simple_config",
-            },
-            "SIMULATION": {
-                "QUEUE_SYSTEM": {
-                    "JOBNAME": "Job%d",
-                },
-                "RUNPATH": "/tmp/simulations/run%d",
-                "NUM_REALIZATIONS": "/should/be/an/integer",
-                "JOB_SCRIPT": "script.sh",
-                "ENSPATH": "Ensemble",
-            },
-        }
-
-        self.minimum_config_cwd = {
-            "INTERNALS": {},
-            "SIMULATION": {
-                "QUEUE_SYSTEM": {
-                    "JOBNAME": "Job%d",
-                },
-                "RUNPATH": "/tmp/simulations/run%d",
-                "NUM_REALIZATIONS": 10,
-                "JOB_SCRIPT": "script.sh",
-                "ENSPATH": "Ensemble",
-            },
-        }
-
-        self.new_config = {
+def test_new_config(tmp_path):
+    os.chdir(tmp_path)
+    with open(tmp_path / "NEW_TYPE_A", "w") as fout:
+        fout.write(
+            dedent(
+                """
+        EXECUTABLE echo
+        MIN_ARG    1
+        MAX_ARG    4
+        ARG_TYPE 0 STRING
+        ARG_TYPE 1 BOOL
+        ARG_TYPE 2 FLOAT
+        ARG_TYPE 3 INT
+        """
+            )
+        )
+    prog_res_config = ResConfig(
+        config={
             "INTERNALS": {},
             "SIMULATION": {
                 "QUEUE_SYSTEM": {
@@ -104,8 +56,103 @@ class ProgrammaticResConfigTest(ResTest):
                 ],
             },
         }
+    )
+    forward_model = prog_res_config.model_config.getForwardModel()
+    job_A = forward_model.iget_job(0)
+    job_B = forward_model.iget_job(1)
+    assert job_A.get_arglist(), ["Hello", "True", "3.14" == "4"]
+    assert job_B.get_arglist() == ["word"]
 
-        self.large_config = {
+
+def test_minimum_config(minimum_example):
+    prog_res_config = ResConfig(
+        config={
+            "INTERNALS": {
+                "CONFIG_DIRECTORY": "simple_config",
+            },
+            "SIMULATION": {
+                "QUEUE_SYSTEM": {
+                    "JOBNAME": "Job%d",
+                },
+                "RUNPATH": "/tmp/simulations/run%d",
+                "NUM_REALIZATIONS": 10,
+                "MIN_REALIZATIONS": 10,
+                "JOB_SCRIPT": "script.sh",
+                "ENSPATH": "Ensemble",
+            },
+        }
+    )
+
+    assert prog_res_config == minimum_example
+
+    assert len(prog_res_config.errors) == 0
+    assert len(prog_res_config.failed_keys) == 0
+
+
+def test_failed_keys(minimum_example):
+    res_config = ResConfig(
+        config={
+            "INTERNALS": {
+                "CONFIG_DIRECTORY": "simple_config",
+            },
+            "UNKNOWN_KEY": "Have/not/got/a/clue",
+            "SIMULATION": {
+                "QUEUE_SYSTEM": {
+                    "JOBNAME": "Job%d",
+                },
+                "RUNPATH": "/tmp/simulations/run%d",
+                "NUM_REALIZATIONS": 10,
+                "JOB_SCRIPT": "script.sh",
+                "ENSPATH": "Ensemble",
+            },
+        }
+    )
+
+    assert len(res_config.failed_keys) == 1
+    assert list(res_config.failed_keys.keys()) == ["UNKNOWN_KEY"]
+    assert res_config.failed_keys["UNKNOWN_KEY"] == "Have/not/got/a/clue"
+
+
+@pytest.mark.parametrize(
+    "erroring_config",
+    [
+        {
+            "INTERNALS": {
+                "CONFIG_DIRECTORY": "simple_config",
+            },
+            "SIMULATION": {
+                "QUEUE_SYSTEM": {
+                    "JOBNAME": "Job%d",
+                },
+                "RUNPATH": "/tmp/simulations/run%d",
+                "NUM_REALIZATIONS": "/should/be/an/integer",
+                "JOB_SCRIPT": "script.sh",
+                "ENSPATH": "Ensemble",
+            },
+        },
+        {
+            "INTERNALS": {},
+            "SIMULATION": {
+                "QUEUE_SYSTEM": {
+                    "JOBNAME": "Job%d",
+                },
+                "RUNPATH": "/tmp/simulations/run%d",
+                "NUM_REALIZATIONS": 10,
+                "JOB_SCRIPT": "script.sh",
+                "ENSPATH": "Ensemble",
+            },
+        },
+    ],
+)
+def test_errors(minimum_example, erroring_config):
+    with pytest.raises(ValueError):
+        ResConfig(config=erroring_config)
+
+
+def test_large_config(setup_case):
+    res_config = setup_case("local/snake_oil_structure", "user_config.ert")
+    prog_res_config = ResConfig(
+        config={
             "DEFINES": {
                 "<USER>": "TEST_USER",
                 "<SCRATCH>": "scratch/ert",
@@ -207,201 +254,7 @@ class ProgrammaticResConfigTest(ResTest):
                 },
             },
         }
+    )
 
-    def test_minimum_config(self):
-        case_directory = self.createTestPath("local/simple_config")
-        config_file = "simple_config/minimum_config"
-
-        with TestAreaContext("res_config_prog_test") as work_area:
-            work_area.copy_directory(case_directory)
-
-            loaded_res_config = ResConfig(user_config_file=config_file)
-            prog_res_config = ResConfig(config=self.minimum_config)
-
-            self.assertEqual(
-                loaded_res_config.model_config.num_realizations,
-                prog_res_config.model_config.num_realizations,
-            )
-
-            self.assertEqual(
-                loaded_res_config.model_config.getJobnameFormat(),
-                prog_res_config.model_config.getJobnameFormat(),
-            )
-
-            self.assertEqual(
-                loaded_res_config.model_config.getRunpathAsString(),
-                prog_res_config.model_config.getRunpathAsString(),
-            )
-
-            self.assertEqual(
-                loaded_res_config.model_config.getEnspath(),
-                prog_res_config.model_config.getEnspath(),
-            )
-
-            self.assertEqual(0, len(prog_res_config.errors))
-            self.assertEqual(0, len(prog_res_config.failed_keys))
-
-    def test_no_config_directory(self):
-        case_directory = self.createTestPath("local/simple_config")
-
-        with TestAreaContext("res_config_prog_test") as work_area:
-            work_area.copy_directory(case_directory)
-
-            with self.assertRaises(ValueError):
-                ResConfig(config=self.minimum_config_cwd)
-
-    def test_errors(self):
-        case_directory = self.createTestPath("local/simple_config")
-
-        with TestAreaContext("res_config_prog_test") as work_area:
-            work_area.copy_directory(case_directory)
-
-            with self.assertRaises(ValueError):
-                ResConfig(config=self.minimum_config_error)
-
-    def test_failed_keys(self):
-        case_directory = self.createTestPath("local/simple_config")
-
-        with TestAreaContext("res_config_prog_test") as work_area:
-            work_area.copy_directory(case_directory)
-
-            res_config = ResConfig(config=self.minimum_config_extra_key)
-
-            self.assertTrue(len(res_config.failed_keys) == 1)
-            self.assertEqual(["UNKNOWN_KEY"], list(res_config.failed_keys.keys()))
-            self.assertEqual(
-                self.minimum_config_extra_key["UNKNOWN_KEY"],
-                res_config.failed_keys["UNKNOWN_KEY"],
-            )
-
-    def assert_equal_model_config(self, loaded_model_config, prog_model_config):
-        self.assertEqual(
-            loaded_model_config.num_realizations, prog_model_config.num_realizations
-        )
-
-        self.assertEqual(
-            loaded_model_config.getJobnameFormat(), prog_model_config.getJobnameFormat()
-        )
-
-        self.assertEqual(
-            loaded_model_config.getRunpathAsString(),
-            prog_model_config.getRunpathAsString(),
-        )
-
-        self.assertEqual(
-            loaded_model_config.getEnspath(), prog_model_config.getEnspath()
-        )
-
-        self.assertEqual(
-            loaded_model_config.get_history_source(),
-            prog_model_config.get_history_source(),
-        )
-
-        self.assertEqual(
-            loaded_model_config.obs_config_file, prog_model_config.obs_config_file
-        )
-
-        self.assertEqual(
-            loaded_model_config.getForwardModel().joblist(),
-            prog_model_config.getForwardModel().joblist(),
-        )
-
-    def assert_equal_site_config(self, loaded_site_config, prog_site_config):
-        self.assertEqual(loaded_site_config, prog_site_config)
-
-    def assert_equal_ecl_config(self, loaded_ecl_config, prog_ecl_config):
-        self.assertEqual(loaded_ecl_config, prog_ecl_config)
-
-    def assert_equal_analysis_config(self, loaded_config, prog_config):
-        self.assertEqual(loaded_config.get_log_path(), prog_config.get_log_path())
-
-        self.assertEqual(loaded_config.get_max_runtime(), prog_config.get_max_runtime())
-
-    def assert_equal_hook_manager(self, loaded_hook_manager, prog_hook_manager):
-        self.assertEqual(loaded_hook_manager, prog_hook_manager)
-
-    def assert_equal_ensemble_config(self, loaded_config, prog_config):
-        self.assertEqual(
-            set(loaded_config.alloc_keylist()), set(prog_config.alloc_keylist())
-        )
-
-    def assert_equal_ert_workflow(self, loaded_workflow_list, prog_workflow_list):
-        self.assertEqual(loaded_workflow_list, prog_workflow_list)
-
-    def assert_equal_simulation_config(
-        self, loaded_simulation_config, prog_simulation_config
-    ):
-        self.assertEqual(
-            loaded_simulation_config.getPath(), prog_simulation_config.getPath()
-        )
-
-    def test_new_config(self):
-        os.chdir(tempfile.mkdtemp())
-        with open("NEW_TYPE_A", "w") as fout:
-            fout.write(
-                dedent(
-                    """
-            EXECUTABLE echo
-            MIN_ARG    1
-            MAX_ARG    4
-            ARG_TYPE 0 STRING
-            ARG_TYPE 1 BOOL
-            ARG_TYPE 2 FLOAT
-            ARG_TYPE 3 INT
-            """
-                )
-            )
-        prog_res_config = ResConfig(config=self.new_config)
-        forward_model = prog_res_config.model_config.getForwardModel()
-        job_A = forward_model.iget_job(0)
-        job_B = forward_model.iget_job(1)
-        self.assertEqual(job_A.get_arglist(), ["Hello", "True", "3.14", "4"])
-        self.assertEqual(job_B.get_arglist(), ["word"])
-
-    def test_large_config(self):
-        case_directory = self.createTestPath("local/snake_oil_structure")
-        config_file = "snake_oil_structure/ert/model/user_config.ert"
-
-        with TestAreaContext("res_config_prog_test") as work_area:
-            work_area.copy_directory(case_directory)
-
-            loaded_res_config = ResConfig(user_config_file=config_file)
-            prog_res_config = ResConfig(config=self.large_config)
-
-            self.assert_equal_model_config(
-                loaded_res_config.model_config, prog_res_config.model_config
-            )
-
-            self.assert_equal_site_config(
-                loaded_res_config.site_config, prog_res_config.site_config
-            )
-
-            self.assert_equal_ecl_config(
-                loaded_res_config.ecl_config, prog_res_config.ecl_config
-            )
-
-            self.assert_equal_analysis_config(
-                loaded_res_config.analysis_config, prog_res_config.analysis_config
-            )
-
-            self.assert_equal_hook_manager(
-                loaded_res_config.hook_manager, prog_res_config.hook_manager
-            )
-
-            self.assert_equal_ensemble_config(
-                loaded_res_config.ensemble_config, prog_res_config.ensemble_config
-            )
-
-            self.assertEqual(
-                loaded_res_config.ert_templates, prog_res_config.ert_templates
-            )
-
-            self.assert_equal_ert_workflow(
-                loaded_res_config.ert_workflow_list, prog_res_config.ert_workflow_list
-            )
-
-            self.assertEqual(
-                loaded_res_config.queue_config, prog_res_config.queue_config
-            )
-
-            self.assertEqual(0, len(prog_res_config.failed_keys))
+    assert prog_res_config == res_config
+    assert len(prog_res_config.failed_keys) == 0

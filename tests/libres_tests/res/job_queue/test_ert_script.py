@@ -1,8 +1,7 @@
-from ecl.util.test import TestAreaContext
+import pytest
 
 from ert._c_wrappers.job_queue import ErtScript
 
-from ...libres_utils import ResTest
 from .workflow_common import WorkflowCommon
 
 
@@ -26,56 +25,55 @@ class NoneScript(ErtScript):
         assert arg is None
 
 
-class ErtScriptTest(ResTest):
-    @staticmethod
-    def createScripts():
-        WorkflowCommon.createErtScriptsJob()
+def test_ert_script_return_ert():
+    script = ReturnErtScript("ert")
+    result = script.initializeAndRun([], [])
+    assert result == "ert"
 
-        with open("syntax_error_script.py", "w") as f:
-            f.write("from ert._c_wrappers.enkf not_legal_syntax ErtScript\n")
 
-        with open("import_error_script.py", "w") as f:
-            f.write("from ert._c_wrappers.enkf import DoesNotExist\n")
+def test_ert_script_add():
+    script = AddScript("ert")
 
-        with open("empty_script.py", "w") as f:
-            f.write("from ert._c_wrappers.enkf import ErtScript\n")
+    result = script.initializeAndRun([int, int], ["5", "4"])
 
-    def test_ert_script_return_ert(self):
-        script = ReturnErtScript("ert")
-        result = script.initializeAndRun([], [])
-        self.assertEqual(result, "ert")
+    assert result == 9
 
-    def test_ert_script_add(self):
-        script = AddScript("ert")
+    with pytest.raises(ValueError):
+        result = script.initializeAndRun([int, int], ["5", "4.6"])
 
-        result = script.initializeAndRun([int, int], ["5", "4"])
 
-        self.assertEqual(result, 9)
+def test_ert_script_failed_implementation():
+    with pytest.raises(UserWarning):
+        FailScript("ert")
 
-        with self.assertRaises(ValueError):
-            result = script.initializeAndRun([int, int], ["5", "4.6"])
 
-    def test_ert_script_failed_implementation(self):
-        with self.assertRaises(UserWarning):
-            FailScript("ert")
+@pytest.mark.usefixtures("setup_tmpdir")
+def test_ert_script_from_file():
+    WorkflowCommon.createErtScriptsJob()
 
-    def test_ert_script_from_file(self):
-        with TestAreaContext("python/job_queue/ert_script"):
-            ErtScriptTest.createScripts()
+    with open("syntax_error_script.py", "w") as f:
+        f.write("from ert._c_wrappers.enkf not_legal_syntax ErtScript\n")
 
-            script_object = ErtScript.loadScriptFromFile("subtract_script.py")
+    with open("import_error_script.py", "w") as f:
+        f.write("from ert._c_wrappers.enkf import DoesNotExist\n")
 
-            script = script_object("ert")
-            result = script.initializeAndRun([int, int], ["1", "2"])
-            self.assertEqual(result, -1)
+    with open("empty_script.py", "w") as f:
+        f.write("from ert._c_wrappers.enkf import ErtScript\n")
 
-            # with self.assertRaises(ErtScriptError):
-            self.assertIsNone(ErtScript.loadScriptFromFile("syntax_error_script.py"))
-            self.assertIsNone(ErtScript.loadScriptFromFile("import_error_script.py"))
-            self.assertIsNone(ErtScript.loadScriptFromFile("empty_script.py"))
+    script_object = ErtScript.loadScriptFromFile("subtract_script.py")
 
-    def test_none_ert_script(self):
-        # Check if None is not converted to string "None"
-        script = NoneScript("ert")
+    script = script_object("ert")
+    result = script.initializeAndRun([int, int], ["1", "2"])
+    assert result == -1
 
-        script.initializeAndRun([str], [None])
+    # with pytest.raises(ErtScriptError):
+    assert ErtScript.loadScriptFromFile("syntax_error_script.py") is None
+    assert ErtScript.loadScriptFromFile("import_error_script.py") is None
+    assert ErtScript.loadScriptFromFile("empty_script.py") is None
+
+
+def test_none_ert_script():
+    # Check if None is not converted to string "None"
+    script = NoneScript("ert")
+
+    script.initializeAndRun([str], [None])

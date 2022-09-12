@@ -2,7 +2,6 @@ import contextlib
 import importlib
 import pathlib
 import tempfile
-import threading
 from functools import partial
 from pathlib import Path
 from typing import Callable, ContextManager, Type
@@ -13,10 +12,7 @@ import pytest
 import ert
 import ert.ensemble_evaluator as ee
 from ert.async_utils import get_event_loop
-from ert.shared.ensemble_evaluator.client import Client
 from ert.shared.ensemble_evaluator.config import EvaluatorServerConfig
-
-from ..ensemble_evaluator_utils import _mock_ws
 
 
 @contextlib.contextmanager
@@ -370,36 +366,6 @@ def evaluator_config():
         use_token=False,
         generate_cert=False,
     )
-
-
-class MockWSMonitor:
-    def __init__(self, unused_tcp_port) -> None:
-        self.host = "localhost"
-        self.url = f"ws://{self.host}:{unused_tcp_port}"
-        self.messages = []
-        self.mock_ws_thread = threading.Thread(
-            target=partial(_mock_ws, messages=self.messages),
-            args=(self.host, unused_tcp_port),
-        )
-
-    def start(self):
-        self.mock_ws_thread.start()
-
-    def join(self):
-        with Client(self.url) as c:
-            c.send("stop")
-        self.mock_ws_thread.join()
-
-    def join_and_get_messages(self):
-        self.join()
-        return self.messages
-
-
-@pytest.fixture()
-def mock_ws_monitor(unused_tcp_port):
-    mock_ws_monitor = MockWSMonitor(unused_tcp_port=unused_tcp_port)
-    mock_ws_monitor.start()
-    yield mock_ws_monitor
 
 
 @pytest.fixture()

@@ -1,8 +1,6 @@
-import os
 import pathlib
 import shutil
 import time
-from distutils.dir_util import copy_tree
 
 import numpy as np
 import pytest
@@ -13,27 +11,13 @@ from ert._c_wrappers.enkf.export import SummaryObservationCollector
 from ert.data import MeasuredData, loader
 from ert.libres_facade import LibresFacade
 
-from ...utils import SOURCE_DIR
-
-test_data_root = SOURCE_DIR / "test-data" / "local"
-
 
 @pytest.fixture()
-def copy_snake_oil(tmpdir):
-    test_data_dir = os.path.join(test_data_root, "snake_oil")
-    copy_tree(test_data_dir, str(tmpdir))
-    with tmpdir.as_cwd():
-        yield
+def facade_snake_oil(snake_oil_example):
+    yield LibresFacade(snake_oil_example)
 
 
-@pytest.fixture()
-def facade_snake_oil(copy_snake_oil):
-    res_config = ResConfig("snake_oil.ert")
-    ert = EnKFMain(res_config)
-    yield LibresFacade(ert)
-
-
-def test_history_obs(monkeypatch, facade_snake_oil):
+def test_history_obs(facade_snake_oil):
 
     fopr = MeasuredData(facade_snake_oil, ["FOPR"])
     fopr.remove_inactive_observations()
@@ -43,7 +27,7 @@ def test_history_obs(monkeypatch, facade_snake_oil):
     )
 
 
-def test_summary_obs(monkeypatch, facade_snake_oil):
+def test_summary_obs(facade_snake_oil):
     summary_obs = MeasuredData(facade_snake_oil, ["WOPR_OP1_72"])
     summary_obs.remove_inactive_observations()
     assert all(summary_obs.data.columns.get_level_values("data_index").values == [71])
@@ -53,8 +37,9 @@ def test_summary_obs(monkeypatch, facade_snake_oil):
     ] == np.datetime64("2011-12-21")
 
 
+@pytest.mark.usefixtures("snake_oil_example")
 @pytest.mark.integration_test
-def test_summary_obs_runtime(monkeypatch, copy_snake_oil):
+def test_summary_obs_runtime():
     """
     This is mostly a regression test, as reading SUMMARY_OBS was very slow when using
     SUMMARY_OBSERVATION and not HISTORY_OBSERVATION where multiple observations
@@ -91,8 +76,9 @@ def test_summary_obs_runtime(monkeypatch, copy_snake_oil):
     assert summary_obs_time < 10 * history_obs_time
 
 
+@pytest.mark.usefixtures("snake_oil_example")
 @pytest.mark.parametrize("formatted_date", ["2015-06-23", "23/06/2015", "23.06.2015"])
-def test_summary_obs_last_entry(monkeypatch, copy_snake_oil, formatted_date):
+def test_summary_obs_last_entry(formatted_date):
 
     obs_file = pathlib.Path.cwd() / "observations" / "observations.txt"
     with obs_file.open(mode="w") as fin:
@@ -119,8 +105,9 @@ def test_summary_obs_last_entry(monkeypatch, copy_snake_oil, formatted_date):
     ]
 
 
+@pytest.mark.usefixtures("snake_oil_example")
 @pytest.mark.integration_test
-def test_gen_obs_runtime(monkeypatch, copy_snake_oil, snapshot):
+def test_gen_obs_runtime(snapshot):
     obs_file = pathlib.Path.cwd() / "observations" / "observations.txt"
     with obs_file.open(mode="a") as fin:
         fin.write(create_general_observation())
@@ -135,8 +122,7 @@ def test_gen_obs_runtime(monkeypatch, copy_snake_oil, snapshot):
     snapshot.assert_match(df.data.to_csv(), "snake_oil_gendata_output.csv")
 
 
-@pytest.mark.parametrize("formatted_date", ["2015-06-23", "23/06/2015", "23.06.2015"])
-def test_gen_obs(monkeypatch, facade_snake_oil, formatted_date):
+def test_gen_obs(facade_snake_oil):
     df = MeasuredData(facade_snake_oil, ["WPR_DIFF_1"])
     df.remove_inactive_observations()
 
@@ -148,7 +134,7 @@ def test_gen_obs(monkeypatch, facade_snake_oil, formatted_date):
     )
 
 
-def test_gen_obs_and_summary(monkeypatch, facade_snake_oil):
+def test_gen_obs_and_summary(facade_snake_oil):
     df = MeasuredData(facade_snake_oil, ["WPR_DIFF_1", "WOPR_OP1_9"])
     df.remove_inactive_observations()
 
@@ -168,7 +154,7 @@ def test_gen_obs_and_summary(monkeypatch, facade_snake_oil):
     ]
 
 
-def test_gen_obs_and_summary_index_range(monkeypatch, facade_snake_oil):
+def test_gen_obs_and_summary_index_range(facade_snake_oil):
     df = MeasuredData(facade_snake_oil, ["WPR_DIFF_1", "FOPR"], [[800], [10]])
     df.remove_inactive_observations()
 
@@ -191,8 +177,8 @@ def test_gen_obs_and_summary_index_range(monkeypatch, facade_snake_oil):
         ("WPR_DIFF_1", "No response loaded for observation key: WPR_DIFF_1"),
     ],
 )
-@pytest.mark.usefixtures("copy_snake_oil")
-def test_no_storage(monkeypatch, obs_key, expected_msg):
+@pytest.mark.usefixtures("snake_oil_example")
+def test_no_storage(obs_key, expected_msg):
     shutil.rmtree("storage")
     res_config = ResConfig("snake_oil.ert")
     ert = EnKFMain(res_config)
@@ -206,8 +192,8 @@ def test_no_storage(monkeypatch, obs_key, expected_msg):
 
 
 @pytest.mark.parametrize("obs_key", ["FOPR", "WPR_DIFF_1"])
-@pytest.mark.usefixtures("copy_snake_oil")
-def test_no_storage_obs_only(monkeypatch, obs_key):
+@pytest.mark.usefixtures("snake_oil_example")
+def test_no_storage_obs_only(obs_key):
     shutil.rmtree("storage")
     res_config = ResConfig("snake_oil.ert")
     ert = EnKFMain(res_config)
@@ -217,7 +203,7 @@ def test_no_storage_obs_only(monkeypatch, obs_key):
     assert set(md.data.columns.get_level_values(0)) == {obs_key}
 
 
-@pytest.mark.usefixtures("copy_snake_oil")
+@pytest.mark.usefixtures("snake_oil_example")
 def test_summary_collector():
     res_config = ResConfig("snake_oil.ert")
     ert = EnKFMain(res_config)

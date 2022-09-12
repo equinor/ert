@@ -2,10 +2,11 @@ import asyncio
 import json
 import os
 import stat
+import time
 from dataclasses import dataclass
 from pathlib import Path
 from threading import BoundedSemaphore
-from typing import Any, Dict, Optional
+from typing import Any, Callable, Dict, Optional
 from unittest.mock import MagicMock, patch
 
 from ert._clib.model_callbacks import LoadStatus
@@ -27,7 +28,20 @@ from ert._c_wrappers.job_queue import (
     QueueDriverEnum,
 )
 
-from ...libres_utils import wait_for
+
+def wait_for(
+    func: Callable, target: Any = True, interval: float = 0.1, timeout: float = 30
+):
+    """Sleeps (with timeout) until the provided function returns the provided target"""
+    t = 0.0
+    while func() != target:
+        time.sleep(interval)
+        t += interval
+        if t >= timeout:
+            raise AssertionError(
+                "Timeout reached in wait_for "
+                f"(function {func.__name__}, timeout {timeout}) "
+            )
 
 
 def dummy_exit_callback(args):

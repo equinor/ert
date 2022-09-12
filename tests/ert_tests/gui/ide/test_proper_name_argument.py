@@ -1,17 +1,14 @@
 from ert.shared.ide.keywords.definitions import ProperNameArgument
 
-from ...ert_utils import ErtTest
 
+def test_proper_name_argument():
 
-class ProperNameArgumentTest(ErtTest):
-    def test_proper_name_argument(self):
+    argument = ProperNameArgument()
 
-        argument = ProperNameArgument()
+    assert argument.validate("NAME")
+    assert argument.validate("__NAME__")
+    assert argument.validate("<NAME>")
+    assert argument.validate("-NAME-")
 
-        self.assertTrue(argument.validate("NAME"))
-        self.assertTrue(argument.validate("__NAME__"))
-        self.assertTrue(argument.validate("<NAME>"))
-        self.assertTrue(argument.validate("-NAME-"))
-
-        self.assertFalse(argument.validate("-NA ME-"))
-        self.assertFalse(argument.validate("NAME*"))
+    assert not argument.validate("-NA ME-")
+    assert not argument.validate("NAME*")

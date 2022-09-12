@@ -1,108 +1,118 @@
-from ecl.util.test import TestAreaContext
+import pytest
 
-from ert._c_wrappers import ResPrototype
 from ert._c_wrappers.job_queue import WorkflowJob
 
-from ...libres_utils import ResTest
 from .workflow_common import WorkflowCommon
 
 
-class _TestWorkflowJobPrototype(ResPrototype):
-    def __init__(self, prototype, bind=True):
-        super().__init__(prototype, bind=bind)
+@pytest.mark.usefixtures("setup_tmpdir")
+def test_workflow_job_creation():
+    workflow_job = WorkflowJob("Test")
+
+    assert workflow_job.isInternal()
+    assert workflow_job.name() == "Test"
 
 
-class WorkflowJobTest(ResTest):
-    _alloc_config = _TestWorkflowJobPrototype(
-        "config_parser_obj workflow_job_alloc_config()", bind=False
+@pytest.mark.usefixtures("setup_tmpdir")
+def test_read_internal_function():
+    WorkflowCommon.createInternalFunctionJob()
+    WorkflowCommon.createErtScriptsJob()
+
+    config = WorkflowJob.configParser()
+
+    workflow_job = WorkflowJob.fromFile(
+        name="SUBTRACT",
+        parser=config,
+        config_file="subtract_script_job",
     )
-    _alloc_from_file = _TestWorkflowJobPrototype(
-        "workflow_job_obj workflow_job_config_alloc( char* , config_parser , char*)",
-        bind=False,
+    assert workflow_job.name() == "SUBTRACT"
+    assert workflow_job.isInternal()
+    assert workflow_job.functionName() is None
+
+    assert workflow_job.isInternalScript()
+    assert workflow_job.getInternalScriptPath().endswith("subtract_script.py")
+
+
+@pytest.mark.usefixtures("setup_tmpdir")
+def test_arguments():
+    WorkflowCommon.createInternalFunctionJob()
+    WorkflowCommon.createErtScriptsJob()
+
+    config = WorkflowJob.configParser()
+
+    job = WorkflowJob.fromFile(
+        name="SUBTRACT",
+        parser=config,
+        config_file="subtract_script_job",
     )
 
-    def test_workflow_job_creation(self):
-        workflow_job = WorkflowJob("Test")
+    assert job.minimumArgumentCount() == 2
+    assert job.maximumArgumentCount() == 2
+    assert job.argumentTypes() == [float, float]
 
-        self.assertTrue(workflow_job.isInternal())
-        self.assertEqual(workflow_job.name(), "Test")
+    assert job.run(None, [1, 2.5])
 
-    def test_read_internal_function(self):
-        with TestAreaContext("python/job_queue/workflow_job"):
-            WorkflowCommon.createInternalFunctionJob()
-            WorkflowCommon.createErtScriptsJob()
+    with pytest.raises(UserWarning):  # Too few arguments
+        job.run(None, [1])
 
-            config = self._alloc_config()
+    with pytest.raises(UserWarning):  # Too many arguments
+        job.run(None, ["x %d %f %d %s", 1, 2.5, True, "y", "nada"])
 
-            workflow_job = self._alloc_from_file(
-                "SUBTRACT", config, "subtract_script_job"
-            )
-            self.assertEqual(workflow_job.name(), "SUBTRACT")
-            self.assertTrue(workflow_job.isInternal())
-            self.assertIsNone(workflow_job.functionName())
 
-            self.assertTrue(workflow_job.isInternalScript())
-            self.assertTrue(
-                workflow_job.getInternalScriptPath().endswith("subtract_script.py")
-            )
+@pytest.mark.usefixtures("setup_tmpdir")
+def test_run_external_job():
 
-    def test_arguments(self):
-        with TestAreaContext("python/job_queue/workflow_job"):
-            WorkflowCommon.createInternalFunctionJob()
-            WorkflowCommon.createErtScriptsJob()
+    WorkflowCommon.createExternalDumpJob()
 
-            config = self._alloc_config()
-            job = self._alloc_from_file("SUBTRACT", config, "subtract_script_job")
+    config = WorkflowJob.configParser()
 
-            self.assertEqual(job.minimumArgumentCount(), 2)
-            self.assertEqual(job.maximumArgumentCount(), 2)
-            self.assertEqual(job.argumentTypes(), [float, float])
+    job = WorkflowJob.fromFile(
+        name="DUMP",
+        parser=config,
+        config_file="dump_job",
+    )
 
-            self.assertTrue(job.run(None, [1, 2.5]))
+    assert not job.isInternal()
+    argTypes = job.argumentTypes()
+    assert argTypes == [str, str]
+    assert job.run(None, ["test", "text"]) is None
+    assert job.stdoutdata() == "Hello World\n"
 
-            with self.assertRaises(UserWarning):  # Too few arguments
-                job.run(None, [1])
+    with open("test", "r") as f:
+        assert f.read() == "text"
 
-            with self.assertRaises(UserWarning):  # Too many arguments
-                job.run(None, ["x %d %f %d %s", 1, 2.5, True, "y", "nada"])
 
-    def test_run_external_job(self):
+@pytest.mark.usefixtures("setup_tmpdir")
+def test_error_handling_external_job():
 
-        with TestAreaContext("python/job_queue/workflow_job"):
-            WorkflowCommon.createExternalDumpJob()
+    WorkflowCommon.createExternalDumpJob()
 
-            config = self._alloc_config()
-            job = self._alloc_from_file("DUMP", config, "dump_job")
+    config = WorkflowJob.configParser()
 
-            self.assertFalse(job.isInternal())
-            argTypes = job.argumentTypes()
-            self.assertEqual(argTypes, [str, str])
-            self.assertIsNone(job.run(None, ["test", "text"]))
-            self.assertEqual(job.stdoutdata(), "Hello World\n")
+    job = WorkflowJob.fromFile(
+        name="DUMP",
+        parser=config,
+        config_file="dump_failing_job",
+    )
 
-            with open("test", "r") as f:
-                self.assertEqual(f.read(), "text")
+    assert not job.isInternal()
+    job.argumentTypes()
+    assert job.run(None, []) is None
+    assert job.stderrdata().startswith("Traceback")
 
-    def test_error_handling_external_job(self):
 
-        with TestAreaContext("python/job_queue/workflow_job"):
-            WorkflowCommon.createExternalDumpJob()
+@pytest.mark.usefixtures("setup_tmpdir")
+def test_run_internal_script():
+    WorkflowCommon.createErtScriptsJob()
 
-            config = self._alloc_config()
-            job = self._alloc_from_file("DUMP", config, "dump_failing_job")
+    config = WorkflowJob.configParser()
 
-            self.assertFalse(job.isInternal())
-            job.argumentTypes()
-            self.assertIsNone(job.run(None, []))
-            self.assertTrue(job.stderrdata().startswith("Traceback"))
+    job = WorkflowJob.fromFile(
+        name="SUBTRACT",
+        parser=config,
+        config_file="subtract_script_job",
+    )
 
-    def test_run_internal_script(self):
-        with TestAreaContext("python/job_queue/workflow_job"):
-            WorkflowCommon.createErtScriptsJob()
+    result = job.run(None, ["1", "2"])
 
-            config = self._alloc_config()
-            job = self._alloc_from_file("SUBTRACT", config, "subtract_script_job")
-
-            result = job.run(None, ["1", "2"])
-
-            self.assertEqual(result, -1)
+    assert result == -1

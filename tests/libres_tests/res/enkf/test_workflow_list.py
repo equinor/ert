@@ -16,70 +16,60 @@
 
 import os
 
-from ecl.util.test import TestAreaContext
+import pytest
 
 from ert._c_wrappers.enkf import ConfigKeys, ErtWorkflowList, ResConfig, SiteConfig
 
-from ...libres_utils import ResTest
 
+def test_workflow_list_constructor(minimum_example):
+    ERT_SITE_CONFIG = SiteConfig.getLocation()
+    ERT_SHARE_PATH = os.path.dirname(ERT_SITE_CONFIG)
 
-class ErtWorkflowListTest(ResTest):
-    def setUp(self):
-        self.case_directory = self.createTestPath("local/simple_config/")
-
-    def test_workflow_list_constructor(self):
-        with TestAreaContext("ert_workflow_list_test") as work_area:
-
-            ERT_SITE_CONFIG = SiteConfig.getLocation()
-            ERT_SHARE_PATH = os.path.dirname(ERT_SITE_CONFIG)
-
-            self.config_dict = {
-                ConfigKeys.LOAD_WORKFLOW_JOB: [
-                    {
-                        ConfigKeys.NAME: "print_uber",
-                        ConfigKeys.PATH: os.getcwd()
-                        + "/simple_config/workflows/UBER_PRINT",
-                    }
-                ],
-                ConfigKeys.LOAD_WORKFLOW: [
-                    {
-                        ConfigKeys.NAME: "magic_print",
-                        ConfigKeys.PATH: os.getcwd()
-                        + "/simple_config/workflows/MAGIC_PRINT",
-                    }
-                ],
-                ConfigKeys.WORKFLOW_JOB_DIRECTORY: [
-                    ERT_SHARE_PATH + "/workflows/jobs/shell",
-                    ERT_SHARE_PATH + "/workflows/jobs/internal/config",
-                    ERT_SHARE_PATH + "/workflows/jobs/internal-gui/config",
-                ],
+    config_dict = {
+        ConfigKeys.LOAD_WORKFLOW_JOB: [
+            {
+                ConfigKeys.NAME: "print_uber",
+                ConfigKeys.PATH: os.getcwd() + "/simple_config/workflows/UBER_PRINT",
             }
+        ],
+        ConfigKeys.LOAD_WORKFLOW: [
+            {
+                ConfigKeys.NAME: "magic_print",
+                ConfigKeys.PATH: os.getcwd() + "/simple_config/workflows/MAGIC_PRINT",
+            }
+        ],
+        ConfigKeys.WORKFLOW_JOB_DIRECTORY: [
+            ERT_SHARE_PATH + "/workflows/jobs/shell",
+            ERT_SHARE_PATH + "/workflows/jobs/internal/config",
+            ERT_SHARE_PATH + "/workflows/jobs/internal-gui/config",
+        ],
+    }
 
-            work_area.copy_directory(self.case_directory)
+    with open("minimum_config", "a+") as ert_file:
+        ert_file.write("LOAD_WORKFLOW_JOB workflows/UBER_PRINT print_uber\n")
+        ert_file.write("LOAD_WORKFLOW workflows/MAGIC_PRINT magic_print\n")
 
-            config_file = "simple_config/minimum_config"
-            with open(config_file, "a+") as ert_file:
-                ert_file.write("LOAD_WORKFLOW_JOB workflows/UBER_PRINT print_uber\n")
-                ert_file.write("LOAD_WORKFLOW workflows/MAGIC_PRINT magic_print\n")
+    os.mkdir("simple_config/workflows")
 
-            os.mkdir("simple_config/workflows")
+    with open("simple_config/workflows/MAGIC_PRINT", "w") as f:
+        f.write("print_uber\n")
+    with open("simple_config/workflows/UBER_PRINT", "w") as f:
+        f.write("EXECUTABLE ls\n")
 
-            with open("simple_config/workflows/MAGIC_PRINT", "w") as f:
-                f.write("print_uber\n")
-            with open("simple_config/workflows/UBER_PRINT", "w") as f:
-                f.write("EXECUTABLE ls\n")
+    res_config = ResConfig("minimum_config")
 
-            res_config = ResConfig(config_file)
-            list_from_content = res_config.ert_workflow_list
-            list_from_dict = ErtWorkflowList(
-                subst_list=res_config.subst_config.subst_list,
-                config_dict=self.config_dict,
-            )
-            self.assertEqual(list_from_content, list_from_dict)
+    assert (
+        ErtWorkflowList(
+            subst_list=res_config.subst_config.subst_list,
+            config_dict=config_dict,
+        )
+        == res_config.ert_workflow_list
+    )
 
-    def test_illegal_configs(self):
-        with self.assertRaises(ValueError):
-            ErtWorkflowList(subst_list=[], config_dict=[], config_content=[])
 
-        with self.assertRaises(ValueError):
-            ErtWorkflowList()
+def test_illegal_configs():
+    with pytest.raises(ValueError):
+        ErtWorkflowList(subst_list=[], config_dict=[], config_content=[])
+
+    with pytest.raises(ValueError):
+        ErtWorkflowList()

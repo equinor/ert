@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 #  Copyright (C) 2014  Equinor ASA, Norway.
 #
 #  The file 'test_analysis_iter_config.py' is part of ERT
@@ -17,28 +16,26 @@
 
 from ert._c_wrappers.enkf import AnalysisIterConfig
 
-from ...libres_utils import ResTest
+
+def test_set_analysis_iter_config():
+    c = AnalysisIterConfig()
+    assert repr(c).startswith("AnalysisIterConfig")
+
+    assert not c.caseFormatSet()
+    c.setCaseFormat("case%d")
+    assert c.caseFormatSet()
+
+    assert not c.numIterationsSet()
+    c.setNumIterations(1)
+    assert c.numIterationsSet()
 
 
-class AnalysisIterConfigTest(ResTest):
-    def test_set_analysis_iter_config(self):
-        c = AnalysisIterConfig()
-        self.assertTrue(repr(c).startswith("AnalysisIterConfig"))
-
-        self.assertFalse(c.caseFormatSet())
-        c.setCaseFormat("case%d")
-        self.assertTrue(c.caseFormatSet())
-
-        self.assertFalse(c.numIterationsSet())
-        c.setNumIterations(1)
-        self.assertTrue(c.numIterationsSet())
-
-    def test_analysis_iter_config_constructor(self):
-        config_dict = {
-            "ITER_CASE": "ITERATED_ENSEMBLE_SMOOTHER%d",
-            "ITER_COUNT": 4,
-            "ITER_RETRY_COUNT": 4,
-        }
-        c_default = AnalysisIterConfig()
-        c_dict = AnalysisIterConfig(config_dict=config_dict)
-        self.assertEqual(c_default, c_dict)
+def test_analysis_iter_config_constructor():
+    config_dict = {
+        "ITER_CASE": "ITERATED_ENSEMBLE_SMOOTHER%d",
+        "ITER_COUNT": 4,
+        "ITER_RETRY_COUNT": 4,
+    }
+    c_default = AnalysisIterConfig()
+    c_dict = AnalysisIterConfig(config_dict=config_dict)
+    assert c_default == c_dict

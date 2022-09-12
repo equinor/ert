@@ -16,133 +16,128 @@
 import datetime
 import os
 import os.path
-import unittest
 
-from ecl.util.test import TestAreaContext
+import pytest
 
 from ert._c_wrappers.enkf import ConfigKeys, ResConfig, SubstConfig
 
-from ...libres_utils import ResTest
+
+def with_key(a_dict, key, val):
+    copy = a_dict.copy()
+    copy[key] = val
+    return copy
 
 
-class SubstConfigTest(ResTest):
-    def setUp(self):
-        self.path = self.createTestPath("local/snake_oil_structure/")
-        self.config_data = {
-            ConfigKeys.RUNPATH_FILE: "runpath",
-            ConfigKeys.CONFIG_DIRECTORY: self.path,
-            ConfigKeys.CONFIG_FILE_KEY: "config",
-            ConfigKeys.DEFINE_KEY: {"keyA": "valA", "keyB": "valB"},
-            ConfigKeys.DATA_KW_KEY: {"keyC": "valC", "keyD": "valD"},
-            ConfigKeys.DATA_FILE: "eclipse/model/SNAKE_OIL.DATA",
-        }
+def without_key(a_dict, key):
+    return {index: value for index, value in a_dict.items() if index != key}
 
-    def test_two_instances_of_same_config_are_equal(self):
-        subst_config1 = SubstConfig(config_dict=self.config_data)
-        subst_config2 = SubstConfig(config_dict=self.config_data)
-        self.assertEqual(subst_config1, subst_config2)
 
-    def test_two_instances_of_different_config_are_not_equal(self):
-        subst_config1 = SubstConfig(config_dict=self.config_data)
-        subst_config2 = SubstConfig(
-            config_dict=self.set_key(ConfigKeys.RUNPATH_FILE, "aaaaa")
+@pytest.fixture
+def snake_oil_structure_config(setup_case):
+    _ = setup_case("local/snake_oil_structure", "user_config.ert")
+    return {
+        ConfigKeys.RUNPATH_FILE: "runpath",
+        ConfigKeys.CONFIG_DIRECTORY: os.getcwd(),
+        ConfigKeys.CONFIG_FILE_KEY: "config",
+        ConfigKeys.DEFINE_KEY: {"keyA": "valA", "keyB": "valB"},
+        ConfigKeys.DATA_KW_KEY: {"keyC": "valC", "keyD": "valD"},
+        ConfigKeys.DATA_FILE: "eclipse/model/SNAKE_OIL.DATA",
+    }
+
+
+@pytest.fixture
+def snake_oil_structure_config_file(snake_oil_structure_config):
+    filename = snake_oil_structure_config[ConfigKeys.CONFIG_FILE_KEY]
+    with open(filename, "w+") as config:
+        # necessary in the file, but irrelevant to this test
+        config.write("JOBNAME  Job%d\n")
+        config.write("NUM_REALIZATIONS  1\n")
+
+        # write the rest of the relevant config items to the file
+        config.write(
+            f"{ConfigKeys.RUNPATH_FILE} "
+            f"{snake_oil_structure_config[ConfigKeys.RUNPATH_FILE]}\n"
         )
-        self.assertNotEqual(subst_config1, subst_config2)
-
-    def test_old_and_new_constructor_creates_equal_config(self):
-        with TestAreaContext("subst_config_test_tmp") as work_area:
-            work_area.copy_directory(os.path.join(self.path, "eclipse"))
-            cwd = os.getcwd()
-            filename = self.config_data[ConfigKeys.CONFIG_FILE_KEY]
-            self.make_config_file(filename)
-            res_config = ResConfig(user_config_file=filename)
-            subst_config1 = res_config.subst_config
-            subst_config2 = SubstConfig(
-                config_dict=self.set_key(ConfigKeys.CONFIG_DIRECTORY, cwd)
-            )
-
-            self.assertEqual(
-                subst_config1,
-                subst_config2,
-                str(subst_config1) + "\n\nis not equal to:\n\n" + str(subst_config2),
-            )
-
-    def test_complete_config_reads_correct_values(self):
-        subst_config = SubstConfig(config_dict=self.config_data)
-        self.assertKeyValue(subst_config, "<CWD>", self.path)
-        self.assertKeyValue(subst_config, "<CONFIG_PATH>", self.path)
-        self.assertKeyValue(
-            subst_config, "<DATE>", datetime.datetime.now().date().isoformat()
-        )
-        self.assertKeyValue(subst_config, "keyA", "valA")
-        self.assertKeyValue(subst_config, "keyB", "valB")
-        self.assertKeyValue(subst_config, "keyC", "valC")
-        self.assertKeyValue(subst_config, "keyD", "valD")
-        self.assertKeyValue(subst_config, "<RUNPATH_FILE>", self.path + "/runpath")
-        self.assertKeyValue(subst_config, "<NUM_CPU>", "1")
-
-    def test_missing_runpath_gives_default_value(self):
-        subst_config = SubstConfig(config_dict=self.remove_key(ConfigKeys.RUNPATH_FILE))
-        self.assertKeyValue(
-            subst_config, "<RUNPATH_FILE>", self.path + "/.ert_runpath_list"
-        )
-
-    def test_empty_config_raises_error(self):
-        with self.assertRaises(ValueError):
-            SubstConfig(config_dict={})
-
-    def test_missing_config_directory_raises_error(self):
-        with self.assertRaises(ValueError):
-            SubstConfig(config_dict=self.remove_key(ConfigKeys.CONFIG_DIRECTORY))
-
-    def test_data_file_not_found_raises_error(self):
-        with self.assertRaises(IOError):
-            SubstConfig(config_dict=self.set_key(ConfigKeys.DATA_FILE, "not_a_file"))
-
-    def remove_key(self, key):
-        return {
-            index: value for index, value in self.config_data.items() if index != key
-        }
-
-    def set_key(self, key, val):
-        copy = self.config_data.copy()
-        copy[key] = val
-        return copy
-
-    def assertKeyValue(self, subst_config, key, val):
-        actual_val = subst_config.__getitem__(key)
-        assert actual_val == val, (
-            f"subst_config does not contain key/value pair ({key}, {val})"
-            f". Actual value was: {actual_val}"
-        )
-
-    def make_config_file(self, filename):
-        with open(filename, "w+") as config:
-            # necessary in the file, but irrelevant to this test
-            config.write("JOBNAME  Job%d\n")
-            config.write("NUM_REALIZATIONS  1\n")
-
-            # write the rest of the relevant config items to the file
+        defines = snake_oil_structure_config[ConfigKeys.DEFINE_KEY]
+        for key in defines:
+            val = defines[key]
+            config.write(f"{ConfigKeys.DEFINE_KEY} {key} {val}\n")
+        data_kws = snake_oil_structure_config[ConfigKeys.DATA_KW_KEY]
+        for key in data_kws:
+            val = data_kws[key]
             config.write(
-                f"{ConfigKeys.RUNPATH_FILE} "
-                f"{self.config_data[ConfigKeys.RUNPATH_FILE]}\n"
-            )
-            defines = self.config_data[ConfigKeys.DEFINE_KEY]
-            for key in defines:
-                val = defines[key]
-                config.write(f"{ConfigKeys.DEFINE_KEY} {key} {val}\n")
-            data_kws = self.config_data[ConfigKeys.DATA_KW_KEY]
-            for key in data_kws:
-                val = data_kws[key]
-                config.write(
-                    f"{ConfigKeys.DATA_KW_KEY} {key} {val}\n".format(
-                        ConfigKeys.DATA_KW_KEY, key, val
-                    )
+                f"{ConfigKeys.DATA_KW_KEY} {key} {val}\n".format(
+                    ConfigKeys.DATA_KW_KEY, key, val
                 )
-            config.write(
-                f"{ConfigKeys.DATA_FILE} {self.config_data[ConfigKeys.DATA_FILE]}\n"
             )
+        config.write(
+            f"{ConfigKeys.DATA_FILE}"
+            " {snake_oil_structure_config[ConfigKeys.DATA_FILE]}\n"
+        )
+
+    return filename
 
 
-if __name__ == "__main__":
-    unittest.main()
+def test_two_instances_of_same_config_are_equal(snake_oil_structure_config):
+    assert SubstConfig(config_dict=snake_oil_structure_config) == SubstConfig(
+        config_dict=snake_oil_structure_config
+    )
+
+
+def test_two_instances_of_different_config_are_not_equal(snake_oil_structure_config):
+    assert SubstConfig(config_dict=snake_oil_structure_config) != SubstConfig(
+        config_dict=with_key(
+            snake_oil_structure_config, ConfigKeys.RUNPATH_FILE, "aaaaa"
+        )
+    )
+
+
+def test_old_and_new_constructor_creates_equal_config(
+    snake_oil_structure_config_file, snake_oil_structure_config
+):
+    assert ResConfig(
+        user_config_file=snake_oil_structure_config_file
+    ).subst_config == SubstConfig(config_dict=snake_oil_structure_config)
+
+
+def test_complete_config_reads_correct_values(snake_oil_structure_config):
+    subst_config = SubstConfig(config_dict=snake_oil_structure_config)
+    assert subst_config["<CWD>"] == os.getcwd()
+    assert subst_config["<CONFIG_PATH>"] == os.getcwd()
+    assert subst_config["<DATE>"] == datetime.datetime.now().date().isoformat()
+    assert subst_config["keyA"] == "valA"
+    assert subst_config["keyB"] == "valB"
+    assert subst_config["keyC"] == "valC"
+    assert subst_config["keyD"] == "valD"
+    assert subst_config["<RUNPATH_FILE>"] == os.getcwd() + "/runpath"
+    assert subst_config["<NUM_CPU>"] == "1"
+
+
+def test_missing_runpath_gives_default_value(snake_oil_structure_config):
+    subst_config = SubstConfig(
+        config_dict=without_key(snake_oil_structure_config, ConfigKeys.RUNPATH_FILE)
+    )
+    assert subst_config["<RUNPATH_FILE>"] == os.getcwd() + "/.ert_runpath_list"
+
+
+def test_empty_config_raises_error():
+    with pytest.raises(ValueError):
+        SubstConfig(config_dict={})
+
+
+def test_missing_config_directory_raises_error(snake_oil_structure_config):
+    with pytest.raises(ValueError):
+        SubstConfig(
+            config_dict=without_key(
+                snake_oil_structure_config, ConfigKeys.CONFIG_DIRECTORY
+            )
+        )
+
+
+def test_data_file_not_found_raises_error(snake_oil_structure_config):
+    with pytest.raises(IOError):
+        SubstConfig(
+            config_dict=with_key(
+                snake_oil_structure_config, ConfigKeys.DATA_FILE, "not_a_file"
+            )
+        )

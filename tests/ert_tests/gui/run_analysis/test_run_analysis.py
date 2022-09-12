@@ -1,12 +1,11 @@
 from unittest.mock import Mock, patch
 
+import pytest
 from qtpy.QtGui import QIcon
 
 from ert.analysis import ErtAnalysisError
 from ert.gui.ertwidgets.closabledialog import ClosableDialog
 from ert.gui.tools import run_analysis
-
-from ...ert_utils import ErtTest
 
 
 # Mocks are all instances and can never fool type checking, like in QAction's
@@ -17,53 +16,49 @@ class MockedQIcon(QIcon):
     pass
 
 
-class RunAnalysisTests(ErtTest):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+@pytest.fixture
+def mock_tool():
+    tool = None
+    with patch("ert.gui.tools.run_analysis.run_analysis_tool.resourceIcon") as rs:
+        rs.return_value = MockedQIcon()
+        tool = run_analysis.RunAnalysisTool(Mock(), Mock())
+    tool._run_widget = Mock(spec=run_analysis.RunAnalysisPanel)
+    tool._dialog = Mock(spec=ClosableDialog)
+    return tool
 
-        with patch("ert.gui.tools.run_analysis.run_analysis_tool.resourceIcon") as rs:
-            rs.return_value = MockedQIcon()
-            self.tool = run_analysis.RunAnalysisTool(Mock(), Mock())
-        self.tool._run_widget = Mock(spec=run_analysis.RunAnalysisPanel)
-        self.tool._dialog = Mock(spec=ClosableDialog)
 
-    def tearDown(self):
-        ErtTest.tearDown(self)
+@patch("ert.gui.tools.run_analysis.run_analysis_tool.analyse", return_value=None)
+@patch("ert.gui.tools.run_analysis.run_analysis_tool.QMessageBox")
+def test_show_dialogue_at_success(mock_tool, mock_messagebox, mock_analyse):
+    mock_tool._run_widget.source_case.return_value = "source"
+    mock_tool._run_widget.target_case.return_value = "target"
 
-        self.tool._run_widget.reset_mock()
-        self.tool._dialog.reset_mock()
+    ert_mock = Mock()
+    mock_tool.ert = ert_mock
+    mock_tool.run()
 
-    @patch("ert.gui.tools.run_analysis.run_analysis_tool.analyse", return_value=None)
-    @patch("ert.gui.tools.run_analysis.run_analysis_tool.QMessageBox")
-    def test_show_dialogue_at_success(self, mock_messagebox, mock_analyse):
-        self.tool._run_widget.source_case.return_value = "source"
-        self.tool._run_widget.target_case.return_value = "target"
-
-        ert_mock = Mock()
-        self.tool.ert = ert_mock
-        self.tool.run()
-
-        mock_analyse.assert_called_once_with(ert_mock, "target", "source")
-        mock_messagebox.return_value.setText.assert_called_once_with(
-            "Successfully ran analysis for case 'source'."
-        )
-        self.tool._dialog.accept.assert_called_once_with()
-
-    @patch(
-        "ert.gui.tools.run_analysis.run_analysis_tool.analyse",
-        side_effect=ErtAnalysisError("some error"),
+    mock_analyse.assert_called_once_with(ert_mock, "target", "source")
+    mock_messagebox.return_value.setText.assert_called_once_with(
+        "Successfully ran analysis for case 'source'."
     )
-    @patch("ert.gui.tools.run_analysis.run_analysis_tool.QMessageBox")
-    def test_show_dialogue_at_failure(self, mock_messagebox, mock_analyse):
-        self.tool._run_widget.source_case.return_value = "source"
-        self.tool._run_widget.target_case.return_value = "target"
-        ert_mock = Mock()
-        self.tool.ert = ert_mock
-        self.tool.run()
+    mock_tool._dialog.accept.assert_called_once_with()
 
-        mock_analyse.assert_called_once_with(ert_mock, "target", "source")
-        mock_messagebox.return_value.setText.assert_called_once_with(
-            "Unable to run analysis for case 'source'.\n"
-            "The following error occured: some error"
-        )
-        self.tool._dialog.accept.assert_not_called()
+
+@patch(
+    "ert.gui.tools.run_analysis.run_analysis_tool.analyse",
+    side_effect=ErtAnalysisError("some error"),
+)
+@patch("ert.gui.tools.run_analysis.run_analysis_tool.QMessageBox")
+def test_show_dialogue_at_failure(mock_tool, mock_messagebox, mock_analyse):
+    mock_tool._run_widget.source_case.return_value = "source"
+    mock_tool._run_widget.target_case.return_value = "target"
+    ert_mock = Mock()
+    mock_tool.ert = ert_mock
+    mock_tool.run()
+
+    mock_analyse.assert_called_once_with(ert_mock, "target", "source")
+    mock_messagebox.return_value.setText.assert_called_once_with(
+        "Unable to run analysis for case 'source'.\n"
+        "The following error occured: some error"
+    )
+    mock_tool._dialog.accept.assert_not_called()

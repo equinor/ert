@@ -1,94 +1,83 @@
 from ert.shared.ide.keywords.definitions import IntegerArgument
 
-from ...ert_utils import ErtTest
+
+def test_default_integer_argument():
+    integer = IntegerArgument()
+
+    validation_status = integer.validate("45")
+
+    assert validation_status
+    assert validation_status.value() == 45
+    assert validation_status.message() == ""
+
+    validation_status = integer.validate("-45")
+
+    assert validation_status
+    assert validation_status.value() == -45
+
+    validation_status = integer.validate("45 ")
+
+    assert not validation_status
+    assert validation_status.message() != ""
+    assert validation_status.value() is None
+
+    validation_status = integer.validate("gx")
+
+    assert not validation_status
+    assert validation_status.message() != ""
 
 
-class IntegerArgumentTest(ErtTest):
-    def test_default_integer_argument(self):
-        integer = IntegerArgument()
+def test_integer_range_argument_from():
+    from_value = 99
+    integer = IntegerArgument(from_value=from_value)
 
-        validation_status = integer.validate("45")
+    validation_status = integer.validate(f"{from_value}")
+    assert validation_status
 
-        self.assertTrue(validation_status)
-        self.assertEqual(validation_status.value(), 45)
-        self.assertEqual(validation_status.message(), "")
+    value = 98
+    validation_status = integer.validate(f"{value}")
+    assert not validation_status
 
-        validation_status = integer.validate("-45")
+    range_string = f"{from_value} <= {value}"
+    assert validation_status.message() == IntegerArgument.NOT_IN_RANGE % range_string
 
-        self.assertTrue(validation_status)
-        self.assertEqual(validation_status.value(), -45)
 
-        validation_status = integer.validate("45 ")
+def test_integer_range_argument_to():
+    to_value = 99
+    integer = IntegerArgument(to_value=to_value)
 
-        self.assertFalse(validation_status)
-        self.assertNotEqual(validation_status.message(), "")
-        self.assertIsNone(validation_status.value())
+    validation_status = integer.validate(f"{to_value}")
+    assert validation_status
 
-        validation_status = integer.validate("gx")
+    value = 100
+    validation_status = integer.validate(f"{value}")
+    assert not validation_status
 
-        self.assertFalse(validation_status)
-        self.assertNotEqual(validation_status.message(), "")
+    range_string = f"{value} <= {to_value}"
+    assert validation_status.message() == IntegerArgument.NOT_IN_RANGE % range_string
 
-    def test_integer_range_argument_from(self):
-        from_value = 99
-        integer = IntegerArgument(from_value=from_value)
 
-        validation_status = integer.validate(f"{from_value}")
-        self.assertTrue(validation_status)
+def test_integer_range_argument():
+    from_value = 10
+    to_value = 20
+    integer = IntegerArgument(from_value=from_value, to_value=to_value)
 
-        value = 98
-        validation_status = integer.validate(f"{value}")
-        self.assertFalse(validation_status)
+    assert integer.validate(f"{to_value}")
 
-        range_string = f"{from_value} <= {value}"
-        self.assertEqual(
-            validation_status.message(), IntegerArgument.NOT_IN_RANGE % range_string
-        )
+    assert integer.validate(f"{from_value}")
 
-    def test_integer_range_argument_to(self):
-        to_value = 99
-        integer = IntegerArgument(to_value=to_value)
+    assert integer.validate("15")
 
-        validation_status = integer.validate(f"{to_value}")
-        self.assertTrue(validation_status)
+    value = 9
+    validation_status = integer.validate(f"{value}")
+    assert not validation_status
 
-        value = 100
-        validation_status = integer.validate(f"{value}")
-        self.assertFalse(validation_status)
+    range_string = f"{from_value} <= {value} <= {to_value}"
+    assert validation_status.message() == IntegerArgument.NOT_IN_RANGE % range_string
 
-        range_string = f"{value} <= {to_value}"
-        self.assertEqual(
-            validation_status.message(), IntegerArgument.NOT_IN_RANGE % range_string
-        )
+    value = 21
+    validation_status = integer.validate(f"{value}")
+    assert not validation_status
 
-    def test_integer_range_argument(self):
-        from_value = 10
-        to_value = 20
-        integer = IntegerArgument(from_value=from_value, to_value=to_value)
-
-        validation_status = integer.validate(f"{to_value}")
-        self.assertTrue(validation_status)
-
-        validation_status = integer.validate(f"{from_value}")
-        self.assertTrue(validation_status)
-
-        validation_status = integer.validate("15")
-        self.assertTrue(validation_status)
-
-        value = 9
-        validation_status = integer.validate(f"{value}")
-        self.assertFalse(validation_status)
-
-        range_string = f"{from_value} <= {value} <= {to_value}"
-        self.assertEqual(
-            validation_status.message(), IntegerArgument.NOT_IN_RANGE % range_string
-        )
-
-        value = 21
-        validation_status = integer.validate(f"{value}")
-        self.assertFalse(validation_status)
-
-        range_string = f"{from_value} <= {value} <= {to_value}"
-        self.assertEqual(
-            validation_status.message(), IntegerArgument.NOT_IN_RANGE % range_string
-        )
+    range_string = f"{from_value} <= {value} <= {to_value}"
+    assert validation_status.message() == IntegerArgument.NOT_IN_RANGE % range_string
