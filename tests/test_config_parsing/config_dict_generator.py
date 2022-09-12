@@ -41,8 +41,7 @@ def directory_names(draw):
 
 
 small_floats = st.floats(min_value=1.0, max_value=10.0, allow_nan=False)
-positives = st.integers(min_value=0, max_value=10000)
-honest_positives = st.integers(min_value=1, max_value=10000)
+positives = st.integers(min_value=1, max_value=10000)
 
 log_levels = st.sampled_from(
     [
@@ -189,7 +188,7 @@ def config_dicts(draw):
     config_dict = draw(
         st.fixed_dictionaries(
             {
-                ConfigKeys.NUM_REALIZATIONS: honest_positives,
+                ConfigKeys.NUM_REALIZATIONS: positives,
                 ConfigKeys.ECLBASE: st.just(draw(words) + "%d"),
                 ConfigKeys.RUNPATH_FILE: file_names,
                 ConfigKeys.ALPHA_KEY: small_floats,
