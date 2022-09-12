@@ -93,8 +93,14 @@ class SubstConfig(BaseCClass):
                 "The name of a file with a list of run directories.",
             )
 
+            if ConfigKeys.NUM_CPU in config_dict:
+                subst_list.addItem(
+                    "<NUM_CPU>",
+                    str(config_dict[ConfigKeys.NUM_CPU]),
+                    "The number of CPU used for one forward model.",
+                )
             # Read num_cpu from Eclipse DATA_FILE
-            if ConfigKeys.DATA_FILE in config_dict:
+            elif ConfigKeys.DATA_FILE in config_dict:
                 file_path = os.path.join(
                     config_directory, config_dict[ConfigKeys.DATA_FILE]
                 )
