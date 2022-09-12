@@ -9,7 +9,7 @@ from ert._c_wrappers.enkf import ConfigKeys, EclConfig, ResConfig
 from .config_dict_generator import config_dicts, to_config_file
 
 
-@pytest.mark.usefixtures("setup_tmpdir")
+@pytest.mark.usefixtures("use_tmpdir")
 @given(config_dicts())
 def test_ecl_config_dict_creates_equal_config(config_dict):
     cwd = os.getcwd()

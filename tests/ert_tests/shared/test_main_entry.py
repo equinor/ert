@@ -8,8 +8,6 @@ import pytest
 from ert.shared import main
 from ert.shared.main import log_config
 
-from ...utils import SOURCE_DIR
-
 
 def test_main_logging(monkeypatch, caplog):
     parser_mock = MagicMock()
@@ -127,14 +125,14 @@ def test_logging_config(caplog, config_content, expected):
     assert expected in caplog.messages
 
 
-def test_logging_snake_oil_config(caplog):
+def test_logging_snake_oil_config(caplog, source_root):
     """
     Run logging on an actual config file with line comments
     and inline comments to check the result
     """
     logger = logging.getLogger(__name__)
     config_path = os.path.join(
-        SOURCE_DIR,
+        source_root,
         "test-data",
         "local",
         "snake_oil_structure",

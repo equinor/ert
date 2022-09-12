@@ -97,8 +97,8 @@ def render_dynamic_values(s, itr, iens, geo_id):
 
 
 @pytest.mark.parametrize("itr", [0, 1, 2, 17])
-def test_write_snakeoil_runpath_file(snake_oil_example, itr):
-    ert = snake_oil_example
+def test_write_snakeoil_runpath_file(snake_oil_case, itr):
+    ert = snake_oil_case
     fs_manager = ert.getEnkfFsManager()
     sim_fs = fs_manager.getFileSystem("sim_fs")
 

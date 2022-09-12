@@ -3,8 +3,8 @@ import pytest
 from ert._c_wrappers.enkf.export import GenDataCollector
 
 
-def test_gen_data_collector(snake_oil_example):
-    ert = snake_oil_example
+def test_gen_data_collector(snake_oil_case):
+    ert = snake_oil_case
 
     with pytest.raises(KeyError):
         GenDataCollector.loadGenData(ert, "default_0", "RFT_XX", 199)

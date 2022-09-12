@@ -3,8 +3,8 @@ import pytest
 from ert._c_wrappers.enkf.export import MisfitCollector
 
 
-def test_misfit_collector(snake_oil_example):
-    ert = snake_oil_example
+def test_misfit_collector(snake_oil_case):
+    ert = snake_oil_case
     data = MisfitCollector.loadAllMisfitData(ert, "default_0")
 
     assert pytest.approx(data["MISFIT:FOPR"][0]) == 738.735586

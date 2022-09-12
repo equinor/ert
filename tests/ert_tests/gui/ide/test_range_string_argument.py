@@ -2,30 +2,27 @@ from ert.shared.ide.keywords.definitions.range_string_argument import (
     RangeStringArgument,
 )
 
-from ...ert_utils import ErtTest
 
+def test_proper_name_argument():
 
-class RangeStringArgumentTest(ErtTest):
-    def test_proper_name_argument(self):
+    argument = RangeStringArgument()
 
-        argument = RangeStringArgument()
+    assert argument.validate("1")
+    assert argument.validate("1-10")
+    assert argument.validate("1-10,11-20")
+    assert argument.validate("1-10,11,12,13,14,15,16-20")
 
-        self.assertTrue(argument.validate("1"))
-        self.assertTrue(argument.validate("1-10"))
-        self.assertTrue(argument.validate("1-10,11-20"))
-        self.assertTrue(argument.validate("1-10,11,12,13,14,15,16-20"))
+    # The empty string is invalid in ERT2. However, it is the only way to
+    # specify that all realizations are inactive
+    assert not argument.validate("")
 
-        # The empty string is invalid in ERT2. However, it is the only way to
-        # specify that all realizations are inactive
-        self.assertFalse(argument.validate(""))
+    assert not argument.validate("s5")
+    assert not argument.validate("1-10,5-4*")
 
-        self.assertFalse(argument.validate("s5"))
-        self.assertFalse(argument.validate("1-10,5-4*"))
+    assert argument.validate("1 - 5, 2,3 ,4")
+    assert argument.validate("1 -  5, 2    ,3 ,4")
 
-        self.assertTrue(argument.validate("1 - 5, 2,3 ,4"))
-        self.assertTrue(argument.validate("1 -  5, 2    ,3 ,4"))
+    argument = RangeStringArgument(max_value=10)
 
-        argument = RangeStringArgument(max_value=10)
-
-        self.assertTrue(argument.validate("1-5, 9"))
-        self.assertFalse(argument.validate("10"))
+    assert argument.validate("1-5, 9")
+    assert not argument.validate("10")

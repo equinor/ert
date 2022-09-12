@@ -2,7 +2,6 @@ from argparse import Namespace
 
 import pytest
 
-from ert._c_wrappers.enkf import EnKFMain
 from ert.libres_facade import LibresFacade
 from ert.shared.cli import model_factory
 from ert.shared.models import (
@@ -14,14 +13,6 @@ from ert.shared.models import (
 )
 
 
-@pytest.fixture
-def poly_example(setup_case):
-    res_config = setup_case("local/poly_example", "poly.ert")
-    ert = EnKFMain(res_config)
-    facade = LibresFacade(ert)
-    return ert, facade
-
-
 @pytest.mark.parametrize(
     "target_case, format_mode, expected",
     [
@@ -30,8 +21,9 @@ def poly_example(setup_case):
         (None, True, "default_%d"),
     ],
 )
-def test_target_case_name(target_case, expected, format_mode, poly_example):
-    ert, facade = poly_example
+def test_target_case_name(target_case, expected, format_mode, poly_case):
+    ert = poly_case
+    facade = LibresFacade(ert)
     args = Namespace(target_case=target_case)
     assert (
         model_factory._target_case_name(
@@ -41,8 +33,8 @@ def test_target_case_name(target_case, expected, format_mode, poly_example):
     )
 
 
-def test_default_realizations(poly_example):
-    _, facade = poly_example
+def test_default_realizations(poly_case):
+    facade = LibresFacade(poly_case)
     args = Namespace(realizations=None)
     assert (
         model_factory._realizations(args, facade.get_ensemble_size())
@@ -50,8 +42,8 @@ def test_default_realizations(poly_example):
     )
 
 
-def test_custom_realizations(poly_example):
-    _, facade = poly_example
+def test_custom_realizations(poly_case):
+    facade = LibresFacade(poly_case)
     args = Namespace(realizations="0-4,7,8")
     ensemble_size = facade.get_ensemble_size()
     active_mask = [False] * ensemble_size
@@ -65,8 +57,9 @@ def test_custom_realizations(poly_example):
     assert model_factory._realizations(args, ensemble_size) == active_mask
 
 
-def test_init_iteration_number(poly_example):
-    ert, facade = poly_example
+def test_init_iteration_number(poly_case):
+    ert = poly_case
+    facade = LibresFacade(ert)
     args = Namespace(iter_num=10, realizations=None)
     model = model_factory._setup_ensemble_experiment(
         ert, args, facade.get_ensemble_size(), "experiment_id"
@@ -76,8 +69,8 @@ def test_init_iteration_number(poly_example):
     assert run_context.iteration == 10
 
 
-def test_setup_single_test_run(poly_example):
-    ert, _ = poly_example
+def test_setup_single_test_run(poly_case):
+    ert = poly_case
 
     model = model_factory._setup_single_test_run(ert, "experiment_id")
     assert isinstance(model, SingleTestRun)
@@ -87,8 +80,9 @@ def test_setup_single_test_run(poly_example):
     model.create_context()
 
 
-def test_setup_ensemble_experiment(poly_example):
-    ert, facade = poly_example
+def test_setup_ensemble_experiment(poly_case):
+    ert = poly_case
+    facade = LibresFacade(ert)
     args = Namespace(realizations=None, iter_num=1)
     model = model_factory._setup_ensemble_experiment(
         ert, args, facade.get_ensemble_size(), "experiment_id"
@@ -100,8 +94,9 @@ def test_setup_ensemble_experiment(poly_example):
     model.create_context()
 
 
-def test_setup_ensemble_smoother(poly_example):
-    ert, facade = poly_example
+def test_setup_ensemble_smoother(poly_case):
+    ert = poly_case
+    facade = LibresFacade(ert)
 
     args = Namespace(realizations="0-4,7,8", target_case="test_case")
 
@@ -121,8 +116,9 @@ def test_setup_ensemble_smoother(poly_example):
     model.create_context()
 
 
-def test_setup_multiple_data_assimilation(poly_example):
-    ert, facade = poly_example
+def test_setup_multiple_data_assimilation(poly_case):
+    ert = poly_case
+    facade = LibresFacade(ert)
     args = Namespace(
         realizations="0-4,7,8",
         weights="6,4,2",
@@ -147,8 +143,9 @@ def test_setup_multiple_data_assimilation(poly_example):
     model.create_context(0)
 
 
-def test_setup_iterative_ensemble_smoother(poly_example):
-    ert, facade = poly_example
+def test_setup_iterative_ensemble_smoother(poly_case):
+    ert = poly_case
+    facade = LibresFacade(ert)
     args = Namespace(
         realizations="0-4,7,8",
         target_case="test_case_%d",

@@ -1,6 +1,6 @@
 #  Copyright (C) 2018  Equinor ASA, Norway.
 #
-#  The file 'test_ecl.py' is part of ERT - Ensemble based Reservoir Tool.
+#  The file 'test_rms_config.py' is part of ERT - Ensemble based Reservoir Tool.
 #
 #  ERT is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -15,99 +15,84 @@
 #  for more details.
 import os
 import stat
-import unittest
 
-from ecl.util.test import TestAreaContext
-from pytest import MonkeyPatch
+import pytest
 
 from ert._c_wrappers.fm.rms import RMSConfig
 
-from ...libres_utils import ResTest
 
-
-class RMSConfigTest(ResTest):
-    def setUp(self):
-        self.monkeypatch = MonkeyPatch()
-        pass
-
-    def tearDown(self):
-        self.monkeypatch.undo()
-
-    def test_load(self):
-        self.monkeypatch.setenv("RMS_SITE_CONFIG", "file/does/not/exist")
-        with self.assertRaises(IOError):
-            conf = RMSConfig()
-
-        self.monkeypatch.setenv("RMS_SITE_CONFIG", RMSConfig.DEFAULT_CONFIG_FILE)
+@pytest.mark.usefixtures("use_tmpdir")
+def test_load(monkeypatch):
+    monkeypatch.setenv("RMS_SITE_CONFIG", "file/does/not/exist")
+    with pytest.raises(IOError):
         conf = RMSConfig()
 
-        with self.assertRaises(OSError):
-            # pylint: disable=pointless-statement
-            conf.executable
+    monkeypatch.setenv("RMS_SITE_CONFIG", RMSConfig.DEFAULT_CONFIG_FILE)
+    conf = RMSConfig()
 
-        with TestAreaContext("yaml"):
-            with open("file.yml", "w") as f:
-                f.write("this:\n -should\n-be\ninvalid:yaml?")
+    with pytest.raises(OSError):
+        # pylint: disable=pointless-statement
+        conf.executable
 
-            self.monkeypatch.setenv("RMS_SITE_CONFIG", "file.yml")
-            with self.assertRaises(ValueError):
-                conf = RMSConfig()
+    with open("file.yml", "w") as f:
+        f.write("this:\n -should\n-be\ninvalid:yaml?")
 
-            os.mkdir("bin")
-            with open("bin/rms", "w") as f:
-                f.write("This is an RMS executable ...")
-            os.chmod("bin/rms", stat.S_IEXEC)
+    monkeypatch.setenv("RMS_SITE_CONFIG", "file.yml")
+    with pytest.raises(ValueError):
+        conf = RMSConfig()
 
-            with open("file.yml", "w") as f:
-                f.write("executable: bin/rms")
+    os.mkdir("bin")
+    with open("bin/rms", "w") as f:
+        f.write("This is an RMS executable ...")
+    os.chmod("bin/rms", stat.S_IEXEC)
 
-            conf = RMSConfig()
-            self.assertEqual(conf.executable, "bin/rms")
-            self.assertIsNone(conf.threads)
+    with open("file.yml", "w") as f:
+        f.write("executable: bin/rms")
 
-            with open("file.yml", "w") as f:
-                f.write("executable: bin/rms\n")
-                f.write("threads: 17")
+    conf = RMSConfig()
+    assert conf.executable == "bin/rms"
+    assert conf.threads is None
 
-            conf = RMSConfig()
-            self.assertEqual(conf.threads, 17)
+    with open("file.yml", "w") as f:
+        f.write("executable: bin/rms\n")
+        f.write("threads: 17")
 
-            with open("file.yml", "w") as f:
-                f.write("executable: bin/rms\n")
-                f.write("wrapper: not-exisiting-exec")
+    conf = RMSConfig()
+    assert conf.threads == 17
 
-            conf = RMSConfig()
+    with open("file.yml", "w") as f:
+        f.write("executable: bin/rms\n")
+        f.write("wrapper: not-exisiting-exec")
 
-            with self.assertRaises(OSError):
-                # pylint: disable=pointless-statement
-                conf.wrapper
+    conf = RMSConfig()
 
-            with open("file.yml", "w") as f:
-                f.write("executable: bin/rms\n")
-                f.write("wrapper: bash")
+    with pytest.raises(OSError):
+        # pylint: disable=pointless-statement
+        conf.wrapper
 
-            conf = RMSConfig()
-            self.assertEqual(conf.wrapper, "bash")
+    with open("file.yml", "w") as f:
+        f.write("executable: bin/rms\n")
+        f.write("wrapper: bash")
 
-    def test_load_env(self):
-        with TestAreaContext("yaml"):
-            self.monkeypatch.setenv("RMS_SITE_CONFIG", "file.yml")
-            with open("file.yml", "w") as f:
-                f.write(
-                    """\
+    conf = RMSConfig()
+    assert conf.wrapper == "bash"
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_load_env(monkeypatch):
+    monkeypatch.setenv("RMS_SITE_CONFIG", "file.yml")
+    with open("file.yml", "w") as f:
+        f.write(
+            """\
 executable: bin/rms\n
 wrapper: bash
 env:
-  10.1.3:
-    PATH_PREFIX: /some/path
-    PYTHONPATH: /some/pythonpath
+    10.1.3:
+        PATH_PREFIX: /some/path
+        PYTHONPATH: /some/pythonpath
 """
-                )
-            conf = RMSConfig()
-            self.assertEqual(conf.env("10.1.3")["PATH_PREFIX"], "/some/path")
-            self.assertEqual(conf.env("10.1.3")["PYTHONPATH"], "/some/pythonpath")
-            self.assertEqual(conf.env("non_existing"), {})
-
-
-if __name__ == "__main__":
-    unittest.main()
+        )
+    conf = RMSConfig()
+    assert conf.env("10.1.3")["PATH_PREFIX"] == "/some/path"
+    assert conf.env("10.1.3")["PYTHONPATH"] == "/some/pythonpath"
+    assert conf.env("non_existing") == {}

@@ -24,11 +24,11 @@ def test_parse_comma_list(tmpdir, monkeypatch, input_string, expected):
 
 def test_disable_parameters_is_loaded():
     pm = ErtPluginManager()
-    assert "DISABLE_PARAMETERS" in pm.get_installable_workflow_jobs().keys()
+    assert "DISABLE_PARAMETERS" in pm.get_installable_workflow_jobs()
 
 
-def test_that_we_can_disable_a_parameter(copy_case):
-    copy_case("local/poly_example")
+@pytest.mark.usefixtures("copy_poly_case")
+def test_that_we_can_disable_a_parameter():
     with open("poly.ert", "a") as fh:
         fh.writelines("GEN_KW DONT_UPDATE_KW template.txt kw.txt prior.txt")
     with open("template.txt", "w") as fh:

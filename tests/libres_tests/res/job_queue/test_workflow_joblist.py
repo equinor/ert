@@ -1,39 +1,38 @@
-from ecl.util.test import TestAreaContext
+import pytest
 
 from ert._c_wrappers.job_queue import WorkflowJob, WorkflowJoblist
 
-from ...libres_utils import ResTest
 from .workflow_common import WorkflowCommon
 
 
-class WorkflowJoblistTest(ResTest):
-    def test_workflow_joblist_creation(self):
-        joblist = WorkflowJoblist()
+def test_workflow_joblist_creation():
+    joblist = WorkflowJoblist()
 
-        job = WorkflowJob("JOB1")
+    job = WorkflowJob("JOB1")
 
-        joblist.addJob(job)
+    joblist.addJob(job)
 
-        self.assertTrue(job in joblist)
-        self.assertTrue("JOB1" in joblist)
+    assert job in joblist
+    assert "JOB1" in joblist
 
-        job_ref = joblist["JOB1"]
+    job_ref = joblist["JOB1"]
 
-        self.assertEqual(job.name(), job_ref.name())
+    assert job.name() == job_ref.name()
 
-    def test_workflow_joblist_with_files(self):
-        with TestAreaContext("python/job_queue/workflow_joblist"):
-            WorkflowCommon.createErtScriptsJob()
-            WorkflowCommon.createExternalDumpJob()
-            WorkflowCommon.createInternalFunctionJob()
 
-            joblist = WorkflowJoblist()
+@pytest.mark.usefixtures("use_tmpdir")
+def test_workflow_joblist_with_files():
+    WorkflowCommon.createErtScriptsJob()
+    WorkflowCommon.createExternalDumpJob()
+    WorkflowCommon.createInternalFunctionJob()
 
-            joblist.addJobFromFile("DUMP_JOB", "dump_job")
-            joblist.addJobFromFile("SUBTRACT_SCRIPT_JOB", "subtract_script_job")
+    joblist = WorkflowJoblist()
 
-            self.assertTrue("DUMP_JOB" in joblist)
-            self.assertTrue("SUBTRACT_SCRIPT_JOB" in joblist)
+    joblist.addJobFromFile("DUMP_JOB", "dump_job")
+    joblist.addJobFromFile("SUBTRACT_SCRIPT_JOB", "subtract_script_job")
 
-            self.assertFalse((joblist["DUMP_JOB"]).isInternal())
-            self.assertTrue((joblist["SUBTRACT_SCRIPT_JOB"]).isInternal())
+    assert "DUMP_JOB" in joblist
+    assert "SUBTRACT_SCRIPT_JOB" in joblist
+
+    assert not (joblist["DUMP_JOB"]).isInternal()
+    assert (joblist["SUBTRACT_SCRIPT_JOB"]).isInternal()

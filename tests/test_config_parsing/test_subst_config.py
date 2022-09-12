@@ -9,13 +9,13 @@ from ert._c_wrappers.enkf import ConfigKeys, ResConfig, SubstConfig
 from .config_dict_generator import config_dicts, to_config_file
 
 
-@pytest.mark.usefixtures("setup_tmpdir")
+@pytest.mark.usefixtures("use_tmpdir")
 @given(config_dicts())
 def test_two_instances_of_same_config_are_equal(config_dict):
     assert SubstConfig(config_dict=config_dict) == SubstConfig(config_dict=config_dict)
 
 
-@pytest.mark.usefixtures("setup_tmpdir")
+@pytest.mark.usefixtures("use_tmpdir")
 @given(config_dicts(), config_dicts())
 def test_two_instances_of_different_config_are_not_equal(config_dict1, config_dict2):
     assume(config_dict1[ConfigKeys.DEFINE_KEY] != config_dict2[ConfigKeys.DEFINE_KEY])
@@ -25,7 +25,7 @@ def test_two_instances_of_different_config_are_not_equal(config_dict1, config_di
 
 
 @pytest.mark.skip(reason="https://github.com/equinor/ert/issues/3802")
-@pytest.mark.usefixtures("setup_tmpdir")
+@pytest.mark.usefixtures("use_tmpdir")
 @given(config_dicts())
 def test_from_dict_and_from_file_creates_equal_config(config_dict):
     cwd = os.getcwd()
@@ -36,7 +36,7 @@ def test_from_dict_and_from_file_creates_equal_config(config_dict):
     assert res_config.subst_config == SubstConfig(config_dict=config_dict)
 
 
-@pytest.mark.usefixtures("setup_tmpdir")
+@pytest.mark.usefixtures("use_tmpdir")
 @given(config_dicts())
 def test_complete_config_reads_correct_values(config_dict):
     subst_config = SubstConfig(config_dict=config_dict)
@@ -50,7 +50,7 @@ def test_complete_config_reads_correct_values(config_dict):
     assert subst_config["<NUM_CPU>"] == "1"
 
 
-@pytest.mark.usefixtures("setup_tmpdir")
+@pytest.mark.usefixtures("use_tmpdir")
 @given(config_dicts())
 def test_missing_runpath_gives_default_value(config_dict):
     config_dict.pop(ConfigKeys.RUNPATH_FILE)
@@ -63,7 +63,7 @@ def test_empty_config_raises_error():
         SubstConfig(config_dict={})
 
 
-@pytest.mark.usefixtures("setup_tmpdir")
+@pytest.mark.usefixtures("use_tmpdir")
 @given(config_dicts())
 def test_missing_config_directory_raises_error(config_dict):
     config_dict.pop(ConfigKeys.CONFIG_DIRECTORY)
@@ -71,7 +71,7 @@ def test_missing_config_directory_raises_error(config_dict):
         SubstConfig(config_dict=config_dict)
 
 
-@pytest.mark.usefixtures("setup_tmpdir")
+@pytest.mark.usefixtures("use_tmpdir")
 @given(config_dicts())
 def test_data_file_not_found_raises_error(config_dict):
     config_dict[ConfigKeys.DATA_FILE] = "not_a_file"

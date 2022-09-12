@@ -1,52 +1,45 @@
-from ecl.util.test import TestAreaContext
+import pytest
 
 from ert._c_wrappers.enkf import ActiveList, GenDataConfig, GenObservation
 
-from ...libres_utils import ResTest
 
+def test_create(tmp_path):
+    data_config = GenDataConfig("KEY")
+    with pytest.raises(ValueError):
+        gen_obs = GenObservation("KEY", data_config)
 
-class GenObsTest(ResTest):
-    def setUp(self):
-        pass
+    with open(tmp_path / "obs1.txt", "w") as f:
+        f.write("10  5  12 6\n")
 
-    def test_create(self):
-        data_config = GenDataConfig("KEY")
-        with self.assertRaises(ValueError):
-            gen_obs = GenObservation("KEY", data_config)
+    with pytest.raises(ValueError):
+        gen_obs = GenObservation(
+            "KEY", data_config, scalar_value=(1, 2), obs_file=str(tmp_path / "obs1.txt")
+        )
 
-        with TestAreaContext("gen_obs/create"):
-            with open("obs1.txt", "w") as f:
-                f.write("10  5  12 6\n")
+    with pytest.raises(TypeError):
+        gen_obs = GenObservation("KEY", data_config, scalar_value=1)
 
-            with self.assertRaises(ValueError):
-                gen_obs = GenObservation(
-                    "KEY", data_config, scalar_value=(1, 2), obs_file="obs1.txt"
-                )
+    with pytest.raises(IOError):
+        gen_obs = GenObservation("KEY", data_config, obs_file="does/not/exist")
 
-            with self.assertRaises(TypeError):
-                gen_obs = GenObservation("KEY", data_config, scalar_value=1)
+    gen_obs = GenObservation(
+        "KEY", data_config, obs_file=str(tmp_path / "obs1.txt"), data_index="10,20"
+    )
+    assert len(gen_obs) == 2
+    assert gen_obs[0] == (10, 5)
+    assert gen_obs[1] == (12, 6)
 
-            with self.assertRaises(IOError):
-                gen_obs = GenObservation("KEY", data_config, obs_file="does/not/exist")
+    assert gen_obs.getValue(0) == 10
+    assert gen_obs.getDataIndex(1) == 20
+    assert gen_obs.getStdScaling(0) == 1
+    assert gen_obs.getStdScaling(1) == 1
 
-            gen_obs = GenObservation(
-                "KEY", data_config, obs_file="obs1.txt", data_index="10,20"
-            )
-            self.assertEqual(len(gen_obs), 2)
-            self.assertEqual(gen_obs[0], (10, 5))
-            self.assertEqual(gen_obs[1], (12, 6))
+    active_list = ActiveList()
+    gen_obs.updateStdScaling(0.25, active_list)
+    assert gen_obs.getStdScaling(0) == 0.25
+    assert gen_obs.getStdScaling(1) == 0.25
 
-            self.assertEqual(gen_obs.getValue(0), 10)
-            self.assertEqual(gen_obs.getDataIndex(1), 20)
-            self.assertEqual(gen_obs.getStdScaling(0), 1)
-            self.assertEqual(gen_obs.getStdScaling(1), 1)
-
-            active_list = ActiveList()
-            gen_obs.updateStdScaling(0.25, active_list)
-            self.assertEqual(gen_obs.getStdScaling(0), 0.25)
-            self.assertEqual(gen_obs.getStdScaling(1), 0.25)
-
-            active_list.addActiveIndex(1)
-            gen_obs.updateStdScaling(2.00, active_list)
-            self.assertEqual(gen_obs.getStdScaling(0), 0.25)
-            self.assertEqual(gen_obs.getStdScaling(1), 2.00)
+    active_list.addActiveIndex(1)
+    gen_obs.updateStdScaling(2.00, active_list)
+    assert gen_obs.getStdScaling(0) == 0.25
+    assert gen_obs.getStdScaling(1) == 2.00

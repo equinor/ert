@@ -3,10 +3,10 @@ import pytest
 from ert._c_wrappers.enkf.export import SummaryObservationCollector
 
 
-def test_summary_observation_collector(monkeypatch, snake_oil_example):
+def test_summary_observation_collector(monkeypatch, snake_oil_case):
     monkeypatch.setenv("TZ", "CET")  # The ert_statoil case was generated in CET
 
-    ert = snake_oil_example
+    ert = snake_oil_case
 
     assert SummaryObservationCollector.summaryKeyHasObservations(ert, "FOPR")
     assert not SummaryObservationCollector.summaryKeyHasObservations(ert, "FOPT")

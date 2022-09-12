@@ -41,8 +41,8 @@ def dumpDesignMatrix(path):
         dm.write("24	0.08	725	ON\n")
 
 
-def test_join(monkeypatch, snake_oil_example):
-    ert = snake_oil_example
+def test_join(monkeypatch, snake_oil_case):
+    ert = snake_oil_case
     monkeypatch.setenv("TZ", "CET")  # The ert_statoil case was generated in CET
 
     dumpDesignMatrix("DesignMatrix.txt")

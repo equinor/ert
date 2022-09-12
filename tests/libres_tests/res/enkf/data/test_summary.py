@@ -1,24 +1,22 @@
+import pytest
+
 from ert._c_wrappers.enkf.config import SummaryConfig
 from ert._c_wrappers.enkf.data.summary import Summary
 
-from ....libres_utils import ResTest
 
+def test_create():
+    config = SummaryConfig("WWCT:OP_5")
+    summary = Summary(config)
+    assert len(summary) == 0
 
-class SummaryTest(ResTest):
-    # pylint: disable=pointless-statement
-    def test_create(self):
-        config = SummaryConfig("WWCT:OP_5")
-        summary = Summary(config)
-        self.assertEqual(len(summary), 0)
+    with pytest.raises(IndexError):
+        _ = summary[100]
 
-        with self.assertRaises(IndexError):
-            summary[100]
+    summary[0] = 75
+    assert summary[0] == 75
 
-        summary[0] = 75
-        self.assertEqual(summary[0], 75)
+    summary[10] = 100
+    assert summary[10] == 100
 
-        summary[10] = 100
-        self.assertEqual(summary[10], 100)
-
-        with self.assertRaises(ValueError):
-            summary[5]
+    with pytest.raises(ValueError):
+        _ = summary[5]

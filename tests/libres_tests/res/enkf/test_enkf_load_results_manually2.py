@@ -22,5 +22,5 @@ def test_load_results_manually2(setup_case, caplog, monkeypatch, lazy_load):
     realisations[0] = True  # only need one to test what we want
     with caplog.at_level(logging.INFO):
         loaded = ert.loadFromForwardModel(realisations, 0, load_from)
-        assert 0 == loaded  # they will in fact all fail, but that's ok
+        assert loaded == 0  # they will in fact all fail, but that's ok
         assert f"lazy={lazy_load}".lower() in caplog.text

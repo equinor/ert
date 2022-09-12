@@ -3,10 +3,10 @@ from ert._c_wrappers.enkf.config import GenDataConfig
 from ert._c_wrappers.enkf.data import EnkfNode
 
 
-def load_active_masks(snake_oil_example):
+def load_active_masks(snake_oil_case):
     case1 = "default_0"
     case2 = "default_1"
-    ert = snake_oil_example
+    ert = snake_oil_case
 
     fs1 = ert.getEnkfFsManager().getFileSystem(case1)
     config_node = ert.ensembleConfig().getNode("SNAKE_OIL_OPR_DIFF")

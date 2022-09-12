@@ -1,69 +1,69 @@
-from ecl.util.test import TestAreaContext
+import pytest
 
 from ert._c_wrappers.job_queue import Workflow, WorkflowJoblist
 from ert._c_wrappers.util.substitution_list import SubstitutionList
 
-from ...libres_utils import ResTest
 from .workflow_common import WorkflowCommon
 
 
-class WorkflowTest(ResTest):
-    def test_workflow(self):
-        with TestAreaContext("python/job_queue/workflow"):
-            WorkflowCommon.createExternalDumpJob()
+@pytest.mark.usefixtures("use_tmpdir")
+def test_workflow():
+    WorkflowCommon.createExternalDumpJob()
 
-            joblist = WorkflowJoblist()
-            self.assertTrue(joblist.addJobFromFile("DUMP", "dump_job"))
+    joblist = WorkflowJoblist()
+    assert joblist.addJobFromFile("DUMP", "dump_job")
 
-            with self.assertRaises(UserWarning):
-                joblist.addJobFromFile("KNOCK", "knock_job")
+    with pytest.raises(UserWarning):
+        joblist.addJobFromFile("KNOCK", "knock_job")
 
-            self.assertTrue("DUMP" in joblist)
+    assert "DUMP" in joblist
 
-            workflow = Workflow("dump_workflow", joblist)
+    workflow = Workflow("dump_workflow", joblist)
 
-            self.assertEqual(len(workflow), 2)
+    assert len(workflow) == 2
 
-            job, args = workflow[0]
-            self.assertEqual(job, joblist["DUMP"])
-            self.assertEqual(args[0], "dump1")
-            self.assertEqual(args[1], "dump_text_1")
+    job, args = workflow[0]
+    assert job == joblist["DUMP"]
+    assert args[0] == "dump1"
+    assert args[1] == "dump_text_1"
 
-            job, args = workflow[1]
-            self.assertEqual(job, joblist["DUMP"])
+    job, args = workflow[1]
+    assert job == joblist["DUMP"]
 
-    def test_workflow_run(self):
-        with TestAreaContext("python/job_queue/workflow"):
-            WorkflowCommon.createExternalDumpJob()
 
-            joblist = WorkflowJoblist()
-            self.assertTrue(joblist.addJobFromFile("DUMP", "dump_job"))
-            self.assertTrue("DUMP" in joblist)
+@pytest.mark.usefixtures("use_tmpdir")
+def test_workflow_run():
+    WorkflowCommon.createExternalDumpJob()
 
-            workflow = Workflow("dump_workflow", joblist)
+    joblist = WorkflowJoblist()
+    assert joblist.addJobFromFile("DUMP", "dump_job")
+    assert "DUMP" in joblist
 
-            self.assertTrue(len(workflow), 2)
+    workflow = Workflow("dump_workflow", joblist)
 
-            context = SubstitutionList()
-            context.addItem("<PARAM>", "text")
+    assert len(workflow), 2
 
-            self.assertTrue(workflow.run(None, verbose=True, context=context))
+    context = SubstitutionList()
+    context.addItem("<PARAM>", "text")
 
-            with open("dump1", "r") as f:
-                self.assertEqual(f.read(), "dump_text_1")
+    assert workflow.run(None, verbose=True, context=context)
 
-            with open("dump2", "r") as f:
-                self.assertEqual(f.read(), "dump_text_2")
+    with open("dump1", "r") as f:
+        assert f.read() == "dump_text_1"
 
-    def test_failing_workflow_run(self):
-        with TestAreaContext("python/job_queue/workflow"):
-            WorkflowCommon.createExternalDumpJob()
+    with open("dump2", "r") as f:
+        assert f.read() == "dump_text_2"
 
-            joblist = WorkflowJoblist()
-            self.assertTrue(joblist.addJobFromFile("DUMP", "dump_job"))
-            self.assertTrue("DUMP" in joblist)
 
-            workflow = Workflow("undefined", joblist)
-            context = SubstitutionList()
+@pytest.mark.usefixtures("use_tmpdir")
+def test_failing_workflow_run():
+    WorkflowCommon.createExternalDumpJob()
 
-            self.assertFalse(workflow.run(None, verbose=True, context=context))
+    joblist = WorkflowJoblist()
+    assert joblist.addJobFromFile("DUMP", "dump_job")
+    assert "DUMP" in joblist
+
+    workflow = Workflow("undefined", joblist)
+    context = SubstitutionList()
+
+    assert not workflow.run(None, verbose=True, context=context)

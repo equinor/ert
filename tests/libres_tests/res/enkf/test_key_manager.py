@@ -1,8 +1,8 @@
 from ert._c_wrappers.enkf.key_manager import KeyManager
 
 
-def test_summary_keys(snake_oil_example):
-    ert = snake_oil_example
+def test_summary_keys(snake_oil_case):
+    ert = snake_oil_case
     key_man = KeyManager(ert)
 
     assert len(key_man.summaryKeys()) == 46
@@ -13,8 +13,8 @@ def test_summary_keys(snake_oil_example):
     assert key_man.isKeyWithObservations("FOPR")
 
 
-def test_gen_data_keys(snake_oil_example):
-    ert = snake_oil_example
+def test_gen_data_keys(snake_oil_case):
+    ert = snake_oil_case
     key_man = KeyManager(ert)
 
     assert len(key_man.genDataKeys()) == 3
@@ -25,16 +25,16 @@ def test_gen_data_keys(snake_oil_example):
     assert key_man.isKeyWithObservations("SNAKE_OIL_WPR_DIFF@199")
 
 
-def test_gen_kw_keys(snake_oil_example):
-    ert = snake_oil_example
+def test_gen_kw_keys(snake_oil_case):
+    ert = snake_oil_case
     key_man = KeyManager(ert)
 
     assert len(key_man.genKwKeys()) == 10
     assert "SNAKE_OIL_PARAM:BPR_555_PERSISTENCE" in key_man.genKwKeys()
 
 
-def test_gen_kw_priors(snake_oil_example):
-    ert = snake_oil_example
+def test_gen_kw_priors(snake_oil_case):
+    ert = snake_oil_case
     key_man = KeyManager(ert)
     priors = key_man.gen_kw_priors()
     assert len(priors["SNAKE_OIL_PARAM"]) == 10
