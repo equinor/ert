@@ -16,12 +16,11 @@
 
 
 import os
-import unittest
 from subprocess import PIPE, Popen, TimeoutExpired
 
-from ert._c_wrappers.util.subprocess import await_process_tee
+import pytest
 
-from ...libres_utils import tmpdir
+from ert._c_wrappers.util.subprocess import await_process_tee
 
 
 def _find_system_pipe_max_size():
@@ -38,44 +37,44 @@ def _find_system_pipe_max_size():
 _maxBytes = _find_system_pipe_max_size() - 1
 
 
-class TestSubprocess(unittest.TestCase):
-    @tmpdir()
-    def test_await_process_tee(self):
-        with open("original", "wb") as fh:
-            fh.write(bytearray(os.urandom(_maxBytes)))
+@pytest.mark.usefixtures("use_tmpdir")
+def test_await_process_tee():
+    with open("original", "wb") as fh:
+        fh.write(bytearray(os.urandom(_maxBytes)))
 
-        with open("a", "wb") as a_fh, open("b", "wb") as b_fh:
-            process = Popen(["/bin/cat", "original"], stdout=PIPE)
-            await_process_tee(process, a_fh, b_fh)
+    with open("a", "wb") as a_fh, open("b", "wb") as b_fh:
+        process = Popen(["/bin/cat", "original"], stdout=PIPE)
+        await_process_tee(process, a_fh, b_fh)
 
-        with open("a", "rb") as f:
-            a_content = f.read()
-        with open("b", "rb") as f:
-            b_content = f.read()
-        with open("original", "rb") as f:
-            original_content = f.read()
+    with open("a", "rb") as f:
+        a_content = f.read()
+    with open("b", "rb") as f:
+        b_content = f.read()
+    with open("original", "rb") as f:
+        original_content = f.read()
 
-        self.assertTrue(process.stdout.closed)
-        self.assertEqual(original_content, a_content)
-        self.assertEqual(original_content, b_content)
+    assert process.stdout.closed
+    assert a_content == original_content
+    assert b_content == original_content
 
-    @tmpdir()
-    def test_await_process_finished_tee(self):
-        with open("original", "wb") as fh:
-            fh.write(bytearray(os.urandom(_maxBytes)))
 
-        with open("a", "wb") as a_fh, open("b", "wb") as b_fh:
-            process = Popen(["/bin/cat", "original"], stdout=PIPE)
-            process.wait()
-            await_process_tee(process, a_fh, b_fh)
+@pytest.mark.usefixtures("use_tmpdir")
+def test_await_process_finished_tee():
+    with open("original", "wb") as fh:
+        fh.write(bytearray(os.urandom(_maxBytes)))
 
-        with open("a", "rb") as f:
-            a_content = f.read()
-        with open("b", "rb") as f:
-            b_content = f.read()
-        with open("original", "rb") as f:
-            original_content = f.read()
+    with open("a", "wb") as a_fh, open("b", "wb") as b_fh:
+        process = Popen(["/bin/cat", "original"], stdout=PIPE)
+        process.wait()
+        await_process_tee(process, a_fh, b_fh)
 
-        self.assertTrue(process.stdout.closed)
-        self.assertEqual(original_content, a_content)
-        self.assertEqual(original_content, b_content)
+    with open("a", "rb") as f:
+        a_content = f.read()
+    with open("b", "rb") as f:
+        b_content = f.read()
+    with open("original", "rb") as f:
+        original_content = f.read()
+
+    assert process.stdout.closed
+    assert a_content == original_content
+    assert b_content == original_content

@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 #  Copyright (C) 2013  Equinor ASA, Norway.
 #
 #  The file 'test_analysis_config.py' is part of ERT - Ensemble based Reservoir Tool.
@@ -16,96 +15,79 @@
 #  for more details.
 
 import pytest
-from ecl.util.test import TestAreaContext
 
 from ert._c_wrappers.enkf import AnalysisConfig, ConfigKeys
 
-from ...libres_utils import ResTest
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_invalid_user_config():
+    with pytest.raises(IOError):
+        AnalysisConfig("this/is/not/a/file")
 
 
-class AnalysisConfigTest(ResTest):
-    def setUp(self):
-        self.case_directory = self.createTestPath("local/simple_config/")
-        self.case_file = "simple_config/minimum_config"
+@pytest.fixture
+def analysis_config(minimum_case):
+    return minimum_case.resConfig().analysis_config
 
-    def test_invalid_user_config(self):
-        with TestAreaContext("void land"):
-            with self.assertRaises(IOError):
-                AnalysisConfig("this/is/not/a/file")
 
-    def test_keywords_for_monitoring_simulation_runtime(self):
-        with TestAreaContext("analysis_config_init_test") as work_area:
-            work_area.copy_directory(self.case_directory)
-            ac = AnalysisConfig(self.case_file)
+def test_keywords_for_monitoring_simulation_runtime(analysis_config):
 
-            # Unless the MIN_REALIZATIONS is set in config, one is required to
-            # have "all" realizations.
-            self.assertFalse(ac.haveEnoughRealisations(5))
-            self.assertTrue(ac.haveEnoughRealisations(10))
+    # Unless the MIN_REALIZATIONS is set in config, one is required to
+    # have "all" realizations.
+    assert not analysis_config.haveEnoughRealisations(5)
+    assert analysis_config.haveEnoughRealisations(10)
 
-            ac.set_max_runtime(50)
-            self.assertEqual(50, ac.get_max_runtime())
+    analysis_config.set_max_runtime(50)
+    assert 50 == analysis_config.get_max_runtime()
 
-            ac.set_stop_long_running(True)
-            self.assertTrue(ac.get_stop_long_running())
+    analysis_config.set_stop_long_running(True)
+    assert analysis_config.get_stop_long_running()
 
-    def test_analysis_modules(self):
-        with TestAreaContext("analysis_config_init_test") as work_area:
-            work_area.copy_directory(self.case_directory)
-            ac = AnalysisConfig(self.case_file)
-            self.assertIsNotNone(ac.activeModuleName())
-            self.assertIsNotNone(ac.getModuleList())
 
-    def test_analysis_config_global_std_scaling(self):
-        with TestAreaContext("analysis_config_init_test") as work_area:
-            work_area.copy_directory(self.case_directory)
-            ac = AnalysisConfig(self.case_file)
-            assert pytest.approx(ac.getGlobalStdScaling()) == 1.0
-            ac.setGlobalStdScaling(0.77)
-            assert pytest.approx(ac.getGlobalStdScaling()) == 0.77
+def test_analysis_modules(analysis_config):
+    assert analysis_config.activeModuleName() is not None
+    assert analysis_config.getModuleList() is not None
 
-    def test_init(self):
-        with TestAreaContext("analysis_config_init_test") as work_area:
-            work_area.copy_directory(self.case_directory)
-            analysis_config = AnalysisConfig(self.case_file)
-            self.assertIsNotNone(analysis_config)
 
-    def test_analysis_config_constructor(self):
-        with TestAreaContext("analysis_config_constructor_test") as work_area:
-            work_area.copy_directory(self.case_directory)
-            config_dict = {
-                ConfigKeys.NUM_REALIZATIONS: 10,
-                ConfigKeys.ALPHA_KEY: 3,
-                ConfigKeys.RERUN_KEY: False,
-                ConfigKeys.RERUN_START_KEY: 0,
-                ConfigKeys.UPDATE_LOG_PATH: "update_log",
-                ConfigKeys.STD_CUTOFF_KEY: 1e-6,
-                ConfigKeys.STOP_LONG_RUNNING: False,
-                ConfigKeys.SINGLE_NODE_UPDATE: False,
-                ConfigKeys.GLOBAL_STD_SCALING: 1,
-                ConfigKeys.MAX_RUNTIME: 0,
-                ConfigKeys.MIN_REALIZATIONS: 0,
-                ConfigKeys.ANALYSIS_COPY: [
-                    {
-                        ConfigKeys.SRC_NAME: "STD_ENKF",
-                        ConfigKeys.DST_NAME: "ENKF_HIGH_TRUNCATION",
-                    }
-                ],
-                ConfigKeys.ANALYSIS_SET_VAR: [
-                    {
-                        ConfigKeys.MODULE_NAME: "STD_ENKF",
-                        ConfigKeys.VAR_NAME: "ENKF_NCOMP",
-                        ConfigKeys.VALUE: 2,
-                    },
-                    {
-                        ConfigKeys.MODULE_NAME: "ENKF_HIGH_TRUNCATION",
-                        ConfigKeys.VAR_NAME: "ENKF_TRUNCATION",
-                        ConfigKeys.VALUE: 0.99,
-                    },
-                ],
-                ConfigKeys.ANALYSIS_SELECT: "ENKF_HIGH_TRUNCATION",
-            }
-            _config_file = "simple_config/analysis_config"
-            analysis_config_file = AnalysisConfig(user_config_file=_config_file)
-            analysis_config_dict = AnalysisConfig(config_dict=config_dict)
-            self.assertEqual(analysis_config_dict, analysis_config_file)
+def test_analysis_config_global_std_scaling(analysis_config):
+    assert pytest.approx(analysis_config.getGlobalStdScaling()) == 1.0
+    analysis_config.setGlobalStdScaling(0.77)
+    assert pytest.approx(analysis_config.getGlobalStdScaling()) == 0.77
+
+
+def test_analysis_config_constructor(setup_case):
+    _ = setup_case("local/simple_config", "analysis_config")
+    assert AnalysisConfig(user_config_file="analysis_config") == AnalysisConfig(
+        config_dict={
+            ConfigKeys.NUM_REALIZATIONS: 10,
+            ConfigKeys.ALPHA_KEY: 3,
+            ConfigKeys.RERUN_KEY: False,
+            ConfigKeys.RERUN_START_KEY: 0,
+            ConfigKeys.UPDATE_LOG_PATH: "update_log",
+            ConfigKeys.STD_CUTOFF_KEY: 1e-6,
+            ConfigKeys.STOP_LONG_RUNNING: False,
+            ConfigKeys.SINGLE_NODE_UPDATE: False,
+            ConfigKeys.GLOBAL_STD_SCALING: 1,
+            ConfigKeys.MAX_RUNTIME: 0,
+            ConfigKeys.MIN_REALIZATIONS: 0,
+            ConfigKeys.ANALYSIS_COPY: [
+                {
+                    ConfigKeys.SRC_NAME: "STD_ENKF",
+                    ConfigKeys.DST_NAME: "ENKF_HIGH_TRUNCATION",
+                }
+            ],
+            ConfigKeys.ANALYSIS_SET_VAR: [
+                {
+                    ConfigKeys.MODULE_NAME: "STD_ENKF",
+                    ConfigKeys.VAR_NAME: "ENKF_NCOMP",
+                    ConfigKeys.VALUE: 2,
+                },
+                {
+                    ConfigKeys.MODULE_NAME: "ENKF_HIGH_TRUNCATION",
+                    ConfigKeys.VAR_NAME: "ENKF_TRUNCATION",
+                    ConfigKeys.VALUE: 0.99,
+                },
+            ],
+            ConfigKeys.ANALYSIS_SELECT: "ENKF_HIGH_TRUNCATION",
+        }
+    )

@@ -1,16 +1,15 @@
 import os.path
+from pathlib import Path
 
-from ecl.util.test import TestAreaContext
+import pytest
 
 from ert._c_wrappers.enkf.config import GenKwConfig
 from ert._c_wrappers.enkf.data import GenKw
 
-from ....libres_utils import ResTest
 
-
-def create_gen_kw():
-    parameter_file = "MULTFLT.txt"
-    template_file = "MULTFLT.tmpl"
+def create_gen_kw(tmp_path):
+    parameter_file = str(tmp_path / "MULTFLT.txt")
+    template_file = str(tmp_path / "MULTFLT.tmpl")
     with open(parameter_file, "w") as f:
         f.write("MULTFLT1  NORMAL  0   1\n")
         f.write("MULTFLT2  RAW \n")
@@ -26,84 +25,80 @@ def create_gen_kw():
     return (gen_kw_config, gen_kw)
 
 
-class GenKwTest(ResTest):
-    # pylint: disable=pointless-statement
-    def test_gen_kw_get_set(self):
-        with TestAreaContext("enkf/data/gen_kwt"):
+def test_gen_kw_get_set(tmp_path):
+    (gen_kw_config, gen_kw) = create_gen_kw(tmp_path)
+    assert isinstance(gen_kw, GenKw)
 
-            (gen_kw_config, gen_kw) = create_gen_kw()
-            self.assertIsInstance(gen_kw, GenKw)
+    gen_kw[0] = 3.0
+    assert gen_kw[0] == 3.0
 
-            gen_kw[0] = 3.0
-            self.assertEqual(gen_kw[0], 3.0)
+    gen_kw["MULTFLT1"] = 4.0
+    assert gen_kw["MULTFLT1"] == 4.0
+    assert gen_kw[0] == 4.0
 
-            gen_kw["MULTFLT1"] = 4.0
-            self.assertEqual(gen_kw["MULTFLT1"], 4.0)
-            self.assertEqual(gen_kw[0], 4.0)
+    gen_kw["MULTFLT2"] = 8.0
+    assert gen_kw["MULTFLT2"] == 8.0
+    assert gen_kw[1] == 8.0
 
-            gen_kw["MULTFLT2"] = 8.0
-            self.assertEqual(gen_kw["MULTFLT2"], 8.0)
-            self.assertEqual(gen_kw[1], 8.0)
+    gen_kw["MULTFLT3"] = 12.0
+    assert gen_kw["MULTFLT3"] == 12.0
+    assert gen_kw[2] == 12.0
 
-            gen_kw["MULTFLT3"] = 12.0
-            self.assertEqual(gen_kw["MULTFLT3"], 12.0)
-            self.assertEqual(gen_kw[2], 12.0)
+    assert len(gen_kw) == 3
 
-            self.assertEqual(len(gen_kw), 3)
+    with pytest.raises(IndexError):
+        _ = gen_kw[4]
 
-            with self.assertRaises(IndexError):
-                gen_kw[4]
+    with pytest.raises(TypeError):
+        _ = gen_kw[1.5]
 
-            with self.assertRaises(TypeError):
-                gen_kw[1.5]
+    with pytest.raises(KeyError):
+        _ = gen_kw["MULTFLT_2"]
 
-            with self.assertRaises(KeyError):
-                gen_kw["MULTFLT_2"]
+    assert "MULTFLT1" in gen_kw
 
-            self.assertTrue("MULTFLT1" in gen_kw)
+    items = gen_kw.items()
+    assert len(items) == 3
+    assert items[0][0] == "MULTFLT1"
+    assert items[1][0] == "MULTFLT2"
+    assert items[2][0] == "MULTFLT3"
 
-            items = gen_kw.items()
-            self.assertEqual(len(items), 3)
-            self.assertEqual(items[0][0], "MULTFLT1")
-            self.assertEqual(items[1][0], "MULTFLT2")
-            self.assertEqual(items[2][0], "MULTFLT3")
+    assert items[0][1] == 4
+    assert items[1][1] == 8
+    assert items[2][1] == 12
 
-            self.assertEqual(items[0][1], 4)
-            self.assertEqual(items[1][1], 8)
-            self.assertEqual(items[2][1], 12)
 
-    def test_gen_kw_get_set_vector(self):
-        with TestAreaContext("enkf/data/gen_kwt"):
+def test_gen_kw_get_set_vector(tmp_path):
+    (gen_kw_config, gen_kw) = create_gen_kw(tmp_path)
+    with pytest.raises(ValueError):
+        gen_kw.setValues([0])
 
-            (gen_kw_config, gen_kw) = create_gen_kw()
-            with self.assertRaises(ValueError):
-                gen_kw.setValues([0])
+    with pytest.raises(TypeError):
+        gen_kw.setValues(["A", "B", "C"])
 
-            with self.assertRaises(TypeError):
-                gen_kw.setValues(["A", "B", "C"])
+    gen_kw.setValues([0, 1, 2])
+    assert gen_kw[0] == 0
+    assert gen_kw[1] == 1
+    assert gen_kw[2] == 2
 
-            gen_kw.setValues([0, 1, 2])
-            self.assertEqual(gen_kw[0], 0)
-            self.assertEqual(gen_kw[1], 1)
-            self.assertEqual(gen_kw[2], 2)
+    assert gen_kw["MULTFLT1"] == 0
+    assert gen_kw["MULTFLT2"] == 1
+    assert gen_kw["MULTFLT3"] == 2
 
-            self.assertEqual(gen_kw["MULTFLT1"], 0)
-            self.assertEqual(gen_kw["MULTFLT2"], 1)
-            self.assertEqual(gen_kw["MULTFLT3"], 2)
 
-    def test_gen_kw_ecl_write(self):
-        with TestAreaContext("enkf/data/gen_kwt"):
-            (gen_kw_config, gen_kw) = create_gen_kw()
+@pytest.mark.usefixtures("use_tmpdir")
+def test_gen_kw_ecl_write():
+    (gen_kw_config, gen_kw) = create_gen_kw(Path("."))
 
-            with self.assertRaises(IOError):
-                gen_kw.eclWrite("tmp", "file.txt")
+    with pytest.raises(IOError):
+        gen_kw.eclWrite("tmp", "file.txt")
 
-            gen_kw.eclWrite(None, "file.txt")
-            self.assertTrue(os.path.isfile("file.txt"))
+    gen_kw.eclWrite(None, "file.txt")
+    assert os.path.isfile("file.txt")
 
-            os.mkdir("tmp")
-            gen_kw.eclWrite("tmp", "file.txt")
-            self.assertTrue(os.path.isfile("tmp/file.txt"))
+    os.mkdir("tmp")
+    gen_kw.eclWrite("tmp", "file.txt")
+    assert os.path.isfile("tmp/file.txt")
 
-            gen_kw.exportParameters("tmp/export.txt")
-            self.assertTrue(os.path.isfile("tmp/export.txt"))
+    gen_kw.exportParameters("tmp/export.txt")
+    assert os.path.isfile("tmp/export.txt")

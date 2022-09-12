@@ -2,8 +2,8 @@ from ert._c_wrappers.enkf.data.enkf_node import EnkfNode
 from ert._c_wrappers.enkf.node_id import NodeId
 
 
-def test_create(snake_oil_example):
-    ert = snake_oil_example
+def test_create(snake_oil_case):
+    ert = snake_oil_case
     fs1 = ert.getEnkfFsManager().getCurrentFileSystem()
     config_node = ert.ensembleConfig().getNode("SNAKE_OIL_OPR_DIFF")
 

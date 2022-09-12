@@ -8,7 +8,7 @@ from ert._c_wrappers.enkf import ConfigKeys, ResConfig, RNGConfig
 from .config_dict_generator import config_dicts, to_config_file
 
 
-@pytest.mark.usefixtures("setup_tmpdir")
+@pytest.mark.usefixtures("use_tmpdir")
 @given(config_dicts())
 def test_site_config_config_same_as_from_file(config_dict):
     cwd = os.getcwd()

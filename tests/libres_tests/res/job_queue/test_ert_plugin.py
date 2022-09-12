@@ -1,6 +1,6 @@
-from ert._c_wrappers.job_queue import CancelPluginException, ErtPlugin
+import pytest
 
-from ...libres_utils import ResTest
+from ert._c_wrappers.job_queue import CancelPluginException, ErtPlugin
 
 
 class SimplePlugin(ErtPlugin):
@@ -36,37 +36,31 @@ class CanceledPlugin(ErtPlugin):
         raise CancelPluginException("Cancel test!")
 
 
-class ErtPluginTest(ResTest):
-    def test_simple_ert_plugin(self):
+def test_simple_ert_plugin():
 
-        simple_plugin = SimplePlugin("ert")
+    simple_plugin = SimplePlugin("ert")
 
-        arguments = simple_plugin.getArguments()
+    arguments = simple_plugin.getArguments()
 
-        self.assertTrue("SimplePlugin" in simple_plugin.getName())
-        self.assertEqual("No description provided!", simple_plugin.getDescription())
+    assert "SimplePlugin" in simple_plugin.getName()
+    assert simple_plugin.getDescription() == "No description provided!"
 
-        simple_plugin.initializeAndRun([str, int], arguments)
+    simple_plugin.initializeAndRun([str, int], arguments)
 
-    def test_full_ert_plugin(self):
-        plugin = FullPlugin("ert")
 
-        self.assertEqual(plugin.getName(), "FullPlugin")
-        self.assertEqual(plugin.getDescription(), "Fully described!")
+def test_full_ert_plugin():
+    plugin = FullPlugin("ert")
 
-        arguments = plugin.getArguments()
+    assert plugin.getName() == "FullPlugin"
+    assert plugin.getDescription() == "Fully described!"
 
-        plugin.initializeAndRun([int, str, float], arguments)
+    arguments = plugin.getArguments()
 
-    def test_cancel_plugin(self):
-        plugin = CanceledPlugin("ert")
+    plugin.initializeAndRun([int, str, float], arguments)
 
-        with self.assertRaises(CancelPluginException):
-            plugin.getArguments()
 
-    # def test_gui_ert_plugin(self):
-    #     app = QApplication([])
-    #     plugin = GUIPlugin("ert")
-    #
-    #     arguments = plugin.getArguments()
-    #     plugin.initializeAndRun([int, int], arguments)
+def test_cancel_plugin():
+    plugin = CanceledPlugin("ert")
+
+    with pytest.raises(CancelPluginException):
+        plugin.getArguments()

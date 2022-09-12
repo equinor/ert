@@ -7,7 +7,7 @@ import pkg_resources
 import pytest
 from hypothesis import HealthCheck, settings
 
-from ert._c_wrappers.enkf import ResConfig
+from ert._c_wrappers.enkf import EnKFMain, ResConfig
 from ert.shared.services import Storage
 
 from .utils import SOURCE_DIR
@@ -26,9 +26,9 @@ def source_root():
 
 
 @pytest.fixture(scope="class")
-def class_source_root(request):
-    request.cls.SOURCE_ROOT = SOURCE_DIR
-    request.cls.TESTDATA_ROOT = SOURCE_DIR / "test-data"
+def class_source_root(request, source_root):
+    request.cls.SOURCE_ROOT = source_root
+    request.cls.TESTDATA_ROOT = source_root / "test-data"
     request.cls.SHARE_ROOT = pkg_resources.resource_filename("ert.shared", "share")
     request.cls.EQUINOR_DATA = (request.cls.TESTDATA_ROOT / "Equinor").is_symlink()
     yield
@@ -73,6 +73,21 @@ def setup_case(tmpdir, source_root):
 
 
 @pytest.fixture()
+def poly_case(setup_case):
+    return EnKFMain(setup_case("local/poly_example", "poly.ert"))
+
+
+@pytest.fixture()
+def snake_oil_case(setup_case):
+    return EnKFMain(setup_case("local/snake_oil", "snake_oil.ert"))
+
+
+@pytest.fixture()
+def minimum_case(setup_case):
+    return EnKFMain(setup_case("local/simple_config", "minimum_config"))
+
+
+@pytest.fixture()
 def copy_case(tmpdir, source_root):
     def _copy_case(path):
         shutil.copytree(os.path.join(source_root, "test-data", path), "test_data")
@@ -80,6 +95,21 @@ def copy_case(tmpdir, source_root):
 
     with tmpdir.as_cwd():
         yield _copy_case
+
+
+@pytest.fixture()
+def copy_poly_case(copy_case):
+    copy_case("local/poly_example")
+
+
+@pytest.fixture()
+def copy_snake_oil_case(copy_case):
+    copy_case("local/snake_oil")
+
+
+@pytest.fixture()
+def copy_minimum_case(copy_case):
+    copy_case("local/simple_config")
 
 
 @pytest.fixture()

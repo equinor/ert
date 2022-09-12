@@ -13,7 +13,6 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
-import inspect
 import os
 import re
 import shutil
@@ -27,8 +26,6 @@ from ecl.summary import EclSum
 
 from ert._c_wrappers.fm.ecl import Ecl100Config, EclRun, FlowConfig, ecl_run, run
 from ert._c_wrappers.fm.ecl.ecl_run import make_SLURM_machine_list
-
-from ...libres_utils import tmpdir
 
 
 def flow_install():
@@ -120,9 +117,6 @@ def init_flow_config(monkeypatch, tmpdir):
         yield
 
 
-ecl_config_path = os.path.dirname(inspect.getsourcefile(Ecl100Config))
-
-
 def test_make_LSB_MCPU_machine_list():
     assert ecl_run.make_LSB_MCPU_machine_list("host1 4 host2 4") == [
         "host1",
@@ -136,7 +130,7 @@ def test_make_LSB_MCPU_machine_list():
     ]
 
 
-@tmpdir()
+@pytest.mark.usefixtures("use_tmpdir")
 def test_create(monkeypatch):
     # This test can make do with a mock simulator; - just something executable
 
@@ -176,7 +170,7 @@ def test_create(monkeypatch):
     ecl_run = EclRun("path/ECLIPSE.DATA", sim)
     assert ecl_run.runPath() == os.path.join(os.getcwd(), "path")
     assert ecl_run.baseName() == "ECLIPSE"
-    assert 1 == ecl_run.numCpu()
+    assert ecl_run.numCpu() == 1
 
     # invalid number of CPU
     with pytest.raises(ValueError):
@@ -213,7 +207,7 @@ def test_flow(init_flow_config, source_root):
         run(flow_config, ["SPE1.DATA", "--version=no/such/version"])
 
 
-@tmpdir()
+@pytest.mark.usefixtures("use_tmpdir")
 def test_running_flow_given_env_config_can_still_read_parent_env(monkeypatch):
     version = "1111.11"
 
@@ -262,7 +256,7 @@ def test_running_flow_given_env_config_can_still_read_parent_env(monkeypatch):
     assert lines == ["VAL1\n", "VAL2\n"]
 
 
-@tmpdir()
+@pytest.mark.usefixtures("use_tmpdir")
 def test_running_flow_given_no_env_config_can_still_read_parent_env(monkeypatch):
     version = "1111.11"
 
@@ -312,7 +306,7 @@ def test_running_flow_given_no_env_config_can_still_read_parent_env(monkeypatch)
     assert lines == ["VAL1\n", "VAL2\n"]
 
 
-@tmpdir()
+@pytest.mark.usefixtures("use_tmpdir")
 def test_running_flow_given_env_variables_with_same_name_as_parent_env_variables_will_overwrite(  # noqa
     monkeypatch,
 ):

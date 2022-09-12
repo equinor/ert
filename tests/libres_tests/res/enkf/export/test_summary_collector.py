@@ -3,9 +3,9 @@ import pytest
 from ert._c_wrappers.enkf.export import SummaryCollector
 
 
-def test_summary_collector(monkeypatch, snake_oil_example):
+def test_summary_collector(monkeypatch, snake_oil_case):
     monkeypatch.setenv("TZ", "CET")  # The ert_statoil case was generated in CET
-    ert = snake_oil_example
+    ert = snake_oil_case
 
     data = SummaryCollector.loadAllSummaryData(ert, "default_0")
 

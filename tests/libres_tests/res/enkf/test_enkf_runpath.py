@@ -3,6 +3,8 @@ import os
 import shutil
 from pathlib import Path
 
+import pytest
+
 from ert._c_wrappers.enkf import ResConfig
 from ert._c_wrappers.enkf.enkf_main import EnKFMain
 
@@ -24,9 +26,8 @@ def test_with_gen_kw(copy_case):
     assert len(os.listdir("storage/snake_oil/runpath/realization-0")) == 1
 
 
-def test_without_gen_kw(copy_case):
-    copy_case("local/snake_oil")
-
+@pytest.mark.usefixtures("copy_snake_oil_case")
+def test_without_gen_kw():
     with fileinput.input("snake_oil.ert", inplace=True) as fin:
         for line in fin:
             if line.startswith("GEN_KW"):

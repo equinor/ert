@@ -14,20 +14,20 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 
-from ecl.util.test import TestAreaContext
+import pytest
 
 from ert._c_wrappers.enkf import ConfigKeys, ResConfig, RNGConfig
 
-from ...libres_utils import ResTest
 
-
-class RNGConfigTest(ResTest):
-    def create_base_config(self):
-        return {
+@pytest.mark.usefixtures("copy_minimum_case")
+def test_compare_config_content_and_dict_constructor():
+    assert ResConfig(
+        config={
             "INTERNALS": {
-                "CONFIG_DIRECTORY": "simple_config",
+                "CONFIG_DIRECTORY": ".",
             },
             "SIMULATION": {
+                "RANDOM_SEED": "abcdefghijklmnop",
                 "QUEUE_SYSTEM": {
                     "JOBNAME": "Job%d",
                 },
@@ -37,38 +37,11 @@ class RNGConfigTest(ResTest):
                 "ENSPATH": "Ensemble",
             },
         }
+    ).rng_config == RNGConfig(config_dict={ConfigKeys.RANDOM_SEED: "abcdefghijklmnop"})
 
-    def test_compare_config_content_and_dict_constructor(self):
-        config = self.create_base_config()
 
-        case_directory = self.createTestPath("local/simple_config")
-        with TestAreaContext("rng_config") as work_area:
-            work_area.copy_directory(case_directory)
-
-            random_seed = "abcdefghijklmnop"
-            rng_config_dict = {ConfigKeys.RANDOM_SEED: random_seed}
-            config["SIMULATION"]["SEED"] = rng_config_dict
-
-            # we instantiate an `RNGConfig` class using a config dict
-            rng_config_from_dict = RNGConfig(config_dict=rng_config_dict)
-            # NB: We are using the `config` argument, which essentially
-            # passes a config content directly to the init function of the
-            # `ResConfig` class
-            res_config_from_config_content = ResConfig(config=config)
-
-            self.assertEqual(
-                rng_config_from_dict, res_config_from_config_content.rng_config
-            )
-
-    def test_random_seed(self):
-        config = self.create_base_config()
-
-        random_seed = "abcdefghijklmnop"
-        config["SIMULATION"]["SEED"] = {ConfigKeys.RANDOM_SEED: random_seed}
-
-        case_directory = self.createTestPath("local/simple_config")
-        with TestAreaContext("rng_config") as work_area:
-            work_area.copy_directory(case_directory)
-            res_config = ResConfig(config=config)
-
-            self.assertEqual(random_seed, res_config.rng_config.random_seed)
+def test_random_seed():
+    assert (
+        RNGConfig(config_dict={ConfigKeys.RANDOM_SEED: "abcdefghijklmnop"}).random_seed
+        == "abcdefghijklmnop"
+    )

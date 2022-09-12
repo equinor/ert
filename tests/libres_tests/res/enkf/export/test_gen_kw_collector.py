@@ -3,8 +3,8 @@ import pytest
 from ert._c_wrappers.enkf.export import GenKwCollector
 
 
-def test_gen_kw_collector(snake_oil_example):
-    ert = snake_oil_example
+def test_gen_kw_collector(snake_oil_case):
+    ert = snake_oil_case
 
     data = GenKwCollector.loadAllGenKwData(ert, "default_0")
 

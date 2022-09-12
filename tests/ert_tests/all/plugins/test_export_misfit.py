@@ -20,13 +20,11 @@ def test_export_misfit(setup_case, snapshot):
     )
 
 
-def test_export_misfit_no_responses_in_storage(setup_case):
-    res_config = setup_case("local/poly_example", "poly.ert")
-    ert = EnKFMain(res_config)
+def test_export_misfit_no_responses_in_storage(poly_case):
     with pytest.raises(StorageError, match="No responses loaded"):
-        ExportMisfitDataJob(ert).run()
+        ExportMisfitDataJob(poly_case).run()
 
 
 def test_export_misfit_data_job_is_loaded():
     pm = ErtPluginManager()
-    assert "EXPORT_MISFIT_DATA" in pm.get_installable_workflow_jobs().keys()
+    assert "EXPORT_MISFIT_DATA" in pm.get_installable_workflow_jobs()

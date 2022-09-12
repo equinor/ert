@@ -5,12 +5,12 @@ import pytest
 from ert._c_wrappers.enkf import RunContext
 
 
-def test_enkf_fs_manager_create(snake_oil_example):
+def test_enkf_fs_manager_create(snake_oil_case):
     # We are indirectly testing the create through the create
     # already in the enkf_main object. In principle we could
     # create a separate manager instance from the ground up, but
     # then the reference count will be weird.
-    ert = snake_oil_example
+    ert = snake_oil_case
     fsm = ert.getEnkfFsManager()
 
     fsm.getCurrentFileSystem()
@@ -32,8 +32,8 @@ def test_enkf_fs_manager_create(snake_oil_example):
     assert not fsm.caseHasData("newFS")
 
 
-def test_rotate(snake_oil_example):
-    ert = snake_oil_example
+def test_rotate(snake_oil_case):
+    ert = snake_oil_case
     fsm = ert.getEnkfFsManager()
     assert fsm.getFileSystemCount() == 1
 
@@ -54,8 +54,8 @@ def test_rotate(snake_oil_example):
     "state_mask, expected_length",
     [([True] * 25, 25), ([False] * 25, 0), ([False, True, True], 3)],
 )
-def test_custom_init_runs(snake_oil_example, state_mask, expected_length):
-    ert = snake_oil_example
+def test_custom_init_runs(snake_oil_case, state_mask, expected_length):
+    ert = snake_oil_case
     new_fs = ert.getEnkfFsManager().getFileSystem("new_case")
     ert.getEnkfFsManager().switchFileSystem(new_fs)
     ert.getEnkfFsManager().customInitializeCurrentFromExistingCase(
@@ -64,8 +64,8 @@ def test_custom_init_runs(snake_oil_example, state_mask, expected_length):
     assert len(ert.getEnkfFsManager().getStateMapForCase("new_case")) == expected_length
 
 
-def test_fs_init_from_scratch(snake_oil_example):
-    ert = snake_oil_example
+def test_fs_init_from_scratch(snake_oil_case):
+    ert = snake_oil_case
     sim_fs = ert.getEnkfFsManager().getFileSystem("new_case")
     mask = [True] * 6 + [False] * 19
     run_context = RunContext(sim_fs=sim_fs, mask=mask)

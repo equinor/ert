@@ -1,26 +1,24 @@
+import pytest
+
 from ert._c_wrappers.enkf.config import EnkfConfigNode
 
-from ....libres_utils import ResTest
 
+def test_gen_data():
+    # Must have %d in filename argument
+    with pytest.raises(ValueError):
+        config_node = EnkfConfigNode.create_gen_data("KEY", "FILE")
 
-class EnkfConfigNodeTest(ResTest):
-    def test_gen_data(self):
+    config_node = EnkfConfigNode.create_gen_data("KEY", "FILE%d")
+    assert isinstance(config_node, EnkfConfigNode)
+    gen_data = config_node.getModelConfig()
+    assert gen_data.getNumReportStep() == 1
+    assert gen_data.getReportStep(0) == 0
 
-        # Must have %d in filename argument
-        with self.assertRaises(ValueError):
-            config_node = EnkfConfigNode.create_gen_data("KEY", "FILE")
-
-        config_node = EnkfConfigNode.create_gen_data("KEY", "FILE%d")
-        self.assertIsInstance(config_node, EnkfConfigNode)
-        gen_data = config_node.getModelConfig()
-        self.assertEqual(1, gen_data.getNumReportStep())
-        self.assertEqual(0, gen_data.getReportStep(0))
-
-        config_node = EnkfConfigNode.create_gen_data(
-            "KEY", "FILE%d", report_steps=[10, 20, 30]
-        )
-        self.assertIsInstance(config_node, EnkfConfigNode)
-        gen_data = config_node.getModelConfig()
-        self.assertEqual(3, gen_data.getNumReportStep())
-        for r1, r2 in zip([10, 20, 30], gen_data.getReportSteps()):
-            self.assertEqual(r1, r2)
+    config_node = EnkfConfigNode.create_gen_data(
+        "KEY", "FILE%d", report_steps=[10, 20, 30]
+    )
+    assert isinstance(config_node, EnkfConfigNode)
+    gen_data = config_node.getModelConfig()
+    assert gen_data.getNumReportStep() == 3
+    for r1, r2 in zip([10, 20, 30], gen_data.getReportSteps()):
+        assert r1 == r2

@@ -14,7 +14,7 @@ def touch(filename):
 
 
 @pytest.mark.skip(reason="https://github.com/equinor/ert/issues/3801")
-@pytest.mark.usefixtures("setup_tmpdir")
+@pytest.mark.usefixtures("use_tmpdir")
 @given(config_dicts())
 def test_site_config_dict_same_as_from_file(config_dict):
     cwd = os.getcwd()
