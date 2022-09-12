@@ -45,7 +45,10 @@ def test_complete_config_reads_correct_values(config_dict):
     for key, value in config_dict[ConfigKeys.DATA_KW_KEY].items():
         assert subst_config[key] == value
     assert subst_config["<RUNPATH_FILE>"] == config_dict[ConfigKeys.RUNPATH_FILE]
-    assert subst_config["<NUM_CPU>"] == "1"
+    expected_num_cpu = (
+        config_dict[ConfigKeys.NUM_CPU] if ConfigKeys.NUM_CPU in config_dict else 1
+    )
+    assert subst_config["<NUM_CPU>"] == str(expected_num_cpu)
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -73,5 +76,7 @@ def test_missing_config_directory_raises_error(config_dict):
 @given(config_dicts())
 def test_data_file_not_found_raises_error(config_dict):
     config_dict[ConfigKeys.DATA_FILE] = "not_a_file"
+    # subst config only tries to read data file if num cpu is not given
+    del config_dict[ConfigKeys.NUM_CPU]
     with pytest.raises(IOError):
         SubstConfig(config_dict=config_dict)
