@@ -202,7 +202,7 @@ def config_dicts(draw):
                 ConfigKeys.SINGLE_NODE_UPDATE: st.booleans(),
                 ConfigKeys.MAX_RUNTIME: positives,
                 ConfigKeys.MIN_REALIZATIONS: positives,
-                ConfigKeys.CONFIG_DIRECTORY: st.just("."),
+                ConfigKeys.CONFIG_DIRECTORY: st.just(os.getcwd()),
                 ConfigKeys.CONFIG_FILE_KEY: file_names,
                 ConfigKeys.DEFINE_KEY: st.dictionaries(define_keys(), words),
                 ConfigKeys.DATA_KW_KEY: st.dictionaries(words, words),
