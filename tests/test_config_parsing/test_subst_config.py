@@ -30,8 +30,9 @@ def test_two_instances_of_different_config_are_not_equal(config_dict1, config_di
 def test_from_dict_and_from_file_creates_equal_config(config_dict):
     filename = config_dict[ConfigKeys.CONFIG_FILE_KEY]
     to_config_file(filename, config_dict)
-    res_config = ResConfig(user_config_file=filename)
-    assert res_config.subst_config == SubstConfig(config_dict=config_dict)
+    res_config_from_file = ResConfig(user_config_file=filename)
+    subst_config_from_dict = SubstConfig(config_dict=config_dict)
+    assert res_config_from_file.subst_config == subst_config_from_dict
 
 
 @pytest.mark.usefixtures("use_tmpdir")
