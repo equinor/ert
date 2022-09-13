@@ -284,76 +284,47 @@ def to_config_file(filename, config_dict):
         config.write(
             f"{ConfigKeys.RUNPATH_FILE} {config_dict[ConfigKeys.RUNPATH_FILE]}\n"
         )
-        if ConfigKeys.SETENV in config_dict:
-            for statement in config_dict[ConfigKeys.SETENV]:
-                config.write(
-                    f"{ConfigKeys.SETENV}"
-                    f" {statement[ConfigKeys.NAME]} {statement[ConfigKeys.VALUE]}\n"
-                )
-
-        if ConfigKeys.ANALYSIS_COPY in config_dict:
-            for statement in config_dict[ConfigKeys.ANALYSIS_COPY]:
-                config.write(
-                    f"{ConfigKeys.ANALYSIS_COPY}"
-                    f" {statement[ConfigKeys.SRC_NAME]}"
-                    f" {statement[ConfigKeys.DST_NAME]}\n"
-                )
-
-        if ConfigKeys.ANALYSIS_SET_VAR in config_dict:
-            for statement in config_dict[ConfigKeys.ANALYSIS_SET_VAR]:
-                config.write(
-                    f"{ConfigKeys.ANALYSIS_SET_VAR} {statement[ConfigKeys.MODULE_NAME]}"
-                    f" {statement[ConfigKeys.VAR_NAME]} {statement[ConfigKeys.VALUE]}\n"
-                )
-
-        if ConfigKeys.DEFINE_KEY in config_dict:
-            for key, value in config_dict[ConfigKeys.DEFINE_KEY].items():
-                config.write(f"{ConfigKeys.DEFINE_KEY} {key} {value}\n")
-
-        if ConfigKeys.INSTALL_JOB in config_dict:
-            for job in config_dict[ConfigKeys.INSTALL_JOB]:
-                config.write(
-                    f"{ConfigKeys.INSTALL_JOB}"
-                    f" {job[ConfigKeys.NAME]} {job[ConfigKeys.PATH]}\n"
-                )
-
-        if ConfigKeys.QUEUE_OPTION in config_dict:
-            for setting in config_dict[ConfigKeys.QUEUE_OPTION]:
-                config.write(
-                    f"{ConfigKeys.QUEUE_OPTION}"
-                    f" {setting[ConfigKeys.NAME]} {setting[ConfigKeys.VALUE]}\n"
-                )
-
-        for key in [
-            ConfigKeys.NUM_REALIZATIONS,
-            ConfigKeys.DATA_FILE,
-            ConfigKeys.LICENSE_PATH,
-            ConfigKeys.RANDOM_SEED,
-            ConfigKeys.ANALYSIS_SELECT,
-            ConfigKeys.RERUN_KEY,
-            ConfigKeys.ALPHA_KEY,
-            ConfigKeys.RERUN_START_KEY,
-            ConfigKeys.UPDATE_LOG_PATH,
-            ConfigKeys.STD_CUTOFF_KEY,
-            ConfigKeys.MAX_RUNTIME,
-            ConfigKeys.MIN_REALIZATIONS,
-            ConfigKeys.ITER_CASE,
-            ConfigKeys.ITER_COUNT,
-            ConfigKeys.ITER_RETRY_COUNT,
-            ConfigKeys.GRID,
-            ConfigKeys.ECLBASE,
-            ConfigKeys.NUM_CPU,
-            ConfigKeys.MAX_SUBMIT,
-            ConfigKeys.JOB_SCRIPT,
-        ]:
-            if key in config_dict:
-                config.write(f"{key} {config_dict[key]}\n")
-
-        if ConfigKeys.QUEUE_SYSTEM in config_dict:
-            config.write(
-                f"{ConfigKeys.QUEUE_SYSTEM}"
-                f" {config_dict[ConfigKeys.QUEUE_SYSTEM].name[:-7]}\n"
-            )
-
-        if ConfigKeys.UMASK in config_dict:
-            config.write(f"{ConfigKeys.UMASK} 0{config_dict[ConfigKeys.UMASK]:o}\n")
+        for keyword, keyword_value in config_dict.items():
+            if keyword == ConfigKeys.DATA_KW_KEY:
+                for define_key, define_value in keyword_value.items():
+                    config.write(f"{keyword} {define_key} {define_value}\n")
+            elif keyword == ConfigKeys.SETENV:
+                for statement in keyword_value:
+                    config.write(
+                        f"{keyword}"
+                        f" {statement[ConfigKeys.NAME]} {statement[ConfigKeys.VALUE]}\n"
+                    )
+            elif keyword == ConfigKeys.ANALYSIS_COPY:
+                for statement in keyword_value:
+                    config.write(
+                        f"{keyword}"
+                        f" {statement[ConfigKeys.SRC_NAME]}"
+                        f" {statement[ConfigKeys.DST_NAME]}\n"
+                    )
+            elif keyword == ConfigKeys.ANALYSIS_SET_VAR:
+                for statement in keyword_value:
+                    config.write(
+                        f"{keyword} {statement[ConfigKeys.MODULE_NAME]}"
+                        f" {statement[ConfigKeys.VAR_NAME]}"
+                        f" {statement[ConfigKeys.VALUE]}\n"
+                    )
+            elif keyword == ConfigKeys.DEFINE_KEY:
+                for define_key, define_value in keyword_value.items():
+                    config.write(f"{keyword} {define_key} {define_value}\n")
+            elif keyword == ConfigKeys.INSTALL_JOB:
+                for job in keyword_value:
+                    config.write(
+                        f"{keyword}" f" {job[ConfigKeys.NAME]} {job[ConfigKeys.PATH]}\n"
+                    )
+            elif keyword == ConfigKeys.QUEUE_OPTION:
+                for setting in keyword_value:
+                    config.write(
+                        f"{keyword}"
+                        f" {setting[ConfigKeys.NAME]} {setting[ConfigKeys.VALUE]}\n"
+                    )
+            elif keyword == ConfigKeys.QUEUE_SYSTEM:
+                config.write(f"{keyword}" f" {keyword_value.name[:-7]}\n")
+            elif keyword == ConfigKeys.UMASK:
+                config.write(f"{keyword} 0{keyword_value:o}\n")
+            else:
+                config.write(f"{keyword} {keyword_value}\n")
