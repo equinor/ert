@@ -288,6 +288,9 @@ def to_config_file(filename, config_dict):
             if keyword == ConfigKeys.DATA_KW_KEY:
                 for define_key, define_value in keyword_value.items():
                     config.write(f"{keyword} {define_key} {define_value}\n")
+            elif keyword == ConfigKeys.INSTALL_JOB_DIRECTORY:
+                for install_dir in keyword_value:
+                    config.write(f"{keyword} {install_dir}\n")
             elif keyword == ConfigKeys.SETENV:
                 for statement in keyword_value:
                     config.write(
