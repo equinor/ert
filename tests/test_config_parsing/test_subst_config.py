@@ -24,7 +24,6 @@ def test_two_instances_of_different_config_are_not_equal(config_dict1, config_di
     )
 
 
-@pytest.mark.skip(reason="https://github.com/equinor/ert/issues/3802")
 @pytest.mark.usefixtures("use_tmpdir")
 @given(config_dicts())
 def test_from_dict_and_from_file_creates_equal_config(config_dict):
