@@ -784,27 +784,6 @@ bool ensemble_config_require_summary(const ensemble_config_type *ens_config) {
     return ensemble_config_has_impl_type(ens_config, SUMMARY);
 }
 
-/**
-   this function will look up the user_key in the ensemble_config. if
-   the corresponding config_node can not be found 0 will be returned,
-   otherwise enkf_config_node functions will be invoked.
-*/
-int ensemble_config_get_observations(const ensemble_config_type *config,
-                                     enkf_obs_type *enkf_obs,
-                                     const char *user_key, int obs_count,
-                                     time_t *obs_time, double *y, double *std) {
-    int num_obs = 0;
-    char *index_key;
-    const enkf_config_node_type *config_node =
-        ensemble_config_user_get_node(config, user_key, &index_key);
-    if (config_node != NULL) {
-        num_obs = enkf_config_node_load_obs(config_node, enkf_obs, index_key,
-                                            obs_count, obs_time, y, std);
-        free(index_key);
-    }
-    return num_obs;
-}
-
 /*
    the ensemble_config_add_xxx() functions below will create a new xxx
    instance and add it to the ensemble_config; the return value from

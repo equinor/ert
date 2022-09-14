@@ -66,10 +66,6 @@ ensemble_config_add_gen_kw(ensemble_config_type *config, const char *key,
 extern "C" enkf_config_node_type *
 ensemble_config_add_field(ensemble_config_type *config, const char *key,
                           ecl_grid_type *ecl_grid, bool forward_init);
-int ensemble_config_get_observations(const ensemble_config_type *config,
-                                     enkf_obs_type *enkf_obs,
-                                     const char *user_key, int obs_count,
-                                     time_t *obs_time, double *y, double *std);
 void ensemble_config_clear_obs_keys(ensemble_config_type *ensemble_config);
 void ensemble_config_add_obs_key(ensemble_config_type *, const char *,
                                  const char *);
