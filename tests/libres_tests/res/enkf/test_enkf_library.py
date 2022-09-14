@@ -5,12 +5,9 @@ from ert._c_wrappers.enkf import AnalysisConfig, EclConfig, EnkfConfigNode
 from ert._c_wrappers.enkf.util import TimeMap
 
 
-def test_failed_class_creation():
-    classes = [EnkfConfigNode]
-
-    for cls in classes:
-        with pytest.raises(NotImplementedError):
-            cls()
+def test_failed_enkf_config_node_creation():
+    with pytest.raises(NotImplementedError):
+        EnkfConfigNode()
 
 
 @pytest.mark.unstable
