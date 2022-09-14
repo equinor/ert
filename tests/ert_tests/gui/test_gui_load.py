@@ -130,8 +130,11 @@ def test_gui_full(monkeypatch, tmpdir, qapp, mock_start_server):
             lambda: None
         )  # exec_ starts the event loop, and will stall the test.
         monkeypatch.setattr(ert.gui.gert_main, "QApplication", Mock(return_value=qapp))
+        monkeypatch.setattr(ert.gui.gert_main.LibresFacade, "enspath", str(tmpdir))
         run_gui(args_mock)
-        mock_start_server.assert_called_once_with(res_config="config.ert")
+        mock_start_server.assert_called_once_with(
+            project=str(tmpdir), res_config="config.ert"
+        )
 
 
 def test_gui_iter_num(monkeypatch, tmpdir, qtbot, patch_enkf_main):

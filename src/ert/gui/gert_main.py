@@ -62,8 +62,10 @@ def run_gui(args):
     # be the base name of the original config
     args.config = os.path.basename(args.config)
     ert = EnKFMain(res_config)
+    facade = LibresFacade(ert)
     with Storage.connect_or_start_server(
-        res_config=os.path.basename(args.config)
+        res_config=os.path.basename(args.config),
+        project=facade.enspath,
     ), add_gui_log_handler() as log_handler:
         notifier = ErtNotifier(args.config)
         # window reference must be kept until app.exec returns:

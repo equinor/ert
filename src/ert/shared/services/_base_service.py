@@ -33,12 +33,12 @@ T = TypeVar("T", bound="BaseService")
 ConnInfo = Union[Mapping[str, Any], Exception, None]
 
 
-SERVICE_NAMES: Set[str] = set()
+SERVICE_CONF_PATHS: Set[str] = set()
 
 
 def cleanup_service_files(signum: int, frame: Optional[FrameType]) -> None:
-    for service_name in SERVICE_NAMES:
-        file = Path(f"{service_name}_server.json")
+    for file_path in SERVICE_CONF_PATHS:
+        file = Path(file_path)
         if file.exists():
             file.unlink()
     raise OSError(f"Signal {signum} received.")
@@ -94,6 +94,7 @@ class _Proc(threading.Thread):
         exec_args: Sequence[str],
         timeout: int,
         set_conn_info: Callable[[ConnInfo], None],
+        project: Path,
     ):
         super().__init__()
 
@@ -103,6 +104,7 @@ class _Proc(threading.Thread):
         self._exec_args = exec_args
         self._timeout = timeout
         self._set_conn_info = set_conn_info
+        self._service_config_path = Path(project) / f"{self._service_name}_server.json"
 
         self._assert_server_not_running()
 
@@ -112,7 +114,7 @@ class _Proc(threading.Thread):
         env = os.environ.copy()
         env["ERT_COMM_FD"] = str(fd_write)
 
-        SERVICE_NAMES.add(self._service_name)
+        SERVICE_CONF_PATHS.add(str(self._service_config_path))
 
         self._childproc = Popen(
             self._exec_args,
@@ -162,17 +164,17 @@ class _Proc(threading.Thread):
         we have waited long enough before sys.exit
         """
         for i in range(3):
-            if (Path.cwd() / f"{self._service_name}_server.json").exists():
+            if self._service_config_path.exists():
                 print(
                     f"{self._service_name}_server.json is "
                     f"present on this location. Retry {i}"
                 )
                 time.sleep(1)
 
-        if (Path.cwd() / f"{self._service_name}_server.json").exists():
+        if self._service_config_path.exists():
             print(
                 f"A file called {self._service_name}_server.json is present from this "
-                "location. This indicates there is already a ert instance running. "
+                f"location. This indicates there is already a ert instance running. "
                 "If you are certain that is not the case, try to delete the file "
                 "and try again."
             )
@@ -216,9 +218,8 @@ class _Proc(threading.Thread):
         """
         Ensure that the JSON connection information file is deleted
         """
-        file = Path(f"{self._service_name}_server.json")
-        if file.exists():
-            file.unlink()
+        if self._service_config_path.exists():
+            self._service_config_path.unlink()
 
     @property
     def logger(self) -> Logger:
@@ -264,6 +265,7 @@ class BaseService:
         exec_args: Sequence[str],
         timeout: int = 120,
         conn_info: ConnInfo = None,
+        project: Optional[Path] = None,
     ):
         self._exec_args = exec_args
         self._timeout = timeout
@@ -271,16 +273,14 @@ class BaseService:
         self._proc: Optional[_Proc] = None
         self._conn_info: ConnInfo = conn_info
         self._conn_info_event = threading.Event()
+        self._project = project or Path.cwd()
 
         # Flag that we have connection information
         if self._conn_info:
             self._conn_info_event.set()
         else:
             self._proc = _Proc(
-                self.service_name,
-                exec_args,
-                timeout,
-                self.set_conn_info,
+                self.service_name, exec_args, timeout, self.set_conn_info, self._project
             )
 
     @classmethod
@@ -312,12 +312,9 @@ class BaseService:
             timeout = 120
         t = -1
         while t < timeout:
-            search_path = Path(path)
-            while search_path != Path("/"):
-                if (search_path / name).exists():
-                    with (search_path / name).open() as f:
-                        return cls([], conn_info=json.load(f))
-                search_path = search_path.parent
+            if (path / name).exists():
+                with (path / name).open() as f:
+                    return cls([], conn_info=json.load(f), project=path)
 
             sleep(1)
             t += 1
@@ -329,7 +326,7 @@ class BaseService:
         try:
             # Note that timeout==0 will bypass the loop in connect() and force
             # TimeoutError if there is no known existing instance
-            return _Context(cls.connect(timeout=0))
+            return _Context(cls.connect(timeout=0, project=kwargs.get("project")))
         except TimeoutError:
             # Server is not running. Start a new one
             pass
@@ -358,8 +355,13 @@ class BaseService:
             raise ValueError
         self._conn_info = info
 
+        if self._project is not None:
+            path = f"{self._project}/{self.service_name}_server.json"
+        else:
+            path = f"{self.service_name}_server.json"
+
         if isinstance(info, Mapping):
-            with open(f"{self.service_name}_server.json", "w") as f:
+            with open(path, "w") as f:
                 json.dump(info, f, indent=4)
 
         self._conn_info_event.set()
