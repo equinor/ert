@@ -79,14 +79,6 @@ class EnKFMain(BaseCClass):
 
     _free = ResPrototype("void enkf_main_free(enkf_main)")
     _get_obs = ResPrototype("enkf_obs_ref enkf_main_get_obs(enkf_main)")
-    _get_observations = ResPrototype(
-        "void enkf_main_get_observations(enkf_main, \
-                                         char*, \
-                                         int, \
-                                         long*, \
-                                         double*, \
-                                         double*)"
-    )
     _have_observations = ResPrototype("bool enkf_main_have_obs(enkf_main)")
     _get_workflow_list = ResPrototype(
         "ert_workflow_list_ref enkf_main_get_workflow_list(enkf_main)"
@@ -358,9 +350,6 @@ class EnKFMain(BaseCClass):
 
     def getHistoryLength(self) -> int:
         return self.resConfig().model_config.get_last_history_restart()
-
-    def get_observations(self, user_key, obs_count, obs_x, obs_y, obs_std):
-        return self._get_observations(user_key, obs_count, obs_x, obs_y, obs_std)
 
     def getKeyManager(self) -> "KeyManager":
         return self.__key_manager

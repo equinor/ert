@@ -99,14 +99,6 @@ void enkf_main_free(enkf_main_type *enkf_main) {
     delete enkf_main;
 }
 
-void enkf_main_get_observations(const enkf_main_type *enkf_main,
-                                const char *user_key, int obs_count,
-                                time_t *obs_time, double *y, double *std) {
-    ensemble_config_get_observations(
-        res_config_get_ensemble_config(enkf_main->res_config), enkf_main->obs,
-        user_key, obs_count, obs_time, y, std);
-}
-
 void enkf_main_install_SIGNALS(void) { util_install_signals(); }
 
 ert_workflow_list_type *enkf_main_get_workflow_list(enkf_main_type *enkf_main) {
