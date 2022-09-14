@@ -691,3 +691,23 @@ class ResConfig(BaseCClass):
 
     def __ne__(self, other):
         return not self == other
+
+    def __repr__(self):
+        return f"ResConfig({str(self)})"
+
+    def __str__(self):
+        return (
+            "{\n"
+            f"SubstConfig: {self.subst_config},\n"
+            f"SiteConfig: {self.site_config},\n"
+            f"RNGConfig: {self.rng_config},\n"
+            f"AnalysisConfig: {self.analysis_config},\n"
+            f"ErtWorkflowList: {self.ert_workflow_list},\n"
+            f"HookManager: {self.hook_manager},\n"
+            f"ErtTemplates: {self.ert_templates},\n"
+            f"ECLConfig: {self.ecl_config},\n"
+            f"EnsembleConfig: {self.ensemble_config},\n"
+            f"ModelConfig: {self.model_config},\n"
+            f"QueueConfig: {self.queue_config},\n"
+            "}"
+        )
