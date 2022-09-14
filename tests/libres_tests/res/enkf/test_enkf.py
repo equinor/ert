@@ -51,12 +51,6 @@ def test_site_bootstrap():
         EnKFMain(None)
 
 
-def test_default_res_config(minimum_case):
-    assert minimum_case.resConfig is not None
-    assert minimum_case.siteConfig is not None
-    assert minimum_case.analysisConfig is not None
-
-
 def test_invalid_res_config():
     with pytest.raises(TypeError):
         EnKFMain(res_config="This is not a ResConfig instance")
