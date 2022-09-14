@@ -1,11 +1,13 @@
+import os.path
 from unittest.mock import patch
 
 from ecl.util.test import TestAreaContext
 
 from ert._c_wrappers.job_queue import Workflow, WorkflowJoblist, WorkflowRunner
 from ert._c_wrappers.util.substitution_list import SubstitutionList
+from tests.utils import wait_until
 
-from ...libres_utils import ResTest, wait_until
+from ...libres_utils import ResTest
 from .workflow_common import WorkflowCommon
 
 
@@ -29,16 +31,16 @@ class WorkflowRunnerTest(ResTest):
             with workflow_runner:
                 self.assertIsNone(workflow_runner.workflowResult())
 
-                wait_until(lambda: self.assertTrue(workflow_runner.isRunning()))
-                wait_until(lambda: self.assertFileExists("wait_started_0"))
+                wait_until(workflow_runner.isRunning)
+                wait_until(lambda: os.path.exists("wait_started_0"))
 
-                wait_until(lambda: self.assertFileExists("wait_finished_0"))
+                wait_until(lambda: os.path.exists("wait_finished_0"))
 
-                wait_until(lambda: self.assertFileExists("wait_started_1"))
+                wait_until(lambda: os.path.exists("wait_started_1"))
 
                 workflow_runner.cancel()
 
-                wait_until(lambda: self.assertFileExists("wait_cancelled_1"))
+                wait_until(lambda: os.path.exists("wait_cancelled_1"))
 
                 self.assertTrue(workflow_runner.isCancelled())
 
@@ -66,10 +68,10 @@ class WorkflowRunnerTest(ResTest):
             self.assertFalse(workflow_runner.isRunning())
 
             with workflow_runner:
-                wait_until(lambda: self.assertTrue(workflow_runner.isRunning()))
-                wait_until(lambda: self.assertFileExists("wait_started_0"))
-                wait_until(lambda: self.assertFileExists("wait_finished_0"))
-                wait_until(lambda: self.assertFileExists("wait_started_1"))
+                wait_until(workflow_runner.isRunning)
+                wait_until(lambda: os.path.exists("wait_started_0"))
+                wait_until(lambda: os.path.exists("wait_finished_0"))
+                wait_until(lambda: os.path.exists("wait_started_1"))
                 workflow_runner.cancel()
                 self.assertTrue(workflow_runner.isCancelled())
 

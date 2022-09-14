@@ -1,8 +1,7 @@
 from ert._c_wrappers.enkf import EnKFMain
 from ert._c_wrappers.enkf.enums import RealizationStateEnum
 from ert.simulator import SimulationContext
-
-from ...libres_utils import wait_until
+from tests.utils import wait_until
 
 
 def test_simulation_context(setup_case):
@@ -27,10 +26,7 @@ def test_simulation_context(setup_case):
         else:
             assert not odd_ctx.isRealizationFinished(iens)
 
-    def all_stopped():
-        assert not even_ctx.isRunning() and not odd_ctx.isRunning()
-
-    wait_until(all_stopped, timeout=90)
+    wait_until(lambda: not even_ctx.isRunning() and not odd_ctx.isRunning(), timeout=90)
 
     for iens in range(size):
         if iens % 2 == 0:
