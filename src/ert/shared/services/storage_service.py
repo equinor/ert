@@ -29,6 +29,8 @@ class Storage(BaseService):
             exec_args.extend(("--database-url", database_url))
         if verbose:
             exec_args.append("--verbose")
+        if "project" in kwargs:
+            exec_args.extend(["--project", str(kwargs["project"])])
 
         super().__init__(exec_args, *args, **kwargs)
 
@@ -40,6 +42,16 @@ class Storage(BaseService):
         Blocks while the server is starting.
         """
         return ("__token__", self.fetch_conn_info()["authtoken"])
+
+    # @classmethod
+    # def start_service(cls, *args: Any, **kwargs: Any):
+    #     try:
+    #         service = cls.connect(timeout=0, project=kwargs.get("project"))
+    #         # Attempt to fetch the service url
+    #         _ = service.fetch_url()
+    #     except TimeoutError:
+    #         return cls.start_server(*args, **kwargs)
+    #     return _Context(service)
 
     def fetch_url(self) -> str:
         """Returns the url. Blocks while the server is starting"""

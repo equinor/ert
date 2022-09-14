@@ -10,7 +10,7 @@ from textwrap import dedent
 import pytest
 
 from ert.shared.services._base_service import (
-    SERVICE_NAMES,
+    SERVICE_CONF_PATHS,
     BaseService,
     ServerBootFail,
     cleanup_service_files,
@@ -307,22 +307,23 @@ def test_local_exec_args_multi():
 
 
 def test_cleanup_service_files(tmpdir):
-    storage_service_name = "storage"
-    storage_service_file = f"{storage_service_name}_server.json"
-    with open(storage_service_file, "w") as f:
-        f.write("storage_service info")
-    assert Path(storage_service_file).exists()
-    SERVICE_NAMES.add(storage_service_name)
+    with tmpdir.as_cwd():
+        storage_service_name = "storage"
+        storage_service_file = f"{storage_service_name}_server.json"
+        with open(storage_service_file, "w") as f:
+            f.write("storage_service info")
+        assert Path(storage_service_file).exists()
+        SERVICE_CONF_PATHS.add(tmpdir / storage_service_file)
 
-    webviz_service_name = "webviz-ert"
-    webviz_service_file = f"{webviz_service_name}_server.json"
-    with open(webviz_service_file, "w") as f:
-        f.write("webviz-ert info")
-    assert Path(webviz_service_file).exists()
-    SERVICE_NAMES.add(webviz_service_name)
+        webviz_service_name = "webviz-ert"
+        webviz_service_file = f"{webviz_service_name}_server.json"
+        with open(webviz_service_file, "w") as f:
+            f.write("webviz-ert info")
+        assert Path(webviz_service_file).exists()
+        SERVICE_CONF_PATHS.add(tmpdir / webviz_service_file)
 
-    with pytest.raises(OSError):
-        cleanup_service_files(signum=99, frame=None)
+        with pytest.raises(OSError):
+            cleanup_service_files(signum=99, frame=None)
 
-    assert not Path(storage_service_file).exists()
-    assert not Path(webviz_service_file).exists()
+        assert not Path(storage_service_file).exists()
+        assert not Path(webviz_service_file).exists()
