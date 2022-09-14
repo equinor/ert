@@ -30,7 +30,7 @@ start_tests () {
     # a lock filgit ree for the default server and kill the run
     # Allow xvfb to find a new server
     xvfb-run -s "-screen 0 640x480x24" --auto-servernum python -m \
-    pytest -k "not test_gui_load and not test_formatting" \
+    pytest --color=no -k "not test_gui_load and not test_formatting" \
     -m "not requires_window_manager" tests/ert_tests
     popd
 }

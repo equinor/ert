@@ -29,10 +29,10 @@ run_ert_clib_tests(){
     # A test on the internal CI is activated by writing a comment with "test flaky please"
     # Requires that the user is allowed to run the tests.
     xvfb-run -s "-screen 0 640x480x24" --auto-servernum python -m \
-    pytest tests/ert_tests -k "not test_gui_load and not test_formatting" \
+    pytest --color=no tests/ert_tests -k "not test_gui_load and not test_formatting" \
     -m "not requires_window_manager"
 
-    pytest tests/libres_tests                                         \
+    pytest --color=no tests/libres_tests                              \
     --ignore="tests/libres_tests/res/enkf/test_analysis_config.py"    \
     --ignore="tests/libres_tests/res/enkf/test_res_config.py"         \
     --ignore="tests/libres_tests/res/enkf/test_site_config.py"        \

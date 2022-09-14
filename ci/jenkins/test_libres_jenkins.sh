@@ -139,7 +139,7 @@ run_pytest_normal () {
 
 	# Avoid implicitly loaded cwd modules
 	pushd ${ERT_CLIB_BUILD}
-	python -m pytest --durations=10 ${ERT_SOURCE_ROOT}/tests/libres_tests
+	python -m pytest --color=no --durations=10 ${ERT_SOURCE_ROOT}/tests/libres_tests
 	popd
 }
 

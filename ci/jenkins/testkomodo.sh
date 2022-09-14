@@ -36,14 +36,14 @@ start_tests () {
     # Allow xvfb to find a new server
     pushd ${CI_TEST_ROOT}/tests/ert_tests
     xvfb-run -s "-screen 0 640x480x24" --auto-servernum python -m \
-    pytest -k "not test_gui_load and not test_formatting" \
+    pytest --color=no -k "not test_gui_load and not test_formatting" \
     -m "not requires_window_manager"
     popd
 
     pushd ${CI_TEST_ROOT}/tests/libres_tests
     ln -s /project/res-testdata/ErtTestData ${CI_TEST_ROOT}/test-data/Equinor
     export ECL_SKIP_SIGNAL=ON
-    pytest                                                   \
+    pytest --color=no                                                     \
         --ignore="tests/libres_tests/res/enkf/test_analysis_config.py"    \
         --ignore="tests/libres_tests/res/enkf/test_res_config.py"         \
         --ignore="tests/libres_tests/res/enkf/test_site_config.py"        \
