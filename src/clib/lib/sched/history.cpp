@@ -50,34 +50,14 @@ history_source_type history_get_source_type(const char *string_source) {
     return source_type;
 }
 
-const char *history_get_source_string(history_source_type history_source) {
-    switch (history_source) {
-    case (REFCASE_SIMULATED):
-        return "REFCASE_SIMULATED";
-        break;
-    case (REFCASE_HISTORY):
-        return "REFCASE_HISTORY";
-        break;
-    default:
-        util_abort("%s: Internal inconsistency in refcase \n", __func__);
-        return NULL;
-    }
-}
-
 UTIL_IS_INSTANCE_FUNCTION(history, HISTORY_TYPE_ID)
-
-static history_type *history_alloc_empty() {
-    history_type *history = (history_type *)util_malloc(sizeof *history);
-    UTIL_TYPE_ID_INIT(history, HISTORY_TYPE_ID);
-    history->refcase = NULL;
-    return history;
-}
 
 void history_free(history_type *history) { free(history); }
 
 history_type *history_alloc_from_refcase(const ecl_sum_type *refcase,
                                          bool use_h_keywords) {
-    history_type *history = history_alloc_empty();
+    history_type *history = (history_type *)util_malloc(sizeof *history);
+    UTIL_TYPE_ID_INIT(history, HISTORY_TYPE_ID);
 
     history->refcase =
         refcase; /* This function does not really do anthing - it just sets the ecl_sum field of the history instance. */
@@ -152,10 +132,6 @@ bool history_init_ts(const history_type *history, const char *summary_key,
     return initOK;
 }
 
-time_t history_get_start_time(const history_type *history) {
-    return ecl_sum_get_start_time(history->refcase);
-}
-
 /* Uncertain about the first node - offset problems +++ ??
    Changed to use node_end_time() at svn ~ 2850
 
@@ -167,24 +143,4 @@ time_t history_get_time_t_from_restart_nr(const history_type *history,
         return ecl_sum_get_start_time(history->refcase);
     else
         return ecl_sum_get_report_time(history->refcase, restart_nr);
-}
-
-int history_get_restart_nr_from_time_t(const history_type *history,
-                                       time_t time) {
-    if (time == history_get_start_time(history))
-        return 0;
-    else {
-        int report_step =
-            ecl_sum_get_report_step_from_time(history->refcase, time);
-        if (report_step >= 1)
-            return report_step;
-        else {
-            int mday, year, month;
-            util_set_date_values_utc(time, &mday, &month, &year);
-            util_abort("%s: Date: %04d-%02d-%02d does not coincide with any "
-                       "report time. Aborting.\n",
-                       __func__, year, month, mday);
-            return -1;
-        }
-    }
 }

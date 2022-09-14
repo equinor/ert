@@ -47,13 +47,10 @@ history_source_type history_get_source_type(const char *string_source);
 void history_free(history_type *);
 history_type *history_alloc_from_refcase(const ecl_sum_type *refcase,
                                          bool use_h_keywords);
-PY_USED const char *
-history_get_source_string(history_source_type history_source);
 bool history_init_ts(const history_type *history, const char *summary_key,
                      double_vector_type *value, bool_vector_type *valid);
 
 // Accessors.
-time_t history_get_start_time(const history_type *history);
 int history_get_last_restart(const history_type *);
 time_t history_get_time_t_from_restart_nr(const history_type *history,
                                           int restart_nr);
