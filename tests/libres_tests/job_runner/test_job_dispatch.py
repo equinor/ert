@@ -15,8 +15,9 @@ import pytest
 from ert.job_runner.cli import _setup_reporters, main
 from ert.job_runner.reporting import Event, Interactive
 from ert.job_runner.reporting.message import Finish, Init
+from tests.utils import wait_until
 
-from ..libres_utils import _mock_ws_thread, tmpdir, wait_until
+from ..libres_utils import _mock_ws_thread, tmpdir
 
 
 class JobDispatchTest(unittest.TestCase):
@@ -102,11 +103,11 @@ else:
         p = psutil.Process(job_dispatch_process.pid)
 
         # Three levels of processes should spawn 8 children in total
-        wait_until(lambda: self.assertEqual(len(p.children(recursive=True)), 8))
+        wait_until(lambda: len(p.children(recursive=True)) == 8)
 
         p.terminate()
 
-        wait_until(lambda: self.assertEqual(len(p.children(recursive=True)), 0))
+        wait_until(lambda: len(p.children(recursive=True)) == 0)
 
         os.wait()  # allow os to clean up zombie processes
 

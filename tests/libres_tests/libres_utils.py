@@ -72,31 +72,6 @@ def tmp(path=None, teardown=True):
             shutil.rmtree(fname, ignore_errors=True)
 
 
-def wait_until(func, interval=0.5, timeout=30):
-    """Expects 'func' to raise an AssertionError to indicate failure.
-    Repeatedly calls 'func' until it does not throw an AssertionError.
-    Waits 'interval' seconds before each invocation. If 'timeout' is
-    reached, will raise the AssertionError.
-
-    Example of how to wait for a file to be created:
-
-    wait_until(lambda: assertFileExists("/some/file"))"""
-    t = 0
-    while True:
-        time.sleep(interval)
-        t += interval
-        try:
-            func()
-            return
-        except AssertionError:
-            if t >= timeout:
-                raise AssertionError(
-                    "Timeout reached in wait_until "
-                    f"(function {func.__name__}, timeout {timeout:g}) "
-                    "when waiting for assertion."
-                )
-
-
 def wait_for(
     func: Callable, target: Any = True, interval: float = 0.1, timeout: float = 30
 ):
