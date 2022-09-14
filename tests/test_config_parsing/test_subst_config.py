@@ -44,7 +44,10 @@ def test_complete_config_reads_correct_values(config_dict):
         assert subst_config[key] == value
     for key, value in config_dict[ConfigKeys.DATA_KW_KEY].items():
         assert subst_config[key] == value
-    assert subst_config["<RUNPATH_FILE>"] == config_dict[ConfigKeys.RUNPATH_FILE]
+    cwd = os.getcwd()
+    assert subst_config["<RUNPATH_FILE>"] == os.path.join(
+        cwd, config_dict[ConfigKeys.RUNPATH_FILE]
+    )
     expected_num_cpu = (
         config_dict[ConfigKeys.NUM_CPU] if ConfigKeys.NUM_CPU in config_dict else 1
     )
@@ -56,7 +59,8 @@ def test_complete_config_reads_correct_values(config_dict):
 def test_missing_runpath_gives_default_value(config_dict):
     config_dict.pop(ConfigKeys.RUNPATH_FILE)
     subst_config = SubstConfig(config_dict=config_dict)
-    assert subst_config["<RUNPATH_FILE>"] == ".ert_runpath_list"
+    expected_runpath_filepath = os.path.join(os.getcwd(), ".ert_runpath_list")
+    assert subst_config["<RUNPATH_FILE>"] == expected_runpath_filepath
 
 
 def test_empty_config_raises_error():
