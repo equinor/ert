@@ -68,9 +68,6 @@ struct enkf_main_struct {
     const res_config_type *res_config;
 
     enkf_obs_type *obs;
-
-    /** The size of the ensemble */
-    int ens_size;
 };
 
 UTIL_SAFE_CAST_FUNCTION(enkf_main, ENKF_MAIN_ID)
