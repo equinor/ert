@@ -86,7 +86,6 @@ class EnKFMain(BaseCClass):
     _get_hook_manager = ResPrototype(
         "hook_manager_ref enkf_main_get_hook_manager(enkf_main)"
     )
-    _get_res_config = ResPrototype("res_config_ref enkf_main_get_res_config(enkf_main)")
 
     def __init__(self, config: "ResConfig", read_only: bool = False):
         self.config_file = config

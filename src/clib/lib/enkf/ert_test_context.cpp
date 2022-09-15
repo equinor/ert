@@ -81,6 +81,10 @@ enkf_main_type *ert_test_context_get_main(ert_test_context_type *test_context) {
     return test_context->enkf_main;
 }
 
+res_config_type *ert_test_context_get_res(ert_test_context_type *test_context) {
+    return test_context->res_config;
+}
+
 const char *
 ert_test_context_get_cwd(const ert_test_context_type *test_context) {
     return test_work_area_get_cwd(test_context->work_area);
