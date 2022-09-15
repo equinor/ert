@@ -81,11 +81,6 @@ bool enkf_main_have_obs(const enkf_main_type *enkf_main) {
     return enkf_obs_have_obs(enkf_main->obs);
 }
 
-const hook_manager_type *
-enkf_main_get_hook_manager(const enkf_main_type *enkf_main) {
-    return res_config_get_hook_manager(enkf_main->res_config);
-}
-
 void enkf_main_free(enkf_main_type *enkf_main) {
 
     if (enkf_main->obs)
@@ -95,10 +90,6 @@ void enkf_main_free(enkf_main_type *enkf_main) {
 }
 
 void enkf_main_install_SIGNALS(void) { util_install_signals(); }
-
-ert_workflow_list_type *enkf_main_get_workflow_list(enkf_main_type *enkf_main) {
-    return res_config_get_workflow_list(enkf_main->res_config);
-}
 
 int enkf_main_load_from_run_context(const int ens_size,
                                     ensemble_config_type *ensemble_config,
