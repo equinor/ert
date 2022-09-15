@@ -50,11 +50,11 @@ void verify_parameters_txt() {
     free(file_content);
 }
 
-void test_write_gen_kw_export_file(enkf_main_type *enkf_main) {
+void test_write_gen_kw_export_file(res_config_type *res_config) {
     enkf_fs_type *init_fs =
         enkf_fs_create_fs("new_fs", BLOCK_FS_DRIVER_ID, true);
     ensemble_config_type *ens_config =
-        res_config_get_ensemble_config(enkf_main_get_res_config(enkf_main));
+        res_config_get_ensemble_config(res_config);
     enkf_node_type *enkf_node =
         enkf_node_alloc(ensemble_config_get_node(ens_config, "MULTFLT"));
     enkf_node_type *enkf_node2 =
@@ -90,11 +90,10 @@ void test_write_gen_kw_export_file(enkf_main_type *enkf_main) {
     }
 
     {
-        enkf_main::ecl_write(
-            res_config_get_ensemble_config(enkf_main_get_res_config(enkf_main)),
-            model_config_get_gen_kw_export_name(res_config_get_model_config(
-                enkf_main_get_res_config(enkf_main))),
-            "simulations/run0", 0, init_fs);
+        enkf_main::ecl_write(res_config_get_ensemble_config(res_config),
+                             model_config_get_gen_kw_export_name(
+                                 res_config_get_model_config(res_config)),
+                             "simulations/run0", 0, init_fs);
         test_assert_true(fs::exists("simulations/run0/parameters.txt"));
     }
     enkf_node_free(enkf_node);
@@ -110,10 +109,10 @@ int main(int argc, char **argv) {
         ert_test_context_type *test_context =
             ert_test_context_alloc("gen_kw_logarithmic_test", config_file);
         enkf_main_type *enkf_main = ert_test_context_get_main(test_context);
-
+        res_config_type *res_config = ert_test_context_get_res(test_context);
         test_assert_not_NULL(enkf_main);
 
-        test_write_gen_kw_export_file(enkf_main);
+        test_write_gen_kw_export_file(res_config);
 
         ert_test_context_free(test_context);
     }

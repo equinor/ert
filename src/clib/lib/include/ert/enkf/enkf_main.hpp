@@ -77,9 +77,6 @@ int enkf_main_load_from_run_context(const int ens_size,
                                     enkf_fs_type *sim_fs,
                                     std::vector<run_arg_type *> run_args);
 
-extern "C" const res_config_type *
-enkf_main_get_res_config(const enkf_main_type *enkf_main);
-
 UTIL_SAFE_CAST_HEADER(enkf_main);
 UTIL_IS_INSTANCE_HEADER(enkf_main);
 

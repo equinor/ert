@@ -73,11 +73,6 @@ struct enkf_main_struct {
 UTIL_SAFE_CAST_FUNCTION(enkf_main, ENKF_MAIN_ID)
 UTIL_IS_INSTANCE_FUNCTION(enkf_main, ENKF_MAIN_ID)
 
-const res_config_type *
-enkf_main_get_res_config(const enkf_main_type *enkf_main) {
-    return enkf_main->res_config;
-}
-
 enkf_obs_type *enkf_main_get_obs(const enkf_main_type *enkf_main) {
     return enkf_main->obs;
 }
