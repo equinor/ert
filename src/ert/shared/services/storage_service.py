@@ -43,16 +43,6 @@ class Storage(BaseService):
         """
         return ("__token__", self.fetch_conn_info()["authtoken"])
 
-    # @classmethod
-    # def start_service(cls, *args: Any, **kwargs: Any):
-    #     try:
-    #         service = cls.connect(timeout=0, project=kwargs.get("project"))
-    #         # Attempt to fetch the service url
-    #         _ = service.fetch_url()
-    #     except TimeoutError:
-    #         return cls.start_server(*args, **kwargs)
-    #     return _Context(service)
-
     def fetch_url(self) -> str:
         """Returns the url. Blocks while the server is starting"""
         if self._url is not None:
