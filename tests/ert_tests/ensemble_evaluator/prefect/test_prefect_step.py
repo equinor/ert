@@ -1,4 +1,5 @@
 import functools
+import os
 import pickle
 from datetime import timedelta
 from functools import partial
@@ -15,8 +16,6 @@ import ert.ensemble_evaluator as ee
 from ert.async_utils import get_event_loop
 from ert.ensemble_evaluator import identifiers as ids
 from ert.ensemble_evaluator.builder._prefect import _on_task_failure
-
-from ...ert_utils import tmp
 
 
 def get_step(step_name, inputs, outputs, jobs, type_="unix"):
@@ -87,7 +86,7 @@ def step_test_script_transmitter(test_data_path, transmitter_factory, script_nam
     return script_transmitter
 
 
-def prefect_flow_run(ws_monitor, step, input_map, output_map, **kwargs):
+def prefect_flow_run(ws_monitor, step, input_map, output_map, run_dir, **kwargs):
     """Use prefect-flow to run task from step output using task_inputs"""
     with prefect.context(url=ws_monitor.url, token=None, cert=None):
         with Flow("testing") as flow:
@@ -95,7 +94,7 @@ def prefect_flow_run(ws_monitor, step, input_map, output_map, **kwargs):
                 output_transmitters=output_map, ens_id="test_ens_id", **kwargs
             )
             result = task(inputs=input_map)
-        with tmp():
+        with run_dir.as_cwd():
             flow_run = flow.run()
     # Stop the mock evaluator WS server
     messages = ws_monitor.join_and_get_messages()
@@ -148,6 +147,7 @@ def test_unix_task(
     transmitter_factory,
     job_args,
     error_test,
+    tmpdir,
 ):
     """Test unix-step and error. Create step, run prefect flow, assert results"""
     step, input_map, output_map = get_step(
@@ -176,6 +176,7 @@ def test_unix_task(
         step=step,
         input_map=input_map,
         output_map=output_map,
+        run_dir=tmpdir,
     )
 
     if not error_test:
@@ -210,6 +211,7 @@ def test_function_step(
     mock_ws_monitor,
     input_transmitter_factory,
     transmitter_factory,
+    tmpdir,
 ):
     """Test both internal and external function"""
     test_values = {"a": 42, "b": 24, "c": 6}
@@ -247,6 +249,7 @@ def test_function_step(
         step=step,
         input_map=input_map,
         output_map=output_map,
+        run_dir=tmpdir,
     )
     assert_prefect_flow_run(
         result=result,
@@ -265,9 +268,10 @@ def test_on_task_failure(
     retries,
     nfails,
     expect,
+    tmpdir,
 ):
     """Test both job and task failure of prefect-flow-run"""
-    with tmp() as runpath:
+    with tmpdir.as_cwd():
         step, input_map, output_map = get_step(
             step_name="test_step",
             inputs=[
@@ -279,9 +283,10 @@ def test_on_task_failure(
                 )
             ],
             outputs=[],
-            jobs=[("script", Path("unix_test_retry_script.py"), [runpath])],
+            jobs=[("script", Path("unix_test_retry_script.py"), [tmpdir])],
             type_="unix",
         )
+        os.mkdir(tmpdir.join("run_dir"))
         result, flow_run, messages = prefect_flow_run(
             ws_monitor=mock_ws_monitor,
             step=step,
@@ -290,6 +295,7 @@ def test_on_task_failure(
             max_retries=retries,
             retry_delay=timedelta(seconds=1),
             on_failure=functools.partial(_on_task_failure, ens_id="test_ens_id"),
+            run_dir=tmpdir.join("run_dir"),
         )
     task_result = flow_run.result[result]
     assert task_result.is_successful() == expect
