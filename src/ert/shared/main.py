@@ -1,5 +1,4 @@
 import atexit
-import json
 import logging
 import logging.config
 import os
@@ -8,11 +7,11 @@ import sys
 from argparse import ArgumentParser, ArgumentTypeError
 from contextlib import contextmanager
 
-import requests
 import yaml
 from ecl import set_abort_handler
 
 import ert.shared
+from ert._c_wrappers.enkf import ResConfig
 from ert.logging import LOGGING_CONFIG
 from ert.logging._log_util_abort import _log_util_abort
 from ert.shared.cli import (
@@ -56,21 +55,20 @@ def run_webviz_ert(args):
         raise ValueError(
             "Running `ert vis` requires that webviz_ert is installed"
         ) from err
-    kwargs = {"res_config": args.config}
-    kwargs["verbose"] = args.verbose
+
+    kwargs = {"verbose": args.verbose}
+    if args.config:
+        res_config = ResConfig(args.config)
+        config_path = res_config.config_path
+        ens_path = res_config.model_config.getEnspath()
+        kwargs["res_config"] = args.config
+        kwargs["project"] = f"{config_path}/{ens_path}"
 
     if args.database_url is not None:
         kwargs["database_url"] = args.database_url
 
     with Storage.connect_or_start_server(**kwargs) as storage:
         storage.wait_until_ready()
-        url = storage.fetch_url()
-        auth = storage.fetch_auth()
-        response = requests.get(f"{url}/server/info", headers={"Token": auth[1]})
-        if response.status_code == 200:
-            title = json.loads(response.content)["name"]
-        else:
-            title = "ERT - Visualization tool"
         print(
             """
 -----------------------------------------------------------
@@ -80,12 +78,13 @@ Starting up Webviz-ERT. This might take more than a minute.
 -----------------------------------------------------------
 """
         )
-        kwargs = {
+        webviz_kwargs = {
             "experimental_mode": args.experimental_mode,
             "verbose": args.verbose,
-            "title": title,
+            "title": kwargs.get("res_config", "ERT - Visualization tool"),
+            "project": kwargs.get("project", os.getcwd()),
         }
-        with WebvizErt.start_server(**kwargs) as webviz_ert_server:
+        with WebvizErt.start_server(**webviz_kwargs) as webviz_ert_server:
             webviz_ert_server.wait()
 
 

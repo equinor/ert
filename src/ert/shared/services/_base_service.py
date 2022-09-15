@@ -104,7 +104,7 @@ class _Proc(threading.Thread):
         self._exec_args = exec_args
         self._timeout = timeout
         self._set_conn_info = set_conn_info
-        self._service_config_path = Path(project) / f"{self._service_name}_server.json"
+        self._service_config_path = project / f"{self._service_name}_server.json"
 
         self._assert_server_not_running()
 
@@ -174,7 +174,7 @@ class _Proc(threading.Thread):
         if self._service_config_path.exists():
             print(
                 f"A file called {self._service_name}_server.json is present from this "
-                f"location. This indicates there is already a ert instance running. "
+                "location. This indicates there is already a ert instance running. "
                 "If you are certain that is not the case, try to delete the file "
                 "and try again."
             )
@@ -265,7 +265,7 @@ class BaseService:
         exec_args: Sequence[str],
         timeout: int = 120,
         conn_info: ConnInfo = None,
-        project: Optional[Path] = None,
+        project: Optional[str] = None,
     ):
         self._exec_args = exec_args
         self._timeout = timeout
@@ -273,7 +273,7 @@ class BaseService:
         self._proc: Optional[_Proc] = None
         self._conn_info: ConnInfo = conn_info
         self._conn_info_event = threading.Event()
-        self._project = project or Path.cwd()
+        self._project = Path(project) if project is not None else Path.cwd()
 
         # Flag that we have connection information
         if self._conn_info:
@@ -314,7 +314,7 @@ class BaseService:
         while t < timeout:
             if (path / name).exists():
                 with (path / name).open() as f:
-                    return cls([], conn_info=json.load(f), project=path)
+                    return cls([], conn_info=json.load(f), project=str(path))
 
             sleep(1)
             t += 1

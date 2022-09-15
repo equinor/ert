@@ -138,7 +138,9 @@ def run_server(args: Optional[argparse.Namespace] = None, debug: bool = False) -
         # at startup. We set the database URL to an SQLite in-memory database so
         # that the import succeeds.
         os.environ["ERT_STORAGE_DATABASE_URL"] = "sqlite://"
-        os.environ["ERT_STORAGE_RES_CONFIG"] = args.config or find_ert_config()
+        os.environ["ERT_STORAGE_RES_CONFIG"] = (
+            os.path.abspath(args.config) or find_ert_config()
+        )
         config = uvicorn.Config("ert.shared.dark_storage.app:app", **config_args)
     server = Server(config, json.dumps(connection_info), lockfile)
 
