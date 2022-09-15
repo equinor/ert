@@ -63,12 +63,6 @@ extern "C" bool enkf_main_have_obs(const enkf_main_type *enkf_main);
 
 void enkf_main_install_SIGNALS(void);
 
-extern "C" const hook_manager_type *
-enkf_main_get_hook_manager(const enkf_main_type *enkf_main);
-
-extern "C" ert_workflow_list_type *
-enkf_main_get_workflow_list(enkf_main_type *enkf_main);
-
 int enkf_main_load_from_run_context(const int ens_size,
                                     ensemble_config_type *ensemble_config,
                                     model_config_type *model_config,

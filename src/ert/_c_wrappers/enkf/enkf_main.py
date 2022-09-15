@@ -80,12 +80,6 @@ class EnKFMain(BaseCClass):
     _free = ResPrototype("void enkf_main_free(enkf_main)")
     _get_obs = ResPrototype("enkf_obs_ref enkf_main_get_obs(enkf_main)")
     _have_observations = ResPrototype("bool enkf_main_have_obs(enkf_main)")
-    _get_workflow_list = ResPrototype(
-        "ert_workflow_list_ref enkf_main_get_workflow_list(enkf_main)"
-    )
-    _get_hook_manager = ResPrototype(
-        "hook_manager_ref enkf_main_get_hook_manager(enkf_main)"
-    )
 
     def __init__(self, config: "ResConfig", read_only: bool = False):
         self.config_file = config
@@ -354,10 +348,10 @@ class EnKFMain(BaseCClass):
         return self.__key_manager
 
     def getWorkflowList(self) -> ErtWorkflowList:
-        return self._get_workflow_list().setParent(self)
+        return self.resConfig().ert_workflow_list
 
     def getHookManager(self) -> HookManager:
-        return self._get_hook_manager()
+        return self.resConfig().hook_manager
 
     def loadFromRunContext(self, run_context: RunContext, fs) -> int:
         """Returns the number of loaded realizations"""

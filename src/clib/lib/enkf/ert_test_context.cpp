@@ -111,9 +111,9 @@ bool ert_test_context_install_workflow_job(ert_test_context_type *test_context,
                                            const char *job_name,
                                            const char *job_file) {
     if (fs::exists(job_file)) {
-        enkf_main_type *enkf_main = ert_test_context_get_main(test_context);
+        res_config_type *res_config = ert_test_context_get_res(test_context);
         ert_workflow_list_type *workflow_list =
-            enkf_main_get_workflow_list(enkf_main);
+            res_config_get_workflow_list(res_config);
         ert_workflow_list_add_job(workflow_list, job_name, job_file);
         return ert_workflow_list_has_job(workflow_list, job_name);
     } else
@@ -124,9 +124,9 @@ bool ert_test_context_install_workflow(ert_test_context_type *test_context,
                                        const char *workflow_name,
                                        const char *workflow_file) {
     if (fs::exists(workflow_file)) {
-        enkf_main_type *enkf_main = ert_test_context_get_main(test_context);
+        res_config_type *res_config = ert_test_context_get_res(test_context);
         ert_workflow_list_type *workflow_list =
-            enkf_main_get_workflow_list(enkf_main);
+            res_config_get_workflow_list(res_config);
         ert_workflow_list_add_workflow(workflow_list, workflow_file,
                                        workflow_name);
         return ert_workflow_list_has_workflow(workflow_list, workflow_name);
@@ -144,8 +144,9 @@ void ert_test_context_fwrite_workflow_job(FILE *stream, const char *job_name,
 bool ert_test_context_run_worklow(ert_test_context_type *test_context,
                                   const char *workflow_name) {
     enkf_main_type *enkf_main = ert_test_context_get_main(test_context);
+    res_config_type *res_config = ert_test_context_get_res(test_context);
     ert_workflow_list_type *workflow_list =
-        enkf_main_get_workflow_list(enkf_main);
+        res_config_get_workflow_list(res_config);
 
     if (ert_workflow_list_has_workflow(workflow_list, workflow_name)) {
         bool result = ert_workflow_list_run_workflow_blocking(
@@ -159,9 +160,9 @@ bool ert_test_context_run_worklow(ert_test_context_type *test_context,
 bool ert_test_context_run_worklow_job(ert_test_context_type *test_context,
                                       const char *job_name,
                                       const stringlist_type *args) {
-    enkf_main_type *enkf_main = ert_test_context_get_main(test_context);
+    res_config_type *res_config = ert_test_context_get_res(test_context);
     ert_workflow_list_type *workflow_list =
-        enkf_main_get_workflow_list(enkf_main);
+        res_config_get_workflow_list(res_config);
 
     if (ert_workflow_list_has_job(workflow_list, job_name)) {
         bool status;
