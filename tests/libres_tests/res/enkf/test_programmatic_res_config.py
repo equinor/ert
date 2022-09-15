@@ -73,19 +73,6 @@ class ProgrammaticResConfigTest(ResTest):
             },
         }
 
-        self.minimum_config_cwd = {
-            "INTERNALS": {},
-            "SIMULATION": {
-                "QUEUE_SYSTEM": {
-                    "JOBNAME": "Job%d",
-                },
-                "RUNPATH": "/tmp/simulations/run%d",
-                "NUM_REALIZATIONS": 10,
-                "JOB_SCRIPT": "script.sh",
-                "ENSPATH": "Ensemble",
-            },
-        }
-
         self.new_config = {
             "INTERNALS": {},
             "SIMULATION": {
@@ -240,15 +227,6 @@ class ProgrammaticResConfigTest(ResTest):
 
             self.assertEqual(0, len(prog_res_config.errors))
             self.assertEqual(0, len(prog_res_config.failed_keys))
-
-    def test_no_config_directory(self):
-        case_directory = self.createTestPath("local/simple_config")
-
-        with TestAreaContext("res_config_prog_test") as work_area:
-            work_area.copy_directory(case_directory)
-
-            with self.assertRaises(ValueError):
-                ResConfig(config=self.minimum_config_cwd)
 
     def test_errors(self):
         case_directory = self.createTestPath("local/simple_config")
