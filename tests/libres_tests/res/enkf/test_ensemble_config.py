@@ -1,27 +1,23 @@
-from ecl.util.test import TestAreaContext
+import pytest
 
-from ert._c_wrappers.enkf import ConfigKeys, EnsembleConfig, ResConfig
+from ert._c_wrappers.enkf import ConfigKeys, EnsembleConfig
 from ert._c_wrappers.enkf.enums import GenDataFileType
 
-from ...libres_utils import ResTest
+
+def test_create():
+    conf = EnsembleConfig()
+    assert len(conf) == 0
+    assert "XYZ" not in conf
+
+    with pytest.raises(KeyError):
+        # pylint: disable=pointless-statement
+        conf["KEY"]
 
 
-class EnsembleConfigTest(ResTest):
-    def setUp(self):
-        self.case_directory = self.createTestPath("local/simple_config/")
-        self.case_file = "simple_config/ensemble_config"
-
-    def test_create(self):
-        conf = EnsembleConfig()
-        self.assertEqual(len(conf), 0)
-        self.assertFalse("XYZ" in conf)
-
-        with self.assertRaises(KeyError):
-            # pylint: disable=pointless-statement
-            conf["KEY"]
-
-    def test_ensemble_config_constructor(self):
-        config_dict = {
+def test_ensemble_config_constructor(setup_case):
+    res_config = setup_case("local/configuration_tests", "ensemble_config.ert")
+    assert res_config.ensemble_config == EnsembleConfig(
+        config_dict={
             ConfigKeys.GEN_KW_TAG_FORMAT: "<%s>",
             ConfigKeys.GEN_PARAM: [
                 {
@@ -61,9 +57,9 @@ class EnsembleConfigTest(ResTest):
             ConfigKeys.GEN_KW: [
                 {
                     ConfigKeys.NAME: "MULTFLT",
-                    ConfigKeys.TEMPLATE: "configuration_tests/FAULT_TEMPLATE",
+                    ConfigKeys.TEMPLATE: "FAULT_TEMPLATE",
                     ConfigKeys.OUT_FILE: "MULTFLT.INC",
-                    ConfigKeys.PARAMETER_FILE: "configuration_tests/MULTFLT.TXT",
+                    ConfigKeys.PARAMETER_FILE: "MULTFLT.TXT",
                     ConfigKeys.INIT_FILES: None,
                     ConfigKeys.MIN_STD: None,
                     ConfigKeys.FORWARD_INIT: False,
@@ -72,11 +68,9 @@ class EnsembleConfigTest(ResTest):
             ConfigKeys.SURFACE_KEY: [
                 {
                     ConfigKeys.NAME: "TOP",
-                    ConfigKeys.INIT_FILES: "configuration_tests/surface/small.irap",
-                    ConfigKeys.OUT_FILE: "configuration_tests/surface/small_out.irap",
-                    ConfigKeys.BASE_SURFACE_KEY: (
-                        "configuration_tests/surface/small.irap"
-                    ),
+                    ConfigKeys.INIT_FILES: "surface/small.irap",
+                    ConfigKeys.OUT_FILE: "surface/small_out.irap",
+                    ConfigKeys.BASE_SURFACE_KEY: ("surface/small.irap"),
                     ConfigKeys.MIN_STD: None,
                     ConfigKeys.FORWARD_INIT: False,
                 }
@@ -100,20 +94,12 @@ class EnsembleConfigTest(ResTest):
             ],
             ConfigKeys.SCHEDULE_PREDICTION_FILE: [
                 {
-                    ConfigKeys.TEMPLATE: "configuration_tests/input/schedule.sch",
+                    ConfigKeys.TEMPLATE: "input/schedule.sch",
                     ConfigKeys.INIT_FILES: None,
                     ConfigKeys.MIN_STD: None,
                     ConfigKeys.PARAMETER_KEY: None,
                 }
             ],
-        }
-
-        self.case_directory = self.createTestPath("local/configuration_tests/")
-        with TestAreaContext("ensemble_config_test") as work_area:
-            work_area.copy_directory(self.case_directory)
-            res_config = ResConfig("configuration_tests/ensemble_config.ert")
-            ensemble_config_file = res_config.ensemble_config
-            ensemble_config_dict = EnsembleConfig(
-                config_dict=config_dict, grid=res_config.ecl_config.getGrid()
-            )
-            self.assertEqual(ensemble_config_dict, ensemble_config_file)
+        },
+        grid=res_config.ecl_config.getGrid(),
+    )
