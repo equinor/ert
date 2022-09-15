@@ -1,26 +1,19 @@
-from ert.exceptions._exceptions import (
-    ConfigValidationError,
+from ._exceptions import (
     ElementExistsError,
     ElementMissingError,
     ErtError,
     ExperimentError,
     FileExistsException,
-    IllegalWorkspaceOperation,
-    IllegalWorkspaceState,
     NonExistentExperiment,
     StorageError,
 )
 
-# Explicitly export again, otherwise mypy is unhappy.
 __all__ = [
-    "ErtError",
-    "StorageError",
     "ElementExistsError",
     "ElementMissingError",
-    "FileExistsException",
-    "IllegalWorkspaceOperation",
-    "IllegalWorkspaceState",
-    "NonExistentExperiment",
-    "ConfigValidationError",
+    "ErtError",
     "ExperimentError",
+    "FileExistsException",
+    "NonExistentExperiment",
+    "StorageError",
 ]
