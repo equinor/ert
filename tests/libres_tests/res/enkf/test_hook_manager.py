@@ -15,113 +15,83 @@
 #  for more details.
 import os
 import os.path
-import unittest
 
-from ecl.util.test import TestArea
+import pytest
 
 from ert._c_wrappers.enkf import ConfigKeys, HookManager, HookRuntime, ResConfig
 
-from ...libres_utils import ResTest
+
+def without_key(a_dict, key):
+    return {index: value for index, value in a_dict.items() if index != key}
 
 
-class HookManagerTest(ResTest):
-    def setUp(self):
-        self.work_area = TestArea("hook_manager_test_tmp")
-        # in order to test HOOK_WORKFLOWS there need to be some workflows loaded
-        self.work_area.copy_directory(
-            self.createTestPath("local/config/workflows/workflowjobs")
-        )
-        self.work_area.copy_directory(
-            self.createTestPath("local/config/workflows/workflows")
-        )
-        self.config_data = {
-            ConfigKeys.RUNPATH_FILE: "runpath",
-            ConfigKeys.CONFIG_DIRECTORY: self.work_area.get_cwd(),
-            ConfigKeys.CONFIG_FILE_KEY: "config",
-            ConfigKeys.HOOK_WORKFLOW_KEY: [("MAGIC_PRINT", "PRE_SIMULATION")],
-            # these two entries makes the workflow_list load this workflow, but
-            # are not needed by hook_manager directly
-            ConfigKeys.LOAD_WORKFLOW_JOB: "workflowjobs/MAGIC_PRINT",
-            ConfigKeys.LOAD_WORKFLOW: "workflows/MAGIC_PRINT",
-        }
-        self.filename = self.config_data[ConfigKeys.CONFIG_FILE_KEY]
-        # these files must exist
-        self.make_empty_file(self.config_data[ConfigKeys.RUNPATH_FILE])
-
-        # write a config file in order to load ResConfig
-        self.make_config_file(self.filename)
-        self.res_config = ResConfig(user_config_file=self.filename)
-
-    def tearDown(self):
-        del self.work_area
-
-    def test_different_hook_workflow_gives_not_equal_hook_managers(self):
-        res_config2 = ResConfig(user_config_file=self.filename)
-        hook_manager1 = HookManager(
-            workflow_list=self.res_config.ert_workflow_list,
-            config_dict=self.config_data,
-        )
-        hook_manager2 = HookManager(
-            workflow_list=res_config2.ert_workflow_list,
-            config_dict=self.remove_key(ConfigKeys.HOOK_WORKFLOW_KEY),
-        )
-
-        self.assertNotEqual(hook_manager1, hook_manager2)
-
-    def test_old_and_new_constructor_creates_equal_config(self):
-        res_config2 = ResConfig(user_config_file=self.filename)
-        old = res_config2.hook_manager
-        new = HookManager(
-            workflow_list=self.res_config.ert_workflow_list,
-            config_dict=self.config_data,
-        )
-
-        self.assertEqual(old, new)
-
-    def test_all_config_entries_are_set(self):
-        hook_manager = HookManager(
-            workflow_list=self.res_config.ert_workflow_list,
-            config_dict=self.config_data,
-        )
-
-        self.assertEqual(len(hook_manager), 1)
-
-        magic_workflow = hook_manager[0]
-        conf_dir = self.config_data[ConfigKeys.CONFIG_DIRECTORY]
-        self.assertEqual(
-            magic_workflow.getWorkflow().src_file,
-            os.path.join(conf_dir, self.config_data[ConfigKeys.LOAD_WORKFLOW]),
-        )
-        self.assertEqual(magic_workflow.getRunMode(), HookRuntime.PRE_SIMULATION)
-
-    def remove_key(self, key):
-        return {
-            index: value for index, value in self.config_data.items() if index != key
-        }
-
-    def set_key(self, key, val):
-        copy = self.config_data.copy()
-        copy[key] = val
-        return copy
-
-    def make_config_file(self, filename):
-        with open(filename, "w+") as config:
-            # necessary in the file, but irrelevant to this test
-            config.write("JOBNAME  Job%d\n")
-            config.write("NUM_REALIZATIONS  1\n")
-            for key, val in self.config_data.items():
-                if key in (ConfigKeys.CONFIG_FILE_KEY, ConfigKeys.CONFIG_DIRECTORY):
-                    continue
-                if isinstance(val, str):
-                    config.write(f"{key} {val}\n")
-                else:
-                    # assume this is the list of tuple for hook workflows
-                    for val1, val2 in val:
-                        config.write(f"{key} {val1} {val2}\n")
-
-    def make_empty_file(self, filename):
-        open(filename, "a").close()
+@pytest.fixture
+def workflows_config_dict(copy_case):
+    copy_case("local/config/workflows")
+    # create empty runpath file
+    open("runpath", "a").close()
+    config_dict = {
+        ConfigKeys.RUNPATH_FILE: "runpath",
+        ConfigKeys.CONFIG_DIRECTORY: ".",
+        ConfigKeys.CONFIG_FILE_KEY: "config",
+        ConfigKeys.HOOK_WORKFLOW_KEY: [("MAGIC_PRINT", "PRE_SIMULATION")],
+        # these two entries makes the workflow_list load this workflow, but
+        # are not needed by hook_manager directly
+        ConfigKeys.LOAD_WORKFLOW_JOB: "workflowjobs/MAGIC_PRINT",
+        ConfigKeys.LOAD_WORKFLOW: "workflows/MAGIC_PRINT",
+    }
+    with open("config", "w+") as config:
+        # necessary in the file, but irrelevant to this test
+        config.write("JOBNAME  Job%d\n")
+        config.write("NUM_REALIZATIONS  1\n")
+        for key, val in config_dict.items():
+            if key in (ConfigKeys.CONFIG_FILE_KEY, ConfigKeys.CONFIG_DIRECTORY):
+                continue
+            if isinstance(val, str):
+                config.write(f"{key} {val}\n")
+            else:
+                # assume this is the list of tuple for hook workflows
+                for val1, val2 in val:
+                    config.write(f"{key} {val1} {val2}\n")
+    return config_dict
 
 
-if __name__ == "__main__":
-    unittest.main()
+def test_different_hook_workflow_gives_not_equal_hook_managers(workflows_config_dict):
+    res_config = ResConfig(
+        user_config_file=workflows_config_dict[ConfigKeys.CONFIG_FILE_KEY]
+    )
+    assert HookManager(
+        workflow_list=res_config.ert_workflow_list,
+        config_dict=workflows_config_dict,
+    ) != HookManager(
+        workflow_list=res_config.ert_workflow_list,
+        config_dict=without_key(workflows_config_dict, ConfigKeys.HOOK_WORKFLOW_KEY),
+    )
+
+
+def test_old_and_new_constructor_creates_equal_config(workflows_config_dict):
+    res_config = ResConfig(
+        user_config_file=workflows_config_dict[ConfigKeys.CONFIG_FILE_KEY]
+    )
+    assert res_config.hook_manager == HookManager(
+        workflow_list=res_config.ert_workflow_list,
+        config_dict=workflows_config_dict,
+    )
+
+
+def test_all_config_entries_are_set(workflows_config_dict):
+    res_config = ResConfig(
+        user_config_file=workflows_config_dict[ConfigKeys.CONFIG_FILE_KEY]
+    )
+    hook_manager = HookManager(
+        workflow_list=res_config.ert_workflow_list,
+        config_dict=workflows_config_dict,
+    )
+
+    assert len(hook_manager) == 1
+
+    magic_workflow = hook_manager[0]
+    assert magic_workflow.getWorkflow().src_file == os.path.join(
+        os.getcwd(), workflows_config_dict[ConfigKeys.LOAD_WORKFLOW]
+    )
+    assert magic_workflow.getRunMode() == HookRuntime.PRE_SIMULATION
