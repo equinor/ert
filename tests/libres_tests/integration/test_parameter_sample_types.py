@@ -11,7 +11,6 @@ from ecl import EclDataType
 from ecl.eclfile import EclKW
 from ecl.grid import EclGrid
 from ecl.util.geometry import Surface
-from ecl.util.util import BoolVector
 
 from ert._c_wrappers.enkf import EnKFMain, ResConfig
 from ert.libres_facade import LibresFacade
@@ -36,9 +35,7 @@ def create_runpath(config):
 
 def load_from_forward_model(ert):
     facade = LibresFacade(ert)
-    realizations = BoolVector(
-        default_value=True, initial_size=facade.get_ensemble_size()
-    )
+    realizations = [True] * facade.get_ensemble_size()
     return facade.load_from_forward_model("default_0", realizations, 0)
 
 
