@@ -1,10 +1,8 @@
-# -*- coding: utf-8 -*-
 import os
 import tempfile
-import unittest
 from unittest.mock import Mock
 
-from pytest import MonkeyPatch
+import pytest
 
 import tests.ert_tests.all.plugins.dummy_plugins as dummy_plugins
 from ert.shared.plugins import ErtPluginContext
@@ -18,71 +16,64 @@ env_vars = [
 ]
 
 
-class PluginContextTest(unittest.TestCase):
-    def setUp(self):
-        self.monkeypatch = MonkeyPatch()
+def test_no_plugins(monkeypatch):
+    # pylint: disable=pointless-statement
+    monkeypatch.delenv("ERT_SITE_CONFIG", raising=False)
+    with ErtPluginContext(plugins=[]) as c:
+        with pytest.raises(KeyError):
+            os.environ["ECL100_SITE_CONFIG"]
+        with pytest.raises(KeyError):
+            os.environ["ECL300_SITE_CONFIG"]
+        with pytest.raises(KeyError):
+            os.environ["FLOW_SITE_CONFIG"]
+        with pytest.raises(KeyError):
+            os.environ["RMS_SITE_CONFIG"]
 
-    def tearDown(self):
-        self.monkeypatch.undo()
+        assert os.path.isfile(os.environ["ERT_SITE_CONFIG"])
+        with open(os.environ["ERT_SITE_CONFIG"]) as f:
+            assert c.plugin_manager.get_site_config_content() == f.read()
 
-    def test_no_plugins(self):
-        # pylint: disable=pointless-statement
-        self.monkeypatch.delenv("ERT_SITE_CONFIG", raising=False)
-        with ErtPluginContext(plugins=[]) as c:
-            with self.assertRaises(KeyError):
-                os.environ["ECL100_SITE_CONFIG"]
-            with self.assertRaises(KeyError):
-                os.environ["ECL300_SITE_CONFIG"]
-            with self.assertRaises(KeyError):
-                os.environ["FLOW_SITE_CONFIG"]
-            with self.assertRaises(KeyError):
-                os.environ["RMS_SITE_CONFIG"]
+        path = os.environ["ERT_SITE_CONFIG"]
 
-            self.assertTrue(os.path.isfile(os.environ["ERT_SITE_CONFIG"]))
-            with open(os.environ["ERT_SITE_CONFIG"]) as f:
-                self.assertEqual(f.read(), c.plugin_manager.get_site_config_content())
+    with pytest.raises(KeyError):
+        os.environ["ERT_SITE_CONFIG"]
+    assert not os.path.isfile(path)
 
-            path = os.environ["ERT_SITE_CONFIG"]
 
-        with self.assertRaises(KeyError):
-            os.environ["ERT_SITE_CONFIG"]
-        self.assertFalse(os.path.isfile(path))
+def test_with_plugins(monkeypatch):
+    # pylint: disable=pointless-statement
+    monkeypatch.delenv("ERT_SITE_CONFIG", raising=False)
+    # We are comparing two function calls, both of which generate a tmpdir,
+    # this makes sure that the same tmpdir is called on both occasions.
+    monkeypatch.setattr(tempfile, "mkdtemp", Mock(return_value=tempfile.mkdtemp()))
+    with ErtPluginContext(plugins=[dummy_plugins]) as c:
+        with pytest.raises(KeyError):
+            os.environ["ECL100_SITE_CONFIG"]
+        with pytest.raises(KeyError):
+            os.environ["ECL300_SITE_CONFIG"]
+        with pytest.raises(KeyError):
+            os.environ["FLOW_SITE_CONFIG"]
+        with pytest.raises(KeyError):
+            os.environ["RMS_SITE_CONFIG"]
 
-    def test_with_plugins(self):
-        # pylint: disable=pointless-statement
-        self.monkeypatch.delenv("ERT_SITE_CONFIG", raising=False)
-        # We are comparing two function calls, both of which generate a tmpdir,
-        # this makes sure that the same tmpdir is called on both occasions.
-        self.monkeypatch.setattr(
-            tempfile, "mkdtemp", Mock(return_value=tempfile.mkdtemp())
-        )
-        with ErtPluginContext(plugins=[dummy_plugins]) as c:
-            with self.assertRaises(KeyError):
-                os.environ["ECL100_SITE_CONFIG"]
-            with self.assertRaises(KeyError):
-                os.environ["ECL300_SITE_CONFIG"]
-            with self.assertRaises(KeyError):
-                os.environ["FLOW_SITE_CONFIG"]
-            with self.assertRaises(KeyError):
-                os.environ["RMS_SITE_CONFIG"]
+        assert os.path.isfile(os.environ["ERT_SITE_CONFIG"])
+        with open(os.environ["ERT_SITE_CONFIG"]) as f:
+            assert c.plugin_manager.get_site_config_content() == f.read()
 
-            self.assertTrue(os.path.isfile(os.environ["ERT_SITE_CONFIG"]))
-            with open(os.environ["ERT_SITE_CONFIG"]) as f:
-                self.assertEqual(f.read(), c.plugin_manager.get_site_config_content())
+        path = os.environ["ERT_SITE_CONFIG"]
 
-            path = os.environ["ERT_SITE_CONFIG"]
+    with pytest.raises(KeyError):
+        os.environ["ERT_SITE_CONFIG"]
+    assert not os.path.isfile(path)
 
-        with self.assertRaises(KeyError):
-            os.environ["ERT_SITE_CONFIG"]
-        self.assertFalse(os.path.isfile(path))
 
-    def test_already_set(self):
+def test_already_set(monkeypatch):
+    for var in env_vars:
+        monkeypatch.setenv(var, "TEST")
+
+    with ErtPluginContext(plugins=[dummy_plugins]):
         for var in env_vars:
-            self.monkeypatch.setenv(var, "TEST")
+            assert os.environ[var] == "TEST"
 
-        with ErtPluginContext(plugins=[dummy_plugins]):
-            for var in env_vars:
-                self.assertEqual("TEST", os.environ[var])
-
-        for var in env_vars:
-            self.assertEqual("TEST", os.environ[var])
+    for var in env_vars:
+        assert os.environ[var] == "TEST"
