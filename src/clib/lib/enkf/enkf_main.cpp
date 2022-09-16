@@ -62,8 +62,6 @@ struct enkf_main_struct {
     UTIL_TYPE_ID_DECLARATION;
     /** The internalized information. */
 
-    const res_config_type *res_config;
-
     enkf_obs_type *obs;
 };
 
@@ -221,8 +219,6 @@ enkf_main_type *enkf_main_alloc(const res_config_type *res_config,
 
     enkf_main_type *enkf_main = new enkf_main_type;
     UTIL_TYPE_ID_INIT(enkf_main, ENKF_MAIN_ID);
-
-    enkf_main->res_config = res_config;
 
     // Init observations
     auto obs = enkf_obs_alloc(model_config_get_history(model_config),
