@@ -19,7 +19,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <future>
 #include <string>
 #include <tuple>
 #include <unordered_map>
@@ -50,8 +49,6 @@
 #include <ert/enkf/enkf_types.hpp>
 #include <ert/enkf/field.hpp>
 #include <ert/enkf/obs_data.hpp>
-
-#include <ert/concurrency.hpp>
 
 #include <ert/python.hpp>
 
@@ -90,78 +87,6 @@ void enkf_main_free(enkf_main_type *enkf_main) {
 }
 
 void enkf_main_install_SIGNALS(void) { util_install_signals(); }
-
-int enkf_main_load_from_run_context(const int ens_size,
-                                    ensemble_config_type *ensemble_config,
-                                    model_config_type *model_config,
-                                    ecl_config_type *ecl_config,
-                                    std::vector<bool> active_mask,
-                                    enkf_fs_type *sim_fs,
-                                    std::vector<run_arg_type *> run_args) {
-    // Loading state from a fwd-model is mainly io-bound so we can
-    // allow a lot more than #cores threads to execute in parallel.
-    // The number 100 is quite arbitrarily chosen though and should
-    // probably come from some resource like a site-config or similar.
-    // NOTE that this mechanism only limits the number of *concurrently
-    // executing* threads. The number of instantiated and stored futures
-    // will be equal to the number of active realizations.
-    Semafoor concurrently_executing_threads(100);
-    std::vector<
-        std::tuple<int, std::future<std::pair<fw_load_status, std::string>>>>
-        futures;
-
-    // If this function is called via pybind11 we need to release
-    // the GIL here because this function may spin up several
-    // threads which also may need the GIL (e.g. for logging)
-    PyThreadState *state = nullptr;
-    if (PyGILState_Check() == 1)
-        state = PyEval_SaveThread();
-
-    for (int iens = 0; iens < ens_size; ++iens) {
-        if (active_mask[iens]) {
-
-            futures.push_back(std::make_tuple(
-                iens, // for logging later
-                std::async(
-                    std::launch::async,
-                    [=](const int realisation, Semafoor &execution_limiter) {
-                        // Acquire permit from semaphore or pause execution
-                        // until one becomes available. A successfully acquired
-                        // permit is released when exiting scope.
-                        std::scoped_lock lock(execution_limiter);
-
-                        auto &state_map = enkf_fs_get_state_map(sim_fs);
-
-                        state_map.update_matching(realisation, STATE_UNDEFINED,
-                                                  STATE_INITIALIZED);
-                        auto status = enkf_state_load_from_forward_model(
-                            ensemble_config, model_config, ecl_config,
-                            run_args[iens]);
-                        state_map.set(realisation,
-                                      status.first == LOAD_SUCCESSFUL
-                                          ? STATE_HAS_DATA
-                                          : STATE_LOAD_FAILURE);
-                        return status;
-                    },
-                    iens, std::ref(concurrently_executing_threads))));
-        }
-    }
-
-    int loaded = 0;
-    for (auto &[iens, fut] : futures) {
-        auto result = fut.get();
-        if (result.first == LOAD_SUCCESSFUL) {
-            loaded++;
-        } else {
-            logger->error("Realization: {}, load failure: {}", iens,
-                          result.second);
-        }
-    }
-    if (state)
-        PyEval_RestoreThread(state);
-
-    return loaded;
-}
 
 std::vector<std::string> get_observation_keys(py::object self) {
     auto enkf_main = ert::from_cwrap<enkf_main_type>(self);
@@ -343,22 +268,6 @@ ERT_CLIB_SUBMODULE("enkf_main", m) {
         py::arg("iactive"));
     m.def("get_observation_keys", get_observation_keys);
     m.def("get_parameter_keys", get_parameter_keys);
-    m.def("load_from_run_context",
-          [](int ens_size, py::object ensemble_config, py::object model_config,
-             py::object ecl_config, std::vector<py::object> run_args_,
-             std::vector<bool> active_mask, py::object sim_fs_) {
-              auto sim_fs = ert::from_cwrap<enkf_fs_type>(sim_fs_);
-              std::vector<run_arg_type *> run_args;
-              for (auto &run_arg : run_args_) {
-                  run_args.push_back(ert::from_cwrap<run_arg_type>(run_arg));
-              }
-              return enkf_main_load_from_run_context(
-                  ens_size,
-                  ert::from_cwrap<ensemble_config_type>(ensemble_config),
-                  ert::from_cwrap<model_config_type>(model_config),
-                  ert::from_cwrap<ecl_config_type>(ecl_config), active_mask,
-                  sim_fs, run_args);
-          });
     m.def(
         "init_active_run",
         [](py::object res_config, char *run_path, int iens, py::object sim_fs,

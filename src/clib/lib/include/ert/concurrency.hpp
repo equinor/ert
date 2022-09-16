@@ -1,6 +1,7 @@
 #ifndef ERT_CONCURRENCY_HPP
 #define ERT_CONCURRENCY_HPP
 
+#include <condition_variable>
 #include <mutex>
 
 // Standard support for semaphores arrived in C++20, so make our own for now

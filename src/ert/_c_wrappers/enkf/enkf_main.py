@@ -217,7 +217,14 @@ class EnKFMain(BaseCClass):
         run_context = self.create_ensemble_experiment_run_context(
             active_mask=realization, iteration=iteration, source_filesystem=fs
         )
-        nr_loaded = self.loadFromRunContext(run_context, fs)
+        nr_loaded = fs.load_from_run_path(
+            self.getEnsembleSize(),
+            self.ensembleConfig(),
+            self.getModelConfig(),
+            self.eclConfig(),
+            run_context.run_args,
+            run_context.mask,
+        )
         fs.sync()
         return nr_loaded
 
@@ -357,18 +364,6 @@ class EnKFMain(BaseCClass):
 
     def getHookManager(self) -> HookManager:
         return self.resConfig().hook_manager
-
-    def loadFromRunContext(self, run_context: RunContext, fs) -> int:
-        """Returns the number of loaded realizations"""
-        return enkf_main.load_from_run_context(
-            self.getEnsembleSize(),
-            self.ensembleConfig(),
-            self.getModelConfig(),
-            self.eclConfig(),
-            run_context.run_args,
-            run_context.mask,
-            fs,
-        )
 
     def initRun(self, run_context: "RunContext", parameters: List[str] = None):
         if parameters is None:
