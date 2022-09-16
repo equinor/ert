@@ -1,6 +1,5 @@
 import logging
 import tempfile
-import unittest
 from unittest.mock import Mock
 
 import ert.shared.hook_implementations
@@ -8,87 +7,71 @@ import tests.ert_tests.all.plugins.dummy_plugins as dummy_plugins
 from ert.shared.plugins import ErtPluginManager
 
 
-class PluginManagerTest(unittest.TestCase):
-    def test_no_plugins(self):
-        pm = ErtPluginManager(plugins=[ert.shared.hook_implementations])
-        self.assertDictEqual(
-            {"GitHub page": "https://github.com/equinor/ert"}, pm.get_help_links()
-        )
-        self.assertIsNone(pm.get_flow_config_path())
-        self.assertIsNone(pm.get_ecl100_config_path())
-        self.assertIsNone(pm.get_ecl300_config_path())
-        self.assertIsNone(pm.get_rms_config_path())
+def test_no_plugins():
+    pm = ErtPluginManager(plugins=[ert.shared.hook_implementations])
+    assert pm.get_help_links() == {"GitHub page": "https://github.com/equinor/ert"}
+    assert pm.get_flow_config_path() is None
+    assert pm.get_ecl100_config_path() is None
+    assert pm.get_ecl300_config_path() is None
+    assert pm.get_rms_config_path() is None
 
-        self.assertLess(0, len(pm.get_installable_jobs()))
-        self.assertLess(0, len(pm._get_config_workflow_jobs()))
+    assert len(pm.get_installable_jobs()) > 0
+    assert len(pm._get_config_workflow_jobs()) > 0
 
-        self.assertListEqual(
-            [
-                "-- Content below originated from ert (site_config_lines)",
-                "JOB_SCRIPT job_dispatch.py",
-                "QUEUE_SYSTEM LOCAL",
-                "QUEUE_OPTION LOCAL MAX_RUNNING 1",
-            ],
-            pm._site_config_lines(),
-        )
+    assert pm._site_config_lines() == [
+        "-- Content below originated from ert (site_config_lines)",
+        "JOB_SCRIPT job_dispatch.py",
+        "QUEUE_SYSTEM LOCAL",
+        "QUEUE_OPTION LOCAL MAX_RUNNING 1",
+    ]
 
-    def test_with_plugins(self):
-        pm = ErtPluginManager(plugins=[ert.shared.hook_implementations, dummy_plugins])
-        self.assertDictEqual(
-            {
-                "GitHub page": "https://github.com/equinor/ert",
-                "test": "test",
-                "test2": "test",
-            },
-            pm.get_help_links(),
-        )
-        self.assertEqual("/dummy/path/flow_config.yml", pm.get_flow_config_path())
-        self.assertEqual("/dummy/path/rms_config.yml", pm.get_rms_config_path())
-        self.assertEqual("/dummy/path/ecl100_config.yml", pm.get_ecl100_config_path())
-        self.assertEqual("/dummy/path/ecl300_config.yml", pm.get_ecl300_config_path())
 
-        self.assertIn(("job1", "/dummy/path/job1"), pm.get_installable_jobs().items())
-        self.assertIn(("job2", "/dummy/path/job2"), pm.get_installable_jobs().items())
-        self.assertIn(
-            ("wf_job1", "/dummy/path/wf_job1"),
-            pm._get_config_workflow_jobs().items(),
-        )
-        self.assertIn(
-            ("wf_job2", "/dummy/path/wf_job2"),
-            pm._get_config_workflow_jobs().items(),
-        )
+def test_with_plugins():
+    pm = ErtPluginManager(plugins=[ert.shared.hook_implementations, dummy_plugins])
+    assert pm.get_help_links() == {
+        "GitHub page": "https://github.com/equinor/ert",
+        "test": "test",
+        "test2": "test",
+    }
+    assert pm.get_flow_config_path() == "/dummy/path/flow_config.yml"
+    assert pm.get_rms_config_path() == "/dummy/path/rms_config.yml"
+    assert pm.get_ecl100_config_path() == "/dummy/path/ecl100_config.yml"
+    assert pm.get_ecl300_config_path() == "/dummy/path/ecl300_config.yml"
 
-        self.assertListEqual(
-            [
-                "-- Content below originated from ert (site_config_lines)",
-                "JOB_SCRIPT job_dispatch.py",
-                "QUEUE_SYSTEM LOCAL",
-                "QUEUE_OPTION LOCAL MAX_RUNNING 1",
-                "-- Content below originated from dummy (site_config_lines)",
-                "JOB_SCRIPT job_dispatch_dummy.py",
-                "QUEUE_OPTION LOCAL MAX_RUNNING 2",
-            ],
-            pm._site_config_lines(),
-        )
+    assert pm.get_installable_jobs()["job1"] == "/dummy/path/job1"
+    assert pm.get_installable_jobs()["job2"] == "/dummy/path/job2"
+    assert pm._get_config_workflow_jobs()["wf_job1"] == "/dummy/path/wf_job1"
+    assert pm._get_config_workflow_jobs()["wf_job2"] == "/dummy/path/wf_job2"
 
-    def test_job_documentation(self):
-        pm = ErtPluginManager(plugins=[dummy_plugins])
-        expected = {
-            "job1": {
-                "config_file": "/dummy/path/job1",
-                "source_package": "dummy",
-                "source_function_name": "installable_jobs",
-                "description": "job description",
-                "examples": "example 1 and example 2",
-                "category": "test.category.for.job",
-            },
-            "job2": {
-                "config_file": "/dummy/path/job2",
-                "source_package": "dummy",
-                "source_function_name": "installable_jobs",
-            },
-        }
-        assert pm.get_documentation_for_jobs() == expected
+    assert pm._site_config_lines() == [
+        "-- Content below originated from ert (site_config_lines)",
+        "JOB_SCRIPT job_dispatch.py",
+        "QUEUE_SYSTEM LOCAL",
+        "QUEUE_OPTION LOCAL MAX_RUNNING 1",
+        "-- Content below originated from dummy (site_config_lines)",
+        "JOB_SCRIPT job_dispatch_dummy.py",
+        "QUEUE_OPTION LOCAL MAX_RUNNING 2",
+    ]
+
+
+def test_job_documentation():
+    pm = ErtPluginManager(plugins=[dummy_plugins])
+    expected = {
+        "job1": {
+            "config_file": "/dummy/path/job1",
+            "source_package": "dummy",
+            "source_function_name": "installable_jobs",
+            "description": "job description",
+            "examples": "example 1 and example 2",
+            "category": "test.category.for.job",
+        },
+        "job2": {
+            "config_file": "/dummy/path/job2",
+            "source_package": "dummy",
+            "source_function_name": "installable_jobs",
+        },
+    }
+    assert pm.get_documentation_for_jobs() == expected
 
 
 def test_workflows_merge(monkeypatch, tmpdir):
