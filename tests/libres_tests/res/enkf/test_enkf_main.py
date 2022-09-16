@@ -376,3 +376,15 @@ def test_failed_realizations(setup_case):
     assert 5 in realizations_list
     assert 6 in realizations_list
     assert 7 in realizations_list
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_data_kw():
+    # Write a minimal config file with DEFINE
+    with open("config_file.ert", "w") as fout:
+        fout.write("NUM_REALIZATIONS 1\nDEFINE MY_PATH <CONFIG_PATH>")
+    res_config = ResConfig("config_file.ert")
+    ert = EnKFMain(res_config)
+    data_kw = ert.getDataKW()
+    my_path = data_kw["MY_PATH"]
+    assert my_path == os.getcwd()
