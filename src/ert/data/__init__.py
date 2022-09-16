@@ -14,7 +14,7 @@ from ert.data.record._record import (
 )
 
 from . import loader
-from .measured import MeasuredData
+from ._measured_data import MeasuredData
 from .record._transformation import (
     CopyTransformation,
     EclSumTransformation,
