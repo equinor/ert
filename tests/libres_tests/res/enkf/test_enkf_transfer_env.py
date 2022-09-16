@@ -36,5 +36,5 @@ def test_transfer_var():
         assert env_data["SECOND"] == "TheSecondValue"
 
         path_data = data["global_update_path"]
-        assert "TheThirdValue" == path_data["THIRD"]
-        assert "TheFourthValue" == path_data["FOURTH"]
+        assert path_data["THIRD"] == "TheThirdValue"
+        assert path_data["FOURTH"] == "TheFourthValue"

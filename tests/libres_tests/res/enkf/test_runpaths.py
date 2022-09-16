@@ -174,7 +174,7 @@ def test_assert_export():
     ert.createRunPath(run_context)
 
     assert runpath_list_file.exists()
-    assert "test_runpath_list.txt" == runpath_list_file.name
+    assert runpath_list_file.name == "test_runpath_list.txt"
     assert (
         runpath_list_file.read_text("utf-8")
         == f"000  {os.getcwd()}/simulations/realization0  a_name_0  000\n"

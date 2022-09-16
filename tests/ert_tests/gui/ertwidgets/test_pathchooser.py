@@ -13,7 +13,7 @@ def test_selectfile(qtbot, tmpdir, monkeypatch):
     monkeypatch.setattr(QFileDialog, "getOpenFileName", lambda *args: ("foo", "bar"))
     qtbot.waitExposed(widget)
     widget.selectPath()
-    assert "foo" == model.getPath(), f"Unexpected path {model.getPath()}"
+    assert model.getPath() == "foo", f"Unexpected path {model.getPath()}"
 
 
 def test_selectfile_cancel(qtbot, tmpdir, monkeypatch):
@@ -38,7 +38,7 @@ def test_selectdirectory(qtbot, tmpdir, monkeypatch):
 
     qtbot.waitExposed(widget)
     widget.selectPath()
-    assert "foo" == model.getPath(), f"Unexpected path {model.getPath()}"
+    assert model.getPath() == "foo", f"Unexpected path {model.getPath()}"
 
 
 def test_selectdirectory_cancel(qtbot, tmpdir, monkeypatch):

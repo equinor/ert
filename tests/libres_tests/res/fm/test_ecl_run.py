@@ -177,7 +177,7 @@ def test_create(monkeypatch):
         EclRun("path/ECLIPSE.DATA", sim, num_cpu="xxx")
 
     ecl_run = EclRun("path/ECLIPSE.DATA", mpi_sim, num_cpu="10")
-    assert 10 == ecl_run.numCpu()
+    assert ecl_run.numCpu() == 10
 
     # Missing datafile
     with pytest.raises(IOError):

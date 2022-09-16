@@ -114,7 +114,7 @@ def test_failed_keys():
 
     assert len(res_config.failed_keys) == 1
     assert list(res_config.failed_keys.keys()) == ["UNKNOWN_KEY"]
-    assert "Have/not/got/a/clue" == res_config.failed_keys["UNKNOWN_KEY"]
+    assert res_config.failed_keys["UNKNOWN_KEY"] == "Have/not/got/a/clue"
 
 
 def test_new_config():
