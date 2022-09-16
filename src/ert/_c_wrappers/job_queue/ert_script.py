@@ -3,7 +3,7 @@ import inspect
 import logging
 import sys
 import traceback
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 if TYPE_CHECKING:
     from ert._c_wrappers.enkf import EnKFMain
@@ -113,13 +113,19 @@ class ErtScript:
         self.__failed = True
 
     @staticmethod
-    def loadScriptFromFile(path) -> "ErtScript":
+    def loadScriptFromFile(path) -> Optional["ErtScript"]:
         try:
             module_name = f"ErtScriptModule_{ErtScript.__module_count}"
             ErtScript.__module_count += 1
 
             spec = importlib.util.spec_from_file_location(module_name, path)
+            if spec is None:
+                raise ValueError(f"Could not find spec for {module_name}")
             module = importlib.util.module_from_spec(spec)
+            if module is None:
+                raise ValueError(f"Could not find {module_name} with spec {spec}")
+            if spec.loader is None:
+                raise ValueError(f"No loader for module {module} with spec {spec}")
             spec.loader.exec_module(module)
             return ErtScript.__findErtScriptImplementations(module)
         except Exception:
