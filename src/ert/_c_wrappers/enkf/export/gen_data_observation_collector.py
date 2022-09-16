@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 
 from ert._c_wrappers.enkf import EnKFMain
 from ert._c_wrappers.enkf.enums import EnkfObservationImplementationType
@@ -14,7 +14,9 @@ class GenDataObservationCollector:
         return [key for key in observation_keys]
 
     @staticmethod
-    def getObservationKeyForDataKey(ert: EnKFMain, data_key, data_report_step) -> str:
+    def getObservationKeyForDataKey(
+        ert: EnKFMain, data_key, data_report_step
+    ) -> Optional[str]:
         observation_key = None
 
         enkf_obs = ert.getObservations()
