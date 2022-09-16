@@ -32,8 +32,7 @@ def initializeCurrentCaseFromScratch(
 ):
     mask = [False] * ert.getEnsembleSize()
     for member in members:
-        member = int(member.strip())
-        mask[member] = True
+        mask[int(member.strip())] = True
 
     sim_fs = ert.getEnkfFsManager().getCurrentFileSystem()
     run_context = RunContext(sim_fs=sim_fs, mask=mask)

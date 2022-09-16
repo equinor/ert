@@ -26,8 +26,6 @@ class Arguments:
 
 
 class IteratedEnsembleSmootherPanel(SimulationConfigPanel):
-    analysis_module_name = "IES_ENKF"
-
     def __init__(self, facade: LibresFacade, notifier: ErtNotifier):
         self.facade = facade
         self.notifier = notifier
@@ -75,7 +73,7 @@ class IteratedEnsembleSmootherPanel(SimulationConfigPanel):
 
         self._analysis_module_edit = AnalysisModuleEdit(
             self.facade,
-            module_name=IteratedEnsembleSmootherPanel.analysis_module_name,
+            module_name="IES_ENKF",
             help_link="config/analysis/analysis_module",
         )
         layout.addRow("Analysis module:", self._analysis_module_edit)

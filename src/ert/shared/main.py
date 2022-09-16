@@ -157,10 +157,10 @@ def attemp_int_conversion(val: str) -> int:
 
 
 def convert_port(val: str) -> int:
-    val = attemp_int_conversion(val)
-    if not (0 <= val <= 65535):
-        raise ArgumentTypeError(f"{val} is not in valid port range 0-65535")
-    return val
+    int_val = attemp_int_conversion(val)
+    if not (0 <= int_val <= 65535):
+        raise ArgumentTypeError(f"{int_val} is not in valid port range 0-65535")
+    return int_val
 
 
 def valid_port_range(user_input: str) -> range:
@@ -168,12 +168,12 @@ def valid_port_range(user_input: str) -> range:
         raise ArgumentTypeError("Port range must contain two integers separated by '-'")
     a, b = user_input.split("-")
 
-    a, b = convert_port(a), convert_port(b)
+    port_a, port_b = convert_port(a), convert_port(b)
 
-    if b < a:
+    if port_b < port_a:
         raise ArgumentTypeError(f"Invalid port range [{a},{b}], {b} is < {a}")
 
-    return range(a, b + 1)
+    return range(port_a, port_b + 1)
 
 
 def range_limited_int(user_input):

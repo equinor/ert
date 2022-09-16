@@ -25,8 +25,6 @@ class Arguments:
 
 
 class EnsembleSmootherPanel(SimulationConfigPanel):
-    analysis_module_name = "STD_ENKF"
-
     def __init__(self, ert: EnKFMain, notifier: ErtNotifier):
         super().__init__(EnsembleSmoother)
         self.ert = ert
@@ -55,7 +53,7 @@ class EnsembleSmootherPanel(SimulationConfigPanel):
 
         self._analysis_module_edit = AnalysisModuleEdit(
             facade,
-            module_name=EnsembleSmootherPanel.analysis_module_name,
+            module_name="STD_ENKF",
             help_link="config/analysis/analysis_module",
         )
         layout.addRow("Analysis module:", self._analysis_module_edit)
