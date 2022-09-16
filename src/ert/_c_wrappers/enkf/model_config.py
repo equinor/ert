@@ -20,7 +20,7 @@ from ecl.summary import EclSum
 
 from ert._c_wrappers import ResPrototype
 from ert._c_wrappers.enkf.config_keys import ConfigKeys
-from ert._c_wrappers.enkf.util import TimeMap
+from ert._c_wrappers.enkf.time_map import TimeMap
 from ert._c_wrappers.job_queue import ForwardModel
 from ert._c_wrappers.sched import HistorySourceEnum
 from ert._c_wrappers.util import PathFormat
