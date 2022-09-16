@@ -183,7 +183,7 @@ class EnKFMain(BaseCClass):
 
     @property
     def _parameter_keys(self):
-        return enkf_main.get_parameter_keys(self)
+        return self.ensembleConfig().parameters
 
     @property
     def substituter(self):
