@@ -38,7 +38,7 @@ def test_keywords_for_monitoring_simulation_runtime(analysis_config):
     assert analysis_config.haveEnoughRealisations(10)
 
     analysis_config.set_max_runtime(50)
-    assert 50 == analysis_config.get_max_runtime()
+    assert analysis_config.get_max_runtime() == 50
 
     analysis_config.set_stop_long_running(True)
     assert analysis_config.get_stop_long_running()
