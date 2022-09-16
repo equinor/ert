@@ -2,7 +2,7 @@ import io
 import logging
 from itertools import combinations as combi
 from json.decoder import JSONDecodeError
-from typing import List
+from typing import List, Optional
 
 import httpx
 import pandas as pd
@@ -24,7 +24,7 @@ class PlotApi:
         with Storage.session() as client:
             client.post("/updates/facade", timeout=self._timeout)
 
-    def _get_case(self, name: str) -> dict:
+    def _get_case(self, name: str) -> Optional[dict]:
         for e in self._get_all_cases():
             if e["name"] == name:
                 return e
