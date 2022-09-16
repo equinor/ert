@@ -143,3 +143,23 @@ class EnkfFs(BaseCClass):
         return update.load_parameters(
             self, ensemble_config, iens_active_index, parameters
         )
+
+    def load_from_run_path(
+        self,
+        ensemble_size,
+        ensemble_config,
+        model_config,
+        ecl_config,
+        run_args,
+        active_realizations,
+    ) -> int:
+        """Returns the number of loaded realizations"""
+        return _clib.enkf_fs.load_from_run_path(
+            self,
+            ensemble_size,
+            ensemble_config,
+            model_config,
+            ecl_config,
+            run_args,
+            active_realizations,
+        )

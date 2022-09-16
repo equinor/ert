@@ -51,22 +51,6 @@ def enkf_main(tmp_path):
     yield EnKFMain(ResConfig("test.ert"))
 
 
-def test_load_from_forward_model(enkf_main):
-
-    fs = MagicMock()
-    realizations = [True] * 10
-    iteration = 0
-    num_loaded = 8
-
-    enkf_main.create_ensemble_experiment_run_context = MagicMock()
-    enkf_main.loadFromRunContext = MagicMock()
-    enkf_main.loadFromRunContext.return_value = num_loaded
-
-    assert enkf_main.loadFromForwardModel(realizations, iteration, fs) == num_loaded
-
-    enkf_main.loadFromRunContext.assert_called()
-
-
 def test_create_ensemble_experiment_run_context(enkf_main):
     fs = MagicMock()
 
@@ -410,45 +394,6 @@ def test_load_results_manually(setup_case):
 
     load_into_case_state_map = load_into.getStateMap()
 
-    load_into_states = [state for state in load_into_case_state_map]
-
-    expected = [
-        RealizationStateEnum.STATE_HAS_DATA,
-        RealizationStateEnum.STATE_LOAD_FAILURE,
-        RealizationStateEnum.STATE_LOAD_FAILURE,
-        RealizationStateEnum.STATE_LOAD_FAILURE,
-        RealizationStateEnum.STATE_LOAD_FAILURE,
-        RealizationStateEnum.STATE_LOAD_FAILURE,
-        RealizationStateEnum.STATE_LOAD_FAILURE,
-        RealizationStateEnum.STATE_UNDEFINED,
-        RealizationStateEnum.STATE_HAS_DATA,
-        RealizationStateEnum.STATE_HAS_DATA,
-    ]
-
-    assert load_into_states == expected
-    assert loaded == 3
-
-
-def test_load_results_from_run_context(setup_case):
-    res_config = setup_case("local/mini_ert", "mini_fail_config")
-    ert = EnKFMain(res_config)
-    load_into_case = "A1"
-    load_from_case = "default_0"
-
-    load_into = ert.getEnkfFsManager().getFileSystem(load_into_case)
-    load_from = ert.getEnkfFsManager().getFileSystem(load_from_case)
-
-    ert.getEnkfFsManager().switchFileSystem(load_from)
-    realisations = [True] * 10
-    realisations[7] = False
-
-    run_context = ert.create_ensemble_experiment_run_context(
-        source_filesystem=load_into, active_mask=realisations, iteration=0
-    )
-
-    loaded = ert.loadFromRunContext(run_context, load_into)
-
-    load_into_case_state_map = load_into.getStateMap()
     load_into_states = [state for state in load_into_case_state_map]
 
     expected = [

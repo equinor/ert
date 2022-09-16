@@ -63,14 +63,6 @@ extern "C" bool enkf_main_have_obs(const enkf_main_type *enkf_main);
 
 void enkf_main_install_SIGNALS(void);
 
-int enkf_main_load_from_run_context(const int ens_size,
-                                    ensemble_config_type *ensemble_config,
-                                    model_config_type *model_config,
-                                    ecl_config_type *ecl_config,
-                                    std::vector<bool> active_mask,
-                                    enkf_fs_type *sim_fs,
-                                    std::vector<run_arg_type *> run_args);
-
 UTIL_SAFE_CAST_HEADER(enkf_main);
 UTIL_IS_INSTANCE_HEADER(enkf_main);
 

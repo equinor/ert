@@ -17,7 +17,9 @@
 */
 
 #include "ert/python.hpp"
+#include <ert/concurrency.hpp>
 #include <filesystem>
+#include <future>
 #include <memory>
 #include <string>
 #include <vector>
@@ -612,6 +614,79 @@ misfit_ensemble_type *enkf_fs_get_misfit_ensemble(const enkf_fs_type *fs) {
     return fs->misfit_ensemble;
 }
 
+namespace {
+int load_from_run_path(const int ens_size,
+                       ensemble_config_type *ensemble_config,
+                       model_config_type *model_config,
+                       ecl_config_type *ecl_config,
+                       std::vector<bool> active_mask, enkf_fs_type *sim_fs,
+                       std::vector<run_arg_type *> run_args) {
+    // Loading state from a fwd-model is mainly io-bound so we can
+    // allow a lot more than #cores threads to execute in parallel.
+    // The number 100 is quite arbitrarily chosen though and should
+    // probably come from some resource like a site-config or similar.
+    // NOTE that this mechanism only limits the number of *concurrently
+    // executing* threads. The number of instantiated and stored futures
+    // will be equal to the number of active realizations.
+    Semafoor concurrently_executing_threads(100);
+    std::vector<
+        std::tuple<int, std::future<std::pair<fw_load_status, std::string>>>>
+        futures;
+
+    // If this function is called via pybind11 we need to release
+    // the GIL here because this function may spin up several
+    // threads which also may need the GIL (e.g. for logging)
+    PyThreadState *state = nullptr;
+    if (PyGILState_Check() == 1)
+        state = PyEval_SaveThread();
+
+    for (int iens = 0; iens < ens_size; ++iens) {
+        if (active_mask[iens]) {
+
+            futures.push_back(std::make_tuple(
+                iens, // for logging later
+                std::async(
+                    std::launch::async,
+                    [=](const int realisation, Semafoor &execution_limiter) {
+                        // Acquire permit from semaphore or pause execution
+                        // until one becomes available. A successfully acquired
+                        // permit is released when exiting scope.
+                        std::scoped_lock lock(execution_limiter);
+
+                        auto &state_map = enkf_fs_get_state_map(sim_fs);
+
+                        state_map.update_matching(realisation, STATE_UNDEFINED,
+                                                  STATE_INITIALIZED);
+                        auto status = enkf_state_load_from_forward_model(
+                            ensemble_config, model_config, ecl_config,
+                            run_args[iens]);
+                        state_map.set(realisation,
+                                      status.first == LOAD_SUCCESSFUL
+                                          ? STATE_HAS_DATA
+                                          : STATE_LOAD_FAILURE);
+                        return status;
+                    },
+                    iens, std::ref(concurrently_executing_threads))));
+        }
+    }
+
+    int loaded = 0;
+    for (auto &[iens, fut] : futures) {
+        auto result = fut.get();
+        if (result.first == LOAD_SUCCESSFUL) {
+            loaded++;
+        } else {
+            logger->error("Realization: {}, load failure: {}", iens,
+                          result.second);
+        }
+    }
+    if (state)
+        PyEval_RestoreThread(state);
+
+    return loaded;
+}
+} // namespace
+
 ERT_CLIB_SUBMODULE("enkf_fs", m) {
     using namespace py::literals;
 
@@ -652,4 +727,19 @@ ERT_CLIB_SUBMODULE("enkf_fs", m) {
         },
         py::arg("self"), py::arg("ensemble_config"), py::arg("parameter_names"),
         py::arg("ensemble_size"));
+    m.def("load_from_run_path",
+          [](py::object self, int ens_size, py::object ensemble_config,
+             py::object model_config, py::object ecl_config,
+             std::vector<py::object> run_args_, std::vector<bool> active_mask) {
+              std::vector<run_arg_type *> run_args;
+              for (auto &run_arg : run_args_) {
+                  run_args.push_back(ert::from_cwrap<run_arg_type>(run_arg));
+              }
+              return load_from_run_path(
+                  ens_size,
+                  ert::from_cwrap<ensemble_config_type>(ensemble_config),
+                  ert::from_cwrap<model_config_type>(model_config),
+                  ert::from_cwrap<ecl_config_type>(ecl_config), active_mask,
+                  ert::from_cwrap<enkf_fs_type>(self), run_args);
+          });
 }
