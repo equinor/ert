@@ -350,6 +350,7 @@ def test_res_config_dict_constructor(setup_case):
     # add a missing entries to config file
     with open("user_config.ert", "a+") as ert_file:
         ert_file.write("JOB_SCRIPT ../../../script.sh\n")
+        ert_file.write("NUM_CPU 0\n")
 
     # split config_file to path and filename
     cfg_path, cfg_file = os.path.split(os.path.realpath("ert/model/user_config.ert"))
