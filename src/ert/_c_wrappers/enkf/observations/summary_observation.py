@@ -18,6 +18,7 @@ from cwrap import BaseCClass
 
 from ert import _clib
 from ert._c_wrappers import ResPrototype
+from ert._c_wrappers.enkf.active_list import ActiveList
 
 
 class SummaryObservation(BaseCClass):
@@ -50,29 +51,25 @@ class SummaryObservation(BaseCClass):
                 "Unable to construct SummaryObservation with given configuration!"
             )
 
-    def getValue(self):
-        """@rtype: float"""
+    def getValue(self) -> float:
         return self._get_value()
 
-    def getStandardDeviation(self):
-        """@rtype: float"""
+    def getStandardDeviation(self) -> float:
         return self._get_std()
 
-    def getStdScaling(self, index=0):
-        """@rtype: float"""
+    def getStdScaling(self, index=0) -> float:
         return self._get_std_scaling()
 
-    def set_std_scaling(self, scaling_factor):
+    def set_std_scaling(self, scaling_factor: float) -> None:
         self._set_std_scale(scaling_factor)
 
     def __len__(self):
         return 1
 
-    def getSummaryKey(self):
-        """@rtype: str"""
+    def getSummaryKey(self) -> str:
         return self._get_summary_key()
 
-    def updateStdScaling(self, factor, active_list):
+    def updateStdScaling(self, factor: float, active_list: ActiveList) -> None:
         _clib.local.summary_obs.update_std_scaling(self, factor, active_list)
 
     def free(self):
