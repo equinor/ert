@@ -52,8 +52,6 @@ class Arguments:
 
 
 class MultipleDataAssimilationPanel(SimulationConfigPanel):
-    analysis_module_name = "STD_ENKF"
-
     def __init__(self, facade: LibresFacade, notifier: ErtNotifier):
         SimulationConfigPanel.__init__(self, MultipleDataAssimilation)
 
@@ -95,7 +93,7 @@ class MultipleDataAssimilationPanel(SimulationConfigPanel):
 
         self._analysis_module_edit = AnalysisModuleEdit(
             facade,
-            module_name=MultipleDataAssimilationPanel.analysis_module_name,
+            module_name="STD_ENKF",
             help_link="config/analysis/analysis_module",
         )
         layout.addRow("Analysis module:", self._analysis_module_edit)
