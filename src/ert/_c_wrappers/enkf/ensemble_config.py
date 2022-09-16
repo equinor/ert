@@ -294,6 +294,10 @@ class EnsembleConfig(BaseCClass):
         assert isinstance(ert_impl_type, ErtImplType)
         return list(self._alloc_keylist_from_impl_type(ert_impl_type))
 
+    @property
+    def parameters(self) -> List[str]:
+        return self.getKeylistFromVarType(EnkfVarType.PARAMETER)
+
     def __contains__(self, key):
         return self._has_key(key)
 
