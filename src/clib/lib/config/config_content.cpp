@@ -202,32 +202,6 @@ bool config_content_iget_as_bool(const config_content_type *content,
     return config_content_item_iget_as_bool(item, occurence, index);
 }
 
-double config_content_iget_as_double(const config_content_type *content,
-                                     const char *key, int occurence,
-                                     int index) {
-    config_content_item_type *item = config_content_get_item(content, key);
-    return config_content_item_iget_as_double(item, occurence, index);
-}
-
-/**
-   This function will return NULL is the item has not been set,
-   however it must be installed with config_add_schema_item().
-*/
-const char *config_content_safe_iget(const config_content_type *content,
-                                     const char *kw, int occurence, int index) {
-    const char *value = NULL;
-
-    if (config_content_has_item(content, kw)) {
-        config_content_item_type *item = config_content_get_item(content, kw);
-        if (occurence < config_content_item_get_size(item)) {
-            config_content_node_type *node =
-                config_content_item_iget_node(item, occurence);
-            value = config_content_node_safe_iget(node, index);
-        }
-    }
-    return value;
-}
-
 /**
    Return the number of times a keyword has been set - dies on unknown
    'kw'. If the append_arg attribute has been set to false the
