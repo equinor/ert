@@ -62,7 +62,7 @@ from .site_config import SiteConfig
 from .state_map import StateMap
 from .subst_config import SubstConfig
 from .summary_key_set import SummaryKeySet
-from .util import TimeMap
+from .time_map import TimeMap
 
 __all__ = [
     "SummaryObservation",

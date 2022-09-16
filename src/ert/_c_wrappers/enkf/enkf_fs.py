@@ -25,7 +25,7 @@ from ert._c_wrappers import ResPrototype
 from ert._c_wrappers.enkf.enums import EnKFFSType
 from ert._c_wrappers.enkf.res_config import EnsembleConfig
 from ert._c_wrappers.enkf.summary_key_set import SummaryKeySet
-from ert._c_wrappers.enkf.util import TimeMap
+from ert._c_wrappers.enkf.time_map import TimeMap
 from ert._clib import update
 
 if TYPE_CHECKING:
