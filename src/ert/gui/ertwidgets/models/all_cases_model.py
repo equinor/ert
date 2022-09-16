@@ -7,7 +7,6 @@ class AllCasesModel(QAbstractItemModel):
     def __init__(self, facade: LibresFacade):
         self.facade = facade
         QAbstractItemModel.__init__(self)
-        self.__data = []
 
     def index(self, row, column, parent=None, *args, **kwargs):
         return self.createIndex(row, column)
