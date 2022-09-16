@@ -54,12 +54,6 @@ extern "C" int config_content_iget_as_int(const config_content_type *content,
 extern "C" bool config_content_iget_as_bool(const config_content_type *content,
                                             const char *key, int occurence,
                                             int index);
-extern "C" double
-config_content_iget_as_double(const config_content_type *content,
-                              const char *key, int occurence, int index);
-extern "C" const char *
-config_content_safe_iget(const config_content_type *content, const char *kw,
-                         int occurence, int index);
 extern "C" int config_content_get_occurences(const config_content_type *content,
                                              const char *kw);
 
