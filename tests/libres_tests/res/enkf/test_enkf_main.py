@@ -4,6 +4,7 @@ from textwrap import dedent
 from unittest.mock import MagicMock
 
 import pytest
+from ecl.summary import EclSum
 
 from ert._c_wrappers.enkf import (
     AnalysisConfig,
@@ -25,6 +26,20 @@ from ert._c_wrappers.enkf.enums import (
 )
 from ert._c_wrappers.enkf.enums.realization_state_enum import RealizationStateEnum
 from ert._c_wrappers.enkf.observations.summary_observation import SummaryObservation
+
+
+@pytest.mark.unstable
+def test_ecl_config_creation(minimum_case):
+    assert isinstance(minimum_case.analysisConfig(), AnalysisConfig)
+    assert isinstance(minimum_case.eclConfig(), EclConfig)
+
+    with pytest.raises(AssertionError):  # Null pointer!
+        assert isinstance(minimum_case.eclConfig().getRefcase(), EclSum)
+
+    file_system = minimum_case.getEnkfFsManager().getCurrentFileSystem()
+    assert file_system.getCaseName() == "default"
+    time_map = file_system.getTimeMap()
+    assert isinstance(time_map, TimeMap)
 
 
 @pytest.fixture
