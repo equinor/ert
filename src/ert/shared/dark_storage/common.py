@@ -11,10 +11,10 @@ def ensemble_parameter_names(res: LibresFacade) -> List[str]:
     return res.gen_kw_keys()
 
 
-def ensemble_parameters(ensemble_name: str) -> List[dict]:
+def ensemble_parameters(res: LibresFacade) -> List[dict]:
     return [
         dict(name=key, userdata=dict(data_origin="GEN_KW"), labels=[])
-        for key in ensemble_parameter_names(ensemble_name)
+        for key in ensemble_parameter_names(res)
     ]
 
 
