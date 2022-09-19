@@ -18,7 +18,7 @@ EXAMPLE_QSTAT_CONTENT = """
 Job id            Name             User              Time Use S Queue
 ----------------  ---------------- ----------------  -------- - -----
 15399.s034-lcam   DROGON-1         combert                     0 H hb120
-15400.s034-lcam   DROGON-2         barbert                     0 R hb120
+15400             DROGON-2         barbert                     0 R hb120
 15402.s034-lcam   DROGON-3         foobert                     0 E hb120
 """.strip()
 
@@ -312,6 +312,22 @@ def test_many_concurrent_qstat_invocations(tmpdir):
     # to test for. Number of backend runs should then be relative to the time taken
     # to run the test (plus 3 for slack)
     assert 1 < backend_runs < int(time_taken / cache_timeout) + 3
+
+
+@pytest.mark.skipif(sys.platform.startswith("darwin"), reason="No flock on MacOS")
+def test_optional_job_id_namespace(tmpdir):
+    os.chdir(tmpdir)
+    Path(PROXYFILE_FOR_TESTS).write_text(EXAMPLE_QSTAT_CONTENT, encoding="utf-8")
+    assert "15399.s034" in EXAMPLE_QSTAT_CONTENT
+    result_job_with_namespace = subprocess.run(
+        [PROXYSCRIPT, "15399", PROXYFILE_FOR_TESTS], check=True, capture_output=True
+    )
+    assert len(result_job_with_namespace.stdout.splitlines()) == 3
+    assert "15400  " in EXAMPLE_QSTAT_CONTENT
+    result_job_without_namespace = subprocess.run(
+        [PROXYSCRIPT, "15400", PROXYFILE_FOR_TESTS], check=True, capture_output=True
+    )
+    assert len(result_job_without_namespace.stdout.splitlines()) == 3
 
 
 @pytest.mark.skipif(sys.platform.startswith("darwin"), reason="No flock on MacOS")

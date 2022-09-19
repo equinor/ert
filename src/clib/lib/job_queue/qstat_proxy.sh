@@ -91,14 +91,14 @@ fi
 
 # Replicate qstat's error behaviour:
 if [ -n "$1" ]; then
-    grep -e "^${1}\." $proxyfile >/dev/null 2>&1 || {
+    grep -e "^${1}[\.[:space:]]" $proxyfile >/dev/null 2>&1 || {
         echo "Unknown Job Id $1" && cat $proxyfile >&2 && exit 1;
         }
 fi
 
 # Extract the job id from the proxyfile:
 if [ -n "$1" ]; then
-    grep -e "-----" -e "User" -e "^$1\." $proxyfile
+    grep -e "-----" -e "User" -e "^$1[\.[:space:]]" $proxyfile
     exit 0
 fi
 

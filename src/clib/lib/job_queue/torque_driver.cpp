@@ -319,12 +319,20 @@ static int torque_job_parse_qsub_stdout(const torque_driver_type *driver,
     int jobid;
     {
         FILE *stream = util_fopen(stdout_file, "r");
+
         char *jobid_string = util_fscanf_alloc_upto(stream, ".", false);
 
-        torque_debug(driver, "Torque job ID string: '%s'", jobid_string);
+        bool possible_jobid;
+        if (jobid_string == NULL) {
+            /* We get here if the '.' separator is not found */
+            possible_jobid = util_fscanf_int(stream, &jobid);
+            torque_debug(driver, "Torque job ID int: '%d'", jobid);
+        } else {
+            possible_jobid = util_sscanf_int(jobid_string, &jobid);
+            torque_debug(driver, "Torque job ID string: '%s'", jobid_string);
+        }
 
-        if (jobid_string == NULL || !util_sscanf_int(jobid_string, &jobid)) {
-
+        if (!possible_jobid) {
             char *file_content =
                 util_fread_alloc_file_content(stdout_file, NULL);
             fprintf(stderr, "Failed to get torque job id from file: %s \n",
@@ -582,12 +590,18 @@ job_status_type torque_driver_parse_status(const char *qstat_file,
 
             if (sscanf(line, "%s %*s %*s %*s %s %*s", job_id_full_string,
                        string_status) == 2) {
+                /* The job id string may or may not contain a dot */
                 const char *dotPtr = strchr(job_id_full_string, '.');
-                int dotPosition = dotPtr - job_id_full_string;
-
                 {
-                    char *job_id_as_char_ptr = util_alloc_substring_copy(
-                        job_id_full_string, 0, dotPosition);
+                    char *job_id_as_char_ptr;
+                    if (dotPtr != NULL) {
+                        int dotPosition = dotPtr - job_id_full_string;
+                        job_id_as_char_ptr = util_alloc_substring_copy(
+                            job_id_full_string, 0, dotPosition);
+                    } else {
+                        job_id_as_char_ptr =
+                            util_alloc_string_copy(job_id_full_string);
+                    }
                     if (util_string_equal(job_id_as_char_ptr, jobnr_char)) {
 
                         switch (string_status[0]) {
