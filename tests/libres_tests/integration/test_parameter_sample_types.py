@@ -6,6 +6,7 @@ from pathlib import Path
 from textwrap import dedent
 
 import cwrap
+import numpy as np
 import pytest
 from ecl import EclDataType
 from ecl.eclfile import EclKW
@@ -14,6 +15,7 @@ from ecl.util.geometry import Surface
 from ecl.util.util import BoolVector
 
 from ert._c_wrappers.enkf import EnKFMain, ResConfig
+from ert._clib.update import Parameter
 from ert.libres_facade import LibresFacade
 
 
@@ -22,12 +24,13 @@ def write_file(fname, contents):
         fout.writelines(contents)
 
 
-def create_runpath(config):
+def create_runpath(config, active_mask=None):
+    active_mask = [True] if active_mask is None else active_mask
     res_config = ResConfig(config)
     ert = EnKFMain(res_config)
 
     run_context = ert.create_ensemble_experiment_run_context(
-        active_mask=[True],
+        active_mask=active_mask,
         iteration=0,
     )
     ert.createRunPath(run_context)
@@ -363,3 +366,36 @@ def test_initialize_random_seed(tmpdir, caplog, check_random_seed, expectation):
                     Path("simulations/realization0/kw.txt").read_text("utf-8")
                     == expected
                 )
+
+
+def test_that_first_three_parameters_sampled_snapshot(tmpdir):
+    """
+    Nothing special about the first three, but there was a regression
+    in nr. 2, so added one extra.
+    """
+    with tmpdir.as_cwd():
+        config = dedent(
+            """
+        JOBNAME my_name%d
+        NUM_REALIZATIONS 10
+        GEN_KW KW_NAME template.txt kw.txt prior.txt
+        RANDOM_SEED 1234
+        """
+        )
+        with open("config.ert", "w") as fh:
+            fh.writelines(config)
+        with open("template.txt", "w") as fh:
+            fh.writelines("MY_KEYWORD <MY_KEYWORD>")
+        with open("prior.txt", "w") as fh:
+            fh.writelines("MY_KEYWORD NORMAL 0 1")
+        ert = create_runpath("config.ert", [True] * 3)
+        fs = ert.getCurrentFileSystem()
+        prior = fs.load_parameters(
+            ert.ensembleConfig(), list(range(3)), [Parameter("KW_NAME")]
+        )
+        expected = (
+            [-0.9966211, 0.01418702, -0.44262875]
+            if sys.platform.startswith("darwin")
+            else [1.8565558, -1.0516311, 1.6020288]
+        )
+        np.testing.assert_almost_equal(prior, np.array([expected]))

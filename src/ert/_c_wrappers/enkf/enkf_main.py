@@ -67,7 +67,12 @@ def naturalSortKey(s: str) -> List[Union[int, str]]:
 
 
 def _forward_rng(rng):
-    return b"".join(struct.pack("I", (rng.forward())) for _ in range(rng.stateSize()))
+    """
+    The rng state needs a byte string of length 16, to get that
+    we forward, i.e. sample from the rng 4 times and convert to
+    byte, creating a byte string of length 16.
+    """
+    return b"".join(struct.pack("I", (rng.forward())) for _ in range(4))
 
 
 class EnKFMain(BaseCClass):
