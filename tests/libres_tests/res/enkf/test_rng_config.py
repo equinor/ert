@@ -16,7 +16,7 @@
 
 import pytest
 
-from ert._c_wrappers.enkf import ConfigKeys, ResConfig, RNGConfig
+from ert._c_wrappers.enkf import ResConfig, RNGConfig
 
 
 @pytest.mark.usefixtures("copy_minimum_case")
@@ -37,14 +37,7 @@ def test_compare_config_content_and_dict_constructor():
                 "ENSPATH": "Ensemble",
             },
         }
-    ).rng_config == RNGConfig(config_dict={ConfigKeys.RANDOM_SEED: "abcdefghijklmnop"})
-
-
-def test_random_seed():
-    assert (
-        RNGConfig(config_dict={ConfigKeys.RANDOM_SEED: "abcdefghijklmnop"}).random_seed
-        == "abcdefghijklmnop"
-    )
+    ).rng_config == RNGConfig("abcdefghijklmnop")
 
 
 @pytest.mark.usefixtures("copy_minimum_case")
@@ -64,4 +57,4 @@ def test_default_random_seed():
                 "ENSPATH": "Ensemble",
             },
         }
-    ).rng_config == RNGConfig(config_dict={ConfigKeys.RANDOM_SEED: None})
+    ).rng_config == RNGConfig(None)

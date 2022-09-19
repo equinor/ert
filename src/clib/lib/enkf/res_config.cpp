@@ -23,6 +23,8 @@
 
 #include <ert/enkf/config_keys.hpp>
 #include <ert/enkf/res_config.hpp>
+#include <ert/logging.hpp>
+static auto logger = ert::get_logger("enkf");
 
 struct res_config_struct {
 

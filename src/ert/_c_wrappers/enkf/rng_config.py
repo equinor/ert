@@ -14,54 +14,25 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 import struct
+from typing import Optional
 
 from cwrap import BaseCClass
 
 from ert._c_wrappers import ResPrototype
-from ert._c_wrappers.enkf.config_keys import ConfigKeys
 from ert._clib.rng_config import log_seed
 
 
 class RNGConfig(BaseCClass):
     TYPE_NAME = "rng_config"
-    _alloc = ResPrototype("void* rng_config_alloc(config_content)", bind=False)
-    _alloc_full = ResPrototype("void* rng_config_alloc_full(char*)", bind=False)
+    _alloc = ResPrototype("void* rng_config_alloc(char*)", bind=False)
     _free = ResPrototype("void rng_config_free(rng_config)")
-    _rng_alg_type = ResPrototype("rng_alg_type_enum rng_config_get_type(rng_config)")
     _random_seed = ResPrototype("char* rng_config_get_random_seed(rng_config)")
 
-    def __init__(self, config_content=None, config_dict=None):
-        if config_content and config_dict:
-            raise ValueError("RNGConfig can not be instantiated with both config types")
-
-        if not (config_content or config_dict):
-            raise ValueError(
-                "RNGConfig can not be instantiated without any config objects"
-            )
-
-        if config_content:
-            c_ptr = self._alloc(config_content)
-        elif config_dict:
-            random_seed = config_dict.get(ConfigKeys.RANDOM_SEED)
-            c_ptr = self._alloc_full(random_seed)
-        else:
-            c_ptr = None
-
-        if c_ptr is None:
-            raise ValueError("Failed to construct RNGConfig instance")
-
-        super().__init__(c_ptr)
-
-    @property
-    def alg_type(self):
-        return self._rng_alg_type()
+    def __init__(self, random_seed: Optional[str] = None):
+        super().__init__(self._alloc(random_seed))
 
     def __repr__(self):
-        return (
-            "RNGConfig(config_dict={"
-            f"{ConfigKeys.RANDOM_SEED}: {self.random_seed}"
-            "})"
-        )
+        return f"RNGConfig(random_seed={self.random_seed})"
 
     @property
     def random_seed(self):
@@ -71,13 +42,7 @@ class RNGConfig(BaseCClass):
         self._free()
 
     def __eq__(self, other):
-        if self.random_seed != other.random_seed:
-            return False
-
-        if self.alg_type != other.alg_type:
-            return False
-
-        return True
+        return self.random_seed == other.random_seed
 
 
 def format_seed(random_seed: str):

@@ -24,6 +24,7 @@
 #include <ert/util/util.h>
 
 #include <ert/logging.hpp>
+#include <string>
 
 #include <ert/enkf/config_keys.hpp>
 #include <ert/enkf/model_config.hpp>
@@ -32,51 +33,16 @@
 static auto logger = ert::get_logger("enkf");
 
 struct rng_config_struct {
-    rng_alg_type type;
     char *random_seed;
 };
-
-static void rng_config_set_random_seed(rng_config_type *rng_config,
-                                       const char *random_seed) {
-    rng_config->random_seed =
-        util_realloc_string_copy(rng_config->random_seed, random_seed);
-}
 
 const char *rng_config_get_random_seed(const rng_config_type *rng_config) {
     return rng_config->random_seed;
 }
 
-void rng_config_set_type(rng_config_type *rng_config, rng_alg_type type) {
-    rng_config->type = type;
-}
-
-rng_alg_type rng_config_get_type(const rng_config_type *rng_config) {
-    return rng_config->type;
-}
-
-static rng_config_type *rng_config_alloc_default(void) {
-    rng_config_type *rng_config =
-        (rng_config_type *)util_malloc(sizeof *rng_config);
-
-    rng_config_set_type(rng_config, MZRAN); /* Only type ... */
-    rng_config->random_seed = NULL;
-
-    return rng_config;
-}
-
-rng_config_type *rng_config_alloc(const config_content_type *config_content) {
-    rng_config_type *rng_config = rng_config_alloc_default();
-
-    if (config_content)
-        rng_config_init(rng_config, config_content);
-
-    return rng_config;
-}
-rng_config_type *rng_config_alloc_full(const char *random_seed) {
-    rng_config_type *rng_config = rng_config_alloc_default();
-    rng_config->random_seed =
-        util_realloc_string_copy(rng_config->random_seed, random_seed);
-
+rng_config_type *rng_config_alloc(const char *random_seed) {
+    auto rng_config = (rng_config_type *)malloc(sizeof(rng_config_type *));
+    rng_config->random_seed = util_alloc_string_copy(random_seed);
     return rng_config;
 }
 
@@ -87,16 +53,6 @@ void rng_config_free(rng_config_type *rng) {
 
 void rng_config_add_config_items(config_parser_type *parser) {
     config_add_key_value(parser, RANDOM_SEED_KEY, false, CONFIG_STRING);
-}
-
-void rng_config_init(rng_config_type *rng_config,
-                     const config_content_type *config_content) {
-    if (config_content_has_item(config_content, RANDOM_SEED_KEY)) {
-        const char *random_seed =
-            config_content_get_value(config_content, RANDOM_SEED_KEY);
-        rng_config_set_random_seed(rng_config, random_seed);
-        logger->critical("Using RANDOM_SEED: {}", random_seed);
-    }
 }
 
 ERT_CLIB_SUBMODULE("rng_config", m) {

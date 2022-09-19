@@ -177,7 +177,10 @@ class ResConfig(BaseCClass):
 
         subst_config = SubstConfig(config_content=config_content)
         site_config = SiteConfig(config_content=config_content)
-        rng_config = RNGConfig(config_content=config_content)
+        if config_content.hasKey(ConfigKeys.RANDOM_SEED):
+            rng_config = RNGConfig(config_content.getValue(ConfigKeys.RANDOM_SEED))
+        else:
+            rng_config = RNGConfig()
         analysis_config = AnalysisConfig(config_content=config_content)
         ecl_config = EclConfig(config_content=config_content)
         queue_config = QueueConfig(config_content=config_content)
@@ -253,7 +256,10 @@ class ResConfig(BaseCClass):
 
         subst_config = SubstConfig(config_dict=config_dict)
         site_config = SiteConfig(config_dict=config_dict)
-        rng_config = RNGConfig(config_dict=config_dict)
+        if ConfigKeys.RANDOM_SEED in config_dict:
+            rng_config = RNGConfig(config_dict[ConfigKeys.RANDOM_SEED])
+        else:
+            rng_config = RNGConfig()
         analysis_config = AnalysisConfig(config_dict=config_dict)
         ecl_config = EclConfig(config_dict=config_dict)
         queue_config = QueueConfig(config_dict=config_dict)
