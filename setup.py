@@ -1,14 +1,12 @@
 import os
-from pathlib import Path
-import sys
-
-from setuptools import find_packages, Command
-from setuptools_scm import get_version
-
-from skbuild import setup
-from setuptools.command.egg_info import egg_info
-
 import subprocess
+import sys
+from pathlib import Path
+
+from setuptools import Command, find_packages
+from setuptools.command.egg_info import egg_info
+from setuptools_scm import get_version
+from skbuild import setup
 
 # list of pair of .proto file and out directory
 PROTOBUF_FILES = [
@@ -142,7 +140,7 @@ args = dict(
         "pandas",
         "pluggy",
         "prefect<2",
-        "protobuf",
+        "protobuf==3.19.1",
         "psutil",
         "pydantic >= 1.9",
         "PyQt5",

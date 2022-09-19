@@ -10,7 +10,7 @@ requires = [
     "ecl",
     "conan",
     "pybind11>=2.8.1",  # If this comes out of sync with the version installed by Conan please update the version in CMakeLists
-    "grpcio-tools",
+    "grpcio-tools==1.41.0",
 ]
 
 
