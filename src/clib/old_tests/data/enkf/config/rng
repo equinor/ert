@@ -1,4 +1,0 @@
-NUM_REALIZATIONS  25
-
--- The settings below here are artifacts which should not be necessary ...
-JOB_SCRIPT script.sh
