@@ -6,7 +6,7 @@ import httpx
 import requests
 from ert_storage.client import Client, ConnInfo
 
-from ert.services._base_service import BaseService, local_exec_args
+from ert.services._base_service import BaseService, _Context, local_exec_args
 
 
 class Storage(BaseService):
@@ -42,6 +42,16 @@ class Storage(BaseService):
         Blocks while the server is starting.
         """
         return ("__token__", self.fetch_conn_info()["authtoken"])
+
+    @classmethod
+    def init_service(cls, *args: Any, **kwargs: Any) -> _Context:
+        try:
+            service = cls.connect(timeout=0, project=kwargs.get("project"))
+            # Check the server is up and running
+            _ = service.fetch_url()
+        except TimeoutError:
+            return cls.start_server(*args, **kwargs)
+        return _Context(service)
 
     def fetch_url(self) -> str:
         """Returns the url. Blocks while the server is starting"""

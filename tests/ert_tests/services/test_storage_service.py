@@ -59,3 +59,32 @@ def test_create_connection_string(monkeypatch):
     assert len(connection_string["urls"]) == 3
 
     del os.environ["ERT_STORAGE_CONNECTION_STRING"]
+
+
+@pytest.mark.requires_ert_storage
+def test_init_service_no_server_start(tmpdir, mock_start_server, mock_connect):
+    with tmpdir.as_cwd():
+        Storage.init_service(project=str(tmpdir))
+        mock_connect.assert_called_once_with(project=str(tmpdir), timeout=0)
+        mock_start_server.assert_not_called()
+
+
+@pytest.mark.requires_ert_storage
+def test_init_service_server_start_if_no_conf_file(tmpdir, mock_start_server):
+    with tmpdir.as_cwd():
+        Storage.init_service(project=str(tmpdir))
+        mock_start_server.assert_called_once_with(project=str(tmpdir))
+
+
+@pytest.mark.requires_ert_storage
+def test_init_service_server_start_conf_info_is_stale(tmpdir, mock_start_server):
+    with tmpdir.as_cwd():
+        config_file = f"{Storage.service_name}_server.json"
+        with open(config_file, "w") as f:
+            f.write(
+                """
+            {"authtoken": "test123", "urls": ["http://127.0.0.1:51821"]}
+            """
+            )
+        Storage.init_service(project=str(tmpdir))
+        mock_start_server.assert_called_once_with(project=str(tmpdir))

@@ -63,7 +63,7 @@ def run_gui(args):
     args.config = os.path.basename(args.config)
     ert = EnKFMain(res_config)
     facade = LibresFacade(ert)
-    with Storage.connect_or_start_server(
+    with Storage.init_service(
         res_config=os.path.basename(args.config),
         project=os.path.abspath(facade.enspath),
     ), add_gui_log_handler() as log_handler:

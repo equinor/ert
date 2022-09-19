@@ -122,9 +122,16 @@ def use_tmpdir(tmp_path):
 
 @pytest.fixture()
 def mock_start_server(monkeypatch):
-    connect_or_start_server = MagicMock()
-    monkeypatch.setattr(Storage, "connect_or_start_server", connect_or_start_server)
-    yield connect_or_start_server
+    start_server = MagicMock()
+    monkeypatch.setattr(Storage, "start_server", start_server)
+    yield start_server
+
+
+@pytest.fixture()
+def mock_connect(monkeypatch):
+    connect = MagicMock()
+    monkeypatch.setattr(Storage, "connect", connect)
+    yield connect
 
 
 def pytest_addoption(parser):

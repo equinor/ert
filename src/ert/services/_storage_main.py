@@ -5,7 +5,6 @@ import logging.config
 import os
 import socket
 import sys
-from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
 import uvicorn
@@ -24,11 +23,9 @@ class Server(uvicorn.Server):
         self,
         config: uvicorn.Config,
         connection_info: Union[str, Dict[str, Any]],
-        info_file: Path,
     ):
         super().__init__(config)
         self.connection_info = connection_info
-        self.info_file = info_file
 
     async def startup(self, sockets: list = None) -> None:
         """Overridden startup that also sends connection information"""
@@ -113,10 +110,6 @@ def run_server(args: Optional[argparse.Namespace] = None, debug: bool = False) -
         authtoken = generate_authtoken()
         os.environ["ERT_STORAGE_TOKEN"] = authtoken
 
-    lockfile = Path.cwd() / "storage_server.json"
-    if lockfile.exists():
-        sys.exit("'storage_server.json' already exists")
-
     config_args: Dict[str, Any] = {}
     if args.debug or debug:
         config_args.update(reload=True, reload_dirs=[os.path.dirname(ert_shared_path)])
@@ -142,7 +135,7 @@ def run_server(args: Optional[argparse.Namespace] = None, debug: bool = False) -
             os.path.abspath(args.config) or find_ert_config()
         )
         config = uvicorn.Config("ert.dark_storage.app:app", **config_args)
-    server = Server(config, json.dumps(connection_info), lockfile)
+    server = Server(config, json.dumps(connection_info))
 
     logger = logging.getLogger("ert.shared.storage.info")
     log_level = logging.INFO if args.verbose else logging.WARNING

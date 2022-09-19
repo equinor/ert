@@ -177,14 +177,6 @@ def test_json_deleted(server):
     assert not os.path.exists("dummy_server.json")
 
 
-def test_json_exists(monkeypatch, tmp_path):
-    monkeypatch.chdir(tmp_path)
-
-    (tmp_path / "dummy_server.json").write_text("this is a json file")
-    with pytest.raises(SystemExit):
-        _DummyService(exec_args=["/usr/bin/true"])
-
-
 @pytest.mark.script(
     """\
 os.write(fd, b'{"authtoken": "test123", "urls": ["url"]}')
