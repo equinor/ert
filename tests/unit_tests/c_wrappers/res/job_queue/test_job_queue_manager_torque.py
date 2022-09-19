@@ -121,6 +121,11 @@ exit 1
     "qsub_script, qstat_script",
     [
         pytest.param(MOCK_QSUB, MOCK_QSTAT, id="none_flaky"),
+        pytest.param(
+            MOCK_QSUB.replace(".s034-lcam", ""),
+            MOCK_QSTAT.replace(".s034-lcam", ""),
+            id="none_flaky_no_namespace",
+        ),
         pytest.param(FLAKY_QSUB, MOCK_QSTAT, id="flaky_qsub"),
         pytest.param(MOCK_QSUB, FLAKY_QSTAT, id="flaky_qstat"),
         pytest.param(FLAKY_QSUB, FLAKY_QSTAT, id="all_flaky"),
