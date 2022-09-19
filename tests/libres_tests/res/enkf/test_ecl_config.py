@@ -19,9 +19,8 @@ import os.path
 from datetime import datetime
 
 from ecl.summary import EclSum
-from ecl.util.test import TestAreaContext
 
-from ert._c_wrappers.enkf import ConfigKeys, EclConfig, ResConfig
+from ert._c_wrappers.enkf import ConfigKeys, EclConfig
 from ert._c_wrappers.util import UIReturn
 
 
@@ -80,23 +79,17 @@ def test_wrongly_configured_refcase_path():
     assert ecl_config.getRefcase() is None
 
 
-def test_ecl_config_constructor(source_root):
-    config_dict = {
-        ConfigKeys.DATA_FILE: "configuration_tests/input/SPE1.DATA",
-        ConfigKeys.ECLBASE: "configuration_tests/input/<ECLIPSE_NAME>-%d",
-        ConfigKeys.GRID: "configuration_tests/input/CASE.EGRID",
-        ConfigKeys.REFCASE: "configuration_tests/input/refcase/SNAKE_OIL_FIELD",
-        ConfigKeys.SCHEDULE_PREDICTION_FILE: ("configuration_tests/input/schedule.sch"),
-    }
-
-    case_directory = str(source_root / "test-data/local/configuration_tests/")
-    with TestAreaContext("ecl_config_test") as work_area:
-        work_area.copy_directory(case_directory)
-        res_config = ResConfig("configuration_tests/ecl_config.ert")
-        ecl_config_file = res_config.ecl_config
-        ecl_config_dict = EclConfig(config_dict=config_dict)
-
-        assert ecl_config_dict == ecl_config_file
+def test_ecl_config_constructor(setup_case):
+    res_config = setup_case("local/configuration_tests", "ecl_config.ert")
+    assert res_config.ecl_config == EclConfig(
+        config_dict={
+            ConfigKeys.DATA_FILE: "input/SPE1.DATA",
+            ConfigKeys.ECLBASE: "input/<ECLIPSE_NAME>-%d",
+            ConfigKeys.GRID: "input/CASE.EGRID",
+            ConfigKeys.REFCASE: "input/refcase/SNAKE_OIL_FIELD",
+            ConfigKeys.SCHEDULE_PREDICTION_FILE: "input/schedule.sch",
+        }
+    )
 
 
 def test_that_refcase_gets_correct_name(tmpdir):
