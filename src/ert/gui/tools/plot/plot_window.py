@@ -1,5 +1,4 @@
 import logging
-import os
 
 from httpx import RequestError
 from pandas import DataFrame
@@ -55,11 +54,6 @@ class PlotWindow(QMainWindow):
         except (RequestError, TimeoutError) as e:
             logger.exception(e)
             msg = f"{e}"
-            if "None of the URLs provided" in str(e):
-                msg = (
-                    f"{e} \n Remove storage_server.json from {os.getcwd()},"
-                    f" and restart the application."
-                )
 
             QMessageBox.critical(self, "Request Failed", msg)
 
@@ -97,11 +91,6 @@ class PlotWindow(QMainWindow):
         except (RequestError, TimeoutError) as e:
             logger.exception(e)
             msg = f"{e}"
-            if "None of the URLs provided" in str(e):
-                msg = (
-                    f"{e} \n Remove storage_server.json from {os.getcwd()},"
-                    f" and restart the application."
-                )
 
             QMessageBox.critical(self, "Request Failed", msg)
             cases = []
@@ -140,11 +129,6 @@ class PlotWindow(QMainWindow):
                     except (RequestError, TimeoutError) as e:
                         logger.exception(e)
                         msg = f"{e}"
-                        if "None of the URLs provided" in str(e):
-                            msg = (
-                                f"{e} \n Remove storage_server.json from {os.getcwd()},"
-                                f" and restart the application."
-                            )
 
                         QMessageBox.critical(self, "Request Failed", msg)
 
@@ -155,11 +139,6 @@ class PlotWindow(QMainWindow):
                     except (RequestError, TimeoutError) as e:
                         logger.exception(e)
                         msg = f"{e}"
-                        if "None of the URLs provided" in str(e):
-                            msg = (
-                                f"{e} \n Remove storage_server.json from {os.getcwd()},"
-                                f" and restart the application."
-                            )
 
                         QMessageBox.critical(self, "Request Failed", msg)
 
@@ -181,11 +160,6 @@ class PlotWindow(QMainWindow):
                     except (RequestError, TimeoutError) as e:
                         logger.exception(e)
                         msg = f"{e}"
-                        if "None of the URLs provided" in str(e):
-                            msg = (
-                                f"{e} \n Remove storage_server.json from {os.getcwd()},"
-                                f" and restart the application."
-                            )
 
                         QMessageBox.critical(self, "Request Failed", msg)
                         plot_context.history_data = None

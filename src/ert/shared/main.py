@@ -59,15 +59,18 @@ def run_webviz_ert(args):
     kwargs = {"verbose": args.verbose}
     if args.config:
         res_config = ResConfig(args.config)
-        config_path = res_config.config_path
+        os.chdir(res_config.config_path)
         ens_path = res_config.model_config.getEnspath()
-        kwargs["res_config"] = args.config
-        kwargs["project"] = f"{config_path}/{ens_path}"
+
+        # Changing current working directory means we need to
+        # only use the base name of the config file path
+        kwargs["res_config"] = os.path.basename(args.config)
+        kwargs["project"] = os.path.abspath(ens_path)
 
     if args.database_url is not None:
         kwargs["database_url"] = args.database_url
 
-    with Storage.connect_or_start_server(**kwargs) as storage:
+    with Storage.init_service(**kwargs) as storage:
         storage.wait_until_ready()
         print(
             """

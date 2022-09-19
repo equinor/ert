@@ -4,7 +4,6 @@ import os
 import signal
 import sys
 import threading
-import time
 from logging import Logger, getLogger
 from pathlib import Path
 from select import PIPE_BUF, select
@@ -106,8 +105,6 @@ class _Proc(threading.Thread):
         self._set_conn_info = set_conn_info
         self._service_config_path = project / f"{self._service_name}_server.json"
 
-        self._assert_server_not_running()
-
         fd_read, fd_write = os.pipe()
         self._comm_pipe = os.fdopen(fd_read)
 
@@ -158,29 +155,6 @@ class _Proc(threading.Thread):
         self._shutdown.set()
         self.join()
         return self._childproc.returncode
-
-    def _assert_server_not_running(self) -> None:
-        """It doesn't seem to be possible to check whether a server has been started
-        other than looking for files that were created during the startup process.
-        Due to possible race-condition we do a retry if file is present to make sure
-        we have waited long enough before sys.exit
-        """
-        for i in range(3):
-            if self._service_config_path.exists():
-                print(
-                    f"{self._service_name}_server.json is "
-                    f"present on this location. Retry {i}"
-                )
-                time.sleep(1)
-
-        if self._service_config_path.exists():
-            print(
-                f"A file called {self._service_name}_server.json is present from this "
-                "location. This indicates there is already a ert instance running. "
-                "If you are certain that is not the case, try to delete the file "
-                "and try again."
-            )
-            sys.exit(1)
 
     def _read_conn_info(self, proc: Popen) -> Optional[str]:
         comm_buf = io.StringIO()
