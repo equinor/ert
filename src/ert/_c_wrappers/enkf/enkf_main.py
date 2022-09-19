@@ -374,7 +374,7 @@ class EnKFMain(BaseCClass):
         if parameters is None:
             parameters = self._parameter_keys
         state_map = run_context.sim_fs.getStateMap()
-        for realization_nr in range(self.getEnsembleSize()):
+        for realization_nr, rng in enumerate(self.realizations):
             current_status = state_map[realization_nr]
             if (
                 run_context.is_active(realization_nr)
@@ -391,7 +391,7 @@ class EnKFMain(BaseCClass):
                         or current_status == STATE_LOAD_FAILURE,
                     ):
                         enkf_state.state_initialize(
-                            self.realizations[realization_nr],
+                            rng,
                             enkf_node,
                             run_context.sim_fs,
                             realization_nr,
