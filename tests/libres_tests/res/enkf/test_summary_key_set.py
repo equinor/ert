@@ -1,6 +1,6 @@
 import os
 
-from ecl.util.test.test_area import TestAreaContext
+import pytest
 
 from ert._c_wrappers.enkf import EnKFMain, ResConfig, SummaryKeySet
 from ert._c_wrappers.enkf.enkf_fs import EnkfFs
@@ -29,21 +29,21 @@ def test_creation():
     assert list(keys.keys()) == ["FOPT", "WWCT"]
 
 
+@pytest.mark.usefixtures("use_tmpdir")
 def test_read_only_creation():
-    with TestAreaContext("enkf/summary_key_set/read_only_write_test"):
-        keys = SummaryKeySet()
+    keys = SummaryKeySet()
 
-        keys.addSummaryKey("FOPT")
-        keys.addSummaryKey("WWCT")
+    keys.addSummaryKey("FOPT")
+    keys.addSummaryKey("WWCT")
 
-        filename = "test.txt"
-        keys.writeToFile(filename)
+    filename = "test.txt"
+    keys.writeToFile(filename)
 
-        keys_from_file = SummaryKeySet(filename, read_only=True)
-        assert keys.keys() == keys_from_file.keys()
+    keys_from_file = SummaryKeySet(filename, read_only=True)
+    assert keys.keys() == keys_from_file.keys()
 
-        assert keys_from_file.isReadOnly()
-        assert not keys_from_file.addSummaryKey("WOPR")
+    assert keys_from_file.isReadOnly()
+    assert not keys_from_file.addSummaryKey("WOPR")
 
 
 def test_write_to_and_read_from_file(tmp_path):

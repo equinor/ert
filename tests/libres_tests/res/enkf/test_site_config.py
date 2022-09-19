@@ -19,7 +19,6 @@ import os
 from pathlib import Path
 
 import pytest
-from ecl.util.test import TestAreaContext
 
 from ert._c_wrappers.enkf import ConfigKeys, EnKFMain, ResConfig, SiteConfig
 
@@ -33,10 +32,10 @@ def test_umask_is_written_to_json(setup_case):
     assert json.load(Path("simulations/run0/jobs.json").open())["umask"] == "0022"
 
 
+@pytest.mark.usefixtures("use_tmpdir")
 def test_invalid_user_config():
-    with TestAreaContext("void land"):
-        with pytest.raises(IOError):
-            SiteConfig("this/is/not/a/file")
+    with pytest.raises(IOError):
+        SiteConfig("this/is/not/a/file")
 
 
 def test_constructors(snake_oil_case):
