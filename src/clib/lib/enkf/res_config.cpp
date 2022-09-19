@@ -131,69 +131,6 @@ res_config_alloc_user_content(const char *user_config_file,
     return config_content;
 }
 
-res_config_type *res_config_alloc_load(const char *config_file) {
-    config_parser_type *config_parser = config_alloc();
-    config_content_type *config_content =
-        res_config_alloc_user_content(config_file, config_parser);
-
-    res_config_type *res_config = res_config_alloc(config_content);
-
-    config_content_free(config_content);
-    config_free(config_parser);
-
-    return res_config;
-}
-
-static void res_config_init(res_config_type *res_config,
-                            const config_content_type *config_content) {
-    if (config_content_has_item(config_content, RES_CONFIG_FILE_KEY)) {
-        const char *res_config_file = config_content_get_value_as_abspath(
-            config_content, RES_CONFIG_FILE_KEY);
-        res_config->user_config_file = util_alloc_string_copy(res_config_file);
-    }
-
-    if (config_content_has_item(config_content, CONFIG_DIRECTORY_KEY)) {
-        const char *config_dir = config_content_get_value_as_abspath(
-            config_content, CONFIG_DIRECTORY_KEY);
-        res_config->config_dir = util_alloc_string_copy(config_dir);
-    }
-}
-
-res_config_type *res_config_alloc(const config_content_type *config_content) {
-    res_config_type *res_config = res_config_alloc_empty();
-
-    if (config_content)
-        res_config_init(res_config, config_content);
-
-    res_config->subst_config = subst_config_alloc(config_content);
-    res_config->site_config = site_config_alloc(config_content);
-    res_config->rng_config = rng_config_alloc(config_content);
-
-    res_config->workflow_list = ert_workflow_list_alloc(
-        subst_config_get_subst_list(res_config->subst_config), config_content);
-
-    res_config->hook_manager =
-        hook_manager_alloc(res_config->workflow_list, config_content);
-
-    res_config->ecl_config = ecl_config_alloc(config_content);
-
-    res_config->ensemble_config = ensemble_config_alloc(
-        config_content, ecl_config_get_grid(res_config->ecl_config),
-        ecl_config_get_refcase(res_config->ecl_config));
-
-    res_config->model_config = model_config_alloc(
-        config_content, res_config->config_dir,
-        site_config_get_installed_jobs(res_config->site_config),
-        ecl_config_get_last_history_restart(res_config->ecl_config),
-        ecl_config_get_refcase(res_config->ecl_config));
-
-    res_config->analysis_config = analysis_config_alloc(config_content);
-
-    res_config->queue_config = queue_config_alloc(config_content);
-
-    return res_config;
-}
-
 res_config_type *res_config_alloc_full(
     char *config_dir, char *user_config_file, subst_config_type *subst_config,
     site_config_type *site_config, rng_config_type *rng_config,
