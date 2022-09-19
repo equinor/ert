@@ -125,7 +125,7 @@ args = dict(
         "cloudpickle",
         "tqdm>=4.62.0",
         "cryptography",
-        "cwrap<1.6.4",
+        "cwrap",
         "dask_jobqueue",
         "decorator",
         "deprecation",
