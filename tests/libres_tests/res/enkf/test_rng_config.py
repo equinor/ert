@@ -45,3 +45,23 @@ def test_random_seed():
         RNGConfig(config_dict={ConfigKeys.RANDOM_SEED: "abcdefghijklmnop"}).random_seed
         == "abcdefghijklmnop"
     )
+
+
+@pytest.mark.usefixtures("copy_minimum_case")
+def test_default_random_seed():
+    assert ResConfig(
+        config={
+            "INTERNALS": {
+                "CONFIG_DIRECTORY": ".",
+            },
+            "SIMULATION": {
+                "QUEUE_SYSTEM": {
+                    "JOBNAME": "Job%d",
+                },
+                "RUNPATH": "/tmp/simulations/run%d",
+                "NUM_REALIZATIONS": 1,
+                "JOB_SCRIPT": "script.sh",
+                "ENSPATH": "Ensemble",
+            },
+        }
+    ).rng_config == RNGConfig(config_dict={ConfigKeys.RANDOM_SEED: None})
