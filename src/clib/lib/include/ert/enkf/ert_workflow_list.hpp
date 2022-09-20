@@ -66,9 +66,6 @@ ert_workflow_list_get_job_names(const ert_workflow_list_type *workflow_list);
 void ert_workflow_list_add_alias(ert_workflow_list_type *workflow_list,
                                  const char *real_name, const char *alias);
 void ert_workflow_list_add_config_items(config_parser_type *config);
-bool ert_workflow_list_run_workflow__(ert_workflow_list_type *workflow_list,
-                                      workflow_type *workflow, bool verbose,
-                                      void *self);
 extern "C" bool
 ert_workflow_list_has_workflow(ert_workflow_list_type *workflow_list,
                                const char *workflow_name);
@@ -76,9 +73,6 @@ extern "C" stringlist_type *
 ert_workflow_list_alloc_namelist(ert_workflow_list_type *workflow_list);
 void ert_workflow_list_set_verbose(ert_workflow_list_type *workflow_list,
                                    bool verbose);
-bool ert_workflow_list_run_workflow_blocking(
-    ert_workflow_list_type *workflow_list, const char *workflow_name,
-    void *self);
 extern "C" const subst_list_type *
 ert_workflow_list_get_context(const ert_workflow_list_type *workflow_list);
 int ert_workflow_list_get_size(const ert_workflow_list_type *workflow_list);

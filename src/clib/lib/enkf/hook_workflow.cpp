@@ -67,18 +67,6 @@ hook_workflow_get_workflow(const hook_workflow_type *hook_workflow) {
     return hook_workflow->workflow;
 }
 
-bool hook_workflow_run_workflow(const hook_workflow_type *hook_workflow,
-                                ert_workflow_list_type *workflow_list,
-                                void *self) {
-    bool verbose = false;
-    if (hook_workflow->workflow != NULL) {
-        bool result = ert_workflow_list_run_workflow__(
-            workflow_list, hook_workflow->workflow, verbose, self);
-        return result;
-    } else
-        return false;
-}
-
 hook_run_mode_enum hook_workflow_run_mode_from_name(const char *run_mode) {
     hook_run_mode_enum mode;
     if (strcmp(run_mode, RUN_MODE_PRE_SIMULATION_NAME) == 0)
