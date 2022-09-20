@@ -6,7 +6,7 @@ import httpx
 import requests
 from ert_storage.client import Client, ConnInfo
 
-from ert.shared.services._base_service import BaseService, local_exec_args
+from ert.services._base_service import BaseService, local_exec_args
 
 
 class Storage(BaseService):

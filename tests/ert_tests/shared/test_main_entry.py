@@ -60,7 +60,7 @@ def test_api_database_default(monkeypatch):
     monkeypatch.setattr(main, "ErtPluginContext", MagicMock())
     mocked_start_server = MagicMock()
     monkeypatch.setattr(
-        "ert.shared.services.storage_service.BaseService.start_server",
+        "ert.services.storage_service.BaseService.start_server",
         mocked_start_server,
     )
     monkeypatch.setattr(
@@ -82,7 +82,7 @@ def test_api_database_url_forwarded(monkeypatch):
     monkeypatch.setattr(main, "ErtPluginContext", MagicMock())
     mocked_start_server = MagicMock()
     monkeypatch.setattr(
-        "ert.shared.services.storage_service.BaseService.start_server",
+        "ert.services.storage_service.BaseService.start_server",
         mocked_start_server,
     )
     monkeypatch.setattr(

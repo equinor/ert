@@ -7,7 +7,7 @@ import pandas as pd
 import pytest
 
 from ert.gui.tools.plot.plot_api import PlotApi
-from ert.shared.services import Storage
+from ert.services import Storage
 
 
 class MockResponse:

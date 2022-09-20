@@ -11,8 +11,8 @@ from ert._c_wrappers.enkf.enums.enkf_obs_impl_type_enum import (
     EnkfObservationImplementationType,
 )
 from ert.data import MeasuredData
+from ert.services import Storage
 from ert.shared.feature_toggling import feature_enabled
-from ert.shared.services import Storage
 
 if TYPE_CHECKING:
     from ert.libres_facade import LibresFacade

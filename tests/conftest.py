@@ -8,7 +8,7 @@ import pytest
 from hypothesis import HealthCheck, settings
 
 from ert._c_wrappers.enkf import EnKFMain, ResConfig
-from ert.shared.services import Storage
+from ert.services import Storage
 
 from .utils import SOURCE_DIR
 

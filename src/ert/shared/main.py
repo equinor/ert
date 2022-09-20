@@ -14,6 +14,7 @@ import ert.shared
 from ert._c_wrappers.enkf import ResConfig
 from ert.logging import LOGGING_CONFIG
 from ert.logging._log_util_abort import _log_util_abort
+from ert.services import Storage, WebvizErt
 from ert.shared.cli import (
     ENSEMBLE_EXPERIMENT_MODE,
     ENSEMBLE_SMOOTHER_MODE,
@@ -33,7 +34,6 @@ from ert.shared.ide.keywords.definitions import (
 )
 from ert.shared.models.multiple_data_assimilation import MultipleDataAssimilation
 from ert.shared.plugins.plugin_manager import ErtPluginContext
-from ert.shared.services import Storage, WebvizErt
 from ert.shared.storage.command import add_parser_options as ert_api_add_parser_options
 
 
