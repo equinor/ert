@@ -505,7 +505,6 @@ def test_res_config_dict_constructor(setup_case):
 
     # add missing entries to config file
     with open(config_file_name, "a+") as ert_file:
-        ert_file.write("JOB_SCRIPT ../../../script.sh\n")
         ert_file.write("NUM_CPU 0\n")
 
     # load res_file
