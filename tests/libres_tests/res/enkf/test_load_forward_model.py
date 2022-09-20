@@ -1,30 +1,18 @@
 import fileinput
 import logging
 import os
-import shutil
 from datetime import datetime
 from pathlib import Path
 from textwrap import dedent
 
 import pytest
 from ecl.summary import EclSum
-from ecl.util.util import BoolVector
 
 from ert._c_wrappers.enkf import EnKFMain, ResConfig
 from ert.libres_facade import LibresFacade
 
 
-@pytest.fixture
-def copy_data(tmp_path, source_root):
-    os.chdir(tmp_path)
-    shutil.copytree(
-        os.path.join(source_root, "test-data", "local/snake_oil"), "test_data"
-    )
-    os.chdir("test_data")
-
-
-def run_simulator(time_step_count, start_date):
-    """@rtype: EclSum"""
+def run_simulator(time_step_count, start_date) -> EclSum:
     ecl_sum = EclSum.writer("SNAKE_OIL_FIELD", start_date, 10, 10, 10)
 
     ecl_sum.addVariable("FOPR", unit="SM3/DAY")
@@ -47,10 +35,11 @@ def run_simulator(time_step_count, start_date):
     return ecl_sum
 
 
-def test_load_inconsistent_time_map_summary(copy_data, caplog):
+def test_load_inconsistent_time_map_summary(copy_case, caplog):
     """
     Checking that we dont util_abort, we fail the forward model instead
     """
+    copy_case("local/snake_oil")
     cwd = os.getcwd()
 
     # Get rid of GEN_DATA as we are only interested in SUMMARY
@@ -76,9 +65,7 @@ def test_load_inconsistent_time_map_summary(copy_data, caplog):
     ecl_sum.fwrite()
     os.chdir(cwd)
 
-    realizations = BoolVector(
-        default_value=False, initial_size=facade.get_ensemble_size()
-    )
+    realizations = [False] * facade.get_ensemble_size()
     realizations[realisation_number] = True
     with caplog.at_level(logging.ERROR):
         loaded = facade.load_from_forward_model("default_0", realizations, 0)
@@ -96,10 +83,11 @@ def test_load_inconsistent_time_map_summary(copy_data, caplog):
     )  # Check that status is as expected
 
 
-def test_load_forward_model(copy_data):
+def test_load_forward_model(copy_case):
     """
     Checking that we are able to load from forward model
     """
+    copy_case("local/snake_oil")
     # Get rid of GEN_DATA it causes a failure to load from forward model
     with fileinput.input("snake_oil.ert", inplace=True) as fin:
         for line in fin:
@@ -112,9 +100,7 @@ def test_load_forward_model(copy_data):
     facade = LibresFacade(ert)
     realisation_number = 0
 
-    realizations = BoolVector(
-        default_value=False, initial_size=facade.get_ensemble_size()
-    )
+    realizations = [False] * facade.get_ensemble_size()
     realizations[realisation_number] = True
     loaded = facade.load_from_forward_model("default_0", realizations, 0)
     assert loaded == 1
