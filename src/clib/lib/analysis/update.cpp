@@ -312,6 +312,8 @@ std::pair<Eigen::MatrixXd, ObservationHandler> load_observations_and_responses(
         obs_data_errors_as_vector(obs_data) * sqrt(global_std_scaling);
     std::vector<bool> obs_mask = obs_data_get_active_mask(obs_data);
 
+    obs_data_free(obs_data);
+
     return std::pair<Eigen::MatrixXd, ObservationHandler>(
         S, ObservationHandler(observation_values, observation_errors, obs_mask,
                               update_snapshot));
