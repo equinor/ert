@@ -3,7 +3,7 @@ from uuid import UUID
 from ert_storage import json_schema as js
 from fastapi import APIRouter, Depends
 
-from ert.shared.dark_storage.enkf import LibresFacade, get_res, reset_res
+from ert.dark_storage.enkf import LibresFacade, get_res, reset_res
 
 router = APIRouter(tags=["ensemble"])
 

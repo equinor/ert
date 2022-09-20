@@ -141,7 +141,7 @@ def run_server(args: Optional[argparse.Namespace] = None, debug: bool = False) -
         os.environ["ERT_STORAGE_RES_CONFIG"] = (
             os.path.abspath(args.config) or find_ert_config()
         )
-        config = uvicorn.Config("ert.shared.dark_storage.app:app", **config_args)
+        config = uvicorn.Config("ert.dark_storage.app:app", **config_args)
     server = Server(config, json.dumps(connection_info), lockfile)
 
     logger = logging.getLogger("ert.shared.storage.info")

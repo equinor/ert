@@ -4,7 +4,7 @@ from uuid import UUID
 from ert_storage import json_schema as js
 from fastapi import APIRouter, Body, Depends
 
-from ert.shared.dark_storage.enkf import LibresFacade, get_id, get_res, get_size
+from ert.dark_storage.enkf import LibresFacade, get_id, get_res, get_size
 from ert.shared.storage.extraction import create_priors
 
 router = APIRouter(tags=["experiment"])

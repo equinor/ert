@@ -4,14 +4,8 @@ from uuid import UUID
 from ert_storage import json_schema as js
 from fastapi import APIRouter, Body, Depends
 
-from ert.shared.dark_storage.common import ensemble_parameter_names, get_response_names
-from ert.shared.dark_storage.enkf import (
-    LibresFacade,
-    get_id,
-    get_name,
-    get_res,
-    get_size,
-)
+from ert.dark_storage.common import ensemble_parameter_names, get_response_names
+from ert.dark_storage.enkf import LibresFacade, get_id, get_name, get_res, get_size
 
 router = APIRouter(tags=["ensemble"])
 

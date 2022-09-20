@@ -3,8 +3,8 @@ from uuid import UUID
 from fastapi import APIRouter, Depends
 from fastapi.responses import Response
 
-from ert.shared.dark_storage.common import data_for_key
-from ert.shared.dark_storage.enkf import LibresFacade, get_name, get_res
+from ert.dark_storage.common import data_for_key
+from ert.dark_storage.enkf import LibresFacade, get_name, get_res
 
 router = APIRouter(tags=["response"])
 
