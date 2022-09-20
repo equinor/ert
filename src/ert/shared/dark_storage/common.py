@@ -77,48 +77,47 @@ def observations_for_obs_keys(res: LibresFacade, case, obs_keys):
     expected_keys = ["OBS", "STD"]
     if not isinstance(data, pd.DataFrame):
         raise TypeError(f"Invalid type: {type(data)}, should be type: {pd.DataFrame}")
-    elif data.empty:
+    if data.empty:
         return []
-    elif not data.empty and not set(expected_keys).issubset(data.index):
+    if not data.empty and not set(expected_keys).issubset(data.index):
         raise ValueError(
             '["OBS", "STD"] should be present in DataFrame index, '
             f"missing: {set(expected_keys) - set(data.index)}"
         )
-    else:
-        observation_vectors = res.get_observations()
-        observations = data.loc[["OBS", "STD"]]
-        grouped_obs = {}
-        response_observation_link = {}
-        summary_obs_keys = observation_vectors.getTypedKeylist(
-            EnkfObservationImplementationType.SUMMARY_OBS
-        )
+    observation_vectors = res.get_observations()
+    observations = data.loc[["OBS", "STD"]]
+    grouped_obs = {}
+    response_observation_link = {}
+    summary_obs_keys = observation_vectors.getTypedKeylist(
+        EnkfObservationImplementationType.SUMMARY_OBS
+    )
 
-        for obs_key in observations.columns.get_level_values(0).unique():
-            obs_vec = observation_vectors[obs_key]
-            data_key = obs_vec.getDataKey()
-            obs_data = _get_obs_data(obs_key, observations[obs_key])
+    for obs_key in observations.columns.get_level_values(0).unique():
+        obs_vec = observation_vectors[obs_key]
+        data_key = obs_vec.getDataKey()
+        obs_data = _get_obs_data(obs_key, observations[obs_key])
 
-            if obs_key not in summary_obs_keys:
-                grouped_obs[obs_key] = obs_data
-                response_observation_link[data_key] = obs_key
+        if obs_key not in summary_obs_keys:
+            grouped_obs[obs_key] = obs_data
+            response_observation_link[data_key] = obs_key
+        else:
+            response_observation_link[data_key] = data_key
+            if data_key in grouped_obs:
+                for el in filter(lambda x: not x == "name", obs_data):
+                    grouped_obs[data_key][el] += obs_data[el]
             else:
-                response_observation_link[data_key] = data_key
-                if data_key in grouped_obs:
-                    for el in filter(lambda x: not x == "name", obs_data):
-                        grouped_obs[data_key][el] += obs_data[el]
-                else:
-                    obs_data["name"] = data_key
-                    grouped_obs[data_key] = obs_data
-        for key, obs in grouped_obs.items():
-            x_axis, values, error = (
-                list(t)
-                for t in zip(*sorted(zip(obs["x_axis"], obs["values"], obs["errors"])))
-            )
-            x_axis = _prepare_x_axis(x_axis)
-            grouped_obs[key]["x_axis"] = x_axis
-            grouped_obs[key]["values"] = values
-            grouped_obs[key]["errors"] = error
-        return [obs for obs in grouped_obs.values()]
+                obs_data["name"] = data_key
+                grouped_obs[data_key] = obs_data
+    for obs in grouped_obs.values():
+        x_axis, values, error = (
+            list(t)
+            for t in zip(*sorted(zip(obs["x_axis"], obs["values"], obs["errors"])))
+        )
+        x_axis = _prepare_x_axis(x_axis)
+        obs["x_axis"] = x_axis
+        obs["values"] = values
+        obs["errors"] = error
+    return list(grouped_obs.values())
 
 
 def _get_obs_data(key, obs) -> dict:
