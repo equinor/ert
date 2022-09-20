@@ -1,3 +1,5 @@
+import re
+from pathlib import Path
 from textwrap import dedent
 
 import pytest
@@ -119,22 +121,45 @@ def test_gen_kw_config_get_priors():
     } in priors
 
 
+number_regex = r"[-+]?(?:\d*\.\d+|\d+)"
+
+
 @pytest.mark.parametrize(
-    "distribution, expect_log",
+    "distribution, expect_log, parameters_regex",
     [
-        ("NORMAL 0 1", False),
-        ("LOGNORMAL 0 1", True),
-        ("UNIFORM 0 1", False),
-        ("TRUNCATED_NORMAL 1 0.25 0 10", False),
-        ("LOGUNIF 0.0001 1", True),
-        ("CONST 1.0", False),
-        ("DUNIF 5 1 5", False),
-        ("ERRF 1 2 0.1 0.1", False),
-        ("DERRF 10 1 2 0.1 0.1", False),
-        ("TRIANGULAR 0 0.5 1", False),
+        ("NORMAL 0 1", False, r"KW_NAME:MY_KEYWORD " + number_regex),
+        (
+            "LOGNORMAL 0 1",
+            True,
+            r"KW_NAME:MY_KEYWORD "
+            + number_regex
+            + r"\n"
+            + r"LOG10_KW_NAME:MY_KEYWORD "
+            + number_regex,
+        ),
+        ("UNIFORM 0 1", False, r"KW_NAME:MY_KEYWORD " + number_regex),
+        (
+            "TRUNCATED_NORMAL 1 0.25 0 10",
+            False,
+            r"KW_NAME:MY_KEYWORD " + number_regex,
+        ),
+        (
+            "LOGUNIF 0.0001 1",
+            True,
+            r"KW_NAME:MY_KEYWORD "
+            + number_regex
+            + r"\n"
+            + r"LOG10_KW_NAME:MY_KEYWORD "
+            + number_regex,
+        ),
+        ("CONST 1.0", False, "KW_NAME:MY_KEYWORD 1\n"),
+        ("DUNIF 5 1 5", False, r"KW_NAME:MY_KEYWORD " + number_regex),
+        ("ERRF 1 2 0.1 0.1", False, r"KW_NAME:MY_KEYWORD " + number_regex),
+        ("DERRF 10 1 2 0.1 0.1", False, r"KW_NAME:MY_KEYWORD " + number_regex),
+        ("TRIANGULAR 0 0.5 1", False, r"KW_NAME:MY_KEYWORD " + number_regex),
     ],
 )
-def test_gen_kw_is_log_or_not(tmpdir, distribution, expect_log):
+def test_gen_kw_is_log_or_not(tmpdir, distribution, expect_log, parameters_regex):
     with tmpdir.as_cwd():
         config = dedent(
             """
@@ -157,3 +182,8 @@ def test_gen_kw_is_log_or_not(tmpdir, distribution, expect_log):
         gen_kw_config = node.getModelConfig()
         assert isinstance(gen_kw_config, GenKwConfig)
         assert gen_kw_config.shouldUseLogScale(0) is expect_log
+        ert.createRunPath(ert.create_ensemble_experiment_run_context(0))
+        assert re.match(
+            parameters_regex,
+            Path("simulations/realization0/parameters.txt").read_text(),
+        )
