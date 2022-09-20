@@ -335,29 +335,6 @@ bool ert_workflow_list_has_workflow(ert_workflow_list_type *workflow_list,
     return hash_has_key(workflow_list->workflows, workflow_name) ||
            hash_has_key(workflow_list->alias_map, workflow_name);
 }
-
-bool ert_workflow_list_run_workflow__(ert_workflow_list_type *workflow_list,
-                                      workflow_type *workflow, bool verbose,
-                                      void *self) {
-    bool runOK = workflow_run(workflow, self, verbose, workflow_list->context);
-    if (runOK)
-        workflow_list->last_error = NULL;
-    else
-        workflow_list->last_error = workflow_get_last_error(workflow);
-
-    return runOK;
-}
-
-bool ert_workflow_list_run_workflow_blocking(
-    ert_workflow_list_type *workflow_list, const char *workflow_name,
-    void *self) {
-    workflow_type *workflow =
-        ert_workflow_list_get_workflow(workflow_list, workflow_name);
-    bool result = ert_workflow_list_run_workflow__(
-        workflow_list, workflow, workflow_list->verbose, self);
-    return result;
-}
-
 stringlist_type *
 ert_workflow_list_alloc_namelist(ert_workflow_list_type *workflow_list) {
     return hash_alloc_stringlist(workflow_list->workflows);

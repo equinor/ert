@@ -41,9 +41,6 @@ void hook_workflow_free__(void *arg);
 
 extern "C" workflow_type *
 hook_workflow_get_workflow(const hook_workflow_type *hook_workflow);
-bool hook_workflow_run_workflow(const hook_workflow_type *hook_workflow,
-                                ert_workflow_list_type *workflow_list,
-                                void *self);
 extern "C" hook_run_mode_enum
 hook_workflow_get_run_mode(const hook_workflow_type *hook_workflow);
 
