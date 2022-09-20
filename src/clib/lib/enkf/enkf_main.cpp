@@ -371,4 +371,24 @@ ERT_CLIB_SUBMODULE("enkf_main", m) {
         py::arg("res_config"), py::arg("run_path"), py::arg("iens"),
         py::arg("sim_fs"), py::arg("run_id"), py::arg("job_name"),
         py::arg("subst_list"));
+    m.def("log_seed", [](py::object rng_) {
+        auto rng = ert::from_cwrap<rng_type>(rng_);
+        unsigned int random_seed[4];
+        rng_get_state(rng, (char *)random_seed);
+
+        char random_seed_str[10 * 4 + 1];
+        random_seed_str[0] = '\0';
+        char *uint_fmt = util_alloc_sprintf("%%0%du", 10);
+
+        for (int i = 0; i < 4; ++i) {
+            char *elem = util_alloc_sprintf(uint_fmt, random_seed[i]);
+            strcat(random_seed_str, elem);
+            free(elem);
+        }
+        free(uint_fmt);
+        logger->info(
+            "To repeat this experiment, add the following random seed to "
+            "your config file:");
+        logger->info("RANDOM_SEED {}", random_seed_str);
+    });
 }

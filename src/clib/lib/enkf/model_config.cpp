@@ -39,7 +39,6 @@
 #include <ert/enkf/ert_workflow_list.hpp>
 #include <ert/enkf/hook_manager.hpp>
 #include <ert/enkf/model_config.hpp>
-#include <ert/enkf/rng_config.hpp>
 #include <ert/enkf/site_config.hpp>
 
 static auto logger = ert::get_logger("enkf");
@@ -620,7 +619,7 @@ static void model_config_init_user_config(config_parser_type *config) {
     analysis_config_add_config_items(config);
     ensemble_config_add_config_items(config);
     ecl_config_add_config_items(config);
-    rng_config_add_config_items(config);
+    config_add_key_value(config, RANDOM_SEED_KEY, false, CONFIG_STRING);
 
     config_add_key_value(config, MAX_RESAMPLE_KEY, false, CONFIG_INT);
 

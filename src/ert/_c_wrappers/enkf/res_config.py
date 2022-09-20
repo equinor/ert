@@ -31,7 +31,6 @@ from ert._c_wrappers.enkf.ert_workflow_list import ErtWorkflowList
 from ert._c_wrappers.enkf.hook_manager import HookManager
 from ert._c_wrappers.enkf.model_config import ModelConfig
 from ert._c_wrappers.enkf.queue_config import QueueConfig
-from ert._c_wrappers.enkf.rng_config import RNGConfig
 from ert._c_wrappers.enkf.site_config import SiteConfig
 from ert._c_wrappers.enkf.subst_config import SubstConfig
 
@@ -53,7 +52,6 @@ class ResConfig(BaseCClass):
         "char*, "
         "subst_config, "
         "site_config, "
-        "rng_config, "
         "analysis_config, "
         "ert_workflow_list, "
         "hook_manager, "
@@ -94,7 +92,6 @@ class ResConfig(BaseCClass):
     _ert_workflow_list = ResPrototype(
         "ert_workflow_list_ref res_config_get_workflow_list(res_config)"
     )
-    _rng_config = ResPrototype("rng_config_ref res_config_get_rng_config(res_config)")
     _queue_config = ResPrototype(
         "queue_config_ref res_config_get_queue_config(res_config)"
     )
@@ -177,7 +174,10 @@ class ResConfig(BaseCClass):
 
         subst_config = SubstConfig(config_content=config_content)
         site_config = SiteConfig(config_content=config_content)
-        rng_config = RNGConfig(config_content=config_content)
+        if config_content.hasKey(ConfigKeys.RANDOM_SEED):
+            self.random_seed = config_content.getValue(ConfigKeys.RANDOM_SEED)
+        else:
+            self.random_seed = None
         analysis_config = AnalysisConfig(config_content=config_content)
         ecl_config = EclConfig(config_content=config_content)
         queue_config = QueueConfig(config_content=config_content)
@@ -233,7 +233,6 @@ class ResConfig(BaseCClass):
         return [
             subst_config,
             site_config,
-            rng_config,
             analysis_config,
             ert_workflow_list,
             hook_manager,
@@ -253,7 +252,7 @@ class ResConfig(BaseCClass):
 
         subst_config = SubstConfig(config_dict=config_dict)
         site_config = SiteConfig(config_dict=config_dict)
-        rng_config = RNGConfig(config_dict=config_dict)
+        self.random_seed = config_dict.get(ConfigKeys.RANDOM_SEED, None)
         analysis_config = AnalysisConfig(config_dict=config_dict)
         ecl_config = EclConfig(config_dict=config_dict)
         queue_config = QueueConfig(config_dict=config_dict)
@@ -306,7 +305,6 @@ class ResConfig(BaseCClass):
         return [
             subst_config,
             site_config,
-            rng_config,
             analysis_config,
             ert_workflow_list,
             hook_manager,
@@ -657,10 +655,6 @@ class ResConfig(BaseCClass):
         return self._ert_workflow_list()
 
     @property
-    def rng_config(self):
-        return self._rng_config()
-
-    @property
     def ert_templates(self):
         return self._templates
 
@@ -673,7 +667,7 @@ class ResConfig(BaseCClass):
         config_eqs = (
             (self.subst_config == other.subst_config),
             (self.site_config == other.site_config),
-            (self.rng_config == other.rng_config),
+            (self.random_seed == other.random_seed),
             (self.analysis_config == other.analysis_config),
             (self.ert_workflow_list == other.ert_workflow_list),
             (self.hook_manager == other.hook_manager),

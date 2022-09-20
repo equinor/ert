@@ -333,8 +333,7 @@ def test_extensive_config(setup_case):
             == Path(job.executable()).resolve()
         )
 
-    rng_config = res_config.rng_config
-    assert snake_oil_structure_config["RNG_ALG_TYPE"] == rng_config.alg_type
+    assert snake_oil_structure_config["RNG_ALG_TYPE"] == RngAlgTypeEnum.MZRAN
 
 
 def test_res_config_dict_constructor(setup_case):
@@ -542,7 +541,7 @@ def test_res_config_dict_constructor(setup_case):
 
     assert res_config_file.subst_config == res_config_dict.subst_config
     assert res_config_file.site_config == res_config_dict.site_config
-    assert res_config_file.rng_config == res_config_dict.rng_config
+    assert res_config_file.random_seed == res_config_dict.random_seed
     assert res_config_file.ert_workflow_list == res_config_dict.ert_workflow_list
     assert res_config_file.hook_manager == res_config_dict.hook_manager
     assert res_config_file.ert_templates == res_config_dict.ert_templates

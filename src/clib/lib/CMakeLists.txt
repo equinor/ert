@@ -115,7 +115,6 @@ pybind11_add_module(
   enkf/obs_data.cpp
   enkf/obs_vector.cpp
   enkf/queue_config.cpp
-  enkf/rng_config.cpp
   enkf/run_arg.cpp
   enkf/site_config.cpp
   enkf/res_config.cpp
