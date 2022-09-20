@@ -5,7 +5,7 @@ from fastapi import FastAPI, Request, status
 from fastapi.openapi.docs import get_redoc_html, get_swagger_ui_html
 from fastapi.responses import HTMLResponse, RedirectResponse
 
-from ert.shared.dark_storage.endpoints import router as endpoints_router
+from ert.dark_storage.endpoints import router as endpoints_router
 
 app = FastAPI(
     title=ert_storage_app.title,
@@ -21,7 +21,8 @@ app = FastAPI(
 
 @app.on_event("startup")
 async def initialize_libres_facade() -> None:
-    from ert.shared.dark_storage.enkf import init_facade
+    # pylint: disable=import-outside-toplevel
+    from ert.dark_storage.enkf import init_facade
 
     init_facade()
 

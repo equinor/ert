@@ -7,12 +7,12 @@ from ert_storage import json_schema as js
 from fastapi import APIRouter, Body, Depends, File, Header, Request, UploadFile, status
 from fastapi.responses import Response
 
-from ert.shared.dark_storage.common import (
+from ert.dark_storage.common import (
     data_for_key,
     ensemble_parameters,
     observations_for_obs_keys,
 )
-from ert.shared.dark_storage.enkf import LibresFacade, get_id, get_name, get_res
+from ert.dark_storage.enkf import LibresFacade, get_id, get_name, get_res
 
 router = APIRouter(tags=["record"])
 

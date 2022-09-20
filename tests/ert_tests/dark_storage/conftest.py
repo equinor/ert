@@ -8,9 +8,9 @@ import py
 import pytest
 from starlette.testclient import TestClient
 
+from ert.dark_storage import enkf
 from ert.shared.cli import ENSEMBLE_SMOOTHER_MODE
 from ert.shared.cli.main import run_cli
-from ert.shared.dark_storage import enkf
 from ert.shared.main import ert_parser
 
 
@@ -143,7 +143,7 @@ def dark_storage_app_(monkeypatch):
     monkeypatch.setenv("ERT_STORAGE_NO_TOKEN", "yup")
     monkeypatch.setenv("ERT_STORAGE_RES_CONFIG", "poly.ert")
     monkeypatch.setenv("ERT_STORAGE_DATABASE_URL", "sqlite://")
-    from ert.shared.dark_storage.app import app
+    from ert.dark_storage.app import app
 
     yield app
     reset_enkf()
