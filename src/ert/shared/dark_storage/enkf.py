@@ -31,21 +31,21 @@ def init_facade() -> None:
     _libres_facade = LibresFacade(_ert)
 
 
-def get_id(type, name):
-    if type not in ids:
-        ids[type] = {}
-    if name not in ids[type]:
-        ids[type][name] = uuid.uuid4()
-    return ids[type][name]
+def get_id(type_key, name):
+    if type_key not in ids:
+        ids[type_key] = {}
+    if name not in ids[type_key]:
+        ids[type_key][name] = uuid.uuid4()
+    return ids[type_key][name]
 
 
-def get_name(type, uuid):
-    if type not in ids:
-        ids[type] = {}
-    for name, id in ids[type].items():
-        if str(id) == str(uuid):
+def get_name(type_key, type_uuid):
+    if type_key not in ids:
+        ids[type_key] = {}
+    for name, name_id in ids[type_key].items():
+        if str(name_id) == str(type_uuid):
             return name
-    raise ValueError(f"No such uuid for type {type}")
+    raise ValueError(f"No such uuid for type {type_key}")
 
 
 def get_res(*, _: None = Depends(security)) -> LibresFacade:
