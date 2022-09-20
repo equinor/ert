@@ -338,7 +338,9 @@ def test_extensive_config(setup_case):
 
 
 def test_res_config_dict_constructor(setup_case):
-    _ = setup_case("local/snake_oil_structure", "ert/model/user_config.ert")
+    config_file_name = "user_config.ert"
+    relative_config_path = f"ert/model/{config_file_name}"
+    _ = setup_case("local/snake_oil_structure", relative_config_path)
     # create script file
     script_file = "script.sh"
     with open(script_file, "w") as f:
@@ -348,7 +350,7 @@ def test_res_config_dict_constructor(setup_case):
     os.chmod(script_file, stat.S_IEXEC | st.st_mode)
 
     # split config_file to path and filename
-    cfg_path, cfg_file = os.path.split(os.path.realpath("ert/model/user_config.ert"))
+    absolute_config_dir, _ = os.path.split(os.path.realpath(relative_config_path))
 
     config_data_new = {
         ConfigKeys.ALPHA_KEY: 3,
@@ -498,16 +500,16 @@ def test_res_config_dict_constructor(setup_case):
                     config_data_new[ConfigKeys.DEFINE_KEY].get(define_key),
                 )
 
-    # change dir to actual location of cfg_file
-    os.chdir(cfg_path)
+    # change dir to actual location of config file
+    os.chdir(absolute_config_dir)
 
     # add missing entries to config file
-    with open(cfg_file, "a+") as ert_file:
+    with open(config_file_name, "a+") as ert_file:
         ert_file.write("JOB_SCRIPT ../../../script.sh\n")
         ert_file.write("NUM_CPU 0\n")
 
     # load res_file
-    res_config_file = ResConfig(user_config_file=cfg_file)
+    res_config_file = ResConfig(user_config_file=config_file_name)
 
     # get site_config location
     ert_share_path = os.path.dirname(res_config_file.site_config.getLocation())
@@ -515,7 +517,7 @@ def test_res_config_dict_constructor(setup_case):
     # update dictionary
     # commit missing entries, this should be updated and validated in
     # configsuite instead
-    config_data_new[ConfigKeys.CONFIG_FILE_KEY] = cfg_file
+    config_data_new[ConfigKeys.CONFIG_FILE_KEY] = config_file_name
     config_data_new[ConfigKeys.INSTALL_JOB_DIRECTORY] = [
         ert_share_path + "/forward-models/res",
         ert_share_path + "/forward-models/shell",
