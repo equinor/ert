@@ -347,11 +347,6 @@ def test_res_config_dict_constructor(setup_case):
     st = os.stat(script_file)
     os.chmod(script_file, stat.S_IEXEC | st.st_mode)
 
-    # add a missing entries to config file
-    with open("user_config.ert", "a+") as ert_file:
-        ert_file.write("JOB_SCRIPT ../../../script.sh\n")
-        ert_file.write("NUM_CPU 0\n")
-
     # split config_file to path and filename
     cfg_path, cfg_file = os.path.split(os.path.realpath("ert/model/user_config.ert"))
 
@@ -505,6 +500,11 @@ def test_res_config_dict_constructor(setup_case):
 
     # change dir to actual location of cfg_file
     os.chdir(cfg_path)
+
+    # add missing entries to config file
+    with open(cfg_file, "a+") as ert_file:
+        ert_file.write("JOB_SCRIPT ../../../script.sh\n")
+        ert_file.write("NUM_CPU 0\n")
 
     # load res_file
     res_config_file = ResConfig(user_config_file=cfg_file)
