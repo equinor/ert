@@ -354,10 +354,6 @@ int meas_data_get_active_obs_size(const meas_data_type *matrix) {
     return obs_size;
 }
 
-/*
-  Observe that this can return NULL is there is no data/observations.
-*/
-
 Eigen::MatrixXd meas_data_makeS(const meas_data_type *matrix) {
     int obs_offset = 0;
     Eigen::MatrixXd S = Eigen::MatrixXd::Zero(
