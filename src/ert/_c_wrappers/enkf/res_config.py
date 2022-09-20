@@ -248,11 +248,9 @@ class ResConfig(BaseCClass):
 
     # build configs from config dict
     def _alloc_from_dict(self, config_dict):
-        # treat the default config dir
-        config_dir = os.getcwd()
-        if ConfigKeys.CONFIG_DIRECTORY in config_dict:
-            config_dir = config_dict[ConfigKeys.CONFIG_DIRECTORY]
-        config_dict[ConfigKeys.CONFIG_DIRECTORY] = config_dir
+        # default config dir is os.getcwd()
+        if ConfigKeys.CONFIG_DIRECTORY not in config_dict:
+            config_dict[ConfigKeys.CONFIG_DIRECTORY] = os.getcwd()
 
         subst_config = SubstConfig(config_dict=config_dict)
         site_config = SiteConfig(config_dict=config_dict)
@@ -301,6 +299,7 @@ class ResConfig(BaseCClass):
             config_dict=config_dict,
         )
 
+        config_dir = config_dict[ConfigKeys.CONFIG_DIRECTORY]
         model_config = ModelConfig(
             data_root=config_dir,
             joblist=site_config.get_installed_jobs(),
