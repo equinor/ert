@@ -9,7 +9,7 @@ import pandas as pd
 import requests
 from pandas.errors import ParserError
 
-from ert.shared.services import Storage
+from ert.services import Storage
 
 logger = logging.getLogger(__name__)
 

@@ -1,7 +1,7 @@
 import sys
 from typing import Any
 
-from ert.shared.services._base_service import BaseService
+from ert.services._base_service import BaseService
 
 
 class WebvizErt(BaseService):

@@ -39,7 +39,7 @@ from ert.gui.tools.plugins import PluginHandler, PluginsTool
 from ert.gui.tools.run_analysis import RunAnalysisTool
 from ert.gui.tools.workflows import WorkflowsTool
 from ert.libres_facade import LibresFacade
-from ert.shared.services import Storage
+from ert.services import Storage
 
 
 def run_gui(args):

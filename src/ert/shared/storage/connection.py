@@ -1,7 +1,7 @@
 import os
 from typing import Optional
 
-from ert.shared.services import Storage
+from ert.services import Storage
 
 
 def get_info(project_id: Optional[os.PathLike] = None):

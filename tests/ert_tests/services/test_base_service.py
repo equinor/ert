@@ -9,7 +9,7 @@ from textwrap import dedent
 
 import pytest
 
-from ert.shared.services._base_service import (
+from ert.services._base_service import (
     SERVICE_CONF_PATHS,
     BaseService,
     ServerBootFail,
