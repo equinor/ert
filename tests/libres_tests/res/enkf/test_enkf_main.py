@@ -329,7 +329,7 @@ def test_random_seed_initialization_of_rngs(random_seed, tmpdir):
 
         res_config = ResConfig("config.ert")
         EnKFMain(res_config)
-        assert res_config.rng_config.random_seed == str(random_seed)
+        assert res_config.random_seed == str(random_seed)
 
 
 def test_failed_realizations(setup_case):

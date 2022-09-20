@@ -27,7 +27,6 @@
 #include <ert/enkf/ert_workflow_list.hpp>
 #include <ert/enkf/hook_manager.hpp>
 #include <ert/enkf/model_config.hpp>
-#include <ert/enkf/rng_config.hpp>
 #include <ert/enkf/site_config.hpp>
 #include <ert/enkf/subst_config.hpp>
 
@@ -37,8 +36,7 @@ extern "C" void
 res_config_init_config_parser(config_parser_type *config_parser);
 extern "C" PY_USED res_config_type *res_config_alloc_full(
     char *config_dir, char *user_config_file, subst_config_type *subst_config,
-    site_config_type *site_config, rng_config_type *rng_config,
-    analysis_config_type *analysis_config,
+    site_config_type *site_config, analysis_config_type *analysis_config,
     ert_workflow_list_type *workflow_list, hook_manager_type *hook_manager,
     ecl_config_type *ecl_config, ensemble_config_type *ensemble_config,
     model_config_type *model_config, queue_config_type *queue_config);
@@ -49,7 +47,6 @@ res_config_alloc_user_content(const char *user_config_file,
                               config_parser_type *config_parser);
 extern "C" const site_config_type *
 res_config_get_site_config(const res_config_type *);
-extern "C" rng_config_type *res_config_get_rng_config(const res_config_type *);
 extern "C" const analysis_config_type *
 res_config_get_analysis_config(const res_config_type *);
 extern "C" ert_workflow_list_type *

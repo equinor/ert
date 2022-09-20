@@ -55,7 +55,6 @@ from .node_id import NodeId
 from .observations import BlockDataConfig, GenObservation, ObsVector, SummaryObservation
 from .queue_config import QueueConfig
 from .res_config import ResConfig
-from .rng_config import RNGConfig
 from .row_scaling import RowScaling
 from .run_arg import RunArg
 from .site_config import SiteConfig
@@ -112,7 +111,6 @@ __all__ = [
     "ModelConfig",
     "HookWorkflow",
     "HookManager",
-    "RNGConfig",
     "ResConfig",
     "RunArg",
     "RunContext",

@@ -13,7 +13,6 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
-import logging
 import os
 import re
 import struct
@@ -41,7 +40,6 @@ from ert._c_wrappers.enkf.key_manager import KeyManager
 from ert._c_wrappers.enkf.model_config import ModelConfig
 from ert._c_wrappers.enkf.node_id import NodeId
 from ert._c_wrappers.enkf.queue_config import QueueConfig
-from ert._c_wrappers.enkf.rng_config import format_seed, log_seed
 from ert._c_wrappers.enkf.runpaths import Runpaths
 from ert._c_wrappers.enkf.site_config import SiteConfig
 from ert._c_wrappers.enkf.substituter import Substituter
@@ -73,6 +71,22 @@ def _forward_rng(rng):
     byte, creating a byte string of length 16.
     """
     return b"".join(struct.pack("I", (rng.forward())) for _ in range(4))
+
+
+def format_seed(random_seed: str):
+    state_size = 4
+    state_digits = 10
+    fseed = [0] * state_size
+    seed_pos = 0
+    for i in range(state_size):
+        for _ in range(state_digits):
+            fseed[i] *= 10
+            fseed[i] += ord(random_seed[seed_pos]) - ord("0")
+            seed_pos = (seed_pos + 1) % len(random_seed)
+
+    # The function this was derived from had integer overflow, so we
+    # allow for the same here
+    return b"".join(struct.pack("I", x % (2**32)) for x in fseed)
 
 
 class EnKFMain(BaseCClass):
@@ -127,14 +141,14 @@ class EnKFMain(BaseCClass):
         self.storage = fs
         global_rng = RandomNumberGenerator()
         self._shared_rng = RandomNumberGenerator(init_mode=RngInitModeEnum.INIT_DEFAULT)
-        random_seed = self.resConfig().rng_config.random_seed
+        random_seed = self.resConfig().random_seed
         if random_seed:
             global_rng.setState(format_seed(random_seed))
             self._shared_rng.setState(format_seed(random_seed))
             self._shared_rng.setState(_forward_rng(self._shared_rng))
             self._shared_rng.setState(_forward_rng(self._shared_rng))
         else:
-            log_seed(global_rng)
+            enkf_main.log_seed(global_rng)
         self.realizations = [
             RandomNumberGenerator(init_mode=RngInitModeEnum.INIT_DEFAULT)
             for _ in range(self.getEnsembleSize())

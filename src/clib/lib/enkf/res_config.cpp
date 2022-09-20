@@ -30,7 +30,6 @@ struct res_config_struct {
     char *config_dir;
 
     site_config_type *site_config;
-    rng_config_type *rng_config;
     analysis_config_type *analysis_config;
     ert_workflow_list_type *workflow_list;
     subst_config_type *subst_config;
@@ -50,7 +49,6 @@ static res_config_type *res_config_alloc_empty() {
     res_config->config_dir = NULL;
 
     res_config->site_config = NULL;
-    res_config->rng_config = NULL;
     res_config->analysis_config = NULL;
     res_config->workflow_list = NULL;
     res_config->subst_config = NULL;
@@ -133,8 +131,7 @@ res_config_alloc_user_content(const char *user_config_file,
 
 res_config_type *res_config_alloc_full(
     char *config_dir, char *user_config_file, subst_config_type *subst_config,
-    site_config_type *site_config, rng_config_type *rng_config,
-    analysis_config_type *analysis_config,
+    site_config_type *site_config, analysis_config_type *analysis_config,
     ert_workflow_list_type *workflow_list, hook_manager_type *hook_manager,
     ecl_config_type *ecl_config, ensemble_config_type *ensemble_config,
     model_config_type *model_config, queue_config_type *queue_config) {
@@ -144,7 +141,6 @@ res_config_type *res_config_alloc_full(
     res_config->config_dir = util_alloc_string_copy(config_dir);
     res_config->subst_config = subst_config;
     res_config->site_config = site_config;
-    res_config->rng_config = rng_config;
     res_config->analysis_config = analysis_config;
     res_config->workflow_list = workflow_list;
     res_config->hook_manager = hook_manager;
@@ -160,7 +156,6 @@ void res_config_free(res_config_type *res_config) {
         return;
 
     site_config_free(res_config->site_config);
-    rng_config_free(res_config->rng_config);
     analysis_config_free(res_config->analysis_config);
     ert_workflow_list_free(res_config->workflow_list);
     subst_config_free(res_config->subst_config);
@@ -178,10 +173,6 @@ void res_config_free(res_config_type *res_config) {
 const site_config_type *
 res_config_get_site_config(const res_config_type *res_config) {
     return res_config->site_config;
-}
-
-rng_config_type *res_config_get_rng_config(const res_config_type *res_config) {
-    return res_config->rng_config;
 }
 
 const analysis_config_type *
