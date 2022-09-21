@@ -8,6 +8,7 @@
 #include <ert/analysis/update.hpp>
 #include <ert/enkf/enkf_analysis.hpp>
 #include <ert/enkf/enkf_config_node.hpp>
+#include <ert/enkf/enkf_obs.hpp>
 #include <ert/enkf/meas_data.hpp>
 #include <ert/enkf/obs_data.hpp>
 #include <ert/except.hpp>

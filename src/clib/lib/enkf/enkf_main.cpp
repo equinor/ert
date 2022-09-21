@@ -41,7 +41,6 @@
 #include <ert/enkf/enkf_analysis.hpp>
 #include <ert/enkf/enkf_config_node.hpp>
 #include <ert/enkf/enkf_defaults.hpp>
-#include <ert/enkf/enkf_main.hpp>
 #include <ert/enkf/enkf_obs.hpp>
 #include <ert/enkf/enkf_state.hpp>
 #include <ert/enkf/enkf_types.hpp>
@@ -53,49 +52,6 @@
 static auto logger = ert::get_logger("enkf");
 
 namespace fs = std::filesystem;
-
-#define ENKF_MAIN_ID 8301
-
-struct enkf_main_struct {
-    UTIL_TYPE_ID_DECLARATION;
-    /** The internalized information. */
-
-    enkf_obs_type *obs;
-};
-
-UTIL_SAFE_CAST_FUNCTION(enkf_main, ENKF_MAIN_ID)
-UTIL_IS_INSTANCE_FUNCTION(enkf_main, ENKF_MAIN_ID)
-
-enkf_obs_type *enkf_main_get_obs(const enkf_main_type *enkf_main) {
-    return enkf_main->obs;
-}
-
-bool enkf_main_have_obs(const enkf_main_type *enkf_main) {
-    return enkf_obs_have_obs(enkf_main->obs);
-}
-
-void enkf_main_free(enkf_main_type *enkf_main) {
-
-    if (enkf_main->obs)
-        enkf_obs_free(enkf_main->obs);
-
-    delete enkf_main;
-}
-
-void enkf_main_install_SIGNALS(void) { util_install_signals(); }
-
-std::vector<std::string> get_observation_keys(py::object self) {
-    auto enkf_main = ert::from_cwrap<enkf_main_type>(self);
-    std::vector<std::string> observations;
-
-    hash_iter_type *obs_iter = enkf_obs_alloc_iter(enkf_main->obs);
-    while (!hash_iter_is_complete(obs_iter)) {
-        const char *obs_key = hash_iter_get_next_key(obs_iter);
-        observations.push_back(obs_key);
-    }
-    hash_iter_free(obs_iter);
-    return observations;
-}
 
 namespace enkf_main {
 /**
@@ -203,30 +159,6 @@ static void enkf_main_copy_ensemble(const ensemble_config_type *ensemble_config,
     }
 }
 
-enkf_main_type *enkf_main_alloc(model_config_type *model_config,
-                                ecl_config_type *ecl_config,
-                                ensemble_config_type *ensemble_config,
-                                analysis_config_type *analysis_config,
-                                bool read_only) {
-
-    enkf_main_type *enkf_main = new enkf_main_type;
-    UTIL_TYPE_ID_INIT(enkf_main, ENKF_MAIN_ID);
-
-    // Init observations
-    auto obs = enkf_obs_alloc(model_config_get_history_source(model_config),
-                              model_config_get_external_time_map(model_config),
-                              ecl_config_get_grid(ecl_config),
-                              ecl_config_get_refcase(ecl_config), ensemble_config);
-    const char *obs_config_file =
-        model_config_get_obs_config_file(model_config);
-    if (obs_config_file)
-        enkf_obs_load(obs, obs_config_file,
-                      analysis_config_get_std_cutoff(analysis_config));
-    enkf_main->obs = obs;
-
-    return enkf_main;
-}
-
 ERT_CLIB_SUBMODULE("enkf_main", m) {
     using namespace py::literals;
     m.def(
@@ -246,7 +178,6 @@ ERT_CLIB_SUBMODULE("enkf_main", m) {
         py::arg("self"), py::arg("source_case"), py::arg("current_case"),
         py::arg("source_report_step"), py::arg("node_list"),
         py::arg("iactive"));
-    m.def("get_observation_keys", get_observation_keys);
     m.def(
         "init_active_run",
         [](py::object model_config, py::object ensemble_config,

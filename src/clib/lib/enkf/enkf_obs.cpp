@@ -206,7 +206,7 @@ enkf_obs_type *enkf_obs_alloc(const history_source_type history,
 
     /* Initialize obs time: */
     {
-        if (enkf_obs->history) {
+        if (enkf_obs->refcase) {
             int last_report = ecl_sum_get_last_report_step(refcase);
             int step;
             for (step = 0; step <= last_report; step++) {
@@ -234,13 +234,6 @@ enkf_obs_type *enkf_obs_alloc(const history_source_type history,
     }
 
     return enkf_obs;
-}
-
-bool enkf_obs_have_obs(const enkf_obs_type *enkf_obs) {
-    if (vector_get_size(enkf_obs->obs_vector) > 0)
-        return true;
-    else
-        return false;
 }
 
 bool enkf_obs_is_valid(const enkf_obs_type *obs) { return obs->valid; }

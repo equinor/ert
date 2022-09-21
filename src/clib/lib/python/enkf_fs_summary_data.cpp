@@ -1,4 +1,5 @@
-#include <ert/enkf/enkf_main.hpp>
+
+#include <ert/enkf/enkf_plot_data.hpp>
 #include <ert/python.hpp>
 #include <pybind11/numpy.h>
 #include <pybind11/pybind11.h>

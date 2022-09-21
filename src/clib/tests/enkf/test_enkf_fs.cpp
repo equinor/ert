@@ -32,8 +32,8 @@ TEST_CASE("enkf_fs_fwrite_misfit", "[enkf_fs]") {
             auto misfit_ensemble = enkf_fs_get_misfit_ensemble(fs);
             auto ensemble_config =
                 ensemble_config_alloc_full("name-not-important");
-            auto enkf_obs =
-                enkf_obs_alloc(nullptr, nullptr, nullptr, nullptr, nullptr);
+            auto enkf_obs = enkf_obs_alloc(HISTORY_SOURCE_INVALID, nullptr,
+                                           nullptr, nullptr, nullptr);
             int ens_size = 1;
             int history_length = 1;
             misfit_ensemble_initialize(misfit_ensemble, ensemble_config,
