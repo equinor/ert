@@ -541,7 +541,9 @@ class EnKFMain(BaseCClass):
                     target.write_text(result)
 
                 enkf_main.init_active_run(
-                    res_config=self.resConfig(),
+                    res_config=self.resConfig().model_config,
+                    res_config=self.resConfig().ensemble_config,
+                    res_config=self.resConfig().site_config,
                     run_path=run_arg.runpath,
                     iens=run_arg.iens,
                     sim_fs=run_arg.sim_fs,
