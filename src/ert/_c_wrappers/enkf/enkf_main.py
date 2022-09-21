@@ -338,13 +338,13 @@ class EnKFMain(BaseCClass):
         return self._ensemble_size
 
     def ensembleConfig(self) -> EnsembleConfig:
-        return self.resConfig().ensemble_config.setParent(self)
+        return self.resConfig().ensemble_config
 
     def analysisConfig(self) -> AnalysisConfig:
-        return self.resConfig().analysis_config.setParent(self)
+        return self.resConfig().analysis_config
 
     def getModelConfig(self) -> ModelConfig:
-        return self.config_file.model_config.setParent(self)
+        return self.config_file.model_config
 
     def siteConfig(self) -> SiteConfig:
         return self.config_file.site_config

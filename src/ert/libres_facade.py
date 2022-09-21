@@ -70,7 +70,7 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
         return self._enkf_main.resConfig().model_config.getEnspath()
 
     @property
-    def user_config_file(self) -> str:
+    def user_config_file(self) -> Optional[str]:
         return self._enkf_main.resConfig().user_config_file
 
     @property
