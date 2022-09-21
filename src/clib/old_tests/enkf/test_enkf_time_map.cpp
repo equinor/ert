@@ -28,7 +28,6 @@
 #include <ert/ecl/ecl_sum.h>
 
 #include <ert/enkf/enkf_fs.hpp>
-#include <ert/enkf/enkf_main.hpp>
 #include <ert/enkf/time_map.hpp>
 
 void ecl_test(const char *ecl_case) {
@@ -311,7 +310,7 @@ void test_read_only() {
 
 int main(int argc, char **argv) {
 
-    enkf_main_install_SIGNALS();
+    util_install_signals();
 
     if (argc == 1) {
         simple_test();

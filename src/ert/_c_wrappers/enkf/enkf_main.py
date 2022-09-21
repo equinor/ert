@@ -19,11 +19,9 @@ import struct
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, List, Union
 
-from cwrap import BaseCClass
 from ecl.util.enums import RngInitModeEnum
 from ecl.util.util import RandomNumberGenerator
 
-from ert._c_wrappers import ResPrototype
 from ert._c_wrappers.analysis.configuration import UpdateConfiguration
 from ert._c_wrappers.enkf.analysis_config import AnalysisConfig
 from ert._c_wrappers.enkf.data import EnkfNode
@@ -89,20 +87,7 @@ def format_seed(random_seed: str):
     return b"".join(struct.pack("I", x % (2**32)) for x in fseed)
 
 
-class EnKFMain(BaseCClass):
-    """Access to the C EnKFMain interface."""
-
-    TYPE_NAME = "enkf_main"
-
-    _alloc = ResPrototype(
-        "void* enkf_main_alloc(model_config, ecl_config,"
-        " ens_config, analysis_config, bool)",
-        bind=False,
-    )
-    _free = ResPrototype("void enkf_main_free(enkf_main)")
-    _get_obs = ResPrototype("enkf_obs_ref enkf_main_get_obs(enkf_main)")
-    _have_observations = ResPrototype("bool enkf_main_have_obs(enkf_main)")
-
+class EnKFMain:
     def __init__(self, config: "ResConfig", read_only: bool = False):
         self.config_file = config
         self.update_snapshots = {}
@@ -111,18 +96,18 @@ class EnKFMain(BaseCClass):
             raise TypeError(
                 "Failed to construct EnKFMain instance due to invalid res_config."
             )
-        c_ptr = self._alloc(
-            config.model_config,
-            config.ecl_config,
+
+        self._observations = EnkfObs(
+            config.model_config.get_history_source(),
+            config.model_config.get_time_map(),
+            config.ecl_config.getGrid(),
+            config.ecl_config.getRefcase(),
             config.ensemble_config,
-            config.analysis_config,
-            read_only,
         )
-        if c_ptr:
-            super().__init__(c_ptr)
-        else:
-            raise ValueError(
-                f"Failed to construct EnKFMain instance from config {config}."
+        if config.model_config.obs_config_file:
+            self._observations.load(
+                config.model_config.obs_config_file,
+                config.analysis_config.getStdCutoff(),
             )
         self._ensemble_size = self.config_file.model_config.num_realizations
         self.__key_manager = KeyManager(self)
@@ -188,7 +173,7 @@ class EnKFMain(BaseCClass):
 
     @property
     def _observation_keys(self):
-        return enkf_main.get_observation_keys(self)
+        return list(self._observations.getMatchingKeys("*"))
 
     @property
     def _parameter_keys(self):
@@ -326,13 +311,8 @@ class EnKFMain(BaseCClass):
     def get_queue_config(self) -> QueueConfig:
         return self.resConfig().queue_config
 
-    def free(self):
-        self._free()
-
     def __repr__(self):
-        ens = self.getEnsembleSize()
-        cnt = f"ensemble_size = {ens}, config_file = {self.config_file}"
-        return self._create_repr(cnt)
+        return f"EnKFMain(size: {self.getEnsembleSize()}, config: {self.config_file})"
 
     def getEnsembleSize(self) -> int:
         return self._ensemble_size
@@ -371,10 +351,10 @@ class EnKFMain(BaseCClass):
         return self.resConfig().model_config.getEnspath()
 
     def getObservations(self) -> EnkfObs:
-        return self._get_obs().setParent(self)
+        return self._observations
 
     def have_observations(self) -> bool:
-        return self._have_observations()
+        return len(self._observations) > 0
 
     def getHistoryLength(self) -> int:
         return self.resConfig().model_config.get_last_history_restart()

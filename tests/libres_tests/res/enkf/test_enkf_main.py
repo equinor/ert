@@ -190,7 +190,7 @@ def test_assert_symlink_deleted(snake_oil_field_example):
 
 
 def test_repr(minimum_case):
-    assert repr(minimum_case).startswith("EnKFMain(ensemble_size")
+    assert repr(minimum_case).startswith("EnKFMain(size: 10, config")
 
 
 def test_bootstrap(minimum_case):

@@ -26,9 +26,15 @@ from ert._c_wrappers.enkf.observations import ObsVector
 class EnkfObs(BaseCClass):
     TYPE_NAME = "enkf_obs"
 
+    _alloc = ResPrototype(
+        "void* enkf_obs_alloc(history_source_enum, time_map, ecl_grid, \
+                                        ecl_sum, ens_config)",
+        bind=False,
+    )
+    _free = ResPrototype("void enkf_obs_free(enkf_obs)")
     _get_size = ResPrototype("int enkf_obs_get_size( enkf_obs )")
     _valid = ResPrototype("bool enkf_obs_is_valid(enkf_obs)")
-
+    _load = ResPrototype("void enkf_obs_load(enkf_obs, char*, double)")
     _clear = ResPrototype("void enkf_obs_clear( enkf_obs )")
     _alloc_typed_keylist = ResPrototype(
         "stringlist_obj enkf_obs_alloc_typed_keylist(enkf_obs, enkf_obs_impl_type)"
@@ -42,6 +48,13 @@ class EnkfObs(BaseCClass):
     _iget_vector = ResPrototype("obs_vector_ref enkf_obs_iget_vector(enkf_obs, int)")
     _iget_obs_time = ResPrototype("time_t enkf_obs_iget_obs_time(enkf_obs, int)")
     _add_obs_vector = ResPrototype("void enkf_obs_add_obs_vector(enkf_obs, obs_vector)")
+
+    def __init__(self, history_type, time_map, grid, refcase, ensemble_config):
+        c_ptr = self._alloc(history_type, time_map, grid, refcase, ensemble_config)
+        if c_ptr:
+            super().__init__(c_ptr)
+        else:
+            raise ValueError("Failed to construct EnkfObs")
 
     def __len__(self):
         return self._get_size()
@@ -118,6 +131,12 @@ class EnkfObs(BaseCClass):
         observation_vector.convertToCReference(self)
 
         self._add_obs_vector(observation_vector)
+
+    def free(self):
+        self._free()
+
+    def load(self, config_file, std_cutoff):
+        self._load(config_file, std_cutoff)
 
     @property
     def valid(self):

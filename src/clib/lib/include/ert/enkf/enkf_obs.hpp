@@ -37,14 +37,13 @@
 #include <ert/enkf/obs_vector.hpp>
 #include <ert/enkf/time_map.hpp>
 
-bool enkf_obs_have_obs(const enkf_obs_type *enkf_obs);
 extern "C" bool enkf_obs_is_valid(const enkf_obs_type *);
 
-enkf_obs_type *enkf_obs_alloc(const history_source_type history,
-                              time_map_type *external_time_map,
-                              const ecl_grid_type *grid,
-                              const ecl_sum_type *refcase,
-                              ensemble_config_type *ensemble_config);
+extern "C" enkf_obs_type *enkf_obs_alloc(const history_source_type history,
+                                         time_map_type *external_time_map,
+                                         const ecl_grid_type *grid,
+                                         const ecl_sum_type *refcase,
+                                         ensemble_config_type *ensemble_config);
 
 extern "C" void enkf_obs_free(enkf_obs_type *enkf_obs);
 
@@ -55,7 +54,7 @@ extern "C" obs_vector_type *enkf_obs_get_vector(const enkf_obs_type *,
 extern "C" void enkf_obs_add_obs_vector(enkf_obs_type *enkf_obs,
                                         const obs_vector_type *vector);
 
-void enkf_obs_load(enkf_obs_type *, const char *, double);
+extern "C" void enkf_obs_load(enkf_obs_type *, const char *, double);
 extern "C" void enkf_obs_clear(enkf_obs_type *enkf_obs);
 extern "C" obs_impl_type enkf_obs_get_type(const enkf_obs_type *enkf_obs,
                                            const char *key);

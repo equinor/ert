@@ -91,7 +91,7 @@ class ModelConfig(BaseCClass):
     )
     _get_data_root = ResPrototype("char* model_config_get_data_root(model_config)")
     _get_time_map = ResPrototype(
-        "void model_config_get_external_time_map(model_config)"
+        "time_map_ref model_config_get_external_time_map(model_config)"
     )
     _get_last_history_restart = ResPrototype(
         "int model_config_get_last_history_restart(model_config)"

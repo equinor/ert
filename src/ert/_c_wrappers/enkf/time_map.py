@@ -71,6 +71,9 @@ class TimeMap(BaseCClass):
         else:
             raise IOError((errno.ENOENT, f"File not found: {filename}"))
 
+    def __eq__(self, other):
+        return list(self) == list(other)
+
     def getSimulationDays(self, step):
         """@rtype: double"""
         if not isinstance(step, int):
