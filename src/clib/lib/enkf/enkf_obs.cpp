@@ -168,9 +168,7 @@ struct enkf_obs_struct {
 
     bool valid;
     /* Several shared resources - can generally be NULL*/
-    /** A shared (not owned by enkf_obs) reference to the history object - used
-     * when adding HISTORY observations. */
-    const history_type *history;
+    history_source_type history;
     const ecl_sum_type *refcase;
     const ecl_grid_type *grid;
     time_map_type *external_time_map;
@@ -188,7 +186,7 @@ static int enkf_obs_get_last_restart(const enkf_obs_type *enkf_obs) {
 
 UTIL_IS_INSTANCE_FUNCTION(enkf_obs, ENKF_OBS_TYPE_ID)
 
-enkf_obs_type *enkf_obs_alloc(const history_type *history,
+enkf_obs_type *enkf_obs_alloc(const history_source_type history,
                               time_map_type *external_time_map,
                               const ecl_grid_type *grid,
                               const ecl_sum_type *refcase,
@@ -209,11 +207,14 @@ enkf_obs_type *enkf_obs_alloc(const history_type *history,
     /* Initialize obs time: */
     {
         if (enkf_obs->history) {
-            int last_report = history_get_last_restart(enkf_obs->history);
+            int last_report = ecl_sum_get_last_report_step(refcase);
             int step;
             for (step = 0; step <= last_report; step++) {
-                time_t obs_time =
-                    history_get_time_t_from_restart_nr(enkf_obs->history, step);
+                time_t obs_time;
+                if (step == 0)
+                    obs_time = ecl_sum_get_start_time(refcase);
+                else
+                    obs_time = ecl_sum_get_report_time(refcase, step);
                 enkf_obs_iset_obs_time(enkf_obs, step, obs_time);
             }
             enkf_obs->valid = true;
@@ -503,7 +504,8 @@ static void handle_history_observation(enkf_obs_type *enkf_obs,
         if (obs_vector != NULL) {
             if (obs_vector_load_from_HISTORY_OBSERVATION(
                     obs_vector, hist_obs_conf, enkf_obs->obs_time,
-                    enkf_obs->history, enkf_obs->ensemble_config, std_cutoff)) {
+                    enkf_obs->history, enkf_obs->ensemble_config, std_cutoff,
+                    enkf_obs->refcase)) {
                 enkf_obs_add_obs_vector(enkf_obs, obs_vector);
             } else {
                 fprintf(stderr,

@@ -30,8 +30,6 @@
 #include <ert/job_queue/ext_joblist.hpp>
 #include <ert/job_queue/forward_model.hpp>
 
-#include <ert/sched/history.hpp>
-
 #include <ert/ecl/ecl_sum.h>
 
 #include <ert/res_util/path_fmt.hpp>
@@ -40,6 +38,15 @@
 #include <ert/enkf/enkf_types.hpp>
 #include <ert/enkf/fs_types.hpp>
 #include <ert/enkf/time_map.hpp>
+
+typedef enum {
+    SCHEDULE = 0,
+    /** ecl_sum_get_well_var( "WWCT" );  */
+    REFCASE_SIMULATED = 1,
+    /** ecl_sum_get_well_var( "WWCTH" ); */
+    REFCASE_HISTORY = 2,
+    HISTORY_SOURCE_INVALID = 10
+} history_source_type;
 
 typedef struct model_config_struct model_config_type;
 extern "C" const char *
@@ -75,7 +82,6 @@ extern "C" bool
 model_config_runpath_requires_iter(const model_config_type *model_config);
 extern "C" path_fmt_type *
 model_config_get_runpath_fmt(const model_config_type *);
-history_type *model_config_get_history(const model_config_type *);
 extern "C" forward_model_type *
 model_config_get_forward_model(const model_config_type *);
 void model_config_set_max_internal_submit(model_config_type *config,

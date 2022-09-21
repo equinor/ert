@@ -32,8 +32,6 @@
 #include <ert/util/util.h>
 #include <ert/util/vector.h>
 
-#include <ert/sched/history.hpp>
-
 #include <ert/config/conf.hpp>
 
 #include <ert/ecl/ecl_grid.h>
@@ -460,12 +458,68 @@ obs_vector_type *obs_vector_alloc_from_GENERAL_OBSERVATION(
     }
 }
 
+static bool history_init_ts(const history_source_type history,
+                            const char *summary_key, double_vector_type *value,
+                            bool_vector_type *valid,
+                            const ecl_sum_type *refcase) {
+    bool initOK = false;
+
+    double_vector_reset(value);
+    bool_vector_reset(valid);
+    bool_vector_set_default(valid, false);
+
+    char *local_key;
+    if (history == REFCASE_HISTORY) {
+        /* Must create a new key with 'H' for historical values. */
+        const ecl_smspec_type *smspec = ecl_sum_get_smspec(refcase);
+        const char *join_string = ecl_smspec_get_join_string(smspec);
+        ecl_smspec_var_type var_type =
+            ecl_smspec_identify_var_type(summary_key);
+
+        if ((var_type == ECL_SMSPEC_WELL_VAR) ||
+            (var_type == ECL_SMSPEC_GROUP_VAR))
+            local_key = util_alloc_sprintf(
+                "%sH%s%s", ecl_sum_get_keyword(refcase, summary_key),
+                join_string, ecl_sum_get_wgname(refcase, summary_key));
+        else if (var_type == ECL_SMSPEC_FIELD_VAR)
+            local_key = util_alloc_sprintf(
+                "%sH", ecl_sum_get_keyword(refcase, summary_key));
+        else
+            local_key =
+                NULL; // If we try to get historical values of e.g. Region quantities it will fail.
+    } else
+        local_key = (char *)summary_key;
+
+    if (local_key) {
+        if (ecl_sum_has_general_var(refcase, local_key)) {
+            for (int tstep = 0; tstep <= ecl_sum_get_last_report_step(refcase);
+                 tstep++) {
+                if (ecl_sum_has_report_step(refcase, tstep)) {
+                    int time_index = ecl_sum_iget_report_end(refcase, tstep);
+                    double_vector_iset(value, tstep,
+                                       ecl_sum_get_general_var(
+                                           refcase, time_index, local_key));
+                    bool_vector_iset(valid, tstep, true);
+                } else
+                    bool_vector_iset(valid, tstep,
+                                     false); /* Did not have this report step */
+            }
+            initOK = true;
+        }
+
+        if (history == REFCASE_HISTORY)
+            free(local_key);
+    }
+    return initOK;
+}
+
 // Should check the refcase for key - if it is != NULL.
 
 bool obs_vector_load_from_HISTORY_OBSERVATION(
     obs_vector_type *obs_vector, const conf_instance_type *conf_instance,
-    time_map_type *obs_time, const history_type *history,
-    ensemble_config_type *ensemble_config, double std_cutoff) {
+    time_map_type *obs_time, const history_source_type history,
+    ensemble_config_type *ensemble_config, double std_cutoff,
+    const ecl_sum_type *refcase) {
 
     if (!conf_instance_is_of_class(conf_instance, "HISTORY_OBSERVATION"))
         util_abort("%s: internal error. expected \"HISTORY_OBSERVATION\" "
@@ -487,9 +541,9 @@ bool obs_vector_load_from_HISTORY_OBSERVATION(
             conf_instance_get_item_value_ref(conf_instance, "ERROR_MODE");
         const char *sum_key = conf_instance_get_name_ref(conf_instance);
 
-        // Get time series data from history object and allocate
+        // Get time series data from refcase and allocate
         size = time_map_get_last_step(obs_time) + 1;
-        if (history_init_ts(history, sum_key, value, valid)) {
+        if (history_init_ts(history, sum_key, value, valid, refcase)) {
             // Create  the standard deviation vector
             if (strcmp(error_mode, "ABS") == 0) {
                 for (restart_nr = 0; restart_nr < size; restart_nr++)

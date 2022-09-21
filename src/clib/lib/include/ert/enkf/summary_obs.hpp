@@ -21,8 +21,6 @@
 
 #include <stdbool.h>
 
-#include <ert/sched/history.hpp>
-
 #include <ert/config/conf.hpp>
 
 #include <ert/enkf/active_list.hpp>

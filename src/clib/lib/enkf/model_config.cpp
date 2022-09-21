@@ -24,8 +24,6 @@
 #include <ert/util/hash.h>
 #include <ert/util/type_macros.h>
 
-#include <ert/sched/history.hpp>
-
 #include <ert/config/config_parser.hpp>
 
 #include <ert/job_queue/forward_model.hpp>
@@ -70,7 +68,7 @@ struct model_config_struct {
     forward_model_type *forward_model;
     time_map_type *external_time_map;
     /** The history object. */
-    history_type *history;
+    history_source_type history;
     /** path_fmt instance for runpath - runtime the call gets arguments: (iens,
      * report_step1 , report_step2) - i.e. at least one %d must be present.*/
     path_fmt_type *current_runpath;
@@ -204,21 +202,17 @@ void model_config_set_refcase(model_config_type *model_config,
 
 history_source_type
 model_config_get_history_source(const model_config_type *model_config) {
-    if (!model_config->history)
-        return HISTORY_SOURCE_INVALID;
-
-    return history_get_source(model_config->history);
+    return model_config->history;
 }
 
 void model_config_select_refcase_history(model_config_type *model_config,
                                          const ecl_sum_type *refcase,
                                          bool use_history) {
-    if (model_config->history != NULL)
-        history_free(model_config->history);
-
     if (refcase != NULL) {
-        model_config->history =
-            history_alloc_from_refcase(refcase, use_history);
+        if (use_history)
+            model_config->history = REFCASE_HISTORY;
+        else
+            model_config->history = REFCASE_SIMULATED;
     } else
         util_abort("%s: internal error - trying to load history from REFCASE - "
                    "but no REFCASE has been loaded.\n",
@@ -253,7 +247,7 @@ model_config_type *model_config_alloc_empty() {
     model_config->default_data_root = NULL;
     model_config->current_runpath = NULL;
     model_config->current_path_key = NULL;
-    model_config->history = NULL;
+    model_config->history = HISTORY_SOURCE_INVALID;
     model_config->jobname_fmt = NULL;
     model_config->forward_model = NULL;
     model_config->external_time_map = NULL;
@@ -408,12 +402,15 @@ void model_config_init(model_config_type *model_config,
         model_config_select_runpath(model_config, DEFAULT_RUNPATH_KEY);
     }
 
-    history_source_type source_type = DEFAULT_HISTORY_SOURCE;
+    history_source_type source_type = REFCASE_HISTORY;
 
     if (config_content_has_item(config, HISTORY_SOURCE_KEY)) {
         const char *history_source =
             config_content_iget(config, HISTORY_SOURCE_KEY, 0, 0);
-        source_type = history_get_source_type(history_source);
+        if (strcmp(history_source, "REFCASE_SIMULATED") == 0)
+            source_type = REFCASE_SIMULATED;
+        else if (strcmp(history_source, "REFCASE_HISTORY") == 0)
+            source_type = REFCASE_HISTORY;
     }
 
     if (!model_config_select_history(model_config, source_type, refcase))
@@ -503,9 +500,6 @@ void model_config_free(model_config_type *model_config) {
     free(model_config->data_root);
     free(model_config->default_data_root);
 
-    if (model_config->history)
-        history_free(model_config->history);
-
     if (model_config->forward_model)
         forward_model_free(model_config->forward_model);
 
@@ -517,14 +511,10 @@ void model_config_free(model_config_type *model_config) {
 }
 
 bool model_config_has_history(const model_config_type *config) {
-    if (config->history != NULL)
+    if (config->history != HISTORY_SOURCE_INVALID)
         return true;
     else
         return false;
-}
-
-history_type *model_config_get_history(const model_config_type *config) {
-    return config->history;
 }
 
 int model_config_get_num_realizations(const model_config_type *model_config) {
@@ -541,8 +531,8 @@ model_config_get_external_time_map(const model_config_type *config) {
 }
 
 int model_config_get_last_history_restart(const model_config_type *config) {
-    if (config->history)
-        return history_get_last_restart(config->history);
+    if (config->history != HISTORY_SOURCE_INVALID)
+        return ecl_sum_get_last_report_step(config->refcase);
     else {
         if (config->external_time_map)
             return time_map_get_last_step(config->external_time_map);
