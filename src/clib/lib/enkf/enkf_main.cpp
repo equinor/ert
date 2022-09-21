@@ -205,27 +205,26 @@ static void enkf_main_copy_ensemble(const ensemble_config_type *ensemble_config,
     }
 }
 
-enkf_main_type *enkf_main_alloc(const res_config_type *res_config,
+enkf_main_type *enkf_main_alloc(model_config_type *model_config,
+                                ecl_config_type *ecl_config,
+                                ensemble_config_type *ensemble_config,
+                                analysis_config_type *analysis_config,
                                 bool read_only) {
-    const ecl_config_type *ecl_config = res_config_get_ecl_config(res_config);
-    const model_config_type *model_config =
-        res_config_get_model_config(res_config);
 
     enkf_main_type *enkf_main = new enkf_main_type;
     UTIL_TYPE_ID_INIT(enkf_main, ENKF_MAIN_ID);
 
     // Init observations
-    auto obs = enkf_obs_alloc(model_config_get_history(model_config),
-                              model_config_get_external_time_map(model_config),
-                              ecl_config_get_grid(ecl_config),
-                              ecl_config_get_refcase(ecl_config),
-                              res_config_get_ensemble_config(res_config));
+    auto obs =
+        enkf_obs_alloc(model_config_get_history(model_config),
+                       model_config_get_external_time_map(model_config),
+                       ecl_config_get_grid(ecl_config),
+                       ecl_config_get_refcase(ecl_config), ensemble_config);
     const char *obs_config_file =
         model_config_get_obs_config_file(model_config);
     if (obs_config_file)
         enkf_obs_load(obs, obs_config_file,
-                      analysis_config_get_std_cutoff(
-                          res_config_get_analysis_config(res_config)));
+                      analysis_config_get_std_cutoff(analysis_config));
     enkf_main->obs = obs;
 
     return enkf_main;
@@ -263,7 +262,8 @@ ERT_CLIB_SUBMODULE("enkf_main", m) {
                 ert::from_cwrap<enkf_fs_type>(sim_fs), run_id, job_name,
                 ert::from_cwrap<subst_list_type>(subst_list));
         },
-        py::arg("model_config"),py::arg("ensemble_config"), py::arg("site_config"), py::arg("run_path"), py::arg("iens"),
+        py::arg("model_config"), py::arg("ensemble_config"),
+        py::arg("site_config"), py::arg("run_path"), py::arg("iens"),
         py::arg("sim_fs"), py::arg("run_id"), py::arg("job_name"),
         py::arg("subst_list"));
     m.def("log_seed", [](py::object rng_) {
