@@ -41,7 +41,6 @@
 #include <ert/enkf/enkf_util.hpp>
 #include <ert/enkf/ensemble_config.hpp>
 #include <ert/enkf/model_config.hpp>
-#include <ert/enkf/res_config.hpp>
 #include <ert/enkf/run_arg.hpp>
 #include <ert/enkf/site_config.hpp>
 
@@ -51,10 +50,6 @@ void enkf_state_initialize(rng_type *rng, enkf_fs_type *fs,
 std::pair<fw_load_status, std::string> enkf_state_load_from_forward_model(
     ensemble_config_type *ens_config, model_config_type *model_config,
     const ecl_config_type *ecl_config, const run_arg_type *run_arg);
-
-std::pair<fw_load_status, std::string>
-enkf_state_complete_forward_modelOK(const res_config_type *res_config,
-                                    run_arg_type *run_arg);
 bool enkf_state_complete_forward_model_EXIT_handler__(run_arg_type *run_arg);
 
 #endif

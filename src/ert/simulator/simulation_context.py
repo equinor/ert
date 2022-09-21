@@ -10,8 +10,16 @@ from ert._clib import model_callbacks  # pylint: disable=import-error
 from .forward_model_status import ForwardModelStatus
 
 if TYPE_CHECKING:
-    from ert._c_wrappers.enkf import EnkfFs, EnKFMain, RunArg, RunContext
+    from ert._c_wrappers.enkf import EnkfFs, EnKFMain, ResConfig, RunArg, RunContext
     from ert._c_wrappers.job_queue import JobQueue, JobStatusType
+
+
+def done_callback(
+    args: Tuple["RunArg", "ResConfig"]
+) -> Tuple[model_callbacks.LoadStatus, str]:
+    return model_callbacks.forward_model_ok(  # type: ignore
+        args[0], args[1].ensemble_config, args[1].model_config, args[1].ecl_config
+    )
 
 
 def _run_forward_model(
@@ -25,9 +33,6 @@ def _run_forward_model(
     if max_runtime == 0:
         max_runtime = None
 
-    done_callback_function = model_callbacks.forward_model_ok
-    exit_callback_function = model_callbacks.forward_model_exit
-
     # submit jobs
     for index, run_arg in enumerate(run_context):
         if not run_context.is_active(index):
@@ -36,8 +41,8 @@ def _run_forward_model(
             run_arg,
             ert.resConfig(),
             max_runtime,
-            done_callback_function,
-            exit_callback_function,
+            done_callback,
+            model_callbacks.forward_model_exit,
         )
 
     job_queue.submit_complete()  # type: ignore

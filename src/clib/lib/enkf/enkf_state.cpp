@@ -349,24 +349,6 @@ std::pair<fw_load_status, std::string> enkf_state_load_from_forward_model(
     return result;
 }
 
-std::pair<fw_load_status, std::string>
-enkf_state_complete_forward_modelOK(const res_config_type *res_config,
-                                    run_arg_type *run_arg) {
-
-    ensemble_config_type *ens_config =
-        res_config_get_ensemble_config(res_config);
-    const ecl_config_type *ecl_config = res_config_get_ecl_config(res_config);
-    model_config_type *model_config = res_config_get_model_config(res_config);
-    auto result = enkf_state_load_from_forward_model(ens_config, model_config,
-                                                     ecl_config, run_arg);
-
-    if (result.first == LOAD_SUCCESSFUL) {
-        result.second = "Results loaded successfully.";
-    }
-
-    return result;
-}
-
 bool enkf_state_complete_forward_model_EXIT_handler__(run_arg_type *run_arg) {
     if (run_arg_get_run_status(run_arg) != JOB_LOAD_FAILURE)
         run_arg_set_run_status(run_arg, JOB_RUN_FAILURE);
