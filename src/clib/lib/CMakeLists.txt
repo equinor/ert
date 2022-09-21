@@ -42,7 +42,6 @@ pybind11_add_module(
   rms/rms_tagkey.cpp
   rms/rms_type.cpp
   rms/rms_util.cpp
-  sched/history.cpp
   analysis/analysis_module.cpp
   analysis/update.cpp
   analysis/ies/ies_config.cpp

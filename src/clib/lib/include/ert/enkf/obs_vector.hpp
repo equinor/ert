@@ -25,8 +25,6 @@
 #include <ert/util/bool_vector.h>
 #include <ert/util/int_vector.h>
 
-#include <ert/sched/history.hpp>
-
 #include <ert/config/conf.hpp>
 
 #include <ert/ecl/ecl_sum.h>
@@ -86,12 +84,10 @@ void obs_vector_load_from_SUMMARY_OBSERVATION(obs_vector_type *obs_vector,
                                               const conf_instance_type *,
                                               time_map_type *obs_time,
                                               ensemble_config_type *);
-bool obs_vector_load_from_HISTORY_OBSERVATION(obs_vector_type *obs_vector,
-                                              const conf_instance_type *,
-                                              time_map_type *obs_time,
-                                              const history_type *,
-                                              ensemble_config_type *,
-                                              double std_cutoff);
+bool obs_vector_load_from_HISTORY_OBSERVATION(
+    obs_vector_type *obs_vector, const conf_instance_type *,
+    time_map_type *obs_time, const history_source_type history,
+    ensemble_config_type *, double std_cutoff, const ecl_sum_type *);
 extern "C" obs_vector_type *obs_vector_alloc(obs_impl_type obs_type,
                                              const char *obs_key,
                                              enkf_config_node_type *config_node,

@@ -20,8 +20,6 @@
 
 #include <ert/ecl/ecl_sum.h>
 
-#include <ert/sched/history.hpp>
-
 int main(int argc, char **argv) {
     char *sum_case = argv[1];
     ecl_sum_type *refcase = ecl_sum_fread_alloc_case(sum_case, ":");

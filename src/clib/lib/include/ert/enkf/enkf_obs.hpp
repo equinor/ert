@@ -27,8 +27,6 @@
 
 #include <ert/config/conf.hpp>
 
-#include <ert/sched/history.hpp>
-
 #include <ert/ecl/ecl_sum.h>
 
 #include <ert/enkf/enkf_fs.hpp>
@@ -42,7 +40,7 @@
 bool enkf_obs_have_obs(const enkf_obs_type *enkf_obs);
 extern "C" bool enkf_obs_is_valid(const enkf_obs_type *);
 
-enkf_obs_type *enkf_obs_alloc(const history_type *history,
+enkf_obs_type *enkf_obs_alloc(const history_source_type history,
                               time_map_type *external_time_map,
                               const ecl_grid_type *grid,
                               const ecl_sum_type *refcase,

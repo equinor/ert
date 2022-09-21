@@ -35,8 +35,6 @@
 #include <ert/logging.hpp>
 #include <ert/res_util/subst_list.hpp>
 
-#include <ert/sched/history.hpp>
-
 #include <ert/analysis/analysis_module.hpp>
 #include <ert/analysis/update.hpp>
 
@@ -215,11 +213,10 @@ enkf_main_type *enkf_main_alloc(model_config_type *model_config,
     UTIL_TYPE_ID_INIT(enkf_main, ENKF_MAIN_ID);
 
     // Init observations
-    auto obs =
-        enkf_obs_alloc(model_config_get_history(model_config),
-                       model_config_get_external_time_map(model_config),
-                       ecl_config_get_grid(ecl_config),
-                       ecl_config_get_refcase(ecl_config), ensemble_config);
+    auto obs = enkf_obs_alloc(model_config_get_history_source(model_config),
+                              model_config_get_external_time_map(model_config),
+                              ecl_config_get_grid(ecl_config),
+                              ecl_config_get_refcase(ecl_config), ensemble_config);
     const char *obs_config_file =
         model_config_get_obs_config_file(model_config);
     if (obs_config_file)
