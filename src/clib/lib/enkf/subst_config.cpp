@@ -79,7 +79,8 @@ subst_config_type *subst_config_alloc_full(const subst_list_type *define_list) {
     for (int i = 0; i < subst_list_get_size(define_list); i++) {
         const char *key = subst_list_iget_key(define_list, i);
         const char *value = subst_list_iget_value(define_list, i);
-        subst_config_add_subst_kw(subst_config, key, value);
+        const char *docstring = subst_list_get_doc_string(define_list, key);
+        subst_list_append_copy(subst_config->subst_list, key, value, docstring);
     }
 
     return subst_config;

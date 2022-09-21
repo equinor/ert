@@ -23,7 +23,6 @@ def facade(snake_oil_data):
     config_file = "snake_oil.ert"
 
     rc = ResConfig(user_config_file=config_file)
-    rc.convertToCReference(None)
     ert = EnKFMain(rc)
     facade = LibresFacade(ert)
     return facade

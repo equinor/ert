@@ -19,7 +19,6 @@ def test_executing_workflow():
             file.write("LOAD_WORKFLOW test_wf")
 
         rc = ResConfig(user_config_file=config_file)
-        rc.convertToCReference(None)
         ert = EnKFMain(rc)
         args = Namespace(name="test_wf")
         execute_workflow(ert, args.name)

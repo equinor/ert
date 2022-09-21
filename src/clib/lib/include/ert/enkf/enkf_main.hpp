@@ -48,7 +48,6 @@
 #include <ert/enkf/hook_manager.hpp>
 #include <ert/enkf/misfit_ensemble.hpp>
 #include <ert/enkf/obs_data.hpp>
-#include <ert/enkf/res_config.hpp>
 #include <ert/enkf/site_config.hpp>
 
 typedef struct enkf_main_struct enkf_main_type;

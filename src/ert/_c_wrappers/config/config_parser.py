@@ -18,6 +18,7 @@ import os.path
 import sys
 
 from cwrap import BaseCClass
+from ecl.util.util import StringHash, StringList
 
 from ert._c_wrappers import ResPrototype
 from ert._c_wrappers.config.config_content import ConfigContent
@@ -95,9 +96,13 @@ class ConfigParser(BaseCClass):
         unrecognized=UnrecognizedEnum.CONFIG_UNRECOGNIZED_WARN,
         validate=True,
     ) -> ConfigContent:
-        """@rtype: ConfigContent"""
 
         assert isinstance(unrecognized, UnrecognizedEnum)
+
+        hash = StringHash()
+        if pre_defined_kw_map is not None:
+            for key in pre_defined_kw_map:
+                hash[key] = pre_defined_kw_map[key]
 
         if not os.path.exists(config_file):
             raise IOError(f"File: {config_file} does not exists")
@@ -106,7 +111,7 @@ class ConfigParser(BaseCClass):
             comment_string,
             include_kw,
             define_kw,
-            pre_defined_kw_map,
+            hash,
             unrecognized,
             validate,
         )
@@ -135,7 +140,6 @@ class ConfigParser(BaseCClass):
         config_filename=None,
         unrecognized_action=UnrecognizedEnum.CONFIG_UNRECOGNIZED_WARN,
     ):
-
         return self._add_key_value(
             config_content, key, value, path_elm, config_filename, unrecognized_action
         )
