@@ -94,8 +94,11 @@ class EnKFMain(BaseCClass):
 
     TYPE_NAME = "enkf_main"
 
-    _alloc = ResPrototype("void* enkf_main_alloc(res_config, bool)", bind=False)
-
+    _alloc = ResPrototype(
+        "void* enkf_main_alloc(model_config, ecl_config,"
+        " ens_config, analysis_config, bool)",
+        bind=False,
+    )
     _free = ResPrototype("void enkf_main_free(enkf_main)")
     _get_obs = ResPrototype("enkf_obs_ref enkf_main_get_obs(enkf_main)")
     _have_observations = ResPrototype("bool enkf_main_have_obs(enkf_main)")
@@ -108,7 +111,13 @@ class EnKFMain(BaseCClass):
             raise TypeError(
                 "Failed to construct EnKFMain instance due to invalid res_config."
             )
-        c_ptr = self._alloc(config, read_only)
+        c_ptr = self._alloc(
+            config.model_config,
+            config.ecl_config,
+            config.ensemble_config,
+            config.analysis_config,
+            read_only,
+        )
         if c_ptr:
             super().__init__(c_ptr)
         else:
@@ -541,9 +550,9 @@ class EnKFMain(BaseCClass):
                     target.write_text(result)
 
                 enkf_main.init_active_run(
-                    res_config=self.resConfig().model_config,
-                    res_config=self.resConfig().ensemble_config,
-                    res_config=self.resConfig().site_config,
+                    model_config=self.resConfig().model_config,
+                    ensemble_config=self.resConfig().ensemble_config,
+                    site_config=self.resConfig().site_config,
                     run_path=run_arg.runpath,
                     iens=run_arg.iens,
                     sim_fs=run_arg.sim_fs,

@@ -55,8 +55,10 @@ typedef struct enkf_main_struct enkf_main_type;
 
 extern "C" void enkf_main_free(enkf_main_type *);
 
-extern "C" enkf_main_type *enkf_main_alloc(const res_config_type *,
-                                           bool read_only = false);
+extern "C" enkf_main_type *
+enkf_main_alloc(model_config_type *model_config, ecl_config_type *ecl_config,
+                ensemble_config_type *ensemble_config,
+                analysis_config_type *analysis_config, bool read_only = false);
 
 extern "C" enkf_obs_type *enkf_main_get_obs(const enkf_main_type *);
 extern "C" bool enkf_main_have_obs(const enkf_main_type *enkf_main);
