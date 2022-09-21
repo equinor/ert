@@ -150,27 +150,21 @@ void ecl_write(const ensemble_config_type *ens_config,
  *  * substitutes DATAKW into the eclipse data file template and write it to runpath;
  *  * write the job script.
  *
- * @param res_config The config to use for initialization.
  * @param run_path The runpath string
  * @param iens The realization number.
  * @param fs The file system to write to
  * @param run_id Unique id of run
  * @param subst_list The substitutions to perform for that run.
  */
-void init_active_run(const res_config_type *res_config, char *run_path,
+void init_active_run(const model_config_type *model_config,
+                     ensemble_config_type *ens_config,
+                     const site_config_type *site_config, char *run_path,
                      int iens, enkf_fs_type *fs, char *run_id, char *job_name,
                      const subst_list_type *subst_list) {
-
-    model_config_type *model_config = res_config_get_model_config(res_config);
-    ensemble_config_type *ens_config =
-        res_config_get_ensemble_config(res_config);
-
     ecl_write(ens_config, model_config_get_gen_kw_export_name(model_config),
               run_path, iens, fs);
 
     // Create the job script
-    const site_config_type *site_config =
-        res_config_get_site_config(res_config);
     forward_model_formatted_fprintf(
         model_config_get_forward_model(model_config), run_id, run_path,
         model_config_get_data_root(model_config), subst_list,
@@ -259,14 +253,17 @@ ERT_CLIB_SUBMODULE("enkf_main", m) {
     m.def("get_observation_keys", get_observation_keys);
     m.def(
         "init_active_run",
-        [](py::object res_config, char *run_path, int iens, py::object sim_fs,
+        [](py::object model_config, py::object ensemble_config,
+           py::object site_config, char *run_path, int iens, py::object sim_fs,
            char *run_id, char *job_name, py::object subst_list) {
             enkf_main::init_active_run(
-                ert::from_cwrap<res_config_type>(res_config), run_path, iens,
+                ert::from_cwrap<model_config_type>(model_config),
+                ert::from_cwrap<ensemble_config_type>(ensemble_config),
+                ert::from_cwrap<site_config_type>(site_config), run_path, iens,
                 ert::from_cwrap<enkf_fs_type>(sim_fs), run_id, job_name,
                 ert::from_cwrap<subst_list_type>(subst_list));
         },
-        py::arg("res_config"), py::arg("run_path"), py::arg("iens"),
+        py::arg("model_config"),py::arg("ensemble_config"), py::arg("site_config"), py::arg("run_path"), py::arg("iens"),
         py::arg("sim_fs"), py::arg("run_id"), py::arg("job_name"),
         py::arg("subst_list"));
     m.def("log_seed", [](py::object rng_) {
