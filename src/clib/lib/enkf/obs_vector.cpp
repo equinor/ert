@@ -651,10 +651,8 @@ void obs_vector_measure(const obs_vector_type *obs_vector, enkf_fs_type *fs,
 
         node_id_type node_id = {.report_step = report_step, .iens = 0};
 
-        int vec_size = ens_active_list.size();
-        for (int active_iens_index = 0; active_iens_index < vec_size;
-             active_iens_index++) {
-            node_id.iens = ens_active_list[active_iens_index];
+        for (auto iens : ens_active_list) {
+            node_id.iens = iens;
 
             enkf_node_load(enkf_node, fs, node_id);
             obs_vector->measure(obs_node, enkf_node_value_ptr(enkf_node),
