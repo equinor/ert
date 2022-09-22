@@ -86,7 +86,7 @@ class QueueConfig(BaseCClass):
                 config_dict[ConfigKeys.JOB_SCRIPT],
                 config_dict[ConfigKeys.USER_MODE],
                 config_dict[ConfigKeys.MAX_SUBMIT],
-                config_dict[ConfigKeys.NUM_CPU],
+                config_dict.get(ConfigKeys.NUM_CPU, -1),
                 config_dict[ConfigKeys.QUEUE_SYSTEM],
             )
         if not c_ptr:

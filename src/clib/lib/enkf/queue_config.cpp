@@ -55,7 +55,7 @@ static queue_config_type *queue_config_alloc_empty() {
     queue_config->driver_type = NULL_DRIVER;
     queue_config->user_mode = false;
     queue_config->max_submit = 2; // Default value
-    queue_config->num_cpu = 0;
+    queue_config->num_cpu = -1;
 
     return queue_config;
 }
