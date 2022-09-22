@@ -107,12 +107,12 @@ class BatchSimulator:
         self, sim_id: int, controls: Dict[str, Dict[str, Any]], file_system: "EnkfFs"
     ) -> None:
         def _set_ext_param(
-            ext_param: "ExtParam",
+            ext_node: "ExtParam",
             key: Union[str, int],
             assignment: Union[Dict[str, Any], Tuple[str, str], str, int],
         ) -> None:
             if isinstance(assignment, dict):  # handle suffixes
-                suffixes = ext_param.config[key]
+                suffixes = ext_node.config[key]
                 if len(assignment) != len(suffixes):
                     missingsuffixes = set(suffixes).difference(set(assignment.keys()))
                     raise KeyError(
