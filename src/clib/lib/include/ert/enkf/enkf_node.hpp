@@ -106,7 +106,6 @@ bool enkf_node_user_get(enkf_node_type *, enkf_fs_type *, const char *,
                         node_id_type, double *);
 enkf_node_type *enkf_node_deep_alloc(const enkf_config_node_type *config);
 extern "C" enkf_node_type *enkf_node_alloc(const enkf_config_node_type *);
-enkf_node_type *enkf_node_copyc(const enkf_node_type *);
 /*
     The enkf_node_free() function declaration is in the enkf_config_node.h header,
     because the enkf_config_node needs to know how to free the min_std node.
