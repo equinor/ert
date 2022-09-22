@@ -150,7 +150,6 @@ bool enkf_node_vector_storage(const enkf_node_type *node);
 
 const enkf_config_node_type *enkf_node_get_config(const enkf_node_type *);
 extern "C" const char *enkf_node_get_key(const enkf_node_type *);
-bool enkf_node_has_func(const enkf_node_type *, node_function_type);
 
 UTIL_IS_INSTANCE_HEADER(enkf_node);
 

@@ -676,29 +676,6 @@ enkf_node_alloc_empty(const enkf_config_node_type *config) {
     return node;
 }
 
-#define CASE_SET(type, func)                                                   \
-    case (type):                                                               \
-        has_func = (func != NULL);                                             \
-        break;
-bool enkf_node_has_func(const enkf_node_type *node,
-                        node_function_type function_type) {
-    bool has_func = false;
-    switch (function_type) {
-        CASE_SET(alloc_func, node->alloc);
-        CASE_SET(ecl_write_func, node->ecl_write);
-        CASE_SET(forward_load_func, node->forward_load);
-        CASE_SET(copy_func, node->copy);
-        CASE_SET(initialize_func, node->initialize);
-        CASE_SET(free_func, node->freef);
-    default:
-        fprintf(stderr,
-                "%s: node_function_identifier: %d not recognized - aborting \n",
-                __func__, function_type);
-    }
-    return has_func;
-}
-#undef CASE_SET
-
 enkf_node_type *enkf_node_alloc(const enkf_config_node_type *config) {
     enkf_node_type *node = enkf_node_alloc_empty(config);
     UTIL_TYPE_ID_INIT(node, ENKF_NODE_TYPE_ID);
