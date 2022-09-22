@@ -72,7 +72,6 @@ class ModelConfig(BaseCClass):
     _select_history = ResPrototype(
         "bool  model_config_select_history(model_config, history_source_enum, ecl_sum)"
     )
-    _has_history = ResPrototype("bool  model_config_has_history(model_config)")
     _gen_kw_export_name = ResPrototype(
         "char* model_config_get_gen_kw_export_name(model_config)"
     )
@@ -211,9 +210,6 @@ class ModelConfig(BaseCClass):
             raise ValueError("Failed to construct ModelConfig instance.")
 
         super().__init__(c_ptr, is_reference=is_reference)
-
-    def hasHistory(self):
-        return self._has_history()
 
     def get_history_source(self) -> HistorySourceEnum:
         return self._get_history_source()

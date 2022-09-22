@@ -247,7 +247,7 @@ model_config_type *model_config_alloc_empty() {
     model_config->default_data_root = NULL;
     model_config->current_runpath = NULL;
     model_config->current_path_key = NULL;
-    model_config->history = HISTORY_SOURCE_INVALID;
+    model_config->history = REFCASE_HISTORY;
     model_config->jobname_fmt = NULL;
     model_config->forward_model = NULL;
     model_config->external_time_map = NULL;
@@ -510,13 +510,6 @@ void model_config_free(model_config_type *model_config) {
     free(model_config);
 }
 
-bool model_config_has_history(const model_config_type *config) {
-    if (config->history != HISTORY_SOURCE_INVALID)
-        return true;
-    else
-        return false;
-}
-
 int model_config_get_num_realizations(const model_config_type *model_config) {
     return model_config->num_realizations;
 }
@@ -531,7 +524,7 @@ model_config_get_external_time_map(const model_config_type *config) {
 }
 
 int model_config_get_last_history_restart(const model_config_type *config) {
-    if (config->history != HISTORY_SOURCE_INVALID)
+    if (config->refcase)
         return ecl_sum_get_last_report_step(config->refcase);
     else {
         if (config->external_time_map)
