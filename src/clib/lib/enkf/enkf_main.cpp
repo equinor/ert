@@ -15,39 +15,9 @@
    for more details.
 */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
-#include <string>
-#include <tuple>
-#include <unordered_map>
-#include <vector>
-
 #include <ert/python.hpp>
-#include <ert/res_util/path_fmt.hpp>
-#include <ert/util/bool_vector.h>
-#include <ert/util/hash.h>
-#include <ert/util/int_vector.h>
-#include <ert/util/type_vector_functions.h>
-#include <ert/util/vector.hpp>
 
 #include <ert/logging.hpp>
-#include <ert/res_util/subst_list.hpp>
-
-#include <ert/analysis/analysis_module.hpp>
-#include <ert/analysis/update.hpp>
-
-#include <ert/enkf/enkf_analysis.hpp>
-#include <ert/enkf/enkf_config_node.hpp>
-#include <ert/enkf/enkf_defaults.hpp>
-#include <ert/enkf/enkf_obs.hpp>
-#include <ert/enkf/enkf_state.hpp>
-#include <ert/enkf/enkf_types.hpp>
-#include <ert/enkf/field.hpp>
-#include <ert/enkf/obs_data.hpp>
-
-#include <ert/python.hpp>
 
 static auto logger = ert::get_logger("enkf");
 
