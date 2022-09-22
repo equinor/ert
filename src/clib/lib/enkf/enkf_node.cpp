@@ -123,8 +123,7 @@
    enkf_node_initialize()
    enkf_node_forward_load()
 
-   These functions should all start with a call to
-   enkf_node_ensure_memory(). The (re)allocation of data is done at
+   The (re)allocation of data is done at
    the enkf_node level, and **NOT** in the low level object
    (altough that is where it is eventually done of course).
 
@@ -136,42 +135,6 @@
    logic is not fully up to it? And should therefore maybe be
    punished?
 
-   o The only memory operation which is exported to 'user-space'
-   (i.e. the enkf_state object) is enkf_node_free_data().
-
-   Keeeping track of node state.
-   =============================
-
-   To keep track of the state of the node's data (actually the data of
-   the contained enkf_object, i.e. a field) we have three highly
-   internal variables __state, __modified , __iens, and
-   __report_step. These three variables are used/updated in the
-   following manner:
-
-
-
-   1. The nodes are created with (modified, report_step, state, iens) ==
-   (true , -1 , undefined , -1).
-
-   2. After initialization we set: report_step -> 0 , state ->
-   analyzed, modified -> true, iens -> -1
-
-   3. After load (both from ensemble and ECLIPSE). We set modified ->
-   false, and report_step, state and iens according to the load
-   arguments.
-
-   4. After deserialize (i.e. update) we set modified -> true.
-
-   5. After write (to ensemble) we set in the same way as after load.
-
-   6. After free_data we invalidate according to the newly allocated
-   status.
-
-   7. In the ens_load routine we check if modified == false and the
-   report_step and state arguments agree with the current
-   values. IN THAT CASE WE JUST RETURN WITHOUT ACTUALLY HITTING
-   THE FILESYSTEM. This performance gain is the main point of the
-   whole exercise.
 */
 struct enkf_node_struct {
     UTIL_TYPE_ID_DECLARATION;
@@ -443,15 +406,6 @@ bool enkf_node_store(enkf_node_type *enkf_node, enkf_fs_type *fs,
                                       node_id.iens);
 }
 
-/**
-   This function will load a node from the filesystem if it is
-   available; if not it will just return false.
-
-   The state argument can be 'both' - in which case it will first try
-   the analyzed, and then subsequently the forecast before giving up
-   and returning false. If the function returns true with state ==
-   'both' it is no way to determine which version was actually loaded.
-*/
 bool enkf_node_try_load(enkf_node_type *enkf_node, enkf_fs_type *fs,
                         node_id_type node_id) {
     if (enkf_node_has_data(enkf_node, fs, node_id)) {
@@ -644,7 +598,6 @@ const char *enkf_node_get_key(const enkf_node_type *enkf_node) {
 
 #undef FUNC_ASSERT
 
-/* Manual inheritance - .... */
 static enkf_node_type *
 enkf_node_alloc_empty(const enkf_config_node_type *config) {
     const char *node_key = enkf_config_node_get_key(config);
@@ -655,9 +608,6 @@ enkf_node_alloc_empty(const enkf_config_node_type *config) {
     node->node_key = util_alloc_string_copy(node_key);
     node->data = NULL;
 
-    /*
-    Start by initializing all function pointers to NULL.
-  */
     node->alloc = NULL;
     node->ecl_write = NULL;
     node->forward_load = NULL;
