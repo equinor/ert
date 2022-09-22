@@ -142,7 +142,6 @@ struct enkf_node_struct {
     ecl_write_ftype *ecl_write;
     forward_load_ftype *forward_load;
     forward_load_vector_ftype *forward_load_vector;
-    free_data_ftype *free_data;
     user_get_ftype *user_get;
     user_get_vector_ftype *user_get_vector;
     fload_ftype *fload;
@@ -583,7 +582,6 @@ enkf_node_alloc_empty(const enkf_config_node_type *config) {
     node->copy = NULL;
     node->initialize = NULL;
     node->freef = NULL;
-    node->free_data = NULL;
     node->user_get = NULL;
     node->user_get_vector = NULL;
     node->fload = NULL;
