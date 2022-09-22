@@ -66,7 +66,6 @@ snake_oil_structure_config = {
     "LSF_QUEUE": "mr",
     "LSF_SERVER": "simulacrum",
     "LSF_RESOURCE": "select[x86_64Linux] same[type:model]",
-    "UMASK": int("007", 8),
     "MAX_RUNNING": "100",
     "DATA_FILE": "eclipse/model/SNAKE_OIL.DATA",
     "START": date(2017, 1, 1),
@@ -258,7 +257,6 @@ def test_extensive_config(setup_case):
         assert snake_oil_structure_config[key] == act
 
     site_config = res_config.site_config
-    assert site_config.umask == snake_oil_structure_config["UMASK"]
     job_list = site_config.get_installed_jobs()
     for job_name in snake_oil_structure_config["INSTALL_JOB"]:
         assert job_name in job_list
@@ -381,7 +379,6 @@ def test_res_config_dict_constructor(setup_case):
                 ConfigKeys.VALUE: "select[x86_64Linux] same[type:model]",
             },
         ],
-        ConfigKeys.UMASK: int("007", 8),
         ConfigKeys.MAX_RUNNING: "100",
         ConfigKeys.DATA_FILE: "../../eclipse/model/SNAKE_OIL.DATA",
         # "START"             : date(2017, 1, 1), no clue where this comes from

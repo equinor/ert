@@ -119,7 +119,6 @@ ERT_CLIB_SUBMODULE("config_keys", m) {
     cls.attr("SURFACE_KEY") = SURFACE_KEY;
     cls.attr("TEMPLATE") = TEMPLATE_KEY;
     cls.attr("TIME_MAP") = TIME_MAP_KEY;
-    cls.attr("UMASK") = UMASK_KEY;
     cls.attr("UPDATE_LOG_PATH") = UPDATE_LOG_PATH_KEY;
     cls.attr("USER_MODE") = "USER_MODE";
     cls.attr("USER_NAME") = "USER_NAME";

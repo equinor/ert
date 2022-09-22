@@ -19,7 +19,6 @@ namespace utils {
 std::shared_ptr<std::istream> get_file(const char *filename) {
     std::string s = R"(
 Name:	test
-Umask:	0022
 State:	R (running)
 Tgid:	72786
 Ngid:	0

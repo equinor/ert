@@ -37,7 +37,6 @@ else:
     os.chmod("dummy_executable", stat.S_IRWXU | stat.S_IRWXO | stat.S_IRWXG)
 
     job_list = {
-        "umask": "0002",
         "DATA_ROOT": "",
         "global_environment": {},
         "global_update_path": {},
@@ -123,7 +122,6 @@ def test_job_dispatch_run_subset_specified_as_parmeter():
     os.chmod("dummy_executable", stat.S_IRWXU | stat.S_IRWXO | stat.S_IRWXG)
 
     job_list = {
-        "umask": "0002",
         "DATA_ROOT": "",
         "global_environment": {},
         "global_update_path": {},

@@ -235,7 +235,6 @@ def config_dicts(draw):
                 ),
                 ConfigKeys.INSTALL_JOB_DIRECTORY: st.lists(directory_names()),
                 ConfigKeys.LICENSE_PATH: directory_names(),
-                ConfigKeys.UMASK: st.just(0x007),
                 ConfigKeys.RANDOM_SEED: words,
                 ConfigKeys.SETENV: st.lists(
                     st.fixed_dictionaries(
@@ -320,7 +319,5 @@ def to_config_file(filename, config_dict):
                     )
             elif keyword == ConfigKeys.QUEUE_SYSTEM:
                 config.write(f"{keyword}" f" {keyword_value.name[:-7]}\n")
-            elif keyword == ConfigKeys.UMASK:
-                config.write(f"{keyword} 0{keyword_value:o}\n")
             else:
                 config.write(f"{keyword} {keyword_value}\n")

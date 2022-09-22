@@ -20,7 +20,6 @@ JSON_STRING = """
 {
   "DATA_ROOT" : "/path/to/data",
   "run_id"    : "ERT_RUN_ID",
-  "umask" : "0000",
   "jobList" : [ {"name" : "PERLIN",
   "executable" : "perlin.py",
   "target_file" : "my_target_file",
@@ -54,14 +53,13 @@ JSON_STRING = """
 
 JSON_STRING_NO_DATA_ROOT = """
 {
-  "umask" : "0000",
   "jobList"   : []
 }
 """
 
 
-def create_jobs_json(job_list, umask="0000"):
-    return {"umask": umask, "DATA_ROOT": "/path/to/data", "jobList": job_list}
+def create_jobs_json(job_list):
+    return {"DATA_ROOT": "/path/to/data", "jobList": job_list}
 
 
 @pytest.fixture(autouse=True)
@@ -92,13 +90,7 @@ def set_up_environ():
 @pytest.mark.usefixtures("use_tmpdir")
 def test_missing_joblist_json():
     with pytest.raises(KeyError):
-        JobRunner({"umask": "0000"})
-
-
-@pytest.mark.usefixtures("use_tmpdir")
-def test_missing_umask_json():
-    with pytest.raises(KeyError):
-        JobRunner({"jobList": "[]"})
+        JobRunner({})
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -198,7 +190,6 @@ def test_given_global_env_and_update_path_executable_env_is_updated():
     }
 
     data = {
-        "umask": "0000",
         "global_environment": {
             "KEY_ONE": "FirstValue",
             "KEY_TWO": "SecondValue",
@@ -261,7 +252,7 @@ assert exec_env["NOT_SET"] is None
     global_args = SubstitutionList()
     env_varlist = EnvironmentVarlist()
     forward_model.formatted_fprintf(
-        "run_id", None, "data_root", global_args, 0, env_varlist
+        "run_id", None, "data_root", global_args, env_varlist
     )
 
     with open("jobs.json", "r") as f:

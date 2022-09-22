@@ -167,7 +167,6 @@ QUEUE_OPTION LSF LSF_RESOURCE select[x86_64Linux] same[type:model]
 QUEUE_OPTION LSF LSF_SERVER   simulacrum
 QUEUE_OPTION LSF LSF_QUEUE    mr
 MAX_SUBMIT                    13
-UMASK                         007
 GEN_DATA super_data INPUT_FORMAT:ASCII RESULT_FILE:super_data_%d  REPORT_STEPS:1
 GEN_KW SIGMA          ../input/templates/sigma.tmpl          coarse.sigma              ../input/distributions/sigma.dist
 RUN_TEMPLATE             ../input/templates/seed_template.txt     seed.txt

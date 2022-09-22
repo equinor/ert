@@ -34,7 +34,6 @@ LICENSE_PATH license
                 "LICENSE_PATH": "license",
                 "RES_CONFIG_FILE": "test.ert",
                 "RUNPATH_FILE": "rpfile",
-                "UMASK": 2,
             }
         ).site_config
     )
