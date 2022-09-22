@@ -294,5 +294,4 @@
     void prefix##_clear__(void *void_arg) {                                    \
         prefix##_clear(prefix##_safe_cast(void_arg));                          \
     }
-#define VOID_CLEAR_HEADER(prefix) void prefix##_clear__(void *)
 #endif

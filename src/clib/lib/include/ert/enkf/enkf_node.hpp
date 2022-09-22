@@ -128,7 +128,6 @@ bool enkf_node_forward_load(enkf_node_type *enkf_node, int report_step,
 extern "C" void enkf_node_ecl_write(const enkf_node_type *, const char *,
                                     value_export_type *, int);
 bool enkf_node_initialize(enkf_node_type *enkf_node, int, rng_type *);
-void enkf_node_clear(enkf_node_type *);
 
 void enkf_node_copy(const enkf_config_node_type *config_node,
                     enkf_fs_type *src_case, enkf_fs_type *target_case,
