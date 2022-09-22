@@ -88,8 +88,6 @@ struct site_config_struct {
     /** Container for the environment variables set in the user config file. */
     env_varlist_type *env_varlist;
 
-    mode_t umask;
-
     /** The license_root_path value set by the user. */
     char *license_root_path;
     /** The license_root_path value set by the site. */
@@ -105,15 +103,6 @@ static bool site_config_init(site_config_type *site_config,
                              const config_content_type *config);
 static void site_config_init_env(site_config_type *site_config,
                                  const config_content_type *config);
-
-void site_config_set_umask(site_config_type *site_config, mode_t new_mask) {
-    umask(new_mask);
-    site_config->umask = new_mask;
-}
-
-mode_t site_config_get_umask(const site_config_type *site_config) {
-    return site_config->umask;
-}
 
 static void site_config_set_config_file(site_config_type *site_config,
                                         const char *config_file) {
@@ -138,10 +127,6 @@ static site_config_type *site_config_alloc_empty() {
     site_config->user_mode = false;
 
     site_config->env_varlist = env_varlist_alloc();
-
-    /* Some hooops to get the current umask. */
-    site_config->umask = umask(0);
-    site_config_set_umask(site_config, site_config->umask);
 
     site_config->search_path = false;
     return site_config;
@@ -180,12 +165,10 @@ site_config_type *site_config_alloc(const config_content_type *config_content) {
 }
 
 site_config_type *site_config_alloc_full(ext_joblist_type *ext_joblist,
-                                         env_varlist_type *env_varlist,
-                                         int umask) {
+                                         env_varlist_type *env_varlist) {
     site_config_type *site_config = site_config_alloc_empty();
     site_config->joblist = ext_joblist;
     site_config->env_varlist = env_varlist;
-    site_config->umask = umask;
     return site_config;
 }
 
@@ -329,28 +312,6 @@ static bool site_config_init(site_config_type *site_config,
 
     site_config_add_jobs(site_config, config);
     site_config_init_env(site_config, config);
-
-    /*
-     Set the umask for all file creation. The default equinor value is 0022,
-     i.e. write access is removed from group and others.
-
-     The string is supposed to be in OCTAL representation (without any
-     prefix characters).
-   */
-
-    if (config_content_has_item(config, UMASK_KEY)) {
-        const char *string_mask = config_content_get_value(config, UMASK_KEY);
-        int umask_value;
-        if (util_sscanf_octal_int(string_mask, &umask_value)) {
-            if (umask_value == 0)
-                throw std::invalid_argument(
-                    "Setting UMASK to 0 is not allowed since it can "
-                    "have severe security implications");
-            site_config_set_umask(site_config, (mode_t)umask_value);
-        } else
-            util_abort("%s: failed to parse:\"%s\" as a valid octal literal \n",
-                       __func__, string_mask);
-    }
 
     if (config_content_has_item(config, LICENSE_PATH_KEY))
         site_config_set_license_root_path(

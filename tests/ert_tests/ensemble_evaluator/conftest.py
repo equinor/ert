@@ -122,7 +122,6 @@ def make_ensemble_builder(queue_config):
                                 _dump_ext_job(ext_job, index)
                                 for index, ext_job in enumerate(ext_job_list)
                             ],
-                            "umask": "0022",
                         },
                         f,
                     )

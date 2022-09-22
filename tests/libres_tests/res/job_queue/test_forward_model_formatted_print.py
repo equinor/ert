@@ -282,12 +282,11 @@ def set_up_forward_model(selected_jobs=None):
     return forward_model
 
 
-def verify_json_dump(selected_jobs, global_args, umask, run_id):
+def verify_json_dump(selected_jobs, global_args, run_id):
     assert os.path.isfile(JOBS_JSON_FILE)
     config = load_configs(JOBS_JSON_FILE)
 
     assert run_id == config["run_id"]
-    assert umask == int(config["umask"], 8)
     assert len(selected_jobs) == len(config["jobList"])
 
     for job_index, selected_job in enumerate(selected_jobs):
@@ -321,14 +320,13 @@ def verify_json_dump(selected_jobs, global_args, umask, run_id):
 def test_no_jobs():
     forward_model = set_up_forward_model([])
     run_id = "test_no_jobs_id"
-    umask = 4
     global_args = SubstitutionList()
     varlist = EnvironmentVarlist()
     forward_model.formatted_fprintf(
-        run_id, os.getcwd(), "data_root", global_args, umask, varlist
+        run_id, os.getcwd(), "data_root", global_args, varlist
     )
 
-    verify_json_dump([], global_args, umask, run_id)
+    verify_json_dump([], global_args, run_id)
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -354,7 +352,6 @@ def test_transfer_arg_types():
     forward_model.add_job("FWD_MODEL")
 
     run_id = "test_no_jobs_id"
-    umask = 4
     global_args = SubstitutionList()
 
     forward_model.formatted_fprintf(
@@ -362,7 +359,6 @@ def test_transfer_arg_types():
         os.getcwd(),
         "data_root",
         global_args,
-        umask,
         EnvironmentVarlist(),
     )
     config = load_configs(JOBS_JSON_FILE)
@@ -395,10 +391,9 @@ def test_env_varlist():
     )
     forward_model = set_up_forward_model([])
     run_id = "test_no_jobs_id"
-    umask = 4
     global_args = SubstitutionList()
     forward_model.formatted_fprintf(
-        run_id, os.getcwd(), "data_root", global_args, umask, varlist
+        run_id, os.getcwd(), "data_root", global_args, varlist
     )
     config = load_configs(JOBS_JSON_FILE)
     env_config = config[varlist_string]
@@ -420,27 +415,25 @@ def test_one_job():
     for i in range(len(joblist)):
         forward_model = set_up_forward_model([i])
         run_id = "test_one_job"
-        umask = 11
         global_args = SubstitutionList()
         varlist = EnvironmentVarlist()
         forward_model.formatted_fprintf(
-            run_id, os.getcwd(), "data_root", global_args, umask, varlist
+            run_id, os.getcwd(), "data_root", global_args, varlist
         )
 
-        verify_json_dump([i], global_args, umask, run_id)
+        verify_json_dump([i], global_args, run_id)
 
 
 def run_all():
     forward_model = set_up_forward_model(range(len(joblist)))
-    umask = 0
     run_id = "run_all"
     global_args = SubstitutionList()
     varlist = EnvironmentVarlist()
     forward_model.formatted_fprintf(
-        run_id, os.getcwd(), "data_root", global_args, umask, varlist
+        run_id, os.getcwd(), "data_root", global_args, varlist
     )
 
-    verify_json_dump(range(len(joblist)), global_args, umask, run_id)
+    verify_json_dump(range(len(joblist)), global_args, run_id)
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -487,11 +480,10 @@ def test_various_null_fields():
 def test_status_file():
     forward_model = set_up_forward_model()
     run_id = "test_no_jobs_id"
-    umask = 4
     global_args = SubstitutionList()
     varlist = EnvironmentVarlist()
     forward_model.formatted_fprintf(
-        run_id, os.getcwd(), "data_root", global_args, umask, varlist
+        run_id, os.getcwd(), "data_root", global_args, varlist
     )
 
     s = (

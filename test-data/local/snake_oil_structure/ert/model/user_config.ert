@@ -49,8 +49,6 @@ MAX_SUBMIT                    13  -- How many times should the queue system
                                   -- retry a simulation.  Default == 2.  Use
                                   -- 1 when debugging)
 
-UMASK                         007  -- umask == chmod o-xrw
-
 -- ------------------------------------------------------------------------
 -- -- SECTION: Uncertainty parameters
 -- ------------------------------------------------------------------------

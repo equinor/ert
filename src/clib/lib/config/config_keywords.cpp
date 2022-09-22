@@ -144,12 +144,6 @@ static void add_set_env_keyword(config_parser_type *config_parser) {
     config_schema_item_set_envvar_expansion(item, false);
 }
 
-static void add_umask_keyword(config_parser_type *config_parser) {
-    auto item = add_single_arg_keyword(config_parser, UMASK_KEY);
-    config_schema_item_set_deprecated(
-        item, "UMASK is deprecated and will be removed in the future.");
-}
-
 static void add_update_path_keyword(config_parser_type *config_parser) {
     // UPDATE_PATH   LD_LIBRARY_PATH   /path/to/some/funky/lib
     // Will prepend "/path/to/some/funky/lib" at the front of LD_LIBRARY_PATH.
@@ -265,7 +259,6 @@ void init_site_config_parser(config_parser_type *config_parser) {
     add_load_workflow_keyword(config_parser);
     add_load_workflow_job_keyword(config_parser);
     add_set_env_keyword(config_parser);
-    add_umask_keyword(config_parser);
     add_update_path_keyword(config_parser);
     add_install_job_keyword(config_parser);
     add_path_keyword(config_parser, INSTALL_JOB_DIRECTORY_KEY);
@@ -336,7 +329,6 @@ ERT_CLIB_SUBMODULE("config_keywords", m) {
             add_job_script_keyword(config_parser);
             add_load_workflow_job_keyword(config_parser);
             add_set_env_keyword(config_parser);
-            add_umask_keyword(config_parser);
             add_update_path_keyword(config_parser);
             add_path_keyword(config_parser, LICENSE_PATH_KEY);
             add_install_job_keyword(config_parser);

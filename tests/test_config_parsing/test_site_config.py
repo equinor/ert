@@ -22,19 +22,3 @@ def test_site_config_dict_same_as_from_file(config_dict):
     to_config_file(filename, config_dict)
     config_dict[ConfigKeys.CONFIG_DIRECTORY] = cwd
     assert SiteConfig(filename) == SiteConfig(config_dict=config_dict)
-
-
-@pytest.mark.xfail(reason="https://github.com/equinor/ert/issues/2553")
-def test_site_config_defaults_umask(tmpdir):
-    touch(tmpdir + "/rpfile")
-    touch(tmpdir + "/datafile")
-    os.mkdir(tmpdir + "/license")
-    SiteConfig(
-        config_dict={
-            "CONFIG_DIRECTORY": str(tmpdir),
-            "DATA_FILE": "datafile",
-            "LICENSE_PATH": "license",
-            "RES_CONFIG_FILE": "test.ert",
-            "RUNPATH_FILE": "rpfile",
-        }
-    )

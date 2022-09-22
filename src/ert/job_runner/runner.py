@@ -6,8 +6,6 @@ from ert.job_runner.reporting.message import Finish, Init
 
 class JobRunner:
     def __init__(self, jobs_data):
-        os.umask(int(jobs_data["umask"], 8))
-
         self._data_root = jobs_data.get("DATA_ROOT")
         if self._data_root:
             os.environ["DATA_ROOT"] = self._data_root

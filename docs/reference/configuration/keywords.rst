@@ -82,7 +82,6 @@ Keyword name                                                            Required
 :ref:`SUMMARY  <summary>`                                               NO                                                                      Add summary variables for internalization
 :ref:`SURFACE <surface>`                                                NO                                                                      Surface parameter read from RMS IRAP file
 :ref:`TIME_MAP  <time_map>`                                             NO                                                                      Ability to manually enter a list of dates to establish report step <-> dates mapping
-:ref:`UMASK <umask>`                                                    NO                                                                      DEPRECATED: Control the permissions on files created by ERT
 :ref:`UPDATE_LOG_PATH  <update_log_path>`                               NO                                      update_log                      Summary of the update steps are stored in this directory
 :ref:`UPDATE_PATH  <update_path>`                                       NO                                                                      Modify a UNIX path variable like LD_LIBRARY_PATH
 :ref:`WORKFLOW_JOB_DIRECTORY  <workflow_job_directory>`                 NO                                                                      Directory containing workflow jobs
@@ -2231,53 +2230,3 @@ instance, and are not applied to the shell.
                 setenv PATH /some/funky/path/bin:$PATH
 
         The whole thing is just a workaround because we can not use $PATH.
-
-
-.. _umask:
-.. topic:: UMASK
-
-        This feature is deprecated and will be removed in a future release.
-
-        The `umask` is a concept used by Linux to control the permissions on
-        newly created files. By default the files created by ERT will have the
-        default permissions of your account, but by using the keyword `UMASK`
-        you can alter the permissions of files created by ERT.
-
-        To determine the initial permissions on newly created files start with
-        the initial permissions `-rw-rw-rw-` (octal 0666) for files and
-        `-rwxrwxrwx` (octal 0777) for directories, and then *~subtract* the
-        current umask setting. So if you wish the newly created files to have
-        permissions `-rw-r-----` you need to subtract write permissions for
-        group and read and write permissions for others - corresponding to
-        `umask 0026`.
-
-        ::
-
-           UMASK 0022
-
-        We remove write permissions from group and others, implying that
-        everyone can read the files and directories created by ert, but only the
-        owner can write to them. Also everyone can execute the directories (i.e.
-        list the content).
-
-        The umask setting in ERT is passed on to the forward model, and should
-        apply to the files/directories created by the forward model also.
-        However - the executables in the forward model can in principle set it's
-        own umask setting or alter permissions in another way - so there is no
-        guarantee that the umask setting will apply to all files created by the
-        forward model.
-
-        The octal permissions are based on three octal numbers for owner, group
-        and others, where each value is based on adding the constants:
-
-         1: Execute permission
-         2: Write permission
-         4: Read permission
-
-        So an octal permission of 0754 means:
-
-         - Owner(7) can execute(1), write(2) and read(4).
-         - Group(5) can execute(1) and read(4).
-         - Others(2) can read(4)
-
-        Setting UMASK to 0 is not supported as it poses a potential security risk.

@@ -39,7 +39,6 @@ class ForwardModel(BaseCClass):
                                               char*, \
                                               char*, \
                                               subst_list, \
-                                              int, \
                                               env_varlist)"
     )
 
@@ -80,12 +79,9 @@ class ForwardModel(BaseCClass):
         path,
         data_root,
         global_args: SubstitutionList,
-        umask,
         env_varlist: EnvironmentVarlist,
     ):
-        self._formatted_fprintf(
-            run_id, path, data_root, global_args, umask, env_varlist
-        )
+        self._formatted_fprintf(run_id, path, data_root, global_args, env_varlist)
 
     def __repr__(self):
         return self._create_repr(f"joblist={self.joblist()}")

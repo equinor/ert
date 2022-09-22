@@ -27,7 +27,7 @@ class SiteConfig(BaseCClass):
     TYPE_NAME = "site_config"
     _alloc = ResPrototype("void* site_config_alloc(config_content)", bind=False)
     _alloc_full = ResPrototype(
-        "void* site_config_alloc_full(ext_joblist, env_varlist, int)", bind=False
+        "void* site_config_alloc_full(ext_joblist, env_varlist)", bind=False
     )
     _free = ResPrototype("void site_config_free( site_config )")
     _get_installed_jobs = ResPrototype(
@@ -41,7 +41,6 @@ class SiteConfig(BaseCClass):
     )
     _get_location = ResPrototype("char* site_config_get_location()", bind=False)
     _get_config_file = ResPrototype("char* site_config_get_config_file(site_config)")
-    _get_umask = ResPrototype("int site_config_get_umask(site_config)")
     _get_env_var_list = ResPrototype(
         "env_varlist_ref site_config_get_env_varlist(site_config)"
     )
@@ -122,9 +121,8 @@ class SiteConfig(BaseCClass):
             )
 
             env_var_list.convertToCReference(None)
-            umask = config_dict.get(ConfigKeys.UMASK)
 
-            c_ptr = self._alloc_full(ext_job_list, env_var_list, umask)
+            c_ptr = self._alloc_full(ext_job_list, env_var_list)
 
         if c_ptr is None:
             raise ValueError("Failed to construct SiteConfig instance.")
@@ -134,7 +132,6 @@ class SiteConfig(BaseCClass):
     def __repr__(self):
         return (
             "SiteConfig(config_dict={"
-            + f"{ConfigKeys.UMASK}: {self.umask},"
             + f"{ConfigKeys.INSTALL_JOB}: ["
             + ", ".join(str(job) for job in self.get_installed_jobs())
             + "],"
@@ -162,14 +159,7 @@ class SiteConfig(BaseCClass):
     def free(self):
         self._free()
 
-    @property
-    def umask(self):
-        return self._get_umask()
-
     def __eq__(self, other):
-        if self.umask != other.umask:
-            return False
-
         self_job_list = self.get_installed_jobs()
         other_job_list = other.get_installed_jobs()
 

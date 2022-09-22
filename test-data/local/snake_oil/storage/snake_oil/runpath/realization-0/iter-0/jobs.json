@@ -1,5 +1,4 @@
 {
-"umask" : "0002",
 "DATA_ROOT": "/data/work/ERT/ert/test-data/local/snake_oil",
 "global_environment" : {"ECL300_SITE_CONFIG" : "/data/work/venvs/ert_basic/lib/python3.8/site-packages/ert_configurations/resources/ecl300_config.yml", "ECL100_SITE_CONFIG" : "/data/work/venvs/ert_basic/lib/python3.8/site-packages/ert_configurations/resources/ecl100_config.yml", "RMS_SITE_CONFIG" : "/data/work/venvs/ert_basic/lib/python3.8/site-packages/ert_configurations/resources/rms_config.yml", "FLOW_SITE_CONFIG" : "/data/work/venvs/ert_basic/lib/python3.8/site-packages/ert_configurations/resources/flow_config.yml"},
 "global_update_path" : {},

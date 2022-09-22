@@ -22,7 +22,7 @@ def test_run_one_job_with_an_integer_arg_is_actually_a_fractional():
         "arg_types": ["STRING", "RUNTIME_INT"],
     }
 
-    data = {"umask": "0000", "DATA_ROOT": "/path/to/data", "jobList": [job_0]}
+    data = {"DATA_ROOT": "/path/to/data", "jobList": [job_0]}
 
     runner = JobRunner(data)
     statuses = list(runner.run([]))
@@ -64,7 +64,6 @@ def test_run_given_one_job_with_missing_file_and_one_file_present():
     }
 
     data = {
-        "umask": "0000",
         "DATA_ROOT": "/path/to/data",
         "jobList": [job_0, job_1],
     }
