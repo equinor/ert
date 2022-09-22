@@ -154,7 +154,6 @@ struct enkf_node_struct {
     write_to_buffer_ftype *write_to_buffer;
     initialize_ftype *initialize;
     node_free_ftype *freef;
-    clear_ftype *clear;
     node_copy_ftype *copy;
 
     bool vector_storage;
@@ -554,11 +553,6 @@ bool enkf_node_initialize(enkf_node_type *enkf_node, int iens, rng_type *rng) {
         return false; /* No init performed */
 }
 
-void enkf_node_clear(enkf_node_type *enkf_node) {
-    FUNC_ASSERT(enkf_node->clear);
-    enkf_node->clear(enkf_node->data);
-}
-
 extern "C" void enkf_node_free(enkf_node_type *enkf_node) {
     if (enkf_node->freef != NULL)
         enkf_node->freef(enkf_node->data);
@@ -601,7 +595,6 @@ enkf_node_alloc_empty(const enkf_config_node_type *config) {
     node->write_to_buffer = NULL;
     node->serialize = NULL;
     node->deserialize = NULL;
-    node->clear = NULL;
     node->has_data = NULL;
 
     switch (impl_type) {
@@ -616,7 +609,6 @@ enkf_node_alloc_empty(const enkf_config_node_type *config) {
         node->read_from_buffer = gen_kw_read_from_buffer__;
         node->serialize = gen_kw_serialize__;
         node->deserialize = gen_kw_deserialize__;
-        node->clear = gen_kw_clear__;
         node->fload = gen_kw_fload__;
         break;
     case (SUMMARY):
@@ -631,7 +623,6 @@ enkf_node_alloc_empty(const enkf_config_node_type *config) {
         node->write_to_buffer = summary_write_to_buffer__;
         node->serialize = summary_serialize__;
         node->deserialize = summary_deserialize__;
-        node->clear = summary_clear__;
         node->has_data = summary_has_data__;
         break;
     case (SURFACE):
@@ -645,7 +636,6 @@ enkf_node_alloc_empty(const enkf_config_node_type *config) {
         node->write_to_buffer = surface_write_to_buffer__;
         node->serialize = surface_serialize__;
         node->deserialize = surface_deserialize__;
-        node->clear = surface_clear__;
         node->fload = surface_fload__;
         break;
     case (FIELD):
@@ -659,8 +649,6 @@ enkf_node_alloc_empty(const enkf_config_node_type *config) {
         node->write_to_buffer = field_write_to_buffer__;
         node->serialize = field_serialize__;
         node->deserialize = field_deserialize__;
-
-        node->clear = field_clear__;
         node->fload = field_fload__;
         break;
     case (GEN_DATA):
@@ -675,8 +663,6 @@ enkf_node_alloc_empty(const enkf_config_node_type *config) {
         node->write_to_buffer = gen_data_write_to_buffer__;
         node->serialize = gen_data_serialize__;
         node->deserialize = gen_data_deserialize__;
-
-        node->clear = gen_data_clear__;
         break;
     /* EXT_PARAM is used by Everest */
     case (EXT_PARAM):
