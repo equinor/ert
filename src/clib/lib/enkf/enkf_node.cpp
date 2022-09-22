@@ -200,18 +200,6 @@ void enkf_node_alloc_domain_object(enkf_node_type *enkf_node) {
     }
 }
 
-enkf_node_type *enkf_node_copyc(const enkf_node_type *enkf_node) {
-    FUNC_ASSERT(enkf_node->copy);
-    {
-        const enkf_node_type *src = enkf_node;
-        enkf_node_type *target;
-        target = enkf_node_alloc(src->config);
-        src->copy(src->data,
-                  target->data); /* Calling the low level copy function */
-        return target;
-    }
-}
-
 ert_impl_type enkf_node_get_impl_type(const enkf_node_type *enkf_node) {
     return enkf_config_node_get_impl_type(enkf_node->config);
 }
