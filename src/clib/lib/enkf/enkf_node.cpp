@@ -560,10 +560,6 @@ extern "C" void enkf_node_free(enkf_node_type *enkf_node) {
     free(enkf_node);
 }
 
-void enkf_node_free__(void *void_node) {
-    enkf_node_free((enkf_node_type *)void_node);
-}
-
 const char *enkf_node_get_key(const enkf_node_type *enkf_node) {
     return enkf_node->node_key;
 }
