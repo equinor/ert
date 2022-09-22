@@ -40,12 +40,10 @@
 #include <ert/enkf/time_map.hpp>
 
 typedef enum {
-    SCHEDULE = 0,
     /** ecl_sum_get_well_var( "WWCT" );  */
     REFCASE_SIMULATED = 1,
     /** ecl_sum_get_well_var( "WWCTH" ); */
     REFCASE_HISTORY = 2,
-    HISTORY_SOURCE_INVALID = 10
 } history_source_type;
 
 typedef struct model_config_struct model_config_type;

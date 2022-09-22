@@ -30,9 +30,8 @@ int main(int argc, char **argv) {
     ensemble_config_type *ensemble_config = NULL;
     ecl_sum_type *refcase = NULL;
 
-    enkf_obs_type *enkf_obs =
-        enkf_obs_alloc(HISTORY_SOURCE_INVALID, external_time_map, grid, refcase,
-                       ensemble_config);
+    enkf_obs_type *enkf_obs = enkf_obs_alloc(REFCASE_HISTORY, external_time_map,
+                                             grid, refcase, ensemble_config);
 
     obs_vector_type *obs_vector =
         obs_vector_alloc(SUMMARY_OBS, "WWCT", NULL, 2);
