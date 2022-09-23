@@ -104,8 +104,8 @@ analysis_iter_config_type *analysis_iter_config_alloc_full(const char *case_fmt,
     analysis_iter_config_set_num_iterations(config, num_iterations);
     analysis_iter_config_set_num_retries_per_iteration(config, num_iter_tries);
 
-    config->num_iterations_set = false;
-    config->case_set = false;
+    config->num_iterations_set = true;
+    config->case_set = true;
     return config;
 }
 
