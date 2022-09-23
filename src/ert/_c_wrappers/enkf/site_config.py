@@ -29,9 +29,6 @@ class SiteConfig(BaseCClass):
     _alloc_full = ResPrototype(
         "void* site_config_alloc_full(ext_joblist, env_varlist, int)", bind=False
     )
-    _alloc_load_user_config = ResPrototype(
-        "void* site_config_alloc_load_user_config(char*)", bind=False
-    )
     _free = ResPrototype("void site_config_free( site_config )")
     _get_installed_jobs = ResPrototype(
         "ext_joblist_ref site_config_get_installed_jobs(site_config)"
@@ -49,11 +46,9 @@ class SiteConfig(BaseCClass):
         "env_varlist_ref site_config_get_env_varlist(site_config)"
     )
 
-    def __init__(self, user_config_file=None, config_content=None, config_dict=None):
+    def __init__(self, config_content=None, config_dict=None):
 
-        configs = sum(
-            1 for x in [user_config_file, config_content, config_dict] if x is not None
-        )
+        configs = sum(1 for x in [config_content, config_dict] if x is not None)
 
         if configs > 1:
             raise ValueError(
@@ -66,12 +61,7 @@ class SiteConfig(BaseCClass):
             )
 
         c_ptr = None
-        if user_config_file is not None:
-            if not os.path.isfile(user_config_file):
-                raise IOError(f'No such configuration file "{user_config_file}".')
-            c_ptr = self._alloc_load_user_config(user_config_file)
-
-        elif config_content is not None:
+        if config_content is not None:
             c_ptr = self._alloc(config_content)
 
         elif config_dict is not None:

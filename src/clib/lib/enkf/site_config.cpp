@@ -167,23 +167,6 @@ static site_config_type *site_config_alloc_default() {
     return site_config;
 }
 
-site_config_type *
-site_config_alloc_load_user_config(const char *user_config_file) {
-    config_parser_type *config_parser = config_alloc();
-    config_content_type *config_content = NULL;
-
-    if (user_config_file)
-        config_content =
-            model_config_alloc_content(user_config_file, config_parser);
-
-    site_config_type *site_config = site_config_alloc(config_content);
-
-    config_free(config_parser);
-    config_content_free(config_content);
-
-    return site_config;
-}
-
 site_config_type *site_config_alloc(const config_content_type *config_content) {
     site_config_type *site_config = site_config_alloc_default();
 
