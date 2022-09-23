@@ -33,13 +33,6 @@ SCENARIO("Using UMASK in config") {
                     "UMASK is deprecated and will be removed in the future."));
             }
         }
-        WHEN("Loading the config") {
-            set_site_config("config.ert");
-            THEN("The constructer raises a invalid argument error") {
-                REQUIRE_NOTHROW(
-                    site_config_alloc_load_user_config("config.ert"));
-            }
-        }
     }
     GIVEN("A config file with umask set to 0") {
         WITH_TMPDIR;
@@ -63,14 +56,6 @@ SCENARIO("Using UMASK in config") {
                 REQUIRE(stringlist_contains(
                     warnings,
                     "UMASK is deprecated and will be removed in the future."));
-            }
-        }
-        WHEN("Loading the config") {
-            set_site_config("config.ert");
-            THEN("The constructer raises a invalid argument error") {
-                REQUIRE_THROWS_AS(
-                    site_config_alloc_load_user_config("config.ert"),
-                    std::invalid_argument);
             }
         }
     }

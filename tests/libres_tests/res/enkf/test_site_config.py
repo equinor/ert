@@ -32,12 +32,6 @@ def test_umask_is_written_to_json(setup_case):
     assert json.load(Path("simulations/run0/jobs.json").open())["umask"] == "0022"
 
 
-@pytest.mark.usefixtures("use_tmpdir")
-def test_invalid_user_config():
-    with pytest.raises(IOError):
-        SiteConfig("this/is/not/a/file")
-
-
 def test_constructors(snake_oil_case):
     ert_site_config = SiteConfig.getLocation()
     ert_share_path = os.path.dirname(ert_site_config)
@@ -79,7 +73,7 @@ def test_constructors(snake_oil_case):
 
 def test_2_inits_raises():
     with pytest.raises(ValueError):
-        SiteConfig(user_config_file="a_config", config_dict={"some": "config"})
+        SiteConfig(config_content="a_config", config_dict={"some": "config"})
 
 
 def test_site_config_hook_workflow(monkeypatch, tmp_path):
