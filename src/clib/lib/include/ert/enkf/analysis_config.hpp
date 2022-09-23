@@ -43,9 +43,6 @@ analysis_config_get_module(const analysis_config_type *config,
                            const char *module_name);
 extern "C" bool analysis_config_has_module(const analysis_config_type *config,
                                            const char *module_name);
-void analysis_config_load_module(int ens_size, analysis_config_type *config,
-                                 analysis_mode_enum mode);
-
 std::vector<std::string>
 analysis_config_module_names(const analysis_config_type *config);
 
@@ -58,8 +55,6 @@ extern "C" PY_USED analysis_config_type *analysis_config_alloc_full(
     double std_cutoff, bool stop_long_running, bool single_node_update,
     double global_std_scaling, int max_runtime, int min_realisations);
 analysis_config_type *analysis_config_alloc_default(void);
-extern "C" analysis_config_type *
-analysis_config_alloc_load(const char *user_config_file);
 extern "C" analysis_config_type *
 analysis_config_alloc(const config_content_type *config_content);
 extern "C" void analysis_config_free(analysis_config_type *);

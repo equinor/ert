@@ -14,7 +14,7 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 
-from os.path import isfile, realpath
+from os.path import realpath
 from typing import List, Optional
 
 from cwrap import BaseCClass
@@ -31,7 +31,6 @@ class AnalysisConfig(BaseCClass):
     TYPE_NAME = "analysis_config"
 
     _alloc = ResPrototype("void* analysis_config_alloc(config_content)", bind=False)
-    _alloc_load = ResPrototype("void* analysis_config_alloc_load(char*)", bind=False)
     _alloc_full = ResPrototype(
         "void* analysis_config_alloc_full(double, bool, "
         "int, char*, double, bool, bool, "
@@ -103,13 +102,10 @@ class AnalysisConfig(BaseCClass):
 
     def __init__(
         self,
-        user_config_file=None,
         config_content: Optional[ConfigContent] = None,
         config_dict=None,
     ):
-        configs = sum(
-            1 for x in [user_config_file, config_content, config_dict] if x is not None
-        )
+        configs = sum(1 for x in [config_content, config_dict] if x is not None)
 
         if configs > 1:
             raise ValueError(
@@ -123,20 +119,6 @@ class AnalysisConfig(BaseCClass):
             )
 
         c_ptr = None
-
-        if user_config_file is not None:
-            if not isfile(user_config_file):
-                raise IOError(f'No such configuration file "{user_config_file}".')
-
-            c_ptr = self._alloc_load(user_config_file)
-            if c_ptr:
-                super().__init__(c_ptr)
-            else:
-                raise ValueError(
-                    "Failed to construct AnalysisConfig instance "
-                    f"from config file {user_config_file}."
-                )
-
         if config_content is not None:
             c_ptr = self._alloc(config_content)
             if c_ptr:

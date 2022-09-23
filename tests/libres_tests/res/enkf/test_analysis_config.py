@@ -19,12 +19,6 @@ import pytest
 from ert._c_wrappers.enkf import AnalysisConfig, ConfigKeys
 
 
-@pytest.mark.usefixtures("use_tmpdir")
-def test_invalid_user_config():
-    with pytest.raises(IOError):
-        AnalysisConfig("this/is/not/a/file")
-
-
 @pytest.fixture
 def analysis_config(minimum_case):
     return minimum_case.resConfig().analysis_config
@@ -56,8 +50,8 @@ def test_analysis_config_global_std_scaling(analysis_config):
 
 
 def test_analysis_config_constructor(setup_case):
-    _ = setup_case("local/simple_config", "analysis_config")
-    assert AnalysisConfig(user_config_file="analysis_config") == AnalysisConfig(
+    res_config = setup_case("local/simple_config", "analysis_config")
+    assert res_config.analysis_config == AnalysisConfig(
         config_dict={
             ConfigKeys.NUM_REALIZATIONS: 10,
             ConfigKeys.ALPHA_KEY: 3,
