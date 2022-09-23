@@ -92,11 +92,6 @@ struct model_config_struct {
     char *obs_config_file;
 };
 
-char *model_config_alloc_jobname(const model_config_type *model_config,
-                                 int iens) {
-    return util_alloc_sprintf(model_config->jobname_fmt, iens);
-}
-
 const char *
 model_config_get_jobname_fmt(const model_config_type *model_config) {
     return model_config->jobname_fmt;
@@ -374,14 +369,6 @@ static void model_config_set_default_data_root(model_config_type *model_config,
     setenv("DATA_ROOT", data_root, 1);
 }
 
-bool model_config_data_root_is_set(const model_config_type *model_config) {
-    if (!model_config->data_root)
-        return false;
-
-    return !util_string_equal(model_config->data_root,
-                              model_config->default_data_root);
-}
-
 void model_config_init(model_config_type *model_config,
                        const config_content_type *config, const char *data_root,
                        int ens_size, const ext_joblist_type *joblist,
@@ -569,49 +556,6 @@ model_config_get_forward_model(const model_config_type *config) {
     return config->forward_model;
 }
 
-static char *model_config_alloc_user_config_file(const char *user_config_file,
-                                                 bool base_only) {
-    char *base_name;
-    char *extension;
-    util_alloc_file_components(user_config_file, NULL, &base_name, &extension);
-
-    char *config_file;
-    if (base_only)
-        config_file = util_alloc_filename(NULL, base_name, NULL);
-    else
-        config_file = util_alloc_filename(NULL, base_name, extension);
-
-    free(base_name);
-    free(extension);
-
-    return config_file;
-}
-
-static hash_type *alloc_predefined_kw_map(const char *user_config_file) {
-    char *config_file_base =
-        model_config_alloc_user_config_file(user_config_file, true);
-    char *config_file =
-        model_config_alloc_user_config_file(user_config_file, false);
-    char *config_path;
-
-    hash_type *pre_defined_kw_map = hash_alloc();
-    hash_insert_string(pre_defined_kw_map, "<CONFIG_FILE>", config_file);
-    hash_insert_string(pre_defined_kw_map, "<CONFIG_FILE_BASE>",
-                       config_file_base);
-    {
-        char *tmp_path;
-        util_alloc_file_components(user_config_file, &tmp_path, NULL, NULL);
-        config_path = util_alloc_abs_path(tmp_path);
-        free(tmp_path);
-    }
-    hash_insert_string(pre_defined_kw_map, "<CONFIG_PATH>", config_path);
-    free(config_path);
-    free(config_file);
-    free(config_file_base);
-
-    return pre_defined_kw_map;
-}
-
 static void model_config_init_user_config(config_parser_type *config) {
     config_schema_item_type *item;
 
@@ -688,40 +632,4 @@ static void model_config_init_user_config(config_parser_type *config) {
 void model_config_init_config_parser(config_parser_type *config_parser) {
     model_config_init_user_config(config_parser);
     site_config_add_config_items(config_parser, false);
-}
-
-config_content_type *model_config_alloc_content(const char *user_config_file,
-                                                config_parser_type *config) {
-
-    model_config_init_config_parser(config);
-
-    hash_type *pre_defined_kw_map = alloc_predefined_kw_map(user_config_file);
-    config_content_type *content =
-        config_parse(config, user_config_file, "--", INCLUDE_KEY, DEFINE_KEY,
-                     pre_defined_kw_map, CONFIG_UNRECOGNIZED_WARN, true);
-    hash_free(pre_defined_kw_map);
-
-    const stringlist_type *warnings = config_content_get_warnings(content);
-    if (stringlist_get_size(warnings) > 0) {
-        std::string error_string =
-            "** There were warnings when parsing the configuration file: ";
-        error_string.append(user_config_file);
-        error_string.append(". ");
-        for (int i = 0; i < stringlist_get_size(warnings); i++) {
-            error_string.append(std::to_string(i));
-            error_string.append(" : ");
-            error_string.append(stringlist_iget(warnings, i));
-        }
-        logger->warning(error_string);
-    }
-
-    if (!config_content_is_valid(content)) {
-        config_error_type *errors = config_content_get_errors(content);
-        config_error_fprintf(errors, true, stderr);
-
-        util_abort("%s: Failed to load user configuration file: %s\n", __func__,
-                   user_config_file);
-    }
-
-    return content;
 }
