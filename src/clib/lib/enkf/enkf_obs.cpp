@@ -497,8 +497,7 @@ static void handle_history_observation(enkf_obs_type *enkf_obs,
         if (obs_vector != NULL) {
             if (obs_vector_load_from_HISTORY_OBSERVATION(
                     obs_vector, hist_obs_conf, enkf_obs->obs_time,
-                    enkf_obs->history, enkf_obs->ensemble_config, std_cutoff,
-                    enkf_obs->refcase)) {
+                    enkf_obs->history, std_cutoff, enkf_obs->refcase)) {
                 enkf_obs_add_obs_vector(enkf_obs, obs_vector);
             } else {
                 fprintf(stderr,
