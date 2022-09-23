@@ -22,6 +22,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <optional>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
@@ -468,7 +469,7 @@ static bool history_init_ts(const history_source_type history,
     bool_vector_reset(valid);
     bool_vector_set_default(valid, false);
 
-    char *local_key;
+    std::optional<std::string> local_key = std::nullopt;
     if (history == REFCASE_HISTORY) {
         /* Must create a new key with 'H' for historical values. */
         const ecl_smspec_type *smspec = ecl_sum_get_smspec(refcase);
@@ -478,27 +479,25 @@ static bool history_init_ts(const history_source_type history,
 
         if ((var_type == ECL_SMSPEC_WELL_VAR) ||
             (var_type == ECL_SMSPEC_GROUP_VAR))
-            local_key = util_alloc_sprintf(
+            local_key = std::string(std::move(util_alloc_sprintf(
                 "%sH%s%s", ecl_sum_get_keyword(refcase, summary_key),
-                join_string, ecl_sum_get_wgname(refcase, summary_key));
+                join_string, ecl_sum_get_wgname(refcase, summary_key))));
         else if (var_type == ECL_SMSPEC_FIELD_VAR)
-            local_key = util_alloc_sprintf(
-                "%sH", ecl_sum_get_keyword(refcase, summary_key));
-        else
-            local_key =
-                NULL; // If we try to get historical values of e.g. Region quantities it will fail.
+            local_key = std::string(std::move(util_alloc_sprintf(
+                "%sH", ecl_sum_get_keyword(refcase, summary_key))));
     } else
-        local_key = (char *)summary_key;
+        local_key = std::string(summary_key);
 
-    if (local_key) {
-        if (ecl_sum_has_general_var(refcase, local_key)) {
+    if (local_key.has_value()) {
+        if (ecl_sum_has_general_var(refcase, local_key.value().c_str())) {
             for (int tstep = 0; tstep <= ecl_sum_get_last_report_step(refcase);
                  tstep++) {
                 if (ecl_sum_has_report_step(refcase, tstep)) {
                     int time_index = ecl_sum_iget_report_end(refcase, tstep);
-                    double_vector_iset(value, tstep,
-                                       ecl_sum_get_general_var(
-                                           refcase, time_index, local_key));
+                    double_vector_iset(
+                        value, tstep,
+                        ecl_sum_get_general_var(refcase, time_index,
+                                                local_key.value().c_str()));
                     bool_vector_iset(valid, tstep, true);
                 } else
                     bool_vector_iset(valid, tstep,
@@ -506,9 +505,6 @@ static bool history_init_ts(const history_source_type history,
             }
             initOK = true;
         }
-
-        if (history == REFCASE_HISTORY)
-            free(local_key);
     }
     return initOK;
 }
