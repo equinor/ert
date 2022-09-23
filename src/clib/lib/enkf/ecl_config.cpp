@@ -469,30 +469,6 @@ bool ecl_config_have_eclbase(const ecl_config_type *ecl_config) {
     return ecl_config->have_eclbase;
 }
 
-void ecl_config_add_config_items(config_parser_type *config) {
-    config_schema_item_type *item;
-
-    /*
-   Observe that SCHEDULE_PREDICTION_FILE - which is implemented as a
-   GEN_KW is added in ensemble_config.c
-  */
-
-    item = config_add_schema_item(config, ECLBASE_KEY, false);
-    config_schema_item_set_argc_minmax(item, 1, 1);
-
-    item = config_add_schema_item(config, DATA_FILE_KEY, false);
-    config_schema_item_set_argc_minmax(item, 1, 1);
-    config_schema_item_iset_type(item, 0, CONFIG_EXISTING_PATH);
-
-    item = config_add_schema_item(config, REFCASE_KEY, false);
-    config_schema_item_set_argc_minmax(item, 1, 1);
-    config_schema_item_iset_type(item, 0, CONFIG_PATH);
-
-    item = config_add_schema_item(config, GRID_KEY, false);
-    config_schema_item_set_argc_minmax(item, 1, 1);
-    config_schema_item_iset_type(item, 0, CONFIG_EXISTING_PATH);
-}
-
 /** Units as specified in the ECLIPSE technical manual */
 const char *ecl_config_get_depth_unit(const ecl_config_type *ecl_config) {
     switch (ecl_config->unit_system) {
