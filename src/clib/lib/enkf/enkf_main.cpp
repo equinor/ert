@@ -168,7 +168,6 @@ void init_active_run(const model_config_type *model_config,
     forward_model_formatted_fprintf(
         model_config_get_forward_model(model_config), run_id, run_path,
         model_config_get_data_root(model_config), subst_list,
-        site_config_get_umask(site_config),
         site_config_get_env_varlist(site_config));
 }
 } // namespace enkf_main

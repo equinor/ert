@@ -22,16 +22,6 @@ import pytest
 
 from ert._c_wrappers.enkf import ConfigKeys, EnKFMain, ResConfig, SiteConfig
 
-
-def test_umask_is_written_to_json(setup_case):
-    res_config = setup_case("local/simple_config", "config_umask")
-    ert = EnKFMain(res_config)
-    run_context = ert.create_ensemble_experiment_run_context(iteration=0)
-    ert.createRunPath(run_context)
-
-    assert json.load(Path("simulations/run0/jobs.json").open())["umask"] == "0022"
-
-
 def test_constructors(snake_oil_case):
     ert_site_config = SiteConfig.getLocation()
     ert_share_path = os.path.dirname(ert_site_config)
