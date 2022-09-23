@@ -39,12 +39,10 @@
 #include <ert/enkf/fs_types.hpp>
 #include <ert/enkf/time_map.hpp>
 
-typedef enum {
-    /** ecl_sum_get_well_var( "WWCT" );  */
-    REFCASE_SIMULATED = 1,
-    /** ecl_sum_get_well_var( "WWCTH" ); */
-    REFCASE_HISTORY = 2,
-} history_source_type;
+enum history_source_type {
+    REFCASE_SIMULATED = 1, /** ecl_sum_get_well_var( "WWCT" );  */
+    REFCASE_HISTORY = 2,   /** ecl_sum_get_well_var( "WWCTH" ); */
+};
 
 typedef struct model_config_struct model_config_type;
 extern "C" const char *
