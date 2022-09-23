@@ -529,8 +529,7 @@ static bool read_history_from_ecl_summary(const history_source_type history,
 bool obs_vector_load_from_HISTORY_OBSERVATION(
     obs_vector_type *obs_vector, const conf_instance_type *conf_instance,
     time_map_type *obs_time, const history_source_type history,
-    ensemble_config_type *ensemble_config, double std_cutoff,
-    const ecl_sum_type *refcase) {
+    double std_cutoff, const ecl_sum_type *refcase) {
 
     if (!conf_instance_is_of_class(conf_instance, "HISTORY_OBSERVATION"))
         util_abort("%s: internal error. expected \"HISTORY_OBSERVATION\" "
