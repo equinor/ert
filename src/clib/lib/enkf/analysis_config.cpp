@@ -521,22 +521,6 @@ analysis_config_type *analysis_config_alloc_default(void) {
     return config;
 }
 
-analysis_config_type *analysis_config_alloc_load(const char *user_config_file) {
-    config_parser_type *config_parser = config_alloc();
-    config_content_type *config_content = NULL;
-    if (user_config_file)
-        config_content =
-            model_config_alloc_content(user_config_file, config_parser);
-
-    analysis_config_type *analysis_config =
-        analysis_config_alloc(config_content);
-
-    config_content_free(config_content);
-    config_free(config_parser);
-
-    return analysis_config;
-}
-
 analysis_config_type *
 analysis_config_alloc(const config_content_type *config_content) {
     analysis_config_type *analysis_config = analysis_config_alloc_default();
