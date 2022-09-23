@@ -53,7 +53,8 @@ void analysis_config_init(analysis_config_type *analysis,
 extern "C" PY_USED analysis_config_type *analysis_config_alloc_full(
     double alpha, bool rerun, int rerun_start, const char *log_path,
     double std_cutoff, bool stop_long_running, bool single_node_update,
-    double global_std_scaling, int max_runtime, int min_realisations);
+    double global_std_scaling, int max_runtime, int min_realisations,
+    const char *case_fmt, int num_iterations, int num_iter_tries);
 analysis_config_type *analysis_config_alloc_default(void);
 extern "C" analysis_config_type *
 analysis_config_alloc(const config_content_type *config_content);

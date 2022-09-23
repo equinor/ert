@@ -34,7 +34,7 @@ class AnalysisConfig(BaseCClass):
     _alloc_full = ResPrototype(
         "void* analysis_config_alloc_full(double, bool, "
         "int, char*, double, bool, bool, "
-        "double, int, int)",
+        "double, int, int, char*, int, int)",
         bind=False,
     )
 
@@ -138,6 +138,9 @@ class AnalysisConfig(BaseCClass):
                 config_dict.get(ConfigKeys.GLOBAL_STD_SCALING, 1.0),
                 config_dict.get(ConfigKeys.MAX_RUNTIME, 0),
                 config_dict.get(ConfigKeys.MIN_REALIZATIONS, 0),
+                config_dict.get(ConfigKeys.ITER_CASE, "ITERATED_ENSEMBLE_SMOOTHER%d"),
+                config_dict.get(ConfigKeys.ITER_COUNT, 4),
+                config_dict.get(ConfigKeys.ITER_RETRY_COUNT, 4),
             )
             if c_ptr:
                 super().__init__(c_ptr)

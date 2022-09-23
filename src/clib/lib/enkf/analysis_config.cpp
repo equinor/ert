@@ -465,7 +465,8 @@ void analysis_config_free(analysis_config_type *config) {
 analysis_config_type *analysis_config_alloc_full(
     double alpha, bool rerun, int rerun_start, const char *log_path,
     double std_cutoff, bool stop_long_running, bool single_node_update,
-    double global_std_scaling, int max_runtime, int min_realisations) {
+    double global_std_scaling, int max_runtime, int min_realisations,
+    const char *case_fmt, int num_iterations, int num_iter_tries) {
     analysis_config_type *config = new analysis_config_type();
     UTIL_TYPE_ID_INIT(config, ANALYSIS_CONFIG_TYPE_ID);
 
@@ -485,7 +486,8 @@ analysis_config_type *analysis_config_alloc_full(
     config->max_runtime = max_runtime;
 
     config->analysis_module = NULL;
-    config->iter_config = analysis_iter_config_alloc();
+    config->iter_config = analysis_iter_config_alloc_full(
+        case_fmt, num_iterations, num_iter_tries);
     config->global_std_scaling = global_std_scaling;
 
     analysis_config_load_internal_modules(config);

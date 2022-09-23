@@ -59,9 +59,9 @@ class AnalysisIterConfig(BaseCClass):
                 raise ValueError("Failed to construct AnalysisIterConfig instance.")
         else:
             c_ptr = self._alloc_full(
-                config_dict[ConfigKeys.ITER_CASE],
-                config_dict[ConfigKeys.ITER_COUNT],
-                config_dict[ConfigKeys.ITER_RETRY_COUNT],
+                config_dict.get(ConfigKeys.ITER_CASE, "ITERATED_ENSEMBLE_SMOOTHER%d"),
+                config_dict.get(ConfigKeys.ITER_COUNT, 4),
+                config_dict.get(ConfigKeys.ITER_RETRY_COUNT, 4),
             )
             if c_ptr:
                 super().__init__(c_ptr)
