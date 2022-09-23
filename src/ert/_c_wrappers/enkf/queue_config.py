@@ -29,7 +29,6 @@ class QueueConfig(BaseCClass):
     TYPE_NAME = "queue_config"
 
     _free = ResPrototype("void queue_config_free( queue_config )")
-    _alloc = ResPrototype("void* queue_config_alloc_load(char*)", bind=False)
     _alloc_full = ResPrototype(
         "void* queue_config_alloc_full(char*, bool, int, int, queue_driver_enum)",
         bind=False,
@@ -56,13 +55,10 @@ class QueueConfig(BaseCClass):
 
     def __init__(
         self,
-        user_config_file=None,
         config_content: Optional[ConfigContent] = None,
         config_dict=None,
     ):
-        configs = sum(
-            1 for x in [user_config_file, config_content, config_dict] if x is not None
-        )
+        configs = sum(1 for x in [config_content, config_dict] if x is not None)
 
         if configs > 1:
             raise ValueError(
@@ -75,12 +71,8 @@ class QueueConfig(BaseCClass):
             )
 
         c_ptr = None
-        if user_config_file is not None:
-            c_ptr = self._alloc(user_config_file)
-
         if config_content is not None:
             c_ptr = self._alloc_content(config_content)
-
         if config_dict is not None:
             c_ptr = self._alloc_full(
                 config_dict[ConfigKeys.JOB_SCRIPT],

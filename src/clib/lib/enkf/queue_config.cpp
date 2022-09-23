@@ -74,22 +74,6 @@ static queue_config_type *queue_config_alloc_default() {
     return queue_config;
 }
 
-queue_config_type *queue_config_alloc_load(const char *user_config_file) {
-    config_parser_type *config = config_alloc();
-
-    config_content_type *content = NULL;
-
-    if (user_config_file)
-        content = model_config_alloc_content(user_config_file, config);
-
-    queue_config_type *queue_config = queue_config_alloc(content);
-
-    config_free(config);
-    config_content_free(content);
-
-    return queue_config;
-}
-
 queue_config_type *
 queue_config_alloc(const config_content_type *config_content) {
     queue_config_type *queue_config = queue_config_alloc_default();
