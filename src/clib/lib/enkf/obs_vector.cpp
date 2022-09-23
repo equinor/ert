@@ -459,10 +459,25 @@ obs_vector_type *obs_vector_alloc_from_GENERAL_OBSERVATION(
     }
 }
 
-static bool history_init_ts(const history_source_type history,
-                            const char *summary_key, double_vector_type *value,
-                            bool_vector_type *valid,
-                            const ecl_sum_type *refcase) {
+/**
+ * @brief Reads history from ecl_summary file for use as ert observation
+ *
+ *  Depending on the value of history_source_type the key that is being
+ *  read is either the result key (for example FOPR), or the historical
+ *  key (in this example FOPRH), both of which can be stored in an ecl
+ *  summary file
+ *
+ * @param history Which type of key to read
+ * @param value Values are loaded into
+ * @param summary_key Base name of the key to read
+ * @param valid Checks if values are valid
+ * @param refcase ecl summary file
+ */
+static bool read_history_from_ecl_summary(const history_source_type history,
+                                          const char *summary_key,
+                                          double_vector_type *value,
+                                          bool_vector_type *valid,
+                                          const ecl_sum_type *refcase) {
     bool initOK = false;
 
     double_vector_reset(value);
@@ -539,7 +554,8 @@ bool obs_vector_load_from_HISTORY_OBSERVATION(
 
         // Get time series data from refcase and allocate
         size = time_map_get_last_step(obs_time) + 1;
-        if (history_init_ts(history, sum_key, value, valid, refcase)) {
+        if (read_history_from_ecl_summary(history, sum_key, value, valid,
+                                          refcase)) {
             // Create  the standard deviation vector
             if (strcmp(error_mode, "ABS") == 0) {
                 for (restart_nr = 0; restart_nr < size; restart_nr++)
