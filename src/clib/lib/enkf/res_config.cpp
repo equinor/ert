@@ -31,9 +31,49 @@ ERT_CLIB_SUBMODULE("res_config", m) {
                 ert::from_cwrap<config_parser_type>(py_config_parser);
             ert_workflow_list_add_config_items(config_parser);
             analysis_config_add_config_items(config_parser);
-            ensemble_config_add_config_items(config_parser);
             auto item =
-                config_add_schema_item(config_parser, ECLBASE_KEY, false);
+                config_add_schema_item(config_parser, "HAVANA_FAULT", false);
+            config_schema_item_set_argc_minmax(item, 2, 2);
+
+            item = config_add_schema_item(config_parser, "MULTFLT", false);
+            config_schema_item_set_argc_minmax(item, 3, 3);
+            config_schema_item_iset_type(item, 2, CONFIG_EXISTING_PATH);
+
+            item = config_add_schema_item(config_parser, GEN_KW_KEY, false);
+            config_schema_item_set_argc_minmax(item, 4, 6);
+            config_schema_item_iset_type(item, 1, CONFIG_EXISTING_PATH);
+            config_schema_item_iset_type(item, 2, CONFIG_PATH);
+            config_schema_item_iset_type(item, 3, CONFIG_EXISTING_PATH);
+
+            item = config_add_key_value(config_parser, GEN_KW_TAG_FORMAT_KEY,
+                                        false, CONFIG_STRING);
+            item = config_add_schema_item(config_parser,
+                                          SCHEDULE_PREDICTION_FILE_KEY, false);
+            /* scedhule_prediction_file   filename  <parameters:> <init_files:> */
+            config_schema_item_set_argc_minmax(item, 1, 3);
+            config_schema_item_iset_type(item, 0, CONFIG_EXISTING_PATH);
+
+            enkf_config_node_add_GEN_PARAM_config_schema(config_parser);
+            enkf_config_node_add_GEN_DATA_config_schema(config_parser);
+
+            item = config_add_schema_item(
+                config_parser, SUMMARY_KEY,
+                false); /* can have several summary keys on each line. */
+            config_schema_item_set_argc_minmax(item, 1, CONFIG_DEFAULT_ARG_MAX);
+
+            item = config_add_schema_item(config_parser, SURFACE_KEY, false);
+            config_schema_item_set_argc_minmax(item, 4, 5);
+
+            // the way config info is entered for fields is unfortunate because
+            // it is difficult/impossible to let the config system handle run
+            // time validation of the input.
+
+            item = config_add_schema_item(config_parser, FIELD_KEY, false);
+            config_schema_item_set_argc_minmax(item, 2, CONFIG_DEFAULT_ARG_MAX);
+            config_schema_item_add_required_children(
+                item,
+                GRID_KEY); /* if you are using a field - you must have a grid. */
+            item = config_add_schema_item(config_parser, ECLBASE_KEY, false);
             config_schema_item_set_argc_minmax(item, 1, 1);
 
             item = config_add_schema_item(config_parser, DATA_FILE_KEY, false);
