@@ -177,24 +177,6 @@ ensemble_config_alloc_full(const char *gen_kw_format_string) {
     return ensemble_config;
 }
 
-ensemble_config_type *ensemble_config_alloc_load(const char *user_config_file,
-                                                 ecl_grid_type *grid,
-                                                 const ecl_sum_type *refcase) {
-    config_parser_type *config_parser = config_alloc();
-    config_content_type *config_content = NULL;
-    if (user_config_file)
-        config_content =
-            model_config_alloc_content(user_config_file, config_parser);
-
-    ensemble_config_type *ensemble_config =
-        ensemble_config_alloc(config_content, grid, refcase);
-
-    config_content_free(config_content);
-    config_free(config_parser);
-
-    return ensemble_config;
-}
-
 // forward declaration -> implementation further down
 static void ensemble_config_init(ensemble_config_type *ensemble_config,
                                  const config_content_type *config,

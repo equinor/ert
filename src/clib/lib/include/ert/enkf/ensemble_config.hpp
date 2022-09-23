@@ -99,8 +99,6 @@ ensemble_config_keylist_from_var_type(const ensemble_config_type *,
 extern "C" stringlist_type *
 ensemble_config_alloc_keylist_from_impl_type(const ensemble_config_type *,
                                              ert_impl_type);
-ensemble_config_type *ensemble_config_alloc_load(const char *, ecl_grid_type *,
-                                                 const ecl_sum_type *);
 extern "C" ensemble_config_type *
 ensemble_config_alloc(const config_content_type *, ecl_grid_type *,
                       const ecl_sum_type *);

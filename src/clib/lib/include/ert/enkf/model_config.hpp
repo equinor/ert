@@ -46,10 +46,6 @@ extern "C" const char *
 model_config_get_data_root(const model_config_type *model_config);
 void model_config_set_data_root(model_config_type *model_config,
                                 const char *data_root);
-bool model_config_data_root_is_set(const model_config_type *model_config);
-
-char *model_config_alloc_jobname(const model_config_type *model_config,
-                                 int iens);
 extern "C" const char *
 model_config_get_jobname_fmt(const model_config_type *model_config);
 void model_config_set_jobname_fmt(model_config_type *model_config,
@@ -118,8 +114,6 @@ model_config_set_gen_kw_export_name(model_config_type *model_config,
 extern "C" const char *
 model_config_get_gen_kw_export_name(const model_config_type *model_config);
 
-config_content_type *model_config_alloc_content(const char *,
-                                                config_parser_type *);
 void model_config_init_config_parser(config_parser_type *config_parser);
 
 UTIL_IS_INSTANCE_HEADER(model_config);

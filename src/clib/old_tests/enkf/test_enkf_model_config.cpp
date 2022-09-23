@@ -53,14 +53,6 @@ void test_runpath() {
     model_config_free(model_config);
 }
 
-void test_data_root() {
-    model_config_type *model_config = model_config_alloc_empty();
-    test_assert_false(model_config_data_root_is_set(model_config));
-    model_config_set_data_root(model_config, "root");
-    test_assert_true(model_config_data_root_is_set(model_config));
-    model_config_free(model_config);
-}
-
 void test_export_file() {
     model_config_type *model_config = model_config_alloc_empty();
 
@@ -70,7 +62,6 @@ void test_export_file() {
 int main(int argc, char **argv) {
     test_create();
     test_runpath();
-    test_data_root();
     test_export_file();
     exit(0);
 }
