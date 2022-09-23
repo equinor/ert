@@ -35,8 +35,6 @@
 typedef struct queue_config_struct queue_config_type;
 
 extern "C" queue_config_type *
-queue_config_alloc_load(const char *user_config_file);
-extern "C" queue_config_type *
 queue_config_alloc(const config_content_type *config_content);
 extern "C" PY_USED queue_config_type *
 queue_config_alloc_full(char *job_script, bool user_mode, int max_submit,

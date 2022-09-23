@@ -54,20 +54,16 @@ foreach(
   add_test(NAME ${test} COMMAND ${test})
 endforeach()
 
-foreach(test
-        enkf_queue_config enkf_ert_workflow_list enkf_ecl_config
-        enkf_ecl_config_config enkf_executable_path enkf_ensemble_GEN_PARAM)
+foreach(test enkf_ert_workflow_list enkf_ecl_config enkf_ecl_config_config
+             enkf_ensemble_GEN_PARAM)
 
   add_executable(${test} ${TESTS_EXCLUDE_FROM_ALL} test_${test}.cpp)
   target_link_libraries(${test} ert)
 endforeach()
 
-add_config_test(enkf_executable_path enkf_executable_path)
-
 add_config_test(enkf_ensemble_GEN_PARAM enkf_ensemble_GEN_PARAM
                 "${TEST_DATA_DIR}/enkf/ensemble/GEN_PARAM")
 
-add_config_test(enkf_queue_config enkf_queue_config)
 add_config_test(enkf_ecl_config1 enkf_ecl_config)
 add_config_test(enkf_ecl_config2 enkf_ecl_config
                 "${LOCAL_TEST_DATA_DIR}/snake_oil/refcase/SNAKE_OIL_FIELD")

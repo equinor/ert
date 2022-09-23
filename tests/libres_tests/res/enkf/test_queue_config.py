@@ -31,11 +31,14 @@ def test_get_queue_config(minimum_case):
     assert queue_config.has_job_script() == queue_config_copy.has_job_script()
 
 
-def test_qeueu_not_both():
-    with pytest.raises(ValueError):
-        _ = QueueConfig(
-            user_config_file="a_file", config_content=ConfigContent("a_file")
-        )
+def test_that_qeueu_raises_given_two_init_params():
+    with pytest.raises(ValueError, match="multiple config"):
+        _ = QueueConfig(config_dict={}, config_content=ConfigContent("a_file"))
+
+
+def test_queue_raises_given_no_init_params():
+    with pytest.raises(ValueError, match="no config"):
+        _ = QueueConfig()
 
 
 def test_queue_config_constructor(minimum_case):
@@ -56,9 +59,9 @@ def test_queue_config_constructor(minimum_case):
     )
 
 
-def test_get_slurm_queue_config(copy_case):
-    copy_case("local/simple_config")
-    queue_config = QueueConfig("slurm_config")
+def test_get_slurm_queue_config(setup_case):
+    res_config = setup_case("local/simple_config", "slurm_config")
+    queue_config = res_config.queue_config
 
     assert queue_config.queue_system == "SLURM"
     driver = queue_config.driver
