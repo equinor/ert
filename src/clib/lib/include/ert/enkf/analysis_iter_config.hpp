@@ -45,7 +45,6 @@ analysis_iter_config_alloc_full(const char *case_fmt, int num_iterations,
 extern "C" void analysis_iter_config_free(analysis_iter_config_type *config);
 const char *analysis_iter_config_iget_case(analysis_iter_config_type *config,
                                            int iter);
-void analysis_iter_config_add_config_items(config_parser_type *config);
 void analysis_iter_config_init(analysis_iter_config_type *iter_config,
                                const config_content_type *config);
 extern "C" bool
