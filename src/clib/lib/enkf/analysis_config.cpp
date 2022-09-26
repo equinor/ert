@@ -534,35 +534,3 @@ analysis_config_alloc(const config_content_type *config_content) {
 
     return analysis_config;
 }
-
-void analysis_config_add_config_items(config_parser_type *config) {
-    config_schema_item_type *item;
-
-    config_add_key_value(config, ENKF_ALPHA_KEY, false, CONFIG_FLOAT);
-    config_add_key_value(config, STD_CUTOFF_KEY, false, CONFIG_FLOAT);
-    config_settings_init_parser__(UPDATE_SETTING_KEY, config, false);
-
-    config_add_key_value(config, SINGLE_NODE_UPDATE_KEY, false, CONFIG_BOOL);
-
-    config_add_key_value(config, ENKF_RERUN_KEY, false, CONFIG_BOOL);
-    config_add_key_value(config, RERUN_START_KEY, false, CONFIG_INT);
-    config_add_key_value(config, UPDATE_LOG_PATH_KEY, false, CONFIG_STRING);
-    config_add_key_value(config, MIN_REALIZATIONS_KEY, false, CONFIG_STRING);
-    config_add_key_value(config, MAX_RUNTIME_KEY, false, CONFIG_INT);
-
-    item =
-        config_add_key_value(config, STOP_LONG_RUNNING_KEY, false, CONFIG_BOOL);
-    stringlist_type *child_list = stringlist_alloc_new();
-    stringlist_append_copy(child_list, MIN_REALIZATIONS_KEY);
-    config_schema_item_set_required_children_on_value(item, "TRUE", child_list);
-    stringlist_free(child_list);
-
-    config_add_key_value(config, ANALYSIS_SELECT_KEY, false, CONFIG_STRING);
-
-    item = config_add_schema_item(config, ANALYSIS_COPY_KEY, false);
-    config_schema_item_set_argc_minmax(item, 2, 2);
-
-    item = config_add_schema_item(config, ANALYSIS_SET_VAR_KEY, false);
-    config_schema_item_set_argc_minmax(item, 3, CONFIG_DEFAULT_ARG_MAX);
-    analysis_iter_config_add_config_items(config);
-}

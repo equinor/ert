@@ -76,8 +76,6 @@ extern "C" void analysis_config_set_std_cutoff(analysis_config_type *config,
                                                double std_cutoff);
 extern "C" double
 analysis_config_get_std_cutoff(const analysis_config_type *config);
-void analysis_config_add_config_items(config_parser_type *config);
-
 extern "C" bool analysis_config_select_module(analysis_config_type *config,
                                               const char *module_name);
 analysis_module_type *

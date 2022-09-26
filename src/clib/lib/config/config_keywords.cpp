@@ -89,7 +89,48 @@ ERT_CLIB_SUBMODULE("config_keywords", m) {
             auto config_parser =
                 ert::from_cwrap<config_parser_type>(py_config_parser);
             ert_workflow_list_add_config_items(config_parser);
-            analysis_config_add_config_items(config_parser);
+            config_schema_item_type *item;
+
+            config_add_key_value(config_parser, ENKF_ALPHA_KEY, false,
+                                 CONFIG_FLOAT);
+            config_add_key_value(config_parser, STD_CUTOFF_KEY, false,
+                                 CONFIG_FLOAT);
+            config_settings_init_parser__(UPDATE_SETTING_KEY, config_parser,
+                                          false);
+
+            config_add_key_value(config_parser, SINGLE_NODE_UPDATE_KEY, false,
+                                 CONFIG_BOOL);
+
+            config_add_key_value(config_parser, ENKF_RERUN_KEY, false,
+                                 CONFIG_BOOL);
+            config_add_key_value(config_parser, RERUN_START_KEY, false,
+                                 CONFIG_INT);
+            config_add_key_value(config_parser, UPDATE_LOG_PATH_KEY, false,
+                                 CONFIG_STRING);
+            config_add_key_value(config_parser, MIN_REALIZATIONS_KEY, false,
+                                 CONFIG_STRING);
+            config_add_key_value(config_parser, MAX_RUNTIME_KEY, false,
+                                 CONFIG_INT);
+
+            item = config_add_key_value(config_parser, STOP_LONG_RUNNING_KEY,
+                                        false, CONFIG_BOOL);
+            stringlist_type *child_list = stringlist_alloc_new();
+            stringlist_append_copy(child_list, MIN_REALIZATIONS_KEY);
+            config_schema_item_set_required_children_on_value(item, "TRUE",
+                                                              child_list);
+            stringlist_free(child_list);
+
+            config_add_key_value(config_parser, ANALYSIS_SELECT_KEY, false,
+                                 CONFIG_STRING);
+
+            item =
+                config_add_schema_item(config_parser, ANALYSIS_COPY_KEY, false);
+            config_schema_item_set_argc_minmax(item, 2, 2);
+
+            item = config_add_schema_item(config_parser, ANALYSIS_SET_VAR_KEY,
+                                          false);
+            config_schema_item_set_argc_minmax(item, 3, CONFIG_DEFAULT_ARG_MAX);
+            analysis_iter_config_add_config_items(config_parser);
             ensemble_config_add_config_items(config_parser);
             ecl_config_add_config_items(config_parser);
             config_add_key_value(config_parser, RANDOM_SEED_KEY, false,
