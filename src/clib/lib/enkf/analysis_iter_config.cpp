@@ -126,12 +126,6 @@ const char *analysis_iter_config_iget_case(analysis_iter_config_type *config,
         return NULL;
 }
 
-void analysis_iter_config_add_config_items(config_parser_type *config) {
-    config_add_key_value(config, ITER_CASE_KEY, false, CONFIG_STRING);
-    config_add_key_value(config, ITER_COUNT_KEY, false, CONFIG_INT);
-    config_add_key_value(config, ITER_RETRY_COUNT_KEY, false, CONFIG_INT);
-}
-
 void analysis_iter_config_init(analysis_iter_config_type *iter_config,
                                const config_content_type *config) {
     if (config_content_has_item(config, ITER_CASE_KEY))

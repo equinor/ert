@@ -153,7 +153,12 @@ ERT_CLIB_SUBMODULE("config_keywords", m) {
                                  CONFIG_STRING);
             add_analysis_copy_keyword(config_parser);
             add_analysis_set_var_keyword(config_parser);
-            analysis_iter_config_add_config_items(config_parser);
+            config_add_key_value(config_parser, ITER_CASE_KEY, false,
+                                 CONFIG_STRING);
+            config_add_key_value(config_parser, ITER_COUNT_KEY, false,
+                                 CONFIG_INT);
+            config_add_key_value(config_parser, ITER_RETRY_COUNT_KEY, false,
+                                 CONFIG_INT);
             ensemble_config_add_config_items(config_parser);
             ecl_config_add_config_items(config_parser);
             config_add_key_value(config_parser, RANDOM_SEED_KEY, false,
