@@ -31,7 +31,7 @@ from ert._c_wrappers.enkf.model_config import ModelConfig
 from ert._c_wrappers.enkf.queue_config import QueueConfig
 from ert._c_wrappers.enkf.site_config import SiteConfig
 from ert._c_wrappers.enkf.subst_config import SubstConfig
-from ert._clib.res_config import init_config_parser
+from ert._clib.config_keywords import init_res_config_parser
 
 
 def format_warning_message(message, category, *args, **kwargs):
@@ -91,7 +91,7 @@ class ResConfig:
         if user_config_file is not None:
             # initialize configcontent if user_file provided
             config_parser = ConfigParser()
-            init_config_parser(config_parser)
+            init_res_config_parser(config_parser)
             self.config_path = os.path.abspath(os.path.dirname(user_config_file))
             config_content = config_parser.parse(
                 user_config_file,
@@ -475,7 +475,7 @@ class ResConfig:
         defines, config_dir, config_list = self._extract_config(config)
 
         config_parser = ConfigParser()
-        init_config_parser(config_parser)
+        init_res_config_parser(config_parser)
         config_content = ConfigContent(None)
         config_content.setParser(config_parser)
 
