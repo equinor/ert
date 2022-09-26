@@ -275,7 +275,21 @@ ERT_CLIB_SUBMODULE("config_keywords", m) {
             config_add_key_value(config_parser, ITER_RETRY_COUNT_KEY, false,
                                  CONFIG_INT);
             ensemble_config_add_config_items(config_parser);
-            ecl_config_add_config_items(config_parser);
+            auto item =
+                config_add_schema_item(config_parser, ECLBASE_KEY, false);
+            config_schema_item_set_argc_minmax(item, 1, 1);
+
+            item = config_add_schema_item(config_parser, DATA_FILE_KEY, false);
+            config_schema_item_set_argc_minmax(item, 1, 1);
+            config_schema_item_iset_type(item, 0, CONFIG_EXISTING_PATH);
+
+            item = config_add_schema_item(config_parser, REFCASE_KEY, false);
+            config_schema_item_set_argc_minmax(item, 1, 1);
+            config_schema_item_iset_type(item, 0, CONFIG_PATH);
+
+            item = config_add_schema_item(config_parser, GRID_KEY, false);
+            config_schema_item_set_argc_minmax(item, 1, 1);
+            config_schema_item_iset_type(item, 0, CONFIG_EXISTING_PATH);
             config_add_key_value(config_parser, RANDOM_SEED_KEY, false,
                                  CONFIG_STRING);
             config_add_key_value(config_parser, MAX_RESAMPLE_KEY, false,
