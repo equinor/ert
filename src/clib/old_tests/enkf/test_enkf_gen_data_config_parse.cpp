@@ -33,7 +33,8 @@ enkf_config_node_type *parse_alloc_GEN_PARAM(const char *config_string,
     config_parser_type *config = config_alloc();
     enkf_config_node_type *enkf_config_node = NULL;
 
-    enkf_config_node_add_GEN_PARAM_config_schema(config);
+    auto item = config_add_schema_item(config, GEN_PARAM_KEY, false);
+    config_schema_item_set_argc_minmax(item, 2, CONFIG_DEFAULT_ARG_MAX);
     {
         FILE *stream = util_fopen("config.txt", "w");
         fputs(config_string, stream);
@@ -137,7 +138,8 @@ enkf_config_node_type *parse_alloc_GEN_DATA_result(const char *config_string,
     config_parser_type *config = config_alloc();
     enkf_config_node_type *enkf_config_node = NULL;
 
-    enkf_config_node_add_GEN_DATA_config_schema(config);
+    auto item = config_add_schema_item(config, GEN_DATA_KEY, false);
+    config_schema_item_set_argc_minmax(item, 1, CONFIG_DEFAULT_ARG_MAX);
     {
         FILE *stream = util_fopen("config.txt", "w");
         fputs(config_string, stream);

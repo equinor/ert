@@ -21,6 +21,7 @@
 #include <ert/util/test_util.h>
 
 #include <ert/config/config_parser.hpp>
+#include <ert/enkf/config_keys.hpp>
 
 #include <ert/ecl/ecl_sum.h>
 
@@ -32,7 +33,8 @@ int main(int argc, char **argv) {
     config_content_type *content;
     ensemble_config_type *ensemble = ensemble_config_alloc(NULL, NULL, NULL);
 
-    enkf_config_node_add_GEN_PARAM_config_schema(config);
+    auto item = config_add_schema_item(config, GEN_PARAM_KEY, false);
+    config_schema_item_set_argc_minmax(item, 2, CONFIG_DEFAULT_ARG_MAX);
 
     content = config_parse(config, config_file, "--", NULL, NULL, NULL,
                            CONFIG_UNRECOGNIZED_WARN, true);

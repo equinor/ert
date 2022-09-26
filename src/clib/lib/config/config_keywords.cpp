@@ -290,6 +290,16 @@ static void add_field_keyword(config_parser_type *config_parser) {
     config_schema_item_add_required_children(item, GRID_KEY);
 }
 
+static void add_gen_param_keyword(config_parser_type *config) {
+    auto item = config_add_schema_item(config, GEN_PARAM_KEY, false);
+    config_schema_item_set_argc_minmax(item, 2, CONFIG_DEFAULT_ARG_MAX);
+}
+
+static void add_gen_data_keyword(config_parser_type *config) {
+    auto item = config_add_schema_item(config, GEN_DATA_KEY, false);
+    config_schema_item_set_argc_minmax(item, 1, CONFIG_DEFAULT_ARG_MAX);
+}
+
 void init_site_config_parser(config_parser_type *config_parser) {
     add_max_submit_keyword(config_parser);
     add_num_cpu_keyword(config_parser);
@@ -357,8 +367,8 @@ ERT_CLIB_SUBMODULE("config_keywords", m) {
             config_add_key_value(config_parser, GEN_KW_TAG_FORMAT_KEY, false,
                                  CONFIG_STRING);
 
-            enkf_config_node_add_GEN_PARAM_config_schema(config_parser);
-            enkf_config_node_add_GEN_DATA_config_schema(config_parser);
+            add_gen_param_keyword(config_parser);
+            add_gen_data_keyword(config_parser);
 
             add_summary_keyword(config_parser);
             add_surface_keyword(config_parser);
