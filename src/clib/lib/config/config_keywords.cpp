@@ -188,11 +188,42 @@ static void add_load_workflow_job_keyword(config_parser_type *config_parser) {
     config_schema_item_set_argc_minmax(item, 1, 2);
     config_schema_item_iset_type(item, 0, CONFIG_EXISTING_PATH);
 }
+static void add_max_submit_keyword(config_parser_type *config_parser) {
+    auto item = config_add_schema_item(config_parser, MAX_SUBMIT_KEY, false);
+    config_schema_item_set_argc_minmax(item, 1, 1);
+    config_schema_item_iset_type(item, 0, CONFIG_INT);
+}
+
+static void add_num_cpu_keyword(config_parser_type *config_parser) {
+    auto item = config_add_schema_item(config_parser, NUM_CPU_KEY, false);
+    config_schema_item_set_argc_minmax(item, 1, 1);
+    config_schema_item_iset_type(item, 0, CONFIG_INT);
+}
+static void add_queue_system_keyword(config_parser_type *config_parser,
+                                     bool required) {
+    auto item =
+        config_add_schema_item(config_parser, QUEUE_SYSTEM_KEY, required);
+    config_schema_item_set_argc_minmax(item, 1, 1);
+}
+
+static void add_queue_option_keyword(config_parser_type *config_parser) {
+    auto item = config_add_schema_item(config_parser, QUEUE_OPTION_KEY, false);
+    config_schema_item_set_argc_minmax(item, 2, CONFIG_DEFAULT_ARG_MAX);
+}
+
+static void add_job_script_keyword(config_parser_type *config_parser) {
+    auto item = config_add_schema_item(config_parser, JOB_SCRIPT_KEY, false);
+    config_schema_item_set_argc_minmax(item, 1, 1);
+    config_schema_item_iset_type(item, 0, CONFIG_EXECUTABLE);
+}
 
 void init_site_config_parser(config_parser_type *config_parser,
                              bool site_mode) {
-    queue_config_add_config_items(config_parser, site_mode);
-
+    add_max_submit_keyword(config_parser);
+    add_num_cpu_keyword(config_parser);
+    add_queue_system_keyword(config_parser, site_mode);
+    add_queue_option_keyword(config_parser);
+    add_job_script_keyword(config_parser);
     add_workflow_job_directory_keyword(config_parser);
     add_load_workflow_keyword(config_parser);
     add_load_workflow_job_keyword(config_parser);
