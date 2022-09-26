@@ -122,61 +122,69 @@ static void add_hook_workflow_keyword(config_parser_type *config_parser) {
     stringlist_free(argv);
 }
 
-void init_site_config_parser(config_parser_type *config, bool site_mode) {
-    queue_config_add_config_items(config, site_mode);
-
-    config_schema_item_type *item;
-    ert_workflow_list_add_config_items(config);
-
+static void add_set_env_keyword(config_parser_type *config_parser) {
     // You can set environment variables which will be applied to the run-time
     // environment. Can unfortunately not use constructions like
     // PATH=$PATH:/some/new/path, use the UPDATE_PATH function instead.
-    item = config_add_schema_item(config, SETENV_KEY, false);
+    auto item = config_add_schema_item(config_parser, SETENV_KEY, false);
     config_schema_item_set_argc_minmax(item, 2, 2);
     // Do not expand $VAR expressions (that is done in util_interp_setenv()).
     config_schema_item_set_envvar_expansion(item, false);
+}
 
-    item = config_add_schema_item(config, UMASK_KEY, false);
+static void add_umask_keyword(config_parser_type *config_parser) {
+    auto item = config_add_schema_item(config_parser, UMASK_KEY, false);
     config_schema_item_set_deprecated(
         item, "UMASK is deprecated and will be removed in the future.");
     config_schema_item_set_argc_minmax(item, 1, 1);
+}
 
+static void add_update_path_keyword(config_parser_type *config_parser) {
     // UPDATE_PATH   LD_LIBRARY_PATH   /path/to/some/funky/lib
-
     // Will prepend "/path/to/some/funky/lib" at the front of LD_LIBRARY_PATH.
-    item = config_add_schema_item(config, UPDATE_PATH_KEY, false);
+    auto item = config_add_schema_item(config_parser, UPDATE_PATH_KEY, false);
     config_schema_item_set_argc_minmax(item, 2, 2);
     // Do not expand $VAR expressions (that is done in util_interp_setenv()).
     config_schema_item_set_envvar_expansion(item, false);
+}
 
-    if (!site_mode) {
-        item = config_add_schema_item(config, LICENSE_PATH_KEY, false);
-        config_schema_item_set_argc_minmax(item, 1, 1);
-        config_schema_item_iset_type(item, 0, CONFIG_PATH);
-    }
-
-    item = config_add_schema_item(config, INSTALL_JOB_KEY, false);
-    config_schema_item_set_argc_minmax(item, 2, 2);
-    config_schema_item_iset_type(item, 1, CONFIG_EXISTING_PATH);
-
-    item = config_add_schema_item(config, INSTALL_JOB_DIRECTORY_KEY, false);
+static void add_licence_path_keyword(config_parser_type *config_parser) {
+    auto item = config_add_schema_item(config_parser, LICENSE_PATH_KEY, false);
     config_schema_item_set_argc_minmax(item, 1, 1);
     config_schema_item_iset_type(item, 0, CONFIG_PATH);
+}
 
-    item = config_add_schema_item(config, HOOK_WORKFLOW_KEY, false);
+static void add_install_job_keyword(config_parser_type *config_parser) {
+    auto item = config_add_schema_item(config_parser, INSTALL_JOB_KEY, false);
     config_schema_item_set_argc_minmax(item, 2, 2);
-    config_schema_item_iset_type(item, 0, CONFIG_STRING);
-    config_schema_item_iset_type(item, 1, CONFIG_STRING);
-    {
-        stringlist_type *argv = stringlist_alloc_new();
-        stringlist_append_copy(argv, RUN_MODE_PRE_SIMULATION_NAME);
-        stringlist_append_copy(argv, RUN_MODE_POST_SIMULATION_NAME);
-        stringlist_append_copy(argv, RUN_MODE_PRE_UPDATE_NAME);
-        stringlist_append_copy(argv, RUN_MODE_POST_UPDATE_NAME);
-        stringlist_append_copy(argv, RUN_MODE_PRE_FIRST_UPDATE_NAME);
-        config_schema_item_set_indexed_selection_set(item, 1, argv);
-        stringlist_free(argv);
+    config_schema_item_iset_type(item, 1, CONFIG_EXISTING_PATH);
+}
+
+static void
+add_install_job_directory_keyword(config_parser_type *config_parser) {
+    auto item =
+        config_add_schema_item(config_parser, INSTALL_JOB_DIRECTORY_KEY, false);
+    config_schema_item_set_argc_minmax(item, 1, 1);
+    config_schema_item_iset_type(item, 0, CONFIG_PATH);
+}
+
+void init_site_config_parser(config_parser_type *config_parser,
+                             bool site_mode) {
+    queue_config_add_config_items(config_parser, site_mode);
+
+    ert_workflow_list_add_config_items(config_parser);
+
+    add_set_env_keyword(config_parser);
+    add_umask_keyword(config_parser);
+    add_update_path_keyword(config_parser);
+
+    if (!site_mode) {
+        add_licence_path_keyword(config_parser);
     }
+
+    add_install_job_keyword(config_parser);
+    add_install_job_directory_keyword(config_parser);
+    add_hook_workflow_keyword(config_parser);
 }
 
 ERT_CLIB_SUBMODULE("config_keywords", m) {
