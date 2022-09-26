@@ -217,6 +217,79 @@ static void add_job_script_keyword(config_parser_type *config_parser) {
     config_schema_item_iset_type(item, 0, CONFIG_EXECUTABLE);
 }
 
+static void add_ecl_base_keyword(config_parser_type *config_parser) {
+    auto item = config_add_schema_item(config_parser, ECLBASE_KEY, false);
+    config_schema_item_set_argc_minmax(item, 1, 1);
+}
+
+static void add_data_file_keyword(config_parser_type *config_parser) {
+    auto item = config_add_schema_item(config_parser, DATA_FILE_KEY, false);
+    config_schema_item_set_argc_minmax(item, 1, 1);
+    config_schema_item_iset_type(item, 0, CONFIG_EXISTING_PATH);
+}
+
+static void add_grid_keyword(config_parser_type *config_parser) {
+    auto item = config_add_schema_item(config_parser, GRID_KEY, false);
+    config_schema_item_set_argc_minmax(item, 1, 1);
+    config_schema_item_iset_type(item, 0, CONFIG_EXISTING_PATH);
+}
+
+static void add_refcase_keyword(config_parser_type *config_parser) {
+    auto item = config_add_schema_item(config_parser, REFCASE_KEY, false);
+    config_schema_item_set_argc_minmax(item, 1, 1);
+    config_schema_item_iset_type(item, 0, CONFIG_PATH);
+}
+
+static void add_havana_fault_keyword(config_parser_type *config_parser) {
+    auto item = config_add_schema_item(config_parser, "HAVANA_FAULT", false);
+    config_schema_item_set_argc_minmax(item, 2, 2);
+}
+
+static void add_multflt_keyword(config_parser_type *config_parser) {
+    auto item = config_add_schema_item(config_parser, "MULTFLT", false);
+    config_schema_item_set_argc_minmax(item, 3, 3);
+    config_schema_item_iset_type(item, 2, CONFIG_EXISTING_PATH);
+}
+
+static void add_gen_kw_keyword(config_parser_type *config_parser) {
+    auto item = config_add_schema_item(config_parser, GEN_KW_KEY, false);
+    config_schema_item_set_argc_minmax(item, 4, 6);
+    config_schema_item_iset_type(item, 1, CONFIG_EXISTING_PATH);
+    config_schema_item_iset_type(item, 2, CONFIG_PATH);
+    config_schema_item_iset_type(item, 3, CONFIG_EXISTING_PATH);
+}
+
+static void
+add_schedule_prediction_file_keyword(config_parser_type *config_parser) {
+    auto item = config_add_schema_item(config_parser,
+                                       SCHEDULE_PREDICTION_FILE_KEY, false);
+    /* scedhule_prediction_file   filename  <parameters:> <init_files:> */
+    config_schema_item_set_argc_minmax(item, 1, 3);
+    config_schema_item_iset_type(item, 0, CONFIG_EXISTING_PATH);
+}
+
+static void add_summary_keyword(config_parser_type *config_parser) {
+    auto item = config_add_schema_item(config_parser, SUMMARY_KEY, false);
+    /* can have several summary keys on each line. */
+    config_schema_item_set_argc_minmax(item, 1, CONFIG_DEFAULT_ARG_MAX);
+}
+
+static void add_surface_keyword(config_parser_type *config_parser) {
+    auto item = config_add_schema_item(config_parser, SURFACE_KEY, false);
+    config_schema_item_set_argc_minmax(item, 4, 5);
+}
+
+static void add_field_keyword(config_parser_type *config_parser) {
+    // the way config info is entered for fields is unfortunate because
+    // it is difficult/impossible to let the config system handle run
+    // time validation of the input.
+
+    auto item = config_add_schema_item(config_parser, FIELD_KEY, false);
+    config_schema_item_set_argc_minmax(item, 2, CONFIG_DEFAULT_ARG_MAX);
+    // if you are using a field - you must have a grid.
+    config_schema_item_add_required_children(item, GRID_KEY);
+}
+
 void init_site_config_parser(config_parser_type *config_parser) {
     add_max_submit_keyword(config_parser);
     add_num_cpu_keyword(config_parser);
@@ -274,22 +347,27 @@ ERT_CLIB_SUBMODULE("config_keywords", m) {
                                  CONFIG_INT);
             config_add_key_value(config_parser, ITER_RETRY_COUNT_KEY, false,
                                  CONFIG_INT);
-            ensemble_config_add_config_items(config_parser);
-            auto item =
-                config_add_schema_item(config_parser, ECLBASE_KEY, false);
-            config_schema_item_set_argc_minmax(item, 1, 1);
+            // the two fault types are just added to the config object only to
+            // be able to print suitable messages before exiting.
+            add_havana_fault_keyword(config_parser);
+            add_multflt_keyword(config_parser);
+            add_gen_kw_keyword(config_parser);
+            add_schedule_prediction_file_keyword(config_parser);
 
-            item = config_add_schema_item(config_parser, DATA_FILE_KEY, false);
-            config_schema_item_set_argc_minmax(item, 1, 1);
-            config_schema_item_iset_type(item, 0, CONFIG_EXISTING_PATH);
+            config_add_key_value(config_parser, GEN_KW_TAG_FORMAT_KEY, false,
+                                 CONFIG_STRING);
 
-            item = config_add_schema_item(config_parser, REFCASE_KEY, false);
-            config_schema_item_set_argc_minmax(item, 1, 1);
-            config_schema_item_iset_type(item, 0, CONFIG_PATH);
+            enkf_config_node_add_GEN_PARAM_config_schema(config_parser);
+            enkf_config_node_add_GEN_DATA_config_schema(config_parser);
 
-            item = config_add_schema_item(config_parser, GRID_KEY, false);
-            config_schema_item_set_argc_minmax(item, 1, 1);
-            config_schema_item_iset_type(item, 0, CONFIG_EXISTING_PATH);
+            add_summary_keyword(config_parser);
+            add_surface_keyword(config_parser);
+            add_field_keyword(config_parser);
+
+            add_ecl_base_keyword(config_parser);
+            add_data_file_keyword(config_parser);
+            add_grid_keyword(config_parser);
+            add_refcase_keyword(config_parser);
             config_add_key_value(config_parser, RANDOM_SEED_KEY, false,
                                  CONFIG_STRING);
             config_add_key_value(config_parser, MAX_RESAMPLE_KEY, false,
