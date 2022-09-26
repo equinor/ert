@@ -398,7 +398,7 @@ site_config_alloc_content(config_parser_type *config_parser) {
         util_abort("%s: can not locate site configuration file:%s \n", __func__,
                    site_config_file);
 
-    init_site_config_parser(config_parser, true);
+    init_site_config_parser(config_parser);
     config_content_type *content =
         config_parse(config_parser, site_config_file, "--", INCLUDE_KEY,
                      DEFINE_KEY, NULL, CONFIG_UNRECOGNIZED_WARN, true);
