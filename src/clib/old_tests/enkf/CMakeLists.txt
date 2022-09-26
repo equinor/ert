@@ -28,6 +28,7 @@ foreach(
   enkf_ensemble
   enkf_ensemble_config
   enkf_fs
+  enkf_gen_data_config
   enkf_gen_data_config_parse
   enkf_iter_config
   enkf_meas_data
@@ -43,6 +44,7 @@ foreach(
   enkf_plot_tvector
   enkf_run_arg
   enkf_state_map
+  enkf_time_map
   obs_vector
   measured
   obs_mask_deactivate
@@ -71,12 +73,6 @@ add_config_test(enkf_ecl_config2 enkf_ecl_config
 add_config_test(enkf_ecl_config_config enkf_ecl_config_config
                 "${LOCAL_TEST_DATA_DIR}/snake_oil/snake_oil.ert")
 
-foreach(test enkf_gen_data_config enkf_time_map)
-
-  add_executable(${test} ${TESTS_EXCLUDE_FROM_ALL} test_${test}.cpp)
-  target_link_libraries(${test} ert)
-endforeach()
-
 # -----------------------------------------------------------------
 # Equinor tests
 # -----------------------------------------------------------------
@@ -85,12 +81,6 @@ if(NOT EXISTS "${EQUINOR_TEST_DATA_DIR}")
   return()
 endif()
 
-add_equinor_test(
-  enkf_gen_data_config enkf_gen_data_config
-  "${EQUINOR_TEST_DATA_DIR}/config/gendata_test/RFT_E-3H_21"
-  "${EQUINOR_TEST_DATA_DIR}/config/gendata_test/RFT_E-3H_21_empty")
-
-add_equinor_test(enkf_time_map1 enkf_time_map)
 add_equinor_test(
   enkf_time_map2
   enkf_time_map
