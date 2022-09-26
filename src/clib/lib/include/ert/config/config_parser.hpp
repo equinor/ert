@@ -56,9 +56,9 @@ extern "C" config_schema_item_type *
 config_add_schema_item(config_parser_type *config, const char *kw,
                        bool required);
 
-extern "C" config_schema_item_type *
-config_add_key_value(config_parser_type *config, const char *key, bool required,
-                     config_item_types item_type);
+config_schema_item_type *config_add_key_value(config_parser_type *config,
+                                              const char *key, bool required,
+                                              config_item_types item_type);
 
 extern "C" int config_get_schema_size(const config_parser_type *config);
 void config_parser_deprecate(config_parser_type *config, const char *kw,

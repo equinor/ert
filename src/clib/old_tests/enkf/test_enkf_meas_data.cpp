@@ -50,9 +50,6 @@ void create_test() {
             meas_block_iset(block, 10, 0, 100);
             test_assert_double_equal(100, meas_block_iget(block, 10, 0));
 
-            test_assert_bool_equal(true, meas_block_iens_active(block, 10));
-            test_assert_bool_equal(false, meas_block_iens_active(block, 11));
-
             test_assert_util_abort("meas_block_assert_iens_active",
                                    meas_block_iset_abort, block);
             test_assert_util_abort("meas_block_assert_iens_active",

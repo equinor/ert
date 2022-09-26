@@ -183,10 +183,6 @@ int obs_block_get_size(const obs_block_type *obs_block) {
     return obs_block->size;
 }
 
-int obs_block_get_active_size(const obs_block_type *obs_block) {
-    return obs_block->active_size;
-}
-
 static void obs_block_set_active_mask(const obs_block_type *obs_block,
                                       bool_vector_type *mask, int *offset) {
     for (int i = 0; i < obs_block->size; i++) {
@@ -319,20 +315,6 @@ obs_data_lookup_block(const obs_data_type *obs_data, int total_index,
         util_abort("%s: could not lookup obs-block \n", __func__);
         return NULL;
     }
-}
-
-double obs_data_iget_value(const obs_data_type *obs_data, int total_index) {
-    int total_offset;
-    const obs_block_type *obs_block =
-        obs_data_lookup_block(obs_data, total_index, &total_offset);
-    return obs_block_iget_value(obs_block, total_index - total_offset);
-}
-
-double obs_data_iget_std(const obs_data_type *obs_data, int total_index) {
-    int total_offset;
-    const obs_block_type *obs_block =
-        obs_data_lookup_block(obs_data, total_index, &total_offset);
-    return obs_block_iget_std(obs_block, total_index - total_offset);
 }
 
 std::vector<bool> obs_data_get_active_mask(const obs_data_type *obs_data) {
