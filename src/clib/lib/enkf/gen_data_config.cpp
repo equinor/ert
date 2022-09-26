@@ -335,8 +335,6 @@ gen_data_config_get_template_key(const gen_data_config_type *config) {
 
    * "ASCII"
    * "ASCII_TEMPLATE"
-   * "BINARY_DOUBLE"
-   * "BINARY_FLOAT"
 
    Its the inverse action of gen_data_config_format_name
 
@@ -355,10 +353,6 @@ gen_data_config_check_format(const char *format_string) {
             type = ASCII;
         else if (strcmp(format_string, "ASCII_TEMPLATE") == 0)
             type = ASCII_TEMPLATE;
-        else if (strcmp(format_string, "BINARY_DOUBLE") == 0)
-            type = BINARY_DOUBLE;
-        else if (strcmp(format_string, "BINARY_FLOAT") == 0)
-            type = BINARY_FLOAT;
     }
 
     return type;
@@ -367,8 +361,8 @@ gen_data_config_check_format(const char *format_string) {
 /**
    The valid options are:
 
-   INPUT_FORMAT:(ASCII|ASCII_TEMPLATE|BINARY_DOUBLE|BINARY_FLOAT)
-   OUTPUT_FORMAT:(ASCII|ASCII_TEMPLATE|BINARY_DOUBLE|BINARY_FLOAT)
+   INPUT_FORMAT:(ASCII|ASCII_TEMPLATE)
+   OUTPUT_FORMAT:(ASCII|ASCII_TEMPLATE)
    TEMPLATE:/some/template/file
    KEY:<SomeKeyFoundInTemplate>
    ECL_FILE:<filename to write EnKF ==> Forward model>  (In the case of gen_param - this is extracted in the calling scope).
@@ -643,10 +637,6 @@ gen_data_config_format_name(gen_data_file_format_type format_type) {
         return "ASCII";
     case ASCII_TEMPLATE:
         return "ASCII_TEMPLATE";
-    case BINARY_FLOAT:
-        return "BINARY_FLOAT";
-    case BINARY_DOUBLE:
-        return "BINARY_DOUBLE";
     default:
         util_abort("%s: What the f.. \n", __func__);
         return NULL;

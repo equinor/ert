@@ -298,8 +298,7 @@ static bool gen_data_fload_active__(gen_data_type *gen_data,
    header information in this file - the size is determined by seeing
    how much can be successfully loaded.
 
-   The file is loaded with the gen_common_fload_alloc() function, and
-   can be in formatted ASCII or binary_float / binary_double.
+   The file is loaded with the gen_common_fload_alloc() function.
 
    When the read is complete it is checked/verified with the config
    object that this file was as long as the others we have loaded for
@@ -434,12 +433,6 @@ void gen_data_export(const gen_data_type *gen_data, const char *full_path,
         break;
     case (ASCII_TEMPLATE):
         gen_data_ecl_write_ASCII(gen_data, full_path, export_type);
-        break;
-    case (BINARY_DOUBLE):
-        gen_data_ecl_write_binary(gen_data, full_path, ECL_DOUBLE);
-        break;
-    case (BINARY_FLOAT):
-        gen_data_ecl_write_binary(gen_data, full_path, ECL_FLOAT);
         break;
     default:
         util_abort("%s: internal error - export type is not set.\n", __func__);

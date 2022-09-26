@@ -35,9 +35,6 @@ typedef enum {
     ASCII = 1,
     /** The data is inserted into a user defined template file. */
     ASCII_TEMPLATE = 2,
-    /** The data is in a binary file with doubles.*/
-    BINARY_DOUBLE = 3,
-    BINARY_FLOAT = 4
 } /*   The data is in a binary file with floats. */
 gen_data_file_format_type;
 

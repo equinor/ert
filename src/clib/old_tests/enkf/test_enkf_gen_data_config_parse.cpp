@@ -106,10 +106,10 @@ void test_parse_gen_param() {
 
     // Correct
     {
-        enkf_config_node_type *config_node = parse_alloc_GEN_PARAM(
-            "GEN_PARAM KEY ECLFILE INPUT_FORMAT:BINARY_DOUBLE "
-            "OUTPUT_FORMAT:ASCII INIT_FILES:INIT%d\n",
-            true);
+        enkf_config_node_type *config_node =
+            parse_alloc_GEN_PARAM("GEN_PARAM KEY ECLFILE INPUT_FORMAT:ASCII "
+                                  "OUTPUT_FORMAT:ASCII INIT_FILES:INIT%d\n",
+                                  true);
 
         test_assert_string_equal(
             "ECLFILE", enkf_config_node_get_enkf_outfile(config_node));
@@ -122,8 +122,7 @@ void test_parse_gen_param() {
             gen_data_config_type *gen_data_config =
                 (gen_data_config_type *)enkf_config_node_get_ref(config_node);
             test_assert_int_equal(
-                BINARY_DOUBLE,
-                gen_data_config_get_input_format(gen_data_config));
+                ASCII, gen_data_config_get_input_format(gen_data_config));
             test_assert_int_equal(
                 ASCII, gen_data_config_get_output_format(gen_data_config));
         }
