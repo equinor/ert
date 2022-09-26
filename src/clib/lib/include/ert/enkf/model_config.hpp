@@ -115,8 +115,6 @@ void model_config_set_gen_kw_export_name(model_config_type *model_config,
 extern "C" const char *
 model_config_get_gen_kw_export_name(const model_config_type *model_config);
 
-void model_config_init_config_parser(config_parser_type *config_parser);
-
 UTIL_IS_INSTANCE_HEADER(model_config);
 
 #endif
