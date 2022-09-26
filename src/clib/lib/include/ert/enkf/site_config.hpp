@@ -57,5 +57,4 @@ extern "C" site_config_type *
 site_config_alloc_full(ext_joblist_type *ext_joblist,
                        env_varlist_type *env_varlist, int umask);
 config_content_type *site_config_alloc_content(config_parser_type *);
-void site_config_add_config_items(config_parser_type *config, bool site_mode);
 #endif

@@ -217,25 +217,18 @@ static void add_job_script_keyword(config_parser_type *config_parser) {
     config_schema_item_iset_type(item, 0, CONFIG_EXECUTABLE);
 }
 
-void init_site_config_parser(config_parser_type *config_parser,
-                             bool site_mode) {
+void init_site_config_parser(config_parser_type *config_parser) {
     add_max_submit_keyword(config_parser);
     add_num_cpu_keyword(config_parser);
-    add_queue_system_keyword(config_parser, site_mode);
+    add_queue_system_keyword(config_parser, true);
     add_queue_option_keyword(config_parser);
     add_job_script_keyword(config_parser);
     add_workflow_job_directory_keyword(config_parser);
     add_load_workflow_keyword(config_parser);
     add_load_workflow_job_keyword(config_parser);
-
     add_set_env_keyword(config_parser);
     add_umask_keyword(config_parser);
     add_update_path_keyword(config_parser);
-
-    if (!site_mode) {
-        add_licence_path_keyword(config_parser);
-    }
-
     add_install_job_keyword(config_parser);
     add_install_job_directory_keyword(config_parser);
     add_hook_workflow_keyword(config_parser);
@@ -305,8 +298,24 @@ ERT_CLIB_SUBMODULE("config_keywords", m) {
             add_gen_kw_export_keyword(config_parser);
             add_history_source_keyword(config_parser);
             add_runpath_file_keyword(config_parser);
+            add_max_submit_keyword(config_parser);
+            add_num_cpu_keyword(config_parser);
+            add_queue_system_keyword(config_parser, false);
+            add_queue_option_keyword(config_parser);
+            add_job_script_keyword(config_parser);
+            add_workflow_job_directory_keyword(config_parser);
+            add_load_workflow_keyword(config_parser);
+            add_load_workflow_job_keyword(config_parser);
+
+            add_set_env_keyword(config_parser);
+            add_umask_keyword(config_parser);
+            add_update_path_keyword(config_parser);
+
+            add_licence_path_keyword(config_parser);
+            add_install_job_keyword(config_parser);
+            add_install_job_directory_keyword(config_parser);
             add_hook_workflow_keyword(config_parser);
-            site_config_add_config_items(config_parser, false);
+            add_hook_workflow_keyword(config_parser);
             config_add_key_value(config_parser, RES_CONFIG_FILE_KEY, false,
                                  CONFIG_EXISTING_PATH);
             config_add_key_value(config_parser, CONFIG_DIRECTORY_KEY, false,

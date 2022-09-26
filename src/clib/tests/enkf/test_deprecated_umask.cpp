@@ -5,8 +5,8 @@
 #include <iostream>
 
 #include "../tmpdir.hpp"
+#include <ert/config/config_keywords.hpp>
 #include <ert/config/config_parser.hpp>
-#include <ert/enkf/site_config.hpp>
 extern "C" void set_site_config(const char *site_config);
 SCENARIO("Using UMASK in config") {
     GIVEN("A config file with umask set to 007") {
@@ -19,7 +19,7 @@ SCENARIO("Using UMASK in config") {
         config_parser_type *config = config_alloc();
         config_content_type *content;
 
-        site_config_add_config_items(config, false);
+        init_site_config_parser(config);
 
         WHEN("Parsing the config file") {
             content = config_parse(config, "config.ert", "--", NULL, NULL, NULL,
@@ -44,7 +44,7 @@ SCENARIO("Using UMASK in config") {
         config_parser_type *config = config_alloc();
         config_content_type *content;
 
-        site_config_add_config_items(config, false);
+        init_site_config_parser(config);
 
         WHEN("Parsing the config file") {
             content = config_parse(config, "config.ert", "--", NULL, NULL, NULL,
