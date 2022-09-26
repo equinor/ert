@@ -31,6 +31,7 @@
 #include <ert/job_queue/ext_joblist.hpp>
 #include <ert/job_queue/job_queue.hpp>
 
+#include <ert/config/config_keywords.hpp>
 #include <ert/config/config_parser.hpp>
 
 #include <ert/enkf/config_keys.hpp>
@@ -381,63 +382,6 @@ site_config_get_installed_jobs(const site_config_type *site_config) {
     return site_config->joblist;
 }
 
-void site_config_add_config_items(config_parser_type *config, bool site_mode) {
-    queue_config_add_config_items(config, site_mode);
-
-    config_schema_item_type *item;
-    ert_workflow_list_add_config_items(config);
-
-    // You can set environment variables which will be applied to the run-time
-    // environment. Can unfortunately not use constructions like
-    // PATH=$PATH:/some/new/path, use the UPDATE_PATH function instead.
-    item = config_add_schema_item(config, SETENV_KEY, false);
-    config_schema_item_set_argc_minmax(item, 2, 2);
-    // Do not expand $VAR expressions (that is done in util_interp_setenv()).
-    config_schema_item_set_envvar_expansion(item, false);
-
-    item = config_add_schema_item(config, UMASK_KEY, false);
-    config_schema_item_set_deprecated(
-        item, "UMASK is deprecated and will be removed in the future.");
-    config_schema_item_set_argc_minmax(item, 1, 1);
-
-    // UPDATE_PATH   LD_LIBRARY_PATH   /path/to/some/funky/lib
-
-    // Will prepend "/path/to/some/funky/lib" at the front of LD_LIBRARY_PATH.
-    item = config_add_schema_item(config, UPDATE_PATH_KEY, false);
-    config_schema_item_set_argc_minmax(item, 2, 2);
-    // Do not expand $VAR expressions (that is done in util_interp_setenv()).
-    config_schema_item_set_envvar_expansion(item, false);
-
-    if (!site_mode) {
-        item = config_add_schema_item(config, LICENSE_PATH_KEY, false);
-        config_schema_item_set_argc_minmax(item, 1, 1);
-        config_schema_item_iset_type(item, 0, CONFIG_PATH);
-    }
-
-    item = config_add_schema_item(config, INSTALL_JOB_KEY, false);
-    config_schema_item_set_argc_minmax(item, 2, 2);
-    config_schema_item_iset_type(item, 1, CONFIG_EXISTING_PATH);
-
-    item = config_add_schema_item(config, INSTALL_JOB_DIRECTORY_KEY, false);
-    config_schema_item_set_argc_minmax(item, 1, 1);
-    config_schema_item_iset_type(item, 0, CONFIG_PATH);
-
-    item = config_add_schema_item(config, HOOK_WORKFLOW_KEY, false);
-    config_schema_item_set_argc_minmax(item, 2, 2);
-    config_schema_item_iset_type(item, 0, CONFIG_STRING);
-    config_schema_item_iset_type(item, 1, CONFIG_STRING);
-    {
-        stringlist_type *argv = stringlist_alloc_new();
-        stringlist_append_copy(argv, RUN_MODE_PRE_SIMULATION_NAME);
-        stringlist_append_copy(argv, RUN_MODE_POST_SIMULATION_NAME);
-        stringlist_append_copy(argv, RUN_MODE_PRE_UPDATE_NAME);
-        stringlist_append_copy(argv, RUN_MODE_POST_UPDATE_NAME);
-        stringlist_append_copy(argv, RUN_MODE_PRE_FIRST_UPDATE_NAME);
-        config_schema_item_set_indexed_selection_set(item, 1, argv);
-        stringlist_free(argv);
-    }
-}
-
 const char *site_config_get_config_file(const site_config_type *site_config) {
     return site_config->config_file;
 }
@@ -454,7 +398,7 @@ site_config_alloc_content(config_parser_type *config_parser) {
         util_abort("%s: can not locate site configuration file:%s \n", __func__,
                    site_config_file);
 
-    site_config_add_config_items(config_parser, true);
+    init_site_config_parser(config_parser, true);
     config_content_type *content =
         config_parse(config_parser, site_config_file, "--", INCLUDE_KEY,
                      DEFINE_KEY, NULL, CONFIG_UNRECOGNIZED_WARN, true);
