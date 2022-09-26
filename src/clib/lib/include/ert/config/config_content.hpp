@@ -45,17 +45,15 @@ void config_content_add_node(config_content_type *content,
 extern "C" config_error_type *
 config_content_get_errors(const config_content_type *content);
 
-extern "C" const char *config_content_iget(const config_content_type *content,
-                                           const char *key, int occurence,
-                                           int index);
+const char *config_content_iget(const config_content_type *content,
+                                const char *key, int occurence, int index);
 extern "C" int config_content_iget_as_int(const config_content_type *content,
                                           const char *key, int occurence,
                                           int index);
-extern "C" bool config_content_iget_as_bool(const config_content_type *content,
-                                            const char *key, int occurence,
-                                            int index);
-extern "C" int config_content_get_occurences(const config_content_type *content,
-                                             const char *kw);
+bool config_content_iget_as_bool(const config_content_type *content,
+                                 const char *key, int occurence, int index);
+int config_content_get_occurences(const config_content_type *content,
+                                  const char *kw);
 
 bool config_content_get_value_as_bool(const config_content_type *config,
                                       const char *kw);
@@ -65,7 +63,7 @@ double config_content_get_value_as_double(const config_content_type *config,
                                           const char *kw);
 const char *config_content_get_value_as_path(const config_content_type *config,
                                              const char *kw);
-extern "C" const char *
+const char *
 config_content_get_value_as_abspath(const config_content_type *config,
                                     const char *kw);
 const char *

@@ -80,10 +80,10 @@ gen_data_config_get_initial_size(const gen_data_config_type *config);
 void gen_data_config_assert_size(gen_data_config_type *, int, int);
 extern "C" const bool_vector_type *
 gen_data_config_get_active_mask(const gen_data_config_type *config);
-extern "C" void gen_data_config_update_active(gen_data_config_type *config,
-                                              int report_step,
-                                              const bool_vector_type *data_mask,
-                                              enkf_fs_type *sim_fs);
+void gen_data_config_update_active(gen_data_config_type *config,
+                                   int report_step,
+                                   const bool_vector_type *data_mask,
+                                   enkf_fs_type *sim_fs);
 void gen_data_config_get_template_data(const gen_data_config_type *, char **,
                                        int *, int *, int *);
 extern "C" const char *

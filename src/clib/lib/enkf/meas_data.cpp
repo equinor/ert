@@ -149,10 +149,6 @@ static void meas_block_initS(const meas_block_type *meas_block,
     *__obs_offset = obs_offset;
 }
 
-bool meas_block_iens_active(const meas_block_type *meas_block, int iens) {
-    return meas_block->ens_mask[iens];
-}
-
 void meas_block_calculate_ens_stats(meas_block_type *meas_block) {
     for (int iobs = 0; iobs < meas_block->obs_size; iobs++) {
         if (meas_block->active[iobs]) {
@@ -319,26 +315,9 @@ meas_block_type *meas_data_add_block(meas_data_type *matrix,
     return (meas_block_type *)vector_get_last(matrix->data);
 }
 
-/*
-  Observe that the key should compare with the keys created by meas_data_alloc_key().
-*/
-bool meas_data_has_block(const meas_data_type *matrix, const char *lookup_key) {
-    return hash_has_key(matrix->blocks, lookup_key);
-}
-
-meas_block_type *meas_data_get_block(const meas_data_type *matrix,
-                                     const char *lookup_key) {
-    return (meas_block_type *)hash_get(matrix->blocks, lookup_key);
-}
-
 meas_block_type *meas_data_iget_block(const meas_data_type *matrix,
                                       int block_nr) {
     return (meas_block_type *)vector_iget(matrix->data, block_nr);
-}
-
-const meas_block_type *meas_data_iget_block_const(const meas_data_type *matrix,
-                                                  int block_nr) {
-    return (const meas_block_type *)vector_iget_const(matrix->data, block_nr);
 }
 
 int meas_data_get_active_obs_size(const meas_data_type *matrix) {
@@ -372,12 +351,4 @@ Eigen::MatrixXd meas_data_makeS(const meas_data_type *matrix) {
 
 int meas_data_get_active_ens_size(const meas_data_type *meas_data) {
     return meas_data->active_ens_size;
-}
-
-int meas_data_get_total_ens_size(const meas_data_type *meas_data) {
-    return meas_data->ens_mask.size();
-}
-
-int meas_data_get_num_blocks(const meas_data_type *meas_data) {
-    return vector_get_size(meas_data->data);
 }

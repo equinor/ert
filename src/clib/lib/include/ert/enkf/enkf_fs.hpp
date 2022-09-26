@@ -48,7 +48,7 @@ void enkf_fs_fwrite_vector(enkf_fs_type *enkf_fs, buffer_type *buffer,
                            const char *node_key, enkf_var_type var_type,
                            int iens);
 
-extern "C" bool enkf_fs_exists(const char *mount_point);
+bool enkf_fs_exists(const char *mount_point);
 
 extern "C" void enkf_fs_sync(enkf_fs_type *fs);
 
