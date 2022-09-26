@@ -303,9 +303,6 @@ ERT_CLIB_SUBMODULE("config_keywords", m) {
             add_queue_system_keyword(config_parser, false);
             add_queue_option_keyword(config_parser);
             add_job_script_keyword(config_parser);
-            add_workflow_job_directory_keyword(config_parser);
-            add_load_workflow_keyword(config_parser);
-            add_load_workflow_job_keyword(config_parser);
 
             add_set_env_keyword(config_parser);
             add_umask_keyword(config_parser);
@@ -314,7 +311,6 @@ ERT_CLIB_SUBMODULE("config_keywords", m) {
             add_licence_path_keyword(config_parser);
             add_install_job_keyword(config_parser);
             add_install_job_directory_keyword(config_parser);
-            add_hook_workflow_keyword(config_parser);
             add_hook_workflow_keyword(config_parser);
             config_add_key_value(config_parser, RES_CONFIG_FILE_KEY, false,
                                  CONFIG_EXISTING_PATH);
