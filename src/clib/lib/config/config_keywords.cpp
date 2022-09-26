@@ -172,7 +172,18 @@ void init_site_config_parser(config_parser_type *config_parser,
                              bool site_mode) {
     queue_config_add_config_items(config_parser, site_mode);
 
-    ert_workflow_list_add_config_items(config_parser);
+    auto item = config_add_schema_item(config_parser,
+                                       WORKFLOW_JOB_DIRECTORY_KEY, false);
+    config_schema_item_set_argc_minmax(item, 1, 1);
+    config_schema_item_iset_type(item, 0, CONFIG_PATH);
+
+    item = config_add_schema_item(config_parser, LOAD_WORKFLOW_KEY, false);
+    config_schema_item_set_argc_minmax(item, 1, 2);
+    config_schema_item_iset_type(item, 0, CONFIG_EXISTING_PATH);
+
+    item = config_add_schema_item(config_parser, LOAD_WORKFLOW_JOB_KEY, false);
+    config_schema_item_set_argc_minmax(item, 1, 2);
+    config_schema_item_iset_type(item, 0, CONFIG_EXISTING_PATH);
 
     add_set_env_keyword(config_parser);
     add_umask_keyword(config_parser);
@@ -194,7 +205,20 @@ ERT_CLIB_SUBMODULE("config_keywords", m) {
         [](py::object py_config_parser) {
             auto config_parser =
                 ert::from_cwrap<config_parser_type>(py_config_parser);
-            ert_workflow_list_add_config_items(config_parser);
+            auto item = config_add_schema_item(
+                config_parser, WORKFLOW_JOB_DIRECTORY_KEY, false);
+            config_schema_item_set_argc_minmax(item, 1, 1);
+            config_schema_item_iset_type(item, 0, CONFIG_PATH);
+
+            item =
+                config_add_schema_item(config_parser, LOAD_WORKFLOW_KEY, false);
+            config_schema_item_set_argc_minmax(item, 1, 2);
+            config_schema_item_iset_type(item, 0, CONFIG_EXISTING_PATH);
+
+            item = config_add_schema_item(config_parser, LOAD_WORKFLOW_JOB_KEY,
+                                          false);
+            config_schema_item_set_argc_minmax(item, 1, 2);
+            config_schema_item_iset_type(item, 0, CONFIG_EXISTING_PATH);
             config_add_key_value(config_parser, ENKF_ALPHA_KEY, false,
                                  CONFIG_FLOAT);
             config_add_key_value(config_parser, STD_CUTOFF_KEY, false,
