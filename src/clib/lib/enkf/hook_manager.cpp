@@ -145,26 +145,6 @@ void hook_manager_init(hook_manager_type *hook_manager,
     }
 }
 
-void hook_manager_add_config_items(config_parser_type *config) {
-    config_schema_item_type *item;
-
-    item = config_add_schema_item(config, HOOK_WORKFLOW_KEY, false);
-    config_schema_item_set_argc_minmax(item, 2, 2);
-    config_schema_item_iset_type(item, 0, CONFIG_STRING);
-    config_schema_item_iset_type(item, 1, CONFIG_STRING);
-    {
-        stringlist_type *argv = stringlist_alloc_new();
-
-        stringlist_append_copy(argv, RUN_MODE_PRE_SIMULATION_NAME);
-        stringlist_append_copy(argv, RUN_MODE_POST_SIMULATION_NAME);
-        stringlist_append_copy(argv, RUN_MODE_PRE_UPDATE_NAME);
-        stringlist_append_copy(argv, RUN_MODE_POST_UPDATE_NAME);
-        config_schema_item_set_indexed_selection_set(item, 1, argv);
-
-        stringlist_free(argv);
-    }
-}
-
 void hook_manager_run_workflows(const hook_manager_type *hook_manager,
                                 hook_run_mode_enum run_mode, void *self) {
     bool verbose = false;

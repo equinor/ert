@@ -40,7 +40,6 @@ extern "C" void hook_manager_free(hook_manager_type *hook_manager);
 
 void hook_manager_init(hook_manager_type *hook_manager,
                        const config_content_type *config);
-void hook_manager_add_config_items(config_parser_type *config);
 void hook_manager_run_workflows(const hook_manager_type *hook_manager,
                                 hook_run_mode_enum run_mode, void *self);
 

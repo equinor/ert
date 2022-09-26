@@ -107,6 +107,21 @@ static void add_analysis_set_var_keyword(config_parser_type *config_parser) {
     config_schema_item_set_argc_minmax(item, 3, CONFIG_DEFAULT_ARG_MAX);
 }
 
+static void add_hook_workflow_keyword(config_parser_type *config_parser) {
+    auto item = config_add_schema_item(config_parser, HOOK_WORKFLOW_KEY, false);
+    config_schema_item_set_argc_minmax(item, 2, 2);
+    config_schema_item_iset_type(item, 0, CONFIG_STRING);
+    config_schema_item_iset_type(item, 1, CONFIG_STRING);
+
+    stringlist_type *argv = stringlist_alloc_new();
+    stringlist_append_copy(argv, RUN_MODE_PRE_SIMULATION_NAME);
+    stringlist_append_copy(argv, RUN_MODE_POST_SIMULATION_NAME);
+    stringlist_append_copy(argv, RUN_MODE_PRE_UPDATE_NAME);
+    stringlist_append_copy(argv, RUN_MODE_POST_UPDATE_NAME);
+    config_schema_item_set_indexed_selection_set(item, 1, argv);
+    stringlist_free(argv);
+}
+
 ERT_CLIB_SUBMODULE("config_keywords", m) {
     using namespace py::literals;
     m.def(
@@ -163,7 +178,7 @@ ERT_CLIB_SUBMODULE("config_keywords", m) {
             add_gen_kw_export_keyword(config_parser);
             add_history_source_keyword(config_parser);
             add_runpath_file_keyword(config_parser);
-            hook_manager_add_config_items(config_parser);
+            add_hook_workflow_keyword(config_parser);
             site_config_add_config_items(config_parser, false);
             config_add_key_value(config_parser, RES_CONFIG_FILE_KEY, false,
                                  CONFIG_EXISTING_PATH);
