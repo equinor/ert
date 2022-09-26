@@ -37,6 +37,7 @@ pybind11_add_module(
   config/config_path_elm.cpp
   config/config_schema_item.cpp
   config/config_settings.cpp
+  config/config_keywords.cpp
   rms/rms_file.cpp
   rms/rms_tag.cpp
   rms/rms_tagkey.cpp
@@ -116,7 +117,6 @@ pybind11_add_module(
   enkf/queue_config.cpp
   enkf/run_arg.cpp
   enkf/site_config.cpp
-  enkf/res_config.cpp
   enkf/row_scaling.cpp
   enkf/state_map.cpp
   enkf/state_map.cpp
