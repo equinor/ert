@@ -303,21 +303,6 @@ static void ert_workflow_list_init(ert_workflow_list_type *workflow_list,
     }
 }
 
-void ert_workflow_list_add_config_items(config_parser_type *config) {
-    config_schema_item_type *item =
-        config_add_schema_item(config, WORKFLOW_JOB_DIRECTORY_KEY, false);
-    config_schema_item_set_argc_minmax(item, 1, 1);
-    config_schema_item_iset_type(item, 0, CONFIG_PATH);
-
-    item = config_add_schema_item(config, LOAD_WORKFLOW_KEY, false);
-    config_schema_item_set_argc_minmax(item, 1, 2);
-    config_schema_item_iset_type(item, 0, CONFIG_EXISTING_PATH);
-
-    item = config_add_schema_item(config, LOAD_WORKFLOW_JOB_KEY, false);
-    config_schema_item_set_argc_minmax(item, 1, 2);
-    config_schema_item_iset_type(item, 0, CONFIG_EXISTING_PATH);
-}
-
 workflow_type *
 ert_workflow_list_get_workflow(ert_workflow_list_type *workflow_list,
                                const char *workflow_name) {

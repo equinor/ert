@@ -65,7 +65,6 @@ extern "C" stringlist_type *
 ert_workflow_list_get_job_names(const ert_workflow_list_type *workflow_list);
 void ert_workflow_list_add_alias(ert_workflow_list_type *workflow_list,
                                  const char *real_name, const char *alias);
-void ert_workflow_list_add_config_items(config_parser_type *config);
 extern "C" bool
 ert_workflow_list_has_workflow(ert_workflow_list_type *workflow_list,
                                const char *workflow_name);
