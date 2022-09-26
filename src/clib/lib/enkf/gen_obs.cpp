@@ -76,8 +76,6 @@ struct gen_obs_struct {
     /** The key this observation is held by - in the enkf_obs structur (only
      * for debug messages). */
     char *obs_key;
-    /** The format, i.e. ASCII, binary_double or binary_float, of the
-     * observation file. */
     gen_data_file_format_type obs_format;
     gen_data_config_type *data_config;
 };
@@ -110,9 +108,7 @@ static double IGET_SCALED_STD(const gen_obs_type *gen_obs, int index) {
    where the first N elements are data values, and the last N values
    are the corresponding standard deviations.
 
-   The file is loaded with the gen_common_fload_alloc() function, and
-   can be in formatted ASCII or binary_float / binary_double. Observe
-   that there is *NO* header information in this file.
+   The file is loaded with the gen_common_fload_alloc() function.
 */
 static void gen_obs_set_data(gen_obs_type *gen_obs, int buffer_size,
                              const double *buffer) {

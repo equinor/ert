@@ -508,8 +508,6 @@ forward model. The valid values are:
 
 * ASCII - This is just text file with formatted numbers.
 * ASCII_TEMPLATE - A plain text file with formatted numbers, and an arbitrary header/footer.
-* BINARY_FLOAT - A vector of binary float numbers.
-* BINARY_DOUBLE - A vector of binary double numbers.
 
 Regarding the different formats - observe the following:
 
@@ -624,10 +622,7 @@ the configuration:
 The ``4DWOC`` is an arbitrary unique key, ``RESULT_FILE:SimulatedWOC%d.txt``
 means that ERT will look for results in the file ``SimulatedWOC_0.txt``. The
 ``INPUT_FORMAT:ASCII`` means that ERT will expect the result file to be
-formatted as an ASCII file, the other alternative formats are
-``INPUT_FORMAT:BINARY_FLOAT`` and ``INPUT_FORMAT:BINARY_DOUBLE`` - in general
-only the ASCII alternative is used, and in the future that should at least be
-the default.
+formatted as an ASCII file.
 
 The ``REPORT_STEPS:0`` is tightly bound to the ``%d`` integer format specifier
 in the result file - at load time the ``%d`` is replaced with the integer values

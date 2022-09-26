@@ -164,10 +164,6 @@ void test_format_check() {
     test_assert_int_equal(ASCII, gen_data_config_check_format("ASCII"));
     test_assert_int_equal(ASCII_TEMPLATE,
                           gen_data_config_check_format("ASCII_TEMPLATE"));
-    test_assert_int_equal(BINARY_DOUBLE,
-                          gen_data_config_check_format("BINARY_DOUBLE"));
-    test_assert_int_equal(BINARY_FLOAT,
-                          gen_data_config_check_format("BINARY_FLOAT"));
 }
 
 void test_set_template_invalid() {
