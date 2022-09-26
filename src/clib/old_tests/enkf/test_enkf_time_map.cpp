@@ -259,7 +259,7 @@ void simple_test_inconsistent() {
     time_map_free(time_map);
 }
 
-#define MAP_SIZE 10000
+#define MAP_SIZE 100
 
 void thread_test() {
     time_map_type *time_map = time_map_alloc();
@@ -275,7 +275,7 @@ void thread_test() {
 
     {
         std::vector<std::future<void>> futures;
-        int pool_size = 500;
+        int pool_size = 50;
         for (int i{}; i < pool_size; ++i)
             futures.emplace_back(
                 std::async(std::launch::async, update_time_map));
