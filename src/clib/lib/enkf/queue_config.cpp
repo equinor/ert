@@ -342,42 +342,6 @@ int queue_config_get_num_cpu(const queue_config_type *queue_config) {
     return queue_config->num_cpu;
 }
 
-void queue_config_add_config_items(config_parser_type *parser, bool site_mode) {
-
-    {
-        config_schema_item_type *item =
-            config_add_schema_item(parser, MAX_SUBMIT_KEY, false);
-        config_schema_item_set_argc_minmax(item, 1, 1);
-        config_schema_item_iset_type(item, 0, CONFIG_INT);
-    }
-
-    {
-        config_schema_item_type *item =
-            config_add_schema_item(parser, NUM_CPU_KEY, false);
-        config_schema_item_set_argc_minmax(item, 1, 1);
-        config_schema_item_iset_type(item, 0, CONFIG_INT);
-    }
-
-    {
-        config_schema_item_type *item =
-            config_add_schema_item(parser, QUEUE_SYSTEM_KEY, site_mode);
-        config_schema_item_set_argc_minmax(item, 1, 1);
-    }
-
-    {
-        config_schema_item_type *item =
-            config_add_schema_item(parser, QUEUE_OPTION_KEY, false);
-        config_schema_item_set_argc_minmax(item, 2, CONFIG_DEFAULT_ARG_MAX);
-    }
-
-    {
-        config_schema_item_type *item =
-            config_add_schema_item(parser, JOB_SCRIPT_KEY, false);
-        config_schema_item_set_argc_minmax(item, 1, 1);
-        config_schema_item_iset_type(item, 0, CONFIG_EXECUTABLE);
-    }
-}
-
 const char *queue_config_lsf_queue_name() { return LSF_QUEUE; }
 
 const char *queue_config_lsf_server() { return LSF_SERVER; }

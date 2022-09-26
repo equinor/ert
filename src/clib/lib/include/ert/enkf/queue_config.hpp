@@ -72,8 +72,6 @@ void queue_config_create_queue_drivers(queue_config_type *queue_config);
 extern "C" const char *
 queue_config_get_queue_system(const queue_config_type *queue_config);
 
-void queue_config_add_config_items(config_parser_type *parser, bool site_mode);
-
 job_queue_type *
 queue_config_alloc_job_queue(const queue_config_type *queue_config);
 
