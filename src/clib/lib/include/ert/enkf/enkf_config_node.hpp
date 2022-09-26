@@ -162,8 +162,6 @@ enkf_config_node_get_min_std(const enkf_config_node_type *config_node);
 extern "C" bool
 enkf_config_node_use_forward_init(const enkf_config_node_type *config_node);
 
-void enkf_config_node_add_GEN_DATA_config_schema(config_parser_type *config);
-void enkf_config_node_add_GEN_PARAM_config_schema(config_parser_type *config);
 enkf_config_node_type *enkf_config_node_alloc_GEN_PARAM_from_config(
     const config_content_node_type *config_node);
 enkf_config_node_type *enkf_config_node_alloc_GEN_DATA_from_config(

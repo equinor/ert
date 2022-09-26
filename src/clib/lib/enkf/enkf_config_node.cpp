@@ -686,18 +686,6 @@ void enkf_config_node_fprintf_config(const enkf_config_node_type *config_node,
     fprintf(stream, "\n");
 }
 
-void enkf_config_node_add_GEN_PARAM_config_schema(config_parser_type *config) {
-    config_schema_item_type *item;
-    item = config_add_schema_item(config, GEN_PARAM_KEY, false);
-    config_schema_item_set_argc_minmax(item, 2, CONFIG_DEFAULT_ARG_MAX);
-}
-
-void enkf_config_node_add_GEN_DATA_config_schema(config_parser_type *config) {
-    config_schema_item_type *item;
-    item = config_add_schema_item(config, GEN_DATA_KEY, false);
-    config_schema_item_set_argc_minmax(item, 1, CONFIG_DEFAULT_ARG_MAX);
-}
-
 enkf_config_node_type *enkf_config_node_alloc_GEN_DATA_from_config(
     const config_content_node_type *node) {
     enkf_config_node_type *config_node = NULL;
