@@ -67,7 +67,7 @@ Keyword name                                                            Required
 :ref:`NUM_REALIZATIONS <num_realizations>`                              YES                                                                     Set the number of reservoir realizations to use
 :ref:`OBS_CONFIG <obs_config>`                                          NO                                                                      File specifying observations with uncertainties
 :ref:`QUEUE_OPTION <queue_option>`                                      NO                                                                      Set options for an ERT queue system
-:ref:`QUEUE_SYSTEM <queue_system>`                                      NO                                                                      System used for running simulation jobs
+:ref:`QUEUE_SYSTEM <queue_system>`                                      NO                                      LOCAL_DRIVER                                System used for running simulation jobs
 :ref:`REFCASE <refcase>`                                                NO                                                                      Reference case used for observations and plotting (See HISTORY_SOURCE and SUMMARY)
 :ref:`RERUN_START  <rerun_start>`                                       NO                                      0                               Deprecated
 :ref:`RESULT_PATH  <result_path>`                                       NO                                      results/step_%d                 Define where ERT should store results

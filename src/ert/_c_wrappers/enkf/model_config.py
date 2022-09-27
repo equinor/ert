@@ -130,7 +130,7 @@ class ModelConfig(BaseCClass):
             num_realizations = config_dict.get(ConfigKeys.NUM_REALIZATIONS)
 
             # RUNPATH_KEY
-            run_path = config_dict.get(ConfigKeys.RUNPATH)
+            run_path = config_dict.get(ConfigKeys.RUNPATH, "simulations/realization%d")
             if run_path is not None:
                 run_path = os.path.realpath(run_path)
 
@@ -140,7 +140,7 @@ class ModelConfig(BaseCClass):
                 data_root = os.path.realpath(data_root_from_config)
 
             # ENSPATH_KEY
-            ens_path = config_dict.get(ConfigKeys.ENSPATH)
+            ens_path = config_dict.get(ConfigKeys.ENSPATH, "storage")
             if ens_path is not None:
                 ens_path = os.path.realpath(ens_path)
 
