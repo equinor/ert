@@ -51,6 +51,7 @@ from ._step import _FunctionStep, _UnixStep
 from ._unix_task import UnixTask
 
 if TYPE_CHECKING:
+    from multiprocessing.context import ForkServerContext
     from ert.shared.ensemble_evaluator.config import EvaluatorServerConfig
 
 DEFAULT_MAX_RETRIES = 0
@@ -226,7 +227,7 @@ class PrefectEnsemble(_Ensemble):  # pylint: disable=too-many-instance-attribute
         return flow
 
     @staticmethod
-    def _get_multiprocessing_context() -> BaseContext:
+    def _get_multiprocessing_context() -> "ForkServerContext":
         """See _prefect_forkserver_preload"""
         preload_module_name = (
             "ert.ensemble_evaluator.builder._prefect_forkserver_preload"
