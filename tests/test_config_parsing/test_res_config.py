@@ -3,6 +3,7 @@ import os
 import pytest
 
 from ert._c_wrappers.enkf import ResConfig
+from ert._c_wrappers.enkf.config_keys import ConfigKeys
 
 
 def touch(filename):
@@ -37,3 +38,10 @@ LICENSE_PATH license
             }
         ).site_config
     )
+
+
+def test_res_config_minimal_dict_init(tmpdir):
+    with tmpdir.as_cwd():
+        config_dict = {ConfigKeys.NUM_REALIZATIONS: 1}
+        res_config = ResConfig(config_dict=config_dict)
+        assert res_config is not None

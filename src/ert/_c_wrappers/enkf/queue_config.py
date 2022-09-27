@@ -14,6 +14,7 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 
+import shutil
 from typing import Optional
 
 from cwrap import BaseCClass
@@ -22,6 +23,7 @@ from ert._c_wrappers import ResPrototype
 from ert._c_wrappers.config import ConfigContent
 from ert._c_wrappers.enkf.config_keys import ConfigKeys
 from ert._c_wrappers.job_queue import Driver, JobQueue
+from ert._c_wrappers.job_queue.driver import LOCAL_DRIVER
 
 
 class QueueConfig(BaseCClass):
@@ -74,12 +76,13 @@ class QueueConfig(BaseCClass):
         if config_content is not None:
             c_ptr = self._alloc_content(config_content)
         if config_dict is not None:
+            job_script_path = shutil.which("job_dispatch.py") or "job_dispatch.py"
             c_ptr = self._alloc_full(
-                config_dict[ConfigKeys.JOB_SCRIPT],
-                config_dict[ConfigKeys.USER_MODE],
-                config_dict[ConfigKeys.MAX_SUBMIT],
-                config_dict[ConfigKeys.NUM_CPU],
-                config_dict[ConfigKeys.QUEUE_SYSTEM],
+                config_dict.get(ConfigKeys.JOB_SCRIPT, job_script_path),
+                config_dict.get(ConfigKeys.USER_MODE, True),
+                config_dict.get(ConfigKeys.MAX_SUBMIT, 2),
+                config_dict.get(ConfigKeys.NUM_CPU, 0),
+                config_dict.get(ConfigKeys.QUEUE_SYSTEM, LOCAL_DRIVER),
             )
         if not c_ptr:
             raise ValueError("Unable to create QueueConfig instance")
