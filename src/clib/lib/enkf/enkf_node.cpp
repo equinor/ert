@@ -578,14 +578,12 @@ enkf_node_alloc_empty(const enkf_config_node_type *config) {
         node->alloc = gen_kw_alloc__;
         node->ecl_write = gen_kw_ecl_write__;
         node->copy = gen_kw_copy__;
-        node->initialize = gen_kw_initialize__;
         node->freef = gen_kw_free__;
         node->user_get = gen_kw_user_get__;
         node->write_to_buffer = gen_kw_write_to_buffer__;
         node->read_from_buffer = gen_kw_read_from_buffer__;
         node->serialize = gen_kw_serialize__;
         node->deserialize = gen_kw_deserialize__;
-        node->fload = gen_kw_fload__;
         break;
     case (SUMMARY):
         node->forward_load = summary_forward_load__;

@@ -6,6 +6,7 @@
 #include <stdlib.h>
 
 #include <ert/enkf/enkf_util.hpp>
+#include <ert/python.hpp>
 
 class generator {
     rng_type *rng;
@@ -34,4 +35,10 @@ void enkf_util_assert_buffer_type(buffer_type *buffer,
         util_abort(
             "%s: wrong target type in file (expected:%d  got:%d) - aborting \n",
             __func__, target_type, file_type);
+}
+
+ERT_CLIB_SUBMODULE("enkf_util", m) {
+    m.def("standard_normal", [](py::handle rng) {
+        return enkf_util_rand_normal(0, 1, ert::from_cwrap<rng_type>(rng));
+    });
 }

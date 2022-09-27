@@ -1,12 +1,16 @@
+import io
 import os
 import re
 import struct
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, List, Union
 
+import numpy as np
+import numpy.typing as npt
 from ecl.util.enums import RngInitModeEnum
 from ecl.util.util import RandomNumberGenerator
 
+from ert import _clib
 from ert._c_wrappers.analysis.configuration import UpdateConfiguration
 from ert._c_wrappers.enkf.analysis_config import AnalysisConfig
 from ert._c_wrappers.enkf.data import EnkfNode
@@ -16,6 +20,7 @@ from ert._c_wrappers.enkf.enkf_fs_manager import FileSystemRotator
 from ert._c_wrappers.enkf.enkf_obs import EnkfObs
 from ert._c_wrappers.enkf.ensemble_config import EnsembleConfig
 from ert._c_wrappers.enkf.enums import RealizationStateEnum
+from ert._c_wrappers.enkf.enums.ert_impl_type_enum import ErtImplType
 from ert._c_wrappers.enkf.ert_run_context import RunContext
 from ert._c_wrappers.enkf.ert_workflow_list import ErtWorkflowList
 from ert._c_wrappers.enkf.hook_manager import HookManager
@@ -27,7 +32,7 @@ from ert._c_wrappers.enkf.runpaths import Runpaths
 from ert._c_wrappers.enkf.site_config import SiteConfig
 from ert._c_wrappers.enkf.substituter import Substituter
 from ert._c_wrappers.util.substitution_list import SubstitutionList
-from ert._clib import enkf_main, enkf_state
+from ert._clib import enkf_fs, enkf_main, enkf_state
 from ert._clib.state_map import (
     STATE_LOAD_FAILURE,
     STATE_PARENT_FAILURE,
@@ -368,9 +373,10 @@ class EnKFMain:
                 and not current_status == STATE_PARENT_FAILURE
             ):
                 for parameter in parameters:
-                    node = self.ensembleConfig().getNode(parameter)
-                    enkf_node = EnkfNode(node)
-                    if node.getUseForwardInit():
+                    config_node = self.ensembleConfig().getNode(parameter)
+                    enkf_node = EnkfNode(config_node)
+
+                    if config_node.getUseForwardInit():
                         continue
                     if (
                         not enkf_node.has_data(
@@ -378,15 +384,45 @@ class EnKFMain:
                         )
                         or current_status == STATE_LOAD_FAILURE
                     ):
-                        enkf_state.state_initialize(
-                            rng,
-                            enkf_node,
-                            run_context.sim_fs,
-                            realization_nr,
-                        )
+                        rng = self.realizations[realization_nr]
+                        impl_type = enkf_node.getImplType()
+
+                        if impl_type == ErtImplType.GEN_KW:
+                            gen_kw_node = enkf_node.asGenKw()
+
+                            vals = self._sample_gen_kw(rng, len(gen_kw_node))
+
+                            if len(vals) > 0:
+                                s = io.BytesIO()
+                                # The first element is time_t (64 bit integer), but
+                                # it is not used so we write 0 instead - for
+                                # padding purposes.
+                                s.write(struct.pack("Qi", 0, int(ErtImplType.GEN_KW)))
+                                s.write(vals.tobytes())
+
+                                enkf_fs.write_parameter(
+                                    run_context.sim_fs,
+                                    config_node.getKey(),
+                                    realization_nr,
+                                    s.getvalue(),
+                                )
+
+                        else:
+                            enkf_state.state_initialize(
+                                self.realizations[realization_nr],
+                                enkf_node,
+                                run_context.sim_fs,
+                                realization_nr,
+                            )
+
                 if state_map[realization_nr] in [STATE_UNDEFINED, STATE_LOAD_FAILURE]:
                     state_map[realization_nr] = RealizationStateEnum.STATE_INITIALIZED
         run_context.sim_fs.sync()
+
+    def _sample_gen_kw(
+        self, rng: RandomNumberGenerator, nsamples: int
+    ) -> npt.NDArray[np.float_]:
+        return np.array([_clib.enkf_util.standard_normal(rng) for _ in range(nsamples)])
 
     def rng(self) -> RandomNumberGenerator:
         "Will return the random number generator used for updates."

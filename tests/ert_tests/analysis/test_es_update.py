@@ -174,13 +174,8 @@ def test_update_snapshot(setup_case, module, expected_gen_kw):
 
 
 @pytest.mark.integration_test
-def test_that_posterior_has_lower_variance_than_prior_with_init_files(copy_case):
-    """This is the poly-case but with initialization with INIT_FILES.
-    See,
-    https://ert.readthedocs.io/en/latest/reference/configuration/data_types.html?highlight=FORWARD_INIT#initialization-with-init-files
-    This is done such that the callback functions are called.
-    """
-    copy_case("externally_sampled_params")
+def test_that_posterior_has_lower_variance_than_prior(copy_case):
+    copy_case("poly_example")
 
     parser = ArgumentParser(prog="test_main")
     parsed = ert_parser(
@@ -191,7 +186,7 @@ def test_that_posterior_has_lower_variance_than_prior_with_init_files(copy_case)
             "default",
             "--target-case",
             "target",
-            "config.ert",
+            "poly.ert",
             "--port-range",
             "1024-65535",
         ],
@@ -199,7 +194,7 @@ def test_that_posterior_has_lower_variance_than_prior_with_init_files(copy_case)
 
     run_cli(parsed)
 
-    res_config = ResConfig("config.ert")
+    res_config = ResConfig("poly.ert")
 
     ert = EnKFMain(res_config)
 

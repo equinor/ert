@@ -673,6 +673,22 @@ int load_from_run_path(const int ens_size,
 
     return loaded;
 }
+
+void bind_write_parameter(py::handle fs_, const std::string &node_key, int iens,
+                          py::bytes buffer) {
+    auto fs = ert::from_cwrap<enkf_fs_type>(fs_);
+    if (fs->read_only)
+        util_abort("%s: attempt to write to read_only filesystem mounted at:%s "
+                   "- aborting. \n",
+                   __func__, fs->mount_point);
+
+    ert::block_fs_driver *driver =
+        enkf_fs_select_driver(fs, PARAMETER, node_key.c_str());
+    char *bufferz;
+    Py_ssize_t size;
+    PyBytes_AsStringAndSize(buffer.ptr(), &bufferz, &size);
+    driver->save_node(node_key.c_str(), iens, bufferz, size);
+}
 } // namespace
 
 ERT_CLIB_SUBMODULE("enkf_fs", m) {
@@ -708,6 +724,7 @@ ERT_CLIB_SUBMODULE("enkf_fs", m) {
         },
         py::arg("self"), py::arg("ensemble_config"), py::arg("parameter_names"),
         py::arg("ensemble_size"));
+
     m.def("load_from_run_path", [](Cwrap<enkf_fs_type> enkf_fs, int ens_size,
                                    Cwrap<ensemble_config_type> ensemble_config,
                                    Cwrap<model_config_type> model_config,
@@ -721,4 +738,6 @@ ERT_CLIB_SUBMODULE("enkf_fs", m) {
         return load_from_run_path(ens_size, ensemble_config, model_config,
                                   ecl_config, active_mask, enkf_fs, run_args);
     });
+
+    m.def("write_parameter", bind_write_parameter);
 }

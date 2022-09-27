@@ -839,12 +839,6 @@ ensemble_config_forward_init(const ensemble_config_type *ens_config,
                 enkf_fs_type *sim_fs = run_arg_get_sim_fs(run_arg);
                 node_id_type node_id = {.report_step = 0, .iens = iens};
 
-                /*
-           Will not reinitialize; i.e. it is essential that the
-           forward model uses the state given from the stored
-           instance, and not from the current run of e.g. RMS.
-        */
-
                 if (!enkf_node_has_data(node, sim_fs, node_id)) {
                     if (enkf_node_forward_init(
                             node, run_arg_get_runpath(run_arg), iens))

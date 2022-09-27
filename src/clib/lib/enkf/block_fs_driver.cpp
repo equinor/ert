@@ -16,6 +16,8 @@ namespace fs = std::filesystem;
 #include <ert/enkf/block_fs_driver.hpp>
 #include <ert/enkf/fs_types.hpp>
 
+#include <fmt/format.h>
+
 typedef struct bfs_struct bfs_type;
 typedef struct bfs_config_struct bfs_config_type;
 
@@ -125,6 +127,13 @@ void ert::block_fs_driver::save_node(const char *node_key, int report_step,
     bfs_type *bfs = this->get_fs(iens);
     block_fs_fwrite_buffer(bfs->block_fs, key, buffer);
     free(key);
+}
+
+void ert::block_fs_driver::save_node(const char *node_key, int iens,
+                                     const void *ptr, size_t data_size) {
+    auto key = fmt::format("{}.0.{}", node_key, iens);
+    bfs_type *bfs = this->get_fs(iens);
+    block_fs_fwrite_file(bfs->block_fs, key.c_str(), ptr, data_size);
 }
 
 void ert::block_fs_driver::save_vector(const char *node_key, int iens,

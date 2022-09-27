@@ -7,7 +7,6 @@ from textwrap import dedent
 
 import cwrap
 import numpy as np
-import pandas as pd
 import pytest
 from ecl import EclDataType
 from ecl.eclfile import EclKW
@@ -15,7 +14,6 @@ from ecl.grid import EclGrid
 from ecl.util.geometry import Surface
 
 from ert._c_wrappers.enkf import EnKFMain, ResConfig
-from ert._c_wrappers.enkf.export import GenKwCollector
 from ert._clib import update
 from ert._clib.update import Parameter
 from ert.libres_facade import LibresFacade
@@ -56,30 +54,6 @@ def load_from_forward_model(ert):
             else "MY_KEYWORD 1.85656",
             [],
             does_not_raise(),
-        ),
-        (
-            "GEN_KW KW_NAME template.txt kw.txt prior.txt INIT_FILES:custom_param%d",
-            "MY_KEYWORD 1.31",
-            [("custom_param0", "MY_KEYWORD 1.31")],
-            does_not_raise(),
-        ),
-        (
-            "GEN_KW KW_NAME template.txt kw.txt prior.txt INIT_FILES:custom_param%d",
-            "MY_KEYWORD 1.31",
-            [("custom_param0", "1.31")],
-            does_not_raise(),
-        ),
-        (
-            "GEN_KW KW_NAME template.txt kw.txt prior.txt FORWARD_INIT:True INIT_FILES:custom_param0",  # noqa
-            "Not expecting a file",
-            [],
-            pytest.raises(FileNotFoundError, match="kw.txt"),
-        ),
-        (
-            "GEN_KW KW_NAME template.txt kw.txt prior.txt FORWARD_INIT=True INIT_FILES:custom_param0",  # noqa
-            "MY_KEYWORD 1.31",
-            [("custom_param0", "MY_KEYWORD 1.31")],
-            does_not_raise(),  # This really should not work, spot the mistake?
         ),
     ],
 )
@@ -251,21 +225,15 @@ def test_gen_kw_forward_init(tmpdir, load_forward_init):
             fh.writelines("MY_KEYWORD NORMAL 0 1")
         if not load_forward_init:
             write_file("custom_param0", "MY_KEYWORD 1.31")
-        ert = create_runpath("config.ert")
 
-        if load_forward_init:
-            assert not Path("simulations/realization0/kw.txt").exists()
-            param_file = Path("simulations/realization0/custom_param0")
-            param_file.write_text("1.01")
-        else:
-            assert Path("simulations/realization0/kw.txt").exists()
-        assert load_from_forward_model(ert) == 1
-
-        df = GenKwCollector.loadAllGenKwData(ert, "default_0")
-        if load_forward_init:
-            assert df["KW_NAME:MY_KEYWORD"][0] == 1.01
-        else:
-            assert pd.isna(df["KW_NAME:MY_KEYWORD"][0])
+        with pytest.raises(
+            KeyError,
+            match=(
+                "Loading GEN_KW from files created by "
+                "the forward model is not supported."
+            ),
+        ):
+            create_runpath("config.ert")
 
 
 @pytest.mark.parametrize(
