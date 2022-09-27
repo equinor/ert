@@ -31,6 +31,8 @@ public:
                    buffer_type *buffer);
     void save_node(const char *node_key, int report_step, int iens,
                    buffer_type *buffer);
+    void save_node(const char *node_key, int iens, const void *ptr,
+                   size_t data_size);
 
     bool has_vector(const char *node_key, int iens);
     void load_vector(const char *node_key, int iens, buffer_type *buffer);

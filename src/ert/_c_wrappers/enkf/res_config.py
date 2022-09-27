@@ -11,6 +11,7 @@ from ert._c_wrappers.enkf.analysis_config import AnalysisConfig
 from ert._c_wrappers.enkf.config_keys import ConfigKeys
 from ert._c_wrappers.enkf.ecl_config import EclConfig
 from ert._c_wrappers.enkf.ensemble_config import EnsembleConfig
+from ert._c_wrappers.enkf.enums import ErtImplType
 from ert._c_wrappers.enkf.ert_workflow_list import ErtWorkflowList
 from ert._c_wrappers.enkf.hook_manager import HookManager
 from ert._c_wrappers.enkf.model_config import ModelConfig
@@ -194,6 +195,13 @@ class ResConfig:
             refcase=self.ecl_config.getRefcase(),
         )
 
+        for key in self.ensemble_config.getKeylistFromImplType(ErtImplType.GEN_KW):
+            if self.ensemble_config.getNode(key).get_init_file_fmt() != None:
+                raise KeyError(
+                    "Loading GEN_KW from files created by the forward model "
+                    "is not supported."
+                )
+
         self.model_config = ModelConfig(
             data_root=self.config_path,
             joblist=self.site_config.get_installed_jobs(),
@@ -269,6 +277,13 @@ class ResConfig:
             refcase=self.ecl_config.getRefcase(),
             config_dict=config_dict,
         )
+
+        for key in self.ensemble_config.getKeylistFromImplType(ErtImplType.GEN_KW):
+            if self.ensemble_config.getNode(key).get_init_file_fmt() != None:
+                raise KeyError(
+                    "Loading GEN_KW from files created by the forward model "
+                    "is not supported."
+                )
 
         self.model_config = ModelConfig(
             data_root=self.config_path,

@@ -152,33 +152,6 @@ void gen_kw_read_from_buffer(gen_kw_type *gen_kw, buffer_type *buffer,
 }
 #undef MULTFLT
 
-C_USED static bool gen_kw_fload(gen_kw_type *, const char *);
-
-bool gen_kw_initialize(gen_kw_type *gen_kw, int iens, const char *init_file,
-                       rng_type *rng) {
-    if (!init_file && !rng)
-        util_abort("%s internal error: both init_file and rng are NULL",
-                   __func__);
-
-    bool ret = false;
-
-    if (init_file)
-        ret = gen_kw_fload(gen_kw, init_file);
-    else {
-        const double mean =
-            0.0; /* Mean and std are hardcoded - the variability should be in the transformation. */
-        const double std = 1.0;
-        const int data_size = gen_kw_config_get_data_size(gen_kw->config);
-        int i;
-
-        for (i = 0; i < data_size; i++)
-            gen_kw->data[i] = enkf_util_rand_normal(mean, std, rng);
-
-        ret = true;
-    }
-    return ret;
-}
-
 void gen_kw_serialize(const gen_kw_type *gen_kw, node_id_type node_id,
                       const ActiveList *active_list, Eigen::MatrixXd &A,
                       int row_offset, int column) {
@@ -277,106 +250,6 @@ const char *gen_kw_get_name(const gen_kw_type *gen_kw, int kw_nr) {
 }
 
 /**
-   This function will load values for gen_kw instance from file. The
-   file should be formatted as either:
-
-   -------
-   Value1
-   Value2
-   Value3
-   ....
-   ValueN
-   -------
-
-   Or
-
-   ------------
-   Key3  Value3
-   Key5  Value5
-   Key1  Value1
-   .....
-   ------------
-
-   I.e. you can either just dump in all the numbers in one long
-   vector, or you can interlace numbers and keys. In the latter case
-   the ordering is arbitrary.
-
-   Observe the following:
-
-    1. All values must be specified.
-    2. The values are in the N(0,1) domain, i.e. the untransformed variables.
-
-*/
-static bool gen_kw_fload(gen_kw_type *gen_kw, const char *filename) {
-    FILE *stream = util_fopen__(filename, "r");
-    if (stream) {
-        const int size = gen_kw_config_get_data_size(gen_kw->config);
-        bool readOK = true;
-
-        /* First try reading all the data as one long vector. */
-        {
-            int index = 0;
-            while ((index < size) && readOK) {
-                double value;
-                if (fscanf(stream, "%lg", &value) == 1)
-                    gen_kw->data[index] = value;
-                else
-                    readOK = false;
-                index++;
-            }
-        }
-
-        /*
-       OK - rewind and try again with interlaced key + value
-       pairs. Observe that we still require that ALL the elements in the
-       gen_kw instance are set, i.e. it is not allowed to read only some
-       of the keywords; but the ordering is not relevant.
-
-       The code will be fooled (and give undefined erronous results) if
-       the same key appears several times. Be polite!
-    */
-
-        if (!readOK) {
-            int counter = 0;
-            readOK = true;
-            fseek(stream, 0, SEEK_SET);
-
-            while ((counter < size) && readOK) {
-                char key[128];
-                double value;
-                int fscanf_return = fscanf(stream, "%s %lg", key, &value);
-
-                if (fscanf_return == 2) {
-                    int index = gen_kw_config_get_index(gen_kw->config, key);
-                    if (index >= 0)
-                        gen_kw->data[index] = value;
-                    else
-                        util_abort(
-                            "%s: key:%s not recognized as part of GEN_KW "
-                            "instance - error when reading file:%s \n",
-                            __func__, key, filename);
-                    counter++;
-                } else {
-                    util_abort("%s: failed to read (key,value) pair at line:%d "
-                               "in file:%s \n",
-                               __func__, util_get_current_linenr(stream),
-                               filename);
-                    readOK = false;
-                }
-            }
-        }
-
-        if (!readOK)
-            util_abort("%s: failed loading from file:%s \n", __func__,
-                       filename);
-
-        fclose(stream);
-        return true;
-    } else
-        return false;
-}
-
-/**
    Will return 0.0 on invalid input, and set valid -> false. It is the
    responsibility of the calling scope to check valid.
 */
@@ -400,7 +273,6 @@ C_USED bool gen_kw_user_get(const gen_kw_type *gen_kw, const char *key,
 UTIL_SAFE_CAST_FUNCTION(gen_kw, GEN_KW);
 UTIL_SAFE_CAST_FUNCTION_CONST(gen_kw, GEN_KW);
 VOID_ALLOC(gen_kw);
-VOID_INITIALIZE(gen_kw);
 VOID_COPY(gen_kw)
 VOID_FREE(gen_kw)
 VOID_ECL_WRITE(gen_kw)
@@ -410,4 +282,3 @@ VOID_READ_FROM_BUFFER(gen_kw)
 VOID_SERIALIZE(gen_kw)
 VOID_DESERIALIZE(gen_kw)
 VOID_CLEAR(gen_kw)
-VOID_FLOAD(gen_kw)
