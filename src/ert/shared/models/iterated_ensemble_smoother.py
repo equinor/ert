@@ -288,7 +288,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
     ) -> str:
         await loop.run_in_executor(
             executor,
-            self.ert().getEnkfSimulationRunner().createRunPath,
+            self.ert().createRunPath,
             run_context,
         )
 
@@ -346,7 +346,6 @@ class IteratedEnsembleSmoother(BaseRunModel):
                 run_context,
                 self._w_container,
             )
-            self._w_container.iteration_nr += 1
         except ErtAnalysisError as e:
             experiment_logger.exception("analysis failed")
             await self._dispatch_ee(
