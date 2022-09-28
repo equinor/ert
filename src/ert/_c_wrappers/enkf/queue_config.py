@@ -30,7 +30,7 @@ class QueueConfig(BaseCClass):
 
     _free = ResPrototype("void queue_config_free( queue_config )")
     _alloc_full = ResPrototype(
-        "void* queue_config_alloc_full(char*, bool, int, int, queue_driver_enum)",
+        "void* queue_config_alloc_full(bool, int, int, queue_driver_enum)",
         bind=False,
     )
     _alloc_content = ResPrototype(
@@ -39,8 +39,6 @@ class QueueConfig(BaseCClass):
     _alloc_local_copy = ResPrototype(
         "queue_config_obj queue_config_alloc_local_copy( queue_config )"
     )
-    _has_job_script = ResPrototype("bool queue_config_has_job_script( queue_config )")
-    _get_job_script = ResPrototype("char* queue_config_get_job_script(queue_config)")
     _max_submit = ResPrototype("int queue_config_get_max_submit(queue_config)")
     _queue_system = ResPrototype("char* queue_config_get_queue_system(queue_config)")
     _queue_driver = ResPrototype(
@@ -75,7 +73,6 @@ class QueueConfig(BaseCClass):
             c_ptr = self._alloc_content(config_content)
         if config_dict is not None:
             c_ptr = self._alloc_full(
-                config_dict[ConfigKeys.JOB_SCRIPT],
                 config_dict[ConfigKeys.USER_MODE],
                 config_dict[ConfigKeys.MAX_SUBMIT],
                 config_dict[ConfigKeys.NUM_CPU],
@@ -101,9 +98,6 @@ class QueueConfig(BaseCClass):
     def create_local_copy(self):
         return self._alloc_local_copy()
 
-    def has_job_script(self):
-        return self._has_job_script()
-
     def free(self):
         self._free()
 
@@ -119,10 +113,6 @@ class QueueConfig(BaseCClass):
     def queue_system(self):
         """The queue system in use, e.g. LSF or LOCAL"""
         return self._queue_system()
-
-    @property
-    def job_script(self):
-        return self._get_job_script()
 
     @property
     def driver(self) -> Driver:
@@ -157,7 +147,6 @@ class QueueConfig(BaseCClass):
     def __repr__(self):
         return (
             "QueueConfig(config_dict={"
-            f"'{ConfigKeys.JOB_SCRIPT}': {self.job_script}, "
             f"'{ConfigKeys.MAX_SUBMIT}': {self.max_submit}, "
             f"'{ConfigKeys.NUM_CPU}': {self.num_cpu}, "
             f"'{ConfigKeys.QUEUE_SYSTEM}': {self.queue_system}, "
@@ -171,8 +160,6 @@ class QueueConfig(BaseCClass):
         if self.queue_system != other.queue_system:
             return False
         if self.num_cpu != other.num_cpu:
-            return False
-        if self.job_script != other.job_script:
             return False
 
         if self.queue_system != "LOCAL":

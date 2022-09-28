@@ -37,20 +37,13 @@ typedef struct queue_config_struct queue_config_type;
 extern "C" queue_config_type *
 queue_config_alloc(const config_content_type *config_content);
 extern "C" PY_USED queue_config_type *
-queue_config_alloc_full(char *job_script, bool user_mode, int max_submit,
-                        int num_cpu, job_driver_type driver_type);
+queue_config_alloc_full(bool user_mode, int max_submit, int num_cpu,
+                        job_driver_type driver_type);
 extern "C" queue_config_type *
 queue_config_alloc_local_copy(queue_config_type *queue_config);
 extern "C" void queue_config_free(queue_config_type *queue_config);
 
 extern "C" int queue_config_get_max_submit(queue_config_type *queue_config);
-extern "C" bool
-queue_config_has_job_script(const queue_config_type *queue_config);
-bool queue_config_set_job_script(queue_config_type *queue_config,
-                                 const char *job_script);
-extern "C" const char *
-queue_config_get_job_script(const queue_config_type *queue_config);
-
 job_driver_type
 queue_config_get_driver_type(const queue_config_type *queue_config);
 

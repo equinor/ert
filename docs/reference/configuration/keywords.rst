@@ -53,7 +53,6 @@ Keyword name                                                            Required
 :ref:`ITER_COUNT <iter_count>`                                          NO                                      4                               Number of iterations - iterated ensemble smoother
 :ref:`ITER_RETRY_COUNT <iter_retry_count>`                              NO                                      4                               Number of retries for a iteration - iterated ensemble smoother
 :ref:`JOBNAME <jobname>`                                                YES\*                                                                   Name used for simulation files. \*Either JOBNAME or ECLBASE must be specified
-:ref:`JOB_SCRIPT <job_script>`                                          NO                                                                      Python script managing the forward model
 :ref:`LOAD_WORKFLOW <load_workflow>`                                    NO                                                                      Load a workflow into ERT
 :ref:`LOAD_WORKFLOW_JOB <load_workflow_job>`                            NO                                                                      Load a workflow job into ERT
 :ref:`LICENSE_PATH <license_path>`                                      NO                                                                      A path where ert-licenses to e.g. RMS are stored
@@ -1565,26 +1564,6 @@ Keywords related to running the forward model
 
         Experimental alternative to `FORWARD_MODEL`.
 
-
-.. _job_script:
-.. topic:: JOB_SCRIPT
-
-        Running the forward model from ERT is a multi-level process which can be
-        summarized as follows:
-
-        #. A Python module called jobs.py is written and stored in the directory where
-           the forward simulation is run. The jobs.py module contains a list of
-           job-elements, where each element is a Python representation of the code
-           entered when installing the job.
-        #. ERT submits a Python script to the enkf queue system, this
-           script then loads the jobs.py module to find out which programs to run, and
-           how to run them.
-        #. The job_script starts and monitors the individual jobs in the jobs.py
-           module.
-
-        The JOB_SCRIPT variable should point at the Python script which is managing
-        the forward model. This should normally be set in the site wide configuration
-        file.
 
 .. _queue_system:
 .. topic:: QUEUE_SYSTEM

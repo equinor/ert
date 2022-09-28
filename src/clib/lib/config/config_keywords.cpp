@@ -190,11 +190,6 @@ static void add_queue_option_keyword(config_parser_type *config_parser) {
     config_schema_item_set_argc_minmax(item, 2, CONFIG_DEFAULT_ARG_MAX);
 }
 
-static void add_job_script_keyword(config_parser_type *config_parser) {
-    auto item = add_single_arg_keyword(config_parser, JOB_SCRIPT_KEY);
-    config_schema_item_iset_type(item, 0, CONFIG_EXECUTABLE);
-}
-
 static void add_havana_fault_keyword(config_parser_type *config_parser) {
     auto item = config_add_schema_item(config_parser, "HAVANA_FAULT", false);
     config_schema_item_set_argc_minmax(item, 2, 2);
@@ -260,7 +255,6 @@ void init_site_config_parser(config_parser_type *config_parser) {
     add_int_keyword(config_parser, NUM_CPU_KEY);
     add_queue_system_keyword(config_parser, true);
     add_queue_option_keyword(config_parser);
-    add_job_script_keyword(config_parser);
     add_path_keyword(config_parser, WORKFLOW_JOB_DIRECTORY_KEY);
     add_load_workflow_keyword(config_parser);
     add_load_workflow_job_keyword(config_parser);
@@ -333,7 +327,6 @@ ERT_CLIB_SUBMODULE("config_keywords", m) {
             add_int_keyword(config_parser, NUM_CPU_KEY);
             add_queue_system_keyword(config_parser, false);
             add_queue_option_keyword(config_parser);
-            add_job_script_keyword(config_parser);
             add_load_workflow_job_keyword(config_parser);
             add_set_env_keyword(config_parser);
             add_umask_keyword(config_parser);

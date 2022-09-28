@@ -32,7 +32,6 @@ def test_eclbase_and_jobname():
                 },
                 "RUNPATH": "/tmp/simulations/run%d",
                 "NUM_REALIZATIONS": 1,
-                "JOB_SCRIPT": "script.sh",
                 "ENSPATH": "Ensemble",
                 "ECLBASE": "ECLBASE%d",
             },
@@ -52,7 +51,6 @@ def test_eclbase():
             "SIMULATION": {
                 "RUNPATH": "/tmp/simulations/run%d",
                 "NUM_REALIZATIONS": 1,
-                "JOB_SCRIPT": "script.sh",
                 "ENSPATH": "Ensemble",
                 "ECLBASE": "ECLBASE%d",
             },
@@ -76,7 +74,6 @@ def test_jobname():
                 },
                 "RUNPATH": "/tmp/simulations/run%d",
                 "NUM_REALIZATIONS": 1,
-                "JOB_SCRIPT": "script.sh",
                 "ENSPATH": "Ensemble",
             },
         }

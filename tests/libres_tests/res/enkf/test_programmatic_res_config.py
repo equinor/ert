@@ -85,7 +85,6 @@ def test_errors():
                     },
                     "RUNPATH": "/tmp/simulations/run%d",
                     "NUM_REALIZATIONS": "/should/be/an/integer",
-                    "JOB_SCRIPT": "script.sh",
                     "ENSPATH": "Ensemble",
                 },
             }
@@ -106,7 +105,6 @@ def test_failed_keys():
                 },
                 "RUNPATH": "/tmp/simulations/run%d",
                 "NUM_REALIZATIONS": 10,
-                "JOB_SCRIPT": "script.sh",
                 "ENSPATH": "Ensemble",
             },
         }

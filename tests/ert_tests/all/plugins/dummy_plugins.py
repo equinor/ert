@@ -56,7 +56,7 @@ def legacy_ertscript_workflow(config):
 @hook_implementation
 @plugin_response(plugin_name="dummy")
 def site_config_lines():
-    return ["JOB_SCRIPT job_dispatch_dummy.py", "QUEUE_OPTION LOCAL MAX_RUNNING 2"]
+    return ["QUEUE_OPTION LOCAL MAX_RUNNING 2"]
 
 
 @hook_implementation

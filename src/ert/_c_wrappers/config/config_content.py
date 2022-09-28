@@ -13,7 +13,7 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
-from typing import TYPE_CHECKING, Any, Dict, List
+from typing import TYPE_CHECKING, Any, Dict, Generator, List
 
 from cwrap import BaseCClass
 
@@ -133,7 +133,10 @@ class ContentItem(BaseCClass):
     def __len__(self):
         return self._size()
 
-    def __getitem__(self, index):
+    def __iter__(self) -> Generator[ContentNode, None, None]:
+        return (self[i] for i in range(len(self)))
+
+    def __getitem__(self, index: int) -> ContentNode:
         if isinstance(index, int):
             if index < 0:
                 index += len(self)

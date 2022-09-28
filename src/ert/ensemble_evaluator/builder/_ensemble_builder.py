@@ -158,7 +158,7 @@ class _EnsembleBuilder:  # pylint: disable=too-many-instance-attributes
                 ).set_run_path(
                     Path(run_arg.runpath)
                 ).set_job_script(
-                    res_config.queue_config.job_script
+                    "job_dispatch.py"
                 ).set_job_name(
                     run_arg.job_name
                 ).set_run_arg(

@@ -176,7 +176,6 @@ def test_missing_directory():
                     },
                     "RUNPATH": "/tmp/simulations/run%d",
                     "NUM_REALIZATIONS": 1,
-                    "JOB_SCRIPT": "script.sh",
                     "ENSPATH": "Ensemble",
                 },
             }
@@ -248,7 +247,6 @@ def test_extensive_config(setup_case):
     queue_config = res_config.queue_config
     for key, act in [
         ("MAX_SUBMIT", queue_config.max_submit),
-        ("LSF_QUEUE", queue_config.queue_name),
         ("LSF_SERVER", queue_config.lsf_server),
         ("LSF_RESOURCE", queue_config.lsf_resource),
         ("QUEUE_SYSTEM", queue_config.queue_system),
@@ -364,20 +362,19 @@ def test_res_config_dict_constructor(setup_case):
         ConfigKeys.RUNPATH: "<SCRATCH>/<USER>/<CASE_DIR>/realization-%d/iter-%d",
         ConfigKeys.NUM_REALIZATIONS: 10,  # model
         ConfigKeys.MAX_RUNTIME: 23400,
-        ConfigKeys.JOB_SCRIPT: f"../../{script_file}",
         ConfigKeys.QUEUE_SYSTEM: QueueDriverEnum.LSF_DRIVER,
         ConfigKeys.USER_MODE: True,
         ConfigKeys.MAX_SUBMIT: 13,
         ConfigKeys.NUM_CPU: 0,
         ConfigKeys.QUEUE_OPTION: [
             {ConfigKeys.NAME: "MAX_RUNNING", ConfigKeys.VALUE: "100"},
-            {ConfigKeys.NAME: QueueConfig.LSF_QUEUE_NAME_KEY, ConfigKeys.VALUE: "mr"},
+            {ConfigKeys.NAME: "LSF_QUEUE", ConfigKeys.VALUE: "mr"},
             {
-                ConfigKeys.NAME: QueueConfig.LSF_SERVER_KEY,
+                ConfigKeys.NAME: "LSF_SERVER",
                 ConfigKeys.VALUE: "simulacrum",
             },
             {
-                ConfigKeys.NAME: QueueConfig.LSF_RESOURCE_KEY,
+                ConfigKeys.NAME: "LSF_RESOURCE",
                 ConfigKeys.VALUE: "select[x86_64Linux] same[type:model]",
             },
         ],
@@ -504,7 +501,6 @@ def test_res_config_dict_constructor(setup_case):
 
     # add missing entries to config file
     with open(config_file_name, "a+") as ert_file:
-        ert_file.write(f"JOB_SCRIPT ../../{script_file}\n")
         ert_file.write("NUM_CPU 0\n")
 
     # load res_file
@@ -534,10 +530,6 @@ def test_res_config_dict_constructor(setup_case):
         ip[ConfigKeys.PATH] = os.path.realpath(ip[ConfigKeys.PATH])
     for ip in config_data_new[ConfigKeys.LOAD_WORKFLOW_JOB]:
         ip[ConfigKeys.PATH] = os.path.realpath(ip[ConfigKeys.PATH])
-
-    config_data_new[ConfigKeys.JOB_SCRIPT] = os.path.normpath(
-        os.path.realpath(config_data_new[ConfigKeys.JOB_SCRIPT])
-    )
 
     # open config via dictionary
     res_config_dict = ResConfig(config_dict=config_data_new)

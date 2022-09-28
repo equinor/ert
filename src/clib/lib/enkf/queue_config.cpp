@@ -34,7 +34,6 @@
 
 struct queue_config_struct {
     job_driver_type driver_type;
-    char *job_script;
     hash_type *queue_drivers;
     bool user_mode;
     int max_submit;
@@ -51,7 +50,6 @@ static queue_config_type *queue_config_alloc_empty() {
     queue_config_type *queue_config =
         (queue_config_type *)util_malloc(sizeof *queue_config);
     queue_config->queue_drivers = hash_alloc();
-    queue_config->job_script = NULL;
     queue_config->driver_type = NULL_DRIVER;
     queue_config->user_mode = false;
     queue_config->max_submit = 2; // Default value
@@ -86,15 +84,14 @@ queue_config_alloc(const config_content_type *config_content) {
     return queue_config;
 }
 
-queue_config_type *queue_config_alloc_full(char *job_script, bool user_mode,
-                                           int max_submit, int num_cpu,
+queue_config_type *queue_config_alloc_full(bool user_mode, int max_submit,
+                                           int num_cpu,
                                            job_driver_type driver_type) {
 
     queue_config_type *queue_config =
         (queue_config_type *)util_malloc(sizeof *queue_config);
     queue_config->queue_drivers = hash_alloc();
     queue_config_create_queue_drivers(queue_config);
-    queue_config->job_script = util_alloc_string_copy(job_script);
     queue_config->driver_type = static_cast<job_driver_type>(driver_type);
     queue_config->user_mode = user_mode;
     queue_config->max_submit = max_submit;
@@ -111,12 +108,6 @@ queue_config_alloc_local_copy(queue_config_type *queue_config) {
     queue_config_add_queue_driver(queue_config_copy, LOCAL_DRIVER_NAME,
                                   queue_driver_alloc_local());
     queue_config_copy->user_mode = queue_config->user_mode;
-
-    if (queue_config_has_job_script(queue_config)) {
-        queue_config_copy->job_script =
-            util_alloc_string_copy(queue_config->job_script);
-    } else
-        queue_config_copy->job_script = NULL;
 
     if (queue_config->driver_type == NULL_DRIVER)
         queue_config_copy->driver_type = NULL_DRIVER;
@@ -150,7 +141,6 @@ queue_config_alloc_job_queue(const queue_config_type *queue_config) {
 
 void queue_config_free(queue_config_type *queue_config) {
     hash_free(queue_config->queue_drivers);
-    free(queue_config->job_script);
     free(queue_config);
 }
 
@@ -175,29 +165,6 @@ queue_config_get_queue_system(const queue_config_type *queue_config) {
 
 int queue_config_get_max_submit(queue_config_type *queue_config) {
     return queue_config->max_submit;
-}
-
-const char *queue_config_get_job_script(const queue_config_type *queue_config) {
-    return queue_config->job_script;
-}
-
-bool queue_config_has_job_script(const queue_config_type *queue_config) {
-    if (queue_config->job_script)
-        return true;
-    else
-        return false;
-}
-
-bool queue_config_set_job_script(queue_config_type *queue_config,
-                                 const char *job_script) {
-    if (!util_is_executable(job_script))
-        return false;
-
-    char *job_script_full_path = util_alloc_realpath(job_script);
-    queue_config->job_script = util_realloc_string_copy(
-        queue_config->job_script, job_script_full_path);
-    free(job_script_full_path);
-    return true;
 }
 
 static void queue_config_set_queue_option(queue_config_type *queue_config,
@@ -295,12 +262,6 @@ static bool queue_config_init(queue_config_type *queue_config,
     if (config_content_has_item(config_content, NUM_CPU_KEY))
         queue_config->num_cpu =
             config_content_get_value_as_int(config_content, NUM_CPU_KEY);
-
-    if (config_content_has_item(config_content, JOB_SCRIPT_KEY)) {
-        queue_config_set_job_script(queue_config,
-                                    config_content_get_value_as_executable(
-                                        config_content, JOB_SCRIPT_KEY));
-    }
 
     if (config_content_has_item(config_content, MAX_SUBMIT_KEY))
         queue_config->max_submit =

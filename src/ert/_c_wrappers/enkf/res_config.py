@@ -16,7 +16,7 @@
 import os
 import warnings
 from os.path import isfile
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 from ecl.util.util import StringList
 
@@ -31,6 +31,7 @@ from ert._c_wrappers.enkf.model_config import ModelConfig
 from ert._c_wrappers.enkf.queue_config import QueueConfig
 from ert._c_wrappers.enkf.site_config import SiteConfig
 from ert._c_wrappers.enkf.subst_config import SubstConfig
+from ert._c_wrappers.job_queue import QueueDriverEnum
 from ert._clib.config_keywords import init_res_config_parser
 
 
@@ -119,7 +120,25 @@ class ResConfig:
             self.random_seed = None
         self.analysis_config = AnalysisConfig(config_content=config_content)
         self.ecl_config = EclConfig(config_content=config_content)
-        self.queue_config = QueueConfig(config_content=config_content)
+
+        queue_config_args = {}
+        if ConfigKeys.MAX_SUBMIT in config_content:
+            queue_config_args["max_submit"] = config_content[ConfigKeys.MAX_SUBMIT][-1][
+                0
+            ]
+        if ConfigKeys.NUM_CPU in config_content:
+            queue_config_args["num_cpu"] = config_content[ConfigKeys.NUM_CPU][-1][0]
+        if ConfigKeys.QUEUE_SYSTEM in config_content:
+            queue_config_args["queue_system"] = QueueDriverEnum.from_string(
+                config_content[ConfigKeys.QUEUE_SYSTEM][-1][0] + "_DRIVER"
+            )
+        if ConfigKeys.QUEUE_OPTION in config_content:
+            queue_config_args["queue_options"] = [
+                (node[0], node[1])
+                for node in iter(config_content[ConfigKeys.QUEUE_OPTION])
+            ]
+
+        self.queue_config = QueueConfig(**queue_config_args)
 
         self.ert_workflow_list = ErtWorkflowList(
             subst_list=self.subst_config.subst_list, config_content=config_content
@@ -182,7 +201,16 @@ class ResConfig:
         self.random_seed = config_dict.get(ConfigKeys.RANDOM_SEED, None)
         self.analysis_config = AnalysisConfig(config_dict=config_dict)
         self.ecl_config = EclConfig(config_dict=config_dict)
-        self.queue_config = QueueConfig(config_dict=config_dict)
+        self.queue_config = QueueConfig(
+            config_dict[ConfigKeys.JOB_SCRIPT],
+            config_dict[ConfigKeys.MAX_SUBMIT],
+            config_dict[ConfigKeys.NUM_CPU],
+            config_dict[ConfigKeys.QUEUE_SYSTEM],
+            [
+                (option[ConfigKeys.NAME], option[ConfigKeys.VALUE])
+                for option in config_dict.get(ConfigKeys.QUEUE_OPTION, [])
+            ],
+        )
 
         self.ert_workflow_list = ErtWorkflowList(
             subst_list=self.subst_config.subst_list, config_dict=config_dict

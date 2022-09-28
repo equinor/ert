@@ -113,6 +113,18 @@ class Driver(BaseCClass):
     def free(self):
         self._free()
 
+    @classmethod
+    def create_driver(cls, driver_type: QueueDriverEnum) -> "Driver":
+        if driver_type == LSF_DRIVER:
+            return cls._make_lsf_driver()
+        if driver_type == RSH_DRIVER:
+            return cls._make_rsh_driver()
+        if driver_type == LOCAL_DRIVER:
+            return cls._make_local_driver()
+        if driver_type == SLURM_DRIVER:
+            return cls._make_slurm_driver()
+        raise ValueError(f"Cannot create driver type {driver_type}")
+
 
 class LSFDriver(Driver):
     def __init__(

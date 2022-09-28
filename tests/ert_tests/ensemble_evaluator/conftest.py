@@ -8,7 +8,6 @@ from unittest.mock import Mock
 import pytest
 
 import ert.ensemble_evaluator
-from ert._c_wrappers.enkf import ConfigKeys
 from ert._c_wrappers.enkf.queue_config import QueueConfig
 from ert._c_wrappers.job_queue.driver import LOCAL_DRIVER
 from ert._c_wrappers.job_queue.ext_job import ExtJob
@@ -63,18 +62,13 @@ def snapshot():
 
 @pytest.fixture
 def queue_config():
-    return QueueConfig(
-        config_dict={
-            ConfigKeys.JOB_SCRIPT: "job_dispatch.py",
-            ConfigKeys.USER_MODE: True,
-            ConfigKeys.MAX_SUBMIT: 100,
-            ConfigKeys.NUM_CPU: 10,
-            ConfigKeys.QUEUE_SYSTEM: LOCAL_DRIVER,
-            ConfigKeys.QUEUE_OPTION: [
-                {ConfigKeys.NAME: "MAX_RUNNING", ConfigKeys.VALUE: "50"}
-            ],
-        }
+    to_return = QueueConfig(
+        max_submit=100,
+        num_cpu=10,
+        queue_system=LOCAL_DRIVER,
     )
+    to_return.driver.set_option("MAX_RUNNING", "50")
+    return to_return
 
 
 @pytest.fixture

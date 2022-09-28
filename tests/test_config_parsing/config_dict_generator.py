@@ -201,7 +201,6 @@ def config_dicts(draw):
                 ConfigKeys.DATA_KW_KEY: st.dictionaries(words, words),
                 ConfigKeys.DATA_FILE: file_names,
                 ConfigKeys.GRID: st.just(draw(words) + ".EGRID"),
-                ConfigKeys.JOB_SCRIPT: file_names,
                 ConfigKeys.USER_MODE: st.booleans(),
                 ConfigKeys.MAX_SUBMIT: positives,
                 ConfigKeys.NUM_CPU: positives,
@@ -249,7 +248,6 @@ def config_dicts(draw):
         job[ConfigKeys.PATH] for job in config_dict[ConfigKeys.INSTALL_JOB]
     ]
     should_exist_files.append(config_dict[ConfigKeys.DATA_FILE])
-    should_exist_files.append(config_dict[ConfigKeys.JOB_SCRIPT])
 
     for filename in should_exist_files:
         if not os.path.isfile(filename):

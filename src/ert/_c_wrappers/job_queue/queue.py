@@ -551,7 +551,7 @@ class JobQueue(BaseCClass):
     ) -> None:
         job_name = run_arg.job_name
         run_path = run_arg.runpath
-        job_script = res_config.queue_config.job_script
+        job_script = "job_dispatch.py"
         num_cpu = res_config.queue_config.num_cpu
         if num_cpu == 0:
             num_cpu = res_config.ecl_config.num_cpu

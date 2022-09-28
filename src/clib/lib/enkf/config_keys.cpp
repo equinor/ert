@@ -51,7 +51,6 @@ ERT_CLIB_SUBMODULE("config_keys", m) {
     cls.attr("ITER_COUNT") = ITER_COUNT_KEY;
     cls.attr("ITER_RETRY_COUNT") = ITER_RETRY_COUNT_KEY;
     cls.attr("JOBNAME") = JOBNAME_KEY;
-    cls.attr("JOB_SCRIPT") = JOB_SCRIPT_KEY;
     cls.attr("KEY_KEY") = KEY_KEY;
     cls.attr("LIB_NAME") = "LIB_NAME";
     cls.attr("LICENSE_PATH") = LICENSE_PATH_KEY;
