@@ -1,4 +1,5 @@
 from datetime import datetime
+from pathlib import Path
 from textwrap import dedent
 
 import pytest
@@ -53,10 +54,10 @@ def test_that_correct_key_observation_is_loaded(extra_config, expected):
         OBS_CONFIG observations_config
         """
     )
-    with open("observations_config", "w") as fout:
-        fout.write("HISTORY_OBSERVATION FOPR;")
-    with open("config.ert", "w") as fout:
-        fout.write(config_text + extra_config)
+    Path("observations_config").write_text(
+        "HISTORY_OBSERVATION FOPR;", encoding="utf-8"
+    )
+    Path("config.ert").write_text(config_text + extra_config, encoding="utf-8")
     run_simulator()
     res_config = ResConfig("config.ert")
     observations = EnkfObs(
@@ -71,3 +72,50 @@ def test_that_correct_key_observation_is_loaded(extra_config, expected):
         res_config.analysis_config.get_std_cutoff(),
     )
     assert [obs.getValue() for obs in observations["FOPR"]] == [expected]
+
+
+@pytest.mark.parametrize(
+    "datestring, deprecated",
+    [
+        pytest.param("20.01.2000", True, id="dd.mm.yyyy gives warning"),
+        pytest.param("20.1.2000", True, id="dd.m.yyyy gives warning"),
+        pytest.param("20-01-2000", True, id="dd-mm-yyyy gives warning"),
+        pytest.param("2000-01-20", False, id="YYYY-MM-DD does not give_warning"),
+    ],
+)
+@pytest.mark.usefixtures("use_tmpdir")
+def test_date_parsing_in_observations(datestring, deprecated, capfd):
+    config_text = dedent(
+        """
+        NUM_REALIZATIONS 1
+        JOBNAME my_case%d
+        REFCASE MY_REFCASE
+        OBS_CONFIG observations_config
+        """
+    )
+    Path("observations_config").write_text(
+        "SUMMARY_OBSERVATION FOPR_1 "
+        f"{{ KEY=FOPR; VALUE=1; ERROR=1; DATE={datestring}; }};",
+        encoding="utf-8",
+    )
+    Path("config.ert").write_text(config_text, encoding="utf-8")
+    run_simulator()
+    res_config = ResConfig("config.ert")
+    observations = EnkfObs(
+        res_config.model_config.get_history_source(),
+        res_config.model_config.get_time_map(),
+        res_config.ecl_config.grid,
+        res_config.ecl_config.refcase,
+        res_config.ensemble_config,
+    )
+    observations.load(
+        res_config.model_config.obs_config_file,
+        res_config.analysis_config.get_std_cutoff(),
+    )
+    captured = capfd.readouterr()
+    if deprecated:
+        assert "is deprecated" in captured.err
+        assert "Please use ISO date format" in captured.err
+    else:
+        assert "deprecat" not in captured.err.lower()
+        assert "deprecat" not in captured.out.lower()

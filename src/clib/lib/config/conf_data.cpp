@@ -12,7 +12,7 @@ namespace fs = std::filesystem;
 #define DT_INT_STRING "integer"
 #define DT_POSINT_STRING "positive integer"
 #define DT_FLOAT_STRING "floating point number"
-#define DT_POSFLOAT_STRING "positive floating foint number"
+#define DT_POSFLOAT_STRING "positive floating point number"
 #define DT_FILE_STRING "file"
 #define DT_DATE_STRING "date"
 
@@ -72,7 +72,15 @@ bool conf_data_validate_string_as_dt_value(dt_enum dt, const char *str) {
         time_t date;
         if (util_sscanf_isodate(str, &date))
             return true;
-        return util_sscanf_date_utc(str, &date);
+        if (util_sscanf_date_utc(str, &date)) {
+            fprintf(stderr,
+                    "** Deprecation warning: The date format as in \'%s\' is "
+                    "deprecated, and its support will be removed in a future "
+                    "release. Please use ISO date format YYYY-MM-DD.\n",
+                    str);
+            return true;
+        }
+        return false;
     }
     default:
         util_abort("%s: Error parsing \"%s\".\n", __func__, str);
