@@ -3,10 +3,11 @@
 import os
 import os.path
 
+from cwrap import open as copen
 from ecl import EclTypeEnum
 from ecl.eclfile import EclKW
 from ecl.grid import EclGrid
-from ecl.util import RandomNumberGenerator
+from ecl.util.util import RandomNumberGenerator
 
 # This little script is used as a one-shot operation to generate the
 # grid and the corresponding PERMX and PORO fields used for this test
@@ -28,19 +29,19 @@ def make_grid():
 
 
 def make_field(rng, grid, iens):
-    permx = EclKW.create("PERMX", grid.getGlobalSize(), EclTypeEnum.ECL_FLOAT_TYPE)
+    permx = EclKW("PERMX", grid.getGlobalSize(), EclTypeEnum.ECL_FLOAT_TYPE)
     permx.assign(rng.getDouble())
 
-    poro = EclKW.create("PORO", grid.getGlobalSize(), EclTypeEnum.ECL_FLOAT_TYPE)
+    poro = EclKW("PORO", grid.getGlobalSize(), EclTypeEnum.ECL_FLOAT_TYPE)
     poro.assign(rng.getDouble())
 
     if not os.path.isdir("fields"):
         os.makedirs("fields")
 
-    with open("fields/permx%d.grdecl" % iens, "w") as f:
+    with copen("fields/permx%d.grdecl" % iens, "w") as f:
         permx.write_grdecl(f)
 
-    with open("fields/poro%d.grdecl" % iens, "w") as f:
+    with copen("fields/poro%d.grdecl" % iens, "w") as f:
         poro.write_grdecl(f)
 
 
