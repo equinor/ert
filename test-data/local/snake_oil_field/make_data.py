@@ -3,10 +3,11 @@
 import os
 import os.path
 
-from ecl import EclTypeEnum
+from cwrap import open as copen
+from ecl import EclDataType
 from ecl.eclfile import EclKW
-from ecl.grid import EclGrid
-from ecl.util import RandomNumberGenerator
+from ecl.grid import EclGridGenerator
+from ecl.util.util import RandomNumberGenerator
 
 # This little script is used as a one-shot operation to generate the
 # grid and the corresponding PERMX and PORO fields used for this test
@@ -19,7 +20,7 @@ ens_size = 10
 
 
 def make_grid():
-    grid = EclGrid.createRectangular((nx, ny, nz), (1, 1, 1))
+    grid = EclGridGenerator.create_rectangular((nx, ny, nz), (1, 1, 1))
     if not os.path.isdir("grid"):
         os.makedirs("grid")
     grid.save_EGRID("grid/CASE.EGRID")
@@ -28,19 +29,19 @@ def make_grid():
 
 
 def make_field(rng, grid, iens):
-    permx = EclKW.create("PERMX", grid.getGlobalSize(), EclTypeEnum.ECL_FLOAT_TYPE)
+    permx = EclKW("PERMX", grid.getGlobalSize(), EclDataType.ECL_FLOAT)
     permx.assign(rng.getDouble())
 
-    poro = EclKW.create("PORO", grid.getGlobalSize(), EclTypeEnum.ECL_FLOAT_TYPE)
+    poro = EclKW("PORO", grid.getGlobalSize(), EclDataType.ECL_FLOAT)
     poro.assign(rng.getDouble())
 
     if not os.path.isdir("fields"):
         os.makedirs("fields")
 
-    with open("fields/permx%d.grdecl" % iens, "w") as f:
+    with copen("fields/permx%d.grdecl" % iens, "w") as f:
         permx.write_grdecl(f)
 
-    with open("fields/poro%d.grdecl" % iens, "w") as f:
+    with copen("fields/poro%d.grdecl" % iens, "w") as f:
         poro.write_grdecl(f)
 
 
