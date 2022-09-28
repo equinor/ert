@@ -4,9 +4,9 @@ import os
 import os.path
 
 from cwrap import open as copen
-from ecl import EclTypeEnum
+from ecl import EclDataType
 from ecl.eclfile import EclKW
-from ecl.grid import EclGrid
+from ecl.grid import EclGridGenerator
 from ecl.util.util import RandomNumberGenerator
 
 # This little script is used as a one-shot operation to generate the
@@ -20,7 +20,7 @@ ens_size = 10
 
 
 def make_grid():
-    grid = EclGrid.createRectangular((nx, ny, nz), (1, 1, 1))
+    grid = EclGridGenerator.create_rectangular((nx, ny, nz), (1, 1, 1))
     if not os.path.isdir("grid"):
         os.makedirs("grid")
     grid.save_EGRID("grid/CASE.EGRID")
@@ -29,10 +29,10 @@ def make_grid():
 
 
 def make_field(rng, grid, iens):
-    permx = EclKW("PERMX", grid.getGlobalSize(), EclTypeEnum.ECL_FLOAT_TYPE)
+    permx = EclKW("PERMX", grid.getGlobalSize(), EclDataType.ECL_FLOAT)
     permx.assign(rng.getDouble())
 
-    poro = EclKW("PORO", grid.getGlobalSize(), EclTypeEnum.ECL_FLOAT_TYPE)
+    poro = EclKW("PORO", grid.getGlobalSize(), EclDataType.ECL_FLOAT)
     poro.assign(rng.getDouble())
 
     if not os.path.isdir("fields"):
