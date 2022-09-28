@@ -57,7 +57,6 @@ queue_systems = st.sampled_from(
     [
         QueueDriverEnum.LSF_DRIVER,
         QueueDriverEnum.LOCAL_DRIVER,
-        QueueDriverEnum.RSH_DRIVER,
         QueueDriverEnum.TORQUE_DRIVER,
         QueueDriverEnum.SLURM_DRIVER,
     ]
@@ -82,12 +81,6 @@ def valid_queue_options(queue_system):
             "EXCLUDE_HOST",
             "PROJECT_CODE",
             "SUBMIT_SLEEP",
-        ]
-    elif queue_system == QueueDriverEnum.RSH_DRIVER:
-        valids += [
-            "RSH_HOSTLIST",
-            "RSH_CLEAR_HOSTLIST",
-            "RSH_CMD",
         ]
     elif queue_system == QueueDriverEnum.SLURM_DRIVER:
         valids += [
