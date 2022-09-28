@@ -243,7 +243,7 @@ class PrefectEnsemble(_Ensemble):  # pylint: disable=too-many-instance-attribute
 
         # everything in self will be pickled since we bind a member function in target
         ctx = self._get_multiprocessing_context()
-        eval_proc = ctx.Process(target=self._evaluate)
+        eval_proc = ctx.Process(target=self._evaluate)  # type: ignore
         eval_proc.daemon = True
         eval_proc.start()
         self._eval_proc = eval_proc
