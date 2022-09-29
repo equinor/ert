@@ -31,7 +31,7 @@ class RowScalingJob1(ErtScript):
         field_config = poro_config.getFieldModelConfig()
 
         # -------------------------------------------------------------------------------------
-        grid = main.eclConfig().getGrid()
+        grid = main.eclConfig().grid
         obs_pos = grid.get_xyz(ijk=(5, 5, 1))
         length_scale = (2, 1, 0.50)
         gaussian = partial(gaussian_decay, obs_pos, length_scale, grid)

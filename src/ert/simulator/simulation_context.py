@@ -18,7 +18,7 @@ def done_callback(
     args: Tuple["RunArg", "ResConfig"]
 ) -> Tuple[model_callbacks.LoadStatus, str]:
     return model_callbacks.forward_model_ok(  # type: ignore
-        args[0], args[1].ensemble_config, args[1].model_config, args[1].ecl_config
+        args[0], args[1].ensemble_config, args[1].model_config
     )
 
 

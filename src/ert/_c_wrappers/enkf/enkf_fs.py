@@ -127,7 +127,6 @@ class EnkfFs(BaseCClass):
         ensemble_size,
         ensemble_config,
         model_config,
-        ecl_config,
         run_args,
         active_realizations,
     ) -> int:
@@ -137,7 +136,6 @@ class EnkfFs(BaseCClass):
             ensemble_size,
             ensemble_config,
             model_config,
-            ecl_config,
             run_args,
             active_realizations,
         )

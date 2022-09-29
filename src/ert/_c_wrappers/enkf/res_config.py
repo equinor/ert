@@ -108,7 +108,13 @@ class ResConfig:
         else:
             self.random_seed = None
         self.analysis_config = AnalysisConfig(config_content=user_config_content)
-        self.ecl_config = EclConfig(config_content=user_config_content)
+
+        user_config_content_as_dict = user_config_content.as_dict()
+        user_config_content_as_dict_simplified = {
+            key: value[0][0] if len(value[0]) == 1 else value[0]
+            for key, value in user_config_content_as_dict.items()
+        }
+        self.ecl_config = EclConfig.from_dict(user_config_content_as_dict_simplified)
 
         queue_config_args = {}
 
@@ -186,8 +192,8 @@ class ResConfig:
 
         self.ensemble_config = EnsembleConfig(
             config_content=user_config_content,
-            grid=self.ecl_config.getGrid(),
-            refcase=self.ecl_config.getRefcase(),
+            grid=self.ecl_config.grid,
+            refcase=self.ecl_config.refcase,
         )
 
         for key in self.ensemble_config.getKeylistFromImplType(ErtImplType.GEN_KW):
@@ -200,7 +206,7 @@ class ResConfig:
         self.model_config = ModelConfig(
             data_root=self.config_path,
             joblist=self.site_config.get_installed_jobs(),
-            refcase=self.ecl_config.getRefcase(),
+            refcase=self.ecl_config.refcase,
             config_content=user_config_content,
         )
 
@@ -216,7 +222,7 @@ class ResConfig:
         self.site_config = SiteConfig.from_config_dict(config_dict=config_dict)
         self.random_seed = config_dict.get(ConfigKeys.RANDOM_SEED, None)
         self.analysis_config = AnalysisConfig(config_dict=config_dict)
-        self.ecl_config = EclConfig(config_dict=config_dict)
+        self.ecl_config = EclConfig.from_dict(config_dict=config_dict)
         queue_config_args = {}
         if ConfigKeys.JOB_SCRIPT in config_dict:
             queue_config_args["job_script"] = config_dict[ConfigKeys.JOB_SCRIPT]
@@ -263,8 +269,8 @@ class ResConfig:
             self._templates.append([os.path.abspath(source_file), target_file])
 
         self.ensemble_config = EnsembleConfig(
-            grid=self.ecl_config.getGrid(),
-            refcase=self.ecl_config.getRefcase(),
+            grid=self.ecl_config.grid,
+            refcase=self.ecl_config.refcase,
             config_dict=config_dict,
         )
 
@@ -278,7 +284,7 @@ class ResConfig:
         self.model_config = ModelConfig(
             data_root=self.config_path,
             joblist=self.site_config.get_installed_jobs(),
-            refcase=self.ecl_config.getRefcase(),
+            refcase=self.ecl_config.refcase,
             config_dict=config_dict,
         )
 

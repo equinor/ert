@@ -24,7 +24,6 @@ def test_eclbase_and_jobname():
         }
     )
     assert res_config.model_config.getJobnameFormat() == "JOBNAME%d"
-    assert res_config.ecl_config.active()
 
 
 @pytest.mark.usefixtures("copy_minimum_case")
@@ -44,7 +43,6 @@ def test_eclbase():
         }
     )
 
-    assert res_config.ecl_config.active()
     assert res_config.model_config.getJobnameFormat() == "ECLBASE%d"
 
 
@@ -66,7 +64,6 @@ def test_jobname():
             },
         }
     )
-    assert not res_config.ecl_config.active()
     assert res_config.model_config.getJobnameFormat() == "JOBNAME%d"
 
 
@@ -75,7 +72,7 @@ def test_model_config_dict_constructor(setup_case):
     assert res_config.model_config == ModelConfig(
         data_root="",
         joblist=res_config.site_config.get_installed_jobs(),
-        refcase=res_config.ecl_config.getRefcase(),
+        refcase=res_config.ecl_config.refcase,
         config_dict={
             ConfigKeys.MAX_RESAMPLE: 1,
             ConfigKeys.JOBNAME: "model_config_test",

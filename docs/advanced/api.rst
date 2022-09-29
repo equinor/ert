@@ -42,7 +42,7 @@ config commands by writing a Python script, and invoking it from a workflow.
 ERT script function                                                        Purpose
 =========================================================================  ===================================================================================
 :ref:`getObservations                  <all_obs>`                          Get the observations currently imported, use to filter the observations to localize
-:ref:`getGrid                          <ert_grid>`                         Get the underlying grid use to define active cells in a field
+:ref:`grid                             <ert_grid>`                         Get the underlying grid use to define active cells in a field
 :ref:`EclGrid, EclInitFile             <load_file>`                        Loads eclipse file in restart format
 :ref:`EclRegion                        <create_eclregion>`                 Creates a new region for use when defining active regions for fields
 :ref:`select_active                    <eclregion_select_all>`             Selects or deselects cells in a region
@@ -76,7 +76,7 @@ ERT script function                                                        Purpo
 
 .. #####################################################################
 .. _ert_grid:
-.. topic:: getGrid
+.. topic:: grid
 
    This function will retrieve ERT's grid
 
@@ -84,7 +84,7 @@ ERT script function                                                        Purpo
 
    ::
 
-      grid = ert.eclConfig.getGrid()
+      grid = ert.eclConfig.grid
 
 .. #####################################################################
 .. _load_file:

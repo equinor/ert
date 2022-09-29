@@ -1,4 +1,3 @@
-#include <ert/enkf/ecl_config.hpp>
 #include <ert/enkf/ensemble_config.hpp>
 #include <ert/enkf/model_config.hpp>
 #include <ert/enkf/run_arg.hpp>
@@ -18,10 +17,9 @@ ERT_CLIB_SUBMODULE("model_callbacks", m) {
 
     m.def("forward_model_ok", [](Cwrap<run_arg_type> run_arg,
                                  Cwrap<ensemble_config_type> ens_conf,
-                                 Cwrap<model_config_type> model_conf,
-                                 Cwrap<ecl_config_type> ecl_conf) {
-        auto result = enkf_state_load_from_forward_model(ens_conf, model_conf,
-                                                         ecl_conf, run_arg);
+                                 Cwrap<model_config_type> model_conf) {
+        auto result =
+            enkf_state_load_from_forward_model(ens_conf, model_conf, run_arg);
 
         if (result.first == LOAD_SUCCESSFUL) {
             result.second = "Results loaded successfully.";

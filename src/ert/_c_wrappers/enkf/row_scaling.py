@@ -25,7 +25,7 @@ def assign(self, target_size, func):
         >>> ens_config = ert.ensembleConfig()
         >>> config_node = ens_config["PORO"]
         >>> field_config = config.node.getFieldModelConfig()
-        >>> grid = ert.eclConfig().getGrid()
+        >>> grid = ert.eclConfig().grid
         >>> pos = grid.get_xyz(ijk=(10,10,1))
         >>> r0 = 10
 
