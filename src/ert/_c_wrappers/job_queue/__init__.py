@@ -74,7 +74,7 @@ if LSF_HOME:
     setenv("LSF_SERVERDIR", f"{LSF_HOME}/etc")
     setenv("LSF_ENVDIR", f"{LSF_HOME}/conf")  # This is wrong: Equinor: /prog/LSF/conf
 
-from .driver import Driver, LocalDriver, LSFDriver, QueueDriverEnum, RSHDriver  # noqa
+from .driver import Driver, LocalDriver, LSFDriver, QueueDriverEnum  # noqa
 from .environment_varlist import EnvironmentVarlist  # noqa
 from .ert_plugin import CancelPluginException, ErtPlugin  # noqa
 from .ert_script import ErtScript  # noqa
@@ -110,7 +110,6 @@ __all__ = [
     "QueueDriverEnum",
     "Driver",
     "LSFDriver",
-    "RSHDriver",
     "LocalDriver",
     "ExtJob",
     "ExtJoblist",

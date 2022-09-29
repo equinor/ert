@@ -23,7 +23,6 @@
 #include <ert/job_queue/job_queue.hpp>
 #include <ert/job_queue/lsf_driver.hpp>
 
-#include <ert/job_queue/rsh_driver.hpp>
 #include <ert/job_queue/slurm_driver.hpp>
 #include <ert/job_queue/torque_driver.hpp>
 
@@ -139,22 +138,6 @@ void get_driver_option_lists() {
         queue_driver_free(driver_lsf);
     }
 
-    //Rsh driver option list
-    {
-        queue_driver_type *driver_rsh = queue_driver_alloc(RSH_DRIVER);
-        stringlist_type *option_list = stringlist_alloc_new();
-        queue_driver_init_option_list(driver_rsh, option_list);
-
-        test_assert_true(stringlist_contains(option_list, MAX_RUNNING));
-        test_assert_true(stringlist_contains(option_list, RSH_HOST));
-        test_assert_true(stringlist_contains(option_list, RSH_HOSTLIST));
-        test_assert_true(stringlist_contains(option_list, RSH_CMD));
-        test_assert_true(stringlist_contains(option_list, RSH_CLEAR_HOSTLIST));
-
-        stringlist_free(option_list);
-        queue_driver_free(driver_rsh);
-    }
-
     //SLurm driver option list
     {
         queue_driver_type *driver_slurm = queue_driver_alloc(SLURM_DRIVER);
@@ -187,7 +170,6 @@ void get_driver_option_lists() {
 int main(int argc, char **argv) {
     job_queue_set_driver_(LSF_DRIVER);
     job_queue_set_driver_(LOCAL_DRIVER);
-    job_queue_set_driver_(RSH_DRIVER);
     job_queue_set_driver_(TORQUE_DRIVER);
     job_queue_set_driver_(SLURM_DRIVER);
 

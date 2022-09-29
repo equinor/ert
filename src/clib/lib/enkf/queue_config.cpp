@@ -159,8 +159,6 @@ queue_config_get_queue_system(const queue_config_type *queue_config) {
     switch (queue_config->driver_type) {
     case LSF_DRIVER:
         return LSF_DRIVER_NAME;
-    case RSH_DRIVER:
-        return RSH_DRIVER_NAME;
     case LOCAL_DRIVER:
         return LOCAL_DRIVER_NAME;
     case TORQUE_DRIVER:
@@ -252,8 +250,6 @@ void queue_config_create_queue_drivers(queue_config_type *queue_config) {
                                   queue_driver_alloc_LSF(NULL, NULL, NULL));
     queue_config_add_queue_driver(queue_config, TORQUE_DRIVER_NAME,
                                   queue_driver_alloc_TORQUE());
-    queue_config_add_queue_driver(queue_config, RSH_DRIVER_NAME,
-                                  queue_driver_alloc_RSH(NULL, NULL));
     queue_config_add_queue_driver(queue_config, LOCAL_DRIVER_NAME,
                                   queue_driver_alloc_local());
     queue_config_add_queue_driver(queue_config, SLURM_DRIVER_NAME,
@@ -277,9 +273,7 @@ static bool queue_config_init(queue_config_type *queue_config,
 
         if (strcmp(queue_system, LSF_DRIVER_NAME) == 0) {
             queue_config->driver_type = LSF_DRIVER;
-        } else if (strcmp(queue_system, RSH_DRIVER_NAME) == 0)
-            queue_config->driver_type = RSH_DRIVER;
-        else if (strcmp(queue_system, LOCAL_DRIVER_NAME) == 0)
+        } else if (strcmp(queue_system, LOCAL_DRIVER_NAME) == 0)
             queue_config->driver_type = LOCAL_DRIVER;
         else if (strcmp(queue_system, TORQUE_DRIVER_NAME) == 0)
             queue_config->driver_type = TORQUE_DRIVER;
