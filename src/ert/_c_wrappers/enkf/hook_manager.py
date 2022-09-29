@@ -75,6 +75,8 @@ class HookManager(BaseCClass):
         return self._size()
 
     def __repr__(self):
+        if not self._address():
+            return "<HookManager()>"
         return f'HookManager({", ".join([str(x) for x in self])})'
 
     def __getitem__(self, index) -> HookWorkflow:

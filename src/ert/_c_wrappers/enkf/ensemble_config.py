@@ -206,6 +206,8 @@ class EnsembleConfig(BaseCClass):
         return self._size()
 
     def __repr__(self):
+        if not self._address():
+            return "<EnsembleConfig()>"
         return (
             "EnsembleConfig(config_dict={"
             + f"{ConfigKeys.GEN_KW}: ["

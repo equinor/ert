@@ -250,6 +250,8 @@ class AnalysisConfig(BaseCClass):
         return not self == other
 
     def __repr__(self):
+        if not self._address():
+            return "<AnalysisConfig()>"
         return (
             "AnalysisConfig(config_dict={"
             f"'UPDATE_LOG_PATH': {realpath(self.get_log_path())}, "
