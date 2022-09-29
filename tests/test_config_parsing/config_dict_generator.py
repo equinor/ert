@@ -1,5 +1,6 @@
 import os
 import os.path
+import stat
 
 import hypothesis.strategies as st
 from hypothesis import assume
@@ -247,6 +248,9 @@ def config_dicts(draw):
     should_exist_files.append(config_dict[ConfigKeys.DATA_FILE])
     should_exist_files.append(config_dict[ConfigKeys.JOB_SCRIPT])
 
+    should_be_executable_files = []
+    should_be_executable_files.append(config_dict[ConfigKeys.JOB_SCRIPT])
+
     for filename in should_exist_files:
         if not os.path.isfile(filename):
             print(f"touch {filename}")
@@ -257,6 +261,10 @@ def config_dicts(draw):
         if not os.path.isdir(dirname):
             print(f"mkdir {dirname}")
             os.mkdir(dirname)
+
+    for filename in should_be_executable_files:
+        current_mode = os.stat(filename).st_mode
+        os.chmod(filename, current_mode | stat.S_IEXEC)
 
     draw(egrids).to_file(config_dict[ConfigKeys.GRID])
 
