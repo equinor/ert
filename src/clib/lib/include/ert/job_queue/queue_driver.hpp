@@ -27,7 +27,6 @@ typedef enum {
     NULL_DRIVER = 0,
     LSF_DRIVER = 1,
     LOCAL_DRIVER = 2,
-    RSH_DRIVER = 3,
     TORQUE_DRIVER = 4,
     SLURM_DRIVER = 5
 } job_driver_type;
@@ -51,8 +50,6 @@ typedef bool(set_option_ftype)(void *, const char *, const void *);
 typedef const void *(get_option_ftype)(const void *, const char *);
 typedef void(init_option_list_ftype)(stringlist_type *);
 
-queue_driver_type *queue_driver_alloc_RSH(const char *rsh_cmd,
-                                          const hash_type *rsh_hostlist);
 queue_driver_type *queue_driver_alloc_LSF(const char *queue_name,
                                           const char *resource_request,
                                           const char *remote_lsf_server);

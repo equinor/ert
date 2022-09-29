@@ -20,7 +20,6 @@ add_executable(
   res_util/test_string.cpp
   res_util/test_metric.cpp
   job_queue/test_lsf_driver.cpp
-  job_queue/test_rsh_driver.cpp
   job_queue/test_ext_job_executable.cpp)
 
 target_link_libraries(ert_test_suite ert Catch2::Catch2WithMain fmt::fmt)

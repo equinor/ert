@@ -1587,7 +1587,7 @@ Keywords related to running the forward model
 .. topic:: QUEUE_SYSTEM
 
         The keyword QUEUE_SYSTEM can be used to control where the simulation jobs are
-        executed. It can take the values LSF, TORQUE, SLURM, RSH (*deprecated*) and LOCAL.
+        executed. It can take the values LSF, TORQUE, SLURM and LOCAL.
 
         ::
 
@@ -1931,60 +1931,6 @@ bjobs.
         ::
 
                 QUEUE_OPTION TORQUE DEBUG_OUTPUT torque_log.txt
-
-.. _configuring_the_rsh_queue:
-
-Configuring the RSH queue (deprecated)
---------------------------------------
-
-.. _rsh_host:
-.. topic:: RSH_HOST
-
-        You can run the forward model on workstations using remote-shell
-        commands. To use the RSH queue system you must first set a list of computers
-        which ERT can use for running jobs:
-
-        ::
-
-                QUEUE_OPTION RSH RSH_HOST   computer1:2  computer2:2   large_computer:8
-
-        Here you tell ERT that you can run on three different computers: computer1,
-        computer2 and large_computer. The two first computers can accept two jobs,
-        and the last can take eight jobs. Observe the following when using RSH:
-
-        You must have passwordless login to the computers listed in RSH_HOST otherwise
-        it will fail hard. ERT does not consider total load on the various computers;
-        if have said it can take two jobs, it will get two jobs, irrespective of the
-        existing load.
-
-.. _rsh_command:
-.. topic:: RSH_COMMAND
-
-        This is the name of the executable used to invoke remote shell operations.
-        Will typically be either rsh or ssh. The command given to RSH_COMMAND must
-        either be in PATH or an absolute path.
-
-        ::
-
-                QUEUE_OPTION RSH RSH_COMMAND /usr/bin/ssh
-
-
-.. _max_running_rsh:
-.. topic:: MAX_RUNNING
-
-        The queue option keyword MAX_RUNNING controls the maximum number of simultaneous
-        jobs running when (in this case) using the RSH option in QUEUE_SYSTEM. If MAX_RUNNING
-        exceeds the total capacity defined in RSH_HOST, it will automatically be truncated to
-        that capacity.
-
-        *Example:*
-
-        ::
-
-                QUEUE_SYSTEM RSH
-                -- No more than 10 simultaneous jobs
-                -- running via RSH.
-                QUEUE_OPTION RSH MAX_RUNNING 10
 
 
 .. _configuring_the_slurm_queue:

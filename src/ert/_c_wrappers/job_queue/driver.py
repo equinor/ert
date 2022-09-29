@@ -27,7 +27,6 @@ class QueueDriverEnum(BaseCEnum):
     NULL_DRIVER = None
     LSF_DRIVER = None
     LOCAL_DRIVER = None
-    RSH_DRIVER = None
     TORQUE_DRIVER = None
     SLURM_DRIVER = None
 
@@ -35,13 +34,11 @@ class QueueDriverEnum(BaseCEnum):
 QueueDriverEnum.addEnum("NULL_DRIVER", 0)
 QueueDriverEnum.addEnum("LSF_DRIVER", 1)
 QueueDriverEnum.addEnum("LOCAL_DRIVER", 2)
-QueueDriverEnum.addEnum("RSH_DRIVER", 3)
 QueueDriverEnum.addEnum("TORQUE_DRIVER", 4)
 QueueDriverEnum.addEnum("SLURM_DRIVER", 5)
 
 
 LSF_DRIVER = QueueDriverEnum.LSF_DRIVER
-RSH_DRIVER = QueueDriverEnum.RSH_DRIVER
 LOCAL_DRIVER = QueueDriverEnum.LOCAL_DRIVER
 SLURM_DRIVER = QueueDriverEnum.SLURM_DRIVER
 
@@ -133,18 +130,3 @@ class LSFDriver(Driver):
 class LocalDriver(Driver):
     def __init__(self, max_running):
         Driver.__init__(self, QueueDriverEnum.LOCAL_DRIVER, max_running, options=[])
-
-
-class RSHDriver(Driver):
-    # Changing shell to bash can come in conflict with running ssh
-    # commands.
-
-    def __init__(self, max_running, rsh_host_list, rsh_cmd="/usr/bin/ssh"):
-        """
-        @rsh_host_list should be a list of tuples like: (hostname, max_running)
-        """
-
-        options = [("RSH_CMD", rsh_cmd)]
-        for (host, host_max) in rsh_host_list:
-            options.append(("RSH_HOST", f"{host}:{host_max:d}"))
-        Driver.__init__(self, QueueDriverEnum.RSH_DRIVER, max_running, options=options)

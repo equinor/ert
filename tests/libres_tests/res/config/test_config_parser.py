@@ -72,7 +72,7 @@ def test_item_types(tmp_path):
 @pytest.mark.usefixtures("use_tmpdir")
 def test_parse():
     config_file = """
-RSH_HOST some-hostname:2 other-hostname:2
+TEST_HOST some-hostname:2 other-hostname:2
 FIELD    PRESSURE      DYNAMIC
 FIELD    SWAT          DYNAMIC   MIN:0   MAX:1
 FIELD    SGAS          DYNAMIC   MIN:0   MAX:1
@@ -82,14 +82,14 @@ FIELD    RV            DYNAMIC   MIN:0.0034"""
         fout.write(config_file)
     conf = ConfigParser()
     conf.add("FIELD", False)
-    schema_item = conf.add("RSH_HOST", False)
+    schema_item = conf.add("TEST_HOST", False)
     assert isinstance(schema_item, SchemaItem)
     content = conf.parse(
         "simple_config", unrecognized=UnrecognizedEnum.CONFIG_UNRECOGNIZED_IGNORE
     )
     assert content.isValid()
 
-    content_item = content["RSH_HOST"]
+    content_item = content["TEST_HOST"]
     assert isinstance(content_item, ContentItem)
     assert len(content_item) == 1
     # pylint: disable=pointless-statement

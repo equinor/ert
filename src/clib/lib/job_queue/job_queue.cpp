@@ -211,7 +211,7 @@ struct job_queue_struct {
     /** The queue will look for this file to verify that the job is running or
      * has run.  If not, ok_file is ignored. */
     char *status_file;
-    /** A pointer to a driver instance (LSF|LOCAL|RSH) which actually 'does it'. */
+    /** A pointer to a driver instance (LSF|LOCAL) which actually 'does it'. */
     queue_driver_type *driver;
 
     /** True if the queue has been reset and is ready for use, false if the

@@ -24,7 +24,6 @@
 #include <ert/job_queue/local_driver.hpp>
 #include <ert/job_queue/lsf_driver.hpp>
 #include <ert/job_queue/queue_driver.hpp>
-#include <ert/job_queue/rsh_driver.hpp>
 #include <ert/job_queue/slurm_driver.hpp>
 #include <ert/job_queue/torque_driver.hpp>
 
@@ -252,18 +251,6 @@ static UTIL_SAFE_CAST_FUNCTION(queue_driver, QUEUE_DRIVER_ID)
         driver->init_options = local_driver_init_option_list;
         driver->data = local_driver_alloc();
         break;
-    case RSH_DRIVER:
-        driver->submit = rsh_driver_submit_job;
-        driver->get_status = rsh_driver_get_job_status;
-        driver->kill_job = rsh_driver_kill_job;
-        driver->free_job = rsh_driver_free_job;
-        driver->free_driver = rsh_driver_free__;
-        driver->set_option = rsh_driver_set_option;
-        driver->get_option = rsh_driver_get_option;
-        driver->name = util_alloc_string_copy("RSH");
-        driver->init_options = rsh_driver_init_option_list;
-        driver->data = rsh_driver_alloc();
-        break;
     case TORQUE_DRIVER:
         driver->submit = torque_driver_submit_job;
         driver->get_status = torque_driver_get_job_status;
@@ -340,16 +327,6 @@ queue_driver_type *queue_driver_alloc_LSF(const char *queue_name,
 
 queue_driver_type *queue_driver_alloc_TORQUE() {
     queue_driver_type *driver = queue_driver_alloc(TORQUE_DRIVER);
-    return driver;
-}
-
-queue_driver_type *queue_driver_alloc_RSH(const char *rsh_cmd,
-                                          const hash_type *rsh_hostlist) {
-    queue_driver_type *driver = queue_driver_alloc(RSH_DRIVER);
-
-    queue_driver_set_option(driver, RSH_HOSTLIST, rsh_hostlist);
-    queue_driver_set_option(driver, RSH_CMD, rsh_cmd);
-
     return driver;
 }
 

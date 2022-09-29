@@ -42,7 +42,6 @@ void test_options(void) {
     test_option(driver, LSF_BSUB_CMD, "Xbsub");
     test_option(driver, LSF_BJOBS_CMD, "Xbsub");
     test_option(driver, LSF_BKILL_CMD, "Xbsub");
-    test_option(driver, LSF_RSH_CMD, "RSH");
     test_option(driver, LSF_LOGIN_SHELL, "shell");
     test_option(driver, LSF_BSUB_CMD, "bsub");
     test_option(driver, LSF_PROJECT_CODE, "my-ppu");

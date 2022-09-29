@@ -13,7 +13,6 @@ A number of queue systems are pre-installed with ERT.
 - ``LSF``
 - ``TORQUE``
 - ``SLURM``
-- ``RSH`` — `deprecated`
 
 The ``LOCAL`` queue system will, unsurprisingly, run all computations locally,
 whereas the remaining systems requires access to some external resource. Let's
