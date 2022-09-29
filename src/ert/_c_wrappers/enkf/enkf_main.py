@@ -88,7 +88,7 @@ def format_seed(random_seed: str):
 
 class EnKFMain:
     def __init__(self, config: "ResConfig", read_only: bool = False):
-        self.config_file = config
+        self.res_config = config
         self.update_snapshots = {}
         self._update_configuration = None
         if config is None:
@@ -108,7 +108,7 @@ class EnKFMain:
                 config.model_config.obs_config_file,
                 config.analysis_config.getStdCutoff(),
             )
-        self._ensemble_size = self.config_file.model_config.num_realizations
+        self._ensemble_size = self.res_config.model_config.num_realizations
         self.__key_manager = KeyManager(self)
         self._substituter = Substituter(
             {key: value for (key, value, _) in self.getDataKW()}
@@ -203,9 +203,9 @@ class EnKFMain:
     def storage(self, file_system):
         self.addDataKW("<ERT-CASE>", file_system.getCaseName())
         self.addDataKW("<ERTCASE>", file_system.getCaseName())
-        if self.config_file.ecl_config.getRefcase():
+        if self.res_config.ecl_config.getRefcase():
             time_map = file_system.getTimeMap()
-            time_map.attach_refcase(self.config_file.ecl_config.getRefcase())
+            time_map.attach_refcase(self.res_config.ecl_config.getRefcase())
         case_name = file_system.getCaseName()
         full_name = os.path.join(self.getMountPoint(), case_name)
         if full_name not in self._fs_rotator:
@@ -316,7 +316,7 @@ class EnKFMain:
         return self.resConfig().queue_config
 
     def __repr__(self):
-        return f"EnKFMain(size: {self.getEnsembleSize()}, config: {self.config_file})"
+        return f"EnKFMain(size: {self.getEnsembleSize()}, config: {self.res_config})"
 
     def getEnsembleSize(self) -> int:
         return self._ensemble_size
@@ -328,19 +328,19 @@ class EnKFMain:
         return self.resConfig().analysis_config
 
     def getModelConfig(self) -> ModelConfig:
-        return self.config_file.model_config
+        return self.res_config.model_config
 
     def siteConfig(self) -> SiteConfig:
-        return self.config_file.site_config
+        return self.res_config.site_config
 
     def resConfig(self) -> "ResConfig":
-        return self.config_file
+        return self.res_config
 
     def eclConfig(self) -> EclConfig:
-        return self.config_file.ecl_config
+        return self.res_config.ecl_config
 
     def getDataKW(self) -> SubstitutionList:
-        return self.config_file.subst_config.subst_list
+        return self.res_config.subst_config.subst_list
 
     def addDataKW(self, key: str, value: str) -> None:
         # Substitution should be the responsibility of
@@ -513,7 +513,7 @@ class EnKFMain:
                     exist_ok=True,
                 )
 
-                for source_file, target_file in self.config_file.ert_templates:
+                for source_file, target_file in self.res_config.ert_templates:
                     target_file = self.substituter.substitute(
                         target_file, run_arg.iens, run_context.iteration
                     )
