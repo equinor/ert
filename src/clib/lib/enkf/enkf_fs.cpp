@@ -606,7 +606,6 @@ namespace {
 int load_from_run_path(const int ens_size,
                        ensemble_config_type *ensemble_config,
                        model_config_type *model_config,
-                       ecl_config_type *ecl_config,
                        std::vector<bool> active_mask, enkf_fs_type *sim_fs,
                        std::vector<run_arg_type *> run_args) {
     // Loading state from a fwd-model is mainly io-bound so we can
@@ -646,8 +645,7 @@ int load_from_run_path(const int ens_size,
                         state_map.update_matching(realisation, STATE_UNDEFINED,
                                                   STATE_INITIALIZED);
                         auto status = enkf_state_load_from_forward_model(
-                            ensemble_config, model_config, ecl_config,
-                            run_args[iens]);
+                            ensemble_config, model_config, run_args[iens]);
                         state_map.set(realisation,
                                       status.first == LOAD_SUCCESSFUL
                                           ? STATE_HAS_DATA
@@ -725,19 +723,18 @@ ERT_CLIB_SUBMODULE("enkf_fs", m) {
         py::arg("self"), py::arg("ensemble_config"), py::arg("parameter_names"),
         py::arg("ensemble_size"));
 
-    m.def("load_from_run_path", [](Cwrap<enkf_fs_type> enkf_fs, int ens_size,
-                                   Cwrap<ensemble_config_type> ensemble_config,
-                                   Cwrap<model_config_type> model_config,
-                                   Cwrap<ecl_config_type> ecl_config,
-                                   py::sequence run_args_,
-                                   std::vector<bool> active_mask) {
-        std::vector<run_arg_type *> run_args;
-        for (auto run_arg : run_args_) {
-            run_args.push_back(ert::from_cwrap<run_arg_type>(run_arg));
-        }
-        return load_from_run_path(ens_size, ensemble_config, model_config,
-                                  ecl_config, active_mask, enkf_fs, run_args);
-    });
+    m.def("load_from_run_path",
+          [](Cwrap<enkf_fs_type> enkf_fs, int ens_size,
+             Cwrap<ensemble_config_type> ensemble_config,
+             Cwrap<model_config_type> model_config, py::sequence run_args_,
+             std::vector<bool> active_mask) {
+              std::vector<run_arg_type *> run_args;
+              for (auto run_arg : run_args_) {
+                  run_args.push_back(ert::from_cwrap<run_arg_type>(run_arg));
+              }
+              return load_from_run_path(ens_size, ensemble_config, model_config,
+                                        active_mask, enkf_fs, run_args);
+          });
 
     m.def("write_parameter", bind_write_parameter);
 }

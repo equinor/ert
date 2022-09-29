@@ -32,8 +32,7 @@ void enkf_state_initialize(rng_type *rng, enkf_fs_type *fs,
         enkf_node_store(param_node, fs, node_id);
 }
 
-ecl_sum_type *load_ecl_sum(const ecl_config_type *ecl_config,
-                           const char *run_path, const char *eclbase) {
+ecl_sum_type *load_ecl_sum(const char *run_path, const char *eclbase) {
     ecl_sum_type *summary = NULL;
 
     char *header_file = ecl_util_alloc_exfilename(
@@ -264,9 +263,10 @@ static fw_load_status enkf_state_internalize_GEN_DATA(
    Will mainly be called at the end of the forward model, but can also
    be called manually from external scope.
 */
-static std::pair<fw_load_status, std::string> enkf_state_internalize_results(
-    ensemble_config_type *ens_config, model_config_type *model_config,
-    const ecl_config_type *ecl_config, const run_arg_type *run_arg) {
+static std::pair<fw_load_status, std::string>
+enkf_state_internalize_results(ensemble_config_type *ens_config,
+                               model_config_type *model_config,
+                               const run_arg_type *run_arg) {
     const summary_key_matcher_type *matcher =
         ensemble_config_get_summary_key_matcher(ens_config);
 
@@ -277,9 +277,8 @@ static std::pair<fw_load_status, std::string> enkf_state_internalize_results(
         // in these results are inferred from the loading of summary results,
         // hence we must load the summary results first.
         try {
-            auto summary =
-                load_ecl_sum(ecl_config, run_arg_get_runpath(run_arg),
-                             run_arg_get_job_name(run_arg));
+            auto summary = load_ecl_sum(run_arg_get_runpath(run_arg),
+                                        run_arg_get_job_name(run_arg));
             auto status = enkf_state_internalize_dynamic_eclipse_results(
                 ens_config, summary, matcher, run_arg_get_sim_fs(run_arg),
                 run_arg_get_iens(run_arg));
@@ -301,6 +300,8 @@ static std::pair<fw_load_status, std::string> enkf_state_internalize_results(
 
     enkf_fs_type *sim_fs = run_arg_get_sim_fs(run_arg);
     int last_report = time_map_get_last_step(enkf_fs_get_time_map(sim_fs));
+    // TODO investigate usage of last history: is last_report < 0 possible? is
+    // this code path still traversed?
     if (last_report < 0)
         last_report = model_config_get_last_history_restart(model_config);
     auto result = enkf_state_internalize_GEN_DATA(ens_config, run_arg,
@@ -310,15 +311,16 @@ static std::pair<fw_load_status, std::string> enkf_state_internalize_results(
     return {LOAD_SUCCESSFUL, ""};
 }
 
-std::pair<fw_load_status, std::string> enkf_state_load_from_forward_model(
-    ensemble_config_type *ens_config, model_config_type *model_config,
-    const ecl_config_type *ecl_config, const run_arg_type *run_arg) {
+std::pair<fw_load_status, std::string>
+enkf_state_load_from_forward_model(ensemble_config_type *ens_config,
+                                   model_config_type *model_config,
+                                   const run_arg_type *run_arg) {
     std::pair<fw_load_status, std::string> result;
     if (ensemble_config_have_forward_init(ens_config))
         result = ensemble_config_forward_init(ens_config, run_arg);
     if (result.first == LOAD_SUCCESSFUL) {
-        result = enkf_state_internalize_results(ens_config, model_config,
-                                                ecl_config, run_arg);
+        result =
+            enkf_state_internalize_results(ens_config, model_config, run_arg);
     }
     auto &state_map = enkf_fs_get_state_map(run_arg_get_sim_fs(run_arg));
     int iens = run_arg_get_iens(run_arg);

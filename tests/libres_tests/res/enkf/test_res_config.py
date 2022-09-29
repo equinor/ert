@@ -256,16 +256,16 @@ def test_extensive_config(setup_case):
     ecl_config = res_config.ecl_config
     assert (
         Path(snake_oil_structure_config["DATA_FILE"]).resolve()
-        == Path(ecl_config.getDataFile()).resolve()
+        == Path(ecl_config._data_file).resolve()
     )
     for extension in ["SMSPEC", "UNSMRY"]:
         assert (
             Path(snake_oil_structure_config["REFCASE"] + "." + extension).resolve()
-            == Path(ecl_config.getRefcaseName() + "." + extension).resolve()
+            == Path(ecl_config.refcase.case + "." + extension).resolve()
         )
     assert (
         Path(snake_oil_structure_config["GRID"]).resolve()
-        == Path(ecl_config.get_gridfile()).resolve()
+        == Path(ecl_config._grid_file).resolve()
     )
 
     ensemble_config = res_config.ensemble_config

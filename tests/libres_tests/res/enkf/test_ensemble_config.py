@@ -88,5 +88,5 @@ def test_ensemble_config_constructor(setup_case):
                 }
             ],
         },
-        grid=res_config.ecl_config.getGrid(),
+        grid=res_config.ecl_config.grid,
     )

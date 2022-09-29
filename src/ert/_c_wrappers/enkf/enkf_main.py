@@ -88,8 +88,8 @@ class EnKFMain:
         self._observations = EnkfObs(
             config.model_config.get_history_source(),
             config.model_config.get_time_map(),
-            config.ecl_config.getGrid(),
-            config.ecl_config.getRefcase(),
+            config.ecl_config.grid,
+            config.ecl_config.refcase,
             config.ensemble_config,
         )
         if config.model_config.obs_config_file:
@@ -192,9 +192,9 @@ class EnKFMain:
     def storage(self, file_system):
         self.addDataKW("<ERT-CASE>", file_system.getCaseName())
         self.addDataKW("<ERTCASE>", file_system.getCaseName())
-        if self.res_config.ecl_config.getRefcase():
+        if self.res_config.ecl_config.refcase:
             time_map = file_system.getTimeMap()
-            time_map.attach_refcase(self.res_config.ecl_config.getRefcase())
+            time_map.attach_refcase(self.res_config.ecl_config.refcase)
         case_name = file_system.getCaseName()
         full_name = os.path.join(self.getMountPoint(), case_name)
         if full_name not in self._fs_rotator:
@@ -222,7 +222,6 @@ class EnKFMain:
             self.getEnsembleSize(),
             self.ensembleConfig(),
             self.getModelConfig(),
-            self.eclConfig(),
             run_context.run_args,
             run_context.mask,
         )

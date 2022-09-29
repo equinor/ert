@@ -144,7 +144,6 @@ class _EnsembleBuilder:  # pylint: disable=too-many-instance-attributes
                         run_arg,
                         res_config.ensemble_config,
                         res_config.model_config,
-                        res_config.ecl_config,
                     )
                 ).set_done_callback(
                     lambda x: _clib.model_callbacks.forward_model_ok(*x)  # type: ignore

@@ -94,14 +94,6 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
             self._enkf_main.ensembleConfig().getKeylistFromImplType(ErtImplType.GEN_KW)
         )
 
-    @property
-    def grid_file(self) -> str:
-        return self._enkf_main.eclConfig().get_gridfile()
-
-    @property
-    def grid(self) -> "EclGrid":
-        return self._enkf_main.eclConfig().getGrid()
-
     def export_field_parameter(
         self, parameter_name: str, case_name: str, filepath: str
     ) -> None:
@@ -319,7 +311,7 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
         return MisfitCollector.loadAllMisfitData(self._enkf_main, case_name=case_name)
 
     def refcase_data(self, key: str) -> DataFrame:
-        refcase = self._enkf_main.eclConfig().getRefcase()
+        refcase = self._enkf_main.eclConfig().refcase
 
         if refcase is None or key not in refcase:
             return DataFrame()

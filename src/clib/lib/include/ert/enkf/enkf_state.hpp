@@ -15,7 +15,6 @@
 #include <ert/job_queue/forward_model.hpp>
 #include <ert/job_queue/job_queue.hpp>
 
-#include <ert/enkf/ecl_config.hpp>
 #include <ert/enkf/enkf_fs.hpp>
 #include <ert/enkf/enkf_node.hpp>
 #include <ert/enkf/enkf_serialize.hpp>
@@ -29,9 +28,10 @@
 void enkf_state_initialize(rng_type *rng, enkf_fs_type *fs,
                            enkf_node_type *param_node, int iens);
 
-std::pair<fw_load_status, std::string> enkf_state_load_from_forward_model(
-    ensemble_config_type *ens_config, model_config_type *model_config,
-    const ecl_config_type *ecl_config, const run_arg_type *run_arg);
+std::pair<fw_load_status, std::string>
+enkf_state_load_from_forward_model(ensemble_config_type *ens_config,
+                                   model_config_type *model_config,
+                                   const run_arg_type *run_arg);
 bool enkf_state_complete_forward_model_EXIT_handler__(run_arg_type *run_arg);
 
 #endif

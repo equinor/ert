@@ -62,8 +62,8 @@ def test_that_correct_key_observation_is_loaded(extra_config, expected):
     observations = EnkfObs(
         res_config.model_config.get_history_source(),
         res_config.model_config.get_time_map(),
-        res_config.ecl_config.getGrid(),
-        res_config.ecl_config.getRefcase(),
+        res_config.ecl_config.grid,
+        res_config.ecl_config.refcase,
         res_config.ensemble_config,
     )
     observations.load(

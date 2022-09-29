@@ -36,7 +36,7 @@ def test_ecl_config_creation(minimum_case):
     assert isinstance(minimum_case.eclConfig(), EclConfig)
 
     with pytest.raises(AssertionError):  # Null pointer!
-        assert isinstance(minimum_case.eclConfig().getRefcase(), EclSum)
+        assert isinstance(minimum_case.eclConfig().refcase, EclSum)
 
     file_system = minimum_case.getEnkfFsManager().getCurrentFileSystem()
     assert file_system.getCaseName() == "default"

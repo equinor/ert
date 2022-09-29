@@ -71,7 +71,6 @@ pybind11_add_module(
   enkf/analysis_iter_config.cpp
   enkf/block_fs_driver.cpp
   enkf/config_keys.cpp
-  enkf/ecl_config.cpp
   enkf/enkf_analysis.cpp
   enkf/enkf_config_node.cpp
   enkf/enkf_fs.cpp

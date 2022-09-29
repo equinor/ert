@@ -1,207 +1,91 @@
 import os
+from typing import Optional
 
-from cwrap import BaseCClass
+from ecl.ecl_util import EclFileEnum, get_file_type
+from ecl.ecl_util import get_num_cpu as get_num_cpu_from_data_file
 from ecl.grid import EclGrid
 from ecl.summary import EclSum
 
-from ert._c_wrappers import ResPrototype
-from ert._c_wrappers.util import UIReturn
-
-from .config_keys import ConfigKeys
+from ert._c_wrappers.enkf.config_keys import ConfigKeys
 
 
-class EclConfig(BaseCClass):
-    TYPE_NAME = "ecl_config"
+class EclConfig:
+    def __init__(
+        self,
+        data_file: Optional[str] = None,
+        grid_file: Optional[str] = None,
+        refcase_file: Optional[str] = None,
+    ):
+        self._data_file = data_file
+        self._grid_file = grid_file
+        self._refcase_file = refcase_file
+        self.grid = self._load_grid() if grid_file else None
+        self.refcase = self._load_refcase() if refcase_file else None
 
-    _alloc = ResPrototype("void* ecl_config_alloc(config_content)", bind=False)
-    _alloc_full = ResPrototype(
-        "void* ecl_config_alloc_full(  bool, \
-                                                                            char*, \
-                                                                            ecl_grid, \
-                                                                            char*, \
-                                                                            char*)",  # noqa
-        bind=False,
-    )
-    _free = ResPrototype("void  ecl_config_free( ecl_config )")
-    _get_data_file = ResPrototype("char* ecl_config_get_data_file(ecl_config)")
-    _set_data_file = ResPrototype("void  ecl_config_set_data_file(ecl_config , char*)")
-    _validate_data_file = ResPrototype(
-        "ui_return_obj ecl_config_validate_data_file(ecl_config , char*)"
-    )
-    _get_gridfile = ResPrototype("char* ecl_config_get_gridfile(ecl_config)")
-    _set_gridfile = ResPrototype("void  ecl_config_set_grid(ecl_config, char*)")
-    _validate_gridfile = ResPrototype(
-        "ui_return_obj ecl_config_validate_grid(ecl_config, char*)"
-    )
-    _get_grid = ResPrototype("ecl_grid_ref ecl_config_get_grid(ecl_config)")
-    _get_refcase_name = ResPrototype("char* ecl_config_get_refcase_name(ecl_config)")
-    _get_refcase = ResPrototype("ecl_sum_ref ecl_config_get_refcase(ecl_config)")
-    _load_refcase = ResPrototype("void  ecl_config_load_refcase(ecl_config, char*)")
-    _validate_refcase = ResPrototype(
-        "ui_return_obj ecl_config_validate_refcase(ecl_config, char*)"
-    )
-    _has_refcase = ResPrototype("bool  ecl_config_has_refcase(ecl_config)")
-    _get_depth_unit = ResPrototype("char* ecl_config_get_depth_unit(ecl_config)")
-    _get_pressure_unit = ResPrototype("char* ecl_config_get_pressure_unit(ecl_config)")
-    _active = ResPrototype("bool ecl_config_active(ecl_config)")
-    _get_last_history_restart = ResPrototype(
-        "int ecl_config_get_last_history_restart(ecl_config)"
-    )
-    _get_num_cpu = ResPrototype("int ecl_config_get_num_cpu(ecl_config)")
-
-    def __init__(self, config_content=None, config_dict=None):
-
-        if config_content is not None and config_dict is not None:
-            raise ValueError(
-                "Error: EclConfig can not be instantiated with multiple config objects"
+    @classmethod
+    def from_dict(cls, config_dict) -> "EclConfig":
+        ecl_config_args = {}
+        if ConfigKeys.DATA_FILE in config_dict:
+            ecl_config_args["data_file"] = os.path.realpath(
+                config_dict[ConfigKeys.DATA_FILE]
             )
-        c_ptr = None
-        if config_dict is None:
-            c_ptr = self._alloc(config_content)
-
-        if config_dict is not None:
-            # ECLBASE_KEY
-            have_eclbase = config_dict.get(ConfigKeys.ECLBASE) is not None
-
-            # DATA_FILE_KEY
-            data_file = config_dict.get(ConfigKeys.DATA_FILE)
-            if data_file is not None:
-                data_file = os.path.realpath(data_file)
-                if not os.path.isfile(data_file):
-                    raise ValueError("Error: data file is not a file")
-
-            # GRID_KEY
-            grid = None
-            grid_file = config_dict.get(ConfigKeys.GRID)
-            if grid_file is not None:
-                grid_file = os.path.realpath(grid_file)
-                if not os.path.isfile(grid_file):
-                    raise ValueError("Error: grid file is not a file")
-                grid = EclGrid.load_from_file(grid_file)
-
-            # REFCASE_KEY
-            refcase_default = config_dict.get(ConfigKeys.REFCASE)
-            if refcase_default is not None:
-                refcase_default = os.path.realpath(refcase_default)
-
-            # SCHEDULE_PREDICTION_FILE_KEY
-            schedule_prediction_file = config_dict.get(
-                ConfigKeys.SCHEDULE_PREDICTION_FILE
+        if ConfigKeys.GRID in config_dict:
+            ecl_config_args["grid_file"] = os.path.realpath(
+                config_dict[ConfigKeys.GRID]
             )
-
-            c_ptr = self._alloc_full(
-                have_eclbase,
-                data_file,
-                grid,
-                refcase_default,
-                schedule_prediction_file,
+        if ConfigKeys.REFCASE in config_dict:
+            ecl_config_args["refcase_file"] = os.path.realpath(
+                config_dict[ConfigKeys.REFCASE]
             )
-            if grid is not None:
-                grid.convertToCReference(None)
-
-        if c_ptr:
-            super().__init__(c_ptr)
-        else:
-            raise RuntimeError("Internal error: Failed constructing EclConfig!")
-
-    def free(self):
-        self._free()
-
-    def getDataFile(self):
-        return self._get_data_file()
-
-    def setDataFile(self, datafile):
-        self._set_data_file(datafile)
-
-    def validateDataFile(self, datafile) -> UIReturn:
-        """@rtype: UIReturn"""
-        return self._validate_data_file(datafile)
-
-    # -----------------------------------------------------------------
-
-    def get_gridfile(self) -> str:
-        return self._get_gridfile()
-
-    def set_gridfile(self, gridfile):
-        self._set_gridfile(gridfile)
-
-    def validateGridFile(self, gridfile):
-        return self._validate_gridfile(gridfile)
-
-    def getGrid(self) -> EclGrid:
-        return self._get_grid()
-
-    def getRefcaseName(self):
-        return self._get_refcase_name()
-
-    def loadRefcase(self, refcase):
-        self._load_refcase(refcase)
-
-    def getRefcase(self) -> EclSum:
-        refcase = self._get_refcase()
-        if refcase is not None:
-            refcase.setParent(self)
-
-        return refcase
-
-    def validateRefcase(self, refcase):
-        return self._validate_refcase(refcase)
-
-    def hasRefcase(self):
-        """@rtype: bool"""
-        return self._has_refcase()
-
-    # -----------------------------------------------------------------
-
-    def getDepthUnit(self):
-        return self._get_depth_unit()
-
-    def getPressureUnit(self):
-        return self._get_pressure_unit()
-
-    # -----------------------------------------------------------------
-
-    def active(self):
-        """
-        Has ECLIPSE been configured?"
-        """
-        return self._active()
-
-    def getLastHistoryRestart(self):
-        return self._get_last_history_restart()
+        return cls(**ecl_config_args)
 
     @property
-    def num_cpu(self):
-        """
-        Returns numbers cpu to be used defined in a DATA file
-        """
-        return self._get_num_cpu()
+    def num_cpu(self) -> Optional[int]:
+        if not self._data_file:
+            return None
+        return get_num_cpu_from_data_file(self._data_file)
+
+    def _load_grid(self) -> Optional[EclGrid]:
+        ecl_grid_file_types = [
+            EclFileEnum.ECL_GRID_FILE,
+            EclFileEnum.ECL_EGRID_FILE,
+        ]
+        if get_file_type(self._grid_file) not in ecl_grid_file_types:
+            raise ValueError(f"grid file {self._grid_file} does not have expected type")
+        return EclGrid.load_from_file(self._grid_file)
+
+    def _load_refcase(self) -> EclSum:
+        # defaults for loading refcase - necessary for using the function
+        # exposed in python part of ecl
+        refcase_load_args = {
+            "load_case": self._refcase_file,
+            "join_string": ":",
+            "include_restart": True,
+            "lazy_load": True,
+            "file_options": 0,
+        }
+        return EclSum(**refcase_load_args)
 
     def __repr__(self):
-        if not self._address():
-            return "<EclConfig()>"
         return (
-            "EclConfig(config_dict={"
-            f"'{ConfigKeys.DATA_FILE}': {self.getDataFile()}, "
-            f"'{ConfigKeys.GRID}': {self.get_gridfile()}, "
-            f"'{ConfigKeys.REFCASE}': {self.getRefcaseName()}, "
-            "})"
+            "EclConfig(\n"
+            f"\tdata_file={self._data_file},\n"
+            f"\tgrid_file={self._grid_file},\n"
+            f"\trefcase_file={self._refcase_file},\n"
+            ")"
         )
 
     def __eq__(self, other):
-        if self.getDataFile() != other.getDataFile():
+        if self._data_file != other._data_file:
             return False
 
-        if self.get_gridfile() != other.get_gridfile():
+        if self._grid_file != other._grid_file:
             return False
 
-        if self.getRefcaseName() != other.getRefcaseName():
+        if self._refcase_file != other._refcase_file:
             return False
 
-        if self.getDepthUnit() != other.getDepthUnit():
-            return False
-
-        if self.getPressureUnit() != other.getPressureUnit():
+        if self.num_cpu != other.num_cpu:
             return False
 
         return True
