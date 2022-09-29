@@ -35,7 +35,8 @@ void call_set_queue_index(void *arg) {
 void test_queue_index() {
     ecl::util::TestArea ta("queue_index");
     {
-        enkf_fs_type *fs = enkf_fs_create_fs("sim", BLOCK_FS_DRIVER_ID, true);
+        enkf_fs_type *fs =
+            enkf_fs_create_fs("sim", BLOCK_FS_DRIVER_ID, 1, true);
         run_arg_type *run_arg =
             run_arg_alloc("run_id", fs, 0, 6, "path", "base");
 
@@ -70,9 +71,9 @@ void test_SMOOTHER_RUN() {
     ecl::util::TestArea ta("smoother");
     {
         enkf_fs_type *sim_fs =
-            enkf_fs_create_fs("sim", BLOCK_FS_DRIVER_ID, true);
+            enkf_fs_create_fs("sim", BLOCK_FS_DRIVER_ID, 1, true);
         enkf_fs_type *target_fs =
-            enkf_fs_create_fs("target", BLOCK_FS_DRIVER_ID, true);
+            enkf_fs_create_fs("target", BLOCK_FS_DRIVER_ID, 1, true);
         run_arg_type *run_arg =
             run_arg_alloc("run_id", sim_fs, 0, 6, "path", "BASE");
         test_assert_true(run_arg_is_instance(run_arg));
@@ -87,7 +88,7 @@ void test_INIT_ONLY() {
     ecl::util::TestArea ta("INIT");
     {
         enkf_fs_type *init_fs =
-            enkf_fs_create_fs("sim", BLOCK_FS_DRIVER_ID, true);
+            enkf_fs_create_fs("sim", BLOCK_FS_DRIVER_ID, 1, true);
 
         run_arg_type *run_arg =
             run_arg_alloc("run_id", init_fs, 0, 6, "path", NULL);
@@ -102,7 +103,8 @@ void test_INIT_ONLY() {
 void test_ENSEMBLE_EXPERIMENT() {
     ecl::util::TestArea ta("ens");
     {
-        enkf_fs_type *fs = enkf_fs_create_fs("sim", BLOCK_FS_DRIVER_ID, true);
+        enkf_fs_type *fs =
+            enkf_fs_create_fs("sim", BLOCK_FS_DRIVER_ID, 1, true);
 
         run_arg_type *run_arg =
             run_arg_alloc("run_id", fs, 0, 6, "path", "BASE");

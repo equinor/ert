@@ -172,11 +172,12 @@ UTIL_IS_INSTANCE_FUNCTION(enkf_fs, ENKF_FS_TYPE_ID)
 
 enkf_fs_type *enkf_fs_get_ref(enkf_fs_type *fs) { return fs; }
 
-enkf_fs_type *enkf_fs_alloc_empty(const char *mount_point, bool read_only) {
+enkf_fs_type *enkf_fs_alloc_empty(const char *mount_point,
+                                  unsigned ensemble_size, bool read_only) {
     enkf_fs_type *fs = new enkf_fs_type;
     UTIL_TYPE_ID_INIT(fs, ENKF_FS_TYPE_ID);
     fs->time_map = time_map_alloc();
-    fs->state_map = std::make_shared<StateMap>();
+    fs->state_map = std::make_shared<StateMap>(ensemble_size);
     fs->summary_key_set = summary_key_set_alloc();
     fs->misfit_ensemble = misfit_ensemble_alloc();
     fs->read_only = true;
@@ -239,8 +240,10 @@ static void enkf_fs_assign_driver(enkf_fs_type *fs,
 
 static enkf_fs_type *enkf_fs_mount_block_fs(FILE *fstab_stream,
                                             const char *mount_point,
+                                            unsigned ensemble_size,
                                             bool read_only) {
-    enkf_fs_type *fs = enkf_fs_alloc_empty(mount_point, read_only);
+    enkf_fs_type *fs =
+        enkf_fs_alloc_empty(mount_point, ensemble_size, read_only);
 
     {
         while (true) {
@@ -261,7 +264,8 @@ static enkf_fs_type *enkf_fs_mount_block_fs(FILE *fstab_stream,
 }
 
 enkf_fs_type *enkf_fs_create_fs(const char *mount_point,
-                                fs_driver_impl driver_id, bool mount) {
+                                fs_driver_impl driver_id,
+                                unsigned ensemble_size, bool mount) {
     /*
 	 * NOTE: This value is the (maximum) number of concurrent files
 	 * used by ert::block_fs_driver -objects. These objects will
@@ -288,7 +292,7 @@ enkf_fs_type *enkf_fs_create_fs(const char *mount_point,
     }
 
     if (mount)
-        return enkf_fs_mount(mount_point);
+        return enkf_fs_mount(mount_point, ensemble_size);
     else
         return NULL;
 }
@@ -367,7 +371,8 @@ void enkf_fs_fwrite_misfit(enkf_fs_type *fs) {
     }
 }
 
-enkf_fs_type *enkf_fs_mount(const char *mount_point, bool read_only) {
+enkf_fs_type *enkf_fs_mount(const char *mount_point, unsigned ensemble_size,
+                            bool read_only) {
     FILE *stream = fs_driver_open_fstab(mount_point, false);
 
     if (!stream)
@@ -381,7 +386,8 @@ enkf_fs_type *enkf_fs_mount(const char *mount_point, bool read_only) {
 
     switch (driver_id) {
     case (BLOCK_FS_DRIVER_ID):
-        fs = enkf_fs_mount_block_fs(stream, mount_point, read_only);
+        fs = enkf_fs_mount_block_fs(stream, mount_point, ensemble_size,
+                                    read_only);
         logger->debug("Mounting (block_fs) point {}.", mount_point);
         break;
     default:

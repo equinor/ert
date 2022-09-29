@@ -5,7 +5,7 @@ from ert.simulator.simulation_context import _run_forward_model
 
 def test_run_simulation_batch(setup_case):
     ert = EnKFMain(setup_case("local/config/simulation_batch", "config.ert"))
-    ens_size = 2
+    ens_size = 4
     ens_config = ert.ensembleConfig()
 
     # Observe that a significant amount of hardcoding
@@ -32,7 +32,7 @@ def test_run_simulation_batch(setup_case):
     fs_manager = ert.getEnkfFsManager()
     sim_fs = fs_manager.getFileSystem("sim_fs")
     state_map = sim_fs.getStateMap()
-    batch_size = ens_size + 2
+    batch_size = ens_size
     for iens in range(batch_size):
         node_id = NodeId(0, iens)
 

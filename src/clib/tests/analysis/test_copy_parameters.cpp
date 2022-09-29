@@ -27,15 +27,15 @@ TEST_CASE("Copy parameters from one source-fs to target-fs",
         // create file system
         auto source_path =
             std::filesystem::current_path() / std::filesystem::path("source");
-        auto fs_source =
-            enkf_fs_create_fs(source_path.c_str(), BLOCK_FS_DRIVER_ID, true);
+        int ensemble_size = 10;
+        auto fs_source = enkf_fs_create_fs(
+            source_path.c_str(), BLOCK_FS_DRIVER_ID, ensemble_size, true);
         auto target_path =
             std::filesystem::current_path() / std::filesystem::path("target");
-        auto fs_target =
-            enkf_fs_create_fs(target_path.c_str(), BLOCK_FS_DRIVER_ID, true);
+        auto fs_target = enkf_fs_create_fs(
+            target_path.c_str(), BLOCK_FS_DRIVER_ID, ensemble_size, true);
 
         auto ensemble_config = ensemble_config_alloc_full("name-not-important");
-        int ensemble_size = 10;
         // setting up a config node for a single parameter
         auto config_node =
             ensemble_config_add_gen_kw(ensemble_config, "TEST", false);

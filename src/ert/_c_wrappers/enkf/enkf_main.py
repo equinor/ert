@@ -128,9 +128,14 @@ class EnKFMain:
             fs = EnkfFs(
                 ens_path / current_case_file.read_text("utf-8").strip(),
                 read_only=read_only,
+                ensemble_size=self._ensemble_size,
             )
         else:
-            fs = EnkfFs.createFileSystem(ens_path / "default", read_only=read_only)
+            fs = EnkfFs.createFileSystem(
+                ens_path / "default",
+                read_only=read_only,
+                ensemble_size=self._ensemble_size,
+            )
         self.storage = fs
         global_rng = RandomNumberGenerator()
         self._shared_rng = RandomNumberGenerator(init_mode=RngInitModeEnum.INIT_DEFAULT)
@@ -417,9 +422,11 @@ class EnKFMain:
 
         if full_case_name not in self._fs_rotator:
             if not os.path.exists(full_case_name):
-                new_fs = EnkfFs.createFileSystem(full_case_name, read_only)
+                new_fs = EnkfFs.createFileSystem(
+                    full_case_name, read_only, self._ensemble_size
+                )
             else:
-                new_fs = EnkfFs(full_case_name, read_only)
+                new_fs = EnkfFs(full_case_name, read_only, self._ensemble_size)
             self._fs_rotator.append(new_fs)
 
         fs = self._fs_rotator[full_case_name]
