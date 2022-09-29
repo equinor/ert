@@ -43,6 +43,7 @@ def _run_forward_model(
             max_runtime,
             done_callback,
             model_callbacks.forward_model_exit,
+            ert.get_num_cpu(),
         )
 
     job_queue.submit_complete()  # type: ignore

@@ -347,7 +347,6 @@ def test_res_config_dict_constructor(setup_case):
         ConfigKeys.JOB_SCRIPT: f"../../{script_file}",
         ConfigKeys.QUEUE_SYSTEM: QueueDriverEnum.LSF_DRIVER,
         ConfigKeys.MAX_SUBMIT: 13,
-        ConfigKeys.NUM_CPU: 0,
         ConfigKeys.QUEUE_OPTION: [
             {
                 ConfigKeys.DRIVER_NAME: QueueDriverEnum.LSF_DRIVER,
@@ -493,7 +492,6 @@ def test_res_config_dict_constructor(setup_case):
     # add missing entries to config file
     with open(config_file_name, "a+") as ert_file:
         ert_file.write(f"JOB_SCRIPT ../../{script_file}\n")
-        ert_file.write("NUM_CPU 0\n")
 
     # load res_file
     res_config_file = ResConfig(user_config_file=config_file_name)

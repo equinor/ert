@@ -303,6 +303,7 @@ class BaseRunModel:
                 self._queue_config,
                 self.ert().analysisConfig(),
                 self.ert().resConfig(),
+                self.ert().get_num_cpu(),
             )
             .set_id(str(uuid.uuid1()).split("-", maxsplit=1)[0])
             .build()
@@ -345,6 +346,7 @@ class BaseRunModel:
                 self._queue_config,
                 self.ert().analysisConfig(),
                 self.ert().resConfig(),
+                self.ert().get_num_cpu(),
             )
             .set_id(str(uuid.uuid1()).split("-", maxsplit=1)[0])
             .build()

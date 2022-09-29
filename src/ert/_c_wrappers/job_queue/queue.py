@@ -533,13 +533,11 @@ class JobQueue(BaseCClass):
         max_runtime: Optional[int],
         ok_cb: Callable[..., Any],
         exit_cb: Callable[..., Any],
+        num_cpu: int,
     ) -> None:
         job_name = run_arg.job_name
         run_path = run_arg.runpath
         job_script = res_config.queue_config.job_script
-        num_cpu = res_config.queue_config.num_cpu
-        if num_cpu == 0:
-            num_cpu = res_config.ecl_config.num_cpu
 
         job = JobQueueNode(
             job_script=job_script,
