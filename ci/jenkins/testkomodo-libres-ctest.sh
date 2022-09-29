@@ -20,8 +20,7 @@ build_ert_clib () {
     cmake .. \
           -DCMAKE_PREFIX_PATH=$INSTALL \
           -DCMAKE_INSTALL_PREFIX=$INSTALL \
-          -DBUILD_TESTS=ON \
-          -DEQUINOR_TESTDATA_ROOT=/project/res-testdata/ErtTestData
+          -DBUILD_TESTS=ON
     ninja
     popd
 }

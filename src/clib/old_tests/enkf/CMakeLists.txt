@@ -9,12 +9,6 @@ function(add_config_test name command)
                                      "ERT_SITE_CONFIG=${SITE_CONFIG_PATH}")
 endfunction()
 
-function(add_equinor_test name command)
-  add_test(NAME ${name} COMMAND ${command} ${ARGN})
-
-  set_property(TEST ${name} PROPERTY LABELS EquinorData)
-endfunction()
-
 # -----------------------------------------------------------------
 # Public tests
 # -----------------------------------------------------------------
@@ -63,19 +57,5 @@ endforeach()
 add_config_test(enkf_ecl_config1 enkf_ecl_config)
 add_config_test(enkf_ecl_config2 enkf_ecl_config
                 "${LOCAL_TEST_DATA_DIR}/snake_oil/refcase/SNAKE_OIL_FIELD")
-
-# -----------------------------------------------------------------
-# Equinor tests
-# -----------------------------------------------------------------
-
-if(NOT EXISTS "${EQUINOR_TEST_DATA_DIR}")
-  return()
-endif()
-
-add_equinor_test(
-  enkf_time_map2
-  enkf_time_map
-  "${EQUINOR_TEST_DATA_DIR}/ECLIPSE/Gurbat/ECLIPSE"
-  "${EQUINOR_TEST_DATA_DIR}/ECLIPSE/ModifiedSummary/EXTRA_TSTEP"
-  "${EQUINOR_TEST_DATA_DIR}/ECLIPSE/ModifiedSummary/SHORT"
-  "${EQUINOR_TEST_DATA_DIR}/ECLIPSE/ModifiedSummary/MISSING_TSTEP")
+add_config_test(enkf_time_map2 enkf_time_map
+                "${LOCAL_TEST_DATA_DIR}/snake_oil/refcase/SNAKE_OIL_FIELD")
