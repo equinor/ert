@@ -194,6 +194,8 @@ class EclConfig(BaseCClass):
         return self._get_num_cpu()
 
     def __repr__(self):
+        if not self._address():
+            return "<EclConfig()>"
         return (
             "EclConfig(config_dict={"
             f"'{ConfigKeys.DATA_FILE}': {self.getDataFile()}, "

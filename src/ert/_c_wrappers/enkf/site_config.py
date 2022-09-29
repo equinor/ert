@@ -130,6 +130,8 @@ class SiteConfig(BaseCClass):
         super().__init__(c_ptr)
 
     def __repr__(self):
+        if not self._address():
+            return "<SiteConfig()>"
         return (
             "SiteConfig(config_dict={"
             + f"{ConfigKeys.INSTALL_JOB}: ["

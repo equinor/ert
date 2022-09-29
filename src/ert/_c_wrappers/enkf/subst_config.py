@@ -160,6 +160,8 @@ class SubstConfig(BaseCClass):
         return f"SubstConfig({str(self)})"
 
     def __str__(self):
+        if not self._address():
+            return ""
         return (
             "["
             + ",\n".join(

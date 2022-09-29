@@ -158,6 +158,8 @@ class QueueConfig(BaseCClass):
         return self._get_num_cpu()
 
     def __repr__(self):
+        if not self._address:
+            return "<QueueConfig()>"
         return (
             "QueueConfig(config_dict={"
             f"'{ConfigKeys.JOB_SCRIPT}': {self.job_script}, "
