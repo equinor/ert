@@ -200,7 +200,6 @@ class ResConfig:
         self.model_config = ModelConfig(
             data_root=self.config_path,
             joblist=self.site_config.get_installed_jobs(),
-            last_history_restart=self.ecl_config.getLastHistoryRestart(),
             refcase=self.ecl_config.getRefcase(),
             config_content=user_config_content,
         )
@@ -279,7 +278,6 @@ class ResConfig:
         self.model_config = ModelConfig(
             data_root=self.config_path,
             joblist=self.site_config.get_installed_jobs(),
-            last_history_restart=self.ecl_config.getLastHistoryRestart(),
             refcase=self.ecl_config.getRefcase(),
             config_dict=config_dict,
         )
