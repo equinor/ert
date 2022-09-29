@@ -35,17 +35,17 @@ class EnvironmentVarlist(BaseCClass):
 
     def __init__(
         self,
-        vars: Optional[Dict[str, str]] = None,
+        _vars: Optional[Dict[str, str]] = None,
         paths: Optional[Dict[str, str]] = None,
     ):
-        if vars is None:
-            vars = {}
+        if _vars is None:
+            _vars = {}
         if paths is None:
             paths = {}
         c_ptr = self._alloc()
         super().__init__(c_ptr)
 
-        for key, value in vars.items():
+        for key, value in _vars.items():
             self._setenv(key, value)
         for key, value in paths.items():
             self._update_path(key, value)

@@ -32,7 +32,7 @@ class WorkflowRunner:
         self.run()
         return self
 
-    def __exit__(self, type, value, traceback):
+    def __exit__(self, _type, value, traceback):
         self.wait()
 
     def run(self):

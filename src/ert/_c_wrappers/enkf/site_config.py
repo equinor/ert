@@ -114,7 +114,7 @@ class SiteConfig(BaseCClass):
             # Create varlist
             environment_vars = config_dict.get(ConfigKeys.SETENV, [])
             env_var_list = EnvironmentVarlist(
-                vars={
+                _vars={
                     elem[ConfigKeys.NAME]: elem[ConfigKeys.VALUE]
                     for elem in environment_vars
                 }

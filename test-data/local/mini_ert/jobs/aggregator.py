@@ -10,9 +10,9 @@ if __name__ == "__main__":
     with open("aggregated.txt", "w", encoding="utf-8") as output_file:
         sum_of_sum = 0.0
         for key, filename in files.items():
-            sum = 0.0
+            total = 0.0
             with open(filename, "r", encoding="utf-8") as input_file:
-                sum += float(input_file.readline())
+                total += float(input_file.readline())
             sum_of_sum += sum
             output_file.write(f"{key} {sum:f}\n")
 

@@ -17,7 +17,7 @@ class SearchBox(QLineEdit):
         self.presentSearch()
         self.textChanged.connect(self.__emitFilterChanged)
 
-    def __emitFilterChanged(self, filter):
+    def __emitFilterChanged(self, _filter):
         self.filterChanged.emit(self.filter())
         # self.emit(SIGNAL('filterChanged(PyQt_PyObject)'), self.filter())
 
