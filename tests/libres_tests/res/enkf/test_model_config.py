@@ -75,7 +75,6 @@ def test_model_config_dict_constructor(setup_case):
     assert res_config.model_config == ModelConfig(
         data_root="",
         joblist=res_config.site_config.get_installed_jobs(),
-        last_history_restart=res_config.ecl_config.getLastHistoryRestart(),
         refcase=res_config.ecl_config.getRefcase(),
         config_dict={
             ConfigKeys.MAX_RESAMPLE: 1,

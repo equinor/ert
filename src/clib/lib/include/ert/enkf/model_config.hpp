@@ -53,7 +53,7 @@ extern "C" const char *
 model_config_get_obs_config_file(const model_config_type *model_config);
 void model_config_init(model_config_type *model_config,
                        const config_content_type *, const char *data_root,
-                       int ens_size, const ext_joblist_type *, int,
+                       int ens_size, const ext_joblist_type *,
                        const ecl_sum_type *refcase);
 extern "C" void model_config_free(model_config_type *);
 extern "C" bool
@@ -79,7 +79,7 @@ void model_config_set_refcase(model_config_type *model_config,
 model_config_type *model_config_alloc_empty();
 extern "C" model_config_type *model_config_alloc(const config_content_type *,
                                                  const char *data_root,
-                                                 const ext_joblist_type *, int,
+                                                 const ext_joblist_type *,
                                                  const ecl_sum_type *);
 extern "C" model_config_type *model_config_alloc_full(
     int max_resample, int num_realizations, char *run_path, char *data_root,

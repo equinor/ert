@@ -256,13 +256,12 @@ model_config_type *model_config_alloc_empty() {
 model_config_type *model_config_alloc(const config_content_type *config_content,
                                       const char *data_root,
                                       const ext_joblist_type *joblist,
-                                      int last_history_restart,
                                       const ecl_sum_type *refcase) {
     model_config_type *model_config = model_config_alloc_empty();
 
     if (config_content)
         model_config_init(model_config, config_content, data_root, 0, joblist,
-                          last_history_restart, refcase);
+                          refcase);
 
     return model_config;
 }
@@ -350,7 +349,7 @@ static void model_config_set_default_data_root(model_config_type *model_config,
 void model_config_init(model_config_type *model_config,
                        const config_content_type *config, const char *data_root,
                        int ens_size, const ext_joblist_type *joblist,
-                       int last_history_restart, const ecl_sum_type *refcase) {
+                       const ecl_sum_type *refcase) {
 
     model_config->forward_model = forward_model_alloc(joblist);
     const subst_list_type *define_list =
