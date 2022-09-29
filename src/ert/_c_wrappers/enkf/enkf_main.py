@@ -382,10 +382,11 @@ class EnKFMain:
                     enkf_node = EnkfNode(node)
                     if node.getUseForwardInit():
                         continue
-                    if not enkf_node.has_data(
-                        run_context.sim_fs,
-                        NodeId(0, realization_nr)
-                        or current_status == STATE_LOAD_FAILURE,
+                    if (
+                        not enkf_node.has_data(
+                            run_context.sim_fs, NodeId(0, realization_nr)
+                        )
+                        or current_status == STATE_LOAD_FAILURE
                     ):
                         enkf_state.state_initialize(
                             rng,
