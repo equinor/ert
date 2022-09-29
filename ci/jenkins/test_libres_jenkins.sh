@@ -56,8 +56,7 @@ build_ert_clib () {
 		  -DCMAKE_PREFIX_PATH=$INSTALL \
 		  -DCMAKE_INSTALL_PREFIX=$INSTALL \
 		  -DCMAKE_BUILD_TYPE=RelWithDebInfo \
-		  -DBUILD_TESTS=ON \
-		  -DEQUINOR_TESTDATA_ROOT=/project/res-testdata/ErtTestData
+		  -DBUILD_TESTS=ON
 	make -j 6 install
 	popd
 }

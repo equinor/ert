@@ -15,11 +15,16 @@
 #  for more details.
 import errno
 import os
+from typing import TYPE_CHECKING
 
 from cwrap import BaseCClass
 from ecl.util.util import CTime
 
 from ert._c_wrappers import ResPrototype
+from ert._clib import time_map
+
+if TYPE_CHECKING:
+    from ecl.summary import EclSum
 
 
 class TimeMap(BaseCClass):
@@ -116,6 +121,9 @@ class TimeMap(BaseCClass):
     def __contains__(self, time):
         index = self._lookup_time(CTime(time))
         return index >= 0
+
+    def summary_update(self, summary: "EclSum") -> str:
+        return time_map.summary_update(self, summary)
 
     def lookupTime(self, time, tolerance_seconds_before=0, tolerance_seconds_after=0):
         """Will look up the report step corresponding to input @time.

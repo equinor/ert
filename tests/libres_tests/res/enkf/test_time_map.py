@@ -1,6 +1,8 @@
 import datetime
 
+import pandas as pd
 import pytest
+from ecl.summary import EclSum
 
 from ert._c_wrappers.enkf import TimeMap
 
@@ -214,3 +216,56 @@ def test_nearest_date_lookup():
             tolerance_seconds_before=10,
             tolerance_seconds_after=10,
         )
+
+
+@pytest.mark.parametrize(
+    "time_steps, expected",
+    [
+        pytest.param(
+            {"2000-01-01": 1.0, "2000-01-03": 4.0, "2000-01-04": 1.0},
+            "",
+            id="Everything matches",
+        ),
+        pytest.param(
+            {
+                "2000-01-01": 0.0,
+                "2000-01-02": 0.5,
+                "2000-01-03": 0.5,
+                "2000-01-04": 1.0,
+            },
+            (
+                "2 inconsistencies in time_map, first: Time mismatch for step: 2, "
+                "response time: 2000-01-02, reference case: 2000-01-03, last: Time "
+                "mismatch for step: 3, response time: 2000-01-03, reference case: "
+                "2000-01-04"
+            ),
+            id="Extra time step in the middle",
+        ),
+        pytest.param(
+            {"2000-01-01": 1.0, "2000-01-04": 1.0},
+            (
+                "1 inconsistencies in time_map, first: Time mismatch for step: 2, "
+                "response time: 2000-01-04, reference case: 2000-01-03, last: Time "
+                "mismatch for step: 2, response time: 2000-01-04, reference case: "
+                "2000-01-03"
+            ),
+            id="Missing time step in the middle",
+        ),
+    ],
+)
+def test_time_map_summary_update(time_steps, expected):
+
+    df = pd.DataFrame(
+        {"FOPR": {"2000-01-01": 0.0, "2000-01-03": 1.0, "2000-01-04": 1.0}}
+    )
+    df.index = pd.to_datetime(df.index)
+    refcase = EclSum.from_pandas("REFCASE", df)
+
+    time_map = TimeMap()
+    time_map.attach_refcase(refcase)
+
+    df = pd.DataFrame({"FOPR": time_steps})
+    df.index = pd.to_datetime(df.index)
+    summary = EclSum.from_pandas("ECL_CASE", df)
+
+    assert time_map.summary_update(summary) == expected

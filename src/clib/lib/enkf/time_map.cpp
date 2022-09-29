@@ -604,3 +604,17 @@ int_vector_type *time_map_alloc_index_map(time_map_type *map,
     pthread_rwlock_unlock(&map->rw_lock);
     return index_map;
 }
+
+#include <ert/python.hpp>
+
+ERT_CLIB_SUBMODULE("time_map", m) {
+    using namespace py::literals;
+    m.def(
+        "summary_update",
+        [](py::object self, py::object summary) {
+            return time_map_summary_update(
+                ert::from_cwrap<time_map_type>(self),
+                ert::from_cwrap<ecl_sum_type>(summary));
+        },
+        py::arg("self"), py::arg("summary"));
+}
