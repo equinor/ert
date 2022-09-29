@@ -109,21 +109,18 @@ class _EnsembleBuilder:  # pylint: disable=too-many-instance-attributes
         return self
 
     @staticmethod
-    def from_legacy(
+    def from_legacy(  # pylint: disable=too-many-arguments # cf. #3991
         run_context: RunContext,
         forward_model: ForwardModel,
         queue_config: QueueConfig,
         analysis_config: AnalysisConfig,
         res_config: ResConfig,
+        num_cpu: int,
     ) -> "_EnsembleBuilder":
         builder = _EnsembleBuilder().set_legacy_dependencies(
             queue_config,
             analysis_config,
         )
-
-        num_cpu = res_config.queue_config.num_cpu
-        if num_cpu == 0:
-            num_cpu = res_config.ecl_config.num_cpu
 
         for iens, run_arg in enumerate(run_context):
             active = run_context.is_active(iens)

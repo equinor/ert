@@ -77,6 +77,7 @@ def test_build_ensemble_legacy():
         queue_config=queue_config,
         analysis_config=analysis_config,
         res_config=res_config,
+        num_cpu=1,
     )
 
     ensemble = ensemble_builder.set_id("0").build()

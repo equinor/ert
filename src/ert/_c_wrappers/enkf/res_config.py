@@ -592,6 +592,12 @@ class ResConfig:
     def ert_templates(self):
         return self._templates
 
+    def get_num_cpu(self) -> Optional[int]:
+        queue_num_cpu = self.queue_config.num_cpu
+        if queue_num_cpu == 0:
+            return None
+        return queue_num_cpu
+
     def __eq__(self, other):
         # compare each config separatelly
         config_eqs = (
