@@ -473,8 +473,8 @@ bool config_schema_item_validate_set(const config_schema_item_type *item,
                         if (!util_is_executable(value))
                             config_error_add(
                                 error_list,
-                                util_alloc_sprintf(
-                                    "Could not locate executable:%s ", value));
+                                util_alloc_sprintf("File not executable:%s ",
+                                                   value));
                     }
                 } break;
                 case (CONFIG_BOOL):
