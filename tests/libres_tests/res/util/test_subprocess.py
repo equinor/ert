@@ -34,6 +34,8 @@ def _find_system_pipe_max_size():
         p.kill()
         return len(p.stdout.read())
 
+    return None
+
 
 _maxBytes = _find_system_pipe_max_size() - 1
 
