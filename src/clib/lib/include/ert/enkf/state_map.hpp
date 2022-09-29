@@ -11,7 +11,10 @@ class StateMap {
     mutable std::mutex m_mutex;
 
 public:
-    StateMap() = default;
+    StateMap() = delete;
+    StateMap(unsigned ensemble_size) {
+        m_state.resize(ensemble_size, STATE_UNDEFINED);
+    };
     StateMap(const std::filesystem::path &filename);
     StateMap(const StateMap &other);
 

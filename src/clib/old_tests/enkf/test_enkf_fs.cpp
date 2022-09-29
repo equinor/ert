@@ -71,28 +71,29 @@ void test_mount() {
     ecl::util::TestArea ta("mount");
 
     test_assert_false(enkf_fs_exists("mnt"));
-    test_assert_NULL(enkf_fs_create_fs("mnt", BLOCK_FS_DRIVER_ID, false));
+    test_assert_NULL(enkf_fs_create_fs("mnt", BLOCK_FS_DRIVER_ID, 1, false));
     test_assert_true(enkf_fs_exists("mnt"));
     {
-        enkf_fs_type *fs = enkf_fs_mount("mnt");
+        enkf_fs_type *fs = enkf_fs_mount("mnt", 1);
         test_assert_true(fs::exists("mnt/mnt.lock"));
         test_assert_true(enkf_fs_is_instance(fs));
         enkf_fs_umount(fs);
         test_assert_false(fs::exists("mnt/mnt.lock"));
     }
     {
-        enkf_fs_type *fs = enkf_fs_create_fs("mnt2", BLOCK_FS_DRIVER_ID, true);
+        enkf_fs_type *fs =
+            enkf_fs_create_fs("mnt2", BLOCK_FS_DRIVER_ID, 1, true);
         test_assert_true(enkf_fs_is_instance(fs));
         enkf_fs_umount(fs);
     }
 }
 
-void mount(void *args) { enkf_fs_type *fs2 = enkf_fs_mount("mnt"); }
+void mount(void *args) { enkf_fs_type *fs2 = enkf_fs_mount("mnt", 1); }
 
 void test_mount_filesystem_readwrite_twice() {
     ecl::util::TestArea ta("test_mount_filesystem_readwrite_twice");
-    enkf_fs_create_fs("mnt", BLOCK_FS_DRIVER_ID, false);
-    enkf_fs_type *fs = enkf_fs_mount("mnt");
+    enkf_fs_create_fs("mnt", BLOCK_FS_DRIVER_ID, 1, false);
+    enkf_fs_type *fs = enkf_fs_mount("mnt", 1);
 
     test_assert_true(fs::exists("mnt/mnt.lock"));
     test_assert_true(enkf_fs_is_instance(fs));

@@ -119,7 +119,8 @@ void StateMap::set(int index, realisation_state_enum new_state) {
     if (index < 0)
         throw exc::out_of_range("index out of range: {} < 0", index);
     if (index >= m_state.size())
-        m_state.resize(index + 1, STATE_UNDEFINED);
+        throw exc::out_of_range("index out of range: {} >= {}", index,
+                                m_state.size());
 
     auto current_state = static_cast<realisation_state_enum>(m_state.at(index));
 
@@ -161,7 +162,7 @@ bool StateMap::read(const fs::path &filename) {
         read_libecl_vector(stream, m_state);
         return true;
     } catch (std::ios_base::failure &) {
-        m_state.clear();
+        std::fill(m_state.begin(), m_state.end(), STATE_UNDEFINED);
         return false;
     }
 }
@@ -194,18 +195,6 @@ void StateMap::set_from_mask(const std::vector<bool> &mask,
 ERT_CLIB_SUBMODULE("state_map", m) {
     using namespace py::literals;
 
-    const auto init_with_exception = [](const fs::path &path) -> StateMap {
-        StateMap sm;
-        if (!sm.read(path))
-            throw std::ios_base::failure{"StateMap::StateMap"};
-        return sm;
-    };
-
-    const auto load_with_exception = [](StateMap &sm, const fs::path &path) {
-        if (!sm.read(path))
-            throw std::ios_base::failure{"StateMap::load"};
-    };
-
     py::enum_<realisation_state_enum>(m, "RealizationStateEnum",
                                       py::arithmetic{})
         .value("STATE_UNDEFINED", STATE_UNDEFINED)
@@ -217,14 +206,10 @@ ERT_CLIB_SUBMODULE("state_map", m) {
 
     py::class_<StateMap, std::shared_ptr<StateMap>>(m, "StateMap")
         .def_static("isLegalTransition", &StateMap::is_legal_transition)
-        .def(py::init<>())
-        .def(py::init(init_with_exception), "path"_a)
         .def(py::self == py::self)
         .def("__len__", &StateMap::size)
         .def("_get", &StateMap::get, "index"_a)
         .def("__setitem__", &StateMap::set, "index"_a, "value"_a)
-        .def("load", load_with_exception, "path"_a)
-        .def("save", &StateMap::write, "path"_a)
         .def("selectMatching", [](const StateMap &x, int mask) {
             return x.select_matching(mask);
         });

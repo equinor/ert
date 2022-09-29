@@ -52,7 +52,7 @@ def test_rotate(snake_oil_case):
 
 @pytest.mark.parametrize(
     "state_mask, expected_length",
-    [([True] * 25, 25), ([False] * 25, 0), ([False, True, True], 3)],
+    [([True] * 25, 25), ([False] * 25, 25), ([False, True, True], 25)],
 )
 def test_custom_init_runs(snake_oil_case, state_mask, expected_length):
     ert = snake_oil_case
@@ -71,4 +71,4 @@ def test_fs_init_from_scratch(snake_oil_case):
     run_context = RunContext(sim_fs=sim_fs, mask=mask)
 
     ert.getEnkfFsManager().initRun(run_context, ["SNAKE_OIL_PARAM"])
-    assert len(ert.getEnkfFsManager().getStateMapForCase("new_case")) == 6
+    assert len(ert.getEnkfFsManager().getStateMapForCase("new_case")) == 25

@@ -51,11 +51,12 @@ TEST_CASE("Write and read a matrix to enkf_fs instance",
         WITH_TMPDIR;
         // create file system
         auto file_path = std::filesystem::current_path();
-        auto fs =
-            enkf_fs_create_fs(file_path.c_str(), BLOCK_FS_DRIVER_ID, true);
+        int ensemble_size = 10;
+        auto fs = enkf_fs_create_fs(file_path.c_str(), BLOCK_FS_DRIVER_ID,
+                                    ensemble_size, true);
 
         auto ensemble_config = ensemble_config_alloc_full("name-not-important");
-        int ensemble_size = 10;
+
         // setting up a config node for a single parameter
         auto config_node =
             ensemble_config_add_gen_kw(ensemble_config, "TEST", false);
@@ -118,11 +119,12 @@ TEST_CASE("Reading and writing matrices with rowscaling attached",
         WITH_TMPDIR;
         // create file system
         auto file_path = std::filesystem::current_path();
-        auto fs =
-            enkf_fs_create_fs(file_path.c_str(), BLOCK_FS_DRIVER_ID, true);
+        int ensemble_size = 10;
+        auto fs = enkf_fs_create_fs(file_path.c_str(), BLOCK_FS_DRIVER_ID,
+                                    ensemble_size, true);
 
         auto ensemble_config = ensemble_config_alloc_full("name-not-important");
-        int ensemble_size = 10;
+
         // setting up a config node for a single parameter
         auto config_node =
             ensemble_config_add_gen_kw(ensemble_config, "TEST", false);

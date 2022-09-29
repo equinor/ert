@@ -38,12 +38,12 @@ if TYPE_CHECKING:
 class EnkfFs(BaseCClass):
     TYPE_NAME = "enkf_fs"
 
-    _mount = ResPrototype("void* enkf_fs_mount(char*, bool)", bind=False)
+    _mount = ResPrototype("void* enkf_fs_mount(char*, int, bool)", bind=False)
     _sync = ResPrototype("void enkf_fs_sync(enkf_fs)")
     _is_read_only = ResPrototype("bool  enkf_fs_is_read_only(enkf_fs)")
     _fsync = ResPrototype("void  enkf_fs_fsync(enkf_fs)")
     _create = ResPrototype(
-        "enkf_fs_obj   enkf_fs_create_fs(char* , enkf_fs_type_enum , bool)",
+        "enkf_fs_obj   enkf_fs_create_fs(char* , enkf_fs_type_enum ,int, bool)",
         bind=False,
     )
     _get_time_map = ResPrototype("time_map_ref  enkf_fs_get_time_map(enkf_fs)")
@@ -52,10 +52,12 @@ class EnkfFs(BaseCClass):
     )
     _umount = ResPrototype("void enkf_fs_umount(enkf_fs)")
 
-    def __init__(self, mount_point: Union[str, Path], read_only: bool = False):
+    def __init__(
+        self, mount_point: Union[str, Path], read_only: bool, ensemble_size: int
+    ):
         self.mount_point = Path(mount_point).absolute()
         self.case_name = self.mount_point.stem
-        c_ptr = self._mount(self.mount_point.as_posix(), read_only)
+        c_ptr = self._mount(self.mount_point.as_posix(), ensemble_size, read_only)
         super().__init__(c_ptr)
 
     # This method will return a new Python object which shares the underlying
@@ -94,12 +96,12 @@ class EnkfFs(BaseCClass):
 
     @classmethod
     def createFileSystem(
-        cls, path: Union[str, Path], read_only: bool = False
+        cls, path: Union[str, Path], read_only: bool, ensemble_size: int
     ) -> "EnkfFs":
         path = Path(path).absolute()
         fs_type = EnKFFSType.BLOCK_FS_DRIVER_ID
-        cls._create(path.as_posix(), fs_type, True)
-        return cls(path, read_only=read_only)
+        cls._create(path.as_posix(), fs_type, ensemble_size, False)
+        return cls(path, read_only=read_only, ensemble_size=ensemble_size)
 
     def sync(self):
         self._sync()

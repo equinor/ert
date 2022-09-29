@@ -25,19 +25,14 @@
 
 #include <ert/enkf/state_map.hpp>
 
-void create_test() {
-    StateMap state_map;
-    test_assert_int_equal(0, state_map.size());
-}
-
 void get_test() {
-    StateMap state_map;
+    StateMap state_map(101);
     test_assert_int_equal(STATE_UNDEFINED, state_map.get(0));
     test_assert_int_equal(STATE_UNDEFINED, state_map.get(100));
 }
 
 void set_test() {
-    StateMap state_map;
+    StateMap state_map(101);
     state_map.set(0, STATE_INITIALIZED);
     test_assert_int_equal(STATE_INITIALIZED, state_map.get(0));
 
@@ -54,8 +49,8 @@ void load_empty_test() {
 }
 
 void test_equal() {
-    StateMap state_map1;
-    StateMap state_map2;
+    StateMap state_map1(151);
+    StateMap state_map2(151);
 
     test_assert_true(state_map1 == state_map2);
     for (int i = 0; i < 25; i++) {
@@ -74,23 +69,10 @@ void test_equal() {
     test_assert_false(state_map1 == state_map2);
 }
 
-void test_copy() {
-    StateMap state_map;
-    state_map.set(0, STATE_INITIALIZED);
-    state_map.set(100, STATE_INITIALIZED);
-    {
-        StateMap copy = state_map;
-        test_assert_true(copy == state_map);
-
-        state_map.set(10, STATE_INITIALIZED);
-        test_assert_false(copy == state_map);
-    }
-}
-
 void test_io() {
     ecl::util::TestArea ta("state_map_io");
     {
-        StateMap state_map;
+        StateMap state_map(101);
         state_map.set(0, STATE_INITIALIZED);
         state_map.set(100, STATE_INITIALIZED);
         state_map.write("map");
@@ -98,7 +80,7 @@ void test_io() {
         StateMap copy1("map");
         test_assert_true(state_map == copy1);
 
-        StateMap copy2;
+        StateMap copy2(101);
         test_assert_true(copy2.read("map"));
         test_assert_true(state_map == copy2);
 
@@ -107,14 +89,11 @@ void test_io() {
 
         copy2.read("map");
         test_assert_true(state_map == copy2);
-
-        test_assert_false(copy2.read("DoesNotExist"));
-        test_assert_int_equal(0, copy2.size());
     }
 }
 
 void test_update_matching() {
-    StateMap state_map;
+    StateMap state_map(11);
 
     state_map.set(10, STATE_INITIALIZED);
     state_map.set(3, STATE_PARENT_FAILURE);
@@ -137,13 +116,13 @@ void test_update_matching() {
 }
 
 void test_select_matching() {
-    StateMap state_map;
+    StateMap state_map(51);
 
     state_map.set(10, STATE_INITIALIZED);
     state_map.set(10, STATE_HAS_DATA);
     state_map.set(20, STATE_INITIALIZED);
     auto mask = state_map.select_matching(STATE_HAS_DATA | STATE_INITIALIZED);
-    test_assert_int_equal(mask.size(), 21);
+    test_assert_int_equal(mask.size(), 51);
     test_assert_true(mask[10]);
     test_assert_true(mask[20]);
 
@@ -225,12 +204,10 @@ void test_transitions() {
 }
 
 int main(int argc, char **argv) {
-    create_test();
     get_test();
     set_test();
     load_empty_test();
     test_equal();
-    test_copy();
     test_io();
     test_select_matching();
     test_transitions();
