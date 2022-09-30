@@ -1,3 +1,4 @@
+import logging
 from typing import List
 
 from ert._c_wrappers.config.active_range import ActiveRange
@@ -9,6 +10,15 @@ from ert.shared.models.single_test_run import SingleTestRun
 
 
 def create_model(ert, ensemble_size, current_case_name, args, id_):
+    logger = logging.getLogger(__name__)
+    logger.info(
+        "Initiating experiment",
+        extra={
+            "mode": args.mode,
+            "ensemble_size": ensemble_size,
+        },
+    )
+
     # Setup model
     if args.mode == "test_run":
         model = _setup_single_test_run(ert, id_)
