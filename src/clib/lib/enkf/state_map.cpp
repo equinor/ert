@@ -114,14 +114,6 @@ bool StateMap::is_legal_transition(realisation_state_enum state1,
 void StateMap::set(int index, realisation_state_enum new_state) {
     std::lock_guard lock{m_mutex};
 
-    if (index < 0)
-        index += m_state.size();
-    if (index < 0)
-        throw exc::out_of_range("index out of range: {} < 0", index);
-    if (index >= m_state.size())
-        throw exc::out_of_range("index out of range: {} >= {}", index,
-                                m_state.size());
-
     auto current_state = static_cast<realisation_state_enum>(m_state.at(index));
 
     if (is_legal_transition(current_state, new_state))
