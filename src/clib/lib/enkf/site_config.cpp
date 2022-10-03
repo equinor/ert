@@ -145,7 +145,7 @@ static void site_config_load_config(site_config_type *site_config) {
 /**
  * NOTE: The queue config is not loaded until the site_config_alloc_load_user.
  */
-static site_config_type *site_config_alloc_default() {
+site_config_type *site_config_alloc_default() {
     site_config_type *site_config = site_config_alloc_empty();
     site_config_set_config_file(site_config, site_config_get_location());
     site_config_load_config(site_config);

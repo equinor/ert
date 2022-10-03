@@ -68,6 +68,7 @@ class ContentNode(BaseCClass):
         ContentTypeEnum.CONFIG_EXISTING_PATH: _iget_as_path,
         ContentTypeEnum.CONFIG_BOOL: _iget_as_bool,
         ContentTypeEnum.CONFIG_ISODATE: _iget_as_isodate,
+        ContentTypeEnum.CONFIG_EXECUTABLE: _iget_as_string,
     }
 
     def __init__(self):
@@ -198,6 +199,13 @@ class ConfigContent(BaseCClass):
                 "Failed to construct ConfigContent "
                 f"instance from config file {filename}."
             )
+
+    def __repr__(self):
+        return (
+            f"{self.__class__.__name__}(\n\t"
+            + ",\n\t".join([f"{k}: {self.getValue(k)}" for k in self.keys()])
+            + ")"
+        )
 
     def __len__(self):
         return self._size()
