@@ -52,16 +52,14 @@ PYBIND11_MODULE(_clib, m) {
 
     m.def(
         "obs_vector_get_step_list",
-        [](py::object self) {
-            auto obs_vector = ert::from_cwrap<obs_vector_type>(self);
-            return obs_vector_get_step_list(obs_vector);
+        [](Cwrap<obs_vector_type> self) {
+            return obs_vector_get_step_list(self);
         },
         py::arg("self"));
     m.def(
         "analysis_config_module_names",
-        [](py::object self) {
-            auto analysis_config = ert::from_cwrap<analysis_config_type>(self);
-            return analysis_config_module_names(analysis_config);
+        [](Cwrap<analysis_config_type> self) {
+            return analysis_config_module_names(self);
         },
         py::arg("self"));
 }

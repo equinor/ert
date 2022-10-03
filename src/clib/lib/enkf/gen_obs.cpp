@@ -472,9 +472,8 @@ VOID_UPDATE_STD_SCALE(gen_obs)
 
 class ActiveList;
 namespace {
-void update_std_scaling(py::handle obj, double scaling,
+void update_std_scaling(Cwrap<gen_obs_type> self, double scaling,
                         const ActiveList &active_list) {
-    auto *self = ert::from_cwrap<gen_obs_type>(obj);
     gen_obs_update_std_scale(self, scaling, &active_list);
 }
 } // namespace

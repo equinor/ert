@@ -269,9 +269,7 @@ ERT_CLIB_SUBMODULE("config_keywords", m) {
     using namespace py::literals;
     m.def(
         "init_res_config_parser",
-        [](py::object py_config_parser) {
-            auto config_parser =
-                ert::from_cwrap<config_parser_type>(py_config_parser);
+        [](Cwrap<config_parser_type> config_parser) {
             add_path_keyword(config_parser, WORKFLOW_JOB_DIRECTORY_KEY);
             add_load_workflow_keyword(config_parser);
             add_load_workflow_job_keyword(config_parser);

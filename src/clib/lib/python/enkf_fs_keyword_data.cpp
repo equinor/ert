@@ -11,13 +11,9 @@ static auto logger = ert::get_logger("enkf_fs");
 ERT_CLIB_SUBMODULE("enkf_fs_keyword_data", m) {
     m.def(
         "keyword_data_get_realizations",
-        [](py::object config, py::object fs,
-           const std::vector<std::string> &keys,
+        [](Cwrap<ensemble_config_type> ensemble_config,
+           Cwrap<enkf_fs_type> enkf_fs, const std::vector<std::string> &keys,
            const std::vector<int> &realizations) {
-            auto ensemble_config =
-                ert::from_cwrap<ensemble_config_type>(config);
-            auto enkf_fs = ert::from_cwrap<enkf_fs_type>(fs);
-
             const int key_count = std::size(keys);
             const int realization_size = std::size(realizations);
             const size_t size = realization_size * key_count;

@@ -73,16 +73,10 @@ ERT_CLIB_SUBMODULE("env_varlist", m) {
     using namespace py::literals;
     m.def(
         "_get_varlist",
-        [](py::object self_py) {
-            auto self = ert::from_cwrap<env_varlist_type>(self_py);
-            return self->varlist;
-        },
+        [](Cwrap<env_varlist_type> self) { return self->varlist; },
         py::arg("self"));
     m.def(
         "_get_updatelist",
-        [](py::object self_py) {
-            auto self = ert::from_cwrap<env_varlist_type>(self_py);
-            return self->updatelist;
-        },
+        [](Cwrap<env_varlist_type> self) { return self->updatelist; },
         py::arg("self"));
 }
