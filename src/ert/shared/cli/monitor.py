@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import sys
 from datetime import datetime
+from typing import Iterator, Union
 
 from colors import color as ansi_color
 from tqdm import tqdm
@@ -58,9 +59,12 @@ class Monitor:
         is the string to be (un-)colored."""
         return args[0]
 
-    def monitor(self, tracker):
+    def monitor(
+        self,
+        events: Iterator[Union[FullSnapshotEvent, SnapshotUpdateEvent, EndEvent]],
+    ):
         self._start_time = datetime.now()
-        for event in tracker.track():
+        for event in events:
             if isinstance(event, FullSnapshotEvent):
                 if event.snapshot is not None:
                     self._snapshots[event.iteration] = event.snapshot

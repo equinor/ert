@@ -2,7 +2,7 @@ import asyncio
 import logging
 import pickle
 from contextlib import contextmanager
-from typing import Any, Callable, Generator, Set
+from typing import Any, Callable, Iterator, Set
 
 from cloudevents.exceptions import DataUnmarshallerError
 from cloudevents.http import from_json
@@ -80,9 +80,7 @@ class ExperimentServer:
             await self._registry.all_experiments[0].dispatch(event, 0)
 
     @contextmanager
-    def store_client(
-        self, websocket: WebSocketServerProtocol
-    ) -> Generator[None, None, None]:
+    def store_client(self, websocket: WebSocketServerProtocol) -> Iterator[None]:
         """store_client(self, websocket)
 
         Context manager for a client connection handler, allowing to know how

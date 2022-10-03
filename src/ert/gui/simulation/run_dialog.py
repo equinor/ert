@@ -43,7 +43,6 @@ _TOTAL_PROGRESS_TEMPLATE = "Total progress {total_progress}% — {phase_name}"
 
 class RunDialog(QDialog):
     simulation_done = Signal(bool, str)
-    simulation_termination_request = Signal()
 
     def __init__(self, config_file, run_model, parent=None):
         QDialog.__init__(self, parent)
@@ -286,12 +285,12 @@ class RunDialog(QDialog):
 
         self._ticker.start(1000)
 
-        tracker = EvaluatorTracker(
+        self._tracker = EvaluatorTracker(
             self._run_model,
             ee_con_info=evaluator_server_config.get_connection_info(),
         )
 
-        worker = TrackerWorker(tracker)
+        worker = TrackerWorker(self._tracker.track)
         worker_thread = QThread()
         worker.done.connect(worker_thread.quit)
         worker.consumed_event.connect(self._on_tracker_event)
@@ -312,7 +311,7 @@ class RunDialog(QDialog):
         if kill_job == QMessageBox.Yes:
             # Normally this slot would be invoked by the signal/slot system,
             # but the worker is busy tracking the evaluation.
-            self._worker.request_termination()
+            self._tracker.request_termination()
             self.reject()
         return kill_job
 

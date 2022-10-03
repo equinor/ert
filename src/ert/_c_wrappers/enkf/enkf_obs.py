@@ -13,7 +13,7 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
-from typing import Generator, List, Optional, Union
+from typing import Iterator, List, Optional, Union
 
 from cwrap import BaseCClass
 from ecl.util.util import StringList
@@ -62,7 +62,7 @@ class EnkfObs(BaseCClass):
     def __contains__(self, key):
         return self._has_key(key)
 
-    def __iter__(self) -> Generator[ObsVector, None, None]:
+    def __iter__(self) -> Iterator[ObsVector]:
         iobs = 0
         while iobs < len(self):
             vector = self[iobs]

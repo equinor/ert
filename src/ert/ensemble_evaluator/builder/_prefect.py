@@ -11,7 +11,7 @@ import time
 import warnings
 from datetime import timedelta
 from multiprocessing.process import BaseProcess
-from typing import TYPE_CHECKING, Any, Dict, Generator, List, Optional, Union
+from typing import TYPE_CHECKING, Any, Dict, Iterator, List, Optional, Union
 
 import cloudpickle
 from cloudevents.conversion import to_json
@@ -62,7 +62,7 @@ logger = logging.getLogger(__name__)
 
 
 @contextlib.contextmanager
-def prefect_log_level_context(level: Union[int, str]) -> Generator[None, None, None]:
+def prefect_log_level_context(level: Union[int, str]) -> Iterator[None]:
     prefect_logger = prefect.utilities.logging.get_logger()
     prev_log_level = prefect_logger.level
     prefect_logger.setLevel(level=level)

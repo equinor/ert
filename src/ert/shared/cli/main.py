@@ -110,7 +110,7 @@ def run_cli(args):
         monitor = Monitor(out=out, color_always=args.color_always)
 
         try:
-            monitor.monitor(tracker)
+            monitor.monitor(tracker.track())
         except (SystemExit, KeyboardInterrupt):
             print("\nKilling simulations...")
             tracker.request_termination()

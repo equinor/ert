@@ -1,6 +1,6 @@
 import logging
 from contextlib import contextmanager
-from typing import Generator
+from typing import Iterator
 
 from qtpy import QtCore
 from qtpy.QtCore import QObject
@@ -54,7 +54,7 @@ class EventViewerPanel(QPlainTextEdit):
 
 
 @contextmanager
-def add_gui_log_handler() -> Generator[GUILogHandler, None, None]:
+def add_gui_log_handler() -> Iterator[GUILogHandler]:
     """
     Context manager for the GUILogHandler class. Will make sure that the handler
     is removed prior to program exit.
