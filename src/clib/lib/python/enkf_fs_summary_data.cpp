@@ -8,13 +8,10 @@
 ERT_CLIB_SUBMODULE("enkf_fs_summary_data", m) {
     m.def(
         "get_summary_data",
-        [](py::object ens_cfg, py::object fs,
+        [](Cwrap<ensemble_config_type> ensemble_config,
+           Cwrap<enkf_fs_type> enkfs_fs,
            const std::vector<std::string> &summary_keys,
            const std::vector<int> &realizations, const int time_map_size) {
-            auto ensemble_config =
-                ert::from_cwrap<ensemble_config_type>(ens_cfg);
-            auto enkfs_fs = ert::from_cwrap<enkf_fs_type>(fs);
-
             const int realization_size = std::size(realizations);
             const int summary_key_size = std::size(summary_keys);
             const size_t size =

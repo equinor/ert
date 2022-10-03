@@ -8,8 +8,7 @@ namespace py = pybind11;
 ERT_CLIB_SUBMODULE("ensemble_config", m) {
     m.def(
         "ensemble_config_keylist_from_var_type",
-        [](py::object self, int var_mask) {
-            auto ensemble_config = ert::from_cwrap<ensemble_config_type>(self);
+        [](Cwrap<ensemble_config_type> ensemble_config, int var_mask) {
             return ensemble_config_keylist_from_var_type(ensemble_config,
                                                          var_mask);
         },

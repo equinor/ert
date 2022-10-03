@@ -132,39 +132,34 @@ ERT_CLIB_SUBMODULE("enkf_main", m) {
     using namespace py::literals;
     m.def(
         "init_current_case_from_existing_custom",
-        [](py::object ensemble_config_py, py::object source_case_py,
-           py::object current_case_py, int source_report_step,
-           std::vector<std::string> &node_list, std::vector<bool> &iactive) {
-            auto source_case_fs = ert::from_cwrap<enkf_fs_type>(source_case_py);
-            auto current_fs = ert::from_cwrap<enkf_fs_type>(current_case_py);
-            auto ensemble_config =
-                ert::from_cwrap<ensemble_config_type>(ensemble_config_py);
-            enkf_main_copy_ensemble(ensemble_config, source_case_fs,
-                                    source_report_step, current_fs, iactive,
+        [](Cwrap<ensemble_config_type> ensemble_config,
+           Cwrap<enkf_fs_type> source_case, Cwrap<enkf_fs_type> current_case,
+           int source_report_step, std::vector<std::string> &node_list,
+           std::vector<bool> &iactive) {
+            enkf_main_copy_ensemble(ensemble_config, source_case,
+                                    source_report_step, current_case, iactive,
                                     node_list);
-            enkf_fs_fsync(current_fs);
+            enkf_fs_fsync(current_case);
         },
         py::arg("self"), py::arg("source_case"), py::arg("current_case"),
         py::arg("source_report_step"), py::arg("node_list"),
         py::arg("iactive"));
     m.def(
         "init_active_run",
-        [](py::object model_config, py::object ensemble_config,
-           py::object site_config, char *run_path, int iens, py::object sim_fs,
-           char *run_id, char *job_name, py::object subst_list) {
-            enkf_main::init_active_run(
-                ert::from_cwrap<model_config_type>(model_config),
-                ert::from_cwrap<ensemble_config_type>(ensemble_config),
-                ert::from_cwrap<site_config_type>(site_config), run_path, iens,
-                ert::from_cwrap<enkf_fs_type>(sim_fs), run_id, job_name,
-                ert::from_cwrap<subst_list_type>(subst_list));
+        [](Cwrap<model_config_type> model_config,
+           Cwrap<ensemble_config_type> ensemble_config,
+           Cwrap<site_config_type> site_config, char *run_path, int iens,
+           Cwrap<enkf_fs_type> sim_fs, char *run_id, char *job_name,
+           Cwrap<subst_list_type> subst_list) {
+            enkf_main::init_active_run(model_config, ensemble_config,
+                                       site_config, run_path, iens, sim_fs,
+                                       run_id, job_name, subst_list);
         },
         py::arg("model_config"), py::arg("ensemble_config"),
         py::arg("site_config"), py::arg("run_path"), py::arg("iens"),
         py::arg("sim_fs"), py::arg("run_id"), py::arg("job_name"),
         py::arg("subst_list"));
-    m.def("log_seed", [](py::object rng_) {
-        auto rng = ert::from_cwrap<rng_type>(rng_);
+    m.def("log_seed", [](Cwrap<rng_type> rng) {
         uint32_t random_seeds[4];
         rng_get_state(rng, reinterpret_cast<char *>(random_seeds));
 

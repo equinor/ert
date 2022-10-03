@@ -1,3 +1,4 @@
+#include "ert/enkf/ensemble_config.hpp"
 #include <Eigen/Dense>
 #include <cerrno>
 #include <optional>
@@ -323,92 +324,67 @@ std::pair<Eigen::MatrixXd, ObservationHandler> load_observations_and_responses(
 
 namespace {
 static Eigen::MatrixXd generate_noise(int active_obs_size, int active_ens_size,
-                                      py::object shared_rng) {
-    auto shared_rng_ = ert::from_cwrap<rng_type>(shared_rng);
+                                      Cwrap<rng_type> shared_rng) {
     Eigen::MatrixXd noise =
         Eigen::MatrixXd::Zero(active_obs_size, active_ens_size);
     for (int j = 0; j < active_ens_size; j++)
         for (int i = 0; i < active_obs_size; i++)
-            noise(i, j) = enkf_util_rand_normal(0, 1, shared_rng_);
+            noise(i, j) = enkf_util_rand_normal(0, 1, shared_rng);
     return noise;
 }
 
-static void copy_parameters_pybind(py::object source_fs, py::object target_fs,
-                                   py::object ensemble_config,
+static void copy_parameters_pybind(Cwrap<enkf_fs_type> source_fs,
+                                   Cwrap<enkf_fs_type> target_fs,
+                                   Cwrap<ensemble_config_type> ensemble_config,
                                    std::vector<bool> ens_mask) {
-    auto ensemble_config_ =
-        ert::from_cwrap<ensemble_config_type>(ensemble_config);
-    auto source_fs_ = ert::from_cwrap<enkf_fs_type>(source_fs);
-    auto target_fs_ = ert::from_cwrap<enkf_fs_type>(target_fs);
-    return analysis::copy_parameters(source_fs_, target_fs_, ensemble_config_,
+    return analysis::copy_parameters(source_fs, target_fs, ensemble_config,
                                      ens_mask);
 }
 
 static std::pair<Eigen::MatrixXd, analysis::ObservationHandler>
 load_observations_and_responses_pybind(
-    py::object source_fs, py::object obs, double alpha, double std_cutoff,
-    double global_std_scaling, std::vector<bool> ens_mask,
+    Cwrap<enkf_fs_type> source_fs, Cwrap<enkf_obs_type> obs, double alpha,
+    double std_cutoff, double global_std_scaling, std::vector<bool> ens_mask,
     const std::vector<std::pair<std::string, std::vector<int>>>
         &selected_observations) {
-
-    auto source_fs_ = ert::from_cwrap<enkf_fs_type>(source_fs);
-    auto obs_ = ert::from_cwrap<enkf_obs_type>(obs);
-
     return analysis::load_observations_and_responses(
-        source_fs_, obs_, alpha, std_cutoff, global_std_scaling, ens_mask,
+        source_fs, obs, alpha, std_cutoff, global_std_scaling, ens_mask,
         selected_observations);
 }
 
 static std::vector<std::pair<Eigen::MatrixXd, std::shared_ptr<RowScaling>>>
 load_row_scaling_parameters_pybind(
-    py::object target_fs, py::object ensemble_config,
+    Cwrap<enkf_fs_type> target_fs, Cwrap<ensemble_config_type> ensemble_config,
     const std::vector<int> &iens_active_index,
     const std::vector<analysis::RowScalingParameter> &config_parameters) {
-
-    auto target_fs_ = ert::from_cwrap<enkf_fs_type>(target_fs);
-    auto ensemble_config_ =
-        ert::from_cwrap<ensemble_config_type>(ensemble_config);
-
     return analysis::load_row_scaling_parameters(
-        target_fs_, ensemble_config_, iens_active_index, config_parameters);
+        target_fs, ensemble_config, iens_active_index, config_parameters);
 }
 
 static std::optional<Eigen::MatrixXd>
-load_parameters_pybind(py::object target_fs, py::object ensemble_config,
+load_parameters_pybind(Cwrap<enkf_fs_type> target_fs,
+                       Cwrap<ensemble_config_type> ensemble_config,
                        const std::vector<int> &iens_active_index,
                        const std::vector<analysis::Parameter> &parameters) {
-
-    auto target_fs_ = ert::from_cwrap<enkf_fs_type>(target_fs);
-    auto ensemble_config_ =
-        ert::from_cwrap<ensemble_config_type>(ensemble_config);
-
-    return analysis::load_parameters(target_fs_, ensemble_config_,
+    return analysis::load_parameters(target_fs, ensemble_config,
                                      iens_active_index, parameters);
 }
 
-static void save_parameters_pybind(py::object target_fs,
-                                   py::object ensemble_config,
+static void save_parameters_pybind(Cwrap<enkf_fs_type> target_fs,
+                                   Cwrap<ensemble_config_type> ensemble_config,
                                    std::vector<int> iens_active_index,
                                    std::vector<analysis::Parameter> &parameters,
                                    const Eigen::MatrixXd &A) {
-    auto target_fs_ = ert::from_cwrap<enkf_fs_type>(target_fs);
-    auto ensemble_config_ =
-        ert::from_cwrap<ensemble_config_type>(ensemble_config);
-
-    analysis::save_parameters(target_fs_, ensemble_config_, iens_active_index,
+    analysis::save_parameters(target_fs, ensemble_config, iens_active_index,
                               parameters, A);
 }
 static void save_row_scaling_parameters_pybind(
-    py::object target_fs, py::object ensemble_config,
+    Cwrap<enkf_fs_type> target_fs, Cwrap<ensemble_config_type> ensemble_config,
     std::vector<int> iens_active_index,
     const std::vector<analysis::RowScalingParameter> &config_parameters,
     const std::vector<std::pair<Eigen::MatrixXd, std::shared_ptr<RowScaling>>>
         scaled_A) {
-    auto target_fs_ = ert::from_cwrap<enkf_fs_type>(target_fs);
-    auto ensemble_config_ =
-        ert::from_cwrap<ensemble_config_type>(ensemble_config);
-
-    analysis::save_row_scaling_parameters(target_fs_, ensemble_config_,
+    analysis::save_row_scaling_parameters(target_fs, ensemble_config,
                                           iens_active_index, config_parameters,
                                           scaled_A);
 }

@@ -359,10 +359,9 @@ bool enkf_state_complete_forward_model_EXIT_handler__(run_arg_type *run_arg) {
 }
 
 ERT_CLIB_SUBMODULE("enkf_state", m) {
-    m.def("state_initialize", [](py::object rng, py::object param_node,
-                                 py::object fs, int iens) {
-        return enkf_state_initialize(
-            ert::from_cwrap<rng_type>(rng), ert::from_cwrap<enkf_fs_type>(fs),
-            ert::from_cwrap<enkf_node_type>(param_node), iens);
-    });
+    m.def("state_initialize",
+          [](Cwrap<rng_type> rng, Cwrap<enkf_node_type> param_node,
+             Cwrap<enkf_fs_type> fs, int iens) {
+              return enkf_state_initialize(rng, fs, param_node, iens);
+          });
 }

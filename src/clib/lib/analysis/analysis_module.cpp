@@ -302,9 +302,9 @@ analysis_module_get_module_config(const analysis_module_type *module) {
     return module->module_config.get();
 }
 
-ies::Config *analysis_module_get_module_config_pybind(py::object module) {
-    auto module_ = ert::from_cwrap<analysis_module_type>(module);
-    return analysis_module_get_module_config(module_);
+ies::Config *
+analysis_module_get_module_config_pybind(Cwrap<analysis_module_type> module) {
+    return analysis_module_get_module_config(module);
 }
 
 ERT_CLIB_SUBMODULE("analysis_module", m) {

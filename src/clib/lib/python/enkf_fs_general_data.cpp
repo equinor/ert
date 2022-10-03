@@ -7,9 +7,8 @@
 ERT_CLIB_SUBMODULE("enkf_fs_general_data", m) {
     m.def(
         "gendata_get_realizations",
-        [](py::object self, const std::vector<int> &realizations) {
-            auto enkf_plot_gendata =
-                ert::from_cwrap<enkf_plot_gendata_type>(self);
+        [](Cwrap<enkf_plot_gendata_type> enkf_plot_gendata,
+           const std::vector<int> &realizations) {
             const int data_size =
                 enkf_plot_gendata_get_data_size(enkf_plot_gendata);
             if (data_size < 0) {
