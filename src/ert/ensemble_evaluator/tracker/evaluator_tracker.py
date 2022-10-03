@@ -3,7 +3,7 @@ import logging
 import queue
 import threading
 import time
-from typing import TYPE_CHECKING, Dict, Generator, Union
+from typing import TYPE_CHECKING, Dict, Iterator, Union
 
 from aiohttp import ClientError
 from websockets.exceptions import ConnectionClosedError
@@ -121,7 +121,7 @@ class EvaluatorTracker:
 
     def track(
         self,
-    ) -> Generator[Union[FullSnapshotEvent, SnapshotUpdateEvent, EndEvent], None, None]:
+    ) -> Iterator[Union[FullSnapshotEvent, SnapshotUpdateEvent, EndEvent]]:
         while True:
             event = self._work_queue.get()
             if isinstance(event, str):
@@ -221,6 +221,7 @@ class EvaluatorTracker:
         # See issue: https://github.com/equinor/ert/issues/1250
         #
         try:
+            logger.debug("requesting termination...")
             get_event_loop().run_until_complete(
                 wait_for_evaluator(
                     base_url=self._ee_con_info.url,
@@ -229,6 +230,7 @@ class EvaluatorTracker:
                     timeout=5,
                 )
             )
+            logger.debug("requested termination")
         except ClientError as e:
             logger.warning(f"{__name__} - exception {e}")
             return

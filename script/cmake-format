@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-import sys
 import re
-from typing import Generator
-from pathlib import Path
-from subprocess import check_output, CalledProcessError, STDOUT
+import sys
 from argparse import ArgumentParser
+from pathlib import Path
+from subprocess import STDOUT, CalledProcessError, check_output
+from typing import Iterator
 
 
 def source_root() -> Path:
@@ -16,7 +16,7 @@ def source_root() -> Path:
     return node
 
 
-def enumerate_sources() -> Generator[Path, None, None]:
+def enumerate_sources() -> Iterator[Path]:
     root = source_root()
     for filename in "CMakeLists.txt", "*.cmake":
         pattern = f"src/**/{filename}"

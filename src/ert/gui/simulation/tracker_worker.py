@@ -1,8 +1,8 @@
 import logging
+from typing import Callable, Iterator, Union
 
 from qtpy.QtCore import QObject, Signal, Slot
 
-from ert.ensemble_evaluator import EvaluatorTracker
 from ert.ensemble_evaluator.event import (
     EndEvent,
     FullSnapshotEvent,
@@ -20,16 +20,22 @@ class TrackerWorker(QObject):
     consumed_event = Signal(object)
     done = Signal()
 
-    def __init__(self, tracker: EvaluatorTracker, parent=None):
+    def __init__(
+        self,
+        event_generator_factory: Callable[
+            [], Iterator[Union[FullSnapshotEvent, SnapshotUpdateEvent, EndEvent]]
+        ],
+        parent=None,
+    ):
         super().__init__(parent)
         logger.debug("init trackerworker")
-        self._tracker = tracker
+        self._tracker = event_generator_factory
         self._stopped = False
 
     @Slot()
     def consume_and_emit(self):
         logger.debug("tracking...")
-        for event in self._tracker.track():
+        for event in self._tracker():
             if self._stopped:
                 logger.debug("stopped")
                 break
@@ -53,9 +59,3 @@ class TrackerWorker(QObject):
     def stop(self):
         logger.debug("stopping...")
         self._stopped = True
-
-    @Slot()
-    def request_termination(self):
-        logger.debug("requesting termination...")
-        self._tracker.request_termination()
-        logger.debug("requested termination")

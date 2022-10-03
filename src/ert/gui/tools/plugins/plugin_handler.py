@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Generator, List
+from typing import TYPE_CHECKING, Iterator, List
 
 from .plugin import Plugin
 
@@ -24,7 +24,7 @@ class PluginHandler:
     def ert(self) -> "EnKFMain":
         return self.__ert
 
-    def __iter__(self) -> Generator[Plugin, None, None]:
+    def __iter__(self) -> Iterator[Plugin]:
         index = 0
         while index < len(self.__plugins):
             yield self.__plugins[index]

@@ -4,7 +4,7 @@ import ssl
 import threading
 import time
 from concurrent.futures import CancelledError
-from typing import Generator, Optional, Union
+from typing import Iterator, Optional, Union
 
 import websockets
 from cloudevents.http import CloudEvent
@@ -104,7 +104,7 @@ class SyncWebsocketDuplexer:
             self.stop()
             raise
 
-    def receive(self) -> Generator[CloudEvent, None, None]:
+    def receive(self) -> Iterator[CloudEvent]:
         """Create a generator with which you can iterate over incoming
         websocket messages."""
         self._ensure_running()

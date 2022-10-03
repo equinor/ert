@@ -1,7 +1,7 @@
 import uuid
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Generator, List
+from typing import Iterator, List
 
 from ert._c_wrappers.enkf.enkf_fs import EnkfFs
 from ert._c_wrappers.enkf.run_arg import RunArg
@@ -46,7 +46,7 @@ class RunContext:
     def __getitem__(self, item) -> RunArg:
         return self.run_args[item]
 
-    def __iter__(self) -> Generator[RunArg, None, None]:
+    def __iter__(self) -> Iterator[RunArg]:
         yield from self.run_args
 
     def deactivate_realization(self, realization_nr):
