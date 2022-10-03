@@ -49,6 +49,7 @@ extern "C" const env_varlist_type *
 site_config_get_env_varlist(const site_config_type *site_config);
 int site_config_install_job(site_config_type *site_config, const char *job_name,
                             const char *install_file);
+extern "C" site_config_type *site_config_alloc_default();
 extern "C" site_config_type *
 site_config_alloc(const config_content_type *config_content);
 extern "C" site_config_type *

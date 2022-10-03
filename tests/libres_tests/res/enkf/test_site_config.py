@@ -16,8 +16,6 @@
 
 import os
 
-import pytest
-
 from ert._c_wrappers.enkf import ConfigKeys, ResConfig, SiteConfig
 
 
@@ -25,7 +23,7 @@ def test_constructors(snake_oil_case):
     ert_site_config = SiteConfig.getLocation()
     ert_share_path = os.path.dirname(ert_site_config)
 
-    assert snake_oil_case.resConfig().site_config == SiteConfig(
+    assert snake_oil_case.resConfig().site_config == SiteConfig.from_config_dict(
         config_dict={
             ConfigKeys.INSTALL_JOB: [
                 {
@@ -57,11 +55,6 @@ def test_constructors(snake_oil_case):
             ConfigKeys.LICENSE_PATH: "some/random/path",
         }
     )
-
-
-def test_2_inits_raises():
-    with pytest.raises(ValueError):
-        SiteConfig(config_content="a_config", config_dict={"some": "config"})
 
 
 def test_site_config_hook_workflow(monkeypatch, tmp_path):

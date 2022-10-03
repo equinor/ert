@@ -178,7 +178,7 @@ class ResConfig:
         config_dict[ConfigKeys.CONFIG_DIRECTORY] = self.config_path
 
         self.subst_config = SubstConfig(config_dict=config_dict)
-        self.site_config = SiteConfig(config_dict=config_dict)
+        self.site_config = SiteConfig.from_config_dict(config_dict=config_dict)
         self.random_seed = config_dict.get(ConfigKeys.RANDOM_SEED, None)
         self.analysis_config = AnalysisConfig(config_dict=config_dict)
         self.ecl_config = EclConfig(config_dict=config_dict)
