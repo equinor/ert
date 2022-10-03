@@ -14,6 +14,7 @@
 #include <pybind11/stl_bind.h>
 
 #include <ert/logging.hpp>
+#include <pyerrors.h>
 
 namespace py = pybind11;
 
@@ -34,7 +35,67 @@ template <typename T> T *from_cwrap(py::handle obj) {
 
     return reinterpret_cast<T *>(pointer);
 }
+
+/**
+ * Pointer container with automatic typecasting from Python
+ *
+ * Functions with 'Cwrap<T>' arguments will get the pointer value from the
+ * Python object's '_BaseCClass__c_pointer' attribute.
+ *
+ * \code
+ * void py_foo(Cwrap<enkf_fs_type> enkf_fs) {
+ *   // enkf_fs implicitly casted from 'Cwrap<enkf_fs_type>' to 'enkf_fs_type *':
+ *   enkf_fs_foo(enkf_fs);
+ * }
+ * \endcode
+ *
+ * @note No typechecking is made other than making sure that the Python type is
+ *       a subclass of 'BaseCClass'.
+ */
+template <typename T> class Cwrap {
+    T *m_ptr{};
+
+public:
+    Cwrap() = default;
+    explicit Cwrap(T *ptr) : m_ptr(ptr) {}
+    Cwrap(const Cwrap &) = default;
+    Cwrap(Cwrap &&) = default;
+
+    Cwrap &operator=(const Cwrap &) = default;
+    Cwrap &operator=(Cwrap &&) = default;
+
+    T *operator->() { return m_ptr; }
+    const T *operator->() const { return m_ptr; }
+
+    T &operator*() { return *m_ptr; }
+    const T &operator*() const { return *m_ptr; }
+
+    /** Implicit cast to the underlying pointer */
+    operator T *() { return m_ptr; }
+
+    /** Implicit cast to the underlying const pointer */
+    operator const T *() const { return m_ptr; }
+};
 } // namespace ert
+
+namespace pybind11::detail {
+/**
+ * Pybind11 type caster for the Cwrap type
+ *
+ * @note We only implement Python to C++ conversion. C++ to Python requires
+ *       knowledge of the Python class name which is not obtainable just
+ *       from the C++ class name.
+ */
+template <typename T> struct type_caster<::ert::Cwrap<T>> {
+    PYBIND11_TYPE_CASTER(::ert::Cwrap<T>, const_name("cwrap"));
+
+    bool load(handle ref, bool) {
+        this->value = ::ert::Cwrap<T>{ert::from_cwrap<T>(ref)};
+        return true;
+    }
+};
+} // namespace pybind11::detail
+
 /**
  * Define a submodule path within the Python package 'ert._clib'
  *
@@ -61,3 +122,5 @@ template <typename T> T *from_cwrap(py::handle obj) {
     static ::ert::detail::Submodule _python_submodule{_Path,                   \
                                                       _python_submodule_init}; \
     void _python_submodule_init(py::module_ _ModuleParam)
+
+using ert::Cwrap;
