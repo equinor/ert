@@ -39,7 +39,7 @@ class KeyManager:
                 key=lambda k: k.lower(),
             )
 
-        return self.__summary_keys
+        return self.__summary_keys  # type: ignore
 
     def summaryKeysWithObservations(self) -> List[str]:
         if self.__summary_keys_with_observations is None:
@@ -52,7 +52,7 @@ class KeyManager:
                 key=lambda k: k.lower(),
             )
 
-        return self.__summary_keys_with_observations
+        return self.__summary_keys_with_observations  # type: ignore
 
     def genKwKeys(self) -> List[str]:
         if self.__gen_kw_keys is None:
@@ -74,7 +74,7 @@ class KeyManager:
 
             self.__gen_kw_keys = sorted(gen_kw_list, key=lambda k: k.lower())
 
-        return self.__gen_kw_keys
+        return self.__gen_kw_keys  # type: ignore
 
     def genDataKeys(self) -> List[str]:
         if self.__gen_data_keys is None:
@@ -91,7 +91,7 @@ class KeyManager:
 
             self.__gen_data_keys = sorted(gen_data_list, key=lambda k: k.lower())
 
-        return self.__gen_data_keys
+        return self.__gen_data_keys  # type: ignore
 
     def genDataKeysWithObservations(self) -> List[str]:
         if self.__gen_data_keys_with_observations is None:
@@ -111,7 +111,7 @@ class KeyManager:
 
             self.__gen_data_keys_with_observations = gen_data_obs_keys
 
-        return self.__gen_data_keys_with_observations
+        return self.__gen_data_keys_with_observations  # type: ignore
 
     def misfitKeys(self, sort_keys=True) -> List[str]:
         if self.__misfit_keys is None:
@@ -125,7 +125,7 @@ class KeyManager:
                 sorted(keys, key=lambda k: k.lower()) if sort_keys else keys
             )
 
-        return self.__misfit_keys
+        return self.__misfit_keys  # type: ignore
 
     def allDataTypeKeys(self) -> List[str]:
         if self.__all_keys is None:
@@ -139,7 +139,7 @@ class KeyManager:
                 self.summaryKeysWithObservations() + self.genDataKeysWithObservations()
             )
 
-        return self.__all_keys_with_observations
+        return self.__all_keys_with_observations  # type: ignore
 
     def isKeyWithObservations(self, key: str) -> bool:
         return key in self.allDataTypeKeysWithObservations()
