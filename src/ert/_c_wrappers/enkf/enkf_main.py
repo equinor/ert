@@ -410,9 +410,6 @@ class EnKFMain:
     def _createFullCaseName(self, mount_root: str, case_name: str) -> str:
         return os.path.join(mount_root, case_name)
 
-    # The return value from the getFileSystem will be a weak reference to the
-    # underlying enkf_fs object. That implies that the fs manager must be in
-    # scope for the return value to be valid.
     def getFileSystem(
         self, case_name: str, mount_root: str = None, read_only: bool = False
     ) -> EnkfFs:
