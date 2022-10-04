@@ -36,11 +36,10 @@ ecl_sum_type *load_ecl_sum(const ecl_config_type *ecl_config,
                            const char *run_path, const char *eclbase) {
     ecl_sum_type *summary = NULL;
 
-    const bool fmt_file = ecl_config_get_formatted(ecl_config);
     char *header_file = ecl_util_alloc_exfilename(
-        run_path, eclbase, ECL_SUMMARY_HEADER_FILE, fmt_file, -1);
+        run_path, eclbase, ECL_SUMMARY_HEADER_FILE, DEFAULT_FORMATTED, -1);
     char *unified_file = ecl_util_alloc_exfilename(
-        run_path, eclbase, ECL_UNIFIED_SUMMARY_FILE, fmt_file, -1);
+        run_path, eclbase, ECL_UNIFIED_SUMMARY_FILE, DEFAULT_FORMATTED, -1);
     stringlist_type *data_files = stringlist_alloc_new();
     if ((unified_file != NULL) && (header_file != NULL)) {
         stringlist_append_copy(data_files, unified_file);
