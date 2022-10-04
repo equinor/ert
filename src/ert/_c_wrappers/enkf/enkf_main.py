@@ -207,7 +207,7 @@ class EnKFMain:
             time_map = file_system.getTimeMap()
             time_map.attach_refcase(self.config_file.ecl_config.getRefcase())
         case_name = file_system.getCaseName()
-        full_name = self._createFullCaseName(self.getMountPoint(), case_name)
+        full_name = os.path.join(self.getMountPoint(), case_name)
         if full_name not in self._fs_rotator:
             self._fs_rotator.append(file_system)
         # On setting a new file system we write the current_case file
@@ -407,16 +407,13 @@ class EnKFMain:
         "Will return the random number generator used for updates."
         return self._shared_rng
 
-    def _createFullCaseName(self, mount_root: str, case_name: str) -> str:
-        return os.path.join(mount_root, case_name)
-
     def getFileSystem(
         self, case_name: str, mount_root: str = None, read_only: bool = False
     ) -> EnkfFs:
         if mount_root is None:
             mount_root = self.getMountPoint()
 
-        full_case_name = self._createFullCaseName(mount_root, case_name)
+        full_case_name = os.path.join(mount_root, case_name)
 
         if full_case_name not in self._fs_rotator:
             if not os.path.exists(full_case_name):
@@ -488,7 +485,7 @@ class EnKFMain:
         if mount_root is None:
             mount_root = self.getMountPoint()
 
-        full_case_name = self._createFullCaseName(mount_root, case_name)
+        full_case_name = os.path.join(mount_root, case_name)
 
         return full_case_name in self._fs_rotator
 
@@ -498,7 +495,7 @@ class EnKFMain:
             return fs.getStateMap()
         else:
             mount_root = self.getMountPoint()
-            full_case_name = self._createFullCaseName(mount_root, case)
+            full_case_name = os.path.join(mount_root, case)
             return self.storage.read_state_map(full_case_name)
 
     def createRunPath(self, run_context: RunContext) -> None:
