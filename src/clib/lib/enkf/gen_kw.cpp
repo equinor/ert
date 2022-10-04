@@ -18,6 +18,7 @@
 
 #include <Eigen/Dense>
 #include <cmath>
+#include <fmt/format.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -154,8 +155,18 @@ void gen_kw_read_from_buffer(gen_kw_type *gen_kw, buffer_type *buffer,
     const int data_size = gen_kw_config_get_data_size(gen_kw->config);
     ert_impl_type file_type;
     file_type = (ert_impl_type)buffer_fread_int(buffer);
-    if ((file_type == GEN_KW) || (file_type == MULTFLT))
+    if ((file_type == GEN_KW) || (file_type == MULTFLT)) {
+        size_t expected_size =
+            buffer_get_remaining_size(buffer) / sizeof *gen_kw->data;
+        if (expected_size != data_size) {
+            const char *key = gen_kw_config_get_key(gen_kw->config);
+            throw std::range_error(
+                fmt::format("The configuration of GEN_KW parameter {} is of "
+                            "size {}, expected {}",
+                            key, data_size, expected_size));
+        }
         buffer_fread(buffer, gen_kw->data, sizeof *gen_kw->data, data_size);
+    }
 }
 #undef MULTFLT
 
