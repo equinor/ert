@@ -580,3 +580,29 @@ def test_runpath_file(monkeypatch, tmp_path):
 
     config = ResConfig(os.path.relpath(config_path, workdir_path))
     assert config.runpath_file == str(runpath_path)
+
+
+def test_that_unknown_queue_option_gives_error_message(monkeypatch, tmp_path, capsys):
+    test_site_config = tmp_path / "test_site_config.ert"
+    my_script = (tmp_path / "my_script").resolve()
+    my_script.write_text("")
+    st = os.stat(my_script)
+    os.chmod(my_script, st.st_mode | stat.S_IEXEC)
+    test_site_config.write_text(
+        f"JOB_SCRIPT job_dispatch.py\nJOB_SCRIPT {my_script}\nQUEUE_SYSTEM LOCAL\n"
+    )
+    monkeypatch.setenv("ERT_SITE_CONFIG", str(test_site_config))
+
+    test_user_config = tmp_path / "user_config.ert"
+
+    test_user_config.write_text(
+        "JOBNAME  Job%d\nRUNPATH /tmp/simulations/run%d\n"
+        "NUM_REALIZATIONS 10\nQUEUE_OPTION UNKNOWN_QUEUE unsetoption\n"
+    )
+
+    with pytest.raises(ValueError, match="Parsing"):
+        _ = ResConfig(str(test_user_config))
+
+    err = capsys.readouterr().err
+    assert "Errors parsing" in err
+    assert "UNKNOWN_QUEUE" in err
