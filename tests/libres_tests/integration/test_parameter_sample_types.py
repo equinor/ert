@@ -125,16 +125,16 @@ def test_field_param(tmpdir, config_str, expected):
 
         fs = ert.getEnkfFsManager().getFileSystem("default_0", read_only=True)
         if expected:
-            arr = fs.load_parameters(
-                ert.ensembleConfig(), [0], [update.Parameter("MY_PARAM")]
+            arr = fs.load_parameter(
+                ert.ensembleConfig(), [0], update.Parameter("MY_PARAM")
             )
             assert len(arr) == 16
         else:
-            # load_parameters should probably handle errors better than
+            # load_parameter should probably handle errors better than
             # to throw an exception.
             with pytest.raises(IndexError):
-                fs.load_parameters(
-                    ert.ensembleConfig(), [0], [update.Parameter("MY_PARAM")]
+                fs.load_parameter(
+                    ert.ensembleConfig(), [0], update.Parameter("MY_PARAM")
                 )
 
 
@@ -192,16 +192,16 @@ def test_surface_param(
 
         fs = ert.getEnkfFsManager().getFileSystem("default_0", read_only=True)
         if expected and expect_loaded:
-            arr = fs.load_parameters(
-                ert.ensembleConfig(), [0], [update.Parameter("MY_PARAM")]
+            arr = fs.load_parameter(
+                ert.ensembleConfig(), [0], update.Parameter("MY_PARAM")
             )
             assert len(arr) == 4
         else:
-            # load_parameters should probably handle errors better than
+            # load_parameter should probably handle errors better than
             # to throw an exception.
             with pytest.raises(IndexError):
-                fs.load_parameters(
-                    ert.ensembleConfig(), [0], [update.Parameter("MY_PARAM")]
+                fs.load_parameter(
+                    ert.ensembleConfig(), [0], update.Parameter("MY_PARAM")
                 )
 
 
@@ -322,8 +322,8 @@ def test_that_first_three_parameters_sampled_snapshot(tmpdir):
             fh.writelines("MY_KEYWORD NORMAL 0 1")
         ert = create_runpath("config.ert", [True] * 3)
         fs = ert.getCurrentFileSystem()
-        prior = fs.load_parameters(
-            ert.ensembleConfig(), list(range(3)), [Parameter("KW_NAME")]
+        prior = fs.load_parameter(
+            ert.ensembleConfig(), list(range(3)), Parameter("KW_NAME")
         )
         expected = (
             [-0.9966211, 0.01418702, -0.44262875]

@@ -6,7 +6,9 @@ def test_all_active(snake_oil_field_example):
     assert [param.name for param in update_step.parameters] == [
         "PERMX",
         "PORO",
-        "SNAKE_OIL_PARAM",
+        "SNAKE_OIL_PARAM_BPR",
+        "SNAKE_OIL_PARAM_OP1",
+        "SNAKE_OIL_PARAM_OP2",
     ]
 
     assert len(update_step.observations) == 8
