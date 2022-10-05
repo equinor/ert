@@ -69,7 +69,7 @@ class EnKFMain:
         if config.model_config.obs_config_file:
             self._observations.load(
                 config.model_config.obs_config_file,
-                config.analysis_config.getStdCutoff(),
+                config.analysis_config.get_std_cutoff(),
             )
         self._ensemble_size = self.res_config.model_config.num_realizations
         self._substituter = Substituter(

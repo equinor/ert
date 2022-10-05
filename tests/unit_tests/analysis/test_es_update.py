@@ -311,7 +311,7 @@ SUMMARY_OBSERVATION EXTREMELY_HIGH_STD
     sim_fs = fsm.getFileSystem("default_0")
     target_fs = fsm.getFileSystem("target")
     run_context = RunContext(sim_fs, target_fs)
-    ert.analysisConfig().setEnkfAlpha(alpha)
+    ert.analysisConfig().set_enkf_alpha(alpha)
     w_container = IterativeEnsembleSmoother(ert.getEnsembleSize())
     es_update.iterative_smoother_update(run_context, w_container)
     result_snapshot = es_update.update_snapshots[run_context.run_id]

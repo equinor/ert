@@ -105,15 +105,15 @@ class IteratedEnsembleSmoother(BaseRunModel):
         target_case_format = self._simulation_arguments["target_case"]
         run_context = self.create_context(0)
 
-        self.ert().analysisConfig().getAnalysisIterConfig().setCaseFormat(
+        self.ert().analysisConfig().get_analysis_iter_config().set_case_format(
             target_case_format
         )
 
         ensemble_id = self._runAndPostProcess(run_context, evaluator_server_config)
 
         analysis_config = self.ert().analysisConfig()
-        analysis_iter_config = analysis_config.getAnalysisIterConfig()
-        num_retries_per_iteration = analysis_iter_config.getNumRetries()
+        analysis_iter_config = analysis_config.get_analysis_iter_config()
+        num_retries_per_iteration = analysis_iter_config.get_num_retries()
         num_retries = 0
         current_iter = 0
 
@@ -211,7 +211,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
         target_case_format = self._simulation_arguments["target_case"]
         run_context = await loop.run_in_executor(executor, self.create_context, 0)
 
-        self.ert().analysisConfig().getAnalysisIterConfig().setCaseFormat(
+        self.ert().analysisConfig().get_analysis_iter_config().set_case_format(
             target_case_format
         )
 
@@ -220,8 +220,8 @@ class IteratedEnsembleSmoother(BaseRunModel):
         )
 
         analysis_config = self.ert().analysisConfig()
-        analysis_iter_config = analysis_config.getAnalysisIterConfig()
-        num_retries_per_iteration = analysis_iter_config.getNumRetries()
+        analysis_iter_config = analysis_config.get_analysis_iter_config()
+        num_retries_per_iteration = analysis_iter_config.get_num_retries()
         num_retries = 0
         current_iter = 0
 

@@ -1,114 +1,71 @@
-from cwrap import BaseCClass
+from dataclasses import dataclass
+from typing import Any, Dict
 
-from ert._c_wrappers import ResPrototype
 from ert._c_wrappers.enkf.config_keys import ConfigKeys
 
 
-class AnalysisIterConfig(BaseCClass):
-    TYPE_NAME = "analysis_iter_config"
+@dataclass
+class AnalysisIterConfig:
+    iter_case: str = "ITERATED_ENSEMBLE_SMOOTHER%d"
+    iter_count: int = 4
+    iter_retry_count: int = 4
+    case_format_set: bool = False
 
-    _alloc = ResPrototype("void* analysis_iter_config_alloc( )", bind=False)
-    _alloc_full = ResPrototype(
-        "void* analysis_iter_config_alloc_full( char*, int, int )", bind=False
-    )
-    _free = ResPrototype("void  analysis_iter_config_free( analysis_iter_config )")
-    _set_num_iterations = ResPrototype(
-        "void  analysis_iter_config_set_num_iterations(analysis_iter_config, int)"
-    )
-    _get_num_iterations = ResPrototype(
-        "int   analysis_iter_config_get_num_iterations(analysis_iter_config)"
-    )
-    _get_num_retries = ResPrototype(
-        "int   analysis_iter_config_get_num_retries_per_iteration(analysis_iter_config)"
-    )
-    _num_iterations_set = ResPrototype(
-        "bool  analysis_iter_config_num_iterations_set(analysis_iter_config)"
-    )
-    _set_case_fmt = ResPrototype(
-        "void  analysis_iter_config_set_case_fmt( analysis_iter_config , char* )"
-    )
-    _get_case_fmt = ResPrototype(
-        "char* analysis_iter_config_get_case_fmt( analysis_iter_config)"
-    )
-    _case_fmt_set = ResPrototype(
-        "bool  analysis_iter_config_case_fmt_set(analysis_iter_config)"
-    )
+    @classmethod
+    def from_dict(cls, config_dict: Dict[str, Any]) -> "AnalysisIterConfig":
+        iter_case = config_dict.get(
+            ConfigKeys.ITER_CASE, "ITERATED_ENSEMBLE_SMOOTHER%d"
+        )
+        iter_count = config_dict.get(ConfigKeys.ITER_COUNT, 4)
+        iter_retry_count = config_dict.get(ConfigKeys.ITER_RETRY_COUNT, 4)
+        return cls(iter_case, iter_count, iter_retry_count)
 
-    def __init__(self, config_dict=None):
-
-        if config_dict is None:
-            c_ptr = self._alloc()
-            if c_ptr:
-                super().__init__(c_ptr)
-            else:
-                raise ValueError("Failed to construct AnalysisIterConfig instance.")
-        else:
-            c_ptr = self._alloc_full(
-                config_dict.get(ConfigKeys.ITER_CASE, "ITERATED_ENSEMBLE_SMOOTHER%d"),
-                config_dict.get(ConfigKeys.ITER_COUNT, 4),
-                config_dict.get(ConfigKeys.ITER_RETRY_COUNT, 4),
-            )
-            if c_ptr:
-                super().__init__(c_ptr)
-            else:
-                raise ValueError(
-                    "Failed to construct AnalysisIterConfig instance for dictionary."
-                )
-
-    def getNumIterations(self) -> int:
-        return self._get_num_iterations()
+    def get_num_iterations(self) -> int:
+        return self.iter_count
 
     def __len__(self) -> int:
-        return self.getNumIterations()
+        return self.iter_count
 
-    def setNumIterations(self, num_iterations):
-        self._set_num_iterations(num_iterations)
+    def set_num_iterations(self, num_iterations):
+        self.iter_count = num_iterations
 
-    def numIterationsSet(self):
-        return self._num_iterations_set()
+    def get_num_retries(self) -> int:
+        return self.iter_retry_count
 
-    def getNumRetries(self) -> int:
-        return self._get_num_retries()
+    def case_format(self) -> str:
+        return self.iter_case
 
-    def getCaseFormat(self) -> str:
-        return self._get_case_fmt()
+    def case_format_is_set(self) -> bool:
+        return self.case_format_set
 
-    def setCaseFormat(self, case_fmt):
-        self._set_case_fmt(case_fmt)
-
-    def caseFormatSet(self):
-        return self._case_fmt_set()
-
-    def free(self):
-        self._free()
+    def set_case_format(self, case_fmt):
+        self.iter_case = case_fmt
+        self.case_format_set = True
 
     def _short_case_fmt(self, maxlen=10):
-        fmt = self.getCaseFormat()
-        if len(fmt) <= maxlen:
-            return fmt
-        return fmt[: maxlen - 2] + ".."
+        if len(self.iter_case) <= maxlen:
+            return self.iter_case
+        return self.iter_case[: maxlen - 2] + ".."
 
     def __repr__(self):
-        cfs = "format = False"
-        if self.caseFormatSet():
-            cfs = "format = True"
+        cfs = f"format = {self.case_format_is_set()}"
         fmt = self._short_case_fmt()
-        ret = "AnalysisIterConfig(iterations = %d, retries = %d, fmt = %s, %s) at 0x%x"
-        its = len(self)
-        rets = self.getNumRetries()
-        return ret % (its, rets, fmt, cfs, self._address())
+        its = self.iter_count
+        rets = self.iter_retry_count
+        ret = "AnalysisIterConfig(iterations = %d, retries = %d, fmt = %s, %s)"
+        return ret % (its, rets, fmt, cfs)
 
     def __ne__(self, other):
         return not self == other
 
     def __eq__(self, other):
-        if self.getCaseFormat() != other.getCaseFormat():
+        if self.case_format() != other.case_format():
             return False
 
-        if self.getNumIterations() != other.getNumIterations():
+        if self.get_num_iterations() != other.get_num_iterations():
             return False
 
-        if self.getNumRetries() != other.getNumRetries():
+        if self.get_num_retries() != other.get_num_retries():
             return False
 
         return True

@@ -317,7 +317,7 @@ def _assert_has_enough_realizations(
     ens_mask: List[bool], analysis_config: "AnalysisConfig"
 ) -> None:
     active_realizations = sum(ens_mask)
-    if not analysis_config.haveEnoughRealisations(active_realizations):
+    if not analysis_config.have_enough_realisations(active_realizations):
         raise ErtAnalysisError(
             f"There are {active_realizations} active realisations left, which is "
             "less than the minimum specified - stopping assimilation.",
@@ -335,8 +335,8 @@ def _create_smoother_snapshot(
             name: analysis_config.getActiveModule().getVariableValue(name)
             for name in analysis_config.getActiveModule().getVariableNames()
         },
-        analysis_config.getEnkfAlpha(),
-        analysis_config.getStdCutoff(),
+        analysis_config.get_enkf_alpha(),
+        analysis_config.get_std_cutoff(),
     )
 
 
@@ -356,9 +356,9 @@ class ESUpdate:
         obs = self.ert.getObservations()
         ensemble_config = self.ert.ensembleConfig()
 
-        alpha = analysis_config.getEnkfAlpha()
-        std_cutoff = analysis_config.getStdCutoff()
-        global_scaling = analysis_config.getGlobalStdScaling()
+        alpha = analysis_config.get_enkf_alpha()
+        std_cutoff = analysis_config.get_std_cutoff()
+        global_scaling = analysis_config.get_global_std_scaling()
         source_state_map = source_fs.getStateMap()
         ens_mask = source_state_map.selectMatching(RealizationStateEnum.STATE_HAS_DATA)
         _assert_has_enough_realizations(ens_mask, analysis_config)
@@ -405,9 +405,9 @@ class ESUpdate:
         obs = self.ert.getObservations()
         ensemble_config = self.ert.ensembleConfig()
 
-        alpha = analysis_config.getEnkfAlpha()
-        std_cutoff = analysis_config.getStdCutoff()
-        global_scaling = analysis_config.getGlobalStdScaling()
+        alpha = analysis_config.get_enkf_alpha()
+        std_cutoff = analysis_config.get_std_cutoff()
+        global_scaling = analysis_config.get_global_std_scaling()
         source_state_map = source_fs.getStateMap()
         ens_mask = source_state_map.selectMatching(RealizationStateEnum.STATE_HAS_DATA)
 

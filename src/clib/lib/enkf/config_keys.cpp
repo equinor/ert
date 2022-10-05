@@ -98,7 +98,6 @@ ERT_CLIB_SUBMODULE("config_keys", m) {
     // It is heavily used in Everest as the Everest configuration transpiles all jobs
     // into SIMULATION_JOB.
     cls.attr("SIMULATION_JOB") = SIMULATION_JOB_KEY;
-    cls.attr("SINGLE_NODE_UPDATE") = SINGLE_NODE_UPDATE_KEY;
     cls.attr("SLURM_EXCLUDE_HOST_OPTION") = SLURM_EXCLUDE_HOST_OPTION;
     cls.attr("SLURM_INCLUDE_HOST_OPTION") = SLURM_INCLUDE_HOST_OPTION;
     cls.attr("SLURM_MAX_RUNTIME_OPTION") = SLURM_MAX_RUNTIME_OPTION;

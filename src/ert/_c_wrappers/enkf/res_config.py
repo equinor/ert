@@ -170,10 +170,10 @@ class ResConfig:
             self.random_seed = user_config_content.getValue(ConfigKeys.RANDOM_SEED)
         else:
             self.random_seed = None
-        self.analysis_config = AnalysisConfig(config_content=user_config_content)
 
         config_content_dict = user_config_content.as_dict()
         self.ecl_config = EclConfig.from_dict(config_content_dict)
+        self.analysis_config = AnalysisConfig.from_dict(config_content_dict)
 
         queue_config_args = {}
 
@@ -281,7 +281,7 @@ class ResConfig:
             config_dict=config_dict, site_config_content=site_config_content
         )
         self.random_seed = config_dict.get(ConfigKeys.RANDOM_SEED, None)
-        self.analysis_config = AnalysisConfig(config_dict=config_dict)
+        self.analysis_config = AnalysisConfig.from_dict(config_dict=config_dict)
         self.ecl_config = EclConfig.from_dict(config_dict=config_dict)
         queue_config_args = {}
         if ConfigKeys.JOB_SCRIPT in config_dict:

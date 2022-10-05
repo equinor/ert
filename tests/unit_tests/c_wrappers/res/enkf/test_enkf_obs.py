@@ -68,6 +68,6 @@ def test_that_correct_key_observation_is_loaded(extra_config, expected):
     )
     observations.load(
         res_config.model_config.obs_config_file,
-        res_config.analysis_config.getStdCutoff(),
+        res_config.analysis_config.get_std_cutoff(),
     )
     assert [obs.getValue() for obs in observations["FOPR"]] == [expected]

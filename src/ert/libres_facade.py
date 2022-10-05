@@ -54,7 +54,7 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
         self._es_update.iterative_smoother_update(run_context, ies)
 
     def set_global_std_scaling(self, weight: float) -> None:
-        self._enkf_main.analysisConfig().setGlobalStdScaling(weight)
+        self._enkf_main.analysisConfig().set_global_std_scaling(weight)
 
     def set_log_path(self, output_path: str) -> None:
         self._enkf_main.analysisConfig().set_log_path(output_path)
@@ -77,7 +77,7 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
 
     @property
     def number_of_iterations(self) -> int:
-        return len(self._enkf_main.analysisConfig().getAnalysisIterConfig())
+        return len(self._enkf_main.analysisConfig().get_analysis_iter_config())
 
     def get_run_context(self, prior_name: str, target_name: str) -> RunContext:
         fs_manager = self._enkf_main.getEnkfFsManager()
@@ -152,7 +152,9 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
 
     def get_number_of_iterations(self) -> int:
         return (
-            self._enkf_main.analysisConfig().getAnalysisIterConfig().getNumIterations()
+            self._enkf_main.analysisConfig()
+            .get_analysis_iter_config()
+            .get_num_iterations()
         )
 
     @property
@@ -589,10 +591,10 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
         return self._es_update.update_snapshots
 
     def get_alpha(self) -> float:
-        return self._enkf_main.analysisConfig().getEnkfAlpha()
+        return self._enkf_main.analysisConfig().get_enkf_alpha()
 
     def get_std_cutoff(self) -> float:
-        return self._enkf_main.analysisConfig().getStdCutoff()
+        return self._enkf_main.analysisConfig().get_std_cutoff()
 
     def get_workflow_job(self, name: str) -> Optional["WorkflowJob"]:
         if self._enkf_main.getWorkflowList().hasJob(name):

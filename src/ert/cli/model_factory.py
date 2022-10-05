@@ -117,15 +117,15 @@ def _target_case_name(ert, args, current_case_name, format_mode=False):
     if not format_mode:
         return f"{current_case_name}_smoother_update"
 
-    aic = ert.analysisConfig().getAnalysisIterConfig()
-    if aic.caseFormatSet():
-        return aic.getCaseFormat()
+    aic = ert.analysisConfig().get_analysis_iter_config()
+    if aic.case_format_is_set():
+        return aic.case_format()
 
     return f"{current_case_name}_%d"
 
 
 def _num_iterations(ert, args) -> None:
     if args.num_iterations is not None:
-        ert.analysisConfig().getAnalysisIterConfig().setNumIterations(
+        ert.analysisConfig().get_analysis_iter_config().set_num_iterations(
             int(args.num_iterations)
         )
