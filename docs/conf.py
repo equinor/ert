@@ -22,7 +22,7 @@ from pkg_resources import get_distribution  # noqa
 # -- Project information -----------------------------------------------------
 
 project = "ERT"
-copyright = "Equinor ASA"
+project_copyright = "Equinor ASA"
 author = "SCOUT - ScientifiC cOmpUTing team"
 
 dist_version = get_distribution("ert").version

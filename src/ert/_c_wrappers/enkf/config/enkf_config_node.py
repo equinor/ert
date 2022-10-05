@@ -440,6 +440,7 @@ class EnkfConfigNode(BaseCClass):
                     f"Unhandled implementation model type: {implementation_type:i}"
                 )
             )
+            return None
 
     def getKey(self):
         return self._get_key()

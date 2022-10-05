@@ -91,31 +91,31 @@ class LimitsStack(StackedInput):
         return line_edit
 
     def setValue(self, axis_name, value):
-        input = self._inputs[axis_name]
+        _input = self._inputs[axis_name]
 
         if axis_name in LimitsStack.NUMBER_AXIS:
             if value is None:
-                input.setText("")
+                _input.setText("")
             else:
-                input.setText(str(value))
+                _input.setText(str(value))
         elif axis_name == PlotContext.DATE_AXIS:
-            input.setDate(value)
+            _input.setDate(value)
 
     def getValue(self, axis_name):
-        input = self._inputs[axis_name]
+        _input = self._inputs[axis_name]
         result = None
         if axis_name in LimitsStack.FLOAT_AXIS:
             try:
-                result = float(input.text())
+                result = float(_input.text())
             except ValueError:
                 result = None
         elif axis_name in LimitsStack.INT_AXIS:
             try:
-                result = int(input.text())
+                result = int(_input.text())
             except ValueError:
                 result = None
         elif axis_name == PlotContext.DATE_AXIS:
-            result = input.date()
+            result = _input.date()
 
         return result
 

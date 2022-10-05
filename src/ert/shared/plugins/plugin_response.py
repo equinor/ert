@@ -2,10 +2,14 @@ from decorator import decorator
 
 
 @decorator
-def plugin_response(func, plugin_name="", *args, **kwargs):
-    response = func(*args, **kwargs)
+def plugin_response(_func=None, plugin_name="", *args, **kwargs):
+
+    if _func is None:
+        return None
+
+    response = _func(*args, **kwargs)
     return (
-        PluginResponse(response, PluginMetadata(plugin_name, func.__name__))
+        PluginResponse(response, PluginMetadata(plugin_name, _func.__name__))
         if response is not None
         else None
     )

@@ -38,7 +38,7 @@ class _DummyService(BaseService):
 def server_script(monkeypatch, tmp_path: Path, request):
     marker = request.node.get_closest_marker("script")
     if marker is None:
-        return
+        return None
 
     monkeypatch.chdir(tmp_path)
 

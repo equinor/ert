@@ -133,8 +133,8 @@ class Shell:
                         for file in files:
                             Shell.__deleteFile(os.path.join(root, file))
 
-                        for dir in dirs:
-                            Shell.__deleteDirectory(os.path.join(root, dir))
+                        for _dir in dirs:
+                            Shell.__deleteDirectory(os.path.join(root, _dir))
 
             else:
                 raise IOError(f"Entry:'{path}' is not a directory")

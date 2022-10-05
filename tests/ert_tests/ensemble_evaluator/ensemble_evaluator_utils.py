@@ -46,8 +46,8 @@ def send_dispatch_event(client, event_type, source, event_id, data, **extra_attr
 class TestEnsemble(_Ensemble):
     __test__ = False
 
-    def __init__(self, iter, reals, steps, jobs, id_):
-        self.iter = iter
+    def __init__(self, _iter, reals, steps, jobs, id_):
+        self.iter = _iter
         self.test_reals = reals
         self.steps = steps
         self.jobs = jobs

@@ -72,7 +72,7 @@ class Client:  # pylint: disable=too-many-instance-attributes
                 await self.websocket.send(msg)
                 return
             except ConnectionClosedOK:
-                # Connection was closed no point in trying to send more messages
+                pass  # Connection was closed no point in trying to send more messages
                 raise
             except (
                 ConnectionClosedError,

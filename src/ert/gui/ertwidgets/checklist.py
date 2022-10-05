@@ -120,16 +120,16 @@ class CheckList(QWidget):
         self._checkAllButton.setEnabled(enabled)
         self._uncheckAllButton.setEnabled(enabled)
 
-    def filterList(self, filter):
-        filter = filter.lower()
+    def filterList(self, _filter):
+        _filter = _filter.lower()
 
         for index in range(0, self._list.count()):
             item = self._list.item(index)
             text = str(item.text()).lower()
 
-            if filter == "":
+            if _filter == "":
                 item.setHidden(False)
-            elif filter in text:
+            elif _filter in text:
                 item.setHidden(False)
             else:
                 item.setHidden(True)

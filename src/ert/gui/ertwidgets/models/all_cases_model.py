@@ -32,6 +32,8 @@ class AllCasesModel(QAbstractItemModel):
             if role == Qt.DisplayRole:
                 return item
 
+        return None
+
     def itemAt(self, index):
         assert isinstance(index, QModelIndex)
 
