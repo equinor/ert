@@ -34,7 +34,7 @@ def without_key(a_dict, key):
 
 @pytest.fixture
 def snake_oil_structure_config(copy_case):
-    copy_case("local/snake_oil_structure")
+    copy_case("snake_oil_structure")
     return {
         ConfigKeys.RUNPATH_FILE: "runpath",
         ConfigKeys.CONFIG_DIRECTORY: os.getcwd(),

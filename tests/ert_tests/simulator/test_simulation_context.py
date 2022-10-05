@@ -5,7 +5,7 @@ from tests.utils import wait_until
 
 
 def test_simulation_context(setup_case):
-    res_config = setup_case("local/batch_sim", "sleepy_time.ert")
+    res_config = setup_case("batch_sim", "sleepy_time.ert")
     ert = EnKFMain(res_config)
 
     size = 4

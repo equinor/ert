@@ -60,7 +60,7 @@ def test_queue_config_constructor(minimum_case):
 
 
 def test_get_slurm_queue_config(setup_case):
-    res_config = setup_case("local/simple_config", "slurm_config")
+    res_config = setup_case("simple_config", "slurm_config")
     queue_config = res_config.queue_config
 
     assert queue_config.queue_system == "SLURM"

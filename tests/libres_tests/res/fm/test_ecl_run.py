@@ -188,8 +188,8 @@ def test_create(monkeypatch):
 @pytest.mark.xfail(reason="Finding a version on Komodo of flow that is not OPM-flow")
 @flow_installed
 def test_flow(init_flow_config, source_root):
-    shutil.copy(source_root / "test-data/local/eclipse/SPE1.DATA", "SPE1.DATA")
-    shutil.copy(source_root / "local/eclipse/SPE1_ERROR.DATA", "SPE1_ERROR.DATA")
+    shutil.copy(source_root / "test-data/eclipse/SPE1.DATA", "SPE1.DATA")
+    shutil.copy(source_root / "eclipse/SPE1_ERROR.DATA", "SPE1_ERROR.DATA")
     flow_config = FlowConfig()
     sim = flow_config.sim()
     flow_run = EclRun("SPE1.DATA", sim)
@@ -365,7 +365,7 @@ def test_running_flow_given_env_variables_with_same_name_as_parent_env_variables
 @pytest.mark.requires_eclipse
 def test_run(init_ecl100_config, source_root):
     shutil.copy(
-        source_root / "test-data/local/eclipse/SPE1.DATA",
+        source_root / "test-data/eclipse/SPE1.DATA",
         "SPE1.DATA",
     )
     ecl_config = Ecl100Config()
@@ -395,7 +395,7 @@ def test_run(init_ecl100_config, source_root):
 @pytest.mark.requires_eclipse
 def test_run_new_log_file(init_ecl100_config, source_root):
     shutil.copy(
-        source_root / "test-data/local/eclipse/SPE1.DATA",
+        source_root / "test-data/eclipse/SPE1.DATA",
         "SPE1.DATA",
     )
     ecl_config = Ecl100Config()
@@ -424,7 +424,7 @@ def test_run_new_log_file(init_ecl100_config, source_root):
 @pytest.mark.requires_eclipse
 def test_run_api(init_ecl100_config, source_root):
     shutil.copy(
-        source_root / "test-data/local/eclipse/SPE1.DATA",
+        source_root / "test-data/eclipse/SPE1.DATA",
         "SPE1.DATA",
     )
     ecl_config = Ecl100Config()
@@ -436,7 +436,7 @@ def test_run_api(init_ecl100_config, source_root):
 @pytest.mark.requires_eclipse
 def test_failed_run(init_ecl100_config, source_root):
     shutil.copy(
-        source_root / "test-data/local/eclipse/SPE1_ERROR.DATA",
+        source_root / "test-data/eclipse/SPE1_ERROR.DATA",
         "SPE1_ERROR.DATA",
     )
     ecl_config = Ecl100Config()
@@ -449,7 +449,7 @@ def test_failed_run(init_ecl100_config, source_root):
 @pytest.mark.requires_eclipse
 def test_failed_run_OK(init_ecl100_config, source_root):
     shutil.copy(
-        source_root / "test-data/local/eclipse/SPE1_ERROR.DATA",
+        source_root / "test-data/eclipse/SPE1_ERROR.DATA",
         "SPE1_ERROR.DATA",
     )
     ecl_config = Ecl100Config()
@@ -466,7 +466,7 @@ def test_failed_run_OK(init_ecl100_config, source_root):
 @pytest.mark.requires_eclipse
 def test_mpi_run(init_ecl100_config, source_root):
     shutil.copy(
-        source_root / "test-data/local/eclipse/SPE1_PARALLELL.DATA",
+        source_root / "test-data/eclipse/SPE1_PARALLELL.DATA",
         "SPE1_PARALLELL.DATA",
     )
     ecl_config = Ecl100Config()
@@ -478,7 +478,7 @@ def test_mpi_run(init_ecl100_config, source_root):
 @pytest.mark.requires_eclipse
 def test_summary_block(init_ecl100_config, source_root):
     shutil.copy(
-        source_root / "test-data/local/eclipse/SPE1.DATA",
+        source_root / "test-data/eclipse/SPE1.DATA",
         "SPE1.DATA",
     )
     ecl_config = Ecl100Config()
@@ -494,10 +494,10 @@ def test_summary_block(init_ecl100_config, source_root):
 @pytest.mark.requires_eclipse
 def test_error_parse(init_ecl100_config, source_root):
     shutil.copy(
-        source_root / "test-data/local/eclipse/SPE1.DATA",
+        source_root / "test-data/eclipse/SPE1.DATA",
         "SPE1.DATA",
     )
-    prt_file = source_root / "test-data/local/eclipse/parse/ERROR.PRT"
+    prt_file = source_root / "test-data/eclipse/parse/ERROR.PRT"
     shutil.copy(prt_file, "SPE1.PRT")
 
     ecl_config = Ecl100Config()

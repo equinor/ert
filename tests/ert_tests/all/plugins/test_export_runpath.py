@@ -11,7 +11,7 @@ from ert.shared.plugins import ErtPluginManager
 
 @pytest.fixture
 def snake_oil_export_runpath_job(setup_case):
-    res_config = setup_case("local/snake_oil", "snake_oil.ert")
+    res_config = setup_case("snake_oil", "snake_oil.ert")
     ert = EnKFMain(res_config)
     return ExportRunpathJob(ert)
 
@@ -33,7 +33,7 @@ class WritingSetup:
 @pytest.fixture
 def writing_setup(setup_case):
     with patch.object(Runpaths, "write_runpath_list") as write_mock:
-        res_config = setup_case("local/snake_oil", "snake_oil.ert")
+        res_config = setup_case("snake_oil", "snake_oil.ert")
         ert = EnKFMain(res_config)
         yield WritingSetup(write_mock, ExportRunpathJob(ert))
 

@@ -15,7 +15,7 @@ def test_create():
 
 
 def test_ensemble_config_constructor(setup_case):
-    res_config = setup_case("local/configuration_tests", "ensemble_config.ert")
+    res_config = setup_case("configuration_tests", "ensemble_config.ert")
     assert res_config.ensemble_config == EnsembleConfig(
         config_dict={
             ConfigKeys.GEN_KW_TAG_FORMAT: "<%s>",

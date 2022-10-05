@@ -107,7 +107,7 @@ As a simple test of your `ert` installation, you may try to run one of the
 examples, for instance:
 
 ```
-cd test-data/local/poly_example
+cd test-data/poly_example
 # for non-gui trial run
 ert test_run poly.ert
 # for gui trial run
@@ -213,9 +213,9 @@ python setup.py compile_protocol_buffers
 ## Example usage
 
 ### Basic ert test
-To test if ert itself is working, go to `test-data/local/poly_example` and start ert by running `poly.ert` with `ert gui`
+To test if ert itself is working, go to `test-data/poly_example` and start ert by running `poly.ert` with `ert gui`
 ```
-cd test-data/local/poly_example
+cd test-data/poly_example
 ert gui poly.ert
 ````
 This opens up the ert graphical user interface.

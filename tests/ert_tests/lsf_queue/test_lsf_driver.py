@@ -14,7 +14,7 @@ from ert.shared.main import ert_parser
 def poly_case_context(tmpdir, source_root, mock_start_server):
     # Copy the poly_example files needed
     shutil.copytree(
-        os.path.join(source_root, "test-data", "local", "poly_example"),
+        os.path.join(source_root, "test-data", "poly_example"),
         os.path.join(str(tmpdir), "poly_example"),
     )
 

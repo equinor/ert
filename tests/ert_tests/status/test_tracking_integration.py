@@ -150,7 +150,7 @@ def test_tracking(
 ):
     experiment_folder = "poly_example"
     shutil.copytree(
-        os.path.join(source_root, "test-data", "local", f"{experiment_folder}"),
+        os.path.join(source_root, "test-data", f"{experiment_folder}"),
         os.path.join(str(tmpdir), f"{experiment_folder}"),
     )
 

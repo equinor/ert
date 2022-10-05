@@ -207,7 +207,7 @@ def test_init(minimum_case):
 
 
 def test_extensive_config(setup_case):
-    res_config = setup_case("local/snake_oil_structure", "ert/model/user_config.ert")
+    res_config = setup_case("snake_oil_structure", "ert/model/user_config.ert")
 
     model_config = res_config.model_config
     assert (
@@ -337,7 +337,7 @@ def test_extensive_config(setup_case):
 def test_res_config_dict_constructor(setup_case):
     config_file_name = "user_config.ert"
     relative_config_path = f"ert/model/{config_file_name}"
-    _ = setup_case("local/snake_oil_structure", relative_config_path)
+    _ = setup_case("snake_oil_structure", relative_config_path)
     # create script file
     script_file = "script.sh"
     with open(script_file, "w") as f:

@@ -6,7 +6,7 @@ from ert._c_wrappers.enkf import EnkfFs
 
 
 def test_create(copy_case):
-    copy_case("local/mini_ert")
+    copy_case("mini_ert")
     mount_point = "fail_storage/ertensemble/default"
 
     assert os.path.exists(mount_point)

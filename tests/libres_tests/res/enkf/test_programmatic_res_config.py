@@ -159,9 +159,7 @@ def test_new_config():
 
 
 def test_large_config(setup_case):
-    loaded_res_config = setup_case(
-        "local/snake_oil_structure", "ert/model/user_config.ert"
-    )
+    loaded_res_config = setup_case("snake_oil_structure", "ert/model/user_config.ert")
     prog_res_config = ResConfig(
         config={
             "DEFINES": {

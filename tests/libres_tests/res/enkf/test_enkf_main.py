@@ -347,7 +347,7 @@ def test_failed_realizations(setup_case):
     8 OK
     9 OK
     """
-    ert = EnKFMain(setup_case("local/mini_ert", "mini_fail_config"))
+    ert = EnKFMain(setup_case("mini_ert", "mini_fail_config"))
     fs = ert.getEnkfFsManager().getCurrentFileSystem()
 
     realizations_list = fs.realizationList(RealizationStateEnum.STATE_HAS_DATA)
@@ -378,7 +378,7 @@ def test_data_kw():
 
 
 def test_load_results_manually(setup_case):
-    res_config = setup_case("local/mini_ert", "mini_fail_config")
+    res_config = setup_case("mini_ert", "mini_fail_config")
     ert = EnKFMain(res_config)
     load_into_case = "A1"
     load_from_case = "default_1"
@@ -423,7 +423,7 @@ def test_load_results_manually2(setup_case, caplog, monkeypatch, lazy_load):
     """
     if lazy_load:
         monkeypatch.setenv("ERT_LAZY_LOAD_SUMMARYDATA", str(lazy_load))
-    res_config = setup_case("local/snake_oil", "snake_oil.ert")
+    res_config = setup_case("snake_oil", "snake_oil.ert")
     ert = EnKFMain(res_config)
     load_from = ert.getEnkfFsManager().getFileSystem("default_0")
     ert.getEnkfFsManager().switchFileSystem(load_from)

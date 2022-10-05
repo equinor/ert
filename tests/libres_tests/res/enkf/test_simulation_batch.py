@@ -4,7 +4,7 @@ from ert.simulator.simulation_context import _run_forward_model
 
 
 def test_run_simulation_batch(setup_case):
-    ert = EnKFMain(setup_case("local/config/simulation_batch", "config.ert"))
+    ert = EnKFMain(setup_case("config/simulation_batch", "config.ert"))
     ens_size = 4
     ens_config = ert.ensembleConfig()
 
