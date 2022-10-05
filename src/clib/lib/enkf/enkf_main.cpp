@@ -78,54 +78,8 @@ void init_active_run(const model_config_type *model_config,
 }
 } // namespace enkf_main
 
-static void enkf_main_copy_ensemble(const ensemble_config_type *ensemble_config,
-                                    enkf_fs_type *source_case_fs,
-                                    int source_report_step,
-                                    enkf_fs_type *target_case_fs,
-                                    const std::vector<bool> &iens_mask,
-                                    const std::vector<std::string> &node_list) {
-    auto &target_state_map = enkf_fs_get_state_map(target_case_fs);
-
-    for (auto &node : node_list) {
-        enkf_config_node_type *config_node =
-            ensemble_config_get_node(ensemble_config, node.c_str());
-
-        int src_iens = 0;
-        for (auto mask : iens_mask) {
-            if (mask) {
-                node_id_type src_id = {.report_step = source_report_step,
-                                       .iens = src_iens};
-                node_id_type target_id = {.report_step = 0, .iens = src_iens};
-
-                /* The copy is careful ... */
-                if (enkf_config_node_has_node(config_node, source_case_fs,
-                                              src_id))
-                    enkf_node_copy(config_node, source_case_fs, target_case_fs,
-                                   src_id, target_id);
-
-                target_state_map.set(src_iens, STATE_INITIALIZED);
-            }
-            src_iens++;
-        }
-    }
-}
-
 ERT_CLIB_SUBMODULE("enkf_main", m) {
     using namespace py::literals;
-    m.def(
-        "init_current_case_from_existing_custom",
-        [](Cwrap<ensemble_config_type> ensemble_config,
-           Cwrap<enkf_fs_type> source_case, Cwrap<enkf_fs_type> current_case,
-           int source_report_step, std::vector<std::string> &node_list,
-           std::vector<bool> &iactive) {
-            enkf_main_copy_ensemble(ensemble_config, source_case,
-                                    source_report_step, current_case, iactive,
-                                    node_list);
-            enkf_fs_fsync(current_case);
-        },
-        py::arg("self"), py::arg("source_case"), py::arg("current_case"),
-        py::arg("source_report_step"), py::arg("node_list"),
-        py::arg("iactive"));
     m.def(
         "init_active_run",
         [](Cwrap<model_config_type> model_config,

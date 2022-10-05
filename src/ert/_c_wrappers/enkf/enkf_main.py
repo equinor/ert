@@ -439,23 +439,6 @@ class EnKFMain:
     def getCaseList(self) -> List[str]:
         return sorted(self._fs_rotator.cases, key=naturalSortKey)
 
-    def customInitializeCurrentFromExistingCase(
-        self,
-        source_case: str,
-        source_report_step: int,
-        member_mask: List[bool],
-        node_list: List[str],
-    ) -> None:
-        source_case_fs = self._fs_rotator[source_case]
-        _clib.enkf_main.init_current_case_from_existing_custom(
-            self.ensembleConfig(),
-            source_case_fs,
-            self.getCurrentFileSystem(),
-            source_report_step,
-            node_list,
-            member_mask,
-        )
-
     def createRunPath(self, run_context: RunContext) -> None:
         self.initRun(run_context)
         for iens, run_arg in enumerate(run_context):

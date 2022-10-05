@@ -149,3 +149,19 @@ class EnkfFs(BaseCClass):
             run_args,
             active_realizations,
         )
+
+    def copy_from_case(
+        self, other: "EnkfFs", report_step: int, nodes: List[str], active: List[bool]
+    ):
+        """
+        This copies parameters from self into other, checking if nodes exists
+        in self before performing copy.
+        """
+        _clib.enkf_fs.copy_from_case(
+            self,
+            self._ensemble_config,
+            other,
+            report_step,
+            nodes,
+            active,
+        )
