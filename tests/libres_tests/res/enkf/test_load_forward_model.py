@@ -39,7 +39,7 @@ def test_load_inconsistent_time_map_summary(copy_case, caplog):
     """
     Checking that we dont util_abort, we fail the forward model instead
     """
-    copy_case("local/snake_oil")
+    copy_case("snake_oil")
     cwd = os.getcwd()
 
     # Get rid of GEN_DATA as we are only interested in SUMMARY
@@ -87,7 +87,7 @@ def test_load_forward_model(copy_case):
     """
     Checking that we are able to load from forward model
     """
-    copy_case("local/snake_oil")
+    copy_case("snake_oil")
     # Get rid of GEN_DATA it causes a failure to load from forward model
     with fileinput.input("snake_oil.ert", inplace=True) as fin:
         for line in fin:

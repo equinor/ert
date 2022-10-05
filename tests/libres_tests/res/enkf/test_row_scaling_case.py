@@ -190,7 +190,7 @@ def assert_field_update(grid, init_field, update_field1, update_field2):
 
 @pytest.fixture
 def row_scaling_example(setup_case):
-    return EnKFMain(setup_case("local/row_scaling", "config"))
+    return EnKFMain(setup_case("row_scaling", "config"))
 
 
 def test_update_workflow(row_scaling_example):
@@ -451,7 +451,7 @@ def test_large_case(tmpdir, source_root):
     """
     with tmpdir.as_cwd():
         shutil.copytree(
-            os.path.join(source_root, "test-data", "local", "row_scaling"), "test_data"
+            os.path.join(source_root, "test-data", "row_scaling"), "test_data"
         )
         os.chdir("test_data")
         with open("config", "w") as fp:

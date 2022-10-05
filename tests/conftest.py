@@ -74,17 +74,17 @@ def setup_case(tmpdir, source_root):
 
 @pytest.fixture()
 def poly_case(setup_case):
-    return EnKFMain(setup_case("local/poly_example", "poly.ert"))
+    return EnKFMain(setup_case("poly_example", "poly.ert"))
 
 
 @pytest.fixture()
 def snake_oil_case(setup_case):
-    return EnKFMain(setup_case("local/snake_oil", "snake_oil.ert"))
+    return EnKFMain(setup_case("snake_oil", "snake_oil.ert"))
 
 
 @pytest.fixture()
 def minimum_case(setup_case):
-    return EnKFMain(setup_case("local/simple_config", "minimum_config"))
+    return EnKFMain(setup_case("simple_config", "minimum_config"))
 
 
 @pytest.fixture()
@@ -99,17 +99,17 @@ def copy_case(tmpdir, source_root):
 
 @pytest.fixture()
 def copy_poly_case(copy_case):
-    copy_case("local/poly_example")
+    copy_case("poly_example")
 
 
 @pytest.fixture()
 def copy_snake_oil_case(copy_case):
-    copy_case("local/snake_oil")
+    copy_case("snake_oil")
 
 
 @pytest.fixture()
 def copy_minimum_case(copy_case):
-    copy_case("local/simple_config")
+    copy_case("simple_config")
 
 
 @pytest.fixture()

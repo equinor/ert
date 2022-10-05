@@ -86,7 +86,7 @@ def test_jobname():
 
 
 def test_model_config_dict_constructor(setup_case):
-    res_config = setup_case("local/configuration_tests", "model_config.ert")
+    res_config = setup_case("configuration_tests", "model_config.ert")
     assert res_config.model_config == ModelConfig(
         data_root="",
         joblist=res_config.site_config.get_installed_jobs(),
@@ -129,7 +129,7 @@ def test_model_config_dict_constructor(setup_case):
 
 def test_schedule_file_as_history_is_disallowed(setup_case):
     with pytest.raises(ValueError) as cm:
-        setup_case("local/configuration_tests", "sched_file_as_history_source.ert")
+        setup_case("configuration_tests", "sched_file_as_history_source.ert")
 
         # Any assert should per the unittest documentation be outside the
         # scope of the assertRaises with-block.

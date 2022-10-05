@@ -12,9 +12,7 @@ from ert.libres_facade import LibresFacade
 
 @pytest.fixture
 def snake_oil_data(source_root, tmp_path, monkeypatch):
-    shutil.copytree(
-        source_root / "test-data/local/snake_oil", tmp_path, dirs_exist_ok=True
-    )
+    shutil.copytree(source_root / "test-data/snake_oil", tmp_path, dirs_exist_ok=True)
     monkeypatch.chdir(tmp_path)
 
 

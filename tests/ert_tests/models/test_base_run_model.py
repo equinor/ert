@@ -8,7 +8,7 @@ from ert.shared.models import BaseRunModel
 
 
 def test_base_run_model_supports_restart(setup_case):
-    ert = EnKFMain(setup_case("local/simple_config/", "minimum_config"))
+    ert = EnKFMain(setup_case("simple_config/", "minimum_config"))
     brm = BaseRunModel(None, ert, ert.get_queue_config(), "experiment_id")
     assert brm.support_restart
 

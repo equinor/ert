@@ -149,7 +149,7 @@ Experiment constants
 
    ::
 
-      YOUR_WORKFLOW_JOB /data/repos/ert/test-data/local/poly_example
+      YOUR_WORKFLOW_JOB /data/repos/ert/test-data/poly_example
 
 .. _ms_date:
 .. topic:: DATE

@@ -124,7 +124,7 @@ def make_poly_example(folder, source, **kwargs):
 
 def make_poly_template(folder, source_folder, **kwargs):
     return make_poly_example(
-        folder, source_folder / "test-data" / "local" / "poly_template", **kwargs
+        folder, source_folder / "test-data" / "poly_template", **kwargs
     )
 
 
@@ -155,7 +155,7 @@ if __name__ == "__main__":
         folder = py.path.local(tempfile.mkdtemp())
     make_poly_example(
         folder,
-        "../../test-data/local/poly_template",
+        "../../test-data/poly_template",
         gen_data_count=34,
         gen_data_entries=15,
         summary_data_entries=100,

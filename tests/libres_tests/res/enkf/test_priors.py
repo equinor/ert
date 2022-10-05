@@ -9,7 +9,7 @@ from ert._c_wrappers.enkf import EnKFMain, ResConfig, RunContext
 
 def test_adding_priors(tmpdir, source_root):
     shutil.copytree(
-        os.path.join(source_root, "test-data", "local", "poly_example"),
+        os.path.join(source_root, "test-data", "poly_example"),
         os.path.join(str(tmpdir), "poly_example"),
     )
     with tmpdir.as_cwd():

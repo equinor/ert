@@ -34,7 +34,7 @@ def mock_cli_run(monkeypatch):
 @pytest.mark.integration_test
 def test_target_case_equal_current_case(tmpdir, source_root):
     shutil.copytree(
-        os.path.join(source_root, "test-data", "local", "poly_example"),
+        os.path.join(source_root, "test-data", "poly_example"),
         os.path.join(str(tmpdir), "poly_example"),
     )
     with tmpdir.as_cwd():
@@ -60,7 +60,7 @@ def test_target_case_equal_current_case(tmpdir, source_root):
 @pytest.mark.integration_test
 def test_runpath_file(tmpdir, source_root):
     shutil.copytree(
-        os.path.join(source_root, "test-data", "local", "poly_example"),
+        os.path.join(source_root, "test-data", "poly_example"),
         os.path.join(str(tmpdir), "poly_example"),
     )
 
@@ -98,7 +98,7 @@ def test_runpath_file(tmpdir, source_root):
 @pytest.mark.integration_test
 def test_ensemble_evaluator(tmpdir, source_root):
     shutil.copytree(
-        os.path.join(source_root, "test-data", "local", "poly_example"),
+        os.path.join(source_root, "test-data", "poly_example"),
         os.path.join(str(tmpdir), "poly_example"),
     )
 
@@ -126,7 +126,7 @@ def test_ensemble_evaluator(tmpdir, source_root):
 @pytest.mark.integration_test
 def test_es_mda(tmpdir, source_root):
     shutil.copytree(
-        os.path.join(source_root, "test-data", "local", "poly_example"),
+        os.path.join(source_root, "test-data", "poly_example"),
         os.path.join(str(tmpdir), "poly_example"),
     )
 
@@ -156,7 +156,7 @@ def test_es_mda(tmpdir, source_root):
 @pytest.mark.integration_test
 def test_ensemble_evaluator_disable_monitoring(tmpdir, source_root):
     shutil.copytree(
-        os.path.join(source_root, "test-data", "local", "poly_example"),
+        os.path.join(source_root, "test-data", "poly_example"),
         os.path.join(str(tmpdir), "poly_example"),
     )
 
@@ -185,7 +185,7 @@ def test_ensemble_evaluator_disable_monitoring(tmpdir, source_root):
 @pytest.mark.integration_test
 def test_cli_test_run(tmpdir, source_root, mock_cli_run):
     shutil.copytree(
-        os.path.join(source_root, "test-data", "local", "poly_example"),
+        os.path.join(source_root, "test-data", "poly_example"),
         os.path.join(str(tmpdir), "poly_example"),
     )
 
@@ -211,7 +211,7 @@ def test_cli_test_run(tmpdir, source_root, mock_cli_run):
 @pytest.mark.integration_test
 def test_ies(tmpdir, source_root):
     shutil.copytree(
-        os.path.join(source_root, "test-data", "local", "poly_example"),
+        os.path.join(source_root, "test-data", "poly_example"),
         os.path.join(str(tmpdir), "poly_example"),
     )
 
@@ -240,7 +240,7 @@ def test_ies(tmpdir, source_root):
 @pytest.mark.timeout(40)
 def test_experiment_server_ensemble_experiment(tmpdir, source_root, capsys):
     shutil.copytree(
-        os.path.join(source_root, "test-data", "local", "poly_example"),
+        os.path.join(source_root, "test-data", "poly_example"),
         os.path.join(str(tmpdir), "poly_example"),
     )
 
@@ -273,7 +273,7 @@ def test_experiment_server_ensemble_experiment(tmpdir, source_root, capsys):
 @pytest.mark.timeout(40)
 def test_experiment_server_ensemble_smoother(tmpdir, source_root, capsys):
     shutil.copytree(
-        os.path.join(source_root, "test-data", "local", "poly_example"),
+        os.path.join(source_root, "test-data", "poly_example"),
         os.path.join(str(tmpdir), "poly_example"),
     )
 
@@ -307,7 +307,7 @@ def test_experiment_server_ensemble_smoother(tmpdir, source_root, capsys):
 @pytest.mark.timeout(40)
 def test_experiment_server_mda(tmpdir, source_root, capsys):
     shutil.copytree(
-        os.path.join(source_root, "test-data", "local", "poly_example"),
+        os.path.join(source_root, "test-data", "poly_example"),
         os.path.join(str(tmpdir), "poly_example"),
     )
     with tmpdir.as_cwd():

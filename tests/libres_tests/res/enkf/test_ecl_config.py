@@ -25,9 +25,9 @@ from ert._c_wrappers.util import UIReturn
 
 
 def test_grid(source_root):
-    grid_file = source_root / "test-data/local/snake_oil_field/grid/CASE.EGRID"
+    grid_file = source_root / "test-data/snake_oil_field/grid/CASE.EGRID"
     smspec_file = (
-        source_root / "test-data/local/snake_oil_field/refcase/SNAKE_OIL_FIELD.SMSPEC"
+        source_root / "test-data/snake_oil_field/refcase/SNAKE_OIL_FIELD.SMSPEC"
     )
     ec = EclConfig()
     ui = ec.validateGridFile(str(grid_file))
@@ -47,7 +47,7 @@ def test_datafile(source_root):
     ui = ec.validateDataFile("DoesNotExist")
     assert not ui
 
-    dfile = str(source_root / "test-data/local/eclipse/SPE1.DATA")
+    dfile = str(source_root / "test-data/eclipse/SPE1.DATA")
     ui = ec.validateDataFile(dfile)
     assert ui
     ec.setDataFile(dfile)
@@ -56,7 +56,7 @@ def test_datafile(source_root):
 
 def test_refcase(source_root):
     ec = EclConfig()
-    dfile = str(source_root / "test-data/local/snake_oil/refcase/SNAKE_OIL_FIELD")
+    dfile = str(source_root / "test-data/snake_oil/refcase/SNAKE_OIL_FIELD")
 
     ui = ec.validateRefcase("Does/not/exist")
     assert not ui
@@ -80,7 +80,7 @@ def test_wrongly_configured_refcase_path():
 
 
 def test_ecl_config_constructor(setup_case):
-    res_config = setup_case("local/configuration_tests", "ecl_config.ert")
+    res_config = setup_case("configuration_tests", "ecl_config.ert")
     assert res_config.ecl_config == EclConfig(
         config_dict={
             ConfigKeys.DATA_FILE: "input/SPE1.DATA",

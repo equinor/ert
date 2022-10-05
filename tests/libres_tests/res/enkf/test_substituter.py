@@ -54,7 +54,7 @@ def test_get_substitution_list():
 
 
 def test_substitution_workflow_integration(setup_case):
-    res_config = setup_case("local/config/workflows", "config")
+    res_config = setup_case("config/workflows", "config")
     ert = EnKFMain(res_config)
     current_filesystem = ert.getEnkfFsManager().getCurrentFileSystem()
 

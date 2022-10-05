@@ -27,7 +27,7 @@ def without_key(a_dict, key):
 
 @pytest.fixture
 def workflows_config_dict(copy_case):
-    copy_case("local/config/workflows")
+    copy_case("config/workflows")
     # create empty runpath file
     with open("runpath", "a", encoding="utf-8"):
         pass

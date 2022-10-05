@@ -10,7 +10,7 @@ from ert.shared.plugins import ErtPluginManager
 
 
 def test_export_misfit(setup_case, snapshot):
-    res_config = setup_case("local/snake_oil", "snake_oil.ert")
+    res_config = setup_case("snake_oil", "snake_oil.ert")
     ert = EnKFMain(res_config)
     ExportMisfitDataJob(ert).run()
     result = pd.read_hdf("misfit.hdf")

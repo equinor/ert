@@ -134,7 +134,6 @@ def test_logging_snake_oil_config(caplog, source_root):
     config_path = os.path.join(
         source_root,
         "test-data",
-        "local",
         "snake_oil_structure",
         "ert",
         "model",

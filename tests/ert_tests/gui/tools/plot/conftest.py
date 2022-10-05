@@ -39,7 +39,7 @@ def api(tmpdir, source_root, monkeypatch):
     monkeypatch.setattr(Storage, "session", session)
 
     with tmpdir.as_cwd():
-        test_data_root = source_root / "test-data" / "local"
+        test_data_root = source_root / "test-data"
         test_data_dir = os.path.join(test_data_root, "snake_oil")
         shutil.copytree(test_data_dir, "test_data")
         os.chdir("test_data")

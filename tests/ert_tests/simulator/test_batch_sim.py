@@ -31,7 +31,7 @@ def _wait_for_completion(ctx):
 
 @pytest.fixture
 def batch_sim_example(setup_case):
-    return setup_case("local/batch_sim", "batch_sim.ert")
+    return setup_case("batch_sim", "batch_sim.ert")
 
 
 def test_invalid_simulator_creation(batch_sim_example):
@@ -536,7 +536,7 @@ def assertContextStatusOddFailures(batch_ctx, final_state_only=False):
 @pytest.mark.usefixtures("use_tmpdir")
 def test_batch_ctx_status_failing_jobs(setup_case):
 
-    res_config = setup_case("local/batch_sim", "batch_sim_sleep_and_fail.ert")
+    res_config = setup_case("batch_sim", "batch_sim_sleep_and_fail.ert")
 
     external_parameters = {
         "WELL_ORDER": ("W1", "W2", "W3"),

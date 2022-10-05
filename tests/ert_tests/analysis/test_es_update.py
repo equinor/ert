@@ -27,7 +27,7 @@ def test_update_report(setup_case, snapshot):
     Note that this is now a snapshot test, so there is no guarantee that the
     snapshots are correct, they are just documenting the current behavior.
     """
-    res_config = setup_case("local/snake_oil", "snake_oil.ert")
+    res_config = setup_case("snake_oil", "snake_oil.ert")
 
     ert = EnKFMain(res_config)
     es_update = ESUpdate(ert)
@@ -126,7 +126,7 @@ def test_update_snapshot(setup_case, module, expected_gen_kw):
     Note that this is now a snapshot test, so there is no guarantee that the
     snapshots are correct, they are just documenting the current behavior.
     """
-    res_config = setup_case("local/snake_oil", "snake_oil.ert")
+    res_config = setup_case("snake_oil", "snake_oil.ert")
 
     ert = EnKFMain(res_config)
     es_update = ESUpdate(ert)
@@ -180,7 +180,7 @@ def test_that_posterior_has_lower_variance_than_prior_with_init_files(copy_case)
     https://ert.readthedocs.io/en/latest/reference/configuration/data_types.html?highlight=FORWARD_INIT#initialization-with-init-files
     This is done such that the callback functions are called.
     """
-    copy_case("local/externally_sampled_params")
+    copy_case("externally_sampled_params")
 
     parser = ArgumentParser(prog="test_main")
     parsed = ert_parser(
@@ -261,7 +261,7 @@ def test_localization(setup_case, expected_target_gen_kw):
     Note that this is now a snapshot test, so there is no guarantee that the
     snapshots are correct, they are just documenting the current behavior.
     """
-    res_config = setup_case("local/snake_oil", "snake_oil.ert")
+    res_config = setup_case("snake_oil", "snake_oil.ert")
     ert = EnKFMain(res_config)
     es_update = ESUpdate(ert)
     fsm = ert.getEnkfFsManager()
@@ -325,7 +325,7 @@ def test_snapshot_alpha(setup_case, alpha, expected):
     Note that this is now a snapshot test, so there is no guarantee that the
     snapshots are correct, they are just documenting the current behavior.
     """
-    res_config = setup_case("local/snake_oil", "snake_oil.ert")
+    res_config = setup_case("snake_oil", "snake_oil.ert")
 
     obs_file = Path("observations") / "observations.txt"
     with obs_file.open(mode="w") as fin:

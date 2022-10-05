@@ -65,7 +65,7 @@ def test_write_to_and_read_from_file(tmp_path):
 
 
 def test_with_enkf_fs(copy_case):
-    copy_case("local/snake_oil")
+    copy_case("snake_oil")
 
     fs = EnkfFs("storage/snake_oil/ensemble/default_0", False, 4)
     summary_key_set = fs.getSummaryKeySet()

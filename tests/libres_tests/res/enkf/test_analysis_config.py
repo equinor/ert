@@ -50,7 +50,7 @@ def test_analysis_config_global_std_scaling(analysis_config):
 
 
 def test_analysis_config_constructor(setup_case):
-    res_config = setup_case("local/simple_config", "analysis_config")
+    res_config = setup_case("simple_config", "analysis_config")
     assert res_config.analysis_config == AnalysisConfig(
         config_dict={
             ConfigKeys.NUM_REALIZATIONS: 10,

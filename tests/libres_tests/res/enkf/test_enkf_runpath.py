@@ -10,7 +10,7 @@ from ert._c_wrappers.enkf.enkf_main import EnKFMain
 
 
 def test_with_gen_kw(copy_case):
-    copy_case("local/snake_oil")
+    copy_case("snake_oil")
     shutil.rmtree("storage")
     res_config = ResConfig("snake_oil.ert")
     main = EnKFMain(res_config)
