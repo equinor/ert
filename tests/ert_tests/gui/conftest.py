@@ -159,6 +159,9 @@ class MockTracker:
     def reset(self):
         pass
 
+    def request_termination(self):
+        pass
+
 
 @pytest.fixture
 def mock_tracker():

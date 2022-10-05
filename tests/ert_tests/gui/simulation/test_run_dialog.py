@@ -1,7 +1,8 @@
 from unittest.mock import patch
 
 import pytest
-from qtpy.QtCore import Qt
+from qtpy import QtWidgets
+from qtpy.QtCore import Qt, QTimer
 
 from ert.ensemble_evaluator import identifiers as ids
 from ert.ensemble_evaluator import state
@@ -27,6 +28,33 @@ def test_success(runmodel, qtbot, mock_tracker):
         qtbot.waitUntil(lambda: widget._total_progress_bar.value() == 100)
         assert widget.done_button.isVisible()
         assert widget.done_button.text() == "Done"
+
+
+# pylint: disable=no-member
+def test_kill_simulations(runmodel, qtbot, mock_tracker):
+    widget = RunDialog("poly.ert", runmodel)
+    widget.show()
+    qtbot.addWidget(widget)
+
+    with patch("ert.gui.simulation.run_dialog.EvaluatorTracker") as tracker:
+        tracker.return_value = mock_tracker([EndEvent(failed=False, failed_msg="")])
+        widget.startSimulation()
+
+    with qtbot.waitExposed(widget, timeout=30000):
+
+        def handle_dialog():
+            message_box = [
+                x for x in widget.children() if isinstance(x, QtWidgets.QMessageBox)
+            ][0]
+            dialog_button_box = [
+                x
+                for x in message_box.children()
+                if isinstance(x, QtWidgets.QDialogButtonBox)
+            ][0]
+            qtbot.mouseClick(dialog_button_box.children()[-2], Qt.LeftButton)
+
+        QTimer.singleShot(100, handle_dialog)
+        widget.killJobs()
 
 
 def test_large_snapshot(runmodel, large_snapshot, qtbot, mock_tracker):
