@@ -39,9 +39,6 @@ class SiteConfig(BaseCClass):
     _get_license_root_path = ResPrototype(
         "char* site_config_get_license_root_path(site_config)"
     )
-    _set_license_root_path = ResPrototype(
-        "void site_config_set_license_root_path(site_config, char*)"
-    )
     _get_location = ResPrototype("char* site_config_get_location()", bind=False)
     _get_config_file = ResPrototype("char* site_config_get_config_file(site_config)")
     _get_env_var_list = ResPrototype(
@@ -140,9 +137,6 @@ class SiteConfig(BaseCClass):
 
     def get_license_root_path(self) -> str:
         return self._get_license_root_path()
-
-    def set_license_root_pathmax_submit(self, path):
-        self._set_license_root_path(path)
 
     @classmethod
     def getLocation(cls) -> str:
