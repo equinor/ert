@@ -65,7 +65,7 @@ void ecl_write(const ensemble_config_type *ens_config,
  */
 void init_active_run(const model_config_type *model_config,
                      ensemble_config_type *ens_config,
-                     const site_config_type *site_config, char *run_path,
+                     const env_varlist_type *env_varlist, char *run_path,
                      int iens, enkf_fs_type *fs, char *run_id, char *job_name,
                      const subst_list_type *subst_list) {
     ecl_write(ens_config, model_config_get_gen_kw_export_name(model_config),
@@ -74,8 +74,7 @@ void init_active_run(const model_config_type *model_config,
     // Create the job script
     forward_model_formatted_fprintf(
         model_config_get_forward_model(model_config), run_id, run_path,
-        model_config_get_data_root(model_config), subst_list,
-        site_config_get_env_varlist(site_config));
+        model_config_get_data_root(model_config), subst_list, env_varlist);
 }
 } // namespace enkf_main
 
@@ -131,15 +130,15 @@ ERT_CLIB_SUBMODULE("enkf_main", m) {
         "init_active_run",
         [](Cwrap<model_config_type> model_config,
            Cwrap<ensemble_config_type> ensemble_config,
-           Cwrap<site_config_type> site_config, char *run_path, int iens,
+           Cwrap<env_varlist_type> env_varlist, char *run_path, int iens,
            Cwrap<enkf_fs_type> sim_fs, char *run_id, char *job_name,
            Cwrap<subst_list_type> subst_list) {
             enkf_main::init_active_run(model_config, ensemble_config,
-                                       site_config, run_path, iens, sim_fs,
+                                       env_varlist, run_path, iens, sim_fs,
                                        run_id, job_name, subst_list);
         },
         py::arg("model_config"), py::arg("ensemble_config"),
-        py::arg("site_config"), py::arg("run_path"), py::arg("iens"),
+        py::arg("env_varlist"), py::arg("run_path"), py::arg("iens"),
         py::arg("sim_fs"), py::arg("run_id"), py::arg("job_name"),
         py::arg("subst_list"));
     m.def("log_seed", [](Cwrap<rng_type> rng) {
