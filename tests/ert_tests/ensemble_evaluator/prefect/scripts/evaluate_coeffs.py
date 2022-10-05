@@ -16,6 +16,8 @@ def _evaluate(coeffs, x, degree):
     if degree >= 2:
         return coeffs["a"] * x**degree
 
+    return None
+
 
 def config_dump_entry(args=None):
     arg_parser = argparse.ArgumentParser(

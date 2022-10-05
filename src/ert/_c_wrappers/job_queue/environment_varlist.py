@@ -33,13 +33,13 @@ class EnvironmentVarlist(BaseCClass):
         "void env_varlist_update_path(env_varlist, char*, char*)"
     )
 
-    def __init__(self, vars: Optional[Dict[str, str]] = None):
-        if vars is None:
-            vars = {}
+    def __init__(self, _vars: Optional[Dict[str, str]] = None):
+        if _vars is None:
+            _vars = {}
         c_ptr = self._alloc()
         super().__init__(c_ptr)
 
-        for key, value in vars.items():
+        for key, value in _vars.items():
             self.setenv(key, value)
 
     def setenv(self, key, value):

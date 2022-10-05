@@ -57,6 +57,8 @@ class ExtJoblist(BaseCClass):
         if job in self:
             return self._get_job(job).setParent(self)
 
+        return None
+
     def getAvailableJobNames(self) -> StringList:
         """@rtype: StringList"""
         return [str(x) for x in self._alloc_list().setParent(self)]

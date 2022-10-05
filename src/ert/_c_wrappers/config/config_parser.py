@@ -99,10 +99,10 @@ class ConfigParser(BaseCClass):
 
         assert isinstance(unrecognized, UnrecognizedEnum)
 
-        hash = StringHash()
+        hash_value = StringHash()
         if pre_defined_kw_map is not None:
             for key in pre_defined_kw_map:
-                hash[key] = pre_defined_kw_map[key]
+                hash_value[key] = pre_defined_kw_map[key]
 
         if not os.path.exists(config_file):
             raise IOError(f"File: {config_file} does not exists")
@@ -111,7 +111,7 @@ class ConfigParser(BaseCClass):
             comment_string,
             include_kw,
             define_kw,
-            hash,
+            hash_value,
             unrecognized,
             validate,
         )

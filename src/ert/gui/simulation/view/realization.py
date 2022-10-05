@@ -17,10 +17,10 @@ from ert.gui.model.snapshot import RealJobColorHint, RealLabelHint, RealStatusCo
 
 
 class RealizationWidget(QWidget):
-    def __init__(self, iter: int, parent=None) -> None:
+    def __init__(self, _it: int, parent=None) -> None:
         super().__init__(parent)
 
-        self._iter = iter
+        self._iter = _it
         self._delegateWidth = 70
         self._delegateHeight = 70
 

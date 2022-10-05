@@ -204,7 +204,9 @@ def test_site_bootstrap():
 
 def test_invalid_res_config():
     with pytest.raises(TypeError):
-        EnKFMain(res_config="This is not a ResConfig instance")
+        EnKFMain(
+            res_config="This is not a ResConfig instance"
+        )  # pylint: disable=unexpected-keyword-arg
 
 
 def test_invalid_parameter_count_2_res_config():

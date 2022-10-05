@@ -40,6 +40,8 @@ class DataTypeKeysListModel(QAbstractItemModel):
                 if item["observations"]:
                     return self.HAS_OBSERVATIONS
 
+        return None
+
     def itemAt(self, index):
         assert isinstance(index, QModelIndex)
 

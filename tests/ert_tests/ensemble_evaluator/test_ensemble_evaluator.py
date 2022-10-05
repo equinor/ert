@@ -237,7 +237,7 @@ def test_dying_batcher(evaluator):
 @pytest.mark.consumer_driven_contract_verification
 def test_verify_monitor_failing_ensemble(make_ee_config, event_loop):
     ee_config = make_ee_config(use_token=False, generate_cert=False)
-    ensemble = TestEnsemble(iter=1, reals=2, steps=1, jobs=2, id_="ee-0")
+    ensemble = TestEnsemble(_iter=1, reals=2, steps=1, jobs=2, id_="ee-0")
     ensemble.addFailJob(real=1, step=0, job=1)
     ee = EnsembleEvaluator(
         ensemble,
@@ -253,7 +253,7 @@ def test_verify_monitor_failing_ensemble(make_ee_config, event_loop):
 @pytest.mark.consumer_driven_contract_verification
 def test_verify_monitor_failing_evaluation(make_ee_config, event_loop):
     ee_config = make_ee_config(use_token=False, generate_cert=False)
-    ensemble = TestEnsemble(iter=1, reals=2, steps=1, jobs=2, id_="ee-0")
+    ensemble = TestEnsemble(_iter=1, reals=2, steps=1, jobs=2, id_="ee-0")
     ensemble.with_failure()
     ee = EnsembleEvaluator(
         ensemble,
@@ -268,7 +268,7 @@ def test_verify_monitor_failing_evaluation(make_ee_config, event_loop):
 
 @pytest.mark.consumer_driven_contract_verification
 def test_verify_monitor_successful_ensemble(make_ee_config, event_loop):
-    ensemble = TestEnsemble(iter=1, reals=2, steps=2, jobs=2, id_="ee-0").with_result(
+    ensemble = TestEnsemble(_iter=1, reals=2, steps=2, jobs=2, id_="ee-0").with_result(
         b"\x80\x04\x95\x0f\x00\x00\x00\x00\x00\x00\x00\x8c\x0bhello world\x94.",
         "application/octet-stream",
     )
@@ -309,7 +309,7 @@ def test_ens_eval_run_and_get_successful_realizations_connection_refused_no_reco
 
     ee_config = make_ee_config(use_token=False, generate_cert=False)
     ensemble = AutorunTestEnsemble(
-        iter=1, reals=num_realizations, steps=1, jobs=2, id_="0"
+        _iter=1, reals=num_realizations, steps=1, jobs=2, id_="0"
     )
     for i in range(num_failing):
         ensemble.addFailJob(real=i, step=0, job=1)
@@ -325,7 +325,7 @@ def test_ens_eval_run_and_get_successful_realizations_connection_refused_no_reco
 
 def test_ens_eval_run_and_get_successful_realizations_timeout(make_ee_config):
     ee_config = make_ee_config(use_token=False, generate_cert=False)
-    ensemble = AutorunTestEnsemble(iter=1, reals=1, steps=1, jobs=2, id_="0")
+    ensemble = AutorunTestEnsemble(_iter=1, reals=1, steps=1, jobs=2, id_="0")
     ee = EnsembleEvaluator(ensemble, ee_config, 0)
 
     with patch.object(
@@ -361,7 +361,7 @@ def test_recover_from_failure_in_run_and_get_successful_realizations(
         use_token=False, generate_cert=False, custom_host="localhost"
     )
     ensemble = AutorunTestEnsemble(
-        iter=1, reals=num_realizations, steps=1, jobs=2, id_="0"
+        _iter=1, reals=num_realizations, steps=1, jobs=2, id_="0"
     )
 
     for i in range(num_failing):
@@ -390,7 +390,7 @@ def test_exhaust_retries_in_run_and_get_successful_realizations(
         use_token=False, generate_cert=False, custom_host="localhost"
     )
     ensemble = AutorunTestEnsemble(
-        iter=1, reals=num_realizations, steps=1, jobs=2, id_="0"
+        _iter=1, reals=num_realizations, steps=1, jobs=2, id_="0"
     )
 
     for i in range(num_failing):

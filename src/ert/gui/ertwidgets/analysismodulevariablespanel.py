@@ -158,6 +158,8 @@ class AnalysisModuleVariablesPanel(QWidget):
             if widget.objectName() == widget_name:
                 return widget
 
+        return None
+
     def createSpinBox(
         self,
         variable_name,
