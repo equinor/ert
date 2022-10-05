@@ -64,6 +64,17 @@ queue_systems = st.sampled_from(
 )
 
 
+def queue_name(queue_driver):
+    if queue_driver == QueueDriverEnum.LSF_DRIVER:
+        return "LSF"
+    if queue_driver == QueueDriverEnum.LOCAL_DRIVER:
+        return "LOCAL"
+    if queue_driver == QueueDriverEnum.TORQUE_DRIVER:
+        return "TORQUE"
+    if queue_driver == QueueDriverEnum.SLURM_DRIVER:
+        return "SLURM"
+
+
 def valid_queue_options(queue_system):
     valids = [ConfigKeys.MAX_RUNNING]
     if queue_system == QueueDriverEnum.LSF_DRIVER:
@@ -167,10 +178,19 @@ def valid_queue_values(option_name):
 def queue_options(draw, queue_systems):
     queue_system = draw(queue_systems)
     name = draw(st.sampled_from(valid_queue_options(queue_system)))
-    return {
-        ConfigKeys.NAME: name,
-        ConfigKeys.VALUE: draw(valid_queue_values(name)),
-    }
+    do_set = draw(st.booleans())
+    if do_set:
+        return {
+            ConfigKeys.DRIVER_NAME: queue_system,
+            ConfigKeys.OPTION: name,
+            ConfigKeys.VALUE: draw(valid_queue_values(name)),
+        }
+    else:
+        # Missing VALUE means unset
+        return {
+            ConfigKeys.DRIVER_NAME: queue_system,
+            ConfigKeys.OPTION: name,
+        }
 
 
 @st.composite
@@ -320,7 +340,13 @@ def to_config_file(filename, config_dict):
                 for setting in keyword_value:
                     config.write(
                         f"{keyword}"
-                        f" {setting[ConfigKeys.NAME]} {setting[ConfigKeys.VALUE]}\n"
+                        + f" {queue_name(setting[ConfigKeys.DRIVER_NAME])}"
+                        + f" {setting[ConfigKeys.OPTION]}"
+                        + (
+                            f" {setting[ConfigKeys.VALUE]}\n"
+                            if ConfigKeys.VALUE in setting
+                            else "\n"
+                        )
                     )
             elif keyword == ConfigKeys.QUEUE_SYSTEM:
                 config.write(f"{keyword}" f" {keyword_value.name[:-7]}\n")

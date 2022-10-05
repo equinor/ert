@@ -93,9 +93,13 @@ class QueueConfig(BaseCClass):
         if config_dict is not None:
             queue_options = config_dict.get(ConfigKeys.QUEUE_OPTION, [])
             for option in queue_options:
-                self.driver.set_option(
-                    option[ConfigKeys.NAME], option[ConfigKeys.VALUE]
-                )
+                if option[ConfigKeys.DRIVER_NAME] == self.queue_system:
+                    if ConfigKeys.VALUE in option:
+                        self.driver.set_option(
+                            option[ConfigKeys.OPTION], option[ConfigKeys.VALUE]
+                        )
+                    else:
+                        self.driver.unset_option(option[ConfigKeys.OPTION])
 
     def create_job_queue(self) -> JobQueue:
         queue = JobQueue(self.driver, max_submit=self.max_submit)
