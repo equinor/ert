@@ -161,7 +161,7 @@ class CaseInitializationConfigurationPanel(QTabWidget):
             report_step = history_length_spinner.value()
             parameters = parameter_model.getSelectedItems()
             members = members_model.getSelectedItems()
-            case_manager = self.ert._fs_rotator
+            case_manager = self.ert.storage_manager
             if (
                 source_case_name in case_manager
                 and case_manager[source_case_name].is_initalized
@@ -250,7 +250,7 @@ class CaseInitializationConfigurationPanel(QTabWidget):
         if case_name is None:
             case_name = self.ert.getEnkfFsManager().getCurrentFileSystem().getCaseName()
 
-        states = list(self.ert._fs_rotator.state_map(case_name))
+        states = list(self.ert.storage_manager.state_map(case_name))
 
         html = "<table>"
         for index, value in enumerate(states):

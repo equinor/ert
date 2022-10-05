@@ -100,14 +100,14 @@ class EnKFMain:
 
         # Initialize storage
         ens_path = Path(config.model_config.getEnspath())
-        self._fs_rotator = FileSystemManager(
+        self.storage_manager = FileSystemManager(
             5,
             ens_path,
             config.ensemble_config,
             self.getEnsembleSize(),
             read_only=read_only,
         )
-        self.switchFileSystem(self._fs_rotator.active_case)
+        self.switchFileSystem(self.storage_manager.active_case)
 
         # Set up RNG
         config_seed = self.resConfig().random_seed
@@ -392,52 +392,52 @@ class EnKFMain:
 
     def getFileSystem(self, case_name: str) -> "EnkfFs":
         try:
-            case = self._fs_rotator[case_name]
+            case = self.storage_manager[case_name]
         except KeyError:
-            case = self._fs_rotator.add_case(case_name)
+            case = self.storage_manager.add_case(case_name)
         if self.res_config.ecl_config.refcase:
             time_map = case.getTimeMap()
             time_map.attach_refcase(self.res_config.ecl_config.refcase)
         return case
 
     def caseExists(self, case_name: str) -> bool:
-        return case_name in self._fs_rotator
+        return case_name in self.storage_manager
 
     def caseHasData(self, case_name: str) -> bool:
-        if case_name not in self._fs_rotator:
+        if case_name not in self.storage_manager:
             return False
-        state_map = self._fs_rotator.state_map(case_name)
+        state_map = self.storage_manager.state_map(case_name)
 
         return any(state == RealizationStateEnum.STATE_HAS_DATA for state in state_map)
 
     def getCurrentFileSystem(self) -> "EnkfFs":
         """Returns the currently selected file system"""
-        return self.getFileSystem(self._fs_rotator.active_case)
+        return self.getFileSystem(self.storage_manager.active_case)
 
     def getStateMapForCase(self, case_name: str):
-        return self._fs_rotator.state_map(case_name)
+        return self.storage_manager.state_map(case_name)
 
     def switchFileSystem(self, case_name: str) -> None:
         if isinstance(case_name, EnkfFs):
             case_name = case_name.case_name
-        if case_name not in self._fs_rotator.cases:
+        if case_name not in self.storage_manager.cases:
             raise KeyError(
-                f"Unknown case: {case_name}, valid: {self._fs_rotator.cases}"
+                f"Unknown case: {case_name}, valid: {self.storage_manager.cases}"
             )
         self.addDataKW("<ERT-CASE>", case_name)
         self.addDataKW("<ERTCASE>", case_name)
-        self._fs_rotator.active_case = case_name
+        self.storage_manager.active_case = case_name
         (Path(self.getModelConfig().getEnspath()) / "current_case").write_text(
             case_name
         )
 
     def isCaseInitialized(self, case: str) -> bool:
-        if case not in self._fs_rotator:
+        if case not in self.storage_manager:
             return False
-        return self._fs_rotator[case].is_initalized
+        return self.storage_manager[case].is_initalized
 
     def getCaseList(self) -> List[str]:
-        return sorted(self._fs_rotator.cases, key=naturalSortKey)
+        return sorted(self.storage_manager.cases, key=naturalSortKey)
 
     def createRunPath(self, run_context: RunContext) -> None:
         self.initRun(run_context)

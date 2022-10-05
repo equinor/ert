@@ -10,7 +10,7 @@ def get_runnable_realizations_mask(ert, casename):
     realization is sane or not.
     If the requested case does not exist, an empty list is returned
     """
-    fsm = ert._fs_rotator
+    fsm = ert.storage_manager
     if casename not in fsm:
         return []
     sm = fsm.state_map(casename)

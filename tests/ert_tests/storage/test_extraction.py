@@ -506,7 +506,7 @@ def _create_runpath(ert: LibresFacade, iteration: int = 0) -> RunContext:
 
     run_context = enkf_main.create_ensemble_smoother_run_context(
         iteration=iteration,
-        target_filesystem=enkf_main._fs_rotator.add_case("iter"),
+        target_filesystem=enkf_main.storage_manager.add_case("iter"),
     )
 
     enkf_main.createRunPath(run_context)
