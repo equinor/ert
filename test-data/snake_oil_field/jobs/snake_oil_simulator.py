@@ -9,12 +9,23 @@ def globalIndex(i, j, k, nx=10, ny=10):
     return i + nx * (j - 1) + nx * ny * (k - 1)
 
 
-def readParameters(filename):
+def read_seed(filename):
     params = {}
     with open(filename, "r") as f:
         for line in f:
-            key, value = line.split(":", 1)
+            key, value = line.split(":")
             params[key] = value.strip()
+
+    return params
+
+
+def read_parameters(filename):
+    params = {}
+    with open(filename, "r") as f:
+        for line in f:
+            key, value = line.split(" ")
+            _, name = key.split(":")
+            params[name] = value.strip()
 
     return params
 
@@ -139,8 +150,8 @@ def roundedInt(value):
 
 
 if __name__ == "__main__":
-    seed = int(readParameters("seed.txt")["SEED"])
-    parameters = readParameters("snake_oil_params.txt")
+    seed = int(read_seed("seed.txt")["SEED"])
+    parameters = read_parameters("parameters.txt")
 
     op1_divergence_scale = float(parameters["OP1_DIVERGENCE_SCALE"])
     op2_divergence_scale = float(parameters["OP2_DIVERGENCE_SCALE"])

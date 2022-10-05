@@ -7,9 +7,11 @@ import pytest
 from iterative_ensemble_smoother import IterativeEnsembleSmoother
 
 from ert._c_wrappers.enkf import EnKFMain, EnkfNode, NodeId, ResConfig, RunContext
+from ert._c_wrappers.enkf.enkf_fs import EnkfFs
 from ert._c_wrappers.enkf.export import GenKwCollector
 from ert.analysis import ErtAnalysisError, ESUpdate
-from ert.shared.cli import ENSEMBLE_SMOOTHER_MODE
+from ert.analysis._es_update import _create_temporary_parameter_storage
+from ert.shared.cli import ENSEMBLE_EXPERIMENT_MODE, ENSEMBLE_SMOOTHER_MODE
 from ert.shared.cli.main import run_cli
 from ert.shared.main import ert_parser
 
@@ -211,7 +213,7 @@ def test_that_posterior_has_lower_variance_than_prior(copy_case):
 
 
 @pytest.mark.parametrize(
-    "expected_target_gen_kw",
+    "expected_target_gen_kw, update_step",
     [
         pytest.param(
             [
@@ -225,6 +227,43 @@ def test_that_posterior_has_lower_variance_than_prior(copy_case):
                 0.4039137216428462,
                 0.10001691562080614,
                 0.09549338450036506,
+            ],
+            [
+                {
+                    "name": "update_step_LOCA",
+                    "observations": ["WOPR_OP1_72"],
+                    "parameters": [("SNAKE_OIL_PARAM", [1, 2])],
+                }
+            ],
+            marks=pytest.mark.skipif(
+                sys.platform.startswith("darwin"),
+                reason="See https://github.com/equinor/ert/issues/2351",
+            ),
+        ),
+        pytest.param(
+            [
+                -1.2634961086738858,
+                0.4789009281077111,
+                -0.23938849999570316,
+                0.7477534046493867,
+                -0.10400064074767973,
+                -1.7223242794585338,
+                0.0761604027734105,
+                0.4039137216428462,
+                0.10001691562080614,
+                0.09549338450036506,
+            ],
+            [
+                {
+                    "name": "update_step_LOCA",
+                    "observations": ["WOPR_OP1_72"],
+                    "parameters": [("SNAKE_OIL_PARAM", [1, 2])],
+                },
+                {
+                    "name": "update_step_LOCA",
+                    "observations": ["WOPR_OP1_108"],
+                    "parameters": [("SNAKE_OIL_PARAM", [0, 2])],
+                },
             ],
             marks=pytest.mark.skipif(
                 sys.platform.startswith("darwin"),
@@ -244,6 +283,13 @@ def test_that_posterior_has_lower_variance_than_prior(copy_case):
                 0.10001691562080614,
                 0.09549338450036506,
             ],
+            [
+                {
+                    "name": "update_step_LOCA",
+                    "observations": ["WOPR_OP1_72"],
+                    "parameters": [("SNAKE_OIL_PARAM", [1, 2])],
+                }
+            ],
             marks=pytest.mark.skipif(
                 sys.platform.startswith("linux"),
                 reason="See https://github.com/equinor/ert/issues/2351",
@@ -251,7 +297,7 @@ def test_that_posterior_has_lower_variance_than_prior(copy_case):
         ),
     ],
 )
-def test_localization(setup_case, expected_target_gen_kw):
+def test_localization(setup_case, expected_target_gen_kw, update_step):
     """
     Note that this is now a snapshot test, so there is no guarantee that the
     snapshots are correct, they are just documenting the current behavior.
@@ -263,13 +309,6 @@ def test_localization(setup_case, expected_target_gen_kw):
     sim_fs = fsm.getFileSystem("default_0")
     target_fs = fsm.getFileSystem("target")
     # perform localization
-    update_step = [
-        {
-            "name": "update_step_LOCA",
-            "observations": ["WOPR_OP1_72"],
-            "parameters": [("SNAKE_OIL_PARAM", [1, 2])],
-        }
-    ]
 
     ert.update_configuration = update_step
 
@@ -294,7 +333,6 @@ def test_localization(setup_case, expected_target_gen_kw):
 
     # test that all the other values are left unchanged
     assert sim_gen_kw[3:] == target_gen_kw[3:]
-    assert sim_gen_kw[0] == target_gen_kw[0]
 
     assert target_gen_kw == pytest.approx(expected_target_gen_kw)
 
@@ -363,3 +401,48 @@ SUMMARY_OBSERVATION EXTREMELY_HIGH_STD
     result_snapshot = es_update.update_snapshots[run_context.run_id]
     assert result_snapshot.alpha == alpha
     assert result_snapshot.update_step_snapshots["ALL_ACTIVE"].obs_status == expected
+
+
+@pytest.mark.integration_test
+def test_update_multiple_param(copy_case):
+    """
+    Note that this is now a snapshot test, so there is no guarantee that the
+    snapshots are correct, they are just documenting the current behavior.
+    """
+    copy_case("snake_oil_field")
+    parser = ArgumentParser(prog="test_main")
+    parsed = ert_parser(
+        parser,
+        [
+            ENSEMBLE_EXPERIMENT_MODE,
+            "snake_oil.ert",
+            "--port-range",
+            "1024-65535",
+        ],
+    )
+    run_cli(parsed)
+
+    res_config = ResConfig("snake_oil.ert")
+    ert = EnKFMain(res_config)
+    es_update = ESUpdate(ert)
+    fsm = ert.getEnkfFsManager()
+    sim_fs = fsm.getFileSystem("default")
+    target_fs = fsm.getFileSystem("target")
+
+    run_context = ert.create_ensemble_smoother_run_context(
+        source_filesystem=sim_fs, target_filesystem=target_fs, iteration=0
+    )
+    es_update.smootherUpdate(run_context)
+
+    prior = _create_temporary_parameter_storage(
+        sim_fs, ert.ensembleConfig(), list(range(10))
+    )
+    posterior = _create_temporary_parameter_storage(
+        target_fs, ert.ensembleConfig(), list(range(10))
+    )
+
+    # We expect that ERT's update step lowers the
+    # generalized variance for the parameters.
+    # https://en.wikipedia.org/wiki/Variance#For_vector-valued_random_variables
+    for prior_name, prior_data in prior.items():
+        assert np.trace(np.cov(posterior[prior_name])) < np.trace(np.cov(prior_data))

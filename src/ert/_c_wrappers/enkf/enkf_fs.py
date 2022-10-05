@@ -105,21 +105,21 @@ class EnkfFs(BaseCClass):
         self,
         ensemble_config: "EnsembleConfig",
         iens_active_index: List[int],
-        parameters: List[update.Parameter],
+        parameter: update.Parameter,
         values: npt.ArrayLike,
     ) -> None:
-        update.save_parameters(
-            self, ensemble_config, iens_active_index, parameters, values
+        update.save_parameter(
+            self, ensemble_config, iens_active_index, parameter, values
         )
 
-    def load_parameters(
+    def load_parameter(
         self,
         ensemble_config: EnsembleConfig,
         iens_active_index: List[int],
-        parameters: List[update.Parameter],
+        parameter: update.Parameter,
     ) -> np.ndarray:
-        return update.load_parameters(
-            self, ensemble_config, iens_active_index, parameters
+        return update.load_parameter(
+            self, ensemble_config, iens_active_index, parameter
         )
 
     def load_from_run_path(

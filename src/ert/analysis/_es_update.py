@@ -1,7 +1,7 @@
 import logging
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, List
+from typing import TYPE_CHECKING, Any, Dict, List, Tuple, Union
 
 import iterative_ensemble_smoother as ies
 import numpy as np
@@ -9,12 +9,15 @@ from iterative_ensemble_smoother.experimental import (
     ensemble_smoother_update_step_row_scaling,
 )
 
+from ert._c_wrappers.enkf import ActiveMode
 from ert._c_wrappers.enkf.enums import RealizationStateEnum
+from ert._c_wrappers.enkf.row_scaling import RowScaling
 from ert._clib import analysis_module, update
 
 from ._ies import IesConfig
 
 if TYPE_CHECKING:
+    import numpy.typing as npt
     from ecl.util.util import RandomNumberGenerator
 
     from ert._c_wrappers.analysis.configuration import UpdateConfiguration
@@ -43,6 +46,93 @@ class SmootherSnapshot:
     update_step_snapshots: Dict[str, "UpdateSnapshot"] = field(default_factory=dict)
 
 
+def _get_A_matrix(
+    temporary_storage: Dict[str, "npt.NDArray[np.double]"],
+    parameters: List[update.Parameter],
+) -> Any:
+    matrices: Any = []
+    for p in parameters:
+        if p.active_list.getMode() == ActiveMode.ALL_ACTIVE:
+            matrices.append(temporary_storage[p.name])
+        elif p.active_list.getMode() == ActiveMode.PARTLY_ACTIVE:
+            matrices.append(
+                temporary_storage[p.name][p.active_list.get_active_index_list(), :]
+            )
+    if not matrices:
+        return None
+    return np.vstack(matrices)
+
+
+def _get_row_scaling_A_matrices(
+    temporary_storage: Dict[str, "npt.NDArray[np.double]"],
+    parameters: List[update.RowScalingParameter],
+) -> List[Tuple["npt.NDArray[np.double]", RowScaling]]:
+    matrices = []
+    for p in parameters:
+        if p.active_list.getMode() == ActiveMode.ALL_ACTIVE:
+            matrices.append((temporary_storage[p.name], p.row_scaling))
+        elif p.active_list.getMode() == ActiveMode.PARTLY_ACTIVE:
+            matrices.append(
+                (
+                    temporary_storage[p.name][p.active_list.get_active_index_list(), :],
+                    p.row_scaling,
+                ),
+            )
+
+    return matrices
+
+
+def _save_to_temporary_storage(
+    temporary_storage: Dict[str, "npt.NDArray[np.double]"],
+    parameters: List[update.Parameter],
+    A: Union["npt.NDArray[np.double]", None],
+) -> None:
+    if A is None:
+        return
+    offset = 0
+    for p in parameters:
+        if p.active_list.getMode() == ActiveMode.ALL_ACTIVE:
+            rows = temporary_storage[p.name].shape[0]
+            temporary_storage[p.name] = A[offset : offset + rows, :]
+            offset += rows
+        elif p.active_list.getMode() == ActiveMode.PARTLY_ACTIVE:
+            row_indices = p.active_list.get_active_index_list()
+            for i, row in enumerate(row_indices):
+                temporary_storage[p.name][row] = A[offset + i]
+            offset += len(row_indices)
+
+
+def _save_temporary_storage_to_disk(
+    target_fs: "EnkfFs",
+    ensemble_config: "EnsembleConfig",
+    temporary_storage: Dict[str, "npt.NDArray[np.double]"],
+    iens_active_index: List[int],
+) -> None:
+    for key, matrix in temporary_storage.items():
+        target_fs.save_parameters(
+            ensemble_config=ensemble_config,
+            iens_active_index=iens_active_index,
+            parameter=update.Parameter(key),
+            values=matrix,
+        )
+
+
+def _create_temporary_parameter_storage(
+    source_fs: "EnkfFs",
+    ensemble_config: "EnsembleConfig",
+    iens_active_index: List[int],
+) -> Dict[str, "npt.NDArray[np.double]"]:
+    temporary_storage = {}
+    for key in ensemble_config.parameters:
+        matrix = source_fs.load_parameter(
+            ensemble_config=ensemble_config,
+            iens_active_index=iens_active_index,
+            parameter=update.Parameter(key),
+        )
+        temporary_storage[key] = matrix
+    return temporary_storage
+
+
 def analysis_ES(
     updatestep: "UpdateConfiguration",
     obs: "EnkfObs",
@@ -60,8 +150,9 @@ def analysis_ES(
 
     iens_active_index = [i for i in range(len(ens_mask)) if ens_mask[i]]
 
-    update.copy_parameters(source_fs, target_fs, ensemble_config, ens_mask)
-
+    temp_storage = _create_temporary_parameter_storage(
+        source_fs, ensemble_config, iens_active_index
+    )
     # Looping over local analysis update_step
     for update_step in updatestep:
 
@@ -85,14 +176,9 @@ def analysis_ES(
                 f"No active observations for update step: {update_step.name}."
             )
 
-        A = update.load_parameters(
-            target_fs, ensemble_config, iens_active_index, update_step.parameters
-        )
-        A_with_rowscaling = update.load_row_scaling_parameters(
-            target_fs,
-            ensemble_config,
-            iens_active_index,
-            update_step.row_scaling_parameters,
+        A = _get_A_matrix(temp_storage, update_step.parameters)
+        A_with_rowscaling = _get_row_scaling_A_matrices(
+            temp_storage, update_step.row_scaling_parameters
         )
         noise = update.generate_noise(len(observation_values), S.shape[1], shared_rng)
         if A is not None:
@@ -105,13 +191,7 @@ def analysis_ES(
                 module_config.get_truncation(),
                 ies.InversionType(module_config.inversion),
             )
-            target_fs.save_parameters(
-                ensemble_config,
-                iens_active_index,
-                update_step.parameters,
-                A,
-            )
-
+            _save_to_temporary_storage(temp_storage, update_step.parameters, A)
         if A_with_rowscaling:
             A_with_rowscaling = ensemble_smoother_update_step_row_scaling(
                 S,
@@ -122,13 +202,14 @@ def analysis_ES(
                 module_config.get_truncation(),
                 ies.InversionType(module_config.inversion),
             )
-            update.save_row_scaling_parameters(
-                target_fs,
-                ensemble_config,
-                iens_active_index,
-                update_step.row_scaling_parameters,
-                A_with_rowscaling,
-            )
+            for parameter, (A, _) in zip(
+                update_step.row_scaling_parameters, A_with_rowscaling
+            ):
+                _save_to_temporary_storage(temp_storage, [parameter], A)
+
+    _save_temporary_storage_to_disk(
+        target_fs, ensemble_config, temp_storage, iens_active_index
+    )
 
 
 def analysis_IES(
@@ -149,7 +230,9 @@ def analysis_IES(
 
     iens_active_index = [i for i in range(len(ens_mask)) if ens_mask[i]]
 
-    update.copy_parameters(source_fs, target_fs, ensemble_config, ens_mask)
+    temp_storage = _create_temporary_parameter_storage(
+        source_fs, ensemble_config, iens_active_index
+    )
 
     # Looping over local analysis update_step
     for update_step in updatestep:
@@ -175,9 +258,7 @@ def analysis_IES(
                 f"No active observations for update step: {update_step.name}."
             )
 
-        A = target_fs.load_parameters(
-            ensemble_config, iens_active_index, update_step.parameters
-        )
+        A = _get_A_matrix(temp_storage, update_step.parameters)
 
         noise = update.generate_noise(len(observation_values), S.shape[1], shared_rng)
         A = iterative_ensemble_smoother.update_step(
@@ -191,12 +272,11 @@ def analysis_IES(
             inversion=ies.InversionType(module_config.inversion),
             truncation=module_config.get_truncation(),
         )
-        target_fs.save_parameters(
-            ensemble_config,
-            iens_active_index,
-            update_step.parameters,
-            A,
-        )
+        _save_to_temporary_storage(temp_storage, update_step.parameters, A)
+
+    _save_temporary_storage_to_disk(
+        target_fs, ensemble_config, temp_storage, iens_active_index
+    )
 
 
 def _write_update_report(fname: Path, snapshot: SmootherSnapshot) -> None:
