@@ -61,7 +61,9 @@ class Client:  # pylint: disable=too-many-instance-attributes
 
     async def get_websocket(self) -> WebSocketClientProtocol:
         return await connect(
-            self.url, ssl=self._ssl_context, extra_headers=self._extra_headers
+            self.url,
+            ssl=self._ssl_context,
+            extra_headers=self._extra_headers,
         )
 
     async def _send(self, msg: AnyStr) -> None:
