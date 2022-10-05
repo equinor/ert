@@ -450,8 +450,9 @@ bool config_schema_item_validate_set(const config_schema_item_type *item,
 
                             config_error_add(
                                 error_list,
-                                util_alloc_sprintf(
-                                    "Could not locate executable:%s ", value));
+                                util_alloc_sprintf("Path to executable:%s is "
+                                                   "actually a directory",
+                                                   value));
                             break;
                         }
 
@@ -466,7 +467,7 @@ bool config_schema_item_validate_set(const config_schema_item_type *item,
                             config_error_add(
                                 error_list,
                                 util_alloc_sprintf(
-                                    "Could not locate executable:%s ", value));
+                                    "Executable:%s does not exist", value));
 
                         free(path_exe);
                     } else {

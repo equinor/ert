@@ -182,6 +182,12 @@ static void add_queue_system_keyword(config_parser_type *config_parser,
 static void add_queue_option_keyword(config_parser_type *config_parser) {
     auto item = config_add_schema_item(config_parser, QUEUE_OPTION_KEY, false);
     config_schema_item_set_argc_minmax(item, 2, CONFIG_DEFAULT_ARG_MAX);
+    stringlist_type *argv = stringlist_alloc_new();
+    stringlist_append_copy(argv, "LSF");
+    stringlist_append_copy(argv, "LOCAL");
+    stringlist_append_copy(argv, "TORQUE");
+    stringlist_append_copy(argv, "SLURM");
+    config_schema_item_set_indexed_selection_set(item, 0, argv);
 }
 
 static void add_job_script_keyword(config_parser_type *config_parser) {
