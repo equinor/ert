@@ -211,7 +211,6 @@ def config_dicts(draw):
                 ConfigKeys.RERUN_START_KEY: positives,
                 ConfigKeys.UPDATE_LOG_PATH: directory_names(),
                 ConfigKeys.STD_CUTOFF_KEY: small_floats,
-                ConfigKeys.SINGLE_NODE_UPDATE: st.booleans(),
                 ConfigKeys.MAX_RUNTIME: positives,
                 ConfigKeys.MIN_REALIZATIONS: positives,
                 ConfigKeys.CONFIG_DIRECTORY: st.just(os.getcwd()),

@@ -341,7 +341,6 @@ def test_res_config_dict_constructor(setup_case):
         ConfigKeys.RERUN_START_KEY: 0,
         ConfigKeys.STD_CUTOFF_KEY: 1e-6,
         ConfigKeys.STOP_LONG_RUNNING: False,
-        ConfigKeys.SINGLE_NODE_UPDATE: False,
         ConfigKeys.GLOBAL_STD_SCALING: 1,
         ConfigKeys.MIN_REALIZATIONS: 5,
         # "MIN_REALIZATIONS"  : "50%", percentages need to be fixed or removed

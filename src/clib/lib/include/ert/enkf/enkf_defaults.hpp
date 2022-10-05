@@ -81,19 +81,7 @@
    Defaults for the EnKF analysis. The analysis_config object is
    instantiated with these values.
 */
-#define DEFAULT_ENKF_ALPHA 3.0
-#define DEFAULT_ENKF_STD_CUTOFF 1e-6
-#define DEFAULT_RERUN false
-#define DEFAULT_RERUN_START 0
-#define DEFAULT_UPDATE_LOG_PATH "update_log"
-#define DEFAULT_SINGLE_NODE_UPDATE false
 #define DEFAULT_ANALYSIS_MODULE "STD_ENKF"
-#define DEFAULT_ANALYSIS_NUM_ITERATIONS 4
-#define DEFAULT_ANALYSIS_ITER_CASE "ITERATED_ENSEMBLE_SMOOTHER%d"
-#define DEFAULT_ANALYSIS_MIN_REALISATIONS 0 // 0: No lower limit
-#define DEFAULT_ANALYSIS_STOP_LONG_RUNNING false
-#define DEFAULT_MAX_RUNTIME 0
-#define DEFAULT_ITER_RETRY_COUNT 4
 
 /* Default directories. */
 #define DEFAULT_RUNPATH "simulations/realization-<IENS>/iter-<ITER>"

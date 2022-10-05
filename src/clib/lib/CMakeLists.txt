@@ -36,7 +36,6 @@ pybind11_add_module(
   config/config_error.cpp
   config/config_path_elm.cpp
   config/config_schema_item.cpp
-  config/config_settings.cpp
   config/config_keywords.cpp
   rms/rms_file.cpp
   rms/rms_tag.cpp
@@ -68,7 +67,6 @@ pybind11_add_module(
   enkf/active_list.cpp
   enkf/time_map.cpp
   enkf/analysis_config.cpp
-  enkf/analysis_iter_config.cpp
   enkf/block_fs_driver.cpp
   enkf/config_keys.cpp
   enkf/enkf_analysis.cpp

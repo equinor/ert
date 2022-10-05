@@ -76,7 +76,6 @@ Keyword name                                                            Required
 :ref:`SCHEDULE_PREDICTION_FILE <schedule_prediction_file>`              NO                                                                      Schedule prediction file
 :ref:`SETENV <setenv>`                                                  NO                                                                      You can modify the UNIX environment with SETENV calls
 :ref:`SIMULATION_JOB <simulation_job>`                                  NO                                                                      Experimental alternative to FORWARD_MODEL
-:ref:`SINGLE_NODE_UPDATE <single_node_update>`                          NO                                      FALSE                           Splits the dataset into individual parameters
 :ref:`STOP_LONG_RUNNING <stop_long_running>`                            NO                                      FALSE                           Stop long running realizations after minimum number of realizations (MIN_REALIZATIONS) have run
 :ref:`SUMMARY  <summary>`                                               NO                                                                      Add summary variables for internalization
 :ref:`SURFACE <surface>`                                                NO                                                                      Surface parameter read from RMS IRAP file
@@ -1423,12 +1422,6 @@ to load, select and modify the analysis modules are documented here.
 
         How many times should the queue system retry a simulation.
                 Default is 2.
-
-
-.. _single_node_update:
-.. topic:: SINGLE_NODE_UPDATE
-
-        Splits the dataset into individual parameters.
 
 
 Advanced optional keywords

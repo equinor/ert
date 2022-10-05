@@ -88,7 +88,7 @@ def test_hook_call_order_iterative_ensemble_smoother(monkeypatch):
     across different models.
     """
     ert_mock = MagicMock()
-    ert_mock.analysisConfig.return_value.getAnalysisIterConfig.return_value.getNumRetries.return_value = (  # noqa
+    ert_mock.analysisConfig.return_value.get_analysis_iter_config.return_value.get_num_retries.return_value = (  # noqa
         1
     )
     ert_mock.runWorkflows = MagicMock()

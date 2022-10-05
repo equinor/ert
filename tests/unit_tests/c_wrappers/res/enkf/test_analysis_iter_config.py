@@ -5,18 +5,14 @@ def test_set_analysis_iter_config():
     c = AnalysisIterConfig()
     assert repr(c).startswith("AnalysisIterConfig")
 
-    assert not c.caseFormatSet()
-    c.setCaseFormat("case%d")
-    assert c.caseFormatSet()
-
-    assert not c.numIterationsSet()
-    c.setNumIterations(1)
-    assert c.numIterationsSet()
+    assert not c.case_format_is_set()
+    c.set_case_format("case%d")
+    assert c.case_format_is_set()
 
 
 def test_analysis_iter_config_default():
     c_default = AnalysisIterConfig()
-    c_dict = AnalysisIterConfig(config_dict={})
+    c_dict = AnalysisIterConfig.from_dict({})
     assert c_default == c_dict
 
 
@@ -29,8 +25,8 @@ def test_analysis_iter_config_dict_init():
         "ITER_COUNT": iter_count,
         "ITER_RETRY_COUNT": iter_retry_count,
     }
-    a_ite_config = AnalysisIterConfig(config_dict=config_dict)
+    a_ite_config = AnalysisIterConfig.from_dict(config_dict)
 
-    assert a_ite_config.getCaseFormat() == iter_case
-    assert a_ite_config.getNumIterations() == iter_count
-    assert a_ite_config.getNumRetries() == iter_retry_count
+    assert a_ite_config.case_format() == iter_case
+    assert a_ite_config.get_num_iterations() == iter_count
+    assert a_ite_config.get_num_retries() == iter_retry_count
