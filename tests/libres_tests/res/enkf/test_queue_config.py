@@ -51,7 +51,11 @@ def test_queue_config_constructor(minimum_case):
                 ConfigKeys.MAX_SUBMIT: 2,
                 ConfigKeys.NUM_CPU: 0,
                 ConfigKeys.QUEUE_OPTION: [
-                    {ConfigKeys.NAME: "MAX_RUNNING", ConfigKeys.VALUE: "50"}
+                    {
+                        ConfigKeys.DRIVER_NAME: QueueDriverEnum(2),
+                        ConfigKeys.OPTION: "MAX_RUNNING",
+                        ConfigKeys.VALUE: "50",
+                    }
                 ],
             }
         )

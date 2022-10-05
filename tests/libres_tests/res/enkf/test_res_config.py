@@ -368,14 +368,24 @@ def test_res_config_dict_constructor(setup_case):
         ConfigKeys.MAX_SUBMIT: 13,
         ConfigKeys.NUM_CPU: 0,
         ConfigKeys.QUEUE_OPTION: [
-            {ConfigKeys.NAME: "MAX_RUNNING", ConfigKeys.VALUE: "100"},
-            {ConfigKeys.NAME: QueueConfig.LSF_QUEUE_NAME_KEY, ConfigKeys.VALUE: "mr"},
             {
-                ConfigKeys.NAME: QueueConfig.LSF_SERVER_KEY,
+                ConfigKeys.DRIVER_NAME: QueueDriverEnum.LSF_DRIVER,
+                ConfigKeys.OPTION: "MAX_RUNNING",
+                ConfigKeys.VALUE: "100",
+            },
+            {
+                ConfigKeys.DRIVER_NAME: QueueDriverEnum.LSF_DRIVER,
+                ConfigKeys.OPTION: QueueConfig.LSF_QUEUE_NAME_KEY,
+                ConfigKeys.VALUE: "mr",
+            },
+            {
+                ConfigKeys.DRIVER_NAME: QueueDriverEnum.LSF_DRIVER,
+                ConfigKeys.OPTION: QueueConfig.LSF_SERVER_KEY,
                 ConfigKeys.VALUE: "simulacrum",
             },
             {
-                ConfigKeys.NAME: QueueConfig.LSF_RESOURCE_KEY,
+                ConfigKeys.DRIVER_NAME: QueueDriverEnum.LSF_DRIVER,
+                ConfigKeys.OPTION: QueueConfig.LSF_RESOURCE_KEY,
                 ConfigKeys.VALUE: "select[x86_64Linux] same[type:model]",
             },
         ],
