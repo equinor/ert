@@ -50,12 +50,6 @@ typedef bool(set_option_ftype)(void *, const char *, const void *);
 typedef const void *(get_option_ftype)(const void *, const char *);
 typedef void(init_option_list_ftype)(stringlist_type *);
 
-queue_driver_type *queue_driver_alloc_LSF(const char *queue_name,
-                                          const char *resource_request,
-                                          const char *remote_lsf_server);
-queue_driver_type *queue_driver_alloc_TORQUE();
-queue_driver_type *queue_driver_alloc_local();
-queue_driver_type *queue_driver_alloc_slurm();
 extern "C" queue_driver_type *queue_driver_alloc(job_driver_type type);
 
 void *queue_driver_submit_job(queue_driver_type *driver, const char *run_cmd,
@@ -76,8 +70,8 @@ queue_driver_get_name(const queue_driver_type *driver);
 extern "C" bool queue_driver_set_option(queue_driver_type *driver,
                                         const char *option_key,
                                         const void *value);
-bool queue_driver_unset_option(queue_driver_type *driver,
-                               const char *option_key);
+extern "C" bool queue_driver_unset_option(queue_driver_type *driver,
+                                          const char *option_key);
 extern "C" const void *queue_driver_get_option(queue_driver_type *driver,
                                                const char *option_key);
 void queue_driver_init_option_list(queue_driver_type *driver,

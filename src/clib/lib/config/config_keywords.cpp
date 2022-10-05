@@ -269,7 +269,13 @@ void init_site_config_parser(config_parser_type *config_parser) {
 ERT_CLIB_SUBMODULE("config_keywords", m) {
     using namespace py::literals;
     m.def(
-        "init_res_config_parser",
+        "init_site_config_parser",
+        [](Cwrap<config_parser_type> config_parser) {
+            init_site_config_parser(config_parser);
+        },
+        py::arg("config_parser"));
+    m.def(
+        "init_user_config_parser",
         [](Cwrap<config_parser_type> config_parser) {
             add_path_keyword(config_parser, WORKFLOW_JOB_DIRECTORY_KEY);
             add_load_workflow_keyword(config_parser);

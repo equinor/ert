@@ -220,7 +220,6 @@ def config_dicts(draw):
                 ConfigKeys.DATA_FILE: file_names,
                 ConfigKeys.GRID: st.just(draw(words) + ".EGRID"),
                 ConfigKeys.JOB_SCRIPT: file_names,
-                ConfigKeys.USER_MODE: st.booleans(),
                 ConfigKeys.MAX_SUBMIT: positives,
                 ConfigKeys.NUM_CPU: positives,
                 ConfigKeys.QUEUE_SYSTEM: st.just(queue_system),

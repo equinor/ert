@@ -313,36 +313,6 @@ void queue_driver_init_option_list(queue_driver_type *driver,
             __func__, driver->name);
 }
 
-queue_driver_type *queue_driver_alloc_LSF(const char *queue_name,
-                                          const char *lsf_resource,
-                                          const char *lsf_server) {
-    queue_driver_type *driver = queue_driver_alloc(LSF_DRIVER);
-
-    queue_driver_set_option(driver, LSF_QUEUE, queue_name);
-    queue_driver_set_option(driver, LSF_RESOURCE, lsf_resource);
-    queue_driver_set_option(driver, LSF_SERVER, lsf_server);
-
-    return driver;
-}
-
-queue_driver_type *queue_driver_alloc_TORQUE() {
-    queue_driver_type *driver = queue_driver_alloc(TORQUE_DRIVER);
-    return driver;
-}
-
-queue_driver_type *queue_driver_alloc_local() {
-    queue_driver_type *driver = queue_driver_alloc(LOCAL_DRIVER);
-
-    /* No options set for the local driver. */
-
-    return driver;
-}
-
-queue_driver_type *queue_driver_alloc_slurm() {
-    queue_driver_type *driver = queue_driver_alloc(SLURM_DRIVER);
-    return driver;
-}
-
 /* These are the functions used by the job_queue layer. */
 
 void *queue_driver_submit_job(queue_driver_type *driver, const char *run_cmd,

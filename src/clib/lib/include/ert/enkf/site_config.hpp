@@ -31,8 +31,6 @@
 #include <ert/job_queue/forward_model.hpp>
 #include <ert/job_queue/job_queue.hpp>
 
-#include <ert/enkf/queue_config.hpp>
-
 typedef struct site_config_struct site_config_type;
 
 extern "C" const char *site_config_get_location();

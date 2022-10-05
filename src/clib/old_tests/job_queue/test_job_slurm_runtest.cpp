@@ -49,7 +49,7 @@ void make_failed_job(const char *fname, int sleep_time) {
 
 void run(double squeue_timeout) {
     ecl::util::TestArea ta("slurm_submit", true);
-    queue_driver_type *driver = queue_driver_alloc_slurm();
+    queue_driver_type *driver = queue_driver_alloc(SLURM_DRIVER);
     std::vector<void *> jobs;
     const char *long_cmd = util_alloc_abs_path("long_run.sh");
     const char *ok_cmd = util_alloc_abs_path("ok_run.sh");
