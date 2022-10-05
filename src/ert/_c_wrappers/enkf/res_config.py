@@ -15,6 +15,7 @@
 #  for more details.
 import os
 import warnings
+from collections import defaultdict
 from os.path import isfile
 from typing import Any, Dict, Optional
 
@@ -31,7 +32,8 @@ from ert._c_wrappers.enkf.model_config import ModelConfig
 from ert._c_wrappers.enkf.queue_config import QueueConfig
 from ert._c_wrappers.enkf.site_config import SiteConfig
 from ert._c_wrappers.enkf.subst_config import SubstConfig
-from ert._clib.config_keywords import init_res_config_parser
+from ert._c_wrappers.job_queue import QueueDriverEnum
+from ert._clib.config_keywords import init_site_config_parser, init_user_config_parser
 
 
 def format_warning_message(message, category, *args, **kwargs):
@@ -88,12 +90,15 @@ class ResConfig:
 
     # build configs from config file or everest dict
     def _alloc_from_content(self, user_config_file=None, config=None):
+        site_config_parser = ConfigParser()
+        init_site_config_parser(site_config_parser)
+        site_config_content = site_config_parser.parse(SiteConfig.getLocation())
         if user_config_file is not None:
             # initialize configcontent if user_file provided
             config_parser = ConfigParser()
-            init_res_config_parser(config_parser)
+            init_user_config_parser(config_parser)
             self.config_path = os.path.abspath(os.path.dirname(user_config_file))
-            config_content = config_parser.parse(
+            user_config_content = config_parser.parse(
                 user_config_file,
                 pre_defined_kw_map={
                     "<CWD>": self.config_path,
@@ -106,37 +111,80 @@ class ResConfig:
             )
         else:
             self.config_path = os.getcwd()
-            config_content = self._build_config_content(config)
+            user_config_content = self._build_config_content(config)
 
         if self.errors:
             raise ValueError("Error loading configuration: " + str(self._errors))
 
-        self.subst_config = SubstConfig(config_content=config_content)
-        self.site_config = SiteConfig(config_content=config_content)
-        if config_content.hasKey(ConfigKeys.RANDOM_SEED):
-            self.random_seed = config_content.getValue(ConfigKeys.RANDOM_SEED)
+        self.subst_config = SubstConfig(config_content=user_config_content)
+        self.site_config = SiteConfig(config_content=user_config_content)
+        if user_config_content.hasKey(ConfigKeys.RANDOM_SEED):
+            self.random_seed = user_config_content.getValue(ConfigKeys.RANDOM_SEED)
         else:
             self.random_seed = None
-        self.analysis_config = AnalysisConfig(config_content=config_content)
-        self.ecl_config = EclConfig(config_content=config_content)
-        self.queue_config = QueueConfig(config_content=config_content)
+        self.analysis_config = AnalysisConfig(config_content=user_config_content)
+        self.ecl_config = EclConfig(config_content=user_config_content)
 
-        self.ert_workflow_list = ErtWorkflowList(
-            subst_list=self.subst_config.subst_list, config_content=config_content
+        queue_config_args = {}
+
+        def set_value(argname, key, transform=lambda x: x):
+            if key in site_config_content:
+                queue_config_args[argname] = transform(
+                    site_config_content.getValue(key)
+                )
+            if key in user_config_content:
+                queue_config_args[argname] = transform(
+                    user_config_content.getValue(key)
+                )
+
+        set_value("job_script", ConfigKeys.JOB_SCRIPT)
+        set_value("max_submit", ConfigKeys.MAX_SUBMIT)
+        set_value("num_cpu", ConfigKeys.NUM_CPU)
+        set_value(
+            "queue_system",
+            ConfigKeys.QUEUE_SYSTEM,
+            lambda x: QueueDriverEnum.from_string(x + "_DRIVER"),
         )
 
-        if config_content.hasKey(ConfigKeys.RUNPATH_FILE):
-            self.runpath_file = config_content.getValue(ConfigKeys.RUNPATH_FILE)
+        queue_config_args["queue_options"] = defaultdict(list)
+
+        def set_options(content):
+            if ConfigKeys.QUEUE_OPTION in content:
+                for setting in iter(content[ConfigKeys.QUEUE_OPTION]):
+                    queue_driver_type = QueueDriverEnum.from_string(
+                        setting[0] + "_DRIVER"
+                    )
+                    option_name = setting[1]
+                    if len(setting) == 2:
+                        queue_config_args["queue_options"][queue_driver_type].append(
+                            setting[1]
+                        )
+                    else:
+                        option_value = " ".join(list(setting)[2:])
+                        queue_config_args["queue_options"][queue_driver_type].append(
+                            (option_name, option_value)
+                        )
+
+        set_options(site_config_content)
+        set_options(user_config_content)
+        self.queue_config = QueueConfig(**queue_config_args)
+
+        self.ert_workflow_list = ErtWorkflowList(
+            subst_list=self.subst_config.subst_list, config_content=user_config_content
+        )
+
+        if user_config_content.hasKey(ConfigKeys.RUNPATH_FILE):
+            self.runpath_file = user_config_content.getValue(ConfigKeys.RUNPATH_FILE)
         else:
             self.runpath_file = ".ert_runpath_list"
 
         self.hook_manager = HookManager(
-            workflow_list=self.ert_workflow_list, config_content=config_content
+            workflow_list=self.ert_workflow_list, config_content=user_config_content
         )
 
-        if config_content.hasKey(ConfigKeys.DATA_FILE) and config_content.hasKey(
-            ConfigKeys.ECLBASE
-        ):
+        if user_config_content.hasKey(
+            ConfigKeys.DATA_FILE
+        ) and user_config_content.hasKey(ConfigKeys.ECLBASE):
             # This replicates the behavior of the DATA_FILE implementation
             # in C, it adds the .DATA extension and facilitates magic string
             # replacement in the data file
@@ -146,17 +194,17 @@ class ResConfig:
                 "want to template magic strings into the data file"
             )
             warnings.warn(warning, DeprecationWarning)
-            source_file = config_content[ConfigKeys.DATA_FILE]
-            target_file = config_content[ConfigKeys.ECLBASE]
+            source_file = user_config_content[ConfigKeys.DATA_FILE]
+            target_file = user_config_content[ConfigKeys.ECLBASE]
             target_file = target_file.getValue(0).replace("%d", "<IENS>")
             self._templates.append([source_file.getValue(0), target_file + ".DATA"])
 
-        if config_content.hasKey(ConfigKeys.RUN_TEMPLATE):
-            for template in config_content[ConfigKeys.RUN_TEMPLATE]:
+        if user_config_content.hasKey(ConfigKeys.RUN_TEMPLATE):
+            for template in user_config_content[ConfigKeys.RUN_TEMPLATE]:
                 self._templates.append(list(template))
 
         self.ensemble_config = EnsembleConfig(
-            config_content=config_content,
+            config_content=user_config_content,
             grid=self.ecl_config.getGrid(),
             refcase=self.ecl_config.getRefcase(),
         )
@@ -166,7 +214,7 @@ class ResConfig:
             joblist=self.site_config.get_installed_jobs(),
             last_history_restart=self.ecl_config.getLastHistoryRestart(),
             refcase=self.ecl_config.getRefcase(),
-            config_content=config_content,
+            config_content=user_config_content,
         )
 
     # build configs from config dict
@@ -182,7 +230,23 @@ class ResConfig:
         self.random_seed = config_dict.get(ConfigKeys.RANDOM_SEED, None)
         self.analysis_config = AnalysisConfig(config_dict=config_dict)
         self.ecl_config = EclConfig(config_dict=config_dict)
-        self.queue_config = QueueConfig(config_dict=config_dict)
+        queue_config_args = {}
+        if ConfigKeys.JOB_SCRIPT in config_dict:
+            queue_config_args["job_script"] = config_dict[ConfigKeys.JOB_SCRIPT]
+        if ConfigKeys.MAX_SUBMIT in config_dict:
+            queue_config_args["max_submit"] = config_dict[ConfigKeys.MAX_SUBMIT]
+        if ConfigKeys.NUM_CPU in config_dict:
+            queue_config_args["num_cpu"] = config_dict[ConfigKeys.NUM_CPU]
+        if ConfigKeys.QUEUE_SYSTEM in config_dict:
+            queue_config_args["queue_system"] = config_dict[ConfigKeys.QUEUE_SYSTEM]
+        queue_config_args["queue_options"] = defaultdict(list)
+        for setting in config_dict.get(ConfigKeys.QUEUE_OPTION, []):
+            queue_config_args["queue_options"][setting[ConfigKeys.DRIVER_NAME]].append(
+                setting[ConfigKeys.OPTION]
+                if len(setting) == 2
+                else (setting[ConfigKeys.OPTION], setting[ConfigKeys.VALUE])
+            )
+        self.queue_config = QueueConfig(**queue_config_args)
 
         self.ert_workflow_list = ErtWorkflowList(
             subst_list=self.subst_config.subst_list, config_dict=config_dict
@@ -475,7 +539,7 @@ class ResConfig:
         defines, config_dir, config_list = self._extract_config(config)
 
         config_parser = ConfigParser()
-        init_res_config_parser(config_parser)
+        init_user_config_parser(config_parser)
         config_content = ConfigContent(None)
         config_content.setParser(config_parser)
 

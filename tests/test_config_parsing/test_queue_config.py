@@ -3,7 +3,7 @@ import os
 import pytest
 from hypothesis import given
 
-from ert._c_wrappers.enkf import ConfigKeys, QueueConfig
+from ert._c_wrappers.enkf import ConfigKeys, ResConfig
 
 from .config_dict_generator import config_dicts, to_config_file
 
@@ -16,4 +16,7 @@ def test_queue_config_dict_same_as_from_file(config_dict):
     filename = config_dict[ConfigKeys.CONFIG_FILE_KEY]
     to_config_file(filename, config_dict)
     config_dict[ConfigKeys.CONFIG_DIRECTORY] = cwd
-    assert QueueConfig(filename) == QueueConfig(config_dict=config_dict)
+    assert (
+        ResConfig(filename).queue_config
+        == ResConfig(config_dict=config_dict).queue_config
+    )

@@ -27,7 +27,6 @@ from ert._c_wrappers.enkf import (
     AnalysisConfig,
     ConfigKeys,
     GenDataFileType,
-    QueueConfig,
     ResConfig,
     SiteConfig,
 )
@@ -245,16 +244,14 @@ def test_extensive_config(setup_case):
     )
 
     queue_config = res_config.queue_config
-    for key, act in [
-        ("MAX_SUBMIT", queue_config.max_submit),
-        ("LSF_QUEUE", queue_config.queue_name),
-        ("LSF_SERVER", queue_config.lsf_server),
-        ("LSF_RESOURCE", queue_config.lsf_resource),
-        ("QUEUE_SYSTEM", queue_config.queue_system),
-        ("QUEUE_SYSTEM", queue_config.driver.name),
-        ("MAX_RUNNING", queue_config.driver.get_option("MAX_RUNNING")),
-    ]:
-        assert snake_oil_structure_config[key] == act
+    assert queue_config.queue_system == QueueDriverEnum.LSF_DRIVER
+    assert snake_oil_structure_config["MAX_SUBMIT"] == queue_config.max_submit
+    driver = queue_config.create_driver()
+    assert snake_oil_structure_config["MAX_RUNNING"] == driver.get_option("MAX_RUNNING")
+    assert snake_oil_structure_config["LSF_SERVER"] == driver.get_option("LSF_SERVER")
+    assert snake_oil_structure_config["LSF_RESOURCE"] == driver.get_option(
+        "LSF_RESOURCE"
+    )
 
     site_config = res_config.site_config
     job_list = site_config.get_installed_jobs()
@@ -364,7 +361,6 @@ def test_res_config_dict_constructor(setup_case):
         ConfigKeys.MAX_RUNTIME: 23400,
         ConfigKeys.JOB_SCRIPT: f"../../{script_file}",
         ConfigKeys.QUEUE_SYSTEM: QueueDriverEnum.LSF_DRIVER,
-        ConfigKeys.USER_MODE: True,
         ConfigKeys.MAX_SUBMIT: 13,
         ConfigKeys.NUM_CPU: 0,
         ConfigKeys.QUEUE_OPTION: [
@@ -375,17 +371,17 @@ def test_res_config_dict_constructor(setup_case):
             },
             {
                 ConfigKeys.DRIVER_NAME: QueueDriverEnum.LSF_DRIVER,
-                ConfigKeys.OPTION: QueueConfig.LSF_QUEUE_NAME_KEY,
+                ConfigKeys.OPTION: "LSF_QUEUE",
                 ConfigKeys.VALUE: "mr",
             },
             {
                 ConfigKeys.DRIVER_NAME: QueueDriverEnum.LSF_DRIVER,
-                ConfigKeys.OPTION: QueueConfig.LSF_SERVER_KEY,
+                ConfigKeys.OPTION: "LSF_SERVER",
                 ConfigKeys.VALUE: "simulacrum",
             },
             {
                 ConfigKeys.DRIVER_NAME: QueueDriverEnum.LSF_DRIVER,
-                ConfigKeys.OPTION: QueueConfig.LSF_RESOURCE_KEY,
+                ConfigKeys.OPTION: "LSF_RESOURCE",
                 ConfigKeys.VALUE: "select[x86_64Linux] same[type:model]",
             },
         ],
@@ -590,6 +586,33 @@ def test_runpath_file(monkeypatch, tmp_path):
 
     config = ResConfig(os.path.relpath(config_path, workdir_path))
     assert config.runpath_file == str(runpath_path)
+
+
+def test_that_job_script_can_be_set_in_site_config(monkeypatch, tmp_path):
+    """
+    We use the jobscript field to inject a komodo environment onprem.
+    This overwrites the value by appending to the default siteconfig.
+    Need to check that the second JOB_SCRIPT is the one that gets used.
+    """
+    test_site_config = tmp_path / "test_site_config.ert"
+    my_script = (tmp_path / "my_script").resolve()
+    my_script.write_text("")
+    st = os.stat(my_script)
+    os.chmod(my_script, st.st_mode | stat.S_IEXEC)
+    test_site_config.write_text(
+        f"JOB_SCRIPT job_dispatch.py\nJOB_SCRIPT {my_script}\nQUEUE_SYSTEM LOCAL\n"
+    )
+    monkeypatch.setenv("ERT_SITE_CONFIG", str(test_site_config))
+
+    test_user_config = tmp_path / "user_config.ert"
+
+    test_user_config.write_text(
+        "JOBNAME  Job%d\nRUNPATH /tmp/simulations/run%d\nNUM_REALIZATIONS 10\n"
+    )
+
+    res_config = ResConfig(str(test_user_config))
+
+    assert Path(res_config.queue_config.job_script).resolve() == my_script
 
 
 def test_that_unknown_queue_option_gives_error_message(monkeypatch, tmp_path, capsys):

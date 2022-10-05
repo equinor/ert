@@ -48,6 +48,7 @@ class Driver(BaseCClass):
     _alloc = ResPrototype("void* queue_driver_alloc( queue_driver_enum )", bind=False)
     _free = ResPrototype("void queue_driver_free( driver )")
     _set_option = ResPrototype("void queue_driver_set_option( driver , char* , char*)")
+    _unset_option = ResPrototype("void queue_driver_unset_option( driver , char*)")
     _get_option = ResPrototype("char* queue_driver_get_option(driver, char*)")
     _free_job = ResPrototype("void   queue_driver_free_job( driver , job )")
     _get_status = ResPrototype(
@@ -79,6 +80,9 @@ class Driver(BaseCClass):
         should be a string.
         """
         return self._set_option(option, str(value))
+
+    def unset_option(self, option):
+        return self._unset_option(option)
 
     def get_option(self, option_key):
         return self._get_option(option_key)

@@ -54,7 +54,7 @@ void submit_job(queue_driver_type *driver, const ecl::util::TestArea &ta,
 
 void run() {
     ecl::util::TestArea ta("slurm_submit", true);
-    queue_driver_type *driver = queue_driver_alloc_slurm();
+    queue_driver_type *driver = queue_driver_alloc(SLURM_DRIVER);
     const char *cmd = util_alloc_abs_path("cmd.sh");
 
     make_sleep_job(cmd, 10);

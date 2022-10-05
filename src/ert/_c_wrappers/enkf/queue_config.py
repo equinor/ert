@@ -15,186 +15,41 @@
 #  for more details.
 
 import shutil
-from typing import Optional
+from dataclasses import dataclass, field
+from typing import Dict, List, Tuple, Union
 
-from cwrap import BaseCClass
-
-from ert._c_wrappers import ResPrototype
-from ert._c_wrappers.config import ConfigContent
-from ert._c_wrappers.enkf.config_keys import ConfigKeys
-from ert._c_wrappers.job_queue import Driver, JobQueue
-from ert._c_wrappers.job_queue.driver import LOCAL_DRIVER
+from ert._c_wrappers.job_queue import Driver, JobQueue, QueueDriverEnum
 
 
-class QueueConfig(BaseCClass):
-
-    TYPE_NAME = "queue_config"
-
-    _free = ResPrototype("void queue_config_free( queue_config )")
-    _alloc_full = ResPrototype(
-        "void* queue_config_alloc_full(char*, bool, int, int, queue_driver_enum)",
-        bind=False,
+@dataclass
+class QueueConfig:
+    job_script: str = shutil.which("job_dispatch.py") or "job_dispatch.py"
+    max_submit: int = 2
+    num_cpu: int = 0
+    queue_system: QueueDriverEnum = QueueDriverEnum.NULL_DRIVER
+    queue_options: Dict[QueueDriverEnum, List[Union[Tuple[str, str], str]]] = field(
+        default_factory=dict
     )
-    _alloc_content = ResPrototype(
-        "void* queue_config_alloc(config_content)", bind=False
-    )
-    _alloc_local_copy = ResPrototype(
-        "queue_config_obj queue_config_alloc_local_copy( queue_config )"
-    )
-    _has_job_script = ResPrototype("bool queue_config_has_job_script( queue_config )")
-    _get_job_script = ResPrototype("char* queue_config_get_job_script(queue_config)")
-    _max_submit = ResPrototype("int queue_config_get_max_submit(queue_config)")
-    _queue_system = ResPrototype("char* queue_config_get_queue_system(queue_config)")
-    _queue_driver = ResPrototype(
-        "driver_ref queue_config_get_queue_driver(queue_config, char*)"
-    )
-    _get_num_cpu = ResPrototype("int queue_config_get_num_cpu(queue_config)")
 
-    _lsf_queue_opt = ResPrototype("char* queue_config_lsf_queue_name()", bind=False)
-    _lsf_server_opt = ResPrototype("char* queue_config_lsf_server()", bind=False)
-    _lsf_resource_opt = ResPrototype("char* queue_config_lsf_resource()", bind=False)
-    _lsf_driver_opt = ResPrototype("char* queue_config_lsf_driver_name()", bind=False)
-
-    def __init__(
-        self,
-        config_content: Optional[ConfigContent] = None,
-        config_dict=None,
-    ):
-        configs = sum(1 for x in [config_content, config_dict] if x is not None)
-
-        if configs > 1:
-            raise ValueError(
-                "Attempting to create QueueConfig object with multiple config objects"
-            )
-
-        if configs == 0:
-            raise ValueError(
-                "Attempting to create QueueConfig object with no config objects"
-            )
-
-        c_ptr = None
-        if config_content is not None:
-            c_ptr = self._alloc_content(config_content)
-        if config_dict is not None:
-            job_script_path = shutil.which("job_dispatch.py") or "job_dispatch.py"
-            c_ptr = self._alloc_full(
-                config_dict.get(ConfigKeys.JOB_SCRIPT, job_script_path),
-                config_dict.get(ConfigKeys.USER_MODE, True),
-                config_dict.get(ConfigKeys.MAX_SUBMIT, 2),
-                config_dict.get(ConfigKeys.NUM_CPU, 0),
-                config_dict.get(ConfigKeys.QUEUE_SYSTEM, LOCAL_DRIVER),
-            )
-        if not c_ptr:
-            raise ValueError("Unable to create QueueConfig instance")
-
-        super().__init__(c_ptr)
-
-        # Need to create
-        if config_dict is not None:
-            queue_options = config_dict.get(ConfigKeys.QUEUE_OPTION, [])
-            for option in queue_options:
-                if option[ConfigKeys.DRIVER_NAME] == self.queue_system:
-                    if ConfigKeys.VALUE in option:
-                        self.driver.set_option(
-                            option[ConfigKeys.OPTION], option[ConfigKeys.VALUE]
-                        )
-                    else:
-                        self.driver.unset_option(option[ConfigKeys.OPTION])
+    def create_driver(self) -> Driver:
+        driver = Driver(self.queue_system)
+        if self.queue_system in self.queue_options:
+            for setting in self.queue_options[self.queue_system]:
+                if isinstance(setting, Tuple):
+                    driver.set_option(*setting)
+                else:
+                    driver.unset_option(setting)
+        return driver
 
     def create_job_queue(self) -> JobQueue:
-        queue = JobQueue(self.driver, max_submit=self.max_submit)
+        queue = JobQueue(self.create_driver(), max_submit=self.max_submit)
         return queue
 
     def create_local_copy(self):
-        return self._alloc_local_copy()
-
-    def has_job_script(self):
-        return self._has_job_script()
-
-    def free(self):
-        self._free()
-
-    @property
-    def max_submit(self):
-        return self._max_submit()
-
-    @property
-    def queue_name(self):
-        return self.driver.get_option(QueueConfig.LSF_QUEUE_NAME_KEY)
-
-    @property
-    def queue_system(self):
-        """The queue system in use, e.g. LSF or LOCAL"""
-        return self._queue_system()
-
-    @property
-    def job_script(self):
-        return self._get_job_script()
-
-    @property
-    def driver(self) -> Driver:
-        return self._queue_driver(self.queue_system).setParent(self)
-
-    def _assert_lsf(self, key="driver"):
-        sys = self.queue_system
-        if sys != QueueConfig.LSF_KEY:
-            fmt = "Cannot fetch LSF {key}, current queue is {system}"
-            raise ValueError(fmt.format(key=key, system=self.queue_system))
-
-    @property
-    def _lsf_driver(self):
-        self._assert_lsf()
-        driver = self._queue_driver(self.LSF_KEY)
-        return driver.setParent(self)
-
-    @property
-    def lsf_resource(self):
-        self._assert_lsf(key=QueueConfig.LSF_RESOURCE_KEY)
-        return self._lsf_driver.get_option(self.LSF_RESOURCE_KEY)
-
-    @property
-    def lsf_server(self):
-        self._assert_lsf(key=QueueConfig.LSF_SERVER_KEY)
-        return self._lsf_driver.get_option(self.LSF_SERVER_KEY)
-
-    @property
-    def num_cpu(self):
-        return self._get_num_cpu()
-
-    def __repr__(self):
-        if not self._address:
-            return "<QueueConfig()>"
-        return (
-            "QueueConfig(config_dict={"
-            f"'{ConfigKeys.JOB_SCRIPT}': {self.job_script}, "
-            f"'{ConfigKeys.MAX_SUBMIT}': {self.max_submit}, "
-            f"'{ConfigKeys.NUM_CPU}': {self.num_cpu}, "
-            f"'{ConfigKeys.QUEUE_SYSTEM}': {self.queue_system}, "
-            "})"
+        return QueueConfig(
+            self.job_script,
+            self.max_submit,
+            self.num_cpu,
+            QueueDriverEnum.LOCAL_DRIVER,
+            self.queue_options,
         )
-
-    def __eq__(self, other):
-
-        if self.max_submit != other.max_submit:
-            return False
-        if self.queue_system != other.queue_system:
-            return False
-        if self.num_cpu != other.num_cpu:
-            return False
-        if self.job_script != other.job_script:
-            return False
-
-        if self.queue_system != "LOCAL":
-            if self.queue_name != other.queue_name:
-                return False
-            if self.lsf_resource != other.lsf_resource:
-                return False
-            if self.lsf_server != other.lsf_server:
-                return False
-
-        return True
-
-    LSF_KEY = _lsf_driver_opt()
-    LSF_QUEUE_NAME_KEY = _lsf_queue_opt()
-    LSF_RESOURCE_KEY = _lsf_resource_opt()
-    LSF_SERVER_KEY = _lsf_server_opt()
