@@ -29,19 +29,19 @@ def test_enkf_fs_manager_create(snake_oil_case):
 def test_rotate(snake_oil_case):
     ert = snake_oil_case
     fsm = ert.getEnkfFsManager()
-    assert len(fsm._fs_rotator) == 2
+    assert len(fsm.storage_manager) == 2
 
     fs_list = []
     for index in range(5):
         fs_list.append(fsm.getFileSystem(f"fs_fill_{index}"))
 
-    assert len(fsm._fs_rotator) == 7
+    assert len(fsm.storage_manager) == 7
 
     for index in range(3 * 5):
         fs_name = f"fs_test_{index}"
         sys.stderr.write(f"Mounting: {fs_name}\n")
         fsm.getFileSystem(fs_name)
-        assert len(fsm._fs_rotator) == 8 + index
+        assert len(fsm.storage_manager) == 8 + index
 
 
 @pytest.mark.parametrize(
@@ -50,7 +50,7 @@ def test_rotate(snake_oil_case):
 )
 def test_custom_init_runs(snake_oil_case, state_mask, expected_length):
     ert = snake_oil_case
-    fs_manager = ert._fs_rotator
+    fs_manager = ert.storage_manager
     source_fs = fs_manager.current_case
     new_fs = fs_manager.add_case("new_case")
     source_fs.copy_from_case(new_fs, 0, ["SNAKE_OIL_PARAM"], state_mask)
