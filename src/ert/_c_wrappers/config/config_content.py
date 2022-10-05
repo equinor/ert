@@ -13,7 +13,7 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
-from typing import TYPE_CHECKING, Any, Dict, List
+from typing import TYPE_CHECKING, Any, Dict, Generator, List
 
 from cwrap import BaseCClass
 
@@ -53,6 +53,9 @@ class ContentNode(BaseCClass):
     _iget_as_path = ResPrototype(
         "char* config_content_node_iget_as_path( content_node , int)"
     )
+    _iget_as_executable = ResPrototype(
+        "char* config_content_node_iget_as_executable( content_node , int)"
+    )
     _iget_as_bool = ResPrototype(
         "bool config_content_node_iget_as_bool( content_node , int)"
     )
@@ -68,7 +71,7 @@ class ContentNode(BaseCClass):
         ContentTypeEnum.CONFIG_EXISTING_PATH: _iget_as_path,
         ContentTypeEnum.CONFIG_BOOL: _iget_as_bool,
         ContentTypeEnum.CONFIG_ISODATE: _iget_as_isodate,
-        ContentTypeEnum.CONFIG_EXECUTABLE: _iget_as_string,
+        ContentTypeEnum.CONFIG_EXECUTABLE: _iget_as_executable,
     }
 
     def __init__(self):
@@ -76,6 +79,9 @@ class ContentNode(BaseCClass):
 
     def __len__(self):
         return self._size()
+
+    def __iter__(self):
+        return iter([self[i] for i in range(len(self))])
 
     def __assertIndex(self, index):
         if isinstance(index, int):
@@ -134,7 +140,10 @@ class ContentItem(BaseCClass):
     def __len__(self):
         return self._size()
 
-    def __getitem__(self, index):
+    def __iter__(self) -> Generator[ContentNode, None, None]:
+        return (self[i] for i in range(len(self)))
+
+    def __getitem__(self, index: int) -> ContentNode:
         if isinstance(index, int):
             if index < 0:
                 index += len(self)
