@@ -1,3 +1,4 @@
+import datetime
 import logging
 import queue
 import threading
@@ -6,6 +7,7 @@ from typing import Any, Dict
 
 from cloudevents.conversion import to_json
 from cloudevents.http import CloudEvent
+from websockets.exceptions import ConnectionClosedError
 
 from _ert_job_runner.client import Client
 from _ert_job_runner.reporting.base import Reporter
@@ -53,15 +55,34 @@ class Event(Reporter):
         self._step_id = None
         self._event_queue = queue.Queue()
         self._event_publisher_thread = threading.Thread(target=self._publish_event)
+        self._sentinel = object()  # notifying the queue's ended
+        self._timeout_timestamp = None
+        self._timestamp_lock = threading.Lock()
+        # seconds to timeout the reporter the thread after Finish() was received
+        self._reporter_timeout = 60
 
     def _publish_event(self):
         logger.debug("Publishing event.")
-        with Client(self._evaluator_url, self._token, self._cert) as client:
+        with Client(
+            url=self._evaluator_url,
+            token=self._token,
+            cert=self._cert,
+        ) as client:
             while True:
+                with self._timestamp_lock:
+                    if (
+                        self._timeout_timestamp is not None
+                        and datetime.datetime.now() > self._timeout_timestamp
+                    ):
+                        self._timeout_timestamp = None
+                        break
                 event = self._event_queue.get()
-                if event is None:
-                    return
-                client.send(to_json(event).decode())
+                if event is self._sentinel:
+                    break
+                try:
+                    client.send(to_json(event).decode())
+                except (ConnectionError, ConnectionClosedError):
+                    pass
 
     def report(self, msg):
         self._statemachine.transition(msg)
@@ -140,5 +161,9 @@ class Event(Reporter):
             )
 
     def _finished_handler(self, msg):
-        self._event_queue.put(None)
+        self._event_queue.put(self._sentinel)
+        with self._timestamp_lock:
+            self._timeout_timestamp = datetime.datetime.now() + datetime.timedelta(
+                seconds=self._reporter_timeout
+            )
         self._event_publisher_thread.join()
