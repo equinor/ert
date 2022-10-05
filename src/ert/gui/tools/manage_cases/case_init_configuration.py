@@ -161,18 +161,19 @@ class CaseInitializationConfigurationPanel(QTabWidget):
             report_step = history_length_spinner.value()
             parameters = parameter_model.getSelectedItems()
             members = members_model.getSelectedItems()
-            case_manager = self.ert.getEnkfFsManager()
+            case_manager = self.ert._fs_rotator
             if (
-                source_case in case_manager
+                source_case_name in case_manager
                 and case_manager[source_case_name].is_initalized
-                and self.ert.caseExists(target_case_name)
+                and target_case_name in case_manager
             ):
                 member_mask = [False] * self.ert.getEnsembleSize()
                 for member in members:
                     member_mask[int(member)] = True
-
-                self.ert.getEnkfFsManager().customInitializeCurrentFromExistingCase(
-                    source_case_name, report_step, member_mask, parameters
+                source_fs = case_manager[source_case_name]
+                target_fs = case_manager[target_case_name]
+                source_fs.careful_duplicate(
+                    target_fs, report_step, parameters, member_mask
                 )
 
         initialize_button.clicked.connect(initializeFromExisting)
