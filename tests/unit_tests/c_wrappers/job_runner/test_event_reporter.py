@@ -1,7 +1,10 @@
 import json
 import os
+import time
+from unittest.mock import patch
 
 import pytest
+from websockets.exceptions import ConnectionClosedError
 
 from _ert_job_runner.job import Job
 from _ert_job_runner.reporting import Event
@@ -153,3 +156,70 @@ def test_report_inconsistent_events(unused_tcp_port):
             match=r"Illegal transition None -> \(MessageType<Finish>,\)",
         ):
             reporter.report(Finish())
+
+
+def test_report_with_failed_reporter_but_finished_jobs(unused_tcp_port):
+    # this is to show when the reporter fails ert won't crash nor
+    # staying hanging but instead finishes up the job;
+    # see reporter._event_publisher_thread.join()
+    # also assert reporter._timeout_timestamp is None
+    # meaning Finish event initiated _timeout and timeout was reached
+    # which then sets _timeout_timestamp=None
+    mock_send_retry_time = 2
+
+    def mock_send(msg):
+        time.sleep(mock_send_retry_time)
+        raise ConnectionClosedError(None, None)
+
+    host = "localhost"
+    url = f"ws://{host}:{unused_tcp_port}"
+    reporter = Event(evaluator_url=url)
+    reporter._reporter_timeout = 4
+    job1 = Job({"name": "job1", "stdout": "stdout", "stderr": "stderr"}, 0)
+    lines = []
+    with _mock_ws_thread(host, unused_tcp_port, lines):
+        with patch("_ert_job_runner.client.Client.send", lambda x, y: mock_send(y)):
+            reporter.report(Init([job1], 1, 19, ens_id="ens_id", real_id=0, step_id=0))
+            reporter.report(Running(job1, 100, 10))
+            reporter.report(Running(job1, 100, 10))
+            reporter.report(Running(job1, 100, 10))
+            # set _stop_timestamp
+            reporter.report(Finish())
+        if reporter._event_publisher_thread.is_alive():
+            reporter._event_publisher_thread.join()
+        # set _stop_timestamp to None only when timer stopped
+        assert reporter._timeout_timestamp is None
+    assert len(lines) == 0, "expected 0 Job running messages"
+
+
+def test_report_with_reconnected_reporter_but_finished_jobs(unused_tcp_port):
+    # this is to show when the reporter fails but reconnects
+    # reporter still manages to send events and completes fine
+    # see assert reporter._timeout_timestamp is not None
+    # meaning Finish event initiated _timeout but timeout wasn't reached since
+    # it finished succesfully
+    mock_send_retry_time = 3
+
+    def mock_send(msg):
+        time.sleep(mock_send_retry_time)
+        raise ConnectionClosedError(None, None)
+
+    host = "localhost"
+    url = f"ws://{host}:{unused_tcp_port}"
+    reporter = Event(evaluator_url=url)
+    job1 = Job({"name": "job1", "stdout": "stdout", "stderr": "stderr"}, 0)
+    lines = []
+    with _mock_ws_thread(host, unused_tcp_port, lines):
+        with patch("_ert_job_runner.client.Client.send", lambda x, y: mock_send(y)):
+            reporter.report(Init([job1], 1, 19, ens_id="ens_id", real_id=0, step_id=0))
+            reporter.report(Running(job1, 100, 10))
+            reporter.report(Running(job1, 100, 10))
+            reporter.report(Running(job1, 100, 10))
+        # reconnect and continue sending events
+        # set _stop_timestamp
+        reporter.report(Finish())
+        if reporter._event_publisher_thread.is_alive():
+            reporter._event_publisher_thread.join()
+        # set _stop_timestamp was not set to None since the reporter finished on time
+        assert reporter._timeout_timestamp is not None
+    assert len(lines) == 3, "expected 3 Job running messages"
