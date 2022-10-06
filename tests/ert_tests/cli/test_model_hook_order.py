@@ -34,9 +34,7 @@ def test_hook_call_order_ensemble_smoother(monkeypatch):
     evaluator_server_config_mock = MagicMock()
     test_class.runSimulations(evaluator_server_config_mock)
 
-    expected_calls = [
-        call(expected_call, ert=ert_mock) for expected_call in EXPECTED_CALL_ORDER
-    ]
+    expected_calls = [call(expected_call) for expected_call in EXPECTED_CALL_ORDER]
     assert ert_mock.runWorkflows.mock_calls == expected_calls
 
 
@@ -70,9 +68,7 @@ def test_hook_call_order_es_mda(monkeypatch):
 
     test_class.runSimulations(evaluator_server_config)
 
-    expected_calls = [
-        call(expected_call, ert=ert_mock) for expected_call in EXPECTED_CALL_ORDER
-    ]
+    expected_calls = [call(expected_call) for expected_call in EXPECTED_CALL_ORDER]
     assert ert_mock.runWorkflows.mock_calls == expected_calls
 
 
@@ -114,7 +110,5 @@ def test_hook_call_order_iterative_ensemble_smoother(monkeypatch):
     test_class._w_container = MockWContainer()
     test_class.runSimulations(MagicMock())
 
-    expected_calls = [
-        call(expected_call, ert=ert_mock) for expected_call in EXPECTED_CALL_ORDER
-    ]
+    expected_calls = [call(expected_call) for expected_call in EXPECTED_CALL_ORDER]
     assert ert_mock.runWorkflows.mock_calls == expected_calls

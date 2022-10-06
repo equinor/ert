@@ -115,7 +115,7 @@ class SimulationContext:
         )
 
         self._ert.createRunPath(self._run_context)
-        self._ert.runWorkflows(HookRuntime.PRE_SIMULATION, self._ert)
+        self._ert.runWorkflows(HookRuntime.PRE_SIMULATION)
         self._sim_thread = self._run_simulations_simple_step()
 
         # Wait until the queue is active before we finish the creation

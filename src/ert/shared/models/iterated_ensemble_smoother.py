@@ -54,7 +54,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
 
         self.setPhaseName("Pre processing...", indeterminate=True)
         self.ert().createRunPath(run_context)
-        self.ert().runWorkflows(HookRuntime.PRE_SIMULATION, ert=self.ert())
+        self.ert().runWorkflows(HookRuntime.PRE_SIMULATION)
         # create ensemble
         ensemble_id = self._post_ensemble_data(update_id=update_id)
         self.setPhaseName("Running forecast...", indeterminate=False)
@@ -65,7 +65,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
         self.checkHaveSufficientRealizations(num_successful_realizations)
 
         self.setPhaseName("Post processing...", indeterminate=True)
-        self.ert().runWorkflows(HookRuntime.POST_SIMULATION, ert=self.ert())
+        self.ert().runWorkflows(HookRuntime.POST_SIMULATION)
         self._post_ensemble_results(ensemble_id)
         return ensemble_id
 
@@ -79,7 +79,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
         self.setPhaseName("Analyzing...", indeterminate=True)
 
         self.setPhaseName("Pre processing update...", indeterminate=True)
-        self.ert().runWorkflows(HookRuntime.PRE_UPDATE, ert=self.ert())
+        self.ert().runWorkflows(HookRuntime.PRE_UPDATE)
 
         try:
             self.facade.iterative_smoother_update(run_context, self._w_container)
@@ -95,7 +95,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
         )
 
         self.setPhaseName("Post processing update...", indeterminate=True)
-        self.ert().runWorkflows(HookRuntime.POST_UPDATE, ert=self.ert())
+        self.ert().runWorkflows(HookRuntime.POST_UPDATE)
         return update_id
 
     def runSimulations(
@@ -127,7 +127,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
             # We run the PRE_FIRST_UPDATE hook here because the current_iter is
             # explicitly available, versus in the run_context inside analyzeStep
             if current_iter == 0:
-                self.ert().runWorkflows(HookRuntime.PRE_FIRST_UPDATE, ert=self.ert())
+                self.ert().runWorkflows(HookRuntime.PRE_FIRST_UPDATE)
             update_id = self.analyzeStep(run_context, ensemble_id)
             current_iter = self._w_container.iteration_nr - 1
 

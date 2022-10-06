@@ -88,17 +88,6 @@ class HookManager(BaseCClass):
         else:
             raise IndexError(f"Invalid index.  Valid range: [0, {len(self)}).")
 
-    def runWorkflows(self, run_time, ert_self):
-
-        workflow_list = ert_self.getWorkflowList()
-        for hook_workflow in self:
-
-            if hook_workflow.getRunMode() is not run_time:
-                continue
-
-            workflow = hook_workflow.getWorkflow()
-            workflow.run(ert_self, context=workflow_list.getContext())
-
     def __eq__(self, other):
         if len(self) != len(other):
             return False
