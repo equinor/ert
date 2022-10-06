@@ -127,28 +127,6 @@ void hook_manager_init(hook_manager_type *hook_manager,
     }
 }
 
-void hook_manager_run_workflows(const hook_manager_type *hook_manager,
-                                hook_run_mode_enum run_mode, void *self) {
-    bool verbose = false;
-    for (int i = 0; i < vector_get_size(hook_manager->hook_workflow_list);
-         i++) {
-        hook_workflow_type *hook_workflow = (hook_workflow_type *)vector_iget(
-            hook_manager->hook_workflow_list, i);
-        if (hook_workflow_get_run_mode(hook_workflow) == run_mode) {
-            workflow_type *workflow = hook_workflow_get_workflow(hook_workflow);
-            workflow_run(
-                workflow, self, verbose,
-                ert_workflow_list_get_context(hook_manager->workflow_list));
-            /*
-        The workflow_run function will return a bool to indicate
-        success/failure, and in the case of error the function
-        workflow_get_last_error() can be used to get a config_error
-        object.
-      */
-        }
-    }
-}
-
 const hook_workflow_type *
 hook_manager_iget_hook_workflow(const hook_manager_type *hook_manager,
                                 int index) {

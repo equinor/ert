@@ -23,9 +23,6 @@ extern "C" void hook_manager_free(hook_manager_type *hook_manager);
 
 void hook_manager_init(hook_manager_type *hook_manager,
                        const config_content_type *config);
-void hook_manager_run_workflows(const hook_manager_type *hook_manager,
-                                hook_run_mode_enum run_mode, void *self);
-
 extern "C" PY_USED const hook_workflow_type *
 hook_manager_iget_hook_workflow(const hook_manager_type *hook_manager,
                                 int index);
