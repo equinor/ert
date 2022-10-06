@@ -98,11 +98,12 @@ These keywords must be set to make ERT function properly.
 .. _data_file:
 .. topic:: DATA_FILE
 
-        ``DATA_FILE`` has been deprecated, use: :ref:`RUN_TEMPLATE <run_template>` instead
         Name of the template ECLIPSE data file used to control the simulations.
         A modified realization specific version of this file will be prepared by ERT,
         named according to :ref:`ECLBASE <ECLBASE>` and copied to the runpath
-        folder.
+        folder. Note that support for parsing the ECLIPSE data file is limited,
+        and using explicit templating with :ref:`RUN_TEMPLATE <run_template>` is
+        recommended.
 
 
         *Example:*
@@ -112,16 +113,23 @@ These keywords must be set to make ERT function properly.
                 -- Load the data file called ECLIPSE.DATA
                 DATA_FILE ECLIPSE.DATA
 
-        Necessary preparations to this file include:
+        See the ``DATA_KW`` keyword which can be used to utilize more template
+        functionality in the eclipse datafile.
 
-        1. Insert ``INCLUDE`` statements to include the various uncertainty
-           parameters in use at the right place in the datafile.
+        This is used to replace ERT magic strings into the data file, as well as
+        update the number of cpus that are reserved for ERT in the queue system.
 
-        2. Make sure that the include files used in the datafiles can be
-           correctly resolved from the runpath location.
+        It searches for PARALLEL in the data file, and if that is not found it
+        will search for SLAVE and update <NUM_CPU> according to how many nodes are
+        found, note that it does *not* parse the data files of the nodes, and will
+        assume one cpu per node.
 
-        3. See the ``DATA_KW`` keyword which can be used to utilize more template
-           functionality in the eclipse datafile.
+        It is strongly recommended to use the :ref:`RUN_TEMPLATE <run_template>`
+        for magic string replacement and resource allocation instead. Combined
+        with :ref:`NUM_CPU <num_cpu>` the resources for the cluster are specified
+        directly in the ERT configuration, and can be templated into the ECLIPSE
+        data file, see  :ref:`RUN_TEMPLATE <run_template>`.
+
 
 
 
@@ -584,6 +592,23 @@ possible to do with ERT.
 
                 ECLBASE BASE_ECL_NAME-<IENS>
                 RUN_TEMPLATE MY_DATA_FILE.DATA <ECLBASE>.DATA
+
+
+
+        To control the number of CPUs that are reserved for ECLIPSE use `RUN_TEMPLATE` with
+        :ref:`NUM_CPU <num_cpu>` and keep them in sync:
+
+        ::
+
+                NUM_CPU 4
+                ECLBASE BASE_ECL_NAME-<IENS>
+                RUN_TEMPLATE MY_DATA_FILE.DATA <ECLBASE>.DATA
+
+        In the ECLIPSE data file:
+
+        ::
+
+                PARALLEL <NUM_CPU>
 
 
 Keywords controlling the simulations

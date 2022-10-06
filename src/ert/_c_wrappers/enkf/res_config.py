@@ -14,7 +14,6 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 import os
-import warnings
 from os.path import isfile
 from typing import Any, Dict, Optional
 
@@ -32,13 +31,6 @@ from ert._c_wrappers.enkf.queue_config import QueueConfig
 from ert._c_wrappers.enkf.site_config import SiteConfig
 from ert._c_wrappers.enkf.subst_config import SubstConfig
 from ert._clib.config_keywords import init_res_config_parser
-
-
-def format_warning_message(message, category, *args, **kwargs):
-    return f"{category.__name__}: {message}\n"
-
-
-warnings.formatwarning = format_warning_message
 
 
 class ResConfig:
@@ -140,12 +132,6 @@ class ResConfig:
             # This replicates the behavior of the DATA_FILE implementation
             # in C, it adds the .DATA extension and facilitates magic string
             # replacement in the data file
-            warning = (
-                "DATA_FILE is deprecated and will be removed, use: "
-                "RUN_TEMPLATE MY_DATA_FILE.DATA <ECLBASE>.DATA instead if you "
-                "want to template magic strings into the data file"
-            )
-            warnings.warn(warning, DeprecationWarning)
             source_file = config_content[ConfigKeys.DATA_FILE]
             target_file = config_content[ConfigKeys.ECLBASE]
             target_file = target_file.getValue(0).replace("%d", "<IENS>")
@@ -192,12 +178,6 @@ class ResConfig:
             # This replicates the behavior of the DATA_FILE implementation
             # in C, it adds the .DATA extension and facilitates magic string
             # replacement in the data file
-            warning = (
-                "DATA_FILE is deprecated and will be removed, use: "
-                "RUN_TEMPLATE MY_DATA_FILE.DATA <ECLBASE>.DATA instead if you "
-                "want to template magic strings into the data file"
-            )
-            warnings.warn(warning, DeprecationWarning)
             source_file = config_dict[ConfigKeys.DATA_FILE]
             target_file = config_dict[ConfigKeys.ECLBASE].replace("%d", "<IENS>")
             self._templates.append(
