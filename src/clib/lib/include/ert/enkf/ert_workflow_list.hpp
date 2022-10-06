@@ -24,11 +24,12 @@ ert_workflow_list_add_workflow(ert_workflow_list_type *workflow_list,
 extern "C" void ert_workflow_list_free(ert_workflow_list_type *workflow_list);
 ert_workflow_list_type *
 ert_workflow_list_alloc_empty(const subst_list_type *subst_list);
-ert_workflow_list_type *
-ert_workflow_list_alloc_load_site_config(const subst_list_type *);
+ert_workflow_list_type *ert_workflow_list_alloc_load_site_config(
+    const subst_list_type *, const config_content_type *site_config_content);
 extern "C" ert_workflow_list_type *
 ert_workflow_list_alloc(const subst_list_type *context,
-                        const config_content_type *config_content);
+                        const config_content_type *config_content,
+                        const config_content_type *site_config_content);
 extern "C" PY_USED ert_workflow_list_type *ert_workflow_list_alloc_full(
     const subst_list_type *context, workflow_joblist_type *workflow_joblist,
     const char **hook_workflow_names, const char **hook_workflow_run_modes,

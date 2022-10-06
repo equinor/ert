@@ -18,7 +18,6 @@
 #include <ert/enkf/ensemble_config.hpp>
 #include <ert/enkf/ert_workflow_list.hpp>
 #include <ert/enkf/model_config.hpp>
-#include <ert/enkf/site_config.hpp>
 
 namespace fs = std::filesystem;
 
