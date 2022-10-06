@@ -109,7 +109,7 @@ args = dict(
         "alembic",
         "ansicolors==1.1.8",
         "async-generator",
-        "beartype >= 0.9.1, < 0.11",
+        "beartype > 0.11",
         "cloudevents>=1.6.0",
         "cloudpickle",
         "tqdm>=4.62.0",
