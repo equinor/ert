@@ -7,6 +7,7 @@
 #include <ert/config/config_content.hpp>
 #include <ert/config/config_error.hpp>
 #include <ert/config/config_parser.hpp>
+#include <ert/enkf/hook_workflow.hpp>
 
 #include <ert/job_queue/workflow.hpp>
 #include <ert/job_queue/workflow_job.hpp>
@@ -28,9 +29,10 @@ ert_workflow_list_alloc_load_site_config(const subst_list_type *);
 extern "C" ert_workflow_list_type *
 ert_workflow_list_alloc(const subst_list_type *context,
                         const config_content_type *config_content);
-extern "C" PY_USED ert_workflow_list_type *
-ert_workflow_list_alloc_full(const subst_list_type *context,
-                             workflow_joblist_type *workflow_joblist);
+extern "C" PY_USED ert_workflow_list_type *ert_workflow_list_alloc_full(
+    const subst_list_type *context, workflow_joblist_type *workflow_joblist,
+    const char **hook_workflow_names, const char **hook_workflow_run_modes,
+    int hook_workflow_count);
 
 void ert_workflow_list_add_jobs_in_directory(
     ert_workflow_list_type *workflow_list, const char *path);
@@ -57,6 +59,12 @@ void ert_workflow_list_set_verbose(ert_workflow_list_type *workflow_list,
 extern "C" const subst_list_type *
 ert_workflow_list_get_context(const ert_workflow_list_type *workflow_list);
 int ert_workflow_list_get_size(const ert_workflow_list_type *workflow_list);
+
+extern "C" const hook_workflow_type *ert_workflow_list_iget_hook_workflow(
+    const ert_workflow_list_type *workflow_list, int index);
+
+extern "C" int ert_workflow_list_num_hook_workflows(
+    const ert_workflow_list_type *workflow_list);
 
 UTIL_IS_INSTANCE_HEADER(ert_workflow_list);
 

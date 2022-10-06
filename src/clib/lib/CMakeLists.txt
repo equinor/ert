@@ -104,7 +104,6 @@ pybind11_add_module(
   enkf/gen_kw_config.cpp
   enkf/value_export.cpp
   enkf/gen_obs.cpp
-  enkf/hook_manager.cpp
   enkf/hook_workflow.cpp
   enkf/meas_data.cpp
   enkf/misfit_ensemble.cpp
