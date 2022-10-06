@@ -9,8 +9,10 @@
 
 #include <ert/res_util/subst_list.hpp>
 #include <ert/util/hash.h>
+#include <ert/util/vector.h>
 
 #include <ert/config/config_parser.hpp>
+#include <ert/enkf/hook_workflow.hpp>
 
 #include <ert/job_queue/workflow.hpp>
 
@@ -32,6 +34,7 @@ struct ert_workflow_list_struct {
     hash_type *workflows;
     hash_type *alias_map;
     workflow_joblist_type *joblist;
+    vector_type *hook_workflow_list;
     const subst_list_type *context;
     const config_error_type *last_error;
     bool verbose;
@@ -50,6 +53,7 @@ ert_workflow_list_alloc_empty(const subst_list_type *context) {
     workflow_list->joblist = workflow_joblist_alloc();
     workflow_list->context = context;
     workflow_list->last_error = NULL;
+    workflow_list->hook_workflow_list = vector_alloc_new();
     ert_workflow_list_set_verbose(workflow_list, DEFAULT_WORKFLOW_VERBOSE);
     return workflow_list;
 }
@@ -83,13 +87,24 @@ ert_workflow_list_alloc(const subst_list_type *context,
     return workflow_list;
 }
 
-ert_workflow_list_type *
-ert_workflow_list_alloc_full(const subst_list_type *context,
-                             workflow_joblist_type *workflow_joblist) {
+ert_workflow_list_type *ert_workflow_list_alloc_full(
+    const subst_list_type *context, workflow_joblist_type *workflow_joblist,
+    const char **hook_workflow_names, const char **hook_workflow_run_modes,
+    int hook_workflow_count) {
     ert_workflow_list_type *workflow_list =
         ert_workflow_list_alloc_empty(context);
     workflow_list->joblist = workflow_joblist;
     workflow_list->context = context;
+    for (int i = 0; i < hook_workflow_count; ++i) {
+        const char *workflow_name = hook_workflow_names[i];
+        hook_run_mode_enum run_mode =
+            hook_workflow_run_mode_from_name(hook_workflow_run_modes[i]);
+        workflow_type *workflow =
+            ert_workflow_list_get_workflow(workflow_list, workflow_name);
+        hook_workflow_type *hook = hook_workflow_alloc(workflow, run_mode);
+        vector_append_owned_ref(workflow_list->hook_workflow_list, hook,
+                                hook_workflow_free__);
+    }
 
     return workflow_list;
 }
@@ -109,6 +124,7 @@ ert_workflow_list_get_context(const ert_workflow_list_type *workflow_list) {
 void ert_workflow_list_free(ert_workflow_list_type *workflow_list) {
     hash_free(workflow_list->workflows);
     hash_free(workflow_list->alias_map);
+    vector_free(workflow_list->hook_workflow_list);
     workflow_joblist_free(workflow_list->joblist);
     free(workflow_list);
 }
@@ -283,6 +299,42 @@ static void ert_workflow_list_init(ert_workflow_list_type *workflow_list,
             }
         }
     }
+
+    if (config_content_has_item(config, HOOK_WORKFLOW_KEY)) {
+        for (int ihook = 0;
+             ihook < config_content_get_occurences(config, HOOK_WORKFLOW_KEY);
+             ihook++) {
+            const char *workflow_name =
+                config_content_iget(config, HOOK_WORKFLOW_KEY, ihook, 0);
+            hook_run_mode_enum run_mode = hook_workflow_run_mode_from_name(
+                config_content_iget(config, HOOK_WORKFLOW_KEY, ihook, 1));
+            if (ert_workflow_list_has_workflow(workflow_list, workflow_name)) {
+                workflow_type *workflow = ert_workflow_list_get_workflow(
+                    workflow_list, workflow_name);
+                hook_workflow_type *hook =
+                    hook_workflow_alloc(workflow, run_mode);
+                vector_append_owned_ref(workflow_list->hook_workflow_list, hook,
+                                        hook_workflow_free__);
+            } else {
+                fprintf(stderr,
+                        "** Warning: While hooking workflow: %s not recognized "
+                        "among "
+                        "the list of loaded workflows.",
+                        workflow_name);
+            }
+        }
+    }
+}
+
+const hook_workflow_type *ert_workflow_list_iget_hook_workflow(
+    const ert_workflow_list_type *workflow_list, int index) {
+    return (hook_workflow_type *)vector_iget(workflow_list->hook_workflow_list,
+                                             index);
+}
+
+int ert_workflow_list_num_hook_workflows(
+    const ert_workflow_list_type *workflow_list) {
+    return vector_get_size(workflow_list->hook_workflow_list);
 }
 
 workflow_type *

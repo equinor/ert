@@ -533,7 +533,6 @@ def test_res_config_dict_constructor(setup_case):
     assert res_config_file.site_config == res_config_dict.site_config
     assert res_config_file.random_seed == res_config_dict.random_seed
     assert res_config_file.ert_workflow_list == res_config_dict.ert_workflow_list
-    assert res_config_file.hook_manager == res_config_dict.hook_manager
     assert res_config_file.ert_templates == res_config_dict.ert_templates
     assert res_config_file.ecl_config == res_config_dict.ecl_config
     assert res_config_file.ensemble_config == res_config_dict.ensemble_config
@@ -648,4 +647,6 @@ def test_that_workflow_run_modes_can_be_selected(tmp_path, run_mode):
         f"HOOK_WORKFLOW SCRIPT {run_mode}\n"
     )
     res_config = ResConfig(str(test_user_config))
-    assert res_config.hook_manager[0].getRunMode() == run_mode
+    assert (
+        len(list(res_config.ert_workflow_list.get_workflows_hooked_at(run_mode))) == 1
+    )

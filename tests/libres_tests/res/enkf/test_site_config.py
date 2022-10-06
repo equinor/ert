@@ -1,6 +1,7 @@
 import os
 
 from ert._c_wrappers.enkf import ConfigKeys, ResConfig, SiteConfig
+from ert._c_wrappers.enkf.enums import HookRuntime
 
 
 def test_constructors(snake_oil_case):
@@ -71,7 +72,16 @@ MIN_ARG 1
     monkeypatch.setenv("ERT_SITE_CONFIG", site_config_filename)
 
     res_config = ResConfig(user_config_file=test_config_filename)
-    assert len(res_config.hook_manager) == 1
-    assert res_config.hook_manager[0].getWorkflow().src_file == str(
-        tmp_path / "ECHO_WORKFLOW"
+    assert (
+        len(
+            list(
+                res_config.ert_workflow_list.get_workflows_hooked_at(
+                    HookRuntime.PRE_SIMULATION
+                )
+            )
+        )
+        == 1
     )
+    assert res_config.ert_workflow_list._hook_workflows[
+        0
+    ].getWorkflow().src_file == str(tmp_path / "ECHO_WORKFLOW")

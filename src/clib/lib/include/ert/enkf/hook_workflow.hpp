@@ -5,8 +5,6 @@
 
 #include <ert/job_queue/workflow.hpp>
 
-#include <ert/enkf/ert_workflow_list.hpp>
-
 typedef enum {
     PRE_SIMULATION = 0,
     POST_SIMULATION = 1,

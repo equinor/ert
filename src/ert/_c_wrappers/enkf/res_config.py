@@ -13,7 +13,6 @@ from ert._c_wrappers.enkf.ecl_config import EclConfig
 from ert._c_wrappers.enkf.ensemble_config import EnsembleConfig
 from ert._c_wrappers.enkf.enums import ErtImplType
 from ert._c_wrappers.enkf.ert_workflow_list import ErtWorkflowList
-from ert._c_wrappers.enkf.hook_manager import HookManager
 from ert._c_wrappers.enkf.model_config import ModelConfig
 from ert._c_wrappers.enkf.queue_config import QueueConfig
 from ert._c_wrappers.enkf.site_config import SiteConfig
@@ -164,10 +163,6 @@ class ResConfig:
         else:
             self.runpath_file = ".ert_runpath_list"
 
-        self.hook_manager = HookManager(
-            workflow_list=self.ert_workflow_list, config_content=user_config_content
-        )
-
         if user_config_content.hasKey(
             ConfigKeys.DATA_FILE
         ) and user_config_content.hasKey(ConfigKeys.ECLBASE):
@@ -267,10 +262,6 @@ class ResConfig:
         templates = config_dict.get(ConfigKeys.RUN_TEMPLATE, [])
         for source_file, target_file, *_ in templates:
             self._templates.append([os.path.abspath(source_file), target_file])
-
-        self.hook_manager = HookManager(
-            workflow_list=self.ert_workflow_list, config_dict=config_dict
-        )
 
         self.ensemble_config = EnsembleConfig(
             grid=self.ecl_config.getGrid(),
@@ -606,7 +597,6 @@ class ResConfig:
             (self.random_seed == other.random_seed),
             (self.analysis_config == other.analysis_config),
             (self.ert_workflow_list == other.ert_workflow_list),
-            (self.hook_manager == other.hook_manager),
             (self.ert_templates == other.ert_templates),
             (self.ecl_config == other.ecl_config),
             (self.ensemble_config == other.ensemble_config),
@@ -632,7 +622,6 @@ class ResConfig:
             f"RandomSeed: {self.random_seed},\n"
             f"AnalysisConfig: {self.analysis_config},\n"
             f"ErtWorkflowList: {self.ert_workflow_list},\n"
-            f"HookManager: {self.hook_manager},\n"
             f"ErtTemplates: {self.ert_templates},\n"
             f"EclConfig: {self.ecl_config},\n"
             f"EnsembleConfig: {self.ensemble_config},\n"

@@ -23,7 +23,6 @@ from ert._c_wrappers.enkf.enums import RealizationStateEnum
 from ert._c_wrappers.enkf.enums.ert_impl_type_enum import ErtImplType
 from ert._c_wrappers.enkf.ert_run_context import RunContext
 from ert._c_wrappers.enkf.ert_workflow_list import ErtWorkflowList
-from ert._c_wrappers.enkf.hook_manager import HookManager
 from ert._c_wrappers.enkf.key_manager import KeyManager
 from ert._c_wrappers.enkf.model_config import ModelConfig
 from ert._c_wrappers.enkf.node_id import NodeId
@@ -368,9 +367,6 @@ class EnKFMain:
     def getWorkflowList(self) -> ErtWorkflowList:
         return self.resConfig().ert_workflow_list
 
-    def getHookManager(self) -> HookManager:
-        return self.resConfig().hook_manager
-
     def initRun(self, run_context: "RunContext", parameters: List[str] = None):
         if parameters is None:
             parameters = self._parameter_keys
@@ -582,10 +578,5 @@ class EnKFMain:
 
     def runWorkflows(self, runtime: int) -> None:
         workflow_list = self.getWorkflowList()
-        for hook_workflow in self.getHookManager():
-
-            if hook_workflow.getRunMode() is not runtime:
-                continue
-
-            workflow = hook_workflow.getWorkflow()
+        for workflow in workflow_list.get_workflows_hooked_at(runtime):
             workflow.run(self, context=workflow_list.getContext())

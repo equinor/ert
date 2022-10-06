@@ -1,12 +1,21 @@
+import ctypes
 import os
-from typing import List
+from typing import Iterator, List
 
 from cwrap import BaseCClass
 
 from ert._c_wrappers import ResPrototype
 from ert._c_wrappers.enkf.config_keys import ConfigKeys
+from ert._c_wrappers.enkf.enums import HookRuntime
+from ert._c_wrappers.enkf.hook_workflow import HookWorkflow
 from ert._c_wrappers.job_queue import Workflow, WorkflowJob, WorkflowJoblist
 from ert._c_wrappers.util.substitution_list import SubstitutionList
+
+
+def _to_c_string_arr(lst: List[str]):
+    arr = (ctypes.c_char_p * len(lst))()
+    arr[:] = [s.encode("utf-8") for s in lst]
+    return arr
 
 
 class ErtWorkflowList(BaseCClass):
@@ -42,6 +51,14 @@ class ErtWorkflowList(BaseCClass):
     )
     _get_job_names = ResPrototype(
         "stringlist_obj ert_workflow_list_get_job_names(ert_workflow_list)"
+    )
+
+    _get_hook_workflow = ResPrototype(
+        "hook_workflow_obj ert_workflow_list_iget_hook_workflow(ert_workflow_list, int)"
+    )
+
+    _num_hook_workflows = ResPrototype(
+        "int ert_workflow_list_num_hook_workflows(ert_workflow_list)"
     )
 
     def __init__(self, subst_list=None, config_content=None, config_dict=None):
@@ -103,7 +120,27 @@ class ErtWorkflowList(BaseCClass):
 
             workflow_joblist.convertToCReference(None)
 
-            c_ptr = self._alloc_full(subst_list, workflow_joblist)
+            # HOOK_WORKFLOW
+            hook_workflow_names = []
+            hook_workflow_run_modes = []
+            if ConfigKeys.HOOK_WORKFLOW_KEY in config_dict:
+                for hook_workflow_name, run_mode_name in config_dict[
+                    ConfigKeys.HOOK_WORKFLOW_KEY
+                ]:
+                    if run_mode_name not in [
+                        runtime.name for runtime in HookRuntime.enums()
+                    ]:
+                        raise ValueError(f"Run mode {run_mode_name} not supported")
+                    hook_workflow_names.append(hook_workflow_name)
+                    hook_workflow_run_modes.append(run_mode_name)
+
+            c_ptr = self._alloc_full(
+                subst_list,
+                workflow_joblist,
+                _to_c_string_arr(hook_workflow_names),
+                _to_c_string_arr(hook_workflow_run_modes),
+                len(hook_workflow_names),
+            )
 
         if c_ptr is None:
             raise ValueError("Failed to construct ErtWorkflowList instance")
@@ -194,4 +231,17 @@ class ErtWorkflowList(BaseCClass):
             if self[name_self] != other[name_other]:
                 return False
 
+        if self._hook_workflows != other._hook_workflows:
+            return False
+
         return True
+
+    @property
+    def _hook_workflows(self) -> List[HookWorkflow]:
+        return [self._get_hook_workflow(i) for i in range(self._num_hook_workflows())]
+
+    def get_workflows_hooked_at(self, run_time) -> Iterator[Workflow]:
+        return map(
+            lambda wh: wh.getWorkflow(),
+            filter(lambda w: w.getRunMode() == run_time, self._hook_workflows),
+        )

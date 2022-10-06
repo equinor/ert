@@ -4,7 +4,6 @@
 
 #include <ert/enkf/config_keys.hpp>
 #include <ert/enkf/enkf_defaults.hpp>
-#include <ert/enkf/hook_manager.hpp>
 #include <ert/enkf/model_config.hpp>
 #include <ert/enkf/subst_config.hpp>
 

@@ -290,8 +290,6 @@ def test_large_config(setup_case):
         == loaded_res_config.analysis_config.get_max_runtime()
     )
 
-    assert loaded_res_config.hook_manager == prog_res_config.hook_manager
-
     assert set(loaded_res_config.ensemble_config.alloc_keylist()) == set(
         prog_res_config.ensemble_config.alloc_keylist()
     )

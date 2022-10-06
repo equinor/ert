@@ -32,7 +32,6 @@ from .enums import (
 )
 from .ert_run_context import RunContext
 from .ert_workflow_list import ErtWorkflowList
-from .hook_manager import HookManager
 from .hook_workflow import HookWorkflow
 from .model_config import ModelConfig
 from .node_id import NodeId
@@ -94,7 +93,6 @@ __all__ = [
     "EnkfObs",
     "ModelConfig",
     "HookWorkflow",
-    "HookManager",
     "ResConfig",
     "RunArg",
     "RunContext",
