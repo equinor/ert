@@ -407,7 +407,6 @@ class BaseRunModel:
             executor,
             self.ert().runWorkflows,
             hook,
-            self.ert(),
         )
 
         await self._dispatch_ee(

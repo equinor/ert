@@ -544,7 +544,12 @@ class EnKFMain:
 
         self.runpaths.write_runpath_list(iterations, realizations)
 
-    @staticmethod
-    def runWorkflows(runtime: int, ert: "EnKFMain") -> None:
-        hook_manager = ert.getHookManager()
-        hook_manager.runWorkflows(runtime, ert)
+    def runWorkflows(self, runtime: int) -> None:
+        workflow_list = self.getWorkflowList()
+        for hook_workflow in self.getHookManager():
+
+            if hook_workflow.getRunMode() is not runtime:
+                continue
+
+            workflow = hook_workflow.getWorkflow()
+            workflow.run(self, context=workflow_list.getContext())

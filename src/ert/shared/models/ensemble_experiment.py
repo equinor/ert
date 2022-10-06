@@ -104,7 +104,7 @@ class EnsembleExperiment(BaseRunModel):
         # Push ensemble, parameters, observations to new storage
         ensemble_id = self._post_ensemble_data()
 
-        self.ert().runWorkflows(HookRuntime.PRE_SIMULATION, self.ert())
+        self.ert().runWorkflows(HookRuntime.PRE_SIMULATION)
 
         self.setPhaseName(run_msg, indeterminate=False)
 
@@ -118,7 +118,7 @@ class EnsembleExperiment(BaseRunModel):
         self.checkHaveSufficientRealizations(num_successful_realizations)
 
         self.setPhaseName("Post processing...", indeterminate=True)
-        self.ert().runWorkflows(HookRuntime.POST_SIMULATION, self.ert())
+        self.ert().runWorkflows(HookRuntime.POST_SIMULATION)
 
         # Push simulation results to storage
         self._post_ensemble_results(ensemble_id)

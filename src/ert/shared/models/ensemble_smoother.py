@@ -183,7 +183,7 @@ class EnsembleSmoother(BaseRunModel):
         self.setPhaseName("Pre processing...", indeterminate=True)
         self.ert().createRunPath(prior_context)
 
-        self.ert().runWorkflows(HookRuntime.PRE_SIMULATION, ert=self.ert())
+        self.ert().runWorkflows(HookRuntime.PRE_SIMULATION)
 
         # Push ensemble, parameters, observations to new storage
         ensemble_id = self._post_ensemble_data()
@@ -200,11 +200,11 @@ class EnsembleSmoother(BaseRunModel):
         self.checkHaveSufficientRealizations(num_successful_realizations)
 
         self.setPhaseName("Post processing...", indeterminate=True)
-        self.ert().runWorkflows(HookRuntime.POST_SIMULATION, ert=self.ert())
+        self.ert().runWorkflows(HookRuntime.POST_SIMULATION)
 
         self.setPhaseName("Analyzing...")
-        self.ert().runWorkflows(HookRuntime.PRE_FIRST_UPDATE, ert=self.ert())
-        self.ert().runWorkflows(HookRuntime.PRE_UPDATE, ert=self.ert())
+        self.ert().runWorkflows(HookRuntime.PRE_FIRST_UPDATE)
+        self.ert().runWorkflows(HookRuntime.PRE_UPDATE)
         try:
             self.facade.smoother_update(prior_context)
         except ErtAnalysisError as e:
@@ -212,7 +212,7 @@ class EnsembleSmoother(BaseRunModel):
                 f"Analysis of simulation failed with the following error: {e}"
             ) from e
 
-        self.ert().runWorkflows(HookRuntime.POST_UPDATE, ert=self.ert())
+        self.ert().runWorkflows(HookRuntime.POST_UPDATE)
 
         # Create an update object in storage
         analysis_module_name = self.ert().analysisConfig().activeModuleName()
@@ -227,7 +227,7 @@ class EnsembleSmoother(BaseRunModel):
 
         self.ert().createRunPath(rerun_context)
 
-        self.ert().runWorkflows(HookRuntime.PRE_SIMULATION, ert=self.ert())
+        self.ert().runWorkflows(HookRuntime.PRE_SIMULATION)
         # Push ensemble, parameters, observations to new storage
         ensemble_id = self._post_ensemble_data(update_id=update_id)
 
@@ -240,7 +240,7 @@ class EnsembleSmoother(BaseRunModel):
         self.checkHaveSufficientRealizations(num_successful_realizations)
 
         self.setPhaseName("Post processing...", indeterminate=True)
-        self.ert().runWorkflows(HookRuntime.POST_SIMULATION, ert=self.ert())
+        self.ert().runWorkflows(HookRuntime.POST_SIMULATION)
 
         # Push simulation results to storage
         self._post_ensemble_results(ensemble_id)

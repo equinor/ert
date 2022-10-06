@@ -167,12 +167,12 @@ class MultipleDataAssimilation(BaseRunModel):
                 run_context, evaluator_server_config, update_id=update_id
             )
             if is_first_iteration:
-                self.ert().runWorkflows(HookRuntime.PRE_FIRST_UPDATE, ert=self.ert())
-            self.ert().runWorkflows(HookRuntime.PRE_UPDATE, ert=self.ert())
+                self.ert().runWorkflows(HookRuntime.PRE_FIRST_UPDATE)
+            self.ert().runWorkflows(HookRuntime.PRE_UPDATE)
             update_id = self.update(
                 run_context=run_context, weight=weight, ensemble_id=ensemble_id
             )
-            self.ert().runWorkflows(HookRuntime.POST_UPDATE, ert=self.ert())
+            self.ert().runWorkflows(HookRuntime.POST_UPDATE)
 
         self.setPhaseName("Post processing...", indeterminate=True)
         run_context = self.create_context(
@@ -225,7 +225,7 @@ class MultipleDataAssimilation(BaseRunModel):
 
         phase_string = f"Pre processing for iteration: {iteration}"
         self.setPhaseName(phase_string)
-        self.ert().runWorkflows(HookRuntime.PRE_SIMULATION, ert=self.ert())
+        self.ert().runWorkflows(HookRuntime.PRE_SIMULATION)
 
         # Push ensemble, parameters, observations to new storage
         new_ensemble_id = self._post_ensemble_data(update_id=update_id)
@@ -247,7 +247,7 @@ class MultipleDataAssimilation(BaseRunModel):
 
         phase_string = f"Post processing for iteration: {iteration}"
         self.setPhaseName(phase_string, indeterminate=True)
-        self.ert().runWorkflows(HookRuntime.POST_SIMULATION, ert=self.ert())
+        self.ert().runWorkflows(HookRuntime.POST_SIMULATION)
 
         return num_successful_realizations, new_ensemble_id
 
