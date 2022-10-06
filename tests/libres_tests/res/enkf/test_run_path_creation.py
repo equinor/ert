@@ -3,11 +3,9 @@ from datetime import datetime
 from pathlib import Path
 from textwrap import dedent
 
-import packaging
 import pytest
 
 from ert._c_wrappers.enkf import EnKFMain, ResConfig
-from ert.shared.version import version
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -167,8 +165,6 @@ def test_run_template_replace_in_ecl_data_file(key, expected):
     do substitutions and rename it from the DATA_FILE name
     to ECLBASE
     """
-    if packaging.version.parse(version) > packaging.version.parse("5.0"):
-        pytest.fail("DATA_FILE has passed deprecation period and should be removed")
     config_text = dedent(
         """
         NUM_REALIZATIONS 1
@@ -245,3 +241,41 @@ def test_that_creating_runpath_makes_initialized_fs():
     assert not ert.isCaseInitialized("default")
     ert.createRunPath(run_context)
     assert ert.isCaseInitialized("default")
+
+
+@pytest.mark.parametrize(
+    "eclipse_data, expected_cpus",
+    [
+        ("PARALLEL 4 /", 4),
+        pytest.param(
+            dedent(
+                """
+            SLAVES
+            -- comment
+            -- comment with slash / "
+            'upper' 'base' '*' 'data_file' /
+            'lower' 'base' '*' 'data_file_lower' /
+            /"""
+            ),
+            3,
+            id=(
+                "This is strictly not the correct way to parse this, "
+                "as the slave nodes could run on multiple cores"
+            ),
+        ),
+    ],
+)
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_data_file_sets_num_cpu(eclipse_data, expected_cpus):
+    config_text = dedent(
+        """
+        NUM_REALIZATIONS 1
+        DATA_FILE MY_DATA_FILE.DATA
+        """
+    )
+    Path("MY_DATA_FILE.DATA").write_text(eclipse_data)
+    Path("config.ert").write_text(config_text)
+
+    res_config = ResConfig("config.ert")
+    ert = EnKFMain(res_config)
+    assert int(ert.substituter.get_substitutions(0, 0)["<NUM_CPU>"]) == expected_cpus
