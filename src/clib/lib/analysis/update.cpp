@@ -54,7 +54,7 @@ void ensure_node_loaded(const enkf_config_node_type *config_node,
 
 void serialize_node(enkf_fs_type *fs, const enkf_config_node_type *config_node,
                     int iens, int row_offset, int column,
-                    const ActiveList *active_list, Eigen::MatrixXd &A) {
+                    const ActiveList &active_list, Eigen::MatrixXd &A) {
 
     enkf_node_type *node = enkf_node_alloc(config_node);
     node_id_type node_id = {.report_step = 0, .iens = iens};
@@ -76,26 +76,30 @@ void serialize_parameter(const ensemble_config_type *ens_config,
             ensemble_config_get_node(ens_config, parameter.name.c_str());
 
         ensure_node_loaded(config_node, target_fs);
-        int active_size = parameter.active_list.active_size(
-            enkf_config_node_get_data_size(config_node, 0));
 
+        auto active_size =
+            active_list::size(parameter.active_list,
+                              enkf_config_node_get_data_size(config_node, 0));
+        if (active_size == 0)
+            continue;
+
+        /* Resize A if needed */
         if ((active_size + current_row) > A.rows())
             A.conservativeResize(A.rows() + active_size, ens_size);
-        if (active_size > 0) {
-            for (int column = 0; column < ens_size; column++) {
-                int iens = iens_active_index[column];
-                serialize_node(target_fs, config_node, iens, current_row,
-                               column, &parameter.active_list, A);
-            }
-            current_row += active_size;
+
+        for (int column = 0; column < ens_size; column++) {
+            int iens = iens_active_index[column];
+            serialize_node(target_fs, config_node, iens, current_row, column,
+                           parameter.active_list, A);
         }
+        current_row += active_size;
     }
     A.conservativeResize(current_row, ens_size);
 }
 
 void deserialize_node(enkf_fs_type *fs,
                       const enkf_config_node_type *config_node, int iens,
-                      int row_offset, int column, const ActiveList *active_list,
+                      int row_offset, int column, const ActiveList &active_list,
                       const Eigen::MatrixXd &A) {
 
     node_id_type node_id = {.report_step = 0, .iens = iens};
@@ -155,16 +159,18 @@ void save_parameters(enkf_fs_type *target_fs,
         const enkf_config_node_type *config_node =
             ensemble_config_get_node(ensemble_config, parameter.name.c_str());
         ensure_node_loaded(config_node, target_fs);
-        int active_size = parameter.active_list.active_size(
-            enkf_config_node_get_data_size(config_node, 0));
-        if (active_size > 0) {
-            for (int column = 0; column < ens_size; column++) {
-                int iens = iens_active_index[column];
-                deserialize_node(target_fs, config_node, iens, current_row,
-                                 column, &parameter.active_list, A);
-            }
-            current_row += active_size;
+        auto active_size =
+            active_list::size(parameter.active_list,
+                              enkf_config_node_get_data_size(config_node, 0));
+        if (active_size == 0)
+            continue;
+
+        for (int column = 0; column < ens_size; column++) {
+            int iens = iens_active_index[column];
+            deserialize_node(target_fs, config_node, iens, current_row, column,
+                             parameter.active_list, A);
         }
+        current_row += active_size;
     }
 }
 
@@ -187,7 +193,7 @@ void save_row_scaling_parameters(
                     target_fs,
                     ensemble_config_get_node(ensemble_config,
                                              scaled_parameter.name.c_str()),
-                    iens, 0, column, &scaled_parameter.active_list, A);
+                    iens, 0, column, scaled_parameter.active_list, A);
             }
             ikw++;
         }
@@ -223,7 +229,7 @@ load_row_scaling_parameters(
             for (int column = 0; column < iens_active_index.size(); column++) {
                 int iens = iens_active_index[column];
                 serialize_node(target_fs, config_node, iens, 0, column,
-                               &parameter.active_list, A);
+                               parameter.active_list, A);
             }
             auto row_scaling = parameter.row_scaling;
 
@@ -395,28 +401,21 @@ ERT_CLIB_SUBMODULE("update", m) {
     py::class_<analysis::RowScalingParameter,
                std::shared_ptr<analysis::RowScalingParameter>>(
         m, "RowScalingParameter")
-        .def(py::init<std::string, std::shared_ptr<RowScaling>,
-                      std::vector<int>>(),
-             py::arg("name"), py::arg("row_scaling"),
-             py::arg("index_list") = py::list())
+        .def(py::init<std::string, std::shared_ptr<RowScaling>, ActiveList>(),
+             "name"_a, "row_scaling"_a, "index_list"_a = py::none())
         .def_readwrite("name", &analysis::RowScalingParameter::name)
         .def_readwrite("row_scaling",
                        &analysis::RowScalingParameter::row_scaling)
-        .def_readonly("active_list",
-                      &analysis::RowScalingParameter::active_list)
-        .def_property("index_list",
-                      &analysis::RowScalingParameter::get_index_list,
-                      &analysis::RowScalingParameter::set_index_list)
+        .def_readwrite("active_list",
+                       &analysis::RowScalingParameter::active_list)
         .def("__repr__", &::analysis::RowScalingParameter::to_string);
 
     py::class_<analysis::Parameter, std::shared_ptr<analysis::Parameter>>(
         m, "Parameter")
-        .def(py::init<std::string, std::vector<int>>(), py::arg("name"),
-             py::arg("index_list") = py::list())
+        .def(py::init<std::string, ActiveList>(), "name"_a,
+             "index_list"_a = py::none())
         .def_readwrite("name", &analysis::Parameter::name)
-        .def_readonly("active_list", &analysis::Parameter::active_list)
-        .def_property("index_list", &analysis::Parameter::get_index_list,
-                      &analysis::Parameter::set_index_list)
+        .def_readwrite("active_list", &analysis::Parameter::active_list)
         .def("__repr__", &::analysis::Parameter::to_string);
 
     py::class_<analysis::ObservationHandler,

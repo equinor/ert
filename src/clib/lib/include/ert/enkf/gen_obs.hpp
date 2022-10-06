@@ -19,7 +19,7 @@ void gen_obs_user_get_with_data_index(const gen_obs_type *gen_obs,
                                       double *std, bool *valid);
 
 void gen_obs_update_std_scale(gen_obs_type *gen_obs, double std_multiplier,
-                              const ActiveList *active_list);
+                              const ActiveList &active_list);
 extern "C" int gen_obs_get_size(const gen_obs_type *gen_obs);
 extern "C" double gen_obs_iget_std(const gen_obs_type *gen_obs, int index);
 extern "C" void gen_obs_load_std(const gen_obs_type *gen_obs, int size,

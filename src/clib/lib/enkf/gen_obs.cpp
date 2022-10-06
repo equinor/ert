@@ -387,21 +387,10 @@ void gen_obs_user_get_with_data_index(const gen_obs_type *gen_obs,
 }
 
 void gen_obs_update_std_scale(gen_obs_type *gen_obs, double std_multiplier,
-                              const ActiveList *active_list) {
-    if (active_list->getMode() == ALL_ACTIVE) {
-        for (int i = 0; i < gen_obs->obs_size; i++)
-            gen_obs->std_scaling[i] = std_multiplier;
-    } else {
-        const int *active_index = active_list->active_list_get_active();
-        int size = active_list->active_size(gen_obs->obs_size);
-        for (int i = 0; i < size; i++) {
-            int obs_index = active_index[i];
-            if (obs_index >= gen_obs->obs_size) {
-                util_abort("[Gen_Obs] Index out of bounds %d [0, %d]",
-                           obs_index, gen_obs->obs_size - 1);
-            }
-            gen_obs->std_scaling[obs_index] = std_multiplier;
-        }
+                              const ActiveList &active_list) {
+    for (auto [i, obs_index] :
+         active_list::with_total_size(active_list, gen_obs->obs_size)) {
+        gen_obs->std_scaling[obs_index] = std_multiplier;
     }
 }
 
@@ -452,11 +441,10 @@ VOID_USER_GET_OBS(gen_obs)
 VOID_CHI2(gen_obs, gen_data)
 VOID_UPDATE_STD_SCALE(gen_obs)
 
-class ActiveList;
 namespace {
 void update_std_scaling(Cwrap<gen_obs_type> self, double scaling,
                         const ActiveList &active_list) {
-    gen_obs_update_std_scale(self, scaling, &active_list);
+    gen_obs_update_std_scale(self, scaling, active_list);
 }
 } // namespace
 

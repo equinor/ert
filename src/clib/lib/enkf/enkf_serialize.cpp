@@ -157,37 +157,20 @@ vector (marked with X2 above)). Now - that was clear ehhh?
 
 void enkf_matrix_serialize(const void *__node_data, int node_size,
                            ecl_data_type node_type,
-                           const ActiveList *__active_list, Eigen::MatrixXd &A,
+                           const ActiveList &active_list, Eigen::MatrixXd &A,
                            int row_offset, int column) {
-    const int *active_list = __active_list->active_list_get_active();
-    auto active_size = __active_list->active_size(node_size);
-
     if (ecl_type_is_double(node_type)) {
         const double *node_data = (const double *)__node_data;
-        if (active_size == node_size) { /* All elements active */
-            if ((row_offset + node_size) <= A.rows()) {
-                for (int i = 0; i < node_size; i++)
-                    A(row_offset + i, column) = node_data[i];
-            } else
-                throw std::out_of_range("range violation");
-        } else {
-            for (int row_index = 0; row_index < active_size; row_index++) {
-                int node_index = active_list[row_index];
-                A(row_index + row_offset, column) = node_data[node_index];
-            }
+        for (auto [row_index, node_index] :
+             active_list::with_total_size(active_list, node_size)) {
+            A(row_index + row_offset, column) = node_data[node_index];
         }
     } else if (ecl_type_is_float(node_type)) {
         const float *node_data = (const float *)__node_data;
         int row_index;
-        if (active_size == node_size) { /* All elements active */
-            for (row_index = 0; row_index < node_size; row_index++)
-                /* Must have float -> double conversion; can not use memcpy() based approach */
-                A(row_index + row_offset, column) = node_data[row_index];
-        } else {
-            for (int row_index = 0; row_index < active_size; row_index++) {
-                int node_index = active_list[row_index];
-                A(row_index + row_offset, column) = node_data[node_index];
-            }
+        for (auto [row_index, node_index] :
+             active_list::with_total_size(active_list, node_size)) {
+            A(row_index + row_offset, column) = node_data[node_index];
         }
     } else
         util_abort(
@@ -197,37 +180,22 @@ void enkf_matrix_serialize(const void *__node_data, int node_size,
 
 void enkf_matrix_deserialize(void *__node_data, int node_size,
                              ecl_data_type node_type,
-                             const ActiveList *__active_list,
+                             const ActiveList &active_list,
                              const Eigen::MatrixXd &A, int row_offset,
                              int column) {
-    const int *active_list = __active_list->active_list_get_active();
-    auto active_size = __active_list->active_size(node_size);
-
     if (ecl_type_is_double(node_type)) {
         double *node_data = (double *)__node_data;
 
-        if (active_size == node_size) { /* All elements active */
-            for (int row_index = 0; row_index < active_size; row_index++)
-                node_data[row_index] = A(row_index + row_offset, column);
-        } else {
-            for (int row_index = 0; row_index < active_size; row_index++) {
-                int node_index = active_list[row_index];
-                node_data[node_index] = A(row_index + row_offset, column);
-            }
+        for (auto [row_index, node_index] :
+             active_list::with_total_size(active_list, node_size)) {
+            node_data[node_index] = A(row_index + row_offset, column);
         }
-
     } else if (ecl_type_is_float(node_type)) {
         float *node_data = (float *)__node_data;
 
-        if (active_size == node_size) { /* All elements active */
-            int row_index;
-            for (row_index = 0; row_index < active_size; row_index++)
-                node_data[row_index] = A(row_index + row_offset, column);
-        } else {
-            for (int row_index = 0; row_index < active_size; row_index++) {
-                int node_index = active_list[row_index];
-                node_data[node_index] = A(row_index + row_offset, column);
-            }
+        for (auto [row_index, node_index] :
+             active_list::with_total_size(active_list, node_size)) {
+            node_data[node_index] = A(row_index + row_offset, column);
         }
     } else
         util_abort(

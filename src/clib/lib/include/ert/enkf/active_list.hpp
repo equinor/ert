@@ -1,40 +1,60 @@
-#ifndef ERT_ACTIVE_LIST_H
-#define ERT_ACTIVE_LIST_H
+#pragma once
 
-#include <stdio.h>
-
+#include <optional>
 #include <vector>
 
-#include <ert/enkf/enkf_types.hpp>
+using ActiveList = std::optional<std::vector<size_t>>;
 
-/**
-   This enum is used when we are setting up the dependencies between
-   observations and variables. The modes all_active and inactive are
-   sufficient information, for the values partly active we need
-   additional information.
+namespace active_list {
+class ActiveListIterable {
+    const std::vector<size_t> *const m_data;
+    const size_t m_total_size;
 
-   The same type is used both for variables (PRESSURE/PORO/MULTZ/...)
-   and for observations.
-*/
-typedef enum {
-    /** The variable/observation is fully active, i.e. all cells/all faults/all .. */
-    ALL_ACTIVE = 1,
-    /** Partly active - must supply additonal type spesific information on what is active.*/
-    PARTLY_ACTIVE = 3
-} active_mode_type;
+    class iterator {
+        const std::vector<size_t> *const m_data;
+        const size_t m_total_size;
+        size_t m_pos;
 
-class ActiveList {
+    public:
+        iterator(const std::vector<size_t> *const data, const size_t total_size,
+                 size_t pos)
+            : m_data(data), m_total_size(total_size), m_pos(pos) {}
+
+        bool operator!=(const iterator &other) const {
+            return m_pos != other.m_pos;
+        }
+
+        std::pair<size_t, size_t> operator*() const {
+            return m_data != nullptr ? std::pair{m_pos, (*m_data)[m_pos]}
+                                     : std::pair{m_pos, m_pos};
+        }
+
+        iterator &operator++() {
+            ++m_pos;
+            return *this;
+        }
+    };
+
 public:
-    const std::vector<int> &index_list() const;
-    const int *active_list_get_active() const;
-    active_mode_type getMode() const;
-    int active_size(int default_size) const;
-    void add_index(int index);
-    bool operator==(const ActiveList &other) const;
+    ActiveListIterable(const std::vector<size_t> *const data,
+                       const size_t total_size)
+        : m_data(data), m_total_size(total_size) {}
 
-private:
-    std::vector<int> m_index_list;
-    active_mode_type m_mode = ALL_ACTIVE;
+    iterator begin() const { return {m_data, m_total_size, 0}; }
+
+    iterator end() const {
+        return {m_data, m_total_size,
+                m_data != nullptr ? m_data->size() : m_total_size};
+    }
 };
 
-#endif
+inline ActiveListIterable with_total_size(const ActiveList &al,
+                                          size_t total_size) {
+    return {al.has_value() ? &(*al) : nullptr, total_size};
+}
+
+inline size_t size(const ActiveList &al, size_t total_size) {
+    return al.has_value() ? al->size() : total_size;
+}
+
+} // namespace active_list

@@ -22,7 +22,7 @@ bool scale_std_summarysingleobservation_no_errors() {
     test_assert_double_equal(1.0, summary_obs_get_std_scaling(summary_obs));
 
     ActiveList active_list;
-    summary_obs_update_std_scale(summary_obs, 2.0, &active_list);
+    summary_obs_update_std_scale(summary_obs, 2.0, active_list);
     test_assert_double_equal(2.0, summary_obs_get_std_scaling(summary_obs));
 
     obs_vector_free(obs_vector);
@@ -57,7 +57,7 @@ bool scale_std_summarymanyobservations_no_errors() {
     ActiveList active_list;
     for (int i = 0; i < num_observations; i++)
         summary_obs_update_std_scale(observations[i], scaling_factor,
-                                     &active_list);
+                                     active_list);
 
     for (int i = 0; i < num_observations; i++) {
         summary_obs_type *after_scale = observations[i];
@@ -94,7 +94,7 @@ bool scale_std_gen_withdata_no_errors() {
 
     ActiveList active_list;
     for (int i = 0; i < num_observations; i++)
-        gen_obs_update_std_scale(observations[i], multiplier, &active_list);
+        gen_obs_update_std_scale(observations[i], multiplier, active_list);
 
     for (int i = 0; i < num_observations; i++) {
         char *index_key = util_alloc_sprintf("%d", 0);

@@ -117,14 +117,9 @@ double summary_obs_get_std_scaling(const summary_obs_type *summary_obs) {
 
 void summary_obs_update_std_scale(summary_obs_type *summary_obs,
                                   double std_multiplier,
-                                  const ActiveList *active_list) {
-    if (active_list->getMode() == ALL_ACTIVE)
+                                  const ActiveList &active_list) {
+    if (active_list::size(active_list, OBS_SIZE) > 0)
         summary_obs->std_scaling = std_multiplier;
-    else {
-        int size = active_list->active_size(OBS_SIZE);
-        if (size > 0)
-            summary_obs->std_scaling = std_multiplier;
-    }
 }
 
 void summary_obs_set_std_scale(summary_obs_type *summary_obs,
@@ -139,13 +134,11 @@ VOID_MEASURE(summary_obs, summary)
 VOID_CHI2(summary_obs, summary)
 VOID_UPDATE_STD_SCALE(summary_obs);
 
-class ActiveList;
 namespace {
 void update_std_scaling(py::handle obj, double scaling,
                         const ActiveList &active_list) {
-    auto *summary_obs = reinterpret_cast<summary_obs_type *>(
-        PyLong_AsVoidPtr(obj.attr("_BaseCClass__c_pointer").ptr()));
-    summary_obs_update_std_scale(summary_obs, scaling, &active_list);
+    auto summary_obs = ert::from_cwrap<summary_obs_type>(obj);
+    summary_obs_update_std_scale(summary_obs, scaling, active_list);
 }
 } // namespace
 

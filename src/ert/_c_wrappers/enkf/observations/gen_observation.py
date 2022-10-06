@@ -1,5 +1,6 @@
 import ctypes
 import os.path
+from typing import List, Optional
 
 import numpy as np
 from cwrap import BaseCClass
@@ -7,7 +8,6 @@ from ecl.util.util import IntVector
 
 from ert import _clib
 from ert._c_wrappers import ResPrototype
-from ert._c_wrappers.enkf import ActiveList
 from ert._c_wrappers.enkf.config import GenDataConfig
 
 
@@ -99,7 +99,7 @@ class GenObservation(BaseCClass):
         """@rtype: float"""
         return self._get_std_scaling(obs_index)
 
-    def updateStdScaling(self, factor, active_list: ActiveList):
+    def updateStdScaling(self, factor, active_list: Optional[List[int]]):
         _clib.local.gen_obs.update_std_scaling(self, factor, active_list)
 
     def get_data_points(self):

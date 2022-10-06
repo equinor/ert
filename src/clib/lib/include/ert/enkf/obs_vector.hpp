@@ -35,7 +35,7 @@ typedef void(obs_meas_ftype)(const void *, const void *, node_id_type,
                              meas_data_type *);
 typedef void(obs_user_get_ftype)(void *, const char *, double *, double *,
                                  bool *);
-typedef void(obs_update_std_scale_ftype)(void *, double, const ActiveList *);
+typedef void(obs_update_std_scale_ftype)(void *, double, const ActiveList &);
 typedef double(obs_chi2_ftype)(const void *, const void *, node_id_type);
 
 extern "C" void obs_vector_free(obs_vector_type *);

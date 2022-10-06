@@ -1,4 +1,3 @@
-from .active_list import ActiveList
 from .analysis_config import AnalysisConfig
 from .analysis_iter_config import AnalysisIterConfig
 from .config import (
@@ -18,7 +17,6 @@ from .enkf_main import EnKFMain
 from .enkf_obs import EnkfObs
 from .ensemble_config import EnsembleConfig
 from .enums import (
-    ActiveMode,
     EnkfFieldFileFormatEnum,
     EnKFFSType,
     EnkfObservationImplementationType,
@@ -70,7 +68,6 @@ __all__ = [
     "SummaryKeySet",
     "EnkfFs",
     "RowScaling",
-    "ActiveList",
     "EnkfFieldFileFormatEnum",
     "LoadFailTypeEnum",
     "EnkfVarType",
@@ -80,7 +77,6 @@ __all__ = [
     "EnkfTruncationType",
     "EnKFFSType",
     "GenDataFileType",
-    "ActiveMode",
     "HookRuntime",
     "AnalysisIterConfig",
     "AnalysisConfig",

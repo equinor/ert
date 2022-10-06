@@ -178,26 +178,26 @@
 
 #define VOID_SERIALIZE(prefix)                                                 \
     void prefix##_serialize__(const void *void_arg, node_id_type node_id,      \
-                              const ActiveList *active_list,                   \
+                              const ActiveList &active_list,                   \
                               Eigen::MatrixXd &A, int row_offset,              \
                               int column) {                                    \
         const prefix##_type *arg = prefix##_safe_cast_const(void_arg);         \
         prefix##_serialize(arg, node_id, active_list, A, row_offset, column);  \
     }
 #define VOID_SERIALIZE_HEADER(prefix)                                          \
-    void prefix##_serialize__(const void *, node_id_type, const ActiveList *,  \
+    void prefix##_serialize__(const void *, node_id_type, const ActiveList &,  \
                               Eigen::MatrixXd &, int, int);
 
 #define VOID_DESERIALIZE(prefix)                                               \
     void prefix##_deserialize__(                                               \
-        void *void_arg, node_id_type node_id, const ActiveList *active_list,   \
+        void *void_arg, node_id_type node_id, const ActiveList &active_list,   \
         const Eigen::MatrixXd &A, int row_offset, int column) {                \
         prefix##_type *arg = prefix##_safe_cast(void_arg);                     \
         prefix##_deserialize(arg, node_id, active_list, A, row_offset,         \
                              column);                                          \
     }
 #define VOID_DESERIALIZE_HEADER(prefix)                                        \
-    void prefix##_deserialize__(void *, node_id_type, const ActiveList *,      \
+    void prefix##_deserialize__(void *, node_id_type, const ActiveList &,      \
                                 const Eigen::MatrixXd &, int, int);
 
 #define VOID_INITIALIZE(prefix)                                                \
@@ -245,14 +245,14 @@
 
 #define VOID_UPDATE_STD_SCALE(prefix)                                          \
     void prefix##_update_std_scale__(void *void_obs, double std_multiplier,    \
-                                     const ActiveList *active_list) {          \
+                                     const ActiveList &active_list) {          \
         prefix##_type *obs = prefix##_safe_cast(void_obs);                     \
         prefix##_update_std_scale(obs, std_multiplier, active_list);           \
     }
 
 #define VOID_UPDATE_STD_SCALE_HEADER(prefix)                                   \
     void prefix##_update_std_scale__(void *void_obs, double std_multiplier,    \
-                                     const ActiveList *active_list);
+                                     const ActiveList &active_list);
 
 #define VOID_CHI2(obs_prefix, state_prefix)                                    \
     double obs_prefix##_chi2__(const void *void_obs, const void *void_state,   \

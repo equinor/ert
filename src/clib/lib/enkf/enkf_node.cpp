@@ -497,7 +497,7 @@ bool enkf_node_has_data(enkf_node_type *enkf_node, enkf_fs_type *fs,
 }
 
 void enkf_node_serialize(enkf_node_type *enkf_node, enkf_fs_type *fs,
-                         node_id_type node_id, const ActiveList *active_list,
+                         node_id_type node_id, const ActiveList &active_list,
                          Eigen::MatrixXd &A, int row_offset, int column) {
 
     FUNC_ASSERT(enkf_node->serialize);
@@ -507,7 +507,7 @@ void enkf_node_serialize(enkf_node_type *enkf_node, enkf_fs_type *fs,
 }
 
 void enkf_node_deserialize(enkf_node_type *enkf_node, enkf_fs_type *fs,
-                           node_id_type node_id, const ActiveList *active_list,
+                           node_id_type node_id, const ActiveList &active_list,
                            const Eigen::MatrixXd &A, int row_offset,
                            int column) {
 

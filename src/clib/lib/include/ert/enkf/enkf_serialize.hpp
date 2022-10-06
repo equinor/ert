@@ -7,12 +7,12 @@
 
 void enkf_matrix_serialize(const void *__node_data, int node_size,
                            ecl_data_type node_type,
-                           const ActiveList *__active_list, Eigen::MatrixXd &A,
+                           const ActiveList &active_list, Eigen::MatrixXd &A,
                            int row_offset, int column);
 
 void enkf_matrix_deserialize(void *__node_data, int node_size,
                              ecl_data_type node_type,
-                             const ActiveList *__active_list,
+                             const ActiveList &active_list,
                              const Eigen::MatrixXd &A, int row_offset,
                              int column);
 

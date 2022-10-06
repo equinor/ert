@@ -15,7 +15,6 @@ endfunction()
 
 foreach(
   test
-  enkf_active_list
   enkf_analysis_config
   enkf_config_node
   enkf_ensemble
