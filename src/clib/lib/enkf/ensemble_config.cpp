@@ -1,21 +1,3 @@
-/*
-   copyright (c) 2011  equinor asa, norway.
-
-   the file 'ensemble_config.c' is part of ert - ensemble based reservoir tool.
-
-   ert is free software: you can redistribute it and/or modify
-   it under the terms of the gnu general public license as published by
-   the free software foundation, either version 3 of the license, or
-   (at your option) any later version.
-
-   ert is distributed in the hope that it will be useful, but without any
-   warranty; without even the implied warranty of merchantability or
-   fitness for a particular purpose.
-
-   see the gnu general public license at <http://www.gnu.org/licenses/gpl.html>
-   for more details.
-*/
-
 #include <filesystem>
 #include <map>
 #include <string>
