@@ -21,7 +21,8 @@ def _to_c_string_arr(lst: List[str]):
 class ErtWorkflowList(BaseCClass):
     TYPE_NAME = "ert_workflow_list"
     _alloc = ResPrototype(
-        "void* ert_workflow_list_alloc(subst_list, config_content)", bind=False
+        "void* ert_workflow_list_alloc(subst_list, config_content, config_content)",
+        bind=False,
     )
     _alloc_full = ResPrototype(
         "void* ert_workflow_list_alloc_full(subst_list, workflow_joblist)", bind=False
@@ -61,7 +62,13 @@ class ErtWorkflowList(BaseCClass):
         "int ert_workflow_list_num_hook_workflows(ert_workflow_list)"
     )
 
-    def __init__(self, subst_list=None, config_content=None, config_dict=None):
+    def __init__(
+        self,
+        subst_list=None,
+        config_content=None,
+        config_dict=None,
+        site_config_content=None,
+    ):
         if subst_list is None:
             raise ValueError(
                 "Failed to construct ErtWorkflowList with no substitution list"
@@ -78,10 +85,16 @@ class ErtWorkflowList(BaseCClass):
                 "instance with multiple config object"
             )
 
+        if config_content is not None and site_config_content is None:
+            raise ValueError(
+                "Failed to construct ErtWorkflowList instance. "
+                "When using config_content also requires site_config_content"
+            )
+
         c_ptr = None
 
         if config_content is not None:
-            c_ptr = self._alloc(subst_list, config_content)
+            c_ptr = self._alloc(subst_list, config_content, site_config_content)
 
         if config_dict is not None:
             workflow_joblist = WorkflowJoblist()

@@ -22,7 +22,6 @@
 #include <ert/enkf/enkf_defaults.hpp>
 #include <ert/enkf/ert_workflow_list.hpp>
 #include <ert/enkf/model_config.hpp>
-#include <ert/enkf/site_config.hpp>
 
 namespace fs = std::filesystem;
 static auto logger = ert::get_logger("enkf");
@@ -59,27 +58,13 @@ ert_workflow_list_alloc_empty(const subst_list_type *context) {
 }
 
 ert_workflow_list_type *
-ert_workflow_list_alloc_load_site_config(const subst_list_type *context) {
+ert_workflow_list_alloc(const subst_list_type *context,
+                        const config_content_type *config_content,
+                        const config_content_type *site_config_content) {
+
     ert_workflow_list_type *workflow_list =
         ert_workflow_list_alloc_empty(context);
-
-    config_parser_type *config = config_alloc();
-    config_content_type *content = site_config_alloc_content(config);
-
-    ert_workflow_list_init(workflow_list, content);
-
-    config_free(config);
-    config_content_free(content);
-
-    return workflow_list;
-}
-
-ert_workflow_list_type *
-ert_workflow_list_alloc(const subst_list_type *context,
-                        const config_content_type *config_content) {
-
-    ert_workflow_list_type *workflow_list =
-        ert_workflow_list_alloc_load_site_config(context);
+    ert_workflow_list_init(workflow_list, site_config_content);
 
     if (config_content)
         ert_workflow_list_init(workflow_list, config_content);

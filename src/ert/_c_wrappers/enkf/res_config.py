@@ -155,7 +155,9 @@ class ResConfig:
         self.queue_config = QueueConfig(**queue_config_args)
 
         self.ert_workflow_list = ErtWorkflowList(
-            subst_list=self.subst_config.subst_list, config_content=user_config_content
+            subst_list=self.subst_config.subst_list,
+            config_content=user_config_content,
+            site_config_content=site_config_content,
         )
 
         if user_config_content.hasKey(ConfigKeys.RUNPATH_FILE):
