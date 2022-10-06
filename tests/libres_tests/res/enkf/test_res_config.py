@@ -31,6 +31,7 @@ from ert._c_wrappers.enkf import (
     ResConfig,
     SiteConfig,
 )
+from ert._c_wrappers.enkf.enums import HookRuntime
 from ert._c_wrappers.job_queue import QueueDriverEnum
 from ert._c_wrappers.sched import HistorySourceEnum
 
@@ -580,3 +581,29 @@ def test_runpath_file(monkeypatch, tmp_path):
 
     config = ResConfig(os.path.relpath(config_path, workdir_path))
     assert config.runpath_file == str(runpath_path)
+
+
+@pytest.mark.parametrize(
+    "run_mode",
+    [
+        HookRuntime.POST_SIMULATION,
+        HookRuntime.PRE_SIMULATION,
+        HookRuntime.PRE_FIRST_UPDATE,
+        HookRuntime.PRE_UPDATE,
+        HookRuntime.POST_UPDATE,
+    ],
+)
+def test_that_workflow_run_modes_can_be_selected(tmp_path, run_mode):
+    my_script = (tmp_path / "my_script").resolve()
+    my_script.write_text("")
+    st = os.stat(my_script)
+    os.chmod(my_script, st.st_mode | stat.S_IEXEC)
+    test_user_config = tmp_path / "user_config.ert"
+    test_user_config.write_text(
+        "JOBNAME  Job%d\nRUNPATH /tmp/simulations/run%d\n"
+        "NUM_REALIZATIONS 10\n"
+        f"LOAD_WORKFLOW {my_script} SCRIPT\n"
+        f"HOOK_WORKFLOW SCRIPT {run_mode}\n"
+    )
+    res_config = ResConfig(str(test_user_config))
+    assert res_config.hook_manager[0].getRunMode() == run_mode
