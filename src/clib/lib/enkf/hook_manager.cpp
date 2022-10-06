@@ -12,7 +12,6 @@
 
 #include <ert/enkf/config_keys.hpp>
 #include <ert/enkf/hook_manager.hpp>
-#include <ert/enkf/site_config.hpp>
 
 #include <algorithm>
 #include <filesystem>

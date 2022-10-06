@@ -20,7 +20,6 @@
 #include <ert/enkf/enkf_defaults.hpp>
 #include <ert/enkf/ert_workflow_list.hpp>
 #include <ert/enkf/model_config.hpp>
-#include <ert/enkf/site_config.hpp>
 
 namespace fs = std::filesystem;
 static auto logger = ert::get_logger("enkf");

@@ -114,7 +114,6 @@ pybind11_add_module(
   enkf/obs_data.cpp
   enkf/obs_vector.cpp
   enkf/run_arg.cpp
-  enkf/site_config.cpp
   enkf/row_scaling.cpp
   enkf/state_map.cpp
   enkf/state_map.cpp

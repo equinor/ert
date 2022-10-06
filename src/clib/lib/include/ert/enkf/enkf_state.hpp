@@ -24,7 +24,6 @@
 #include <ert/enkf/ensemble_config.hpp>
 #include <ert/enkf/model_config.hpp>
 #include <ert/enkf/run_arg.hpp>
-#include <ert/enkf/site_config.hpp>
 
 void enkf_state_initialize(rng_type *rng, enkf_fs_type *fs,
                            enkf_node_type *param_node, int iens);
