@@ -2,10 +2,11 @@ import os
 
 from ert._c_wrappers.enkf import ConfigKeys, ResConfig, SiteConfig
 from ert._c_wrappers.enkf.enums import HookRuntime
+from ert._c_wrappers.enkf.res_config import site_config_location
 
 
 def test_constructors(snake_oil_case):
-    ert_site_config = SiteConfig.getLocation()
+    ert_site_config = site_config_location()
     ert_share_path = os.path.dirname(ert_site_config)
 
     assert snake_oil_case.resConfig().site_config == SiteConfig.from_config_dict(

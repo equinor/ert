@@ -369,7 +369,7 @@ def test_shell_script_jobs_availability(minimal_case):
     res_config = ResConfig("config.ert")
     site_config = res_config.site_config
 
-    installed_jobs = site_config.get_installed_jobs()
+    installed_jobs = site_config.job_list
     fm_shell_jobs = {}
     for job in installed_jobs:
         exe = job.get_executable()

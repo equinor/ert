@@ -19,7 +19,6 @@
 #include <ert/enkf/config_keys.hpp>
 #include <ert/enkf/enkf_defaults.hpp>
 #include <ert/enkf/model_config.hpp>
-#include <ert/enkf/site_config.hpp>
 #include <ert/except.hpp>
 
 #define UPDATE_ENKF_ALPHA_KEY "ENKF_ALPHA"

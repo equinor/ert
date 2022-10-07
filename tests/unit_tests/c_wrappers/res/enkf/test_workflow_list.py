@@ -2,12 +2,13 @@ import os
 
 import pytest
 
-from ert._c_wrappers.enkf import ConfigKeys, ErtWorkflowList, ResConfig, SiteConfig
+from ert._c_wrappers.enkf import ConfigKeys, ErtWorkflowList, ResConfig
+from ert._c_wrappers.enkf.res_config import site_config_location
 
 
 @pytest.mark.usefixtures("copy_minimum_case")
 def test_workflow_list_constructor():
-    ERT_SITE_CONFIG = SiteConfig.getLocation()
+    ERT_SITE_CONFIG = site_config_location()
     ERT_SHARE_PATH = os.path.dirname(ERT_SITE_CONFIG)
 
     config_dict = {

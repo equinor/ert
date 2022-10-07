@@ -23,27 +23,6 @@ def _load_lib():
 
     lib = ctypes.CDLL(ert._clib.__file__)  # pylint: disable=no-member
 
-    # Configure site_config to be a ctypes.CFUNCTION with type:
-    # void set_site_config(char *);
-    site_config = lib.set_site_config
-    site_config.restype = None
-    site_config.argtypes = (ctypes.c_char_p,)
-
-    # Find share/ert
-    from pathlib import Path
-
-    path = Path(__file__).parent
-    for p in path.parents:
-        npath = p / "ert" / "shared" / "share" / "ert" / "site-config"
-        if npath.is_file():
-            path = npath
-            break
-    else:
-        raise ImportError("Could not find `share/ert/site-config`")
-
-    # Set site-config to point to [PREFIX]/share/ert/site-config
-    site_config(str(path).encode("utf-8"))
-
     return lib
 
 

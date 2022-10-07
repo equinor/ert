@@ -458,7 +458,7 @@ class EnKFMain:
                 _clib.enkf_main.init_active_run(
                     model_config=self.resConfig().model_config,
                     ensemble_config=self.resConfig().ensemble_config,
-                    env_varlist=self.resConfig().site_config._get_env_var_list(),
+                    env_varlist=self.resConfig().site_config.var_list,
                     run_path=run_arg.runpath,
                     iens=run_arg.iens,
                     sim_fs=run_arg.sim_fs,
