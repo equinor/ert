@@ -195,13 +195,13 @@ def test_flag_to_produce_hdf5_output_with_ecl100(source_root):
 @pytest.mark.usefixtures("use_tmpdir", "init_eclrun_config")
 def test_mpi_run(source_root):
     shutil.copy(
-        os.path.join(source_root, "test-data/eclipse/SPE1_PARALLELL.DATA"),
-        "SPE1_PARALLELL.DATA",
+        os.path.join(source_root, "test-data/eclipse/SPE1_PARALLEL.DATA"),
+        "SPE1_PARALLEL.DATA",
     )
     ecl_config = Ecl100Config()
-    run(ecl_config, ["SPE1_PARALLELL.DATA", "--version=2019.3", "--num-cpu=2"])
-    assert os.path.isfile("SPE1_PARALLELL.OUT")
-    assert os.path.getsize("SPE1_PARALLELL.OUT") > 0
+    run(ecl_config, ["SPE1_PARALLEL.DATA", "--version=2019.3", "--num-cpu=2"])
+    assert os.path.isfile("SPE1_PARALLEL.OUT")
+    assert os.path.getsize("SPE1_PARALLEL.OUT") > 0
 
 
 @pytest.mark.requires_eclipse

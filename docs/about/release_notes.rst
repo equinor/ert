@@ -2274,7 +2274,7 @@ Build and test fixes:
  - travis will build all repositories [`23 <https://github.com/Equinor/res/pull/23/>`__].
  - Travis + OSX [`69 <https://github.com/Equinor/res/pull/69/>`__, `72 <https://github.com/Equinor/res/pull/72/>`__]
  - Remove equinor specific settings from build sytem [`38 <https://github.com/Equinor/res/pull/38/>`__].
- - Travis split for parallell builds [`79 <https://github.com/Equinor/res/pull/79/>`__].
+ - Travis split for parallel builds [`79 <https://github.com/Equinor/res/pull/79/>`__].
 
 
 Config refactor:

@@ -12,7 +12,7 @@
 #
 # In the example below the ecl100 simulator is installed in versions '2015.2'
 # and '2017.2'. Each version of the program can exist as a scalar single process
-# application and a parallell MPI application. When we have drilled all the way
+# application and a parallel MPI application. When we have drilled all the way
 # down through versions['2105.2']['scalar'] the only required
 # attribute is 'executable' which is the full path to the executable program. In
 # addition you can add an env: setting which will be a dictionary of environment
