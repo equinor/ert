@@ -166,6 +166,9 @@ class ResConfig:
         self.ecl_config = EclConfig.from_dict(config_content_dict)
 
         queue_config_args = {}
+        queue_config_args["num_cpu"] = (
+            self.num_cpu_from_config if self.num_cpu_from_config is not None else 0
+        )
 
         def set_value(argname, key, transform=lambda x: x):
             if key in site_config_content:
@@ -179,7 +182,6 @@ class ResConfig:
 
         set_value("job_script", ConfigKeys.JOB_SCRIPT)
         set_value("max_submit", ConfigKeys.MAX_SUBMIT)
-        set_value("num_cpu", ConfigKeys.NUM_CPU)
         set_value(
             "queue_system",
             ConfigKeys.QUEUE_SYSTEM,
@@ -285,12 +287,13 @@ class ResConfig:
         self.analysis_config = AnalysisConfig(config_dict=config_dict)
         self.ecl_config = EclConfig.from_dict(config_dict=config_dict)
         queue_config_args = {}
+        queue_config_args["num_cpu"] = (
+            self.num_cpu_from_config if self.num_cpu_from_config is not None else 0
+        )
         if ConfigKeys.JOB_SCRIPT in config_dict:
             queue_config_args["job_script"] = config_dict[ConfigKeys.JOB_SCRIPT]
         if ConfigKeys.MAX_SUBMIT in config_dict:
             queue_config_args["max_submit"] = config_dict[ConfigKeys.MAX_SUBMIT]
-        if ConfigKeys.NUM_CPU in config_dict:
-            queue_config_args["num_cpu"] = config_dict[ConfigKeys.NUM_CPU]
         if ConfigKeys.QUEUE_SYSTEM in config_dict:
             queue_config_args["queue_system"] = config_dict[ConfigKeys.QUEUE_SYSTEM]
         queue_config_args["queue_options"] = defaultdict(list)
