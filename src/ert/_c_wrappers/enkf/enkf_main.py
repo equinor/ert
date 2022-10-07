@@ -301,13 +301,7 @@ class EnKFMain:
         return self.resConfig().queue_config
 
     def get_num_cpu(self) -> int:
-        queue_num_cpus = self.res_config.get_num_cpu()
-        if queue_num_cpus is not None:
-            return queue_num_cpus
-        ecl_num_cpus = self.eclConfig().num_cpu
-        if ecl_num_cpus is not None:
-            return ecl_num_cpus
-        return 1
+        return self.res_config.preferred_num_cpu()
 
     def __repr__(self):
         return f"EnKFMain(size: {self.getEnsembleSize()}, config: {self.res_config})"
