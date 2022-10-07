@@ -10,10 +10,8 @@ import pandas as pd
 import pytest
 from numpy.testing import assert_almost_equal, assert_array_equal
 
+from ert import LibresFacade
 from ert._c_wrappers.enkf import RunContext
-from ert._c_wrappers.enkf.enkf_main import EnKFMain
-from ert._c_wrappers.enkf.res_config import ResConfig
-from ert.libres_facade import LibresFacade
 from ert.shared.storage import extraction
 
 
@@ -68,15 +66,7 @@ class ErtConfigBuilder:
         self._build_observations(path)
         self._build_priors(path)
 
-        config = ResConfig(str(path / "test.ert"))
-        enkfmain = EnKFMain(config)
-
-        # The C code doesn't do resource counting correctly, so we need to hook
-        # ResConfig to EnKFMain because otherwise ResConfig will be deleted and
-        # EnKFMain will use a dangling pointer.
-        enkfmain.__config = config  # pylint: disable=unused-private-member
-
-        return LibresFacade(enkfmain)
+        return LibresFacade.from_config_file(str(path / "test.ert"))
 
     def _build_ert(self, path):
         f = (path / "test.ert").open("w")
