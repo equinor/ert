@@ -16,7 +16,6 @@ def test_queue_config_constructor(minimum_case):
         job_script="script.sh",
         queue_system=QueueDriverEnum(2),
         max_submit=2,
-        num_cpu=0,
         queue_options={
             QueueDriverEnum.LOCAL_DRIVER: [
                 ("MAX_RUNNING", "1"),
@@ -29,7 +28,6 @@ def test_queue_config_constructor(minimum_case):
         job_script=os.path.abspath("script.sh"),
         queue_system=QueueDriverEnum(2),
         max_submit=2,
-        num_cpu=0,
         queue_options={
             QueueDriverEnum.LOCAL_DRIVER: [
                 ("MAX_RUNNING", "1"),
@@ -48,7 +46,6 @@ def test_set_and_unset_option():
         job_script="script.sh",
         queue_system=QueueDriverEnum(2),
         max_submit=2,
-        num_cpu=0,
         queue_options={
             QueueDriverEnum.LOCAL_DRIVER: [
                 ("MAX_RUNNING", "50"),

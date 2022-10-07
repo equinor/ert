@@ -9,7 +9,6 @@ from ert._c_wrappers.job_queue import Driver, JobQueue, QueueDriverEnum
 class QueueConfig:
     job_script: str = shutil.which("job_dispatch.py") or "job_dispatch.py"
     max_submit: int = 2
-    num_cpu: int = 0
     queue_system: QueueDriverEnum = QueueDriverEnum.NULL_DRIVER
     queue_options: Dict[QueueDriverEnum, List[Union[Tuple[str, str], str]]] = field(
         default_factory=dict
@@ -33,7 +32,6 @@ class QueueConfig:
         return QueueConfig(
             self.job_script,
             self.max_submit,
-            self.num_cpu,
             QueueDriverEnum.LOCAL_DRIVER,
             self.queue_options,
         )

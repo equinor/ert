@@ -22,7 +22,8 @@ subst_config_install_config_directory(subst_config_type *subst_config,
                                       const char *user_config_file);
 
 static void subst_config_init_load(subst_config_type *subst_config,
-                                   const config_content_type *content);
+                                   const config_content_type *content,
+                                   int num_cpu);
 
 static subst_config_type *subst_config_alloc_empty() {
     subst_config_type *subst_config =
@@ -45,11 +46,12 @@ static subst_config_type *subst_config_alloc_default() {
     return subst_config;
 }
 
-subst_config_type *subst_config_alloc(const config_content_type *user_config) {
+subst_config_type *subst_config_alloc(const config_content_type *user_config,
+                                      int num_cpu) {
     subst_config_type *subst_config = subst_config_alloc_default();
 
     if (user_config)
-        subst_config_init_load(subst_config, user_config);
+        subst_config_init_load(subst_config, user_config, num_cpu);
 
     return subst_config;
 }
@@ -190,7 +192,8 @@ static void subst_config_install_data_kw(subst_config_type *subst_config,
 }
 
 static void subst_config_init_load(subst_config_type *subst_config,
-                                   const config_content_type *content) {
+                                   const config_content_type *content,
+                                   int num_cpu) {
 
     if (config_content_has_item(content, CONFIG_DIRECTORY_KEY)) {
         const char *work_dir =
@@ -223,21 +226,7 @@ static void subst_config_init_load(subst_config_type *subst_config,
         subst_config, "RUNPATH_FILE", runpath_file,
         "The name of a file with a list of run directories.");
 
-    if (config_content_has_item(content, DATA_FILE_KEY)) {
-        const char *data_file =
-            config_content_get_value_as_abspath(content, DATA_FILE_KEY);
-
-        if (!fs::exists(data_file))
-            util_abort("%s: Could not find ECLIPSE data file: %s\n", __func__,
-                       data_file ? data_file : "NULL");
-
-        int num_cpu = ecl_util_get_num_cpu(data_file);
-        subst_config_install_num_cpu(subst_config, num_cpu);
-    }
-
-    // The NUM_CPU keyword in the user's config overrides the one set by the DATA_FILE above
-    if (config_content_has_item(content, NUM_CPU_KEY)) {
-        int num_cpu = config_content_get_value_as_int(content, NUM_CPU_KEY);
+    if (num_cpu > 0) {
         subst_config_install_num_cpu(subst_config, num_cpu);
     }
 }

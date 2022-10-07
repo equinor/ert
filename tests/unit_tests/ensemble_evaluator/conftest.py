@@ -65,7 +65,6 @@ def queue_config():
     return QueueConfig(
         job_script="job_dispatch.py",
         max_submit=100,
-        num_cpu=10,
         queue_system=LOCAL_DRIVER,
         queue_options=[("MAX_RUNNING", "50")],
     )
