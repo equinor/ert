@@ -17,7 +17,7 @@
    ---------------------------
 
    There is a simple possibility to limit the number of jobs which are
-   running in parallell. It works like this:
+   running in parallel. It works like this:
 
     1. For the joblist as a whole a license_path is created. This
        license path should contain both a uid and pid of the current

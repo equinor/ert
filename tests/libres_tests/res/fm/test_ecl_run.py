@@ -451,13 +451,13 @@ def test_failed_run_OK(init_ecl100_config, source_root):
 @pytest.mark.requires_eclipse
 def test_mpi_run(init_ecl100_config, source_root):
     shutil.copy(
-        source_root / "test-data/eclipse/SPE1_PARALLELL.DATA",
-        "SPE1_PARALLELL.DATA",
+        source_root / "test-data/eclipse/SPE1_PARALLEL.DATA",
+        "SPE1_PARALLEL.DATA",
     )
     ecl_config = Ecl100Config()
-    run(ecl_config, ["SPE1_PARALLELL.DATA", "--version=2014.2", "--num-cpu=2"])
-    assert os.path.isfile("SPE1_PARALLELL.LOG")
-    assert os.path.getsize("SPE1_PARALLELL.LOG") > 0
+    run(ecl_config, ["SPE1_PARALLEL.DATA", "--version=2014.2", "--num-cpu=2"])
+    assert os.path.isfile("SPE1_PARALLEL.LOG")
+    assert os.path.getsize("SPE1_PARALLEL.LOG") > 0
 
 
 @pytest.mark.requires_eclipse
