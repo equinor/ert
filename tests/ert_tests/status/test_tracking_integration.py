@@ -282,7 +282,7 @@ def test_tracking_time_map(
         # We create a reference case
         run_sim(datetime(2014, 9, 10))
         cwd = Path().absolute()
-        sim_path = Path("simulations") / "realization0"
+        sim_path = Path("simulations") / "realization-0" / "iter-0"
         sim_path.mkdir(parents=True, exist_ok=True)
         os.chdir(sim_path)
         # We are a bit sneaky here, there is no forward model creating any responses
@@ -429,7 +429,8 @@ def test_tracking_missing_ecl(
         assert (
             f"Realization: 0 failed after reaching max submit with: Could not find "
             f"SUMMARY file or using non unified SUMMARY file from: "
-            f"{Path().absolute()}/simulations/realization0/ECLIPSE_CASE.UNSMRY"
+            f"{Path().absolute()}/simulations/realization-0/"
+            "iter-0/ECLIPSE_CASE.UNSMRY"
         ) in caplog.messages
 
         # Just also check that it failed for the expected reason
@@ -437,7 +438,8 @@ def test_tracking_missing_ecl(
         assert (
             f"Realization: 0 failed after reaching max submit with: Could not find "
             f"SUMMARY file or using non unified SUMMARY file from: "
-            f"{Path().absolute()}/simulations/realization0/ECLIPSE_CASE.UNSMRY"
+            f"{Path().absolute()}/simulations/realization-0/"
+            "iter-0/ECLIPSE_CASE.UNSMRY"
         ) in failures[0].failed_msg
 
         thread.join()

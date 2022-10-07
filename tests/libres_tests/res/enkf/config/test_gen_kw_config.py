@@ -185,5 +185,5 @@ def test_gen_kw_is_log_or_not(tmpdir, distribution, expect_log, parameters_regex
         ert.createRunPath(ert.create_ensemble_experiment_run_context(0))
         assert re.match(
             parameters_regex,
-            Path("simulations/realization0/parameters.txt").read_text(),
+            Path("simulations/realization-0/iter-0/parameters.txt").read_text(),
         )

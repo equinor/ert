@@ -42,5 +42,5 @@ def test_num_cpu_subst(monkeypatch, tmp_path, append, numcpu):
     enkf_main = EnKFMain(config)
     _create_runpath(enkf_main)
 
-    with open("simulations/realization0/jobs.json") as f:
+    with open("simulations/realization-0/iter-0/jobs.json") as f:
         assert f'"argList" : ["{numcpu}"]' in f.read()

@@ -516,7 +516,9 @@ def _create_runpath(ert: LibresFacade, iteration: int = 0) -> RunContext:
 def _get_parameters() -> pd.DataFrame:
     params_json = [
         json.loads(path.read_text())
-        for path in sorted(Path.cwd().glob("simulations/realization*/coeffs.json"))
+        for path in sorted(
+            Path.cwd().glob("simulations/realization-*/iter-*/coeffs.json")
+        )
     ]
 
     return pd.DataFrame(params_json)

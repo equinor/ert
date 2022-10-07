@@ -96,7 +96,7 @@
 #define DEFAULT_ITER_RETRY_COUNT 4
 
 /* Default directories. */
-#define DEFAULT_RUNPATH "simulations/realization%d"
+#define DEFAULT_RUNPATH "simulations/realization-<IENS>/iter-<ITER>"
 #define DEFAULT_ENSPATH "storage"
 
 #define SUMMARY_KEY_JOIN_STRING ":"

@@ -77,7 +77,8 @@ def test_gen_kw(tmpdir, config_str, expected, extra_files, expectation):
         create_runpath("config.ert")
         with expectation:
             assert (
-                Path("simulations/realization0/kw.txt").read_text("utf-8") == expected
+                Path("simulations/realization-0/iter-0/kw.txt").read_text("utf-8")
+                == expected
             )
 
 
@@ -85,7 +86,7 @@ def test_gen_kw(tmpdir, config_str, expected, extra_files, expectation):
     "config_str, expected",
     [
         (
-            "FIELD MY_PARAM PARAMETER my_param.grdecl INIT_FILES:../../my_param_0.grdecl FORWARD_INIT:True",  # noqa
+            "FIELD MY_PARAM PARAMETER my_param.grdecl INIT_FILES:../../../my_param_0.grdecl FORWARD_INIT:True",  # noqa
             True,
         ),
         (
@@ -148,7 +149,7 @@ def test_field_param(tmpdir, config_str, expected):
             "",
         ),
         (
-            "SURFACE MY_PARAM OUTPUT_FILE:surf.irap INIT_FILES:../../surf%d.irap BASE_SURFACE:surf0.irap FORWARD_INIT:True",  # noqa
+            "SURFACE MY_PARAM OUTPUT_FILE:surf.irap INIT_FILES:../../../surf%d.irap BASE_SURFACE:surf0.irap FORWARD_INIT:True",  # noqa
             True,
             1,
             "",
@@ -272,7 +273,9 @@ def test_initialize_random_seed(tmpdir, caplog, check_random_seed, expectation):
                 fh.writelines("MY_KEYWORD NORMAL 0 1")
             create_runpath("config.ert")
             # We read the first parameter value as a reference value
-            expected = Path("simulations/realization0/kw.txt").read_text("utf-8")
+            expected = Path("simulations/realization-0/iter-0/kw.txt").read_text(
+                "utf-8"
+            )
 
             # Make a clean directory for the second case, which is identical
             # to the first, except that it uses the random seed from the first
@@ -295,7 +298,7 @@ def test_initialize_random_seed(tmpdir, caplog, check_random_seed, expectation):
             create_runpath("config_2.ert")
             with expectation:
                 assert (
-                    Path("simulations/realization0/kw.txt").read_text("utf-8")
+                    Path("simulations/realization-0/iter-0/kw.txt").read_text("utf-8")
                     == expected
                 )
 
