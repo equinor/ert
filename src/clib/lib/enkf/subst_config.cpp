@@ -97,15 +97,6 @@ void subst_config_add_subst_kw(subst_config_type *subst_config, const char *key,
                            "Supplied by the user in the configuration file.");
 }
 
-static void subst_config_install_num_cpu(subst_config_type *subst_config,
-                                         int num_cpu) {
-    char *num_cpu_string = util_alloc_sprintf("%d", num_cpu);
-    subst_config_add_internal_subst_kw(
-        subst_config, "NUM_CPU", num_cpu_string,
-        "The number of CPU used for one forward model.");
-    free(num_cpu_string);
-}
-
 static void subst_config_init_default(subst_config_type *subst_config) {
     /* Here we add the functions which should be available for string substitution operations. */
 
@@ -156,8 +147,6 @@ static void subst_config_init_default(subst_config_type *subst_config) {
     subst_config_add_internal_subst_kw(subst_config, "DATE", date_string,
                                        "The current date.");
     free(date_string);
-
-    subst_config_install_num_cpu(subst_config, 1);
 }
 
 static void
@@ -222,22 +211,4 @@ static void subst_config_init_load(subst_config_type *subst_config,
     subst_config_add_internal_subst_kw(
         subst_config, "RUNPATH_FILE", runpath_file,
         "The name of a file with a list of run directories.");
-
-    if (config_content_has_item(content, DATA_FILE_KEY)) {
-        const char *data_file =
-            config_content_get_value_as_abspath(content, DATA_FILE_KEY);
-
-        if (!fs::exists(data_file))
-            util_abort("%s: Could not find ECLIPSE data file: %s\n", __func__,
-                       data_file ? data_file : "NULL");
-
-        int num_cpu = ecl_util_get_num_cpu(data_file);
-        subst_config_install_num_cpu(subst_config, num_cpu);
-    }
-
-    // The NUM_CPU keyword in the user's config overrides the one set by the DATA_FILE above
-    if (config_content_has_item(content, NUM_CPU_KEY)) {
-        int num_cpu = config_content_get_value_as_int(content, NUM_CPU_KEY);
-        subst_config_install_num_cpu(subst_config, num_cpu);
-    }
 }

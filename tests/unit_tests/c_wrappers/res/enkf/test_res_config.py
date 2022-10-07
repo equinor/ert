@@ -120,7 +120,8 @@ snake_oil_structure_config = {
     },
 }
 
-# Expand all strings in snake_oil_structure_config according to config_defines.
+
+# Expand all strings in snake oil structure config according to defines.
 for define_key, define_value in config_defines.items():
     for data_key, data_value in snake_oil_structure_config.items():
         if isinstance(data_value, str):
@@ -257,10 +258,6 @@ def test_extensive_config(setup_case):
         assert exp_job_data["STDOUT"] == job_list[job_name].get_stdout_file()
 
     ecl_config = res_config.ecl_config
-    assert (
-        Path(snake_oil_structure_config["DATA_FILE"]).resolve()
-        == Path(ecl_config._data_file).resolve()
-    )
     for extension in ["SMSPEC", "UNSMRY"]:
         assert (
             Path(snake_oil_structure_config["REFCASE"] + "." + extension).resolve()

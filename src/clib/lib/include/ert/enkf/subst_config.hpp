@@ -1,6 +1,7 @@
 #ifndef ERT_SUBST_CONFIG_H
 #define ERT_SUBST_CONFIG_H
 
+#include <ert/config/config_content.hpp>
 #include <ert/tooling.hpp>
 
 typedef struct subst_config_struct subst_config_type;

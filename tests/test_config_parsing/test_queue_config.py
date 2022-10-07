@@ -32,7 +32,5 @@ def test_queue_config_dict_works_without_num_cpu(config_dict):
     config_dict[ConfigKeys.CONFIG_DIRECTORY] = cwd
 
     queue_config_from_dict = ResConfig(config_dict=config_dict).queue_config
-    res_config_from_file: ResConfig = ResConfig(filename)
 
     assert queue_config_from_dict.num_cpu == 0
-    assert res_config_from_file.get_num_cpu() is None

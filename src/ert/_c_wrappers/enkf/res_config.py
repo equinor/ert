@@ -5,6 +5,7 @@ from os.path import isfile
 from pathlib import Path
 from typing import Any, Dict, Optional
 
+from ecl.ecl_util import get_num_cpu as get_num_cpu_from_data_file
 from ecl.util.util import StringList
 
 from ert._c_wrappers.config import ConfigContent, ConfigParser
@@ -161,7 +162,25 @@ class ResConfig:
             logging.error(f"Error loading configuration: {str(self._errors)}")
             raise ValueError("Error loading configuration: " + str(self._errors))
 
+        self.num_cpu_from_data_file = (
+            get_num_cpu_from_data_file(
+                user_config_content.getValue(ConfigKeys.DATA_FILE)
+            )
+            if user_config_content.hasKey(ConfigKeys.DATA_FILE)
+            else None
+        )
+        self.num_cpu_from_config = (
+            user_config_content.getValue(ConfigKeys.NUM_CPU)
+            if user_config_content.hasKey(ConfigKeys.NUM_CPU)
+            else None
+        )
+
         self.subst_config = SubstConfig(config_content=user_config_content)
+        self.subst_config.subst_list.addItem(
+            "<NUM_CPU>",
+            str(self.preferred_num_cpu()),
+            "The number of CPU used for one forward model.",
+        )
         self.site_config = SiteConfig.from_config_content(
             user_config_content=user_config_content,
             site_config_content=site_config_content,
@@ -176,6 +195,9 @@ class ResConfig:
         self.analysis_config = AnalysisConfig.from_dict(config_content_dict)
 
         queue_config_args = {}
+        queue_config_args["num_cpu"] = (
+            self.num_cpu_from_config if self.num_cpu_from_config is not None else 0
+        )
 
         def set_value(argname, key, transform=lambda x: x):
             if key in site_config_content:
@@ -189,7 +211,6 @@ class ResConfig:
 
         set_value("job_script", ConfigKeys.JOB_SCRIPT)
         set_value("max_submit", ConfigKeys.MAX_SUBMIT)
-        set_value("num_cpu", ConfigKeys.NUM_CPU)
         set_value(
             "queue_system",
             ConfigKeys.QUEUE_SYSTEM,
@@ -276,7 +297,21 @@ class ResConfig:
             self.config_path = config_dict[ConfigKeys.CONFIG_DIRECTORY]
         config_dict[ConfigKeys.CONFIG_DIRECTORY] = self.config_path
 
+        self.num_cpu_from_config = config_dict.get(ConfigKeys.NUM_CPU, None)
+        self.num_cpu_from_data_file = (
+            get_num_cpu_from_data_file(config_dict[ConfigKeys.DATA_FILE])
+            if (
+                ConfigKeys.DATA_FILE in config_dict
+                and os.path.exists(config_dict[ConfigKeys.DATA_FILE])
+            )
+            else None
+        )
         self.subst_config = SubstConfig(config_dict=config_dict)
+        self.subst_config.subst_list.addItem(
+            "<NUM_CPU>",
+            str(self.preferred_num_cpu()),
+            "The number of CPU used for one forward model.",
+        )
         self.site_config = SiteConfig.from_config_dict(
             config_dict=config_dict, site_config_content=site_config_content
         )
@@ -284,12 +319,13 @@ class ResConfig:
         self.analysis_config = AnalysisConfig.from_dict(config_dict=config_dict)
         self.ecl_config = EclConfig.from_dict(config_dict=config_dict)
         queue_config_args = {}
+        queue_config_args["num_cpu"] = (
+            self.num_cpu_from_config if self.num_cpu_from_config is not None else 0
+        )
         if ConfigKeys.JOB_SCRIPT in config_dict:
             queue_config_args["job_script"] = config_dict[ConfigKeys.JOB_SCRIPT]
         if ConfigKeys.MAX_SUBMIT in config_dict:
             queue_config_args["max_submit"] = config_dict[ConfigKeys.MAX_SUBMIT]
-        if ConfigKeys.NUM_CPU in config_dict:
-            queue_config_args["num_cpu"] = config_dict[ConfigKeys.NUM_CPU]
         if ConfigKeys.QUEUE_SYSTEM in config_dict:
             queue_config_args["queue_system"] = config_dict[ConfigKeys.QUEUE_SYSTEM]
         queue_config_args["queue_options"] = defaultdict(list)
@@ -625,6 +661,13 @@ class ResConfig:
     def free(self):
         self._free()  # pylint: disable=no-member
 
+    def preferred_num_cpu(self) -> int:
+        if self.num_cpu_from_config is not None:
+            return self.num_cpu_from_config
+        if self.num_cpu_from_data_file is not None:
+            return self.num_cpu_from_data_file
+        return 1
+
     @property
     def errors(self):
         return self._errors
@@ -637,18 +680,14 @@ class ResConfig:
     def ert_templates(self):
         return self._templates
 
-    def get_num_cpu(self) -> Optional[int]:
-        queue_num_cpu = self.queue_config.num_cpu
-        if queue_num_cpu == 0:
-            return None
-        return queue_num_cpu
-
     def __eq__(self, other):
         # compare each config separatelly
         config_eqs = (
             (self.subst_config == other.subst_config),
             (self.site_config == other.site_config),
             (self.random_seed == other.random_seed),
+            (self.num_cpu_from_config == other.num_cpu_from_config),
+            (self.num_cpu_from_data_file == other.num_cpu_from_data_file),
             (self.analysis_config == other.analysis_config),
             (self.ert_workflow_list == other.ert_workflow_list),
             (self.ert_templates == other.ert_templates),
@@ -674,6 +713,8 @@ class ResConfig:
             f"SubstConfig: {self.subst_config},\n"
             f"SiteConfig: {self.site_config},\n"
             f"RandomSeed: {self.random_seed},\n"
+            f"Config Num CPUs: {self.num_cpu_from_config},\n"
+            f"Data File Num CPUs: {self.num_cpu_from_data_file},\n"
             f"AnalysisConfig: {self.analysis_config},\n"
             f"ErtWorkflowList: {self.ert_workflow_list},\n"
             f"ErtTemplates: {self.ert_templates},\n"

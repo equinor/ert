@@ -2,7 +2,6 @@ import os
 from typing import Optional, Union
 
 from ecl.ecl_util import EclFileEnum, get_file_type
-from ecl.ecl_util import get_num_cpu as get_num_cpu_from_data_file
 from ecl.grid import EclGrid
 from ecl.summary import EclSum
 
@@ -12,11 +11,9 @@ from ert._c_wrappers.enkf.config_keys import ConfigKeys
 class EclConfig:
     def __init__(
         self,
-        data_file: Optional[str] = None,
         grid_file: Optional[str] = None,
         refcase_file: Optional[str] = None,
     ):
-        self._data_file = data_file
         self._grid_file = grid_file
         self._refcase_file = refcase_file
         self.grid = self._load_grid() if grid_file else None
@@ -24,16 +21,9 @@ class EclConfig:
 
     @classmethod
     def from_dict(cls, config_dict) -> "EclConfig":
-        data_file = _get_value(config_dict.get(ConfigKeys.DATA_FILE))
         grid_file = _get_value(config_dict.get(ConfigKeys.GRID))
         refcase_file = _get_value(config_dict.get(ConfigKeys.REFCASE))
-        return cls(data_file, grid_file, refcase_file)
-
-    @property
-    def num_cpu(self) -> Optional[int]:
-        if not self._data_file:
-            return None
-        return get_num_cpu_from_data_file(self._data_file)
+        return cls(grid_file, refcase_file)
 
     def _load_grid(self) -> Optional[EclGrid]:
         ecl_grid_file_types = [
@@ -59,23 +49,16 @@ class EclConfig:
     def __repr__(self):
         return (
             "EclConfig(\n"
-            f"\tdata_file={self._data_file},\n"
             f"\tgrid_file={self._grid_file},\n"
             f"\trefcase_file={self._refcase_file},\n"
             ")"
         )
 
     def __eq__(self, other):
-        if self._data_file != other._data_file:
-            return False
-
         if self._grid_file != other._grid_file:
             return False
 
         if self._refcase_file != other._refcase_file:
-            return False
-
-        if self.num_cpu != other.num_cpu:
             return False
 
         return True

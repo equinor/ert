@@ -1,4 +1,5 @@
 import os.path
+from typing import Optional
 
 from cwrap import BaseCClass
 from ecl import EclPrototype
@@ -77,28 +78,6 @@ class SubstConfig(BaseCClass):
                 "The name of a file with a list of run directories.",
             )
 
-            if ConfigKeys.NUM_CPU in config_dict:
-                subst_list.addItem(
-                    "<NUM_CPU>",
-                    str(config_dict[ConfigKeys.NUM_CPU]),
-                    "The number of CPU used for one forward model.",
-                )
-            # Read num_cpu from Eclipse DATA_FILE
-            elif ConfigKeys.DATA_FILE in config_dict:
-                file_path = os.path.join(
-                    config_directory, config_dict[ConfigKeys.DATA_FILE]
-                )
-
-                if os.path.isfile(file_path) and os.access(file_path, os.R_OK):
-                    num_cpu = self._get_num_cpu(file_path)
-                    subst_list.addItem(
-                        "<NUM_CPU>",
-                        str(num_cpu),
-                        "The number of CPU used for one forward model.",
-                    )
-                else:
-                    raise IOError(f"Could not find ECLIPSE data file: {file_path}")
-
             c_ptr = self._alloc_full(subst_list)
 
         else:
@@ -108,6 +87,12 @@ class SubstConfig(BaseCClass):
             raise ValueError("Failed to construct Substonfig instance")
 
         super().__init__(c_ptr)
+        if num_cpu is not None:
+            self.subst_list.addItem(
+                "<NUM_CPU>",
+                str(num_cpu),
+                "The number of CPU used for one forward model.",
+            )
 
     def __getitem__(self, key):
         subst_list = self._get_subst_list()

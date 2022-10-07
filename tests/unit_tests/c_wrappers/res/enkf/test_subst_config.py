@@ -55,10 +55,6 @@ def snake_oil_structure_config_file(snake_oil_structure_config):
                     ConfigKeys.DATA_KW_KEY, key, val
                 )
             )
-        config.write(
-            f"{ConfigKeys.DATA_FILE}"
-            f" {snake_oil_structure_config[ConfigKeys.DATA_FILE]}\n"
-        )
 
     return filename
 
@@ -115,14 +111,5 @@ def test_missing_config_directory_raises_error(snake_oil_structure_config):
         SubstConfig(
             config_dict=without_key(
                 snake_oil_structure_config, ConfigKeys.CONFIG_DIRECTORY
-            )
-        )
-
-
-def test_data_file_not_found_raises_error(snake_oil_structure_config):
-    with pytest.raises(IOError):
-        SubstConfig(
-            config_dict=with_key(
-                snake_oil_structure_config, ConfigKeys.DATA_FILE, "not_a_file"
             )
         )
