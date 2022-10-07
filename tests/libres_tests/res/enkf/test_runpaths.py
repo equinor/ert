@@ -177,5 +177,5 @@ def test_assert_export():
     assert runpath_list_file.name == "test_runpath_list.txt"
     assert (
         runpath_list_file.read_text("utf-8")
-        == f"000  {os.getcwd()}/simulations/realization0  a_name_0  000\n"
+        == f"000  {os.getcwd()}/simulations/realization-0/iter-0  a_name_0  000\n"
     )

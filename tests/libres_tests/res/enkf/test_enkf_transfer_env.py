@@ -28,7 +28,7 @@ def test_transfer_var():
 
     run_context = ert.create_ensemble_experiment_run_context(iteration=0)
     ert.createRunPath(run_context)
-    os.chdir("simulations/realization0")
+    os.chdir("simulations/realization-0/iter-0")
     with open("jobs.json", "r") as f:
         data = json.load(f)
         env_data = data["global_environment"]

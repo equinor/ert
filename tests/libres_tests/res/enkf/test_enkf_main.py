@@ -107,7 +107,8 @@ def test_create_run_context(monkeypatch, enkf_main):
     assert run_context.target_fs == enkf_main.getCurrentFileSystem()
     assert run_context.mask == [True] * ensemble_size
     assert run_context.paths == [
-        f"{Path().absolute()}/simulations/realization{i}" for i in range(ensemble_size)
+        f"{Path().absolute()}/simulations/realization-{i}/iter-0"
+        for i in range(ensemble_size)
     ]
     assert run_context.jobnames == [f"name{i}" for i in range(ensemble_size)]
 
