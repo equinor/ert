@@ -6,18 +6,6 @@ from ecl.summary import EclSum
 from ert._c_wrappers.enkf import ConfigKeys, EclConfig
 
 
-def test_ecl_config_default_num_cpu_value(source_root):
-    dfile = str(source_root / "test-data/eclipse/SPE1.DATA")
-    ec = EclConfig(data_file=dfile)
-    assert ec._data_file == dfile
-    assert ec.num_cpu == 1
-
-
-def test_num_cpu_is_none_when_datafile_not_given(source_root):
-    ec = EclConfig()
-    assert ec.num_cpu is None
-
-
 def test_refcase(source_root):
     refcase_file = str(source_root / "test-data/snake_oil/refcase/SNAKE_OIL_FIELD")
     ec = EclConfig(refcase_file=refcase_file)
@@ -35,7 +23,6 @@ def test_wrongly_configured_refcase_path():
 def test_ecl_config_constructors(setup_case):
     res_config = setup_case("configuration_tests", "ecl_config.ert")
     config_dict = {
-        ConfigKeys.DATA_FILE: "input/SPE1.DATA",
         ConfigKeys.GRID: "input/CASE.EGRID",
         ConfigKeys.REFCASE: "input/refcase/SNAKE_OIL_FIELD",
     }

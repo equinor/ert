@@ -1,12 +1,13 @@
 #ifndef ERT_SUBST_CONFIG_H
 #define ERT_SUBST_CONFIG_H
 
+#include <ert/config/config_content.hpp>
 #include <ert/tooling.hpp>
 
 typedef struct subst_config_struct subst_config_type;
 
 extern "C" subst_config_type *
-subst_config_alloc(const config_content_type *user_config);
+subst_config_alloc(const config_content_type *user_config, int num_cpu);
 extern "C" PY_USED subst_config_type *
 subst_config_alloc_full(const subst_list_type *define_list);
 extern "C" void subst_config_free(subst_config_type *subst_config);
