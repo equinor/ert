@@ -267,18 +267,22 @@ def config_dicts(draw):
     should_exist_files.append(config_dict[ConfigKeys.DATA_FILE])
     should_exist_files.append(config_dict[ConfigKeys.JOB_SCRIPT])
 
-    should_be_executable_files = []
+    should_be_executable_files = [
+        job[ConfigKeys.PATH] for job in config_dict[ConfigKeys.INSTALL_JOB]
+    ]
     should_be_executable_files.append(config_dict[ConfigKeys.JOB_SCRIPT])
+
+    config_dict[ConfigKeys.JOB_SCRIPT] = os.path.abspath(
+        config_dict[ConfigKeys.JOB_SCRIPT]
+    )
 
     for filename in should_exist_files:
         if not os.path.isfile(filename):
-            print(f"touch {filename}")
             touch(filename)
 
     should_exist_directories = config_dict[ConfigKeys.INSTALL_JOB_DIRECTORY]
     for dirname in should_exist_directories:
         if not os.path.isdir(dirname):
-            print(f"mkdir {dirname}")
             os.mkdir(dirname)
 
     for filename in should_be_executable_files:
