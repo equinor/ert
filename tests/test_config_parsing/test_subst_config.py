@@ -30,14 +30,14 @@ def test_from_dict_and_from_file_creates_equal_config(config_dict):
     filename = config_dict[ConfigKeys.CONFIG_FILE_KEY]
     to_config_file(filename, config_dict)
     res_config_from_file = ResConfig(user_config_file=filename)
-    subst_config_from_dict = SubstConfig(config_dict=config_dict)
+    subst_config_from_dict = ResConfig(config_dict=config_dict).subst_config
     assert res_config_from_file.subst_config == subst_config_from_dict
 
 
 @pytest.mark.usefixtures("use_tmpdir")
 @given(config_dicts())
 def test_complete_config_reads_correct_values(config_dict):
-    subst_config = SubstConfig(config_dict=config_dict)
+    subst_config = ResConfig(config_dict=config_dict).subst_config
     assert subst_config["<CWD>"] == config_dict[ConfigKeys.CONFIG_DIRECTORY]
     assert subst_config["<CONFIG_PATH>"] == config_dict[ConfigKeys.CONFIG_DIRECTORY]
     for key, value in config_dict[ConfigKeys.DEFINE_KEY].items():
@@ -73,14 +73,4 @@ def test_empty_config_raises_error():
 def test_missing_config_directory_raises_error(config_dict):
     config_dict.pop(ConfigKeys.CONFIG_DIRECTORY)
     with pytest.raises(ValueError):
-        SubstConfig(config_dict=config_dict)
-
-
-@pytest.mark.usefixtures("use_tmpdir")
-@given(config_dicts())
-def test_data_file_not_found_raises_error(config_dict):
-    config_dict[ConfigKeys.DATA_FILE] = "not_a_file"
-    # subst config only tries to read data file if num cpu is not given
-    del config_dict[ConfigKeys.NUM_CPU]
-    with pytest.raises(IOError):
         SubstConfig(config_dict=config_dict)

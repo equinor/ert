@@ -115,7 +115,9 @@ class ResConfig:
             else None
         )
 
-        self.subst_config = SubstConfig(config_content=user_config_content)
+        self.subst_config = SubstConfig(
+            config_content=user_config_content, num_cpu=self.preferred_num_cpu()
+        )
         self.site_config = SiteConfig(config_content=user_config_content)
         if user_config_content.hasKey(ConfigKeys.RANDOM_SEED):
             self.random_seed = user_config_content.getValue(ConfigKeys.RANDOM_SEED)
@@ -245,8 +247,9 @@ class ResConfig:
             )
             else None
         )
-
-        self.subst_config = SubstConfig(config_dict=config_dict)
+        self.subst_config = SubstConfig(
+            config_dict=config_dict, num_cpu=self.preferred_num_cpu()
+        )
         self.site_config = SiteConfig.from_config_dict(config_dict=config_dict)
         self.random_seed = config_dict.get(ConfigKeys.RANDOM_SEED, None)
         self.analysis_config = AnalysisConfig(config_dict=config_dict)

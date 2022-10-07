@@ -1,4 +1,5 @@
 import os.path
+from typing import Optional
 
 from cwrap import BaseCClass
 from ecl import EclPrototype
@@ -10,7 +11,7 @@ from ert._c_wrappers.util import SubstitutionList
 
 class SubstConfig(BaseCClass):
     TYPE_NAME = "subst_config"
-    _alloc = ResPrototype("void* subst_config_alloc(config_content)", bind=False)
+    _alloc = ResPrototype("void* subst_config_alloc(config_content,int)", bind=False)
     _alloc_full = ResPrototype("void* subst_config_alloc_full(subst_list)", bind=False)
     _free = ResPrototype("void  subst_config_free(subst_config)")
     _get_subst_list = ResPrototype(
@@ -18,7 +19,9 @@ class SubstConfig(BaseCClass):
     )
     _get_num_cpu = EclPrototype("int ecl_util_get_num_cpu(char*)", bind=False)
 
-    def __init__(self, config_content=None, config_dict=None):
+    def __init__(
+        self, config_content=None, config_dict=None, num_cpu: Optional[int] = None
+    ):
         if not (config_content is not None) ^ (config_dict is not None):
             raise ValueError(
                 "SubstConfig must be instansiated with exactly one"
@@ -76,33 +79,18 @@ class SubstConfig(BaseCClass):
                 runpath_file_path,
                 "The name of a file with a list of run directories.",
             )
-
-            if ConfigKeys.NUM_CPU in config_dict:
+            if num_cpu is not None:
                 subst_list.addItem(
                     "<NUM_CPU>",
-                    str(config_dict[ConfigKeys.NUM_CPU]),
+                    str(num_cpu),
                     "The number of CPU used for one forward model.",
                 )
-            # Read num_cpu from Eclipse DATA_FILE
-            elif ConfigKeys.DATA_FILE in config_dict:
-                file_path = os.path.join(
-                    config_directory, config_dict[ConfigKeys.DATA_FILE]
-                )
-
-                if os.path.isfile(file_path) and os.access(file_path, os.R_OK):
-                    num_cpu = self._get_num_cpu(file_path)
-                    subst_list.addItem(
-                        "<NUM_CPU>",
-                        str(num_cpu),
-                        "The number of CPU used for one forward model.",
-                    )
-                else:
-                    raise IOError(f"Could not find ECLIPSE data file: {file_path}")
 
             c_ptr = self._alloc_full(subst_list)
 
         else:
-            c_ptr = self._alloc(config_content)
+            num_cpu_as_int = num_cpu if num_cpu is not None else 0
+            c_ptr = self._alloc(config_content, num_cpu_as_int)
 
         if c_ptr is None:
             raise ValueError("Failed to construct Substonfig instance")
