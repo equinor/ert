@@ -17,8 +17,8 @@ def without_key(a_dict, key):
     return {index: value for index, value in a_dict.items() if index != key}
 
 
-@pytest.fixture
-def snake_oil_structure_config(copy_case):
+@pytest.fixture(name="snake_oil_structure_config")
+def fixture_snake_oil_structure_config(copy_case):
     copy_case("snake_oil_structure")
     return {
         ConfigKeys.RUNPATH_FILE: "runpath",
@@ -26,14 +26,13 @@ def snake_oil_structure_config(copy_case):
         ConfigKeys.CONFIG_FILE_KEY: "config",
         ConfigKeys.DEFINE_KEY: {"keyA": "valA", "keyB": "valB"},
         ConfigKeys.DATA_KW_KEY: {"keyC": "valC", "keyD": "valD"},
-        ConfigKeys.DATA_FILE: "eclipse/model/SNAKE_OIL.DATA",
     }
 
 
-@pytest.fixture
-def snake_oil_structure_config_file(snake_oil_structure_config):
+@pytest.fixture(name="snake_oil_structure_config_file")
+def fixture_snake_oil_structure_config_file(snake_oil_structure_config):
     filename = snake_oil_structure_config[ConfigKeys.CONFIG_FILE_KEY]
-    with open(filename, "w+") as config:
+    with open(file=filename, mode="w+", encoding="utf-8") as config:
         # necessary in the file, but irrelevant to this test
         config.write("JOBNAME  Job%d\n")
         config.write("NUM_REALIZATIONS  1\n")
@@ -55,10 +54,6 @@ def snake_oil_structure_config_file(snake_oil_structure_config):
                     ConfigKeys.DATA_KW_KEY, key, val
                 )
             )
-        config.write(
-            f"{ConfigKeys.DATA_FILE}"
-            f" {snake_oil_structure_config[ConfigKeys.DATA_FILE]}\n"
-        )
 
     return filename
 
@@ -115,14 +110,5 @@ def test_missing_config_directory_raises_error(snake_oil_structure_config):
         SubstConfig(
             config_dict=without_key(
                 snake_oil_structure_config, ConfigKeys.CONFIG_DIRECTORY
-            )
-        )
-
-
-def test_data_file_not_found_raises_error(snake_oil_structure_config):
-    with pytest.raises(IOError):
-        SubstConfig(
-            config_dict=with_key(
-                snake_oil_structure_config, ConfigKeys.DATA_FILE, "not_a_file"
             )
         )
