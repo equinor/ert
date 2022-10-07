@@ -117,13 +117,16 @@ snake_oil_structure_config = {
     },
 }
 
-# Expand all strings in snake_oil_structure_config according to config_defines.
-for define_key, define_value in config_defines.items():
-    for data_key, data_value in snake_oil_structure_config.items():
-        if isinstance(data_value, str):
-            snake_oil_structure_config[data_key] = data_value.replace(
-                define_key, define_value
-            )
+
+def expand_config_defs(defines, config):
+    for define_key, define_value in defines.items():
+        for data_key, data_value in config.items():
+            if isinstance(data_value, str):
+                config[data_key] = data_value.replace(define_key, define_value)
+
+
+# Expand all strings in snake oil structure config according to defines.
+expand_config_defs(config_defines, snake_oil_structure_config)
 
 
 def test_invalid_user_config():
@@ -254,10 +257,6 @@ def test_extensive_config(setup_case):
         assert exp_job_data["STDOUT"] == job_list[job_name].get_stdout_file()
 
     ecl_config = res_config.ecl_config
-    assert (
-        Path(snake_oil_structure_config["DATA_FILE"]).resolve()
-        == Path(ecl_config._data_file).resolve()
-    )
     for extension in ["SMSPEC", "UNSMRY"]:
         assert (
             Path(snake_oil_structure_config["REFCASE"] + "." + extension).resolve()
@@ -323,7 +322,7 @@ def test_res_config_dict_constructor(setup_case):
     _ = setup_case("snake_oil_structure", relative_config_path)
     # create script file
     script_file = "script.sh"
-    with open(script_file, "w") as f:
+    with open(file=script_file, mode="w", encoding="utf-8") as f:
         f.write("""#!/bin/sh\nls""")
 
     st = os.stat(script_file)
@@ -491,7 +490,7 @@ def test_res_config_dict_constructor(setup_case):
     os.chdir(absolute_config_dir)
 
     # add missing entries to config file
-    with open(config_file_name, "a+") as ert_file:
+    with open(file=config_file_name, mode="a+", encoding="utf-8") as ert_file:
         ert_file.write(f"JOB_SCRIPT ../../{script_file}\n")
 
     # load res_file
