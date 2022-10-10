@@ -1,3 +1,5 @@
+from typing import List
+
 from cwrap import BaseCClass
 from ecl.util.util import DoubleVector
 
@@ -32,7 +34,12 @@ class EnsemblePlotGenData(BaseCClass):
     )
     _free = ResPrototype("void  enkf_plot_gendata_free(ensemble_plot_gen_data)")
 
-    def __init__(self, ensemble_config_node, file_system, report_step):
+    def __init__(
+        self,
+        ensemble_config_node: EnkfConfigNode,
+        file_system: EnkfFs,
+        report_step: int,
+    ):
         assert isinstance(ensemble_config_node, EnkfConfigNode)
         assert ensemble_config_node.getImplementationType() == ErtImplType.GEN_DATA
 
@@ -66,14 +73,12 @@ class EnsemblePlotGenData(BaseCClass):
             cur += 1
 
     def getMaxValues(self) -> DoubleVector:
-        """@rtype: DoubleVector"""
         return self._max_values().setParent(self)
 
     def getMinValues(self) -> DoubleVector:
-        """@rtype: DoubleVector"""
         return self._min_values().setParent(self)
 
-    def getRealizations(self, realizations):
+    def getRealizations(self, realizations: List[int]):
         return _clib.enkf_fs_general_data.gendata_get_realizations(self, realizations)
 
     def free(self):

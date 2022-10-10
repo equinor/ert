@@ -2,24 +2,23 @@ import logging
 from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Union
 
 import numpy as np
-from pandas import DataFrame
+from ecl.util.util import IntVector
+from pandas import DataFrame, MultiIndex, Series
 
+from ert import _clib
 from ert._c_wrappers.enkf import EnKFMain, EnkfNode, ErtImplType, ResConfig, RunContext
-from ert._c_wrappers.enkf.export import (
-    GenDataCollector,
-    GenDataObservationCollector,
-    GenKwCollector,
-    MisfitCollector,
-    SummaryCollector,
-    SummaryObservationCollector,
+from ert._c_wrappers.enkf.config import GenKwConfig
+from ert._c_wrappers.enkf.enums import (
+    EnkfObservationImplementationType,
+    RealizationStateEnum,
 )
+from ert._c_wrappers.enkf.plot_data import EnsemblePlotGenData
 from ert.analysis import ESUpdate, SmootherSnapshot
 from ert.data import MeasuredData
 
 _logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
-    from ecl.grid import EclGrid
     from iterative_ensemble_smoother import IterativeEnsembleSmoother
 
     from ert._c_wrappers.analysis.analysis_module import AnalysisModule
@@ -97,7 +96,7 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
     def export_field_parameter(
         self, parameter_name: str, case_name: str, filepath: str
     ) -> None:
-        file_system = self._enkf_main.getEnkfFsManager().getFileSystem(case_name)
+        file_system = self._enkf_main.getFileSystem(case_name)
         config_node = self._enkf_main.ensembleConfig()[parameter_name]
         ext = config_node.get_enkf_outfile().rsplit(".")[-1]
         EnkfNode.exportMany(
@@ -130,7 +129,9 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
 
     def get_active_realizations(self, case_name: str) -> List[int]:
         fs = self._enkf_main.getFileSystem(case_name, read_only=True)
-        return SummaryCollector.createActiveList(fs)
+        state_map = fs.getStateMap()
+        ens_mask = state_map.selectMatching(RealizationStateEnum.STATE_HAS_DATA)
+        return [index for index, element in enumerate(ens_mask) if element]
 
     def case_initialized(self, case: str) -> bool:
         return self._enkf_main.isCaseInitialized(case)
@@ -188,17 +189,70 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
     def get_observation_key(self, index: Union[str, int]) -> str:
         return self._enkf_main.getObservations()[index].getKey()
 
-    def load_gen_data(self, case_name: str, key: str, report_step: int) -> DataFrame:
-        return GenDataCollector.loadGenData(
-            self._enkf_main, case_name, key, report_step
-        )
+    def load_gen_data(
+        self,
+        case_name: str,
+        key: str,
+        report_step: int,
+        realization_index: Optional[int] = None,
+    ) -> DataFrame:
+        fs = self._enkf_main.getFileSystem(case_name, read_only=True)
+        realizations = fs.realizationList(RealizationStateEnum.STATE_HAS_DATA)
+        if realization_index:
+            if realization_index not in realizations:
+                raise IndexError(f"No such realization {realization_index}")
+            realizations = IntVector.active_list(str(realization_index))
+
+        config_node = self._enkf_main.ensembleConfig().getNode(key)
+        config_node.getModelConfig()
+
+        ensemble_data = EnsemblePlotGenData(config_node, fs, report_step)
+        data_array = ensemble_data.getRealizations(realizations)
+
+        return DataFrame(data=data_array, columns=np.array(realizations))
 
     def load_observation_data(
         self, case_name: str, keys: Optional[List[str]] = None
     ) -> DataFrame:
-        return SummaryObservationCollector.loadObservationData(
-            self._enkf_main, case_name, keys
+        observations = self._enkf_main.getObservations()
+        history_length = self._enkf_main.getHistoryLength()
+        dates = [
+            observations.getObservationTime(index).datetime()
+            for index in range(1, history_length + 1)
+        ]
+        summary_keys = sorted(
+            [
+                key
+                for key in self.get_summary_keys()
+                if len(
+                    self._enkf_main.ensembleConfig().getNode(key).getObservationKeys()
+                )
+                > 0
+            ],
+            key=lambda k: k.lower(),
         )
+        if keys is not None:
+            summary_keys = [
+                key for key in keys if key in summary_keys
+            ]  # ignore keys that doesn't exist
+        columns = summary_keys
+        std_columns = [f"STD_{key}" for key in summary_keys]
+        df = DataFrame(index=dates, columns=columns + std_columns)
+        for key in summary_keys:
+            observation_keys = (
+                self._enkf_main.ensembleConfig().getNode(key).getObservationKeys()
+            )
+            for obs_key in observation_keys:
+                observation_data = observations[obs_key]
+                for index in range(0, history_length + 1):
+                    if observation_data.isActive(index):
+                        obs_time = observations.getObservationTime(index).datetime()
+                        node = observation_data.getNode(index)
+                        value = node.getValue()  # type: ignore
+                        std = node.getStandardDeviation()  # type: ignore
+                        df[key][obs_time] = value
+                        df[f"STD_{key}"][obs_time] = std
+        return df
 
     def select_or_create_new_case(self, case_name: str) -> None:
         if self.get_current_case_name() != case_name:
@@ -212,31 +266,52 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
         return self._enkf_main.caseHasData(case)
 
     def all_data_type_keys(self) -> List[str]:
-        return self._enkf_main.getKeyManager().allDataTypeKeys()
+        return self.get_summary_keys() + self.gen_kw_keys() + self.get_gen_data_keys()
 
     def get_all_gen_data_observation_keys(self) -> List[str]:
-        return GenDataObservationCollector.getAllObservationKeys(self._enkf_main)
+        return list(
+            self._enkf_main.getObservations().getTypedKeylist(
+                EnkfObservationImplementationType.GEN_OBS  # type: ignore
+            )
+        )
 
     def get_all_summary_observation_keys(self) -> List[str]:
-        return SummaryObservationCollector.getAllObservationKeys(self._enkf_main)
+        return sorted(
+            [
+                key
+                for key in self.get_summary_keys()
+                if len(
+                    self._enkf_main.ensembleConfig().getNode(key).getObservationKeys()
+                )
+                > 0
+            ],
+            key=lambda k: k.lower(),
+        )
 
     def observation_keys(self, key: str) -> List[str]:
-        if self._enkf_main.getKeyManager().isGenDataKey(key):
+        if self.is_gen_data_key(key):
             key_parts = key.split("@")
-            key = key_parts[0]
+            data_key = key_parts[0]
             if len(key_parts) > 1:
-                report_step = int(key_parts[1])
+                data_report_step = int(key_parts[1])
             else:
-                report_step = 0
+                data_report_step = 0
 
-            obs_key = GenDataObservationCollector.getObservationKeyForDataKey(
-                self._enkf_main, key, report_step
-            )
+            obs_key = None
+
+            enkf_obs = self._enkf_main.getObservations()
+            for obs_vector in enkf_obs:
+                if EnkfObservationImplementationType.GEN_OBS:
+                    report_step = obs_vector.firstActiveStep()
+                    key = obs_vector.getDataKey()
+
+                    if key == data_key and report_step == data_report_step:
+                        obs_key = obs_vector.getObservationKey()
             if obs_key is not None:
                 return [obs_key]
             else:
                 return []
-        elif self._enkf_main.getKeyManager().isSummaryKey(key):
+        elif self.is_summary_key(key):
             return [
                 str(k)
                 for k in self._enkf_main.ensembleConfig()
@@ -252,12 +327,35 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
         keys: Optional[List[str]] = None,
         realization_index: Optional[int] = None,
     ) -> DataFrame:
-        return GenKwCollector.loadAllGenKwData(
-            self._enkf_main,
-            case_name=case_name,
-            keys=keys,
-            realization_index=realization_index,
+        fs = self._enkf_main.getFileSystem(case_name, read_only=True)
+
+        ens_mask = fs.getStateMap().selectMatching(
+            RealizationStateEnum.STATE_INITIALIZED
+            | RealizationStateEnum.STATE_HAS_DATA,
         )
+        realizations = [index for index, active in enumerate(ens_mask) if active]
+
+        if realization_index is not None:
+            if realization_index not in realizations:
+                raise IndexError(f"No such realization ({realization_index})")
+            realizations = [realization_index]
+
+        gen_kw_keys = self.gen_kw_keys()
+
+        if keys is not None:
+            gen_kw_keys = [
+                key for key in keys if key in gen_kw_keys
+            ]  # ignore keys that doesn't exist
+
+        gen_kw_array = _clib.enkf_fs_keyword_data.keyword_data_get_realizations(
+            self._enkf_main.ensembleConfig(), fs, gen_kw_keys, realizations
+        )
+        gen_kw_data = DataFrame(
+            data=gen_kw_array, index=realizations, columns=gen_kw_keys
+        )
+
+        gen_kw_data.index.name = "Realization"
+        return gen_kw_data
 
     def gather_gen_kw_data(
         self,
@@ -281,19 +379,42 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
         keys: Optional[List[str]] = None,
         realization_index: Optional[int] = None,
     ) -> DataFrame:
-        return SummaryCollector.loadAllSummaryData(
-            self._enkf_main,
-            case_name=case_name,
-            keys=keys,
-            realization_index=realization_index,
+        fs = self._enkf_main.getFileSystem(case_name, read_only=True)
+
+        time_map = fs.getTimeMap()
+        dates = [time_map[index].datetime() for index in range(1, len(time_map))]
+
+        realizations = self.get_active_realizations(case_name)
+        if realization_index is not None:
+            if realization_index not in realizations:
+                raise IndexError(f"No such realization {realization_index}")
+            realizations = [realization_index]
+
+        summary_keys = self.get_summary_keys()
+        if keys is not None:
+            summary_keys = [
+                key for key in keys if key in summary_keys
+            ]  # ignore keys that doesn't exist
+
+        summary_data = _clib.enkf_fs_summary_data.get_summary_data(
+            self._enkf_main.ensembleConfig(), fs, summary_keys, realizations, len(dates)
         )
+
+        if np.isnan(summary_data).all():
+            return DataFrame()
+
+        multi_index = MultiIndex.from_product(
+            [realizations, dates], names=["Realization", "Date"]
+        )
+
+        return DataFrame(data=summary_data, index=multi_index, columns=summary_keys)
 
     def gather_summary_data(
         self,
         case: str,
         key: str,
         realization_index: Optional[int] = None,
-    ) -> DataFrame:
+    ) -> Union[DataFrame, Series]:
         data = self.load_all_summary_data(case, [key], realization_index)
         if not data.empty:
             idx = data.index.duplicated()
@@ -308,7 +429,38 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
         return data
 
     def load_all_misfit_data(self, case_name: str) -> DataFrame:
-        return MisfitCollector.loadAllMisfitData(self._enkf_main, case_name=case_name)
+        realizations = self.get_active_realizations(case_name)
+        misfit_keys = []
+        for obs_vector in self._enkf_main.getObservations():
+            misfit_keys.append(f"MISFIT:{obs_vector.getObservationKey()}")
+
+        misfit_keys.append("MISFIT:TOTAL")
+
+        misfit_sum_index = len(misfit_keys) - 1
+
+        misfit_array = np.empty(
+            shape=(len(misfit_keys), len(realizations)), dtype=np.float64
+        )
+        misfit_array.fill(np.nan)
+        misfit_array[misfit_sum_index] = 0.0
+
+        for column_index, obs_vector in enumerate(self._enkf_main.getObservations()):
+
+            for realization_index, realization_number in enumerate(realizations):
+                misfit = obs_vector.getTotalChi2(
+                    self._enkf_main.getFileSystem(case_name, read_only=True),
+                    realization_number,
+                )
+
+                misfit_array[column_index][realization_index] = misfit
+                misfit_array[misfit_sum_index][realization_index] += misfit
+
+        misfit_data = DataFrame(
+            data=np.transpose(misfit_array), index=realizations, columns=misfit_keys
+        )
+        misfit_data.index.name = "Realization"
+
+        return misfit_data
 
     def refcase_data(self, key: str) -> DataFrame:
         refcase = self._enkf_main.eclConfig().refcase
@@ -324,7 +476,9 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
 
         return data.iloc[1:]
 
-    def history_data(self, key: str, case: Optional[str] = None) -> DataFrame:
+    def history_data(
+        self, key: str, case: Optional[str] = None
+    ) -> Union[DataFrame, Series]:
         if not self.is_summary_key(key):
             return DataFrame()
 
@@ -348,8 +502,7 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
             report_step = 0
 
         try:
-            data = GenDataCollector.loadGenData(
-                self._enkf_main,
+            data = self.load_gen_data(
                 case,
                 key,
                 report_step,
@@ -358,28 +511,67 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
         except (ValueError, KeyError):
             data = DataFrame()
 
-        return data.dropna()  # removes all rows that has a NaN
+        return data.dropna()
 
     def is_summary_key(self, key: str) -> bool:
-        return key in self._enkf_main.getKeyManager().summaryKeys()
+        return key in self.get_summary_keys()
 
     def get_summary_keys(self) -> List[str]:
-        return self._enkf_main.getKeyManager().summaryKeys()
+        return sorted(
+            list(
+                self._enkf_main.ensembleConfig().getKeylistFromImplType(
+                    ErtImplType.SUMMARY
+                )
+            ),
+            key=lambda k: k.lower(),
+        )
 
     def is_gen_kw_key(self, key: str) -> bool:
-        return key in self._enkf_main.getKeyManager().genKwKeys()
+        return key in self.gen_kw_keys()
 
     def gen_kw_keys(self) -> List[str]:
-        return self._enkf_main.getKeyManager().genKwKeys()
+        gen_kw_keys = self.get_gen_kw()
+
+        gen_kw_list = []
+        for key in gen_kw_keys:
+            enkf_config_node = self._enkf_main.ensembleConfig().getNode(key)
+            gen_kw_config = enkf_config_node.getModelConfig()
+            assert isinstance(gen_kw_config, GenKwConfig)
+
+            for keyword_index, keyword in enumerate(gen_kw_config):
+                gen_kw_list.append(f"{key}:{keyword}")
+
+                if gen_kw_config.shouldUseLogScale(keyword_index):
+                    gen_kw_list.append(f"LOG10_{key}:{keyword}")
+
+        return sorted(gen_kw_list, key=lambda k: k.lower())
 
     def is_gen_data_key(self, key: str) -> bool:
-        return key in self._enkf_main.getKeyManager().genDataKeys()
+        return key in self.get_gen_data_keys()
 
     def get_gen_data_keys(self) -> List[str]:
-        return self._enkf_main.getKeyManager().genDataKeys()
+        gen_data_keys = self._enkf_main.ensembleConfig().getKeylistFromImplType(
+            ErtImplType.GEN_DATA
+        )
+        gen_data_list = []
+        for key in gen_data_keys:
+            enkf_config_node = self._enkf_main.ensembleConfig().getNode(key)
+            gen_data_config = enkf_config_node.getDataModelConfig()
+
+            for report_step in gen_data_config.getReportSteps():
+                gen_data_list.append(f"{key}@{report_step}")
+
+        return sorted(gen_data_list, key=lambda k: k.lower())
 
     def gen_kw_priors(self) -> Dict[str, List["PriorDict"]]:
-        return self._enkf_main.getKeyManager().gen_kw_priors()
+        gen_kw_keys = self.get_gen_kw()
+        all_gen_kw_priors = {}
+        for key in gen_kw_keys:
+            enkf_config_node = self._enkf_main.ensembleConfig().getNode(key)
+            gen_kw_config = enkf_config_node.getModelConfig()
+            all_gen_kw_priors[key] = gen_kw_config.get_priors()
+
+        return all_gen_kw_priors
 
     @property
     def update_snapshots(self) -> Dict[str, SmootherSnapshot]:

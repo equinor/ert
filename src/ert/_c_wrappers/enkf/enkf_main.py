@@ -23,7 +23,6 @@ from ert._c_wrappers.enkf.enums import RealizationStateEnum
 from ert._c_wrappers.enkf.enums.ert_impl_type_enum import ErtImplType
 from ert._c_wrappers.enkf.ert_run_context import RunContext
 from ert._c_wrappers.enkf.ert_workflow_list import ErtWorkflowList
-from ert._c_wrappers.enkf.key_manager import KeyManager
 from ert._c_wrappers.enkf.model_config import ModelConfig
 from ert._c_wrappers.enkf.node_id import NodeId
 from ert._c_wrappers.enkf.queue_config import QueueConfig
@@ -98,7 +97,6 @@ class EnKFMain:
                 config.analysis_config.getStdCutoff(),
             )
         self._ensemble_size = self.res_config.model_config.num_realizations
-        self.__key_manager = KeyManager(self)
         self._substituter = Substituter(
             {key: value for (key, value, _) in self.getDataKW()}
         )
@@ -359,9 +357,6 @@ class EnKFMain:
 
     def getHistoryLength(self) -> int:
         return self.resConfig().model_config.get_last_history_restart()
-
-    def getKeyManager(self) -> "KeyManager":
-        return self.__key_manager
 
     def getWorkflowList(self) -> ErtWorkflowList:
         return self.resConfig().ert_workflow_list

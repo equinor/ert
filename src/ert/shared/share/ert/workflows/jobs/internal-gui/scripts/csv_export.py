@@ -3,12 +3,7 @@ import re
 
 import pandas
 
-from ert._c_wrappers.enkf.export import (
-    DesignMatrixReader,
-    GenKwCollector,
-    MisfitCollector,
-    SummaryCollector,
-)
+from ert import LibresFacade
 from ert._c_wrappers.job_queue import CancelPluginException, ErtPlugin
 from ert.gui.ertwidgets.customdialog import CustomDialog
 from ert.gui.ertwidgets.listeditbox import ListEditBox
@@ -19,6 +14,13 @@ try:
     from PyQt4.QtGui import QCheckBox
 except ImportError:
     from PyQt5.QtWidgets import QCheckBox
+
+
+def loadDesignMatrix(filename) -> pandas.DataFrame:
+    dm = pandas.read_csv(filename, delim_whitespace=True)
+    dm = dm.rename(columns={dm.columns[0]: "Realization"})
+    dm = dm.set_index(["Realization"])
+    return dm
 
 
 class CSVExportJob(ErtPlugin):
@@ -91,6 +93,7 @@ class CSVExportJob(ErtPlugin):
         drop_const_cols=False,
     ):
         cases = []
+        facade = LibresFacade(self.ert())
 
         if case_list is not None:
             if case_list.strip() == "*":
@@ -99,7 +102,7 @@ class CSVExportJob(ErtPlugin):
                 cases = case_list.split(",")
 
         if case_list is None or len(cases) == 0:
-            cases = [self.ert().getEnkfFsManager().getCurrentFileSystem().getCaseName()]
+            cases = [self.ert().getCurrentFileSystem().getCaseName()]
 
         if design_matrix_path is not None:
             if not os.path.exists(design_matrix_path):
@@ -113,10 +116,10 @@ class CSVExportJob(ErtPlugin):
         for index, case in enumerate(cases):
             case = case.strip()
 
-            if not self.ert().getEnkfFsManager().caseExists(case):
+            if not self.ert().caseExists(case):
                 raise UserWarning(f"The case '{case}' does not exist!")
 
-            if not self.ert().getEnkfFsManager().caseHasData(case):
+            if not self.ert().caseHasData(case):
                 raise UserWarning(f"The case '{case}' does not have any data!")
 
             if infer_iteration:
@@ -124,20 +127,18 @@ class CSVExportJob(ErtPlugin):
             else:
                 iteration_number = index
 
-            case_data = GenKwCollector.loadAllGenKwData(self.ert(), case)
+            case_data = facade.load_all_gen_kw_data(case)
 
             if design_matrix_path is not None:
-                design_matrix_data = DesignMatrixReader.loadDesignMatrix(
-                    design_matrix_path
-                )
+                design_matrix_data = loadDesignMatrix(design_matrix_path)
                 if not design_matrix_data.empty:
                     case_data = case_data.join(design_matrix_data, how="outer")
 
-            misfit_data = MisfitCollector.loadAllMisfitData(self.ert(), case)
+            misfit_data = facade.load_all_misfit_data(case)
             if not misfit_data.empty:
                 case_data = case_data.join(misfit_data, how="outer")
 
-            summary_data = SummaryCollector.loadAllSummaryData(self.ert(), case)
+            summary_data = facade.load_all_summary_data(case)
             if not summary_data.empty:
                 case_data = case_data.join(summary_data, how="outer")
             else:

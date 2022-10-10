@@ -4,10 +4,8 @@ import time
 
 import numpy as np
 import pytest
-from ecl.summary import EclSum
 
 from ert._c_wrappers.enkf import EnKFMain, ResConfig
-from ert._c_wrappers.enkf.export import SummaryObservationCollector
 from ert.data import MeasuredData, loader
 from ert.libres_facade import LibresFacade
 
@@ -201,19 +199,6 @@ def test_no_storage_obs_only(obs_key):
     facade = LibresFacade(ert)
     md = MeasuredData(facade, [obs_key], load_data=False)
     assert set(md.data.columns.get_level_values(0)) == {obs_key}
-
-
-@pytest.mark.usefixtures("copy_snake_oil_case")
-def test_summary_collector():
-    res_config = ResConfig("snake_oil.ert")
-    ert = EnKFMain(res_config)
-    summary = EclSum("refcase/SNAKE_OIL_FIELD.UNSMRY")
-    data = SummaryObservationCollector.loadObservationData(ert, "default_0")
-
-    assert (
-        data["FOPR"].values.tolist()
-        == summary.numpy_vector("FOPRH", report_only=True).tolist()
-    )
 
 
 def create_summary_observation():

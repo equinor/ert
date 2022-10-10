@@ -401,7 +401,9 @@ class EnkfConfigNode(BaseCClass):
             f"implementation = {self.getImplementationType()}"
         )
 
-    def getModelConfig(self):
+    def getModelConfig(
+        self,
+    ) -> Union[FieldConfig, GenDataConfig, GenKwConfig, SummaryConfig, ExtParamConfig]:
         implementation_type = self.getImplementationType()
 
         if implementation_type == ErtImplType.FIELD:
@@ -419,13 +421,10 @@ class EnkfConfigNode(BaseCClass):
                 self.getPointerReference(), parent=self
             )
         else:
-            print(
-                (
-                    "[EnkfConfigNode::getModelConfig()] "
-                    f"Unhandled implementation model type: {implementation_type:i}"
-                )
+            raise ValueError(
+                "[EnkfConfigNode::getModelConfig()] "
+                f"Unhandled implementation model type: {implementation_type:i}"
             )
-            return None
 
     def getKey(self):
         return self._get_key()
