@@ -22,7 +22,6 @@ void test_create() {
     {
         enkf_plot_gen_kw_type *gen_kw = enkf_plot_gen_kw_alloc(config_node);
         test_assert_true(enkf_plot_gen_kw_is_instance(gen_kw));
-        test_assert_int_equal(0, enkf_plot_gen_kw_get_size(gen_kw));
         enkf_plot_gen_kw_free(gen_kw);
     }
 

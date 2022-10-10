@@ -42,10 +42,6 @@ void enkf_plot_gen_kw_free(enkf_plot_gen_kw_type *plot_gen_kw) {
     free(plot_gen_kw);
 }
 
-int enkf_plot_gen_kw_get_size(const enkf_plot_gen_kw_type *plot_gen_kw) {
-    return plot_gen_kw->size;
-}
-
 enkf_plot_gen_kw_vector_type *
 enkf_plot_gen_kw_iget(const enkf_plot_gen_kw_type *plot_gen_kw, int iens) {
     if ((iens < 0) || (iens >= plot_gen_kw->size))
@@ -106,21 +102,6 @@ void enkf_plot_gen_kw_load(enkf_plot_gen_kw_type *plot_gen_kw, enkf_fs_type *fs,
     }
 }
 
-const char *enkf_plot_gen_kw_iget_key(const enkf_plot_gen_kw_type *plot_gen_kw,
-                                      int index) {
-    const gen_kw_config_type *gen_kw_config =
-        (const gen_kw_config_type *)enkf_config_node_get_ref(
-            plot_gen_kw->config_node);
-    return gen_kw_config_iget_name(gen_kw_config, index);
-}
-
-int enkf_plot_gen_kw_get_keyword_count(const enkf_plot_gen_kw_type *gen_kw) {
-    const gen_kw_config_type *gen_kw_config =
-        (const gen_kw_config_type *)enkf_config_node_get_ref(
-            gen_kw->config_node);
-    return gen_kw_config_get_data_size(gen_kw_config);
-}
-
 int enkf_plot_gen_kw_get_keyword_index(const enkf_plot_gen_kw_type *gen_kw,
                                        const std::string &keyword) {
     const gen_kw_config_type *gen_kw_config =
@@ -136,12 +117,4 @@ int enkf_plot_gen_kw_get_keyword_index(const enkf_plot_gen_kw_type *gen_kw,
         }
     }
     return result;
-}
-
-bool enkf_plot_gen_kw_should_use_log_scale(const enkf_plot_gen_kw_type *gen_kw,
-                                           int index) {
-    const gen_kw_config_type *gen_kw_config =
-        (const gen_kw_config_type *)enkf_config_node_get_ref(
-            gen_kw->config_node);
-    return gen_kw_config_should_use_log_scale(gen_kw_config, index);
 }

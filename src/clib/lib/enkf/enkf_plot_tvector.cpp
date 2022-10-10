@@ -12,7 +12,6 @@ struct enkf_plot_tvector_struct {
     UTIL_TYPE_ID_DECLARATION;
     double_vector_type *data;
     double_vector_type *work;
-    time_t_vector_type *time;
     bool_vector_type *mask;
     const enkf_config_node_type *config_node;
     int iens;
@@ -24,7 +23,6 @@ UTIL_IS_INSTANCE_FUNCTION(enkf_plot_tvector, ENKF_PLOT_TVECTOR_ID)
 
 void enkf_plot_tvector_reset(enkf_plot_tvector_type *plot_tvector) {
     double_vector_reset(plot_tvector->data);
-    time_t_vector_reset(plot_tvector->time);
     bool_vector_reset(plot_tvector->mask);
 }
 
@@ -35,7 +33,6 @@ enkf_plot_tvector_alloc(const enkf_config_node_type *config_node, int iens) {
     UTIL_TYPE_ID_INIT(plot_tvector, ENKF_PLOT_TVECTOR_ID);
 
     plot_tvector->data = double_vector_alloc(0, 0);
-    plot_tvector->time = time_t_vector_alloc(-1, 0);
     plot_tvector->mask = bool_vector_alloc(false, 0);
     plot_tvector->work = double_vector_alloc(0, 0);
     plot_tvector->iens = iens;
@@ -52,7 +49,6 @@ enkf_plot_tvector_alloc(const enkf_config_node_type *config_node, int iens) {
 void enkf_plot_tvector_free(enkf_plot_tvector_type *plot_tvector) {
     double_vector_free(plot_tvector->data);
     double_vector_free(plot_tvector->work);
-    time_t_vector_free(plot_tvector->time);
     bool_vector_free(plot_tvector->mask);
 }
 
@@ -70,7 +66,6 @@ int enkf_plot_tvector_size(const enkf_plot_tvector_type *plot_tvector) {
 
 void enkf_plot_tvector_iset(enkf_plot_tvector_type *plot_tvector, int index,
                             time_t time, double value) {
-    time_t_vector_iset(plot_tvector->time, index, time);
     bool active_value = true;
 
     /* This is to handle holes in the summary vector storage. */
@@ -87,11 +82,6 @@ void enkf_plot_tvector_iset(enkf_plot_tvector_type *plot_tvector, int index,
 double enkf_plot_tvector_iget_value(const enkf_plot_tvector_type *plot_tvector,
                                     int index) {
     return double_vector_iget(plot_tvector->data, index);
-}
-
-time_t enkf_plot_tvector_iget_time(const enkf_plot_tvector_type *plot_tvector,
-                                   int index) {
-    return time_t_vector_iget(plot_tvector->time, index);
 }
 
 bool enkf_plot_tvector_iget_active(const enkf_plot_tvector_type *plot_tvector,
