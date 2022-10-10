@@ -66,6 +66,11 @@ class SiteConfig:
         for elem in iter(site_environment_vars):
             var_list.setenv(elem[0], elem[1])
 
+        site_paths = site_config_content["UPDATE_PATH"]
+
+        for elem in iter(site_paths):
+            var_list.update_path(elem[0], elem[1])
+
     @classmethod
     def from_config_content(
         cls, config_content: ConfigContent, site_config_content: ConfigContent
@@ -154,6 +159,11 @@ class SiteConfig:
 
         for elem in dict_vars:
             env_vars.setenv(elem[ConfigKeys.NAME], elem[ConfigKeys.VALUE])
+
+        dict_paths = config_dict.get("UPDATE_PATH", [])
+
+        for elem in dict_paths:
+            env_vars.update_path(elem[ConfigKeys.NAME], elem[ConfigKeys.VALUE])
 
         SiteConfig._add_config_content(
             license_root_path, site_config_content, ext_job_list, env_vars
