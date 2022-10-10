@@ -112,7 +112,9 @@ class ModelConfig(BaseCClass):
             num_realizations = config_dict.get(ConfigKeys.NUM_REALIZATIONS)
 
             # RUNPATH_KEY
-            run_path = config_dict.get(ConfigKeys.RUNPATH, "simulations/realization%d")
+            run_path = config_dict.get(
+                ConfigKeys.RUNPATH, "simulations/realization-<IENS>/iter-<ITER>"
+            )
             if run_path is not None:
                 run_path = os.path.realpath(run_path)
 
