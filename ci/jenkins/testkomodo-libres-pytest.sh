@@ -25,15 +25,10 @@ install_package () {
 }
 
 start_tests () {
-    pushd ${CI_TEST_ROOT}/tests/libres_tests
+    pushd ${CI_TEST_ROOT}/tests/
+    ln -s /project/res-testdata/ErtTestData ${CI_TEST_ROOT}/test-data/Equinor
     export ECL_SKIP_SIGNAL=ON
-    pytest                                                   \
-        --ignore="tests/libres_tests/res/enkf/test_analysis_config.py"    \
-        --ignore="tests/libres_tests/res/enkf/test_res_config.py"         \
-        --ignore="tests/libres_tests/res/enkf/test_site_config.py"        \
-        --ignore="tests/libres_tests/res/enkf/test_workflow_list.py"      \
-        --ignore="tests/libres_tests/res/enkf/test_hook_manager.py"       \
-        --eclipse-simulator
+    pytest -m "requires_eclipse" --eclipse-simulator
 
     popd
 }

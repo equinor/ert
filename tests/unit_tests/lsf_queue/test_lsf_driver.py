@@ -20,7 +20,9 @@ def poly_case_context(tmpdir, source_root, mock_start_server):
 
     # Add the mocked lsf commands to the runpath
     shutil.copytree(
-        os.path.join(source_root, "tests", "ert_tests", "lsf_queue", "mocked_commands"),
+        os.path.join(
+            source_root, "tests", "unit_tests", "lsf_queue", "mocked_commands"
+        ),
         os.path.join(str(tmpdir), "poly_example", "mocked_commands"),
     )
 
@@ -28,6 +30,7 @@ def poly_case_context(tmpdir, source_root, mock_start_server):
         yield
 
 
+@pytest.mark.integration_test
 def test_run_mocked_lsf_queue(poly_case_context):
     apply_customized_config()
     parser = ArgumentParser(prog="test_main")
@@ -44,6 +47,7 @@ def test_run_mocked_lsf_queue(poly_case_context):
     run_cli(parsed)
 
 
+@pytest.mark.integration_test
 def test_mock_bsub_fail_random(poly_case_context):
     """
     Approx 7/10 of the submits will fail due to the random generator in the

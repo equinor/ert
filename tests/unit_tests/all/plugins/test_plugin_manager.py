@@ -4,7 +4,7 @@ from unittest.mock import Mock
 
 import ert.shared.hook_implementations
 from ert.shared.plugins import ErtPluginManager
-from tests.ert_tests.all.plugins import dummy_plugins
+from tests.unit_tests.all.plugins import dummy_plugins
 
 
 def test_no_plugins():

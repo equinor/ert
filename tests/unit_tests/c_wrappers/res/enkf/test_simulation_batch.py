@@ -1,8 +1,11 @@
+import pytest
+
 from ert._c_wrappers.enkf import EnkfConfigNode, EnKFMain, EnkfNode, NodeId
 from ert._c_wrappers.enkf.enums import RealizationStateEnum
 from ert.simulator.simulation_context import _run_forward_model
 
 
+@pytest.mark.integration_test
 def test_run_simulation_batch(setup_case):
     ert = EnKFMain(setup_case("config/simulation_batch", "config.ert"))
     ens_size = 4

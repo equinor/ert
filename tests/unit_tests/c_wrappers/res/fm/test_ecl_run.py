@@ -371,7 +371,9 @@ def test_run(init_ecl100_config, source_root):
     # will fail with exit(1); don't think Eclipse actually
     # fails with exit(1) - but let us at least be prepared
     # when/if it does.
-    ecl_run.sim.executable = source_root / "tests/libres_tests/res/fm/ecl_run_fail"
+    ecl_run.sim.executable = (
+        source_root / "tests/unit_tests/c_wrappers/res/fm/ecl_run_fail"
+    )
 
     with pytest.raises(Exception):
         ecl_run.runEclipse()
@@ -401,7 +403,9 @@ def test_run_new_log_file(init_ecl100_config, source_root):
     # will fail with exit(1); don't think Eclipse actually
     # fails with exit(1) - but let us at least be prepared
     # when/if it does.
-    ecl_run.sim.executable = source_root / "tests/libres_tests/res/fm/ecl_run_fail"
+    ecl_run.sim.executable = (
+        source_root / "tests/unit_tests/c_wrappers/res/fm/ecl_run_fail"
+    )
     with pytest.raises(Exception):
         ecl_run.runEclipse()
 
@@ -444,7 +448,9 @@ def test_failed_run_OK(init_ecl100_config, source_root):
     # in the nocheck mode that should also be OK.
     sim = ecl_config.sim("2014.2")
     ecl_run = EclRun("SPE1_ERROR", sim, check_status=False)
-    ecl_run.sim.executable = source_root / "tests/libres_tests/res/fm/ecl_run_fail"
+    ecl_run.sim.executable = (
+        source_root / "tests/unit_tests/c_wrappers/res/fm/ecl_run_fail"
+    )
     ecl_run.runEclipse()
 
 

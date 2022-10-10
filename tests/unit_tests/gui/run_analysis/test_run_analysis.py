@@ -16,6 +16,9 @@ class MockedQIcon(QIcon):
     pass
 
 
+pytestmark = pytest.mark.requires_window_manager
+
+
 @pytest.fixture
 def mock_tool():
     with patch("ert.gui.tools.run_analysis.run_analysis_tool.resourceIcon") as rs:
