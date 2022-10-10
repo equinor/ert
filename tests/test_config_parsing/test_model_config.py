@@ -1,5 +1,8 @@
-from ert._c_wrappers.enkf import ResConfig
+import os.path
+
+from ert._c_wrappers.enkf import ModelConfig, ResConfig
 from ert._c_wrappers.enkf.config_keys import ConfigKeys
+from ert._c_wrappers.job_queue import ExtJoblist
 
 
 def test_default_model_config_ens_path(tmpdir):
@@ -38,3 +41,14 @@ ENSPATH storage
 
         assert dict_default_ens_path == dict_set_ens_path
         assert dict_default_ens_path == default_ens_path
+
+
+def test_default_model_config_run_path(tmpdir):
+    assert ModelConfig(
+        data_root=str(tmpdir),
+        joblist=ExtJoblist(),
+        refcase=None,
+        config_dict={ConfigKeys.NUM_REALIZATIONS: 1},
+    ).getRunpathFormat()._str() == os.path.abspath(
+        "simulations/realization-<IENS>/iter-<ITER>"
+    )
