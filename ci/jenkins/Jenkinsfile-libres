@@ -21,18 +21,9 @@ pipeline {
                 sh 'sh ci/jenkins/test_libres_jenkins.sh build_ert_dev'
             }
         }
-        stage('tests') {
-            parallel {
-                stage('run ctest') {
-                    steps {
-                        sh 'sh ci/jenkins/test_libres_jenkins.sh run_ctest'
-                    }
-                }
-                stage('run pytest_normal') {
-                    steps {
-                        sh 'sh ci/jenkins/test_libres_jenkins.sh run_pytest_normal'
-                    }
-                }              
+        stage('run ctest') {
+            steps {
+                sh 'sh ci/jenkins/test_libres_jenkins.sh run_ctest'
             }
         }
     }

@@ -50,7 +50,9 @@ def test_run_class_multi_seed(monkeypatch, test_input, expected_result, source_r
     os.mkdir("run_path")
     os.mkdir("bin")
     os.mkdir("project")
-    shutil.copy(os.path.join(source_root, "tests/libres_tests/res/fm/rms"), "bin")
+    shutil.copy(
+        os.path.join(source_root, "tests/unit_tests/c_wrappers/res/fm/rms"), "bin"
+    )
     monkeypatch.setenv("RMS_SITE_CONFIG", "rms_config.yml")
 
     action = {"exit_status": 0}
@@ -82,7 +84,9 @@ def test_run_class(monkeypatch, source_root):
     os.mkdir("run_path")
     os.mkdir("bin")
     os.mkdir("project")
-    shutil.copy(os.path.join(source_root, "tests/libres_tests/res/fm/rms"), "bin")
+    shutil.copy(
+        os.path.join(source_root, "tests/unit_tests/c_wrappers/res/fm/rms"), "bin"
+    )
     monkeypatch.setenv("RMS_SITE_CONFIG", "rms_config.yml")
 
     action = {"exit_status": 0}
@@ -141,7 +145,9 @@ def test_run(monkeypatch, source_root):
     os.mkdir("run_path")
     os.mkdir("bin")
     os.mkdir("project")
-    shutil.copy(os.path.join(source_root, "tests/libres_tests/res/fm/rms"), "bin")
+    shutil.copy(
+        os.path.join(source_root, "tests/unit_tests/c_wrappers/res/fm/rms"), "bin"
+    )
     monkeypatch.setenv("RMS_SITE_CONFIG", "rms_config.yml")
 
     action = {"exit_status": 0}
@@ -220,7 +226,7 @@ def test_rms_load_env(monkeypatch, source_root, val, carry_over):
     os.mkdir("bin")
     os.mkdir("project")
     shutil.copy(
-        os.path.join(source_root, "tests/libres_tests/res/fm/rms"),
+        os.path.join(source_root, "tests/unit_tests/c_wrappers/res/fm/rms"),
         "bin",
     )
     monkeypatch.setenv("RMS_SITE_CONFIG", "rms_config.yml")
@@ -291,7 +297,7 @@ def test_rms_drop_env(monkeypatch, source_root, val, carry_over):
     os.mkdir("bin")
     os.mkdir("project")
     shutil.copy(
-        os.path.join(source_root, "tests/libres_tests/res/fm/rms"),
+        os.path.join(source_root, "tests/unit_tests/c_wrappers/res/fm/rms"),
         "bin",
     )
     monkeypatch.setenv("RMS_SITE_CONFIG", "rms_config.yml")
@@ -338,7 +344,9 @@ def test_run_class_with_existing_target_file(monkeypatch, source_root):
     os.mkdir("run_path")
     os.mkdir("bin")
     os.mkdir("project")
-    shutil.copy(os.path.join(source_root, "tests/libres_tests/res/fm/rms"), "bin")
+    shutil.copy(
+        os.path.join(source_root, "tests/unit_tests/c_wrappers/res/fm/rms"), "bin"
+    )
     monkeypatch.setenv("RMS_SITE_CONFIG", "rms_config.yml")
 
     target_file = os.path.join(os.getcwd(), "rms_target_file")
@@ -373,7 +381,9 @@ def test_run_wrapper(monkeypatch, source_root):
     os.mkdir("run_path")
     os.mkdir("bin")
     os.mkdir("project")
-    shutil.copy(os.path.join(source_root, "tests/libres_tests/res/fm/rms"), "bin")
+    shutil.copy(
+        os.path.join(source_root, "tests/unit_tests/c_wrappers/res/fm/rms"), "bin"
+    )
 
     with open(wrapper_file_name, "w") as f:
         f.write("#!/bin/bash\n")
@@ -445,7 +455,9 @@ env:
     os.mkdir("run_path")
     os.mkdir("bin")
     os.mkdir("project")
-    shutil.copy(os.path.join(source_root, "tests/libres_tests/res/fm/rms"), "bin")
+    shutil.copy(
+        os.path.join(source_root, "tests/unit_tests/c_wrappers/res/fm/rms"), "bin"
+    )
 
     with open(wrapper_file_name, "w") as f:
         f.write(
@@ -496,7 +508,9 @@ env:
     os.mkdir("run_path")
     os.mkdir("bin")
     os.mkdir("project")
-    shutil.copy(os.path.join(source_root, "tests/libres_tests/res/fm/rms"), "bin")
+    shutil.copy(
+        os.path.join(source_root, "tests/unit_tests/c_wrappers/res/fm/rms"), "bin"
+    )
 
     with open(wrapper_file_name, "w") as f:
         f.write(
@@ -554,7 +568,9 @@ env:
     os.mkdir("run_path")
     os.mkdir("bin")
     os.mkdir("project")
-    shutil.copy(os.path.join(source_root, "tests/libres_tests/res/fm/rms"), "bin")
+    shutil.copy(
+        os.path.join(source_root, "tests/unit_tests/c_wrappers/res/fm/rms"), "bin"
+    )
 
     monkeypatch.setenv("RMS_SITE_CONFIG", "rms_config.yml")
     monkeypatch.setenv("PATH", f"{os.getcwd()}/bin:{os.environ['PATH']}")
@@ -605,7 +621,9 @@ def test_rms_job_script_parser(monkeypatch, source_root):
     os.mkdir("run_path")
     os.mkdir("bin")
     os.mkdir("project")
-    shutil.copy(os.path.join(source_root, "tests/libres_tests/res/fm/rms"), "bin")
+    shutil.copy(
+        os.path.join(source_root, "tests/unit_tests/c_wrappers/res/fm/rms"), "bin"
+    )
     monkeypatch.setenv("RMS_SITE_CONFIG", "rms_config.yml")
 
     action = {"exit_status": 0}

@@ -20,7 +20,7 @@ install_test_dependencies () {
     pip install pytest-repeat
 }
 
-run_ert_clib_tests(){
+run_flaky_tests(){
     # If a developer would like to test a specific function, remove these
     # lines and include the specific tests one would like to run.
     # The internal job will use the testkomodo-repeat-flaky.sh from the branch
@@ -29,16 +29,7 @@ run_ert_clib_tests(){
     # A test on the internal CI is activated by writing a comment with "test flaky please"
     # Requires that the user is allowed to run the tests.
     xvfb-run -s "-screen 0 640x480x24" --auto-servernum python -m \
-    pytest tests/ert_tests -k "not test_gui_load and not test_formatting" \
-    -m "not requires_window_manager"
-
-    pytest tests/libres_tests                                         \
-    --ignore="tests/libres_tests/res/enkf/test_analysis_config.py"    \
-    --ignore="tests/libres_tests/res/enkf/test_res_config.py"         \
-    --ignore="tests/libres_tests/res/enkf/test_site_config.py"        \
-    --ignore="tests/libres_tests/res/enkf/test_workflow_list.py"      \
-    --ignore="tests/libres_tests/res/enkf/test_hook_manager.py"
-
+    pytest tests/ -m "not requires_window_manager" --hypothesis-profile=ci
 }
 
 start_tests () {
@@ -58,7 +49,7 @@ start_tests () {
 
     for ((i = 0; i <= $n_runs; i++))
     do
-        if ! run_ert_clib_tests; then
+        if ! run_flaky_tests; then
             ((failures +=1))
         fi
     done

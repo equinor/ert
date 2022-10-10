@@ -28,7 +28,6 @@ build_and_test () {
 	run build_ert_clib
 	run build_ert_dev
 	run run_ctest
-	run run_pytest_normal
 }
 
 setup () {
@@ -130,15 +129,6 @@ run_ctest () {
 	pushd $ERT_CLIB_BUILD
 	export ERT_SITE_CONFIG=${ERT_SOURCE_ROOT}/src/ert/shared/share/ert/site-config
 	ctest -j $CTEST_JARG -E Lint --output-on-failure
-	popd
-}
-
-run_pytest_normal () {
-	run enable_environment
-
-	# Avoid implicitly loaded cwd modules
-	pushd ${ERT_CLIB_BUILD}
-	python -m pytest --durations=10 ${ERT_SOURCE_ROOT}/tests/libres_tests
 	popd
 }
 

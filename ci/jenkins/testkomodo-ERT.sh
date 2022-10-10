@@ -26,11 +26,6 @@ start_tests () {
     fi
     export NO_PROXY=localhost,127.0.0.1
 
-    # The existence of a running xvfb process will produce
-    # a lock filgit ree for the default server and kill the run
-    # Allow xvfb to find a new server
-    xvfb-run -s "-screen 0 640x480x24" --auto-servernum python -m \
-    pytest -k "not test_gui_load and not test_formatting" \
-    -m "not requires_window_manager" tests/ert_tests
+    pytest --hypothesis-profile=ci -m "not requires_window_manager" tests/
     popd
 }

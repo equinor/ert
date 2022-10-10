@@ -18,14 +18,16 @@ jobs:
     timeout-minutes: 40
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
-        system-under-test: ['res', 'ert']
+        test-type: ['integration-tests', 'unit-tests', 'gui-tests']
     steps:
     - uses: actions/checkout@v2
       with:
         fetch-depth: 0
 
     - uses: './.github/actions/install_dependencies'
+      if: matrix.test-type == 'gui-tests'
       with:
         os: ubuntu-latest
 
@@ -39,24 +41,24 @@ jobs:
         pip install .
         pip install -r dev-requirements.txt
 
-    - name: Run ert tests
-      if: matrix.system-under-test == 'ert'
+    - name: Test GUI
+      if: matrix.test-type == 'gui-tests'
       env:
         DISPLAY: ':99.0'
       run: |
         ci/github/start_herbstluftwm.sh &
         sleep 5
-        # We run the tests from the test directory as pytest-cov (at least as
-        # of 3.0.0) will create an incorrect report when a directory matches
-        # the package name
-        cd tests
-        pytest ert_tests --cov=ert --cov-report=xml:cov.xml
+        pytest tests/ --cov=ert --hypothesis-profile=ci -m "requires_window_manager" --cov-report=xml:cov.xml
 
-    - name: Run res tests
-      if: matrix.system-under-test == 'res'
+    - name: Test Integration
+      if: matrix.test-type == 'integration-tests'
       run: |
-        cd tests
-        pytest libres_tests test_config_parsing  --hypothesis-profile=ci --cov=ert --cov-report=xml:cov.xml
+        pytest tests/ --cov=ert --hypothesis-profile=ci -m "integration_test" --cov-report=xml:cov.xml
+
+    - name: Test units
+      if: matrix.test-type == 'unit-tests'
+      run: |
+        pytest tests/ --cov=ert --hypothesis-profile=ci -m "not integration_test and not requires_window_manager" --cov-report=xml:cov.xml
 
     - name: Upload python coverage to Codecov
       uses: codecov/codecov-action@v2

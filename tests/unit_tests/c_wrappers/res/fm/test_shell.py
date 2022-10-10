@@ -315,6 +315,7 @@ def test_careful_copy_file():
     assert os.path.isfile("file3")
 
 
+@pytest.mark.integration_test
 def test_shell_scripts_integration(tmpdir):
     """
     The following test is a regression test that
