@@ -204,17 +204,6 @@ std::pair<Eigen::MatrixXd, ObservationHandler> load_observations_and_responses(
 }
 } // namespace analysis
 
-namespace {
-static Eigen::MatrixXd generate_noise(int active_obs_size, int active_ens_size,
-                                      Cwrap<rng_type> shared_rng) {
-    Eigen::MatrixXd noise =
-        Eigen::MatrixXd::Zero(active_obs_size, active_ens_size);
-    for (int j = 0; j < active_ens_size; j++)
-        for (int i = 0; i < active_obs_size; i++)
-            noise(i, j) = enkf_util_rand_normal(0, 1, shared_rng);
-    return noise;
-}
-
 static std::pair<Eigen::MatrixXd, analysis::ObservationHandler>
 load_observations_and_responses_pybind(
     Cwrap<enkf_fs_type> source_fs, Cwrap<enkf_obs_type> obs, double alpha,
@@ -226,7 +215,6 @@ load_observations_and_responses_pybind(
         selected_observations);
 }
 
-} // namespace
 ERT_CLIB_SUBMODULE("update", m) {
     using namespace py::literals;
     py::class_<analysis::RowScalingParameter,
@@ -273,5 +261,4 @@ ERT_CLIB_SUBMODULE("update", m) {
           load_observations_and_responses_pybind);
     m.def("save_parameter", analysis::save_parameter);
     m.def("load_parameter", analysis::load_parameter);
-    m.def("generate_noise", generate_noise);
 }

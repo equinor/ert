@@ -321,7 +321,7 @@ bool gen_data_forward_load(gen_data_type *gen_data, const char *ecl_file,
    the gen_data instance does not have any init function - that is OK.
 */
 C_USED bool gen_data_initialize(gen_data_type *gen_data, int iens,
-                                const char *init_file, rng_type *rng) {
+                                const char *init_file) {
     bool ret = false;
     if (init_file) {
         if (!gen_data_fload_with_report_step(gen_data, init_file, 0, NULL))

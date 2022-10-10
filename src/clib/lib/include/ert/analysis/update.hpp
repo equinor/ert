@@ -6,7 +6,6 @@
 #include <ert/enkf/ensemble_config.hpp>
 #include <ert/enkf/obs_data.hpp>
 #include <ert/enkf/row_scaling.hpp>
-#include <ert/util/rng.hpp>
 #include <iterator>
 #include <stdexcept>
 

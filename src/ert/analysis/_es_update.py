@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING, Any, Dict, List, Tuple, Union
 
 import iterative_ensemble_smoother as ies
 import numpy as np
+import numpy.typing as npt
 from iterative_ensemble_smoother.experimental import (
     ensemble_smoother_update_step_row_scaling,
 )
@@ -17,9 +18,6 @@ from ert._clib import analysis_module, update
 from ._ies import IesConfig
 
 if TYPE_CHECKING:
-    import numpy.typing as npt
-    from ecl.util.util import RandomNumberGenerator
-
     from ert._c_wrappers.analysis.configuration import UpdateConfiguration
     from ert._c_wrappers.enkf import EnKFMain, RunContext
     from ert._c_wrappers.enkf.analysis_config import AnalysisConfig
@@ -136,7 +134,7 @@ def _create_temporary_parameter_storage(
 def analysis_ES(
     updatestep: "UpdateConfiguration",
     obs: "EnkfObs",
-    shared_rng: "RandomNumberGenerator",
+    rng: np.random.Generator,
     module_config: IesConfig,
     alpha: float,
     std_cutoff: float,
@@ -180,7 +178,7 @@ def analysis_ES(
         A_with_rowscaling = _get_row_scaling_A_matrices(
             temp_storage, update_step.row_scaling_parameters
         )
-        noise = update.generate_noise(len(observation_values), S.shape[1], shared_rng)
+        noise = rng.standard_normal(size=(len(observation_values), S.shape[1]))
         if A is not None:
             A = ies.ensemble_smoother_update_step(
                 S,
@@ -215,7 +213,7 @@ def analysis_ES(
 def analysis_IES(
     updatestep: "UpdateConfiguration",
     obs: "EnkfObs",
-    shared_rng: "RandomNumberGenerator",
+    rng: np.random.Generator,
     module_config: IesConfig,
     alpha: float,
     std_cutoff: float,
@@ -260,7 +258,7 @@ def analysis_IES(
 
         A = _get_A_matrix(temp_storage, update_step.parameters)
 
-        noise = update.generate_noise(len(observation_values), S.shape[1], shared_rng)
+        noise = rng.standard_normal(size=(len(observation_values), S.shape[1]))
         A = iterative_ensemble_smoother.update_step(
             S,
             A,
@@ -356,7 +354,6 @@ class ESUpdate:
         analysis_config = self.ert.analysisConfig()
 
         obs = self.ert.getObservations()
-        shared_rng = self.ert.rng()
         ensemble_config = self.ert.ensembleConfig()
 
         alpha = analysis_config.getEnkfAlpha()
@@ -373,7 +370,7 @@ class ESUpdate:
         analysis_ES(
             updatestep,
             obs,
-            shared_rng,
+            self.ert.rng(),
             analysis_module.get_module_config(analysis_config.getActiveModule()),
             alpha,
             std_cutoff,
@@ -406,7 +403,6 @@ class ESUpdate:
         analysis_config = self.ert.analysisConfig()
 
         obs = self.ert.getObservations()
-        shared_rng = self.ert.rng()
         ensemble_config = self.ert.ensembleConfig()
 
         alpha = analysis_config.getEnkfAlpha()
@@ -424,7 +420,7 @@ class ESUpdate:
         analysis_IES(
             updatestep,
             obs,
-            shared_rng,
+            self.ert.rng(),
             analysis_module.get_module_config(analysis_config.getActiveModule()),
             alpha,
             std_cutoff,

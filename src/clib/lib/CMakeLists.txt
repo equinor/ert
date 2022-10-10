@@ -86,7 +86,6 @@ pybind11_add_module(
   enkf/enkf_serialize.cpp
   enkf/enkf_state.cpp
   enkf/enkf_types.cpp
-  enkf/enkf_util.cpp
   enkf/ensemble_config.cpp
   enkf/ert_workflow_list.cpp
   enkf/ext_param.cpp

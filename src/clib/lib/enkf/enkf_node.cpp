@@ -4,7 +4,6 @@
 #include <string.h>
 
 #include <ert/util/buffer.h>
-#include <ert/util/rng.h>
 #include <ert/util/util.h>
 #include <ert/util/vector.h>
 
@@ -309,7 +308,7 @@ bool enkf_node_forward_init(enkf_node_type *enkf_node, const char *run_path,
                             int iens) {
     char *init_file =
         enkf_config_node_alloc_initfile(enkf_node->config, run_path, iens);
-    bool init = enkf_node->initialize(enkf_node->data, iens, init_file, NULL);
+    bool init = enkf_node->initialize(enkf_node->data, iens, init_file);
     free(init_file);
     return init;
 }
@@ -523,12 +522,11 @@ void enkf_node_deserialize(enkf_node_type *enkf_node, enkf_fs_type *fs,
    place. If the function returns false it is for instance not
    necessary to internalize anything.
 */
-bool enkf_node_initialize(enkf_node_type *enkf_node, int iens, rng_type *rng) {
+bool enkf_node_initialize(enkf_node_type *enkf_node, int iens) {
     if (enkf_node->initialize != NULL) {
         char *init_file =
             enkf_config_node_alloc_initfile(enkf_node->config, NULL, iens);
-        bool init =
-            enkf_node->initialize(enkf_node->data, iens, init_file, rng);
+        bool init = enkf_node->initialize(enkf_node->data, iens, init_file);
         free(init_file);
         return init;
     } else

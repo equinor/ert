@@ -1,6 +1,5 @@
 import logging
 import os
-import sys
 from contextlib import ExitStack as does_not_raise
 from pathlib import Path
 from textwrap import dedent
@@ -49,9 +48,7 @@ def load_from_forward_model(ert):
     [
         (
             "GEN_KW KW_NAME template.txt kw.txt prior.txt\nRANDOM_SEED 1234",
-            "MY_KEYWORD -0.996621"
-            if sys.platform == "darwin"
-            else "MY_KEYWORD 1.85656",
+            "MY_KEYWORD 0.379773",
             [],
             does_not_raise(),
         ),
@@ -328,9 +325,5 @@ def test_that_first_three_parameters_sampled_snapshot(tmpdir):
         prior = fs.load_parameter(
             ert.ensembleConfig(), list(range(3)), Parameter("KW_NAME")
         )
-        expected = (
-            [-0.9966211, 0.01418702, -0.44262875]
-            if sys.platform.startswith("darwin")
-            else [1.8565558, -1.0516311, 1.6020288]
-        )
+        expected = [0.3797727, 0.7943204, 2.2610954]
         np.testing.assert_almost_equal(prior, np.array([expected]))

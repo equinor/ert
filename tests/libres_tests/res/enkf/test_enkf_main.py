@@ -303,14 +303,6 @@ def test_run_context(minimum_case):
     run_arg = run_context[2]
     assert isinstance(run_arg, RunArg)
 
-    rng1 = minimum_case.rng()
-    rng1.setState("ABCDEFGHIJ012345")
-    d1 = rng1.getDouble()
-    rng1.setState("ABCDEFGHIJ012345")
-    rng2 = minimum_case.rng()
-    d2 = rng2.getDouble()
-    assert d1 == d2
-
 
 @pytest.mark.parametrize(
     "random_seed", ["0", "1234", "123ABC", "123456789ABCDEFGHIJKLMNOPGRST", "123456"]

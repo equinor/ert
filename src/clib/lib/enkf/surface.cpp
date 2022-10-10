@@ -35,8 +35,7 @@ bool surface_fload(surface_type *surface, const char *filename) {
     return ret;
 }
 
-bool surface_initialize(surface_type *surface, int iens, const char *filename,
-                        rng_type *rng) {
+bool surface_initialize(surface_type *surface, int iens, const char *filename) {
     return surface_fload(surface, filename);
 }
 

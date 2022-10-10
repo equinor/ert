@@ -7,7 +7,6 @@
 
 #include <ert/res_util/file_utils.hpp>
 #include <ert/util/buffer.h>
-#include <ert/util/rng.h>
 #include <ert/util/util.h>
 
 #include <ert/ecl/ecl_endian_flip.h>
@@ -620,8 +619,7 @@ void field_ecl_write(const field_type *field, const char *run_path,
     free(full_path);
 }
 
-bool field_initialize(field_type *field, int iens, const char *init_file,
-                      rng_type *rng) {
+bool field_initialize(field_type *field, int iens, const char *init_file) {
     bool ret = false;
     if (init_file) {
         if (field_fload(field, init_file)) {

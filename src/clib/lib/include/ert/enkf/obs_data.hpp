@@ -6,7 +6,6 @@
 #include <vector>
 
 #include <ert/util/hash.h>
-#include <ert/util/rng.h>
 
 #include <ert/enkf/enkf_types.hpp>
 #include <ert/enkf/meas_data.hpp>
