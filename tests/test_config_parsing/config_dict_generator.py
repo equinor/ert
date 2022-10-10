@@ -417,6 +417,7 @@ def config_dicts(draw):
     should_be_executable_files = [
         job_path for _, job_path in config_dict[ConfigKeys.INSTALL_JOB]
     ]
+    should_exist_job_scripts = should_be_executable_files.copy()
     should_be_executable_files.append(config_dict[ConfigKeys.JOB_SCRIPT])
 
     config_dict[ConfigKeys.JOB_SCRIPT] = os.path.abspath(
@@ -444,8 +445,6 @@ def config_dicts(draw):
             )
             shutil.copy(refcase_src_file, "./refcase/" + dest)
 
-    should_be_executable_files = [config_dict[ConfigKeys.JOB_SCRIPT]]
-
     if (
         len(config_dict[ConfigKeys.INSTALL_JOB]) == 0
         and os.getenv("ERT_SITE_CONFIG", None) is not None
@@ -464,6 +463,21 @@ def config_dicts(draw):
     for dirname in should_exist_directories:
         if not os.path.isdir(dirname):
             os.mkdir(dirname)
+
+    for job_dir in config_dict[ConfigKeys.INSTALL_JOB_DIRECTORY]:
+        should_exist_job_scripts.append(job_dir + "/" + draw(file_names))
+
+    for job_file in should_exist_job_scripts:
+        path = Path(job_file).parent
+        executable_file = draw(file_names) + ".exe"
+        if not os.path.isdir(path / "script"):
+            os.mkdir(path / "script")
+        touch(path / "script" / executable_file)
+        should_be_executable_files.append(path / "script" / executable_file)
+        Path(job_file).write_text(
+            f"EXECUTABLE script/{executable_file}\nMIN_ARG 0\nMAX_ARG 1\n",
+            encoding="utf-8",
+        )
 
     for filename in should_be_executable_files:
         current_mode = os.stat(filename).st_mode

@@ -27,7 +27,6 @@ from ert._c_wrappers.enkf.model_config import ModelConfig
 from ert._c_wrappers.enkf.node_id import NodeId
 from ert._c_wrappers.enkf.queue_config import QueueConfig
 from ert._c_wrappers.enkf.runpaths import Runpaths
-from ert._c_wrappers.enkf.site_config import SiteConfig
 from ert._c_wrappers.enkf.substituter import Substituter
 from ert._c_wrappers.util.substitution_list import SubstitutionList
 from ert._clib.state_map import STATE_LOAD_FAILURE, STATE_UNDEFINED
@@ -367,9 +366,6 @@ class EnKFMain:
     def getModelConfig(self) -> ModelConfig:
         return self.res_config.model_config
 
-    def siteConfig(self) -> SiteConfig:
-        return self.res_config.site_config
-
     def resConfig(self) -> "ResConfig":
         return self.res_config
 
@@ -554,7 +550,7 @@ class EnKFMain:
                     iens,
                     run_context.iteration,
                     self.substituter,
-                    res_config.site_config.env_vars,
+                    res_config.env_vars,
                 )
 
         active_list = [

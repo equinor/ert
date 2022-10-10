@@ -1,6 +1,7 @@
 import logging
 import os
 from collections import defaultdict
+from collections.abc import Mapping
 from datetime import date
 from os.path import isfile
 from pathlib import Path
@@ -18,8 +19,12 @@ from ert._c_wrappers.enkf.enums import ErtImplType
 from ert._c_wrappers.enkf.ert_workflow_list import ErtWorkflowList
 from ert._c_wrappers.enkf.model_config import ModelConfig
 from ert._c_wrappers.enkf.queue_config import QueueConfig
-from ert._c_wrappers.enkf.site_config import SiteConfig
-from ert._c_wrappers.job_queue import ExtJob, ForwardModel, QueueDriverEnum
+from ert._c_wrappers.job_queue import (
+    EnvironmentVarlist,
+    ExtJob,
+    ForwardModel,
+    QueueDriverEnum,
+)
 from ert._c_wrappers.util import SubstitutionList
 from ert._clib.config_keywords import init_site_config_parser, init_user_config_parser
 
@@ -233,13 +238,10 @@ class ResConfig:
         self.substitution_list = self.create_substitution_list_from_config_content(
             config_content=user_config_content
         )
-        self.site_config = SiteConfig.from_config_content(
-            user_config_content=user_config_content,
-            site_config_content=site_config_content,
-        )
         config_content_dict = config_content_as_dict(
             user_config_content, site_config_content
         )
+        self.env_vars = self._read_env_vars(config_content_dict)
         self.random_seed = config_content_dict.get(ConfigKeys.RANDOM_SEED, None)
         self.analysis_config = AnalysisConfig.from_dict(config_content_dict)
 
@@ -346,7 +348,6 @@ class ResConfig:
     def _alloc_from_dict(self, config_dict):
         site_config_parser = ConfigParser()
         init_site_config_parser(site_config_parser)
-        site_config_content = site_config_parser.parse(site_config_location())
         # treat the default config dir
         self.config_path = os.getcwd()
 
@@ -363,9 +364,7 @@ class ResConfig:
         self.substitution_list = self.create_substitution_list_from_dict(
             config_dict=config_dict
         )
-        self.site_config = SiteConfig.from_config_dict(
-            config_dict=config_dict, site_config_content=site_config_content
-        )
+        self.env_vars = self._read_env_vars(config_dict)
         self.random_seed = config_dict.get(ConfigKeys.RANDOM_SEED, None)
         self.analysis_config = AnalysisConfig.from_dict(config_dict=config_dict)
 
@@ -455,6 +454,27 @@ class ResConfig:
             refcase=self.ensemble_config.refcase,
             config_dict=config_dict,
         )
+
+    @staticmethod
+    def _read_env_vars(config_dict):
+        env_vars = EnvironmentVarlist()
+
+        environment_vars = config_dict.get(ConfigKeys.SETENV, [])
+
+        for item in iter(environment_vars):
+            if isinstance(item, Mapping):
+                key = item["NAME"]
+                value = item["VALUE"]
+            else:
+                key, value = item
+            env_vars.setenv(key, value)
+
+        paths = config_dict.get("UPDATE_PATH", [])
+
+        for key, value in iter(paths):
+            env_vars.update_path(key, value)
+
+        return env_vars
 
     @staticmethod
     def _installed_jobs_from_dict(config_dict):
@@ -872,25 +892,22 @@ class ResConfig:
         return self._templates
 
     def __eq__(self, other):
-        # compare each config separatelly
-        config_eqs = (
-            (self.substitution_list == other.substitution_list),
-            (self.site_config == other.site_config),
-            (self.random_seed == other.random_seed),
-            (self.num_cpu_from_config == other.num_cpu_from_config),
-            (self.num_cpu_from_data_file == other.num_cpu_from_data_file),
-            (self.analysis_config == other.analysis_config),
-            (self.ert_workflow_list == other.ert_workflow_list),
-            (self.ert_templates == other.ert_templates),
-            (self.ensemble_config == other.ensemble_config),
-            (self.model_config == other.model_config),
-            (self.queue_config == other.queue_config),
+        return (
+            other is not None
+            and isinstance(other, ResConfig)
+            and self.substitution_list == other.substitution_list
+            and self.installed_jobs == other.installed_jobs
+            and self.env_vars == other.env_vars
+            and self.random_seed == other.random_seed
+            and self.num_cpu_from_config == other.num_cpu_from_config
+            and self.num_cpu_from_data_file == other.num_cpu_from_data_file
+            and self.analysis_config == other.analysis_config
+            and self.ert_workflow_list == other.ert_workflow_list
+            and self.ert_templates == other.ert_templates
+            and self.ensemble_config == other.ensemble_config
+            and self.model_config == other.model_config
+            and self.queue_config == other.queue_config
         )
-
-        if not all(config_eqs):
-            return False
-
-        return True
 
     def __ne__(self, other):
         return not self == other
@@ -901,7 +918,8 @@ class ResConfig:
     def __str__(self):
         return (
             f"SubstitutionList: {self.substitution_list},\n"
-            f"SiteConfig: {self.site_config},\n"
+            f"Installed jobs: {self.installed_jobs},\n"
+            f"EnvironmentVarlist: {self.env_vars},\n"
             f"RandomSeed: {self.random_seed},\n"
             f"Config Num CPUs: {self.num_cpu_from_config},\n"
             f"Data File Num CPUs: {self.num_cpu_from_data_file},\n"

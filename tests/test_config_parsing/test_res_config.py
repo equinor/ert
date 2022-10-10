@@ -17,8 +17,8 @@ def touch(filename):
         fh.write(" ")
 
 
-@pytest.mark.skip(reason="https://github.com/equinor/ert/issues/2554")
-def test_res_config_simple_config_parsing(tmpdir):
+@pytest.mark.xfail(reason="https://github.com/equinor/ert/issues/4178")
+def test_res_config_simple_config_parsing(tmpdir, set_site_config, monkeypatch):
     touch(tmpdir + "/rpfile")
     touch(tmpdir + "/datafile")
     os.mkdir(tmpdir + "/license")
@@ -32,17 +32,16 @@ DATA_FILE datafile
 LICENSE_PATH license
 """
         )
-    assert (
-        ResConfig(str(tmpdir + "/test.ert")).site_config
-        == ResConfig(
-            config_dict={
-                "CONFIG_DIRECTORY": str(tmpdir),
-                "DATA_FILE": "datafile",
-                "LICENSE_PATH": "license",
-                "RES_CONFIG_FILE": "test.ert",
-                "RUNPATH_FILE": "rpfile",
-            }
-        ).site_config
+
+    monkeypatch.chdir(tmpdir)
+    assert ResConfig("test.ert") == ResConfig(
+        config_dict={
+            "NUM_REALIZATIONS": 1,
+            "DATA_FILE": "datafile",
+            "LICENSE_PATH": "license",
+            "RES_CONFIG_FILE": "test.ert",
+            "RUNPATH_FILE": "rpfile",
+        }
     )
 
 
