@@ -115,10 +115,6 @@ bool ext_joblist_del_job(ext_joblist_type *joblist, const char *job_name) {
         return false;
 }
 
-hash_type *ext_joblist_get_jobs(const ext_joblist_type *joblist) {
-    return joblist->jobs;
-}
-
 void ext_joblist_add_jobs_in_directory(ext_joblist_type *joblist,
                                        const char *path,
                                        const char *license_root_path,

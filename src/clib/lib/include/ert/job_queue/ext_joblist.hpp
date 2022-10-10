@@ -27,7 +27,4 @@ void ext_joblist_add_jobs_in_directory(ext_joblist_type *joblist,
                                        const char *license_root_path,
                                        bool user_mode, bool search_path);
 extern "C" int ext_joblist_get_size(const ext_joblist_type *joblist);
-
-extern "C" hash_type *ext_joblist_get_jobs(const ext_joblist_type *joblist);
-
 #endif
