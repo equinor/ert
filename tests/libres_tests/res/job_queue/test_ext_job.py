@@ -127,3 +127,15 @@ def test_valid_args():
     run_arg_list = ["Trjue", "76"]
     assert ExtJob.valid_args(run_arg_types, run_arg_list)
     assert not ExtJob.valid_args(run_arg_types, run_arg_list, True)
+
+
+def test_ext_job_optionals(tmp_path):
+    executable = tmp_path / "exec"
+    executable.write_text("")
+    st = os.stat(executable)
+    os.chmod(executable, st.st_mode | stat.S_IEXEC)
+    config_file = tmp_path / "config_file"
+    config_file.write_text("EXECUTABLE exec\n")
+    ext_job = ExtJob(str(config_file), False)
+    assert ext_job.get_license_path() == None
+    assert ext_job.name() == "config_file"
