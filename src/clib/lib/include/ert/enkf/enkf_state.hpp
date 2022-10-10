@@ -5,7 +5,6 @@
 
 #include <ert/res_util/subst_list.hpp>
 #include <ert/util/hash.h>
-#include <ert/util/rng.h>
 #include <ert/util/stringlist.h>
 
 #include <ert/ecl/ecl_file.h>
@@ -25,8 +24,8 @@
 #include <ert/enkf/run_arg.hpp>
 #include <ert/enkf/site_config.hpp>
 
-void enkf_state_initialize(rng_type *rng, enkf_fs_type *fs,
-                           enkf_node_type *param_node, int iens);
+void enkf_state_initialize(enkf_fs_type *fs, enkf_node_type *param_node,
+                           int iens);
 
 std::pair<fw_load_status, std::string>
 enkf_state_load_from_forward_model(ensemble_config_type *ens_config,

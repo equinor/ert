@@ -7,7 +7,6 @@
 #include <ert/util/buffer.h>
 #include <ert/util/hash.h>
 #include <ert/util/int_vector.h>
-#include <ert/util/rng.h>
 #include <ert/util/type_macros.h>
 
 #include <ert/ecl/ecl_file.h>
@@ -42,7 +41,7 @@ typedef bool(has_data_ftype)(const void *, int);
 typedef void(user_get_vector_ftype)(void *, const char *, double_vector_type *);
 typedef bool(user_get_ftype)(void *, const char *, int, double *);
 typedef void *(alloc_ftype)(const void *);
-typedef bool(initialize_ftype)(void *, int, const char *, rng_type *);
+typedef bool(initialize_ftype)(void *, int, const char *);
 typedef bool(forward_load_ftype)(void *, const char *, int, const void *);
 typedef bool(forward_load_vector_ftype)(void *, const char *,
                                         const ecl_sum_type *,
@@ -108,7 +107,7 @@ bool enkf_node_forward_load(enkf_node_type *enkf_node, int report_step,
                             const ecl_sum_type *ecl_sum);
 void enkf_node_ecl_write(const enkf_node_type *, const char *,
                          value_export_type *, int);
-bool enkf_node_initialize(enkf_node_type *enkf_node, int, rng_type *);
+bool enkf_node_initialize(enkf_node_type *enkf_node, int);
 
 void enkf_node_copy(const enkf_config_node_type *config_node,
                     enkf_fs_type *src_case, enkf_fs_type *target_case,

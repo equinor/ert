@@ -1,4 +1,3 @@
-import sys
 from argparse import ArgumentParser
 from pathlib import Path
 
@@ -44,81 +43,35 @@ def test_update_report(setup_case, snapshot):
 @pytest.mark.parametrize(
     "module, expected_gen_kw",
     [
-        pytest.param(
+        (
             "IES_ENKF",
             [
-                0.19646461221617806,
-                -0.8580650655205431,
-                -1.7033885637717783,
-                0.2143913913285077,
-                -0.6416317135179632,
-                -0.9655917323739145,
-                0.33111809209873133,
-                -0.39486155020884783,
-                1.6583030240523025,
-                -1.2083505536978683,
+                0.045866650397621375,
+                -0.8036327113581042,
+                -1.8013223842943873,
+                0.23971274043174723,
+                -0.9822843385488024,
+                -1.0164040084981638,
+                0.06941917822163765,
+                -0.4644324177656203,
+                1.7996593079415084,
+                -1.2832952021744541,
             ],
-            marks=pytest.mark.skipif(
-                sys.platform.startswith("darwin"),
-                reason="See https://github.com/equinor/ert/issues/2351",
-            ),
         ),
-        pytest.param(
-            "IES_ENKF",
-            [
-                0.4017777704668615,
-                -0.9277413075241868,
-                -1.8045946565215083,
-                0.23176385196876714,
-                -0.8300453517964581,
-                -0.9828660162918067,
-                -0.051783268233953655,
-                -0.40210522896061107,
-                1.8186815661449791,
-                -1.1306332986095615,
-            ],
-            marks=pytest.mark.skipif(
-                sys.platform.startswith("linux"),
-                reason="See https://github.com/equinor/ert/issues/2351",
-            ),
-        ),
-        pytest.param(
+        (
             "STD_ENKF",
             [
-                1.196462292883038,
-                -1.9782890562294615,
-                -2.078978973876065,
-                -0.14118328421874526,
-                -1.0000524286981523,
-                -0.461103367650835,
-                0.5010898849822789,
-                -0.9273783981099771,
-                2.6971604296733,
-                -2.077579845830024,
+                0.94546568985211,
+                -1.88756846595873,
+                -2.2422020080804144,
+                -0.09898103571334578,
+                -1.567806803749551,
+                -0.5457904945245821,
+                0.0649250285204559,
+                -1.0433298440379313,
+                2.93275423615531,
+                -2.2024875932910004,
             ],
-            marks=pytest.mark.skipif(
-                sys.platform.startswith("darwin"),
-                reason="See https://github.com/equinor/ert/issues/2351",
-            ),
-        ),
-        pytest.param(
-            "STD_ENKF",
-            [
-                1.5386508899675102,
-                -2.0944161262355347,
-                -2.247655795125614,
-                -0.11222918315164569,
-                -1.3140751591623103,
-                -0.4898938408473217,
-                -0.13707904890552972,
-                -0.9394511960295817,
-                2.9644579998277614,
-                -1.948051087349513,
-            ],
-            marks=pytest.mark.skipif(
-                sys.platform.startswith("linux"),
-                reason="See https://github.com/equinor/ert/issues/2351",
-            ),
         ),
     ],
 )
@@ -210,11 +163,11 @@ def test_that_posterior_has_lower_variance_than_prior(copy_case):
 @pytest.mark.parametrize(
     "expected_target_gen_kw, update_step",
     [
-        pytest.param(
+        (
             [
                 -1.3035319087841115,
-                0.478900928107711,
-                -0.2960474299371837,
+                0.5347227225020401,
+                -0.43324960974185356,
                 0.7477534046493867,
                 -0.10400064074767973,
                 -1.7223242794585338,
@@ -230,16 +183,12 @@ def test_that_posterior_has_lower_variance_than_prior(copy_case):
                     "parameters": [("SNAKE_OIL_PARAM", [1, 2])],
                 }
             ],
-            marks=pytest.mark.skipif(
-                sys.platform.startswith("darwin"),
-                reason="See https://github.com/equinor/ert/issues/2351",
-            ),
         ),
-        pytest.param(
+        (
             [
-                -1.2634961086738858,
-                0.4789009281077111,
-                -0.23938849999570316,
+                -1.280789209535364,
+                0.5347227225020401,
+                -0.42275146812773123,
                 0.7477534046493867,
                 -0.10400064074767973,
                 -1.7223242794585338,
@@ -260,35 +209,6 @@ def test_that_posterior_has_lower_variance_than_prior(copy_case):
                     "parameters": [("SNAKE_OIL_PARAM", [0, 2])],
                 },
             ],
-            marks=pytest.mark.skipif(
-                sys.platform.startswith("darwin"),
-                reason="See https://github.com/equinor/ert/issues/2351",
-            ),
-        ),
-        pytest.param(
-            [
-                -1.3035319087841115,
-                0.927500805607199,
-                -1.3986433196044348,
-                0.7477534046493867,
-                -0.10400064074767973,
-                -1.7223242794585338,
-                0.0761604027734105,
-                0.4039137216428462,
-                0.10001691562080614,
-                0.09549338450036506,
-            ],
-            [
-                {
-                    "name": "update_step_LOCA",
-                    "observations": ["WOPR_OP1_72"],
-                    "parameters": [("SNAKE_OIL_PARAM", [1, 2])],
-                }
-            ],
-            marks=pytest.mark.skipif(
-                sys.platform.startswith("linux"),
-                reason="See https://github.com/equinor/ert/issues/2351",
-            ),
         ),
     ],
 )
@@ -297,6 +217,7 @@ def test_localization(setup_case, expected_target_gen_kw, update_step):
     Note that this is now a snapshot test, so there is no guarantee that the
     snapshots are correct, they are just documenting the current behavior.
     """
+
     res_config = setup_case("snake_oil", "snake_oil.ert")
     ert = EnKFMain(res_config)
     es_update = ESUpdate(ert)

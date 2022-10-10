@@ -1,14 +1,12 @@
 import io
+import logging
 import os
 import re
 import struct
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, List, Union
+from typing import TYPE_CHECKING, Any, List, Sequence, Union
 
 import numpy as np
-import numpy.typing as npt
-from ecl.util.enums import RngInitModeEnum
-from ecl.util.util import RandomNumberGenerator
 
 from ert import _clib
 from ert._c_wrappers.analysis.configuration import UpdateConfiguration
@@ -30,7 +28,6 @@ from ert._c_wrappers.enkf.runpaths import Runpaths
 from ert._c_wrappers.enkf.site_config import SiteConfig
 from ert._c_wrappers.enkf.substituter import Substituter
 from ert._c_wrappers.util.substitution_list import SubstitutionList
-from ert._clib import enkf_fs, enkf_main, enkf_state
 from ert._clib.state_map import (
     STATE_LOAD_FAILURE,
     STATE_PARENT_FAILURE,
@@ -42,20 +39,14 @@ if TYPE_CHECKING:
     from ert._c_wrappers.enkf.state_map import StateMap
 
 
+logger = logging.getLogger(__name__)
+
+
 def naturalSortKey(s: str) -> List[Union[int, str]]:
     _nsre = re.compile("([0-9]+)")
     return [
         int(text) if text.isdigit() else text.lower() for text in re.split(_nsre, s)
     ]
-
-
-def _forward_rng(rng):
-    """
-    The rng state needs a byte string of length 16, to get that
-    we forward, i.e. sample from the rng 4 times and convert to
-    byte, creating a byte string of length 16.
-    """
-    return b"".join(struct.pack("I", (rng.forward())) for _ in range(4))
 
 
 def format_seed(random_seed: str):
@@ -124,22 +115,30 @@ class EnKFMain:
                 ensemble_size=self._ensemble_size,
             )
         self.storage = fs
-        global_rng = RandomNumberGenerator()
-        self._shared_rng = RandomNumberGenerator(init_mode=RngInitModeEnum.INIT_DEFAULT)
-        random_seed = self.resConfig().random_seed
-        if random_seed:
-            global_rng.setState(format_seed(random_seed))
-            self._shared_rng.setState(format_seed(random_seed))
-            self._shared_rng.setState(_forward_rng(self._shared_rng))
-            self._shared_rng.setState(_forward_rng(self._shared_rng))
+
+        # Set up RNG
+        config_seed = self.resConfig().random_seed
+        if config_seed is None:
+            seed_seq = np.random.SeedSequence()
+            logger.info(
+                "To repeat this experiment, "
+                "add the following random seed to your config file:"
+            )
+            logger.info(f"RANDOM_SEED {seed_seq.entropy}")
         else:
-            enkf_main.log_seed(global_rng)
+            seed: Union[int, Sequence[int]]
+            try:
+                seed = int(config_seed)
+            except ValueError:
+                seed = [ord(x) for x in config_seed]
+            seed_seq = np.random.SeedSequence(seed)
+
+        self._shared_rng = np.random.default_rng(seed_seq)
+
         self.realizations = [
-            RandomNumberGenerator(init_mode=RngInitModeEnum.INIT_DEFAULT)
-            for _ in range(self.getEnsembleSize())
+            np.random.default_rng(seed)
+            for seed in seed_seq.spawn(self.getEnsembleSize())
         ]
-        for rng in self.realizations:
-            rng.setState(_forward_rng(global_rng))
 
     @property
     def update_configuration(self) -> UpdateConfiguration:
@@ -388,10 +387,8 @@ class EnKFMain:
 
                         if impl_type == ErtImplType.GEN_KW:
                             gen_kw_node = enkf_node.asGenKw()
-
-                            vals = self._sample_gen_kw(rng, len(gen_kw_node))
-
-                            if len(vals) > 0:
+                            if len(gen_kw_node) > 0:
+                                vals = rng.standard_normal(len(gen_kw_node))
                                 s = io.BytesIO()
                                 # The first element is time_t (64 bit integer), but
                                 # it is not used so we write 0 instead - for
@@ -399,7 +396,7 @@ class EnKFMain:
                                 s.write(struct.pack("Qi", 0, int(ErtImplType.GEN_KW)))
                                 s.write(vals.tobytes())
 
-                                enkf_fs.write_parameter(
+                                _clib.enkf_fs.write_parameter(
                                     run_context.sim_fs,
                                     config_node.getKey(),
                                     realization_nr,
@@ -407,8 +404,7 @@ class EnKFMain:
                                 )
 
                         else:
-                            enkf_state.state_initialize(
-                                self.realizations[realization_nr],
+                            _clib.enkf_state.state_initialize(
                                 enkf_node,
                                 run_context.sim_fs,
                                 realization_nr,
@@ -418,12 +414,7 @@ class EnKFMain:
                     state_map[realization_nr] = RealizationStateEnum.STATE_INITIALIZED
         run_context.sim_fs.sync()
 
-    def _sample_gen_kw(
-        self, rng: RandomNumberGenerator, nsamples: int
-    ) -> npt.NDArray[np.float_]:
-        return np.array([_clib.enkf_util.standard_normal(rng) for _ in range(nsamples)])
-
-    def rng(self) -> RandomNumberGenerator:
+    def rng(self) -> np.random.Generator:
         "Will return the random number generator used for updates."
         return self._shared_rng
 
@@ -492,7 +483,7 @@ class EnKFMain:
                 f"No such source case: {source_case} in {self.getCaseList()}"
             )
         source_case_fs = self.getFileSystem(source_case)
-        enkf_main.init_current_case_from_existing_custom(
+        _clib.enkf_main.init_current_case_from_existing_custom(
             self.ensembleConfig(),
             source_case_fs,
             self._fs,
@@ -550,7 +541,7 @@ class EnKFMain:
                         )
                     target.write_text(result)
 
-                enkf_main.init_active_run(
+                _clib.enkf_main.init_active_run(
                     model_config=self.resConfig().model_config,
                     ensemble_config=self.resConfig().ensemble_config,
                     env_varlist=self.resConfig().site_config._get_env_var_list(),

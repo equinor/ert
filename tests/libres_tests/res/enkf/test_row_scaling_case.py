@@ -236,16 +236,15 @@ def test_update_code2(row_scaling_example):
     and then afterwards with row scaling in update2. The row scaling function
     is designed so that it is possible to test the updated results.
     """
-    random_seed = "ABCDEFGHIJK0123456"
     main = row_scaling_example
     init_fs = init_data(main)
     update_fs1 = main.getEnkfFsManager().getFileSystem("target1")
+    random_state = main.rng().bit_generator.state
 
     # The first smoother update without row scaling
     es_update = ESUpdate(main)
     run_context = RunContext(init_fs, update_fs1)
-    rng = main.rng()
-    rng.setState(random_seed)
+    main.rng().bit_generator.state = random_state
     es_update.smootherUpdate(run_context)
 
     # Configure the local updates
@@ -269,7 +268,7 @@ def test_update_code2(row_scaling_example):
     update_fs2 = main.getEnkfFsManager().getFileSystem("target2")
     es_update = ESUpdate(main)
     run_context = RunContext(init_fs, update_fs2)
-    rng.setState(random_seed)
+    main.rng().bit_generator.state = random_state
     es_update.smootherUpdate(run_context)
 
     # Fetch the three values initial, update without row scaling and
@@ -298,16 +297,15 @@ def test_row_scaling_using_assign_vector(row_scaling_example):
     applied with the function row_scaling.assign_vector() instead of
     using a callable.
     """
-    random_seed = "ABCDEFGHIJK0123456"
     main = row_scaling_example
     init_fs = init_data(main)
     update_fs1 = main.getEnkfFsManager().getFileSystem("target1")
+    random_state = main.rng().bit_generator.state
 
     # The first smoother update without row scaling
     es_update = ESUpdate(main)
     run_context = RunContext(init_fs, update_fs1)
-    rng = main.rng()
-    rng.setState(random_seed)
+    main.rng().bit_generator.state = random_state
     es_update.smootherUpdate(run_context)
 
     # Configure the local updates
@@ -336,7 +334,7 @@ def test_row_scaling_using_assign_vector(row_scaling_example):
     update_fs2 = main.getEnkfFsManager().getFileSystem("target2")
     es_update = ESUpdate(main)
     run_context = RunContext(init_fs, update_fs2)
-    rng.setState(random_seed)
+    main.rng().bit_generator.state = random_state
     es_update.smootherUpdate(run_context)
 
     # Fetch the three values initial, update without row scaling and
@@ -488,15 +486,14 @@ def test_reuse_ALL_ACTIVE(row_scaling_example):
        an entry from the ALL_OBS set, and then that same entry is added to
        the next.
     """
-    random_seed = "ABCDEFGHIJK0123456"
     main = row_scaling_example
+    random_state = main.rng().bit_generator.state
     grid = main.eclConfig().grid
     init_fs = init_data(main)
     es_update = ESUpdate(main)
     update_fs1 = main.getEnkfFsManager().getFileSystem("target1")
     run_context = RunContext(init_fs, update_fs1)
-    rng = main.rng()
-    rng.setState(random_seed)
+    main.rng().bit_generator.state = random_state
     # Normal update without any local configuration
     es_update.smootherUpdate(run_context)
     update_step = [

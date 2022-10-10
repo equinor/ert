@@ -2,12 +2,12 @@
 #include <chrono>
 #include <ert/util/test_util.hpp>
 #include <iostream>
+#include <random>
 #include <stdexcept>
 #include <stdlib.h>
 #include <vector>
 
 #include <ert/enkf/row_scaling.hpp>
-#include <ert/util/rng.hpp>
 
 void test_create() {
     RowScaling row_scaling;
@@ -69,8 +69,10 @@ void test_multiply() {
     const int ens_size = 100;
     Eigen::MatrixXd A0 = Eigen::MatrixXd::Random(data_size, ens_size);
     Eigen::MatrixXd X0 = Eigen::MatrixXd::Zero(ens_size, ens_size);
-    rng_type *rng = rng_alloc(MZRAN, INIT_DEFAULT);
-    //matrix_random_init(A0, rng);
+    const auto random_double = [] {
+        static std::default_random_engine engine{std::random_device{}()};
+        return std::uniform_real_distribution<double>{}(engine);
+    };
 
     const int project_iens = 4;
     for (int col = 0; col < ens_size; col++)
@@ -119,7 +121,7 @@ void test_multiply() {
         test_assert_int_equal(row_scaling.size(), 2 * data_size + 1);
 
         for (int row = 0; row < data_size; row++)
-            row_data[row] = rng_get_double(rng);
+            row_data[row] = random_double();
 
         row_scaling.assign_vector(row_data.data(), row_data.size());
         test_assert_int_equal(row_scaling.size(), data_size);
@@ -136,7 +138,6 @@ void test_multiply() {
 
         test_multiply(row_scaling, A0, X0);
     }
-    rng_free(rng);
 }
 
 int main(int argc, char **argv) {

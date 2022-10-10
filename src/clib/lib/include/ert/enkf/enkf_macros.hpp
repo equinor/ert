@@ -7,7 +7,6 @@
 
 #include <ert/util/double_vector.hpp>
 #include <ert/util/int_vector.hpp>
-#include <ert/util/rng.hpp>
 
 #include <ert/ecl/ecl_file.hpp>
 #include <ert/ecl/ecl_sum.hpp>
@@ -202,12 +201,12 @@
 
 #define VOID_INITIALIZE(prefix)                                                \
     bool prefix##_initialize__(void *void_arg, int iens,                       \
-                               const char *init_file, rng_type *rng) {         \
+                               const char *init_file) {                        \
         prefix##_type *arg = prefix##_safe_cast(void_arg);                     \
-        return prefix##_initialize(arg, iens, init_file, rng);                 \
+        return prefix##_initialize(arg, iens, init_file);                      \
     }
 #define VOID_INITIALIZE_HEADER(prefix)                                         \
-    bool prefix##_initialize__(void *, int, const char *, rng_type *);
+    bool prefix##_initialize__(void *, int, const char *);
 
 #define VOID_GET_OBS(prefix)                                                   \
     void prefix##_get_observations__(const void *void_arg,                     \

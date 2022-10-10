@@ -8,7 +8,6 @@
 #include <ert/python.hpp>
 #include <ert/res_util/subst_list.hpp>
 #include <ert/util/hash.h>
-#include <ert/util/rng.h>
 
 #include <ert/ecl/ecl_kw.h>
 #include <ert/ecl/ecl_sum.h>
@@ -29,10 +28,10 @@
 
 static auto logger = ert::get_logger("enkf");
 
-void enkf_state_initialize(rng_type *rng, enkf_fs_type *fs,
-                           enkf_node_type *param_node, int iens) {
+void enkf_state_initialize(enkf_fs_type *fs, enkf_node_type *param_node,
+                           int iens) {
     node_id_type node_id = {.report_step = 0, .iens = iens};
-    if (enkf_node_initialize(param_node, iens, rng))
+    if (enkf_node_initialize(param_node, iens))
         enkf_node_store(param_node, fs, node_id);
 }
 
@@ -345,10 +344,8 @@ bool enkf_state_complete_forward_model_EXIT_handler__(run_arg_type *run_arg) {
 
 ERT_CLIB_SUBMODULE("enkf_state", m) {
     m.def("state_initialize",
-          [](Cwrap<rng_type> rng, Cwrap<enkf_node_type> param_node,
-             Cwrap<enkf_fs_type> fs, int iens) {
-              return enkf_state_initialize(rng, fs, param_node, iens);
-          });
+          [](Cwrap<enkf_node_type> param_node, Cwrap<enkf_fs_type> fs,
+             int iens) { return enkf_state_initialize(fs, param_node, iens); });
 
     m.def("internalize_results", [](Cwrap<ensemble_config_type> ens_config,
                                     Cwrap<model_config_type> model_config,
