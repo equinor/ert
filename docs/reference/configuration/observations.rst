@@ -236,9 +236,7 @@ In its simplest form, a history observation is created as follows::
  HISTORY_OBSERVATION WOPR:P1;
 
 This will condition on WOPR in well P1 using a default observation
-error. The default observation error is a relative error of 10% to the
-measurement with a minimum error of 0.10. See below on how explicitly
-set the error.
+error.
 
 In general, to condition on variable VAR in well or group WGNAME, one
 uses::
@@ -258,8 +256,37 @@ field, one would add the following to the observation configuration:
 
  HISTORY_OBSERVATION GOPR:FIELD;
 
-By default, the observation error is set to 10% of the observed value,
-with a minimum of 0.10. It can be changed as follows:
+The default observation error is the sum between a relative error of 10% to
+the measurement and a minimum error of 0.10, which is equivalent to:
+
+.. code-block:: none
+
+ HISTORY_OBSERVATION GWIR:FIELD
+ {
+    ERROR       = 0.10;
+    ERROR_MODE  = RELMIN;
+    ERROR_MIN   = 0.10;
+ };
+
+The item ERROR_MODE can take three different values: ABS, REL or RELMIN.
+As stated above, the default error mode is RELMIN.
+
+ERT will crash if the total error associated with an observation is zero.
+A zero error is incompatible with the logic used in the history matching
+process. Therefore, setting a minimum error is particularly important for
+observations that could happen to be zero. For example, if an observation is the
+water production rate and, at a given time, its value is zero, the relative
+error will be zero, and the only error computed is the minimum error.
+
+The error explicitizes the degree of uncertainty associated to the given 
+observation. It has an inverse effect on the weight that an observation 
+will have during the history matching process: the higher the error
+specified for an observation, the smaller will be its weight during 
+the updating process. Therefore, it is important to have consistency
+between setting up the errors and the degree of uncertainty in an
+observation.
+
+The default error mode and values can be changed as follows:
 
 .. code-block:: none
 
@@ -269,12 +296,13 @@ with a minimum of 0.10. It can be changed as follows:
     ERROR_MODE  = ABS;
  };
 
-This will set the observation error to 1000 for all observations of
-GOPR:FIELD. Note that both the items ERROR and ERROR_MODE as well as
+This will set the observation error to an absolute value of 1000 
+for all observations of GOPR:FIELD. 
+
+Note that both the items ERROR and ERROR_MODE as well as
 the whole definition shall end with a semi-colon.
 
-The item ERROR_MODE can take three different values: ABS, REL or
-RELMIN. If set to REL, all observation errors will be set to the
+If ERROR_MODE is set to REL, all observation errors will be set to the
 observed values multiplied by ERROR. Thus, the following will
 condition on water injection rate for the whole field with 20%
 observation uncertainity:
@@ -288,7 +316,8 @@ observation uncertainity:
  };
 
 If you do not want the observation error to drop below a given
-threshold, say 100, you can use RELMIN and the keyword ERROR_MIN:
+threshold, say 100, you can set ERROR_MODE to RELMIN and the 
+keyword ERROR_MIN:
 
 .. code-block:: none
 
@@ -298,6 +327,9 @@ threshold, say 100, you can use RELMIN and the keyword ERROR_MIN:
     ERROR_MODE  = RELMIN;
     ERROR_MIN   = 100;
  };
+
+This error mode is also relevant for observations that may be zero,
+for example water production rates.
 
 Note that the configuration parser does not threat carriage return
 different from space. Thus, the following statement is equivalent to
