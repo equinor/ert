@@ -69,10 +69,6 @@ enkf_plot_data_iget(const enkf_plot_data_type *plot_data, int index) {
     return plot_data->ensemble[index];
 }
 
-int enkf_plot_data_get_size(const enkf_plot_data_type *plot_data) {
-    return plot_data->size;
-}
-
 void enkf_plot_data_load(enkf_plot_data_type *plot_data, enkf_fs_type *fs,
                          const char *index_key) {
     auto &state_map = enkf_fs_get_state_map(fs);

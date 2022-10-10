@@ -29,9 +29,6 @@ enkf_plot_tvector_size(const enkf_plot_tvector_type *plot_tvector);
 extern "C" double
 enkf_plot_tvector_iget_value(const enkf_plot_tvector_type *plot_tvector,
                              int index);
-extern "C" time_t
-enkf_plot_tvector_iget_time(const enkf_plot_tvector_type *plot_tvector,
-                            int index);
 extern "C" bool
 enkf_plot_tvector_iget_active(const enkf_plot_tvector_type *plot_tvector,
                               int index);
