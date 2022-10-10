@@ -272,7 +272,8 @@ def test_large_config(setup_case):
         == prog_model_config.get_history_source()
     )
     assert loaded_model_config.obs_config_file == prog_model_config.obs_config_file
-    assert loaded_res_config.site_config == prog_res_config.site_config
+    assert loaded_res_config.installed_jobs == prog_res_config.installed_jobs
+    assert loaded_res_config.env_vars == prog_res_config.env_vars
     assert (
         loaded_res_config.forward_model.job_name_list()
         == prog_res_config.forward_model.job_name_list()

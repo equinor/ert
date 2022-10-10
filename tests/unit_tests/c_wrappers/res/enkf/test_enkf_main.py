@@ -17,7 +17,6 @@ from ert._c_wrappers.enkf import (
     ObsVector,
     ResConfig,
     RunArg,
-    SiteConfig,
     TimeMap,
 )
 from ert._c_wrappers.enkf.config import EnkfConfigNode
@@ -269,7 +268,6 @@ def test_config(minimum_case):
     assert isinstance(minimum_case.ensembleConfig(), EnsembleConfig)
     assert isinstance(minimum_case.analysisConfig(), AnalysisConfig)
     assert isinstance(minimum_case.getModelConfig(), ModelConfig)
-    assert isinstance(minimum_case.siteConfig(), SiteConfig)
 
     assert isinstance(minimum_case.getObservations(), EnkfObs)
     assert isinstance(minimum_case.getEnkfFsManager().getCurrentFileSystem(), EnkfFs)

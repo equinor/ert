@@ -14,10 +14,9 @@ from ert._c_wrappers.enkf import (
     AnalysisConfig,
     ConfigKeys,
     GenDataFileType,
+    HookRuntime,
     ResConfig,
-    SiteConfig,
 )
-from ert._c_wrappers.enkf.enums import HookRuntime
 from ert._c_wrappers.enkf.res_config import parse_signature_job, site_config_location
 from ert._c_wrappers.job_queue import QueueDriverEnum
 from ert._c_wrappers.sched import HistorySourceEnum
@@ -185,9 +184,6 @@ def test_init(minimum_case):
     # assert  clib_getenv("DATA_ROOT")  == "NEW"
 
     assert res_config is not None
-
-    assert res_config.site_config is not None
-    assert isinstance(res_config.site_config, SiteConfig)
 
     assert res_config.analysis_config is not None
     assert isinstance(res_config.analysis_config, AnalysisConfig)
@@ -515,7 +511,8 @@ def test_res_config_dict_constructor(setup_case):
     res_config_dict = ResConfig(config_dict=config_data_new)
 
     assert res_config_file.substitution_list == res_config_dict.substitution_list
-    assert res_config_file.site_config == res_config_dict.site_config
+    assert res_config_file.installed_jobs == res_config_dict.installed_jobs
+    assert res_config_file.env_vars == res_config_dict.env_vars
     assert res_config_file.random_seed == res_config_dict.random_seed
     assert res_config_file.ert_workflow_list == res_config_dict.ert_workflow_list
     assert res_config_file.ert_templates == res_config_dict.ert_templates

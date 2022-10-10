@@ -11,7 +11,4 @@ from .config_dict_generator import config_dicts, to_config_file
 def test_site_config_dict_same_as_from_file(config_dict):
     filename = "config.ert"
     to_config_file(filename, config_dict)
-    assert (
-        ResConfig(config_dict=config_dict).site_config
-        == ResConfig(filename).site_config
-    )
+    assert ResConfig(config_dict=config_dict).env_vars == ResConfig(filename).env_vars
