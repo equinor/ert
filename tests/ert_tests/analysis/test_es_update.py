@@ -6,9 +6,8 @@ import numpy as np
 import pytest
 from iterative_ensemble_smoother import IterativeEnsembleSmoother
 
+from ert import LibresFacade
 from ert._c_wrappers.enkf import EnKFMain, EnkfNode, NodeId, ResConfig, RunContext
-from ert._c_wrappers.enkf.enkf_fs import EnkfFs
-from ert._c_wrappers.enkf.export import GenKwCollector
 from ert.analysis import ErtAnalysisError, ESUpdate
 from ert.analysis._es_update import _create_temporary_parameter_storage
 from ert.shared.cli import ENSEMBLE_EXPERIMENT_MODE, ENSEMBLE_SMOOTHER_MODE
@@ -195,13 +194,9 @@ def test_that_posterior_has_lower_variance_than_prior(copy_case):
     )
 
     run_cli(parsed)
-
-    res_config = ResConfig("poly.ert")
-
-    ert = EnKFMain(res_config)
-
-    df_default = GenKwCollector.loadAllGenKwData(ert, "default")
-    df_target = GenKwCollector.loadAllGenKwData(ert, "target")
+    facade = LibresFacade.from_config_file("poly.ert")
+    df_default = facade.load_all_gen_kw_data("default")
+    df_target = facade.load_all_gen_kw_data("target")
 
     # We expect that ERT's update step lowers the
     # generalized variance for the parameters.

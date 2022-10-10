@@ -1,7 +1,7 @@
 from typing import Iterator, List, Optional, Union
 
 from cwrap import BaseCClass
-from ecl.util.util import StringList
+from ecl.util.util import CTime, StringList
 
 from ert._c_wrappers import ResPrototype
 from ert._c_wrappers.enkf.enums import EnkfObservationImplementationType
@@ -106,8 +106,7 @@ class EnkfObs(BaseCClass):
     def hasKey(self, key) -> bool:
         return key in self
 
-    def getObservationTime(self, index):
-        """@rtype: CTime"""
+    def getObservationTime(self, index: int) -> CTime:
         return self._iget_obs_time(index)
 
     def addObservationVector(self, observation_vector):

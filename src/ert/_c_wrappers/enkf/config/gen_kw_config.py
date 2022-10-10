@@ -53,11 +53,9 @@ class GenKwConfig(BaseCClass):
         "double_vector_ref gen_kw_config_iget_function_parameter_values(gen_kw_config, int)"  # noqa
     )
 
-    def __init__(self, key, template_file, parameter_file, tag_fmt="<%s>"):
-        """
-        @type key: str
-        @type tag_fmt: str
-        """
+    def __init__(
+        self, key: str, template_file: str, parameter_file: str, tag_fmt: str = "<%s>"
+    ):
         if not os.path.isfile(template_file):
             raise IOError(f"No such file:{template_file}")
 
@@ -85,11 +83,9 @@ class GenKwConfig(BaseCClass):
         return None if path is None else os.path.abspath(path)
 
     def getKeyWords(self) -> StringList:
-        """@rtype: StringList"""
         return self._alloc_name_list()
 
-    def shouldUseLogScale(self, index):
-        """@rtype: bool"""
+    def shouldUseLogScale(self, index: int) -> bool:
         return self._should_use_log_scale(index)
 
     def free(self):
@@ -101,8 +97,7 @@ class GenKwConfig(BaseCClass):
             f'tag_fmt = "{self.tag_fmt}") at 0x{self._address():x}'
         )
 
-    def getKey(self):
-        """@rtype: str"""
+    def getKey(self) -> str:
         return self._get_key()
 
     @property
@@ -112,8 +107,7 @@ class GenKwConfig(BaseCClass):
     def __len__(self):
         return self._size()
 
-    def __getitem__(self, index):
-        """@rtype: str"""
+    def __getitem__(self, index: int) -> str:
         return self._iget_name(index)
 
     def __iter__(self):
@@ -125,8 +119,7 @@ class GenKwConfig(BaseCClass):
     def __ne__(self, other):
         return not self == other
 
-    def __eq__(self, other):
-        """@rtype: bool"""
+    def __eq__(self, other) -> bool:
         if self.getTemplateFile() != other.getTemplateFile():
             return False
 
@@ -139,18 +132,6 @@ class GenKwConfig(BaseCClass):
         return True
 
     def get_priors(self) -> List["PriorDict"]:
-        """
-        @rtype: list
-        [
-            {
-                "key" : "<key>",
-                "function" : "<function_type>"
-                "parameters" : {
-                    "<name>" : "<value>"
-                }
-            }
-        ]
-        """
         priors: List["PriorDict"] = []
         keys = self.getKeyWords()
         for i, key in enumerate(keys):

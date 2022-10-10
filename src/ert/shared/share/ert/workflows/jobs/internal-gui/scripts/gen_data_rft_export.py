@@ -5,9 +5,9 @@ import re
 import numpy
 import pandas
 
+from ert import LibresFacade
 from ert._c_wrappers.enkf import RealizationStateEnum
 from ert._c_wrappers.enkf.enums import EnkfObservationImplementationType
-from ert._c_wrappers.enkf.export import ArgLoader, GenDataCollector
 from ert._c_wrappers.job_queue import CancelPluginException, ErtPlugin
 from ert.gui.ertwidgets.customdialog import CustomDialog
 from ert.gui.ertwidgets.listeditbox import ListEditBox
@@ -18,6 +18,41 @@ try:
     from PyQt4.QtGui import QCheckBox
 except ImportError:
     from PyQt5.QtWidgets import QCheckBox
+
+
+def load_args(filename, column_names=None):
+    rows = 0
+    columns = 0
+    with open(filename, "r") as fileH:
+        for line in fileH.readlines():
+            rows += 1
+            columns = max(columns, len(line.split()))
+
+    if column_names is not None:
+        if len(column_names) <= columns:
+            columns = len(column_names)
+        else:
+            raise ValueError("To many coloumns in input")
+
+    data = numpy.empty(shape=(rows, columns), dtype=numpy.float64)
+    data.fill(numpy.nan)
+
+    row = 0
+    with open(filename) as fileH:
+        for line in fileH.readlines():
+            tmp = line.split()
+            print(tmp)
+            for column in range(columns):
+                data[row][column] = float(tmp[column])
+            row += 1
+
+    if column_names is None:
+        column_names = []
+        for column in range(columns):
+            column_names.append(f"Column{column:d}")
+
+    data_frame = pandas.DataFrame(data=data, columns=column_names)
+    return data_frame
 
 
 class GenDataRFTCSVExportJob(ErtPlugin):
@@ -94,6 +129,7 @@ class GenDataRFTCSVExportJob(ErtPlugin):
 
         """
 
+        facade = LibresFacade(self.ert())
         wells = set()
         obs_pattern = "RFT_*"
         enkf_obs = self.ert().getObservations()
@@ -132,10 +168,8 @@ class GenDataRFTCSVExportJob(ErtPlugin):
                 report_step = obs_vector.activeStep()
                 obs_node = obs_vector.getNode(report_step)
 
-                rft_data = GenDataCollector.loadGenData(
-                    self.ert(), case, data_key, report_step
-                )
-                fs = self.ert().getEnkfFsManager().getFileSystem(case)
+                rft_data = facade.load_gen_data(case, data_key, report_step)
+                fs = self.ert().getFileSystem(case)
                 realizations = fs.realizationList(RealizationStateEnum.STATE_HAS_DATA)
 
                 # Trajectory
@@ -143,7 +177,7 @@ class GenDataRFTCSVExportJob(ErtPlugin):
                 if not os.path.isfile(trajectory_file):
                     trajectory_file = os.path.join(trajectory_path, f"{well}_R.txt")
 
-                arg = ArgLoader.load(
+                arg = load_args(
                     trajectory_file, column_names=["utm_x", "utm_y", "md", "tvd"]
                 )
                 tvd_arg = arg["tvd"]
