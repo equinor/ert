@@ -1,7 +1,6 @@
-from typing import Dict
+from typing import Dict, Iterator, List
 
 from cwrap import BaseCClass
-from ecl.util.util import StringList
 
 from ert._c_wrappers import ResPrototype
 from ert._c_wrappers.job_queue import ExtJob
@@ -27,38 +26,35 @@ class ExtJoblist(BaseCClass):
             job_name: self.get_job(job_name) for job_name in self.getAvailableJobNames()
         }
 
-    def __len__(self):
+    def __len__(self) -> int:
         return self._size()
 
-    def __contains__(self, job):
-        return self._has_job(job)
+    def __contains__(self, job_name: str) -> bool:
+        return self._has_job(job_name)
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[ExtJob]:
         names = self.getAvailableJobNames()
         for job in names:
             yield self[job]
 
-    def __getitem__(self, job):
-        if job in self:
-            return self._get_job(job).setParent(self)
+    def __getitem__(self, job_name: str) -> ExtJob:
+        if job_name in self:
+            return self._get_job(job_name).setParent(self)
+        raise IndexError(f"Unknown job {job_name}")
 
-        return None
-
-    def getAvailableJobNames(self) -> StringList:
-        """@rtype: StringList"""
+    def getAvailableJobNames(self) -> List[str]:
         return [str(x) for x in self._alloc_list().setParent(self)]
 
-    def del_job(self, job):
-        return self._del_job(job)
+    def del_job(self, job_name: str):
+        return self._del_job(job_name)
 
-    def has_job(self, job):
-        return job in self
+    def has_job(self, job_name: str) -> bool:
+        return job_name in self
 
-    def get_job(self, job) -> ExtJob:
-        """@rtype: ExtJob"""
-        return self[job]
+    def get_job(self, job_name: str) -> ExtJob:
+        return self[job_name]
 
-    def add_job(self, job_name, new_job):
+    def add_job(self, job_name: str, new_job: ExtJob):
         if not new_job.isReference():
             new_job.convertToCReference(self)
 
@@ -67,5 +63,8 @@ class ExtJoblist(BaseCClass):
     def free(self):
         self._free()
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return self._create_repr(f"size={len(self)}, joblist={self.get_jobs()}")
+
+    def __eq__(self, other: "ExtJoblist") -> bool:
+        return self.get_jobs() == other.get_jobs()
