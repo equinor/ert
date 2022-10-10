@@ -1,3 +1,5 @@
+from typing import Dict
+
 from cwrap import BaseCClass
 from ecl.util.util import StringList
 
@@ -14,18 +16,16 @@ class ExtJoblist(BaseCClass):
     _del_job = ResPrototype("int ext_joblist_del_job(ext_joblist, char*)")
     _has_job = ResPrototype("int ext_joblist_has_job(ext_joblist, char*)")
     _add_job = ResPrototype("void ext_joblist_add_job(ext_joblist, char*, ext_job)")
-    _get_jobs = ResPrototype("hash_ref ext_joblist_get_jobs(ext_joblist)")
     _size = ResPrototype("int ext_joblist_get_size(ext_joblist)")
 
     def __init__(self):
         c_ptr = self._alloc()
         super().__init__(c_ptr)
 
-    def get_jobs(self):
-        """@rtype: Hash"""
-        jobs = self._get_jobs()
-        jobs.setParent(self)
-        return jobs
+    def get_jobs(self) -> Dict[str, ExtJob]:
+        return {
+            job_name: self.get_job(job_name) for job_name in self.getAvailableJobNames()
+        }
 
     def __len__(self):
         return self._size()
