@@ -300,8 +300,6 @@ enkf_state_internalize_results(ensemble_config_type *ens_config,
 
     enkf_fs_type *sim_fs = run_arg_get_sim_fs(run_arg);
     int last_report = time_map_get_last_step(enkf_fs_get_time_map(sim_fs));
-    // TODO investigate usage of last history: is last_report < 0 possible? is
-    // this code path still traversed?
     if (last_report < 0)
         last_report = model_config_get_last_history_restart(model_config);
     auto result = enkf_state_internalize_GEN_DATA(ens_config, run_arg,
