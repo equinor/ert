@@ -99,9 +99,11 @@ class SiteConfig:
         return SiteConfig(ext_job_list, env_vars)
 
     @classmethod
-    def from_config_dict(cls, config_dict, site_config_content: ConfigContent):
+    def from_config_dict(cls, config_dict, site_config_content: ConfigContent = None):
         license_root_path = None
-        if site_config_content.hasKey(ConfigKeys.LICENSE_PATH):
+        if site_config_content is not None and site_config_content.hasKey(
+            ConfigKeys.LICENSE_PATH
+        ):
             license_root_path = site_config_content.getValue(ConfigKeys.LICENSE_PATH)
         if ConfigKeys.LICENSE_PATH in config_dict:
             user_license_root_path = config_dict.get(ConfigKeys.LICENSE_PATH)
@@ -165,8 +167,9 @@ class SiteConfig:
         for elem in dict_paths:
             env_vars.update_path(elem[ConfigKeys.NAME], elem[ConfigKeys.VALUE])
 
-        SiteConfig._add_config_content(
-            license_root_path, site_config_content, ext_job_list, env_vars
-        )
+        if site_config_content is not None:
+            SiteConfig._add_config_content(
+                license_root_path, site_config_content, ext_job_list, env_vars
+            )
 
         return SiteConfig(ext_job_list, env_vars)
