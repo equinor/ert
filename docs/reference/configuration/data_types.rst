@@ -544,7 +544,7 @@ multiple vectors:
 
    SUMMARY  WWCT:OP_1  WWCT:OP_2  WWCT:OP_3
    SUMMARY  FOPT FOPR  FWPR
-   SUMAMRY  GGPR:NORTH GOPR:SOUTH
+   SUMMARY  GGPR:NORTH GOPR:SOUTH
 
 If you in the observation use the ``SUMMARY_OBSERVATION`` or
 ``HISTORY_OBSERVATION`` keyword to compare simulatons and observations for a
