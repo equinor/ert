@@ -11,7 +11,7 @@ from ert._c_wrappers import ResPrototype
 from ert._c_wrappers.config import ConfigContent
 from ert._c_wrappers.enkf.config import EnkfConfigNode
 from ert._c_wrappers.enkf.config_keys import ConfigKeys
-from ert._c_wrappers.enkf.enums import EnkfVarType, ErtImplType
+from ert._c_wrappers.enkf.enums import EnkfVarType, ErtImplType, GenDataFileType
 
 
 def _get_abs_path(file):
