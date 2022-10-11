@@ -285,3 +285,6 @@ class EnsembleConfig(BaseCClass):
 
     def __ne__(self, other):
         return not self == other
+
+    def have_forward_init(self) -> bool:
+        return _clib.ensemble_config.have_forward_init(self)

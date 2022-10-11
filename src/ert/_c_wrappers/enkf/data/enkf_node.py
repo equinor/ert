@@ -3,6 +3,7 @@ from typing import TYPE_CHECKING
 
 from cwrap import BaseCClass
 
+from ert import _clib
 from ert._c_wrappers import ResPrototype
 from ert._c_wrappers.enkf.data.ext_param import ExtParam
 from ert._c_wrappers.enkf.data.field import Field
@@ -69,7 +70,7 @@ class EnkfNode(BaseCClass):
         else:
             raise NotImplementedError("The export method is only implemented for field")
 
-    def has_data(self, fs, node_id):
+    def has_data(self, fs: EnkfFs, node_id: NodeId) -> bool:
         return self._has_data(fs, node_id)
 
     def valuePointer(self):
@@ -137,3 +138,6 @@ class EnkfNode(BaseCClass):
 
     def __repr__(self):
         return f'EnkfNode(name = "{self.name()}") {self._ad_str()}'
+
+    def forward_init(self, run_path: str, iens: int) -> bool:
+        return _clib.enkf_node.forward_init(self, run_path, iens)

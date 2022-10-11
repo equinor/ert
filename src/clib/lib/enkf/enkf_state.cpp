@@ -16,6 +16,10 @@
 #include <ert/job_queue/environment_varlist.hpp>
 #include <ert/job_queue/forward_model.hpp>
 
+#include "ert/enkf/ensemble_config.hpp"
+#include "ert/enkf/model_config.hpp"
+#include "ert/enkf/run_arg_type.hpp"
+
 #include <ert/enkf/enkf_defaults.hpp>
 #include <ert/enkf/enkf_node.hpp>
 #include <ert/enkf/enkf_state.hpp>
@@ -306,7 +310,7 @@ enkf_state_internalize_results(ensemble_config_type *ens_config,
                                                   model_config, last_report);
     if (result == LOAD_FAILURE)
         return {LOAD_FAILURE, "Failed to internalize GEN_DATA"};
-    return {LOAD_SUCCESSFUL, ""};
+    return {LOAD_SUCCESSFUL, "Results loaded successfully."};
 }
 
 std::pair<fw_load_status, std::string>
@@ -345,4 +349,11 @@ ERT_CLIB_SUBMODULE("enkf_state", m) {
              Cwrap<enkf_fs_type> fs, int iens) {
               return enkf_state_initialize(rng, fs, param_node, iens);
           });
+
+    m.def("internalize_results", [](Cwrap<ensemble_config_type> ens_config,
+                                    Cwrap<model_config_type> model_config,
+                                    Cwrap<run_arg_type> run_arg) {
+        return enkf_state_internalize_results(ens_config, model_config,
+                                              run_arg);
+    });
 }

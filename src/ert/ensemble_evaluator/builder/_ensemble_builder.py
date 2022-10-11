@@ -3,12 +3,13 @@ import logging
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
 
-from ert import _clib
 from ert._c_wrappers.enkf import QueueConfig
 from ert._c_wrappers.enkf.analysis_config import AnalysisConfig
 from ert._c_wrappers.enkf.ert_run_context import RunContext
+from ert._c_wrappers.enkf.model_callbacks import forward_model_exit
 from ert._c_wrappers.enkf.res_config import ResConfig
 from ert._c_wrappers.job_queue.forward_model import ForwardModel
+from ert.ensemble_evaluator.callbacks import _forward_model_ok
 
 from ._ensemble import _Ensemble
 from ._io_ import _DummyIOBuilder
@@ -22,6 +23,7 @@ from ._template import _SOURCE_TEMPLATE_ENS
 
 if TYPE_CHECKING:
     import ert
+    from ert._c_wrappers.enkf import EclConfig, EnsembleConfig, ModelConfig, RunArg
 
 logger = logging.getLogger(__name__)
 
@@ -146,9 +148,9 @@ class _EnsembleBuilder:  # pylint: disable=too-many-instance-attributes
                         res_config.model_config,
                     )
                 ).set_done_callback(
-                    lambda x: _clib.model_callbacks.forward_model_ok(*x)  # type: ignore
+                    lambda x: _forward_model_ok(*x)
                 ).set_exit_callback(
-                    _clib.model_callbacks.forward_model_exit
+                    forward_model_exit
                 ).set_num_cpu(
                     num_cpu
                 ).set_run_path(

@@ -1,3 +1,4 @@
+#include "ert/python.hpp"
 #include <filesystem>
 #include <map>
 #include <string>
@@ -27,6 +28,7 @@
 #include <ert/enkf/enkf_obs.hpp>
 #include <ert/enkf/ensemble_config.hpp>
 #include <ert/enkf/gen_kw_config.hpp>
+#include <ert/enkf/run_arg.hpp>
 #include <ert/logging.hpp>
 
 namespace fs = std::filesystem;
@@ -867,4 +869,10 @@ ensemble_config_forward_init(const ensemble_config_type *ens_config,
         }
     }
     return {result, error_msg};
+}
+
+ERT_CLIB_SUBMODULE("ensemble_config", m) {
+    m.def("have_forward_init", [](Cwrap<ensemble_config_type> self) {
+        return self->have_forward_init;
+    });
 }

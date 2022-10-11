@@ -158,7 +158,7 @@ class EnkfConfigNode(BaseCClass):
     def getPointerReference(self):
         return self._get_ref()
 
-    def getUseForwardInit(self):
+    def getUseForwardInit(self) -> bool:
         return self._use_forward_init()
 
     def get_min_std_file(self):
@@ -182,7 +182,7 @@ class EnkfConfigNode(BaseCClass):
     def get_enkf_infile(self):
         return self._get_enkf_infile()
 
-    def get_init_file_fmt(self):
+    def get_init_file_fmt(self) -> str:
         return self._get_init_file_fmt()
 
     def getObservationKeys(self) -> StringList:
