@@ -75,6 +75,8 @@ class EnsembleConfig(BaseCClass):
                 "object with multiple config objects"
             )
 
+        # insert init of grid here?
+
         c_ptr = None
         if config_dict is not None:
             c_ptr = self._alloc_full(config_dict.get(ConfigKeys.GEN_KW_TAG_FORMAT))
