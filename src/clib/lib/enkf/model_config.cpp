@@ -171,16 +171,6 @@ const char *model_config_get_enspath(const model_config_type *model_config) {
     return model_config->enspath;
 }
 
-const ecl_sum_type *
-model_config_get_refcase(const model_config_type *model_config) {
-    return model_config->refcase;
-}
-
-void model_config_set_refcase(model_config_type *model_config,
-                              const ecl_sum_type *refcase) {
-    model_config->refcase = refcase;
-}
-
 history_source_type
 model_config_get_history_source(const model_config_type *model_config) {
     return model_config->history;
@@ -348,7 +338,7 @@ void model_config_init(model_config_type *model_config,
     model_config->forward_model = forward_model_alloc(joblist);
     const subst_list_type *define_list =
         config_content_get_const_define_list(config);
-    model_config_set_refcase(model_config, refcase);
+    model_config->refcase = refcase;
     model_config_set_default_data_root(model_config, data_root);
 
     if (config_content_has_item(config, NUM_REALIZATIONS_KEY))
