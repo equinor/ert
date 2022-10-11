@@ -44,7 +44,6 @@ run_ert_clib_tests(){
 start_tests () {
     export NO_PROXY=localhost,127.0.0.1
     export ERT_SHOW_BACKTRACE=1
-    ln -s /project/res-testdata/ErtTestData ${CI_TEST_ROOT}/test-data/Equinor
 
     pushd ${CI_TEST_ROOT}
     set +e
