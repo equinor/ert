@@ -26,12 +26,6 @@
 #define NULL_LSF_SERVER "NULL"
 #define DEFAULT_SUBMIT_SLEEP "0"
 
-typedef enum {
-    LSF_SUBMIT_INVALID = 0,
-    LSF_SUBMIT_LOCAL_SHELL = 2,
-    LSF_SUBMIT_REMOTE_SHELL = 3
-} lsf_submit_method_enum;
-
 typedef struct lsf_driver_struct lsf_driver_type;
 typedef struct lsf_job_struct lsf_job_type;
 
@@ -61,8 +55,6 @@ void lsf_driver_set_bjobs_refresh_interval(lsf_driver_type *driver,
 
 void lsf_driver_add_exclude_hosts(lsf_driver_type *driver,
                                   const char *excluded);
-lsf_submit_method_enum
-lsf_driver_get_submit_method(const lsf_driver_type *driver);
 
 const void *lsf_driver_get_option(const void *__driver, const char *option_key);
 bool lsf_driver_set_option(void *__driver, const char *option_key,

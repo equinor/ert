@@ -112,7 +112,7 @@ struct lsf_driver_struct {
     char *project_code;
     pthread_mutex_t submit_lock;
 
-    lsf_submit_method_enum submit_method;
+    bool remote;
     int submit_sleep;
 
     int error_count;
@@ -206,15 +206,16 @@ char *lsf_job_write_bjobs_to_file(const char *bjobs_cmd,
     char *tmp_file =
         (char *)util_alloc_tmp_file("/tmp", "ert_job_exec_host", true);
 
-    if (driver->submit_method == LSF_SUBMIT_REMOTE_SHELL) {
+    if (driver->remote) {
         char **argv = (char **)util_calloc(2, sizeof *argv);
         argv[0] = driver->remote_lsf_server;
         argv[1] = cmd;
         util_spawn_blocking(driver->rsh_cmd, 2, (const char **)argv, tmp_file,
                             NULL);
         free(argv);
-    } else if (driver->submit_method == LSF_SUBMIT_LOCAL_SHELL)
+    } else {
         util_spawn_blocking(cmd, 0, NULL, tmp_file, NULL);
+    }
 
     free(cmd);
 
@@ -297,7 +298,7 @@ static char *alloc_quoted_resource_string(const lsf_driver_type *driver) {
 
     char *quoted_resource_request = NULL;
     if (req) {
-        if (driver->submit_method == LSF_SUBMIT_REMOTE_SHELL)
+        if (driver->remote)
             quoted_resource_request = util_alloc_sprintf("\"%s\"", req);
         else
             quoted_resource_request = util_alloc_string_copy(req);
@@ -317,7 +318,7 @@ stringlist_type *lsf_driver_alloc_cmd(lsf_driver_type *driver,
 
     char *quoted_resource_request = alloc_quoted_resource_string(driver);
 
-    if (driver->submit_method == LSF_SUBMIT_REMOTE_SHELL)
+    if (driver->remote)
         stringlist_append_copy(argv, driver->bsub_cmd);
 
     stringlist_append_copy(argv, "-o");
@@ -368,7 +369,7 @@ static int lsf_driver_submit_shell_job(lsf_driver_type *driver,
             lsf_driver_alloc_cmd(driver, lsf_stdout, job_name, submit_cmd,
                                  num_cpu, job_argc, job_argv);
 
-        if (driver->submit_method == LSF_SUBMIT_REMOTE_SHELL) {
+        if (driver->remote) {
             char **argv = (char **)util_calloc(2, sizeof *argv);
             argv[0] = driver->remote_lsf_server;
             argv[1] = stringlist_alloc_joined_string(remote_argv, " ");
@@ -384,7 +385,7 @@ static int lsf_driver_submit_shell_job(lsf_driver_type *driver,
 
             free(argv[1]);
             free(argv);
-        } else if (driver->submit_method == LSF_SUBMIT_LOCAL_SHELL) {
+        } else {
             char **argv = stringlist_alloc_char_ref(remote_argv);
 
             if (driver->debug_output) {
@@ -422,7 +423,7 @@ static int lsf_driver_get_status__(lsf_driver_type *driver, const char *status,
 static void lsf_driver_update_bjobs_table(lsf_driver_type *driver) {
     char *tmp_file = (char *)util_alloc_tmp_file("/tmp", "enkf-bjobs", true);
 
-    if (driver->submit_method == LSF_SUBMIT_REMOTE_SHELL) {
+    if (driver->remote) {
         char **argv = (char **)util_calloc(2, sizeof *argv);
         argv[0] = driver->remote_lsf_server;
         argv[1] = util_alloc_sprintf("%s -a", driver->bjobs_cmd);
@@ -430,7 +431,7 @@ static void lsf_driver_update_bjobs_table(lsf_driver_type *driver) {
                             NULL);
         free(argv[1]);
         free(argv);
-    } else if (driver->submit_method == LSF_SUBMIT_LOCAL_SHELL) {
+    } else {
         const char **argv = (const char **)util_calloc(1, sizeof *argv);
         argv[0] = "-a";
         util_spawn_blocking(driver->bjobs_cmd, 1, (const char **)argv, tmp_file,
@@ -475,7 +476,7 @@ static bool lsf_driver_run_bhist(lsf_driver_type *driver, lsf_job_type *job,
     bool bhist_ok = true;
     char *output_file = (char *)util_alloc_tmp_file("/tmp", "bhist", true);
 
-    if (driver->submit_method == LSF_SUBMIT_REMOTE_SHELL) {
+    if (driver->remote) {
         char **argv = (char **)util_calloc(2, sizeof *argv);
         argv[0] = driver->remote_lsf_server;
         argv[1] =
@@ -484,7 +485,7 @@ static bool lsf_driver_run_bhist(lsf_driver_type *driver, lsf_job_type *job,
                             output_file, NULL);
         free(argv[1]);
         free(argv);
-    } else if (driver->submit_method == LSF_SUBMIT_LOCAL_SHELL) {
+    } else {
         char **argv = (char **)util_calloc(1, sizeof *argv);
         argv[0] = job->lsf_jobnr_char;
         util_spawn_blocking(driver->bjobs_cmd, 2, (const char **)argv,
@@ -736,7 +737,7 @@ void lsf_driver_kill_job(void *__driver, void *__job) {
     lsf_driver_type *driver = lsf_driver_safe_cast(__driver);
     lsf_job_type *job = lsf_job_safe_cast(__job);
 
-    if (driver->submit_method == LSF_SUBMIT_REMOTE_SHELL) {
+    if (driver->remote) {
         char **argv = (char **)util_calloc(2, sizeof *argv);
         argv[0] = driver->remote_lsf_server;
         argv[1] =
@@ -747,7 +748,7 @@ void lsf_driver_kill_job(void *__driver, void *__job) {
 
         free(argv[1]);
         free(argv);
-    } else if (driver->submit_method == LSF_SUBMIT_LOCAL_SHELL) {
+    } else {
         util_spawn_blocking(driver->bkill_cmd, 1,
                             (const char **)&job->lsf_jobnr_char, NULL, NULL);
     }
@@ -764,11 +765,10 @@ void *lsf_driver_submit_job(void *__driver, const char *submit_cmd, int num_cpu,
         {
             char *lsf_stdout =
                 (char *)util_alloc_filename(run_path, job_name, "LSF-stdout");
-            lsf_submit_method_enum submit_method = driver->submit_method;
             pthread_mutex_lock(&driver->submit_lock);
 
-            logger->info("LSF DRIVER submitting using method:{} \n",
-                         submit_method);
+            logger->info("LSF DRIVER submitting {} \n",
+                         driver->remote ? "remotely" : "locally");
 
             job->lsf_jobnr = lsf_driver_submit_shell_job(
                 driver, lsf_stdout, job_name, submit_cmd, num_cpu, argc, argv);
@@ -879,25 +879,20 @@ static void lsf_driver_set_bhist_cmd(lsf_driver_type *driver,
 
 static void lsf_driver_set_remote_server(lsf_driver_type *driver,
                                          const char *remote_server) {
-    if (remote_server == NULL) {
-    } else {
-        driver->remote_lsf_server =
-            util_realloc_string_copy(driver->remote_lsf_server, remote_server);
-        res_env_unsetenv("BSUB_QUIET");
-        {
-            char *tmp_server = (char *)util_alloc_strupr_copy(remote_server);
+    driver->remote_lsf_server =
+        util_realloc_string_copy(driver->remote_lsf_server, remote_server);
+    res_env_unsetenv("BSUB_QUIET");
+    {
+        char *tmp_server = (char *)util_alloc_strupr_copy(remote_server);
 
-            if (strcmp(tmp_server, LOCAL_LSF_SERVER) == 0)
-                driver->submit_method = LSF_SUBMIT_LOCAL_SHELL;
-            else if (
-                strcmp(tmp_server, NULL_LSF_SERVER) ==
-                0) // We trap the special string 'NULL' and call again with a true NULL pointer.
-                lsf_driver_set_remote_server(driver, NULL);
-            else
-                driver->submit_method = LSF_SUBMIT_REMOTE_SHELL;
+        if (strcmp(tmp_server, LOCAL_LSF_SERVER) == 0)
+            driver->remote = false;
+        else if (strcmp(tmp_server, NULL_LSF_SERVER) == 0)
+            return;
+        else
+            driver->remote = true;
 
-            free(tmp_server);
-        }
+        free(tmp_server);
     }
 }
 
@@ -912,11 +907,6 @@ void lsf_driver_add_exclude_hosts(lsf_driver_type *driver,
         if (iter == driver->exclude_hosts.end())
             driver->exclude_hosts.push_back(excluded);
     }
-}
-
-lsf_submit_method_enum
-lsf_driver_get_submit_method(const lsf_driver_type *driver) {
-    return driver->submit_method;
 }
 
 static bool lsf_driver_set_debug_output(lsf_driver_type *driver,
@@ -1075,15 +1065,6 @@ static void lsf_driver_shell_init(lsf_driver_type *lsf_driver) {
     pthread_mutex_init(&lsf_driver->bjobs_mutex, NULL);
 }
 
-/**
-  If the lsb library is compiled in and the runtime loading of the lsb libraries
-  has succeeded we default to submitting through internal library calls,
-  otherwise we will submit using shell commands on the local workstation.
-*/
-static void lsf_driver_init_submit_method(lsf_driver_type *driver) {
-    driver->submit_method = LSF_SUBMIT_LOCAL_SHELL;
-}
-
 bool lsf_driver_has_project_code(const lsf_driver_type *driver) {
     if (driver->project_code)
         return true;
@@ -1095,7 +1076,7 @@ void *lsf_driver_alloc() {
     lsf_driver_type *lsf_driver = new lsf_driver_type();
 
     UTIL_TYPE_ID_INIT(lsf_driver, LSF_DRIVER_TYPE_ID);
-    lsf_driver->submit_method = LSF_SUBMIT_INVALID;
+    lsf_driver->remote = false;
     lsf_driver->login_shell = NULL;
     lsf_driver->queue_name = NULL;
     lsf_driver->remote_lsf_server = NULL;
@@ -1108,7 +1089,6 @@ void *lsf_driver_alloc() {
     pthread_mutex_init(&lsf_driver->submit_lock, NULL);
 
     lsf_driver_shell_init(lsf_driver);
-    lsf_driver_init_submit_method(lsf_driver);
 
     lsf_driver_set_option(lsf_driver, LSF_SERVER, NULL);
     lsf_driver_set_option(lsf_driver, LSF_RSH_CMD, DEFAULT_RSH_CMD);
