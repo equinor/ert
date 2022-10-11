@@ -64,7 +64,6 @@ pybind11_add_module(
   job_queue/workflow_joblist.cpp
   job_queue/environment_varlist.cpp
   job_queue/job_kw_definitions.cpp
-  ${lsb}
   enkf/active_list.cpp
   enkf/time_map.cpp
   enkf/analysis_config.cpp
