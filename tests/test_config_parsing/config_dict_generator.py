@@ -29,11 +29,12 @@ def define_keys(draw):
 
 
 def touch(filename):
-    with open(filename, "w") as fh:
+    with open(file=filename, mode="w", encoding="utf-8") as fh:
         fh.write(" ")
 
 
 file_names = words
+format_file_names = st.builds(lambda file_name: file_name + "-%d", file_names)
 
 
 @st.composite
@@ -63,6 +64,25 @@ queue_systems = st.sampled_from(
     ]
 )
 
+functions = st.sampled_from(
+    [
+        "DENORMALIZE_PERMX",
+        "NORMALIZE_PORO",
+        "LN",
+        "LOG10",
+        "EXP0",
+        "LOG",
+        "EXP",
+        "TRUNC_POW10",
+        "LN0",
+        "DENORMALIZE_PORO",
+        "NORMALIZE_PERMZ",
+        "NORMALIZE_PERMX",
+        "DENORMALIZE_PERMZ",
+        "POW10",
+    ]
+)
+
 
 def queue_name(queue_driver):
     if queue_driver == QueueDriverEnum.LSF_DRIVER:
@@ -73,6 +93,7 @@ def queue_name(queue_driver):
         return "TORQUE"
     if queue_driver == QueueDriverEnum.SLURM_DRIVER:
         return "SLURM"
+    raise ValueError(f"unexpected driver `{queue_driver}`")
 
 
 def valid_queue_options(queue_system):
@@ -175,8 +196,8 @@ def valid_queue_values(option_name):
 
 
 @st.composite
-def queue_options(draw, queue_systems):
-    queue_system = draw(queue_systems)
+def queue_options(draw, systems):
+    queue_system = draw(systems)
     name = draw(st.sampled_from(valid_queue_options(queue_system)))
     do_set = draw(st.booleans())
     if do_set:
@@ -219,6 +240,40 @@ def config_dicts(draw):
                 ConfigKeys.DATA_KW_KEY: st.dictionaries(words, words),
                 ConfigKeys.DATA_FILE: file_names,
                 ConfigKeys.GRID: st.just(draw(words) + ".EGRID"),
+                ConfigKeys.FIELD_KEY: st.lists(
+                    st.fixed_dictionaries(
+                        {
+                            ConfigKeys.NAME: words,
+                            ConfigKeys.VAR_TYPE: st.just("PARAMETER"),
+                            ConfigKeys.OUT_FILE: file_names,
+                            # ConfigKeys.ENKF_INFILE: file_names, # only used in general!
+                            ConfigKeys.FORWARD_INIT: st.booleans(),
+                            ConfigKeys.INIT_TRANSFORM: functions,
+                            ConfigKeys.OUTPUT_TRANSFORM: functions,
+                            # ConfigKeys.INPUT_TRANSFORM: functions, # only used in general!
+                            ConfigKeys.MIN_KEY: small_floats,
+                            ConfigKeys.MAX_KEY: small_floats,
+                            ConfigKeys.INIT_FILES: file_names,
+                        }
+                    ),
+                    unique_by=lambda field_dict: field_dict[ConfigKeys.NAME],
+                ),
+                ConfigKeys.GEN_DATA: st.lists(
+                    st.fixed_dictionaries(
+                        {
+                            ConfigKeys.NAME: words,
+                            ConfigKeys.RESULT_FILE: format_file_names,
+                            ConfigKeys.INPUT_FORMAT: st.just("ASCII"),
+                            ConfigKeys.REPORT_STEPS: st.lists(
+                                st.integers(min_value=0, max_value=100),
+                                min_size=2,
+                                unique=True,
+                            ),  # should this be sorted?!
+                        }
+                    ),
+                    unique_by=lambda field_dict: field_dict[ConfigKeys.NAME],
+                ),
+                # ConfigKeys.GEN_KW_TAG_FORMAT: TODO,
                 ConfigKeys.JOB_SCRIPT: file_names,
                 ConfigKeys.MAX_SUBMIT: positives,
                 ConfigKeys.NUM_CPU: positives,
@@ -299,8 +354,8 @@ def config_dicts(draw):
     return config_dict
 
 
-def to_config_file(filename, config_dict):
-    with open(filename, "w+") as config:
+def to_config_file(filename, config_dict):  # pylint: disable=too-many-branches
+    with open(file=filename, mode="w+", encoding="utf-8") as config:
         config.write(
             f"{ConfigKeys.RUNPATH_FILE} {config_dict[ConfigKeys.RUNPATH_FILE]}\n"
         )
@@ -308,6 +363,70 @@ def to_config_file(filename, config_dict):
             if keyword == ConfigKeys.DATA_KW_KEY:
                 for define_key, define_value in keyword_value.items():
                     config.write(f"{keyword} {define_key} {define_value}\n")
+            elif keyword == ConfigKeys.FIELD_KEY:
+                # keyword_value is a list of dicts, each defining a field
+                for field_dict in keyword_value:
+                    config.write(
+                        " ".join(
+                            [
+                                keyword,
+                                field_dict.get(ConfigKeys.NAME, ""),
+                                field_dict.get(ConfigKeys.VAR_TYPE, ""),
+                                field_dict.get(ConfigKeys.OUT_FILE, ""),
+                                f"INIT_FILES:{field_dict.get(ConfigKeys.INIT_FILES)}"
+                                if ConfigKeys.INIT_FILES in field_dict
+                                else "",
+                                f"MIN:{field_dict.get(ConfigKeys.MIN_KEY)}"
+                                if ConfigKeys.MIN_KEY in field_dict
+                                else "",
+                                f"MAX:{field_dict.get(ConfigKeys.MAX_KEY)}"
+                                if ConfigKeys.MAX_KEY in field_dict
+                                else "",
+                                (
+                                    "OUTPUT_TRANSFORM:"
+                                    f"{field_dict.get(ConfigKeys.OUTPUT_TRANSFORM)}"
+                                )
+                                if ConfigKeys.OUTPUT_TRANSFORM in field_dict
+                                else "",
+                                (
+                                    "INIT_TRANSFORM:"
+                                    f"{field_dict.get(ConfigKeys.INIT_TRANSFORM)}"
+                                )
+                                if ConfigKeys.INIT_TRANSFORM in field_dict
+                                else "",
+                                (
+                                    "FORWARD_INIT:"
+                                    f"{field_dict.get(ConfigKeys.FORWARD_INIT)}"
+                                )
+                                if ConfigKeys.FORWARD_INIT in field_dict
+                                else "",
+                                field_dict.get(ConfigKeys.ENKF_INFILE, ""),
+                                field_dict.get(ConfigKeys.INPUT_TRANSFORM, ""),
+                            ]
+                        )
+                        + "\n"
+                    )
+            elif keyword == ConfigKeys.GEN_DATA:
+                # keyword_value is a list of dicts, each defining a field
+                for field_dict in keyword_value:
+                    report_steps_as_string = ",".join(
+                        map(str, field_dict.get(ConfigKeys.REPORT_STEPS))
+                    )
+                    config.write(
+                        " ".join(
+                            [
+                                keyword,
+                                field_dict.get(ConfigKeys.NAME, ""),
+                                f"RESULT_FILE:{field_dict.get(ConfigKeys.RESULT_FILE)}",
+                                (
+                                    "INPUT_FORMAT:"
+                                    f"{field_dict.get(ConfigKeys.INPUT_FORMAT)}"
+                                ),
+                                f"REPORT_STEPS:{report_steps_as_string}",
+                            ]
+                        )
+                        + "\n"
+                    )
             elif keyword == ConfigKeys.INSTALL_JOB_DIRECTORY:
                 for install_dir in keyword_value:
                     config.write(f"{keyword} {install_dir}\n")

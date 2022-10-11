@@ -11,7 +11,7 @@ from ert._c_wrappers import ResPrototype
 from ert._c_wrappers.config import ConfigContent
 from ert._c_wrappers.enkf.config import EnkfConfigNode
 from ert._c_wrappers.enkf.config_keys import ConfigKeys
-from ert._c_wrappers.enkf.enums import EnkfVarType, ErtImplType
+from ert._c_wrappers.enkf.enums import EnkfVarType, ErtImplType, GenDataFileType
 
 
 def _get_abs_path(file):
@@ -89,10 +89,11 @@ class EnsembleConfig(BaseCClass):
 
             gen_data_list = config_dict.get(ConfigKeys.GEN_DATA, [])
             for gene_data in gen_data_list:
+                input_format_string = gene_data.get(ConfigKeys.INPUT_FORMAT)
                 gen_data_node = EnkfConfigNode.create_gen_data_full(
                     gene_data.get(ConfigKeys.NAME),
                     gene_data.get(ConfigKeys.RESULT_FILE),
-                    gene_data.get(ConfigKeys.INPUT_FORMAT),
+                    GenDataFileType.from_string(input_format_string),
                     gene_data.get(ConfigKeys.REPORT_STEPS),
                     gene_data.get(ConfigKeys.ECL_FILE),
                     gene_data.get(ConfigKeys.INIT_FILES),
