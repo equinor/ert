@@ -87,20 +87,12 @@ void test_cmd(void) {
     lsf_driver_free(driver);
 }
 
-void test_submit_method() {
-    lsf_driver_type *driver = (lsf_driver_type *)lsf_driver_alloc();
-    test_assert_int_equal(lsf_driver_get_submit_method(driver),
-                          LSF_SUBMIT_LOCAL_SHELL);
-    lsf_driver_free(driver);
-}
-
 int main(int argc, char **argv) {
     util_install_signals();
 
     test_options();
     test_status_tr();
     test_cmd();
-    test_submit_method();
 
     exit(0);
 }
