@@ -607,43 +607,6 @@ void enkf_config_node_clear_obs_keys(enkf_config_node_type *config_node) {
     stringlist_clear(config_node->obs_keys);
 }
 
-void enkf_config_node_fprintf_config(const enkf_config_node_type *config_node,
-                                     FILE *stream) {
-    switch (config_node->impl_type) {
-    case (GEN_KW):
-        fprintf(stream, CONFIG_KEY_FORMAT, GEN_KW_KEY);
-        fprintf(stream, CONFIG_VALUE_FORMAT, config_node->key);
-        gen_kw_config_fprintf_config(
-            (const gen_kw_config_type *)config_node->data,
-            path_fmt_get_fmt(config_node->enkf_outfile_fmt),
-            config_node->min_std_file, stream);
-        break;
-    case (FIELD):
-        fprintf(stream, CONFIG_KEY_FORMAT, FIELD_KEY);
-        fprintf(stream, CONFIG_VALUE_FORMAT, config_node->key);
-        field_config_fprintf_config(
-            (field_config_type *)config_node->data, config_node->var_type,
-            path_fmt_get_fmt(config_node->enkf_outfile_fmt),
-            path_fmt_get_fmt(config_node->enkf_infile_fmt),
-            config_node->min_std_file, stream);
-        break;
-    case (GEN_DATA):
-        fprintf(stream, CONFIG_KEY_FORMAT, GEN_DATA_KEY);
-        gen_data_config_fprintf_config(
-            (const gen_data_config_type *)config_node->data,
-            config_node->var_type,
-            path_fmt_get_fmt(config_node->enkf_outfile_fmt),
-            path_fmt_get_fmt(config_node->enkf_infile_fmt),
-            config_node->min_std_file, stream);
-        break;
-    default:
-        util_abort("%s: internal error - function can not store configuration "
-                   "for: %s variables. \n",
-                   __func__, enkf_types_get_impl_name(config_node->impl_type));
-    }
-    fprintf(stream, "\n");
-}
-
 void enkf_config_node_add_GEN_DATA_config_schema(config_parser_type *config) {
     config_schema_item_type *item;
     item = config_add_schema_item(config, GEN_DATA_KEY, false);

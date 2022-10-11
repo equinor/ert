@@ -123,9 +123,6 @@ void enkf_config_node_set_internalize(enkf_config_node_type *node,
 bool enkf_config_node_internalize(const enkf_config_node_type *node,
                                   int report_step);
 
-void enkf_config_node_fprintf_config(const enkf_config_node_type *config_node,
-                                     FILE *stream);
-
 /*
     The enkf_node_free() function declaration is in the enkf_config_node.h header,
     because the enkf_config_node needs to know how to free the min_std node.
