@@ -420,10 +420,6 @@ def test_load_results_manually(setup_case):
 @pytest.mark.skip
 @pytest.mark.parametrize("lazy_load", [True, False])
 def test_load_results_manually2(setup_case, caplog, monkeypatch, lazy_load):
-    """
-    This little test does not depend on Equinor-data and only verifies
-    the lazy_load flag in forward_load_context plus memory-logging
-    """
     if lazy_load:
         monkeypatch.setenv("ERT_LAZY_LOAD_SUMMARYDATA", str(lazy_load))
     res_config = setup_case("snake_oil", "snake_oil.ert")

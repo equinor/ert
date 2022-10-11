@@ -41,7 +41,6 @@ start_tests () {
     popd
 
     pushd ${CI_TEST_ROOT}/tests/libres_tests
-    ln -s /project/res-testdata/ErtTestData ${CI_TEST_ROOT}/test-data/Equinor
     export ECL_SKIP_SIGNAL=ON
     pytest                                                   \
         --ignore="tests/libres_tests/res/enkf/test_analysis_config.py"    \

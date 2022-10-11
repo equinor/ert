@@ -30,7 +30,6 @@ def class_source_root(request, source_root):
     request.cls.SOURCE_ROOT = source_root
     request.cls.TESTDATA_ROOT = source_root / "test-data"
     request.cls.SHARE_ROOT = pkg_resources.resource_filename("ert.shared", "share")
-    request.cls.EQUINOR_DATA = (request.cls.TESTDATA_ROOT / "Equinor").is_symlink()
     yield
 
 
