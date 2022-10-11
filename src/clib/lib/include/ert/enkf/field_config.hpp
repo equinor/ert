@@ -151,11 +151,6 @@ field_config_get_output_transform_name(const field_config_type *field_config);
 extern "C" const char *
 field_config_get_init_transform_name(const field_config_type *field_config);
 
-void field_config_fprintf_config(const field_config_type *config,
-                                 enkf_var_type var_type, const char *outfile,
-                                 const char *infile, const char *min_std_file,
-                                 FILE *stream);
-
 extern "C" field_type_enum
 field_config_get_type(const field_config_type *config);
 

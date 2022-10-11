@@ -70,7 +70,7 @@ struct ensemble_config_struct {
     char *
         gen_kw_format_string; /* format string used when creating gen_kw search/replace strings. */
     std::map<std::string, enkf_config_node_type *>
-        config_nodes; /* a hash of enkf_config_node instances - which again conatin pointers to e.g. field_config objects.  */
+        config_nodes; /* a hash of enkf_config_node instances - which again contain pointers to e.g. field_config objects.  */
     field_trans_table_type *
         field_trans_table; /* a table of the transformations which are available to apply on fields. */
     bool have_forward_init;

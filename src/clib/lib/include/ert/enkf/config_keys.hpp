@@ -4,7 +4,6 @@
 /* These keys are used as options in KEY:VALUE statements */
 #define BASE_SURFACE_KEY "BASE_SURFACE"
 #define DEFINE_KEY "DEFINE"
-#define DYNAMIC_KEY "DYNAMIC"
 #define ECL_FILE_KEY "ECL_FILE"
 #define FORWARD_INIT_KEY "FORWARD_INIT"
 #define GENERAL_KEY "GENERAL"

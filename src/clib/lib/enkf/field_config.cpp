@@ -758,48 +758,6 @@ ecl_grid_type *field_config_get_grid(const field_config_type *config) {
     return config->grid;
 }
 
-void field_config_fprintf_config(const field_config_type *config,
-                                 enkf_var_type var_type, const char *outfile,
-                                 const char *infile, const char *min_std_file,
-                                 FILE *stream) {
-
-    if (var_type == PARAMETER) {
-        fprintf(stream, CONFIG_VALUE_FORMAT, PARAMETER_KEY);
-        fprintf(stream, CONFIG_VALUE_FORMAT, outfile);
-    } else {
-        if (true)
-            /* This is an ECLIPSE dynamic field. */
-            fprintf(stream, CONFIG_VALUE_FORMAT, DYNAMIC_KEY);
-        else {
-            /* Dynamic fields which are not ECLIPSE solution fields - not really very well supported. */
-            fprintf(stream, CONFIG_VALUE_FORMAT, GENERAL_KEY);
-            fprintf(stream, CONFIG_VALUE_FORMAT, outfile);
-            fprintf(stream, CONFIG_VALUE_FORMAT, infile);
-        }
-    }
-
-    if (config->init_transform != NULL)
-        fprintf(stream, CONFIG_OPTION_FORMAT, INIT_TRANSFORM_KEY,
-                config->init_transform_name);
-
-    if (config->output_transform != NULL)
-        fprintf(stream, CONFIG_OPTION_FORMAT, OUTPUT_TRANSFORM_KEY,
-                config->output_transform_name);
-
-    if (config->input_transform != NULL)
-        fprintf(stream, CONFIG_OPTION_FORMAT, INPUT_TRANSFORM_KEY,
-                config->input_transform_name);
-
-    if (min_std_file != NULL)
-        fprintf(stream, CONFIG_OPTION_FORMAT, MIN_STD_KEY, min_std_file);
-
-    if (config->truncation & TRUNCATE_MIN)
-        fprintf(stream, CONFIG_FLOAT_OPTION_FORMAT, MIN_KEY, config->min_value);
-
-    if (config->truncation & TRUNCATE_MAX)
-        fprintf(stream, CONFIG_FLOAT_OPTION_FORMAT, MAX_KEY, config->max_value);
-}
-
 UTIL_SAFE_CAST_FUNCTION(field_config, FIELD_CONFIG_ID)
 UTIL_SAFE_CAST_FUNCTION_CONST(field_config, FIELD_CONFIG_ID)
 CONFIG_GET_ECL_KW_NAME(field);
