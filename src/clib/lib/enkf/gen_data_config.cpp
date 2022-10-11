@@ -581,15 +581,11 @@ gen_data_config_format_name(gen_data_file_format_type format_type) {
 
 void gen_data_config_fprintf_config(const gen_data_config_type *config,
                                     enkf_var_type var_type, const char *outfile,
-                                    const char *infile,
-                                    const char *min_std_file, FILE *stream) {
+                                    const char *infile, FILE *stream) {
     if (var_type == PARAMETER)
         fprintf(stream, CONFIG_VALUE_FORMAT, outfile);
     else
         fprintf(stream, CONFIG_OPTION_FORMAT, ECL_FILE_KEY, outfile);
-
-    if (min_std_file != NULL)
-        fprintf(stream, CONFIG_OPTION_FORMAT, MIN_STD_KEY, min_std_file);
 
     if (config->template_file != NULL)
         fprintf(stream, CONFIG_OPTION_FORMAT, TEMPLATE_KEY,

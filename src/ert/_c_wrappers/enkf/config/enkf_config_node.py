@@ -64,9 +64,6 @@ class EnkfConfigNode(BaseCClass):
     _get_enkf_outfile = ResPrototype(
         "char* enkf_config_node_get_enkf_outfile(enkf_config_node)"
     )
-    _get_min_std_file = ResPrototype(
-        "char* enkf_config_node_get_min_std_file(enkf_config_node)"
-    )
     _get_enkf_infile = ResPrototype(
         "char* enkf_config_node_get_enkf_infile(enkf_config_node)"
     )
@@ -104,7 +101,6 @@ class EnkfConfigNode(BaseCClass):
                                                                  char*, \
                                                                  char*, \
                                                                  char*, \
-                                                                 char*, \
                                                                  char*)",
         bind=False,
     )
@@ -114,14 +110,12 @@ class EnkfConfigNode(BaseCClass):
                                                                   bool, \
                                                                   char*, \
                                                                   char*, \
-                                                                  char*, \
                                                                   char*)",
         bind=False,
     )
 
     _update_parameter_field = ResPrototype(
         "void enkf_config_node_update_parameter_field(enkf_config_node, \
-                                                      char*, \
                                                       char*, \
                                                       char*, \
                                                       enkf_truncation_type_enum, \
@@ -133,7 +127,6 @@ class EnkfConfigNode(BaseCClass):
     )
     _update_general_field = ResPrototype(
         "void enkf_config_node_update_general_field(enkf_config_node, \
-                                                    char*, \
                                                     char*, \
                                                     char*, \
                                                     char*, \
@@ -160,9 +153,6 @@ class EnkfConfigNode(BaseCClass):
 
     def getUseForwardInit(self) -> bool:
         return self._use_forward_init()
-
-    def get_min_std_file(self):
-        return self._get_min_std_file()
 
     def get_enkf_outfile(self) -> str:
         return self._get_enkf_outfile()
@@ -281,7 +271,6 @@ class EnkfConfigNode(BaseCClass):
         enkf_outfile,
         parameter_file,
         forward_init,
-        mid_std_file,
         init_file_fmt,
         gen_kw_format,
     ):
@@ -293,7 +282,6 @@ class EnkfConfigNode(BaseCClass):
             template_file,
             enkf_outfile,
             parameter_file,
-            mid_std_file,
             init_file_fmt,
         )
         if config_node is None:
@@ -309,7 +297,6 @@ class EnkfConfigNode(BaseCClass):
         init_file_fmt,
         output_file,
         base_surface_file,
-        min_std_file,
         forward_init,
     ):
 
@@ -320,7 +307,6 @@ class EnkfConfigNode(BaseCClass):
             forward_init,
             output_file,
             base_surface_file,
-            min_std_file,
             init_file_fmt,
         )
         if config_node is None:
@@ -342,7 +328,6 @@ class EnkfConfigNode(BaseCClass):
         init_transform,
         output_transform,
         input_transform,
-        min_std_file,
         min_key,
         max_key,
         init_file_fmt,
@@ -368,7 +353,6 @@ class EnkfConfigNode(BaseCClass):
             config_node._update_parameter_field(
                 ecl_file,
                 init_file_fmt,
-                min_std_file,
                 truncation,
                 value_min,
                 value_max,
@@ -381,7 +365,6 @@ class EnkfConfigNode(BaseCClass):
                 ecl_file,
                 enkf_infile,
                 init_file_fmt,
-                min_std_file,
                 truncation,
                 value_min,
                 value_max,
@@ -442,8 +425,6 @@ class EnkfConfigNode(BaseCClass):
         if self.getImplementationType() == ErtImplType.EXT_PARAM:
             if self.get_init_file_fmt() != other.get_init_file_fmt():
                 return False
-            if self.get_min_std_file() != other.get_min_std_file():
-                return False
             if self.get_enkf_outfile() != other.get_enkf_outfile():
                 return False
             if self.getUseForwardInit() != other.getUseForwardInit():
@@ -464,8 +445,6 @@ class EnkfConfigNode(BaseCClass):
                 return False
             if self.get_init_file_fmt() != other.get_init_file_fmt():
                 return False
-            if self.get_min_std_file() != other.get_min_std_file():
-                return False
             if self.get_enkf_outfile() != other.get_enkf_outfile():
                 return False
             if self.getUseForwardInit() != other.getUseForwardInit():
@@ -480,16 +459,12 @@ class EnkfConfigNode(BaseCClass):
                 return False
             if self.get_enkf_outfile() != other.get_enkf_outfile():
                 return False
-            if self.get_min_std_file() != other.get_min_std_file():
-                return False
         elif self.getImplementationType() == ErtImplType.FIELD:
             if self.getFieldModelConfig() != other.getFieldModelConfig():
                 return False
             if self.getUseForwardInit() != other.getUseForwardInit():
                 return False
             if self.get_init_file_fmt() != other.get_init_file_fmt():
-                return False
-            if self.get_min_std_file() != other.get_min_std_file():
                 return False
             if self.get_enkf_outfile() != other.get_enkf_outfile():
                 return False

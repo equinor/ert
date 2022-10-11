@@ -29,9 +29,6 @@ bool enkf_config_node_has_node(const enkf_config_node_type *node,
                                enkf_fs_type *fs, node_id_type node_id);
 bool enkf_config_node_vector_storage(const enkf_config_node_type *config_node);
 
-void enkf_config_node_update_min_std(enkf_config_node_type *config_node,
-                                     const char *min_std_file);
-
 enkf_config_node_type *
 enkf_config_node_alloc_GEN_DATA_result(const char *key,
                                        gen_data_file_format_type input_format,
@@ -43,15 +40,14 @@ enkf_config_node_type *enkf_config_node_new_surface(const char *key,
 void enkf_config_node_update_surface(enkf_config_node_type *config_node,
                                      const char *base_surface,
                                      const char *init_file_fmt,
-                                     const char *output_file,
-                                     const char *min_std_file);
+                                     const char *output_file);
 
 void enkf_config_node_update_gen_kw(
     enkf_config_node_type *config_node,
     const char *
         enkf_outfile_fmt, /* The include file created by ERT for the forward model. */
     const char *template_file, const char *parameter_file,
-    const char *min_std_file, const char *init_file_fmt);
+    const char *init_file_fmt);
 
 extern "C" enkf_config_node_type *
 enkf_config_node_alloc(enkf_var_type, ert_impl_type, bool, const char *,
@@ -62,9 +58,8 @@ enkf_config_node_alloc_summary(const char *key, load_fail_type load_fail);
 
 extern "C" void enkf_config_node_update_parameter_field(
     enkf_config_node_type *config_node, const char *enkf_outfile_fmt,
-    const char *init_file_fmt, const char *min_std_file, int truncation,
-    double value_min, double value_max, const char *init_transform,
-    const char *output_transform);
+    const char *init_file_fmt, int truncation, double value_min,
+    double value_max, const char *init_transform, const char *output_transform);
 
 extern "C" enkf_config_node_type *
 enkf_config_node_alloc_GEN_DATA_everest(const char *key,
@@ -73,10 +68,9 @@ enkf_config_node_alloc_GEN_DATA_everest(const char *key,
 
 extern "C" void enkf_config_node_update_general_field(
     enkf_config_node_type *config_node, const char *enkf_outfile_fmt,
-    const char *enkf_infile_fmt, const char *init_file_fmt,
-    const char *min_std_file, int truncation, double value_min,
-    double value_max, const char *init_transform, const char *input_transform,
-    const char *output_transform);
+    const char *enkf_infile_fmt, const char *init_file_fmt, int truncation,
+    double value_min, double value_max, const char *init_transform,
+    const char *input_transform, const char *output_transform);
 
 enkf_config_node_type *enkf_config_node_new_gen_kw(const char *key,
                                                    const char *tag_fmt,
@@ -108,8 +102,6 @@ enkf_config_node_get_var_type(const enkf_config_node_type *);
 extern "C" void *enkf_config_node_get_ref(const enkf_config_node_type *);
 extern "C" const char *enkf_config_node_get_key(const enkf_config_node_type *);
 extern "C" const char *
-enkf_config_node_get_min_std_file(const enkf_config_node_type *config_node);
-extern "C" const char *
 enkf_config_node_get_enkf_outfile(const enkf_config_node_type *conifg_node);
 extern "C" const char *
 enkf_config_node_get_enkf_infile(const enkf_config_node_type *config_node);
@@ -126,10 +118,10 @@ bool enkf_config_node_internalize(const enkf_config_node_type *node,
 /*
     The enkf_node_free() function declaration is in the enkf_config_node.h header,
     because the enkf_config_node needs to know how to free the min_std node.
+    That's not really the reason, because min_std doesn't exist anymore, but
+    the function declaration is needed anyways.
   */
 extern "C" void enkf_node_free(enkf_node_type *enkf_node);
-const enkf_node_type *
-enkf_config_node_get_min_std(const enkf_config_node_type *config_node);
 
 extern "C" bool
 enkf_config_node_use_forward_init(const enkf_config_node_type *config_node);
@@ -148,13 +140,11 @@ extern "C" PY_USED enkf_config_node_type *enkf_config_node_alloc_GEN_DATA_full(
 extern "C" PY_USED enkf_config_node_type *enkf_config_node_alloc_GEN_KW_full(
     const char *node_key, bool forward_init, const char *gen_kw_format,
     const char *template_file, const char *enkf_outfile,
-    const char *parameter_file, const char *min_std_file,
-    const char *init_file_fmt);
+    const char *parameter_file, const char *init_file_fmt);
 
 extern "C" PY_USED enkf_config_node_type *enkf_config_node_alloc_SURFACE_full(
     const char *node_key, bool forward_init, const char *output_file,
-    const char *base_surface, const char *min_std_file,
-    const char *init_file_fmt);
+    const char *base_surface, const char *init_file_fmt);
 
 VOID_FREE_HEADER(enkf_config_node);
 #endif

@@ -277,14 +277,10 @@ int gen_kw_config_get_index(const gen_kw_config_type *config, const char *key) {
 }
 
 void gen_kw_config_fprintf_config(const gen_kw_config_type *config,
-                                  const char *outfile, const char *min_std_file,
-                                  FILE *stream) {
+                                  const char *outfile, FILE *stream) {
     fprintf(stream, CONFIG_VALUE_FORMAT, config->template_file);
     fprintf(stream, CONFIG_VALUE_FORMAT, outfile);
     fprintf(stream, CONFIG_VALUE_FORMAT, config->parameter_file);
-
-    if (min_std_file != NULL)
-        fprintf(stream, CONFIG_OPTION_FORMAT, MIN_STD_KEY, min_std_file);
 }
 
 const char *gen_kw_config_iget_function_type(const gen_kw_config_type *config,

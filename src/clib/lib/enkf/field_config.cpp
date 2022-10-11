@@ -116,7 +116,6 @@ struct field_config_struct {
     bool write_compressed;
 
     field_type_enum type;
-    field_type *min_std;
     /** Internalize a (pointer to) a table of the available transformation functions. */
     field_trans_table_type *trans_table;
     /** Function to apply to the data before they are exported - NULL: no transform. */
@@ -299,7 +298,6 @@ field_config_type *field_config_alloc_empty(const char *ecl_kw_name,
     config->init_transform_name = NULL;
 
     config->truncation = TRUNCATE_NONE;
-    config->min_std = NULL;
     config->trans_table = trans_table;
 
     field_config_set_grid(

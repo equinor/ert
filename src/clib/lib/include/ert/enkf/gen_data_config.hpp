@@ -79,8 +79,7 @@ extern "C" const char *
 gen_data_config_get_template_key(const gen_data_config_type *config);
 void gen_data_config_fprintf_config(const gen_data_config_type *config,
                                     enkf_var_type var_type, const char *outfile,
-                                    const char *infile,
-                                    const char *min_std_file, FILE *stream);
+                                    const char *infile, FILE *stream);
 extern "C" int
 gen_data_config_get_data_size__(const gen_data_config_type *config,
                                 int report_step);
