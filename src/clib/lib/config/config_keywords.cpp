@@ -42,6 +42,11 @@ add_single_arg_keyword(config_parser_type *config_parser, std::string keyword) {
     return item;
 }
 
+static void add_jobname_keyword(config_parser_type *config_parser) {
+    auto item = config_add_schema_item(config_parser, JOBNAME_KEY, true);
+    config_schema_item_set_argc_minmax(item, 1, 1);
+}
+
 static void add_num_realizations_keyword(config_parser_type *config_parser) {
     auto item =
         config_add_schema_item(config_parser, NUM_REALIZATIONS_KEY, true);
@@ -317,7 +322,7 @@ ERT_CLIB_SUBMODULE("config_keywords", m) {
             add_path_keyword(config_parser, RUNPATH_KEY);
             add_path_keyword(config_parser, DATA_ROOT_KEY);
             add_path_keyword(config_parser, ENSPATH_KEY);
-            add_single_arg_keyword(config_parser, JOBNAME_KEY);
+            add_jobname_keyword(config_parser);
             add_forward_model_keyword(config_parser);
             add_simulation_job_keyword(config_parser);
             add_data_kw_keyword(config_parser);

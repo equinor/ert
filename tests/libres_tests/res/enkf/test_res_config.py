@@ -624,6 +624,18 @@ def test_that_unknown_queue_option_gives_error_message(monkeypatch, tmp_path, ca
     assert "UNKNOWN_QUEUE" in err
 
 
+def test_that_missing_jobname_gives_error_message(tmp_path, capsys):
+    test_user_config = tmp_path / "user_config.ert"
+    test_user_config.write_text("NUM_REALIZATIONS 10\n")
+
+    with pytest.raises(ValueError, match="Parsing"):
+        _ = ResConfig(str(test_user_config))
+
+    err = capsys.readouterr().err
+    assert "Errors parsing" in err
+    assert "JOBNAME" in err
+
+
 @pytest.mark.parametrize(
     "run_mode",
     [
