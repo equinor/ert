@@ -92,6 +92,7 @@ jobs:
     - uses: actions/setup-python@v2
       with:
         python-version: ${{ matrix.python-version }}
+        cache: pip
 
     - name: Build Linux Wheel
       uses: docker://quay.io/pypa/manylinux2014_x86_64
@@ -138,6 +139,7 @@ jobs:
     - uses: actions/setup-python@v2
       with:
         python-version: ${{ matrix.python-version }}
+        cache: pip
 
     - name: Get wheels
       uses: actions/download-artifact@v2
@@ -218,6 +220,7 @@ jobs:
     - uses: actions/setup-python@v2
       with:
         python-version: ${{ matrix.python-version }}
+        cache: pip
 
     - name: Get wheels
       uses: actions/download-artifact@v2
@@ -266,6 +269,7 @@ jobs:
     - uses: actions/setup-python@v2
       with:
         python-version: ${{ matrix.python-version }}
+        cache: pip
 
     - name: Get wheels
       uses: actions/download-artifact@v2

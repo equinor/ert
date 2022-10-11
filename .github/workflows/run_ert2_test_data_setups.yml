@@ -30,6 +30,7 @@ jobs:
       uses: actions/setup-python@v2
       with:
         python-version: ${{ matrix.python-version }}
+        cache: pip
 
     - name: Install Ubuntu dependencies
       if: matrix.os == 'ubuntu-latest'
