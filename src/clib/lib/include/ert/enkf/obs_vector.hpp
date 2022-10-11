@@ -14,9 +14,9 @@
 #include <ert/enkf/enkf_fs.hpp>
 #include <ert/enkf/enkf_macros.hpp>
 #include <ert/enkf/enkf_node.hpp>
-#include <ert/enkf/enkf_state.hpp>
 #include <ert/enkf/enkf_types.hpp>
 #include <ert/enkf/ensemble_config.hpp>
+#include <ert/enkf/model_config.hpp>
 #include <ert/enkf/obs_data.hpp>
 #include <ert/enkf/time_map.hpp>
 

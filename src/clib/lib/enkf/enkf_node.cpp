@@ -1,3 +1,4 @@
+#include "ert/python.hpp"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -663,4 +664,16 @@ enkf_node_type *enkf_node_alloc(const enkf_config_node_type *config) {
 
 enkf_node_type *enkf_node_deep_alloc(const enkf_config_node_type *config) {
     return enkf_node_alloc(config);
+}
+
+ERT_CLIB_SUBMODULE("enkf_node", m) {
+    using namespace py::literals;
+
+    m.def(
+        "forward_init",
+        [](Cwrap<enkf_node_type> enkf_node, const std::string &run_path,
+           int iens) {
+            return enkf_node_forward_init(enkf_node, run_path.c_str(), iens);
+        },
+        "self"_a, "run_path"_a, "iens"_a);
 }

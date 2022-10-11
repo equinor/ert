@@ -12,7 +12,6 @@
 #include <ert/ecl/ecl_sum.h>
 
 #include <ert/enkf/enkf_fs.hpp>
-#include <ert/enkf/enkf_state.hpp>
 #include <ert/enkf/enkf_types.hpp>
 #include <ert/enkf/meas_data.hpp>
 #include <ert/enkf/obs_data.hpp>

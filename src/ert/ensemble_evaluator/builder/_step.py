@@ -1,6 +1,6 @@
 from itertools import chain
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Callable, List, Optional, Sequence, Union
+from typing import TYPE_CHECKING, Any, Callable, List, Optional, Sequence, Tuple, Union
 
 from ert._c_wrappers.enkf import RunArg
 
@@ -29,7 +29,7 @@ from ._unix_task import UnixTask
 if TYPE_CHECKING:
     import ert
 
-callback = Callable[[List[Any]], bool]
+callback = Callable[[List[Any]], Union[bool, Tuple[Any, str]]]
 
 
 class _Step(_Stage):

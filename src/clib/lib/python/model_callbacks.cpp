@@ -1,3 +1,4 @@
+#include <ert/enkf/enkf_state.hpp>
 #include <ert/enkf/ensemble_config.hpp>
 #include <ert/enkf/model_config.hpp>
 #include <ert/enkf/run_arg.hpp>

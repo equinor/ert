@@ -24,6 +24,7 @@
 #include <ert/enkf/block_fs_driver.hpp>
 #include <ert/enkf/enkf_defaults.hpp>
 #include <ert/enkf/enkf_fs.hpp>
+#include <ert/enkf/enkf_state.hpp>
 #include <ert/enkf/misfit_ensemble.hpp>
 
 #include <fmt/format.h>
