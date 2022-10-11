@@ -393,7 +393,6 @@ def test_res_config_dict_constructor(setup_case):
                 ConfigKeys.OUT_FILE: "coarse.sigma",
                 ConfigKeys.PARAMETER_FILE: "../input/distributions/sigma.dist",
                 ConfigKeys.INIT_FILES: None,
-                ConfigKeys.MIN_STD: None,
                 ConfigKeys.FORWARD_INIT: False,
             }  # ensemble
         ],

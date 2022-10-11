@@ -48,7 +48,6 @@ def test_ensemble_config_constructor(setup_case):
                     ConfigKeys.OUT_FILE: "MULTFLT.INC",
                     ConfigKeys.PARAMETER_FILE: "MULTFLT.TXT",
                     ConfigKeys.INIT_FILES: None,
-                    ConfigKeys.MIN_STD: None,
                     ConfigKeys.FORWARD_INIT: False,
                 }
             ],
@@ -58,7 +57,6 @@ def test_ensemble_config_constructor(setup_case):
                     ConfigKeys.INIT_FILES: "surface/small.irap",
                     ConfigKeys.OUT_FILE: "surface/small_out.irap",
                     ConfigKeys.BASE_SURFACE_KEY: ("surface/small.irap"),
-                    ConfigKeys.MIN_STD: None,
                     ConfigKeys.FORWARD_INIT: False,
                 }
             ],
@@ -75,7 +73,6 @@ def test_ensemble_config_constructor(setup_case):
                     ConfigKeys.INPUT_TRANSFORM: None,
                     ConfigKeys.MIN_KEY: None,
                     ConfigKeys.MAX_KEY: None,
-                    ConfigKeys.MIN_STD: None,
                     ConfigKeys.FORWARD_INIT: False,
                 }
             ],
@@ -83,7 +80,6 @@ def test_ensemble_config_constructor(setup_case):
                 {
                     ConfigKeys.TEMPLATE: "input/schedule.sch",
                     ConfigKeys.INIT_FILES: None,
-                    ConfigKeys.MIN_STD: None,
                     ConfigKeys.PARAMETER_KEY: None,
                 }
             ],

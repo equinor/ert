@@ -271,8 +271,7 @@ void ensemble_config_add_config_items(config_parser_type *config) {
     config_schema_item_iset_type(item, 2, CONFIG_PATH);
     config_schema_item_iset_type(item, 3, CONFIG_EXISTING_PATH);
 
-    item = config_add_key_value(config, GEN_KW_TAG_FORMAT_KEY, false,
-                                CONFIG_STRING);
+    config_add_key_value(config, GEN_KW_TAG_FORMAT_KEY, false, CONFIG_STRING);
     item = config_add_schema_item(config, SCHEDULE_PREDICTION_FILE_KEY, false);
     /* scedhule_prediction_file   filename  <parameters:> <init_files:> */
     config_schema_item_set_argc_minmax(item, 1, 3);
@@ -353,7 +352,6 @@ static void ensemble_config_init_GEN_KW(ensemble_config_type *ensemble_config,
                                                          forward_init);
                 enkf_config_node_update_gen_kw(
                     config_node, enkf_outfile, template_file, parameter_file,
-                    get_string(opt_map, MIN_STD_KEY),
                     get_string(opt_map, INIT_FILES_KEY));
             }
         }
@@ -379,7 +377,6 @@ static void ensemble_config_init_SURFACE(ensemble_config_type *ensemble_config,
                         get_string(opt_map, OUTPUT_FILE_KEY);
                     const char *base_surface =
                         get_string(opt_map, BASE_SURFACE_KEY);
-                    const char *min_std_file = get_string(opt_map, MIN_STD_KEY);
                     const char *forward_string =
                         get_string(opt_map, FORWARD_INIT_KEY);
                     bool forward_init = false;
@@ -411,7 +408,7 @@ static void ensemble_config_init_SURFACE(ensemble_config_type *ensemble_config,
                                                         forward_init);
                         enkf_config_node_update_surface(
                             config_node, base_surface, init_file_fmt,
-                            output_file, min_std_file);
+                            output_file);
                     }
                 }
             }
@@ -503,7 +500,6 @@ static void ensemble_config_init_FIELD(ensemble_config_type *ensemble_config,
                         get_string(opt_map, INIT_TRANSFORM_KEY);
                     const char *output_transform =
                         get_string(opt_map, OUTPUT_TRANSFORM_KEY);
-                    const char *min_std_file = get_string(opt_map, MIN_STD_KEY);
                     const char *forward_string =
                         get_string(opt_map, FORWARD_INIT_KEY);
                     bool forward_init = false;
@@ -518,9 +514,8 @@ static void ensemble_config_init_FIELD(ensemble_config_type *ensemble_config,
                     config_node = ensemble_config_add_field(
                         ensemble_config, key, grid, forward_init);
                     enkf_config_node_update_parameter_field(
-                        config_node, ecl_file, init_file_fmt, min_std_file,
-                        truncation, value_min, value_max, init_transform,
-                        output_transform);
+                        config_node, ecl_file, init_file_fmt, truncation,
+                        value_min, value_max, init_transform, output_transform);
                 } else if (strcmp(var_type_string, GENERAL_KEY) == 0) {
                     /* General - not really interesting .. */
                     const char *ecl_file = config_content_node_iget(node, 2);
@@ -533,7 +528,6 @@ static void ensemble_config_init_FIELD(ensemble_config_type *ensemble_config,
                         get_string(opt_map, OUTPUT_TRANSFORM_KEY);
                     const char *input_transform =
                         get_string(opt_map, INPUT_TRANSFORM_KEY);
-                    const char *min_std_file = get_string(opt_map, MIN_STD_KEY);
                     const char *forward_string =
                         get_string(opt_map, FORWARD_INIT_KEY);
                     bool forward_init = false;
@@ -550,8 +544,8 @@ static void ensemble_config_init_FIELD(ensemble_config_type *ensemble_config,
                         ensemble_config, key, grid, forward_init);
                     enkf_config_node_update_general_field(
                         config_node, ecl_file, enkf_infile, init_file_fmt,
-                        min_std_file, truncation, value_min, value_max,
-                        init_transform, input_transform, output_transform);
+                        truncation, value_min, value_max, init_transform,
+                        input_transform, output_transform);
 
                 } else
                     util_abort("%s: field type: %s is not recognized\n",
@@ -579,7 +573,6 @@ static void ensemble_config_init_PRED(ensemble_config_type *ensemble_config,
     config_content_node_init_opt_hash(pred_node, opt_hash, 1);
     const char *parameters =
         (const char *)hash_safe_get(opt_hash, PARAMETER_KEY);
-    const char *min_std = (const char *)hash_safe_get(opt_hash, MIN_STD_KEY);
     const char *init_files =
         (const char *)hash_safe_get(opt_hash, INIT_FILES_KEY);
     hash_free(opt_hash);
@@ -594,7 +587,7 @@ static void ensemble_config_init_PRED(ensemble_config_type *ensemble_config,
     enkf_config_node_type *config_node =
         ensemble_config_add_gen_kw(ensemble_config, PRED_KEY, false);
     enkf_config_node_update_gen_kw(config_node, target_file, template_file,
-                                   parameters, min_std, init_files);
+                                   parameters, init_files);
 
     free(target_file);
 }

@@ -107,7 +107,6 @@ class EnsembleConfig(BaseCClass):
                     gen_kw.get(ConfigKeys.OUT_FILE),
                     _get_abs_path(gen_kw.get(ConfigKeys.PARAMETER_FILE)),
                     gen_kw.get(ConfigKeys.FORWARD_INIT),
-                    gen_kw.get(ConfigKeys.MIN_STD),
                     gen_kw.get(ConfigKeys.INIT_FILES),
                     config_dict.get(ConfigKeys.GEN_KW_TAG_FORMAT),
                 )
@@ -120,7 +119,6 @@ class EnsembleConfig(BaseCClass):
                     surface.get(ConfigKeys.INIT_FILES),
                     surface.get(ConfigKeys.OUT_FILE),
                     surface.get(ConfigKeys.BASE_SURFACE_KEY),
-                    surface.get(ConfigKeys.MIN_STD),
                     surface.get(ConfigKeys.FORWARD_INIT),
                 )
                 self.addNode(surface_node)
@@ -142,7 +140,6 @@ class EnsembleConfig(BaseCClass):
                     field.get(ConfigKeys.INIT_TRANSFORM),
                     field.get(ConfigKeys.OUTPUT_TRANSFORM),
                     field.get(ConfigKeys.INPUT_TRANSFORM),
-                    field.get(ConfigKeys.MIN_STD),
                     field.get(ConfigKeys.MIN_KEY),
                     field.get(ConfigKeys.MAX_KEY),
                     field.get(ConfigKeys.INIT_FILES),
@@ -159,7 +156,6 @@ class EnsembleConfig(BaseCClass):
                     _get_filename(schedule_file.get(ConfigKeys.TEMPLATE)),
                     schedule_file.get(ConfigKeys.PARAMETER_KEY),
                     False,
-                    schedule_file.get(ConfigKeys.MIN_STD),
                     schedule_file.get(ConfigKeys.INIT_FILES),
                     config_dict.get(ConfigKeys.GEN_KW_TAG_FORMAT),
                 )

@@ -49,8 +49,6 @@ struct enkf_config_node_struct {
     path_fmt_type *enkf_outfile_fmt;
     /** This points to the config object of the actual implementation. */
     void *data;
-    enkf_node_type *min_std;
-    char *min_std_file;
 
     /** Function pointer to ask the underlying config object of the size - i.e.
      * number of elements. */
@@ -92,8 +90,6 @@ static enkf_config_node_type *enkf_config_node_alloc__(enkf_var_type var_type,
     node->internalize = NULL;
     node->data = NULL;
     node->obs_keys = stringlist_alloc_new();
-    node->min_std = NULL;
-    node->min_std_file = NULL;
 
     node->get_data_size = NULL;
     node->freef = NULL;
@@ -135,30 +131,10 @@ bool enkf_config_node_vector_storage(const enkf_config_node_type *config_node) {
     return config_node->vector_storage;
 }
 
-void enkf_config_node_update_min_std(enkf_config_node_type *config_node,
-                                     const char *min_std_file) {
-    if (!util_string_equal(config_node->min_std_file, min_std_file)) {
-        /* The current min_std_file and the new input are different, and
-       the min_std node must be cleared. */
-        if (config_node->min_std != NULL) {
-            enkf_node_free(config_node->min_std);
-            config_node->min_std = NULL;
-            free(config_node->min_std_file);
-        }
-    }
-    config_node->min_std_file =
-        util_realloc_string_copy(config_node->min_std_file, min_std_file);
-    if (config_node->min_std_file != NULL) {
-        config_node->min_std = enkf_node_alloc(config_node);
-        enkf_node_fload(config_node->min_std, min_std_file);
-    }
-}
-
 static void enkf_config_node_update(enkf_config_node_type *config_node,
                                     const char *initfile_fmt,
                                     const char *enkf_outfile_fmt,
-                                    const char *enkf_infile_fmt,
-                                    const char *min_std_file) {
+                                    const char *enkf_infile_fmt) {
 
     config_node->init_file_fmt =
         path_fmt_realloc_path_fmt(config_node->init_file_fmt, initfile_fmt);
@@ -166,7 +142,6 @@ static void enkf_config_node_update(enkf_config_node_type *config_node,
         config_node->enkf_infile_fmt, enkf_infile_fmt);
     config_node->enkf_outfile_fmt = path_fmt_realloc_path_fmt(
         config_node->enkf_outfile_fmt, enkf_outfile_fmt);
-    enkf_config_node_update_min_std(config_node, min_std_file);
 }
 
 enkf_config_node_type *
@@ -178,7 +153,7 @@ enkf_config_node_alloc(enkf_var_type var_type, ert_impl_type impl_type,
     enkf_config_node_type *node =
         enkf_config_node_alloc__(var_type, impl_type, key, forward_init);
     enkf_config_node_update(node, init_file_fmt, enkf_outfile_fmt,
-                            enkf_infile_fmt, NULL);
+                            enkf_infile_fmt);
     node->data = data;
     return node;
 }
@@ -188,15 +163,14 @@ void enkf_config_node_update_gen_kw(
     const char *
         enkf_outfile_fmt, /* The include file created by ERT for the forward model. */
     const char *template_file, const char *parameter_file,
-    const char *min_std_file, const char *init_file_fmt) {
+    const char *init_file_fmt) {
 
     /* 1: Update the low level gen_kw_config stuff. */
     gen_kw_config_update((gen_kw_config_type *)config_node->data, template_file,
                          parameter_file);
 
     /* 2: Update the stuff which is owned by the upper-level enkf_config_node instance. */
-    enkf_config_node_update(config_node, init_file_fmt, enkf_outfile_fmt, NULL,
-                            min_std_file);
+    enkf_config_node_update(config_node, init_file_fmt, enkf_outfile_fmt, NULL);
 }
 
 /**
@@ -223,16 +197,14 @@ enkf_config_node_type *enkf_config_node_new_surface(const char *key,
 void enkf_config_node_update_surface(enkf_config_node_type *config_node,
                                      const char *base_surface,
                                      const char *init_file_fmt,
-                                     const char *output_file,
-                                     const char *min_std_file) {
+                                     const char *output_file) {
 
     /* 1: Update the data owned by the surface node. */
     surface_config_set_base_surface((surface_config_type *)config_node->data,
                                     base_surface);
 
     /* 2: Update the stuff which is owned by the upper-level enkf_config_node instance. */
-    enkf_config_node_update(config_node, init_file_fmt, output_file, NULL,
-                            min_std_file);
+    enkf_config_node_update(config_node, init_file_fmt, output_file, NULL);
 }
 
 enkf_config_node_type *
@@ -277,7 +249,7 @@ enkf_config_node_alloc_GEN_DATA_result(const char *key,
 
     enkf_config_node_update(
         config_node, /* Generic update - needs the format settings from the special.*/
-        NULL, NULL, enkf_infile_fmt, NULL);
+        NULL, NULL, enkf_infile_fmt);
 
     return config_node;
 }
@@ -297,11 +269,13 @@ enkf_config_node_alloc_field(const char *key, ecl_grid_type *ecl_grid,
     return config_node;
 }
 
-void enkf_config_node_update_parameter_field(
-    enkf_config_node_type *config_node, const char *enkf_outfile_fmt,
-    const char *init_file_fmt, const char *min_std_file, int truncation,
-    double value_min, double value_max, const char *init_transform,
-    const char *output_transform) {
+void enkf_config_node_update_parameter_field(enkf_config_node_type *config_node,
+                                             const char *enkf_outfile_fmt,
+                                             const char *init_file_fmt,
+                                             int truncation, double value_min,
+                                             double value_max,
+                                             const char *init_transform,
+                                             const char *output_transform) {
 
     field_file_format_type export_format = field_config_default_export_format(
         enkf_outfile_fmt); /* Purely based on extension, recognizes ROFF and GRDECL, the rest will be ecl_kw format. */
@@ -309,16 +283,14 @@ void enkf_config_node_update_parameter_field(
         (field_config_type *)config_node->data, truncation, value_min,
         value_max, export_format, init_transform, output_transform);
     config_node->var_type = PARAMETER;
-    enkf_config_node_update(config_node, init_file_fmt, enkf_outfile_fmt, NULL,
-                            min_std_file);
+    enkf_config_node_update(config_node, init_file_fmt, enkf_outfile_fmt, NULL);
 }
 
 void enkf_config_node_update_general_field(
     enkf_config_node_type *config_node, const char *enkf_outfile_fmt,
-    const char *enkf_infile_fmt, const char *init_file_fmt,
-    const char *min_std_file, int truncation, double value_min,
-    double value_max, const char *init_transform, const char *input_transform,
-    const char *output_transform) {
+    const char *enkf_infile_fmt, const char *init_file_fmt, int truncation,
+    double value_min, double value_max, const char *init_transform,
+    const char *input_transform, const char *output_transform) {
 
     field_file_format_type export_format = field_config_default_export_format(
         enkf_outfile_fmt); /* Purely based on extension, recognizes ROFF and GRDECL, the rest will be ecl_kw format. */
@@ -340,7 +312,7 @@ void enkf_config_node_update_general_field(
                                       input_transform, output_transform);
 
     enkf_config_node_update(config_node, init_file_fmt, enkf_outfile_fmt,
-                            enkf_infile_fmt, min_std_file);
+                            enkf_infile_fmt);
 }
 
 /**
@@ -376,20 +348,7 @@ void enkf_config_node_free(enkf_config_node_type *node) {
     if (node->internalize != NULL)
         bool_vector_free(node->internalize);
 
-    if (node->min_std != NULL)
-        enkf_node_free(node->min_std);
-
     free(node);
-}
-
-const enkf_node_type *
-enkf_config_node_get_min_std(const enkf_config_node_type *config_node) {
-    return config_node->min_std;
-}
-
-const char *
-enkf_config_node_get_min_std_file(const enkf_config_node_type *config_node) {
-    return config_node->min_std_file;
 }
 
 const char *
@@ -418,7 +377,6 @@ enkf_config_node_get_init_file_fmt(const enkf_config_node_type *config_node) {
  */
 void enkf_config_node_set_internalize(enkf_config_node_type *node,
                                       int report_step) {
-    ert_impl_type impl_type = enkf_config_node_get_impl_type(node);
     if (node->internalize == NULL)
         node->internalize = bool_vector_alloc(0, false);
     bool_vector_iset(node->internalize, report_step, true);
@@ -774,27 +732,25 @@ enkf_config_node_type *enkf_config_node_alloc_GEN_DATA_full(
 enkf_config_node_type *enkf_config_node_alloc_GEN_KW_full(
     const char *node_key, bool forward_init, const char *gen_kw_format,
     const char *template_file, const char *enkf_outfile,
-    const char *parameter_file, const char *min_std_file,
-    const char *init_file_fmt) {
+    const char *parameter_file, const char *init_file_fmt) {
     enkf_config_node_type *config_node = NULL;
     config_node =
         enkf_config_node_new_gen_kw(node_key, gen_kw_format, forward_init);
 
     enkf_config_node_update_gen_kw(config_node, enkf_outfile, template_file,
-                                   parameter_file, min_std_file, init_file_fmt);
+                                   parameter_file, init_file_fmt);
 
     return config_node;
 }
 
 enkf_config_node_type *enkf_config_node_alloc_SURFACE_full(
     const char *node_key, bool forward_init, const char *output_file,
-    const char *base_surface, const char *min_std_file,
-    const char *init_file_fmt) {
+    const char *base_surface, const char *init_file_fmt) {
 
     enkf_config_node_type *config_node =
         enkf_config_node_new_surface(node_key, forward_init);
     enkf_config_node_update_surface(config_node, base_surface, init_file_fmt,
-                                    output_file, min_std_file);
+                                    output_file);
 
     return config_node;
 }

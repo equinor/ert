@@ -64,7 +64,6 @@ ERT_CLIB_SUBMODULE("config_keys", m) {
     cls.attr("MAX_SUBMIT") = MAX_SUBMIT_KEY;
     cls.attr("MIN_KEY") = MIN_KEY;
     cls.attr("MIN_REALIZATIONS") = MIN_REALIZATIONS_KEY;
-    cls.attr("MIN_STD") = MIN_STD_KEY;
     cls.attr("MODULE_NAME") = "MODULE_NAME";
     cls.attr("NAME") = "NAME";
     cls.attr("NUM_CPU") = NUM_CPU_KEY;
