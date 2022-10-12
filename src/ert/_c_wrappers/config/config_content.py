@@ -263,8 +263,19 @@ class ConfigContent(BaseCClass):
         # (false positive)
         d: Dict[str, List[Any]] = {}
         for key in self.keys():
-            d[key] = []
             item = self[key]
-            for node in item:
-                d[key].append(list(node))
+            if len(item) > 1:
+                d[key] = []
+                for node in item:
+                    values = list(node)
+                    if len(values) > 1:
+                        d[key].append(values)
+                    else:
+                        d[key].append(values[0])
+            else:
+                values = list(item[0])
+                if len(values) > 1:
+                    d[key] = [values]
+                else:
+                    d[key] = values[0]
         return d
