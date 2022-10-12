@@ -56,7 +56,7 @@ static void setting_node_free(setting_node_type *node) {
 }
 
 static void setting_node_free__(void *arg) {
-    setting_node_type *node = setting_node_safe_cast(arg);
+    auto node = static_cast<setting_node_type *>(arg);
     setting_node_free(node);
 }
 

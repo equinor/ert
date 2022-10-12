@@ -502,7 +502,7 @@ void config_schema_item_free(config_schema_item_type *item) {
 }
 
 void config_schema_item_free__(void *void_item) {
-    config_schema_item_type *item = config_schema_item_safe_cast(void_item);
+    auto item = static_cast<config_schema_item_type *>(void_item);
     config_schema_item_free(item);
 }
 

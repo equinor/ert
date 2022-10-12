@@ -64,7 +64,7 @@ void config_content_node_free(config_content_node_type *node) {
 }
 
 void config_content_node_free__(void *arg) {
-    config_content_node_type *node = config_content_node_safe_cast(arg);
+    auto node = static_cast<config_content_node_type *>(arg);
     config_content_node_free(node);
 }
 

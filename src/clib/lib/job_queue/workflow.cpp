@@ -54,7 +54,7 @@ static void cmd_free(cmd_type *cmd) {
 }
 
 static void cmd_free__(void *arg) {
-    cmd_type *cmd = cmd_safe_cast(arg);
+    auto cmd = static_cast<cmd_type *>(arg);
     cmd_free(cmd);
 }
 
@@ -219,7 +219,7 @@ static UTIL_SAFE_CAST_FUNCTION(workflow, WORKFLOW_TYPE_ID)
 }
 
 void workflow_free__(void *arg) {
-    workflow_type *workflow = workflow_safe_cast(arg);
+    auto workflow = static_cast<workflow_type *>(arg);
     workflow_free(workflow);
 }
 

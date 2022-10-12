@@ -12,7 +12,6 @@ void test_create() {
 
     enkf_plot_gen_kw_vector_type *vector =
         enkf_plot_gen_kw_vector_alloc(config_node, 0);
-    test_assert_true(enkf_plot_gen_kw_vector_is_instance(vector));
     test_assert_int_equal(0, enkf_plot_gen_kw_vector_get_size(vector));
 
     enkf_plot_gen_kw_vector_free(vector);

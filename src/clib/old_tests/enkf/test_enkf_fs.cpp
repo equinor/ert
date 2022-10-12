@@ -58,14 +58,12 @@ void test_mount() {
     {
         enkf_fs_type *fs = enkf_fs_mount("mnt", 1);
         test_assert_true(fs::exists("mnt/mnt.lock"));
-        test_assert_true(enkf_fs_is_instance(fs));
         enkf_fs_umount(fs);
         test_assert_false(fs::exists("mnt/mnt.lock"));
     }
     {
         enkf_fs_type *fs =
             enkf_fs_create_fs("mnt2", BLOCK_FS_DRIVER_ID, 1, true);
-        test_assert_true(enkf_fs_is_instance(fs));
         enkf_fs_umount(fs);
     }
 }
@@ -78,7 +76,6 @@ void test_mount_filesystem_readwrite_twice() {
     enkf_fs_type *fs = enkf_fs_mount("mnt", 1);
 
     test_assert_true(fs::exists("mnt/mnt.lock"));
-    test_assert_true(enkf_fs_is_instance(fs));
     test_assert_false(enkf_fs_is_read_only(fs));
 
     pid_t pid = fork();

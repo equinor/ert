@@ -110,7 +110,7 @@ void meas_block_free(meas_block_type *meas_block) {
 }
 
 static void meas_block_free__(void *arg) {
-    meas_block_type *meas_block = meas_block_safe_cast(arg);
+    auto meas_block = static_cast<meas_block_type *>(arg);
     meas_block_free(meas_block);
 }
 

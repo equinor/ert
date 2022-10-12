@@ -6,7 +6,6 @@
 
 void test_create() {
     model_config_type *model_config = model_config_alloc_empty();
-    test_assert_true(model_config_is_instance(model_config));
     model_config_free(model_config);
 }
 

@@ -17,7 +17,7 @@ void subst_list_insert_func(subst_list_type *subst_list, const char *func_name,
 void subst_list_fprintf(const subst_list_type *, FILE *stream);
 void subst_list_set_parent(subst_list_type *subst_list,
                            const subst_list_type *parent);
-extern "C" subst_list_type *subst_list_alloc(const void *input_arg);
+extern "C" subst_list_type *subst_list_alloc(const subst_func_pool_type *pool);
 subst_list_type *subst_list_alloc_deep_copy(const subst_list_type *);
 extern "C" void subst_list_free(subst_list_type *);
 void subst_list_clear(subst_list_type *subst_list);

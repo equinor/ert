@@ -336,6 +336,6 @@ void queue_driver_free(queue_driver_type *driver) {
 }
 
 void queue_driver_free__(void *driver) {
-    queue_driver_type *queue_driver = queue_driver_safe_cast(driver);
+    auto queue_driver = static_cast<queue_driver_type *>(driver);
     queue_driver_free(queue_driver);
 }

@@ -606,7 +606,7 @@ void field_ecl_write(const field_type *field, const char *run_path,
         field_config_get_export_format(field->config);
 
     if (export_format == ECL_FILE) {
-        fortio_type *restart_fortio = fortio_safe_cast(filestream);
+        auto restart_fortio = static_cast<fortio_type *>(filestream);
         field_export(field, NULL, restart_fortio, export_format, true, NULL);
         return;
     }

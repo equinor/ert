@@ -74,7 +74,7 @@ static void gen_kw_parameter_free(gen_kw_parameter_type *parameter) {
 }
 
 static void gen_kw_parameter_free__(void *__parameter) {
-    gen_kw_parameter_type *parameter = gen_kw_parameter_safe_cast(__parameter);
+    auto parameter = static_cast<gen_kw_parameter_type *>(__parameter);
     gen_kw_parameter_free(parameter);
 }
 

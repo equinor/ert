@@ -20,7 +20,6 @@ void test_create() {
     enkf_config_node_type *config_node =
         enkf_config_node_alloc_GEN_DATA_result("key", ASCII, "Result:%d");
     enkf_plot_gendata_type *gen_data = enkf_plot_gendata_alloc(config_node);
-    test_assert_true(enkf_plot_gendata_is_instance(gen_data));
     test_assert_int_equal(0, enkf_plot_gendata_get_size(gen_data));
     enkf_config_node_free(config_node);
     enkf_plot_gendata_free(gen_data);

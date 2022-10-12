@@ -252,27 +252,14 @@ bool subst_list_has_key(const subst_list_type *subst_list, const char *key) {
    the parent is used also for the newly allocated subst_list
    instance.
 */
-subst_list_type *subst_list_alloc(const void *input_arg) {
+subst_list_type *subst_list_alloc(const subst_func_pool_type *pool) {
     subst_list_type *subst_list =
         (subst_list_type *)util_malloc(sizeof *subst_list);
-    UTIL_TYPE_ID_INIT(subst_list, SUBST_LIST_TYPE_ID);
     subst_list->parent = NULL;
-    subst_list->func_pool = NULL;
+    subst_list->func_pool = pool;
     subst_list->map = hash_alloc();
     subst_list->string_data = vector_alloc_new();
     subst_list->func_data = vector_alloc_new();
-
-    if (input_arg != NULL) {
-        if (subst_list_is_instance(input_arg))
-            subst_list_set_parent(subst_list,
-                                  (const subst_list_type *)input_arg);
-        else if (subst_func_pool_is_instance(input_arg))
-            subst_list->func_pool = (const subst_func_pool_type *)input_arg;
-        else
-            util_abort(
-                "%s: run_time cast failed - invalid type on input argument.\n",
-                __func__);
-    }
 
     return subst_list;
 }
@@ -698,10 +685,12 @@ char *subst_list_alloc_filtered_string(const subst_list_type *subst_list,
 */
 subst_list_type *subst_list_alloc_deep_copy(const subst_list_type *src) {
     subst_list_type *copy;
-    if (src->parent != NULL)
-        copy = subst_list_alloc(src->parent);
-    else
+    if (src->parent != NULL) {
+        copy = subst_list_alloc(nullptr);
+        subst_list_set_parent(copy, src->parent);
+    } else {
         copy = subst_list_alloc(src->func_pool);
+    }
 
     {
         int index;

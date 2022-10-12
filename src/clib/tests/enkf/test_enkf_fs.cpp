@@ -162,7 +162,6 @@ TEST_CASE("Mount filesystem read/write twice", "[enkf_fs]") {
     enkf_fs_type *fs = enkf_fs_mount("mnt", 1);
 
     REQUIRE(std::filesystem::exists("mnt/mnt.lock"));
-    REQUIRE(enkf_fs_is_instance(fs));
     REQUIRE(!enkf_fs_is_read_only(fs));
 
     pid_t pid = fork();

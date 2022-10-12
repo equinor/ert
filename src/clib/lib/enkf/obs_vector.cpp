@@ -189,29 +189,8 @@ void obs_vector_free(obs_vector_type *obs_vector) {
     delete obs_vector;
 }
 
-static void obs_vector_assert_node_type(const obs_vector_type *obs_vector,
-                                        const void *node) {
-    bool type_OK;
-    switch (obs_vector->obs_type) {
-    case (SUMMARY_OBS):
-        type_OK = summary_obs_is_instance(node);
-        break;
-    case (GEN_OBS):
-        type_OK = gen_obs_is_instance(node);
-        break;
-    default:
-        util_abort("%s: Error in type check: \n", __func__);
-        type_OK = false;
-    }
-    if (!type_OK)
-        util_abort("%s: Type mismatch when trying to add observation node to "
-                   "observation vector \n",
-                   __func__);
-}
-
 void obs_vector_install_node(obs_vector_type *obs_vector, int index,
                              void *node) {
-    obs_vector_assert_node_type(obs_vector, node);
     {
         if (vector_iget_const(obs_vector->nodes, index) == NULL) {
             obs_vector->num_active++;

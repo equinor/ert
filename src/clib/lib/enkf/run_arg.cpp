@@ -60,7 +60,7 @@ void run_arg_free(run_arg_type *run_arg) {
 }
 
 void run_arg_free__(void *arg) {
-    run_arg_type *run_arg = run_arg_safe_cast(arg);
+    auto run_arg = static_cast<run_arg_type *>(arg);
     run_arg_free(run_arg);
 }
 

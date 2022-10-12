@@ -12,7 +12,6 @@ void test_define(config_parser_type *config, const char *config_file) {
         config_parse(config, config_file, NULL, NULL, "DEFINE",
                      pre_defined_kw_map, CONFIG_UNRECOGNIZED_IGNORE, true);
     hash_free(pre_defined_kw_map);
-    test_assert_true(config_content_is_instance(content));
     test_assert_true(config_content_is_valid(content));
     {
         const subst_list_type *define_list =

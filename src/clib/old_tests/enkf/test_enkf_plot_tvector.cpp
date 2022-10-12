@@ -9,7 +9,6 @@ void create_test() {
     enkf_config_node_type *config_node =
         enkf_config_node_alloc_summary("KEY", LOAD_FAIL_SILENT);
     enkf_plot_tvector_type *tvector = enkf_plot_tvector_alloc(config_node, 0);
-    test_assert_true(enkf_plot_tvector_is_instance(tvector));
     enkf_plot_tvector_free(tvector);
 }
 

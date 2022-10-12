@@ -25,7 +25,7 @@ static void misfit_member_free(misfit_member_type *node) {
 }
 
 void misfit_member_free__(void *node) {
-    misfit_member_free(misfit_member_safe_cast(node));
+    misfit_member_free(static_cast<misfit_member_type *>(node));
 }
 
 misfit_member_type *misfit_member_alloc(int iens) {

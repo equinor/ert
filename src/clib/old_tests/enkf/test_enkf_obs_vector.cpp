@@ -9,7 +9,6 @@
 void test_create(enkf_config_node_type *config_node) {
     obs_vector_type *obs_vector =
         obs_vector_alloc(SUMMARY_OBS, "OBS", config_node, 100);
-    test_assert_true(obs_vector_is_instance(obs_vector));
     {
 
         {

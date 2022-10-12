@@ -6,7 +6,6 @@
 void test_create() {
     ui_return_status_enum status = UI_RETURN_OK;
     ui_return_type *ui_return = ui_return_alloc(status);
-    test_assert_true(ui_return_is_instance(ui_return));
     test_assert_int_equal(status, ui_return_get_status(ui_return));
     ui_return_free(ui_return);
 }

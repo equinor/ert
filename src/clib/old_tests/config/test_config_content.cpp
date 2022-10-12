@@ -4,7 +4,6 @@
 
 void test_create() {
     config_content_type *content = config_content_alloc("filename");
-    test_assert_true(config_content_is_instance(content));
     config_content_free(content);
 }
 

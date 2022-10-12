@@ -49,7 +49,7 @@ static void misfit_ts_free(misfit_ts_type *misfit_ts) {
 }
 
 void misfit_ts_free__(void *vector) {
-    misfit_ts_free(misfit_ts_safe_cast(vector));
+    misfit_ts_free(static_cast<misfit_ts_type *>(vector));
 }
 
 void misfit_ts_iset(misfit_ts_type *vector, int time_index, double value) {
