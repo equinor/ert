@@ -169,6 +169,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
         prior_context: Optional[RunContext] = None,
         rerun: bool = False,
     ) -> RunContext:
+
         target_case_format = self._simulation_arguments["target_case"]
 
         sim_fs = self.createTargetCaseFileSystem(itr, target_case_format)
@@ -182,7 +183,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
             )
             mask = sim_fs.getStateMap().createMask(state)
 
-        if rerun:
+        if rerun or itr >= self.facade.get_number_of_iterations():
             target_fs = None
         else:
             target_fs = self.createTargetCaseFileSystem(itr + 1, target_case_format)
