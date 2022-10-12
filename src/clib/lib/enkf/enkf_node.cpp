@@ -30,30 +30,30 @@
    |  |  |              |        |                |  enkf_config_node |
    |  |  |              |        |                |                   |
    ===|  |  enkf_node   |  o------                |                   |
-   o |  |              |                         |                   |
-   | ===|              |                         =====================
-   |  o |              |                                   o
-   |  | ================                                   |
-   |  |        o                                           |
-   |  \        |                                           |
+   o  |  |              |                         |                   |
+   |  ===|              |                         =====================
+   |   o |              |                                  o
+   |   | ================                                  |
+   |   |       o                                           |
    |   \       |                                           |
+   |    \      |                                           |
    |    |      |                                           |
    |    |      |                                           |
    |    |      |                                           |
    |    |      |                                           |
-   \|/   |      |                                           |
-   ======|======|==                                        \|/
-   |    \|/     | |   o-----------
-   |  ==========|=====           |                =====================
-   |  |        \|/   |   o--------                |                   |
-   |  |  ================        |------------->  |                   |
-   |  |  |              |        |                |  field_config     |
-   |  |  |              |        |                |                   |
-   ===|  |  field       |  o------                |                   |
-   |     |              |                         |                   |
-   ===   |              |                         =====================
-         |              |
-         ================
+  \|/   |      |                                           |
+  ======|======|==                                        \|/
+  |    \|/     | |   o-----------
+  |  ==========|=====           |                =====================
+  |  |        \|/   |   o--------                |                   |
+  |  |  ================        |------------->  |                   |
+  |  |  |              |        |                |  field_config     |
+  |  |  |              |        |                |                   |
+  ===|  |  field       |  o------                |                   |
+  |     |              |                         |                   |
+  ===   |              |                         =====================
+        |              |
+        ================
 
 
    To summarize in words:
@@ -616,9 +616,7 @@ enkf_node_alloc_empty(const enkf_config_node_type *config) {
         break;
     case (GEN_DATA):
         node->alloc = gen_data_alloc__;
-        node->initialize = gen_data_initialize__;
         node->freef = gen_data_free__;
-        node->ecl_write = gen_data_ecl_write__;
         node->forward_load = gen_data_forward_load__;
         node->user_get = gen_data_user_get__;
         node->read_from_buffer = gen_data_read_from_buffer__;

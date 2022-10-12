@@ -148,10 +148,6 @@ class EnsembleConfig(BaseCClass):
                     gene_data.get(ConfigKeys.RESULT_FILE),
                     gene_data.get(ConfigKeys.INPUT_FORMAT),
                     gene_data.get(ConfigKeys.REPORT_STEPS),
-                    gene_data.get(ConfigKeys.ECL_FILE),
-                    gene_data.get(ConfigKeys.INIT_FILES),
-                    gene_data.get(ConfigKeys.TEMPLATE),
-                    gene_data.get(ConfigKeys.KEY_KEY),
                 )
                 self.addNode(gen_data_node)
 

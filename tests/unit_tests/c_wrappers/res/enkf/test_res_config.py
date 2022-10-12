@@ -403,10 +403,6 @@ def test_res_config_dict_constructor(setup_case):
                 ConfigKeys.INPUT_FORMAT: GenDataFileType.ASCII,
                 ConfigKeys.RESULT_FILE: "super_data_%d",
                 ConfigKeys.REPORT_STEPS: [1],
-                ConfigKeys.INIT_FILES: None,
-                ConfigKeys.ECL_FILE: None,
-                ConfigKeys.TEMPLATE: None,
-                ConfigKeys.KEY_KEY: None,
             }  # ensemble
         ],
         ConfigKeys.ECLBASE: "eclipse/model/<ECLIPSE_NAME>-%d",  # model, ecl

@@ -304,62 +304,6 @@ bool gen_data_forward_load(gen_data_type *gen_data, const char *ecl_file,
                                            run_arg_get_sim_fs(run_arg));
 }
 
-/**
-   This function initializes the parameter. This is based on loading a
-   file. The name of the file is derived from a path_fmt instance
-   owned by the config object. Observe that there is *NO* header
-   information in this file. We just read floating point numbers until
-   we reach EOF.
-
-   When the read is complete it is checked/verified with the config
-   object that this file was as long as the files we have loaded for
-   other members.
-
-   If gen_data_config_alloc_initfile() returns NULL that means that
-   the gen_data instance does not have any init function - that is OK.
-*/
-C_USED bool gen_data_initialize(gen_data_type *gen_data, int iens,
-                                const char *init_file) {
-    bool ret = false;
-    if (init_file) {
-        if (!gen_data_fload_with_report_step(gen_data, init_file, 0, NULL))
-            util_abort("%s: could not find file:%s \n", __func__, init_file);
-        ret = true;
-    }
-    return ret;
-}
-
-static void gen_data_ecl_write_ASCII(const gen_data_type *gen_data,
-                                     const char *file,
-                                     gen_data_file_format_type export_format) {
-    FILE *stream = util_fopen(file, "w");
-    char *template_buffer;
-    int template_data_offset, template_buffer_size, template_data_skip;
-
-    if (export_format == ASCII_TEMPLATE) {
-        gen_data_config_get_template_data(
-            gen_data->config, &template_buffer, &template_data_offset,
-            &template_buffer_size, &template_data_skip);
-        util_fwrite(template_buffer, 1, template_data_offset, stream, __func__);
-    }
-
-    {
-        const int size = gen_data_config_get_data_size(
-            gen_data->config, gen_data->current_report_step);
-        int i;
-        double *double_data = (double *)gen_data->data;
-        for (i = 0; i < size; i++)
-            fprintf(stream, "%lg\n", double_data[i]);
-    }
-
-    if (export_format == ASCII_TEMPLATE) {
-        int new_offset = template_data_offset + template_data_skip;
-        util_fwrite(&template_buffer[new_offset], 1,
-                    template_buffer_size - new_offset, stream, __func__);
-    }
-    fclose(stream);
-}
-
 static void gen_data_ecl_write_binary(const gen_data_type *gen_data,
                                       const char *file,
                                       ecl_data_type export_type) {
@@ -370,38 +314,6 @@ static void gen_data_ecl_write_binary(const gen_data_type *gen_data,
                                               gen_data->current_report_step),
                 stream, __func__);
     fclose(stream);
-}
-
-void gen_data_export(const gen_data_type *gen_data, const char *full_path,
-                     gen_data_file_format_type export_type) {
-    switch (export_type) {
-    case (ASCII):
-        gen_data_ecl_write_ASCII(gen_data, full_path, export_type);
-        break;
-    case (ASCII_TEMPLATE):
-        gen_data_ecl_write_ASCII(gen_data, full_path, export_type);
-        break;
-    default:
-        util_abort("%s: internal error - export type is not set.\n", __func__);
-    }
-}
-
-/**
-    It is the enkf_node layer which knows whether the node actually
-    has any data to export. If it is not supposed to write data to the
-    forward model, i.e. it is of enkf_type 'dynamic_result' that is
-    signaled down here with eclfile == NULL.
-*/
-void gen_data_ecl_write(const gen_data_type *gen_data, const char *run_path,
-                        const char *eclfile, value_export_type *export_value) {
-    if (eclfile != NULL) {
-        char *full_path = util_alloc_filename(run_path, eclfile, NULL);
-
-        gen_data_file_format_type export_type =
-            gen_data_config_get_output_format(gen_data->config);
-        gen_data_export(gen_data, full_path, export_type);
-        free(full_path);
-    }
 }
 
 static void gen_data_assert_index(const gen_data_type *gen_data, int index) {
@@ -472,8 +384,6 @@ void gen_data_copy_to_double_vector(const gen_data_type *gen_data,
 VOID_USER_GET(gen_data)
 VOID_ALLOC(gen_data)
 VOID_FREE(gen_data)
-VOID_INITIALIZE(gen_data)
-VOID_ECL_WRITE(gen_data)
 VOID_FORWARD_LOAD(gen_data)
 VOID_READ_FROM_BUFFER(gen_data);
 VOID_WRITE_TO_BUFFER(gen_data);

@@ -131,11 +131,11 @@ void enkf_config_node_add_GEN_DATA_config_schema(config_parser_type *config);
 enkf_config_node_type *enkf_config_node_alloc_GEN_DATA_from_config(
     const config_content_node_type *node);
 
-extern "C" PY_USED enkf_config_node_type *enkf_config_node_alloc_GEN_DATA_full(
-    const char *node_key, const char *result_file,
-    gen_data_file_format_type input_format, const int_vector_type *report_steps,
-    const char *ecl_file, const char *init_file_fmt, const char *template_file,
-    const char *data_key);
+extern "C" PY_USED enkf_config_node_type *
+enkf_config_node_alloc_GEN_DATA_full(const char *node_key,
+                                     const char *result_file,
+                                     gen_data_file_format_type input_format,
+                                     const int_vector_type *report_steps);
 
 extern "C" PY_USED enkf_config_node_type *enkf_config_node_alloc_GEN_KW_full(
     const char *node_key, bool forward_init, const char *gen_kw_format,

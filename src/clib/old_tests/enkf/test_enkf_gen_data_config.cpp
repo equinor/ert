@@ -103,17 +103,9 @@ void alloc_invalid_io_format1(void *arg) {
     gen_data_config_free(config);
 }
 
-void alloc_invalid_io_format2(void *arg) {
-    gen_data_config_type *config =
-        gen_data_config_alloc_GEN_DATA_state("KEY", GEN_DATA_UNDEFINED, ASCII);
-    gen_data_config_free(config);
-}
-
 void test_set_invalid_format() {
     test_assert_util_abort("gen_data_config_alloc_GEN_DATA_result",
                            alloc_invalid_io_format1, NULL);
-    test_assert_util_abort("gen_data_config_alloc_GEN_DATA_state",
-                           alloc_invalid_io_format2, NULL);
 }
 
 void test_format_check() {

@@ -23,7 +23,6 @@ ERT_CLIB_SUBMODULE("config_keys", m) {
     cls.attr("DRIVER_NAME") = "DRIVER_NAME";
     cls.attr("DST_NAME") = "DST_NAME";
     cls.attr("ECLBASE") = ECLBASE_KEY;
-    cls.attr("ECL_FILE") = ECL_FILE_KEY;
     cls.attr("ENKF_INFILE") = "ENKF_INFILE";
     cls.attr("ENSPATH") = ENSPATH_KEY;
     cls.attr("EXPORT") = "EXPORT";
@@ -51,7 +50,6 @@ ERT_CLIB_SUBMODULE("config_keys", m) {
     cls.attr("ITER_RETRY_COUNT") = ITER_RETRY_COUNT_KEY;
     cls.attr("JOBNAME") = JOBNAME_KEY;
     cls.attr("JOB_SCRIPT") = JOB_SCRIPT_KEY;
-    cls.attr("KEY_KEY") = KEY_KEY;
     cls.attr("LIB_NAME") = "LIB_NAME";
     cls.attr("LICENSE_PATH") = LICENSE_PATH_KEY;
     cls.attr("LOAD_WORKFLOW") = LOAD_WORKFLOW_KEY;
@@ -70,7 +68,6 @@ ERT_CLIB_SUBMODULE("config_keys", m) {
     cls.attr("NUM_REALIZATIONS") = NUM_REALIZATIONS_KEY;
     cls.attr("OBS_CONFIG") = OBS_CONFIG_KEY;
     cls.attr("OPTION") = "OPTION";
-    cls.attr("OUTPUT_FORMAT") = OUTPUT_FORMAT_KEY;
     cls.attr("OUTPUT_TRANSFORM") = OUTPUT_TRANSFORM_KEY;
     cls.attr("OUT_FILE") = "OUT_FILE";
     cls.attr("PARAMETER_FILE") = "PARAMETER_FILE";

@@ -10,9 +10,6 @@ class GenData(BaseCClass):
     _free = ResPrototype("void   gen_data_free(gen_data)")
     _size = ResPrototype("int    gen_data_get_size(gen_data)")
     _iget = ResPrototype("double gen_data_iget_double(gen_data , int)")
-    _export = ResPrototype(
-        "void   gen_data_export(gen_data , char*, gen_data_file_format_type, fortio)"
-    )
     _export_data = ResPrototype("void   gen_data_export_data(gen_data , double_vector)")
 
     def __init__(self):
@@ -30,14 +27,6 @@ class GenData(BaseCClass):
 
     def __repr__(self):
         return f"GenData(len = {len(self)}) {self._ad_str()}"
-
-    def export(self, file_name, file_format_type, fortio):
-        """
-        @type: str
-        @type: GenDataFileType
-        @type: FortIO
-        """
-        self._export(file_name, file_format_type, fortio)
 
     def getData(self) -> DoubleVector:
         data = DoubleVector()

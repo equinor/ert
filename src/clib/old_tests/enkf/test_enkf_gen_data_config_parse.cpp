@@ -122,9 +122,6 @@ void test_parse_gen_data_result() {
                 (gen_data_config_type *)enkf_config_node_get_ref(config_node);
             test_assert_int_equal(
                 ASCII, gen_data_config_get_input_format(gen_data_config));
-            test_assert_int_equal(
-                GEN_DATA_UNDEFINED,
-                gen_data_config_get_output_format(gen_data_config));
 
             test_assert_int_equal(
                 3, gen_data_config_num_report_step(gen_data_config));
