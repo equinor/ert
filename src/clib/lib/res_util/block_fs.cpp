@@ -21,7 +21,6 @@
 namespace fs = std::filesystem;
 
 #define MOUNT_MAP_MAGIC_INT 8861290
-#define BLOCK_FS_TYPE_ID 7100652
 
 /*
    These should be bitwise "smart" - so it is possible
@@ -209,8 +208,6 @@ private:
 };
 
 struct block_fs_struct {
-    UTIL_TYPE_ID_DECLARATION;
-
     int data_fd;
     FILE *data_stream;
 
@@ -224,8 +221,6 @@ struct block_fs_struct {
     int fsync_interval;
 };
 
-UTIL_SAFE_CAST_FUNCTION(block_fs, BLOCK_FS_TYPE_ID)
-
 static inline void block_fs_fseek(block_fs_type *block_fs, long offset) {
     fseek__(block_fs->data_stream, offset, SEEK_SET);
 }
@@ -233,7 +228,6 @@ static inline void block_fs_fseek(block_fs_type *block_fs, long offset) {
 static block_fs_type *block_fs_alloc_empty(const fs::path &mount_file,
                                            int fsync_interval, bool read_only) {
     block_fs_type *block_fs = new block_fs_type;
-    UTIL_TYPE_ID_INIT(block_fs, BLOCK_FS_TYPE_ID);
 
     block_fs->fsync_interval = fsync_interval;
 
@@ -254,8 +248,6 @@ static block_fs_type *block_fs_alloc_empty(const fs::path &mount_file,
     block_fs->data_owner = !read_only;
     return block_fs;
 }
-
-UTIL_IS_INSTANCE_FUNCTION(block_fs, BLOCK_FS_TYPE_ID);
 
 static void block_fs_fwrite_mount_info(const fs::path &mount_file) {
     FILE *stream = util_fopen(mount_file.c_str(), "w");

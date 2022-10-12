@@ -19,7 +19,6 @@
 GET_DATA_SIZE_HEADER(gen_kw);
 
 struct gen_kw_struct {
-    int __type_id;
     const gen_kw_config_type *config;
     double *data;
     subst_list_type *subst_list;
@@ -33,7 +32,6 @@ void gen_kw_free(gen_kw_type *gen_kw) {
 
 extern "C" PY_USED gen_kw_type *gen_kw_alloc(const gen_kw_config_type *config) {
     gen_kw_type *gen_kw = (gen_kw_type *)util_malloc(sizeof *gen_kw);
-    gen_kw->__type_id = GEN_KW;
     gen_kw->config = config;
     gen_kw->subst_list = subst_list_alloc(NULL);
     gen_kw->data = (double *)util_calloc(gen_kw_config_get_data_size(config),
@@ -270,8 +268,6 @@ C_USED bool gen_kw_user_get(const gen_kw_type *gen_kw, const char *key,
     }
 }
 
-UTIL_SAFE_CAST_FUNCTION(gen_kw, GEN_KW);
-UTIL_SAFE_CAST_FUNCTION_CONST(gen_kw, GEN_KW);
 VOID_ALLOC(gen_kw);
 VOID_COPY(gen_kw)
 VOID_FREE(gen_kw)

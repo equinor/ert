@@ -3,7 +3,6 @@
 
 #include <ert/util/bool_vector.h>
 #include <ert/util/stringlist.h>
-#include <ert/util/type_macros.h>
 
 #include <ert/enkf/enkf_config_node.hpp>
 #include <ert/enkf/enkf_plot_gen_kw_vector.hpp>
@@ -22,7 +21,5 @@ extern "C" void enkf_plot_gen_kw_load(enkf_plot_gen_kw_type *gen_kw,
 
 int enkf_plot_gen_kw_get_keyword_index(const enkf_plot_gen_kw_type *gen_kw,
                                        const std::string &keyword);
-
-UTIL_IS_INSTANCE_HEADER(enkf_plot_gen_kw);
 
 #endif

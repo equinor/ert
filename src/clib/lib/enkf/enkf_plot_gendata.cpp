@@ -6,10 +6,7 @@
 #include <ert/enkf/enkf_plot_gendata.hpp>
 #include <ert/enkf/obs_vector.hpp>
 
-#define ENKF_PLOT_GENDATA_TYPE_ID 377626666
-
 struct enkf_plot_gendata_struct {
-    UTIL_TYPE_ID_DECLARATION;
     int size;
     int report_step;
     const enkf_config_node_type *enkf_config_node;
@@ -18,14 +15,11 @@ struct enkf_plot_gendata_struct {
     double_vector_type *min_values;
 };
 
-UTIL_IS_INSTANCE_FUNCTION(enkf_plot_gendata, ENKF_PLOT_GENDATA_TYPE_ID)
-
 enkf_plot_gendata_type *
 enkf_plot_gendata_alloc(const enkf_config_node_type *enkf_config_node) {
     if (enkf_config_node_get_impl_type(enkf_config_node) == GEN_DATA) {
         enkf_plot_gendata_type *data =
             (enkf_plot_gendata_type *)util_malloc(sizeof *data);
-        UTIL_TYPE_ID_INIT(data, ENKF_PLOT_GENDATA_TYPE_ID);
         data->size = 0;
         data->enkf_config_node = enkf_config_node;
         data->ensemble = NULL;

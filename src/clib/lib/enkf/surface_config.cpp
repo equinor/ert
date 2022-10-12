@@ -4,17 +4,13 @@
 
 #include <ert/enkf/surface_config.hpp>
 
-#define SURFACE_CONFIG_TYPE_ID 853317
-
 struct surface_config_struct {
-    UTIL_TYPE_ID_DECLARATION;
     geo_surface_type *base_surface;
 };
 
 surface_config_type *surface_config_alloc_empty() {
     surface_config_type *config =
         (surface_config_type *)util_malloc(sizeof *config);
-    UTIL_TYPE_ID_INIT(config, SURFACE_CONFIG_TYPE_ID);
     config->base_surface = NULL;
     return config;
 }
@@ -48,7 +44,5 @@ void surface_config_ecl_write(const surface_config_type *config,
                                              zcoord);
 }
 
-UTIL_SAFE_CAST_FUNCTION(surface_config, SURFACE_CONFIG_TYPE_ID)
-UTIL_SAFE_CAST_FUNCTION_CONST(surface_config, SURFACE_CONFIG_TYPE_ID)
 VOID_GET_DATA_SIZE(surface)
 VOID_CONFIG_FREE(surface)

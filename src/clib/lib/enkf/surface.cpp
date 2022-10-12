@@ -10,8 +10,6 @@
 #include <ert/enkf/surface.hpp>
 
 struct surface_struct {
-    /** Only used for run_time checking. */
-    int __type_id;
     /** Can not be NULL - var_type is set on first load. */
     surface_config_type *config;
     /** Size should always be one */
@@ -41,7 +39,6 @@ bool surface_initialize(surface_type *surface, int iens, const char *filename) {
 
 surface_type *surface_alloc(const surface_config_type *surface_config) {
     surface_type *surface = (surface_type *)util_malloc(sizeof *surface);
-    surface->__type_id = SURFACE;
     surface->config = (surface_config_type *)surface_config;
     {
         const int data_size = surface_config_get_data_size(surface_config);
@@ -123,8 +120,6 @@ bool surface_user_get(const surface_type *surface, const char *index_key,
     return false;
 }
 
-UTIL_SAFE_CAST_FUNCTION(surface, SURFACE)
-UTIL_SAFE_CAST_FUNCTION_CONST(surface, SURFACE)
 VOID_ALLOC(surface)
 VOID_FREE(surface)
 VOID_ECL_WRITE(surface)

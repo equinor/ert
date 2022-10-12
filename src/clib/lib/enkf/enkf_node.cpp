@@ -16,8 +16,6 @@
 #include <ert/enkf/summary.hpp>
 #include <ert/enkf/surface.hpp>
 
-#define ENKF_NODE_TYPE_ID 71043086
-
 /**
    A small illustration (says more than thousand words ...) of how the
    enkf_node, enkf_config_node, field[1] and field_config[1] objects
@@ -119,7 +117,6 @@
 
 */
 struct enkf_node_struct {
-    UTIL_TYPE_ID_DECLARATION;
     alloc_ftype *alloc;
     ecl_write_ftype *ecl_write;
     forward_load_ftype *forward_load;
@@ -149,8 +146,6 @@ struct enkf_node_struct {
      * pointer to the config object of data). */
     const enkf_config_node_type *config;
 };
-
-UTIL_IS_INSTANCE_FUNCTION(enkf_node, ENKF_NODE_TYPE_ID)
 
 const enkf_config_node_type *enkf_node_get_config(const enkf_node_type *node) {
     return node->config;
@@ -655,7 +650,6 @@ enkf_node_alloc_empty(const enkf_config_node_type *config) {
 
 enkf_node_type *enkf_node_alloc(const enkf_config_node_type *config) {
     enkf_node_type *node = enkf_node_alloc_empty(config);
-    UTIL_TYPE_ID_INIT(node, ENKF_NODE_TYPE_ID);
     enkf_node_alloc_domain_object(node);
     return node;
 }

@@ -189,7 +189,6 @@ struct fs_driver_struct {
 };
 
 void fs_driver_init(fs_driver_type *);
-fs_driver_type *fs_driver_safe_cast(void *);
 
 void fs_driver_init_fstab(FILE *stream, fs_driver_impl driver_id);
 char *fs_driver_alloc_fstab_file(const char *path);

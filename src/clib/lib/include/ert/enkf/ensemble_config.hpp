@@ -96,7 +96,4 @@ std::pair<fw_load_status, std::string>
 ensemble_config_forward_init(const ensemble_config_type *ens_config,
                              const run_arg_type *run_arg);
 
-UTIL_IS_INSTANCE_HEADER(ensemble_config);
-UTIL_SAFE_CAST_HEADER(ensemble_config);
-
 #endif

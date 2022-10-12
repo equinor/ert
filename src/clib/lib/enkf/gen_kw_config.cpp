@@ -18,18 +18,13 @@
 
 namespace fs = std::filesystem;
 
-#define GEN_KW_CONFIG_TYPE_ID 550761
-#define GEN_KW_PARAMETER_TYPE_ID 886201
-
 typedef struct {
-    UTIL_TYPE_ID_DECLARATION;
     char *name;
     char *tagged_name;
     trans_func_type *trans_func;
 } gen_kw_parameter_type;
 
 struct gen_kw_config_struct {
-    UTIL_TYPE_ID_DECLARATION;
     char *key;
     /** Vector of gen_kw_parameter_type instances. */
     vector_type *parameters;
@@ -38,12 +33,6 @@ struct gen_kw_config_struct {
     /** Pointer to the tag_format owned by the ensemble config object. */
     const char *tag_fmt;
 };
-
-UTIL_SAFE_CAST_FUNCTION(gen_kw_parameter, GEN_KW_PARAMETER_TYPE_ID)
-UTIL_SAFE_CAST_FUNCTION_CONST(gen_kw_parameter, GEN_KW_PARAMETER_TYPE_ID)
-
-UTIL_SAFE_CAST_FUNCTION(gen_kw_config, GEN_KW_CONFIG_TYPE_ID)
-UTIL_SAFE_CAST_FUNCTION_CONST(gen_kw_config, GEN_KW_CONFIG_TYPE_ID)
 
 static void
 gen_kw_parameter_update_tagged_name(gen_kw_parameter_type *parameter,
@@ -57,7 +46,6 @@ static gen_kw_parameter_type *gen_kw_parameter_alloc(const char *parameter_name,
                                                      const char *tag_fmt) {
     gen_kw_parameter_type *parameter =
         (gen_kw_parameter_type *)util_malloc(sizeof *parameter);
-    UTIL_TYPE_ID_INIT(parameter, GEN_KW_PARAMETER_TYPE_ID);
     parameter->name = util_alloc_string_copy(parameter_name);
     parameter->tagged_name = NULL;
     parameter->trans_func = NULL;
@@ -167,7 +155,6 @@ gen_kw_config_type *gen_kw_config_alloc_empty(const char *key,
                                               const char *tag_fmt) {
     gen_kw_config_type *gen_kw_config =
         (gen_kw_config_type *)util_malloc(sizeof *gen_kw_config);
-    UTIL_TYPE_ID_INIT(gen_kw_config, GEN_KW_CONFIG_TYPE_ID);
 
     gen_kw_config->key = NULL;
     gen_kw_config->template_file = NULL;

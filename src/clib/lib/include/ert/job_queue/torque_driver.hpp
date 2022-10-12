@@ -4,7 +4,6 @@
 #include <stdio.h>
 
 #include <ert/job_queue/queue_driver.hpp>
-#include <ert/util/type_macros.hpp>
 
 /*
     The options supported by the Torque driver.
@@ -59,7 +58,5 @@ int torque_driver_get_submit_sleep(const torque_driver_type *driver);
 FILE *torque_driver_get_debug_stream(const torque_driver_type *driver);
 job_status_type torque_driver_parse_status(const char *qstat_file,
                                            const char *jobnr);
-
-UTIL_SAFE_CAST_HEADER(torque_driver);
 
 #endif /* TORQUE_DRIVER_H */

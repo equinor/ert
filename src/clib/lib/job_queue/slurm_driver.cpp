@@ -103,7 +103,6 @@ private:
     mutable pthread_rwlock_t lock = PTHREAD_RWLOCK_INITIALIZER;
 };
 
-#define SLURM_DRIVER_TYPE_ID 70555081
 #define DEFAULT_SBATCH_CMD "sbatch"
 #define DEFAULT_SCANCEL_CMD "scancel"
 #define DEFAULT_SQUEUE_CMD "squeue"
@@ -119,8 +118,6 @@ private:
 #define SLURM_CONFIGURING_STATUS "CONFIGURING"
 
 struct slurm_driver_struct {
-    UTIL_TYPE_ID_DECLARATION;
-
     std::string sbatch_cmd;
     std::string scancel_cmd;
     std::string squeue_cmd;
@@ -198,12 +195,8 @@ template <typename C> static std::string join_string(const C &strings) {
     return full_string;
 }
 
-UTIL_SAFE_CAST_FUNCTION(slurm_driver, SLURM_DRIVER_TYPE_ID);
-static UTIL_SAFE_CAST_FUNCTION_CONST(slurm_driver, SLURM_DRIVER_TYPE_ID);
-
 void *slurm_driver_alloc() {
     slurm_driver_type *driver = new slurm_driver_type();
-    UTIL_TYPE_ID_INIT(driver, SLURM_DRIVER_TYPE_ID);
     driver->sbatch_cmd = DEFAULT_SBATCH_CMD;
     driver->scancel_cmd = DEFAULT_SCANCEL_CMD;
     driver->squeue_cmd = DEFAULT_SQUEUE_CMD;

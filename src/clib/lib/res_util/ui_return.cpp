@@ -5,21 +5,15 @@
 
 #include <ert/res_util/ui_return.hpp>
 
-#define UI_RETURN_TYPE_ID 6122209
-
 struct ui_return_struct {
-    UTIL_TYPE_ID_DECLARATION;
     ui_return_status_enum status;
     stringlist_type *error_list;
     char *help_text;
 };
 
-UTIL_IS_INSTANCE_FUNCTION(ui_return, UI_RETURN_TYPE_ID)
-
 ui_return_type *ui_return_alloc(ui_return_status_enum status) {
     ui_return_type *ui_return =
         (ui_return_type *)util_malloc(sizeof *ui_return);
-    UTIL_TYPE_ID_INIT(ui_return, UI_RETURN_TYPE_ID);
     ui_return->status = status;
     ui_return->help_text = NULL;
     ui_return->error_list = stringlist_alloc_new();

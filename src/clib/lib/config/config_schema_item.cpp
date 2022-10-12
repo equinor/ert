@@ -9,7 +9,6 @@
 #include <ert/res_util/res_env.hpp>
 #include <ert/util/hash.hpp>
 #include <ert/util/parser.hpp>
-#include <ert/util/type_macros.hpp>
 
 #include <ert/config/config_error.hpp>
 #include <ert/config/config_schema_item.hpp>
@@ -70,9 +69,7 @@ struct validate_struct {
     hash_type *required_children_value;
 };
 
-#define CONFIG_SCHEMA_ITEM_ID 6751
 struct config_schema_item_struct {
-    UTIL_TYPE_ID_DECLARATION;
     /** The kw which identifies this item */
     char *kw;
 
@@ -184,10 +181,8 @@ static void validate_set_indexed_selection_set(validate_type *validate,
         set.insert(stringlist_iget(argv, i));
 }
 
-static UTIL_SAFE_CAST_FUNCTION(config_schema_item, CONFIG_SCHEMA_ITEM_ID)
-
-    void config_schema_item_assure_type(const config_schema_item_type *item,
-                                        int index, int type_mask) {
+void config_schema_item_assure_type(const config_schema_item_type *item,
+                                    int index, int type_mask) {
     bool OK = false;
 
     if (int_vector_safe_iget(item->validate->type_map, index) & type_mask)
@@ -201,7 +196,6 @@ config_schema_item_type *config_schema_item_alloc(const char *kw,
                                                   bool required) {
     config_schema_item_type *item =
         (config_schema_item_type *)util_malloc(sizeof *item);
-    UTIL_TYPE_ID_INIT(item, CONFIG_SCHEMA_ITEM_ID);
     item->kw = util_alloc_string_copy(kw);
 
     item->required_set = required;

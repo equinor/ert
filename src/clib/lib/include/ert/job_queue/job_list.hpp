@@ -1,8 +1,6 @@
 #ifndef ERT_JOB_LIST_H
 #define ERT_JOB_LIST_H
 
-#include <ert/util/type_macros.hpp>
-
 #include <ert/job_queue/job_node.hpp>
 #include <ert/job_queue/queue_driver.hpp>
 
@@ -20,8 +18,5 @@ void job_list_get_rdlock(job_list_type *list);
 void job_list_reader_wait(job_list_type *list, int usleep_time1,
                           int usleep_time2);
 void job_list_unlock(job_list_type *list);
-
-UTIL_SAFE_CAST_HEADER(job_list);
-UTIL_IS_INSTANCE_HEADER(job_list);
 
 #endif

@@ -45,7 +45,6 @@ static auto logger = ert::get_logger("job_queue");
         this:
 
         struct some_driver {
-            UTIL_TYPE_ID_DECLARATION
             QUEUE_DRIVER_FUNCTIONS
             ....
             ....
@@ -56,7 +55,6 @@ static auto logger = ert::get_logger("job_queue");
         queue_driver_type instance which is a struct like this:
 
         struct queue_driver_struct {
-            UTIL_TYPE_ID_DECLARATION
             QUEUE_DRIVER_FIELDS
         }
 
@@ -182,7 +180,6 @@ static auto logger = ert::get_logger("job_queue");
 
 */
 struct job_queue_struct {
-    UTIL_TYPE_ID_DECLARATION;
     job_list_type *job_list;
     job_queue_status_type *status;
     /** The queue will look for the occurrence of this file to detect a failure. */
@@ -395,8 +392,6 @@ int job_queue_add_job(job_queue_type *queue, const char *run_cmd,
         return -1;
 }
 
-UTIL_SAFE_CAST_FUNCTION(job_queue, JOB_QUEUE_TYPE_ID)
-
 /**
    Observe that the job_queue returned by this function is NOT ready
    for use; a driver must be set explicitly with a call to
@@ -407,7 +402,6 @@ job_queue_type *job_queue_alloc(int max_submit, const char *ok_file,
                                 const char *exit_file) {
 
     job_queue_type *queue = (job_queue_type *)util_malloc(sizeof *queue);
-    UTIL_TYPE_ID_INIT(queue, JOB_QUEUE_TYPE_ID);
     queue->usleep_time = 250000; /* 1000000 : 1 second */
     queue->max_ok_wait_time = 60;
     queue->max_duration = 0;

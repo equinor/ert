@@ -26,10 +26,7 @@ struct bfs_config_struct {
     bool read_only;
 };
 
-#define BFS_TYPE_ID 5510643
-
 struct bfs_struct {
-    UTIL_TYPE_ID_DECLARATION;
     block_fs_type *block_fs;
     /** The full path to the file mounted by the block_fs layer - including extension.*/
     char *mountfile;
@@ -61,7 +58,6 @@ static void bfs_close(bfs_type *bfs) {
 
 static bfs_type *bfs_alloc(const bfs_config_type *config) {
     bfs_type *fs = (bfs_type *)util_malloc(sizeof *fs);
-    UTIL_TYPE_ID_INIT(fs, BFS_TYPE_ID);
     fs->config = config;
 
     // New init

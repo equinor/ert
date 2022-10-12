@@ -30,8 +30,6 @@ ext_param_config_ikey_iget_suffix(const ext_param_config_type *config,
 int ext_param_config_ikey_get_suffix_index(const ext_param_config_type *config,
                                            int key_id, const char *suffix);
 
-UTIL_SAFE_CAST_HEADER(ext_param_config);
-UTIL_SAFE_CAST_HEADER_CONST(ext_param_config);
 VOID_FREE_HEADER(ext_param_config);
 VOID_GET_DATA_SIZE_HEADER(ext_param);
 

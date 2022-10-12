@@ -13,7 +13,6 @@
    according to various criteria.
 */
 struct misfit_ensemble_struct {
-    UTIL_TYPE_ID_DECLARATION;
     bool initialized;
     int history_length;
     /** Vector of misfit_member_type instances - one for each ensemble member. */

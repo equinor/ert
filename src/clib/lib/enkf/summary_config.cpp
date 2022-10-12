@@ -9,10 +9,7 @@
 
 #include <ert/enkf/summary_config.hpp>
 
-#define SUMMARY_CONFIG_TYPE_ID 63106
-
 struct summary_config_struct {
-    int __type_id;
     load_fail_type load_fail;
     /** The type of the variable - according to ecl_summary nomenclature. */
     ecl_smspec_var_type var_type;
@@ -21,8 +18,6 @@ struct summary_config_struct {
     /** Set of keys (which fit in enkf_obs) which are observations of this node. */
     std::set<std::string> obs_set;
 };
-
-UTIL_IS_INSTANCE_FUNCTION(summary_config, SUMMARY_CONFIG_TYPE_ID)
 
 const char *summary_config_get_var(const summary_config_type *config) {
     return config->var;
@@ -63,7 +58,6 @@ summary_config_type *summary_config_alloc(const char *var,
                                           load_fail_type load_fail) {
     summary_config_type *config = new summary_config_type();
 
-    config->__type_id = SUMMARY_CONFIG_TYPE_ID;
     config->var = util_alloc_string_copy(var);
     config->var_type = ecl_smspec_identify_var_type(var);
     summary_config_set_load_fail_mode(config, load_fail);
@@ -80,7 +74,5 @@ int summary_config_get_data_size(const summary_config_type *config) {
     return 1;
 }
 
-UTIL_SAFE_CAST_FUNCTION(summary_config, SUMMARY_CONFIG_TYPE_ID)
-UTIL_SAFE_CAST_FUNCTION_CONST(summary_config, SUMMARY_CONFIG_TYPE_ID)
 VOID_GET_DATA_SIZE(summary)
 VOID_CONFIG_FREE(summary)

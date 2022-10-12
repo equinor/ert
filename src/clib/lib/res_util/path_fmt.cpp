@@ -3,12 +3,9 @@
 #include <stdlib.h>
 
 #include "ert/util/build_config.hpp"
-#include <ert/util/type_macros.hpp>
 #include <ert/util/util.hpp>
 
 #include <ert/res_util/path_fmt.hpp>
-
-#define PATH_FMT_ID 7519200
 
 /**
 The basic idea of the path_fmt_struct is that it should be possible for
@@ -36,15 +33,12 @@ char * path = path_fmt_alloc(path_fmt , "BaseCase" , 67);
 
 */
 struct path_fmt_struct {
-    UTIL_TYPE_ID_DECLARATION;
     char *fmt;
     char *file_fmt;
     bool is_directory;
 };
 
-static UTIL_SAFE_CAST_FUNCTION(path_fmt, PATH_FMT_ID)
-
-    void path_fmt_reset_fmt(path_fmt_type *path, const char *fmt) {
+void path_fmt_reset_fmt(path_fmt_type *path, const char *fmt) {
     path->fmt = util_realloc_string_copy(path->fmt, fmt);
     if (path->is_directory)
         path->file_fmt = util_alloc_sprintf("%s/%%s", fmt);
@@ -52,7 +46,6 @@ static UTIL_SAFE_CAST_FUNCTION(path_fmt, PATH_FMT_ID)
 
 static path_fmt_type *path_fmt_alloc__(const char *fmt, bool is_directory) {
     path_fmt_type *path = (path_fmt_type *)util_malloc(sizeof *path);
-    UTIL_TYPE_ID_INIT(path, PATH_FMT_ID);
     path->fmt = NULL;
     path->file_fmt = NULL;
     path->is_directory = is_directory;

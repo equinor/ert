@@ -4,8 +4,6 @@
 #include <stdbool.h>
 #include <time.h>
 
-#include <ert/util/type_macros.h>
-
 #include <ert/config/config_content.hpp>
 #include <ert/config/config_parser.hpp>
 
@@ -95,7 +93,5 @@ void model_config_set_gen_kw_export_name(model_config_type *model_config,
                                          const char *name);
 extern "C" const char *
 model_config_get_gen_kw_export_name(const model_config_type *model_config);
-
-UTIL_IS_INSTANCE_HEADER(model_config);
 
 #endif

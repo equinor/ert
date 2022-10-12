@@ -12,9 +12,6 @@
 
 typedef struct enkf_plot_tvector_struct enkf_plot_tvector_type;
 
-UTIL_SAFE_CAST_HEADER(enkf_plot_tvector);
-UTIL_IS_INSTANCE_HEADER(enkf_plot_tvector);
-
 void enkf_plot_tvector_reset(enkf_plot_tvector_type *plot_tvector);
 enkf_plot_tvector_type *
 enkf_plot_tvector_alloc(const enkf_config_node_type *config_node, int iens);

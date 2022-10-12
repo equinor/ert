@@ -11,21 +11,15 @@
 
 namespace fs = std::filesystem;
 
-#define SUMMARY_KEY_SET_TYPE_ID 700672133
-
 struct summary_key_set_struct {
-    UTIL_TYPE_ID_DECLARATION;
     hash_type *key_set;
     pthread_rwlock_t rw_lock;
     bool read_only;
 };
 
-UTIL_IS_INSTANCE_FUNCTION(summary_key_set, SUMMARY_KEY_SET_TYPE_ID)
-
 summary_key_set_type *summary_key_set_alloc() {
     summary_key_set_type *set =
         (summary_key_set_type *)util_malloc(sizeof *set);
-    UTIL_TYPE_ID_INIT(set, SUMMARY_KEY_SET_TYPE_ID);
     set->key_set = hash_alloc();
     pthread_rwlock_init(&set->rw_lock, NULL);
     set->read_only = false;

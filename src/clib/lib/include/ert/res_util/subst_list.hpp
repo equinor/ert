@@ -5,7 +5,6 @@
 #include <stdio.h>
 
 #include <ert/util/buffer.hpp>
-#include <ert/util/type_macros.hpp>
 
 #include <ert/res_util/subst_func.hpp>
 
@@ -48,6 +47,4 @@ extern "C" bool subst_list_has_key(const subst_list_type *subst_list,
                                    const char *key);
 void subst_list_add_from_string(subst_list_type *subst_list,
                                 const char *arg_string, bool append);
-
-UTIL_IS_INSTANCE_HEADER(subst_list);
 #endif

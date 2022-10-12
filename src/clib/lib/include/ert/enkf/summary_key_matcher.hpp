@@ -2,7 +2,6 @@
 #define ERT_SUMMARY_KEY_MATCHER_H
 
 #include <ert/util/stringlist.h>
-#include <ert/util/type_macros.h>
 
 #include <ert/enkf/enkf_types.hpp>
 
@@ -19,7 +18,5 @@ bool summary_key_matcher_summary_key_is_required(
     const summary_key_matcher_type *matcher, const char *summary_key);
 stringlist_type *
 summary_key_matcher_get_keys(const summary_key_matcher_type *matcher);
-
-UTIL_IS_INSTANCE_HEADER(summary_key_matcher);
 
 #endif

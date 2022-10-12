@@ -35,7 +35,6 @@ static auto logger = ert::get_logger("enkf");
    the gen_data implementation.
 */
 struct gen_data_struct {
-    int __type_id;
     /** Thin config object - mainly contains filename for remote load */
     gen_data_config_type *config;
     /** Actual storage - will be casted to double or float on use. */
@@ -75,7 +74,6 @@ gen_data_type *gen_data_alloc(const gen_data_config_type *config) {
     gen_data_type *gen_data = (gen_data_type *)util_malloc(sizeof *gen_data);
     gen_data->config = (gen_data_config_type *)config;
     gen_data->data = NULL;
-    gen_data->__type_id = GEN_DATA;
     gen_data->active_mask = bool_vector_alloc(0, true);
     gen_data->current_report_step = -1; /* God - if you ever read this .... */
     return gen_data;
@@ -471,8 +469,6 @@ void gen_data_copy_to_double_vector(const gen_data_type *gen_data,
     double_vector_memcpy_from_data(vector, data, size);
 }
 
-UTIL_SAFE_CAST_FUNCTION_CONST(gen_data, GEN_DATA)
-UTIL_SAFE_CAST_FUNCTION(gen_data, GEN_DATA)
 VOID_USER_GET(gen_data)
 VOID_ALLOC(gen_data)
 VOID_FREE(gen_data)

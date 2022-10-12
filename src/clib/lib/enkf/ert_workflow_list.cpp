@@ -26,10 +26,7 @@
 namespace fs = std::filesystem;
 static auto logger = ert::get_logger("enkf");
 
-#define ERT_WORKFLOW_LIST_TYPE_ID 8856275
-
 struct ert_workflow_list_struct {
-    UTIL_TYPE_ID_DECLARATION;
     hash_type *workflows;
     hash_type *alias_map;
     workflow_joblist_type *joblist;
@@ -46,7 +43,6 @@ ert_workflow_list_type *
 ert_workflow_list_alloc_empty(const subst_list_type *context) {
     ert_workflow_list_type *workflow_list =
         (ert_workflow_list_type *)util_malloc(sizeof *workflow_list);
-    UTIL_TYPE_ID_INIT(workflow_list, ERT_WORKFLOW_LIST_TYPE_ID);
     workflow_list->workflows = hash_alloc();
     workflow_list->alias_map = hash_alloc();
     workflow_list->joblist = workflow_joblist_alloc();
@@ -93,8 +89,6 @@ ert_workflow_list_type *ert_workflow_list_alloc_full(
 
     return workflow_list;
 }
-
-UTIL_IS_INSTANCE_FUNCTION(ert_workflow_list, ERT_WORKFLOW_LIST_TYPE_ID)
 
 void ert_workflow_list_set_verbose(ert_workflow_list_type *workflow_list,
                                    bool verbose) {

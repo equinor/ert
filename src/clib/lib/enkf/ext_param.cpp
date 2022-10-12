@@ -17,7 +17,6 @@ namespace fs = std::filesystem;
 GET_DATA_SIZE_HEADER(ext_param);
 
 struct ext_param_struct {
-    int __type_id;
     const ext_param_config_type *config;
     std::vector<std::vector<double>> data;
 };
@@ -26,7 +25,6 @@ void ext_param_free(ext_param_type *ext_param) { delete ext_param; }
 
 ext_param_type *ext_param_alloc(const ext_param_config_type *config) {
     ext_param_type *ext_param = new ext_param_type();
-    ext_param->__type_id = EXT_PARAM;
     ext_param->config = config;
     ext_param->data.resize(ext_param_config_get_data_size(config));
     for (int i = 0; i < ext_param->data.size(); i++) {
@@ -212,8 +210,6 @@ ext_param_config_type const *ext_param_get_config(const ext_param_type *param) {
     return param->config;
 }
 
-UTIL_SAFE_CAST_FUNCTION(ext_param, EXT_PARAM)
-UTIL_SAFE_CAST_FUNCTION_CONST(ext_param, EXT_PARAM)
 VOID_ALLOC(ext_param)
 VOID_FREE(ext_param)
 VOID_ECL_WRITE(ext_param)

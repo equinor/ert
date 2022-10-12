@@ -20,8 +20,6 @@ extern "C" int summary_length(const summary_type *summary);
 extern "C" double summary_undefined_value();
 
 VOID_HAS_DATA_HEADER(summary);
-UTIL_SAFE_CAST_HEADER(summary);
-UTIL_SAFE_CAST_HEADER_CONST(summary);
 VOID_ALLOC_HEADER(summary);
 VOID_FREE_HEADER(summary);
 VOID_COPY_HEADER(summary);

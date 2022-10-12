@@ -4,8 +4,6 @@
 #include <stdbool.h>
 #include <stdlib.h>
 
-#include <ert/util/type_macros.h>
-
 #include <ert/ecl/ecl_smspec.h>
 #include <ert/ecl/ecl_sum.h>
 
@@ -41,9 +39,6 @@ extern "C" summary_config_type *summary_config_alloc(const char *,
                                                      load_fail_type load_fail);
 extern "C" void summary_config_free(summary_config_type *);
 
-UTIL_IS_INSTANCE_HEADER(summary_config);
-UTIL_SAFE_CAST_HEADER(summary_config);
-UTIL_SAFE_CAST_HEADER_CONST(summary_config);
 GET_DATA_SIZE_HEADER(summary);
 VOID_GET_DATA_SIZE_HEADER(summary);
 VOID_CONFIG_FREE_HEADER(summary);

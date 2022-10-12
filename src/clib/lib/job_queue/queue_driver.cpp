@@ -34,10 +34,7 @@
 
  */
 
-#define QUEUE_DRIVER_ID 86516032
-
 struct queue_driver_struct {
-    UTIL_TYPE_ID_DECLARATION;
     /** Function pointers - pointing to low level functions in the
      * implementations of e.g. lsf_driver. */
     submit_job_ftype *submit;
@@ -64,8 +61,6 @@ struct queue_driver_struct {
      * will (try) to send an unlimited number of jobs to the driver. */
     int max_running;
 };
-
-UTIL_IS_INSTANCE_FUNCTION(queue_driver, QUEUE_DRIVER_ID)
 
 void queue_driver_set_max_running(queue_driver_type *driver, int max_running) {
     driver->max_running_string =
@@ -180,7 +175,6 @@ bool queue_driver_unset_option(queue_driver_type *driver,
 static queue_driver_type *queue_driver_alloc_empty() {
     queue_driver_type *driver =
         (queue_driver_type *)util_malloc(sizeof *driver);
-    UTIL_TYPE_ID_INIT(driver, QUEUE_DRIVER_ID);
     driver->driver_type = NULL_DRIVER;
     driver->submit = NULL;
     driver->get_status = NULL;
@@ -199,14 +193,12 @@ static queue_driver_type *queue_driver_alloc_empty() {
     return driver;
 }
 
-static UTIL_SAFE_CAST_FUNCTION(queue_driver, QUEUE_DRIVER_ID)
+// The driver created in this function has all the function pointers
+// correctly initialized; but no options have been set. I.e. unless
+// the driver in question needs no options (e.g. the LOCAL driver) the
+// returned driver will NOT be ready for use.
 
-    // The driver created in this function has all the function pointers
-    // correctly initialized; but no options have been set. I.e. unless
-    // the driver in question needs no options (e.g. the LOCAL driver) the
-    // returned driver will NOT be ready for use.
-
-    queue_driver_type *queue_driver_alloc(job_driver_type type) {
+queue_driver_type *queue_driver_alloc(job_driver_type type) {
     queue_driver_type *driver = queue_driver_alloc_empty();
     driver->driver_type = type;
     switch (type) {

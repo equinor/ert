@@ -5,7 +5,6 @@
 #include <ert/util/hash.h>
 #include <ert/util/int_vector.h>
 #include <ert/util/stringlist.h>
-#include <ert/util/type_macros.h>
 
 #include <ert/config/conf.hpp>
 
@@ -61,6 +60,5 @@ enkf_obs_alloc_matching_keylist(const enkf_obs_type *enkf_obs,
 extern "C" time_t enkf_obs_iget_obs_time(const enkf_obs_type *enkf_obs,
                                          int report_step);
 conf_class_type *enkf_obs_get_obs_conf_class();
-UTIL_IS_INSTANCE_HEADER(enkf_obs);
 
 #endif

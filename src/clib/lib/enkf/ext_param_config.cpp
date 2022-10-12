@@ -4,22 +4,16 @@
 #include <string>
 #include <vector>
 
-#include <ert/util/type_macros.h>
 #include <ert/util/util.h>
 
 #include <ert/enkf/enkf_macros.hpp>
 #include <ert/enkf/ext_param_config.hpp>
 
-#define EXT_PARAM_CONFIG_ID 97124451
 struct ext_param_config_struct {
-    UTIL_TYPE_ID_DECLARATION;
     std::string key;
     std::vector<std::string> keys;
     std::vector<std::vector<std::string>> suffixes;
 };
-
-UTIL_SAFE_CAST_FUNCTION(ext_param_config, EXT_PARAM_CONFIG_ID)
-UTIL_SAFE_CAST_FUNCTION_CONST(ext_param_config, EXT_PARAM_CONFIG_ID)
 
 void ext_param_config_free(ext_param_config_type *config) { delete config; }
 
@@ -54,7 +48,6 @@ ext_param_config_type *ext_param_config_alloc(const char *key,
         return NULL;
 
     ext_param_config_type *config = new ext_param_config_type();
-    UTIL_TYPE_ID_INIT(config, EXT_PARAM_CONFIG_ID);
     config->key = key;
 
     for (int i = 0; i < stringlist_get_size(keys); i++) {

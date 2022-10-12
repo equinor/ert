@@ -7,7 +7,6 @@
 #include <ert/util/buffer.h>
 #include <ert/util/hash.h>
 #include <ert/util/int_vector.h>
-#include <ert/util/type_macros.h>
 
 #include <ert/ecl/ecl_file.h>
 #include <ert/ecl/ecl_kw.h>
@@ -131,7 +130,5 @@ bool enkf_node_vector_storage(const enkf_node_type *node);
 
 const enkf_config_node_type *enkf_node_get_config(const enkf_node_type *);
 extern "C" const char *enkf_node_get_key(const enkf_node_type *);
-
-UTIL_IS_INSTANCE_HEADER(enkf_node);
 
 #endif

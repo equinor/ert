@@ -2,7 +2,6 @@
 #define ERT_ENKF_PLOT_GEN_KW_VECTOR_H
 
 #include <ert/util/stringlist.h>
-#include <ert/util/type_macros.h>
 
 #include <ert/enkf/enkf_config_node.hpp>
 
@@ -21,7 +20,5 @@ void enkf_plot_gen_kw_vector_load(enkf_plot_gen_kw_vector_type *vector,
 extern "C" double
 enkf_plot_gen_kw_vector_iget(const enkf_plot_gen_kw_vector_type *vector,
                              int index);
-
-UTIL_IS_INSTANCE_HEADER(enkf_plot_gen_kw_vector);
 
 #endif

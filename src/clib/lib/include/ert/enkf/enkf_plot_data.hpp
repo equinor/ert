@@ -4,7 +4,6 @@
 #include <stdbool.h>
 
 #include <ert/util/bool_vector.h>
-#include <ert/util/type_macros.h>
 
 #include <ert/enkf/enkf_config_node.hpp>
 #include <ert/enkf/enkf_fs.hpp>
@@ -20,7 +19,5 @@ extern "C" void enkf_plot_data_load(enkf_plot_data_type *plot_data,
                                     enkf_fs_type *fs, const char *user_key);
 extern "C" enkf_plot_tvector_type *
 enkf_plot_data_iget(const enkf_plot_data_type *plot_data, int index);
-
-UTIL_IS_INSTANCE_HEADER(enkf_plot_data);
 
 #endif

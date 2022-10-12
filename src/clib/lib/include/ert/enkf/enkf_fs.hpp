@@ -4,7 +4,6 @@
 
 #include <ert/util/buffer.h>
 #include <ert/util/stringlist.h>
-#include <ert/util/type_macros.h>
 
 #include <ert/enkf/enkf_fs_type.hpp>
 #include <ert/enkf/enkf_types.hpp>
@@ -75,8 +74,5 @@ extern "C" time_map_type *enkf_fs_get_time_map(const enkf_fs_type *fs);
 misfit_ensemble_type *enkf_fs_get_misfit_ensemble(const enkf_fs_type *fs);
 extern "C" summary_key_set_type *
 enkf_fs_get_summary_key_set(const enkf_fs_type *fs);
-
-UTIL_SAFE_CAST_HEADER(enkf_fs);
-UTIL_IS_INSTANCE_HEADER(enkf_fs);
 
 #endif

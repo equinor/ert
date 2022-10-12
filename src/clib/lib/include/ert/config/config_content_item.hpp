@@ -3,7 +3,6 @@
 
 #include <ert/util/hash.hpp>
 #include <ert/util/stringlist.hpp>
-#include <ert/util/type_macros.hpp>
 
 #include <ert/config/config_content_node.hpp>
 #include <ert/config/config_error.hpp>
@@ -44,7 +43,5 @@ const config_schema_item_type *
 config_content_item_get_schema(const config_content_item_type *item);
 const config_path_elm_type *
 config_content_item_get_path_elm(const config_content_item_type *item);
-
-UTIL_IS_INSTANCE_HEADER(config_content_item);
 
 #endif
