@@ -14,17 +14,8 @@ class GenDataConfig(BaseCClass):
         bind=False,
     )
     _free = ResPrototype("void  gen_data_config_free( gen_data_config )")
-    _get_output_format = ResPrototype(
-        "gen_data_file_format_type gen_data_config_get_output_format(gen_data_config)"
-    )
     _get_input_format = ResPrototype(
         "gen_data_file_format_type gen_data_config_get_input_format(gen_data_config)"
-    )
-    _get_template_file = ResPrototype(
-        "char* gen_data_config_get_template_file(gen_data_config)"
-    )
-    _get_template_key = ResPrototype(
-        "char* gen_data_config_get_template_key(gen_data_config)"
     )
     _get_initial_size = ResPrototype(
         "int   gen_data_config_get_initial_size(gen_data_config)"
@@ -52,12 +43,6 @@ class GenDataConfig(BaseCClass):
         c_pointer = self._alloc(key, input_format)
         super().__init__(c_pointer)
 
-    def get_template_file(self):
-        return self._get_template_file()
-
-    def get_template_key(self):
-        return self._get_template_key()
-
     def getDataSize(self, report_step):
         data_size = self._get_data_size(report_step)
         if data_size < 0:
@@ -79,9 +64,6 @@ class GenDataConfig(BaseCClass):
     def get_initial_size(self) -> int:
         return self._get_initial_size()
 
-    def getOutputFormat(self):
-        return self._get_output_format()
-
     def getInputFormat(self):
         return self._get_input_format()
 
@@ -91,7 +73,6 @@ class GenDataConfig(BaseCClass):
     def __repr__(self):
         return (
             f"GenDataConfig(name = {self.name()}, "
-            f"template_key = {self.get_template_key()}, "
             f"initial_size = {self.get_initial_size()}) {self._ad_str()}"
         )
 
@@ -114,13 +95,7 @@ class GenDataConfig(BaseCClass):
         if self.getName() != other.getName():
             return False
 
-        if self.get_template_key() != other.get_template_key():
-            return False
-
         if self.getInputFormat() != other.getInputFormat():
-            return False
-
-        if self.getOutputFormat() != other.getOutputFormat():
             return False
 
         if self.getReportSteps() != other.getReportSteps():

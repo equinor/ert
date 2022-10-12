@@ -19,9 +19,6 @@ bool gen_data_forward_load(gen_data_type *gen_data, const char *ecl_file,
 extern "C" void gen_data_free(gen_data_type *);
 extern "C" int gen_data_get_size(const gen_data_type *);
 extern "C" double gen_data_iget_double(const gen_data_type *, int);
-extern "C" void gen_data_export(const gen_data_type *gen_data,
-                                const char *full_path,
-                                gen_data_file_format_type export_type);
 extern "C" void gen_data_export_data(const gen_data_type *gen_data,
                                      double_vector_type *export_data);
 const char *gen_data_get_key(const gen_data_type *gen_data);

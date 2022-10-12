@@ -4,7 +4,7 @@ Data types
 ==========
 
 Briefly, the purpose of ERT is to pass uncertain parameter values to a simulator [#]_
-and save the responses. 
+and save the responses.
 ERT must therefore be able to read and write data in a format understood by the simulator.
 
 Data managed by ERT are organized in different *data types* described in
@@ -415,17 +415,16 @@ achieve this you do:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The SURFACE keyword can be used to work with surface from RMS in the irap
-format. 
+format.
 For detailed description and examples see :ref:`here <surface>`.
 
 **Regarding templates:**
 
-If you use OUTPUT_FORMAT:ASCII_TEMPLATE you must also supply the arguments
-TEMPLATE:/template/file and KEY:MaGiCKEY. The template file is an arbitrary
-existing text file, and KEY is a magic string found in this file. When ERT is
-running the magic string is replaced with parameter data when the ECLIPSE_FILE
-is written to the directory where the simulation is run from. Consider for
-example the following configuration:
+You may supply the arguments TEMPLATE:/template/file and KEY:MaGiCKEY. The
+template file is an arbitrary existing text file, and KEY is a magic string
+found in this file. When ERT is running the magic string is replaced with
+parameter data when the ECLIPSE_FILE is written to the directory where the
+simulation is run from. Consider for example the following configuration:
 
 ::
 
@@ -499,8 +498,8 @@ can use wildcard notation to all summary vectors matching a pattern, i.e. this:
    SUMMARY F*
    SUMMARY G*:NORTH
 
-will load the ``WWCT`` and ``WWCTH``, as well as ``WGOR`` and ``WGORH`` vectors 
-for all wells, all field related vectors and all group vectors from the ``NORTH`` 
+will load the ``WWCT`` and ``WWCTH``, as well as ``WGOR`` and ``WGORH`` vectors
+for all wells, all field related vectors and all group vectors from the ``NORTH``
 group.
 
 

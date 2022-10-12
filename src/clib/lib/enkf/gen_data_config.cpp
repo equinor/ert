@@ -32,23 +32,9 @@ static auto logger = ert::get_logger("enkf");
 struct gen_data_config_struct {
     /** The key this gen_data instance is known under - needed for debugging. */
     char *key;
-    char *template_file;
-    /** Buffer containing the content of the template - read and internalized
-     * at boot time. */
-    char *template_buffer;
-    char *template_key;
-    /** The offset into the template buffer before the data should come. */
-    int template_data_offset;
-    /** The length of data identifier in the template.*/
-    int template_data_skip;
-    /** The total size (bytes) of the template buffer .*/
-    int template_buffer_size;
     /** The format used for loading gen_data instances when the forward model
      * has completed *AND* for loading the initial files.*/
     gen_data_file_format_type input_format;
-    /** The format used when gen_data instances are written to disk for the
-     * forward model. */
-    gen_data_file_format_type output_format;
     /** Data size, i.e. number of elements , indexed with report_step */
     int_vector_type *data_size_vector;
     /** The report steps where we expect to load data for this instance. */
@@ -69,10 +55,6 @@ struct gen_data_config_struct {
 gen_data_file_format_type
 gen_data_config_get_input_format(const gen_data_config_type *config) {
     return config->input_format;
-}
-gen_data_file_format_type
-gen_data_config_get_output_format(const gen_data_config_type *config) {
-    return config->output_format;
 }
 
 /*
@@ -105,19 +87,6 @@ int gen_data_config_get_initial_size(const gen_data_config_type *config) {
     return initial_size;
 }
 
-static void gen_data_config_reset_template(gen_data_config_type *config) {
-    free(config->template_buffer);
-    free(config->template_key);
-    free(config->template_file);
-
-    config->template_file = NULL;
-    config->template_buffer = NULL;
-    config->template_key = NULL;
-    config->template_data_offset = 0;
-    config->template_data_skip = 0;
-    config->template_buffer_size = 0;
-}
-
 static gen_data_config_type *gen_data_config_alloc(const char *key,
                                                    bool dynamic) {
     gen_data_config_type *config =
@@ -125,13 +94,7 @@ static gen_data_config_type *gen_data_config_alloc(const char *key,
 
     config->key = util_alloc_string_copy(key);
 
-    config->template_file = NULL;
-    config->template_key = NULL;
-    config->template_buffer = NULL;
-    gen_data_config_reset_template(config);
-
     config->input_format = GEN_DATA_UNDEFINED;
-    config->output_format = GEN_DATA_UNDEFINED;
     config->data_size_vector = int_vector_alloc(
         0, -1); /* The default value: -1 - indicates "NOT SET" */
     config->active_report_steps = int_vector_alloc(0, 0);
@@ -164,102 +127,12 @@ gen_data_config_alloc_GEN_DATA_result(const char *key,
     return config;
 }
 
-gen_data_config_type *
-gen_data_config_alloc_GEN_DATA_state(const char *key,
-                                     gen_data_file_format_type output_format,
-                                     gen_data_file_format_type input_format) {
-    gen_data_config_type *config = gen_data_config_alloc(key, true);
-
-    if (input_format == ASCII_TEMPLATE)
-        util_abort("%s: Sorry can not use INPUT_FORMAT:ASCII_TEMPLATE\n",
-                   __func__);
-
-    if (output_format == GEN_DATA_UNDEFINED ||
-        input_format == GEN_DATA_UNDEFINED)
-        util_abort("%s: Sorry must specify valid values for both input and "
-                   "output format\n",
-                   __func__);
-
-    config->output_format = output_format;
-    config->input_format = input_format;
-    return config;
-}
-
 const bool_vector_type *
 gen_data_config_get_active_mask(const gen_data_config_type *config) {
     if (config->dynamic)
         return config->active_mask;
     else
         return NULL;
-}
-
-bool gen_data_config_set_template(gen_data_config_type *config,
-                                  const char *template_ecl_file,
-                                  const char *template_data_key) {
-    char *template_buffer = NULL;
-    bool template_valid = true;
-    int template_buffer_size;
-
-    if (template_ecl_file) {
-        if (util_file_readable(template_ecl_file)) {
-            template_buffer = util_fread_alloc_file_content(
-                template_ecl_file, &template_buffer_size);
-            if (template_data_key) {
-                if (strstr(template_buffer, template_data_key) == NULL)
-                    template_valid = false;
-            }
-        } else
-            template_valid = false;
-    }
-
-    if (template_valid) {
-
-        gen_data_config_reset_template(config);
-        if (template_ecl_file != NULL) {
-            char *data_ptr;
-            config->template_buffer = template_buffer;
-            config->template_buffer_size = template_buffer_size;
-            if (template_data_key != NULL) {
-                data_ptr = strstr(config->template_buffer, template_data_key);
-                if (data_ptr == NULL)
-                    util_abort("%s: template:%s can not be used - could not "
-                               "find data key:%s \n",
-                               __func__, template_ecl_file, template_data_key);
-                else {
-                    config->template_data_offset =
-                        data_ptr - config->template_buffer;
-                    config->template_data_skip = strlen(template_data_key);
-                }
-            } else { /* We are using a template without a template_data_key - the
-                  data is assumed to come at the end of the template. */
-                config->template_data_offset = strlen(config->template_buffer);
-                config->template_data_skip = 0;
-            }
-
-            config->template_file = util_realloc_string_copy(
-                config->template_file, template_ecl_file);
-            config->template_key = util_realloc_string_copy(
-                config->template_key, template_data_key);
-
-            if (config->output_format != ASCII_TEMPLATE)
-                fprintf(stderr,
-                        "**WARNING: The template settings will ignored for "
-                        "key:%s - use OUTPUT_FORMAT:ASCII_TEMPLATE to get "
-                        "template behaviour\n",
-                        config->key);
-        }
-    }
-    return template_valid;
-}
-
-const char *
-gen_data_config_get_template_file(const gen_data_config_type *config) {
-    return config->template_file;
-}
-
-const char *
-gen_data_config_get_template_key(const gen_data_config_type *config) {
-    return config->template_key;
 }
 
 /**
@@ -298,10 +171,6 @@ gen_data_config_check_format(const char *format_string) {
    The valid options are:
 
    INPUT_FORMAT:(ASCII|ASCII_TEMPLATE)
-   OUTPUT_FORMAT:(ASCII|ASCII_TEMPLATE)
-   TEMPLATE:/some/template/file
-   KEY:<SomeKeyFoundInTemplate>
-   ECL_FILE:<filename to write EnKF ==> Forward model>  
    RESULT_FILE:<filename to read EnKF <== Forward model>
 
 */
@@ -310,9 +179,6 @@ void gen_data_config_free(gen_data_config_type *config) {
     int_vector_free(config->active_report_steps);
 
     free(config->key);
-    free(config->template_buffer);
-    free(config->template_file);
-    free(config->template_key);
     bool_vector_free(config->active_mask);
 
     free(config);
@@ -522,18 +388,6 @@ bool gen_data_config_is_dynamic(const gen_data_config_type *config) {
     return config->dynamic;
 }
 
-void gen_data_config_get_template_data(const gen_data_config_type *config,
-                                       char **template_buffer,
-                                       int *template_data_offset,
-                                       int *template_buffer_size,
-                                       int *template_data_skip) {
-
-    *template_buffer = config->template_buffer;
-    *template_data_offset = config->template_data_offset;
-    *template_buffer_size = config->template_buffer_size;
-    *template_data_skip = config->template_data_skip;
-}
-
 bool gen_data_config_valid_result_format(const char *result_file_fmt) {
     if (result_file_fmt) {
         if (util_is_abs_path(result_file_fmt))
@@ -577,33 +431,6 @@ gen_data_config_format_name(gen_data_file_format_type format_type) {
         util_abort("%s: What the f.. \n", __func__);
         return NULL;
     }
-}
-
-void gen_data_config_fprintf_config(const gen_data_config_type *config,
-                                    enkf_var_type var_type, const char *outfile,
-                                    const char *infile, FILE *stream) {
-    if (var_type == PARAMETER)
-        fprintf(stream, CONFIG_VALUE_FORMAT, outfile);
-    else
-        fprintf(stream, CONFIG_OPTION_FORMAT, ECL_FILE_KEY, outfile);
-
-    if (config->template_file != NULL)
-        fprintf(stream, CONFIG_OPTION_FORMAT, TEMPLATE_KEY,
-                config->template_file);
-
-    if (config->template_key != NULL)
-        fprintf(stream, CONFIG_OPTION_FORMAT, KEY_KEY, config->template_key);
-
-    if (infile != NULL)
-        fprintf(stream, CONFIG_OPTION_FORMAT, RESULT_FILE_KEY, infile);
-
-    if (config->input_format != GEN_DATA_UNDEFINED)
-        fprintf(stream, CONFIG_OPTION_FORMAT, INPUT_FORMAT_KEY,
-                gen_data_config_format_name(config->input_format));
-
-    if (config->output_format != GEN_DATA_UNDEFINED)
-        fprintf(stream, CONFIG_OPTION_FORMAT, OUTPUT_FORMAT_KEY,
-                gen_data_config_format_name(config->output_format));
 }
 
 VOID_FREE(gen_data_config)

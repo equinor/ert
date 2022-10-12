@@ -86,11 +86,7 @@ class EnkfConfigNode(BaseCClass):
         "enkf_config_node_obj enkf_config_node_alloc_GEN_DATA_full(char*, \
                                                                    char*, \
                                                                    gen_data_file_format_type, \
-                                                                   int_vector, \
-                                                                   char*, \
-                                                                   char*, \
-                                                                   char*, \
-                                                                   char*)",  # noqa
+                                                                   int_vector)",  # noqa
         bind=False,
     )
 
@@ -236,10 +232,6 @@ class EnkfConfigNode(BaseCClass):
         result_file,
         input_format,
         report_steps,
-        ecl_file,
-        init_file_fmt,
-        template_file,
-        data_key,
     ):
         active_steps = IntVector()
         for step in report_steps:
@@ -250,10 +242,6 @@ class EnkfConfigNode(BaseCClass):
             result_file,
             input_format,
             active_steps,
-            ecl_file,
-            init_file_fmt,
-            template_file,
-            data_key,
         )
         if config_node is None:
             raise ValueError(

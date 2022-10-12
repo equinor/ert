@@ -577,22 +577,11 @@ enkf_config_node_type *enkf_config_node_alloc_GEN_DATA_from_config(
             gen_data_file_format_type input_format =
                 gen_data_config_check_format(
                     (const char *)hash_safe_get(options, INPUT_FORMAT_KEY));
-            const char *init_file_fmt =
-                (const char *)hash_safe_get(options, INIT_FILES_KEY);
-            const char *ecl_file =
-                (const char *)hash_safe_get(options, ECL_FILE_KEY);
-            const char *template_file =
-                (const char *)hash_safe_get(options, TEMPLATE_KEY);
-            const char *data_key =
-                (const char *)hash_safe_get(options, KEY_KEY);
             const char *result_file =
                 (const char *)hash_safe_get(options, RESULT_FILE_KEY);
-            const char *forward_string =
-                (const char *)hash_safe_get(options, FORWARD_INIT_KEY);
             const char *report_steps_string =
                 (const char *)hash_safe_get(options, REPORT_STEPS_KEY);
             int_vector_type *report_steps = int_vector_alloc(0, 0);
-            bool forward_init = false;
             bool valid_input = true;
 
             if (input_format == GEN_DATA_UNDEFINED)
@@ -646,32 +635,13 @@ enkf_config_node_type *enkf_config_node_alloc_GEN_DATA_from_config(
 
             if (valid_input) {
 
-                if (forward_string) {
-                    if (!util_sscanf_bool(forward_string, &forward_init))
-                        fprintf(stderr,
-                                "** Warning: parsing %s as bool failed - using "
-                                "FALSE \n",
-                                forward_string);
-                }
-
-                if ((init_file_fmt == NULL) && (ecl_file == NULL) &&
-                    (result_file != NULL))
+                if (result_file != NULL)
                     config_node = enkf_config_node_alloc_GEN_DATA_result(
                         node_key, input_format, result_file);
-                else if ((init_file_fmt != NULL) && (ecl_file != NULL) &&
-                         (result_file != NULL))
-                    util_abort(
-                        "%s: This used to call the removed "
-                        "enkf_config_node_alloc_GEN_DATA_state() function \n",
-                        __func__);
                 {
                     gen_data_config_type *gen_data_config =
                         (gen_data_config_type *)enkf_config_node_get_ref(
                             config_node);
-
-                    if (template_file)
-                        gen_data_config_set_template(gen_data_config,
-                                                     template_file, data_key);
 
                     for (int i = 0; i < int_vector_size(report_steps); i++) {
                         int report_step = int_vector_iget(report_steps, i);
@@ -691,28 +661,19 @@ enkf_config_node_type *enkf_config_node_alloc_GEN_DATA_from_config(
     return config_node;
 }
 
-enkf_config_node_type *enkf_config_node_alloc_GEN_DATA_full(
-    const char *node_key, const char *result_file,
-    gen_data_file_format_type input_format, const int_vector_type *report_steps,
-    const char *ecl_file, const char *init_file_fmt, const char *template_file,
-    const char *data_key) {
+enkf_config_node_type *
+enkf_config_node_alloc_GEN_DATA_full(const char *node_key,
+                                     const char *result_file,
+                                     gen_data_file_format_type input_format,
+                                     const int_vector_type *report_steps) {
     enkf_config_node_type *config_node = NULL;
 
-    if ((init_file_fmt == NULL) && (ecl_file == NULL) &&
-        (result_file != NULL)) {
+    if (result_file != NULL) {
         config_node = enkf_config_node_alloc_GEN_DATA_result(
             node_key, input_format, result_file);
-    } else if ((init_file_fmt != NULL) && (ecl_file != NULL) &&
-               (result_file != NULL)) {
-        util_abort("%s: This used to call the removed "
-                   "enkf_config_node_alloc_GEN_DATA_state() function \n",
-                   __func__);
     }
     gen_data_config_type *gen_data_config =
         (gen_data_config_type *)enkf_config_node_get_ref(config_node);
-
-    if (template_file)
-        gen_data_config_set_template(gen_data_config, template_file, data_key);
 
     for (int i = 0; i < int_vector_size(report_steps); i++) {
         int report_step = int_vector_iget(report_steps, i);

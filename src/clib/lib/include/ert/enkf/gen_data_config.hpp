@@ -24,9 +24,6 @@ bool gen_data_config_is_dynamic(const gen_data_config_type *config);
 void gen_data_config_load_active(gen_data_config_type *config, enkf_fs_type *fs,
                                  int report_step, bool force_load);
 bool gen_data_config_valid_result_format(const char *result_file_fmt);
-bool gen_data_config_set_template(gen_data_config_type *config,
-                                  const char *template_ecl_file,
-                                  const char *template_data_key);
 
 bool gen_data_config_has_active_mask(const gen_data_config_type *config,
                                      enkf_fs_type *fs, int report_step);
@@ -34,15 +31,9 @@ bool gen_data_config_has_active_mask(const gen_data_config_type *config,
 extern "C" gen_data_config_type *
 gen_data_config_alloc_GEN_DATA_result(const char *key,
                                       gen_data_file_format_type input_format);
-gen_data_config_type *
-gen_data_config_alloc_GEN_DATA_state(const char *key,
-                                     gen_data_file_format_type output_format,
-                                     gen_data_file_format_type input_format);
 void gen_data_config_set_ens_size(gen_data_config_type *config, int ens_size);
 extern "C" gen_data_file_format_type
 gen_data_config_get_input_format(const gen_data_config_type *);
-extern "C" gen_data_file_format_type
-gen_data_config_get_output_format(const gen_data_config_type *);
 extern "C" void gen_data_config_free(gen_data_config_type *);
 extern "C" PY_USED int
 gen_data_config_get_initial_size(const gen_data_config_type *config);
@@ -53,8 +44,6 @@ void gen_data_config_update_active(gen_data_config_type *config,
                                    int report_step,
                                    const bool_vector_type *data_mask,
                                    enkf_fs_type *sim_fs);
-void gen_data_config_get_template_data(const gen_data_config_type *, char **,
-                                       int *, int *, int *);
 extern "C" const char *
 gen_data_config_get_key(const gen_data_config_type *config);
 int gen_data_config_get_data_size(const gen_data_config_type *config,
@@ -73,13 +62,6 @@ gen_data_config_has_report_step(const gen_data_config_type *config,
                                 int report_step);
 extern "C" int
 gen_data_config_num_report_step(const gen_data_config_type *config);
-extern "C" const char *
-gen_data_config_get_template_file(const gen_data_config_type *config);
-extern "C" const char *
-gen_data_config_get_template_key(const gen_data_config_type *config);
-void gen_data_config_fprintf_config(const gen_data_config_type *config,
-                                    enkf_var_type var_type, const char *outfile,
-                                    const char *infile, FILE *stream);
 extern "C" int
 gen_data_config_get_data_size__(const gen_data_config_type *config,
                                 int report_step);
