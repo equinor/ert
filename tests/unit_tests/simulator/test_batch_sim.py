@@ -5,7 +5,7 @@ import time
 import pytest
 
 from ert._c_wrappers.job_queue import JobStatusType
-from ert.simulator import BatchContext, BatchSimulator
+from ert.simulator import BatchSimulator
 
 
 class MockMonitor:
@@ -34,11 +34,9 @@ def batch_sim_example(setup_case):
     return setup_case("batch_sim", "batch_sim.ert")
 
 
-def test_invalid_simulator_creation(batch_sim_example):
-    res_config = batch_sim_example
-    # Not valid ResConfig instance as first argument
-    with pytest.raises(ValueError):
-        rsim = BatchSimulator(
+def test_that_simulator_raises_error_when_missing_resconfig():
+    with pytest.raises(ValueError, match="The first argument must be valid ResConfig"):
+        _ = BatchSimulator(
             "ARG",
             {
                 "WELL_ORDER": ["W1", "W2", "W3"],
@@ -47,24 +45,27 @@ def test_invalid_simulator_creation(batch_sim_example):
             ["ORDER", "ON_OFF"],
         )
 
-    # Control argument not a dict - Exception
-    with pytest.raises(Exception):
-        rsim = BatchSimulator(res_config, ["WELL_ORDER", ["W1", "W2", "W3"]], ["ORDER"])
 
-    # Duplicate keys
-    with pytest.raises(ValueError):
-        rsim = BatchSimulator(res_config, {"WELL_ORDER": ["W3", "W2", "W3"]}, ["ORDER"])
+def test_that_batch_simulator_gives_good_message_on_duplicate_keys(minimum_case):
+    with pytest.raises(ValueError, match="Duplicate keys"):
+        _ = BatchSimulator(
+            minimum_case.resConfig(), {"WELL_ORDER": ["W3", "W2", "W3"]}, ["ORDER"]
+        )
 
-    rsim = BatchSimulator(
-        res_config,
+
+@pytest.fixture
+def batch_simulator(batch_sim_example):
+    return BatchSimulator(
+        batch_sim_example,
         {"WELL_ORDER": ["W1", "W2", "W3"], "WELL_ON_OFF": ["W1", "W2", "W3"]},
         ["ORDER", "ON_OFF"],
     )
 
-    # The key for one of the controls is invalid => KeyError
-    with pytest.raises(KeyError):
-        rsim.start(
-            "case",
+
+@pytest.mark.parametrize(
+    "input, match",
+    [
+        (
             [
                 (
                     2,
@@ -81,12 +82,9 @@ def test_invalid_simulator_creation(batch_sim_example):
                     },
                 ),
             ],
-        )
-
-    # The key for one of the variables is invalid => KeyError
-    with pytest.raises(KeyError):
-        rsim.start(
-            "case",
+            "Mismatch between initialized and provided",
+        ),
+        (
             [
                 (
                     2,
@@ -103,12 +101,9 @@ def test_invalid_simulator_creation(batch_sim_example):
                     },
                 ),
             ],
-        )
-
-    # The key for one of the variables is invalid => KeyError
-    with pytest.raises(KeyError):
-        rsim.start(
-            "case",
+            "No such key: W4",
+        ),
+        (
             [
                 (
                     2,
@@ -125,16 +120,13 @@ def test_invalid_simulator_creation(batch_sim_example):
                     },
                 ),
             ],
-        )
-
-    # Missing the key WELL_ON_OFF => KeyError
-    with pytest.raises(KeyError):
-        rsim.start("case", [(2, {"WELL_ORDER": {"W1": 0, "W2": 0, "W3": 1}})])
-
-    # One of the numeric vectors has wrong length => ValueError:
-    with pytest.raises(KeyError):
-        rsim.start(
-            "case",
+            "Expected 3 variables",
+        ),
+        (
+            [(2, {"WELL_ORDER": {"W1": 0, "W2": 0, "W3": 1}})],
+            "Mismatch between initialized and provided",
+        ),
+        (
             [
                 (
                     2,
@@ -144,49 +136,19 @@ def test_invalid_simulator_creation(batch_sim_example):
                     },
                 ),
             ],
-        )
-
-    # Not numeric values => Exception
-    with pytest.raises(Exception):
-        rsim.start(
+            "Expected 3 variables",
+        ),
+    ],
+)
+def test_that_starting_with_invalid_key_raises_key_error(batch_simulator, input, match):
+    with pytest.raises(KeyError, match=match):
+        batch_simulator.start(
             "case",
-            [
-                (
-                    2,
-                    {
-                        "WELL_ORDER": {"W1": 0, "W2": 0, "W3": 1},
-                        "WELL_ON_OFF": {"W1": 0, "W2": 1, "W3": "X"},
-                    },
-                ),
-            ],
-        )
-
-    # Not numeric values => Exception
-    with pytest.raises(Exception):
-        rsim.start(
-            "case",
-            [
-                (
-                    "2",
-                    {
-                        "WELL_ORDER": {"W1": 0, "W2": 0, "W3": 1},
-                        "WELL_ON_OFF": {"W1": 0, "W2": 1, "W3": 4},
-                    },
-                ),
-            ],
+            input,
         )
 
 
-def test_batch_simulation(batch_sim_example):
-    res_config = batch_sim_example
-    monitor = MockMonitor()
-    rsim = BatchSimulator(
-        res_config,
-        {"WELL_ORDER": ["W1", "W2", "W3"], "WELL_ON_OFF": ["W1", "W2", "W3"]},
-        ["ORDER", "ON_OFF"],
-        callback=monitor.start_callback,
-    )
-
+def test_batch_simulation(batch_simulator):
     # Starting a simulation which should actually run through.
     case_data = [
         (
@@ -205,7 +167,7 @@ def test_batch_simulation(batch_sim_example):
         ),
     ]
 
-    ctx = rsim.start("case", case_data)
+    ctx = batch_simulator.start("case", case_data)
     assert len(case_data) == len(ctx)
 
     # Asking for results before it is complete.
@@ -241,70 +203,43 @@ def test_batch_simulation(batch_sim_example):
                 controls[ctrl_key][var_name] ** 2 for var_name in ["W1", "W2", "W3"]
             ]
 
-    assert isinstance(monitor.sim_context, BatchContext)
 
-
-@pytest.mark.usefixtures("use_tmpdir")
-def test_batch_simulation_invalid_suffixes(batch_sim_example):
-    res_config = batch_sim_example
-
-    # If suffixes are given, must be all non-empty string collections
-    type_err_suffixes = (
-        27,
-        "astring",
-        b"somebytes",
-        True,
-        False,
-        [True, False],
-        None,
-        range(3),
-    )
-    for sfx in type_err_suffixes:
-        with pytest.raises(TypeError):
-            BatchSimulator(
-                res_config,
-                {
-                    "WELL_ORDER": {"W1": ["a"], "W3": sfx},
-                },
-                ["ORDER"],
-            )
-    val_err_suffixes = (
-        [],
-        {},
-        [""],
-        ["a", "a"],
-    )
-    for sfx in val_err_suffixes:
-        with pytest.raises(ValueError):
-            BatchSimulator(
-                res_config,
-                {
-                    "WELL_ORDER": {"W1": ["a"], "W3": sfx},
-                },
-                ["ORDER"],
-            )
-
-    rsim = BatchSimulator(
-        res_config,
-        {
-            "WELL_ORDER": {
-                "W1": ["a", "b"],
-                "W3": ["c"],
+@pytest.mark.parametrize(
+    "suffix, error",
+    (
+        (27, TypeError),
+        ("astring", TypeError),
+        (b"somebytes", TypeError),
+        (True, TypeError),
+        (False, TypeError),
+        ([True, False], TypeError),
+        (None, TypeError),
+        (range(3), TypeError),
+        ([], ValueError),
+        ({}, ValueError),
+        ([""], ValueError),
+        (["a", "a"], ValueError),
+    ),
+)
+def test_that_batch_simulation_handles_invalid_suffixes_at_init(
+    batch_sim_example, suffix, error
+):
+    with pytest.raises(error):
+        _ = BatchSimulator(
+            batch_sim_example,
+            {
+                "WELL_ORDER": {"W1": ["a"], "W3": suffix},
             },
-        },
-        ["ORDER"],
-    )
+            ["ORDER"],
+        )
 
-    # suffixes not taken into account
-    with pytest.raises(KeyError):
-        rsim.start("case", [(1, {"WELL_ORDER": {"W1": 3, "W3": 2}})])
-    with pytest.raises(KeyError):
-        rsim.start("case", [(1, {"WELL_ORDER": {"W1": {}, "W3": {}}})])
 
-    # wrong suffixes
-    with pytest.raises(KeyError):
-        rsim.start(
-            "case",
+@pytest.mark.parametrize(
+    "inp, match",
+    [
+        ([(1, {"WELL_ORDER": {"W1": 3, "W3": 2}})], "Key W1 has suffixes"),
+        ([(1, {"WELL_ORDER": {"W1": {}, "W3": {}}})], "Key W1 is missing"),
+        (
             [
                 (
                     1,
@@ -316,12 +251,9 @@ def test_batch_simulation_invalid_suffixes(batch_sim_example):
                     },
                 )
             ],
-        )
-
-    # missing one suffix
-    with pytest.raises(KeyError):
-        rsim.start(
-            "case",
+            "Key W1 has suffixes",
+        ),
+        (
             [
                 (
                     1,
@@ -333,27 +265,25 @@ def test_batch_simulation_invalid_suffixes(batch_sim_example):
                     },
                 )
             ],
-        )
-
-    # wrong type for values
-    # Exception cause atm this would raise a ctypes.ArgumentError
-    # but that's an implementation detail that will hopefully change
-    # not so far in the future
-    with pytest.raises(Exception):
-        rsim.start(
-            "case",
-            [
-                (
-                    1,
-                    {
-                        "WELL_ORDER": {
-                            "W1": {"a": "3", "b": 3},
-                            "W3": {"c": 2},
-                        }
-                    },
-                )
-            ],
-        )
+            "Key W1 is missing",
+        ),
+    ],
+)
+def test_that_batch_simulator_handles_invalid_suffixes_at_start(
+    batch_sim_example, inp, match
+):
+    rsim = BatchSimulator(
+        batch_sim_example,
+        {
+            "WELL_ORDER": {
+                "W1": ["a", "b"],
+                "W3": ["c"],
+            },
+        },
+        ["ORDER"],
+    )
+    with pytest.raises(KeyError, match=match):
+        rsim.start("case", inp)
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -465,10 +395,8 @@ def test_stop_sim(batch_sim_example):
 
 
 def test_workflow_pre_simulation(batch_sim_example):
-    res_config = batch_sim_example
-
     rsim = BatchSimulator(
-        res_config,
+        batch_sim_example,
         {"WELL_ORDER": ["W1", "W2", "W3"], "WELL_ON_OFF": ["W1", "W2", "W3"]},
         ["ORDER", "ON_OFF"],
     )
@@ -533,7 +461,6 @@ def assertContextStatusOddFailures(batch_ctx, final_state_only=False):
             assert status == JobStatusType.JOB_QUEUE_FAILED
 
 
-@pytest.mark.usefixtures("use_tmpdir")
 def test_batch_ctx_status_failing_jobs(setup_case):
 
     res_config = setup_case("batch_sim", "batch_sim_sleep_and_fail.ert")
