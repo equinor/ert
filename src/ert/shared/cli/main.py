@@ -52,10 +52,8 @@ def run_cli(args):
     evaluator_server_config = EvaluatorServerConfig(custom_port_range=args.port_range)
     experiment_id = str(uuid.uuid4())
 
+    # Note that asyncio.run should be called once in ert/shared/main.py
     if FeatureToggling.is_enabled("experiment-server"):
-        # TODO: need to perform same case checks as for non-experiment-server.
-        # TODO: asyncio.run should be called once in ert/shared/main.py
-        # see https://github.com/equinor/ert/issues/3443 for both of these TODOs
         asyncio.run(
             _run_cli_async(
                 ert,
