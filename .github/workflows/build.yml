@@ -174,7 +174,7 @@ jobs:
     - name: Unit Test
       if: matrix.test-type == 'unit-tests'
       run: |
-        pytest tests -sv  --hypothesis-profile=ci-m "not integration_test and not requires_window_manager"
+        pytest tests -sv  --hypothesis-profile=ci -m "not integration_test and not requires_window_manager"
 
     - name: Integration Test 
       if: matrix.test-type == 'integration-tests'
