@@ -1,5 +1,5 @@
 import os
-from typing import Optional
+from typing import Optional, Union
 
 from ecl.ecl_util import EclFileEnum, get_file_type
 from ecl.ecl_util import get_num_cpu as get_num_cpu_from_data_file
@@ -24,20 +24,10 @@ class EclConfig:
 
     @classmethod
     def from_dict(cls, config_dict) -> "EclConfig":
-        ecl_config_args = {}
-        if ConfigKeys.DATA_FILE in config_dict:
-            ecl_config_args["data_file"] = os.path.realpath(
-                config_dict[ConfigKeys.DATA_FILE]
-            )
-        if ConfigKeys.GRID in config_dict:
-            ecl_config_args["grid_file"] = os.path.realpath(
-                config_dict[ConfigKeys.GRID]
-            )
-        if ConfigKeys.REFCASE in config_dict:
-            ecl_config_args["refcase_file"] = os.path.realpath(
-                config_dict[ConfigKeys.REFCASE]
-            )
-        return cls(**ecl_config_args)
+        data_file = _get_value(config_dict.get(ConfigKeys.DATA_FILE))
+        grid_file = _get_value(config_dict.get(ConfigKeys.GRID))
+        refcase_file = _get_value(config_dict.get(ConfigKeys.REFCASE))
+        return cls(data_file, grid_file, refcase_file)
 
     @property
     def num_cpu(self) -> Optional[int]:
@@ -89,3 +79,12 @@ class EclConfig:
             return False
 
         return True
+
+
+def _get_value(config_dict_value: Optional[Union[list, str]]) -> Optional[str]:
+    if config_dict_value is not None:
+        if isinstance(config_dict_value, str):
+            return os.path.realpath(config_dict_value)
+        elif isinstance(config_dict_value, list):
+            return os.path.realpath(config_dict_value[-1])
+    return config_dict_value

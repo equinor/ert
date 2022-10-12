@@ -148,12 +148,8 @@ class ResConfig:
             self.random_seed = None
         self.analysis_config = AnalysisConfig(config_content=user_config_content)
 
-        user_config_content_as_dict = user_config_content.as_dict()
-        user_config_content_as_dict_simplified = {
-            key: value[0][0] if len(value[0]) == 1 else value[0]
-            for key, value in user_config_content_as_dict.items()
-        }
-        self.ecl_config = EclConfig.from_dict(user_config_content_as_dict_simplified)
+        config_content_dict = user_config_content.as_dict()
+        self.ecl_config = EclConfig.from_dict(config_content_dict)
 
         queue_config_args = {}
 
