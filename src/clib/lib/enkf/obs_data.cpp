@@ -110,7 +110,7 @@ void obs_block_free(obs_block_type *obs_block) {
 }
 
 static void obs_block_free__(void *arg) {
-    obs_block_type *obs_block = obs_block_safe_cast(arg);
+    auto obs_block = static_cast<obs_block_type *>(arg);
     obs_block_free(obs_block);
 }
 

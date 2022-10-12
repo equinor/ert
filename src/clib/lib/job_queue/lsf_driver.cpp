@@ -637,9 +637,9 @@ static int lsf_driver_get_job_status_libary(void *__driver, void *__job) {
         return JOB_QUEUE_NOT_ACTIVE;
     else {
         int status;
-        lsf_driver_type *driver = lsf_driver_safe_cast(__driver);
+        auto driver = static_cast<lsf_driver_type *>(__driver);
 #ifdef HAVE_LSF_LIBRARY
-        lsf_job_type *job = lsf_job_safe_cast(__job);
+        auto job = static_cast<lsf_job_type *>(__job);
         if (lsb_openjob(driver->lsb, job->lsf_jobnr) != 1) {
             // Failed to get information about the job - we boldly assume the
             // following situation has occured:
@@ -776,8 +776,8 @@ static int lsf_driver_get_job_status_shell(void *__driver, void *__job) {
     int status = JOB_STAT_NULL;
 
     if (__job != NULL) {
-        lsf_job_type *job = lsf_job_safe_cast(__job);
-        lsf_driver_type *driver = lsf_driver_safe_cast(__driver);
+        auto job = static_cast<lsf_job_type *>(__job);
+        auto driver = static_cast<lsf_driver_type *>(__driver);
 
         {
             // Updating the bjobs_table of the driver involves a significant
@@ -868,7 +868,7 @@ job_status_type lsf_driver_convert_status(int lsf_status) {
 
 int lsf_driver_get_job_status_lsf(void *__driver, void *__job) {
     int lsf_status;
-    lsf_driver_type *driver = lsf_driver_safe_cast(__driver);
+    auto driver = static_cast<lsf_driver_type *>(__driver);
 
     if (driver->submit_method == LSF_SUBMIT_INTERNAL)
         lsf_status = lsf_driver_get_job_status_libary(__driver, __job);
@@ -884,7 +884,7 @@ job_status_type lsf_driver_get_job_status(void *__driver, void *__job) {
 }
 
 void lsf_driver_free_job(void *__job) {
-    lsf_job_type *job = lsf_job_safe_cast(__job);
+    auto job = static_cast<lsf_job_type *>(__job);
     lsf_job_free(job);
 }
 
@@ -933,14 +933,14 @@ static void lsf_driver_node_failure(lsf_driver_type *driver,
 }
 
 void lsf_driver_blacklist_node(void *__driver, void *__job) {
-    lsf_driver_type *driver = lsf_driver_safe_cast(__driver);
-    lsf_job_type *job = lsf_job_safe_cast(__job);
+    auto driver = static_cast<lsf_driver_type *>(__driver);
+    auto job = static_cast<lsf_job_type *>(__job);
     lsf_driver_node_failure(driver, job);
 }
 
 void lsf_driver_kill_job(void *__driver, void *__job) {
-    lsf_driver_type *driver = lsf_driver_safe_cast(__driver);
-    lsf_job_type *job = lsf_job_safe_cast(__job);
+    auto driver = static_cast<lsf_driver_type *>(__driver);
+    auto job = static_cast<lsf_job_type *>(__job);
     {
         if (driver->submit_method == LSF_SUBMIT_INTERNAL) {
 #ifdef HAVE_LSF_LIBRARY
@@ -972,7 +972,7 @@ void lsf_driver_kill_job(void *__driver, void *__job) {
 void *lsf_driver_submit_job(void *__driver, const char *submit_cmd, int num_cpu,
                             const char *run_path, const char *job_name,
                             int argc, const char **argv) {
-    lsf_driver_type *driver = lsf_driver_safe_cast(__driver);
+    auto driver = static_cast<lsf_driver_type *>(__driver);
     lsf_driver_assert_submit_method(driver);
     {
         lsf_job_type *job = lsf_job_alloc(job_name);
@@ -1065,7 +1065,7 @@ void lsf_driver_free(lsf_driver_type *driver) {
 }
 
 void lsf_driver_free__(void *__driver) {
-    lsf_driver_type *driver = lsf_driver_safe_cast(__driver);
+    auto driver = static_cast<lsf_driver_type *>(__driver);
     lsf_driver_free(driver);
 }
 
@@ -1203,7 +1203,7 @@ void lsf_driver_set_bjobs_refresh_interval_option(lsf_driver_type *driver,
 bool lsf_driver_set_option(void *__driver, const char *option_key,
                            const void *value_) {
     const char *value = (const char *)value_;
-    lsf_driver_type *driver = lsf_driver_safe_cast(__driver);
+    auto driver = static_cast<lsf_driver_type *>(__driver);
     bool has_option = true;
     {
         if (strcmp(LSF_RESOURCE, option_key) == 0)
@@ -1243,7 +1243,7 @@ bool lsf_driver_set_option(void *__driver, const char *option_key,
 
 const void *lsf_driver_get_option(const void *__driver,
                                   const char *option_key) {
-    const lsf_driver_type *driver = lsf_driver_safe_cast_const(__driver);
+    const auto driver = static_cast<const lsf_driver_type *>(__driver);
     {
         if (strcmp(LSF_RESOURCE, option_key) == 0)
             return driver->resource_request;

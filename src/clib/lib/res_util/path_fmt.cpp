@@ -227,6 +227,6 @@ void path_fmt_free(path_fmt_type *path) {
 }
 
 void path_fmt_free__(void *arg) {
-    path_fmt_type *path_fmt = path_fmt_safe_cast(arg);
+    auto path_fmt = static_cast<path_fmt_type *>(arg);
     path_fmt_free(path_fmt);
 }

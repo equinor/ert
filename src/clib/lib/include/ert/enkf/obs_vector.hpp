@@ -30,7 +30,7 @@ void obs_vector_measure(const obs_vector_type *, enkf_fs_type *fs,
                         meas_data_type *);
 
 typedef void(obs_free_ftype)(void *);
-typedef void(obs_get_ftype)(const void *, obs_data_type *, enkf_fs_type *, int);
+typedef void(obs_get_ftype)(void *, obs_data_type *, enkf_fs_type *, int);
 typedef void(obs_meas_ftype)(const void *, const void *, node_id_type,
                              meas_data_type *);
 typedef void(obs_user_get_ftype)(void *, const char *, double *, double *,

@@ -6,7 +6,6 @@
 
 void test_create() {
     subst_list_type *subst_list = subst_list_alloc(NULL);
-    test_assert_true(subst_list_is_instance(subst_list));
     subst_list_free(subst_list);
 }
 

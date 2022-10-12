@@ -32,7 +32,7 @@ config_path_elm_type *config_path_elm_alloc(const fs::path &root_path,
 void config_path_elm_free(config_path_elm_type *path_elm) { delete path_elm; }
 
 void config_path_elm_free__(void *arg) {
-    config_path_elm_type *path_elm = config_path_elm_safe_cast(arg);
+    auto path_elm = static_cast<config_path_elm_type *>(arg);
     config_path_elm_free(path_elm);
 }
 

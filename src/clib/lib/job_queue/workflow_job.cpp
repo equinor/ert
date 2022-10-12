@@ -314,7 +314,7 @@ void workflow_job_free(workflow_job_type *workflow_job) {
 }
 
 void workflow_job_free__(void *arg) {
-    workflow_job_type *workflow_job = workflow_job_safe_cast(arg);
+    auto workflow_job = static_cast<workflow_job_type *>(arg);
     workflow_job_free(workflow_job);
 }
 

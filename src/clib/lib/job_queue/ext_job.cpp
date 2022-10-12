@@ -323,7 +323,7 @@ void ext_job_free(ext_job_type *ext_job) {
 }
 
 void ext_job_free__(void *__ext_job) {
-    ext_job_free(ext_job_safe_cast(__ext_job));
+    ext_job_free(static_cast<ext_job_type *>(__ext_job));
 }
 
 /*

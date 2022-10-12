@@ -6,12 +6,11 @@
 void test_create() {
     job_queue_node_type *node =
         job_queue_node_alloc_simple("name", "/tmp", "/bin/ls", 0, NULL);
-    test_assert_true(job_queue_node_is_instance(node));
     job_queue_node_free(node);
 }
 
 void call_get_queue_index(void *arg) {
-    job_queue_node_type *node = job_queue_node_safe_cast(arg);
+    auto node = static_cast<job_queue_node_type *>(arg);
     job_queue_node_get_queue_index(node);
 }
 

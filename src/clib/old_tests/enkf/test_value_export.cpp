@@ -52,8 +52,6 @@ void test_create() {
 
     test_assert_int_equal(0, value_export_size(export_value));
 
-    test_assert_true(value_export_is_instance(export_value));
-
     value_export_txt(export_value);
     test_assert_false(fs::exists("parameters.txt"));
 

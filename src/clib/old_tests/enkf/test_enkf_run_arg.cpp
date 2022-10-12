@@ -6,12 +6,12 @@
 #include <ert/util/test_work_area.h>
 
 void call_get_queue_index(void *arg) {
-    run_arg_type *run_arg = run_arg_safe_cast(arg);
+    auto run_arg = static_cast<run_arg_type *>(arg);
     run_arg_get_queue_index(run_arg);
 }
 
 void call_set_queue_index(void *arg) {
-    run_arg_type *run_arg = run_arg_safe_cast(arg);
+    auto run_arg = static_cast<run_arg_type *>(arg);
     run_arg_set_queue_index(run_arg, 88);
 }
 
@@ -42,12 +42,12 @@ void test_queue_index() {
 }
 
 void call_get_sim_fs(void *arg) {
-    run_arg_type *run_arg = run_arg_safe_cast(arg);
+    auto run_arg = static_cast<run_arg_type *>(arg);
     run_arg_get_sim_fs(run_arg);
 }
 
 void call_get_update_target_fs(void *arg) {
-    run_arg_type *run_arg = run_arg_safe_cast(arg);
+    auto run_arg = static_cast<run_arg_type *>(arg);
 }
 
 void test_SMOOTHER_RUN() {
@@ -59,7 +59,6 @@ void test_SMOOTHER_RUN() {
             enkf_fs_create_fs("target", BLOCK_FS_DRIVER_ID, 1, true);
         run_arg_type *run_arg =
             run_arg_alloc("run_id", sim_fs, 0, 6, "path", "BASE");
-        test_assert_true(run_arg_is_instance(run_arg));
         test_assert_ptr_equal(run_arg_get_sim_fs(run_arg), sim_fs);
         run_arg_free(run_arg);
         enkf_fs_umount(sim_fs);
@@ -75,7 +74,6 @@ void test_INIT_ONLY() {
 
         run_arg_type *run_arg =
             run_arg_alloc("run_id", init_fs, 0, 6, "path", NULL);
-        test_assert_true(run_arg_is_instance(run_arg));
         test_assert_ptr_equal(run_arg_get_sim_fs(run_arg), init_fs);
 
         run_arg_free(run_arg);
@@ -91,7 +89,6 @@ void test_ENSEMBLE_EXPERIMENT() {
 
         run_arg_type *run_arg =
             run_arg_alloc("run_id", fs, 0, 6, "path", "BASE");
-        test_assert_true(run_arg_is_instance(run_arg));
 
         test_assert_ptr_equal(run_arg_get_sim_fs(run_arg), fs);
 

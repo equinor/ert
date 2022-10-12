@@ -8,13 +8,12 @@
 
 void test_create() {
     job_list_type *list = job_list_alloc();
-    test_assert_true(job_list_is_instance(list));
     test_assert_int_equal(0, job_list_get_size(list));
     job_list_free(list);
 }
 
 void call_iget_job(void *arg) {
-    job_list_type *job_list = job_list_safe_cast(arg);
+    auto job_list = static_cast<job_list_type *>(arg);
     job_list_iget_job(job_list, 10);
 }
 

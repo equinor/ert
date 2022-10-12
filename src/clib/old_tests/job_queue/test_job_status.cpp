@@ -6,7 +6,7 @@
 #include <ert/util/test_util.hpp>
 
 void call_get_status(void *arg) {
-    job_queue_status_type *job_status = job_queue_status_safe_cast(arg);
+    auto job_status = static_cast<job_queue_status_type *>(arg);
     job_queue_status_get_count(
         job_status,
         pow(2,
@@ -15,7 +15,6 @@ void call_get_status(void *arg) {
 
 void test_create() {
     job_queue_status_type *status = job_queue_status_alloc();
-    test_assert_true(job_queue_status_is_instance(status));
     test_assert_int_equal(job_queue_status_get_count(status, JOB_QUEUE_DONE),
                           0);
     test_assert_util_abort("job_queue_status_get_count", call_get_status,
@@ -24,20 +23,20 @@ void test_create() {
 }
 
 void *add_sim(void *arg) {
-    job_queue_status_type *job_status = job_queue_status_safe_cast(arg);
+    auto job_status = static_cast<job_queue_status_type *>(arg);
     job_queue_status_inc(job_status, JOB_QUEUE_WAITING);
     return NULL;
 }
 
 void *user_exit(void *arg) {
-    job_queue_status_type *job_status = job_queue_status_safe_cast(arg);
+    auto job_status = static_cast<job_queue_status_type *>(arg);
     job_queue_status_transition(job_status, JOB_QUEUE_WAITING,
                                 JOB_QUEUE_DO_KILL);
     return NULL;
 }
 
 void *user_done(void *arg) {
-    job_queue_status_type *job_status = job_queue_status_safe_cast(arg);
+    auto job_status = static_cast<job_queue_status_type *>(arg);
     job_queue_status_transition(job_status, JOB_QUEUE_WAITING, JOB_QUEUE_DONE);
     return NULL;
 }

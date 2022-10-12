@@ -21,7 +21,6 @@ analysis_config_type *create_analysis_config() {
 
 void test_create() {
     analysis_config_type *ac = create_analysis_config();
-    test_assert_true(analysis_config_is_instance(ac));
     analysis_config_free(ac);
 }
 

@@ -47,7 +47,7 @@ static UTIL_SAFE_CAST_FUNCTION(rms_tag, RMS_TAG_TYPE_ID)
 }
 
 void rms_tag_free__(void *arg) {
-    rms_tag_type *tag = rms_tag_safe_cast(arg);
+    auto tag = static_cast<rms_tag_type *>(arg);
     rms_tag_free(tag);
 }
 

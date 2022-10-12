@@ -40,7 +40,7 @@ void hook_workflow_free(hook_workflow_type *hook_workflow) {
 }
 
 void hook_workflow_free__(void *arg) {
-    hook_workflow_type *hook_workflow = hook_workflow_safe_cast(arg);
+    auto hook_workflow = static_cast<hook_workflow_type *>(arg);
     hook_workflow_free(hook_workflow);
 }
 

@@ -33,7 +33,6 @@ int main(int argc, char **argv) {
             config_content_type *content =
                 config_parse(config, argc_OK, "--", NULL, NULL, NULL,
                              CONFIG_UNRECOGNIZED_ERROR, true);
-            test_assert_true(config_content_is_instance(content));
             test_assert_true(config_content_is_valid(content));
             config_content_free(content);
         }
@@ -42,7 +41,6 @@ int main(int argc, char **argv) {
             config_content_type *content =
                 config_parse(config, argc_less, "--", NULL, NULL, NULL,
                              CONFIG_UNRECOGNIZED_ERROR, true);
-            test_assert_true(config_content_is_instance(content));
             test_assert_false(config_content_is_valid(content));
 
             {
@@ -63,7 +61,6 @@ int main(int argc, char **argv) {
             config_content_type *content =
                 config_parse(config, argc_more, "--", NULL, NULL, NULL,
                              CONFIG_UNRECOGNIZED_ERROR, true);
-            test_assert_true(config_content_is_instance(content));
             test_assert_false(config_content_is_valid(content));
             {
                 const config_error_type *config_error =

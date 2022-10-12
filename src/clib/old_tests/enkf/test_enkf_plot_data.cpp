@@ -7,7 +7,6 @@
 
 void test_create() {
     enkf_plot_data_type *plot_data = enkf_plot_data_alloc(NULL);
-    test_assert_true(enkf_plot_data_is_instance(plot_data));
     enkf_plot_data_free(plot_data);
 }
 

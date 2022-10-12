@@ -72,7 +72,7 @@ void subst_func_free(subst_func_type *subst_func) {
 UTIL_SAFE_CAST_FUNCTION(subst_func, SUBST_FUNC_TYPE_ID);
 
 static void subst_func_free__(void *arg) {
-    subst_func_free(subst_func_safe_cast(arg));
+    subst_func_free(static_cast<subst_func_type *>(arg));
 }
 
 UTIL_IS_INSTANCE_FUNCTION(subst_func_pool, SUBST_FUNC_POOL_TYPE_ID);

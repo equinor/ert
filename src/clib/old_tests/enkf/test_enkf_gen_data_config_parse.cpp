@@ -110,7 +110,6 @@ void test_parse_gen_data_result() {
             "GEN_DATA GEN_DATA_KEY  RESULT_FILE:Results%d INPUT_FORMAT:ASCII  "
             "REPORT_STEPS:10,20,30\n",
             true);
-        test_assert_true(enkf_config_node_is_instance(config_node));
 
         test_assert_string_equal("Results%d",
                                  enkf_config_node_get_enkf_infile(config_node));

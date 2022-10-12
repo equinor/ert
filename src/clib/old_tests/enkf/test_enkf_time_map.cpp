@@ -94,7 +94,7 @@ void simple_test() {
 }
 
 static void simple_update(void *arg) {
-    time_map_type *tmap = time_map_safe_cast(arg);
+    auto tmap = static_cast<time_map_type *>(arg);
 
     time_map_update(tmap, 0, 101);
 }
@@ -146,7 +146,6 @@ void test_read_only() {
     {
         time_map_type *tm = time_map_alloc();
 
-        test_assert_true(time_map_is_instance(tm));
         test_assert_false(time_map_is_readonly(tm));
 
         time_map_update(tm, 0, 0);
