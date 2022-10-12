@@ -1,3 +1,4 @@
+import logging
 import os
 import warnings
 from collections import defaultdict
@@ -26,6 +27,8 @@ def format_warning_message(message, category, *args, **kwargs):
 
 
 warnings.formatwarning = format_warning_message
+
+logger = logging.getLogger(__name__)
 
 
 class ResConfig:
@@ -73,6 +76,39 @@ class ResConfig:
         if user_config_file is not None and not isfile(user_config_file):
             raise IOError(f'No such configuration file "{user_config_file}".')
 
+    def _log_config_file(self, config_file: str) -> None:
+        """
+        Logs what configuration was used to start ert. Because the config
+        parsing is quite convoluted we are not able to remove all the comments,
+        but the easy ones are filtered out.
+        """
+        if config_file is not None and os.path.isfile(config_file):
+            config_context = ""
+            with open(config_file, "r", encoding="utf-8") as file_obj:
+                for line in file_obj:
+                    line = line.strip()
+                    if not line or line.startswith("--"):
+                        continue
+                    if "--" in line and not any(x in line for x in ['"', "'"]):
+                        # There might be a comment in this line, but it could
+                        # also be an argument to a job, so we do a quick check
+                        line = line.split("--")[0].rstrip()
+                    config_context += line + "\n"
+            logger.info(
+                f"Content of the configuration file ({config_file}):\n" + config_context
+            )
+
+    def _log_config_content(self, config_content: ConfigContent) -> None:
+        tmp_dict = config_content.as_dict().copy()
+        tmp_dict.pop("FORWARD_MODEL", None)
+        tmp_dict.pop("LOAD_WORKFLOW", None)
+        tmp_dict.pop("LOAD_WORKFLOW_JOB", None)
+        tmp_dict.pop("HOOK_WORKFLOW", None)
+        tmp_dict.pop("WORKFLOW_JOB_DIRECTORY", None)
+
+        logger.info("Content of the config_content:")
+        logger.info(tmp_dict)
+
     # build configs from config file or everest dict
     def _alloc_from_content(self, user_config_file=None, config=None):
         site_config_parser = ConfigParser()
@@ -97,6 +133,9 @@ class ResConfig:
         else:
             self.config_path = os.getcwd()
             user_config_content = self._build_config_content(config)
+
+        self._log_config_file(user_config_file)
+        self._log_config_content(user_config_content)
 
         if self.errors:
             raise ValueError("Error loading configuration: " + str(self._errors))

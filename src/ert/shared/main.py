@@ -479,29 +479,6 @@ def start_ert_server(mode: str):
         yield
 
 
-def log_config(config_path: str, logger: logging.Logger) -> None:
-    """
-    Logs what configuration was used to start ert. Because the config
-    parsing is quite convoluted we are not able to remove all the comments,
-    but the easy ones are filtered out.
-    """
-    if config_path is not None and os.path.isfile(config_path):
-        config_context = ""
-        with open(config_path, "r", encoding="utf-8") as file_obj:
-            for line in file_obj:
-                line = line.strip()
-                if not line or line.startswith("--"):
-                    continue
-                if "--" in line and not any(x in line for x in ['"', "'"]):
-                    # There might be a comment in this line, but it could
-                    # also be an argument to a job, so we do a quick check
-                    line = line.split("--")[0].rstrip()
-                config_context += line + "\n"
-        logger.info(
-            f"Content of the configuration file ({config_path}):\n" + config_context
-        )
-
-
 @atexit.register
 def log_process_usage():
     try:
@@ -569,7 +546,6 @@ def main():
         with start_ert_server(args.mode), ErtPluginContext() as context:
             context.plugin_manager.add_logging_handle_to_root(logging.getLogger())
             logger.info(f"Running ert with {args}")
-            log_config(args.config, logger)
             args.func(args)
     except ErtCliError as err:
         logger.exception(str(err))
