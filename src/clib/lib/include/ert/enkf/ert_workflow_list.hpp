@@ -2,7 +2,6 @@
 #define ERT_WORKFLOW_LIST_H
 
 #include <ert/res_util/subst_list.hpp>
-#include <ert/util/type_macros.h>
 
 #include <ert/config/config_content.hpp>
 #include <ert/config/config_error.hpp>
@@ -66,7 +65,5 @@ extern "C" const hook_workflow_type *ert_workflow_list_iget_hook_workflow(
 
 extern "C" int ert_workflow_list_num_hook_workflows(
     const ert_workflow_list_type *workflow_list);
-
-UTIL_IS_INSTANCE_HEADER(ert_workflow_list);
 
 #endif

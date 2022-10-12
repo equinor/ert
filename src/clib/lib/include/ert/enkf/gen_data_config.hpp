@@ -85,9 +85,6 @@ extern "C" int
 gen_data_config_get_data_size__(const gen_data_config_type *config,
                                 int report_step);
 
-UTIL_IS_INSTANCE_HEADER(gen_data_config);
-UTIL_SAFE_CAST_HEADER(gen_data_config);
-UTIL_SAFE_CAST_HEADER_CONST(gen_data_config);
 VOID_FREE_HEADER(gen_data_config)
 
 #endif

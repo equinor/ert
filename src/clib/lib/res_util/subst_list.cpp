@@ -63,10 +63,7 @@ typedef enum {
     SUBST_SHARED_REF = 3
 } subst_insert_type; /* Mode used in the subst_list_insert__() function */
 
-#define SUBST_LIST_TYPE_ID 6614320
-
 struct subst_list_struct {
-    UTIL_TYPE_ID_DECLARATION;
     /** A parent subst_list instance - can be NULL - no destructor is called
      * for the parent. */
     const subst_list_type *parent;
@@ -220,8 +217,6 @@ subst_list_insert_new_node(subst_list_type *subst_list, const char *key,
     hash_insert_ref(subst_list->map, key, new_node);
     return new_node;
 }
-
-UTIL_IS_INSTANCE_FUNCTION(subst_list, SUBST_LIST_TYPE_ID)
 
 /**
    Observe that this function sets both the subst parent, and the pool

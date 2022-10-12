@@ -6,7 +6,6 @@
 
 #include <ert/res_util/subst_list.hpp>
 #include <ert/util/hash.hpp>
-#include <ert/util/type_macros.hpp>
 #include <ert/util/vector.hpp>
 
 #include <ert/config/config_content.hpp>
@@ -15,10 +14,7 @@
 
 namespace fs = std::filesystem;
 
-#define CONFIG_CONTENT_TYPE_ID 6612520
-
 struct config_content_struct {
-    UTIL_TYPE_ID_DECLARATION;
     /** A set of config files which have been parsed - to protect against
      * circular includes. */
     std::set<std::string> parsed_files;
@@ -37,11 +33,8 @@ struct config_content_struct {
     bool valid;
 };
 
-UTIL_IS_INSTANCE_FUNCTION(config_content, CONFIG_CONTENT_TYPE_ID)
-
 config_content_type *config_content_alloc(const char *filename) {
     auto content = new config_content_type;
-    UTIL_TYPE_ID_INIT(content, CONFIG_CONTENT_TYPE_ID);
 
     content->valid = false;
     content->items = hash_alloc();

@@ -13,7 +13,6 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#include <ert/util/type_macros.h>
 #include <ert/util/util.h>
 
 #include <ert/logging.hpp>
@@ -116,7 +115,6 @@ static auto logger = ert::get_logger("enkf");
   foolprof.
 */
 
-#define ENKF_FS_TYPE_ID 1089763
 #define ENKF_MOUNT_MAP "enkf_mount_info"
 #define SUMMARY_KEY_SET_FILE "summary-key-set"
 #define TIME_MAP_FILE "time-map"
@@ -125,7 +123,6 @@ static auto logger = ert::get_logger("enkf");
 #define CASE_CONFIG_FILE "case_config"
 
 struct enkf_fs_struct {
-    UTIL_TYPE_ID_DECLARATION;
     std::string case_name;
     char *mount_point;
 
@@ -150,15 +147,11 @@ struct enkf_fs_struct {
     path_fmt_type *case_tstep_member_fmt;
 };
 
-UTIL_SAFE_CAST_FUNCTION(enkf_fs, ENKF_FS_TYPE_ID)
-UTIL_IS_INSTANCE_FUNCTION(enkf_fs, ENKF_FS_TYPE_ID)
-
 enkf_fs_type *enkf_fs_get_ref(enkf_fs_type *fs) { return fs; }
 
 enkf_fs_type *enkf_fs_alloc_empty(const char *mount_point,
                                   unsigned ensemble_size, bool read_only) {
     enkf_fs_type *fs = new enkf_fs_type;
-    UTIL_TYPE_ID_INIT(fs, ENKF_FS_TYPE_ID);
     fs->time_map = time_map_alloc();
     fs->state_map = std::make_shared<StateMap>(ensemble_size);
     fs->summary_key_set = summary_key_set_alloc();

@@ -2,14 +2,10 @@
 #define ERT_RUN_ARG_H
 
 #include <ert/res_util/path_fmt.hpp>
-#include <ert/util/type_macros.h>
 
 #include <ert/enkf/enkf_fs.hpp>
 #include <ert/enkf/enkf_types.hpp>
 #include <ert/enkf/run_arg_type.hpp>
-
-UTIL_SAFE_CAST_HEADER(run_arg);
-UTIL_IS_INSTANCE_HEADER(run_arg);
 
 extern "C" run_arg_type *run_arg_alloc(const char *run_id, enkf_fs_type *sim_fs,
                                        int iens, int iter, const char *runpath,

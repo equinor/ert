@@ -2,26 +2,19 @@
 
 #include <ert/util/double_vector.h>
 #include <ert/util/int_vector.h>
-#include <ert/util/type_macros.h>
 #include <ert/util/util.h>
 
 #include <ert/enkf/misfit_ts.hpp>
 
-#define MISFIT_TS_TYPE_ID 641066
-
 /** misfit for one ensemble member / observation key. */
 struct misfit_ts_struct {
-    UTIL_TYPE_ID_DECLARATION;
     /** A double vector of length 'history_length' with actual misfit values. */
     double_vector_type *data;
 };
 
-static UTIL_SAFE_CAST_FUNCTION(misfit_ts, MISFIT_TS_TYPE_ID);
-
 misfit_ts_type *misfit_ts_alloc(int history_length) {
     misfit_ts_type *misfit_ts =
         (misfit_ts_type *)util_malloc(sizeof *misfit_ts);
-    UTIL_TYPE_ID_INIT(misfit_ts, MISFIT_TS_TYPE_ID);
 
     if (history_length > 0)
         misfit_ts->data = double_vector_alloc(history_length + 1, 0);

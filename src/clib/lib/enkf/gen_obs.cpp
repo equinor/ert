@@ -18,8 +18,6 @@
 #include <ert/except.hpp>
 #include <ert/python.hpp>
 
-#define GEN_OBS_TYPE_ID 77619
-
 /**
    This file implemenets a structure for general observations. A
    general observation is just a vector of numbers - where EnKF has no
@@ -40,7 +38,6 @@
   std_scaling will be incorporated in the result.
 */
 struct gen_obs_struct {
-    UTIL_TYPE_ID_DECLARATION;
     /** This is the total size of the observation vector. */
     int obs_size;
     /** The indexes which are observed in the corresponding gen_data instance -
@@ -64,11 +61,7 @@ struct gen_obs_struct {
     gen_data_config_type *data_config;
 };
 
-static UTIL_SAFE_CAST_FUNCTION_CONST(
-    gen_obs, GEN_OBS_TYPE_ID) static UTIL_SAFE_CAST_FUNCTION(gen_obs,
-                                                             GEN_OBS_TYPE_ID)
-
-    void gen_obs_free(gen_obs_type *gen_obs) {
+void gen_obs_free(gen_obs_type *gen_obs) {
     free(gen_obs->obs_data);
     free(gen_obs->obs_std);
     free(gen_obs->obs_key);
@@ -166,7 +159,6 @@ void gen_obs_parse_data_index(gen_obs_type *obs,
 gen_obs_type *gen_obs_alloc__(const gen_data_config_type *data_config,
                               const char *obs_key) {
     auto obs = new gen_obs_type;
-    UTIL_TYPE_ID_INIT(obs, GEN_OBS_TYPE_ID);
     obs->obs_data = NULL;
     obs->obs_std = NULL;
     obs->std_scaling = NULL;
@@ -442,7 +434,6 @@ int gen_obs_get_obs_index(const gen_obs_type *gen_obs, int index) {
     }
 }
 
-UTIL_IS_INSTANCE_FUNCTION(gen_obs, GEN_OBS_TYPE_ID)
 VOID_FREE(gen_obs)
 VOID_GET_OBS(gen_obs)
 VOID_MEASURE(gen_obs, gen_data)

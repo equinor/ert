@@ -2,7 +2,6 @@
 #define ERT_SLURM_DRIVER_H
 
 #include <ert/util/stringlist.hpp>
-#include <ert/util/type_macros.h>
 
 #include <ert/enkf/config_keys.hpp>
 #include <ert/job_queue/job_status.hpp>
@@ -30,7 +29,5 @@ void *slurm_driver_submit_job(void *__driver, const char *cmd, int num_cpu,
 job_status_type slurm_driver_get_job_status(void *__driver, void *__job);
 void slurm_driver_kill_job(void *__driver, void *__job);
 void slurm_driver_free_job(void *__job);
-
-UTIL_SAFE_CAST_HEADER(slurm_driver);
 
 #endif

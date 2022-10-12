@@ -4,7 +4,6 @@
 #include <ert/res_util/path_fmt.hpp>
 #include <ert/util/bool_vector.h>
 #include <ert/util/hash.h>
-#include <ert/util/type_macros.h>
 
 #include <ert/config/config_parser.hpp>
 
@@ -25,7 +24,6 @@ namespace fs = std::filesystem;
 
 static auto logger = ert::get_logger("enkf");
 
-#define MODEL_CONFIG_TYPE_ID 661053
 /**
    This struct contains configuration which is specific to this
    particular model/run. Such of the information is actually accessed
@@ -46,7 +44,6 @@ static auto logger = ert::get_logger("enkf");
   This semantically predefined runpath is the only option visible to the user.
  */
 struct model_config_struct {
-    UTIL_TYPE_ID_DECLARATION;
     /** The forward_model - as loaded from the config file. Each enkf_state
      * object internalizes its private copy of the forward_model. */
     forward_model_type *forward_model;
@@ -212,8 +209,6 @@ void model_config_set_max_internal_submit(model_config_type *model_config,
     model_config->max_internal_submit = max_resample;
 }
 
-UTIL_IS_INSTANCE_FUNCTION(model_config, MODEL_CONFIG_TYPE_ID);
-
 model_config_type *model_config_alloc_empty() {
     model_config_type *model_config =
         (model_config_type *)util_malloc(sizeof *model_config);
@@ -225,7 +220,6 @@ model_config_type *model_config_alloc_empty() {
      3. Initialize with user supplied values.
 
   */
-    UTIL_TYPE_ID_INIT(model_config, MODEL_CONFIG_TYPE_ID);
     model_config->enspath = NULL;
     model_config->data_root = NULL;
     model_config->default_data_root = NULL;

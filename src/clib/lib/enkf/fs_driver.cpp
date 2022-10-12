@@ -30,13 +30,6 @@ void fs_driver_init(fs_driver_type *driver) {
     driver->fsync_driver = NULL;
 }
 
-fs_driver_type *fs_driver_safe_cast(void *__driver) {
-    fs_driver_type *driver = (fs_driver_type *)__driver;
-    if (driver->type_id != FS_DRIVER_ID)
-        util_abort("%s: runtime cast failed. \n", __func__);
-    return driver;
-}
-
 void fs_driver_init_fstab(FILE *stream, fs_driver_impl driver_id) {
     util_fwrite_long(FS_MAGIC_ID, stream);
     util_fwrite_int(CURRENT_FS_VERSION, stream);

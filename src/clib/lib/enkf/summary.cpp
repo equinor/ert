@@ -14,8 +14,6 @@
 #define SUMMARY_UNDEF -9999
 
 struct summary_struct {
-    /** Only used for run_time checking. */
-    int __type_id;
     /** Can not be NULL - var_type is set on first load. */
     summary_config_type *config;
     double_vector_type *data_vector;
@@ -27,7 +25,6 @@ C_USED void summary_clear(summary_type *summary) {
 
 summary_type *summary_alloc(const summary_config_type *summary_config) {
     summary_type *summary = (summary_type *)util_malloc(sizeof *summary);
-    summary->__type_id = SUMMARY;
     summary->config = (summary_config_type *)summary_config;
     summary->data_vector = double_vector_alloc(0, SUMMARY_UNDEF);
     return summary;
@@ -272,8 +269,6 @@ bool summary_forward_load_vector(summary_type *summary,
     return true;
 }
 
-UTIL_SAFE_CAST_FUNCTION(summary, SUMMARY)
-UTIL_SAFE_CAST_FUNCTION_CONST(summary, SUMMARY)
 VOID_ALLOC(summary)
 VOID_FREE(summary)
 VOID_COPY(summary)

@@ -29,9 +29,7 @@ static auto logger = ert::get_logger("enkf");
    accordingly.
 */
 
-#define GEN_DATA_CONFIG_ID 90051
 struct gen_data_config_struct {
-    UTIL_TYPE_ID_DECLARATION;
     /** The key this gen_data instance is known under - needed for debugging. */
     char *key;
     char *template_file;
@@ -67,10 +65,6 @@ struct gen_data_config_struct {
     bool_vector_type *active_mask;
     int active_report_step;
 };
-
-UTIL_IS_INSTANCE_FUNCTION(gen_data_config, GEN_DATA_CONFIG_ID)
-UTIL_SAFE_CAST_FUNCTION(gen_data_config, GEN_DATA_CONFIG_ID)
-UTIL_SAFE_CAST_FUNCTION_CONST(gen_data_config, GEN_DATA_CONFIG_ID)
 
 gen_data_file_format_type
 gen_data_config_get_input_format(const gen_data_config_type *config) {
@@ -128,7 +122,6 @@ static gen_data_config_type *gen_data_config_alloc(const char *key,
                                                    bool dynamic) {
     gen_data_config_type *config =
         (gen_data_config_type *)util_malloc(sizeof *config);
-    UTIL_TYPE_ID_INIT(config, GEN_DATA_CONFIG_ID);
 
     config->key = util_alloc_string_copy(key);
 

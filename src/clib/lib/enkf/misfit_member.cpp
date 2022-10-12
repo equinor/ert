@@ -5,19 +5,14 @@
 
 #include <ert/enkf/misfit_member.hpp>
 
-#define MISFIT_MEMBER_TYPE_ID 541066
-
 /** misfit_member_struct contains the misfit for one ensemble member */
 struct misfit_member_struct {
-    UTIL_TYPE_ID_DECLARATION;
     int my_iens;
     /** hash table of misfit_ts_type instances - indexed by observation keys.
      * The structure of this hash table is duplicated for each ensemble
      * member.*/
     hash_type *obs;
 };
-
-static UTIL_SAFE_CAST_FUNCTION(misfit_member, MISFIT_MEMBER_TYPE_ID);
 
 static void misfit_member_free(misfit_member_type *node) {
     hash_free(node->obs);
@@ -30,7 +25,6 @@ void misfit_member_free__(void *node) {
 
 misfit_member_type *misfit_member_alloc(int iens) {
     misfit_member_type *node = (misfit_member_type *)util_malloc(sizeof *node);
-    UTIL_TYPE_ID_INIT(node, MISFIT_MEMBER_TYPE_ID);
     node->my_iens = iens;
     node->obs = hash_alloc();
     return node;

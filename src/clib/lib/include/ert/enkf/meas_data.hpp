@@ -7,15 +7,12 @@
 
 #include <ert/util/bool_vector.h>
 #include <ert/util/hash.h>
-#include <ert/util/type_macros.h>
 
 #include <ert/tooling.hpp>
 
 typedef struct meas_data_struct meas_data_type;
 typedef struct meas_block_struct meas_block_type;
 
-UTIL_IS_INSTANCE_HEADER(meas_data);
-UTIL_SAFE_CAST_HEADER(meas_block);
 meas_block_type *meas_block_alloc(const char *obs_key,
                                   const std::vector<bool> &ens_mask,
                                   int obs_size);

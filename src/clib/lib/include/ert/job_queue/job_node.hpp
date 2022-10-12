@@ -3,7 +3,6 @@
 
 #include <ert/job_queue/job_queue_status.hpp>
 #include <ert/job_queue/queue_driver.hpp>
-#include <ert/util/type_macros.hpp>
 
 /**
    This struct holds the job_queue information about one job. Observe
@@ -94,7 +93,5 @@ extern "C" void job_queue_node_set_status(job_queue_node_type *node,
                                           job_status_type new_status);
 
 char *job_queue_node_get_name(job_queue_node_type *node);
-UTIL_IS_INSTANCE_HEADER(job_queue_node);
-UTIL_SAFE_CAST_HEADER(job_queue_node);
 
 #endif

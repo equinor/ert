@@ -4,22 +4,15 @@
 
 #include <stdlib.h>
 
-#include <ert/util/type_macros.hpp>
-
 #include <ert/config/config_path_elm.hpp>
 
 #include <fmt/format.h>
 
 namespace fs = std::filesystem;
 
-#define CONFIG_PATH_ELM_TYPE_ID 7100063
-
-static UTIL_SAFE_CAST_FUNCTION(config_path_elm, CONFIG_PATH_ELM_TYPE_ID);
-
 config_path_elm_type *config_path_elm_alloc(const fs::path &root_path,
                                             const char *path) {
     auto path_elm = new config_path_elm_type;
-    UTIL_TYPE_ID_INIT(path_elm, CONFIG_PATH_ELM_TYPE_ID);
     if (path == NULL) {
         path_elm->path = root_path;
     } else {

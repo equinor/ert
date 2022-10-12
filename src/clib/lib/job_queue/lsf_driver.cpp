@@ -86,8 +86,6 @@ static auto logger = ert::get_logger("job_queue.lsf_driver");
 
 */
 
-#define LSF_DRIVER_TYPE_ID 10078365
-#define LSF_JOB_TYPE_ID 9963900
 #define MAX_ERROR_COUNT 100
 #define SUBMIT_ERROR_SLEEP 2
 #define BJOBS_REFRESH_TIME "10"
@@ -98,7 +96,6 @@ static auto logger = ert::get_logger("job_queue.lsf_driver");
 #define DEFAULT_BHIST_CMD "bhist"
 
 struct lsf_job_struct {
-    UTIL_TYPE_ID_DECLARATION;
     long int lsf_jobnr;
     int num_exec_host;
     char **exec_host;
@@ -108,7 +105,6 @@ struct lsf_job_struct {
 };
 
 struct lsf_driver_struct {
-    UTIL_TYPE_ID_DECLARATION;
     char *queue_name;
     char *resource_request;
     std::vector<std::string> exclude_hosts;
@@ -152,10 +148,6 @@ struct lsf_driver_struct {
     char *bhist_cmd;
 };
 
-UTIL_SAFE_CAST_FUNCTION(lsf_driver, LSF_DRIVER_TYPE_ID);
-static UTIL_SAFE_CAST_FUNCTION_CONST(lsf_driver, LSF_DRIVER_TYPE_ID);
-static UTIL_SAFE_CAST_FUNCTION(lsf_job, LSF_JOB_TYPE_ID);
-
 static lsf_job_type *lsf_job_alloc(const char *job_name) {
     lsf_job_type *job;
     job = (lsf_job_type *)util_malloc(sizeof *job);
@@ -165,7 +157,6 @@ static lsf_job_type *lsf_job_alloc(const char *job_name) {
     job->lsf_jobnr = 0;
     job->lsf_jobnr_char = NULL;
     job->job_name = util_alloc_string_copy(job_name);
-    UTIL_TYPE_ID_INIT(job, LSF_JOB_TYPE_ID);
     return job;
 }
 
@@ -1379,7 +1370,6 @@ bool lsf_driver_has_project_code(const lsf_driver_type *driver) {
 void *lsf_driver_alloc() {
     lsf_driver_type *lsf_driver = new lsf_driver_type();
 
-    UTIL_TYPE_ID_INIT(lsf_driver, LSF_DRIVER_TYPE_ID);
     lsf_driver->submit_method = LSF_SUBMIT_INVALID;
     lsf_driver->login_shell = NULL;
     lsf_driver->queue_name = NULL;

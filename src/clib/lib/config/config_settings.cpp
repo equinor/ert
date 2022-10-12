@@ -1,15 +1,11 @@
 #include <stdlib.h>
 
 #include <ert/util/hash.hpp>
-#include <ert/util/type_macros.hpp>
 
 #include <ert/config/config_schema_item.hpp>
 #include <ert/config/config_settings.hpp>
 
-#define SETTING_NODE_TYPE_ID 76254096
-
 struct config_settings_struct {
-    UTIL_TYPE_ID_DECLARATION;
     char *root_key;
     hash_type *settings;
 };
@@ -17,7 +13,6 @@ struct config_settings_struct {
 typedef struct setting_node_struct setting_node_type;
 
 struct setting_node_struct {
-    UTIL_TYPE_ID_DECLARATION;
     config_item_types value_type;
     char *key;
     char *string_value;
@@ -30,8 +25,6 @@ static void setting_node_assert_type(const setting_node_type *node,
                    __func__, expected_type, node->value_type);
 }
 
-UTIL_SAFE_CAST_FUNCTION(setting_node, SETTING_NODE_TYPE_ID)
-
 static setting_node_type *setting_node_alloc(const char *key,
                                              config_item_types value_type,
                                              const char *initial_value) {
@@ -41,7 +34,6 @@ static setting_node_type *setting_node_alloc(const char *key,
     {
         setting_node_type *node =
             (setting_node_type *)util_malloc(sizeof *node);
-        UTIL_TYPE_ID_INIT(node, SETTING_NODE_TYPE_ID);
         node->value_type = value_type;
         node->string_value = util_alloc_string_copy(initial_value);
         node->key = util_alloc_string_copy(key);

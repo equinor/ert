@@ -10,7 +10,6 @@
 #include <ert/util/hash.hpp>
 #include <ert/util/parser.hpp>
 #include <ert/util/path_stack.hpp>
-#include <ert/util/type_macros.hpp>
 
 #include <ert/config/config_parser.hpp>
 

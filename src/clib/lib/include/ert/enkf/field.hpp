@@ -1,6 +1,5 @@
 #ifndef ERT_FIELD_H
 #define ERT_FIELD_H
-#include <ert/util/type_macros.h>
 
 #include <ert/ecl/ecl_kw.h>
 #include <ert/ecl/ecl_type.h>
@@ -33,8 +32,6 @@ extern "C" int field_get_size(const field_type *field);
 
 void field_inplace_output_transform(field_type *field);
 
-UTIL_IS_INSTANCE_HEADER(field);
-UTIL_SAFE_CAST_HEADER_CONST(field);
 VOID_ALLOC_HEADER(field);
 VOID_FREE_HEADER(field);
 VOID_COPY_HEADER(field);

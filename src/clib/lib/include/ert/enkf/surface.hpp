@@ -7,8 +7,6 @@
 
 typedef struct surface_struct surface_type;
 
-UTIL_SAFE_CAST_HEADER(surface);
-UTIL_SAFE_CAST_HEADER_CONST(surface);
 VOID_ALLOC_HEADER(surface);
 VOID_FREE_HEADER(surface);
 VOID_ECL_WRITE_HEADER(surface);

@@ -16,10 +16,7 @@ static const char *rms_endtag_string = "endtag";
 #define OWNED_REF 1
 #define COPY 2
 
-#define RMS_TAG_TYPE_ID 4431296
-
 struct rms_tag_struct {
-    UTIL_TYPE_ID_DECLARATION;
     char *name;
     vector_type *key_list;
     /** Hash of tagkey instances */
@@ -28,7 +25,6 @@ struct rms_tag_struct {
 
 rms_tag_type *rms_tag_alloc(const char *name) {
     rms_tag_type *tag = (rms_tag_type *)malloc(sizeof *tag);
-    UTIL_TYPE_ID_INIT(tag, RMS_TAG_TYPE_ID)
     tag->name = NULL;
     tag->key_hash = hash_alloc();
     tag->key_list = vector_alloc_new();
@@ -37,9 +33,7 @@ rms_tag_type *rms_tag_alloc(const char *name) {
     return tag;
 }
 
-static UTIL_SAFE_CAST_FUNCTION(rms_tag, RMS_TAG_TYPE_ID)
-
-    void rms_tag_free(rms_tag_type *tag) {
+void rms_tag_free(rms_tag_type *tag) {
     free(tag->name);
     hash_free(tag->key_hash);
     vector_free(tag->key_list);

@@ -14,8 +14,6 @@
 #include <ert/enkf/enkf_types.hpp>
 #include <ert/enkf/field_config.hpp>
 
-#define FIELD_CONFIG_ID 78269
-
 /**
    About transformations and truncations
    -------------------------------------
@@ -92,8 +90,6 @@ Observe the following convention:
     active_index:  [0 , nactive)
 */
 struct field_config_struct {
-    UTIL_TYPE_ID_DECLARATION;
-
     /** Name/key ... */
     char *ecl_kw_name;
     /** The number of elements in the three directions. */
@@ -136,8 +132,6 @@ struct field_config_struct {
     char *init_transform_name;
     char *input_transform_name;
 };
-
-UTIL_IS_INSTANCE_FUNCTION(field_config, FIELD_CONFIG_ID)
 
 /**
    This function takes a field_file_format_type variable, and returns
@@ -288,7 +282,6 @@ field_config_type *field_config_alloc_empty(const char *ecl_kw_name,
 
     field_config_type *config =
         (field_config_type *)util_malloc(sizeof *config);
-    UTIL_TYPE_ID_INIT(config, FIELD_CONFIG_ID);
 
     config->keep_inactive_cells = keep_inactive_cells;
     config->ecl_kw_name = util_alloc_string_copy(ecl_kw_name);
@@ -722,8 +715,6 @@ ecl_grid_type *field_config_get_grid(const field_config_type *config) {
     return config->grid;
 }
 
-UTIL_SAFE_CAST_FUNCTION(field_config, FIELD_CONFIG_ID)
-UTIL_SAFE_CAST_FUNCTION_CONST(field_config, FIELD_CONFIG_ID)
 CONFIG_GET_ECL_KW_NAME(field);
 GET_DATA_SIZE(field)
 VOID_GET_DATA_SIZE(field)

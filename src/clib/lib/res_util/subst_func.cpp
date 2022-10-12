@@ -6,16 +6,11 @@
 
 #include <ert/res_util/subst_func.hpp>
 
-#define SUBST_FUNC_TYPE_ID 646781
-#define SUBST_FUNC_POOL_TYPE_ID 7641
-
 struct subst_func_pool_struct {
-    UTIL_TYPE_ID_DECLARATION;
     hash_type *func_table;
 };
 
 struct subst_func_struct {
-    UTIL_TYPE_ID_DECLARATION;
     subst_func_ftype *func;
     char *name;
     /** doc_string for this function - can be NULL. */
@@ -52,7 +47,6 @@ subst_func_type *subst_func_alloc(const char *func_name, const char *doc_string,
                                   int argc_min, int argc_max, void *arg) {
     subst_func_type *subst_func =
         (subst_func_type *)util_malloc(sizeof *subst_func);
-    UTIL_TYPE_ID_INIT(subst_func, SUBST_FUNC_TYPE_ID);
     subst_func->func = func;
     subst_func->name = util_alloc_string_copy(func_name);
     subst_func->vararg = vararg;
@@ -69,18 +63,13 @@ void subst_func_free(subst_func_type *subst_func) {
     free(subst_func);
 }
 
-UTIL_SAFE_CAST_FUNCTION(subst_func, SUBST_FUNC_TYPE_ID);
-
 static void subst_func_free__(void *arg) {
     subst_func_free(static_cast<subst_func_type *>(arg));
 }
 
-UTIL_IS_INSTANCE_FUNCTION(subst_func_pool, SUBST_FUNC_POOL_TYPE_ID);
-
 subst_func_pool_type *subst_func_pool_alloc() {
     subst_func_pool_type *pool =
         (subst_func_pool_type *)util_malloc(sizeof *pool);
-    UTIL_TYPE_ID_INIT(pool, SUBST_FUNC_POOL_TYPE_ID);
     pool->func_table = hash_alloc();
     return pool;
 }

@@ -4,8 +4,6 @@
 #include <filesystem>
 
 struct config_path_elm_type {
-    /** UTIL_TYPE_ID_DECLARATION */
-    int __type_id;
     std::filesystem::path path;
 };
 

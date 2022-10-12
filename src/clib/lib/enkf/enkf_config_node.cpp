@@ -21,10 +21,7 @@
 
 namespace fs = std::filesystem;
 
-#define ENKF_CONFIG_NODE_TYPE_ID 776104
-
 struct enkf_config_node_struct {
-    UTIL_TYPE_ID_DECLARATION;
     ert_impl_type impl_type;
     enkf_var_type var_type;
     bool vector_storage;
@@ -58,8 +55,6 @@ struct enkf_config_node_struct {
     config_free_ftype *freef;
 };
 
-UTIL_IS_INSTANCE_FUNCTION(enkf_config_node, ENKF_CONFIG_NODE_TYPE_ID)
-
 bool enkf_config_node_has_node(const enkf_config_node_type *node,
                                enkf_fs_type *fs, node_id_type node_id) {
 
@@ -79,7 +74,6 @@ static enkf_config_node_type *enkf_config_node_alloc__(enkf_var_type var_type,
                                                        bool forward_init) {
     enkf_config_node_type *node =
         (enkf_config_node_type *)util_malloc(sizeof *node);
-    UTIL_TYPE_ID_INIT(node, ENKF_CONFIG_NODE_TYPE_ID);
     node->forward_init = forward_init;
     node->var_type = var_type;
     node->impl_type = impl_type;
@@ -798,5 +792,4 @@ enkf_config_node_type *enkf_config_node_alloc_SURFACE_full(
 
     return config_node;
 }
-UTIL_SAFE_CAST_FUNCTION(enkf_config_node, ENKF_CONFIG_NODE_TYPE_ID)
 VOID_FREE(enkf_config_node)

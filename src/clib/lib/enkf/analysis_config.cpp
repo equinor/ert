@@ -25,12 +25,9 @@
 #define UPDATE_ENKF_ALPHA_KEY "ENKF_ALPHA"
 #define UPDATE_STD_CUTOFF_KEY "STD_CUTOFF"
 
-#define ANALYSIS_CONFIG_TYPE_ID 64431306
-
 using namespace std::string_literals;
 
 struct analysis_config_struct {
-    UTIL_TYPE_ID_DECLARATION;
     std::unordered_map<std::string, analysis_module_type *> analysis_modules;
     analysis_module_type *analysis_module;
     /** Points to directory with update logs. */
@@ -51,8 +48,6 @@ struct analysis_config_struct {
     int max_runtime;
     double global_std_scaling;
 };
-
-UTIL_IS_INSTANCE_FUNCTION(analysis_config, ANALYSIS_CONFIG_TYPE_ID)
 
 /*
 
@@ -450,7 +445,6 @@ analysis_config_type *analysis_config_alloc_full(
     double global_std_scaling, int max_runtime, int min_realisations,
     const char *case_fmt, int num_iterations, int num_iter_tries) {
     analysis_config_type *config = new analysis_config_type();
-    UTIL_TYPE_ID_INIT(config, ANALYSIS_CONFIG_TYPE_ID);
 
     config->log_path = NULL;
     config->update_settings = config_settings_alloc(UPDATE_SETTING_KEY);
@@ -479,7 +473,6 @@ analysis_config_type *analysis_config_alloc_full(
 
 analysis_config_type *analysis_config_alloc_default(void) {
     analysis_config_type *config = new analysis_config_type();
-    UTIL_TYPE_ID_INIT(config, ANALYSIS_CONFIG_TYPE_ID);
 
     config->update_settings = config_settings_alloc(UPDATE_SETTING_KEY);
     config_settings_add_double_setting(

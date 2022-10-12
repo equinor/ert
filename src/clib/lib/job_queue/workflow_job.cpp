@@ -20,10 +20,7 @@ using namespace std::string_literals;
 
 #define NULL_STRING "NULL"
 
-#define WORKFLOW_JOB_TYPE_ID 614441
-
 struct workflow_job_struct {
-    UTIL_TYPE_ID_DECLARATION;
     bool internal;
     int min_arg;
     int max_arg;
@@ -88,8 +85,6 @@ config_parser_type *workflow_job_alloc_config() {
     return config;
 }
 
-static UTIL_SAFE_CAST_FUNCTION(workflow_job, WORKFLOW_JOB_TYPE_ID);
-
 void workflow_job_update_config_compiler(const workflow_job_type *workflow_job,
                                          config_parser_type *config_compiler) {
     config_schema_item_type *item =
@@ -111,7 +106,6 @@ void workflow_job_update_config_compiler(const workflow_job_type *workflow_job,
 workflow_job_type *workflow_job_alloc(const char *name, bool internal) {
     workflow_job_type *workflow_job =
         (workflow_job_type *)util_malloc(sizeof *workflow_job);
-    UTIL_TYPE_ID_INIT(workflow_job, WORKFLOW_JOB_TYPE_ID);
     workflow_job->internal = internal; // this can not be changed run-time.
     workflow_job->min_arg = CONFIG_DEFAULT_ARG_MIN;
     workflow_job->max_arg = CONFIG_DEFAULT_ARG_MAX;

@@ -25,10 +25,7 @@
 #include <ert/enkf/obs_vector.hpp>
 #include <ert/enkf/summary_obs.hpp>
 
-#define OBS_VECTOR_TYPE_ID 120086
-
 struct obs_vector_struct {
-    UTIL_TYPE_ID_DECLARATION;
     /** Function used to free an observation node. */
     obs_free_ftype *freef;
     /** Function used to build the 'd' vector. */
@@ -52,9 +49,6 @@ struct obs_vector_struct {
     int num_active;
     std::vector<int> step_list;
 };
-
-UTIL_IS_INSTANCE_FUNCTION(obs_vector, OBS_VECTOR_TYPE_ID)
-UTIL_SAFE_CAST_FUNCTION(obs_vector, OBS_VECTOR_TYPE_ID)
 
 static int
 __conf_instance_get_restart_nr(const conf_instance_type *conf_instance,
@@ -120,7 +114,6 @@ obs_vector_type *obs_vector_alloc(obs_impl_type obs_type, const char *obs_key,
                                   int num_reports) {
     auto vector = new obs_vector_type;
 
-    UTIL_TYPE_ID_INIT(vector, OBS_VECTOR_TYPE_ID);
     vector->freef = NULL;
     vector->measure = NULL;
     vector->get_obs = NULL;

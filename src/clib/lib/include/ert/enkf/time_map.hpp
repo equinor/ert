@@ -6,12 +6,8 @@
 #include <ert/ecl/ecl_sum.h>
 #include <ert/tooling.hpp>
 #include <ert/util/int_vector.h>
-#include <ert/util/type_macros.h>
 
 typedef struct time_map_struct time_map_type;
-
-UTIL_SAFE_CAST_HEADER(time_map);
-UTIL_IS_INSTANCE_HEADER(time_map);
 
 bool time_map_try_summary_update(time_map_type *map,
                                  const ecl_sum_type *ecl_sum);

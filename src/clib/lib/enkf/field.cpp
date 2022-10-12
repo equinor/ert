@@ -35,7 +35,6 @@ GET_DATA_SIZE_HEADER(field);
     be (at least) of the types int, float and double.
 */
 struct field_struct {
-    int __type_id;
     /** The field config object - containing information of active cells++ */
     const field_config_type *config;
     /** The actual storage for the field - suitabley casted to int/float/double on use*/
@@ -241,7 +240,6 @@ static field_type *__field_alloc(const field_config_type *field_config,
     }
     field->export_data =
         NULL; /* This NULL is checked for in the revert_output_transform() */
-    field->__type_id = FIELD;
     return field;
 }
 
@@ -938,9 +936,6 @@ C_USED bool field_user_get(const field_type *field, const char *index_key,
 
   MATH_OPS(field)
 */
-UTIL_SAFE_CAST_FUNCTION(field, FIELD)
-UTIL_SAFE_CAST_FUNCTION_CONST(field, FIELD)
-UTIL_IS_INSTANCE_FUNCTION(field, FIELD)
 VOID_ALLOC(field)
 VOID_FREE(field)
 VOID_ECL_WRITE(field)
