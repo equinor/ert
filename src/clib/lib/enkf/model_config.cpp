@@ -19,6 +19,8 @@
 #include <ert/enkf/ert_workflow_list.hpp>
 #include <ert/enkf/model_config.hpp>
 
+#include <fmt/format.h>
+
 namespace fs = std::filesystem;
 
 static auto logger = ert::get_logger("enkf");
@@ -239,8 +241,7 @@ model_config_type *model_config_alloc_empty() {
     model_config->num_realizations = 0;
     model_config->obs_config_file = NULL;
 
-    model_config_set_enspath(model_config,
-                             fs::absolute(DEFAULT_ENSPATH).c_str());
+    model_config_set_enspath(model_config, DEFAULT_ENSPATH);
     model_config_set_max_internal_submit(model_config,
                                          DEFAULT_MAX_INTERNAL_SUBMIT);
     model_config_add_runpath(model_config, DEFAULT_RUNPATH_KEY,
@@ -426,6 +427,11 @@ void model_config_init(model_config_type *model_config,
         model_config_set_enspath(
             model_config,
             config_content_get_value_as_abspath(config, ENSPATH_KEY));
+    else {
+        auto config_path = config_content_get_config_path(config);
+        auto def_ens_path = fmt::format("{}/{}", config_path, DEFAULT_ENSPATH);
+        model_config_set_enspath(model_config, def_ens_path.c_str());
+    }
 
     if (config_content_has_item(config, DATA_ROOT_KEY))
         model_config_set_data_root(
