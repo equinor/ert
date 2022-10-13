@@ -1,6 +1,7 @@
 import os
 import os.path
 import stat
+from pathlib import Path
 
 import hypothesis.strategies as st
 from hypothesis import assume
@@ -267,11 +268,6 @@ def config_dicts(draw):
     should_exist_files.append(config_dict[ConfigKeys.DATA_FILE])
     should_exist_files.append(config_dict[ConfigKeys.JOB_SCRIPT])
 
-    should_be_executable_files = [
-        job[ConfigKeys.PATH] for job in config_dict[ConfigKeys.INSTALL_JOB]
-    ]
-    should_be_executable_files.append(config_dict[ConfigKeys.JOB_SCRIPT])
-
     config_dict[ConfigKeys.JOB_SCRIPT] = os.path.abspath(
         config_dict[ConfigKeys.JOB_SCRIPT]
     )
@@ -279,6 +275,17 @@ def config_dicts(draw):
     for filename in should_exist_files:
         if not os.path.isfile(filename):
             touch(filename)
+
+    should_be_executable_files = [config_dict[ConfigKeys.JOB_SCRIPT]]
+
+    for job in config_dict[ConfigKeys.INSTALL_JOB]:
+        job_file = job[ConfigKeys.PATH]
+        executable_file = draw(file_names) + ".exe"
+        touch(executable_file)
+        should_be_executable_files.append(executable_file)
+        Path(job_file).write_text(
+            f"EXECUTABLE {executable_file}\nMIN_ARG 0\nMAX_ARG 1\n"
+        )
 
     should_exist_directories = config_dict[ConfigKeys.INSTALL_JOB_DIRECTORY]
     for dirname in should_exist_directories:
