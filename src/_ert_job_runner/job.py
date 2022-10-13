@@ -8,11 +8,14 @@ from subprocess import Popen
 from psutil import AccessDenied, NoSuchProcess, Process, TimeoutExpired, ZombieProcess
 
 from _ert_job_runner.io import assert_file_executable
-from _ert_job_runner.reporting.message import Exited, Running, Start
+from _ert_job_runner.reporting.message import Exited, Running, RunningNoMemChange, Start
 
 
 class Job:
-    MEMORY_POLL_PERIOD = 5  # Seconds between memory polls
+    # Seconds between memory polls
+    MEMORY_POLL_PERIOD = 5
+    # Number of bytes required to yield a change
+    MEMORY_INCREASE_THRESHOLD = 1e7
 
     def __init__(self, job_data, index, sleep_interval=1):
         self.sleep_interval = sleep_interval
@@ -22,7 +25,9 @@ class Job:
         self.std_out = job_data.get("stdout")
 
     def run(self):
+        # pylint: disable=too-many-branches
         # pylint: disable=consider-using-with
+        # pylint: disable=too-many-statements
         start_message = Start(self)
 
         errors = self._check_job_files()
@@ -99,6 +104,7 @@ class Job:
 
         process = Process(proc.pid)
         max_memory_usage = 0
+        last_memory_usage = -self.MEMORY_INCREASE_THRESHOLD
         while exit_code is None:
             try:
                 memory = process.memory_info().rss
@@ -108,10 +114,13 @@ class Job:
                 #
                 # See https://github.com/giampaolo/psutil/issues/1044#issuecomment-298745532  # noqa
                 memory = 0
-            if memory > max_memory_usage:
-                max_memory_usage = memory
+            max_memory_usage = max(memory, max_memory_usage)
 
-            yield Running(self, max_memory_usage, memory)
+            if abs(memory - last_memory_usage) >= self.MEMORY_INCREASE_THRESHOLD:
+                last_memory_usage = memory
+                yield Running(self, max_memory_usage, memory)
+            else:
+                yield RunningNoMemChange(self, max_memory_usage, memory)
 
             try:
                 exit_code = process.wait(timeout=self.MEMORY_POLL_PERIOD)
