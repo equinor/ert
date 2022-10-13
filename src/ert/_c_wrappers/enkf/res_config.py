@@ -163,7 +163,8 @@ class ResConfig:
 
         self.subst_config = SubstConfig(config_content=user_config_content)
         self.site_config = SiteConfig.from_config_content(
-            config_content=user_config_content, site_config_content=site_config_content
+            user_config_content=user_config_content,
+            site_config_content=site_config_content,
         )
         if user_config_content.hasKey(ConfigKeys.RANDOM_SEED):
             self.random_seed = user_config_content.getValue(ConfigKeys.RANDOM_SEED)
