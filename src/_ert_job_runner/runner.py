@@ -62,7 +62,6 @@ class JobRunner:
         for job in job_queue:
             for status_update in job.run():
                 yield status_update
-
                 if not status_update.success():
                     yield Finish().with_error("Not all jobs completed successfully.")
                     return
