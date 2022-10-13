@@ -48,6 +48,8 @@ class ContentNode(BaseCClass):
         "time_t config_content_node_iget_as_isodate( content_node , int)"
     )
 
+    _free = ResPrototype("void config_content_node_free( content_node )")
+
     typed_get = {
         ContentTypeEnum.CONFIG_STRING: _iget_as_string,
         ContentTypeEnum.CONFIG_INT: _iget_as_int,
@@ -103,6 +105,9 @@ class ContentNode(BaseCClass):
     def igetString(self, index):
         index = self.__assertIndex(index)
         return self._iget(index)
+
+    def free(self):
+        self._free()
 
 
 class ContentItem(BaseCClass):
