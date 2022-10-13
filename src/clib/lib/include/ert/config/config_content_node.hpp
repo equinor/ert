@@ -20,7 +20,7 @@ void config_content_node_set(config_content_node_type *node,
 char *
 config_content_node_alloc_joined_string(const config_content_node_type *node,
                                         const char *sep);
-void config_content_node_free(config_content_node_type *node);
+extern "C" void config_content_node_free(config_content_node_type *node);
 void config_content_node_free__(void *arg);
 extern "C" const char *
 config_content_node_get_full_string(const config_content_node_type *node,
