@@ -27,7 +27,7 @@ from ert.libres_facade import LibresFacade
 from ert.services import Storage
 
 
-def run_gui(args):
+def run_gui(args: argparse.Namespace):
     app = QApplication([])  # Early so that QT is initialized before other imports
     app.setWindowIcon(resourceIcon("application/window_icon_cutout"))
     res_config = ResConfig(args.config)
@@ -49,7 +49,7 @@ def run_gui(args):
     ert = EnKFMain(res_config)
     facade = LibresFacade(ert)
     with Storage.init_service(
-        res_config=os.path.basename(args.config),
+        res_config=args.config,
         project=os.path.abspath(facade.enspath),
     ), add_gui_log_handler() as log_handler:
         notifier = ErtNotifier(args.config)
