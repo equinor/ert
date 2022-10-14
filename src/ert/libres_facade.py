@@ -2,6 +2,7 @@ import logging
 from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Union
 
 import numpy as np
+from ecl.grid import EclGrid
 from ecl.util.util import IntVector
 from pandas import DataFrame, MultiIndex, Series
 
@@ -92,6 +93,14 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
         return list(
             self._enkf_main.ensembleConfig().getKeylistFromImplType(ErtImplType.GEN_KW)
         )
+
+    @property
+    def grid_file(self) -> Optional[str]:
+        return self._enkf_main.eclConfig()._grid_file
+
+    @property
+    def grid(self) -> Optional[EclGrid]:
+        return self._enkf_main.eclConfig().grid
 
     def export_field_parameter(
         self, parameter_name: str, case_name: str, filepath: str
