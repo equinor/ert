@@ -1,11 +1,11 @@
 import argparse
 import os
 import shutil
-from unittest.mock import Mock, PropertyMock
+from unittest.mock import MagicMock, Mock, PropertyMock
 
 import pytest
-from qtpy.QtCore import Qt
-from qtpy.QtWidgets import QWidget
+from qtpy.QtCore import Qt, QTimer
+from qtpy.QtWidgets import QDialog, QMessageBox, QWidget
 
 import ert.gui
 from ert.gui.ertnotifier import ErtNotifier
@@ -165,6 +165,41 @@ def test_gui_iter_num(monkeypatch, qtbot, patch_enkf_main):
     start_simulation = gui.findChild(QWidget, name="start_simulation")
     qtbot.mouseClick(start_simulation, Qt.LeftButton)
     assert sim_panel.getSimulationArguments().iter_num == 10
+
+
+def test_start_simulation_disabled(monkeypatch, qtbot, patch_enkf_main):
+    args_mock = Mock()
+    type(args_mock).config = PropertyMock(return_value="config.ert")
+
+    dummy_run_dialog = QDialog(None)
+
+    setattr(dummy_run_dialog, "startSimulation", lambda *args: None)
+
+    monkeypatch.setattr(
+        ert.gui.simulation.simulation_panel.QMessageBox,
+        "question",
+        lambda *args: QMessageBox.Yes,
+    )
+    monkeypatch.setattr(
+        ert.gui.simulation.simulation_panel, "RunDialog", lambda *args: dummy_run_dialog
+    )
+    monkeypatch.setattr(
+        ert.gui.simulation.simulation_panel, "create_model", lambda *args: None
+    )
+
+    notifier = MagicMock()
+    gui = _start_window(patch_enkf_main, notifier, args_mock, GUILogHandler())
+    qtbot.addWidget(gui)
+
+    start_simulation = gui.findChild(QWidget, name="start_simulation")
+
+    def handle_dialog():
+        assert not start_simulation.isEnabled()
+        dummy_run_dialog.accept()
+
+    QTimer.singleShot(10, handle_dialog)
+    qtbot.mouseClick(start_simulation, Qt.LeftButton)
+    assert start_simulation.isEnabled()
 
 
 def test_dialog(qtbot):
