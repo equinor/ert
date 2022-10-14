@@ -164,8 +164,12 @@ ERT_CLIB_SUBMODULE("state_map", m) {
         .def(py::self == py::self)
         .def("__len__", &StateMap::size)
         .def("_get", &StateMap::get, "index"_a)
+        .def("_set", &StateMap::set, "index"_a, "new_state"_a)
         .def("__setitem__", &StateMap::set, "index"_a, "value"_a)
-        .def("selectMatching", [](const StateMap &x, int mask) {
-            return x.select_matching(mask);
+        .def("selectMatching", [](const StateMap &x,
+                                  int mask) { return x.select_matching(mask); })
+        .def("update_matching", [](StateMap &x, size_t index, int state_mask,
+                                   realisation_state_enum new_state) {
+            return x.update_matching(index, state_mask, new_state);
         });
 }

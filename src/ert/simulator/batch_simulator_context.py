@@ -6,7 +6,6 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
 import numpy as np
 
 from ert._c_wrappers.enkf import NodeId
-from ert._c_wrappers.enkf.data import EnkfNode
 
 from .simulation_context import SimulationContext
 
@@ -95,9 +94,6 @@ class BatchContext(SimulationContext):
             )
 
         res: List[Optional[Dict[str, "npt.NDArray[np.float64]"]]] = []
-        nodes = [
-            EnkfNode(self.ert_config.ensemble_config[key]) for key in self.result_keys
-        ]
         for sim_id in range(len(self)):
             node_id = NodeId(0, sim_id)
             if not self.didRealizationSucceed(sim_id):
@@ -105,10 +101,9 @@ class BatchContext(SimulationContext):
                 res.append(None)
                 continue
             d = {}
-            for node in nodes:
-                node.load(self.get_sim_fs(), node_id)
-                data = node.asGenData().getData()
-                d[node.name()] = np.array(data)
+            for key in self.result_keys:
+                data, _ = self.get_sim_fs().load_gen_data(f"{key}-0", [sim_id])
+                d[key] = data.flatten()
             res.append(d)
 
         return res

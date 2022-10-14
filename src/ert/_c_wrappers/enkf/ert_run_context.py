@@ -71,10 +71,10 @@ class RunContext:
     def __len__(self):
         return len(self.initial_mask)
 
-    def __getitem__(self, item) -> RunArg:
+    def __getitem__(self, item) -> "RunArg":
         return self.run_args[item]
 
-    def __iter__(self) -> Iterator[RunArg]:
+    def __iter__(self) -> Iterator["RunArg"]:
         yield from self.run_args
 
     def deactivate_realization(self, realization_nr):
