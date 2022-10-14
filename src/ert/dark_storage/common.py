@@ -20,7 +20,7 @@ def ensemble_parameters(res: LibresFacade) -> List[dict]:
 
 def get_response_names(res: LibresFacade, case_name) -> List[str]:
     storage = res._enkf_main.storage_manager[case_name]
-    result = list(storage.getSummaryKeySet().keys())
+    result = storage.getSummaryKeySet()
     result.extend(res.get_gen_data_keys().copy())
     return result
 
