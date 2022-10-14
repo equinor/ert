@@ -37,7 +37,7 @@ struct ensemble_config_struct {
         config_nodes; /* a hash of enkf_config_node instances - which again contain pointers to e.g. field_config objects.  */
     field_trans_table_type *
         field_trans_table; /* a table of the transformations which are available to apply on fields. */
-    summary_key_matcher_type *summary_key_matcher;
+    std::vector<std::string> summary_keys;
 };
 
 /**
@@ -80,7 +80,6 @@ ensemble_config_alloc_full(const char *gen_kw_format_string) {
     ensemble_config_type *ensemble_config = new ensemble_config_type();
 
     ensemble_config->field_trans_table = field_trans_table_alloc();
-    ensemble_config->summary_key_matcher = summary_key_matcher_alloc();
 
     if (strcmp(gen_kw_format_string, DEFAULT_GEN_KW_TAG_FORMAT) != 0) {
         stringlist_type *gen_kw_keys =
@@ -101,7 +100,6 @@ ensemble_config_alloc_full(const char *gen_kw_format_string) {
 
 void ensemble_config_free(ensemble_config_type *ensemble_config) {
     field_trans_table_free(ensemble_config->field_trans_table);
-    summary_key_matcher_free(ensemble_config->summary_key_matcher);
 
     for (auto &config_pair : ensemble_config->config_nodes)
         enkf_config_node_free(config_pair.second);
@@ -179,8 +177,7 @@ void ensemble_config_clear_obs_keys(ensemble_config_type *ensemble_config) {
 void ensemble_config_init_SUMMARY_full(ensemble_config_type *ensemble_config,
                                        const char *key,
                                        const ecl_sum_type *refcase) {
-    summary_key_matcher_add_summary_key(ensemble_config->summary_key_matcher,
-                                        key);
+    ensemble_config->summary_keys.push_back(std::string(key));
     if (util_string_has_wildcard(key)) {
         if (refcase != NULL) {
             stringlist_type *keys = stringlist_alloc_new();
@@ -304,15 +301,9 @@ ensemble_config_add_summary_observation(ensemble_config_type *ensemble_config,
     enkf_config_node_type *config_node =
         ensemble_config_add_summary(ensemble_config, key, load_fail);
 
-    summary_key_matcher_add_summary_key(ensemble_config->summary_key_matcher,
-                                        key);
+    ensemble_config->summary_keys.push_back(std::string(key));
 
     return config_node;
-}
-
-const summary_key_matcher_type *ensemble_config_get_summary_key_matcher(
-    const ensemble_config_type *ensemble_config) {
-    return ensemble_config->summary_key_matcher;
 }
 
 std::pair<fw_load_status, std::string>
@@ -365,4 +356,6 @@ ERT_CLIB_SUBMODULE("ensemble_config", m) {
 
         return false;
     });
+    m.def("get_summary_keys",
+          [](Cwrap<ensemble_config_type> self) { return self->summary_keys; });
 }

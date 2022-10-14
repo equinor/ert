@@ -175,3 +175,6 @@ class TimeMap(BaseCClass):
         for step, t in enumerate(self):
             step_list.append((step, t, self.getSimulationDays(step)))
         return step_list
+
+    def last_step(self):
+        return self._last_step()
