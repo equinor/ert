@@ -32,7 +32,9 @@ if TYPE_CHECKING:
 
 
 class LibresFacade:  # pylint: disable=too-many-public-methods
-    """Facade for libres inside ERT."""
+    """The intention of this class is to expose properties or data of ert
+    commonly used in other project. It is part of the public interface of ert,
+    and as such changes here should not be taken lightly."""
 
     def __init__(self, enkf_main: EnKFMain):
         self._enkf_main = enkf_main
