@@ -9,20 +9,20 @@ from ert.async_utils import get_event_loop
 from ert.data import BlobRecord, NumericalRecord, Record, record_data
 from ert.ensemble_evaluator import identifiers as ids
 
-from ._io_ import _IO
+from ._io_ import IO
 from ._io_map import _stage_transmitter_mapping
-from ._job import _FunctionJob
+from ._job import FunctionJob
 
 if TYPE_CHECKING:
     import ert
 
-    from ._step import _Step
+    from ._step import Step
 
 
 class FunctionTask(prefect.Task):  # type: ignore
     def __init__(
         self,
-        step: "_Step",
+        step: "Step",
         output_transmitters: _stage_transmitter_mapping,
         ens_id: str,
         *args: Any,
@@ -40,7 +40,7 @@ class FunctionTask(prefect.Task):  # type: ignore
         transmitters: _stage_transmitter_mapping,
     ) -> _stage_transmitter_mapping:
         async def _load(
-            io_: _IO, transmitter: "ert.data.RecordTransmitter"
+            io_: IO, transmitter: "ert.data.RecordTransmitter"
         ) -> Tuple[str, Record]:
             record = await transmitter.load()
             return (io_.name, record)
@@ -57,7 +57,7 @@ class FunctionTask(prefect.Task):  # type: ignore
         function_output: Dict[str, record_data] = func(**kwargs)
 
         async def _transmit(
-            io_: _IO, transmitter: "ert.data.RecordTransmitter", data: record_data
+            io_: IO, transmitter: "ert.data.RecordTransmitter", data: record_data
         ) -> Tuple[str, "ert.data.RecordTransmitter"]:
             record: Record = (
                 BlobRecord(data=data)
@@ -84,7 +84,7 @@ class FunctionTask(prefect.Task):  # type: ignore
 
     def run_job(
         self,
-        job: _FunctionJob,
+        job: FunctionJob,
         transmitters: _stage_transmitter_mapping,
         client: Client,
     ) -> _stage_transmitter_mapping:
@@ -123,7 +123,7 @@ class FunctionTask(prefect.Task):  # type: ignore
             )
 
             job = self.step.jobs[0]
-            if not isinstance(job, _FunctionJob):
+            if not isinstance(job, FunctionJob):
                 raise TypeError(f"unexpected job {type(job)} in function task")
 
             output = self.run_job(job=job, transmitters=inputs, client=ee_client)

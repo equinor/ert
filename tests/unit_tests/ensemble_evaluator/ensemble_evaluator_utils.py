@@ -6,11 +6,10 @@ from cloudevents.conversion import to_json
 from cloudevents.http import CloudEvent
 
 from _ert_job_runner.client import Client
-from ert.ensemble_evaluator import identifiers
-from ert.ensemble_evaluator.builder._ensemble import _Ensemble
-from ert.ensemble_evaluator.builder._job import _BaseJob
-from ert.ensemble_evaluator.builder._realization import _Realization
-from ert.ensemble_evaluator.builder._step import _Step
+from ert.ensemble_evaluator import Ensemble, identifiers
+from ert.ensemble_evaluator._builder._job import BaseJob
+from ert.ensemble_evaluator._builder._realization import Realization
+from ert.ensemble_evaluator._builder._step import Step
 
 
 def _mock_ws(host, port, messages, delay_startup=0):
@@ -43,7 +42,7 @@ def send_dispatch_event(client, event_type, source, event_id, data, **extra_attr
     client.send(to_json(event1))
 
 
-class TestEnsemble(_Ensemble):
+class TestEnsemble(Ensemble):
     __test__ = False
 
     def __init__(self, _iter, reals, steps, jobs, id_):
@@ -57,15 +56,15 @@ class TestEnsemble(_Ensemble):
         self.fails = False
 
         the_reals = [
-            _Realization(
+            Realization(
                 real_no,
                 steps=[
-                    _Step(
+                    Step(
                         id_=step_no,
                         inputs=[],
                         outputs=[],
                         jobs=[
-                            _BaseJob(
+                            BaseJob(
                                 id_=job_no,
                                 index=job_no,
                                 name=f"job-{job_no}",

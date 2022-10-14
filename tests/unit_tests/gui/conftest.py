@@ -8,7 +8,7 @@ import pytest
 from ert.ensemble_evaluator.identifiers import CURRENT_MEMORY_USAGE, MAX_MEMORY_USAGE
 from ert.ensemble_evaluator.snapshot import (
     Job,
-    Realization,
+    RealizationSnapshot,
     Snapshot,
     SnapshotBuilder,
     SnapshotDict,
@@ -24,7 +24,7 @@ from ert.ensemble_evaluator.state import (
 
 @pytest.fixture()
 def full_snapshot() -> Snapshot:
-    real = Realization(
+    real = RealizationSnapshot(
         status=REALIZATION_STATE_UNKNOWN,
         active=True,
         steps={

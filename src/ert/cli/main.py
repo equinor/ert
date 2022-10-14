@@ -21,8 +21,7 @@ from ert.cli import (
 from ert.cli.model_factory import create_model
 from ert.cli.monitor import Monitor
 from ert.cli.workflow import execute_workflow
-from ert.ensemble_evaluator import EvaluatorTracker
-from ert.ensemble_evaluator.config import EvaluatorServerConfig
+from ert.ensemble_evaluator import EvaluatorServerConfig, EvaluatorTracker
 from ert.libres_facade import LibresFacade
 from ert.shared.feature_toggling import FeatureToggling
 

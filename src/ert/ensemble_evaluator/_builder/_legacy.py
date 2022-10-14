@@ -24,13 +24,13 @@ from ert._c_wrappers.enkf.analysis_config import AnalysisConfig
 from ert._c_wrappers.enkf.queue_config import QueueConfig
 from ert.async_utils import get_event_loop
 from ert.ensemble_evaluator import identifiers
-from ert.ensemble_evaluator.util._network import wait_for_evaluator
 
-from ._ensemble import _Ensemble
-from ._realization import _Realization
+from .._wait_for_evaluator import wait_for_evaluator
+from ._ensemble import Ensemble
 
 if TYPE_CHECKING:
-    from ert.ensemble_evaluator.config import EvaluatorServerConfig
+    from ._realization import Realization
+    from .config import EvaluatorServerConfig
 
 
 CONCURRENT_INTERNALIZATION = 10
@@ -40,10 +40,10 @@ event_logger = logging.getLogger("ert.event_log")
 experiment_logger = logging.getLogger("ert.experiment_server")
 
 
-class _LegacyEnsemble(_Ensemble):
+class LegacyEnsemble(Ensemble):
     def __init__(  # pylint: disable=too-many-arguments
         self,
-        reals: List[_Realization],
+        reals: List["Realization"],
         metadata: Dict[str, Any],
         queue_config: QueueConfig,
         analysis_config: AnalysisConfig,

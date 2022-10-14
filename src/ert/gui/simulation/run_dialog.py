@@ -20,11 +20,11 @@ from qtpy.QtWidgets import (
 
 from ert.ensemble_evaluator import (
     EndEvent,
+    EvaluatorServerConfig,
     EvaluatorTracker,
     FullSnapshotEvent,
     SnapshotUpdateEvent,
 )
-from ert.ensemble_evaluator.config import EvaluatorServerConfig
 from ert.gui.ertwidgets import resourceMovie
 from ert.gui.ertwidgets.message_box import ErtMessageBox
 from ert.gui.model.job_list import JobListProxyModel

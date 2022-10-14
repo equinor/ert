@@ -1,7 +1,7 @@
 import pytest
 
-from ert.ensemble_evaluator import identifiers
-from ert.ensemble_evaluator.evaluator import EnsembleEvaluator, ee_monitor
+from ert.ensemble_evaluator import Monitor, identifiers
+from ert.ensemble_evaluator.evaluator import EnsembleEvaluator
 from ert.ensemble_evaluator.narratives import (
     monitor_failing_ensemble,
     monitor_failing_evaluation,
@@ -26,7 +26,7 @@ def test_monitor_successful_ensemble(make_ee_config):
 
     ee.run()
     with NarrativeProxy(monitor_successful_ensemble()).proxy(ee_config.url):
-        with ee_monitor.create(ee_config.get_connection_info()) as monitor:
+        with Monitor(ee_config.get_connection_info()) as monitor:
             for event in monitor.track():
                 if event["type"] == identifiers.EVTYPE_EE_SNAPSHOT:
                     ensemble.start()
@@ -53,7 +53,7 @@ def test_monitor_failing_evaluation(make_ee_config):
     with NarrativeProxy(
         monitor_failing_evaluation().on_uri(f"ws://localhost:{ee_config.port}")
     ).proxy(ee_config.url):
-        with ee_monitor.create(ee_config.get_connection_info()) as monitor:
+        with Monitor(ee_config.get_connection_info()) as monitor:
             for event in monitor.track():
                 if event["type"] == identifiers.EVTYPE_EE_SNAPSHOT:
                     ensemble.start()
@@ -81,7 +81,7 @@ def test_monitor_failing_ensemble(make_ee_config):
     with NarrativeProxy(
         monitor_failing_ensemble().on_uri(f"ws://localhost:{ee_config.port}")
     ).proxy(ee_config.url):
-        with ee_monitor.create(ee_config.get_connection_info()) as monitor:
+        with Monitor(ee_config.get_connection_info()) as monitor:
             for event in monitor.track():
                 if event["type"] == identifiers.EVTYPE_EE_SNAPSHOT:
                     ensemble.start()

@@ -2,7 +2,8 @@ import logging
 
 import pytest
 
-from ert.ensemble_evaluator import EnsembleStateTracker, state
+from ert.ensemble_evaluator import state
+from ert.ensemble_evaluator._builder._ensemble import _EnsembleStateTracker
 
 
 @pytest.mark.parametrize(
@@ -26,7 +27,7 @@ from ert.ensemble_evaluator import EnsembleStateTracker, state
 def test_ensemble_state_tracker(transition, allowed, caplog, snapshot):
     initial_state, update_state = transition
     with caplog.at_level(logging.WARNING):
-        state_tracker = EnsembleStateTracker(initial_state)
+        state_tracker = _EnsembleStateTracker(initial_state)
         new_state = state_tracker.update_state(update_state)
         assert new_state == update_state
         if allowed:
@@ -38,7 +39,7 @@ def test_ensemble_state_tracker(transition, allowed, caplog, snapshot):
 
 
 def test_ensemble_state_tracker_handles():
-    state_machine = EnsembleStateTracker()
+    state_machine = _EnsembleStateTracker()
     expected_sates = [
         state.ENSEMBLE_STATE_UNKNOWN,
         state.ENSEMBLE_STATE_STARTED,

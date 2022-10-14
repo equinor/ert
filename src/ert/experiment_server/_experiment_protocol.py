@@ -6,7 +6,7 @@ from typing_extensions import Protocol
 from _ert_com_protocol import DispatcherMessage
 
 if TYPE_CHECKING:
-    from ert.ensemble_evaluator.config import EvaluatorServerConfig
+    from ert.ensemble_evaluator import EvaluatorServerConfig
 
 
 class Experiment(Protocol):

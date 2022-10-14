@@ -6,11 +6,7 @@ from typing import Iterator, Union
 from colors import color as ansi_color
 from tqdm import tqdm
 
-from ert.ensemble_evaluator.event import (
-    EndEvent,
-    FullSnapshotEvent,
-    SnapshotUpdateEvent,
-)
+from ert.ensemble_evaluator import EndEvent, FullSnapshotEvent, SnapshotUpdateEvent
 from ert.ensemble_evaluator.state import (
     ALL_REALIZATION_STATES,
     COLOR_FAILED,

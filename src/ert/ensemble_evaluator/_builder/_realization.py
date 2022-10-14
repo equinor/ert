@@ -3,18 +3,17 @@ from collections import defaultdict
 from graphlib import TopologicalSorter
 from typing import TYPE_CHECKING, Iterator, List, Optional, Sequence, Tuple
 
-from ._stage import _StageBuilder
-from ._step import _Step, _StepBuilder
-from ._template import _SOURCE_TEMPLATE_REAL
+from ._step import Step, StepBuilder
 
+SOURCE_TEMPLATE_REAL = "/real/{iens}"
 if TYPE_CHECKING:
-    import ert
+    from ._stage import StageBuilder
 
 
 logger = logging.getLogger(__name__)
 
 
-def _sort_steps(steps: Sequence["_Step"]) -> Tuple[str, ...]:
+def _sort_steps(steps: Sequence["Step"]) -> Tuple[str, ...]:
     """Return a tuple comprised by step names in the order they should be
     executed."""
     graph = defaultdict(set)
@@ -40,11 +39,11 @@ def _sort_steps(steps: Sequence["_Step"]) -> Tuple[str, ...]:
     return tuple(ts.static_order())
 
 
-class _Realization:
+class Realization:
     def __init__(  # pylint: disable=too-many-arguments
         self,
         iens: int,
-        steps: Sequence[_Step],
+        steps: Sequence[Step],
         active: bool,
         source: str,
         ts_sorted_steps: Optional[Tuple[str, ...]] = None,
@@ -82,7 +81,7 @@ class _Realization:
     def source(self) -> str:
         return self._source
 
-    def get_steps_sorted_topologically(self) -> Iterator[_Step]:
+    def get_steps_sorted_topologically(self) -> Iterator[Step]:
         steps = self.steps
         if not self._ts_sorted_indices:
             raise NotImplementedError("steps were not sorted")
@@ -90,42 +89,42 @@ class _Realization:
             yield steps[idx]
 
 
-class _RealizationBuilder:
+class RealizationBuilder:
     def __init__(self) -> None:
-        self._steps: List[_StepBuilder] = []
-        self._stages: List[_StageBuilder] = []
+        self._steps: List[StepBuilder] = []
+        self._stages: List["StageBuilder"] = []
         self._active: Optional[bool] = None
         self._iens: Optional[int] = None
         self._parent_source: Optional[str] = None
 
-    def active(self, active: bool) -> "_RealizationBuilder":
+    def active(self, active: bool) -> "RealizationBuilder":
         self._active = active
         return self
 
-    def add_step(self, step: _StepBuilder) -> "_RealizationBuilder":
+    def add_step(self, step: StepBuilder) -> "RealizationBuilder":
         self._steps.append(step)
         return self
 
-    def add_stage(self, stage: _StageBuilder) -> "_RealizationBuilder":
+    def add_stage(self, stage: "StageBuilder") -> "RealizationBuilder":
         self._stages.append(stage)
         return self
 
-    def set_iens(self, iens: int) -> "_RealizationBuilder":
+    def set_iens(self, iens: int) -> "RealizationBuilder":
         self._iens = iens
         return self
 
-    def set_parent_source(self, source: str) -> "_RealizationBuilder":
+    def set_parent_source(self, source: str) -> "RealizationBuilder":
         self._parent_source = source
         return self
 
-    def build(self) -> _Realization:
+    def build(self) -> Realization:
         if not self._iens:
             # assume this is being used as a forward model, thus should be 0
             self._iens = 0
         if not self._parent_source:
             raise ValueError(f"need parent_source for realization: {self._iens}")
 
-        source = self._parent_source + _SOURCE_TEMPLATE_REAL.format(iens=self._iens)
+        source = self._parent_source + SOURCE_TEMPLATE_REAL.format(iens=self._iens)
 
         if self._active is None:
             raise ValueError(f"realization {self._iens}: active should be set")
@@ -134,7 +133,7 @@ class _RealizationBuilder:
 
         ts_sorted_steps = _sort_steps(steps)
 
-        return _Realization(
+        return Realization(
             self._iens,
             steps,
             self._active,
