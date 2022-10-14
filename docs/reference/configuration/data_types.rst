@@ -415,70 +415,8 @@ achieve this you do:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The SURFACE keyword can be used to work with surface from RMS in the irap
-format. The surface keyword is configured like this:
-
-::
-
-	SURFACE TOP   OUTPUT_FILE:surf.irap   INIT_FILES:Surfaces/surf%d.irap   BASE_SURFACE:Surfaces/surf0.irap
-
-The first argument, TOP in the example above, is the identifier you want to use
-for this surface in ert. The ``OUTPUT_FILE`` key is the name of surface file
-which ERT will generate for you, ``INIT_FILES`` points to a list of files which are
-used to initialize, and ``BASE_SURFACE`` must point to one existing surface file.
-When loading the surfaces ERT will check that all the headers are compatible. An
-example of a surface IRAP file is:
-
-::
-
-	-996   511     50.000000     50.000000
-	444229.9688   457179.9688  6809537.0000  6835037.0000
-	260      -30.0000   444229.9688  6809537.0000
-	0     0     0     0     0     0     0
-	2735.7461    2734.8909    2736.9705    2737.4048    2736.2539    2737.0122
-	2740.2644    2738.4014    2735.3770    2735.7327    2733.4944    2731.6448
-	2731.5454    2731.4810    2730.4644    2730.5591    2729.8997    2726.2217
-	2721.0996    2716.5913    2711.4338    2707.7791    2705.4504    2701.9187
-	....
-
-The surface data will typically be fed into other programs like Cohiba or RMS.
-The surface data can be updated using the Smoother.
-
-**Initializing from the FORWARD MODEL**
-
-All the parameter types like FIELD, GEN_KW and SURFACE can be
-initialized from the forward model. To achieve this you just add the setting
-FORWARD_INIT:True to the configuration. When using forward init the
-initialization will work like this:
-
-#. The explicit initialization from the case menu, or when you start a
-   simulation, will be ignored.
-#. When the FORWARD_MODEL is complete ERT will try to initialize the node based
-   on files created by the forward model. If the init fails the job as a whole
-   will fail.
-#. If a node has been initialized, it will not be initialized again if you run
-   again. [Should be possible to force this ....]
-
-When using FORWARD_INIT:True ERT will consider the INIT_FILES setting to find
-which file to initialize from. If the INIT_FILES setting contains a relative
-filename, it will be interpreted relatively to the runpath directory. In the
-example below we assume that RMS has created a file petro.grdecl which contains
-both the PERMX and the PORO fields in grdecl format; we wish to initialize PERMX
-and PORO nodes from these files:
-
-::
-
-	FIELD   PORO  PARAMETER    poro.grdecl     INIT_FILES:petro.grdecl  FORWARD_INIT:True
-	FIELD   PERMX PARAMETER    permx.grdecl    INIT_FILES:petro.grdecl  FORWARD_INIT:True
-
-Observe that forward model has created the file petro.grdecl and the nodes PORO
-and PERMX create the ECLIPSE input files poro.grdecl and permx.grdecl, to ensure
-that ECLIPSE finds the input files poro.grdecl and permx.grdecl the forward
-model should contain a job which will copy/convert petro.grdecl ->
-(poro.grdecl,permx.grdecl), this job should not overwrite existing versions of
-permx.grdecl and poro.grdecl. This extra hoops is not strictly needed in all
-cases, but strongly recommended to ensure that you have control over which data
-is used, and that everything is consistent in the case where the forward model
-is run again.
+format. 
+For detailed description and examples see :ref:`here <surface>`.
 
 **Regarding templates:**
 
