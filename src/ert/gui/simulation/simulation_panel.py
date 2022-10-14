@@ -140,8 +140,12 @@ class SimulationPanel(QWidget):
                     str(uuid.uuid4()),
                 ),
             )
+            self.run_button.setDisabled(True)
+            self.run_button.setText("Simulation running...")
             dialog.startSimulation()
             dialog.exec_()
+            self.run_button.setText("Start simulation")
+            self.run_button.setDisabled(False)
 
             self.notifier.emitErtChange()  # simulations may have added new cases
 
