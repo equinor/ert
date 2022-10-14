@@ -1,8 +1,6 @@
 from itertools import chain
 from pathlib import Path
-from typing import Any, Callable, List, Optional, Sequence, Tuple, Union
-
-from ert._c_wrappers.enkf import RunArg
+from typing import TYPE_CHECKING, Any, Callable, List, Optional, Sequence, Tuple, Union
 
 from ._function_task import FunctionTask
 from ._io_ import IO, DummyIO, DummyIOBuilder, InputBuilder, IOBuilder, OutputBuilder
@@ -12,6 +10,8 @@ from ._stage import Stage, StageBuilder
 from ._unix_task import UnixTask
 
 SOURCE_TEMPLATE_STEP = "/step/{step_id}"
+if TYPE_CHECKING:
+    from ert._c_wrappers.enkf import RunArg
 
 callback = Callable[[List[Any]], Union[bool, Tuple[Any, str]]]
 
@@ -89,7 +89,7 @@ class LegacyStep(Step):  # pylint: disable=too-many-instance-attributes
         run_path: Path,
         job_script: str,
         job_name: str,
-        run_arg: RunArg,
+        run_arg: "RunArg",
     ) -> None:
         super().__init__(id_, inputs, outputs, jobs, name, source)
         if max_runtime is not None and max_runtime <= 0:
@@ -121,7 +121,7 @@ class StepBuilder(StageBuilder):  # pylint: disable=too-many-instance-attributes
         self._run_path: Optional[Path] = None
         self._job_script: Optional[str] = None
         self._job_name: Optional[str] = None
-        self._run_arg: Optional[RunArg] = None
+        self._run_arg: Optional["RunArg"] = None
 
     def set_id(self, id_: str) -> "StepBuilder":
         super().set_id(id_)
@@ -190,7 +190,7 @@ class StepBuilder(StageBuilder):  # pylint: disable=too-many-instance-attributes
         self._job_name = job_name
         return self
 
-    def set_run_arg(self, run_arg: RunArg) -> "StepBuilder":
+    def set_run_arg(self, run_arg: "RunArg") -> "StepBuilder":
         self._run_arg = run_arg
         return self
 

@@ -14,10 +14,6 @@ ERT_CLIB_SUBMODULE("enkf_fs_summary_data", m) {
             auto data = array.mutable_unchecked();
             int summary_key_index = 0;
             for (const auto &key : summary_keys) {
-                if (!summary_key_set_has_summary_key(
-                        enkf_fs_get_summary_key_set(fs), key.c_str()))
-                    throw std::invalid_argument(
-                        fmt::format("Summary key: {} not in storage", key));
                 auto config_node =
                     enkf_config_node_alloc_summary(key.c_str(), LOAD_FAIL_WARN);
                 enkf_node_type *work_node = enkf_node_alloc(config_node);

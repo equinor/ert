@@ -6,8 +6,10 @@ import numpy
 import pandas
 
 from ert import LibresFacade
-from ert._c_wrappers.enkf import RealizationStateEnum
-from ert._c_wrappers.enkf.enums import EnkfObservationImplementationType
+from ert._c_wrappers.enkf.enums import (
+    EnkfObservationImplementationType,
+    RealizationStateEnum,
+)
 from ert._c_wrappers.job_queue import CancelPluginException, ErtPlugin
 from ert.gui.ertwidgets.customdialog import CustomDialog
 from ert.gui.ertwidgets.listeditbox import ListEditBox

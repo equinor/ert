@@ -39,7 +39,6 @@ from .res_config import ResConfig
 from .row_scaling import RowScaling
 from .run_arg import RunArg
 from .state_map import StateMap
-from .summary_key_set import SummaryKeySet
 from .time_map import TimeMap
 
 __all__ = [
@@ -62,7 +61,6 @@ __all__ = [
     "NodeId",
     "TimeMap",
     "StateMap",
-    "SummaryKeySet",
     "EnkfFs",
     "RowScaling",
     "ActiveList",

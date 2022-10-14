@@ -544,4 +544,21 @@ ERT_CLIB_SUBMODULE("enkf_node", m) {
             return enkf_node_forward_init(enkf_node, run_path, iens);
         },
         "self"_a, "run_path"_a, "iens"_a);
+    m.def("try_load", [](Cwrap<enkf_node_type> enkf_node,
+                         Cwrap<enkf_fs_type> sim_fs, int report_step,
+                         int iens) {
+        return enkf_node_try_load(enkf_node, sim_fs,
+                                  {.report_step = report_step, .iens = iens});
+    });
+    m.def("store", [](Cwrap<enkf_node_type> enkf_node,
+                      Cwrap<enkf_fs_type> sim_fs, int report_step, int iens) {
+        return enkf_node_store(enkf_node, sim_fs,
+                               {.report_step = report_step, .iens = iens});
+    });
+    m.def("has_data", [](Cwrap<enkf_node_type> enkf_node,
+                         Cwrap<enkf_fs_type> sim_fs, int report_step,
+                         int iens) {
+        return enkf_node_has_data(enkf_node, sim_fs,
+                                  {.report_step = report_step, .iens = iens});
+    });
 }
