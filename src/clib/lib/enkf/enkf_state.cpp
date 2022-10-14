@@ -34,6 +34,23 @@ void enkf_state_initialize(enkf_fs_type *fs, enkf_node_type *param_node,
         enkf_node_store(param_node, fs, node_id);
 }
 
+std::string get_ecl_header_file(std::string run_path, std::string eclbase) {
+    char *header_file = ecl_util_alloc_exfilename(
+        run_path.c_str(), eclbase.c_str(), ECL_SUMMARY_HEADER_FILE,
+        DEFAULT_FORMATTED, -1);
+    if (header_file == NULL)
+        return "";
+    return std::string(header_file);
+}
+
+std::string get_ecl_unified_file(std::string run_path, std::string eclbase) {
+    char *unified_file = ecl_util_alloc_exfilename(
+        run_path.c_str(), eclbase.c_str(), ECL_UNIFIED_SUMMARY_FILE,
+        DEFAULT_FORMATTED, -1);
+    if (unified_file == NULL)
+        return "";
+    return std::string(unified_file);
+}
 ecl_sum_type *load_ecl_sum(const char *run_path, const char *eclbase) {
     ecl_sum_type *summary = NULL;
 
@@ -344,4 +361,21 @@ ERT_CLIB_SUBMODULE("enkf_state", m) {
         return enkf_state_internalize_results(ens_config, model_config,
                                               run_arg);
     });
+
+    m.def("internalize_dynamic_eclipse_results",
+          [](Cwrap<ensemble_config_type> ens_config,
+             Cwrap<ecl_sum_type> summary, std::vector<std::string> summary_keys,
+             Cwrap<enkf_fs_type> sim_fs, int iens) {
+              return enkf_state_internalize_dynamic_eclipse_results(
+                  ens_config, summary, summary_keys, sim_fs, iens);
+          });
+    m.def("internalize_GEN_DATA",
+          [](Cwrap<ensemble_config_type> ens_config,
+             Cwrap<run_arg_type> run_arg, Cwrap<model_config_type> model_config,
+             int last_report) {
+              return enkf_state_internalize_GEN_DATA(ens_config, run_arg,
+                                                     model_config, last_report);
+          });
+    m.def("get_ecl_header_file", get_ecl_header_file);
+    m.def("get_ecl_unified_file", get_ecl_unified_file);
 }

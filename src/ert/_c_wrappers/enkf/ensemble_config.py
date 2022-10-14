@@ -336,3 +336,6 @@ class EnsembleConfig(BaseCClass):
 
     def have_forward_init(self) -> bool:
         return _clib.ensemble_config.have_forward_init(self)
+
+    def get_summary_keys(self) -> List[str]:
+        return _clib.ensemble_config.get_summary_keys(self)
