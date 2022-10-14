@@ -91,17 +91,18 @@ ecl_sum_type *load_ecl_sum(const char *run_path, const char *eclbase) {
 static std::pair<fw_load_status, std::string>
 enkf_state_check_for_missing_eclipse_summary_data(
     const ensemble_config_type *ens_config,
-    const summary_key_matcher_type *matcher, const ecl_smspec_type *smspec,
+    const std::vector<std::string> summary_keys, const ecl_smspec_type *smspec,
     const int iens) {
-    stringlist_type *keys = summary_key_matcher_get_keys(matcher);
+
     std::pair<fw_load_status, std::string> result = {LOAD_SUCCESSFUL, ""};
     std::vector<std::string> missing_keys;
-    for (int i = 0; i < stringlist_get_size(keys); i++) {
+    for (auto summary_key : summary_keys) {
 
-        const char *key = stringlist_iget(keys, i);
+        const char *key = summary_key.c_str();
 
         if (ecl_smspec_has_general_var(smspec, key) ||
-            !summary_key_matcher_summary_key_is_required(matcher, key))
+            !summary_key_matcher_summary_key_is_required(summary_keys,
+                                                         summary_key))
             continue;
 
         if (!ensemble_config_has_key(ens_config, key))
@@ -115,10 +116,9 @@ enkf_state_check_for_missing_eclipse_summary_data(
                 "{}, but have no observations either, so will continue.",
                 iens, key);
         } else {
-            missing_keys.push_back(key);
+            missing_keys.push_back(summary_key);
         }
     }
-    stringlist_free(keys);
     if (!missing_keys.empty())
         return {
             LOAD_FAILURE,
@@ -130,14 +130,8 @@ enkf_state_check_for_missing_eclipse_summary_data(
 static std::pair<fw_load_status, std::string>
 enkf_state_internalize_dynamic_eclipse_results(
     ensemble_config_type *ens_config, const ecl_sum_type *summary,
-    const summary_key_matcher_type *matcher, enkf_fs_type *sim_fs,
+    const std::vector<std::string> summary_keys, enkf_fs_type *sim_fs,
     const int iens) {
-    int load_start = 0;
-
-    if (load_start == 0) {
-        // Do not attempt to load the "S0000" summary results.
-        load_start++;
-    }
 
     time_map_type *time_map = enkf_fs_get_time_map(sim_fs);
     auto status = time_map_summary_update(time_map, summary);
@@ -152,7 +146,7 @@ enkf_state_internalize_dynamic_eclipse_results(
     // summary file.
     const int step2 = ecl_sum_get_last_report_step(summary);
 
-    int_vector_iset_block(time_index, 0, load_start, -1);
+    int_vector_iset(time_index, 0, -1);
     int_vector_resize(time_index, step2 + 1, -1);
 
     const ecl_smspec_type *smspec = ecl_sum_get_smspec(summary);
@@ -162,7 +156,7 @@ enkf_state_internalize_dynamic_eclipse_results(
             ecl_smspec_iget_node_w_node_index(smspec, i);
         const char *key = smspec_node.get_gen_key1();
 
-        if (summary_key_matcher_match_summary_key(matcher, key)) {
+        if (summary_key_matcher_match_summary_key(summary_keys, key)) {
             summary_key_set_type *key_set = enkf_fs_get_summary_key_set(sim_fs);
             summary_key_set_add_summary_key(key_set, key);
 
@@ -184,7 +178,7 @@ enkf_state_internalize_dynamic_eclipse_results(
     // Check if some of the specified keys are missing from the Eclipse
     // data, and if there are observations for them. That is a problem.
     return enkf_state_check_for_missing_eclipse_summary_data(
-        ens_config, matcher, smspec, iens);
+        ens_config, summary_keys, smspec, iens);
     return {LOAD_SUCCESSFUL, ""};
 }
 
@@ -269,11 +263,9 @@ static std::pair<fw_load_status, std::string>
 enkf_state_internalize_results(ensemble_config_type *ens_config,
                                model_config_type *model_config,
                                const run_arg_type *run_arg) {
-    const summary_key_matcher_type *matcher =
-        ensemble_config_get_summary_key_matcher(ens_config);
+    auto summary_keys = ensemble_config_get_summary_keys(ens_config);
 
-    if (summary_key_matcher_get_size(matcher) > 0 ||
-        ensemble_config_require_summary(ens_config)) {
+    if (summary_keys.size() > 0) {
         // We are expecting there to be summary data
         // The timing information - i.e. mainly what is the last report step
         // in these results are inferred from the loading of summary results,
@@ -282,7 +274,7 @@ enkf_state_internalize_results(ensemble_config_type *ens_config,
             auto summary = load_ecl_sum(run_arg_get_runpath(run_arg),
                                         run_arg_get_job_name(run_arg));
             auto status = enkf_state_internalize_dynamic_eclipse_results(
-                ens_config, summary, matcher, run_arg_get_sim_fs(run_arg),
+                ens_config, summary, summary_keys, run_arg_get_sim_fs(run_arg),
                 run_arg_get_iens(run_arg));
             ecl_sum_free(summary);
             if (status.first != LOAD_SUCCESSFUL) {
