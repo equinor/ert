@@ -438,8 +438,7 @@ static void handle_history_observation(enkf_obs_type *enkf_obs,
         enkf_config_node_type *config_node = ensemble_config_add_summary(
             enkf_obs->ensemble_config, obs_key, LOAD_FAIL_WARN);
 
-        summary_key_matcher_add_summary_key(
-            enkf_obs->ensemble_config->summary_key_matcher, obs_key);
+        enkf_obs->ensemble_config->summary_keys.push_back(obs_key);
 
         if (config_node == NULL) {
             fprintf(stderr,
@@ -492,8 +491,7 @@ static void handle_summary_observation(enkf_obs_type *enkf_obs,
         enkf_config_node_type *config_node = ensemble_config_add_summary(
             enkf_obs->ensemble_config, sum_key, LOAD_FAIL_WARN);
 
-        summary_key_matcher_add_summary_key(
-            enkf_obs->ensemble_config->summary_key_matcher, sum_key);
+        enkf_obs->ensemble_config->summary_keys.push_back(sum_key);
 
         if (config_node == NULL) {
             fprintf(stderr,

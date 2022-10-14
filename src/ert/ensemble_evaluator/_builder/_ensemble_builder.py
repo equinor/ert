@@ -7,7 +7,6 @@ from typing_extensions import Self
 from ert._c_wrappers.enkf import QueueConfig
 from ert._c_wrappers.enkf.analysis_config import AnalysisConfig
 
-from ._ensemble import Ensemble
 from ._io_ import DummyIOBuilder
 from ._io_map import InputMap, OutputMap
 from ._legacy import LegacyEnsemble
@@ -16,6 +15,7 @@ from ._realization import RealizationBuilder
 
 if TYPE_CHECKING:
     import ert
+    from ert._c_wrappers.enkf import AnalysisConfig, QueueConfig
 
 SOURCE_TEMPLATE_ENS = "/ert/ensemble/{ens_id}"
 logger = logging.getLogger(__name__)
@@ -27,7 +27,9 @@ class EnsembleBuilder:  # pylint: disable=too-many-instance-attributes
         self._forward_model: Optional[RealizationBuilder] = None
         self._size: int = 0
         self._metadata: Dict[str, Any] = {}
-        self._legacy_dependencies: Optional[Tuple[QueueConfig, AnalysisConfig]] = None
+        self._legacy_dependencies: Optional[
+            Tuple["QueueConfig", "AnalysisConfig"]
+        ] = None
         self._inputs: Dict[int, Dict[str, "ert.data.RecordTransmitter"]] = {}
         self._outputs: Dict[int, Dict[str, "ert.data.RecordTransmitter"]] = {}
 
@@ -64,7 +66,7 @@ class EnsembleBuilder:  # pylint: disable=too-many-instance-attributes
         return self
 
     def set_legacy_dependencies(
-        self, queue_config: QueueConfig, analysis_config: AnalysisConfig
+        self, queue_config: "QueueConfig", analysis_config: "AnalysisConfig"
     ) -> Self:
         self._legacy_dependencies = (queue_config, analysis_config)
         return self

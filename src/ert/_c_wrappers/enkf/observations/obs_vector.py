@@ -91,7 +91,7 @@ class ObsVector(BaseCClass):
         """
         return _clib.obs_vector_get_step_list(self)
 
-    def activeStep(self):
+    def activeStep(self) -> List[int]:
         """Assuming the observation is only active for one report step, this
         method will return that report step - if it is active for more
         than one report step the method will raise an exception.
