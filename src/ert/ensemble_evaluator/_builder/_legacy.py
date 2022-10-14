@@ -19,9 +19,6 @@ from typing import (
 from cloudevents.http.event import CloudEvent
 
 import _ert_com_protocol
-from ert._c_wrappers.enkf import RunArg
-from ert._c_wrappers.enkf.analysis_config import AnalysisConfig
-from ert._c_wrappers.enkf.queue_config import QueueConfig
 from ert.async_utils import get_event_loop
 from ert.ensemble_evaluator import identifiers
 
@@ -29,6 +26,8 @@ from .._wait_for_evaluator import wait_for_evaluator
 from ._ensemble import Ensemble
 
 if TYPE_CHECKING:
+    from ert._c_wrappers.enkf import AnalysisConfig, QueueConfig, RunArg
+
     from ._realization import Realization
     from .config import EvaluatorServerConfig
 
@@ -45,8 +44,8 @@ class LegacyEnsemble(Ensemble):
         self,
         reals: List["Realization"],
         metadata: Dict[str, Any],
-        queue_config: QueueConfig,
-        analysis_config: AnalysisConfig,
+        queue_config: "QueueConfig",
+        analysis_config: "AnalysisConfig",
         id_: str,
     ) -> None:
         super().__init__(reals, metadata, id_)
@@ -121,7 +120,7 @@ class LegacyEnsemble(Ensemble):
         ],
     ) -> Tuple[Callable[[List[Any]], Any], "asyncio.Task[None]"]:
         def on_timeout(callback_args: Sequence[Any]) -> None:
-            run_args: RunArg = callback_args[0]
+            run_args: "RunArg" = callback_args[0]
             timeout_queue.put_nowait(
                 event_generator(identifiers.EVTYPE_FM_STEP_TIMEOUT, run_args.iens)
             )
