@@ -41,7 +41,7 @@ struct ensemble_config_struct {
     field_trans_table_type *
         field_trans_table; /* a table of the transformations which are available to apply on fields. */
     bool have_forward_init;
-    summary_key_matcher_type *summary_key_matcher;
+    std::vector<std::string> summary_keys;
 };
 
 /**
@@ -106,7 +106,6 @@ static ensemble_config_type *ensemble_config_alloc_empty(void) {
     ensemble_config->gen_kw_format_string =
         util_alloc_string_copy(DEFAULT_GEN_KW_TAG_FORMAT);
     ensemble_config->have_forward_init = false;
-    ensemble_config->summary_key_matcher = summary_key_matcher_alloc();
     pthread_mutex_init(&ensemble_config->mutex, NULL);
 
     return ensemble_config;
@@ -122,7 +121,6 @@ ensemble_config_alloc_full(const char *gen_kw_format_string) {
 
 void ensemble_config_free(ensemble_config_type *ensemble_config) {
     field_trans_table_free(ensemble_config->field_trans_table);
-    summary_key_matcher_free(ensemble_config->summary_key_matcher);
     free(ensemble_config->gen_kw_format_string);
 
     for (auto &config_pair : ensemble_config->config_nodes)
@@ -196,8 +194,7 @@ void ensemble_config_clear_obs_keys(ensemble_config_type *ensemble_config) {
 void ensemble_config_init_SUMMARY_full(ensemble_config_type *ensemble_config,
                                        const char *key,
                                        const ecl_sum_type *refcase) {
-    summary_key_matcher_add_summary_key(ensemble_config->summary_key_matcher,
-                                        key);
+    ensemble_config->summary_keys.push_back(std::string(key));
     if (util_string_has_wildcard(key)) {
         if (refcase != NULL) {
             stringlist_type *keys = stringlist_alloc_new();
@@ -326,15 +323,9 @@ ensemble_config_add_summary_observation(ensemble_config_type *ensemble_config,
     enkf_config_node_type *config_node =
         ensemble_config_add_summary(ensemble_config, key, load_fail);
 
-    summary_key_matcher_add_summary_key(ensemble_config->summary_key_matcher,
-                                        key);
+    ensemble_config->summary_keys.push_back(std::string(key));
 
     return config_node;
-}
-
-const summary_key_matcher_type *ensemble_config_get_summary_key_matcher(
-    const ensemble_config_type *ensemble_config) {
-    return ensemble_config->summary_key_matcher;
 }
 
 int ensemble_config_get_size(const ensemble_config_type *ensemble_config) {
@@ -387,4 +378,6 @@ ERT_CLIB_SUBMODULE("ensemble_config", m) {
     m.def("have_forward_init", [](Cwrap<ensemble_config_type> self) {
         return self->have_forward_init;
     });
+    m.def("get_summary_keys",
+          [](Cwrap<ensemble_config_type> self) { return self->summary_keys; });
 }
