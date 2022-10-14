@@ -1,16 +1,18 @@
 import uuid
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Iterator, List
+from typing import TYPE_CHECKING, Iterator, List
 
-from ert._c_wrappers.enkf.enkf_fs import EnkfFs
 from ert._c_wrappers.enkf.run_arg import RunArg
+
+if TYPE_CHECKING:
+    from ert._c_wrappers.enkf.enkf_fs import EnkfFs
 
 
 @dataclass
 class RunContext:
-    sim_fs: EnkfFs
-    target_fs: EnkfFs = None
+    sim_fs: "EnkfFs"
+    target_fs: "EnkfFs" = None
     mask: List[bool] = field(default_factory=list)
     paths: List[str] = field(default_factory=list)
     jobnames: List[str] = field(default_factory=list)
@@ -48,10 +50,10 @@ class RunContext:
     def __len__(self):
         return len(self.mask)
 
-    def __getitem__(self, item) -> RunArg:
+    def __getitem__(self, item) -> "RunArg":
         return self.run_args[item]
 
-    def __iter__(self) -> Iterator[RunArg]:
+    def __iter__(self) -> Iterator["RunArg"]:
         yield from self.run_args
 
     def deactivate_realization(self, realization_nr):
