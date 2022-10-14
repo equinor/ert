@@ -1,6 +1,5 @@
 import ctypes
 import logging
-from fnmatch import fnmatch
 from pathlib import Path
 from typing import TYPE_CHECKING, Tuple
 
@@ -26,6 +25,7 @@ def _internalize_GEN_DATA(
     for key in keys:
         config_node = ensemble_config[key]
         filename_fmt = config_node.get_enkf_infile()
+        data = []
         for i in config_node.getModelConfig().getReportSteps():
             filename = filename_fmt % i
             if not Path.exists(run_path / filename):
@@ -33,22 +33,19 @@ def _internalize_GEN_DATA(
                 continue
 
             with open(run_path / filename, "r") as f:
-                data = [float(v.strip()) for v in f.readlines()]
+                key_data = [float(v.strip()) for v in f.readlines()]
+                data.append(key_data)
 
-            run_arg.sim_fs.save_gen_data(f"{key}@{i}", data, run_arg.iens)
+            run_arg.sim_fs.save_gen_data(f"{key}-{i}", data, run_arg.iens)
 
     if errors:
         return (LoadStatus.LOAD_FAILURE, "\n".join(errors))
     return (LoadStatus.LOAD_SUCCESSFUL, "")
 
 
-def _should_load_summary_key(data_key, user_set_keys):
-    return any(fnmatch(data_key, key) for key in user_set_keys)
-
-
 def _internalize_SUMMARY_DATA(ens_config: "EnsembleConfig", run_arg: "RunArg"):
-    user_summary_keys = ens_config.get_summary_keys()
-    if len(user_summary_keys) == 0:
+    summary_keys = ens_config.get_summary_keys()
+    if len(summary_keys) == 0:
         return (LoadStatus.LOAD_SUCCESSFUL, "")
 
     try:
@@ -88,8 +85,6 @@ def _internalize_SUMMARY_DATA(ens_config: "EnsembleConfig", run_arg: "RunArg"):
             )
 
     for key in summary:
-        if not _should_load_summary_key(key, user_summary_keys):
-            continue
         keys.append(key)
 
         np_vector = np.zeros(len(time_map))
@@ -106,7 +101,7 @@ def _internalize_SUMMARY_DATA(ens_config: "EnsembleConfig", run_arg: "RunArg"):
 
 
 def _internalize_results(
-    ens_config: "EnsembleConfig", history_restart: int, run_arg: "RunArg"
+    ens_config: "EnsembleConfig", model_config: "ModelConfig", run_arg: "RunArg"
 ) -> Tuple[LoadStatus, str]:
 
     status = _internalize_SUMMARY_DATA(ens_config, run_arg)
@@ -115,7 +110,7 @@ def _internalize_results(
 
     last_report = run_arg.sim_fs.getTimeMap().last_step()
     if last_report < 0:
-        last_report = history_restart
+        last_report = model_config.get_last_history_restart()
     result = _internalize_GEN_DATA(ens_config, run_arg, last_report)
 
     if result[0] == LoadStatus.LOAD_FAILURE:

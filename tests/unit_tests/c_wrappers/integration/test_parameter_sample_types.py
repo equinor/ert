@@ -246,12 +246,6 @@ def test_field_param(tmpdir, config_str, expect_forward_init):
             0,
             "Failed to initialize node 'MY_PARAM' in file surf0.irap",
         ),
-        (
-            "SURFACE MY_PARAM OUTPUT_FILE:surf.irap INIT_FILES:surf.irap BASE_SURFACE:surf0.irap FORWARD_INIT:True",  # noqa
-            True,
-            0,
-            "Failed to initialize node 'MY_PARAM' in file surf.irap",
-        ),
     ],
 )
 def test_surface_param(

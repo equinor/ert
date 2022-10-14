@@ -37,6 +37,7 @@ struct ensemble_config_struct {
         config_nodes; /* a hash of enkf_config_node instances - which again contain pointers to e.g. field_config objects.  */
     field_trans_table_type *
         field_trans_table; /* a table of the transformations which are available to apply on fields. */
+    bool have_forward_init;
     std::vector<std::string> summary_keys;
 };
 
@@ -94,12 +95,31 @@ ensemble_config_alloc_full(const char *gen_kw_format_string) {
         }
         stringlist_free(gen_kw_keys);
     }
+}
+
+field_trans_table_type *
+ensemble_config_get_trans_table(const ensemble_config_type *ensemble_config) {
+    return ensemble_config->field_trans_table;
+}
+
+static ensemble_config_type *ensemble_config_alloc_empty(void) {
+    ensemble_config_type *ensemble_config = new ensemble_config_type();
+
+    ensemble_config->field_trans_table = field_trans_table_alloc();
+    ensemble_config->gen_kw_format_string =
+        util_alloc_string_copy(DEFAULT_GEN_KW_TAG_FORMAT);
+    ensemble_config->have_forward_init = false;
+    pthread_mutex_init(&ensemble_config->mutex, NULL);
+
+    return ensemble_config;
+}
 
     return ensemble_config;
 }
 
 void ensemble_config_free(ensemble_config_type *ensemble_config) {
     field_trans_table_free(ensemble_config->field_trans_table);
+    free(ensemble_config->gen_kw_format_string);
 
     for (auto &config_pair : ensemble_config->config_nodes)
         enkf_config_node_free(config_pair.second);
@@ -304,6 +324,10 @@ ensemble_config_add_summary_observation(ensemble_config_type *ensemble_config,
     ensemble_config->summary_keys.push_back(std::string(key));
 
     return config_node;
+}
+
+int ensemble_config_get_size(const ensemble_config_type *ensemble_config) {
+    return ensemble_config->config_nodes.size();
 }
 
 std::pair<fw_load_status, std::string>

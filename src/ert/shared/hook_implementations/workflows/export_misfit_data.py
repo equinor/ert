@@ -33,11 +33,15 @@ class ExportMisfitDataJob(ErtScript):
         if not realizations:
             raise StorageError("No responses loaded")
 
-        all_observations = [(n.getObsKey(), []) for n in ert.getObservations()]
+        all_observations = [
+            (n.getObsKey(), list(range(len(n)))) for n in ert.getObservations()
+        ]
         measured_data, obs_data = _get_obs_and_measure_data(
             ert.getObservations(), fs, all_observations, realizations
         )
-        joined = obs_data.join(measured_data, on=["data_key", "axis"], how="inner")
+        joined = obs_data.join(
+            measured_data, on=["data_key", "axis"], how="inner"
+        ).drop_duplicates()
         misfit = pd.DataFrame(index=joined.index)
         for col in measured_data:
             misfit[col] = ((joined["OBS"] - joined[col]) / joined["STD"]) ** 2

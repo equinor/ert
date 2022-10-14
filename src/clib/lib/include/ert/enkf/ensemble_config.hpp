@@ -58,6 +58,9 @@ ensemble_config_alloc_full(const char *gen_kw_format_string);
 extern "C" void ensemble_config_init_SUMMARY_full(ensemble_config_type *,
                                                   const char *,
                                                   const ecl_sum_type *);
+
+extern "C" int
+ensemble_config_get_size(const ensemble_config_type *ensemble_config);
 std::pair<fw_load_status, std::string>
 ensemble_config_forward_init(const ensemble_config_type *ens_config,
                              const int iens, const std::string &run_path,

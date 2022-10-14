@@ -60,7 +60,7 @@ def forward_model_ok(
         result = _ensemble_config_forward_init(ens_conf, run_arg)
 
     if result[0] == LoadStatus.LOAD_SUCCESSFUL:
-        result = _internalize_results(ens_conf, last_history_restart, run_arg)
+        result = _internalize_results(ens_conf, model_conf, run_arg)
 
     run_arg.sim_fs.getStateMap()[run_arg.iens] = (
         RealizationStateEnum.STATE_HAS_DATA

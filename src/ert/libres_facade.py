@@ -218,8 +218,13 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
                 raise IndexError(f"No such realization {realization_index}")
             realizations = [realization_index]
 
-        return fs.load_gen_data_as_df([f"{key}@{report_step}"], realizations).droplevel(
-            "data_key"
+        data_array, realizations = fs.load_gen_data(
+            f"{key}-{report_step}", realizations
+        )
+
+        return DataFrame(
+            data=data_array.reshape(len(data_array), len(realizations)),
+            columns=np.array(realizations),
         )
 
     def load_observation_data(
@@ -417,10 +422,18 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
             summary_keys = [
                 key for key in keys if key in summary_keys
             ]  # ignore keys that doesn't exist
-        try:
-            df = fs.load_summary_data_as_df(summary_keys, realizations)
-        except KeyError:
-            return DataFrame()
+
+        data, x_axis, realizations = fs.load_summary_data(summary_keys, realizations)
+        time_axis = x_axis
+        multi_index = MultiIndex.from_product(
+            [summary_keys, time_axis], names=["data_key", "axis"]
+        )
+
+        df = DataFrame(
+            data=data.reshape(len(time_axis) * len(summary_keys), len(realizations)),
+            index=multi_index,
+            columns=realizations,
+        )
         df = df.stack().unstack(level=0).swaplevel()
         df.index.names = ["Realization", "Date"]
         return df
@@ -452,11 +465,13 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
         for obs_vector in observations:
             misfit_keys.append(f"MISFIT:{obs_vector.getObservationKey()}")
 
-        all_observations = [(n.getObsKey(), n.getStepList()) for n in observations]
+        all_observations = [(n.getObsKey(), list(range(len(n)))) for n in observations]
         measured_data, obs_data = _get_obs_and_measure_data(
             observations, fs, all_observations, realizations
         )
-        joined = obs_data.join(measured_data, on=["data_key", "axis"], how="inner")
+        joined = obs_data.join(
+            measured_data, on=["data_key", "axis"], how="inner"
+        ).drop_duplicates()
         misfit = DataFrame(index=joined.index)
         for col in measured_data:
             misfit[col] = ((joined["OBS"] - joined[col]) / joined["STD"]) ** 2

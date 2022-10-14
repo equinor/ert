@@ -534,6 +534,28 @@ summary_key_set_type *enkf_fs_get_summary_key_set(const enkf_fs_type *fs) {
     return fs->summary_key_set;
 }
 
+misfit_ensemble_type *enkf_fs_get_misfit_ensemble(const enkf_fs_type *fs) {
+    return fs->misfit_ensemble;
+}
+
+namespace {
+void bind_write_parameter(py::handle fs_, const std::string &node_key, int iens,
+                          py::bytes buffer) {
+    auto fs = ert::from_cwrap<enkf_fs_type>(fs_);
+    if (fs->read_only)
+        util_abort("%s: attempt to write to read_only filesystem mounted at:%s "
+                   "- aborting. \n",
+                   __func__, fs->mount_point);
+
+    ert::block_fs_driver *driver =
+        enkf_fs_select_driver(fs, PARAMETER, node_key.c_str());
+    char *bufferz;
+    Py_ssize_t size;
+    PyBytes_AsStringAndSize(buffer.ptr(), &bufferz, &size);
+    driver->save_node(node_key.c_str(), iens, bufferz, size);
+}
+} // namespace
+
 ERT_CLIB_SUBMODULE("enkf_fs", m) {
     using namespace py::literals;
 
@@ -562,6 +584,8 @@ ERT_CLIB_SUBMODULE("enkf_fs", m) {
         },
         py::arg("self"), py::arg("ensemble_config"), py::arg("parameter_names"),
         py::arg("ensemble_size"));
+
+    m.def("write_parameter", bind_write_parameter);
     m.def(
         "copy_from_case",
         [](Cwrap<enkf_fs_type> source_case,
