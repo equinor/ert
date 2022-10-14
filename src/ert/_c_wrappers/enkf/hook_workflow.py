@@ -36,3 +36,6 @@ class HookWorkflow(BaseCClass):
 
     def __repr__(self):
         return f"HookWorkflow({self.getWorkflow().src_file}, {self.getRunMode()})"
+
+    def free(self):
+        pass
