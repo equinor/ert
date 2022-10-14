@@ -1,7 +1,7 @@
 """Utility to compensate for a weak job type."""
 import time
 
-from ert.job_runner.reporting.message import _JOB_STATUS_WAITING
+from _ert_job_runner.reporting.message import _JOB_STATUS_WAITING
 
 
 def create_job_dict(job):

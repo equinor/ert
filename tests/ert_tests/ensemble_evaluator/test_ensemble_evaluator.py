@@ -5,6 +5,7 @@ from aiohttp import ServerTimeoutError
 from websockets.exceptions import ConnectionClosedError
 from websockets.version import version as websockets_version
 
+from _ert_job_runner.client import Client
 from ert.ensemble_evaluator import Snapshot, identifiers, wait_for_evaluator
 from ert.ensemble_evaluator.state import (
     ENSEMBLE_STATE_FAILED,
@@ -14,7 +15,6 @@ from ert.ensemble_evaluator.state import (
     JOB_STATE_FINISHED,
     JOB_STATE_RUNNING,
 )
-from ert.shared.ensemble_evaluator.client import Client
 from ert.shared.ensemble_evaluator.evaluator import EnsembleEvaluator, ee_monitor
 from ert.shared.ensemble_evaluator.monitor import _Monitor
 from ert.shared.ensemble_evaluator.narratives import (

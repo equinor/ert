@@ -2,7 +2,7 @@ import os
 import signal
 import sys
 
-from ert.job_runner.cli import main as job_runner_main
+from _ert_job_runner.cli import main as job_runner_main
 
 
 def sigterm_handler(_signo, _stack_frame):

@@ -1,7 +1,7 @@
 from typing import Optional
 
-from ert.job_runner.reporting.base import Reporter
-from ert.job_runner.reporting.message import (
+from _ert_job_runner.reporting.base import Reporter
+from _ert_job_runner.reporting.message import (
     _JOB_EXIT_FAILED_STRING,
     Finish,
     Message,

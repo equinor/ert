@@ -1,7 +1,7 @@
 import os
 
-from ert.job_runner.job import Job
-from ert.job_runner.reporting.message import Finish, Init
+from _ert_job_runner.job import Job
+from _ert_job_runner.reporting.message import Finish, Init
 
 
 class JobRunner:

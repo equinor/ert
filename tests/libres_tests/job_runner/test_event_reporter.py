@@ -3,16 +3,16 @@ import os
 
 import pytest
 
-from ert.job_runner.job import Job
-from ert.job_runner.reporting import Event
-from ert.job_runner.reporting.event import (
+from _ert_job_runner.job import Job
+from _ert_job_runner.reporting import Event
+from _ert_job_runner.reporting.event import (
     _FM_JOB_FAILURE,
     _FM_JOB_RUNNING,
     _FM_JOB_START,
     _FM_JOB_SUCCESS,
 )
-from ert.job_runner.reporting.message import Exited, Finish, Init, Running, Start
-from ert.job_runner.reporting.statemachine import TransitionError
+from _ert_job_runner.reporting.message import Exited, Finish, Init, Running, Start
+from _ert_job_runner.reporting.statemachine import TransitionError
 from tests.utils import _mock_ws_thread
 
 

@@ -7,7 +7,7 @@ from pathlib import Path
 
 import websockets
 
-from ert.shared.ensemble_evaluator.client import Client
+from _ert_job_runner.client import Client
 
 
 def source_dir():

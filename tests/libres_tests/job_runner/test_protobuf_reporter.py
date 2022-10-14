@@ -2,17 +2,17 @@ import os
 
 import pytest
 
-from ert.experiment_server._schema_pb2 import (
+from _ert_job_runner._schema_pb2 import (
     JOB_FAILURE,
     JOB_RUNNING,
     JOB_START,
     JOB_SUCCESS,
     DispatcherMessage,
 )
-from ert.job_runner.job import Job
-from ert.job_runner.reporting import Protobuf
-from ert.job_runner.reporting.message import Exited, Finish, Init, Running, Start
-from ert.job_runner.reporting.statemachine import TransitionError
+from _ert_job_runner.job import Job
+from _ert_job_runner.reporting import Protobuf
+from _ert_job_runner.reporting.message import Exited, Finish, Init, Running, Start
+from _ert_job_runner.reporting.statemachine import TransitionError
 from tests.utils import _mock_ws_thread
 
 

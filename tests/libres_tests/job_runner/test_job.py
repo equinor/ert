@@ -3,13 +3,13 @@ from unittest.mock import PropertyMock, patch
 
 import pytest
 
-from ert.job_runner.job import Job
-from ert.job_runner.reporting.message import Exited, Running, Start
+from _ert_job_runner.job import Job
+from _ert_job_runner.reporting.message import Exited, Running, Start
 
 
-@patch("ert.job_runner.job.assert_file_executable")
-@patch("ert.job_runner.job.Popen")
-@patch("ert.job_runner.job.Process")
+@patch("_ert_job_runner.job.assert_file_executable")
+@patch("_ert_job_runner.job.Popen")
+@patch("_ert_job_runner.job.Process")
 @pytest.mark.usefixtures("use_tmpdir")
 def test_run_with_process_failing(
     mock_process, mock_popen, mock_assert_file_executable
