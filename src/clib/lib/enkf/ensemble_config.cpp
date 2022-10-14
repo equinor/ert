@@ -861,4 +861,6 @@ ERT_CLIB_SUBMODULE("ensemble_config", m) {
     m.def("have_forward_init", [](Cwrap<ensemble_config_type> self) {
         return self->have_forward_init;
     });
+    m.def("get_summary_keys",
+          [](Cwrap<ensemble_config_type> self) { return self->summary_keys; });
 }
