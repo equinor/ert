@@ -1,19 +1,12 @@
 from cwrap import BaseCClass
 
+from ert import _clib
 from ert._c_wrappers import ResPrototype
 
 
 class RunArg(BaseCClass):
     TYPE_NAME = "run_arg"
-    _alloc = ResPrototype(
-        "void* run_arg_alloc(char*, \
-                                                       enkf_fs, \
-                                                       int, \
-                                                       int, \
-                                                       char*, \
-                                                       char*)",
-        bind=False,
-    )
+
     _free = ResPrototype("void run_arg_free(run_arg)")
     _get_queue_index_safe = ResPrototype("int  run_arg_get_queue_index_safe(run_arg)")
     _set_queue_index = ResPrototype("void run_arg_set_queue_index(run_arg, int)")
@@ -34,7 +27,7 @@ class RunArg(BaseCClass):
         run_path,
         job_name,
     ):
-        c_ptr = self._alloc(
+        c_ptr = _clib.run_arg.alloc(
             run_id,
             sim_fs,
             iens,

@@ -70,8 +70,6 @@ extern "C" void ensemble_config_init_SUMMARY_full(ensemble_config_type *,
                                                   const char *,
                                                   const ecl_sum_type *);
 
-const summary_key_matcher_type *ensemble_config_get_summary_key_matcher(
-    const ensemble_config_type *ensemble_config);
 extern "C" int
 ensemble_config_get_size(const ensemble_config_type *ensemble_config);
 std::pair<fw_load_status, std::string>
