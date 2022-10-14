@@ -251,7 +251,7 @@ def get_ensemble_responses(
     response_map: Mapping[str, js.RecordOut] = {}
     storage = res._enkf_main.storage_manager[get_name("ensemble", ensemble_id)]
 
-    for name in storage.getSummaryKeySet().keys():
+    for name in storage.getSummaryKeySet():
         obs_keys = res.observation_keys(name)
         response_map[str(name)] = js.RecordOut(
             id=get_id("response", f"{ensemble_id}/{name}"),
