@@ -1,7 +1,13 @@
 import uuid
+<<<<<<< HEAD
 from dataclasses import InitVar, dataclass, field
 from pathlib import Path
 from typing import TYPE_CHECKING, Dict, Iterator, List
+=======
+from dataclasses import dataclass, field
+from datetime import datetime
+from typing import TYPE_CHECKING, Iterator, List
+>>>>>>> 2b78e2c6b (Use numpy files for SUMMARY and GEN_DATA)
 
 from ert._c_wrappers.enkf.run_arg import RunArg
 from ert._c_wrappers.enkf.runpaths import Runpaths
