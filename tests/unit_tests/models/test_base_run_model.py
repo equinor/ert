@@ -3,7 +3,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from ert._c_wrappers.enkf import EnKFMain, RunContext
+from ert._c_wrappers.enkf import EnkfFs, EnKFMain, RunContext
 from ert._c_wrappers.job_queue import RunStatusType
 from ert.shared.models import BaseRunModel
 
@@ -61,12 +61,17 @@ def test_failed_realizations(initials, completed, any_failed, failures):
     assert brm.has_failed_realizations() == any_failed
 
 
+@pytest.mark.usefixtures("use_tmpdir")
 def test_run_ensemble_evaluator():
     run_arg = MagicMock()
     run_arg.run_status = RunStatusType.JOB_LOAD_FAILURE
 
     run_context = RunContext(
-        None, mask=[True], paths=["some%d/path%d"], jobnames=["some_job%d"], iteration=0
+        EnkfFs.createFileSystem("test", True, 10),
+        mask=[True],
+        paths=["some%d/path%d"],
+        jobnames=["some_job%d"],
+        iteration=0,
     )
     run_context.run_args = [run_arg]
     run_context.deactivate_realization = MagicMock()
