@@ -12,7 +12,6 @@ from ert._clib.enkf_state import (
 )
 
 if TYPE_CHECKING:
-    import ert
     from ert._c_wrappers.enkf import EnsembleConfig, ModelConfig, RunArg
 
 

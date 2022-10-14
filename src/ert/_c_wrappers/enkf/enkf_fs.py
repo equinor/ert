@@ -1,5 +1,7 @@
+import asyncio
+import logging
 from pathlib import Path
-from typing import TYPE_CHECKING, List, Union
+from typing import TYPE_CHECKING, List, Tuple, Union
 
 import numpy as np
 import numpy.typing as npt
@@ -7,17 +9,45 @@ from cwrap import BaseCClass
 
 from ert import _clib
 from ert._c_wrappers import ResPrototype
-from ert._c_wrappers.enkf.enums import EnKFFSType
-from ert._c_wrappers.enkf.res_config import EnsembleConfig
+from ert._c_wrappers.enkf.enums import EnKFFSType, RealizationStateEnum
+from ert._c_wrappers.enkf.model_callbacks import LoadStatus
 from ert._c_wrappers.enkf.summary_key_set import SummaryKeySet
 from ert._c_wrappers.enkf.time_map import TimeMap
 from ert._clib import update
+from ert.ensemble_evaluator.callbacks import _forward_model_ok
 
 if TYPE_CHECKING:
     from ecl.util.util import IntVector
 
+    from ert._c_wrappers.enkf.res_config import EnsembleConfig, ModelConfig
+    from ert._c_wrappers.enkf.run_arg import RunArg
     from ert._c_wrappers.enkf.state_map import StateMap
-    from ert._clib.state_map import RealizationStateEnum
+
+logger = logging.getLogger(__name__)
+
+
+def _load_realization(
+    sim_fs: "EnkfFs",
+    realisation: int,
+    ensemble_config: "EnsembleConfig",
+    model_config: "ModelConfig",
+    run_args: List["RunArg"],
+) -> Tuple["LoadStatus", str]:
+    state_map = sim_fs.getStateMap()
+
+    state_map.update_matching(
+        realisation,
+        RealizationStateEnum.STATE_UNDEFINED,
+        RealizationStateEnum.STATE_INITIALIZED,
+    )
+    status = _forward_model_ok(run_args[realisation], ensemble_config, model_config)
+    state_map._set(
+        realisation,
+        RealizationStateEnum.STATE_HAS_DATA
+        if status[0] == LoadStatus.LOAD_SUCCESSFUL
+        else RealizationStateEnum.STATE_LOAD_FAILURE,
+    )
+    return status
 
 
 class EnkfFs(BaseCClass):
@@ -116,30 +146,12 @@ class EnkfFs(BaseCClass):
 
     def load_parameter(
         self,
-        ensemble_config: EnsembleConfig,
+        ensemble_config: "EnsembleConfig",
         iens_active_index: List[int],
         parameter: update.Parameter,
     ) -> np.ndarray:
         return update.load_parameter(
             self, ensemble_config, iens_active_index, parameter
-        )
-
-    def load_from_run_path(
-        self,
-        ensemble_size,
-        ensemble_config,
-        model_config,
-        run_args,
-        active_realizations,
-    ) -> int:
-        """Returns the number of loaded realizations"""
-        return _clib.enkf_fs.load_from_run_path(
-            self,
-            ensemble_size,
-            ensemble_config,
-            model_config,
-            run_args,
-            active_realizations,
         )
 
     def copy_from_case(
@@ -157,3 +169,27 @@ class EnkfFs(BaseCClass):
             nodes,
             active,
         )
+
+    def load_from_run_path(
+        self,
+        ensemble_size: int,
+        ensemble_config: "EnsembleConfig",
+        model_config: "ModelConfig",
+        run_args: List["RunArg"],
+        active_realizations: List[bool],
+    ) -> int:
+        """Returns the number of loaded realizations"""
+
+        loaded = 0
+        for iens in range(ensemble_size):
+            if not active_realizations[iens]:
+                continue
+            result = _load_realization(
+                self, iens, ensemble_config, model_config, run_args
+            )
+            if result[0] == LoadStatus.LOAD_SUCCESSFUL:
+                loaded += 1
+            else:
+                logger.error(f"Realization: {iens}, load failure: {result[1]}")
+
+        return loaded
