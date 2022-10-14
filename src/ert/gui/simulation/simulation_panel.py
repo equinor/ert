@@ -128,7 +128,6 @@ class SimulationPanel(QWidget):
         )
 
         if start_simulations == QMessageBox.Yes:
-
             arguments = self.getSimulationArguments()
             dialog = RunDialog(
                 self._config_file,
@@ -139,11 +138,13 @@ class SimulationPanel(QWidget):
                     arguments,
                     str(uuid.uuid4()),
                 ),
+                parent=self
             )
             dialog.startSimulation()
             dialog.exec_()
 
             self.notifier.emitErtChange()  # simulations may have added new cases
+
 
     def toggleSimulationMode(self):
         current_model = self.getCurrentSimulationModel()
