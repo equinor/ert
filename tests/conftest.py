@@ -146,6 +146,11 @@ def pytest_addoption(parser):
 
 
 def pytest_collection_modifyitems(config, items):
+    for item in items:
+        fixtures = getattr(item, "fixturenames", ())
+        if "qtbot" in fixtures or "qtmodeltester" in fixtures:
+            item.add_marker("requires_window_manager")
+
     if config.getoption("--runslow"):
         # --runslow given in cli: do not skip slow tests
         skip_quick = pytest.mark.skip(

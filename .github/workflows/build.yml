@@ -123,11 +123,19 @@ jobs:
       matrix:
         python-version: ['3.8', '3.9', '3.10']
         os: [ubuntu-latest, macos-latest]
-        test-type: ['integration-tests', 'unit-tests']
+        test-type: ['integration-tests', 'unit-tests', 'gui-test']
         # Excluded to keep build times down on Github actions
         exclude:
           - os: macos-latest
             python-version: '3.9'
+          - os: macos-latest
+            test-type: 'gui-test'
+          - os: ubuntu-latest
+            python-version: '3.9'
+            test-type: 'gui-test'
+          - os: ubuntu-latest
+            python-version: '3.10'
+            test-type: 'gui-test'
     runs-on: ${{ matrix.os }}
 
     steps:
@@ -136,6 +144,7 @@ jobs:
         fetch-depth: 0
 
     - uses: './.github/actions/install_dependencies'
+      if: matrix.test-type == 'gui-test'
       with:
         os: ${{ matrix.os }}
 
@@ -153,37 +162,39 @@ jobs:
         find . -name "*.whl" -exec pip install {} \;
         pip install -r dev-requirements.txt
 
-    - name: Test Ubuntu
-      if: matrix.os == 'ubuntu-latest' && matrix.test-type == 'unit-tests'
+    - name: Test GUI
+      if: matrix.test-type == 'gui-test'
       env:
         DISPLAY: ':99.0'
       run: |
         ci/github/start_herbstluftwm.sh &
         sleep 5
         pushd tests
-        pytest ert_tests -sv --durations=0 -m "not integration_test"
+        pytest ert_tests -sv -m "requires_window_manager"
+
+    - name: Test Ubuntu
+      if: matrix.os == 'ubuntu-latest' && matrix.test-type == 'unit-tests'
+      run: |
+        pushd tests
+        pytest ert_tests -sv -m "not integration_test and not requires_window_manager"
 
     - name: Test MacOS
       if: matrix.os == 'macos-latest' && matrix.test-type == 'unit-tests'
       run: |
         pushd tests
-        pytest ert_tests -sv --durations=0 -m "not integration_test"
+        pytest ert_tests -sv -m "not integration_test and not requires_window_manager"
 
     - name: Integration Test Ubuntu
       if: matrix.os == 'ubuntu-latest' && matrix.test-type == 'integration-tests'
-      env:
-        DISPLAY: ':99.0'
       run: |
-        ci/github/start_herbstluftwm.sh &
-        sleep 5
         pushd tests
-        pytest ert_tests performance_tests -sv --durations=5 -m "integration_test"
+        pytest ert_tests performance_tests -sv --durations=5 -m "integration_test and not requires_window_manager"
 
     - name: Integration Test MacOS
       if: matrix.os == 'macos-latest' && matrix.test-type == 'integration-tests'
       run: |
         pushd tests
-        pytest ert_tests performance_tests -sv --durations=5 -m "integration_test"
+        pytest ert_tests performance_tests -sv --durations=5 -m "integration_test and not requires_window_manager"
 
     - name: Test for a clean repository
       run: |

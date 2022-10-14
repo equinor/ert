@@ -1,3 +1,4 @@
+import pytest
 from PyQt5.QtCore import QModelIndex
 from pytestqt.qt_compat import qt_api
 
@@ -32,6 +33,7 @@ def test_using_qt_model_tester(qtmodeltester, full_snapshot):
     qtmodeltester.check(model, force_py=True)
 
 
+@pytest.mark.requires_window_manager
 def test_progression(full_snapshot):
     source_model = SnapshotModel()
     model = ProgressProxyModel(source_model, parent=None)
@@ -58,6 +60,7 @@ def test_progression(full_snapshot):
     }
 
 
+@pytest.mark.requires_window_manager
 def test_progression_start_iter_not_zero(full_snapshot):
     source_model = SnapshotModel()
     model = ProgressProxyModel(source_model, parent=None)
