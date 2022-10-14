@@ -94,6 +94,7 @@ def test_gui_load(qtbot, patch_enkf_main):
     assert sim_panel.getCurrentSimulationModel() == ensemble_panel.getSimulationModel()
 
 
+@pytest.mark.requires_window_manager
 def test_gui_full(monkeypatch, tmp_path, qapp, mock_start_server, source_root):
     shutil.copytree(
         os.path.join(source_root, "test-data", "poly_example"),
@@ -113,6 +114,7 @@ def test_gui_full(monkeypatch, tmp_path, qapp, mock_start_server, source_root):
     )
 
 
+@pytest.mark.requires_window_manager
 def test_that_loading_gui_creates_a_single_storage_folder(
     monkeypatch, tmp_path, qapp, source_root
 ):

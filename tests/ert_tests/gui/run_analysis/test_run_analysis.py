@@ -26,6 +26,7 @@ def mock_tool():
         yield tool
 
 
+@pytest.mark.requires_window_manager
 @patch("ert.gui.tools.run_analysis.run_analysis_tool.analyse", return_value=None)
 @patch("ert.gui.tools.run_analysis.run_analysis_tool.QMessageBox")
 def test_show_dialogue_at_success(mock_messagebox, mock_analyse, mock_tool):
@@ -43,6 +44,7 @@ def test_show_dialogue_at_success(mock_messagebox, mock_analyse, mock_tool):
     mock_tool._dialog.accept.assert_called_once_with()
 
 
+@pytest.mark.requires_window_manager
 @patch(
     "ert.gui.tools.run_analysis.run_analysis_tool.analyse",
     side_effect=ErtAnalysisError("some error"),

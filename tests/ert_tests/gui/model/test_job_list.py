@@ -48,6 +48,7 @@ def test_using_qt_model_tester(qtmodeltester, full_snapshot):
     qtmodeltester.check(model, force_py=True)
 
 
+@pytest.mark.requires_window_manager
 def test_changes(full_snapshot):
     source_model = SnapshotModel()
 
@@ -87,6 +88,7 @@ def test_changes(full_snapshot):
     )
 
 
+@pytest.mark.requires_window_manager
 @pytest.mark.parametrize("timezone", [(None), (tz.gettz("UTC"))])
 @patch("ert.gui.model.snapshot.datetime", wraps=datetime)
 def test_duration(mock_datetime, timezone, full_snapshot):
@@ -136,6 +138,7 @@ def test_duration(mock_datetime, timezone, full_snapshot):
     mock_datetime.datetime.now.assert_called_once_with(timezone)
 
 
+@pytest.mark.requires_window_manager
 def test_no_cross_talk(full_snapshot):
     source_model = SnapshotModel()
 
