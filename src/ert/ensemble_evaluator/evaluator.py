@@ -16,17 +16,29 @@ from cloudevents.http import CloudEvent, from_json
 from websockets.exceptions import ConnectionClosedError
 from websockets.legacy.server import WebSocketServerProtocol
 
-import ert.ensemble_evaluator.monitor as ee_monitor
-from ert.ensemble_evaluator import identifiers
-from ert.ensemble_evaluator.builder._ensemble import _Ensemble
-from ert.ensemble_evaluator.config import EvaluatorServerConfig
-from ert.ensemble_evaluator.dispatch import BatchingDispatcher
-from ert.ensemble_evaluator.state import (
+from ert.serialization import evaluator_marshaller, evaluator_unmarshaller
+
+from ._builder import Ensemble
+from .config import EvaluatorServerConfig
+from .dispatch import BatchingDispatcher
+from .identifiers import (
+    EVGROUP_FM_ALL,
+    EVTYPE_EE_SNAPSHOT,
+    EVTYPE_EE_SNAPSHOT_UPDATE,
+    EVTYPE_EE_TERMINATED,
+    EVTYPE_EE_USER_CANCEL,
+    EVTYPE_EE_USER_DONE,
+    EVTYPE_ENSEMBLE_CANCELLED,
+    EVTYPE_ENSEMBLE_FAILED,
+    EVTYPE_ENSEMBLE_STARTED,
+    EVTYPE_ENSEMBLE_STOPPED,
+)
+from .monitor import Monitor
+from .state import (
     ENSEMBLE_STATE_CANCELLED,
     ENSEMBLE_STATE_FAILED,
     ENSEMBLE_STATE_STOPPED,
 )
-from ert.serialization import evaluator_marshaller, evaluator_unmarshaller
 
 logger = logging.getLogger(__name__)
 
@@ -35,7 +47,7 @@ _MAX_UNSUCCESSFUL_CONNECTION_ATTEMPTS = 3
 
 class EnsembleEvaluator:
     # pylint: disable=too-many-instance-attributes
-    def __init__(self, ensemble: _Ensemble, config: EvaluatorServerConfig, iter_: int):
+    def __init__(self, ensemble: Ensemble, config: EvaluatorServerConfig, iter_: int):
         # Without information on the iteration, the events emitted from the
         # evaluator are ambiguous. In the future, an experiment authority* will
         # "own" the evaluators and can add iteration information to events they
@@ -43,7 +55,7 @@ class EnsembleEvaluator:
         # * https://github.com/equinor/ert/issues/1250
         self._iter: int = iter_
         self._config: EvaluatorServerConfig = config
-        self._ensemble: _Ensemble = ensemble
+        self._ensemble: Ensemble = ensemble
 
         self._loop = asyncio.new_event_loop()
         self._done = self._loop.create_future()
@@ -57,11 +69,11 @@ class EnsembleEvaluator:
         )
 
         for e_type, f in (
-            (identifiers.EVGROUP_FM_ALL, self._fm_handler),
-            (identifiers.EVTYPE_ENSEMBLE_STARTED, self._started_handler),
-            (identifiers.EVTYPE_ENSEMBLE_STOPPED, self._stopped_handler),
-            (identifiers.EVTYPE_ENSEMBLE_CANCELLED, self._cancelled_handler),
-            (identifiers.EVTYPE_ENSEMBLE_FAILED, self._failed_handler),
+            (EVGROUP_FM_ALL, self._fm_handler),
+            (EVTYPE_ENSEMBLE_STARTED, self._started_handler),
+            (EVTYPE_ENSEMBLE_STOPPED, self._stopped_handler),
+            (EVTYPE_ENSEMBLE_CANCELLED, self._cancelled_handler),
+            (EVTYPE_ENSEMBLE_FAILED, self._failed_handler),
         ):
             self._dispatcher.register_event_handler(e_type, f)
 
@@ -109,14 +121,14 @@ class EnsembleEvaluator:
             # create a fake event because that's currently the only
             # api for setting state in the ensemble
             if len(events) == 0:
-                events = [self._create_cloud_event(identifiers.EVTYPE_ENSEMBLE_FAILED)]
+                events = [self._create_cloud_event(EVTYPE_ENSEMBLE_FAILED)]
             snapshot_update_event = self.ensemble.update_snapshot(events)
             await self._send_snapshot_update(snapshot_update_event)
             self._signal_cancel()  # let ensemble know it should stop
 
     async def _send_snapshot_update(self, snapshot_update_event):
         message = self._create_cloud_message(
-            identifiers.EVTYPE_EE_SNAPSHOT_UPDATE,
+            EVTYPE_EE_SNAPSHOT_UPDATE,
             snapshot_update_event.to_dict(),
         )
         if message and self._clients:
@@ -176,7 +188,7 @@ class EnsembleEvaluator:
     async def handle_client(self, websocket, path):
         with self.store_client(websocket):
             event = self._create_cloud_message(
-                identifiers.EVTYPE_EE_SNAPSHOT, self._ensemble.snapshot.to_dict()
+                EVTYPE_EE_SNAPSHOT, self._ensemble.snapshot.to_dict()
             )
             await websocket.send(event)
 
@@ -185,11 +197,11 @@ class EnsembleEvaluator:
                     message, data_unmarshaller=evaluator_unmarshaller
                 )
                 logger.debug(f"got message from client: {client_event}")
-                if client_event["type"] == identifiers.EVTYPE_EE_USER_CANCEL:
+                if client_event["type"] == EVTYPE_EE_USER_CANCEL:
                     logger.debug(f"Client {websocket.remote_address} asked to cancel.")
                     self._signal_cancel()
 
-                elif client_event["type"] == identifiers.EVTYPE_EE_USER_DONE:
+                elif client_event["type"] == EVTYPE_EE_USER_DONE:
                     logger.debug(f"Client {websocket.remote_address} signalled done.")
                     self._stop()
 
@@ -239,8 +251,8 @@ class EnsembleEvaluator:
                         return
 
                     if event["type"] in [
-                        identifiers.EVTYPE_ENSEMBLE_STOPPED,
-                        identifiers.EVTYPE_ENSEMBLE_FAILED,
+                        EVTYPE_ENSEMBLE_STOPPED,
+                        EVTYPE_ENSEMBLE_FAILED,
                     ]:
                         return
             except ConnectionClosedError as connection_error:
@@ -307,7 +319,7 @@ class EnsembleEvaluator:
 
             logger.debug("Sending termination-message to clients...")
             message = self._create_cloud_message(
-                identifiers.EVTYPE_EE_TERMINATED,
+                EVTYPE_EE_TERMINATED,
                 data=terminated_data,
                 extra_attrs=terminated_attrs,
                 data_marshaller=cloudpickle.dumps,
@@ -325,10 +337,10 @@ class EnsembleEvaluator:
         loop.run_until_complete(self.evaluator_server())
         logger.debug("Server thread exiting.")
 
-    def run(self) -> ee_monitor._Monitor:
+    def run(self) -> Monitor:
         self._ws_thread.start()
         self._ensemble.evaluate(self._config)
-        return ee_monitor.create(self._config.get_connection_info())
+        return Monitor(self._config.get_connection_info())
 
     def _stop(self):
         if not self._done.done():

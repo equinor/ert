@@ -9,17 +9,18 @@ from cloudevents.exceptions import DataUnmarshallerError
 from cloudevents.http import CloudEvent, from_json
 
 from ert.ensemble_evaluator import identifiers
-from ert.ensemble_evaluator.sync_ws_duplexer import SyncWebsocketDuplexer
 from ert.serialization import evaluator_marshaller, evaluator_unmarshaller
 
+from .sync_ws_duplexer import SyncWebsocketDuplexer
+
 if TYPE_CHECKING:
-    from ert.ensemble_evaluator import EvaluatorConnectionInfo
+    from .ensemble_evaluator import EvaluatorConnectionInfo
 
 
 logger = logging.getLogger(__name__)
 
 
-class _Monitor:
+class Monitor:
     def __init__(self, ee_con_info: "EvaluatorConnectionInfo") -> None:
         self._ee_con_info = ee_con_info
         self._ws_duplexer: Optional[SyncWebsocketDuplexer] = None
@@ -99,7 +100,3 @@ class _Monitor:
                 if event["type"] == identifiers.EVTYPE_EE_TERMINATED:
                     logger.debug(f"monitor-{self._id} client received terminated")
                     break
-
-
-def create(ee_con_info: "EvaluatorConnectionInfo") -> _Monitor:
-    return _Monitor(ee_con_info)

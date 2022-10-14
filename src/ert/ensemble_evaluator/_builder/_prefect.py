@@ -32,27 +32,21 @@ from prefect.executors import DaskExecutor, LocalDaskExecutor  # type: ignore
 
 from _ert_job_runner.client import Client
 from ert.async_utils import get_event_loop
-from ert.ensemble_evaluator.evaluator_connection_info import EvaluatorConnectionInfo
-from ert.ensemble_evaluator.identifiers import (
-    EVTYPE_ENSEMBLE_CANCELLED,
-    EVTYPE_ENSEMBLE_FAILED,
-    EVTYPE_ENSEMBLE_STARTED,
-    EVTYPE_ENSEMBLE_STOPPED,
-    EVTYPE_FM_STEP_FAILURE,
-)
+from ert.ensemble_evaluator import identifiers
+from ert.ensemble_evaluator.config import EvaluatorConnectionInfo
 from ert.shared.port_handler import find_available_port
 
-from ._ensemble import _Ensemble
+from ._ensemble import Ensemble
 from ._function_task import FunctionTask
 from ._io_map import _ensemble_transmitter_mapping
-from ._realization import _Realization
-from ._step import _FunctionStep, _UnixStep
+from ._realization import Realization
+from ._step import FunctionStep, UnixStep
 from ._unix_task import UnixTask
 
 if TYPE_CHECKING:
     from multiprocessing.context import ForkServerContext
 
-    from ert.ensemble_evaluator.config import EvaluatorServerConfig
+    from ert.ensemble_evaluator import EvaluatorServerConfig
 
 DEFAULT_MAX_RETRIES = 0
 DEFAULT_RETRY_DELAY = 5  # seconds
@@ -141,7 +135,7 @@ def _on_task_failure(
         with Client(url, token, cert) as c:
             event = CloudEvent(
                 {
-                    "type": EVTYPE_FM_STEP_FAILURE,
+                    "type": identifiers.EVTYPE_FM_STEP_FAILURE,
                     "source": task.step.source(),
                     "datacontenttype": "application/json",
                 },
@@ -150,10 +144,10 @@ def _on_task_failure(
             c.send(to_json(event).decode())
 
 
-class PrefectEnsemble(_Ensemble):  # pylint: disable=too-many-instance-attributes
+class PrefectEnsemble(Ensemble):  # pylint: disable=too-many-instance-attributes
     def __init__(  # pylint: disable=too-many-arguments
         self,
-        reals: List[_Realization],
+        reals: List[Realization],
         inputs: _ensemble_transmitter_mapping,
         outputs: _ensemble_transmitter_mapping,
         max_running: int,
@@ -207,7 +201,7 @@ class PrefectEnsemble(_Ensemble):  # pylint: disable=too-many-instance-attribute
                     outputs = self._outputs[iens]
                     # Prefect does not allow retry_delay if max_retries is 0
                     retry_delay = None if self._max_retries == 0 else self._retry_delay
-                    assert isinstance(step, (_UnixStep, _FunctionStep))  # mypy
+                    assert isinstance(step, (UnixStep, FunctionStep))  # mypy
                     step_task = step.get_task(
                         outputs,
                         self.id_,
@@ -230,7 +224,7 @@ class PrefectEnsemble(_Ensemble):  # pylint: disable=too-many-instance-attribute
     def _get_multiprocessing_context() -> "ForkServerContext":
         """See _prefect_forkserver_preload"""
         preload_module_name = (
-            "ert.ensemble_evaluator.builder._prefect_forkserver_preload"
+            "ert.ensemble_evaluator._builder._prefect_forkserver_preload"
         )
         loader = importlib.util.find_spec(preload_module_name)
         if not loader:
@@ -262,7 +256,7 @@ class PrefectEnsemble(_Ensemble):  # pylint: disable=too-many-instance-attribute
             ) as c:
                 event = CloudEvent(
                     {
-                        "type": EVTYPE_ENSEMBLE_STARTED,
+                        "type": identifiers.EVTYPE_ENSEMBLE_STARTED,
                         "source": f"/ert/ensemble/{self.id_}",
                     },
                 )
@@ -281,7 +275,7 @@ class PrefectEnsemble(_Ensemble):  # pylint: disable=too-many-instance-attribute
             ) as c:
                 event = CloudEvent(
                     {
-                        "type": EVTYPE_ENSEMBLE_STOPPED,
+                        "type": identifiers.EVTYPE_ENSEMBLE_STOPPED,
                         "source": f"/ert/ensemble/{self.id_}",
                         "datacontenttype": "application/octet-stream",
                     },
@@ -307,7 +301,7 @@ class PrefectEnsemble(_Ensemble):  # pylint: disable=too-many-instance-attribute
             ) as c:
                 event = CloudEvent(
                     {
-                        "type": EVTYPE_ENSEMBLE_FAILED,
+                        "type": identifiers.EVTYPE_ENSEMBLE_FAILED,
                         "source": f"/ert/ensemble/{self.id_}",
                     },
                 )
@@ -374,7 +368,7 @@ class PrefectEnsemble(_Ensemble):  # pylint: disable=too-many-instance-attribute
         self._eval_proc = None
         event = CloudEvent(
             {
-                "type": EVTYPE_ENSEMBLE_CANCELLED,
+                "type": identifiers.EVTYPE_ENSEMBLE_CANCELLED,
                 "source": f"/ert/ensemble/{self.id_}",
                 "datacontenttype": "application/json",
             },

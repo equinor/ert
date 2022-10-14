@@ -10,8 +10,10 @@ from ert.ensemble_evaluator.snapshot import (
     PartialSnapshot,
     Snapshot,
     SnapshotBuilder,
+    _get_job_id,
+    _get_real_id,
+    _get_step_id,
 )
-from ert.ensemble_evaluator.util import _tool as tool
 
 
 def test_snapshot_merge(snapshot: Snapshot):
@@ -125,9 +127,9 @@ def test_snapshot_merge(snapshot: Snapshot):
 )
 def test_source_get_ids(source_string, expected_ids):
 
-    assert tool.get_real_id(source_string) == expected_ids["real"]
-    assert tool.get_step_id(source_string) == expected_ids["step"]
-    assert tool.get_job_id(source_string) == expected_ids["job"]
+    assert _get_real_id(source_string) == expected_ids["real"]
+    assert _get_step_id(source_string) == expected_ids["step"]
+    assert _get_job_id(source_string) == expected_ids["job"]
 
 
 def test_update_partial_from_multiple_cloudevents(snapshot):

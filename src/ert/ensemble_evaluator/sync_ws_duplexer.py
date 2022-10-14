@@ -11,7 +11,7 @@ from cloudevents.http import CloudEvent
 from websockets.client import WebSocketClientProtocol  # type: ignore
 from websockets.datastructures import Headers
 
-import ert.ensemble_evaluator
+from ._wait_for_evaluator import wait_for_evaluator
 
 
 class SyncWebsocketDuplexer:
@@ -73,7 +73,7 @@ class SyncWebsocketDuplexer:
             max_queue=500,
         )
 
-        await ert.ensemble_evaluator.wait_for_evaluator(
+        await wait_for_evaluator(
             base_url=self._hc_uri,
             token=self._token,
             cert=self._cert,

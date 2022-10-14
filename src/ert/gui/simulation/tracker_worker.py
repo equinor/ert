@@ -3,11 +3,7 @@ from typing import Callable, Iterator, Union
 
 from qtpy.QtCore import QObject, Signal, Slot
 
-from ert.ensemble_evaluator.event import (
-    EndEvent,
-    FullSnapshotEvent,
-    SnapshotUpdateEvent,
-)
+from ert.ensemble_evaluator import EndEvent, FullSnapshotEvent, SnapshotUpdateEvent
 from ert.gui.model.snapshot import SnapshotModel
 
 logger = logging.getLogger(__name__)

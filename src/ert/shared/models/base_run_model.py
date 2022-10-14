@@ -6,6 +6,7 @@ import uuid
 from abc import abstractmethod
 from contextlib import contextmanager
 from functools import singledispatchmethod
+from pathlib import Path
 from typing import Any, Dict, Iterator, List, Optional, Union
 
 from cloudevents.http import CloudEvent
@@ -13,12 +14,18 @@ from cloudevents.http import CloudEvent
 import _ert_com_protocol
 from ert._c_wrappers.enkf import EnKFMain, QueueConfig
 from ert._c_wrappers.enkf.ert_run_context import RunContext
+from ert._c_wrappers.enkf.model_callbacks import forward_model_exit
 from ert._c_wrappers.job_queue import ForwardModel, RunStatusType
-from ert.ensemble_evaluator import Ensemble, EnsembleBuilder
-from ert.ensemble_evaluator.config import EvaluatorServerConfig
-from ert.ensemble_evaluator.evaluator import EnsembleEvaluator
-from ert.ensemble_evaluator.util._tool import get_real_id
-from ert.experiment_server import ExperimentStateMachine
+from ert.ensemble_evaluator import (
+    Ensemble,
+    EnsembleBuilder,
+    EnsembleEvaluator,
+    EvaluatorServerConfig,
+    LegacyJobBuilder,
+    RealizationBuilder,
+    StepBuilder,
+    forward_model_ok,
+)
 from ert.libres_facade import LibresFacade
 from ert.shared.feature_toggling import feature_enabled
 from ert.shared.storage.extraction import (
@@ -308,18 +315,7 @@ class BaseRunModel:
     def run_ensemble_evaluator(
         self, run_context: RunContext, ee_config: EvaluatorServerConfig
     ) -> int:
-        ensemble = (
-            EnsembleBuilder.from_legacy(
-                run_context,
-                self.get_forward_model(),
-                self._queue_config,
-                self.ert().analysisConfig(),
-                self.ert().resConfig(),
-                self.ert().get_num_cpu(),
-            )
-            .set_id(str(uuid.uuid1()).split("-", maxsplit=1)[0])
-            .build()
-        )
+        ensemble = self._build_ensemble(run_context)
 
         self.ert().initRun(run_context)
 
@@ -344,6 +340,56 @@ class BaseRunModel:
                 ):
                     run_context.deactivate_realization(iens)
 
+    def _build_ensemble(
+        self,
+        run_context: RunContext,
+    ) -> "Ensemble":
+        builder = EnsembleBuilder().set_legacy_dependencies(
+            self._queue_config,
+            self.ert().analysisConfig(),
+        )
+
+        for iens, run_arg in enumerate(run_context):
+            active = run_context.is_active(iens)
+            real = RealizationBuilder().set_iens(iens).active(active)
+            step = StepBuilder().set_id("0").set_dummy_io().set_name("legacy step")
+            if active:
+                real.active(True).add_step(step)
+                for index in range(0, len(self.get_forward_model())):
+                    ext_job = self.get_forward_model().iget_job(index)
+                    step.add_job(
+                        LegacyJobBuilder()
+                        .set_id(str(index))
+                        .set_index(str(index))
+                        .set_name(ext_job.name())
+                        .set_ext_job(ext_job)  # type: ignore
+                    )
+                step.set_max_runtime(
+                    self.ert().analysisConfig().get_max_runtime()
+                ).set_callback_arguments(
+                    (
+                        run_arg,
+                        self.ert().resConfig().ensemble_config,
+                        self.ert().resConfig().model_config,
+                    )
+                ).set_done_callback(
+                    lambda x: forward_model_ok(*x)
+                ).set_exit_callback(
+                    forward_model_exit
+                ).set_num_cpu(
+                    self.ert().get_num_cpu()
+                ).set_run_path(
+                    Path(run_arg.runpath)
+                ).set_job_script(
+                    self.ert().resConfig().queue_config.job_script
+                ).set_job_name(
+                    run_arg.job_name
+                ).set_run_arg(
+                    run_arg
+                )
+            builder.add_realization(real)
+        return builder.set_id(str(uuid.uuid1()).split("-", maxsplit=1)[0]).build()
+
     async def _evaluate(
         self, run_context: RunContext, ee_config: EvaluatorServerConfig
     ) -> None:
@@ -351,18 +397,7 @@ class BaseRunModel:
         experiment_logger.debug("_evaluate")
         loop = asyncio.get_running_loop()
         experiment_logger.debug("building...")
-        ensemble = (
-            EnsembleBuilder.from_legacy(
-                run_context,
-                self.get_forward_model(),
-                self._queue_config,
-                self.ert().analysisConfig(),
-                self.ert().resConfig(),
-                self.ert().get_num_cpu(),
-            )
-            .set_id(str(uuid.uuid1()).split("-", maxsplit=1)[0])
-            .build()
-        )
+        ensemble = self._build_ensemble(run_context)
         self._iter_map[run_context.iteration] = ensemble.id_
         experiment_logger.debug("built")
 

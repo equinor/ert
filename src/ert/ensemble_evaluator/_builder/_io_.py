@@ -1,5 +1,5 @@
 import logging
-from typing import TYPE_CHECKING, Dict, Optional, Type, TypeVar, cast
+from typing import TYPE_CHECKING, Dict, Optional, Type, cast
 
 from ert.data import TransformationDirection
 
@@ -10,10 +10,7 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-_IOBuilder_TV = TypeVar("_IOBuilder_TV", bound="_IOBuilder")
-
-
-class _IO:
+class IO:
     def __init__(
         self,
         name: str,
@@ -23,20 +20,20 @@ class _IO:
         self.name = name
 
 
-class _DummyIO(_IO):
+class DummyIO(IO):
     pass
 
 
-class _Input(_IO):
+class _Input(IO):
     pass
 
 
-class _Output(_IO):
+class _Output(IO):
     pass
 
 
-class _IOBuilder:
-    _concrete_cls: Optional[Type[_IO]] = None
+class IOBuilder:
+    _concrete_cls: Optional[Type[IO]] = None
 
     _TRANSMITTER_FACTORY_ALL = -1
 
@@ -45,13 +42,13 @@ class _IOBuilder:
         self._transformation: Optional["ert.data.RecordTransformation"] = None
         self._transmitter_factories: Dict[int, "ert.data.transmitter_factory"] = {}
 
-    def set_name(self: _IOBuilder_TV, name: str) -> _IOBuilder_TV:
+    def set_name(self: "IOBuilder", name: str) -> "IOBuilder":
         self._name = name
         return self
 
     def set_transformation(
         self, transformation: "ert.data.RecordTransformation"
-    ) -> "_IOBuilder":
+    ) -> "IOBuilder":
         # Validate that a transformation can transform in the required direction.
         # The constraints are in tuple form: (IO type, required direction).
         constraints = (
@@ -72,7 +69,7 @@ class _IOBuilder:
 
     def set_transmitter_factory(
         self, factory: "ert.data.transmitter_factory", index: Optional[int] = None
-    ) -> "_IOBuilder":
+    ) -> "IOBuilder":
         """Fix the transmitter factory for this IO to index if index is >= 0. If the
         index is omitted or is < 0, it the factory will be called for all indices not
         fixed to an index. So either one transmitter factory is used for all indices
@@ -99,9 +96,9 @@ class _IOBuilder:
             return self._transmitter_factories[self._TRANSMITTER_FACTORY_ALL]
         return self._transmitter_factories[index]
 
-    def build(self) -> _IO:
+    def build(self) -> IO:
         if self._concrete_cls is None:
-            raise TypeError("cannot build _IO")
+            raise TypeError("cannot build IO")
         if self._name is None:
             raise ValueError("missing name for IO")
         return self._concrete_cls(  # pylint: disable=not-callable
@@ -109,17 +106,17 @@ class _IOBuilder:
         )
 
 
-class _DummyIOBuilder(_IOBuilder):
-    _concrete_cls = _DummyIO
+class DummyIOBuilder(IOBuilder):
+    _concrete_cls = DummyIO
 
-    def build(self) -> _DummyIO:
+    def build(self) -> DummyIO:
         super().set_name("dummy i/o")
-        return cast(_DummyIO, super().build())
+        return cast(DummyIO, super().build())
 
 
-class _InputBuilder(_IOBuilder):
+class InputBuilder(IOBuilder):
     _concrete_cls = _Input
 
 
-class _OutputBuilder(_IOBuilder):
+class OutputBuilder(IOBuilder):
     _concrete_cls = _Output

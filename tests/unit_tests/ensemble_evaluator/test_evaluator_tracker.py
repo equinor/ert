@@ -308,9 +308,7 @@ def test_tracking_progress(
         use_token=False,
         generate_cert=False,
     )
-    with patch(
-        "ert.ensemble_evaluator.tracker.evaluator_tracker.create_ee_monitor"
-    ) as mock_ee:
+    with patch("ert.ensemble_evaluator.evaluator_tracker.Monitor") as mock_ee:
         mock_ee.return_value.__enter__.return_value = make_mock_ee_monitor(
             monitor_events.copy()
         )

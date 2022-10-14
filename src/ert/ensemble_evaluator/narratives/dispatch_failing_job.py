@@ -1,9 +1,6 @@
 from ert.ensemble_evaluator import identifiers
-from ert.ensemble_evaluator.narratives.narrative import (
-    Consumer,
-    EventDescription,
-    Provider,
-)
+
+from .narrative import Consumer, EventDescription, Provider
 
 
 def dispatch_failing_job():

@@ -9,20 +9,12 @@ from aiohttp import ClientError
 from websockets.exceptions import ConnectionClosedError
 
 from ert.async_utils import get_event_loop
-from ert.ensemble_evaluator.evaluator_connection_info import EvaluatorConnectionInfo
-from ert.ensemble_evaluator.event import (
-    EndEvent,
-    FullSnapshotEvent,
-    SnapshotUpdateEvent,
-)
 from ert.ensemble_evaluator.identifiers import (
     EVTYPE_EE_SNAPSHOT,
     EVTYPE_EE_SNAPSHOT_UPDATE,
     EVTYPE_EE_TERMINATED,
     STATUS,
 )
-from ert.ensemble_evaluator.monitor import create as create_ee_monitor
-from ert.ensemble_evaluator.snapshot import PartialSnapshot, Snapshot
 from ert.ensemble_evaluator.state import (
     ENSEMBLE_STATE_CANCELLED,
     ENSEMBLE_STATE_FAILED,
@@ -30,7 +22,12 @@ from ert.ensemble_evaluator.state import (
     REALIZATION_STATE_FAILED,
     REALIZATION_STATE_FINISHED,
 )
-from ert.ensemble_evaluator.util._network import wait_for_evaluator
+
+from ._wait_for_evaluator import wait_for_evaluator
+from .evaluator_connection_info import EvaluatorConnectionInfo
+from .event import EndEvent, FullSnapshotEvent, SnapshotUpdateEvent
+from .monitor import Monitor
+from .snapshot import PartialSnapshot, Snapshot
 
 if TYPE_CHECKING:
     from cloudevents.http.event import CloudEvent
@@ -68,7 +65,7 @@ class EvaluatorTracker:
         while not self._model.isFinished():
             try:
                 drainer_logger.debug("connecting to new monitor...")
-                with create_ee_monitor(self._ee_con_info) as monitor:
+                with Monitor(self._ee_con_info) as monitor:
                     drainer_logger.debug("connected")
                     for event in monitor.track():
                         if event["type"] in (
@@ -235,7 +232,7 @@ class EvaluatorTracker:
             logger.warning(f"{__name__} - exception {e}")
             return
 
-        with create_ee_monitor(self._ee_con_info) as monitor:
+        with Monitor(self._ee_con_info) as monitor:
             monitor.signal_cancel()
         while self._drainer_thread.is_alive():
             self._clear_work_queue()

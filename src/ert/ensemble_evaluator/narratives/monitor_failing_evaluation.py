@@ -2,12 +2,8 @@ import re
 
 from ert import serialization
 from ert.ensemble_evaluator import identifiers, state
-from ert.ensemble_evaluator.narratives.narrative import (
-    Consumer,
-    EventDescription,
-    Provider,
-    ReMatch,
-)
+
+from .narrative import Consumer, EventDescription, Provider, ReMatch
 
 
 def monitor_failing_evaluation():

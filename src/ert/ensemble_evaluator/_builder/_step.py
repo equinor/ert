@@ -1,44 +1,28 @@
 from itertools import chain
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Callable, List, Optional, Sequence, Tuple, Union
+from typing import Any, Callable, List, Optional, Sequence, Tuple, Union
 
 from ert._c_wrappers.enkf import RunArg
 
 from ._function_task import FunctionTask
-from ._io_ import (
-    _IO,
-    _DummyIO,
-    _DummyIOBuilder,
-    _InputBuilder,
-    _IOBuilder,
-    _OutputBuilder,
-)
+from ._io_ import IO, DummyIO, DummyIOBuilder, InputBuilder, IOBuilder, OutputBuilder
 from ._io_map import _stage_transmitter_mapping
-from ._job import (
-    _BaseJob,
-    _FunctionJob,
-    _JobBuilder,
-    _LegacyJob,
-    _LegacyJobBuilder,
-    _UnixJob,
-)
-from ._stage import _Stage, _StageBuilder
-from ._template import _SOURCE_TEMPLATE_STEP
+from ._job import BaseJob, FunctionJob, JobBuilder, LegacyJob, LegacyJobBuilder, UnixJob
+from ._stage import Stage, StageBuilder
 from ._unix_task import UnixTask
 
-if TYPE_CHECKING:
-    import ert
+SOURCE_TEMPLATE_STEP = "/step/{step_id}"
 
 callback = Callable[[List[Any]], Union[bool, Tuple[Any, str]]]
 
 
-class _Step(_Stage):
+class Step(Stage):
     def __init__(  # pylint: disable=too-many-arguments
         self,
         id_: str,
-        inputs: Sequence[_IO],
-        outputs: Sequence[_IO],
-        jobs: Sequence[_BaseJob],
+        inputs: Sequence[IO],
+        outputs: Sequence[IO],
+        jobs: Sequence[BaseJob],
         name: str,
         source: str,
     ) -> None:
@@ -50,13 +34,13 @@ class _Step(_Stage):
         return self._source
 
 
-class _UnixStep(_Step):
+class UnixStep(Step):
     def __init__(  # pylint: disable=too-many-arguments
         self,
         id_: str,
-        inputs: Sequence[_IO],
-        outputs: Sequence[_IO],
-        jobs: Sequence[_BaseJob],
+        inputs: Sequence[IO],
+        outputs: Sequence[IO],
+        jobs: Sequence[BaseJob],
         name: str,
         source: str,
         run_path: Optional[Path] = None,
@@ -76,7 +60,7 @@ class _UnixStep(_Step):
         )
 
 
-class _FunctionStep(_Step):
+class FunctionStep(Step):
     def get_task(
         self,
         output_transmitters: _stage_transmitter_mapping,
@@ -87,13 +71,13 @@ class _FunctionStep(_Step):
         return FunctionTask(self, output_transmitters, ens_id, *args, **kwargs)
 
 
-class _LegacyStep(_Step):  # pylint: disable=too-many-instance-attributes
+class LegacyStep(Step):  # pylint: disable=too-many-instance-attributes
     def __init__(  # pylint: disable=too-many-arguments
         self,
         id_: str,
-        inputs: Sequence[_IO],
-        outputs: Sequence[_IO],
-        jobs: Sequence[_LegacyJob],
+        inputs: Sequence[IO],
+        outputs: Sequence[IO],
+        jobs: Sequence[LegacyJob],
         name: str,
         ee_url: str,
         source: str,
@@ -121,10 +105,10 @@ class _LegacyStep(_Step):  # pylint: disable=too-many-instance-attributes
         self.run_arg = run_arg
 
 
-class _StepBuilder(_StageBuilder):  # pylint: disable=too-many-instance-attributes
+class StepBuilder(StageBuilder):  # pylint: disable=too-many-instance-attributes
     def __init__(self) -> None:
         super().__init__()
-        self._jobs: List[Union[_JobBuilder, _LegacyJobBuilder]] = []
+        self._jobs: List[Union[JobBuilder, LegacyJobBuilder]] = []
         self._type: Optional[str] = None
         self._parent_source: Optional[str] = None
 
@@ -139,94 +123,94 @@ class _StepBuilder(_StageBuilder):  # pylint: disable=too-many-instance-attribut
         self._job_name: Optional[str] = None
         self._run_arg: Optional[RunArg] = None
 
-    def set_id(self, id_: str) -> "_StepBuilder":
+    def set_id(self, id_: str) -> "StepBuilder":
         super().set_id(id_)
         return self
 
-    def set_name(self, name: str) -> "_StepBuilder":
+    def set_name(self, name: str) -> "StepBuilder":
         super().set_name(name)
         return self
 
-    def add_output(self, output: _IOBuilder) -> "_StepBuilder":
-        if isinstance(output, _InputBuilder):
+    def add_output(self, output: IOBuilder) -> "StepBuilder":
+        if isinstance(output, InputBuilder):
             raise TypeError(f"adding input '{output._name}' as output")
         super().add_output(output)
         return self
 
-    def add_input(self, input_: _IOBuilder) -> "_StepBuilder":
-        if isinstance(input_, _OutputBuilder):
+    def add_input(self, input_: IOBuilder) -> "StepBuilder":
+        if isinstance(input_, OutputBuilder):
             raise TypeError(f"adding output '{input_._name}' as input")
         super().add_input(input_)
         return self
 
-    def set_type(self, type_: str) -> "_StepBuilder":
+    def set_type(self, type_: str) -> "StepBuilder":
         self._type = type_
         return self
 
-    def set_parent_source(self, source: str) -> "_StepBuilder":
+    def set_parent_source(self, source: str) -> "StepBuilder":
         self._parent_source = source
         return self
 
-    def add_job(self, job: Union[_JobBuilder, _LegacyJobBuilder]) -> "_StepBuilder":
+    def add_job(self, job: Union[JobBuilder, LegacyJobBuilder]) -> "StepBuilder":
         self._jobs.append(job)
         return self
 
-    def set_max_runtime(self, max_runtime: Optional[int]) -> "_StepBuilder":
+    def set_max_runtime(self, max_runtime: Optional[int]) -> "StepBuilder":
         if max_runtime and max_runtime > 0:
             self._max_runtime = max_runtime
         return self
 
     def set_callback_arguments(
         self, callback_arguments: Sequence[Any]
-    ) -> "_StepBuilder":
+    ) -> "StepBuilder":
         self._callback_arguments = callback_arguments
         return self
 
-    def set_done_callback(self, done_callback: callback) -> "_StepBuilder":
+    def set_done_callback(self, done_callback: callback) -> "StepBuilder":
         self._done_callback = done_callback
         return self
 
-    def set_exit_callback(self, exit_callback: callback) -> "_StepBuilder":
+    def set_exit_callback(self, exit_callback: callback) -> "StepBuilder":
         self._exit_callback = exit_callback
         return self
 
-    def set_num_cpu(self, num_cpu: int) -> "_StepBuilder":
+    def set_num_cpu(self, num_cpu: int) -> "StepBuilder":
         self._num_cpu = num_cpu
         return self
 
-    def set_run_path(self, run_path: Path) -> "_StepBuilder":
+    def set_run_path(self, run_path: Path) -> "StepBuilder":
         self._run_path = run_path
         return self
 
-    def set_job_script(self, job_script: str) -> "_StepBuilder":
+    def set_job_script(self, job_script: str) -> "StepBuilder":
         self._job_script = job_script
         return self
 
-    def set_job_name(self, job_name: str) -> "_StepBuilder":
+    def set_job_name(self, job_name: str) -> "StepBuilder":
         self._job_name = job_name
         return self
 
-    def set_run_arg(self, run_arg: RunArg) -> "_StepBuilder":
+    def set_run_arg(self, run_arg: RunArg) -> "StepBuilder":
         self._run_arg = run_arg
         return self
 
-    def set_dummy_io(self) -> "_StepBuilder":
-        self.add_input(_DummyIOBuilder())
-        self.add_output(_DummyIOBuilder())
+    def set_dummy_io(self) -> "StepBuilder":
+        self.add_input(DummyIOBuilder())
+        self.add_output(DummyIOBuilder())
         return self
 
     # pylint: disable=too-many-branches
-    def build(self) -> Union[_LegacyStep, _FunctionStep, _UnixStep]:
+    def build(self) -> Union[LegacyStep, FunctionStep, UnixStep]:
         stage = super().build()
         if not self._parent_source:
             raise ValueError(f"need parent_source for {self._name}")
-        source = self._parent_source + _SOURCE_TEMPLATE_STEP.format(step_id=stage.id_)
+        source = self._parent_source + SOURCE_TEMPLATE_STEP.format(step_id=stage.id_)
 
         # only legacy has _run_arg, so assume it is a legacy step
         if self._run_arg:
-            legacy_jobs: List[_LegacyJob] = []
+            legacy_jobs: List[LegacyJob] = []
             for builder in self._jobs:
-                if isinstance(builder, _LegacyJobBuilder):
+                if isinstance(builder, LegacyJobBuilder):
                     legacy_jobs.append(builder.set_parent_source(source).build())
             if self._callback_arguments is None:
                 raise ValueError(f"{self} needs callback_arguments")
@@ -245,7 +229,7 @@ class _StepBuilder(_StageBuilder):  # pylint: disable=too-many-instance-attribut
             if self._run_arg is None:
                 raise ValueError(f"{self} needs run_arg")
 
-            return _LegacyStep(
+            return LegacyStep(
                 stage.id_,
                 stage.inputs,
                 stage.outputs,
@@ -264,13 +248,13 @@ class _StepBuilder(_StageBuilder):  # pylint: disable=too-many-instance-attribut
                 self._run_arg,
             )
         if self._type == "function":
-            function_jobs: List[_FunctionJob] = []
+            function_jobs: List[FunctionJob] = []
             for builder in self._jobs:
                 job = builder.set_parent_source(source).build()
-                if isinstance(job, _FunctionJob):
+                if isinstance(job, FunctionJob):
                     function_jobs.append(job)
 
-            return _FunctionStep(
+            return FunctionStep(
                 stage.id_,
                 stage.inputs,
                 stage.outputs,
@@ -281,7 +265,7 @@ class _StepBuilder(_StageBuilder):  # pylint: disable=too-many-instance-attribut
         elif self._type == "unix":
             for io_ in chain(stage.inputs, stage.outputs):
                 # dummy io are used for legacy ensembles can not transform
-                if isinstance(io_, _DummyIO):
+                if isinstance(io_, DummyIO):
                     continue
 
                 if not io_.transformation:
@@ -289,13 +273,13 @@ class _StepBuilder(_StageBuilder):  # pylint: disable=too-many-instance-attribut
                         f"cannot build {self._type} step: {io_} has no transformation"
                     )
 
-            unix_jobs: List[_UnixJob] = []
+            unix_jobs: List[UnixJob] = []
             for builder in self._jobs:
                 job = builder.set_parent_source(source).build()
-                if isinstance(job, _UnixJob):
+                if isinstance(job, UnixJob):
                     unix_jobs.append(job)
 
-            return _UnixStep(
+            return UnixStep(
                 stage.id_,
                 stage.inputs,
                 stage.outputs,

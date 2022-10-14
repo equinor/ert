@@ -2,7 +2,7 @@ import pytest
 from PyQt5.QtCore import QModelIndex
 from pytestqt.qt_compat import qt_api
 
-from ert.ensemble_evaluator.snapshot import PartialSnapshot, Realization
+from ert.ensemble_evaluator.snapshot import PartialSnapshot, RealizationSnapshot
 from ert.ensemble_evaluator.state import (
     REALIZATION_STATE_FINISHED,
     REALIZATION_STATE_UNKNOWN,
@@ -51,7 +51,7 @@ def test_progression(full_snapshot):
     }
 
     partial = PartialSnapshot(full_snapshot)
-    partial.update_real("0", Realization(status=REALIZATION_STATE_FINISHED))
+    partial.update_real("0", RealizationSnapshot(status=REALIZATION_STATE_FINISHED))
     source_model._add_partial_snapshot(SnapshotModel.prerender(partial), 0)
 
     assert model.data(model.index(0, 0, QModelIndex()), ProgressRole) == {
@@ -78,7 +78,7 @@ def test_progression_start_iter_not_zero(full_snapshot):
     }
 
     partial = PartialSnapshot(full_snapshot)
-    partial.update_real("0", Realization(status=REALIZATION_STATE_FINISHED))
+    partial.update_real("0", RealizationSnapshot(status=REALIZATION_STATE_FINISHED))
     source_model._add_partial_snapshot(SnapshotModel.prerender(partial), 1)
 
     assert model.data(model.index(0, 0, QModelIndex()), ProgressRole) == {

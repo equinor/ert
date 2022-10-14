@@ -8,8 +8,7 @@ from ert._c_wrappers.enkf.node_id import NodeId
 from ert._c_wrappers.enkf.state_map import RealizationStateEnum
 
 if TYPE_CHECKING:
-    import ert
-    from ert._c_wrappers.enkf import EclConfig, EnsembleConfig, ModelConfig, RunArg
+    from ert._c_wrappers.enkf import EnsembleConfig, ModelConfig, RunArg
 
 
 def _ensemble_config_forward_init(
@@ -48,7 +47,7 @@ def _ensemble_config_forward_init(
     return (result, error_msg)
 
 
-def _forward_model_ok(
+def forward_model_ok(
     run_arg: "RunArg",
     ens_conf: "EnsembleConfig",
     model_conf: "ModelConfig",

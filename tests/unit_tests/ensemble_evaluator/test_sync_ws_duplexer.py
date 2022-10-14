@@ -70,7 +70,7 @@ def test_immediate_stop(unused_tcp_port, ws):
 
 
 def test_failed_connection():
-    with patch("ert.ensemble_evaluator.wait_for_evaluator") as w:
+    with patch("ert.ensemble_evaluator.sync_ws_duplexer.wait_for_evaluator") as w:
         w.side_effect = OSError("expected OSError")
         with pytest.raises(OSError, match="expected OSError"):
             SyncWebsocketDuplexer("ws://localhost:0", "http://localhost:0", None, None)

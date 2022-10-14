@@ -6,9 +6,10 @@ from websockets.exceptions import ConnectionClosedError
 from websockets.version import version as websockets_version
 
 from _ert_job_runner.client import Client
-from ert.ensemble_evaluator import Snapshot, identifiers, wait_for_evaluator
-from ert.ensemble_evaluator.evaluator import EnsembleEvaluator, ee_monitor
-from ert.ensemble_evaluator.monitor import _Monitor
+from ert.ensemble_evaluator import Snapshot, identifiers
+from ert.ensemble_evaluator._wait_for_evaluator import wait_for_evaluator
+from ert.ensemble_evaluator.evaluator import EnsembleEvaluator
+from ert.ensemble_evaluator.monitor import Monitor
 from ert.ensemble_evaluator.narratives import (
     dispatch_failing_job,
     monitor_failing_ensemble,
@@ -40,7 +41,6 @@ def test_dispatchers_can_connect_and_monitor_can_shut_down_evaluator(evaluator):
         url = evaluator._config.url
         # first snapshot before any event occurs
         snapshot_event = next(events)
-        print(snapshot_event)
         snapshot = Snapshot(snapshot_event.data)
         assert snapshot.status == ENSEMBLE_STATE_UNKNOWN
         # two dispatchers connect
@@ -101,7 +101,7 @@ def test_dispatchers_can_connect_and_monitor_can_shut_down_evaluator(evaluator):
             assert snapshot.get_job("1", "0", "1").status == JOB_STATE_FAILURE
 
         # a second monitor connects
-        with ee_monitor.create(evaluator._config.get_connection_info()) as monitor2:
+        with Monitor(evaluator._config.get_connection_info()) as monitor2:
             events2 = monitor2.track()
             full_snapshot_event = next(events2)
             assert full_snapshot_event["type"] == identifiers.EVTYPE_EE_SNAPSHOT
@@ -316,7 +316,7 @@ def test_ens_eval_run_and_get_successful_realizations_connection_refused_no_reco
     ee = EnsembleEvaluator(ensemble, ee_config, 0)
 
     with patch.object(
-        _Monitor, "track", side_effect=ConnectionRefusedError("Connection error")
+        Monitor, "track", side_effect=ConnectionRefusedError("Connection error")
     ) as mock:
         num_successful = ee.run_and_get_successful_realizations()
         assert mock.call_count == 3
@@ -329,7 +329,7 @@ def test_ens_eval_run_and_get_successful_realizations_timeout(make_ee_config):
     ee = EnsembleEvaluator(ensemble, ee_config, 0)
 
     with patch.object(
-        _Monitor, "track", side_effect=ServerTimeoutError("timed out")
+        Monitor, "track", side_effect=ServerTimeoutError("timed out")
     ) as mock:
         num_successful = ee.run_and_get_successful_realizations()
         assert mock.call_count == 3
@@ -368,7 +368,7 @@ def test_recover_from_failure_in_run_and_get_successful_realizations(
         ensemble.addFailJob(real=i, step=0, job=1)
     ee = EnsembleEvaluator(ensemble, ee_config, 0)
     with patch.object(
-        _Monitor,
+        Monitor,
         "track",
         side_effect=[get_connection_closed_exception()] * 2
         + [ConnectionRefusedError("Connection error")]
@@ -397,7 +397,7 @@ def test_exhaust_retries_in_run_and_get_successful_realizations(
         ensemble.addFailJob(real=i, step=0, job=1)
     ee = EnsembleEvaluator(ensemble, ee_config, 0)
     with patch.object(
-        _Monitor,
+        Monitor,
         "track",
         side_effect=[get_connection_closed_exception()] * 2
         + [ConnectionRefusedError("Connection error")]

@@ -14,6 +14,8 @@ import ert
 import ert.ensemble_evaluator as ee
 from _ert_job_runner.client import Client
 from ert.async_utils import get_event_loop
+from ert.ensemble_evaluator._builder import InputBuilder, OutputBuilder
+from ert.ensemble_evaluator._builder._job import JobBuilder
 from ert.ensemble_evaluator.config import EvaluatorServerConfig
 
 from ..ensemble_evaluator_utils import _mock_ws
@@ -101,7 +103,7 @@ def get_degree_step(
 
     input_name = f"generate_{degree_spelled}_degree"
     step_builder.add_input(
-        ee.InputBuilder()
+        InputBuilder()
         .set_name(input_name)
         .set_transformation(
             ert.data.ExecutableTransformation(
@@ -119,7 +121,7 @@ def get_degree_step(
     )
 
     coeffs_input = (
-        ee.InputBuilder()
+        InputBuilder()
         .set_name("coeffs")
         .set_transformation(
             ert.data.SerializationTransformation(
@@ -134,7 +136,7 @@ def get_degree_step(
 
     output_name = f"input{degree}"
     step_builder.add_output(
-        ee.OutputBuilder()
+        OutputBuilder()
         .set_name(output_name)
         .set_transformation(
             ert.data.SerializationTransformation(
@@ -144,7 +146,7 @@ def get_degree_step(
         .set_transmitter_factory(partial(transmitter_factory, output_name))
     )
     step_builder.add_job(
-        ee.JobBuilder()
+        JobBuilder()
         .set_index("0")
         .set_name(f"generate_{degree_spelled}_degree")
         .set_executable(Path("evaluate_coeffs.py"))
@@ -164,7 +166,7 @@ def zero_degree_step(transmitter_factory, test_data_path, coefficients):
     )
 
     step_builder.add_input(
-        ee.InputBuilder()
+        InputBuilder()
         .set_name("input2")
         .set_transformation(
             ert.data.SerializationTransformation(
@@ -202,7 +204,7 @@ def second_degree_step(transmitter_factory, test_data_path, coefficients):
 def sum_coeffs_step(test_data_path, transmitter_factory):
     step_builder = ee.StepBuilder().set_name("add_coeffs").set_type("unix")
     step_builder.add_input(
-        ee.InputBuilder()
+        InputBuilder()
         .set_name("sum_up")
         .set_transformation(
             ert.data.ExecutableTransformation(
@@ -220,7 +222,7 @@ def sum_coeffs_step(test_data_path, transmitter_factory):
     )
 
     step_builder.add_input(
-        ee.InputBuilder()
+        InputBuilder()
         .set_name("input0")
         .set_transformation(
             ert.data.SerializationTransformation(
@@ -231,7 +233,7 @@ def sum_coeffs_step(test_data_path, transmitter_factory):
     )
 
     step_builder.add_input(
-        ee.InputBuilder()
+        InputBuilder()
         .set_name("input1")
         .set_transformation(
             ert.data.SerializationTransformation(
@@ -242,7 +244,7 @@ def sum_coeffs_step(test_data_path, transmitter_factory):
     )
 
     step_builder.add_input(
-        ee.InputBuilder()
+        InputBuilder()
         .set_name("input2")
         .set_transformation(
             ert.data.SerializationTransformation(
@@ -253,7 +255,7 @@ def sum_coeffs_step(test_data_path, transmitter_factory):
     )
 
     step_builder.add_output(
-        ee.OutputBuilder()
+        OutputBuilder()
         .set_name("sum_output")
         .set_transformation(
             ert.data.SerializationTransformation(
@@ -264,7 +266,7 @@ def sum_coeffs_step(test_data_path, transmitter_factory):
     )
 
     step_builder.add_job(
-        ee.JobBuilder()
+        JobBuilder()
         .set_index("0")
         .set_name("sum_up")
         .set_executable(Path("sum_coeffs.py"))
@@ -312,12 +314,12 @@ def function_ensemble_builder_factory(
     transmitter_factory,
     coefficients,
 ):
-    job_builder = ee.JobBuilder().set_name("user_defined_function").set_index("0")
+    job_builder = JobBuilder().set_name("user_defined_function").set_index("0")
 
     step_builder = ee.StepBuilder().set_name("function_evaluation").set_type("function")
 
     coeffs_input = (
-        ee.InputBuilder()
+        InputBuilder()
         .set_name("coeffs")
         .set_transformation(
             ert.data.SerializationTransformation(
@@ -332,7 +334,7 @@ def function_ensemble_builder_factory(
     step_builder.add_input(coeffs_input)
 
     step_builder.add_output(
-        ee.OutputBuilder()
+        OutputBuilder()
         .set_name("function_output")
         .set_transformation(
             ert.data.SerializationTransformation(

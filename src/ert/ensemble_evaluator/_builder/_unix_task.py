@@ -21,12 +21,12 @@ from ert.ensemble_evaluator.identifiers import (
 )
 
 from ._io_map import _stage_transmitter_mapping
-from ._job import _UnixJob
+from ._job import UnixJob
 
 if TYPE_CHECKING:
     import ert
 
-    from ._step import _Step
+    from ._step import Step
 
 _BIN_FOLDER = "bin"
 
@@ -56,7 +56,7 @@ def create_runpath(path: Optional[Path] = None) -> Iterator[Path]:
 class UnixTask(prefect.Task):  # type: ignore
     def __init__(
         self,
-        step: "_Step",
+        step: "Step",
         output_transmitters: _stage_transmitter_mapping,
         ens_id: str,
         *args: Any,
@@ -69,7 +69,7 @@ class UnixTask(prefect.Task):  # type: ignore
         self._ens_id = ens_id
         self._run_path = run_path
 
-    def run_job(self, job: _UnixJob, run_path: Path) -> None:
+    def run_job(self, job: UnixJob, run_path: Path) -> None:
         shell_cmd = [job.executable.as_posix()]
         if job.args:
             shell_cmd += [os.path.expandvars(arg) for arg in job.args]
@@ -108,7 +108,7 @@ class UnixTask(prefect.Task):  # type: ignore
                 EVTYPE_FM_JOB_START,
                 job.source(),
             )
-            if not isinstance(job, _UnixJob):
+            if not isinstance(job, UnixJob):
                 raise TypeError(f"unexpected job {type(job)} in unix task")
             self.run_job(job, run_path)
             _send_event(

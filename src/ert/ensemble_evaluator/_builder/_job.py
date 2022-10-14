@@ -1,18 +1,15 @@
 import pickle
 import uuid
 from pathlib import Path
-from typing import Any, Callable, List, Optional, Tuple, TypeVar, Union
+from typing import Any, Callable, List, Optional, Tuple, Union
 
 from ert._c_wrappers.job_queue.ext_job import ExtJob
 
-from ._template import _SOURCE_TEMPLATE_JOB
-
-_BaseJobBuilder_TV = TypeVar("_BaseJobBuilder_TV", bound="_BaseJobBuilder")
-
+SOURCE_TEMPLATE_JOB = "/job/{job_id}/index/{job_index}"
 _callable_or_path = Union[bytes, Path]
 
 
-class _BaseJob:
+class BaseJob:
     def __init__(self, id_: str, index: str, name: str, source: str) -> None:
         self.id_ = id_
         self.name = name
@@ -23,7 +20,7 @@ class _BaseJob:
         return self._source
 
 
-class _UnixJob(_BaseJob):
+class UnixJob(BaseJob):
     def __init__(  # pylint: disable=too-many-arguments
         self,
         id_: str,
@@ -38,7 +35,7 @@ class _UnixJob(_BaseJob):
         self.args = args
 
 
-class _FunctionJob(_BaseJob):
+class FunctionJob(BaseJob):
     # pylint: disable=too-many-arguments
     # index is required by job sorting for gui
     def __init__(
@@ -53,7 +50,7 @@ class _FunctionJob(_BaseJob):
         self.command = command
 
 
-class _LegacyJob(_BaseJob):
+class LegacyJob(BaseJob):
     def __init__(
         self,
         id_: str,
@@ -65,48 +62,48 @@ class _LegacyJob(_BaseJob):
         self.ext_job = ext_job
 
 
-class _BaseJobBuilder:
+class BaseJobBuilder:
     def __init__(self) -> None:
         self._id: Optional[str] = None
         self._index: Optional[str] = None
         self._name: Optional[str] = None
         self._parent_source: Optional[str] = None
 
-    def set_id(self: _BaseJobBuilder_TV, id_: str) -> _BaseJobBuilder_TV:
+    def set_id(self: "BaseJobBuilder", id_: str) -> "BaseJobBuilder":
         self._id = id_
         return self
 
-    def set_parent_source(self: _BaseJobBuilder_TV, source: str) -> _BaseJobBuilder_TV:
+    def set_parent_source(self: "BaseJobBuilder", source: str) -> "BaseJobBuilder":
         self._parent_source = source
         return self
 
-    def set_name(self: _BaseJobBuilder_TV, name: str) -> _BaseJobBuilder_TV:
+    def set_name(self: "BaseJobBuilder", name: str) -> "BaseJobBuilder":
         self._name = name
         return self
 
-    def set_index(self: _BaseJobBuilder_TV, index: str) -> _BaseJobBuilder_TV:
+    def set_index(self: "BaseJobBuilder", index: str) -> "BaseJobBuilder":
         self._index = index
         return self
 
-    def build(self) -> _BaseJob:
+    def build(self) -> BaseJob:
         raise NotImplementedError("cannot build basejob")
 
 
-class _JobBuilder(_BaseJobBuilder):
+class JobBuilder(BaseJobBuilder):
     def __init__(self) -> None:
         super().__init__()
         self._executable: Optional[_callable_or_path] = None
         self._args: Optional[Tuple[str, ...]] = None
 
-    def set_executable(self, executable: _callable_or_path) -> "_JobBuilder":
+    def set_executable(self, executable: _callable_or_path) -> "JobBuilder":
         self._executable = executable
         return self
 
-    def set_args(self, args: Tuple[str, ...]) -> "_JobBuilder":
+    def set_args(self, args: Tuple[str, ...]) -> "JobBuilder":
         self._args = args
         return self
 
-    def build(self) -> Union[_FunctionJob, _UnixJob]:
+    def build(self) -> Union[FunctionJob, UnixJob]:
         if self._id is None:
             self._id = str(uuid.uuid4())
         if self._index is None:
@@ -115,7 +112,7 @@ class _JobBuilder(_BaseJobBuilder):
             raise ValueError("job needs a name")
         if self._parent_source is None:
             raise ValueError("job need source of parent")
-        source = self._parent_source + _SOURCE_TEMPLATE_JOB.format(
+        source = self._parent_source + SOURCE_TEMPLATE_JOB.format(
             job_id=self._id, job_index=self._index
         )
         try:
@@ -131,19 +128,19 @@ class _JobBuilder(_BaseJobBuilder):
                 )
 
             assert isinstance(self._executable, bytes)  # mypy
-            return _FunctionJob(
+            return FunctionJob(
                 self._id, self._index, self._name, source, self._executable
             )
 
         if not isinstance(self._executable, Path):
             raise TypeError(f"executable in job '{self._name}' should be a {Path}")
-        return _UnixJob(
+        return UnixJob(
             self._id, self._index, self._name, source, self._executable, self._args
         )
 
 
 # pylint: disable=too-many-instance-attributes
-class _LegacyJobBuilder(_BaseJobBuilder):
+class LegacyJobBuilder(BaseJobBuilder):
     def __init__(self) -> None:
         super().__init__()
         self._ext_job: Optional[ExtJob] = None
@@ -158,11 +155,11 @@ class _LegacyJobBuilder(_BaseJobBuilder):
         self._callback_arguments: Optional[List[Any]] = None
         self._max_runtime: Optional[int] = None
 
-    def set_ext_job(self, ext_job: ExtJob) -> "_LegacyJobBuilder":
+    def set_ext_job(self, ext_job: ExtJob) -> "LegacyJobBuilder":
         self._ext_job = ext_job
         return self
 
-    def build(self) -> _LegacyJob:
+    def build(self) -> LegacyJob:
         if self._id is None:
             self._id = str(uuid.uuid4())
         if self._index is None:
@@ -171,4 +168,4 @@ class _LegacyJobBuilder(_BaseJobBuilder):
             raise ValueError("legacy job must have name")
         if self._ext_job is None:
             raise ValueError(f"legacy job {self._name} must have ExtJob")
-        return _LegacyJob(self._id, self._index, self._name, self._ext_job)
+        return LegacyJob(self._id, self._index, self._name, self._ext_job)

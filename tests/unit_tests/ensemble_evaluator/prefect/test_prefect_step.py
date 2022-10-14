@@ -15,7 +15,9 @@ import ert
 import ert.ensemble_evaluator as ee
 from ert.async_utils import get_event_loop
 from ert.ensemble_evaluator import identifiers as ids
-from ert.ensemble_evaluator.builder._prefect import _on_task_failure
+from ert.ensemble_evaluator._builder import InputBuilder, OutputBuilder
+from ert.ensemble_evaluator._builder._job import JobBuilder
+from ert.ensemble_evaluator._builder._prefect import _on_task_failure
 
 
 def get_step(step_name, inputs, outputs, jobs, type_="unix"):
@@ -32,7 +34,7 @@ def get_step(step_name, inputs, outputs, jobs, type_="unix"):
     )
     for idx, (name, executable, args) in enumerate(jobs):
         step_builder.add_job(
-            ee.JobBuilder()
+            JobBuilder()
             .set_id(str(idx))
             .set_index(str(idx))
             .set_name(name)
@@ -45,14 +47,14 @@ def get_step(step_name, inputs, outputs, jobs, type_="unix"):
             location=Path(path), mime=mime
         )
         step_builder.add_input(
-            ee.InputBuilder()
+            InputBuilder()
             .set_name(name)
             .set_transformation(transformation)
             .set_transmitter_factory(factory)
         )
     for name, path, mime, factory in outputs:
         step_builder.add_output(
-            ee.OutputBuilder()
+            OutputBuilder()
             .set_name(name)
             .set_transformation(
                 ert.data.SerializationTransformation(location=path, mime=mime)

@@ -5,25 +5,32 @@ from unittest.mock import MagicMock
 
 import pytest
 
-import ert.ensemble_evaluator as ee
 from ert.data import (
     CopyTransformation,
     SerializationTransformation,
     TransformationDirection,
 )
+from ert.ensemble_evaluator._builder import (
+    EnsembleBuilder,
+    InputBuilder,
+    OutputBuilder,
+    RealizationBuilder,
+    StepBuilder,
+)
+from ert.ensemble_evaluator._builder._job import JobBuilder
 
 
 @pytest.mark.parametrize("active_real", [True, False])
 def test_build_ensemble(active_real):
     ensemble = (
-        ee.EnsembleBuilder()
+        EnsembleBuilder()
         .add_realization(
-            ee.RealizationBuilder()
+            RealizationBuilder()
             .set_iens(2)
             .add_step(
-                ee.StepBuilder()
+                StepBuilder()
                 .add_job(
-                    ee.JobBuilder()
+                    JobBuilder()
                     .set_id("4")
                     .set_index("5")
                     .set_name("echo_command")
@@ -47,43 +54,6 @@ def test_build_ensemble(active_real):
     assert step.source() == "/ert/ensemble/1/real/2/step/3"
     job = step.jobs[0]
     assert job.source() == "/ert/ensemble/1/real/2/step/3/job/4/index/5"
-
-
-def test_build_ensemble_legacy():
-
-    run_context = MagicMock()
-    run_context.is_active = lambda i: bool(i == 0)
-    run_context.__iter__.return_value = [MagicMock()]
-
-    ext_job = MagicMock()
-    ext_job.get_executable = MagicMock(return_value="junk.exe")
-    ext_job.name = MagicMock(return_value="junk")
-    ext_job.get_arglist = MagicMock(return_value=("arg1", "arg2", "arg3"))
-
-    forward_model = MagicMock()
-    forward_model.__len__.return_value = 1
-    forward_model.iget_job = lambda i: ext_job if i == 0 else None
-
-    analysis_config = MagicMock()
-    analysis_config.get_max_runtime = MagicMock(return_value=0)
-
-    queue_config = MagicMock()
-
-    res_config = MagicMock()
-
-    ensemble_builder = ee.EnsembleBuilder.from_legacy(
-        run_context=run_context,
-        forward_model=forward_model,
-        queue_config=queue_config,
-        analysis_config=analysis_config,
-        res_config=res_config,
-        num_cpu=1,
-    )
-
-    ensemble = ensemble_builder.set_id("0").build()
-
-    real = ensemble.reals[0]
-    assert real.active
 
 
 @pytest.mark.parametrize(
@@ -188,15 +158,15 @@ def test_topological_sort(steps, expected, ambiguous):
     For expected steps, assert that they are equal to the sorted steps, minus
     any ambiguous steps.
     """
-    real = ee.RealizationBuilder().set_iens(0).active(True)
+    real = RealizationBuilder().set_iens(0).active(True)
     transmitted_factory = MagicMock()
     non_transmitted_factory = MagicMock().return_value = MagicMock()
     non_transmitted_factory.return_value.is_transmitted.return_value = False
     for step_def in steps:
-        step = ee.StepBuilder().set_id("0").set_name(step_def["name"]).set_type("unix")
+        step = StepBuilder().set_id("0").set_name(step_def["name"]).set_type("unix")
         for input_ in step_def["inputs"]:
             step.add_input(
-                ee.InputBuilder()
+                InputBuilder()
                 .set_name(input_)
                 .set_transmitter_factory(transmitted_factory)
                 .set_transformation(
@@ -205,7 +175,7 @@ def test_topological_sort(steps, expected, ambiguous):
             )
         for output in step_def["outputs"]:
             step.add_output(
-                ee.OutputBuilder()
+                OutputBuilder()
                 .set_name(output)
                 .set_transmitter_factory(non_transmitted_factory)
                 .set_transformation(
@@ -214,7 +184,7 @@ def test_topological_sort(steps, expected, ambiguous):
             )
         real.add_step(step)
 
-    ensemble = ee.EnsembleBuilder().add_realization(real).set_id("0").build()
+    ensemble = EnsembleBuilder().add_realization(real).set_id("0").build()
     real = ensemble.reals[0]
 
     if ambiguous:
@@ -233,8 +203,8 @@ def test_topological_sort(steps, expected, ambiguous):
 def test_io_transformation_required_for_unix():
     with pytest.raises(ValueError, match="has no transformation"):
         (
-            ee.StepBuilder()
-            .add_input(ee.InputBuilder().set_name("input"))
+            StepBuilder()
+            .add_input(InputBuilder().set_name("input"))
             .set_type("unix")
             .set_name("stage")
             .set_parent_source("/")
@@ -246,7 +216,7 @@ def test_io_transformation_required_for_unix():
     "builder,transformation",
     [
         pytest.param(
-            ee.InputBuilder(),
+            InputBuilder(),
             CopyTransformation(pathlib.Path("foo"), TransformationDirection.TO_RECORD),
             marks=pytest.mark.raises(
                 exception=ValueError,
@@ -258,7 +228,7 @@ def test_io_transformation_required_for_unix():
             ),
         ),
         pytest.param(
-            ee.OutputBuilder(),
+            OutputBuilder(),
             CopyTransformation(
                 pathlib.Path("foo"), TransformationDirection.FROM_RECORD
             ),
@@ -272,11 +242,11 @@ def test_io_transformation_required_for_unix():
             ),
         ),
         pytest.param(
-            ee.InputBuilder(),
+            InputBuilder(),
             CopyTransformation(pathlib.Path("foo")),
         ),
         pytest.param(
-            ee.OutputBuilder(),
+            OutputBuilder(),
             CopyTransformation(pathlib.Path("foo")),
         ),
     ],

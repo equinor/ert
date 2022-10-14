@@ -16,8 +16,9 @@ from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.x509.oid import NameOID
 from dns import exception, resolver, reversename
 
-from ert.ensemble_evaluator import EvaluatorConnectionInfo
 from ert.shared import port_handler
+
+from .evaluator_connection_info import EvaluatorConnectionInfo
 
 logger = logging.getLogger(__name__)
 
