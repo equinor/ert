@@ -16,12 +16,6 @@ struct surface_struct {
     double *data;
 };
 
-C_USED void surface_clear(surface_type *surface) {
-    const int data_size = surface_config_get_data_size(surface->config);
-    for (int k = 0; k < data_size; k++)
-        surface->data[k] = 0;
-}
-
 bool surface_fload(surface_type *surface, const char *filename) {
     bool ret = false;
     if (filename) {
@@ -130,5 +124,4 @@ VOID_READ_FROM_BUFFER(surface)
 VOID_SERIALIZE(surface)
 VOID_DESERIALIZE(surface)
 VOID_INITIALIZE(surface)
-VOID_CLEAR(surface)
 VOID_FLOAD(surface)
