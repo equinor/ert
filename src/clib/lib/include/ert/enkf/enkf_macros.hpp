@@ -158,14 +158,6 @@
 #define VOID_USER_GET_OBS_HEADER(prefix)                                       \
     void prefix##_user_get__(void *, const char *, double *, double *, bool *);
 
-#define VOID_COPY(prefix)                                                      \
-    void prefix##_copy__(const void *void_src, void *void_target) {            \
-        auto src = static_cast<const prefix##_type *>(void_src);               \
-        auto target = static_cast<prefix##_type *>(void_target);               \
-        prefix##_copy(src, target);                                            \
-    }
-#define VOID_COPY_HEADER(prefix) void prefix##_copy__(const void *, void *);
-
 #define CONFIG_GET_ECL_KW_NAME(prefix)                                         \
     const char *prefix##_config_get_ecl_kw_name(                               \
         const prefix##_config_type *config) {                                  \

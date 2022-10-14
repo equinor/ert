@@ -37,13 +37,6 @@ bool summary_active_value(double value) {
     return true;
 }
 
-void summary_copy(const summary_type *src, summary_type *target) {
-    if (src->config == target->config)
-        double_vector_memcpy(target->data_vector, src->data_vector);
-    else
-        util_abort("%s: do not share config objects \n", __func__);
-}
-
 void summary_read_from_buffer(summary_type *summary, buffer_type *buffer,
                               enkf_fs_type *fs, int report_step) {
     enkf_util_assert_buffer_type(buffer, SUMMARY);
@@ -271,7 +264,6 @@ bool summary_forward_load_vector(summary_type *summary,
 
 VOID_ALLOC(summary)
 VOID_FREE(summary)
-VOID_COPY(summary)
 VOID_FORWARD_LOAD(summary)
 VOID_FORWARD_LOAD_VECTOR(summary)
 VOID_USER_GET(summary)

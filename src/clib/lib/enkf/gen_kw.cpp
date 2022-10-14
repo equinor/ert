@@ -45,15 +45,6 @@ C_USED void gen_kw_clear(gen_kw_type *gen_kw) {
         gen_kw->data[i] = 0.0;
 }
 
-void gen_kw_copy(const gen_kw_type *src, gen_kw_type *target) {
-    if (src->config == target->config) {
-        int buffer_size =
-            gen_kw_config_get_data_size(src->config) * sizeof src->data;
-        memcpy(target->data, src->data, buffer_size);
-    } else
-        util_abort("%s: two elements do not share config object \n", __func__);
-}
-
 int gen_kw_data_size(const gen_kw_type *gen_kw) {
     return gen_kw_config_get_data_size(gen_kw->config);
 }
@@ -269,7 +260,6 @@ C_USED bool gen_kw_user_get(const gen_kw_type *gen_kw, const char *key,
 }
 
 VOID_ALLOC(gen_kw);
-VOID_COPY(gen_kw)
 VOID_FREE(gen_kw)
 VOID_ECL_WRITE(gen_kw)
 VOID_USER_GET(gen_kw)

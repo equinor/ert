@@ -472,7 +472,6 @@ void gen_data_copy_to_double_vector(const gen_data_type *gen_data,
 VOID_USER_GET(gen_data)
 VOID_ALLOC(gen_data)
 VOID_FREE(gen_data)
-VOID_COPY(gen_data)
 VOID_INITIALIZE(gen_data)
 VOID_ECL_WRITE(gen_data)
 VOID_FORWARD_LOAD(gen_data)
