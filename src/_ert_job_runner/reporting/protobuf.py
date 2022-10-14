@@ -4,7 +4,7 @@ import threading
 from pathlib import Path
 from typing import Union
 
-from ert.experiment_server._schema_pb2 import (
+from _ert_job_runner._schema_pb2 import (
     JOB_FAILURE,
     JOB_RUNNING,
     JOB_START,
@@ -17,8 +17,9 @@ from ert.experiment_server._schema_pb2 import (
     RealizationId,
     StepId,
 )
-from ert.job_runner.reporting.base import Reporter
-from ert.job_runner.reporting.message import (
+from _ert_job_runner.client import Client
+from _ert_job_runner.reporting.base import Reporter
+from _ert_job_runner.reporting.message import (
     _JOB_EXIT_FAILED_STRING,
     Exited,
     Finish,
@@ -26,8 +27,7 @@ from ert.job_runner.reporting.message import (
     Running,
     Start,
 )
-from ert.job_runner.reporting.statemachine import StateMachine
-from ert.shared.ensemble_evaluator.client import Client
+from _ert_job_runner.reporting.statemachine import StateMachine
 
 logger = logging.getLogger(__name__)
 

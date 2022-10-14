@@ -3,6 +3,9 @@ import os.path
 
 import pytest
 
+from _ert_job_runner.job import Job
+from _ert_job_runner.reporting import File
+from _ert_job_runner.reporting.message import Exited, Finish, Init, Running, Start
 from ert.constant_filenames import (
     ERROR_file,
     LOG_file,
@@ -10,9 +13,6 @@ from ert.constant_filenames import (
     STATUS_file,
     STATUS_json,
 )
-from ert.job_runner.job import Job
-from ert.job_runner.reporting import File
-from ert.job_runner.reporting.message import Exited, Finish, Init, Running, Start
 
 
 @pytest.fixture

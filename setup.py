@@ -9,9 +9,7 @@ from setuptools_scm import get_version
 from skbuild import setup
 
 # list of pair of .proto file and out directory
-PROTOBUF_FILES = [
-    ("src/ert/experiment_server/_schema.proto", "src/ert/experiment_server")
-]
+PROTOBUF_FILES = [("src/ert/experiment_server/_schema.proto", "src/_ert_job_runner/")]
 
 
 def compile_protocol_buffers():
@@ -160,7 +158,7 @@ args = dict(
     entry_points={
         "console_scripts": [
             "ert=ert.shared.main:main",
-            "job_dispatch.py = ert.job_runner.job_dispatch:main",
+            "job_dispatch.py = _ert_job_runner.job_dispatch:main",
         ]
     },
     scripts=["src/clib/lib/job_queue/qstat_proxy.sh"],

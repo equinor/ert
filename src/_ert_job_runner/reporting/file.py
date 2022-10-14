@@ -5,16 +5,9 @@ import os
 import socket
 import time
 
-from ert.constant_filenames import (
-    ERROR_file,
-    LOG_file,
-    OK_file,
-    STATUS_file,
-    STATUS_json,
-)
-from ert.job_runner.io import cond_unlink
-from ert.job_runner.reporting.base import Reporter
-from ert.job_runner.reporting.message import (
+from _ert_job_runner.io import cond_unlink
+from _ert_job_runner.reporting.base import Reporter
+from _ert_job_runner.reporting.message import (
     _JOB_EXIT_FAILED_STRING,
     _JOB_STATUS_FAILURE,
     _JOB_STATUS_RUNNING,
@@ -26,11 +19,17 @@ from ert.job_runner.reporting.message import (
     Running,
     Start,
 )
-from ert.job_runner.util import data as data_util
+from _ert_job_runner.util import data as data_util
 
 TIME_FORMAT = "%H:%M:%S"
 logger = logging.getLogger(__name__)
 append = functools.partial(open, mode="a")
+
+LOG_file = "JOB_LOG"
+ERROR_file = "ERROR"
+STATUS_file = "STATUS"
+OK_file = "OK"
+STATUS_json = "status.json"
 
 
 class File(Reporter):

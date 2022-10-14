@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING, Any, Dict, List, Mapping, Optional, Sequence, 
 from cloudevents.conversion import to_json
 from cloudevents.http import CloudEvent
 
+from _ert_job_runner.client import Client
 from ert.ensemble_evaluator import state
 from ert.ensemble_evaluator.snapshot import (
     Job,
@@ -16,7 +17,6 @@ from ert.ensemble_evaluator.snapshot import (
 )
 from ert.ensemble_evaluator.tracker.ensemble_state_tracker import EnsembleStateTracker
 from ert.serialization import evaluator_marshaller
-from ert.shared.ensemble_evaluator.client import Client
 
 from ._realization import _Realization
 

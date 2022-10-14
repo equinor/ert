@@ -11,9 +11,9 @@ from unittest.mock import mock_open, patch
 import psutil
 import pytest
 
-from ert.job_runner.cli import _setup_reporters, main
-from ert.job_runner.reporting import Event, Interactive
-from ert.job_runner.reporting.message import Finish, Init
+from _ert_job_runner.cli import _setup_reporters, main
+from _ert_job_runner.reporting import Event, Interactive
+from _ert_job_runner.reporting.message import Finish, Init
 from tests.utils import _mock_ws_thread, wait_until
 
 
@@ -83,7 +83,9 @@ else:
         )
     os.chmod("setsid", 0o755)
 
-    job_dispatch_script = importlib.util.find_spec("ert.job_runner.job_dispatch").origin
+    job_dispatch_script = importlib.util.find_spec(
+        "_ert_job_runner.job_dispatch"
+    ).origin
     # pylint: disable=consider-using-with
     # (we wait for the process below)
     job_dispatch_process = Popen(
@@ -206,7 +208,9 @@ def test_job_dispatch_run_subset_specified_as_parmeter():
         )
     os.chmod("setsid", 0o755)
 
-    job_dispatch_script = importlib.util.find_spec("ert.job_runner.job_dispatch").origin
+    job_dispatch_script = importlib.util.find_spec(
+        "_ert_job_runner.job_dispatch"
+    ).origin
     # pylint: disable=consider-using-with
     # (we wait for the process below)
     job_dispatch_process = Popen(
@@ -270,9 +274,9 @@ def test_job_dispatch_kills_itself_after_unsuccessful_job(unused_tcp_port):
     port = unused_tcp_port
     jobs_json = json.dumps({"ens_id": "_id_", "dispatch_url": f"ws://localhost:{port}"})
 
-    with patch("ert.job_runner.cli.os") as mock_os, patch(
-        "ert.job_runner.cli.open", new=mock_open(read_data=jobs_json)
-    ), patch("ert.job_runner.cli.JobRunner") as mock_runner:
+    with patch("_ert_job_runner.cli.os") as mock_os, patch(
+        "_ert_job_runner.cli.open", new=mock_open(read_data=jobs_json)
+    ), patch("_ert_job_runner.cli.JobRunner") as mock_runner:
         mock_runner.return_value.run.return_value = [
             Init([], 0, 0),
             Finish().with_error("overall bad run"),

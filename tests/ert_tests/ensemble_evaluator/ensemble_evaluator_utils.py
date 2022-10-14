@@ -5,12 +5,12 @@ import websockets
 from cloudevents.conversion import to_json
 from cloudevents.http import CloudEvent
 
+from _ert_job_runner.client import Client
 from ert.ensemble_evaluator import identifiers
 from ert.ensemble_evaluator.builder._ensemble import _Ensemble
 from ert.ensemble_evaluator.builder._job import _BaseJob
 from ert.ensemble_evaluator.builder._realization import _Realization
 from ert.ensemble_evaluator.builder._step import _Step
-from ert.shared.ensemble_evaluator.client import Client
 
 
 def _mock_ws(host, port, messages, delay_startup=0):

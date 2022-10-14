@@ -6,10 +6,11 @@ import signal
 import sys
 import typing
 
-from ert.constant_filenames import JOBS_FILE
-from ert.job_runner import reporting
-from ert.job_runner.reporting.message import Finish
-from ert.job_runner.runner import JobRunner
+from _ert_job_runner import reporting
+from _ert_job_runner.reporting.message import Finish
+from _ert_job_runner.runner import JobRunner
+
+JOBS_FILE = "jobs.json"
 
 logger = logging.getLogger(__name__)
 

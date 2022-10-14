@@ -4,10 +4,10 @@ from typing import TYPE_CHECKING, Any, Callable, Dict, Tuple
 
 import prefect
 
+from _ert_job_runner.client import Client
 from ert.async_utils import get_event_loop
 from ert.data import BlobRecord, NumericalRecord, Record, record_data
 from ert.ensemble_evaluator import identifiers as ids
-from ert.shared.ensemble_evaluator.client import Client
 
 from ._io_ import _IO
 from ._io_map import _stage_transmitter_mapping

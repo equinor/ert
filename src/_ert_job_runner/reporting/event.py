@@ -7,8 +7,9 @@ from typing import Any, Dict
 from cloudevents.conversion import to_json
 from cloudevents.http import CloudEvent
 
-from ert.job_runner.reporting.base import Reporter
-from ert.job_runner.reporting.message import (
+from _ert_job_runner.client import Client
+from _ert_job_runner.reporting.base import Reporter
+from _ert_job_runner.reporting.message import (
     _JOB_EXIT_FAILED_STRING,
     Exited,
     Finish,
@@ -17,8 +18,7 @@ from ert.job_runner.reporting.message import (
     Running,
     Start,
 )
-from ert.job_runner.reporting.statemachine import StateMachine
-from ert.shared.ensemble_evaluator.client import Client
+from _ert_job_runner.reporting.statemachine import StateMachine
 
 _FM_JOB_START = "com.equinor.ert.forward_model_job.start"
 _FM_JOB_RUNNING = "com.equinor.ert.forward_model_job.running"

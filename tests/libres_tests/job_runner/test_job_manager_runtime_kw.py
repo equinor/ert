@@ -3,8 +3,8 @@ import os.path
 
 import pytest
 
-from ert.job_runner.reporting.message import Exited, Finish, Start
-from ert.job_runner.runner import JobRunner
+from _ert_job_runner.reporting.message import Exited, Finish, Start
+from _ert_job_runner.runner import JobRunner
 
 
 @pytest.mark.usefixtures("use_tmpdir")

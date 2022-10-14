@@ -1,7 +1,7 @@
 import logging
 from typing import Callable, Dict, Tuple, Type
 
-from ert.job_runner.reporting.message import (
+from _ert_job_runner.reporting.message import (
     Exited,
     Finish,
     Init,

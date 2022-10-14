@@ -12,8 +12,8 @@ import pytest
 
 import ert
 import ert.ensemble_evaluator as ee
+from _ert_job_runner.client import Client
 from ert.async_utils import get_event_loop
-from ert.shared.ensemble_evaluator.client import Client
 from ert.shared.ensemble_evaluator.config import EvaluatorServerConfig
 
 from ..ensemble_evaluator_utils import _mock_ws
