@@ -152,6 +152,11 @@ bool summary_forward_load_vector(summary_type *summary,
                 double_vector_iset(
                     summary->data_vector, store_index,
                     ecl_sum_iget(ecl_sum, last_update_step_index, key_index));
+                double d =
+                    ecl_sum_iget(ecl_sum, last_update_step_index, key_index);
+
+                if (std::string(var_key) == "WOPR:OP1")
+                    printf("%s %f\n", var_key, d);
             }
         }
     }

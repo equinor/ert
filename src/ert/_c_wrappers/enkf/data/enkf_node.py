@@ -9,12 +9,12 @@ from ert._c_wrappers.enkf.data.ext_param import ExtParam
 from ert._c_wrappers.enkf.data.field import Field
 from ert._c_wrappers.enkf.data.gen_data import GenData
 from ert._c_wrappers.enkf.data.gen_kw import GenKw
-from ert._c_wrappers.enkf.enkf_fs import EnkfFs
 from ert._c_wrappers.enkf.enums import ErtImplType
 from ert._c_wrappers.enkf.node_id import NodeId
 
 if TYPE_CHECKING:
     from ert._c_wrappers.enkf.config import EnkfConfigNode
+    from ert._c_wrappers.enkf.enkf_fs import EnkfFs
 
 
 class EnkfNode(BaseCClass):
@@ -23,8 +23,6 @@ class EnkfNode(BaseCClass):
     _free = ResPrototype("void  enkf_node_free(enkf_node)")
     _get_name = ResPrototype("char* enkf_node_get_key(enkf_node)")
     _value_ptr = ResPrototype("void* enkf_node_value_ptr(enkf_node)")
-    _store = ResPrototype("bool  enkf_node_store(enkf_node, enkf_fs, node_id)")
-    _has_data = ResPrototype("bool  enkf_node_has_data(enkf_node, enkf_fs, node_id)")
     _get_impl_type = ResPrototype(
         "ert_impl_type_enum enkf_node_get_impl_type(enkf_node)"
     )
@@ -42,7 +40,7 @@ class EnkfNode(BaseCClass):
         cls,
         config_node: "EnkfConfigNode",
         file_format: str,
-        fs: EnkfFs,
+        fs: "EnkfFs",
         iens_list,
         report_step=0,
         file_type=None,
@@ -68,8 +66,8 @@ class EnkfNode(BaseCClass):
         else:
             raise NotImplementedError("The export method is only implemented for field")
 
-    def has_data(self, fs: EnkfFs, node_id: NodeId) -> bool:
-        return self._has_data(fs, node_id)
+    def has_data(self, fs: "EnkfFs", node_id: NodeId) -> bool:
+        return _clib.enkf_node.has_data(self, fs, node_id.report_step, node_id.iens)
 
     def valuePointer(self):
         return self._value_ptr()
@@ -101,24 +99,21 @@ class EnkfNode(BaseCClass):
 
         return ExtParam.createCReference(self.valuePointer(), self)
 
-    def tryLoad(self, fs: EnkfFs, node_id: NodeId) -> bool:
+    def tryLoad(self, fs: "EnkfFs", node_id: NodeId) -> bool:
         return _clib.enkf_node.try_load(self, fs, node_id.report_step, node_id.iens)
 
     def name(self) -> str:
         return self._get_name()
 
-    def load(self, fs: EnkfFs, node_id: NodeId):
-        if not self.tryLoad(fs, node_id):
+    def load(self, fs: "EnkfFs", node_id: NodeId):
+        if not _clib.enkf_node.try_load(self, fs, node_id.report_step, node_id.iens):
             raise Exception(
                 f"Could not load node: {self.name()} iens: {node_id.iens} "
                 f"report: {node_id.report_step}"
             )
 
-    def save(self, fs: EnkfFs, node_id: NodeId):
-        assert isinstance(fs, EnkfFs)
-        assert isinstance(node_id, NodeId)
-
-        return self._store(fs, node_id)
+    def save(self, fs: "EnkfFs", node_id: NodeId):
+        return _clib.enkf_node.store(self, fs, node_id.report_step, node_id.iens)
 
     def free(self):
         self._free()

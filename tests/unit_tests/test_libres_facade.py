@@ -412,7 +412,7 @@ def test_gen_data_collector(snake_oil_case_storage):
     with pytest.raises(KeyError):
         facade.load_gen_data("default_0", "RFT_XX", 199)
 
-    with pytest.raises(ValueError):
+    with pytest.raises(KeyError):
         facade.load_gen_data("default_0", "SNAKE_OIL_OPR_DIFF", 198)
 
     data1 = facade.load_gen_data("default_0", "SNAKE_OIL_OPR_DIFF", 199)
