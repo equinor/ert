@@ -1,3 +1,5 @@
+#include <ert/python.hpp>
+#include <string>
 
 #include <ert/enkf/enkf_types.hpp>
 #include <ert/enkf/run_arg.hpp>
@@ -126,4 +128,13 @@ enkf_fs_type *run_arg_get_sim_fs(const run_arg_type *run_arg) {
                    __func__);
         return NULL;
     }
+}
+ERT_CLIB_SUBMODULE("run_arg", m) {
+    using namespace py::literals;
+    m.def("alloc", [](std::string run_id, Cwrap<enkf_fs_type> sim_fs, int iens,
+                      int iter, std::string runpath, std::string job_name) {
+        auto run_arg = run_arg_alloc(run_id.c_str(), sim_fs, iens, iter,
+                                     runpath.c_str(), job_name.c_str());
+        return ert::to_python(run_arg);
+    });
 }

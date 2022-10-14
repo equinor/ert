@@ -1,4 +1,4 @@
-from ert._c_wrappers.enkf import RealizationStateEnum
+from ert._c_wrappers.enkf.enums import RealizationStateEnum
 
 
 def get_runnable_realizations_mask(ert, casename):

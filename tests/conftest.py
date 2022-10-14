@@ -203,6 +203,7 @@ def pytest_collection_modifyitems(config, items):
 def _get_snakes(source_root):
     shutil.copytree(os.path.join(source_root, "test-data", "snake_oil"), "test_data")
     os.chdir("test_data")
+    print(os.getcwd())
     with fileinput.input("snake_oil.ert", inplace=True) as fin:
         for line_nr, line in enumerate(fin):
             if line_nr == 1:
@@ -211,7 +212,8 @@ def _get_snakes(source_root):
                 print("NUM_REALIZATIONS 5", end="")
             else:
                 print(line, end="")
-
+        with open("snake_oil.ert", "r") as f:
+            print(f.read())
         parser = ArgumentParser(prog="test_main")
         parsed = ert_parser(
             parser,
