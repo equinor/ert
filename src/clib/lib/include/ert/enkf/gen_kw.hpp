@@ -30,7 +30,6 @@ extern "C" const char *gen_kw_get_name(const gen_kw_type *, int);
 void gen_kw_filter_file(const gen_kw_type *, const char *);
 
 VOID_ECL_WRITE_HEADER(gen_kw)
-VOID_COPY_HEADER(gen_kw);
 VOID_FREE_HEADER(gen_kw);
 VOID_ALLOC_HEADER(gen_kw);
 VOID_ECL_WRITE_HEADER(gen_kw);

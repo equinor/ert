@@ -34,7 +34,6 @@ void field_inplace_output_transform(field_type *field);
 
 VOID_ALLOC_HEADER(field);
 VOID_FREE_HEADER(field);
-VOID_COPY_HEADER(field);
 VOID_INITIALIZE_HEADER(field);
 VOID_ECL_WRITE_HEADER(field);
 VOID_USER_GET_HEADER(field);

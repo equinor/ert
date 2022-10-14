@@ -41,15 +41,6 @@ surface_type *surface_alloc(const surface_config_type *surface_config) {
     return surface;
 }
 
-void surface_copy(const surface_type *src, surface_type *target) {
-    if (src->config == target->config) {
-        const int data_size = surface_config_get_data_size(src->config);
-        for (int k = 0; k < data_size; k++)
-            target->data[k] = src->data[k];
-    } else
-        util_abort("%s: do not share config objects \n", __func__);
-}
-
 void surface_read_from_buffer(surface_type *surface, buffer_type *buffer,
                               enkf_fs_type *fs, int report_step) {
     int size = surface_config_get_data_size(surface->config);
@@ -117,7 +108,6 @@ bool surface_user_get(const surface_type *surface, const char *index_key,
 VOID_ALLOC(surface)
 VOID_FREE(surface)
 VOID_ECL_WRITE(surface)
-VOID_COPY(surface)
 VOID_USER_GET(surface)
 VOID_WRITE_TO_BUFFER(surface)
 VOID_READ_FROM_BUFFER(surface)

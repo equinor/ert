@@ -35,7 +35,6 @@ bool gen_data_fload_with_report_step(gen_data_type *gen_data,
 VOID_USER_GET_HEADER(gen_data);
 VOID_ALLOC_HEADER(gen_data);
 VOID_FREE_HEADER(gen_data);
-VOID_COPY_HEADER(gen_data);
 VOID_ECL_WRITE_HEADER(gen_data);
 VOID_FORWARD_LOAD_HEADER(gen_data);
 VOID_INITIALIZE_HEADER(gen_data);

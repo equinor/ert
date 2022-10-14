@@ -251,14 +251,6 @@ field_type *field_alloc(const field_config_type *field_config) {
     return __field_alloc(field_config, NULL, 0);
 }
 
-C_USED void field_copy(const field_type *src, field_type *target) {
-    if (src->config == target->config)
-        memcpy(target->data, src->data,
-               field_config_get_byte_size(src->config));
-    else
-        util_abort("%s: instances do not share config \n", __func__);
-}
-
 void field_read_from_buffer(field_type *field, buffer_type *buffer,
                             enkf_fs_type *fs, int report_step) {
     int byte_size = field_config_get_byte_size(field->config);
@@ -939,7 +931,6 @@ C_USED bool field_user_get(const field_type *field, const char *index_key,
 VOID_ALLOC(field)
 VOID_FREE(field)
 VOID_ECL_WRITE(field)
-VOID_COPY(field)
 VOID_INITIALIZE(field);
 VOID_USER_GET(field)
 VOID_READ_FROM_BUFFER(field)

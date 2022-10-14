@@ -555,7 +555,6 @@ enkf_node_alloc_empty(const enkf_config_node_type *config) {
     node->ecl_write = NULL;
     node->forward_load = NULL;
     node->forward_load_vector = NULL;
-    node->copy = NULL;
     node->initialize = NULL;
     node->freef = NULL;
     node->user_get = NULL;
@@ -571,7 +570,6 @@ enkf_node_alloc_empty(const enkf_config_node_type *config) {
     case (GEN_KW):
         node->alloc = gen_kw_alloc__;
         node->ecl_write = gen_kw_ecl_write__;
-        node->copy = gen_kw_copy__;
         node->freef = gen_kw_free__;
         node->user_get = gen_kw_user_get__;
         node->write_to_buffer = gen_kw_write_to_buffer__;
@@ -583,7 +581,6 @@ enkf_node_alloc_empty(const enkf_config_node_type *config) {
         node->forward_load = summary_forward_load__;
         node->forward_load_vector = summary_forward_load_vector__;
         node->alloc = summary_alloc__;
-        node->copy = summary_copy__;
         node->freef = summary_free__;
         node->user_get = summary_user_get__;
         node->user_get_vector = summary_user_get_vector__;
@@ -597,7 +594,6 @@ enkf_node_alloc_empty(const enkf_config_node_type *config) {
         node->initialize = surface_initialize__;
         node->ecl_write = surface_ecl_write__;
         node->alloc = surface_alloc__;
-        node->copy = surface_copy__;
         node->freef = surface_free__;
         node->user_get = surface_user_get__;
         node->read_from_buffer = surface_read_from_buffer__;
@@ -609,7 +605,6 @@ enkf_node_alloc_empty(const enkf_config_node_type *config) {
     case (FIELD):
         node->alloc = field_alloc__;
         node->ecl_write = field_ecl_write__;
-        node->copy = field_copy__;
         node->initialize = field_initialize__;
         node->freef = field_free__;
         node->user_get = field_user_get__;
@@ -622,7 +617,6 @@ enkf_node_alloc_empty(const enkf_config_node_type *config) {
     case (GEN_DATA):
         node->alloc = gen_data_alloc__;
         node->initialize = gen_data_initialize__;
-        node->copy = gen_data_copy__;
         node->freef = gen_data_free__;
         node->ecl_write = gen_data_ecl_write__;
         node->forward_load = gen_data_forward_load__;
