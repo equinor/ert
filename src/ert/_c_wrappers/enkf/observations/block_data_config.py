@@ -20,3 +20,6 @@ class BlockDataConfig(BaseCClass):
 
         else:
             raise ValueError("Currently ONLY field data is supported")
+
+    def free(self):
+        pass

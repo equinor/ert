@@ -36,3 +36,6 @@ class EnsemblePlotGenDataVector(BaseCClass):
     def __getitem__(self, index):
         """@rtype: float"""
         return self._get_value(index)
+
+    def free(self):
+        pass
