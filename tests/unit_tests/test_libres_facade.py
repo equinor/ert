@@ -242,7 +242,7 @@ def test_summary_collector(monkeypatch, snake_oil_case_storage, snapshot):
         data.iloc[:4].round(4).to_csv(index_label=[0, 1, 2, 3, 4]),
         "summary_collector_1.csv",
     )
-    assert data.shape == (1000, 45)
+    assert data.shape == (1000, 46)
     with pytest.raises(KeyError):
         # realization 60:
         data.loc[60]
@@ -376,7 +376,7 @@ def test_gen_data_collector(snake_oil_case_storage, snapshot):
     with pytest.raises(KeyError):
         facade.load_gen_data("default_0", "RFT_XX", 199)
 
-    with pytest.raises(ValueError):
+    with pytest.raises(KeyError):
         facade.load_gen_data("default_0", "SNAKE_OIL_OPR_DIFF", 198)
 
     data1 = facade.load_gen_data("default_0", "SNAKE_OIL_OPR_DIFF", 199)

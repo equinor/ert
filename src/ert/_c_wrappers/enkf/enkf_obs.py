@@ -5,8 +5,10 @@ from ecl.util.util import CTime, StringList
 
 from ert import _clib
 from ert._c_wrappers import ResPrototype
+from ert._c_wrappers.enkf.ensemble_config import EnsembleConfig  # pylint: disable=W0611
 from ert._c_wrappers.enkf.enums import EnkfObservationImplementationType
 from ert._c_wrappers.enkf.observations import ObsVector
+from ert._c_wrappers.sched import HistorySourceEnum  # pylint: disable=W0611
 
 
 class EnkfObs(BaseCClass):

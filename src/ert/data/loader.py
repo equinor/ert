@@ -122,7 +122,7 @@ def _load_general_response(
         for time_step in time_steps:
             gen_data = facade.load_gen_data(case_name, data_key, time_step).T
             data = data.append(gen_data)
-    except ValueError as err:
+    except KeyError as err:
         raise ResponseError(
             f"No response loaded for observation key: {obs_key}"
         ) from err
