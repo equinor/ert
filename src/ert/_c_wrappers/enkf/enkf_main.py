@@ -49,22 +49,6 @@ def naturalSortKey(s: str) -> List[Union[int, str]]:
     ]
 
 
-def format_seed(random_seed: str):
-    state_size = 4
-    state_digits = 10
-    fseed = [0] * state_size
-    seed_pos = 0
-    for i in range(state_size):
-        for _ in range(state_digits):
-            fseed[i] *= 10
-            fseed[i] += ord(random_seed[seed_pos]) - ord("0")
-            seed_pos = (seed_pos + 1) % len(random_seed)
-
-    # The function this was derived from had integer overflow, so we
-    # allow for the same here
-    return b"".join(struct.pack("I", x % (2**32)) for x in fseed)
-
-
 class EnKFMain:
     def __init__(self, config: "ResConfig", read_only: bool = False):
         self.res_config = config
