@@ -85,6 +85,17 @@ class ResConfig:
                         # There might be a comment in this line, but it could
                         # also be an argument to a job, so we do a quick check
                         line = line.split("--")[0].rstrip()
+                    if any(
+                        kw in line
+                        for kw in [
+                            "FORWARD_MODEL",
+                            "LOAD_WORKFLOW",
+                            "LOAD_WORKFLOW_JOB",
+                            "HOOK_WORKFLOW",
+                            "WORKFLOW_JOB_DIRECTORY",
+                        ]
+                    ):
+                        continue
                     config_context += line + "\n"
             logger.info(
                 f"Content of the configuration file ({config_file}):\n" + config_context
@@ -130,6 +141,7 @@ class ResConfig:
         self._log_config_content(user_config_content)
 
         if self.errors:
+            logging.error(f"Error loading configuration: {str(self._errors)}")
             raise ValueError("Error loading configuration: " + str(self._errors))
 
         self.subst_config = SubstConfig(config_content=user_config_content)

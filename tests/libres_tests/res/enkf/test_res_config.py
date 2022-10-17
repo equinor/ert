@@ -599,7 +599,9 @@ def test_that_job_script_can_be_set_in_site_config(monkeypatch, tmp_path):
     assert Path(res_config.queue_config.job_script).resolve() == my_script
 
 
-def test_that_unknown_queue_option_gives_error_message(monkeypatch, tmp_path, capsys):
+def test_that_unknown_queue_option_gives_error_message(
+    caplog, monkeypatch, tmp_path, capsys
+):
     test_site_config = tmp_path / "test_site_config.ert"
     my_script = (tmp_path / "my_script").resolve()
     my_script.write_text("")
@@ -661,11 +663,6 @@ def test_that_workflow_run_modes_can_be_selected(tmp_path, run_mode):
         pytest.param("\t--Comment", "", id="Line comment with whitespace"),
         pytest.param("KEY VALUE", "KEY VALUE\n", id="Config line"),
         pytest.param("KEY VALUE --Comment", "KEY VALUE\n", id="Inline comment"),
-        pytest.param(
-            'FORWARD_MODEL("--argument_or_comment")',
-            'FORWARD_MODEL("--argument_or_comment")\n',
-            id="Not able to determine inline comment or part of config",
-        ),
     ],
 )
 def test_logging_config(caplog, config_content, expected):
@@ -733,9 +730,6 @@ RUN_TEMPLATE             ../input/templates/seed_template.txt     seed.txt
 INSTALL_JOB SNAKE_OIL_SIMULATOR ../../snake_oil/jobs/SNAKE_OIL_SIMULATOR
 INSTALL_JOB SNAKE_OIL_NPV ../../snake_oil/jobs/SNAKE_OIL_NPV
 INSTALL_JOB SNAKE_OIL_DIFF ../../snake_oil/jobs/SNAKE_OIL_DIFF
-FORWARD_MODEL SNAKE_OIL_SIMULATOR
-FORWARD_MODEL SNAKE_OIL_NPV
-FORWARD_MODEL SNAKE_OIL_DIFF
 HISTORY_SOURCE REFCASE_HISTORY
 OBS_CONFIG ../input/observations/obsfiles/observations.txt
 TIME_MAP   ../input/refcase/time_map.txt
@@ -748,8 +742,6 @@ SUMMARY WBHP:PROD
 SUMMARY WWIR:INJ
 SUMMARY WWIT:INJ
 SUMMARY WBHP:INJ
-SUMMARY ROE:1
-LOAD_WORKFLOW_JOB ../bin/workflows/workflowjobs/UBER_PRINT
-LOAD_WORKFLOW     ../bin/workflows/MAGIC_PRINT"""  # noqa: E501
+SUMMARY ROE:1"""  # noqa: E501
         in caplog.text
     )
