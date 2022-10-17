@@ -1,17 +1,13 @@
 from ert._c_wrappers.enkf import AnalysisIterConfig
 
 
-def test_set_analysis_iter_config():
-    c = AnalysisIterConfig()
-    assert repr(c).startswith("AnalysisIterConfig")
-
-    assert not c.case_format_is_set()
-    c.set_case_format("case%d")
-    assert c.case_format_is_set()
-
-
 def test_analysis_iter_config_default():
     c_default = AnalysisIterConfig()
+    assert repr(c_default).startswith("AnalysisIterConfig")
+    assert c_default.iter_case is None
+    assert c_default.iter_count == 4
+    assert c_default.iter_retry_count == 4
+
     c_dict = AnalysisIterConfig.from_dict({})
     assert c_default == c_dict
 
@@ -25,8 +21,8 @@ def test_analysis_iter_config_dict_init():
         "ITER_COUNT": iter_count,
         "ITER_RETRY_COUNT": iter_retry_count,
     }
-    a_ite_config = AnalysisIterConfig.from_dict(config_dict)
+    a_iter_config = AnalysisIterConfig.from_dict(config_dict)
 
-    assert a_ite_config.case_format() == iter_case
-    assert a_ite_config.get_num_iterations() == iter_count
-    assert a_ite_config.get_num_retries() == iter_retry_count
+    assert a_iter_config.iter_case == iter_case
+    assert a_iter_config.iter_count == iter_count
+    assert a_iter_config.iter_retry_count == iter_retry_count

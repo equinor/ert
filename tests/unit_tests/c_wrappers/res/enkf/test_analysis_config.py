@@ -138,3 +138,40 @@ def test_analysis_config_std_cutoff():
     config_dict[ConfigKeys.STD_CUTOFF_KEY] = 24
     new_analysis_config = AnalysisConfig.from_dict(config_dict)
     assert new_analysis_config.get_std_cutoff() == 24.0
+
+
+def test_analysis_config_iter_config():
+    config_dict = {
+        ConfigKeys.NUM_REALIZATIONS: 10,
+    }
+    analysis_config = AnalysisConfig.from_dict(config_dict)
+
+    assert analysis_config.case_format is None
+    assert analysis_config.case_format_is_set() is False
+
+    expected_case_format = "case_%d"
+    analysis_config.set_case_format(expected_case_format)
+    assert analysis_config.case_format_is_set() is True
+    assert analysis_config.case_format == expected_case_format
+
+    assert analysis_config.num_iterations == 4
+    analysis_config.set_num_iterations(42)
+    assert analysis_config.num_iterations == 42
+
+    assert analysis_config.num_retries_per_iter == 4
+
+
+def test_analysis_config_iter_config_dict_initialisation():
+    expected_case_format = "case_%d"
+    config_dict = {
+        ConfigKeys.NUM_REALIZATIONS: 10,
+        ConfigKeys.ITER_CASE: expected_case_format,
+        ConfigKeys.ITER_COUNT: 42,
+        ConfigKeys.ITER_RETRY_COUNT: 24,
+    }
+    analysis_config = AnalysisConfig.from_dict(config_dict)
+
+    assert analysis_config.case_format_is_set() is True
+    assert analysis_config.case_format == expected_case_format
+    assert analysis_config.num_iterations == 42
+    assert analysis_config.num_retries_per_iter == 24

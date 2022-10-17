@@ -25,11 +25,9 @@ class TargetCaseModel(ValueModel):
     def getDefaultValue(self):
         """@rtype: str"""
         if self._format_mode:
-            analysis_iter_config = (
-                self.facade.get_analysis_config().get_analysis_iter_config()
-            )
-            if analysis_iter_config.case_format_is_set():
-                return analysis_iter_config.case_format()
+            analysis_config = self.facade.get_analysis_config()
+            if analysis_config.case_format_is_set():
+                return analysis_config.case_format
             else:
                 case_name = self.facade.get_current_case_name()
                 return f"{case_name}_%d"

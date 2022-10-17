@@ -1,6 +1,6 @@
 from math import ceil
 from os.path import realpath
-from typing import List
+from typing import List, Optional
 
 from cwrap import BaseCClass
 
@@ -161,9 +161,6 @@ class AnalysisConfig(BaseCClass):
     def set_std_cutoff(self, std_cutoff: float):
         self._std_cutoff = std_cutoff
 
-    def get_analysis_iter_config(self) -> AnalysisIterConfig:
-        return self._analysis_iter_config
-
     def get_stop_long_running(self) -> bool:
         return self._stop_long_running
 
@@ -210,6 +207,27 @@ class AnalysisConfig(BaseCClass):
     def have_enough_realisations(self, realizations) -> bool:
         return realizations >= self.minimum_required_realizations
 
+    @property
+    def case_format(self) -> Optional[str]:
+        return self._analysis_iter_config.iter_case
+
+    def case_format_is_set(self) -> bool:
+        return self._analysis_iter_config.iter_case is not None
+
+    def set_case_format(self, case_fmt: str):
+        self._analysis_iter_config.iter_case = case_fmt
+
+    @property
+    def num_retries_per_iter(self) -> int:
+        return self._analysis_iter_config.iter_retry_count
+
+    @property
+    def num_iterations(self) -> int:
+        return self._analysis_iter_config.iter_count
+
+    def set_num_iterations(self, num_iterations: int):
+        self._analysis_iter_config.iter_count = num_iterations
+
     def __ne__(self, other):
         return not self == other
 
@@ -228,7 +246,7 @@ class AnalysisConfig(BaseCClass):
             f"'RERUN_START': {self.get_rerun_start()}, "
             f"'ANALYSIS_SELECT': {self.activeModuleName()}, "
             f"'MODULE_LIST': {self.getModuleList()}, "
-            f"'ITER_CONFIG': {self.get_analysis_iter_config()}, "
+            f"'ITER_CONFIG': {self._analysis_iter_config}, "
             f"'MIN_REALIZATIONS_REQUIRED': {self.minimum_required_realizations}, "
             "})"
         )
@@ -264,7 +282,7 @@ class AnalysisConfig(BaseCClass):
         if self.activeModuleName() != other.activeModuleName():
             return False
 
-        if self.get_analysis_iter_config() != other.get_analysis_iter_config():
+        if self._analysis_iter_config != other._analysis_iter_config:
             return False
 
         if self.minimum_required_realizations != other.minimum_required_realizations:

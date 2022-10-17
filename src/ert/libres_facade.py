@@ -77,7 +77,7 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
 
     @property
     def number_of_iterations(self) -> int:
-        return len(self._enkf_main.analysisConfig().get_analysis_iter_config())
+        return self._enkf_main.analysisConfig().num_iterations
 
     def get_run_context(self, prior_name: str, target_name: str) -> RunContext:
         fs_manager = self._enkf_main.getEnkfFsManager()
@@ -151,11 +151,7 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
         return self._enkf_main.get_queue_config()
 
     def get_number_of_iterations(self) -> int:
-        return (
-            self._enkf_main.analysisConfig()
-            .get_analysis_iter_config()
-            .get_num_iterations()
-        )
+        return self._enkf_main.analysisConfig().num_iterations
 
     @property
     def have_observations(self) -> bool:
