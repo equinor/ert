@@ -5,7 +5,6 @@ from pathlib import Path
 
 from setuptools import Command, find_packages
 from setuptools.command.egg_info import egg_info
-from setuptools_scm import get_version
 from skbuild import setup
 
 # list of pair of .proto file and out directory
@@ -92,7 +91,6 @@ args = dict(
     author="Equinor ASA",
     author_email="fg_sib-scout@equinor.com",
     description="Ensemble based Reservoir Tool (ERT)",
-    use_scm_version={"root": ".", "write_to": "src/ert/shared/version.py"},
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/equinor/ert",
