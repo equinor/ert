@@ -5,7 +5,7 @@ import time
 from functools import partial
 from pathlib import Path
 
-import websockets
+import websockets.server
 
 from _ert_job_runner.client import Client
 
