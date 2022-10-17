@@ -325,5 +325,5 @@ def test_that_first_three_parameters_sampled_snapshot(tmpdir):
         prior = fs.load_parameter(
             ert.ensembleConfig(), list(range(3)), Parameter("KW_NAME")
         )
-        expected = [0.3797727, 0.7943204, 2.2610954]
+        expected = [0.3797727, 1.4478575, 0.1159295]
         np.testing.assert_almost_equal(prior, np.array([expected]))

@@ -1,4 +1,3 @@
-import io
 import logging
 import os
 import re
@@ -28,6 +27,7 @@ from ert._c_wrappers.enkf.runpaths import Runpaths
 from ert._c_wrappers.enkf.site_config import SiteConfig
 from ert._c_wrappers.enkf.substituter import Substituter
 from ert._c_wrappers.util.substitution_list import SubstitutionList
+from ert._clib import update
 from ert._clib.state_map import (
     STATE_LOAD_FAILURE,
     STATE_PARENT_FAILURE,
@@ -111,11 +111,7 @@ class EnKFMain:
             seed_seq = np.random.SeedSequence(seed)
 
         self._shared_rng = np.random.default_rng(seed_seq)
-
-        self.realizations = [
-            np.random.default_rng(seed)
-            for seed in seed_seq.spawn(self.getEnsembleSize())
-        ]
+        self._ensemble_rng = np.random.default_rng(seed_seq.spawn(1)[0])
 
     @property
     def update_configuration(self) -> UpdateConfiguration:
@@ -320,54 +316,45 @@ class EnKFMain:
         if parameters is None:
             parameters = self._parameter_keys
         state_map = run_context.sim_fs.getStateMap()
-        for realization_nr, rng in enumerate(self.realizations):
-            current_status = state_map[realization_nr]
-            if (
-                run_context.is_active(realization_nr)
-                and not current_status == STATE_PARENT_FAILURE
-            ):
-                for parameter in parameters:
-                    config_node = self.ensembleConfig().getNode(parameter)
-                    enkf_node = EnkfNode(config_node)
+        active_realizations = [
+            i
+            for i, state in enumerate(state_map)
+            if (state != STATE_PARENT_FAILURE) and run_context.is_active(i)
+        ]
 
+        for parameter in parameters:
+            config_node = self.ensembleConfig().getNode(parameter)
+            enkf_node = EnkfNode(config_node)
+
+            if enkf_node.getImplType() == ErtImplType.GEN_KW:
+                prior = self._ensemble_rng.standard_normal(
+                    (len(enkf_node.asGenKw()), len(active_realizations))
+                )
+                run_context.sim_fs.save_parameters(
+                    self.ensembleConfig(),
+                    active_realizations,
+                    update.Parameter(parameter),
+                    prior,
+                )
+            else:
+                for realization_nr in active_realizations:
                     if config_node.getUseForwardInit():
                         continue
-                    if (
-                        not enkf_node.has_data(
-                            run_context.sim_fs, NodeId(0, realization_nr)
-                        )
-                        or current_status == STATE_LOAD_FAILURE
+                    if not enkf_node.has_data(
+                        run_context.sim_fs, NodeId(0, realization_nr)
                     ):
-                        rng = self.realizations[realization_nr]
-                        impl_type = enkf_node.getImplType()
+                        _clib.enkf_state.state_initialize(
+                            enkf_node,
+                            run_context.sim_fs,
+                            realization_nr,
+                        )
 
-                        if impl_type == ErtImplType.GEN_KW:
-                            gen_kw_node = enkf_node.asGenKw()
-                            if len(gen_kw_node) > 0:
-                                vals = rng.standard_normal(len(gen_kw_node))
-                                s = io.BytesIO()
-                                # The first element is time_t (64 bit integer), but
-                                # it is not used so we write 0 instead - for
-                                # padding purposes.
-                                s.write(struct.pack("Qi", 0, int(ErtImplType.GEN_KW)))
-                                s.write(vals.tobytes())
-
-                                _clib.enkf_fs.write_parameter(
-                                    run_context.sim_fs,
-                                    config_node.getKey(),
-                                    realization_nr,
-                                    s.getvalue(),
-                                )
-
-                        else:
-                            _clib.enkf_state.state_initialize(
-                                enkf_node,
-                                run_context.sim_fs,
-                                realization_nr,
-                            )
-
-                if state_map[realization_nr] in [STATE_UNDEFINED, STATE_LOAD_FAILURE]:
-                    state_map[realization_nr] = RealizationStateEnum.STATE_INITIALIZED
+        for realization_nr in active_realizations:
+            if state_map[realization_nr] in [
+                STATE_UNDEFINED,
+                STATE_LOAD_FAILURE,
+            ]:
+                state_map[realization_nr] = RealizationStateEnum.STATE_INITIALIZED
         run_context.sim_fs.sync()
 
     def rng(self) -> np.random.Generator:
