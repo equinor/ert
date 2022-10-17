@@ -1,4 +1,3 @@
-import atexit
 import logging
 import logging.config
 import os
@@ -479,7 +478,6 @@ def start_ert_server(mode: str):
         yield
 
 
-@atexit.register
 def log_process_usage():
     try:
         import resource
@@ -563,6 +561,7 @@ def main():
 
         sys.exit(msg)
     finally:
+        log_process_usage()
         os.environ.pop("ERT_LOG_DIR")
 
 
