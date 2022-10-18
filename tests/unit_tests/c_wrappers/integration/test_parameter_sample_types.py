@@ -32,6 +32,7 @@ def create_runpath(config, active_mask=None):
         active_mask=active_mask,
         iteration=0,
     )
+    ert.sample_prior(run_context.sim_fs, run_context.active_realizations)
     ert.createRunPath(run_context)
     return ert
 

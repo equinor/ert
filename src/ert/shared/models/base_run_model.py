@@ -317,7 +317,10 @@ class BaseRunModel:
     ) -> int:
         ensemble = self._build_ensemble(run_context)
 
-        self.ert().initRun(run_context)
+        self.ert().sample_prior(
+            run_context.sim_fs,
+            run_context.active_realizations,
+        )
 
         totalOk = EnsembleEvaluator(
             ensemble,
@@ -408,8 +411,9 @@ class BaseRunModel:
         with concurrent.futures.ThreadPoolExecutor() as pool:
             await loop.run_in_executor(
                 pool,
-                self.ert().initRun,
-                run_context,
+                self.ert().sample_prior,
+                run_context.sim_fs,
+                [i for i, _ in enumerate(run_context) if run_context.is_active(i)],
             )
 
             await ensemble.evaluate_async(ee_config, self.id_)

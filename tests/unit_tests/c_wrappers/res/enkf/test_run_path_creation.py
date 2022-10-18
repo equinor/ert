@@ -215,7 +215,7 @@ def test_run_template_replace_in_file_name():
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_that_creating_runpath_makes_initialized_fs():
+def test_that_sampling_prior_makes_initialized_fs():
     """
     This checks that creating the run path initializes the selected case,
     for that parameters are needed, so add a simple GEN_KW.
@@ -239,7 +239,7 @@ def test_that_creating_runpath_makes_initialized_fs():
         iteration=0, active_mask=[True]
     )
     assert not ert.isCaseInitialized("default")
-    ert.createRunPath(run_context)
+    ert.sample_prior(run_context.sim_fs, run_context.active_realizations)
     assert ert.isCaseInitialized("default")
 
 

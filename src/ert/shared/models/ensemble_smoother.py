@@ -45,7 +45,7 @@ class EnsembleSmoother(BaseRunModel):
         await self.dispatch(event)
 
         self._checkMinimumActiveRealizations(prior_context)
-
+        self.ert().sample_prior(prior_context.sim_fs, prior_context.active_realizations)
         await loop.run_in_executor(
             threadpool,
             self.ert().createRunPath,
@@ -179,6 +179,7 @@ class EnsembleSmoother(BaseRunModel):
         # self.setAnalysisModule(arguments["analysis_module"])
 
         self.setPhaseName("Pre processing...", indeterminate=True)
+        self.ert().sample_prior(prior_context.sim_fs, prior_context.active_realizations)
         self.ert().createRunPath(prior_context)
 
         self.ert().runWorkflows(HookRuntime.PRE_SIMULATION)

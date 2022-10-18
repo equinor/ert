@@ -170,6 +170,7 @@ def test_assert_symlink_deleted(snake_oil_field_example):
 
     # create directory structure
     run_context = ert.create_ensemble_experiment_run_context(iteration=0)
+    ert.sample_prior(run_context.sim_fs, run_context.active_realizations)
     ert.createRunPath(run_context)
 
     # replace field file with symlink

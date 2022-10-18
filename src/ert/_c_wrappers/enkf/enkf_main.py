@@ -307,18 +307,26 @@ class EnKFMain:
     def getWorkflowList(self) -> ErtWorkflowList:
         return self.resConfig().ert_workflow_list
 
-    def initRun(self, run_context: "RunContext", parameters: List[str] = None):
+    def sample_prior(
+        self,
+        storage: "EnkfFs",
+        active_realizations: List[int],
+        parameters: List[str] = None,
+    ) -> None:
+        """This function is responsible for getting the prior into storage,
+        in the case of GEN_KW we sample the data and store it, and if INIT_FILES
+        are used without FORWARD_INIT we load files and store them. If FORWARD_INIT
+        is set the state is set to INITIALIZED, but no parameters are saved to storage
+        until after the forward model has completed.
+        """
         # pylint: disable=too-many-nested-blocks
         # (this is a real code smell that we mute for now)
         if parameters is None:
             parameters = self._parameter_keys
-        state_map = run_context.sim_fs.getStateMap()
-        for realization_nr, rng in enumerate(self.realizations):
+        state_map = storage.getStateMap()
+        for realization_nr in active_realizations:
             current_status = state_map[realization_nr]
-            if (
-                run_context.is_active(realization_nr)
-                and not current_status == STATE_PARENT_FAILURE
-            ):
+            if not current_status == STATE_PARENT_FAILURE:
                 for parameter in parameters:
                     config_node = self.ensembleConfig().getNode(parameter)
                     enkf_node = EnkfNode(config_node)
@@ -326,9 +334,7 @@ class EnKFMain:
                     if config_node.getUseForwardInit():
                         continue
                     if (
-                        not enkf_node.has_data(
-                            run_context.sim_fs, NodeId(0, realization_nr)
-                        )
+                        not enkf_node.has_data(storage, NodeId(0, realization_nr))
                         or current_status == STATE_LOAD_FAILURE
                     ):
                         rng = self.realizations[realization_nr]
@@ -364,7 +370,7 @@ class EnKFMain:
                                 s.write(vals.tobytes())
 
                                 _clib.enkf_fs.write_parameter(
-                                    run_context.sim_fs,
+                                    storage,
                                     config_node.getKey(),
                                     realization_nr,
                                     s.getvalue(),
@@ -373,13 +379,13 @@ class EnKFMain:
                         else:
                             _clib.enkf_state.state_initialize(
                                 enkf_node,
-                                run_context.sim_fs,
+                                storage,
                                 realization_nr,
                             )
 
                 if state_map[realization_nr] in [STATE_UNDEFINED, STATE_LOAD_FAILURE]:
                     state_map[realization_nr] = RealizationStateEnum.STATE_INITIALIZED
-        run_context.sim_fs.sync()
+        storage.sync()
 
     def rng(self) -> np.random.Generator:
         "Will return the random number generator used for updates."
@@ -435,7 +441,6 @@ class EnKFMain:
         return sorted(self.storage_manager.cases, key=naturalSortKey)
 
     def createRunPath(self, run_context: RunContext) -> None:
-        self.initRun(run_context)
         for iens, run_arg in enumerate(run_context):
             if run_context.is_active(iens):
                 substitutions = self.substituter.get_substitutions(

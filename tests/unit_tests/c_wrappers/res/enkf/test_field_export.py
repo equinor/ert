@@ -51,8 +51,7 @@ def test_field_export_many(snake_oil_field_example):
     config_node = ens_config["PERMX"]
 
     fs = fs_manager.getCurrentFileSystem()
-    run_context = RunContext(fs, mask=[True] * ert.getEnsembleSize())
-    ert.initRun(run_context)
+    ert.sample_prior(fs, list(range(ert.getEnsembleSize())))
     # Filename without embedded %d - TypeError
     with pytest.raises(TypeError):
         EnkfNode.exportMany(config_node, "export/with/path/PERMX.grdecl", fs, [0, 2, 4])

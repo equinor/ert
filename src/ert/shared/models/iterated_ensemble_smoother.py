@@ -107,6 +107,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
 
         self.ert().analysisConfig().set_case_format(target_case_format)
 
+        self.ert().sample_prior(run_context.sim_fs, run_context.active_realizations)
         ensemble_id = self._runAndPostProcess(run_context, evaluator_server_config)
 
         analysis_config = self.ert().analysisConfig()

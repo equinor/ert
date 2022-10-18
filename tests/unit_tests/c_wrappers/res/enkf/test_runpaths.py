@@ -122,6 +122,7 @@ def test_write_snakeoil_runpath_file(snake_oil_case, itr):
         iteration=itr,
     )
 
+    ert.sample_prior(run_context.sim_fs, run_context.active_realizations)
     ert.createRunPath(run_context)
 
     for i, _ in enumerate(run_context):
@@ -170,7 +171,7 @@ def test_assert_export():
     run_context = ert.create_ensemble_experiment_run_context(
         iteration=0,
     )
-
+    ert.sample_prior(run_context.sim_fs, run_context.active_realizations)
     ert.createRunPath(run_context)
 
     assert runpath_list_file.exists()
