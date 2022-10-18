@@ -3,4 +3,3 @@
    :hidden:
 
    plugin_system
-   webviz-ert
