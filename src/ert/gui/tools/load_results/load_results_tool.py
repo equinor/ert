@@ -1,4 +1,4 @@
-from ert.gui.ertwidgets import resourceIcon
+from ert.gui.ertwidgets import resourceIcon, showWaitCursorWhileWaiting
 from ert.gui.ertwidgets.closabledialog import ClosableDialog
 from ert.gui.tools import Tool
 from ert.gui.tools.load_results import LoadResultsPanel
@@ -26,7 +26,10 @@ class LoadResultsTool(Tool):
         self.__dialog.addButton("Load", self.load)
         self.__dialog.exec_()
 
-    def load(self):
+    @showWaitCursorWhileWaiting
+    def load(self, _):
+        self.__dialog.disableCloseButton()
+        self.__dialog.toggleButton(caption="Load", enabled=False)
         self.__import_widget.load()
         self.__dialog.accept()
 
