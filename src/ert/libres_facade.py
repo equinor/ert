@@ -22,7 +22,7 @@ _logger = logging.getLogger(__name__)
 if TYPE_CHECKING:
     from iterative_ensemble_smoother import IterativeEnsembleSmoother
 
-    from ert._c_wrappers.analysis.analysis_module import AnalysisModule
+    from ert._c_wrappers.analysis import AnalysisModule
     from ert._c_wrappers.analysis.configuration import UpdateConfiguration
     from ert._c_wrappers.enkf import AnalysisConfig, QueueConfig
     from ert._c_wrappers.enkf.config.gen_kw_config import PriorDict

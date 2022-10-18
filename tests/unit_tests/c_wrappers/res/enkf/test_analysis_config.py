@@ -1,6 +1,7 @@
 import pytest
 
 from ert._c_wrappers.enkf import AnalysisConfig, ConfigKeys
+from ert._c_wrappers.enkf.analysis_config import AnalysisConfigError
 
 
 @pytest.fixture
@@ -175,6 +176,33 @@ def test_analysis_config_iter_config_dict_initialisation():
     assert analysis_config.case_format == expected_case_format
     assert analysis_config.num_iterations == 42
     assert analysis_config.num_retries_per_iter == 24
+
+
+def test_analysis_config_modules():
+    config_dict = {
+        ConfigKeys.NUM_REALIZATIONS: 10,
+    }
+    analysis_config = AnalysisConfig.from_dict(config_dict)
+    default_modules = analysis_config.getModuleList()
+    assert len(default_modules) == 2
+    assert "IES_ENKF" in analysis_config.getModuleList()
+    assert "STD_ENKF" in analysis_config.getModuleList()
+    assert analysis_config.hasModule("IES_ENKF")
+    assert analysis_config.hasModule("STD_ENKF")
+
+    assert analysis_config.activeModuleName() == "STD_ENKF"
+    assert analysis_config.getActiveModule().name == "STD_ENKF"
+
+    assert analysis_config.selectModule("IES_ENKF")
+
+    assert analysis_config.getActiveModule().name == "IES_ENKF"
+    assert analysis_config.activeModuleName() == "IES_ENKF"
+
+    es_module = analysis_config.getModule("STD_ENKF")
+    assert es_module.name == "STD_ENKF"
+    with pytest.raises(AnalysisConfigError):
+        analysis_config.getModule("UNKNOWN")
+    assert not analysis_config.selectModule("UNKNOWN")
 
 
 def test_analysis_config_iter_config_default_initialisation():

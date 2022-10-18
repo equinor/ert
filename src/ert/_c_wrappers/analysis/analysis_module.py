@@ -1,68 +1,35 @@
-from typing import TYPE_CHECKING, Dict, List, Literal, Type, TypedDict, Union
-
-from cwrap import BaseCClass
-
-from ert._c_wrappers import ResPrototype
+from enum import Enum
+from typing import TYPE_CHECKING, Dict, List, Type, TypedDict, Union
 
 if TYPE_CHECKING:
 
     class VariableInfo(TypedDict):
         type: Union[Type[float], Type[int]]
         min: float
+        value: Union[float, int]
         max: float
         step: float
         labelname: str
 
-    VariableName = Literal[
-        "IES_MAX_STEPLENGTH",
-        "IES_MIN_STEPLENGTH",
-        "IES_DEC_STEPLENGTH",
-        "IES_INVERSION",
-        "ENKF_TRUNCATION",
-    ]
+
+DEFAULT_IES_MAX_STEPLENGTH = 0.60
+DEFAULT_IES_MIN_STEPLENGTH = 0.30
+DEFAULT_IES_DEC_STEPLENGTH = 2.50
+MIN_IES_DEC_STEPLENGTH = 1.1
+DEFAULT_TRUNCATION = 0.98
 
 
-class AnalysisModule(BaseCClass):
-    TYPE_NAME = "analysis_module"
+class ModuleType(str, Enum):
+    ITERATED_ENSEMBLE_SMOOTHER = "IES_ENKF"
+    ENSEMBLE_SMOOTHER = "STD_ENKF"
 
-    _alloc = ResPrototype("void* analysis_module_alloc(int)", bind=False)
-    _free = ResPrototype("void analysis_module_free(analysis_module)")
-    _set_var = ResPrototype(
-        "bool analysis_module_set_var(analysis_module, char*, char*)"
-    )
-    _get_name = ResPrototype("char* analysis_module_get_name(analysis_module)")
-    _has_var = ResPrototype("bool analysis_module_has_var(analysis_module, char*)")
-    _get_double = ResPrototype(
-        "double analysis_module_get_double(analysis_module, char*)"
-    )
-    _get_int = ResPrototype("int analysis_module_get_int(analysis_module, char*)")
-    _get_bool = ResPrototype("bool analysis_module_get_bool(analysis_module, char*)")
 
-    VARIABLE_NAMES: Dict["VariableName", "VariableInfo"] = {
-        "IES_MAX_STEPLENGTH": {
-            "type": float,
-            "min": 0.1,
-            "max": 1.00,
-            "step": 0.1,
-            "labelname": "Gauss–Newton maximum steplength",
-        },
-        "IES_MIN_STEPLENGTH": {
-            "type": float,
-            "min": 0.1,
-            "max": 1.00,
-            "step": 0.1,
-            "labelname": "Gauss–Newton minimum steplength",
-        },
-        "IES_DEC_STEPLENGTH": {
-            "type": float,
-            "min": 1.1,
-            "max": 10.00,
-            "step": 0.1,
-            "labelname": "Gauss–Newton steplength decline",
-        },
+def get_variables(module: ModuleType) -> Dict[str, "VariableInfo"]:
+    es_variables: Dict[str, "VariableInfo"] = {
         "IES_INVERSION": {
             "type": int,
             "min": 0,
+            "value": 0,
             "max": 3,
             "step": 1,
             "labelname": "Inversion algorithm",
@@ -70,93 +37,168 @@ class AnalysisModule(BaseCClass):
         "ENKF_TRUNCATION": {
             "type": float,
             "min": -2.0,
+            "value": DEFAULT_TRUNCATION,
             "max": 1,
             "step": 0.01,
             "labelname": "Singular value truncation",
         },
     }
+    ies_variables = {
+        "IES_MAX_STEPLENGTH": {
+            "type": float,
+            "min": 0.1,
+            "value": DEFAULT_IES_MAX_STEPLENGTH,
+            "max": 1.00,
+            "step": 0.1,
+            "labelname": "Gauss–Newton maximum steplength",
+        },
+        "IES_MIN_STEPLENGTH": {
+            "type": float,
+            "min": 0.1,
+            "value": DEFAULT_IES_MIN_STEPLENGTH,
+            "max": 1.00,
+            "step": 0.1,
+            "labelname": "Gauss–Newton minimum steplength",
+        },
+        "IES_DEC_STEPLENGTH": {
+            "type": float,
+            "min": 1.1,
+            "value": DEFAULT_IES_DEC_STEPLENGTH,
+            "max": 10.00,
+            "step": 0.1,
+            "labelname": "Gauss–Newton steplength decline",
+        },
+        **es_variables,
+    }
+    if module == ModuleType.ENSEMBLE_SMOOTHER:
+        return es_variables
+    return ies_variables
 
-    def __init__(self, type_id):
-        c_ptr = self._alloc(type_id)
-        if not c_ptr:
-            raise KeyError(f"Failed to load internal module:{type_id}")
 
-        super().__init__(c_ptr)
+class AnalysisModule:
+    MODE = {1: ModuleType.ENSEMBLE_SMOOTHER, 2: ModuleType.ITERATED_ENSEMBLE_SMOOTHER}
+    DEPRECATED_KEYS = ["USE_EE", "USE_GE"]
+    TRUNK_ALTERNATE_KEYS = ["ENKF_NCOMP", "ENKF_SUBSPACE_DIMENSION"]
+    SPECIAL_KEYS = ["INVERSION", *TRUNK_ALTERNATE_KEYS, *DEPRECATED_KEYS]
 
-    def getVariableNames(self) -> List["VariableName"]:
-        items = []
-        for name in AnalysisModule.VARIABLE_NAMES:
-            if self.hasVar(name):
-                items.append(name)
-        return items
+    def __init__(self, mode: ModuleType, name: str, variables: Dict, iterable: bool):
+        self.mode = mode
+        self.name = name
+        self.iterable = iterable
+        self._variables = variables
 
-    def getVariableValue(self, name: "VariableName") -> Union[int, float, bool]:
-        self.__assertVar(name)
-        variable_type = self.getVariableType(name)
-        if variable_type == float:
-            return self.getDouble(name)
-        elif variable_type == bool:
-            return self.getBool(name)
-        elif variable_type == int:
-            return self.getInt(name)
+    @classmethod
+    def ens_smother_module(cls, name: ModuleType = ModuleType.ENSEMBLE_SMOOTHER):
+        return cls(
+            mode=ModuleType.ENSEMBLE_SMOOTHER,
+            name=name,
+            variables=get_variables(ModuleType.ENSEMBLE_SMOOTHER),
+            iterable=False,
+        )
+
+    @classmethod
+    def iterated_ens_smother_module(
+        cls, name: ModuleType = ModuleType.ITERATED_ENSEMBLE_SMOOTHER
+    ):
+        return cls(
+            mode=ModuleType.ITERATED_ENSEMBLE_SMOOTHER,
+            name=name,
+            variables=get_variables(ModuleType.ITERATED_ENSEMBLE_SMOOTHER),
+            iterable=True,
+        )
+
+    def get_variable_names(self) -> List[str]:
+        return list(self._variables.keys())
+
+    def get_variable_value(self, name) -> Union[int, float, bool]:
+        if name in self._variables:
+            return self._variables[name]["value"]
+        raise KeyError(f"Variable {name} not found in module")
+
+    def variable_value_dict(self) -> Dict[str, Union[float, int]]:
+        return {name: var["value"] for name, var in self._variables.items()}
+
+    def add_var(self, var_name: str, value):
+        if var_name in self._variables:  # or var_name in special_keys
+            self.set_var(var_name, value)
         else:
-            raise ValueError(f"Variable of type {variable_type} is not supported")
+            # add new variable config dict to self._variables
+            pass
 
-    def getVariableType(
-        self, name: "VariableName"
-    ) -> Union[Type[int], Type[float], Type[bool]]:
-        return AnalysisModule.VARIABLE_NAMES[name]["type"]
+    def handle_special_key_set(self, var_name, value):
+        if var_name in self.DEPRECATED_KEYS:
+            # log something about like:
+            # The USE_EE/USE_GE settings have been removed
+            # use the INVERSION setting instead
+            pass
+        elif var_name == "INVERSION":
+            inversion_str_map = {
+                "EXACT": 0,
+                "SUBSPACE_EXACT_R": 1,
+                "SUBSPACE_EE_R": 2,
+                "SUBSPACE_RE": 3,
+            }
+            if value in inversion_str_map:
+                self.set_var("IES_INVERSION", inversion_str_map[value])
+        elif var_name in self.TRUNK_ALTERNATE_KEYS:
+            self.set_var("ENKF_TRUNCATION", value)
 
-    def free(self):
-        self._free()
+    def set_var(self, var_name: str, value: Union[float, int, bool, str]):
+        if var_name in self.SPECIAL_KEYS:
+            self.handle_special_key_set(var_name, value)
+        elif var_name in self._variables:
+            var = self._variables[var_name]
+            try:
+                new_value = var["type"](value)
+                # TODO check min max values before assignment
+                var["value"] = new_value
+
+            except ValueError:
+                raise ValueError(
+                    f"Variable {var_name} expected type {var['type']}"
+                    f" received {value} of {type(value)}"
+                )
+        else:
+            raise KeyError(f"Variable {var_name} not found in module")
+
+    @property
+    def inversion(self):
+        return self.get_variable_value("IES_INVERSION")
+
+    @inversion.setter
+    def inversion(self, value):
+        self.set_var("IES_INVERSION", value)
+
+    def get_truncation(self) -> float:
+        return self.get_variable_value("ENKF_TRUNCATION")
+
+    def get_steplength(self, iteration_nr: int) -> float:
+        """
+        This is an implementation of Eq. (49), which calculates a suitable
+        step length for the update step, from the book:
+
+        Geir Evensen, Formulating the history matching problem with
+        consistent error statistics, Computational Geosciences (2021) 25:945 –970
+        """
+        min_step_length = self.get_variable_value("IES_MIN_STEPLENGTH")
+        max_step_length = self.get_variable_value("IES_MAX_STEPLENGTH")
+        dec_step_length = self.get_variable_value("IES_DEC_STEPLENGTH")
+        step_length = min_step_length + (max_step_length - min_step_length) * pow(
+            2, -(iteration_nr - 1) / (dec_step_length - 1)
+        )
+        return step_length
 
     def __repr__(self):
-        if not self:
-            return repr(None)
-        return f"AnalysisModule(name = {self.name()}, ad = {self._ad_str()})"
-
-    def __assertVar(self, var_name: str):
-        if not self.hasVar(var_name):
-            raise KeyError(f"Module does not support key:{var_name}")
-
-    def setVar(self, var_name: str, value):
-        self.__assertVar(var_name)
-        string_value = str(value)
-        return self._set_var(var_name, string_value)
-
-    def name(self) -> str:
-        return self._get_name()
-
-    def hasVar(self, var: str) -> bool:
-        return self._has_var(var)
-
-    def getDouble(self, var: str) -> float:
-        self.__assertVar(var)
-        return self._get_double(var)
-
-    def getInt(self, var: str) -> int:
-        self.__assertVar(var)
-        return self._get_int(var)
-
-    def getBool(self, var: str) -> bool:
-        self.__assertVar(var)
-        return self._get_bool(var)
+        return f"AnalysisModule(name = {self.name})"
 
     def __ne__(self, other):
         return not self == other
 
     def __eq__(self, other):
-        if self.name() != other.name():
+        if self.name != other.name:
             return False
 
-        var_name_local = self.getVariableNames()
-        var_name_other = other.getVariableNames()
-
-        if var_name_local != var_name_other:
+        if self._variables != other._variables:
             return False
-
-        for a in var_name_local:
-            if self.getVariableValue(a) != other.getVariableValue(a):
-                return False
 
         return True
