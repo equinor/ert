@@ -114,9 +114,11 @@ def copy_minimum_case(copy_case):
 @pytest.fixture()
 def use_tmpdir(tmp_path):
     cwd = os.getcwd()
-    os.chdir(tmp_path)
-    yield
-    os.chdir(cwd)
+    try:
+        os.chdir(tmp_path)
+        yield
+    finally:
+        os.chdir(cwd)
 
 
 @pytest.fixture()
