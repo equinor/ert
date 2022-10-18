@@ -5,6 +5,7 @@ import os
 import signal
 import sys
 import typing
+from datetime import datetime
 
 from _ert_job_runner import reporting
 from _ert_job_runner.reporting.message import Finish, RunningNoMemChange
@@ -46,6 +47,23 @@ def _setup_reporters(
     return reporters
 
 
+def _setup_logging(directory: str = "logs"):
+    job_runner_logger = logging.getLogger("_ert_job_runner")
+    os.makedirs(directory, exist_ok=True)
+
+    formatter = logging.Formatter(
+        "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    )
+
+    filename = f"job-runner-log-{datetime.now().strftime('%Y-%m-%dT%H%M')}.txt"
+    handler = logging.FileHandler(filename=directory + "/" + filename)
+    handler.setFormatter(formatter)
+    handler.setLevel(logging.DEBUG)
+
+    job_runner_logger.addHandler(handler)
+    job_runner_logger.setLevel(logging.DEBUG)
+
+
 def main(args):
 
     parser = argparse.ArgumentParser(
@@ -71,6 +89,9 @@ def main(args):
         if not os.path.exists(parsed_args.run_path):
             sys.exit(f"No such directory: {parsed_args.run_path}")
         os.chdir(parsed_args.run_path)
+
+    # Make sure that logging is setup _after_ we have moved to the runpath directory
+    _setup_logging()
 
     ens_id = None
     try:
