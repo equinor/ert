@@ -112,7 +112,7 @@ class SiteConfig:
         # fill in joblist
         for job in config_dict.get(ConfigKeys.INSTALL_JOB, []):
             cls._add_job(
-                job_list, license_root_path, job[ConfigKeys.PATH], job[ConfigKeys.NAME]
+                job_list, license_root_path, os.path.abspath(job[ConfigKeys.PATH]), job[ConfigKeys.NAME]
             )
 
         for job_path in config_dict.get(ConfigKeys.INSTALL_JOB_DIRECTORY, []):
@@ -121,7 +121,7 @@ class SiteConfig:
                 continue
             files = os.listdir(job_path)
             for file_name in files:
-                full_path = os.path.join(job_path, file_name)
+                full_path = os.path.abspath(os.path.join(job_path, file_name))
                 cls._add_job(job_list, license_root_path, full_path)
 
         # fill in varlist

@@ -1,6 +1,7 @@
 import os
 import os.path
 import stat
+from pathlib import Path
 
 import hypothesis.strategies as st
 from hypothesis import assume
@@ -201,7 +202,7 @@ def config_dicts(draw):
             {
                 ConfigKeys.NUM_REALIZATIONS: positives,
                 ConfigKeys.ECLBASE: st.just(draw(words) + "%d"),
-                ConfigKeys.RUNPATH_FILE: file_names,
+                ConfigKeys.RUNPATH_FILE: st.just(draw(file_names) + "runpath"),
                 ConfigKeys.ALPHA_KEY: small_floats,
                 ConfigKeys.ITER_CASE: words,
                 ConfigKeys.ITER_COUNT: positives,
@@ -214,12 +215,12 @@ def config_dicts(draw):
                 ConfigKeys.MAX_RUNTIME: positives,
                 ConfigKeys.MIN_REALIZATIONS: positives,
                 ConfigKeys.CONFIG_DIRECTORY: st.just(os.getcwd()),
-                ConfigKeys.CONFIG_FILE_KEY: file_names,
+                ConfigKeys.CONFIG_FILE_KEY: st.just(draw(file_names) + ".ert"),
                 ConfigKeys.DEFINE_KEY: st.dictionaries(define_keys(), words),
                 ConfigKeys.DATA_KW_KEY: st.dictionaries(words, words),
-                ConfigKeys.DATA_FILE: file_names,
+                ConfigKeys.DATA_FILE: st.just(draw(file_names) + ".DATA"),
                 ConfigKeys.GRID: st.just(draw(words) + ".EGRID"),
-                ConfigKeys.JOB_SCRIPT: file_names,
+                ConfigKeys.JOB_SCRIPT: st.just(draw(file_names) + "job_script"),
                 ConfigKeys.MAX_SUBMIT: positives,
                 ConfigKeys.NUM_CPU: positives,
                 ConfigKeys.QUEUE_SYSTEM: st.just(queue_system),
@@ -246,7 +247,7 @@ def config_dicts(draw):
                     st.fixed_dictionaries(
                         {
                             ConfigKeys.NAME: words,
-                            ConfigKeys.PATH: file_names,
+                            ConfigKeys.PATH: st.just(draw(file_names) + "job_config"),
                         }
                     ),
                 ),
@@ -279,6 +280,17 @@ def config_dicts(draw):
     for filename in should_exist_files:
         if not os.path.isfile(filename):
             touch(filename)
+
+    should_be_executable_files = [config_dict[ConfigKeys.JOB_SCRIPT]]
+
+    for job in config_dict[ConfigKeys.INSTALL_JOB]:
+        job_file = job[ConfigKeys.PATH]
+        executable_file = draw(file_names) + ".exe"
+        touch(executable_file)
+        should_be_executable_files.append(executable_file)
+        Path(job_file).write_text(
+            f"EXECUTABLE {executable_file}\nMIN_ARG 0\nMAX_ARG 1\n"
+        )
 
     should_exist_directories = config_dict[ConfigKeys.INSTALL_JOB_DIRECTORY]
     for dirname in should_exist_directories:
