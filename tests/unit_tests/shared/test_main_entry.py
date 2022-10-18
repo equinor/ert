@@ -4,7 +4,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from ert.shared import main
+import ert.__main__ as main
 
 
 def test_main_logging(monkeypatch, caplog):

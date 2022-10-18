@@ -11,10 +11,7 @@ from ecl import set_abort_handler
 
 import ert.shared
 from ert._c_wrappers.enkf import ResConfig
-from ert.logging import LOGGING_CONFIG
-from ert.logging._log_util_abort import _log_util_abort
-from ert.services import Storage, WebvizErt
-from ert.shared.cli import (
+from ert.cli import (
     ENSEMBLE_EXPERIMENT_MODE,
     ENSEMBLE_SMOOTHER_MODE,
     ES_MDA_MODE,
@@ -22,7 +19,10 @@ from ert.shared.cli import (
     TEST_RUN_MODE,
     WORKFLOW_MODE,
 )
-from ert.shared.cli.main import ErtCliError, run_cli
+from ert.cli.main import ErtCliError, run_cli
+from ert.logging import LOGGING_CONFIG
+from ert.logging._log_util_abort import _log_util_abort
+from ert.services import Storage, WebvizErt
 from ert.shared.feature_toggling import FeatureToggling
 from ert.shared.ide.keywords.definitions import (
     IntegerArgument,

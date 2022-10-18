@@ -4,7 +4,8 @@ import pytest
 from packaging.version import Version
 
 import ert.shared
-from ert.shared.cli import (
+from ert.__main__ import ert_parser
+from ert.cli import (
     ENSEMBLE_EXPERIMENT_MODE,
     ENSEMBLE_SMOOTHER_MODE,
     ES_MDA_MODE,
@@ -12,13 +13,12 @@ from ert.shared.cli import (
     TEST_RUN_MODE,
     WORKFLOW_MODE,
 )
-from ert.shared.main import ert_parser
 
 
 @pytest.fixture(autouse=True)
 def mocked_valid_file(monkeypatch):
     monkeypatch.setattr(
-        ert.shared.main, "valid_file", Mock(return_value="path/to/config.ert")
+        ert.__main__, "valid_file", Mock(return_value="path/to/config.ert")
     )
 
 
@@ -30,7 +30,7 @@ def test_argparse_exec_gui():
 @pytest.mark.parametrize("input_path", ["a/path/config.ert", "another/path/config.ert"])
 def test_parsed_config(monkeypatch, input_path):
     monkeypatch.setattr(
-        ert.shared.main, "valid_file", Mock(side_effect=lambda x: input_path)
+        ert.__main__, "valid_file", Mock(side_effect=lambda x: input_path)
     )
     parsed = ert_parser(None, [TEST_RUN_MODE, input_path])
     assert parsed.config == input_path

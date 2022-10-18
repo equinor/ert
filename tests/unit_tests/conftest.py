@@ -31,4 +31,4 @@ def no_cert_in_test(monkeypatch):
                 kwargs["generate_cert"] = False
             super().__init__(*args, **kwargs)
 
-    monkeypatch.setattr("ert.shared.cli.main.EvaluatorServerConfig", MockESConfig)
+    monkeypatch.setattr("ert.cli.main.EvaluatorServerConfig", MockESConfig)

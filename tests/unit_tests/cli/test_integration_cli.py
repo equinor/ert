@@ -8,16 +8,16 @@ from unittest.mock import Mock, call
 import pytest
 
 import ert.shared
-from ert.shared.cli import (
+from ert.__main__ import ert_parser
+from ert.cli import (
     ENSEMBLE_EXPERIMENT_MODE,
     ENSEMBLE_SMOOTHER_MODE,
     ES_MDA_MODE,
     ITERATIVE_ENSEMBLE_SMOOTHER_MODE,
     TEST_RUN_MODE,
 )
-from ert.shared.cli.main import ErtCliError, run_cli
+from ert.cli.main import ErtCliError, run_cli
 from ert.shared.feature_toggling import FeatureToggling
-from ert.shared.main import ert_parser
 
 
 @pytest.fixture()
@@ -27,7 +27,7 @@ def mock_cli_run(monkeypatch):
     mocked_thread_join = Mock()
     monkeypatch.setattr(threading.Thread, "start", mocked_thread_start)
     monkeypatch.setattr(threading.Thread, "join", mocked_thread_join)
-    monkeypatch.setattr(ert.shared.cli.monitor.Monitor, "monitor", mocked_monitor)
+    monkeypatch.setattr(ert.cli.monitor.Monitor, "monitor", mocked_monitor)
     yield mocked_monitor, mocked_thread_join, mocked_thread_start
 
 
