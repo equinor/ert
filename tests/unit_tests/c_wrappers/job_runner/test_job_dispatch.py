@@ -231,6 +231,7 @@ def test_job_dispatch_run_subset_specified_as_parmeter():
     assert os.path.isfile("job_C.out")
 
 
+@pytest.mark.usefixtures("use_tmpdir")
 def test_no_jobs_json_file():
     with pytest.raises(IOError):
         main(["script.py", os.path.realpath(os.curdir)])
@@ -274,16 +275,20 @@ def test_job_dispatch_kills_itself_after_unsuccessful_job(unused_tcp_port):
     port = unused_tcp_port
     jobs_json = json.dumps({"ens_id": "_id_", "dispatch_url": f"ws://localhost:{port}"})
 
-    with patch("_ert_job_runner.cli.os") as mock_os, patch(
+    with patch("_ert_job_runner.cli.os.killpg") as mock_killpg, patch(
+        "_ert_job_runner.cli.os.getpgid"
+    ) as mock_getpgid, patch(
         "_ert_job_runner.cli.open", new=mock_open(read_data=jobs_json)
-    ), patch("_ert_job_runner.cli.JobRunner") as mock_runner:
+    ), patch(
+        "_ert_job_runner.cli.JobRunner"
+    ) as mock_runner:
         mock_runner.return_value.run.return_value = [
             Init([], 0, 0),
             Finish().with_error("overall bad run"),
         ]
-        mock_os.getpgid.return_value = 17
+        mock_getpgid.return_value = 17
 
         with _mock_ws_thread(host, port, []):
-            main(["script.py", "/foo/bar/baz"])
+            main(["script.py"])
 
-        mock_os.killpg.assert_called_with(17, signal.SIGKILL)
+        mock_killpg.assert_called_with(17, signal.SIGKILL)
