@@ -112,7 +112,10 @@ class SiteConfig:
         # fill in joblist
         for job in config_dict.get(ConfigKeys.INSTALL_JOB, []):
             cls._add_job(
-                job_list, license_root_path, os.path.abspath(job[ConfigKeys.PATH]), job[ConfigKeys.NAME]
+                job_list,
+                license_root_path,
+                os.path.abspath(job[ConfigKeys.PATH]),
+                job[ConfigKeys.NAME],
             )
 
         for job_path in config_dict.get(ConfigKeys.INSTALL_JOB_DIRECTORY, []):
