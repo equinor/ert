@@ -51,54 +51,6 @@ std::string get_ecl_unified_file(std::string run_path, std::string eclbase) {
         return "";
     return std::string(unified_file);
 }
-ecl_sum_type *load_ecl_sum(const char *run_path, const char *eclbase) {
-    ecl_sum_type *summary = NULL;
-
-    char *header_file = ecl_util_alloc_exfilename(
-        run_path, eclbase, ECL_SUMMARY_HEADER_FILE, DEFAULT_FORMATTED, -1);
-    char *unified_file = ecl_util_alloc_exfilename(
-        run_path, eclbase, ECL_UNIFIED_SUMMARY_FILE, DEFAULT_FORMATTED, -1);
-    stringlist_type *data_files = stringlist_alloc_new();
-    if ((unified_file != NULL) && (header_file != NULL)) {
-        stringlist_append_copy(data_files, unified_file);
-
-        bool include_restart = false;
-
-        /*
-             * Setting this flag causes summary-data to be loaded by
-             * ecl::unsmry_loader which is "horribly slow" according
-             * to comments in the code. The motivation for introducing
-             * this mode was at some point to use less memory, but
-             * computers nowadays should not have a problem with that.
-             *
-             * For comments, reasoning and discussions, please refer to
-             * https://github.com/equinor/ert/issues/2873
-             *   and
-             * https://github.com/equinor/ert/issues/2972
-             */
-        bool lazy_load = false;
-        if (std::getenv("ERT_LAZY_LOAD_SUMMARYDATA"))
-            lazy_load = true;
-
-        {
-            ert::utils::scoped_memory_logger memlogger(
-                logger, fmt::format("lazy={}", lazy_load));
-
-            int file_options = 0;
-            summary = ecl_sum_fread_alloc(
-                header_file, data_files, SUMMARY_KEY_JOIN_STRING,
-                include_restart, lazy_load, file_options);
-        }
-    } else {
-        stringlist_free(data_files);
-        throw std::invalid_argument(
-            "Could not find SUMMARY file or using non unified SUMMARY file");
-    }
-    stringlist_free(data_files);
-    free(header_file);
-    free(unified_file);
-    return summary;
-}
 
 /**
  * Check if there are summary keys in the ensemble config that is not found in
@@ -268,79 +220,6 @@ static fw_load_status enkf_state_internalize_GEN_DATA(
     return result;
 }
 
-/**
-   This function loads the results from a forward simulations from report_step1
-   to report_step2. The details of what to load are in model_config and the
-   spesific nodes for special cases.
-
-   Will mainly be called at the end of the forward model, but can also
-   be called manually from external scope.
-*/
-static std::pair<fw_load_status, std::string>
-enkf_state_internalize_results(ensemble_config_type *ens_config,
-                               model_config_type *model_config,
-                               const run_arg_type *run_arg) {
-    auto summary_keys = ensemble_config_get_summary_keys(ens_config);
-
-    if (summary_keys.size() > 0) {
-        // We are expecting there to be summary data
-        // The timing information - i.e. mainly what is the last report step
-        // in these results are inferred from the loading of summary results,
-        // hence we must load the summary results first.
-        try {
-            auto summary = load_ecl_sum(run_arg_get_runpath(run_arg),
-                                        run_arg_get_job_name(run_arg));
-            auto status = enkf_state_internalize_dynamic_eclipse_results(
-                ens_config, summary, summary_keys, run_arg_get_sim_fs(run_arg),
-                run_arg_get_iens(run_arg));
-            ecl_sum_free(summary);
-            if (status.first != LOAD_SUCCESSFUL) {
-                return {status.first,
-                        status.second +
-                            fmt::format(" from: {}/{}.UNSMRY",
-                                        run_arg_get_runpath(run_arg),
-                                        run_arg_get_job_name(run_arg))};
-            }
-        } catch (std::invalid_argument const &ex) {
-            return {LOAD_FAILURE,
-                    ex.what() + fmt::format(" from: {}/{}.UNSMRY",
-                                            run_arg_get_runpath(run_arg),
-                                            run_arg_get_job_name(run_arg))};
-        }
-    }
-
-    enkf_fs_type *sim_fs = run_arg_get_sim_fs(run_arg);
-    int last_report = time_map_get_last_step(enkf_fs_get_time_map(sim_fs));
-    if (last_report < 0)
-        last_report = model_config_get_last_history_restart(model_config);
-    auto result = enkf_state_internalize_GEN_DATA(ens_config, run_arg,
-                                                  model_config, last_report);
-    if (result == LOAD_FAILURE)
-        return {LOAD_FAILURE, "Failed to internalize GEN_DATA"};
-    return {LOAD_SUCCESSFUL, "Results loaded successfully."};
-}
-
-std::pair<fw_load_status, std::string>
-enkf_state_load_from_forward_model(ensemble_config_type *ens_config,
-                                   model_config_type *model_config,
-                                   const run_arg_type *run_arg) {
-    std::pair<fw_load_status, std::string> result;
-    if (ensemble_config_have_forward_init(ens_config))
-        result = ensemble_config_forward_init(ens_config, run_arg);
-    if (result.first == LOAD_SUCCESSFUL) {
-        result =
-            enkf_state_internalize_results(ens_config, model_config, run_arg);
-    }
-    auto &state_map = enkf_fs_get_state_map(run_arg_get_sim_fs(run_arg));
-    int iens = run_arg_get_iens(run_arg);
-    if (result.first != LOAD_SUCCESSFUL)
-        state_map.set(iens, STATE_LOAD_FAILURE);
-    else
-        state_map.set(iens, STATE_HAS_DATA);
-
-    return result;
-}
-
 bool enkf_state_complete_forward_model_EXIT_handler__(run_arg_type *run_arg) {
     if (run_arg_get_run_status(run_arg) != JOB_LOAD_FAILURE)
         run_arg_set_run_status(run_arg, JOB_RUN_FAILURE);
@@ -354,13 +233,6 @@ ERT_CLIB_SUBMODULE("enkf_state", m) {
     m.def("state_initialize",
           [](Cwrap<enkf_node_type> param_node, Cwrap<enkf_fs_type> fs,
              int iens) { return enkf_state_initialize(fs, param_node, iens); });
-
-    m.def("internalize_results", [](Cwrap<ensemble_config_type> ens_config,
-                                    Cwrap<model_config_type> model_config,
-                                    Cwrap<run_arg_type> run_arg) {
-        return enkf_state_internalize_results(ens_config, model_config,
-                                              run_arg);
-    });
 
     m.def("internalize_dynamic_eclipse_results",
           [](Cwrap<ensemble_config_type> ens_config,
