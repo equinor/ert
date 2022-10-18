@@ -98,7 +98,9 @@ class CaseInitializationConfigurationPanel(QTabWidget):
 
         layout.addSpacing(10)
 
-        initialize_button = QPushButton("Initialize")
+        initialize_button = QPushButton(
+            "Initialize", objectName="initialize_scratch_button"
+        )
         addHelpToWidget(initialize_button, "init/initialize_from_scratch")
         initialize_button.setMinimumWidth(75)
         initialize_button.setMaximumWidth(150)
@@ -110,7 +112,7 @@ class CaseInitializationConfigurationPanel(QTabWidget):
             mask = [False] * self.ert.getEnsembleSize()
             for member in members:
                 mask[int(member.strip())] = True
-            case_manager = self.ert.getEnkfFsManager()
+            case_manager = self.ert.storage_manager
             sim_fs = case_manager.current_case
             run_context = RunContext(sim_fs=sim_fs, mask=mask)
             self.ert.initRun(run_context, parameters=parameters)
