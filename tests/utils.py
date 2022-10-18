@@ -78,9 +78,11 @@ def _mock_ws_thread(host, port, messages):
         ),
     )
     mock_ws_thread.start()
-    yield
-    url = f"ws://{host}:{port}"
-    with Client(url) as client:
-        client.send("stop")
-    mock_ws_thread.join()
-    messages.pop()
+    try:
+        yield
+    finally:
+        url = f"ws://{host}:{port}"
+        with Client(url) as client:
+            client.send("stop")
+        mock_ws_thread.join()
+        messages.pop()
