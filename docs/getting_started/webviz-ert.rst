@@ -2,13 +2,6 @@ Webviz-ert
 ==========
 
 
-.. DANGER::
-   Webviz-ert and the corresponding ert-api is experimental, meaning that the interface
-   and/or API are subject to breaking changes. In addition, such breaking changes might
-   not follow rules for semantic versioning, as the feature is considered experimental
-   and not part of the public interface.
-
-
 Introduction
 ------------
 
@@ -31,16 +24,11 @@ With a komodo release sourced, webviz-ert is currently launched from the termina
    ert vis <ert-config-file>
 
 Expect approx 60-90 seconds of initialization-time before firefox is launched and
-webviz-ert is up and running. Currently extensive logging is carried out in the
-terminal - but ERROR messages should not appear without something being wrong.
+webviz-ert is up and running. 
 
 To end the session just close firefox and `Ctrl+C` in the terminal.
 
-NB! Currently there is a lack of error handling and you could end up with the
-webviz-ert instance without data / not responding. Close fireforx and restart from the
-terminal is the way to fix. Please copy stacktrace from terminal and send to us if
-this happens - as it usually is due to inconsistency in the data and how we are
-putting it together.
+![startup](https://user-images.githubusercontent.com/4508053/186850915-4b53c4fb-273d-4c15-961c-299966c3232c.gif)
 
 Views
 -----
@@ -63,6 +51,8 @@ be turned off / on by clicking on the corresponding realization id on the right
 When multiple ensembles are selected each plot will be overlayed on top of
 each other transparently, where each ensemble gets its own color.
 
+![plot_viewer](https://user-images.githubusercontent.com/4508053/186850936-38a13f16-f795-4691-8455-fc12f8372d8e.gif)
+
 Observation analyzer
 ~~~~~~~~~~~~~~~~~~~~
 
@@ -72,6 +62,7 @@ statistics per a single time point or to render misfits as a histogram aggregati
 over the entire temporal axes. When multiple ensembles are selected each graph will
 be overlayed on top of each other transparently, where each ensemble gets its own color.
 
+![observation_analyzer](https://user-images.githubusercontent.com/4508053/186850964-68b137eb-17c4-4bf9-9436-81c8c86e5956.gif)
 
 Parameter comparison viewer
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -79,6 +70,8 @@ Parameter comparison viewer
 Every selected parameter is visualized in the parallel coordinates plot, where each
 vertical axis represents a single parameter. Multiple ensembles are
 distinguished by different colors.
+
+![parameter_comparison](https://user-images.githubusercontent.com/4508053/186851000-e5b750e1-d7ae-4da4-a612-b6c3740f5698.gif)
 
 Response correlation viewer
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -100,3 +93,5 @@ row represents one of the selected parameters. We can select the currently activ
 response and parameter by clicking directly on a heatmap.
 4) Correlation BarChart for the single selected response (from heatmap) and
 all selected parameters in a descending order according to the correlation.
+
+![response_correlation](https://user-images.githubusercontent.com/4508053/186851026-df2085fd-5c35-42a6-a87e-c1890a963254.gif)
