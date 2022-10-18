@@ -1,9 +1,12 @@
+import logging
 import os
 from dataclasses import dataclass
 
 from ert._c_wrappers.config import ConfigContent
 from ert._c_wrappers.enkf.config_keys import ConfigKeys
 from ert._c_wrappers.job_queue import EnvironmentVarlist, ExtJob, ExtJoblist
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -14,7 +17,7 @@ class SiteConfig:
     @classmethod
     def _add_job(cls, job_list, license_root_path, job_path, job_name=None):
         if not os.path.isfile(job_path):
-            print(f"WARNING: Unable to locate job file {job_path}")
+            logger.warn(f"Unable to locate job file {job_path}")
             return
         new_job = ExtJob(
             config_file=job_path,
@@ -41,12 +44,13 @@ class SiteConfig:
             for args in iter(config_content[ConfigKeys.INSTALL_JOB_DIRECTORY]):
                 job_path = args[0]
                 if not os.path.isdir(job_path):
-                    print(f"WARNING: Unable to locate job directory {job_path}")
+                    logger.warn(f"Unable to locate job directory {job_path}")
                     continue
                 files = os.listdir(job_path)
                 for file_name in files:
                     full_path = os.path.join(job_path, file_name)
-                    cls._add_job(job_list, license_root_path, full_path)
+                    if os.path.isfile(full_path):
+                        cls._add_job(job_list, license_root_path, full_path)
 
         environment_vars = config_content[ConfigKeys.SETENV]
 
@@ -120,7 +124,7 @@ class SiteConfig:
 
         for job_path in config_dict.get(ConfigKeys.INSTALL_JOB_DIRECTORY, []):
             if not os.path.isdir(job_path):
-                print(f"WARNING: Unable to locate job directory {job_path}")
+                logger.warn(f"Unable to locate job directory {job_path}")
                 continue
             files = os.listdir(job_path)
             for file_name in files:
