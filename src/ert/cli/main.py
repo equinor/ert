@@ -9,17 +9,17 @@ import uuid
 from typing import Any
 
 from ert._c_wrappers.enkf import EnKFMain, ResConfig
-from ert.ensemble_evaluator import EvaluatorTracker
-from ert.libres_facade import LibresFacade
-from ert.shared.cli import (
+from ert.cli import (
     ENSEMBLE_SMOOTHER_MODE,
     ES_MDA_MODE,
     ITERATIVE_ENSEMBLE_SMOOTHER_MODE,
     WORKFLOW_MODE,
 )
-from ert.shared.cli.model_factory import create_model
-from ert.shared.cli.monitor import Monitor
-from ert.shared.cli.workflow import execute_workflow
+from ert.cli.model_factory import create_model
+from ert.cli.monitor import Monitor
+from ert.cli.workflow import execute_workflow
+from ert.ensemble_evaluator import EvaluatorTracker
+from ert.libres_facade import LibresFacade
 from ert.shared.ensemble_evaluator.config import EvaluatorServerConfig
 from ert.shared.feature_toggling import FeatureToggling
 

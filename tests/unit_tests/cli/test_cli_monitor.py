@@ -1,6 +1,7 @@
 from datetime import datetime
 from io import StringIO
 
+from ert.cli.monitor import Monitor
 from ert.ensemble_evaluator.event import _UpdateEvent
 from ert.ensemble_evaluator.snapshot import Realization, Snapshot, SnapshotDict
 from ert.ensemble_evaluator.state import (
@@ -8,7 +9,6 @@ from ert.ensemble_evaluator.state import (
     REALIZATION_STATE_RUNNING,
     REALIZATION_STATE_WAITING,
 )
-from ert.shared.cli.monitor import Monitor
 
 
 def test_color_always():

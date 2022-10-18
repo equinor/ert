@@ -157,7 +157,7 @@ args = dict(
     ],
     entry_points={
         "console_scripts": [
-            "ert=ert.shared.main:main",
+            "ert=ert.__main__:main",
             "job_dispatch.py = _ert_job_runner.job_dispatch:main",
         ]
     },

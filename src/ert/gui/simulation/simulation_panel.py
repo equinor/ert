@@ -15,10 +15,10 @@ from qtpy.QtWidgets import (
 )
 
 from ert._c_wrappers.enkf import EnKFMain
+from ert.cli.model_factory import create_model
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets import addHelpToWidget, resourceIcon
 from ert.libres_facade import LibresFacade
-from ert.shared.cli.model_factory import create_model
 
 from .ensemble_experiment_panel import EnsembleExperimentPanel
 from .ensemble_smoother_panel import EnsembleSmootherPanel

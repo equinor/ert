@@ -133,7 +133,7 @@ class ExperimentServer:
         The ert parameter, as well as the first input parameter in the factory
         :class:`Callable`, refers to the EnkfMain type.
 
-        Create a legacy experiment using a model factory. See ``ert.shared.cli.model_factory.create_model``.
+        Create a legacy experiment using a model factory. See ``ert.cli.model_factory.create_model``.
         """
         experiment = factory(
             ert,

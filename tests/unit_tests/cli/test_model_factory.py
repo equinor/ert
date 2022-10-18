@@ -2,8 +2,8 @@ from argparse import Namespace
 
 import pytest
 
+from ert.cli import model_factory
 from ert.libres_facade import LibresFacade
-from ert.shared.cli import model_factory
 from ert.shared.models import (
     EnsembleExperiment,
     EnsembleSmoother,

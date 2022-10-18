@@ -6,12 +6,12 @@ import pytest
 from iterative_ensemble_smoother import IterativeEnsembleSmoother
 
 from ert import LibresFacade
+from ert.__main__ import ert_parser
 from ert._c_wrappers.enkf import EnKFMain, EnkfNode, NodeId, ResConfig, RunContext
 from ert.analysis import ErtAnalysisError, ESUpdate
 from ert.analysis._es_update import _create_temporary_parameter_storage
-from ert.shared.cli import ENSEMBLE_EXPERIMENT_MODE, ENSEMBLE_SMOOTHER_MODE
-from ert.shared.cli.main import run_cli
-from ert.shared.main import ert_parser
+from ert.cli import ENSEMBLE_EXPERIMENT_MODE, ENSEMBLE_SMOOTHER_MODE
+from ert.cli.main import run_cli
 
 
 @pytest.fixture()
