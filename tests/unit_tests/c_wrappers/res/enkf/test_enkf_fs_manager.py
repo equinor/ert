@@ -63,5 +63,7 @@ def test_fs_init_from_scratch(snake_oil_case):
     mask = [True] * 6 + [False] * 19
     run_context = RunContext(sim_fs=sim_fs, mask=mask)
 
-    ert.getEnkfFsManager().initRun(run_context, ["SNAKE_OIL_PARAM"])
+    ert.getEnkfFsManager().sample_prior(
+        run_context.sim_fs, run_context.active_realizations, ["SNAKE_OIL_PARAM"]
+    )
     assert len(ert.getEnkfFsManager().getStateMapForCase("new_case")) == 25

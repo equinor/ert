@@ -108,14 +108,13 @@ class CaseInitializationConfigurationPanel(QTabWidget):
         @showWaitCursorWhileWaiting
         def initializeFromScratch(_):
             parameters = parameter_model.getSelectedItems()
-            members = members_model.getSelectedItems()
-            mask = [False] * self.ert.getEnsembleSize()
-            for member in members:
-                mask[int(member.strip())] = True
             case_manager = self.ert.storage_manager
             sim_fs = case_manager.current_case
-            run_context = RunContext(sim_fs=sim_fs, mask=mask)
-            self.ert.initRun(run_context, parameters=parameters)
+            self.ert.sample_prior(
+                storage=sim_fs,
+                active_realizations=[int(i) for i in members_model.getSelectedItems()],
+                parameters=parameters,
+            )
 
         initialize_button.clicked.connect(initializeFromScratch)
         layout.addWidget(initialize_button, 0, Qt.AlignCenter)

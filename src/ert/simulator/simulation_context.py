@@ -23,7 +23,7 @@ def _run_forward_model(
     ert: "EnKFMain", job_queue: "JobQueue", run_context: "RunContext"
 ) -> int:
     # run simplestep
-    ert.initRun(run_context)
+    ert.sample_prior(run_context.sim_fs, run_context.active_realizations)
 
     # start queue
     max_runtime: Optional[int] = ert.analysisConfig().get_max_runtime()
@@ -110,7 +110,9 @@ class SimulationContext:
             active_mask=mask,
             iteration=itr,
         )
-
+        self._ert.sample_prior(
+            self._run_context.sim_fs, self._run_context.active_realizations
+        )
         self._ert.createRunPath(self._run_context)
         self._ert.runWorkflows(HookRuntime.PRE_SIMULATION)
         self._sim_thread = self._run_simulations_simple_step()

@@ -19,7 +19,7 @@ from ert.analysis import ESUpdate
 # process.
 #
 # The parameter field PORO is initialized by first creating input files
-# poro/poro%d.grdecl and then the normal main.initRun() function is used to
+# poro/poro%d.grdecl and then the normal main.sample_prior() function is used to
 # initialize the case and load the PORO data from disk. The summary data is
 # normally loaded from a summary case found on disk, here we instead explicitly
 # assign a value to the WBHP field at report step 1. Since we circumvent the
@@ -64,9 +64,7 @@ def init_data(main):
         bhp.append(poro * 1000 + random.gauss(0, bhp_std))
         wct.append(poro * 4 + random.gauss(0, wct_std))
 
-    mask = [True] * main.getEnsembleSize()
-    init_context = RunContext(sim_fs=init_fs, mask=mask)
-    main.initRun(init_context)
+    main.sample_prior(init_fs, list(range(main.getEnsembleSize())))
 
     ens_config = main.ensembleConfig()
     bhp_config = ens_config["WBHP"]

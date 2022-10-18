@@ -19,6 +19,7 @@ def test_adding_priors(tmpdir, source_root):
             active_mask=[True] * 10,
             iteration=0,
         )
+        m.sample_prior(run_context.sim_fs, run_context.active_realizations)
         m.createRunPath(run_context)
         del m
         gc.collect()

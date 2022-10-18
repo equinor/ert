@@ -18,6 +18,7 @@ def test_with_gen_kw(copy_case):
     run_context = main.create_ensemble_experiment_run_context(
         source_filesystem=fs, active_mask=[True], iteration=0
     )
+    main.sample_prior(fs, run_context.active_realizations)
     main.createRunPath(run_context)
     assert os.path.exists(
         "storage/snake_oil/runpath/realization-0/iter-0/parameters.txt"

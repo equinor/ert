@@ -36,10 +36,20 @@ class EnsembleExperiment(BaseRunModel):
         with concurrent.futures.ThreadPoolExecutor() as executor:
             run_context = await loop.run_in_executor(executor, self.create_context)
 
+            def sample_and_create_run_path(
+                ert: "EnKFMain", run_context: "RunContext"
+            ) -> None:
+                ert.sample_prior(
+                    run_context.sim_fs,
+                    run_context.active_realizations,
+                )
+                ert.createRunPath(run_context)
+
             experiment_logger.debug("creating runpaths")
             await loop.run_in_executor(
                 executor,
-                self.ert().createRunPath,
+                sample_and_create_run_path,
+                self.ert(),
                 run_context,
             )
 
@@ -96,6 +106,10 @@ class EnsembleExperiment(BaseRunModel):
         self.setPhase(0, "Running simulations...", indeterminate=False)
 
         self.setPhaseName("Pre processing...", indeterminate=True)
+        self.ert().sample_prior(
+            run_context.sim_fs,
+            run_context.active_realizations,
+        )
         self.ert().createRunPath(run_context)
 
         # Push ensemble, parameters, observations to new storage

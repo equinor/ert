@@ -40,6 +40,10 @@ class RunContext:
         except IndexError:
             return False
 
+    @property
+    def active_realizations(self):
+        return [i for i, _ in enumerate(self) if self.is_active(i)]
+
     def __len__(self):
         return len(self.mask)
 

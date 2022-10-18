@@ -66,12 +66,13 @@ class MultipleDataAssimilation(BaseRunModel):
 
         weights = self.normalizeWeights(weights)
 
-        run_context = None
         update_id = None
         enumerated_weights = list(enumerate(weights))
         weights_to_run = enumerated_weights[
             min(self._simulation_arguments["start_iteration"], len(weights)) :
         ]
+        run_context = self.create_context(0, initialize_mask_from_arguments=True)
+        self.ert().sample_prior(run_context.sim_fs, run_context.active_realizations)
         for iteration, weight in weights_to_run:
             is_first_iteration = iteration == 0
 
@@ -152,12 +153,13 @@ class MultipleDataAssimilation(BaseRunModel):
         )
         self.setPhaseName(phase_string, indeterminate=True)
 
-        run_context = None
+        run_context = self.create_context(0, initialize_mask_from_arguments=True)
         update_id = None
         enumerated_weights = list(enumerate(weights))
         weights_to_run = enumerated_weights[
             min(self._simulation_arguments["start_iteration"], len(weights)) :
         ]
+        self.ert().sample_prior(run_context.sim_fs, run_context.active_realizations)
         for iteration, weight in weights_to_run:
             is_first_iteration = iteration == 0
             run_context = self.create_context(
