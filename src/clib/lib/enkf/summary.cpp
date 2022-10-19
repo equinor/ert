@@ -119,92 +119,6 @@ void summary_user_get_vector(const summary_type *summary, const char *index_key,
     double_vector_memcpy(value, summary->data_vector);
 }
 
-/**
-   There are three typical reasons why the node data can not be loaded:
-
-     1. The ecl_sum instance is equal to NULL.
-     2. The ecl_sum instance does not have the report step we are asking for.
-     3. The ecl_sum instance does not have the variable we are asking for.
-
-   In the two first cases the function will return false, ultimately
-   signaling that the simulation has failed. In the last case we check
-   the required flag of the variable, and if this is set to false we
-   return true. This is done because this is a typical situation for
-   e.g. a well which has not yet opened.
-*/
-bool summary_forward_load(summary_type *summary, const char *ecl_file_name,
-                          int report_step, const void *argument) {
-    bool loadOK = false;
-    double load_value;
-    const ecl_sum_type *ecl_sum =
-        reinterpret_cast<const ecl_sum_type *>(argument);
-    if (ecl_sum == NULL)
-        return false;
-
-    const char *var_key = summary_config_get_var(summary->config);
-    load_fail_type load_fail_action =
-        summary_config_get_load_fail_mode(summary->config);
-
-    /* Check if the ecl_sum instance has this report step. */
-    if (ecl_sum_has_report_step(ecl_sum, report_step)) {
-        int last_report_index = ecl_sum_iget_report_end(ecl_sum, report_step);
-
-        if (ecl_sum_has_general_var(ecl_sum, var_key)) {
-            load_value =
-                ecl_sum_get_general_var(ecl_sum, last_report_index, var_key);
-            loadOK = true;
-        } else {
-            load_value = 0;
-            /*
-            The summary object does not have this variable - probably meaning
-            that it is a well/group which has not yet opened. When required ==
-            false we do not signal load failure in this situation.
-
-            If the user has misspelled the name, we will go through the whole
-            simulation without detecting that error.
-            */
-            if (load_fail_action == LOAD_FAIL_EXIT)
-                loadOK = false;
-            else {
-                loadOK = true;
-                if (load_fail_action == LOAD_FAIL_WARN)
-                    fprintf(stderr,
-                            "** WARNING ** Failed summary:%s does not have "
-                            "key:%s \n",
-                            ecl_sum_get_case(ecl_sum), var_key);
-            }
-        }
-    } else {
-        load_value = 0;
-        if (report_step == 0)
-            loadOK = true;
-        /*
-         We do not signal load failure if we do not have the S0000
-         summary file - which does not contain any useful information
-         anyway.
-
-         Hmmm - there is a "if (report_step > 0)" check in the
-         enkf_state_internalize_x() function as well.
-        */
-        else {
-            if (load_fail_action == LOAD_FAIL_EXIT)
-                loadOK = false;
-            else {
-                loadOK = true;
-                if (load_fail_action == LOAD_FAIL_WARN)
-                    fprintf(stderr,
-                            "** WARNING ** Failed summary:%s does not have "
-                            "report_step:%d \n",
-                            ecl_sum_get_case(ecl_sum), report_step);
-            }
-        }
-    }
-
-    if (loadOK)
-        summary_set(summary, report_step, load_value);
-
-    return loadOK;
-}
 
 bool summary_forward_load_vector(summary_type *summary,
                                  const char *ecl_file_name,
@@ -264,7 +178,6 @@ bool summary_forward_load_vector(summary_type *summary,
 
 VOID_ALLOC(summary)
 VOID_FREE(summary)
-VOID_FORWARD_LOAD(summary)
 VOID_FORWARD_LOAD_VECTOR(summary)
 VOID_USER_GET(summary)
 VOID_USER_GET_VECTOR(summary)

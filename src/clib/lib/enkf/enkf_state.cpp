@@ -199,7 +199,7 @@ static fw_load_status enkf_state_load_gen_data_node(
 
         enkf_node_type *node = enkf_node_alloc(config_node);
 
-        if (enkf_node_forward_load(node, report_step, run_arg, NULL)) {
+        if (enkf_node_forward_load(node, report_step, run_arg)) {
             node_id_type node_id = {.report_step = report_step, .iens = iens};
 
             enkf_node_store(node, sim_fs, node_id);

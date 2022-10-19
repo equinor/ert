@@ -22,7 +22,6 @@ extern "C" double summary_undefined_value();
 VOID_HAS_DATA_HEADER(summary);
 VOID_ALLOC_HEADER(summary);
 VOID_FREE_HEADER(summary);
-VOID_FORWARD_LOAD_HEADER(summary);
 VOID_FORWARD_LOAD_VECTOR_HEADER(summary);
 VOID_USER_GET_HEADER(summary);
 VOID_USER_GET_VECTOR_HEADER(summary);

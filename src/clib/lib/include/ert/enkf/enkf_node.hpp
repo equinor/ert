@@ -96,8 +96,7 @@ bool enkf_node_forward_load_vector(enkf_node_type *enkf_node,
                                    const ecl_sum_type *ecl_sum,
                                    const int_vector_type *time_index);
 bool enkf_node_forward_load(enkf_node_type *enkf_node, int report_step,
-                            const run_arg_type *run_arg,
-                            const ecl_sum_type *ecl_sum);
+                            const run_arg_type *run_arg);
 void enkf_node_ecl_write(const enkf_node_type *, const char *,
                          value_export_type *, int);
 bool enkf_node_initialize(enkf_node_type *enkf_node, int);
