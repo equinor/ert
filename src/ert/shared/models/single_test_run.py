@@ -2,7 +2,7 @@ from typing import Any, Dict
 
 from ert._c_wrappers.enkf.enkf_main import EnKFMain
 from ert._c_wrappers.enkf.ert_run_context import RunContext
-from ert.shared.ensemble_evaluator.config import EvaluatorServerConfig
+from ert.ensemble_evaluator.config import EvaluatorServerConfig
 from ert.shared.models import EnsembleExperiment, ErtRunError
 
 

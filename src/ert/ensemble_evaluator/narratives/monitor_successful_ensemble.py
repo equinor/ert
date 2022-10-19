@@ -5,7 +5,7 @@ import cloudpickle
 
 from ert import serialization
 from ert.ensemble_evaluator import identifiers, state
-from ert.shared.ensemble_evaluator.narratives.narrative import (
+from ert.ensemble_evaluator.narratives.narrative import (
     Consumer,
     EventDescription,
     Provider,

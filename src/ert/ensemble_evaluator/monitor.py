@@ -9,8 +9,8 @@ from cloudevents.exceptions import DataUnmarshallerError
 from cloudevents.http import CloudEvent, from_json
 
 from ert.ensemble_evaluator import identifiers
+from ert.ensemble_evaluator.sync_ws_duplexer import SyncWebsocketDuplexer
 from ert.serialization import evaluator_marshaller, evaluator_unmarshaller
-from ert.shared.ensemble_evaluator.sync_ws_duplexer import SyncWebsocketDuplexer
 
 if TYPE_CHECKING:
     from ert.ensemble_evaluator import EvaluatorConnectionInfo

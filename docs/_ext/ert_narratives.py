@@ -8,7 +8,7 @@ from docutils import nodes, statemachine
 from docutils.parsers.rst import Directive
 from sphinx.application import Sphinx
 
-from ert.shared.ensemble_evaluator import narratives
+from ert.ensemble_evaluator import narratives
 
 TMPL = """.. datatemplate:json:: {source_path}
     :template: ert_narratives.tmpl"""

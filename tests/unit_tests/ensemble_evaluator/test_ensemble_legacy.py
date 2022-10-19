@@ -5,8 +5,8 @@ import pytest
 from websockets.exceptions import ConnectionClosed
 
 from ert.ensemble_evaluator import identifiers, state
-from ert.shared.ensemble_evaluator.config import EvaluatorServerConfig
-from ert.shared.ensemble_evaluator.evaluator import EnsembleEvaluator
+from ert.ensemble_evaluator.config import EvaluatorServerConfig
+from ert.ensemble_evaluator.evaluator import EnsembleEvaluator
 
 
 @pytest.mark.timeout(60)

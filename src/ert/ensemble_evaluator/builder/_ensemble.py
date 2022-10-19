@@ -24,7 +24,7 @@ from ._realization import _Realization
 if TYPE_CHECKING:
     import asyncio
 
-    from ert.shared.ensemble_evaluator.config import EvaluatorServerConfig
+    from ert.ensemble_evaluator.config import EvaluatorServerConfig
 
 logger = logging.getLogger(__name__)
 

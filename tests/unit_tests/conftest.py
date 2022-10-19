@@ -3,7 +3,7 @@ import logging
 
 import pytest
 
-from ert.shared.ensemble_evaluator.config import EvaluatorServerConfig
+from ert.ensemble_evaluator.config import EvaluatorServerConfig
 
 
 @pytest.fixture(autouse=True)

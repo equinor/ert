@@ -52,7 +52,7 @@ from ._unix_task import UnixTask
 if TYPE_CHECKING:
     from multiprocessing.context import ForkServerContext
 
-    from ert.shared.ensemble_evaluator.config import EvaluatorServerConfig
+    from ert.ensemble_evaluator.config import EvaluatorServerConfig
 
 DEFAULT_MAX_RETRIES = 0
 DEFAULT_RETRY_DELAY = 5  # seconds

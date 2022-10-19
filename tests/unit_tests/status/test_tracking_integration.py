@@ -19,6 +19,7 @@ from ert._c_wrappers.enkf.res_config import ResConfig
 from ert.cli import ENSEMBLE_EXPERIMENT_MODE, ENSEMBLE_SMOOTHER_MODE, TEST_RUN_MODE
 from ert.cli.model_factory import create_model
 from ert.ensemble_evaluator import EvaluatorTracker
+from ert.ensemble_evaluator.config import EvaluatorServerConfig
 from ert.ensemble_evaluator.event import (
     EndEvent,
     FullSnapshotEvent,
@@ -31,7 +32,6 @@ from ert.ensemble_evaluator.state import (
     REALIZATION_STATE_FINISHED,
 )
 from ert.libres_facade import LibresFacade
-from ert.shared.ensemble_evaluator.config import EvaluatorServerConfig
 from ert.shared.feature_toggling import FeatureToggling
 
 

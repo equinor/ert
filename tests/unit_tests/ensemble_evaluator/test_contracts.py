@@ -3,7 +3,7 @@ import websockets
 from cloudevents.conversion import to_json
 from cloudevents.http import CloudEvent, from_json
 
-from ert.shared.ensemble_evaluator.narratives.narrative import (
+from ert.ensemble_evaluator.narratives.narrative import (
     Consumer,
     EventDescription,
     Provider,

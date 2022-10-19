@@ -15,9 +15,11 @@ from ert._c_wrappers.enkf import EnKFMain, QueueConfig
 from ert._c_wrappers.enkf.ert_run_context import RunContext
 from ert._c_wrappers.job_queue import ForwardModel, RunStatusType
 from ert.ensemble_evaluator import Ensemble, EnsembleBuilder
+from ert.ensemble_evaluator.config import EvaluatorServerConfig
+from ert.ensemble_evaluator.evaluator import EnsembleEvaluator
+from ert.ensemble_evaluator.util._tool import get_real_id
+from ert.experiment_server import ExperimentStateMachine
 from ert.libres_facade import LibresFacade
-from ert.shared.ensemble_evaluator.config import EvaluatorServerConfig
-from ert.shared.ensemble_evaluator.evaluator import EnsembleEvaluator
 from ert.shared.feature_toggling import feature_enabled
 from ert.shared.storage.extraction import (
     post_ensemble_data,
