@@ -71,7 +71,7 @@ def test_model_config_dict_constructor(setup_case):
     res_config = setup_case("configuration_tests", "model_config.ert")
     assert res_config.model_config == ModelConfig(
         data_root="",
-        joblist=res_config.site_config.get_installed_jobs(),
+        joblist=res_config.site_config.job_list,
         refcase=res_config.ecl_config.refcase,
         config_dict={
             ConfigKeys.MAX_RESAMPLE: 1,

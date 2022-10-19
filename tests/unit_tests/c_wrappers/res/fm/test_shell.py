@@ -2,6 +2,7 @@ import contextlib
 import os
 import os.path
 import subprocess
+from pathlib import Path
 
 import pytest
 
@@ -369,19 +370,19 @@ def test_shell_script_jobs_availability(minimal_case):
     res_config = ResConfig("config.ert")
     site_config = res_config.site_config
 
-    installed_jobs = site_config.get_installed_jobs()
+    installed_jobs = site_config.job_list
     fm_shell_jobs = {}
     for job in installed_jobs:
         exe = job.get_executable()
         if "shell_scripts" in exe:
-            fm_shell_jobs[job.name().upper()] = exe
+            fm_shell_jobs[job.name().upper()] = Path(exe).resolve()
 
     list_from_content = res_config.ert_workflow_list
     wf_shell_jobs = {}
     for wf_name in list_from_content.getJobNames():
         exe = list_from_content.getJob(wf_name).executable()
         if exe and "shell_scripts" in exe:
-            wf_shell_jobs[wf_name] = exe
+            wf_shell_jobs[wf_name] = Path(exe).resolve()
 
     assert fm_shell_jobs == wf_shell_jobs
 

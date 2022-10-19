@@ -18,6 +18,7 @@ from ert._c_wrappers.enkf import (
     SiteConfig,
 )
 from ert._c_wrappers.enkf.enums import HookRuntime
+from ert._c_wrappers.enkf.res_config import site_config_location
 from ert._c_wrappers.job_queue import QueueDriverEnum
 from ert._c_wrappers.sched import HistorySourceEnum
 
@@ -242,7 +243,7 @@ def test_extensive_config(setup_case):
     )
 
     site_config = res_config.site_config
-    job_list = site_config.get_installed_jobs()
+    job_list = site_config.job_list
     for job_name in snake_oil_structure_config["INSTALL_JOB"]:
         assert job_name in job_list
 
@@ -499,7 +500,7 @@ def test_res_config_dict_constructor(setup_case):
     res_config_file = ResConfig(user_config_file=config_file_name)
 
     # get site_config location
-    ert_share_path = os.path.dirname(res_config_file.site_config.getLocation())
+    ert_share_path = os.path.dirname(site_config_location())
 
     # update dictionary
     # commit missing entries, this should be updated and validated in

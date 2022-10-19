@@ -2,6 +2,7 @@ import logging
 import os
 from collections import defaultdict
 from os.path import isfile
+from pathlib import Path
 from typing import Any, Dict, Optional
 
 from ecl.util.util import StringList
@@ -21,6 +22,22 @@ from ert._c_wrappers.job_queue import QueueDriverEnum
 from ert._clib.config_keywords import init_site_config_parser, init_user_config_parser
 
 logger = logging.getLogger(__name__)
+
+
+def site_config_location():
+
+    if "ERT_SITE_CONFIG" in os.environ:
+        return os.environ["ERT_SITE_CONFIG"]
+
+    path = Path(__file__).parent
+    for p in path.parents:
+        npath = p / "ert" / "shared" / "share" / "ert" / "site-config"
+        if npath.is_file():
+            path = npath
+            break
+    else:
+        raise SystemError("Could not find `share/ert/site-config`")
+    return str(path)
 
 
 class ResConfig:
@@ -116,7 +133,7 @@ class ResConfig:
     def _alloc_from_content(self, user_config_file=None, config=None):
         site_config_parser = ConfigParser()
         init_site_config_parser(site_config_parser)
-        site_config_content = site_config_parser.parse(SiteConfig.getLocation())
+        site_config_content = site_config_parser.parse(site_config_location())
         if user_config_file is not None:
             # initialize configcontent if user_file provided
             config_parser = ConfigParser()
@@ -145,7 +162,10 @@ class ResConfig:
             raise ValueError("Error loading configuration: " + str(self._errors))
 
         self.subst_config = SubstConfig(config_content=user_config_content)
-        self.site_config = SiteConfig(config_content=user_config_content)
+        self.site_config = SiteConfig.from_config_content(
+            user_config_content=user_config_content,
+            site_config_content=site_config_content,
+        )
         if user_config_content.hasKey(ConfigKeys.RANDOM_SEED):
             self.random_seed = user_config_content.getValue(ConfigKeys.RANDOM_SEED)
         else:
@@ -240,13 +260,16 @@ class ResConfig:
 
         self.model_config = ModelConfig(
             data_root=self.config_path,
-            joblist=self.site_config.get_installed_jobs(),
+            joblist=self.site_config.job_list,
             refcase=self.ecl_config.refcase,
             config_content=user_config_content,
         )
 
     # build configs from config dict
     def _alloc_from_dict(self, config_dict):
+        site_config_parser = ConfigParser()
+        init_site_config_parser(site_config_parser)
+        site_config_content = site_config_parser.parse(site_config_location())
         # treat the default config dir
         self.config_path = os.getcwd()
         if ConfigKeys.CONFIG_DIRECTORY in config_dict:
@@ -254,7 +277,9 @@ class ResConfig:
         config_dict[ConfigKeys.CONFIG_DIRECTORY] = self.config_path
 
         self.subst_config = SubstConfig(config_dict=config_dict)
-        self.site_config = SiteConfig.from_config_dict(config_dict=config_dict)
+        self.site_config = SiteConfig.from_config_dict(
+            config_dict=config_dict, site_config_content=site_config_content
+        )
         self.random_seed = config_dict.get(ConfigKeys.RANDOM_SEED, None)
         self.analysis_config = AnalysisConfig(config_dict=config_dict)
         self.ecl_config = EclConfig.from_dict(config_dict=config_dict)
@@ -312,7 +337,7 @@ class ResConfig:
 
         self.model_config = ModelConfig(
             data_root=self.config_path,
-            joblist=self.site_config.get_installed_jobs(),
+            joblist=self.site_config.job_list,
             refcase=self.ecl_config.refcase,
             config_dict=config_dict,
         )
@@ -607,10 +632,6 @@ class ResConfig:
     @property
     def failed_keys(self):
         return self._failed_keys
-
-    @property
-    def site_config_file(self):
-        return self.site_config.config_file
 
     @property
     def ert_templates(self):
