@@ -1,5 +1,7 @@
 import asyncio
+import ctypes
 import logging
+from multiprocessing.pool import ThreadPool
 from pathlib import Path
 from typing import TYPE_CHECKING, List, Tuple, Union
 
@@ -17,6 +19,7 @@ from ert._clib import update
 from ert.ensemble_evaluator.callbacks import _forward_model_ok
 
 if TYPE_CHECKING:
+    from ecl.summary import EclSum
     from ecl.util.util import IntVector
 
     from ert._c_wrappers.enkf.res_config import EnsembleConfig, ModelConfig
@@ -47,7 +50,7 @@ def _load_realization(
         if status[0] == LoadStatus.LOAD_SUCCESSFUL
         else RealizationStateEnum.STATE_LOAD_FAILURE,
     )
-    return status
+    return status, realisation
 
 
 class EnkfFs(BaseCClass):
@@ -170,6 +173,52 @@ class EnkfFs(BaseCClass):
             active,
         )
 
+    def save_summary_data(self, summary: "EclSum", realization: int):
+        import os
+
+        output_path = self.mount_point / f"summary-{realization}"
+        Path.mkdir(output_path, exist_ok=True)
+        data = []
+        keys = []
+        time_map = summary.alloc_time_vector(True)
+        for key in summary:
+            keys.append(key)
+            np_vector = np.zeros(len(time_map))
+            summary._init_numpy_vector_interp(
+                key, time_map, np_vector.ctypes.data_as(ctypes.POINTER(ctypes.c_double))
+            )
+            data.append(np_vector)
+        total = np.stack(data, axis=0)
+        np.save(output_path / "data", total)
+        with open(output_path / "keys", "w") as f:
+            f.write("\n".join(keys))
+
+        with open(output_path / "time_map", "w") as f:
+            f.write("\n".join([str(t) for t in time_map]))
+
+    def load_summary_data(self, summary_keys, realizations):
+        result = []
+        loaded = []
+        dates = []
+        for realization in realizations:
+            input_path = self.mount_point / f"summary-{realization}"
+            if not input_path.exists():
+                continue
+            loaded.append(realization)
+            np_data = np.load(input_path / "data.npy")
+            keys = []
+            with open(input_path / "keys", "r") as f:
+                keys = [k.strip() for k in f.readlines()]
+            if not dates:
+                with open(input_path / "time_map", "r") as f:
+                    dates = [k.strip() for k in f.readlines()]
+            indices = [keys.index(summary_key) for summary_key in summary_keys]
+
+            result.append(np_data[indices, :].T)
+        if not result:
+            return np.array([]), dates, loaded
+        return np.stack(result), dates, loaded
+
     def load_from_run_path(
         self,
         ensemble_size: int,
@@ -179,17 +228,23 @@ class EnkfFs(BaseCClass):
         active_realizations: List[bool],
     ) -> int:
         """Returns the number of loaded realizations"""
+        pool = ThreadPool(processes=8)
+
+        async_result = [
+            pool.apply_async(
+                _load_realization, (self, iens, ensemble_config, model_config, run_args)
+            )
+            for iens in range(ensemble_size)
+            if active_realizations[iens]
+        ]
 
         loaded = 0
-        for iens in range(ensemble_size):
-            if not active_realizations[iens]:
-                continue
-            result = _load_realization(
-                self, iens, ensemble_config, model_config, run_args
-            )
-            if result[0] == LoadStatus.LOAD_SUCCESSFUL:
+        for t in async_result:
+            ((status, message), iens) = t.get()
+
+            if status == LoadStatus.LOAD_SUCCESSFUL:
                 loaded += 1
             else:
-                logger.error(f"Realization: {iens}, load failure: {result[1]}")
+                logger.error(f"Realization: {iens}, load failure: {message}")
 
         return loaded

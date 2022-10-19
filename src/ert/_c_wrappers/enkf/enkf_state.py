@@ -1,6 +1,9 @@
+import ctypes
 import os
 from typing import TYPE_CHECKING, Tuple
 
+import ecl_data_io
+import numpy
 from ecl.summary import EclSum
 
 from ert._c_wrappers.enkf.model_callbacks import LoadStatus
@@ -34,16 +37,22 @@ def _internalize_results(
                 "Could not find SUMMARY file or using non unified SUMMARY "
                 f"file from: {run_arg.runpath}/{run_arg.job_name}.UNSMRY",
             )
-        summary = EclSum.load(ecl_header_file, ecl_unified_file, include_restart=False)
 
-        status = internalize_dynamic_eclipse_results(
-            ens_config,
-            summary,
-            summary_keys,
-            run_arg.sim_fs,
-            run_arg.iens,
+        summary = EclSum(
+            f"{run_arg.runpath}/{run_arg.job_name}",
+            include_restart=False,
+            lazy_load=False,
         )
-
+        run_arg.sim_fs.save_summary_data(summary, run_arg.iens)
+        # summary = ecl_data_io.read(ecl_unified_file)
+        # status = internalize_dynamic_eclipse_results(
+        #     ens_config,
+        #     summary,
+        #     summary_keys,
+        #     run_arg.sim_fs,
+        #     run_arg.iens,
+        # )
+        status = (LoadStatus.LOAD_SUCCESSFUL, "")
         if status[0] != LoadStatus.LOAD_SUCCESSFUL:
             return (
                 status[0],

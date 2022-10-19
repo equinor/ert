@@ -413,8 +413,8 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
                 key for key in keys if key in summary_keys
             ]  # ignore keys that doesn't exist
 
-        summary_data = _clib.enkf_fs_summary_data.get_summary_data(
-            self._enkf_main.ensembleConfig(), fs, summary_keys, realizations, len(dates)
+        summary_data, dates, realizations = fs.load_summary_data(
+            summary_keys, realizations
         )
 
         if np.isnan(summary_data).all():
@@ -424,7 +424,13 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
             [realizations, dates], names=["Realization", "Date"]
         )
 
-        return DataFrame(data=summary_data, index=multi_index, columns=summary_keys)
+        return DataFrame(
+            data=summary_data.reshape(
+                len(dates) * len(realizations), len(summary_keys)
+            ),
+            index=multi_index,
+            columns=summary_keys,
+        )
 
     def gather_summary_data(
         self,
