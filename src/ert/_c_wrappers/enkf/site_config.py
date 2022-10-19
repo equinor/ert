@@ -37,8 +37,8 @@ class SiteConfig:
     ):
 
         if config_content.hasKey(ConfigKeys.INSTALL_JOB):
-            for args in iter(config_content[ConfigKeys.INSTALL_JOB]):
-                cls._add_job(job_list, license_root_path, args[1], args[0])
+            for name, config in iter(config_content[ConfigKeys.INSTALL_JOB]):
+                cls._add_job(job_list, license_root_path, config, name)
 
         if config_content.hasKey(ConfigKeys.INSTALL_JOB_DIRECTORY):
             for args in iter(config_content[ConfigKeys.INSTALL_JOB_DIRECTORY]):
@@ -54,13 +54,13 @@ class SiteConfig:
 
         environment_vars = config_content[ConfigKeys.SETENV]
 
-        for elem in iter(environment_vars):
-            env_vars.setenv(elem[0], elem[1])
+        for key, value in iter(environment_vars):
+            env_vars.setenv(key, value)
 
         paths = config_content["UPDATE_PATH"]
 
-        for elem in iter(paths):
-            env_vars.update_path(elem[0], elem[1])
+        for key, value in iter(paths):
+            env_vars.update_path(key, value)
 
     @classmethod
     def from_config_content(
