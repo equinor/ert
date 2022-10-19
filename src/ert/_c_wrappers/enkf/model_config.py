@@ -95,13 +95,6 @@ class ModelConfig(BaseCClass):
                 "Error: Unable to create ModelConfig with multiple config objects"
             )
 
-        hist_src_enum = ModelConfig._get_history_src_enum(config_dict, config_content)
-        if hist_src_enum == HistorySourceEnum.SCHEDULE:
-            raise ValueError(
-                f"{HistorySourceEnum.SCHEDULE} as "
-                f"{ConfigKeys.HISTORY_SOURCE} is not supported"
-            )
-
         if config_dict is None:
             c_ptr = self._alloc(config_content, data_root, joblist, refcase)
         else:

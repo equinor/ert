@@ -106,15 +106,3 @@ def test_model_config_dict_constructor(setup_case):
             ],
         },
     )
-
-
-def test_schedule_file_as_history_is_disallowed(setup_case):
-    with pytest.raises(ValueError) as cm:
-        setup_case("configuration_tests", "sched_file_as_history_source.ert")
-
-        # Any assert should per the unittest documentation be outside the
-        # scope of the assertRaises with-block.
-        assert (
-            f"{HistorySourceEnum.SCHEDULE} as "
-            f"{ConfigKeys.HISTORY_SOURCE} is not supported"
-        ) in str(cm.exception)
