@@ -8,8 +8,8 @@ import pytest
 import websockets
 from websockets.exceptions import ConnectionClosedOK
 
-from ert.shared.ensemble_evaluator.config import EvaluatorServerConfig
-from ert.shared.ensemble_evaluator.sync_ws_duplexer import SyncWebsocketDuplexer
+from ert.ensemble_evaluator.config import EvaluatorServerConfig
+from ert.ensemble_evaluator.sync_ws_duplexer import SyncWebsocketDuplexer
 
 
 @pytest.fixture

@@ -24,6 +24,7 @@ from ert.ensemble_evaluator import (
     FullSnapshotEvent,
     SnapshotUpdateEvent,
 )
+from ert.ensemble_evaluator.config import EvaluatorServerConfig
 from ert.gui.ertwidgets import resourceMovie
 from ert.gui.ertwidgets.message_box import ErtMessageBox
 from ert.gui.model.job_list import JobListProxyModel
@@ -31,7 +32,6 @@ from ert.gui.model.progress_proxy import ProgressProxyModel
 from ert.gui.model.snapshot import FileRole, RealIens, SnapshotModel
 from ert.gui.tools.file import FileDialog
 from ert.gui.tools.plot.plot_tool import PlotTool
-from ert.shared.ensemble_evaluator.config import EvaluatorServerConfig
 from ert.shared.models import BaseRunModel
 from ert.shared.status.utils import format_running_time
 

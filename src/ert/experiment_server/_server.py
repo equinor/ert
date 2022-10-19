@@ -17,8 +17,7 @@ from ._experiment_protocol import Experiment
 from ._registry import _Registry
 
 if TYPE_CHECKING:
-    from ert._c_wrappers.enkf import EnKFMain
-    from ert.shared.ensemble_evaluator.config import EvaluatorServerConfig
+    from ert.ensemble_evaluator.config import EvaluatorServerConfig
 
 
 logger = logging.getLogger(__name__)

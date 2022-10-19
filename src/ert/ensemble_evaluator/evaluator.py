@@ -16,17 +16,17 @@ from cloudevents.http import CloudEvent, from_json
 from websockets.exceptions import ConnectionClosedError
 from websockets.legacy.server import WebSocketServerProtocol
 
-import ert.shared.ensemble_evaluator.monitor as ee_monitor
+import ert.ensemble_evaluator.monitor as ee_monitor
 from ert.ensemble_evaluator import identifiers
 from ert.ensemble_evaluator.builder._ensemble import _Ensemble
+from ert.ensemble_evaluator.config import EvaluatorServerConfig
+from ert.ensemble_evaluator.dispatch import BatchingDispatcher
 from ert.ensemble_evaluator.state import (
     ENSEMBLE_STATE_CANCELLED,
     ENSEMBLE_STATE_FAILED,
     ENSEMBLE_STATE_STOPPED,
 )
 from ert.serialization import evaluator_marshaller, evaluator_unmarshaller
-from ert.shared.ensemble_evaluator.config import EvaluatorServerConfig
-from ert.shared.ensemble_evaluator.dispatch import BatchingDispatcher
 
 logger = logging.getLogger(__name__)
 

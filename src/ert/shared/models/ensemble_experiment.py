@@ -7,7 +7,7 @@ import _ert_com_protocol
 from ert._c_wrappers.enkf import RunContext
 from ert._c_wrappers.enkf.enkf_main import EnKFMain, QueueConfig
 from ert._c_wrappers.enkf.enums import HookRuntime
-from ert.shared.ensemble_evaluator.config import EvaluatorServerConfig
+from ert.ensemble_evaluator.config import EvaluatorServerConfig
 from ert.shared.models import BaseRunModel
 from ert.shared.models.base_run_model import ErtRunError
 

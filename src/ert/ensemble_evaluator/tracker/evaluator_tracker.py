@@ -21,6 +21,7 @@ from ert.ensemble_evaluator.identifiers import (
     EVTYPE_EE_TERMINATED,
     STATUS,
 )
+from ert.ensemble_evaluator.monitor import create as create_ee_monitor
 from ert.ensemble_evaluator.snapshot import PartialSnapshot, Snapshot
 from ert.ensemble_evaluator.state import (
     ENSEMBLE_STATE_CANCELLED,
@@ -30,7 +31,6 @@ from ert.ensemble_evaluator.state import (
     REALIZATION_STATE_FINISHED,
 )
 from ert.ensemble_evaluator.util._network import wait_for_evaluator
-from ert.shared.ensemble_evaluator.monitor import create as create_ee_monitor
 
 if TYPE_CHECKING:
     from cloudevents.http.event import CloudEvent
@@ -64,7 +64,7 @@ class EvaluatorTracker:
 
     def _drain_monitor(self) -> None:
         asyncio.set_event_loop(asyncio.new_event_loop())
-        drainer_logger = logging.getLogger("ert.shared.ensemble_evaluator.drainer")
+        drainer_logger = logging.getLogger("ert.ensemble_evaluator.drainer")
         while not self._model.isFinished():
             try:
                 drainer_logger.debug("connecting to new monitor...")
@@ -209,7 +209,7 @@ class EvaluatorTracker:
             pass
 
     def request_termination(self) -> None:
-        logger = logging.getLogger("ert.shared.ensemble_evaluator.tracker")
+        logger = logging.getLogger("ert.ensemble_evaluator.tracker")
         # There might be some situations where the
         # evaluation is finished or the evaluation
         # is yet to start when calling this function.

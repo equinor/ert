@@ -1,14 +1,14 @@
 import pytest
 
 from ert.ensemble_evaluator import identifiers
-from ert.ensemble_evaluator.state import ENSEMBLE_STATE_FAILED, ENSEMBLE_STATE_STOPPED
-from ert.shared.ensemble_evaluator.evaluator import EnsembleEvaluator, ee_monitor
-from ert.shared.ensemble_evaluator.narratives import (
+from ert.ensemble_evaluator.evaluator import EnsembleEvaluator, ee_monitor
+from ert.ensemble_evaluator.narratives import (
     monitor_failing_ensemble,
     monitor_failing_evaluation,
     monitor_successful_ensemble,
 )
-from ert.shared.ensemble_evaluator.narratives.proxy import NarrativeProxy
+from ert.ensemble_evaluator.narratives.proxy import NarrativeProxy
+from ert.ensemble_evaluator.state import ENSEMBLE_STATE_FAILED, ENSEMBLE_STATE_STOPPED
 
 from .ensemble_evaluator_utils import TestEnsemble
 

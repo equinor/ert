@@ -8,7 +8,7 @@ from ert._c_wrappers.enkf import RunContext
 from ert._c_wrappers.enkf.enkf_main import EnKFMain, QueueConfig
 from ert._c_wrappers.enkf.enums import HookRuntime, RealizationStateEnum
 from ert.analysis import ErtAnalysisError
-from ert.shared.ensemble_evaluator.config import EvaluatorServerConfig
+from ert.ensemble_evaluator.config import EvaluatorServerConfig
 from ert.shared.models import BaseRunModel, ErtRunError
 
 logger = logging.getLogger(__file__)

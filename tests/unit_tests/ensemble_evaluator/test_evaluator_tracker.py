@@ -6,9 +6,9 @@ from cloudevents.http.event import CloudEvent
 
 import ert.ensemble_evaluator.identifiers as ids
 from ert.ensemble_evaluator import EvaluatorTracker, state
+from ert.ensemble_evaluator.config import EvaluatorServerConfig
 from ert.ensemble_evaluator.event import EndEvent, SnapshotUpdateEvent
 from ert.ensemble_evaluator.snapshot import PartialSnapshot, SnapshotBuilder, Step
-from ert.shared.ensemble_evaluator.config import EvaluatorServerConfig
 from ert.shared.models.base_run_model import BaseRunModel
 
 
