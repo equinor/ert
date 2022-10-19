@@ -8,7 +8,7 @@
 [![Code Style](https://github.com/equinor/ert/actions/workflows/style.yml/badge.svg)](https://github.com/equinor/ert/actions/workflows/style.yml)
 [![Type checking](https://github.com/equinor/ert/actions/workflows/typing.yml/badge.svg)](https://github.com/equinor/ert/actions/workflows/typing.yml)
 [![codecov](https://codecov.io/gh/equinor/ert/branch/add_code_coverage/graph/badge.svg?token=keVAcWavZ1)](https://codecov.io/gh/equinor/ert)
-[![Run test-data](https://github.com/equinor/ert/actions/workflows/run_ert2_test_data_setups.yml/badge.svg)](https://github.com/equinor/ert/actions/workflows/run_ert2_test_data_setups.yml)
+[![Run test-data](https://github.com/equinor/ert/actions/workflows/run_ert_test_data_setups.yml/badge.svg)](https://github.com/equinor/ert/actions/workflows/run_ert_test_data_setups.yml)
 [![Run polynomial demo](https://github.com/equinor/ert/actions/workflows/run_examples_polynomial.yml/badge.svg)](https://github.com/equinor/ert/actions/workflows/run_examples_polynomial.yml)
 [![Run SPE1 demo](https://github.com/equinor/ert/actions/workflows/run_examples_spe1.yml/badge.svg)](https://github.com/equinor/ert/actions/workflows/run_examples_spe1.yml)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
@@ -56,7 +56,7 @@ Documentation for ert is located at [https://ert.readthedocs.io/en/latest/](http
 
 ## Developing
 
-ERT was originally written in C/C++ but most new code is Python. 
+ERT was originally written in C/C++ but most new code is Python.
 
 ### Developing Python
 
