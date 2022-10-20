@@ -363,7 +363,7 @@ possible to do with ERT.
 
         REFCASE_SIMULATED
                 In this case the historical values are based on the
-                simulated values from the refcase, this is mostly relevant when a you want
+                simulated values from the refcase, this is mostly relevant when you want
                 compare with another case which serves as 'the truth'.
 
         When setting HISTORY_SOURCE to either REFCASE_SIMULATED or REFCASE_HISTORY you
@@ -410,8 +410,8 @@ possible to do with ERT.
         Please note that the refcase is a common source of frustration for ERT users. The
         reason is that ERT indexes summary observation values according to the report steping
         of the reservoir simulator. This indexing is extracted by the report steps of the
-        refcase when staring ERT. Later on when extracting results from forecasted
-        simulations ERT requires that the indexing is according to that of the refcase. During a
+        refcase when starting ERT. Later on, when extracting results from forecasted
+        simulations, ERT requires that the indexing is according to that of the refcase. During a
         project it is very easy to introduce inconsistencies between the indexing in the
         refcase, the forward model and the internalized summary results in storage.
         Unfortunately, ERT does not handle this well and leaves the user with cryptical
@@ -422,7 +422,7 @@ possible to do with ERT.
 
         The HISTORY_SOURCE keyword is optional. But if you are to perform model updating,
         indexing of summary observations need to be defined. This is either done by the
-        REFCASE or the :ref:`TIME_MAP <TIME_MAP>` keyord, and the former is recommended.
+        REFCASE or the :ref:`TIME_MAP <TIME_MAP>` keyword, and the former is recommended.
 
 
 .. _install_job:
