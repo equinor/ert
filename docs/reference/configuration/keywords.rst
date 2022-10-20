@@ -101,7 +101,7 @@ These keywords must be set to make ERT function properly.
         named according to :ref:`ECLBASE <ECLBASE>` and copied to the runpath
         folder. Note that support for parsing the ECLIPSE data file is limited,
         and using explicit templating with :ref:`RUN_TEMPLATE <run_template>` is
-        recommended.
+        recommended where possible.
 
 
         *Example:*
@@ -120,7 +120,8 @@ These keywords must be set to make ERT function properly.
         It searches for PARALLEL in the data file, and if that is not found it
         will search for SLAVE and update <NUM_CPU> according to how many nodes are
         found, note that it does *not* parse the data files of the nodes, and will
-        assume one cpu per node.
+        assume one cpu per node where entry number 5 is not set, and the number of
+        entry number 5 otherwise plus one cpu for the master node.
 
         It is strongly recommended to use the :ref:`RUN_TEMPLATE <run_template>`
         for magic string replacement and resource allocation instead. Combined

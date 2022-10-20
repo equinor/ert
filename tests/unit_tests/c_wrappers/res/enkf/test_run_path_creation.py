@@ -253,14 +253,15 @@ def test_that_creating_runpath_makes_initialized_fs():
             SLAVES
             -- comment
             -- comment with slash / "
-            'upper' 'base' '*' 'data_file' /
+            'upper' 'base' '*' 'data_file' 4 /
             'lower' 'base' '*' 'data_file_lower' /
             /"""
             ),
-            3,
+            6,
             id=(
-                "This is strictly not the correct way to parse this, "
-                "as the slave nodes could run on multiple cores"
+                "Entry number 5 on each lines says how many cpus each "
+                "slave should run on, omitting it means 1 cpu. "
+                "1 for master, 4 for slave 1 and 1 for slave 2 = 6"
             ),
         ),
     ],
