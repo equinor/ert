@@ -61,14 +61,14 @@ def maximize_ulimits():
 
 
 @pytest.fixture()
-def setup_case(tmpdir, source_root):
+def setup_case(tmp_path, source_root, monkeypatch):
     def copy_case(path, config_file):
         shutil.copytree(os.path.join(source_root, "test-data", path), "test_data")
-        os.chdir("test_data")
+        monkeypatch.chdir(tmp_path / "test_data")
         return ResConfig(config_file)
 
-    with tmpdir.as_cwd():
-        yield copy_case
+    monkeypatch.chdir(tmp_path)
+    yield copy_case
 
 
 @pytest.fixture()
@@ -87,13 +87,13 @@ def minimum_case(setup_case):
 
 
 @pytest.fixture()
-def copy_case(tmpdir, source_root):
+def copy_case(tmp_path, source_root, monkeypatch):
     def _copy_case(path):
         shutil.copytree(os.path.join(source_root, "test-data", path), "test_data")
-        os.chdir("test_data")
+        monkeypatch.chdir(tmp_path / "test_data")
 
-    with tmpdir.as_cwd():
-        yield _copy_case
+    monkeypatch.chdir(tmp_path)
+    yield _copy_case
 
 
 @pytest.fixture()
