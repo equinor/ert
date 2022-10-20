@@ -20,6 +20,17 @@ install_package () {
 }
 
 start_tests () {
+    echo $ghprbActualCommit
+    echo $ghprbActualCommitAuthor
+    echo $ghprbActualCommitAuthorEmail
+    echo $ghprbPullDescription
+    echo $ghprbPullId
+    echo $ghprbPullLink
+    echo $ghprbPullTitle
+    echo $ghprbSourceBranch
+    echo $ghprbTargetBranch
+    echo $ghprbCommentBody
+    echo $sha1
     if [[ ${CI_KOMODO_RELEASE} =~ py27$  ]]
     then
         export PYTEST_QT_API=pyqt4v2
