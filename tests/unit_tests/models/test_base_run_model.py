@@ -68,6 +68,7 @@ def test_active_realizations(initials, expected):
         ([False, False], [False, False], False, [False, False]),
         ([False, False], [True, True], False, [False, False]),
         ([True, True], [False, True], True, [True, False]),
+        ([False, False], [], True, [True, True]),
     ],
 )
 def test_failed_realizations(initials, completed, any_failed, failures):
