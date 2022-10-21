@@ -210,10 +210,13 @@ class ExtJob(BaseCClass):
     def name(self) -> str:
         return self._get_name()
 
-    def __ne__(self, other: "ExtJob") -> bool:
+    def __ne__(self, other) -> bool:
         return not self == other
 
-    def __eq__(self, other: "ExtJob") -> bool:
+    def __eq__(self, other) -> bool:
+        if not isinstance(other, ExtJob):
+            return False
+
         if self.name() != other.name():
             return False
 
