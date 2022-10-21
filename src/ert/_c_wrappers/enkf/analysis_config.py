@@ -43,7 +43,7 @@ class AnalysisConfig(BaseCClass):
         max_runtime=0,
         min_realization=0,
         update_log_path=None,
-        analysis_iter_config=AnalysisIterConfig(),
+        analysis_iter_config=None,
         analysis_copy=None,
         analysis_set_var=None,
         analysis_select=None,
@@ -58,7 +58,7 @@ class AnalysisConfig(BaseCClass):
         self._stop_long_running = stop_long_running
         self._alpha = alpha
         self._std_cutoff = std_cutoff
-        self._analysis_iter_config = analysis_iter_config
+        self._analysis_iter_config = analysis_iter_config or AnalysisIterConfig()
         self._update_log_path = update_log_path
 
         self._analysis_select = analysis_select
