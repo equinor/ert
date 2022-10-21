@@ -85,4 +85,6 @@ def test_with_enkf_fs(copy_case):
     ensemble_config = ert.ensembleConfig()
 
     assert "FOPT" in ensemble_config
+    assert "WWCT" in ensemble_config
+    assert "WOPR" in ensemble_config
     assert "TCPU" not in ensemble_config

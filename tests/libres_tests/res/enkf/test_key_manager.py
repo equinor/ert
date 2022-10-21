@@ -5,7 +5,7 @@ def test_summary_keys(snake_oil_case):
     ert = snake_oil_case
     key_man = KeyManager(ert)
 
-    assert len(key_man.summaryKeys()) == 46
+    assert len(key_man.summaryKeys()) == 47
     assert "FOPT" in key_man.summaryKeys()
 
     assert len(key_man.summaryKeysWithObservations()) == 2
