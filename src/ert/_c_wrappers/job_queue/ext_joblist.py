@@ -66,5 +66,7 @@ class ExtJoblist(BaseCClass):
     def __repr__(self) -> str:
         return self._create_repr(f"size={len(self)}, joblist={self.get_jobs()}")
 
-    def __eq__(self, other: "ExtJoblist") -> bool:
+    def __eq__(self, other) -> bool:
+        if not isinstance(other, ExtJoblist):
+            return False
         return self.get_jobs() == other.get_jobs()
