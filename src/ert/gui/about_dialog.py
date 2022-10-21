@@ -1,8 +1,8 @@
-import ecl
 from qtpy.QtCore import QSize, Qt
 from qtpy.QtGui import QFont
 from qtpy.QtWidgets import QDialog, QHBoxLayout, QLabel, QPushButton, QVBoxLayout
 
+import ecl
 import ert.gui as ert_gui
 
 

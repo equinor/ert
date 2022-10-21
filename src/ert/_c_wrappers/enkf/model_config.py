@@ -1,8 +1,8 @@
 import os
 
 from cwrap import BaseCClass
-from ecl.summary import EclSum
 
+from ecl.summary import EclSum
 from ert._c_wrappers import ResPrototype
 from ert._c_wrappers.enkf.config_keys import ConfigKeys
 from ert._c_wrappers.enkf.time_map import TimeMap

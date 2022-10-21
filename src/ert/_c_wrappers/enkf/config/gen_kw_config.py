@@ -2,8 +2,8 @@ import os
 from typing import TYPE_CHECKING, Dict, List, TypedDict
 
 from cwrap import BaseCClass
-from ecl.util.util import StringList
 
+from ecl.util.util import StringList
 from ert._c_wrappers import ResPrototype
 
 if TYPE_CHECKING:

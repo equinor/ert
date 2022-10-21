@@ -5,8 +5,8 @@ import shutil
 
 import numpy as np
 import pytest
-from ecl.grid import EclGridGenerator
 
+from ecl.grid import EclGridGenerator
 from ert._c_wrappers.enkf import EnKFMain, EnkfNode, NodeId, ResConfig, RunContext
 from ert._c_wrappers.enkf.enums import RealizationStateEnum
 from ert._clib.local.row_scaling import RowScaling

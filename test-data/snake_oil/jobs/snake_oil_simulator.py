@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 from datetime import datetime
 
-from ecl.summary import EclSum
 from oil_reservoir_synthesizer import OilSimulator
+
+from ecl.summary import EclSum
 
 
 def globalIndex(i, j, k, nx=10, ny=10, nz=10):

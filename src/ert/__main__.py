@@ -7,9 +7,9 @@ from argparse import ArgumentParser, ArgumentTypeError
 from contextlib import contextmanager
 
 import yaml
-from ecl import set_abort_handler
 
 import ert.shared
+from ecl import set_abort_handler
 from ert._c_wrappers.enkf import ResConfig
 from ert.cli import (
     ENSEMBLE_EXPERIMENT_MODE,

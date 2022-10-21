@@ -1,7 +1,6 @@
 from pathlib import Path
 
 from ecl.util.util import StringList
-
 from ert._c_wrappers.config.config_content import ConfigContent
 from ert._c_wrappers.config.config_parser import ConfigParser
 from ert._c_wrappers.config.content_type_enum import ContentTypeEnum

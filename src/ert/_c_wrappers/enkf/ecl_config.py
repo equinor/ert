@@ -5,7 +5,6 @@ from ecl.ecl_util import EclFileEnum, get_file_type
 from ecl.ecl_util import get_num_cpu as get_num_cpu_from_data_file
 from ecl.grid import EclGrid
 from ecl.summary import EclSum
-
 from ert._c_wrappers.enkf.config_keys import ConfigKeys
 
 

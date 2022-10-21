@@ -2,8 +2,8 @@ import numbers
 import os.path
 
 from cwrap import BaseCClass
-from ecl.util.util import DoubleVector
 
+from ecl.util.util import DoubleVector
 from ert._c_wrappers import ResPrototype
 from ert._c_wrappers.enkf.config import GenKwConfig
 

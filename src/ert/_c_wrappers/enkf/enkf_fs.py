@@ -15,7 +15,6 @@ from ert._clib import update
 
 if TYPE_CHECKING:
     from ecl.util.util import IntVector
-
     from ert._c_wrappers.enkf.state_map import StateMap
     from ert._clib.state_map import RealizationStateEnum
 

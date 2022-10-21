@@ -2,10 +2,10 @@ import os
 from typing import List, Optional
 
 from cwrap import BaseCClass
+
 from ecl.grid import EclGrid
 from ecl.summary import EclSum
 from ecl.util.util import StringList
-
 from ert import _clib
 from ert._c_wrappers import ResPrototype
 from ert._c_wrappers.config import ConfigContent

@@ -1,5 +1,4 @@
 from ecl.util.util.stringlist import StringList
-
 from ert._c_wrappers import ResPrototype
 from ert._c_wrappers.job_queue import ErtScript
 

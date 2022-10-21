@@ -1,8 +1,8 @@
 from datetime import datetime
 
 import pytest
-from ecl.summary import EclSum
 
+from ecl.summary import EclSum
 from ert._c_wrappers.enkf import ConfigKeys, EclConfig
 
 

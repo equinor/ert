@@ -2,10 +2,10 @@ import logging
 from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Union
 
 import numpy as np
-from ecl.grid import EclGrid
-from ecl.util.util import IntVector
 from pandas import DataFrame, MultiIndex, Series
 
+from ecl.grid import EclGrid
+from ecl.util.util import IntVector
 from ert import _clib
 from ert._c_wrappers.enkf import EnKFMain, EnkfNode, ErtImplType, ResConfig, RunContext
 from ert._c_wrappers.enkf.config import GenKwConfig

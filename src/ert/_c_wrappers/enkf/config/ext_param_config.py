@@ -1,6 +1,6 @@
 from cwrap import BaseCClass
-from ecl.util.util import StringList
 
+from ecl.util.util import StringList
 from ert._c_wrappers import ResPrototype
 
 

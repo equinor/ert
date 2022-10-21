@@ -1,6 +1,6 @@
 from cwrap import BaseCClass
-from ecl.grid import EclGrid
 
+from ecl.grid import EclGrid
 from ert._c_wrappers import ResPrototype
 from ert._c_wrappers.enkf.enums import EnkfFieldFileFormatEnum
 

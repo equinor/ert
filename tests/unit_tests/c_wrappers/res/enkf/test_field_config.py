@@ -1,6 +1,6 @@
 import pytest
-from ecl.grid import EclGridGenerator
 
+from ecl.grid import EclGridGenerator
 from ert._c_wrappers.enkf.config import FieldConfig, FieldTypeEnum
 from ert._c_wrappers.enkf.enums import EnkfFieldFileFormatEnum
 

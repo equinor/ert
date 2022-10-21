@@ -8,8 +8,8 @@ from unittest import mock
 
 import pytest
 import yaml
-from ecl.summary import EclSum
 
+from ecl.summary import EclSum
 from ert._c_wrappers.fm.ecl import Ecl100Config, EclRun, EclrunConfig, run
 
 

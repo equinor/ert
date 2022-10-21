@@ -10,9 +10,9 @@ from pathlib import Path
 from textwrap import dedent
 
 import pytest
-from ecl.summary import EclSum
 from jsonpath_ng import parse
 
+from ecl.summary import EclSum
 from ert.__main__ import ert_parser
 from ert._c_wrappers.enkf.enkf_main import EnKFMain
 from ert._c_wrappers.enkf.res_config import ResConfig

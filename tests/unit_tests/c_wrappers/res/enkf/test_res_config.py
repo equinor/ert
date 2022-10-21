@@ -8,8 +8,8 @@ from unittest.mock import MagicMock, mock_open, patch
 
 import pytest
 from cwrap import Prototype, load
-from ecl.util.enums import RngAlgTypeEnum
 
+from ecl.util.enums import RngAlgTypeEnum
 from ert._c_wrappers.enkf import (
     AnalysisConfig,
     ConfigKeys,

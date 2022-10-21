@@ -3,8 +3,8 @@ import time
 from threading import Lock, Thread
 
 from cwrap import BaseCClass
-from ecl.util.util import StringList
 
+from ecl.util.util import StringList
 from ert._c_wrappers import ResPrototype
 from ert._c_wrappers.job_queue.job_status_type_enum import JobStatusType
 from ert._c_wrappers.job_queue.job_submit_status_type_enum import JobSubmitStatusType

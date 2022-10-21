@@ -3,8 +3,8 @@ import os
 from typing import TYPE_CHECKING
 
 from cwrap import BaseCClass
-from ecl.util.util import CTime
 
+from ecl.util.util import CTime
 from ert._c_wrappers import ResPrototype
 from ert._clib import time_map
 

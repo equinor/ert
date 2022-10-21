@@ -8,10 +8,10 @@ import tempfile
 import ecl_data_io as eclio
 import numpy
 import py
-from ecl.summary import EclSum
 from jinja2 import Environment, FileSystemLoader
 from numpy import array
 
+from ecl.summary import EclSum
 from ert.dark_storage import enkf
 
 

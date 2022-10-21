@@ -2,8 +2,8 @@ import os.path
 import sys
 
 from cwrap import BaseCClass
-from ecl.util.util import StringHash
 
+from ecl.util.util import StringHash
 from ert._c_wrappers import ResPrototype
 from ert._c_wrappers.config.config_content import ConfigContent
 from ert._c_wrappers.config.unrecognized_enum import UnrecognizedEnum

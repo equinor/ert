@@ -5,8 +5,8 @@ from textwrap import dedent
 from unittest.mock import MagicMock
 
 import pytest
-from ecl.summary import EclSum
 
+from ecl.summary import EclSum
 from ert._c_wrappers.enkf import (
     AnalysisConfig,
     EclConfig,

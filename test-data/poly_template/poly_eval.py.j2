@@ -1,14 +1,14 @@
 #!/usr/bin/env python
 
-import json
-
 import datetime
+import json
+import os
+
+import ecl_data_io as eclio
+import numpy
+from numpy import array
 
 from ecl.summary import EclSum
-import os
-from numpy import array
-import numpy
-import ecl_data_io as eclio
 
 
 def _load_coeffs(filename):

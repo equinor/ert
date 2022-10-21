@@ -1,8 +1,8 @@
 from typing import Iterator, List, Optional, Union
 
 from cwrap import BaseCClass
-from ecl.util.util import CTime, StringList
 
+from ecl.util.util import CTime, StringList
 from ert._c_wrappers import ResPrototype
 from ert._c_wrappers.enkf.enums import EnkfObservationImplementationType
 from ert._c_wrappers.enkf.observations import ObsVector

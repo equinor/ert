@@ -1,8 +1,8 @@
 import math
 from functools import partial
 
-from ert._clib.local.row_scaling import RowScaling
 from ert._c_wrappers.job_queue import ErtScript
+from ert._clib.local.row_scaling import RowScaling
 
 
 def gaussian_decay(obs_pos, length_scale, grid, data_index):

@@ -41,7 +41,7 @@ jobs:
 
     - name: Run isort
       run: |
-        isort --check src/ tests/
+        isort --check src tests test-data
 
     - name: Lint with flake8
       run: |

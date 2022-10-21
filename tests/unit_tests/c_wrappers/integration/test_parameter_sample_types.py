@@ -7,11 +7,11 @@ from textwrap import dedent
 import cwrap
 import numpy as np
 import pytest
+
 from ecl import EclDataType
 from ecl.eclfile import EclKW
 from ecl.grid import EclGrid
 from ecl.util.geometry import Surface
-
 from ert._c_wrappers.enkf import EnKFMain, ResConfig
 from ert._clib import update
 from ert._clib.update import Parameter

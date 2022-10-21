@@ -8,8 +8,8 @@ from pathlib import Path
 from typing import Dict, List, Optional
 
 import aiofiles
-from ecl.summary import EclSum
 
+from ecl.summary import EclSum
 from ert.async_utils import get_event_loop
 from ert.data import BlobRecord, NumericalRecord, NumericalRecordTree, Record
 from ert.exceptions import FileExistsException

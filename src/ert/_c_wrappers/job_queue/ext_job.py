@@ -2,8 +2,8 @@ import os.path
 from typing import Dict, List, Optional
 
 from cwrap import BaseCClass
-from ecl.util.util import StringList
 
+from ecl.util.util import StringList
 from ert._c_wrappers import ResPrototype
 from ert._c_wrappers.config import ContentTypeEnum
 
