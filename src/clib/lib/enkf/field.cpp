@@ -1,3 +1,4 @@
+#include "ert/enkf/value_export.hpp"
 #include <filesystem>
 
 #include <Eigen/Dense>
@@ -548,8 +549,7 @@ void field_export(const field_type *__field, const char *file,
         field_output_transform(field);
 
     /*  Writes the field to in ecl_kw format to a new file.  */
-    if ((file_type == ECL_KW_FILE_ALL_CELLS) ||
-        (file_type == ECL_KW_FILE_ACTIVE_CELLS)) {
+    if (file_type == ECL_KW_FILE_ALL_CELLS) {
         fortio_type *fortio;
         bool fmt_file =
             false; /* For formats which support both formatted and unformatted output this is hardwired to unformatted. */
@@ -570,9 +570,6 @@ void field_export(const field_type *__field, const char *file,
     } else if (file_type == RMS_ROFF_FILE)
         /* Roff export */
         field_ROFF_export(field, file, init_file);
-    else if (file_type == ECL_FILE)
-        /* This entry point is used by the ecl_write() function to write to an ALREADY OPENED eclipse restart file. */
-        field_ecl_write1D_fortio(field, restart_fortio);
     else
         util_abort("%s: internal error file_type = %d - aborting \n", __func__,
                    file_type);
@@ -591,15 +588,9 @@ void field_export(const field_type *__field, const char *file,
    unchanged.
 */
 void field_ecl_write(const field_type *field, const char *run_path,
-                     const char *file, void *filestream) {
+                     const char *file, value_export_type *value_export) {
     field_file_format_type export_format =
         field_config_get_export_format(field->config);
-
-    if (export_format == ECL_FILE) {
-        auto restart_fortio = static_cast<fortio_type *>(filestream);
-        field_export(field, NULL, restart_fortio, export_format, true, NULL);
-        return;
-    }
 
     char *full_path = util_alloc_filename(run_path, file, NULL);
     if (util_is_link(full_path))
