@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#!/usr/bin/env python
 import math
 import random
 
@@ -470,16 +470,16 @@ class PerlinNoise:
 
 
 def createObservationFile(report_step, observation, count, std=0.2):
-    with open("perlin_obs_%d.txt" % report_step, "w") as f:
+    with open(f"perlin_obs_{report_step}.txt", "w", encoding="utf-8") as f:
 
         for index in range(count):
             x = index / 8.0
-            f.write("%f %f\n" % (observation.perlinNoise1D(x), std))
+            f.write(f"{observation.perlinNoise1D(x)} {std}\n")
 
 
 def readParameters(filename):
     params = {}
-    with open(filename, "r") as f:
+    with open(filename, "r", encoding="utf-8") as f:
         for line in f:
             key, value = line.split(":", 1)
             params[key] = float(value)
@@ -489,12 +489,6 @@ def readParameters(filename):
 
 if __name__ == "__main__":
     count = 100
-
-    # primes = []
-    # for p in range(128):
-    #     primes.append(str(PerlinNoise.createPrime(7)))
-    #
-    # print(",".join(primes))
 
     observations = {
         1: PerlinNoise(prime_1=15731, prime_2=789221, prime_3=1376312589),
@@ -515,13 +509,11 @@ if __name__ == "__main__":
         p2_index = int(round(params["PRIME_2"]))
         p3_index = int(round(params["PRIME_3"]))
 
-        with open("perlin_%d.txt" % report_step, "w") as f:
+        with open(f"perlin_{report_step}.txt", "w", encoding="utf-8") as f:
             P1 = PRIME_INDEX_1[p1_index]
             P2 = PRIME_INDEX_2[p2_index]
             P3 = PRIME_INDEX_3[p3_index]
-            # P1 = PerlinNoise.createPrime()
-            # P2 = PerlinNoise.createPrime()
-            # P3 = PerlinNoise.createPrime()
+
             report_step_noise = PerlinNoise(
                 persistence=persistence,
                 number_of_octaves=octaves,
@@ -534,4 +526,4 @@ if __name__ == "__main__":
                 x = i / 8.0
                 obs = observation.perlinNoise1D(x)
                 noise = report_step_noise.perlinNoise1D(x)
-                f.write("%f\n" % (obs + offset + noise * scale))
+                f.write(f"{obs + offset + noise * scale}\n")

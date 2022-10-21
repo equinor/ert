@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 from datetime import datetime
 
-from ecl.summary import EclSum
 from oil_reservoir_synthesizer import OilSimulator
+
+from ecl.summary import EclSum
 
 
 def globalIndex(i, j, k, nx=10, ny=10, nz=10):
@@ -20,7 +21,6 @@ def readParameters(filename):
 
 
 def runSimulator(simulator, history_simulator, time_step_count):
-    """@rtype: EclSum"""
     ecl_sum = EclSum.writer("SNAKE_OIL_FIELD", datetime(2010, 1, 1), 10, 10, 10)
 
     ecl_sum.addVariable("FOPT")
@@ -184,6 +184,6 @@ if __name__ == "__main__":
 
     ecl_sum.fwrite()
 
-    with open("time_map.txt", "w") as f:
-        for t in time_map:
-            f.write("%s\n" % t)
+    with open("time_map.txt", "w", encoding="utf-8") as filehandle:
+        for timestep_string in time_map:
+            filehandle.write(f"{timestep_string}\n")

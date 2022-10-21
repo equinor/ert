@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 from datetime import datetime
 
-from ecl.summary import EclSum
-
 from snake_oil_simulator import OilSimulator
+
+from ecl.summary import EclSum
 
 
 def globalIndex(i, j, k, nx=10, ny=10, nz=10):
@@ -12,7 +12,7 @@ def globalIndex(i, j, k, nx=10, ny=10, nz=10):
 
 def readParameters(filename):
     params = {}
-    with open(filename, "r") as f:
+    with open(filename, "r", encoding="utf-8") as f:
         for line in f:
             key, value = line.split(":", 1)
             params[key] = value.strip()
@@ -20,8 +20,7 @@ def readParameters(filename):
     return params
 
 
-def runSimulator(simulator, history_simulator, time_step_count):
-    """@rtype: EclSum"""
+def runSimulator(simulator, history_simulator, time_step_count) -> EclSum:
     ecl_sum = EclSum.writer("SNAKE_OIL_FIELD", datetime(2010, 1, 1), 10, 10, 10)
 
     ecl_sum.addVariable("FOPT")
@@ -185,6 +184,6 @@ if __name__ == "__main__":
 
     ecl_sum.fwrite()
 
-    with open("time_map.txt", "w") as f:
+    with open("time_map.txt", "w", encoding="utf-8") as f:
         for t in time_map:
-            f.write("%s\n" % t)
+            f.write(f"{t}\n")

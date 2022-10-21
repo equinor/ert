@@ -63,7 +63,7 @@ def batch_simulator(batch_sim_example):
 
 
 @pytest.mark.parametrize(
-    "input, match",
+    "_input, match",
     [
         (
             [
@@ -140,11 +140,13 @@ def batch_simulator(batch_sim_example):
         ),
     ],
 )
-def test_that_starting_with_invalid_key_raises_key_error(batch_simulator, input, match):
+def test_that_starting_with_invalid_key_raises_key_error(
+    batch_simulator, _input, match
+):
     with pytest.raises(KeyError, match=match):
         batch_simulator.start(
             "case",
-            input,
+            _input,
         )
 
 

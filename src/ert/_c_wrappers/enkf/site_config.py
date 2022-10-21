@@ -17,7 +17,7 @@ class SiteConfig:
     @classmethod
     def _add_job(cls, job_list, license_root_path, job_path, job_name=None):
         if not os.path.isfile(job_path):
-            logger.warn(f"Unable to locate job file {job_path}")
+            logger.warning(f"Unable to locate job file {job_path}")
             return
         new_job = ExtJob(
             config_file=job_path,
@@ -44,7 +44,7 @@ class SiteConfig:
             for args in iter(config_content[ConfigKeys.INSTALL_JOB_DIRECTORY]):
                 job_path = args[0]
                 if not os.path.isdir(job_path):
-                    logger.warn(f"Unable to locate job directory {job_path}")
+                    logger.warning(f"Unable to locate job directory {job_path}")
                     continue
                 files = os.listdir(job_path)
                 for file_name in files:
@@ -124,7 +124,7 @@ class SiteConfig:
 
         for job_path in config_dict.get(ConfigKeys.INSTALL_JOB_DIRECTORY, []):
             if not os.path.isdir(job_path):
-                logger.warn(f"Unable to locate job directory {job_path}")
+                logger.warning(f"Unable to locate job directory {job_path}")
                 continue
             files = os.listdir(job_path)
             for file_name in files:

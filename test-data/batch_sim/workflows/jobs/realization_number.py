@@ -1,21 +1,22 @@
 #!/usr/bin/env python
-import os.path
 import argparse
 import re
+from pathlib import Path
 
 TARGET_FILE = "realization.number"
 REGEX = r"realization-(\d+)"
 
 
 def add_file_to_realization_runpaths(runpath_file):
-    with open(runpath_file, "r") as fh:
+    with open(runpath_file, "r", encoding="utf-8") as fh:
         runpath_file_lines = fh.readlines()
 
     for line in runpath_file_lines:
         realization_path = line.split()[1]
-        with open(os.path.join(realization_path, TARGET_FILE), "w") as fh:
-            realization_nr = re.findall(REGEX, realization_path)
-            fh.write("{}\n".format(realization_nr[0]))
+        realization_nr = re.findall(REGEX, realization_path)
+        (Path(realization_path) / TARGET_FILE).write_text(
+            f"{realization_nr[0]}", encoding="utf-8"
+        )
 
 
 def job_parser():
