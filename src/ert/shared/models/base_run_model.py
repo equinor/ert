@@ -138,12 +138,16 @@ class BaseRunModel:
         Creates a list of bools representing the failed realizations,
         i.e., a realization that has failed is assigned a True value.
         """
-        return [
-            initial and not completed
-            for initial, completed in zip(
-                self._initial_realizations_mask, self._completed_realizations_mask
-            )
-        ]
+        if self._completed_realizations_mask:
+            return [
+                initial and not completed
+                for initial, completed in zip(
+                    self._initial_realizations_mask, self._completed_realizations_mask
+                )
+            ]
+        else:
+            # If all realisations fail
+            return [True] * len(self._initial_realizations_mask)
 
     def _count_successful_realizations(self) -> int:
         """
