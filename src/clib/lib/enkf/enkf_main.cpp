@@ -1,6 +1,6 @@
-#include <ert/python.hpp>
-
 #include <ert/logging.hpp>
+#include <ert/python.hpp>
+#include <stdexcept>
 
 static auto logger = ert::get_logger("enkf");
 
@@ -38,13 +38,18 @@ void ecl_write(const ensemble_config_type *ens_config,
         if (enkf_node_use_forward_init(enkf_node) &&
             !enkf_node_has_data(enkf_node, fs, node_id))
             continue;
-        enkf_node_load(enkf_node, fs, node_id);
-
+        try {
+            enkf_node_load(enkf_node, fs, node_id);
+        } catch (const std::out_of_range &) {
+            enkf_node_free(enkf_node);
+            value_export_free(export_value);
+            throw pybind11::key_error(
+                fmt::format("No such parameter {} in storage", key));
+        }
         enkf_node_ecl_write(enkf_node, run_path, export_value, 0);
         enkf_node_free(enkf_node);
     }
     value_export(export_value);
-
     value_export_free(export_value);
 }
 
