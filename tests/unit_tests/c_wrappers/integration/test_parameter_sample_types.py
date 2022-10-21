@@ -128,9 +128,7 @@ def test_field_param(tmpdir, config_str, expected):
             )
             assert len(arr) == 16
         else:
-            # load_parameter should probably handle errors better than
-            # to throw an exception.
-            with pytest.raises(IndexError):
+            with pytest.raises(KeyError, match="No parameter: MY_PARAM in storage"):
                 fs.load_parameter(
                     ert.ensembleConfig(), [0], update.Parameter("MY_PARAM")
                 )
@@ -195,9 +193,7 @@ def test_surface_param(
             )
             assert len(arr) == 4
         else:
-            # load_parameter should probably handle errors better than
-            # to throw an exception.
-            with pytest.raises(IndexError):
+            with pytest.raises(KeyError, match="No parameter: MY_PARAM in storage"):
                 fs.load_parameter(
                     ert.ensembleConfig(), [0], update.Parameter("MY_PARAM")
                 )

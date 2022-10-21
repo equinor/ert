@@ -60,6 +60,15 @@ void serialize_node(enkf_fs_type *fs, const enkf_config_node_type *config_node,
 
     enkf_node_type *node = enkf_node_alloc(config_node);
     node_id_type node_id = {.report_step = 0, .iens = iens};
+    try {
+        enkf_node_serialize(node, fs, node_id, active_list, A, row_offset,
+                            column);
+    } catch (const std::out_of_range &) {
+        std::string param_name = enkf_node_get_key(node);
+        enkf_node_free(node);
+        throw pybind11::key_error(
+            fmt::format("No parameter: {} in storage", param_name));
+    }
     enkf_node_serialize(node, fs, node_id, active_list, A, row_offset, column);
     enkf_node_free(node);
 }
