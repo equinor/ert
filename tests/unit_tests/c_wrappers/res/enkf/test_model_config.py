@@ -72,7 +72,7 @@ def test_model_config_dict_constructor(setup_case):
     assert res_config.model_config == ModelConfig(
         data_root="",
         joblist=res_config.site_config.job_list,
-        refcase=res_config.ecl_config.refcase,
+        refcase=res_config.ensemble_config.refcase,
         config_dict={
             ConfigKeys.MAX_RESAMPLE: 1,
             ConfigKeys.JOBNAME: "model_config_test",

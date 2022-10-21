@@ -33,10 +33,10 @@ from ert._c_wrappers.enkf.observations.summary_observation import SummaryObserva
 @pytest.mark.unstable
 def test_ecl_config_creation(minimum_case):
     assert isinstance(minimum_case.analysisConfig(), AnalysisConfig)
-    assert isinstance(minimum_case.eclConfig(), EclConfig)
+    assert isinstance(minimum_case.ensembleConfig(), EnsembleConfig)
 
     with pytest.raises(AssertionError):  # Null pointer!
-        assert isinstance(minimum_case.eclConfig().refcase, EclSum)
+        assert isinstance(minimum_case.ensembleConfig().refcase, EclSum)
 
     file_system = minimum_case.getEnkfFsManager().getCurrentFileSystem()
     assert file_system.getCaseName() == "default"

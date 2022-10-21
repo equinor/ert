@@ -245,11 +245,7 @@ class ResConfig:
             for template in user_config_content[ConfigKeys.RUN_TEMPLATE]:
                 self._templates.append(list(template))
 
-        self.ensemble_config = EnsembleConfig(
-            config_content=user_config_content,
-            grid=self.ecl_config.grid,
-            refcase=self.ecl_config.refcase,
-        )
+        self.ensemble_config = EnsembleConfig(config_content=user_config_content)
 
         for key in self.ensemble_config.getKeylistFromImplType(ErtImplType.GEN_KW):
             if self.ensemble_config.getNode(key).get_init_file_fmt() != None:
@@ -261,7 +257,7 @@ class ResConfig:
         self.model_config = ModelConfig(
             data_root=self.config_path,
             joblist=self.site_config.job_list,
-            refcase=self.ecl_config.refcase,
+            refcase=self.ensemble_config.refcase,
             config_content=user_config_content,
         )
 
@@ -322,11 +318,7 @@ class ResConfig:
         for source_file, target_file, *_ in templates:
             self._templates.append([os.path.abspath(source_file), target_file])
 
-        self.ensemble_config = EnsembleConfig(
-            grid=self.ecl_config.grid,
-            refcase=self.ecl_config.refcase,
-            config_dict=config_dict,
-        )
+        self.ensemble_config = EnsembleConfig(config_dict=config_dict)
 
         for key in self.ensemble_config.getKeylistFromImplType(ErtImplType.GEN_KW):
             if self.ensemble_config.getNode(key).get_init_file_fmt() != None:
@@ -338,7 +330,7 @@ class ResConfig:
         self.model_config = ModelConfig(
             data_root=self.config_path,
             joblist=self.site_config.job_list,
-            refcase=self.ecl_config.refcase,
+            refcase=self.ensemble_config.refcase,
             config_dict=config_dict,
         )
 
@@ -652,7 +644,6 @@ class ResConfig:
             (self.analysis_config == other.analysis_config),
             (self.ert_workflow_list == other.ert_workflow_list),
             (self.ert_templates == other.ert_templates),
-            (self.ecl_config == other.ecl_config),
             (self.ensemble_config == other.ensemble_config),
             (self.model_config == other.model_config),
             (self.queue_config == other.queue_config),
@@ -677,7 +668,6 @@ class ResConfig:
             f"AnalysisConfig: {self.analysis_config},\n"
             f"ErtWorkflowList: {self.ert_workflow_list},\n"
             f"ErtTemplates: {self.ert_templates},\n"
-            f"EclConfig: {self.ecl_config},\n"
             f"EnsembleConfig: {self.ensemble_config},\n"
             f"ModelConfig: {self.model_config},\n"
             f"QueueConfig: {self.queue_config}"

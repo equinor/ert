@@ -83,6 +83,7 @@ def test_ensemble_config_constructor(setup_case):
                     ConfigKeys.PARAMETER_KEY: None,
                 }
             ],
+            ConfigKeys.GRID: "grid/CASE.EGRID",  # ecl
+            # ConfigKeys.REFCASE: "../input/refcase/SNAKE_OIL_FIELD",  # ecl
         },
-        grid=res_config.ecl_config.grid,
     )
