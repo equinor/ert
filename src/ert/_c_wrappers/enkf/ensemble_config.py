@@ -1,7 +1,8 @@
 import os
-from typing import List, Optional
+from typing import List, Optional, Union
 
 from cwrap import BaseCClass
+from ecl.ecl_util import EclFileEnum, get_file_type
 from ecl.grid import EclGrid
 from ecl.summary import EclSum
 from ecl.util.util import StringList
@@ -11,7 +12,7 @@ from ert._c_wrappers import ResPrototype
 from ert._c_wrappers.config import ConfigContent
 from ert._c_wrappers.enkf.config import EnkfConfigNode
 from ert._c_wrappers.enkf.config_keys import ConfigKeys
-from ert._c_wrappers.enkf.enums import EnkfVarType, ErtImplType, GenDataFileType
+from ert._c_wrappers.enkf.enums import EnkfVarType, ErtImplType
 
 
 def _get_abs_path(file):
@@ -62,11 +63,40 @@ class EnsembleConfig(BaseCClass):
         "void ensemble_config_init_SUMMARY_full(ens_config, char*, ecl_sum)"
     )
 
+    @staticmethod
+    def _load_grid(grid_file: str) -> Optional[EclGrid]:
+        ecl_grid_file_types = [
+            EclFileEnum.ECL_GRID_FILE,
+            EclFileEnum.ECL_EGRID_FILE,
+        ]
+        if get_file_type(grid_file) not in ecl_grid_file_types:
+            raise ValueError(f"grid file {grid_file} does not have expected type")
+        return EclGrid.load_from_file(grid_file)
+
+    @staticmethod
+    def _get_file_str(config_dict_value: Optional[Union[list, str]]) -> Optional[str]:
+        if config_dict_value is not None:
+            if isinstance(config_dict_value, str):
+                return os.path.realpath(config_dict_value)
+            elif isinstance(config_dict_value, list):
+                return os.path.realpath(config_dict_value[-1])
+        return config_dict_value
+
+    def _load_refcase(self, refcase_file: str) -> EclSum:
+        # defaults for loading refcase - necessary for using the function
+        # exposed in python part of ecl
+        refcase_load_args = {
+            "load_case": refcase_file,
+            "join_string": ":",
+            "include_restart": True,
+            "lazy_load": True,
+            "file_options": 0,
+        }
+        return EclSum(**refcase_load_args)
+
     def __init__(
         self,
         config_content: Optional[ConfigContent] = None,
-        grid: Optional[EclGrid] = None,
-        refcase: Optional[EclSum] = None,
         config_dict=None,
     ):
         if config_content is not None and config_dict is not None:
@@ -74,6 +104,32 @@ class EnsembleConfig(BaseCClass):
                 "Attempting to create EnsembleConfig "
                 "object with multiple config objects"
             )
+
+        self._grid_file: Optional[str] = (
+            self._get_file_str(config_dict[ConfigKeys.GRID])
+            if (config_dict is not None and ConfigKeys.GRID in config_dict)
+            else None
+        )
+
+        self._refcase_file: Optional[str] = (
+            self._get_file_str(config_dict[ConfigKeys.REFCASE])
+            if (config_dict is not None and ConfigKeys.REFCASE in config_dict)
+            else None
+        )
+
+        if config_content is not None:
+            config_content_dict = config_content.as_dict()
+            self._grid_file = self._get_file_str(
+                config_content_dict.get(ConfigKeys.GRID)
+            )
+            self._refcase_file = self._get_file_str(
+                config_content_dict.get(ConfigKeys.REFCASE)
+            )
+
+        self.grid = self._load_grid(self._grid_file) if self._grid_file else None
+        self.refcase = (
+            self._load_refcase(self._refcase_file) if self._refcase_file else None
+        )
 
         c_ptr = None
         if config_dict is not None:
@@ -125,14 +181,14 @@ class EnsembleConfig(BaseCClass):
 
             summary_list = config_dict.get(ConfigKeys.SUMMARY, [])
             for a in summary_list:
-                self.add_summary_full(a, refcase)
+                self.add_summary_full(a, self.refcase)
 
             field_list = config_dict.get(ConfigKeys.FIELD_KEY, [])
             for field in field_list:
                 field_node = EnkfConfigNode.create_field(
                     field.get(ConfigKeys.NAME),
                     field.get(ConfigKeys.VAR_TYPE),
-                    grid,
+                    self.grid,
                     self._get_trans_table(),
                     field.get(ConfigKeys.OUT_FILE),
                     field.get(ConfigKeys.ENKF_INFILE),
@@ -163,7 +219,7 @@ class EnsembleConfig(BaseCClass):
 
             return
 
-        c_ptr = self._alloc(config_content, grid, refcase)
+        c_ptr = self._alloc(config_content, self.grid, self.refcase)
         if c_ptr is None:
             raise ValueError("Failed to construct EnsembleConfig instance")
         super().__init__(c_ptr)
@@ -211,7 +267,12 @@ class EnsembleConfig(BaseCClass):
                 for key in self.alloc_keylist()
                 if self.getNode(key).getImplementationType() == ErtImplType.FIELD
             )
-            + "]"
+            + "], "
+            + f"{ConfigKeys.GRID}: "
+            + f"{self._grid_file}"
+            + ", "
+            + f"{ConfigKeys.REFCASE}: "
+            + f"{self._refcase_file}"
             + "}"
         )
 
@@ -255,6 +316,14 @@ class EnsembleConfig(BaseCClass):
         return list(self._alloc_keylist_from_impl_type(ert_impl_type))
 
     @property
+    def get_grid_file(self) -> Optional[str]:
+        return self._grid_file
+
+    @property
+    def get_refcase_file(self) -> Optional[str]:
+        return self._refcase_file
+
+    @property
     def parameters(self) -> List[str]:
         return self.getKeylistFromVarType(EnkfVarType.PARAMETER)
 
@@ -276,6 +345,12 @@ class EnsembleConfig(BaseCClass):
                     return False
             else:
                 return False
+
+        if (
+            self._grid_file != other._grid_file
+            or self._refcase_file != other._refcase_file
+        ):
+            return False
 
         return True
 

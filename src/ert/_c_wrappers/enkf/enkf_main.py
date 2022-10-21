@@ -62,8 +62,8 @@ class EnKFMain:
         self._observations = EnkfObs(
             config.model_config.get_history_source(),
             config.model_config.get_time_map(),
-            config.ecl_config.grid,
-            config.ecl_config.refcase,
+            config.ensemble_config.grid,
+            config.ensemble_config.refcase,
             config.ensemble_config,
         )
         if config.model_config.obs_config_file:
@@ -379,9 +379,9 @@ class EnKFMain:
             case = self.storage_manager[case_name]
         except KeyError:
             case = self.storage_manager.add_case(case_name)
-        if self.res_config.ecl_config.refcase:
+        if self.res_config.ensemble_config.refcase:
             time_map = case.getTimeMap()
-            time_map.attach_refcase(self.res_config.ecl_config.refcase)
+            time_map.attach_refcase(self.res_config.ensemble_config.refcase)
         return case
 
     def caseExists(self, case_name: str) -> bool:

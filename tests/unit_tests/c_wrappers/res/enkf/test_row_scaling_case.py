@@ -468,7 +468,7 @@ TIME_MAP timemap.txt
         ens_config = main.ensembleConfig()
         poro_config = ens_config["PORO"]
         field_config = poro_config.getFieldModelConfig()
-        grid = main.eclConfig().grid
+        grid = main.ensembleConfig().grid
         row_scaling.assign(field_config.get_data_size(), ScalingTest(grid))
         es_update = ESUpdate(main)
         update_fs = main.getEnkfFsManager().getFileSystem("target2")
