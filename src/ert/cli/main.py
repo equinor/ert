@@ -130,7 +130,7 @@ async def _run_cli_async(
     from ert.experiment_server import ExperimentServer  # noqa
 
     experiment_server = ExperimentServer(ee_config)
-    experiment_server.add_legacy_experiment(
-        ert, ensemble_size, current_case_name, args, create_model, experiment_id
+    experiment_server.add_experiment(
+        create_model(ert, ensemble_size, current_case_name, args, experiment_id)
     )
     await experiment_server.run_experiment(experiment_id=experiment_id)

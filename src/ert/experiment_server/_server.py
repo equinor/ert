@@ -2,14 +2,13 @@ import asyncio
 import logging
 import pickle
 from contextlib import contextmanager
-from typing import Any, Callable, Iterator, Set
+from typing import Iterator, Set
 
 from cloudevents.exceptions import DataUnmarshallerError
 from cloudevents.http import from_json
 from websockets.legacy.server import WebSocketServerProtocol
 from websockets.server import serve
 
-from ert._c_wrappers.enkf.enkf_main import EnKFMain
 from ert.serialization import evaluator_unmarshaller
 from ert.shared.ensemble_evaluator.config import EvaluatorServerConfig
 
@@ -117,33 +116,6 @@ class ExperimentServer:
             logger.debug("Async server exiting.")
         except Exception:  # pylint: disable=broad-except
             logger.exception("crash/burn")
-
-    # pylint: disable=line-too-long
-    def add_legacy_experiment(  # pylint: disable=too-many-arguments
-        self,
-        ert: EnKFMain,
-        ensemble_size: int,
-        current_case_name: str,
-        args: Any,
-        factory: Callable[[EnKFMain, int, str, Any, str], Experiment],
-        experiment_id: str,
-    ) -> str:
-        """add_legacy_experiment(self, ert, ensemble_size: int,current_case_name: str, factory: Callable[[Any, int, str, Any, str], Experiment], experiment_id: str)
-
-        The ert parameter, as well as the first input parameter in the factory
-        :class:`Callable`, refers to the EnkfMain type.
-
-        Create a legacy experiment using a model factory. See ``ert.cli.model_factory.create_model``.
-        """
-        experiment = factory(
-            ert,
-            ensemble_size,
-            current_case_name,
-            args,
-            experiment_id,
-        )
-        self._registry.add_experiment(experiment)
-        return experiment.id_
 
     def add_experiment(self, experiment: Experiment) -> str:
         self._registry.add_experiment(experiment)
