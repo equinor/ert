@@ -4,9 +4,6 @@
 
 find_program(SBATCH "sbatch")
 
-file(COPY "${TEST_DATA_DIR}/job_queue/qsub_emulators/"
-     DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")
-
 # -----------------------------------------------------------------
 # Public tests
 # -----------------------------------------------------------------
