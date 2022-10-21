@@ -63,13 +63,9 @@ typedef enum {
     /** ecl_kw format either packed (i.e. active cells) *or* all cells - used
      * when reading from file. */
     ECL_KW_FILE = 2,
-    /** ecl_kw format, only active cells - used writing to file. */
-    ECL_KW_FILE_ACTIVE_CELLS = 3,
     /** ecl_kw_format, all cells - used when writing to file. */
     ECL_KW_FILE_ALL_CELLS = 4,
     ECL_GRDECL_FILE = 5,
-    /** Assumes packed on export. */
-    ECL_FILE = 6,
     FILE_FORMAT_NULL = 7
 } field_file_format_type; /* Used when the guess functions are given NULL to check -should never be read. */
 
