@@ -213,16 +213,15 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
             if realization_index not in realizations:
                 raise IndexError(f"No such realization {realization_index}")
             realizations = [realization_index]
-        config_node = self._enkf_main.ensembleConfig().getNode(key)
-        if report_step not in config_node.getDataModelConfig().getReportSteps():
-            raise ValueError(
-                f"No report step {report_step} in report steps: "
-                f"{config_node.getDataModelConfig().getReportSteps()}"
-            )
-        data_array = _clib.enkf_fs_general_data.gendata_get_realizations(
-            config_node, fs, realizations, report_step
+
+        data_array, realizations = fs.load_gen_data(
+            f"{key}-{report_step}", realizations
         )
-        return DataFrame(data=data_array, columns=np.array(realizations))
+
+        return DataFrame(
+            data=data_array.reshape(len(data_array), len(realizations)),
+            columns=np.array(realizations),
+        )
 
     def load_observation_data(
         self, case_name: str, keys: Optional[List[str]] = None
@@ -531,8 +530,9 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
                 report_step,
                 realization_index,
             )
-        except (ValueError, KeyError):
+        except (ValueError, KeyError) as e:
             data = DataFrame()
+            raise e
 
         return data.dropna()
 

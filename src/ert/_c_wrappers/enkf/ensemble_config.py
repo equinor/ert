@@ -339,3 +339,6 @@ class EnsembleConfig(BaseCClass):
 
     def get_summary_keys(self) -> List[str]:
         return _clib.ensemble_config.get_summary_keys(self)
+
+    def get_gen_data_keys(self) -> List[str]:
+        return _clib.ensemble_config.get_gen_data_keys(self)

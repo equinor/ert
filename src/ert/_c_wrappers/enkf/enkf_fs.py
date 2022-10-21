@@ -1,4 +1,3 @@
-import asyncio
 import ctypes
 import logging
 from multiprocessing.pool import ThreadPool
@@ -16,7 +15,7 @@ from ert._c_wrappers.enkf.model_callbacks import LoadStatus
 from ert._c_wrappers.enkf.summary_key_set import SummaryKeySet
 from ert._c_wrappers.enkf.time_map import TimeMap
 from ert._clib import update
-from ert.ensemble_evaluator.callbacks import _forward_model_ok
+from ert.ensemble_evaluator.callbacks import forward_model_ok
 
 if TYPE_CHECKING:
     from ecl.summary import EclSum
@@ -43,7 +42,7 @@ def _load_realization(
         RealizationStateEnum.STATE_UNDEFINED,
         RealizationStateEnum.STATE_INITIALIZED,
     )
-    status = _forward_model_ok(run_args[realisation], ensemble_config, model_config)
+    status = forward_model_ok(run_args[realisation], ensemble_config, model_config)
     state_map._set(
         realisation,
         RealizationStateEnum.STATE_HAS_DATA
@@ -173,9 +172,7 @@ class EnkfFs(BaseCClass):
             active,
         )
 
-    def save_summary_data(self, summary: "EclSum", realization: int):
-        import os
-
+    def save_summary_data(self, summary: "EclSum", realization: int) -> None:
         output_path = self.mount_point / f"summary-{realization}"
         Path.mkdir(output_path, exist_ok=True)
         data = []
@@ -183,10 +180,14 @@ class EnkfFs(BaseCClass):
         time_map = summary.alloc_time_vector(True)
         for key in summary:
             keys.append(key)
+
             np_vector = np.zeros(len(time_map))
             summary._init_numpy_vector_interp(
-                key, time_map, np_vector.ctypes.data_as(ctypes.POINTER(ctypes.c_double))
+                key,
+                time_map,
+                np_vector.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
             )
+
             data.append(np_vector)
         total = np.stack(data, axis=0)
         np.save(output_path / "data", total)
@@ -196,7 +197,9 @@ class EnkfFs(BaseCClass):
         with open(output_path / "time_map", "w") as f:
             f.write("\n".join([str(t) for t in time_map]))
 
-    def load_summary_data(self, summary_keys, realizations):
+    def load_summary_data(
+        self, summary_keys: List[str], realizations: List[int]
+    ) -> Tuple["npt.NDArray[np.double]", List[str], List[int]]:
         result = []
         loaded = []
         dates = []
@@ -206,6 +209,7 @@ class EnkfFs(BaseCClass):
                 continue
             loaded.append(realization)
             np_data = np.load(input_path / "data.npy")
+
             keys = []
             with open(input_path / "keys", "r") as f:
                 keys = [k.strip() for k in f.readlines()]
@@ -214,10 +218,36 @@ class EnkfFs(BaseCClass):
                     dates = [k.strip() for k in f.readlines()]
             indices = [keys.index(summary_key) for summary_key in summary_keys]
 
-            result.append(np_data[indices, :].T)
+            result.append(np_data[indices, :].reshape(1, len(indices) * len(dates)).T)
         if not result:
             return np.array([]), dates, loaded
-        return np.stack(result), dates, loaded
+        return np.concatenate(result, axis=1), dates, loaded
+
+    def save_gen_data(
+        self, key: str, data: List[List[float]], realization: int
+    ) -> None:
+        output_path = self.mount_point / f"gen-data-{realization}"
+        Path.mkdir(output_path, exist_ok=True)
+        np_data = np.array(data)
+        np.save(output_path / key, np_data)
+
+    def load_gen_data(
+        self, key: str, realizations: List[int]
+    ) -> Tuple["npt.NDArray[np.double]", List[int]]:
+        result = []
+        loaded = []
+        for realization in realizations:
+            input_path = self.mount_point / f"gen-data-{realization}" / f"{key}.npy"
+            if not input_path.exists():
+                continue
+
+            np_data = np.load(input_path)
+
+            result.append(np_data)
+            loaded.append(realization)
+        if not result:
+            return np.array([]), loaded
+        return np.stack(result).T, loaded
 
     def load_from_run_path(
         self,
