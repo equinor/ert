@@ -1,7 +1,7 @@
 import logging
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, List, Tuple, Union
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
 
 import iterative_ensemble_smoother as ies
 import numpy as np
@@ -83,7 +83,7 @@ def _get_row_scaling_A_matrices(
 def _save_to_temporary_storage(
     temporary_storage: Dict[str, "npt.NDArray[np.double]"],
     parameters: List[update.Parameter],
-    A: Union["npt.NDArray[np.double]", None],
+    A: Optional["npt.NDArray[np.double]"],
 ) -> None:
     if A is None:
         return

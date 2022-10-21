@@ -215,7 +215,7 @@ class BaseRunModel:
     def getPhaseName(self) -> str:
         return self._phase_name
 
-    def setIndeterminate(self, indeterminate: Union[bool, None]) -> None:
+    def setIndeterminate(self, indeterminate: Optional[bool]) -> None:
         if indeterminate is not None:
             self._indeterminate = indeterminate
 
