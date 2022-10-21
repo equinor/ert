@@ -1,14 +1,13 @@
 #!/usr/bin/env python
 
-import json
-
 import datetime
+import json
+import os
+
+import ecl_data_io as eclio
+import numpy as np
 
 from ecl.summary import EclSum
-import os
-from numpy import array
-import numpy
-import ecl_data_io as eclio
 
 
 def _load_coeffs(filename):
@@ -45,7 +44,7 @@ def write_summary_data(file, x_size, keywords, coeffs, update_steps):
                 day = float(step + 1)
                 values = [_evaluate(coeffs[key % len(coeffs)], step) for key in range(num_keys)]
                 yield 'MINISTEP', [step]
-                yield 'PARAMS  ', array([day] + values, dtype=numpy.float32)
+                yield 'PARAMS  ', np.array([day] + values, dtype=np.float32)
 
     eclio.write(file, content_generator())
 

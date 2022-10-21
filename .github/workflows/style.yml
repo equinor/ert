@@ -59,13 +59,15 @@ jobs:
             access-member-before-definition, \
             arguments-differ, \
             arguments-renamed, \
+            assert-on-string-literal, \
+            bad-classmethod-argument, \
             bad-thread-instantiation, \
             chained-comparison, \
             comparison-with-callable, \
             consider-iterating-dictionary, \
             consider-using-dict-items, \
             consider-using-enumerate, \
-            consider-using-f-string
+            consider-using-f-string, \
             consider-using-from-import, \
             consider-using-generator, \
             consider-using-get, \
@@ -75,6 +77,7 @@ jobs:
             consider-using-set-comprehension, \
             consider-using-with, \
             dangerous-default-value, \
+            deprecated-method, \
             duplicate-key, \
             empty-docstring, \
             expression-not-assigned, \
@@ -88,11 +91,13 @@ jobs:
             no-else-raise, \
             no-member, \
             no-method-argument, \
+            no-value-for-parameter, \
             not-async-context-manager, \
             not-callable, \
             parse-error, \
             pointless-statement, \
             pointless-string-statement, \
+            redefined-builtin, \
             redundant-unittest-assert, \
             reimported, \
             simplifiable-if-statement, \
@@ -100,9 +105,11 @@ jobs:
             super-with-arguments, \
             superfluous-parens, \
             too-many-lines, \
+            too-many-nested-blocks, \
             undefined-all-variable, \
             undefined-loop-variable, \
             undefined-variable, \
+            unexpected-keyword-arg, \
             ungrouped-imports, \
             unidiomatic-typecheck, \
             unnecessary-comprehension, \

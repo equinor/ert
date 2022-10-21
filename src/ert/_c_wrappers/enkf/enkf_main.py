@@ -311,6 +311,8 @@ class EnKFMain:
         return self.resConfig().ert_workflow_list
 
     def initRun(self, run_context: "RunContext", parameters: List[str] = None):
+        # pylint: disable=too-many-nested-blocks
+        # (this is a real code smell that we mute for now)
         if parameters is None:
             parameters = self._parameter_keys
         state_map = run_context.sim_fs.getStateMap()
