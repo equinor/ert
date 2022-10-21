@@ -175,3 +175,19 @@ def test_analysis_config_iter_config_dict_initialisation():
     assert analysis_config.case_format == expected_case_format
     assert analysis_config.num_iterations == 42
     assert analysis_config.num_retries_per_iter == 24
+
+
+def test_analysis_config_iter_config_default_initialisation():
+    config = AnalysisConfig()
+    expected_case_format = "case_%d"
+    config.set_case_format(expected_case_format)
+    assert config.case_format_is_set() is True
+    assert config.case_format == expected_case_format
+    config.set_num_iterations(42)
+    assert config.num_iterations == 42
+    assert config.num_retries_per_iter == 4
+
+    new_config = AnalysisConfig()
+    assert new_config.num_iterations == 4
+    assert new_config.case_format is None
+    assert new_config.case_format_is_set() is False
