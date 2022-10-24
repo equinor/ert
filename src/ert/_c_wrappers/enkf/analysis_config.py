@@ -1,10 +1,13 @@
+import logging
 from math import ceil
 from os.path import realpath
 from typing import Dict, List, Optional
 
-from ert._c_wrappers.analysis import AnalysisModule, ModuleType
+from ert._c_wrappers.analysis import AnalysisMode, AnalysisModule
 from ert._c_wrappers.enkf.analysis_iter_config import AnalysisIterConfig
 from ert._c_wrappers.enkf.config_keys import ConfigKeys
+
+logger = logging.getLogger(__name__)
 
 
 class AnalysisConfigError(Exception):
@@ -44,10 +47,10 @@ class AnalysisConfig:
         es_module = AnalysisModule.ens_smother_module()
         ies_module = AnalysisModule.iterated_ens_smother_module()
         self._modules: Dict[str, AnalysisModule] = {
-            ModuleType.ENSEMBLE_SMOOTHER: es_module,
-            ModuleType.ITERATED_ENSEMBLE_SMOOTHER: ies_module,
+            AnalysisMode.ENSEMBLE_SMOOTHER: es_module,
+            AnalysisMode.ITERATED_ENSEMBLE_SMOOTHER: ies_module,
         }
-        self._active_module = analysis_select or ModuleType.ENSEMBLE_SMOOTHER
+        self._active_module = analysis_select or AnalysisMode.ENSEMBLE_SMOOTHER
         # copy modules
         for element in analysis_copy:
             if isinstance(element, list):
@@ -58,7 +61,7 @@ class AnalysisConfig:
 
             module = self._modules.get(src_name)
             if module is not None:
-                if module.mode == ModuleType.ENSEMBLE_SMOOTHER:
+                if module.mode == AnalysisMode.ENSEMBLE_SMOOTHER:
                     new_module = AnalysisModule.ens_smother_module(dst_name)
                 else:
                     new_module = AnalysisModule.iterated_ens_smother_module(dst_name)
@@ -168,7 +171,10 @@ class AnalysisConfig:
         if module_name in self._modules:
             self._active_module = module_name
             return True
-        # TODO log something regarding the module name not being available
+        logger.warning(
+            f"Module {module_name} not found."
+            f" Active module {self._active_module} not changed"
+        )
         return False
 
     def get_active_module(self) -> AnalysisModule:

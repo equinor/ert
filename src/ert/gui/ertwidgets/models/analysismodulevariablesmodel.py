@@ -1,13 +1,13 @@
 from typing import List, Union
 
-from ert._c_wrappers.analysis import ModuleType
-from ert._c_wrappers.analysis.analysis_module import get_variables
+from ert._c_wrappers.analysis import AnalysisMode
+from ert._c_wrappers.analysis.analysis_module import get_mode_variables
 from ert.libres_facade import LibresFacade
 
 
 class AnalysisModuleVariablesModel:
 
-    _VARIABLE_NAMES = get_variables(ModuleType.ITERATED_ENSEMBLE_SMOOTHER)
+    _VARIABLE_NAMES = get_mode_variables(AnalysisMode.ITERATED_ENSEMBLE_SMOOTHER)
 
     @classmethod
     def getVariableNames(

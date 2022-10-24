@@ -1,5 +1,9 @@
+import logging
 from enum import Enum
 from typing import TYPE_CHECKING, Dict, List, Type, TypedDict, Union
+
+logger = logging.getLogger(__name__)
+
 
 if TYPE_CHECKING:
 
@@ -19,12 +23,12 @@ DEFAULT_TRUNCATION = 0.98
 DEFAULT_INVERSION = 0
 
 
-class ModuleType(str, Enum):
+class AnalysisMode(str, Enum):
     ITERATED_ENSEMBLE_SMOOTHER = "IES_ENKF"
     ENSEMBLE_SMOOTHER = "STD_ENKF"
 
 
-def get_variables(module: ModuleType) -> Dict[str, "VariableInfo"]:
+def get_mode_variables(module: AnalysisMode) -> Dict[str, "VariableInfo"]:
     es_variables: Dict[str, "VariableInfo"] = {
         "IES_INVERSION": {
             "type": int,
@@ -70,40 +74,39 @@ def get_variables(module: ModuleType) -> Dict[str, "VariableInfo"]:
         },
         **es_variables,
     }
-    if module == ModuleType.ENSEMBLE_SMOOTHER:
+    if module == AnalysisMode.ENSEMBLE_SMOOTHER:
         return es_variables
     return ies_variables
 
 
 class AnalysisModule:
-    MODE = {1: ModuleType.ENSEMBLE_SMOOTHER, 2: ModuleType.ITERATED_ENSEMBLE_SMOOTHER}
     DEPRECATED_KEYS = ["USE_EE", "USE_GE"]
     TRUNK_ALTERNATE_KEYS = ["ENKF_NCOMP", "ENKF_SUBSPACE_DIMENSION"]
     SPECIAL_KEYS = ["INVERSION", *TRUNK_ALTERNATE_KEYS, *DEPRECATED_KEYS]
 
-    def __init__(self, mode: ModuleType, name: str, variables: Dict, iterable: bool):
+    def __init__(self, mode: AnalysisMode, name: str, variables: Dict, iterable: bool):
         self.mode = mode
         self.name = name
         self.iterable = iterable
         self._variables = variables
 
     @classmethod
-    def ens_smother_module(cls, name: ModuleType = ModuleType.ENSEMBLE_SMOOTHER):
+    def ens_smother_module(cls, name: AnalysisMode = AnalysisMode.ENSEMBLE_SMOOTHER):
         return cls(
-            mode=ModuleType.ENSEMBLE_SMOOTHER,
+            mode=AnalysisMode.ENSEMBLE_SMOOTHER,
             name=name,
-            variables=get_variables(ModuleType.ENSEMBLE_SMOOTHER),
+            variables=get_mode_variables(AnalysisMode.ENSEMBLE_SMOOTHER),
             iterable=False,
         )
 
     @classmethod
     def iterated_ens_smother_module(
-        cls, name: ModuleType = ModuleType.ITERATED_ENSEMBLE_SMOOTHER
+        cls, name: AnalysisMode = AnalysisMode.ITERATED_ENSEMBLE_SMOOTHER
     ):
         return cls(
-            mode=ModuleType.ITERATED_ENSEMBLE_SMOOTHER,
+            mode=AnalysisMode.ITERATED_ENSEMBLE_SMOOTHER,
             name=name,
-            variables=get_variables(ModuleType.ITERATED_ENSEMBLE_SMOOTHER),
+            variables=get_mode_variables(AnalysisMode.ITERATED_ENSEMBLE_SMOOTHER),
             iterable=True,
         )
 
@@ -127,10 +130,10 @@ class AnalysisModule:
 
     def handle_special_key_set(self, var_name, value):
         if var_name in self.DEPRECATED_KEYS:
-            # log something about like:
-            # The USE_EE/USE_GE settings have been removed
-            # use the INVERSION setting instead
-            pass
+            logger.warning(
+                "USE_EE/USE_GE settings have been removed"
+                "use the INVERSION setting instead"
+            )
         elif var_name == "INVERSION":
             inversion_str_map = {
                 "EXACT": 0,
@@ -176,9 +179,11 @@ class AnalysisModule:
         """
         This is an implementation of Eq. (49), which calculates a suitable
         step length for the update step, from the book:
-
         Geir Evensen, Formulating the history matching problem with
         consistent error statistics, Computational Geosciences (2021) 25:945 –970
+
+        Function not really used moved from C to keep the class interface consistent
+        should be investigated for possible removal.
         """
         min_step_length = self.get_variable_value("IES_MIN_STEPLENGTH")
         max_step_length = self.get_variable_value("IES_MAX_STEPLENGTH")

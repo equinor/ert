@@ -1,3 +1,3 @@
-from .analysis_module import AnalysisModule, ModuleType
+from .analysis_module import AnalysisMode, AnalysisModule
 
-__all__ = ["AnalysisModule", "ModuleType"]
+__all__ = ["AnalysisModule", "AnalysisMode"]
