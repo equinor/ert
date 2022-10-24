@@ -24,6 +24,30 @@ def test_job_create_submit_script(use_tmpdir):
     [
         (None, "", JobStatusType.JOB_QUEUE_STATUS_FAILURE),
         ("", "1234", JobStatusType.JOB_QUEUE_STATUS_FAILURE),
+        ("Job Id: 1\njob_state = R", "1", JobStatusType.JOB_QUEUE_RUNNING),
+        ("Job Id: 1.namespace\njob_state = R", "1", JobStatusType.JOB_QUEUE_RUNNING),
+        ("Job Id: 11\njob_state = R", "1", JobStatusType.JOB_QUEUE_STATUS_FAILURE),
+        ("Job Id: 1", "1", JobStatusType.JOB_QUEUE_STATUS_FAILURE),
+        ("Job Id: 1\njob_state = E", "1", JobStatusType.JOB_QUEUE_DONE),
+        ("Job Id: 1\njob_state = C", "1", JobStatusType.JOB_QUEUE_DONE),
+        ("Job Id: 1\njob_state = H", "1", JobStatusType.JOB_QUEUE_PENDING),
+        ("Job Id: 1\njob_state = Q", "1", JobStatusType.JOB_QUEUE_PENDING),
+        ("Job Id: 1\njob_state = Æ", "1", JobStatusType.JOB_QUEUE_STATUS_FAILURE),
+        (
+            "Job Id: 1\njob_state = E\nExit_status = 1",
+            "1",
+            JobStatusType.JOB_QUEUE_EXIT,
+        ),
+        (
+            "Job Id: 1\njob_state = C\nExit_status = 1",
+            "1",
+            JobStatusType.JOB_QUEUE_EXIT,
+        ),
+        (
+            "Job Id: 1\njob_state = C\nJob Id: 2\njob_state = R",
+            "2",
+            JobStatusType.JOB_QUEUE_RUNNING,
+        ),
     ],
 )
 def test_parse_status(
