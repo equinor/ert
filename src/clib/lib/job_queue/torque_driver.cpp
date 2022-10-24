@@ -1,7 +1,12 @@
 #include <filesystem>
 
+#include <array>
+#include <fstream>
+#include <iostream>
+#include <sstream>
 #include <stdio.h>
 #include <string.h>
+#include <string>
 #include <unistd.h>
 
 #include <ert/res_util/file_utils.hpp>
@@ -530,9 +535,11 @@ torque_driver_get_qstat_status(torque_driver_type *driver,
     job_status_type status = JOB_QUEUE_STATUS_FAILURE;
 
     {
-        const char **argv = (const char **)util_calloc(2, sizeof *argv);
-        argv[0] = driver->qstat_opts;
-        argv[1] = jobnr_char;
+        char const *hard_coded_qstat_option = "-f";
+        /* "qstat -f" means "full"/"long" output
+         * (multiple lines of output pr. job)  */
+        std::array argv{hard_coded_qstat_option,
+                        (const char *)driver->qstat_opts, jobnr_char};
 
         /* The qstat command might fail intermittently for acceptable reasons,
            retry a couple of times with exponential sleep. ERT pings qstat
@@ -541,9 +548,9 @@ torque_driver_get_qstat_status(torque_driver_type *driver,
         int return_value = -1;
         int sleep_time = 2;                 /* seconds */
         int max_sleep_time = 2 * 2 * 2 * 2; /* max 4 attempts */
-        while ((return_value != 0) & (sleep_time < max_sleep_time)) {
+        while ((return_value != 0) && (sleep_time < max_sleep_time)) {
             return_value =
-                util_spawn_blocking(driver->qstat_cmd, 2, (const char **)argv,
+                util_spawn_blocking(driver->qstat_cmd, argv.size(), argv.data(),
                                     tmp_std_file, tmp_err_file);
             if (return_value != 0) {
                 torque_debug(driver,
@@ -553,7 +560,6 @@ torque_driver_get_qstat_status(torque_driver_type *driver,
                 sleep_time *= 2;
             }
         }
-        free(argv);
     }
 
     if (fs::exists(tmp_std_file)) {
@@ -575,74 +581,119 @@ job_status_type torque_driver_parse_status(const char *qstat_file,
                                            const char *jobnr_char) {
     job_status_type status = JOB_QUEUE_STATUS_FAILURE;
 
-    if (fs::exists(qstat_file)) {
-        char *line = NULL;
-        {
-            FILE *stream = util_fopen(qstat_file, "r");
-            bool at_eof = false;
-            util_fskip_lines(stream, 2);
-            line = util_fscanf_alloc_line(stream, &at_eof);
-            fclose(stream);
+    int jobnr_no_namespace = -1;
+    if (jobnr_char != NULL) {
+        /* Remove namespace from incoming job_id */
+        std::string jobnr_namespaced(jobnr_char);
+        int dot_position;
+        dot_position = jobnr_namespaced.find(".");
+        if (dot_position != std::string::npos) {
+            jobnr_namespaced.replace(dot_position, 1, " ");
         }
+        std::stringstream(jobnr_namespaced) >> jobnr_no_namespace;
+    }
 
-        if (line) {
-            char job_id_full_string[32];
-            char string_status[2];
+    /* Parse the qstat output, looking only for requested job_id */
+    std::string job_id_label("Job Id: ");
+    int pos;
+    int job_id = -1;
+    std::string job_state("_void_");
+    int exit_status = 0;
+    std::ifstream qstatoutput(qstat_file);
+    qstatoutput.imbue(std::locale::classic());
+    try {
+        qstatoutput.exceptions(qstatoutput.failbit);
+    } catch (const std::ios::failure &) {
+        fprintf(stderr,
+                "** Warning: Failed to parse job state for job %s "
+                "from file '%s', file unreadable.\n",
+                jobnr_char, qstat_file);
+        return JOB_QUEUE_STATUS_FAILURE;
+    }
 
-            if (sscanf(line, "%s %*s %*s %*s %s %*s", job_id_full_string,
-                       string_status) == 2) {
-                /* The job id string may or may not contain a dot */
-                const char *dotPtr = strchr(job_id_full_string, '.');
-                {
-                    char *job_id_as_char_ptr;
-                    if (dotPtr != NULL) {
-                        int dotPosition = dotPtr - job_id_full_string;
-                        job_id_as_char_ptr = util_alloc_substring_copy(
-                            job_id_full_string, 0, dotPosition);
-                    } else {
-                        job_id_as_char_ptr =
-                            util_alloc_string_copy(job_id_full_string);
-                    }
-                    if (util_string_equal(job_id_as_char_ptr, jobnr_char)) {
+    std::string line;
+    int job_id_parser_state = -1;
+    try {
+        while (std::getline(qstatoutput, line)) {
+            pos = line.find(job_id_label);
+            if (pos != std::string::npos) {
+                line.replace(0, job_id_label.length() + pos, "");
 
-                        switch (string_status[0]) {
-                        case 'R':
-                            /* Job is running */
-                            status = JOB_QUEUE_RUNNING;
-                            break;
-                        case 'E':
-                            /* Job is exiting after having run */
-                            status = JOB_QUEUE_DONE;
-                            break;
-                        case 'F':
-                            /* PBS specific value: Job is finished */
-                            /* This is only returned in the alternative qstat format
-                            triggered with '-x' or '-H' option to qstat */
-                            status = JOB_QUEUE_DONE;
-                            break;
-                        case 'C':
-                            /* Job is completed after having run */
-                            status = JOB_QUEUE_DONE;
-                            break;
-                        case 'H':
-                            /* Job is held */
-                            status = JOB_QUEUE_PENDING;
-                            break;
-                        case 'Q':
-                            /* Job is queued, eligible to run or routed */
-                            status = JOB_QUEUE_PENDING;
-                            break;
-                        default:
-                            break;
-                        }
+                // Remove namespace (Torque server name)
+                int dot_position = line.find(".");
+                if (dot_position != std::string::npos) {
+                    line.replace(dot_position, 1, " ");
+                }
+                std::stringstream(line) >> job_id_parser_state;
+            }
 
-                        free(job_id_as_char_ptr);
-                    }
+            if ((line.find("job_state") != std::string::npos) &&
+                (job_id_parser_state == jobnr_no_namespace)) {
+                std::string key, equalsign;
+                try {
+                    std::stringstream(line) >> key >> equalsign >> job_state;
+
+                } catch (const std::ios::failure &) {
+                    fprintf(stderr,
+                            "** Warning: Failed to parse job state for job %s "
+                            "from string '%s'.\n",
+                            jobnr_char, line.c_str());
                 }
             }
-            free(line);
+
+            if ((line.find("Exit_status") != std::string::npos) &&
+                (job_id_parser_state == jobnr_no_namespace)) {
+                std::string key, equalsign;
+                try {
+                    std::stringstream(line) >> key >> equalsign >> exit_status;
+
+                } catch (const std::ios::failure &) {
+                    fprintf(stderr,
+                            "** Warning: Failed to parse exit status for job "
+                            "%s from string '%s'.\n",
+                            jobnr_char, line.c_str());
+                }
+            }
         }
+    } catch (const std::ios::failure &) {
+        fprintf(stderr, "** Warning: Failed to parse file %s, is it empty?\n",
+                qstat_file);
     }
+    switch (job_state[0]) {
+    case 'R':
+        /* Job is running */
+        status = JOB_QUEUE_RUNNING;
+        break;
+    case 'E':
+        /* Job is exiting after having run */
+        status = JOB_QUEUE_DONE;
+        break;
+    case 'F':
+        /* PBS specific value: Job is finished */
+        /* This is only returned in the alternative qstat format
+               triggered with '-x' or '-H' option to qstat */
+        status = JOB_QUEUE_DONE;
+        break;
+    case 'C':
+        /* Job is completed after having run */
+        status = JOB_QUEUE_DONE;
+        break;
+    case 'H':
+        /* Job is held */
+        status = JOB_QUEUE_PENDING;
+        break;
+    case 'Q':
+        /* Job is queued, eligible to run or routed */
+        status = JOB_QUEUE_PENDING;
+        break;
+    default:
+        break;
+    }
+
+    if (exit_status != 0) {
+        status = JOB_QUEUE_EXIT;
+    }
+
     if (status == JOB_QUEUE_STATUS_FAILURE)
         fprintf(
             stderr,
