@@ -28,7 +28,7 @@ class EnkfFs(BaseCClass):
     _is_read_only = ResPrototype("bool  enkf_fs_is_read_only(enkf_fs)")
     _fsync = ResPrototype("void  enkf_fs_fsync(enkf_fs)")
     _create = ResPrototype(
-        "enkf_fs_obj   enkf_fs_create_fs(char* , enkf_fs_type_enum ,int, bool)",
+        "void*   enkf_fs_create_fs(char* , enkf_fs_type_enum ,int, bool)",
         bind=False,
     )
     _get_time_map = ResPrototype("time_map_ref  enkf_fs_get_time_map(enkf_fs)")
@@ -86,7 +86,7 @@ class EnkfFs(BaseCClass):
     ) -> "EnkfFs":
         path = Path(path).absolute()
         fs_type = EnKFFSType.BLOCK_FS_DRIVER_ID
-        cls._create(path.as_posix(), fs_type, ensemble_size, True)
+        cls._create(path.as_posix(), fs_type, ensemble_size, False)
         return cls(path, ensemble_config, ensemble_size, read_only=read_only)
 
     def sync(self):
