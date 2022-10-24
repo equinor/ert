@@ -11,7 +11,6 @@ from ecl.util.util import StringList
 from ert._c_wrappers.config import ConfigContent, ConfigParser
 from ert._c_wrappers.enkf.analysis_config import AnalysisConfig
 from ert._c_wrappers.enkf.config_keys import ConfigKeys
-from ert._c_wrappers.enkf.ecl_config import EclConfig
 from ert._c_wrappers.enkf.ensemble_config import EnsembleConfig
 from ert._c_wrappers.enkf.enums import ErtImplType
 from ert._c_wrappers.enkf.ert_workflow_list import ErtWorkflowList
@@ -188,7 +187,6 @@ class ResConfig:
             self.random_seed = None
 
         config_content_dict = user_config_content.as_dict()
-        self.ecl_config = EclConfig.from_dict(config_content_dict)
         self.analysis_config = AnalysisConfig.from_dict(config_content_dict)
 
         queue_config_args = {}
@@ -305,7 +303,7 @@ class ResConfig:
         )
         self.random_seed = config_dict.get(ConfigKeys.RANDOM_SEED, None)
         self.analysis_config = AnalysisConfig.from_dict(config_dict=config_dict)
-        self.ecl_config = EclConfig.from_dict(config_dict=config_dict)
+
         queue_config_args = {}
         if ConfigKeys.JOB_SCRIPT in config_dict:
             queue_config_args["job_script"] = config_dict[ConfigKeys.JOB_SCRIPT]

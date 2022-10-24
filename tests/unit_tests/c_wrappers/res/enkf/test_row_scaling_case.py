@@ -32,7 +32,7 @@ from ert.analysis import ESUpdate
 def init_data(main):
     fsm = main.getEnkfFsManager()
     init_fs = fsm.getFileSystem("init")
-    grid = main.eclConfig().grid
+    grid = main.ensembleConfig().grid
 
     # Model: bhp = poro * 1000
     poro_mean = 0.15
@@ -212,12 +212,13 @@ def test_update_code1(row_scaling_example):
             "row_scaling_parameters": [("PORO", row_scaling)],
         },
     ]
+
     main.update_configuration = update_steps
     ens_config = main.ensembleConfig()
     poro_config = ens_config["PORO"]
     field_config = poro_config.getFieldModelConfig()
 
-    grid = main.eclConfig().grid
+    grid = main.ensembleConfig().grid
     obs_pos = grid.get_xyz(ijk=(5, 5, 1))
     length_scale = (2, 1, 0.50)
     row_scaling.assign(
@@ -261,7 +262,7 @@ def test_update_code2(row_scaling_example):
     ens_config = main.ensembleConfig()
     poro_config = ens_config["PORO"]
     field_config = poro_config.getFieldModelConfig()
-    grid = main.eclConfig().grid
+    grid = main.ensembleConfig().grid
     row_scaling.assign(field_config.get_data_size(), ScalingTest(grid))
 
     # Second update with row scaling
@@ -322,7 +323,7 @@ def test_row_scaling_using_assign_vector(row_scaling_example):
     ens_config = main.ensembleConfig()
     poro_config = ens_config["PORO"]
     field_config = poro_config.getFieldModelConfig()
-    grid = main.eclConfig().grid
+    grid = main.ensembleConfig().grid
 
     scaling = ScalingTest(grid)
     scaling_vector = np.ndarray([field_config.get_data_size()], dtype=np.float32)
@@ -397,7 +398,7 @@ def test_2update_step(row_scaling_example):
     ens_config = main.ensembleConfig()
     poro_config = ens_config["PORO"]
     field_config = poro_config.getFieldModelConfig()
-    grid = main.eclConfig().grid
+    grid = main.ensembleConfig().grid
 
     row_scaling1.assign(field_config.get_data_size(), SelectLayer(0, grid))
     row_scaling2.assign(field_config.get_data_size(), SelectLayer(1, grid))
@@ -488,7 +489,7 @@ def test_reuse_ALL_ACTIVE(row_scaling_example):
     """
     main = row_scaling_example
     random_state = main.rng().bit_generator.state
-    grid = main.eclConfig().grid
+    grid = main.ensembleConfig().grid
     init_fs = init_data(main)
     es_update = ESUpdate(main)
     update_fs1 = main.getEnkfFsManager().getFileSystem("target1")

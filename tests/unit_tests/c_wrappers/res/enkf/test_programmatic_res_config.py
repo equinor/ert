@@ -279,7 +279,14 @@ def test_large_config(setup_case):
     )
     assert loaded_res_config.site_config == prog_res_config.site_config
 
-    assert loaded_res_config.ecl_config == prog_res_config.ecl_config
+    assert (
+        loaded_res_config.ensemble_config._grid_file
+        == prog_res_config.ensemble_config._grid_file
+    )
+    assert (
+        loaded_res_config.ensemble_config._refcase_file
+        == prog_res_config.ensemble_config._refcase_file
+    )
 
     assert (
         Path(prog_res_config.analysis_config.get_log_path()).resolve()

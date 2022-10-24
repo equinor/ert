@@ -104,8 +104,8 @@ def test_date_parsing_in_observations(datestring, deprecated, capfd):
     observations = EnkfObs(
         res_config.model_config.get_history_source(),
         res_config.model_config.get_time_map(),
-        res_config.ecl_config.grid,
-        res_config.ecl_config.refcase,
+        res_config.ensemble_config.grid,
+        res_config.ensemble_config.refcase,
         res_config.ensemble_config,
     )
     observations.load(
