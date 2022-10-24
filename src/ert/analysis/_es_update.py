@@ -329,8 +329,8 @@ def _create_smoother_snapshot(
     return SmootherSnapshot(
         source_fs.getCaseName(),
         target_fs.getCaseName(),
-        analysis_config.activeModuleName(),
-        analysis_config.getActiveModule().variable_value_dict(),
+        analysis_config.active_module_name(),
+        analysis_config.get_active_module().variable_value_dict(),
         analysis_config.get_enkf_alpha(),
         analysis_config.get_std_cutoff(),
     )
@@ -367,7 +367,7 @@ class ESUpdate:
             updatestep,
             obs,
             self.ert.rng(),
-            analysis_config.getActiveModule(),
+            analysis_config.get_active_module(),
             alpha,
             std_cutoff,
             global_scaling,
@@ -417,7 +417,7 @@ class ESUpdate:
             updatestep,
             obs,
             self.ert.rng(),
-            analysis_config.getActiveModule(),
+            analysis_config.get_active_module(),
             alpha,
             std_cutoff,
             global_scaling,

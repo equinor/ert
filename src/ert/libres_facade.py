@@ -130,7 +130,7 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
         return self._enkf_main.analysisConfig()
 
     def get_analysis_module(self, module_name: str) -> "AnalysisModule":
-        return self._enkf_main.analysisConfig().getModule(module_name)
+        return self._enkf_main.analysisConfig().get_module(module_name)
 
     def get_ensemble_size(self) -> int:
         return self._enkf_main.getEnsembleSize()

@@ -23,11 +23,6 @@ def test_keywords_for_monitoring_simulation_runtime(analysis_config):
     assert analysis_config.get_stop_long_running()
 
 
-def test_analysis_modules(analysis_config):
-    assert analysis_config.activeModuleName() is not None
-    assert analysis_config.getModuleList() is not None
-
-
 def test_analysis_config_global_std_scaling(analysis_config):
     assert pytest.approx(analysis_config.get_global_std_scaling()) == 1.0
     analysis_config.set_global_std_scaling(0.77)
@@ -183,26 +178,24 @@ def test_analysis_config_modules():
         ConfigKeys.NUM_REALIZATIONS: 10,
     }
     analysis_config = AnalysisConfig.from_dict(config_dict)
-    default_modules = analysis_config.getModuleList()
+    default_modules = analysis_config.get_module_list()
     assert len(default_modules) == 2
-    assert "IES_ENKF" in analysis_config.getModuleList()
-    assert "STD_ENKF" in analysis_config.getModuleList()
-    assert analysis_config.hasModule("IES_ENKF")
-    assert analysis_config.hasModule("STD_ENKF")
+    assert "IES_ENKF" in default_modules
+    assert "STD_ENKF" in default_modules
 
-    assert analysis_config.activeModuleName() == "STD_ENKF"
-    assert analysis_config.getActiveModule().name == "STD_ENKF"
+    assert analysis_config.active_module_name() == "STD_ENKF"
+    assert analysis_config.get_active_module().name == "STD_ENKF"
 
-    assert analysis_config.selectModule("IES_ENKF")
+    assert analysis_config.select_module("IES_ENKF")
 
-    assert analysis_config.getActiveModule().name == "IES_ENKF"
-    assert analysis_config.activeModuleName() == "IES_ENKF"
+    assert analysis_config.get_active_module().name == "IES_ENKF"
+    assert analysis_config.active_module_name() == "IES_ENKF"
 
-    es_module = analysis_config.getModule("STD_ENKF")
+    es_module = analysis_config.get_module("STD_ENKF")
     assert es_module.name == "STD_ENKF"
     with pytest.raises(AnalysisConfigError):
-        analysis_config.getModule("UNKNOWN")
-    assert not analysis_config.selectModule("UNKNOWN")
+        analysis_config.get_module("UNKNOWN")
+    assert not analysis_config.select_module("UNKNOWN")
 
 
 def test_analysis_config_iter_config_default_initialisation():

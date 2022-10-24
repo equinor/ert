@@ -99,7 +99,6 @@ def test_hook_call_order_iterative_ensemble_smoother(monkeypatch):
     test_class._ert = ert_mock
     test_class.parseWeights = MagicMock(return_value=[1])
     test_class.setAnalysisModule = MagicMock()
-    # test_class.setAnalysisModule.return_value.getInt.return_value = 1
     test_class.run_ensemble_evaluator = MagicMock(return_value=1)
 
     test_class.setPhase = MagicMock()

@@ -15,8 +15,8 @@ if TYPE_CHECKING:
 DEFAULT_IES_MAX_STEPLENGTH = 0.60
 DEFAULT_IES_MIN_STEPLENGTH = 0.30
 DEFAULT_IES_DEC_STEPLENGTH = 2.50
-MIN_IES_DEC_STEPLENGTH = 1.1
 DEFAULT_TRUNCATION = 0.98
+DEFAULT_INVERSION = 0
 
 
 class ModuleType(str, Enum):
@@ -29,7 +29,7 @@ def get_variables(module: ModuleType) -> Dict[str, "VariableInfo"]:
         "IES_INVERSION": {
             "type": int,
             "min": 0,
-            "value": 0,
+            "value": DEFAULT_INVERSION,
             "max": 3,
             "step": 1,
             "labelname": "Inversion algorithm",

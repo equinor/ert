@@ -33,7 +33,7 @@ class MultipleDataAssimilation(BaseRunModel):
         self.weights = MultipleDataAssimilation.default_weights
 
     def setAnalysisModule(self, module_name: str) -> None:
-        module_load_success = self.ert().analysisConfig().selectModule(module_name)
+        module_load_success = self.ert().analysisConfig().select_module(module_name)
 
         if not module_load_success:
             raise ErtRunError(f"Unable to load analysis module '{module_name}'!")
@@ -204,7 +204,7 @@ class MultipleDataAssimilation(BaseRunModel):
                 f"{next_iteration}. The following error occured {e}"
             ) from e
         # Push update data to new storage
-        analysis_module_name = self.ert().analysisConfig().activeModuleName()
+        analysis_module_name = self.ert().analysisConfig().active_module_name()
         update_id = self._post_update_data(
             parent_ensemble_id=ensemble_id, algorithm=analysis_module_name
         )

@@ -75,7 +75,7 @@ class AnalysisConfig:
                 var_name = set_var[ConfigKeys.VAR_NAME]
                 value = set_var[ConfigKeys.VALUE]
 
-            module = self.getModule(module_name)
+            module = self.get_module(module_name)
             module.set_var(var_name, value)
 
     @classmethod
@@ -153,28 +153,25 @@ class AnalysisConfig:
     def set_max_runtime(self, max_runtime: int):
         self._max_runtime = max_runtime
 
-    def activeModuleName(self) -> str:
+    def active_module_name(self) -> str:
         return self._active_module
 
-    def getModuleList(self) -> List[str]:
+    def get_module_list(self) -> List[str]:
         return list(self._modules.keys())
 
-    def getModule(self, module_name: str) -> AnalysisModule:
-        if self.hasModule(module_name):
+    def get_module(self, module_name: str) -> AnalysisModule:
+        if module_name in self._modules:
             return self._modules[module_name]
         raise AnalysisConfigError(f"Analysis module {module_name} not found!")
 
-    def hasModule(self, module_name: str) -> bool:
-        return module_name in self._modules
-
-    def selectModule(self, module_name: str) -> bool:
-        if self.hasModule(module_name):
+    def select_module(self, module_name: str) -> bool:
+        if module_name in self._modules:
             self._active_module = module_name
             return True
         # TODO log something regarding the module name not being available
         return False
 
-    def getActiveModule(self) -> AnalysisModule:
+    def get_active_module(self) -> AnalysisModule:
         return self._modules[self._active_module]
 
     def set_global_std_scaling(self, std_scaling: float):
@@ -225,8 +222,8 @@ class AnalysisConfig:
             f"'ENKF_ALPHA': {self.get_enkf_alpha()}, "
             f"'RERUN': {self.get_rerun()}, "
             f"'RERUN_START': {self.get_rerun_start()}, "
-            f"'ANALYSIS_SELECT': {self.activeModuleName()}, "
-            f"'MODULE_LIST': {self.getModuleList()}, "
+            f"'ANALYSIS_SELECT': {self._active_module}, "
+            f"'MODULE_LIST': {self.get_module_list()}, "
             f"'ITER_CONFIG': {self._analysis_iter_config}, "
             f"'MIN_REALIZATIONS_REQUIRED': {self.minimum_required_realizations}, "
             "})"
@@ -257,10 +254,10 @@ class AnalysisConfig:
         if self.get_rerun_start() != other.get_rerun_start():
             return False
 
-        if set(self.getModuleList()) != set(other.getModuleList()):
+        if set(self.get_module_list()) != set(other.get_module_list()):
             return False
 
-        if self.activeModuleName() != other.activeModuleName():
+        if self._active_module != other._active_module:
             return False
 
         if self._analysis_iter_config != other._analysis_iter_config:
@@ -270,8 +267,8 @@ class AnalysisConfig:
             return False
 
         # compare each module
-        for a in self.getModuleList():
-            if self.getModule(a) != other.getModule(a):
+        for a in self.get_module_list():
+            if self.get_module(a) != other.get_module(a):
                 return False
 
         return True

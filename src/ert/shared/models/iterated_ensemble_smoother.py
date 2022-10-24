@@ -33,12 +33,12 @@ class IteratedEnsembleSmoother(BaseRunModel):
         )
 
     def setAnalysisModule(self, module_name: str) -> AnalysisModule:
-        module_load_success = self.ert().analysisConfig().selectModule(module_name)
+        module_load_success = self.ert().analysisConfig().select_module(module_name)
 
         if not module_load_success:
             raise ErtRunError(f"Unable to load analysis module '{module_name}'!")
 
-        return self.ert().analysisConfig().getModule(module_name)
+        return self.ert().analysisConfig().get_module(module_name)
 
     def _runAndPostProcess(
         self,
@@ -87,7 +87,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
             ) from e
 
         # Push update data to new storage
-        analysis_module_name = self.ert().analysisConfig().activeModuleName()
+        analysis_module_name = self.ert().analysisConfig().active_module_name()
         update_id = self._post_update_data(
             parent_ensemble_id=ensemble_id, algorithm=analysis_module_name
         )
@@ -351,7 +351,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
             ) from e
 
         # Push update data to new storage
-        analysis_module_name = self.ert().analysisConfig().activeModuleName()
+        analysis_module_name = self.ert().analysisConfig().active_module_name()
         update_id = await loop.run_in_executor(
             executor, self._post_update_data, ensemble_id, analysis_module_name
         )
