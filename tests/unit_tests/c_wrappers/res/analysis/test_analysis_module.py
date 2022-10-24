@@ -7,7 +7,7 @@ from ert._c_wrappers.analysis.analysis_module import (
     DEFAULT_IES_MIN_STEPLENGTH,
     DEFAULT_INVERSION,
     DEFAULT_TRUNCATION,
-    get_mode_variables
+    get_mode_variables,
 )
 
 

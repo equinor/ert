@@ -121,13 +121,6 @@ class AnalysisModule:
     def variable_value_dict(self) -> Dict[str, Union[float, int]]:
         return {name: var["value"] for name, var in self._variables.items()}
 
-    def add_var(self, var_name: str, value):
-        if var_name in self._variables:  # or var_name in special_keys
-            self.set_var(var_name, value)
-        else:
-            # add new variable config dict to self._variables
-            pass
-
     def handle_special_key_set(self, var_name, value):
         if var_name in self.DEPRECATED_KEYS:
             logger.warning(
