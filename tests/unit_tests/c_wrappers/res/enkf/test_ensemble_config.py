@@ -87,3 +87,39 @@ def test_ensemble_config_constructor(setup_case):
             # ConfigKeys.REFCASE: "../input/refcase/SNAKE_OIL_FIELD",  # ecl
         },
     )
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_ensemble_config_fails_on_non_sensical_refcase_file():
+    refcase_file = "CEST_PAS_UNE_REFCASE"
+    refcase_file_content = """
+_________________________________________     _____    ____________________
+\\______   \\_   _____/\\_   _____/\\_   ___ \\   /  _  \\  /   _____/\\_   _____/
+ |       _/|    __)_  |    __)  /    \\  \\/  /  /_\\  \\ \\_____  \\  |    __)_
+ |    |   \\|        \\ |     \\   \\     \\____/    |    \\/        \\ |        \\
+ |____|_  /_______  / \\___  /    \\______  /\\____|__  /_______  //_______  /
+        \\/        \\/      \\/            \\/         \\/        \\/         \\/
+"""
+    with open(refcase_file, "w+", encoding="utf-8") as refcase_file_handler:
+        refcase_file_handler.write(refcase_file_content)
+    with pytest.raises(expected_exception=IOError, match=refcase_file):
+        config_dict = {ConfigKeys.REFCASE: refcase_file}
+        EnsembleConfig(config_dict=config_dict)
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_ensemble_config_fails_on_non_sensical_grid_file():
+    grid_file = "BRICKWALL"
+    # NB: this is just silly ASCII content, not even close to a correct GRID file
+    grid_file_content = """
+_|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|
+___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|__
+_|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|
+___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|__
+_|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|
+"""
+    with open(grid_file, "w+", encoding="utf-8") as grid_file_handler:
+        grid_file_handler.write(grid_file_content)
+    with pytest.raises(expected_exception=ValueError, match=grid_file):
+        config_dict = {ConfigKeys.GRID: grid_file}
+        EnsembleConfig(config_dict=config_dict)
