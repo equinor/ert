@@ -153,8 +153,22 @@ class AnalysisModule:
             var = self._variables[var_name]
             try:
                 new_value = var["type"](value)
-                # TODO check min max values before assignment
-                var["value"] = new_value
+                if new_value > var["max"]:
+                    var["value"] = var["max"]
+                    logger.warning(
+                        f"New value {new_value} for key"
+                        f" {var_name} is greater than "
+                        f"max allowed key value {var['max']}"
+                    )
+                elif new_value < var["min"]:
+                    var["value"] = var["min"]
+                    logger.warning(
+                        f"New value {new_value} for key"
+                        f" {var_name} is smaller than "
+                        f"min allowed key value {var['min']}"
+                    )
+                else:
+                    var["value"] = new_value
 
             except ValueError:
                 raise ValueError(
