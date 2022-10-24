@@ -91,14 +91,15 @@ fi
 
 # Replicate qstat's error behaviour:
 if [ -n "$1" ]; then
-    grep -e "^${1}[\.[:space:]]" $proxyfile >/dev/null 2>&1 || {
-        echo "Unknown Job Id $1" && cat $proxyfile >&2 && exit 1;
+    grep -e "Job Id: ${1}" $proxyfile >/dev/null 2>&1 || {
+        echo "qstat: Unknown Job Id $1" && cat $proxyfile >&2 && exit 1;
         }
 fi
 
 # Extract the job id from the proxyfile:
 if [ -n "$1" ]; then
-    grep -e "-----" -e "User" -e "^$1[\.[:space:]]" $proxyfile
+    awk "BEGIN { RS=\"Job Id: \"} /^$1/,/Job/ {printf \"Job Id: \"; print}" $proxyfile \
+        | grep -v ^$
     exit 0
 fi
 
@@ -107,16 +108,27 @@ cat $proxyfile
 
 exit 0
 
-# Example qstat output:
-# Job id            Name             User              Time Use S Queue
-# ----------------  ---------------- ----------------  -------- - -----
-# 15399.s034-lcam   DROGON-1         droger                   0 E hb120
-# 15400.s034-lcam   DROGON-2         droger                   0 E hb120
-# 15402.s034-lcam   DROGON-3         droger                   0 R hb120
-# 15401.s034-lcam   DROGON-0         droger                   0 H hb120
-# 15403.s034-lcam   DROGON-10        droger                   0 F hb120
+# Example qstat output (when called with '-f'):
+# Job Id: 15399.s034-lcam
+#     Job_Name = DROGON-1
+#     Job_Owner = combert
+#     queue = hb120
+#     job_state = H
+# Job Id: 15400
+#     Job_Name = DROGON-2
+#     Job_Owner = barbert
+#     queue = hb120
+#     job_state = R
+# Job Id: 15402.s034-lcam
+#     Job_Name = DROGON-3
+#     Job_Owner = foobert
+#     queue = hb120
+#     job_state = E
+# Job Id: 15403.s034-lcam
+#     Job_Name = DROGON-3
+#     Job_Owner = foobert
+#     queue = hb120
+#     job_state = F
 
-# NB: The torque driver *always* asserts that the relevant info it looks
-# for is on the third line only.
 # NB: The F(inished) state is only reported if the "-x" option is supplied,
 #     (this is also the default option to qstat in the driver)

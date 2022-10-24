@@ -15,11 +15,21 @@ import testpath
 PROXYSCRIPT = shutil.which("qstat_proxy.sh")
 
 EXAMPLE_QSTAT_CONTENT = """
-Job id            Name             User              Time Use S Queue
-----------------  ---------------- ----------------  -------- - -----
-15399.s034-lcam   DROGON-1         combert                     0 H hb120
-15400             DROGON-2         barbert                     0 R hb120
-15402.s034-lcam   DROGON-3         foobert                     0 E hb120
+Job Id: 15399.s034-lcam
+    Job_Name = DROGON-1
+    Job_Owner = combert
+    queue = hb120
+    job_state = H
+Job Id: 15400
+    Job_Name = DROGON-2
+    Job_Owner = barbert_15399
+    queue = hb120
+    job_state = R
+Job Id: 15402.s034-lcam
+    Job_Name = DROGON-3
+    Job_Owner = foobert
+    queue = hb120
+    job_state = E
 """.strip()
 
 PROXYFILE_FOR_TESTS = "proxyfile"
@@ -47,16 +57,19 @@ def test_recent_proxyfile_exists(tmpdir, jobid):
     with testpath.MockCommand("qstat", python=MOCKED_QSTAT_BACKEND):
         result = subprocess.run(
             [PROXYSCRIPT, str(jobid), PROXYFILE_FOR_TESTS],
-            check=True,
+            check=False,
             capture_output=True,
         )
+    print(result)
     assert str(jobid) in str(result.stdout)
     if sys.platform.startswith("darwin"):
         # On Darwin, the proxy script falls back to the mocked backend which is
         # not feature complete for this test:
-        assert len(result.stdout.splitlines()) == 5
+        assert len(result.stdout.splitlines()) == len(
+            EXAMPLE_QSTAT_CONTENT.splitlines()
+        )
     else:
-        assert len(result.stdout.splitlines()) == 3
+        assert len(result.stdout.splitlines()) == 5
 
 
 def test_proxyfile_not_exists(tmpdir):
@@ -73,9 +86,11 @@ def test_proxyfile_not_exists(tmpdir):
     assert "15399" in str(result.stdout)
     if sys.platform.startswith("darwin"):
         # (the mocked backend is not feature complete)
-        assert len(result.stdout.splitlines()) == 5
+        assert len(result.stdout.splitlines()) == len(
+            EXAMPLE_QSTAT_CONTENT.splitlines()
+        )
     else:
-        assert len(result.stdout.splitlines()) == 3
+        assert len(result.stdout.splitlines()) == 5
 
 
 @pytest.mark.skipif(sys.platform.startswith("darwin"), reason="No flock on MacOS")
@@ -141,7 +156,7 @@ def test_old_proxyfile_exists(tmpdir):
         print(result)
         assert Path(PROXYFILE_FOR_TESTS).exists()
         assert "15399" in str(result.stdout)
-        assert len(result.stdout.splitlines()) == 3
+        assert len(result.stdout.splitlines()) == 5
 
 
 @pytest.mark.skipif(sys.platform.startswith("darwin"), reason="No flock on MacOS")
@@ -212,7 +227,7 @@ def test_options_passed_through_proxy(tmpdir, options, expected):
         )
         if expected is None:
             assert result.returncode == 1
-            assert result.stdout.strip().decode() == f"Unknown Job Id {options}"
+            assert result.stdout.strip().decode() == f"qstat: Unknown Job Id {options}"
             return
         assert result.returncode == 0
 
@@ -322,12 +337,12 @@ def test_optional_job_id_namespace(tmpdir):
     result_job_with_namespace = subprocess.run(
         [PROXYSCRIPT, "15399", PROXYFILE_FOR_TESTS], check=True, capture_output=True
     )
-    assert len(result_job_with_namespace.stdout.splitlines()) == 3
-    assert "15400  " in EXAMPLE_QSTAT_CONTENT
+    assert len(result_job_with_namespace.stdout.splitlines()) == 5
+    assert "15400\n" in EXAMPLE_QSTAT_CONTENT
     result_job_without_namespace = subprocess.run(
         [PROXYSCRIPT, "15400", PROXYFILE_FOR_TESTS], check=True, capture_output=True
     )
-    assert len(result_job_without_namespace.stdout.splitlines()) == 3
+    assert len(result_job_without_namespace.stdout.splitlines()) == 5
 
 
 @pytest.mark.skipif(sys.platform.startswith("darwin"), reason="No flock on MacOS")
@@ -354,4 +369,4 @@ def test_no_argument(tmpdir):
         check=True,
         capture_output=True,
     )
-    assert len(result.stdout.splitlines()) == 5
+    assert len(result.stdout.splitlines()) == len(EXAMPLE_QSTAT_CONTENT.splitlines())
