@@ -69,7 +69,7 @@ def test_with_enkf_fs(copy_case):
     res_config = ResConfig("snake_oil.ert")
 
     fs = EnkfFs(
-        "storage/snake_oil/ensemble/default_0", res_config.ensemble_config, False, 4
+        "storage/snake_oil/ensemble/default_0", res_config.ensemble_config, 4, False
     )
     summary_key_set = fs.getSummaryKeySet()
     summary_key_set.addSummaryKey("FOPT")
