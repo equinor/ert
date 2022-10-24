@@ -82,7 +82,7 @@ ERT script function                                                        Purpo
 
    ::
 
-      grid = ert.eclConfig.grid
+      grid = ert.ensembleConfig.grid
 
 .. #####################################################################
 .. _load_file:

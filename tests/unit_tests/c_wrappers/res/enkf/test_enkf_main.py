@@ -9,7 +9,6 @@ from ecl.summary import EclSum
 
 from ert._c_wrappers.enkf import (
     AnalysisConfig,
-    EclConfig,
     EnkfFs,
     EnKFMain,
     EnkfObs,
@@ -271,7 +270,6 @@ def test_config(minimum_case):
     assert isinstance(minimum_case.analysisConfig(), AnalysisConfig)
     assert isinstance(minimum_case.getModelConfig(), ModelConfig)
     assert isinstance(minimum_case.siteConfig(), SiteConfig)
-    assert isinstance(minimum_case.eclConfig(), EclConfig)
 
     assert isinstance(minimum_case.getObservations(), EnkfObs)
     assert isinstance(minimum_case.getEnkfFsManager().getCurrentFileSystem(), EnkfFs)

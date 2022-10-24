@@ -13,7 +13,6 @@ from ert._c_wrappers.analysis.configuration import UpdateConfiguration
 from ert._c_wrappers.enkf import EnkfFs
 from ert._c_wrappers.enkf.analysis_config import AnalysisConfig
 from ert._c_wrappers.enkf.data import EnkfNode
-from ert._c_wrappers.enkf.ecl_config import EclConfig
 from ert._c_wrappers.enkf.enkf_fs_manager import FileSystemManager
 from ert._c_wrappers.enkf.enkf_obs import EnkfObs
 from ert._c_wrappers.enkf.ensemble_config import EnsembleConfig
@@ -279,9 +278,6 @@ class EnKFMain:
 
     def resConfig(self) -> "ResConfig":
         return self.res_config
-
-    def eclConfig(self) -> EclConfig:
-        return self.res_config.ecl_config
 
     def getDataKW(self) -> SubstitutionList:
         return self.res_config.subst_config.subst_list

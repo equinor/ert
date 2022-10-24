@@ -259,15 +259,15 @@ def test_extensive_config(setup_case):
         assert exp_job_data["STDERR"] == job_list[job_name].get_stderr_file()
         assert exp_job_data["STDOUT"] == job_list[job_name].get_stdout_file()
 
-    ecl_config = res_config.ecl_config
+    ensemble_config = res_config.ensemble_config
     for extension in ["SMSPEC", "UNSMRY"]:
         assert (
             Path(snake_oil_structure_config["REFCASE"] + "." + extension).resolve()
-            == Path(ecl_config.refcase.case + "." + extension).resolve()
+            == Path(ensemble_config.refcase.case + "." + extension).resolve()
         )
     assert (
         Path(snake_oil_structure_config["GRID"]).resolve()
-        == Path(ecl_config._grid_file).resolve()
+        == Path(ensemble_config._grid_file).resolve()
     )
 
     ensemble_config = res_config.ensemble_config
@@ -534,7 +534,6 @@ def test_res_config_dict_constructor(setup_case):
     assert res_config_file.random_seed == res_config_dict.random_seed
     assert res_config_file.ert_workflow_list == res_config_dict.ert_workflow_list
     assert res_config_file.ert_templates == res_config_dict.ert_templates
-    assert res_config_file.ecl_config == res_config_dict.ecl_config
     assert res_config_file.ensemble_config == res_config_dict.ensemble_config
     assert res_config_file.model_config == res_config_dict.model_config
     # https://github.com/equinor/ert/issues/2571
