@@ -7,7 +7,12 @@ from typing import Callable, TypedDict
 
 import pytest
 
-from ert._c_wrappers.job_queue import Driver, JobQueueNode, QueueDriverEnum
+from ert._c_wrappers.job_queue import (
+    Driver,
+    JobQueueNode,
+    JobStatusType,
+    QueueDriverEnum,
+)
 from ert._clib.model_callbacks import LoadStatus
 
 
@@ -61,12 +66,8 @@ SIMPLE_SCRIPT = """#!/bin/sh
 echo "finished successfully" > STATUS
 """
 
-# This script is susceptible to race conditions. Python works
-# better than sh.
-FAILING_SCRIPT = """#!/usr/bin/env python
+FAILING_FORWARD_MODEL = """#!/usr/bin/env python
 import sys
-with open("one_byte_pr_invocation", "a") as f:
-    f.write(".")
 sys.exit(1)
 """
 
@@ -90,14 +91,21 @@ exit 1
 """
 
 
-def create_qstat_output(
-    state: str, job_id: str = "10001.s034-lcam", bash=False, bashindent=""
+def create_qstat_f_output(
+    job_id: str = "10001.s034-lcam",
+    state: str = "R",
+    exit_status: int = 0,
+    bash=False,
+    bashindent="",
 ):
     assert len(state) == 1
-    mocked_output = f"""Job id            Name             User              Time Use S Queue
-----------------  ---------------- ----------------  -------- - -----
-{job_id: <16}  MyMockedJob      rms                      0 {state:<1} normal   100
-"""  # noqa
+    mocked_output = f"Job Id: {job_id}\n"
+
+    if state is not None:
+        mocked_output += f"  job_state = {state}\n"
+    if exit_status is not None:
+        mocked_output += f"  Exit_status = {exit_status}\n"
+
     if bash:
         return "\n".join(
             [f'{bashindent}echo "{line}"' for line in mocked_output.splitlines()]
@@ -106,7 +114,7 @@ def create_qstat_output(
 
 
 # A qstat script that works as expected:
-MOCK_QSTAT = "#!/bin/sh\n" + create_qstat_output(state="E", bash=True)
+MOCK_QSTAT = "#!/bin/sh\n" + create_qstat_f_output(state="E", bash=True)
 
 # A qstat shell script that will fail on the first invocation, but succeed on
 # the second (by persisting its state in the current working directory)
@@ -115,7 +123,7 @@ FLAKY_QSTAT = (
 sleep 1
 if [ -s firstwasflaky ]; then
 """
-    + create_qstat_output(state="E", bash=True, bashindent="    ")
+    + create_qstat_f_output(state="E", bash=True, bashindent="    ")
     + """
     exit 0
 fi
@@ -176,7 +184,6 @@ def _build_jobqueuenode(dummy_config: JobConfig, job_id=0):
 def test_run_torque_job(
     temp_working_directory, dummy_config, qsub_script, qstat_script
 ):
-    # pylint: disable=unused-argument
     """Verify that the torque driver will succeed in submitting and
     monitoring torque jobs even when the Torque commands qsub and qstat
     are flaky.
@@ -205,21 +212,61 @@ def test_run_torque_job(
     assert (runpath / "OK").read_text(encoding="utf-8") == "success"
 
 
-def test_that_torque_driver_passes_dash_x_to_qstat(
-    temp_working_directory, dummy_config
+@pytest.mark.parametrize(
+    "user_qstat_option, expected_options",
+    [("", "-f 10001"), ("-x", "-f -x 10001"), ("-f", "-f -f 10001")],
+)
+def test_that_torque_driver_passes_options_to_qstat(
+    temp_working_directory, dummy_config, user_qstat_option, expected_options
 ):
-    # pylint: disable=unused-argument
-    """-x is a default option in the driver for the qstat option,
-    making qstat also display information about finished jobs."""
+    """The driver supports setting options to qstat, but the
+    hard-coded -f option is always there."""
 
     _deploy_script(dummy_config["job_script"], SIMPLE_SCRIPT)
     _deploy_script("qsub", MOCK_QSUB)
     _deploy_script(
         "qstat",
         "#!/bin/bash\n"
-        + create_qstat_output(state="E", bash=True)
+        + create_qstat_f_output(state="E", bash=True)
         + "\n"
         + "echo $@ > qstat_options",
+    )
+
+    driver = Driver(
+        driver_type=QueueDriverEnum.TORQUE_DRIVER,
+        options=[
+            ("QSTAT_CMD", temp_working_directory / "qstat"),
+            ("QSTAT_OPTIONS", user_qstat_option),
+        ],
+    )
+
+    job, _runpath = _build_jobqueuenode(dummy_config)
+    job.run(driver, BoundedSemaphore())
+    job.wait_for()
+
+    assert Path("qstat_options").read_text(encoding="utf-8").strip() == expected_options
+
+
+@pytest.mark.parametrize(
+    "job_state, exit_status, expected_status",
+    [
+        ("E", 0, JobStatusType.JOB_QUEUE_SUCCESS),
+        ("E", 1, JobStatusType.JOB_QUEUE_EXIT),
+        ("F", 0, JobStatusType.JOB_QUEUE_SUCCESS),
+        ("F", 1, JobStatusType.JOB_QUEUE_EXIT),
+        ("C", 0, JobStatusType.JOB_QUEUE_SUCCESS),
+        ("C", 1, JobStatusType.JOB_QUEUE_EXIT),
+    ],
+)
+def test_torque_job_status_from_qstat_output(
+    temp_working_directory, dummy_config, job_state, exit_status, expected_status
+):
+    _deploy_script(dummy_config["job_script"], SIMPLE_SCRIPT)
+    _deploy_script("qsub", MOCK_QSUB)
+    _deploy_script(
+        "qstat",
+        "#!/bin/sh\n"
+        + create_qstat_f_output(state=job_state, exit_status=exit_status, bash=True),
     )
 
     driver = Driver(
@@ -228,7 +275,8 @@ def test_that_torque_driver_passes_dash_x_to_qstat(
     )
 
     job, _runpath = _build_jobqueuenode(dummy_config)
-    job.run(driver, BoundedSemaphore())
+
+    pool_sema = BoundedSemaphore(value=2)
+    job.run(driver, pool_sema)
     job.wait_for()
-    # qstat job id = 10001
-    assert Path("qstat_options").read_text(encoding="utf-8").strip() == "-x 10001"
+    assert job.status == expected_status
