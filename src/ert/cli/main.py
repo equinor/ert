@@ -6,7 +6,10 @@ import os
 import sys
 import threading
 import uuid
+from pathlib import Path
 from typing import Any
+
+import filelock
 
 from ert._c_wrappers.enkf import EnKFMain, ResConfig
 from ert.cli import (
@@ -28,6 +31,10 @@ class ErtCliError(Exception):
     pass
 
 
+class ErtTimeoutError(Exception):
+    pass
+
+
 def run_cli(args):
     res_config = ResConfig(args.config)
 
@@ -44,7 +51,15 @@ def run_cli(args):
     os.chdir(res_config.config_path)
     ert = EnKFMain(res_config)
     facade = LibresFacade(ert)
-
+    ens_path = Path(res_config.model_config.getEnspath())
+    storage_lock = filelock.FileLock(ens_path / (ens_path.stem + ".lock"))
+    try:
+        storage_lock.acquire(timeout=5)
+    except filelock.Timeout:
+        raise ErtTimeoutError(
+            f"Not able to acquire lock for: {ens_path}, ert could be opened twice, or "
+            f"another user is using the same ENSPATH"
+        )
     if args.mode == WORKFLOW_MODE:
         execute_workflow(ert, args.name)
         return
@@ -115,6 +130,9 @@ def run_cli(args):
 
     thread.join()
 
+    if storage_lock.is_locked:
+        storage_lock.release()
+        os.remove(storage_lock.lock_file)
     if model.hasRunFailed():
         raise ErtCliError(model.getFailMessage())
 

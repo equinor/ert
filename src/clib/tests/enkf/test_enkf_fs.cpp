@@ -153,24 +153,3 @@ TEST_CASE("block_fs", "[enkf_fs]") {
         block_fs_close(bfs);
     }
 }
-
-void mount(void *args) { enkf_fs_type *fs2 = enkf_fs_mount("mnt", 1); }
-
-TEST_CASE("Mount filesystem read/write twice", "[enkf_fs]") {
-    WITH_TMPDIR;
-    enkf_fs_create_fs("mnt", BLOCK_FS_DRIVER_ID, 1, false);
-    enkf_fs_type *fs = enkf_fs_mount("mnt", 1);
-
-    REQUIRE(std::filesystem::exists("mnt/mnt.lock"));
-    REQUIRE(!enkf_fs_is_read_only(fs));
-
-    pid_t pid = fork();
-    if (pid == 0) {
-        test_assert_util_abort("enkf_fs_alloc_empty", mount, NULL);
-    } else {
-        int child_status;
-        waitpid(pid, &child_status, 0);
-        REQUIRE(child_status == 0);
-    }
-    enkf_fs_umount(fs);
-}

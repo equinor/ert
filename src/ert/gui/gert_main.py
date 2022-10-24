@@ -2,11 +2,14 @@ import argparse
 import logging
 import os
 import sys
+from pathlib import Path
 
+import filelock
 from qtpy.QtCore import QLocale, Qt
 from qtpy.QtWidgets import QApplication, QMessageBox
 
 from ert._c_wrappers.enkf import EnKFMain, ResConfig
+from ert.cli.main import ErtTimeoutError
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets import SummaryPanel, resourceIcon
 from ert.gui.main_window import GertMainWindow
@@ -41,21 +44,35 @@ def run_gui(args: argparse.Namespace):
             "workflow_jobs": str(res_config.model_config.getForwardModel().joblist())
         },
     )
-
     os.chdir(res_config.config_path)
     # Changing current working directory means we need to update the config file to
     # be the base name of the original config
     args.config = os.path.basename(args.config)
     ert = EnKFMain(res_config)
+
     facade = LibresFacade(ert)
-    with Storage.init_service(
-        res_config=args.config,
-        project=os.path.abspath(facade.enspath),
-    ), add_gui_log_handler() as log_handler:
-        notifier = ErtNotifier(args.config)
-        # window reference must be kept until app.exec returns:
-        window = _start_window(ert, notifier, args, log_handler)  # noqa
-        return app.exec_()
+    ens_path = Path(res_config.model_config.getEnspath())
+    storage_lock = filelock.FileLock(ens_path / (ens_path.stem + ".lock"))
+
+    try:
+        storage_lock.acquire(timeout=5)
+        with Storage.init_service(
+            res_config=args.config,
+            project=os.path.abspath(facade.enspath),
+        ), add_gui_log_handler() as log_handler:
+            notifier = ErtNotifier(args.config)
+            # window reference must be kept until app.exec returns:
+            window = _start_window(ert, notifier, args, log_handler)  # noqa
+            return app.exec_()
+    except filelock.Timeout:
+        raise ErtTimeoutError(
+            f"Not able to acquire lock for: {ens_path}, ert could be opened twice, or "
+            f"another user is using the same ENSPATH"
+        )
+    finally:
+        if storage_lock.is_locked:
+            storage_lock.release()
+            os.remove(storage_lock.lock_file)
 
 
 def _start_window(

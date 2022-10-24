@@ -19,7 +19,7 @@ from ert.cli import (
     TEST_RUN_MODE,
     WORKFLOW_MODE,
 )
-from ert.cli.main import ErtCliError, run_cli
+from ert.cli.main import ErtCliError, ErtTimeoutError, run_cli
 from ert.logging import LOGGING_CONFIG
 from ert.logging._log_util_abort import _log_util_abort
 from ert.services import Storage, WebvizErt
@@ -545,7 +545,7 @@ def main():
             context.plugin_manager.add_logging_handle_to_root(logging.getLogger())
             logger.info(f"Running ert with {args}")
             args.func(args)
-    except ErtCliError as err:
+    except (ErtCliError, ErtTimeoutError) as err:
         logger.exception(str(err))
         sys.exit(str(err))
     except BaseException as err:

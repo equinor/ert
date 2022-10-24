@@ -126,9 +126,6 @@ struct enkf_fs_struct {
     std::string case_name;
     char *mount_point;
 
-    char *lock_file;
-    int lock_fd;
-
     std::unique_ptr<ert::block_fs_driver> dynamic_forecast;
     std::unique_ptr<ert::block_fs_driver> parameter;
     std::unique_ptr<ert::block_fs_driver> index;
@@ -156,22 +153,11 @@ enkf_fs_type *enkf_fs_alloc_empty(const char *mount_point,
     fs->state_map = std::make_shared<StateMap>(ensemble_size);
     fs->summary_key_set = summary_key_set_alloc();
     fs->misfit_ensemble = misfit_ensemble_alloc();
-    fs->read_only = true;
+    fs->read_only = read_only;
     fs->mount_point = strdup(mount_point);
-    fs->lock_fd = 0;
     auto mount_path = fs::path(mount_point);
     std::string case_name = mount_path.filename();
-    fs->lock_file = strdup((mount_path / (case_name + ".lock")).c_str());
 
-    if (util_try_lockf(fs->lock_file, S_IWUSR + S_IWGRP, &fs->lock_fd)) {
-        fs->read_only = false;
-    } else {
-        if (!read_only) {
-            util_abort("%s: Another program has already opened filesystem "
-                       "read-write \n",
-                       __func__);
-        }
-    }
     return fs;
 }
 
@@ -401,13 +387,6 @@ void enkf_fs_sync(enkf_fs_type *fs) {
 }
 
 void enkf_fs_umount(enkf_fs_type *fs) {
-    if (fs->lock_fd > 0) {
-        close(
-            fs->lock_fd); // Closing the lock_file file descriptor - and releasing the lock.
-        util_unlink_existing(fs->lock_file);
-    }
-
-    free(fs->lock_file);
     free(fs->mount_point);
     path_fmt_free(fs->case_fmt);
     path_fmt_free(fs->case_member_fmt);
