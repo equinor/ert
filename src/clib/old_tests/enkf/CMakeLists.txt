@@ -40,8 +40,7 @@ foreach(
   measured
   obs_mask_deactivate
   row_scaling
-  trans_func
-  value_export)
+  trans_func)
   add_executable(${test} ${TESTS_EXCLUDE_FROM_ALL} test_${test}.cpp)
   target_link_libraries(${test} ert)
   add_test(NAME ${test} COMMAND ${test})

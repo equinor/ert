@@ -19,6 +19,7 @@
 #include <ert/enkf/gen_data.hpp>
 #include <ert/enkf/gen_data_config.hpp>
 #include <ert/enkf/run_arg.hpp>
+#include <ert/python.hpp>
 
 namespace fs = std::filesystem;
 static auto logger = ert::get_logger("enkf");

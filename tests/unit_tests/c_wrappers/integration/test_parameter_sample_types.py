@@ -40,7 +40,7 @@ def create_runpath(config, active_mask=None):
 def load_from_forward_model(ert):
     facade = LibresFacade(ert)
     realizations = [True] * facade.get_ensemble_size()
-    return facade.load_from_forward_model("default_0", realizations, 0)
+    return facade.load_from_forward_model("default", realizations, 0)
 
 
 @pytest.mark.integration_test
@@ -140,7 +140,7 @@ def test_that_order_of_input_in_user_input_is_abritrary_for_gen_kw_init_files(
 
 
 @pytest.mark.parametrize(
-    "config_str, expected",
+    "config_str, expect_forward_init",
     [
         (
             "FIELD MY_PARAM PARAMETER my_param.grdecl INIT_FILES:../../../my_param_0.grdecl FORWARD_INIT:True",  # noqa
@@ -152,7 +152,7 @@ def test_that_order_of_input_in_user_input_is_abritrary_for_gen_kw_init_files(
         ),
     ],
 )
-def test_field_param(tmpdir, config_str, expected):
+def test_field_param(tmpdir, config_str, expect_forward_init):
     with tmpdir.as_cwd():
         config = dedent(
             """
@@ -167,35 +167,52 @@ def test_field_param(tmpdir, config_str, expected):
         )
         grid.save_GRID("MY_GRID.GRID")
 
-        poro = EclKW("MY_PARAM", grid.getGlobalSize(), EclDataType.ECL_FLOAT)
+        expect_param = EclKW("MY_PARAM", grid.getGlobalSize(), EclDataType.ECL_FLOAT)
         for i in range(grid.getGlobalSize()):
-            poro[i] = i
+            expect_param[i] = i
 
         with cwrap.open("my_param_0.grdecl", mode="w") as f:
-            grid.write_grdecl(poro, f)
+            grid.write_grdecl(expect_param, f)
         with open("config.ert", "w") as fh:
             fh.writelines(config)
         ert = create_runpath("config.ert")
-        assert ert.ensembleConfig()["MY_PARAM"].getUseForwardInit() is expected
-        # We try to load the parameters from the forward model, this would fail if
-        # forward init was not set correctly
-        assert load_from_forward_model(ert) == 1
+        assert (
+            ert.ensembleConfig()["MY_PARAM"].getUseForwardInit() is expect_forward_init
+        )
 
-        fs = ert.getEnkfFsManager().getFileSystem("default_0")
-        if expected:
-            arr = fs.load_parameter(
-                ert.ensembleConfig(), [0], update.Parameter("MY_PARAM")
-            )
-            assert len(arr) == 16
-        else:
+        fs = ert.getEnkfFsManager().getFileSystem("default")
+        # Assert that the data has been written to runpath
+        if expect_forward_init:
+            # FORWARD_INIT: True means that ERT waits until the end of the
+            # forward model to internalise the data
+            assert not Path("simulations/realization-0/iter-0/my_param.grdecl").exists()
+
             with pytest.raises(KeyError, match="No parameter: MY_PARAM in storage"):
                 fs.load_parameter(
                     ert.ensembleConfig(), [0], update.Parameter("MY_PARAM")
                 )
 
+            # We try to load the parameters from the forward model, this would fail if
+            # forward init was not set correctly
+            assert load_from_forward_model(ert) == 1
+
+            # Once data has been internalised, ERT will generate the
+            # parameter files
+            create_runpath("config.ert")
+
+        with cwrap.open("simulations/realization-0/iter-0/my_param.grdecl", "rb") as f:
+            actual_param = EclKW.read_grdecl(f, "MY_PARAM")
+        assert actual_param == expect_param
+
+        if expect_forward_init:
+            arr = fs.load_parameter(
+                ert.ensembleConfig(), [0], update.Parameter("MY_PARAM")
+            )
+            assert len(arr) == 16
+
 
 @pytest.mark.parametrize(
-    "config_str, expected, expect_loaded, error",
+    "config_str, expect_forward_init, expect_num_loaded, error",
     [
         (
             "SURFACE MY_PARAM OUTPUT_FILE:surf.irap   INIT_FILES:surf%d.irap   BASE_SURFACE:surf0.irap",  # noqa
@@ -220,8 +237,8 @@ def test_field_param(tmpdir, config_str, expected):
 def test_surface_param(
     tmpdir,
     config_str,
-    expected,
-    expect_loaded,
+    expect_forward_init,
+    expect_num_loaded,
     error,
     caplog,
 ):
@@ -233,21 +250,40 @@ def test_surface_param(
         """
         )
         config += config_str
-        s0 = Surface(nx=2, ny=2, xinc=1, yinc=1, xstart=1, ystart=1, angle=0)
-        s0.write("surf.irap")
-        s0.write("surf0.irap")
+        expect_surface = Surface(
+            nx=2, ny=2, xinc=1, yinc=1, xstart=1, ystart=1, angle=0
+        )
+        expect_surface.write("surf.irap")
+        expect_surface.write("surf0.irap")
 
         with open("config.ert", "w") as fh:
             fh.writelines(config)
         ert = create_runpath("config.ert")
-        assert ert.ensembleConfig()["MY_PARAM"].getUseForwardInit() is expected
+        assert (
+            ert.ensembleConfig()["MY_PARAM"].getUseForwardInit() is expect_forward_init
+        )
         # We try to load the parameters from the forward model, this would fail if
         # forward init was not set correctly
-        assert load_from_forward_model(ert) == expect_loaded
+        assert load_from_forward_model(ert) == expect_num_loaded
         assert error in "".join(caplog.messages)
 
-        fs = ert.getEnkfFsManager().getFileSystem("default_0")
-        if expected and expect_loaded:
+        # Assert that the data has been written to runpath
+        if expect_num_loaded > 0:
+            if expect_forward_init:
+                # FORWARD_INIT: True means that ERT waits until the end of the
+                # forward model to internalise the data
+                assert not Path("simulations/realization-0/iter-0/surf.irap").exists()
+
+                # Once data has been internalised, ERT will generate the
+                # parameter files
+                create_runpath("config.ert")
+
+            actual_surface = Surface("simulations/realization-0/iter-0/surf.irap")
+            assert actual_surface == expect_surface
+
+        # Assert that the data has been internalised to storage
+        fs = ert.getEnkfFsManager().getFileSystem("default")
+        if expect_num_loaded > 0:
             arr = fs.load_parameter(
                 ert.ensembleConfig(), [0], update.Parameter("MY_PARAM")
             )

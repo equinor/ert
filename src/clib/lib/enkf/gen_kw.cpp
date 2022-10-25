@@ -15,6 +15,7 @@
 #include <ert/enkf/gen_kw.hpp>
 #include <ert/enkf/gen_kw_common.hpp>
 #include <ert/enkf/gen_kw_config.hpp>
+#include <ert/python.hpp>
 
 GET_DATA_SIZE_HEADER(gen_kw);
 
@@ -190,50 +191,6 @@ void gen_kw_filter_file(const gen_kw_type *gen_kw, const char *target_file) {
                    __func__);
 }
 
-void gen_kw_export_values(const gen_kw_type *gen_kw,
-                          value_export_type *export_value) {
-    const int size = gen_kw_config_get_data_size(gen_kw->config);
-
-    for (int ikw = 0; ikw < size; ++ikw) {
-        const char *key = gen_kw_config_get_key(gen_kw->config);
-        const char *parameter = gen_kw_config_iget_name(gen_kw->config, ikw);
-
-        double value =
-            gen_kw_config_transform(gen_kw->config, ikw, gen_kw->data[ikw]);
-
-        value_export_append(export_value, key, parameter, value);
-
-        if (gen_kw_config_should_use_log_scale(gen_kw->config, ikw)) {
-            double log_value = log10(value);
-            char *log_key = util_alloc_sprintf("LOG10_%s", key);
-            value_export_append(export_value, log_key, parameter, log_value);
-            free(log_key);
-        }
-    }
-}
-
-void gen_kw_write_export_file(const gen_kw_type *gen_kw, const char *filename) {
-    value_export_type *export_value = value_export_alloc("", filename);
-    gen_kw_export_values(gen_kw, export_value);
-    value_export_txt__(export_value, filename);
-    value_export_free(export_value);
-}
-
-void gen_kw_ecl_write(const gen_kw_type *gen_kw, const char *run_path,
-                      const char *base_file, value_export_type *export_value) {
-    char *target_file;
-    if (run_path)
-        target_file = util_alloc_filename(run_path, base_file, NULL);
-    else
-        target_file = util_alloc_string_copy(base_file);
-
-    gen_kw_filter_file(gen_kw, target_file);
-    free(target_file);
-
-    if (export_value)
-        gen_kw_export_values(gen_kw, export_value);
-}
-
 const char *gen_kw_get_name(const gen_kw_type *gen_kw, int kw_nr) {
     return gen_kw_config_iget_name(gen_kw->config, kw_nr);
 }
@@ -261,10 +218,63 @@ C_USED bool gen_kw_user_get(const gen_kw_type *gen_kw, const char *key,
 
 VOID_ALLOC(gen_kw);
 VOID_FREE(gen_kw)
-VOID_ECL_WRITE(gen_kw)
 VOID_USER_GET(gen_kw)
 VOID_WRITE_TO_BUFFER(gen_kw)
 VOID_READ_FROM_BUFFER(gen_kw)
 VOID_SERIALIZE(gen_kw)
 VOID_DESERIALIZE(gen_kw)
 VOID_CLEAR(gen_kw)
+
+namespace {
+void gen_kw_export_values(const gen_kw_type *gen_kw, py::dict exports) {
+    auto size = gen_kw_config_get_data_size(gen_kw->config);
+
+    for (int ikw{}; ikw < size; ++ikw) {
+        auto key = gen_kw_config_get_key(gen_kw->config);
+        auto parameter = gen_kw_config_iget_name(gen_kw->config, ikw);
+
+        auto value =
+            gen_kw_config_transform(gen_kw->config, ikw, gen_kw->data[ikw]);
+
+        if (!exports.contains(key))
+            exports[key] = py::dict{};
+        exports[key][parameter] = value;
+
+        if (gen_kw_config_should_use_log_scale(gen_kw->config, ikw)) {
+            auto log_key = fmt::format("LOG10_{}", key);
+
+            if (!exports.contains(log_key.c_str()))
+                exports[log_key.c_str()] = py::dict{};
+            exports[log_key.c_str()][parameter] = log10(value);
+        }
+    }
+}
+
+void gen_kw_ecl_write(const gen_kw_type *gen_kw, const char *run_path,
+                      const char *base_file, py::dict exports) {
+    char *target_file;
+    if (run_path)
+        target_file = util_alloc_filename(run_path, base_file, NULL);
+    else
+        target_file = util_alloc_string_copy(base_file);
+
+    gen_kw_filter_file(gen_kw, target_file);
+    free(target_file);
+
+    gen_kw_export_values(gen_kw, exports);
+}
+} // namespace
+
+ERT_CLIB_SUBMODULE("gen_kw", m) {
+    m.def("generate_parameter_file",
+          [](Cwrap<enkf_node_type> enkf_node, const std::string &run_path,
+             const std::optional<std::string> &opt_file, py::dict exports) {
+              if (enkf_node_get_impl_type(enkf_node) != GEN_KW)
+                  throw py::value_error{"EnkfNode must be of type GEN_KW"};
+
+              auto file = opt_file ? opt_file->c_str() : nullptr;
+              gen_kw_ecl_write(
+                  static_cast<gen_kw_type *>(enkf_node_value_ptr(enkf_node)),
+                  run_path.c_str(), file, exports);
+          });
+}

@@ -14,6 +14,7 @@
 #include <ert/enkf/gen_kw_config.hpp>
 #include <ert/enkf/gen_obs.hpp>
 #include <ert/enkf/surface_config.hpp>
+#include <ert/python.hpp>
 #include <ert/res_util/path_fmt.hpp>
 #include <ert/util/string_util.h>
 #include <ert/util/stringlist.h>
@@ -710,3 +711,14 @@ enkf_config_node_type *enkf_config_node_alloc_SURFACE_full(
     return config_node;
 }
 VOID_FREE(enkf_config_node)
+
+ERT_CLIB_SUBMODULE("enkf_config_node", m) {
+    m.def("alloc_outfile",
+          [](Cwrap<enkf_config_node_type> self, int iens) -> py::object {
+              auto path = enkf_config_node_alloc_outfile(self, iens);
+              if (path == nullptr)
+                  return py::none{};
+              else
+                  return py::str{path};
+          });
+}

@@ -8,6 +8,7 @@
 #include <ert/enkf/enkf_macros.hpp>
 #include <ert/enkf/enkf_util.hpp>
 #include <ert/enkf/surface.hpp>
+#include <ert/python.hpp>
 
 struct surface_struct {
     /** Can not be NULL - var_type is set on first load. */
@@ -82,7 +83,7 @@ void surface_deserialize(surface_type *surface, node_id_type node_id,
 }
 
 void surface_ecl_write(const surface_type *surface, const char *run_path,
-                       const char *base_file, value_export_type *export_value) {
+                       const char *base_file) {
     char *target_file = util_alloc_filename(run_path, base_file, NULL);
     surface_config_ecl_write(surface->config, target_file, surface->data);
     free(target_file);
@@ -107,7 +108,6 @@ bool surface_user_get(const surface_type *surface, const char *index_key,
 
 VOID_ALLOC(surface)
 VOID_FREE(surface)
-VOID_ECL_WRITE(surface)
 VOID_USER_GET(surface)
 VOID_WRITE_TO_BUFFER(surface)
 VOID_READ_FROM_BUFFER(surface)
@@ -115,3 +115,17 @@ VOID_SERIALIZE(surface)
 VOID_DESERIALIZE(surface)
 VOID_INITIALIZE(surface)
 VOID_FLOAD(surface)
+
+ERT_CLIB_SUBMODULE("surface", m) {
+    m.def("generate_parameter_file",
+          [](Cwrap<enkf_node_type> enkf_node, const std::string &run_path,
+             const std::optional<std::string> &opt_file) {
+              if (enkf_node_get_impl_type(enkf_node) != SURFACE)
+                  throw py::value_error{"EnkfNode must be of type SURFACE"};
+
+              auto file = opt_file ? opt_file->c_str() : nullptr;
+              surface_ecl_write(
+                  static_cast<surface_type *>(enkf_node_value_ptr(enkf_node)),
+                  run_path.c_str(), file);
+          });
+}

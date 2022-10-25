@@ -1,8 +1,8 @@
-#include "ert/enkf/value_export.hpp"
 #include <filesystem>
 
 #include <Eigen/Dense>
 #include <cmath>
+#include <stdexcept>
 #include <stdlib.h>
 #include <string.h>
 
@@ -18,6 +18,7 @@
 #include <ert/rms/rms_util.hpp>
 
 #include <ert/enkf/field.hpp>
+#include <ert/python.hpp>
 
 namespace fs = std::filesystem;
 
@@ -588,7 +589,7 @@ void field_export(const field_type *__field, const char *file,
    unchanged.
 */
 void field_ecl_write(const field_type *field, const char *run_path,
-                     const char *file, value_export_type *value_export) {
+                     const char *file) {
     field_file_format_type export_format =
         field_config_get_export_format(field->config);
 
@@ -921,7 +922,6 @@ C_USED bool field_user_get(const field_type *field, const char *index_key,
 */
 VOID_ALLOC(field)
 VOID_FREE(field)
-VOID_ECL_WRITE(field)
 VOID_INITIALIZE(field);
 VOID_USER_GET(field)
 VOID_READ_FROM_BUFFER(field)
@@ -930,3 +930,17 @@ VOID_CLEAR(field)
 VOID_SERIALIZE(field)
 VOID_DESERIALIZE(field)
 VOID_FLOAD(field)
+
+ERT_CLIB_SUBMODULE("field", m) {
+    m.def("generate_parameter_file",
+          [](Cwrap<enkf_node_type> enkf_node, const std::string &run_path,
+             const std::optional<std::string> &opt_file) {
+              if (enkf_node_get_impl_type(enkf_node) != FIELD)
+                  throw py::value_error{"EnkfNode must be of type FIELD"};
+
+              auto file = opt_file ? opt_file->c_str() : nullptr;
+              field_ecl_write(
+                  static_cast<field_type *>(enkf_node_value_ptr(enkf_node)),
+                  run_path.c_str(), file);
+          });
+}
