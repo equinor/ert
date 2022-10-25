@@ -1,4 +1,9 @@
+import os
+from datetime import datetime
+
 import pytest
+from ecl.grid.ecl_grid import EclGrid
+from ecl.summary import EclSum
 
 from ert._c_wrappers.enkf import ConfigKeys, EnsembleConfig
 from ert._c_wrappers.enkf.enums import GenDataFileType
@@ -83,8 +88,8 @@ def test_ensemble_config_constructor(setup_case):
                     ConfigKeys.PARAMETER_KEY: None,
                 }
             ],
-            ConfigKeys.GRID: "grid/CASE.EGRID",  # ecl
-            # ConfigKeys.REFCASE: "../input/refcase/SNAKE_OIL_FIELD",  # ecl
+            ConfigKeys.GRID: "grid/CASE.EGRID",
+            # ConfigKeys.REFCASE: "input/refcase/SNAKE_OIL_FIELD",
         },
     )
 
@@ -123,3 +128,40 @@ _|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|
     with pytest.raises(expected_exception=ValueError, match=grid_file):
         config_dict = {ConfigKeys.GRID: grid_file}
         EnsembleConfig(config_dict=config_dict)
+
+
+def test_ensemble_config_construct_refcase_and_grid(setup_case):
+    setup_case("configuration_tests", "ensemble_config.ert")
+    grid_file = "grid/CASE.EGRID"
+    refcase_file = "input/refcase/SNAKE_OIL_FIELD"
+
+    ec = EnsembleConfig(
+        config_dict={
+            ConfigKeys.GRID: grid_file,
+            ConfigKeys.REFCASE: refcase_file,
+        },
+    )
+
+    assert isinstance(ec, EnsembleConfig)
+    assert isinstance(ec.grid, EclGrid)
+    assert isinstance(ec.refcase, EclSum)
+
+    assert ec._grid_file == os.path.realpath(grid_file)
+    assert ec._refcase_file == os.path.realpath(refcase_file)
+
+
+def test_that_refcase_gets_correct_name(tmpdir):
+    refcase_name = "MY_REFCASE"
+    config_dict = {
+        ConfigKeys.REFCASE: refcase_name,
+    }
+
+    with tmpdir.as_cwd():
+        ecl_sum = EclSum.writer(refcase_name, datetime(2014, 9, 10), 10, 10, 10)
+        ecl_sum.addVariable("FOPR", unit="SM3/DAY")
+        t_step = ecl_sum.addTStep(2, sim_days=1)
+        t_step["FOPR"] = 1
+        ecl_sum.fwrite()
+
+        ec = EnsembleConfig(config_dict=config_dict)
+        assert os.path.realpath(refcase_name) == ec.refcase.case
