@@ -2,36 +2,36 @@ import pytest
 
 from ert._c_wrappers.analysis import AnalysisMode, AnalysisModule
 from ert._c_wrappers.analysis.analysis_module import (
+    DEFAULT_ENKF_TRUNCATION,
     DEFAULT_IES_DEC_STEPLENGTH,
+    DEFAULT_IES_INVERSION,
     DEFAULT_IES_MAX_STEPLENGTH,
     DEFAULT_IES_MIN_STEPLENGTH,
-    DEFAULT_INVERSION,
-    DEFAULT_TRUNCATION,
     get_mode_variables,
 )
 
 
 def test_analysis_module_default_values():
-    ies_am = AnalysisModule.iterated_ens_smother_module()
+    ies_am = AnalysisModule.iterated_ens_smoother_module()
 
     # Check default values in dict
     assert ies_am.variable_value_dict() == {
         "IES_MAX_STEPLENGTH": DEFAULT_IES_MAX_STEPLENGTH,
         "IES_MIN_STEPLENGTH": DEFAULT_IES_MIN_STEPLENGTH,
         "IES_DEC_STEPLENGTH": DEFAULT_IES_DEC_STEPLENGTH,
-        "IES_INVERSION": DEFAULT_INVERSION,
-        "ENKF_TRUNCATION": DEFAULT_TRUNCATION,
+        "IES_INVERSION": DEFAULT_IES_INVERSION,
+        "ENKF_TRUNCATION": DEFAULT_ENKF_TRUNCATION,
     }
 
-    es_am = AnalysisModule.ens_smother_module()
+    es_am = AnalysisModule.ens_smoother_module()
     assert es_am.variable_value_dict() == {
-        "IES_INVERSION": DEFAULT_INVERSION,
-        "ENKF_TRUNCATION": DEFAULT_TRUNCATION,
+        "IES_INVERSION": DEFAULT_IES_INVERSION,
+        "ENKF_TRUNCATION": DEFAULT_ENKF_TRUNCATION,
     }
 
 
 def test_analysis_module_set_get_values():
-    ies_am = AnalysisModule.iterated_ens_smother_module()
+    ies_am = AnalysisModule.iterated_ens_smoother_module()
     ies_am.set_var("ENKF_TRUNCATION", "0.1")
     assert ies_am.get_variable_value("ENKF_TRUNCATION") == 0.1
     assert ies_am.get_truncation() == 0.1
@@ -65,7 +65,7 @@ def test_analysis_module_set_get_values():
 
 
 def test_set_get_var_errors():
-    mod = AnalysisModule.ens_smother_module()
+    mod = AnalysisModule.ens_smoother_module()
 
     with pytest.raises(ValueError):
         mod.set_var("ENKF_TRUNCATION", "super1.0")
@@ -79,25 +79,25 @@ def test_set_get_var_errors():
 
 def test_set_get_var_out_of_bounds():
     ies_variables = get_mode_variables(AnalysisMode.ITERATED_ENSEMBLE_SMOOTHER)
-    ies = AnalysisModule.iterated_ens_smother_module()
-    enkf_trunck_max = ies_variables["ENKF_TRUNCATION"]["max"]
-    enkf_trunck_min = ies_variables["ENKF_TRUNCATION"]["min"]
-    ies.set_var("ENKF_TRUNCATION", enkf_trunck_max + 1)
-    assert ies.get_truncation() == enkf_trunck_max
+    ies = AnalysisModule.iterated_ens_smoother_module()
+    enkf_trunc_max = ies_variables["ENKF_TRUNCATION"]["max"]
+    enkf_trunc_min = ies_variables["ENKF_TRUNCATION"]["min"]
+    ies.set_var("ENKF_TRUNCATION", enkf_trunc_max + 1)
+    assert ies.get_truncation() == enkf_trunc_max
 
-    ies.set_var("ENKF_TRUNCATION", enkf_trunck_min - 1)
-    assert ies.get_truncation() == enkf_trunck_min
+    ies.set_var("ENKF_TRUNCATION", enkf_trunc_min - 1)
+    assert ies.get_truncation() == enkf_trunc_min
 
-    ies.set_var("ENKF_NCOMP", enkf_trunck_max + 1)
-    assert ies.get_truncation() == enkf_trunck_max
+    ies.set_var("ENKF_NCOMP", enkf_trunc_max + 1)
+    assert ies.get_truncation() == enkf_trunc_max
 
-    ies.set_var("ENKF_NCOMP", enkf_trunck_min - 1)
-    assert ies.get_truncation() == enkf_trunck_min
+    ies.set_var("ENKF_NCOMP", enkf_trunc_min - 1)
+    assert ies.get_truncation() == enkf_trunc_min
 
-    ies.set_var("ENKF_SUBSPACE_DIMENSION", enkf_trunck_max + 1)
-    assert ies.get_truncation() == enkf_trunck_max
-    ies.set_var("ENKF_SUBSPACE_DIMENSION", enkf_trunck_min - 1)
-    assert ies.get_truncation() == enkf_trunck_min
+    ies.set_var("ENKF_SUBSPACE_DIMENSION", enkf_trunc_max + 1)
+    assert ies.get_truncation() == enkf_trunc_max
+    ies.set_var("ENKF_SUBSPACE_DIMENSION", enkf_trunc_min - 1)
+    assert ies.get_truncation() == enkf_trunc_min
 
     ies.set_var("IES_INVERSION", 5)
     assert ies_variables["IES_INVERSION"]["max"] == 3

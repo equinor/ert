@@ -19,8 +19,8 @@ if TYPE_CHECKING:
 DEFAULT_IES_MAX_STEPLENGTH = 0.60
 DEFAULT_IES_MIN_STEPLENGTH = 0.30
 DEFAULT_IES_DEC_STEPLENGTH = 2.50
-DEFAULT_TRUNCATION = 0.98
-DEFAULT_INVERSION = 0
+DEFAULT_ENKF_TRUNCATION = 0.98
+DEFAULT_IES_INVERSION = 0
 
 
 class AnalysisMode(str, Enum):
@@ -28,12 +28,12 @@ class AnalysisMode(str, Enum):
     ENSEMBLE_SMOOTHER = "STD_ENKF"
 
 
-def get_mode_variables(module: AnalysisMode) -> Dict[str, "VariableInfo"]:
+def get_mode_variables(mode: AnalysisMode) -> Dict[str, "VariableInfo"]:
     es_variables: Dict[str, "VariableInfo"] = {
         "IES_INVERSION": {
             "type": int,
             "min": 0,
-            "value": DEFAULT_INVERSION,
+            "value": DEFAULT_IES_INVERSION,
             "max": 3,
             "step": 1,
             "labelname": "Inversion algorithm",
@@ -41,13 +41,13 @@ def get_mode_variables(module: AnalysisMode) -> Dict[str, "VariableInfo"]:
         "ENKF_TRUNCATION": {
             "type": float,
             "min": -2.0,
-            "value": DEFAULT_TRUNCATION,
+            "value": DEFAULT_ENKF_TRUNCATION,
             "max": 1,
             "step": 0.01,
             "labelname": "Singular value truncation",
         },
     }
-    ies_variables = {
+    ies_variables: Dict[str, "VariableInfo"] = {
         "IES_MAX_STEPLENGTH": {
             "type": float,
             "min": 0.1,
@@ -74,24 +74,30 @@ def get_mode_variables(module: AnalysisMode) -> Dict[str, "VariableInfo"]:
         },
         **es_variables,
     }
-    if module == AnalysisMode.ENSEMBLE_SMOOTHER:
+    if mode == AnalysisMode.ENSEMBLE_SMOOTHER:
         return es_variables
     return ies_variables
 
 
 class AnalysisModule:
     DEPRECATED_KEYS = ["USE_EE", "USE_GE"]
-    TRUNK_ALTERNATE_KEYS = ["ENKF_NCOMP", "ENKF_SUBSPACE_DIMENSION"]
-    SPECIAL_KEYS = ["INVERSION", *TRUNK_ALTERNATE_KEYS, *DEPRECATED_KEYS]
+    TRUNC_ALTERNATE_KEYS = ["ENKF_NCOMP", "ENKF_SUBSPACE_DIMENSION"]
+    SPECIAL_KEYS = ["INVERSION", *TRUNC_ALTERNATE_KEYS, *DEPRECATED_KEYS]
 
-    def __init__(self, mode: AnalysisMode, name: str, variables: Dict, iterable: bool):
+    def __init__(
+        self,
+        mode: AnalysisMode,
+        name: str,
+        variables: Dict[str, "VariableInfo"],
+        iterable: bool,
+    ):
         self.mode = mode
         self.name = name
         self.iterable = iterable
         self._variables = variables
 
     @classmethod
-    def ens_smother_module(cls, name: AnalysisMode = AnalysisMode.ENSEMBLE_SMOOTHER):
+    def ens_smoother_module(cls, name: AnalysisMode = AnalysisMode.ENSEMBLE_SMOOTHER):
         return cls(
             mode=AnalysisMode.ENSEMBLE_SMOOTHER,
             name=name,
@@ -100,7 +106,7 @@ class AnalysisModule:
         )
 
     @classmethod
-    def iterated_ens_smother_module(
+    def iterated_ens_smoother_module(
         cls, name: AnalysisMode = AnalysisMode.ITERATED_ENSEMBLE_SMOOTHER
     ):
         return cls(
@@ -116,7 +122,7 @@ class AnalysisModule:
     def get_variable_value(self, name) -> Union[int, float, bool]:
         if name in self._variables:
             return self._variables[name]["value"]
-        raise KeyError(f"Variable {name} not found in module")
+        raise KeyError(f"Variable {name} not found in module {self.name}")
 
     def variable_value_dict(self) -> Dict[str, Union[float, int]]:
         return {name: var["value"] for name, var in self._variables.items()}
@@ -124,8 +130,8 @@ class AnalysisModule:
     def handle_special_key_set(self, var_name, value):
         if var_name in self.DEPRECATED_KEYS:
             logger.warning(
-                "USE_EE/USE_GE settings have been removed"
-                "use the INVERSION setting instead"
+                f"{var_name} settings have been removed"
+                f"use the INVERSION setting instead"
             )
         elif var_name == "INVERSION":
             inversion_str_map = {
@@ -136,7 +142,12 @@ class AnalysisModule:
             }
             if value in inversion_str_map:
                 self.set_var("IES_INVERSION", inversion_str_map[value])
-        elif var_name in self.TRUNK_ALTERNATE_KEYS:
+            else:
+                logger.warning(
+                    f"Unknown value {value} used for INVERSION key"
+                    f"supported values are {list(inversion_str_map.keys())}"
+                )
+        elif var_name in self.TRUNC_ALTERNATE_KEYS:
             self.set_var("ENKF_TRUNCATION", value)
 
     def set_var(self, var_name: str, value: Union[float, int, bool, str]):
@@ -150,15 +161,15 @@ class AnalysisModule:
                     var["value"] = var["max"]
                     logger.warning(
                         f"New value {new_value} for key"
-                        f" {var_name} is greater than "
-                        f"max allowed key value {var['max']}"
+                        f" {var_name} is out of min/max bound "
+                        f"using max value {var['max']}"
                     )
                 elif new_value < var["min"]:
                     var["value"] = var["min"]
                     logger.warning(
                         f"New value {new_value} for key"
-                        f" {var_name} is smaller than "
-                        f"min allowed key value {var['min']}"
+                        f" {var_name} is out of min/max bound "
+                        f"using min value {var['min']}"
                     )
                 else:
                     var["value"] = new_value
@@ -166,7 +177,7 @@ class AnalysisModule:
             except ValueError:
                 raise ValueError(
                     f"Variable {var_name} expected type {var['type']}"
-                    f" received {value} of {type(value)}"
+                    f" received value `{value}` of type `{type(value)}`"
                 )
         else:
             raise KeyError(f"Variable {var_name} not found in module")
@@ -208,6 +219,8 @@ class AnalysisModule:
 
     def __eq__(self, other):
         if self.name != other.name:
+            return False
+        if self.mode != other.mode:
             return False
 
         if self._variables != other._variables:

@@ -44,8 +44,8 @@ class AnalysisConfig:
 
         analysis_set_var = analysis_set_var or []
         analysis_copy = analysis_copy or []
-        es_module = AnalysisModule.ens_smother_module()
-        ies_module = AnalysisModule.iterated_ens_smother_module()
+        es_module = AnalysisModule.ens_smoother_module()
+        ies_module = AnalysisModule.iterated_ens_smoother_module()
         self._modules: Dict[str, AnalysisModule] = {
             AnalysisMode.ENSEMBLE_SMOOTHER: es_module,
             AnalysisMode.ITERATED_ENSEMBLE_SMOOTHER: ies_module,
@@ -62,12 +62,14 @@ class AnalysisConfig:
             module = self._modules.get(src_name)
             if module is not None:
                 if module.mode == AnalysisMode.ENSEMBLE_SMOOTHER:
-                    new_module = AnalysisModule.ens_smother_module(dst_name)
+                    new_module = AnalysisModule.ens_smoother_module(dst_name)
                 else:
-                    new_module = AnalysisModule.iterated_ens_smother_module(dst_name)
+                    new_module = AnalysisModule.iterated_ens_smoother_module(dst_name)
                 self._modules[dst_name] = new_module
             else:
-                raise AnalysisConfigError(f"Module {src_name} does not exist")
+                raise AnalysisConfigError(
+                    f"Trying to copy module {src_name}" f" which does not exist"
+                )
 
         # set var list
         for set_var in analysis_set_var:
