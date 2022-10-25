@@ -24,7 +24,6 @@ class EnkfNode(BaseCClass):
     _free = ResPrototype("void  enkf_node_free(enkf_node)")
     _get_name = ResPrototype("char* enkf_node_get_key(enkf_node)")
     _value_ptr = ResPrototype("void* enkf_node_value_ptr(enkf_node)")
-    _try_load = ResPrototype("bool  enkf_node_try_load(enkf_node, enkf_fs, node_id)")
     _store = ResPrototype("bool  enkf_node_store(enkf_node, enkf_fs, node_id)")
     _has_data = ResPrototype("bool  enkf_node_has_data(enkf_node, enkf_fs, node_id)")
     _get_impl_type = ResPrototype(
@@ -110,12 +109,7 @@ class EnkfNode(BaseCClass):
         return ExtParam.createCReference(self.valuePointer(), self)
 
     def tryLoad(self, fs: EnkfFs, node_id: NodeId) -> bool:
-        if not isinstance(fs, EnkfFs):
-            raise TypeError(f"fs must be an EnkfFs, not {type(fs)}")
-        if not isinstance(node_id, NodeId):
-            raise TypeError(f"node_id must be a NodeId, not {type(node_id)}")
-
-        return self._try_load(fs, node_id)
+        return _clib.enkf_node.try_load(self, fs, node_id.report_step, node_id.iens)
 
     def name(self) -> str:
         return self._get_name()

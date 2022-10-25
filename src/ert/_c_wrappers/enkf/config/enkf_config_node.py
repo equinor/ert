@@ -5,6 +5,7 @@ from cwrap import BaseCClass
 from ecl.grid import EclGrid
 from ecl.util.util import IntVector, StringList
 
+from ert import _clib
 from ert._c_wrappers import ResPrototype
 from ert._c_wrappers.enkf.config_keys import ConfigKeys
 from ert._c_wrappers.enkf.enums import (
@@ -458,3 +459,6 @@ class EnkfConfigNode(BaseCClass):
                 return False
 
         return True
+
+    def enkf_outfile_fmt(self, iens: int) -> Optional[str]:
+        return _clib.enkf_config_node.alloc_outfile(self, iens)

@@ -69,7 +69,6 @@ pybind11_add_module(
   enkf/enkf_analysis.cpp
   enkf/enkf_config_node.cpp
   enkf/enkf_fs.cpp
-  enkf/enkf_main.cpp
   enkf/enkf_node.cpp
   enkf/enkf_obs.cpp
   enkf/enkf_plot_data.cpp
@@ -95,7 +94,6 @@ pybind11_add_module(
   enkf/gen_data_config.cpp
   enkf/gen_kw.cpp
   enkf/gen_kw_config.cpp
-  enkf/value_export.cpp
   enkf/gen_obs.cpp
   enkf/hook_workflow.cpp
   enkf/meas_data.cpp

@@ -1,6 +1,3 @@
-import os.path
-from pathlib import Path
-
 import pytest
 
 from ert._c_wrappers.enkf.config import GenKwConfig
@@ -84,21 +81,3 @@ def test_gen_kw_get_set_vector(tmp_path):
     assert gen_kw["MULTFLT1"] == 0
     assert gen_kw["MULTFLT2"] == 1
     assert gen_kw["MULTFLT3"] == 2
-
-
-@pytest.mark.usefixtures("use_tmpdir")
-def test_gen_kw_ecl_write():
-    (gen_kw_config, gen_kw) = create_gen_kw(Path("."))
-
-    with pytest.raises(IOError):
-        gen_kw.eclWrite("tmp", "file.txt")
-
-    gen_kw.eclWrite(None, "file.txt")
-    assert os.path.isfile("file.txt")
-
-    os.mkdir("tmp")
-    gen_kw.eclWrite("tmp", "file.txt")
-    assert os.path.isfile("tmp/file.txt")
-
-    gen_kw.exportParameters("tmp/export.txt")
-    assert os.path.isfile("tmp/export.txt")

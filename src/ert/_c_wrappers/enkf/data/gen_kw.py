@@ -1,5 +1,4 @@
 import numbers
-import os.path
 
 from cwrap import BaseCClass
 from ecl.util.util import DoubleVector
@@ -12,7 +11,6 @@ class GenKw(BaseCClass):
     TYPE_NAME = "gen_kw"
     _alloc = ResPrototype("void*  gen_kw_alloc(gen_kw_config)", bind=False)
     _free = ResPrototype("void   gen_kw_free(gen_kw_config)")
-    _export_parameters = ResPrototype("void   gen_kw_write_export_file(gen_kw , char*)")
     _data_iget = ResPrototype("double gen_kw_data_iget(gen_kw, int, bool)")
     _data_iset = ResPrototype("void   gen_kw_data_iset(gen_kw, int, double)")
     _set_values = ResPrototype("void   gen_kw_data_set_vector(gen_kw, double_vector)")
@@ -20,9 +18,6 @@ class GenKw(BaseCClass):
     _data_set = ResPrototype("void   gen_kw_data_set(gen_kw, char*, double)")
     _size = ResPrototype("int    gen_kw_data_size(gen_kw)")
     _has_key = ResPrototype("bool   gen_kw_data_has_key(gen_kw, char*)")
-    _ecl_write = ResPrototype(
-        "void   gen_kw_ecl_write(gen_kw,    char* , char* , void*)"
-    )
     _iget_key = ResPrototype("char*  gen_kw_get_name(gen_kw, int)")
 
     def __init__(self, gen_kw_config: GenKwConfig):
@@ -40,10 +35,6 @@ class GenKw(BaseCClass):
 
     def __str__(self):
         return repr(self)
-
-    def exportParameters(self, file_name):
-        """@type: str"""
-        self._export_parameters(file_name)
 
     def __getitem__(self, key):
         """
@@ -88,13 +79,6 @@ class GenKw(BaseCClass):
         for index in range(len(self)):
             v.append((self._iget_key(index), self._data_iget(index, do_transform)))
         return v
-
-    def eclWrite(self, path, filename):
-        if path is not None:
-            if not os.path.isdir(path):
-                raise IOError(f"The directory:{path} does not exist")
-
-        self._ecl_write(path, filename, None)
 
     def setValues(self, values):
         if len(values) == len(self):

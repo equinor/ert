@@ -16,7 +16,6 @@
 #include <ert/enkf/enkf_serialize.hpp>
 #include <ert/enkf/enkf_types.hpp>
 #include <ert/enkf/meas_data.hpp>
-#include <ert/enkf/value_export.hpp>
 
 #define VOID_CONFIG_FREE(prefix)                                               \
     void prefix##_config_free__(void *void_arg) {                              \
@@ -82,18 +81,6 @@
         return prefix##_fload(arg, filename);                                  \
     }
 #define VOID_FLOAD_HEADER(prefix) bool prefix##_fload__(void *, const char *);
-
-#define VOID_ECL_WRITE(prefix)                                                 \
-    void prefix##_ecl_write__(const void *void_arg, const char *path,          \
-                              const char *file,                                \
-                              value_export_type *export_value) {               \
-        auto arg = static_cast<const prefix##_type *>(void_arg);               \
-        prefix##_ecl_write(arg, path, file, export_value);                     \
-    }
-
-#define VOID_ECL_WRITE_HEADER(prefix)                                          \
-    void prefix##_ecl_write__(const void *, const char *, const char *,        \
-                              value_export_type *export_value);
 
 #define VOID_FORWARD_LOAD(prefix)                                              \
     bool prefix##_forward_load__(void *void_arg, const char *ecl_file,         \

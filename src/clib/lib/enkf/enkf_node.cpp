@@ -1,4 +1,3 @@
-#include "ert/python.hpp"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -15,6 +14,7 @@
 #include <ert/enkf/run_arg.hpp>
 #include <ert/enkf/summary.hpp>
 #include <ert/enkf/surface.hpp>
+#include <ert/python.hpp>
 
 /**
    A small illustration (says more than thousand words ...) of how the
@@ -118,7 +118,6 @@
 */
 struct enkf_node_struct {
     alloc_ftype *alloc;
-    ecl_write_ftype *ecl_write;
     forward_load_ftype *forward_load;
     forward_load_vector_ftype *forward_load_vector;
     user_get_ftype *user_get;
@@ -185,28 +184,6 @@ bool enkf_node_use_forward_init(const enkf_node_type *enkf_node) {
 
 void *enkf_node_value_ptr(const enkf_node_type *enkf_node) {
     return enkf_node->data;
-}
-
-/**
-   This function calls the node spesific ecl_write function. IF the
-   ecl_file of the (node == NULL) *ONLY* the path is sent to the node
-   spesific file.
-*/
-void enkf_node_ecl_write(const enkf_node_type *enkf_node, const char *path,
-                         value_export_type *export_value, int report_step) {
-    if (enkf_node->ecl_write != NULL) {
-        char *node_eclfile = enkf_config_node_alloc_outfile(
-            enkf_node->config,
-            report_step); /* Will return NULL if the node does not have any outfile format. */
-        /*
-      If the node does not have a outfile (i.e. ecl_file), the
-      ecl_write function will be called with file argument NULL. It
-      is then the responsability of the low-level implementation to
-      do "the right thing".
-    */
-        enkf_node->ecl_write(enkf_node->data, path, node_eclfile, export_value);
-        free(node_eclfile);
-    }
 }
 
 /**
@@ -552,7 +529,6 @@ enkf_node_alloc_empty(const enkf_config_node_type *config) {
     node->data = NULL;
 
     node->alloc = NULL;
-    node->ecl_write = NULL;
     node->forward_load = NULL;
     node->forward_load_vector = NULL;
     node->initialize = NULL;
@@ -569,7 +545,6 @@ enkf_node_alloc_empty(const enkf_config_node_type *config) {
     switch (impl_type) {
     case (GEN_KW):
         node->alloc = gen_kw_alloc__;
-        node->ecl_write = gen_kw_ecl_write__;
         node->freef = gen_kw_free__;
         node->user_get = gen_kw_user_get__;
         node->write_to_buffer = gen_kw_write_to_buffer__;
@@ -592,7 +567,6 @@ enkf_node_alloc_empty(const enkf_config_node_type *config) {
         break;
     case (SURFACE):
         node->initialize = surface_initialize__;
-        node->ecl_write = surface_ecl_write__;
         node->alloc = surface_alloc__;
         node->freef = surface_free__;
         node->user_get = surface_user_get__;
@@ -604,7 +578,6 @@ enkf_node_alloc_empty(const enkf_config_node_type *config) {
         break;
     case (FIELD):
         node->alloc = field_alloc__;
-        node->ecl_write = field_ecl_write__;
         node->initialize = field_initialize__;
         node->freef = field_free__;
         node->user_get = field_user_get__;
@@ -628,7 +601,6 @@ enkf_node_alloc_empty(const enkf_config_node_type *config) {
     case (EXT_PARAM):
         node->alloc = ext_param_alloc__;
         node->freef = ext_param_free__;
-        node->ecl_write = ext_param_ecl_write__;
         node->write_to_buffer = ext_param_write_to_buffer__;
         node->read_from_buffer = ext_param_read_from_buffer__;
         break;
@@ -652,6 +624,11 @@ enkf_node_type *enkf_node_deep_alloc(const enkf_config_node_type *config) {
 
 ERT_CLIB_SUBMODULE("enkf_node", m) {
     using namespace py::literals;
+
+    m.def("try_load", [](Cwrap<enkf_node_type> self, Cwrap<enkf_fs_type> fs,
+                         int report_step, int iens) {
+        return enkf_node_try_load(self, fs, {report_step, iens});
+    });
 
     m.def(
         "forward_init",

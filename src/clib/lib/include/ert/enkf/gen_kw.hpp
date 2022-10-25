@@ -11,12 +11,6 @@
 #include <ert/enkf/gen_kw_common.hpp>
 #include <ert/enkf/gen_kw_config.hpp>
 
-extern "C" void gen_kw_ecl_write(const gen_kw_type *gen_kw,
-                                 const char *run_path, const char *base_file,
-                                 value_export_type *export_value);
-extern "C" PY_USED void gen_kw_write_export_file(const gen_kw_type *gen_kw,
-                                                 const char *filename);
-
 extern "C" void gen_kw_free(gen_kw_type *);
 extern "C" int gen_kw_data_size(const gen_kw_type *);
 extern "C" double gen_kw_data_iget(const gen_kw_type *, int, bool);
@@ -29,10 +23,8 @@ extern "C" PY_USED bool gen_kw_data_has_key(gen_kw_type *, const char *);
 extern "C" const char *gen_kw_get_name(const gen_kw_type *, int);
 void gen_kw_filter_file(const gen_kw_type *, const char *);
 
-VOID_ECL_WRITE_HEADER(gen_kw)
 VOID_FREE_HEADER(gen_kw);
 VOID_ALLOC_HEADER(gen_kw);
-VOID_ECL_WRITE_HEADER(gen_kw);
 VOID_USER_GET_HEADER(gen_kw);
 VOID_WRITE_TO_BUFFER_HEADER(gen_kw);
 VOID_READ_FROM_BUFFER_HEADER(gen_kw);

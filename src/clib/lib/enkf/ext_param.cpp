@@ -11,6 +11,7 @@
 #include <ert/enkf/enkf_util.hpp>
 #include <ert/enkf/ext_param.hpp>
 #include <ert/enkf/ext_param_config.hpp>
+#include <ert/python.hpp>
 
 namespace fs = std::filesystem;
 
@@ -177,7 +178,7 @@ void ext_param_json_export(const ext_param_type *ext_param,
 }
 
 void ext_param_ecl_write(const ext_param_type *ext_param, const char *run_path,
-                         const char *base_file, value_export_type *unused) {
+                         const char *base_file) {
     char *target_file;
 
     if (run_path)
@@ -212,6 +213,19 @@ ext_param_config_type const *ext_param_get_config(const ext_param_type *param) {
 
 VOID_ALLOC(ext_param)
 VOID_FREE(ext_param)
-VOID_ECL_WRITE(ext_param)
 VOID_WRITE_TO_BUFFER(ext_param)
 VOID_READ_FROM_BUFFER(ext_param)
+
+ERT_CLIB_SUBMODULE("ext_param", m) {
+    m.def("generate_parameter_file",
+          [](Cwrap<enkf_node_type> enkf_node, const std::string &run_path,
+             const std::optional<std::string> &opt_file) {
+              if (enkf_node_get_impl_type(enkf_node) != EXT_PARAM)
+                  throw py::value_error{"EnkfNode must be of type EXT_PARAM"};
+
+              auto file = opt_file ? opt_file->c_str() : nullptr;
+              ext_param_ecl_write(
+                  static_cast<ext_param_type *>(enkf_node_value_ptr(enkf_node)),
+                  run_path.c_str(), file);
+          });
+}

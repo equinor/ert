@@ -1,10 +1,12 @@
 import io
+import json
 import logging
 import os
 import re
 import struct
+from datetime import datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, List, Sequence, Union
+from typing import TYPE_CHECKING, Any, List, Mapping, Sequence, Union
 
 import numpy as np
 import pandas as pd
@@ -18,6 +20,7 @@ from ert._c_wrappers.enkf.enkf_fs_manager import FileSystemManager
 from ert._c_wrappers.enkf.enkf_obs import EnkfObs
 from ert._c_wrappers.enkf.ensemble_config import EnsembleConfig
 from ert._c_wrappers.enkf.enums import RealizationStateEnum
+from ert._c_wrappers.enkf.enums.enkf_var_type_enum import EnkfVarType
 from ert._c_wrappers.enkf.enums.ert_impl_type_enum import ErtImplType
 from ert._c_wrappers.enkf.ert_run_context import RunContext
 from ert._c_wrappers.enkf.ert_workflow_list import ErtWorkflowList
@@ -40,6 +43,109 @@ if TYPE_CHECKING:
 
 
 logger = logging.getLogger(__name__)
+
+
+def _backup_if_existing(path: Path) -> None:
+    if not path.exists():
+        return
+    timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%SZ")
+    new_path = path.parent / f"{path.name}_backup_{timestamp}"
+    path.rename(new_path)
+
+
+def _value_export_txt(
+    run_path: str, export_base_name: str, values: Mapping[str, Mapping[str, float]]
+) -> None:
+    path = Path(run_path) / f"{export_base_name}.txt"
+    _backup_if_existing(path)
+
+    if len(values) == 0:
+        return
+
+    with path.open("w") as f:
+        for key, param_map in values.items():
+            for param, value in param_map.items():
+                print(f"{key}:{param} {value:g}", file=f)
+
+
+def _value_export_json(
+    run_path: str, export_base_name: str, values: Mapping[str, Mapping[str, float]]
+) -> None:
+    path = Path(run_path) / f"{export_base_name}.json"
+    _backup_if_existing(path)
+
+    if len(values) == 0:
+        return
+
+    # Hierarchical
+    json_out = {key: dict(param_map.items()) for key, param_map in values.items()}
+
+    # Composite
+    json_out.update(
+        {
+            f"{key}:{param}": value
+            for key, param_map in values.items()
+            for param, value in param_map.items()
+        }
+    )
+
+    # Disallow NaN from being written: ERT produces the parameters and the only
+    # way for the output to be NaN is if the input is invalid or if the sampling
+    # function is buggy. Either way, that would be a bug and we can report it by
+    # having json throw an error.
+    json.dump(json_out, path.open("w"), allow_nan=False)
+
+
+def _generate_parameter_files(
+    ens_config: "EnsembleConfig",
+    export_base_name: str,
+    run_path: str,
+    iens: int,
+    fs: "EnkfFs",
+) -> None:
+    """
+    Generate parameter files that are placed in each runtime directory for
+    forward-model jobs to consume.
+
+    Args:
+        ens_config: Configuration which contains the parameter nodes for this
+            ensemble run.
+        export_base_name: Base name for the GEN_KW parameters file. Ie. the
+            `parameters` in `parameters.json`.
+        run_path: Path to the runtime directory
+        iens: Realisation index
+        fs: EnkfFs from which to load parameter data
+    """
+    exports = {}
+    for key in ens_config.getKeylistFromVarType(
+        EnkfVarType.PARAMETER + EnkfVarType.EXT_PARAMETER
+    ):
+        node = ens_config[key]
+        enkf_node = EnkfNode(node)
+        node_id = NodeId(report_step=0, iens=iens)
+
+        if node.getUseForwardInit() and not enkf_node.has_data(fs, node_id):
+            continue
+        enkf_node.load(fs, node_id)
+
+        node_eclfile = node.get_enkf_outfile()
+
+        type_ = enkf_node.getImplType()
+        if type_ == ErtImplType.FIELD:
+            _clib.field.generate_parameter_file(enkf_node, run_path, node_eclfile)
+        elif type_ == ErtImplType.SURFACE:
+            _clib.surface.generate_parameter_file(enkf_node, run_path, node_eclfile)
+        elif type_ == ErtImplType.EXT_PARAM:
+            _clib.ext_param.generate_parameter_file(enkf_node, run_path, node_eclfile)
+        elif type_ == ErtImplType.GEN_KW:
+            _clib.gen_kw.generate_parameter_file(
+                enkf_node, run_path, node_eclfile, exports
+            )
+        else:
+            raise NotImplementedError
+
+    _value_export_txt(run_path, export_base_name, exports)
+    _value_export_json(run_path, export_base_name, exports)
 
 
 def naturalSortKey(s: str) -> List[Union[int, str]]:
@@ -473,12 +579,12 @@ class EnKFMain:
 
                 res_config = self.resConfig()
                 model_config = res_config.model_config
-                _clib.enkf_main.ecl_write(
-                    model_config=model_config,
-                    ensemble_config=res_config.ensemble_config,
-                    run_path=run_arg.runpath,
-                    iens=run_arg.iens,
-                    sim_fs=run_arg.sim_fs,
+                _generate_parameter_files(
+                    res_config.ensemble_config,
+                    model_config.getGenKWExportName(),
+                    run_arg.runpath,
+                    run_arg.iens,
+                    run_arg.sim_fs,
                 )
                 model_config.getForwardModel().formatted_fprintf(
                     run_arg.get_run_id(),

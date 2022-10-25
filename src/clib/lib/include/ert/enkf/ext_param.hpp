@@ -28,7 +28,6 @@ ext_param_get_config(const ext_param_type *param);
 
 VOID_FREE_HEADER(ext_param);
 VOID_ALLOC_HEADER(ext_param);
-VOID_ECL_WRITE_HEADER(ext_param);
 VOID_WRITE_TO_BUFFER_HEADER(ext_param)
 VOID_READ_FROM_BUFFER_HEADER(ext_param)
 
