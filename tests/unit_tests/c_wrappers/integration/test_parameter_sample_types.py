@@ -71,12 +71,53 @@ def test_gen_kw(tmpdir, config_str, expected, extra_files, expectation):
             fh.writelines("MY_KEYWORD NORMAL 0 1")
         for fname, contents in extra_files:
             write_file(fname, contents)
-        create_runpath("config.ert")
+
         with expectation:
+            create_runpath("config.ert")
             assert (
                 Path("simulations/realization-0/iter-0/kw.txt").read_text("utf-8")
                 == expected
             )
+
+
+@pytest.mark.integration_test
+@pytest.mark.parametrize(
+    "config_str, expected, extra_files",
+    [
+        (
+            "GEN_KW KW_NAME template.txt kw.txt prior.txt INIT_FILES:custom_param%d",
+            "MY_KEYWORD 1.31\nMY_SECOND_KEYWORD 1.01",
+            [("custom_param0", "MY_SECOND_KEYWORD 1.01\nMY_KEYWORD 1.31")],
+        ),
+    ],
+)
+def test_that_order_of_input_in_user_input_is_abritrary_for_gen_kw_init_files(
+    tmpdir, config_str, expected, extra_files
+):
+    with tmpdir.as_cwd():
+        config = dedent(
+            """
+        JOBNAME my_name%d
+        NUM_REALIZATIONS 1
+        """
+        )
+        config += config_str
+        with open("config.ert", "w") as fh:
+            fh.writelines(config)
+        with open("template.txt", "w") as fh:
+            fh.writelines(
+                "MY_KEYWORD <MY_KEYWORD>\nMY_SECOND_KEYWORD <MY_SECOND_KEYWORD>"
+            )
+        with open("prior.txt", "w") as fh:
+            fh.writelines("MY_KEYWORD NORMAL 0 1\nMY_SECOND_KEYWORD NORMAL 0 1")
+        for fname, contents in extra_files:
+            write_file(fname, contents)
+
+        create_runpath("config.ert")
+        assert (
+            Path("simulations/realization-0/iter-0/kw.txt").read_text("utf-8")
+            == expected
+        )
 
 
 @pytest.mark.parametrize(
@@ -207,7 +248,7 @@ def test_gen_kw_forward_init(tmpdir, load_forward_init):
             f"""
         JOBNAME my_name%d
         NUM_REALIZATIONS 1
-        GEN_KW KW_NAME template.txt kw.txt prior.txt FORWARD_INIT:{str(load_forward_init)} INIT_FILES:custom_param0
+        GEN_KW KW_NAME template.txt kw.txt prior.txt FORWARD_INIT:{str(load_forward_init)} INIT_FILES:custom_param%d
         """  # noqa
         )
         with open("config.ert", "w") as fh:
@@ -218,16 +259,23 @@ def test_gen_kw_forward_init(tmpdir, load_forward_init):
         with open("prior.txt", "w") as fh:
             fh.writelines("MY_KEYWORD NORMAL 0 1")
         if not load_forward_init:
-            write_file("custom_param0", "MY_KEYWORD 1.31")
+            write_file("custom_param0", "1.31")
 
-        with pytest.raises(
-            KeyError,
-            match=(
-                "Loading GEN_KW from files created by "
-                "the forward model is not supported."
-            ),
-        ):
-            create_runpath("config.ert")
+        if load_forward_init:
+            with pytest.raises(
+                KeyError,
+                match=(
+                    "Loading GEN_KW from files created by "
+                    "the forward model is not supported."
+                ),
+            ):
+                create_runpath("config.ert")
+        else:
+            ert = create_runpath("config.ert")
+            assert Path("simulations/realization-0/iter-0/kw.txt").exists()
+            facade = LibresFacade(ert)
+            df = facade.load_all_gen_kw_data("default")
+            assert df["KW_NAME:MY_KEYWORD"][0] == 1.31
 
 
 @pytest.mark.parametrize(
