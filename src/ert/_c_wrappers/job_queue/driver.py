@@ -1,3 +1,5 @@
+from typing import List, Tuple
+
 from cwrap import BaseCClass, BaseCEnum
 
 from ert._c_wrappers import ResPrototype
@@ -42,10 +44,12 @@ class Driver(BaseCClass):
     _set_max_running = ResPrototype("void queue_driver_set_max_running( driver , int)")
     _get_name = ResPrototype("char* queue_driver_get_name( driver )")
 
-    def __init__(self, driver_type, max_running=1, options=None):
-        """
-        Creates a new driver instance
-        """
+    def __init__(
+        self,
+        driver_type: QueueDriverEnum,
+        max_running: int = 1,
+        options: List[Tuple[str, str]] = None,
+    ):
         c_ptr = self._alloc(driver_type)
         super().__init__(c_ptr)
         if options:
@@ -53,15 +57,8 @@ class Driver(BaseCClass):
                 self.set_option(key, value)
         self.set_max_running(max_running)
 
-    def set_option(self, option, value):
-        """
-        Set the driver option @option to @value.
-
-        If the option is succlessfully set the method will return True,
-        otherwise the method will return False. If the @option is not
-        recognized the method will return False. The supplied value
-        should be a string.
-        """
+    def set_option(self, option: str, value: str) -> bool:
+        """Set a driver option to a specific value, return False if unknown option."""
         return self._set_option(option, str(value))
 
     def unset_option(self, option):
