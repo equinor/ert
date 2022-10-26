@@ -1,5 +1,4 @@
 
-#include <ert/enkf/analysis_config.hpp>
 #include <ert/enkf/config_keys.hpp>
 #include <ert/enkf/ert_workflow_list.hpp>
 #include <ert/python.hpp>

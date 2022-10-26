@@ -1,5 +1,4 @@
 from functools import partial
-from typing import TYPE_CHECKING
 
 from qtpy.QtWidgets import (
     QCheckBox,
@@ -16,9 +15,6 @@ from ert.gui.ertwidgets.models.analysismodulevariablesmodel import (
     AnalysisModuleVariablesModel,
 )
 from ert.libres_facade import LibresFacade
-
-if TYPE_CHECKING:
-    from ert._c_wrappers.analysis.analysis_module import VariableName
 
 
 class AnalysisModuleVariablesPanel(QWidget):

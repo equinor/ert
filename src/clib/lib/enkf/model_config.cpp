@@ -11,7 +11,6 @@
 
 #include <ert/logging.hpp>
 
-#include <ert/enkf/analysis_config.hpp>
 #include <ert/enkf/config_keys.hpp>
 #include <ert/enkf/enkf_defaults.hpp>
 #include <ert/enkf/ensemble_config.hpp>

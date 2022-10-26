@@ -3,7 +3,6 @@
 
 #include <ert/util/util.h>
 
-#include <ert/analysis/analysis_module.hpp>
 #include <ert/enkf/enkf_analysis.hpp>
 #include <ert/enkf/meas_data.hpp>
 #include <ert/enkf/obs_data.hpp>

@@ -3,7 +3,6 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
-#include <ert/enkf/analysis_config.hpp>
 #include <ert/enkf/ensemble_config.hpp>
 #include <ert/enkf/obs_vector.hpp>
 #include <ert/python.hpp>
@@ -54,12 +53,6 @@ PYBIND11_MODULE(_clib, m) {
         "obs_vector_get_step_list",
         [](Cwrap<obs_vector_type> self) {
             return obs_vector_get_step_list(self);
-        },
-        py::arg("self"));
-    m.def(
-        "analysis_config_module_names",
-        [](Cwrap<analysis_config_type> self) {
-            return analysis_config_module_names(self);
         },
         py::arg("self"));
 }

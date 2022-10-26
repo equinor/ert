@@ -27,7 +27,7 @@ class EnsembleSmoother(BaseRunModel):
         self.support_restart = False
 
     def setAnalysisModule(self, module_name: str) -> None:
-        module_load_success = self.ert().analysisConfig().selectModule(module_name)
+        module_load_success = self.ert().analysisConfig().select_module(module_name)
 
         if not module_load_success:
             raise ErtRunError(f"Unable to load analysis module '{module_name}'!")
@@ -120,7 +120,7 @@ class EnsembleSmoother(BaseRunModel):
             threadpool,
             self._post_update_data,
             ensemble_id,
-            self.ert().analysisConfig().activeModuleName(),
+            self.ert().analysisConfig().active_module_name(),
         )
 
         self.ert().getEnkfFsManager().switchFileSystem(prior_context.target_fs)
@@ -213,7 +213,7 @@ class EnsembleSmoother(BaseRunModel):
         self.ert().runWorkflows(HookRuntime.POST_UPDATE)
 
         # Create an update object in storage
-        analysis_module_name = self.ert().analysisConfig().activeModuleName()
+        analysis_module_name = self.ert().analysisConfig().active_module_name()
         update_id = self._post_update_data(ensemble_id, analysis_module_name)
 
         self.setPhase(1, "Running simulations...")

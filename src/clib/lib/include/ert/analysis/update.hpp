@@ -1,6 +1,5 @@
 #pragma once
 
-#include <ert/enkf/analysis_config.hpp>
 #include <ert/enkf/enkf_analysis.hpp>
 #include <ert/enkf/enkf_fs.hpp>
 #include <ert/enkf/ensemble_config.hpp>

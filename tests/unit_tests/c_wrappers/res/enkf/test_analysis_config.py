@@ -1,6 +1,7 @@
 import pytest
 
 from ert._c_wrappers.enkf import AnalysisConfig, ConfigKeys
+from ert._c_wrappers.enkf.analysis_config import AnalysisConfigError
 
 
 @pytest.fixture
@@ -20,11 +21,6 @@ def test_keywords_for_monitoring_simulation_runtime(analysis_config):
 
     analysis_config.set_stop_long_running(True)
     assert analysis_config.get_stop_long_running()
-
-
-def test_analysis_modules(analysis_config):
-    assert analysis_config.activeModuleName() is not None
-    assert analysis_config.getModuleList() is not None
 
 
 def test_analysis_config_global_std_scaling(analysis_config):
@@ -175,6 +171,31 @@ def test_analysis_config_iter_config_dict_initialisation():
     assert analysis_config.case_format == expected_case_format
     assert analysis_config.num_iterations == 42
     assert analysis_config.num_retries_per_iter == 24
+
+
+def test_analysis_config_modules():
+    config_dict = {
+        ConfigKeys.NUM_REALIZATIONS: 10,
+    }
+    analysis_config = AnalysisConfig.from_dict(config_dict)
+    default_modules = analysis_config.get_module_list()
+    assert len(default_modules) == 2
+    assert "IES_ENKF" in default_modules
+    assert "STD_ENKF" in default_modules
+
+    assert analysis_config.active_module_name() == "STD_ENKF"
+    assert analysis_config.get_active_module().name == "STD_ENKF"
+
+    assert analysis_config.select_module("IES_ENKF")
+
+    assert analysis_config.get_active_module().name == "IES_ENKF"
+    assert analysis_config.active_module_name() == "IES_ENKF"
+
+    es_module = analysis_config.get_module("STD_ENKF")
+    assert es_module.name == "STD_ENKF"
+    with pytest.raises(AnalysisConfigError):
+        analysis_config.get_module("UNKNOWN")
+    assert not analysis_config.select_module("UNKNOWN")
 
 
 def test_analysis_config_iter_config_default_initialisation():
