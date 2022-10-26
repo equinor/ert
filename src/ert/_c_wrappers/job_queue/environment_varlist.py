@@ -39,10 +39,18 @@ class EnvironmentVarlist(BaseCClass):
     def update_path(self, key, value):
         self._update_path(key, value)
 
+    @property
+    def varlist(self):
+        return _get_varlist(self)
+
+    @property
+    def updatelist(self):
+        return _get_updatelist(self)
+
     def __repr__(self) -> str:
         return (
-            f"EnvironmentVarlist(varlist={_get_varlist(self)},"
-            f" updatelist={_get_updatelist(self)})"
+            f"EnvironmentVarlist(varlist={self.varlist},"
+            f" updatelist={self.updatelist})"
         )
 
     def __eq__(self, other) -> bool:

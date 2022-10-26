@@ -43,7 +43,9 @@ def run_cli(args):
     logger.info(
         "Logging forward model jobs",
         extra={
-            "workflow_jobs": str(res_config.model_config.getForwardModel().joblist())
+            "workflow_jobs": str(
+                res_config.model_config.getForwardModel().job_name_list()
+            )
         },
     )
 

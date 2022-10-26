@@ -83,11 +83,6 @@ jobList = [
      "stdin"     : "eclipse.stdin"}]
 */
 
-#define EXT_JOB_STDOUT "stdout"
-#define EXT_JOB_STDERR "stderr"
-//Setting STDOUT null or STDERR null in forward model directs output to screen
-#define EXT_JOB_NO_STD_FILE "null"
-
 struct ext_job_struct {
     char *name;
     char *executable;
@@ -491,7 +486,7 @@ const char *ext_job_get_stdin_file(const ext_job_type *ext_job) {
 }
 
 void ext_job_set_stdout_file(ext_job_type *ext_job, const char *stdout_file) {
-    if (!util_string_equal(stdout_file, EXT_JOB_NO_STD_FILE))
+    if (!util_string_equal(stdout_file, "null"))
         ext_job->stdout_file =
             util_realloc_string_copy(ext_job->stdout_file, stdout_file);
 }
@@ -501,7 +496,7 @@ const char *ext_job_get_stdout_file(const ext_job_type *ext_job) {
 }
 
 void ext_job_set_stderr_file(ext_job_type *ext_job, const char *stderr_file) {
-    if (strcmp(stderr_file, EXT_JOB_NO_STD_FILE) != 0)
+    if (strcmp(stderr_file, "null") != 0)
         ext_job->stderr_file =
             util_realloc_string_copy(ext_job->stderr_file, stderr_file);
 }
@@ -545,6 +540,10 @@ int ext_job_get_max_arg(const ext_job_type *ext_job) {
     return ext_job->max_arg;
 }
 
+subst_list_type *ext_job_get_private_args(ext_job_type *ext_job) {
+    return ext_job->private_args;
+}
+
 void ext_job_set_private_arg(ext_job_type *ext_job, const char *key,
                              const char *value) {
     subst_list_append_copy(ext_job->private_args, key, value, NULL);
@@ -569,6 +568,14 @@ hash_type *ext_job_get_environment(ext_job_type *ext_job) {
     return ext_job->environment;
 }
 
+hash_type *ext_job_get_default_mapping(ext_job_type *ext_job) {
+    return ext_job->default_mapping;
+}
+
+hash_type *ext_job_get_exec_env(ext_job_type *ext_job) {
+    return ext_job->exec_env;
+}
+
 static char *__alloc_filtered_string(const char *src_string,
                                      const subst_list_type *private_args,
                                      const subst_list_type *global_args) {
@@ -584,274 +591,6 @@ static char *__alloc_filtered_string(const char *src_string,
         tmp2 = tmp1;
 
     return tmp2;
-}
-
-static void __fprintf_string(FILE *stream, const char *s,
-                             const subst_list_type *private_args,
-                             const subst_list_type *global_args) {
-    char *filtered_string =
-        __alloc_filtered_string(s, private_args, global_args);
-    fprintf(stream, "\"%s\"", filtered_string);
-    free(filtered_string);
-}
-
-static void __fprintf_python_string(FILE *stream, const char *prefix,
-                                    const char *id, const char *value,
-                                    const char *suffix,
-                                    const subst_list_type *private_args,
-                                    const subst_list_type *global_args,
-                                    const char *null_value) {
-    fprintf(stream, "%s\"%s\" : ", prefix, id);
-    if (value == NULL)
-        fprintf(stream, "%s", null_value);
-    else
-        __fprintf_string(stream, value, private_args, global_args);
-    fprintf(stream, "%s", suffix);
-}
-
-static void __fprintf_init_python_list(FILE *stream, const char *id) {
-    fprintf(stream, "\"%s\" : ", id);
-    fprintf(stream, "[");
-}
-
-static void __fprintf_close_python_list(FILE *stream) { fprintf(stream, "]"); }
-
-static hash_type *__alloc_filtered_hash(hash_type *input_hash,
-                                        bool include_angular_values,
-                                        const subst_list_type *private_args,
-                                        const subst_list_type *global_args) {
-
-    hash_type *output_hash = hash_alloc();
-    hash_iter_type *iter = hash_iter_alloc(input_hash);
-    const char *key = hash_iter_get_next_key(iter);
-    while (key != NULL) {
-        const char *value = (const char *)hash_get(input_hash, key);
-        // If the value is NULL or alternatively the special string value
-        // "null" we print the @null_value variable and continue.
-        if (!value || strcmp(value, "null") == 0)
-            hash_insert_ref(output_hash, key, NULL);
-        else {
-            char *fv =
-                __alloc_filtered_string(value, private_args, global_args);
-            // If the value string contains a <XXX> string which is not
-            // represented in the substitutionlists we will not print out the
-            // <xxxx> literal.
-            if (include_angular_values)
-                hash_insert_hash_owned_ref(output_hash, key, fv, free);
-            else {
-                if (!(fv[0] == '<' && fv[strlen(fv) - 1] == '>'))
-                    hash_insert_hash_owned_ref(output_hash, key, fv, free);
-            }
-        }
-
-        key = hash_iter_get_next_key(iter);
-    }
-    return output_hash;
-}
-
-static void __fprintf_python_hash(FILE *stream, const char *prefix,
-                                  const char *id, hash_type *input_hash,
-                                  const char *suffix,
-                                  const subst_list_type *private_args,
-                                  const subst_list_type *global_args,
-                                  const char *null_value) {
-    bool print_angular_values = false;
-    hash_type *output_hash = __alloc_filtered_hash(
-        input_hash, print_angular_values, private_args, global_args);
-    int hash_size = hash_get_size(output_hash);
-
-    fprintf(stream, "%s\"%s\" : ", prefix, id);
-    if (hash_size > 0) {
-        bool first = true;
-        fprintf(stream, "{");
-
-        hash_iter_type *iter = hash_iter_alloc(output_hash);
-        const char *key = hash_iter_get_next_key(iter);
-
-        while (key != NULL) {
-            const char *value = (const char *)hash_get(output_hash, key);
-            if (!first)
-                fprintf(stream, ",");
-
-            if (value)
-                fprintf(stream, "\"%s\" : \"%s\"", key, value);
-            else
-                fprintf(stream, "\"%s\" : %s", key, null_value);
-
-            key = hash_iter_get_next_key(iter);
-            first = false;
-        }
-
-        fprintf(stream, "}");
-    } else
-        fprintf(stream, "%s", null_value);
-    fprintf(stream, "%s", suffix);
-
-    hash_free(output_hash);
-}
-
-static void __fprintf_python_int(FILE *stream, const char *prefix,
-                                 const char *key, int value, const char *suffix,
-                                 const char *null_value) {
-    fprintf(stream, "%s", prefix);
-    if (value > 0)
-        fprintf(stream, "\"%s\" : %d", key, value);
-    else
-        fprintf(stream, "\"%s\" : %s", key, null_value);
-    fprintf(stream, "%s", suffix);
-}
-
-/**
-   This is special cased to support the default mapping.
-*/
-static void __fprintf_python_argList(FILE *stream, const char *prefix,
-                                     const ext_job_type *ext_job,
-                                     const char *suffix,
-                                     const subst_list_type *global_args) {
-
-    stringlist_type *argv;
-    if (ext_job->deprecated_argv)
-        argv = ext_job->deprecated_argv;
-    else
-        argv = ext_job->argv;
-
-    fprintf(stream, "%s", prefix);
-    __fprintf_init_python_list(stream, "argList");
-    {
-        for (int index = 0; index < stringlist_get_size(argv); index++) {
-            const char *src_string = stringlist_iget(argv, index);
-            char *filtered_string = __alloc_filtered_string(
-                src_string, ext_job->private_args, global_args);
-            if (hash_has_key(ext_job->default_mapping, filtered_string))
-                filtered_string = (char *)util_realloc_string_copy(
-                    filtered_string,
-                    (const char *)hash_get(ext_job->default_mapping,
-                                           filtered_string));
-
-            fprintf(stream, "\"%s\"", filtered_string);
-            if (index < (stringlist_get_size(argv) - 1))
-                fprintf(stream, ",");
-
-            free(filtered_string);
-        }
-    }
-    __fprintf_close_python_list(stream);
-    fprintf(stream, "%s", suffix);
-}
-
-static void __fprintf_python_arg_types(FILE *stream, const char *prefix,
-                                       const char *key,
-                                       const ext_job_type *ext_job,
-                                       const char *suffix,
-                                       const char *null_value) {
-    fprintf(stream, "%s", prefix);
-    if (!ext_job->arg_types) {
-        fprintf(stream, "\"%s\" : %s", key, null_value);
-        goto postfix;
-    }
-
-    fprintf(stream, "\"%s\" : [", key);
-    for (int i = 0; i < ext_job->max_arg; i++) {
-
-        const char *arg_type = NULL;
-        int type = int_vector_safe_iget(ext_job->arg_types, i);
-        switch (type) {
-        case CONFIG_INT:
-            arg_type = JOB_INT_TYPE;
-            break;
-        case CONFIG_FLOAT:
-            arg_type = JOB_FLOAT_TYPE;
-            break;
-        case CONFIG_STRING:
-            arg_type = JOB_STRING_TYPE;
-            break;
-        case CONFIG_BOOL:
-            arg_type = JOB_BOOL_TYPE;
-            break;
-        case CONFIG_RUNTIME_FILE:
-            arg_type = JOB_RUNTIME_FILE_TYPE;
-            break;
-        case CONFIG_RUNTIME_INT:
-            arg_type = JOB_RUNTIME_INT_TYPE;
-            break;
-        default:
-            util_abort("%s unknown config type %d", __func__, type);
-        }
-
-        fprintf(stream, "\"%s\"", arg_type);
-        if ((i + 1) < ext_job->max_arg)
-            fprintf(stream, ", ");
-    }
-    fprintf(stream, "]");
-
-postfix:
-    fprintf(stream, "%s", suffix);
-}
-
-void ext_job_json_fprintf(const ext_job_type *ext_job, int job_index,
-                          FILE *stream, const subst_list_type *global_args) {
-    const char *null_value = "null";
-
-    char *file_stdout_index = NULL;
-    char *file_stderr_index = NULL;
-
-    file_stdout_index =
-        util_alloc_sprintf("%s.%d", ext_job->stdout_file, job_index);
-    file_stderr_index =
-        util_alloc_sprintf("%s.%d", ext_job->stderr_file, job_index);
-
-    fprintf(stream, " {");
-    {
-        __fprintf_python_string(stream, "", "name", ext_job->name, ",\n",
-                                ext_job->private_args, NULL, null_value);
-        __fprintf_python_string(stream, "  ", "executable", ext_job->executable,
-                                ",\n", ext_job->private_args, global_args,
-                                null_value);
-        __fprintf_python_string(stream, "  ", "target_file",
-                                ext_job->target_file, ",\n",
-                                ext_job->private_args, global_args, null_value);
-        __fprintf_python_string(stream, "  ", "error_file", ext_job->error_file,
-                                ",\n", ext_job->private_args, global_args,
-                                null_value);
-        __fprintf_python_string(stream, "  ", "start_file", ext_job->start_file,
-                                ",\n", ext_job->private_args, global_args,
-                                null_value);
-        __fprintf_python_string(stream, "  ", "stdout", file_stdout_index,
-                                ",\n", ext_job->private_args, global_args,
-                                null_value);
-        __fprintf_python_string(stream, "  ", "stderr", file_stderr_index,
-                                ",\n", ext_job->private_args, global_args,
-                                null_value);
-        __fprintf_python_string(stream, "  ", "stdin", ext_job->stdin_file,
-                                ",\n", ext_job->private_args, global_args,
-                                null_value);
-        __fprintf_python_argList(stream, "  ", ext_job, ",\n", global_args);
-        __fprintf_python_hash(stream, "  ", "environment", ext_job->environment,
-                              ",\n", ext_job->private_args, global_args,
-                              null_value);
-        __fprintf_python_hash(stream, "  ", "exec_env", ext_job->exec_env,
-                              ",\n", ext_job->private_args, global_args,
-                              null_value);
-        __fprintf_python_string(stream, "  ", "license_path",
-                                ext_job->license_path, ",\n",
-                                ext_job->private_args, global_args, null_value);
-        __fprintf_python_int(stream, "  ", "max_running_minutes",
-                             ext_job->max_running_minutes, ",\n", null_value);
-        __fprintf_python_int(stream, "  ", "max_running", ext_job->max_running,
-                             ",\n", null_value);
-        __fprintf_python_int(stream, "  ", "min_arg", ext_job->min_arg, ",\n",
-                             null_value);
-
-        __fprintf_python_arg_types(stream, "  ", "arg_types", ext_job, ",\n",
-                                   null_value);
-
-        __fprintf_python_int(stream, "  ", "max_arg", ext_job->max_arg, "\n",
-                             null_value);
-    }
-    fprintf(stream, "}");
-
-    free(file_stdout_index);
-    free(file_stderr_index);
 }
 
 #define PRINT_KEY_STRING(stream, key, value)                                   \
@@ -1026,15 +765,15 @@ ext_job_type *ext_job_fscanf_alloc(const char *name,
                     ext_job_set_stdout_file(
                         ext_job, config_content_iget(content, "STDOUT", 0, 0));
                 else
-                    ext_job->stdout_file = util_alloc_filename(
-                        NULL, ext_job->name, EXT_JOB_STDOUT);
+                    ext_job->stdout_file =
+                        util_alloc_filename(NULL, ext_job->name, "stdout");
 
                 if (config_content_has_item(content, "STDERR"))
                     ext_job_set_stderr_file(
                         ext_job, config_content_iget(content, "STDERR", 0, 0));
                 else
-                    ext_job->stderr_file = util_alloc_filename(
-                        NULL, ext_job->name, EXT_JOB_STDERR);
+                    ext_job->stderr_file =
+                        util_alloc_filename(NULL, ext_job->name, "stderr");
 
                 if (config_content_has_item(content, "ERROR_FILE"))
                     ext_job_set_error_file(

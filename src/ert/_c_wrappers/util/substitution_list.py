@@ -16,6 +16,9 @@ class SubstitutionList(BaseCClass):
     _append_copy = ResPrototype(
         "void subst_list_append_copy(subst_list, char*, char*, char*)"
     )
+    _alloc_filtered_string = ResPrototype(
+        "char* subst_list_alloc_filtered_string(subst_list, char*)"
+    )
 
     def __init__(self):
         c_ptr = self._alloc(None)
@@ -73,6 +76,9 @@ class SubstitutionList(BaseCClass):
                 return index
 
         return None  # Should never happen!
+
+    def substitute(self, to_substitute: str) -> str:
+        return self._alloc_filtered_string(to_substitute)
 
     def free(self):
         self._free()

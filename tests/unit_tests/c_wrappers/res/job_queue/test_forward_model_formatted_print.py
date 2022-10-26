@@ -7,11 +7,11 @@ import stat
 
 import pytest
 
+from ert._c_wrappers.enkf.substituter import Substituter
 from ert._c_wrappers.job_queue.environment_varlist import EnvironmentVarlist
 from ert._c_wrappers.job_queue.ext_job import ExtJob
 from ert._c_wrappers.job_queue.ext_joblist import ExtJoblist
 from ert._c_wrappers.job_queue.forward_model import ForwardModel
-from ert._c_wrappers.util.substitution_list import SubstitutionList
 from ert.simulator.forward_model_status import ForwardModelStatus
 
 joblist = [
@@ -282,7 +282,7 @@ def set_up_forward_model(selected_jobs=None):
     return forward_model
 
 
-def verify_json_dump(selected_jobs, global_args, run_id):
+def verify_json_dump(selected_jobs, run_id):
     assert os.path.isfile(JOBS_JSON_FILE)
     config = load_configs(JOBS_JSON_FILE)
 
@@ -320,13 +320,11 @@ def verify_json_dump(selected_jobs, global_args, run_id):
 def test_no_jobs():
     forward_model = set_up_forward_model([])
     run_id = "test_no_jobs_id"
-    global_args = SubstitutionList()
-    varlist = EnvironmentVarlist()
     forward_model.formatted_fprintf(
-        run_id, os.getcwd(), "data_root", global_args, varlist
+        run_id, os.getcwd(), "data_root", 0, 0, Substituter(), EnvironmentVarlist()
     )
 
-    verify_json_dump([], global_args, run_id)
+    verify_json_dump([], run_id)
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -352,13 +350,14 @@ def test_transfer_arg_types():
     forward_model.add_job("FWD_MODEL")
 
     run_id = "test_no_jobs_id"
-    global_args = SubstitutionList()
 
     forward_model.formatted_fprintf(
         run_id,
         os.getcwd(),
         "data_root",
-        global_args,
+        0,
+        0,
+        Substituter(),
         EnvironmentVarlist(),
     )
     config = load_configs(JOBS_JSON_FILE)
@@ -391,9 +390,8 @@ def test_env_varlist():
     )
     forward_model = set_up_forward_model([])
     run_id = "test_no_jobs_id"
-    global_args = SubstitutionList()
     forward_model.formatted_fprintf(
-        run_id, os.getcwd(), "data_root", global_args, varlist
+        run_id, os.getcwd(), "data_root", 0, 0, Substituter(), varlist
     )
     config = load_configs(JOBS_JSON_FILE)
     env_config = config[varlist_string]
@@ -415,25 +413,21 @@ def test_one_job():
     for i in range(len(joblist)):
         forward_model = set_up_forward_model([i])
         run_id = "test_one_job"
-        global_args = SubstitutionList()
-        varlist = EnvironmentVarlist()
         forward_model.formatted_fprintf(
-            run_id, os.getcwd(), "data_root", global_args, varlist
+            run_id, os.getcwd(), "data_root", 0, 0, Substituter(), EnvironmentVarlist()
         )
 
-        verify_json_dump([i], global_args, run_id)
+        verify_json_dump([i], run_id)
 
 
 def run_all():
     forward_model = set_up_forward_model(range(len(joblist)))
     run_id = "run_all"
-    global_args = SubstitutionList()
-    varlist = EnvironmentVarlist()
     forward_model.formatted_fprintf(
-        run_id, os.getcwd(), "data_root", global_args, varlist
+        run_id, os.getcwd(), "data_root", 0, 0, Substituter(), EnvironmentVarlist()
     )
 
-    verify_json_dump(range(len(joblist)), global_args, run_id)
+    verify_json_dump(range(len(joblist)), run_id)
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -480,10 +474,14 @@ def test_various_null_fields():
 def test_status_file():
     forward_model = set_up_forward_model()
     run_id = "test_no_jobs_id"
-    global_args = SubstitutionList()
-    varlist = EnvironmentVarlist()
     forward_model.formatted_fprintf(
-        run_id, os.getcwd(), "data_root", global_args, varlist
+        run_id,
+        os.getcwd(),
+        "data_root",
+        0,
+        0,
+        Substituter(),
+        EnvironmentVarlist(),
     )
 
     with open("status.json", "w") as f:
@@ -511,3 +509,21 @@ def test_status_file():
     for job in status.jobs:
         assert isinstance(job.start_time, datetime.datetime)
         assert isinstance(job.end_time, datetime.datetime)
+
+
+def test_that_values_with_brackets_are_ommitted(tmp_path):
+    forward_model = ForwardModel(ExtJoblist())
+    env_vars = EnvironmentVarlist({"ENV_VAR": "<SOME_BRACKETS>"})
+    run_id = "test_no_jobs_id"
+    forward_model.formatted_fprintf(
+        run_id,
+        tmp_path,
+        "data_root",
+        0,
+        0,
+        Substituter(),
+        env_vars,
+    )
+    with open(tmp_path / "jobs.json") as fp:
+        data = json.load(fp)
+    assert "ENV_VAR" not in data["global_environment"]["ENV_VAR"]

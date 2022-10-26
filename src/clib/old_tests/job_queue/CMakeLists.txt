@@ -14,7 +14,6 @@ file(COPY "${TEST_DATA_DIR}/job_queue/qsub_emulators/"
 foreach(
   name
   job_status
-  ext_job
   job_node
   job_lsf_parse_bsub_stdout
   job_lsf

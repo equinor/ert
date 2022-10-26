@@ -34,7 +34,8 @@ void subst_list_prepend_owned_ref(subst_list_type *, const char *, const char *,
 bool subst_list_filter_file(const subst_list_type *, const char *,
                             const char *);
 bool subst_list_update_string(const subst_list_type *, char **);
-char *subst_list_alloc_filtered_string(const subst_list_type *, const char *);
+extern "C" char *subst_list_alloc_filtered_string(const subst_list_type *,
+                                                  const char *);
 extern "C" int subst_list_get_size(const subst_list_type *);
 extern "C" const char *subst_list_get_value(const subst_list_type *subst_list,
                                             const char *key);
