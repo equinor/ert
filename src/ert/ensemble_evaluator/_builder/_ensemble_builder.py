@@ -2,6 +2,8 @@ import copy
 import logging
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
 
+from typing_extensions import Self
+
 from ert._c_wrappers.enkf import QueueConfig
 from ert._c_wrappers.enkf.analysis_config import AnalysisConfig
 
@@ -36,7 +38,7 @@ class EnsembleBuilder:  # pylint: disable=too-many-instance-attributes
         self._executor: str = "local"
         self._id: Optional[str] = None
 
-    def set_forward_model(self, forward_model: RealizationBuilder) -> "EnsembleBuilder":
+    def set_forward_model(self, forward_model: RealizationBuilder) -> Self:
         if self._reals:
             raise ValueError(
                 "Cannot set forward model when realizations are already specified"
@@ -44,18 +46,18 @@ class EnsembleBuilder:  # pylint: disable=too-many-instance-attributes
         self._forward_model = forward_model
         return self
 
-    def add_realization(self, real: RealizationBuilder) -> "EnsembleBuilder":
+    def add_realization(self, real: RealizationBuilder) -> Self:
         if self._forward_model:
             raise ValueError("Cannot add realization when forward model is specified")
 
         self._reals.append(real)
         return self
 
-    def set_metadata(self, key: str, value: Any) -> "EnsembleBuilder":
+    def set_metadata(self, key: str, value: Any) -> Self:
         self._metadata[key] = value
         return self
 
-    def set_ensemble_size(self, size: int) -> "EnsembleBuilder":
+    def set_ensemble_size(self, size: int) -> Self:
         """Duplicate the ensemble members that existed at build time so as to
         get the desired state."""
         self._size = size
@@ -63,39 +65,39 @@ class EnsembleBuilder:  # pylint: disable=too-many-instance-attributes
 
     def set_legacy_dependencies(
         self, queue_config: QueueConfig, analysis_config: AnalysisConfig
-    ) -> "EnsembleBuilder":
+    ) -> Self:
         self._legacy_dependencies = (queue_config, analysis_config)
         return self
 
-    def set_inputs(self, inputs: InputMap) -> "EnsembleBuilder":
+    def set_inputs(self, inputs: InputMap) -> Self:
         self._inputs = inputs.to_dict()
         return self
 
-    def set_outputs(self, outputs: OutputMap) -> "EnsembleBuilder":
+    def set_outputs(self, outputs: OutputMap) -> Self:
         self._outputs = outputs.to_dict()
         return self
 
-    def set_custom_port_range(self, custom_port_range: range) -> "EnsembleBuilder":
+    def set_custom_port_range(self, custom_port_range: range) -> Self:
         self._custom_port_range = custom_port_range
         return self
 
-    def set_max_running(self, max_running: int) -> "EnsembleBuilder":
+    def set_max_running(self, max_running: int) -> Self:
         self._max_running = max_running
         return self
 
-    def set_max_retries(self, max_retries: int) -> "EnsembleBuilder":
+    def set_max_retries(self, max_retries: int) -> Self:
         self._max_retries = max_retries
         return self
 
-    def set_retry_delay(self, retry_delay: int) -> "EnsembleBuilder":
+    def set_retry_delay(self, retry_delay: int) -> Self:
         self._retry_delay = retry_delay
         return self
 
-    def set_executor(self, executor: str) -> "EnsembleBuilder":
+    def set_executor(self, executor: str) -> Self:
         self._executor = executor
         return self
 
-    def set_id(self, id_: str) -> "EnsembleBuilder":
+    def set_id(self, id_: str) -> Self:
         self._id = id_
         return self
 

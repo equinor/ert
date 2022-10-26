@@ -3,6 +3,8 @@ from collections import defaultdict
 from graphlib import TopologicalSorter
 from typing import TYPE_CHECKING, Iterator, List, Optional, Sequence, Tuple
 
+from typing_extensions import Self
+
 from ._step import Step, StepBuilder
 
 SOURCE_TEMPLATE_REAL = "/real/{iens}"
@@ -97,23 +99,23 @@ class RealizationBuilder:
         self._iens: Optional[int] = None
         self._parent_source: Optional[str] = None
 
-    def active(self, active: bool) -> "RealizationBuilder":
+    def active(self, active: bool) -> Self:
         self._active = active
         return self
 
-    def add_step(self, step: StepBuilder) -> "RealizationBuilder":
+    def add_step(self, step: StepBuilder) -> Self:
         self._steps.append(step)
         return self
 
-    def add_stage(self, stage: "StageBuilder") -> "RealizationBuilder":
+    def add_stage(self, stage: "StageBuilder") -> Self:
         self._stages.append(stage)
         return self
 
-    def set_iens(self, iens: int) -> "RealizationBuilder":
+    def set_iens(self, iens: int) -> Self:
         self._iens = iens
         return self
 
-    def set_parent_source(self, source: str) -> "RealizationBuilder":
+    def set_parent_source(self, source: str) -> Self:
         self._parent_source = source
         return self
 
