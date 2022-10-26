@@ -54,7 +54,6 @@ extensions = [
     "sphinxcontrib.datatemplates",
     "sphinxcontrib.plantuml",
     "ert_jobs",
-    "ert_narratives",
 ]
 
 # Autodoc settings:

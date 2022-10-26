@@ -1,4 +1,4 @@
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 from aiohttp import ServerTimeoutError
@@ -7,15 +7,8 @@ from websockets.version import version as websockets_version
 
 from _ert_job_runner.client import Client
 from ert.ensemble_evaluator import Snapshot, identifiers
-from ert.ensemble_evaluator._wait_for_evaluator import wait_for_evaluator
 from ert.ensemble_evaluator.evaluator import EnsembleEvaluator
 from ert.ensemble_evaluator.monitor import Monitor
-from ert.ensemble_evaluator.narratives import (
-    dispatch_failing_job,
-    monitor_failing_ensemble,
-    monitor_failing_evaluation,
-    monitor_successful_ensemble,
-)
 from ert.ensemble_evaluator.state import (
     ENSEMBLE_STATE_FAILED,
     ENSEMBLE_STATE_STARTED,
@@ -25,11 +18,7 @@ from ert.ensemble_evaluator.state import (
     JOB_STATE_RUNNING,
 )
 
-from .ensemble_evaluator_utils import (
-    AutorunTestEnsemble,
-    TestEnsemble,
-    send_dispatch_event,
-)
+from .ensemble_evaluator_utils import AutorunTestEnsemble, send_dispatch_event
 
 
 def test_dispatchers_can_connect_and_monitor_can_shut_down_evaluator(evaluator):
@@ -232,74 +221,6 @@ def test_dying_batcher(evaluator):
         list(monitor.track())
 
         assert ENSEMBLE_STATE_FAILED == evaluator.ensemble.snapshot.status
-
-
-@pytest.mark.consumer_driven_contract_verification
-def test_verify_monitor_failing_ensemble(make_ee_config, event_loop):
-    ee_config = make_ee_config(use_token=False, generate_cert=False)
-    ensemble = TestEnsemble(_iter=1, reals=2, steps=1, jobs=2, id_="ee-0")
-    ensemble.addFailJob(real=1, step=0, job=1)
-    ee = EnsembleEvaluator(
-        ensemble,
-        ee_config,
-        0,
-    )
-    ee.run()
-    event_loop.run_until_complete(wait_for_evaluator(ee_config.url))
-    monitor_failing_ensemble().verify(ee_config.client_uri, on_connect=ensemble.start)
-    ensemble.join()
-
-
-@pytest.mark.consumer_driven_contract_verification
-def test_verify_monitor_failing_evaluation(make_ee_config, event_loop):
-    ee_config = make_ee_config(use_token=False, generate_cert=False)
-    ensemble = TestEnsemble(_iter=1, reals=2, steps=1, jobs=2, id_="ee-0")
-    ensemble.with_failure()
-    ee = EnsembleEvaluator(
-        ensemble,
-        ee_config,
-        0,
-    )
-    ee.run()
-    event_loop.run_until_complete(wait_for_evaluator(ee_config.url))
-    monitor_failing_evaluation().verify(ee_config.client_uri, on_connect=ensemble.start)
-    ensemble.join()
-
-
-@pytest.mark.consumer_driven_contract_verification
-def test_verify_monitor_successful_ensemble(make_ee_config, event_loop):
-    ensemble = TestEnsemble(_iter=1, reals=2, steps=2, jobs=2, id_="ee-0").with_result(
-        b"\x80\x04\x95\x0f\x00\x00\x00\x00\x00\x00\x00\x8c\x0bhello world\x94.",
-        "application/octet-stream",
-    )
-    ee_config = make_ee_config(use_token=False, generate_cert=False)
-    ee = EnsembleEvaluator(
-        ensemble,
-        ee_config,
-        0,
-    )
-    ee.run()
-    event_loop.run_until_complete(wait_for_evaluator(ee_config.url))
-    monitor_successful_ensemble().verify(
-        ee_config.client_uri, on_connect=ensemble.start
-    )
-    ensemble.join()
-
-
-@pytest.mark.consumer_driven_contract_verification
-def test_verify_dispatch_failing_job(make_ee_config, event_loop):
-    ee_config = make_ee_config(use_token=False, generate_cert=False)
-    mock_ensemble = MagicMock()
-    mock_ensemble.snapshot.to_dict.return_value = {}
-    ee = EnsembleEvaluator(
-        mock_ensemble,
-        ee_config,
-        0,
-    )
-    ee.run()
-    event_loop.run_until_complete(wait_for_evaluator(ee_config.url))
-    dispatch_failing_job().verify(ee_config.client_uri, on_connect=lambda: None)
-    ee.stop()
 
 
 @pytest.mark.parametrize("num_realizations, num_failing", [(10, 5), (10, 10)])

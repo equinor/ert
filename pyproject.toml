@@ -17,8 +17,6 @@ requires = [
 [tool.pytest.ini_options]
 addopts = "-ra --strict-markers"
 markers = [
-    "consumer_driven_contract_test",
-    "consumer_driven_contract_verification",
     "integration_test",
     "quick_only",
     "requires_eclipse",
