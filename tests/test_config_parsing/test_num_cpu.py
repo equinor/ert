@@ -19,7 +19,7 @@ def test_num_cpu_from_config_preferred():
     data_file = "dfile"
     config_num_cpu = 17
     data_file_num_cpu = 4
-    with open(data_file, "w") as data_file_hander:
+    with open(file=data_file, mode="w", encoding="utf-8") as data_file_hander:
         data_file_hander.write(
             f"""PARALLEL
  {data_file_num_cpu} DISTRIBUTED/
@@ -41,7 +41,7 @@ def test_num_cpu_from_config_preferred():
 def test_num_cpu_from_data_file_used_if_config_num_cpu_not_set():
     data_file = "dfile"
     data_file_num_cpu = 4
-    with open(data_file, "w") as data_file_hander:
+    with open(file=data_file, mode="w", encoding="utf-8") as data_file_hander:
         data_file_hander.write(
             f"""
 PARALLEL
