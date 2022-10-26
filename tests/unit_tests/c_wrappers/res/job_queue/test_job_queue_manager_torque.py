@@ -11,6 +11,29 @@ from ert._c_wrappers.job_queue import Driver, JobQueueNode, QueueDriverEnum
 from ert._clib.model_callbacks import LoadStatus
 
 
+@pytest.fixture(name="temp_working_directory")
+def fixture_temp_working_directory(tmpdir):
+    old_cwd = os.getcwd()
+    os.chdir(tmpdir)
+    yield tmpdir
+
+    os.chdir(old_cwd)
+
+
+@pytest.fixture(name="dummy_config")
+def fixture_dummy_config():
+    return JobConfig(
+        {
+            "job_script": "job_script.py",
+            "num_cpu": 1,
+            "job_name": "dummy_job_{}",
+            "run_path": "dummy_path_{}",
+            "ok_callback": dummy_ok_callback,
+            "exit_callback": dummy_exit_callback,
+        }
+    )
+
+
 @dataclass
 class RunArg:
     iens: int
@@ -30,18 +53,9 @@ def dummy_ok_callback(args):
     return (LoadStatus.LOAD_SUCCESSFUL, "")
 
 
-def dummy_exit_callback(args):
+def dummy_exit_callback(_args):
     Path("ERROR").write_text("failure", encoding="utf-8")
 
-
-DUMMY_CONFIG: JobConfig = {
-    "job_script": "job_script.py",
-    "num_cpu": 1,
-    "job_name": "dummy_job_{}",
-    "run_path": "dummy_path_{}",
-    "ok_callback": dummy_ok_callback,
-    "exit_callback": dummy_exit_callback,
-}
 
 SIMPLE_SCRIPT = """#!/bin/sh
 echo "finished successfully" > STATUS
@@ -117,6 +131,34 @@ exit 1
 )
 
 
+def _deploy_script(scriptname: Path, scripttext: str):
+    script = Path(scriptname)
+    script.write_text(scripttext, encoding="utf-8")
+    script.chmod(stat.S_IRWXU)
+
+
+def _build_jobqueuenode(dummy_config: JobConfig, job_id=0):
+    runpath = Path(dummy_config["run_path"].format(job_id))
+    runpath.mkdir()
+
+    job = JobQueueNode(
+        job_script=dummy_config["job_script"],
+        job_name=dummy_config["job_name"].format(job_id),
+        run_path=os.path.realpath(dummy_config["run_path"].format(job_id)),
+        num_cpu=1,
+        status_file="STATUS",
+        ok_file="OK",
+        exit_file="ERROR",
+        done_callback_function=dummy_config["ok_callback"],
+        exit_callback_function=dummy_config["exit_callback"],
+        callback_arguments=[
+            RunArg(iens=job_id),
+            Path(dummy_config["run_path"].format(job_id)).resolve(),
+        ],
+    )
+    return (job, runpath)
+
+
 @pytest.mark.parametrize(
     "qsub_script, qstat_script",
     [
@@ -131,51 +173,28 @@ exit 1
         pytest.param(FLAKY_QSUB, FLAKY_QSTAT, id="all_flaky"),
     ],
 )
-def test_run_torque_job(tmpdir, qsub_script, qstat_script):
+def test_run_torque_job(
+    temp_working_directory, dummy_config, qsub_script, qstat_script
+):
+    # pylint: disable=unused-argument
     """Verify that the torque driver will succeed in submitting and
     monitoring torque jobs even when the Torque commands qsub and qstat
     are flaky.
 
     A flaky torque command is a shell script that sometimes but not
     always returns with a non-zero exit code."""
-    os.chdir(tmpdir)
-    os.putenv("PATH", os.getcwd() + ":" + os.getenv("PATH"))
-    driver = Driver(driver_type=QueueDriverEnum.TORQUE_DRIVER, max_running=1)
 
-    script = Path(DUMMY_CONFIG["job_script"])
-    script.write_text(SIMPLE_SCRIPT, encoding="utf-8")
-    script.chmod(stat.S_IRWXU)
+    _deploy_script(dummy_config["job_script"], SIMPLE_SCRIPT)
+    _deploy_script("qsub", qsub_script)
+    _deploy_script("qstat", qstat_script)
 
-    qsub = Path("qsub")
-    qsub.write_text(qsub_script, encoding="utf-8")
-    qsub.chmod(stat.S_IRWXU)
-
-    qstat = Path("qstat")
-    qstat.write_text(qstat_script, encoding="utf-8")
-    qstat.chmod(stat.S_IRWXU)
-
-    job_id = 0
-    runpath = Path(DUMMY_CONFIG["run_path"].format(job_id))
-    runpath.mkdir()
-
-    job = JobQueueNode(
-        job_script=DUMMY_CONFIG["job_script"],
-        job_name=DUMMY_CONFIG["job_name"].format(job_id),
-        run_path=os.path.realpath(DUMMY_CONFIG["run_path"].format(job_id)),
-        num_cpu=1,
-        status_file="STATUS",
-        ok_file="OK",
-        exit_file="ERROR",
-        done_callback_function=DUMMY_CONFIG["ok_callback"],
-        exit_callback_function=DUMMY_CONFIG["exit_callback"],
-        callback_arguments=[
-            RunArg(iens=job_id),
-            Path(DUMMY_CONFIG["run_path"].format(job_id)).resolve(),
-        ],
+    driver = Driver(
+        driver_type=QueueDriverEnum.TORQUE_DRIVER,
+        options=[("QSTAT_CMD", temp_working_directory / "qstat")],
     )
 
-    pool_sema = BoundedSemaphore(value=2)
-    job.run(driver, pool_sema)
+    (job, runpath) = _build_jobqueuenode(dummy_config)
+    job.run(driver, BoundedSemaphore())
     job.wait_for()
 
     # This file is supposed created by the job that the qsub script points to,
@@ -184,3 +203,31 @@ def test_run_torque_job(tmpdir, qsub_script, qstat_script):
 
     # The "done" callback:
     assert (runpath / "OK").read_text(encoding="utf-8") == "success"
+
+
+def test_that_torque_driver_passes_dash_x_to_qstat(
+    temp_working_directory, dummy_config
+):
+    # pylint: disable=unused-argument
+    """-x is a default option in the driver for the qstat option,
+    making qstat also display information about finished jobs."""
+
+    _deploy_script(dummy_config["job_script"], SIMPLE_SCRIPT)
+    _deploy_script("qsub", MOCK_QSUB)
+    _deploy_script(
+        "qstat",
+        "#!/bin/bash\n"
+        + create_qstat_output(state="E", bash=True)
+        + "\n"
+        + "echo $@ > qstat_options",
+    )
+
+    driver = Driver(
+        driver_type=QueueDriverEnum.TORQUE_DRIVER,
+        options=[("QSTAT_CMD", temp_working_directory / "qstat")],
+    )
+
+    job, _runpath = _build_jobqueuenode(dummy_config)
+    job.run(driver, BoundedSemaphore())
+    job.wait_for()
+    assert Path("qstat_options").read_text(encoding="utf-8").strip() == "-x"

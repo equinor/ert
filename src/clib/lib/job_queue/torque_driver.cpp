@@ -530,8 +530,9 @@ torque_driver_get_qstat_status(torque_driver_type *driver,
     job_status_type status = JOB_QUEUE_STATUS_FAILURE;
 
     {
-        const char **argv = (const char **)util_calloc(1, sizeof *argv);
-        argv[0] = jobnr_char;
+        const char **argv = (const char **)util_calloc(2, sizeof *argv);
+        argv[0] = driver->qstat_opts;
+        argv[1] = jobnr_char;
 
         /* The qstat command might fail intermittently for acceptable reasons,
            retry a couple of times with exponential sleep. ERT pings qstat
