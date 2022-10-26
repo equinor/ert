@@ -24,11 +24,6 @@ struct forward_model_struct {
     const ext_joblist_type *ext_joblist;
 };
 
-#define DEFAULT_JOB_JSON "jobs.json"
-#define DEFAULT_STATUS_JSON "status.json"
-#define DEFAULT_JOB_MODULE "jobs.py"
-#define DEFAULT_JOBLIST_NAME "jobList"
-
 forward_model_type *forward_model_alloc(const ext_joblist_type *ext_joblist) {
     forward_model_type *forward_model =
         (forward_model_type *)util_malloc(sizeof *forward_model);
@@ -137,57 +132,6 @@ void forward_model_parse_job_deprecated_args(
 
     free(job_name);
 }
-
-static void forward_model_json_fprintf(const forward_model_type *forward_model,
-                                       const char *run_id, const char *path,
-                                       const char *data_root,
-                                       const subst_list_type *global_args,
-                                       const env_varlist_type *varlist) {
-    char *json_file = (char *)util_alloc_filename(path, DEFAULT_JOB_JSON, NULL);
-    FILE *stream = util_fopen(json_file, "w");
-    int job_index;
-
-    fprintf(stream, "{\n");
-
-    fprintf(stream, "\"DATA_ROOT\": \"%s\",\n", data_root);
-    env_varlist_json_fprintf(varlist, stream);
-    fprintf(stream, ",\n");
-    fprintf(stream, "\"jobList\" : [");
-    for (job_index = 0; job_index < vector_get_size(forward_model->jobs);
-         job_index++) {
-        const ext_job_type *job = (const ext_job_type *)vector_iget_const(
-            forward_model->jobs, job_index);
-        ext_job_json_fprintf(job, job_index, stream, global_args);
-        if (job_index < (vector_get_size(forward_model->jobs) - 1))
-            fprintf(stream, ",\n");
-    }
-    fprintf(stream, "],\n");
-
-    fprintf(stream, "\"run_id\" : \"%s\",\n", run_id);
-    fprintf(stream, "\"ert_pid\" : \"%ld\"\n",
-            (long)getpid()); //Long is big enough to hold __pid_t
-    fprintf(stream, "}\n");
-    fclose(stream);
-    free(json_file);
-
-    char *status_file =
-        (char *)util_alloc_filename(path, DEFAULT_STATUS_JSON, NULL);
-    remove(status_file);
-    free(status_file);
-}
-
-void forward_model_formatted_fprintf(const forward_model_type *forward_model,
-                                     const char *run_id, const char *path,
-                                     const char *data_root,
-                                     const subst_list_type *global_args,
-                                     const env_varlist_type *list) {
-    forward_model_json_fprintf(forward_model, run_id, path, data_root,
-                               global_args, list);
-}
-
-#undef DEFAULT_JOB_JSON
-#undef DEFAULT_JOB_MODULE
-#undef DEFAULT_JOBLIST_NAME
 
 ext_job_type *forward_model_iget_job(forward_model_type *forward_model,
                                      int index) {

@@ -26,11 +26,11 @@ void ext_job_set_private_arg(ext_job_type *, const char *, const char *);
 void ext_job_set_define_args(ext_job_type *ext_job,
                              const subst_list_type *define_args);
 
-void ext_job_json_fprintf(const ext_job_type *, int job_index, FILE *,
-                          const subst_list_type *);
 extern "C" ext_job_type *ext_job_fscanf_alloc(const char *, const char *,
                                               bool private_job, const char *,
                                               bool search_path);
+
+extern "C" subst_list_type *ext_job_get_private_args(ext_job_type *ext_job);
 extern "C" const stringlist_type *
 ext_job_get_arglist(const ext_job_type *ext_job);
 extern "C" const stringlist_type *
@@ -78,6 +78,8 @@ extern "C" int ext_job_get_max_running_minutes(const ext_job_type *ext_job);
 extern "C" void ext_job_add_environment(ext_job_type *ext_job, const char *key,
                                         const char *value);
 extern "C" void ext_job_clear_environment(ext_job_type *ext_job);
+extern "C" hash_type *ext_job_get_exec_env(ext_job_type *ext_job);
+extern "C" hash_type *ext_job_get_default_mapping(ext_job_type *ext_job);
 extern "C" hash_type *ext_job_get_environment(ext_job_type *ext_job);
 extern "C" void ext_job_set_private_args_from_string(ext_job_type *ext_job,
                                                      const char *arg_string);

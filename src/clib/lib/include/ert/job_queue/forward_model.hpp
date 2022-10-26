@@ -22,11 +22,6 @@ void forward_model_parse_job_args(forward_model_type *model,
 void forward_model_parse_job_deprecated_args(
     forward_model_type *forward_model, const char *input_string,
     const subst_list_type *define_args); //DEPRECATED
-extern "C" void forward_model_formatted_fprintf(const forward_model_type *,
-                                                const char *run_id,
-                                                const char *, const char *,
-                                                const subst_list_type *,
-                                                const env_varlist_type *list);
 extern "C" void forward_model_free(forward_model_type *);
 extern "C" ext_job_type *
 forward_model_iget_job(forward_model_type *forward_model, int index);

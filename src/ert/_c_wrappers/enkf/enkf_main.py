@@ -484,7 +484,9 @@ class EnKFMain:
                     run_arg.get_run_id(),
                     run_arg.runpath,
                     model_config.data_root(),
-                    subst_list,
+                    iens,
+                    run_context.iteration,
+                    self.substituter,
                     res_config.site_config.env_vars,
                 )
 

@@ -41,7 +41,9 @@ def run_gui(args: argparse.Namespace):
     logger.info(
         "Logging forward model jobs",
         extra={
-            "workflow_jobs": str(res_config.model_config.getForwardModel().joblist())
+            "workflow_jobs": str(
+                res_config.model_config.getForwardModel().job_name_list()
+            )
         },
     )
     os.chdir(res_config.config_path)

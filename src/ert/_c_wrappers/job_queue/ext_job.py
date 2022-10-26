@@ -6,6 +6,7 @@ from ecl.util.util import StringList
 
 from ert._c_wrappers import ResPrototype
 from ert._c_wrappers.config import ContentTypeEnum
+from ert._c_wrappers.util import SubstitutionList
 
 
 class ExtJob(BaseCClass):
@@ -49,6 +50,10 @@ class ExtJob(BaseCClass):
         "config_content_type_enum ext_job_iget_argtype(ext_job, int)"
     )
 
+    _get_exec_env = ResPrototype("string_hash_ref ext_job_get_exec_env(ext_job)")
+    _get_default_mapping = ResPrototype(
+        "string_hash_ref ext_job_get_default_mapping(ext_job)"
+    )
     _get_environment = ResPrototype("string_hash_ref ext_job_get_environment(ext_job)")
     _set_environment = ResPrototype(
         "void ext_job_add_environment(ext_job, char*, char*)"
@@ -59,6 +64,7 @@ class ExtJob(BaseCClass):
     _get_argvalues = ResPrototype("stringlist_ref ext_job_get_argvalues(ext_job)")
     _clear_environment = ResPrototype("void ext_job_clear_environment(ext_job)")
     _save = ResPrototype("void ext_job_save(ext_job)")
+    _get_private_args = ResPrototype("subst_list_ref ext_job_get_private_args(ext_job)")
 
     def __init__(
         self,
@@ -93,6 +99,9 @@ class ExtJob(BaseCClass):
         else:
             return "UNINITIALIZED ExtJob"
 
+    def get_private_args(self) -> SubstitutionList:
+        return self._get_private_args()
+
     def set_private_args_as_string(self, args: str):
         self._set_private_args_as_string(args)
 
@@ -114,7 +123,7 @@ class ExtJob(BaseCClass):
     def set_stdin_file(self, filename):
         self._set_stdin_file(filename)
 
-    def get_stdout_file(self):
+    def get_stdout_file(self) -> str:
         return self._get_stdout_file()
 
     def set_stdout_file(self, filename):
@@ -183,6 +192,12 @@ class ExtJob(BaseCClass):
     def get_environment(self) -> Dict[str, str]:
         return dict(**self._get_environment())
 
+    def get_exec_env(self) -> Dict[str, str]:
+        return dict(**self._get_exec_env())
+
+    def get_default_mapping(self) -> Dict[str, str]:
+        return dict(**self._get_default_mapping())
+
     def set_environment(self, key: str, value: str):
         self._set_environment(key, value)
 
@@ -190,7 +205,12 @@ class ExtJob(BaseCClass):
         return self._get_license_path()
 
     def get_arglist(self) -> List[str]:
-        return list(self._get_arglist())
+        # We unescape backslash here to keep backwards compatability ie. If
+        # the arglist contains a '\n' we interpret it as a newline.
+        return [
+            s.encode("utf-8", "backslashreplace").decode("unicode_escape")
+            for s in self._get_arglist()
+        ]
 
     def get_argvalues(self) -> List[str]:
         return list(self._get_argvalues())

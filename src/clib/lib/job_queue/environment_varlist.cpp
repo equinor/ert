@@ -27,28 +27,6 @@ void env_varlist_setenv(env_varlist_type *list, const char *key,
     list->varlist[key] = res_env_interp_setenv(key, value);
 }
 
-static void print_map_as_json(const std::map<std::string, std::string> &map,
-                              FILE *stream) {
-    bool first = true;
-    fprintf(stream, "{");
-    for (const auto &[key, value] : map) {
-        if (!first) {
-            fprintf(stream, ", ");
-        }
-        first = false;
-        fprintf(stream, R"("%s" : "%s")", key.c_str(), value.c_str());
-    }
-    fprintf(stream, "}");
-}
-
-void env_varlist_json_fprintf(const env_varlist_type *list, FILE *stream) {
-    fprintf(stream, "\"%s\" : ", ENV_VAR_KEY_STRING);
-    print_map_as_json(list->varlist, stream);
-    fprintf(stream, ",\n");
-    fprintf(stream, "\"%s\" : ", UPDATE_PATH_KEY_STRING);
-    print_map_as_json(list->updatelist, stream);
-}
-
 void env_varlist_free(env_varlist_type *list) { delete list; }
 
 ERT_CLIB_SUBMODULE("env_varlist", m) {

@@ -1,7 +1,6 @@
 from unittest.mock import MagicMock
 
 import pytest
-from ecl.util.util import StringList
 
 from ert.gui.ertwidgets.models.ertsummary import ErtSummary
 
@@ -10,10 +9,10 @@ from ert.gui.ertwidgets.models.ertsummary import ErtSummary
 def mock_ert(monkeypatch):
     ert_mock = MagicMock()
 
-    string_list = StringList(["forward_model_1", "forward_model_2"])
-    ert_mock.getModelConfig.return_value.getForwardModel.return_value.joblist.return_value = (  # noqa
-        string_list
-    )
+    ert_mock.getModelConfig.return_value.getForwardModel.return_value.job_name_list.return_value = [  # noqa
+        "forward_model_1",
+        "forward_model_2",
+    ]
 
     ert_mock.ensembleConfig.return_value.getKeylistFromVarType.return_value = [
         "param_1",

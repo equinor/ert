@@ -274,8 +274,8 @@ def test_large_config(setup_case):
     )
     assert loaded_model_config.obs_config_file == prog_model_config.obs_config_file
     assert (
-        loaded_model_config.getForwardModel().joblist()
-        == prog_model_config.getForwardModel().joblist()
+        loaded_model_config.getForwardModel().job_name_list()
+        == prog_model_config.getForwardModel().job_name_list()
     )
     assert loaded_res_config.site_config == prog_res_config.site_config
 

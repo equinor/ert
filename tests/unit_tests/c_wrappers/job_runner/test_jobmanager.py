@@ -7,6 +7,7 @@ import pytest
 
 from _ert_job_runner.reporting.message import Exited, Start
 from _ert_job_runner.runner import JobRunner
+from ert._c_wrappers.enkf.substituter import Substituter
 from ert._c_wrappers.job_queue import (
     EnvironmentVarlist,
     ExtJob,
@@ -249,10 +250,8 @@ assert exec_env["NOT_SET"] is None
     job_list.add_job("EXEC_ENV", ext_job)
     forward_model = ForwardModel(job_list)
     forward_model.add_job("EXEC_ENV")
-    global_args = SubstitutionList()
-    env_varlist = EnvironmentVarlist()
     forward_model.formatted_fprintf(
-        "run_id", None, "data_root", global_args, env_varlist
+        "run_id", ".", "data_root", 0, 0, Substituter(), EnvironmentVarlist()
     )
 
     with open("jobs.json", "r") as f:
