@@ -17,8 +17,8 @@ def without_key(a_dict, key):
     return {index: value for index, value in a_dict.items() if index != key}
 
 
-@pytest.fixture
-def snake_oil_structure_config(copy_case):
+@pytest.fixture(name="snake_oil_structure_config")
+def fixture_snake_oil_structure_config(copy_case):
     copy_case("snake_oil_structure")
     return {
         ConfigKeys.RUNPATH_FILE: "runpath",
@@ -29,10 +29,10 @@ def snake_oil_structure_config(copy_case):
     }
 
 
-@pytest.fixture
-def snake_oil_structure_config_file(snake_oil_structure_config):
+@pytest.fixture(name="snake_oil_structure_config_file")
+def fixture_snake_oil_structure_config_file(snake_oil_structure_config):
     filename = snake_oil_structure_config[ConfigKeys.CONFIG_FILE_KEY]
-    with open(filename, "w+") as config:
+    with open(file=filename, mode="w+", encoding="utf-8") as config:
         # necessary in the file, but irrelevant to this test
         config.write("JOBNAME  Job%d\n")
         config.write("NUM_REALIZATIONS  1\n")
