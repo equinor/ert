@@ -261,7 +261,7 @@ class ResConfig:
         self.ensemble_config = EnsembleConfig(config_content=user_config_content)
 
         for key in self.ensemble_config.getKeylistFromImplType(ErtImplType.GEN_KW):
-            if self.ensemble_config.getNode(key).get_init_file_fmt() != None:
+            if self.ensemble_config.getNode(key).getUseForwardInit():
                 raise KeyError(
                     "Loading GEN_KW from files created by the forward model "
                     "is not supported."
@@ -344,7 +344,7 @@ class ResConfig:
         self.ensemble_config = EnsembleConfig(config_dict=config_dict)
 
         for key in self.ensemble_config.getKeylistFromImplType(ErtImplType.GEN_KW):
-            if self.ensemble_config.getNode(key).get_init_file_fmt() != None:
+            if self.ensemble_config.getNode(key).getUseForwardInit():
                 raise KeyError(
                     "Loading GEN_KW from files created by the forward model "
                     "is not supported."
