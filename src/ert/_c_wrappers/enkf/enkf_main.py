@@ -449,16 +449,21 @@ class EnKFMain:
                         )
                     target.write_text(result)
 
-                _clib.enkf_main.init_active_run(
-                    model_config=self.resConfig().model_config,
-                    ensemble_config=self.resConfig().ensemble_config,
-                    env_varlist=self.resConfig().site_config.env_vars,
+                res_config = self.resConfig()
+                model_config = res_config.model_config
+                _clib.enkf_main.ecl_write(
+                    model_config=model_config,
+                    ensemble_config=res_config.ensemble_config,
                     run_path=run_arg.runpath,
                     iens=run_arg.iens,
                     sim_fs=run_arg.sim_fs,
-                    run_id=run_arg.get_run_id(),
-                    job_name=run_arg.job_name,
-                    subst_list=subst_list,
+                )
+                model_config.getForwardModel().formatted_fprintf(
+                    run_arg.get_run_id(),
+                    run_arg.runpath,
+                    model_config.data_root(),
+                    subst_list,
+                    res_config.site_config.env_vars,
                 )
 
         active_list = [
