@@ -127,7 +127,16 @@ class SubstConfig(BaseCClass):
         return not self == other
 
     def __repr__(self):
-        return f"SubstConfig({str(self)})"
+        concise_substitution_list = (
+            (
+                "["
+                + ",\n".join([f"({key}, {value})" for key, value, _ in self.subst_list])
+                + "]"
+            )
+            if self._address()
+            else "[]"
+        )
+        return f"<SubstConfig({concise_substitution_list})>"
 
     def __str__(self):
         if not self._address():
