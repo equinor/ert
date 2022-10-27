@@ -6,5 +6,8 @@ JOB_SCRIPT script.sh
 QUEUE_SYSTEM LOCAL
 QUEUE_OPTION LOCAL MAX_RUNNING 50
 
+MAX_RUNTIME 24
+MAX_RUNTIME 42
+
 -- This is not strictly necessary, a sensible default will be used if not given.
 ENSPATH  Ensemble
