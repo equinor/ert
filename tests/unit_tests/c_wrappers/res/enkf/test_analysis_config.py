@@ -16,6 +16,9 @@ def test_keywords_for_monitoring_simulation_runtime(analysis_config):
     assert not analysis_config.have_enough_realisations(5)
     assert analysis_config.have_enough_realisations(10)
 
+    assert analysis_config.get_max_runtime() < 50
+    assert analysis_config.get_max_runtime() == 42
+
     analysis_config.set_max_runtime(50)
     assert analysis_config.get_max_runtime() == 50
 

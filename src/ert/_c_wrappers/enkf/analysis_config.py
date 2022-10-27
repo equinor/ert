@@ -101,6 +101,9 @@ class AnalysisConfig:
         if min_realization == 0:
             min_realization = num_realization
         min_realization = min(min_realization, num_realization)
+        max_runtime = config_dict.get(ConfigKeys.MAX_RUNTIME, 0)
+        if isinstance(max_runtime, list):
+            max_runtime = max_runtime[-1]
 
         config = cls(
             alpha=config_dict.get(ConfigKeys.ALPHA_KEY, 3.0),
@@ -109,7 +112,7 @@ class AnalysisConfig:
             std_cutoff=config_dict.get(ConfigKeys.STD_CUTOFF_KEY, 1e-6),
             stop_long_running=config_dict.get(ConfigKeys.STOP_LONG_RUNNING, False),
             global_std_scaling=config_dict.get(ConfigKeys.GLOBAL_STD_SCALING, 1.0),
-            max_runtime=config_dict.get(ConfigKeys.MAX_RUNTIME, 0),
+            max_runtime=max_runtime,
             min_realization=min_realization,
             update_log_path=config_dict.get(ConfigKeys.UPDATE_LOG_PATH, "update_log"),
             analysis_iter_config=AnalysisIterConfig.from_dict(config_dict),
