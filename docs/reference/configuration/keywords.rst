@@ -31,7 +31,6 @@ Keyword name                                                            Required
 :ref:`DATA_FILE <data_file>`                                            NO                                                                      Provide an ECLIPSE data file for the problem
 :ref:`DATA_KW <data_kw>`                                                NO                                                                      Replace strings in ECLIPSE .DATA files
 :ref:`DEFINE <define>`                                                  NO                                                                      Define keywords with config scope
-:ref:`DELETE_RUNPATH <delete_runpath>`                                  NO                                                                      Explicitly tell ERT to delete the runpath when a job is complete
 :ref:`ECLBASE <eclbase>`                                                YES\*                                                                   Define a name for the ECLIPSE simulations. \*Either JOBNAME or ECLBASE must be specified
 :ref:`ENKF_ALPHA <enkf_alpha>`                                          NO                                      3.0                             Parameter controlling outlier behaviour in EnKF algorithm
 :ref:`ENKF_FORCE_NCOMP <enkf_force_ncomp>`                              NO                                      0                               Indicate if ERT should force a specific number of principal components
@@ -290,33 +289,6 @@ possible to do with ERT.
 
         Ignored. Was used to specify log level to output. Today this is
         controlled via Python's logging module.
-
-.. _delete_runpath:
-.. topic:: DELETE_RUNPATH
-
-        When the ERT application is running it creates directories for
-        the forward model simulations, one for each realization. When
-        the simulations are done, ERT will load the results into the
-        internal database. By default the realization folders will be
-        left intact after ERT has loaded the results, but using the
-        keyword DELETE_RUNPATH you can request to have (some of) the
-        directories deleted after results have been loaded.
-
-        *Example A:*
-
-        ::
-
-                -- Delete simulation directories 0 to 99
-                DELETE_RUNPATH 0-99
-
-        *Example B:*
-
-        ::
-
-                -- Delete simulation directories 0 to 10 as well as 12, 15 and 20.
-                DELETE_RUNPATH 0 - 10, 12, 15, 20
-
-        The DELETE_RUNPATH keyword is optional.
 
 
 .. _rerun_start:
