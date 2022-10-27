@@ -1394,7 +1394,7 @@ to load, select and modify the analysis modules are documented here.
 
 
         Case name format - iterated ensemble smoother.
-                By default, this value is set to `ITERATED_ENSEMBLE_SMOOTHER%d`.
+                By default, this value is set to `default_%d`.
 
 
 .. _iter_count:

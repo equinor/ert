@@ -42,9 +42,7 @@ pybind11_add_module(
   rms/rms_tagkey.cpp
   rms/rms_type.cpp
   rms/rms_util.cpp
-  analysis/analysis_module.cpp
   analysis/update.cpp
-  analysis/ies/ies_config.cpp
   job_queue/ext_job.cpp
   job_queue/ext_joblist.cpp
   job_queue/forward_model.cpp
@@ -66,7 +64,6 @@ pybind11_add_module(
   ${lsb}
   enkf/active_list.cpp
   enkf/time_map.cpp
-  enkf/analysis_config.cpp
   enkf/block_fs_driver.cpp
   enkf/config_keys.cpp
   enkf/enkf_analysis.cpp

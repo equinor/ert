@@ -84,7 +84,7 @@ def test_update_snapshot(setup_case, module, expected_gen_kw):
 
     ert = EnKFMain(res_config)
     es_update = ESUpdate(ert)
-    ert.analysisConfig().selectModule(module)
+    ert.analysisConfig().select_module(module)
     fsm = ert.getEnkfFsManager()
     sim_fs = fsm.getFileSystem("default_0")
     target_fs = fsm.getFileSystem("target")
@@ -306,7 +306,7 @@ SUMMARY_OBSERVATION EXTREMELY_HIGH_STD
 
     ert = EnKFMain(res_config)
     es_update = ESUpdate(ert)
-    ert.analysisConfig().selectModule("IES_ENKF")
+    ert.analysisConfig().select_module("IES_ENKF")
     fsm = ert.getEnkfFsManager()
     sim_fs = fsm.getFileSystem("default_0")
     target_fs = fsm.getFileSystem("target")

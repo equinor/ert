@@ -1,37 +1,20 @@
+import logging
 from math import ceil
 from os.path import realpath
-from typing import List, Optional
+from typing import Dict, List, Optional
 
-from cwrap import BaseCClass
-
-from ert import _clib
-from ert._c_wrappers import ResPrototype
-from ert._c_wrappers.analysis import AnalysisModule
+from ert._c_wrappers.analysis import AnalysisMode, AnalysisModule
 from ert._c_wrappers.enkf.analysis_iter_config import AnalysisIterConfig
 from ert._c_wrappers.enkf.config_keys import ConfigKeys
 
+logger = logging.getLogger(__name__)
 
-class AnalysisConfig(BaseCClass):
-    _alloc = ResPrototype("void* analysis_config_alloc()", bind=False)
 
-    _add_module_copy = ResPrototype(
-        "void analysis_config_add_module_copy( analysis_config, char* , char* )"
-    )
+class AnalysisConfigError(Exception):
+    pass
 
-    _free = ResPrototype("void analysis_config_free( analysis_config )")
-    _get_active_module_name = ResPrototype(
-        "char* analysis_config_get_active_module_name(analysis_config)"
-    )
-    _get_module = ResPrototype(
-        "analysis_module_ref analysis_config_get_module(analysis_config, char*)"
-    )
-    _select_module = ResPrototype(
-        "bool analysis_config_select_module(analysis_config, char*)"
-    )
-    _has_module = ResPrototype(
-        "bool analysis_config_has_module(analysis_config, char*)"
-    )
 
+class AnalysisConfig:
     def __init__(
         self,
         alpha=3.0,
@@ -48,8 +31,6 @@ class AnalysisConfig(BaseCClass):
         analysis_set_var=None,
         analysis_select=None,
     ):
-
-        c_ptr = self._alloc()
         self._rerun = rerun
         self._rerun_start = rerun_start
         self._max_runtime = max_runtime
@@ -61,42 +42,49 @@ class AnalysisConfig(BaseCClass):
         self._analysis_iter_config = analysis_iter_config or AnalysisIterConfig()
         self._update_log_path = update_log_path
 
-        self._analysis_select = analysis_select
         self._analysis_set_var = analysis_set_var or []
         self._analysis_copy = analysis_copy or []
+        es_module = AnalysisModule.ens_smoother_module()
+        ies_module = AnalysisModule.iterated_ens_smoother_module()
+        self._modules: Dict[str, AnalysisModule] = {
+            AnalysisMode.ENSEMBLE_SMOOTHER: es_module,
+            AnalysisMode.ITERATED_ENSEMBLE_SMOOTHER: ies_module,
+        }
+        self._active_module = analysis_select or AnalysisMode.ENSEMBLE_SMOOTHER
+        self._copy_modules()
+        self._set_modules_var_list()
 
-        if c_ptr:
-            super().__init__(c_ptr)
-            # copy modules
-            for element in self._analysis_copy:
-                if isinstance(element, list):
-                    src_name, dst_name = element
+    def _copy_modules(self):
+        for element in self._analysis_copy:
+            if isinstance(element, list):
+                src_name, dst_name = element
+            else:
+                src_name = element[ConfigKeys.SRC_NAME]
+                dst_name = element[ConfigKeys.DST_NAME]
+
+            module = self._modules.get(src_name)
+            if module is not None:
+                if module.mode == AnalysisMode.ENSEMBLE_SMOOTHER:
+                    new_module = AnalysisModule.ens_smoother_module(dst_name)
                 else:
-                    src_name = element[ConfigKeys.SRC_NAME]
-                    dst_name = element[ConfigKeys.DST_NAME]
-
-                self._add_module_copy(
-                    src_name,
-                    dst_name,
+                    new_module = AnalysisModule.iterated_ens_smoother_module(dst_name)
+                self._modules[dst_name] = new_module
+            else:
+                raise AnalysisConfigError(
+                    f"Trying to copy module {src_name}" f" which does not exist"
                 )
 
-            # set var list
-            for set_var in self._analysis_set_var:
-                if isinstance(set_var, list):
-                    module_name, var_name, value = set_var
-                else:
-                    module_name = set_var[ConfigKeys.MODULE_NAME]
-                    var_name = set_var[ConfigKeys.VAR_NAME]
-                    value = set_var[ConfigKeys.VALUE]
+    def _set_modules_var_list(self):
+        for set_var in self._analysis_set_var:
+            if isinstance(set_var, list):
+                module_name, var_name, value = set_var
+            else:
+                module_name = set_var[ConfigKeys.MODULE_NAME]
+                var_name = set_var[ConfigKeys.VAR_NAME]
+                value = set_var[ConfigKeys.VALUE]
 
-                module = self._get_module(module_name)
-                module._set_var(var_name, str(value))
-
-            if self._analysis_select:
-                self._select_module(self._analysis_select)
-
-        else:
-            raise ValueError("Failed to construct AnalysisConfig")
+            module = self.get_module(module_name)
+            module.set_var(var_name, value)
 
     @classmethod
     def from_dict(cls, config_dict) -> "AnalysisConfig":
@@ -173,26 +161,29 @@ class AnalysisConfig(BaseCClass):
     def set_max_runtime(self, max_runtime: int):
         self._max_runtime = max_runtime
 
-    def free(self):
-        self._free()
+    def active_module_name(self) -> str:
+        return self._active_module
 
-    def activeModuleName(self) -> str:
-        return self._get_active_module_name()
+    def get_module_list(self) -> List[str]:
+        return list(self._modules.keys())
 
-    def getModuleList(self) -> List[str]:
-        return _clib.analysis_config_module_names(self)
+    def get_module(self, module_name: str) -> AnalysisModule:
+        if module_name in self._modules:
+            return self._modules[module_name]
+        raise AnalysisConfigError(f"Analysis module {module_name} not found!")
 
-    def getModule(self, module_name: str) -> AnalysisModule:
-        return self._get_module(module_name)
+    def select_module(self, module_name: str) -> bool:
+        if module_name in self._modules:
+            self._active_module = module_name
+            return True
+        logger.warning(
+            f"Module {module_name} not found."
+            f" Active module {self._active_module} not changed"
+        )
+        return False
 
-    def hasModule(self, module_name: str) -> bool:
-        return self._has_module(module_name)
-
-    def selectModule(self, module_name: str) -> bool:
-        return self._select_module(module_name)
-
-    def getActiveModule(self) -> AnalysisModule:
-        return self.getModule(self.activeModuleName())
+    def get_active_module(self) -> AnalysisModule:
+        return self._modules[self._active_module]
 
     def set_global_std_scaling(self, std_scaling: float):
         self._global_std_scaling = std_scaling
@@ -232,23 +223,20 @@ class AnalysisConfig(BaseCClass):
         return not self == other
 
     def __repr__(self):
-        if not self._address():
-            return "<AnalysisConfig()>"
         return (
-            "AnalysisConfig(config_dict={"
-            f"'UPDATE_LOG_PATH': {self.get_log_path()}, "
-            f"'MAX_RUNTIME': {self.get_max_runtime()}, "
-            f"'GLOBAL_STD_SCALING': {self.get_global_std_scaling()}, "
-            f"'STOP_LONG_RUNNING': {self.get_stop_long_running()}, "
-            f"'STD_CUTOFF': {self.get_std_cutoff()}, "
-            f"'ENKF_ALPHA': {self.get_enkf_alpha()}, "
-            f"'RERUN': {self.get_rerun()}, "
-            f"'RERUN_START': {self.get_rerun_start()}, "
-            f"'ANALYSIS_SELECT': {self.activeModuleName()}, "
-            f"'MODULE_LIST': {self.getModuleList()}, "
-            f"'ITER_CONFIG': {self._analysis_iter_config}, "
-            f"'MIN_REALIZATIONS_REQUIRED': {self.minimum_required_realizations}, "
-            "})"
+            "AnalysisConfig("
+            f"alpha={self._alpha}"
+            f"rerun={self._rerun}"
+            f"std_cutoff={self._std_cutoff}"
+            f"stop_long_running={self._stop_long_running}"
+            f"global_std_scaling={self._global_std_scaling}"
+            f"max_runtime={self._max_runtime}"
+            f"min_realization={self._min_realization}"
+            f"update_log_path={self._update_log_path}"
+            f"analysis_iter_config={self._analysis_iter_config}"
+            f"analysis_copy={self._analysis_copy}"
+            f"analysis_set_var={self._analysis_set_var}"
+            f"analysis_select={self._active_module})"
         )
 
     def __eq__(self, other):
@@ -276,10 +264,10 @@ class AnalysisConfig(BaseCClass):
         if self.get_rerun_start() != other.get_rerun_start():
             return False
 
-        if set(self.getModuleList()) != set(other.getModuleList()):
+        if set(self.get_module_list()) != set(other.get_module_list()):
             return False
 
-        if self.activeModuleName() != other.activeModuleName():
+        if self._active_module != other._active_module:
             return False
 
         if self._analysis_iter_config != other._analysis_iter_config:
@@ -289,8 +277,8 @@ class AnalysisConfig(BaseCClass):
             return False
 
         # compare each module
-        for a in self.getModuleList():
-            if self.getModule(a) != other.getModule(a):
+        for a in self.get_module_list():
+            if self.get_module(a) != other.get_module(a):
                 return False
 
         return True

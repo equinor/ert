@@ -22,7 +22,7 @@ _logger = logging.getLogger(__name__)
 if TYPE_CHECKING:
     from iterative_ensemble_smoother import IterativeEnsembleSmoother
 
-    from ert._c_wrappers.analysis.analysis_module import AnalysisModule
+    from ert._c_wrappers.analysis import AnalysisModule
     from ert._c_wrappers.analysis.configuration import UpdateConfiguration
     from ert._c_wrappers.enkf import AnalysisConfig, QueueConfig
     from ert._c_wrappers.enkf.config.gen_kw_config import PriorDict
@@ -130,7 +130,7 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
         return self._enkf_main.analysisConfig()
 
     def get_analysis_module(self, module_name: str) -> "AnalysisModule":
-        return self._enkf_main.analysisConfig().getModule(module_name)
+        return self._enkf_main.analysisConfig().get_module(module_name)
 
     def get_ensemble_size(self) -> int:
         return self._enkf_main.getEnsembleSize()

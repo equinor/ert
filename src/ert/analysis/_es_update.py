@@ -13,11 +13,10 @@ from iterative_ensemble_smoother.experimental import (
 from ert._c_wrappers.enkf import ActiveMode
 from ert._c_wrappers.enkf.enums import RealizationStateEnum
 from ert._c_wrappers.enkf.row_scaling import RowScaling
-from ert._clib import analysis_module, update
-
-from ._ies import IesConfig
+from ert._clib import update
 
 if TYPE_CHECKING:
+    from ert._c_wrappers.analysis import AnalysisModule
     from ert._c_wrappers.analysis.configuration import UpdateConfiguration
     from ert._c_wrappers.enkf import EnKFMain, RunContext
     from ert._c_wrappers.enkf.analysis_config import AnalysisConfig
@@ -135,7 +134,7 @@ def analysis_ES(
     updatestep: "UpdateConfiguration",
     obs: "EnkfObs",
     rng: np.random.Generator,
-    module_config: IesConfig,
+    module: "AnalysisModule",
     alpha: float,
     std_cutoff: float,
     global_scaling: float,
@@ -186,8 +185,8 @@ def analysis_ES(
                 observation_errors,
                 observation_values,
                 noise,
-                module_config.get_truncation(),
-                ies.InversionType(module_config.inversion),
+                module.get_truncation(),
+                ies.InversionType(module.inversion),
             )
             _save_to_temporary_storage(temp_storage, update_step.parameters, A)
         if A_with_rowscaling:
@@ -197,8 +196,8 @@ def analysis_ES(
                 observation_errors,
                 observation_values,
                 noise,
-                module_config.get_truncation(),
-                ies.InversionType(module_config.inversion),
+                module.get_truncation(),
+                ies.InversionType(module.inversion),
             )
             for parameter, (A, _) in zip(
                 update_step.row_scaling_parameters, A_with_rowscaling
@@ -214,7 +213,7 @@ def analysis_IES(
     updatestep: "UpdateConfiguration",
     obs: "EnkfObs",
     rng: np.random.Generator,
-    module_config: IesConfig,
+    module: "AnalysisModule",
     alpha: float,
     std_cutoff: float,
     global_scaling: float,
@@ -267,8 +266,8 @@ def analysis_IES(
             noise,
             ensemble_mask=np.array(ens_mask),
             observation_mask=observation_mask,
-            inversion=ies.InversionType(module_config.inversion),
-            truncation=module_config.get_truncation(),
+            inversion=ies.InversionType(module.inversion),
+            truncation=module.get_truncation(),
         )
         _save_to_temporary_storage(temp_storage, update_step.parameters, A)
 
@@ -330,11 +329,8 @@ def _create_smoother_snapshot(
     return SmootherSnapshot(
         source_fs.getCaseName(),
         target_fs.getCaseName(),
-        analysis_config.activeModuleName(),
-        {
-            name: analysis_config.getActiveModule().getVariableValue(name)
-            for name in analysis_config.getActiveModule().getVariableNames()
-        },
+        analysis_config.active_module_name(),
+        analysis_config.get_active_module().variable_value_dict(),
         analysis_config.get_enkf_alpha(),
         analysis_config.get_std_cutoff(),
     )
@@ -371,7 +367,7 @@ class ESUpdate:
             updatestep,
             obs,
             self.ert.rng(),
-            analysis_module.get_module_config(analysis_config.getActiveModule()),
+            analysis_config.get_active_module(),
             alpha,
             std_cutoff,
             global_scaling,
@@ -421,7 +417,7 @@ class ESUpdate:
             updatestep,
             obs,
             self.ert.rng(),
-            analysis_module.get_module_config(analysis_config.getActiveModule()),
+            analysis_config.get_active_module(),
             alpha,
             std_cutoff,
             global_scaling,
