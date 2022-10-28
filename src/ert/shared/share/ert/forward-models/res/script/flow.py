@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 import sys
 
-from ert._c_wrappers.fm.ecl import Ecl300Config, run
+from ecl_config import FlowConfig
+from ecl_run import run
 
-config = Ecl300Config()
+config = FlowConfig()
 run(config, [arg for arg in sys.argv[1:] if len(arg) > 0])

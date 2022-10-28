@@ -1,2 +1,2 @@
-EXECUTABLE  ../templating/script/template_render
+EXECUTABLE  ../templating/script/template_render.py
 ARGLIST -i <INPUT_FILES> -o <OUTPUT_FILE> -t <TEMPLATE_FILE>

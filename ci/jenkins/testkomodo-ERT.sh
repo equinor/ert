@@ -1,8 +1,8 @@
 copy_test_files () {
     cp -r ${CI_SOURCE_ROOT}/tests ${CI_TEST_ROOT}
 
-    #ert
     ln -s ${CI_SOURCE_ROOT}/test-data ${CI_TEST_ROOT}/test-data
+    ln -s ${CI_SOURCE_ROOT}/src ${CI_TEST_ROOT}/src
 
     # Trick ERT to find a fake source root
     mkdir ${CI_TEST_ROOT}/.git

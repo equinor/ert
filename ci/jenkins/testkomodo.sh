@@ -1,23 +1,14 @@
 copy_test_files () {
     cp -r ${CI_SOURCE_ROOT}/tests ${CI_TEST_ROOT}
-
-    #ert
     ln -s ${CI_SOURCE_ROOT}/test-data ${CI_TEST_ROOT}/test-data
+
+    ln -s ${CI_SOURCE_ROOT}/src ${CI_TEST_ROOT}/src
 
     # Trick ERT to find a fake source root
     mkdir ${CI_TEST_ROOT}/.git
 
-    # clib
-    mkdir -p ${CI_TEST_ROOT}/src/clib/res/fm/rms
-    ln -s ${CI_SOURCE_ROOT}/src/ert/_c_wrappers/fm/rms/rms_config.yml ${CI_TEST_ROOT}/src/clib/res/fm/rms/rms_config.yml
-    ln -s {$CI_SOURCE_ROOT,$CI_TEST_ROOT}/src/clib/lib
-    ln -s {$CI_SOURCE_ROOT,$CI_TEST_ROOT}/src/clib/bin
-
-    ln -s ${CI_SOURCE_ROOT}/share ${CI_TEST_ROOT}/share
-
     # Keep pytest configuration:
     ln -s ${CI_SOURCE_ROOT}/pyproject.toml ${CI_TEST_ROOT}/pyproject.toml
-
 }
 
 install_test_dependencies () {

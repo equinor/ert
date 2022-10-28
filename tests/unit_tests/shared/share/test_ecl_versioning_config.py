@@ -5,30 +5,51 @@ import stat
 import pytest
 import yaml
 
-from ert._c_wrappers.fm.ecl import Ecl100Config
-from ert._c_wrappers.fm.ecl.ecl_config import Keys
+from tests.utils import SOURCE_DIR
+
+from ._import_from_location import import_from_location
+
+# import ecl_config and ecl_run.py from ert/forward-models/res/script
+# package-data path which. These are kept out of the ert package to avoid the
+# overhead of importing ert. This is necessary as these may be invoked as a
+# subprocess on each realization.
+
+
+ecl_config = import_from_location(
+    "ecl_config",
+    os.path.join(
+        SOURCE_DIR, "src/ert/shared/share/ert/forward-models/res/script/ecl_config.py"
+    ),
+)
+
+ecl_run = import_from_location(
+    "ecl_run",
+    os.path.join(
+        SOURCE_DIR, "src/ert/shared/share/ert/forward-models/res/script/ecl_run.py"
+    ),
+)
 
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_load(monkeypatch):
-    source_file = inspect.getsourcefile(Ecl100Config)
+    source_file = inspect.getsourcefile(ecl_config.Ecl100Config)
     assert source_file is not None
     ecl_config_path = os.path.dirname(source_file)
     monkeypatch.setenv("ECL100_SITE_CONFIG", "file/does/not/exist")
     with pytest.raises(IOError):
-        conf = Ecl100Config()
+        conf = ecl_config.Ecl100Config()
 
     monkeypatch.setenv(
         "ECL100_SITE_CONFIG",
         os.path.join(ecl_config_path, "ecl100_config.yml"),
     )
-    conf = Ecl100Config()
+    conf = ecl_config.Ecl100Config()
     with open("file.yml", "w") as f:
         f.write("this:\n -should\n-be\ninvalid:yaml?")
 
     monkeypatch.setenv("ECL100_SITE_CONFIG", "file.yml")
     with pytest.raises(ValueError):
-        conf = Ecl100Config()
+        conf = ecl_config.Ecl100Config()
 
     scalar_exe = "bin/scalar_exe"
     mpi_exe = "bin/mpi_exe"
@@ -46,14 +67,14 @@ def test_load(monkeypatch):
     monkeypatch.setenv("ENV1", "A")
     monkeypatch.setenv("ENV2", "C")
     d = {
-        Keys.env: {"LICENSE_SERVER": "license@company.com"},
-        Keys.versions: {
+        ecl_config.Keys.env: {"LICENSE_SERVER": "license@company.com"},
+        ecl_config.Keys.versions: {
             "2015": {
-                Keys.scalar: {Keys.executable: scalar_exe},
-                Keys.mpi: {
-                    Keys.executable: mpi_exe,
-                    Keys.mpirun: mpi_run,
-                    Keys.env: {
+                ecl_config.Keys.scalar: {ecl_config.Keys.executable: scalar_exe},
+                ecl_config.Keys.mpi: {
+                    ecl_config.Keys.executable: mpi_exe,
+                    ecl_config.Keys.mpirun: mpi_run,
+                    ecl_config.Keys.env: {
                         "I_MPI_ROOT": "$ENV1:B:$ENV2",
                         "TEST_VAR": "$ENV1.B.$ENV2 $UNKNOWN_VAR",
                         "P4_RSHCOMMAND": "",
@@ -63,16 +84,16 @@ def test_load(monkeypatch):
                 },
             },
             "2016": {
-                Keys.scalar: {Keys.executable: "/does/not/exist"},
-                Keys.mpi: {
-                    Keys.executable: "/does/not/exist",
-                    Keys.mpirun: mpi_run,
+                ecl_config.Keys.scalar: {ecl_config.Keys.executable: "/does/not/exist"},
+                ecl_config.Keys.mpi: {
+                    ecl_config.Keys.executable: "/does/not/exist",
+                    ecl_config.Keys.mpirun: mpi_run,
                 },
             },
             "2017": {
-                Keys.mpi: {
-                    Keys.executable: mpi_exe,
-                    Keys.mpirun: "/does/not/exist",
+                ecl_config.Keys.mpi: {
+                    ecl_config.Keys.executable: mpi_exe,
+                    ecl_config.Keys.mpirun: "/does/not/exist",
                 }
             },
         },
@@ -81,7 +102,7 @@ def test_load(monkeypatch):
     with open("file.yml", "w") as f:
         f.write(yaml.dump(d))
 
-    conf = Ecl100Config()
+    conf = ecl_config.Ecl100Config()
     # Fails because there is no version 2020
     with pytest.raises(KeyError):
         sim = conf.sim("2020")
@@ -135,17 +156,17 @@ def test_default(monkeypatch):
     os.chmod(scalar_exe, stat.S_IEXEC)
 
     d0 = {
-        Keys.versions: {
-            "2015": {Keys.scalar: {Keys.executable: scalar_exe}},
-            "2016": {Keys.scalar: {Keys.executable: scalar_exe}},
+        ecl_config.Keys.versions: {
+            "2015": {ecl_config.Keys.scalar: {ecl_config.Keys.executable: scalar_exe}},
+            "2016": {ecl_config.Keys.scalar: {ecl_config.Keys.executable: scalar_exe}},
         }
     }
 
     d1 = {
-        Keys.default_version: "2015",
-        Keys.versions: {
-            "2015": {Keys.scalar: {Keys.executable: scalar_exe}},
-            "2016": {Keys.scalar: {Keys.executable: scalar_exe}},
+        ecl_config.Keys.default_version: "2015",
+        ecl_config.Keys.versions: {
+            "2015": {ecl_config.Keys.scalar: {ecl_config.Keys.executable: scalar_exe}},
+            "2016": {ecl_config.Keys.scalar: {ecl_config.Keys.executable: scalar_exe}},
         },
     }
 
@@ -153,12 +174,12 @@ def test_default(monkeypatch):
     with open("file.yml", "w") as f:
         f.write(yaml.dump(d1))
 
-    conf = Ecl100Config()
+    conf = ecl_config.Ecl100Config()
     sim = conf.sim()
     assert sim.version == "2015"
     assert "2015" in conf
     assert "xxxx" not in conf
-    assert Keys.default in conf
+    assert ecl_config.Keys.default in conf
     assert None in conf
 
     sim = conf.sim("default")
@@ -167,12 +188,12 @@ def test_default(monkeypatch):
     with open("file.yml", "w") as f:
         f.write(yaml.dump(d0))
 
-    conf = Ecl100Config()
-    assert Keys.default not in conf
+    conf = ecl_config.Ecl100Config()
+    assert ecl_config.Keys.default not in conf
     assert conf.default_version is None
 
     with pytest.raises(Exception):
         sim = conf.sim()
 
     with pytest.raises(Exception):
-        sim = conf.sim(Keys.default)
+        sim = conf.sim(ecl_config.Keys.default)

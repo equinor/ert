@@ -1,2 +1,2 @@
 INTERNAL FALSE
-EXECUTABLE  ../../../shell_scripts/symlink
+EXECUTABLE  ../../../shell_scripts/symlink.py

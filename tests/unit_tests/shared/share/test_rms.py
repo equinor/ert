@@ -9,8 +9,23 @@ from unittest.mock import patch
 import pkg_resources
 import pytest
 
-from ert._c_wrappers.fm.rms import RMSConfig, RMSRun, RMSRunException
-from ert._c_wrappers.fm.rms import run as rms_run
+from tests.utils import SOURCE_DIR
+
+from ._import_from_location import import_from_location
+
+# import rms.py from ert/forward-models/res/script
+# package-data path which. These are kept out of the ert package to avoid the
+# overhead of importing ert. This is necessary as these may be invoked as a
+# subprocess on each realization.
+rms = import_from_location(
+    "rms",
+    os.path.join(
+        SOURCE_DIR, "src/ert/shared/share/ert/forward-models/res/script/rms.py"
+    ),
+)
+
+
+rms_run = rms.run
 
 TEST_ENV_WRAPPER = """\
 #!/usr/bin/env bash
@@ -50,9 +65,7 @@ def test_run_class_multi_seed(monkeypatch, test_input, expected_result, source_r
     os.mkdir("run_path")
     os.mkdir("bin")
     os.mkdir("project")
-    shutil.copy(
-        os.path.join(source_root, "tests/unit_tests/c_wrappers/res/fm/rms"), "bin"
-    )
+    shutil.copy(os.path.join(source_root, "tests/unit_tests/shared/share/rms"), "bin")
     monkeypatch.setenv("RMS_SITE_CONFIG", "rms_config.yml")
 
     action = {"exit_status": 0}
@@ -63,17 +76,17 @@ def test_run_class_multi_seed(monkeypatch, test_input, expected_result, source_r
     with open("run_path/random.seeds", "w") as f:
         f.write("\n".join(seed_file))
 
-    r = RMSRun(test_input, "project", "workflow", run_path="run_path")
+    r = rms.RMSRun(test_input, "project", "workflow", run_path="run_path")
     assert r.seed == expected_result
 
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_create():
     with pytest.raises(OSError):
-        RMSRun(0, "/project/does/not/exist", "workflow")
+        rms.RMSRun(0, "/project/does/not/exist", "workflow")
 
         os.mkdir("rms")
-        RMSRun(0, "rms", "workflow")
+        rms.RMSRun(0, "rms", "workflow")
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -84,31 +97,29 @@ def test_run_class(monkeypatch, source_root):
     os.mkdir("run_path")
     os.mkdir("bin")
     os.mkdir("project")
-    shutil.copy(
-        os.path.join(source_root, "tests/unit_tests/c_wrappers/res/fm/rms"), "bin"
-    )
+    shutil.copy(os.path.join(source_root, "tests/unit_tests/shared/share/rms"), "bin")
     monkeypatch.setenv("RMS_SITE_CONFIG", "rms_config.yml")
 
     action = {"exit_status": 0}
     with open("run_path/action.json", "w") as f:
         f.write(json.dumps(action))
 
-    r = RMSRun(0, "project", "workflow", run_path="run_path", allow_no_env=True)
+    r = rms.RMSRun(0, "project", "workflow", run_path="run_path", allow_no_env=True)
     r.run()
 
     action = {"exit_status": 1}
     with open("run_path/action.json", "w") as f:
         f.write(json.dumps(action))
 
-    r = RMSRun(0, "project", "workflow", run_path="run_path", allow_no_env=True)
-    with pytest.raises(RMSRunException):
+    r = rms.RMSRun(0, "project", "workflow", run_path="run_path", allow_no_env=True)
+    with pytest.raises(rms.RMSRunException):
         r.run()
 
     action = {"exit_status": 0}
     with open("run_path/action.json", "w") as f:
         f.write(json.dumps(action))
 
-    r = RMSRun(
+    r = rms.RMSRun(
         0,
         "project",
         "workflow",
@@ -116,7 +127,7 @@ def test_run_class(monkeypatch, source_root):
         target_file="some_file",
         allow_no_env=True,
     )
-    with pytest.raises(RMSRunException):
+    with pytest.raises(rms.RMSRunException):
         r.run()
 
     action = {
@@ -126,7 +137,7 @@ def test_run_class(monkeypatch, source_root):
     with open("run_path/action.json", "w") as f:
         f.write(json.dumps(action))
 
-    r = RMSRun(
+    r = rms.RMSRun(
         0,
         "project",
         "workflow",
@@ -145,9 +156,7 @@ def test_run(monkeypatch, source_root):
     os.mkdir("run_path")
     os.mkdir("bin")
     os.mkdir("project")
-    shutil.copy(
-        os.path.join(source_root, "tests/unit_tests/c_wrappers/res/fm/rms"), "bin"
-    )
+    shutil.copy(os.path.join(source_root, "tests/unit_tests/shared/share/rms"), "bin")
     monkeypatch.setenv("RMS_SITE_CONFIG", "rms_config.yml")
 
     action = {"exit_status": 0}
@@ -160,14 +169,14 @@ def test_run(monkeypatch, source_root):
     with open("run_path/action.json", "w") as f:
         f.write(json.dumps(action))
 
-    with pytest.raises(RMSRunException):
+    with pytest.raises(rms.RMSRunException):
         rms_run(0, "project", "workflow", run_path="run_path", allow_no_env=True)
 
     action = {"exit_status": 0}
     with open("run_path/action.json", "w") as f:
         f.write(json.dumps(action))
 
-    with pytest.raises(RMSRunException):
+    with pytest.raises(rms.RMSRunException):
         rms_run(
             0,
             "project",
@@ -226,7 +235,7 @@ def test_rms_load_env(monkeypatch, source_root, val, carry_over):
     os.mkdir("bin")
     os.mkdir("project")
     shutil.copy(
-        os.path.join(source_root, "tests/unit_tests/c_wrappers/res/fm/rms"),
+        os.path.join(source_root, "tests/unit_tests/shared/share/rms"),
         "bin",
     )
     monkeypatch.setenv("RMS_SITE_CONFIG", "rms_config.yml")
@@ -236,7 +245,7 @@ def test_rms_load_env(monkeypatch, source_root, val, carry_over):
         f.write(json.dumps(action))
 
     rms_exec = pkg_resources.resource_filename(
-        "ert.shared", "share/ert/forward-models/res/script/rms"
+        "ert.shared", "share/ert/forward-models/res/script/rms.py"
     )
     subprocess.check_call(
         [
@@ -297,7 +306,7 @@ def test_rms_drop_env(monkeypatch, source_root, val, carry_over):
     os.mkdir("bin")
     os.mkdir("project")
     shutil.copy(
-        os.path.join(source_root, "tests/unit_tests/c_wrappers/res/fm/rms"),
+        os.path.join(source_root, "tests/unit_tests/shared/share/rms"),
         "bin",
     )
     monkeypatch.setenv("RMS_SITE_CONFIG", "rms_config.yml")
@@ -307,7 +316,7 @@ def test_rms_drop_env(monkeypatch, source_root, val, carry_over):
         f.write(json.dumps(action))
 
     rms_exec = pkg_resources.resource_filename(
-        "ert.shared", "share/ert/forward-models/res/script/rms"
+        "ert.shared", "share/ert/forward-models/res/script/rms.py"
     )
     subprocess.check_call(
         [
@@ -344,9 +353,7 @@ def test_run_class_with_existing_target_file(monkeypatch, source_root):
     os.mkdir("run_path")
     os.mkdir("bin")
     os.mkdir("project")
-    shutil.copy(
-        os.path.join(source_root, "tests/unit_tests/c_wrappers/res/fm/rms"), "bin"
-    )
+    shutil.copy(os.path.join(source_root, "tests/unit_tests/shared/share/rms"), "bin")
     monkeypatch.setenv("RMS_SITE_CONFIG", "rms_config.yml")
 
     target_file = os.path.join(os.getcwd(), "rms_target_file")
@@ -360,7 +367,7 @@ def test_run_class_with_existing_target_file(monkeypatch, source_root):
     with open(target_file, "w") as f:
         f.write("This is a dummy target file")
 
-    r = RMSRun(
+    r = rms.RMSRun(
         0,
         "project",
         "workflow",
@@ -381,9 +388,7 @@ def test_run_wrapper(monkeypatch, source_root):
     os.mkdir("run_path")
     os.mkdir("bin")
     os.mkdir("project")
-    shutil.copy(
-        os.path.join(source_root, "tests/unit_tests/c_wrappers/res/fm/rms"), "bin"
-    )
+    shutil.copy(os.path.join(source_root, "tests/unit_tests/shared/share/rms"), "bin")
 
     with open(wrapper_file_name, "w") as f:
         f.write("#!/bin/bash\n")
@@ -403,14 +408,14 @@ def test_run_wrapper(monkeypatch, source_root):
     with open("run_path/action.json", "w") as f:
         f.write(json.dumps(action))
 
-    with pytest.raises(RMSRunException):
+    with pytest.raises(rms.RMSRunException):
         rms_run(0, "project", "workflow", run_path="run_path", allow_no_env=True)
 
     action = {"exit_status": 0}
     with open("run_path/action.json", "w") as f:
         f.write(json.dumps(action))
 
-    with pytest.raises(RMSRunException):
+    with pytest.raises(rms.RMSRunException):
         rms_run(
             0,
             "project",
@@ -455,9 +460,7 @@ env:
     os.mkdir("run_path")
     os.mkdir("bin")
     os.mkdir("project")
-    shutil.copy(
-        os.path.join(source_root, "tests/unit_tests/c_wrappers/res/fm/rms"), "bin"
-    )
+    shutil.copy(os.path.join(source_root, "tests/unit_tests/shared/share/rms"), "bin")
 
     with open(wrapper_file_name, "w") as f:
         f.write(
@@ -508,9 +511,7 @@ env:
     os.mkdir("run_path")
     os.mkdir("bin")
     os.mkdir("project")
-    shutil.copy(
-        os.path.join(source_root, "tests/unit_tests/c_wrappers/res/fm/rms"), "bin"
-    )
+    shutil.copy(os.path.join(source_root, "tests/unit_tests/shared/share/rms"), "bin")
 
     with open(wrapper_file_name, "w") as f:
         f.write(
@@ -568,9 +569,7 @@ env:
     os.mkdir("run_path")
     os.mkdir("bin")
     os.mkdir("project")
-    shutil.copy(
-        os.path.join(source_root, "tests/unit_tests/c_wrappers/res/fm/rms"), "bin"
-    )
+    shutil.copy(os.path.join(source_root, "tests/unit_tests/shared/share/rms"), "bin")
 
     monkeypatch.setenv("RMS_SITE_CONFIG", "rms_config.yml")
     monkeypatch.setenv("PATH", f"{os.getcwd()}/bin:{os.environ['PATH']}")
@@ -582,7 +581,7 @@ env:
     with open("run_path/action.json", "w") as f:
         f.write(json.dumps(action))
 
-    with pytest.raises(RMSRunException) as e:
+    with pytest.raises(rms.RMSRunException) as e:
         rms_run(
             0,
             "project",
@@ -621,9 +620,7 @@ def test_rms_job_script_parser(monkeypatch, source_root):
     os.mkdir("run_path")
     os.mkdir("bin")
     os.mkdir("project")
-    shutil.copy(
-        os.path.join(source_root, "tests/unit_tests/c_wrappers/res/fm/rms"), "bin"
-    )
+    shutil.copy(os.path.join(source_root, "tests/unit_tests/shared/share/rms"), "bin")
     monkeypatch.setenv("RMS_SITE_CONFIG", "rms_config.yml")
 
     action = {"exit_status": 0}
@@ -631,7 +628,7 @@ def test_rms_job_script_parser(monkeypatch, source_root):
         f.write(json.dumps(action))
 
     rms_exec = pkg_resources.resource_filename(
-        "ert.shared", "share/ert/forward-models/res/script/rms"
+        "ert.shared", "share/ert/forward-models/res/script/rms.py"
     )
     subprocess.check_call(
         [
@@ -670,10 +667,10 @@ def test_rms_job_script_parser(monkeypatch, source_root):
 def test_load(monkeypatch):
     monkeypatch.setenv("RMS_SITE_CONFIG", "file/does/not/exist")
     with pytest.raises(IOError):
-        conf = RMSConfig()
+        conf = rms.RMSConfig()
 
-    monkeypatch.setenv("RMS_SITE_CONFIG", RMSConfig.DEFAULT_CONFIG_FILE)
-    conf = RMSConfig()
+    monkeypatch.setenv("RMS_SITE_CONFIG", rms.RMSConfig.DEFAULT_CONFIG_FILE)
+    conf = rms.RMSConfig()
 
     with pytest.raises(OSError):
         # pylint: disable=pointless-statement
@@ -684,7 +681,7 @@ def test_load(monkeypatch):
 
     monkeypatch.setenv("RMS_SITE_CONFIG", "file.yml")
     with pytest.raises(ValueError):
-        conf = RMSConfig()
+        conf = rms.RMSConfig()
 
     os.mkdir("bin")
     with open("bin/rms", "w") as f:
@@ -694,7 +691,7 @@ def test_load(monkeypatch):
     with open("file.yml", "w") as f:
         f.write("executable: bin/rms")
 
-    conf = RMSConfig()
+    conf = rms.RMSConfig()
     assert conf.executable == "bin/rms"
     assert conf.threads is None
 
@@ -702,14 +699,14 @@ def test_load(monkeypatch):
         f.write("executable: bin/rms\n")
         f.write("threads: 17")
 
-    conf = RMSConfig()
+    conf = rms.RMSConfig()
     assert conf.threads == 17
 
     with open("file.yml", "w") as f:
         f.write("executable: bin/rms\n")
         f.write("wrapper: not-exisiting-exec")
 
-    conf = RMSConfig()
+    conf = rms.RMSConfig()
 
     with pytest.raises(OSError):
         # pylint: disable=pointless-statement
@@ -719,7 +716,7 @@ def test_load(monkeypatch):
         f.write("executable: bin/rms\n")
         f.write("wrapper: bash")
 
-    conf = RMSConfig()
+    conf = rms.RMSConfig()
     assert conf.wrapper == "bash"
 
 
@@ -737,7 +734,7 @@ env:
         PYTHONPATH: /some/pythonpath
 """
         )
-    conf = RMSConfig()
+    conf = rms.RMSConfig()
     assert conf.env("10.1.3")["PATH_PREFIX"] == "/some/path"
     assert conf.env("10.1.3")["PYTHONPATH"] == "/some/pythonpath"
     assert conf.env("non_existing") == {}

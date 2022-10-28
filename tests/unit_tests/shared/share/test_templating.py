@@ -1,11 +1,35 @@
 import json
+import os
 import subprocess
 
 import jinja2
 import pkg_resources
 import pytest
 
-from ert._c_wrappers.fm.templating import load_parameters, render_template
+from tests.utils import SOURCE_DIR
+
+from ._import_from_location import import_from_location
+
+# import template_render.py from ert/forward-models/templating/script
+# package-data path which. These are kept out of the ert package to avoid the
+# overhead of importing ert. This is necessary as these may be invoked as a
+# subprocess on each realization.
+
+
+template_render = import_from_location(
+    "template_render",
+    os.path.join(
+        SOURCE_DIR,
+        "src/ert/shared/share/ert/forward-models/templating/script/template_render.py",
+    ),
+)
+
+render_template = template_render.render_template
+
+
+def load_parameters():
+    return template_render.load_data("parameters.json")
+
 
 well_drill_tmpl = (
     'PROD1 takes value {{ well_drill.PROD1 }}, implying {{ "on" if well_drill.PROD1 >= 0.5 else "off" }}\n'  # noqa
@@ -197,7 +221,7 @@ def test_template_executable():
     )
     template_render_exec = pkg_resources.resource_filename(
         "ert.shared",
-        "share/ert/forward-models/templating/script/template_render",
+        "share/ert/forward-models/templating/script/template_render.py",
     )
 
     subprocess.call(template_render_exec + params, shell=True, stdout=subprocess.PIPE)

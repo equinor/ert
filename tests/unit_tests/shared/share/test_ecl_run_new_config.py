@@ -10,7 +10,29 @@ import pytest
 import yaml
 from ecl.summary import EclSum
 
-from ert._c_wrappers.fm.ecl import Ecl100Config, EclRun, EclrunConfig, run
+from tests.utils import SOURCE_DIR
+
+from ._import_from_location import import_from_location
+
+# import ecl_config.py and ecl_run from ert/forward-models/res/script
+# package-data path which. These are kept out of the ert package to avoid the
+# overhead of importing ert. This is necessary as these may be invoked as a
+# subprocess on each realization.
+
+
+ecl_config = import_from_location(
+    "ecl_config",
+    os.path.join(
+        SOURCE_DIR, "src/ert/shared/share/ert/forward-models/res/script/ecl_config.py"
+    ),
+)
+
+ecl_run = import_from_location(
+    "ecl_run",
+    os.path.join(
+        SOURCE_DIR, "src/ert/shared/share/ert/forward-models/res/script/ecl_run.py"
+    ),
+)
 
 
 def find_version(output):
@@ -38,12 +60,12 @@ def init_eclrun_config(tmp_path, monkeypatch, eclrun_conf):
 
 
 def test_get_version_raise():
-    ecl_config = Ecl100Config()
-    class_file = inspect.getfile(Ecl100Config)
+    econfig = ecl_config.Ecl100Config()
+    class_file = inspect.getfile(ecl_config.Ecl100Config)
     class_dir = os.path.dirname(os.path.abspath(class_file))
     msg = os.path.join(class_dir, "ecl100_config.yml")
     with pytest.raises(ValueError, match=msg):
-        ecl_config._get_version(None)
+        econfig._get_version(None)
 
 
 @pytest.mark.usefixtures("use_tmpdir", "init_eclrun_config")
@@ -59,13 +81,13 @@ with open("env.json", "w") as f:
 """
         )
     os.chmod("eclrun", os.stat("eclrun").st_mode | stat.S_IEXEC)
-    ecl_config = Ecl100Config()
-    eclrun_config = EclrunConfig(ecl_config, "2019.3")
-    ecl_run = EclRun("DUMMY", None, check_status=False)
+    econfig = ecl_config.Ecl100Config()
+    eclrun_config = ecl_config.EclrunConfig(econfig, "2019.3")
+    erun = ecl_run.EclRun("DUMMY", None, check_status=False)
     with mock.patch.object(
-        ecl_run, "_get_run_command", mock.MagicMock(return_value="./eclrun")
+        erun, "_get_run_command", mock.MagicMock(return_value="./eclrun")
     ):
-        ecl_run.runEclipse(eclrun_config=eclrun_config)
+        erun.runEclipse(eclrun_config=eclrun_config)
     with open("env.json") as f:
         run_env = json.load(f)
 
@@ -88,19 +110,19 @@ def test_run(source_root):
         os.path.join(source_root, "test-data/eclipse/SPE1.DATA"),
         "SPE1.DATA",
     )
-    ecl_config = Ecl100Config()
+    econfig = ecl_config.Ecl100Config()
 
-    ecl_run = EclRun("SPE1.DATA", None)
-    ecl_run.runEclipse(eclrun_config=EclrunConfig(ecl_config, "2019.1"))
+    erun = ecl_run.EclRun("SPE1.DATA", None)
+    erun.runEclipse(eclrun_config=ecl_config.EclrunConfig(econfig, "2019.1"))
 
-    ok_path = os.path.join(ecl_run.runPath(), f"{ecl_run.baseName()}.OK")
-    log_path = os.path.join(ecl_run.runPath(), f"{ecl_run.baseName()}.LOG")
+    ok_path = os.path.join(erun.runPath(), f"{erun.baseName()}.OK")
+    log_path = os.path.join(erun.runPath(), f"{erun.baseName()}.LOG")
 
     assert os.path.isfile(ok_path)
     assert os.path.isfile(log_path)
     assert os.path.getsize(log_path) > 0
 
-    errors = ecl_run.parseErrors()
+    errors = erun.parseErrors()
     assert len(errors) == 0
 
 
@@ -111,19 +133,19 @@ def test_run_new_log_file(source_root):
         os.path.join(source_root, "test-data/eclipse/SPE1.DATA"),
         "SPE1.DATA",
     )
-    ecl_config = Ecl100Config()
+    econfig = ecl_config.Ecl100Config()
 
-    ecl_run = EclRun("SPE1.DATA", None)
-    ecl_run.runEclipse(eclrun_config=EclrunConfig(ecl_config, "2019.3"))
+    erun = ecl_run.EclRun("SPE1.DATA", None)
+    erun.runEclipse(eclrun_config=ecl_config.EclrunConfig(econfig, "2019.3"))
 
-    ok_path = os.path.join(ecl_run.runPath(), f"{ecl_run.baseName()}.OK")
-    log_path = os.path.join(ecl_run.runPath(), f"{ecl_run.baseName()}.OUT")
+    ok_path = os.path.join(erun.runPath(), f"{erun.baseName()}.OK")
+    log_path = os.path.join(erun.runPath(), f"{erun.baseName()}.OUT")
 
     assert os.path.isfile(ok_path)
     assert os.path.isfile(log_path)
     assert os.path.getsize(log_path) > 0
 
-    errors = ecl_run.parseErrors()
+    errors = erun.parseErrors()
     assert len(errors) == 0
 
 
@@ -134,8 +156,8 @@ def test_run_api(source_root):
         os.path.join(source_root, "test-data/eclipse/SPE1.DATA"),
         "SPE1.DATA",
     )
-    ecl_config = Ecl100Config()
-    run(ecl_config, ["SPE1.DATA", "--version=2019.3"])
+    econfig = ecl_config.Ecl100Config()
+    ecl_run.run(econfig, ["SPE1.DATA", "--version=2019.3"])
 
     assert os.path.isfile("SPE1.DATA")
 
@@ -147,11 +169,11 @@ def test_failed_run(source_root):
         os.path.join(source_root, "test-data/eclipse/SPE1_ERROR.DATA"),
         "SPE1_ERROR.DATA",
     )
-    ecl_config = Ecl100Config()
-    eclrun_config = EclrunConfig(ecl_config, "2019.3")
-    ecl_run = EclRun("SPE1_ERROR", None)
+    econfig = ecl_config.Ecl100Config()
+    eclrun_config = ecl_config.EclrunConfig(econfig, "2019.3")
+    erun = ecl_run.EclRun("SPE1_ERROR", None)
     with pytest.raises(Exception, match="ERROR"):
-        ecl_run.runEclipse(eclrun_config=eclrun_config)
+        erun.runEclipse(eclrun_config=eclrun_config)
 
 
 @pytest.mark.requires_eclipse
@@ -161,8 +183,8 @@ def test_failed_run_OK(source_root):
         os.path.join(source_root, "test-data/eclipse/SPE1_ERROR.DATA"),
         "SPE1_ERROR.DATA",
     )
-    ecl_config = Ecl100Config()
-    run(ecl_config, ["SPE1_ERROR", "--version=2019.3", "--ignore-errors"])
+    econfig = ecl_config.Ecl100Config()
+    ecl_run.run(econfig, ["SPE1_ERROR", "--version=2019.3", "--ignore-errors"])
 
 
 @pytest.mark.requires_eclipse
@@ -172,9 +194,9 @@ def test_no_hdf5_output_by_default_with_ecl100(source_root):
         os.path.join(source_root, "test-data/eclipse/SPE1.DATA"),
         "SPE1.DATA",
     )
-    ecl_config = Ecl100Config()
+    econfig = ecl_config.Ecl100Config()
     # check that by default .h5 file IS NOT produced
-    run(ecl_config, ["SPE1.DATA", "--version=2019.3"])
+    ecl_run.run(econfig, ["SPE1.DATA", "--version=2019.3"])
     assert not os.path.exists("SPE1.h5")
 
 
@@ -185,9 +207,9 @@ def test_flag_to_produce_hdf5_output_with_ecl100(source_root):
         os.path.join(source_root, "test-data/eclipse/SPE1.DATA"),
         "SPE1.DATA",
     )
-    ecl_config = Ecl100Config()
+    econfig = ecl_config.Ecl100Config()
     # check that with flag .h5 file IS produced
-    run(ecl_config, ["SPE1.DATA", "--version=2019.3", "--summary-conversion"])
+    ecl_run.run(econfig, ["SPE1.DATA", "--version=2019.3", "--summary-conversion"])
     assert os.path.exists("SPE1.h5")
 
 
@@ -198,8 +220,8 @@ def test_mpi_run(source_root):
         os.path.join(source_root, "test-data/eclipse/SPE1_PARALLEL.DATA"),
         "SPE1_PARALLEL.DATA",
     )
-    ecl_config = Ecl100Config()
-    run(ecl_config, ["SPE1_PARALLEL.DATA", "--version=2019.3", "--num-cpu=2"])
+    econfig = ecl_config.Ecl100Config()
+    ecl_run.run(econfig, ["SPE1_PARALLEL.DATA", "--version=2019.3", "--num-cpu=2"])
     assert os.path.isfile("SPE1_PARALLEL.OUT")
     assert os.path.getsize("SPE1_PARALLEL.OUT") > 0
 
@@ -211,11 +233,11 @@ def test_summary_block(source_root):
         os.path.join(source_root, "test-data/eclipse/SPE1.DATA"),
         "SPE1.DATA",
     )
-    ecl_config = Ecl100Config()
-    ecl_run = EclRun("SPE1.DATA", None)
-    ret_value = ecl_run.summary_block()
+    econfig = ecl_config.Ecl100Config()
+    erun = ecl_run.EclRun("SPE1.DATA", None)
+    ret_value = erun.summary_block()
     assert ret_value is None
 
-    ecl_run.runEclipse(eclrun_config=EclrunConfig(ecl_config, "2019.3"))
-    ecl_sum = ecl_run.summary_block()
+    erun.runEclipse(eclrun_config=ecl_config.EclrunConfig(econfig, "2019.3"))
+    ecl_sum = erun.summary_block()
     assert isinstance(ecl_sum, EclSum)
