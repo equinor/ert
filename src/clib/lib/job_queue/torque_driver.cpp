@@ -543,7 +543,7 @@ torque_driver_get_qstat_status(torque_driver_type *driver,
         int max_sleep_time = 2 * 2 * 2 * 2; /* max 4 attempts */
         while ((return_value != 0) & (sleep_time < max_sleep_time)) {
             return_value =
-                util_spawn_blocking(driver->qstat_cmd, 1, (const char **)argv,
+                util_spawn_blocking(driver->qstat_cmd, 2, (const char **)argv,
                                     tmp_std_file, tmp_err_file);
             if (return_value != 0) {
                 torque_debug(driver,
