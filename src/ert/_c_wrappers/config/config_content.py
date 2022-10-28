@@ -7,6 +7,7 @@ from ert._c_wrappers.config.config_error import ConfigError
 from ert._c_wrappers.config.config_path_elm import ConfigPathElm
 from ert._c_wrappers.config.content_type_enum import ContentTypeEnum
 from ert._c_wrappers.config.schema_item import SchemaItem
+from ert._c_wrappers.util.substitution_list import SubstitutionList
 
 if TYPE_CHECKING:
     from ert._c_wrappers.config.config_parser import ConfigParser
@@ -180,6 +181,9 @@ class ConfigContent(BaseCClass):
     _create_path_elm = ResPrototype(
         "config_path_elm_ref config_content_add_path_elm(config_content, char*)"
     )
+    _get_const_define_list = ResPrototype(
+        "subst_list_ref config_content_get_const_define_list(config_content)"
+    )
     _add_define = ResPrototype(
         "void config_content_add_define(config_content, char*, char*)"
     )
@@ -251,6 +255,9 @@ class ConfigContent(BaseCClass):
 
     def create_path_elm(self, path) -> ConfigPathElm:
         return self._create_path_elm(path)
+
+    def get_const_define_list(self):
+        return self._get_const_define_list()
 
     def add_define(self, key: str, value: str):
         self._add_define(key, value)

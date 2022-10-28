@@ -61,7 +61,7 @@ config_content_get_value_node(const config_content_type *content,
 extern "C" void config_content_add_define(config_content_type *content,
                                           const char *key, const char *value);
 subst_list_type *config_content_get_define_list(config_content_type *content);
-const subst_list_type *
+extern "C" const subst_list_type *
 config_content_get_const_define_list(const config_content_type *content);
 const char *config_content_get_config_file(const config_content_type *content,
                                            bool abs_path);

@@ -20,11 +20,19 @@ def without_key(a_dict, key):
 @pytest.fixture(name="snake_oil_structure_config")
 def fixture_snake_oil_structure_config(copy_case):
     copy_case("snake_oil_structure")
+    cwd = os.getcwd()
+    config_file_name = "config"
     return {
         ConfigKeys.RUNPATH_FILE: "runpath",
-        ConfigKeys.CONFIG_DIRECTORY: os.getcwd(),
-        ConfigKeys.CONFIG_FILE_KEY: "config",
-        ConfigKeys.DEFINE_KEY: {"keyA": "valA", "keyB": "valB"},
+        ConfigKeys.CONFIG_FILE_KEY: config_file_name,
+        ConfigKeys.DEFINE_KEY: {
+            "<CWD>": cwd,
+            "<CONFIG_PATH>": cwd,
+            "<CONFIG_FILE>": config_file_name,
+            "<CONFIG_FILE_BASE>": config_file_name,
+            "keyA": "valA",
+            "keyB": "valB",
+        },
         ConfigKeys.DATA_KW_KEY: {"keyC": "valC", "keyD": "valD"},
     }
 
@@ -59,16 +67,19 @@ def fixture_snake_oil_structure_config_file(snake_oil_structure_config):
 
 
 def test_two_instances_of_same_config_are_equal(snake_oil_structure_config):
-    assert SubstConfig(config_dict=snake_oil_structure_config) == SubstConfig(
-        config_dict=snake_oil_structure_config
-    )
+    assert SubstConfig.from_dict(
+        config_dict=snake_oil_structure_config, num_cpu=1
+    ) == SubstConfig.from_dict(config_dict=snake_oil_structure_config, num_cpu=1)
 
 
 def test_two_instances_of_different_config_are_not_equal(snake_oil_structure_config):
-    assert SubstConfig(config_dict=snake_oil_structure_config) != SubstConfig(
+    assert SubstConfig.from_dict(
+        config_dict=snake_oil_structure_config, num_cpu=1
+    ) != SubstConfig.from_dict(
         config_dict=with_key(
             snake_oil_structure_config, ConfigKeys.RUNPATH_FILE, "aaaaa"
-        )
+        ),
+        num_cpu=1,
     )
 
 
@@ -77,11 +88,15 @@ def test_old_and_new_constructor_creates_equal_config(
 ):
     assert ResConfig(
         user_config_file=snake_oil_structure_config_file
-    ).subst_config == SubstConfig(config_dict=snake_oil_structure_config)
+    ).subst_config == SubstConfig.from_dict(
+        config_dict=snake_oil_structure_config, num_cpu=1
+    )
 
 
 def test_complete_config_reads_correct_values(snake_oil_structure_config):
-    subst_config = SubstConfig(config_dict=snake_oil_structure_config)
+    subst_config = SubstConfig.from_dict(
+        config_dict=snake_oil_structure_config, num_cpu=1
+    )
     assert subst_config["<CWD>"] == os.getcwd()
     assert subst_config["<CONFIG_PATH>"] == os.getcwd()
     assert subst_config["<DATE>"] == datetime.datetime.now().date().isoformat()
@@ -94,21 +109,8 @@ def test_complete_config_reads_correct_values(snake_oil_structure_config):
 
 
 def test_missing_runpath_gives_default_value(snake_oil_structure_config):
-    subst_config = SubstConfig(
-        config_dict=without_key(snake_oil_structure_config, ConfigKeys.RUNPATH_FILE)
+    subst_config = SubstConfig.from_dict(
+        config_dict=without_key(snake_oil_structure_config, ConfigKeys.RUNPATH_FILE),
+        num_cpu=1,
     )
     assert subst_config["<RUNPATH_FILE>"] == os.getcwd() + "/.ert_runpath_list"
-
-
-def test_empty_config_raises_error():
-    with pytest.raises(ValueError):
-        SubstConfig(config_dict={})
-
-
-def test_missing_config_directory_raises_error(snake_oil_structure_config):
-    with pytest.raises(ValueError):
-        SubstConfig(
-            config_dict=without_key(
-                snake_oil_structure_config, ConfigKeys.CONFIG_DIRECTORY
-            )
-        )

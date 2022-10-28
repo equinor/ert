@@ -174,7 +174,7 @@ class ResConfig:
             else None
         )
 
-        self.subst_config = SubstConfig(
+        self.subst_config = SubstConfig.from_config_content(
             config_content=user_config_content, num_cpu=self.preferred_num_cpu()
         )
         self.site_config = SiteConfig.from_config_content(
@@ -300,7 +300,7 @@ class ResConfig:
             else None
         )
 
-        self.subst_config = SubstConfig(
+        self.subst_config = SubstConfig.from_dict(
             config_dict=config_dict, num_cpu=self.preferred_num_cpu()
         )
         self.site_config = SiteConfig.from_config_dict(

@@ -413,6 +413,10 @@ def test_res_config_dict_constructor(setup_case):
             "../output/run_path_file/.ert-runpath-list_<CASE_DIR>"
         ),  # subst
         ConfigKeys.DEFINE_KEY: {
+            "<CWD>": absolute_config_dir,
+            "<CONFIG_PATH>": absolute_config_dir,
+            "<CONFIG_FILE>": config_file_name,
+            "<CONFIG_FILE_BASE>": config_file_name.split(".", maxsplit=1)[0],
             "<USER>": "TEST_USER",
             "<SCRATCH>": "scratch/ert",
             "<CASE_DIR>": "the_extensive_case",
