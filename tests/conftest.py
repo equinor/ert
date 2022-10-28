@@ -20,8 +20,8 @@ settings.register_profile(
 )
 
 
-@pytest.fixture(scope="session")
-def source_root():
+@pytest.fixture(scope="session", name="source_root")
+def fixture_source_root():
     return SOURCE_DIR
 
 
@@ -60,8 +60,8 @@ def maximize_ulimits():
     resource.setrlimit(resource.RLIMIT_NOFILE, limits)
 
 
-@pytest.fixture()
-def setup_case(tmp_path, source_root, monkeypatch):
+@pytest.fixture(name="setup_case")
+def fixture_setup_case(tmp_path, source_root, monkeypatch):
     def copy_case(path, config_file):
         shutil.copytree(os.path.join(source_root, "test-data", path), "test_data")
         monkeypatch.chdir(tmp_path / "test_data")
@@ -86,8 +86,8 @@ def minimum_case(setup_case):
     return EnKFMain(setup_case("simple_config", "minimum_config"))
 
 
-@pytest.fixture()
-def copy_case(tmp_path, source_root, monkeypatch):
+@pytest.fixture(name="copy_case")
+def fixture_copy_case(tmp_path, source_root, monkeypatch):
     def _copy_case(path):
         shutil.copytree(os.path.join(source_root, "test-data", path), "test_data")
         monkeypatch.chdir(tmp_path / "test_data")
