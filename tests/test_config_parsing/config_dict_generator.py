@@ -18,18 +18,6 @@ words = st.text(
 )
 
 
-@st.composite
-def define_keys(draw):
-    """
-    When initializing from dict, unlike when reading from file,
-    defines are not resolved so we must make sure a define key
-    is not present in any file names etc. Therefore all file_names
-    are upper case and define keys are prefixed with the lower case
-    'key'.
-    """
-    return "key" + draw(words)
-
-
 def touch(filename):
     with open(file=filename, mode="w", encoding="utf-8") as fh:
         fh.write(" ")
@@ -218,8 +206,34 @@ def queue_options(draw, systems):
 
 
 @st.composite
+def defines(draw, config_files, cwds):
+    """
+    We combine default defines that are magically populated in the config
+    content path using the predefined keyword mechanism with random key values.
+    When initializing from dict, unlike when reading from file, defines are not
+    resolved so we must make sure a define key is not present in any file names
+    etc. Therefore all file_names are upper case and define keys are prefixed
+    with the lower case 'key'.
+    """
+    config_file_name = os.path.basename(draw(config_files))
+    pre_defined_kw_map = draw(
+        st.fixed_dictionaries(
+            {
+                "<CWD>": cwds,
+                "<CONFIG_PATH>": cwds,
+                "<CONFIG_FILE>": st.just(config_file_name),
+                "<CONFIG_FILE_BASE>": st.just(config_file_name.split(".")[0]),
+            }
+        )
+    )
+    random_defines = draw(st.dictionaries(st.just("key-" + draw(words)), words))
+    return {**random_defines, **pre_defined_kw_map}
+
+
+@st.composite
 def config_dicts(draw):
     queue_system = draw(queue_systems)
+    config_file_name = st.just(draw(file_names) + ".ert")
     config_dict = draw(
         st.fixed_dictionaries(
             {
@@ -236,9 +250,8 @@ def config_dicts(draw):
                 ConfigKeys.STD_CUTOFF_KEY: small_floats,
                 ConfigKeys.MAX_RUNTIME: positives,
                 ConfigKeys.MIN_REALIZATIONS: positives,
-                ConfigKeys.CONFIG_DIRECTORY: st.just(os.getcwd()),
-                ConfigKeys.CONFIG_FILE_KEY: st.just(draw(file_names) + ".ert"),
-                ConfigKeys.DEFINE_KEY: st.dictionaries(define_keys(), words),
+                ConfigKeys.CONFIG_FILE_KEY: st.just(config_file_name),
+                ConfigKeys.DEFINE_KEY: defines(config_file_name, st.just(os.getcwd())),
                 ConfigKeys.DATA_KW_KEY: st.dictionaries(words, words),
                 ConfigKeys.DATA_FILE: st.just(draw(file_names) + ".DATA"),
                 ConfigKeys.GRID: st.just(draw(words) + ".EGRID"),
@@ -358,10 +371,8 @@ def config_dicts(draw):
 
     draw(egrids).to_file(config_dict[ConfigKeys.GRID])
 
-    assume(config_dict[ConfigKeys.DATA_FILE] != config_dict[ConfigKeys.CONFIG_FILE_KEY])
-    assume(
-        config_dict[ConfigKeys.RUNPATH_FILE] != config_dict[ConfigKeys.CONFIG_FILE_KEY]
-    )
+    assume(config_dict[ConfigKeys.DATA_FILE] != config_file_name)
+    assume(config_dict[ConfigKeys.RUNPATH_FILE] != config_file_name)
 
     return config_dict
 

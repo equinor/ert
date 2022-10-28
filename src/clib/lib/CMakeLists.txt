@@ -114,8 +114,7 @@ pybind11_add_module(
   enkf/summary_obs.cpp
   enkf/surface.cpp
   enkf/surface_config.cpp
-  enkf/trans_func.cpp
-  enkf/subst_config.cpp)
+  enkf/trans_func.cpp)
 
 # -----------------------------------------------------------------
 # Target: Python C Extension 'ert._clib'

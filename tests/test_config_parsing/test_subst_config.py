@@ -12,16 +12,18 @@ from .config_dict_generator import config_dicts, to_config_file
 @pytest.mark.usefixtures("use_tmpdir")
 @given(config_dicts())
 def test_two_instances_of_same_config_are_equal(config_dict):
-    assert SubstConfig(config_dict=config_dict) == SubstConfig(config_dict=config_dict)
+    assert SubstConfig.from_dict(
+        config_dict=config_dict, num_cpu=1
+    ) == SubstConfig.from_dict(config_dict=config_dict, num_cpu=1)
 
 
 @pytest.mark.usefixtures("use_tmpdir")
 @given(config_dicts(), config_dicts())
 def test_two_instances_of_different_config_are_not_equal(config_dict1, config_dict2):
     assume(config_dict1[ConfigKeys.DEFINE_KEY] != config_dict2[ConfigKeys.DEFINE_KEY])
-    assert SubstConfig(config_dict=config_dict1) != SubstConfig(
-        config_dict=config_dict2
-    )
+    assert SubstConfig.from_dict(
+        config_dict=config_dict1, num_cpu=1
+    ) != SubstConfig.from_dict(config_dict=config_dict2, num_cpu=1)
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -58,19 +60,6 @@ def test_complete_config_reads_correct_values(config_dict):
 @given(config_dicts())
 def test_missing_runpath_gives_default_value(config_dict):
     config_dict.pop(ConfigKeys.RUNPATH_FILE)
-    subst_config = SubstConfig(config_dict=config_dict)
+    subst_config = SubstConfig.from_dict(config_dict=config_dict, num_cpu=1)
     expected_runpath_filepath = os.path.join(os.getcwd(), ".ert_runpath_list")
     assert subst_config["<RUNPATH_FILE>"] == expected_runpath_filepath
-
-
-def test_empty_config_raises_error():
-    with pytest.raises(ValueError):
-        SubstConfig(config_dict={})
-
-
-@pytest.mark.usefixtures("use_tmpdir")
-@given(config_dicts())
-def test_missing_config_directory_raises_error(config_dict):
-    config_dict.pop(ConfigKeys.CONFIG_DIRECTORY)
-    with pytest.raises(ValueError):
-        SubstConfig(config_dict=config_dict)

@@ -1,114 +1,84 @@
 import os.path
-from typing import Optional
+from datetime import date
+from typing import Dict
 
-from cwrap import BaseCClass
-
-from ert._c_wrappers import ResPrototype
+from ert._c_wrappers.config import ConfigContent
 from ert._c_wrappers.enkf.config_keys import ConfigKeys
 from ert._c_wrappers.util import SubstitutionList
 
 
-class SubstConfig(BaseCClass):
-    TYPE_NAME = "subst_config"
-    _alloc = ResPrototype("void* subst_config_alloc(config_content,int)", bind=False)
-    _alloc_full = ResPrototype("void* subst_config_alloc_full(subst_list)", bind=False)
-    _free = ResPrototype("void  subst_config_free(subst_config)")
-    _get_subst_list = ResPrototype(
-        "subst_list_ref subst_config_get_subst_list( subst_config )"
-    )
-
+class SubstConfig:
     def __init__(
-        self, config_content=None, config_dict=None, num_cpu: Optional[int] = None
+        self,
+        defines: Dict[str, str],
+        data_kw: Dict[str, str],
+        runpath_file_name: str,
+        num_cpu: int,
     ):
-        if not (config_content is not None) ^ (config_dict is not None):
-            raise ValueError(
-                "SubstConfig must be instansiated with exactly one"
-                " of config_content or config_dict"
-            )
+        subst_list = SubstitutionList()
 
-        if config_dict is not None:
-            subst_list = SubstitutionList()
+        today_date_string = date.today().isoformat()
+        subst_list.addItem("<DATE>", today_date_string, "The current date.")
 
-            # DIRECTORY #
-            config_directory = config_dict.get(ConfigKeys.CONFIG_DIRECTORY)
-            if isinstance(config_directory, str):
-                subst_list.addItem(
-                    "<CWD>",
-                    config_directory,
-                    "The current working directory we are running from"
-                    " - the location of the config file.",
-                )
-                subst_list.addItem(
-                    "<CONFIG_PATH>",
-                    config_directory,
-                    "The current working directory we are running from"
-                    " - the location of the config file.",
-                )
-            else:
-                raise ValueError(f"{ConfigKeys.CONFIG_DIRECTORY} must be configured")
+        for key, value in defines.items():
+            subst_list.addItem(key, value)
+        for key, value in data_kw.items():
+            subst_list.addItem(key, value)
 
-            # FILE #
-            filename = config_dict.get(ConfigKeys.CONFIG_FILE_KEY)
-            if isinstance(filename, str):
-                subst_list.addItem("<CONFIG_FILE>", filename)
-                subst_list.addItem("<CONFIG_FILE_BASE>", os.path.splitext(filename)[0])
-
-            # CONSTANTS #
-            constants = config_dict.get(ConfigKeys.DEFINE_KEY)
-            if isinstance(constants, dict):
-                for key in constants:
-                    subst_list.addItem(key, constants[key])
-
-            # DATA_KW
-            data_kw = config_dict.get(ConfigKeys.DATA_KW_KEY)
-            if isinstance(data_kw, dict):
-                for key, value in data_kw.items():
-                    subst_list.addItem(key, value)
-
-            # RUNPATH_FILE #
-            runpath_file_name = config_dict.get(
-                ConfigKeys.RUNPATH_FILE, ConfigKeys.RUNPATH_LIST_FILE
-            )
+        if "<CONFIG_PATH>" in defines:
             runpath_file_path = os.path.normpath(
-                os.path.join(config_directory, runpath_file_name)
+                os.path.join(defines["<CONFIG_PATH>"], runpath_file_name)
             )
-            subst_list.addItem(
-                "<RUNPATH_FILE>",
-                runpath_file_path,
-                "The name of a file with a list of run directories.",
-            )
-            if num_cpu is not None:
-                subst_list.addItem(
-                    "<NUM_CPU>",
-                    str(num_cpu),
-                    "The number of CPU used for one forward model.",
-                )
-
-            c_ptr = self._alloc_full(subst_list)
-
         else:
-            num_cpu_as_int = num_cpu if num_cpu is not None else 0
-            c_ptr = self._alloc(config_content, num_cpu_as_int)
+            runpath_file_path = os.path.abspath(runpath_file_name)
+        subst_list.addItem(
+            "<RUNPATH_FILE>",
+            runpath_file_path,
+            "The name of a file with a list of run directories.",
+        )
+        subst_list.addItem(
+            "<NUM_CPU>",
+            str(num_cpu),
+            "The number of CPU used for one forward model.",
+        )
+        self.subst_list = subst_list
 
-        if c_ptr is None:
-            raise ValueError("Failed to construct Substonfig instance")
+    @classmethod
+    def from_dict(cls, config_dict: dict, num_cpu: int):
+        init_args = {}
+        init_args["defines"] = config_dict.get(ConfigKeys.DEFINE_KEY, {})
+        init_args["data_kw"] = config_dict.get(ConfigKeys.DATA_KW_KEY, {})
+        init_args["runpath_file_name"] = config_dict.get(
+            ConfigKeys.RUNPATH_FILE, ConfigKeys.RUNPATH_LIST_FILE
+        )
+        init_args["num_cpu"] = num_cpu
+        return cls(**init_args)
 
-        super().__init__(c_ptr)
+    @classmethod
+    def from_config_content(cls, config_content: ConfigContent, num_cpu: int):
+        init_args = {}
+        init_args["runpath_file_name"] = (
+            config_content.getValue(ConfigKeys.RUNPATH_FILE)
+            if ConfigKeys.RUNPATH_FILE in config_content
+            else ConfigKeys.RUNPATH_LIST_FILE
+        )
+
+        init_args["data_kw"] = {}
+        if ConfigKeys.DATA_KW_KEY in config_content:
+            for data_kw_definition in config_content[ConfigKeys.DATA_KW_KEY]:
+                init_args["data_kw"][data_kw_definition[0]] = data_kw_definition[1]
+
+        init_args["defines"] = dict(
+            (key, value) for key, value, _ in config_content.get_const_define_list()
+        )
+        init_args["num_cpu"] = num_cpu
+        return cls(**init_args)
 
     def __getitem__(self, key):
-        subst_list = self._get_subst_list()
-        return subst_list[key]
+        return self.subst_list[key]
 
     def __iter__(self):
-        subst_list = self._get_subst_list()
-        return iter(subst_list)
-
-    @property
-    def subst_list(self):
-        return self._get_subst_list().setParent(self)
-
-    def free(self):
-        self._free()
+        return iter(self.subst_list)
 
     def __eq__(self, other):
         list1 = self.subst_list
@@ -128,19 +98,13 @@ class SubstConfig(BaseCClass):
 
     def __repr__(self):
         concise_substitution_list = (
-            (
-                "["
-                + ",\n".join([f"({key}, {value})" for key, value, _ in self.subst_list])
-                + "]"
-            )
-            if self._address()
-            else "[]"
+            "["
+            + ",\n".join([f"({key}, {value})" for key, value, _ in self.subst_list])
+            + "]"
         )
         return f"<SubstConfig({concise_substitution_list})>"
 
     def __str__(self):
-        if not self._address():
-            return ""
         return (
             "["
             + ",\n".join(
