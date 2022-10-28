@@ -3,7 +3,7 @@ import os
 from collections import defaultdict
 from os.path import isfile
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 from ecl.ecl_util import get_num_cpu as get_num_cpu_from_data_file
 from ecl.util.util import StringList
@@ -22,6 +22,45 @@ from ert._c_wrappers.job_queue import QueueDriverEnum
 from ert._clib.config_keywords import init_site_config_parser, init_user_config_parser
 
 logger = logging.getLogger(__name__)
+
+SINGLE_VALUE_KEYS = [
+    ConfigKeys.ALPHA_KEY,
+    ConfigKeys.ANALYSIS_SELECT,
+    ConfigKeys.CONFIG_DIRECTORY,
+    ConfigKeys.CONFIG_FILE_KEY,
+    ConfigKeys.DATAROOT,
+    ConfigKeys.DATA_FILE,
+    ConfigKeys.ECLBASE,
+    ConfigKeys.ENSPATH,
+    ConfigKeys.GEN_KW_EXPORT_NAME,
+    ConfigKeys.GEN_KW_TAG_FORMAT,
+    ConfigKeys.GRID,
+    ConfigKeys.HISTORY_SOURCE,
+    ConfigKeys.ITER_CASE,
+    ConfigKeys.ITER_COUNT,
+    ConfigKeys.ITER_RETRY_COUNT,
+    ConfigKeys.JOBNAME,
+    ConfigKeys.JOB_SCRIPT,
+    ConfigKeys.LICENSE_PATH,
+    ConfigKeys.MAX_RESAMPLE,
+    ConfigKeys.MAX_RUNTIME,
+    ConfigKeys.MAX_SUBMIT,
+    ConfigKeys.MIN_REALIZATIONS,
+    ConfigKeys.NUM_CPU,
+    ConfigKeys.NUM_REALIZATIONS,
+    ConfigKeys.OBS_CONFIG,
+    ConfigKeys.QUEUE_SYSTEM,
+    ConfigKeys.RANDOM_SEED,
+    ConfigKeys.REFCASE,
+    ConfigKeys.RERUN_KEY,
+    ConfigKeys.RERUN_START_KEY,
+    ConfigKeys.RUNPATH,
+    ConfigKeys.RUNPATH_FILE,
+    ConfigKeys.STD_CUTOFF_KEY,
+    ConfigKeys.STOP_LONG_RUNNING,
+    ConfigKeys.TIME_MAP,
+    ConfigKeys.UPDATE_LOG_PATH,
+]
 
 
 def site_config_location():
@@ -119,7 +158,7 @@ class ResConfig:
             )
 
     def _log_config_content(self, config_content: ConfigContent) -> None:
-        tmp_dict = config_content.as_dict().copy()
+        tmp_dict = self._config_content_as_dict(config_content).copy()
         tmp_dict.pop("FORWARD_MODEL", None)
         tmp_dict.pop("LOAD_WORKFLOW", None)
         tmp_dict.pop("LOAD_WORKFLOW_JOB", None)
@@ -186,7 +225,7 @@ class ResConfig:
         else:
             self.random_seed = None
 
-        config_content_dict = user_config_content.as_dict()
+        config_content_dict = self._config_content_as_dict(user_config_content)
         self.analysis_config = AnalysisConfig.from_dict(config_content_dict)
 
         queue_config_args = {}
@@ -646,6 +685,30 @@ class ResConfig:
         self._errors = list(config_content.getErrors())
 
         return config_content
+
+    @staticmethod
+    def _config_content_as_dict(config_content: ConfigContent) -> Dict[str, List[Any]]:
+        content_dict: Dict[str, List[Any]] = {}
+        for key in config_content.keys():
+            item = config_content[key]
+            if key in SINGLE_VALUE_KEYS:
+                content_dict[key] = item.getValue()
+                continue
+            if len(item) > 1:
+                content_dict[key] = []
+                for node in item:
+                    values = list(node)
+                    if len(values) > 1:
+                        content_dict[key].append(values)
+                    else:
+                        content_dict[key].append(values[0])
+            else:
+                values = list(item[0])
+                if len(values) > 1:
+                    content_dict[key] = [values]
+                else:
+                    content_dict[key] = values[0]
+        return content_dict
 
     def free(self):
         self._free()  # pylint: disable=no-member

@@ -264,25 +264,3 @@ class ConfigContent(BaseCClass):
 
     def keys(self) -> List[str]:
         return list(self._keys())
-
-    def as_dict(self) -> Dict[str, List[Any]]:
-        # pylint: disable=consider-using-dict-items
-        # (false positive)
-        d: Dict[str, List[Any]] = {}
-        for key in self.keys():
-            item = self[key]
-            if len(item) > 1:
-                d[key] = []
-                for node in item:
-                    values = list(node)
-                    if len(values) > 1:
-                        d[key].append(values)
-                    else:
-                        d[key].append(values[0])
-            else:
-                values = list(item[0])
-                if len(values) > 1:
-                    d[key] = [values]
-                else:
-                    d[key] = values[0]
-        return d
