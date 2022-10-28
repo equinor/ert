@@ -271,12 +271,11 @@ def config_dicts(draw):
                                 st.integers(min_value=0, max_value=100),
                                 min_size=2,
                                 unique=True,
-                            ),  # should this be sorted?!
+                            ),
                         }
                     ),
                     unique_by=lambda field_dict: field_dict[ConfigKeys.NAME],
                 ),
-                # ConfigKeys.GEN_KW_TAG_FORMAT: TODO,
                 ConfigKeys.MAX_SUBMIT: positives,
                 ConfigKeys.NUM_CPU: positives,
                 ConfigKeys.QUEUE_SYSTEM: st.just(queue_system),
@@ -345,7 +344,7 @@ def config_dicts(draw):
         touch(executable_file)
         should_be_executable_files.append(executable_file)
         Path(job_file).write_text(
-            f"EXECUTABLE {executable_file}\nMIN_ARG 0\nMAX_ARG 1\n"
+            f"EXECUTABLE {executable_file}\nMIN_ARG 0\nMAX_ARG 1\n", encoding="utf-8"
         )
 
     should_exist_directories = config_dict[ConfigKeys.INSTALL_JOB_DIRECTORY]
