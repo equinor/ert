@@ -27,6 +27,103 @@ Release Notes
  Miscellaneous:
    -
 
+Version 4.1
+------------
+
+Breaking changes:
+  - Disable automatic resize of state-map when setting outside map size (`#3951 <https://github.com/equinor/ert/pull/3951>`_)
+  - Remove the GEN_PARAM keyword (`#3867 <https://github.com/equinor/ert/pull/3867>`_)
+  - Move init and storing of GEN_KW form C to python (`#3943 <https://github.com/equinor/ert/pull/3943>`_)
+  - Simplify EclConfig (`#3919 <https://github.com/equinor/ert/pull/3919>`_)
+  - Change default runpath (`#4019 <https://github.com/equinor/ert/pull/4019>`_)
+  - Remove no longer used min std (`#4057 <https://github.com/equinor/ert/pull/4057>`_)
+  - Remove RSH queue driver (`#3962 <https://github.com/equinor/ert/pull/3962>`_)
+  - Replace libecl RNG with numpy.random.Generator (`#4033 <https://github.com/equinor/ert/pull/4033>`_)
+
+Bugfixes:
+  - Make default ensemble path consistent (`#3982 <https://github.com/equinor/ert/pull/3982>`_)
+  - Update torque driver to handle finished jobs (`#3880 <https://github.com/equinor/ert/pull/3880>`_)
+  - Fix bug where extra case is created when running ies (`#4049 <https://github.com/equinor/ert/pull/4049>`_)
+  - Make sure loading gui produces just one storage folder (`#4053 <https://github.com/equinor/ert/pull/4053>`_)
+  - Add grid and grid_file properties back to libres_facade (`#4063 <https://github.com/equinor/ert/pull/4063>`_)
+  - Disable "Start simulation" button while running simulations (`#4080 <https://github.com/equinor/ert/pull/4080>`_)
+  - Show restart button when all realisations fail (`#4113 <https://github.com/equinor/ert/pull/4113>`_)
+  - Propagate error messages from job_queue_node (`#4127 <https://github.com/equinor/ert/pull/4127>`_)
+  - Propagate qstat options to qstat executable (`#4138 <https://github.com/equinor/ert/pull/4138>`_)
+
+New features:
+  - Consume Protobuf events from dispatcher and pass them to the statemachine (`#3733 <https://github.com/equinor/ert/pull/3733>`_)
+
+Improvements:
+  - Improve test coverage of ok callback (`#3860 <https://github.com/equinor/ert/pull/3860>`_)
+  - Raise exception if size of gen_kw in storage differs with gen_kw_config (`#3984 <https://github.com/equinor/ert/pull/3984>`_)
+  - Save parameters to in-memory storage between update-steps (`#4026 <https://github.com/equinor/ert/pull/4026>`_)
+  - Show loading cursor when loading from runpath (`#4094 <https://github.com/equinor/ert/pull/4094>`_)
+  - Support Torque job id without a dot character (`#3911 <https://github.com/equinor/ert/pull/3911>`_)
+  - Improve error message if a parameter is missing from storage (`#4119 <https://github.com/equinor/ert/pull/4119>`_)
+  - Move lock file to ENSPATH (`#4122 <https://github.com/equinor/ert/pull/4122>`_)
+  - Mute external DEBUG messages (`#3981 <https://github.com/equinor/ert/pull/3981>`_)
+  - Speed up realizations by moving ert.job_runner to _ert_job_runner (`#4076 <https://github.com/equinor/ert/pull/4076>`_)
+
+Dependencies:
+  - Relax protobuf pin to "<4" (`#3968 <https://github.com/equinor/ert/pull/3968>`_)
+  - Define usage of setuptools_scm in pyproject.toml (`#4081 <https://github.com/equinor/ert/pull/4081>`_)
+
+Miscellaneous:
+  - Log experiment type and size when a run model is instantiated (`#3967 <https://github.com/equinor/ert/pull/3967>`_)
+  - Remove unused function weakref from EnkfFs (`#3989 <https://github.com/equinor/ert/pull/3989>`_)
+  - Remove copyright notices in .py, .cpp and .hpp files (`#3582 <https://github.com/equinor/ert/pull/3582>`_)
+  - Change num cpu interface / usage and default value (`#3988 <https://github.com/equinor/ert/pull/3988>`_)
+  - Remove outdated GEN_DATA docs (`#3997 <https://github.com/equinor/ert/pull/3997>`_)
+  - Move enkf logic from enkf_main to fs_manager (`#3807 <https://github.com/equinor/ert/pull/3807>`_)
+  - Remove unused code related to enkf_node (`#4066 <https://github.com/equinor/ert/pull/4066>`_)
+  - Remove HistorySourceEnum.SCHEDULE (`#4097 <https://github.com/equinor/ert/pull/4097>`_)
+  - Move Eclipse Grid and Refcase to EnsembleConfig (`#4100 <https://github.com/equinor/ert/pull/4100>`_)
+  - Remove bunch of stuff from ensemble config (`#4075 <https://github.com/equinor/ert/pull/4075>`_)
+  - Initialize res config form minimal dictionary  (`#3952 <https://github.com/equinor/ert/pull/3952>`_)
+  - Make default __repr__ on BaseCClasses (`#3963 <https://github.com/equinor/ert/pull/3963>`_)
+  - Add automatic typecasting from cwrap to C++` (`#3971 <https://github.com/equinor/ert/pull/3971>`_)
+  - Ignore type errors in key_manager (`#3973 <https://github.com/equinor/ert/pull/3973>`_)
+  - Convert equinor test to local test (`#3961 <https://github.com/equinor/ert/pull/3961>`_)
+  - Update snake oil field test (`#3983 <https://github.com/equinor/ert/pull/3983>`_)
+  - Remove local folder from test-data (`#3996 <https://github.com/equinor/ert/pull/3996>`_)
+  - Simplify queue_config (`#3957 <https://github.com/equinor/ert/pull/3957>`_)
+  - Simplify site config (`#4003 <https://github.com/equinor/ert/pull/4003>`_)
+  - Simplify ert config builder (`#4022 <https://github.com/equinor/ert/pull/4022>`_)
+  - Simplify run workflows (`#4009 <https://github.com/equinor/ert/pull/4009>`_)
+  - Simplify analysis config (`#4034 <https://github.com/equinor/ert/pull/4034>`_)
+  - Remove unused hook_manager_run_workflow (`#4008 <https://github.com/equinor/ert/pull/4008>`_)
+  - Document the ERT Storage Server database model (`#3683 <https://github.com/equinor/ert/pull/3683>`_)
+  - Remove hook manager (`#4012 <https://github.com/equinor/ert/pull/4012>`_)
+  - Pass site config to workflow list (`#4016 <https://github.com/equinor/ert/pull/4016>`_)
+  - Fix test_config_parsing generation and site config (`#4023 <https://github.com/equinor/ert/pull/4023>`_)
+  - Fix ext joblist (`#4025 <https://github.com/equinor/ert/pull/4025>`_)
+  - Fix ModelConfig default runpathformat (`#4029 <https://github.com/equinor/ert/pull/4029>`_)
+  - Remove collectors and keymanager (`#4027 <https://github.com/equinor/ert/pull/4027>`_)
+  - Remove unused functionality from plot_data (`#4031 <https://github.com/equinor/ert/pull/4031>`_)
+  - Fix missing config_node free function (`#4058 <https://github.com/equinor/ert/pull/4058>`_)
+  - Move forward_model_ok into Python (`#4038 <https://github.com/equinor/ert/pull/4038>`_)
+  - Update ConfigContent to_dict functionality (`#4052 <https://github.com/equinor/ert/pull/4052>`_)
+  - Remove libecl-style "type-safety" (`#4051 <https://github.com/equinor/ert/pull/4051>`_)
+  - Remove references to Equinor test data (`#4040 <https://github.com/equinor/ert/pull/4040>`_)
+  - Undeprecate the DATA_FILE keyword and add documentation (`#4017 <https://github.com/equinor/ert/pull/4017>`_)
+  - Job runner yields Running event only when memory consumption has significant change (`#4067 <https://github.com/equinor/ert/pull/4067>`_)
+  - Remove WORKFLOW and FORWARD_MODEL before logging user config (`#4085 <https://github.com/equinor/ert/pull/4085>`_)
+  - Rename tests directories (`#4030 <https://github.com/equinor/ert/pull/4030>`_)
+  - Setup log file for job_dispatch logger (`#3999 <https://github.com/equinor/ert/pull/3999>`_)
+  - Update webviz-ert documentation (`#4090 <https://github.com/equinor/ert/pull/4090>`_)
+  - log_process_usage in finally rather than atexit (`#4087 <https://github.com/equinor/ert/pull/4087>`_)
+  - Delete site config c code (`#4020 <https://github.com/equinor/ert/pull/4020>`_)
+  - Update documentation of HISTORY_OBSERVATION > ERROR (`#4032 <https://github.com/equinor/ert/pull/4032>`_)
+  - Emit deprecation warning for non-ISO dates in observation config files (`#3958 <https://github.com/equinor/ert/pull/3958>`_)
+  - Update docs for DATA_FILE (`#4104 <https://github.com/equinor/ert/pull/4104>`_)
+  - Analysis iter config pure dataclass (`#4082 <https://github.com/equinor/ert/pull/4082>`_)
+  - Make forward_model only called from python (`#4137 <https://github.com/equinor/ert/pull/4137>`_)
+  - Fix komodo tests (`#4142 <https://github.com/equinor/ert/pull/4142>`_)
+  - Move C implementation for ies_config analysis_config and analysis_module in python (`#4133 <https://github.com/equinor/ert/pull/4133>`_)
+  - Account for instance where ERT config file has `MAX_RUNTIME` defined multiple times (`#4147 <https://github.com/equinor/ert/pull/4147>`_)
+
+
 Version 3.0
 ------------
 
