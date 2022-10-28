@@ -503,7 +503,6 @@ def test_res_config_dict_constructor(setup_case):
     # update dictionary
     # commit missing entries, this should be updated and validated in
     # configsuite instead
-    config_data_new[ConfigKeys.CONFIG_FILE_KEY] = config_file_name
     config_data_new[ConfigKeys.INSTALL_JOB_DIRECTORY] = [
         ert_share_path + "/forward-models/res",
         ert_share_path + "/forward-models/shell",

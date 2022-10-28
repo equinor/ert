@@ -4,6 +4,7 @@ import stat
 from pathlib import Path
 
 import hypothesis.strategies as st
+import pytest
 from hypothesis import assume
 
 from ert._c_wrappers.enkf import ConfigKeys
@@ -237,6 +238,7 @@ def config_dicts(draw):
     config_dict = draw(
         st.fixed_dictionaries(
             {
+                pytest.TEST_CONFIG_FILE_KEY: config_file_name,
                 ConfigKeys.NUM_REALIZATIONS: positives,
                 ConfigKeys.ECLBASE: st.just(draw(words) + "%d"),
                 ConfigKeys.RUNPATH_FILE: st.just(draw(file_names) + "runpath"),
@@ -250,7 +252,6 @@ def config_dicts(draw):
                 ConfigKeys.STD_CUTOFF_KEY: small_floats,
                 ConfigKeys.MAX_RUNTIME: positives,
                 ConfigKeys.MIN_REALIZATIONS: positives,
-                ConfigKeys.CONFIG_FILE_KEY: st.just(config_file_name),
                 ConfigKeys.DEFINE_KEY: defines(config_file_name, st.just(os.getcwd())),
                 ConfigKeys.DATA_KW_KEY: st.dictionaries(words, words),
                 ConfigKeys.DATA_FILE: st.just(draw(file_names) + ".DATA"),

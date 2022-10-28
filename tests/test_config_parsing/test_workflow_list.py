@@ -13,7 +13,7 @@ from .config_dict_generator import config_dicts, to_config_file
 @given(config_dicts())
 def test_ert_workflow_list_dict_creates_equal_config(config_dict):
     cwd = os.getcwd()
-    filename = config_dict[ConfigKeys.CONFIG_FILE_KEY]
+    filename = config_dict[pytest.TEST_CONFIG_FILE_KEY]
     to_config_file(filename, config_dict)
     res_config = ResConfig(user_config_file=filename)
     config_dict[ConfigKeys.CONFIG_DIRECTORY] = cwd

@@ -335,7 +335,6 @@ ERT_CLIB_SUBMODULE("config_keywords", m) {
             add_install_job_keyword(config_parser);
             add_path_keyword(config_parser, INSTALL_JOB_DIRECTORY_KEY);
             add_hook_workflow_keyword(config_parser);
-            add_existing_path_keyword(config_parser, RES_CONFIG_FILE_KEY);
             add_existing_path_keyword(config_parser, CONFIG_DIRECTORY_KEY);
         },
         py::arg("config_parser"));
