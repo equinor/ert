@@ -1,4 +1,4 @@
-EXECUTABLE ../res/script/ecl300
+EXECUTABLE ../res/script/ecl300.py
 DEFAULT <VERSION> version
 DEFAULT <NUM_CPU> 1
 DEFAULT <OPTS> ""

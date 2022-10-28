@@ -1,13 +1,53 @@
+#!/usr/bin/env python
+import argparse
 import json
 import os
 import os.path
 import random
+import shutil
 import subprocess
 import sys
 import time
 from contextlib import contextmanager
 
-from .rms_config import RMSConfig
+import yaml
+
+
+class RMSConfig:
+    DEFAULT_CONFIG_FILE = os.path.join(os.path.dirname(__file__), "rms_config.yml")
+
+    def __init__(self):
+        config_file = os.getenv("RMS_SITE_CONFIG", default=self.DEFAULT_CONFIG_FILE)
+        with open(config_file) as f:
+            try:
+                config = yaml.safe_load(f)
+            except yaml.YAMLError:
+                raise ValueError(f"Failed to parse: {config_file} as yaml")
+
+        self._config = config
+
+    @property
+    def executable(self):
+        exe = self._config["executable"]
+        if not os.access(exe, os.X_OK):
+            raise OSError(f"The executable: {exe} can not run")
+
+        return exe
+
+    @property
+    def wrapper(self):
+        exe = self._config.get("wrapper", None)
+        if exe is not None and shutil.which(exe) is None:
+            raise OSError(f"The executable: {exe} is not found")
+        return exe
+
+    @property
+    def threads(self):
+        return self._config.get("threads")
+
+    def env(self, version):
+        env_versions = self._config.get("env", {})
+        return env_versions.get(version, {})
 
 
 @contextmanager
@@ -187,3 +227,117 @@ class RMSRun:
             args += ["-threads", str(self.config.threads)]
         comp_process = subprocess.run(args=args, check=False)
         return comp_process.returncode
+
+
+def _build_argument_parser():
+    description = "Wrapper script to run rms."
+    usage = (
+        "The script must be invoked with minimum three positional arguments:\n\n"
+        "   rms  iens  project  workflow \n\n"
+        "Optional arguments supported: \n"
+        "  target file [-t][--target-file]\n"
+        "  run path [-r][--run-path] default=rms/model\n"
+        "  import path [-i][--import-path] default=./ \n"
+        "  export path [-e][--export-path] default=./ \n"
+        "  version [-v][--version]\n"
+    )
+    parser = argparse.ArgumentParser(description=description, usage=usage)
+    parser.add_argument(
+        "iens",
+        type=int,
+        help="Realization number",
+    )
+    parser.add_argument(
+        "project",
+        help="The RMS project we are running",
+    )
+    parser.add_argument(
+        "workflow",
+        help="The rms workflow we intend to run",
+    )
+    parser.add_argument(
+        "-r",
+        "--run-path",
+        default="rms/model",
+        help="The directory which will be used as cwd when running rms",
+    )
+    parser.add_argument(
+        "-t",
+        "--target-file",
+        default=None,
+        help="name of file which should be created/updated by rms",
+    )
+    parser.add_argument(
+        "-i",
+        "--import-path",
+        default="./",
+        help="the prefix of all relative paths when rms is importing",
+    )
+    parser.add_argument(
+        "-e",
+        "--export-path",
+        default="./",
+        help="the prefix of all relative paths when rms is exporting",
+    )
+    parser.add_argument(
+        "-v",
+        "--version",
+        default=None,
+        help="The version of rms to use",
+    )
+    parser.add_argument(
+        "-a",
+        "--allow-no-env",
+        action="store_true",
+        help="Allow RMS to run without a site configured environment",
+    )
+    return parser
+
+
+def run(
+    iens,
+    project,
+    workflow,
+    run_path="rms",
+    target_file=None,
+    export_path="rmsEXPORT",
+    import_path="rmsIMPORT",
+    version=None,
+    readonly=True,
+    allow_no_env=False,
+):
+    run_object = RMSRun(
+        iens,
+        project,
+        workflow,
+        run_path=run_path,
+        target_file=target_file,
+        export_path=export_path,
+        import_path=import_path,
+        version=version,
+        readonly=readonly,
+        allow_no_env=allow_no_env,
+    )
+    run_object.run()
+
+
+# The first three arguments; iens, project and workflow are positional
+# and *must* be supplied. The run_path and target_file arguments are optional.
+
+if __name__ == "__main__":
+    # old style jobs pass inn empty arguments as "" and causes argparse to fail
+    sys.argv = [arg for arg in sys.argv if arg != ""]
+    arg_parser = _build_argument_parser()
+    args = arg_parser.parse_args()
+
+    run(
+        args.iens,
+        args.project,
+        args.workflow,
+        run_path=args.run_path,
+        target_file=args.target_file,
+        import_path=args.import_path,
+        export_path=args.export_path,
+        version=args.version,
+        allow_no_env=args.allow_no_env,
+    )

@@ -2,21 +2,12 @@ import contextlib
 import os
 import os.path
 import subprocess
+import sys
 from pathlib import Path
 
 import pytest
 
 from ert._c_wrappers.enkf import ResConfig
-from ert._c_wrappers.fm.shell import (
-    careful_copy_file,
-    copy_directory,
-    copy_file,
-    delete_directory,
-    delete_file,
-    mkdir,
-    move_file,
-    symlink,
-)
 
 
 @contextlib.contextmanager
@@ -29,25 +20,76 @@ def pushd(path):
     os.chdir(cwd0)
 
 
-@pytest.mark.usefixtures("use_tmpdir")
-def test_symlink():
-    with pytest.raises(IOError):
-        symlink("target/does/not/exist", "link")
+class Shell:
+    """
+    A test utility that runs the forward-model scripts and returns the error
+    output (if any)
+    """
 
+    def __init__(self, source_root):
+        self.script_dir = os.path.join(
+            source_root,
+            "src",
+            "ert",
+            "shared",
+            "share",
+            "ert",
+            "shell_scripts",
+        )
+
+    def _call_script(self, name, args):
+        return subprocess.run(
+            [sys.executable, os.path.join(self.script_dir, name)] + list(args),
+            check=False,
+            capture_output=True,
+        )
+
+    def symlink(self, *args):
+        return self._call_script("symlink.py", args)
+
+    def mkdir(self, *args):
+        return self._call_script("make_directory.py", args)
+
+    def careful_copy_file(self, *args):
+        return self._call_script("careful_copy_file.py", args)
+
+    def copy_directory(self, *args):
+        return self._call_script("copy_directory.py", args)
+
+    def copy_file(self, *args):
+        return self._call_script("copy_file.py", args)
+
+    def delete_directory(self, *args):
+        return self._call_script("delete_directory.py", args)
+
+    def delete_file(self, *args):
+        return self._call_script("delete_file.py", args)
+
+    def move_file(self, *args):
+        return self._call_script("move_file.py", args)
+
+
+@pytest.fixture
+def shell(source_root):
+    return Shell(source_root)
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_symlink(shell):
+    assert b"must exist" in shell.symlink("target/does/not/exist", "link").stderr
     with open("target", "w") as fileH:
         fileH.write("target ...")
 
-    symlink("target", "link")
+    shell.symlink("target", "link")
     assert os.path.islink("link")
     assert os.readlink("link") == "target"
 
     with open("target2", "w") as fileH:
         fileH.write("target ...")
 
-    with pytest.raises(OSError):
-        symlink("target2", "target")
+    assert b"File exists" in shell.symlink("target2", "target").stderr
 
-    symlink("target2", "link")
+    shell.symlink("target2", "link")
     assert os.path.islink("link")
     assert os.readlink("link") == "target2"
 
@@ -55,26 +97,26 @@ def test_symlink():
     os.makedirs("root2/sub1/sub2")
     os.makedirs("run")
 
-    symlink("../target", "linkpath/link")
+    shell.symlink("../target", "linkpath/link")
     assert os.path.isdir("linkpath")
     assert os.path.islink("linkpath/link")
 
-    symlink("../target", "linkpath/link")
+    shell.symlink("../target", "linkpath/link")
     assert os.path.isdir("linkpath")
     assert os.path.islink("linkpath/link")
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_symlink2():
+def test_symlink2(shell):
     os.makedirs("path")
     with open("path/target", "w") as f:
         f.write("1234")
 
-    symlink("path/target", "link")
+    shell.symlink("path/target", "link")
     assert os.path.islink("link")
     assert os.path.isfile("path/target")
 
-    symlink("path/target", "link")
+    shell.symlink("path/target", "link")
     assert os.path.islink("link")
     assert os.path.isfile("path/target")
     with open("link") as f:
@@ -83,61 +125,57 @@ def test_symlink2():
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_mkdir():
+def test_mkdir(shell):
     with open("file", "w") as f:
         f.write("Hei")
 
-    with pytest.raises(OSError):
-        mkdir("file")
+    assert b"File exists" in shell.mkdir("file").stderr
 
-    mkdir("path")
+    shell.mkdir("path")
     assert os.path.isdir("path")
-    mkdir("path")
+    shell.mkdir("path")
 
-    mkdir("path/subpath")
+    shell.mkdir("path/subpath")
     assert os.path.isdir("path/subpath")
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_move_file():
+def test_move_file(shell):
     with open("file", "w") as f:
         f.write("Hei")
 
-    move_file("file", "file2")
+    shell.move_file("file", "file2")
     assert os.path.isfile("file2")
     assert not os.path.isfile("file")
 
-    with pytest.raises(IOError):
-        move_file("file2", "path/file2")
+    assert b"No such file or directory" in shell.move_file("file2", "path/file2").stderr
 
-    mkdir("path")
-    move_file("file2", "path/file2")
+    shell.mkdir("path")
+    shell.move_file("file2", "path/file2")
     assert os.path.isfile("path/file2")
     assert not os.path.isfile("file2")
 
-    with pytest.raises(IOError):
-        move_file("path", "path2")
+    assert b"not an existing file" in shell.move_file("path", "path2").stderr
 
-    with pytest.raises(IOError):
-        move_file("not_existing", "target")
+    assert b"not an existing file" in shell.move_file("not_existing", "target").stderr
 
     with open("file2", "w") as f:
         f.write("123")
 
-    move_file("file2", "path/file2")
+    shell.move_file("file2", "path/file2")
     assert os.path.isfile("path/file2")
     assert not os.path.isfile("file2")
 
-    mkdir("rms/ipl")
+    shell.mkdir("rms/ipl")
     with open("global_variables.ipl", "w") as f:
         f.write("123")
 
-    move_file("global_variables.ipl", "rms/ipl/global_variables.ipl")
+    shell.move_file("global_variables.ipl", "rms/ipl/global_variables.ipl")
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_move_file_into_folder_file_exists():
-    mkdir("dst_folder")
+def test_move_file_into_folder_file_exists(shell):
+    shell.mkdir("dst_folder")
     with open("dst_folder/file", "w") as f:
         f.write("old")
 
@@ -148,7 +186,7 @@ def test_move_file_into_folder_file_exists():
         content = f.read()
         assert content == "old"
 
-    move_file("file", "dst_folder")
+    shell.move_file("file", "dst_folder")
     with open("dst_folder/file", "r") as f:
         content = f.read()
         assert content == "new"
@@ -157,13 +195,13 @@ def test_move_file_into_folder_file_exists():
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_move_pathfile_into_folder():
-    mkdir("dst_folder")
-    mkdir("source1/source2/")
+def test_move_pathfile_into_folder(shell):
+    shell.mkdir("dst_folder")
+    shell.mkdir("source1/source2/")
     with open("source1/source2/file", "w") as f:
         f.write("stuff")
 
-    move_file("source1/source2/file", "dst_folder")
+    shell.move_file("source1/source2/file", "dst_folder")
     with open("dst_folder/file", "r") as f:
         content = f.read()
         assert content == "stuff"
@@ -172,16 +210,16 @@ def test_move_pathfile_into_folder():
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_move_pathfile_into_folder_file_exists():
-    mkdir("dst_folder")
-    mkdir("source1/source2/")
+def test_move_pathfile_into_folder_file_exists(shell):
+    shell.mkdir("dst_folder")
+    shell.mkdir("source1/source2/")
     with open("source1/source2/file", "w") as f:
         f.write("stuff")
 
     with open("dst_folder/file", "w") as f:
         f.write("garbage")
 
-    move_file("source1/source2/file", "dst_folder")
+    shell.move_file("source1/source2/file", "dst_folder")
     with open("dst_folder/file", "r") as f:
         content = f.read()
         assert content == "stuff"
@@ -190,129 +228,125 @@ def test_move_pathfile_into_folder_file_exists():
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_delete_file():
-    mkdir("pathx")
-    with pytest.raises(IOError):
-        delete_file("pathx")
+def test_delete_file(shell):
+    shell.mkdir("pathx")
+    assert b"not a regular file" in shell.delete_file("pathx").stderr
 
     # deleteFile which does not exist - is silently ignored
-    delete_file("does/not/exist")
+    shell.delete_file("does/not/exist")
 
     with open("file", "w") as f:
         f.write("hei")
-    symlink("file", "link")
+    shell.symlink("file", "link")
     assert os.path.islink("link")
 
-    delete_file("file")
+    shell.delete_file("file")
     assert not os.path.isfile("file")
     assert os.path.islink("link")
-    delete_file("link")
+    shell.delete_file("link")
     assert not os.path.islink("link")
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_delete_directory():
+def test_delete_directory(shell):
     # deleteDriecteory which does not exist - is silently ignored
-    delete_directory("does/not/exist")
+    shell.delete_directory("does/not/exist")
 
     with open("file", "w") as f:
         f.write("hei")
 
-    with pytest.raises(IOError):
-        delete_directory("file")
+    assert b"not a directory" in shell.delete_directory("file").stderr
 
-    mkdir("link_target/subpath")
+    shell.mkdir("link_target/subpath")
     with open("link_target/link_file", "w") as f:
         f.write("hei")
 
-    mkdir("path/subpath")
+    shell.mkdir("path/subpath")
     with open("path/file", "w") as f:
         f.write("hei")
 
     with open("path/subpath/file", "w") as f:
         f.write("hei")
 
-    symlink("../link_target", "path/link")
-    delete_directory("path")
+    shell.symlink("../link_target", "path/link")
+    shell.delete_directory("path")
     assert not os.path.exists("path")
     assert os.path.exists("link_target/link_file")
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_copy_directory_error():
-    with pytest.raises(IOError):
-        copy_directory("does/not/exist", "target")
+def test_copy_directory_error(shell):
+    assert (
+        b"existing directory" in shell.copy_directory("does/not/exist", "target").stderr
+    )
 
     with open("file", "w") as f:
         f.write("hei")
 
-    with pytest.raises(IOError):
-        copy_directory("hei", "target")
+    assert b"existing directory" in shell.copy_directory("hei", "target").stderr
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_copy_file():
-    with pytest.raises(IOError):
-        copy_file("does/not/exist", "target")
+def test_copy_file(shell):
+    assert b"existing file" in shell.copy_file("does/not/exist", "target").stderr
 
-    mkdir("path")
-    with pytest.raises(IOError):
-        copy_file("path", "target")
+    shell.mkdir("path")
+    assert b"existing file" in shell.copy_file("path", "target").stderr
 
     with open("file1", "w") as f:
         f.write("hei")
 
-    copy_file("file1", "file2")
+    shell.copy_file("file1", "file2")
     assert os.path.isfile("file2")
 
-    copy_file("file1", "path")
+    shell.copy_file("file1", "path")
     assert os.path.isfile("path/file1")
 
-    copy_file("file1", "path2/file1")
+    shell.copy_file("file1", "path2/file1")
     assert os.path.isfile("path2/file1")
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_copy_file2():
-    mkdir("root/sub/path")
+def test_copy_file2(shell):
+    shell.mkdir("root/sub/path")
 
     with open("file", "w") as f:
         f.write("Hei ...")
 
-    copy_file("file", "root/sub/path/file")
+    shell.copy_file("file", "root/sub/path/file")
     assert os.path.isfile("root/sub/path/file")
 
     with open("file2", "w") as f:
         f.write("Hei ...")
 
     with pushd("root/sub/path"):
-        copy_file("../../../file2")
+        shell.copy_file("../../../file2")
         assert os.path.isfile("file2")
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_copy_file3():
-    mkdir("rms/output")
+def test_copy_file3(shell):
+    shell.mkdir("rms/output")
 
     with open("file.txt", "w") as f:
         f.write("Hei")
 
-    copy_file("file.txt", "rms/output/")
+    shell.copy_file("file.txt", "rms/output/")
     assert os.path.isfile("rms/output/file.txt")
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_careful_copy_file():
+def test_careful_copy_file(shell):
     with open("file1", "w") as f:
         f.write("hei")
     with open("file2", "w") as f:
         f.write("hallo")
 
-    careful_copy_file("file1", "file2")
+    shell.careful_copy_file("file1", "file2")
     with open("file2", "r") as f:
         assert f.readline() == "hallo"
 
-    careful_copy_file("file1", "file3")
+    print(shell.careful_copy_file("file1", "file3"))
     assert os.path.isfile("file3")
 
 

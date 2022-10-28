@@ -1,4 +1,4 @@
-EXECUTABLE ../res/script/rms
+EXECUTABLE ../res/script/rms.py
 
 DEFAULT       <RMS_IMPORT_PATH> ./
 DEFAULT       <RMS_EXPORT_PATH> ./

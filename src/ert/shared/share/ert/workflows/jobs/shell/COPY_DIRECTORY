@@ -1,2 +1,2 @@
 INTERNAL FALSE
-EXECUTABLE  ../../../shell_scripts/copy_directory
+EXECUTABLE  ../../../shell_scripts/copy_directory.py
