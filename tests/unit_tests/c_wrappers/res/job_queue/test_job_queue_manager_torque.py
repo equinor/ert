@@ -230,4 +230,5 @@ def test_that_torque_driver_passes_dash_x_to_qstat(
     job, _runpath = _build_jobqueuenode(dummy_config)
     job.run(driver, BoundedSemaphore())
     job.wait_for()
-    assert Path("qstat_options").read_text(encoding="utf-8").strip() == "-x"
+    # qstat job id = 10001
+    assert Path("qstat_options").read_text(encoding="utf-8").strip() == "-x 10001"
