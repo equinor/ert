@@ -1,3 +1,4 @@
+import copy
 import datetime
 import json
 import os
@@ -239,7 +240,6 @@ def validate_ext_job(ext_job, ext_job_config):
 
 
 def generate_job_from_dict(ext_job_config, private=True):
-    import copy
 
     ext_job_config = copy.deepcopy(ext_job_config)
     ext_job_config["executable"] = os.path.join(
@@ -486,15 +486,26 @@ def test_status_file():
         run_id, os.getcwd(), "data_root", global_args, varlist
     )
 
-    s = (
-        '{"start_time": null, "jobs": [{"status": "Success", '
-        '"start_time": 1519653419.0, "end_time": 1519653419.0, '
-        '"name": "SQUARE_PARAMS", "error": null, "current_memory_usage": 2000, '
-        '"max_memory_usage": 3000}], "end_time": null, "run_id": ""}'
-    )
-
     with open("status.json", "w") as f:
-        f.write(s)
+        json.dump(
+            {
+                "start_time": None,
+                "jobs": [
+                    {
+                        "status": "Success",
+                        "start_time": 1519653419.0,
+                        "end_time": 1519653419.0,
+                        "name": "SQUARE_PARAMS",
+                        "error": None,
+                        "current_memory_usage": 2000,
+                        "max_memory_usage": 3000,
+                    }
+                ],
+                "end_time": None,
+                "run_id": "",
+            },
+            f,
+        )
 
     status = ForwardModelStatus.try_load("")
     for job in status.jobs:
