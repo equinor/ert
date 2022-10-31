@@ -60,26 +60,21 @@ class FileSystemManager:
         return len(self.cases)
 
     def add_case(self, case_name: str) -> "EnkfFs":
-        if case_name in self.open_storages:
-            raise ValueError(f"Duplicate case: {case_name} in {self.open_storages}")
-        if case_name in self.cases:
-            file_system = EnkfFs(
-                self.storage_path / case_name,
-                self._ensemble_config,
-                self._ensemble_size,
-                self.read_only,
-            )
-        else:
-            file_system = EnkfFs.createFileSystem(
-                self.storage_path / case_name,
-                self._ensemble_config,
-                self._ensemble_size,
-                self.read_only,
-            )
+        if case_name in self:
+            raise ValueError(f"Duplicate case: {case_name} in {self.cases}")
+        file_system = EnkfFs.createFileSystem(
+            self.storage_path / case_name,
+            self._ensemble_config,
+            self._ensemble_size,
+            self.read_only,
+        )
+        self._add_to_open(file_system)
+        return file_system
+
+    def _add_to_open(self, file_system: "EnkfFs") -> None:
         if len(self.open_storages) == self.capacity:
             self._drop_oldest_file_system()
         self.open_storages[file_system.case_name] = file_system
-        return file_system
 
     def state_map(self, case_name: str) -> "StateMap":
         return self[case_name].getStateMap()
@@ -97,7 +92,14 @@ class FileSystemManager:
         if case_name in self.open_storages:
             return self.open_storages[case_name]
         elif case_name in self.cases:
-            return self.add_case(case_name)
+            file_system = EnkfFs.createFileSystem(
+                self.storage_path / case_name,
+                self._ensemble_config,
+                self._ensemble_size,
+                self.read_only,
+            )
+            self._add_to_open(file_system)
+            return file_system
         else:
             raise KeyError(f"No such case name: {case_name} in {self.cases}")
 
