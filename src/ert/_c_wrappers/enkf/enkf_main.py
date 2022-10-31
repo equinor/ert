@@ -387,15 +387,15 @@ class EnKFMain:
         return self.res_config
 
     def getDataKW(self) -> SubstitutionList:
-        return self.res_config.subst_config.subst_list
+        return self.res_config.substitution_list
 
     def addDataKW(self, key: str, value: str) -> None:
         # Substitution should be the responsibility of
         # self.substituter. However,
-        # self.resConfig().subst_config.subst_list is still
+        # self.resConfig().substitution_list is still
         # used by workflows to do substitution. For now, we
         # need to update this here.
-        self.resConfig().subst_config.subst_list.addItem(key, value)
+        self.resConfig().substitution_list.addItem(key, value)
         self.substituter.add_global_substitution(key, value)
 
     def getMountPoint(self) -> str:

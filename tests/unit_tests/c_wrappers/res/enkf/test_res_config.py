@@ -234,7 +234,7 @@ def test_init(minimum_case):
 
     assert res_config.config_path == os.getcwd()
 
-    assert res_config.subst_config["<CONFIG_PATH>"] == os.getcwd()
+    assert res_config.substitution_list["<CONFIG_PATH>"] == os.getcwd()
 
 
 def test_extensive_config(setup_case):
@@ -568,7 +568,7 @@ def test_res_config_dict_constructor(setup_case):
     # open config via dictionary
     res_config_dict = ResConfig(config_dict=config_data_new)
 
-    assert res_config_file.subst_config == res_config_dict.subst_config
+    assert res_config_file.substitution_list == res_config_dict.substitution_list
     assert res_config_file.site_config == res_config_dict.site_config
     assert res_config_file.random_seed == res_config_dict.random_seed
     assert res_config_file.ert_workflow_list == res_config_dict.ert_workflow_list

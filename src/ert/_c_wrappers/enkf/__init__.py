@@ -41,7 +41,6 @@ from .row_scaling import RowScaling
 from .run_arg import RunArg
 from .site_config import SiteConfig
 from .state_map import StateMap
-from .subst_config import SubstConfig
 from .summary_key_set import SummaryKeySet
 from .time_map import TimeMap
 
@@ -86,7 +85,6 @@ __all__ = [
     "QueueConfig",
     "ErtWorkflowList",
     "SiteConfig",
-    "SubstConfig",
     "EnsembleConfig",
     "EnkfObs",
     "ModelConfig",

@@ -25,7 +25,10 @@ def test_substitution_list():
     subst_list.addItem("Key2", "Value2", "Doc String2")
     assert subst_list.keys() == ["Key", "Key2"]
 
-    assert "SubstitutionList(len=2)" in repr(subst_list)
+    str_repr = repr(subst_list)
+    assert "SubstitutionList" in str_repr
+    assert "Key2, Value2" in str_repr
+    assert "Key, Value" in str_repr
 
     assert subst_list.get("nosuchkey", 1729) == 1729
     assert subst_list.get("nosuchkey") is None

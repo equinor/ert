@@ -46,7 +46,7 @@ def test_workflow_list_constructor():
 
     assert (
         ErtWorkflowList(
-            subst_list=res_config.subst_config.subst_list,
+            subst_list=res_config.substitution_list,
             config_dict=config_dict,
         )
         == res_config.ert_workflow_list
