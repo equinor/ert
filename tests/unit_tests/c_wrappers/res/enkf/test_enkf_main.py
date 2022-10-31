@@ -274,7 +274,7 @@ def test_config(minimum_case):
     assert isinstance(minimum_case.getObservations(), EnkfObs)
     assert isinstance(minimum_case.getEnkfFsManager().getCurrentFileSystem(), EnkfFs)
 
-    assert minimum_case.getMountPoint().endswith("/Ensemble")
+    assert minimum_case.storage_manager.storage_path.stem == "Ensemble"
 
 
 def test_run_context(minimum_case):
