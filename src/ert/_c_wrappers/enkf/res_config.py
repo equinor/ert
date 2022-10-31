@@ -27,7 +27,6 @@ SINGLE_VALUE_KEYS = [
     ConfigKeys.ALPHA_KEY,
     ConfigKeys.ANALYSIS_SELECT,
     ConfigKeys.CONFIG_DIRECTORY,
-    ConfigKeys.CONFIG_FILE_KEY,
     ConfigKeys.DATAROOT,
     ConfigKeys.DATA_FILE,
     ConfigKeys.ECLBASE,

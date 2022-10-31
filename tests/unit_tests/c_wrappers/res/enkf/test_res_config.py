@@ -126,7 +126,6 @@ SINGLE_VALUE_KEY_TYPES = {
     ConfigKeys.ALPHA_KEY: "int",
     ConfigKeys.ANALYSIS_SELECT: "str",
     ConfigKeys.CONFIG_DIRECTORY: "path",
-    ConfigKeys.CONFIG_FILE_KEY: "file_path",
     ConfigKeys.DATAROOT: "file_path",
     ConfigKeys.DATA_FILE: "file_path",
     ConfigKeys.ECLBASE: "file_path",
