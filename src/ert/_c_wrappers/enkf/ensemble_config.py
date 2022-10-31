@@ -118,13 +118,14 @@ class EnsembleConfig(BaseCClass):
         )
 
         if config_content is not None:
-            config_content_dict = config_content.as_dict()
-            self._grid_file = self._get_file_str(
-                config_content_dict.get(ConfigKeys.GRID)
-            )
-            self._refcase_file = self._get_file_str(
-                config_content_dict.get(ConfigKeys.REFCASE)
-            )
+            if config_content.hasKey(ConfigKeys.GRID):
+                self._grid_file = self._get_file_str(
+                    config_content.getValue(ConfigKeys.GRID)
+                )
+            if config_content.hasKey(ConfigKeys.REFCASE):
+                self._refcase_file = self._get_file_str(
+                    config_content.getValue(ConfigKeys.REFCASE)
+                )
 
         self.grid = self._load_grid(self._grid_file) if self._grid_file else None
         self.refcase = (
