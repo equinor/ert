@@ -110,7 +110,3 @@ class FileSystemManager:
 
     def __iter__(self) -> Generator:
         yield from self.cases
-
-    def umount(self) -> None:
-        while len(self.open_storages) > 0:
-            self._drop_oldest_file_system()
