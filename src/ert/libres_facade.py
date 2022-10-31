@@ -145,7 +145,10 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
         return [index for index, element in enumerate(ens_mask) if element]
 
     def case_initialized(self, case: str) -> bool:
-        return self._enkf_main.isCaseInitialized(case)
+        if case in self._enkf_main.storage_manager:
+            return self._enkf_main.storage_manager[case].is_initalized
+        else:
+            return False
 
     def get_queue_config(self) -> "QueueConfig":
         return self._enkf_main.get_queue_config()

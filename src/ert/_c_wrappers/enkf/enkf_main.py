@@ -523,11 +523,6 @@ class EnKFMain:
             case_name
         )
 
-    def isCaseInitialized(self, case: str) -> bool:
-        if case not in self.storage_manager:
-            return False
-        return self.storage_manager[case].is_initalized
-
     def getCaseList(self) -> List[str]:
         return sorted(self.storage_manager.cases, key=naturalSortKey)
 
