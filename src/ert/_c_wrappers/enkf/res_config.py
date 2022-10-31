@@ -1,6 +1,7 @@
 import logging
 import os
 from collections import defaultdict
+from datetime import date
 from os.path import isfile
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -17,8 +18,8 @@ from ert._c_wrappers.enkf.ert_workflow_list import ErtWorkflowList
 from ert._c_wrappers.enkf.model_config import ModelConfig
 from ert._c_wrappers.enkf.queue_config import QueueConfig
 from ert._c_wrappers.enkf.site_config import SiteConfig
-from ert._c_wrappers.enkf.subst_config import SubstConfig
 from ert._c_wrappers.job_queue import QueueDriverEnum
+from ert._c_wrappers.util import SubstitutionList
 from ert._clib.config_keywords import init_site_config_parser, init_user_config_parser
 
 logger = logging.getLogger(__name__)
@@ -212,8 +213,8 @@ class ResConfig:
             else None
         )
 
-        self.subst_config = SubstConfig.from_config_content(
-            config_content=user_config_content, num_cpu=self.preferred_num_cpu()
+        self.substitution_list = self.create_substitution_list_from_config_content(
+            config_content=user_config_content
         )
         self.site_config = SiteConfig.from_config_content(
             user_config_content=user_config_content,
@@ -271,7 +272,7 @@ class ResConfig:
         self.queue_config = QueueConfig(**queue_config_args)
 
         self.ert_workflow_list = ErtWorkflowList(
-            subst_list=self.subst_config.subst_list,
+            subst_list=self.substitution_list,
             config_content=user_config_content,
             site_config_content=site_config_content,
         )
@@ -338,8 +339,8 @@ class ResConfig:
             else None
         )
 
-        self.subst_config = SubstConfig.from_dict(
-            config_dict=config_dict, num_cpu=self.preferred_num_cpu()
+        self.substitution_list = self.create_substitution_list_from_dict(
+            config_dict=config_dict
         )
         self.site_config = SiteConfig.from_config_dict(
             config_dict=config_dict, site_config_content=site_config_content
@@ -364,7 +365,7 @@ class ResConfig:
         self.queue_config = QueueConfig(**queue_config_args)
 
         self.ert_workflow_list = ErtWorkflowList(
-            subst_list=self.subst_config.subst_list, config_dict=config_dict
+            subst_list=self.substitution_list, config_dict=config_dict
         )
 
         if ConfigKeys.DATA_FILE in config_dict and ConfigKeys.ECLBASE in config_dict:
@@ -709,6 +710,72 @@ class ResConfig:
                     content_dict[key] = values[0]
         return content_dict
 
+    @staticmethod
+    def _create_substitution_list(
+        defines: Dict[str, str],
+        data_kw: Dict[str, str],
+        runpath_file_name: str,
+        num_cpu: int,
+    ) -> SubstitutionList:
+        subst_list = SubstitutionList()
+
+        today_date_string = date.today().isoformat()
+        subst_list.addItem("<DATE>", today_date_string, "The current date.")
+
+        for key, value in defines.items():
+            subst_list.addItem(key, value)
+        for key, value in data_kw.items():
+            subst_list.addItem(key, value)
+
+        if "<CONFIG_PATH>" in defines:
+            runpath_file_path = os.path.normpath(
+                os.path.join(defines["<CONFIG_PATH>"], runpath_file_name)
+            )
+        else:
+            runpath_file_path = os.path.abspath(runpath_file_name)
+        subst_list.addItem(
+            "<RUNPATH_FILE>",
+            runpath_file_path,
+            "The name of a file with a list of run directories.",
+        )
+        subst_list.addItem(
+            "<NUM_CPU>",
+            str(num_cpu),
+            "The number of CPU used for one forward model.",
+        )
+        return subst_list
+
+    def create_substitution_list_from_dict(self, config_dict: dict):
+        init_args = {}
+        init_args["defines"] = config_dict.get(ConfigKeys.DEFINE_KEY, {})
+        init_args["data_kw"] = config_dict.get(ConfigKeys.DATA_KW_KEY, {})
+        init_args["runpath_file_name"] = config_dict.get(
+            ConfigKeys.RUNPATH_FILE, ConfigKeys.RUNPATH_LIST_FILE
+        )
+        init_args["num_cpu"] = self.preferred_num_cpu()
+        return self._create_substitution_list(**init_args)
+
+    def create_substitution_list_from_config_content(
+        self, config_content: ConfigContent
+    ):
+        init_args = {}
+        init_args["runpath_file_name"] = (
+            config_content.getValue(ConfigKeys.RUNPATH_FILE)
+            if ConfigKeys.RUNPATH_FILE in config_content
+            else ConfigKeys.RUNPATH_LIST_FILE
+        )
+
+        init_args["data_kw"] = {}
+        if ConfigKeys.DATA_KW_KEY in config_content:
+            for data_kw_definition in config_content[ConfigKeys.DATA_KW_KEY]:
+                init_args["data_kw"][data_kw_definition[0]] = data_kw_definition[1]
+
+        init_args["defines"] = dict(
+            (key, value) for key, value, _ in config_content.get_const_define_list()
+        )
+        init_args["num_cpu"] = self.preferred_num_cpu()
+        return self._create_substitution_list(**init_args)
+
     def free(self):
         self._free()  # pylint: disable=no-member
 
@@ -734,7 +801,7 @@ class ResConfig:
     def __eq__(self, other):
         # compare each config separatelly
         config_eqs = (
-            (self.subst_config == other.subst_config),
+            (self.substitution_list == other.substitution_list),
             (self.site_config == other.site_config),
             (self.random_seed == other.random_seed),
             (self.num_cpu_from_config == other.num_cpu_from_config),
@@ -760,7 +827,7 @@ class ResConfig:
 
     def __str__(self):
         return (
-            f"SubstConfig: {self.subst_config},\n"
+            f"SubstitutionList: {self.substitution_list},\n"
             f"SiteConfig: {self.site_config},\n"
             f"RandomSeed: {self.random_seed},\n"
             f"Config Num CPUs: {self.num_cpu_from_config},\n"

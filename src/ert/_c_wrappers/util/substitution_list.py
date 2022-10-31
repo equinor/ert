@@ -88,6 +88,7 @@ class SubstitutionList(BaseCClass):
             otherValue = other.get(key)
             if oneValue != otherValue:
                 return False
+        return True
 
     def __ne__(self, other):
         return not self == other
@@ -95,8 +96,15 @@ class SubstitutionList(BaseCClass):
     def free(self):
         self._free()
 
+    def _concise_representation(self):
+        return (
+            ("[" + ",\n".join([f"({key}, {value})" for key, value, _ in self]) + "]")
+            if self._address()
+            else ""
+        )
+
     def __repr__(self):
-        return self._create_repr(f"len={len(self)}")
+        return f"<SubstitutionList({self._concise_representation()})>"
 
     def __str__(self):
-        return f"SubstitutionList{{{', '.join(map(str, self.keys()))}}}"
+        return f"SubstitutionList({self._concise_representation()})"
