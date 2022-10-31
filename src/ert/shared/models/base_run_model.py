@@ -27,7 +27,11 @@ from ert.ensemble_evaluator import (
     forward_model_ok,
 )
 from ert.libres_facade import LibresFacade
-from ert.shared.feature_toggling import feature_enabled
+from ert.shared.feature_toggling import (
+    FeatureToggling,
+    feature_enabled,
+    feature_enabled_async,
+)
 from ert.shared.storage.extraction import (
     post_ensemble_data,
     post_ensemble_results,
@@ -168,14 +172,6 @@ class BaseRunModel:
         completed = self._completed_realizations_mask
         return completed.count(True)
 
-    def start_simulations_thread(
-        self, evaluator_server_config: EvaluatorServerConfig
-    ) -> None:
-        asyncio.set_event_loop(asyncio.new_event_loop())
-        self.startSimulations(
-            evaluator_server_config=evaluator_server_config,
-        )
-
     def startSimulations(self, evaluator_server_config: EvaluatorServerConfig) -> None:
         logs: _LogAggregration = _LogAggregration()
         try:
@@ -186,7 +182,7 @@ class BaseRunModel:
                 run_context = self.runSimulations(
                     evaluator_server_config=evaluator_server_config,
                 )
-                self._completed_realizations_mask = run_context.mask
+                self._completed_realizations_mask = run_context.mask  # type: ignore # should we implement an if statement with toggling?
         except ErtRunError as e:
             self._completed_realizations_mask = []
             self._failed = True
@@ -203,7 +199,7 @@ class BaseRunModel:
 
     def runSimulations(
         self, evaluator_server_config: EvaluatorServerConfig
-    ) -> RunContext:
+    ) -> Union[RunContext, None]:
         raise NotImplementedError("Method must be implemented by inheritors!")
 
     def teardown_context(self) -> None:
@@ -304,10 +300,18 @@ class BaseRunModel:
                 + "MIN_REALIZATIONS in the config file"
             )
 
+    def _count_active_realizations(self, run_context: RunContext) -> int:
+        return sum(run_context.mask)
+
     def run_ensemble_evaluator(
         self, run_context: RunContext, ee_config: EvaluatorServerConfig
     ) -> int:
         ensemble = self._build_ensemble(run_context)
+
+        self.ert().sample_prior(
+            run_context.sim_fs,
+            run_context.active_realizations,
+        )
 
         totalOk = EnsembleEvaluator(
             ensemble,
@@ -381,7 +385,7 @@ class BaseRunModel:
 
     async def _evaluate(
         self, run_context: RunContext, ee_config: EvaluatorServerConfig
-    ) -> None:
+    ) -> Union[None, int]:
         """Start asynchronous evaluation of an ensemble."""
         experiment_logger.debug("_evaluate")
         loop = asyncio.get_running_loop()
@@ -389,10 +393,21 @@ class BaseRunModel:
         ensemble = self._build_ensemble(run_context)
         self._iter_map[run_context.iteration] = ensemble.id_
         experiment_logger.debug("built")
-
-        ensemble_listener = asyncio.create_task(
-            self._ensemble_listener(ensemble, iter_=run_context.iteration)
-        )
+        if FeatureToggling.is_enabled("experiment-server"):
+            # If experiment-server is enabled, the server has been created already.
+            # We are only setting up a task that consumes events coming from the ensemble
+            server = None
+            ensemble_listener_task = asyncio.create_task(
+                self._ensemble_listener(ensemble, iter_=run_context.iteration)
+            )
+        else:
+            # Set up the EnsembleEvaluator server
+            server = EnsembleEvaluator(
+                ensemble,
+                ee_config,
+                run_context.iteration,
+            )
+            ensemble_listener_task = asyncio.create_task(server.evaluator_server())
 
         with concurrent.futures.ThreadPoolExecutor() as pool:
             await loop.run_in_executor(
@@ -402,25 +417,72 @@ class BaseRunModel:
                 [i for i, _ in enumerate(run_context) if run_context.is_active(i)],
             )
 
-            await ensemble.evaluate_async(ee_config, self.id_)
+        if FeatureToggling.is_enabled("experiment-server"):
+            await ensemble.evaluate_async(ee_config, experiment_id=self._id)
+        else:
+            evaluation_task = asyncio.create_task(
+                ensemble.evaluate_async(ee_config, experiment_id=None)
+            )
+            done, pending = await asyncio.wait(
+                [ensemble_listener_task, evaluation_task],
+                return_when=asyncio.FIRST_COMPLETED,
+            )
 
-            await ensemble_listener
+            if evaluation_task in done:
+                experiment_logger.debug("Experiment evaluation completed")
+                # raise experiment exception if any
+                try:
+                    evaluation_task.result()
+                except Exception:  # pylint: disable=broad-except
+                    experiment_logger.exception(
+                        "Experiment failed:",
+                        exc_info=True,
+                    )
+                finally:
+                    experiment_logger.debug("Initializing shutdown of EnsembleServer")
+                    try:
+                        # If a client connects to the server, it can signal through
+                        # events that server should stop (e.g. when all information
+                        # has passed through). We allow possible clients connected
+                        #  to signal that they are finished before we stop the server
+                        await asyncio.wait_for(ensemble_listener_task, 10)
+                        experiment_logger.debug("Server stopped from client")
+                    except asyncio.TimeoutError:
+                        experiment_logger.debug("Stopping the server from experiment..")
+                        await server.stop()  # type: ignore # server is None only if FeatureToggling.is_enabled("experiment-server")
+            else:
+                # experiment is pending, but the server died, so try cancelling the experiment
+                # then raise the server's exception
+                for pending_task in pending:
+                    experiment_logger.debug(
+                        "task %s was pending, cancelling...", pending_task
+                    )
+                    pending_task.cancel()
+                for done_task in done:
+                    done_task.result()
 
-            for iens, run_arg in enumerate(run_context):
-                if run_context.is_active(iens):
-                    if run_arg.run_status in (
-                        RunStatusType.JOB_LOAD_FAILURE,
-                        RunStatusType.JOB_RUN_FAILURE,
-                    ):
-                        run_context.deactivate_realization(iens)
+        for iens, run_arg in enumerate(run_context):
+            if run_context.is_active(iens):
+                if run_arg.run_status in (
+                    RunStatusType.JOB_LOAD_FAILURE,
+                    RunStatusType.JOB_RUN_FAILURE,
+                ):
+                    run_context.deactivate_realization(iens)
 
+        with concurrent.futures.ThreadPoolExecutor() as pool:
             await loop.run_in_executor(
                 pool,
                 run_context.sim_fs.fsync,
             )
 
+        if not FeatureToggling.is_enabled("experiment-server"):
+            return ensemble.get_successful_realizations()
+        return None
+
     @abstractmethod
-    async def run(self, evaluator_server_config: EvaluatorServerConfig) -> None:
+    async def run(
+        self, evaluator_server_config: EvaluatorServerConfig, model_name: str
+    ) -> Union[None, RunContext]:
         raise NotImplementedError
 
     async def successful_realizations(self, iter_: int) -> int:
@@ -477,6 +539,7 @@ class BaseRunModel:
                 break
 
     @singledispatchmethod
+    @feature_enabled_async("experiment-server")
     async def dispatch(
         self,
         event: Union[CloudEvent, _ert_com_protocol.DispatcherMessage],

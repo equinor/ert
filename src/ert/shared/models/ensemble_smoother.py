@@ -2,7 +2,7 @@ import asyncio
 import concurrent
 import logging
 from functools import partial
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Union
 
 import _ert_com_protocol
 from ert._c_wrappers.enkf import RunContext
@@ -10,6 +10,7 @@ from ert._c_wrappers.enkf.enkf_main import EnKFMain, QueueConfig
 from ert._c_wrappers.enkf.enums import HookRuntime, RealizationStateEnum
 from ert.analysis import ErtAnalysisError
 from ert.ensemble_evaluator import EvaluatorServerConfig
+from ert.shared.feature_toggling import FeatureToggling
 from ert.shared.models import BaseRunModel, ErtRunError
 
 experiment_logger = logging.getLogger("ert.experiment_server.ensemble_experiment")
@@ -32,7 +33,11 @@ class EnsembleSmoother(BaseRunModel):
         if not module_load_success:
             raise ErtRunError(f"Unable to load analysis module '{module_name}'!")
 
-    async def run(self, evaluator_server_config: EvaluatorServerConfig) -> None:
+    async def run(
+        self,
+        evaluator_server_config: EvaluatorServerConfig,
+        model_name: str = "ensemble smoother",
+    ) -> Union[RunContext, None]:
         loop = asyncio.get_running_loop()
         threadpool = concurrent.futures.ThreadPoolExecutor()
 
@@ -43,8 +48,11 @@ class EnsembleSmoother(BaseRunModel):
             status="EXPERIMENT_STARTED", experiment_id=self.id_
         )
         await self.dispatch(event)
+        self._checkMinimumActiveRealizations(prior_context)
 
-        self._checkMinimumActiveRealizations(len(prior_context.active_realizations))
+        self.setPhase(0, "Running simulations...", indeterminate=False)
+        self.setPhaseName("Pre processing...", indeterminate=True)
+
         self.ert().sample_prior(prior_context.sim_fs, prior_context.active_realizations)
         await loop.run_in_executor(
             threadpool,
@@ -61,21 +69,26 @@ class EnsembleSmoother(BaseRunModel):
         ensemble_id = await loop.run_in_executor(threadpool, self._post_ensemble_data)
 
         experiment_logger.debug("evaluating")
-        await self._evaluate(prior_context, evaluator_server_config)
+        num_successful_realizations = await self._evaluate(
+            prior_context, evaluator_server_config
+        )
 
         # Push simulation results to storage
         await loop.run_in_executor(threadpool, self._post_ensemble_results, ensemble_id)
 
-        num_successful_realizations = await self.successful_realizations(
-            prior_context.iteration
-        )
+        if FeatureToggling.is_enabled("experiment-server"):
+            num_successful_realizations = await self.successful_realizations(
+                prior_context.iteration
+            )
 
-        self.checkHaveSufficientRealizations(num_successful_realizations)
+        self.checkHaveSufficientRealizations(num_successful_realizations)  # type: ignore
+        self.setPhaseName("Post processing...", indeterminate=True)
 
         await self._run_hook(
             HookRuntime.POST_SIMULATION, prior_context.iteration, loop, threadpool
         )
 
+        self.setPhaseName("Analyzing...")
         await self._run_hook(
             HookRuntime.PRE_FIRST_UPDATE, prior_context.iteration, loop, threadpool
         )
@@ -123,7 +136,10 @@ class EnsembleSmoother(BaseRunModel):
             self.ert().analysisConfig().active_module_name(),
         )
 
+        self.setPhase(1, "Running simulations...")
         self.ert().getEnkfFsManager().switchFileSystem(prior_context.target_fs)
+
+        self.setPhaseName("Pre processing...")
 
         experiment_logger.debug("creating context for iter 1")
         rerun_context = await loop.run_in_executor(
@@ -144,17 +160,20 @@ class EnsembleSmoother(BaseRunModel):
         ensemble_id = await loop.run_in_executor(
             threadpool, self._post_ensemble_data, update_id
         )
-
-        # Evaluate
+        self.setPhaseName("Running forecast...", indeterminate=False)
         experiment_logger.debug("evaluating for iter 1")
-        await self._evaluate(rerun_context, evaluator_server_config)
-
-        num_successful_realizations = await self.successful_realizations(
-            rerun_context.iteration,
+        num_successful_realizations = await self._evaluate(
+            rerun_context, evaluator_server_config
         )
 
-        self.checkHaveSufficientRealizations(num_successful_realizations)
+        if FeatureToggling.is_enabled("experiment-server"):
+            num_successful_realizations = await self.successful_realizations(
+                rerun_context.iteration,
+            )
 
+        self.checkHaveSufficientRealizations(num_successful_realizations)  # type: ignore
+
+        self.setPhaseName("Post processing...", indeterminate=True)
         await self._run_hook(
             HookRuntime.POST_SIMULATION, rerun_context.iteration, loop, threadpool
         )
@@ -167,88 +186,16 @@ class EnsembleSmoother(BaseRunModel):
         )
         await self.dispatch(event)
         experiment_logger.debug("experiment done")
+        self.setPhase(2, "Simulations completed.")
+
+        if not FeatureToggling.is_enabled("experiment-server"):
+            return prior_context
+        return None
 
     def runSimulations(
         self, evaluator_server_config: EvaluatorServerConfig
-    ) -> RunContext:
-        prior_context = self.create_context()
-
-        self._checkMinimumActiveRealizations(len(prior_context.active_realizations))
-        self.setPhase(0, "Running simulations...", indeterminate=False)
-
-        # self.setAnalysisModule(arguments["analysis_module"])
-
-        self.setPhaseName("Pre processing...", indeterminate=True)
-        self.ert().sample_prior(prior_context.sim_fs, prior_context.active_realizations)
-        self.ert().createRunPath(prior_context)
-
-        self.ert().runWorkflows(HookRuntime.PRE_SIMULATION)
-
-        # Push ensemble, parameters, observations to new storage
-        ensemble_id = self._post_ensemble_data()
-
-        self.setPhaseName("Running forecast...", indeterminate=False)
-
-        num_successful_realizations = self.run_ensemble_evaluator(
-            prior_context, evaluator_server_config
-        )
-
-        # Push simulation results to storage
-        self._post_ensemble_results(ensemble_id)
-
-        self.checkHaveSufficientRealizations(num_successful_realizations)
-
-        self.setPhaseName("Post processing...", indeterminate=True)
-        self.ert().runWorkflows(HookRuntime.POST_SIMULATION)
-
-        self.setPhaseName("Analyzing...")
-        self.ert().runWorkflows(HookRuntime.PRE_FIRST_UPDATE)
-        self.ert().runWorkflows(HookRuntime.PRE_UPDATE)
-        try:
-            self.facade.smoother_update(prior_context)
-        except ErtAnalysisError as e:
-            raise ErtRunError(
-                f"Analysis of simulation failed with the following error: {e}"
-            ) from e
-
-        self.ert().runWorkflows(HookRuntime.POST_UPDATE)
-
-        # Create an update object in storage
-        analysis_module_name = self.ert().analysisConfig().active_module_name()
-        update_id = self._post_update_data(ensemble_id, analysis_module_name)
-
-        self.setPhase(1, "Running simulations...")
-        self.ert().getEnkfFsManager().switchFileSystem(
-            prior_context.target_fs.case_name
-        )
-
-        self.setPhaseName("Pre processing...")
-
-        rerun_context = self.create_context(prior_context=prior_context)
-
-        self.ert().createRunPath(rerun_context)
-
-        self.ert().runWorkflows(HookRuntime.PRE_SIMULATION)
-        # Push ensemble, parameters, observations to new storage
-        ensemble_id = self._post_ensemble_data(update_id=update_id)
-
-        self.setPhaseName("Running forecast...", indeterminate=False)
-
-        num_successful_realizations = self.run_ensemble_evaluator(
-            rerun_context, evaluator_server_config
-        )
-
-        self.checkHaveSufficientRealizations(num_successful_realizations)
-
-        self.setPhaseName("Post processing...", indeterminate=True)
-        self.ert().runWorkflows(HookRuntime.POST_SIMULATION)
-
-        # Push simulation results to storage
-        self._post_ensemble_results(ensemble_id)
-
-        self.setPhase(2, "Simulations completed.")
-
-        return prior_context
+    ) -> Union[RunContext, None]:
+        return asyncio.run(self.run(evaluator_server_config), debug=True)
 
     def create_context(self, prior_context: Optional[RunContext] = None) -> RunContext:
         fs_manager = self.ert().getEnkfFsManager()

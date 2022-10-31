@@ -1,7 +1,7 @@
 import asyncio
 import concurrent
 import logging
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import _ert_com_protocol
 from ert._c_wrappers.enkf import RunContext
@@ -9,6 +9,7 @@ from ert._c_wrappers.enkf.enkf_main import EnKFMain, QueueConfig
 from ert._c_wrappers.enkf.enums import HookRuntime, RealizationStateEnum
 from ert.analysis import ErtAnalysisError
 from ert.ensemble_evaluator import EvaluatorServerConfig
+from ert.shared.feature_toggling import FeatureToggling
 from ert.shared.models import BaseRunModel, ErtRunError
 
 logger = logging.getLogger(__file__)
@@ -38,9 +39,17 @@ class MultipleDataAssimilation(BaseRunModel):
         if not module_load_success:
             raise ErtRunError(f"Unable to load analysis module '{module_name}'!")
 
-    async def run(self, evaluator_server_config: EvaluatorServerConfig) -> None:
+    async def run(
+        self, evaluator_server_config: EvaluatorServerConfig, model_name: str
+    ) -> Union[RunContext, None]:
         loop = asyncio.get_running_loop()
         threadpool = concurrent.futures.ThreadPoolExecutor()
+
+        # Context created purely for the purpose of checking minimum active
+        # realizations:  (?)
+        prior_context = await loop.run_in_executor(
+            threadpool, self.create_context, 0, True
+        )
 
         experiment_logger.debug("starting es-mda experiment")
         event = _ert_com_protocol.node_status_builder(
@@ -48,7 +57,8 @@ class MultipleDataAssimilation(BaseRunModel):
         )
         await self.dispatch(event)
         self._checkMinimumActiveRealizations(
-            self._simulation_arguments["active_realizations"].count(True)
+            #self._simulation_arguments["active_realizations"].count(True)
+            prior_context
         )
 
         weights = self.parseWeights(self._simulation_arguments["weights"])
@@ -67,6 +77,7 @@ class MultipleDataAssimilation(BaseRunModel):
         weights_to_run = enumerated_weights[
             min(self._simulation_arguments["start_iteration"], len(weights)) :
         ]
+
         starting_iteration = self._simulation_arguments["start_iteration"]
         case_format = self._simulation_arguments["target_case"]
         storage_manager = self.ert().storage_manager
@@ -88,81 +99,10 @@ class MultipleDataAssimilation(BaseRunModel):
                 )
                 if val
             ]
-            self.ert().sample_prior(prior_fs, active_realizations)
-        for iteration, weight in weights_to_run:
-            is_first_iteration = iteration == 0
-
-            run_context = await loop.run_in_executor(
-                threadpool,
-                self.create_context,
-                iteration,
-                self._simulation_arguments["active_realizations"],
-            )
-
-            await loop.run_in_executor(
-                threadpool,
-                self.ert().createRunPath,
-                run_context,
-            )
-            await self._run_hook(
-                HookRuntime.PRE_SIMULATION, iteration, loop, threadpool
-            )
-            ensemble_id = await loop.run_in_executor(
-                threadpool, self._post_ensemble_data, update_id
-            )
-            await self._evaluate(run_context, evaluator_server_config)
-
-            num_successful_realizations = await self.successful_realizations(iteration)
-
-            # Push simulation results to storage
-            await loop.run_in_executor(
-                threadpool, self._post_ensemble_results, ensemble_id
-            )
-
-            num_successful_realizations += self._simulation_arguments.get(
-                "prev_successful_realizations", 0
-            )
-            self.checkHaveSufficientRealizations(num_successful_realizations)
-
-            await self._run_hook(
-                HookRuntime.POST_SIMULATION, iteration, loop, threadpool
-            )
-
-            if is_first_iteration:
-                await self._run_hook(
-                    HookRuntime.PRE_FIRST_UPDATE, iteration, loop, threadpool
-                )
-            await self._run_hook(HookRuntime.PRE_UPDATE, iteration, loop, threadpool)
-            update_id = self.update(
-                run_context=run_context, weight=weight, ensemble_id=ensemble_id
-            )
-            await self._run_hook(HookRuntime.POST_UPDATE, iteration, loop, threadpool)
-
-        assert run_context is not None  # mypy
-        event = _ert_com_protocol.node_status_builder(
-            status="EXPERIMENT_ANALYSIS_ENDED", experiment_id=self.id_
-        )
-        await self.dispatch(event)
-
-    def runSimulations(
-        self, evaluator_server_config: EvaluatorServerConfig
-    ) -> RunContext:
-        self._checkMinimumActiveRealizations(
-            self._simulation_arguments["active_realizations"].count(True)
-        )
-        weights = self.parseWeights(self._simulation_arguments["weights"])
-        iteration_count = len(weights)
-
-        self.setAnalysisModule(self._simulation_arguments["analysis_module"])
-
-        logger.info(
-            f"Running MDA ES for {iteration_count}  "
-            f'iterations\t{", ".join(str(weight) for weight in weights)}'
-        )
-        weights = self.normalizeWeights(weights)
-
-        weight_string = ", ".join(str(round(weight, 3)) for weight in weights)
-        logger.info(f"Running MDA ES on (weights normalized)\t{weight_string}")
+            # self.ert().sample_prior(prior_fs, active_realizations)
+            # How can implement prior_fs in run_context?
+            run_context = self.create_context(0, initialize_mask_from_arguments=True)
+            self.ert().sample_prior(run_context.sim_fs, run_context.active_realizations)
 
         self.setPhaseCount(iteration_count + 1)  # weights + post
         phase_string = (
@@ -171,60 +111,129 @@ class MultipleDataAssimilation(BaseRunModel):
         )
         self.setPhaseName(phase_string, indeterminate=True)
 
-        update_id = None
-        enumerated_weights = list(enumerate(weights))
-        starting_iteration = self._simulation_arguments["start_iteration"]
-        case_format = self._simulation_arguments["target_case"]
-        storage_manager = self.ert().storage_manager
-        if starting_iteration > 0:
-            if case_format % starting_iteration not in storage_manager:
-                raise ErtRunError(
-                    f"Source case {case_format % starting_iteration} for iteration "
-                    f"{starting_iteration} does not exists in {storage_manager.cases}."
-                    " If you are attempting to restart ESMDA from a iteration other "
-                    "than 0, make sure the target case format is the same as for the "
-                    f"original run.(Current target case format: {case_format})"
-                )
-        else:
-            prior_fs = storage_manager.add_case(case_format % starting_iteration)
-            active_realizations = [
-                i
-                for i, val in enumerate(
-                    self._simulation_arguments["active_realizations"]
-                )
-                if val
-            ]
-            self.ert().sample_prior(prior_fs, active_realizations)
-
-        weights_to_run = enumerated_weights[min(starting_iteration, len(weights)) :]
-
         for iteration, weight in weights_to_run:
             is_first_iteration = iteration == 0
-            if is_first_iteration:
-                mask = self._simulation_arguments["active_realizations"]
-            else:
-                mask = None
-            run_context = self.create_context(iteration, mask=mask)
-            _, ensemble_id = self._simulateAndPostProcess(
-                run_context, evaluator_server_config, update_id=update_id
+            run_context = await loop.run_in_executor(
+                threadpool, 
+                self.create_context, 
+                iteration, 
+                is_first_iteration,
+                # instead of: self._simulation_arguments["active_realizations"],
+            )
+
+            await loop.run_in_executor(
+                threadpool,
+                self.create_context,
+                iteration,
+                is_first_iteration,
+                # self._simulation_arguments["active_realizations"],
+            )
+            _, ensemble_id = await self._simulateAndPostProcess(
+                run_context,
+                evaluator_server_config,
+                update_id=update_id,
+                loop=loop,
+                threadpool=threadpool,
             )
             if is_first_iteration:
-                self.ert().runWorkflows(HookRuntime.PRE_FIRST_UPDATE)
-            self.ert().runWorkflows(HookRuntime.PRE_UPDATE)
-            update_id = self.update(
-                run_context=run_context, weight=weight, ensemble_id=ensemble_id
+                await self._run_hook(
+                    HookRuntime.PRE_FIRST_UPDATE, iteration, loop, threadpool
+                )
+            await self._run_hook(HookRuntime.PRE_UPDATE, iteration, loop, threadpool)
+            update_id = await loop.run_in_executor(
+                threadpool,
+                self.update,
+                run_context=run_context,
+                weight=weight,
+                ensemble_id=ensemble_id,
             )
-            self.ert().runWorkflows(HookRuntime.POST_UPDATE)
+            await self._run_hook(HookRuntime.POST_UPDATE, iteration, loop, threadpool)
 
         self.setPhaseName("Post processing...", indeterminate=True)
-        run_context = self.create_context(len(weights), update=False)
-        self._simulateAndPostProcess(
-            run_context, evaluator_server_config, update_id=update_id
+
+        run_context = await loop.run_in_executor(
+            threadpool, self.create_context, iteration, is_first_iteration
         )
 
-        self.setPhase(iteration_count + 1, "Simulations completed.")
+        event = _ert_com_protocol.node_status_builder(
+            status="EXPERIMENT_ANALYSIS_ENDED", experiment_id=self.id_
+        )
+        await self.dispatch(event)
 
-        return run_context
+        await self._simulateAndPostProcess(
+            run_context,
+            evaluator_server_config,
+            update_id=update_id,
+            loop=loop,
+            threadpool=threadpool,
+        )
+
+        if not FeatureToggling.is_enabled("experiment-server"):
+            self.setPhase(iteration_count + 1, "Simulations completed.")
+            return run_context
+        return None
+
+    async def _simulateAndPostProcess(
+        self,
+        run_context: RunContext,
+        evaluator_server_config: EvaluatorServerConfig,
+        update_id: Union[None, str],
+        loop: asyncio.AbstractEventLoop,
+        threadpool: Any,
+    ) -> Any:
+        iteration = run_context.iteration
+        phase_string = f"Running simulation for iteration: {iteration}"
+        self.setPhaseName(phase_string, indeterminate=True)
+        is_first_iteration = iteration == 0
+
+        run_context = await loop.run_in_executor(
+            threadpool, self.create_context, iteration, is_first_iteration
+        )
+
+        await loop.run_in_executor(
+            threadpool,
+            self.ert().createRunPath,
+            run_context,
+        )
+        phase_string = f"Pre processing for iteration: {iteration}"
+        self.setPhaseName(phase_string)
+        await self._run_hook(HookRuntime.PRE_SIMULATION, iteration, loop, threadpool)
+        ensemble_id = await loop.run_in_executor(
+            threadpool, self._post_ensemble_data, update_id
+        )
+        phase_string = f"Running forecast for iteration: {iteration}"
+        self.setPhaseName(phase_string, indeterminate=False)
+
+        num_successful_realizations = await self._evaluate(
+            run_context, evaluator_server_config
+        )
+
+        if FeatureToggling.is_enabled("experiment-server"):
+            num_successful_realizations = await self.successful_realizations(
+                run_context.iteration
+            )
+
+        # Push simulation results to storage
+        await loop.run_in_executor(threadpool, self._post_ensemble_results, ensemble_id)
+
+        num_successful_realizations += self._simulation_arguments.get(
+            "prev_successful_realizations", 0
+        )
+        self.checkHaveSufficientRealizations(num_successful_realizations)  # type: ignore
+
+        phase_string = f"Post processing for iteration: {iteration}"
+        self.setPhaseName(phase_string, indeterminate=True)
+
+        await self._run_hook(HookRuntime.POST_SIMULATION, iteration, loop, threadpool)
+
+        return num_successful_realizations, ensemble_id
+
+    def runSimulations(
+        self, evaluator_server_config: EvaluatorServerConfig
+    ) -> Union[RunContext, None]:
+        return asyncio.run(
+            self.run(evaluator_server_config, model_name="ES-MDA"), debug=True
+        )
 
     def _count_active_realizations(self, run_context: RunContext) -> int:
         return sum(run_context.mask)
@@ -250,46 +259,6 @@ class MultipleDataAssimilation(BaseRunModel):
         )
 
         return update_id
-
-    def _simulateAndPostProcess(
-        self,
-        run_context: RunContext,
-        evaluator_server_config: EvaluatorServerConfig,
-        update_id: Optional[str] = None,
-    ) -> Tuple[int, str]:
-        iteration = run_context.iteration
-
-        phase_string = f"Running simulation for iteration: {iteration}"
-        self.setPhaseName(phase_string, indeterminate=True)
-        self.ert().createRunPath(run_context)
-
-        phase_string = f"Pre processing for iteration: {iteration}"
-        self.setPhaseName(phase_string)
-        self.ert().runWorkflows(HookRuntime.PRE_SIMULATION)
-
-        # Push ensemble, parameters, observations to new storage
-        new_ensemble_id = self._post_ensemble_data(update_id=update_id)
-
-        phase_string = f"Running forecast for iteration: {iteration}"
-        self.setPhaseName(phase_string, indeterminate=False)
-
-        num_successful_realizations = self.run_ensemble_evaluator(
-            run_context, evaluator_server_config
-        )
-
-        # Push simulation results to storage
-        self._post_ensemble_results(new_ensemble_id)
-
-        num_successful_realizations += self._simulation_arguments.get(
-            "prev_successful_realizations", 0
-        )
-        self.checkHaveSufficientRealizations(num_successful_realizations)
-
-        phase_string = f"Post processing for iteration: {iteration}"
-        self.setPhaseName(phase_string, indeterminate=True)
-        self.ert().runWorkflows(HookRuntime.POST_SIMULATION)
-
-        return num_successful_realizations, new_ensemble_id
 
     @staticmethod
     def normalizeWeights(weights: List[float]) -> List[float]:

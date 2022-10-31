@@ -24,6 +24,11 @@ from ert._c_wrappers.enkf.analysis_config import AnalysisConfig
 from ert._c_wrappers.enkf.queue_config import QueueConfig
 from ert.async_utils import get_event_loop
 from ert.ensemble_evaluator import identifiers
+from ert.shared.feature_toggling import (
+    FeatureToggling,
+    feature_enabled,
+    feature_enabled_async,
+)
 
 from .._wait_for_evaluator import wait_for_evaluator
 from ._ensemble import Ensemble
@@ -138,61 +143,24 @@ class LegacyEnsemble(Ensemble):
 
         return on_timeout, send_timeout_future
 
-    def evaluate(self, config: "EvaluatorServerConfig") -> None:
-        if not config:
-            raise ValueError("no config for evaluator")
-        self._config = config
-        get_event_loop().run_until_complete(
-            wait_for_evaluator(
-                base_url=self._config.url,
-                token=self._config.token,
-                cert=self._config.cert,
-            )
-        )
-
-        threading.Thread(target=self._evaluate, name="LegacyEnsemble").start()
-
-    def _evaluate(self) -> None:
-        """
-        This method is executed on a separate thread, i.e. in parallel
-        with other threads. Its sole purpose is to execute and wait for
-        a coroutine
-        """
-        # Get a fresh eventloop
-        asyncio.set_event_loop(asyncio.new_event_loop())
-
-        if self._config is None:
-            raise ValueError("no config")
-
-        # The cloudevent_unary_send only accepts a cloud event, but in order to
-        # send cloud events over the network, we need token, URI and cert. These are
-        # not known until evaluate() is called and _config is set. So in a hacky
-        # fashion, we create the partialmethod (bound partial) here, after evaluate().
-        # Note that this is the "sync" version of evaluate(), and that the "async"
-        # version uses a different cloudevent_unary_send.
-        self.__class__._ce_unary_send = partialmethod(  # type: ignore
-            self.__class__.send_cloudevent,
-            self._config.dispatch_uri,
-            token=self._config.token,
-            cert=self._config.cert,
-        )
-        try:
-            get_event_loop().run_until_complete(
-                self._evaluate_inner(
-                    cloudevent_unary_send=self._ce_unary_send  # type: ignore
-                )
-            )
-        finally:
-            get_event_loop().close()
-
     async def evaluate_async(
         self,
         config: "EvaluatorServerConfig",
-        experiment_id: str,
+        experiment_id: Union[None, str],
     ) -> None:
         self._config = config
+        if FeatureToggling.is_enabled("experiment-server"):
+            event_send_func = self.queue_cloudevent
+        else:
+            event_send_func = partial(  # type: ignore
+                self.send_cloudevent,
+                self._config.dispatch_uri,
+                token=self._config.token,
+                cert=self._config.cert,
+            )
+
         await self._evaluate_inner(
-            cloudevent_unary_send=self.queue_cloudevent,
+            cloudevent_unary_send=event_send_func,
             output_bus=self.output_bus,
             experiment_id=experiment_id,
         )
@@ -332,8 +300,8 @@ class LegacyEnsemble(Ensemble):
     def cancellable(self) -> bool:
         return True
 
-    def cancel(self) -> None:
-        self._job_queue.kill_all_jobs()
+    async def cancel(self) -> None:
+        asyncio.get_running_loop().run_until_complete(self._job_queue.kill_all_jobs())
         logger.debug("evaluator cancelled")
 
     @property

@@ -1,13 +1,14 @@
 import asyncio
 import concurrent
 import logging
-from typing import Any, Dict
+from typing import Any, Dict, Union
 
 import _ert_com_protocol
 from ert._c_wrappers.enkf import RunContext
 from ert._c_wrappers.enkf.enkf_main import EnKFMain, QueueConfig
 from ert._c_wrappers.enkf.enums import HookRuntime
 from ert.ensemble_evaluator import EvaluatorServerConfig
+from ert.shared.feature_toggling import FeatureToggling
 from ert.shared.models import BaseRunModel
 from ert.shared.models.base_run_model import ErtRunError
 
@@ -17,20 +18,24 @@ experiment_logger = logging.getLogger("ert.experiment_server.ensemble_experiment
 class EnsembleExperiment(BaseRunModel):
     def __init__(
         self,
+        id_: str,
         simulation_arguments: Dict[str, Any],
         ert: EnKFMain,
         queue_config: QueueConfig,
-        id_: str,
     ):
         super().__init__(simulation_arguments, ert, queue_config, id_)
 
-    async def run(self, evaluator_server_config: EvaluatorServerConfig) -> None:
-
-        experiment_logger.debug("starting ensemble experiment")
+    async def run(
+        self, evaluator_server_config: EvaluatorServerConfig, model_name: str
+    ) -> Union[RunContext, None]:
+        experiment_logger.debug(f"Starting {model_name}...")
         event = _ert_com_protocol.node_status_builder(
             status="EXPERIMENT_STARTED", experiment_id=self.id_
         )
         await self.dispatch(event)
+        self.setPhase(0, "Running simulations...", indeterminate=False)
+
+        self.setPhaseName("Pre processing...", indeterminate=True)
 
         loop = asyncio.get_running_loop()
         with concurrent.futures.ThreadPoolExecutor() as executor:
@@ -58,27 +63,33 @@ class EnsembleExperiment(BaseRunModel):
             await self._run_hook(
                 HookRuntime.PRE_SIMULATION, run_context.iteration, loop, executor
             )
+            self.setPhaseName(f"Running {model_name}...", indeterminate=False)
 
             experiment_logger.debug("evaluating")
-            await self._evaluate(run_context, evaluator_server_config)
-
-            num_successful_realizations = await self.successful_realizations(
-                run_context.iteration
+            num_successful_realizations = await self._evaluate(
+                run_context, evaluator_server_config
             )
+
+            if FeatureToggling.is_enabled("experiment-server"):
+                num_successful_realizations = await self.successful_realizations(
+                    run_context.iteration
+                )
 
             num_successful_realizations += self._simulation_arguments.get(
                 "prev_successful_realizations", 0
             )
+
             try:
-                self.checkHaveSufficientRealizations(num_successful_realizations)
+                self.checkHaveSufficientRealizations(num_successful_realizations)  # type: ignore # _simulation_arguments is a dict
             except ErtRunError as e:
                 event = _ert_com_protocol.node_status_builder(
                     status="EXPERIMENT_FAILED", experiment_id=self.id_
                 )
                 event.experiment.message = str(e)
                 await self.dispatch(event)
-                return
+                return run_context
 
+            self.setPhaseName("Post processing...", indeterminate=True)
             await self._run_hook(
                 HookRuntime.POST_SIMULATION, run_context.iteration, loop, executor
             )
@@ -95,54 +106,17 @@ class EnsembleExperiment(BaseRunModel):
         )
         await self.dispatch(event)
 
-    def runSimulations__(
-        self,
-        run_msg: str,
-        evaluator_server_config: EvaluatorServerConfig,
-    ) -> RunContext:
-
-        run_context = self.create_context()
-
-        self.setPhase(0, "Running simulations...", indeterminate=False)
-
-        self.setPhaseName("Pre processing...", indeterminate=True)
-        self.ert().sample_prior(
-            run_context.sim_fs,
-            run_context.active_realizations,
-        )
-        self.ert().createRunPath(run_context)
-
-        # Push ensemble, parameters, observations to new storage
-        ensemble_id = self._post_ensemble_data()
-
-        self.ert().runWorkflows(HookRuntime.PRE_SIMULATION)
-
-        self.setPhaseName(run_msg, indeterminate=False)
-
-        num_successful_realizations = self.run_ensemble_evaluator(
-            run_context, evaluator_server_config
-        )
-
-        num_successful_realizations += self._simulation_arguments.get(
-            "prev_successful_realizations", 0
-        )
-        self.checkHaveSufficientRealizations(num_successful_realizations)
-
-        self.setPhaseName("Post processing...", indeterminate=True)
-        self.ert().runWorkflows(HookRuntime.POST_SIMULATION)
-
-        # Push simulation results to storage
-        self._post_ensemble_results(ensemble_id)
-
-        self.setPhase(1, "Simulations completed.")  # done...
-
-        return run_context
+        if not FeatureToggling.is_enabled("experiment-server"):
+            self.setPhase(1, "Simulations completed.")  # done...
+            return run_context
+        return None
 
     def runSimulations(
         self, evaluator_server_config: EvaluatorServerConfig
-    ) -> RunContext:
-        return self.runSimulations__(
-            "Running ensemble experiment...", evaluator_server_config
+    ) -> Union[RunContext, None]:
+        return asyncio.run(
+            self.run(evaluator_server_config, model_name="ensemble experiment"),
+            debug=True,
         )
 
     def create_context(self) -> RunContext:

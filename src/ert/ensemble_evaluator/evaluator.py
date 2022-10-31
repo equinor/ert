@@ -57,7 +57,7 @@ class EnsembleEvaluator:
         self._config: EvaluatorServerConfig = config
         self._ensemble: Ensemble = ensemble
 
-        self._loop = asyncio.new_event_loop()
+        self._loop = asyncio.get_running_loop()
         self._done = self._loop.create_future()
 
         self._clients: Set[WebSocketServerProtocol] = set()
@@ -78,9 +78,6 @@ class EnsembleEvaluator:
             self._dispatcher.register_event_handler(e_type, f)
 
         self._result = None
-        self._ws_thread = threading.Thread(
-            name="ert_ee_run_server", target=self._run_server, args=(self._loop,)
-        )
 
     @property
     def config(self):
@@ -109,7 +106,7 @@ class EnsembleEvaluator:
         if self.ensemble.status != ENSEMBLE_STATE_FAILED:
             snapshot_update_event = self.ensemble.update_snapshot(events)
             await self._send_snapshot_update(snapshot_update_event)
-            self._stop()
+            await self.stop()
 
     async def _failed_handler(self, events):
         if self.ensemble.status not in (
@@ -124,7 +121,7 @@ class EnsembleEvaluator:
                 events = [self._create_cloud_event(EVTYPE_ENSEMBLE_FAILED)]
             snapshot_update_event = self.ensemble.update_snapshot(events)
             await self._send_snapshot_update(snapshot_update_event)
-            self._signal_cancel()  # let ensemble know it should stop
+            await self._signal_cancel()  # let ensemble know it should stop
 
     async def _send_snapshot_update(self, snapshot_update_event):
         message = self._create_cloud_message(
@@ -199,11 +196,11 @@ class EnsembleEvaluator:
                 logger.debug(f"got message from client: {client_event}")
                 if client_event["type"] == EVTYPE_EE_USER_CANCEL:
                     logger.debug(f"Client {websocket.remote_address} asked to cancel.")
-                    self._signal_cancel()
+                    await self._signal_cancel()
 
                 elif client_event["type"] == EVTYPE_EE_USER_DONE:
                     logger.debug(f"Client {websocket.remote_address} signalled done.")
-                    self._stop()
+                    await self.stop()
 
     @asynccontextmanager
     async def count_dispatcher(self):
@@ -290,7 +287,12 @@ class EnsembleEvaluator:
             max_queue=None,
             max_size=2**26,
         ):
+
+            logger.debug("Running evaluator server")
             await self._done
+            logger.debug(
+                "Done signal received - preparing shutdown of evaluator server"
+            )
             if self._dispatchers_connected is not None:
                 logger.debug(
                     f"Got done signal. {self._dispatchers_connected.qsize()} "
@@ -333,24 +335,11 @@ class EnsembleEvaluator:
 
         logger.debug("Async server exiting.")
 
-    def _run_server(self, loop):
-        loop.run_until_complete(self.evaluator_server())
-        logger.debug("Server thread exiting.")
-
-    def run(self) -> Monitor:
-        self._ws_thread.start()
-        self._ensemble.evaluate(self._config)
-        return Monitor(self._config.get_connection_info())
-
-    def _stop(self):
+    async def stop(self):
         if not self._done.done():
             self._done.set_result(None)
 
-    def stop(self):
-        self._loop.call_soon_threadsafe(self._stop)
-        self._ws_thread.join()
-
-    def _signal_cancel(self):
+    async def _signal_cancel(self):
         """
         This is just a wrapper around logic for whether to signal cancel via
         a cancellable ensemble or to use internal stop-mechanism directly
@@ -361,53 +350,12 @@ class EnsembleEvaluator:
         """
         if self._ensemble.cancellable:
             logger.debug("Cancelling current ensemble")
-            self._ensemble.cancel()
+            await self._ensemble.cancel()
         else:
             logger.debug("Stopping current ensemble")
-            self._stop()
+            await self.stop()
 
-    def run_and_get_successful_realizations(self) -> int:
-        monitor = self.run()
-        unsuccessful_connection_attempts = 0
-        while True:
-            try:
-                for _ in monitor.track():
-                    unsuccessful_connection_attempts = 0
-                break
-            except (ConnectionClosedError) as e:
-                logger.debug(
-                    "Connection closed unexpectedly in "
-                    f"run_and_get_successful_realizations: {e}"
-                )
-            except (ConnectionRefusedError, ClientError) as e:
-                unsuccessful_connection_attempts += 1
-                logger.debug(
-                    f"run_and_get_successful_realizations caught {e}."
-                    f"{unsuccessful_connection_attempts} unsuccessful attempts"
-                )
-                if (
-                    unsuccessful_connection_attempts
-                    == _MAX_UNSUCCESSFUL_CONNECTION_ATTEMPTS
-                ):
-                    logger.debug("Max connection attempts reached")
-                    self._signal_cancel()
-                    break
-
-                sleep_time = 0.25 * 2**unsuccessful_connection_attempts
-                logger.debug(
-                    f"Sleeping for {sleep_time} seconds before attempting to reconnect"
-                )
-                time.sleep(sleep_time)
-            except BaseException:  # pylint: disable=broad-except
-                logger.exception("unexpected error: ")
-                # We really don't know what happened...  shut down and
-                # get out of here. Monitor is stopped by context-mgr
-                self._signal_cancel()
-                break
-
-        logger.debug("Waiting for evaluator shutdown")
-        self._ws_thread.join()
-        logger.debug("Evaluator is done")
+    async def get_successful_realizations(self):
         return self._ensemble.get_successful_realizations()
 
     @staticmethod
