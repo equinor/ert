@@ -11,19 +11,17 @@ def test_enkf_fs_manager_create(snake_oil_case):
     # create a separate manager instance from the ground up, but
     # then the reference count will be weird.
     ert = snake_oil_case
-    fsm = ert.getEnkfFsManager()
+    fsm = ert.storage_manager
 
-    fsm.getCurrentFileSystem()
-    assert fsm.caseExists("default_0")
-    assert fsm.caseHasData("default_0")
+    assert "default_0" in fsm
+    assert fsm.has_data("default_0")
 
-    assert not fsm.caseExists("newFS")
-    assert not fsm.caseHasData("newFS")
+    assert "newFS" not in fsm
 
-    fsm.getFileSystem("newFS")
+    fsm.add_case("newFS")
 
-    assert fsm.caseExists("newFS")
-    assert not fsm.caseHasData("newFS")
+    assert "newFS" in fsm
+    assert not fsm.has_data("newFS")
 
 
 def test_rotate(snake_oil_case):

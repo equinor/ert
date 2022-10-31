@@ -66,11 +66,6 @@ def test_cases_list(facade):
     assert ["default_0", "default_1"] == cases
 
 
-def test_case_has_data(facade):
-    assert facade.case_has_data("default_0")
-    assert not facade.case_has_data("default")
-
-
 def test_all_data_type_keys(facade):
     keys = facade.all_data_type_keys()
 

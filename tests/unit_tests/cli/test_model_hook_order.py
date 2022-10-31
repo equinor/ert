@@ -47,6 +47,8 @@ def test_hook_call_order_es_mda(monkeypatch):
         "start_iteration": 0,
         "weights": [1],
         "analysis_module": "some_module",
+        "active_realizations": [True],
+        "target_case": "target_%d",
     }
     evaluator_server_config = EvaluatorServerConfig(
         custom_port_range=range(1024, 65535), use_token=False, generate_cert=False
@@ -58,7 +60,6 @@ def test_hook_call_order_es_mda(monkeypatch):
     ert_mock.runWorkflows = MagicMock()
 
     test_class.create_context = MagicMock()
-    test_class._checkMinimumActiveRealizations = MagicMock()
     test_class.parseWeights = MagicMock(return_value=[1])
     test_class.setAnalysisModule = MagicMock()
     test_class.facade.get_number_of_iterations = MagicMock(return_value=-1)
