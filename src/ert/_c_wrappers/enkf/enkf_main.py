@@ -38,7 +38,6 @@ from ert._clib.state_map import (
 
 if TYPE_CHECKING:
     from ert._c_wrappers.enkf.res_config import ResConfig
-    from ert._c_wrappers.enkf.state_map import StateMap
 
 
 logger = logging.getLogger(__name__)
