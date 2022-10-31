@@ -1175,7 +1175,7 @@ and/or history matching project.
         The SUMMARY keyword has limited support for '*' wildcards, if your key
         contains one or more '*' characters all matching variables from the refcase
         are selected. Observe that if your summary key contains wildcards you must
-        supply a refcase with the REFCASE key - otherwise it will fail hard.
+        supply a refcase with the REFCASE key - otherwise only fully expanded keywords will be used.
 
         **Note:** Properties added using the SUMMARY keyword are only
         diagnostic. I.e. they have no effect on the sensitivity analysis or
