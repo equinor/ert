@@ -388,9 +388,6 @@ class EnKFMain:
         self.resConfig().substitution_list.addItem(key, value)
         self.substituter.add_global_substitution(key, value)
 
-    def getMountPoint(self) -> str:
-        return self.resConfig().model_config.getEnspath()
-
     def getObservations(self) -> EnkfObs:
         return self._observations
 
