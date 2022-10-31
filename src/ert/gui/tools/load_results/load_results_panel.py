@@ -1,13 +1,16 @@
 import os
 
+from PyQt5.QtWidgets import QMessageBox
 from qtpy.QtWidgets import QComboBox, QFormLayout, QTextEdit, QWidget
 
+from ert.gui.ertwidgets.message_box import ErtMessageBox
 from ert.gui.ertwidgets.models.activerealizationsmodel import ActiveRealizationsModel
 from ert.gui.ertwidgets.models.all_cases_model import AllCasesModel
 from ert.gui.ertwidgets.models.valuemodel import ValueModel
 from ert.gui.ertwidgets.stringbox import StringBox
 from ert.libres_facade import LibresFacade
 from ert.shared.ide.keywords.definitions import IntegerArgument, RangeStringArgument
+from ert.shared.models.base_run_model import _LogAggregration, captured_logs
 
 
 class LoadResultsPanel(QWidget):
@@ -98,14 +101,24 @@ class LoadResultsPanel(QWidget):
                 )
             )
             return False
-        loaded = self.facade.load_from_forward_model(
-            selected_case, realizations, iteration
-        )
+        logs: _LogAggregration = _LogAggregration()
+        with captured_logs() as logs:
+            loaded = self.facade.load_from_forward_model(
+                selected_case, realizations, iteration
+            )
 
-        if loaded > 0:
-            print(f"Successfully loaded {loaded} realisations.")
+        if loaded == realizations.count(True):
+            QMessageBox.information(
+                self, "Success", "Successfully loaded all realisations"
+            )
+        elif loaded > 0:
+            msg = ErtMessageBox(
+                f"Successfully loaded {loaded} realizations", "\n".join(logs.messages)
+            )
+            msg.exec_()
         else:
-            print("No realisations loaded.")
+            msg = ErtMessageBox("No realizations loaded", "\n".join(logs.messages))
+            msg.exec_()
         return loaded
 
     def setCurrectCase(self):
