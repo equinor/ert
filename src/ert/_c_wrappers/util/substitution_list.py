@@ -80,6 +80,18 @@ class SubstitutionList(BaseCClass):
     def substitute(self, to_substitute: str) -> str:
         return self._alloc_filtered_string(to_substitute)
 
+    def __eq__(self, other):
+        if len(self.keys()) != len(other.keys()):
+            return False
+        for key in self.keys():
+            oneValue = self.get(key)
+            otherValue = other.get(key)
+            if oneValue != otherValue:
+                return False
+
+    def __ne__(self, other):
+        return not self == other
+
     def free(self):
         self._free()
 
