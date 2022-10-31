@@ -2,7 +2,6 @@ import io
 import json
 import logging
 import os
-import re
 import struct
 from datetime import datetime
 from pathlib import Path
@@ -146,13 +145,6 @@ def _generate_parameter_files(
 
     _value_export_txt(run_path, export_base_name, exports)
     _value_export_json(run_path, export_base_name, exports)
-
-
-def naturalSortKey(s: str) -> List[Union[int, str]]:
-    _nsre = re.compile("([0-9]+)")
-    return [
-        int(text) if text.isdigit() else text.lower() for text in re.split(_nsre, s)
-    ]
 
 
 class EnKFMain:
@@ -522,9 +514,6 @@ class EnKFMain:
         (Path(self.getModelConfig().getEnspath()) / "current_case").write_text(
             case_name
         )
-
-    def getCaseList(self) -> List[str]:
-        return sorted(self.storage_manager.cases, key=naturalSortKey)
 
     def createRunPath(self, run_context: RunContext) -> None:
         for iens, run_arg in enumerate(run_context):
