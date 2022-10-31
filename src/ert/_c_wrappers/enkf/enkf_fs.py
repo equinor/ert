@@ -25,7 +25,6 @@ class EnkfFs(BaseCClass):
 
     _mount = ResPrototype("void* enkf_fs_mount(char*, int, bool)", bind=False)
     _sync = ResPrototype("void enkf_fs_sync(enkf_fs)")
-    _is_read_only = ResPrototype("bool  enkf_fs_is_read_only(enkf_fs)")
     _fsync = ResPrototype("void  enkf_fs_fsync(enkf_fs)")
     _create = ResPrototype(
         "void*   enkf_fs_create_fs(char* , enkf_fs_type_enum ,int, bool)",
@@ -59,9 +58,6 @@ class EnkfFs(BaseCClass):
 
     def getCaseName(self) -> str:
         return self.case_name
-
-    def isReadOnly(self) -> bool:
-        return self._is_read_only()
 
     @property
     def is_initalized(self) -> bool:
