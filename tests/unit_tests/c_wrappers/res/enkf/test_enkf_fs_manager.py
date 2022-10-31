@@ -64,4 +64,4 @@ def test_fs_init_from_scratch(snake_oil_case):
     ert.getEnkfFsManager().sample_prior(
         run_context.sim_fs, run_context.active_realizations, ["SNAKE_OIL_PARAM"]
     )
-    assert len(ert.getEnkfFsManager().getStateMapForCase("new_case")) == 25
+    assert len(ert.storage_manager.state_map("new_case")) == 25

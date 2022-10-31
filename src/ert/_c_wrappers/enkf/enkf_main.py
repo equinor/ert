@@ -512,9 +512,6 @@ class EnKFMain:
         """Returns the currently selected file system"""
         return self.getFileSystem(self.storage_manager.active_case)
 
-    def getStateMapForCase(self, case_name: str):
-        return self.storage_manager.state_map(case_name)
-
     def switchFileSystem(self, case_name: str) -> None:
         if isinstance(case_name, EnkfFs):
             case_name = case_name.case_name
