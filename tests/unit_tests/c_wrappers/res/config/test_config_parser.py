@@ -170,7 +170,6 @@ def test_parser_content():
     os.makedirs("tmp")
     os.chdir("tmp")
     content = conf.parse("../config")
-    d = content.as_dict()
     assert content.isValid()
     assert "KEY" in content
     assert "NOKEY" not in content
@@ -179,11 +178,9 @@ def test_parser_content():
     keys = content.keys()
     assert len(keys) == 1
     assert "KEY" in keys
-    d = content.as_dict()
-    assert "KEY" in d
-    item_list = d["KEY"]
+    item_list = content["KEY"]
     assert len(item_list) == 1
-    line = item_list[0]
+    line = list(item_list[0])
     assert line[0] == "VALUE1"
     assert line[1] == "VALUE2"
     assert line[2] == 100
