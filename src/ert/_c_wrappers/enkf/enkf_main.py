@@ -505,9 +505,6 @@ class EnKFMain:
             time_map.attach_refcase(self.res_config.ensemble_config.refcase)
         return case
 
-    def caseExists(self, case_name: str) -> bool:
-        return case_name in self.storage_manager
-
     def getCurrentFileSystem(self) -> "EnkfFs":
         """Returns the currently selected file system"""
         return self.getFileSystem(self.storage_manager.active_case)
