@@ -260,7 +260,7 @@ def config_dicts(draw):
                 ConfigKeys.FIELD_KEY: st.lists(
                     st.fixed_dictionaries(
                         {
-                            ConfigKeys.NAME: words,
+                            ConfigKeys.NAME: st.just("FIELD-" + draw(words)),
                             ConfigKeys.VAR_TYPE: st.just("PARAMETER"),
                             ConfigKeys.OUT_FILE: file_names,
                             # ConfigKeys.ENKF_INFILE: file_names, only used in general
@@ -278,7 +278,7 @@ def config_dicts(draw):
                 ConfigKeys.GEN_DATA: st.lists(
                     st.fixed_dictionaries(
                         {
-                            ConfigKeys.NAME: words,
+                            ConfigKeys.NAME: st.just("GEN_DATA-" + draw(words)),
                             ConfigKeys.RESULT_FILE: format_file_names,
                             ConfigKeys.INPUT_FORMAT: st.just(GenDataFileType.ASCII),
                             ConfigKeys.REPORT_STEPS: st.lists(
