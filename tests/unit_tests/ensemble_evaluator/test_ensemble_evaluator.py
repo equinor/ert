@@ -1,3 +1,5 @@
+import asyncio
+from threading import Thread
 from unittest.mock import patch
 
 import pytest
@@ -7,6 +9,7 @@ from websockets.version import version as websockets_version
 
 from _ert_job_runner.client import Client
 from ert.ensemble_evaluator import Snapshot, identifiers
+from ert.ensemble_evaluator._wait_for_evaluator import wait_for_evaluator
 from ert.ensemble_evaluator.evaluator import EnsembleEvaluator
 from ert.ensemble_evaluator.monitor import Monitor
 from ert.ensemble_evaluator.state import (
@@ -21,206 +24,237 @@ from ert.ensemble_evaluator.state import (
 from .ensemble_evaluator_utils import AutorunTestEnsemble, send_dispatch_event
 
 
-def test_dispatchers_can_connect_and_monitor_can_shut_down_evaluator(evaluator):
-    with evaluator.run() as monitor:
-        events = monitor.track()
-        token = evaluator._config.token
-        cert = evaluator._config.cert
+async def start_server_and_run_func_in_thread(run_func, evaluator):
+    server_task = asyncio.create_task(evaluator.evaluator_server())
+    con_info = evaluator._config.get_connection_info()
+    await wait_for_evaluator(
+        base_url=con_info.url, token=con_info.token, cert=con_info.cert
+    )
 
-        url = evaluator._config.url
-        # first snapshot before any event occurs
-        snapshot_event = next(events)
-        snapshot = Snapshot(snapshot_event.data)
-        assert snapshot.status == ENSEMBLE_STATE_UNKNOWN
-        # two dispatchers connect
-        with Client(
-            url + "/dispatch",
-            cert=cert,
-            token=token,
-            max_retries=1,
-            timeout_multiplier=1,
-        ) as dispatch1, Client(
-            url + "/dispatch",
-            cert=cert,
-            token=token,
-            max_retries=1,
-            timeout_multiplier=1,
-        ) as dispatch2:
+    t = Thread(target=run_func, args=[evaluator], name="Test-run-function-thread")
+    t.start()
+    try:
+        # The evaluator should be stopped by the run_func itself, hence
+        # we should not need to wait 90 seconds. We set a timeout though
+        # to ensure we are not waiting forever
+        await asyncio.wait_for(server_task, 90)
+    except asyncio.TimeoutError:
+        await evaluator.stop()
+    t.join()
 
-            # first dispatcher informs that job 0 is running
-            send_dispatch_event(
-                dispatch1,
-                identifiers.EVTYPE_FM_JOB_RUNNING,
-                f"/ert/ensemble/{evaluator.ensemble.id_}/real/0/step/0/job/0",
-                "event1",
-                {"current_memory_usage": 1000},
-            )
 
-            # second dispatcher informs that job 0 is running
-            send_dispatch_event(
-                dispatch2,
-                identifiers.EVTYPE_FM_JOB_RUNNING,
-                f"/ert/ensemble/{evaluator.ensemble.id_}/real/1/step/0/job/0",
-                "event1",
-                {"current_memory_usage": 1000},
-            )
+@pytest.mark.asyncio
+async def test_dispatchers_can_connect_and_monitor_can_shut_down_evaluator(evaluator):
+    def test_func(evaluator):
+        with Monitor(evaluator._config.get_connection_info()) as monitor:
+            events = monitor.track()
+            token = evaluator._config.token
+            cert = evaluator._config.cert
 
-            # second dispatcher informs that job 0 is done
-            send_dispatch_event(
-                dispatch2,
-                identifiers.EVTYPE_FM_JOB_SUCCESS,
-                f"/ert/ensemble/{evaluator.ensemble.id_}/real/1/step/0/job/0",
-                "event1",
-                {"current_memory_usage": 1000},
-            )
-
-            # second dispatcher informs that job 1 is failed
-            send_dispatch_event(
-                dispatch2,
-                identifiers.EVTYPE_FM_JOB_FAILURE,
-                f"/ert/ensemble/{evaluator.ensemble.id_}/real/1/step/0/job/1",
-                "event_job_1_fail",
-                {identifiers.ERROR_MSG: "error"},
-            )
-            evt = next(events)
-            print(evt)
-            snapshot = Snapshot(evt.data)
-            assert snapshot.get_job("1", "0", "0").status == JOB_STATE_FINISHED
-            assert snapshot.get_job("0", "0", "0").status == JOB_STATE_RUNNING
-            assert snapshot.get_job("1", "0", "1").status == JOB_STATE_FAILURE
-
-        # a second monitor connects
-        with Monitor(evaluator._config.get_connection_info()) as monitor2:
-            events2 = monitor2.track()
-            full_snapshot_event = next(events2)
-            assert full_snapshot_event["type"] == identifiers.EVTYPE_EE_SNAPSHOT
-            snapshot = Snapshot(full_snapshot_event.data)
+            url = evaluator._config.url
+            # first snapshot before any event occurs
+            snapshot_event = next(events)
+            snapshot = Snapshot(snapshot_event.data)
             assert snapshot.status == ENSEMBLE_STATE_UNKNOWN
-            assert snapshot.get_job("0", "0", "0").status == JOB_STATE_RUNNING
-            assert snapshot.get_job("1", "0", "0").status == JOB_STATE_FINISHED
+            # two dispatchers connect
+            with Client(
+                url + "/dispatch",
+                cert=cert,
+                token=token,
+                max_retries=1,
+                timeout_multiplier=1,
+            ) as dispatch1, Client(
+                url + "/dispatch",
+                cert=cert,
+                token=token,
+                max_retries=1,
+                timeout_multiplier=1,
+            ) as dispatch2:
 
-            # one monitor requests that server exit
-            monitor.signal_cancel()
+                # first dispatcher informs that job 0 is running
+                send_dispatch_event(
+                    dispatch1,
+                    identifiers.EVTYPE_FM_JOB_RUNNING,
+                    f"/ert/ensemble/{evaluator.ensemble.id_}/real/0/step/0/job/0",
+                    "event1",
+                    {"current_memory_usage": 1000},
+                )
 
-            # both monitors should get a terminated event
-            terminated = next(events)
-            terminated2 = next(events2)
-            assert terminated["type"] == identifiers.EVTYPE_EE_TERMINATED
-            assert terminated2["type"] == identifiers.EVTYPE_EE_TERMINATED
+                # second dispatcher informs that job 0 is running
+                send_dispatch_event(
+                    dispatch2,
+                    identifiers.EVTYPE_FM_JOB_RUNNING,
+                    f"/ert/ensemble/{evaluator.ensemble.id_}/real/1/step/0/job/0",
+                    "event1",
+                    {"current_memory_usage": 1000},
+                )
 
-            for e in [events, events2]:
-                for undexpected_event in e:
-                    assert (
-                        False
-                    ), f"got unexpected event {undexpected_event} from monitor"
+                # second dispatcher informs that job 0 is done
+                send_dispatch_event(
+                    dispatch2,
+                    identifiers.EVTYPE_FM_JOB_SUCCESS,
+                    f"/ert/ensemble/{evaluator.ensemble.id_}/real/1/step/0/job/0",
+                    "event1",
+                    {"current_memory_usage": 1000},
+                )
 
+                # second dispatcher informs that job 1 is failed
+                send_dispatch_event(
+                    dispatch2,
+                    identifiers.EVTYPE_FM_JOB_FAILURE,
+                    f"/ert/ensemble/{evaluator.ensemble.id_}/real/1/step/0/job/1",
+                    "event_job_1_fail",
+                    {identifiers.ERROR_MSG: "error"},
+                )
+                evt = next(events)
+                print(evt)
+                snapshot = Snapshot(evt.data)
+                assert snapshot.get_job("1", "0", "0").status == JOB_STATE_FINISHED
+                assert snapshot.get_job("0", "0", "0").status == JOB_STATE_RUNNING
+                assert snapshot.get_job("1", "0", "1").status == JOB_STATE_FAILURE
 
-def test_ensure_multi_level_events_in_order(evaluator):
-    with evaluator.run() as monitor:
-        events = monitor.track()
+            # a second monitor connects
+            with Monitor(evaluator._config.get_connection_info()) as monitor2:
+                events2 = monitor2.track()
+                full_snapshot_event = next(events2)
+                assert full_snapshot_event["type"] == identifiers.EVTYPE_EE_SNAPSHOT
+                snapshot = Snapshot(full_snapshot_event.data)
+                assert snapshot.status == ENSEMBLE_STATE_UNKNOWN
+                assert snapshot.get_job("0", "0", "0").status == JOB_STATE_RUNNING
+                assert snapshot.get_job("1", "0", "0").status == JOB_STATE_FINISHED
 
-        token = evaluator._config.token
-        cert = evaluator._config.cert
-        url = evaluator._config.url
+                # one monitor requests that server exit
+                monitor.signal_cancel()
 
-        snapshot_event = next(events)
-        assert snapshot_event["type"] == identifiers.EVTYPE_EE_SNAPSHOT
-        with Client(url + "/dispatch", cert=cert, token=token) as dispatch1:
-            send_dispatch_event(
-                dispatch1,
-                identifiers.EVTYPE_ENSEMBLE_STARTED,
-                f"/ert/ensemble/{evaluator.ensemble.id_}",
-                "event0",
-                {},
-            )
-            send_dispatch_event(
-                dispatch1,
-                identifiers.EVTYPE_FM_STEP_SUCCESS,
-                f"/ert/ensemble/{evaluator.ensemble.id_}/real/0/step/0",
-                "event1",
-                {},
-            )
-            send_dispatch_event(
-                dispatch1,
-                identifiers.EVTYPE_FM_STEP_SUCCESS,
-                f"/ert/ensemble/{evaluator.ensemble.id_}/real/1/step/0",
-                "event2",
-                {},
-            )
-            send_dispatch_event(
-                dispatch1,
-                identifiers.EVTYPE_ENSEMBLE_STOPPED,
-                f"/ert/ensemble/{evaluator.ensemble.id_}",
-                "event3",
-                {},
-            )
-        monitor.signal_done()
-        events = list(events)
+                # both monitors should get a terminated event
+                terminated = next(events)
+                terminated2 = next(events2)
+                assert terminated["type"] == identifiers.EVTYPE_EE_TERMINATED
+                assert terminated2["type"] == identifiers.EVTYPE_EE_TERMINATED
 
-        # Without making too many assumptions about what events to expect, it
-        # should be reasonable to expect that if an event contains information
-        # about realizations, the state of the ensemble up until that point
-        # should be not final (i.e. not cancelled, stopped, failed).
-        ensemble_state = snapshot_event.data.get("status")
-        for event in events:
-            if event.data:
-                if "reals" in event.data:
-                    assert ensemble_state == ENSEMBLE_STATE_STARTED
-                ensemble_state = event.data.get("status", ensemble_state)
+                for e in [events, events2]:
+                    for undexpected_event in e:
+                        assert (
+                            False
+                        ), f"got unexpected event {undexpected_event} from monitor"
+
+    await start_server_and_run_func_in_thread(test_func, evaluator)
 
 
-def test_dying_batcher(evaluator):
+@pytest.mark.asyncio
+async def test_ensure_multi_level_events_in_order(evaluator):
+    def test_func(evaluator):
+        with Monitor(evaluator._config.get_connection_info()) as monitor:
+            events = monitor.track()
+
+            token = evaluator._config.token
+            cert = evaluator._config.cert
+            url = evaluator._config.url
+
+            snapshot_event = next(events)
+            assert snapshot_event["type"] == identifiers.EVTYPE_EE_SNAPSHOT
+            with Client(url + "/dispatch", cert=cert, token=token) as dispatch1:
+                send_dispatch_event(
+                    dispatch1,
+                    identifiers.EVTYPE_ENSEMBLE_STARTED,
+                    f"/ert/ensemble/{evaluator.ensemble.id_}",
+                    "event0",
+                    {},
+                )
+                send_dispatch_event(
+                    dispatch1,
+                    identifiers.EVTYPE_FM_STEP_SUCCESS,
+                    f"/ert/ensemble/{evaluator.ensemble.id_}/real/0/step/0",
+                    "event1",
+                    {},
+                )
+                send_dispatch_event(
+                    dispatch1,
+                    identifiers.EVTYPE_FM_STEP_SUCCESS,
+                    f"/ert/ensemble/{evaluator.ensemble.id_}/real/1/step/0",
+                    "event2",
+                    {},
+                )
+                send_dispatch_event(
+                    dispatch1,
+                    identifiers.EVTYPE_ENSEMBLE_STOPPED,
+                    f"/ert/ensemble/{evaluator.ensemble.id_}",
+                    "event3",
+                    {},
+                )
+            monitor.signal_done()
+            events = list(events)
+
+            # Without making too many assumptions about what events to expect, it
+            # should be reasonable to expect that if an event contains information
+            # about realizations, the state of the ensemble up until that point
+            # should be not final (i.e. not cancelled, stopped, failed).
+            ensemble_state = snapshot_event.data.get("status")
+            for event in events:
+                if event.data:
+                    if "reals" in event.data:
+                        assert ensemble_state == ENSEMBLE_STATE_STARTED
+                    ensemble_state = event.data.get("status", ensemble_state)
+
+    await start_server_and_run_func_in_thread(test_func, evaluator)
+
+
+@pytest.mark.asyncio
+async def test_dying_batcher(evaluator):
     def exploding_handler(events):
         raise ValueError("Boom!")
 
     evaluator._dispatcher.register_event_handler("EXPLODING", exploding_handler)
 
-    with evaluator.run() as monitor:
-        token = evaluator._config.token
-        cert = evaluator._config.cert
-        url = evaluator._config.url
+    def test_func(evaluator):
+        with Monitor(evaluator._config.get_connection_info()) as monitor:
+            token = evaluator._config.token
+            cert = evaluator._config.cert
+            url = evaluator._config.url
 
-        with Client(url + "/dispatch", cert=cert, token=token) as dispatch:
-            send_dispatch_event(
-                dispatch,
-                identifiers.EVTYPE_ENSEMBLE_STARTED,
-                f"/ert/ensemble/{evaluator.ensemble.id_}",
-                "event0",
-                {},
-            )
-            send_dispatch_event(
-                dispatch,
-                identifiers.EVTYPE_FM_JOB_RUNNING,
-                f"/ert/ensemble/{evaluator.ensemble.id_}/real/0/step/0/job/0",
-                "event1",
-                {"current_memory_usage": 1000},
-            )
-            send_dispatch_event(
-                dispatch,
-                identifiers.EVTYPE_FM_JOB_RUNNING,
-                f"/ert/ensemble/{evaluator.ensemble.id_}/real/0/step/0/job/0",
-                "event2",
-                {},
-            )
-            send_dispatch_event(
-                dispatch,
-                "EXPLODING",
-                f"/ert/ensemble/{evaluator.ensemble.id_}/real/1/step/0",
-                "event3",
-                {},
-            )
-            send_dispatch_event(
-                dispatch,
-                identifiers.EVTYPE_FM_STEP_SUCCESS,
-                f"/ert/ensemble/{evaluator.ensemble.id_}/real/0/step/0/job/0",
-                "event4",
-                {},
-            )
+            with Client(url + "/dispatch", cert=cert, token=token) as dispatch:
+                send_dispatch_event(
+                    dispatch,
+                    identifiers.EVTYPE_ENSEMBLE_STARTED,
+                    f"/ert/ensemble/{evaluator.ensemble.id_}",
+                    "event0",
+                    {},
+                )
+                send_dispatch_event(
+                    dispatch,
+                    identifiers.EVTYPE_FM_JOB_RUNNING,
+                    f"/ert/ensemble/{evaluator.ensemble.id_}/real/0/step/0/job/0",
+                    "event1",
+                    {"current_memory_usage": 1000},
+                )
+                send_dispatch_event(
+                    dispatch,
+                    identifiers.EVTYPE_FM_JOB_RUNNING,
+                    f"/ert/ensemble/{evaluator.ensemble.id_}/real/0/step/0/job/0",
+                    "event2",
+                    {},
+                )
+                send_dispatch_event(
+                    dispatch,
+                    "EXPLODING",
+                    f"/ert/ensemble/{evaluator.ensemble.id_}/real/1/step/0",
+                    "event3",
+                    {},
+                )
+                send_dispatch_event(
+                    dispatch,
+                    identifiers.EVTYPE_FM_STEP_SUCCESS,
+                    f"/ert/ensemble/{evaluator.ensemble.id_}/real/0/step/0/job/0",
+                    "event4",
+                    {},
+                )
 
-        # drain the monitor
-        list(monitor.track())
+            # drain the monitor
+            list(monitor.track())
 
-        assert ENSEMBLE_STATE_FAILED == evaluator.ensemble.snapshot.status
+            assert ENSEMBLE_STATE_FAILED == evaluator.ensemble.snapshot.status
+
+    await start_server_and_run_func_in_thread(test_func, evaluator)
 
 
 @pytest.mark.parametrize("num_realizations, num_failing", [(10, 5), (10, 10)])

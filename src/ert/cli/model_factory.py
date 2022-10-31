@@ -1,6 +1,7 @@
 import logging
 from typing import List
 
+from ert._c_wrappers.enkf.enkf_main import EnKFMain
 from ert._c_wrappers.config.active_range import ActiveRange
 from ert.shared.models.ensemble_experiment import EnsembleExperiment
 from ert.shared.models.ensemble_smoother import EnsembleSmoother
@@ -43,7 +44,7 @@ def create_model(ert, ensemble_size, current_case_name, args, id_):
     return model
 
 
-def _setup_single_test_run(ert, id_):
+def _setup_single_test_run(ert: EnKFMain, id_: str) -> SingleTestRun:
     simulations_argument = {"active_realizations": [True]}
     model = SingleTestRun(simulations_argument, ert, id_)
     return model

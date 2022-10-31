@@ -1,4 +1,4 @@
-from unittest.mock import MagicMock, call
+from unittest.mock import MagicMock, call, AsyncMock
 
 from ert._c_wrappers.enkf.enums import HookRuntime
 from ert.ensemble_evaluator.config import EvaluatorServerConfig
@@ -28,7 +28,7 @@ def test_hook_call_order_ensemble_smoother(monkeypatch):
     minimum_args = MagicMock()
     test_class = EnsembleSmoother(minimum_args, ert_mock, MagicMock(), "experiment_id")
     test_class.create_context = MagicMock()
-    test_class.run_ensemble_evaluator = MagicMock(return_value=1)
+    test_class._evaluate = AsyncMock(return_value=1)
     ert_mock.runWorkflows = MagicMock()
     test_class.facade._es_update = MagicMock()
     evaluator_server_config_mock = MagicMock()
@@ -65,7 +65,7 @@ def test_hook_call_order_es_mda(monkeypatch):
     test_class.facade.get_number_of_iterations = MagicMock(return_value=-1)
     test_class.facade._es_update = MagicMock()
 
-    test_class.run_ensemble_evaluator = MagicMock(return_value=1)
+    test_class._evaluate = AsyncMock(return_value=1)
 
     test_class.runSimulations(evaluator_server_config)
 
@@ -100,7 +100,7 @@ def test_hook_call_order_iterative_ensemble_smoother(monkeypatch):
     test_class._ert = ert_mock
     test_class.parseWeights = MagicMock(return_value=[1])
     test_class.setAnalysisModule = MagicMock()
-    test_class.run_ensemble_evaluator = MagicMock(return_value=1)
+    test_class._evaluate = AsyncMock(return_value=1)
 
     test_class.setPhase = MagicMock()
     test_class.facade.get_number_of_iterations = MagicMock(return_value=1)

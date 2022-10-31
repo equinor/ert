@@ -103,7 +103,7 @@ def run_cli(args):
 
     thread = threading.Thread(
         name="ert_cli_simulation_thread",
-        target=model.start_simulations_thread,
+        target=model.startSimulations,
         args=(evaluator_server_config,),
     )
     thread.start()

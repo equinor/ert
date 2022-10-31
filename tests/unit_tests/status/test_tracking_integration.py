@@ -194,7 +194,7 @@ def test_tracking(
 
         thread = threading.Thread(
             name="ert_cli_simulation_thread",
-            target=model.start_simulations_thread,
+            target=model.startSimulations,
             args=(evaluator_server_config,),
         )
         thread.start()
@@ -319,7 +319,7 @@ def test_tracking_time_map(
 
         thread = threading.Thread(
             name="ert_cli_simulation_thread",
-            target=model.start_simulations_thread,
+            target=model.startSimulations,
             args=(evaluator_server_config,),
         )
         with caplog.at_level(logging.INFO):
@@ -406,7 +406,7 @@ def test_tracking_missing_ecl(
 
         thread = threading.Thread(
             name="ert_cli_simulation_thread",
-            target=model.start_simulations_thread,
+            target=model.startSimulations,
             args=(evaluator_server_config,),
         )
         with caplog.at_level(logging.ERROR):

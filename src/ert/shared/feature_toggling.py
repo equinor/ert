@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from copy import deepcopy
 
@@ -79,6 +80,19 @@ def feature_enabled(feature_name):
                 return func(*args, **kwargs)
             else:
                 return None
+
+        return wrapper
+
+    return decorator
+
+
+def feature_enabled_async(feature_name):
+    def decorator(func):
+        async def wrapper(*args, **kwargs):
+            if FeatureToggling.is_enabled(feature_name):
+                return await func(*args, **kwargs)
+            else:
+                return await asyncio.sleep(0.1)
 
         return wrapper
 
