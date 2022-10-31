@@ -93,12 +93,14 @@ class LoadResultsPanel(QWidget):
             if iteration is None:
                 iteration = ""
             iteration = int(iteration)
-        except ValueError as e:
-            print(
+        except ValueError:
+            QMessageBox.warning(
+                self,
+                "Warning",
                 (
-                    "Expected a (whole) number in iteration field, "
-                    f'got "{iteration}". Error message: {e}.'
-                )
+                    "Expected an integer number in iteration field, "
+                    f'got "{iteration}"'
+                ),
             )
             return False
         logs: _LogAggregration = _LogAggregration()
