@@ -238,9 +238,10 @@ def test_that_sampling_prior_makes_initialized_fs():
     run_context = ert.create_ensemble_experiment_run_context(
         iteration=0, active_mask=[True]
     )
-    assert not ert.isCaseInitialized("default")
+    storage_manager = ert.storage_manager
+    assert not storage_manager["default"].is_initalized
     ert.sample_prior(run_context.sim_fs, run_context.active_realizations)
-    assert ert.isCaseInitialized("default")
+    assert storage_manager["default"].is_initalized
 
 
 @pytest.mark.parametrize(
