@@ -1,4 +1,5 @@
 import logging
+import re
 from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Union
 
 import numpy as np
@@ -272,7 +273,14 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
             self._enkf_main.switchFileSystem(fs.case_name)
 
     def cases(self) -> List[str]:
-        return self._enkf_main.getCaseList()
+        def sort_key(s: str) -> List[Union[int, str]]:
+            _nsre = re.compile("([0-9]+)")
+            return [
+                int(text) if text.isdigit() else text.lower()
+                for text in re.split(_nsre, s)
+            ]
+
+        return sorted(self._enkf_main.storage_manager.cases, key=sort_key)
 
     def all_data_type_keys(self) -> List[str]:
         return self.get_summary_keys() + self.gen_kw_keys() + self.get_gen_data_keys()
