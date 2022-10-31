@@ -1,0 +1,53 @@
+2022-10-31 14:20:50,128 - _ert_job_runner.reporting.statemachine - DEBUG - Initializing state machines
+2022-10-31 14:20:50,128 - _ert_job_runner.cli - INFO - Job status: Init
+2022-10-31 14:20:50,129 - _ert_job_runner.reporting.file - DEBUG - Init Message Instance
+2022-10-31 14:20:50,129 - _ert_job_runner.reporting.file - DEBUG - Deleting old status files
+2022-10-31 14:20:50,129 - _ert_job_runner.reporting.event - DEBUG - Publishing event.
+2022-10-31 14:20:50,129 - _ert_job_runner.cli - INFO - Job status: Start
+2022-10-31 14:20:50,129 - _ert_job_runner.reporting.file - DEBUG - Adding message job to status dictionary.
+2022-10-31 14:20:50,129 - _ert_job_runner.reporting.file - DEBUG - Job SNAKE_OIL_SIMULATOR was successfully started
+2022-10-31 14:20:50,129 - _ert_job_runner.reporting.file - INFO - Append SNAKE_OIL_SIMULATOR job starting timestamp 14:20:50 to STATUS_file.
+2022-10-31 14:20:50,129 - _ert_job_runner.reporting.event - DEBUG - Job SNAKE_OIL_SIMULATOR was successfully started
+2022-10-31 14:20:50,130 - _ert_job_runner.reporting.event - DEBUG - Schedule <class 'cloudevents.http.event.CloudEvent'> "com.equinor.ert.forward_model_job.start" for delivery
+2022-10-31 14:20:50,136 - _ert_job_runner.cli - INFO - Job status: Running
+2022-10-31 14:20:50,136 - _ert_job_runner.reporting.file - DEBUG - Adding message job to status dictionary.
+2022-10-31 14:20:50,137 - _ert_job_runner.reporting.event - DEBUG - SNAKE_OIL_SIMULATOR job is running
+2022-10-31 14:20:50,137 - _ert_job_runner.reporting.event - DEBUG - Schedule <class 'cloudevents.http.event.CloudEvent'> "com.equinor.ert.forward_model_job.running" for delivery
+2022-10-31 14:20:52,397 - _ert_job_runner.cli - INFO - Job status: Exited
+2022-10-31 14:20:52,397 - _ert_job_runner.reporting.file - DEBUG - Adding message job to status dictionary.
+2022-10-31 14:20:52,397 - _ert_job_runner.reporting.file - DEBUG - Job SNAKE_OIL_SIMULATOR exited successfully
+2022-10-31 14:20:52,398 - _ert_job_runner.reporting.event - DEBUG - Job SNAKE_OIL_SIMULATOR exited successfully
+2022-10-31 14:20:52,398 - _ert_job_runner.reporting.event - DEBUG - Schedule <class 'cloudevents.http.event.CloudEvent'> "com.equinor.ert.forward_model_job.success" for delivery
+2022-10-31 14:20:52,398 - _ert_job_runner.cli - INFO - Job status: Start
+2022-10-31 14:20:52,398 - _ert_job_runner.reporting.file - DEBUG - Adding message job to status dictionary.
+2022-10-31 14:20:52,398 - _ert_job_runner.reporting.file - DEBUG - Job SNAKE_OIL_NPV was successfully started
+2022-10-31 14:20:52,398 - _ert_job_runner.reporting.file - INFO - Append SNAKE_OIL_NPV job starting timestamp 14:20:52 to STATUS_file.
+2022-10-31 14:20:52,399 - _ert_job_runner.reporting.event - DEBUG - Job SNAKE_OIL_NPV was successfully started
+2022-10-31 14:20:52,399 - _ert_job_runner.reporting.event - DEBUG - Schedule <class 'cloudevents.http.event.CloudEvent'> "com.equinor.ert.forward_model_job.start" for delivery
+2022-10-31 14:20:52,406 - _ert_job_runner.cli - INFO - Job status: Running
+2022-10-31 14:20:52,406 - _ert_job_runner.reporting.file - DEBUG - Adding message job to status dictionary.
+2022-10-31 14:20:52,407 - _ert_job_runner.reporting.event - DEBUG - SNAKE_OIL_NPV job is running
+2022-10-31 14:20:52,407 - _ert_job_runner.reporting.event - DEBUG - Schedule <class 'cloudevents.http.event.CloudEvent'> "com.equinor.ert.forward_model_job.running" for delivery
+2022-10-31 14:20:52,902 - _ert_job_runner.cli - INFO - Job status: Exited
+2022-10-31 14:20:52,902 - _ert_job_runner.reporting.file - DEBUG - Adding message job to status dictionary.
+2022-10-31 14:20:52,902 - _ert_job_runner.reporting.file - DEBUG - Job SNAKE_OIL_NPV exited successfully
+2022-10-31 14:20:52,903 - _ert_job_runner.reporting.event - DEBUG - Job SNAKE_OIL_NPV exited successfully
+2022-10-31 14:20:52,903 - _ert_job_runner.reporting.event - DEBUG - Schedule <class 'cloudevents.http.event.CloudEvent'> "com.equinor.ert.forward_model_job.success" for delivery
+2022-10-31 14:20:52,903 - _ert_job_runner.cli - INFO - Job status: Start
+2022-10-31 14:20:52,903 - _ert_job_runner.reporting.file - DEBUG - Adding message job to status dictionary.
+2022-10-31 14:20:52,903 - _ert_job_runner.reporting.file - DEBUG - Job SNAKE_OIL_DIFF was successfully started
+2022-10-31 14:20:52,904 - _ert_job_runner.reporting.file - INFO - Append SNAKE_OIL_DIFF job starting timestamp 14:20:52 to STATUS_file.
+2022-10-31 14:20:52,904 - _ert_job_runner.reporting.event - DEBUG - Job SNAKE_OIL_DIFF was successfully started
+2022-10-31 14:20:52,904 - _ert_job_runner.reporting.event - DEBUG - Schedule <class 'cloudevents.http.event.CloudEvent'> "com.equinor.ert.forward_model_job.start" for delivery
+2022-10-31 14:20:52,909 - _ert_job_runner.cli - INFO - Job status: Running
+2022-10-31 14:20:52,909 - _ert_job_runner.reporting.file - DEBUG - Adding message job to status dictionary.
+2022-10-31 14:20:52,910 - _ert_job_runner.reporting.event - DEBUG - SNAKE_OIL_DIFF job is running
+2022-10-31 14:20:52,910 - _ert_job_runner.reporting.event - DEBUG - Schedule <class 'cloudevents.http.event.CloudEvent'> "com.equinor.ert.forward_model_job.running" for delivery
+2022-10-31 14:20:53,417 - _ert_job_runner.cli - INFO - Job status: Exited
+2022-10-31 14:20:53,417 - _ert_job_runner.reporting.file - DEBUG - Adding message job to status dictionary.
+2022-10-31 14:20:53,417 - _ert_job_runner.reporting.file - DEBUG - Job SNAKE_OIL_DIFF exited successfully
+2022-10-31 14:20:53,417 - _ert_job_runner.reporting.event - DEBUG - Job SNAKE_OIL_DIFF exited successfully
+2022-10-31 14:20:53,417 - _ert_job_runner.reporting.event - DEBUG - Schedule <class 'cloudevents.http.event.CloudEvent'> "com.equinor.ert.forward_model_job.success" for delivery
+2022-10-31 14:20:53,418 - _ert_job_runner.cli - INFO - Job status: Finish
+2022-10-31 14:20:53,418 - _ert_job_runner.reporting.file - DEBUG - Runner finished
+2022-10-31 14:20:53,418 - _ert_job_runner.reporting.file - DEBUG - Runner finished successfully

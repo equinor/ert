@@ -114,7 +114,7 @@ def test_gen_obs_runtime(snapshot):
     ert = EnKFMain(res_config)
 
     facade = LibresFacade(ert)
-
+    facade.select_or_create_new_case("default")
     df = MeasuredData(facade, [f"CUSTOM_DIFF_{restart}" for restart in range(500)])
 
     snapshot.assert_match(df.data.to_csv(), "snake_oil_gendata_output.csv")
@@ -241,12 +241,14 @@ def test_all_measured_snapshot(snapshot, facade_snake_oil):
     While there is no guarantee that this snapshot is 100% correct, it does represent
     the current state of loading from storage for the snake_oil case.
     """
+    facade_snake_oil.select_or_create_new_case("default")
     obs_keys = facade_snake_oil.get_matching_wildcards()("*").strings
     measured_data = MeasuredData(facade_snake_oil, obs_keys)
     snapshot.assert_match(measured_data.data.to_csv(), "snake_oil_measured_output.csv")
 
 
 def test_active_realizations(facade_snake_oil):
+    facade_snake_oil.select_or_create_new_case("default")
     current_case_name = facade_snake_oil.get_current_case_name()
     active_realizations = facade_snake_oil.get_active_realizations(current_case_name)
     assert len(active_realizations) == 25

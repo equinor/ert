@@ -4,6 +4,7 @@ import pytest
 
 from ert._c_wrappers.enkf import EnKFMain, ResConfig, SummaryKeySet
 from ert._c_wrappers.enkf.enkf_fs import EnkfFs
+from ert.libres_facade import LibresFacade
 
 
 def test_creation():
@@ -69,7 +70,7 @@ def test_with_enkf_fs(copy_case):
     res_config = ResConfig("snake_oil.ert")
 
     fs = EnkfFs(
-        "storage/snake_oil/ensemble/default_0", res_config.ensemble_config, 4, False
+        "storage/snake_oil/ensemble/default", res_config.ensemble_config, 4, False
     )
     summary_key_set = fs.getSummaryKeySet()
     summary_key_set.addSummaryKey("FOPT")
@@ -79,6 +80,8 @@ def test_with_enkf_fs(copy_case):
 
     res_config = ResConfig("snake_oil.ert")
     ert = EnKFMain(res_config)
+    facade = LibresFacade(ert)
+    facade.select_or_create_new_case("default")
     fs = ert.getEnkfFsManager().getCurrentFileSystem()
     summary_key_set = fs.getSummaryKeySet()
     assert "FOPT" in summary_key_set

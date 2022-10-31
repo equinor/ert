@@ -14,14 +14,6 @@ from ert.cli import ENSEMBLE_EXPERIMENT_MODE, ENSEMBLE_SMOOTHER_MODE
 from ert.cli.main import run_cli
 
 
-@pytest.fixture()
-def minimal_config(use_tmpdir):
-    with open("config_file.ert", "w") as fout:
-        fout.write("NUM_REALIZATIONS 1")
-    res_config = ResConfig("config_file.ert")
-    yield res_config
-
-
 def test_update_report(setup_case, snapshot):
     """
     Note that this is now a snapshot test, so there is no guarantee that the
@@ -32,7 +24,7 @@ def test_update_report(setup_case, snapshot):
     ert = EnKFMain(res_config)
     es_update = ESUpdate(ert)
     fsm = ert.getEnkfFsManager()
-    sim_fs = fsm.getFileSystem("default_0")
+    sim_fs = fsm.getFileSystem("default")
     target_fs = fsm.getFileSystem("target")
     run_context = RunContext(sim_fs, target_fs)
     es_update.smootherUpdate(run_context)
@@ -46,31 +38,31 @@ def test_update_report(setup_case, snapshot):
         (
             "IES_ENKF",
             [
-                0.045866650397621375,
-                -0.8036327113581042,
-                -1.8013223842943873,
-                0.23971274043174723,
-                -0.9822843385488024,
-                -1.0164040084981638,
-                0.06941917822163765,
-                -0.4644324177656203,
-                1.7996593079415084,
-                -1.2832952021744541,
+                0.1354320975256126,
+                -0.9008090947883539,
+                2.269934798484141,
+                1.0398838817698344,
+                -2.500592496273497,
+                1.3552524895821088,
+                1.1147880613170447,
+                -0.3921659741429975,
+                -0.5367979155326622,
+                -0.44941925776980124,
             ],
         ),
         (
             "STD_ENKF",
             [
-                0.94546568985211,
-                -1.88756846595873,
-                -2.2422020080804144,
-                -0.09898103571334578,
-                -1.567806803749551,
-                -0.5457904945245821,
-                0.0649250285204559,
-                -1.0433298440379313,
-                2.93275423615531,
-                -2.2024875932910004,
+                0.5108986295767448,
+                -1.4866364705014095,
+                2.8936470430140155,
+                1.4932659263584276,
+                -4.34014782425466,
+                2.411909353882357,
+                1.4771893414880648,
+                -1.0296350447095624,
+                -0.592614391703779,
+                -2.0291671399762294,
             ],
         ),
     ],
@@ -86,7 +78,7 @@ def test_update_snapshot(setup_case, module, expected_gen_kw):
     es_update = ESUpdate(ert)
     ert.analysisConfig().select_module(module)
     fsm = ert.getEnkfFsManager()
-    sim_fs = fsm.getFileSystem("default_0")
+    sim_fs = fsm.getFileSystem("default")
     target_fs = fsm.getFileSystem("target")
     run_context = RunContext(sim_fs, target_fs)
 
@@ -111,16 +103,16 @@ def test_update_snapshot(setup_case, module, expected_gen_kw):
 
     assert sim_gen_kw == pytest.approx(
         [
-            -1.3035319087841115,
-            0.8222709205428339,
-            -1.1400029486153482,
-            0.7477534046493867,
-            -0.10400064074767973,
-            -1.7223242794585338,
-            0.0761604027734105,
-            0.4039137216428462,
-            0.10001691562080614,
-            0.09549338450036506,
+            -0.4277677005510859,
+            -0.022068031218771135,
+            1.3343664316893276,
+            0.359810814886946,
+            0.258740495698248,
+            -0.22973280686826203,
+            0.5711861410605145,
+            0.5640376317068494,
+            -0.453073201275987,
+            1.9202025655398407,
         ]
     )
 
@@ -165,16 +157,16 @@ def test_that_posterior_has_lower_variance_than_prior(copy_case):
     [
         (
             [
-                -1.3035319087841115,
-                0.5347227225020401,
-                -0.43324960974185356,
-                0.7477534046493867,
-                -0.10400064074767973,
-                -1.7223242794585338,
-                0.0761604027734105,
-                0.4039137216428462,
-                0.10001691562080614,
-                0.09549338450036506,
+                -0.4277677005510859,
+                -1.248448474837954,
+                0.8481398331588765,
+                0.359810814886946,
+                0.258740495698248,
+                -0.22973280686826203,
+                0.5711861410605145,
+                0.5640376317068494,
+                -0.453073201275987,
+                1.9202025655398407,
             ],
             [
                 {
@@ -186,16 +178,16 @@ def test_that_posterior_has_lower_variance_than_prior(copy_case):
         ),
         (
             [
-                -1.280789209535364,
-                0.5347227225020401,
-                -0.42275146812773123,
-                0.7477534046493867,
-                -0.10400064074767973,
-                -1.7223242794585338,
-                0.0761604027734105,
-                0.4039137216428462,
-                0.10001691562080614,
-                0.09549338450036506,
+                -0.24905813433661067,
+                -1.248448474837954,
+                2.096944337841518,
+                0.359810814886946,
+                0.258740495698248,
+                -0.22973280686826203,
+                0.5711861410605145,
+                0.5640376317068494,
+                -0.453073201275987,
+                1.9202025655398407,
             ],
             [
                 {
@@ -222,7 +214,7 @@ def test_localization(setup_case, expected_target_gen_kw, update_step):
     ert = EnKFMain(res_config)
     es_update = ESUpdate(ert)
     fsm = ert.getEnkfFsManager()
-    sim_fs = fsm.getFileSystem("default_0")
+    sim_fs = fsm.getFileSystem("default")
     target_fs = fsm.getFileSystem("target")
     # perform localization
 
@@ -308,7 +300,7 @@ SUMMARY_OBSERVATION EXTREMELY_HIGH_STD
     es_update = ESUpdate(ert)
     ert.analysisConfig().select_module("IES_ENKF")
     fsm = ert.getEnkfFsManager()
-    sim_fs = fsm.getFileSystem("default_0")
+    sim_fs = fsm.getFileSystem("default")
     target_fs = fsm.getFileSystem("target")
     run_context = RunContext(sim_fs, target_fs)
     ert.analysisConfig().set_enkf_alpha(alpha)
@@ -321,10 +313,6 @@ SUMMARY_OBSERVATION EXTREMELY_HIGH_STD
 
 @pytest.mark.integration_test
 def test_update_multiple_param(copy_case):
-    """
-    Note that this is now a snapshot test, so there is no guarantee that the
-    snapshots are correct, they are just documenting the current behavior.
-    """
     copy_case("snake_oil_field")
     parser = ArgumentParser(prog="test_main")
     parsed = ert_parser(

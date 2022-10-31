@@ -68,7 +68,7 @@ def test_load_inconsistent_time_map_summary(copy_case, caplog):
     realizations = [False] * facade.get_ensemble_size()
     realizations[realisation_number] = True
     with caplog.at_level(logging.ERROR):
-        loaded = facade.load_from_forward_model("default_0", realizations, 0)
+        loaded = facade.load_from_forward_model("default", realizations, 0)
     assert (
         "Realization: 0, load failure: 2 inconsistencies in time_map, first: "
         "Time mismatch for step: 0, response time: 2000-01-01, reference case: "
@@ -77,6 +77,7 @@ def test_load_inconsistent_time_map_summary(copy_case, caplog):
         "/SNAKE_OIL_FIELD.UNSMRY"
     ) in caplog.messages
     assert loaded == 0
+    facade.select_or_create_new_case("default")
     assert (
         facade.get_current_fs().getStateMap()[realisation_number].name
         == "STATE_LOAD_FAILURE"

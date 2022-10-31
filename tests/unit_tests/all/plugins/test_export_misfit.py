@@ -3,6 +3,7 @@ import pytest
 
 from ert._c_wrappers.enkf import EnKFMain
 from ert.exceptions import StorageError
+from ert.libres_facade import LibresFacade
 from ert.shared.hook_implementations.workflows.export_misfit_data import (
     ExportMisfitDataJob,
 )
@@ -12,6 +13,8 @@ from ert.shared.plugins import ErtPluginManager
 def test_export_misfit(setup_case, snapshot):
     res_config = setup_case("snake_oil", "snake_oil.ert")
     ert = EnKFMain(res_config)
+    facade = LibresFacade(ert)
+    facade.select_or_create_new_case("default")
     ExportMisfitDataJob(ert).run()
     result = pd.read_hdf("misfit.hdf")
     snapshot.assert_match(

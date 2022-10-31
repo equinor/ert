@@ -3,8 +3,8 @@ from ert._c_wrappers.enkf.node_id import NodeId
 
 
 def test_load_active_masks(snake_oil_case):
-    case1 = "default_0"
-    case2 = "default_1"
+    case1 = "default"
+    case2 = "default_ensemble_smoother"
     ert = snake_oil_case
 
     fs1 = ert.getEnkfFsManager().getFileSystem(case1)
