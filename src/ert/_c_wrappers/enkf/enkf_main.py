@@ -508,13 +508,6 @@ class EnKFMain:
     def caseExists(self, case_name: str) -> bool:
         return case_name in self.storage_manager
 
-    def caseHasData(self, case_name: str) -> bool:
-        if case_name not in self.storage_manager:
-            return False
-        state_map = self.storage_manager.state_map(case_name)
-
-        return any(state == RealizationStateEnum.STATE_HAS_DATA for state in state_map)
-
     def getCurrentFileSystem(self) -> "EnkfFs":
         """Returns the currently selected file system"""
         return self.getFileSystem(self.storage_manager.active_case)

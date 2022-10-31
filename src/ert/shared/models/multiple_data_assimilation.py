@@ -42,18 +42,14 @@ class MultipleDataAssimilation(BaseRunModel):
         loop = asyncio.get_running_loop()
         threadpool = concurrent.futures.ThreadPoolExecutor()
 
-        # Context created purely for the purpose of checking minimum active
-        # realizations:  (?)
-        prior_context = await loop.run_in_executor(
-            threadpool, self.create_context, 0, True
-        )
-
         experiment_logger.debug("starting es-mda experiment")
         event = _ert_com_protocol.node_status_builder(
             status="EXPERIMENT_STARTED", experiment_id=self.id_
         )
         await self.dispatch(event)
-        self._checkMinimumActiveRealizations(prior_context)
+        self._checkMinimumActiveRealizations(
+            self._simulation_arguments["active_realizations"].count(True)
+        )
 
         weights = self.parseWeights(self._simulation_arguments["weights"])
         iteration_count = len(weights)
@@ -71,8 +67,28 @@ class MultipleDataAssimilation(BaseRunModel):
         weights_to_run = enumerated_weights[
             min(self._simulation_arguments["start_iteration"], len(weights)) :
         ]
-        run_context = self.create_context(0, initialize_mask_from_arguments=True)
-        self.ert().sample_prior(run_context.sim_fs, run_context.active_realizations)
+        starting_iteration = self._simulation_arguments["start_iteration"]
+        case_format = self._simulation_arguments["target_case"]
+        storage_manager = self.ert().storage_manager
+        if starting_iteration > 0:
+            if case_format % starting_iteration not in storage_manager:
+                raise ErtRunError(
+                    f"Source case {case_format % starting_iteration} for iteration "
+                    f"{starting_iteration} does not exists in {storage_manager.cases}."
+                    " If you are attempting to restart ESMDA from a iteration other "
+                    "than 0, make sure the target case format is the same as for the "
+                    f"original run.(Current target case format: {case_format})"
+                )
+        else:
+            prior_fs = storage_manager.add_case(case_format % starting_iteration)
+            active_realizations = [
+                i
+                for i, val in enumerate(
+                    self._simulation_arguments["active_realizations"]
+                )
+                if val
+            ]
+            self.ert().sample_prior(prior_fs, active_realizations)
         for iteration, weight in weights_to_run:
             is_first_iteration = iteration == 0
 
@@ -129,8 +145,7 @@ class MultipleDataAssimilation(BaseRunModel):
         self, evaluator_server_config: EvaluatorServerConfig
     ) -> RunContext:
         self._checkMinimumActiveRealizations(
-            self.create_context(0, initialize_mask_from_arguments=True)
-            # Runpaths are mkdir'ed here as a side-effect
+            self._simulation_arguments["active_realizations"].count(True)
         )
         weights = self.parseWeights(self._simulation_arguments["weights"])
         iteration_count = len(weights)
@@ -153,13 +168,33 @@ class MultipleDataAssimilation(BaseRunModel):
         )
         self.setPhaseName(phase_string, indeterminate=True)
 
-        run_context = self.create_context(0, initialize_mask_from_arguments=True)
         update_id = None
         enumerated_weights = list(enumerate(weights))
-        weights_to_run = enumerated_weights[
-            min(self._simulation_arguments["start_iteration"], len(weights)) :
-        ]
-        self.ert().sample_prior(run_context.sim_fs, run_context.active_realizations)
+        starting_iteration = self._simulation_arguments["start_iteration"]
+        case_format = self._simulation_arguments["target_case"]
+        storage_manager = self.ert().storage_manager
+        if starting_iteration > 0:
+            if case_format % starting_iteration not in storage_manager:
+                raise ErtRunError(
+                    f"Source case {case_format % starting_iteration} for iteration "
+                    f"{starting_iteration} does not exists in {storage_manager.cases}."
+                    " If you are attempting to restart ESMDA from a iteration other "
+                    "than 0, make sure the target case format is the same as for the "
+                    f"original run.(Current target case format: {case_format})"
+                )
+        else:
+            prior_fs = storage_manager.add_case(case_format % starting_iteration)
+            active_realizations = [
+                i
+                for i, val in enumerate(
+                    self._simulation_arguments["active_realizations"]
+                )
+                if val
+            ]
+            self.ert().sample_prior(prior_fs, active_realizations)
+
+        weights_to_run = enumerated_weights[min(starting_iteration, len(weights)) :]
+
         for iteration, weight in weights_to_run:
             is_first_iteration = iteration == 0
             run_context = self.create_context(
@@ -297,20 +332,12 @@ class MultipleDataAssimilation(BaseRunModel):
         update: bool = True,
     ) -> RunContext:
         target_case_format = self._simulation_arguments["target_case"]
-        fs_manager = self.ert().getEnkfFsManager()
+        fs_manager = self.ert().storage_manager
 
         source_case_name = target_case_format % itr
-        if itr > 0 and not fs_manager.caseExists(source_case_name):
-            raise ErtRunError(
-                f"Source case {source_case_name} for iteration {itr} does not exists. "
-                "If you are attempting to restart ESMDA from a iteration other than 0, "
-                "make sure the target case format is the same as for the original run! "
-                f"(Current target case format: {target_case_format})"
-            )
-
-        sim_fs = fs_manager.getFileSystem(source_case_name)
+        sim_fs = fs_manager[source_case_name]
         if update:
-            target_fs = fs_manager.getFileSystem(target_case_format % (itr + 1))
+            target_fs = fs_manager.add_case(target_case_format % (itr + 1))
         else:
             target_fs = None
 

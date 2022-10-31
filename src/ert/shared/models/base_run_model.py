@@ -297,8 +297,7 @@ class BaseRunModel:
                 + "to allow failures in your simulations."
             )
 
-    def _checkMinimumActiveRealizations(self, run_context: RunContext) -> None:
-        active_realizations = self._count_active_realizations(run_context)
+    def _checkMinimumActiveRealizations(self, active_realizations: int) -> None:
         if (
             not self.ert()
             .analysisConfig()
@@ -308,9 +307,6 @@ class BaseRunModel:
                 "Number of active realizations is less than the specified "
                 + "MIN_REALIZATIONS in the config file"
             )
-
-    def _count_active_realizations(self, run_context: RunContext) -> int:
-        return sum(run_context.mask)
 
     def run_ensemble_evaluator(
         self, run_context: RunContext, ee_config: EvaluatorServerConfig

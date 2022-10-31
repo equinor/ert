@@ -271,9 +271,6 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
     def cases(self) -> List[str]:
         return self._enkf_main.getCaseList()
 
-    def case_has_data(self, case: str) -> bool:
-        return self._enkf_main.caseHasData(case)
-
     def all_data_type_keys(self) -> List[str]:
         return self.get_summary_keys() + self.gen_kw_keys() + self.get_gen_data_keys()
 

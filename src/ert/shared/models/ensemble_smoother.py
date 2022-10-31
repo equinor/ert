@@ -44,7 +44,7 @@ class EnsembleSmoother(BaseRunModel):
         )
         await self.dispatch(event)
 
-        self._checkMinimumActiveRealizations(prior_context)
+        self._checkMinimumActiveRealizations(len(prior_context.active_realizations))
         self.ert().sample_prior(prior_context.sim_fs, prior_context.active_realizations)
         await loop.run_in_executor(
             threadpool,
@@ -173,7 +173,7 @@ class EnsembleSmoother(BaseRunModel):
     ) -> RunContext:
         prior_context = self.create_context()
 
-        self._checkMinimumActiveRealizations(prior_context)
+        self._checkMinimumActiveRealizations(len(prior_context.active_realizations))
         self.setPhase(0, "Running simulations...", indeterminate=False)
 
         # self.setAnalysisModule(arguments["analysis_module"])

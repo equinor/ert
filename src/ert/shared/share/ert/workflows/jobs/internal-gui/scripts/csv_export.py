@@ -115,11 +115,11 @@ class CSVExportJob(ErtPlugin):
 
         for index, case in enumerate(cases):
             case = case.strip()
-
-            if not self.ert().caseExists(case):
+            case_manager = self.ert().storage_manager
+            if case not in case_manager:
                 raise UserWarning(f"The case '{case}' does not exist!")
 
-            if not self.ert().caseHasData(case):
+            if not case_manager.has_data(case):
                 raise UserWarning(f"The case '{case}' does not have any data!")
 
             if infer_iteration:
@@ -225,7 +225,6 @@ class CSVExportJob(ErtPlugin):
         return default
 
     def getAllCaseList(self):
-        fs_manager = self.ert().getEnkfFsManager()
-        all_case_list = fs_manager.getCaseList()
-        all_case_list = [case for case in all_case_list if fs_manager.caseHasData(case)]
+        fs_manager = self.ert().storage_manager
+        all_case_list = [case for case in fs_manager if fs_manager.has_data(case)]
         return all_case_list

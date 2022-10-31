@@ -1,7 +1,8 @@
 from pathlib import Path
-from typing import TYPE_CHECKING, Dict, List
+from typing import TYPE_CHECKING, Dict, Generator, List
 
 from ert._c_wrappers.enkf.enkf_fs import EnkfFs
+from ert._clib.state_map import RealizationStateEnum
 
 if TYPE_CHECKING:
     from ert._c_wrappers.enkf import EnsembleConfig
@@ -79,6 +80,10 @@ class FileSystemManager:
     def state_map(self, case_name: str) -> "StateMap":
         return self[case_name].getStateMap()
 
+    def has_data(self, case: str) -> bool:
+        state_map = self.state_map(case)
+        return RealizationStateEnum.STATE_HAS_DATA in state_map
+
     def _drop_oldest_file_system(self) -> None:
         if len(self.open_storages) > 0:
             case_name = list(self.open_storages)[0]
@@ -102,6 +107,9 @@ class FileSystemManager:
             return file_system
         else:
             raise KeyError(f"No such case name: {case_name} in {self.cases}")
+
+    def __iter__(self) -> Generator:
+        yield from self.cases
 
     def umount(self) -> None:
         while len(self.open_storages) > 0:

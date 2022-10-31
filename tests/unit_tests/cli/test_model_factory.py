@@ -140,7 +140,6 @@ def test_setup_multiple_data_assimilation(poly_case):
     assert "analysis_module" in model._simulation_arguments
     assert "weights" in model._simulation_arguments
     assert "start_iteration" in model._simulation_arguments
-    model.create_context(0)
 
 
 def test_setup_iterative_ensemble_smoother(poly_case):

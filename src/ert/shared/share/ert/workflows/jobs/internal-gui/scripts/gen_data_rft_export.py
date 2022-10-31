@@ -149,10 +149,10 @@ class GenDataRFTCSVExportJob(ErtPlugin):
             case = case.strip()
             case_frame = pandas.DataFrame()
 
-            if not self.ert().getEnkfFsManager().caseExists(case):
+            if case not in self.ert().storage_manager:
                 raise UserWarning(f"The case '{case}' does not exist!")
 
-            if not self.ert().getEnkfFsManager().caseHasData(case):
+            if not self.ert().storage_manager.has_data(case):
                 raise UserWarning(f"The case '{case}' does not have any data!")
 
             if infer_iteration:
@@ -238,9 +238,8 @@ class GenDataRFTCSVExportJob(ErtPlugin):
         )
         trajectory_chooser = PathChooser(trajectory_model)
 
-        fs_manager = self.ert().getEnkfFsManager()
-        all_case_list = fs_manager.getCaseList()
-        all_case_list = [case for case in all_case_list if fs_manager.caseHasData(case)]
+        fs_manager = self.ert().storage_manager
+        all_case_list = [case for case in fs_manager if fs_manager.has_data(case)]
         list_edit = ListEditBox(all_case_list)
 
         infer_iteration_check = QCheckBox()
