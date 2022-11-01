@@ -5,12 +5,12 @@
 #include <ert/util/test_work_area.hpp>
 
 void test_create() {
-    subst_list_type *subst_list = subst_list_alloc(NULL);
+    subst_list_type *subst_list = subst_list_alloc();
     subst_list_free(subst_list);
 }
 
 void test_filter_file1() {
-    subst_list_type *subst_list = subst_list_alloc(NULL);
+    subst_list_type *subst_list = subst_list_alloc();
     ecl::util::TestArea ta("filter_:file");
     {
         FILE *stream = util_fopen("template", "w");
@@ -40,7 +40,7 @@ void test_filter_file1() {
 }
 
 void test_filter_file2() {
-    subst_list_type *subst_list = subst_list_alloc(NULL);
+    subst_list_type *subst_list = subst_list_alloc();
     ecl::util::TestArea ta("filetr2");
     {
         FILE *stream = util_fopen("template", "w");

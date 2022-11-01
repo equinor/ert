@@ -40,7 +40,7 @@ config_content_type *config_content_alloc(const char *filename) {
     content->items = hash_alloc();
     content->nodes = vector_alloc_new();
     content->parse_errors = config_error_alloc();
-    content->define_list = subst_list_alloc(NULL);
+    content->define_list = subst_list_alloc();
     content->warnings = stringlist_alloc_new();
 
     content->path_stack = config_path_stack_alloc();
