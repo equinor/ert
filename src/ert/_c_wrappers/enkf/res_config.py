@@ -309,6 +309,10 @@ class ResConfig:
         for job_description in config_content_dict.get(ConfigKeys.FORWARD_MODEL, []):
             job_name, args = parse_signature_job("".join(job_description))
             job = self.site_config.job_list.get_job_copy(job_name)
+            if job is None:
+                err_msg = f"Could not find job `{job_name}` in list of installed jobs: "
+                err_msg += f"{list(self.site_config.job_list)}"
+                raise ValueError(err_msg)
             if args is not None:
                 job.set_private_args_as_string(args)
                 job.set_define_args(self.substitution_list)
@@ -419,6 +423,13 @@ class ResConfig:
             job = self.site_config.job_list.get_job_copy(
                 job_description[ConfigKeys.NAME]
             )
+            if job is None:
+                err_msg = (
+                    f"Could not find job `{job_description[ConfigKeys.NAME]}` "
+                    "in list of installed jobs: "
+                )
+                err_msg += f"{list(self.site_config.job_list)}"
+                raise ValueError(err_msg)
             job.set_private_args_as_string(job_description.get(ConfigKeys.ARGLIST))
             job.convertToCReference(None)
             jobs.append(job)
@@ -761,16 +772,15 @@ class ResConfig:
         return subst_list
 
     def create_substitution_list_from_dict(self, config_dict: dict):
-        init_args = {}
-        init_args["defines"] = config_dict.get(ConfigKeys.DEFINE_KEY, {})
-        init_args["data_kw"] = config_dict.get(ConfigKeys.DATA_KW_KEY, {})
-        init_args["config_dir"] = config_dict.get(
-            ConfigKeys.CONFIG_DIRECTORY, os.getcwd()
-        )
-        init_args["runpath_file_name"] = config_dict.get(
-            ConfigKeys.RUNPATH_FILE, ConfigKeys.RUNPATH_LIST_FILE
-        )
-        init_args["num_cpu"] = self.preferred_num_cpu()
+        init_args = {
+            "defines": config_dict.get(ConfigKeys.DEFINE_KEY, {}),
+            "data_kw": config_dict.get(ConfigKeys.DATA_KW_KEY, {}),
+            "config_dir": config_dict.get(ConfigKeys.CONFIG_DIRECTORY, os.getcwd()),
+            "runpath_file_name": config_dict.get(
+                ConfigKeys.RUNPATH_FILE, ConfigKeys.RUNPATH_LIST_FILE
+            ),
+            "num_cpu": self.preferred_num_cpu(),
+        }
         return self._create_substitution_list(**init_args)
 
     def create_substitution_list_from_config_content(

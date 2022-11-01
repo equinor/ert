@@ -3,10 +3,13 @@ from datetime import date
 from textwrap import dedent
 
 import pytest
+from hypothesis import given
 
 from ert._c_wrappers.config.config_parser import ConfigValidationError
 from ert._c_wrappers.enkf import ResConfig
 from ert._c_wrappers.enkf.config_keys import ConfigKeys
+
+from .config_dict_generator import config_dicts, to_config_file
 
 
 def touch(filename):
@@ -91,3 +94,24 @@ def test_res_config_parses_date():
     expected_ens_path = f"{expected_storage}/ensemble"
     assert res_config.model_config.getEnspath() == expected_ens_path
     assert res_config.model_config.getRunpathAsString() == expected_run_path
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+@given(config_dicts())
+def test_res_config_throws_on_missing_forward_model_job(config_dict):
+    filename = "config.ert"
+    config_dict.pop(ConfigKeys.INSTALL_JOB)
+    config_dict.pop(ConfigKeys.INSTALL_JOB_DIRECTORY)
+    config_dict[ConfigKeys.FORWARD_MODEL].append(
+        {
+            ConfigKeys.NAME: "this-is-not-the-job-you-are-looking-for",
+            ConfigKeys.ARGLIST: "<WAVE-HAND>=casually",
+        }
+    )
+
+    to_config_file(filename, config_dict)
+
+    with pytest.raises(expected_exception=ValueError, match="Could not find job"):
+        ResConfig(user_config_file=filename)
+    with pytest.raises(expected_exception=ValueError, match="Could not find job"):
+        ResConfig(config_dict=config_dict)
