@@ -1,4 +1,5 @@
 import os
+from typing import Optional
 
 from cwrap import BaseCClass
 from ecl.summary import EclSum
@@ -225,7 +226,8 @@ class ModelConfig(BaseCClass):
     def runpathRequiresIterations(self) -> bool:
         return self._runpath_requires_iterations()
 
-    def getJobnameFormat(self) -> str:
+    def getJobnameFormat(self) -> Optional[str]:
+        """Returns None if no job name format given in config file."""
         return self._get_jobname_fmt()
 
     @property

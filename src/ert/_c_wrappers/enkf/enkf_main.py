@@ -180,7 +180,7 @@ class EnKFMain:
         self._ensemble_size = self.res_config.model_config.num_realizations
         self._substituter = Substituter(dict(self.getDataKW()))
         self._runpaths = Runpaths(
-            self.getModelConfig().getJobnameFormat(),
+            self.resConfig().preferred_job_fmt(),
             self.getModelConfig().getRunpathFormat().format_string,
             Path(config.runpath_file),
             self.substituter.substitute,
