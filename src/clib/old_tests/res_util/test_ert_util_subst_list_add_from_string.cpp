@@ -5,14 +5,14 @@
 
 void call_func_util_abort(void *args) {
     subst_list_type *subst_list = subst_list_alloc();
-    subst_list_add_from_string(subst_list, (char *)args, true);
+    subst_list_add_from_string(subst_list, (char *)args);
     subst_list_free(subst_list);
 }
 
 void test_valid_arg_string(const char *arg_string, int arg_count, ...) {
     va_list ap;
     subst_list_type *subst_list = subst_list_alloc();
-    subst_list_add_from_string(subst_list, arg_string, true);
+    subst_list_add_from_string(subst_list, arg_string);
     test_assert_int_equal(subst_list_get_size(subst_list), arg_count);
     va_start(ap, arg_count);
     for (int i = 0; i < arg_count; i++) {
