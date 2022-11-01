@@ -313,11 +313,6 @@ class BaseRunModel:
     ) -> int:
         ensemble = self._build_ensemble(run_context)
 
-        self.ert().sample_prior(
-            run_context.sim_fs,
-            run_context.active_realizations,
-        )
-
         totalOk = EnsembleEvaluator(
             ensemble,
             ee_config,
