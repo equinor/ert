@@ -325,9 +325,6 @@ class ResConfig:
         site_config_content = site_config_parser.parse(site_config_location())
         # treat the default config dir
         self.config_path = os.getcwd()
-        if ConfigKeys.CONFIG_DIRECTORY in config_dict:
-            self.config_path = config_dict[ConfigKeys.CONFIG_DIRECTORY]
-        config_dict[ConfigKeys.CONFIG_DIRECTORY] = self.config_path
 
         self.num_cpu_from_config = config_dict.get(ConfigKeys.NUM_CPU, None)
         self.num_cpu_from_data_file = (
@@ -714,6 +711,7 @@ class ResConfig:
     def _create_substitution_list(
         defines: Dict[str, str],
         data_kw: Dict[str, str],
+        config_dir: str,
         runpath_file_name: str,
         num_cpu: int,
     ) -> SubstitutionList:
@@ -721,6 +719,7 @@ class ResConfig:
 
         today_date_string = date.today().isoformat()
         subst_list.addItem("<DATE>", today_date_string, "The current date.")
+        subst_list.addItem("<CONFIG_PATH>", config_dir)
 
         for key, value in defines.items():
             subst_list.addItem(key, value)
@@ -749,6 +748,9 @@ class ResConfig:
         init_args = {}
         init_args["defines"] = config_dict.get(ConfigKeys.DEFINE_KEY, {})
         init_args["data_kw"] = config_dict.get(ConfigKeys.DATA_KW_KEY, {})
+        init_args["config_dir"] = config_dict.get(
+            ConfigKeys.CONFIG_DIRECTORY, os.getcwd()
+        )
         init_args["runpath_file_name"] = config_dict.get(
             ConfigKeys.RUNPATH_FILE, ConfigKeys.RUNPATH_LIST_FILE
         )
@@ -770,6 +772,11 @@ class ResConfig:
             for data_kw_definition in config_content[ConfigKeys.DATA_KW_KEY]:
                 init_args["data_kw"][data_kw_definition[0]] = data_kw_definition[1]
 
+        init_args["config_dir"] = (
+            config_content.getValue(ConfigKeys.CONFIG_DIRECTORY)
+            if ConfigKeys.CONFIG_DIRECTORY in config_content
+            else os.getcwd()
+        )
         init_args["defines"] = dict(
             (key, value) for key, value, _ in config_content.get_const_define_list()
         )
