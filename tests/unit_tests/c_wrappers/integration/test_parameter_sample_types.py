@@ -12,6 +12,7 @@ from ecl.eclfile import EclKW
 from ecl.grid import EclGrid
 from ecl.util.geometry import Surface
 
+from ert._c_wrappers.config.config_parser import ConfigValidationError
 from ert._c_wrappers.enkf import EnKFMain, ResConfig
 from ert._clib import update
 from ert._clib.update import Parameter
@@ -51,6 +52,26 @@ def load_from_forward_model(ert):
             "MY_KEYWORD 0.379773",
             [],
             does_not_raise(),
+        ),
+        (
+            "GEN_KW KW_NAME template.txt kw.txt prior.txt INIT_FILES:custom_param%d",
+            "MY_KEYWORD 1.31",
+            [("custom_param0", "MY_KEYWORD 1.31")],
+            does_not_raise(),
+        ),
+        (
+            "GEN_KW KW_NAME template.txt kw.txt prior.txt INIT_FILES:custom_param%d",
+            "MY_KEYWORD 1.31",
+            [("custom_param0", "1.31")],
+            does_not_raise(),
+        ),
+        (
+            "GEN_KW KW_NAME template.txt kw.txt prior.txt INIT_FILES:custom_param0",  # noqa
+            "Not expecting a file",
+            [],
+            pytest.raises(
+                ConfigValidationError, match="Loading GEN_KW from files requires %d"
+            ),
         ),
     ],
 )
