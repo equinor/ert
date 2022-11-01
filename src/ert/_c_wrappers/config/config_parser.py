@@ -9,6 +9,10 @@ from ert._c_wrappers.config.config_content import ConfigContent
 from ert._c_wrappers.config.unrecognized_enum import UnrecognizedEnum
 
 
+class ConfigValidationError(ValueError):
+    pass
+
+
 class ConfigParser(BaseCClass):
     TYPE_NAME = "config_parser"
 
@@ -105,7 +109,7 @@ class ConfigParser(BaseCClass):
             sys.stderr.write(f"Errors parsing:{config_file} \n")
             for count, error in enumerate(config_content.getErrors()):
                 sys.stderr.write(f"  {count:02d}:{error}\n")
-            raise ValueError(f"Parsing:{config_file} failed")
+            raise ConfigValidationError(f"Parsing:{config_file} failed")
 
         return config_content
 
