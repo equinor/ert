@@ -182,7 +182,7 @@ class EnKFMain:
             {key: value for (key, value, _) in self.getDataKW()}
         )
         self._runpaths = Runpaths(
-            self.getModelConfig().getJobnameFormat(),
+            self.resConfig().preferred_job_fmt(),
             self.getModelConfig().getRunpathFormat().format_string,
             Path(config.runpath_file),
             self.substituter.substitute,

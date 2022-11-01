@@ -729,6 +729,13 @@ class ResConfig:
             return self.num_cpu_from_data_file
         return 1
 
+    def preferred_job_fmt(self) -> str:
+        in_config = self.model_config.getJobnameFormat()
+        if in_config is None:
+            return "JOB%d"
+        else:
+            return in_config
+
     @property
     def errors(self):
         return self._errors
