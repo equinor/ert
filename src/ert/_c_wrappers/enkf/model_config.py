@@ -222,11 +222,32 @@ class ModelConfig(BaseCClass):
     def get_time_map(self):
         return self._get_time_map()
 
+    def __repr__(self):
+        return f"<ModelConfig({self.__str__()})>"
+
+    def __str__(self):
+        return (
+            (
+                f"data_root: {self.data_root()},\n"
+                f"num_realizations: {self.num_realizations},\n"
+                f"obs_config_file: {self.obs_config_file},\n"
+                f"ens_path: {self.getEnspath()},\n"
+                f"run_path_format: {self.getRunpathFormat()},\n"
+                f"job_name_format: {self.getJobnameFormat()},\n"
+                f"run_path: {self.getRunpathAsString()},\n"
+                f"max_internal_submit: {self.get_max_internal_submit()},\n"
+                f"gen_kw_export_name: {self.getGenKWExportName()},\n"
+                f"time_map: {self.get_time_map()},\n"
+            )
+            if self._address()
+            else ""
+        )
+
     def __ne__(self, other):
         return not self == other
 
     def __eq__(self, other):
-        if self.data_root() != other.data_root():
+        if os.path.normpath(self.data_root()) != os.path.normpath(other.data_root()):
             return False
 
         if self.num_realizations != other.num_realizations:

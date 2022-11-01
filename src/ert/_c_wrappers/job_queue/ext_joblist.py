@@ -58,6 +58,8 @@ class ExtJoblist(BaseCClass):
         return self[job_name]
 
     def get_job_copy(self, job_name: str) -> Optional[ExtJob]:
+        if job_name not in self:
+            return None
         return self._get_job_copy(job_name)
 
     def add_job(self, job_name: str, new_job: ExtJob):

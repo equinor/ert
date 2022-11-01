@@ -1,5 +1,8 @@
+import contextlib
+import glob
 import os
 import os.path
+import shutil
 import stat
 from pathlib import Path
 
@@ -10,6 +13,7 @@ from hypothesis import assume
 from ert._c_wrappers.enkf import ConfigKeys
 from ert._c_wrappers.enkf.enums import GenDataFileType
 from ert._c_wrappers.job_queue import QueueDriverEnum
+from ert._c_wrappers.sched import HistorySourceEnum
 from ert._c_wrappers.util.enums import MessageLevelEnum
 
 from .egrid_generator import egrids
@@ -206,6 +210,57 @@ def queue_options(draw, systems):
         }
 
 
+def default_ext_job_names():
+    return (
+        st.sampled_from(
+            [
+                "DELETE_FILE",
+                "move_file",
+                "make_directory",
+                "rms",
+                "CAREFUL_COPY_FILE",
+                "RMS",
+                "flow",
+                "COPY_FILE",
+                "careful_copy_file",
+                "ECLIPSE100",
+                "delete_file",
+                "delete_directory",
+                "DELETE_DIRECTORY",
+                "FLOW",
+                "ECLIPSE300",
+                "eclipse300",
+                "MOVE_FILE",
+                "template_render",
+                "TEMPLATE_RENDER",
+                "COPY_DIRECTORY",
+                "symlink",
+                "copy_directory",
+                "SYMLINK",
+                "MAKE_SYMLINK",
+                "eclipse100",
+                "make_symlink",
+                "MAKE_DIRECTORY",
+                "copy_file",
+            ]
+        )
+        if os.getenv("ERT_SITE_CONFIG", None) is None
+        else st.nothing()
+    )
+
+
+@st.composite
+def random_ext_job_names(draw, some_words, some_file_names):
+    return draw(
+        st.fixed_dictionaries(
+            {
+                ConfigKeys.NAME: some_words,
+                ConfigKeys.PATH: st.just(draw(some_file_names) + "job_config"),
+            }
+        )
+    )
+
+
 @st.composite
 def defines(draw, config_files, cwds):
     """
@@ -259,6 +314,20 @@ def config_dicts(draw):
                 ConfigKeys.DATA_FILE: st.just(draw(file_names) + ".DATA"),
                 ConfigKeys.GRID: st.just(draw(words) + ".EGRID"),
                 ConfigKeys.JOB_SCRIPT: st.just(draw(file_names) + "job_script"),
+                ConfigKeys.MAX_RESAMPLE: positives,
+                ConfigKeys.JOBNAME: st.just("JOBNAME-" + draw(words)),
+                ConfigKeys.RUNPATH: st.just("runpath-" + draw(format_file_names)),
+                ConfigKeys.ENSPATH: st.just(draw(words) + ".enspath"),
+                ConfigKeys.TIME_MAP: st.just(draw(file_names) + ".timemap"),
+                ConfigKeys.OBS_CONFIG: st.just("obs-config-" + draw(file_names)),
+                ConfigKeys.DATAROOT: st.just("."),
+                ConfigKeys.HISTORY_SOURCE: st.just(
+                    HistorySourceEnum.from_string("REFCASE_SIMULATED")
+                ),
+                ConfigKeys.REFCASE: st.just("refcase/" + draw(file_names)),
+                ConfigKeys.GEN_KW_EXPORT_NAME: st.just(
+                    "gen-kw-export-name-" + draw(file_names)
+                ),
                 ConfigKeys.FIELD_KEY: st.lists(
                     st.fixed_dictionaries(
                         {
@@ -315,12 +384,7 @@ def config_dicts(draw):
                 ),
                 ConfigKeys.ANALYSIS_SELECT: st.just("STD_ENKF"),
                 ConfigKeys.INSTALL_JOB: st.lists(
-                    st.fixed_dictionaries(
-                        {
-                            ConfigKeys.NAME: words,
-                            ConfigKeys.PATH: st.just(draw(file_names) + "job_config"),
-                        }
-                    ),
+                    random_ext_job_names(words, file_names)
                 ),
                 ConfigKeys.INSTALL_JOB_DIRECTORY: st.lists(directory_names()),
                 ConfigKeys.LICENSE_PATH: directory_names(),
@@ -333,11 +397,41 @@ def config_dicts(draw):
             }
         )
     )
+
+    config_dict[ConfigKeys.FORWARD_MODEL] = draw(
+        st.lists(
+            st.fixed_dictionaries(
+                {
+                    ConfigKeys.NAME: st.one_of(
+                        default_ext_job_names(),
+                        st.sampled_from(
+                            list(
+                                map(
+                                    lambda job: job[ConfigKeys.NAME],
+                                    config_dict[ConfigKeys.INSTALL_JOB],
+                                )
+                            )
+                        )
+                        if len(config_dict[ConfigKeys.INSTALL_JOB]) > 0
+                        else st.nothing(),
+                    ),
+                    ConfigKeys.ARGLIST: st.just(
+                        ",".join(
+                            draw(st.lists(st.just(f"<{draw(words)}>={draw(words)}")))
+                        )
+                    ),
+                }
+            ),
+        )
+    )
+
     should_exist_files = [
         job[ConfigKeys.PATH] for job in config_dict[ConfigKeys.INSTALL_JOB]
     ]
     should_exist_files.append(config_dict[ConfigKeys.DATA_FILE])
     should_exist_files.append(config_dict[ConfigKeys.JOB_SCRIPT])
+    should_exist_files.append(config_dict[ConfigKeys.TIME_MAP])
+    should_exist_files.append(config_dict[ConfigKeys.OBS_CONFIG])
 
     should_be_executable_files = [
         job[ConfigKeys.PATH] for job in config_dict[ConfigKeys.INSTALL_JOB]
@@ -352,7 +446,30 @@ def config_dicts(draw):
         if not os.path.isfile(filename):
             touch(filename)
 
+    if ConfigKeys.REFCASE in config_dict:
+        dest_basename = os.path.splitext(
+            os.path.basename(config_dict[ConfigKeys.REFCASE])
+        )[0]
+        refcase_src_files_glob = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)),
+            "../../test-data/configuration_tests/input/refcase/SNAKE_OIL_FIELD*",
+        )
+        with contextlib.suppress(FileExistsError):
+            os.mkdir("./refcase")
+        refcase_src_files = glob.glob(refcase_src_files_glob)
+        for refcase_src_file in refcase_src_files:
+            dest = os.path.basename(refcase_src_file).replace(
+                "SNAKE_OIL_FIELD", dest_basename
+            )
+            shutil.copy(refcase_src_file, "./refcase/" + dest)
+
     should_be_executable_files = [config_dict[ConfigKeys.JOB_SCRIPT]]
+
+    if (
+        len(config_dict[ConfigKeys.INSTALL_JOB]) == 0
+        and os.getenv("ERT_SITE_CONFIG", None) is not None
+    ):
+        assume(len(config_dict[ConfigKeys.FORWARD_MODEL]) == 0)
 
     for job in config_dict[ConfigKeys.INSTALL_JOB]:
         job_file = job[ConfigKeys.PATH]
@@ -389,6 +506,11 @@ def to_config_file(filename, config_dict):  # pylint: disable=too-many-branches
             if keyword == ConfigKeys.DATA_KW_KEY:
                 for define_key, define_value in keyword_value.items():
                     config.write(f"{keyword} {define_key} {define_value}\n")
+            elif keyword == ConfigKeys.FORWARD_MODEL:
+                for forward_model_job in keyword_value:
+                    job_name = forward_model_job[ConfigKeys.NAME]
+                    job_args = forward_model_job[ConfigKeys.ARGLIST]
+                    config.write(f"{keyword} {job_name}({job_args})\n")
             elif keyword == ConfigKeys.FIELD_KEY:
                 # keyword_value is a list of dicts, each defining a field
                 for field_dict in keyword_value:

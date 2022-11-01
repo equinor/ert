@@ -1,13 +1,18 @@
 import os.path
 
+import pytest
+from hypothesis import given
+
 from ert._c_wrappers.enkf import ModelConfig, ResConfig
 from ert._c_wrappers.enkf.config_keys import ConfigKeys
+
+from .config_dict_generator import config_dicts, to_config_file
 
 
 def test_default_model_config_ens_path(tmpdir):
     with tmpdir.as_cwd():
         config_file = "test.ert"
-        with open(config_file, "w") as f:
+        with open(config_file, "w", encoding="utf-8") as f:
             f.write(
                 """
 NUM_REALIZATIONS  1
@@ -17,7 +22,7 @@ NUM_REALIZATIONS  1
         # By default, the ensemble path is set to 'storage'
         default_ens_path = res_config.model_config.getEnspath()
 
-        with open(config_file, "a") as f:
+        with open(config_file, "a", encoding="utf-8") as f:
             f.write(
                 """
 ENSPATH storage
@@ -50,3 +55,15 @@ def test_default_model_config_run_path(tmpdir):
     ).getRunpathFormat()._str() == os.path.abspath(
         "simulations/realization-<IENS>/iter-<ITER>"
     )
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+@given(config_dicts())
+def test_model_config_from_dict_and_user_config(config_dict):
+    filename = "config.ert"
+    to_config_file(filename, config_dict)
+
+    res_config_from_file = ResConfig(user_config_file=filename)
+    res_config_from_dict = ResConfig(config_dict=config_dict)
+
+    assert res_config_from_file.model_config == res_config_from_dict.model_config
