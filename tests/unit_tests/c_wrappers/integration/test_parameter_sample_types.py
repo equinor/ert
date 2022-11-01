@@ -12,6 +12,7 @@ from ecl.eclfile import EclKW
 from ecl.grid import EclGrid
 from ecl.util.geometry import Surface
 
+from ert._c_wrappers.config.config_parser import ConfigValidationError
 from ert._c_wrappers.enkf import EnKFMain, ResConfig
 from ert._clib import update
 from ert._clib.update import Parameter
@@ -69,7 +70,9 @@ def load_from_forward_model(ert):
             "GEN_KW KW_NAME template.txt kw.txt prior.txt INIT_FILES:custom_param0",  # noqa
             "Not expecting a file",
             [],
-            pytest.raises(ValueError, match="Loading GEN_KW from files requires %d"),
+            pytest.raises(
+                ConfigValidationError, match="Loading GEN_KW from files requires %d"
+            ),
         ),
     ],
 )

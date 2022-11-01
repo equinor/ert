@@ -10,6 +10,7 @@ from ecl.ecl_util import get_num_cpu as get_num_cpu_from_data_file
 from ecl.util.util import StringList
 
 from ert._c_wrappers.config import ConfigContent, ConfigParser
+from ert._c_wrappers.config.config_parser import ConfigValidationError
 from ert._c_wrappers.enkf.analysis_config import AnalysisConfig
 from ert._c_wrappers.enkf.config_keys import ConfigKeys
 from ert._c_wrappers.enkf.ensemble_config import EnsembleConfig
@@ -198,7 +199,9 @@ class ResConfig:
 
         if self.errors:
             logging.error(f"Error loading configuration: {str(self._errors)}")
-            raise ValueError("Error loading configuration: " + str(self._errors))
+            raise ConfigValidationError(
+                "Error loading configuration: " + str(self._errors)
+            )
 
         self.num_cpu_from_data_file = (
             get_num_cpu_from_data_file(
@@ -309,7 +312,9 @@ class ResConfig:
                 self.ensemble_config.getNode(key).get_init_file_fmt() != None
                 and "%" not in self.ensemble_config.getNode(key).get_init_file_fmt()
             ):
-                raise ValueError("Loading GEN_KW from files requires %d in file format")
+                raise ConfigValidationError(
+                    "Loading GEN_KW from files requires %d in file format"
+                )
 
         self.model_config = ModelConfig(
             data_root=self.config_path,
@@ -394,7 +399,9 @@ class ResConfig:
                 self.ensemble_config.getNode(key).get_init_file_fmt() != None
                 and "%" not in self.ensemble_config.getNode(key).get_init_file_fmt()
             ):
-                raise ValueError("Loading GEN_KW from files requires %d in file format")
+                raise ConfigValidationError(
+                    "Loading GEN_KW from files requires %d in file format"
+                )
 
         self.model_config = ModelConfig(
             data_root=self.config_path,
