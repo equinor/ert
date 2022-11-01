@@ -125,9 +125,9 @@ void ert::block_fs_driver::save_node(const char *node_key, int report_step,
     free(key);
 }
 
-void ert::block_fs_driver::save_node(const char *node_key, int iens,
+void ert::block_fs_driver::save_node(const char *node_key, int report_step, int iens,
                                      const void *ptr, size_t data_size) {
-    auto key = fmt::format("{}.0.{}", node_key, iens);
+    auto key = fmt::format("{}.{}.{}", node_key, report_step, iens);
     bfs_type *bfs = this->get_fs(iens);
     block_fs_fwrite_file(bfs->block_fs, key.c_str(), ptr, data_size);
 }

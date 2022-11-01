@@ -1,14 +1,18 @@
 import fileinput
 import logging
 import os
+import struct
+import numpy as np
+import pytest
 from datetime import datetime
 from pathlib import Path
 from textwrap import dedent
 
-import pytest
 from ecl.summary import EclSum
 
 from ert._c_wrappers.enkf import EnKFMain, ResConfig
+from ert._c_wrappers.enkf.enkf_fs import EnkfFs
+from ert._c_wrappers.enkf.enums import RealizationStateEnum as State
 from ert.libres_facade import LibresFacade
 
 
@@ -42,6 +46,18 @@ def test_load_inconsistent_time_map_summary(caplog):
     """
     cwd = os.getcwd()
 
+    # Create synthetic StateMap
+    state_map_path = Path("storage/snake_oil/ensemble/default/files/state-map")
+    state_map_path.parent.mkdir(parents=True)
+    state_map_path.write_bytes(struct.pack("III", 1, 0, int(State.STATE_HAS_DATA)))
+
+    # Create synthetic TimeMap
+    time_map = np.zeros(201, dtype=np.uint64)
+    time_map_path = Path("storage/snake_oil/ensemble/default/files/time-map")
+    with time_map_path.open("wb") as fh:
+        fh.write(struct.pack("IQ", time_map.size, 0))
+        fh.write(time_map.data)
+
     # Get rid of GEN_DATA as we are only interested in SUMMARY
     with fileinput.input("snake_oil.ert", inplace=True) as fin:
         for line in fin:
@@ -52,34 +68,33 @@ def test_load_inconsistent_time_map_summary(caplog):
     res_config = ResConfig("snake_oil.ert")
     ert = EnKFMain(res_config)
     facade = LibresFacade(ert)
-    realisation_number = 0
     assert (
-        facade.get_current_fs().getStateMap()[realisation_number].name
-        == "STATE_HAS_DATA"
+        facade.get_current_fs().getStateMap()[realization] == State.STATE_HAS_DATA
     )  # Check prior state
 
     # Create a result that is incompatible with the refcase
     run_path = Path("storage") / "snake_oil" / "runpath" / "realization-0" / "iter-0"
+    run_path.mkdir(parents=True)
     os.chdir(run_path)
     ecl_sum = run_simulator(1, datetime(2000, 1, 1))
     ecl_sum.fwrite()
     os.chdir(cwd)
 
     realizations = [False] * facade.get_ensemble_size()
-    realizations[realisation_number] = True
+    realizations[realization] = True
     with caplog.at_level(logging.ERROR):
-        loaded = facade.load_from_forward_model("default_0", realizations, 0)
+        loaded = facade.load_from_forward_model("default", realizations, 0)
     assert (
         "Realization: 0, load failure: 2 inconsistencies in time_map, first: "
         "Time mismatch for step: 0, response time: 2000-01-01, reference case: "
-        "2010-01-01, last: Time mismatch for step: 1, response time: 2000-01-10, "
-        f"reference case: 2010-01-10 from: {run_path.absolute()}"
+        "1970-01-01, last: Time mismatch for step: 1, response time: 2000-01-10, "
+        f"reference case: 1970-01-01 from: {run_path.absolute()}"
         "/SNAKE_OIL_FIELD.UNSMRY"
     ) in caplog.messages
     assert loaded == 0
     assert (
-        facade.get_current_fs().getStateMap()[realisation_number].name
-        == "STATE_LOAD_FAILURE"
+        facade.get_current_fs().getStateMap()[realization]
+        == State.STATE_LOAD_FAILURE
     )  # Check that status is as expected
 
 
@@ -99,6 +114,8 @@ def test_load_forward_model():
     ert = EnKFMain(res_config)
     facade = LibresFacade(ert)
     realisation_number = 0
+
+    facade.get_current_fs().save_gen_data("SNAKE_OIL_OPR_DIFF", np.ndarray(5), 199, 0)
 
     realizations = [False] * facade.get_ensemble_size()
     realizations[realisation_number] = True

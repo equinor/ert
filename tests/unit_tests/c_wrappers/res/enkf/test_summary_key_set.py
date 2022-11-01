@@ -1,6 +1,6 @@
 import os
-
 import pytest
+import numpy as np
 
 from ert._c_wrappers.enkf import EnKFMain, ResConfig, SummaryKeySet
 from ert._c_wrappers.enkf.enkf_fs import EnkfFs
@@ -68,8 +68,8 @@ def test_write_to_and_read_from_file(tmp_path):
 def test_with_enkf_fs():
     res_config = ResConfig("snake_oil.ert")
 
-    fs = EnkfFs(
-        "storage/snake_oil/ensemble/default_0", res_config.ensemble_config, 4, False
+    fs = EnkfFs.createFileSystem(
+        "storage/snake_oil/ensemble/default", res_config.ensemble_config, 4, False
     )
     summary_key_set = fs.getSummaryKeySet()
     summary_key_set.addSummaryKey("FOPT")

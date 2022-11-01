@@ -1,5 +1,8 @@
+import io
 from pathlib import Path
 from typing import TYPE_CHECKING, List, Union
+import struct
+import zlib
 
 import numpy as np
 import numpy.typing as npt
@@ -7,7 +10,7 @@ from cwrap import BaseCClass
 
 from ert import _clib
 from ert._c_wrappers import ResPrototype
-from ert._c_wrappers.enkf.enums import EnKFFSType
+from ert._c_wrappers.enkf.enums import EnKFFSType, ErtImplType
 from ert._c_wrappers.enkf.res_config import EnsembleConfig
 from ert._c_wrappers.enkf.summary_key_set import SummaryKeySet
 from ert._c_wrappers.enkf.time_map import TimeMap
@@ -158,4 +161,30 @@ class EnkfFs(BaseCClass):
             report_step,
             nodes,
             active,
+        )
+
+    def save_gen_data(
+        self,
+        key: str,
+        array: npt.NDArray[np.float64],
+        report_step: int,
+        realization: int,
+    ) -> None:
+        """
+        Save data as GEN_DATA directly to storage, bypassing creation of enkf_node and enkf_config_node
+        """
+        buf = io.BytesIO()
+        buf.write(
+            struct.pack(
+                "QIII",
+                0,  # timestamp; unused and set to 0
+                int(ErtImplType.GEN_DATA),
+                array.size,
+                0,  # report_step; unused and set to 0
+            )
+        )
+        buf.write(zlib.compress(array.data))
+
+        _clib.enkf_fs.save_dynamic_forecast(
+            self, key, report_step, realization, buf.getvalue()
         )

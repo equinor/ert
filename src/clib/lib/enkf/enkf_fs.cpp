@@ -1,4 +1,5 @@
 #include "ert/python.hpp"
+#include <bytesobject.h>
 #include <ert/concurrency.hpp>
 #include <filesystem>
 #include <future>
@@ -649,7 +650,8 @@ void bind_write_parameter(py::handle fs_, const std::string &node_key, int iens,
     char *bufferz;
     Py_ssize_t size;
     PyBytes_AsStringAndSize(buffer.ptr(), &bufferz, &size);
-    driver->save_node(node_key.c_str(), iens, bufferz, size);
+    driver->save_node(node_key.c_str(), 0 /* report_step */, iens, bufferz,
+                      size);
 }
 } // namespace
 
@@ -729,4 +731,14 @@ ERT_CLIB_SUBMODULE("enkf_fs", m) {
         },
         py::arg("self"), py::arg("ensemble_config"), py::arg("target_case"),
         py::arg("report_step"), py::arg("node_list"), py::arg("iactive"));
+
+    m.def("save_dynamic_forecast",
+          [](Cwrap<enkf_fs_type> self, const char *key, int report_step,
+             int realization, py::bytes buffer) {
+              char *buf{};
+              Py_ssize_t len{};
+              PyBytes_AsStringAndSize(buffer.ptr(), &buf, &len);
+              self->dynamic_forecast->save_node(key, report_step, realization,
+                                                buf, len);
+          });
 }
