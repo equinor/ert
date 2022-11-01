@@ -8,8 +8,6 @@
 
 typedef struct subst_list_struct subst_list_type;
 void subst_list_fprintf(const subst_list_type *, FILE *stream);
-void subst_list_set_parent(subst_list_type *subst_list,
-                           const subst_list_type *parent);
 extern "C" subst_list_type *subst_list_alloc();
 subst_list_type *subst_list_alloc_deep_copy(const subst_list_type *);
 extern "C" void subst_list_free(subst_list_type *);

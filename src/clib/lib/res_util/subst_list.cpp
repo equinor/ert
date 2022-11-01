@@ -63,9 +63,6 @@ typedef enum {
 } subst_insert_type; /* Mode used in the subst_list_insert__() function */
 
 struct subst_list_struct {
-    /** A parent subst_list instance - can be NULL - no destructor is called
-     * for the parent. */
-    const subst_list_type *parent;
     /** The string substitutions we should do. */
     vector_type *string_data;
     hash_type *map;
@@ -170,11 +167,6 @@ subst_list_insert_new_node(subst_list_type *subst_list, const char *key,
     return new_node;
 }
 
-void subst_list_set_parent(subst_list_type *subst_list,
-                           const subst_list_type *parent) {
-    subst_list->parent = parent;
-}
-
 bool subst_list_has_key(const subst_list_type *subst_list, const char *key) {
     return hash_has_key(subst_list->map, key);
 }
@@ -182,7 +174,6 @@ bool subst_list_has_key(const subst_list_type *subst_list, const char *key) {
 subst_list_type *subst_list_alloc() {
     subst_list_type *subst_list =
         (subst_list_type *)util_malloc(sizeof *subst_list);
-    subst_list->parent = NULL;
     subst_list->map = hash_alloc();
     subst_list->string_data = vector_alloc_new();
 
@@ -265,19 +256,14 @@ void subst_list_free(subst_list_type *subst_list) {
 
   which will update a buffer instance. This function again will call
   another function for pure string substitutions.
-
-  The update replace functions will first apply all the string
-  substitutions for this particular instance, and afterwards calling
-  all the string substititions of the parent (recursively).
 */
 
 /**
    Updates the buffer inplace with all the string substitutions in the
-   subst_list. This is the lowest level function, which does *NOT*
-   consider the parent pointer.
+   subst_list.
 */
-static bool subst_list_replace_strings__(const subst_list_type *subst_list,
-                                         buffer_type *buffer) {
+static bool subst_list_replace_strings(const subst_list_type *subst_list,
+                                       buffer_type *buffer) {
     int index;
     bool global_match = false;
     for (index = 0; index < vector_get_size(subst_list->string_data); index++) {
@@ -295,69 +281,6 @@ static bool subst_list_replace_strings__(const subst_list_type *subst_list,
         }
     }
     return global_match;
-}
-
-/**
-   Should we evaluate the parent first (i.e. top down), or this
-   instance first and then subsequently the parent (i.e. bottom
-   up). The problem is with inherited defintions:
-
-     Inherited defintions
-     --------------------
-
-     In this situation we have defined a (key,value) substitution,
-     where the value depends on a value following afterwards:
-
-       ("<PATH>" , "/tmp/run/<CASE>")
-       ("<CASE>" , "Test4")
-
-     I.e. first <PATH> is replaced with "/tmp/run/<CASE>" and then
-     subsequently "<CASE>" is replaced with "Test4". A typical use
-     case here is that the common definition of "<PATH>" is in the
-     parent, and consequently parent should run first (i.e. top
-     down).
-
-     However, in other cases the order of defintion might very well be
-     opposite, i.e. with "<CASE>" first and then things will blow up:
-
-       1. <CASE>: Not found
-       2. <PATH> -> /tmp/run/<CASE>
-
-     and, the final <CASE> will not be resolved. I.e. there is no
-     obvious 'right' way to do it.
-
-
-
-     Overriding defaults
-     -------------------
-
-     The parent has defined:
-
-        ("<PATH>" , "/tmp/run/default")
-
-     But for a particular instance we would like to overwrite <PATH>
-     with another definition:
-
-        ("<PATH>" , "/tmp/run/special_case")
-
-     This will require evaluating the bottom first, i.e. a bottom up
-     approach.
-
-
-   Currently the implementation is purely top down, the latter case
-   above is not supported. The actual implementation here is in terms
-   of recursion, the low level function doing the stuff is
-   subst_list_replace_strings__() which is not recursive.
-*/
-static bool subst_list_replace_strings(const subst_list_type *subst_list,
-                                       buffer_type *buffer) {
-    bool match = false;
-    if (subst_list->parent != NULL)
-        match = subst_list_replace_strings(subst_list->parent, buffer);
-
-    /* The actual string replace */
-    match = (subst_list_replace_strings__(subst_list, buffer) || match);
-    return match;
 }
 
 /**
@@ -450,9 +373,6 @@ char *subst_list_alloc_filtered_string(const subst_list_type *subst_list,
 subst_list_type *subst_list_alloc_deep_copy(const subst_list_type *src) {
     subst_list_type *copy;
     copy = subst_list_alloc();
-    if (src->parent != NULL) {
-        subst_list_set_parent(copy, src->parent);
-    }
 
     {
         int index;
