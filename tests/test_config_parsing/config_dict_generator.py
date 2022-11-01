@@ -235,6 +235,7 @@ def defines(draw, config_files, cwds):
 def config_dicts(draw):
     queue_system = draw(queue_systems)
     config_file_name = st.just(draw(file_names) + ".ert")
+    cwd = os.getcwd()
     config_dict = draw(
         st.fixed_dictionaries(
             {
@@ -251,8 +252,9 @@ def config_dicts(draw):
                 ConfigKeys.UPDATE_LOG_PATH: directory_names(),
                 ConfigKeys.STD_CUTOFF_KEY: small_floats,
                 ConfigKeys.MAX_RUNTIME: positives,
+                ConfigKeys.CONFIG_DIRECTORY: st.just(cwd),
                 ConfigKeys.MIN_REALIZATIONS: positives,
-                ConfigKeys.DEFINE_KEY: defines(config_file_name, st.just(os.getcwd())),
+                ConfigKeys.DEFINE_KEY: defines(config_file_name, st.just(cwd)),
                 ConfigKeys.DATA_KW_KEY: st.dictionaries(words, words),
                 ConfigKeys.DATA_FILE: st.just(draw(file_names) + ".DATA"),
                 ConfigKeys.GRID: st.just(draw(words) + ".EGRID"),
