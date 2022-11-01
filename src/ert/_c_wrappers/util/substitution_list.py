@@ -6,7 +6,7 @@ from ert._c_wrappers import ResPrototype
 class SubstitutionList(BaseCClass):
     TYPE_NAME = "subst_list"
 
-    _alloc = ResPrototype("void* subst_list_alloc(void*)", bind=False)
+    _alloc = ResPrototype("void* subst_list_alloc()", bind=False)
     _free = ResPrototype("void subst_list_free(subst_list)")
     _size = ResPrototype("int subst_list_get_size(subst_list)")
     _iget_key = ResPrototype("char* subst_list_iget_key(subst_list, int)")

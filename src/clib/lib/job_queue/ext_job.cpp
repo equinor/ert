@@ -201,7 +201,7 @@ ext_job_type *ext_job_alloc(const char *name, const char *license_root_path,
                             bool private_job) {
     ext_job_type *ext_job =
         ext_job_alloc__(name, license_root_path, private_job);
-    ext_job->private_args = subst_list_alloc(NULL);
+    ext_job->private_args = subst_list_alloc();
     return ext_job;
 }
 
