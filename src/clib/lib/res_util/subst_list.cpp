@@ -93,8 +93,6 @@ typedef struct {
     bool value_owner;
     char *value;
     char *key;
-    /** A doc_string of this substitution - only for documentation - can be NULL. */
-    char *doc_string;
 } subst_list_string_type;
 
 /** Allocates an empty instance with no values. */
@@ -103,7 +101,6 @@ static subst_list_string_type *subst_list_string_alloc(const char *key) {
         (subst_list_string_type *)util_malloc(sizeof *node);
     node->value_owner = false;
     node->value = NULL;
-    node->doc_string = NULL;
     node->key = util_alloc_string_copy(key);
     return node;
 }
@@ -115,7 +112,6 @@ static void subst_list_string_free_content(subst_list_string_type *node) {
 
 static void subst_list_string_free(subst_list_string_type *node) {
     subst_list_string_free_content(node);
-    free(node->doc_string);
     free(node->key);
     free(node);
 }
@@ -129,7 +125,6 @@ static void subst_list_string_free__(void *node) {
 */
 static void subst_list_string_set_value(subst_list_string_type *node,
                                         const char *input_value,
-                                        const char *doc_string,
                                         subst_insert_type insert_mode) {
     subst_list_string_free_content(node);
     {
@@ -147,9 +142,6 @@ static void subst_list_string_set_value(subst_list_string_type *node,
         node->value = value;
     }
 
-    if (doc_string != NULL)
-        node->doc_string =
-            util_realloc_string_copy(node->doc_string, doc_string);
 }
 
 /**
@@ -259,26 +251,14 @@ subst_list_type *subst_list_alloc(const subst_func_pool_type *pool) {
     return subst_list;
 }
 
-/**
-   The semantics of the doc_string string is as follows:
-
-    1. If doc_string is different from NULL the doc_string is stored in the node.
-
-    2. If a NULL value follows a non-NULL value (i.e. the substitution
-       is updated) the doc_string is not changed.
-
-   The idea is that the doc_string must just be included the first
-   time a (key,value) pair is added. On subsequent updates of the
-   value, the doc_string string can be NULL.
-*/
 static void subst_list_insert__(subst_list_type *subst_list, const char *key,
-                                const char *value, const char *doc_string,
+                                const char *value,
                                 bool append, subst_insert_type insert_mode) {
     subst_list_string_type *node = subst_list_get_string_node(subst_list, key);
 
     if (node == NULL) /* Did not have the node. */
         node = subst_list_insert_new_node(subst_list, key, append);
-    subst_list_string_set_value(node, value, doc_string, insert_mode);
+    subst_list_string_set_value(node, value, insert_mode);
 }
 
 /*
@@ -304,32 +284,32 @@ static void subst_list_insert__(subst_list_type *subst_list, const char *key,
 */
 
 void subst_list_append_owned_ref(subst_list_type *subst_list, const char *key,
-                                 const char *value, const char *doc_string) {
-    subst_list_insert__(subst_list, key, value, doc_string, true,
+                                 const char *value) {
+    subst_list_insert__(subst_list, key, value, true,
                         SUBST_MANAGED_REF);
 }
 
 void subst_list_append_copy(subst_list_type *subst_list, const char *key,
-                            const char *value, const char *doc_string) {
-    subst_list_insert__(subst_list, key, value, doc_string, true,
+                            const char *value) {
+    subst_list_insert__(subst_list, key, value, true,
                         SUBST_DEEP_COPY);
 }
 
 void subst_list_prepend_ref(subst_list_type *subst_list, const char *key,
-                            const char *value, const char *doc_string) {
-    subst_list_insert__(subst_list, key, value, doc_string, false,
+                            const char *value) {
+    subst_list_insert__(subst_list, key, value, false,
                         SUBST_SHARED_REF);
 }
 
 void subst_list_prepend_owned_ref(subst_list_type *subst_list, const char *key,
-                                  const char *value, const char *doc_string) {
-    subst_list_insert__(subst_list, key, value, doc_string, false,
+                                  const char *value) {
+    subst_list_insert__(subst_list, key, value, false,
                         SUBST_MANAGED_REF);
 }
 
 void subst_list_prepend_copy(subst_list_type *subst_list, const char *key,
-                             const char *value, const char *doc_string) {
-    subst_list_insert__(subst_list, key, value, doc_string, false,
+                             const char *value) {
+    subst_list_insert__(subst_list, key, value, false,
                         SUBST_DEEP_COPY);
 }
 
@@ -693,7 +673,7 @@ subst_list_type *subst_list_alloc_deep_copy(const subst_list_type *src) {
             const subst_list_string_type *node =
                 (const subst_list_string_type *)vector_iget_const(
                     src->string_data, index);
-            subst_list_insert__(copy, node->key, node->value, node->doc_string,
+            subst_list_insert__(copy, node->key, node->value,
                                 true, SUBST_DEEP_COPY);
         }
 
@@ -744,13 +724,6 @@ const char *subst_list_get_value(const subst_list_type *subst_list,
     const subst_list_string_type *node =
         (const subst_list_string_type *)hash_get(subst_list->map, key);
     return node->value;
-}
-
-const char *subst_list_get_doc_string(const subst_list_type *subst_list,
-                                      const char *key) {
-    const subst_list_string_type *node =
-        (const subst_list_string_type *)hash_get(subst_list->map, key);
-    return node->doc_string;
 }
 
 void subst_list_fprintf(const subst_list_type *subst_list, FILE *stream) {
@@ -886,9 +859,9 @@ void subst_list_add_from_string(subst_list_type *subst_list,
 
         // Add to the list of parsed arguments.
         if (append)
-            subst_list_append_copy(subst_list, key, value, NULL);
+            subst_list_append_copy(subst_list, key, value);
         else
-            subst_list_prepend_copy(subst_list, key, value, NULL);
+            subst_list_prepend_copy(subst_list, key, value);
 
         free(tmp);
 

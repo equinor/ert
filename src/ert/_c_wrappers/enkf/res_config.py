@@ -718,7 +718,7 @@ class ResConfig:
         subst_list = SubstitutionList()
 
         today_date_string = date.today().isoformat()
-        subst_list.addItem("<DATE>", today_date_string, "The current date.")
+        subst_list.addItem("<DATE>", today_date_string)
         subst_list.addItem("<CONFIG_PATH>", config_dir)
 
         for key, value in defines.items():
@@ -732,15 +732,10 @@ class ResConfig:
             )
         else:
             runpath_file_path = os.path.abspath(runpath_file_name)
-        subst_list.addItem(
-            "<RUNPATH_FILE>",
-            runpath_file_path,
-            "The name of a file with a list of run directories.",
-        )
+        subst_list.addItem("<RUNPATH_FILE>", runpath_file_path)
         subst_list.addItem(
             "<NUM_CPU>",
             str(num_cpu),
-            "The number of CPU used for one forward model.",
         )
         return subst_list
 
@@ -778,7 +773,7 @@ class ResConfig:
             else os.getcwd()
         )
         init_args["defines"] = dict(
-            (key, value) for key, value, _ in config_content.get_const_define_list()
+            (key, value) for key, value in config_content.get_const_define_list()
         )
         init_args["num_cpu"] = self.preferred_num_cpu()
         return self._create_substitution_list(**init_args)

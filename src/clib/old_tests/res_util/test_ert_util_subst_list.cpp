@@ -17,10 +17,10 @@ void test_filter_file1() {
         fprintf(stream, "<KEY1>\n<KEY2>\n<KEY3>\n<KEY4>\n");
         fclose(stream);
     }
-    subst_list_append_copy(subst_list, "<KEY1>", "Value1", NULL);
-    subst_list_append_copy(subst_list, "<KEY2>", "Value2", NULL);
-    subst_list_append_copy(subst_list, "<KEY3>", "Value3", NULL);
-    subst_list_append_copy(subst_list, "<KEY4>", "Value4", NULL);
+    subst_list_append_copy(subst_list, "<KEY1>", "Value1");
+    subst_list_append_copy(subst_list, "<KEY2>", "Value2");
+    subst_list_append_copy(subst_list, "<KEY3>", "Value3");
+    subst_list_append_copy(subst_list, "<KEY4>", "Value4");
 
     subst_list_filter_file(subst_list, "template", "target");
 
@@ -48,10 +48,9 @@ void test_filter_file2() {
         fclose(stream);
     }
 
-    subst_list_append_copy(subst_list, "__MAGIC__", "MagicAllTheWayToWorkFlow",
-                           NULL);
-    subst_list_append_copy(subst_list, "<CASE>", "SUPERcase", NULL);
-    subst_list_append_copy(subst_list, "<ERTCASE>", "default", NULL);
+    subst_list_append_copy(subst_list, "__MAGIC__", "MagicAllTheWayToWorkFlow");
+    subst_list_append_copy(subst_list, "<CASE>", "SUPERcase");
+    subst_list_append_copy(subst_list, "<ERTCASE>", "default");
     subst_list_filter_file(subst_list, "template", "target");
 
     {
