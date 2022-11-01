@@ -324,38 +324,6 @@ def test_random_seed_initialization_of_rngs(random_seed, tmpdir):
         assert res_config.random_seed == str(random_seed)
 
 
-def test_failed_realizations(setup_case):
-    """mini_fail_config has the following realization success/failures:
-
-    0 OK
-    1 GenData report step 1 missing
-    2 GenData report step 2 missing, Forward Model Component Target File not found
-    3 GenData report step 3 missing, Forward Model Component Target File not found
-    4 GenData report step 1 missing
-    5 GenData report step 2 missing, Forward Model Component Target File not found
-    6 GenData report step 3 missing
-    7 Forward Model Target File not found.
-    8 OK
-    9 OK
-    """
-    ert = EnKFMain(setup_case("mini_ert", "mini_fail_config"))
-    fs = ert.getEnkfFsManager().getCurrentFileSystem()
-
-    realizations_list = fs.realizationList(RealizationStateEnum.STATE_HAS_DATA)
-    assert 0 in realizations_list
-    assert 8 in realizations_list
-    assert 9 in realizations_list
-
-    realizations_list = fs.realizationList(RealizationStateEnum.STATE_LOAD_FAILURE)
-    assert 1 in realizations_list
-    assert 2 in realizations_list
-    assert 3 in realizations_list
-    assert 4 in realizations_list
-    assert 5 in realizations_list
-    assert 6 in realizations_list
-    assert 7 in realizations_list
-
-
 @pytest.mark.usefixtures("use_tmpdir")
 def test_data_kw():
     # Write a minimal config file with DEFINE
@@ -366,43 +334,6 @@ def test_data_kw():
     data_kw = ert.getDataKW()
     my_path = data_kw["MY_PATH"]
     assert my_path == os.getcwd()
-
-
-def test_load_results_manually(setup_case):
-    res_config = setup_case("mini_ert", "mini_fail_config")
-    ert = EnKFMain(res_config)
-    load_into_case = "A1"
-    load_from_case = "default_1"
-
-    load_into = ert.getEnkfFsManager().getFileSystem(load_into_case)
-    load_from = ert.getEnkfFsManager().getFileSystem(load_from_case)
-
-    ert.getEnkfFsManager().switchFileSystem(load_from)
-    realisations = [True] * 10
-    realisations[7] = False
-    iteration = 0
-
-    loaded = ert.loadFromForwardModel(realisations, iteration, load_into)
-
-    load_into_case_state_map = load_into.getStateMap()
-
-    load_into_states = list(load_into_case_state_map)
-
-    expected = [
-        RealizationStateEnum.STATE_HAS_DATA,
-        RealizationStateEnum.STATE_LOAD_FAILURE,
-        RealizationStateEnum.STATE_LOAD_FAILURE,
-        RealizationStateEnum.STATE_LOAD_FAILURE,
-        RealizationStateEnum.STATE_LOAD_FAILURE,
-        RealizationStateEnum.STATE_LOAD_FAILURE,
-        RealizationStateEnum.STATE_LOAD_FAILURE,
-        RealizationStateEnum.STATE_UNDEFINED,
-        RealizationStateEnum.STATE_HAS_DATA,
-        RealizationStateEnum.STATE_HAS_DATA,
-    ]
-
-    assert load_into_states == expected
-    assert loaded == 3
 
 
 @pytest.mark.skip
