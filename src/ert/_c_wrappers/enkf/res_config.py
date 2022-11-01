@@ -78,6 +78,10 @@ def site_config_location():
     return str(path)
 
 
+class ConfigValidationError(ValueError):
+    pass
+
+
 class ResConfig:
     def __init__(
         self,
@@ -197,7 +201,9 @@ class ResConfig:
 
         if self.errors:
             logging.error(f"Error loading configuration: {str(self._errors)}")
-            raise ValueError("Error loading configuration: " + str(self._errors))
+            raise ConfigValidationError(
+                "Error loading configuration: " + str(self._errors)
+            )
 
         self.num_cpu_from_data_file = (
             get_num_cpu_from_data_file(
@@ -308,7 +314,9 @@ class ResConfig:
                 self.ensemble_config.getNode(key).get_init_file_fmt() != None
                 and "%" not in self.ensemble_config.getNode(key).get_init_file_fmt()
             ):
-                raise ValueError("Loading GEN_KW from files requires %d in file format")
+                raise ConfigValidationError(
+                    "Loading GEN_KW from files requires %d in file format"
+                )
 
         self.model_config = ModelConfig(
             data_root=self.config_path,
@@ -396,7 +404,9 @@ class ResConfig:
                 self.ensemble_config.getNode(key).get_init_file_fmt() != None
                 and "%" not in self.ensemble_config.getNode(key).get_init_file_fmt()
             ):
-                raise ValueError("Loading GEN_KW from files requires %d in file format")
+                raise ConfigValidationError(
+                    "Loading GEN_KW from files requires %d in file format"
+                )
 
         self.model_config = ModelConfig(
             data_root=self.config_path,

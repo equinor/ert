@@ -11,6 +11,7 @@ import pytest
 
 import ert.shared
 from ert.__main__ import ert_parser
+from ert._c_wrappers.enkf import ConfigValidationError
 from ert.cli import (
     ENSEMBLE_EXPERIMENT_MODE,
     ENSEMBLE_SMOOTHER_MODE,
@@ -379,3 +380,17 @@ def test_experiment_server_mda(tmpdir, source_root, capsys):
         assert "Successful realizations: 5\n" in captured.out
 
     FeatureToggling.reset()
+
+
+def test_bad_config_error_message(tmp_path):
+    (tmp_path / "test.ert").write_text("NUM_REL 10\n")
+    parser = ArgumentParser(prog="test_main")
+    parsed = ert_parser(
+        parser,
+        [
+            TEST_RUN_MODE,
+            str(tmp_path / "test.ert"),
+        ],
+    )
+    with pytest.raises(ConfigValidationError, match="JOBNAME or ECLBASE"):
+        run_cli(parsed)

@@ -10,7 +10,7 @@ import yaml
 from ecl import set_abort_handler
 
 import ert.shared
-from ert._c_wrappers.enkf import ResConfig
+from ert._c_wrappers.enkf import ConfigValidationError, ResConfig
 from ert.cli import (
     ENSEMBLE_EXPERIMENT_MODE,
     ENSEMBLE_SMOOTHER_MODE,
@@ -548,6 +548,9 @@ def main():
     except (ErtCliError, ErtTimeoutError) as err:
         logger.exception(str(err))
         sys.exit(str(err))
+    except ConfigValidationError as err:
+        logger.exception(str(err))
+        sys.exit(f"Error in configuration file: {err}")
     except BaseException as err:
         logger.exception(f'ERT crashed unexpectedly with "{err}"')
 
