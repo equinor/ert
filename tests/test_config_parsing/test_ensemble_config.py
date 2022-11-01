@@ -4,7 +4,7 @@ import os.path
 import pytest
 from hypothesis import given, settings
 
-from ert._c_wrappers.enkf import ConfigKeys, EnsembleConfig, ResConfig
+from ert._c_wrappers.enkf import ConfigKeys, ResConfig
 
 from .config_dict_generator import config_dicts, to_config_file
 
@@ -15,20 +15,13 @@ from .config_dict_generator import config_dicts, to_config_file
 def test_ensemble_config_works_without_grid(config_dict):
     cwd = os.getcwd()
     filename = config_dict[pytest.TEST_CONFIG_FILE_KEY]
-    # config_dict.pop(ConfigKeys.GRID)
     to_config_file(filename, config_dict)
     config_dict[ConfigKeys.CONFIG_DIRECTORY] = cwd
 
     res_config_from_file = ResConfig(user_config_file=filename)
     res_config_from_dict = ResConfig(config_dict=config_dict)
 
-    with open(filename, "r+") as file_handler:
-        print(file_handler.read())
-
-    print(config_dict[ConfigKeys.FIELD_KEY])
-    print(res_config_from_file.ensemble_config)
     assert res_config_from_file.ensemble_config == res_config_from_dict.ensemble_config
-    # assert False
 
 
 @pytest.mark.skip(reason="github.com/equinor/ert/issues/4070")
