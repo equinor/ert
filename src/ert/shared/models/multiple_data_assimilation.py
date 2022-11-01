@@ -1,7 +1,7 @@
 import asyncio
 import concurrent
 import logging
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import _ert_com_protocol
 from ert._c_wrappers.enkf import RunContext
@@ -93,7 +93,10 @@ class MultipleDataAssimilation(BaseRunModel):
             is_first_iteration = iteration == 0
 
             run_context = await loop.run_in_executor(
-                threadpool, self.create_context, iteration, is_first_iteration
+                threadpool,
+                self.create_context,
+                iteration,
+                self._simulation_arguments["active_realizations"],
             )
 
             await loop.run_in_executor(
@@ -197,9 +200,11 @@ class MultipleDataAssimilation(BaseRunModel):
 
         for iteration, weight in weights_to_run:
             is_first_iteration = iteration == 0
-            run_context = self.create_context(
-                iteration, initialize_mask_from_arguments=is_first_iteration
-            )
+            if is_first_iteration:
+                mask = self._simulation_arguments["active_realizations"]
+            else:
+                mask = None
+            run_context = self.create_context(iteration, mask=mask)
             _, ensemble_id = self._simulateAndPostProcess(
                 run_context, evaluator_server_config, update_id=update_id
             )
@@ -212,9 +217,7 @@ class MultipleDataAssimilation(BaseRunModel):
             self.ert().runWorkflows(HookRuntime.POST_UPDATE)
 
         self.setPhaseName("Post processing...", indeterminate=True)
-        run_context = self.create_context(
-            len(weights), initialize_mask_from_arguments=False, update=False
-        )
+        run_context = self.create_context(len(weights), update=False)
         self._simulateAndPostProcess(
             run_context, evaluator_server_config, update_id=update_id
         )
@@ -328,7 +331,7 @@ class MultipleDataAssimilation(BaseRunModel):
     def create_context(
         self,
         itr: int,
-        initialize_mask_from_arguments: bool = True,
+        mask: Optional[List[bool]] = None,
         update: bool = True,
     ) -> RunContext:
         target_case_format = self._simulation_arguments["target_case"]
@@ -341,9 +344,7 @@ class MultipleDataAssimilation(BaseRunModel):
         else:
             target_fs = None
 
-        if initialize_mask_from_arguments:
-            mask = self._simulation_arguments["active_realizations"]
-        else:
+        if mask is None:
             initialized_and_has_data: RealizationStateEnum = (
                 RealizationStateEnum.STATE_HAS_DATA  # type: ignore
                 | RealizationStateEnum.STATE_INITIALIZED
