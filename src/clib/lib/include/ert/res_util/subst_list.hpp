@@ -15,10 +15,6 @@ void subst_list_clear(subst_list_type *subst_list);
 extern "C" void subst_list_append_copy(subst_list_type *, const char *,
                                        const char *);
 void subst_list_append_owned_ref(subst_list_type *, const char *, const char *);
-void subst_list_prepend_copy(subst_list_type *, const char *, const char *);
-void subst_list_prepend_ref(subst_list_type *, const char *, const char *);
-void subst_list_prepend_owned_ref(subst_list_type *, const char *,
-                                  const char *);
 
 bool subst_list_filter_file(const subst_list_type *, const char *,
                             const char *);
@@ -34,5 +30,5 @@ extern "C" const char *subst_list_iget_key(const subst_list_type *subst_list,
 extern "C" bool subst_list_has_key(const subst_list_type *subst_list,
                                    const char *key);
 void subst_list_add_from_string(subst_list_type *subst_list,
-                                const char *arg_string, bool append);
+                                const char *arg_string);
 #endif

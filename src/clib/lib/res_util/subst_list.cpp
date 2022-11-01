@@ -152,16 +152,11 @@ subst_list_get_string_node(const subst_list_type *subst_list, const char *key) {
 }
 
 static subst_list_string_type *
-subst_list_insert_new_node(subst_list_type *subst_list, const char *key,
-                           bool append) {
+subst_list_insert_new_node(subst_list_type *subst_list, const char *key) {
     subst_list_string_type *new_node = subst_list_string_alloc(key);
 
-    if (append)
-        vector_append_owned_ref(subst_list->string_data, new_node,
-                                subst_list_string_free__);
-    else
-        vector_insert_owned_ref(subst_list->string_data, 0, new_node,
-                                subst_list_string_free__);
+    vector_append_owned_ref(subst_list->string_data, new_node,
+                            subst_list_string_free__);
 
     hash_insert_ref(subst_list->map, key, new_node);
     return new_node;
@@ -181,12 +176,12 @@ subst_list_type *subst_list_alloc() {
 }
 
 static void subst_list_insert__(subst_list_type *subst_list, const char *key,
-                                const char *value, bool append,
+                                const char *value,
                                 subst_insert_type insert_mode) {
     subst_list_string_type *node = subst_list_get_string_node(subst_list, key);
 
     if (node == NULL) /* Did not have the node. */
-        node = subst_list_insert_new_node(subst_list, key, append);
+        node = subst_list_insert_new_node(subst_list, key);
     subst_list_string_set_value(node, value, insert_mode);
 }
 
@@ -214,27 +209,12 @@ static void subst_list_insert__(subst_list_type *subst_list, const char *key,
 
 void subst_list_append_owned_ref(subst_list_type *subst_list, const char *key,
                                  const char *value) {
-    subst_list_insert__(subst_list, key, value, true, SUBST_MANAGED_REF);
+    subst_list_insert__(subst_list, key, value, SUBST_MANAGED_REF);
 }
 
 void subst_list_append_copy(subst_list_type *subst_list, const char *key,
                             const char *value) {
-    subst_list_insert__(subst_list, key, value, true, SUBST_DEEP_COPY);
-}
-
-void subst_list_prepend_ref(subst_list_type *subst_list, const char *key,
-                            const char *value) {
-    subst_list_insert__(subst_list, key, value, false, SUBST_SHARED_REF);
-}
-
-void subst_list_prepend_owned_ref(subst_list_type *subst_list, const char *key,
-                                  const char *value) {
-    subst_list_insert__(subst_list, key, value, false, SUBST_MANAGED_REF);
-}
-
-void subst_list_prepend_copy(subst_list_type *subst_list, const char *key,
-                             const char *value) {
-    subst_list_insert__(subst_list, key, value, false, SUBST_DEEP_COPY);
+    subst_list_insert__(subst_list, key, value, SUBST_DEEP_COPY);
 }
 
 void subst_list_clear(subst_list_type *subst_list) {
@@ -380,8 +360,7 @@ subst_list_type *subst_list_alloc_deep_copy(const subst_list_type *src) {
             const subst_list_string_type *node =
                 (const subst_list_string_type *)vector_iget_const(
                     src->string_data, index);
-            subst_list_insert__(copy, node->key, node->value, true,
-                                SUBST_DEEP_COPY);
+            subst_list_insert__(copy, node->key, node->value, SUBST_DEEP_COPY);
         }
     }
     return copy;
@@ -507,7 +486,7 @@ static char *trim_string(char *str) {
 }
 
 void subst_list_add_from_string(subst_list_type *subst_list,
-                                const char *arg_string_orig, bool append) {
+                                const char *arg_string_orig) {
     if (!arg_string_orig)
         return;
 
@@ -555,10 +534,7 @@ void subst_list_add_from_string(subst_list_type *subst_list,
                        arg_string_orig);
 
         // Add to the list of parsed arguments.
-        if (append)
-            subst_list_append_copy(subst_list, key, value);
-        else
-            subst_list_prepend_copy(subst_list, key, value);
+        subst_list_append_copy(subst_list, key, value);
 
         free(tmp);
 

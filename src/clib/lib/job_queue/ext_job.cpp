@@ -997,7 +997,7 @@ const stringlist_type *ext_job_get_argvalues(const ext_job_type *ext_job) {
 void ext_job_set_private_args_from_string(ext_job_type *ext_job,
                                           const char *arg_string) {
     subst_list_clear(ext_job->private_args);
-    subst_list_add_from_string(ext_job->private_args, arg_string, true);
+    subst_list_add_from_string(ext_job->private_args, arg_string);
 }
 
 bool ext_job_is_shared(const ext_job_type *ext_job) {
