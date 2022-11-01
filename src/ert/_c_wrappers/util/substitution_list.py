@@ -12,10 +12,7 @@ class SubstitutionList(BaseCClass):
     _iget_key = ResPrototype("char* subst_list_iget_key(subst_list, int)")
     _get_value = ResPrototype("char* subst_list_get_value(subst_list, char*)")
     _has_key = ResPrototype("bool subst_list_has_key(subst_list, char*)")
-    _get_doc = ResPrototype("char* subst_list_get_doc_string(subst_list, char*)")
-    _append_copy = ResPrototype(
-        "void subst_list_append_copy(subst_list, char*, char*, char*)"
-    )
+    _append_copy = ResPrototype("void subst_list_append_copy(subst_list, char*, char*)")
     _alloc_filtered_string = ResPrototype(
         "char* subst_list_alloc_filtered_string(subst_list, char*)"
     )
@@ -31,8 +28,8 @@ class SubstitutionList(BaseCClass):
     def __len__(self):
         return self._size()
 
-    def addItem(self, key, value, doc_string=""):
-        self._append_copy(key, value, doc_string)
+    def addItem(self, key, value):
+        self._append_copy(key, value)
 
     def keys(self):
         key_list = []
@@ -45,7 +42,7 @@ class SubstitutionList(BaseCClass):
         keys = self.keys()
         for index in range(len(self)):
             key = keys[index]
-            yield (key, self[key], self.doc(key))
+            yield (key, self[key])
 
     def __contains__(self, key):
         if not isinstance(key, str):
@@ -61,18 +58,12 @@ class SubstitutionList(BaseCClass):
     def get(self, key, default=None):
         return self[key] if key in self else default
 
-    def doc(self, key):
-        if key in self:
-            return self._get_doc(key)
-        else:
-            raise KeyError(f"No such key:{key}")
-
     def indexForKey(self, key):
         if key not in self:
             raise KeyError(f"Key '{key}' not in substitution list!")
 
-        for index, key_val_doc in enumerate(self):
-            if key == key_val_doc[0]:
+        for index, key_value in enumerate(self):
+            if key == key_value[0]:
                 return index
 
         return None  # Should never happen!
@@ -98,7 +89,7 @@ class SubstitutionList(BaseCClass):
 
     def _concise_representation(self):
         return (
-            ("[" + ",\n".join([f"({key}, {value})" for key, value, _ in self]) + "]")
+            ("[" + ",\n".join([f"({key}, {value})" for key, value in self]) + "]")
             if self._address()
             else ""
         )

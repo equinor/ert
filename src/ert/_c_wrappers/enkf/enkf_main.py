@@ -178,9 +178,7 @@ class EnKFMain:
                 config.analysis_config.get_std_cutoff(),
             )
         self._ensemble_size = self.res_config.model_config.num_realizations
-        self._substituter = Substituter(
-            {key: value for (key, value, _) in self.getDataKW()}
-        )
+        self._substituter = Substituter(dict(self.getDataKW()))
         self._runpaths = Runpaths(
             self.getModelConfig().getJobnameFormat(),
             self.getModelConfig().getRunpathFormat().format_string,

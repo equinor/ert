@@ -6,7 +6,7 @@ from ert._c_wrappers.util.substitution_list import SubstitutionList
 def test_substitution_list():
     subst_list = SubstitutionList()
 
-    subst_list.addItem("Key", "Value", "Doc String")
+    subst_list.addItem("Key", "Value")
 
     assert len(subst_list) == 1
 
@@ -15,14 +15,10 @@ def test_substitution_list():
         subst_list[2]
         subst_list["NoSuchKey"]
 
-    with pytest.raises(KeyError):
-        subst_list.doc("NoSuchKey")
-
     assert "Key" in subst_list
     assert subst_list["Key"], "Value"
-    assert subst_list.doc("Key"), "Doc String"
 
-    subst_list.addItem("Key2", "Value2", "Doc String2")
+    subst_list.addItem("Key2", "Value2")
     assert subst_list.keys() == ["Key", "Key2"]
 
     str_repr = repr(subst_list)

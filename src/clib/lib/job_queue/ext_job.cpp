@@ -546,7 +546,7 @@ subst_list_type *ext_job_get_private_args(ext_job_type *ext_job) {
 
 void ext_job_set_private_arg(ext_job_type *ext_job, const char *key,
                              const char *value) {
-    subst_list_append_copy(ext_job->private_args, key, value, NULL);
+    subst_list_append_copy(ext_job->private_args, key, value);
 }
 
 void ext_job_set_define_args(ext_job_type *ext_job,
