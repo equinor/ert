@@ -1,4 +1,6 @@
 import os
+from datetime import date
+from textwrap import dedent
 
 import pytest
 
@@ -65,3 +67,27 @@ def test_bad_config_provide_error_message(tmp_path):
         rconfig = ResConfig(config=testDict)
 
     assert rconfig is None
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_res_config_parses_date():
+    test_config_file_base = "test"
+    test_config_file_name = f"{test_config_file_base}.ert"
+    test_config_contents = dedent(
+        """
+        NUM_REALIZATIONS  1
+        DEFINE <STORAGE> storage/<CONFIG_FILE_BASE>-<DATE>
+        RUNPATH <STORAGE>/runpath/realization-%d/iter-%d
+        ENSPATH <STORAGE>/ensemble
+        """
+    )
+    with open(test_config_file_name, "w") as fh:
+        fh.write(test_config_contents)
+    res_config = ResConfig(user_config_file=test_config_file_name)
+
+    date_string = date.today().isoformat()
+    expected_storage = os.path.abspath(f"storage/{test_config_file_base}-{date_string}")
+    expected_run_path = f"{expected_storage}/runpath/realization-%d/iter-%d"
+    expected_ens_path = f"{expected_storage}/ensemble"
+    assert res_config.model_config.getEnspath() == expected_ens_path
+    assert res_config.model_config.getRunpathAsString() == expected_run_path
