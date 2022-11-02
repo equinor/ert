@@ -183,6 +183,7 @@ class ResConfig:
                 user_config_file,
                 pre_defined_kw_map={
                     "<CWD>": self.config_path,
+                    "<DATE>": self._current_date_string(),
                     "<CONFIG_PATH>": self.config_path,
                     "<CONFIG_FILE>": os.path.basename(user_config_file),
                     "<CONFIG_FILE_BASE>": os.path.basename(user_config_file).split(".")[
@@ -715,6 +716,10 @@ class ResConfig:
         return content_dict
 
     @staticmethod
+    def _current_date_string() -> str:
+        return date.today().isoformat()
+
+    @staticmethod
     def _create_substitution_list(
         defines: Dict[str, str],
         data_kw: Dict[str, str],
@@ -724,7 +729,7 @@ class ResConfig:
     ) -> SubstitutionList:
         subst_list = SubstitutionList()
 
-        today_date_string = date.today().isoformat()
+        today_date_string = ResConfig._current_date_string()
         subst_list.addItem("<DATE>", today_date_string)
         subst_list.addItem("<CONFIG_PATH>", config_dir)
 
