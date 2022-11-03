@@ -30,11 +30,7 @@ from ert._c_wrappers.enkf.runpaths import Runpaths
 from ert._c_wrappers.enkf.site_config import SiteConfig
 from ert._c_wrappers.enkf.substituter import Substituter
 from ert._c_wrappers.util.substitution_list import SubstitutionList
-from ert._clib.state_map import (
-    STATE_LOAD_FAILURE,
-    STATE_PARENT_FAILURE,
-    STATE_UNDEFINED,
-)
+from ert._clib.state_map import STATE_LOAD_FAILURE, STATE_UNDEFINED
 
 if TYPE_CHECKING:
     from ert._c_wrappers.enkf.res_config import ResConfig
@@ -418,65 +414,63 @@ class EnKFMain:
         state_map = storage.getStateMap()
         for realization_nr in active_realizations:
             current_status = state_map[realization_nr]
-            if not current_status == STATE_PARENT_FAILURE:
-                for parameter in parameters:
-                    config_node = self.ensembleConfig().getNode(parameter)
-                    enkf_node = EnkfNode(config_node)
+            for parameter in parameters:
+                config_node = self.ensembleConfig().getNode(parameter)
+                enkf_node = EnkfNode(config_node)
 
-                    if config_node.getUseForwardInit():
-                        continue
-                    if (
-                        not enkf_node.has_data(storage, NodeId(0, realization_nr))
-                        or current_status == STATE_LOAD_FAILURE
-                    ):
-                        rng = self.realizations[realization_nr]
-                        impl_type = enkf_node.getImplType()
+                if config_node.getUseForwardInit():
+                    continue
+                if (
+                    not enkf_node.has_data(storage, NodeId(0, realization_nr))
+                    or current_status == STATE_LOAD_FAILURE
+                ):
+                    rng = self.realizations[realization_nr]
+                    impl_type = enkf_node.getImplType()
 
-                        if impl_type == ErtImplType.GEN_KW:
-                            gen_kw_node = enkf_node.asGenKw()
-                            if len(gen_kw_node) > 0:
-                                if config_node.get_init_file_fmt():
-                                    df = pd.read_csv(
-                                        config_node.get_init_file_fmt()
-                                        % realization_nr,
-                                        delim_whitespace=True,
-                                        header=None,
-                                    )
-                                    # This means we have a key: value mapping in the
-                                    # file otherwise it is just a list of values
-                                    if df.shape[1] == 2:
-                                        # We need to sort the user input keys by the
-                                        # internal order of sub-parameters:
-                                        keys = [val[0] for val in gen_kw_node.items()]
-                                        df = df.set_index(df.columns[0])
-                                        vals = df.reindex(keys).values.flatten()
-                                    else:
-                                        vals = df.values.flatten()
-                                else:
-                                    vals = rng.standard_normal(len(gen_kw_node))
-                                s = io.BytesIO()
-                                # The first element is time_t (64 bit integer), but
-                                # it is not used so we write 0 instead - for
-                                # padding purposes.
-                                s.write(struct.pack("Qi", 0, int(ErtImplType.GEN_KW)))
-                                s.write(vals.tobytes())
-
-                                _clib.enkf_fs.write_parameter(
-                                    storage,
-                                    config_node.getKey(),
-                                    realization_nr,
-                                    s.getvalue(),
+                    if impl_type == ErtImplType.GEN_KW:
+                        gen_kw_node = enkf_node.asGenKw()
+                        if len(gen_kw_node) > 0:
+                            if config_node.get_init_file_fmt():
+                                df = pd.read_csv(
+                                    config_node.get_init_file_fmt() % realization_nr,
+                                    delim_whitespace=True,
+                                    header=None,
                                 )
+                                # This means we have a key: value mapping in the
+                                # file otherwise it is just a list of values
+                                if df.shape[1] == 2:
+                                    # We need to sort the user input keys by the
+                                    # internal order of sub-parameters:
+                                    keys = [val[0] for val in gen_kw_node.items()]
+                                    df = df.set_index(df.columns[0])
+                                    vals = df.reindex(keys).values.flatten()
+                                else:
+                                    vals = df.values.flatten()
+                            else:
+                                vals = rng.standard_normal(len(gen_kw_node))
+                            s = io.BytesIO()
+                            # The first element is time_t (64 bit integer), but
+                            # it is not used so we write 0 instead - for
+                            # padding purposes.
+                            s.write(struct.pack("Qi", 0, int(ErtImplType.GEN_KW)))
+                            s.write(vals.tobytes())
 
-                        else:
-                            _clib.enkf_state.state_initialize(
-                                enkf_node,
+                            _clib.enkf_fs.write_parameter(
                                 storage,
+                                config_node.getKey(),
                                 realization_nr,
+                                s.getvalue(),
                             )
 
-                if state_map[realization_nr] in [STATE_UNDEFINED, STATE_LOAD_FAILURE]:
-                    state_map[realization_nr] = RealizationStateEnum.STATE_INITIALIZED
+                    else:
+                        _clib.enkf_state.state_initialize(
+                            enkf_node,
+                            storage,
+                            realization_nr,
+                        )
+
+            if state_map[realization_nr] in [STATE_UNDEFINED, STATE_LOAD_FAILURE]:
+                state_map[realization_nr] = RealizationStateEnum.STATE_INITIALIZED
         storage.sync()
 
     def rng(self) -> np.random.Generator:
