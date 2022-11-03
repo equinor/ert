@@ -82,12 +82,7 @@ class FileSystemManager:
         return file_system
 
     def state_map(self, case_name: str) -> "StateMap":
-        if case_name in self.open_storages:
-            return self.open_storages[case_name].getStateMap()
-        elif case_name in self.cases:
-            return EnkfFs.read_state_map((self.storage_path / case_name).as_posix())
-        else:
-            raise KeyError(f"No such case: {case_name} in: {self.cases}")
+        return self[case_name].getStateMap()
 
     def _drop_oldest_file_system(self) -> None:
         if len(self.open_storages) > 0:

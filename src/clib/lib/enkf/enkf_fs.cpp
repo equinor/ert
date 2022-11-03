@@ -303,18 +303,6 @@ static void enkf_fs_fread_summary_key_set(enkf_fs_type *fs) {
     free(filename);
 }
 
-StateMap enkf_fs_read_state_map(const char *mount_point) {
-    path_fmt_type *path_fmt = path_fmt_alloc_directory_fmt(DEFAULT_CASE_PATH);
-    char *filename =
-        path_fmt_alloc_file(path_fmt, false, mount_point, STATE_MAP_FILE);
-
-    StateMap state_map(filename);
-
-    path_fmt_free(path_fmt);
-    free(filename);
-    return state_map;
-}
-
 static void enkf_fs_fread_misfit(enkf_fs_type *fs) {
     FILE *stream = enkf_fs_open_excase_file(fs, MISFIT_ENSEMBLE_FILE);
     if (stream != NULL) {
@@ -668,12 +656,6 @@ ERT_CLIB_SUBMODULE("enkf_fs", m) {
     m.def(
         "get_state_map",
         [](Cwrap<enkf_fs_type> self) { return self->state_map; }, "self"_a);
-    m.def(
-        "read_state_map",
-        [](std::string case_path) {
-            return enkf_fs_read_state_map(case_path.c_str());
-        },
-        "case_path"_a);
     m.def(
         "is_initialized",
         [](Cwrap<enkf_fs_type> fs, Cwrap<ensemble_config_type> ensemble_config,
