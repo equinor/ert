@@ -15,8 +15,6 @@ typedef struct enkf_plot_data_struct enkf_plot_data_type;
 extern "C" enkf_plot_data_type *
 enkf_plot_data_alloc(const enkf_config_node_type *config_node);
 extern "C" void enkf_plot_data_free(enkf_plot_data_type *plot_data);
-extern "C" void enkf_plot_data_load(enkf_plot_data_type *plot_data,
-                                    enkf_fs_type *fs, const char *user_key);
 extern "C" enkf_plot_tvector_type *
 enkf_plot_data_iget(const enkf_plot_data_type *plot_data, int index);
 
