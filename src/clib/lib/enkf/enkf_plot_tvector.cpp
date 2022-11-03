@@ -15,11 +15,6 @@ struct enkf_plot_tvector_struct {
     bool summary_mode;
 };
 
-void enkf_plot_tvector_reset(enkf_plot_tvector_type *plot_tvector) {
-    double_vector_reset(plot_tvector->data);
-    bool_vector_reset(plot_tvector->mask);
-}
-
 enkf_plot_tvector_type *
 enkf_plot_tvector_alloc(const enkf_config_node_type *config_node, int iens) {
     enkf_plot_tvector_type *plot_tvector =
@@ -43,14 +38,6 @@ void enkf_plot_tvector_free(enkf_plot_tvector_type *plot_tvector) {
     double_vector_free(plot_tvector->data);
     double_vector_free(plot_tvector->work);
     bool_vector_free(plot_tvector->mask);
-}
-
-bool enkf_plot_tvector_all_active(const enkf_plot_tvector_type *plot_tvector) {
-    bool all_active = true;
-    for (int i = 0; i < bool_vector_size(plot_tvector->mask); i++)
-        all_active = all_active && bool_vector_iget(plot_tvector->mask, i);
-
-    return all_active;
 }
 
 int enkf_plot_tvector_size(const enkf_plot_tvector_type *plot_tvector) {

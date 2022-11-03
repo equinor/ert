@@ -30,22 +30,6 @@ void test_iset() {
     enkf_plot_tvector_free(tvector);
 }
 
-void test_all_active() {
-    enkf_config_node_type *config_node =
-        enkf_config_node_alloc_summary("KEY", LOAD_FAIL_SILENT);
-    enkf_plot_tvector_type *tvector = enkf_plot_tvector_alloc(config_node, 0);
-    test_assert_true(enkf_plot_tvector_all_active(tvector));
-
-    enkf_plot_tvector_iset(tvector, 00, 0, 100);
-    test_assert_true(enkf_plot_tvector_all_active(tvector));
-
-    enkf_plot_tvector_iset(tvector, 1, 0, 100);
-    test_assert_true(enkf_plot_tvector_all_active(tvector));
-
-    enkf_plot_tvector_iset(tvector, 10, 0, 100);
-    test_assert_false(enkf_plot_tvector_all_active(tvector));
-}
-
 void test_iget() {
     enkf_config_node_type *config_node =
         enkf_config_node_alloc_summary("KEY", LOAD_FAIL_SILENT);
@@ -73,7 +57,6 @@ void test_iget() {
 int main(int argc, char **argv) {
     create_test();
     test_iset();
-    test_all_active();
     test_iget();
 
     exit(0);

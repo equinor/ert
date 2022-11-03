@@ -12,7 +12,6 @@
 
 typedef struct enkf_plot_tvector_struct enkf_plot_tvector_type;
 
-void enkf_plot_tvector_reset(enkf_plot_tvector_type *plot_tvector);
 enkf_plot_tvector_type *
 enkf_plot_tvector_alloc(const enkf_config_node_type *config_node, int iens);
 void enkf_plot_tvector_load(enkf_plot_tvector_type *plot_tvector,
@@ -29,6 +28,5 @@ enkf_plot_tvector_iget_value(const enkf_plot_tvector_type *plot_tvector,
 extern "C" bool
 enkf_plot_tvector_iget_active(const enkf_plot_tvector_type *plot_tvector,
                               int index);
-bool enkf_plot_tvector_all_active(const enkf_plot_tvector_type *plot_tvector);
 
 #endif
