@@ -1,5 +1,5 @@
+#include <ert/enkf/enkf_plot_tvector.hpp>
 
-#include <ert/enkf/enkf_plot_data.hpp>
 #include <ert/python.hpp>
 #include <pybind11/numpy.h>
 #include <pybind11/pybind11.h>
@@ -23,45 +23,33 @@ ERT_CLIB_SUBMODULE("enkf_fs_summary_data", m) {
             for (const auto &key : summary_keys) {
                 auto ensemble_config_node =
                     ensemble_config_get_node(ensemble_config, key.c_str());
-                auto ensemble_data = enkf_plot_data_alloc(ensemble_config_node);
 
                 auto &state_map = enkf_fs_get_state_map(fs);
-                int ens_size = state_map.size();
 
                 std::vector<bool> mask =
                     state_map.select_matching(STATE_HAS_DATA);
-                {
-                    for (int iens = 0; iens < ens_size; iens++) {
-                        if (mask[iens]) {
-                            enkf_plot_tvector_type *vector =
-                                enkf_plot_data_iget(ensemble_data, iens);
-                            enkf_plot_tvector_load(vector, fs, nullptr);
+
+                for (int iens = 0; iens < realization_size; iens++) {
+                    if (mask[iens]) {
+                        enkf_plot_tvector_type *vector =
+                            enkf_plot_tvector_alloc(ensemble_config_node, iens);
+                        enkf_plot_tvector_load(vector, fs, nullptr);
+                        int realization_vector_size =
+                            enkf_plot_tvector_size(vector);
+
+                        for (int index = 1; index < realization_vector_size;
+                             index++) {
+                            if (enkf_plot_tvector_iget_active(vector, index)) {
+                                double value =
+                                    enkf_plot_tvector_iget_value(vector, index);
+                                data[iens * (time_map_size * summary_key_size) +
+                                     (((index - 1) * summary_key_size) +
+                                      summary_key_index)] = value;
+                            }
                         }
+                        enkf_plot_tvector_free(vector);
                     }
                 }
-
-                int realization_index = 0;
-                for (const auto &realization_number : realizations) {
-                    enkf_plot_tvector_type *realization_vector =
-                        enkf_plot_data_iget(ensemble_data, realization_number);
-                    int realization_vector_size =
-                        enkf_plot_tvector_size(realization_vector);
-
-                    for (int index = 1; index < realization_vector_size;
-                         index++) {
-                        if (enkf_plot_tvector_iget_active(realization_vector,
-                                                          index)) {
-                            double value = enkf_plot_tvector_iget_value(
-                                realization_vector, index);
-                            data[realization_index *
-                                     (time_map_size * summary_key_size) +
-                                 (((index - 1) * summary_key_size) +
-                                  summary_key_index)] = value;
-                        }
-                    }
-                    realization_index++;
-                }
-                enkf_plot_data_free(ensemble_data);
                 summary_key_index++;
             }
 
