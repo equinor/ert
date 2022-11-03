@@ -151,7 +151,9 @@ class CaseInitializationConfigurationPanel(QTabWidget):
         layout.addLayout(check_list_layout)
         layout.addSpacing(10)
 
-        initialize_button = QPushButton("Initialize")
+        initialize_button = QPushButton(
+            "Initialize", objectName="initialize_existing_button"
+        )
         addHelpToWidget(initialize_button, "init/initialize_from_existing")
         initialize_button.setMinimumWidth(75)
         initialize_button.setMaximumWidth(150)
@@ -174,7 +176,7 @@ class CaseInitializationConfigurationPanel(QTabWidget):
                     member_mask[int(member)] = True
                 source_fs = case_manager[source_case_name]
                 target_fs = case_manager[target_case_name]
-                source_fs.careful_duplicate(
+                source_fs.copy_from_case(
                     target_fs, report_step, parameters, member_mask
                 )
 
@@ -191,7 +193,7 @@ class CaseInitializationConfigurationPanel(QTabWidget):
         history_length_spinner = QSpinBox()
         addHelpToWidget(history_length_spinner, "config/init/history_length")
         history_length_spinner.setMinimum(0)
-        history_length_spinner.setMaximum(self.ert.getHistoryLength())
+        history_length_spinner.setMaximum(max(0, self.ert.getHistoryLength()))
 
         initial = QToolButton()
         initial.setText("Initial")
