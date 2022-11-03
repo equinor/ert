@@ -8,8 +8,7 @@
 ERT_CLIB_SUBMODULE("enkf_fs_summary_data", m) {
     m.def(
         "get_summary_data",
-        [](Cwrap<ensemble_config_type> ensemble_config,
-           Cwrap<enkf_fs_type> enkfs_fs,
+        [](Cwrap<ensemble_config_type> ensemble_config, Cwrap<enkf_fs_type> fs,
            const std::vector<std::string> &summary_keys,
            const std::vector<int> &realizations, const int time_map_size) {
             const int realization_size = std::size(realizations);
@@ -26,8 +25,20 @@ ERT_CLIB_SUBMODULE("enkf_fs_summary_data", m) {
                     ensemble_config_get_node(ensemble_config, key.c_str());
                 auto ensemble_data = enkf_plot_data_alloc(ensemble_config_node);
 
-                auto user_key = nullptr;
-                enkf_plot_data_load(ensemble_data, enkfs_fs, user_key);
+                auto &state_map = enkf_fs_get_state_map(fs);
+                int ens_size = state_map.size();
+
+                std::vector<bool> mask =
+                    state_map.select_matching(STATE_HAS_DATA);
+                {
+                    for (int iens = 0; iens < ens_size; iens++) {
+                        if (mask[iens]) {
+                            enkf_plot_tvector_type *vector =
+                                enkf_plot_data_iget(ensemble_data, iens);
+                            enkf_plot_tvector_load(vector, fs, nullptr);
+                        }
+                    }
+                }
 
                 int realization_index = 0;
                 for (const auto &realization_number : realizations) {
