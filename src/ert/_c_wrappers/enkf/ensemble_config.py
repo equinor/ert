@@ -64,7 +64,9 @@ class EnsembleConfig(BaseCClass):
     )
 
     @staticmethod
-    def _load_grid(grid_file: str) -> Optional[EclGrid]:
+    def _load_grid(grid_file: Optional[str]) -> Optional[EclGrid]:
+        if grid_file is None:
+            return None
         ecl_grid_file_types = [
             EclFileEnum.ECL_GRID_FILE,
             EclFileEnum.ECL_EGRID_FILE,
@@ -73,16 +75,9 @@ class EnsembleConfig(BaseCClass):
             raise ValueError(f"grid file {grid_file} does not have expected type")
         return EclGrid.load_from_file(grid_file)
 
-    @staticmethod
-    def _get_file_str(config_dict_value: Optional[Union[list, str]]) -> Optional[str]:
-        if config_dict_value is not None:
-            if isinstance(config_dict_value, str):
-                return os.path.realpath(config_dict_value)
-            elif isinstance(config_dict_value, list):
-                return os.path.realpath(config_dict_value[-1])
-        return config_dict_value
-
-    def _load_refcase(self, refcase_file: str) -> EclSum:
+    def _load_refcase(self, refcase_file: Optional[str]) -> Optional[EclSum]:
+        if refcase_file is None:
+            return None
         # defaults for loading refcase - necessary for using the function
         # exposed in python part of ecl
         refcase_load_args = {
@@ -105,121 +100,106 @@ class EnsembleConfig(BaseCClass):
                 "object with multiple config objects"
             )
 
-        self._grid_file: Optional[str] = (
-            self._get_file_str(config_dict[ConfigKeys.GRID])
-            if (config_dict is not None and ConfigKeys.GRID in config_dict)
-            else None
-        )
+        self._grid_file: Optional[str] = None
+        self._refcase_file: Optional[str] = None
+        c_ptr = None
 
-        self._refcase_file: Optional[str] = (
-            self._get_file_str(config_dict[ConfigKeys.REFCASE])
-            if (config_dict is not None and ConfigKeys.REFCASE in config_dict)
-            else None
-        )
+        if config_dict is not None:
+            c_ptr = self._alloc_full(config_dict.get(ConfigKeys.GEN_KW_TAG_FORMAT))
+            grid_file_path = _get_abs_path(config_dict.get(ConfigKeys.GRID))
+            self._grid_file: Optional[str] = grid_file_path
+            refcase_file_path = _get_abs_path(config_dict.get(ConfigKeys.REFCASE))
+            self._refcase_file: Optional[str] = refcase_file_path
+            self.grid = self._load_grid(self._grid_file)
+            self.refcase = self._load_refcase(self._refcase_file)
 
         if config_content is not None:
             if config_content.hasKey(ConfigKeys.GRID):
-                self._grid_file = self._get_file_str(
-                    config_content.getValue(ConfigKeys.GRID)
-                )
+                self._grid_file = config_content.getValue(ConfigKeys.GRID)
             if config_content.hasKey(ConfigKeys.REFCASE):
-                self._refcase_file = self._get_file_str(
-                    config_content.getValue(ConfigKeys.REFCASE)
-                )
+                self._refcase_file = config_content.getValue(ConfigKeys.REFCASE)
+            self.grid = self._load_grid(self._grid_file)
+            self.refcase = self._load_refcase(self._refcase_file)
 
-        self.grid = self._load_grid(self._grid_file) if self._grid_file else None
-        self.refcase = (
-            self._load_refcase(self._refcase_file) if self._refcase_file else None
-        )
+            c_ptr = self._alloc(config_content, self.grid, self.refcase)
 
-        c_ptr = None
-        if config_dict is not None:
-            c_ptr = self._alloc_full(config_dict.get(ConfigKeys.GEN_KW_TAG_FORMAT))
-            if c_ptr is None:
-                raise ValueError(
-                    "Failed to construct EnsembleConfig instance from dict"
-                )
-
-            super().__init__(c_ptr)
-
-            gen_data_list = config_dict.get(ConfigKeys.GEN_DATA, [])
-            for gene_data in gen_data_list:
-                gen_data_node = EnkfConfigNode.create_gen_data_full(
-                    gene_data.get(ConfigKeys.NAME),
-                    gene_data.get(ConfigKeys.RESULT_FILE),
-                    gene_data.get(ConfigKeys.INPUT_FORMAT),
-                    gene_data.get(ConfigKeys.REPORT_STEPS),
-                )
-                self.addNode(gen_data_node)
-
-            gen_kw_list = config_dict.get(ConfigKeys.GEN_KW, [])
-            for gen_kw in gen_kw_list:
-                gen_kw_node = EnkfConfigNode.create_gen_kw(
-                    gen_kw.get(ConfigKeys.NAME),
-                    _get_abs_path(gen_kw.get(ConfigKeys.TEMPLATE)),
-                    gen_kw.get(ConfigKeys.OUT_FILE),
-                    _get_abs_path(gen_kw.get(ConfigKeys.PARAMETER_FILE)),
-                    gen_kw.get(ConfigKeys.FORWARD_INIT),
-                    gen_kw.get(ConfigKeys.INIT_FILES),
-                    config_dict.get(ConfigKeys.GEN_KW_TAG_FORMAT),
-                )
-                self.addNode(gen_kw_node)
-
-            surface_list = config_dict.get(ConfigKeys.SURFACE_KEY, [])
-            for surface in surface_list:
-                surface_node = EnkfConfigNode.create_surface(
-                    surface.get(ConfigKeys.NAME),
-                    surface.get(ConfigKeys.INIT_FILES),
-                    surface.get(ConfigKeys.OUT_FILE),
-                    surface.get(ConfigKeys.BASE_SURFACE_KEY),
-                    surface.get(ConfigKeys.FORWARD_INIT),
-                )
-                self.addNode(surface_node)
-
-            summary_list = config_dict.get(ConfigKeys.SUMMARY, [])
-            for a in summary_list:
-                self.add_summary_full(a, self.refcase)
-
-            field_list = config_dict.get(ConfigKeys.FIELD_KEY, [])
-            for field in field_list:
-                field_node = EnkfConfigNode.create_field(
-                    field.get(ConfigKeys.NAME),
-                    field.get(ConfigKeys.VAR_TYPE),
-                    self.grid,
-                    self._get_trans_table(),
-                    field.get(ConfigKeys.OUT_FILE),
-                    field.get(ConfigKeys.ENKF_INFILE),
-                    field.get(ConfigKeys.FORWARD_INIT),
-                    field.get(ConfigKeys.INIT_TRANSFORM),
-                    field.get(ConfigKeys.OUTPUT_TRANSFORM),
-                    field.get(ConfigKeys.INPUT_TRANSFORM),
-                    field.get(ConfigKeys.MIN_KEY),
-                    field.get(ConfigKeys.MAX_KEY),
-                    field.get(ConfigKeys.INIT_FILES),
-                )
-                self.addNode(field_node)
-
-            schedule_file_list = config_dict.get(
-                ConfigKeys.SCHEDULE_PREDICTION_FILE, []
-            )
-            for schedule_file in schedule_file_list:
-                schedule_file_node = EnkfConfigNode.create_gen_kw(
-                    ConfigKeys.PRED_KEY,
-                    schedule_file.get(ConfigKeys.TEMPLATE),
-                    _get_filename(schedule_file.get(ConfigKeys.TEMPLATE)),
-                    schedule_file.get(ConfigKeys.PARAMETER_KEY),
-                    False,
-                    schedule_file.get(ConfigKeys.INIT_FILES),
-                    config_dict.get(ConfigKeys.GEN_KW_TAG_FORMAT),
-                )
-                self.addNode(schedule_file_node)
-
-            return
-
-        c_ptr = self._alloc(config_content, self.grid, self.refcase)
         if c_ptr is None:
             raise ValueError("Failed to construct EnsembleConfig instance")
         super().__init__(c_ptr)
+
+    @classmethod
+    def from_dict(cls, config_dict):
+        ens_config = cls(config_dict=config_dict)
+        gen_data_list = config_dict.get(ConfigKeys.GEN_DATA, [])
+        for gene_data in gen_data_list:
+            gen_data_node = EnkfConfigNode.create_gen_data_full(
+                gene_data.get(ConfigKeys.NAME),
+                gene_data.get(ConfigKeys.RESULT_FILE),
+                gene_data.get(ConfigKeys.INPUT_FORMAT),
+                gene_data.get(ConfigKeys.REPORT_STEPS),
+            )
+            ens_config.addNode(gen_data_node)
+
+        gen_kw_list = config_dict.get(ConfigKeys.GEN_KW, [])
+        for gen_kw in gen_kw_list:
+            gen_kw_node = EnkfConfigNode.create_gen_kw(
+                gen_kw.get(ConfigKeys.NAME),
+                _get_abs_path(gen_kw.get(ConfigKeys.TEMPLATE)),
+                gen_kw.get(ConfigKeys.OUT_FILE),
+                _get_abs_path(gen_kw.get(ConfigKeys.PARAMETER_FILE)),
+                gen_kw.get(ConfigKeys.FORWARD_INIT),
+                gen_kw.get(ConfigKeys.INIT_FILES),
+                config_dict.get(ConfigKeys.GEN_KW_TAG_FORMAT),
+            )
+            ens_config.addNode(gen_kw_node)
+
+        surface_list = config_dict.get(ConfigKeys.SURFACE_KEY, [])
+        for surface in surface_list:
+            surface_node = EnkfConfigNode.create_surface(
+                surface.get(ConfigKeys.NAME),
+                surface.get(ConfigKeys.INIT_FILES),
+                surface.get(ConfigKeys.OUT_FILE),
+                surface.get(ConfigKeys.BASE_SURFACE_KEY),
+                surface.get(ConfigKeys.FORWARD_INIT),
+            )
+            ens_config.addNode(surface_node)
+
+        summary_list = config_dict.get(ConfigKeys.SUMMARY, [])
+        for a in summary_list:
+            ens_config.add_summary_full(a, ens_config.refcase)
+
+        field_list = config_dict.get(ConfigKeys.FIELD_KEY, [])
+        for field in field_list:
+            field_node = EnkfConfigNode.create_field(
+                field.get(ConfigKeys.NAME),
+                field.get(ConfigKeys.VAR_TYPE),
+                ens_config.grid,
+                ens_config._get_trans_table(),
+                field.get(ConfigKeys.OUT_FILE),
+                field.get(ConfigKeys.ENKF_INFILE),
+                field.get(ConfigKeys.FORWARD_INIT),
+                field.get(ConfigKeys.INIT_TRANSFORM),
+                field.get(ConfigKeys.OUTPUT_TRANSFORM),
+                field.get(ConfigKeys.INPUT_TRANSFORM),
+                field.get(ConfigKeys.MIN_KEY),
+                field.get(ConfigKeys.MAX_KEY),
+                field.get(ConfigKeys.INIT_FILES),
+            )
+            ens_config.addNode(field_node)
+
+        schedule_file_list = config_dict.get(ConfigKeys.SCHEDULE_PREDICTION_FILE, [])
+        for schedule_file in schedule_file_list:
+            schedule_file_node = EnkfConfigNode.create_gen_kw(
+                ConfigKeys.PRED_KEY,
+                schedule_file.get(ConfigKeys.TEMPLATE),
+                _get_filename(schedule_file.get(ConfigKeys.TEMPLATE)),
+                schedule_file.get(ConfigKeys.PARAMETER_KEY),
+                False,
+                schedule_file.get(ConfigKeys.INIT_FILES),
+                config_dict.get(ConfigKeys.GEN_KW_TAG_FORMAT),
+            )
+            ens_config.addNode(schedule_file_node)
+        return ens_config
 
     def __len__(self):
         return self._size()

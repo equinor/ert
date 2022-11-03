@@ -63,8 +63,6 @@ bool ensemble_config_have_forward_init(
     const ensemble_config_type *ensemble_config);
 bool ensemble_config_require_summary(const ensemble_config_type *config);
 
-void ensemble_config_add_config_items(config_parser_type *);
-
 extern "C" field_trans_table_type *
 ensemble_config_get_trans_table(const ensemble_config_type *ensemble_config);
 extern "C" enkf_config_node_type *
