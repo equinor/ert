@@ -77,32 +77,16 @@ void enkf_plot_tvector_load(enkf_plot_tvector_type *plot_tvector,
     int step2 = time_map_get_last_step(time_map);
     enkf_node_type *work_node = enkf_node_alloc(plot_tvector->config_node);
 
-    if (enkf_node_vector_storage(work_node)) {
-        bool has_data = enkf_node_user_get_vector(
-            work_node, fs, index_key, plot_tvector->iens, plot_tvector->work);
+    bool has_data = enkf_node_user_get_vector(
+        work_node, fs, index_key, plot_tvector->iens, plot_tvector->work);
 
-        if (has_data) {
-            for (int step = 0; step < double_vector_size(plot_tvector->work);
-                 step++)
-                enkf_plot_tvector_iset(
-                    plot_tvector, step, time_map_iget(time_map, step),
-                    double_vector_iget(plot_tvector->work, step));
-        }
-    } else {
-        int step;
-        node_id_type node_id;
-        node_id.iens = plot_tvector->iens;
-        node_id.report_step = 0;
-
-        for (step = step1; step <= step2; step++) {
-            double value;
-            node_id.report_step = step;
-
-            if (enkf_node_user_get(work_node, fs, index_key, node_id, &value)) {
-                enkf_plot_tvector_iset(plot_tvector, step,
-                                       time_map_iget(time_map, step), value);
-            }
-        }
+    if (has_data) {
+        for (int step = 0; step < double_vector_size(plot_tvector->work);
+             step++)
+            enkf_plot_tvector_iset(
+                plot_tvector, step, time_map_iget(time_map, step),
+                double_vector_iget(plot_tvector->work, step));
     }
+
     enkf_node_free(work_node);
 }
