@@ -34,11 +34,9 @@ ERT_CLIB_SUBMODULE("enkf_fs_summary_data", m) {
                         enkf_plot_tvector_type *vector =
                             enkf_plot_tvector_alloc(ensemble_config_node, iens);
                         enkf_plot_tvector_load(vector, fs, nullptr);
-                        int realization_vector_size =
-                            enkf_plot_tvector_size(vector);
 
-                        for (int index = 1; index < realization_vector_size;
-                             index++) {
+                        for (int index = 1;
+                             index < enkf_plot_tvector_size(vector); index++) {
                             if (enkf_plot_tvector_iget_active(vector, index)) {
                                 double value =
                                     enkf_plot_tvector_iget_value(vector, index);
