@@ -3,6 +3,7 @@
 #include <ert/util/util.h>
 #include <stdlib.h>
 
+#include <ert/enkf/enkf_node.hpp>
 #include <ert/geometry/geo_surface.h>
 
 #include <ert/enkf/enkf_macros.hpp>

@@ -4,7 +4,6 @@ from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Union
 
 import numpy as np
 from ecl.grid import EclGrid
-from ecl.util.util import IntVector
 from pandas import DataFrame, MultiIndex, Series
 
 from ert import _clib
@@ -14,7 +13,6 @@ from ert._c_wrappers.enkf.enums import (
     EnkfObservationImplementationType,
     RealizationStateEnum,
 )
-from ert._c_wrappers.enkf.plot_data import EnsemblePlotGenData
 from ert.analysis import ESUpdate, SmootherSnapshot
 from ert.data import MeasuredData
 
@@ -211,17 +209,19 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
     ) -> DataFrame:
         fs = self._enkf_main.getFileSystem(case_name)
         realizations = fs.realizationList(RealizationStateEnum.STATE_HAS_DATA)
-        if realization_index:
+        if realization_index is not None:
             if realization_index not in realizations:
                 raise IndexError(f"No such realization {realization_index}")
-            realizations = IntVector.active_list(str(realization_index))
-
+            realizations = [realization_index]
         config_node = self._enkf_main.ensembleConfig().getNode(key)
-        config_node.getModelConfig()
-
-        ensemble_data = EnsemblePlotGenData(config_node, fs, report_step)
-        data_array = ensemble_data.getRealizations(realizations)
-
+        if report_step not in config_node.getDataModelConfig().getReportSteps():
+            raise ValueError(
+                f"No report step {report_step} in report steps: "
+                f"{config_node.getDataModelConfig().getReportSteps()}"
+            )
+        data_array = _clib.enkf_fs_general_data.gendata_get_realizations(
+            config_node, fs, realizations, report_step
+        )
         return DataFrame(data=data_array, columns=np.array(realizations))
 
     def load_observation_data(

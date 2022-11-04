@@ -4,7 +4,6 @@
 
 #pragma once
 
-#include <ert/enkf/enkf_plot_gendata.hpp>
 #include <pybind11/eigen.h>
 #include <pybind11/numpy.h>
 #include <pybind11/operators.h>

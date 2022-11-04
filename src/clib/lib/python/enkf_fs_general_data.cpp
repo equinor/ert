@@ -1,60 +1,45 @@
-#include <ert/enkf/enkf_plot_gendata.hpp>
+#include <ert/enkf/enkf_config_node.hpp>
+#include <ert/enkf/enkf_plot_genvector.hpp>
 #include <ert/python.hpp>
-#include <pybind11/numpy.h>
-#include <pybind11/pybind11.h>
-#include <pybind11/stl.h>
 
 ERT_CLIB_SUBMODULE("enkf_fs_general_data", m) {
     m.def(
         "gendata_get_realizations",
-        [](Cwrap<enkf_plot_gendata_type> enkf_plot_gendata,
-           const std::vector<int> &realizations) {
-            const int data_size =
-                enkf_plot_gendata_get_data_size(enkf_plot_gendata);
-            if (data_size < 0) {
-                throw pybind11::value_error(
-                    "No data has been loaded for report step");
-            }
-            auto active_mask = enkf_plot_gendata_active_mask(enkf_plot_gendata);
-            const int realization_size = std::size(realizations);
-            const size_t size = data_size * realization_size;
+        [](Cwrap<enkf_config_node_type> config_node, Cwrap<enkf_fs_type> fs,
+           const std::vector<int> &realizations, int report_step) {
+            if (realizations.empty())
+                return py::array_t<double, 2>();
 
-            double *data = new double[size];
-            std::fill_n(data, size, NAN);
+            auto vector =
+                enkf_plot_genvector_alloc(config_node, realizations.front());
+            enkf_plot_genvector_load(vector, fs, report_step);
+            size_t data_size = enkf_plot_genvector_get_size(vector);
+            py::array_t<double, 2> array({data_size, realizations.size()});
+            auto data = array.mutable_unchecked();
 
-            for (int realization_index = 0;
-                 realization_index < realization_size; realization_index++) {
-                int realization = realizations.at(realization_index);
-                enkf_plot_genvector_type *vector =
-                    enkf_plot_gendata_iget(enkf_plot_gendata, realization);
-                int current_data_size = enkf_plot_genvector_get_size(vector);
-                // Following comment is from orginal code
-                // see: https://github.com/equinor/ert/blob/3f84b979b985376aade9203a6b977b9b541d8c14/res/enkf/export/gen_data_collector.py#L46
-                // Must check because of a bug changing between different case with different states
-                if (current_data_size > 0) {
-                    int data_index;
-                    for (data_index = 0; data_index < current_data_size;
-                         data_index++) {
-                        if (active_mask.at(data_index)) {
-                            data[realization_index +
-                                 realization_size * data_index] =
-                                enkf_plot_genvector_iget(vector, data_index);
-                        }
+            for (size_t iens_index{}; iens_index < realizations.size();
+                 ++iens_index) {
+                if (iens_index > 0) {
+                    enkf_plot_genvector_free(vector);
+                    vector = enkf_plot_genvector_alloc(
+                        config_node, realizations[iens_index]);
+                    enkf_plot_genvector_load(vector, fs, report_step);
+
+                    if (enkf_plot_genvector_get_size(vector) != data_size) {
+                        enkf_plot_genvector_free(vector);
+                        throw py::value_error("GEN_DATA vector size mismatch");
                     }
                 }
+
+                int data_index;
+                for (data_index = 0; data_index < data_size; data_index++) {
+                    data(data_index, iens_index) =
+                        enkf_plot_genvector_iget(vector, data_index);
+                }
             }
-
-            py::capsule free_when_done(data, [](void *f) {
-                double *data = reinterpret_cast<double *>(f);
-                delete[] data;
-            });
-
-            return py::array_t<double>(
-                {data_size, realization_size}, // shape
-                {realization_size * sizeof(double),
-                 sizeof(double)}, // C-style contiguous strides for double
-                data,             // the data pointer
-                free_when_done);  // numpy array references this parent
+            enkf_plot_genvector_free(vector);
+            return array;
         },
-        py::arg("self"), py::arg("realizations"));
+        py::arg("config_node"), py::arg("realizations"), py::arg("storage"),
+        py::arg("report_step"));
 }

@@ -3,12 +3,12 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <ert/ecl/ecl_util.h>
 #include <ert/logging.hpp>
 #include <ert/util/bool_vector.h>
 #include <ert/util/int_vector.h>
 #include <ert/util/util.h>
-
-#include <ert/ecl/ecl_util.h>
+#include <pybind11/stl.h>
 
 #include <ert/enkf/config_keys.hpp>
 #include <ert/enkf/enkf_defaults.hpp>
@@ -73,9 +73,7 @@ int gen_data_config_get_data_size(const gen_data_config_type *config,
                                   int report_step) {
     int current_size = gen_data_config_get_data_size__(config, report_step);
     if (current_size < 0)
-        util_abort("%s: Size not set for object:%s report_step:%d - internal "
-                   "error: \n",
-                   __func__, config->key, report_step);
+        throw pybind11::value_error("No data has been loaded for report step");
     return current_size;
 }
 

@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <vector>
 
+#include <ert/enkf/enkf_node.hpp>
 #include <ert/res_util/file_utils.hpp>
 #include <ert/util/util.h>
 
