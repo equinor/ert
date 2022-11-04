@@ -25,6 +25,7 @@ pybind11_add_module(
   python/enkf_defaults.cpp
   python/enkf_fs_summary_data.cpp
   python/model_callbacks.cpp
+  python/_torque_driver.cpp
   config/conf_util.cpp
   config/conf.cpp
   config/conf_data.cpp

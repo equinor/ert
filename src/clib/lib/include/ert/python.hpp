@@ -113,9 +113,9 @@ template <typename T> struct type_caster<::ert::Cwrap<T>> {
  * Multiple initialisation functions can be defined for the same submodule.
  * However, the order in which each function is called is undefined.
  *
- * Note: The name of this macro should reflect the module path of this libres
+ * Note: The name of this macro should reflect the module path of this
  * library. At the moment it is 'ert._clib', so the macro is prefixed with
- * RES_LIB.
+ * ERT_CLIB.
  */
 #define ERT_CLIB_SUBMODULE(_Path, _ModuleParam)                                \
     static void _python_submodule_init(py::module_);                           \

@@ -133,61 +133,10 @@ void getoption_nooptionsset_defaultoptionsreturned() {
     torque_driver_free(driver);
 }
 
-void create_submit_script_script_according_to_input() {
-    ecl::util::TestArea ta("submit_script");
-    const char *script_filename = "qsub_script.sh";
-
-    {
-        const char **args = (const char **)util_calloc(2, sizeof *args);
-        args[0] = "/tmp/jaja/";
-        args[1] = "number2arg";
-        torque_job_create_submit_script(script_filename, "job_program.py", 2,
-                                        args);
-        free(args);
-    }
-
-    {
-        FILE *file_stream = util_fopen(script_filename, "r");
-        bool at_eof = false;
-
-        char *line = util_fscanf_alloc_line(file_stream, &at_eof);
-        test_assert_string_equal("#!/bin/sh", line);
-        free(line);
-
-        line = util_fscanf_alloc_line(file_stream, &at_eof);
-        test_assert_string_equal("job_program.py /tmp/jaja/ number2arg", line);
-        free(line);
-
-        line = util_fscanf_alloc_line(file_stream, &at_eof);
-        free(line);
-        test_assert_true(at_eof);
-
-        fclose(file_stream);
-    }
-}
-
-void test_parse_invalid() {
-    test_assert_int_equal(
-        torque_driver_parse_status("/file/does/not/exist", NULL),
-        JOB_QUEUE_STATUS_FAILURE);
-    {
-        ecl::util::TestArea ta("submit");
-        {
-            FILE *stream = util_fopen("qstat.stdout", "w");
-            fclose(stream);
-        }
-        test_assert_int_equal(
-            torque_driver_parse_status("qstat.stdout", "a2345"),
-            JOB_QUEUE_STATUS_FAILURE);
-    }
-}
-
 int main(int argc, char **argv) {
     getoption_nooptionsset_defaultoptionsreturned();
     setoption_setalloptions_optionsset();
 
     setoption_set_typed_options_wrong_format_returns_false();
-    create_submit_script_script_according_to_input();
-    test_parse_invalid();
     exit(0);
 }
