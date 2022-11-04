@@ -1,5 +1,5 @@
 import os
-from typing import List, Optional, Union
+from typing import List, Optional
 
 from cwrap import BaseCClass
 from ecl.ecl_util import EclFileEnum, get_file_type
