@@ -698,21 +698,11 @@ class ResConfig:
             item = config_content[key]
             if key in SINGLE_VALUE_KEYS:
                 content_dict[key] = item.getValue()
-                continue
-            if len(item) > 1:
+            else:
                 content_dict[key] = []
                 for node in item:
                     values = list(node)
-                    if len(values) > 1:
-                        content_dict[key].append(values)
-                    else:
-                        content_dict[key].append(values[0])
-            else:
-                values = list(item[0])
-                if len(values) > 1:
-                    content_dict[key] = [values]
-                else:
-                    content_dict[key] = values[0]
+                    content_dict[key].append(values)
         return content_dict
 
     @staticmethod
