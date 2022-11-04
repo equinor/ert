@@ -584,7 +584,7 @@ class EnKFMain:
                     run_arg.iens,
                     run_arg.sim_fs,
                 )
-                model_config.getForwardModel().formatted_fprintf(
+                res_config.forward_model.formatted_fprintf(
                     run_arg.get_run_id(),
                     run_arg.runpath,
                     model_config.data_root(),

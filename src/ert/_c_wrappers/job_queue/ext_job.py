@@ -65,6 +65,9 @@ class ExtJob(BaseCClass):
     _clear_environment = ResPrototype("void ext_job_clear_environment(ext_job)")
     _save = ResPrototype("void ext_job_save(ext_job)")
     _get_private_args = ResPrototype("subst_list_ref ext_job_get_private_args(ext_job)")
+    _set_define_args = ResPrototype(
+        "subst_list_ref ext_job_set_define_args(ext_job, subst_list)"
+    )
 
     def __init__(
         self,
@@ -98,6 +101,9 @@ class ExtJob(BaseCClass):
             )
         else:
             return "UNINITIALIZED ExtJob"
+
+    def set_define_args(self, subst_list: SubstitutionList) -> None:
+        self._set_define_args(subst_list)
 
     def get_private_args(self) -> SubstitutionList:
         return self._get_private_args()

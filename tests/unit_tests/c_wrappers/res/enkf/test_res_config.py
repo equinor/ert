@@ -252,7 +252,7 @@ def test_extensive_config(setup_case):
     assert snake_oil_structure_config["JOBNAME"] == model_config.getJobnameFormat()
     assert (
         snake_oil_structure_config["FORWARD_MODEL"]
-        == model_config.getForwardModel().job_name_list()
+        == res_config.forward_model.job_name_list()
     )
     assert (
         snake_oil_structure_config["HISTORY_SOURCE"]

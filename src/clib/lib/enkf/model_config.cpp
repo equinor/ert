@@ -7,8 +7,6 @@
 
 #include <ert/config/config_parser.hpp>
 
-#include <ert/job_queue/forward_model.hpp>
-
 #include <ert/logging.hpp>
 
 #include <ert/enkf/config_keys.hpp>
@@ -43,9 +41,6 @@ static auto logger = ert::get_logger("enkf");
   This semantically predefined runpath is the only option visible to the user.
  */
 struct model_config_struct {
-    /** The forward_model - as loaded from the config file. Each enkf_state
-     * object internalizes its private copy of the forward_model. */
-    forward_model_type *forward_model;
     time_map_type *external_time_map;
     /** The history object. */
     history_source_type history;
@@ -216,7 +211,6 @@ model_config_type *model_config_alloc_empty() {
     model_config->current_path_key = NULL;
     model_config->history = REFCASE_HISTORY;
     model_config->jobname_fmt = NULL;
-    model_config->forward_model = NULL;
     model_config->external_time_map = NULL;
     model_config->runpath_map = hash_alloc();
     model_config->gen_kw_export_name = NULL;
@@ -238,22 +232,19 @@ model_config_type *model_config_alloc_empty() {
 
 model_config_type *model_config_alloc(const config_content_type *config_content,
                                       const char *data_root,
-                                      const ext_joblist_type *joblist,
                                       const ecl_sum_type *refcase) {
     model_config_type *model_config = model_config_alloc_empty();
 
     if (config_content)
-        model_config_init(model_config, config_content, data_root, 0, joblist,
-                          refcase);
+        model_config_init(model_config, config_content, data_root, 0, refcase);
 
     return model_config;
 }
 
 model_config_type *model_config_alloc_full(
     int max_resample, int num_realizations, char *run_path, char *data_root,
-    char *enspath, char *job_name, forward_model_type *forward_model,
-    char *obs_config, time_map_type *time_map, char *gen_kw_export_name,
-    history_source_type history_source, const ext_joblist_type *joblist,
+    char *enspath, char *job_name, char *obs_config, time_map_type *time_map,
+    char *gen_kw_export_name, history_source_type history_source,
     const ecl_sum_type *refcase) {
     model_config_type *model_config = model_config_alloc_empty();
     model_config->max_internal_submit = max_resample;
@@ -267,7 +258,6 @@ model_config_type *model_config_alloc_full(
         util_realloc_string_copy(model_config->enspath, enspath);
     model_config->jobname_fmt =
         util_realloc_string_copy(model_config->jobname_fmt, job_name);
-    model_config->forward_model = forward_model;
     model_config->obs_config_file = util_alloc_string_copy(obs_config);
     model_config->external_time_map = time_map;
     model_config->gen_kw_export_name = util_realloc_string_copy(
@@ -331,10 +321,8 @@ static void model_config_set_default_data_root(model_config_type *model_config,
 
 void model_config_init(model_config_type *model_config,
                        const config_content_type *config, const char *data_root,
-                       int ens_size, const ext_joblist_type *joblist,
-                       const ecl_sum_type *refcase) {
+                       int ens_size, const ecl_sum_type *refcase) {
 
-    model_config->forward_model = forward_model_alloc(joblist);
     const subst_list_type *define_list =
         config_content_get_const_define_list(config);
     model_config->refcase = refcase;
@@ -343,23 +331,6 @@ void model_config_init(model_config_type *model_config,
     if (config_content_has_item(config, NUM_REALIZATIONS_KEY))
         model_config->num_realizations =
             config_content_get_value_as_int(config, NUM_REALIZATIONS_KEY);
-
-    for (int i = 0; i < config_content_get_size(config); i++) {
-        const config_content_node_type *node =
-            config_content_iget_node(config, i);
-        if (util_string_equal(config_content_node_get_kw(node),
-                              SIMULATION_JOB_KEY))
-            forward_model_parse_job_args(
-                model_config->forward_model,
-                config_content_node_get_stringlist(node), define_list);
-
-        if (util_string_equal(config_content_node_get_kw(node),
-                              FORWARD_MODEL_KEY)) {
-            const char *arg = config_content_node_get_full_string(node, "");
-            forward_model_parse_job_deprecated_args(model_config->forward_model,
-                                                    arg, define_list);
-        }
-    }
 
     if (config_content_has_item(config, RUNPATH_KEY)) {
         model_config_add_runpath(
@@ -471,9 +442,6 @@ void model_config_free(model_config_type *model_config) {
     free(model_config->data_root);
     free(model_config->default_data_root);
 
-    if (model_config->forward_model)
-        forward_model_free(model_config->forward_model);
-
     if (model_config->external_time_map)
         time_map_free(model_config->external_time_map);
 
@@ -503,9 +471,4 @@ int model_config_get_last_history_restart(const model_config_type *config) {
         else
             return -1;
     }
-}
-
-forward_model_type *
-model_config_get_forward_model(const model_config_type *config) {
-    return config->forward_model;
 }

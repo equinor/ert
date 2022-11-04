@@ -7,7 +7,6 @@ from ecl.summary import EclSum
 from ert._c_wrappers import ResPrototype
 from ert._c_wrappers.enkf.config_keys import ConfigKeys
 from ert._c_wrappers.enkf.time_map import TimeMap
-from ert._c_wrappers.job_queue import ForwardModel
 from ert._c_wrappers.sched import HistorySourceEnum
 from ert._c_wrappers.util import PathFormat
 
@@ -17,7 +16,7 @@ class ModelConfig(BaseCClass):
 
     _alloc = ResPrototype(
         "void*  model_config_alloc(config_content, \
-                                   char*, ext_joblist, \
+                                   char*, \
                                    ecl_sum)",
         bind=False,
     )
@@ -28,19 +27,14 @@ class ModelConfig(BaseCClass):
                                         char*, \
                                         char*, \
                                         char*, \
-                                        forward_model, \
                                         char*, \
                                         time_map, \
                                         char*, \
                                         history_source_enum, \
-                                        ext_joblist, \
                                         ecl_sum)",
         bind=False,
     )
     _free = ResPrototype("void  model_config_free( model_config )")
-    _get_forward_model = ResPrototype(
-        "forward_model_ref model_config_get_forward_model(model_config)"
-    )
     _get_max_internal_submit = ResPrototype(
         "int   model_config_get_max_internal_submit(model_config)"
     )
@@ -85,7 +79,6 @@ class ModelConfig(BaseCClass):
     def __init__(
         self,
         data_root,
-        joblist,
         refcase,
         config_content=None,
         config_dict=None,
@@ -97,7 +90,7 @@ class ModelConfig(BaseCClass):
             )
 
         if config_dict is None:
-            c_ptr = self._alloc(config_content, data_root, joblist, refcase)
+            c_ptr = self._alloc(config_content, data_root, refcase)
         else:
             # MAX_RESAMPLE_KEY
             max_resample = config_dict.get(ConfigKeys.MAX_RESAMPLE, 1)
@@ -124,20 +117,6 @@ class ModelConfig(BaseCClass):
 
             # JOBNAME_KEY
             job_name = config_dict.get(ConfigKeys.JOBNAME)
-
-            # FORWARD_MODEL_KEY
-            forward_model = ForwardModel(ext_joblist=joblist)
-            # SIMULATION_JOB_KEY
-            for job_description in config_dict.get(ConfigKeys.FORWARD_MODEL, []):
-                job = forward_model.add_job(job_description[ConfigKeys.NAME])
-                job.set_private_args_as_string(job_description.get(ConfigKeys.ARGLIST))
-                job.convertToCReference(None)
-
-            # SIMULATION_JOB_KEY
-            for job_description in config_dict.get(ConfigKeys.SIMULATION_JOB, []):
-                job = forward_model.add_job(job_description[ConfigKeys.NAME])
-                job.set_private_args_as_string(job_description.get(ConfigKeys.ARGLIST))
-                job.convertToCReference(None)
 
             # OBS_CONFIG_KEY
             obs_config = config_dict.get(ConfigKeys.OBS_CONFIG)
@@ -170,17 +149,13 @@ class ModelConfig(BaseCClass):
                 data_root,
                 ens_path,
                 job_name,
-                forward_model,
                 obs_config,
                 time_map,
                 gen_kw_export_name,
                 history_source,
-                joblist,
                 refcase,
             )
 
-            # Fix ownership
-            forward_model.convertToCReference(None)
             if time_map is not None:
                 time_map.convertToCReference(None)
 
@@ -204,9 +179,6 @@ class ModelConfig(BaseCClass):
 
     def set_max_internal_submit(self, max_value):
         self._get_max_internal_submit(max_value)
-
-    def getForwardModel(self) -> ForwardModel:
-        return self._get_forward_model().setParent(self)
 
     def getRunpathAsString(self) -> str:
         return self._get_runpath_as_char()
@@ -286,9 +258,6 @@ class ModelConfig(BaseCClass):
             return False
 
         if self.get_time_map() != other.get_time_map():
-            return False
-
-        if self.getForwardModel() != other.getForwardModel():
             return False
 
         return True
