@@ -816,7 +816,7 @@ def test_config_content_as_dict(tmpdir):
             "KEY": [["VALUE1", "VALUE1", 100], ["VALUE2", "VALUE2", 200]],
             ConfigKeys.NUM_REALIZATIONS: 42,
             ConfigKeys.QUEUE_OPTION: [["SLURM", "MAX_RUNNING", "50"]],
-            "MULTIPLE_KEY_VALUE": [6, 24, 12],
+            "MULTIPLE_KEY_VALUE": [[6], [24], [12]],
             ConfigKeys.DATA_FILE: str(Path.cwd() / existing_file_2),
             ConfigKeys.REFCASE: str(Path.cwd() / existing_file_1),
         }
