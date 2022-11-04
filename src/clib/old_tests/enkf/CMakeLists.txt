@@ -27,7 +27,6 @@ foreach(
   enkf_obs_invalid_path
   enkf_obs
   enkf_obs_vector
-  enkf_plot_gendata
   enkf_plot_gen_kw
   enkf_plot_gen_kw_vector
   enkf_plot_genvector

@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <ert/enkf/enkf_node.hpp>
 #include <ert/res_util/subst_list.hpp>
 #include <ert/util/buffer.h>
 #include <ert/util/util.h>

@@ -1,9 +1,7 @@
 #include <ert/enkf/enkf_plot_tvector.hpp>
+#include <ert/enkf/ensemble_config.hpp>
 
 #include <ert/python.hpp>
-#include <pybind11/numpy.h>
-#include <pybind11/pybind11.h>
-#include <pybind11/stl.h>
 
 ERT_CLIB_SUBMODULE("enkf_fs_summary_data", m) {
     m.def(
