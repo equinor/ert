@@ -497,7 +497,7 @@ class BaseRunModel:
         await self._state_machine.update(event)
 
     def get_forward_model(self) -> ForwardModel:
-        return self.ert().resConfig().model_config.getForwardModel()
+        return self.ert().resConfig().forward_model
 
     def get_run_context(self) -> Optional[RunContext]:
         return self._run_context

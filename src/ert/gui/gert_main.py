@@ -40,11 +40,7 @@ def run_gui(args: argparse.Namespace):
     logger = logging.getLogger(__name__)
     logger.info(
         "Logging forward model jobs",
-        extra={
-            "workflow_jobs": str(
-                res_config.model_config.getForwardModel().job_name_list()
-            )
-        },
+        extra={"workflow_jobs": str(res_config.forward_model.job_name_list())},
     )
     os.chdir(res_config.config_path)
     # Changing current working directory means we need to update the config file to

@@ -23,8 +23,8 @@ void ext_job_free__(void *);
 extern "C" void ext_job_save(const ext_job_type *ext_job);
 void ext_job_fprintf(const ext_job_type *, FILE *stream);
 void ext_job_set_private_arg(ext_job_type *, const char *, const char *);
-void ext_job_set_define_args(ext_job_type *ext_job,
-                             const subst_list_type *define_args);
+extern "C" void ext_job_set_define_args(ext_job_type *ext_job,
+                                        const subst_list_type *define_args);
 
 extern "C" ext_job_type *ext_job_fscanf_alloc(const char *, const char *,
                                               bool private_job, const char *,

@@ -114,8 +114,7 @@ def test_forward_model_job(job, forward_model, expected_args):
     res_config = ResConfig("config_file.ert")
     ert = EnKFMain(res_config)
 
-    model_config = ert.getModelConfig()
-    forward_model = model_config.getForwardModel()
+    forward_model = ert.resConfig().forward_model
     assert forward_model.get_size() == 1
     assert forward_model.iget_job(0).get_argvalues() == expected_args
 
@@ -169,8 +168,7 @@ def test_simulation_job(job, forward_model, expected_args):
     res_config = ResConfig("config_file.ert")
     ert = EnKFMain(res_config)
 
-    model_config = ert.getModelConfig()
-    forward_model = model_config.getForwardModel()
+    forward_model = ert.resConfig().forward_model
     forward_model_job = forward_model.iget_job(0)
     assert forward_model.get_size() == 1
     assert forward_model_job.get_argvalues() == expected_args

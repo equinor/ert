@@ -138,7 +138,7 @@ def test_new_config():
             },
         }
     )
-    forward_model = prog_res_config.model_config.getForwardModel()
+    forward_model = prog_res_config.forward_model
     assert forward_model.iget_job(0).get_arglist() == ["Hello", "True", "3.14", "4"]
     assert forward_model.iget_job(1).get_arglist() == ["word"]
 
@@ -273,11 +273,11 @@ def test_large_config(setup_case):
         == prog_model_config.get_history_source()
     )
     assert loaded_model_config.obs_config_file == prog_model_config.obs_config_file
-    assert (
-        loaded_model_config.getForwardModel().job_name_list()
-        == prog_model_config.getForwardModel().job_name_list()
-    )
     assert loaded_res_config.site_config == prog_res_config.site_config
+    assert (
+        loaded_res_config.forward_model.job_name_list()
+        == prog_res_config.forward_model.job_name_list()
+    )
 
     assert (
         loaded_res_config.ensemble_config._grid_file

@@ -4,7 +4,7 @@ from collections import defaultdict
 from datetime import date
 from os.path import isfile
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 from ecl.ecl_util import get_num_cpu as get_num_cpu_from_data_file
 from ecl.util.util import StringList
@@ -19,7 +19,7 @@ from ert._c_wrappers.enkf.ert_workflow_list import ErtWorkflowList
 from ert._c_wrappers.enkf.model_config import ModelConfig
 from ert._c_wrappers.enkf.queue_config import QueueConfig
 from ert._c_wrappers.enkf.site_config import SiteConfig
-from ert._c_wrappers.job_queue import QueueDriverEnum
+from ert._c_wrappers.job_queue import ForwardModel, QueueDriverEnum
 from ert._c_wrappers.util import SubstitutionList
 from ert._clib.config_keywords import init_site_config_parser, init_user_config_parser
 
@@ -78,6 +78,38 @@ def site_config_location():
     else:
         raise SystemError("Could not find `share/ert/site-config`")
     return str(path)
+
+
+def parse_signature_job(signature: str) -> Tuple[str, Optional[str]]:
+    """Parses the job description as a signature type job.
+
+    A signature is on the form job(arg1=val1, arg2=val2, arg3=val3). This is used
+    in the FORWARD_MODEL keyword:
+
+        FORWARD_MODEL job(arg1=val1, arg2=val2, arg3=val3)
+
+    :returns: Tuple of the job name, and the string of argument assignments.
+
+
+    >>> parse_signature_job("job(arg1=val1, arg2=val2, arg3=val3)")
+    ("job", "arg1=val1, arg2=val2, arg3=val3")
+
+    Function without arguments has arglist set to None:
+
+    >>> parse_signature_job("job")
+    ("job", None)
+    """
+
+    open_paren = signature.find("(")
+    if open_paren == -1:
+        return signature, None
+    job_name = signature[:open_paren]
+    close_paren = signature[-1]
+    if close_paren != ")":
+        raise ConfigValidationError(
+            f"Missing ) in FORWARD_MODEL job description {signature}"
+        )
+    return job_name, signature[open_paren + 1 : -1]
 
 
 class ResConfig:
@@ -317,9 +349,26 @@ class ResConfig:
                     "Loading GEN_KW from files requires %d in file format"
                 )
 
+        self.forward_model = ForwardModel(ext_joblist=self.site_config.job_list)
+        self.forward_model.convertToCReference(None)
+
+        # FORWARD_MODEL_KEY
+        for job_description in config_content_dict.get(ConfigKeys.FORWARD_MODEL, []):
+            job_name, args = parse_signature_job("".join(job_description))
+            job = self.forward_model.add_job(job_name)
+            if args is not None:
+                job.set_private_args_as_string(args)
+                job.set_define_args(self.substitution_list)
+            job.convertToCReference(None)
+
+        # SIMULATION_JOB_KEY
+        for job_description in config_content_dict.get(ConfigKeys.SIMULATION_JOB, []):
+            job = self.forward_model.add_job(job_description[0])
+            job.set_arglist(job_description[1:])
+            job.set_define_args(self.substitution_list)
+            job.convertToCReference(None)
         self.model_config = ModelConfig(
             data_root=self.config_path,
-            joblist=self.site_config.job_list,
             refcase=self.ensemble_config.refcase,
             config_content=user_config_content,
         )
@@ -404,9 +453,22 @@ class ResConfig:
                     "Loading GEN_KW from files requires %d in file format"
                 )
 
+        # FORWARD_MODEL_KEY
+        self.forward_model = ForwardModel(ext_joblist=self.site_config.job_list)
+        self.forward_model.convertToCReference(None)
+        # SIMULATION_JOB_KEY
+        for job_description in config_dict.get(ConfigKeys.FORWARD_MODEL, []):
+            job = self.forward_model.add_job(job_description[ConfigKeys.NAME])
+            job.set_private_args_as_string(job_description.get(ConfigKeys.ARGLIST))
+            job.convertToCReference(None)
+
+        # SIMULATION_JOB_KEY
+        for job_description in config_dict.get(ConfigKeys.SIMULATION_JOB, []):
+            job = self.forward_model.add_job(job_description[ConfigKeys.NAME])
+            job.set_private_args_as_string(job_description.get(ConfigKeys.ARGLIST))
+            job.convertToCReference(None)
         self.model_config = ModelConfig(
             data_root=self.config_path,
-            joblist=self.site_config.job_list,
             refcase=self.ensemble_config.refcase,
             config_dict=config_dict,
         )

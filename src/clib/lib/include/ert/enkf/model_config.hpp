@@ -7,9 +7,6 @@
 #include <ert/config/config_content.hpp>
 #include <ert/config/config_parser.hpp>
 
-#include <ert/job_queue/ext_joblist.hpp>
-#include <ert/job_queue/forward_model.hpp>
-
 #include <ert/ecl/ecl_sum.h>
 
 #include <ert/res_util/path_fmt.hpp>
@@ -48,15 +45,12 @@ extern "C" const char *
 model_config_get_obs_config_file(const model_config_type *model_config);
 void model_config_init(model_config_type *model_config,
                        const config_content_type *, const char *data_root,
-                       int ens_size, const ext_joblist_type *,
-                       const ecl_sum_type *refcase);
+                       int ens_size, const ecl_sum_type *refcase);
 extern "C" void model_config_free(model_config_type *);
 extern "C" bool
 model_config_runpath_requires_iter(const model_config_type *model_config);
 extern "C" path_fmt_type *
 model_config_get_runpath_fmt(const model_config_type *);
-extern "C" forward_model_type *
-model_config_get_forward_model(const model_config_type *);
 void model_config_set_max_internal_submit(model_config_type *config,
                                           int max_resample);
 extern "C" PY_USED int
@@ -72,13 +66,11 @@ model_config_get_history_source(const model_config_type *model_config);
 model_config_type *model_config_alloc_empty();
 extern "C" model_config_type *model_config_alloc(const config_content_type *,
                                                  const char *data_root,
-                                                 const ext_joblist_type *,
                                                  const ecl_sum_type *);
 extern "C" model_config_type *model_config_alloc_full(
     int max_resample, int num_realizations, char *run_path, char *data_root,
-    char *enspath, char *job_name, forward_model_type *forward_model,
-    char *obs_config, time_map_type *time_map, char *gen_kw_export_name,
-    history_source_type history_source, const ext_joblist_type *joblist,
+    char *enspath, char *job_name, char *obs_config, time_map_type *time_map,
+    char *gen_kw_export_name, history_source_type history_source,
     const ecl_sum_type *refcase);
 extern "C" bool model_config_select_history(model_config_type *model_config,
                                             history_source_type source_type,
