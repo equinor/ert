@@ -36,6 +36,12 @@ jobs:
         sudo apt-get update -y
         sudo apt-get install -y valgrind
 
+
+    - name: Add path on macos-latest
+      if: matrix.os == 'macos-latest'
+      run: |
+        export PATH=$PATH:'/Library/Frameworks/Python.framework/Versions/3.11/bin'
+
     - name: Install dependencies from PyPI
       run: |
         python3 -m pip install conan pybind11
