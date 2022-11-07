@@ -61,7 +61,6 @@ def _run_forward_model(
 
     # deactivate failed realizations
     totalOk = 0
-    totalFailed = 0
     for index, run_arg in enumerate(run_context):
         if run_context.is_active(index):
             if run_arg.run_status in (
@@ -69,16 +68,10 @@ def _run_forward_model(
                 RunStatusType.JOB_RUN_FAILURE,
             ):
                 run_context.deactivate_realization(index)  # type: ignore
-                totalFailed += 1
             else:
                 totalOk += 1
 
     run_context.sim_fs.fsync()  # type: ignore
-
-    if totalFailed == 0:
-        print(f"All {totalOk} active jobs complete and data loaded.")
-    else:
-        print(f"{totalFailed} active job(s) failed.")
 
     return totalOk
 
