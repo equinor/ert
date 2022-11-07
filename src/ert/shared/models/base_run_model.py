@@ -277,10 +277,6 @@ class BaseRunModel:
         else:
             return self.stop_time() - self.start_time()
 
-    @staticmethod
-    def is_forward_model_finished(progress: ForwardModel) -> bool:
-        return all(job.status == "Success" for job in progress.jobs)
-
     def isIndeterminate(self) -> bool:
         return not self.isFinished() and self._indeterminate
 
