@@ -1,3 +1,9 @@
+from typing import TYPE_CHECKING, List
+
+if TYPE_CHECKING:
+    from ert.gui.plottery import PlotConfig
+
+
 class PlotContext:
     UNKNOWN_AXIS = None
     VALUE_AXIS = "VALUE"
@@ -28,33 +34,27 @@ class PlotContext:
         self._x_axis = None
         self._y_axis = None
 
-    def plotConfig(self):
-        """:rtype: PlotConfig"""
+    def plotConfig(self) -> "PlotConfig":
         return self._plot_config
 
-    def cases(self):
-        """:rtype: list of str"""
+    def cases(self) -> List[str]:
         return self._cases
 
-    def key(self):
-        """:rtype: str"""
+    def key(self) -> str:
         return self._key
 
     def deactivateDateSupport(self):
         self._date_support_active = False
 
-    def isDateSupportActive(self):
-        """@rtype: bool"""
+    def isDateSupportActive(self) -> bool:
         return self._date_support_active
 
     @property
-    def x_axis(self):
-        """@rtype: str"""
+    def x_axis(self) -> str:
         return self._x_axis
 
     @x_axis.setter
-    def x_axis(self, value):
-        """@type value: str"""
+    def x_axis(self, value: str):
         if value not in PlotContext.AXIS_TYPES:
             raise UserWarning(
                 f"Axis: '{value}' is not one of: {PlotContext.AXIS_TYPES}"
@@ -62,13 +62,11 @@ class PlotContext:
         self._x_axis = value
 
     @property
-    def y_axis(self):
-        """@rtype: str"""
+    def y_axis(self) -> str:
         return self._y_axis
 
     @y_axis.setter
-    def y_axis(self, value):
-        """@type value: str"""
+    def y_axis(self, value: str):
         if value not in PlotContext.AXIS_TYPES:
             raise UserWarning(
                 f"Axis: '{value}' is not one of: {PlotContext.AXIS_TYPES}"

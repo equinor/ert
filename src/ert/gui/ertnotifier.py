@@ -9,8 +9,7 @@ class ErtNotifier(QObject):
         self._config_file = config_file
 
     @property
-    def config_file(self):
-        """@rtype: str"""
+    def config_file(self) -> str:
         return self._config_file
 
     @Slot()

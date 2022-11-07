@@ -3,7 +3,7 @@ import inspect
 import logging
 import sys
 import traceback
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, List, Optional
 
 if TYPE_CHECKING:
     from ert._c_wrappers.enkf import EnKFMain
@@ -59,13 +59,12 @@ class ErtScript:
         """
         pass
 
-    def initializeAndRun(self, argument_types, argument_values, verbose=False):
-        """
-        @type argument_types: list of type
-        @type argument_values: list of string
-        @type verbose: bool
-        @rtype: unknown
-        """
+    def initializeAndRun(
+        self,
+        argument_types: List[type],
+        argument_values: List[str],
+        verbose: bool = False,
+    ):
         self.__verbose = verbose
         self.__failed = False
 

@@ -1,3 +1,5 @@
+from typing import TYPE_CHECKING
+
 from qtpy.QtCore import QObject, Qt, Signal
 from qtpy.QtWidgets import (
     QDialog,
@@ -20,6 +22,9 @@ from .default_customization_view import DefaultCustomizationView
 from .limits_customization_view import LimitsCustomizationView
 from .statistics_customization_view import StatisticsCustomizationView
 from .style_customization_view import StyleCustomizationView
+
+if TYPE_CHECKING:
+    from ert.gui.tools.plot import CustomizationView
 
 
 class PlotCustomizer(QObject):
@@ -63,8 +68,7 @@ class PlotCustomizer(QObject):
         )
         self._revertCustomization(self.getPlotConfig())
 
-    def _getPlotConfigHistory(self):
-        """@rtype: PlotConfigHistory"""
+    def _getPlotConfigHistory(self) -> PlotConfigHistory:
         return self._plot_configs[self._plot_config_key]
 
     def undoCustomization(self):
@@ -109,8 +113,7 @@ class PlotCustomizer(QObject):
         if emit:
             self.settingsChanged.emit()
 
-    def isCopyPossible(self):
-        """@rtype: bool"""
+    def isCopyPossible(self) -> bool:
         return len(self._plot_configs) > 2
 
     def copyCustomizationTo(self, keys):
@@ -162,8 +165,7 @@ class PlotCustomizer(QObject):
             self._plot_config_key = key
             self._revertCustomization(self.getPlotConfig(), emit=False)
 
-    def getPlotConfig(self):
-        """@rtype: PlotConfig"""
+    def getPlotConfig(self) -> PlotConfig:
         return self._getPlotConfigHistory().getPlotConfig()
 
     def setAxisTypes(self, x_axis_type, y_axis_type):
@@ -286,8 +288,7 @@ class CustomizePlotDialog(QDialog):
         self._tab_map[attribute_name] = widget
         self._tab_order.append(attribute_name)
 
-    def __getitem__(self, item):
-        """@rtype: ert.gui.tools.plot.customize.customization_view.CustomizationView"""
+    def __getitem__(self, item) -> "CustomizationView":
         return self._tab_map[item]
 
     def __iter__(self):

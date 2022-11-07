@@ -1,4 +1,5 @@
 import os
+from typing import Union
 
 from cwrap import BaseCClass
 
@@ -25,39 +26,24 @@ class WorkflowJoblist(BaseCClass):
         c_ptr = self._alloc()
         super().__init__(c_ptr)
 
-    def addJob(self, job):
-        """@type job: WorkflowJob"""
+    def addJob(self, job) -> WorkflowJob:
         job.convertToCReference(self)
         self._add_job(job)
 
-    def addJobFromFile(self, name, filepath):
-        """
-        @type name: str
-        @type filepath: str
-        @rtype: bool
-        """
+    def addJobFromFile(self, name: str, filepath: str) -> bool:
         if not os.path.exists(filepath):
             raise UserWarning(f"Job file '{filepath}' does not exist!")
 
         return self._add_job_from_file(name, filepath)
 
-    def __contains__(self, item):
-        """
-        @type item: str or WorkflowJob
-        @rtype: bool
-        """
+    def __contains__(self, item: Union[str, WorkflowJob]) -> bool:
 
         if isinstance(item, WorkflowJob):
             item = item.name()
 
         return self._has_job(item)
 
-    def __getitem__(self, item):
-        """
-        @type item: str
-        @rtype: WorkflowJob
-        """
-
+    def __getitem__(self, item: str) -> WorkflowJob:
         if item not in self:
             return None
 

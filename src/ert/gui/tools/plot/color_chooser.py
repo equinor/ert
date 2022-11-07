@@ -48,8 +48,7 @@ class ColorBox(QFrame):
             self.colorChanged.emit(self._color)
 
     @property
-    def color(self):
-        """@rtype: QColor"""
+    def color(self) -> QColor:
         return self._color
 
     @color.setter

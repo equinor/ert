@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 from datetime import datetime
-
-from snake_oil_simulator import OilSimulator
+from typing import List, Tuple
 
 from ecl.summary import EclSum
+from oil_reservoir_synthesizer import OilSimulator
 
 
 def globalIndex(i, j, k, nx=10, ny=10, nz=10):
@@ -20,7 +20,9 @@ def readParameters(filename):
     return params
 
 
-def runSimulator(simulator, history_simulator, time_step_count) -> EclSum:
+def runSimulator(
+    simulator, history_simulator, time_step_count
+) -> Tuple[EclSum, List[str]]:
     ecl_sum = EclSum.writer("SNAKE_OIL_FIELD", datetime(2010, 1, 1), 10, 10, 10)
 
     ecl_sum.addVariable("FOPT")

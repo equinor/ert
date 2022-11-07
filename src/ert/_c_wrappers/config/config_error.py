@@ -12,8 +12,7 @@ class ConfigError(BaseCClass):
     def __init__(self):
         raise NotImplementedError("Class can not be instantiated directly!")
 
-    def __getitem__(self, index):
-        """@rtype: str"""
+    def __getitem__(self, index: int) -> str:
         if not isinstance(index, int):
             raise TypeError("Expected an integer")
 
@@ -23,8 +22,7 @@ class ConfigError(BaseCClass):
 
         return self._iget(index)
 
-    def __len__(self):
-        """@rtype: int"""
+    def __len__(self) -> int:
         return self._count()
 
     def free(self):

@@ -13,16 +13,13 @@ class PlotConfigHistory:
         self._redo_history = []
         self._current = PlotConfig.createCopy(self._initial)
 
-    def isUndoPossible(self):
-        """@rtype: bool"""
+    def isUndoPossible(self) -> bool:
         return len(self._undo_history) > 0
 
-    def isRedoPossible(self):
-        """@rtype: bool"""
+    def isRedoPossible(self) -> bool:
         return len(self._redo_history) > 0
 
-    def applyChanges(self, plot_config):
-        """@type plot_config: PlotConfig"""
+    def applyChanges(self, plot_config: PlotConfig):
         self._undo_history.append(self._current)
         copy = PlotConfig.createCopy(self._current)
         copy.copyConfigFrom(plot_config)

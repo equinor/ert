@@ -3,8 +3,10 @@ from typing import TYPE_CHECKING
 from ert._c_wrappers.job_queue import ErtScript
 
 if TYPE_CHECKING:
+    from qtpy.QtWidgets import QWidget
+
     from ert._c_wrappers.enkf import EnKFMain
-    from ert._c_wrappers.job_queue import WorkflowJob
+    from ert._c_wrappers.job_queue import ErtPlugin, WorkflowJob
 
 
 class Plugin:
@@ -20,8 +22,7 @@ class Plugin:
         self.__name = script.getName()
         self.__description = script.getDescription()
 
-    def __loadPlugin(self):
-        """@rtype: ErtPlugin"""
+    def __loadPlugin(self) -> "ErtPlugin":
         script_obj = ErtScript.loadScriptFromFile(
             self.__workflow_job.getInternalScriptPath()
         )
@@ -45,8 +46,7 @@ class Plugin:
     def setParentWindow(self, parent_window):
         self.__parent_window = parent_window
 
-    def getParentWindow(self):
-        """@rtype: QWidget"""
+    def getParentWindow(self) -> "QWidget":
         return self.__parent_window
 
     def ert(self) -> "EnKFMain":

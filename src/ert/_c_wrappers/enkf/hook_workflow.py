@@ -19,7 +19,6 @@ class HookWorkflow(BaseCClass):
         raise NotImplementedError("Class can not be instantiated directly!")
 
     def getWorkflow(self) -> Workflow:
-        """@rtype: Workflow"""
         return self._get_workflow()
 
     def getRunMode(self) -> HookRuntime:

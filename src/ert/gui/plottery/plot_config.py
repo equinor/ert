@@ -115,34 +115,29 @@ class PlotConfig:
     def observationsColor(self):
         return self._observs_style.color
 
-    def observationsStyle(self):
-        """@rtype: PlotStyle"""
+    def observationsStyle(self) -> PlotStyle:
         style = PlotStyle("Observations style")
         style.copyStyleFrom(self._observs_style)
         return style
 
-    def historyStyle(self):
-        """@rtype: PlotStyle"""
+    def historyStyle(self) -> PlotStyle:
         style = PlotStyle("History style")
         style.copyStyleFrom(self._history_style)
         return style
 
-    def histogramStyle(self):
-        """@rtype: PlotStyle"""
+    def histogramStyle(self) -> PlotStyle:
         style = PlotStyle("Histogram style")
         style.copyStyleFrom(self._histogram_style)
         style.color = self.currentColor()
         return style
 
-    def distributionStyle(self):
-        """@rtype: PlotStyle"""
+    def distributionStyle(self) -> PlotStyle:
         style = PlotStyle("Distribution style")
         style.copyStyleFrom(self._distribution_style)
         style.color = self.currentColor()
         return style
 
-    def distributionLineStyle(self):
-        """@rtype: ert.gui.plottery.PlotStyle"""
+    def distributionLineStyle(self) -> PlotStyle:
         style = PlotStyle("Distribution line style")
         style.copyStyleFrom(self._distribution_line_style)
         return style
@@ -220,8 +215,7 @@ class PlotConfig:
         copy_style.color = self.currentColor()
         return copy_style
 
-    def setHistoryStyle(self, style):
-        """@type style: PlotStyle"""
+    def setHistoryStyle(self, style: PlotStyle):
         self._history_style.line_style = style.line_style
         self._history_style.marker = style.marker
         self._history_style.width = style.width
@@ -230,36 +224,29 @@ class PlotConfig:
     def setObservationsColor(self, color):
         self._observs_style.color = color
 
-    def setObservationsStyle(self, style):
-        """@type style: PlotStyle"""
+    def setObservationsStyle(self, style: PlotStyle):
         self._observs_style.line_style = style.line_style
         self._observs_style.marker = style.marker
         self._observs_style.width = style.width
         self._observs_style.size = style.size
 
-    def setDefaultStyle(self, style):
-        """@type style: PlotStyle"""
+    def setDefaultStyle(self, style: PlotStyle):
         self._default_style.line_style = style.line_style
         self._default_style.marker = style.marker
         self._default_style.width = style.width
         self._default_style.size = style.size
 
     @property
-    def limits(self):
-        """@rtype: PlotLimits"""
+    def limits(self) -> PlotLimits:
         limits = PlotLimits()
         limits.copyLimitsFrom(self._limits)
         return limits
 
     @limits.setter
-    def limits(self, value):
-        """@type value: PlotLimits"""
+    def limits(self, value: PlotLimits):
         self._limits.copyLimitsFrom(value)
 
-    def copyConfigFrom(self, other):
-        """
-        :type other: PlotConfig
-        """
+    def copyConfigFrom(self, other: "PlotConfig"):
         self._default_style.copyStyleFrom(other._default_style, copy_enabled_state=True)
         self._history_style.copyStyleFrom(other._history_style, copy_enabled_state=True)
         self._histogram_style.copyStyleFrom(

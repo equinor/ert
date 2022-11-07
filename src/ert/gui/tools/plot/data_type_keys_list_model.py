@@ -1,3 +1,5 @@
+from typing import Optional
+
 from qtpy.QtCore import QAbstractItemModel, QModelIndex, Qt
 from qtpy.QtGui import QColor
 
@@ -42,7 +44,7 @@ class DataTypeKeysListModel(QAbstractItemModel):
 
         return None
 
-    def itemAt(self, index):
+    def itemAt(self, index) -> Optional[str]:
         assert isinstance(index, QModelIndex)
 
         if index.isValid():

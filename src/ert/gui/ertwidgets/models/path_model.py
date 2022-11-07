@@ -21,36 +21,26 @@ class PathModel(ValueModel):
         self._path_must_exist = must_exist
         self._path_must_be_absolute = must_be_absolute
 
-    def pathIsRequired(self):
-        """@rtype: bool"""
+    def pathIsRequired(self) -> bool:
         return self._path_is_required
 
-    def pathMustBeADirectory(self):
-        """@rtype: bool"""
+    def pathMustBeADirectory(self) -> bool:
         return self._path_must_be_a_directory
 
-    def pathMustBeAFile(self):
-        """@rtype: bool"""
+    def pathMustBeAFile(self) -> bool:
         return self._path_must_be_a_file
 
-    def pathMustBeExecutable(self):
-        """@rtype: bool"""
+    def pathMustBeExecutable(self) -> bool:
         return self._path_must_be_executable
 
-    def pathMustExist(self):
-        """@rtype: bool"""
+    def pathMustExist(self) -> bool:
         return self._path_must_exist
 
-    def pathMustBeAbsolute(self):
-        """@rtype: bool"""
+    def pathMustBeAbsolute(self) -> bool:
         return self._path_must_be_absolute
 
-    def getPath(self):
-        """@rtype: str"""
+    def getPath(self) -> str:
         return self.getValue()
 
-    def setPath(self, value):
-        """
-        @type value: str
-        """
+    def setPath(self, value: str):
         self.setValue(value)

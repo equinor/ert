@@ -64,8 +64,7 @@ class TimeMap(BaseCClass):
     def __eq__(self, other):
         return list(self) == list(other)
 
-    def getSimulationDays(self, step):
-        """@rtype: double"""
+    def getSimulationDays(self, step: int) -> float:
         if not isinstance(step, int):
             raise TypeError("Expected an integer")
 
@@ -78,8 +77,7 @@ class TimeMap(BaseCClass):
     def attach_refcase(self, refcase):
         self._attach_refcase(refcase)
 
-    def __getitem__(self, index):
-        """@rtype: CTime"""
+    def __getitem__(self, index: int) -> CTime:
         if not isinstance(index, int):
             raise TypeError("Expected an integer")
 
@@ -153,8 +151,7 @@ class TimeMap(BaseCClass):
         else:
             raise ValueError(f"The days: {days} was not found in the time_map instance")
 
-    def __len__(self):
-        """@rtype: int"""
+    def __len__(self) -> int:
         return self._size()
 
     def free(self):

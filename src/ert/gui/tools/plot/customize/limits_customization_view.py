@@ -132,36 +132,30 @@ class LimitsWidget:
         self._y_current_input_name = PlotContext.UNKNOWN_AXIS
 
     @property
-    def x_minimum_stack(self):
-        """@rtype: LimitsStack"""
+    def x_minimum_stack(self) -> LimitsStack:
         return self._x_minimum_stack
 
     @property
-    def x_maximum_stack(self):
-        """@rtype: LimitsStack"""
+    def x_maximum_stack(self) -> LimitsStack:
         return self._x_maximum_stack
 
     @property
-    def y_minimum_stack(self):
-        """@rtype: LimitsStack"""
+    def y_minimum_stack(self) -> LimitsStack:
         return self._y_minimum_stack
 
     @property
-    def y_maximum_stack(self):
-        """@rtype: LimitsStack"""
+    def y_maximum_stack(self) -> LimitsStack:
         return self._y_maximum_stack
 
     @property
-    def limits(self):
-        """@rtype: PlotLimits"""
+    def limits(self) -> PlotLimits:
         self._updateLimits()
         limits = PlotLimits()
         limits.copyLimitsFrom(self._limits)
         return limits
 
     @limits.setter
-    def limits(self, value):
-        """@type value: PlotLimits"""
+    def limits(self, value: PlotLimits):
         self._limits.copyLimitsFrom(value)
         self._updateWidgets()
 

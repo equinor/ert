@@ -109,8 +109,7 @@ def _realizations(args, ensemble_size: int) -> List[bool]:
     return ActiveRange(rangestring=args.realizations, length=ensemble_size).mask
 
 
-def _target_case_name(ert, args, current_case_name, format_mode=False):
-    """@rtype: str"""
+def _target_case_name(ert, args, current_case_name, format_mode=False) -> str:
     if args.target_case is not None:
         return args.target_case
 
