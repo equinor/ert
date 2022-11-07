@@ -125,16 +125,6 @@
 #define VOID_USER_GET_HEADER(prefix)                                           \
     bool prefix##_user_get__(void *, const char *, int, double *);
 
-#define VOID_USER_GET_VECTOR(prefix)                                           \
-    void prefix##_user_get_vector__(void *void_arg, const char *key,           \
-                                    double_vector_type *value) {               \
-        auto arg = static_cast<prefix##_type *>(void_arg);                     \
-        prefix##_user_get_vector(arg, key, value);                             \
-    }
-
-#define VOID_USER_GET_VECTOR_HEADER(prefix)                                    \
-    void prefix##_user_get_vector__(void *, const char *, double_vector_type *);
-
 #define VOID_USER_GET_OBS(prefix)                                              \
     void prefix##_user_get__(void *void_arg, const char *key, double *value,   \
                              double *std, bool *valid) {                       \

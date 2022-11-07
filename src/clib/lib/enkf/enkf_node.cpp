@@ -121,7 +121,6 @@ struct enkf_node_struct {
     forward_load_ftype *forward_load;
     forward_load_vector_ftype *forward_load_vector;
     user_get_ftype *user_get;
-    user_get_vector_ftype *user_get_vector;
     fload_ftype *fload;
     has_data_ftype *has_data;
 
@@ -212,21 +211,13 @@ bool enkf_node_user_get(enkf_node_type *enkf_node, enkf_fs_type *fs,
     }
 }
 
-bool enkf_node_user_get_vector(enkf_node_type *enkf_node, enkf_fs_type *fs,
-                               const char *key, int iens,
-                               double_vector_type *values) {
-    if (enkf_node->vector_storage) {
-        if (enkf_node_try_load_vector(enkf_node, fs, iens)) {
-            enkf_node->user_get_vector(enkf_node->data, key, values);
-            return true;
-        } else
-            return false;
-    } else {
-        util_abort("%s: internal error - function should only be called by "
-                   "nodes with vector storage.\n",
-                   __func__);
-        return false;
-    }
+std::vector<double> enkf_node_user_get_vector(enkf_node_type *enkf_node,
+                                              enkf_fs_type *fs, int iens) {
+    if (enkf_node_try_load_vector(enkf_node, fs, iens)) {
+        return summary_user_get_vector(
+            static_cast<summary_type *>(enkf_node->data));
+    } else
+        return {};
 }
 
 bool enkf_node_fload(enkf_node_type *enkf_node, const char *filename) {
@@ -534,7 +525,6 @@ enkf_node_alloc_empty(const enkf_config_node_type *config) {
     node->initialize = NULL;
     node->freef = NULL;
     node->user_get = NULL;
-    node->user_get_vector = NULL;
     node->fload = NULL;
     node->read_from_buffer = NULL;
     node->write_to_buffer = NULL;
@@ -558,7 +548,6 @@ enkf_node_alloc_empty(const enkf_config_node_type *config) {
         node->alloc = summary_alloc__;
         node->freef = summary_free__;
         node->user_get = summary_user_get__;
-        node->user_get_vector = summary_user_get_vector__;
         node->read_from_buffer = summary_read_from_buffer__;
         node->write_to_buffer = summary_write_to_buffer__;
         node->serialize = summary_serialize__;
