@@ -60,8 +60,7 @@ class LoadResultsPanel(QWidget):
         self.setLayout(layout)
 
     @property
-    def iteration_count(self):
-        """@rtype: int"""
+    def iteration_count(self) -> int:
         try:
             self.facade.run_path % (0, 0)
         except TypeError:

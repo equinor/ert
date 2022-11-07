@@ -1,4 +1,5 @@
 import numbers
+from typing import Union
 
 from cwrap import BaseCClass
 from ecl.util.util import DoubleVector
@@ -36,11 +37,7 @@ class GenKw(BaseCClass):
     def __str__(self):
         return repr(self)
 
-    def __getitem__(self, key):
-        """
-        @type key: int or str
-        @rtype: float
-        """
+    def __getitem__(self, key: Union[str, int]) -> float:
         do_transform = False
         if isinstance(key, str):
             if key not in self:
@@ -95,8 +92,7 @@ class GenKw(BaseCClass):
         else:
             raise ValueError("Size mismatch between GenKW and values")
 
-    def __len__(self):
-        """@rtype: int"""
+    def __len__(self) -> int:
         return self._size()
 
     def __contains__(self, item):

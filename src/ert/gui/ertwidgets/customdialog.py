@@ -56,10 +56,9 @@ class CustomDialog(QDialog):
         if valid:
             self.valid()
 
-    def showAndTell(self):
+    def showAndTell(self) -> bool:
         """
         Shows the dialog modally and returns the true or false (accept/reject)
-        @rtype: bool
         """
         self.optionValidationChanged()
         return self.exec_()

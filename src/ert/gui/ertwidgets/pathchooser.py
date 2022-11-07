@@ -1,5 +1,6 @@
 import os
 import re
+from typing import Tuple
 
 from qtpy.QtCore import QSize
 from qtpy.QtWidgets import QFileDialog, QHBoxLayout, QLineEdit, QToolButton, QWidget
@@ -70,8 +71,7 @@ class PathChooser(QWidget):
         self.setLayout(layout)
         self.getPathFromModel()
 
-    def isPathValid(self, path):
-        """@rtype: tuple of (bool, str)"""
+    def isPathValid(self, path) -> Tuple[bool, str]:
         path = path.strip()
         path_exists = os.path.exists(path)
         is_file = os.path.isfile(path)

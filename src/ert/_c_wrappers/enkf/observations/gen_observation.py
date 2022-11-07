@@ -113,12 +113,10 @@ class GenObservation(BaseCClass):
         )
         return np_vector
 
-    def getSize(self):
-        """@rtype: float"""
+    def getSize(self) -> int:
         return len(self)
 
-    def getIndex(self, obs_index):
-        """@rtype: int"""
+    def getIndex(self, obs_index) -> int:
         return self.getDataIndex(obs_index)
 
     def getDataIndex(self, obs_index):

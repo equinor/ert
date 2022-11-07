@@ -22,8 +22,7 @@ class TargetCaseModel(ValueModel):
             self._custom = True
             ValueModel.setValue(self, value)
 
-    def getDefaultValue(self):
-        """@rtype: str"""
+    def getDefaultValue(self) -> str:
         if self._format_mode:
             analysis_config = self.facade.get_analysis_config()
             if analysis_config.case_format_is_set():

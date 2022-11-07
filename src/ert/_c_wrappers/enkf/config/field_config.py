@@ -114,11 +114,10 @@ class FieldConfig(BaseCClass):
             f"nx = {self.get_nx()}, ny = {self.get_ny()}, nz = {self.get_nz()}"
         )
 
-    def __ne__(self, other):
+    def __ne__(self, other) -> bool:
         return not self == other
 
-    def __eq__(self, other):
-        """@rtype: bool"""
+    def __eq__(self, other) -> bool:
         if self.get_init_transform_name() != other.get_init_transform_name():
             return False
         if self.get_output_transform_name() != other.get_output_transform_name():

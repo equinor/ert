@@ -1,10 +1,16 @@
 from math import ceil, floor, log10, sqrt
+from typing import TYPE_CHECKING, List
 
 import numpy
 import pandas as pd
 from matplotlib.patches import Rectangle
 
 from .plot_tools import PlotTools
+
+if TYPE_CHECKING:
+    from matplotlib.axes import Axes
+
+    from ert.gui.plottery import PlotConfig, PlotContext
 
 
 class HistogramPlot:
@@ -15,8 +21,9 @@ class HistogramPlot:
         plotHistogram(figure, plot_context, case_to_data_map, _observation_data)
 
 
-def plotHistogram(figure, plot_context, case_to_data_map, _observation_data):
-    """@type plot_context: ert.gui.plottery.PlotContext"""
+def plotHistogram(
+    figure, plot_context: "PlotContext", case_to_data_map, _observation_data
+):
     config = plot_context.plotConfig()
 
     case_list = plot_context.cases()
@@ -125,15 +132,13 @@ def plotHistogram(figure, plot_context, case_to_data_map, _observation_data):
         subplot.set_xlim(custom_limits.value_minimum, custom_limits.value_maximum)
 
 
-def _plotCategoricalHistogram(axes, plot_config, data, label, categories):
-    """
-    @type axes: matplotlib.axes.Axes
-    @type plot_config: PlotConfig
-    @type data: DataFrame
-    @type label: str
-    @type categories: list of str
-    """
-
+def _plotCategoricalHistogram(
+    axes: "Axes",
+    plot_config: "PlotConfig",
+    data: pd.DataFrame,
+    label: str,
+    categories: List[str],
+):
     axes.set_xlabel(plot_config.xLabel())
     axes.set_ylabel(plot_config.yLabel())
 
@@ -155,22 +160,15 @@ def _plotCategoricalHistogram(axes, plot_config, data, label, categories):
 
 
 def _plotHistogram(
-    axes,
-    plot_config,
-    data,
-    label,
+    axes: "Axes",
+    plot_config: "PlotConfig",
+    data: pd.DataFrame,
+    label: str,
     bin_count,
     use_log_scale=False,
     minimum=None,
     maximum=None,
 ):
-    """
-    @type axes: matplotlib.axes.Axes
-    @type plot_config: PlotConfig
-    @type data: DataFrame
-    @type label: str
-    """
-
     axes.set_xlabel(plot_config.xLabel())
     axes.set_ylabel(plot_config.yLabel())
 
@@ -199,10 +197,6 @@ def _plotHistogram(
 
 
 def _histogramLogBins(bin_count, minimum=None, maximum=None):
-    """
-    @type data: pandas.DataFrame
-    @rtype: int
-    """
     minimum = log10(float(minimum))
     maximum = log10(float(maximum))
 

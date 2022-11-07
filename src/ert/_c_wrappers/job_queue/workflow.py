@@ -10,6 +10,7 @@ from ert._c_wrappers import ResPrototype
 from ert._c_wrappers.job_queue.workflow_joblist import WorkflowJoblist
 
 if TYPE_CHECKING:
+    from ert._c_wrappers.config import ConfigError
     from ert._c_wrappers.enkf import EnKFMain
     from ert._c_wrappers.job_queue import WorkflowJob
     from ert._c_wrappers.util import SubstitutionList
@@ -124,12 +125,10 @@ class Workflow(BaseCClass):
         while self.isRunning():
             time.sleep(1)
 
-    def getLastError(self):
-        """@rtype: ConfigError"""
+    def getLastError(self) -> "ConfigError":
         return self._get_last_error()
 
-    def getJobsReport(self):
-        """@rtype: {dict}"""
+    def getJobsReport(self) -> Dict[str, Any]:
         return self.__status
 
     @classmethod

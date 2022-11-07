@@ -1,4 +1,9 @@
+from typing import TYPE_CHECKING
+
 from qtpy.QtCore import QSortFilterProxyModel, Qt
+
+if TYPE_CHECKING:
+    from .data_type_keys_list_model import DataTypeKeysListModel
 
 
 class DataTypeProxyModel(QSortFilterProxyModel):
@@ -33,8 +38,7 @@ class DataTypeProxyModel(QSortFilterProxyModel):
 
         return show
 
-    def sourceModel(self):
-        """@rtype: DataTypeKeysListModel"""
+    def sourceModel(self) -> "DataTypeKeysListModel":
         return QSortFilterProxyModel.sourceModel(self)
 
     def setFilterOnMetadata(self, key, value, visible):

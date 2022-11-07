@@ -1,3 +1,5 @@
+from typing import TYPE_CHECKING
+
 from qtpy.QtWidgets import (
     QCheckBox,
     QFormLayout,
@@ -10,6 +12,9 @@ from qtpy.QtWidgets import (
 from ert.gui.tools.plot.widgets.clearable_line_edit import ClearableLineEdit
 
 from .. import style_chooser as sc
+
+if TYPE_CHECKING:
+    from ert.gui.plottery import PlotConfig
 
 
 class CustomizationView(QWidget):
@@ -128,28 +133,19 @@ class CustomizationView(QWidget):
         self._layout.addRow(title, None)
         self.addSpacing(1)
 
-    def __getitem__(self, item):
-        """
-        @rtype: QWidget
-        """
+    def __getitem__(self, item) -> QWidget:
         return self._widgets[item]
 
     def __setitem__(self, key, value):
         self._widgets[key] = value
 
-    def applyCustomization(self, plot_config):
-        """
-        @type plot_config: PlotConfig
-        """
+    def applyCustomization(self, plot_config: "PlotConfig"):
         raise NotImplementedError(
             f"Class '{self.__class__.__name__}' has not implemented "
             "the applyCustomization() function!"
         )
 
-    def revertCustomization(self, plot_config):
-        """
-        @type plot_config: PlotConfig
-        """
+    def revertCustomization(self, plot_config: "PlotConfig"):
         raise NotImplementedError(
             f"Class '{self.__class__.__name__}' has not implemented "
             "the revertCustomization() function!"

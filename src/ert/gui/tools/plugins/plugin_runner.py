@@ -82,12 +82,10 @@ class PluginRunner:
 
         self.__plugin_finished_callback()
 
-    def isRunning(self):
-        """@rtype: bool"""
+    def isRunning(self) -> bool:
         return self.__plugin.getWorkflowJob().isRunning()
 
-    def isCancelled(self):
-        """@rtype: bool"""
+    def isCancelled(self) -> bool:
         return self.__plugin.getWorkflowJob().isCancelled()
 
     def cancel(self):

@@ -60,8 +60,7 @@ class DataTypeKeysWidget(QWidget):
         if selected_item is not None:
             self.dataTypeKeySelected.emit()
 
-    def getSelectedItem(self):
-        """@rtype: str"""
+    def getSelectedItem(self) -> str:
         index = self.data_type_keys_widget.currentIndex()
         source_index = self.filter_model.mapToSource(index)
         item = self.model.itemAt(source_index)

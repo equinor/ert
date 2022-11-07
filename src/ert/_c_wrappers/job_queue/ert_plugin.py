@@ -10,10 +10,8 @@ class ErtPlugin(ErtScript):
         """@rtype: list"""
         return []
 
-    def getName(self):
-        """@rtype: str"""
+    def getName(self) -> str:
         return str(self.__class__)
 
-    def getDescription(self):
-        """@rtype: str"""
+    def getDescription(self) -> str:
         return "No description provided!"

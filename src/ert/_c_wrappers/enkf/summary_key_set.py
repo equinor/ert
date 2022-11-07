@@ -42,11 +42,9 @@ class SummaryKeySet(BaseCClass):
         return self._has_key(key)
 
     def keys(self) -> StringList:
-        """@rtype: StringList"""
         return self._keys()
 
-    def isReadOnly(self):
-        """@rtype: bool"""
+    def isReadOnly(self) -> bool:
         return self._is_read_only()
 
     def writeToFile(self, filename):
