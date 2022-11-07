@@ -97,7 +97,7 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
 
     @property
     def grid_file(self) -> Optional[str]:
-        return self._enkf_main.ensembleConfig().get_grid_file
+        return self._enkf_main.ensembleConfig().grid_file
 
     @property
     def grid(self) -> Optional[EclGrid]:

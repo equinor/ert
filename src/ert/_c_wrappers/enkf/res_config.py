@@ -288,7 +288,7 @@ class ResConfig:
             for template in user_config_content[ConfigKeys.RUN_TEMPLATE]:
                 self._templates.append(list(template))
 
-        self.ensemble_config = EnsembleConfig(config_content=user_config_content)
+        self.ensemble_config = EnsembleConfig.from_dict(config_dict=config_content_dict)
 
         for key in self.ensemble_config.getKeylistFromImplType(ErtImplType.GEN_KW):
             if self.ensemble_config.getNode(key).getUseForwardInit():

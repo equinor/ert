@@ -208,19 +208,3 @@ void config_content_node_assert_key_value(
                    "*without* index you must set argc_min == argc_max = 1 \n",
                    __func__, config_schema_item_get_kw(node->schema));
 }
-
-/**
-   The node should contain elements of the type:
-
-      KEY1:VALUE1    KEY2:Value2   XX Key3:Val3  Ignored
-
-   Which will be inserted in the opt_hash dictionary as : {"KEY1" :
-   "VALUE1" , ... } Elements which do not conform to this syntax are
-   ignored.
-*/
-void config_content_node_init_opt_hash(const config_content_node_type *node,
-                                       hash_type *opt_hash, int elm_offset) {
-    int i;
-    for (i = elm_offset; i < config_content_node_get_size(node); i++)
-        hash_add_option(opt_hash, config_content_node_iget(node, i));
-}

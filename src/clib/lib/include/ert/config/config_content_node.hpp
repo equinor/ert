@@ -54,7 +54,5 @@ extern "C" int
 config_content_node_get_size(const config_content_node_type *node);
 const char *config_content_node_get_kw(const config_content_node_type *node);
 void config_content_node_assert_key_value(const config_content_node_type *node);
-void config_content_node_init_opt_hash(const config_content_node_type *node,
-                                       hash_type *opt_hash, int elm_offset);
 
 #endif

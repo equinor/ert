@@ -1,3 +1,4 @@
+import logging
 import os
 from typing import TYPE_CHECKING, Dict, List, Optional, Tuple, Union
 
@@ -23,6 +24,8 @@ from .summary_config import SummaryConfig
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
+
+logger = logging.getLogger(__name__)
 
 
 class EnkfConfigNode(BaseCClass):
@@ -234,6 +237,21 @@ class EnkfConfigNode(BaseCClass):
         input_format,
         report_steps,
     ):
+        if os.path.isabs(result_file) or "%d" not in result_file:
+            msg = (
+                f"The RESULT_FILE:{result_file} setting for {key} is invalid - "
+                "must have an embedded %d - and be a relative path"
+            )
+            logger.error(msg)
+            return None
+        if not report_steps:
+            msg = (
+                "The GEN_DATA keywords must have a REPORT_STEPS:xxxx defined"
+                "Several report steps separated with ',' and ranges with '-'"
+                "can be listed"
+            )
+            logger.error(msg)
+            return None
         active_steps = IntVector()
         for step in report_steps:
             active_steps.append(step)
@@ -288,6 +306,20 @@ class EnkfConfigNode(BaseCClass):
         base_surface_file,
         forward_init,
     ):
+        msg = "When entering a surface you must provide the argument:\n"
+        valid = True
+        if init_file_fmt is None:
+            msg = msg + f"{ConfigKeys.INIT_FILES}:/path/to/input/files%%d\n"
+            valid = False
+        if output_file is None:
+            msg = msg + "OUTPUT_FILE:name_of_output_file\n"
+            valid = False
+        if base_surface_file is None:
+            valid = False
+            msg = msg + f"{ConfigKeys.BASE_SURFACE_KEY}:base_surface_file\n"
+        if not valid:
+            logger.error(msg)
+            raise ValueError(msg)
 
         if base_surface_file is not None:
             base_surface_file = os.path.realpath(base_surface_file)
@@ -328,9 +360,13 @@ class EnkfConfigNode(BaseCClass):
         value_min = -1
         value_max = -1
         if min_key is not None:
+            if isinstance(min_key, str):
+                min_key = float(min_key)
             value_min = min_key
             truncation = truncation | EnkfTruncationType.TRUNCATE_MIN
         if max_key is not None:
+            if isinstance(max_key, str):
+                max_key = float(max_key)
             value_max = max_key
             truncation = truncation | EnkfTruncationType.TRUNCATE_MAX
 

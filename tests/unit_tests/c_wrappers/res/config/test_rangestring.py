@@ -1,6 +1,10 @@
 import pytest
 
-from ert._c_wrappers.config.rangestring import mask_to_rangestring, rangestring_to_mask
+from ert._c_wrappers.config.rangestring import (
+    mask_to_rangestring,
+    rangestring_to_list,
+    rangestring_to_mask,
+)
 
 
 def testMaskToRangeConversion():
@@ -87,3 +91,29 @@ def test_rangestring_to_mask(rangestring, length, expected_mask):
 def test_rangestring_to_mask_errors(rangestring, length):
     with pytest.raises(ValueError):
         rangestring_to_mask(rangestring, length)
+
+
+@pytest.mark.parametrize(
+    "rangestring, expected",
+    [
+        ("0-1", [0, 1]),
+        ("0-3", [0, 1, 2, 3]),
+        ("0-1, 2, 3", [0, 1, 2, 3]),
+        ("0-1,3-5", [0, 1, 3, 4, 5]),
+        ("0-1, 4, 3-5", [0, 1, 3, 4, 5]),
+        ("1,2,3", [1, 2, 3]),
+        ("1, 3-5 ,2", [1, 2, 3, 4, 5]),
+        ("1, 3-5 ,2", [1, 2, 3, 4, 5]),
+    ],
+)
+def test_rangestring_to_list(rangestring, expected):
+    assert rangestring_to_list(rangestring) == expected
+
+
+@pytest.mark.parametrize(
+    "rangestring",
+    ["a", "*", "-", "0-", "-1", "0-a", "0-1-2", "0--1", "1-0", "0-2.2"],
+)
+def test_rangestring_to_list_errors(rangestring):
+    with pytest.raises(ValueError):
+        rangestring_to_list(rangestring)
