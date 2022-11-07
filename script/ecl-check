@@ -7,18 +7,19 @@ import re
 from typing import Set
 
 
+SOURCE_DIR = "src/clib/lib"
 try:
-    # Use ripgrep: 'rg {} libres/ | wc -l'
+    # Use ripgrep: 'rg {} src/clib/lib | wc -l'
     subprocess.check_output(["rg", "--version"])
 
     def count_occurences(name: str) -> int:
-        return len(subprocess.check_output(("rg", name, "libres/")).split(b"\n"))
+        return len(subprocess.check_output(("rg", name, SOURCE_DIR)).splitlines())
 
 except:
-    # Fall back to 'grep -R {} libres/ | wc -l'
+    # Fall back to 'grep -R {} src/clib/lib | wc -l'
     def count_occurences(name: str) -> int:
         return len(
-            subprocess.check_output(("grep", "-R", name, "libres/")).split(b"\n")
+            subprocess.check_output(("grep", "-R", name, SOURCE_DIR)).splitlines()
         )
 
 
@@ -91,6 +92,8 @@ def main() -> None:
             if match is not None:
                 # Demangled C++ symbol
                 name = match[1]
+            elif sym == "util_abort__":
+                sym = name = "util_abort"
             else:
                 # C symbol
                 name = sym
