@@ -1,4 +1,4 @@
-#include <ert/enkf/enkf_plot_tvector.hpp>
+#include <ert/enkf/enkf_node.hpp>
 #include <ert/enkf/ensemble_config.hpp>
 
 #include <ert/python.hpp>
@@ -12,31 +12,24 @@ ERT_CLIB_SUBMODULE("enkf_fs_summary_data", m) {
             py::array_t<double, 2> array(
                 {time_map_size * realizations.size(), summary_keys.size()});
             auto data = array.mutable_unchecked();
-
             int summary_key_index = 0;
             for (const auto &key : summary_keys) {
-                auto ensemble_config_node =
-                    ensemble_config_get_node(ensemble_config, key.c_str());
+                enkf_node_type *work_node = enkf_node_alloc(
+                    ensemble_config_get_node(ensemble_config, key.c_str()));
 
                 for (size_t iens_index{}; iens_index < realizations.size();
                      ++iens_index) {
                     auto iens = realizations[iens_index];
-                    enkf_plot_tvector_type *vector =
-                        enkf_plot_tvector_alloc(ensemble_config_node, iens);
-                    enkf_plot_tvector_load(vector, fs, nullptr);
-
-                    for (int index = 1; index < enkf_plot_tvector_size(vector);
-                         index++) {
-                        double value =
-                            enkf_plot_tvector_iget_active(vector, index)
-                                ? enkf_plot_tvector_iget_value(vector, index)
-                                : NAN;
+                    auto summary_vector =
+                        enkf_node_user_get_vector(work_node, fs, iens);
+                    for (int index = 1; index < summary_vector.size();
+                         ++index) {
                         data(iens_index * time_map_size + (index - 1),
-                             summary_key_index) = value;
+                             summary_key_index) = summary_vector[index];
                     }
-                    enkf_plot_tvector_free(vector);
                 }
                 summary_key_index++;
+                enkf_node_free(work_node);
             }
             return array;
         },

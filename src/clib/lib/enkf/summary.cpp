@@ -114,9 +114,11 @@ bool summary_user_get(const summary_type *summary, const char *index_key,
     }
 }
 
-void summary_user_get_vector(const summary_type *summary, const char *index_key,
-                             double_vector_type *value) {
-    double_vector_memcpy(value, summary->data_vector);
+std::vector<double> summary_user_get_vector(const summary_type *summary) {
+    std::vector<double> values(double_vector_size(summary->data_vector));
+    for (int step = 0; step < double_vector_size(summary->data_vector); step++)
+        values[step] = double_vector_iget(summary->data_vector, step);
+    return values;
 }
 
 /**
@@ -267,7 +269,6 @@ VOID_FREE(summary)
 VOID_FORWARD_LOAD(summary)
 VOID_FORWARD_LOAD_VECTOR(summary)
 VOID_USER_GET(summary)
-VOID_USER_GET_VECTOR(summary)
 VOID_WRITE_TO_BUFFER(summary)
 VOID_READ_FROM_BUFFER(summary)
 VOID_SERIALIZE(summary)

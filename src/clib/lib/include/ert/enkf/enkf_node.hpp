@@ -31,7 +31,6 @@ typedef void(read_from_buffer_ftype)(void *, buffer_type *, enkf_fs_type *,
 typedef bool(write_to_buffer_ftype)(const void *, buffer_type *, int);
 typedef bool(has_data_ftype)(const void *, int);
 
-typedef void(user_get_vector_ftype)(void *, const char *, double_vector_type *);
 typedef bool(user_get_ftype)(void *, const char *, int, double *);
 typedef void *(alloc_ftype)(const void *);
 typedef bool(initialize_ftype)(void *, int, const char *);
@@ -55,9 +54,8 @@ void enkf_node_deserialize(enkf_node_type *enkf_node, enkf_fs_type *fs,
 
 typedef void(enkf_node_ftype1)(enkf_node_type *);
 
-bool enkf_node_user_get_vector(enkf_node_type *enkf_node, enkf_fs_type *fs,
-                               const char *key, int iens,
-                               double_vector_type *values);
+std::vector<double> enkf_node_user_get_vector(enkf_node_type *enkf_node,
+                                              enkf_fs_type *fs, int iens);
 bool enkf_node_user_get(enkf_node_type *, enkf_fs_type *, const char *,
                         node_id_type, double *);
 enkf_node_type *enkf_node_deep_alloc(const enkf_config_node_type *config);
