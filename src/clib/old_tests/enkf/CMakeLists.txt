@@ -21,7 +21,6 @@ foreach(
   enkf_ensemble_config
   enkf_fs
   enkf_gen_data_config
-  enkf_gen_data_config_parse
   enkf_meas_data
   enkf_model_config
   enkf_obs_invalid_path

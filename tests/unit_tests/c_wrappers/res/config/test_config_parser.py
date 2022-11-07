@@ -10,6 +10,7 @@ from ert._c_wrappers.config import (
     SchemaItem,
     UnrecognizedEnum,
 )
+from ert._c_wrappers.enkf.ensemble_config import _option_dict, _str_to_bool
 
 
 def test_item_types(tmp_path):
@@ -313,3 +314,47 @@ def test_valid_string():
     assert ContentTypeEnum.CONFIG_BOOL.convert_string("True")
     assert not ContentTypeEnum.CONFIG_BOOL.convert_string("False")
     assert not ContentTypeEnum.CONFIG_BOOL.convert_string("F")
+
+
+@pytest.mark.parametrize(
+    "option_list, offset, expected",
+    [
+        (["a:1"], 0, {"a": "1"}),
+        (["B:abc"], 0, {"B": "abc"}),
+        (["A"], 0, {}),
+        (["a:1", "B:abc"], 0, {"a": "1", "B": "abc"}),
+        (["a:1", "T:"], 0, {"a": "1"}),
+        (["a:1", ":T"], 0, {"a": "1"}),
+        (["a:1", ":-:"], 0, {"a": "1"}),
+        (["a:1", "T:"], 0, {"a": "1"}),
+        (["a:1", "b:2", "c:3"], 2, {"c": "3"}),
+        (["a", "b", "c"], 0, {}),
+    ],
+)
+def test_options_dic(option_list, offset, expected):
+    assert _option_dict(option_list, offset) == expected
+
+
+@pytest.mark.parametrize(
+    "text, expected, success",
+    [
+        ("1", True, True),
+        ("True", True, True),
+        ("true", True, True),
+        ("TRUE", True, True),
+        ("False", False, True),
+        ("false", False, True),
+        ("FALSE", False, True),
+        ("0", False, True),
+        ("2", False, False),
+        ("-1", False, False),
+        ("fail", False, False),
+        ("tru", False, False),
+    ],
+)
+def test_str_to_bool(text, expected, success, caplog):
+    assert _str_to_bool(text) == expected
+    if not success:
+        assert caplog.records[0].msg == (
+            f"Failed to parse {text} as bool! Using FORWARD_INIT:FALSE"
+        )

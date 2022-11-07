@@ -74,3 +74,23 @@ def rangestring_to_mask(rangestring: str, length: int) -> List[bool]:
                 )
             mask[int(_range)] = True
     return mask
+
+
+def rangestring_to_list(rangestring: str) -> List[int]:
+    """Convert a string specifying ranges of elements, and the number of elements,
+    into a list of ints. The ranges are end-inclusive."""
+    result = set()
+    if rangestring == "":
+        return []
+    for _range in rangestring.split(","):
+        if "-" in _range:
+            if len(_range.strip().split("-")) != 2:
+                raise ValueError(f"Wrong range syntax {_range}")
+            start, end = map(int, _range.strip().split("-"))
+            if end < start:
+                raise ValueError(f"Range {start}-{end} has invalid direction")
+            for value in range(start, end + 1):
+                result.add(value)
+        elif _range:
+            result.add(int(_range))
+    return list(result)

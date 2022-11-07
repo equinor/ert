@@ -27,30 +27,6 @@ int main(int argc, char **argv) {
             config_content_node_get_full_string(node, ","),
             "KEY1:VALUE1,KEY2:VALUE2,KEY3:VALUE3,KEYVALUE");
 
-        {
-            hash_type *opt_hash = hash_alloc();
-            {
-                config_content_node_init_opt_hash(node, opt_hash, 0);
-                test_assert_int_equal(hash_get_size(opt_hash), 3);
-                test_assert_string_equal(
-                    (const char *)hash_get(opt_hash, "KEY1"), "VALUE1");
-                test_assert_string_equal(
-                    (const char *)hash_get(opt_hash, "KEY3"), "VALUE3");
-            }
-
-            hash_clear(opt_hash);
-            test_assert_int_equal(hash_get_size(opt_hash), 0);
-            config_content_node_init_opt_hash(node, opt_hash, 1);
-            test_assert_int_equal(hash_get_size(opt_hash), 2);
-            test_assert_string_equal((const char *)hash_get(opt_hash, "KEY2"),
-                                     "VALUE2");
-            test_assert_string_equal((const char *)hash_get(opt_hash, "KEY3"),
-                                     "VALUE3");
-            test_assert_false(hash_has_key(opt_hash, "KEY1"));
-            test_assert_false(hash_has_key(opt_hash, "KEYVALUE"));
-            hash_free(opt_hash);
-        }
-
         config_content_node_free(node);
     }
     config_path_elm_free(cwd);

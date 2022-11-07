@@ -1,5 +1,6 @@
+import logging
 import os
-from typing import List, Optional
+from typing import Any, Dict, List, Optional, Union
 
 from cwrap import BaseCClass
 from ecl.ecl_util import EclFileEnum, get_file_type
@@ -9,10 +10,12 @@ from ecl.util.util import StringList
 
 from ert import _clib
 from ert._c_wrappers import ResPrototype
-from ert._c_wrappers.config import ConfigContent
+from ert._c_wrappers.config.rangestring import rangestring_to_list
 from ert._c_wrappers.enkf.config import EnkfConfigNode
 from ert._c_wrappers.enkf.config_keys import ConfigKeys
-from ert._c_wrappers.enkf.enums import EnkfVarType, ErtImplType
+from ert._c_wrappers.enkf.enums import EnkfVarType, ErtImplType, GenDataFileType
+
+logger = logging.getLogger(__name__)
 
 
 def _get_abs_path(file):
@@ -27,11 +30,28 @@ def _get_filename(file):
     return file
 
 
+def _option_dict(option_list: list, offset: int) -> Dict[str, str]:
+    option_dict = {}
+    for option_pair in option_list[offset:]:
+        if len(option_pair.split(":")) == 2:
+            key, val = option_pair.split(":")
+            if val != "" and key != "":
+                option_dict[key] = val
+    return option_dict
+
+
+def _str_to_bool(txt: str) -> bool:
+    if txt.lower() in ["true", "1"]:
+        return True
+    elif txt.lower() in ["false", "0"]:
+        return False
+    else:
+        logger.error(f"Failed to parse {txt} as bool! Using FORWARD_INIT:FALSE")
+        return False
+
+
 class EnsembleConfig(BaseCClass):
     TYPE_NAME = "ens_config"
-    _alloc = ResPrototype(
-        "void* ensemble_config_alloc(config_content, ecl_grid, ecl_sum)", bind=False
-    )
     _alloc_full = ResPrototype("void* ensemble_config_alloc_full(char*)", bind=False)
     _free = ResPrototype("void ensemble_config_free( ens_config )")
     _has_key = ResPrototype("bool ensemble_config_has_key( ens_config , char* )")
@@ -41,15 +61,6 @@ class EnsembleConfig(BaseCClass):
     )
     _alloc_keylist = ResPrototype(
         "stringlist_obj ensemble_config_alloc_keylist( ens_config )"
-    )
-    _add_summary = ResPrototype(
-        "enkf_config_node_ref ensemble_config_add_summary( ens_config, char*, int)"
-    )
-    _add_gen_kw = ResPrototype(
-        "enkf_config_node_ref ensemble_config_add_gen_kw( ens_config, char*)"
-    )
-    _add_field = ResPrototype(
-        "enkf_config_node_ref ensemble_config_add_field( ens_config, char*, ecl_grid)"
     )
     _alloc_keylist_from_impl_type = ResPrototype(
         "stringlist_obj ensemble_config_alloc_keylist_from_impl_type(ens_config, \
@@ -76,6 +87,10 @@ class EnsembleConfig(BaseCClass):
         return EclGrid.load_from_file(grid_file)
 
     def _load_refcase(self, refcase_file: Optional[str]) -> Optional[EclSum]:
+        """
+        If the user has not given a refcase_file it will be
+        impossible to use wildcards when expanding summary variables.
+        """
         if refcase_file is None:
             return None
         # defaults for loading refcase - necessary for using the function
@@ -91,165 +106,271 @@ class EnsembleConfig(BaseCClass):
 
     def __init__(
         self,
-        config_content: Optional[ConfigContent] = None,
-        config_dict=None,
+        grid_file: Optional[str] = None,
+        ref_case_file: Optional[str] = None,
+        tag_format: str = "<%s>",
+        gen_data_list=None,
+        gen_kw_list=None,
+        surface_list=None,
+        summary_list=None,
+        schedule_file_list=None,
+        field_list=None,
     ):
-        if config_content is not None and config_dict is not None:
-            raise ValueError(
-                "Attempting to create EnsembleConfig "
-                "object with multiple config objects"
-            )
+        if gen_kw_list is None:
+            gen_kw_list = []
+        if gen_data_list is None:
+            gen_data_list = []
+        if surface_list is None:
+            surface_list = []
+        if summary_list is None:
+            summary_list = []
+        if schedule_file_list is None:
+            schedule_file_list = []
+        if field_list is None:
+            field_list = []
 
-        self._grid_file: Optional[str] = None
-        self._refcase_file: Optional[str] = None
-        c_ptr = None
-
-        if config_dict is not None:
-            c_ptr = self._alloc_full(config_dict.get(ConfigKeys.GEN_KW_TAG_FORMAT))
-            grid_file_path = _get_abs_path(config_dict.get(ConfigKeys.GRID))
-            self._grid_file: Optional[str] = grid_file_path
-            refcase_file_path = _get_abs_path(config_dict.get(ConfigKeys.REFCASE))
-            self._refcase_file: Optional[str] = refcase_file_path
-            self.grid = self._load_grid(self._grid_file)
-            self.refcase = self._load_refcase(self._refcase_file)
-
-        if config_content is not None:
-            if config_content.hasKey(ConfigKeys.GRID):
-                self._grid_file = config_content.getValue(ConfigKeys.GRID)
-            if config_content.hasKey(ConfigKeys.REFCASE):
-                self._refcase_file = config_content.getValue(ConfigKeys.REFCASE)
-            self.grid = self._load_grid(self._grid_file)
-            self.refcase = self._load_refcase(self._refcase_file)
-
-            c_ptr = self._alloc(config_content, self.grid, self.refcase)
+        self._grid_file = grid_file
+        self._refcase_file = ref_case_file
+        self.grid: Optional[EclGrid] = self._load_grid(grid_file)
+        self.refcase: Optional[EclSum] = self._load_refcase(ref_case_file)
+        self._gen_kw_tag_format = tag_format
+        c_ptr = self._alloc_full(self._gen_kw_tag_format)
 
         if c_ptr is None:
             raise ValueError("Failed to construct EnsembleConfig instance")
         super().__init__(c_ptr)
 
+        for gene_data in gen_data_list:
+            node = self.gen_data_node(gene_data)
+            if node is not None:
+                self.addNode(node)
+
+        for gen_kw in gen_kw_list:
+            gen_kw_node = self.gen_kw_node(gen_kw, tag_format)
+            self.addNode(gen_kw_node)
+
+        for surface in surface_list:
+            surface_node = self.get_surface_node(surface)
+            self.addNode(surface_node)
+
+        for key in summary_list:
+            if isinstance(key, list):
+                for kkey in key:
+                    self.add_summary_full(kkey, self.refcase)
+            else:
+                self.add_summary_full(key, self.refcase)
+
+        for field in field_list:
+            field_node = self.get_field_node(field, self.grid, self._get_trans_table())
+            self.addNode(field_node)
+
+        for schedule_file in schedule_file_list:
+            schedule_file_node = self._get_schedule_file_node(
+                schedule_file, self._gen_kw_tag_format
+            )
+            self.addNode(schedule_file_node)
+
+    @staticmethod
+    def gen_data_node(gen_data: Union[dict, list]) -> Optional[EnkfConfigNode]:
+        if isinstance(gen_data, dict):
+            name = gen_data.get(ConfigKeys.NAME)
+            res_file = gen_data.get(ConfigKeys.RESULT_FILE)
+            input_format = gen_data.get(ConfigKeys.INPUT_FORMAT)
+            report_steps = gen_data.get(ConfigKeys.REPORT_STEPS)
+        else:
+            options = _option_dict(gen_data, 1)
+            name = gen_data[0]
+            res_file = options.get(ConfigKeys.RESULT_FILE)
+            input_format_str = options.get(ConfigKeys.INPUT_FORMAT)
+            if input_format_str not in ["ASCII", "ASCII_TEMPLATE"]:
+                return None
+            input_format = GenDataFileType.from_string(input_format_str)
+            report_steps_str = options.get(ConfigKeys.REPORT_STEPS, "")
+            report_steps = rangestring_to_list(report_steps_str)
+
+        return EnkfConfigNode.create_gen_data_full(
+            name,
+            res_file,
+            input_format,
+            report_steps,
+        )
+
+    @staticmethod
+    def gen_kw_node(gen_kw: Union[dict, list], tag_format: str) -> EnkfConfigNode:
+        if isinstance(gen_kw, dict):
+            name = gen_kw.get(ConfigKeys.NAME)
+            tmpl_path = _get_abs_path(gen_kw.get(ConfigKeys.TEMPLATE))
+            out_file = _get_filename(gen_kw.get(ConfigKeys.OUT_FILE))
+            param_file_path = _get_abs_path(gen_kw.get(ConfigKeys.PARAMETER_FILE))
+            forward_init = gen_kw.get(ConfigKeys.FORWARD_INIT)
+            init_files = _get_abs_path(gen_kw.get(ConfigKeys.INIT_FILES))
+        else:
+            options = _option_dict(gen_kw, 4)
+            name = gen_kw[0]
+            tmpl_path = _get_abs_path(gen_kw[1])
+            out_file = _get_filename(_get_abs_path(gen_kw[2]))
+            param_file_path = _get_abs_path(gen_kw[3])
+            forward_init = _str_to_bool(options.get(ConfigKeys.FORWARD_INIT, "0"))
+            init_files = _get_abs_path(options.get(ConfigKeys.INIT_FILES))
+        return EnkfConfigNode.create_gen_kw(
+            name,
+            tmpl_path,
+            out_file,
+            param_file_path,
+            forward_init,
+            init_files,
+            tag_format,
+        )
+
+    @staticmethod
+    def get_surface_node(surface: Union[dict, list]) -> EnkfConfigNode:
+        if isinstance(surface, dict):
+            name = surface.get(ConfigKeys.NAME)
+            init_file = surface.get(ConfigKeys.INIT_FILES)
+            out_file = surface.get(ConfigKeys.OUT_FILE)
+            base_surface = surface.get(ConfigKeys.BASE_SURFACE_KEY)
+            forward_int = surface.get(ConfigKeys.FORWARD_INIT)
+        else:
+            options = _option_dict(surface, 1)
+            name = surface[0]
+            init_file = options.get(ConfigKeys.INIT_FILES)
+            out_file = options.get("OUTPUT_FILE")
+            base_surface = options.get(ConfigKeys.BASE_SURFACE_KEY)
+            forward_int = _str_to_bool(options.get(ConfigKeys.FORWARD_INIT, "0"))
+
+        return EnkfConfigNode.create_surface(
+            name,
+            init_file,
+            out_file,
+            base_surface,
+            forward_int,
+        )
+
+    @staticmethod
+    def get_field_node(
+        field: Union[dict, list], grid: Optional[EclGrid], trans_table: Any
+    ) -> EnkfConfigNode:
+        if isinstance(field, dict):
+            name = field.get(ConfigKeys.NAME)
+            var_type = field.get(ConfigKeys.VAR_TYPE)
+            out_file = field.get(ConfigKeys.OUT_FILE)
+            enkf_infile = field.get(ConfigKeys.ENKF_INFILE)
+            forward_init = field.get(ConfigKeys.FORWARD_INIT)
+            init_transform = field.get(ConfigKeys.INIT_TRANSFORM)
+            output_transform = field.get(ConfigKeys.OUTPUT_TRANSFORM)
+            input_transform = field.get(ConfigKeys.INPUT_TRANSFORM)
+            min_ = field.get(ConfigKeys.MIN_KEY)
+            max_ = field.get(ConfigKeys.MAX_KEY)
+            init_files = field.get(ConfigKeys.INIT_FILES)
+        else:
+            name = field[0]
+            var_type = field[1]
+            out_file = field[2]
+            enkf_infile = None
+            options = _option_dict(field, 2)
+            if var_type == ConfigKeys.GENERAL_KEY:
+                enkf_infile = field[3]
+            forward_init = _str_to_bool(options.get(ConfigKeys.FORWARD_INIT, "0"))
+            init_transform = options.get(ConfigKeys.INIT_TRANSFORM)
+            output_transform = options.get(ConfigKeys.OUTPUT_TRANSFORM)
+            input_transform = options.get(ConfigKeys.INPUT_TRANSFORM)
+            min_ = options.get(ConfigKeys.MIN_KEY)
+            max_ = options.get(ConfigKeys.MAX_KEY)
+            init_files = options.get(ConfigKeys.INIT_FILES)
+        return EnkfConfigNode.create_field(
+            name,
+            var_type,
+            grid,
+            trans_table,
+            out_file,
+            enkf_infile,
+            forward_init,
+            init_transform,
+            output_transform,
+            input_transform,
+            min_,
+            max_,
+            init_files,
+        )
+
+    @classmethod
+    def _get_schedule_file_node(
+        cls, schedule_file: Union[dict, list, str], tag_format: str
+    ) -> EnkfConfigNode:
+        if isinstance(schedule_file, dict):
+            file_path = schedule_file.get(ConfigKeys.TEMPLATE)
+            file_name = _get_filename(file_path)
+            parameter = schedule_file.get(ConfigKeys.PARAMETER_KEY)
+            init_files = schedule_file.get(ConfigKeys.INIT_FILES)
+        else:
+            file_path = schedule_file[0]
+            if isinstance(schedule_file, str):
+                file_path = schedule_file
+            file_name = _get_filename(file_path)
+            options = _option_dict(file_path, 1)
+            parameter = options.get(ConfigKeys.PARAMETER_KEY)
+            init_files = options.get(ConfigKeys.INIT_FILES)
+
+        return EnkfConfigNode.create_gen_kw(
+            ConfigKeys.PRED_KEY,
+            file_path,
+            file_name,
+            parameter,
+            False,
+            init_files,
+            tag_format,
+        )
+
     @classmethod
     def from_dict(cls, config_dict):
-        ens_config = cls(config_dict=config_dict)
+        grid_file_path = _get_abs_path(config_dict.get(ConfigKeys.GRID))
+        refcase_file_path = _get_abs_path(config_dict.get(ConfigKeys.REFCASE))
+        tag_format = config_dict.get(ConfigKeys.GEN_KW_TAG_FORMAT, "<%s>")
         gen_data_list = config_dict.get(ConfigKeys.GEN_DATA, [])
-        for gene_data in gen_data_list:
-            gen_data_node = EnkfConfigNode.create_gen_data_full(
-                gene_data.get(ConfigKeys.NAME),
-                gene_data.get(ConfigKeys.RESULT_FILE),
-                gene_data.get(ConfigKeys.INPUT_FORMAT),
-                gene_data.get(ConfigKeys.REPORT_STEPS),
-            )
-            ens_config.addNode(gen_data_node)
-
         gen_kw_list = config_dict.get(ConfigKeys.GEN_KW, [])
-        for gen_kw in gen_kw_list:
-            gen_kw_node = EnkfConfigNode.create_gen_kw(
-                gen_kw.get(ConfigKeys.NAME),
-                _get_abs_path(gen_kw.get(ConfigKeys.TEMPLATE)),
-                gen_kw.get(ConfigKeys.OUT_FILE),
-                _get_abs_path(gen_kw.get(ConfigKeys.PARAMETER_FILE)),
-                gen_kw.get(ConfigKeys.FORWARD_INIT),
-                gen_kw.get(ConfigKeys.INIT_FILES),
-                config_dict.get(ConfigKeys.GEN_KW_TAG_FORMAT),
-            )
-            ens_config.addNode(gen_kw_node)
-
         surface_list = config_dict.get(ConfigKeys.SURFACE_KEY, [])
-        for surface in surface_list:
-            surface_node = EnkfConfigNode.create_surface(
-                surface.get(ConfigKeys.NAME),
-                surface.get(ConfigKeys.INIT_FILES),
-                surface.get(ConfigKeys.OUT_FILE),
-                surface.get(ConfigKeys.BASE_SURFACE_KEY),
-                surface.get(ConfigKeys.FORWARD_INIT),
-            )
-            ens_config.addNode(surface_node)
-
         summary_list = config_dict.get(ConfigKeys.SUMMARY, [])
-        for a in summary_list:
-            ens_config.add_summary_full(a, ens_config.refcase)
-
-        field_list = config_dict.get(ConfigKeys.FIELD_KEY, [])
-        for field in field_list:
-            field_node = EnkfConfigNode.create_field(
-                field.get(ConfigKeys.NAME),
-                field.get(ConfigKeys.VAR_TYPE),
-                ens_config.grid,
-                ens_config._get_trans_table(),
-                field.get(ConfigKeys.OUT_FILE),
-                field.get(ConfigKeys.ENKF_INFILE),
-                field.get(ConfigKeys.FORWARD_INIT),
-                field.get(ConfigKeys.INIT_TRANSFORM),
-                field.get(ConfigKeys.OUTPUT_TRANSFORM),
-                field.get(ConfigKeys.INPUT_TRANSFORM),
-                field.get(ConfigKeys.MIN_KEY),
-                field.get(ConfigKeys.MAX_KEY),
-                field.get(ConfigKeys.INIT_FILES),
-            )
-            ens_config.addNode(field_node)
-
+        if isinstance(summary_list, str):
+            summary_list = [summary_list]
         schedule_file_list = config_dict.get(ConfigKeys.SCHEDULE_PREDICTION_FILE, [])
-        for schedule_file in schedule_file_list:
-            schedule_file_node = EnkfConfigNode.create_gen_kw(
-                ConfigKeys.PRED_KEY,
-                schedule_file.get(ConfigKeys.TEMPLATE),
-                _get_filename(schedule_file.get(ConfigKeys.TEMPLATE)),
-                schedule_file.get(ConfigKeys.PARAMETER_KEY),
-                False,
-                schedule_file.get(ConfigKeys.INIT_FILES),
-                config_dict.get(ConfigKeys.GEN_KW_TAG_FORMAT),
-            )
-            ens_config.addNode(schedule_file_node)
+        if isinstance(schedule_file_list, str):
+            schedule_file_list = [[schedule_file_list]]
+        field_list = config_dict.get(ConfigKeys.FIELD_KEY, [])
+
+        ens_config = cls(
+            grid_file=grid_file_path,
+            ref_case_file=refcase_file_path,
+            tag_format=tag_format,
+            gen_data_list=gen_data_list,
+            gen_kw_list=gen_kw_list,
+            surface_list=surface_list,
+            summary_list=summary_list,
+            schedule_file_list=schedule_file_list,
+            field_list=field_list,
+        )
+
         return ens_config
 
     def __len__(self):
         return self._size()
+
+    def _node_info(self, node: str) -> str:
+        impl_type = ErtImplType.from_string(node)
+        key_list = self.getKeylistFromImplType(impl_type)
+        return f"{node}: " f"{[self.getNode(key) for key in key_list]}, "
 
     def __repr__(self):
         if not self._address():
             return "<EnsembleConfig()>"
         return (
             "EnsembleConfig(config_dict={"
-            + f"{ConfigKeys.GEN_KW}: ["
-            + ", ".join(
-                f"{self.getNode(key)}"
-                for key in self.alloc_keylist()
-                if self.getNode(key).getImplementationType() == ErtImplType.GEN_KW
-            )
-            + "], "
-            + f"{ConfigKeys.GEN_DATA}: ["
-            + ", ".join(
-                f"{self.getNode(key)}"
-                for key in self.alloc_keylist()
-                if self.getNode(key).getImplementationType() == ErtImplType.GEN_DATA
-                and self.getNode(key).getVariableType() == EnkfVarType.DYNAMIC_RESULT
-            )
-            + "], "
-            + f"{ConfigKeys.SURFACE_KEY}: ["
-            + ", ".join(
-                f"{self.getNode(key)}"
-                for key in self.alloc_keylist()
-                if self.getNode(key).getImplementationType() == ErtImplType.SURFACE
-            )
-            + "], "
-            + f"{ConfigKeys.SUMMARY}: ["
-            + ", ".join(
-                f"{self.getNode(key)}"
-                for key in self.alloc_keylist()
-                if self.getNode(key).getImplementationType() == ErtImplType.SUMMARY
-            )
-            + "], "
-            + f"{ConfigKeys.FIELD_KEY}: ["
-            + ", ".join(
-                f"{self.getNode(key)}"
-                for key in self.alloc_keylist()
-                if self.getNode(key).getImplementationType() == ErtImplType.FIELD
-            )
-            + "], "
-            + f"{ConfigKeys.GRID}: "
-            + f"{self._grid_file}"
-            + ", "
-            + f"{ConfigKeys.REFCASE}: "
-            + f"{self._refcase_file}"
+            + self._node_info(ConfigKeys.GEN_KW)
+            + self._node_info(ConfigKeys.GEN_DATA)
+            + self._node_info(ConfigKeys.SURFACE_KEY)
+            + self._node_info(ConfigKeys.SUMMARY)
+            + self._node_info(ConfigKeys.FIELD_KEY)
+            + f"{ConfigKeys.GRID}: {self._grid_file},"
+            + f"{ConfigKeys.REFCASE}: {self._refcase_file}"
             + "}"
         )
 
@@ -265,22 +386,13 @@ class EnsembleConfig(BaseCClass):
     def alloc_keylist(self) -> StringList:
         return self._alloc_keylist()
 
-    def add_summary(self, key) -> EnkfConfigNode:
-        return self._add_summary(key, 2).setParent(self)
-
     def add_summary_full(self, key, refcase) -> EnkfConfigNode:
         return self._add_summary_full(key, refcase)
-
-    def add_gen_kw(self, key) -> EnkfConfigNode:
-        return self._add_gen_kw(key).setParent(self)
 
     def addNode(self, config_node: EnkfConfigNode):
         assert isinstance(config_node, EnkfConfigNode)
         self._add_node(config_node)
         config_node.convertToCReference(self)
-
-    def add_field(self, key, eclipse_grid: EclGrid) -> EnkfConfigNode:
-        return self._add_field(key, eclipse_grid).setParent(self)
 
     def getKeylistFromVarType(self, var_mask: EnkfVarType) -> List[str]:
         assert isinstance(var_mask, EnkfVarType)
@@ -293,7 +405,7 @@ class EnsembleConfig(BaseCClass):
         return list(self._alloc_keylist_from_impl_type(ert_impl_type))
 
     @property
-    def get_grid_file(self) -> Optional[str]:
+    def grid_file(self) -> Optional[str]:
         return self._grid_file
 
     @property

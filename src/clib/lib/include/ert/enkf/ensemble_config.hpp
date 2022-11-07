@@ -26,10 +26,6 @@ void ensemble_config_set_refcase(ensemble_config_type *ensemble_config,
 void ensemble_config_set_gen_kw_format(ensemble_config_type *ensemble_config,
                                        const char *gen_kw_format_string);
 
-enkf_config_node_type *
-ensemble_config_add_surface(ensemble_config_type *ensemble_config,
-                            const char *key, bool forward_init);
-
 extern "C" void ensemble_config_add_node(ensemble_config_type *ensemble_config,
                                          enkf_config_node_type *node);
 enkf_config_node_type *
@@ -42,18 +38,9 @@ enkf_config_node_type *
 ensemble_config_add_summary_observation(ensemble_config_type *ensemble_config,
                                         const char *key,
                                         load_fail_type load_fail);
-extern "C" enkf_config_node_type *
-ensemble_config_add_gen_kw(ensemble_config_type *config, const char *key,
-                           bool forward_init);
-extern "C" enkf_config_node_type *
-ensemble_config_add_field(ensemble_config_type *config, const char *key,
-                          ecl_grid_type *ecl_grid, bool forward_init);
 void ensemble_config_clear_obs_keys(ensemble_config_type *ensemble_config);
 void ensemble_config_add_obs_key(ensemble_config_type *, const char *,
                                  const char *);
-const enkf_config_node_type *
-ensemble_config_user_get_node(const ensemble_config_type *, const char *,
-                              char **);
 extern "C" void ensemble_config_free(ensemble_config_type *);
 extern "C" bool ensemble_config_has_key(const ensemble_config_type *,
                                         const char *);
@@ -77,9 +64,6 @@ ensemble_config_keylist_from_var_type(const ensemble_config_type *,
 extern "C" stringlist_type *
 ensemble_config_alloc_keylist_from_impl_type(const ensemble_config_type *,
                                              ert_impl_type);
-extern "C" ensemble_config_type *
-ensemble_config_alloc(const config_content_type *, ecl_grid_type *,
-                      const ecl_sum_type *);
 extern "C" PY_USED ensemble_config_type *
 ensemble_config_alloc_full(const char *gen_kw_format_string);
 extern "C" void ensemble_config_init_SUMMARY_full(ensemble_config_type *,

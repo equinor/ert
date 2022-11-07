@@ -6,19 +6,20 @@ from ecl.grid.ecl_grid import EclGrid
 from ecl.summary import EclSum
 
 from ert._c_wrappers.enkf import ConfigKeys, EnsembleConfig
-from ert._c_wrappers.enkf.enums import GenDataFileType
+from ert._c_wrappers.enkf.enums import EnkfVarType, ErtImplType, GenDataFileType
 
 
 def test_create():
-    with pytest.raises(ValueError):
-        EnsembleConfig()
+    empty_ens_conf = EnsembleConfig()
+    conf_from_dict = EnsembleConfig.from_dict({})
 
-    conf = EnsembleConfig.from_dict({})
-    assert len(conf) == 0
-    assert "XYZ" not in conf
+    assert empty_ens_conf == conf_from_dict
+
+    assert len(conf_from_dict) == 0
+    assert "XYZ" not in conf_from_dict
 
     with pytest.raises(KeyError):
-        _ = conf["KEY"]
+        _ = conf_from_dict["KEY"]
 
 
 def test_ensemble_config_constructor(setup_case):
@@ -31,7 +32,7 @@ def test_ensemble_config_constructor(setup_case):
                     ConfigKeys.NAME: "SNAKE_OIL_OPR_DIFF",
                     ConfigKeys.INPUT_FORMAT: GenDataFileType.ASCII,
                     ConfigKeys.RESULT_FILE: "snake_oil_opr_diff_%d.txt",
-                    ConfigKeys.REPORT_STEPS: [199],
+                    ConfigKeys.REPORT_STEPS: [0, 1, 2, 199],
                 },
                 {
                     ConfigKeys.NAME: "SNAKE_OIL_GPR_DIFF",
@@ -59,7 +60,19 @@ def test_ensemble_config_constructor(setup_case):
                     ConfigKeys.FORWARD_INIT: False,
                 }
             ],
-            ConfigKeys.SUMMARY: ["WOPR:OP_1"],
+            ConfigKeys.SUMMARY: [
+                "WOPR:OP_1",
+                "WOPR:PROD",
+                "WOPT:PROD",
+                "WWPR:PROD",
+                "WWCT:PROD",
+                "WWPT:PROD",
+                "WBHP:PROD",
+                "WWIR:INJ",
+                "WWIT:INJ",
+                "WBHP:INJ",
+                "ROE:1",
+            ],
             ConfigKeys.FIELD_KEY: [
                 {
                     ConfigKeys.NAME: "PERMX",
@@ -129,7 +142,7 @@ def test_ensemble_config_construct_refcase_and_grid(setup_case):
     grid_file = "grid/CASE.EGRID"
     refcase_file = "input/refcase/SNAKE_OIL_FIELD"
 
-    ec = EnsembleConfig(
+    ec = EnsembleConfig.from_dict(
         config_dict={
             ConfigKeys.GRID: grid_file,
             ConfigKeys.REFCASE: refcase_file,
@@ -159,3 +172,78 @@ def test_that_refcase_gets_correct_name(tmpdir):
 
         ec = EnsembleConfig.from_dict(config_dict=config_dict)
         assert os.path.realpath(refcase_name) == ec.refcase.case
+
+
+@pytest.mark.parametrize(
+    "gen_data_str, expected",
+    [
+        ("GEN_DATA_KEY RESULT_FILE:Results INPUT_FORMAT:ASCII REPORT_STEPS:10", None),
+        ("GEN_DATA_KEY RESULT_FILE:Results INPUT_FORMAT:ASCII", None),
+        (
+            "GEN_DATA_KEY RESULT_FILE:Results%d INPUT_FORMAT:GEN_DATA_UNDEFINED"
+            " REPORT_STEPS:10",
+            None,
+        ),
+        (
+            "GEN_DATA_KEY RESULT_FILE:Results%d INPUT_FORMAT:ASCIIX REPORT_STEPS:10",
+            None,
+        ),
+        ("GEN_DATA_KEY RESULT_FILE:Results%d REPORT_STEPS:10", None),
+        (
+            "GEN_DATA_KEY RESULT_FILE:Results%d INPUT_FORMAT:ASCII"
+            " REPORT_STEPS:10,20,30",
+            "Valid",
+        ),
+    ],
+)
+def test_gen_data_node(gen_data_str, expected):
+    node = EnsembleConfig.gen_data_node(gen_data_str.split(" "))
+    if expected is None:
+        assert node == expected
+    else:
+        assert node is not None
+        assert node.getVariableType() == EnkfVarType.DYNAMIC_RESULT
+        assert node.getImplementationType() == ErtImplType.GEN_DATA
+        assert node.getDataModelConfig().getNumReportStep() == 3
+        assert node.getDataModelConfig().hasReportStep(10)
+        assert node.getDataModelConfig().hasReportStep(20)
+        assert node.getDataModelConfig().hasReportStep(30)
+        assert not node.getDataModelConfig().hasReportStep(32)
+        assert node.get_init_file_fmt() is None
+        assert node.get_enkf_outfile() is None
+        assert node.getDataModelConfig().getInputFormat() == GenDataFileType.ASCII
+
+
+def test_get_surface_node(setup_case, caplog):
+    _ = setup_case("configuration_tests", "ensemble_config.ert")
+    surface_str = "TOP"
+    with pytest.raises(ValueError):
+        EnsembleConfig.get_surface_node(surface_str.split(" "))
+
+    surface_in = "surface/small.irap"
+    surface_out = "surface/small_out.irap"
+    # add init file
+    surface_str += f" INIT_FILES:{surface_in}"
+
+    with pytest.raises(ValueError):
+        EnsembleConfig.get_surface_node(surface_str.split(" "))
+
+    # add output file
+    surface_str += f" OUTPUT_FILE:{surface_out}"
+    with pytest.raises(ValueError):
+        EnsembleConfig.get_surface_node(surface_str.split(" "))
+
+    # add base surface
+    surface_str += f" BASE_SURFACE:{surface_in}"
+
+    surface_node = EnsembleConfig.get_surface_node(surface_str.split(" "))
+
+    assert surface_node is not None
+
+    assert surface_node.get_init_file_fmt() == surface_in
+    assert surface_node.get_enkf_outfile() == surface_out
+    assert not surface_node.getUseForwardInit()
+
+    surface_str += " FORWARD_INIT:TRUE"
+    surface_node = EnsembleConfig.get_surface_node(surface_str.split(" "))
+    assert surface_node.getUseForwardInit()
