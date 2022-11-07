@@ -13,7 +13,6 @@
 #include <ert/ecl/ecl_sum.h>
 
 #include <ert/job_queue/environment_varlist.hpp>
-#include <ert/job_queue/forward_model.hpp>
 
 #include "ert/enkf/ensemble_config.hpp"
 #include "ert/enkf/model_config.hpp"

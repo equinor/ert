@@ -44,7 +44,6 @@ pybind11_add_module(
   analysis/update.cpp
   job_queue/ext_job.cpp
   job_queue/ext_joblist.cpp
-  job_queue/forward_model.cpp
   job_queue/job_status.cpp
   job_queue/job_list.cpp
   job_queue/job_node.cpp

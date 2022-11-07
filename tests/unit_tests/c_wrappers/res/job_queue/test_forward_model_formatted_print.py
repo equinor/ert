@@ -275,9 +275,9 @@ def set_up_forward_model(selected_jobs=None):
     for job in jobs:
         ext_joblist.add_job(job.name(), job)
 
-    forward_model = ForwardModel(ext_joblist)
-    for index in selected_jobs:
-        forward_model.add_job(jobs[index].name())
+    forward_model = ForwardModel(
+        jobs=[jobs[i] for i in selected_jobs], ext_joblist=ext_joblist
+    )
 
     return forward_model
 
@@ -346,8 +346,7 @@ def test_transfer_arg_types():
 
     ext_joblist = ExtJoblist()
     ext_joblist.add_job(job.name(), job)
-    forward_model = ForwardModel(ext_joblist)
-    forward_model.add_job("FWD_MODEL")
+    forward_model = ForwardModel(jobs=[job], ext_joblist=ext_joblist)
 
     run_id = "test_no_jobs_id"
 
@@ -512,7 +511,7 @@ def test_status_file():
 
 
 def test_that_values_with_brackets_are_ommitted(tmp_path):
-    forward_model = ForwardModel(ExtJoblist())
+    forward_model = ForwardModel([], ExtJoblist())
     env_vars = EnvironmentVarlist({"ENV_VAR": "<SOME_BRACKETS>"})
     run_id = "test_no_jobs_id"
     forward_model.formatted_fprintf(

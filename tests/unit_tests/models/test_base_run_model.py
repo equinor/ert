@@ -3,7 +3,7 @@ from unittest.mock import MagicMock
 import pytest
 
 from ert._c_wrappers.enkf import EnKFMain, RunContext
-from ert._c_wrappers.job_queue import RunStatusType
+from ert._c_wrappers.job_queue import ExtJoblist, ForwardModel, RunStatusType
 from ert.shared.models import BaseRunModel
 
 
@@ -30,10 +30,10 @@ class MockJob:
 @pytest.mark.parametrize(
     "test_input, expected",
     [
-        ([MockJob("Success")], True),
-        ([MockJob("Failure")], False),
-        ([MockJob("Success"), MockJob("Success")], True),
-        ([MockJob("Failure"), MockJob("Success")], False),
+        (ForwardModel([MockJob("Success")], ExtJoblist()), True),
+        (ForwardModel([MockJob("Failure")], ExtJoblist()), False),
+        (ForwardModel([MockJob("Success"), MockJob("Success")], ExtJoblist()), True),
+        (ForwardModel([MockJob("Failure"), MockJob("Success")], ExtJoblist()), False),
     ],
 )
 def test_is_forward_model_finished(test_input, expected):
