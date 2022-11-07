@@ -23,7 +23,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: ['ubuntu-latest', 'macos-10.15']
+        os: ['ubuntu-latest', 'macos-latest']
 
     runs-on: ${{ matrix.os }}
 
@@ -39,9 +39,11 @@ jobs:
     - name: Install dependencies from PyPI
       run: |
         python3 -m pip install conan pybind11
+        echo "PIP_PKGS_PATH=$(python3 -m pip show conan | grep Location | cut -d ' ' -f 2 | sed -e 's@/lib/.*site-packages$@/bin@')" >> $GITHUB_ENV
 
     - name: Build libecl
       run: |
+        export PATH=$PATH:${{ env.PIP_PKGS_PATH }}
         git clone https://github.com/equinor/libecl
         mkdir libecl/build
         cmake -S libecl -B libecl/build -DCMAKE_BUILD_TYPE=RelWithDebInfo
@@ -50,6 +52,7 @@ jobs:
 
     - name: Build ert clib
       run: |
+        export PATH=$PATH:${{ env.PIP_PKGS_PATH }}
         mkdir cmake-build
         cmake -S src/clib -B cmake-build -DCMAKE_BUILD_TYPE=RelWithDebInfo -DBUILD_TESTS=ON -DCOVERAGE=ON
         cmake --build cmake-build -j2
@@ -66,6 +69,7 @@ jobs:
 
     - name: generate coverage report
       run: |
+        export PATH=$PATH:${{ env.PIP_PKGS_PATH }}
         gcovr -r src/clib/ --exclude-directories ".*tests" cmake-build/ --xml -o cov.xml
 
     - name: Upload c coverage to Codecov
@@ -179,7 +183,7 @@ jobs:
       run: |
         pytest tests -sv  --hypothesis-profile=ci -m "not integration_test and not requires_window_manager"
 
-    - name: Integration Test 
+    - name: Integration Test
       if: matrix.test-type == 'integration-tests'
       run: |
         pytest tests -sv --hypothesis-profile=ci -m "integration_test and not requires_window_manager"
