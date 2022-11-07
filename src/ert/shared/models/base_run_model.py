@@ -279,7 +279,7 @@ class BaseRunModel:
 
     @staticmethod
     def is_forward_model_finished(progress: ForwardModel) -> bool:
-        return all(job.status == "Success" for job in progress)
+        return all(job.status == "Success" for job in progress.jobs)
 
     def isIndeterminate(self) -> bool:
         return not self.isFinished() and self._indeterminate
@@ -349,8 +349,7 @@ class BaseRunModel:
             step = StepBuilder().set_id("0").set_dummy_io().set_name("legacy step")
             if active:
                 real.active(True).add_step(step)
-                for index in range(0, len(self.get_forward_model())):
-                    ext_job = self.get_forward_model().iget_job(index)
+                for index, ext_job in enumerate(self.get_forward_model().jobs):
                     step.add_job(
                         LegacyJobBuilder()
                         .set_id(str(index))

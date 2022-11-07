@@ -139,8 +139,8 @@ def test_new_config():
         }
     )
     forward_model = prog_res_config.forward_model
-    assert forward_model.iget_job(0).get_arglist() == ["Hello", "True", "3.14", "4"]
-    assert forward_model.iget_job(1).get_arglist() == ["word"]
+    assert forward_model.jobs[0].get_arglist() == ["Hello", "True", "3.14", "4"]
+    assert forward_model.jobs[1].get_arglist() == ["word"]
 
 
 def test_large_config(setup_case):

@@ -11,7 +11,6 @@
 #include <ert/ecl/fortio.h>
 
 #include <ert/job_queue/ext_joblist.hpp>
-#include <ert/job_queue/forward_model.hpp>
 #include <ert/job_queue/job_queue.hpp>
 
 #include <ert/enkf/enkf_fs.hpp>

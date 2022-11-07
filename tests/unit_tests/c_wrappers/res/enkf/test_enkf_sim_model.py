@@ -115,8 +115,8 @@ def test_forward_model_job(job, forward_model, expected_args):
     ert = EnKFMain(res_config)
 
     forward_model = ert.resConfig().forward_model
-    assert forward_model.get_size() == 1
-    assert forward_model.iget_job(0).get_argvalues() == expected_args
+    assert len(forward_model.jobs) == 1
+    assert forward_model.jobs[0].get_argvalues() == expected_args
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -169,8 +169,8 @@ def test_simulation_job(job, forward_model, expected_args):
     ert = EnKFMain(res_config)
 
     forward_model = ert.resConfig().forward_model
-    forward_model_job = forward_model.iget_job(0)
-    assert forward_model.get_size() == 1
+    forward_model_job = forward_model.jobs[0]
+    assert len(forward_model.jobs) == 1
     assert forward_model_job.get_argvalues() == expected_args
     assert forward_model_job.get_arglist() == expected_args
     assert forward_model_job.valid_args(

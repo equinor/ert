@@ -1,12 +1,10 @@
 import json
 import logging
 import os
+from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING, Iterator, List, Optional
+from typing import TYPE_CHECKING, List, Optional
 
-from cwrap import BaseCClass
-
-from ert._c_wrappers import ResPrototype
 from ert._c_wrappers.job_queue import EnvironmentVarlist, ExtJob, ExtJoblist
 from ert._clib import job_kw
 
@@ -16,49 +14,13 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-class ForwardModel(BaseCClass):
-    TYPE_NAME = "forward_model"
-
-    _alloc = ResPrototype("void* forward_model_alloc(ext_joblist)", bind=False)
-    _free = ResPrototype("void forward_model_free( forward_model )")
-    _clear = ResPrototype("void forward_model_clear(forward_model)")
-    _add_job = ResPrototype("ext_job_ref forward_model_add_job(forward_model, char*)")
-    _alloc_joblist = ResPrototype(
-        "stringlist_obj forward_model_alloc_joblist(forward_model)"
-    )
-    _iget_job = ResPrototype("ext_job_ref forward_model_iget_job( forward_model, int)")
-    _get_length = ResPrototype("int forward_model_get_length(forward_model)")
-
-    def __init__(self, ext_joblist: ExtJoblist):
-        c_ptr = self._alloc(ext_joblist)
-        if c_ptr:
-            super().__init__(c_ptr)
-        else:
-            raise ValueError(
-                "Failed to construct forward model "
-                f"from provided ext_joblist {ext_joblist}"
-            )
-
-    def __len__(self) -> int:
-        return self._get_length()
+@dataclass
+class ForwardModel:
+    jobs: List[ExtJob]
+    ext_joblist: ExtJoblist
 
     def job_name_list(self) -> List[str]:
-        return list(self._alloc_joblist())
-
-    def iget_job(self, index) -> ExtJob:
-        return self._iget_job(index).setParent(self)
-
-    def add_job(self, name: str) -> ExtJob:
-        return self._add_job(name).setParent(self)
-
-    def __iter__(self) -> Iterator[ExtJob]:
-        return iter([self.iget_job(idx) for idx in range(len(self))])
-
-    def clear(self):
-        self._clear()
-
-    def free(self):
-        self._free()
+        return [j.name() for j in self.jobs]
 
     def formatted_fprintf(
         self,
@@ -143,25 +105,10 @@ class ForwardModel(BaseCClass):
                             ],
                             "max_arg": positive_or_null_int(job.max_arg),
                         }
-                        for idx, job in enumerate(self)
+                        for idx, job in enumerate(self.jobs)
                     ],
                     "run_id": run_id,
                     "ert_pid": str(os.getpid()),
                 },
                 fptr,
             )
-
-    def __repr__(self) -> str:
-        return self._create_repr(f"joblist={self.job_name_list()}")
-
-    def get_size(self) -> int:
-        return len(self)
-
-    def __ne__(self, other) -> bool:
-        return not self == other
-
-    def __eq__(self, other) -> bool:
-        for i in range(len(self)):
-            if self.iget_job(i) != other.iget_job(i):
-                return False
-        return True

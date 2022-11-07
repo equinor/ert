@@ -358,24 +358,28 @@ class ResConfig:
                     "Loading GEN_KW from files requires %d in file format"
                 )
 
-        self.forward_model = ForwardModel(ext_joblist=self.site_config.job_list)
-        self.forward_model.convertToCReference(None)
-
+        jobs = []
         # FORWARD_MODEL_KEY
         for job_description in config_content_dict.get(ConfigKeys.FORWARD_MODEL, []):
             job_name, args = parse_signature_job("".join(job_description))
-            job = self.forward_model.add_job(job_name)
+            job = self.site_config.job_list.get_job_copy(job_name)
             if args is not None:
                 job.set_private_args_as_string(args)
                 job.set_define_args(self.substitution_list)
             job.convertToCReference(None)
+            jobs.append(job)
 
         # SIMULATION_JOB_KEY
         for job_description in config_content_dict.get(ConfigKeys.SIMULATION_JOB, []):
-            job = self.forward_model.add_job(job_description[0])
+            job = self.site_config.job_list.get_job_copy(job_description[0])
             job.set_arglist(job_description[1:])
             job.set_define_args(self.substitution_list)
             job.convertToCReference(None)
+            jobs.append(job)
+
+        self.forward_model = ForwardModel(
+            jobs=jobs, ext_joblist=self.site_config.job_list
+        )
         self.model_config = ModelConfig(
             data_root=self.config_path,
             refcase=self.ensemble_config.refcase,
@@ -462,20 +466,28 @@ class ResConfig:
                     "Loading GEN_KW from files requires %d in file format"
                 )
 
+        jobs = []
         # FORWARD_MODEL_KEY
-        self.forward_model = ForwardModel(ext_joblist=self.site_config.job_list)
-        self.forward_model.convertToCReference(None)
-        # SIMULATION_JOB_KEY
         for job_description in config_dict.get(ConfigKeys.FORWARD_MODEL, []):
-            job = self.forward_model.add_job(job_description[ConfigKeys.NAME])
+            job = self.site_config.job_list.get_job_copy(
+                job_description[ConfigKeys.NAME]
+            )
             job.set_private_args_as_string(job_description.get(ConfigKeys.ARGLIST))
             job.convertToCReference(None)
+            jobs.append(job)
 
         # SIMULATION_JOB_KEY
         for job_description in config_dict.get(ConfigKeys.SIMULATION_JOB, []):
-            job = self.forward_model.add_job(job_description[ConfigKeys.NAME])
+            job = self.site_config.job_list.get_job_copy(
+                job_description[ConfigKeys.NAME]
+            )
             job.set_private_args_as_string(job_description.get(ConfigKeys.ARGLIST))
             job.convertToCReference(None)
+            jobs.append(job)
+
+        self.forward_model = ForwardModel(
+            jobs=jobs, ext_joblist=self.site_config.job_list
+        )
         self.model_config = ModelConfig(
             data_root=self.config_path,
             refcase=self.ensemble_config.refcase,

@@ -1,4 +1,4 @@
-from typing import Dict, Iterator, List
+from typing import Dict, Iterator, List, Optional
 
 from cwrap import BaseCClass
 
@@ -12,6 +12,9 @@ class ExtJoblist(BaseCClass):
     _free = ResPrototype("void ext_joblist_free( ext_joblist )")
     _alloc_list = ResPrototype("stringlist_ref ext_joblist_alloc_list(ext_joblist)")
     _get_job = ResPrototype("ext_job_ref ext_joblist_get_job(ext_joblist, char*)")
+    _get_job_copy = ResPrototype(
+        "ext_job_ref ext_joblist_get_job_copy(ext_joblist, char*)"
+    )
     _del_job = ResPrototype("int ext_joblist_del_job(ext_joblist, char*)")
     _has_job = ResPrototype("int ext_joblist_has_job(ext_joblist, char*)")
     _add_job = ResPrototype("void ext_joblist_add_job(ext_joblist, char*, ext_job)")
@@ -53,6 +56,9 @@ class ExtJoblist(BaseCClass):
 
     def get_job(self, job_name: str) -> ExtJob:
         return self[job_name]
+
+    def get_job_copy(self, job_name: str) -> Optional[ExtJob]:
+        return self._get_job_copy(job_name)
 
     def add_job(self, job_name: str, new_job: ExtJob):
         if not new_job.isReference():
