@@ -41,20 +41,25 @@ def check_cxx_version() -> None:
     """
     Check that the user's compiler is compatible with ERT.
     """
-    cxx = Path(shutil.which(os.environ.get("CXX", "c++"))).resolve()
+    cxx_path = Path(shutil.which(os.environ.get("CXX", "c++")))
     print_info(f"Using C++ compiler: {cxx}")
 
-    version_line = subprocess.check_output([cxx, "--version"]).splitlines()[0].decode()
-    version_match = re.search(r"(\d+)\.(\d+)\.(\d+)", version_line)
-    if version_match is None:
-        print_error("Could not extract version information from C++ compiler")
-        sys.exit(1)
-    version = tuple(int(version_match[x + 1]) for x in range(3))
+    for cxx in cxx_path, cxx_path.resolve():
+        version_line = (
+            subprocess.check_output([cxx, "--version"]).splitlines()[0].decode()
+        )
+        version_match = re.search(r"(\d+)\.(\d+)\.(\d+)", version_line)
+        if version_match is None:
+            print_error("Could not extract version information from C++ compiler")
+            sys.exit(1)
+        version = tuple(int(version_match[x + 1]) for x in range(3))
 
-    if "GCC" in version_line or "g++" in version_line:
-        min_version = MIN_GCC_VERSION
-    elif "clang" in version_line:
-        min_version = MIN_CLANG_VERSION
+        if "GCC" in version_line or "g++" in version_line:
+            min_version = MIN_GCC_VERSION
+            break
+        elif "clang" in version_line:
+            min_version = MIN_CLANG_VERSION
+            break
     else:
         print_error("Unknown C++ compiler. (Neither GCC nor clang)")
         sys.exit(1)
