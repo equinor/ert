@@ -375,11 +375,10 @@ C_USED void gen_data_clear(gen_data_type *gen_data) {
         data[i] = 0;
 }
 
-void gen_data_copy_to_double_vector(const gen_data_type *gen_data,
-                                    double_vector_type *vector) {
+double *gen_data_get_double_vector(const gen_data_type *gen_data) {
     int size = gen_data_get_size(gen_data);
     double *data = (double *)gen_data->data;
-    double_vector_memcpy_from_data(vector, data, size);
+    return data;
 }
 
 VOID_USER_GET(gen_data)

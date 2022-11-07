@@ -29,7 +29,6 @@ foreach(
   enkf_obs_vector
   enkf_plot_gen_kw
   enkf_plot_gen_kw_vector
-  enkf_plot_genvector
   enkf_plot_tvector
   enkf_run_arg
   enkf_state_map

@@ -23,8 +23,7 @@ extern "C" void gen_data_export_data(const gen_data_type *gen_data,
                                      double_vector_type *export_data);
 const char *gen_data_get_key(const gen_data_type *gen_data);
 int gen_data_get_size(const gen_data_type *gen_data);
-void gen_data_copy_to_double_vector(const gen_data_type *gen_data,
-                                    double_vector_type *vector);
+double *gen_data_get_double_vector(const gen_data_type *gen_data);
 bool gen_data_fload_with_report_step(gen_data_type *gen_data,
                                      const char *filename, int report_step,
                                      enkf_fs_type *sim_fs);
