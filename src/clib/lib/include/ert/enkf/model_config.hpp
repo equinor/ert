@@ -45,7 +45,7 @@ extern "C" const char *
 model_config_get_obs_config_file(const model_config_type *model_config);
 void model_config_init(model_config_type *model_config,
                        const config_content_type *, const char *data_root,
-                       int ens_size, const ecl_sum_type *refcase);
+                       const ecl_sum_type *refcase);
 extern "C" void model_config_free(model_config_type *);
 extern "C" bool
 model_config_runpath_requires_iter(const model_config_type *model_config);

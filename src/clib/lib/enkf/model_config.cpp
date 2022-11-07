@@ -236,7 +236,7 @@ model_config_type *model_config_alloc(const config_content_type *config_content,
     model_config_type *model_config = model_config_alloc_empty();
 
     if (config_content)
-        model_config_init(model_config, config_content, data_root, 0, refcase);
+        model_config_init(model_config, config_content, data_root, refcase);
 
     return model_config;
 }
@@ -321,7 +321,7 @@ static void model_config_set_default_data_root(model_config_type *model_config,
 
 void model_config_init(model_config_type *model_config,
                        const config_content_type *config, const char *data_root,
-                       int ens_size, const ecl_sum_type *refcase) {
+                       const ecl_sum_type *refcase) {
 
     const subst_list_type *define_list =
         config_content_get_const_define_list(config);
