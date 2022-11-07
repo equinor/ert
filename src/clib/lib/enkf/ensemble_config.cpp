@@ -147,9 +147,7 @@ static ensemble_config_type *ensemble_config_alloc_empty(void) {
 ensemble_config_type *
 ensemble_config_alloc_full(const char *gen_kw_format_string) {
     ensemble_config_type *ensemble_config = ensemble_config_alloc_empty();
-    ensemble_config->field_trans_table = field_trans_table_alloc();
     ensemble_config_set_gen_kw_format(ensemble_config, gen_kw_format_string);
-    ensemble_config->summary_key_matcher = summary_key_matcher_alloc();
     pthread_mutex_init(&ensemble_config->mutex, NULL);
     return ensemble_config;
 }
@@ -243,55 +241,6 @@ void ensemble_config_clear_obs_keys(ensemble_config_type *ensemble_config) {
         enkf_config_node_type *config_node = config_pair.second;
         enkf_config_node_clear_obs_keys(config_node);
     }
-}
-
-void ensemble_config_add_config_items(config_parser_type *config) {
-    config_schema_item_type *item;
-
-    /*
-      the two fault types are just added to the config object only to
-      be able to print suitable messages before exiting.
-  */
-
-    item = config_add_schema_item(config, "HAVANA_FAULT", false);
-    config_schema_item_set_argc_minmax(item, 2, 2);
-
-    item = config_add_schema_item(config, "MULTFLT", false);
-    config_schema_item_set_argc_minmax(item, 3, 3);
-    config_schema_item_iset_type(item, 2, CONFIG_EXISTING_PATH);
-
-    item = config_add_schema_item(config, GEN_KW_KEY, false);
-    config_schema_item_set_argc_minmax(item, 4, 6);
-    config_schema_item_iset_type(item, 1, CONFIG_EXISTING_PATH);
-    config_schema_item_iset_type(item, 2, CONFIG_PATH);
-    config_schema_item_iset_type(item, 3, CONFIG_EXISTING_PATH);
-
-    config_add_key_value(config, GEN_KW_TAG_FORMAT_KEY, false, CONFIG_STRING);
-    item = config_add_schema_item(config, SCHEDULE_PREDICTION_FILE_KEY, false);
-    /* scedhule_prediction_file   filename  <parameters:> <init_files:> */
-    config_schema_item_set_argc_minmax(item, 1, 3);
-    config_schema_item_iset_type(item, 0, CONFIG_EXISTING_PATH);
-
-    enkf_config_node_add_GEN_DATA_config_schema(config);
-
-    item = config_add_schema_item(
-        config, SUMMARY_KEY,
-        false); /* can have several summary keys on each line. */
-    config_schema_item_set_argc_minmax(item, 1, CONFIG_DEFAULT_ARG_MAX);
-
-    item = config_add_schema_item(config, SURFACE_KEY, false);
-    config_schema_item_set_argc_minmax(item, 4, 5);
-
-    /*
-     the way config info is entered for fields is unfortunate because
-     it is difficult/impossible to let the config system handle run
-     time validation of the input.
-  */
-
-    item = config_add_schema_item(config, FIELD_KEY, false);
-    config_schema_item_set_argc_minmax(item, 2, CONFIG_DEFAULT_ARG_MAX);
-    config_schema_item_add_required_children(
-        item, GRID_KEY); /* if you are using a field - you must have a grid. */
 }
 
 static void ensemble_config_init_GEN_DATA(ensemble_config_type *ensemble_config,

@@ -10,18 +10,20 @@ from ert._c_wrappers.enkf.enums import GenDataFileType
 
 
 def test_create():
-    conf = EnsembleConfig()
+    with pytest.raises(ValueError):
+        EnsembleConfig()
+
+    conf = EnsembleConfig.from_dict({})
     assert len(conf) == 0
     assert "XYZ" not in conf
 
     with pytest.raises(KeyError):
-        # pylint: disable=pointless-statement
-        conf["KEY"]
+        _ = conf["KEY"]
 
 
 def test_ensemble_config_constructor(setup_case):
     res_config = setup_case("configuration_tests", "ensemble_config.ert")
-    assert res_config.ensemble_config == EnsembleConfig(
+    assert res_config.ensemble_config == EnsembleConfig.from_dict(
         config_dict={
             ConfigKeys.GEN_KW_TAG_FORMAT: "<%s>",
             ConfigKeys.GEN_DATA: [
@@ -101,7 +103,7 @@ _________________________________________     _____    ____________________
         refcase_file_handler.write(refcase_file_content)
     with pytest.raises(expected_exception=IOError, match=refcase_file):
         config_dict = {ConfigKeys.REFCASE: refcase_file}
-        EnsembleConfig(config_dict=config_dict)
+        EnsembleConfig.from_dict(config_dict=config_dict)
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -119,7 +121,7 @@ _|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|
         grid_file_handler.write(grid_file_content)
     with pytest.raises(expected_exception=ValueError, match=grid_file):
         config_dict = {ConfigKeys.GRID: grid_file}
-        EnsembleConfig(config_dict=config_dict)
+        EnsembleConfig.from_dict(config_dict=config_dict)
 
 
 def test_ensemble_config_construct_refcase_and_grid(setup_case):
@@ -155,5 +157,5 @@ def test_that_refcase_gets_correct_name(tmpdir):
         t_step["FOPR"] = 1
         ecl_sum.fwrite()
 
-        ec = EnsembleConfig(config_dict=config_dict)
+        ec = EnsembleConfig.from_dict(config_dict=config_dict)
         assert os.path.realpath(refcase_name) == ec.refcase.case

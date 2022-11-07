@@ -388,7 +388,7 @@ class ResConfig:
         for source_file, target_file, *_ in templates:
             self._templates.append([os.path.abspath(source_file), target_file])
 
-        self.ensemble_config = EnsembleConfig(config_dict=config_dict)
+        self.ensemble_config = EnsembleConfig.from_dict(config_dict=config_dict)
 
         for key in self.ensemble_config.getKeylistFromImplType(ErtImplType.GEN_KW):
             if self.ensemble_config.getNode(key).getUseForwardInit():
