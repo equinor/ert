@@ -3,7 +3,7 @@ from unittest.mock import MagicMock
 import pytest
 
 from ert._c_wrappers.enkf import EnKFMain, RunContext
-from ert._c_wrappers.job_queue import ExtJoblist, ForwardModel, RunStatusType
+from ert._c_wrappers.job_queue import RunStatusType
 from ert.shared.models import BaseRunModel
 
 
@@ -16,28 +16,6 @@ def test_base_run_model_supports_restart(setup_case):
 class MockJob:
     def __init__(self, status):
         self.status = status
-
-
-# NOTE: The test below is for the old job-status mechanism no
-# longer used in ERT. The mechanism is, however, used in Everest
-# so we leave this test in place.
-#
-# If Everest at some point updates how it tracks job-status, this
-# test as well as BaseRunModel.is_forward_model_finished() can be
-# removed.
-
-
-@pytest.mark.parametrize(
-    "test_input, expected",
-    [
-        (ForwardModel([MockJob("Success")], ExtJoblist()), True),
-        (ForwardModel([MockJob("Failure")], ExtJoblist()), False),
-        (ForwardModel([MockJob("Success"), MockJob("Success")], ExtJoblist()), True),
-        (ForwardModel([MockJob("Failure"), MockJob("Success")], ExtJoblist()), False),
-    ],
-)
-def test_is_forward_model_finished(test_input, expected):
-    assert BaseRunModel.is_forward_model_finished(test_input) is expected
 
 
 @pytest.mark.parametrize(
