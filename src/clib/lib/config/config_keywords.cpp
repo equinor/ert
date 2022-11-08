@@ -1,6 +1,5 @@
-
+#include <ert/config/config_parser.hpp>
 #include <ert/enkf/config_keys.hpp>
-#include <ert/enkf/ert_workflow_list.hpp>
 #include <ert/python.hpp>
 
 static void add_float_keyword(config_parser_type *config_parser,

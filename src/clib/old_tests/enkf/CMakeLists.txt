@@ -38,11 +38,5 @@ foreach(
   add_test(NAME ${test} COMMAND ${test})
 endforeach()
 
-foreach(test enkf_ert_workflow_list)
-
-  add_executable(${test} ${TESTS_EXCLUDE_FROM_ALL} test_${test}.cpp)
-  target_link_libraries(${test} ert)
-endforeach()
-
 add_config_test(enkf_time_map2 enkf_time_map
                 "${LOCAL_TEST_DATA_DIR}/snake_oil/refcase/SNAKE_OIL_FIELD")

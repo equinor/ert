@@ -71,7 +71,6 @@ pybind11_add_module(
   enkf/enkf_state.cpp
   enkf/enkf_types.cpp
   enkf/ensemble_config.cpp
-  enkf/ert_workflow_list.cpp
   enkf/ext_param.cpp
   enkf/ext_param_config.cpp
   enkf/field.cpp

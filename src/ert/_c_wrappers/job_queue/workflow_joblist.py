@@ -29,6 +29,7 @@ class WorkflowJoblist(BaseCClass):
     def addJob(self, job) -> WorkflowJob:
         job.convertToCReference(self)
         self._add_job(job)
+        return self._get_job(job.name())
 
     def addJobFromFile(self, name: str, filepath: str) -> bool:
         if not os.path.exists(filepath):

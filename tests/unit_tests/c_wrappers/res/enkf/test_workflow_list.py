@@ -3,6 +3,7 @@ import os
 import pytest
 
 from ert._c_wrappers.enkf import ConfigKeys, ErtWorkflowList, ResConfig
+from ert._c_wrappers.enkf.enums import HookRuntime
 from ert._c_wrappers.enkf.res_config import site_config_location
 
 
@@ -16,45 +17,100 @@ def test_workflow_list_constructor():
             {
                 ConfigKeys.NAME: "print_uber",
                 ConfigKeys.PATH: os.getcwd() + "/workflows/UBER_PRINT",
-            }
+            },
+            {
+                ConfigKeys.NAME: "HIDDEN_PRINT",
+                ConfigKeys.PATH: os.getcwd() + "/workflows/HIDDEN_PRINT",
+            },
         ],
         ConfigKeys.LOAD_WORKFLOW: [
             {
                 ConfigKeys.NAME: "magic_print",
                 ConfigKeys.PATH: os.getcwd() + "/workflows/MAGIC_PRINT",
-            }
+            },
+            {
+                ConfigKeys.NAME: "no_print",
+                ConfigKeys.PATH: os.getcwd() + "/workflows/NO_PRINT",
+            },
+            {
+                ConfigKeys.NAME: "some_print",
+                ConfigKeys.PATH: os.getcwd() + "/workflows/SOME_PRINT",
+            },
         ],
         ConfigKeys.WORKFLOW_JOB_DIRECTORY: [
             ERT_SHARE_PATH + "/workflows/jobs/shell",
             ERT_SHARE_PATH + "/workflows/jobs/internal/config",
             ERT_SHARE_PATH + "/workflows/jobs/internal-gui/config",
         ],
+        ConfigKeys.HOOK_WORKFLOW_KEY: [
+            {ConfigKeys.NAME: "magic_print", ConfigKeys.RUNMODE: "POST_UPDATE"},
+            {ConfigKeys.NAME: "no_print", ConfigKeys.RUNMODE: "PRE_UPDATE"},
+        ],
     }
 
-    with open("minimum_config", "a+") as ert_file:
+    with open("minimum_config", "a+", encoding="utf-8") as ert_file:
         ert_file.write("LOAD_WORKFLOW_JOB workflows/UBER_PRINT print_uber\n")
+        ert_file.write("LOAD_WORKFLOW_JOB workflows/HIDDEN_PRINT\n")
         ert_file.write("LOAD_WORKFLOW workflows/MAGIC_PRINT magic_print\n")
+        ert_file.write("LOAD_WORKFLOW workflows/NO_PRINT no_print\n")
+        ert_file.write("LOAD_WORKFLOW workflows/SOME_PRINT some_print\n")
+        ert_file.write("HOOK_WORKFLOW magic_print POST_UPDATE\n")
+        ert_file.write("HOOK_WORKFLOW no_print PRE_UPDATE\n")
 
     os.mkdir("workflows")
 
-    with open("workflows/MAGIC_PRINT", "w") as f:
+    with open("workflows/MAGIC_PRINT", "w", encoding="utf-8") as f:
         f.write("print_uber\n")
-    with open("workflows/UBER_PRINT", "w") as f:
+    with open("workflows/NO_PRINT", "w", encoding="utf-8") as f:
+        f.write("print_uber\n")
+    with open("workflows/SOME_PRINT", "w", encoding="utf-8") as f:
+        f.write("print_uber\n")
+    with open("workflows/UBER_PRINT", "w", encoding="utf-8") as f:
+        f.write("EXECUTABLE ls\n")
+    with open("workflows/HIDDEN_PRINT", "w", encoding="utf-8") as f:
         f.write("EXECUTABLE ls\n")
 
     res_config = ResConfig("minimum_config")
 
-    assert (
-        ErtWorkflowList(
-            config_dict=config_dict,
-        )
-        == res_config.ert_workflow_list
+    ert_workflow_list = ErtWorkflowList(
+        config_dict=config_dict,
     )
+
+    assert ert_workflow_list.getJobNames() == res_config.ert_workflow_list.getJobNames()
+
+    # verify name generated from filename
+    assert "HIDDEN_PRINT" in ert_workflow_list.getJobNames()
+    assert "print_uber" in ert_workflow_list.getJobNames()
+
+    assert [
+        "magic_print",
+        "no_print",
+        "some_print",
+    ] == ert_workflow_list.getWorkflowNames()
+
+    assert (
+        len(list(ert_workflow_list.get_workflows_hooked_at(HookRuntime.PRE_UPDATE)))
+        == 1
+    )
+    assert (
+        len(list(ert_workflow_list.get_workflows_hooked_at(HookRuntime.POST_UPDATE)))
+        == 1
+    )
+    assert (
+        len(
+            list(
+                ert_workflow_list.get_workflows_hooked_at(HookRuntime.PRE_FIRST_UPDATE)
+            )
+        )
+        == 0
+    )
+
+    assert ert_workflow_list == res_config.ert_workflow_list
 
 
 def test_illegal_configs():
     with pytest.raises(ValueError):
-        ErtWorkflowList(config_dict=[], config_content=[])
+        ErtWorkflowList(config_dict=[], content_dict=[])
 
     with pytest.raises(ValueError):
         ErtWorkflowList()

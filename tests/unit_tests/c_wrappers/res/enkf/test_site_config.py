@@ -83,6 +83,6 @@ MIN_ARG 1
         )
         == 1
     )
-    assert res_config.ert_workflow_list._hook_workflows[
-        0
-    ].getWorkflow().src_file == str(tmp_path / "ECHO_WORKFLOW")
+    assert res_config.ert_workflow_list._hook_workflows[0].src_file == str(
+        tmp_path / "ECHO_WORKFLOW"
+    )
