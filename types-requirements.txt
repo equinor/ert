@@ -1,4 +1,4 @@
-mypy
+mypy<0.990
 mypy-protobuf
 types-aiofiles
 types-requests
