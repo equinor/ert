@@ -337,31 +337,6 @@ void gen_data_export_data(const gen_data_type *gen_data,
                                    gen_data_get_size(gen_data));
 }
 
-/**
-   The filesystem will (currently) store gen_data instances which do
-   not hold any data. Therefore it will be quite common to enter this
-   function with an empty instance, we therefore just set valid =>
-   false, and return silently in that case.
-*/
-C_USED bool gen_data_user_get(const gen_data_type *gen_data,
-                              const char *index_key, int report_step,
-                              double *value) {
-    int index;
-    *value = 0.0;
-
-    if (index_key != NULL) {
-        if (util_sscanf_int(index_key, &index)) {
-            if (index < gen_data_config_get_data_size(
-                            gen_data->config, gen_data->current_report_step)) {
-                *value = gen_data_iget_double(gen_data, index);
-                return true;
-            }
-        }
-    }
-
-    return false;
-}
-
 const char *gen_data_get_key(const gen_data_type *gen_data) {
     return gen_data_config_get_key(gen_data->config);
 }

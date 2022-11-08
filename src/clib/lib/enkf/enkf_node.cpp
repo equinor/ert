@@ -120,7 +120,6 @@ struct enkf_node_struct {
     alloc_ftype *alloc;
     forward_load_ftype *forward_load;
     forward_load_vector_ftype *forward_load_vector;
-    user_get_ftype *user_get;
     fload_ftype *fload;
     has_data_ftype *has_data;
 
@@ -149,10 +148,6 @@ const enkf_config_node_type *enkf_node_get_config(const enkf_node_type *node) {
     return node->config;
 }
 
-bool enkf_node_vector_storage(const enkf_node_type *node) {
-    return node->vector_storage;
-}
-
 /*
   All the function pointers REALLY should be in the config object ...
 */
@@ -177,38 +172,8 @@ ert_impl_type enkf_node_get_impl_type(const enkf_node_type *enkf_node) {
     return enkf_config_node_get_impl_type(enkf_node->config);
 }
 
-bool enkf_node_use_forward_init(const enkf_node_type *enkf_node) {
-    return enkf_config_node_use_forward_init(enkf_node->config);
-}
-
 void *enkf_node_value_ptr(const enkf_node_type *enkf_node) {
     return enkf_node->data;
-}
-
-/**
-   This function takes a string - key - as input an calls a node
-   specific function to look up one scalar based on that key. The key
-   is always a string, but the the type of content will vary for the
-   different objects. For a field, the key will be a string of "i,j,k"
-   for a cell.
-
-   If the user has asked for something which does not exist the
-   function SHOULD NOT FAIL; it should return false and set the *value
-   to 0.
-*/
-bool enkf_node_user_get(enkf_node_type *enkf_node, enkf_fs_type *fs,
-                        const char *key, node_id_type node_id, double *value) {
-    FUNC_ASSERT(enkf_node->user_get);
-
-    bool loadOK = enkf_node_try_load(enkf_node, fs, node_id);
-
-    if (loadOK)
-        return enkf_node->user_get(enkf_node->data, key, node_id.report_step,
-                                   value);
-    else {
-        *value = 0;
-        return false;
-    }
 }
 
 std::vector<double> enkf_node_user_get_vector(enkf_node_type *enkf_node,
@@ -218,11 +183,6 @@ std::vector<double> enkf_node_user_get_vector(enkf_node_type *enkf_node,
             static_cast<summary_type *>(enkf_node->data));
     } else
         return {};
-}
-
-bool enkf_node_fload(enkf_node_type *enkf_node, const char *filename) {
-    FUNC_ASSERT(enkf_node->fload);
-    return enkf_node->fload(enkf_node->data, filename);
 }
 
 /**
@@ -524,7 +484,6 @@ enkf_node_alloc_empty(const enkf_config_node_type *config) {
     node->forward_load_vector = NULL;
     node->initialize = NULL;
     node->freef = NULL;
-    node->user_get = NULL;
     node->fload = NULL;
     node->read_from_buffer = NULL;
     node->write_to_buffer = NULL;
@@ -536,7 +495,6 @@ enkf_node_alloc_empty(const enkf_config_node_type *config) {
     case (GEN_KW):
         node->alloc = gen_kw_alloc__;
         node->freef = gen_kw_free__;
-        node->user_get = gen_kw_user_get__;
         node->write_to_buffer = gen_kw_write_to_buffer__;
         node->read_from_buffer = gen_kw_read_from_buffer__;
         node->serialize = gen_kw_serialize__;
@@ -547,7 +505,6 @@ enkf_node_alloc_empty(const enkf_config_node_type *config) {
         node->forward_load_vector = summary_forward_load_vector__;
         node->alloc = summary_alloc__;
         node->freef = summary_free__;
-        node->user_get = summary_user_get__;
         node->read_from_buffer = summary_read_from_buffer__;
         node->write_to_buffer = summary_write_to_buffer__;
         node->serialize = summary_serialize__;
@@ -558,7 +515,6 @@ enkf_node_alloc_empty(const enkf_config_node_type *config) {
         node->initialize = surface_initialize__;
         node->alloc = surface_alloc__;
         node->freef = surface_free__;
-        node->user_get = surface_user_get__;
         node->read_from_buffer = surface_read_from_buffer__;
         node->write_to_buffer = surface_write_to_buffer__;
         node->serialize = surface_serialize__;
@@ -569,7 +525,6 @@ enkf_node_alloc_empty(const enkf_config_node_type *config) {
         node->alloc = field_alloc__;
         node->initialize = field_initialize__;
         node->freef = field_free__;
-        node->user_get = field_user_get__;
         node->read_from_buffer = field_read_from_buffer__;
         node->write_to_buffer = field_write_to_buffer__;
         node->serialize = field_serialize__;
@@ -580,7 +535,6 @@ enkf_node_alloc_empty(const enkf_config_node_type *config) {
         node->alloc = gen_data_alloc__;
         node->freef = gen_data_free__;
         node->forward_load = gen_data_forward_load__;
-        node->user_get = gen_data_user_get__;
         node->read_from_buffer = gen_data_read_from_buffer__;
         node->write_to_buffer = gen_data_write_to_buffer__;
         node->serialize = gen_data_serialize__;

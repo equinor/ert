@@ -195,27 +195,6 @@ const char *gen_kw_get_name(const gen_kw_type *gen_kw, int kw_nr) {
     return gen_kw_config_iget_name(gen_kw->config, kw_nr);
 }
 
-/**
-   Will return 0.0 on invalid input, and set valid -> false. It is the
-   responsibility of the calling scope to check valid.
-*/
-C_USED bool gen_kw_user_get(const gen_kw_type *gen_kw, const char *key,
-                            int report_step, double *value) {
-    int index = gen_kw_config_get_index(gen_kw->config, key);
-
-    if (index >= 0) {
-        *value =
-            gen_kw_config_transform(gen_kw->config, index, gen_kw->data[index]);
-        return true;
-    } else {
-        *value = 0.0;
-        fprintf(stderr,
-                "** Warning:could not lookup key:%s in gen_kw instance \n",
-                key);
-        return false;
-    }
-}
-
 VOID_ALLOC(gen_kw);
 VOID_FREE(gen_kw)
 VOID_USER_GET(gen_kw)

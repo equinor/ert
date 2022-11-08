@@ -31,7 +31,6 @@ typedef void(read_from_buffer_ftype)(void *, buffer_type *, enkf_fs_type *,
 typedef bool(write_to_buffer_ftype)(const void *, buffer_type *, int);
 typedef bool(has_data_ftype)(const void *, int);
 
-typedef bool(user_get_ftype)(void *, const char *, int, double *);
 typedef void *(alloc_ftype)(const void *);
 typedef bool(initialize_ftype)(void *, int, const char *);
 typedef bool(forward_load_ftype)(void *, const char *, int, const void *);
@@ -56,8 +55,6 @@ typedef void(enkf_node_ftype1)(enkf_node_type *);
 
 std::vector<double> enkf_node_user_get_vector(enkf_node_type *enkf_node,
                                               enkf_fs_type *fs, int iens);
-bool enkf_node_user_get(enkf_node_type *, enkf_fs_type *, const char *,
-                        node_id_type, double *);
 enkf_node_type *enkf_node_deep_alloc(const enkf_config_node_type *config);
 extern "C" enkf_node_type *enkf_node_alloc(const enkf_config_node_type *);
 
@@ -67,7 +64,6 @@ extern "C" bool enkf_node_has_data(enkf_node_type *enkf_node, enkf_fs_type *fs,
                                    node_id_type node_id);
 extern "C" void *enkf_node_value_ptr(const enkf_node_type *);
 extern "C" ert_impl_type enkf_node_get_impl_type(const enkf_node_type *);
-bool enkf_node_use_forward_init(const enkf_node_type *enkf_node);
 
 bool enkf_node_forward_load_vector(enkf_node_type *enkf_node,
                                    const ecl_sum_type *ecl_sum,
@@ -82,7 +78,6 @@ void enkf_node_copy(const enkf_config_node_type *config_node,
                     node_id_type src_id, node_id_type target_id);
 enkf_node_type *enkf_node_load_alloc(const enkf_config_node_type *config_node,
                                      enkf_fs_type *fs, node_id_type node_id);
-bool enkf_node_fload(enkf_node_type *enkf_node, const char *filename);
 void enkf_node_load(enkf_node_type *enkf_node, enkf_fs_type *fs,
                     node_id_type node_id);
 void enkf_node_load_vector(enkf_node_type *enkf_node, enkf_fs_type *fs,
@@ -95,7 +90,6 @@ bool enkf_node_try_load(enkf_node_type *enkf_node, enkf_fs_type *fs,
                         node_id_type node_id);
 bool enkf_node_try_load_vector(enkf_node_type *enkf_node, enkf_fs_type *fs,
                                int iens);
-bool enkf_node_vector_storage(const enkf_node_type *node);
 
 const enkf_config_node_type *enkf_node_get_config(const enkf_node_type *);
 extern "C" const char *enkf_node_get_key(const enkf_node_type *);
