@@ -19,13 +19,14 @@ bool summary_active_value(double value);
 extern "C" int summary_length(const summary_type *summary);
 extern "C" double summary_undefined_value();
 std::vector<double> summary_user_get_vector(const summary_type *summary);
+bool summary_forward_load_vector(summary_type *summary,
+                                 const ecl_sum_type *ecl_sum,
+                                 const int_vector_type *time_index);
 
 VOID_HAS_DATA_HEADER(summary);
 VOID_ALLOC_HEADER(summary);
 VOID_FREE_HEADER(summary);
 VOID_FORWARD_LOAD_HEADER(summary);
-VOID_FORWARD_LOAD_VECTOR_HEADER(summary);
-VOID_USER_GET_HEADER(summary);
 VOID_WRITE_TO_BUFFER_HEADER(summary);
 VOID_READ_FROM_BUFFER_HEADER(summary);
 VOID_SERIALIZE_HEADER(summary)

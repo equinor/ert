@@ -75,13 +75,6 @@
     void prefix##_read_from_buffer__(void *, buffer_type *, enkf_fs_type *,    \
                                      int);
 
-#define VOID_FLOAD(prefix)                                                     \
-    bool prefix##_fload__(void *void_arg, const char *filename) {              \
-        auto arg = static_cast<prefix##_type *>(void_arg);                     \
-        return prefix##_fload(arg, filename);                                  \
-    }
-#define VOID_FLOAD_HEADER(prefix) bool prefix##_fload__(void *, const char *);
-
 #define VOID_FORWARD_LOAD(prefix)                                              \
     bool prefix##_forward_load__(void *void_arg, const char *ecl_file,         \
                                  int report_step, const void *argument) {      \
@@ -93,20 +86,6 @@
     bool prefix##_forward_load__(void *, const char *, int,                    \
                                  const void *argument);
 
-#define VOID_FORWARD_LOAD_VECTOR(prefix)                                       \
-    bool prefix##_forward_load_vector__(void *void_arg, const char *ecl_file,  \
-                                        const ecl_sum_type *ecl_sum,           \
-                                        const int_vector_type *time_index) {   \
-        auto arg = static_cast<prefix##_type *>(void_arg);                     \
-        return prefix##_forward_load_vector(arg, ecl_file, ecl_sum,            \
-                                            time_index);                       \
-    }
-
-#define VOID_FORWARD_LOAD_VECTOR_HEADER(prefix)                                \
-    bool prefix##_forward_load_vector__(void *, const char *,                  \
-                                        const ecl_sum_type *ecl_sum,           \
-                                        const int_vector_type *time_index);
-
 #define VOID_FREE(prefix)                                                      \
     void prefix##_free__(void *void_arg) {                                     \
         auto arg = static_cast<prefix##_type *>(void_arg);                     \
@@ -114,16 +93,6 @@
     }
 
 #define VOID_FREE_HEADER(prefix) void prefix##_free__(void *);
-
-#define VOID_USER_GET(prefix)                                                  \
-    bool prefix##_user_get__(void *void_arg, const char *key, int report_step, \
-                             double *value) {                                  \
-        auto arg = static_cast<prefix##_type *>(void_arg);                     \
-        return prefix##_user_get(arg, key, report_step, value);                \
-    }
-
-#define VOID_USER_GET_HEADER(prefix)                                           \
-    bool prefix##_user_get__(void *, const char *, int, double *);
 
 #define VOID_USER_GET_OBS(prefix)                                              \
     void prefix##_user_get__(void *void_arg, const char *key, double *value,   \

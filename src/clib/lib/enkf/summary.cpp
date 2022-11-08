@@ -198,7 +198,6 @@ bool summary_forward_load(summary_type *summary, const char *ecl_file_name,
 }
 
 bool summary_forward_load_vector(summary_type *summary,
-                                 const char *ecl_file_name,
                                  const ecl_sum_type *ecl_sum,
                                  const int_vector_type *time_index) {
     bool loadOK = false;
@@ -256,8 +255,6 @@ bool summary_forward_load_vector(summary_type *summary,
 VOID_ALLOC(summary)
 VOID_FREE(summary)
 VOID_FORWARD_LOAD(summary)
-VOID_FORWARD_LOAD_VECTOR(summary)
-VOID_USER_GET(summary)
 VOID_WRITE_TO_BUFFER(summary)
 VOID_READ_FROM_BUFFER(summary)
 VOID_SERIALIZE(summary)

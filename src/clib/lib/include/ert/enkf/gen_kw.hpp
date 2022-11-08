@@ -25,7 +25,6 @@ void gen_kw_filter_file(const gen_kw_type *, const char *);
 
 VOID_FREE_HEADER(gen_kw);
 VOID_ALLOC_HEADER(gen_kw);
-VOID_USER_GET_HEADER(gen_kw);
 VOID_WRITE_TO_BUFFER_HEADER(gen_kw);
 VOID_READ_FROM_BUFFER_HEADER(gen_kw);
 VOID_SERIALIZE_HEADER(gen_kw)

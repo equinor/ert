@@ -197,7 +197,6 @@ const char *gen_kw_get_name(const gen_kw_type *gen_kw, int kw_nr) {
 
 VOID_ALLOC(gen_kw);
 VOID_FREE(gen_kw)
-VOID_USER_GET(gen_kw)
 VOID_WRITE_TO_BUFFER(gen_kw)
 VOID_READ_FROM_BUFFER(gen_kw)
 VOID_SERIALIZE(gen_kw)
