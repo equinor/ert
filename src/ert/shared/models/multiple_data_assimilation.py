@@ -255,7 +255,7 @@ class MultipleDataAssimilation(BaseRunModel):
         self,
         run_context: RunContext,
         evaluator_server_config: EvaluatorServerConfig,
-        update_id: str = None,
+        update_id: Optional[str] = None,
     ) -> Tuple[int, str]:
         iteration = run_context.iteration
 

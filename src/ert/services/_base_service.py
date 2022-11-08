@@ -308,7 +308,7 @@ class BaseService:
             pass
         return cls.start_server(*args, **kwargs)
 
-    def wait_until_ready(self, timeout: int = None) -> bool:
+    def wait_until_ready(self, timeout: Optional[int] = None) -> bool:
         if timeout is None:
             timeout = self._timeout
 
