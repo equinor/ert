@@ -81,16 +81,6 @@ void simple_test() {
         test_assert_true(time_map_equal(time_map, time_map2));
         time_map_free(time_map2);
     }
-    {
-        time_t mtime1 = util_file_mtime(mapfile);
-        sleep(2);
-        time_map_fwrite(time_map, mapfile);
-
-        test_assert_time_t_equal(mtime1, util_file_mtime(mapfile));
-        time_map_update(time_map, 2, 300);
-        time_map_fwrite(time_map, mapfile);
-        test_assert_time_t_not_equal(mtime1, util_file_mtime(mapfile));
-    }
 }
 
 static void simple_update(void *arg) {

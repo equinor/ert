@@ -29,7 +29,6 @@ static void time_map_summary_log_mismatch(time_map_type *map,
 struct time_map_struct {
     time_t_vector_type *map;
     pthread_rwlock_t rw_lock;
-    bool modified;
     bool read_only;
     const ecl_sum_type *refcase;
 };
@@ -38,7 +37,6 @@ time_map_type *time_map_alloc() {
     time_map_type *map = (time_map_type *)util_malloc(sizeof *map);
 
     map->map = time_t_vector_alloc(0, DEFAULT_TIME);
-    map->modified = false;
     map->read_only = false;
     map->refcase = NULL;
     pthread_rwlock_init(&map->rw_lock, NULL);
@@ -217,7 +215,6 @@ static std::string time_map_update__(time_map_type *map, int step,
         }
     }
     // No mismatch found, ok to update time map
-    map->modified = true;
     time_t_vector_iset(map->map, step, update_time);
 
     return error;
@@ -269,12 +266,9 @@ static void time_map_assert_writable(const time_map_type *map) {
 void time_map_fwrite(time_map_type *map, const char *filename) {
     pthread_rwlock_rdlock(&map->rw_lock);
     {
-        if (map->modified) {
-            auto stream = mkdir_fopen(fs::path(filename), "w");
-            time_t_vector_fwrite(map->map, stream);
-            fclose(stream);
-        }
-        map->modified = false;
+        auto stream = mkdir_fopen(fs::path(filename), "w");
+        time_t_vector_fwrite(map->map, stream);
+        fclose(stream);
     }
     pthread_rwlock_unlock(&map->rw_lock);
 }
@@ -297,7 +291,6 @@ void time_map_fread(time_map_type *map, const char *filename) {
     }
     pthread_rwlock_unlock(&map->rw_lock);
     time_map_get_last_step(map);
-    map->modified = false;
 }
 
 /**
@@ -485,7 +478,6 @@ void time_map_clear(time_map_type *map) {
     pthread_rwlock_wrlock(&map->rw_lock);
     {
         time_t_vector_reset(map->map);
-        map->modified = true;
     }
     pthread_rwlock_unlock(&map->rw_lock);
 }
