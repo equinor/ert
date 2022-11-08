@@ -98,18 +98,27 @@ def parse_signature_job(signature: str) -> Tuple[str, Optional[str]]:
 
     >>> parse_signature_job("job")
     ("job", None)
+
+
+    For backwards compatability, text after first closing parenthesis is closed,
+    but a warning is displayed.
     """
 
     open_paren = signature.find("(")
     if open_paren == -1:
         return signature, None
     job_name = signature[:open_paren]
-    close_paren = signature[-1]
-    if close_paren != ")":
+    close_paren = signature.find(")")
+    if close_paren == -1:
         raise ConfigValidationError(
             f"Missing ) in FORWARD_MODEL job description {signature}"
         )
-    return job_name, signature[open_paren + 1 : -1]
+    if close_paren < len(signature):
+        logger.warning(
+            f'Arguments after closing ) in "{signature}"'
+            f' ("{signature[close_paren:]}") is ignored.'
+        )
+    return job_name, signature[open_paren + 1 : close_paren]
 
 
 class ResConfig:

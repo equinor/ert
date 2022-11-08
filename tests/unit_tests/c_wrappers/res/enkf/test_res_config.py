@@ -19,7 +19,11 @@ from ert._c_wrappers.enkf import (
     SiteConfig,
 )
 from ert._c_wrappers.enkf.enums import HookRuntime
-from ert._c_wrappers.enkf.res_config import SINGLE_VALUE_KEYS, site_config_location
+from ert._c_wrappers.enkf.res_config import (
+    SINGLE_VALUE_KEYS,
+    parse_signature_job,
+    site_config_location,
+)
 from ert._c_wrappers.job_queue import QueueDriverEnum
 from ert._c_wrappers.sched import HistorySourceEnum
 from ert._clib.config_keywords import init_user_config_parser
@@ -850,3 +854,22 @@ def test_config_content_as_dict_single_value_keys(tmpdir):
         content_as_dict = ResConfig._config_content_as_dict(content)
         for _, value in content_as_dict.items():
             assert not isinstance(value, list)
+
+
+def test_that_parse_job_signature_passes_through_job_names():
+    assert parse_signature_job("JOB") == ("JOB", None)
+
+
+def test_that_parse_job_signature_correctly_gets_arguments():
+    assert parse_signature_job("JOB(<ARG1>=val1, <ARG2>=val2)") == (
+        "JOB",
+        "<ARG1>=val1, <ARG2>=val2",
+    )
+
+
+def test_that_parse_job_signature_warns_for_extra_parens(caplog):
+    assert parse_signature_job("JOB(<ARG1>=val1, <ARG2>=val2), <ARG3>=val3)") == (
+        "JOB",
+        "<ARG1>=val1, <ARG2>=val2",
+    )
+    assert "Arguments after closing )" in caplog.text
