@@ -270,10 +270,7 @@ class ResConfig:
 
         self.queue_config = QueueConfig(**queue_config_args)
 
-        self.ert_workflow_list = ErtWorkflowList(
-            config_content=user_config_content,
-            site_config_content=site_config_content,
-        )
+        self.ert_workflow_list = ErtWorkflowList(content_dict=config_content_dict)
 
         if user_config_content.hasKey(ConfigKeys.RUNPATH_FILE):
             self.runpath_file = user_config_content.getValue(ConfigKeys.RUNPATH_FILE)

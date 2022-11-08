@@ -1,190 +1,86 @@
-import ctypes
 import os
 from typing import Iterator, List
 
-from cwrap import BaseCClass
-
-from ert._c_wrappers import ResPrototype
+from ert._c_wrappers.config.config_parser import ConfigValidationError
 from ert._c_wrappers.enkf.config_keys import ConfigKeys
 from ert._c_wrappers.enkf.enums import HookRuntime
-from ert._c_wrappers.enkf.hook_workflow import HookWorkflow
 from ert._c_wrappers.job_queue import Workflow, WorkflowJob, WorkflowJoblist
-from ert._c_wrappers.util.substitution_list import SubstitutionList
 
 
-def _to_c_string_arr(lst: List[str]):
-    arr = (ctypes.c_char_p * len(lst))()
-    arr[:] = [s.encode("utf-8") for s in lst]
-    return arr
-
-
-class ErtWorkflowList(BaseCClass):
-    TYPE_NAME = "ert_workflow_list"
-    _alloc = ResPrototype(
-        "void* ert_workflow_list_alloc(config_content, config_content)",
-        bind=False,
-    )
-    _alloc_full = ResPrototype(
-        "void* ert_workflow_list_alloc_full(workflow_joblist)", bind=False
-    )
-    _free = ResPrototype("void ert_workflow_list_free(ert_workflow_list)")
-    _alloc_namelist = ResPrototype(
-        "stringlist_obj ert_workflow_list_alloc_namelist(ert_workflow_list)"
-    )
-    _has_workflow = ResPrototype(
-        "bool ert_workflow_list_has_workflow(ert_workflow_list, char*)"
-    )
-    _get_workflow = ResPrototype(
-        "workflow_ref ert_workflow_list_get_workflow(ert_workflow_list, char*)"
-    )
-    _add_workflow = ResPrototype(
-        "workflow_ref ert_workflow_list_add_workflow(ert_workflow_list, char*, char*)"
-    )
-    _add_job = ResPrototype(
-        "void ert_workflow_list_add_job(ert_workflow_list, char*, char*)"
-    )
-    _has_job = ResPrototype("bool ert_workflow_list_has_job(ert_workflow_list, char*)")
-    _get_job = ResPrototype(
-        "workflow_job_ref ert_workflow_list_get_job(ert_workflow_list, char*)"
-    )
-    _get_job_names = ResPrototype(
-        "stringlist_obj ert_workflow_list_get_job_names(ert_workflow_list)"
-    )
-
-    _get_hook_workflow = ResPrototype(
-        "hook_workflow_obj ert_workflow_list_iget_hook_workflow(ert_workflow_list, int)"
-    )
-
-    _num_hook_workflows = ResPrototype(
-        "int ert_workflow_list_num_hook_workflows(ert_workflow_list)"
-    )
-
+class ErtWorkflowList:
     def __init__(
         self,
-        config_content=None,
+        content_dict=None,
         config_dict=None,
-        site_config_content=None,
     ):
-
-        if config_content is None and config_dict is None:
+        if content_dict is None and config_dict is None:
             raise ValueError(
                 "Failed to construct ErtWorkflowList instance with no config object"
             )
 
-        if config_content is not None and config_dict is not None:
+        if content_dict is not None and config_dict is not None:
             raise ValueError(
                 "Failed to construct ErtWorkflowList "
                 "instance with multiple config object"
             )
 
-        if config_content is not None and site_config_content is None:
-            raise ValueError(
-                "Failed to construct ErtWorkflowList instance. "
-                "When using config_content also requires site_config_content"
-            )
+        self._workflow_jobs = {}
+        self._workflow = {}
+        self._hook_workflow_list = []
+        self._workflow_joblist = WorkflowJoblist()
+        self._parser = WorkflowJob.configParser()
 
-        c_ptr = None
+        self._workflow_job_info = []
+        self._workflow_job_dir_info = []
+        self._workflow_info = []
+        self._hook_workflow_info = []
 
-        if config_content is not None:
-            c_ptr = self._alloc(config_content, site_config_content)
-
-        if config_dict is not None:
-            workflow_joblist = WorkflowJoblist()
-            parser = WorkflowJob.configParser()
-            for job in config_dict.get(ConfigKeys.LOAD_WORKFLOW_JOB, []):
-                try:
-                    new_job = WorkflowJob.fromFile(
-                        config_file=job[ConfigKeys.PATH],
-                        name=job[ConfigKeys.NAME],
-                        parser=parser,
-                    )
-                except OSError:
-                    print(f"WARNING: Unable to create job from {job[ConfigKeys.PATH]}")
-                    continue
-                if new_job is not None:
-                    workflow_joblist.addJob(new_job)
-                    new_job.convertToCReference(None)
-
-            for job_path in config_dict.get(ConfigKeys.WORKFLOW_JOB_DIRECTORY, []):
-                if not os.path.isdir(job_path):
-                    print(f"WARNING: Unable to open job directory {job_path}")
-                    continue
-
-                files = os.listdir(job_path)
-                for file_name in files:
-                    full_path = os.path.join(job_path, file_name)
-                    try:
-                        new_job = WorkflowJob.fromFile(
-                            config_file=full_path, parser=parser
-                        )
-                        workflow_joblist.addJob(new_job)
-                        new_job.convertToCReference(None)
-                    except OSError:
-                        print(f"WARNING: Unable to create job from {full_path}")
-                        continue
-
-            workflow_joblist.convertToCReference(None)
-
-            # HOOK_WORKFLOW
-            hook_workflow_names = []
-            hook_workflow_run_modes = []
-            if ConfigKeys.HOOK_WORKFLOW_KEY in config_dict:
-                for hook_workflow_name, run_mode_name in config_dict[
-                    ConfigKeys.HOOK_WORKFLOW_KEY
-                ]:
-                    if run_mode_name not in [
-                        runtime.name for runtime in HookRuntime.enums()
-                    ]:
-                        raise ValueError(f"Run mode {run_mode_name} not supported")
-                    hook_workflow_names.append(hook_workflow_name)
-                    hook_workflow_run_modes.append(run_mode_name)
-
-            c_ptr = self._alloc_full(
-                workflow_joblist,
-                _to_c_string_arr(hook_workflow_names),
-                _to_c_string_arr(hook_workflow_run_modes),
-                len(hook_workflow_names),
-            )
-
-        if c_ptr is None:
-            raise ValueError("Failed to construct ErtWorkflowList instance")
-
-        super().__init__(c_ptr)
+        if content_dict is not None:
+            self._handle_config_content_dict(content_dict)
 
         if config_dict is not None:
-            for job in config_dict.get(ConfigKeys.LOAD_WORKFLOW, []):
-                self.addWorkflow(job[ConfigKeys.PATH], job[ConfigKeys.NAME])
+            self._handle_config_dict(config_dict)
+
+        for workflow_job in self._workflow_job_info:
+            self._add_workflow_job(workflow_job)
+
+        for job_path in self._workflow_job_dir_info:
+            self._add_workflow_job_dir(job_path)
+
+        self._workflow_joblist.convertToCReference(None)
+
+        for work in self._workflow_info:
+            self._add_workflow(work)
+
+        for hook_name, mode_name in self._hook_workflow_info:
+            self._add_hook_workflow(hook_name, mode_name)
 
     def getWorkflowNames(self) -> List[str]:
-        return list(self._alloc_namelist())
+        return list(self._workflow.keys())
+
+    def getWorkflowPath(self, workflow_name: str) -> str:
+        return self._workflow[workflow_name].src_file
 
     def __contains__(self, workflow_name: str) -> bool:
-        assert isinstance(workflow_name, str)
-        return self._has_workflow(workflow_name)
+        return workflow_name in self._workflow
 
     def __getitem__(self, item) -> Workflow:
         if item not in self:
-            raise KeyError(f"Item '{item}'  is not in the list of available workflows.")
+            raise KeyError(f"Item '{item}' is not in the list of available workflows.")
 
-        return self._get_workflow(item).setParent(self)
+        return self._workflow[item]
 
     def __str__(self):
         return f"ErtWorkflowList with jobs: {self.getJobNames()}"
 
-    def addWorkflow(self, wf_name: str, wf_path: str):
-        self._add_workflow(wf_name, wf_path).setParent(self)
-
-    def addJob(self, job_name: str, job_path: str):
-        self._add_job(job_name, job_path)
-
     def hasJob(self, job_name: str) -> bool:
-        return self._has_job(job_name)
+        return job_name in self._workflow_jobs
 
     def getJob(self, job_name: str) -> WorkflowJob:
-        return self._get_job(job_name)
+        return self._workflow_jobs[job_name]
 
     def getJobNames(self) -> List[str]:
-        return list(self._get_job_names())
+        return list(self._workflow_jobs.keys())
 
     def getPluginJobs(self) -> List[WorkflowJob]:
         plugins = []
@@ -194,9 +90,6 @@ class ErtWorkflowList(BaseCClass):
                 plugins.append(job)
         return plugins
 
-    def free(self):
-        self._free()
-
     def __ne__(self, other):
         return not self == other
 
@@ -205,9 +98,22 @@ class ErtWorkflowList(BaseCClass):
             {ConfigKeys.NAME: name, ConfigKeys.PATH: self.getJob(name).executable()}
             for name in self.getJobNames()
         ]
+
+        workflow_dicts = [
+            {ConfigKeys.NAME: workflow, ConfigKeys.PATH: self.getWorkflowPath(workflow)}
+            for workflow in self.getWorkflowNames()
+        ]
+
+        hook_dicts = [
+            {ConfigKeys.NAME: name, ConfigKeys.RUNMODE: mode}
+            for name, mode in self._hook_workflow_list
+        ]
+
         return (
             "ErtWorkflowList(config_dict={"
             f"'{ConfigKeys.LOAD_WORKFLOW_JOB}': {job_dicts}, "
+            f"'{ConfigKeys.LOAD_WORKFLOW}': {workflow_dicts}, "
+            f"'{ConfigKeys.HOOK_WORKFLOW_KEY}': {hook_dicts}, "
             "})"
         )
 
@@ -218,16 +124,14 @@ class ErtWorkflowList(BaseCClass):
         for name_self, name_other in zip(
             sorted(self.getJobNames()), sorted(other.getJobNames())
         ):
-            job_self = self.getJob(name_self)
-            job_other = other.getJob(name_other)
-            if job_self != job_other:
+            if self.getJob(name_self) != other.getJob(name_other):
                 return False
 
-        if self.getWorkflowNames() != other.getWorkflowNames():
+        if set(self.getWorkflowNames()) != set(other.getWorkflowNames()):
             return False
 
         for name_self, name_other in zip(
-            self.getWorkflowNames(), other.getWorkflowNames()
+            sorted(self.getWorkflowNames()), sorted(other.getWorkflowNames())
         ):
             if self[name_self] != other[name_other]:
                 return False
@@ -235,14 +139,93 @@ class ErtWorkflowList(BaseCClass):
         if self._hook_workflows != other._hook_workflows:
             return False
 
+        for mode in HookRuntime.enums():
+            for name_self, name_other in zip(
+                sorted(self.get_workflows_hooked_at(mode)),
+                sorted(other.get_workflows_hooked_at(mode)),
+            ):
+                if name_self != name_other:
+                    return False
+                if name_self.src_file != name_other.src_file:
+                    return False
+
         return True
 
-    @property
-    def _hook_workflows(self) -> List[HookWorkflow]:
-        return [self._get_hook_workflow(i) for i in range(self._num_hook_workflows())]
+    def _handle_config_content_dict(self, content_dict):
+        for workflow in content_dict.get(ConfigKeys.LOAD_WORKFLOW_JOB, []):
+            self._workflow_job_info.append(workflow)
 
-    def get_workflows_hooked_at(self, run_time) -> Iterator[Workflow]:
+        for workflow_dir in content_dict.get(ConfigKeys.WORKFLOW_JOB_DIRECTORY, []):
+            self._workflow_job_dir_info.append(workflow_dir)
+
+        for name, mode in content_dict.get(ConfigKeys.HOOK_WORKFLOW_KEY, []):
+            self._hook_workflow_info.append([name, mode])
+
+        for workflow in content_dict.get(ConfigKeys.LOAD_WORKFLOW, []):
+            self._workflow_info.append(workflow)
+
+    def _handle_config_dict(self, config_dict):
+        for job in config_dict.get(ConfigKeys.LOAD_WORKFLOW_JOB, []):
+            self._workflow_job_info.append([job[ConfigKeys.PATH], job[ConfigKeys.NAME]])
+
+        for job_path in config_dict.get(ConfigKeys.WORKFLOW_JOB_DIRECTORY, []):
+            self._workflow_job_dir_info.append(job_path)
+
+        for hook in config_dict.get(ConfigKeys.HOOK_WORKFLOW_KEY, []):
+            self._hook_workflow_info.append(
+                [hook[ConfigKeys.NAME], hook[ConfigKeys.RUNMODE]]
+            )
+
+        for job in config_dict.get(ConfigKeys.LOAD_WORKFLOW, []):
+            self._workflow_info.append([job[ConfigKeys.PATH], job[ConfigKeys.NAME]])
+
+    def _add_workflow_job(self, workflow_job):
+        try:
+            new_job = WorkflowJob.fromFile(
+                config_file=workflow_job[0],
+                name=None if len(workflow_job) == 1 else workflow_job[1],
+                parser=self._parser,
+            )
+            if new_job is not None:
+                self._workflow_jobs[new_job.name()] = self._workflow_joblist.addJob(
+                    new_job
+                )
+                new_job.convertToCReference(None)
+                logger.info("Adding workflow job")
+        except OSError:
+            print(f"WARNING: Unable to create job from {workflow_job[0]}")
+
+    def _add_workflow_job_dir(self, job_path):
+        if not os.path.isdir(job_path):
+            print(f"WARNING: Unable to open job directory {job_path}")
+            return
+
+        files = os.listdir(job_path)
+        for file_name in files:
+            full_path = os.path.join(job_path, file_name)
+            self._add_workflow_job([full_path])
+
+    def _add_workflow(self, work):
+        filename = os.path.basename(work[0]) if len(work) == 1 else work[1]
+        self._workflow[filename] = Workflow(work[0], self._workflow_joblist)
+
+    def _add_hook_workflow(self, hook_name, mode_name):
+        if mode_name not in [runtime.name for runtime in HookRuntime.enums()]:
+            raise ValueError(f"Run mode {mode_name} not supported")
+
+        if hook_name not in self._workflow:
+            raise ConfigValidationError(
+                f"Cannot setup hook for non-existing job name {hook_name}"
+            )
+
+        self._hook_workflow_list.append((hook_name, mode_name))
+
+    @property
+    def _hook_workflows(self) -> List[Workflow]:
+        return [self._workflow[name] for name, _ in self._hook_workflow_list]
+
+    def get_workflows_hooked_at(self, run_time: HookRuntime) -> Iterator[Workflow]:
         return map(
-            lambda wh: wh.getWorkflow(),
-            filter(lambda w: w.getRunMode() == run_time, self._hook_workflows),
+            lambda hookname: self._workflow[hookname[0]],
+            filter(lambda hook: hook[1] == run_time.name, self._hook_workflow_list),
         )

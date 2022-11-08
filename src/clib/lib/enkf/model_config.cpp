@@ -12,7 +12,6 @@
 #include <ert/enkf/config_keys.hpp>
 #include <ert/enkf/enkf_defaults.hpp>
 #include <ert/enkf/ensemble_config.hpp>
-#include <ert/enkf/ert_workflow_list.hpp>
 #include <ert/enkf/model_config.hpp>
 
 #include <fmt/format.h>
