@@ -103,7 +103,6 @@ void simple_test_inconsistent() {
 
 void thread_test() {
     time_map_type *time_map = time_map_alloc();
-    test_assert_false(time_map_is_readonly(time_map));
 
     auto update_time_map = [time_map] {
         int i;
@@ -131,22 +130,6 @@ void thread_test() {
     time_map_free(time_map);
 }
 
-void test_read_only() {
-    ecl::util::TestArea ta("read_only");
-    {
-        time_map_type *tm = time_map_alloc();
-
-        test_assert_false(time_map_is_readonly(tm));
-
-        time_map_update(tm, 0, 0);
-        time_map_update(tm, 1, 10);
-        time_map_update(tm, 2, 20);
-
-        time_map_fwrite(tm, "case/files/time-map");
-        time_map_free(tm);
-    }
-}
-
 int main(int argc, char **argv) {
 
     util_install_signals();
@@ -159,8 +142,6 @@ int main(int argc, char **argv) {
         ecl_test(argv[1]);
         test_index_map(argv[1]);
     }
-
-    test_read_only();
 
     exit(0);
 }

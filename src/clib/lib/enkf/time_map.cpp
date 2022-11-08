@@ -29,7 +29,6 @@ static void time_map_summary_log_mismatch(time_map_type *map,
 struct time_map_struct {
     time_t_vector_type *map;
     pthread_rwlock_t rw_lock;
-    bool read_only;
     const ecl_sum_type *refcase;
 };
 
@@ -37,7 +36,6 @@ time_map_type *time_map_alloc() {
     time_map_type *map = (time_map_type *)util_malloc(sizeof *map);
 
     map->map = time_t_vector_alloc(0, DEFAULT_TIME);
-    map->read_only = false;
     map->refcase = NULL;
     pthread_rwlock_init(&map->rw_lock, NULL);
     return map;
@@ -172,8 +170,6 @@ void time_map_free(time_map_type *map) {
     free(map);
 }
 
-bool time_map_is_readonly(const time_map_type *tm) { return tm->read_only; }
-
 /**
    @brief Checks if time map can be updated and sets value if valid.
    Must hold the write lock. When a refcase is supplied we gurantee
@@ -252,11 +248,6 @@ time_t time_map_iget(time_map_type *map, int step) {
     return t;
 }
 
-static void time_map_assert_writable(const time_map_type *map) {
-    if (map->read_only)
-        util_abort("%s: attempt to modify read-only time-map. \n", __func__);
-}
-
 /**
    Observe that the locking is opposite of the function name; i.e.
    the time_map_fwrite() function reads the time_map and takes the
@@ -274,7 +265,6 @@ void time_map_fwrite(time_map_type *map, const char *filename) {
 }
 
 void time_map_fread(time_map_type *map, const char *filename) {
-    time_map_assert_writable(map);
     pthread_rwlock_wrlock(&map->rw_lock);
     {
         if (fs::exists(filename)) {
@@ -334,7 +324,6 @@ bool time_map_update(time_map_type *map, int step, time_t time) {
 }
 
 bool time_map_try_update(time_map_type *map, int step, time_t time) {
-    time_map_assert_writable(map);
     pthread_rwlock_wrlock(&map->rw_lock);
     std::string error = time_map_update__(map, step, time);
     pthread_rwlock_unlock(&map->rw_lock);
@@ -350,7 +339,6 @@ bool time_map_try_update(time_map_type *map, int step, time_t time) {
 */
 std::string time_map_summary_update(time_map_type *map,
                                     const ecl_sum_type *ecl_sum) {
-    time_map_assert_writable(map);
     bool updateOK = true;
     pthread_rwlock_wrlock(&map->rw_lock);
     std::vector<std::string> errors;
@@ -474,7 +462,6 @@ int time_map_lookup_days(time_map_type *map, double sim_days) {
 }
 
 void time_map_clear(time_map_type *map) {
-    time_map_assert_writable(map);
     pthread_rwlock_wrlock(&map->rw_lock);
     {
         time_t_vector_reset(map->map);
