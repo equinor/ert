@@ -51,7 +51,7 @@ extern "C" bool obs_vector_has_data(const obs_vector_type *obs_vector,
                                     const bool_vector_type *active_mask,
                                     enkf_fs_type *fs);
 void obs_vector_measure(const obs_vector_type *, enkf_fs_type *fs,
-                        int report_step, const int_vector_type *ens_active_list,
+                        int report_step, const std::vector<size_t> &ens_active_list,
                         meas_data_type *);
 extern "C" const char *obs_vector_get_state_kw(const obs_vector_type *);
 extern "C" const char *obs_vector_get_key(const obs_vector_type *);

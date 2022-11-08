@@ -2,7 +2,6 @@ from collections import defaultdict
 
 import pandas as pd
 
-from ert._c_wrappers.enkf import RealizationStateEnum
 from ert._c_wrappers.job_queue import ErtScript
 from ert.exceptions import StorageError
 
@@ -24,13 +23,7 @@ class ExportMisfitDataJob(ErtScript):
 
         if target_file is None:
             target_file = "misfit.hdf"
-        realizations = [
-            i
-            for i, has_data in enumerate(
-                fs.getStateMap().selectMatching(RealizationStateEnum.STATE_HAS_DATA)
-            )
-            if has_data
-        ]
+        realizations = fs.getStateMap().indices_with_data()
         if not realizations:
             raise StorageError("No responses loaded")
         misfits = defaultdict(list)

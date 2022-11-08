@@ -5,7 +5,7 @@ from ert._c_wrappers.enkf.data.enkf_node import EnkfNode
 from ert._c_wrappers.enkf.enkf_state import internalize_results
 from ert._c_wrappers.enkf.model_callbacks import LoadStatus
 from ert._c_wrappers.enkf.node_id import NodeId
-from ert._c_wrappers.enkf.state_map import RealizationStateEnum
+from ert._c_wrappers.enkf.state_map import State
 
 if TYPE_CHECKING:
     from ert._c_wrappers.enkf import EnsembleConfig, ModelConfig, RunArg
@@ -67,9 +67,9 @@ def forward_model_ok(
         )
 
     run_arg.sim_fs.getStateMap()[run_arg.iens] = (
-        RealizationStateEnum.STATE_HAS_DATA
+        State.HAS_DATA
         if result[0] == LoadStatus.LOAD_SUCCESSFUL
-        else RealizationStateEnum.STATE_LOAD_FAILURE
+        else State.LOAD_FAILURE
     )
 
     return result

@@ -1,6 +1,3 @@
-from ert._c_wrappers.enkf import RealizationStateEnum
-
-
 def get_runnable_realizations_mask(ert, casename):
     """Return the list of IDs corresponding to realizations that can be run.
 
@@ -14,10 +11,4 @@ def get_runnable_realizations_mask(ert, casename):
     if casename not in fsm:
         return []
     sm = fsm.state_map(casename)
-    runnable_flag = (
-        RealizationStateEnum.STATE_UNDEFINED
-        | RealizationStateEnum.STATE_INITIALIZED
-        | RealizationStateEnum.STATE_LOAD_FAILURE
-        | RealizationStateEnum.STATE_HAS_DATA
-    )
-    return sm.createMask(runnable_flag)
+    return [True] * len(sm)

@@ -18,7 +18,6 @@ if TYPE_CHECKING:
 
     from ert._c_wrappers.enkf import RunArg
     from ert._c_wrappers.enkf.state_map import StateMap
-    from ert._clib.state_map import RealizationStateEnum
 
 
 class EnkfFs(BaseCClass):
@@ -96,13 +95,6 @@ class EnkfFs(BaseCClass):
 
     def getSummaryKeySet(self) -> SummaryKeySet:
         return self._summary_key_set().setParent(self)
-
-    def realizationList(self, state: "RealizationStateEnum") -> "IntVector":
-        """
-        Will return list of realizations with state == the specified state.
-        """
-        state_map = self.getStateMap()
-        return state_map.realizationList(state)
 
     def save_parameters(
         self,

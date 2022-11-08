@@ -320,10 +320,8 @@ std::pair<fw_load_status, std::string> enkf_state_load_from_forward_model(
             ens_config, last_history_restart, job_name, iens, run_path, sim_fs);
     }
     auto &state_map = enkf_fs_get_state_map(sim_fs);
-    if (result.first != LOAD_SUCCESSFUL)
-        state_map.set(iens, STATE_LOAD_FAILURE);
-    else
-        state_map.set(iens, STATE_HAS_DATA);
+    state_map.at(iens) =
+        result.first == LOAD_SUCCESSFUL ? State::has_data : State::load_failure;
 
     return result;
 }

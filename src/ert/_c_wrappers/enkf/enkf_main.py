@@ -18,7 +18,7 @@ from ert._c_wrappers.enkf.data import EnkfNode
 from ert._c_wrappers.enkf.enkf_fs_manager import FileSystemManager
 from ert._c_wrappers.enkf.enkf_obs import EnkfObs
 from ert._c_wrappers.enkf.ensemble_config import EnsembleConfig
-from ert._c_wrappers.enkf.enums import RealizationStateEnum
+from ert._c_wrappers.enkf.enums import State
 from ert._c_wrappers.enkf.enums.enkf_var_type_enum import EnkfVarType
 from ert._c_wrappers.enkf.enums.ert_impl_type_enum import ErtImplType
 from ert._c_wrappers.enkf.ert_run_context import RunContext
@@ -28,7 +28,6 @@ from ert._c_wrappers.enkf.node_id import NodeId
 from ert._c_wrappers.enkf.queue_config import QueueConfig
 from ert._c_wrappers.enkf.runpaths import Runpaths
 from ert._c_wrappers.util.substitution_list import SubstitutionList
-from ert._clib.state_map import STATE_LOAD_FAILURE, STATE_UNDEFINED
 
 if TYPE_CHECKING:
     from ert._c_wrappers.enkf.res_config import ResConfig
@@ -453,8 +452,8 @@ class EnKFMain:
                             realization_nr,
                         )
 
-            if state_map[realization_nr] in [STATE_UNDEFINED, STATE_LOAD_FAILURE]:
-                state_map[realization_nr] = RealizationStateEnum.STATE_INITIALIZED
+            if state_map[realization_nr] in (State.UNDEFINED, State.LOAD_FAILURE):
+                state_map[realization_nr] = State.INITIALIZED
         storage.sync()
 
     def rng(self) -> np.random.Generator:

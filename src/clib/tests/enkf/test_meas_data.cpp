@@ -1,4 +1,5 @@
 #include "catch2/catch.hpp"
+#include <numeric>
 
 #include <ert/enkf/meas_data.hpp>
 
@@ -7,10 +8,11 @@ void meas_block_calculate_ens_stats(meas_block_type *meas_block);
 TEST_CASE("meas_block_calculate_ens_stats", "[meas_data]") {
 
     int ens_size = 2;
-    std::vector<bool> ens_mask(ens_size, true);
+    std::vector<size_t> realizations(ens_size);
+    std::iota(realizations.begin(), realizations.end(), 0);
     int obs_size = 3;
     const char *obs_key = "OBS1";
-    auto *mb = meas_block_alloc(obs_key, ens_mask, obs_size);
+    auto *mb = meas_block_alloc(obs_key, realizations, obs_size);
 
     meas_block_iset(mb, 0, 0, 1);
     meas_block_iset(mb, 0, 1, 2);

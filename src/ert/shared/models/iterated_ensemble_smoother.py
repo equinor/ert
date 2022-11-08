@@ -10,7 +10,7 @@ from ert._c_wrappers.analysis.analysis_module import AnalysisModule
 from ert._c_wrappers.enkf import RunContext
 from ert._c_wrappers.enkf.enkf_fs import EnkfFs
 from ert._c_wrappers.enkf.enkf_main import EnKFMain, QueueConfig
-from ert._c_wrappers.enkf.enums import HookRuntime, RealizationStateEnum
+from ert._c_wrappers.enkf.enums import HookRuntime, State
 from ert.analysis import ErtAnalysisError
 from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.shared.models import BaseRunModel, ErtRunError
@@ -173,11 +173,11 @@ class IteratedEnsembleSmoother(BaseRunModel):
         if prior_context is None:
             mask = self._simulation_arguments["active_realizations"]
         else:
-            state: RealizationStateEnum = (
-                RealizationStateEnum.STATE_HAS_DATA  # type: ignore
-                | RealizationStateEnum.STATE_INITIALIZED
-            )
-            mask = sim_fs.getStateMap().createMask(state)
+            mask = [
+                x
+                for x in sim_fs.getStateMap()
+                if x == State.initialized or x == State.has_data
+            ]
 
         if rerun or itr >= self.facade.get_number_of_iterations():
             target_fs = None

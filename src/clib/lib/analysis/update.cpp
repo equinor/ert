@@ -74,7 +74,7 @@ void serialize_node(enkf_fs_type *fs, const enkf_config_node_type *config_node,
 
 void serialize_parameter(const ensemble_config_type *ens_config,
                          const Parameter parameter, enkf_fs_type *target_fs,
-                         const std::vector<int> &iens_active_index,
+                         const std::vector<size_t> &iens_active_index,
                          Eigen::MatrixXd &A) {
 
     int ens_size = A.cols();
@@ -109,8 +109,7 @@ void deserialize_node(enkf_fs_type *fs,
 
     enkf_node_deserialize(node, fs, node_id, active_list, A, row_offset,
                           column);
-    enkf_fs_get_state_map(fs).update_matching(iens, STATE_UNDEFINED,
-                                              STATE_INITIALIZED);
+    enkf_fs_get_state_map(fs).at(iens) = State::initialized;
     enkf_node_free(node);
 }
 
@@ -128,7 +127,7 @@ matrix.
 */
 Eigen::MatrixXd load_parameter(Cwrap<enkf_fs_type> source_fs,
                                Cwrap<ensemble_config_type> ensemble_config,
-                               const std::vector<int> &iens_active_index,
+                               const std::vector<size_t> &iens_active_index,
                                const Parameter parameter) {
 
     int active_ens_size = iens_active_index.size();
@@ -146,7 +145,7 @@ save a paramater matrix to enkf_fs_type storage
 */
 void save_parameter(Cwrap<enkf_fs_type> target_fs,
                     Cwrap<ensemble_config_type> ensemble_config,
-                    const std::vector<int> &iens_active_index,
+                    const std::vector<size_t> &iens_active_index,
                     const Parameter parameter, const Eigen::MatrixXd &A) {
 
     int ens_size = iens_active_index.size();
@@ -167,7 +166,7 @@ void save_parameter(Cwrap<enkf_fs_type> target_fs,
 std::pair<Eigen::MatrixXd, ObservationHandler> load_observations_and_responses(
     enkf_fs_type *source_fs, enkf_obs_type *obs, double alpha,
     double std_cutoff, double global_std_scaling,
-    const std::vector<bool> &ens_mask,
+    const std::vector<size_t> &realizations,
     const std::vector<std::pair<std::string, std::vector<int>>>
         &selected_observations) {
     /*
@@ -181,17 +180,16 @@ std::pair<Eigen::MatrixXd, ObservationHandler> load_observations_and_responses(
     */
 
     obs_data_type *obs_data = obs_data_alloc(global_std_scaling);
-    meas_data_type *meas_data = meas_data_alloc(ens_mask);
+    meas_data_type *meas_data = meas_data_alloc(realizations);
 
-    std::vector<int> ens_active_list = bool_vector_to_active_list(ens_mask);
     enkf_obs_get_obs_and_measure_data(obs, source_fs, selected_observations,
-                                      ens_active_list, meas_data, obs_data);
+                                      realizations, meas_data, obs_data);
     enkf_analysis_deactivate_outliers(obs_data, meas_data, std_cutoff, alpha,
                                       selected_observations);
     auto update_snapshot = make_update_snapshot(obs_data, meas_data);
 
     int active_obs_size = obs_data_get_active_size(obs_data);
-    int active_ens_size = meas_data_get_active_ens_size(meas_data);
+    int active_ens_size = realizations.size();
     Eigen::MatrixXd S = meas_data_makeS(meas_data);
     assert_matrix_size(S, "S", active_obs_size, active_ens_size);
     meas_data_free(meas_data);
@@ -215,11 +213,12 @@ std::pair<Eigen::MatrixXd, ObservationHandler> load_observations_and_responses(
 static std::pair<Eigen::MatrixXd, analysis::ObservationHandler>
 load_observations_and_responses_pybind(
     Cwrap<enkf_fs_type> source_fs, Cwrap<enkf_obs_type> obs, double alpha,
-    double std_cutoff, double global_std_scaling, std::vector<bool> ens_mask,
+    double std_cutoff, double global_std_scaling,
+    std::vector<size_t> realizations,
     const std::vector<std::pair<std::string, std::vector<int>>>
         &selected_observations) {
     return analysis::load_observations_and_responses(
-        source_fs, obs, alpha, std_cutoff, global_std_scaling, ens_mask,
+        source_fs, obs, alpha, std_cutoff, global_std_scaling, realizations,
         selected_observations);
 }
 

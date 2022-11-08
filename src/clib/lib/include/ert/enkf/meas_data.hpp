@@ -14,7 +14,7 @@ typedef struct meas_data_struct meas_data_type;
 typedef struct meas_block_struct meas_block_type;
 
 meas_block_type *meas_block_alloc(const char *obs_key,
-                                  const std::vector<bool> &ens_mask,
+                                  const std::vector<size_t> &realizations,
                                   int obs_size);
 void meas_block_iset(meas_block_type *meas_block, int iens, int iobs,
                      double value);
@@ -25,11 +25,10 @@ void meas_block_deactivate(meas_block_type *meas_block, int iobs);
 bool meas_block_iget_active(const meas_block_type *meas_block, int iobs);
 void meas_block_free(meas_block_type *meas_block);
 
-meas_data_type *meas_data_alloc(const std::vector<bool> &ens_mask);
+meas_data_type *meas_data_alloc(const std::vector<size_t> &realiations);
 
 void meas_data_free(meas_data_type *);
 Eigen::MatrixXd meas_data_makeS(const meas_data_type *matrix);
-int meas_data_get_active_ens_size(const meas_data_type *meas_data);
 meas_block_type *meas_data_add_block(meas_data_type *matrix,
                                      const char *obs_key, int report_step,
                                      int obs_size);

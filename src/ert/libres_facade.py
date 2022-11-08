@@ -11,7 +11,7 @@ from ert._c_wrappers.enkf import EnKFMain, EnkfNode, ErtImplType, ResConfig, Run
 from ert._c_wrappers.enkf.config import GenKwConfig
 from ert._c_wrappers.enkf.enums import (
     EnkfObservationImplementationType,
-    RealizationStateEnum,
+    State,
 )
 from ert.analysis import ESUpdate, SmootherSnapshot
 from ert.data import MeasuredData
@@ -139,9 +139,7 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
 
     def get_active_realizations(self, case_name: str) -> List[int]:
         fs = self._enkf_main.getFileSystem(case_name)
-        state_map = fs.getStateMap()
-        ens_mask = state_map.selectMatching(RealizationStateEnum.STATE_HAS_DATA)
-        return [index for index, element in enumerate(ens_mask) if element]
+        return fs.getStateMap().indices_with_data()
 
     def case_initialized(self, case: str) -> bool:
         if case in self._enkf_main.storage_manager:
@@ -208,7 +206,7 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
         realization_index: Optional[int] = None,
     ) -> DataFrame:
         fs = self._enkf_main.getFileSystem(case_name)
-        realizations = fs.realizationList(RealizationStateEnum.STATE_HAS_DATA)
+        realizations = fs.getStateMap().indices_with_data()
         if realization_index is not None:
             if realization_index not in realizations:
                 raise IndexError(f"No such realization {realization_index}")
@@ -346,12 +344,7 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
         realization_index: Optional[int] = None,
     ) -> DataFrame:
         fs = self._enkf_main.getFileSystem(case_name)
-
-        ens_mask = fs.getStateMap().selectMatching(
-            RealizationStateEnum.STATE_INITIALIZED
-            | RealizationStateEnum.STATE_HAS_DATA,
-        )
-        realizations = [index for index, active in enumerate(ens_mask) if active]
+        realizations = [i for i, s in enumerate(fs.getStateMap()) if s in (State.INITIALIZED, State.HAS_DATA)]
 
         if realization_index is not None:
             if realization_index not in realizations:

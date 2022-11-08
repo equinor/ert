@@ -660,7 +660,7 @@ void obs_vector_iget_observations(const obs_vector_type *obs_vector,
 
 void obs_vector_measure(const obs_vector_type *obs_vector, enkf_fs_type *fs,
                         int report_step,
-                        const std::vector<int> &ens_active_list,
+                        const std::vector<size_t> &ens_active_list,
                         meas_data_type *meas_data) {
 
     void *obs_node = (void *)vector_iget(obs_vector->nodes, report_step);

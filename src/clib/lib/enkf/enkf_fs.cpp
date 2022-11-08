@@ -602,18 +602,18 @@ int load_from_run_path(
                         std::scoped_lock lock(execution_limiter);
 
                         auto &state_map = enkf_fs_get_state_map(sim_fs);
+                        auto &state = state_map.at(realisation);
 
-                        state_map.update_matching(realisation, STATE_UNDEFINED,
-                                                  STATE_INITIALIZED);
+                        state = State::initialized;
                         auto status = enkf_state_load_from_forward_model(
                             ensemble_config, last_history_restart,
                             std::get<0>(run_args[iens]),
                             std::get<1>(run_args[iens]).c_str(),
                             std::get<2>(run_args[iens]).c_str(), sim_fs);
-                        state_map.set(realisation,
-                                      status.first == LOAD_SUCCESSFUL
-                                          ? STATE_HAS_DATA
-                                          : STATE_LOAD_FAILURE);
+                        state_map.at(realisation) =
+                            status.first == LOAD_SUCCESSFUL
+                                ? State::has_data
+                                : State::load_failure;
                         return status;
                     },
                     iens, std::ref(concurrently_executing_threads))));
@@ -723,7 +723,7 @@ ERT_CLIB_SUBMODULE("enkf_fs", m) {
                             enkf_node_copy(config_node, source_case,
                                            target_case, src_id, target_id);
 
-                        target_state_map.set(src_iens, STATE_INITIALIZED);
+                        target_state_map.at(src_iens) = State::initialized;
                     }
                     src_iens++;
                 }

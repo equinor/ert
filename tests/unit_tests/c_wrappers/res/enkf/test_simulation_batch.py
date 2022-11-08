@@ -1,7 +1,7 @@
 import pytest
 
 from ert._c_wrappers.enkf import EnkfConfigNode, EnKFMain, EnkfNode, NodeId
-from ert._c_wrappers.enkf.enums import RealizationStateEnum
+from ert._c_wrappers.enkf.enums import State
 from ert.simulator.simulation_context import _run_forward_model
 
 
@@ -47,7 +47,7 @@ def test_run_simulation_batch(setup_case):
         injection_node_ext["W1"] = iens + 1
         injection_node_ext["W4"] = 3 * (iens + 1)
         injection_node.save(sim_fs, node_id)
-        state_map[iens] = RealizationStateEnum.STATE_INITIALIZED
+        state_map[iens] = State.INITIALIZED
 
     mask = [True] * batch_size
     run_context = ert.create_ensemble_experiment_run_context(

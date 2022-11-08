@@ -27,7 +27,6 @@ from .enums import (
     GenDataFileType,
     HookRuntime,
     LoadFailTypeEnum,
-    RealizationStateEnum,
 )
 from .ert_run_context import RunContext
 from .ert_workflow_list import ErtWorkflowList
@@ -71,7 +70,6 @@ __all__ = [
     "EnkfVarType",
     "EnkfObservationImplementationType",
     "ErtImplType",
-    "RealizationStateEnum",
     "EnkfTruncationType",
     "EnKFFSType",
     "GenDataFileType",

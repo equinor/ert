@@ -7,24 +7,10 @@
 
 #include <ert/enkf/meas_data.hpp>
 
-void meas_block_iset_abort(void *arg) {
-    auto block = static_cast<meas_block_type *>(arg);
-    meas_block_iset(block, 0, 0, 100);
-}
-
-void meas_block_iget_abort(void *arg) {
-    auto block = static_cast<meas_block_type *>(arg);
-    meas_block_iget(block, 0, 0);
-}
-
 void create_test() {
-    std::vector<bool> ens_mask(31, false);
-    ens_mask[10] = true;
-    ens_mask[20] = true;
-    ens_mask[30] = true;
+    std::vector<size_t> realizations{10, 20, 30};
     {
-        meas_data_type *meas_data = meas_data_alloc(ens_mask);
-        test_assert_int_equal(3, meas_data_get_active_ens_size(meas_data));
+        meas_data_type *meas_data = meas_data_alloc(realizations);
 
         {
             meas_block_type *block =
@@ -32,11 +18,6 @@ void create_test() {
 
             meas_block_iset(block, 10, 0, 100);
             test_assert_double_equal(100, meas_block_iget(block, 10, 0));
-
-            test_assert_util_abort("meas_block_assert_iens_active",
-                                   meas_block_iset_abort, block);
-            test_assert_util_abort("meas_block_assert_iens_active",
-                                   meas_block_iget_abort, block);
         }
         meas_data_free(meas_data);
     }

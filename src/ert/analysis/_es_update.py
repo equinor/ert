@@ -10,7 +10,6 @@ from iterative_ensemble_smoother.experimental import (
 )
 
 from ert._c_wrappers.enkf import ActiveMode
-from ert._c_wrappers.enkf.enums import RealizationStateEnum
 from ert._c_wrappers.enkf.row_scaling import RowScaling
 from ert._clib import update
 
@@ -140,16 +139,14 @@ def analysis_ES(
     std_cutoff: float,
     global_scaling: float,
     smoother_snapshot: SmootherSnapshot,
-    ens_mask: List[bool],
+    realizations: List[int],
     ensemble_config: "EnsembleConfig",
     source_fs: "EnkfFs",
     target_fs: "EnkfFs",
 ) -> None:
 
-    iens_active_index = [i for i in range(len(ens_mask)) if ens_mask[i]]
-
     temp_storage = _create_temporary_parameter_storage(
-        source_fs, ensemble_config, iens_active_index
+        source_fs, ensemble_config, realizations
     )
     # Looping over local analysis update_step
     for update_step in updatestep:
@@ -160,7 +157,7 @@ def analysis_ES(
             alpha,
             std_cutoff,
             global_scaling,
-            ens_mask,
+            realizations,
             update_step.observation_config(),
         )
         # pylint: disable=unsupported-assignment-operation
@@ -206,7 +203,7 @@ def analysis_ES(
                 _save_to_temporary_storage(temp_storage, [parameter], A)
 
     _save_temporary_storage_to_disk(
-        target_fs, ensemble_config, temp_storage, iens_active_index
+        target_fs, ensemble_config, temp_storage, realizations
     )
 
 
@@ -314,9 +311,9 @@ def _write_update_report(fname: Path, snapshot: SmootherSnapshot) -> None:
 
 
 def _assert_has_enough_realizations(
-    ens_mask: List[bool], analysis_config: "AnalysisConfig"
+    realizations: List[int], analysis_config: "AnalysisConfig"
 ) -> None:
-    active_realizations = sum(ens_mask)
+    active_realizations = len(realizations)
     if not analysis_config.have_enough_realisations(active_realizations):
         raise ErtAnalysisError(
             f"There are {active_realizations} active realisations left, which is "
@@ -357,8 +354,8 @@ class ESUpdate:
         std_cutoff = analysis_config.get_std_cutoff()
         global_scaling = analysis_config.get_global_std_scaling()
         source_state_map = source_fs.getStateMap()
-        ens_mask = source_state_map.selectMatching(RealizationStateEnum.STATE_HAS_DATA)
-        _assert_has_enough_realizations(ens_mask, analysis_config)
+        realizations = source_state_map.indices_with_data()
+        _assert_has_enough_realizations(realizations, analysis_config)
 
         smoother_snapshot = _create_smoother_snapshot(
             source_fs, target_fs, analysis_config
@@ -373,7 +370,7 @@ class ESUpdate:
             std_cutoff,
             global_scaling,
             smoother_snapshot,
-            ens_mask,
+            realizations,
             ensemble_config,
             source_fs,
             target_fs,
@@ -406,9 +403,8 @@ class ESUpdate:
         std_cutoff = analysis_config.get_std_cutoff()
         global_scaling = analysis_config.get_global_std_scaling()
         source_state_map = source_fs.getStateMap()
-        ens_mask = source_state_map.selectMatching(RealizationStateEnum.STATE_HAS_DATA)
-
-        _assert_has_enough_realizations(ens_mask, analysis_config)
+        realizations = source_state_map.indices_with_data()
+        _assert_has_enough_realizations(realizations, analysis_config)
 
         smoother_snapshot = _create_smoother_snapshot(
             source_fs, target_fs, analysis_config

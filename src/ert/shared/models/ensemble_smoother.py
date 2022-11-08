@@ -7,7 +7,7 @@ from typing import Any, Dict, Optional
 import _ert_com_protocol
 from ert._c_wrappers.enkf import RunContext
 from ert._c_wrappers.enkf.enkf_main import EnKFMain, QueueConfig
-from ert._c_wrappers.enkf.enums import HookRuntime, RealizationStateEnum
+from ert._c_wrappers.enkf.enums import HookRuntime, State
 from ert.analysis import ErtAnalysisError
 from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.shared.models import BaseRunModel, ErtRunError
@@ -263,11 +263,7 @@ class EnsembleSmoother(BaseRunModel):
             itr = 1
             sim_fs = prior_context.target_fs
             target_fs = None
-            initialized_and_has_data: RealizationStateEnum = (
-                RealizationStateEnum.STATE_HAS_DATA  # type: ignore
-                | RealizationStateEnum.STATE_INITIALIZED
-            )
-            mask = sim_fs.getStateMap().createMask(initialized_and_has_data)
+            mask = [x == State.INITIALIZED or x == State.HAS_DATA for x in sim_fs.getStateMap()]
 
         run_context = self.ert().create_ensemble_smoother_run_context(
             active_mask=mask,

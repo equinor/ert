@@ -8,7 +8,7 @@ from .ert_impl_type_enum import ErtImplType
 from .gen_data_file_type_enum import GenDataFileType
 from .hook_runtime_enum import HookRuntime
 from .load_fail_type_enum import LoadFailTypeEnum
-from .realization_state_enum import RealizationStateEnum
+from ert._clib.state_map import State
 
 __all__ = [
     "EnkfFieldFileFormatEnum",
@@ -16,7 +16,7 @@ __all__ = [
     "EnkfVarType",
     "EnkfObservationImplementationType",
     "ErtImplType",
-    "RealizationStateEnum",
+    "State",
     "EnkfTruncationType",
     "EnKFFSType",
     "GenDataFileType",

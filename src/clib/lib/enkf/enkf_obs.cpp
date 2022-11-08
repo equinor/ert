@@ -269,7 +269,7 @@ int enkf_obs_get_size(const enkf_obs_type *obs) {
 
 static void enkf_obs_get_obs_and_measure_summary(
     const enkf_obs_type *enkf_obs, obs_vector_type *obs_vector,
-    enkf_fs_type *fs, const std::vector<int> &ens_active_list,
+    enkf_fs_type *fs, const std::vector<size_t> &ens_active_list,
     meas_data_type *meas_data, obs_data_type *obs_data) {
 
     int active_count = 0;
@@ -356,7 +356,7 @@ static void enkf_obs_get_obs_and_measure_summary(
 
 static void enkf_obs_get_obs_and_measure_node(
     const enkf_obs_type *enkf_obs, enkf_fs_type *fs, std::string obs_key,
-    const std::vector<int> &ens_active_list, meas_data_type *meas_data,
+    const std::vector<size_t> &ens_active_list, meas_data_type *meas_data,
     obs_data_type *obs_data) {
 
     obs_vector_type *obs_vector =
@@ -395,7 +395,7 @@ static void enkf_obs_get_obs_and_measure_node(
 void enkf_obs_get_obs_and_measure_data(
     const enkf_obs_type *enkf_obs, enkf_fs_type *fs,
     const std::vector<std::pair<std::string, std::vector<int>>> &observations,
-    const std::vector<int> &ens_active_list, meas_data_type *meas_data,
+    const std::vector<size_t> &ens_active_list, meas_data_type *meas_data,
     obs_data_type *obs_data) {
 
     for (auto &observation : observations) {

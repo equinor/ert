@@ -6,7 +6,7 @@ from qtpy.QtCore import Qt
 from qtpy.QtWidgets import QPushButton
 
 from ert._c_wrappers.enkf import EnKFMain, ResConfig
-from ert._clib.state_map import RealizationStateEnum
+from ert._clib.state_map import State
 from ert._clib.update import Parameter
 from ert.gui.tools.manage_cases.case_init_configuration import (
     CaseInitializationConfigurationPanel,
@@ -19,7 +19,7 @@ def test_case_tool_init_prior(qtbot):
     storage = ert.getCurrentFileSystem()
     assert (
         list(storage.getStateMap())
-        == [RealizationStateEnum.STATE_UNDEFINED] * ert.getEnsembleSize()
+        == [State.UNDEFINED] * ert.getEnsembleSize()
     )
     tool = CaseInitializationConfigurationPanel(ert, MagicMock())
     qtbot.mouseClick(
@@ -27,7 +27,7 @@ def test_case_tool_init_prior(qtbot):
     )
     assert (
         list(storage.getStateMap())
-        == [RealizationStateEnum.STATE_INITIALIZED] * ert.getEnsembleSize()
+        == [State.INITIALIZED] * ert.getEnsembleSize()
     )
 
 
@@ -60,7 +60,7 @@ def test_that_case_tool_can_copy_case_state(qtbot):
     tool = CaseInitializationConfigurationPanel(ert, MagicMock())
     assert (
         list(new_case.getStateMap())
-        == [RealizationStateEnum.STATE_UNDEFINED] * ert.getEnsembleSize()
+        == [State.UNDEFINED] * ert.getEnsembleSize()
     )
     qtbot.mouseClick(
         tool.findChild(QPushButton, name="initialize_existing_button"), Qt.LeftButton

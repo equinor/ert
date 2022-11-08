@@ -1,3 +1,4 @@
+#include <numeric>
 #include <vector>
 
 #include <Eigen/Dense>
@@ -11,7 +12,8 @@
 #include <ert/enkf/meas_data.hpp>
 
 void test_measured_to_matrix() {
-    std::vector<bool> ens_mask(10, true);
+    std::vector<size_t> ens_mask(10);
+    std::iota(ens_mask.begin(), ens_mask.end(), 0);
     meas_data_type *meas_data = meas_data_alloc(ens_mask);
     meas_block_type *meas_block = meas_data_add_block(meas_data, "OBS", 10, 10);
 

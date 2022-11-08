@@ -1,12 +1,10 @@
 #include <algorithm>
 #include <cstdint>
 #include <filesystem>
-
 #include <fstream>
-#include <mutex>
-#include <pthread.h>
 #include <stdexcept>
-#include <stdlib.h>
+
+#include <cppitertools/enumerate.hpp>
 
 #include <ert/util/bool_vector.h>
 #include <ert/util/int_vector.h>
@@ -21,7 +19,7 @@
 namespace fs = std::filesystem;
 
 namespace {
-void read_libecl_vector(std::istream &s, std::vector<int> &v) {
+void read_libecl_vector(std::istream &s, std::vector<State> &v) {
     std::int32_t length{};
     s.read(reinterpret_cast<char *>(&length), sizeof(length));
 
@@ -32,9 +30,22 @@ void read_libecl_vector(std::istream &s, std::vector<int> &v) {
 
     v.resize(length);
     s.read(reinterpret_cast<char *>(&v[0]), sizeof(v[0]) * v.size());
+
+    /* Validate states */
+    State valid_states[]{State::undefined, State::initialized, State::has_data,
+                         State::load_failure};
+    for (auto &state : v) {
+        bool found{};
+        for (auto valid_state : valid_states)
+            if (state == valid_state)
+                found = true;
+
+        if (!found)
+            state = State::undefined;
+    }
 }
 
-void write_libecl_vector(std::ostream &s, const std::vector<int> &v) {
+void write_libecl_vector(std::ostream &s, const std::vector<State> &v) {
     std::int32_t length = v.size();
     s.write(reinterpret_cast<const char *>(&length), sizeof(length));
 
@@ -48,38 +59,9 @@ void write_libecl_vector(std::ostream &s, const std::vector<int> &v) {
 }
 } // namespace
 
-int StateMap::size() const {
-    std::lock_guard guard{m_mutex};
-    return m_state.size();
-}
-
-bool StateMap::operator==(const StateMap &other) const {
-    std::scoped_lock lock{m_mutex, other.m_mutex};
-    return m_state == other.m_state;
-}
-
-realisation_state_enum StateMap::get(int index) const {
-    std::lock_guard guard{m_mutex};
-    if (index < m_state.size())
-        return static_cast<realisation_state_enum>(m_state.at(index));
-    return realisation_state_enum::STATE_UNDEFINED;
-}
-
-void StateMap::set(int index, realisation_state_enum new_state) {
-    std::lock_guard lock{m_mutex};
-    m_state.at(index) = new_state;
-}
-
-void StateMap::update_matching(size_t index, int state_mask,
-                               realisation_state_enum new_state) {
-    realisation_state_enum current_state = get(index);
-    if (current_state & state_mask)
-        set(index, new_state);
-}
+StateMap::StateMap(const fs::path &filename) { read(filename); }
 
 void StateMap::write(const fs::path &path) const {
-    std::lock_guard lock{m_mutex};
-
     std::error_code ec;
     fs::create_directories(path.parent_path(), ec /* Error-code is ignored */);
     std::ofstream stream{path};
@@ -89,51 +71,56 @@ void StateMap::write(const fs::path &path) const {
                    path.c_str());
 
     stream.exceptions(stream.failbit);
-    write_libecl_vector(stream, m_state);
+    write_libecl_vector(stream, *this);
 }
 
 bool StateMap::read(const fs::path &filename) {
-    std::lock_guard lock{m_mutex};
     std::ifstream stream{filename};
     try {
         stream.exceptions(stream.failbit);
-        read_libecl_vector(stream, m_state);
+        read_libecl_vector(stream, *this);
         return true;
     } catch (std::ios_base::failure &) {
-        std::fill(m_state.begin(), m_state.end(), STATE_UNDEFINED);
+        std::fill(begin(), end(), State::undefined);
         return false;
     }
-}
-
-std::vector<bool> StateMap::select_matching(int select_mask) const {
-    std::lock_guard lock{m_mutex};
-    std::vector<bool> select_target(m_state.size(), false);
-    for (size_t i{}; i < m_state.size(); ++i) {
-        auto state_value = m_state[i];
-        if (state_value & select_mask)
-            select_target[i] = true;
-    }
-    return select_target;
 }
 
 ERT_CLIB_SUBMODULE("state_map", m) {
     using namespace py::literals;
 
-    py::enum_<realisation_state_enum>(m, "RealizationStateEnum",
-                                      py::arithmetic{})
-        .value("STATE_UNDEFINED", STATE_UNDEFINED)
-        .value("STATE_INITIALIZED", STATE_INITIALIZED)
-        .value("STATE_HAS_DATA", STATE_HAS_DATA)
-        .value("STATE_LOAD_FAILURE", STATE_LOAD_FAILURE)
-        .value("STATE_PARENT_FAILURE", STATE_PARENT_FAILURE)
+    py::enum_<State>(m, "State", py::arithmetic{})
+        .value("UNDEFINED", State::undefined)
+        .value("INITIALIZED", State::initialized)
+        .value("HAS_DATA", State::has_data)
+        .value("LOAD_FAILURE", State::load_failure)
         .export_values();
+
+    const auto indices_with_data = [](const StateMap &self) {
+        std::vector<size_t> indices;
+        for (auto [index, state] : iter::enumerate(self)) {
+            if (state == State::has_data)
+                indices.push_back(index);
+        }
+        return indices;
+    };
 
     py::class_<StateMap, std::shared_ptr<StateMap>>(m, "StateMap")
         .def(py::self == py::self)
-        .def("__len__", &StateMap::size)
-        .def("_get", &StateMap::get, "index"_a)
-        .def("__setitem__", &StateMap::set, "index"_a, "value"_a)
-        .def("selectMatching", [](const StateMap &x, int mask) {
-            return x.select_matching(mask);
-        });
+        .def("__len__", [](const StateMap &self) { return self.size(); })
+        .def(
+            "__iter__",
+            [](const StateMap &self) { return py::make_iterator(self); },
+            py::keep_alive<0, 1>{})
+        .def(
+            "__getitem__",
+            [](const StateMap &self, size_t index) { return self.at(index); },
+            "index"_a)
+        .def(
+            "__setitem__",
+            [](StateMap &self, size_t index, State value) {
+                self.at(index) = value;
+            },
+            "index"_a, "value"_a)
+        .def("indices_with_data", indices_with_data);
 }

@@ -6,7 +6,6 @@ import numpy
 import pandas
 
 from ert import LibresFacade
-from ert._c_wrappers.enkf import RealizationStateEnum
 from ert._c_wrappers.enkf.enums import EnkfObservationImplementationType
 from ert._c_wrappers.job_queue import CancelPluginException, ErtPlugin
 from ert.gui.ertwidgets.customdialog import CustomDialog
@@ -170,7 +169,7 @@ class GenDataRFTCSVExportJob(ErtPlugin):
 
                 rft_data = facade.load_gen_data(case, data_key, report_step)
                 fs = self.ert().getFileSystem(case)
-                realizations = fs.realizationList(RealizationStateEnum.STATE_HAS_DATA)
+                realizations = fs.getStateMap().indices_with_data()
 
                 # Trajectory
                 trajectory_file = os.path.join(trajectory_path, f"{well}.txt" % well)
