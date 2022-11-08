@@ -30,13 +30,6 @@ summary_type *summary_alloc(const summary_config_type *summary_config) {
     return summary;
 }
 
-bool summary_active_value(double value) {
-    if (value == SUMMARY_UNDEF)
-        return false;
-
-    return true;
-}
-
 void summary_read_from_buffer(summary_type *summary, buffer_type *buffer,
                               enkf_fs_type *fs, int report_step) {
     enkf_util_assert_buffer_type(buffer, SUMMARY);
