@@ -6,8 +6,6 @@
 
 const char *enkf_types_get_impl_name(ert_impl_type impl_type) {
     switch (impl_type) {
-    case (INVALID):
-        return "INVALID";
     case FIELD:
         return "FIELD";
     case GEN_KW:
