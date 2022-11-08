@@ -9,7 +9,6 @@ from ert._c_wrappers.enkf.data.ext_param import ExtParam
 from ert._c_wrappers.enkf.data.field import Field
 from ert._c_wrappers.enkf.data.gen_data import GenData
 from ert._c_wrappers.enkf.data.gen_kw import GenKw
-from ert._c_wrappers.enkf.data.summary import Summary
 from ert._c_wrappers.enkf.enkf_fs import EnkfFs
 from ert._c_wrappers.enkf.enums import ErtImplType
 from ert._c_wrappers.enkf.node_id import NodeId
@@ -95,12 +94,6 @@ class EnkfNode(BaseCClass):
         assert impl_type == ErtImplType.FIELD
 
         return Field.createCReference(self.valuePointer(), self)
-
-    def as_summary(self) -> Summary:
-        impl_type = self.getImplType()
-        assert impl_type == ErtImplType.SUMMARY
-
-        return Summary.createCReference(self.valuePointer(), self)
 
     def as_ext_param(self) -> ExtParam:
         impl_type = self.getImplType()
