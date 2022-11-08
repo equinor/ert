@@ -97,8 +97,8 @@ class ForwardModel(BaseCClass):
                     # replaced by substitute, but were not.
                     result[new_key] = new_value
                 else:
-                    logging.warning(
-                        "Environment variable {} skipped due to unmatched define {}",
+                    logger.warning(
+                        "Environment variable %s skipped due to unmatched define %s",
                         new_key,
                         new_value,
                     )
