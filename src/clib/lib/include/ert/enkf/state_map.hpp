@@ -72,17 +72,4 @@ public:
      * elements have the flags of select_mask set
      */
     std::vector<bool> select_matching(int select_mask) const;
-
-    /**
-     * Determine whether it is possible to change from state1 to state2.
-     *
-     * For example, it isn't permitted to go from STATE_PARENT_FAILURE to
-     * STATE_HAS_DATA.
-     *
-     * @param state1 Start state
-     * @param state2 Target state
-     * @return True if legal, false otherwise
-     */
-    static bool is_legal_transition(realisation_state_enum state1,
-                                    realisation_state_enum state2);
 };

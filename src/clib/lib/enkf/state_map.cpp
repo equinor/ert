@@ -65,40 +65,9 @@ realisation_state_enum StateMap::get(int index) const {
     return realisation_state_enum::STATE_UNDEFINED;
 }
 
-bool StateMap::is_legal_transition(realisation_state_enum state1,
-                                   realisation_state_enum state2) {
-    int target_mask = 0;
-
-    if (state1 == STATE_UNDEFINED)
-        target_mask = STATE_INITIALIZED | STATE_PARENT_FAILURE;
-    else if (state1 == STATE_INITIALIZED)
-        target_mask = STATE_LOAD_FAILURE | STATE_HAS_DATA | STATE_INITIALIZED |
-                      STATE_PARENT_FAILURE;
-    else if (state1 == STATE_HAS_DATA)
-        target_mask = STATE_INITIALIZED | STATE_LOAD_FAILURE | STATE_HAS_DATA |
-                      STATE_PARENT_FAILURE;
-    else if (state1 == STATE_LOAD_FAILURE)
-        target_mask = STATE_HAS_DATA | STATE_INITIALIZED | STATE_LOAD_FAILURE;
-    else if (state1 == STATE_PARENT_FAILURE)
-        target_mask = STATE_INITIALIZED | STATE_PARENT_FAILURE;
-
-    if (state2 & target_mask)
-        return true;
-    else
-        return false;
-}
-
 void StateMap::set(int index, realisation_state_enum new_state) {
     std::lock_guard lock{m_mutex};
-
-    auto current_state = static_cast<realisation_state_enum>(m_state.at(index));
-
-    if (is_legal_transition(current_state, new_state))
-        m_state[index] = new_state;
-    else
-        util_abort(
-            "%s: illegal state transition for realisation:%d %d -> %d \n",
-            __func__, index, current_state, new_state);
+    m_state.at(index) = new_state;
 }
 
 void StateMap::update_matching(size_t index, int state_mask,
@@ -160,7 +129,6 @@ ERT_CLIB_SUBMODULE("state_map", m) {
         .export_values();
 
     py::class_<StateMap, std::shared_ptr<StateMap>>(m, "StateMap")
-        .def_static("isLegalTransition", &StateMap::is_legal_transition)
         .def(py::self == py::self)
         .def("__len__", &StateMap::size)
         .def("_get", &StateMap::get, "index"_a)
