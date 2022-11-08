@@ -61,8 +61,6 @@ enkf_var_type;
 */
 
 typedef enum {
-    INVALID = 0,
-    IMPL_TYPE_OFFSET = 100,
     FIELD = 104,    /* WELL has been removed  */
     GEN_KW = 107,   /* RELPERM has been removed & HAVANA_FAULT */
     SUMMARY = 110,  /* TPGZONE has been removed */
