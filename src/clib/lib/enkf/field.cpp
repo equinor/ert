@@ -877,13 +877,11 @@ bool field_fload_keep_inactive(field_type *field, const char *filename) {
 VOID_ALLOC(field)
 VOID_FREE(field)
 VOID_INITIALIZE(field);
-VOID_USER_GET(field)
 VOID_READ_FROM_BUFFER(field)
 VOID_WRITE_TO_BUFFER(field)
 VOID_CLEAR(field)
 VOID_SERIALIZE(field)
 VOID_DESERIALIZE(field)
-VOID_FLOAD(field)
 
 ERT_CLIB_SUBMODULE("field", m) {
     m.def("generate_parameter_file",

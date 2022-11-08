@@ -28,7 +28,6 @@ bool gen_data_fload_with_report_step(gen_data_type *gen_data,
                                      const char *filename, int report_step,
                                      enkf_fs_type *sim_fs);
 
-VOID_USER_GET_HEADER(gen_data);
 VOID_ALLOC_HEADER(gen_data);
 VOID_FREE_HEADER(gen_data);
 VOID_FORWARD_LOAD_HEADER(gen_data);

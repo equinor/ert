@@ -119,8 +119,6 @@
 struct enkf_node_struct {
     alloc_ftype *alloc;
     forward_load_ftype *forward_load;
-    forward_load_vector_ftype *forward_load_vector;
-    fload_ftype *fload;
     has_data_ftype *has_data;
 
     serialize_ftype *serialize;
@@ -240,9 +238,8 @@ bool enkf_node_forward_load_vector(enkf_node_type *enkf_node,
                                    const ecl_sum_type *ecl_sum,
                                    const int_vector_type *time_index) {
     bool loadOK;
-    FUNC_ASSERT(enkf_node->forward_load_vector);
-    loadOK = enkf_node->forward_load_vector(enkf_node->data, NULL, ecl_sum,
-                                            time_index);
+    loadOK = summary_forward_load_vector(
+        static_cast<summary_type *>(enkf_node->data), ecl_sum, time_index);
 
     return loadOK;
 }
@@ -481,10 +478,8 @@ enkf_node_alloc_empty(const enkf_config_node_type *config) {
 
     node->alloc = NULL;
     node->forward_load = NULL;
-    node->forward_load_vector = NULL;
     node->initialize = NULL;
     node->freef = NULL;
-    node->fload = NULL;
     node->read_from_buffer = NULL;
     node->write_to_buffer = NULL;
     node->serialize = NULL;
@@ -502,7 +497,6 @@ enkf_node_alloc_empty(const enkf_config_node_type *config) {
         break;
     case (SUMMARY):
         node->forward_load = summary_forward_load__;
-        node->forward_load_vector = summary_forward_load_vector__;
         node->alloc = summary_alloc__;
         node->freef = summary_free__;
         node->read_from_buffer = summary_read_from_buffer__;
@@ -519,7 +513,6 @@ enkf_node_alloc_empty(const enkf_config_node_type *config) {
         node->write_to_buffer = surface_write_to_buffer__;
         node->serialize = surface_serialize__;
         node->deserialize = surface_deserialize__;
-        node->fload = surface_fload__;
         break;
     case (FIELD):
         node->alloc = field_alloc__;
@@ -529,7 +522,6 @@ enkf_node_alloc_empty(const enkf_config_node_type *config) {
         node->write_to_buffer = field_write_to_buffer__;
         node->serialize = field_serialize__;
         node->deserialize = field_deserialize__;
-        node->fload = field_fload__;
         break;
     case (GEN_DATA):
         node->alloc = gen_data_alloc__;

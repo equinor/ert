@@ -34,9 +34,6 @@ typedef bool(has_data_ftype)(const void *, int);
 typedef void *(alloc_ftype)(const void *);
 typedef bool(initialize_ftype)(void *, int, const char *);
 typedef bool(forward_load_ftype)(void *, const char *, int, const void *);
-typedef bool(forward_load_vector_ftype)(void *, const char *,
-                                        const ecl_sum_type *,
-                                        const int_vector_type *);
 typedef void(free_data_ftype)(void *);
 typedef void(node_free_ftype)(void *);
 typedef void(clear_ftype)(void *);

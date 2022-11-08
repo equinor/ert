@@ -92,13 +92,11 @@ void surface_ecl_write(const surface_type *surface, const char *run_path,
 
 VOID_ALLOC(surface)
 VOID_FREE(surface)
-VOID_USER_GET(surface)
 VOID_WRITE_TO_BUFFER(surface)
 VOID_READ_FROM_BUFFER(surface)
 VOID_SERIALIZE(surface)
 VOID_DESERIALIZE(surface)
 VOID_INITIALIZE(surface)
-VOID_FLOAD(surface)
 
 ERT_CLIB_SUBMODULE("surface", m) {
     m.def("generate_parameter_file",
