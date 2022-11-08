@@ -510,9 +510,9 @@ def test_status_file():
         assert isinstance(job.end_time, datetime.datetime)
 
 
-def test_that_values_with_brackets_are_ommitted(tmp_path):
-    forward_model = ForwardModel([], ExtJoblist())
-    env_vars = EnvironmentVarlist({"ENV_VAR": "<SOME_BRACKETS>"})
+def test_that_values_with_brackets_are_ommitted(tmp_path, caplog):
+    forward_model = set_up_forward_model()
+    forward_model.jobs[0].set_environment("ENV_VAR", "<SOME_BRACKETS>")
     run_id = "test_no_jobs_id"
     forward_model.formatted_fprintf(
         run_id,
@@ -521,8 +521,9 @@ def test_that_values_with_brackets_are_ommitted(tmp_path):
         0,
         0,
         Substituter(),
-        env_vars,
+        EnvironmentVarlist(),
     )
+    assert "Environment variable ENV_VAR skipped due to" in caplog.text
     with open(tmp_path / "jobs.json") as fp:
         data = json.load(fp)
-    assert "ENV_VAR" not in data["global_environment"]["ENV_VAR"]
+    assert "ENV_VAR" not in data["jobList"][0]["environment"]
