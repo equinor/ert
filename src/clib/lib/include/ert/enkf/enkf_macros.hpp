@@ -165,14 +165,6 @@
         obs_prefix##_measure(obs, state, node_id, meas_data);                  \
     }
 
-#define VOID_MEASURE_UNSAFE(obs_prefix, state_prefix)                          \
-    void obs_prefix##_measure__(const void *void_obs, const void *state,       \
-                                node_id_type node_id,                          \
-                                meas_data_type *meas_data) {                   \
-        auto obs = static_cast<const obs_prefix##_type *>(void_obs);           \
-        obs_prefix##_measure(obs, state, node_id, meas_data);                  \
-    }
-
 #define VOID_MEASURE_HEADER(obs_prefix)                                        \
     void obs_prefix##_measure__(const void *, const void *, node_id_type,      \
                                 meas_data_type *)
@@ -198,12 +190,6 @@
 
 #define VOID_CHI2_HEADER(obs_prefix)                                           \
     double obs_prefix##_chi2__(const void *, const void *, node_id_type);
-
-#define VOID_TRUNCATE(prefix)                                                  \
-    void prefix##_truncate__(void *void_arg) {                                 \
-        prefix##_truncate(static_cast<prefix##_type *>(void_arg));             \
-    }
-#define VOID_TRUNCATE_HEADER(prefix) void prefix##_truncate__(void *)
 
 #define VOID_CLEAR(prefix)                                                     \
     void prefix##_clear__(void *void_arg) {                                    \
