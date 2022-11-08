@@ -868,53 +868,6 @@ bool field_fload_keep_inactive(field_type *field, const char *filename) {
     return field_fload_custom__(field, filename, keep_inactive);
 }
 
-/**
-  Here, index_key is i a tree digit string with the i, j and k indicies of
-  the requested block separated by comma. E.g., 1,1,1.
-
-  The string is supposed to contain indices in the range [1...nx] ,
-  [1..ny] , [1...nz], they are immediately converted to C-based zero
-  offset indices.
-*/
-C_USED bool field_user_get(const field_type *field, const char *index_key,
-                           int report_step, double *value) {
-    const bool internal_value = false;
-    bool valid = false;
-    int i = 0, j = 0, k = 0;
-    int parse_user_key =
-        field_config_parse_user_key(field->config, index_key, &i, &j, &k);
-
-    if (parse_user_key == 0) {
-        int active_index = field_config_active_index(field->config, i, j, k);
-        *value = field_iget_double(field, active_index);
-        valid = true;
-    } else {
-        if (parse_user_key == 1)
-            fprintf(stderr, "Failed to parse \"%s\" as three integers \n",
-                    index_key);
-        else if (parse_user_key == 2)
-            fprintf(stderr, " ijk: %d , %d, %d is invalid \n", i + 1, j + 1,
-                    k + 1);
-        else if (parse_user_key == 3)
-            fprintf(stderr, " ijk: %d , %d, %d is an inactive cell. \n", i + 1,
-                    j + 1, k + 1);
-        else
-            util_abort("%s: internal error -invalid value:%d \n", __func__,
-                       parse_user_key);
-        *value = 0.0;
-        valid = false;
-    }
-
-    if (!internal_value && valid) {
-        field_func_type *output_transform =
-            field_config_get_output_transform(field->config);
-        if (output_transform != NULL)
-            *value = output_transform(*value);
-        /* Truncation - ignored for now */
-    }
-    return valid;
-}
-
 /*
   These two functions assume float/double storage; will not work with
   field which is internally based on char *.

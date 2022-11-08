@@ -90,23 +90,6 @@ void surface_ecl_write(const surface_type *surface, const char *run_path,
     free(target_file);
 }
 
-bool surface_user_get(const surface_type *surface, const char *index_key,
-                      int report_step, double *value) {
-    const int data_size = surface_config_get_data_size(surface->config);
-    int index;
-
-    *value = 0.0;
-
-    if (util_sscanf_int(index_key, &index))
-        if ((index >= 0) && (index < data_size)) {
-            *value = surface->data[index];
-            return true;
-        }
-
-    // Not valid
-    return false;
-}
-
 VOID_ALLOC(surface)
 VOID_FREE(surface)
 VOID_USER_GET(surface)

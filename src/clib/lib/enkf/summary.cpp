@@ -103,17 +103,6 @@ void summary_set(summary_type *summary, int report_step, double value) {
 
 double summary_undefined_value() { return SUMMARY_UNDEF; }
 
-bool summary_user_get(const summary_type *summary, const char *index_key,
-                      int report_step, double *value) {
-    if (double_vector_size(summary->data_vector) > report_step) {
-        *value = double_vector_iget(summary->data_vector, report_step);
-        return true;
-    } else {
-        *value = -1;
-        return false;
-    }
-}
-
 std::vector<double> summary_user_get_vector(const summary_type *summary) {
     std::vector<double> values(double_vector_size(summary->data_vector));
     for (int step = 0; step < double_vector_size(summary->data_vector); step++)
