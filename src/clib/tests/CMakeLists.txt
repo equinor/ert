@@ -13,10 +13,17 @@ add_executable(
   enkf/test_enkf_fs.cpp
   enkf/test_meas_data.cpp
   enkf/test_obs_data.cpp
+  enkf/test_time_map.cpp
   res_util/test_memory.cpp
   res_util/test_string.cpp
   res_util/test_metric.cpp
   job_queue/test_lsf_driver.cpp)
+
+target_compile_definitions(
+  ert_test_suite
+  PRIVATE
+    "LOCAL_TEST_DATA_DIR=::std::filesystem::path(\"${CMAKE_SOURCE_DIR}/../../test-data\")"
+)
 
 target_link_libraries(ert_test_suite ert Catch2::Catch2WithMain fmt::fmt)
 fix_install_names(ert_test_suite)

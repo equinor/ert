@@ -20,7 +20,7 @@ extern "C" double summary_undefined_value();
 std::vector<double> summary_user_get_vector(const summary_type *summary);
 bool summary_forward_load_vector(summary_type *summary,
                                  const ecl_sum_type *ecl_sum,
-                                 const int_vector_type *time_index);
+                                 const std::vector<int> &time_index);
 
 VOID_HAS_DATA_HEADER(summary);
 VOID_ALLOC_HEADER(summary);

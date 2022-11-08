@@ -236,7 +236,7 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
         history_length = self._enkf_main.getHistoryLength()
         dates = [
             observations.getObservationTime(index).datetime()
-            for index in range(1, history_length + 1)
+            for index in range(1, history_length)
         ]
         summary_keys = sorted(
             [
@@ -405,7 +405,10 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
         fs = self._enkf_main.getFileSystem(case_name)
 
         time_map = fs.getTimeMap()
-        dates = [time_map[index].datetime() for index in range(1, len(time_map))]
+        dates = [time_map[index] for index in range(1, len(time_map))]
+        # import pdb; pdb.set_trace()
+
+        print(f"{dates=}")
 
         realizations = self.get_active_realizations(case_name)
         if realization_index is not None:

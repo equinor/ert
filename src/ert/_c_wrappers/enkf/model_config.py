@@ -61,7 +61,7 @@ class ModelConfig:
         if time_map_file is not None:
             self.time_map = TimeMap()
             try:
-                self.time_map.fload(time_map_file)
+                self.time_map.read_text(time_map_file)
             except ValueError as err:
                 logger.warning(err)
             except IOError as err:
@@ -88,12 +88,12 @@ class ModelConfig:
             time_map_file=config_dict.get(ConfigKeys.TIME_MAP),
         )
 
-    def get_last_history_restart(self) -> int:
+    def get_history_num_steps(self) -> int:
         if self.refcase:
-            return self.refcase.last_report
+            return self.refcase.last_report + 1
         if self.time_map:
-            return self.time_map.last_step()
-        return -1
+            return len(self.time_map)
+        return 0
 
     def __repr__(self):
         return f"ModelConfig(\n{self}\n)"

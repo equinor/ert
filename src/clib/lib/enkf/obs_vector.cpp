@@ -10,6 +10,7 @@
 #include <time.h>
 #include <vector>
 
+#include <ert/logging.hpp>
 #include <ert/util/bool_vector.h>
 #include <ert/util/double_vector.h>
 #include <ert/util/util.h>
@@ -24,6 +25,8 @@
 #include <ert/enkf/gen_obs.hpp>
 #include <ert/enkf/obs_vector.hpp>
 #include <ert/enkf/summary_obs.hpp>
+
+static auto logger = ert::get_logger("obs_vector");
 
 struct obs_vector_struct {
     /** Function used to free an observation node. */
@@ -52,49 +55,52 @@ struct obs_vector_struct {
 
 static int
 __conf_instance_get_restart_nr(const conf_instance_type *conf_instance,
-                               const char *obs_key, time_map_type *time_map) {
-    int obs_restart_nr = -1; /* To shut up compiler warning. */
+                               const char *obs_key,
+                               const std::vector<time_t> &time_map) {
+    int obs_restart_nr = -1;
 
     if (conf_instance_has_item(conf_instance, "RESTART")) {
         obs_restart_nr =
             conf_instance_get_item_value_int(conf_instance, "RESTART");
-        if (obs_restart_nr > time_map_get_last_step(time_map))
+        if (obs_restart_nr >= time_map.size())
             util_abort("%s: Observation %s occurs at restart %i, but history "
                        "file has only %i restarts.\n",
-                       __func__, obs_key, obs_restart_nr,
-                       time_map_get_last_step(time_map));
-    } else {
-        time_t obs_time = time_map_get_start_time(time_map);
-
-        if (conf_instance_has_item(conf_instance, "DATE")) {
-            obs_time =
-                conf_instance_get_item_value_time_t(conf_instance, "DATE");
-        } else if (conf_instance_has_item(conf_instance, "DAYS")) {
-            double days =
-                conf_instance_get_item_value_double(conf_instance, "DAYS");
-            util_inplace_forward_days_utc(&obs_time, days);
-        } else if (conf_instance_has_item(conf_instance, "HOURS")) {
-            double hours =
-                conf_instance_get_item_value_double(conf_instance, "HOURS");
-            util_inplace_forward_seconds_utc(&obs_time, hours * 3600);
-        } else
-            util_abort("%s: Internal error. Invalid conf_instance?\n",
-                       __func__);
-
-        obs_restart_nr =
-            time_map_lookup_time_with_tolerance(time_map, obs_time, 30, 30);
-        if (obs_restart_nr < 0) {
-            if (conf_instance_has_item(conf_instance, "DATE"))
-                printf("** ERROR: Could not determine REPORT step "
-                       "corresponding to DATE=%s\n",
-                       conf_instance_get_item_value_ref(conf_instance, "DATE"));
-
-            if (conf_instance_has_item(conf_instance, "DAYS"))
-                printf("** ERROR: Could not determine REPORT step "
-                       "corresponding to DAYS=%s\n",
-                       conf_instance_get_item_value_ref(conf_instance, "DAYS"));
-        }
+                       __func__, obs_key, obs_restart_nr, time_map.size());
+        return obs_restart_nr;
     }
+
+    time_t obs_time = time_map.at(0);
+    if (conf_instance_has_item(conf_instance, "DATE")) {
+        obs_time = conf_instance_get_item_value_time_t(conf_instance, "DATE");
+    } else if (conf_instance_has_item(conf_instance, "DAYS")) {
+        double days =
+            conf_instance_get_item_value_double(conf_instance, "DAYS");
+        util_inplace_forward_days_utc(&obs_time, days);
+    } else if (conf_instance_has_item(conf_instance, "HOURS")) {
+        double hours =
+            conf_instance_get_item_value_double(conf_instance, "HOURS");
+        util_inplace_forward_seconds_utc(&obs_time, hours * 3600);
+    } else
+        util_abort("%s: Internal error. Invalid conf_instance?\n", __func__);
+
+    auto it = std::lower_bound(time_map.begin(), time_map.end(), obs_time);
+    const time_t tolerance = 30;
+    if (it == time_map.end() || std::abs(obs_time - *it) >= tolerance) {
+        if (conf_instance_has_item(conf_instance, "DATE"))
+            logger->error(
+                "Could not determine REPORT step "
+                "corresponding to DATE={}",
+                conf_instance_get_item_value_ref(conf_instance, "DATE"));
+
+        if (conf_instance_has_item(conf_instance, "DAYS"))
+            logger->error(
+                "Could not determine REPORT step "
+                "corresponding to DAYS={}",
+                conf_instance_get_item_value_ref(conf_instance, "DAYS"));
+    } else {
+        obs_restart_nr = std::distance(time_map.begin(), it);
+    }
+
     if (obs_restart_nr < 0)
         util_abort("%s: Failed to look up restart nr correctly \n", __func__);
 
@@ -111,7 +117,7 @@ static void obs_vector_resize(obs_vector_type *vector, int new_size) {
 
 obs_vector_type *obs_vector_alloc(obs_impl_type obs_type, const char *obs_key,
                                   enkf_config_node_type *config_node,
-                                  int num_reports) {
+                                  size_t num_reports) {
     auto vector = new obs_vector_type;
 
     vector->freef = NULL;
@@ -148,8 +154,7 @@ obs_vector_type *obs_vector_alloc(obs_impl_type obs_type, const char *obs_key,
     vector->obs_key = util_alloc_string_copy(obs_key);
     vector->num_active = 0;
     vector->nodes = vector_alloc_new();
-    obs_vector_resize(
-        vector, num_reports + 1); /* +1 here ?? Ohh  - these +/- problems. */
+    obs_vector_resize(vector, num_reports);
 
     return vector;
 }
@@ -278,7 +283,8 @@ int obs_vector_get_next_active_step(const obs_vector_type *obs_vector,
 */
 void obs_vector_load_from_SUMMARY_OBSERVATION(
     obs_vector_type *obs_vector, const conf_instance_type *conf_instance,
-    time_map_type *obs_time, ensemble_config_type *ensemble_config) {
+    const std::vector<time_t> &obs_time,
+    ensemble_config_type *ensemble_config) {
     if (!conf_instance_is_of_class(conf_instance, "SUMMARY_OBSERVATION"))
         util_abort("%s: internal error. expected \"SUMMARY_OBSERVATION\" "
                    "instance, got \"%s\".\n",
@@ -301,15 +307,14 @@ void obs_vector_load_from_SUMMARY_OBSERVATION(
 
         if (obs_restart_nr == 0) {
             int day, month, year;
-            time_t start_time = time_map_iget(obs_time, 0);
+            time_t start_time = obs_time[0];
             util_set_date_values_utc(start_time, &day, &month, &year);
 
-            fprintf(stderr, "** ERROR: It is unfortunately not possible to use "
-                            "summary observations from the\n");
-            fprintf(stderr,
-                    "          start of the simulation. Problem with "
-                    "observation:%s at %4d-%02d-%02d\n",
-                    obs_key, year, month, day);
+            logger->error("It is unfortunately not possible to use "
+                          "summary observations from the start of the "
+                          "simulation. Problem with observation '{}' at "
+                          "{:4d}-{:02d}-{:02d}",
+                          obs_key, year, month, day);
             exit(1);
         }
         {
@@ -325,7 +330,8 @@ void obs_vector_load_from_SUMMARY_OBSERVATION(
 }
 
 obs_vector_type *obs_vector_alloc_from_GENERAL_OBSERVATION(
-    const conf_instance_type *conf_instance, time_map_type *obs_time,
+    const conf_instance_type *conf_instance,
+    const std::vector<time_t> &obs_time,
     const ensemble_config_type *ensemble_config) {
     if (!conf_instance_is_of_class(conf_instance, "GENERAL_OBSERVATION"))
         util_abort("%s: internal error. expected \"GENERAL_OBSERVATION\" "
@@ -371,7 +377,7 @@ obs_vector_type *obs_vector_alloc_from_GENERAL_OBSERVATION(
                     obs_vector = obs_vector_alloc(
                         GEN_OBS, obs_key,
                         ensemble_config_get_node(ensemble_config, state_kw),
-                        time_map_get_last_step(obs_time));
+                        obs_time.size());
                     if (conf_instance_has_item(conf_instance, "VALUE")) {
                         scalar_value = conf_instance_get_item_value_double(
                             conf_instance, "VALUE");
@@ -482,7 +488,7 @@ static bool read_history_from_ecl_summary(const history_source_type history,
 
 bool obs_vector_load_from_HISTORY_OBSERVATION(
     obs_vector_type *obs_vector, const conf_instance_type *conf_instance,
-    time_map_type *obs_time, const history_source_type history,
+    const std::vector<time_t> &obs_time, const history_source_type history,
     double std_cutoff, const ecl_sum_type *refcase) {
 
     if (!conf_instance_is_of_class(conf_instance, "HISTORY_OBSERVATION"))
@@ -492,7 +498,6 @@ bool obs_vector_load_from_HISTORY_OBSERVATION(
 
     {
         bool initOK = false;
-        int size, restart_nr;
         double_vector_type *value = double_vector_alloc(0, 0);
         double_vector_type *std = double_vector_alloc(0, 0);
         bool_vector_type *valid = bool_vector_alloc(0, false);
@@ -506,20 +511,22 @@ bool obs_vector_load_from_HISTORY_OBSERVATION(
         const char *sum_key = conf_instance_get_name_ref(conf_instance);
 
         // Get time series data from refcase and allocate
-        size = time_map_get_last_step(obs_time) + 1;
         if (read_history_from_ecl_summary(history, sum_key, value, valid,
                                           refcase)) {
             // Create  the standard deviation vector
             if (strcmp(error_mode, "ABS") == 0) {
-                for (restart_nr = 0; restart_nr < size; restart_nr++)
+                for (size_t restart_nr = 0; restart_nr < obs_time.size();
+                     restart_nr++)
                     double_vector_iset(std, restart_nr, error);
             } else if (strcmp(error_mode, "REL") == 0) {
-                for (restart_nr = 0; restart_nr < size; restart_nr++)
+                for (size_t restart_nr = 0; restart_nr < obs_time.size();
+                     restart_nr++)
                     double_vector_iset(std, restart_nr,
                                        error * std::abs(double_vector_iget(
                                                    value, restart_nr)));
             } else if (strcmp(error_mode, "RELMIN") == 0) {
-                for (restart_nr = 0; restart_nr < size; restart_nr++) {
+                for (size_t restart_nr = 0; restart_nr < obs_time.size();
+                     restart_nr++) {
                     double tmp_std = util_double_max(
                         error_min, error * std::abs(double_vector_iget(
                                                value, restart_nr)));
@@ -566,11 +573,11 @@ bool obs_vector_load_from_HISTORY_OBSERVATION(
                         start = 0;
                     }
 
-                    if (stop >= size) {
-                        printf("%s: WARNING - Segment out of bounds. "
-                               "Truncating end of segment to %d.\n",
-                               __func__, size - 1);
-                        stop = size - 1;
+                    if (stop >= obs_time.size()) {
+                        fmt::print("%s: WARNING - Segment out of bounds. "
+                                   "Truncating end of segment to %ld.\n",
+                                   __func__, obs_time.size() - 1);
+                        stop = obs_time.size() - 1;
                     }
 
                     if (start > stop) {
@@ -582,18 +589,18 @@ bool obs_vector_load_from_HISTORY_OBSERVATION(
 
                     // Create  the standard deviation vector
                     if (strcmp(error_mode_segment, "ABS") == 0) {
-                        for (restart_nr = start; restart_nr <= stop;
+                        for (size_t restart_nr = start; restart_nr <= stop;
                              restart_nr++)
                             double_vector_iset(std, restart_nr, error_segment);
                     } else if (strcmp(error_mode_segment, "REL") == 0) {
-                        for (restart_nr = start; restart_nr <= stop;
+                        for (size_t restart_nr = start; restart_nr <= stop;
                              restart_nr++)
                             double_vector_iset(std, restart_nr,
                                                error_segment *
                                                    std::abs(double_vector_iget(
                                                        value, restart_nr)));
                     } else if (strcmp(error_mode_segment, "RELMIN") == 0) {
-                        for (restart_nr = start; restart_nr <= stop;
+                        for (size_t restart_nr = start; restart_nr <= stop;
                              restart_nr++) {
                             double tmp_std = util_double_max(
                                 error_min_segment,
@@ -612,7 +619,8 @@ bool obs_vector_load_from_HISTORY_OBSERVATION(
             /*
         This is where the summary observations are finally added.
       */
-            for (restart_nr = 0; restart_nr < size; restart_nr++) {
+            for (size_t restart_nr = 0; restart_nr < obs_time.size();
+                 restart_nr++) {
                 if (bool_vector_safe_iget(valid, restart_nr)) {
                     if (double_vector_iget(std, restart_nr) > std_cutoff) {
                         obs_vector_add_summary_obs(
@@ -620,10 +628,9 @@ bool obs_vector_load_from_HISTORY_OBSERVATION(
                             double_vector_iget(value, restart_nr),
                             double_vector_iget(std, restart_nr));
                     } else
-                        fprintf(stderr,
-                                "** Warning: to small observation error in "
-                                "observation %s:%d - ignored. \n",
-                                sum_key, restart_nr);
+                        logger->warning("Too small observation error in "
+                                        "observation {}:{} - ignored",
+                                        sum_key, restart_nr);
                 }
             }
             initOK = true;

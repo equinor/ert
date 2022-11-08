@@ -214,16 +214,6 @@ bool enkf_node_forward_init(enkf_node_type *enkf_node,
     return init;
 }
 
-bool enkf_node_forward_load_vector(enkf_node_type *enkf_node,
-                                   const ecl_sum_type *ecl_sum,
-                                   const int_vector_type *time_index) {
-    bool loadOK;
-    loadOK = summary_forward_load_vector(
-        static_cast<summary_type *>(enkf_node->data), ecl_sum, time_index);
-
-    return loadOK;
-}
-
 static bool enkf_node_store_buffer(enkf_node_type *enkf_node, enkf_fs_type *fs,
                                    int report_step, int iens) {
     FUNC_ASSERT(enkf_node->write_to_buffer);

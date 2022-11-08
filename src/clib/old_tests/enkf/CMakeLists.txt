@@ -26,7 +26,6 @@ foreach(
   enkf_obs
   enkf_obs_vector
   enkf_state_map
-  enkf_time_map
   obs_vector
   measured
   obs_mask_deactivate
@@ -37,6 +36,3 @@ foreach(
   fix_install_names(${test})
   add_test(NAME ${test} COMMAND ${test})
 endforeach()
-
-add_config_test(enkf_time_map2 enkf_time_map
-                "${LOCAL_TEST_DATA_DIR}/snake_oil/refcase/SNAKE_OIL_FIELD")

@@ -366,7 +366,7 @@ class EnKFMain:
         return len(self._observations) > 0
 
     def getHistoryLength(self) -> int:
-        return self.resConfig().model_config.get_last_history_restart()
+        return self.resConfig().model_config.get_history_num_steps()
 
     def getWorkflowList(self) -> ErtWorkflowList:
         return self.resConfig().ert_workflow_list

@@ -29,6 +29,9 @@ struct Submodule {
 
 namespace ert {
 template <typename T> T *from_cwrap(py::handle obj) {
+    if (obj.is_none())
+        return nullptr;
+
     py::int_ address = obj.attr("_BaseCClass__c_pointer");
     void *pointer = PyLong_AsVoidPtr(address.ptr());
 
