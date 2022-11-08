@@ -1,4 +1,8 @@
 import pytest
+from hypothesis import settings
+
+settings.register_profile("blobs", print_blob=True)
+settings.load_profile("blobs")
 
 
 @pytest.fixture()
