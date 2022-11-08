@@ -131,7 +131,7 @@ struct enkf_fs_struct {
 
     /** Whether this filesystem has been mounted read-only. */
     bool read_only;
-    time_map_type *time_map;
+    std::shared_ptr<TimeMap> time_map;
     std::shared_ptr<StateMap> state_map;
     summary_key_set_type *summary_key_set;
     /* The variables below here are for storing arbitrary files within the
@@ -148,7 +148,7 @@ enkf_fs_type *enkf_fs_get_ref(enkf_fs_type *fs) { return fs; }
 enkf_fs_type *enkf_fs_alloc_empty(const char *mount_point,
                                   unsigned ensemble_size, bool read_only) {
     enkf_fs_type *fs = new enkf_fs_type;
-    fs->time_map = time_map_alloc();
+    fs->time_map = std::make_shared<TimeMap>();
     fs->state_map = std::make_shared<StateMap>(ensemble_size);
     fs->summary_key_set = summary_key_set_alloc();
     fs->misfit_ensemble = misfit_ensemble_alloc();
@@ -260,13 +260,13 @@ enkf_fs_type *enkf_fs_create_fs(const char *mount_point,
 
 static void enkf_fs_fsync_time_map(enkf_fs_type *fs) {
     char *filename = enkf_fs_alloc_case_filename(fs, TIME_MAP_FILE);
-    time_map_fwrite(fs->time_map, filename);
+    fs->time_map->write_binary(filename);
     free(filename);
 }
 
 static void enkf_fs_fread_time_map(enkf_fs_type *fs) {
     char *filename = enkf_fs_alloc_case_filename(fs, TIME_MAP_FILE);
-    time_map_fread(fs->time_map, filename);
+    fs->time_map->read_binary(filename);
     free(filename);
 }
 
@@ -381,7 +381,6 @@ void enkf_fs_umount(enkf_fs_type *fs) {
     path_fmt_free(fs->case_tstep_member_fmt);
 
     summary_key_set_free(fs->summary_key_set);
-    time_map_free(fs->time_map);
     misfit_ensemble_free(fs->misfit_ensemble);
     delete fs;
 }
@@ -548,9 +547,7 @@ FILE *enkf_fs_open_excase_tstep_file(const enkf_fs_type *fs,
     return stream;
 }
 
-time_map_type *enkf_fs_get_time_map(const enkf_fs_type *fs) {
-    return fs->time_map;
-}
+TimeMap &enkf_fs_get_time_map(const enkf_fs_type *fs) { return *fs->time_map; }
 
 StateMap &enkf_fs_get_state_map(enkf_fs_type *fs) { return *fs->state_map; }
 
@@ -643,6 +640,9 @@ ERT_CLIB_SUBMODULE("enkf_fs", m) {
     m.def(
         "get_state_map",
         [](Cwrap<enkf_fs_type> self) { return self->state_map; }, "self"_a);
+    m.def(
+        "get_time_map", [](Cwrap<enkf_fs_type> self) { return self->time_map; },
+        "self"_a);
     m.def(
         "is_initialized",
         [](Cwrap<enkf_fs_type> fs, Cwrap<ensemble_config_type> ensemble_config,

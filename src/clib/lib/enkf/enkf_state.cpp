@@ -15,6 +15,7 @@
 #include <ert/enkf/enkf_node.hpp>
 #include <ert/enkf/enkf_state.hpp>
 #include <ert/enkf/gen_data.hpp>
+#include <ert/enkf/summary.hpp>
 #include <ert/logging.hpp>
 #include <ert/res_util/memory.hpp>
 
@@ -129,28 +130,22 @@ enkf_state_internalize_dynamic_eclipse_results(
     ensemble_config_type *ens_config, const ecl_sum_type *summary,
     const summary_key_matcher_type *matcher, enkf_fs_type *sim_fs,
     const int iens) {
-    int load_start = 0;
 
-    if (load_start == 0) {
-        // Do not attempt to load the "S0000" summary results.
-        load_start++;
-    }
-
-    time_map_type *time_map = enkf_fs_get_time_map(sim_fs);
-    auto status = time_map_summary_update(time_map, summary);
+    auto &time_map = enkf_fs_get_time_map(sim_fs);
+    auto status = time_map.summary_update(summary);
     if (!status.empty()) {
         // Something has gone wrong in checking time map, fail
         return {TIME_MAP_FAILURE, status};
     }
-    int_vector_type *time_index = time_map_alloc_index_map(time_map, summary);
+    auto time_index = time_map.indices(summary);
 
     // The actual loading internalizing - from ecl_sum -> enkf_node.
     // step2 is just taken from the number of steps found in the
     // summary file.
     const int step2 = ecl_sum_get_last_report_step(summary);
 
-    int_vector_iset_block(time_index, 0, load_start, -1);
-    int_vector_resize(time_index, step2 + 1, -1);
+    time_index[0] = -1; // don't load 0th index
+    time_index.resize(step2 + 1, -1);
 
     const ecl_smspec_type *smspec = ecl_sum_get_smspec(summary);
 
@@ -171,12 +166,13 @@ enkf_state_internalize_dynamic_eclipse_results(
             // before we update.
             enkf_node_try_load_vector(node, sim_fs, iens);
 
-            enkf_node_forward_load_vector(node, summary, time_index);
+            summary_forward_load_vector(
+                static_cast<summary_type *>(enkf_node_value_ptr(node)), summary,
+                time_index);
             enkf_node_store_vector(node, sim_fs, iens);
             enkf_node_free(node);
         }
     }
-    int_vector_free(time_index);
 
     // Check if some of the specified keys are missing from the Eclipse
     // data, and if there are observations for them. That is a problem.
@@ -187,7 +183,7 @@ enkf_state_internalize_dynamic_eclipse_results(
 
 static fw_load_status enkf_state_load_gen_data_node(
     const std::string run_path, enkf_fs_type *sim_fs, int iens,
-    const enkf_config_node_type *config_node, int start, int stop) {
+    const enkf_config_node_type *config_node, size_t start, size_t stop) {
     fw_load_status status = LOAD_SUCCESSFUL;
     for (int report_step = start; report_step <= stop; report_step++) {
 
@@ -224,10 +220,9 @@ static fw_load_status enkf_state_load_gen_data_node(
     return status;
 }
 
-static fw_load_status
-enkf_state_internalize_GEN_DATA(const ensemble_config_type *ens_config,
-                                const int iens, enkf_fs_type *sim_fs,
-                                const std::string run_path, int last_report) {
+static fw_load_status enkf_state_internalize_GEN_DATA(
+    const ensemble_config_type *ens_config, const int iens,
+    enkf_fs_type *sim_fs, const std::string run_path, size_t num_reports) {
 
     stringlist_type *keylist_GEN_DATA =
         ensemble_config_alloc_keylist_from_impl_type(ens_config, GEN_DATA);
@@ -235,11 +230,11 @@ enkf_state_internalize_GEN_DATA(const ensemble_config_type *ens_config,
     int numkeys = stringlist_get_size(keylist_GEN_DATA);
 
     if (numkeys > 0)
-        if (last_report <= 0)
+        if (num_reports != 0)
             logger->warning(
                 "Trying to load GEN_DATA without properly "
-                "set last_report (was {}) - will only look for step 0 data: {}",
-                last_report, stringlist_iget(keylist_GEN_DATA, 0));
+                "set num_reports (was {}) - will only look for step 0 data: {}",
+                num_reports, stringlist_iget(keylist_GEN_DATA, 0));
 
     fw_load_status result = LOAD_SUCCESSFUL;
     for (int ikey = 0; ikey < numkeys; ikey++) {
@@ -249,8 +244,8 @@ enkf_state_internalize_GEN_DATA(const ensemble_config_type *ens_config,
         // This for loop should probably be changed to use the report
         // steps configured in the gen_data_config object, instead of
         // spinning through them all.
-        int start = 0;
-        int stop = util_int_max(0, last_report); // inclusive
+        size_t start = 0;
+        size_t stop = num_reports;
         auto status = enkf_state_load_gen_data_node(run_path, sim_fs, iens,
                                                     config_node, start, stop);
         if (status == LOAD_FAILURE)
@@ -268,10 +263,11 @@ enkf_state_internalize_GEN_DATA(const ensemble_config_type *ens_config,
    Will mainly be called at the end of the forward model, but can also
    be called manually from external scope.
 */
-static std::pair<fw_load_status, std::string> enkf_state_internalize_results(
-    ensemble_config_type *ens_config, int last_history_restart,
-    const std::string &job_name, const int iens, const std::string &run_path,
-    enkf_fs_type *sim_fs) {
+static std::pair<fw_load_status, std::string>
+enkf_state_internalize_results(ensemble_config_type *ens_config,
+                               size_t num_steps, const std::string &job_name,
+                               const int iens, const std::string &run_path,
+                               enkf_fs_type *sim_fs) {
     const summary_key_matcher_type *matcher =
         ensemble_config_get_summary_key_matcher(ens_config);
 
@@ -297,11 +293,11 @@ static std::pair<fw_load_status, std::string> enkf_state_internalize_results(
         }
     }
 
-    int last_report = time_map_get_last_step(enkf_fs_get_time_map(sim_fs));
-    if (last_report < 0)
-        last_report = last_history_restart;
+    size_t num_reports = enkf_fs_get_time_map(sim_fs).size();
+    if (num_reports == 0)
+        num_reports = num_steps;
     auto result = enkf_state_internalize_GEN_DATA(ens_config, iens, sim_fs,
-                                                  run_path, last_report);
+                                                  run_path, num_reports);
     if (result == LOAD_FAILURE)
         return {LOAD_FAILURE, "Failed to internalize GEN_DATA"};
     return {LOAD_SUCCESSFUL, "Results loaded successfully."};
@@ -333,12 +329,11 @@ ERT_CLIB_SUBMODULE("enkf_state", m) {
           [](Cwrap<enkf_node_type> param_node, Cwrap<enkf_fs_type> fs,
              int iens) { return enkf_state_initialize(fs, param_node, iens); });
 
-    m.def("internalize_results", [](Cwrap<ensemble_config_type> ens_config,
-                                    int last_history_restart,
-                                    const std::string &job_name, const int iens,
-                                    const std::string &run_path,
-                                    Cwrap<enkf_fs_type> sim_fs) {
-        return enkf_state_internalize_results(ens_config, last_history_restart,
-                                              job_name, iens, run_path, sim_fs);
-    });
+    m.def("internalize_results",
+          [](Cwrap<ensemble_config_type> ens_config, size_t num_steps,
+             const std::string &job_name, const int iens,
+             const std::string &run_path, Cwrap<enkf_fs_type> sim_fs) {
+              return enkf_state_internalize_results(
+                  ens_config, num_steps, job_name, iens, run_path, sim_fs);
+          });
 }

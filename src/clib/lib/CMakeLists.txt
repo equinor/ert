@@ -96,8 +96,9 @@ pybind11_add_module(
 # Target: Python C Extension 'ert._clib'
 # -----------------------------------------------------------------
 
-target_link_libraries(_clib PUBLIC std::filesystem cJSON::cJSON fmt::fmt
-                                   Eigen3::Eigen Threads::Threads)
+target_link_libraries(
+  _clib PUBLIC std::filesystem cJSON::cJSON fmt::fmt Eigen3::Eigen
+               cppitertools::cppitertools Threads::Threads)
 target_include_directories(_clib PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include"
                                         "${ECL_INCLUDE_DIRS}")
 

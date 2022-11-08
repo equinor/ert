@@ -3,6 +3,7 @@ from typing import Iterator, List, Optional, Union
 from cwrap import BaseCClass
 from ecl.util.util import CTime, StringList
 
+from ert import _clib
 from ert._c_wrappers import ResPrototype
 from ert._c_wrappers.enkf.enums import EnkfObservationImplementationType
 from ert._c_wrappers.enkf.observations import ObsVector
@@ -11,11 +12,6 @@ from ert._c_wrappers.enkf.observations import ObsVector
 class EnkfObs(BaseCClass):
     TYPE_NAME = "enkf_obs"
 
-    _alloc = ResPrototype(
-        "void* enkf_obs_alloc(history_source_enum, time_map, ecl_grid, \
-                                        ecl_sum, ens_config)",
-        bind=False,
-    )
     _free = ResPrototype("void enkf_obs_free(enkf_obs)")
     _get_size = ResPrototype("int enkf_obs_get_size( enkf_obs )")
     _valid = ResPrototype("bool enkf_obs_is_valid(enkf_obs)")
@@ -35,7 +31,9 @@ class EnkfObs(BaseCClass):
     _add_obs_vector = ResPrototype("void enkf_obs_add_obs_vector(enkf_obs, obs_vector)")
 
     def __init__(self, history_type, time_map, grid, refcase, ensemble_config):
-        c_ptr = self._alloc(history_type, time_map, grid, refcase, ensemble_config)
+        c_ptr = _clib.enkf_obs.alloc(
+            int(history_type), time_map, grid, refcase, ensemble_config
+        )
         if c_ptr:
             super().__init__(c_ptr)
         else:

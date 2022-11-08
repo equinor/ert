@@ -1,20 +1,20 @@
 #include <cmath>
+#include <cppitertools/enumerate.hpp>
+
+#include <ert/ecl/ecl_grid.h>
+#include <ert/ecl/ecl_sum.h>
 #include <ert/util/hash.h>
 #include <ert/util/type_vector_functions.h>
 #include <ert/util/vector.h>
 
-#include <ert/res_util/string.hpp>
-
 #include <ert/config/conf.hpp>
-
-#include <ert/ecl/ecl_grid.h>
-#include <ert/ecl/ecl_sum.h>
-
 #include <ert/enkf/enkf_analysis.hpp>
 #include <ert/enkf/enkf_fs.hpp>
 #include <ert/enkf/enkf_obs.hpp>
 #include <ert/enkf/obs_vector.hpp>
 #include <ert/enkf/summary_obs.hpp>
+#include <ert/python.hpp>
+#include <ert/res_util/string.hpp>
 
 /**
 
@@ -144,70 +144,44 @@ struct enkf_obs_struct {
     vector_type *obs_vector;
     hash_type *obs_hash;
     /** For fast lookup of report_step -> obs_time */
-    time_map_type *obs_time;
+    std::vector<time_t> obs_time;
 
     bool valid;
     /* Several shared resources - can generally be NULL*/
     history_source_type history;
     const ecl_sum_type *refcase;
     const ecl_grid_type *grid;
-    time_map_type *external_time_map;
     ensemble_config_type *ensemble_config;
 };
 
-static void enkf_obs_iset_obs_time(enkf_obs_type *enkf_obs, int report_step,
-                                   time_t obs_time) {
-    time_map_update(enkf_obs->obs_time, report_step, obs_time);
-}
-
-static int enkf_obs_get_last_restart(const enkf_obs_type *enkf_obs) {
-    return time_map_get_size(enkf_obs->obs_time) - 1;
-}
-
 enkf_obs_type *enkf_obs_alloc(const history_source_type history,
-                              time_map_type *external_time_map,
+                              std::shared_ptr<TimeMap> external_time_map,
                               const ecl_grid_type *grid,
                               const ecl_sum_type *refcase,
                               ensemble_config_type *ensemble_config) {
-    enkf_obs_type *enkf_obs = (enkf_obs_type *)util_malloc(sizeof *enkf_obs);
+    auto enkf_obs = new enkf_obs_type;
     enkf_obs->obs_hash = hash_alloc();
     enkf_obs->obs_vector = vector_alloc_new();
-    enkf_obs->obs_time = time_map_alloc();
 
     enkf_obs->history = history;
     enkf_obs->refcase = refcase;
     enkf_obs->grid = grid;
     enkf_obs->ensemble_config = ensemble_config;
-    enkf_obs->external_time_map = external_time_map;
-    enkf_obs->valid = false;
+    enkf_obs->valid = true;
 
     /* Initialize obs time: */
-    {
-        if (enkf_obs->refcase) {
-            int last_report = ecl_sum_get_last_report_step(refcase);
-            int step;
-            for (step = 0; step <= last_report; step++) {
-                time_t obs_time;
-                if (step == 0)
-                    obs_time = ecl_sum_get_start_time(refcase);
-                else
-                    obs_time = ecl_sum_get_report_time(refcase, step);
-                enkf_obs_iset_obs_time(enkf_obs, step, obs_time);
-            }
-            enkf_obs->valid = true;
-        } else {
-            if (enkf_obs->external_time_map) {
-                int last_report =
-                    time_map_get_size(enkf_obs->external_time_map) - 1;
-                int step;
-                for (step = 0; step <= last_report; step++) {
-                    time_t obs_time =
-                        time_map_iget(enkf_obs->external_time_map, step);
-                    enkf_obs_iset_obs_time(enkf_obs, step, obs_time);
-                }
-                enkf_obs->valid = true;
-            }
+    if (enkf_obs->refcase) {
+        enkf_obs->obs_time.push_back(ecl_sum_get_start_time(refcase));
+
+        int last_report = ecl_sum_get_last_report_step(refcase);
+        for (int step = 1; step <= last_report; step++) {
+            auto obs_time = ecl_sum_get_report_time(refcase, step);
+            enkf_obs->obs_time.push_back(obs_time);
         }
+    } else if (external_time_map) {
+        enkf_obs->obs_time = *external_time_map;
+    } else {
+        enkf_obs->valid = false;
     }
 
     return enkf_obs;
@@ -218,12 +192,13 @@ bool enkf_obs_is_valid(const enkf_obs_type *obs) { return obs->valid; }
 void enkf_obs_free(enkf_obs_type *enkf_obs) {
     hash_free(enkf_obs->obs_hash);
     vector_free(enkf_obs->obs_vector);
-    time_map_free(enkf_obs->obs_time);
-    free(enkf_obs);
+    delete enkf_obs;
 }
 
 time_t enkf_obs_iget_obs_time(const enkf_obs_type *enkf_obs, int report_step) {
-    return time_map_iget(enkf_obs->obs_time, report_step);
+    if (report_step < 0 || report_step >= enkf_obs->obs_time.size())
+        return -1;
+    return enkf_obs->obs_time[report_step];
 }
 
 /**
@@ -437,7 +412,7 @@ static void enkf_obs_update_keys(enkf_obs_type *enkf_obs) {
 /** Handle HISTORY_OBSERVATION instances. */
 static void handle_history_observation(enkf_obs_type *enkf_obs,
                                        conf_instance_type *enkf_conf,
-                                       int last_report, double std_cutoff) {
+                                       size_t num_reports, double std_cutoff) {
     stringlist_type *hist_obs_keys =
         conf_instance_alloc_list_of_sub_instances_of_class_by_name(
             enkf_conf, "HISTORY_OBSERVATION");
@@ -470,7 +445,7 @@ static void handle_history_observation(enkf_obs_type *enkf_obs,
         obs_vector = obs_vector_alloc(
             SUMMARY_OBS, obs_key,
             ensemble_config_get_node(enkf_obs->ensemble_config, obs_key),
-            last_report);
+            num_reports);
         if (obs_vector != NULL) {
             if (obs_vector_load_from_HISTORY_OBSERVATION(
                     obs_vector, hist_obs_conf, enkf_obs->obs_time,
@@ -491,7 +466,7 @@ static void handle_history_observation(enkf_obs_type *enkf_obs,
 /** Handle SUMMARY_OBSERVATION instances. */
 static void handle_summary_observation(enkf_obs_type *enkf_obs,
                                        conf_instance_type *enkf_conf,
-                                       int last_report) {
+                                       size_t num_reports) {
     stringlist_type *sum_obs_keys =
         conf_instance_alloc_list_of_sub_instances_of_class_by_name(
             enkf_conf, "SUMMARY_OBSERVATION");
@@ -520,7 +495,7 @@ static void handle_summary_observation(enkf_obs_type *enkf_obs,
         obs_vector_type *obs_vector = obs_vector_alloc(
             SUMMARY_OBS, obs_key,
             ensemble_config_get_node(enkf_obs->ensemble_config, sum_key),
-            last_report);
+            num_reports);
         if (obs_vector == NULL)
             break;
 
@@ -578,7 +553,6 @@ void enkf_obs_load(enkf_obs_type *enkf_obs, const char *config_file,
         util_abort("%s cannot load invalid enkf observation config %s.\n",
                    __func__, config_file);
 
-    int last_report = enkf_obs_get_last_restart(enkf_obs);
     conf_class_type *enkf_conf_class = enkf_obs_get_obs_conf_class();
     conf_instance_type *enkf_conf = conf_instance_alloc_from_file(
         enkf_conf_class, "enkf_conf", config_file);
@@ -593,8 +567,9 @@ void enkf_obs_load(enkf_obs_type *enkf_obs, const char *config_file,
         util_abort("%s: Can not proceed with this configuration: %s\n",
                    __func__, config_file);
 
-    handle_history_observation(enkf_obs, enkf_conf, last_report, std_cutoff);
-    handle_summary_observation(enkf_obs, enkf_conf, last_report);
+    handle_history_observation(enkf_obs, enkf_conf, enkf_obs->obs_time.size(),
+                               std_cutoff);
+    handle_summary_observation(enkf_obs, enkf_conf, enkf_obs->obs_time.size());
     handle_general_observation(enkf_obs, enkf_conf);
 
     conf_instance_free(enkf_conf);
@@ -1032,4 +1007,23 @@ hash_type *enkf_obs_alloc_data_map(enkf_obs_type *enkf_obs) {
 
 hash_iter_type *enkf_obs_alloc_iter(const enkf_obs_type *enkf_obs) {
     return hash_iter_alloc(enkf_obs->obs_hash);
+}
+
+namespace {
+py::handle pybind_alloc(int history_,
+                        std::shared_ptr<TimeMap> external_time_map,
+                        Cwrap<ecl_grid_type> grid, Cwrap<ecl_sum_type> refcase,
+                        Cwrap<ensemble_config_type> ensemble_config) {
+    auto history = static_cast<history_source_type>(history_);
+    auto ptr = enkf_obs_alloc(history, external_time_map, grid, refcase,
+                              ensemble_config);
+    return PyLong_FromVoidPtr(ptr);
+}
+} // namespace
+
+ERT_CLIB_SUBMODULE("enkf_obs", m) {
+    using namespace py::literals;
+
+    m.def("alloc", pybind_alloc, "history"_a, "time_map"_a, "grid"_a,
+          "refcase"_a, "ensemble_config"_a);
 }

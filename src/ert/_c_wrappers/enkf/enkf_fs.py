@@ -31,7 +31,6 @@ class EnkfFs(BaseCClass):
         "void*   enkf_fs_create_fs(char* , enkf_fs_type_enum ,int, bool)",
         bind=False,
     )
-    _get_time_map = ResPrototype("time_map_ref  enkf_fs_get_time_map(enkf_fs)")
     _summary_key_set = ResPrototype(
         "summary_key_set_ref enkf_fs_get_summary_key_set(enkf_fs)"
     )
@@ -52,7 +51,7 @@ class EnkfFs(BaseCClass):
         self._ensemble_size = ensemble_size
 
     def getTimeMap(self) -> TimeMap:
-        return self._get_time_map().setParent(self)
+        return _clib.enkf_fs.get_time_map(self)
 
     def getStateMap(self) -> "StateMap":
         return _clib.enkf_fs.get_state_map(self)

@@ -358,7 +358,7 @@ class BaseRunModel:
                     (
                         run_arg,
                         self.ert().resConfig().ensemble_config,
-                        self.ert().resConfig().model_config.get_last_history_restart(),
+                        self.ert().resConfig().model_config.get_history_num_steps(),
                     )
                 ).set_done_callback(
                     lambda x: forward_model_ok(*x)

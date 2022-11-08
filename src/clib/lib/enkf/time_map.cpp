@@ -1,173 +1,109 @@
+#include "ert/except.hpp"
 #include <algorithm>
-#include <cmath>
+#include <chrono>
+#include <ctime>
 #include <filesystem>
 #include <fmt/format.h>
-#include <iomanip>
-
-#include <pthread.h>
-#include <stdlib.h>
-
-#include <ert/res_util/file_utils.hpp>
-#include <ert/util/time_t_vector.h>
-#include <ert/util/util.h>
+#include <fstream>
 
 #include <ert/ecl/ecl_sum.h>
 
 #include <ert/enkf/time_map.hpp>
 #include <ert/logging.hpp>
+#include <ert/python.hpp>
+#include <stdexcept>
+#include <string>
+#include <system_error>
+
+#include <pybind11/chrono.h>
 
 namespace fs = std::filesystem;
 static auto logger = ert::get_logger("enkf");
 
-#define DEFAULT_TIME -1
+namespace {
+void read_libecl_vector(std::istream &s, std::vector<time_t> &v) {
+    std::int32_t length{};
+    s.read(reinterpret_cast<char *>(&length), sizeof(length));
 
-static time_t time_map_iget__(const time_map_type *map, int step);
-static void time_map_update_abort(time_map_type *map, int step, time_t time);
-static void time_map_summary_log_mismatch(time_map_type *map,
-                                          const ecl_sum_type *ecl_sum);
+    /* default_value is used by libecl's auto-resizeable vector_type to fill in
+     * the gaps. We don't do that here, but we still have to read the value. */
+    std::time_t default_value{};
+    s.read(reinterpret_cast<char *>(&default_value), sizeof(default_value));
 
-struct time_map_struct {
-    time_t_vector_type *map;
-    pthread_rwlock_t rw_lock;
-    const ecl_sum_type *refcase;
-};
-
-time_map_type *time_map_alloc() {
-    time_map_type *map = (time_map_type *)util_malloc(sizeof *map);
-
-    map->map = time_t_vector_alloc(0, DEFAULT_TIME);
-    map->refcase = NULL;
-    pthread_rwlock_init(&map->rw_lock, NULL);
-    return map;
+    v.resize(length);
+    s.read(reinterpret_cast<char *>(&v[0]), sizeof(v[0]) * v.size());
 }
+
+void write_libecl_vector(std::ostream &s, const std::vector<time_t> &v) {
+    std::int32_t length = v.size();
+    s.write(reinterpret_cast<const char *>(&length), sizeof(length));
+
+    /* default_value is used by libecl's auto-resizeable vector_type to fill in
+     * the gaps. We don't do that here, but we still have to write the value. */
+    std::time_t default_value{};
+    s.write(reinterpret_cast<const char *>(&default_value),
+            sizeof(default_value));
+
+    s.write(reinterpret_cast<const char *>(&v[0]), sizeof(v[0]) * v.size());
+}
+} // namespace
 
 /**
    The refcase will only be attached if it is consistent with the
    current time map; we will accept attaching a refcase which is
    shorter than the current case.
 */
-bool time_map_attach_refcase(time_map_type *time_map,
-                             const ecl_sum_type *refcase) {
-    bool attach_ok = true;
-    pthread_rwlock_rdlock(&time_map->rw_lock);
+bool TimeMap::attach_refcase(const ecl_sum_type *refcase) {
+    size_t ecl_sum_size = ecl_sum_get_last_report_step(refcase) + 1;
+    auto max_step = std::min(size(), ecl_sum_size);
 
-    {
-        int step;
-        int max_step = std::min(time_map_get_size(time_map),
-                                ecl_sum_get_last_report_step(refcase) + 1);
-
-        for (step = 0; step < max_step; step++) {
-            time_t current_time = time_map_iget__(time_map, step);
-            time_t sim_time = ecl_sum_get_report_time(refcase, step);
-
-            if (current_time != sim_time) {
-                /*
-          The treatment of report step 0 has been fraught with uncertainty.
-          Report step 0 is not really valid, and previously both the time_map
-          and the ecl_sum instance have returned -1 as an indication of
-          undefined value.
-
-          As part of the refactoring when the unsmry_loader was added to the
-          ecl_sum implementation ecl_sum will return the start date for report
-          step 0, then this test will fail for existing time_maps created prior
-          to this change of behaviour. We therefore special case the step 0 here.
-
-          July 2018.
-        */
-                if (step == 0)
-                    continue;
-
-                attach_ok = false;
-                break;
-            }
+    /* Skip the first step as it's "fraught with uncertainty" and not really
+     * valid. */
+    for (size_t step = 1; step < max_step; ++step) {
+        if ((*this)[step] != ecl_sum_get_report_time(refcase, step)) {
+            m_refcase = nullptr;
+            return false;
         }
-
-        if (attach_ok)
-            time_map->refcase = refcase;
     }
-    pthread_rwlock_unlock(&time_map->rw_lock);
-
-    return attach_ok;
+    m_refcase = refcase;
+    return true;
 }
 
-bool time_map_has_refcase(const time_map_type *time_map) {
-    if (time_map->refcase)
-        return true;
-    else
-        return false;
-}
+void TimeMap::read_text(const std::filesystem::path &path) {
+    std::ifstream s{path};
 
-bool time_map_fscanf(time_map_type *map, const char *filename) {
-    bool fscanf_ok = true;
-    if (util_is_file(filename)) {
-        time_t_vector_type *time_vector = time_t_vector_alloc(0, 0);
+    clear();
+    size_t txt{};
+    while (!s.eof()) {
+        std::string token;
+        s >> token;
+        if (s.fail())
+            break;
 
-        {
-            FILE *stream = util_fopen(filename, "r");
-            time_t last_date = 0;
-            while (true) {
-                char date_string[128];
-                if (fscanf(stream, "%s", date_string) == 1) {
-                    time_t date;
-                    bool date_parsed_ok =
-                        util_sscanf_isodate(date_string, &date);
-                    if (!date_parsed_ok) {
-                        date_parsed_ok =
-                            util_sscanf_date_utc(date_string, &date);
-                        fprintf(stderr,
-                                "** Deprecation warning: The date format as in "
-                                "\'%s\' is deprecated, and its support will be "
-                                "removed in a future release. Please use ISO "
-                                "date format YYYY-MM-DD.\n",
-                                date_string);
-                    }
-                    if (date_parsed_ok) {
-                        if (date > last_date)
-                            time_t_vector_append(time_vector, date);
-                        else {
-                            fprintf(stderr,
-                                    "** ERROR: The dates in %s must be in "
-                                    "strictly increasing order\n",
-                                    filename);
-                            fscanf_ok = false;
-                            break;
-                        }
-                    } else {
-                        fprintf(stderr,
-                                "** ERROR: The string \'%s\' was not correctly "
-                                "parsed as a date. "
-                                "Please use ISO date format YYYY-MM-DD.\n",
-                                date_string);
-                        fscanf_ok = false;
-                        break;
-                    }
-                    last_date = date;
-                } else
-                    break;
-            }
-            fclose(stream);
+        txt++;
+        s >> std::ws;
 
-            if (fscanf_ok) {
-                int i;
-                time_map_clear(map);
-                for (i = 0; i < time_t_vector_size(time_vector); i++)
-                    time_map_update(map, i, time_t_vector_iget(time_vector, i));
+        /* Try as ISO-8601 date */
+        time_t date;
+        if (!util_sscanf_isodate(token.c_str(), &date)) {
+            logger->warning("The date format as in '{}' is deprecated, and its "
+                            "support will be removed in a future release. "
+                            "Please use ISO date format YYYY-MM-DD",
+                            token);
+
+            /* Fall back to DD/MM/YYYY date format */
+            if (!util_sscanf_date_utc(token.c_str(), &date)) {
+                throw exc::runtime_error{
+                    "The date '{}' could not be parsed. Please use "
+                    "ISO date format YYYY-MM-DD.",
+                    token};
             }
         }
-        time_t_vector_free(time_vector);
-    } else
-        fscanf_ok = false;
 
-    return fscanf_ok;
-}
-
-bool time_map_equal(const time_map_type *map1, const time_map_type *map2) {
-    return time_t_vector_equal(map1->map, map2->map);
-}
-
-void time_map_free(time_map_type *map) {
-    time_t_vector_free(map->map);
-    free(map);
+        if (!empty() && back() >= date)
+            throw exc::runtime_error{"Inconsistent time map"};
+        push_back(date);
+    }
 }
 
 /**
@@ -179,73 +115,26 @@ void time_map_free(time_map_type *map) {
 
    @returns status, empty string if success, error message otherwise
 */
-static std::string time_map_update__(time_map_type *map, int step,
-                                     time_t update_time) {
-    time_t current_time = time_t_vector_safe_iget(map->map, step);
-    auto response_time = *std::localtime(&update_time);
-    std::string error;
+std::optional<Inconsistency> TimeMap::m_update(size_t step,
+                                               time_t update_time) {
+    auto &current_time = (*this)[step];
     // The map has not been initialized if current_time == DEFAULT_TIME,
     // if it has been initialized it must be in sync with update_time
-    if ((current_time != DEFAULT_TIME) && (current_time != update_time)) {
-        auto current_case_time = *std::localtime(&current_time);
-        return fmt::format("Time mismatch for step: {}, response time: "
-                           "{}, reference case: {}",
-                           step, std::put_time(&response_time, "%Y-%m-%d"),
-                           std::put_time(&current_case_time, "%Y-%m-%d"));
-    }
+    if ((current_time != DEFAULT_TIME) && (current_time != update_time))
+        return Inconsistency{
+            .step = step, .expected = update_time, .actual = current_time};
 
     // We could be in a state where map->map is not initialized, however there
     // is a refcase, in that case, make sure the refcase is in sync.
-    if (map->refcase) {
-        if (step <= ecl_sum_get_last_report_step(map->refcase)) {
-            time_t ref_time = ecl_sum_get_report_time(map->refcase, step);
+    if (m_refcase && step <= ecl_sum_get_last_report_step(m_refcase)) {
+        time_t ref_time = ecl_sum_get_report_time(m_refcase, step);
 
-            if (ref_time != update_time) {
-                auto ref_case_time = *std::localtime(&ref_time);
-                return fmt::format("Time mismatch for step: {}, response time: "
-                                   "{}, reference case: {}",
-                                   step,
-                                   std::put_time(&response_time, "%Y-%m-%d"),
-                                   std::put_time(&ref_case_time, "%Y-%m-%d"));
-            }
-        }
+        if (ref_time != update_time)
+            return Inconsistency{
+                .step = step, .expected = update_time, .actual = ref_time};
     }
-    // No mismatch found, ok to update time map
-    time_t_vector_iset(map->map, step, update_time);
-
-    return error;
-}
-
-static time_t time_map_iget__(const time_map_type *map, int step) {
-    return time_t_vector_safe_iget(map->map, step);
-}
-
-double time_map_iget_sim_days(time_map_type *map, int step) {
-    double days;
-
-    pthread_rwlock_rdlock(&map->rw_lock);
-    {
-        time_t start_time = time_map_iget__(map, 0);
-        time_t sim_time = time_map_iget__(map, step);
-
-        if (sim_time >= start_time)
-            days = 1.0 * (sim_time - start_time) / (3600 * 24);
-        else
-            days = -1;
-    }
-    pthread_rwlock_unlock(&map->rw_lock);
-
-    return days;
-}
-
-time_t time_map_iget(time_map_type *map, int step) {
-    time_t t;
-
-    pthread_rwlock_rdlock(&map->rw_lock);
-    t = time_map_iget__(map, step);
-    pthread_rwlock_unlock(&map->rw_lock);
-
-    return t;
+    current_time = update_time;
+    return std::nullopt;
 }
 
 /**
@@ -254,80 +143,26 @@ time_t time_map_iget(time_map_type *map, int step) {
    read lock, whereas the time_map_fread() function takes the write
    lock.
 */
-void time_map_fwrite(time_map_type *map, const char *filename) {
-    pthread_rwlock_rdlock(&map->rw_lock);
-    {
-        auto stream = mkdir_fopen(fs::path(filename), "w");
-        time_t_vector_fwrite(map->map, stream);
-        fclose(stream);
+void TimeMap::write_binary(const std::filesystem::path &path) const {
+    /* Create directories and ignore any errors */
+    std::error_code ec;
+    fs::create_directories(path.parent_path(), ec);
+
+    std::ofstream s{path, std::ios::binary};
+    s.exceptions(s.failbit);
+    write_libecl_vector(s, *this);
+}
+
+void TimeMap::read_binary(const std::filesystem::path &path) {
+    clear();
+
+    std::ifstream s{path, std::ios::binary};
+    try {
+        s.exceptions(s.failbit);
+        read_libecl_vector(s, *this);
+    } catch (std::ios::failure &ex) {
+        clear();
     }
-    pthread_rwlock_unlock(&map->rw_lock);
-}
-
-void time_map_fread(time_map_type *map, const char *filename) {
-    pthread_rwlock_wrlock(&map->rw_lock);
-    {
-        if (fs::exists(filename)) {
-            FILE *stream = util_fopen(filename, "r");
-            time_t_vector_type *file_map = time_t_vector_fread_alloc(stream);
-
-            for (int step = 0; step < time_t_vector_size(file_map); step++)
-                time_map_update__(map, step,
-                                  time_t_vector_iget(file_map, step));
-
-            time_t_vector_free(file_map);
-            fclose(stream);
-        }
-    }
-    pthread_rwlock_unlock(&map->rw_lock);
-    time_map_get_last_step(map);
-}
-
-/**
-  Observe that the return value from this function is an inclusive
-  value; i.e. it should be permissible to ask for results at this report
-  step.
-*/
-int time_map_get_last_step(time_map_type *map) {
-    int last_step;
-
-    pthread_rwlock_rdlock(&map->rw_lock);
-    last_step = time_t_vector_size(map->map) - 1;
-    pthread_rwlock_unlock(&map->rw_lock);
-
-    return last_step;
-}
-
-int time_map_get_size(time_map_type *map) {
-    return time_map_get_last_step(map) + 1;
-}
-
-time_t time_map_get_start_time(time_map_type *map) {
-    return time_map_iget(map, 0);
-}
-
-time_t time_map_get_end_time(time_map_type *map) {
-    int last_step = time_map_get_last_step(map);
-    return time_map_iget(map, last_step);
-}
-
-double time_map_get_end_days(time_map_type *map) {
-    int last_step = time_map_get_last_step(map);
-    return time_map_iget_sim_days(map, last_step);
-}
-
-bool time_map_update(time_map_type *map, int step, time_t time) {
-    bool updateOK = time_map_try_update(map, step, time);
-    if (!updateOK)
-        time_map_update_abort(map, step, time);
-    return updateOK;
-}
-
-bool time_map_try_update(time_map_type *map, int step, time_t time) {
-    pthread_rwlock_wrlock(&map->rw_lock);
-    std::string error = time_map_update__(map, step, time);
-    pthread_rwlock_unlock(&map->rw_lock);
-    return error.empty();
 }
 
 /**
@@ -337,151 +172,33 @@ bool time_map_try_update(time_map_type *map, int step, time_t time) {
 
    @returns status, empty string if success, error message otherwise
 */
-std::string time_map_summary_update(time_map_type *map,
-                                    const ecl_sum_type *ecl_sum) {
+std::string TimeMap::summary_update(const ecl_sum_type *ecl_sum) {
     bool updateOK = true;
-    pthread_rwlock_wrlock(&map->rw_lock);
-    std::vector<std::string> errors;
-
-    auto error = time_map_update__(map, 0, ecl_sum_get_start_time(ecl_sum));
-    if (!error.empty())
-        errors.push_back(error);
+    std::vector<Inconsistency> errors;
 
     int first_step = ecl_sum_get_first_report_step(ecl_sum);
     int last_step = ecl_sum_get_last_report_step(ecl_sum);
+    resize(last_step + 1, DEFAULT_TIME);
+
+    if (auto err = m_update(0, ecl_sum_get_start_time(ecl_sum)); err)
+        errors.emplace_back(*err);
 
     for (int step = first_step; step <= last_step; step++) {
-        if (ecl_sum_has_report_step(ecl_sum, step)) {
-            error = time_map_update__(map, step,
-                                      ecl_sum_get_report_time(ecl_sum, step));
-            if (!error.empty())
-                errors.push_back(error);
-        }
+        if (!ecl_sum_has_report_step(ecl_sum, step))
+            continue;
+
+        if (auto err = m_update(step, ecl_sum_get_report_time(ecl_sum, step));
+            err)
+            errors.emplace_back(*err);
     }
 
-    pthread_rwlock_unlock(&map->rw_lock);
-    std::string error_msg;
     if (!errors.empty()) {
-        error_msg =
-            fmt::format("{} inconsistencies in time_map, first: {}, last: {}",
-                        errors.size(), errors.front(), errors.back());
+        return fmt::format(
+            "{} inconsistencies in time_map, first: {}, last: {}",
+            errors.size(), errors.front(), errors.back());
     }
 
-    return error_msg;
-}
-
-int time_map_lookup_time(time_map_type *map, time_t time) {
-    int index = -1;
-    pthread_rwlock_rdlock(&map->rw_lock);
-    {
-        int current_index = 0;
-        while (true) {
-            if (current_index >= time_t_vector_size(map->map))
-                break;
-
-            if (time_map_iget__(map, current_index) == time) {
-                index = current_index;
-                break;
-            }
-
-            current_index++;
-        }
-    }
-    pthread_rwlock_unlock(&map->rw_lock);
-    return index;
-}
-
-static bool time_map_valid_time__(const time_map_type *map, time_t time) {
-    if (time_t_vector_size(map->map) > 0) {
-        if ((time >= time_map_iget__(map, 0)) &&
-            (time <= time_map_iget__(map, time_t_vector_size(map->map) - 1)))
-            return true;
-        else
-            return false;
-    } else
-        return false;
-}
-
-int time_map_lookup_time_with_tolerance(time_map_type *map, time_t time,
-                                        int seconds_before_tolerance,
-                                        int seconds_after_tolerance) {
-    int nearest_index = -1;
-    pthread_rwlock_rdlock(&map->rw_lock);
-    {
-        if (time_map_valid_time__(map, time)) {
-            time_t nearest_diff = 999999999999;
-            int current_index = 0;
-            while (true) {
-                time_t diff = time - time_map_iget__(map, current_index);
-                if (diff == 0) {
-                    nearest_index = current_index;
-                    break;
-                }
-
-                if (std::fabs(diff) < nearest_diff) {
-                    bool inside_tolerance = true;
-                    if (seconds_after_tolerance >= 0) {
-                        if (diff >= seconds_after_tolerance)
-                            inside_tolerance = false;
-                    }
-
-                    if (seconds_before_tolerance >= 0) {
-                        if (diff <= -seconds_before_tolerance)
-                            inside_tolerance = false;
-                    }
-
-                    if (inside_tolerance) {
-                        nearest_diff = diff;
-                        nearest_index = current_index;
-                    }
-                }
-
-                current_index++;
-
-                if (current_index >= time_t_vector_size(map->map))
-                    break;
-            }
-        }
-    }
-    pthread_rwlock_unlock(&map->rw_lock);
-    return nearest_index;
-}
-
-int time_map_lookup_days(time_map_type *map, double sim_days) {
-    int index = -1;
-    pthread_rwlock_rdlock(&map->rw_lock);
-    {
-        if (time_t_vector_size(map->map) > 0) {
-            time_t time = time_map_iget__(map, 0);
-            util_inplace_forward_days_utc(&time, sim_days);
-            index = time_map_lookup_time(map, time);
-        }
-    }
-    pthread_rwlock_unlock(&map->rw_lock);
-    return index;
-}
-
-void time_map_clear(time_map_type *map) {
-    pthread_rwlock_wrlock(&map->rw_lock);
-    {
-        time_t_vector_reset(map->map);
-    }
-    pthread_rwlock_unlock(&map->rw_lock);
-}
-
-static void time_map_update_abort(time_map_type *map, int step, time_t time) {
-    time_t current_time = time_map_iget__(map, step);
-    int current[3];
-    int new_time[3];
-
-    util_set_date_values_utc(current_time, &current[0], &current[1],
-                             &current[2]);
-    util_set_date_values_utc(time, &new_time[0], &new_time[1], &new_time[2]);
-
-    util_abort("%s: time mismatch for step:%d   New_Time: %04d-%02d-%02d   "
-               "existing: %04d-%02d-%02d \n",
-               __func__, step, new_time[2], new_time[1], new_time[0],
-               current[2], current[1], current[0]);
+    return "";
 }
 
 /**
@@ -507,7 +224,7 @@ static void time_map_update_abort(time_map_type *map, int step, time_t time) {
 
      index_map = { 0 , 1 , 3 , 4 }
 
-  Observe that the time_map_update_summary() must be called prior to
+  Observe that TimeMap::update_summary() must be called prior to
   calling this function, to ensure that the time_map is sufficiently
   long. If timesteps are missing from the summary case we crash hard:
 
@@ -523,17 +240,20 @@ static void time_map_update_abort(time_map_type *map, int step, time_t time) {
      3: 2000-04-01   <-------      2: 2000-04-01
 
 */
-int_vector_type *time_map_alloc_index_map(time_map_type *map,
-                                          const ecl_sum_type *ecl_sum) {
-    int_vector_type *index_map = int_vector_alloc(0, -1);
-    pthread_rwlock_rdlock(&map->rw_lock);
+std::vector<int> TimeMap::indices(const ecl_sum_type *ecl_sum) const {
+    if (empty())
+        return {};
+
+    std::vector<int> indices{-1};
 
     int sum_index = ecl_sum_get_first_report_step(ecl_sum);
     int time_map_index = ecl_sum_get_first_report_step(ecl_sum);
-    for (; time_map_index < time_map_get_size(map); ++time_map_index) {
-        time_t map_time = time_map_iget__(map, time_map_index);
-        if (map_time == DEFAULT_TIME)
+    for (; time_map_index < size(); ++time_map_index) {
+        time_t map_time = (*this)[time_map_index];
+        if (map_time == DEFAULT_TIME) {
+            indices.push_back(-1);
             continue;
+        }
 
         for (; sum_index <= ecl_sum_get_last_report_step(ecl_sum);
              ++sum_index) {
@@ -555,23 +275,60 @@ int_vector_type *time_map_alloc_index_map(time_map_type *map,
             break;
         }
 
-        int_vector_iset(index_map, time_map_index, sum_index);
+        indices.push_back(sum_index);
     }
 
-    pthread_rwlock_unlock(&map->rw_lock);
-    return index_map;
+    return indices;
 }
 
-#include <ert/python.hpp>
+namespace {
+using time_point =
+    std::chrono::time_point<std::chrono::system_clock, std::chrono::seconds>;
+
+py::handle pybind_time(time_t time) {
+    // Lazy initialise the PyDateTime import
+    if (!PyDateTimeAPI) {
+        PyDateTime_IMPORT;
+    }
+
+    std::tm tm;
+    std::tm *tm_ptr = gmtime_r(&time, &tm);
+    if (!tm_ptr) {
+        throw py::cast_error("Unable to represent system_clock in local time");
+    }
+    return PyDateTime_FromDateAndTime(tm.tm_year + 1900, tm.tm_mon + 1,
+                                      tm.tm_mday, tm.tm_hour, tm.tm_min,
+                                      tm.tm_sec, 0);
+}
+
+py::handle pybind_getitem(TimeMap &self, size_t index) {
+    time_t time = self.DEFAULT_TIME;
+    if (index < self.size())
+        time = self[index];
+    return pybind_time(time);
+}
+} // namespace
 
 ERT_CLIB_SUBMODULE("time_map", m) {
     using namespace py::literals;
-    m.def(
-        "summary_update",
-        [](py::object self, py::object summary) {
-            return time_map_summary_update(
-                ert::from_cwrap<time_map_type>(self),
-                ert::from_cwrap<ecl_sum_type>(summary));
-        },
-        py::arg("self"), py::arg("summary"));
+
+    py::class_<TimeMap, std::shared_ptr<TimeMap>>(m, "TimeMap")
+        .def(py::init<>())
+        .def("__len__", [](TimeMap &self) { return self.size(); })
+        .def("__getitem__", &pybind_getitem, "index"_a)
+        .def(py::self == py::self)
+        .def(py::self != py::self)
+        .def("read_text", &TimeMap::read_text, "path"_a)
+        .def(
+            "summary_update",
+            [](TimeMap &self, Cwrap<ecl_sum_type> summary) {
+                return self.summary_update(summary);
+            },
+            "summary"_a)
+        .def(
+            "attach_refcase",
+            [](TimeMap &self, Cwrap<ecl_sum_type> summary) {
+                return self.attach_refcase(summary);
+            },
+            "refcase"_a);
 }

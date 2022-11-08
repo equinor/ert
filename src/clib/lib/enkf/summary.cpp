@@ -1,3 +1,4 @@
+#include <cppitertools/enumerate.hpp>
 #include <stdlib.h>
 
 #include <ert/util/double_vector.h>
@@ -105,7 +106,7 @@ std::vector<double> summary_user_get_vector(const summary_type *summary) {
 
 bool summary_forward_load_vector(summary_type *summary,
                                  const ecl_sum_type *ecl_sum,
-                                 const int_vector_type *time_index) {
+                                 const std::vector<int> &time_index) {
     bool loadOK = false;
 
     if (ecl_sum == NULL)
@@ -121,11 +122,8 @@ bool summary_forward_load_vector(summary_type *summary,
         // will fill the vector with zeros.
 
         if (!ecl_sum_has_general_var(ecl_sum, var_key)) {
-            for (int step = 0; step < int_vector_size(time_index); step++) {
-                int summary_step = int_vector_iget(time_index, step);
-                if (summary_step >= 0)
-                    double_vector_iset(summary->data_vector, summary_step, 0);
-            }
+            for (auto summary_step : time_index)
+                double_vector_iset(summary->data_vector, summary_step, 0);
             loadOK = true;
 
             if (load_fail_action == LOAD_FAIL_WARN)
@@ -141,18 +139,13 @@ bool summary_forward_load_vector(summary_type *summary,
         return loadOK;
 
     int key_index = ecl_sum_get_general_var_params_index(ecl_sum, var_key);
-    for (int store_index = 0; store_index < int_vector_size(time_index);
-         store_index++) {
-        int summary_index = int_vector_iget(time_index, store_index);
-
-        if (summary_index >= 0) {
-            if (ecl_sum_has_report_step(ecl_sum, summary_index)) {
-                int last_update_step_index =
-                    ecl_sum_iget_report_end(ecl_sum, summary_index);
-                double_vector_iset(
-                    summary->data_vector, store_index,
-                    ecl_sum_iget(ecl_sum, last_update_step_index, key_index));
-            }
+    for (auto [store_index, summary_index] : iter::enumerate(time_index)) {
+        if (ecl_sum_has_report_step(ecl_sum, summary_index)) {
+            int last_update_step_index =
+                ecl_sum_iget_report_end(ecl_sum, summary_index);
+            double_vector_iset(
+                summary->data_vector, store_index,
+                ecl_sum_iget(ecl_sum, last_update_step_index, key_index));
         }
     }
     return true;

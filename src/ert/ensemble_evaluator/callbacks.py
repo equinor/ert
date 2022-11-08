@@ -53,7 +53,7 @@ def _ensemble_config_forward_init(
 def forward_model_ok(
     run_arg: "RunArg",
     ens_conf: "EnsembleConfig",
-    last_history_restart: int,
+    num_steps: int,
 ) -> Tuple[LoadStatus, str]:
     result = (LoadStatus.LOAD_SUCCESSFUL, "")
     if ens_conf.have_forward_init():
@@ -62,7 +62,7 @@ def forward_model_ok(
     if result[0] == LoadStatus.LOAD_SUCCESSFUL:
         result = internalize_results(
             ens_conf,
-            last_history_restart,
+            num_steps,
             run_arg.job_name,
             run_arg.iens,
             run_arg.runpath,
