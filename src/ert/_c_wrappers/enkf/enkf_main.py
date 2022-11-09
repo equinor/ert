@@ -87,7 +87,9 @@ def _value_export_json(
     # way for the output to be NaN is if the input is invalid or if the sampling
     # function is buggy. Either way, that would be a bug and we can report it by
     # having json throw an error.
-    json.dump(json_out, path.open("w"), allow_nan=False)
+    json.dump(
+        json_out, path.open("w"), allow_nan=False, indent=0, separators=(", ", " : ")
+    )
 
 
 def _generate_parameter_files(
