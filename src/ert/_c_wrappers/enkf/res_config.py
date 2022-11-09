@@ -4,7 +4,7 @@ from collections import defaultdict
 from datetime import date
 from os.path import isfile
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, Optional, Tuple
 
 from ecl.ecl_util import get_num_cpu as get_num_cpu_from_data_file
 from ecl.util.util import StringList
@@ -23,45 +23,9 @@ from ert._c_wrappers.job_queue import ForwardModel, QueueDriverEnum
 from ert._c_wrappers.util import SubstitutionList
 from ert._clib.config_keywords import init_site_config_parser, init_user_config_parser
 
-logger = logging.getLogger(__name__)
+from ._config_content_as_dict import config_content_as_dict
 
-SINGLE_VALUE_KEYS = [
-    ConfigKeys.ALPHA_KEY,
-    ConfigKeys.ANALYSIS_SELECT,
-    ConfigKeys.CONFIG_DIRECTORY,
-    ConfigKeys.DATAROOT,
-    ConfigKeys.DATA_FILE,
-    ConfigKeys.ECLBASE,
-    ConfigKeys.ENSPATH,
-    ConfigKeys.GEN_KW_EXPORT_NAME,
-    ConfigKeys.GEN_KW_TAG_FORMAT,
-    ConfigKeys.GRID,
-    ConfigKeys.HISTORY_SOURCE,
-    ConfigKeys.ITER_CASE,
-    ConfigKeys.ITER_COUNT,
-    ConfigKeys.ITER_RETRY_COUNT,
-    ConfigKeys.JOBNAME,
-    ConfigKeys.JOB_SCRIPT,
-    ConfigKeys.LICENSE_PATH,
-    ConfigKeys.MAX_RESAMPLE,
-    ConfigKeys.MAX_RUNTIME,
-    ConfigKeys.MAX_SUBMIT,
-    ConfigKeys.MIN_REALIZATIONS,
-    ConfigKeys.NUM_CPU,
-    ConfigKeys.NUM_REALIZATIONS,
-    ConfigKeys.OBS_CONFIG,
-    ConfigKeys.QUEUE_SYSTEM,
-    ConfigKeys.RANDOM_SEED,
-    ConfigKeys.REFCASE,
-    ConfigKeys.RERUN_KEY,
-    ConfigKeys.RERUN_START_KEY,
-    ConfigKeys.RUNPATH,
-    ConfigKeys.RUNPATH_FILE,
-    ConfigKeys.STD_CUTOFF_KEY,
-    ConfigKeys.STOP_LONG_RUNNING,
-    ConfigKeys.TIME_MAP,
-    ConfigKeys.UPDATE_LOG_PATH,
-]
+logger = logging.getLogger(__name__)
 
 
 def site_config_location():
@@ -200,7 +164,7 @@ class ResConfig:
             )
 
     def _log_config_content(self, config_content: ConfigContent) -> None:
-        tmp_dict = self._config_content_as_dict(config_content).copy()
+        tmp_dict = config_content_as_dict(config_content, {}).copy()
         tmp_dict.pop("FORWARD_MODEL", None)
         tmp_dict.pop("LOAD_WORKFLOW", None)
         tmp_dict.pop("LOAD_WORKFLOW_JOB", None)
@@ -265,55 +229,37 @@ class ResConfig:
             user_config_content=user_config_content,
             site_config_content=site_config_content,
         )
-        if user_config_content.hasKey(ConfigKeys.RANDOM_SEED):
-            self.random_seed = user_config_content.getValue(ConfigKeys.RANDOM_SEED)
-        else:
-            self.random_seed = None
-
-        config_content_dict = self._config_content_as_dict(user_config_content)
+        config_content_dict = config_content_as_dict(
+            user_config_content, site_config_content
+        )
+        self.random_seed = config_content_dict.get(ConfigKeys.RANDOM_SEED, None)
         self.analysis_config = AnalysisConfig.from_dict(config_content_dict)
 
-        queue_config_args = {}
-
-        def set_value(argname, key, transform=lambda x: x):
-            if key in site_config_content:
-                queue_config_args[argname] = transform(
-                    site_config_content.getValue(key)
-                )
-            if key in user_config_content:
-                queue_config_args[argname] = transform(
-                    user_config_content.getValue(key)
-                )
-
-        set_value("job_script", ConfigKeys.JOB_SCRIPT)
-        set_value("max_submit", ConfigKeys.MAX_SUBMIT)
-        set_value(
-            "queue_system",
-            ConfigKeys.QUEUE_SYSTEM,
-            lambda x: QueueDriverEnum.from_string(x + "_DRIVER"),
+        queue_config_args = {
+            key.lower(): value
+            for key, value in config_content_dict.items()
+            if key
+            in {
+                ConfigKeys.JOB_SCRIPT,
+                ConfigKeys.MAX_SUBMIT,
+                ConfigKeys.QUEUE_SYSTEM,
+            }
+        }
+        queue_config_args["queue_system"] = QueueDriverEnum.from_string(
+            queue_config_args["queue_system"] + "_DRIVER"
         )
-
         queue_config_args["queue_options"] = defaultdict(list)
+        for setting in config_content_dict.get(ConfigKeys.QUEUE_OPTION, []):
+            queue_driver_type = QueueDriverEnum.from_string(setting[0] + "_DRIVER")
+            option_name = setting[1]
+            if len(setting) == 2:
+                queue_config_args["queue_options"][queue_driver_type].append(setting[1])
+            else:
+                option_value = setting[2]
+                queue_config_args["queue_options"][queue_driver_type].append(
+                    (option_name, option_value)
+                )
 
-        def set_options(content):
-            if ConfigKeys.QUEUE_OPTION in content:
-                for setting in iter(content[ConfigKeys.QUEUE_OPTION]):
-                    queue_driver_type = QueueDriverEnum.from_string(
-                        setting[0] + "_DRIVER"
-                    )
-                    option_name = setting[1]
-                    if len(setting) == 2:
-                        queue_config_args["queue_options"][queue_driver_type].append(
-                            setting[1]
-                        )
-                    else:
-                        option_value = " ".join(list(setting)[2:])
-                        queue_config_args["queue_options"][queue_driver_type].append(
-                            (option_name, option_value)
-                        )
-
-        set_options(site_config_content)
-        set_options(user_config_content)
         self.queue_config = QueueConfig(**queue_config_args)
 
         self.ert_workflow_list = ErtWorkflowList(
@@ -773,20 +719,6 @@ class ResConfig:
         self._errors = list(config_content.getErrors())
 
         return config_content
-
-    @staticmethod
-    def _config_content_as_dict(config_content: ConfigContent) -> Dict[str, List[Any]]:
-        content_dict: Dict[str, List[Any]] = {}
-        for key in config_content.keys():
-            item = config_content[key]
-            if key in SINGLE_VALUE_KEYS:
-                content_dict[key] = item.getValue()
-            else:
-                content_dict[key] = []
-                for node in item:
-                    values = list(node)
-                    content_dict[key].append(values)
-        return content_dict
 
     @staticmethod
     def _current_date_string() -> str:
