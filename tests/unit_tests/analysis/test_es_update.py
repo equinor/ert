@@ -1,5 +1,7 @@
+import os
 from argparse import ArgumentParser
 from pathlib import Path
+from textwrap import dedent
 
 import numpy as np
 import pytest
@@ -14,6 +16,70 @@ from ert.cli import ENSEMBLE_EXPERIMENT_MODE, ENSEMBLE_SMOOTHER_MODE
 from ert.cli.main import run_cli
 
 
+@pytest.fixture(scope="session")
+def minimum_case_with_storage(tmp_path_factory):
+    cwd = os.getcwd()
+    os.chdir(tmp_path_factory.mktemp("minimum_case_with_storage"))
+    with open("config.ert", "w") as fout:
+        # Write a minimal config file
+        fout.write(
+            dedent(
+                """
+        NUM_REALIZATIONS 5
+        OBS_CONFIG observations
+        TIME_MAP time_map
+        GEN_DATA RESPONSE RESULT_FILE:result_%d.out REPORT_STEPS:0 INPUT_FORMAT:ASCII
+        GEN_KW KW_NAME template.txt kw.txt prior.txt
+        RANDOM_SEED 1234
+        """
+            )
+        )
+    with open("obs_data.txt", "w") as fout:
+        fout.write("1.0 0.1")
+    with open("time_map", "w") as fout:
+        fout.write("2014-09-10\n2017-02-05")
+    with open("template.txt", "w") as fh:
+        fh.writelines("MY_KEYWORD <MY_KEYWORD>")
+    with open("prior.txt", "w") as fh:
+        fh.writelines("MY_KEYWORD NORMAL 0 1")
+
+    with open("observations", "w") as fout:
+        fout.write(
+            dedent(
+                """
+        GENERAL_OBSERVATION OBS {
+            DATA       = RESPONSE;
+            INDEX_LIST = 0;
+            RESTART    = 0;
+            OBS_FILE   = obs_data.txt;
+        };
+        """
+            )
+        )
+    ert = EnKFMain(ResConfig("config.ert"))
+    run_context = ert.create_ensemble_experiment_run_context(
+        active_mask=[True] * 5,
+        iteration=0,
+    )
+    ert.sample_prior(run_context.sim_fs, run_context.active_realizations)
+    ert.createRunPath(run_context)
+    seed_seq = np.random.SeedSequence(1234)
+    rng = np.random.default_rng(seed_seq)
+    for run_path in run_context.paths:
+        (Path(run_path) / "result_0.out").write_text(
+            f"{rng.random()}", encoding="utf-8"
+        )
+    run_context.sim_fs.load_from_run_path(
+        5,
+        ert.ensembleConfig(),
+        ert.getModelConfig(),
+        run_context.run_args,
+        run_context.mask,
+    )
+    yield ert
+    os.chdir(cwd)
+
+
 @pytest.fixture()
 def minimal_config(use_tmpdir):
     with open("config_file.ert", "w") as fout:
@@ -22,17 +88,15 @@ def minimal_config(use_tmpdir):
     yield res_config
 
 
-def test_update_report(setup_case, snapshot):
+def test_update_report(minimum_case_with_storage, snapshot):
     """
     Note that this is now a snapshot test, so there is no guarantee that the
     snapshots are correct, they are just documenting the current behavior.
     """
-    res_config = setup_case("snake_oil", "snake_oil.ert")
-
-    ert = EnKFMain(res_config)
+    ert = minimum_case_with_storage
     es_update = ESUpdate(ert)
     fsm = ert.getEnkfFsManager()
-    sim_fs = fsm.getFileSystem("default_0")
+    sim_fs = fsm.getFileSystem("default")
     target_fs = fsm.getFileSystem("target")
     run_context = RunContext(sim_fs, target_fs)
     es_update.smootherUpdate(run_context)
@@ -45,48 +109,25 @@ def test_update_report(setup_case, snapshot):
     [
         (
             "IES_ENKF",
-            [
-                0.4471353277835739,
-                -0.7135041057196058,
-                1.9090515662668008,
-                1.076721896152463,
-                -2.68065246217208,
-                0.8905684424501379,
-                0.7397276594551071,
-                -0.3711756964443876,
-                -0.1370364475726405,
-                -0.5555571321492281,
-            ],
+            [-0.16542185694668],
         ),
         (
             "STD_ENKF",
-            [
-                1.0304040133400145,
-                -1.1744614887201623,
-                2.2921749893184487,
-                1.554662616996142,
-                -4.640247767418966,
-                1.6374359419957374,
-                0.8520886717181678,
-                -0.9946512485452126,
-                0.073654721562924,
-                -2.2060635972752745,
-            ],
+            [1.3985365470629976],
         ),
     ],
 )
-def test_update_snapshot(setup_case, module, expected_gen_kw):
+def test_update_snapshot(minimum_case_with_storage, module, expected_gen_kw):
     """
     Note that this is now a snapshot test, so there is no guarantee that the
     snapshots are correct, they are just documenting the current behavior.
     """
-    res_config = setup_case("snake_oil", "snake_oil.ert")
 
-    ert = EnKFMain(res_config)
+    ert = minimum_case_with_storage
     es_update = ESUpdate(ert)
     ert.analysisConfig().select_module(module)
     fsm = ert.getEnkfFsManager()
-    sim_fs = fsm.getFileSystem("default_0")
+    sim_fs = fsm.getFileSystem("default")
     target_fs = fsm.getFileSystem("target")
     run_context = RunContext(sim_fs, target_fs)
 
@@ -96,7 +137,7 @@ def test_update_snapshot(setup_case, module, expected_gen_kw):
     else:
         es_update.smootherUpdate(run_context)
 
-    conf = ert.ensembleConfig()["SNAKE_OIL_PARAM"]
+    conf = ert.ensembleConfig()["KW_NAME"]
     sim_node = EnkfNode(conf)
     target_node = EnkfNode(conf)
 
@@ -109,20 +150,7 @@ def test_update_snapshot(setup_case, module, expected_gen_kw):
 
     assert sim_gen_kw != target_gen_kw
 
-    assert sim_gen_kw == pytest.approx(
-        [
-            -0.4277677005510859,
-            -0.022068031218771135,
-            1.3343664316893276,
-            0.359810814886946,
-            0.258740495698248,
-            -0.22973280686826203,
-            0.5711861410605145,
-            0.5640376317068494,
-            -0.453073201275987,
-            1.9202025655398407,
-        ]
-    )
+    assert sim_gen_kw == pytest.approx([0.3797726974728599])
 
     assert target_gen_kw == pytest.approx(expected_gen_kw)
 
