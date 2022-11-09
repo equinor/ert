@@ -124,6 +124,101 @@ Miscellaneous:
   - Account for instance where ERT config file has `MAX_RUNTIME` defined multiple times (`#4147 <https://github.com/equinor/ert/pull/4147>`_)
 
 
+Version 4.0
+------------
+
+Breaking changes:
+  - Stop special casing PRED as a GEN_KW (`#3820 <https://github.com/equinor/ert/pull/3820>`_)
+  - Remove BLOCK_OBSERVATION keyword (`#3732 <https://github.com/equinor/ert/pull/3732>`_)
+  - Remove UMASK config option (`#3892 <https://github.com/equinor/ert/pull/3892>`_)
+  - Remove CONTAINER keyword (`#3834 <https://github.com/equinor/ert/pull/3834>`_)
+  - Remove CONTAINER keyword (`#3834 <https://github.com/equinor/ert/pull/3834>`_)
+  - Remove BINARY_FLOAT and BINARY_DOUBLE file formats (`#3947 <https://github.com/equinor/ert/pull/3947>`_)
+
+Bugfixes:
+  - Fix bug where random seed would overflow (`#3863 <https://github.com/equinor/ert/pull/3863>`_)
+  - Fix has_data check in initRun (`#3964 <https://github.com/equinor/ert/pull/3964>`_)
+  - Free obs_data in load_observations_and_responses (`#3916 <https://github.com/equinor/ert/pull/3916>`_)
+
+New features:
+  - Add a cli argument for specifying a log dir (`#3819 <https://github.com/equinor/ert/pull/3819>`_)
+  - Add DisableParametersUpdate workflow (`#3861 <https://github.com/equinor/ert/pull/3861>`_)
+  - Add Experiment server for CLI (`#3768 <https://github.com/equinor/ert/pull/3768>`_)
+
+Improvements:
+  - Overwrite Storage config file if it exits on disk (`#3913 <https://github.com/equinor/ert/pull/3913>`_)
+  - Use variable defining matrix start size (`#3856 <https://github.com/equinor/ert/pull/3856>`_)
+
+Dependencies:
+  - Pin beartype to less than 0.11 (`#3904 <https://github.com/equinor/ert/pull/3904>`_)
+  - Pin protobuf and grpcio-tools (`#3909 <https://github.com/equinor/ert/pull/3909>`_)
+  - Run isort and add isort checking to CI (`#3812 <https://github.com/equinor/ert/pull/3812>`_)
+  - Fix deprecation warning in py310 from setDaemon (`#3848 <https://github.com/equinor/ert/pull/3848>`_)
+  - Move the iterative ensemble smoother to its own repository (`#3844 <https://github.com/equinor/ert/pull/3844>`_)
+
+Miscellaneous:
+  - Move rng creation to python (`#3843 <https://github.com/equinor/ert/pull/3843>`_)
+  - Remove unused template (`#3827 <https://github.com/equinor/ert/pull/3827>`_)
+  - Remove unused function state_map::count_matching (`#3549 <https://github.com/equinor/ert/pull/3459>`_)
+  - Mute matplotlib debug messages (`#3826 <https://github.com/equinor/ert/pull/3826>`_)
+  - Remove Title Case from documentation (`#3821 <https://github.com/equinor/ert/pull/3821>`_)
+  - Fix typo and formatting in keyword documentation (`#3818 <https://github.com/equinor/ert/pull/3818>`_)
+  - Test update with externally sampled params (`#3722 <https://github.com/equinor/ert/pull/3722>`_)
+  - Remove unused strict-keyword from EnkfMain (`#3835 <https://github.com/equinor/ert/pull/3835>`_)
+  - Remove unused functions in queue.py and enkf_config_node.py (`#3852 <https://github.com/equinor/ert/pull/3852>`_)
+  - Test update with INIT_FILES and FORWARD_INIT (`#3846 <https://github.com/equinor/ert/pull/3846>`_)
+  - Mute connection closed error from websocket (`#3814 <https://github.com/equinor/ert/pull/3814>`_)
+  - Close stdin/stdout/stderr files when done (`#3849 <https://github.com/equinor/ert/pull/3849>`_)
+  - Remove getters only used in tests from enkf_main.cpp (`#3895 <https://github.com/equinor/ert/pull/3895>`_)
+  - Remove non-functional private mode for EnkfNode (`#3874 <https://github.com/equinor/ert/pull/3874>`_)
+  - Move enkf_fs method from enkf_main to enkf_fs (`#3900 <https://github.com/equinor/ert/pull/3900>`_)
+  - Move parameter keys to ensemble_config (`#3901 <https://github.com/equinor/ert/pull/3901>`_)
+  - Solve pylint consider-using-with (`#3850 <https://github.com/equinor/ert/pull/3850>`_)
+  - enkf_obs clean-up (`#3917 <https://github.com/equinor/ert/pull/3917>`_)
+  - Clean-up of enkf_node (`#3926 <https://github.com/equinor/ert/pull/3926>`_)
+  - Remove enkf_main from C (`#3924 <https://github.com/equinor/ert/pull/3924>`_)
+  - Solve and enforce 9 pylint messages (`#3730 <https://github.com/equinor/ert/pull/3730>`_)
+  - Solve pylint issue no-member (`#3851 <https://github.com/equinor/ert/pull/3851>`_)
+  - Remove ert3 (`#3877 <https://github.com/equinor/ert/pull/3877>`_)
+  - Fix unnecessary cast from const double to double (`#3832 <https://github.com/equinor/ert/pull/3832>`_)
+  - Propagate ensemble id for source when building (`#3793 <https://github.com/equinor/ert/pull/3793>`_)
+  - Update documentation of SUMMARY keyword (`#3824 <https://github.com/equinor/ert/pull/3824>`_)
+  - Remove unused function enkf_main_load_obs (`#3853 <https://github.com/equinor/ert/pull/3853>`_)
+  - Allow c++ as compiler in build script (`#3794 <https://github.com/equinor/ert/pull/3794>`_)
+  - Disable flaky test (`#3869 <https://github.com/equinor/ert/pull/3869>`_)
+  - Fix config reprs (`#3876 <https://github.com/equinor/ert/pull/3876>`_)
+  - Generate experiment_id and propagate to communication channels (`#3811 <https://github.com/equinor/ert/pull/3811>`_)
+  - Remove some remaining references to libres (`#3878 <https://github.com/equinor/ert/pull/3878>`_)
+  - Remove deprecation limit on ert.data.loader.load_general_data and load.summary.data (`#3883 <https://github.com/equinor/ert/pull/3883>`_)
+  - Move responsibility of creating the log folder into the writing of the update report logic (`#3866 <https://github.com/equinor/ert/pull/3866>`_)
+  - Minor config fixes (`#3858 <https://github.com/equinor/ert/pull/3858>`_)
+  - Remove ert_test_context (`#3879 <https://github.com/equinor/ert/pull/3879>`_)
+  - Replace unittest with pytest (`#3888 <https://github.com/equinor/ert/pull/3888>`_)
+  - Remove unused function get_observations from EnKFMain (`#3891 <https://github.com/equinor/ert/pull/3891>`_)
+  - Remove unused but declared exceptions (`#3896 <https://github.com/equinor/ert/pull/3896>`_)
+  - Remove unused history functions (`#3894 <https://github.com/equinor/ert/pull/3894>`_)
+  - Resolve some mypy typing issues (`#3898 <https://github.com/equinor/ert/pull/3898>`_)
+  - Consolidate unit tests (`#3899 <https://github.com/equinor/ert/pull/3899>`_)
+  - Move storage_service.json to enspath  and propagate the ensepath when starting the webviz_ert service (`#3890 <https://github.com/equinor/ert/pull/3890>`_)
+  - Simplify res config (`#3908 <https://github.com/equinor/ert/pull/3908>`_)
+  - Reconcile location in tests and location in src (`#3914 <https://github.com/equinor/ert/pull/3914>`_)
+  - Remove rng_config (`#3920 <https://github.com/equinor/ert/pull/3920>`_)
+  - Remove c usage of res_config  (`#3922 <https://github.com/equinor/ert/pull/3922>`_)
+  - Remove reading of site_config directly from file (`#3931 <https://github.com/equinor/ert/pull/3931>`_)
+  - Remove direct init of job_queue from file (`#3933 <https://github.com/equinor/ert/pull/3933>`_)
+  - Remove unused analysis_config directly from file (`#3932 <https://github.com/equinor/ert/pull/3932>`_)
+  - Add string representation of ResConfig (`#3928 <https://github.com/equinor/ert/pull/3928>`_)
+  - Consolidate config file and dict paths for substitution config (`#3887 <https://github.com/equinor/ert/pull/3887>`_)
+  - Remove unused model config functions (`#3934 <https://github.com/equinor/ert/pull/3934>`_)
+  - Convert equinor test to local test (`#3944 <https://github.com/equinor/ert/pull/3944>`_)
+  - Clean up unused c code and superfluous `extern "C"` (`#3941 <https://github.com/equinor/ert/pull/3941>`_)
+  - Fix experiment server iterated ensemble smoother (`#3950 <https://github.com/equinor/ert/pull/3950>`_)
+  - Initialize AnalysisIterConfig from dict (`#3946 <https://github.com/equinor/ert/pull/3946>`_)
+  - Simplify which keywords are added for parsing (`#3942 <https://github.com/equinor/ert/pull/3942>`_)
+  - Make enkf_main.log_seed more C++ (`#3945 <https://github.com/equinor/ert/pull/3945>`_)
+  - Remove RSH_DRIVER from test config dict generation (`#3955 <https://github.com/equinor/ert/pull/3955>`_)
+
+
 Version 3.0
 ------------
 
