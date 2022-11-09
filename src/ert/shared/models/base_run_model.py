@@ -323,12 +323,11 @@ class BaseRunModel:
     @staticmethod
     def deactivate_failed_jobs(run_context: RunContext) -> None:
         for iens, run_arg in enumerate(run_context):
-            if run_context.is_active(iens):
-                if run_arg.run_status in (
-                    RunStatusType.JOB_LOAD_FAILURE,
-                    RunStatusType.JOB_RUN_FAILURE,
-                ):
-                    run_context.deactivate_realization(iens)
+            if run_context.is_active(iens) and run_arg.run_status in (
+                RunStatusType.JOB_LOAD_FAILURE,
+                RunStatusType.JOB_RUN_FAILURE,
+            ):
+                run_context.deactivate_realization(iens)
 
     def _build_ensemble(
         self,
@@ -359,7 +358,7 @@ class BaseRunModel:
                     (
                         run_arg,
                         self.ert().resConfig().ensemble_config,
-                        self.ert().resConfig().model_config,
+                        self.ert().resConfig().model_config.get_last_history_restart(),
                     )
                 ).set_done_callback(
                     lambda x: forward_model_ok(*x)
@@ -407,12 +406,11 @@ class BaseRunModel:
             await ensemble_listener
 
             for iens, run_arg in enumerate(run_context):
-                if run_context.is_active(iens):
-                    if run_arg.run_status in (
-                        RunStatusType.JOB_LOAD_FAILURE,
-                        RunStatusType.JOB_RUN_FAILURE,
-                    ):
-                        run_context.deactivate_realization(iens)
+                if run_context.is_active(iens) and run_arg.run_status in (
+                    RunStatusType.JOB_LOAD_FAILURE,
+                    RunStatusType.JOB_RUN_FAILURE,
+                ):
+                    run_context.deactivate_realization(iens)
 
             await loop.run_in_executor(
                 pool,

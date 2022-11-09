@@ -10,7 +10,6 @@
 #include <ert/ecl/ecl_sum.h>
 
 #include "ert/enkf/ensemble_config.hpp"
-#include "ert/enkf/model_config.hpp"
 
 #include <ert/enkf/enkf_defaults.hpp>
 #include <ert/enkf/enkf_node.hpp>
@@ -270,7 +269,7 @@ enkf_state_internalize_GEN_DATA(const ensemble_config_type *ens_config,
    be called manually from external scope.
 */
 static std::pair<fw_load_status, std::string> enkf_state_internalize_results(
-    ensemble_config_type *ens_config, model_config_type *model_config,
+    ensemble_config_type *ens_config, int last_history_restart,
     const std::string &job_name, const int iens, const std::string &run_path,
     enkf_fs_type *sim_fs) {
     const summary_key_matcher_type *matcher =
@@ -300,7 +299,7 @@ static std::pair<fw_load_status, std::string> enkf_state_internalize_results(
 
     int last_report = time_map_get_last_step(enkf_fs_get_time_map(sim_fs));
     if (last_report < 0)
-        last_report = model_config_get_last_history_restart(model_config);
+        last_report = last_history_restart;
     auto result = enkf_state_internalize_GEN_DATA(ens_config, iens, sim_fs,
                                                   run_path, last_report);
     if (result == LOAD_FAILURE)
@@ -309,8 +308,8 @@ static std::pair<fw_load_status, std::string> enkf_state_internalize_results(
 }
 
 std::pair<fw_load_status, std::string> enkf_state_load_from_forward_model(
-    ensemble_config_type *ens_config, model_config_type *model_config,
-    const int iens, const std::string &run_path, const std::string &job_name,
+    ensemble_config_type *ens_config, int last_history_restart, const int iens,
+    const std::string &run_path, const std::string &job_name,
     enkf_fs_type *sim_fs) {
     std::pair<fw_load_status, std::string> result;
     if (ensemble_config_have_forward_init(ens_config))
@@ -318,7 +317,7 @@ std::pair<fw_load_status, std::string> enkf_state_load_from_forward_model(
             ensemble_config_forward_init(ens_config, iens, run_path, sim_fs);
     if (result.first == LOAD_SUCCESSFUL) {
         result = enkf_state_internalize_results(
-            ens_config, model_config, job_name, iens, run_path, sim_fs);
+            ens_config, last_history_restart, job_name, iens, run_path, sim_fs);
     }
     auto &state_map = enkf_fs_get_state_map(sim_fs);
     if (result.first != LOAD_SUCCESSFUL)
@@ -335,11 +334,11 @@ ERT_CLIB_SUBMODULE("enkf_state", m) {
              int iens) { return enkf_state_initialize(fs, param_node, iens); });
 
     m.def("internalize_results", [](Cwrap<ensemble_config_type> ens_config,
-                                    Cwrap<model_config_type> model_config,
+                                    int last_history_restart,
                                     const std::string &job_name, const int iens,
                                     const std::string &run_path,
                                     Cwrap<enkf_fs_type> sim_fs) {
-        return enkf_state_internalize_results(ens_config, model_config,
+        return enkf_state_internalize_results(ens_config, last_history_restart,
                                               job_name, iens, run_path, sim_fs);
     });
 }

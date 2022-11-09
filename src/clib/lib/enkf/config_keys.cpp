@@ -55,7 +55,6 @@ ERT_CLIB_SUBMODULE("config_keys", m) {
     cls.attr("LOAD_WORKFLOW_JOB") = LOAD_WORKFLOW_JOB_KEY;
     cls.attr("LOGGING") = "LOGGING";
     cls.attr("MAX_KEY") = MAX_KEY;
-    cls.attr("MAX_RESAMPLE") = MAX_RESAMPLE_KEY;
     cls.attr("MAX_RUNNING") = "MAX_RUNNING";
     cls.attr("MAX_RUNTIME") = MAX_RUNTIME_KEY;
     cls.attr("MAX_SUBMIT") = MAX_SUBMIT_KEY;

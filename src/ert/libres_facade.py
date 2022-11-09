@@ -68,7 +68,7 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
 
     @property
     def enspath(self) -> str:
-        return self._enkf_main.resConfig().model_config.getEnspath()
+        return self._enkf_main.resConfig().model_config.ens_path
 
     @property
     def user_config_file(self) -> Optional[str]:
@@ -161,7 +161,7 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
 
     @property
     def run_path(self) -> str:
-        return self._enkf_main.getModelConfig().getRunpathAsString()
+        return self._enkf_main.getModelConfig().runpath_format_string
 
     def load_from_forward_model(
         self, case: str, realisations: List[bool], iteration: int
@@ -219,6 +219,7 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
                 f"No report step {report_step} in report steps: "
                 f"{config_node.getDataModelConfig().getReportSteps()}"
             )
+        # pylint: disable=c-extension-no-member
         data_array = _clib.enkf_fs_general_data.gendata_get_realizations(
             config_node, fs, realizations, report_step
         )
@@ -364,6 +365,7 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
                 key for key in keys if key in gen_kw_keys
             ]  # ignore keys that doesn't exist
 
+        # pylint: disable=c-extension-no-member
         gen_kw_array = _clib.enkf_fs_keyword_data.keyword_data_get_realizations(
             self._enkf_main.ensembleConfig(), fs, gen_kw_keys, realizations
         )
@@ -413,6 +415,7 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
                 key for key in keys if key in summary_keys
             ]  # ignore keys that doesn't exist
 
+        # pylint: disable=c-extension-no-member
         summary_data = _clib.enkf_fs_summary_data.get_summary_data(
             self._enkf_main.ensembleConfig(), fs, summary_keys, realizations, len(dates)
         )

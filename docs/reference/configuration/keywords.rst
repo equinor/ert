@@ -57,7 +57,6 @@ Keyword name                                                            Required
 :ref:`LICENSE_PATH <license_path>`                                      NO                                                                      A path where ert-licenses to e.g. RMS are stored
 :ref:`LOG_FILE <log_file>`                                              NO                                      -                               Ignored
 :ref:`LOG_LEVEL <log_level>`                                            NO                                      -                               Ignored
-:ref:`MAX_RESAMPLE <max_resample>`                                      NO                                      1                               How many times should ERT resample & retry a simulation
 :ref:`MAX_RUNTIME <max_runtime>`                                        NO                                      0                               Set the maximum runtime in seconds for a realization
 :ref:`MAX_SUBMIT <max_submit>`                                          NO                                      2                               How many times should the queue system retry a simulation
 :ref:`MIN_REALIZATIONS <min_realizations>`                              NO                                      0                               Set the number of minimum reservoir realizations to run before long running realizations are stopped. Keyword STOP_LONG_RUNNING must be set to TRUE when MIN_REALIZATIONS are set
@@ -157,7 +156,9 @@ These keywords must be set to make ERT function properly.
 
                 ECLBASE eclipse/model/MY_VERY_OWN_OIL_FIELD-%d
 
-        **Note:** JOBNAME can be used as an alternative to ECLBASE.
+        **Note:** JOBNAME can be used as an alternative to ECLBASE. Note that
+        if both are supplied, ECLBASE will be ignored, and the value provided
+        by JOBNAME will be used.
 
 .. _jobname:
 .. topic::  JOBNAME
@@ -1416,13 +1417,6 @@ to load, select and modify the analysis modules are documented here.
 
         Number of retries for a iteration - iterated ensemble smoother.
                 Defaults to 4.
-
-
-.. _max_resample:
-.. topic:: MAX_RESAMPLE
-
-        How many times should ERT resample & retry a simulation.
-                Default is 1.
 
 
 .. _max_submit:

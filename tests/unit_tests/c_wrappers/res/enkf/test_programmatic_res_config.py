@@ -7,9 +7,9 @@ import pytest
 from ert._c_wrappers.enkf import ResConfig
 
 
-@pytest.fixture
+@pytest.fixture(name="minimum_config_dict")
 @pytest.mark.usefixtures()
-def minimum_config_dict():
+def fixture_minimum_config_dict():
     return {
         "INTERNALS": {
             "CONFIG_DIRECTORY": ".",
@@ -37,18 +37,17 @@ def test_minimum_config(minimum_config_dict, minimum_case):
     )
 
     assert (
-        loaded_res_config.model_config.getJobnameFormat()
-        == prog_res_config.model_config.getJobnameFormat()
+        loaded_res_config.model_config.jobname_format_string
+        == prog_res_config.model_config.jobname_format_string
     )
 
     assert (
-        loaded_res_config.model_config.getRunpathAsString()
-        == prog_res_config.model_config.getRunpathAsString()
+        loaded_res_config.model_config.runpath_format_string
+        == prog_res_config.model_config.runpath_format_string
     )
 
     assert (
-        loaded_res_config.model_config.getEnspath()
-        == prog_res_config.model_config.getEnspath()
+        loaded_res_config.model_config.ens_path == prog_res_config.model_config.ens_path
     )
 
     assert len(prog_res_config.errors) == 0
@@ -103,7 +102,7 @@ def test_failed_keys():
 
 def test_new_config(monkeypatch):
     monkeypatch.chdir(tempfile.mkdtemp())
-    with open("NEW_TYPE_A", "w") as fout:
+    with open("NEW_TYPE_A", mode="w", encoding="utf-8") as fout:
         fout.write(
             dedent(
                 """
@@ -260,17 +259,15 @@ def test_large_config(setup_case):
     assert loaded_model_config.num_realizations == prog_model_config.num_realizations
 
     assert (
-        loaded_model_config.getJobnameFormat() == prog_model_config.getJobnameFormat()
+        loaded_model_config.jobname_format_string
+        == prog_model_config.jobname_format_string
     )
     assert (
-        loaded_model_config.getRunpathAsString()
-        == prog_model_config.getRunpathAsString()
+        loaded_model_config.runpath_format_string
+        == prog_model_config.runpath_format_string
     )
-    assert prog_model_config.getEnspath() == loaded_model_config.getEnspath()
-    assert (
-        loaded_model_config.get_history_source()
-        == prog_model_config.get_history_source()
-    )
+    assert prog_model_config.ens_path == loaded_model_config.ens_path
+    assert loaded_model_config.history_source == prog_model_config.history_source
     assert loaded_model_config.obs_config_file == prog_model_config.obs_config_file
     assert loaded_res_config.installed_jobs == prog_res_config.installed_jobs
     assert loaded_res_config.env_vars == prog_res_config.env_vars

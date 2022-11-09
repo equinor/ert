@@ -57,11 +57,15 @@ class TimeMap(BaseCClass):
         if os.path.isfile(filename):
             OK = self._fload(filename)
             if not OK:
-                raise Exception(f"Error occured when loading timemap from:{filename}")
+                raise ValueError(f"Error occured when loading timemap from:{filename}")
         else:
             raise IOError((errno.ENOENT, f"File not found: {filename}"))
 
     def __eq__(self, other):
+        if all((self is None, other is None)):
+            return True
+        if any((self is None, other is None)):
+            return False
         return list(self) == list(other)
 
     def getSimulationDays(self, step: int) -> float:
@@ -76,6 +80,9 @@ class TimeMap(BaseCClass):
 
     def attach_refcase(self, refcase):
         self._attach_refcase(refcase)
+
+    def last_step(self) -> int:
+        return self._last_step()
 
     def __getitem__(self, index: int) -> CTime:
         if not isinstance(index, int):

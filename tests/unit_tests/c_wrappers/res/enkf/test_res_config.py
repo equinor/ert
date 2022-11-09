@@ -7,7 +7,6 @@ from pathlib import Path
 from unittest.mock import MagicMock, mock_open, patch
 
 import pytest
-from cwrap import Prototype, load
 from ecl.util.enums import RngAlgTypeEnum
 
 from ert._c_wrappers.enkf import (
@@ -20,21 +19,6 @@ from ert._c_wrappers.enkf import (
 from ert._c_wrappers.enkf.res_config import parse_signature_job, site_config_location
 from ert._c_wrappers.job_queue import QueueDriverEnum
 from ert._c_wrappers.sched import HistorySourceEnum
-
-# The res_config object should set the environment variable
-# 'DATA_ROOT' to the root directory with the config
-# file. Unfortunately the python methods to get environment variable,
-# os.getenv() and os.environ[] do not reflect the:
-#
-#    setenv( "DATA_ROOT" , ...)
-#
-# call in the res_config C code. We therefore create a wrapper to the
-# underlying libc getenv() function to be used for testing.
-
-
-clib = load(None)
-clib_getenv = Prototype(clib, "char* getenv( char* )", bind=False)
-
 
 config_defines = {
     "<USER>": "TEST_USER",
@@ -103,7 +87,7 @@ snake_oil_structure_config = {
         },
     },
     "FORWARD_MODEL": ["SNAKE_OIL_SIMULATOR", "SNAKE_OIL_NPV", "SNAKE_OIL_DIFF"],
-    "HISTORY_SOURCE": HistorySourceEnum.REFCASE_HISTORY,
+    "HISTORY_SOURCE": "REFCASE_HISTORY",
     "OBS_CONFIG": "ert/input/observations/obsfiles/observations.txt",
     "LOAD_WORKFLOW": [["ert/bin/workflows/MAGIC_PRINT", "MAGIC_PRINT"]],
     "LOAD_WORKFLOW_JOB": [
@@ -174,14 +158,7 @@ def test_missing_directory():
 
 def test_init(minimum_case):
     res_config = minimum_case.resConfig()
-    assert res_config.model_config.data_root() == os.getcwd()
-    assert clib_getenv("DATA_ROOT") == os.getcwd()
-
-    # This fails with an not-understandable Python error:
-    # -----------------------------------------------------------------
-    # res_config.model_config.set_data_root( "NEW" )
-    # assert  res_config.model_config.data_root( )  == "NEW"
-    # assert  clib_getenv("DATA_ROOT")  == "NEW"
+    assert res_config.model_config.data_root == os.getcwd()
 
     assert res_config is not None
 
@@ -199,20 +176,20 @@ def test_extensive_config(setup_case):
     model_config = res_config.model_config
     assert (
         Path(snake_oil_structure_config["RUNPATH"]).resolve()
-        == Path(model_config.getRunpathAsString()).resolve()
+        == Path(model_config.runpath_format_string).resolve()
     )
     assert (
         Path(snake_oil_structure_config["ENSPATH"]).resolve()
-        == Path(model_config.getEnspath()).resolve()
+        == Path(model_config.ens_path).resolve()
     )
-    assert snake_oil_structure_config["JOBNAME"] == model_config.getJobnameFormat()
+    assert snake_oil_structure_config["JOBNAME"] == model_config.jobname_format_string
     assert (
         snake_oil_structure_config["FORWARD_MODEL"]
         == res_config.forward_model.job_name_list()
     )
     assert (
-        snake_oil_structure_config["HISTORY_SOURCE"]
-        == model_config.get_history_source()
+        HistorySourceEnum.from_string(snake_oil_structure_config["HISTORY_SOURCE"])
+        == model_config.history_source
     )
     assert (
         snake_oil_structure_config["NUM_REALIZATIONS"] == model_config.num_realizations
@@ -323,6 +300,9 @@ def test_res_config_dict_constructor(setup_case):
 
     absolute_config_dir, _ = os.path.split(os.path.realpath(relative_config_path))
 
+    # change dir to actual location of config file
+    os.chdir(absolute_config_dir)
+
     config_data_new = {
         ConfigKeys.ALPHA_KEY: 3,
         ConfigKeys.RERUN_KEY: False,
@@ -332,7 +312,9 @@ def test_res_config_dict_constructor(setup_case):
         ConfigKeys.GLOBAL_STD_SCALING: 1,
         ConfigKeys.MIN_REALIZATIONS: 5,
         # "MIN_REALIZATIONS"  : "50%", percentages need to be fixed or removed
-        ConfigKeys.RUNPATH: "<SCRATCH>/<USER>/<CASE_DIR>/realization-%d/iter-%d",
+        ConfigKeys.RUNPATH: os.path.join(
+            os.getcwd(), "<SCRATCH>/<USER>/<CASE_DIR>/realization-%d/iter-%d"
+        ),
         ConfigKeys.NUM_REALIZATIONS: 10,  # model
         ConfigKeys.MAX_RUNTIME: 23400,
         ConfigKeys.JOB_SCRIPT: f"../../{script_file}",
@@ -395,7 +377,7 @@ def test_res_config_dict_constructor(setup_case):
             }  # ensemble
         ],
         ConfigKeys.ECLBASE: "eclipse/model/<ECLIPSE_NAME>-%d",  # model, ecl
-        ConfigKeys.ENSPATH: "../output/storage/<CASE_DIR>",  # model
+        ConfigKeys.ENSPATH: os.path.realpath("../output/storage/<CASE_DIR>"),  # model
         "PLOT_PATH": "../output/results/plot/<CASE_DIR>",
         ConfigKeys.UPDATE_LOG_PATH: "../output/update_log/<CASE_DIR>",  # analysis
         ConfigKeys.RUNPATH_FILE: (
@@ -414,8 +396,7 @@ def test_res_config_dict_constructor(setup_case):
         },  # subst
         ConfigKeys.REFCASE: "../input/refcase/SNAKE_OIL_FIELD",  # ecl
         ConfigKeys.JOBNAME: "SNAKE_OIL_STRUCTURE_%d",  # model
-        ConfigKeys.MAX_RESAMPLE: 1,  # model
-        ConfigKeys.TIME_MAP: "../input/refcase/time_map.txt",  # model
+        ConfigKeys.TIME_MAP: os.path.realpath("../input/refcase/time_map.txt"),  # model
         ConfigKeys.INSTALL_JOB: [
             (
                 "SNAKE_OIL_SIMULATOR",
@@ -441,8 +422,10 @@ def test_res_config_dict_constructor(setup_case):
             },
             {ConfigKeys.NAME: "SNAKE_OIL_DIFF", ConfigKeys.ARGLIST: ""},  # model
         ],
-        ConfigKeys.HISTORY_SOURCE: HistorySourceEnum.REFCASE_HISTORY,
-        ConfigKeys.OBS_CONFIG: "../input/observations/obsfiles/observations.txt",
+        ConfigKeys.HISTORY_SOURCE: "REFCASE_HISTORY",
+        ConfigKeys.OBS_CONFIG: os.path.realpath(
+            "../input/observations/obsfiles/observations.txt"
+        ),
         ConfigKeys.GEN_KW_EXPORT_NAME: "parameters",
         ConfigKeys.LOAD_WORKFLOW_JOB: [
             ["../bin/workflows/workflowjobs/UBER_PRINT", "UBER_PRINT"],
@@ -470,9 +453,6 @@ def test_res_config_dict_constructor(setup_case):
                     define_key,
                     config_data_new[ConfigKeys.DEFINE_KEY].get(define_key),
                 )
-
-    # change dir to actual location of config file
-    os.chdir(absolute_config_dir)
 
     # add missing entries to config file
     with open(file=config_file_name, mode="a+", encoding="utf-8") as ert_file:

@@ -61,8 +61,8 @@ def test_that_correct_key_observation_is_loaded(extra_config, expected):
     run_simulator()
     res_config = ResConfig("config.ert")
     observations = EnkfObs(
-        res_config.model_config.get_history_source(),
-        res_config.model_config.get_time_map(),
+        res_config.model_config.history_source,
+        res_config.model_config.time_map,
         res_config.ensemble_config.grid,
         res_config.ensemble_config.refcase,
         res_config.ensemble_config,
@@ -102,8 +102,8 @@ def test_date_parsing_in_observations(datestring, deprecated, capfd):
     run_simulator()
     res_config = ResConfig("config.ert")
     observations = EnkfObs(
-        res_config.model_config.get_history_source(),
-        res_config.model_config.get_time_map(),
+        res_config.model_config.history_source,
+        res_config.model_config.time_map,
         res_config.ensemble_config.grid,
         res_config.ensemble_config.refcase,
         res_config.ensemble_config,

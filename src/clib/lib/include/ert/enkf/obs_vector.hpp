@@ -16,9 +16,13 @@
 #include <ert/enkf/enkf_node.hpp>
 #include <ert/enkf/enkf_types.hpp>
 #include <ert/enkf/ensemble_config.hpp>
-#include <ert/enkf/model_config.hpp>
 #include <ert/enkf/obs_data.hpp>
 #include <ert/enkf/time_map.hpp>
+
+enum history_source_type {
+    REFCASE_SIMULATED = 1, /** ecl_sum_get_well_var( "WWCT" );  */
+    REFCASE_HISTORY = 2,   /** ecl_sum_get_well_var( "WWCTH" ); */
+};
 
 typedef enum { GEN_OBS = 1, SUMMARY_OBS = 2 } obs_impl_type;
 

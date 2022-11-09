@@ -1,4 +1,4 @@
-#include <ert/enkf/model_config.hpp>
+#include <ert/enkf/enkf_types.hpp>
 #include <ert/python.hpp>
 
 ERT_CLIB_SUBMODULE("model_callbacks", m) {

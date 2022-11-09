@@ -19,7 +19,6 @@ pybind11_add_module(
   python/ensemble_config.cpp
   python/enkf_fs_general_data.cpp
   python/enkf_fs_keyword_data.cpp
-  python/enkf_defaults.cpp
   python/enkf_fs_summary_data.cpp
   python/model_callbacks.cpp
   config/conf_util.cpp
@@ -87,7 +86,6 @@ pybind11_add_module(
   enkf/misfit_ensemble.cpp
   enkf/misfit_member.cpp
   enkf/misfit_ts.cpp
-  enkf/model_config.cpp
   enkf/obs_data.cpp
   enkf/obs_vector.cpp
   enkf/row_scaling.cpp

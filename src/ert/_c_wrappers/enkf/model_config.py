@@ -1,299 +1,146 @@
+import logging
 import os
 from typing import Optional
 
-from cwrap import BaseCClass
 from ecl.summary import EclSum
 
-from ert._c_wrappers import ResPrototype
 from ert._c_wrappers.enkf.config_keys import ConfigKeys
 from ert._c_wrappers.enkf.time_map import TimeMap
 from ert._c_wrappers.sched import HistorySourceEnum
-from ert._c_wrappers.util import PathFormat
+
+logger = logging.getLogger(__name__)
 
 
-class ModelConfig(BaseCClass):
-    TYPE_NAME = "model_config"
-
-    _alloc = ResPrototype(
-        "void*  model_config_alloc(config_content, \
-                                   char*, \
-                                   ecl_sum)",
-        bind=False,
-    )
-    _alloc_full = ResPrototype(
-        "void*  model_config_alloc_full(int, \
-                                        int, \
-                                        char*, \
-                                        char*, \
-                                        char*, \
-                                        char*, \
-                                        char*, \
-                                        time_map, \
-                                        char*, \
-                                        history_source_enum, \
-                                        ecl_sum)",
-        bind=False,
-    )
-    _free = ResPrototype("void  model_config_free( model_config )")
-    _get_max_internal_submit = ResPrototype(
-        "int   model_config_get_max_internal_submit(model_config)"
-    )
-    _get_runpath_as_char = ResPrototype(
-        "char* model_config_get_runpath_as_char(model_config)"
-    )
-    _select_runpath = ResPrototype(
-        "bool  model_config_select_runpath(model_config, char*)"
-    )
-    _set_runpath = ResPrototype("void  model_config_set_runpath(model_config, char*)")
-    _get_enspath = ResPrototype("char* model_config_get_enspath(model_config)")
-    _get_history_source = ResPrototype(
-        "history_source_enum model_config_get_history_source(model_config)"
-    )
-    _select_history = ResPrototype(
-        "bool  model_config_select_history(model_config, history_source_enum, ecl_sum)"
-    )
-    _gen_kw_export_name = ResPrototype(
-        "char* model_config_get_gen_kw_export_name(model_config)"
-    )
-    _runpath_requires_iterations = ResPrototype(
-        "bool  model_config_runpath_requires_iter(model_config)"
-    )
-    _get_jobname_fmt = ResPrototype("char* model_config_get_jobname_fmt(model_config)")
-    _get_runpath_fmt = ResPrototype(
-        "path_fmt_ref model_config_get_runpath_fmt(model_config)"
-    )
-    _get_num_realizations = ResPrototype(
-        "int model_config_get_num_realizations(model_config)"
-    )
-    _get_obs_config_file = ResPrototype(
-        "char* model_config_get_obs_config_file(model_config)"
-    )
-    _get_data_root = ResPrototype("char* model_config_get_data_root(model_config)")
-    _get_time_map = ResPrototype(
-        "time_map_ref model_config_get_external_time_map(model_config)"
-    )
-    _get_last_history_restart = ResPrototype(
-        "int model_config_get_last_history_restart(model_config)"
-    )
+class ModelConfig:
+    DEFAULT_HISTORY_SOURCE = HistorySourceEnum.REFCASE_HISTORY
+    DEFAULT_RUNPATH = "simulations/realization-<IENS>/iter-<ITER>"
+    DEFAULT_GEN_KW_EXPORT_NAME = "parameters"
+    DEFAULT_ENSPATH = "storage"
 
     def __init__(
         self,
-        data_root,
-        refcase,
-        config_content=None,
-        config_dict=None,
-        is_reference=False,
+        num_realizations: int,
+        refcase: EclSum = None,
+        config_dir: Optional[str] = None,
+        data_root: Optional[str] = None,
+        ens_path: Optional[str] = None,
+        history_source: Optional[HistorySourceEnum] = None,
+        runpath_format_string: Optional[str] = None,
+        jobname_format_string: Optional[str] = None,
+        gen_kw_export_name: Optional[str] = None,
+        obs_config_file: Optional[str] = None,
+        time_map_file: Optional[str] = None,
     ):
-        if config_dict is not None and config_content is not None:
-            raise ValueError(
-                "Error: Unable to create ModelConfig with multiple config objects"
+        self.num_realizations = num_realizations
+        self.refcase = refcase
+        if config_dir is None:
+            config_dir = os.getcwd()
+        self._config_dir = config_dir
+        self.data_root = data_root if data_root is not None else config_dir
+        self.ens_path: str = (
+            ens_path
+            if ens_path is not None
+            else os.path.join(config_dir, self.DEFAULT_ENSPATH)
+        )
+
+        self.history_source = (
+            history_source
+            if self.refcase is not None and history_source is not None
+            else self.DEFAULT_HISTORY_SOURCE
+        )
+
+        self.runpath_format_string = (
+            runpath_format_string
+            if runpath_format_string is not None
+            else os.path.realpath(self.DEFAULT_RUNPATH)
+        )
+
+        self.jobname_format_string = jobname_format_string
+        self.gen_kw_export_name = (
+            gen_kw_export_name
+            if gen_kw_export_name is not None
+            else self.DEFAULT_GEN_KW_EXPORT_NAME
+        )
+
+        self.obs_config_file = obs_config_file
+
+        self.time_map = None
+        self._time_map_file = time_map_file
+
+        if time_map_file is not None:
+            self.time_map = TimeMap()
+            try:
+                self.time_map.fload(time_map_file)
+            except ValueError as err:
+                logger.warning(err)
+            except IOError as err:
+                logger.warning(f"failed to load timemap - {err}")
+
+    @classmethod
+    def from_dict(
+        cls, refcase: EclSum, config_path: str, config_dict: dict
+    ) -> "ModelConfig":
+        return cls(
+            config_dir=config_path,
+            num_realizations=config_dict.get(ConfigKeys.NUM_REALIZATIONS),
+            refcase=refcase,
+            data_root=config_dict.get(ConfigKeys.DATAROOT),
+            ens_path=config_dict.get(ConfigKeys.ENSPATH),
+            history_source=HistorySourceEnum.from_string(
+                config_dict.get(ConfigKeys.HISTORY_SOURCE)
             )
+            if ConfigKeys.HISTORY_SOURCE in config_dict
+            else None,
+            runpath_format_string=config_dict.get(ConfigKeys.RUNPATH),
+            jobname_format_string=config_dict.get(
+                ConfigKeys.JOBNAME, config_dict.get(ConfigKeys.ECLBASE, None)
+            ),
+            gen_kw_export_name=config_dict.get(ConfigKeys.GEN_KW_EXPORT_NAME),
+            obs_config_file=config_dict.get(ConfigKeys.OBS_CONFIG),
+            time_map_file=config_dict.get(ConfigKeys.TIME_MAP),
+        )
 
-        if config_dict is None:
-            c_ptr = self._alloc(config_content, data_root, refcase)
-        else:
-            # MAX_RESAMPLE_KEY
-            max_resample = config_dict.get(ConfigKeys.MAX_RESAMPLE, 1)
-
-            # NUM_REALIZATIONS_KEY
-            num_realizations = config_dict.get(ConfigKeys.NUM_REALIZATIONS)
-
-            # RUNPATH_KEY
-            run_path = config_dict.get(
-                ConfigKeys.RUNPATH, "simulations/realization-<IENS>/iter-<ITER>"
-            )
-            if run_path is not None:
-                run_path = os.path.realpath(run_path)
-
-            # DATA_ROOT_KEY
-            data_root_from_config = config_dict.get(ConfigKeys.DATAROOT)
-            if data_root_from_config is not None:
-                data_root = os.path.realpath(data_root_from_config)
-
-            # ENSPATH_KEY
-            ens_path = config_dict.get(ConfigKeys.ENSPATH, "storage")
-            if ens_path is not None:
-                ens_path = os.path.realpath(ens_path)
-
-            # JOBNAME_KEY
-            job_name = config_dict.get(ConfigKeys.JOBNAME)
-
-            # OBS_CONFIG_KEY
-            obs_config = config_dict.get(ConfigKeys.OBS_CONFIG)
-            if obs_config is not None:
-                obs_config = os.path.realpath(obs_config)
-
-            # TIME_MAP_KEY
-            time_map = None
-            time_map_file = config_dict.get(ConfigKeys.TIME_MAP)
-            if time_map_file is not None and not os.path.isfile(
-                os.path.realpath(time_map_file)
-            ):
-                raise ValueError("Error: Time map is not a file")
-            if time_map_file is not None:
-                time_map = TimeMap()
-                time_map.fload(filename=os.path.realpath(time_map_file))
-
-            # GEN_KW_EXPORT_NAME_KEY
-            gen_kw_export_name = config_dict.get(ConfigKeys.GEN_KW_EXPORT_NAME)
-
-            # HISTORY_SOURCE_KEY
-            history_source = config_dict.get(
-                ConfigKeys.HISTORY_SOURCE, HistorySourceEnum.REFCASE_HISTORY
-            )
-
-            c_ptr = self._alloc_full(
-                max_resample,
-                num_realizations,
-                run_path,
-                data_root,
-                ens_path,
-                job_name,
-                obs_config,
-                time_map,
-                gen_kw_export_name,
-                history_source,
-                refcase,
-            )
-
-            if time_map is not None:
-                time_map.convertToCReference(None)
-
-        if c_ptr is None:
-            raise ValueError("Failed to construct ModelConfig instance.")
-
-        super().__init__(c_ptr, is_reference=is_reference)
-
-    def get_history_source(self) -> HistorySourceEnum:
-        return self._get_history_source()
-
-    def set_history_source(
-        self, history_source: HistorySourceEnum, refcase: EclSum
-    ) -> bool:
-        assert isinstance(history_source, HistorySourceEnum)
-        assert isinstance(refcase, EclSum)
-        return self._select_history(history_source, refcase)
-
-    def get_max_internal_submit(self) -> int:
-        return self._get_max_internal_submit()
-
-    def set_max_internal_submit(self, max_value):
-        self._get_max_internal_submit(max_value)
-
-    def getRunpathAsString(self) -> str:
-        return self._get_runpath_as_char()
-
-    def selectRunpath(self, path_key) -> bool:
-        return self._select_runpath(path_key)
-
-    def setRunpath(self, path_format):
-        self._set_runpath(path_format)
-
-    def free(self):
-        self._free()
-
-    def getGenKWExportName(self) -> str:
-        return self._gen_kw_export_name()
-
-    def runpathRequiresIterations(self) -> bool:
-        return self._runpath_requires_iterations()
-
-    def getJobnameFormat(self) -> Optional[str]:
-        """Returns None if no job name format given in config file."""
-        return self._get_jobname_fmt()
-
-    @property
-    def obs_config_file(self):
-        return self._get_obs_config_file()
-
-    def getEnspath(self) -> str:
-        return self._get_enspath()
-
-    def getRunpathFormat(self) -> PathFormat:
-        return self._get_runpath_fmt()
-
-    @property
-    def num_realizations(self):
-        return self._get_num_realizations()
-
-    def data_root(self):
-        return self._get_data_root()
-
-    def get_time_map(self):
-        return self._get_time_map()
+    def get_last_history_restart(self) -> int:
+        if self.refcase:
+            return self.refcase.last_report
+        if self.time_map:
+            return self.time_map.last_step()
+        return -1
 
     def __repr__(self):
-        return f"<ModelConfig({self.__str__()})>"
+        return f"ModelConfig(\n{self}\n)"
 
     def __str__(self):
         return (
-            (
-                f"data_root: {self.data_root()},\n"
-                f"num_realizations: {self.num_realizations},\n"
-                f"obs_config_file: {self.obs_config_file},\n"
-                f"ens_path: {self.getEnspath()},\n"
-                f"run_path_format: {self.getRunpathFormat()},\n"
-                f"job_name_format: {self.getJobnameFormat()},\n"
-                f"run_path: {self.getRunpathAsString()},\n"
-                f"max_internal_submit: {self.get_max_internal_submit()},\n"
-                f"gen_kw_export_name: {self.getGenKWExportName()},\n"
-                f"time_map: {self.get_time_map()},\n"
-            )
-            if self._address()
-            else ""
+            f"num_realizations: {self.num_realizations},\n"
+            f"refcase: {self.refcase},\n"
+            f"config_dir: {self._config_dir},\n"
+            f"data_root: {self.data_root},\n"
+            f"ens_path: {self.ens_path},\n"
+            f"history_source: {self.history_source},\n"
+            f"runpath_format_string: {self.runpath_format_string},\n"
+            f"job_name_format: {self.jobname_format_string},\n"
+            f"gen_kw_export_name: {self.gen_kw_export_name},\n"
+            f"obs_config_file: {self.obs_config_file},\n"
+            f"time_map_file: {self._time_map_file}"
+        )
+
+    def __eq__(self, other):
+        return all(
+            [
+                self.num_realizations == other.num_realizations,
+                self._config_dir == other._config_dir,
+                self.data_root == other.data_root,
+                self.ens_path == other.ens_path,
+                self.history_source == other.history_source,
+                self.runpath_format_string == other.runpath_format_string,
+                self.jobname_format_string == other.jobname_format_string,
+                self.gen_kw_export_name == other.gen_kw_export_name,
+                self.obs_config_file == other.obs_config_file,
+                self._time_map_file == other._time_map_file,
+                self.time_map == other.time_map,
+            ]
         )
 
     def __ne__(self, other):
         return not self == other
-
-    def __eq__(self, other):
-        if os.path.normpath(self.data_root()) != os.path.normpath(other.data_root()):
-            return False
-
-        if self.num_realizations != other.num_realizations:
-            return False
-
-        if os.path.realpath(self.obs_config_file) != os.path.realpath(
-            other.obs_config_file
-        ):
-            return False
-
-        if os.path.realpath(self.getEnspath()) != os.path.realpath(other.getEnspath()):
-            return False
-
-        if self.getRunpathFormat() != other.getRunpathFormat():
-            return False
-
-        if self.getJobnameFormat() != other.getJobnameFormat():
-            return False
-
-        if os.path.realpath(self.getRunpathAsString()) != os.path.realpath(
-            other.getRunpathAsString()
-        ):
-            return False
-
-        if self.get_max_internal_submit() != other.get_max_internal_submit():
-            return False
-
-        if self.getGenKWExportName() != other.getGenKWExportName():
-            return False
-
-        if self.get_time_map() != other.get_time_map():
-            return False
-
-        return True
-
-    @staticmethod
-    def _get_history_src_enum(config_dict, config_content):
-        hist_src_enum = None
-        if config_dict and ConfigKeys.HISTORY_SOURCE in config_dict:
-            hist_src_enum = config_dict.get(ConfigKeys.HISTORY_SOURCE)
-
-        if config_content and config_content.hasKey(ConfigKeys.HISTORY_SOURCE):
-            hist_src_str = config_content.getValue(ConfigKeys.HISTORY_SOURCE)
-            hist_src_enum = HistorySourceEnum.from_string(hist_src_str)
-
-        return hist_src_enum
-
-    def get_last_history_restart(self):
-        return self._get_last_history_restart()

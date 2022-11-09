@@ -38,8 +38,7 @@ from ert.shared.storage.command import add_parser_options as ert_api_add_parser_
 
 
 def run_ert_storage(args):
-    kwargs = {"res_config": args.config}
-    kwargs["verbose"] = True
+    kwargs = {"res_config": args.config, "verbose": True}
 
     if args.database_url is not None:
         kwargs["database_url"] = args.database_url
@@ -50,8 +49,8 @@ def run_ert_storage(args):
 
 def run_webviz_ert(args):
     try:
-        # pylint: disable=unused-import
-        import webviz_ert  # noqa
+        # pylint: disable=unused-import,import-outside-toplevel
+        import webviz_ert
     except ImportError as err:
         raise ValueError(
             "Running `ert vis` requires that webviz_ert is installed"
@@ -61,7 +60,7 @@ def run_webviz_ert(args):
     if args.config:
         res_config = ResConfig(args.config)
         os.chdir(res_config.config_path)
-        ens_path = res_config.model_config.getEnspath()
+        ens_path = res_config.model_config.ens_path
 
         # Changing current working directory means we need to
         # only use the base name of the config file path
@@ -190,11 +189,13 @@ def range_limited_int(user_input):
 
 
 def run_gui_wrapper(args):
+    # pylint: disable=import-outside-toplevel
     from ert.gui.gert_main import run_gui
 
     run_gui(args)
 
 
+# pylint: disable=too-many-statements
 def get_ert_parser(parser=None):
     if parser is None:
         parser = ArgumentParser(description="ERT - Ensemble Reservoir Tool")
@@ -481,6 +482,7 @@ def start_ert_server(mode: str):
 
 def log_process_usage():
     try:
+        # pylint: disable=import-outside-toplevel
         import resource
 
         usage = resource.getrusage(resource.RUSAGE_SELF)
@@ -508,6 +510,7 @@ def log_process_usage():
             "Peak memory use (kB)": maxrss,
         }
         logging.info(f"Peak memory use: {maxrss} kB", extra=usage)
+    # pylint: disable=broad-except
     except Exception as exc:
         logging.warning(
             f"Exception while trying to log ERT process resource usage: {exc}"
@@ -515,6 +518,7 @@ def log_process_usage():
 
 
 def main():
+    # pylint: disable=import-outside-toplevel
     import locale
 
     locale.setlocale(locale.LC_NUMERIC, "C")
@@ -552,7 +556,7 @@ def main():
     except ConfigValidationError as err:
         logger.exception(str(err))
         sys.exit(f"Error in configuration file: {err}")
-    except BaseException as err:
+    except BaseException as err:  # pylint: disable=broad-except
         logger.exception(f'ERT crashed unexpectedly with "{err}"')
 
         logfiles = set()  # Use set to avoid duplicates...
