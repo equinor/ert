@@ -26,11 +26,6 @@ void set_test() {
     test_assert_int_equal(101, state_map.size());
 }
 
-void load_empty_test() {
-    StateMap state_map("File/does/not/exists");
-    test_assert_int_equal(0, state_map.size());
-}
-
 void test_equal() {
     StateMap state_map1(151);
     StateMap state_map2(151);
@@ -50,29 +45,6 @@ void test_equal() {
 
     state_map2.set(150, STATE_INITIALIZED);
     test_assert_false(state_map1 == state_map2);
-}
-
-void test_io() {
-    ecl::util::TestArea ta("state_map_io");
-    {
-        StateMap state_map(101);
-        state_map.set(0, STATE_INITIALIZED);
-        state_map.set(100, STATE_INITIALIZED);
-        state_map.write("map");
-
-        StateMap copy1("map");
-        test_assert_true(state_map == copy1);
-
-        StateMap copy2(101);
-        test_assert_true(copy2.read("map"));
-        test_assert_true(state_map == copy2);
-
-        copy2.set(67, STATE_INITIALIZED);
-        test_assert_false(state_map == copy2);
-
-        copy2.read("map");
-        test_assert_true(state_map == copy2);
-    }
 }
 
 void test_update_matching() {
@@ -189,9 +161,7 @@ void test_transitions() {
 int main(int argc, char **argv) {
     get_test();
     set_test();
-    load_empty_test();
     test_equal();
-    test_io();
     test_select_matching();
     test_transitions();
     exit(0);

@@ -15,8 +15,6 @@ public:
     StateMap(unsigned ensemble_size) {
         m_state.resize(ensemble_size, STATE_UNDEFINED);
     };
-    StateMap(const std::filesystem::path &filename);
-    StateMap(const StateMap &other);
 
     int size() const;
 
@@ -74,24 +72,6 @@ public:
      * elements have the flags of select_mask set
      */
     std::vector<bool> select_matching(int select_mask) const;
-
-    /**
-     * Assign state to all indices where the boolean is false
-     *
-     * @param mask Boolean mask
-     * @param state State to assign
-     */
-    void set_from_inverted_mask(const std::vector<bool> &mask,
-                                realisation_state_enum state);
-
-    /**
-     * Assign state to all indices where the boolean is true
-     *
-     * @param mask Boolean mask
-     * @param state State to assign
-     */
-    void set_from_mask(const std::vector<bool> &mask,
-                       realisation_state_enum state);
 
     /**
      * Determine whether it is possible to change from state1 to state2.
