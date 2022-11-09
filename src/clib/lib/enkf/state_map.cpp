@@ -48,13 +48,6 @@ void write_libecl_vector(std::ostream &s, const std::vector<int> &v) {
 }
 } // namespace
 
-StateMap::StateMap(const fs::path &filename) { read(filename); }
-
-StateMap::StateMap(const StateMap &other) {
-    std::lock_guard guard{other.m_mutex};
-    m_state = other.m_state;
-}
-
 int StateMap::size() const {
     std::lock_guard guard{m_mutex};
     return m_state.size();
@@ -152,20 +145,6 @@ std::vector<bool> StateMap::select_matching(int select_mask) const {
             select_target[i] = true;
     }
     return select_target;
-}
-
-void StateMap::set_from_inverted_mask(const std::vector<bool> &mask,
-                                      realisation_state_enum state) {
-    for (size_t i{}; i < mask.size(); ++i)
-        if (!mask[i])
-            set(i, state);
-}
-
-void StateMap::set_from_mask(const std::vector<bool> &mask,
-                             realisation_state_enum state) {
-    for (size_t i{}; i < mask.size(); ++i)
-        if (mask[i])
-            set(i, state);
 }
 
 ERT_CLIB_SUBMODULE("state_map", m) {
