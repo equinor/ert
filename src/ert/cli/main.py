@@ -49,13 +49,13 @@ def run_cli(args):
     ert = EnKFMain(res_config)
     facade = LibresFacade(ert)
     ens_path = Path(res_config.model_config.getEnspath())
-    storage_lock = filelock.FileLock(ens_path / (ens_path.stem + ".lock"))
+    storage_lock = filelock.FileLock(ens_path / f"{ens_path.stem}.lock")
     try:
         storage_lock.acquire(timeout=5)
     except filelock.Timeout:
         raise ErtTimeoutError(
-            f"Not able to acquire lock for: {ens_path}, ert could be opened twice, or "
-            f"another user is using the same ENSPATH"
+            f"Not able to acquire lock for: {ens_path}. You may already be running ert,"
+            f" or another user is using the same ENSPATH."
         )
     if args.mode == WORKFLOW_MODE:
         execute_workflow(ert, args.name)

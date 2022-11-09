@@ -64,8 +64,8 @@ def run_gui(args: argparse.Namespace):
             return app.exec_()
     except filelock.Timeout:
         raise ErtTimeoutError(
-            f"Not able to acquire lock for: {ens_path}, ert could be opened twice, or "
-            f"another user is using the same ENSPATH"
+            f"Not able to acquire lock for: {ens_path}. You may already be running ert,"
+            f" or another user is using the same ENSPATH."
         )
     finally:
         if storage_lock.is_locked:
