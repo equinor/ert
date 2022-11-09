@@ -38,9 +38,8 @@ class DataTypeKeysListModel(QAbstractItemModel):
 
             if role == Qt.DisplayRole:
                 return item["key"]
-            elif role == Qt.BackgroundRole:
-                if item["observations"]:
-                    return self.HAS_OBSERVATIONS
+            elif role == Qt.BackgroundRole and item["observations"]:
+                return self.HAS_OBSERVATIONS
 
         return None
 

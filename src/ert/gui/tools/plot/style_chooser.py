@@ -142,17 +142,13 @@ class StyleChooser(QWidget):
 
     def _findLineStyleIndex(self, line_style):
         for index, style in enumerate(self._styles):
-            if style[1] == line_style:
-                return index
-            elif style[1] is None and line_style == "":
+            if (style[1] == line_style) or (style[1] is None and line_style == ""):
                 return index
         return -1
 
     def _findMarkerStyleIndex(self, marker):
         for index, style in enumerate(MARKERS):
-            if style[1] == marker:
-                return index
-            elif style[1] is None and marker == "":
+            if (style[1] == marker) or (style[1] is None and marker == ""):
                 return index
         return -1
 
