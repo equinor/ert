@@ -351,7 +351,6 @@ C_USED void gen_data_clear(gen_data_type *gen_data) {
 }
 
 double *gen_data_get_double_vector(const gen_data_type *gen_data) {
-    int size = gen_data_get_size(gen_data);
     double *data = (double *)gen_data->data;
     return data;
 }

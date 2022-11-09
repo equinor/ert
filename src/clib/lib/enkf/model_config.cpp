@@ -323,8 +323,6 @@ void model_config_init(model_config_type *model_config,
                        const config_content_type *config, const char *data_root,
                        const ecl_sum_type *refcase) {
 
-    const subst_list_type *define_list =
-        config_content_get_const_define_list(config);
     model_config->refcase = refcase;
     model_config_set_default_data_root(model_config, data_root);
 

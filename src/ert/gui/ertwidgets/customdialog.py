@@ -48,10 +48,9 @@ class CustomDialog(QDialog):
     def optionValidationChanged(self):
         valid = True
         for option in self._option_list:
-            if hasattr(option, "isValid"):
-                if not option.isValid():
-                    valid = False
-                    self.notValid("One or more options are incorrectly set!")
+            if hasattr(option, "isValid") and not option.isValid():
+                valid = False
+                self.notValid("One or more options are incorrectly set!")
 
         if valid:
             self.valid()

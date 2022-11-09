@@ -458,8 +458,9 @@ class ResConfig:
 
     def _assert_keys(self, mother_key, exp_keys, keys):
         if set(exp_keys) != set(keys):
-            err_msg = "Did expect the keys %r in %s, received %r."
-            raise ValueError(err_msg % (exp_keys, mother_key, keys))
+            raise ValueError(
+                f"Did expect the keys {exp_keys} in {mother_key}, received {keys}."
+            )
 
     def _extract_internals(self, config):
         internal_config = []
@@ -602,8 +603,10 @@ class ResConfig:
             default_opt = {ConfigKeys.INPUT_FORMAT: "ASCII"}
 
             if not sorted(req_keys) == sorted(gd.keys()):
-                err_msg = "Expected keys %r when creating GEN_DATA, received %r"
-                raise KeyError(err_msg % (req_keys, gd))
+                raise KeyError(
+                    f"Expected keys {req_keys} when creating GEN_DATA, "
+                    f"received {gd}"
+                )
 
             value = [gd[ConfigKeys.NAME]]
             value += [f"{key}:{gd[key]}" for key in req_keys[1:]]
@@ -772,27 +775,26 @@ class ResConfig:
     def create_substitution_list_from_config_content(
         self, config_content: ConfigContent
     ):
-        init_args = {}
-        init_args["runpath_file_name"] = (
-            config_content.getValue(ConfigKeys.RUNPATH_FILE)
-            if ConfigKeys.RUNPATH_FILE in config_content
-            else ConfigKeys.RUNPATH_LIST_FILE
-        )
+        init_args = {
+            "runpath_file_name": (
+                config_content.getValue(ConfigKeys.RUNPATH_FILE)
+                if ConfigKeys.RUNPATH_FILE in config_content
+                else ConfigKeys.RUNPATH_LIST_FILE
+            ),
+            "data_kw": {},
+            "config_dir": (
+                config_content.getValue(ConfigKeys.CONFIG_DIRECTORY)
+                if ConfigKeys.CONFIG_DIRECTORY in config_content
+                else os.getcwd()
+            ),
+            "defines": dict(config_content.get_const_define_list()),
+            "num_cpu": self.preferred_num_cpu(),
+        }
 
-        init_args["data_kw"] = {}
         if ConfigKeys.DATA_KW_KEY in config_content:
             for data_kw_definition in config_content[ConfigKeys.DATA_KW_KEY]:
                 init_args["data_kw"][data_kw_definition[0]] = data_kw_definition[1]
 
-        init_args["config_dir"] = (
-            config_content.getValue(ConfigKeys.CONFIG_DIRECTORY)
-            if ConfigKeys.CONFIG_DIRECTORY in config_content
-            else os.getcwd()
-        )
-        init_args["defines"] = dict(
-            (key, value) for key, value in config_content.get_const_define_list()
-        )
-        init_args["num_cpu"] = self.preferred_num_cpu()
         return self._create_substitution_list(**init_args)
 
     def free(self):
