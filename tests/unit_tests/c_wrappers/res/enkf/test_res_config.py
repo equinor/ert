@@ -18,12 +18,12 @@ from ert._c_wrappers.enkf import (
     ResConfig,
     SiteConfig,
 )
-from ert._c_wrappers.enkf.enums import HookRuntime
-from ert._c_wrappers.enkf.res_config import (
-    SINGLE_VALUE_KEYS,
-    parse_signature_job,
-    site_config_location,
+from ert._c_wrappers.enkf._config_content_as_dict import (
+    SINGLE_OCCURRENCE_SINGLE_ARG_KEYS,
+    config_content_as_dict,
 )
+from ert._c_wrappers.enkf.enums import HookRuntime
+from ert._c_wrappers.enkf.res_config import parse_signature_job, site_config_location
 from ert._c_wrappers.job_queue import QueueDriverEnum
 from ert._c_wrappers.sched import HistorySourceEnum
 from ert._clib.config_keywords import init_user_config_parser
@@ -126,7 +126,7 @@ snake_oil_structure_config = {
     },
 }
 
-SINGLE_VALUE_KEY_TYPES = {
+SINGLE_OCCURRENCE_KEY_TYPES = {
     ConfigKeys.ALPHA_KEY: "int",
     ConfigKeys.ANALYSIS_SELECT: "str",
     ConfigKeys.CONFIG_DIRECTORY: "path",
@@ -815,7 +815,7 @@ def test_config_content_as_dict(tmpdir):
             fileH.write("KEY VALUE1 VALUE1 100\n")
             fileH.write("KEY VALUE2 VALUE2 200\n")
         content = conf.parse("config")
-        content_as_dict = ResConfig._config_content_as_dict(content)
+        content_as_dict = config_content_as_dict(content, {})
         assert content_as_dict == {
             "KEY": [["VALUE1", "VALUE1", 100], ["VALUE2", "VALUE2", 200]],
             ConfigKeys.NUM_REALIZATIONS: 42,
@@ -845,13 +845,13 @@ def test_config_content_as_dict_single_value_keys(tmpdir):
         }
 
         with open("config.file", "w") as fileH:
-            for key in SINGLE_VALUE_KEYS:
-                key_type = SINGLE_VALUE_KEY_TYPES[key]
+            for key in SINGLE_OCCURRENCE_SINGLE_ARG_KEYS:
+                key_type = SINGLE_OCCURRENCE_KEY_TYPES[key]
                 value = type_value_map[key_type]
                 fileH.write(f"{key} {value}\n{key} {value}\n")
 
         content = conf.parse("config.file")
-        content_as_dict = ResConfig._config_content_as_dict(content)
+        content_as_dict = config_content_as_dict(content, {})
         for _, value in content_as_dict.items():
             assert not isinstance(value, list)
 
