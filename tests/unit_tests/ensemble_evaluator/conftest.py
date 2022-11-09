@@ -179,7 +179,6 @@ def _dump_ext_job(ext_job, index):
         "stdout": f"{index}.stdout",
         "stderr": f"{index}.stderr",
         "stdin": ext_job.get_stdin_file(),
-        "license_path": ext_job.get_license_path(),
         "environment": None,
         "exec_env": {},
         "max_running": ext_job.get_max_running(),

@@ -12,7 +12,7 @@ from ert._c_wrappers.util import SubstitutionList
 class ExtJob(BaseCClass):
     TYPE_NAME = "ext_job"
     _fscanf_alloc = ResPrototype(
-        "void* ext_job_fscanf_alloc(char*, char*, bool, char* , bool)", bind=False
+        "void* ext_job_fscanf_alloc(char*, bool, char* , bool)", bind=False
     )
     _free = ResPrototype("void ext_job_free( ext_job )")
     _get_help_text = ResPrototype("char* ext_job_get_help_text(ext_job)")
@@ -58,7 +58,6 @@ class ExtJob(BaseCClass):
     _set_environment = ResPrototype(
         "void ext_job_add_environment(ext_job, char*, char*)"
     )
-    _get_license_path = ResPrototype("char* ext_job_get_license_path(ext_job)")
     _get_arglist = ResPrototype("stringlist_ref ext_job_get_arglist(ext_job)")
     _set_arglist = ResPrototype("void ext_job_set_args(ext_job, stringlist)")
     _get_argvalues = ResPrototype("stringlist_ref ext_job_get_argvalues(ext_job)")
@@ -75,16 +74,13 @@ class ExtJob(BaseCClass):
         config_file: str,
         private: bool,
         name: Optional[str] = None,
-        license_root_path: Optional[str] = None,
         search_PATH: bool = True,
     ):
         if os.path.isfile(config_file):
             if name is None:
                 name = os.path.basename(config_file)
 
-            c_ptr = self._fscanf_alloc(
-                name, license_root_path, private, config_file, search_PATH
-            )
+            c_ptr = self._fscanf_alloc(name, private, config_file, search_PATH)
             if c_ptr:
                 super().__init__(c_ptr)
             else:
@@ -210,9 +206,6 @@ class ExtJob(BaseCClass):
 
     def set_environment(self, key: str, value: str):
         self._set_environment(key, value)
-
-    def get_license_path(self) -> Optional[str]:
-        return self._get_license_path()
 
     def get_arglist(self) -> List[str]:
         # We unescape backslash here to keep backwards compatability ie. If

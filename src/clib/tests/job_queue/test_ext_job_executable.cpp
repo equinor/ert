@@ -11,7 +11,7 @@ SCENARIO("Loading ext jobs with different permissions") {
     GIVEN("A non existing executable") {
         WITH_TMPDIR;
         WHEN("Creating a job") {
-            ext_job_type *job = ext_job_alloc("JOB", nullptr, false);
+            ext_job_type *job = ext_job_alloc("JOB", false);
             THEN("setting the executable to a non existing file causes "
                  "exception") {
                 REQUIRE_THROWS_WITH(
@@ -27,7 +27,7 @@ SCENARIO("Loading ext jobs with different permissions") {
         jobfile << "executable" << std::endl;
         jobfile.close();
         WHEN("Loading the file") {
-            ext_job_type *job = ext_job_alloc("JOB", nullptr, false);
+            ext_job_type *job = ext_job_alloc("JOB", false);
             THEN("setting the executable to a non-executable file causes "
                  "exception") {
                 REQUIRE_THROWS_WITH(ext_job_set_executable(job, "executable",
@@ -44,7 +44,7 @@ SCENARIO("Loading ext jobs with different permissions") {
         jobfile.close();
         chmod("executable", 0777);
         WHEN("Loading the file") {
-            ext_job_type *job = ext_job_alloc("JOB", nullptr, false);
+            ext_job_type *job = ext_job_alloc("JOB", false);
             THEN("setting the executable") {
                 REQUIRE_NOTHROW(ext_job_set_executable(job, "executable",
                                                        "executable", true));

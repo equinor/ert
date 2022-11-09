@@ -12,39 +12,6 @@
 //#define MODULE_NAME    "jobs.py"
 //#define JOBLIST_NAME   "jobList"
 
-/*
-   About the 'license' system:
-   ---------------------------
-
-   There is a simple possibility to limit the number of jobs which are
-   running in parallel. It works like this:
-
-    1. For the joblist as a whole a license_path is created. This
-       license path should contain both a uid and pid of the current
-       process. This ensures that:
-
-       a. The license count is per user and per ert instance.
-       b. Each ert instance starts with a fresh license count. A
-          license path, and license files left dangling after unclean
-          shutdown can just be removed.
-
-    2. For each job in the joblist a subdirectory is created under the
-       license_path.
-
-    3. For each job a license_file is created, and for each time a new
-       instance is checked out a hard_link to this license_file is
-       created - i.e. the number of checked out licenses is a
-       hard_link count (-1).
-
-       Step three here is implemented by the job_dispatch script
-       actually running the jobs.
-
-   It is essential that the license_root_path is on a volume which is
-   accessible from all the nodes which will run jobs. Using e.g. /tmp
-   as license_root_path will fail HARD.
-
-*/
-
 struct ext_joblist_struct {
     hash_type *jobs;
 };
@@ -116,9 +83,8 @@ bool ext_joblist_del_job(ext_joblist_type *joblist, const char *job_name) {
 }
 
 void ext_joblist_add_jobs_in_directory(ext_joblist_type *joblist,
-                                       const char *path,
-                                       const char *license_root_path,
-                                       bool user_mode, bool search_path) {
+                                       const char *path, bool user_mode,
+                                       bool search_path) {
     DIR *dirH = opendir(path);
     if (dirH) {
         while (true) {
@@ -130,8 +96,7 @@ void ext_joblist_add_jobs_in_directory(ext_joblist_type *joblist,
                         (char *)util_alloc_filename(path, entry->d_name, NULL);
                     if (util_is_file(full_path)) {
                         ext_job_type *new_job = ext_job_fscanf_alloc(
-                            entry->d_name, license_root_path, user_mode,
-                            full_path, search_path);
+                            entry->d_name, user_mode, full_path, search_path);
                         if (new_job != NULL) {
                             ext_joblist_add_job(joblist, entry->d_name,
                                                 new_job);

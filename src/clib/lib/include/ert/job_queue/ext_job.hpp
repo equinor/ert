@@ -16,8 +16,7 @@ void ext_job_set_help_text(ext_job_type *job, const char *help_text);
 ext_job_type *ext_job_alloc_copy(const ext_job_type *);
 extern "C" void
 ext_job_free_deprecated_argv(ext_job_type *ext_job); //DEPRECATED
-ext_job_type *ext_job_alloc(const char *, const char *license_root_path,
-                            bool private_job);
+ext_job_type *ext_job_alloc(const char *, bool private_job);
 extern "C" const char *ext_job_get_name(const ext_job_type *);
 extern "C" void ext_job_free(ext_job_type *);
 void ext_job_free__(void *);
@@ -27,9 +26,8 @@ void ext_job_set_private_arg(ext_job_type *, const char *, const char *);
 extern "C" void ext_job_set_define_args(ext_job_type *ext_job,
                                         const subst_list_type *define_args);
 
-extern "C" ext_job_type *ext_job_fscanf_alloc(const char *, const char *,
-                                              bool private_job, const char *,
-                                              bool search_path);
+extern "C" ext_job_type *ext_job_fscanf_alloc(const char *, bool private_job,
+                                              const char *, bool search_path);
 
 extern "C" subst_list_type *ext_job_get_private_args(ext_job_type *ext_job);
 extern "C" const stringlist_type *
@@ -84,8 +82,6 @@ extern "C" hash_type *ext_job_get_default_mapping(ext_job_type *ext_job);
 extern "C" hash_type *ext_job_get_environment(ext_job_type *ext_job);
 extern "C" void ext_job_set_private_args_from_string(ext_job_type *ext_job,
                                                      const char *arg_string);
-extern "C" const char *ext_job_get_license_path(const ext_job_type *);
-
 extern "C" const char *ext_job_get_error_file(const ext_job_type *ext_job);
 
 #endif
