@@ -15,22 +15,16 @@ class SiteConfig:
     env_vars: EnvironmentVarlist
 
     @classmethod
-    def _add_job(cls, job_list, license_root_path, job_path, job_name=None):
+    def _add_job(cls, job_list, job_path, job_name=None):
         if not os.path.isfile(job_path):
             logger.warning(f"Unable to locate job file {job_path}")
             return
-        new_job = ExtJob(
-            config_file=job_path,
-            private=False,
-            name=job_name,
-            license_root_path=license_root_path,
-        )
+        new_job = ExtJob(config_file=job_path, private=False, name=job_name)
         job_list.add_job(new_job.name(), new_job)
 
     @classmethod
     def _add_config_content(
         cls,
-        license_root_path: str,
         config_content: ConfigContent,
         job_list: ExtJoblist,
         env_vars: EnvironmentVarlist,
@@ -38,7 +32,7 @@ class SiteConfig:
 
         if config_content.hasKey(ConfigKeys.INSTALL_JOB):
             for name, config in iter(config_content[ConfigKeys.INSTALL_JOB]):
-                cls._add_job(job_list, license_root_path, config, name)
+                cls._add_job(job_list, config, name)
 
         if config_content.hasKey(ConfigKeys.INSTALL_JOB_DIRECTORY):
             for args in iter(config_content[ConfigKeys.INSTALL_JOB_DIRECTORY]):
@@ -50,7 +44,7 @@ class SiteConfig:
                 for file_name in files:
                     full_path = os.path.join(job_path, file_name)
                     if os.path.isfile(full_path):
-                        cls._add_job(job_list, license_root_path, full_path)
+                        cls._add_job(job_list, full_path)
 
         environment_vars = config_content[ConfigKeys.SETENV]
 
@@ -66,58 +60,29 @@ class SiteConfig:
     def from_config_content(
         cls, user_config_content: ConfigContent, site_config_content: ConfigContent
     ):
-        license_root_path = None
-        if site_config_content.hasKey(ConfigKeys.LICENSE_PATH):
-            license_root_path = site_config_content.getValue(ConfigKeys.LICENSE_PATH)
-        if user_config_content.hasKey(ConfigKeys.LICENSE_PATH):
-            user_license_root_path = user_config_content.getValue(
-                ConfigKeys.LICENSE_PATH
-            )
-            license_root_path_site = os.path.realpath(user_license_root_path)
-            license_root_path = os.path.join(
-                license_root_path_site, os.getenv("USER"), str(os.getpid())
-            )
 
         ext_job_list = ExtJoblist()
         env_vars = EnvironmentVarlist()
 
-        SiteConfig._add_config_content(
-            license_root_path, site_config_content, ext_job_list, env_vars
-        )
+        SiteConfig._add_config_content(site_config_content, ext_job_list, env_vars)
 
-        SiteConfig._add_config_content(
-            license_root_path, user_config_content, ext_job_list, env_vars
-        )
+        SiteConfig._add_config_content(user_config_content, ext_job_list, env_vars)
 
         return SiteConfig(ext_job_list, env_vars)
 
     @classmethod
     def from_config_dict(cls, config_dict, site_config_content: ConfigContent = None):
-        license_root_path = None
-        if site_config_content is not None and site_config_content.hasKey(
-            ConfigKeys.LICENSE_PATH
-        ):
-            license_root_path = site_config_content.getValue(ConfigKeys.LICENSE_PATH)
-        if ConfigKeys.LICENSE_PATH in config_dict:
-            user_license_root_path = config_dict.get(ConfigKeys.LICENSE_PATH)
-            license_root_path_site = os.path.realpath(user_license_root_path)
-            license_root_path = os.path.join(
-                license_root_path_site, os.getenv("USER"), str(os.getpid())
-            )
 
         job_list = ExtJoblist()
         env_vars = EnvironmentVarlist()
 
         if site_config_content is not None:
-            SiteConfig._add_config_content(
-                license_root_path, site_config_content, job_list, env_vars
-            )
+            SiteConfig._add_config_content(site_config_content, job_list, env_vars)
 
         # fill in joblist
         for job in config_dict.get(ConfigKeys.INSTALL_JOB, []):
             cls._add_job(
                 job_list,
-                license_root_path,
                 os.path.abspath(job[ConfigKeys.PATH]),
                 job[ConfigKeys.NAME],
             )
@@ -129,7 +94,7 @@ class SiteConfig:
             files = os.listdir(job_path)
             for file_name in files:
                 full_path = os.path.abspath(os.path.join(job_path, file_name))
-                cls._add_job(job_list, license_root_path, full_path)
+                cls._add_job(job_list, full_path)
 
         # fill in varlist
         dict_vars = config_dict.get(ConfigKeys.SETENV, [])

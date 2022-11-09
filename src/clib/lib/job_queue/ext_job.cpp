@@ -94,9 +94,6 @@ struct ext_job_struct {
     char *stdout_file;
     char *stdin_file;
     char *stderr_file;
-    /** If this is NULL - it will be unrestricted ... */
-    char *license_path;
-    char *license_root_path;
     char *config_file;
     /** 0 means unlimited. */
     int max_running;
@@ -131,13 +128,10 @@ struct ext_job_struct {
     bool __valid;
 };
 
-static ext_job_type *ext_job_alloc__(const char *name,
-                                     const char *license_root_path,
-                                     bool private_job) {
+static ext_job_type *ext_job_alloc__(const char *name, bool private_job) {
     ext_job_type *ext_job = (ext_job_type *)util_malloc(sizeof *ext_job);
 
     ext_job->name = util_alloc_string_copy(name);
-    ext_job->license_root_path = util_alloc_string_copy(license_root_path);
     ext_job->executable = NULL;
     ext_job->stdout_file = NULL;
     ext_job->target_file = NULL;
@@ -153,7 +147,6 @@ static ext_job_type *ext_job_alloc__(const char *name,
     ext_job->deprecated_argv = NULL;
     ext_job->argv_string = NULL;
     ext_job->__valid = true;
-    ext_job->license_path = NULL;
     ext_job->config_file = NULL;
     ext_job->max_running = 0;         /* 0 means unlimited. */
     ext_job->max_running_minutes = 0; /* 0 means unlimited. */
@@ -197,18 +190,15 @@ void ext_job_set_help_text(ext_job_type *job, const char *help_text) {
    before the job is in a valid initialized state.
 */
 
-ext_job_type *ext_job_alloc(const char *name, const char *license_root_path,
-                            bool private_job) {
-    ext_job_type *ext_job =
-        ext_job_alloc__(name, license_root_path, private_job);
+ext_job_type *ext_job_alloc(const char *name, bool private_job) {
+    ext_job_type *ext_job = ext_job_alloc__(name, private_job);
     ext_job->private_args = subst_list_alloc();
     return ext_job;
 }
 
 ext_job_type *ext_job_alloc_copy(const ext_job_type *src_job) {
-    ext_job_type *new_job =
-        ext_job_alloc__(src_job->name, src_job->license_root_path,
-                        true /* All copies are by default private jobs. */);
+    ext_job_type *new_job = ext_job_alloc__(
+        src_job->name, true /* All copies are by default private jobs. */);
 
     new_job->config_file = util_alloc_string_copy(src_job->config_file);
     new_job->executable = util_alloc_string_copy(src_job->executable);
@@ -218,7 +208,6 @@ ext_job_type *ext_job_alloc_copy(const ext_job_type *src_job) {
     new_job->stdout_file = util_alloc_string_copy(src_job->stdout_file);
     new_job->stdin_file = util_alloc_string_copy(src_job->stdin_file);
     new_job->stderr_file = util_alloc_string_copy(src_job->stderr_file);
-    new_job->license_path = util_alloc_string_copy(src_job->license_path);
 
     ext_job_set_help_text(new_job, src_job->help_text);
 
@@ -291,8 +280,6 @@ void ext_job_free(ext_job_type *ext_job) {
     free(ext_job->target_file);
     free(ext_job->error_file);
     free(ext_job->stderr_file);
-    free(ext_job->license_path);
-    free(ext_job->license_root_path);
     free(ext_job->config_file);
     free(ext_job->argv_string);
     free(ext_job->help_text);
@@ -313,22 +300,6 @@ void ext_job_free(ext_job_type *ext_job) {
 
 void ext_job_free__(void *__ext_job) {
     ext_job_free(static_cast<ext_job_type *>(__ext_job));
-}
-
-/*
-   The license_path =
-
-   root_license_path / job_name / job_name
-
-*/
-
-static void ext_job_init_license_control(ext_job_type *ext_job) {
-    if (ext_job->license_path == NULL) {
-        ext_job->license_path =
-            util_alloc_sprintf("%s%c%s", ext_job->license_root_path,
-                               UTIL_PATH_SEP_CHAR, ext_job->name);
-        util_make_path(ext_job->license_path);
-    }
 }
 
 void ext_job_set_max_time(ext_job_type *ext_job, int max_time) {
@@ -469,10 +440,6 @@ const char *ext_job_get_start_file(const ext_job_type *ext_job) {
     return ext_job->start_file;
 }
 
-const char *ext_job_get_license_path(const ext_job_type *ext_job) {
-    return ext_job->license_path;
-}
-
 const char *ext_job_get_name(const ext_job_type *ext_job) {
     return ext_job->name;
 }
@@ -507,8 +474,6 @@ const char *ext_job_get_stderr_file(const ext_job_type *ext_job) {
 
 void ext_job_set_max_running(ext_job_type *ext_job, int max_running) {
     ext_job->max_running = max_running;
-    if (max_running > 0)
-        ext_job_init_license_control(ext_job);
 }
 
 int ext_job_get_max_running(const ext_job_type *ext_job) {
@@ -670,10 +635,8 @@ static void ext_job_iset_argtype_string(ext_job_type *ext_job, int iarg,
         int_vector_iset(ext_job->arg_types, iarg, type);
 }
 
-ext_job_type *ext_job_fscanf_alloc(const char *name,
-                                   const char *license_root_path,
-                                   bool private_job, const char *config_file,
-                                   bool search_path) {
+ext_job_type *ext_job_fscanf_alloc(const char *name, bool private_job,
+                                   const char *config_file, bool search_path) {
 
     if (util_entry_readable(config_file)) {
         ext_job_type *ext_job = NULL;
@@ -742,7 +705,7 @@ ext_job_type *ext_job_fscanf_alloc(const char *name,
                 config_parse(config, config_file, "--", NULL, NULL, NULL,
                              CONFIG_UNRECOGNIZED_WARN, true);
             if (config_content_is_valid(content)) {
-                ext_job = ext_job_alloc(name, license_root_path, private_job);
+                ext_job = ext_job_alloc(name, private_job);
                 ext_job_set_config_file(ext_job, config_file);
 
                 const stringlist_type *warnings =

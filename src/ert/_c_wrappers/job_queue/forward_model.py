@@ -94,7 +94,6 @@ class ForwardModel:
                             ],
                             "environment": filter_env_dict(job, job.get_environment()),
                             "exec_env": filter_env_dict(job, job.get_exec_env()),
-                            "license_path": substitute(job, job.get_license_path()),
                             "max_running_minutes": positive_or_null_int(
                                 job.get_max_running_minutes()
                             ),

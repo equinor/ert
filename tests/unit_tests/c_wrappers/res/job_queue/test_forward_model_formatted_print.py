@@ -26,7 +26,6 @@ joblist = [
         "stdin": "input4thewin",
         "argList": ["-speed", "hyper"],
         "environment": {"TARGET": "flatland"},
-        "license_path": "this/is/my/license/PERLIN",
         "max_running_minutes": 12,
         "max_running": 30,
     },
@@ -41,7 +40,6 @@ joblist = [
         "stdin": "illgiveyousome",
         "argList": ["-o"],
         "environment": {"STATE": "awesome"},
-        "license_path": "I/will/pay/ya/tomorrow/AGGREGATOR",
         "max_running_minutes": 1,
         "max_running": 14,
     },
@@ -56,7 +54,6 @@ joblist = [
         "stdin": "input4thewin",
         "argList": ["-p", "8"],
         "environment": {"LOCATION": "earth"},
-        "license_path": "license/PI",
         "max_running_minutes": 12,
         "max_running": 30,
     },
@@ -71,7 +68,6 @@ joblist = [
         "stdin": "illgiveyousome",
         "argList": ["-help"],
         "environment": {"PATH": "/ubertools/4.1"},
-        "license_path": "license/OPTIMUS",
         "max_running_minutes": 1,
         "max_running": 14,
     },
@@ -106,7 +102,6 @@ json_keywords = [
     "stdout",
     "stderr",
     "stdin",
-    "license_path",
     "max_running_minutes",
     "max_running",
     "argList",
@@ -134,7 +129,6 @@ def _generate_job(
     arglist,
     max_running_minutes,
     max_running,
-    license_root_path,
     private,
 ):
     config_file = DEFAULT_NAME if name is None else name
@@ -169,7 +163,7 @@ def _generate_job(
     mode |= stat.S_IXUSR | stat.S_IXGRP
     os.chmod(executable, stat.S_IMODE(mode))
 
-    ext_job = ExtJob(config_file, private, name, license_root_path)
+    ext_job = ExtJob(config_file, private, name)
     os.unlink(config_file)
     os.unlink(executable)
 
@@ -182,10 +176,6 @@ def empty_list_if_none(_list):
 
 def default_name_if_none(name):
     return DEFAULT_NAME if name is None else name
-
-
-def get_license_root_path(license_path):
-    return os.path.split(license_path)[0]
 
 
 def load_configs(config_file):
@@ -229,7 +219,6 @@ def validate_ext_job(ext_job, ext_job_config):
         ext_job_config["max_running_minutes"]
     )
     assert ext_job.get_max_running() == zero_if_none(ext_job_config["max_running"])
-    assert ext_job.get_license_path() == ext_job_config["license_path"]
     assert ext_job.get_arglist() == empty_list_if_none(ext_job_config["argList"])
     if ext_job_config["environment"] is None:
         assert len(ext_job.get_environment().keys()) == 0
@@ -258,7 +247,6 @@ def generate_job_from_dict(ext_job_config, private=True):
         ext_job_config["argList"],
         ext_job_config["max_running_minutes"],
         ext_job_config["max_running"],
-        get_license_root_path(ext_job_config["license_path"]),
         private,
     )
 
@@ -437,17 +425,12 @@ def test_all_jobs():
 @pytest.mark.usefixtures("use_tmpdir")
 def test_name_none():
     name_back_up = joblist[0]["name"]
-    license_path_back_up = joblist[0]["license_path"]
 
     joblist[0]["name"] = None
-    joblist[0]["license_path"] = os.path.join(
-        get_license_root_path(joblist[0]["license_path"]), DEFAULT_NAME
-    )
 
     run_all()
 
     joblist[0]["name"] = name_back_up
-    joblist[0]["license_path"] = license_path_back_up
 
 
 @pytest.mark.usefixtures("use_tmpdir")
