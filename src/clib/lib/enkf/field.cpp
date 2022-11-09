@@ -408,13 +408,6 @@ bool field_write_to_buffer(const field_type *field, buffer_type *buffer,
     return true;
 }
 
-void field_ecl_write1D_fortio(const field_type *field, fortio_type *fortio) {
-    const int data_size = field_config_get_data_size(field->config);
-    ecl_kw_fwrite_param_fortio(fortio,
-                               field_config_get_ecl_kw_name(field->config),
-                               ECL_FLOAT, data_size, field->data);
-}
-
 void field_ecl_write3D_fortio(const field_type *field, fortio_type *fortio,
                               const char *init_file) {
     const int data_size = field_config_get_volume(field->config);
@@ -558,10 +551,7 @@ void field_export(const field_type *__field, const char *file,
 
         fortio = fortio_open_writer(file, fmt_file, ECL_ENDIAN_FLIP);
 
-        if (file_type == ECL_KW_FILE_ALL_CELLS)
-            field_ecl_write3D_fortio(field, fortio, init_file);
-        else
-            field_ecl_write1D_fortio(field, fortio);
+        field_ecl_write3D_fortio(field, fortio, init_file);
 
         fortio_fclose(fortio);
     } else if (file_type == ECL_GRDECL_FILE) {
@@ -682,17 +672,6 @@ double field_iget_double(const field_type *field, int index) {
 
     return double_value;
 }
-
-#define INDEXED_UPDATE_MACRO(t, s, n, index, add)                              \
-    {                                                                          \
-        int i;                                                                 \
-        if (add)                                                               \
-            for (i = 0; i < (n); i++)                                          \
-                (t)[index[i]] += (s)[i];                                       \
-        else                                                                   \
-            for (i = 0; i < (n); i++)                                          \
-                (t)[index[i]] = (s)[i];                                        \
-    }
 
 /**
    Copying data from a (PACKED) ecl_kw instance down to a fields data.
