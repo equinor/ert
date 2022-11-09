@@ -11,7 +11,6 @@ INSTALL_JOB SNAKE_OIL_DIFF input/jobs/SNAKE_OIL_DIFF
 
 -- ModelConfig specific input
 
-MAX_RESAMPLE 1
 JOBNAME model_config_test
 RUNPATH /tmp/simulations/run%d
 NUM_REALIZATIONS 10

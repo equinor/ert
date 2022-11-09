@@ -338,10 +338,19 @@ class ResConfig:
             jobs.append(job)
 
         self.forward_model = ForwardModel(jobs=jobs)
-        self.model_config = ModelConfig(
-            data_root=self.config_path,
-            refcase=self.ensemble_config.refcase,
-            config_content=user_config_content,
+
+        if (
+            ConfigKeys.JOBNAME in config_content_dict
+            and ConfigKeys.ECLBASE in config_content_dict
+        ):
+            logger.warning(
+                "Can not have both JOBNAME and ECLBASE keywords. "
+                "ECLBASE ignored, using JOBNAME with value "
+                f"`{config_content_dict[ConfigKeys.JOBNAME]}` instead"
+            )
+
+        self.model_config = ModelConfig.from_dict(
+            self.ensemble_config.refcase, self.config_path, config_content_dict
         )
 
     # build configs from config dict
@@ -449,10 +458,15 @@ class ResConfig:
             jobs.append(job)
 
         self.forward_model = ForwardModel(jobs=jobs)
-        self.model_config = ModelConfig(
-            data_root=self.config_path,
-            refcase=self.ensemble_config.refcase,
-            config_dict=config_dict,
+
+        if ConfigKeys.JOBNAME in config_dict and ConfigKeys.ECLBASE in config_dict:
+            logger.warning(
+                "Can not have both JOBNAME and ECLBASE keywords. "
+                "ECLBASE ignored, using JOBNAME with value "
+                f"`{config_dict[ConfigKeys.JOBNAME]}` instead"
+            )
+        self.model_config = ModelConfig.from_dict(
+            self.ensemble_config.refcase, self.config_path, config_dict
         )
 
     @staticmethod
@@ -873,7 +887,7 @@ class ResConfig:
         return 1
 
     def preferred_job_fmt(self) -> str:
-        in_config = self.model_config.getJobnameFormat()
+        in_config = self.model_config.jobname_format_string
         if in_config is None:
             return "JOB%d"
         else:

@@ -48,7 +48,7 @@ def run_cli(args):
     os.chdir(res_config.config_path)
     ert = EnKFMain(res_config)
     facade = LibresFacade(ert)
-    ens_path = Path(res_config.model_config.getEnspath())
+    ens_path = Path(res_config.model_config.ens_path)
     storage_lock = filelock.FileLock(ens_path / f"{ens_path.stem}.lock")
     try:
         storage_lock.acquire(timeout=5)
@@ -134,6 +134,7 @@ def run_cli(args):
         raise ErtCliError(model.getFailMessage())
 
 
+# pylint: disable=too-many-arguments
 async def _run_cli_async(
     ert: EnKFMain,
     ensemble_size: int,
@@ -142,7 +143,8 @@ async def _run_cli_async(
     ee_config: EvaluatorServerConfig,
     experiment_id: str,
 ):
-    from ert.experiment_server import ExperimentServer  # noqa
+    # pylint: disable=import-outside-toplevel
+    from ert.experiment_server import ExperimentServer
 
     experiment_server = ExperimentServer(ee_config)
     experiment_server.add_experiment(

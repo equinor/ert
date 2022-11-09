@@ -13,8 +13,8 @@ from ert.gui.ertwidgets.message_box import ErtMessageBox
 from ert.gui.gert_main import GUILogHandler, _start_window, run_gui
 
 
-@pytest.fixture()
-def patch_enkf_main(monkeypatch, tmp_path):
+@pytest.fixture(name="patch_enkf_main")
+def fixture_patch_enkf_main(monkeypatch, tmp_path):
     plugins_mock = Mock()
     plugins_mock.getPluginJobs.return_value = []
 
@@ -175,7 +175,7 @@ def test_start_simulation_disabled(monkeypatch, qtbot, patch_enkf_main):
 
     dummy_run_dialog = QDialog(None)
 
-    setattr(dummy_run_dialog, "startSimulation", lambda *args: None)
+    dummy_run_dialog.startSimulation = lambda *args: None
 
     monkeypatch.setattr(
         ert.gui.simulation.simulation_panel.QMessageBox,

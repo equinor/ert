@@ -294,7 +294,6 @@ ERT_CLIB_SUBMODULE("config_keywords", m) {
             add_existing_path_keyword(config_parser, GRID_KEY);
             add_path_keyword(config_parser, REFCASE_KEY);
             add_string_keyword(config_parser, RANDOM_SEED_KEY);
-            add_int_keyword(config_parser, MAX_RESAMPLE_KEY);
             add_num_realizations_keyword(config_parser);
             add_run_template_keyword(config_parser);
             add_path_keyword(config_parser, RUNPATH_KEY);

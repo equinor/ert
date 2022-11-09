@@ -20,7 +20,7 @@ NUM_REALIZATIONS  1
             )
         res_config = ResConfig(config_file)
         # By default, the ensemble path is set to 'storage'
-        default_ens_path = res_config.model_config.getEnspath()
+        default_ens_path = res_config.model_config.ens_path
 
         with open(config_file, "a", encoding="utf-8") as f:
             f.write(
@@ -31,28 +31,22 @@ ENSPATH storage
 
         # Set the ENSPATH in the config file
         res_config = ResConfig(config_file)
-        set_in_file_ens_path = res_config.model_config.getEnspath()
+        set_in_file_ens_path = res_config.model_config.ens_path
 
         assert default_ens_path == set_in_file_ens_path
 
         config_dict = {ConfigKeys.NUM_REALIZATIONS: 1}
-        dict_default_ens_path = ResConfig(
-            config_dict=config_dict
-        ).model_config.getEnspath()
+        dict_default_ens_path = ResConfig(config_dict=config_dict).model_config.ens_path
 
-        config_dict["ENSPATH"] = "storage"
-        dict_set_ens_path = ResConfig(config_dict=config_dict).model_config.getEnspath()
+        config_dict["ENSPATH"] = os.path.join(os.getcwd(), "storage")
+        dict_set_ens_path = ResConfig(config_dict=config_dict).model_config.ens_path
 
         assert dict_default_ens_path == dict_set_ens_path
         assert dict_default_ens_path == default_ens_path
 
 
 def test_default_model_config_run_path(tmpdir):
-    assert ModelConfig(
-        data_root=str(tmpdir),
-        refcase=None,
-        config_dict={ConfigKeys.NUM_REALIZATIONS: 1},
-    ).getRunpathFormat()._str() == os.path.abspath(
+    assert ModelConfig(num_realizations=1,).runpath_format_string == os.path.abspath(
         "simulations/realization-<IENS>/iter-<ITER>"
     )
 

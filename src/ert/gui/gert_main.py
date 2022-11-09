@@ -49,7 +49,7 @@ def run_gui(args: argparse.Namespace):
     ert = EnKFMain(res_config)
 
     facade = LibresFacade(ert)
-    ens_path = Path(res_config.model_config.getEnspath())
+    ens_path = Path(res_config.model_config.ens_path)
     storage_lock = filelock.FileLock(ens_path / (ens_path.stem + ".lock"))
 
     try:

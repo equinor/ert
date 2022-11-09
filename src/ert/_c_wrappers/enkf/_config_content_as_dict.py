@@ -31,7 +31,6 @@ SINGLE_OCCURRENCE_SINGLE_ARG_KEYS = [
     ConfigKeys.JOBNAME,
     ConfigKeys.JOB_SCRIPT,
     ConfigKeys.LICENSE_PATH,
-    ConfigKeys.MAX_RESAMPLE,
     ConfigKeys.MAX_RUNTIME,
     ConfigKeys.MAX_SUBMIT,
     ConfigKeys.MIN_REALIZATIONS,

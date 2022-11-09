@@ -65,7 +65,6 @@ SINGLE_OCCURRENCE_KEY_TYPES = {
     ConfigKeys.JOBNAME: "str",
     ConfigKeys.JOB_SCRIPT: "file_path",
     ConfigKeys.LICENSE_PATH: "file_path",
-    ConfigKeys.MAX_RESAMPLE: "int",
     ConfigKeys.MAX_RUNTIME: "int",
     ConfigKeys.MAX_SUBMIT: "int",
     ConfigKeys.MIN_REALIZATIONS: "int",

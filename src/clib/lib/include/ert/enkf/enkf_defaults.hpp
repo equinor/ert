@@ -12,19 +12,12 @@
 #define ERT_ENKF_DEFAULT
 #include <stdbool.h>
 
-#define DEFAULT_RUNPATH_KEY "DEFAULT_RUNPATH"
-
 /**
    The format string used when creating "search-strings" which should
    be replaced in the gen_kw template files - MUST contain one %s
    placeholder which will be replaced with the parameter name.
 */
 #define DEFAULT_GEN_KW_TAG_FORMAT "<%s>"
-
-/**
-  Default file name for export file for GEN_KW parameters
-*/
-#define DEFAULT_GEN_KW_EXPORT_NAME "parameters"
 
 /**
    The format string used when creating search strings from user input
@@ -65,17 +58,8 @@
 #define DEFAULT_FORMATTED false
 #define DEFAULT_UNIFIED false
 
-/*
-   Where the history is coming from - default value for config item:
-   HISTORY_SOURCE Observe that the function:
-   model_config_set_history_source() does currently not handle a
-   default value different from SCHEDULE.
-*/
-#define DEFAULT_HISTORY_SOURCE REFCASE_HISTORY
-
 #define DEFAULT_MAX_SUBMIT                                                     \
     2 /* The number of times to resubmit - default value for config item: MAX_SUBMIT */
-#define DEFAULT_MAX_INTERNAL_SUBMIT 1 /** Attached to keyword : MAX_RETRY */
 
 /*
    Defaults for the EnKF analysis. The analysis_config object is
@@ -84,9 +68,6 @@
 #define DEFAULT_ANALYSIS_MODULE "STD_ENKF"
 
 /* Default directories. */
-#define DEFAULT_RUNPATH "simulations/realization-<IENS>/iter-<ITER>"
-#define DEFAULT_ENSPATH "storage"
-
 #define SUMMARY_KEY_JOIN_STRING ":"
 #define USER_KEY_JOIN_STRING ":"
 

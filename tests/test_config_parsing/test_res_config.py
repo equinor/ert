@@ -13,7 +13,7 @@ from .config_dict_generator import config_dicts, to_config_file
 
 
 def touch(filename):
-    with open(filename, "w") as fh:
+    with open(filename, "w", encoding="utf-8") as fh:
         fh.write(" ")
 
 
@@ -22,7 +22,7 @@ def test_res_config_simple_config_parsing(tmpdir, set_site_config, monkeypatch):
     touch(tmpdir + "/rpfile")
     touch(tmpdir + "/datafile")
     os.mkdir(tmpdir + "/license")
-    with open(tmpdir + "/test.ert", "w") as fh:
+    with open(tmpdir + "/test.ert", "w", encoding="utf-8") as fh:
         fh.write(
             """
 JOBNAME  Job%d
@@ -83,7 +83,7 @@ def test_res_config_parses_date():
         ENSPATH <STORAGE>/ensemble
         """
     )
-    with open(test_config_file_name, "w") as fh:
+    with open(test_config_file_name, "w", encoding="utf-8") as fh:
         fh.write(test_config_contents)
     res_config = ResConfig(user_config_file=test_config_file_name)
 
@@ -91,8 +91,8 @@ def test_res_config_parses_date():
     expected_storage = os.path.abspath(f"storage/{test_config_file_base}-{date_string}")
     expected_run_path = f"{expected_storage}/runpath/realization-%d/iter-%d"
     expected_ens_path = f"{expected_storage}/ensemble"
-    assert res_config.model_config.getEnspath() == expected_ens_path
-    assert res_config.model_config.getRunpathAsString() == expected_run_path
+    assert res_config.model_config.ens_path == expected_ens_path
+    assert res_config.model_config.runpath_format_string == expected_run_path
 
 
 @pytest.mark.usefixtures("use_tmpdir")

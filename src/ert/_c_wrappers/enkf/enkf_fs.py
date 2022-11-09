@@ -129,7 +129,7 @@ class EnkfFs(BaseCClass):
         self,
         ensemble_size,
         ensemble_config,
-        model_config,
+        last_history_restart: int,
         run_args: List["RunArg"],
         active_realizations,
     ) -> int:
@@ -139,7 +139,7 @@ class EnkfFs(BaseCClass):
             self,
             ensemble_size,
             ensemble_config,
-            model_config,
+            last_history_restart,
             run_args,
             active_realizations,
         )

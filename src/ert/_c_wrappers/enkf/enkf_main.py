@@ -154,8 +154,8 @@ class EnKFMain:
             )
 
         self._observations = EnkfObs(
-            config.model_config.get_history_source(),
-            config.model_config.get_time_map(),
+            config.model_config.history_source,
+            config.model_config.time_map,
             config.ensemble_config.grid,
             config.ensemble_config.refcase,
             config.ensemble_config,
@@ -169,13 +169,13 @@ class EnKFMain:
         self._substituter = Substituter(dict(self.get_context()))
         self._runpaths = Runpaths(
             self.resConfig().preferred_job_fmt(),
-            self.getModelConfig().getRunpathFormat().format_string,
+            self.getModelConfig().runpath_format_string,
             Path(config.runpath_file),
             self.substituter.substitute,
         )
 
         # Initialize storage
-        ens_path = Path(config.model_config.getEnspath())
+        ens_path = Path(config.model_config.ens_path)
         self.storage_manager = FileSystemManager(
             5,
             ens_path,
@@ -266,7 +266,7 @@ class EnKFMain:
         nr_loaded = fs.load_from_run_path(
             self.getEnsembleSize(),
             self.ensembleConfig(),
-            self.getModelConfig(),
+            self.getHistoryLength(),
             run_context.run_args,
             run_context.mask,
         )
@@ -499,9 +499,7 @@ class EnKFMain:
         self.addDataKW("<ERT-CASE>", case_name)
         self.addDataKW("<ERTCASE>", case_name)
         self.storage_manager.active_case = case_name
-        (Path(self.getModelConfig().getEnspath()) / "current_case").write_text(
-            case_name
-        )
+        (Path(self.getModelConfig().ens_path) / "current_case").write_text(case_name)
 
     def createRunPath(self, run_context: RunContext) -> None:
         for iens, run_arg in enumerate(run_context):
@@ -538,7 +536,7 @@ class EnKFMain:
                 model_config = res_config.model_config
                 _generate_parameter_files(
                     res_config.ensemble_config,
-                    model_config.getGenKWExportName(),
+                    model_config.gen_kw_export_name,
                     run_arg.runpath,
                     run_arg.iens,
                     run_arg.sim_fs,
@@ -546,7 +544,7 @@ class EnKFMain:
                 res_config.forward_model.formatted_fprintf(
                     run_arg.get_run_id(),
                     run_arg.runpath,
-                    model_config.data_root(),
+                    model_config.data_root,
                     iens,
                     run_context.iteration,
                     self.substituter,

@@ -565,7 +565,7 @@ misfit_ensemble_type *enkf_fs_get_misfit_ensemble(const enkf_fs_type *fs) {
 namespace {
 int load_from_run_path(
     const int ens_size, ensemble_config_type *ensemble_config,
-    model_config_type *model_config, std::vector<bool> active_mask,
+    int last_history_restart, std::vector<bool> active_mask,
     enkf_fs_type *sim_fs,
     const std::vector<std::tuple<int, const std::string, const std::string>>
         &run_args) {
@@ -606,7 +606,7 @@ int load_from_run_path(
                         state_map.update_matching(realisation, STATE_UNDEFINED,
                                                   STATE_INITIALIZED);
                         auto status = enkf_state_load_from_forward_model(
-                            ensemble_config, model_config,
+                            ensemble_config, last_history_restart,
                             std::get<0>(run_args[iens]),
                             std::get<1>(run_args[iens]).c_str(),
                             std::get<2>(run_args[iens]).c_str(), sim_fs);
@@ -685,13 +685,14 @@ ERT_CLIB_SUBMODULE("enkf_fs", m) {
     m.def("load_from_run_path",
           [](Cwrap<enkf_fs_type> enkf_fs, int ens_size,
              Cwrap<ensemble_config_type> ensemble_config,
-             Cwrap<model_config_type> model_config,
+             int last_history_restart,
              const std::vector<
                  std::tuple<int, const std::string, const std::string>>
                  run_args,
              std::vector<bool> active_mask) {
-              return load_from_run_path(ens_size, ensemble_config, model_config,
-                                        active_mask, enkf_fs, run_args);
+              return load_from_run_path(ens_size, ensemble_config,
+                                        last_history_restart, active_mask,
+                                        enkf_fs, run_args);
           });
 
     m.def("write_parameter", bind_write_parameter);

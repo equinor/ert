@@ -13,7 +13,6 @@ from hypothesis import assume
 from ert._c_wrappers.enkf import ConfigKeys
 from ert._c_wrappers.enkf.enums import GenDataFileType
 from ert._c_wrappers.job_queue import QueueDriverEnum
-from ert._c_wrappers.sched import HistorySourceEnum
 
 from .egrid_generator import egrids
 
@@ -300,16 +299,21 @@ def config_dicts(draw):
                 ConfigKeys.DATA_FILE: st.just(draw(file_names) + ".DATA"),
                 ConfigKeys.GRID: st.just(draw(words) + ".EGRID"),
                 ConfigKeys.JOB_SCRIPT: st.just(draw(file_names) + "job_script"),
-                ConfigKeys.MAX_RESAMPLE: positives,
                 ConfigKeys.JOBNAME: st.just("JOBNAME-" + draw(words)),
-                ConfigKeys.RUNPATH: st.just("runpath-" + draw(format_file_names)),
-                ConfigKeys.ENSPATH: st.just(draw(words) + ".enspath"),
-                ConfigKeys.TIME_MAP: st.just(draw(file_names) + ".timemap"),
-                ConfigKeys.OBS_CONFIG: st.just("obs-config-" + draw(file_names)),
-                ConfigKeys.DATAROOT: st.just("."),
-                ConfigKeys.HISTORY_SOURCE: st.just(
-                    HistorySourceEnum.from_string("REFCASE_SIMULATED")
+                ConfigKeys.RUNPATH: st.just(
+                    os.path.join(cwd, "runpath-" + draw(format_file_names))
                 ),
+                ConfigKeys.ENSPATH: st.just(
+                    os.path.join(cwd, draw(words) + ".enspath")
+                ),
+                ConfigKeys.TIME_MAP: st.just(
+                    os.path.join(cwd, draw(file_names) + ".timemap")
+                ),
+                ConfigKeys.OBS_CONFIG: st.just(
+                    os.path.join(cwd, "obs-config-" + draw(file_names))
+                ),
+                ConfigKeys.DATAROOT: st.just(cwd),
+                ConfigKeys.HISTORY_SOURCE: st.just("REFCASE_SIMULATED"),
                 ConfigKeys.REFCASE: st.just("refcase/" + draw(file_names)),
                 ConfigKeys.GEN_KW_EXPORT_NAME: st.just(
                     "gen-kw-export-name-" + draw(file_names)
