@@ -105,9 +105,11 @@ def config_content_as_dict(
                 for node in item:
                     values = list(node)
                     content_dict[key].append(values)
+
     for key, join_at in JOIN_KEYS:
-        if key in content_dict and len(content_dict[key]) > join_at:
+        if key in content_dict:
             for occurrence in content_dict[key]:
-                occurrence[join_at] = " ".join(occurrence[join_at:])
-                del occurrence[join_at + 1 :]
+                if len(occurrence) > join_at:
+                    occurrence[join_at] = " ".join(occurrence[join_at:])
+                    del occurrence[join_at + 1 :]
     return content_dict

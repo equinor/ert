@@ -10,7 +10,6 @@ import pytest
 from cwrap import Prototype, load
 from ecl.util.enums import RngAlgTypeEnum
 
-from ert._c_wrappers.config import ConfigParser, ContentTypeEnum
 from ert._c_wrappers.enkf import (
     AnalysisConfig,
     ConfigKeys,
@@ -18,15 +17,10 @@ from ert._c_wrappers.enkf import (
     ResConfig,
     SiteConfig,
 )
-from ert._c_wrappers.enkf._config_content_as_dict import (
-    SINGLE_OCCURRENCE_SINGLE_ARG_KEYS,
-    config_content_as_dict,
-)
 from ert._c_wrappers.enkf.enums import HookRuntime
 from ert._c_wrappers.enkf.res_config import parse_signature_job, site_config_location
 from ert._c_wrappers.job_queue import QueueDriverEnum
 from ert._c_wrappers.sched import HistorySourceEnum
-from ert._clib.config_keywords import init_user_config_parser
 
 # The res_config object should set the environment variable
 # 'DATA_ROOT' to the root directory with the config
@@ -124,44 +118,6 @@ snake_oil_structure_config = {
             "TARGET_FILE": "seed.txt",
         }
     },
-}
-
-SINGLE_OCCURRENCE_KEY_TYPES = {
-    ConfigKeys.ALPHA_KEY: "int",
-    ConfigKeys.ANALYSIS_SELECT: "str",
-    ConfigKeys.CONFIG_DIRECTORY: "path",
-    ConfigKeys.DATAROOT: "file_path",
-    ConfigKeys.DATA_FILE: "file_path",
-    ConfigKeys.ECLBASE: "file_path",
-    ConfigKeys.ENSPATH: "path",
-    ConfigKeys.GEN_KW_EXPORT_NAME: "str",
-    ConfigKeys.GEN_KW_TAG_FORMAT: "str",
-    ConfigKeys.GRID: "file_path",
-    ConfigKeys.HISTORY_SOURCE: "history_enum",
-    ConfigKeys.ITER_CASE: "str",
-    ConfigKeys.ITER_COUNT: "int",
-    ConfigKeys.ITER_RETRY_COUNT: "int",
-    ConfigKeys.JOBNAME: "str",
-    ConfigKeys.JOB_SCRIPT: "file_path",
-    ConfigKeys.LICENSE_PATH: "file_path",
-    ConfigKeys.MAX_RESAMPLE: "int",
-    ConfigKeys.MAX_RUNTIME: "int",
-    ConfigKeys.MAX_SUBMIT: "int",
-    ConfigKeys.MIN_REALIZATIONS: "int",
-    ConfigKeys.NUM_CPU: "int",
-    ConfigKeys.NUM_REALIZATIONS: "int",
-    ConfigKeys.OBS_CONFIG: "file_path",
-    ConfigKeys.QUEUE_SYSTEM: "str",
-    ConfigKeys.RANDOM_SEED: "str",
-    ConfigKeys.REFCASE: "file_path",
-    ConfigKeys.RERUN_KEY: "bool",
-    ConfigKeys.RERUN_START_KEY: "int",
-    ConfigKeys.RUNPATH: "path",
-    ConfigKeys.RUNPATH_FILE: "file_path",
-    ConfigKeys.STD_CUTOFF_KEY: "float",
-    ConfigKeys.STOP_LONG_RUNNING: "bool",
-    ConfigKeys.TIME_MAP: "file_path",
-    ConfigKeys.UPDATE_LOG_PATH: "file_path",
 }
 
 
@@ -786,74 +742,6 @@ SUMMARY WBHP:INJ
 SUMMARY ROE:1"""  # noqa: E501 pylint: disable=line-too-long
         in caplog.text
     )
-
-
-def test_config_content_as_dict(tmpdir):
-    with tmpdir.as_cwd():
-        conf = ConfigParser()
-        existing_file_1 = "test_1.t"
-        existing_file_2 = "test_2.t"
-        Path(existing_file_2).write_text("something")
-        Path(existing_file_1).write_text("not important")
-        init_user_config_parser(conf)
-
-        schema_item = conf.add("MULTIPLE_KEY_VALUE", False)
-        schema_item.iset_type(0, ContentTypeEnum.CONFIG_INT)
-
-        schema_item = conf.add("KEY", False)
-        schema_item.iset_type(2, ContentTypeEnum.CONFIG_INT)
-
-        with open("config", "w") as fileH:
-            fileH.write(f"{ConfigKeys.NUM_REALIZATIONS} 42\n")
-            fileH.write(f"{ConfigKeys.DATA_FILE} {existing_file_2} \n")
-            fileH.write(f"{ConfigKeys.REFCASE} {existing_file_1} \n")
-
-            fileH.write("MULTIPLE_KEY_VALUE 6\n")
-            fileH.write("MULTIPLE_KEY_VALUE 24\n")
-            fileH.write("MULTIPLE_KEY_VALUE 12\n")
-            fileH.write("QUEUE_OPTION SLURM MAX_RUNNING 50\n")
-            fileH.write("KEY VALUE1 VALUE1 100\n")
-            fileH.write("KEY VALUE2 VALUE2 200\n")
-        content = conf.parse("config")
-        content_as_dict = config_content_as_dict(content, {})
-        assert content_as_dict == {
-            "KEY": [["VALUE1", "VALUE1", 100], ["VALUE2", "VALUE2", 200]],
-            ConfigKeys.NUM_REALIZATIONS: 42,
-            ConfigKeys.QUEUE_OPTION: [["SLURM", "MAX_RUNNING", "50"]],
-            "MULTIPLE_KEY_VALUE": [[6], [24], [12]],
-            ConfigKeys.DATA_FILE: str(Path.cwd() / existing_file_2),
-            ConfigKeys.REFCASE: str(Path.cwd() / existing_file_1),
-        }
-
-
-def test_config_content_as_dict_single_value_keys(tmpdir):
-    with tmpdir.as_cwd():
-        conf = ConfigParser()
-        existing_file_1 = "test_1.t"
-        existing_file_2 = "test_2.t"
-        Path(existing_file_2).write_text("something")
-        Path(existing_file_1).write_text("not important")
-        init_user_config_parser(conf)
-        type_value_map = {
-            "str": "abc",
-            "path": tmpdir,
-            "file_path": existing_file_1,
-            "bool": "TRUE",
-            "float": 4.2,
-            "int": 2,
-            "history_enum": "REFCASE_SIMULATED",
-        }
-
-        with open("config.file", "w") as fileH:
-            for key in SINGLE_OCCURRENCE_SINGLE_ARG_KEYS:
-                key_type = SINGLE_OCCURRENCE_KEY_TYPES[key]
-                value = type_value_map[key_type]
-                fileH.write(f"{key} {value}\n{key} {value}\n")
-
-        content = conf.parse("config.file")
-        content_as_dict = config_content_as_dict(content, {})
-        for _, value in content_as_dict.items():
-            assert not isinstance(value, list)
 
 
 def test_that_parse_job_signature_passes_through_job_names():
