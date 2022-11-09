@@ -16,7 +16,6 @@
 void field_scale(field_type *field, double scale_factor);
 extern "C" double field_iget_double(const field_type *, int);
 extern "C" double field_ijk_get_double(const field_type *field, int, int, int);
-void field_ecl_write1D_fortio(const field_type *, fortio_type *);
 void field_ecl_write3D_fortio(const field_type *, fortio_type *, const char *);
 void field_ROFF_export(const field_type *, const char *, const char *);
 void field_copy_ecl_kw_data(field_type *, const ecl_kw_type *);
