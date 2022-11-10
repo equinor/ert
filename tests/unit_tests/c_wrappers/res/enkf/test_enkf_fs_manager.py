@@ -5,12 +5,12 @@ import pytest
 from ert._c_wrappers.enkf import RunContext
 
 
-def test_enkf_fs_manager_create(snake_oil_case):
+def test_enkf_fs_manager_create(snake_oil_case_storage):
     # We are indirectly testing the create through the create
     # already in the enkf_main object. In principle we could
     # create a separate manager instance from the ground up, but
     # then the reference count will be weird.
-    ert = snake_oil_case
+    ert = snake_oil_case_storage
     fsm = ert.storage_manager
 
     assert "default_0" in fsm
@@ -27,19 +27,19 @@ def test_enkf_fs_manager_create(snake_oil_case):
 def test_rotate(snake_oil_case):
     ert = snake_oil_case
     fsm = ert.getEnkfFsManager()
-    assert len(fsm.storage_manager) == 2
+    assert len(fsm.storage_manager) == 1
 
     fs_list = []
     for index in range(5):
         fs_list.append(fsm.getFileSystem(f"fs_fill_{index}"))
 
-    assert len(fsm.storage_manager) == 7
+    assert len(fsm.storage_manager) == 6
 
     for index in range(3 * 5):
         fs_name = f"fs_test_{index}"
         sys.stderr.write(f"Mounting: {fs_name}\n")
         fsm.getFileSystem(fs_name)
-        assert len(fsm.storage_manager) == 8 + index
+        assert len(fsm.storage_manager) == 7 + index
 
 
 @pytest.mark.parametrize(

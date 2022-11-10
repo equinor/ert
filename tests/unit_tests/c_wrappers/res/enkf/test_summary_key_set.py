@@ -64,8 +64,8 @@ def test_write_to_and_read_from_file(tmp_path):
     assert keys.keys() == keys_from_file.keys()
 
 
-def test_with_enkf_fs(copy_case):
-    copy_case("snake_oil")
+@pytest.mark.usefixtures("copy_snake_oil_case_storage")
+def test_with_enkf_fs():
     res_config = ResConfig("snake_oil.ert")
 
     fs = EnkfFs(
@@ -77,7 +77,6 @@ def test_with_enkf_fs(copy_case):
     summary_key_set.addSummaryKey("WOPR")
     fs.sync()
 
-    res_config = ResConfig("snake_oil.ert")
     ert = EnKFMain(res_config)
     fs = ert.getEnkfFsManager().getCurrentFileSystem()
     summary_key_set = fs.getSummaryKeySet()

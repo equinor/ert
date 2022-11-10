@@ -1,14 +1,20 @@
+import fileinput
 import os
 import resource
 import shutil
+from argparse import ArgumentParser
 from unittest.mock import MagicMock
 
 import pkg_resources
 import pytest
 from hypothesis import HealthCheck, settings
 
+from ert.__main__ import ert_parser
 from ert._c_wrappers.enkf import EnKFMain, ResConfig
+from ert.cli import ENSEMBLE_EXPERIMENT_MODE
+from ert.cli.main import run_cli
 from ert.services import Storage
+from ert.shared.feature_toggling import FeatureToggling
 
 from .utils import SOURCE_DIR
 
@@ -82,6 +88,11 @@ def poly_case(setup_case):
 
 
 @pytest.fixture()
+def snake_oil_case_storage(copy_snake_oil_case_storage, tmp_path, source_root):
+    return EnKFMain(ResConfig("snake_oil.ert"))
+
+
+@pytest.fixture()
 def snake_oil_case(setup_case):
     return EnKFMain(setup_case("snake_oil", "snake_oil.ert"))
 
@@ -109,6 +120,13 @@ def copy_poly_case(copy_case):
 @pytest.fixture()
 def copy_snake_oil_case(copy_case):
     copy_case("snake_oil")
+
+
+@pytest.fixture()
+def copy_snake_oil_case_storage(_shared_snake_oil_case, tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    shutil.copytree(_shared_snake_oil_case, "test_data")
+    os.chdir("test_data")
 
 
 @pytest.fixture()
@@ -180,3 +198,47 @@ def pytest_collection_modifyitems(config, items):
                 "--eclipse-simulator"
             ):
                 item.add_marker(pytest.mark.skip("Requires eclipse"))
+
+
+def _get_snakes(source_root):
+    shutil.copytree(os.path.join(source_root, "test-data", "snake_oil"), "test_data")
+    os.chdir("test_data")
+    with fileinput.input("snake_oil.ert", inplace=True) as fin:
+        for line_nr, line in enumerate(fin):
+            if line_nr == 1:
+                print("QUEUE_OPTION LOCAL MAX_RUNNING 5", end="")
+            if "NUM_REALIZATIONS 25" in line:
+                print("NUM_REALIZATIONS 5", end="")
+            else:
+                print(line, end="")
+
+        parser = ArgumentParser(prog="test_main")
+        parsed = ert_parser(
+            parser,
+            [
+                ENSEMBLE_EXPERIMENT_MODE,
+                "--current-case",
+                "default_0",
+                "snake_oil.ert",
+            ],
+        )
+        FeatureToggling.update_from_args(parsed)
+
+        run_cli(parsed)
+        FeatureToggling.reset()
+
+
+@pytest.fixture
+def _shared_snake_oil_case(request, monkeypatch, source_root):
+    """This fixture will run the snake_oil case to populate storage,
+    this is quite slow, but the results will be cached. If something comes
+    out of sync, clear the cache and start again.
+    """
+    snake_path = request.config.cache.mkdir("snake_oil_data")
+    monkeypatch.chdir(snake_path)
+    if not os.listdir(snake_path):
+        _get_snakes(source_root)
+    else:
+        os.chdir("test_data")
+
+    yield os.getcwd()

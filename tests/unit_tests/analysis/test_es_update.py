@@ -22,14 +22,12 @@ def minimal_config(use_tmpdir):
     yield res_config
 
 
-def test_update_report(setup_case, snapshot):
+def test_update_report(snake_oil_case_storage, snapshot):
     """
     Note that this is now a snapshot test, so there is no guarantee that the
     snapshots are correct, they are just documenting the current behavior.
     """
-    res_config = setup_case("snake_oil", "snake_oil.ert")
-
-    ert = EnKFMain(res_config)
+    ert = snake_oil_case_storage
     es_update = ESUpdate(ert)
     fsm = ert.getEnkfFsManager()
     sim_fs = fsm.getFileSystem("default_0")
@@ -46,43 +44,41 @@ def test_update_report(setup_case, snapshot):
         (
             "IES_ENKF",
             [
-                0.045866650397621375,
-                -0.8036327113581042,
-                -1.8013223842943873,
-                0.23971274043174723,
-                -0.9822843385488024,
-                -1.0164040084981638,
-                0.06941917822163765,
-                -0.4644324177656203,
-                1.7996593079415084,
-                -1.2832952021744541,
+                0.8051378579059971,
+                -1.0590823870189123,
+                0.21453874794348846,
+                0.7906341694325716,
+                0.36381072160376937,
+                -0.16190741178934337,
+                0.8480729756454184,
+                0.11731391544577552,
+                0.06444091318618597,
+                0.8885301299055666,
             ],
         ),
         (
             "STD_ENKF",
             [
-                0.94546568985211,
-                -1.88756846595873,
-                -2.2422020080804144,
-                -0.09898103571334578,
-                -1.567806803749551,
-                -0.5457904945245821,
-                0.0649250285204559,
-                -1.0433298440379313,
-                2.93275423615531,
-                -2.2024875932910004,
+                1.6270748968773858,
+                -1.7504252908856734,
+                -0.5320130412204042,
+                1.0778497391296553,
+                0.433857538874117,
+                -0.11669048173673102,
+                1.0326641987020213,
+                -0.18050189539494021,
+                0.40945032282763466,
+                0.20074850614938414,
             ],
         ),
     ],
 )
-def test_update_snapshot(setup_case, module, expected_gen_kw):
+def test_update_snapshot(snake_oil_case_storage, module, expected_gen_kw):
     """
     Note that this is now a snapshot test, so there is no guarantee that the
     snapshots are correct, they are just documenting the current behavior.
     """
-    res_config = setup_case("snake_oil", "snake_oil.ert")
-
-    ert = EnKFMain(res_config)
+    ert = snake_oil_case_storage
     es_update = ESUpdate(ert)
     ert.analysisConfig().select_module(module)
     fsm = ert.getEnkfFsManager()
@@ -111,16 +107,16 @@ def test_update_snapshot(setup_case, module, expected_gen_kw):
 
     assert sim_gen_kw == pytest.approx(
         [
-            -1.3035319087841115,
-            0.8222709205428339,
-            -1.1400029486153482,
-            0.7477534046493867,
-            -0.10400064074767973,
-            -1.7223242794585338,
-            0.0761604027734105,
-            0.4039137216428462,
-            0.10001691562080614,
-            0.09549338450036506,
+            -0.4277677005510859,
+            -0.022068031218771135,
+            1.3343664316893276,
+            0.359810814886946,
+            0.258740495698248,
+            -0.22973280686826203,
+            0.5711861410605145,
+            0.5640376317068494,
+            -0.453073201275987,
+            1.9202025655398407,
         ]
     )
 
@@ -165,16 +161,16 @@ def test_that_posterior_has_lower_variance_than_prior(copy_case):
     [
         (
             [
-                -1.3035319087841115,
-                0.5347227225020401,
-                -0.43324960974185356,
-                0.7477534046493867,
-                -0.10400064074767973,
-                -1.7223242794585338,
-                0.0761604027734105,
-                0.4039137216428462,
-                0.10001691562080614,
-                0.09549338450036506,
+                -0.4277677005510859,
+                0.04888927033150413,
+                0.4252690229257911,
+                0.359810814886946,
+                0.258740495698248,
+                -0.22973280686826203,
+                0.5711861410605145,
+                0.5640376317068494,
+                -0.453073201275987,
+                1.9202025655398407,
             ],
             [
                 {
@@ -186,16 +182,16 @@ def test_that_posterior_has_lower_variance_than_prior(copy_case):
         ),
         (
             [
-                -1.280789209535364,
-                0.5347227225020401,
-                -0.42275146812773123,
-                0.7477534046493867,
-                -0.10400064074767973,
-                -1.7223242794585338,
-                0.0761604027734105,
-                0.4039137216428462,
-                0.10001691562080614,
-                0.09549338450036506,
+                1.277241738018584,
+                0.04888927033150413,
+                -0.443449469995568,
+                0.359810814886946,
+                0.258740495698248,
+                -0.22973280686826203,
+                0.5711861410605145,
+                0.5640376317068494,
+                -0.453073201275987,
+                1.9202025655398407,
             ],
             [
                 {
@@ -212,14 +208,12 @@ def test_that_posterior_has_lower_variance_than_prior(copy_case):
         ),
     ],
 )
-def test_localization(setup_case, expected_target_gen_kw, update_step):
+def test_localization(snake_oil_case_storage, expected_target_gen_kw, update_step):
     """
     Note that this is now a snapshot test, so there is no guarantee that the
     snapshots are correct, they are just documenting the current behavior.
     """
-
-    res_config = setup_case("snake_oil", "snake_oil.ert")
-    ert = EnKFMain(res_config)
+    ert = snake_oil_case_storage
     es_update = ESUpdate(ert)
     fsm = ert.getEnkfFsManager()
     sim_fs = fsm.getFileSystem("default_0")
@@ -253,6 +247,7 @@ def test_localization(setup_case, expected_target_gen_kw, update_step):
     assert target_gen_kw == pytest.approx(expected_target_gen_kw)
 
 
+@pytest.mark.usefixtures("copy_snake_oil_case_storage")
 @pytest.mark.parametrize(
     "alpha, expected",
     [
@@ -269,12 +264,12 @@ def test_localization(setup_case, expected_target_gen_kw, update_step):
         (100, ["ACTIVE", "ACTIVE", "ACTIVE"]),
     ],
 )
-def test_snapshot_alpha(setup_case, alpha, expected):
+def test_snapshot_alpha(alpha, expected):
     """
     Note that this is now a snapshot test, so there is no guarantee that the
     snapshots are correct, they are just documenting the current behavior.
     """
-    res_config = setup_case("snake_oil", "snake_oil.ert")
+    res_config = ResConfig("snake_oil.ert")
 
     obs_file = Path("observations") / "observations.txt"
     with obs_file.open(mode="w") as fin:

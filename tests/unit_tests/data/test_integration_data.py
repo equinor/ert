@@ -11,8 +11,8 @@ from ert.libres_facade import LibresFacade
 
 
 @pytest.fixture()
-def facade_snake_oil(snake_oil_case):
-    yield LibresFacade(snake_oil_case)
+def facade_snake_oil(snake_oil_case_storage):
+    yield LibresFacade(snake_oil_case_storage)
 
 
 def test_history_obs(facade_snake_oil):
@@ -35,7 +35,7 @@ def test_summary_obs(facade_snake_oil):
     ] == np.datetime64("2011-12-21")
 
 
-@pytest.mark.usefixtures("copy_snake_oil_case")
+@pytest.mark.usefixtures("copy_snake_oil_case_storage")
 @pytest.mark.integration_test
 def test_summary_obs_runtime():
     """
@@ -74,7 +74,7 @@ def test_summary_obs_runtime():
     assert summary_obs_time < 10 * history_obs_time
 
 
-@pytest.mark.usefixtures("copy_snake_oil_case")
+@pytest.mark.usefixtures("copy_snake_oil_case_storage")
 @pytest.mark.parametrize("formatted_date", ["2015-06-23", "23/06/2015", "23.06.2015"])
 def test_summary_obs_last_entry(formatted_date):
 
@@ -103,7 +103,7 @@ def test_summary_obs_last_entry(formatted_date):
     ]
 
 
-@pytest.mark.usefixtures("copy_snake_oil_case")
+@pytest.mark.usefixtures("copy_snake_oil_case_storage")
 @pytest.mark.integration_test
 def test_gen_obs_runtime(snapshot):
     obs_file = pathlib.Path.cwd() / "observations" / "observations.txt"
@@ -177,7 +177,6 @@ def test_gen_obs_and_summary_index_range(facade_snake_oil):
 )
 @pytest.mark.usefixtures("copy_snake_oil_case")
 def test_no_storage(obs_key, expected_msg):
-    shutil.rmtree("storage")
     res_config = ResConfig("snake_oil.ert")
     ert = EnKFMain(res_config)
 
@@ -190,7 +189,7 @@ def test_no_storage(obs_key, expected_msg):
 
 
 @pytest.mark.parametrize("obs_key", ["FOPR", "WPR_DIFF_1"])
-@pytest.mark.usefixtures("copy_snake_oil_case")
+@pytest.mark.usefixtures("copy_snake_oil_case_storage")
 def test_no_storage_obs_only(obs_key):
     shutil.rmtree("storage")
     res_config = ResConfig("snake_oil.ert")
@@ -249,8 +248,8 @@ def test_all_measured_snapshot(snapshot, facade_snake_oil):
 def test_active_realizations(facade_snake_oil):
     current_case_name = facade_snake_oil.get_current_case_name()
     active_realizations = facade_snake_oil.get_active_realizations(current_case_name)
-    assert len(active_realizations) == 25
-    assert active_realizations == list(range(25))
+    assert len(active_realizations) == 5
+    assert active_realizations == list(range(5))
 
 
 def test_get_data_keys(facade_snake_oil):
