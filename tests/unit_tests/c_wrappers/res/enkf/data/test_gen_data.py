@@ -2,10 +2,10 @@ from ert._c_wrappers.enkf.data.enkf_node import EnkfNode
 from ert._c_wrappers.enkf.node_id import NodeId
 
 
-def test_load_active_masks(snake_oil_case):
+def test_load_active_masks(snake_oil_case_storage):
     case1 = "default_0"
     case2 = "default_1"
-    ert = snake_oil_case
+    ert = snake_oil_case_storage
 
     fs1 = ert.getEnkfFsManager().getFileSystem(case1)
     config_node = ert.ensembleConfig().getNode("SNAKE_OIL_OPR_DIFF")
@@ -38,8 +38,8 @@ def test_load_active_masks(snake_oil_case):
     assert active_mask[10]
 
 
-def test_create(snake_oil_case):
-    ert = snake_oil_case
+def test_create(snake_oil_case_storage):
+    ert = snake_oil_case_storage
     fs1 = ert.getEnkfFsManager().getCurrentFileSystem()
     config_node = ert.ensembleConfig().getNode("SNAKE_OIL_OPR_DIFF")
 

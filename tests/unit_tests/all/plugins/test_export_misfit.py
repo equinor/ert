@@ -1,7 +1,6 @@
 import pandas as pd
 import pytest
 
-from ert._c_wrappers.enkf import EnKFMain
 from ert.exceptions import StorageError
 from ert.shared.hook_implementations.workflows.export_misfit_data import (
     ExportMisfitDataJob,
@@ -9,9 +8,8 @@ from ert.shared.hook_implementations.workflows.export_misfit_data import (
 from ert.shared.plugins import ErtPluginManager
 
 
-def test_export_misfit(setup_case, snapshot):
-    res_config = setup_case("snake_oil", "snake_oil.ert")
-    ert = EnKFMain(res_config)
+def test_export_misfit(snake_oil_case_storage, snapshot):
+    ert = snake_oil_case_storage
     ExportMisfitDataJob(ert).run()
     result = pd.read_hdf("misfit.hdf")
     snapshot.assert_match(

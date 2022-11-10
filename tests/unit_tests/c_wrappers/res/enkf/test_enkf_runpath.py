@@ -1,6 +1,5 @@
 import fileinput
 import os
-import shutil
 from pathlib import Path
 
 import pytest
@@ -11,7 +10,6 @@ from ert._c_wrappers.enkf.enkf_main import EnKFMain
 
 def test_with_gen_kw(copy_case):
     copy_case("snake_oil")
-    shutil.rmtree("storage")
     res_config = ResConfig("snake_oil.ert")
     main = EnKFMain(res_config)
     fs = main.getEnkfFsManager().getCurrentFileSystem()
@@ -34,7 +32,6 @@ def test_without_gen_kw():
             if line.startswith("GEN_KW"):
                 continue
             print(line, end="")
-    shutil.rmtree("storage")
     assert "GEN_KW" not in Path("snake_oil.ert").read_text("utf-8")
     res_config = ResConfig("snake_oil.ert")
     main = EnKFMain(res_config)

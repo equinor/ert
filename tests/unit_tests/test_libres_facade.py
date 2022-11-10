@@ -25,7 +25,8 @@ def test_keyword_type_checks_missing_key(facade):
     assert not facade.is_gen_kw_key("nokey")
 
 
-def test_data_fetching(facade):
+def test_data_fetching(snake_oil_case_storage):
+    facade = LibresFacade(snake_oil_case_storage)
     data = [
         facade.gather_gen_data_data("default_0", "SNAKE_OIL_GPR_DIFF@199"),
         facade.gather_summary_data("default_0", "BPR:1,3,8"),
@@ -61,9 +62,10 @@ def test_data_fetching_missing_key(facade):
         assert dataframe.empty
 
 
-def test_cases_list(facade):
+def test_cases_list(snake_oil_case_storage):
+    facade = LibresFacade(snake_oil_case_storage)
     cases = facade.cases()
-    assert ["default_0", "default_1"] == cases
+    assert ["default", "default_0"] == cases
 
 
 def test_all_data_type_keys(facade):
@@ -187,23 +189,24 @@ def test_case_history_data_missing_key(facade):
 def _do_verify_indices_and_values(data):
     # Verify indices
     assert data.columns.name == "Realization"
-    assert all(data.columns == range(25))
+    assert all(data.columns == range(5))
     assert data.index.name == "Date"
     assert all(data.index == pd.date_range("2010-01-10", periods=200, freq="10D"))
 
     # Verify selected datapoints
-    assert data.iloc[0][0] == pytest.approx(0.118963, abs=1e-6)  # top-left
-    assert data.iloc[199][0] == pytest.approx(0.133601, abs=1e-6)  # bottom-left
-    assert data.iloc[4][9] == pytest.approx(
-        0.178028, abs=1e-6
+    assert data.iloc[0][0] == pytest.approx(0.1153691, abs=1e-6)  # top-left
+    assert data.iloc[199][0] == pytest.approx(0.122272, abs=1e-6)  # bottom-left
+    assert data.iloc[4][4] == pytest.approx(
+        0.25907284, abs=1e-6
     )  # somewhere in the middle
     # bottom-right 5 entries in col
-    assert data.iloc[-5:][24].values == pytest.approx(
-        [0.143714, 0.142230, 0.140191, 0.140143, 0.139711], abs=1e-6
+    assert data.iloc[-5:][3].values == pytest.approx(
+        [0.24475138, 0.24395752, 0.24330144, 0.24303652, 0.24281485], abs=1e-6
     )
 
 
-def test_summary_data_verify_indices_and_values(caplog, facade):
+def test_summary_data_verify_indices_and_values(caplog, snake_oil_case_storage):
+    facade = LibresFacade(snake_oil_case_storage)
     with caplog.at_level(logging.WARNING):
         _do_verify_indices_and_values(facade.gather_summary_data("default_0", "FOPR"))
         assert "contains duplicate timestamps" not in caplog.text
@@ -234,20 +237,21 @@ def test_gen_kw_priors(facade):
     } in priors["SNAKE_OIL_PARAM"]
 
 
-def test_summary_collector(monkeypatch, facade):
+def test_summary_collector(monkeypatch, snake_oil_case_storage):
+    facade = LibresFacade(snake_oil_case_storage)
     monkeypatch.setenv("TZ", "CET")  # The ert_statoil case was generated in CET
 
     data = facade.load_all_summary_data("default_0")
 
-    assert pytest.approx(data["WWCT:OP2"][0]["2010-01-10"], rel=1e-5) == 0.385549
-    assert pytest.approx(data["WWCT:OP2"][24]["2010-01-10"]) == 0.498331
+    assert pytest.approx(data["WWCT:OP2"][0]["2010-01-10"], rel=1e-5) == 0.460843831
+    assert pytest.approx(data["WWCT:OP2"][4]["2010-01-10"]) == 0.4983681738
 
-    assert pytest.approx(data["FOPR"][0]["2010-01-10"], rel=1e-5) == 0.118963
-    assert pytest.approx(data["FOPR"][0]["2015-06-23"], rel=1e-5) == 0.133601
+    assert pytest.approx(data["FOPR"][0]["2010-01-10"], rel=1e-5) == 0.1153691932
+    assert pytest.approx(data["FOPR"][0]["2015-06-23"], rel=1e-5) == 0.1222724989
 
     # pylint: disable=pointless-statement
-    # realization 20:
-    data.loc[20]
+    # realization 4:
+    data.loc[4]
 
     with pytest.raises(KeyError):
         # realization 60:
@@ -255,13 +259,13 @@ def test_summary_collector(monkeypatch, facade):
 
     data = facade.load_all_summary_data("default_0", ["WWCT:OP1", "WWCT:OP2"])
 
-    assert pytest.approx(data["WWCT:OP1"][0]["2010-01-10"]) == 0.352953
-    assert pytest.approx(data["WWCT:OP2"][0]["2010-01-10"], rel=1e-5) == 0.385549
+    assert pytest.approx(data["WWCT:OP1"][0]["2010-01-10"]) == 0.21947261
+    assert pytest.approx(data["WWCT:OP2"][0]["2010-01-10"], rel=1e-5) == 0.46084383
 
     with pytest.raises(KeyError):
         data["FOPR"]
 
-    realization_index = 10
+    realization_index = 4
     data = facade.load_all_summary_data(
         "default_0",
         ["WWCT:OP1", "WWCT:OP2"],
@@ -281,40 +285,42 @@ def test_summary_collector(monkeypatch, facade):
         )
 
 
-def test_misfit_collector(facade):
+def test_misfit_collector(snake_oil_case_storage):
+    facade = LibresFacade(snake_oil_case_storage)
     data = facade.load_all_misfit_data("default_0")
 
-    assert pytest.approx(data["MISFIT:FOPR"][0]) == 738.735586
-    assert pytest.approx(data["MISFIT:FOPR"][24]) == 1260.086789
+    assert pytest.approx(data["MISFIT:FOPR"][0]) == 1966.3584925069108
+    assert pytest.approx(data["MISFIT:FOPR"][4]) == 758.1662249270752
 
-    assert pytest.approx(data["MISFIT:TOTAL"][0]) == 767.008457
-    assert pytest.approx(data["MISFIT:TOTAL"][24]) == 1359.172803
+    assert pytest.approx(data["MISFIT:TOTAL"][0]) == 2024.461010928874
+    assert pytest.approx(data["MISFIT:TOTAL"][4]) == 831.520534770889
 
     # pylint: disable=pointless-statement
     # realization 20:
-    data.loc[20]
+    data.loc[2]
 
     with pytest.raises(KeyError):
         # realization 60:
         data.loc[60]
 
 
-def test_gen_kw_collector(facade):
+def test_gen_kw_collector(snake_oil_case_storage):
+    facade = LibresFacade(snake_oil_case_storage)
     data = facade.load_all_gen_kw_data("default_0")
 
     assert (
-        pytest.approx(data["SNAKE_OIL_PARAM:OP1_PERSISTENCE"][0], rel=1e-5) == 0.047517
+        pytest.approx(data["SNAKE_OIL_PARAM:OP1_PERSISTENCE"][0], rel=1e-5) == 0.1404199
     )
     assert (
-        pytest.approx(data["SNAKE_OIL_PARAM:OP1_PERSISTENCE"][24], rel=1e-5) == 0.160907
+        pytest.approx(data["SNAKE_OIL_PARAM:OP1_PERSISTENCE"][4], rel=1e-5) == 0.3845847
     )
 
-    assert pytest.approx(data["SNAKE_OIL_PARAM:OP1_OFFSET"][0], rel=1e-5) == 0.054539
-    assert pytest.approx(data["SNAKE_OIL_PARAM:OP1_OFFSET"][12], rel=1e-5) == 0.057807
+    assert pytest.approx(data["SNAKE_OIL_PARAM:OP1_OFFSET"][0], rel=1e-5) == 0.028101138
+    assert pytest.approx(data["SNAKE_OIL_PARAM:OP1_OFFSET"][1], rel=1e-5) == 0.065297145
 
     # pylint: disable=pointless-statement
     # realization 20:
-    data.loc[20]
+    data.loc[4]
 
     with pytest.raises(KeyError):
         # realization 60:
@@ -326,14 +332,14 @@ def test_gen_kw_collector(facade):
     )
 
     assert (
-        pytest.approx(data["SNAKE_OIL_PARAM:OP1_PERSISTENCE"][0], rel=1e-5) == 0.047517
+        pytest.approx(data["SNAKE_OIL_PARAM:OP1_PERSISTENCE"][0], rel=1e-5) == 0.1404199
     )
-    assert pytest.approx(data["SNAKE_OIL_PARAM:OP1_OFFSET"][0], rel=1e-5) == 0.054539
+    assert pytest.approx(data["SNAKE_OIL_PARAM:OP1_OFFSET"][0], rel=1e-5) == 0.028101138
 
     with pytest.raises(KeyError):
         data["SNAKE_OIL_PARAM:OP1_DIVERGENCE_SCALE"]
 
-    realization_index = 10
+    realization_index = 3
     data = facade.load_all_gen_kw_data(
         "default_0",
         ["SNAKE_OIL_PARAM:OP1_PERSISTENCE"],
@@ -344,7 +350,7 @@ def test_gen_kw_collector(facade):
     assert len(data.index) == 1
     assert list(data.columns) == ["SNAKE_OIL_PARAM:OP1_PERSISTENCE"]
     assert (
-        pytest.approx(data["SNAKE_OIL_PARAM:OP1_PERSISTENCE"][10], rel=1e-5) == 0.282923
+        pytest.approx(data["SNAKE_OIL_PARAM:OP1_PERSISTENCE"][3], rel=1e-5) == 0.2707831
     )
 
     non_existing_realization_index = 150
@@ -412,7 +418,8 @@ def test_gen_data_report_steps():
     assert obs_key == []
 
 
-def test_gen_data_collector(facade):
+def test_gen_data_collector(snake_oil_case_storage):
+    facade = LibresFacade(snake_oil_case_storage)
     with pytest.raises(KeyError):
         facade.load_gen_data("default_0", "RFT_XX", 199)
 
@@ -421,11 +428,11 @@ def test_gen_data_collector(facade):
 
     data1 = facade.load_gen_data("default_0", "SNAKE_OIL_OPR_DIFF", 199)
 
-    assert pytest.approx(data1[0][0]) == -0.008206
-    assert pytest.approx(data1[24][1]) == -0.119255
-    assert pytest.approx(data1[24][1000]) == -0.258516
+    assert pytest.approx(data1[0][0]) == -0.057353
+    assert pytest.approx(data1[4][1]) == -0.04993
+    assert pytest.approx(data1[4][1000]) == 0.015464
 
-    realization_index = 10
+    realization_index = 3
     data1 = facade.load_gen_data(
         "default_0",
         "SNAKE_OIL_OPR_DIFF",
