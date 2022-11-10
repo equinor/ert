@@ -86,6 +86,11 @@ def run_cli(args):
         args,
         experiment_id,
     )
+
+    if model.check_if_runpath_exists():
+        print("Warning: ERT is running in an existing runpath")
+        logger.warning("ERT is running in an existing runpath")
+
     # Test run does not have a current_case
     if "current_case" in args and args.current_case:
         facade.select_or_create_new_case(args.current_case)

@@ -1,3 +1,4 @@
+import os
 from unittest.mock import MagicMock
 
 import pytest
@@ -73,3 +74,44 @@ def test_run_ensemble_evaluator():
     BaseRunModel.deactivate_failed_jobs(run_context)
 
     run_context.deactivate_realization.assert_called_with(0)
+
+
+@pytest.fixture
+def create_dummy_run_path(tmpdir):
+    run_path = os.path.join(tmpdir, "out")
+    os.mkdir(run_path)
+    os.mkdir(os.path.join(run_path, "realization-0"))
+    os.mkdir(os.path.join(run_path, "realization-0/iter-0"))
+    os.mkdir(os.path.join(run_path, "realization-1"))
+    os.mkdir(os.path.join(run_path, "realization-1/iter-0"))
+    os.mkdir(os.path.join(run_path, "realization-1/iter-1"))
+    yield os.chdir(tmpdir)
+
+
+@pytest.mark.parametrize(
+    "run_path, number_of_iterations, start_iteration, active_mask, expected",
+    [
+        ("out/realization-%d/iter-%d", 4, 2, [True, True, True, True], False),
+        ("out/realization-%d/iter-%d", 4, 1, [True, True, True, True], True),
+        ("out/realization-%d/iter-%d", 4, 1, [False, False, True, False], False),
+        ("out/realization-%d/iter-%d", 4, 0, [False, False, False, False], False),
+        ("out/realization-%d/iter-%d", 4, 0, [], False),
+    ],
+)
+def test_check_if_runpath_exists(
+    create_dummy_run_path,
+    run_path: str,
+    number_of_iterations: int,
+    start_iteration: int,
+    active_mask: list,
+    expected: bool,
+):
+    simulation_arguments = {
+        "start_iteration": start_iteration,
+        "active_realizations": active_mask,
+    }
+
+    brm = BaseRunModel(simulation_arguments, None, None, None)
+    brm.facade = MagicMock(run_path=run_path, number_of_iterations=number_of_iterations)
+
+    assert brm.check_if_runpath_exists() == expected
