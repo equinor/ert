@@ -1,0 +1,45 @@
+on:
+  workflow_call:
+    inputs:
+      os:
+        type: string
+      python-version:
+        type: string
+jobs:
+
+  build-wheels:
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+
+    runs-on: ${{ inputs.os }}
+
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+
+    - uses: './.github/actions/install_dependencies'
+      with:
+        os: ${{ inputs.os }}
+
+    - uses: actions/setup-python@v2
+      with:
+        python-version: ${{ inputs.python-version }}
+
+    - name: Build Linux Wheel
+      uses: docker://quay.io/pypa/manylinux2014_x86_64
+      with:
+        entrypoint: /github/workspace/ci/github/build_linux_wheel.sh
+        args: ${{ inputs.python-version }}
+      if: inputs.os == 'ubuntu-latest'
+
+    - name: Build macOS Wheel
+      run: pip wheel . --no-deps -w dist
+      if: inputs.os == 'macos-latest'
+
+    - name: Upload wheel as artifact
+      uses: actions/upload-artifact@v2
+      with:
+        name: ${{ inputs.os }} Python ${{ inputs.python-version }} wheel
+        path: dist/*

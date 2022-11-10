@@ -1,0 +1,63 @@
+on:
+  workflow_call:
+    inputs:
+      os:
+        type: string
+      python-version:
+        type: string
+      test-type:
+        type: string
+jobs:
+
+  tests-ert:
+    name: Run ert tests
+    timeout-minutes: 30
+    runs-on: ${{ inputs.os }}
+
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+
+    - uses: './.github/actions/install_dependencies'
+      if: inputs.test-type == 'gui-test'
+      with:
+        os: ${{ inputs.os }}
+
+    - uses: actions/setup-python@v2
+      with:
+        python-version: ${{ inputs.python-version }}
+
+    - name: Install ert and test dependencies
+      run: |
+        pip install .
+        pip install -r dev-requirements.txt
+
+    - name: Test GUI
+      if: inputs.test-type == 'gui-test'
+      env:
+        DISPLAY: ':99.0'
+      run: |
+        ci/github/start_herbstluftwm.sh &
+        sleep 5
+        pytest tests -sv --hypothesis-profile=ci -m "requires_window_manager"
+
+    - name: Unit Test
+      if: inputs.test-type == 'unit-tests'
+      run: |
+        pytest tests -sv  --hypothesis-profile=ci -m "not integration_test and not requires_window_manager"
+
+    - name: Integration Test
+      if: inputs.test-type == 'integration-tests'
+      run: |
+        pytest tests -sv --hypothesis-profile=ci -m "integration_test and not requires_window_manager"
+
+    - name: Test for a clean repository
+      run: |
+        # Run this before the 'Test CLI' entry below, which produces a few files that are accepted for now. Exclude the wheel.
+        git status --porcelain | sed '/ert.*.whl$/d'
+        test -z "$(git status --porcelain | sed '/ert.*.whl$/d')"
+
+    - name: Test CLI
+      run: |
+        ert --help
