@@ -11,6 +11,7 @@ import ert.gui
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets.message_box import ErtMessageBox
 from ert.gui.gert_main import GUILogHandler, _start_window, run_gui
+from ert.shared.models import BaseRunModel
 
 
 @pytest.fixture(name="patch_enkf_main")
@@ -173,20 +174,22 @@ def test_start_simulation_disabled(monkeypatch, qtbot, patch_enkf_main):
     args_mock = Mock()
     type(args_mock).config = PropertyMock(return_value="config.ert")
 
-    dummy_run_dialog = QDialog(None)
-
-    dummy_run_dialog.startSimulation = lambda *args: None
-
     monkeypatch.setattr(
         ert.gui.simulation.simulation_panel.QMessageBox,
         "question",
         lambda *args: QMessageBox.Yes,
     )
+
+    dummy_run_dialog = QDialog(None)
+    dummy_run_dialog.startSimulation = lambda *args: None
     monkeypatch.setattr(
         ert.gui.simulation.simulation_panel, "RunDialog", lambda *args: dummy_run_dialog
     )
+
+    dummy_model = BaseRunModel(None, None, None, None)
+    dummy_model.check_if_runpath_exists = lambda *args: False
     monkeypatch.setattr(
-        ert.gui.simulation.simulation_panel, "create_model", lambda *args: None
+        ert.gui.simulation.simulation_panel, "create_model", lambda *args: dummy_model
     )
 
     notifier = MagicMock()

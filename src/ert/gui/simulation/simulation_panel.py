@@ -123,31 +123,53 @@ class SimulationPanel(QWidget):
             f"Are you sure you want to use case '{case_name}' for initialization of "
             "the initial ensemble when running the simulations?"
         )
-        start_simulations = QMessageBox.question(
-            self, "Start simulations?", message, QMessageBox.Yes | QMessageBox.No
-        )
-
-        if start_simulations == QMessageBox.Yes:
-
-            arguments = self.getSimulationArguments()
-            dialog = RunDialog(
-                self._config_file,
-                create_model(
-                    self.ert,
-                    self.facade.get_ensemble_size(),
-                    self.facade.get_current_case_name(),
-                    arguments,
-                    str(uuid.uuid4()),
-                ),
+        if (
+            QMessageBox.question(
+                self, "Start simulations?", message, QMessageBox.Yes | QMessageBox.No
             )
-            self.run_button.setDisabled(True)
-            self.run_button.setText("Simulation running...")
-            dialog.startSimulation()
-            dialog.exec_()
-            self.run_button.setText("Start simulation")
-            self.run_button.setDisabled(False)
+            == QMessageBox.Yes
+        ):
+            model = create_model(
+                self.ert,
+                self.facade.get_ensemble_size(),
+                self.facade.get_current_case_name(),
+                self.getSimulationArguments(),
+                str(uuid.uuid4()),
+            )
 
-            self.notifier.emitErtChange()  # simulations may have added new cases
+            abort = False
+            if model.check_if_runpath_exists():
+                if (
+                    QMessageBox.warning(
+                        self,
+                        "Start simulations?",
+                        (
+                            "ERT is running in an existing runpath.\n\n"
+                            "Please be aware of the following:\n"
+                            "- Previously generated results "
+                            "might be overwritten.\n"
+                            "- Previously generated files might "
+                            "be used if not configured correctly."
+                        ),
+                        QMessageBox.Yes | QMessageBox.No,
+                    )
+                    == QMessageBox.No
+                ):
+                    abort = True
+
+            if not abort:
+                dialog = RunDialog(
+                    self._config_file,
+                    model,
+                )
+                self.run_button.setDisabled(True)
+                self.run_button.setText("Simulation running...")
+                dialog.startSimulation()
+                dialog.exec_()
+                self.run_button.setText("Start simulation")
+                self.run_button.setDisabled(False)
+
+                self.notifier.emitErtChange()  # simulations may have added new cases
 
     def toggleSimulationMode(self):
         current_model = self.getCurrentSimulationModel()

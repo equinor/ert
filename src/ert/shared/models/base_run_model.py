@@ -523,3 +523,19 @@ class BaseRunModel:
         )
         self.setPhaseName("Uploading done")
         return update_id
+
+    def check_if_runpath_exists(self) -> bool:
+        run_path = self.facade.run_path
+        start_iteration = self._simulation_arguments.get("start_iteration", 0)
+        number_of_iterations = self.facade.number_of_iterations
+        active_mask = []
+        if "active_realizations" in self._simulation_arguments:
+            active_mask = self._simulation_arguments["active_realizations"]
+
+        idx = [i for i in range(len(active_mask)) if active_mask[i]]
+        for i in range(start_iteration, number_of_iterations):
+            for j in idx:
+                s = run_path % (j, i)
+                if Path(s).exists():
+                    return True
+        return False
