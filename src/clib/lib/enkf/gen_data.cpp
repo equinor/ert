@@ -297,12 +297,10 @@ bool gen_data_fload_with_report_step(gen_data_type *gen_data,
     return file_exists;
 }
 
-bool gen_data_forward_load(gen_data_type *gen_data, const char *ecl_file,
-                           int report_step, const void *argument) {
-    const run_arg_type *run_arg =
-        reinterpret_cast<const run_arg_type *>(argument);
-    return gen_data_fload_with_report_step(gen_data, ecl_file, report_step,
-                                           run_arg_get_sim_fs(run_arg));
+bool gen_data_forward_load(gen_data_type *gen_data, const char *file_name,
+                           int report_step, enkf_fs_type *fs) {
+    return gen_data_fload_with_report_step(gen_data, file_name, report_step,
+                                           fs);
 }
 
 static void gen_data_ecl_write_binary(const gen_data_type *gen_data,
@@ -357,7 +355,6 @@ double *gen_data_get_double_vector(const gen_data_type *gen_data) {
 
 VOID_ALLOC(gen_data)
 VOID_FREE(gen_data)
-VOID_FORWARD_LOAD(gen_data)
 VOID_READ_FROM_BUFFER(gen_data);
 VOID_WRITE_TO_BUFFER(gen_data);
 VOID_SERIALIZE(gen_data)

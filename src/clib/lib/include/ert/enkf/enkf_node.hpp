@@ -33,7 +33,6 @@ typedef bool(has_data_ftype)(const void *, int);
 
 typedef void *(alloc_ftype)(const void *);
 typedef bool(initialize_ftype)(void *, int, const char *);
-typedef bool(forward_load_ftype)(void *, const char *, int, const void *);
 typedef void(free_data_ftype)(void *);
 typedef void(node_free_ftype)(void *);
 typedef void(clear_ftype)(void *);
@@ -66,8 +65,7 @@ bool enkf_node_forward_load_vector(enkf_node_type *enkf_node,
                                    const ecl_sum_type *ecl_sum,
                                    const int_vector_type *time_index);
 bool enkf_node_forward_load(enkf_node_type *enkf_node, int report_step,
-                            const run_arg_type *run_arg,
-                            const ecl_sum_type *ecl_sum);
+                            const char *run_path, enkf_fs_type *fs);
 bool enkf_node_initialize(enkf_node_type *enkf_node, int);
 
 void enkf_node_copy(const enkf_config_node_type *config_node,

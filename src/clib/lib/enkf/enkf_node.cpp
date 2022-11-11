@@ -118,7 +118,6 @@
 */
 struct enkf_node_struct {
     alloc_ftype *alloc;
-    forward_load_ftype *forward_load;
     has_data_ftype *has_data;
 
     serialize_ftype *serialize;
@@ -184,38 +183,28 @@ std::vector<double> enkf_node_user_get_vector(enkf_node_type *enkf_node,
 }
 
 /**
-   This function loads (internalizes) ECLIPSE results, the ecl_file
-   instance with restart data, and the ecl_sum instance with summary
-   data must already be loaded by the calling function.
-
    IFF the enkf_node has registered a filename to load from, that is
    passed to the specific load function, otherwise the run_path is sent
    to the load function.
-
-   If the node does not have a forward_load function, the function just
-   returns.
 */
 bool enkf_node_forward_load(enkf_node_type *enkf_node, int report_step,
-                            const run_arg_type *run_arg,
-                            const ecl_sum_type *ecl_sum) {
+                            const char *run_path, enkf_fs_type *fs) {
     bool loadOK;
-    FUNC_ASSERT(enkf_node->forward_load);
-    {
-        char *input_file =
-            enkf_config_node_alloc_infile(enkf_node->config, report_step);
+    char *input_file =
+        enkf_config_node_alloc_infile(enkf_node->config, report_step);
 
-        if (input_file != NULL) {
-            char *file = util_alloc_filename(run_arg_get_runpath(run_arg),
-                                             input_file, NULL);
-            loadOK = enkf_node->forward_load(enkf_node->data, file, report_step,
-                                             run_arg);
-            free(file);
-        } else
-            loadOK = enkf_node->forward_load(enkf_node->data, NULL, report_step,
-                                             run_arg);
+    if (input_file != NULL) {
+        char *file = util_alloc_filename(run_path, input_file, NULL);
+        loadOK =
+            gen_data_forward_load(static_cast<gen_data_type *>(enkf_node->data),
+                                  file, report_step, fs);
+        free(file);
+    } else
+        loadOK =
+            gen_data_forward_load(static_cast<gen_data_type *>(enkf_node->data),
+                                  NULL, report_step, fs);
+    free(input_file);
 
-        free(input_file);
-    }
     return loadOK;
 }
 
@@ -471,7 +460,6 @@ enkf_node_alloc_empty(const enkf_config_node_type *config) {
     node->data = NULL;
 
     node->alloc = NULL;
-    node->forward_load = NULL;
     node->initialize = NULL;
     node->freef = NULL;
     node->read_from_buffer = NULL;
@@ -519,7 +507,6 @@ enkf_node_alloc_empty(const enkf_config_node_type *config) {
     case (GEN_DATA):
         node->alloc = gen_data_alloc__;
         node->freef = gen_data_free__;
-        node->forward_load = gen_data_forward_load__;
         node->read_from_buffer = gen_data_read_from_buffer__;
         node->write_to_buffer = gen_data_write_to_buffer__;
         node->serialize = gen_data_serialize__;
