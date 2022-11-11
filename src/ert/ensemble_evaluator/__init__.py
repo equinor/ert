@@ -5,7 +5,7 @@ from ._builder import (
     RealizationBuilder,
     StepBuilder,
 )
-from .callbacks import forward_model_ok
+from .callbacks import forward_model_exit, forward_model_ok
 from .config import EvaluatorServerConfig
 from .evaluator import EnsembleEvaluator
 from .evaluator_tracker import EvaluatorTracker
@@ -28,5 +28,6 @@ __all__ = (
     "SnapshotUpdateEvent",
     "StepBuilder",
     "forward_model_ok",
+    "forward_model_exit",
     "Monitor",
 )

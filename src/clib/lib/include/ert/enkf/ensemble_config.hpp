@@ -76,6 +76,7 @@ extern "C" int
 ensemble_config_get_size(const ensemble_config_type *ensemble_config);
 std::pair<fw_load_status, std::string>
 ensemble_config_forward_init(const ensemble_config_type *ens_config,
-                             const run_arg_type *run_arg);
+                             const int iens, const std::string &run_path,
+                             enkf_fs_type *sim_fs);
 
 #endif

@@ -4,6 +4,7 @@
 #include <future>
 #include <memory>
 #include <string>
+#include <tuple>
 #include <vector>
 
 #include <fcntl.h>
@@ -25,8 +26,6 @@
 #include <ert/enkf/enkf_fs.hpp>
 #include <ert/enkf/enkf_state.hpp>
 #include <ert/enkf/misfit_ensemble.hpp>
-
-#include <fmt/format.h>
 
 namespace fs = std::filesystem;
 static auto logger = ert::get_logger("enkf");
@@ -564,11 +563,12 @@ misfit_ensemble_type *enkf_fs_get_misfit_ensemble(const enkf_fs_type *fs) {
 }
 
 namespace {
-int load_from_run_path(const int ens_size,
-                       ensemble_config_type *ensemble_config,
-                       model_config_type *model_config,
-                       std::vector<bool> active_mask, enkf_fs_type *sim_fs,
-                       std::vector<run_arg_type *> run_args) {
+int load_from_run_path(
+    const int ens_size, ensemble_config_type *ensemble_config,
+    model_config_type *model_config, std::vector<bool> active_mask,
+    enkf_fs_type *sim_fs,
+    const std::vector<std::tuple<int, const std::string, const std::string>>
+        &run_args) {
     // Loading state from a fwd-model is mainly io-bound so we can
     // allow a lot more than #cores threads to execute in parallel.
     // The number 100 is quite arbitrarily chosen though and should
@@ -606,7 +606,10 @@ int load_from_run_path(const int ens_size,
                         state_map.update_matching(realisation, STATE_UNDEFINED,
                                                   STATE_INITIALIZED);
                         auto status = enkf_state_load_from_forward_model(
-                            ensemble_config, model_config, run_args[iens]);
+                            ensemble_config, model_config,
+                            std::get<0>(run_args[iens]),
+                            std::get<1>(run_args[iens]).c_str(),
+                            std::get<2>(run_args[iens]).c_str(), sim_fs);
                         state_map.set(realisation,
                                       status.first == LOAD_SUCCESSFUL
                                           ? STATE_HAS_DATA
@@ -681,12 +684,11 @@ ERT_CLIB_SUBMODULE("enkf_fs", m) {
     m.def("load_from_run_path",
           [](Cwrap<enkf_fs_type> enkf_fs, int ens_size,
              Cwrap<ensemble_config_type> ensemble_config,
-             Cwrap<model_config_type> model_config, py::sequence run_args_,
+             Cwrap<model_config_type> model_config,
+             const std::vector<
+                 std::tuple<int, const std::string, const std::string>>
+                 run_args,
              std::vector<bool> active_mask) {
-              std::vector<run_arg_type *> run_args;
-              for (auto run_arg : run_args_) {
-                  run_args.push_back(ert::from_cwrap<run_arg_type>(run_arg));
-              }
               return load_from_run_path(ens_size, ensemble_config, model_config,
                                         active_mask, enkf_fs, run_args);
           });

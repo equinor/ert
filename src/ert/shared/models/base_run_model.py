@@ -14,7 +14,6 @@ from cloudevents.http import CloudEvent
 import _ert_com_protocol
 from ert._c_wrappers.enkf import EnKFMain, QueueConfig
 from ert._c_wrappers.enkf.ert_run_context import RunContext
-from ert._c_wrappers.enkf.model_callbacks import forward_model_exit
 from ert._c_wrappers.job_queue import ForwardModel, RunStatusType
 from ert.ensemble_evaluator import (
     Ensemble,
@@ -24,6 +23,7 @@ from ert.ensemble_evaluator import (
     LegacyJobBuilder,
     RealizationBuilder,
     StepBuilder,
+    forward_model_exit,
     forward_model_ok,
 )
 from ert.libres_facade import LibresFacade
@@ -364,7 +364,7 @@ class BaseRunModel:
                 ).set_done_callback(
                     lambda x: forward_model_ok(*x)
                 ).set_exit_callback(
-                    forward_model_exit
+                    lambda x: forward_model_exit(*x)
                 ).set_num_cpu(
                     self.ert().get_num_cpu()
                 ).set_run_path(

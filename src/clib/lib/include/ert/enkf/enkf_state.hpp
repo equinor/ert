@@ -20,15 +20,13 @@
 #include <ert/enkf/enkf_util.hpp>
 #include <ert/enkf/ensemble_config.hpp>
 #include <ert/enkf/model_config.hpp>
-#include <ert/enkf/run_arg.hpp>
 
 void enkf_state_initialize(enkf_fs_type *fs, enkf_node_type *param_node,
                            int iens);
 
-std::pair<fw_load_status, std::string>
-enkf_state_load_from_forward_model(ensemble_config_type *ens_config,
-                                   model_config_type *model_config,
-                                   const run_arg_type *run_arg);
-bool enkf_state_complete_forward_model_EXIT_handler__(run_arg_type *run_arg);
+std::pair<fw_load_status, std::string> enkf_state_load_from_forward_model(
+    ensemble_config_type *ens_config, model_config_type *model_config,
+    const int iens, const std::string &run_path, const std::string &job_name,
+    enkf_fs_type *sim_fs);
 
 #endif

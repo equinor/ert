@@ -28,7 +28,6 @@
 #include <ert/enkf/enkf_obs.hpp>
 #include <ert/enkf/ensemble_config.hpp>
 #include <ert/enkf/gen_kw_config.hpp>
-#include <ert/enkf/run_arg.hpp>
 #include <ert/logging.hpp>
 
 namespace fs = std::filesystem;
@@ -346,27 +345,24 @@ int ensemble_config_get_size(const ensemble_config_type *ensemble_config) {
 
 std::pair<fw_load_status, std::string>
 ensemble_config_forward_init(const ensemble_config_type *ens_config,
-                             const run_arg_type *run_arg) {
+                             const int iens, const std::string &run_path,
+                             enkf_fs_type *sim_fs) {
 
     auto result = LOAD_SUCCESSFUL;
     std::string error_msg;
     {
-        int iens = run_arg_get_iens(run_arg);
         for (auto &config_pair : ens_config->config_nodes) {
             enkf_config_node_type *config_node = config_pair.second;
             if (enkf_config_node_use_forward_init(config_node)) {
                 enkf_node_type *node = enkf_node_alloc(config_node);
-                enkf_fs_type *sim_fs = run_arg_get_sim_fs(run_arg);
                 node_id_type node_id = {.report_step = 0, .iens = iens};
 
                 if (!enkf_node_has_data(node, sim_fs, node_id)) {
-                    if (enkf_node_forward_init(
-                            node, run_arg_get_runpath(run_arg), iens))
+                    if (enkf_node_forward_init(node, run_path, iens))
                         enkf_node_store(node, sim_fs, node_id);
                     else {
                         char *init_file = enkf_config_node_alloc_initfile(
-                            enkf_node_get_config(node),
-                            run_arg_get_runpath(run_arg), iens);
+                            enkf_node_get_config(node), run_path.c_str(), iens);
 
                         if (init_file && !fs::exists(init_file))
                             error_msg = fmt::format(
