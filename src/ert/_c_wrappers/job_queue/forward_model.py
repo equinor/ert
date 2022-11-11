@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING, List, Optional
 
-from ert._c_wrappers.job_queue import EnvironmentVarlist, ExtJob, ExtJoblist
+from ert._c_wrappers.job_queue import EnvironmentVarlist, ExtJob
 from ert._clib import job_kw
 
 if TYPE_CHECKING:
@@ -17,7 +17,6 @@ logger = logging.getLogger(__name__)
 @dataclass
 class ForwardModel:
     jobs: List[ExtJob]
-    ext_joblist: ExtJoblist
 
     def job_name_list(self) -> List[str]:
         return [j.name() for j in self.jobs]

@@ -19,7 +19,7 @@ from ert._c_wrappers.enkf.ert_workflow_list import ErtWorkflowList
 from ert._c_wrappers.enkf.model_config import ModelConfig
 from ert._c_wrappers.enkf.queue_config import QueueConfig
 from ert._c_wrappers.enkf.site_config import SiteConfig
-from ert._c_wrappers.job_queue import ForwardModel, QueueDriverEnum
+from ert._c_wrappers.job_queue import ExtJob, ForwardModel, QueueDriverEnum
 from ert._c_wrappers.util import SubstitutionList
 from ert._clib.config_keywords import init_site_config_parser, init_user_config_parser
 
@@ -304,15 +304,18 @@ class ResConfig:
                     "Loading GEN_KW from files requires %d in file format"
                 )
 
+        self.installed_jobs = self._installed_jobs_from_dict(config_content_dict)
         jobs = []
         # FORWARD_MODEL_KEY
         for job_description in config_content_dict.get(ConfigKeys.FORWARD_MODEL, []):
             job_name, args = parse_signature_job("".join(job_description))
-            job = self.site_config.job_list.get_job_copy(job_name)
-            if job is None:
-                err_msg = f"Could not find job `{job_name}` in list of installed jobs: "
-                err_msg += f"{list(self.site_config.job_list)}"
-                raise ValueError(err_msg)
+            try:
+                job = self.installed_jobs[job_name].copy()
+            except KeyError as err:
+                raise ValueError(
+                    f"Could not find job `{job_name}` in list of installed jobs: "
+                    f"{list(self.installed_jobs.keys())}"
+                ) from err
             if args is not None:
                 job.set_private_args_as_string(args)
                 job.set_define_args(self.substitution_list)
@@ -321,16 +324,14 @@ class ResConfig:
 
         # SIMULATION_JOB_KEY
         for job_description in config_content_dict.get(ConfigKeys.SIMULATION_JOB, []):
-            job = self.site_config.job_list.get_job_copy(job_description[0])
+            job = self.installed_jobs[job_description[0]].copy()
             job.set_arglist(job_description[1:])
             job.set_define_args(self.substitution_list)
             job.clear_deprecated_argv()
             job.convertToCReference(None)
             jobs.append(job)
 
-        self.forward_model = ForwardModel(
-            jobs=jobs, ext_joblist=self.site_config.job_list
-        )
+        self.forward_model = ForwardModel(jobs=jobs)
         self.model_config = ModelConfig(
             data_root=self.config_path,
             refcase=self.ensemble_config.refcase,
@@ -417,39 +418,78 @@ class ResConfig:
                     "Loading GEN_KW from files requires %d in file format"
                 )
 
+        self.installed_jobs = self._installed_jobs_from_dict(config_dict)
         jobs = []
         # FORWARD_MODEL_KEY
         for job_description in config_dict.get(ConfigKeys.FORWARD_MODEL, []):
-            job = self.site_config.job_list.get_job_copy(
-                job_description[ConfigKeys.NAME]
-            )
-            if job is None:
-                err_msg = (
-                    f"Could not find job `{job_description[ConfigKeys.NAME]}` "
-                    "in list of installed jobs: "
-                )
-                err_msg += f"{list(self.site_config.job_list)}"
-                raise ValueError(err_msg)
+            try:
+                job = self.installed_jobs[job_description[ConfigKeys.NAME]].copy()
+            except KeyError as err:
+                raise ValueError(
+                    f"Could not find job `{job_description[ConfigKeys.NAME]}`"
+                    f" in list of installed jobs: {list(self.installed_jobs.keys())}"
+                ) from err
             job.set_private_args_as_string(job_description.get(ConfigKeys.ARGLIST))
             job.convertToCReference(None)
             jobs.append(job)
 
         # SIMULATION_JOB_KEY
         for job_description in config_dict.get(ConfigKeys.SIMULATION_JOB, []):
-            job = self.site_config.job_list.get_job_copy(
-                job_description[ConfigKeys.NAME]
-            )
+            job = self.installed_jobs[job_description[ConfigKeys.NAME]].copy()
+            try:
+                job = self.installed_jobs[job_description[ConfigKeys.NAME]].copy()
+            except KeyError as err:
+                raise ValueError(
+                    f"Could not find job `{job_description[ConfigKeys.NAME]}` "
+                    "in list of installed jobs."
+                ) from err
             job.set_private_args_as_string(job_description.get(ConfigKeys.ARGLIST))
             job.convertToCReference(None)
             jobs.append(job)
 
-        self.forward_model = ForwardModel(
-            jobs=jobs, ext_joblist=self.site_config.job_list
-        )
+        self.forward_model = ForwardModel(jobs=jobs)
         self.model_config = ModelConfig(
             data_root=self.config_path,
             refcase=self.ensemble_config.refcase,
             config_dict=config_dict,
+        )
+
+    @staticmethod
+    def _installed_jobs_from_dict(config_dict):
+        jobs = {}
+        # fill in joblist
+        for job in config_dict.get(ConfigKeys.INSTALL_JOB, []):
+            name = job[0]
+            new_job = ResConfig._create_job(
+                os.path.abspath(job[1]),
+                name,
+            )
+            if new_job is not None:
+                jobs[name] = new_job
+
+        for job_path in config_dict.get(ConfigKeys.INSTALL_JOB_DIRECTORY, []):
+            if not os.path.isdir(job_path):
+                logger.warning(f"Unable to locate job directory {job_path}")
+                continue
+            files = os.listdir(job_path)
+            for file_name in files:
+                full_path = os.path.abspath(os.path.join(job_path, file_name))
+                new_job = ResConfig._create_job(full_path)
+                if new_job is not None:
+                    name = new_job.name()
+                    jobs[name] = new_job
+
+        return jobs
+
+    @staticmethod
+    def _create_job(job_path, job_name=None):
+        if not os.path.isfile(job_path):
+            logger.warning(f"Unable to locate job file {job_path}")
+            return None
+        return ExtJob(
+            config_file=job_path,
+            private=False,
+            name=job_name,
         )
 
     def _extract_defines(self, config):

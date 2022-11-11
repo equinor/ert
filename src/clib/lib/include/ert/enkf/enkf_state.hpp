@@ -10,7 +10,6 @@
 #include <ert/ecl/ecl_file.h>
 #include <ert/ecl/fortio.h>
 
-#include <ert/job_queue/ext_joblist.hpp>
 #include <ert/job_queue/job_queue.hpp>
 
 #include <ert/enkf/enkf_fs.hpp>
