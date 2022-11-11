@@ -75,17 +75,6 @@
     void prefix##_read_from_buffer__(void *, buffer_type *, enkf_fs_type *,    \
                                      int);
 
-#define VOID_FORWARD_LOAD(prefix)                                              \
-    bool prefix##_forward_load__(void *void_arg, const char *ecl_file,         \
-                                 int report_step, const void *argument) {      \
-        auto arg = static_cast<prefix##_type *>(void_arg);                     \
-        return prefix##_forward_load(arg, ecl_file, report_step, argument);    \
-    }
-
-#define VOID_FORWARD_LOAD_HEADER(prefix)                                       \
-    bool prefix##_forward_load__(void *, const char *, int,                    \
-                                 const void *argument);
-
 #define VOID_FREE(prefix)                                                      \
     void prefix##_free__(void *void_arg) {                                     \
         auto arg = static_cast<prefix##_type *>(void_arg);                     \
