@@ -1,5 +1,7 @@
 # This conftest still exists so that tests files can import ert_utils
 import logging
+import os
+import sys
 
 import pytest
 
@@ -32,3 +34,16 @@ def no_cert_in_test(monkeypatch):
             super().__init__(*args, **kwargs)
 
     monkeypatch.setattr("ert.cli.main.EvaluatorServerConfig", MockESConfig)
+
+
+@pytest.fixture(scope="session", autouse=True)
+def ensure_bin_in_path():
+    """
+    Running pytest directly without enabling a virtualenv is perfectly valid.
+    However, our tests assume that `job_dispatch.py` is in PATH which it may not be.
+    This fixture prepends the path to the current Python for tests to pass when not
+    in a virtualenv.
+    """
+    path = os.environ["PATH"]
+    exec_path = os.path.dirname(sys.executable)
+    os.environ["PATH"] = exec_path + ":" + path
