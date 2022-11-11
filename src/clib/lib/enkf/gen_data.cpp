@@ -250,7 +250,7 @@ static bool gen_data_fload_active__(gen_data_type *gen_data,
                 logger->info("GEN_DATA({}): active information loaded from:{}.",
                              gen_data_get_key(gen_data), active_file);
             } else
-                logger->info("GEN_DATA({}): active information NOT loaded.",
+                logger->info("GEN_DATA({}): active information not provided.",
                              gen_data_get_key(gen_data));
             free(active_file);
         }
