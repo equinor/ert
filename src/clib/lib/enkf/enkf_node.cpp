@@ -201,26 +201,20 @@ bool enkf_node_forward_load(enkf_node_type *enkf_node, int report_step,
     bool loadOK;
     FUNC_ASSERT(enkf_node->forward_load);
     {
-        if (enkf_node_get_impl_type(enkf_node) == SUMMARY)
-            /* Fast path for loading summary data. */
+        char *input_file =
+            enkf_config_node_alloc_infile(enkf_node->config, report_step);
+
+        if (input_file != NULL) {
+            char *file = util_alloc_filename(run_arg_get_runpath(run_arg),
+                                             input_file, NULL);
+            loadOK = enkf_node->forward_load(enkf_node->data, file, report_step,
+                                             run_arg);
+            free(file);
+        } else
             loadOK = enkf_node->forward_load(enkf_node->data, NULL, report_step,
-                                             ecl_sum);
-        else {
-            char *input_file =
-                enkf_config_node_alloc_infile(enkf_node->config, report_step);
+                                             run_arg);
 
-            if (input_file != NULL) {
-                char *file = util_alloc_filename(run_arg_get_runpath(run_arg),
-                                                 input_file, NULL);
-                loadOK = enkf_node->forward_load(enkf_node->data, file,
-                                                 report_step, run_arg);
-                free(file);
-            } else
-                loadOK = enkf_node->forward_load(enkf_node->data, NULL,
-                                                 report_step, run_arg);
-
-            free(input_file);
-        }
+        free(input_file);
     }
     return loadOK;
 }
@@ -496,7 +490,6 @@ enkf_node_alloc_empty(const enkf_config_node_type *config) {
         node->deserialize = gen_kw_deserialize__;
         break;
     case (SUMMARY):
-        node->forward_load = summary_forward_load__;
         node->alloc = summary_alloc__;
         node->freef = summary_free__;
         node->read_from_buffer = summary_read_from_buffer__;

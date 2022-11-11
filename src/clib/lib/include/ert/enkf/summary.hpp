@@ -25,7 +25,6 @@ bool summary_forward_load_vector(summary_type *summary,
 VOID_HAS_DATA_HEADER(summary);
 VOID_ALLOC_HEADER(summary);
 VOID_FREE_HEADER(summary);
-VOID_FORWARD_LOAD_HEADER(summary);
 VOID_WRITE_TO_BUFFER_HEADER(summary);
 VOID_READ_FROM_BUFFER_HEADER(summary);
 VOID_SERIALIZE_HEADER(summary)
