@@ -184,7 +184,7 @@ enkf_state_internalize_dynamic_eclipse_results(
 }
 
 static fw_load_status enkf_state_load_gen_data_node(
-    const run_arg_type *run_arg, enkf_fs_type *sim_fs, int iens,
+    const char *run_path, enkf_fs_type *sim_fs, int iens,
     const enkf_config_node_type *config_node, int start, int stop) {
     fw_load_status status = LOAD_SUCCESSFUL;
     for (int report_step = start; report_step <= stop; report_step++) {
@@ -193,9 +193,7 @@ static fw_load_status enkf_state_load_gen_data_node(
 
         enkf_node_type *node = enkf_node_alloc(config_node);
 
-        if (enkf_node_forward_load(node, report_step,
-                                   run_arg_get_runpath(run_arg),
-                                   run_arg_get_sim_fs(run_arg))) {
+        if (enkf_node_forward_load(node, report_step, run_path, sim_fs)) {
             node_id_type node_id = {.report_step = report_step, .iens = iens};
 
             enkf_node_store(node, sim_fs, node_id);
@@ -217,9 +215,10 @@ static fw_load_status enkf_state_load_gen_data_node(
     return status;
 }
 
-static fw_load_status enkf_state_internalize_GEN_DATA(
-    const ensemble_config_type *ens_config, const run_arg_type *run_arg,
-    const model_config_type *model_config, int last_report) {
+static fw_load_status
+enkf_state_internalize_GEN_DATA(const ensemble_config_type *ens_config,
+                                const int iens, enkf_fs_type *sim_fs,
+                                const char *run_path, int last_report) {
 
     stringlist_type *keylist_GEN_DATA =
         ensemble_config_alloc_keylist_from_impl_type(ens_config, GEN_DATA);
@@ -233,8 +232,6 @@ static fw_load_status enkf_state_internalize_GEN_DATA(
                 "set last_report (was {}) - will only look for step 0 data: {}",
                 last_report, stringlist_iget(keylist_GEN_DATA, 0));
 
-    enkf_fs_type *sim_fs = run_arg_get_sim_fs(run_arg);
-    const int iens = run_arg_get_iens(run_arg);
     fw_load_status result = LOAD_SUCCESSFUL;
     for (int ikey = 0; ikey < numkeys; ikey++) {
         const enkf_config_node_type *config_node = ensemble_config_get_node(
@@ -245,7 +242,7 @@ static fw_load_status enkf_state_internalize_GEN_DATA(
         // spinning through them all.
         int start = 0;
         int stop = util_int_max(0, last_report); // inclusive
-        auto status = enkf_state_load_gen_data_node(run_arg, sim_fs, iens,
+        auto status = enkf_state_load_gen_data_node(run_path, sim_fs, iens,
                                                     config_node, start, stop);
         if (status == LOAD_FAILURE)
             result = LOAD_FAILURE;
@@ -301,8 +298,9 @@ enkf_state_internalize_results(ensemble_config_type *ens_config,
     int last_report = time_map_get_last_step(enkf_fs_get_time_map(sim_fs));
     if (last_report < 0)
         last_report = model_config_get_last_history_restart(model_config);
-    auto result = enkf_state_internalize_GEN_DATA(ens_config, run_arg,
-                                                  model_config, last_report);
+    auto result = enkf_state_internalize_GEN_DATA(
+        ens_config, run_arg_get_iens(run_arg), sim_fs,
+        run_arg_get_runpath(run_arg), last_report);
     if (result == LOAD_FAILURE)
         return {LOAD_FAILURE, "Failed to internalize GEN_DATA"};
     return {LOAD_SUCCESSFUL, "Results loaded successfully."};
