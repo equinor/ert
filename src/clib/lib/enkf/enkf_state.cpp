@@ -11,7 +11,6 @@
 
 #include "ert/enkf/ensemble_config.hpp"
 #include "ert/enkf/model_config.hpp"
-#include "ert/enkf/run_arg_type.hpp"
 
 #include <ert/enkf/enkf_defaults.hpp>
 #include <ert/enkf/enkf_node.hpp>
@@ -29,13 +28,16 @@ void enkf_state_initialize(enkf_fs_type *fs, enkf_node_type *param_node,
         enkf_node_store(param_node, fs, node_id);
 }
 
-ecl_sum_type *load_ecl_sum(const char *run_path, const char *eclbase) {
+ecl_sum_type *load_ecl_sum(const std::string run_path,
+                           const std::string eclbase) {
     ecl_sum_type *summary = NULL;
 
     char *header_file = ecl_util_alloc_exfilename(
-        run_path, eclbase, ECL_SUMMARY_HEADER_FILE, DEFAULT_FORMATTED, -1);
+        run_path.c_str(), eclbase.c_str(), ECL_SUMMARY_HEADER_FILE,
+        DEFAULT_FORMATTED, -1);
     char *unified_file = ecl_util_alloc_exfilename(
-        run_path, eclbase, ECL_UNIFIED_SUMMARY_FILE, DEFAULT_FORMATTED, -1);
+        run_path.c_str(), eclbase.c_str(), ECL_UNIFIED_SUMMARY_FILE,
+        DEFAULT_FORMATTED, -1);
     stringlist_type *data_files = stringlist_alloc_new();
     if ((unified_file != NULL) && (header_file != NULL)) {
         stringlist_append_copy(data_files, unified_file);
@@ -184,7 +186,7 @@ enkf_state_internalize_dynamic_eclipse_results(
 }
 
 static fw_load_status enkf_state_load_gen_data_node(
-    const run_arg_type *run_arg, enkf_fs_type *sim_fs, int iens,
+    const std::string run_path, enkf_fs_type *sim_fs, int iens,
     const enkf_config_node_type *config_node, int start, int stop) {
     fw_load_status status = LOAD_SUCCESSFUL;
     for (int report_step = start; report_step <= stop; report_step++) {
@@ -193,9 +195,7 @@ static fw_load_status enkf_state_load_gen_data_node(
 
         enkf_node_type *node = enkf_node_alloc(config_node);
 
-        if (enkf_node_forward_load(node, report_step,
-                                   run_arg_get_runpath(run_arg),
-                                   run_arg_get_sim_fs(run_arg))) {
+        if (enkf_node_forward_load(node, report_step, run_path, sim_fs)) {
             node_id_type node_id = {.report_step = report_step, .iens = iens};
 
             enkf_node_store(node, sim_fs, node_id);
@@ -217,9 +217,10 @@ static fw_load_status enkf_state_load_gen_data_node(
     return status;
 }
 
-static fw_load_status enkf_state_internalize_GEN_DATA(
-    const ensemble_config_type *ens_config, const run_arg_type *run_arg,
-    const model_config_type *model_config, int last_report) {
+static fw_load_status
+enkf_state_internalize_GEN_DATA(const ensemble_config_type *ens_config,
+                                const int iens, enkf_fs_type *sim_fs,
+                                const std::string run_path, int last_report) {
 
     stringlist_type *keylist_GEN_DATA =
         ensemble_config_alloc_keylist_from_impl_type(ens_config, GEN_DATA);
@@ -233,8 +234,6 @@ static fw_load_status enkf_state_internalize_GEN_DATA(
                 "set last_report (was {}) - will only look for step 0 data: {}",
                 last_report, stringlist_iget(keylist_GEN_DATA, 0));
 
-    enkf_fs_type *sim_fs = run_arg_get_sim_fs(run_arg);
-    const int iens = run_arg_get_iens(run_arg);
     fw_load_status result = LOAD_SUCCESSFUL;
     for (int ikey = 0; ikey < numkeys; ikey++) {
         const enkf_config_node_type *config_node = ensemble_config_get_node(
@@ -245,7 +244,7 @@ static fw_load_status enkf_state_internalize_GEN_DATA(
         // spinning through them all.
         int start = 0;
         int stop = util_int_max(0, last_report); // inclusive
-        auto status = enkf_state_load_gen_data_node(run_arg, sim_fs, iens,
+        auto status = enkf_state_load_gen_data_node(run_path, sim_fs, iens,
                                                     config_node, start, stop);
         if (status == LOAD_FAILURE)
             result = LOAD_FAILURE;
@@ -262,10 +261,10 @@ static fw_load_status enkf_state_internalize_GEN_DATA(
    Will mainly be called at the end of the forward model, but can also
    be called manually from external scope.
 */
-static std::pair<fw_load_status, std::string>
-enkf_state_internalize_results(ensemble_config_type *ens_config,
-                               model_config_type *model_config,
-                               const run_arg_type *run_arg) {
+static std::pair<fw_load_status, std::string> enkf_state_internalize_results(
+    ensemble_config_type *ens_config, model_config_type *model_config,
+    const std::string &job_name, const int iens, const std::string &run_path,
+    enkf_fs_type *sim_fs) {
     const summary_key_matcher_type *matcher =
         ensemble_config_get_summary_key_matcher(ens_config);
 
@@ -276,66 +275,50 @@ enkf_state_internalize_results(ensemble_config_type *ens_config,
         // in these results are inferred from the loading of summary results,
         // hence we must load the summary results first.
         try {
-            auto summary = load_ecl_sum(run_arg_get_runpath(run_arg),
-                                        run_arg_get_job_name(run_arg));
+            auto summary = load_ecl_sum(run_path, job_name);
             auto status = enkf_state_internalize_dynamic_eclipse_results(
-                ens_config, summary, matcher, run_arg_get_sim_fs(run_arg),
-                run_arg_get_iens(run_arg));
+                ens_config, summary, matcher, sim_fs, iens);
             ecl_sum_free(summary);
             if (status.first != LOAD_SUCCESSFUL) {
                 return {status.first,
-                        status.second +
-                            fmt::format(" from: {}/{}.UNSMRY",
-                                        run_arg_get_runpath(run_arg),
-                                        run_arg_get_job_name(run_arg))};
+                        status.second + fmt::format(" from: {}/{}.UNSMRY",
+                                                    run_path, job_name)};
             }
         } catch (std::invalid_argument const &ex) {
-            return {LOAD_FAILURE,
-                    ex.what() + fmt::format(" from: {}/{}.UNSMRY",
-                                            run_arg_get_runpath(run_arg),
-                                            run_arg_get_job_name(run_arg))};
+            return {LOAD_FAILURE, ex.what() + fmt::format(" from: {}/{}.UNSMRY",
+                                                          run_path, job_name)};
         }
     }
 
-    enkf_fs_type *sim_fs = run_arg_get_sim_fs(run_arg);
     int last_report = time_map_get_last_step(enkf_fs_get_time_map(sim_fs));
     if (last_report < 0)
         last_report = model_config_get_last_history_restart(model_config);
-    auto result = enkf_state_internalize_GEN_DATA(ens_config, run_arg,
-                                                  model_config, last_report);
+    auto result = enkf_state_internalize_GEN_DATA(ens_config, iens, sim_fs,
+                                                  run_path, last_report);
     if (result == LOAD_FAILURE)
         return {LOAD_FAILURE, "Failed to internalize GEN_DATA"};
     return {LOAD_SUCCESSFUL, "Results loaded successfully."};
 }
 
-std::pair<fw_load_status, std::string>
-enkf_state_load_from_forward_model(ensemble_config_type *ens_config,
-                                   model_config_type *model_config,
-                                   const run_arg_type *run_arg) {
+std::pair<fw_load_status, std::string> enkf_state_load_from_forward_model(
+    ensemble_config_type *ens_config, model_config_type *model_config,
+    const int iens, const std::string &run_path, const std::string &job_name,
+    enkf_fs_type *sim_fs) {
     std::pair<fw_load_status, std::string> result;
     if (ensemble_config_have_forward_init(ens_config))
-        result = ensemble_config_forward_init(ens_config, run_arg);
-    if (result.first == LOAD_SUCCESSFUL) {
         result =
-            enkf_state_internalize_results(ens_config, model_config, run_arg);
+            ensemble_config_forward_init(ens_config, iens, run_path, sim_fs);
+    if (result.first == LOAD_SUCCESSFUL) {
+        result = enkf_state_internalize_results(
+            ens_config, model_config, job_name, iens, run_path, sim_fs);
     }
-    auto &state_map = enkf_fs_get_state_map(run_arg_get_sim_fs(run_arg));
-    int iens = run_arg_get_iens(run_arg);
+    auto &state_map = enkf_fs_get_state_map(sim_fs);
     if (result.first != LOAD_SUCCESSFUL)
         state_map.set(iens, STATE_LOAD_FAILURE);
     else
         state_map.set(iens, STATE_HAS_DATA);
 
     return result;
-}
-
-bool enkf_state_complete_forward_model_EXIT_handler__(run_arg_type *run_arg) {
-    if (run_arg_get_run_status(run_arg) != JOB_LOAD_FAILURE)
-        run_arg_set_run_status(run_arg, JOB_RUN_FAILURE);
-
-    auto &state_map = enkf_fs_get_state_map(run_arg_get_sim_fs(run_arg));
-    state_map.set(run_arg_get_iens(run_arg), STATE_LOAD_FAILURE);
-    return false;
 }
 
 ERT_CLIB_SUBMODULE("enkf_state", m) {
@@ -345,8 +328,10 @@ ERT_CLIB_SUBMODULE("enkf_state", m) {
 
     m.def("internalize_results", [](Cwrap<ensemble_config_type> ens_config,
                                     Cwrap<model_config_type> model_config,
-                                    Cwrap<run_arg_type> run_arg) {
+                                    const std::string &job_name, const int iens,
+                                    const std::string &run_path,
+                                    Cwrap<enkf_fs_type> sim_fs) {
         return enkf_state_internalize_results(ens_config, model_config,
-                                              run_arg);
+                                              job_name, iens, run_path, sim_fs);
     });
 }

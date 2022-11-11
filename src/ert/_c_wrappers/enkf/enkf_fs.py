@@ -16,6 +16,7 @@ from ert._clib import update
 if TYPE_CHECKING:
     from ecl.util.util import IntVector
 
+    from ert._c_wrappers.enkf import RunArg
     from ert._c_wrappers.enkf.state_map import StateMap
     from ert._clib.state_map import RealizationStateEnum
 
@@ -129,10 +130,11 @@ class EnkfFs(BaseCClass):
         ensemble_size,
         ensemble_config,
         model_config,
-        run_args,
+        run_args: List["RunArg"],
         active_realizations,
     ) -> int:
         """Returns the number of loaded realizations"""
+        run_args = [(real.iens, real.runpath, real.job_name) for real in run_args]
         return _clib.enkf_fs.load_from_run_path(
             self,
             ensemble_size,

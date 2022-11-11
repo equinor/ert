@@ -205,10 +205,10 @@ bool enkf_node_forward_load(enkf_node_type *enkf_node, int report_step,
     return loadOK;
 }
 
-bool enkf_node_forward_init(enkf_node_type *enkf_node, const char *run_path,
-                            int iens) {
-    char *init_file =
-        enkf_config_node_alloc_initfile(enkf_node->config, run_path, iens);
+bool enkf_node_forward_init(enkf_node_type *enkf_node,
+                            const std::string &run_path, int iens) {
+    char *init_file = enkf_config_node_alloc_initfile(enkf_node->config,
+                                                      run_path.c_str(), iens);
     bool init = enkf_node->initialize(enkf_node->data, iens, init_file);
     free(init_file);
     return init;
@@ -546,7 +546,7 @@ ERT_CLIB_SUBMODULE("enkf_node", m) {
         "forward_init",
         [](Cwrap<enkf_node_type> enkf_node, const std::string &run_path,
            int iens) {
-            return enkf_node_forward_init(enkf_node, run_path.c_str(), iens);
+            return enkf_node_forward_init(enkf_node, run_path, iens);
         },
         "self"_a, "run_path"_a, "iens"_a);
 }

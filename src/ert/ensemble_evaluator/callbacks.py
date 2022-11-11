@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import TYPE_CHECKING, Tuple
+from typing import TYPE_CHECKING, Any, Tuple
 
 from ert._c_wrappers.enkf.data.enkf_node import EnkfNode
 from ert._c_wrappers.enkf.enkf_state import internalize_results
@@ -57,7 +57,14 @@ def forward_model_ok(
         result = _ensemble_config_forward_init(ens_conf, run_arg)
 
     if result[0] == LoadStatus.LOAD_SUCCESSFUL:
-        result = internalize_results(ens_conf, model_conf, run_arg)
+        result = internalize_results(
+            ens_conf,
+            model_conf,
+            run_arg.job_name,
+            run_arg.iens,
+            run_arg.runpath,
+            run_arg.sim_fs,
+        )
 
     run_arg.sim_fs.getStateMap()[run_arg.iens] = (
         RealizationStateEnum.STATE_HAS_DATA
@@ -66,3 +73,7 @@ def forward_model_ok(
     )
 
     return result
+
+
+def forward_model_exit(run_arg: "RunArg", *_: Tuple[Any]):
+    run_arg.sim_fs.getStateMap()[run_arg.iens] = RealizationStateEnum.STATE_LOAD_FAILURE

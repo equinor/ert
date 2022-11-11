@@ -4,9 +4,9 @@ from time import sleep
 from typing import TYPE_CHECKING, Any, List, Optional, Tuple
 
 from ert._c_wrappers.enkf.enums import HookRuntime
-from ert._c_wrappers.enkf.model_callbacks import LoadStatus, forward_model_exit
+from ert._c_wrappers.enkf.model_callbacks import LoadStatus
 from ert._c_wrappers.job_queue import JobQueueManager, RunStatusType
-from ert.ensemble_evaluator import forward_model_ok
+from ert.ensemble_evaluator import forward_model_exit, forward_model_ok
 
 from .forward_model_status import ForwardModelStatus
 
@@ -17,6 +17,10 @@ if TYPE_CHECKING:
 
 def done_callback(args: Tuple["RunArg", "ResConfig"]) -> Tuple[LoadStatus, str]:
     return forward_model_ok(args[0], args[1].ensemble_config, args[1].model_config)
+
+
+def exit_callback(args: Tuple["RunArg", Any]) -> None:
+    forward_model_exit(args[0])
 
 
 def _run_forward_model(
@@ -39,7 +43,7 @@ def _run_forward_model(
             ert.resConfig(),
             max_runtime,
             done_callback,
-            forward_model_exit,
+            exit_callback,
             ert.get_num_cpu(),
         )
 
