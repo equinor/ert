@@ -68,6 +68,7 @@ class ExtJob(BaseCClass):
     _set_define_args = ResPrototype(
         "subst_list_ref ext_job_set_define_args(ext_job, subst_list)"
     )
+    _free_deprecated_argv = ResPrototype("void ext_job_free_deprecated_argv(ext_job)")
 
     def __init__(
         self,
@@ -101,6 +102,9 @@ class ExtJob(BaseCClass):
             )
         else:
             return "UNINITIALIZED ExtJob"
+
+    def clear_deprecated_argv(self):
+        self._free_deprecated_argv()
 
     def set_define_args(self, subst_list: SubstitutionList) -> None:
         self._set_define_args(subst_list)

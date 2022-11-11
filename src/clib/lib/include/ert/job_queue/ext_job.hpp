@@ -14,7 +14,8 @@ extern "C" const char *ext_job_get_help_text(const ext_job_type *job);
 void ext_job_set_help_text(ext_job_type *job, const char *help_text);
 
 ext_job_type *ext_job_alloc_copy(const ext_job_type *);
-void ext_job_free_deprecated_argv(ext_job_type *ext_job); //DEPRECATED
+extern "C" void
+ext_job_free_deprecated_argv(ext_job_type *ext_job); //DEPRECATED
 ext_job_type *ext_job_alloc(const char *, const char *license_root_path,
                             bool private_job);
 extern "C" const char *ext_job_get_name(const ext_job_type *);

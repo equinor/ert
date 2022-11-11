@@ -153,6 +153,21 @@ def test_forward_model_job(job, forward_model, expected_args):
             ["word", "<ECLBASE>"],
             id="Some args",
         ),
+        pytest.param(
+            dedent(
+                """
+            EXECUTABLE echo
+            MIN_ARG    1
+            MAX_ARG    2
+            ARG_TYPE 0 STRING
+            ARG_TYPE 0 STRING
+            ARGLIST <ARGUMENTA> <ARGUMENTB>
+                    """
+            ),
+            "SIMULATION_JOB job_name arga argb",
+            ["arga", "argb"],
+            id="simulation job with arglist",
+        ),
     ],
 )
 def test_simulation_job(job, forward_model, expected_args):
