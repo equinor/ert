@@ -1,3 +1,4 @@
+# pylint: disable=pointless-statement
 import logging
 from textwrap import dedent
 
@@ -249,10 +250,6 @@ def test_summary_collector(monkeypatch, snake_oil_case_storage):
     assert pytest.approx(data["FOPR"][0]["2010-01-10"], rel=1e-5) == 0.1153691932
     assert pytest.approx(data["FOPR"][0]["2015-06-23"], rel=1e-5) == 0.1222724989
 
-    # pylint: disable=pointless-statement
-    # realization 4:
-    data.loc[4]
-
     with pytest.raises(KeyError):
         # realization 60:
         data.loc[60]
@@ -295,10 +292,6 @@ def test_misfit_collector(snake_oil_case_storage):
     assert pytest.approx(data["MISFIT:TOTAL"][0]) == 2024.461010928874
     assert pytest.approx(data["MISFIT:TOTAL"][4]) == 831.520534770889
 
-    # pylint: disable=pointless-statement
-    # realization 20:
-    data.loc[2]
-
     with pytest.raises(KeyError):
         # realization 60:
         data.loc[60]
@@ -317,10 +310,6 @@ def test_gen_kw_collector(snake_oil_case_storage):
 
     assert pytest.approx(data["SNAKE_OIL_PARAM:OP1_OFFSET"][0], rel=1e-5) == 0.028101138
     assert pytest.approx(data["SNAKE_OIL_PARAM:OP1_OFFSET"][1], rel=1e-5) == 0.065297145
-
-    # pylint: disable=pointless-statement
-    # realization 20:
-    data.loc[4]
 
     with pytest.raises(KeyError):
         # realization 60:
