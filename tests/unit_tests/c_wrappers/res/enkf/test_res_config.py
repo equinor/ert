@@ -245,19 +245,17 @@ def test_extensive_config(setup_case):
         "LSF_RESOURCE"
     )
 
-    site_config = res_config.site_config
-    job_list = site_config.job_list
     for job_name in snake_oil_structure_config["INSTALL_JOB"]:
-        assert job_name in job_list
+        job = res_config.installed_jobs[job_name]
 
         exp_job_data = snake_oil_structure_config["INSTALL_JOB"][job_name]
 
         assert (
             Path(exp_job_data["CONFIG"]).resolve()
-            == Path(job_list[job_name].get_config_file()).resolve()
+            == Path(job.get_config_file()).resolve()
         )
-        assert exp_job_data["STDERR"] == job_list[job_name].get_stderr_file()
-        assert exp_job_data["STDOUT"] == job_list[job_name].get_stdout_file()
+        assert exp_job_data["STDERR"] == job.get_stderr_file()
+        assert exp_job_data["STDOUT"] == job.get_stdout_file()
 
     ensemble_config = res_config.ensemble_config
     for extension in ["SMSPEC", "UNSMRY"]:
@@ -427,18 +425,18 @@ def test_res_config_dict_constructor(setup_case):
         ConfigKeys.MAX_RESAMPLE: 1,  # model
         ConfigKeys.TIME_MAP: "../input/refcase/time_map.txt",  # model
         ConfigKeys.INSTALL_JOB: [
-            {
-                ConfigKeys.NAME: "SNAKE_OIL_SIMULATOR",
-                ConfigKeys.PATH: "../../snake_oil/jobs/SNAKE_OIL_SIMULATOR",
-            },
-            {
-                ConfigKeys.NAME: "SNAKE_OIL_NPV",
-                ConfigKeys.PATH: "../../snake_oil/jobs/SNAKE_OIL_NPV",
-            },
-            {
-                ConfigKeys.NAME: "SNAKE_OIL_DIFF",
-                ConfigKeys.PATH: "../../snake_oil/jobs/SNAKE_OIL_DIFF",
-            },  # site
+            (
+                "SNAKE_OIL_SIMULATOR",
+                "../../snake_oil/jobs/SNAKE_OIL_SIMULATOR",
+            ),
+            (
+                "SNAKE_OIL_NPV",
+                "../../snake_oil/jobs/SNAKE_OIL_NPV",
+            ),
+            (
+                "SNAKE_OIL_DIFF",
+                "../../snake_oil/jobs/SNAKE_OIL_DIFF",
+            ),
         ],
         ConfigKeys.FORWARD_MODEL: [
             {
@@ -513,8 +511,6 @@ def test_res_config_dict_constructor(setup_case):
         ert_share_path + "/workflows/jobs/shell",
         ert_share_path + "/workflows/jobs/internal-gui/config",
     ]
-    for ip in config_data_new[ConfigKeys.INSTALL_JOB]:
-        ip[ConfigKeys.PATH] = os.path.realpath(ip[ConfigKeys.PATH])
 
     for ip in config_data_new[ConfigKeys.LOAD_WORKFLOW]:
         ip[ConfigKeys.PATH] = os.path.realpath(ip[ConfigKeys.PATH])

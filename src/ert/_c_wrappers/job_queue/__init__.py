@@ -64,7 +64,6 @@ from .environment_varlist import EnvironmentVarlist  # noqa
 from .ert_plugin import CancelPluginException, ErtPlugin  # noqa
 from .ert_script import ErtScript  # noqa
 from .ext_job import ExtJob  # noqa
-from .ext_joblist import ExtJoblist  # noqa
 from .external_ert_script import ExternalErtScript  # noqa
 from .forward_model import ForwardModel  # noqa
 from .function_ert_script import FunctionErtScript  # noqa
@@ -97,7 +96,6 @@ __all__ = [
     "LSFDriver",
     "LocalDriver",
     "ExtJob",
-    "ExtJoblist",
     "EnvironmentVarlist",
     "ForwardModel",
     "ErtScript",

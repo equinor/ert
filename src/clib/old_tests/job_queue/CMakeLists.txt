@@ -38,7 +38,6 @@ endforeach()
 foreach(
   name
   job_loadOK
-  ext_joblist
   job_torque_submit
   job_queue_stress_task
   job_program_output
@@ -77,7 +76,3 @@ add_test(
   COMMAND job_torque_submit dummyparam)
 set_property(TEST job_torque_submit PROPERTY ENVIRONMENT “setenv PATH
                                              ${CMAKE_CURRENT_BINARY_DIR}:$PATH”)
-
-add_test(NAME ext_joblist
-         COMMAND ext_joblist "${TEST_DATA_DIR}/job_queue/jobs/util"
-                 "${CMAKE_CURRENT_SOURCE_DIR}")

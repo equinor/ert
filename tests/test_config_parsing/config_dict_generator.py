@@ -252,11 +252,9 @@ def default_ext_job_names():
 @st.composite
 def random_ext_job_names(draw, some_words, some_file_names):
     return draw(
-        st.fixed_dictionaries(
-            {
-                ConfigKeys.NAME: some_words,
-                ConfigKeys.PATH: st.just(draw(some_file_names) + "job_config"),
-            }
+        st.tuples(
+            some_words,
+            st.just(draw(some_file_names) + "job_config"),
         )
     )
 
@@ -402,18 +400,11 @@ def config_dicts(draw):
         st.lists(
             st.fixed_dictionaries(
                 {
-                    ConfigKeys.NAME: st.one_of(
-                        default_ext_job_names(),
-                        st.sampled_from(
-                            list(
-                                map(
-                                    lambda job: job[ConfigKeys.NAME],
-                                    config_dict[ConfigKeys.INSTALL_JOB],
-                                )
-                            )
-                        )
-                        if len(config_dict[ConfigKeys.INSTALL_JOB]) > 0
-                        else st.nothing(),
+                    ConfigKeys.NAME: st.sampled_from(
+                        [
+                            job_name
+                            for job_name, _ in config_dict[ConfigKeys.INSTALL_JOB]
+                        ]
                     ),
                     ConfigKeys.ARGLIST: st.just(
                         ",".join(
@@ -423,10 +414,12 @@ def config_dicts(draw):
                 }
             ),
         )
+        if config_dict[ConfigKeys.INSTALL_JOB]
+        else st.just([])
     )
 
     should_exist_files = [
-        job[ConfigKeys.PATH] for job in config_dict[ConfigKeys.INSTALL_JOB]
+        job_path for _, job_path in config_dict[ConfigKeys.INSTALL_JOB]
     ]
     should_exist_files.append(config_dict[ConfigKeys.DATA_FILE])
     should_exist_files.append(config_dict[ConfigKeys.JOB_SCRIPT])
@@ -434,7 +427,7 @@ def config_dicts(draw):
     should_exist_files.append(config_dict[ConfigKeys.OBS_CONFIG])
 
     should_be_executable_files = [
-        job[ConfigKeys.PATH] for job in config_dict[ConfigKeys.INSTALL_JOB]
+        job_path for _, job_path in config_dict[ConfigKeys.INSTALL_JOB]
     ]
     should_be_executable_files.append(config_dict[ConfigKeys.JOB_SCRIPT])
 
@@ -471,12 +464,11 @@ def config_dicts(draw):
     ):
         assume(len(config_dict[ConfigKeys.FORWARD_MODEL]) == 0)
 
-    for job in config_dict[ConfigKeys.INSTALL_JOB]:
-        job_file = job[ConfigKeys.PATH]
+    for _, job_path in config_dict[ConfigKeys.INSTALL_JOB]:
         executable_file = draw(file_names) + ".exe"
         touch(executable_file)
         should_be_executable_files.append(executable_file)
-        Path(job_file).write_text(
+        Path(job_path).write_text(
             f"EXECUTABLE {executable_file}\nMIN_ARG 0\nMAX_ARG 1\n", encoding="utf-8"
         )
 
@@ -602,10 +594,8 @@ def to_config_file(filename, config_dict):  # pylint: disable=too-many-branches
                 for define_key, define_value in keyword_value.items():
                     config.write(f"{keyword} {define_key} {define_value}\n")
             elif keyword == ConfigKeys.INSTALL_JOB:
-                for job in keyword_value:
-                    config.write(
-                        f"{keyword}" f" {job[ConfigKeys.NAME]} {job[ConfigKeys.PATH]}\n"
-                    )
+                for job_name, job_path in keyword_value:
+                    config.write(f"{keyword}" f" {job_name} {job_path}\n")
             elif keyword == ConfigKeys.QUEUE_OPTION:
                 for setting in keyword_value:
                     config.write(

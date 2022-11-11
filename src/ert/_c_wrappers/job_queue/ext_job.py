@@ -69,6 +69,8 @@ class ExtJob(BaseCClass):
     )
     _free_deprecated_argv = ResPrototype("void ext_job_free_deprecated_argv(ext_job)")
 
+    _copy = ResPrototype("ext_job_obj ext_job_alloc_copy(ext_job)")
+
     def __init__(
         self,
         config_file: str,
@@ -101,6 +103,9 @@ class ExtJob(BaseCClass):
 
     def clear_deprecated_argv(self):
         self._free_deprecated_argv()
+
+    def copy(self):
+        return self._copy()
 
     def set_define_args(self, subst_list: SubstitutionList) -> None:
         self._set_define_args(subst_list)

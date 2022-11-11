@@ -12,18 +12,18 @@ def test_constructors(snake_oil_case):
     assert snake_oil_case.resConfig().site_config == SiteConfig.from_config_dict(
         config_dict={
             ConfigKeys.INSTALL_JOB: [
-                {
-                    ConfigKeys.NAME: "SNAKE_OIL_SIMULATOR",
-                    ConfigKeys.PATH: os.getcwd() + "/jobs/SNAKE_OIL_SIMULATOR",
-                },
-                {
-                    ConfigKeys.NAME: "SNAKE_OIL_NPV",
-                    ConfigKeys.PATH: os.getcwd() + "/jobs/SNAKE_OIL_NPV",
-                },
-                {
-                    ConfigKeys.NAME: "SNAKE_OIL_DIFF",
-                    ConfigKeys.PATH: os.getcwd() + "/jobs/SNAKE_OIL_DIFF",
-                },
+                (
+                    "SNAKE_OIL_SIMULATOR",
+                    os.getcwd() + "/jobs/SNAKE_OIL_SIMULATOR",
+                ),
+                (
+                    "SNAKE_OIL_NPV",
+                    os.getcwd() + "/jobs/SNAKE_OIL_NPV",
+                ),
+                (
+                    "SNAKE_OIL_DIFF",
+                    os.getcwd() + "/jobs/SNAKE_OIL_DIFF",
+                ),
             ],
             ConfigKeys.INSTALL_JOB_DIRECTORY: [
                 ert_share_path + "/forward-models/res",

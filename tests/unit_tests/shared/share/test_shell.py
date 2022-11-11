@@ -402,11 +402,8 @@ def minimal_case(tmpdir):
 
 def test_shell_script_jobs_availability(minimal_case):
     res_config = ResConfig("config.ert")
-    site_config = res_config.site_config
-
-    installed_jobs = site_config.job_list
     fm_shell_jobs = {}
-    for job in installed_jobs:
+    for job in res_config.installed_jobs.values():
         exe = job.get_executable()
         if "shell_scripts" in exe:
             fm_shell_jobs[job.name().upper()] = Path(exe).resolve()

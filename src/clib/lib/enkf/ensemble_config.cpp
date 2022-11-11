@@ -18,8 +18,6 @@
 
 #include <ert/ecl/ecl_grid.h>
 
-#include <ert/job_queue/ext_joblist.hpp>
-
 #include <ert/config/config_parser.hpp>
 
 #include <ert/enkf/config_keys.hpp>

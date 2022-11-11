@@ -10,7 +10,6 @@ import pytest
 from ert._c_wrappers.enkf.substituter import Substituter
 from ert._c_wrappers.job_queue.environment_varlist import EnvironmentVarlist
 from ert._c_wrappers.job_queue.ext_job import ExtJob
-from ert._c_wrappers.job_queue.ext_joblist import ExtJoblist
 from ert._c_wrappers.job_queue.forward_model import ForwardModel
 from ert.simulator.forward_model_status import ForwardModelStatus
 
@@ -259,13 +258,7 @@ def set_up_forward_model(selected_jobs=None):
         selected_jobs = range(len(joblist))
     jobs = [generate_job_from_dict(job) for job in joblist]
 
-    ext_joblist = ExtJoblist()
-    for job in jobs:
-        ext_joblist.add_job(job.name(), job)
-
-    forward_model = ForwardModel(
-        jobs=[jobs[i] for i in selected_jobs], ext_joblist=ext_joblist
-    )
+    forward_model = ForwardModel(jobs=[jobs[i] for i in selected_jobs])
 
     return forward_model
 
@@ -332,9 +325,7 @@ def test_transfer_arg_types():
 
     job = ExtJob("FWD_MODEL", True)
 
-    ext_joblist = ExtJoblist()
-    ext_joblist.add_job(job.name(), job)
-    forward_model = ForwardModel(jobs=[job], ext_joblist=ext_joblist)
+    forward_model = ForwardModel(jobs=[job])
 
     run_id = "test_no_jobs_id"
 
