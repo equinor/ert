@@ -273,9 +273,8 @@ static bool gen_data_fload_active__(gen_data_type *gen_data,
    Return value is whether file was found or was empty
   - might have to check this in calling scope.
 */
-bool gen_data_fload_with_report_step(gen_data_type *gen_data,
-                                     const char *filename, int report_step,
-                                     enkf_fs_type *sim_fs) {
+bool gen_data_forward_load(gen_data_type *gen_data, const char *filename,
+                           int report_step, enkf_fs_type *fs) {
     bool file_exists = fs::exists(filename);
     if (file_exists) {
         gen_data_file_format_type input_format =
@@ -288,19 +287,12 @@ bool gen_data_fload_with_report_step(gen_data_type *gen_data,
         } else {
             bool_vector_reset(gen_data->active_mask);
         }
-        gen_data_set_data__(gen_data, vec.size(), report_step, vec.data(),
-                            sim_fs);
+        gen_data_set_data__(gen_data, vec.size(), report_step, vec.data(), fs);
     } else
         logger->warning("GEN_DATA({}): missing file: {}",
                         gen_data_get_key(gen_data), filename);
 
     return file_exists;
-}
-
-bool gen_data_forward_load(gen_data_type *gen_data, const char *file_name,
-                           int report_step, enkf_fs_type *fs) {
-    return gen_data_fload_with_report_step(gen_data, file_name, report_step,
-                                           fs);
 }
 
 static void gen_data_ecl_write_binary(const gen_data_type *gen_data,
