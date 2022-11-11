@@ -18,11 +18,6 @@ from ert.shared.feature_toggling import FeatureToggling
 
 from .utils import SOURCE_DIR
 
-
-def pytest_configure():
-    pytest.TEST_CONFIG_FILE_KEY = "__TEST_CONFIG_FILE"
-
-
 # CI runners produce unreliable test timings
 # so too_slow healthcheck and deadline has to
 # be supressed to avoid flaky behavior

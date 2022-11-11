@@ -12,7 +12,7 @@ from .config_dict_generator import config_dicts, to_config_file
 @given(config_dicts())
 def test_site_config_dict_same_as_from_file(config_dict):
     cwd = os.getcwd()
-    filename = config_dict[pytest.TEST_CONFIG_FILE_KEY]
+    filename = config_dict[ConfigKeys.DEFINE_KEY]["<CONFIG_FILE>"]
     to_config_file(filename, config_dict)
     config_dict[ConfigKeys.CONFIG_DIRECTORY] = cwd
     assert (

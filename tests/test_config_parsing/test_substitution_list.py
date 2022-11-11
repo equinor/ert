@@ -22,7 +22,7 @@ def test_different_defines_give_different_subst_lists(config_dict1, config_dict2
 @pytest.mark.usefixtures("use_tmpdir")
 @given(config_dicts())
 def test_from_dict_and_from_file_creates_equal_subst_lists(config_dict):
-    filename = config_dict[pytest.TEST_CONFIG_FILE_KEY]
+    filename = config_dict[ConfigKeys.DEFINE_KEY]["<CONFIG_FILE>"]
     to_config_file(filename, config_dict)
     res_config_from_file = ResConfig(user_config_file=filename)
     res_config_from_dict = ResConfig(config_dict=config_dict)
