@@ -14,7 +14,7 @@
 #include <ert/enkf/gen_data_config.hpp>
 
 void gen_data_assert_size(gen_data_type *gen_data, int size, int report_step);
-bool gen_data_forward_load(gen_data_type *gen_data, const char *file_name,
+bool gen_data_forward_load(gen_data_type *gen_data, const char *filename,
                            int report_step, enkf_fs_type *fs);
 extern "C" void gen_data_free(gen_data_type *);
 extern "C" int gen_data_get_size(const gen_data_type *);
@@ -24,9 +24,6 @@ extern "C" void gen_data_export_data(const gen_data_type *gen_data,
 const char *gen_data_get_key(const gen_data_type *gen_data);
 int gen_data_get_size(const gen_data_type *gen_data);
 double *gen_data_get_double_vector(const gen_data_type *gen_data);
-bool gen_data_fload_with_report_step(gen_data_type *gen_data,
-                                     const char *filename, int report_step,
-                                     enkf_fs_type *sim_fs);
 
 VOID_ALLOC_HEADER(gen_data);
 VOID_FREE_HEADER(gen_data);
