@@ -1,8 +1,5 @@
 #include <stdexcept>
-#include <stdio.h>
-#include <string.h>
 #include <string>
-#include <sys/types.h>
 #include <vector>
 
 #include <ert/python.hpp>
@@ -11,8 +8,6 @@
 
 #include <ert/ecl/ecl_kw.h>
 #include <ert/ecl/ecl_sum.h>
-
-#include <ert/job_queue/environment_varlist.hpp>
 
 #include "ert/enkf/ensemble_config.hpp"
 #include "ert/enkf/model_config.hpp"

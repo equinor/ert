@@ -1,6 +1,4 @@
-#include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 
 #include <ert/util/buffer.h>
 #include <ert/util/util.h>
@@ -11,7 +9,6 @@
 #include <ert/enkf/field.hpp>
 #include <ert/enkf/gen_data.hpp>
 #include <ert/enkf/gen_kw.hpp>
-#include <ert/enkf/run_arg.hpp>
 #include <ert/enkf/summary.hpp>
 #include <ert/enkf/surface.hpp>
 #include <ert/python.hpp>
