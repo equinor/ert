@@ -58,7 +58,7 @@ void test_gendata_fload() {
     const char *cwd = ta.original_cwd().c_str();
     enkf_fs_type *write_fs =
         enkf_fs_create_fs(cwd, BLOCK_FS_DRIVER_ID, 1, true);
-    gen_data_fload_with_report_step(gen_data, "RFT_FILE", 0, write_fs);
+    gen_data_forward_load(gen_data, "RFT_FILE", 0, write_fs);
     int data_size = gen_data_config_get_data_size(config, 0);
     test_assert_int_equal(data_size, 4);
 
@@ -76,7 +76,7 @@ void test_gendata_fload_empty_file() {
     const char *cwd = ta.original_cwd().c_str();
     enkf_fs_type *write_fs =
         enkf_fs_create_fs(cwd, BLOCK_FS_DRIVER_ID, 1, true);
-    gen_data_fload_with_report_step(gen_data, "EMPTY_FILE", 0, write_fs);
+    gen_data_forward_load(gen_data, "EMPTY_FILE", 0, write_fs);
     int data_size = gen_data_config_get_data_size(config, 0);
     test_assert_true(data_size == 0);
 
