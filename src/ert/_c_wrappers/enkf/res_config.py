@@ -320,6 +320,7 @@ class ResConfig:
             job = self.site_config.job_list.get_job_copy(job_description[0])
             job.set_arglist(job_description[1:])
             job.set_define_args(self.substitution_list)
+            job.clear_deprecated_argv()
             job.convertToCReference(None)
             jobs.append(job)
 
