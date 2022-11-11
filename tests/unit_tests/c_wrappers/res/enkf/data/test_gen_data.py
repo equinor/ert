@@ -4,7 +4,6 @@ from ert._c_wrappers.enkf.node_id import NodeId
 
 def test_load_active_masks(snake_oil_case_storage):
     case1 = "default_0"
-    case2 = "default_1"
     ert = snake_oil_case_storage
 
     fs1 = ert.getEnkfFsManager().getFileSystem(case1)
@@ -15,10 +14,6 @@ def test_load_active_masks(snake_oil_case_storage):
     active_mask = config_node.getDataModelConfig().getActiveMask()
     first_active_mask_length = len(active_mask)
     assert first_active_mask_length == 2000
-
-    fs2 = ert.getEnkfFsManager().getFileSystem(case2)
-    data_node = EnkfNode(config_node)
-    data_node.tryLoad(fs2, NodeId(199, 0))
 
     active_mask = config_node.getDataModelConfig().getActiveMask()
     second_active_mask_len = len(active_mask)
