@@ -118,85 +118,10 @@ jobs:
         name: ${{ matrix.os }} Python ${{ matrix.python-version }} wheel
         path: dist/*
 
-  tests-ert:
-    name: Run ert tests
-    needs: [build-wheels]
-    timeout-minutes: 30
-    strategy:
-      fail-fast: false
-      matrix:
-        python-version: ['3.8', '3.9', '3.10']
-        os: [ubuntu-latest, macos-latest]
-        test-type: ['integration-tests', 'unit-tests', 'gui-test']
-        # Excluded to keep build times down on Github actions
-        exclude:
-          - os: macos-latest
-            python-version: '3.9'
-          - os: macos-latest
-            test-type: 'gui-test'
-          - os: ubuntu-latest
-            python-version: '3.9'
-            test-type: 'gui-test'
-          - os: ubuntu-latest
-            python-version: '3.10'
-            test-type: 'gui-test'
-          - os: macos-latest
-            python-version: '3.10'
-
-    runs-on: ${{ matrix.os }}
-
-    steps:
-    - uses: actions/checkout@v2
+    - name: Run tests
+      uses: .github/workflows/test_ert.yml
       with:
-        fetch-depth: 0
-
-    - uses: './.github/actions/install_dependencies'
-      if: matrix.test-type == 'gui-test'
-      with:
-        os: ${{ matrix.os }}
-
-    - uses: actions/setup-python@v2
-      with:
-        python-version: ${{ matrix.python-version }}
-
-    - name: Get wheels
-      uses: actions/download-artifact@v2
-      with:
-        name: ${{ matrix.os }} Python ${{ matrix.python-version }} wheel
-
-    - name: Install wheel and test dependencies
-      run: |
-        find . -name "*.whl" -exec pip install {} \;
-        pip install -r dev-requirements.txt
-
-    - name: Test GUI
-      if: matrix.test-type == 'gui-test'
-      env:
-        DISPLAY: ':99.0'
-      run: |
-        ci/github/start_herbstluftwm.sh &
-        sleep 5
-        pytest tests -sv --hypothesis-profile=ci -m "requires_window_manager"
-
-    - name: Unit Test
-      if: matrix.test-type == 'unit-tests'
-      run: |
-        pytest tests -sv  --hypothesis-profile=ci -m "not integration_test and not requires_window_manager"
-
-    - name: Integration Test
-      if: matrix.test-type == 'integration-tests'
-      run: |
-        pytest tests -sv --hypothesis-profile=ci -m "integration_test and not requires_window_manager"
-
-    - name: Test for a clean repository
-      run: |
-        # Run this before the 'Test CLI' entry below, which produces a few files that are accepted for now. Exclude the wheel.
-        git status --porcelain | sed '/ert.*.whl$/d'
-        test -z "$(git status --porcelain | sed '/ert.*.whl$/d')"
-
-    - name: Test CLI
-      run: |
-        ert --help
+        build-config: ${{ tojson(matrix) }}
 
   docs-ert:
     name: Test ert docs
