@@ -27,8 +27,6 @@ foreach(
   enkf_obs_invalid_path
   enkf_obs
   enkf_obs_vector
-  enkf_plot_gen_kw
-  enkf_plot_gen_kw_vector
   enkf_run_arg
   enkf_state_map
   enkf_time_map

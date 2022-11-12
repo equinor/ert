@@ -1,5 +1,7 @@
-#include <ert/enkf/enkf_plot_gen_kw.hpp>
+#include <ert/enkf/enkf_node.hpp>
 #include <ert/enkf/ensemble_config.hpp>
+#include <ert/enkf/gen_kw.hpp>
+#include <ert/enkf/gen_kw_config.hpp>
 #include <ert/python.hpp>
 #include <math.h>
 #include <pybind11/numpy.h>
@@ -7,6 +9,22 @@
 #include <pybind11/stl.h>
 
 static auto logger = ert::get_logger("enkf_fs");
+
+int get_keyword_index(const enkf_config_node_type *config_node,
+                      const std::string &keyword) {
+    const gen_kw_config_type *gen_kw_config =
+        (const gen_kw_config_type *)enkf_config_node_get_ref(config_node);
+
+    auto kw_count = gen_kw_config_get_data_size(gen_kw_config);
+    int result = -1;
+    for (int i = 0; i < kw_count; i++) {
+        std::string key = gen_kw_config_iget_name(gen_kw_config, i);
+        if (key == keyword) {
+            result = i;
+        }
+    }
+    return result;
+}
 
 ERT_CLIB_SUBMODULE("enkf_fs_keyword_data", m) {
     m.def(
@@ -39,34 +57,26 @@ ERT_CLIB_SUBMODULE("enkf_fs_keyword_data", m) {
 
                 auto ensemble_config_node =
                     ensemble_config_get_node(ensemble_config, key.c_str());
-                auto ensemble_data =
-                    enkf_plot_gen_kw_alloc(ensemble_config_node);
-                enkf_plot_gen_kw_load(ensemble_data, enkf_fs, true, 0, NULL);
-
-                auto keyword_index =
-                    enkf_plot_gen_kw_get_keyword_index(ensemble_data, keyword);
                 for (int realization_index = 0;
                      realization_index < realization_size;
                      realization_index++) {
                     int realization = realizations.at(realization_index);
-                    enkf_plot_gen_kw_vector_type *vector =
-                        enkf_plot_gen_kw_iget(ensemble_data, realization);
-
-                    auto vector_size = enkf_plot_gen_kw_vector_get_size(vector);
-                    if (keyword_index < vector_size) {
-                        auto value =
-                            enkf_plot_gen_kw_vector_iget(vector, keyword_index);
-                        if (use_log_scale) {
+                    node_id_type node_id = {.report_step = 0,
+                                            .iens = realization};
+                    enkf_node_type *data_node =
+                        enkf_node_alloc(ensemble_config_node);
+                    if (enkf_node_try_load(data_node, enkf_fs, node_id)) {
+                        const gen_kw_type *gen_kw =
+                            (const gen_kw_type *)enkf_node_value_ptr(data_node);
+                        auto index =
+                            get_keyword_index(ensemble_config_node, keyword);
+                        auto value = gen_kw_data_iget(gen_kw, index, true);
+                        if (use_log_scale)
                             value = log10(value);
-                        }
                         data[key_index + realization_index * key_count] = value;
-                    } else {
-                        logger->warning("Index out of bounds. keyword_index={} "
-                                        "vector_size={}",
-                                        keyword_index, vector_size);
                     }
+                    enkf_node_free(data_node);
                 }
-                enkf_plot_gen_kw_free(ensemble_data);
             }
             py::capsule free_when_done(data, [](void *f) {
                 double *data = reinterpret_cast<double *>(f);
