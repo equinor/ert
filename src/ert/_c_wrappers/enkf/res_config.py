@@ -798,9 +798,6 @@ class ResConfig:
 
         return self._create_substitution_list(**init_args)
 
-    def free(self):
-        self._free()  # pylint: disable=no-member
-
     def preferred_num_cpu(self) -> int:
         if self.num_cpu_from_config is not None:
             return self.num_cpu_from_config
