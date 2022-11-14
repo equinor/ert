@@ -4,8 +4,8 @@ import time
 from unittest.mock import patch
 
 import pytest
-from websockets.exceptions import ConnectionClosedError
 
+from _ert_job_runner.client import ClientConnectionClosedOK, ClientConnectionError
 from _ert_job_runner.job import Job
 from _ert_job_runner.reporting import Event
 from _ert_job_runner.reporting.event import (
@@ -17,6 +17,13 @@ from _ert_job_runner.reporting.event import (
 from _ert_job_runner.reporting.message import Exited, Finish, Init, Running, Start
 from _ert_job_runner.reporting.statemachine import TransitionError
 from tests.utils import _mock_ws_thread
+
+
+def _wait_until(condition, timeout, fail_msg):
+    start = time.time()
+    while not condition():
+        assert start + timeout > time.time(), fail_msg
+        time.sleep(0.1)
 
 
 def test_report_with_successful_start_message_argument(unused_tcp_port):
@@ -169,7 +176,7 @@ def test_report_with_failed_reporter_but_finished_jobs(unused_tcp_port):
 
     def mock_send(msg):
         time.sleep(mock_send_retry_time)
-        raise ConnectionClosedError(None, None)
+        raise ClientConnectionError("Sending failed!")
 
     host = "localhost"
     url = f"ws://{host}:{unused_tcp_port}"
@@ -198,11 +205,11 @@ def test_report_with_reconnected_reporter_but_finished_jobs(unused_tcp_port):
     # see assert reporter._timeout_timestamp is not None
     # meaning Finish event initiated _timeout but timeout wasn't reached since
     # it finished succesfully
-    mock_send_retry_time = 3
+    mock_send_retry_time = 0.1
 
-    def mock_send(msg):
+    def send_func(msg):
         time.sleep(mock_send_retry_time)
-        raise ConnectionClosedError(None, None)
+        raise ClientConnectionError("Sending failed!")
 
     host = "localhost"
     url = f"ws://{host}:{unused_tcp_port}"
@@ -210,11 +217,20 @@ def test_report_with_reconnected_reporter_but_finished_jobs(unused_tcp_port):
     job1 = Job({"name": "job1", "stdout": "stdout", "stderr": "stderr"}, 0)
     lines = []
     with _mock_ws_thread(host, unused_tcp_port, lines):
-        with patch("_ert_job_runner.client.Client.send", lambda x, y: mock_send(y)):
+        with patch("_ert_job_runner.client.Client.send") as patched_send:
+            patched_send.side_effect = send_func
+
             reporter.report(Init([job1], 1, 19, ens_id="ens_id", real_id=0, step_id=0))
             reporter.report(Running(job1, 100, 10))
-            reporter.report(Running(job1, 100, 10))
-            reporter.report(Running(job1, 100, 10))
+            reporter.report(Running(job1, 200, 10))
+            reporter.report(Running(job1, 300, 10))
+
+            _wait_until(
+                condition=lambda: patched_send.call_count == 3,
+                timeout=10,
+                fail_msg="10 seconds should be sufficient to send three events",
+            )
+
         # reconnect and continue sending events
         # set _stop_timestamp
         reporter.report(Finish())
@@ -223,3 +239,51 @@ def test_report_with_reconnected_reporter_but_finished_jobs(unused_tcp_port):
         # set _stop_timestamp was not set to None since the reporter finished on time
         assert reporter._timeout_timestamp is not None
     assert len(lines) == 3, "expected 3 Job running messages"
+
+
+def test_report_with_closed_received_exiting_gracefully(unused_tcp_port):
+    # Whenever the receiver end closes the connection, a ConnectionClosedOK is raised
+    # The reporter should exit the publisher thread gracefully and not send any
+    # more events
+    mock_send_retry_time = 3
+
+    def mock_send(msg):
+        time.sleep(mock_send_retry_time)
+        raise ClientConnectionClosedOK("Connection Closed")
+
+    host = "localhost"
+    url = f"ws://{host}:{unused_tcp_port}"
+    reporter = Event(evaluator_url=url)
+    job1 = Job({"name": "job1", "stdout": "stdout", "stderr": "stderr"}, 0)
+    lines = []
+    with _mock_ws_thread(host, unused_tcp_port, lines):
+        reporter.report(Init([job1], 1, 19, ens_id="ens_id", real_id=0, step_id=0))
+        reporter.report(Running(job1, 100, 10))
+        reporter.report(Running(job1, 200, 10))
+
+        # sleep until both Running events have been received
+        _wait_until(
+            condition=lambda: len(lines) == 2,
+            timeout=10,
+            fail_msg="Should not take 10 seconds to send two events",
+        )
+
+        with patch("_ert_job_runner.client.Client.send", lambda x, y: mock_send(y)):
+            reporter.report(Running(job1, 300, 10))
+            # Make sure the publisher thread exits because it got
+            # ClientConnectionClosedOK. If it hangs it could indicate that the
+            # exception is not caught/handled correctly
+            if reporter._event_publisher_thread.is_alive():
+                reporter._event_publisher_thread.join()
+
+        reporter.report(Running(job1, 400, 10))
+        reporter.report(Finish())
+
+    # set _stop_timestamp was not set to None since the reporter finished on time
+    assert reporter._timeout_timestamp is not None
+
+    # The Running(job1, 300, 10) is popped from the queue, but never sent.
+    # The following Running is added to queue along with the sentinel
+    assert reporter._event_queue.qsize() == 2
+    # None of the messages after ClientConnectionClosedOK was raised, has been sent
+    assert len(lines) == 2, "expected 2 Job running messages"
