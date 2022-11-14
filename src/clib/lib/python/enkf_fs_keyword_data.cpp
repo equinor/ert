@@ -32,14 +32,10 @@ ERT_CLIB_SUBMODULE("enkf_fs_keyword_data", m) {
         [](Cwrap<ensemble_config_type> ensemble_config,
            Cwrap<enkf_fs_type> enkf_fs, const std::vector<std::string> &keys,
            const std::vector<int> &realizations) {
-            const int key_count = std::size(keys);
-            const int realization_size = std::size(realizations);
-            const size_t size = realization_size * key_count;
+            py::array_t<double, 2> array({realizations.size(), keys.size()});
+            auto data = array.mutable_unchecked();
 
-            double *data = new double[size];
-            std::fill_n(data, size, NAN);
-
-            for (int key_index = 0; key_index < key_count; key_index++) {
+            for (int key_index = 0; key_index < keys.size(); key_index++) {
 
                 auto key = keys.at(key_index);
                 std::string keyword = "";
@@ -58,37 +54,28 @@ ERT_CLIB_SUBMODULE("enkf_fs_keyword_data", m) {
                 auto ensemble_config_node =
                     ensemble_config_get_node(ensemble_config, key.c_str());
                 for (int realization_index = 0;
-                     realization_index < realization_size;
+                     realization_index < realizations.size();
                      realization_index++) {
                     int realization = realizations.at(realization_index);
                     node_id_type node_id = {.report_step = 0,
                                             .iens = realization};
                     enkf_node_type *data_node =
                         enkf_node_alloc(ensemble_config_node);
+                    double value = NAN;
                     if (enkf_node_try_load(data_node, enkf_fs, node_id)) {
                         const gen_kw_type *gen_kw =
                             (const gen_kw_type *)enkf_node_value_ptr(data_node);
                         auto index =
                             get_keyword_index(ensemble_config_node, keyword);
-                        auto value = gen_kw_data_iget(gen_kw, index, true);
+                        value = gen_kw_data_iget(gen_kw, index, true);
                         if (use_log_scale)
                             value = log10(value);
-                        data[key_index + realization_index * key_count] = value;
                     }
+                    data(realization_index, key_index) = value;
                     enkf_node_free(data_node);
                 }
             }
-            py::capsule free_when_done(data, [](void *f) {
-                double *data = reinterpret_cast<double *>(f);
-                delete[] data;
-            });
-
-            return py::array_t<double>(
-                {realization_size, key_count}, // shape
-                {key_count * sizeof(double),
-                 sizeof(double)}, // C-style contiguous strides for double
-                data,             // the data pointer
-                free_when_done);  // numpy array references this parent
+            return array;
         },
         py::arg("config"), py::arg("fs"), py::arg("key"),
         py::arg("realizations"));
