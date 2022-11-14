@@ -7,9 +7,12 @@ from typing import Any, Dict
 
 from cloudevents.conversion import to_json
 from cloudevents.http import CloudEvent
-from websockets.exceptions import ConnectionClosedError
 
-from _ert_job_runner.client import Client
+from _ert_job_runner.client import (
+    Client,
+    ClientConnectionClosedOK,
+    ClientConnectionError,
+)
 from _ert_job_runner.reporting.base import Reporter
 from _ert_job_runner.reporting.message import (
     _JOB_EXIT_FAILED_STRING,
@@ -35,6 +38,21 @@ logger = logging.getLogger(__name__)
 
 
 class Event(Reporter):
+    """
+    The Event reporter forwards events, coming from the running job, added with
+    "report" to the given connection information.
+
+    An Init event must provided as the first message, which starts reporting,
+    and a Finish event will signal the reporter that the last event has been reported.
+
+    If event fails to be sent (eg. due to connection error) it does not proceed to the
+    next event but instead tries to re-send the same event.
+
+    Whenever the Finish event (when all the jobs have exited) is provided
+    the reporter will try to send all remaining events for a maximum of 60 seconds
+    before stopping the reporter. Any remaining events will not be sent.
+    """
+
     # pylint: disable=too-many-instance-attributes
     def __init__(self, evaluator_url, token=None, cert_path=None):
         self._evaluator_url = evaluator_url
@@ -54,20 +72,21 @@ class Event(Reporter):
         self._real_id = None
         self._step_id = None
         self._event_queue = queue.Queue()
-        self._event_publisher_thread = threading.Thread(target=self._publish_event)
+        self._event_publisher_thread = threading.Thread(target=self._event_publisher)
         self._sentinel = object()  # notifying the queue's ended
         self._timeout_timestamp = None
         self._timestamp_lock = threading.Lock()
         # seconds to timeout the reporter the thread after Finish() was received
         self._reporter_timeout = 60
 
-    def _publish_event(self):
+    def _event_publisher(self):
         logger.debug("Publishing event.")
         with Client(
             url=self._evaluator_url,
             token=self._token,
             cert=self._cert,
         ) as client:
+            event = None
             while True:
                 with self._timestamp_lock:
                     if (
@@ -76,13 +95,24 @@ class Event(Reporter):
                     ):
                         self._timeout_timestamp = None
                         break
-                event = self._event_queue.get()
-                if event is self._sentinel:
-                    break
+                if event is None:
+                    # if we successfully sent the event we can proceed
+                    # to next one
+                    event = self._event_queue.get()
+                    if event is self._sentinel:
+                        break
                 try:
                     client.send(to_json(event).decode())
-                except (ConnectionError, ConnectionClosedError):
+                    event = None
+                except ClientConnectionError as exception:
+                    # Possible intermittent failure, we retry sending the event
+                    logger.debug(str(exception))
                     pass
+                except ClientConnectionClosedOK as exception:
+                    # The receiving end has closed the connection, we stop
+                    # sending events
+                    logger.debug(str(exception))
+                    break
 
     def report(self, msg):
         self._statemachine.transition(msg)
@@ -166,4 +196,5 @@ class Event(Reporter):
             self._timeout_timestamp = datetime.datetime.now() + datetime.timedelta(
                 seconds=self._reporter_timeout
             )
-        self._event_publisher_thread.join()
+        if self._event_publisher_thread.is_alive():
+            self._event_publisher_thread.join()

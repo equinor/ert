@@ -3,7 +3,7 @@ from functools import partial
 
 import pytest
 
-from _ert_job_runner.client import Client
+from _ert_job_runner.client import Client, ClientConnectionError
 
 from .ensemble_evaluator_utils import _mock_ws
 
@@ -14,7 +14,7 @@ def test_invalid_server():
     url = f"ws://{host}:{port}"
 
     with Client(url, max_retries=2, timeout_multiplier=2) as c1:
-        with pytest.raises((ConnectionRefusedError, OSError)):
+        with pytest.raises(ClientConnectionError):
             c1.send("hei")
 
 
