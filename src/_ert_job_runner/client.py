@@ -1,11 +1,27 @@
 import asyncio
+import logging
 import ssl
 from typing import Any, AnyStr, Dict, Optional, Union
 
 import cloudevents
 from websockets.client import WebSocketClientProtocol, connect
 from websockets.datastructures import Headers
-from websockets.exceptions import ConnectionClosedError, ConnectionClosedOK
+from websockets.exceptions import (
+    ConnectionClosedError,
+    ConnectionClosedOK,
+    InvalidHandshake,
+    InvalidURI,
+)
+
+logger = logging.getLogger(__name__)
+
+
+class ClientConnectionError(Exception):
+    pass
+
+
+class ClientConnectionClosedOK(Exception):
+    pass
 
 
 class Client:  # pylint: disable=too-many-instance-attributes
@@ -73,19 +89,36 @@ class Client:  # pylint: disable=too-many-instance-attributes
                     self.websocket = await self.get_websocket()
                 await self.websocket.send(msg)
                 return
-            except ConnectionClosedOK:
-                pass  # Connection was closed no point in trying to send more messages
-                raise
+            except ConnectionClosedOK as exception:
+                _error_msg = (
+                    f"Connection closed received from the server {self.url}! "
+                    f" Exception from {type(exception)}: {str(exception)}"
+                )
+                raise ClientConnectionClosedOK(_error_msg) from exception
             except (
-                ConnectionClosedError,
+                InvalidHandshake,
+                InvalidURI,
+                asyncio.TimeoutError,
                 ConnectionRefusedError,
                 OSError,
-                asyncio.TimeoutError,
-            ):
+            ) as exception:
                 if retry == self._max_retries:
-                    raise
-                await asyncio.sleep(0.2 + self._timeout_multiplier * retry)
-                self.websocket = None
+                    _error_msg = (
+                        f"Not able to establish the "
+                        f"websocket connection {self.url}! Max retries reached!"
+                        f" Exception from {type(exception)}: {str(exception)}"
+                    )
+                    raise ClientConnectionError(_error_msg) from exception
+            except ConnectionClosedError as exception:
+                if retry == self._max_retries:
+                    _error_msg = (
+                        f"Not been able to send the event"
+                        f" to {self.url}! Max retries reached!"
+                        f" Exception from {type(exception)}: {str(exception)}"
+                    )
+                    raise ClientConnectionError(_error_msg) from exception
+            await asyncio.sleep(0.2 + self._timeout_multiplier * retry)
+            self.websocket = None
 
     def send(self, msg: AnyStr) -> None:
         self.loop.run_until_complete(self._send(msg))
