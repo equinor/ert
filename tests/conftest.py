@@ -200,7 +200,7 @@ def pytest_collection_modifyitems(config, items):
                 item.add_marker(pytest.mark.skip("Requires eclipse"))
 
 
-def _get_snakes(source_root):
+def _run_snake_oil(source_root):
     shutil.copytree(os.path.join(source_root, "test-data", "snake_oil"), "test_data")
     os.chdir("test_data")
     with fileinput.input("snake_oil.ert", inplace=True) as fin:
@@ -237,7 +237,7 @@ def _shared_snake_oil_case(request, monkeypatch, source_root):
     snake_path = request.config.cache.mkdir("snake_oil_data")
     monkeypatch.chdir(snake_path)
     if not os.listdir(snake_path):
-        _get_snakes(source_root)
+        _run_snake_oil(source_root)
     else:
         os.chdir("test_data")
 
