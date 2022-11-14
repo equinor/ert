@@ -1,5 +1,5 @@
 from collections import defaultdict
-from typing import Dict, Tuple
+from typing import Dict, Optional, Tuple
 
 
 class Substituter:
@@ -10,7 +10,7 @@ class Substituter:
         <IENS>: The realization number, provided when substitution is performed.
     """
 
-    def __init__(self, global_substitutions: Dict[str, str] = None):
+    def __init__(self, global_substitutions: Optional[Dict[str, str]] = None):
         """
         :param global_substitutions: List of substitutions that should be
             performed, in the same way regardless of realization and iteration, ie.
