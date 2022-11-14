@@ -92,7 +92,7 @@ def feature_enabled_async(feature_name):
             if FeatureToggling.is_enabled(feature_name):
                 return await func(*args, **kwargs)
             else:
-                return await asyncio.sleep(0.1)
+                return await asyncio.sleep(0)
 
         return wrapper
 

@@ -114,7 +114,7 @@ class Ensemble:
         pass
 
     async def evaluate_async(
-        self, config: "EvaluatorServerConfig", experiment_id: Union[None, str]
+        self, config: "EvaluatorServerConfig", experiment_id: Optional[str]
     ) -> None:
         pass
 

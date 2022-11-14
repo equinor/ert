@@ -1,7 +1,7 @@
 import asyncio
 import concurrent
 import logging
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, Optional
 
 from iterative_ensemble_smoother import IterativeEnsembleSmoother
 
@@ -87,14 +87,14 @@ class IteratedEnsembleSmoother(BaseRunModel):
 
     def runSimulations(
         self, evaluator_server_config: EvaluatorServerConfig
-    ) -> Union[RunContext, None]:
+    ) -> RunContext:
         return asyncio.run(self.run(evaluator_server_config), debug=True)
 
     async def run(
         self,
         evaluator_server_config: EvaluatorServerConfig,
         model_name: str = "ensemble smoother",
-    ) -> Union[RunContext, None]:
+    ) -> RunContext:
         loop = asyncio.get_running_loop()
         executor = concurrent.futures.ThreadPoolExecutor()
 
@@ -164,9 +164,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
 
         if current_iter == (phase_count - 1):
             self.setPhase(phase_count, "Simulations completed.")
-            if not FeatureToggling.is_enabled("experiment-server"):
-                return run_context
-            return None
+            return run_context
         else:
             raise ErtRunError(
                 (
@@ -213,14 +211,14 @@ class IteratedEnsembleSmoother(BaseRunModel):
             )
 
         try:
-            self.checkHaveSufficientRealizations(num_successful_realizations)  # type: ignore
+            self.checkHaveSufficientRealizations(num_successful_realizations)
         except ErtRunError as e:
             event = _ert_com_protocol.node_status_builder(
                 status="EXPERIMENT_FAILED", experiment_id=self.id_
             )
             event.experiment.message = str(e)
             await self.dispatch(event)
-            return run_context  # type: ignore # is this really needed?
+            return "Experiment failed"
 
         await self._run_hook(
             HookRuntime.POST_SIMULATION,

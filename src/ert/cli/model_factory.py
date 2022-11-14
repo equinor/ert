@@ -1,8 +1,8 @@
 import logging
 from typing import List
 
-from ert._c_wrappers.enkf.enkf_main import EnKFMain
 from ert._c_wrappers.config.active_range import ActiveRange
+from ert._c_wrappers.enkf.enkf_main import EnKFMain
 from ert.shared.models.ensemble_experiment import EnsembleExperiment
 from ert.shared.models.ensemble_smoother import EnsembleSmoother
 from ert.shared.models.iterated_ensemble_smoother import IteratedEnsembleSmoother

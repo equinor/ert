@@ -41,7 +41,7 @@ class MultipleDataAssimilation(BaseRunModel):
 
     async def run(
         self, evaluator_server_config: EvaluatorServerConfig, model_name: str
-    ) -> Union[RunContext, None]:
+    ) -> RunContext:
         loop = asyncio.get_running_loop()
         threadpool = concurrent.futures.ThreadPoolExecutor()
 
@@ -99,7 +99,7 @@ class MultipleDataAssimilation(BaseRunModel):
                 if val
             ]
             self.ert().sample_prior(prior_fs, active_realizations)
-        
+
         for iteration, weight in weights_to_run:
             is_first_iteration = iteration == 0
             run_context = await loop.run_in_executor(
@@ -123,9 +123,9 @@ class MultipleDataAssimilation(BaseRunModel):
             update_id = await loop.run_in_executor(
                 threadpool,
                 self.update,
-                run_context=run_context,
-                weight=weight,
-                ensemble_id=ensemble_id,
+                run_context,
+                weight,
+                ensemble_id,
             )
             await self._run_hook(HookRuntime.POST_UPDATE, iteration, loop, threadpool)
 
@@ -150,14 +150,46 @@ class MultipleDataAssimilation(BaseRunModel):
 
         if not FeatureToggling.is_enabled("experiment-server"):
             self.setPhase(iteration_count + 1, "Simulations completed.")
-            return run_context
-        return None
+        
+        return run_context
+
+    def runSimulations(
+        self, evaluator_server_config: EvaluatorServerConfig
+    ) -> RunContext:
+        return asyncio.run(
+            self.run(evaluator_server_config, model_name="ES-MDA"), debug=True
+        )
+
+    def _count_active_realizations(self, run_context: RunContext) -> int:
+        return sum(run_context.mask)
+
+    def update(self, run_context: RunContext, weight: float, ensemble_id: str) -> str:
+        next_iteration = run_context.iteration + 1
+
+        phase_string = f"Analyzing iteration: {next_iteration} with weight {weight}"
+        self.setPhase(self.currentPhase() + 1, phase_string, indeterminate=True)
+
+        self.facade.set_global_std_scaling(weight)
+        try:
+            self.facade.smoother_update(run_context)
+        except ErtAnalysisError as e:
+            raise ErtRunError(
+                "Analysis of simulation failed for iteration:"
+                f"{next_iteration}. The following error occured {e}"
+            ) from e
+        # Push update data to new storage
+        analysis_module_name = self.ert().analysisConfig().active_module_name()
+        update_id = self._post_update_data(
+            parent_ensemble_id=ensemble_id, algorithm=analysis_module_name
+        )
+
+        return update_id
 
     async def _simulateAndPostProcess(
         self,
         run_context: RunContext,
         evaluator_server_config: EvaluatorServerConfig,
-        update_id: Union[None, str],
+        update_id: Optional[str],
         loop: asyncio.AbstractEventLoop,
         threadpool: Any,
     ) -> Any:
@@ -199,7 +231,16 @@ class MultipleDataAssimilation(BaseRunModel):
         num_successful_realizations += self._simulation_arguments.get(
             "prev_successful_realizations", 0
         )
-        self.checkHaveSufficientRealizations(num_successful_realizations)  # type: ignore
+
+        try:
+            self.checkHaveSufficientRealizations(num_successful_realizations)
+        except ErtRunError as e:
+            event = _ert_com_protocol.node_status_builder(
+                status="EXPERIMENT_FAILED", experiment_id=self.id_
+            )
+            event.experiment.message = str(e)
+            await self.dispatch(event)
+            return run_context
 
         phase_string = f"Post processing for iteration: {iteration}"
         self.setPhaseName(phase_string, indeterminate=True)
@@ -207,38 +248,6 @@ class MultipleDataAssimilation(BaseRunModel):
         await self._run_hook(HookRuntime.POST_SIMULATION, iteration, loop, threadpool)
 
         return num_successful_realizations, ensemble_id
-
-    def runSimulations(
-        self, evaluator_server_config: EvaluatorServerConfig
-    ) -> Union[RunContext, None]:
-        return asyncio.run(
-            self.run(evaluator_server_config, model_name="ES-MDA"), debug=True
-        )
-
-    def _count_active_realizations(self, run_context: RunContext) -> int:
-        return sum(run_context.mask)
-
-    def update(self, run_context: RunContext, weight: float, ensemble_id: str) -> str:
-        next_iteration = run_context.iteration + 1
-
-        phase_string = f"Analyzing iteration: {next_iteration} with weight {weight}"
-        self.setPhase(self.currentPhase() + 1, phase_string, indeterminate=True)
-
-        self.facade.set_global_std_scaling(weight)
-        try:
-            self.facade.smoother_update(run_context)
-        except ErtAnalysisError as e:
-            raise ErtRunError(
-                "Analysis of simulation failed for iteration:"
-                f"{next_iteration}. The following error occured {e}"
-            ) from e
-        # Push update data to new storage
-        analysis_module_name = self.ert().analysisConfig().active_module_name()
-        update_id = self._post_update_data(
-            parent_ensemble_id=ensemble_id, algorithm=analysis_module_name
-        )
-
-        return update_id
 
     @staticmethod
     def normalizeWeights(weights: List[float]) -> List[float]:

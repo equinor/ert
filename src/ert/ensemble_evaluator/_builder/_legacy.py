@@ -146,7 +146,7 @@ class LegacyEnsemble(Ensemble):
     async def evaluate_async(
         self,
         config: "EvaluatorServerConfig",
-        experiment_id: Union[None, str],
+        experiment_id: Optional[str],
     ) -> None:
         self._config = config
         if FeatureToggling.is_enabled("experiment-server"):

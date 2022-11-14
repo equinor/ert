@@ -1,4 +1,4 @@
-from unittest.mock import MagicMock, call, AsyncMock
+from unittest.mock import AsyncMock, MagicMock, call
 
 from ert._c_wrappers.enkf.enums import HookRuntime
 from ert.ensemble_evaluator.config import EvaluatorServerConfig

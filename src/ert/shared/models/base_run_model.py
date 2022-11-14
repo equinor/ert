@@ -182,7 +182,7 @@ class BaseRunModel:
                 run_context = self.runSimulations(
                     evaluator_server_config=evaluator_server_config,
                 )
-                self._completed_realizations_mask = run_context.mask  # type: ignore # should we implement an if statement with toggling?
+                self._completed_realizations_mask = run_context.mask
         except ErtRunError as e:
             self._completed_realizations_mask = []
             self._failed = True
@@ -199,7 +199,7 @@ class BaseRunModel:
 
     def runSimulations(
         self, evaluator_server_config: EvaluatorServerConfig
-    ) -> Union[RunContext, None]:
+    ) -> RunContext:
         raise NotImplementedError("Method must be implemented by inheritors!")
 
     def teardown_context(self) -> None:
@@ -360,7 +360,7 @@ class BaseRunModel:
 
     async def _evaluate(
         self, run_context: RunContext, ee_config: EvaluatorServerConfig
-    ) -> Union[None, int]:
+    ) -> int:
         """Start asynchronous evaluation of an ensemble."""
         experiment_logger.debug("_evaluate")
         loop = asyncio.get_running_loop()
@@ -370,7 +370,8 @@ class BaseRunModel:
         experiment_logger.debug("built")
         if FeatureToggling.is_enabled("experiment-server"):
             # If experiment-server is enabled, the server has been created already.
-            # We are only setting up a task that consumes events coming from the ensemble
+            # We are only setting up a task that consumes events coming from the
+            # ensemble
             server = None
             ensemble_listener_task = asyncio.create_task(
                 self._ensemble_listener(ensemble, iter_=run_context.iteration)
@@ -424,10 +425,10 @@ class BaseRunModel:
                         experiment_logger.debug("Server stopped from client")
                     except asyncio.TimeoutError:
                         experiment_logger.debug("Stopping the server from experiment..")
-                        await server.stop()  # type: ignore # server is None only if FeatureToggling.is_enabled("experiment-server")
+                        await server.stop()
             else:
-                # experiment is pending, but the server died, so try cancelling the experiment
-                # then raise the server's exception
+                # experiment is pending, but the server died, so try cancelling
+                # the experiment then raise the server's exception
                 for pending_task in pending:
                     experiment_logger.debug(
                         "task %s was pending, cancelling...", pending_task
@@ -449,14 +450,17 @@ class BaseRunModel:
                 run_context.sim_fs.fsync,
             )
 
-        if not FeatureToggling.is_enabled("experiment-server"):
-            return ensemble.get_successful_realizations()
-        return None
+        if FeatureToggling.is_enabled("experiment-server"):
+            return await self.successful_realizations(
+                run_context.iteration
+                )
+        return ensemble.get_successful_realizations()
+        
 
     @abstractmethod
     async def run(
         self, evaluator_server_config: EvaluatorServerConfig, model_name: str
-    ) -> Union[None, RunContext]:
+    ) -> RunContext:
         raise NotImplementedError
 
     async def successful_realizations(self, iter_: int) -> int:
