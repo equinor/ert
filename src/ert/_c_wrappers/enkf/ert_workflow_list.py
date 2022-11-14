@@ -21,11 +21,11 @@ def _to_c_string_arr(lst: List[str]):
 class ErtWorkflowList(BaseCClass):
     TYPE_NAME = "ert_workflow_list"
     _alloc = ResPrototype(
-        "void* ert_workflow_list_alloc(subst_list, config_content, config_content)",
+        "void* ert_workflow_list_alloc(config_content, config_content)",
         bind=False,
     )
     _alloc_full = ResPrototype(
-        "void* ert_workflow_list_alloc_full(subst_list, workflow_joblist)", bind=False
+        "void* ert_workflow_list_alloc_full(workflow_joblist)", bind=False
     )
     _free = ResPrototype("void ert_workflow_list_free(ert_workflow_list)")
     _alloc_namelist = ResPrototype(
@@ -39,9 +39,6 @@ class ErtWorkflowList(BaseCClass):
     )
     _add_workflow = ResPrototype(
         "workflow_ref ert_workflow_list_add_workflow(ert_workflow_list, char*, char*)"
-    )
-    _get_context = ResPrototype(
-        "subst_list_ref ert_workflow_list_get_context(ert_workflow_list)"
     )
     _add_job = ResPrototype(
         "void ert_workflow_list_add_job(ert_workflow_list, char*, char*)"
@@ -64,15 +61,10 @@ class ErtWorkflowList(BaseCClass):
 
     def __init__(
         self,
-        subst_list=None,
         config_content=None,
         config_dict=None,
         site_config_content=None,
     ):
-        if subst_list is None:
-            raise ValueError(
-                "Failed to construct ErtWorkflowList with no substitution list"
-            )
 
         if config_content is None and config_dict is None:
             raise ValueError(
@@ -94,7 +86,7 @@ class ErtWorkflowList(BaseCClass):
         c_ptr = None
 
         if config_content is not None:
-            c_ptr = self._alloc(subst_list, config_content, site_config_content)
+            c_ptr = self._alloc(config_content, site_config_content)
 
         if config_dict is not None:
             workflow_joblist = WorkflowJoblist()
@@ -148,7 +140,6 @@ class ErtWorkflowList(BaseCClass):
                     hook_workflow_run_modes.append(run_mode_name)
 
             c_ptr = self._alloc_full(
-                subst_list,
                 workflow_joblist,
                 _to_c_string_arr(hook_workflow_names),
                 _to_c_string_arr(hook_workflow_run_modes),
@@ -176,9 +167,6 @@ class ErtWorkflowList(BaseCClass):
             raise KeyError(f"Item '{item}'  is not in the list of available workflows.")
 
         return self._get_workflow(item).setParent(self)
-
-    def getContext(self) -> SubstitutionList:
-        return self._get_context()
 
     def __str__(self):
         return f"ErtWorkflowList with jobs: {self.getJobNames()}"

@@ -31,7 +31,6 @@ struct ert_workflow_list_struct {
     hash_type *alias_map;
     workflow_joblist_type *joblist;
     vector_type *hook_workflow_list;
-    const subst_list_type *context;
     const config_error_type *last_error;
     bool verbose;
 };
@@ -39,14 +38,12 @@ struct ert_workflow_list_struct {
 static void ert_workflow_list_init(ert_workflow_list_type *workflow_list,
                                    const config_content_type *config);
 
-ert_workflow_list_type *
-ert_workflow_list_alloc_empty(const subst_list_type *context) {
+ert_workflow_list_type *ert_workflow_list_alloc_empty() {
     ert_workflow_list_type *workflow_list =
         (ert_workflow_list_type *)util_malloc(sizeof *workflow_list);
     workflow_list->workflows = hash_alloc();
     workflow_list->alias_map = hash_alloc();
     workflow_list->joblist = workflow_joblist_alloc();
-    workflow_list->context = context;
     workflow_list->last_error = NULL;
     workflow_list->hook_workflow_list = vector_alloc_new();
     ert_workflow_list_set_verbose(workflow_list, DEFAULT_WORKFLOW_VERBOSE);
@@ -54,12 +51,10 @@ ert_workflow_list_alloc_empty(const subst_list_type *context) {
 }
 
 ert_workflow_list_type *
-ert_workflow_list_alloc(const subst_list_type *context,
-                        const config_content_type *config_content,
+ert_workflow_list_alloc(const config_content_type *config_content,
                         const config_content_type *site_config_content) {
 
-    ert_workflow_list_type *workflow_list =
-        ert_workflow_list_alloc_empty(context);
+    ert_workflow_list_type *workflow_list = ert_workflow_list_alloc_empty();
     ert_workflow_list_init(workflow_list, site_config_content);
 
     if (config_content)
@@ -69,13 +64,10 @@ ert_workflow_list_alloc(const subst_list_type *context,
 }
 
 ert_workflow_list_type *ert_workflow_list_alloc_full(
-    const subst_list_type *context, workflow_joblist_type *workflow_joblist,
-    const char **hook_workflow_names, const char **hook_workflow_run_modes,
-    int hook_workflow_count) {
-    ert_workflow_list_type *workflow_list =
-        ert_workflow_list_alloc_empty(context);
+    workflow_joblist_type *workflow_joblist, const char **hook_workflow_names,
+    const char **hook_workflow_run_modes, int hook_workflow_count) {
+    ert_workflow_list_type *workflow_list = ert_workflow_list_alloc_empty();
     workflow_list->joblist = workflow_joblist;
-    workflow_list->context = context;
     for (int i = 0; i < hook_workflow_count; ++i) {
         const char *workflow_name = hook_workflow_names[i];
         hook_run_mode_enum run_mode =
@@ -93,11 +85,6 @@ ert_workflow_list_type *ert_workflow_list_alloc_full(
 void ert_workflow_list_set_verbose(ert_workflow_list_type *workflow_list,
                                    bool verbose) {
     workflow_list->verbose = verbose;
-}
-
-const subst_list_type *
-ert_workflow_list_get_context(const ert_workflow_list_type *workflow_list) {
-    return workflow_list->context;
 }
 
 void ert_workflow_list_free(ert_workflow_list_type *workflow_list) {

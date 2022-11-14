@@ -167,13 +167,13 @@ class CSVExportJob(ErtPlugin):
         description = "The CSV export requires some information before it starts:"
         dialog = CustomDialog("CSV Export", description, parent)
 
-        default_csv_output_path = self.getDataKWValue(
+        default_csv_output_path = self.get_context_value(
             "CSV_OUTPUT_PATH", default="output.csv"
         )
         output_path_model = PathModel(default_csv_output_path)
         output_path_chooser = PathChooser(output_path_model)
 
-        design_matrix_default = self.getDataKWValue("DESIGN_MATRIX_PATH", default="")
+        design_matrix_default = self.get_context_value("DESIGN_MATRIX_PATH", default="")
         design_matrix_path_model = PathModel(
             design_matrix_default, is_required=False, must_exist=True
         )
@@ -218,10 +218,10 @@ class CSVExportJob(ErtPlugin):
 
         raise CancelPluginException("User cancelled!")
 
-    def getDataKWValue(self, name, default):
-        data_kw = self.ert().getDataKW()
-        if name in data_kw:
-            return data_kw[data_kw.indexForKey(name)][1]
+    def get_context_value(self, name, default):
+        context = self.ert().get_context()
+        if name in context:
+            return context[context.indexForKey(name)][1]
         return default
 
     def getAllCaseList(self):

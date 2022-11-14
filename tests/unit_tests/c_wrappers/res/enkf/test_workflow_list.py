@@ -46,7 +46,6 @@ def test_workflow_list_constructor():
 
     assert (
         ErtWorkflowList(
-            subst_list=res_config.substitution_list,
             config_dict=config_dict,
         )
         == res_config.ert_workflow_list
@@ -55,7 +54,7 @@ def test_workflow_list_constructor():
 
 def test_illegal_configs():
     with pytest.raises(ValueError):
-        ErtWorkflowList(subst_list=[], config_dict=[], config_content=[])
+        ErtWorkflowList(config_dict=[], config_content=[])
 
     with pytest.raises(ValueError):
         ErtWorkflowList()

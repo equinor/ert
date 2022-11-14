@@ -21,18 +21,15 @@ ert_workflow_list_add_workflow(ert_workflow_list_type *workflow_list,
                                const char *workflow_file,
                                const char *workflow_name);
 extern "C" void ert_workflow_list_free(ert_workflow_list_type *workflow_list);
-ert_workflow_list_type *
-ert_workflow_list_alloc_empty(const subst_list_type *subst_list);
+ert_workflow_list_type *ert_workflow_list_alloc_empty();
 ert_workflow_list_type *ert_workflow_list_alloc_load_site_config(
     const subst_list_type *, const config_content_type *site_config_content);
 extern "C" ert_workflow_list_type *
-ert_workflow_list_alloc(const subst_list_type *context,
-                        const config_content_type *config_content,
+ert_workflow_list_alloc(const config_content_type *config_content,
                         const config_content_type *site_config_content);
 extern "C" PY_USED ert_workflow_list_type *ert_workflow_list_alloc_full(
-    const subst_list_type *context, workflow_joblist_type *workflow_joblist,
-    const char **hook_workflow_names, const char **hook_workflow_run_modes,
-    int hook_workflow_count);
+    workflow_joblist_type *workflow_joblist, const char **hook_workflow_names,
+    const char **hook_workflow_run_modes, int hook_workflow_count);
 
 void ert_workflow_list_add_jobs_in_directory(
     ert_workflow_list_type *workflow_list, const char *path);
@@ -56,8 +53,6 @@ extern "C" stringlist_type *
 ert_workflow_list_alloc_namelist(ert_workflow_list_type *workflow_list);
 void ert_workflow_list_set_verbose(ert_workflow_list_type *workflow_list,
                                    bool verbose);
-extern "C" const subst_list_type *
-ert_workflow_list_get_context(const ert_workflow_list_type *workflow_list);
 int ert_workflow_list_get_size(const ert_workflow_list_type *workflow_list);
 
 extern "C" const hook_workflow_type *ert_workflow_list_iget_hook_workflow(
