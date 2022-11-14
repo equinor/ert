@@ -120,7 +120,7 @@ class RunWorkflowWidget(QWidget):
         workflow_list = self.ert.getWorkflowList()
 
         workflow = workflow_list[self.getCurrentWorkflowName()]
-        context = workflow_list.getContext()
+        context = self.ert.get_context()
         self._workflow_runner = WorkflowRunner(workflow, self.ert, context)
         self._workflow_runner.run()
 

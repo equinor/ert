@@ -58,9 +58,7 @@ def test_substitution_workflow_integration(setup_case):
     ert = EnKFMain(res_config)
     current_filesystem = ert.getEnkfFsManager().getCurrentFileSystem()
 
-    ert.getWorkflowList()["MAGIC_PRINT"].run(
-        ert, context=ert.getWorkflowList().getContext()
-    )
+    ert.getWorkflowList()["MAGIC_PRINT"].run(ert, context=ert.get_context())
 
     assert (
         Path("magic-list.txt").read_text() == f"{current_filesystem.getCaseName()}"

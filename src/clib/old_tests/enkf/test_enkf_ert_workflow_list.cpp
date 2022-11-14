@@ -9,13 +9,13 @@
 #include <ert/enkf/ert_workflow_list.hpp>
 
 void test_create_workflow_list() {
-    ert_workflow_list_type *wf_list = ert_workflow_list_alloc_empty(NULL);
+    ert_workflow_list_type *wf_list = ert_workflow_list_alloc_empty();
     ert_workflow_list_free(wf_list);
 }
 
 void test_add_alias(const char *job) {
     ecl::util::TestArea ta("alias");
-    ert_workflow_list_type *wf_list = ert_workflow_list_alloc_empty(NULL);
+    ert_workflow_list_type *wf_list = ert_workflow_list_alloc_empty();
     ert_workflow_list_add_job(wf_list, "JOB", job);
 
     {

@@ -167,7 +167,7 @@ class EnKFMain:
                 config.analysis_config.get_std_cutoff(),
             )
         self._ensemble_size = self.res_config.model_config.num_realizations
-        self._substituter = Substituter(dict(self.getDataKW()))
+        self._substituter = Substituter(dict(self.get_context()))
         self._runpaths = Runpaths(
             self.resConfig().preferred_job_fmt(),
             self.getModelConfig().getRunpathFormat().format_string,
@@ -373,7 +373,7 @@ class EnKFMain:
     def resConfig(self) -> "ResConfig":
         return self.res_config
 
-    def getDataKW(self) -> SubstitutionList:
+    def get_context(self) -> SubstitutionList:
         return self.res_config.substitution_list
 
     def addDataKW(self, key: str, value: str) -> None:
@@ -382,7 +382,7 @@ class EnKFMain:
         # self.resConfig().substitution_list is still
         # used by workflows to do substitution. For now, we
         # need to update this here.
-        self.resConfig().substitution_list.addItem(key, value)
+        self.res_config.substitution_list.addItem(key, value)
         self.substituter.add_global_substitution(key, value)
 
     def getObservations(self) -> EnkfObs:
@@ -568,4 +568,4 @@ class EnKFMain:
     def runWorkflows(self, runtime: int) -> None:
         workflow_list = self.getWorkflowList()
         for workflow in workflow_list.get_workflows_hooked_at(runtime):
-            workflow.run(self, context=workflow_list.getContext())
+            workflow.run(self, context=self.res_config.substitution_list)

@@ -263,7 +263,6 @@ class ResConfig:
         self.queue_config = QueueConfig(**queue_config_args)
 
         self.ert_workflow_list = ErtWorkflowList(
-            subst_list=self.substitution_list,
             config_content=user_config_content,
             site_config_content=site_config_content,
         )
@@ -381,9 +380,7 @@ class ResConfig:
             )
         self.queue_config = QueueConfig(**queue_config_args)
 
-        self.ert_workflow_list = ErtWorkflowList(
-            subst_list=self.substitution_list, config_dict=config_dict
-        )
+        self.ert_workflow_list = ErtWorkflowList(config_dict=config_dict)
 
         if ConfigKeys.DATA_FILE in config_dict and ConfigKeys.ECLBASE in config_dict:
             # This replicates the behavior of the DATA_FILE implementation

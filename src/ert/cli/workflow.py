@@ -10,7 +10,7 @@ def execute_workflow(ert, workflow_name):
         msg = "Workflow {} is not in the list of available workflows"
         logger.error(msg.format(workflow_name))
         return
-    context = workflow_list.getContext()
+    context = ert.get_context()
     workflow.run(ert=ert, verbose=True, context=context)
     all_successful = all((v["completed"] for k, v in workflow.getJobsReport().items()))
     if not all_successful:
