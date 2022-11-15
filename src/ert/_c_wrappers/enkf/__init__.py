@@ -11,7 +11,7 @@ from .config import (
     SummaryConfig,
 )
 from .config_keys import ConfigKeys
-from .data import EnkfNode, ExtParam, Field, GenData, GenKw
+from .data import EnkfNode, ExtParam, Field, GenKw
 from .enkf_fs import EnkfFs
 from .enkf_main import EnKFMain, ObservationConfigError
 from .enkf_obs import EnkfObs
@@ -47,7 +47,6 @@ __all__ = [
     "ObsVector",
     "Field",
     "GenKw",
-    "GenData",
     "ExtParam",
     "EnkfNode",
     "FieldConfig",

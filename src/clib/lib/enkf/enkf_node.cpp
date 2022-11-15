@@ -7,9 +7,7 @@
 #include <ert/enkf/enkf_node.hpp>
 #include <ert/enkf/ext_param.hpp>
 #include <ert/enkf/field.hpp>
-#include <ert/enkf/gen_data.hpp>
 #include <ert/enkf/gen_kw.hpp>
-#include <ert/enkf/summary.hpp>
 #include <ert/enkf/surface.hpp>
 #include <ert/python.hpp>
 
@@ -170,41 +168,6 @@ void *enkf_node_value_ptr(const enkf_node_type *enkf_node) {
     return enkf_node->data;
 }
 
-std::vector<double> enkf_node_user_get_vector(enkf_node_type *enkf_node,
-                                              enkf_fs_type *fs, int iens) {
-    if (enkf_node_try_load_vector(enkf_node, fs, iens)) {
-        return summary_user_get_vector(
-            static_cast<summary_type *>(enkf_node->data));
-    } else
-        return {};
-}
-
-/**
-   IFF the enkf_node has registered a filename to load from, that is
-   passed to the specific load function, otherwise the run_path is sent
-   to the load function.
-*/
-bool enkf_node_forward_load(enkf_node_type *enkf_node, int report_step,
-                            const std::string &run_path, enkf_fs_type *fs) {
-    bool loadOK;
-    char *input_file =
-        enkf_config_node_alloc_infile(enkf_node->config, report_step);
-
-    if (input_file != NULL) {
-        char *file = util_alloc_filename(run_path.c_str(), input_file, NULL);
-        loadOK =
-            gen_data_forward_load(static_cast<gen_data_type *>(enkf_node->data),
-                                  file, report_step, fs);
-        free(file);
-    } else
-        loadOK =
-            gen_data_forward_load(static_cast<gen_data_type *>(enkf_node->data),
-                                  NULL, report_step, fs);
-    free(input_file);
-
-    return loadOK;
-}
-
 bool enkf_node_forward_init(enkf_node_type *enkf_node,
                             const std::string &run_path, int iens) {
     char *init_file = enkf_config_node_alloc_initfile(enkf_node->config,
@@ -349,21 +312,6 @@ void enkf_node_copy(const enkf_config_node_type *config_node,
     enkf_node_type *enkf_node =
         enkf_node_load_alloc(config_node, src_case, src_id);
 
-    /* Hack to ensure that size is set for the gen_data instances.
-     This sneeks low level stuff into a high level scope. BAD. */
-    {
-        ert_impl_type impl_type = enkf_node_get_impl_type(enkf_node);
-        if (impl_type == GEN_DATA) {
-            /* Read the size at report_step_from */
-            gen_data_type *gen_data =
-                (gen_data_type *)enkf_node_value_ptr(enkf_node);
-            int size = gen_data_get_size(gen_data);
-
-            /* Enforce the size at report_step_to */
-            gen_data_assert_size(gen_data, size, target_id.report_step);
-        }
-    }
-
     enkf_node_store(enkf_node, target_case, target_id);
     enkf_node_free(enkf_node);
 }
@@ -469,15 +417,6 @@ enkf_node_alloc_empty(const enkf_config_node_type *config) {
         node->serialize = gen_kw_serialize__;
         node->deserialize = gen_kw_deserialize__;
         break;
-    case (SUMMARY):
-        node->alloc = summary_alloc__;
-        node->freef = summary_free__;
-        node->read_from_buffer = summary_read_from_buffer__;
-        node->write_to_buffer = summary_write_to_buffer__;
-        node->serialize = summary_serialize__;
-        node->deserialize = summary_deserialize__;
-        node->has_data = summary_has_data__;
-        break;
     case (SURFACE):
         node->initialize = surface_initialize__;
         node->alloc = surface_alloc__;
@@ -495,14 +434,6 @@ enkf_node_alloc_empty(const enkf_config_node_type *config) {
         node->write_to_buffer = field_write_to_buffer__;
         node->serialize = field_serialize__;
         node->deserialize = field_deserialize__;
-        break;
-    case (GEN_DATA):
-        node->alloc = gen_data_alloc__;
-        node->freef = gen_data_free__;
-        node->read_from_buffer = gen_data_read_from_buffer__;
-        node->write_to_buffer = gen_data_write_to_buffer__;
-        node->serialize = gen_data_serialize__;
-        node->deserialize = gen_data_deserialize__;
         break;
     /* EXT_PARAM is used by Everest */
     case (EXT_PARAM):

@@ -38,9 +38,6 @@ class ObsVector(BaseCClass):
     _get_config_node = ResPrototype(
         "enkf_config_node_ref obs_vector_get_config_node(obs_vector)"
     )
-    _get_total_chi2 = ResPrototype(
-        "double obs_vector_total_chi2(obs_vector, enkf_fs, int)"
-    )
     _get_obs_key = ResPrototype("char*  obs_vector_get_obs_key(obs_vector)")
 
     def __init__(
@@ -149,6 +146,3 @@ class ObsVector(BaseCClass):
             f"key = {self.getKey()}, obs_key = {self.getObsKey()}, "
             f"num_active = {len(self)}) {self._ad_str()}"
         )
-
-    def getTotalChi2(self, fs, realization_number) -> float:
-        return self._get_total_chi2(fs, realization_number)
