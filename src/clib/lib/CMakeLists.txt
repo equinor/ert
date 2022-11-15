@@ -47,7 +47,6 @@ pybind11_add_module(
   enkf/time_map.cpp
   enkf/block_fs_driver.cpp
   enkf/config_keys.cpp
-  enkf/enkf_analysis.cpp
   enkf/enkf_config_node.cpp
   enkf/enkf_fs.cpp
   enkf/enkf_node.cpp
@@ -69,11 +68,6 @@ pybind11_add_module(
   enkf/gen_kw.cpp
   enkf/gen_kw_config.cpp
   enkf/gen_obs.cpp
-  enkf/meas_data.cpp
-  enkf/misfit_ensemble.cpp
-  enkf/misfit_member.cpp
-  enkf/misfit_ts.cpp
-  enkf/obs_data.cpp
   enkf/obs_vector.cpp
   enkf/row_scaling.cpp
   enkf/state_map.cpp
