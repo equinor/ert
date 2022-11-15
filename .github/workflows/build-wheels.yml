@@ -19,10 +19,6 @@ jobs:
       with:
         fetch-depth: 0
 
-    - uses: './.github/actions/install_dependencies'
-      with:
-        os: ${{ inputs.os }}
-
     - uses: actions/setup-python@v2
       with:
         python-version: ${{ inputs.python-version }}
