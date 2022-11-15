@@ -8,7 +8,6 @@
 #include <ert/enkf/ext_param.hpp>
 #include <ert/enkf/field.hpp>
 #include <ert/enkf/gen_kw.hpp>
-#include <ert/enkf/summary.hpp>
 #include <ert/enkf/surface.hpp>
 #include <ert/python.hpp>
 
@@ -167,15 +166,6 @@ ert_impl_type enkf_node_get_impl_type(const enkf_node_type *enkf_node) {
 
 void *enkf_node_value_ptr(const enkf_node_type *enkf_node) {
     return enkf_node->data;
-}
-
-std::vector<double> enkf_node_user_get_vector(enkf_node_type *enkf_node,
-                                              enkf_fs_type *fs, int iens) {
-    if (enkf_node_try_load_vector(enkf_node, fs, iens)) {
-        return summary_user_get_vector(
-            static_cast<summary_type *>(enkf_node->data));
-    } else
-        return {};
 }
 
 bool enkf_node_forward_init(enkf_node_type *enkf_node,
@@ -426,15 +416,6 @@ enkf_node_alloc_empty(const enkf_config_node_type *config) {
         node->read_from_buffer = gen_kw_read_from_buffer__;
         node->serialize = gen_kw_serialize__;
         node->deserialize = gen_kw_deserialize__;
-        break;
-    case (SUMMARY):
-        node->alloc = summary_alloc__;
-        node->freef = summary_free__;
-        node->read_from_buffer = summary_read_from_buffer__;
-        node->write_to_buffer = summary_write_to_buffer__;
-        node->serialize = summary_serialize__;
-        node->deserialize = summary_deserialize__;
-        node->has_data = summary_has_data__;
         break;
     case (SURFACE):
         node->initialize = surface_initialize__;
