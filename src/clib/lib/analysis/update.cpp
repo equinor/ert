@@ -8,11 +8,9 @@
 #include <vector>
 
 #include <ert/analysis/update.hpp>
-#include <ert/enkf/enkf_analysis.hpp>
+
 #include <ert/enkf/enkf_config_node.hpp>
 #include <ert/enkf/enkf_obs.hpp>
-#include <ert/enkf/meas_data.hpp>
-#include <ert/enkf/obs_data.hpp>
 #include <ert/except.hpp>
 #include <ert/python.hpp>
 #include <ert/res_util/memory.hpp>
@@ -159,64 +157,7 @@ void save_parameter(Cwrap<enkf_fs_type> target_fs,
     }
 }
 
-std::pair<Eigen::MatrixXd, ObservationHandler> load_observations_and_responses(
-    enkf_fs_type *source_fs, enkf_obs_type *obs, double alpha,
-    double std_cutoff, double global_std_scaling,
-    const std::vector<bool> &ens_mask,
-    const std::vector<std::pair<std::string, std::vector<int>>>
-        &selected_observations) {
-    /*
-    Observations and measurements are collected in these temporary
-    structures. obs_data is a precursor for the 'd' vector, and
-    meas_data is a precursor for the 'S' matrix'.
-
-    The reason for going via these temporary structures is to support
-    deactivating observations which should not be used in the update
-    process.
-    */
-
-    obs_data_type *obs_data = obs_data_alloc(global_std_scaling);
-    meas_data_type *meas_data = meas_data_alloc(ens_mask);
-
-    std::vector<int> ens_active_list = bool_vector_to_active_list(ens_mask);
-    enkf_obs_get_obs_and_measure_data(obs, source_fs, selected_observations,
-                                      ens_active_list, meas_data, obs_data);
-    enkf_analysis_deactivate_outliers(obs_data, meas_data, std_cutoff, alpha,
-                                      selected_observations);
-    auto update_snapshot = make_update_snapshot(obs_data, meas_data);
-
-    int active_obs_size = obs_data_get_active_size(obs_data);
-    int active_ens_size = meas_data_get_active_ens_size(meas_data);
-    Eigen::MatrixXd S = meas_data_makeS(meas_data);
-    assert_matrix_size(S, "S", active_obs_size, active_ens_size);
-    meas_data_free(meas_data);
-
-    Eigen::VectorXd observation_values = obs_data_values_as_vector(obs_data);
-    // Inflating measurement errors by a factor sqrt(global_std_scaling) as shown
-    // in for example evensen2018 - Analysis of iterative ensemble smoothers for solving inverse problems.
-    // `global_std_scaling` is 1.0 for ES.
-    Eigen::VectorXd observation_errors =
-        obs_data_errors_as_vector(obs_data) * sqrt(global_std_scaling);
-    std::vector<bool> obs_mask = obs_data_get_active_mask(obs_data);
-
-    obs_data_free(obs_data);
-
-    return std::pair<Eigen::MatrixXd, ObservationHandler>(
-        S, ObservationHandler(observation_values, observation_errors, obs_mask,
-                              update_snapshot));
-}
 } // namespace analysis
-
-static std::pair<Eigen::MatrixXd, analysis::ObservationHandler>
-load_observations_and_responses_pybind(
-    Cwrap<enkf_fs_type> source_fs, Cwrap<enkf_obs_type> obs, double alpha,
-    double std_cutoff, double global_std_scaling, std::vector<bool> ens_mask,
-    const std::vector<std::pair<std::string, std::vector<int>>>
-        &selected_observations) {
-    return analysis::load_observations_and_responses(
-        source_fs, obs, alpha, std_cutoff, global_std_scaling, ens_mask,
-        selected_observations);
-}
 
 ERT_CLIB_SUBMODULE("update", m) {
     using namespace py::literals;
@@ -247,21 +188,6 @@ ERT_CLIB_SUBMODULE("update", m) {
                       &analysis::Parameter::set_index_list)
         .def("__repr__", &::analysis::Parameter::to_string);
 
-    py::class_<analysis::ObservationHandler,
-               std::shared_ptr<analysis::ObservationHandler>>(
-        m, "ObservationHandler")
-        .def(py::init<>())
-        .def_readwrite("observation_values",
-                       &analysis::ObservationHandler::observation_values,
-                       py::return_value_policy::reference_internal)
-        .def_readwrite("observation_errors",
-                       &analysis::ObservationHandler::observation_errors,
-                       py::return_value_policy::reference_internal)
-        .def_readwrite("obs_mask", &analysis::ObservationHandler::obs_mask)
-        .def_readwrite("update_snapshot",
-                       &analysis::ObservationHandler::update_snapshot);
-    m.def("load_observations_and_responses",
-          load_observations_and_responses_pybind);
     m.def("save_parameter", analysis::save_parameter);
     m.def("load_parameter", analysis::load_parameter);
 }
