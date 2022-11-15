@@ -15,7 +15,7 @@ GRID grid/CASE.EGRID
 
 FIELD PERMX PARAMETER  permx.grdcel  INIT_FILES:fields/permx%d.grdecl
 
-SCHEDULE_PREDICTION_FILE input/schedule.sch
+SCHEDULE_PREDICTION_FILE input/schedule.sch PARAMETER:MULTFLT.TXT INIT_FILES:fields/permx%d.grdecl
 
 SUMMARY WOPR:OP_1
 SUMMARY WOPR:PROD

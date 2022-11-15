@@ -88,13 +88,11 @@ def test_ensemble_config_constructor(setup_case):
                     ConfigKeys.FORWARD_INIT: False,
                 }
             ],
-            ConfigKeys.SCHEDULE_PREDICTION_FILE: [
-                {
-                    ConfigKeys.TEMPLATE: "input/schedule.sch",
-                    ConfigKeys.INIT_FILES: None,
-                    ConfigKeys.PARAMETER_KEY: None,
-                }
-            ],
+            ConfigKeys.SCHEDULE_PREDICTION_FILE: {
+                ConfigKeys.TEMPLATE: "input/schedule.sch",
+                ConfigKeys.INIT_FILES: "fields/permx%d.grdecl",
+                ConfigKeys.PARAMETER_KEY: "MULTFLT.TXT",
+            },
             ConfigKeys.GRID: "grid/CASE.EGRID",
             # ConfigKeys.REFCASE: "input/refcase/SNAKE_OIL_FIELD",
         },
@@ -177,22 +175,28 @@ def test_that_refcase_gets_correct_name(tmpdir):
 @pytest.mark.parametrize(
     "gen_data_str, expected",
     [
-        ("GEN_DATA_KEY RESULT_FILE:Results INPUT_FORMAT:ASCII REPORT_STEPS:10", None),
-        ("GEN_DATA_KEY RESULT_FILE:Results INPUT_FORMAT:ASCII", None),
-        (
-            "GEN_DATA_KEY RESULT_FILE:Results%d INPUT_FORMAT:GEN_DATA_UNDEFINED"
-            " REPORT_STEPS:10",
+        pytest.param(
+            "GDK RESULT_FILE:Results INPUT_FORMAT:ASCII REPORT_STEPS:10",
             None,
+            id="RESULT_FILE missing %d in file name",
         ),
-        (
-            "GEN_DATA_KEY RESULT_FILE:Results%d INPUT_FORMAT:ASCIIX REPORT_STEPS:10",
+        pytest.param(
+            "GDK RESULT_FILE:Results%d INPUT_FORMAT:ASCII",
             None,
+            id="REPORT_STEPS missing",
         ),
-        ("GEN_DATA_KEY RESULT_FILE:Results%d REPORT_STEPS:10", None),
-        (
-            "GEN_DATA_KEY RESULT_FILE:Results%d INPUT_FORMAT:ASCII"
-            " REPORT_STEPS:10,20,30",
+        pytest.param(
+            "GDK RESULT_FILE:Results%d INPUT_FORMAT:ASCIIX REPORT_STEPS:10",
+            None,
+            id="Unsupported INPUT_FORMAT",
+        ),
+        pytest.param(
+            "GDK RESULT_FILE:Results%d REPORT_STEPS:10", None, id="Missing INPUT_FORMAT"
+        ),
+        pytest.param(
+            "GDK RESULT_FILE:Results%d INPUT_FORMAT:ASCII REPORT_STEPS:10,20,30",
             "Valid",
+            id="Valid case",
         ),
     ],
 )

@@ -30,20 +30,34 @@ def _get_filename(file):
     return file
 
 
-def _option_dict(option_list: list, offset: int) -> Dict[str, str]:
+def _option_dict(option_list: List[str], offset: int) -> Dict[str, str]:
     option_dict = {}
     for option_pair in option_list[offset:]:
+        if not isinstance(option_pair, str):
+            logger.warning(
+                f"Ignoring unsupported option pair{option_pair} "
+                f"of type {type(option_pair)}"
+            )
+            continue
+
         if len(option_pair.split(":")) == 2:
             key, val = option_pair.split(":")
             if val != "" and key != "":
                 option_dict[key] = val
+            else:
+                logger.warning(
+                    f"Ignoring argument {option_pair}"
+                    " not properly formatted should be of type ARG:VAL"
+                )
     return option_dict
 
 
-def _str_to_bool(txt: str) -> bool:
-    if txt.lower() in ["true", "1"]:
+def _str_to_bool(txt: Optional[str]) -> bool:
+    if txt is None:
+        return False
+    if txt.lower() == "true":
         return True
-    elif txt.lower() in ["false", "0"]:
+    elif txt.lower() == "false":
         return False
     else:
         logger.error(f"Failed to parse {txt} as bool! Using FORWARD_INIT:FALSE")
@@ -109,11 +123,11 @@ class EnsembleConfig(BaseCClass):
         grid_file: Optional[str] = None,
         ref_case_file: Optional[str] = None,
         tag_format: str = "<%s>",
-        gen_data_list=None,
-        gen_kw_list=None,
-        surface_list=None,
-        summary_list=None,
-        schedule_file_list=None,
+        gen_data_list: Optional[List] = None,
+        gen_kw_list: Optional[List] = None,
+        surface_list: Optional[List] = None,
+        summary_list: Optional[List] = None,
+        schedule_file: Optional[List] = None,
         field_list=None,
     ):
         if gen_kw_list is None:
@@ -124,8 +138,8 @@ class EnsembleConfig(BaseCClass):
             surface_list = []
         if summary_list is None:
             summary_list = []
-        if schedule_file_list is None:
-            schedule_file_list = []
+        if schedule_file is None:
+            schedule_file = []
         if field_list is None:
             field_list = []
 
@@ -163,8 +177,7 @@ class EnsembleConfig(BaseCClass):
         for field in field_list:
             field_node = self.get_field_node(field, self.grid, self._get_trans_table())
             self.addNode(field_node)
-
-        for schedule_file in schedule_file_list:
+        if schedule_file:
             schedule_file_node = self._get_schedule_file_node(
                 schedule_file, self._gen_kw_tag_format
             )
@@ -182,7 +195,8 @@ class EnsembleConfig(BaseCClass):
             name = gen_data[0]
             res_file = options.get(ConfigKeys.RESULT_FILE)
             input_format_str = options.get(ConfigKeys.INPUT_FORMAT)
-            if input_format_str not in ["ASCII", "ASCII_TEMPLATE"]:
+            if input_format_str != "ASCII":
+                logger.error("The only supported INPUT_FORMAT is ASCII")
                 return None
             input_format = GenDataFileType.from_string(input_format_str)
             report_steps_str = options.get(ConfigKeys.REPORT_STEPS, "")
@@ -210,7 +224,7 @@ class EnsembleConfig(BaseCClass):
             tmpl_path = _get_abs_path(gen_kw[1])
             out_file = _get_filename(_get_abs_path(gen_kw[2]))
             param_file_path = _get_abs_path(gen_kw[3])
-            forward_init = _str_to_bool(options.get(ConfigKeys.FORWARD_INIT, "0"))
+            forward_init = _str_to_bool(options.get(ConfigKeys.FORWARD_INIT))
             init_files = _get_abs_path(options.get(ConfigKeys.INIT_FILES))
         return EnkfConfigNode.create_gen_kw(
             name,
@@ -236,7 +250,7 @@ class EnsembleConfig(BaseCClass):
             init_file = options.get(ConfigKeys.INIT_FILES)
             out_file = options.get("OUTPUT_FILE")
             base_surface = options.get(ConfigKeys.BASE_SURFACE_KEY)
-            forward_int = _str_to_bool(options.get(ConfigKeys.FORWARD_INIT, "0"))
+            forward_int = _str_to_bool(options.get(ConfigKeys.FORWARD_INIT))
 
         return EnkfConfigNode.create_surface(
             name,
@@ -270,7 +284,7 @@ class EnsembleConfig(BaseCClass):
             options = _option_dict(field, 2)
             if var_type == ConfigKeys.GENERAL_KEY:
                 enkf_infile = field[3]
-            forward_init = _str_to_bool(options.get(ConfigKeys.FORWARD_INIT, "0"))
+            forward_init = _str_to_bool(options.get(ConfigKeys.FORWARD_INIT))
             init_transform = options.get(ConfigKeys.INIT_TRANSFORM)
             output_transform = options.get(ConfigKeys.OUTPUT_TRANSFORM)
             input_transform = options.get(ConfigKeys.INPUT_TRANSFORM)
@@ -293,9 +307,9 @@ class EnsembleConfig(BaseCClass):
             init_files,
         )
 
-    @classmethod
+    @staticmethod
     def _get_schedule_file_node(
-        cls, schedule_file: Union[dict, list, str], tag_format: str
+        schedule_file: Union[dict, list], tag_format: str
     ) -> EnkfConfigNode:
         if isinstance(schedule_file, dict):
             file_path = schedule_file.get(ConfigKeys.TEMPLATE)
@@ -304,10 +318,8 @@ class EnsembleConfig(BaseCClass):
             init_files = schedule_file.get(ConfigKeys.INIT_FILES)
         else:
             file_path = schedule_file[0]
-            if isinstance(schedule_file, str):
-                file_path = schedule_file
             file_name = _get_filename(file_path)
-            options = _option_dict(file_path, 1)
+            options = _option_dict(schedule_file, 1)
             parameter = options.get(ConfigKeys.PARAMETER_KEY)
             init_files = options.get(ConfigKeys.INIT_FILES)
 
@@ -330,11 +342,7 @@ class EnsembleConfig(BaseCClass):
         gen_kw_list = config_dict.get(ConfigKeys.GEN_KW, [])
         surface_list = config_dict.get(ConfigKeys.SURFACE_KEY, [])
         summary_list = config_dict.get(ConfigKeys.SUMMARY, [])
-        if isinstance(summary_list, str):
-            summary_list = [summary_list]
-        schedule_file_list = config_dict.get(ConfigKeys.SCHEDULE_PREDICTION_FILE, [])
-        if isinstance(schedule_file_list, str):
-            schedule_file_list = [[schedule_file_list]]
+        schedule_file = config_dict.get(ConfigKeys.SCHEDULE_PREDICTION_FILE, [])
         field_list = config_dict.get(ConfigKeys.FIELD_KEY, [])
 
         ens_config = cls(
@@ -345,7 +353,7 @@ class EnsembleConfig(BaseCClass):
             gen_kw_list=gen_kw_list,
             surface_list=surface_list,
             summary_list=summary_list,
-            schedule_file_list=schedule_file_list,
+            schedule_file=schedule_file,
             field_list=field_list,
         )
 
