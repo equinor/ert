@@ -7,7 +7,6 @@ from ert import _clib
 from ert._c_wrappers import ResPrototype
 from ert._c_wrappers.enkf.data.ext_param import ExtParam
 from ert._c_wrappers.enkf.data.field import Field
-from ert._c_wrappers.enkf.data.gen_data import GenData
 from ert._c_wrappers.enkf.data.gen_kw import GenKw
 from ert._c_wrappers.enkf.enums import ErtImplType
 from ert._c_wrappers.enkf.node_id import NodeId
@@ -74,12 +73,6 @@ class EnkfNode(BaseCClass):
 
     def getImplType(self) -> ErtImplType:
         return self._get_impl_type()
-
-    def asGenData(self) -> GenData:
-        impl_type = self.getImplType()
-        assert impl_type == ErtImplType.GEN_DATA
-
-        return GenData.createCReference(self.valuePointer(), self)
 
     def asGenKw(self) -> GenKw:
         impl_type = self.getImplType()
