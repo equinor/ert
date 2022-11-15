@@ -49,8 +49,6 @@ void enkf_node_deserialize(enkf_node_type *enkf_node, enkf_fs_type *fs,
 
 typedef void(enkf_node_ftype1)(enkf_node_type *);
 
-std::vector<double> enkf_node_user_get_vector(enkf_node_type *enkf_node,
-                                              enkf_fs_type *fs, int iens);
 enkf_node_type *enkf_node_deep_alloc(const enkf_config_node_type *config);
 extern "C" enkf_node_type *enkf_node_alloc(const enkf_config_node_type *);
 
@@ -61,9 +59,6 @@ extern "C" bool enkf_node_has_data(enkf_node_type *enkf_node, enkf_fs_type *fs,
 extern "C" void *enkf_node_value_ptr(const enkf_node_type *);
 extern "C" ert_impl_type enkf_node_get_impl_type(const enkf_node_type *);
 
-bool enkf_node_forward_load_vector(enkf_node_type *enkf_node,
-                                   const ecl_sum_type *ecl_sum,
-                                   const int_vector_type *time_index);
 bool enkf_node_forward_load(enkf_node_type *enkf_node, int report_step,
                             const std::string &run_path, enkf_fs_type *fs);
 bool enkf_node_initialize(enkf_node_type *enkf_node, int);
