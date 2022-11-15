@@ -11,7 +11,6 @@ pybind11_add_module(
   python/logging.cpp
   python/ensemble_config.cpp
   python/enkf_fs_keyword_data.cpp
-  python/enkf_fs_summary_data.cpp
   python/model_callbacks.cpp
   config/conf_util.cpp
   config/conf.cpp
@@ -74,7 +73,6 @@ pybind11_add_module(
   enkf/row_scaling.cpp
   enkf/state_map.cpp
   enkf/state_map.cpp
-  enkf/summary.cpp
   enkf/summary_config.cpp
   enkf/summary_key_matcher.cpp
   enkf/summary_key_set.cpp
