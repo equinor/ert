@@ -14,14 +14,11 @@
 
 #include <ert/job_queue/environment_varlist.hpp>
 
-#include "ert/enkf/ensemble_config.hpp"
-#include "ert/enkf/model_config.hpp"
 #include "ert/enkf/run_arg_type.hpp"
 
 #include <ert/enkf/enkf_defaults.hpp>
 #include <ert/enkf/enkf_node.hpp>
 #include <ert/enkf/enkf_state.hpp>
-#include <ert/enkf/gen_data.hpp>
 #include <ert/logging.hpp>
 #include <ert/res_util/memory.hpp>
 

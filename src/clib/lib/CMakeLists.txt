@@ -18,7 +18,6 @@ pybind11_add_module(
   python/init.cpp
   python/logging.cpp
   python/ensemble_config.cpp
-  python/enkf_fs_general_data.cpp
   python/enkf_fs_keyword_data.cpp
   python/enkf_defaults.cpp
   python/enkf_fs_summary_data.cpp
@@ -83,7 +82,6 @@ pybind11_add_module(
   enkf/fs_driver.cpp
   enkf/fs_types.cpp
   enkf/gen_common.cpp
-  enkf/gen_data.cpp
   enkf/gen_data_config.cpp
   enkf/gen_kw.cpp
   enkf/gen_kw_config.cpp

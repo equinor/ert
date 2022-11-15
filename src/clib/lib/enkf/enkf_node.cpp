@@ -9,7 +9,6 @@
 #include <ert/enkf/enkf_node.hpp>
 #include <ert/enkf/ext_param.hpp>
 #include <ert/enkf/field.hpp>
-#include <ert/enkf/gen_data.hpp>
 #include <ert/enkf/gen_kw.hpp>
 #include <ert/enkf/run_arg.hpp>
 #include <ert/enkf/summary.hpp>
@@ -376,21 +375,6 @@ void enkf_node_copy(const enkf_config_node_type *config_node,
     enkf_node_type *enkf_node =
         enkf_node_load_alloc(config_node, src_case, src_id);
 
-    /* Hack to ensure that size is set for the gen_data instances.
-     This sneeks low level stuff into a high level scope. BAD. */
-    {
-        ert_impl_type impl_type = enkf_node_get_impl_type(enkf_node);
-        if (impl_type == GEN_DATA) {
-            /* Read the size at report_step_from */
-            gen_data_type *gen_data =
-                (gen_data_type *)enkf_node_value_ptr(enkf_node);
-            int size = gen_data_get_size(gen_data);
-
-            /* Enforce the size at report_step_to */
-            gen_data_assert_size(gen_data, size, target_id.report_step);
-        }
-    }
-
     enkf_node_store(enkf_node, target_case, target_id);
     enkf_node_free(enkf_node);
 }
@@ -522,15 +506,6 @@ enkf_node_alloc_empty(const enkf_config_node_type *config) {
         node->write_to_buffer = field_write_to_buffer__;
         node->serialize = field_serialize__;
         node->deserialize = field_deserialize__;
-        break;
-    case (GEN_DATA):
-        node->alloc = gen_data_alloc__;
-        node->freef = gen_data_free__;
-        node->forward_load = gen_data_forward_load__;
-        node->read_from_buffer = gen_data_read_from_buffer__;
-        node->write_to_buffer = gen_data_write_to_buffer__;
-        node->serialize = gen_data_serialize__;
-        node->deserialize = gen_data_deserialize__;
         break;
     /* EXT_PARAM is used by Everest */
     case (EXT_PARAM):
