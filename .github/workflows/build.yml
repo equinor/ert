@@ -188,7 +188,7 @@ jobs:
         mv setup.cfg tmp_tests/setup.cfg
         mkdir tmp_tests/.git
 
-    - name: Test docses
+    - name: Test docs
       run: |
         sphinx-build -n -v -E -W ./docs ./tmp/ert_docs
 
