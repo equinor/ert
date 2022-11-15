@@ -11,6 +11,7 @@
 #include <ert/enkf/enkf_obs.hpp>
 #include <ert/enkf/ext_param_config.hpp>
 #include <ert/enkf/field_config.hpp>
+#include <ert/enkf/gen_data_config.hpp>
 #include <ert/enkf/gen_kw_config.hpp>
 #include <ert/enkf/gen_obs.hpp>
 #include <ert/enkf/surface_config.hpp>
