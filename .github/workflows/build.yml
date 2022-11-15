@@ -179,7 +179,7 @@ jobs:
         pytest tests -sv --hypothesis-profile=ci -m "requires_window_manager"
         # dark storage assumes it is a started service so cannot be excuded
         # by pytest blindly
-        pytest --doctest-modules src/ert/ --ignore src/ert/dark_storage
+        pytest --doctest-modules src/ --ignore src/ert/dark_storage --ignore-glob src/_*
 
     - name: Unit Test
       if: matrix.test-type == 'unit-tests'
