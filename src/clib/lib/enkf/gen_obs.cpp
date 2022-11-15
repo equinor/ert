@@ -13,7 +13,6 @@
 #include <ert/enkf/enkf_macros.hpp>
 #include <ert/enkf/enkf_util.hpp>
 #include <ert/enkf/gen_common.hpp>
-#include <ert/enkf/gen_data.hpp>
 #include <ert/enkf/gen_obs.hpp>
 #include <ert/except.hpp>
 #include <ert/python.hpp>
@@ -195,46 +194,6 @@ gen_obs_type *gen_obs_alloc(const gen_data_config_type *data_config,
         gen_obs_parse_data_index(obs, data_index_string);
 
     return obs;
-}
-
-static void gen_obs_assert_data_size(const gen_obs_type *gen_obs,
-                                     const gen_data_type *gen_data) {
-    if (gen_obs->observe_all_data) {
-        int data_size = gen_data_get_size(gen_data);
-        if (gen_obs->obs_size != data_size)
-            util_abort(
-                "%s: size mismatch: Observation: %s:%d      Data: %s:%d \n",
-                __func__, gen_obs->obs_key, gen_obs->obs_size,
-                gen_data_get_key(gen_data), data_size);
-    }
-    /*
-    Else the user has explicitly entered indices to observe in the
-    gen_data instances, and we just have to trust them (however the
-    gen_data_iget() does a range check.
-  */
-}
-
-double gen_obs_chi2(const gen_obs_type *gen_obs, const gen_data_type *gen_data,
-                    node_id_type node_id) {
-    gen_obs_assert_data_size(gen_obs, gen_data);
-    {
-        const bool_vector_type *forward_model_active =
-            gen_data_config_get_active_mask(gen_obs->data_config);
-        double sum_chi2 = 0;
-        for (int iobs = 0; iobs < gen_obs->obs_size; iobs++) {
-            int data_index = gen_obs->data_index_list[iobs];
-            if (forward_model_active &&
-                (bool_vector_iget(forward_model_active, data_index) == false))
-                continue; /* Forward model has deactivated this index - just continue. */
-            {
-                double d = gen_data_iget_double(gen_data, data_index);
-                double x =
-                    (d - gen_obs->obs_data[iobs]) / gen_obs->obs_std[iobs];
-                sum_chi2 += x * x;
-            }
-        }
-        return sum_chi2;
-    }
 }
 
 /*
