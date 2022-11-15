@@ -7,6 +7,8 @@
 #include <ert/enkf/enkf_node.hpp>
 #include <ert/enkf/ext_param.hpp>
 #include <ert/enkf/field.hpp>
+#include <ert/enkf/gen_kw.hpp>
+#include <ert/enkf/summary.hpp>
 #include <ert/enkf/surface.hpp>
 #include <ert/python.hpp>
 
@@ -165,6 +167,15 @@ ert_impl_type enkf_node_get_impl_type(const enkf_node_type *enkf_node) {
 
 void *enkf_node_value_ptr(const enkf_node_type *enkf_node) {
     return enkf_node->data;
+}
+
+std::vector<double> enkf_node_user_get_vector(enkf_node_type *enkf_node,
+                                              enkf_fs_type *fs, int iens) {
+    if (enkf_node_try_load_vector(enkf_node, fs, iens)) {
+        return summary_user_get_vector(
+            static_cast<summary_type *>(enkf_node->data));
+    } else
+        return {};
 }
 
 bool enkf_node_forward_init(enkf_node_type *enkf_node,
