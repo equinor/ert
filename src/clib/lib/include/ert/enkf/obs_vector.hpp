@@ -16,6 +16,7 @@
 #include <ert/enkf/enkf_node.hpp>
 #include <ert/enkf/enkf_types.hpp>
 #include <ert/enkf/ensemble_config.hpp>
+#include <ert/enkf/model_config.hpp>
 #include <ert/enkf/time_map.hpp>
 
 enum history_source_type {

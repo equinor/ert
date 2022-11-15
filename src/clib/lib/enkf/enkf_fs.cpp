@@ -534,10 +534,6 @@ summary_key_set_type *enkf_fs_get_summary_key_set(const enkf_fs_type *fs) {
     return fs->summary_key_set;
 }
 
-misfit_ensemble_type *enkf_fs_get_misfit_ensemble(const enkf_fs_type *fs) {
-    return fs->misfit_ensemble;
-}
-
 namespace {
 void bind_write_parameter(py::handle fs_, const std::string &node_key, int iens,
                           py::bytes buffer) {
