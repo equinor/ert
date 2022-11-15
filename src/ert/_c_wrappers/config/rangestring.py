@@ -9,9 +9,9 @@ The ranges can overlap. The end of each range is inclusive.
 Example:
 
     >>> mask_to_rangestring([True, True, True])
-    "0-2"
+    '0-2'
     >>> mask_to_rangestring([True, False, True, True])
-    "0,2-3"
+    '0, 2-3'
 """
 from typing import Collection, List, Optional, Union
 

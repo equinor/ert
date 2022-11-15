@@ -15,9 +15,9 @@ class Substituter:
         :param global_substitutions: List of substitutions that should be
             performed, in the same way regardless of realization and iteration, ie.
 
-                >>> substituter = Substituter([("<case_name>", "my_case")])
+                >>> substituter = Substituter({"<case_name>": "my_case"})
                 >>> substituter.substitute("the case is: <case_name>", 0, 0)
-                "the case is: my_case"
+                'the case is: my_case'
         """
         if global_substitutions is None:
             self._global_substitutions = {}
@@ -34,9 +34,9 @@ class Substituter:
             >>> substituter = Substituter()
             >>> substituter.add_substitution("<GEO_ID>", "my_geo_id", 0, 0)
             >>> substituter.substitute("the geo id is: <GEO_ID>", 0, 0)
-            "the geo id is: my_geo_id"
+            'the geo id is: my_geo_id'
             >>> substituter.substitute("the geo id is: <GEO_ID>", 9, 9)
-            "the geo id is: <GEO_ID>"
+            'the geo id is: <GEO_ID>'
         """
         self._local_substitutions[(realization, iteration)][key] = str(value)
 
@@ -47,9 +47,9 @@ class Substituter:
             >>> substituter = Substituter()
             >>> substituter.add_global_substitution("<RUNPATH_FILE>", "/path/filename")
             >>> substituter.substitute("the file is: <RUNPATH_FILE>", 0, 0)
-            "the file is: /path/filename"
+            'the file is: /path/filename'
             >>> substituter.substitute("the file is: <RUNPATH_FILE>", 9, 8)
-            "the file is: /path/filename"
+            'the file is: /path/filename'
         """
         self._global_substitutions[key] = str(value)
 
@@ -58,9 +58,9 @@ class Substituter:
 
         Example:
 
-            >>> substituter = Substituter([("<GLOBAL>", "global")])
+            >>> substituter = Substituter({"<GLOBAL>": "global"})
             >>> substituter.get_substitutions(0, 1)
-            {"<GLOBAL>": "global", "<IENS>": 0, "<ITER>": 1}
+            {'<GLOBAL>': 'global', '<IENS>': '0', '<ITER>': '1'}
 
         :return: All substitutions (global and local) to be applied for
             the given realization and iteration.
