@@ -62,6 +62,7 @@ class Runpaths:
 
         The following example code:
 
+            >>> runpath_file = "._ert_runpath_list"
             >>> runpaths = Runpaths(
             ...    "job%d",
             ...    "realization-%d/iteration-%d",

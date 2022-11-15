@@ -56,12 +56,12 @@ def parse_signature_job(signature: str) -> Tuple[str, Optional[str]]:
 
 
     >>> parse_signature_job("job(arg1=val1, arg2=val2, arg3=val3)")
-    ("job", "arg1=val1, arg2=val2, arg3=val3")
+    ('job', 'arg1=val1, arg2=val2, arg3=val3')
 
     Function without arguments has arglist set to None:
 
     >>> parse_signature_job("job")
-    ("job", None)
+    ('job', None)
 
 
     For backwards compatability, text after first closing parenthesis is closed,
