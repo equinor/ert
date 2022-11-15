@@ -7,8 +7,6 @@
 
 #include <ert/enkf/active_list.hpp>
 #include <ert/enkf/enkf_macros.hpp>
-#include <ert/enkf/meas_data.hpp>
-#include <ert/enkf/obs_data.hpp>
 #include <ert/enkf/summary.hpp>
 #include <ert/enkf/summary_config.hpp>
 
@@ -39,10 +37,7 @@ extern "C" void summary_obs_set_std_scale(summary_obs_type *summary_obs,
                                           double std_multiplier);
 
 VOID_FREE_HEADER(summary_obs);
-VOID_GET_OBS_HEADER(summary_obs);
-VOID_MEASURE_HEADER(summary_obs);
 VOID_USER_GET_OBS_HEADER(summary_obs);
-VOID_CHI2_HEADER(summary_obs);
 VOID_UPDATE_STD_SCALE_HEADER(summary_obs);
 
 #endif
