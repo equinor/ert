@@ -7,7 +7,6 @@
 
 #include <ert/enkf/active_list.hpp>
 #include <ert/enkf/enkf_macros.hpp>
-#include <ert/enkf/summary.hpp>
 #include <ert/enkf/summary_config.hpp>
 
 typedef struct summary_obs_struct summary_obs_type;
