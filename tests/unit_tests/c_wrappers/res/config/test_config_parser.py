@@ -329,6 +329,9 @@ def test_valid_string():
         (["a:1", "T:"], 0, {"a": "1"}),
         (["a:1", "b:2", "c:3"], 2, {"c": "3"}),
         (["a", "b", "c"], 0, {}),
+        ([], 0, {}),
+        ([1, 2, 3, 4], 0, {}),
+        ([1.1, "none", 2], 0, {}),
     ],
 )
 def test_options_dic(option_list, offset, expected):
@@ -338,18 +341,17 @@ def test_options_dic(option_list, offset, expected):
 @pytest.mark.parametrize(
     "text, expected, success",
     [
-        ("1", True, True),
         ("True", True, True),
         ("true", True, True),
         ("TRUE", True, True),
         ("False", False, True),
         ("false", False, True),
         ("FALSE", False, True),
-        ("0", False, True),
-        ("2", False, False),
-        ("-1", False, False),
+        (None, False, True),
+        ("1", False, False),
         ("fail", False, False),
         ("tru", False, False),
+        ("", False, False),
     ],
 )
 def test_str_to_bool(text, expected, success, caplog):
