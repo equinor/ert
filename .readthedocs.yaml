@@ -1,8 +1,5 @@
 version: 2
 
-sphinx:
-   configuration: docs/conf.py
-
 python:
    install:
    - requirements: dev-requirements.txt
@@ -11,7 +8,7 @@ python:
 
 sphinx:
   builder: html
-  configuration: docs/rst/manual/conf.py
+  configuration: docs/conf.py
 
 build:
   os: ubuntu-20.04
