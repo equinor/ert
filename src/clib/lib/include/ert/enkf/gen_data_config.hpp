@@ -9,7 +9,6 @@
 #include <ert/enkf/enkf_fs_type.hpp>
 #include <ert/enkf/enkf_macros.hpp>
 #include <ert/enkf/enkf_types.hpp>
-#include <ert/enkf/gen_data_common.hpp>
 
 typedef enum {
     GEN_DATA_UNDEFINED = 0,
@@ -19,6 +18,8 @@ typedef enum {
     ASCII_TEMPLATE = 2,
 } /*   The data is in a binary file with floats. */
 gen_data_file_format_type;
+
+typedef struct gen_data_config_struct gen_data_config_type;
 
 bool gen_data_config_is_dynamic(const gen_data_config_type *config);
 void gen_data_config_load_active(gen_data_config_type *config, enkf_fs_type *fs,
