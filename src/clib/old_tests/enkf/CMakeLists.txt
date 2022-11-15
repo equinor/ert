@@ -21,7 +21,6 @@ foreach(
   enkf_ensemble_config
   enkf_fs
   enkf_gen_data_config
-  enkf_meas_data
   enkf_model_config
   enkf_obs_invalid_path
   enkf_obs
@@ -29,8 +28,6 @@ foreach(
   enkf_state_map
   enkf_time_map
   obs_vector
-  measured
-  obs_mask_deactivate
   row_scaling
   trans_func)
   add_executable(${test} ${TESTS_EXCLUDE_FROM_ALL} test_${test}.cpp)
