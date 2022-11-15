@@ -24,7 +24,7 @@
 #include <ert/enkf/enkf_defaults.hpp>
 #include <ert/enkf/enkf_fs.hpp>
 #include <ert/enkf/enkf_state.hpp>
-#include <ert/enkf/misfit_ensemble.hpp>
+#include <ert/enkf/ensemble_config.hpp>
 
 #include <fmt/format.h>
 
@@ -119,7 +119,6 @@ static auto logger = ert::get_logger("enkf");
 #define SUMMARY_KEY_SET_FILE "summary-key-set"
 #define TIME_MAP_FILE "time-map"
 #define STATE_MAP_FILE "state-map"
-#define MISFIT_ENSEMBLE_FILE "misfit-ensemble"
 #define CASE_CONFIG_FILE "case_config"
 
 struct enkf_fs_struct {
@@ -137,7 +136,6 @@ struct enkf_fs_struct {
     summary_key_set_type *summary_key_set;
     /* The variables below here are for storing arbitrary files within the
      * enkf_fs storage directory, but not as serialized enkf_nodes. */
-    misfit_ensemble_type *misfit_ensemble;
     path_fmt_type *case_fmt;
     path_fmt_type *case_member_fmt;
     path_fmt_type *case_tstep_fmt;
@@ -152,7 +150,6 @@ enkf_fs_type *enkf_fs_alloc_empty(const char *mount_point,
     fs->time_map = time_map_alloc();
     fs->state_map = std::make_shared<StateMap>(ensemble_size);
     fs->summary_key_set = summary_key_set_alloc();
-    fs->misfit_ensemble = misfit_ensemble_alloc();
     fs->read_only = read_only;
     fs->mount_point = strdup(mount_point);
     auto mount_path = fs::path(mount_point);
@@ -303,24 +300,6 @@ static void enkf_fs_fread_summary_key_set(enkf_fs_type *fs) {
     free(filename);
 }
 
-static void enkf_fs_fread_misfit(enkf_fs_type *fs) {
-    FILE *stream = enkf_fs_open_excase_file(fs, MISFIT_ENSEMBLE_FILE);
-    if (stream != NULL) {
-        misfit_ensemble_fread(fs->misfit_ensemble, stream);
-        fclose(stream);
-    }
-}
-
-void enkf_fs_fwrite_misfit(enkf_fs_type *fs) {
-    if (misfit_ensemble_initialized(fs->misfit_ensemble)) {
-        char *filename = enkf_fs_alloc_case_filename(fs, MISFIT_ENSEMBLE_FILE);
-        auto stream = mkdir_fopen(fs::path(filename), "w");
-        free(filename);
-        misfit_ensemble_fwrite(fs->misfit_ensemble, stream);
-        fclose(stream);
-    }
-}
-
 enkf_fs_type *enkf_fs_mount(const char *mount_point, unsigned ensemble_size,
                             bool read_only) {
     FILE *stream = fs_driver_open_fstab(mount_point, false);
@@ -349,7 +328,6 @@ enkf_fs_type *enkf_fs_mount(const char *mount_point, unsigned ensemble_size,
     enkf_fs_fread_time_map(fs);
     enkf_fs_fread_state_map(fs);
     enkf_fs_fread_summary_key_set(fs);
-    enkf_fs_fread_misfit(fs);
 
     enkf_fs_get_ref(fs);
     return fs;
@@ -370,7 +348,6 @@ bool enkf_fs_exists(const char *mount_point) {
 void enkf_fs_sync(enkf_fs_type *fs) {
     if (!fs->read_only) {
         enkf_fs_fsync(fs);
-        enkf_fs_fwrite_misfit(fs);
     }
 }
 
@@ -383,7 +360,6 @@ void enkf_fs_umount(enkf_fs_type *fs) {
 
     summary_key_set_free(fs->summary_key_set);
     time_map_free(fs->time_map);
-    misfit_ensemble_free(fs->misfit_ensemble);
     delete fs;
 }
 
@@ -557,10 +533,6 @@ StateMap &enkf_fs_get_state_map(enkf_fs_type *fs) { return *fs->state_map; }
 
 summary_key_set_type *enkf_fs_get_summary_key_set(const enkf_fs_type *fs) {
     return fs->summary_key_set;
-}
-
-misfit_ensemble_type *enkf_fs_get_misfit_ensemble(const enkf_fs_type *fs) {
-    return fs->misfit_ensemble;
 }
 
 namespace {
