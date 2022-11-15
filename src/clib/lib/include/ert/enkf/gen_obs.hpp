@@ -4,7 +4,6 @@
 #include <ert/enkf/active_list.hpp>
 #include <ert/enkf/enkf_macros.hpp>
 #include <ert/enkf/gen_data_config.hpp>
-#include <ert/enkf/obs_data.hpp>
 
 typedef struct gen_obs_struct gen_obs_type;
 
@@ -42,10 +41,7 @@ extern "C" void gen_obs_load_data_index(gen_obs_type *obs,
 void gen_obs_parse_data_index(gen_obs_type *obs, const char *data_index_string);
 extern "C" void gen_obs_free(gen_obs_type *gen_obs);
 
-VOID_CHI2_HEADER(gen_obs);
 VOID_FREE_HEADER(gen_obs);
-VOID_GET_OBS_HEADER(gen_obs);
-VOID_MEASURE_HEADER(gen_obs);
 VOID_USER_GET_OBS_HEADER(gen_obs);
 VOID_UPDATE_STD_SCALE_HEADER(gen_obs);
 
