@@ -1,0 +1,38 @@
+name: Python doctest
+
+on:
+ push:
+   branches:
+     - main
+     - 'version-**'
+   tags: "*"
+ pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  python-doctest:
+    name: 
+    timeout-minutes: 40
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up Python
+      uses: actions/setup-python@v3
+      with:
+        python-version: '3.9'
+
+    - name: Install with dependencies
+      run: |
+        pip install -e .
+        pip install -r dev-requirements.txt
+
+    - name: Test doctest
+      run: |
+        # dark storage assumes it is a started service so cannot be excuded
+        # by pytest blindly
+        pytest --doctest-modules src/ --ignore src/ert/dark_storage
