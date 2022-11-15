@@ -147,6 +147,10 @@ enkf_fs_type *enkf_fs_alloc_empty(const char *mount_point,
     enkf_fs_type *fs = new enkf_fs_type;
     fs->time_map = std::make_shared<TimeMap>();
     fs->state_map = std::make_shared<StateMap>(ensemble_size);
+<<<<<<< HEAD
+=======
+    fs->summary_key_set = summary_key_set_alloc();
+>>>>>>> 78834babe (Remove unused C after numpy refactor)
     fs->read_only = read_only;
     fs->mount_point = strdup(mount_point);
     auto mount_path = fs::path(mount_point);
@@ -285,6 +289,15 @@ static void enkf_fs_fread_state_map(enkf_fs_type *fs) {
     free(filename);
 }
 
+<<<<<<< HEAD
+=======
+static void enkf_fs_fread_summary_key_set(enkf_fs_type *fs) {
+    char *filename = enkf_fs_alloc_case_filename(fs, SUMMARY_KEY_SET_FILE);
+    summary_key_set_fread(fs->summary_key_set, filename);
+    free(filename);
+}
+
+>>>>>>> 78834babe (Remove unused C after numpy refactor)
 enkf_fs_type *enkf_fs_mount(const char *mount_point, unsigned ensemble_size,
                             bool read_only) {
     FILE *stream = fs_driver_open_fstab(mount_point, false);
@@ -312,6 +325,10 @@ enkf_fs_type *enkf_fs_mount(const char *mount_point, unsigned ensemble_size,
     enkf_fs_init_path_fmt(fs);
     enkf_fs_fread_time_map(fs);
     enkf_fs_fread_state_map(fs);
+<<<<<<< HEAD
+=======
+    enkf_fs_fread_summary_key_set(fs);
+>>>>>>> 78834babe (Remove unused C after numpy refactor)
 
     enkf_fs_get_ref(fs);
     return fs;
@@ -342,6 +359,10 @@ void enkf_fs_umount(enkf_fs_type *fs) {
     path_fmt_free(fs->case_tstep_fmt);
     path_fmt_free(fs->case_tstep_member_fmt);
 
+<<<<<<< HEAD
+=======
+    summary_key_set_free(fs->summary_key_set);
+>>>>>>> 78834babe (Remove unused C after numpy refactor)
     delete fs;
 }
 
