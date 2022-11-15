@@ -32,14 +32,8 @@ static auto logger = ert::get_logger("obs_vector");
 struct obs_vector_struct {
     /** Function used to free an observation node. */
     obs_free_ftype *freef;
-    /** Function used to build the 'd' vector. */
-    obs_get_ftype *get_obs;
-    /** Function used to measure on the state, and add to to the S matrix. */
-    obs_meas_ftype *measure;
     /** Function to get an observation based on KEY:INDEX input from user.*/
     obs_user_get_ftype *user_get;
-    /** Function to evaluate chi-squared for an observation. */
-    obs_chi2_ftype *chi2;
     /** Function to scale the standard deviation with a given factor */
     obs_update_std_scale_ftype *update_std_scale;
     vector_type *nodes;
@@ -133,27 +127,18 @@ obs_vector_type *obs_vector_alloc(obs_impl_type obs_type, const char *obs_key,
     auto vector = new obs_vector_type;
 
     vector->freef = NULL;
-    vector->measure = NULL;
-    vector->get_obs = NULL;
     vector->user_get = NULL;
-    vector->chi2 = NULL;
     vector->update_std_scale = NULL;
 
     switch (obs_type) {
     case (SUMMARY_OBS):
         vector->freef = summary_obs_free__;
-        vector->measure = summary_obs_measure__;
-        vector->get_obs = summary_obs_get_observations__;
         vector->user_get = summary_obs_user_get__;
-        vector->chi2 = summary_obs_chi2__;
         vector->update_std_scale = summary_obs_update_std_scale__;
         break;
     case (GEN_OBS):
         vector->freef = gen_obs_free__;
-        vector->measure = gen_obs_measure__;
-        vector->get_obs = gen_obs_get_observations__;
         vector->user_get = gen_obs_user_get__;
-        vector->chi2 = gen_obs_chi2__;
         vector->update_std_scale = gen_obs_update_std_scale__;
         break;
     default:
@@ -654,38 +639,6 @@ static const char *__summary_kw(const char *field_name) {
     }
 }
 
-void obs_vector_iget_observations(const obs_vector_type *obs_vector,
-                                  int report_step, obs_data_type *obs_data,
-                                  enkf_fs_type *fs) {
-    void *obs_node = (void *)vector_iget(obs_vector->nodes, report_step);
-    if (obs_node != NULL)
-        obs_vector->get_obs(obs_node, obs_data, fs, report_step);
-}
-
-void obs_vector_measure(const obs_vector_type *obs_vector, enkf_fs_type *fs,
-                        int report_step,
-                        const std::vector<int> &ens_active_list,
-                        meas_data_type *meas_data) {
-
-    void *obs_node = (void *)vector_iget(obs_vector->nodes, report_step);
-    if (obs_node != NULL) {
-        enkf_node_type *enkf_node =
-            enkf_node_deep_alloc(obs_vector->config_node);
-
-        node_id_type node_id = {.report_step = report_step, .iens = 0};
-
-        for (auto iens : ens_active_list) {
-            node_id.iens = iens;
-
-            enkf_node_load(enkf_node, fs, node_id);
-            obs_vector->measure(obs_node, enkf_node_value_ptr(enkf_node),
-                                node_id, meas_data);
-        }
-
-        enkf_node_free(enkf_node);
-    }
-}
-
 static bool
 obs_vector_has_data_at_report_step(const obs_vector_type *obs_vector,
                                    const bool_vector_type *active_mask,
@@ -750,101 +703,6 @@ bool obs_vector_has_data(const obs_vector_type *obs_vector,
             return false;
     }
     return true;
-}
-
-/**
-   This is the lowest level function:
-
-   * It is checked that the obs_vector is active for the actual report
-     step; if it is not active 0.0 is returned without any further
-     ado.
-
-   * It is assumed the enkf_node_instance contains valid data for this
-     report_step. This is not checked in this function, and is the
-     responsability of the calling scope.
-
-   * The underlying chi2 function will do a type-check of node - and
-     fail hard if it is not correct.
-
-*/
-static double obs_vector_chi2__(const obs_vector_type *obs_vector,
-                                int report_step, const enkf_node_type *node,
-                                node_id_type node_id) {
-    void *obs_node = (void *)vector_iget(obs_vector->nodes, report_step);
-
-    if (obs_node)
-        return obs_vector->chi2(obs_node, enkf_node_value_ptr(node), node_id);
-    else
-        return 0.0; /* Observation not active for this report step. */
-}
-
-/**
-   This function will evaluate the chi2 for the ensemble members
-   [iens1,iens2) and report steps [step1,step2).
-
-   Observe that the chi2 pointer is assumed to be allocated for the
-   complete ensemble, altough this function only operates on part of
-   it.
-
-   This will not work for container observations .....
-*/
-void obs_vector_ensemble_chi2(const obs_vector_type *obs_vector,
-                              enkf_fs_type *fs, bool_vector_type *valid,
-                              int step1, int step2, int iens1, int iens2,
-                              double **chi2) {
-
-    int step;
-    enkf_node_type *enkf_node = enkf_node_alloc(obs_vector->config_node);
-    node_id_type node_id;
-    for (step = step1; step <= step2; step++) {
-        int iens;
-        node_id.report_step = step;
-        {
-            void *obs_node = (void *)vector_iget(obs_vector->nodes, step);
-
-            if (obs_node == NULL) {
-                for (iens = iens1; iens < iens2; iens++)
-                    chi2[step][iens] = 0;
-            } else {
-                for (iens = iens1; iens < iens2; iens++) {
-                    node_id.iens = iens;
-                    if (enkf_node_try_load(enkf_node, fs, node_id))
-                        chi2[step][iens] = obs_vector_chi2__(
-                            obs_vector, step, enkf_node, node_id);
-                    else {
-                        chi2[step][iens] = 0;
-                        // Missing data - this member will be marked as invalid in the misfit calculations.
-                        bool_vector_iset(valid, iens, false);
-                    }
-                }
-            }
-        }
-    }
-    enkf_node_free(enkf_node);
-}
-
-/**
-   This function will evaluate the total chi2 for one ensemble member
-   (i.e. sum over report steps).
-*/
-double obs_vector_total_chi2(const obs_vector_type *obs_vector,
-                             enkf_fs_type *fs, int iens) {
-    double sum_chi2 = 0;
-    enkf_node_type *enkf_node = enkf_node_deep_alloc(obs_vector->config_node);
-    node_id_type node_id = {.report_step = 0, .iens = iens};
-
-    int vec_size = vector_get_size(obs_vector->nodes);
-    for (int report_step = 0; report_step < vec_size; report_step++) {
-        if (vector_iget(obs_vector->nodes, report_step) != NULL) {
-            node_id.report_step = report_step;
-
-            if (enkf_node_try_load(enkf_node, fs, node_id))
-                sum_chi2 += obs_vector_chi2__(obs_vector, report_step,
-                                              enkf_node, node_id);
-        }
-    }
-    enkf_node_free(enkf_node);
-    return sum_chi2;
 }
 
 const char *obs_vector_get_obs_key(const obs_vector_type *obs_vector) {
