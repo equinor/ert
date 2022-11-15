@@ -28,9 +28,14 @@ jobs:
       with:
         python-version: ${{ inputs.python-version }}
 
-    - name: Install ert and test dependencies
+    - name: Get wheels
+      uses: actions/download-artifact@v2
+      with:
+        name: ${{ inputs.os }} Python ${{ inputs.python-version }} wheel
+
+    - name: Install wheel and test dependencies
       run: |
-        pip install .
+        find . -name "*.whl" -exec pip install {} \;
         pip install -r dev-requirements.txt
 
     - name: Test GUI
