@@ -169,7 +169,7 @@ jobs:
         find . -name "*.whl" -exec pip install {} \;
         pip install -r dev-requirements.txt
 
-    - name: Test GUI and docstrings
+    - name: Test GUI
       if: matrix.test-type == 'gui-test'
       env:
         DISPLAY: ':99.0'
@@ -177,9 +177,6 @@ jobs:
         ci/github/start_herbstluftwm.sh &
         sleep 5
         pytest tests -sv --hypothesis-profile=ci -m "requires_window_manager"
-        # dark storage assumes it is a started service so cannot be excuded
-        # by pytest blindly
-        pytest --doctest-modules src/ert/ --ignore src/ert/dark_storage
 
     - name: Unit Test
       if: matrix.test-type == 'unit-tests'
