@@ -198,12 +198,6 @@ static void add_havana_fault_keyword(config_parser_type *config_parser) {
     config_schema_item_set_argc_minmax(item, 2, 2);
 }
 
-static void add_multflt_keyword(config_parser_type *config_parser) {
-    auto item = config_add_schema_item(config_parser, "MULTFLT", false);
-    config_schema_item_set_argc_minmax(item, 3, 3);
-    config_schema_item_iset_type(item, 2, CONFIG_EXISTING_PATH);
-}
-
 static void add_gen_kw_keyword(config_parser_type *config_parser) {
     auto item = config_add_schema_item(config_parser, GEN_KW_KEY, false);
     config_schema_item_set_argc_minmax(item, 4, 6);
@@ -295,7 +289,6 @@ ERT_CLIB_SUBMODULE("config_keywords", m) {
             // the two fault types are just added to the config object only to
             // be able to print suitable messages before exiting.
             add_havana_fault_keyword(config_parser);
-            add_multflt_keyword(config_parser);
             add_gen_kw_keyword(config_parser);
             add_schedule_prediction_file_keyword(config_parser);
             add_string_keyword(config_parser, GEN_KW_TAG_FORMAT_KEY);
