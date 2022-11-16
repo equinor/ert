@@ -44,8 +44,10 @@ jobs:
 
     - name: find changed files
       id: find_changed_files
-      run: echo ::set-output name=changed_files::$(git diff --name-only ${{github.sha}} ${{github.event.pull_request.base.sha}} | tr ' ' '\n' | xargs ls -d 2>/dev/null | grep -E '\.(hpp|cpp)$' | tr '\n' ' ')
+      run: echo "changed_files=$(git diff --name-only ${{github.sha}} ${{github.event.pull_request.base.sha}} | tr ' ' '\n' | xargs ls -d 2>/dev/null | grep -E '\.(hpp|cpp)$' | tr '\n' ' ')" >> "$GITHUB_OUTPUT"
+
     - run: echo ::add-matcher::.github/clang-tidy-matcher.json
+
     - name: run clang-tidy
       run: clang-tidy -p cmake-build/ ${{steps.find_changed_files.outputs.changed_files}}
       if: steps.find_changed_files.outputs.changed_files != ''
