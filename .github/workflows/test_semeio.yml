@@ -27,10 +27,13 @@ jobs:
       uses: actions/setup-python@v4
       with:
         python-version: '3.10'
+        cache: "pipenv"
+    - run: curl https://raw.githubusercontent.com/pypa/pipenv/master/get-pipenv.py | python
+    - run: pipenv install --ignore-pipfile
 
     - name: Install ert
       run: |
-        pip install .
+        pipenv run pip install .
 
     - name: get semeio
       run: |
@@ -39,6 +42,6 @@ jobs:
     - name: Test semeio
       run: |
         pushd semeio
-        pip install .
-        pip install -r test_requirements.txt
-        pytest
+        pipenv run pip install .
+        pipenv run pip install -r test_requirements.txt
+        pipenv run pytest

@@ -28,10 +28,9 @@ jobs:
       uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
-
-    - name: Install dependencies
-      run: |
-        pip install -r dev-requirements.txt
+        cache: "pipenv"
+    - run: curl https://raw.githubusercontent.com/pypa/pipenv/master/get-pipenv.py | python
+    - run: pipenv install --ignore-pipfile
 
     - name: Clang Format
       run: ./script/clang-format --check
@@ -41,20 +40,20 @@ jobs:
 
     - name: Run isort
       run: |
-        isort --check src/ tests/
+        pipenv run isort --check src/ tests/
 
     - name: Lint with flake8
       run: |
-        flake8
+        pipenv run flake8
 
     - name: Run black
       uses: psf/black@stable
 
     - name: Run pylint
       run: |
-        pip install .  # We need the dependencies of ERT to avoid import-error
-        pylint src/ert --ignore-paths=src/ert/_c_wrappers,src/ert/gui,src/ert/logging,src/ert/analysis/_es_update.py,src/ert/data,src/_ert_job_runner,src/ert/shared,src/ert/__main__.py,src/ert/cli,src/ert/ensemble_evaluator,src/ert/services
-        pylint --disable=all \
+        pipenv run pip install .  # We need the dependencies of ERT to avoid import-error
+        pipenv run pylint src/ert --ignore-paths=src/ert/_c_wrappers,src/ert/gui,src/ert/logging,src/ert/analysis/_es_update.py,src/ert/data,src/_ert_job_runner,src/ert/shared,src/ert/__main__.py,src/ert/cli,src/ert/ensemble_evaluator,src/ert/services
+        pipenv run pylint --disable=all \
           --enable="\
             access-member-before-definition, \
             arguments-differ, \

@@ -168,6 +168,9 @@ jobs:
     - uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
+        cache: "pipenv"
+    - run: curl https://raw.githubusercontent.com/pypa/pipenv/master/get-pipenv.py | python
+    - run: pipenv install --ignore-pipfile
 
     - name: Get wheels
       uses: actions/download-artifact@v3
@@ -176,8 +179,7 @@ jobs:
 
     - name: Install wheel and test dependencies
       run: |
-        find . -name "*.whl" -exec pip install {} \;
-        pip install -r dev-requirements.txt
+        find . -name "*.whl" -exec pipenv run pip install {} \;
 
     - name: Make test directory
       run: |
@@ -189,7 +191,7 @@ jobs:
 
     - name: Test docs
       run: |
-        sphinx-build -n -v -E -W ./docs ./tmp/ert_docs
+        pipenv run sphinx-build -n -v -E -W ./docs ./tmp/ert_docs
 
   publish:
     name: Publish to PyPI

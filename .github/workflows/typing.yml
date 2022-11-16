@@ -28,19 +28,19 @@ jobs:
       uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
+        cache: "pipenv"
+    - run: curl https://raw.githubusercontent.com/pypa/pipenv/master/get-pipenv.py | python
+    - run: pipenv install --ignore-pipfile
     - name: Install ERT and dependencies
       run: |
-        pip install .
+        pipenv run pip install .
     - name: Install dependencies
     # type checking requires protobuf stubs
       run: |
-        python -m pip install --upgrade pip
-        python -m pip install -r types-requirements.txt
-        python -m pip install grpcio-tools
-        python -m grpc_tools.protoc -I src/_ert_com_protocol --mypy_out=src/_ert_com_protocol src/_ert_com_protocol/_schema.proto
+        pipenv run python -m grpc_tools.protoc -I src/_ert_com_protocol --mypy_out=src/_ert_com_protocol src/_ert_com_protocol/_schema.proto
     - name: Run mypy
       run: |
-        mypy --disallow-untyped-defs --ignore-missing-imports src/ert/shared/models
+        pipenv run mypy --disallow-untyped-defs --ignore-missing-imports src/ert/shared/models
     - name: Run strict mypy
       run: |
-        mypy src/ert --config-file .mypy-strict.ini
+        pipenv run mypy src/ert --config-file .mypy-strict.ini

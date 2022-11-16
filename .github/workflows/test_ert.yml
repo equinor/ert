@@ -27,6 +27,9 @@ jobs:
     - uses: actions/setup-python@v4
       with:
         python-version: ${{ inputs.python-version }}
+        cache: "pipenv"
+    - run: curl https://raw.githubusercontent.com/pypa/pipenv/master/get-pipenv.py | python
+    - run: pipenv install --ignore-pipfile
 
     - name: Get wheels
       uses: actions/download-artifact@v3
@@ -35,8 +38,7 @@ jobs:
 
     - name: Install wheel and test dependencies
       run: |
-        find . -name "*.whl" -exec pip install {} \;
-        pip install -r dev-requirements.txt
+        find . -name "*.whl" -exec pipenv run pip install {} \;
 
     - name: Test GUI
       if: inputs.test-type == 'gui-test'
@@ -45,17 +47,17 @@ jobs:
       run: |
         ci/github/start_herbstluftwm.sh &
         sleep 5
-        pytest tests -sv --hypothesis-profile=ci -m "requires_window_manager"
+        pipenv run pytest tests -sv --hypothesis-profile=ci -m "requires_window_manager"
 
     - name: Unit Test
       if: inputs.test-type == 'unit-tests'
       run: |
-        pytest tests -sv  --hypothesis-profile=ci -m "not integration_test and not requires_window_manager"
+        pipenv run pytest tests -sv  --hypothesis-profile=ci -m "not integration_test and not requires_window_manager"
 
     - name: Integration Test
       if: inputs.test-type == 'integration-tests'
       run: |
-        pytest tests -sv --hypothesis-profile=ci -m "integration_test and not requires_window_manager"
+        pipenv run pytest tests -sv --hypothesis-profile=ci -m "integration_test and not requires_window_manager"
 
     - name: Test for a clean repository
       run: |
@@ -65,4 +67,4 @@ jobs:
 
     - name: Test CLI
       run: |
-        ert --help
+        pipenv run ert --help

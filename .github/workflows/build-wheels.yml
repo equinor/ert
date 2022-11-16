@@ -22,6 +22,9 @@ jobs:
     - uses: actions/setup-python@v4
       with:
         python-version: ${{ inputs.python-version }}
+        cache: "pipenv"
+    - run: curl https://raw.githubusercontent.com/pypa/pipenv/master/get-pipenv.py | python
+    - run: pipenv install --ignore-pipfile
 
     - name: Build Linux Wheel
       uses: docker://quay.io/pypa/manylinux2014_x86_64
@@ -31,7 +34,7 @@ jobs:
       if: inputs.os == 'ubuntu-latest'
 
     - name: Build macOS Wheel
-      run: pip wheel . --no-deps -w dist
+      run: pipenv run pip wheel . --no-deps -w dist
       if: inputs.os == 'macos-latest'
 
     - name: Upload wheel as artifact
