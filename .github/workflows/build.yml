@@ -145,7 +145,6 @@ jobs:
   docs-ert:
     name: Test ert docs
     needs: [build-linux]
-    timeout-minutes: 3
     strategy:
       fail-fast: false
       matrix:
