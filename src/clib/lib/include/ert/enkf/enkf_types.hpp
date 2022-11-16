@@ -61,10 +61,10 @@ enkf_var_type;
 */
 
 typedef enum {
-    FIELD = 104,    /* WELL has been removed  */
-    GEN_KW = 107,   /* RELPERM has been removed & HAVANA_FAULT */
-    SUMMARY = 110,  /* TPGZONE has been removed */
-    GEN_DATA = 113, /* PILOT_POINT has been removed */
+    FIELD = 104,
+    GEN_KW = 107,
+    SUMMARY = 110,
+    GEN_DATA = 113,
     SURFACE = 114,
     EXT_PARAM = 116
 } ert_impl_type;

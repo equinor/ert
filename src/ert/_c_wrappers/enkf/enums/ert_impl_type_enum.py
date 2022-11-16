@@ -3,10 +3,10 @@ from cwrap import BaseCEnum
 
 class ErtImplType(BaseCEnum):
     TYPE_NAME = "ert_impl_type_enum"
-    FIELD = None  # WELL has been removed
-    GEN_KW = None  # RELPERM has been removed & HAVANA_FAULT
-    SUMMARY = None  # TPGZONE has been removed
-    GEN_DATA = None  # PILOT_POINT has been removed
+    FIELD = None
+    GEN_KW = None
+    SUMMARY = None
+    GEN_DATA = None
     SURFACE = None
     EXT_PARAM = None
 
