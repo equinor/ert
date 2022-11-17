@@ -504,12 +504,6 @@ class EnKFMain:
     def createRunPath(self, run_context: RunContext) -> None:
         for iens, run_arg in enumerate(run_context):
             if run_context.is_active(iens):
-                substitutions = self.substituter.get_substitutions(
-                    iens, run_arg.iter_id
-                )
-                subst_list = SubstitutionList()
-                for subst in substitutions.items():
-                    subst_list.addItem(*subst)
                 os.makedirs(
                     run_arg.runpath,
                     exist_ok=True,
