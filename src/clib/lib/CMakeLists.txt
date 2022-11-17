@@ -91,7 +91,6 @@ pybind11_add_module(
   enkf/state_map.cpp
   enkf/summary.cpp
   enkf/summary_config.cpp
-  enkf/summary_key_matcher.cpp
   enkf/summary_key_set.cpp
   enkf/summary_obs.cpp
   enkf/surface.cpp
