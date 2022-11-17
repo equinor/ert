@@ -18,7 +18,6 @@
 #include <ert/enkf/enkf_config_node.hpp>
 #include <ert/enkf/enkf_types.hpp>
 #include <ert/enkf/summary_config.hpp>
-#include <ert/enkf/summary_key_matcher.hpp>
 
 typedef struct ensemble_config_struct ensemble_config_type;
 
