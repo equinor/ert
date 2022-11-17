@@ -1,5 +1,6 @@
 import ctypes
 import logging
+from fnmatch import fnmatch
 from pathlib import Path
 from typing import TYPE_CHECKING, Tuple
 
@@ -25,7 +26,6 @@ def _internalize_GEN_DATA(
     for key in keys:
         config_node = ensemble_config[key]
         filename_fmt = config_node.get_enkf_infile()
-        data = []
         for i in config_node.getModelConfig().getReportSteps():
             filename = filename_fmt % i
             if not Path.exists(run_path / filename):
@@ -33,8 +33,7 @@ def _internalize_GEN_DATA(
                 continue
 
             with open(run_path / filename, "r", encoding="utf-8") as f:
-                key_data = [float(v.strip()) for v in f.readlines()]
-                data.append(key_data)
+                data = [float(v.strip()) for v in f.readlines()]
 
             run_arg.ensemble_storage.save_gen_data(f"{key}-{i}", data, run_arg.iens)
 
@@ -43,9 +42,13 @@ def _internalize_GEN_DATA(
     return (LoadStatus.LOAD_SUCCESSFUL, "")
 
 
+def _should_load_summary_key(data_key, user_set_keys):
+    return any(fnmatch(data_key, key) for key in user_set_keys)
+
+
 def _internalize_SUMMARY_DATA(ens_config: "EnsembleConfig", run_arg: "RunArg"):
-    summary_keys = ens_config.get_summary_keys()
-    if len(summary_keys) == 0:
+    user_summary_keys = ens_config.get_summary_keys()
+    if len(user_summary_keys) == 0:
         return (LoadStatus.LOAD_SUCCESSFUL, "")
 
     try:
@@ -85,6 +88,8 @@ def _internalize_SUMMARY_DATA(ens_config: "EnsembleConfig", run_arg: "RunArg"):
             )
 
     for key in summary:
+        if not _should_load_summary_key(key, user_summary_keys):
+            continue
         keys.append(key)
 
         np_vector = np.zeros(len(time_map))
