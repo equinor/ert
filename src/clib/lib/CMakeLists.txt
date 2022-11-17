@@ -10,7 +10,6 @@ pybind11_add_module(
   SHARED
   res_util/memory.cpp
   res_util/file_utils.cpp
-  res_util/ui_return.cpp
   res_util/subst_list.cpp
   res_util/path_fmt.cpp
   res_util/res_env.cpp
