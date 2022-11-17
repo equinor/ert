@@ -1,8 +1,6 @@
 on:
   workflow_call:
     inputs:
-      os:
-        type: string
       python-version:
         type: string
 jobs:
@@ -12,7 +10,7 @@ jobs:
     strategy:
       fail-fast: false
 
-    runs-on: ${{ inputs.os }}
+    runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v3
@@ -28,14 +26,9 @@ jobs:
       with:
         entrypoint: /github/workspace/ci/github/build_linux_wheel.sh
         args: ${{ inputs.python-version }}
-      if: inputs.os == 'ubuntu-latest'
-
-    - name: Build macOS Wheel
-      run: pip wheel . --no-deps -w dist
-      if: inputs.os == 'macos-latest'
 
     - name: Upload wheel as artifact
       uses: actions/upload-artifact@v3
       with:
-        name: ${{ inputs.os }} Python ${{ inputs.python-version }} wheel
+        name: ubuntu-latest Python ${{ inputs.python-version }} wheel
         path: dist/*
