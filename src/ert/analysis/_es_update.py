@@ -3,7 +3,6 @@ from __future__ import annotations
 import logging
 from collections import defaultdict
 from dataclasses import dataclass, field
-from datetime import datetime
 from math import sqrt
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
@@ -183,45 +182,6 @@ def _create_temporary_parameter_storage(
     return temporary_storage
 
 
-# should be moved as member in obs_vector
-def get_gen_obs_data(self: "ObsVector") -> DataFrame:
-    data = []
-    data_key = self.getDataKey()
-    for time_step in self.getStepList():
-        node = self.getNode(time_step)
-        index_list = [node.getIndex(nr) for nr in range(len(node))]
-        index = MultiIndex.from_product(
-            [[self.getKey()], [f"{data_key}-{time_step}"], index_list],
-            names=["key", "data_key", "axis"],
-        )
-        values = node.get_data_points()
-        errors = node.get_std()
-
-        data.append(
-            DataFrame(
-                data=np.array([values, errors]).T, index=index, columns=["OBS", "STD"]
-            )
-        )
-    return pandas.concat(data)
-
-
-# should be moved as member in obs_vector
-def get_summary_obs_data(self: "ObsVector", obs: "EnkfObs") -> DataFrame:
-    observations = []
-    for time_step in self.getStepList():
-        n: "SummaryObservation" = self.getNode(time_step)
-        observations.append([n.getValue(), n.getStandardDeviation()])
-    data_key = self.getDataKey()
-    time_axis = [
-        datetime.strptime(str(obs.getObservationTime(i)), "%Y-%m-%d %H:%M:%S")
-        for i in self.getStepList()
-    ]
-    index = MultiIndex.from_product(
-        [[self.getObsKey()], [data_key], time_axis], names=["key", "data_key", "axis"]
-    )
-    return DataFrame(data=np.array(observations), index=index, columns=["OBS", "STD"])
-
-
 def _get_obs_and_measure_data(
     obs: "EnkfObs",
     source_fs: "EnkfFs",
@@ -230,7 +190,7 @@ def _get_obs_and_measure_data(
 ) -> Tuple[DataFrame, DataFrame]:
     data_keys = defaultdict(set)
     obs_data = []
-    for obs_key, active_mask in selected_observations:
+    for obs_key, active_list in selected_observations:
         obs_vector = obs[obs_key]
 
         try:
@@ -239,10 +199,10 @@ def _get_obs_and_measure_data(
             raise KeyError(f"No data key for obs key: {obs_key}")
         imp_type = obs_vector.getImplementationType().name
         if imp_type == "GEN_OBS":
-            obs_data.append(get_gen_obs_data(obs_vector))
+            obs_data.append(obs_vector.get_gen_obs_data(active_list))
             data_key = f"{data_key}-{obs_vector.activeStep()}"
         elif imp_type == "SUMMARY_OBS":
-            obs_data.append(get_summary_obs_data(obs_vector, obs))
+            obs_data.append(obs_vector.get_summary_obs_data(obs, active_list))
 
         data_keys[imp_type].add((data_key, obs_vector.getObsKey()))
 

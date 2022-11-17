@@ -478,7 +478,7 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
         for obs_vector in observations:
             misfit_keys.append(f"MISFIT:{obs_vector.getObservationKey()}")
 
-        all_observations = [(n.getObsKey(), list(range(len(n)))) for n in observations]
+        all_observations = [(n.getObsKey(), n.getStepList()) for n in observations]
         measured_data, obs_data = _get_obs_and_measure_data(
             observations, fs, all_observations, realizations
         )
