@@ -25,18 +25,26 @@ jobs:
         os: ${{ inputs.os }}
 
     - uses: actions/setup-python@v4
+      id: setup_python
       with:
         python-version: ${{ inputs.python-version }}
+        cache: "pip"
+        cache-dependency-path: |
+          setup.py
+          pyproject.toml
+          dev-requirements.txt
 
     - name: Get wheels
       uses: actions/download-artifact@v3
       with:
         name: ${{ inputs.os }} Python ${{ inputs.python-version }} wheel
 
-    - name: Install wheel and test dependencies
+    - name: Install wheel
       run: |
         find . -name "*.whl" -exec pip install {} \;
-        pip install -r dev-requirements.txt
+
+    - name: Install dependencies
+      run: pip install -r dev-requirements.txt
 
     - name: Test GUI
       if: inputs.test-type == 'gui-test'

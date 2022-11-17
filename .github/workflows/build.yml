@@ -83,10 +83,8 @@ jobs:
       fail-fast: false
       matrix:
         python-version: [ '3.8', '3.9', '3.10' ]
-        os: [ ubuntu-latest ]
-    uses: ./.github/workflows/build-wheels.yml
+    uses: ./.github/workflows/build-wheels-linux.yml
     with:
-      os: ${{ matrix.os }}
       python-version: ${{ matrix.python-version }}
 
   build-mac:
@@ -94,10 +92,8 @@ jobs:
       fail-fast: false
       matrix:
         python-version: [ '3.8', '3.9', '3.10' ]
-        os: [ macos-latest ]
-    uses: ./.github/workflows/build-wheels.yml
+    uses: ./.github/workflows/build-wheels-macos.yml
     with:
-      os: ${{ matrix.os }}
       python-version: ${{ matrix.python-version }}
 
   test-linux:
@@ -166,18 +162,26 @@ jobs:
         sudo apt-get install plantuml
 
     - uses: actions/setup-python@v4
+      id: setup_python
       with:
         python-version: ${{ matrix.python-version }}
+        cache: "pip"
+        cache-dependency-path: |
+          setup.py
+          pyproject.toml
+          dev-requirements.txt
 
     - name: Get wheels
       uses: actions/download-artifact@v3
       with:
         name: ${{ matrix.os }} Python ${{ matrix.python-version }} wheel
 
-    - name: Install wheel and test dependencies
+    - name: Install wheel
       run: |
         find . -name "*.whl" -exec pip install {} \;
-        pip install -r dev-requirements.txt
+
+    - name: Install dependencies
+      run: pip install -r dev-requirements.txt
 
     - name: Make test directory
       run: |
