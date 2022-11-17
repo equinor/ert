@@ -60,16 +60,6 @@ transforms = st.sampled_from(
 small_floats = st.floats(min_value=1.0, max_value=10.0, allow_nan=False)
 positives = st.integers(min_value=1, max_value=10000)
 
-log_levels = st.sampled_from(
-    [
-        MessageLevelEnum.LOG_CRITICAL,
-        MessageLevelEnum.LOG_ERROR,
-        MessageLevelEnum.LOG_WARNING,
-        MessageLevelEnum.LOG_INFO,
-        MessageLevelEnum.LOG_DEBUG,
-    ]
-)
-
 queue_systems = st.sampled_from(
     [
         QueueDriverEnum.LSF_DRIVER,
