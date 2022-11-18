@@ -80,10 +80,10 @@ def _mock_ws_thread(host, port, messages):
     mock_ws_thread.start()
     try:
         yield
+    # Make sure to join the thread even if an exception occurs
+    finally:
         url = f"ws://{host}:{port}"
         with Client(url) as client:
             client.send("stop")
-    # Make sure to join the thread even if an exception occurs
-    finally:
         mock_ws_thread.join()
         messages.pop()
