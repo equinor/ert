@@ -456,7 +456,7 @@ class BaseRunModel:
 
     @abstractmethod
     async def run(
-        self, evaluator_server_config: EvaluatorServerConfig, model_name: str
+        self, evaluator_server_config: EvaluatorServerConfig, model_name: str = "None"
     ) -> RunContext:
         raise NotImplementedError
 
