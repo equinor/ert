@@ -22,7 +22,7 @@ def test_different_defines_give_different_subst_lists(config_dict1, config_dict2
 @pytest.mark.usefixtures("use_tmpdir")
 @given(config_dicts())
 def test_from_dict_and_from_file_creates_equal_subst_lists(config_dict):
-    filename = config_dict[pytest.TEST_CONFIG_FILE_KEY]
+    filename = config_dict[ConfigKeys.DEFINE_KEY]["<CONFIG_FILE>"]
     to_config_file(filename, config_dict)
     res_config_from_file = ResConfig(user_config_file=filename)
     res_config_from_dict = ResConfig(config_dict=config_dict)
@@ -34,11 +34,13 @@ def test_from_dict_and_from_file_creates_equal_subst_lists(config_dict):
 @pytest.mark.usefixtures("use_tmpdir")
 @given(config_dicts())
 def test_complete_config_reads_correct_values(config_dict):
+    filename = config_dict[ConfigKeys.DEFINE_KEY]["<CONFIG_FILE>"]
     substitution_list = ResConfig(config_dict=config_dict).substitution_list
-    assert substitution_list["<CWD>"] == config_dict[ConfigKeys.CONFIG_DIRECTORY]
-    assert (
-        substitution_list["<CONFIG_PATH>"] == config_dict[ConfigKeys.CONFIG_DIRECTORY]
-    )
+    cwd = os.getcwd()
+    assert substitution_list["<CWD>"] == cwd
+    assert substitution_list["<CONFIG_PATH>"] == cwd
+    assert substitution_list["<CONFIG_FILE>"] == filename
+    assert substitution_list["<CONFIG_FILE_BASE>"] == os.path.splitext(filename)[0]
     for key, value in config_dict[ConfigKeys.DEFINE_KEY].items():
         assert substitution_list[key] == value
     for key, value in config_dict[ConfigKeys.DATA_KW_KEY].items():

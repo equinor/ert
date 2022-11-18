@@ -25,8 +25,8 @@ def fixture_snake_oil_structure_config(copy_case):
     return {
         ConfigKeys.NUM_REALIZATIONS: 1,
         ConfigKeys.RUNPATH_FILE: "runpath",
-        pytest.TEST_CONFIG_FILE_KEY: config_file_name,
         ConfigKeys.DEFINE_KEY: {
+            "<DATE>": datetime.date.today().isoformat(),
             "<CWD>": cwd,
             "<CONFIG_PATH>": cwd,
             "<CONFIG_FILE>": config_file_name,
@@ -40,7 +40,7 @@ def fixture_snake_oil_structure_config(copy_case):
 
 @pytest.fixture(name="snake_oil_structure_config_file")
 def fixture_snake_oil_structure_config_file(snake_oil_structure_config):
-    filename = snake_oil_structure_config[pytest.TEST_CONFIG_FILE_KEY]
+    filename = snake_oil_structure_config[ConfigKeys.DEFINE_KEY]["<CONFIG_FILE>"]
     with open(file=filename, mode="w+", encoding="utf-8") as config:
         # necessary in the file, but irrelevant to this test
         config.write("JOBNAME  Job%d\n")
@@ -91,6 +91,8 @@ def test_complete_config_reads_correct_values(snake_oil_structure_config):
     ).substitution_list
     assert substitution_list["<CWD>"] == os.getcwd()
     assert substitution_list["<CONFIG_PATH>"] == os.getcwd()
+    assert substitution_list["<CONFIG_FILE_BASE>"] == "config"
+    assert substitution_list["<CONFIG_FILE>"] == "config"
     assert substitution_list["<DATE>"] == datetime.datetime.now().date().isoformat()
     assert substitution_list["keyA"] == "valA"
     assert substitution_list["keyB"] == "valB"

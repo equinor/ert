@@ -1,6 +1,3 @@
-import os
-import os.path
-
 import pytest
 from hypothesis import assume, given
 
@@ -13,10 +10,8 @@ from .config_dict_generator import config_dicts, to_config_file
 @pytest.mark.usefixtures("use_tmpdir")
 @given(config_dicts())
 def test_ensemble_config_from_file_and_dict_coincide(config_dict):
-    cwd = os.getcwd()
-    filename = config_dict[pytest.TEST_CONFIG_FILE_KEY]
+    filename = "config.ert"
     to_config_file(filename, config_dict)
-    config_dict[ConfigKeys.CONFIG_DIRECTORY] = cwd
 
     res_config_from_file = ResConfig(user_config_file=filename)
     res_config_from_dict = ResConfig(config_dict=config_dict)
@@ -28,7 +23,7 @@ def test_ensemble_config_from_file_and_dict_coincide(config_dict):
 @pytest.mark.usefixtures("use_tmpdir")
 @given(config_dicts())
 def test_ensemble_config_errors_on_unknown_function_in_field(config_dict):
-    filename = config_dict[pytest.TEST_CONFIG_FILE_KEY]
+    filename = "config.ert"
     assume(
         ConfigKeys.FIELD_KEY in config_dict
         and len(config_dict[ConfigKeys.FIELD_KEY]) > 0
@@ -48,7 +43,7 @@ def test_ensemble_config_errors_on_unknown_function_in_field(config_dict):
 def test_ensemble_config_errors_on_identical_name_for_two_enkf_config_nodes(
     config_dict,
 ):
-    filename = config_dict[pytest.TEST_CONFIG_FILE_KEY]
+    filename = "config.ert"
     two_keys = [ConfigKeys.FIELD_KEY, ConfigKeys.GEN_DATA]
     for key in two_keys:
         assume(key in config_dict and len(config_dict[key]) > 0)
