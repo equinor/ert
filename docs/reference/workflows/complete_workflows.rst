@@ -39,18 +39,22 @@ you can load a workflow interactively.
 
 .. _hook_workflow:
 
-Automatically run workflows : :code:`HOOK_WORKFLOW`
+Automatically run workflows
 ---------------------------------------------------
 
 With the keyword :code:`HOOK_WORKFLOW` you can configure workflow
 'hooks'; meaning workflows which will be run automatically at certain
-points during ERTs execution. Currently there are four points in ERTs
+points during ERTs execution. Currently there are five points in ERTs
 flow of execution where you can hook in a workflow:
 
-- Before the simulations start using :code:`PRE_SIMULATION`,
+- Before the simulations (all forward models for a realization) start using :code:`PRE_SIMULATION`,
 - after all the simulations have completed using :code:`POST_SIMULATION`,
-- before the update step using :code:`PRE_UPDATE` and
-- after the update step using :code:`POST_UPDATE`. 
+- before the update step using :code:`PRE_UPDATE`
+- after the update step using :code:`POST_UPDATE` and
+- only before the first update using :code:`PRE_FIRST_UPDATE`.
+
+For non interactive algorithms, :code:`PRE_FIRST_UPDATE` is equal to :code:`PRE_UPDATE`.
+The :code:`POST_SIMULATION` hook is typically used to trigger QC workflows.
 
 ::
 
