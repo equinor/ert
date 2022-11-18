@@ -150,7 +150,7 @@ class MultipleDataAssimilation(BaseRunModel):
 
         if not FeatureToggling.is_enabled("experiment-server"):
             self.setPhase(iteration_count + 1, "Simulations completed.")
-        
+
         return run_context
 
     def runSimulations(

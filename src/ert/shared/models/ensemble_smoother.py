@@ -206,7 +206,7 @@ class EnsembleSmoother(BaseRunModel):
         self.setPhase(2, "Simulations completed.")
 
         return prior_context
-        
+
     def runSimulations(
         self, evaluator_server_config: EvaluatorServerConfig
     ) -> RunContext:

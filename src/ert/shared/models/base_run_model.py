@@ -451,11 +451,8 @@ class BaseRunModel:
             )
 
         if FeatureToggling.is_enabled("experiment-server"):
-            return await self.successful_realizations(
-                run_context.iteration
-                )
+            return await self.successful_realizations(run_context.iteration)
         return ensemble.get_successful_realizations()
-        
 
     @abstractmethod
     async def run(

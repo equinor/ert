@@ -103,7 +103,7 @@ class EnsembleExperiment(BaseRunModel):
 
         if not FeatureToggling.is_enabled("experiment-server"):
             self.setPhase(1, "Simulations completed.")  # done...
-        
+
         return run_context
 
     def runSimulations(
