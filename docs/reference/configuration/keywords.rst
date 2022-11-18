@@ -2069,43 +2069,37 @@ Workflow hooks
 .. _hook_workflow:
 .. topic:: HOOK_WORKFLOW
 
-    With the keyword :code:`HOOK_WORKFLOW` you can configure workflow
-    'hooks'; meaning workflows which will be run automatically at
-    certain points during ERTs execution. Currently there are five
-    points in ERTs flow of execution where you can hook in a workflow,
-    before the simulations start, :code:`PRE_SIMULATION`; after all
-    the simulations have completed, :code:`POST_SIMULATION`; before the
-    update step, :code:`PRE_UPDATE`; :code:`POST_UPDATE`; after the update
-    step and :code:`PRE_FIRST_UPDATE` only before the first update.
-    :code:`PRE_FIRST_UPDATE` will run before :code:`PRE_UPDATE`.
-    For non iterative algorithms, :code:`PRE_FIRST_UPDATE` is equal to
-    :code:`PRE_UPDATE`. The :code:`POST_SIMULATION` hook is
-    typically used to trigger QC workflows:
+        With the keyword :code:`HOOK_WORKFLOW` you can configure workflow
+        'hooks'; meaning workflows which will be run automatically at certain
+        points during ERTs execution. Currently there are five points in ERTs
+        flow of execution where you can hook in a workflow:
 
-    ::
+        - Before the simulations (all forward models for a realization) start using :code:`PRE_SIMULATION`,
+        - after all the simulations have completed using :code:`POST_SIMULATION`,
+        - before the update step using :code:`PRE_UPDATE`
+        - after the update step using :code:`POST_UPDATE` and
+        - only before the first update using :code:`PRE_FIRST_UPDATE`.
 
-        HOOK_WORKFLOW initWFLOW        PRE_SIMULATION
-        HOOK_WORKFLOW preUpdateWFLOW   PRE_UPDATE
-        HOOK_WORKFLOW postUpdateWFLOW  POST_UPDATE
-        HOOK_WORKFLOW QC_WFLOW1        POST_SIMULATION
-        HOOK_WORKFLOW QC_WFLOW2        POST_SIMULATION
+        For non interactive algorithms, :code:`PRE_FIRST_UPDATE` is equal to :code:`PRE_UPDATE`.
+        The :code:`POST_SIMULATION` hook is typically used to trigger QC workflows.
 
+        ::
 
-    In this example the workflow :code:`initWFLOW` will run after all
-    the simulation directories have been created, just before the
-    forward model is submitted to the queue. The workflow
-    :code:`preUpdateWFLOW` will be run before the update step and
-    :code:`postUpdateWFLOW` will be run after the update step. When
-    all the simulations are complete the two workflows
-    :code:`QC_WFLOW1` and :code:`QC_WFLOW2` will be run.
+           HOOK_WORKFLOW initWFLOW        PRE_SIMULATION
+           HOOK_WORKFLOW preUpdateWFLOW   PRE_UPDATE
+           HOOK_WORKFLOW postUpdateWFLOW  POST_UPDATE
+           HOOK_WORKFLOW QC_WFLOW1        POST_SIMULATION
+           HOOK_WORKFLOW QC_WFLOW2        POST_SIMULATION
 
-    Observe that the workflows being 'hooked in' with the
-    :code:`HOOK_WORKFLOW` must be loaded with the
-    :code:`LOAD_WORKFLOW` keyword.
+        In this example the workflow :code:`initWFLOW` will run after all the
+        simulation directories have been created, just before the forward
+        model is submitted to the queue. The workflow :code:`preUpdateWFLOW`
+        will be run before the update step and :code:`postUpdateWFLOW` will be
+        run after the update step. When all the simulations have completed the
+        two workflows :code:`QC_WFLOW1` and :code:`QC_WFLOW2` will be run.
 
-    Currently, :code:`PRE_UPDATE` and :code:`POST_UPDATE` are only
-    available from python.
-
+        Observe that the workflows being 'hooked in' with the
+        :code:`HOOK_WORKFLOW` must be loaded with the :code:`LOAD_WORKFLOW` keyword.
 
 .. _load_workflow:
 .. topic:: LOAD_WORKFLOW
