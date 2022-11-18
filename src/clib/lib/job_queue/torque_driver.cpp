@@ -564,8 +564,10 @@ torque_driver_get_qstat_status(torque_driver_type *driver,
 
     if (fs::exists(tmp_std_file)) {
         status = torque_driver_parse_status(tmp_std_file, jobnr_char);
-        unlink(tmp_std_file);
-        unlink(tmp_err_file);
+        if (status != JOB_QUEUE_STATUS_FAILURE) {
+            unlink(tmp_std_file);
+            unlink(tmp_err_file);
+        }
     } else
         fprintf(stderr,
                 "No such file: %s - reading qstat status failed\n"
