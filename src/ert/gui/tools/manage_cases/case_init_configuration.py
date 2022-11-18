@@ -257,7 +257,7 @@ class CaseInitializationConfigurationPanel(QTabWidget):
 
         html = "<table>"
         for index, value in enumerate(states):
-            html += f"<tr><td width=30>{index:d}.</td><td>{value}</td></tr>"
+            html += f"<tr><td width=30>{index:d}.</td><td>{value.name}</td></tr>"
 
         html += "</table>"
 
