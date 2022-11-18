@@ -1,4 +1,5 @@
 import contextlib
+import datetime
 import glob
 import os
 import os.path
@@ -7,7 +8,6 @@ import stat
 from pathlib import Path
 
 import hypothesis.strategies as st
-import pytest
 from hypothesis import assume
 
 from ert._c_wrappers.enkf import ConfigKeys
@@ -262,6 +262,7 @@ def defines(draw, config_files, cwds):
     pre_defined_kw_map = draw(
         st.fixed_dictionaries(
             {
+                "<DATE>": st.just(datetime.date.today().isoformat()),
                 "<CWD>": cwds,
                 "<CONFIG_PATH>": cwds,
                 "<CONFIG_FILE>": st.just(config_file_name),
@@ -281,7 +282,6 @@ def config_dicts(draw):
     config_dict = draw(
         st.fixed_dictionaries(
             {
-                pytest.TEST_CONFIG_FILE_KEY: config_file_name,
                 ConfigKeys.NUM_REALIZATIONS: positives,
                 ConfigKeys.ECLBASE: st.just(draw(words) + "%d"),
                 ConfigKeys.RUNPATH_FILE: st.just(draw(file_names) + "runpath"),
@@ -294,7 +294,6 @@ def config_dicts(draw):
                 ConfigKeys.UPDATE_LOG_PATH: directory_names(),
                 ConfigKeys.STD_CUTOFF_KEY: small_floats,
                 ConfigKeys.MAX_RUNTIME: positives,
-                ConfigKeys.CONFIG_DIRECTORY: st.just(cwd),
                 ConfigKeys.MIN_REALIZATIONS: positives,
                 ConfigKeys.DEFINE_KEY: defines(config_file_name, st.just(cwd)),
                 ConfigKeys.DATA_KW_KEY: st.dictionaries(words, words),

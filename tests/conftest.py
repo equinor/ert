@@ -18,11 +18,6 @@ from ert.shared.feature_toggling import FeatureToggling
 
 from .utils import SOURCE_DIR
 
-
-def pytest_configure():
-    pytest.TEST_CONFIG_FILE_KEY = "__TEST_CONFIG_FILE"
-
-
 # CI runners produce unreliable test timings
 # so too_slow healthcheck and deadline has to
 # be supressed to avoid flaky behavior
@@ -122,8 +117,8 @@ def copy_snake_oil_case(copy_case):
     copy_case("snake_oil")
 
 
-@pytest.fixture()
-def copy_snake_oil_case_storage(_shared_snake_oil_case, tmp_path, monkeypatch):
+@pytest.fixture(name="copy_snake_oil_case_storage")
+def fixture_copy_snake_oil_case_storage(_shared_snake_oil_case, tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     shutil.copytree(_shared_snake_oil_case, "test_data")
     os.chdir("test_data")

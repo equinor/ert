@@ -174,6 +174,22 @@ class ResConfig:
         logger.info("Content of the config_content:")
         logger.info(tmp_dict)
 
+    @staticmethod
+    def _create_pre_defines(
+        config_file_path: str,
+    ) -> dict:
+        date_string = date.today().isoformat()
+        config_file_dir = os.path.abspath(os.path.dirname(config_file_path))
+        config_file_name = os.path.basename(config_file_path)
+        config_file_basename = os.path.splitext(config_file_name)[0]
+        return {
+            "<DATE>": date_string,
+            "<CWD>": config_file_dir,
+            "<CONFIG_PATH>": config_file_dir,
+            "<CONFIG_FILE>": config_file_name,
+            "<CONFIG_FILE_BASE>": config_file_basename,
+        }
+
     # build configs from config file or everest dict
     def _alloc_from_content(self, user_config_file=None, config=None):
         site_config_parser = ConfigParser()
@@ -186,15 +202,7 @@ class ResConfig:
             self.config_path = os.path.abspath(os.path.dirname(user_config_file))
             user_config_content = config_parser.parse(
                 user_config_file,
-                pre_defined_kw_map={
-                    "<CWD>": self.config_path,
-                    "<DATE>": self._current_date_string(),
-                    "<CONFIG_PATH>": self.config_path,
-                    "<CONFIG_FILE>": os.path.basename(user_config_file),
-                    "<CONFIG_FILE_BASE>": os.path.basename(user_config_file).split(".")[
-                        0
-                    ],
-                },
+                pre_defined_kw_map=ResConfig._create_pre_defines(user_config_file),
             )
         else:
             self.config_path = os.getcwd()
@@ -773,10 +781,6 @@ class ResConfig:
         return config_content
 
     @staticmethod
-    def _current_date_string() -> str:
-        return date.today().isoformat()
-
-    @staticmethod
     def _create_substitution_list(
         defines: Dict[str, str],
         data_kw: Dict[str, str],
@@ -786,8 +790,7 @@ class ResConfig:
     ) -> SubstitutionList:
         subst_list = SubstitutionList()
 
-        today_date_string = ResConfig._current_date_string()
-        subst_list.addItem("<DATE>", today_date_string)
+        # only needed by everest's init from `config` path
         subst_list.addItem("<CONFIG_PATH>", config_dir)
 
         for key, value in defines.items():

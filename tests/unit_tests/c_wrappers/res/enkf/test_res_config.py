@@ -329,7 +329,6 @@ def test_res_config_dict_constructor(setup_case):
     st = os.stat(script_file)
     os.chmod(script_file, stat.S_IEXEC | st.st_mode)
 
-    # split config_file to path and filename
     absolute_config_dir, _ = os.path.split(os.path.realpath(relative_config_path))
 
     config_data_new = {
@@ -415,6 +414,7 @@ def test_res_config_dict_constructor(setup_case):
             "<CONFIG_PATH>": absolute_config_dir,
             "<CONFIG_FILE>": config_file_name,
             "<CONFIG_FILE_BASE>": config_file_name.split(".", maxsplit=1)[0],
+            "<DATE>": date.today().isoformat(),
             "<USER>": "TEST_USER",
             "<SCRATCH>": "scratch/ert",
             "<CASE_DIR>": "the_extensive_case",
@@ -664,11 +664,11 @@ def test_logging_config(caplog, config_content, expected):
 
     with patch("builtins.open", mock_open(read_data=config_content)), patch(
         "os.path.isfile", MagicMock(return_value=True)
+    ), caplog.at_level(logging.INFO), patch.object(
+        ResConfig, "__init__", lambda x: None
     ):
-        with caplog.at_level(logging.INFO):
-            with patch.object(ResConfig, "__init__", lambda x: None):
-                res_config = ResConfig()
-                res_config._log_config_file(config_path)
+        res_config = ResConfig()
+        res_config._log_config_file(config_path)
     expected = base_content.format(expected)
     assert expected in caplog.messages
 
