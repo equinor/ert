@@ -658,8 +658,7 @@ job_status_type torque_driver_parse_status(const char *qstat_file,
             }
         }
     } catch (const std::ios::failure &) {
-        fprintf(stderr, "** Warning: Failed to parse file %s, is it empty?\n",
-                qstat_file);
+        // end-of-file
     }
     switch (job_state[0]) {
     case 'R':
