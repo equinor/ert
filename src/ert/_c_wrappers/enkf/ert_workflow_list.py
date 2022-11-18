@@ -1,3 +1,4 @@
+import logging
 import os
 from typing import Iterator, List
 
@@ -5,6 +6,8 @@ from ert._c_wrappers.config.config_parser import ConfigValidationError
 from ert._c_wrappers.enkf.config_keys import ConfigKeys
 from ert._c_wrappers.enkf.enums import HookRuntime
 from ert._c_wrappers.job_queue import Workflow, WorkflowJob, WorkflowJoblist
+
+logger = logging.getLogger(__name__)
 
 
 class ErtWorkflowList:
@@ -191,7 +194,8 @@ class ErtWorkflowList:
                     new_job
                 )
                 new_job.convertToCReference(None)
-                logger.info("Adding workflow job")
+                logger.info(f"Adding workflow job:{new_job.name()}")
+
         except OSError:
             print(f"WARNING: Unable to create job from {workflow_job[0]}")
 
