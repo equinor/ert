@@ -2104,20 +2104,54 @@ Workflow hooks
 .. _load_workflow:
 .. topic:: LOAD_WORKFLOW
 
-    Load a workflow into ERT.
+        Workflows are loaded with the configuration option :code:`LOAD_WORKFLOW`:
 
+        ::
+
+            LOAD_WORKFLOW  /path/to/workflow/WFLOW1
+            LOAD_WORKFLOW  /path/to/workflow/workflow2  WFLOW2
+
+        The :code:`LOAD_WORKFLOW` takes the path to a workflow file as the first
+        argument. By default the workflow will be labeled with the filename
+        internally in ERT, but you can optionally supply a second extra argument
+        which will be used as the name for the workflow.  Alternatively,
+        you can load a workflow interactively.
 
 .. _load_workflow_job:
 .. topic:: LOAD_WORKFLOW_JOB
 
-    Load a workflow job into ERT.
+        Before the jobs can be used in workflows they must be "loaded" into
+        ERT. This can be done either by specifying jobs by name,
+        or by specifying a directory containing jobs.
 
+        Use the keyword :code:`LOAD_WORKFLOW_JOB` to specify jobs by name:
+
+        ::
+
+            LOAD_WORKFLOW_JOB     jobConfigFile     JobName
+
+        The :code:`LOAD_WORKFLOW_JOB` keyword will load one workflow job.
+        The name of the job is optional, and will be fetched from the configuration file if not provided.
 
 .. _workflow_job_directory:
 .. topic:: WORKFLOW_JOB_DIRECTORY
 
-        Directory containing workflow jobs.
+        Alternatively, you can use the command
+        :code:`WORKFLOW_JOB_DIRECTORY` which will load all the jobs in a
+        directory.
 
+        Use the keyword :code:`WORKFLOW_JOB_DIRECTORY` to specify a directory containing jobs:
+
+        ::
+
+            WORKFLOW_JOB_DIRECTORY /path/to/jobs
+
+        The :code:`WORKFLOW_JOB_DIRECTORY` loads all workflow jobs found in the `/path/to/jobs` directory.
+        Observe that all the files in the `/path/to/jobs` directory
+        should be job configuration files. The jobs loaded in this way will
+        all get the name of the file as the name of the job. The
+        :code:`WORKFLOW_JOB_DIRECTORY` keyword will *not* load configuration
+        files recursively.
 
 Manipulating the Unix environment
 ---------------------------------
