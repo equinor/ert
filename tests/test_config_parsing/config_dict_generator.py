@@ -14,7 +14,6 @@ from ert._c_wrappers.enkf import ConfigKeys
 from ert._c_wrappers.enkf.enums import GenDataFileType
 from ert._c_wrappers.job_queue import QueueDriverEnum
 from ert._c_wrappers.sched import HistorySourceEnum
-from ert._c_wrappers.util.enums import MessageLevelEnum
 
 from .egrid_generator import egrids
 
@@ -59,16 +58,6 @@ transforms = st.sampled_from(
 
 small_floats = st.floats(min_value=1.0, max_value=10.0, allow_nan=False)
 positives = st.integers(min_value=1, max_value=10000)
-
-log_levels = st.sampled_from(
-    [
-        MessageLevelEnum.LOG_CRITICAL,
-        MessageLevelEnum.LOG_ERROR,
-        MessageLevelEnum.LOG_WARNING,
-        MessageLevelEnum.LOG_INFO,
-        MessageLevelEnum.LOG_DEBUG,
-    ]
-)
 
 queue_systems = st.sampled_from(
     [
