@@ -37,9 +37,7 @@ class ExportMisfitDataJob(ErtScript):
         measured_data, obs_data = _get_obs_and_measure_data(
             ert.getObservations(), fs, all_observations, realizations
         )
-        joined = obs_data.join(
-            measured_data, on=["data_key", "axis"], how="inner"
-        ).drop_duplicates()
+        joined = obs_data.join(measured_data, on=["data_key", "axis"], how="inner")
         misfit = pd.DataFrame(index=joined.index)
         for col in measured_data:
             misfit[col] = ((joined["OBS"] - joined[col]) / joined["STD"]) ** 2
