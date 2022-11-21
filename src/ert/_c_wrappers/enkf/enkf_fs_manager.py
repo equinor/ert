@@ -1,3 +1,5 @@
+import json
+import logging
 from pathlib import Path
 from typing import TYPE_CHECKING, Dict, Generator, List
 
@@ -7,6 +9,15 @@ from ert._clib.state_map import RealizationStateEnum
 if TYPE_CHECKING:
     from ert._c_wrappers.enkf import EnsembleConfig
     from ert._clib.state_map import StateMap
+
+FS_VERSION = 0
+FS_VERSION_FILE = ".fs_version"
+
+logger = logging.getLogger(__file__)
+
+
+class FileSystemError(Exception):
+    pass
 
 
 class FileSystemManager:
@@ -28,6 +39,9 @@ class FileSystemManager:
     ):
         self.capacity = capacity
         self.storage_path = storage_path
+        if not self.storage_path.exists():
+            self.storage_path.mkdir(parents=True)
+        self._check_version()
         self.read_only = read_only
         self._ensemble_config = ensemble_config
         self._ensemble_size = ensemble_size
@@ -56,6 +70,31 @@ class FileSystemManager:
     @property
     def cases(self) -> List[str]:
         return [x.stem for x in Path(self.storage_path).iterdir() if x.is_dir()]
+
+    def _check_version(self) -> None:
+        """
+        Checks if the file system on disk was created with the same fs version
+        currently in use.
+        """
+        version_file = self.storage_path / FS_VERSION_FILE
+        if not version_file.exists():
+            # If the version file does not exist it uses old fs
+            with open(version_file, "w") as f:
+                json.dump({"version": 0}, f)
+        with open(version_file, "r") as f:
+            version_data = json.load(f)
+        if version_data["version"] < FS_VERSION:
+            raise FileSystemError(
+                "Trying to load storage created by an older"
+                f" file system version: Current version: {FS_VERSION}"
+                f", found on disk: {version_data['version']}"
+            )
+        if version_data["version"] > FS_VERSION:
+            raise FileSystemError(
+                "Trying to load storage created by a newer"
+                f" file system version: Current version: {FS_VERSION}"
+                f", found on disk: {version_data['version']}"
+            )
 
     def __len__(self) -> int:
         return len(self.cases)

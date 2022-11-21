@@ -2,7 +2,9 @@ import sys
 
 import pytest
 
-from ert._c_wrappers.enkf import RunContext
+import ert
+from ert._c_wrappers.enkf import EnKFMain, ResConfig, RunContext
+from ert._c_wrappers.enkf.enkf_fs_manager import FS_VERSION, FileSystemError
 
 
 def test_enkf_fs_manager_create(snake_oil_case_storage):
@@ -22,6 +24,25 @@ def test_enkf_fs_manager_create(snake_oil_case_storage):
 
     assert "newFS" in fsm
     assert not fsm.has_data("newFS")
+
+
+@pytest.mark.parametrize(
+    "current_fs_version, expected_error",
+    [
+        (FS_VERSION + 1, "created by an older"),
+        (FS_VERSION - 1, "created by a newer"),
+    ],
+)
+def test_enkf_fs_manager_wrong_version(
+    copy_snake_oil_case_storage, monkeypatch, current_fs_version, expected_error
+):
+    monkeypatch.setattr(
+        ert._c_wrappers.enkf.enkf_fs_manager, "FS_VERSION", current_fs_version
+    )
+
+    with pytest.raises(FileSystemError) as e:
+        EnKFMain(ResConfig("snake_oil.ert"))
+    assert expected_error in str(e.value)
 
 
 def test_rotate(snake_oil_case):
