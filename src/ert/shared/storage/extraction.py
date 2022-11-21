@@ -7,8 +7,9 @@ from typing import TYPE_CHECKING, Dict, List, Mapping, Optional, Union
 import pandas as pd
 import requests
 
-from ert._c_wrappers.enkf.enums.enkf_obs_impl_type_enum import (
+from ert._c_wrappers.enkf.enums import (
     EnkfObservationImplementationType,
+    RealizationStateEnum,
 )
 from ert.data import MeasuredData
 from ert.services import Storage
@@ -60,56 +61,57 @@ def create_parameters(ert) -> List[dict]:
 
 def _create_response_observation_links(ert) -> Mapping[str, str]:
     observation_vectors = ert.get_observations()
-    keys = [ert.get_observation_key(i) for i, _ in enumerate(observation_vectors)]
     summary_obs_keys = observation_vectors.getTypedKeylist(
         EnkfObservationImplementationType.SUMMARY_OBS
     )
-    if keys == []:
-        return {}
-
-    data = MeasuredData(ert, keys, load_data=False)
-    observations = data.data.loc[["OBS", "STD"]]
     response_observation_link = {}
 
-    for obs_key in observations.columns.get_level_values(0).unique():
-        obs_vec = observation_vectors[obs_key]
-        data_key = obs_vec.getDataKey()
-
+    for obs_vector in observation_vectors:
+        obs_key = obs_vector.getKey()
+        data_key = obs_vector.getDataKey()
+        # All summary observations for a specific summary vector are grouped
         if obs_key not in summary_obs_keys:
             response_observation_link[data_key] = obs_key
         else:
             response_observation_link[data_key] = data_key
+
     return response_observation_link
 
 
-def create_response_records(ert, ensemble_name: str, observations: List[dict]):
-    data = {
-        key.split("@")[0]: ert.gather_gen_data_data(case=ensemble_name, key=key)
-        for key in ert.get_gen_data_keys()
-    }
-
-    data.update(
-        {
-            key: ert.gather_summary_data(case=ensemble_name, key=key)
-            for key in ert.get_summary_keys()
-        }
+def create_response_records(ert, observations: List[dict]) -> dict:
+    fs = ert.get_current_fs()
+    realizations = fs.realizationList(RealizationStateEnum.STATE_HAS_DATA)
+    summary_df = (
+        fs.load_summary_data_as_df(ert.get_summary_keys(), realizations)
+        if ert.get_summary_keys()
+        else pd.DataFrame()
     )
+    gen_data_df = (
+        fs.load_gen_data_as_df(ert.get_gen_data_keys(), realizations)
+        if ert.get_gen_data_keys()
+        else pd.DataFrame()
+    )
+    all_responses_df = pd.concat([summary_df, gen_data_df])
+
     response_observation_links = _create_response_observation_links(ert)
     observation_ids = {obs["name"]: obs["id"] for obs in observations}
     records = []
-    for key, response in data.items():
+    for response_key, response_df in all_responses_df.groupby(level="data_key"):
+        # ert-storage disregards reportsteps for gen_data
+        response_name = response_key.split("@")[0]
         realizations = {}
-        for index, values in response.items():
-            df = pd.DataFrame(values.to_list())
-            df = df.transpose()
-            df.columns = _prepare_x_axis(response.index.tolist())
-            realizations[index] = df
-        observation_key = response_observation_links.get(key)
+        for realization_index in response_df:
+            _df = (
+                response_df[realization_index].droplevel(level="data_key").to_frame().T
+            )
+            _df.columns = _prepare_x_axis(_df.columns.tolist())
+            realizations[realization_index] = _df
+        observation_key = response_observation_links.get(response_name)
         linked_observation = (
             [observation_ids[observation_key]] if observation_key else None
         )
         records.append(
-            dict(name=key, data=realizations, observations=linked_observation)
+            dict(name=response_name, data=realizations, observations=linked_observation)
         )
     return records
 
@@ -353,7 +355,7 @@ def post_ensemble_results(
         f"ensembles/{ensemble_id}/observations",
     ).json()
 
-    for record in create_response_records(ert, case_name, observations):
+    for record in create_response_records(ert, observations):
         realizations = record["data"]
         name = record["name"]
         for index, data in realizations.items():

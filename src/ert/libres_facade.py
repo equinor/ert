@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Union
 
 import numpy as np
 from ecl.grid import EclGrid
-from pandas import DataFrame, MultiIndex, Series
+from pandas import DataFrame, Series
 
 from ert import _clib
 from ert._c_wrappers.enkf import EnKFMain, EnkfNode, ErtConfig, ErtImplType
@@ -233,13 +233,8 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
                 raise IndexError(f"No such realization {realization_index}")
             realizations = [realization_index]
 
-        data_array, realizations = fs.load_gen_data(
-            f"{key}-{report_step}", realizations
-        )
-
-        return DataFrame(
-            data=data_array.reshape(len(data_array), len(realizations)),
-            columns=np.array(realizations),
+        return fs.load_gen_data_as_df([f"{key}@{report_step}"], realizations).droplevel(
+            "data_key"
         )
 
     def load_observation_data(
@@ -433,20 +428,10 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
                 key for key in keys if key in summary_keys
             ]  # ignore keys that doesn't exist
 
-        data, x_axis, realizations = fs.load_summary_data(summary_keys, realizations)
-        if np.isnan(data).all():
+        try:
+            df = fs.load_summary_data_as_df(summary_keys, realizations)
+        except KeyError:
             return DataFrame()
-
-        time_axis = x_axis
-        multi_index = MultiIndex.from_product(
-            [summary_keys, time_axis], names=["data_key", "axis"]
-        )
-
-        df = DataFrame(
-            data=data.reshape(len(time_axis) * len(summary_keys), len(realizations)),
-            index=multi_index,
-            columns=realizations,
-        )
         df = df.stack().unstack(level=0).swaplevel()
         df.index.names = ["Realization", "Date"]
         return df
@@ -467,7 +452,7 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
                     "timestamps. A possible explanation is that your "
                     "simulation timestep is less than a second."
                 )
-            data = data.unstack(level="Realization").droplevel(0, axis=1)
+            data = data.unstack(level="Realization").droplevel("data_key", axis=1)
         return data
 
     def load_all_misfit_data(self, case_name: str) -> DataFrame:
@@ -482,9 +467,7 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
         measured_data, obs_data = _get_obs_and_measure_data(
             observations, fs, all_observations, realizations
         )
-        joined = obs_data.join(
-            measured_data, on=["data_key", "axis"], how="inner"
-        ).drop_duplicates()
+        joined = obs_data.join(measured_data, on=["data_key", "axis"], how="inner")
         misfit = DataFrame(index=joined.index)
         for col in measured_data:
             misfit[col] = ((joined["OBS"] - joined[col]) / joined["STD"]) ** 2
