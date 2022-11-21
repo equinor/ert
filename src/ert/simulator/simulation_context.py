@@ -100,11 +100,9 @@ class SimulationContext:
         job_queue = ert.get_queue_config().create_job_queue()
         job_queue.set_max_job_duration(max_runtime)
         self._queue_manager = JobQueueManager(job_queue)
-
-        # fill in the missing geo_id data
         for sim_id, (geo_id, _) in enumerate(case_data):
             if mask[sim_id]:
-                ert.set_geo_id(geo_id, sim_id, itr)
+                ert.set_geo_id(str(geo_id), sim_id, itr)
 
         self._run_context = ert.create_ensemble_experiment_run_context(
             source_filesystem=sim_fs,

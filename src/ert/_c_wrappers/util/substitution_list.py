@@ -81,6 +81,18 @@ class SubstitutionList(BaseCClass):
     def substitute(self, to_substitute: str) -> str:
         return self._alloc_filtered_string(to_substitute)
 
+    def substitute_real_iter(
+        self, to_substitute: str, realization: int, iteration: int
+    ) -> str:
+        to_substitute = self._alloc_filtered_string(to_substitute)
+        geo_id_key = f"<GEO_ID_{realization}_{iteration}>"
+        to_substitute = to_substitute.replace(
+            "<GEO_ID>", self.get(geo_id_key, "<GEO_ID>")
+        )
+        to_substitute = to_substitute.replace("<IENS>", str(realization))
+        to_substitute = to_substitute.replace("<ITER>", str(iteration))
+        return to_substitute
+
     def __eq__(self, other):
         if len(self.keys()) != len(other.keys()):
             return False

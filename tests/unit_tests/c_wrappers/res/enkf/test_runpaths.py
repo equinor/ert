@@ -5,6 +5,7 @@ import pytest
 
 from ert._c_wrappers.enkf import EnKFMain, ResConfig
 from ert._c_wrappers.enkf.runpaths import Runpaths
+from ert._c_wrappers.util.substitution_list import SubstitutionList
 
 
 @pytest.mark.parametrize(
@@ -56,11 +57,9 @@ def test_runpath_file(tmp_path, job_format, runpath_format, expected_contents):
     runpath_file = tmp_path / "runpath_file"
 
     assert not runpath_file.exists()
-
+    context = SubstitutionList()
     runpaths = Runpaths(
-        job_format,
-        runpath_format,
-        runpath_file,
+        job_format, runpath_format, runpath_file, context.substitute_real_iter
     )
     runpaths.write_runpath_list([0, 1], [3, 4])
 
@@ -69,11 +68,14 @@ def test_runpath_file(tmp_path, job_format, runpath_format, expected_contents):
 
 def test_runpath_file_writer_substitution(tmp_path):
     runpath_file = tmp_path / "runpath_file"
+
+    context = SubstitutionList()
+    context.addItem("<casename>", "my_case")
     runpaths = Runpaths(
         "<casename>_job",
         "/path/<casename>/ensemble-%d/iteration%d",
         runpath_file,
-        lambda x, *_: x.replace("<casename>", "my_case"),
+        context.substitute_real_iter,
     )
 
     runpaths.write_runpath_list([1], [1])

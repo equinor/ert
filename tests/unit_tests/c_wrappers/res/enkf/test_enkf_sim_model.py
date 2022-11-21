@@ -125,9 +125,9 @@ def test_forward_model_job(job, forward_model, expected_args):
     forward_model = ert.resConfig().forward_model
     assert len(forward_model.jobs) == 1
     assert (
-        forward_model.get_job_data("", "", 0, 0, ert.substituter, res_config.env_vars)[
-            "jobList"
-        ][0]["argList"]
+        forward_model.get_job_data(
+            "", "", 0, 0, ert.get_context(), res_config.env_vars
+        )["jobList"][0]["argList"]
         == expected_args
     )
 
@@ -162,8 +162,8 @@ def test_forward_model_job(job, forward_model, expected_args):
             ARG_TYPE 0 STRING
                     """
             ),
-            "SIMULATION_JOB job_name word <ECLBASE>",
-            ["word", "<ECLBASE>"],
+            "SIMULATION_JOB job_name word <E42>",
+            ["word", "<E42>"],
             id="Some args",
         ),
         pytest.param(
@@ -199,7 +199,7 @@ def test_simulation_job(job, forward_model, expected_args):
     forward_model = ert.resConfig().forward_model
     forward_model_job = forward_model.jobs[0]
     job_data = forward_model.get_job_data(
-        "", "", 0, 0, ert.substituter, res_config.env_vars
+        "", "", 0, 0, ert.get_context(), res_config.env_vars
     )["jobList"][0]
     assert len(forward_model.jobs) == 1
     assert job_data["argList"] == expected_args
