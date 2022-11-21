@@ -69,16 +69,19 @@ jobs:
         ctest --output-on-failure
 
     - name: Install gcovr
+      if: matrix.os == 'ubuntu-latest'
       run: |
         python3 -m pip install gcovr
 
     - name: generate coverage report
+      if: matrix.os == 'ubuntu-latest'
       run: |
         export PATH=$PATH:${{ env.PIP_PKGS_PATH }}
         gcovr -r src/clib/ --exclude-directories ".*tests" cmake-build/ --xml -o cov.xml
 
     - name: Upload c coverage to Codecov
       uses: codecov/codecov-action@v3
+      if: matrix.os == 'ubuntu-latest'
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
         files: cov.xml
