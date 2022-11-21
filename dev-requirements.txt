@@ -19,6 +19,7 @@ pytest-qt
 pytest-raises
 pytest-snapshot
 pytest-timeout
+pytest-xdist
 pytest>6
 requests
 scikit-build
