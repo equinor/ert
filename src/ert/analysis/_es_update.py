@@ -11,7 +11,7 @@ import pandas
 from iterative_ensemble_smoother.experimental import (
     ensemble_smoother_update_step_row_scaling,
 )
-from pandas import DataFrame, MultiIndex
+from pandas import DataFrame
 
 from ert._c_wrappers.enkf.enums import ActiveMode, RealizationStateEnum
 from ert._c_wrappers.enkf.row_scaling import RowScaling
@@ -163,45 +163,23 @@ def _get_obs_and_measure_data(
         imp_type = obs_vector.getImplementationType().name
         if imp_type == "GEN_OBS":
             obs_data.append(obs_vector.get_gen_obs_data(active_list))
-            data_key = f"{data_key}-{obs_vector.activeStep()}"
+            data_key = f"{data_key}@{obs_vector.activeStep()}"
         elif imp_type == "SUMMARY_OBS":
             obs_data.append(obs_vector.get_summary_obs_data(obs, active_list))
 
-        data_keys[imp_type].add((data_key, obs_vector.getObsKey()))
+        data_keys[imp_type].add(data_key)
 
     measured_data = []
     for imp_type, keys in data_keys.items():
         if imp_type == "SUMMARY_OBS":
-            datas = [v[0] for v in keys]
-            data, x_axis, realizations = source_fs.load_summary_data(
-                datas, ens_active_list
-            )
-            time_axis = x_axis
-            multi_index = MultiIndex.from_product(
-                [datas, time_axis], names=["data_key", "axis"]
-            )
             measured_data.append(
-                DataFrame(
-                    data=data.reshape(len(time_axis) * len(keys), len(realizations)),
-                    index=multi_index,
-                    columns=realizations,
-                )
+                source_fs.load_summary_data_as_df(list(keys), ens_active_list)
             )
 
         if imp_type == "GEN_OBS":
-            for d_key, o_key in keys:
-                data, realizations = source_fs.load_gen_data(d_key, ens_active_list)
-                x_axis = [*range(data.shape[0])]
-                multi_index = MultiIndex.from_product(
-                    [[d_key], x_axis], names=["data_key", "axis"]
-                )
-                measured_data.append(
-                    DataFrame(
-                        data=data.reshape(len(x_axis), len(realizations)),
-                        index=multi_index,
-                        columns=realizations,
-                    )
-                )
+            measured_data.append(
+                source_fs.load_gen_data_as_df(list(keys), ens_active_list)
+            )
 
     return pandas.concat(measured_data), pandas.concat(obs_data)
 
@@ -273,9 +251,7 @@ def _load_observations_and_responses(
         obs, source_fs, selected_observations, ens_active_list
     )
 
-    joined = obs_data.join(
-        measured_data, on=["data_key", "axis"], how="inner"
-    ).drop_duplicates()
+    joined = obs_data.join(measured_data, on=["data_key", "axis"], how="inner")
     if len(obs_data) > len(joined):
         missing_indices = set(obs_data.index) - set(joined.index)
         error_msg = []
@@ -285,6 +261,7 @@ def _load_observations_and_responses(
                 f"at: {i[2]} has no response"
             )
         raise IndexError("\n".join(error_msg))
+
     obs_filter = _deactivate_outliers(joined, std_cutoff, alpha)
     obs_mask = [True if i not in obs_filter else False for i in joined.index]
     update_snapshot = _create_update_snapshot(joined, obs_mask)
