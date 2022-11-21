@@ -106,7 +106,8 @@ enkf_state_check_for_missing_eclipse_summary_data(
 
         const enkf_config_node_type *config_node =
             ensemble_config_get_node(ens_config, key);
-        if (enkf_config_node_get_num_obs(config_node) == 0) {
+
+        if (stringlist_get_size(config_node->obs_keys) == 0) {
             logger->info(
                 "[{:03d}:----] Unable to find Eclipse data for summary key: "
                 "{}, but have no observations either, so will continue.",
@@ -190,7 +191,14 @@ static fw_load_status enkf_state_load_gen_data_node(
     const enkf_config_node_type *config_node, int start, int stop) {
     fw_load_status status = LOAD_SUCCESSFUL;
     for (int report_step = start; report_step <= stop; report_step++) {
-        if (!enkf_config_node_internalize(config_node, report_step))
+
+        bool should_internalize = false;
+
+        if (config_node->internalize != NULL)
+            should_internalize =
+                bool_vector_safe_iget(config_node->internalize, report_step);
+
+        if (!should_internalize)
             continue;
 
         enkf_node_type *node = enkf_node_alloc(config_node);

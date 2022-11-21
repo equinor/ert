@@ -22,51 +22,6 @@
 
 namespace fs = std::filesystem;
 
-struct enkf_config_node_struct {
-    ert_impl_type impl_type;
-    enkf_var_type var_type;
-    bool vector_storage;
-    /** Should the (parameter) node be initialized by loading results from the
-     * Forward model? */
-    bool forward_init;
-
-    /** Should this node be internalized - observe that question of what to
-     * internalize is MOSTLY handled at a higher level - without consulting
-     * this variable. Can be NULL. */
-    bool_vector_type *internalize;
-    /** Keys of observations which observe this node. */
-    stringlist_type *obs_keys;
-    char *key;
-    char *init_file_abs_path;
-    /** Format used to create files for initialization. */
-    path_fmt_type *init_file_fmt;
-    /** Format used to load in file from forward model - one %d (if present) is
-     * replaced with report_step. */
-    path_fmt_type *enkf_infile_fmt;
-    /** Name of file which is written by EnKF, and read by the forward model. */
-    path_fmt_type *enkf_outfile_fmt;
-    /** This points to the config object of the actual implementation. */
-    void *data;
-
-    /** Function pointer to ask the underlying config object of the size - i.e.
-     * number of elements. */
-    get_data_size_ftype *get_data_size;
-    config_free_ftype *freef;
-};
-
-bool enkf_config_node_has_node(const enkf_config_node_type *node,
-                               enkf_fs_type *fs, node_id_type node_id) {
-
-    return enkf_fs_has_node(fs, node->key, node->var_type, node_id.report_step,
-                            node_id.iens);
-}
-
-bool enkf_config_node_has_vector(const enkf_config_node_type *node,
-                                 enkf_fs_type *fs, int iens) {
-    bool has_vector = enkf_fs_has_vector(fs, node->key, node->var_type, iens);
-    return has_vector;
-}
-
 static enkf_config_node_type *enkf_config_node_alloc__(enkf_var_type var_type,
                                                        ert_impl_type impl_type,
                                                        const char *key,
@@ -77,9 +32,8 @@ static enkf_config_node_type *enkf_config_node_alloc__(enkf_var_type var_type,
     node->var_type = var_type;
     node->impl_type = impl_type;
     node->key = util_alloc_string_copy(key);
-    node->vector_storage = false;
 
-    node->init_file_abs_path = NULL, node->init_file_fmt = NULL;
+    node->init_file_fmt = NULL;
     node->enkf_infile_fmt = NULL;
     node->enkf_outfile_fmt = NULL;
     node->internalize = NULL;
@@ -99,7 +53,6 @@ static enkf_config_node_type *enkf_config_node_alloc__(enkf_var_type var_type,
         node->get_data_size = gen_kw_config_get_data_size__;
         break;
     case (SUMMARY):
-        node->vector_storage = true;
         node->freef = summary_config_free__;
         node->get_data_size = summary_config_get_data_size__;
         break;
@@ -120,10 +73,6 @@ static enkf_config_node_type *enkf_config_node_alloc__(enkf_var_type var_type,
                    __func__, impl_type);
     }
     return node;
-}
-
-bool enkf_config_node_vector_storage(const enkf_config_node_type *config_node) {
-    return config_node->vector_storage;
 }
 
 static void enkf_config_node_update(enkf_config_node_type *config_node,
@@ -151,55 +100,6 @@ enkf_config_node_alloc(enkf_var_type var_type, ert_impl_type impl_type,
                             enkf_infile_fmt);
     node->data = data;
     return node;
-}
-
-void enkf_config_node_update_gen_kw(
-    enkf_config_node_type *config_node,
-    const char *
-        enkf_outfile_fmt, /* The include file created by ERT for the forward model. */
-    const char *template_file, const char *parameter_file,
-    const char *init_file_fmt) {
-
-    /* 1: Update the low level gen_kw_config stuff. */
-    gen_kw_config_update((gen_kw_config_type *)config_node->data, template_file,
-                         parameter_file);
-
-    /* 2: Update the stuff which is owned by the upper-level enkf_config_node instance. */
-    enkf_config_node_update(config_node, init_file_fmt, enkf_outfile_fmt, NULL);
-}
-
-/**
-   This will create a new gen_kw_config instance which is NOT yet
-   valid.
-*/
-enkf_config_node_type *enkf_config_node_new_gen_kw(const char *key,
-                                                   const char *tag_fmt,
-                                                   bool forward_init) {
-    enkf_config_node_type *config_node =
-        enkf_config_node_alloc__(PARAMETER, GEN_KW, key, forward_init);
-    config_node->data = gen_kw_config_alloc_empty(key, tag_fmt);
-    return config_node;
-}
-
-enkf_config_node_type *enkf_config_node_new_surface(const char *key,
-                                                    bool forward_init) {
-    enkf_config_node_type *config_node =
-        enkf_config_node_alloc__(PARAMETER, SURFACE, key, forward_init);
-    config_node->data = surface_config_alloc_empty();
-    return config_node;
-}
-
-void enkf_config_node_update_surface(enkf_config_node_type *config_node,
-                                     const char *base_surface,
-                                     const char *init_file_fmt,
-                                     const char *output_file) {
-
-    /* 1: Update the data owned by the surface node. */
-    surface_config_set_base_surface((surface_config_type *)config_node->data,
-                                    base_surface);
-
-    /* 2: Update the stuff which is owned by the upper-level enkf_config_node instance. */
-    enkf_config_node_update(config_node, init_file_fmt, output_file, NULL);
 }
 
 enkf_config_node_type *
@@ -329,8 +229,6 @@ void enkf_config_node_free(enkf_config_node_type *node) {
     free(node->key);
     stringlist_free(node->obs_keys);
 
-    free(node->init_file_abs_path);
-
     if (node->enkf_infile_fmt != NULL)
         path_fmt_free(node->enkf_infile_fmt);
 
@@ -377,19 +275,6 @@ void enkf_config_node_set_internalize(enkf_config_node_type *node,
     bool_vector_iset(node->internalize, report_step, true);
 }
 
-/** @return whether the given config node should be internalized at the given
- * report step.
- */
-bool enkf_config_node_internalize(const enkf_config_node_type *node,
-                                  int report_step) {
-    if (node->internalize == NULL)
-        return false;
-    else
-        return bool_vector_safe_iget(
-            node->internalize,
-            report_step); // Will return default value if report_step is beyond size.
-}
-
 /**
    This is the filename used when loading from a completed forward
    model.
@@ -398,14 +283,6 @@ char *enkf_config_node_alloc_infile(const enkf_config_node_type *node,
                                     int report_step) {
     if (node->enkf_infile_fmt != NULL)
         return path_fmt_alloc_path(node->enkf_infile_fmt, false, report_step);
-    else
-        return NULL;
-}
-
-char *enkf_config_node_alloc_outfile(const enkf_config_node_type *node,
-                                     int report_step) {
-    if (node->enkf_outfile_fmt != NULL)
-        return path_fmt_alloc_path(node->enkf_outfile_fmt, false, report_step);
     else
         return NULL;
 }
@@ -435,16 +312,6 @@ enkf_config_node_get_ref(const enkf_config_node_type *node) { // CXX_CAST_ERROR
     return node->data;
 }
 
-bool enkf_config_node_include_type(const enkf_config_node_type *config_node,
-                                   int mask) {
-
-    enkf_var_type var_type = config_node->var_type;
-    if (var_type & mask)
-        return true;
-    else
-        return false;
-}
-
 bool enkf_config_node_use_forward_init(
     const enkf_config_node_type *config_node) {
     return config_node->forward_init;
@@ -469,101 +336,10 @@ enkf_config_node_get_obs_keys(const enkf_config_node_type *config_node) {
     return config_node->obs_keys;
 }
 
-int enkf_config_node_get_num_obs(const enkf_config_node_type *config_node) {
-    return stringlist_get_size(config_node->obs_keys);
-}
-
-/**
-   This checks the index_key - and sums up over all the time points of the observation.
-*/
-int enkf_config_node_load_obs(const enkf_config_node_type *config_node,
-                              enkf_obs_type *enkf_obs, const char *key_index,
-                              int obs_count, time_t *_sim_time, double *_y,
-                              double *_std) {
-    ert_impl_type impl_type = enkf_config_node_get_impl_type(config_node);
-    int num_obs = 0;
-    int iobs;
-
-    for (iobs = 0; iobs < stringlist_get_size(config_node->obs_keys); iobs++) {
-        obs_vector_type *obs_vector = enkf_obs_get_vector(
-            enkf_obs, stringlist_iget(config_node->obs_keys, iobs));
-
-        int report_step = -1;
-        while (true) {
-            report_step =
-                obs_vector_get_next_active_step(obs_vector, report_step);
-            if (report_step == -1)
-                break;
-            {
-                bool valid;
-                double value, std1;
-
-                /*
-                 * The user index used when calling the user_get function on the
-                 * gen_obs data type is different depending on whether is called with a
-                 * data context user_key (as here) or with a observation context
-                 * user_key (as when plotting an observation plot). See more
-                 * documentation of the function gen_obs_user_get_data_index().
-                 */
-
-                if (impl_type == GEN_DATA)
-                    gen_obs_user_get_with_data_index(
-                        (gen_obs_type *)obs_vector_iget_node(obs_vector,
-                                                             report_step),
-                        key_index, &value, &std1, &valid);
-                else
-                    obs_vector_user_get(obs_vector, key_index, report_step,
-                                        &value, &std1, &valid);
-
-                if (valid) {
-                    if (obs_count > 0) {
-                        _sim_time[num_obs] =
-                            enkf_obs_iget_obs_time(enkf_obs, report_step);
-                        _y[num_obs] = value;
-                        _std[num_obs] = std1;
-                    }
-                    num_obs++;
-                }
-            }
-        }
-    }
-
-    /* Sorting the observations in time order. */
-    if (obs_count > 0) {
-        double_vector_type *y =
-            double_vector_alloc_shared_wrapper(0, 0, _y, obs_count);
-        double_vector_type *std =
-            double_vector_alloc_shared_wrapper(0, 0, _std, obs_count);
-        time_t_vector_type *sim_time =
-            time_t_vector_alloc_shared_wrapper(0, 0, _sim_time, obs_count);
-        perm_vector_type *sort_perm = time_t_vector_alloc_sort_perm(sim_time);
-
-        time_t_vector_permute(sim_time, sort_perm);
-        double_vector_permute(y, sort_perm);
-        double_vector_permute(std, sort_perm);
-
-        free(sort_perm);
-        double_vector_free(y);
-        double_vector_free(std);
-        time_t_vector_free(sim_time);
-    }
-    return num_obs;
-}
-
 void enkf_config_node_add_obs_key(enkf_config_node_type *config_node,
                                   const char *obs_key) {
     if (!stringlist_contains(config_node->obs_keys, obs_key))
         stringlist_append_copy(config_node->obs_keys, obs_key);
-}
-
-void enkf_config_node_clear_obs_keys(enkf_config_node_type *config_node) {
-    stringlist_clear(config_node->obs_keys);
-}
-
-void enkf_config_node_add_GEN_DATA_config_schema(config_parser_type *config) {
-    config_schema_item_type *item;
-    item = config_add_schema_item(config, GEN_DATA_KEY, false);
-    config_schema_item_set_argc_minmax(item, 1, CONFIG_DEFAULT_ARG_MAX);
 }
 
 enkf_config_node_type *
@@ -593,12 +369,17 @@ enkf_config_node_type *enkf_config_node_alloc_GEN_KW_full(
     const char *node_key, bool forward_init, const char *gen_kw_format,
     const char *template_file, const char *enkf_outfile,
     const char *parameter_file, const char *init_file_fmt) {
-    enkf_config_node_type *config_node = NULL;
-    config_node =
-        enkf_config_node_new_gen_kw(node_key, gen_kw_format, forward_init);
 
-    enkf_config_node_update_gen_kw(config_node, enkf_outfile, template_file,
-                                   parameter_file, init_file_fmt);
+    enkf_config_node_type *config_node =
+        enkf_config_node_alloc__(PARAMETER, GEN_KW, node_key, forward_init);
+    config_node->data = gen_kw_config_alloc_empty(node_key, gen_kw_format);
+
+    /* 1: Update the low level gen_kw_config stuff. */
+    gen_kw_config_update((gen_kw_config_type *)config_node->data, template_file,
+                         parameter_file);
+
+    /* 2: Update the stuff which is owned by the upper-level enkf_config_node instance. */
+    enkf_config_node_update(config_node, init_file_fmt, enkf_outfile, NULL);
 
     return config_node;
 }
@@ -608,9 +389,15 @@ enkf_config_node_type *enkf_config_node_alloc_SURFACE_full(
     const char *base_surface, const char *init_file_fmt) {
 
     enkf_config_node_type *config_node =
-        enkf_config_node_new_surface(node_key, forward_init);
-    enkf_config_node_update_surface(config_node, base_surface, init_file_fmt,
-                                    output_file);
+        enkf_config_node_alloc__(PARAMETER, SURFACE, node_key, forward_init);
+    config_node->data = surface_config_alloc_empty();
+
+    /* 1: Update the data owned by the surface node. */
+    surface_config_set_base_surface((surface_config_type *)config_node->data,
+                                    base_surface);
+
+    /* 2: Update the stuff which is owned by the upper-level enkf_config_node instance. */
+    enkf_config_node_update(config_node, init_file_fmt, output_file, NULL);
 
     return config_node;
 }
@@ -619,7 +406,11 @@ VOID_FREE(enkf_config_node)
 ERT_CLIB_SUBMODULE("enkf_config_node", m) {
     m.def("alloc_outfile",
           [](Cwrap<enkf_config_node_type> self, int iens) -> py::object {
-              auto path = enkf_config_node_alloc_outfile(self, iens);
+              char *path = nullptr;
+              if (self->enkf_outfile_fmt != NULL)
+                  path =
+                      path_fmt_alloc_path(self->enkf_outfile_fmt, false, iens);
+
               if (path == nullptr)
                   return py::none{};
               else

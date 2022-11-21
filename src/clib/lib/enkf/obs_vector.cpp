@@ -688,12 +688,11 @@ obs_vector_has_data_at_report_step(const obs_vector_type *obs_vector,
                                    enkf_fs_type *fs, int report_step) {
     void *obs_node = (void *)vector_iget(obs_vector->nodes, report_step);
     if (obs_node) {
-        node_id_type node_id = {.report_step = report_step};
+        const enkf_config_node_type *config = obs_vector->config_node;
         for (int iens = 0; iens < bool_vector_size(active_mask); iens++) {
             if (bool_vector_iget(active_mask, iens)) {
-                node_id.iens = iens;
-                if (!enkf_config_node_has_node(obs_vector->config_node, fs,
-                                               node_id))
+                if (!enkf_fs_has_node(fs, config->key, config->var_type,
+                                      report_step, iens))
                     return false;
             }
         }
@@ -723,7 +722,8 @@ static bool obs_vector_has_vector_data(const obs_vector_type *obs_vector,
     for (int iens = 0; iens < vec_size; iens++) {
         const enkf_config_node_type *data_config = obs_vector->config_node;
         if (bool_vector_iget(active_mask, iens)) {
-            if (!enkf_config_node_has_vector(data_config, fs, iens)) {
+            if (!enkf_fs_has_vector(fs, data_config->key, data_config->var_type,
+                                    iens)) {
                 return false;
             }
         }
@@ -736,7 +736,7 @@ bool obs_vector_has_data(const obs_vector_type *obs_vector,
                          const bool_vector_type *active_mask,
                          enkf_fs_type *fs) {
     const enkf_config_node_type *data_config = obs_vector->config_node;
-    if (enkf_config_node_vector_storage(data_config))
+    if (data_config->impl_type == SUMMARY)
         return obs_vector_has_vector_data(obs_vector, active_mask, fs);
 
     int vec_size = vector_get_size(obs_vector->nodes);

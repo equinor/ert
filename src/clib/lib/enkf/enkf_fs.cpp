@@ -669,11 +669,12 @@ ERT_CLIB_SUBMODULE("enkf_fs", m) {
                 const enkf_config_node_type *config_node =
                     ensemble_config_get_node(ensemble_config,
                                              parameter_keys[ikey].c_str());
-                initialized = enkf_config_node_has_node(
-                    config_node, fs, {.report_step = 0, .iens = 0});
+
+                initialized = enkf_fs_has_node(fs, config_node->key,
+                                               config_node->var_type, 0, 0);
                 for (int iens = 0; (iens < ens_size) && initialized; iens++) {
-                    initialized = enkf_config_node_has_node(
-                        config_node, fs, {.report_step = 0, .iens = iens});
+                    initialized = enkf_fs_has_node(
+                        fs, config_node->key, config_node->var_type, 0, iens);
                 }
             }
             return initialized;
@@ -715,8 +716,9 @@ ERT_CLIB_SUBMODULE("enkf_fs", m) {
                                                   .iens = src_iens};
 
                         /* The copy is careful ... */
-                        if (enkf_config_node_has_node(config_node, source_case,
-                                                      src_id))
+                        if (enkf_fs_has_node(source_case, config_node->key,
+                                             config_node->var_type, report_step,
+                                             src_iens))
                             enkf_node_copy(config_node, source_case,
                                            target_case, src_id, target_id);
 

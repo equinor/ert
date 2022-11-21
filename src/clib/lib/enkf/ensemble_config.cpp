@@ -189,7 +189,7 @@ void ensemble_config_add_obs_key(ensemble_config_type *ensemble_config,
 void ensemble_config_clear_obs_keys(ensemble_config_type *ensemble_config) {
     for (auto &config_pair : ensemble_config->config_nodes) {
         enkf_config_node_type *config_node = config_pair.second;
-        enkf_config_node_clear_obs_keys(config_node);
+        stringlist_clear(config_node->obs_keys);
     }
 }
 

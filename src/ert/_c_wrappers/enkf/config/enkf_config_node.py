@@ -6,7 +6,6 @@ from cwrap import BaseCClass
 from ecl.grid import EclGrid
 from ecl.util.util import IntVector, StringList
 
-from ert import _clib
 from ert._c_wrappers import ResPrototype
 from ert._c_wrappers.enkf.config_keys import ConfigKeys
 from ert._c_wrappers.enkf.enums import (
@@ -441,60 +440,30 @@ class EnkfConfigNode(BaseCClass):
         return not self == other
 
     def __eq__(self, other) -> bool:
-        if self.getImplementationType() != other.getImplementationType():
+        if any(
+            (
+                self.getImplementationType() != other.getImplementationType(),
+                self.getKey() != other.getKey(),
+                self.get_init_file_fmt() != other.get_init_file_fmt(),
+                self.get_enkf_outfile() != other.get_enkf_outfile(),
+                self.getUseForwardInit() != other.getUseForwardInit(),
+            )
+        ):
             return False
 
-        if self.getKey() != other.getKey():
-            return False
-
-        if self.getImplementationType() == ErtImplType.EXT_PARAM:
-            if self.get_init_file_fmt() != other.get_init_file_fmt():
-                return False
-            if self.get_enkf_outfile() != other.get_enkf_outfile():
-                return False
-            if self.getUseForwardInit() != other.getUseForwardInit():
-                return False
-        elif self.getImplementationType() == ErtImplType.GEN_DATA:
+        if self.getImplementationType() == ErtImplType.GEN_DATA:
             if self.getDataModelConfig() != other.getDataModelConfig():
                 return False
-            if self.get_init_file_fmt() != other.get_init_file_fmt():
-                return False
-            if self.get_enkf_outfile() != other.get_enkf_outfile():
-                return False
             if self.get_enkf_infile() != other.get_enkf_infile():
-                return False
-            if self.getUseForwardInit() != other.getUseForwardInit():
                 return False
         elif self.getImplementationType() == ErtImplType.GEN_KW:
             if self.getKeywordModelConfig() != other.getKeywordModelConfig():
                 return False
-            if self.get_init_file_fmt() != other.get_init_file_fmt():
-                return False
-            if self.get_enkf_outfile() != other.get_enkf_outfile():
-                return False
-            if self.getUseForwardInit() != other.getUseForwardInit():
-                return False
         elif self.getImplementationType() == ErtImplType.SUMMARY:
             if self.getSummaryModelConfig() != other.getSummaryModelConfig():
-                return False
-        elif self.getImplementationType() == ErtImplType.SURFACE:
-            if self.get_init_file_fmt() != other.get_init_file_fmt():
-                return False
-            if self.getUseForwardInit() != other.getUseForwardInit():
-                return False
-            if self.get_enkf_outfile() != other.get_enkf_outfile():
                 return False
         elif self.getImplementationType() == ErtImplType.FIELD:
             if self.getFieldModelConfig() != other.getFieldModelConfig():
                 return False
-            if self.getUseForwardInit() != other.getUseForwardInit():
-                return False
-            if self.get_init_file_fmt() != other.get_init_file_fmt():
-                return False
-            if self.get_enkf_outfile() != other.get_enkf_outfile():
-                return False
 
         return True
-
-    def enkf_outfile_fmt(self, iens: int) -> Optional[str]:
-        return _clib.enkf_config_node.alloc_outfile(self, iens)
