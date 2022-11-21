@@ -224,7 +224,9 @@ def _shared_snake_oil_case(request, monkeypatch, source_root):
     this is quite slow, but the results will be cached. If something comes
     out of sync, clear the cache and start again.
     """
-    snake_path = request.config.cache.mkdir("snake_oil_data" + os.environ.get("PYTEST_XDIST_WORKER", ""))
+    snake_path = request.config.cache.mkdir(
+        "snake_oil_data" + os.environ.get("PYTEST_XDIST_WORKER", "")
+    )
     monkeypatch.chdir(snake_path)
     if not os.listdir(snake_path):
         _run_snake_oil(source_root)
