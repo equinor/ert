@@ -239,7 +239,7 @@ assert exec_env["NOT_SET"] is None
         f.write("EXEC_ENV TEST_ENV 123\n")
         f.write("EXEC_ENV NOT_SET")
 
-    ext_job = ExtJob("EXEC_ENV", False)
+    ext_job = ExtJob.from_config_file(name=None, config_file="EXEC_ENV")
     forward_model = ForwardModel(jobs=[ext_job])
     forward_model.formatted_fprintf(
         "run_id", ".", "data_root", 0, 0, Substituter(), EnvironmentVarlist()

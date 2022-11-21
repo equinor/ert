@@ -97,7 +97,9 @@ def make_ensemble_builder(queue_config):
                 os.chmod(ext_job_exec, stat.S_IMODE(mode))
 
                 ext_job_list.append(
-                    ExtJob(str(ext_job_config), False, name=f"ext_job_{job_index}")
+                    ExtJob.from_config_file(
+                        str(ext_job_config), name=f"ext_job_{job_index}"
+                    )
                 )
 
             @dataclass
@@ -171,22 +173,22 @@ def make_ensemble_builder(queue_config):
 
 def _dump_ext_job(ext_job, index):
     return {
-        "name": ext_job.name(),
-        "executable": ext_job.get_executable(),
-        "target_file": ext_job.get_target_file(),
-        "error_file": ext_job.get_error_file(),
-        "start_file": ext_job.get_start_file(),
+        "name": ext_job.name,
+        "executable": ext_job.executable,
+        "target_file": ext_job.target_file,
+        "error_file": ext_job.error_file,
+        "start_file": ext_job.start_file,
         "stdout": f"{index}.stdout",
         "stderr": f"{index}.stderr",
-        "stdin": ext_job.get_stdin_file(),
+        "stdin": ext_job.stdin_file,
         "environment": None,
         "exec_env": {},
-        "max_running": ext_job.get_max_running(),
-        "max_running_minutes": ext_job.get_max_running_minutes(),
+        "max_running": ext_job.max_running,
+        "max_running_minutes": ext_job.max_running_minutes,
         "min_arg": ext_job.min_arg,
         "max_arg": ext_job.max_arg,
         "arg_types": ext_job.arg_types,
-        "argList": ext_job.get_arglist(),
+        "argList": ext_job.arglist,
     }
 
 

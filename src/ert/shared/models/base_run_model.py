@@ -350,7 +350,7 @@ class BaseRunModel:
                         LegacyJobBuilder()
                         .set_id(str(index))
                         .set_index(str(index))
-                        .set_name(ext_job.name())
+                        .set_name(ext_job.name)
                         .set_ext_job(ext_job)  # type: ignore
                     )
                 step.set_max_runtime(

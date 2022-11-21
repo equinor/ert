@@ -404,9 +404,9 @@ def test_shell_script_jobs_availability(minimal_case):
     res_config = ResConfig("config.ert")
     fm_shell_jobs = {}
     for job in res_config.installed_jobs.values():
-        exe = job.get_executable()
+        exe = job.executable
         if "shell_scripts" in exe:
-            fm_shell_jobs[job.name().upper()] = Path(exe).resolve()
+            fm_shell_jobs[job.name.upper()] = Path(exe).resolve()
 
     list_from_content = res_config.ert_workflow_list
     wf_shell_jobs = {}

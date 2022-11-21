@@ -1,263 +1,207 @@
+import os
 import os.path
+import shutil
+from collections import defaultdict
+from dataclasses import dataclass, field, replace
 from typing import Dict, List, Optional
 
-from cwrap import BaseCClass
-from ecl.util.util import StringList
-
-from ert._c_wrappers import ResPrototype
-from ert._c_wrappers.config import ContentTypeEnum
+from ert._c_wrappers.config import ConfigParser, ConfigValidationError, ContentTypeEnum
 from ert._c_wrappers.util import SubstitutionList
+from ert._clib.job_kw import type_from_kw
 
 
-class ExtJob(BaseCClass):
-    TYPE_NAME = "ext_job"
-    _fscanf_alloc = ResPrototype(
-        "void* ext_job_fscanf_alloc(char*, bool, char* , bool)", bind=False
-    )
-    _free = ResPrototype("void ext_job_free( ext_job )")
-    _get_help_text = ResPrototype("char* ext_job_get_help_text(ext_job)")
-    _get_name = ResPrototype("char* ext_job_get_name(ext_job)")
-    _set_private_args_as_string = ResPrototype(
-        "void ext_job_set_private_args_from_string(ext_job, char*)"
-    )
-    _is_private = ResPrototype("bool ext_job_is_private(ext_job)")
-    _get_config_file = ResPrototype("char* ext_job_get_config_file(ext_job)")
-    _set_config_file = ResPrototype("void ext_job_set_config_file(ext_job, char*)")
-    _get_stdin_file = ResPrototype("char* ext_job_get_stdin_file(ext_job)")
-    _set_stdin_file = ResPrototype("void ext_job_set_stdin_file(ext_job, char*)")
-    _get_stdout_file = ResPrototype("char* ext_job_get_stdout_file(ext_job)")
-    _set_stdout_file = ResPrototype("void ext_job_set_stdout_file(ext_job, char*)")
-    _get_stderr_file = ResPrototype("char* ext_job_get_stderr_file(ext_job)")
-    _set_stderr_file = ResPrototype("void ext_job_set_stderr_file(ext_job, char*)")
-    _get_target_file = ResPrototype("char* ext_job_get_target_file(ext_job)")
-    _set_target_file = ResPrototype("void ext_job_set_target_file(ext_job, char*)")
-    _get_executable = ResPrototype("char* ext_job_get_executable(ext_job)")
-    _set_executable = ResPrototype("void ext_job_set_executable(ext_job, char*)")
-    _get_error_file = ResPrototype("char* ext_job_get_error_file(ext_job)")
-    _get_start_file = ResPrototype("char* ext_job_get_start_file(ext_job)")
-    _get_max_running = ResPrototype("int ext_job_get_max_running(ext_job)")
-    _set_max_running = ResPrototype("void ext_job_set_max_running(ext_job, int)")
-    _get_max_running_minutes = ResPrototype(
-        "int ext_job_get_max_running_minutes(ext_job)"
-    )
-    _set_max_running_minutes = ResPrototype(
-        "void ext_job_set_max_running_minutes(ext_job, int)"
-    )
-
-    _min_arg = ResPrototype("int ext_job_get_min_arg(ext_job)")
-    _max_arg = ResPrototype("int ext_job_get_max_arg(ext_job)")
-    _arg_type = ResPrototype(
-        "config_content_type_enum ext_job_iget_argtype(ext_job, int)"
-    )
-
-    _get_exec_env = ResPrototype("string_hash_ref ext_job_get_exec_env(ext_job)")
-    _get_default_mapping = ResPrototype(
-        "string_hash_ref ext_job_get_default_mapping(ext_job)"
-    )
-    _get_environment = ResPrototype("string_hash_ref ext_job_get_environment(ext_job)")
-    _set_environment = ResPrototype(
-        "void ext_job_add_environment(ext_job, char*, char*)"
-    )
-    _get_arglist = ResPrototype("stringlist_ref ext_job_get_arglist(ext_job)")
-    _set_arglist = ResPrototype("void ext_job_set_args(ext_job, stringlist)")
-    _get_argvalues = ResPrototype("stringlist_ref ext_job_get_argvalues(ext_job)")
-    _clear_environment = ResPrototype("void ext_job_clear_environment(ext_job)")
-    _save = ResPrototype("void ext_job_save(ext_job)")
-    _get_private_args = ResPrototype("subst_list_ref ext_job_get_private_args(ext_job)")
-    _set_define_args = ResPrototype(
-        "subst_list_ref ext_job_set_define_args(ext_job, subst_list)"
-    )
-    _free_deprecated_argv = ResPrototype("void ext_job_free_deprecated_argv(ext_job)")
-
-    _copy = ResPrototype("ext_job_obj ext_job_alloc_copy(ext_job)")
-
-    def __init__(
-        self,
-        config_file: str,
-        private: bool,
-        name: Optional[str] = None,
-        search_PATH: bool = True,
-    ):
-        if os.path.isfile(config_file):
-            if name is None:
-                name = os.path.basename(config_file)
-
-            c_ptr = self._fscanf_alloc(name, private, config_file, search_PATH)
-            if c_ptr:
-                super().__init__(c_ptr)
-            else:
-                raise ValueError(
-                    f"Unable to construct ExtJob(name={name}, "
-                    f"config_file={config_file}, private={private})"
-                )
-        else:
-            raise IOError(f'No such config file "{config_file}".')
-
-    def __repr__(self):
-        if self._address():
-            return self._create_repr(
-                f"{self.name()}, config_file = {self.get_config_file()}"
-            )
-        else:
-            return "UNINITIALIZED ExtJob"
-
-    def clear_deprecated_argv(self):
-        self._free_deprecated_argv()
-
-    def copy(self):
-        return self._copy()
-
-    def set_define_args(self, subst_list: SubstitutionList) -> None:
-        self._set_define_args(subst_list)
-
-    def get_private_args(self) -> SubstitutionList:
-        return self._get_private_args()
-
-    def set_private_args_as_string(self, args: str):
-        self._set_private_args_as_string(args)
-
-    def get_help_text(self):
-        return self._get_help_text()
-
-    def is_private(self) -> bool:
-        return self._is_private()
-
-    def get_config_file(self) -> str:
-        return self._get_config_file()
-
-    def set_config_file(self, config_file: str):
-        self._set_config_file(config_file)
-
-    def get_stdin_file(self) -> str:
-        return self._get_stdin_file()
-
-    def set_stdin_file(self, filename):
-        self._set_stdin_file(filename)
-
-    def get_stdout_file(self) -> str:
-        return self._get_stdout_file()
-
-    def set_stdout_file(self, filename):
-        self._set_stdout_file(filename)
-
-    def get_stderr_file(self) -> str:
-        return self._get_stderr_file()
-
-    def set_stderr_file(self, filename: str):
-        self._set_stderr_file(filename)
-
-    def get_target_file(self) -> str:
-        return self._get_target_file()
-
-    def set_target_file(self, filename: str):
-        self._set_target_file(filename)
-
-    def get_executable(self) -> str:
-        return self._get_executable()
-
-    def set_executable(self, executable: str):
-        self._set_executable(executable)
-
-    def get_max_running(self) -> int:
-        return self._get_max_running()
-
-    def set_max_running(self, max_running: int):
-        self._set_max_running(max_running)
-
-    def get_error_file(self) -> str:
-        return self._get_error_file()
-
-    def get_start_file(self) -> str:
-        return self._get_start_file()
-
-    def get_max_running_minutes(self) -> int:
-        return self._get_max_running_minutes()
-
-    def set_max_running_minutes(self, min_value: int):
-        self._set_max_running_minutes(min_value)
-
-    @property
-    def min_arg(self) -> int:
-        return self._min_arg()
-
-    @property
-    def max_arg(self) -> int:
-        return self._max_arg()
-
-    @property
-    def arg_types(self) -> List[ContentTypeEnum]:
-        result = []
-        for index in range(self.max_arg):
-            result.append(self._arg_type(index))
-
-        return result
+@dataclass
+class ExtJob:
+    name: str
+    executable: str
+    stdin_file: Optional[str] = None
+    stdout_file: Optional[str] = None
+    stderr_file: Optional[str] = None
+    start_file: Optional[str] = None
+    target_file: Optional[str] = None
+    error_file: Optional[str] = None
+    max_running: Optional[int] = None
+    max_running_minutes: Optional[int] = None
+    min_arg: Optional[int] = None
+    max_arg: Optional[int] = None
+    arglist: List[str] = field(default_factory=list)
+    arg_types: List[ContentTypeEnum] = field(default_factory=list)
+    environment: Dict[str, str] = field(default_factory=dict)
+    exec_env: Dict[str, str] = field(default_factory=dict)
+    default_mapping: Dict[str, str] = field(default_factory=dict)
+    private_args: SubstitutionList = field(default_factory=SubstitutionList)
+    define_args: SubstitutionList = field(default_factory=SubstitutionList)
+    help_text: str = ""
 
     @staticmethod
-    def valid_args(arg_types, arg_list: List[str], runtime: bool = False):
-        for index, arg_type in enumerate(arg_types):
-            arg = arg_list[index]
-            if not arg_type.valid_string(arg, runtime):
-                return False
-            return True
+    def _resolve_executable(executable, name, config_file_location):
+        """
+        :returns: The resolved path to the executable
 
-    def get_environment(self) -> Dict[str, str]:
-        return dict(**self._get_environment())
+        :raises: ConfigValidationError if the executable cannot be found
+            or we don't have permissions to execute.
+        """
+        # PS: This operation has surprising behavior but is kept this way for
+        # backwards compatability
+        if not os.path.isabs(executable):
+            path_to_executable = os.path.abspath(
+                os.path.join(config_file_location, executable)
+            )
+        else:
+            path_to_executable = executable
 
-    def get_exec_env(self) -> Dict[str, str]:
-        return dict(**self._get_exec_env())
+        resolved = None
+        if os.path.exists(path_to_executable):
+            resolved = path_to_executable
+        elif not os.path.isabs(executable):
+            # look for system installed executable
+            resolved = shutil.which(executable)
 
-    def get_default_mapping(self) -> Dict[str, str]:
-        return dict(**self._get_default_mapping())
+        if resolved is None:
+            raise ConfigValidationError(
+                f"Could not find executable {executable} for job {name}"
+            )
 
-    def set_environment(self, key: str, value: str):
-        self._set_environment(key, value)
+        if not os.access(resolved, os.X_OK):  # is not executable
+            raise ConfigValidationError(
+                f"ExtJob {name} with executable"
+                f" {resolved} does not have execute permissions"
+            )
 
-    def get_arglist(self) -> List[str]:
-        # We unescape backslash here to keep backwards compatability ie. If
-        # the arglist contains a '\n' we interpret it as a newline.
-        return [
-            s.encode("utf-8", "backslashreplace").decode("unicode_escape")
-            for s in self._get_arglist()
-        ]
+        if os.path.isdir(resolved):
+            raise ConfigValidationError(
+                f"ExtJob {name} has executable set to directory {resolved}"
+            )
 
-    def get_argvalues(self) -> List[str]:
-        return list(self._get_argvalues())
+        return resolved
 
-    def set_arglist(self, args: List[str]):
-        return self._set_arglist(StringList(args))
+    def copy(self):
+        return replace(self)
 
-    def clear_environment(self):
-        self._clear_environment()
+    _int_keywords = ["MAX_RUNNING", "MAX_RUNNING_MINUTES", "MIN_ARG", "MAX_ARG"]
+    _str_keywords = [
+        "STDIN",
+        "STDOUT",
+        "STDERR",
+        "START_FILE",
+        "EXECUTABLE",
+        "PORTABLE_EXE",
+        "TARGET_FILE",
+        "ERROR_FILE",
+        "START_FILE",
+    ]
 
-    def save(self):
-        self._save()
+    @classmethod
+    def _parse_config_file(cls, config_file: str):
+        parser = ConfigParser()
+        for int_key in cls._int_keywords:
+            parser.add(int_key, value_type=ContentTypeEnum.CONFIG_INT).set_argc_minmax(
+                1, 1
+            )
+        for path_key in cls._str_keywords:
+            parser.add(path_key).set_argc_minmax(1, 1)
 
-    def free(self):
-        self._free()
+        parser.add("EXECUTABLE", required=True).set_argc_minmax(1, 1)
+        parser.add("ENV").set_argc_minmax(1, 2)
+        parser.add("EXEC_ENV").set_argc_minmax(1, 2)
+        parser.add("DEFAULT").set_argc_minmax(2, 2)
+        parser.add("ARGLIST").set_argc_minmax(1, -1)
+        schema = parser.add("ARG_TYPE")
+        schema.set_argc_minmax(2, 2)
+        schema.iset_type(0, ContentTypeEnum.CONFIG_INT)
 
-    def name(self) -> str:
-        return self._get_name()
+        return parser.parse(
+            config_file,
+        )
 
-    def __ne__(self, other) -> bool:
-        return not self == other
+    @classmethod
+    def _read_str_keywords(cls, content_dict, config_content):
+        def set_nullable(keyword, key):
+            value = config_content.getValue(keyword)
+            if value == "null":
+                value = None
+            content_dict[key] = value
 
-    def __eq__(self, other) -> bool:
-        if not isinstance(other, ExtJob):
-            return False
+        for key in cls._str_keywords:
+            if config_content.hasKey(key):
+                if key in ("STDIN", "STDOUT", "STDERR"):
+                    set_nullable(key, key.lower() + "_file")
+                else:
+                    set_nullable(key, key.lower())
 
-        if self.name() != other.name():
-            return False
+    @classmethod
+    def _read_int_keywords(cls, content_dict, config_content):
+        for key in cls._int_keywords:
+            if config_content.hasKey(key):
+                value = config_content.getValue(key)
+                if value > 0:
+                    # less than 0 in the config is equivalent to setting None
+                    # (backwards compatability)
+                    content_dict[key.lower()] = value
 
-        if self.get_arglist() != other.get_arglist():
-            return False
+    @classmethod
+    def from_config_file(cls, config_file: str, name: Optional[str] = None):
+        if name is None:
+            name = os.path.basename(config_file)
 
-        if self.get_config_file() != other.get_config_file():
-            return False
+        config_content = cls._parse_config_file(config_file)
 
-        if self.get_stderr_file() != other.get_stderr_file():
-            return False
+        content_dict = {}
 
-        if self.get_stdout_file() != other.get_stdout_file():
-            return False
+        cls._read_str_keywords(content_dict, config_content)
+        cls._read_int_keywords(content_dict, config_content)
 
-        return True
+        if config_content.hasKey("EXECUTABLE"):
+            content_dict["executable"] = config_content.getValue("EXECUTABLE")
+        if config_content.hasKey("ARGLIST"):
+            # We unescape backslash here to keep backwards compatability ie. If
+            # the arglist contains a '\n' we interpret it as a newline.
+            content_dict["arglist"] = [
+                s.encode("utf-8", "backslashreplace").decode("unicode_escape")
+                for s in config_content["ARGLIST"][-1]
+            ]
+
+        arg_types_dict = defaultdict(lambda: ContentTypeEnum.CONFIG_STRING)
+        if "max_arg" in content_dict and content_dict["max_arg"] > 0:
+            arg_types_dict[content_dict["max_arg"] - 1] = ContentTypeEnum.CONFIG_STRING
+        for arg in config_content["ARG_TYPE"]:
+            arg_types_dict[arg[0]] = ContentTypeEnum(type_from_kw(arg[1]))
+        if arg_types_dict:
+            content_dict["arg_types"] = [
+                arg_types_dict[j]
+                for j in range(max(i for i in arg_types_dict.keys()) + 1)
+            ]
+        else:
+            content_dict["arg_types"] = []
+
+        def set_env(key, keyword):
+            content_dict[key] = {}
+            if config_content.hasKey(keyword):
+                for env in config_content[keyword]:
+                    if len(env) > 1:
+                        content_dict[key][env[0]] = env[1]
+                    else:
+                        content_dict[key][env[0]] = None
+
+        set_env("environment", "ENV")
+        set_env("exec_env", "EXEC_ENV")
+
+        content_dict["default_mapping"] = {}
+        if config_content.hasKey("DEFAULT"):
+            for key, value in config_content["DEFAULT"]:
+                content_dict["default_mapping"][key] = value
+
+        content_dict["executable"] = ExtJob._resolve_executable(
+            content_dict["executable"], name, os.path.dirname(config_file)
+        )
+
+        # The default for stdout_file and stdin_file is
+        # {name}.std{out/err}
+        for handle in ("stdout", "stderr"):
+            if handle + "_file" not in content_dict:
+                content_dict[handle + "_file"] = name + "." + handle
+
+        return cls(
+            name,
+            **content_dict,
+        )

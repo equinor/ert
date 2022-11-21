@@ -16,6 +16,10 @@ class SubstitutionList(BaseCClass):
     _alloc_filtered_string = ResPrototype(
         "char* subst_list_alloc_filtered_string(subst_list, char*)"
     )
+    _add_from_string = ResPrototype(
+        "void subst_list_add_from_string(subst_list, char*)"
+    )
+    _deep_copy = ResPrototype("subst_list_obj subst_list_alloc_deep_copy(subst_list)")
 
     def __init__(self):
         c_ptr = self._alloc(None)
@@ -37,6 +41,9 @@ class SubstitutionList(BaseCClass):
             key_list.append(self._iget_key(i))
         return key_list
 
+    def __deepcopy__(self, memo):
+        return self._deep_copy()
+
     def __iter__(self):
         index = 0
         keys = self.keys()
@@ -54,6 +61,9 @@ class SubstitutionList(BaseCClass):
             return self._get_value(key)
         else:
             raise KeyError(f"No such key:{key}")
+
+    def add_from_string(self, string):
+        self._add_from_string(string)
 
     def get(self, key, default=None):
         return self[key] if key in self else default

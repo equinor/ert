@@ -1,8 +1,16 @@
 from textwrap import dedent
+from typing import List
 
 import pytest
 
 from ert._c_wrappers.enkf import EnKFMain, ResConfig
+
+
+def valid_args(arg_types, arg_list: List[str], runtime: bool = False):
+    for arg, arg_type in zip(arg_list, arg_types):
+        if not arg_type.valid_string(arg, runtime):
+            return False
+    return True
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -116,7 +124,12 @@ def test_forward_model_job(job, forward_model, expected_args):
 
     forward_model = ert.resConfig().forward_model
     assert len(forward_model.jobs) == 1
-    assert forward_model.jobs[0].get_argvalues() == expected_args
+    assert (
+        forward_model.get_job_data("", "", 0, 0, ert.substituter, res_config.env_vars)[
+            "jobList"
+        ][0]["argList"]
+        == expected_args
+    )
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -185,9 +198,9 @@ def test_simulation_job(job, forward_model, expected_args):
 
     forward_model = ert.resConfig().forward_model
     forward_model_job = forward_model.jobs[0]
+    job_data = forward_model.get_job_data(
+        "", "", 0, 0, ert.substituter, res_config.env_vars
+    )["jobList"][0]
     assert len(forward_model.jobs) == 1
-    assert forward_model_job.get_argvalues() == expected_args
-    assert forward_model_job.get_arglist() == expected_args
-    assert forward_model_job.valid_args(
-        forward_model_job.arg_types, forward_model_job.get_arglist()
-    )
+    assert job_data["argList"] == expected_args
+    assert valid_args(forward_model_job.arg_types, job_data["argList"])

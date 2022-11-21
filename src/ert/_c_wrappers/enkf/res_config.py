@@ -1,3 +1,4 @@
+import copy
 import logging
 import os
 from collections import defaultdict
@@ -316,25 +317,24 @@ class ResConfig:
         for job_description in config_content_dict.get(ConfigKeys.FORWARD_MODEL, []):
             job_name, args = parse_signature_job("".join(job_description))
             try:
-                job = self.installed_jobs[job_name].copy()
+                job = copy.deepcopy(self.installed_jobs[job_name])
             except KeyError as err:
                 raise ValueError(
                     f"Could not find job `{job_name}` in list of installed jobs: "
                     f"{list(self.installed_jobs.keys())}"
                 ) from err
             if args is not None:
-                job.set_private_args_as_string(args)
-                job.set_define_args(self.substitution_list)
-            job.convertToCReference(None)
+                job.private_args = SubstitutionList()
+                job.private_args.add_from_string(args)
+                job.define_args = self.substitution_list
             jobs.append(job)
 
         # SIMULATION_JOB_KEY
         for job_description in config_content_dict.get(ConfigKeys.SIMULATION_JOB, []):
-            job = self.installed_jobs[job_description[0]].copy()
-            job.set_arglist(job_description[1:])
-            job.set_define_args(self.substitution_list)
-            job.clear_deprecated_argv()
-            job.convertToCReference(None)
+            job = copy.deepcopy(self.installed_jobs[job_description[0]])
+            job.arglist = job_description[1:]
+            job.define_args = self.substitution_list
+            # job.clear_deprecated_argv()
             jobs.append(job)
 
         self.forward_model = ForwardModel(jobs=jobs)
@@ -430,8 +430,8 @@ class ResConfig:
                     f"Could not find job `{job_description[ConfigKeys.NAME]}`"
                     f" in list of installed jobs: {list(self.installed_jobs.keys())}"
                 ) from err
-            job.set_private_args_as_string(job_description.get(ConfigKeys.ARGLIST))
-            job.convertToCReference(None)
+            job.private_args = SubstitutionList()
+            job.private_args.add_from_string(job_description.get(ConfigKeys.ARGLIST))
             jobs.append(job)
 
         # SIMULATION_JOB_KEY
@@ -444,8 +444,8 @@ class ResConfig:
                     f"Could not find job `{job_description[ConfigKeys.NAME]}` "
                     "in list of installed jobs."
                 ) from err
-            job.set_private_args_as_string(job_description.get(ConfigKeys.ARGLIST))
-            job.convertToCReference(None)
+            job.private_args = SubstitutionList()
+            job.private_args.add_from_string(job_description.get(ConfigKeys.ARGLIST))
             jobs.append(job)
 
         self.forward_model = ForwardModel(jobs=jobs)
@@ -498,7 +498,7 @@ class ResConfig:
                 full_path = os.path.abspath(os.path.join(job_path, file_name))
                 new_job = ResConfig._create_job(full_path)
                 if new_job is not None:
-                    name = new_job.name()
+                    name = new_job.name
                     jobs[name] = new_job
 
         return jobs
@@ -508,10 +508,9 @@ class ResConfig:
         if not os.path.isfile(job_path):
             logger.warning(f"Unable to locate job file {job_path}")
             return None
-        return ExtJob(
-            config_file=job_path,
-            private=False,
+        return ExtJob.from_config_file(
             name=job_name,
+            config_file=job_path,
         )
 
     def _extract_defines(self, config):
