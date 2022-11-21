@@ -121,7 +121,7 @@ def copy_snake_oil_case(copy_case):
 def fixture_copy_snake_oil_case_storage(_shared_snake_oil_case, tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     shutil.copytree(_shared_snake_oil_case, "test_data")
-    os.chdir("test_data")
+    monkeypatch.chdir("test_data")
 
 
 @pytest.fixture()
@@ -130,13 +130,8 @@ def copy_minimum_case(copy_case):
 
 
 @pytest.fixture()
-def use_tmpdir(tmp_path):
-    cwd = os.getcwd()
-    try:
-        os.chdir(tmp_path)
-        yield
-    finally:
-        os.chdir(cwd)
+def use_tmpdir(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
 
 
 @pytest.fixture()
@@ -229,11 +224,11 @@ def _shared_snake_oil_case(request, monkeypatch, source_root):
     this is quite slow, but the results will be cached. If something comes
     out of sync, clear the cache and start again.
     """
-    snake_path = request.config.cache.mkdir("snake_oil_data")
+    snake_path = request.config.cache.mkdir("snake_oil_data" + os.environ.get("PYTEST_XDIST_WORKER", ""))
     monkeypatch.chdir(snake_path)
     if not os.listdir(snake_path):
         _run_snake_oil(source_root)
     else:
-        os.chdir("test_data")
+        monkeypatch.chdir("test_data")
 
     yield os.getcwd()

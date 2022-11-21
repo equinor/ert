@@ -1,6 +1,5 @@
 import asyncio
 import json
-import os
 import stat
 import time
 from dataclasses import dataclass
@@ -113,8 +112,8 @@ def start_all(job_queue, sema_pool):
         job = job_queue.fetch_next_waiting()
 
 
-def test_kill_jobs(tmpdir):
-    os.chdir(tmpdir)
+def test_kill_jobs(tmpdir, monkeypatch):
+    monkeypatch.chdir(tmpdir)
     job_queue = create_local_queue(NEVER_ENDING_SCRIPT)
 
     assert job_queue.queue_size == 10
@@ -144,8 +143,8 @@ def test_kill_jobs(tmpdir):
         job.wait_for()
 
 
-def test_add_jobs(tmpdir):
-    os.chdir(tmpdir)
+def test_add_jobs(tmpdir, monkeypatch):
+    monkeypatch.chdir(tmpdir)
     job_queue = create_local_queue(SIMPLE_SCRIPT)
 
     assert job_queue.queue_size == 10
@@ -164,8 +163,8 @@ def test_add_jobs(tmpdir):
         job.wait_for()
 
 
-def test_failing_jobs(tmpdir):
-    os.chdir(tmpdir)
+def test_failing_jobs(tmpdir, monkeypatch):
+    monkeypatch.chdir(tmpdir)
     job_queue = create_local_queue(FAILING_SCRIPT, max_submit=1)
 
     assert job_queue.queue_size == 10
@@ -190,8 +189,8 @@ def test_failing_jobs(tmpdir):
         assert job_queue.snapshot()[iens] == str(JobStatusType.JOB_QUEUE_FAILED)
 
 
-def test_timeout_jobs(tmpdir):
-    os.chdir(tmpdir)
+def test_timeout_jobs(tmpdir, monkeypatch):
+    monkeypatch.chdir(tmpdir)
     job_numbers = set()
 
     def callback(arg):
@@ -231,8 +230,8 @@ def test_timeout_jobs(tmpdir):
         job.wait_for()
 
 
-def test_add_dispatch_info(tmpdir):
-    os.chdir(tmpdir)
+def test_add_dispatch_info(tmpdir, monkeypatch):
+    monkeypatch.chdir(tmpdir)
     job_queue = create_local_queue(SIMPLE_SCRIPT)
     ens_id = "some_id"
     cert = "My very nice cert"
@@ -262,8 +261,8 @@ def test_add_dispatch_info(tmpdir):
         assert (runpath / cert_file).read_text(encoding="utf-8") == cert
 
 
-def test_add_dispatch_info_cert_none(tmpdir):
-    os.chdir(tmpdir)
+def test_add_dispatch_info_cert_none(tmpdir, monkeypatch):
+    monkeypatch.chdir(tmpdir)
     job_queue = create_local_queue(SIMPLE_SCRIPT)
     ens_id = "some_id"
     dispatch_url = "wss://example.org"
@@ -294,8 +293,8 @@ def test_add_dispatch_info_cert_none(tmpdir):
 
 @pytest.mark.timeout(20)
 @pytest.mark.asyncio
-async def test_retry_on_closed_connection(tmpdir):
-    os.chdir(tmpdir)
+async def test_retry_on_closed_connection(tmpdir, monkeypatch):
+    monkeypatch.chdir(tmpdir)
     job_queue = create_local_queue(SIMPLE_SCRIPT, max_submit=1)
     pool_sema = BoundedSemaphore(value=10)
 

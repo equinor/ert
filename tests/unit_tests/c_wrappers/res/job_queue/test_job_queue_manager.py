@@ -105,10 +105,10 @@ def create_local_queue(
     return job_queue
 
 
-def test_num_cpu_submitted_correctly_lsf(tmpdir):
+def test_num_cpu_submitted_correctly_lsf(tmpdir, monkeypatch):
     """Assert that num_cpu from the ERT configuration is passed on to the bsub
     command used to submit jobs to LSF"""
-    os.chdir(tmpdir)
+    monkeypatch.chdir(tmpdir)
     os.putenv("PATH", os.getcwd() + ":" + os.getenv("PATH"))
     driver = Driver(driver_type=QueueDriverEnum.LSF_DRIVER, max_running=1)
 
@@ -158,8 +158,8 @@ def test_num_cpu_submitted_correctly_lsf(tmpdir):
     assert found_cpu_arg is True
 
 
-def test_execute_queue(tmpdir):
-    os.chdir(tmpdir)
+def test_execute_queue(tmpdir, monkeypatch):
+    monkeypatch.chdir(tmpdir)
     job_queue = create_local_queue(SIMPLE_SCRIPT)
     manager = JobQueueManager(job_queue)
     manager.execute_queue()
@@ -171,10 +171,10 @@ def test_execute_queue(tmpdir):
 
 
 @pytest.mark.parametrize("max_submit_num", [1, 2, 3])
-def test_max_submit_reached(tmpdir, max_submit_num):
+def test_max_submit_reached(tmpdir, max_submit_num, monkeypatch):
     """Check that the JobQueueManager will submit exactly the maximum number of
     resubmissions in the case of scripts that fail."""
-    os.chdir(tmpdir)
+    monkeypatch.chdir(tmpdir)
     num_realizations = 2
     job_queue = create_local_queue(
         FAILING_SCRIPT, max_submit=max_submit_num, num_realizations=num_realizations
@@ -197,8 +197,8 @@ def test_max_submit_reached(tmpdir, max_submit_num):
 
 
 @pytest.mark.parametrize("max_submit_num", [1, 2, 3])
-def test_kill_queue(tmpdir, max_submit_num):
-    os.chdir(tmpdir)
+def test_kill_queue(tmpdir, max_submit_num, monkeypatch):
+    monkeypatch.chdir(tmpdir)
     job_queue = create_local_queue(SIMPLE_SCRIPT, max_submit=max_submit_num)
     manager = JobQueueManager(job_queue)
     job_queue.kill_all_jobs()

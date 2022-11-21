@@ -17,12 +17,9 @@ from ert._clib.model_callbacks import LoadStatus
 
 
 @pytest.fixture(name="temp_working_directory")
-def fixture_temp_working_directory(tmpdir):
-    old_cwd = os.getcwd()
-    os.chdir(tmpdir)
+def fixture_temp_working_directory(tmpdir, monkeypatch):
+    monkeypatch.chdir(tmpdir)
     yield tmpdir
-
-    os.chdir(old_cwd)
 
 
 @pytest.fixture(name="dummy_config")

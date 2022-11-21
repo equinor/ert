@@ -51,8 +51,8 @@ MOCKED_QSTAT_ECHO_ARGS = (
 
 
 @pytest.mark.parametrize("jobid", [15399, 15400, 15402])
-def test_recent_proxyfile_exists(tmpdir, jobid):
-    os.chdir(tmpdir)
+def test_recent_proxyfile_exists(tmpdir, jobid, monkeypatch):
+    monkeypatch.chdir(tmpdir)
     Path(PROXYFILE_FOR_TESTS).write_text(EXAMPLE_QSTAT_CONTENT, encoding="utf-8")
     with testpath.MockCommand("qstat", python=MOCKED_QSTAT_BACKEND):
         result = subprocess.run(
@@ -72,9 +72,9 @@ def test_recent_proxyfile_exists(tmpdir, jobid):
         assert len(result.stdout.splitlines()) == 5
 
 
-def test_proxyfile_not_exists(tmpdir):
+def test_proxyfile_not_exists(tmpdir, monkeypatch):
     """If there is no proxy file, the backend should be called"""
-    os.chdir(tmpdir)
+    monkeypatch.chdir(tmpdir)
     with testpath.MockCommand("qstat", python=MOCKED_QSTAT_BACKEND):
         result = subprocess.run(
             [PROXYSCRIPT, "15399", PROXYFILE_FOR_TESTS],
@@ -94,10 +94,10 @@ def test_proxyfile_not_exists(tmpdir):
 
 
 @pytest.mark.skipif(sys.platform.startswith("darwin"), reason="No flock on MacOS")
-def test_missing_backend_script(tmpdir):
+def test_missing_backend_script(tmpdir, monkeypatch):
     """If a cache file is there, we will use it, but if not, and there is no
     backend, we fail"""
-    os.chdir(tmpdir)
+    monkeypatch.chdir(tmpdir)
     with pytest.raises(subprocess.CalledProcessError):
         subprocess.run(
             [PROXYSCRIPT, "15399", PROXYFILE_FOR_TESTS],
@@ -112,12 +112,12 @@ def test_missing_backend_script(tmpdir):
 
 
 @pytest.mark.skipif(sys.platform.startswith("darwin"), reason="No flock on MacOS")
-def test_recent_proxyfile_locked(tmpdir):
+def test_recent_proxyfile_locked(tmpdir, monkeypatch):
     """If the proxyfile is locked in the OS, and it is not too old, we should use it.
 
     NB: This test relies on the proxy script utilizing 'flock', which is possibly
     an implementation detail."""
-    os.chdir(tmpdir)
+    monkeypatch.chdir(tmpdir)
     Path(PROXYFILE_FOR_TESTS).write_text(EXAMPLE_QSTAT_CONTENT, encoding="utf-8")
     with open(PROXYFILE_FOR_TESTS, encoding="utf-8") as proxy_fd:
         fcntl.flock(proxy_fd, fcntl.LOCK_EX)
@@ -132,10 +132,10 @@ def test_recent_proxyfile_locked(tmpdir):
 
 
 @pytest.mark.skipif(sys.platform.startswith("darwin"), reason="No flock on MacOS")
-def test_old_proxyfile_exists(tmpdir):
+def test_old_proxyfile_exists(tmpdir, monkeypatch):
     """If the proxyfile is there, but old, acquire the lock, fix the cache file,
     and return the correct result."""
-    os.chdir(tmpdir)
+    monkeypatch.chdir(tmpdir)
     Path(PROXYFILE_FOR_TESTS).write_text(
         EXAMPLE_QSTAT_CONTENT.replace("15399", "25399"),
         encoding="utf-8"
@@ -160,12 +160,12 @@ def test_old_proxyfile_exists(tmpdir):
 
 
 @pytest.mark.skipif(sys.platform.startswith("darwin"), reason="No flock on MacOS")
-def test_old_proxyfile_locked(tmpdir):
+def test_old_proxyfile_locked(tmpdir, monkeypatch):
     """If the proxyfile is locked in the OS, and it is too old to use, we fail hard
 
     NB: This rest relies on the proxy script utilizing 'flock', which is possibly
     an implementation detail."""
-    os.chdir(tmpdir)
+    monkeypatch.chdir(tmpdir)
     Path(PROXYFILE_FOR_TESTS).write_text(EXAMPLE_QSTAT_CONTENT, encoding="utf-8")
     # Manipulate mtime of the file so the script thinks it is old:
     eleven_seconds_ago = datetime.datetime.now() - datetime.timedelta(seconds=11)
@@ -185,11 +185,11 @@ def test_old_proxyfile_locked(tmpdir):
 
 
 @pytest.mark.skipif(sys.platform.startswith("darwin"), reason="No flock on MacOS")
-def test_proxyfile_not_existing_but_locked(tmpdir):
+def test_proxyfile_not_existing_but_locked(tmpdir, monkeypatch):
     """This is when another process has locked the output file for writing, but
     it has not finished yet (and the file is thus empty). The proxy should fail in
     this situation."""
-    os.chdir(tmpdir)
+    monkeypatch.chdir(tmpdir)
     with open(PROXYFILE_FOR_TESTS, "w", encoding="utf-8") as proxy_fd:
         fcntl.flock(proxy_fd, fcntl.LOCK_EX)
         assert os.stat(PROXYFILE_FOR_TESTS).st_size == 0
@@ -216,8 +216,8 @@ def test_proxyfile_not_existing_but_locked(tmpdir):
     ],
 )
 @pytest.mark.skipif(sys.platform.startswith("darwin"), reason="No flock on MacOS")
-def test_options_passed_through_proxy(tmpdir, options, expected):
-    os.chdir(tmpdir)
+def test_options_passed_through_proxy(tmpdir, options, expected, monkeypatch):
+    monkeypatch.chdir(tmpdir)
     with testpath.MockCommand("qstat", python=MOCKED_QSTAT_ECHO_ARGS):
         # pylint: disable=subprocess-run-check
         # (the return value from subprocess is manually checked)
@@ -237,7 +237,7 @@ def test_options_passed_through_proxy(tmpdir, options, expected):
 
 
 @pytest.mark.skipif(sys.platform.startswith("darwin"), reason="No flock on MacOS")
-def test_many_concurrent_qstat_invocations(tmpdir):
+def test_many_concurrent_qstat_invocations(tmpdir, monkeypatch):
     """Run many qstat invocations simultaneously, with a mocked backend qstat
     script that logs how many times it is invoked, then we assert that it has
     not been called often.
@@ -263,7 +263,7 @@ def test_many_concurrent_qstat_invocations(tmpdir):
     cache_timeout = 2  # This is CACHE_TIMEOUT in the shell script
     assert invocations * sleeptime > cache_timeout  # Ensure race conditions can happen
 
-    os.chdir(tmpdir)
+    monkeypatch.chdir(tmpdir)
     Path("log").mkdir()  # The mocked backend writes to this directory
     subprocesses = []
     with testpath.MockCommand("qstat", python=MOCKED_QSTAT_BACKEND_LOGGING):
@@ -330,8 +330,8 @@ def test_many_concurrent_qstat_invocations(tmpdir):
 
 
 @pytest.mark.skipif(sys.platform.startswith("darwin"), reason="No flock on MacOS")
-def test_optional_job_id_namespace(tmpdir):
-    os.chdir(tmpdir)
+def test_optional_job_id_namespace(tmpdir, monkeypatch):
+    monkeypatch.chdir(tmpdir)
     Path(PROXYFILE_FOR_TESTS).write_text(EXAMPLE_QSTAT_CONTENT, encoding="utf-8")
     assert "15399.s034" in EXAMPLE_QSTAT_CONTENT
     result_job_with_namespace = subprocess.run(
@@ -346,11 +346,11 @@ def test_optional_job_id_namespace(tmpdir):
 
 
 @pytest.mark.skipif(sys.platform.startswith("darwin"), reason="No flock on MacOS")
-def test_no_such_job_id(tmpdir):
+def test_no_such_job_id(tmpdir, monkeypatch):
     """Ensure we replicate qstat's error behaviour, yielding error
     if a job id does not exist."""
 
-    os.chdir(tmpdir)
+    monkeypatch.chdir(tmpdir)
     Path(PROXYFILE_FOR_TESTS).write_text(EXAMPLE_QSTAT_CONTENT, encoding="utf-8")
     with pytest.raises(subprocess.CalledProcessError):
         subprocess.run(
@@ -360,9 +360,9 @@ def test_no_such_job_id(tmpdir):
 
 
 @pytest.mark.skipif(sys.platform.startswith("darwin"), reason="No flock on MacOS")
-def test_no_argument(tmpdir):
+def test_no_argument(tmpdir, monkeypatch):
     """qstat with no arguments lists all jobs. So should the proxy."""
-    os.chdir(tmpdir)
+    monkeypatch.chdir(tmpdir)
     Path(PROXYFILE_FOR_TESTS).write_text(EXAMPLE_QSTAT_CONTENT, encoding="utf-8")
     result = subprocess.run(
         [PROXYSCRIPT, "", PROXYFILE_FOR_TESTS],
