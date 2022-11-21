@@ -312,7 +312,8 @@ void enkf_node_load(enkf_node_type *enkf_node, enkf_fs_type *fs,
 
 bool enkf_node_try_load_vector(enkf_node_type *enkf_node, enkf_fs_type *fs,
                                int iens) {
-    if (enkf_config_node_has_vector(enkf_node->config, fs, iens)) {
+    if (enkf_fs_has_vector(fs, enkf_node->config->key,
+                           enkf_node->config->var_type, iens)) {
         enkf_node_load_vector(enkf_node, fs, iens);
         return true;
     } else
@@ -325,8 +326,9 @@ bool enkf_node_try_load_vector(enkf_node_type *enkf_node, enkf_fs_type *fs,
 */
 enkf_node_type *enkf_node_load_alloc(const enkf_config_node_type *config_node,
                                      enkf_fs_type *fs, node_id_type node_id) {
-    if (enkf_config_node_vector_storage(config_node)) {
-        if (enkf_config_node_has_vector(config_node, fs, node_id.iens)) {
+    if (enkf_config_node_get_impl_type(config_node) == SUMMARY) {
+        if (enkf_fs_has_vector(fs, config_node->key, config_node->var_type,
+                               node_id.iens)) {
             enkf_node_type *node = enkf_node_alloc(config_node);
             enkf_node_load(node, fs, node_id);
             return node;
@@ -336,7 +338,8 @@ enkf_node_type *enkf_node_load_alloc(const enkf_config_node_type *config_node,
             return NULL;
         }
     } else {
-        if (enkf_config_node_has_node(config_node, fs, node_id)) {
+        if (enkf_fs_has_node(fs, config_node->key, config_node->var_type,
+                             node_id.report_step, node_id.iens)) {
             enkf_node_type *node = enkf_node_alloc(config_node);
             enkf_node_load(node, fs, node_id);
             return node;
@@ -377,14 +380,15 @@ void enkf_node_copy(const enkf_config_node_type *config_node,
 
 bool enkf_node_has_data(enkf_node_type *enkf_node, enkf_fs_type *fs,
                         node_id_type node_id) {
+    int report_step = node_id.report_step;
+    int iens = node_id.iens;
+    const enkf_config_node_type *config = enkf_node->config;
+
     if (enkf_node->vector_storage) {
         FUNC_ASSERT(enkf_node->has_data);
         {
-            int report_step = node_id.report_step;
-            int iens = node_id.iens;
-
             // Try to load the vector.
-            if (enkf_config_node_has_vector(enkf_node->config, fs, iens)) {
+            if (enkf_fs_has_vector(fs, config->key, config->var_type, iens)) {
                 enkf_node_load_vector(enkf_node, fs, iens);
 
                 // The vector is loaded. Check if we have the report_step/state asked for:
@@ -393,7 +397,8 @@ bool enkf_node_has_data(enkf_node_type *enkf_node, enkf_fs_type *fs,
                 return false;
         }
     } else
-        return enkf_config_node_has_node(enkf_node->config, fs, node_id);
+        return enkf_fs_has_node(fs, config->key, config->var_type, report_step,
+                                iens);
 }
 
 void enkf_node_serialize(enkf_node_type *enkf_node, enkf_fs_type *fs,
@@ -451,7 +456,7 @@ enkf_node_alloc_empty(const enkf_config_node_type *config) {
     const char *node_key = enkf_config_node_get_key(config);
     ert_impl_type impl_type = enkf_config_node_get_impl_type(config);
     enkf_node_type *node = (enkf_node_type *)util_malloc(sizeof *node);
-    node->vector_storage = enkf_config_node_vector_storage(config);
+    node->vector_storage = (impl_type == SUMMARY);
     node->config = config;
     node->node_key = util_alloc_string_copy(node_key);
     node->data = NULL;
