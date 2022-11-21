@@ -36,7 +36,7 @@ def _internalize_GEN_DATA(
                 key_data = [float(v.strip()) for v in f.readlines()]
                 data.append(key_data)
 
-            run_arg.sim_fs.save_gen_data(f"{key}-{i}", data, run_arg.iens)
+            run_arg.sim_fs.save_gen_data(f"{key}@{i}", data, run_arg.iens)
 
     if errors:
         return (LoadStatus.LOAD_FAILURE, "\n".join(errors))
