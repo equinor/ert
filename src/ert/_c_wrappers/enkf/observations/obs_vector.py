@@ -164,7 +164,7 @@ class ObsVector(BaseCClass):
 
             index_list = [node.getIndex(nr) for nr in range(len(node))]
             index = MultiIndex.from_product(
-                [[self.getKey()], [f"{data_key}-{time_step}"], index_list],
+                [[self.getKey()], [f"{data_key}@{time_step}"], index_list],
                 names=["key", "data_key", "axis"],
             )
             values = node.get_data_points()
