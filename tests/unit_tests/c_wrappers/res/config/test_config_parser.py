@@ -131,7 +131,7 @@ def test_parse_deprecated():
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_parse_dotdot_relative():
+def test_parse_dotdot_relative(monkeypatch):
     conf = ConfigParser()
     schema_item = conf.add("EXECUTABLE", False)
     schema_item.iset_type(0, ContentTypeEnum.CONFIG_PATH)
@@ -146,7 +146,7 @@ def test_parse_dotdot_relative():
         fileH.write("EXECUTABLE ../../eclipse/bin/script.sh\n")
 
     os.makedirs("cwd/ert")
-    os.chdir("cwd/ert")
+    monkeypatch.chdir("cwd/ert")
     content = conf.parse("../jobs/JOB")
     item = content["EXECUTABLE"]
     node = item[0]

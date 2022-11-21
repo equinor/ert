@@ -1,4 +1,3 @@
-import os
 import tempfile
 from pathlib import Path
 from textwrap import dedent
@@ -102,8 +101,8 @@ def test_failed_keys():
     assert res_config.failed_keys["UNKNOWN_KEY"] == "Have/not/got/a/clue"
 
 
-def test_new_config():
-    os.chdir(tempfile.mkdtemp())
+def test_new_config(monkeypatch):
+    monkeypatch.chdir(tempfile.mkdtemp())
     with open("NEW_TYPE_A", "w") as fout:
         fout.write(
             dedent(

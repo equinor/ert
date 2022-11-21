@@ -44,9 +44,9 @@ def test_ecl_config_creation(minimum_case):
 
 
 @pytest.fixture
-def enkf_main(tmp_path):
+def enkf_main(tmp_path, monkeypatch):
     (tmp_path / "test.ert").write_text("NUM_REALIZATIONS 1\nJOBNAME name%d")
-    os.chdir(tmp_path)
+    monkeypatch.chdir(tmp_path)
     yield EnKFMain(ResConfig("test.ert"))
 
 
