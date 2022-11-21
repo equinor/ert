@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, Any, List, Optional, Tuple, Union
 
 import numpy as np
 import numpy.typing as npt
+import pandas as pd
 from cwrap import BaseCClass
 
 from ert import _clib
@@ -232,6 +233,23 @@ class EnkfFs(BaseCClass):
             return np.array([]), dates, loaded
         return np.concatenate(result, axis=1), dates, loaded
 
+    def load_summary_data_as_df(
+        self, summary_keys: List[str], realizations: List[int]
+    ) -> pd.DataFrame:
+        data, time_axis, realizations = self.load_summary_data(
+            summary_keys, realizations
+        )
+        if not data.any():
+            raise KeyError(f"Unable to load SUMMARY_DATA for keys: {summary_keys}")
+        multi_index = pd.MultiIndex.from_product(
+            [summary_keys, time_axis], names=["data_key", "axis"]
+        )
+        return pd.DataFrame(
+            data=data,
+            index=multi_index,
+            columns=realizations,
+        )
+
     def save_gen_data(
         self, key: str, data: List[List[float]], realization: int
     ) -> None:
@@ -257,6 +275,25 @@ class EnkfFs(BaseCClass):
         if not result:
             raise KeyError(f"Unable to load GEN_DATA for key: {key}")
         return np.stack(result).T, loaded
+
+    def load_gen_data_as_df(
+        self, keys: List[str], realizations: List[int]
+    ) -> pd.DataFrame:
+        dfs = []
+        for key in keys:
+            data, realizations = self.load_gen_data(key, realizations)
+            x_axis = [*range(data.shape[0])]
+            multi_index = pd.MultiIndex.from_product(
+                [[key], x_axis], names=["data_key", "axis"]
+            )
+            dfs.append(
+                pd.DataFrame(
+                    data=data,
+                    index=multi_index,
+                    columns=realizations,
+                )
+            )
+        return pd.concat(dfs)
 
     def load_from_run_path(
         self,
