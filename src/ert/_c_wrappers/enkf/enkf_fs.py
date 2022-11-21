@@ -386,6 +386,23 @@ class EnkfFs(BaseCClass):
     ) -> pd.DataFrame:
         return self._storage.load_summary_data_as_df(summary_keys, realizations)
 
+    def load_summary_data_as_df(
+        self, summary_keys: List[str], realizations: List[int]
+    ) -> pd.DataFrame:
+        data, time_axis, realizations = self.load_summary_data(
+            summary_keys, realizations
+        )
+        if not data.any():
+            raise KeyError(f"Unable to load SUMMARY_DATA for keys: {summary_keys}")
+        multi_index = pd.MultiIndex.from_product(
+            [summary_keys, time_axis], names=["data_key", "axis"]
+        )
+        return pd.DataFrame(
+            data=data,
+            index=multi_index,
+            columns=realizations,
+        )
+
     def save_gen_data(
         self, key: str, data: List[List[float]], realization: int
     ) -> None:
@@ -400,6 +417,25 @@ class EnkfFs(BaseCClass):
         self, keys: List[str], realizations: List[int]
     ) -> pd.DataFrame:
         return self._storage.load_gen_data_as_df(keys, realizations)
+
+    def load_gen_data_as_df(
+        self, keys: List[str], realizations: List[int]
+    ) -> pd.DataFrame:
+        dfs = []
+        for key in keys:
+            data, realizations = self.load_gen_data(key, realizations)
+            x_axis = [*range(data.shape[0])]
+            multi_index = pd.MultiIndex.from_product(
+                [[key], x_axis], names=["data_key", "axis"]
+            )
+            dfs.append(
+                pd.DataFrame(
+                    data=data,
+                    index=multi_index,
+                    columns=realizations,
+                )
+            )
+        return pd.concat(dfs)
 
     def load_from_run_path(
         self,
