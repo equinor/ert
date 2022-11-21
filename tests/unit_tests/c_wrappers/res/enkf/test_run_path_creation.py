@@ -280,4 +280,4 @@ def test_that_data_file_sets_num_cpu(eclipse_data, expected_cpus):
 
     res_config = ResConfig("config.ert")
     ert = EnKFMain(res_config)
-    assert int(ert.substituter.get_substitutions(0, 0)["<NUM_CPU>"]) == expected_cpus
+    assert int(ert.get_context()["<NUM_CPU>"]) == expected_cpus

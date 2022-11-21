@@ -24,7 +24,6 @@ from ert._c_wrappers.enkf.enums import (
     EnkfObservationImplementationType,
     LoadFailTypeEnum,
 )
-from ert._c_wrappers.enkf.enums.realization_state_enum import RealizationStateEnum
 from ert._c_wrappers.enkf.observations.summary_observation import SummaryObservation
 
 
@@ -110,26 +109,10 @@ def test_create_run_context(monkeypatch, enkf_main):
     ]
     assert run_context.jobnames == [f"name{i}" for i in range(ensemble_size)]
 
-    substitutions = enkf_main.substituter.get_substitutions(1, iteration)
-    assert "<RUNPATH>" in substitutions
-    assert substitutions["<ECL_BASE>"] == "name1"
-    assert substitutions["<ECLBASE>"] == "name1"
-    assert substitutions["<ITER>"] == str(iteration)
-    assert substitutions["<IENS>"] == "1"
-
-
-def test_create_set_geo_id(enkf_main):
-
-    iteration = 1
-    realization = 2
-    geo_id = "geo_id"
-
-    enkf_main.set_geo_id("geo_id", realization, iteration)
-
-    assert (
-        enkf_main.substituter.get_substitutions(realization, iteration)["<GEO_ID>"]
-        == geo_id
-    )
+    context = enkf_main.get_context()
+    assert "<RUNPATH>" in context
+    assert context.substitute_real_iter("<ECL_BASE>", 1, iteration) == "name1"
+    assert context.substitute_real_iter("<ECLBASE>", 1, iteration) == "name1"
 
 
 @pytest.mark.usefixtures("use_tmpdir")

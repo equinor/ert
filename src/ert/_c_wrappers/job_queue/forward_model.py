@@ -9,7 +9,7 @@ from ert._c_wrappers.job_queue import EnvironmentVarlist, ExtJob
 from ert._clib import job_kw
 
 if TYPE_CHECKING:
-    from ert._c_wrappers.enkf.substituter import Substituter
+    from ert._c_wrappers.util.substitution_list import SubstitutionList
 
 logger = logging.getLogger(__name__)
 
@@ -28,7 +28,7 @@ class ForwardModel:
         data_root,
         iens: int,
         itr: int,
-        substituter: "Substituter",
+        context: "SubstitutionList",
         env_varlist: EnvironmentVarlist,
         filename: str = "jobs.json",
     ):
@@ -39,7 +39,7 @@ class ForwardModel:
                     data_root,
                     iens,
                     itr,
-                    substituter,
+                    context,
                     env_varlist,
                 ),
                 fptr,
@@ -51,14 +51,13 @@ class ForwardModel:
         data_root,
         iens: int,
         itr: int,
-        substituter: "Substituter",
+        context: "SubstitutionList",
         env_varlist: EnvironmentVarlist,
     ) -> Dict[str, Any]:
         def substitute(job, string):
             if string is not None:
-                return substituter.substitute(
-                    job.private_args.substitute(string), iens, itr
-                )
+                string = job.private_args.substitute(string)
+                return context.substitute_real_iter(string, iens, itr)
             else:
                 return string
 

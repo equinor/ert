@@ -1,6 +1,6 @@
 from os import PathLike
 from pathlib import Path
-from typing import Any, Callable, List
+from typing import Callable, List
 
 
 class Runpaths:
@@ -37,16 +37,17 @@ class Runpaths:
         self.runpath_list_filename = filename
         self._job_name_format = job_name_format
         self._runpath_format = runpath_format
-        self._substitution = substitute
+        self._substitute = substitute
 
     def get_paths(self, realizations: List[int], iteration: int) -> List[str]:
         return [
-            self._format_runpath(realization, iteration) for realization in realizations
+            self._substitute(self.format_runpath(), realization, iteration)
+            for realization in realizations
         ]
 
     def get_jobnames(self, realizations: List[int], iteration: int) -> List[str]:
         return [
-            self._format_job_name(realization, iteration)
+            self._substitute(self.format_job_name(), realization, iteration)
             for realization in realizations
         ]
 
@@ -89,8 +90,12 @@ class Runpaths:
         with self._create_and_open_file() as f:
             for iteration in iteration_numbers:
                 for realization in realization_numbers:
-                    job_name = self._format_job_name(realization, iteration)
-                    runpath = self._format_runpath(realization, iteration)
+                    job_name = self._substitute(
+                        self.format_job_name(), realization, iteration
+                    )
+                    runpath = self._substitute(
+                        self.format_runpath(), realization, iteration
+                    )
                     f.write(
                         f"{realization:03d}  {runpath}  {job_name}  {iteration:03d}\n"
                     )
@@ -99,28 +104,14 @@ class Runpaths:
         Path(self.runpath_list_filename).parent.mkdir(parents=True, exist_ok=True)
         return open(self.runpath_list_filename, mode)
 
-    def _format_job_name(self, realization: int, iteration: int):
-        return self._substitution(
-            _maybe_format(self._job_name_format, realization), realization, iteration
-        )
+    def format_job_name(self) -> str:
+        return _maybe_format(self._job_name_format)
 
-    def _format_runpath(self, realization: int, iteration: int):
-        return str(
-            Path(
-                self._substitution(
-                    _maybe_format(self._runpath_format, realization, iteration),
-                    realization,
-                    iteration,
-                )
-            ).resolve()
-        )
+    def format_runpath(self):
+        return str(Path(_maybe_format(self._runpath_format)).resolve())
 
 
-def _maybe_format(format_string: str, *format_arguments: Any):
-    """Like the % operator for strings, but does not TypeError for excess arguements"""
-    while format_arguments:
-        try:
-            return format_string % format_arguments
-        except TypeError:
-            format_arguments = format_arguments[:-1]
+def _maybe_format(format_string: str) -> str:
+    format_string = format_string.replace("%d", "<IENS>", 1)
+    format_string = format_string.replace("%d", "<ITER>", 1)
     return format_string

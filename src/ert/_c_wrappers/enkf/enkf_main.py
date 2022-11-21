@@ -27,7 +27,6 @@ from ert._c_wrappers.enkf.model_config import ModelConfig
 from ert._c_wrappers.enkf.node_id import NodeId
 from ert._c_wrappers.enkf.queue_config import QueueConfig
 from ert._c_wrappers.enkf.runpaths import Runpaths
-from ert._c_wrappers.enkf.substituter import Substituter
 from ert._c_wrappers.util.substitution_list import SubstitutionList
 from ert._clib.state_map import STATE_LOAD_FAILURE, STATE_UNDEFINED
 
@@ -166,13 +165,17 @@ class EnKFMain:
                 config.analysis_config.get_std_cutoff(),
             )
         self._ensemble_size = self.res_config.model_config.num_realizations
-        self._substituter = Substituter(dict(self.get_context()))
         self._runpaths = Runpaths(
             self.resConfig().preferred_job_fmt(),
             self.getModelConfig().runpath_format_string,
             Path(config.runpath_file),
-            self.substituter.substitute,
+            self.get_context().substitute_real_iter,
         )
+        run_path = self.runpaths.format_runpath()
+        jobname = self.runpaths.format_job_name()
+        self.addDataKW("<RUNPATH>", run_path)
+        self.addDataKW("<ECL_BASE>", jobname)
+        self.addDataKW("<ECLBASE>", jobname)
 
         # Initialize storage
         ens_path = Path(config.model_config.ens_path)
@@ -237,10 +240,6 @@ class EnKFMain:
     @property
     def _parameter_keys(self):
         return self.ensembleConfig().parameters
-
-    @property
-    def substituter(self):
-        return self._substituter
 
     @property
     def runpaths(self):
@@ -318,18 +317,11 @@ class EnKFMain:
             active_mask = [True] * self.getEnsembleSize()
         if source_filesystem is None:
             source_filesystem = self.getCurrentFileSystem()
+
         realizations = list(range(len(active_mask)))
         paths = self.runpaths.get_paths(realizations, iteration)
         jobnames = self.runpaths.get_jobnames(realizations, iteration)
-        for realization, path in enumerate(paths):
-            self.substituter.add_substitution("<RUNPATH>", path, realization, iteration)
-        for realization, jobname in enumerate(jobnames):
-            self.substituter.add_substitution(
-                "<ECL_BASE>", jobname, realization, iteration
-            )
-            self.substituter.add_substitution(
-                "<ECLBASE>", jobname, realization, iteration
-            )
+
         return RunContext(
             sim_fs=source_filesystem,
             target_fs=target_fs,
@@ -339,9 +331,6 @@ class EnKFMain:
             jobnames=jobnames,
         )
 
-    def set_geo_id(self, geo_id: str, realization: int, iteration: int):
-        self.substituter.add_substitution("<GEO_ID>", geo_id, realization, iteration)
-
     def write_runpath_list(self, iterations: List[int], realizations: List[int]):
         self.runpaths.write_runpath_list(iterations, realizations)
 
@@ -350,6 +339,9 @@ class EnKFMain:
 
     def get_num_cpu(self) -> int:
         return self.res_config.preferred_num_cpu()
+
+    def set_geo_id(self, geo_id: str, realization: int, iteration: int):
+        self.addDataKW(f"<GEO_ID_{realization}_{iteration}>", str(geo_id))
 
     def __repr__(self):
         return f"EnKFMain(size: {self.getEnsembleSize()}, config: {self.res_config})"
@@ -373,13 +365,7 @@ class EnKFMain:
         return self.res_config.substitution_list
 
     def addDataKW(self, key: str, value: str) -> None:
-        # Substitution should be the responsibility of
-        # self.substituter. However,
-        # self.resConfig().substitution_list is still
-        # used by workflows to do substitution. For now, we
-        # need to update this here.
-        self.res_config.substitution_list.addItem(key, value)
-        self.substituter.add_global_substitution(key, value)
+        self.get_context().addItem(key, value)
 
     def getObservations(self) -> EnkfObs:
         return self._observations
@@ -510,10 +496,10 @@ class EnKFMain:
                 )
 
                 for source_file, target_file in self.res_config.ert_templates:
-                    target_file = self.substituter.substitute(
+                    target_file = self.get_context().substitute_real_iter(
                         target_file, run_arg.iens, run_context.iteration
                     )
-                    result = self.substituter.substitute(
+                    result = self.get_context().substitute_real_iter(
                         Path(source_file).read_text("utf-8"),
                         run_arg.iens,
                         run_context.iteration,
@@ -541,7 +527,7 @@ class EnKFMain:
                     model_config.data_root,
                     iens,
                     run_context.iteration,
-                    self.substituter,
+                    self.get_context(),
                     res_config.env_vars,
                 )
 
