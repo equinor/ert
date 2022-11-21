@@ -60,7 +60,7 @@ def test_run_simulation_batch(setup_case):
 
     for iens in range(batch_size):
         node_id = NodeId(0, iens)
-        data, _ = sim_fs.load_gen_data("ORDER-0", [iens])
+        data, _ = sim_fs.load_gen_data("ORDER@0", [iens])
         data = data.flatten()
 
         order_node.load(sim_fs, node_id)
