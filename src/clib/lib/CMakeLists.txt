@@ -84,7 +84,6 @@ pybind11_add_module(
   enkf/gen_kw.cpp
   enkf/gen_kw_config.cpp
   enkf/gen_obs.cpp
-  enkf/hook_workflow.cpp
   enkf/meas_data.cpp
   enkf/misfit_ensemble.cpp
   enkf/misfit_member.cpp
