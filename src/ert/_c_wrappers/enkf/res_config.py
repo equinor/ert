@@ -270,7 +270,7 @@ class ResConfig:
 
         self.queue_config = QueueConfig(**queue_config_args)
 
-        self.ert_workflow_list = ErtWorkflowList(content_dict=config_content_dict)
+        self.ert_workflow_list = ErtWorkflowList.from_dict(config_content_dict)
 
         if user_config_content.hasKey(ConfigKeys.RUNPATH_FILE):
             self.runpath_file = user_config_content.getValue(ConfigKeys.RUNPATH_FILE)
@@ -385,7 +385,7 @@ class ResConfig:
             )
         self.queue_config = QueueConfig(**queue_config_args)
 
-        self.ert_workflow_list = ErtWorkflowList(config_dict=config_dict)
+        self.ert_workflow_list = ErtWorkflowList.from_dict(config_dict)
 
         if ConfigKeys.DATA_FILE in config_dict and ConfigKeys.ECLBASE in config_dict:
             # This replicates the behavior of the DATA_FILE implementation

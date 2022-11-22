@@ -13,19 +13,17 @@ logger = logging.getLogger(__name__)
 class ErtWorkflowList:
     def __init__(
         self,
-        content_dict=None,
-        config_dict=None,
+        workflow_job_info: list = None,
+        workflow_job_dir_info: list = None,
+        hook_workflow_info: list = None,
+        workflow_info: list = None,
     ):
-        if content_dict is None and config_dict is None:
-            raise ValueError(
-                "Failed to construct ErtWorkflowList instance with no config object"
-            )
-
-        if content_dict is not None and config_dict is not None:
-            raise ValueError(
-                "Failed to construct ErtWorkflowList "
-                "instance with multiple config object"
-            )
+        workflow_job_info = [] if workflow_job_info is None else workflow_job_info
+        workflow_job_dir_info = (
+            [] if workflow_job_dir_info is None else workflow_job_dir_info
+        )
+        hook_workflow_info = [] if hook_workflow_info is None else hook_workflow_info
+        workflow_info = [] if workflow_info is None else workflow_info
 
         self._workflow_jobs = {}
         self._workflow = {}
@@ -33,30 +31,47 @@ class ErtWorkflowList:
         self._workflow_joblist = WorkflowJoblist()
         self._parser = WorkflowJob.configParser()
 
-        self._workflow_job_info = []
-        self._workflow_job_dir_info = []
-        self._workflow_info = []
-        self._hook_workflow_info = []
-
-        if content_dict is not None:
-            self._handle_config_content_dict(content_dict)
-
-        if config_dict is not None:
-            self._handle_config_dict(config_dict)
-
-        for workflow_job in self._workflow_job_info:
+        for workflow_job in workflow_job_info:
             self._add_workflow_job(workflow_job)
 
-        for job_path in self._workflow_job_dir_info:
+        for job_path in workflow_job_dir_info:
             self._add_workflow_job_dir(job_path)
 
         self._workflow_joblist.convertToCReference(None)
 
-        for work in self._workflow_info:
+        for work in workflow_info:
             self._add_workflow(work)
 
-        for hook_name, mode_name in self._hook_workflow_info:
+        for hook_name, mode_name in hook_workflow_info:
             self._add_hook_workflow(hook_name, mode_name)
+
+    @classmethod
+    def from_dict(cls, content_dict) -> "ErtWorkflowList":
+        workflow_job_info = []
+        workflow_job_dir_info = []
+        hook_workflow_info = []
+        workflow_info = []
+
+        for workflow in content_dict.get(ConfigKeys.LOAD_WORKFLOW_JOB, []):
+            workflow_job_info.append(workflow)
+
+        for workflow_dir in content_dict.get(ConfigKeys.WORKFLOW_JOB_DIRECTORY, []):
+            workflow_job_dir_info.append(workflow_dir)
+
+        for name, mode in content_dict.get(ConfigKeys.HOOK_WORKFLOW_KEY, []):
+            hook_workflow_info.append([name, mode])
+
+        for workflow in content_dict.get(ConfigKeys.LOAD_WORKFLOW, []):
+            workflow_info.append(workflow)
+
+        config = cls(
+            workflow_job_info=workflow_job_info,
+            workflow_job_dir_info=workflow_job_dir_info,
+            hook_workflow_info=hook_workflow_info,
+            workflow_info=workflow_info,
+        )
+
+        return config
 
     def getWorkflowNames(self) -> List[str]:
         return list(self._workflow.keys())
@@ -153,34 +168,6 @@ class ErtWorkflowList:
                     return False
 
         return True
-
-    def _handle_config_content_dict(self, content_dict):
-        for workflow in content_dict.get(ConfigKeys.LOAD_WORKFLOW_JOB, []):
-            self._workflow_job_info.append(workflow)
-
-        for workflow_dir in content_dict.get(ConfigKeys.WORKFLOW_JOB_DIRECTORY, []):
-            self._workflow_job_dir_info.append(workflow_dir)
-
-        for name, mode in content_dict.get(ConfigKeys.HOOK_WORKFLOW_KEY, []):
-            self._hook_workflow_info.append([name, mode])
-
-        for workflow in content_dict.get(ConfigKeys.LOAD_WORKFLOW, []):
-            self._workflow_info.append(workflow)
-
-    def _handle_config_dict(self, config_dict):
-        for job in config_dict.get(ConfigKeys.LOAD_WORKFLOW_JOB, []):
-            self._workflow_job_info.append([job[ConfigKeys.PATH], job[ConfigKeys.NAME]])
-
-        for job_path in config_dict.get(ConfigKeys.WORKFLOW_JOB_DIRECTORY, []):
-            self._workflow_job_dir_info.append(job_path)
-
-        for hook in config_dict.get(ConfigKeys.HOOK_WORKFLOW_KEY, []):
-            self._hook_workflow_info.append(
-                [hook[ConfigKeys.NAME], hook[ConfigKeys.RUNMODE]]
-            )
-
-        for job in config_dict.get(ConfigKeys.LOAD_WORKFLOW, []):
-            self._workflow_info.append([job[ConfigKeys.PATH], job[ConfigKeys.NAME]])
 
     def _add_workflow_job(self, workflow_job):
         try:

@@ -106,10 +106,10 @@ snake_oil_structure_config = {
     "FORWARD_MODEL": ["SNAKE_OIL_SIMULATOR", "SNAKE_OIL_NPV", "SNAKE_OIL_DIFF"],
     "HISTORY_SOURCE": HistorySourceEnum.REFCASE_HISTORY,
     "OBS_CONFIG": "ert/input/observations/obsfiles/observations.txt",
-    "LOAD_WORKFLOW": {"MAGIC_PRINT": "ert/bin/workflows/MAGIC_PRINT"},
-    "LOAD_WORKFLOW_JOB": {
-        "UBER_PRINT": "ert/bin/workflows/workflowjobs/bin/uber_print.py"
-    },
+    "LOAD_WORKFLOW": [["ert/bin/workflows/MAGIC_PRINT", "MAGIC_PRINT"]],
+    "LOAD_WORKFLOW_JOB": [
+        ["ert/bin/workflows/workflowjobs/bin/uber_print.py", "UBER_PRINT"],
+    ],
     "RNG_ALG_TYPE": RngAlgTypeEnum.MZRAN,
     "GRID": "eclipse/include/grid/CASE.EGRID",
     "RUN_TEMPLATE": {
@@ -297,22 +297,18 @@ def test_extensive_config(setup_case):
         ert_workflow_list.getWorkflowNames()
     )
 
-    for w_name in snake_oil_structure_config["LOAD_WORKFLOW"]:
+    for w_path, w_name in snake_oil_structure_config["LOAD_WORKFLOW"]:
         assert w_name in ert_workflow_list
         assert (
-            Path(snake_oil_structure_config["LOAD_WORKFLOW"][w_name]).resolve()
-            == Path(ert_workflow_list[w_name].src_file).resolve()
+            Path(w_path).resolve() == Path(ert_workflow_list[w_name].src_file).resolve()
         )
 
-    for wj_name in snake_oil_structure_config["LOAD_WORKFLOW_JOB"]:
+    for wj_path, wj_name in snake_oil_structure_config["LOAD_WORKFLOW_JOB"]:
         assert ert_workflow_list.hasJob(wj_name)
         job = ert_workflow_list.getJob(wj_name)
 
         assert wj_name == job.name()
-        assert (
-            Path(snake_oil_structure_config["LOAD_WORKFLOW_JOB"][wj_name]).resolve()
-            == Path(job.executable()).resolve()
-        )
+        assert Path(wj_path).resolve() == Path(job.executable()).resolve()
 
     assert snake_oil_structure_config["RNG_ALG_TYPE"] == RngAlgTypeEnum.MZRAN
 
@@ -453,16 +449,10 @@ def test_res_config_dict_constructor(setup_case):
         ConfigKeys.OBS_CONFIG: "../input/observations/obsfiles/observations.txt",
         ConfigKeys.GEN_KW_EXPORT_NAME: "parameters",
         ConfigKeys.LOAD_WORKFLOW_JOB: [
-            {
-                ConfigKeys.NAME: "UBER_PRINT",
-                ConfigKeys.PATH: "../bin/workflows/workflowjobs/UBER_PRINT",
-            }  # workflow_list
+            ["../bin/workflows/workflowjobs/UBER_PRINT", "UBER_PRINT"],
         ],
         ConfigKeys.LOAD_WORKFLOW: [
-            {
-                ConfigKeys.NAME: "MAGIC_PRINT",
-                ConfigKeys.PATH: "../bin/workflows/MAGIC_PRINT",
-            }  # workflow_list
+            ["../bin/workflows/MAGIC_PRINT", "MAGIC_PRINT"],
         ],
         "RNG_ALG_TYPE": RngAlgTypeEnum.MZRAN,
         ConfigKeys.RANDOM_SEED: "3593114179000630026631423308983283277868",  # rng
@@ -512,10 +502,10 @@ def test_res_config_dict_constructor(setup_case):
         ert_share_path + "/workflows/jobs/internal-gui/config",
     ]
 
-    for ip in config_data_new[ConfigKeys.LOAD_WORKFLOW]:
-        ip[ConfigKeys.PATH] = os.path.realpath(ip[ConfigKeys.PATH])
-    for ip in config_data_new[ConfigKeys.LOAD_WORKFLOW_JOB]:
-        ip[ConfigKeys.PATH] = os.path.realpath(ip[ConfigKeys.PATH])
+    for _, path in config_data_new[ConfigKeys.LOAD_WORKFLOW]:
+        path = os.path.realpath(path)
+    for _, path in config_data_new[ConfigKeys.LOAD_WORKFLOW_JOB]:
+        path = os.path.realpath(path)
 
     config_data_new[ConfigKeys.JOB_SCRIPT] = os.path.normpath(
         os.path.realpath(config_data_new[ConfigKeys.JOB_SCRIPT])
