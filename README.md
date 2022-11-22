@@ -212,17 +212,17 @@ python setup.py compile_protocol_buffers
 
 ## Example usage
 
-### Basic ert test
-To test if ert itself is working, go to `test-data/poly_example` and start ert by running `poly.ert` with `ert gui`
+### Basic ERT test
+To test if ERT itself is working, go to `test-data/poly_example` and start ERT by running `poly.ert` with `ert gui`
 ```
 cd test-data/poly_example
 ert gui poly.ert
 ````
-This opens up the ert graphical user interface.
-Finally, test ert by starting and successfully running the simulation.
+This opens up the ERT graphical user interface.
+Finally, test ERT by starting and successfully running the simulation.
 
-### ert with a reservoir simulator
-To actually get ert to work at your site you need to configure details about
+### ERT with a reservoir simulator
+To actually get ERT to work at your site you need to configure details about
 your system; at the very least this means you must configure where your
 reservoir simulator is installed. In addition you might want to configure e.g.
 queue system in the `site-config` file, but that is not strictly necessary for
