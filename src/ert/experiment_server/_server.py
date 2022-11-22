@@ -138,7 +138,9 @@ class ExperimentServer:
         logger.debug("running experiment %s", experiment_id)
         experiment = self._registry.get_experiment(experiment_id)
 
-        experiment_task = asyncio.create_task(experiment.run(self._config))
+        experiment_task = asyncio.create_task(
+            experiment.run(self._config, model_name="ies")
+        )
 
         done, pending = await asyncio.wait(
             [self._server_task, experiment_task], return_when=asyncio.FIRST_COMPLETED
