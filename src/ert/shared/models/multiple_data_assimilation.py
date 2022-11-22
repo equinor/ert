@@ -2,6 +2,7 @@ import asyncio
 import concurrent
 import logging
 from typing import Any, Dict, List, Optional, Tuple
+import functools
 
 import _ert_com_protocol
 from ert._c_wrappers.enkf import RunContext
@@ -65,11 +66,6 @@ class MultipleDataAssimilation(BaseRunModel):
 
         weights = self.normalizeWeights(weights)
 
-        update_id = None
-        enumerated_weights = list(enumerate(weights))
-        weights_to_run = enumerated_weights[
-            min(self._simulation_arguments["start_iteration"], len(weights)) :
-        ]
         self.setPhaseCount(iteration_count + 1)  # weights + post
         phase_string = (
             f"Running MDA ES {iteration_count} "
@@ -100,13 +96,23 @@ class MultipleDataAssimilation(BaseRunModel):
             ]
             self.ert().sample_prior(prior_fs, active_realizations)
 
+        update_id = None
+        enumerated_weights = list(enumerate(weights))
+        weights_to_run = enumerated_weights[
+            min(self._simulation_arguments["start_iteration"], len(weights)) :
+        ]
         for iteration, weight in weights_to_run:
             is_first_iteration = iteration == 0
+            if is_first_iteration:
+                mask = self._simulation_arguments["active_realizations"]
+            else:
+                mask = None
+
             run_context = await loop.run_in_executor(
                 threadpool,
                 self.create_context,
                 iteration,
-                self._simulation_arguments["active_realizations"],
+                mask,
             )
             _, ensemble_id = await self._simulateAndPostProcess(
                 run_context,
@@ -132,7 +138,8 @@ class MultipleDataAssimilation(BaseRunModel):
         self.setPhaseName("Post processing...", indeterminate=True)
 
         run_context = await loop.run_in_executor(
-            threadpool, self.create_context, iteration, is_first_iteration
+            threadpool,
+            functools.partial(self.create_context, itr=len(weights), update=False),
         )
 
         event = _ert_com_protocol.node_status_builder(
@@ -148,8 +155,7 @@ class MultipleDataAssimilation(BaseRunModel):
             threadpool=threadpool,
         )
 
-        if not FeatureToggling.is_enabled("experiment-server"):
-            self.setPhase(iteration_count + 1, "Simulations completed.")
+        self.setPhase(iteration_count + 1, "Simulations completed.")
 
         return run_context
 
@@ -194,25 +200,24 @@ class MultipleDataAssimilation(BaseRunModel):
         threadpool: Any,
     ) -> Any:
         iteration = run_context.iteration
+
         phase_string = f"Running simulation for iteration: {iteration}"
         self.setPhaseName(phase_string, indeterminate=True)
-        is_first_iteration = iteration == 0
-
-        run_context = await loop.run_in_executor(
-            threadpool, self.create_context, iteration, is_first_iteration
-        )
 
         await loop.run_in_executor(
             threadpool,
             self.ert().createRunPath,
             run_context,
         )
+
         phase_string = f"Pre processing for iteration: {iteration}"
         self.setPhaseName(phase_string)
         await self._run_hook(HookRuntime.PRE_SIMULATION, iteration, loop, threadpool)
+
         ensemble_id = await loop.run_in_executor(
             threadpool, self._post_ensemble_data, update_id
         )
+
         phase_string = f"Running forecast for iteration: {iteration}"
         self.setPhaseName(phase_string, indeterminate=False)
 
