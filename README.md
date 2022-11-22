@@ -230,7 +230,12 @@ a basic test.
 
 Let the Protector of ERT help you with this difficult endevor.
 
-![the Protector of ERT "a Laplander man happily smoking his pipe oil painting"](docs/img/TheProtector.jpg)
+| ![the Protector of ERT "a Laplander man happily smoking his pipe oil painting"](docs/img/TheProtector.jpg) |
+|:--:|
+| <b>The protector of ERT trying to help you with the simulation setup</b> |
+
+
+
 
 
 
