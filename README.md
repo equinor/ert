@@ -227,3 +227,10 @@ your system; at the very least this means you must configure where your
 reservoir simulator is installed. In addition you might want to configure e.g.
 queue system in the `site-config` file, but that is not strictly necessary for
 a basic test.
+
+Let the Protector of ERT help you with this difficult endevor.
+
+![the Protector of ERT "a Laplander man happily smoking his pipe oil painting"](docs/img/TheProtector.jpg)
+
+
+
