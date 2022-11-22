@@ -13,6 +13,4 @@ def test_ert_workflow_list_dict_creates_equal_config(config_dict):
     filename = "config.ert"
     to_config_file(filename, config_dict)
     res_config = ResConfig(user_config_file=filename)
-    assert res_config.ert_workflow_list == ErtWorkflowList(
-        config_dict=config_dict,
-    )
+    assert res_config.ert_workflow_list == ErtWorkflowList.from_dict(config_dict)

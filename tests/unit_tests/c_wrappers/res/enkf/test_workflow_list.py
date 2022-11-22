@@ -11,31 +11,17 @@ from ert._c_wrappers.enkf.res_config import site_config_location
 def test_workflow_list_constructor():
     ERT_SITE_CONFIG = site_config_location()
     ERT_SHARE_PATH = os.path.dirname(ERT_SITE_CONFIG)
+    cwd = os.getcwd()
 
     config_dict = {
         ConfigKeys.LOAD_WORKFLOW_JOB: [
-            {
-                ConfigKeys.NAME: "print_uber",
-                ConfigKeys.PATH: os.getcwd() + "/workflows/UBER_PRINT",
-            },
-            {
-                ConfigKeys.NAME: "HIDDEN_PRINT",
-                ConfigKeys.PATH: os.getcwd() + "/workflows/HIDDEN_PRINT",
-            },
+            [cwd + "/workflows/UBER_PRINT", "print_uber"],
+            [cwd + "/workflows/HIDDEN_PRINT", "HIDDEN_PRINT"],
         ],
         ConfigKeys.LOAD_WORKFLOW: [
-            {
-                ConfigKeys.NAME: "magic_print",
-                ConfigKeys.PATH: os.getcwd() + "/workflows/MAGIC_PRINT",
-            },
-            {
-                ConfigKeys.NAME: "no_print",
-                ConfigKeys.PATH: os.getcwd() + "/workflows/NO_PRINT",
-            },
-            {
-                ConfigKeys.NAME: "some_print",
-                ConfigKeys.PATH: os.getcwd() + "/workflows/SOME_PRINT",
-            },
+            [cwd + "/workflows/MAGIC_PRINT", "magic_print"],
+            [cwd + "/workflows/NO_PRINT", "no_print"],
+            [cwd + "/workflows/SOME_PRINT", "some_print"],
         ],
         ConfigKeys.WORKFLOW_JOB_DIRECTORY: [
             ERT_SHARE_PATH + "/workflows/jobs/shell",
@@ -43,8 +29,8 @@ def test_workflow_list_constructor():
             ERT_SHARE_PATH + "/workflows/jobs/internal-gui/config",
         ],
         ConfigKeys.HOOK_WORKFLOW_KEY: [
-            {ConfigKeys.NAME: "magic_print", ConfigKeys.RUNMODE: "POST_UPDATE"},
-            {ConfigKeys.NAME: "no_print", ConfigKeys.RUNMODE: "PRE_UPDATE"},
+            ["magic_print", "POST_UPDATE"],
+            ["no_print", "PRE_UPDATE"],
         ],
     }
 
@@ -71,10 +57,7 @@ def test_workflow_list_constructor():
         f.write("EXECUTABLE ls\n")
 
     res_config = ResConfig("minimum_config")
-
-    ert_workflow_list = ErtWorkflowList(
-        config_dict=config_dict,
-    )
+    ert_workflow_list = ErtWorkflowList.from_dict(config_dict)
 
     assert ert_workflow_list.getJobNames() == res_config.ert_workflow_list.getJobNames()
 
@@ -106,11 +89,3 @@ def test_workflow_list_constructor():
     )
 
     assert ert_workflow_list == res_config.ert_workflow_list
-
-
-def test_illegal_configs():
-    with pytest.raises(ValueError):
-        ErtWorkflowList(config_dict=[], content_dict=[])
-
-    with pytest.raises(ValueError):
-        ErtWorkflowList()
