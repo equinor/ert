@@ -33,7 +33,7 @@ STATUS_json = "status.json"
 
 
 class File(Reporter):
-    def __init__(self, sync_disc_timeout=10):
+    def __init__(self, sync_disc_timeout=0):
         self.status_dict = {}
         self.node = socket.gethostname()
         self._sync_disc_timeout = sync_disc_timeout
