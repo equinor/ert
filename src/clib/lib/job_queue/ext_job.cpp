@@ -656,9 +656,6 @@ ext_job_type *ext_job_fscanf_alloc(const char *name, bool private_job,
             item = config_add_schema_item(config, EXECUTABLE_KEY, false);
             config_schema_item_set_argc_minmax(item, 1, 1);
             config_schema_item_iset_type(item, 0, CONFIG_PATH);
-            item = config_add_schema_item(config, "PORTABLE_EXE", false);
-            config_schema_item_set_argc_minmax(item, 1, 1);
-            config_schema_item_iset_type(item, 0, CONFIG_PATH);
             item = config_add_schema_item(config, "TARGET_FILE", false);
             config_schema_item_set_argc_minmax(item, 1, 1);
             item = config_add_schema_item(config, "ERROR_FILE", false);
@@ -696,9 +693,6 @@ ext_job_type *ext_job_fscanf_alloc(const char *name, bool private_job,
 
             config_schema_item_set_indexed_selection_set(item, 1, var_types);
             stringlist_free(var_types);
-            config_parser_deprecate(
-                config, "PORTABLE_EXE",
-                "'PORTABLE_EXE' is deprecated. Use 'EXECUTABLE' instead.");
         }
         {
             config_content_type *content =
@@ -781,19 +775,10 @@ ext_job_type *ext_job_fscanf_alloc(const char *name, bool private_job,
                 char exec_key[20] = EXECUTABLE_KEY;
                 bool have_executable =
                     config_content_has_item(content, EXECUTABLE_KEY);
-                bool have_portable_exe =
-                    config_content_has_item(content, "PORTABLE_EXE");
-                if (!have_executable && !have_portable_exe) {
+                if (!have_executable) {
                     fprintf(stderr, "%s: ** '%s' must be set\n", config_file,
                             EXECUTABLE_KEY);
                     ext_job->__valid = false;
-                } else if (!have_executable && have_portable_exe) {
-                    strcpy(exec_key, "PORTABLE_EXE");
-                } else if (have_executable && have_portable_exe) {
-                    fprintf(stderr,
-                            "%s: ** Ignoring 'PORTABLE_EXE' and using '%s' as "
-                            "both were given.\n",
-                            config_file, EXECUTABLE_KEY);
                 }
 
                 if (ext_job->__valid) {
