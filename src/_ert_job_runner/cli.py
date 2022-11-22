@@ -8,7 +8,7 @@ import typing
 from datetime import datetime
 
 from _ert_job_runner import reporting
-from _ert_job_runner.reporting.message import Finish, RunningNoMemChange
+from _ert_job_runner.reporting.message import Finish
 from _ert_job_runner.runner import JobRunner
 
 JOBS_FILE = "jobs.json"
@@ -118,8 +118,6 @@ def main(args):
     job_runner = JobRunner(jobs_data)
 
     for job_status in job_runner.run(parsed_args.job):
-        if isinstance(job_status, RunningNoMemChange):
-            continue
         logger.info(f"Job status: {job_status}")
         for reporter in reporters:
             reporter.report(job_status)

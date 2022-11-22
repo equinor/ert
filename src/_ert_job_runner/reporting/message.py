@@ -83,10 +83,6 @@ class Running(Message):
         self.current_memory_usage = current_memory_usage
 
 
-class RunningNoMemChange(Running):
-    pass
-
-
 class Exited(Message):
     def __init__(self, job, exit_code):
         super().__init__(job)
