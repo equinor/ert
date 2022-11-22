@@ -7,7 +7,9 @@ from ert._c_wrappers.config.config_error import ConfigError
 from ert._c_wrappers.config.config_path_elm import ConfigPathElm
 from ert._c_wrappers.config.content_type_enum import ContentTypeEnum
 from ert._c_wrappers.config.schema_item import SchemaItem
-from ert._c_wrappers.util.substitution_list import SubstitutionList
+from ert._c_wrappers.util.substitution_list import (
+    SubstitutionList,  # pylint: disable=import-error
+)
 
 if TYPE_CHECKING:
     from ert._c_wrappers.config.config_parser import ConfigParser
