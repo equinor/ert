@@ -218,7 +218,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
             )
             event.experiment.message = str(e)
             await self.dispatch(event)
-            return "Experiment failed"
+            raise
 
         await self._run_hook(
             HookRuntime.POST_SIMULATION,

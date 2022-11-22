@@ -89,7 +89,7 @@ class EnsembleSmoother(BaseRunModel):
             )
             event.experiment.message = str(e)
             await self.dispatch(event)
-            return prior_context
+            raise
 
         self.setPhaseName("Post processing...", indeterminate=True)
 
@@ -188,7 +188,7 @@ class EnsembleSmoother(BaseRunModel):
             )
             event.experiment.message = str(e)
             await self.dispatch(event)
-            return prior_context
+            raise
 
         self.setPhaseName("Post processing...", indeterminate=True)
         await self._run_hook(

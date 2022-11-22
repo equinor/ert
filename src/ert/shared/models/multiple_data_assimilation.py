@@ -1,8 +1,8 @@
 import asyncio
 import concurrent
+import functools
 import logging
 from typing import Any, Dict, List, Optional, Tuple
-import functools
 
 import _ert_com_protocol
 from ert._c_wrappers.enkf import RunContext
@@ -245,7 +245,7 @@ class MultipleDataAssimilation(BaseRunModel):
             )
             event.experiment.message = str(e)
             await self.dispatch(event)
-            return run_context
+            raise
 
         phase_string = f"Post processing for iteration: {iteration}"
         self.setPhaseName(phase_string, indeterminate=True)

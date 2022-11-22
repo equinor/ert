@@ -82,7 +82,7 @@ class EnsembleExperiment(BaseRunModel):
                 )
                 event.experiment.message = str(e)
                 await self.dispatch(event)
-                return run_context
+                raise
 
             self.setPhaseName("Post processing...", indeterminate=True)
             await self._run_hook(
