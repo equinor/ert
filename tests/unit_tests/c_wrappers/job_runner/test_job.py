@@ -4,7 +4,7 @@ from unittest.mock import PropertyMock, patch
 import pytest
 
 from _ert_job_runner.job import Job
-from _ert_job_runner.reporting.message import Exited, Running, RunningNoMemChange, Start
+from _ert_job_runner.reporting.message import Exited, Running, Start
 
 
 @patch("_ert_job_runner.job.assert_file_executable")
@@ -27,39 +27,6 @@ def test_run_with_process_failing(
     exited = next(run)
     assert isinstance(exited, Exited), "run did not yield Exited message"
     assert exited.exit_code == 9, "Exited message had unexpected exit code"
-
-    with pytest.raises(StopIteration):
-        next(run)
-
-
-@patch("_ert_job_runner.job.assert_file_executable")
-@patch("_ert_job_runner.job.Popen")
-@patch("_ert_job_runner.job.Process")
-@pytest.mark.usefixtures("use_tmpdir")
-def test_run_with_memory_consumption_increase(
-    mock_process, mock_popen, mock_assert_file_executable
-):
-    job = Job({}, 0)
-    type(mock_process.return_value.memory_info.return_value).rss = PropertyMock(
-        return_value=10
-    )
-    mock_process.return_value.wait.return_value = None
-
-    run = job.run()
-
-    assert isinstance(next(run), Start), "run did not yield Start message"
-    assert isinstance(next(run), Running), "run did not yield Running message"
-    assert isinstance(
-        next(run), RunningNoMemChange
-    ), "run did not yield RunningNoMemChange message"
-    type(mock_process.return_value.memory_info.return_value).rss = PropertyMock(
-        return_value=job.MEMORY_INCREASE_THRESHOLD + 10
-    )
-    assert isinstance(next(run), Running), "run did not yield Running message"
-    mock_process.return_value.wait.return_value = 1
-    exited = next(run)
-    assert isinstance(exited, Exited), "run did not yield Exited message"
-    assert exited.exit_code == 1, "Exited message had unexpected exit code"
 
     with pytest.raises(StopIteration):
         next(run)
