@@ -33,10 +33,9 @@ STATUS_json = "status.json"
 
 
 class File(Reporter):
-    def __init__(self, sync_disc_timeout=10):
+    def __init__(self):
         self.status_dict = {}
         self.node = socket.gethostname()
-        self._sync_disc_timeout = sync_disc_timeout
 
     def report(self, msg: Message):
         job_status = {}
@@ -194,7 +193,6 @@ class File(Reporter):
             f.write(
                 f"All jobs complete {time.strftime(TIME_FORMAT, time.localtime())} \n"
             )
-        time.sleep(self._sync_disc_timeout)  # Let the disks sync up
 
     def _dump_status_json(self):
         with open(STATUS_json, "w") as fp:
