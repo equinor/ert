@@ -148,7 +148,6 @@ class LegacyJobBuilder(BaseJobBuilder):
         self._run_path: Optional[str] = None
         self._num_cpu: Optional[int] = None
         self._status_file: Optional[str] = None
-        self._ok_file: Optional[str] = None
         self._exit_file: Optional[str] = None
         self._done_callback_function: Optional[Callable[[List[Any]], bool]] = None
         self._exit_callback_function: Optional[Callable[[List[Any]], bool]] = None

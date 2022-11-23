@@ -6,13 +6,7 @@ import pytest
 from _ert_job_runner.job import Job
 from _ert_job_runner.reporting import File
 from _ert_job_runner.reporting.message import Exited, Finish, Init, Running, Start
-from ert.constant_filenames import (
-    ERROR_file,
-    LOG_file,
-    OK_file,
-    STATUS_file,
-    STATUS_json,
-)
+from ert.constant_filenames import ERROR_file, LOG_file, STATUS_file, STATUS_json
 
 
 @pytest.fixture
@@ -152,9 +146,6 @@ def test_report_with_successful_finish_message_argument(reporter):
 
     reporter.report(msg)
 
-    with open(OK_file, "r") as f:
-        assert "All jobs complete" in f.readline(), "OK file missing expected value"
-
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_dump_error_file_with_stderr(reporter):
@@ -180,13 +171,13 @@ def test_dump_error_file_with_stderr(reporter):
 @pytest.mark.usefixtures("use_tmpdir")
 def test_old_file_deletion(reporter):
     # touch all files that are to be removed
-    for f in [ERROR_file, STATUS_file, OK_file]:
+    for f in [ERROR_file, STATUS_file]:
         with open(f, "a", encoding="utf-8"):
             pass
 
     reporter._delete_old_status_files()
 
-    for f in [ERROR_file, STATUS_file, OK_file]:
+    for f in [ERROR_file, STATUS_file]:
         assert not os.path.isfile(f), f"{reporter} was not deleted"
 
 

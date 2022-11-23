@@ -24,9 +24,6 @@ struct job_queue_node_struct {
     char *run_cmd;
     /** The queue will look for the occurence of this file to detect a failure. */
     char *exit_file;
-    /** The queue will look for this file to verify that the job was OK - can
-     * be NULL - in which case it is ignored. */
-    char *ok_file;
     /** The queue will look for this file to verify that the job is running or
      * has run. */
     char *status_file;
@@ -184,7 +181,6 @@ void job_queue_node_set_queue_index(job_queue_node_type *node,
 void job_queue_node_free_data(job_queue_node_type *node) {
     free(node->job_name);
     free(node->exit_file);
-    free(node->ok_file);
     free(node->status_file);
     free(node->run_cmd);
     util_free_stringlist(node->argv, node->argc);
@@ -220,17 +216,18 @@ job_queue_node_type *job_queue_node_alloc_simple(const char *job_name,
                                                  const char *run_cmd, int argc,
                                                  const char **argv) {
     return job_queue_node_alloc(job_name, run_path, run_cmd, argc, argv, 1,
-                                NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+                                NULL, NULL, NULL, NULL, NULL, NULL);
 }
 
-job_queue_node_type *job_queue_node_alloc_python(
-    const char *job_name, const char *run_path, const char *run_cmd, int argc,
-    const stringlist_type *arguments, int num_cpu, const char *ok_file,
-    const char *status_file, const char *exit_file) {
+job_queue_node_type *
+job_queue_node_alloc_python(const char *job_name, const char *run_path,
+                            const char *run_cmd, int argc,
+                            const stringlist_type *arguments, int num_cpu,
+                            const char *status_file, const char *exit_file) {
     char **argv = stringlist_alloc_char_ref(arguments);
-    job_queue_node_type *out = job_queue_node_alloc(
-        job_name, run_path, run_cmd, argc, argv, num_cpu, ok_file, status_file,
-        exit_file, NULL, NULL, NULL, NULL);
+    job_queue_node_type *out =
+        job_queue_node_alloc(job_name, run_path, run_cmd, argc, argv, num_cpu,
+                             status_file, exit_file, NULL, NULL, NULL, NULL);
     free(argv);
     return out;
 }
@@ -238,7 +235,7 @@ job_queue_node_type *job_queue_node_alloc_python(
 job_queue_node_type *
 job_queue_node_alloc(const char *job_name, const char *run_path,
                      const char *run_cmd, int argc, char const *const *argv,
-                     int num_cpu, const char *ok_file, const char *status_file,
+                     int num_cpu, const char *status_file,
                      const char *exit_file, job_callback_ftype *done_callback,
                      job_callback_ftype *retry_callback,
                      job_callback_ftype *exit_callback, void *callback_arg) {
@@ -263,11 +260,6 @@ job_queue_node_alloc(const char *job_name, const char *run_path,
     node->argv = util_alloc_stringlist_copy(
         argv, argc); // Please fix const <type> ** in libecl
     node->num_cpu = num_cpu;
-
-    if (ok_file)
-        node->ok_file = util_alloc_filename(node->run_path, ok_file, NULL);
-    else
-        node->ok_file = NULL;
 
     if (status_file)
         node->status_file =
@@ -305,10 +297,6 @@ job_queue_node_alloc(const char *job_name, const char *run_path,
 
 const char *job_queue_node_get_exit_file(const job_queue_node_type *node) {
     return node->exit_file;
-}
-
-const char *job_queue_node_get_ok_file(const job_queue_node_type *node) {
-    return node->ok_file;
 }
 
 time_t job_queue_node_get_sim_start(const job_queue_node_type *node) {

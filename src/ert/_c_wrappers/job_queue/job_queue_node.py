@@ -25,7 +25,6 @@ class JobQueueNode(BaseCClass):
         "stringlist,"
         "int, "
         "char*,"
-        "char*,"
         "char*"
         ")",
         bind=False,
@@ -57,7 +56,6 @@ class JobQueueNode(BaseCClass):
         run_path,
         num_cpu,
         status_file,
-        ok_file,
         exit_file,
         done_callback_function,
         exit_callback_function,
@@ -91,7 +89,6 @@ class JobQueueNode(BaseCClass):
             argc,
             argv,
             num_cpu,
-            ok_file,
             status_file,
             exit_file,
             None,

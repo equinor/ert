@@ -117,49 +117,6 @@ static auto logger = ert::get_logger("job_queue");
        'JOB_QUEUE_WAITING' it will (re)submit this job.
 */
 
-/*
-  Communicating success/failure between the job_script and the job_queue:
-  =======================================================================
-
-  The system for communicating success/failure between the queue system
-  (i.e. this file) and the job script is quite elaborate. There are
-  essentially three problems which make this complicated:
-
-   1. The exit status of the jobs is NOT reliably captured - the job
-      might very well fail without us detecting it with the exit
-      status.
-
-   2. Synchronizing of disks can be quite slow, so although a job has
-      completed successfully the files we expect to find might not
-      present.
-
-   3. There is layer upon layer here - this file scope (i.e. the
-      internal queue_system) spawns external jobs in the form of a job
-      script. This script again spawns a series of real external jobs
-      like e.g. ECLIPSE and RMS. The job_script does not reliably
-      capture the exit status of the external programs.
-
-
-  The approach to this is as follows:
-
-   1. If the job (i.e. the job script) finishes with a failure status
-      we communicate the failure back to the calling scope with no
-      more ado.
-
-   2. When a job has finished (seemingly OK) we try hard to determine
-      whether the job has failed or not. This is based on the
-      following tests:
-
-      a) If the job has produced an EXIT file it has failed.
-
-      b) If the job has produced an OK file it has succeeded.
-
-      c) If neither EXIT nor OK files have been produced we spin for a
-         while waiting for one of the files, if none turn up we will
-         eventually mark the job as failed.
-
-*/
-
 #define JOB_QUEUE_TYPE_ID 665210
 
 /**
@@ -184,9 +141,6 @@ struct job_queue_struct {
     job_queue_status_type *status;
     /** The queue will look for the occurrence of this file to detect a failure. */
     char *exit_file;
-    /** The queue will look for this file to verify that the job was OK - can
-     * be NULL - in which case it is ignored. */
-    char *ok_file;
     /** The queue will look for this file to verify that the job is running or
      * has run.  If not, ok_file is ignored. */
     char *status_file;
@@ -205,8 +159,6 @@ struct job_queue_struct {
 
     /** The maximum number of submit attempts for one job. */
     int max_submit;
-    /** Seconds to wait for an OK file - when the job itself has said all OK. */
-    int max_ok_wait_time;
     /** Maximum allowed time for a job to run, 0 = unlimited */
     int max_duration;
     /** A job is only allowed to run until this time. 0 = no time set, ignore stop_time */
@@ -369,7 +321,7 @@ int job_queue_add_job(job_queue_type *queue, const char *run_cmd,
     if (job_queue_accept_jobs(queue)) {
         int queue_index;
         job_queue_node_type *node = job_queue_node_alloc(
-            job_name, run_path, run_cmd, argc, argv, num_cpu, queue->ok_file,
+            job_name, run_path, run_cmd, argc, argv, num_cpu,
             queue->status_file, queue->exit_file, done_callback, retry_callback,
             exit_callback, callback_arg);
         if (node) {
@@ -397,17 +349,14 @@ int job_queue_add_job(job_queue_type *queue, const char *run_cmd,
    for use; a driver must be set explicitly with a call to
    job_queue_set_driver() first.
 */
-job_queue_type *job_queue_alloc(int max_submit, const char *ok_file,
-                                const char *status_file,
+job_queue_type *job_queue_alloc(int max_submit, const char *status_file,
                                 const char *exit_file) {
 
     job_queue_type *queue = (job_queue_type *)util_malloc(sizeof *queue);
     queue->usleep_time = 250000; /* 1000000 : 1 second */
-    queue->max_ok_wait_time = 60;
     queue->max_duration = 0;
     queue->max_submit = max_submit;
     queue->driver = NULL;
-    queue->ok_file = util_alloc_string_copy(ok_file);
     queue->exit_file = util_alloc_string_copy(exit_file);
     queue->status_file = util_alloc_string_copy(status_file);
     queue->open = true;
@@ -452,16 +401,11 @@ int job_queue_get_max_submit(const job_queue_type *job_queue) {
 }
 
 void job_queue_free(job_queue_type *queue) {
-    free(queue->ok_file);
     free(queue->exit_file);
     free(queue->status_file);
     job_list_free(queue->job_list);
     job_queue_status_free(queue->status);
     free(queue);
-}
-
-char *job_queue_get_ok_file(const job_queue_type *queue) {
-    return queue->ok_file;
 }
 
 char *job_queue_get_exit_file(const job_queue_type *queue) {

@@ -13,8 +13,7 @@ typedef struct job_queue_struct job_queue_type;
 extern "C" PY_USED void job_queue_submit_complete(job_queue_type *queue);
 extern "C" void job_queue_set_driver(job_queue_type *queue,
                                      queue_driver_type *driver);
-extern "C" job_queue_type *job_queue_alloc(int, const char *ok_file,
-                                           const char *status_file,
+extern "C" job_queue_type *job_queue_alloc(int, const char *status_file,
                                            const char *exit_file);
 extern "C" void job_queue_free(job_queue_type *);
 
@@ -46,7 +45,6 @@ extern "C" PY_USED void *job_queue_iget_driver_data(job_queue_type *queue,
                                                     int job_index);
 job_queue_node_type *job_queue_iget_job(job_queue_type *job_queue, int job_nr);
 
-extern "C" char *job_queue_get_ok_file(const job_queue_type *queue);
 extern "C" PY_USED char *job_queue_get_exit_file(const job_queue_type *queue);
 extern "C" PY_USED char *job_queue_get_status_file(const job_queue_type *queue);
 extern "C" PY_USED int job_queue_add_job_node(job_queue_type *queue,

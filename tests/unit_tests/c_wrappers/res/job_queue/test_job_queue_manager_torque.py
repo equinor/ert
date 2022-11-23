@@ -152,7 +152,6 @@ def _build_jobqueuenode(dummy_config: JobConfig, job_id=0):
         run_path=os.path.realpath(dummy_config["run_path"].format(job_id)),
         num_cpu=1,
         status_file="STATUS",
-        ok_file="OK",
         exit_file="ERROR",
         done_callback_function=dummy_config["ok_callback"],
         exit_callback_function=dummy_config["exit_callback"],
