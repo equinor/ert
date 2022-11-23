@@ -8,7 +8,8 @@ import stat
 from pathlib import Path
 
 import hypothesis.strategies as st
-from hypothesis import assume
+import py
+from hypothesis import assume, note
 
 from ert._c_wrappers.enkf import ConfigKeys
 from ert._c_wrappers.enkf.enums import GenDataFileType
@@ -247,8 +248,7 @@ def random_ext_job_names(draw, some_words, some_file_names):
     )
 
 
-@st.composite
-def defines(draw, config_files, cwds):
+def defines(config_dict, config_files, cwd):
     """
     We combine default defines that are magically populated in the config
     content path using the predefined keyword mechanism with random key values.
@@ -257,27 +257,20 @@ def defines(draw, config_files, cwds):
     etc. Therefore all file_names are upper case and define keys are prefixed
     with the lower case 'key'.
     """
-    config_file_name = os.path.basename(draw(config_files))
-    pre_defined_kw_map = draw(
-        st.fixed_dictionaries(
-            {
-                "<DATE>": st.just(datetime.date.today().isoformat()),
-                "<CWD>": cwds,
-                "<CONFIG_PATH>": cwds,
-                "<CONFIG_FILE>": st.just(config_file_name),
-                "<CONFIG_FILE_BASE>": st.just(config_file_name.split(".")[0]),
-            }
-        )
-    )
-    random_defines = draw(st.dictionaries(st.just("key-" + draw(words)), words))
-    return {**random_defines, **pre_defined_kw_map}
+    config_file_name = os.path.basename(config_files)
+    return [
+        ("<CONFIG_PATH>", cwd),
+        ("<CONFIG_FILE_BASE>", config_file_name.split(".")[0]),
+        ("<DATE>", datetime.date.today().isoformat()),
+        ("<CWD>", cwd),
+        ("<CONFIG_FILE>", config_file_name),
+        ("<RUNPATH_FILE>", os.path.join(cwd, config_dict[ConfigKeys.RUNPATH_FILE])),
+        ("<NUM_CPU>", str(config_dict[ConfigKeys.NUM_CPU])),
+    ]
 
 
-@st.composite
-def config_dicts(draw):
+def generate_config(draw):
     queue_system = draw(queue_systems)
-    config_file_name = st.just(draw(file_names) + ".ert")
-    cwd = os.getcwd()
     config_dict = draw(
         st.fixed_dictionaries(
             {
@@ -294,25 +287,19 @@ def config_dicts(draw):
                 ConfigKeys.STD_CUTOFF_KEY: small_floats,
                 ConfigKeys.MAX_RUNTIME: positives,
                 ConfigKeys.MIN_REALIZATIONS: positives,
-                ConfigKeys.DEFINE_KEY: defines(config_file_name, st.just(cwd)),
-                ConfigKeys.DATA_KW_KEY: st.dictionaries(words, words),
+                ConfigKeys.DEFINE_KEY: st.lists(
+                    st.tuples(st.just("key-" + draw(words)), words)
+                ),
+                ConfigKeys.DATA_KW_KEY: st.lists(st.tuples(words, words)),
                 ConfigKeys.DATA_FILE: st.just(draw(file_names) + ".DATA"),
                 ConfigKeys.GRID: st.just(draw(words) + ".EGRID"),
                 ConfigKeys.JOB_SCRIPT: st.just(draw(file_names) + "job_script"),
                 ConfigKeys.JOBNAME: st.just("JOBNAME-" + draw(words)),
-                ConfigKeys.RUNPATH: st.just(
-                    os.path.join(cwd, "runpath-" + draw(format_file_names))
-                ),
-                ConfigKeys.ENSPATH: st.just(
-                    os.path.join(cwd, draw(words) + ".enspath")
-                ),
-                ConfigKeys.TIME_MAP: st.just(
-                    os.path.join(cwd, draw(file_names) + ".timemap")
-                ),
-                ConfigKeys.OBS_CONFIG: st.just(
-                    os.path.join(cwd, "obs-config-" + draw(file_names))
-                ),
-                ConfigKeys.DATAROOT: st.just(cwd),
+                ConfigKeys.RUNPATH: st.just("runpath-" + draw(format_file_names)),
+                ConfigKeys.ENSPATH: st.just(draw(words) + ".enspath"),
+                ConfigKeys.TIME_MAP: st.just(draw(file_names) + ".timemap"),
+                ConfigKeys.OBS_CONFIG: st.just("obs-config-" + draw(file_names)),
+                ConfigKeys.DATAROOT: st.just("dataroot"),
                 ConfigKeys.HISTORY_SOURCE: st.just("REFCASE_SIMULATED"),
                 ConfigKeys.REFCASE: st.just("refcase/" + draw(file_names)),
                 ConfigKeys.GEN_KW_EXPORT_NAME: st.just(
@@ -409,6 +396,12 @@ def config_dicts(draw):
         if config_dict[ConfigKeys.INSTALL_JOB]
         else st.just([])
     )
+    return config_dict
+
+
+@st.composite
+def config_generators(draw):
+    config_dict = generate_config(draw)
 
     should_exist_files = [
         job_path for _, job_path in config_dict[ConfigKeys.INSTALL_JOB]
@@ -418,91 +411,128 @@ def config_dicts(draw):
     should_exist_files.append(config_dict[ConfigKeys.TIME_MAP])
     should_exist_files.append(config_dict[ConfigKeys.OBS_CONFIG])
 
-    should_be_executable_files = [
-        job_path for _, job_path in config_dict[ConfigKeys.INSTALL_JOB]
-    ]
-    should_exist_job_scripts = should_be_executable_files.copy()
-    should_be_executable_files.append(config_dict[ConfigKeys.JOB_SCRIPT])
-
-    config_dict[ConfigKeys.JOB_SCRIPT] = os.path.abspath(
-        config_dict[ConfigKeys.JOB_SCRIPT]
-    )
-
-    for filename in should_exist_files:
-        if not os.path.isfile(filename):
-            touch(filename)
-
-    if ConfigKeys.REFCASE in config_dict:
-        dest_basename = os.path.splitext(
-            os.path.basename(config_dict[ConfigKeys.REFCASE])
-        )[0]
-        refcase_src_files_glob = os.path.join(
-            os.path.dirname(os.path.abspath(__file__)),
-            "../../test-data/configuration_tests/input/refcase/SNAKE_OIL_FIELD*",
-        )
-        with contextlib.suppress(FileExistsError):
-            os.mkdir("./refcase")
-        refcase_src_files = glob.glob(refcase_src_files_glob)
-        for refcase_src_file in refcase_src_files:
-            dest = os.path.basename(refcase_src_file).replace(
-                "SNAKE_OIL_FIELD", dest_basename
-            )
-            shutil.copy(refcase_src_file, "./refcase/" + dest)
-
-    if (
-        len(config_dict[ConfigKeys.INSTALL_JOB]) == 0
-        and os.getenv("ERT_SITE_CONFIG", None) is not None
-    ):
-        assume(len(config_dict[ConfigKeys.FORWARD_MODEL]) == 0)
-
-    for _, job_path in config_dict[ConfigKeys.INSTALL_JOB]:
-        executable_file = draw(file_names) + ".exe"
-        touch(executable_file)
-        should_be_executable_files.append(executable_file)
-        Path(job_path).write_text(
-            f"EXECUTABLE {executable_file}\nMIN_ARG 0\nMAX_ARG 1\n", encoding="utf-8"
-        )
+    should_be_executable_files = [config_dict[ConfigKeys.JOB_SCRIPT]]
 
     should_exist_directories = config_dict[ConfigKeys.INSTALL_JOB_DIRECTORY]
-    for dirname in should_exist_directories:
-        if not os.path.isdir(dirname):
-            os.mkdir(dirname)
 
-    for job_dir in config_dict[ConfigKeys.INSTALL_JOB_DIRECTORY]:
-        should_exist_job_scripts.append(job_dir + "/" + draw(file_names))
+    def generate_job_config(job_path):
+        return job_path, draw(file_names) + ".exe"
 
-    for job_file in should_exist_job_scripts:
-        path = Path(job_file).parent
-        executable_file = draw(file_names) + ".exe"
-        if not os.path.isdir(path / "script"):
-            os.mkdir(path / "script")
-        touch(path / "script" / executable_file)
-        should_be_executable_files.append(path / "script" / executable_file)
-        Path(job_file).write_text(
-            f"EXECUTABLE script/{executable_file}\nMIN_ARG 0\nMAX_ARG 1\n",
-            encoding="utf-8",
-        )
+    should_exist_job_configs = [
+        generate_job_config(job_path)
+        for _, job_path in config_dict[ConfigKeys.INSTALL_JOB]
+    ] + [
+        generate_job_config(job_dir + "/" + draw(file_names))
+        for job_dir in config_dict[ConfigKeys.INSTALL_JOB_DIRECTORY]
+    ]
 
-    for filename in should_be_executable_files:
-        current_mode = os.stat(filename).st_mode
-        os.chmod(filename, current_mode | stat.S_IEXEC)
+    should_exist_refcase = (
+        config_dict[ConfigKeys.REFCASE] if ConfigKeys.REFCASE in config_dict else None
+    )
 
-    draw(egrids).to_file(config_dict[ConfigKeys.GRID])
+    egrid = draw(egrids)
 
-    assume(config_dict[ConfigKeys.DATA_FILE] != config_file_name)
-    assume(config_dict[ConfigKeys.RUNPATH_FILE] != config_file_name)
+    # Context manager is returned from the generator and given to test function
+    # Run this function to get dict, and as a side effect all required files
+    # (not config) will then be written to a temp dir which is returned in a
+    # tuple together with the dict as (dict, path). If given a config_file_name
+    # will write the config to that file.
+    @contextlib.contextmanager
+    def generate_files_and_dict(tmp_path_factory, config_file_name=None):
+        tmp = py.path.local(tmp_path_factory.mktemp("config_dict"))
+        note(f"Using tmp dir: {str(tmp)}")
+        with tmp.as_cwd():
+            config_dict[ConfigKeys.JOB_SCRIPT] = os.path.abspath(
+                config_dict[ConfigKeys.JOB_SCRIPT]
+            )
 
-    return config_dict
+            for dirname in should_exist_directories:
+                if not os.path.isdir(dirname):
+                    os.mkdir(dirname)
+
+            for filename in should_exist_files:
+                if not os.path.isfile(filename):
+                    touch(filename)
+
+            def make_executable(filename):
+                current_mode = os.stat(filename).st_mode
+                os.chmod(filename, current_mode | stat.S_IEXEC)
+
+            for filename in should_be_executable_files:
+                make_executable(filename)
+
+            for job_file, executable_file in should_exist_job_configs:
+                path = Path(job_file).parent
+                if not os.path.isdir(path / "script"):
+                    os.mkdir(path / "script")
+                touch(path / "script" / executable_file)
+                make_executable(path / "script" / executable_file)
+                Path(job_file).write_text(
+                    f"EXECUTABLE script/{executable_file}\nMIN_ARG 0\nMAX_ARG 1\n",
+                    encoding="utf-8",
+                )
+
+            if should_exist_refcase is not None:
+                dest_basename = os.path.splitext(
+                    os.path.basename(should_exist_refcase)
+                )[0]
+                refcase_src_files_glob = os.path.join(
+                    os.path.dirname(os.path.abspath(__file__)),
+                    "../../test-data/configuration_tests/input/"
+                    "refcase/SNAKE_OIL_FIELD*",
+                )
+                with contextlib.suppress(FileExistsError):
+                    os.mkdir("./refcase")
+                refcase_src_files = glob.glob(refcase_src_files_glob)
+                for refcase_src_file in refcase_src_files:
+                    dest = os.path.basename(refcase_src_file).replace(
+                        "SNAKE_OIL_FIELD", dest_basename
+                    )
+                    shutil.copy(refcase_src_file, "./refcase/" + dest)
+
+            egrid.to_file(config_dict[ConfigKeys.GRID])
+
+            # Make all paths absolute, as that should be the result after parsing
+            cwd = os.getcwd()
+            config_dict[ConfigKeys.RUNPATH] = os.path.join(
+                cwd, config_dict[ConfigKeys.RUNPATH]
+            )
+            config_dict[ConfigKeys.ENSPATH] = os.path.join(
+                cwd, config_dict[ConfigKeys.ENSPATH]
+            )
+            config_dict[ConfigKeys.TIME_MAP] = os.path.join(
+                cwd, config_dict[ConfigKeys.TIME_MAP]
+            )
+            config_dict[ConfigKeys.OBS_CONFIG] = os.path.join(
+                cwd, config_dict[ConfigKeys.OBS_CONFIG]
+            )
+            config_dict[ConfigKeys.DATAROOT] = os.path.join(
+                cwd, config_dict[ConfigKeys.DATAROOT]
+            )
+
+            if config_file_name is not None:
+                to_config_file(config_file_name, config_dict)
+                assume(config_dict[ConfigKeys.DATA_FILE] != config_file_name)
+                assume(config_dict[ConfigKeys.RUNPATH_FILE] != config_file_name)
+
+            yield config_dict
+
+    return generate_files_and_dict
 
 
 def to_config_file(filename, config_dict):  # pylint: disable=too-many-branches
+
+    predefines = defines(config_dict, filename, os.getcwd())
+    predefines.extend(config_dict[ConfigKeys.DEFINE_KEY])
+    config_dict[ConfigKeys.DEFINE_KEY] = predefines
+
     with open(file=filename, mode="w+", encoding="utf-8") as config:
         config.write(
             f"{ConfigKeys.RUNPATH_FILE} {config_dict[ConfigKeys.RUNPATH_FILE]}\n"
         )
         for keyword, keyword_value in config_dict.items():
             if keyword == ConfigKeys.DATA_KW_KEY:
-                for define_key, define_value in keyword_value.items():
+                for define_key, define_value in keyword_value:
                     config.write(f"{keyword} {define_key} {define_value}\n")
             elif keyword == ConfigKeys.FORWARD_MODEL:
                 for forward_model_job in keyword_value:
@@ -597,7 +627,7 @@ def to_config_file(filename, config_dict):  # pylint: disable=too-many-branches
                         f" {statement[ConfigKeys.VALUE]}\n"
                     )
             elif keyword == ConfigKeys.DEFINE_KEY:
-                for define_key, define_value in keyword_value.items():
+                for define_key, define_value in keyword_value:
                     config.write(f"{keyword} {define_key} {define_value}\n")
             elif keyword == ConfigKeys.INSTALL_JOB:
                 for job_name, job_path in keyword_value:

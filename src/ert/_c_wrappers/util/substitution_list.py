@@ -94,7 +94,7 @@ class SubstitutionList(BaseCClass):
         return to_substitute
 
     def __eq__(self, other):
-        if len(self.keys()) != len(other.keys()):
+        if self.keys() != other.keys():
             return False
         for key in self.keys():
             oneValue = self.get(key)

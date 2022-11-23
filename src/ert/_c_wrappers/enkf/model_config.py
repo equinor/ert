@@ -1,5 +1,4 @@
 import logging
-import os
 from typing import Optional
 
 from ecl.summary import EclSum
@@ -21,9 +20,8 @@ class ModelConfig:
         self,
         num_realizations: int,
         refcase: EclSum = None,
-        config_dir: Optional[str] = None,
         data_root: Optional[str] = None,
-        ens_path: Optional[str] = None,
+        ens_path: str = None,
         history_source: Optional[HistorySourceEnum] = None,
         runpath_format_string: Optional[str] = None,
         jobname_format_string: Optional[str] = None,
@@ -33,15 +31,8 @@ class ModelConfig:
     ):
         self.num_realizations = num_realizations
         self.refcase = refcase
-        if config_dir is None:
-            config_dir = os.getcwd()
-        self._config_dir = config_dir
-        self.data_root = data_root if data_root is not None else config_dir
-        self.ens_path: str = (
-            ens_path
-            if ens_path is not None
-            else os.path.join(config_dir, self.DEFAULT_ENSPATH)
-        )
+        self.data_root = data_root
+        self.ens_path = ens_path
 
         self.history_source = (
             history_source
@@ -52,7 +43,7 @@ class ModelConfig:
         self.runpath_format_string = (
             runpath_format_string
             if runpath_format_string is not None
-            else os.path.realpath(self.DEFAULT_RUNPATH)
+            else self.DEFAULT_RUNPATH
         )
 
         self.jobname_format_string = jobname_format_string
@@ -77,15 +68,12 @@ class ModelConfig:
                 logger.warning(f"failed to load timemap - {err}")
 
     @classmethod
-    def from_dict(
-        cls, refcase: EclSum, config_path: str, config_dict: dict
-    ) -> "ModelConfig":
+    def from_dict(cls, refcase: EclSum, config_dict: dict) -> "ModelConfig":
         return cls(
-            config_dir=config_path,
             num_realizations=config_dict.get(ConfigKeys.NUM_REALIZATIONS),
             refcase=refcase,
             data_root=config_dict.get(ConfigKeys.DATAROOT),
-            ens_path=config_dict.get(ConfigKeys.ENSPATH),
+            ens_path=config_dict[ConfigKeys.ENSPATH],
             history_source=HistorySourceEnum.from_string(
                 config_dict.get(ConfigKeys.HISTORY_SOURCE)
             )
@@ -114,7 +102,6 @@ class ModelConfig:
         return (
             f"num_realizations: {self.num_realizations},\n"
             f"refcase: {self.refcase},\n"
-            f"config_dir: {self._config_dir},\n"
             f"data_root: {self.data_root},\n"
             f"ens_path: {self.ens_path},\n"
             f"history_source: {self.history_source},\n"
@@ -129,7 +116,6 @@ class ModelConfig:
         return all(
             [
                 self.num_realizations == other.num_realizations,
-                self._config_dir == other._config_dir,
                 self.data_root == other.data_root,
                 self.ens_path == other.ens_path,
                 self.history_source == other.history_source,
