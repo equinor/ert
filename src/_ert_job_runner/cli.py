@@ -28,7 +28,7 @@ def _setup_reporters(
     if is_interactive_run:
         reporters.append(reporting.Interactive())
     elif ens_id and experiment_id is None:
-        reporters.append(reporting.File(sync_disc_timeout=0))
+        reporters.append(reporting.File())
         reporters.append(
             reporting.Event(
                 evaluator_url=dispatch_url, token=ee_token, cert_path=ee_cert_path
