@@ -11,7 +11,7 @@ from ert.constant_filenames import ERROR_file, LOG_file, STATUS_file, STATUS_jso
 
 @pytest.fixture
 def reporter():
-    return File(sync_disc_timeout=0)
+    return File()
 
 
 @pytest.mark.usefixtures("use_tmpdir")
