@@ -91,7 +91,6 @@ def create_local_queue(
             run_path=DUMMY_CONFIG["run_path"].format(iens),
             num_cpu=DUMMY_CONFIG["num_cpu"],
             status_file=job_queue.status_file,
-            ok_file=job_queue.ok_file,
             exit_file=job_queue.exit_file,
             done_callback_function=DUMMY_CONFIG["ok_callback"],
             exit_callback_function=DUMMY_CONFIG["exit_callback"],

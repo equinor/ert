@@ -25,13 +25,7 @@ from ert._c_wrappers.job_queue.job_queue_node import JobQueueNode
 from ert._c_wrappers.job_queue.job_status_type_enum import JobStatusType
 from ert._c_wrappers.job_queue.queue_differ import QueueDiffer
 from ert._c_wrappers.job_queue.thread_status_type_enum import ThreadStatus
-from ert.constant_filenames import (
-    CERT_FILE,
-    JOBS_FILE,
-    ERROR_file,
-    OK_file,
-    STATUS_file,
-)
+from ert.constant_filenames import CERT_FILE, JOBS_FILE, ERROR_file, STATUS_file
 
 if TYPE_CHECKING:
     from ert._c_wrappers.enkf.res_config import ResConfig
@@ -86,9 +80,7 @@ class JobQueue(BaseCClass):
     # necessary to explitly inform the queue layer when all jobs have
     # been submitted.
     TYPE_NAME = "job_queue"
-    _alloc = ResPrototype(
-        "void* job_queue_alloc( int , char* , char* , char* )", bind=False
-    )
+    _alloc = ResPrototype("void* job_queue_alloc( int , char* , char* )", bind=False)
     _free = ResPrototype("void job_queue_free( job_queue )")
     _set_max_job_duration = ResPrototype(
         "void job_queue_set_max_job_duration( job_queue , int)"
@@ -108,7 +100,6 @@ class JobQueue(BaseCClass):
     _submit_complete = ResPrototype("void job_queue_submit_complete( job_queue )")
     _get_max_submit = ResPrototype("int job_queue_get_max_submit(job_queue)")
 
-    _get_ok_file = ResPrototype("char* job_queue_get_ok_file(job_queue)")
     _get_exit_file = ResPrototype("char* job_queue_get_exit_file(job_queue)")
     _get_status_file = ResPrototype("char* job_queue_get_status_file(job_queue)")
     _add_job = ResPrototype("int job_queue_add_job_node(job_queue, job_queue_node)")
@@ -150,7 +141,7 @@ class JobQueue(BaseCClass):
 
         self.job_list = []
         self._stopped = False
-        c_ptr = self._alloc(max_submit, OK_file, STATUS_file, ERROR_file)
+        c_ptr = self._alloc(max_submit, STATUS_file, ERROR_file)
         super().__init__(c_ptr)
         self.size = size
 
@@ -257,10 +248,6 @@ class JobQueue(BaseCClass):
     @property
     def queue_size(self):
         return len(self.job_list)
-
-    @property
-    def ok_file(self):
-        return self._get_ok_file()
 
     @property
     def exit_file(self):
@@ -568,7 +555,6 @@ class JobQueue(BaseCClass):
             run_path=run_path,
             num_cpu=num_cpu,
             status_file=self.status_file,
-            ok_file=self.ok_file,
             exit_file=self.exit_file,
             done_callback_function=ok_cb,
             exit_callback_function=exit_cb,
@@ -587,7 +573,6 @@ class JobQueue(BaseCClass):
             run_path=str(stage.run_path),
             num_cpu=stage.num_cpu,
             status_file=self.status_file,
-            ok_file=self.ok_file,
             exit_file=self.exit_file,
             done_callback_function=stage.done_callback,
             exit_callback_function=stage.exit_callback,

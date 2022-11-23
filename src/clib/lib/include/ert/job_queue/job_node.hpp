@@ -40,7 +40,7 @@ void job_queue_node_free_data(job_queue_node_type *node);
 job_queue_node_type *
 job_queue_node_alloc(const char *job_name, const char *run_path,
                      const char *run_cmd, int argc, char const *const *argv,
-                     int num_cpu, const char *ok_file, const char *status_file,
+                     int num_cpu, const char *status_file,
                      const char *exit_file, job_callback_ftype *done_callback,
                      job_callback_ftype *retry_callback,
                      job_callback_ftype *exit_callback, void *callback_arg);
@@ -50,10 +50,11 @@ job_queue_node_type *job_queue_node_alloc_simple(const char *job_name,
                                                  const char *run_cmd, int argc,
                                                  const char **argv);
 
-extern "C" PY_USED job_queue_node_type *job_queue_node_alloc_python(
-    const char *job_name, const char *run_path, const char *run_cmd, int argc,
-    const stringlist_type *arguments, int num_cpu, const char *ok_file,
-    const char *status_file, const char *exit_file);
+extern "C" PY_USED job_queue_node_type *
+job_queue_node_alloc_python(const char *job_name, const char *run_path,
+                            const char *run_cmd, int argc,
+                            const stringlist_type *arguments, int num_cpu,
+                            const char *status_file, const char *exit_file);
 
 bool job_queue_node_kill(job_queue_node_type *node,
                          job_queue_status_type *status,
@@ -79,7 +80,6 @@ time_t job_queue_node_get_sim_start(const job_queue_node_type *node);
 time_t job_queue_node_get_sim_end(const job_queue_node_type *node);
 double job_queue_node_time_since_sim_start(const job_queue_node_type *node);
 
-const char *job_queue_node_get_ok_file(const job_queue_node_type *node);
 const char *job_queue_node_get_exit_file(const job_queue_node_type *node);
 
 bool job_queue_node_run_DONE_callback(job_queue_node_type *node);
