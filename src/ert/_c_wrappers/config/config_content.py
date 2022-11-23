@@ -7,9 +7,7 @@ from ert._c_wrappers.config.config_error import ConfigError
 from ert._c_wrappers.config.config_path_elm import ConfigPathElm
 from ert._c_wrappers.config.content_type_enum import ContentTypeEnum
 from ert._c_wrappers.config.schema_item import SchemaItem
-from ert._c_wrappers.util.substitution_list import (
-    SubstitutionList,  # pylint: disable=import-error
-)
+from ert._c_wrappers.util.substitution_list import SubstitutionList
 
 if TYPE_CHECKING:
     from ert._c_wrappers.config.config_parser import ConfigParser
@@ -258,7 +256,7 @@ class ConfigContent(BaseCClass):
     def create_path_elm(self, path) -> ConfigPathElm:
         return self._create_path_elm(path)
 
-    def get_const_define_list(self):
+    def get_const_define_list(self) -> SubstitutionList:
         return self._get_const_define_list()
 
     def add_define(self, key: str, value: str):
