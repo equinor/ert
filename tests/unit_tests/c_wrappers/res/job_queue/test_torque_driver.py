@@ -3,14 +3,14 @@ from typing import Optional
 
 import pytest
 
+from ert import _clib
 from ert._c_wrappers.job_queue.job_status_type_enum import JobStatusType
-from ert._clib import _torque_driver
 
 
 def test_job_create_submit_script(use_tmpdir):
     # pylint: disable=unused-argument
     script_name = "qsub_script.sh"
-    _torque_driver.torque_job_create_submit_script(
+    _clib.torque_driver.create_submit_script(
         script_name, "job_program.py", ["/tmp/jaja/", "number2arg"]
     )
     assert (
@@ -56,6 +56,4 @@ def test_parse_status(
     # pylint: disable=unused-argument
     if qstat_output is not None:
         Path("qstat.out").write_text(qstat_output, encoding="utf-8")
-    assert (
-        _torque_driver.torque_driver_parse_status("qstat.out", jobnr) == expected_status
-    )
+    assert _clib.torque_driver.parse_status("qstat.out", jobnr) == expected_status

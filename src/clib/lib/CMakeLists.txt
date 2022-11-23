@@ -22,7 +22,6 @@ pybind11_add_module(
   python/enkf_defaults.cpp
   python/enkf_fs_summary_data.cpp
   python/model_callbacks.cpp
-  python/_torque_driver.cpp
   config/conf_util.cpp
   config/conf.cpp
   config/conf_data.cpp
@@ -124,7 +123,7 @@ install(TARGETS _clib LIBRARY DESTINATION src/ert)
 # This extra deploy is only for ctest to be able to locate the script, this file
 # is otherwise deployed through setup.py.
 file(
-  COPY "${CMAKE_CURRENT_SOURCE_DIR}/job_queue/qstat_proxy.sh"
+  COPY "${CMAKE_CURRENT_SOURCE_DIR}/../../ert/_c_wrappers/job_queue/qstat_proxy.sh"
   DESTINATION "${CMAKE_BINARY_DIR}/old_tests/job_queue"
   FILE_PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ)
 
