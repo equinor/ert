@@ -125,4 +125,4 @@ def test_model_config_dict_constructor(setup_case):
         ],
     }
     res_config_from_dict = ResConfig(config_dict=config_dict)
-    assert res_config_from_file.model_config == res_config_from_dict.model_config
+    assert res_config_from_dict.model_config == res_config_from_file.model_config

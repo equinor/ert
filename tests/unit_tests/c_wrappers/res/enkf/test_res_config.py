@@ -158,7 +158,7 @@ def test_missing_directory():
 
 def test_init(minimum_case):
     res_config = minimum_case.resConfig()
-    assert res_config.model_config.data_root == os.getcwd()
+    assert res_config.model_config.data_root == res_config.config_path
 
     assert res_config is not None
 
@@ -300,6 +300,7 @@ def test_res_config_dict_constructor(setup_case):
     os.chdir(absolute_config_dir)
 
     config_data_new = {
+        ConfigKeys.DATAROOT: absolute_config_dir,
         ConfigKeys.ALPHA_KEY: 3,
         ConfigKeys.RERUN_KEY: False,
         ConfigKeys.RERUN_START_KEY: 0,
@@ -379,17 +380,25 @@ def test_res_config_dict_constructor(setup_case):
         ConfigKeys.RUNPATH_FILE: (
             "../output/run_path_file/.ert-runpath-list_<CASE_DIR>"
         ),  # subst
-        ConfigKeys.DEFINE_KEY: {
-            "<CWD>": absolute_config_dir,
-            "<CONFIG_PATH>": absolute_config_dir,
-            "<CONFIG_FILE>": config_file_name,
-            "<CONFIG_FILE_BASE>": config_file_name.split(".", maxsplit=1)[0],
-            "<DATE>": date.today().isoformat(),
-            "<USER>": "TEST_USER",
-            "<SCRATCH>": "scratch/ert",
-            "<CASE_DIR>": "the_extensive_case",
-            "<ECLIPSE_NAME>": "XYZ",
-        },  # subst
+        ConfigKeys.DEFINE_KEY: [
+            ("<CONFIG_PATH>", absolute_config_dir),
+            ("<CONFIG_FILE_BASE>", config_file_name.split(".", maxsplit=1)[0]),
+            ("<DATE>", date.today().isoformat()),
+            ("<CWD>", absolute_config_dir),
+            ("<CONFIG_FILE>", config_file_name),
+            ("<USER>", "TEST_USER"),
+            ("<SCRATCH>", "scratch/ert"),
+            ("<CASE_DIR>", "the_extensive_case"),
+            ("<ECLIPSE_NAME>", "XYZ"),
+            (
+                "<RUNPATH_FILE>",
+                str(
+                    Path(absolute_config_dir).parent
+                    / "output/run_path_file/.ert-runpath-list_the_extensive_case"
+                ),
+            ),
+            ("<NUM_CPU>", "1"),
+        ],  # subst
         ConfigKeys.REFCASE: "../input/refcase/SNAKE_OIL_FIELD",  # ecl
         ConfigKeys.JOBNAME: "SNAKE_OIL_STRUCTURE_%d",  # model
         ConfigKeys.TIME_MAP: os.path.realpath("../input/refcase/time_map.txt"),  # model
@@ -442,12 +451,12 @@ def test_res_config_dict_constructor(setup_case):
 
     # replace define keys only in root strings, this should be updated
     # and validated in configsuite instead
-    for define_key in config_data_new[ConfigKeys.DEFINE_KEY]:
+    for define_key, define_value in config_data_new[ConfigKeys.DEFINE_KEY]:
         for data_key, data_value in config_data_new.items():
             if isinstance(data_value, str):
                 config_data_new[data_key] = data_value.replace(
                     define_key,
-                    config_data_new[ConfigKeys.DEFINE_KEY].get(define_key),
+                    define_value,
                 )
 
     # add missing entries to config file
@@ -486,14 +495,14 @@ def test_res_config_dict_constructor(setup_case):
     # open config via dictionary
     res_config_dict = ResConfig(config_dict=config_data_new)
 
-    assert res_config_file.substitution_list == res_config_dict.substitution_list
-    assert res_config_file.installed_jobs == res_config_dict.installed_jobs
-    assert res_config_file.env_vars == res_config_dict.env_vars
-    assert res_config_file.random_seed == res_config_dict.random_seed
-    assert res_config_file.ert_workflow_list == res_config_dict.ert_workflow_list
-    assert res_config_file.ert_templates == res_config_dict.ert_templates
-    assert res_config_file.ensemble_config == res_config_dict.ensemble_config
-    assert res_config_file.model_config == res_config_dict.model_config
+    assert res_config_dict.substitution_list == res_config_file.substitution_list
+    assert res_config_dict.installed_jobs == res_config_file.installed_jobs
+    assert res_config_dict.env_vars == res_config_file.env_vars
+    assert res_config_dict.random_seed == res_config_file.random_seed
+    assert res_config_dict.ert_workflow_list == res_config_file.ert_workflow_list
+    assert res_config_dict.ert_templates == res_config_file.ert_templates
+    assert res_config_dict.ensemble_config == res_config_file.ensemble_config
+    assert res_config_dict.model_config == res_config_file.model_config
     # https://github.com/equinor/ert/issues/2571
     # assert res_config_file.queue_config == res_config_dict.queue_config
 

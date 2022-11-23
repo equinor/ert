@@ -215,6 +215,15 @@ class ResConfig:
             "<CONFIG_FILE_BASE>": config_file_basename,
         }
 
+    @staticmethod
+    def apply_config_content_defaults(content_dict: dict, config_path: str):
+        if ConfigKeys.DATAROOT not in content_dict:
+            content_dict[ConfigKeys.DATAROOT] = config_path
+        if ConfigKeys.ENSPATH not in content_dict:
+            content_dict[ConfigKeys.ENSPATH] = os.path.join(
+                config_path, ModelConfig.DEFAULT_ENSPATH
+            )
+
     # build configs from config file or everest dict
     def _alloc_from_content(self, user_config_file=None, config=None):
         site_config_parser = ConfigParser()
@@ -256,11 +265,12 @@ class ResConfig:
         )
 
         self.substitution_list = self.create_substitution_list_from_config_content(
-            config_content=user_config_content
+            config_content=user_config_content, config_path=self.config_path
         )
         config_content_dict = config_content_as_dict(
             user_config_content, site_config_content
         )
+        ResConfig.apply_config_content_defaults(config_content_dict, self.config_path)
         self.env_vars = self._read_env_vars(config_content_dict)
         self.random_seed = config_content_dict.get(ConfigKeys.RANDOM_SEED, None)
         self.analysis_config = AnalysisConfig.from_dict(config_content_dict)
@@ -368,7 +378,7 @@ class ResConfig:
             )
 
         self.model_config = ModelConfig.from_dict(
-            self.ensemble_config.refcase, self.config_path, config_content_dict
+            self.ensemble_config.refcase, config_content_dict
         )
 
     # build configs from config dict
@@ -376,7 +386,6 @@ class ResConfig:
         site_config_parser = ConfigParser()
         init_site_config_parser(site_config_parser)
         # treat the default config dir
-        self.config_path = os.getcwd()
 
         self.num_cpu_from_config = config_dict.get(ConfigKeys.NUM_CPU, None)
         self.num_cpu_from_data_file = (
@@ -388,9 +397,13 @@ class ResConfig:
             else None
         )
 
-        self.substitution_list = self.create_substitution_list_from_dict(
-            config_dict=config_dict
-        )
+        self.substitution_list = SubstitutionList()
+        for key, value in config_dict.get(ConfigKeys.DEFINE_KEY, []):
+            self.substitution_list.addItem(key, value)
+
+        for key, value in config_dict.get(ConfigKeys.DATA_KW_KEY, []):
+            self.substitution_list.addItem(key, value)
+
         self.env_vars = self._read_env_vars(config_dict)
         self.random_seed = config_dict.get(ConfigKeys.RANDOM_SEED, None)
         self.analysis_config = AnalysisConfig.from_dict(config_dict=config_dict)
@@ -488,7 +501,7 @@ class ResConfig:
                 f"`{config_dict[ConfigKeys.JOBNAME]}` instead"
             )
         self.model_config = ModelConfig.from_dict(
-            self.ensemble_config.refcase, self.config_path, config_dict
+            self.ensemble_config.refcase, config_dict
         )
 
     @staticmethod
@@ -832,14 +845,27 @@ class ResConfig:
 
         return config_content
 
-    @staticmethod
-    def _create_substitution_list(
-        defines: Dict[str, str],
-        data_kw: Dict[str, str],
-        config_dir: str,
-        runpath_file_name: str,
-        num_cpu: int,
-    ) -> SubstitutionList:
+    def create_substitution_list_from_config_content(
+        self, config_content: ConfigContent, config_path: str
+    ):
+        runpath_file_name = (
+            config_content.getValue(ConfigKeys.RUNPATH_FILE)
+            if ConfigKeys.RUNPATH_FILE in config_content
+            else ConfigKeys.RUNPATH_LIST_FILE
+        )
+        config_dir = (
+            config_content.getValue(ConfigKeys.CONFIG_DIRECTORY)
+            if ConfigKeys.CONFIG_DIRECTORY in config_content
+            else config_path
+        )
+
+        defines = dict(config_content.get_const_define_list())
+        num_cpu = self.preferred_num_cpu()
+
+        data_kw = {}
+        if ConfigKeys.DATA_KW_KEY in config_content:
+            for data_kw_definition in config_content[ConfigKeys.DATA_KW_KEY]:
+                data_kw[data_kw_definition[0]] = data_kw_definition[1]
         subst_list = SubstitutionList()
 
         # only needed by everest's init from `config` path
@@ -855,50 +881,13 @@ class ResConfig:
                 os.path.join(defines["<CONFIG_PATH>"], runpath_file_name)
             )
         else:
-            runpath_file_path = os.path.abspath(runpath_file_name)
+            runpath_file_path = os.path.join(config_path, runpath_file_name)
         subst_list.addItem("<RUNPATH_FILE>", runpath_file_path)
         subst_list.addItem(
             "<NUM_CPU>",
             str(num_cpu),
         )
         return subst_list
-
-    def create_substitution_list_from_dict(self, config_dict: dict):
-        init_args = {
-            "defines": config_dict.get(ConfigKeys.DEFINE_KEY, {}),
-            "data_kw": config_dict.get(ConfigKeys.DATA_KW_KEY, {}),
-            "config_dir": config_dict.get(ConfigKeys.CONFIG_DIRECTORY, os.getcwd()),
-            "runpath_file_name": config_dict.get(
-                ConfigKeys.RUNPATH_FILE, ConfigKeys.RUNPATH_LIST_FILE
-            ),
-            "num_cpu": self.preferred_num_cpu(),
-        }
-        return self._create_substitution_list(**init_args)
-
-    def create_substitution_list_from_config_content(
-        self, config_content: ConfigContent
-    ):
-        init_args = {
-            "runpath_file_name": (
-                config_content.getValue(ConfigKeys.RUNPATH_FILE)
-                if ConfigKeys.RUNPATH_FILE in config_content
-                else ConfigKeys.RUNPATH_LIST_FILE
-            ),
-            "data_kw": {},
-            "config_dir": (
-                config_content.getValue(ConfigKeys.CONFIG_DIRECTORY)
-                if ConfigKeys.CONFIG_DIRECTORY in config_content
-                else os.getcwd()
-            ),
-            "defines": dict(config_content.get_const_define_list()),
-            "num_cpu": self.preferred_num_cpu(),
-        }
-
-        if ConfigKeys.DATA_KW_KEY in config_content:
-            for data_kw_definition in config_content[ConfigKeys.DATA_KW_KEY]:
-                init_args["data_kw"][data_kw_definition[0]] = data_kw_definition[1]
-
-        return self._create_substitution_list(**init_args)
 
     def preferred_num_cpu(self) -> int:
         if self.num_cpu_from_config is not None:

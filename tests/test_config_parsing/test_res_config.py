@@ -9,7 +9,7 @@ from ert._c_wrappers.config.config_parser import ConfigValidationError
 from ert._c_wrappers.enkf import ResConfig
 from ert._c_wrappers.enkf.config_keys import ConfigKeys
 
-from .config_dict_generator import config_dicts, to_config_file
+from .config_dict_generator import config_generators, to_config_file
 
 
 def touch(filename):
@@ -45,11 +45,10 @@ LICENSE_PATH license
     )
 
 
-def test_res_config_minimal_dict_init(tmpdir):
-    with tmpdir.as_cwd():
-        config_dict = {ConfigKeys.NUM_REALIZATIONS: 1}
-        res_config = ResConfig(config_dict=config_dict)
-        assert res_config is not None
+def test_res_config_minimal_dict_init():
+    config_dict = {ConfigKeys.NUM_REALIZATIONS: 1, ConfigKeys.ENSPATH: "test"}
+    res_config = ResConfig(config_dict=config_dict)
+    assert res_config is not None
 
 
 def test_bad_user_config_file_error_message(tmp_path):
@@ -95,33 +94,37 @@ def test_res_config_parses_date():
     assert res_config.model_config.runpath_format_string == expected_run_path
 
 
-@pytest.mark.usefixtures("use_tmpdir", "set_site_config")
-@given(config_dicts())
-def test_env_vars_same_as_from_file(config_dict):
+@pytest.mark.usefixtures("set_site_config")
+@given(config_generators())
+def test_env_vars_same_as_from_file(tmp_path_factory, config_generator):
     filename = "config.ert"
-    to_config_file(filename, config_dict)
-    assert ResConfig(config_dict=config_dict).env_vars == ResConfig(filename).env_vars
+    with config_generator(tmp_path_factory, filename) as config_dict:
+        assert (
+            ResConfig(config_dict=config_dict).env_vars == ResConfig(filename).env_vars
+        )
 
 
-@pytest.mark.usefixtures("use_tmpdir")
-@given(config_dicts())
-def test_res_config_throws_on_missing_forward_model_job(config_dict):
+@given(config_generators())
+def test_res_config_throws_on_missing_forward_model_job(
+    tmp_path_factory, config_generator
+):
     filename = "config.ert"
-    config_dict.pop(ConfigKeys.INSTALL_JOB)
-    config_dict.pop(ConfigKeys.INSTALL_JOB_DIRECTORY)
-    config_dict[ConfigKeys.FORWARD_MODEL].append(
-        {
-            ConfigKeys.NAME: "this-is-not-the-job-you-are-looking-for",
-            ConfigKeys.ARGLIST: "<WAVE-HAND>=casually",
-        }
-    )
+    with config_generator(tmp_path_factory) as config_dict:
+        config_dict.pop(ConfigKeys.INSTALL_JOB)
+        config_dict.pop(ConfigKeys.INSTALL_JOB_DIRECTORY)
+        config_dict[ConfigKeys.FORWARD_MODEL].append(
+            {
+                ConfigKeys.NAME: "this-is-not-the-job-you-are-looking-for",
+                ConfigKeys.ARGLIST: "<WAVE-HAND>=casually",
+            }
+        )
 
-    to_config_file(filename, config_dict)
+        to_config_file(filename, config_dict)
 
-    with pytest.raises(expected_exception=ValueError, match="Could not find job"):
-        ResConfig(user_config_file=filename)
-    with pytest.raises(expected_exception=ValueError, match="Could not find job"):
-        ResConfig(config_dict=config_dict)
+        with pytest.raises(expected_exception=ValueError, match="Could not find job"):
+            ResConfig(user_config_file=filename)
+        with pytest.raises(expected_exception=ValueError, match="Could not find job"):
+            ResConfig(config_dict=config_dict)
 
 
 @pytest.mark.usefixtures("use_tmpdir", "set_site_config")
@@ -141,3 +144,13 @@ def test_that_non_bracketed_defines_warns(bad_define, capsys):
 
     _ = ResConfig("test.ert")
     assert "Using DEFINE or DATA_KW with substitution" in capsys.readouterr().err
+
+
+@pytest.mark.usefixtures("set_site_config")
+@given(config_generators())
+def test_site_config_dict_same_as_from_file(tmp_path_factory, config_generator):
+    filename = "config.ert"
+    with config_generator(tmp_path_factory, filename) as config_dict:
+        assert (
+            ResConfig(config_dict=config_dict).env_vars == ResConfig(filename).env_vars
+        )
