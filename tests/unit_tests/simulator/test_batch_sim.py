@@ -4,6 +4,7 @@ import time
 
 import pytest
 
+from ert._c_wrappers.enkf import ResConfig
 from ert._c_wrappers.job_queue import JobStatusType
 from ert.simulator import BatchSimulator
 
@@ -354,8 +355,19 @@ def test_batch_simulation_suffixes(batch_sim_example):
             assert act == pytest.approx(exp)
 
 
-def test_stop_sim(batch_sim_example):
-    res_config = batch_sim_example
+def test_stop_sim(copy_case):
+    copy_case("batch_sim")
+    with open("sleepy_time.ert", "a") as f:
+        f.write(
+            """
+LOAD_WORKFLOW_JOB workflows/jobs/REALIZATION_NUMBER
+LOAD_WORKFLOW workflows/REALIZATION_NUMBER_WORKFLOW
+HOOK_WORKFLOW REALIZATION_NUMBER_WORKFLOW PRE_SIMULATION
+LOAD_WORKFLOW_JOB workflows/jobs/REALIZATION_NUMBER
+        """
+        )
+
+    res_config = ResConfig("sleepy_time.ert")
 
     rsim = BatchSimulator(
         res_config,
@@ -364,46 +376,6 @@ def test_stop_sim(batch_sim_example):
     )
 
     case_name = "MyCaseName_123"
-
-    # Starting a simulation which should actually run through.
-    ctx = rsim.start(
-        case_name,
-        [
-            (
-                2,
-                {
-                    "WELL_ORDER": {"W1": 1, "W2": 2, "W3": 3},
-                    "WELL_ON_OFF": {"W1": 4, "W2": 5, "W3": 6},
-                },
-            ),
-            (
-                1,
-                {
-                    "WELL_ORDER": {"W1": 7, "W2": 8, "W3": 9},
-                    "WELL_ON_OFF": {"W1": 10, "W2": 11, "W3": 12},
-                },
-            ),
-        ],
-    )
-
-    ctx.stop()
-    status = ctx.status
-
-    assert status.complete == 0
-    assert status.running == 0
-
-    runpath = f"storage/batch_sim/runpath/{case_name}/realization-0"
-    assert os.path.exists(runpath)
-
-
-def test_workflow_pre_simulation(batch_sim_example):
-    rsim = BatchSimulator(
-        batch_sim_example,
-        {"WELL_ORDER": ["W1", "W2", "W3"], "WELL_ON_OFF": ["W1", "W2", "W3"]},
-        ["ORDER", "ON_OFF"],
-    )
-
-    case_name = "TestCase42"
     case_data = [
         (
             2,
@@ -423,17 +395,18 @@ def test_workflow_pre_simulation(batch_sim_example):
 
     # Starting a simulation which should actually run through.
     ctx = rsim.start(case_name, case_data)
-    ctx.stop()
 
+    ctx.stop()
     status = ctx.status
 
     assert status.complete == 0
     assert status.running == 0
-    for idx, _ in enumerate(case_data):
-        path = (
-            f"storage/batch_sim/runpath/{case_name}"
-            f"/realization-{idx}/iter-0/realization.number"
-        )
+
+    paths = (
+        "runpath/realization-0-2/iter-0/realization.number",
+        "runpath/realization-1-1/iter-0/realization.number",
+    )
+    for idx, path in enumerate(paths):
         assert os.path.isfile(path)
         with open(path, "r") as f:
             assert f.readline(1) == str(idx)
