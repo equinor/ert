@@ -102,6 +102,7 @@ args = dict(
             "_c_wrappers/fm/rms/rms_config.yml",
             "_c_wrappers/fm/ecl/ecl300_config.yml",
             "_c_wrappers/fm/ecl/ecl100_config.yml",
+            "_c_wrappers/job_queue/qstat_proxy.sh",
         ],
     },
     include_package_data=True,
@@ -160,7 +161,6 @@ args = dict(
             "job_dispatch.py = _ert_job_runner.job_dispatch:main",
         ]
     },
-    scripts=["src/clib/lib/job_queue/qstat_proxy.sh"],
     cmake_args=[
         "-DECL_INCLUDE_DIRS=" + get_ecl_include(),
         # we can safely pass OSX_DEPLOYMENT_TARGET as it's ignored on

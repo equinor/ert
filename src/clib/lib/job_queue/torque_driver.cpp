@@ -13,8 +13,13 @@
 #include <ert/util/util.hpp>
 
 #include <ert/job_queue/torque_driver.hpp>
+#include <ert/python.hpp>
 
 namespace fs = std::filesystem;
+
+namespace {
+fs::path DEFAULT_QSTAT_CMD = TORQUE_DEFAULT_QSTAT_CMD;
+}
 
 struct torque_driver_struct {
     char *queue_name;
@@ -59,7 +64,7 @@ void *torque_driver_alloc() {
     torque_driver_set_option(torque_driver, TORQUE_QSUB_CMD,
                              TORQUE_DEFAULT_QSUB_CMD);
     torque_driver_set_option(torque_driver, TORQUE_QSTAT_CMD,
-                             TORQUE_DEFAULT_QSTAT_CMD);
+                             DEFAULT_QSTAT_CMD.c_str());
     torque_driver_set_option(torque_driver, TORQUE_QSTAT_OPTIONS,
                              TORQUE_DEFAULT_QSTAT_OPTIONS);
     torque_driver_set_option(torque_driver, TORQUE_QDEL_CMD,
@@ -356,7 +361,7 @@ static int torque_job_parse_qsub_stdout(const torque_driver_type *driver,
 
 void torque_job_create_submit_script(const char *script_filename,
                                      const char *submit_cmd, int argc,
-                                     const char **job_argv) {
+                                     const char *const *job_argv) {
     if (submit_cmd == NULL) {
         util_abort("%s: cannot create submit script, because there is no "
                    "executing commmand specified.",
@@ -744,4 +749,43 @@ int torque_driver_get_submit_sleep(const torque_driver_type *driver) {
 
 FILE *torque_driver_get_debug_stream(const torque_driver_type *driver) {
     return driver->debug_stream;
+}
+
+ERT_CLIB_SUBMODULE("torque_driver", m) {
+    using namespace py::literals;
+
+    /* Determine installed 'qstat_proxy.sh' location */
+    auto ert = py::module_::import("ert");
+
+    py::str file = ert.attr("__file__");
+    fs::path path = static_cast<std::string>(file);
+    DEFAULT_QSTAT_CMD =
+        path.parent_path() / "_c_wrappers/job_queue/qstat_proxy.sh";
+
+    /* Expose for tests */
+    auto pathlib = py::module_::import("pathlib");
+    auto py_path = pathlib.attr("Path")(DEFAULT_QSTAT_CMD.c_str());
+    m.add_object("DEFAULT_QSTAT_CMD", py_path);
+
+    py::enum_<job_status_type>(m, "JobStatusType", py::arithmetic())
+        .export_values();
+
+    m.def(
+        "create_submit_script",
+        [](const char *script_filename, const char *submit_cmd,
+           const std::vector<std::string> &job_argv) {
+            std::vector<const char *> args;
+            for (auto &arg : job_argv)
+                args.push_back(arg.c_str());
+            torque_job_create_submit_script(script_filename, submit_cmd,
+                                            args.size(), args.data());
+        },
+        "script_filename"_a, "submit_cmd"_a, "job_argv"_a);
+
+    m.def(
+        "parse_status",
+        [](const char *qstat_file, const char *jobnr_char) {
+            return torque_driver_parse_status(qstat_file, jobnr_char);
+        },
+        "qstat_file"_a, "jobnr_char"_a);
 }

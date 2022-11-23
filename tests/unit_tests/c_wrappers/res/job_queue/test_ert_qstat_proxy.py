@@ -3,7 +3,6 @@ import enum
 import fcntl
 import json
 import os
-import shutil
 import subprocess
 import sys
 import time
@@ -12,7 +11,9 @@ from pathlib import Path
 import pytest
 import testpath
 
-PROXYSCRIPT = shutil.which("qstat_proxy.sh")
+from ert import _clib
+
+PROXYSCRIPT = _clib.torque_driver.DEFAULT_QSTAT_CMD
 
 EXAMPLE_QSTAT_CONTENT = """
 Job Id: 15399.s034-lcam
