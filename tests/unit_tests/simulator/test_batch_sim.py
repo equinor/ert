@@ -354,8 +354,8 @@ def test_batch_simulation_suffixes(batch_sim_example):
             assert act == pytest.approx(exp)
 
 
-def test_stop_sim(batch_sim_example):
-    res_config = batch_sim_example
+def test_stop_sim(setup_case):
+    res_config = setup_case("batch_sim", "sleepy_time.ert")
 
     rsim = BatchSimulator(
         res_config,
@@ -392,8 +392,7 @@ def test_stop_sim(batch_sim_example):
     assert status.complete == 0
     assert status.running == 0
 
-    runpath = f"storage/batch_sim/runpath/{case_name}/realization-0"
-    assert os.path.exists(runpath)
+    assert os.path.exists(f"runpath/realization-0-2")
 
 
 def test_workflow_pre_simulation(batch_sim_example):
