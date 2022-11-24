@@ -19,7 +19,6 @@ from ert.__main__ import ert_parser
 from ert._c_wrappers.config.config_parser import ConfigValidationError
 from ert._c_wrappers.enkf import EnKFMain, ResConfig
 from ert._clib import update
-from ert._clib.update import Parameter
 from ert.cli import ENSEMBLE_SMOOTHER_MODE
 from ert.cli.main import run_cli
 from ert.libres_facade import LibresFacade
@@ -251,7 +250,7 @@ def test_field_param(tmpdir, config_str, expect_forward_init):
             "SURFACE MY_PARAM OUTPUT_FILE:surf.irap INIT_FILES:surf.irap BASE_SURFACE:surf0.irap FORWARD_INIT:True",  # noqa
             True,
             0,
-            "surf.irap - failed to initialize node: MY_PARAM",
+            "Failed to initialize node 'MY_PARAM' in file surf.irap",
         ),
     ],
 )
@@ -444,9 +443,7 @@ def test_that_first_three_parameters_sampled_snapshot(tmpdir):
             fh.writelines("MY_KEYWORD NORMAL 0 1")
         ert = create_runpath("config.ert", [True] * 3)
         fs = ert.getCurrentFileSystem()
-        prior = fs.load_parameter(
-            ert.ensembleConfig(), list(range(3)), Parameter("KW_NAME")
-        )
+        prior = fs.load_gen_kw("KW_NAME", list(range(3)))
         expected = [-0.8814228, 1.5847818, 1.009956]
         np.testing.assert_almost_equal(prior, np.array([expected]))
 
