@@ -1,8 +1,10 @@
 import logging
+import math
+import shutil
 from datetime import datetime
 from multiprocessing.pool import ThreadPool
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import numpy.typing as npt
@@ -25,6 +27,7 @@ if TYPE_CHECKING:
     from ecl.util.util import IntVector
 
     from ert._c_wrappers.enkf.model_config import ModelConfig
+    from ert._c_wrappers.enkf.config import GenKwConfig
     from ert._c_wrappers.enkf.run_arg import RunArg
     from ert._c_wrappers.enkf.state_map import StateMap
 
@@ -97,11 +100,14 @@ class EnkfFs(BaseCClass):
 
     @property
     def is_initalized(self) -> bool:
-        return _clib.enkf_fs.is_initialized(
-            self,
-            self._ensemble_config,
-            self._ensemble_config.parameters,
-            self._ensemble_size,
+        return (
+            _clib.enkf_fs.is_initialized(
+                self,
+                self._ensemble_config,
+                self._ensemble_config.parameters,
+                self._ensemble_size,
+            )
+            or self._has_parameters()
         )
 
     def realizations_initialized(self, realizations: List[int]):
@@ -154,6 +160,77 @@ class EnkfFs(BaseCClass):
         state_map = self.getStateMap()
         return state_map.realizationList(state)
 
+    def _has_parameters(self) -> bool:
+        """
+        Checks if a parameter folder has been created
+        """
+        for path in self.mount_point.iterdir():
+            if "gen-kw" in str(path):
+                return True
+
+    def save_gen_kw(
+        self,
+        parameter_name: str,
+        parameter_keys: List[str],
+        realization: int,
+        data: npt.ArrayLike,
+    ) -> None:
+        output_path = self.mount_point / f"gen-kw-{realization}"
+        Path.mkdir(output_path, exist_ok=True)
+
+        np.save(output_path / parameter_name, data)
+        with open(output_path / f"{parameter_name}-keys", "w") as f:
+            f.write("\n".join(parameter_keys))
+
+        self.getStateMap().update_matching(
+            realization,
+            RealizationStateEnum.STATE_UNDEFINED,
+            RealizationStateEnum.STATE_INITIALIZED,
+        )
+
+    def _load_gen_kw_realization(
+        self, key: str, realization: int
+    ) -> Tuple["npt.NDArray[np.double]", List[str]]:
+        input_path = self.mount_point / f"gen-kw-{realization}"
+        if not input_path.exists():
+            raise KeyError(f"Unable to load GEN_KW for key: {key}")
+
+        np_data = np.load(input_path / f"{key}.npy")
+        with open(input_path / f"{key}-keys", "r") as f:
+            keys = [k.strip() for k in f.readlines()]
+
+        return np_data, keys
+
+    def load_gen_kw_as_dict(
+        self, key: str, realization: int, gen_kw_config: "GenKwConfig"
+    ) -> Dict[str, float]:
+        data, keys = self._load_gen_kw_realization(key, realization)
+
+        transformed = {
+            parameter_key: gen_kw_config.transform(index, value)
+            for index, (parameter_key, value) in enumerate(zip(keys, data))
+        }
+
+        result = {key: transformed}
+
+        log10 = {
+            parameter_key: math.log(value, 10)
+            for index, (parameter_key, value) in enumerate(transformed.items())
+            if gen_kw_config.shouldUseLogScale(index)
+        }
+        if log10:
+            result.update({f"LOG10_{key}": log10})
+        return result
+
+    def load_gen_kw(
+        self, key: str, realizations: List[int]
+    ) -> "npt.NDArray[np.double]":
+        result = []
+        for realization in realizations:
+            data, _ = self._load_gen_kw_realization(key, realization)
+            result.append(data)
+        return np.stack(result).T
+
     def save_parameters(
         self,
         config_node: "EnkfConfigNode",
@@ -173,7 +250,7 @@ class EnkfFs(BaseCClass):
 
     def copy_from_case(
         self, other: "EnkfFs", report_step: int, nodes: List[str], active: List[bool]
-    ):
+    ) -> None:
         """
         This copies parameters from self into other, checking if nodes exists
         in self before performing copy.
@@ -186,6 +263,34 @@ class EnkfFs(BaseCClass):
             nodes,
             active,
         )
+        self._copy_parameter_files(other, nodes, [i for i, b in enumerate(active) if b])
+
+    def _copy_parameter_files(
+        self, to: "EnkfFs", parameter_keys: List[str], realizations: List[int]
+    ) -> None:
+        """
+        Copies selected parameter files from one storage to another.
+        Filters on realization and parameter keys
+        """
+        for gen_kw_folder in self.mount_point.glob("gen-kw-*"):
+            files_to_copy = []
+            realization = int(str(gen_kw_folder).rsplit("-", maxsplit=1)[-1])
+            if realization in realizations:
+                for parameter_file in gen_kw_folder.iterdir():
+                    base_name = str(parameter_file.stem)
+                    if base_name in parameter_keys:
+                        files_to_copy.append(parameter_file.name)
+                        files_to_copy.append(f"{base_name}-keys")
+
+            if not files_to_copy:
+                continue
+
+            Path.mkdir(to.mount_point / gen_kw_folder.stem)
+            for f in files_to_copy:
+                shutil.copy(
+                    src=self.mount_point / gen_kw_folder.stem / f,
+                    dst=to.mount_point / gen_kw_folder.stem / f,
+                )
 
     def save_summary_data(
         self,
