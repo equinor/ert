@@ -13,7 +13,7 @@ from iterative_ensemble_smoother.experimental import (
 )
 from pandas import DataFrame
 
-from ert._c_wrappers.enkf.enums import ActiveMode, RealizationStateEnum
+from ert._c_wrappers.enkf.enums import ActiveMode, ErtImplType, RealizationStateEnum
 from ert._c_wrappers.enkf.row_scaling import RowScaling
 from ert._clib import update
 
@@ -120,12 +120,18 @@ def _save_temporary_storage_to_disk(
 ) -> None:
     for key, matrix in temporary_storage.items():
         config_node = ensemble_config.getNode(key)
-        target_fs.save_parameters(
-            config_node=config_node,
-            iens_active_index=iens_active_index,
-            parameter=update.Parameter(key),
-            values=matrix,
-        )
+        if config_node.getImplementationType() == ErtImplType.GEN_KW:
+            gen_kw_config = config_node.getKeywordModelConfig()
+            parameter_keys = list(gen_kw_config)
+            for i, realization in enumerate(iens_active_index):
+                target_fs.save_gen_kw(key, parameter_keys, realization, matrix[:, i])
+        else:
+            target_fs.save_parameters(
+                config_node=config_node,
+                iens_active_index=iens_active_index,
+                parameter=update.Parameter(key),
+                values=matrix,
+            )
 
 
 def _create_temporary_parameter_storage(
@@ -136,11 +142,14 @@ def _create_temporary_parameter_storage(
     temporary_storage = {}
     for key in ensemble_config.parameters:
         config_node = ensemble_config.getNode(key)
-        matrix = source_fs.load_parameter(
-            config_node=config_node,
-            iens_active_index=iens_active_index,
-            parameter=update.Parameter(key),
-        )
+        if config_node.getImplementationType() == ErtImplType.GEN_KW:
+            matrix = source_fs.load_gen_kw(key, iens_active_index)
+        else:
+            matrix = source_fs.load_parameter(
+                config_node=config_node,
+                iens_active_index=iens_active_index,
+                parameter=update.Parameter(key),
+            )
         temporary_storage[key] = matrix
     return temporary_storage
 
