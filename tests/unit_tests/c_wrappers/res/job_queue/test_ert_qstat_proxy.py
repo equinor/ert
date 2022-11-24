@@ -3,7 +3,6 @@ import enum
 import fcntl
 import json
 import os
-import shutil
 import subprocess
 import sys
 import time
@@ -12,7 +11,9 @@ from pathlib import Path
 import pytest
 import testpath
 
-PROXYSCRIPT = shutil.which("qstat_proxy.sh")
+PROXYSCRIPT = os.path.normpath(
+    os.path.join(__file__, "../../../../../../src/clib/lib/job_queue/qstat_proxy.sh")
+)
 
 EXAMPLE_QSTAT_CONTENT = """
 Job Id: 15399.s034-lcam
