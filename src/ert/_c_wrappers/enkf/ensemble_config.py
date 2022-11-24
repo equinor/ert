@@ -69,7 +69,6 @@ class EnsembleConfig(BaseCClass):
     _alloc_full = ResPrototype("void* ensemble_config_alloc_full(char*)", bind=False)
     _free = ResPrototype("void ensemble_config_free( ens_config )")
     _has_key = ResPrototype("bool ensemble_config_has_key( ens_config , char* )")
-    _size = ResPrototype("int ensemble_config_get_size( ens_config)")
     _get_node = ResPrototype(
         "enkf_config_node_ref ensemble_config_get_node( ens_config , char*)"
     )
@@ -130,18 +129,12 @@ class EnsembleConfig(BaseCClass):
         schedule_file: Optional[List] = None,
         field_list=None,
     ):
-        if gen_kw_list is None:
-            gen_kw_list = []
-        if gen_data_list is None:
-            gen_data_list = []
-        if surface_list is None:
-            surface_list = []
-        if summary_list is None:
-            summary_list = []
-        if schedule_file is None:
-            schedule_file = []
-        if field_list is None:
-            field_list = []
+        gen_kw_list = [] if gen_kw_list is None else gen_kw_list
+        gen_data_list = [] if gen_data_list is None else gen_data_list
+        surface_list = [] if surface_list is None else surface_list
+        summary_list = [] if summary_list is None else summary_list
+        schedule_file = [] if schedule_file is None else schedule_file
+        field_list = [] if field_list is None else field_list
 
         self._grid_file = grid_file
         self._refcase_file = ref_case_file
@@ -243,21 +236,21 @@ class EnsembleConfig(BaseCClass):
             init_file = surface.get(ConfigKeys.INIT_FILES)
             out_file = surface.get(ConfigKeys.OUT_FILE)
             base_surface = surface.get(ConfigKeys.BASE_SURFACE_KEY)
-            forward_int = surface.get(ConfigKeys.FORWARD_INIT)
+            forward_init = surface.get(ConfigKeys.FORWARD_INIT)
         else:
             options = _option_dict(surface, 1)
             name = surface[0]
             init_file = options.get(ConfigKeys.INIT_FILES)
             out_file = options.get("OUTPUT_FILE")
             base_surface = options.get(ConfigKeys.BASE_SURFACE_KEY)
-            forward_int = _str_to_bool(options.get(ConfigKeys.FORWARD_INIT))
+            forward_init = _str_to_bool(options.get(ConfigKeys.FORWARD_INIT))
 
         return EnkfConfigNode.create_surface(
             name,
             init_file,
             out_file,
             base_surface,
-            forward_int,
+            forward_init,
         )
 
     @staticmethod
@@ -358,9 +351,6 @@ class EnsembleConfig(BaseCClass):
         )
 
         return ens_config
-
-    def __len__(self):
-        return self._size()
 
     def _node_info(self, node: str) -> str:
         impl_type = ErtImplType.from_string(node)

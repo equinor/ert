@@ -33,14 +33,10 @@ namespace fs = std::filesystem;
 static auto logger = ert::get_logger("ensemble_config");
 
 struct ensemble_config_struct {
-    pthread_mutex_t mutex;
-    char *
-        gen_kw_format_string; /* format string used when creating gen_kw search/replace strings. */
     std::map<std::string, enkf_config_node_type *>
         config_nodes; /* a hash of enkf_config_node instances - which again contain pointers to e.g. field_config objects.  */
     field_trans_table_type *
         field_trans_table; /* a table of the transformations which are available to apply on fields. */
-    bool have_forward_init;
     summary_key_matcher_type *summary_key_matcher;
 };
 
@@ -73,17 +69,24 @@ struct ensemble_config_struct {
       tagged_string = util_alloc_sprintf( gen_kw_format_string , parameter_name );
 
 */
-void ensemble_config_set_gen_kw_format(ensemble_config_type *ensemble_config,
-                                       const char *gen_kw_format_string) {
-    if (!util_string_equal(gen_kw_format_string,
-                           ensemble_config->gen_kw_format_string)) {
+
+field_trans_table_type *
+ensemble_config_get_trans_table(const ensemble_config_type *ensemble_config) {
+    return ensemble_config->field_trans_table;
+}
+
+ensemble_config_type *
+ensemble_config_alloc_full(const char *gen_kw_format_string) {
+    ensemble_config_type *ensemble_config = new ensemble_config_type();
+
+    ensemble_config->field_trans_table = field_trans_table_alloc();
+    ensemble_config->summary_key_matcher = summary_key_matcher_alloc();
+
+    if (strcmp(gen_kw_format_string, DEFAULT_GEN_KW_TAG_FORMAT) != 0) {
         stringlist_type *gen_kw_keys =
             ensemble_config_alloc_keylist_from_impl_type(ensemble_config,
                                                          GEN_KW);
-        int i;
-        ensemble_config->gen_kw_format_string = util_realloc_string_copy(
-            ensemble_config->gen_kw_format_string, gen_kw_format_string);
-        for (i = 0; i < stringlist_get_size(gen_kw_keys); i++) {
+        for (int i = 0; i < stringlist_get_size(gen_kw_keys); i++) {
             enkf_config_node_type *config_node = ensemble_config_get_node(
                 ensemble_config, stringlist_iget(gen_kw_keys, i));
             gen_kw_config_update_tag_format(
@@ -92,38 +95,13 @@ void ensemble_config_set_gen_kw_format(ensemble_config_type *ensemble_config,
         }
         stringlist_free(gen_kw_keys);
     }
-}
 
-field_trans_table_type *
-ensemble_config_get_trans_table(const ensemble_config_type *ensemble_config) {
-    return ensemble_config->field_trans_table;
-}
-
-static ensemble_config_type *ensemble_config_alloc_empty(void) {
-    ensemble_config_type *ensemble_config = new ensemble_config_type();
-
-    ensemble_config->field_trans_table = field_trans_table_alloc();
-    ensemble_config->gen_kw_format_string =
-        util_alloc_string_copy(DEFAULT_GEN_KW_TAG_FORMAT);
-    ensemble_config->have_forward_init = false;
-    ensemble_config->summary_key_matcher = summary_key_matcher_alloc();
-    pthread_mutex_init(&ensemble_config->mutex, NULL);
-
-    return ensemble_config;
-}
-
-ensemble_config_type *
-ensemble_config_alloc_full(const char *gen_kw_format_string) {
-    ensemble_config_type *ensemble_config = ensemble_config_alloc_empty();
-    ensemble_config_set_gen_kw_format(ensemble_config, gen_kw_format_string);
-    pthread_mutex_init(&ensemble_config->mutex, NULL);
     return ensemble_config;
 }
 
 void ensemble_config_free(ensemble_config_type *ensemble_config) {
     field_trans_table_free(ensemble_config->field_trans_table);
     summary_key_matcher_free(ensemble_config->summary_key_matcher);
-    free(ensemble_config->gen_kw_format_string);
 
     for (auto &config_pair : ensemble_config->config_nodes)
         enkf_config_node_free(config_pair.second);
@@ -159,7 +137,14 @@ enkf_config_node_type *ensemble_config_get_or_create_summary_node(
 
 bool ensemble_config_have_forward_init(
     const ensemble_config_type *ensemble_config) {
-    return ensemble_config->have_forward_init;
+
+    for (auto const &[node_key, enkf_config_node] :
+         ensemble_config->config_nodes) {
+        if (enkf_config_node_use_forward_init(enkf_config_node))
+            return true;
+    }
+
+    return false;
 }
 
 void ensemble_config_add_node(ensemble_config_type *ensemble_config,
@@ -172,8 +157,6 @@ void ensemble_config_add_node(ensemble_config_type *ensemble_config,
                        __func__, key);
 
         ensemble_config->config_nodes[key] = node;
-        ensemble_config->have_forward_init |=
-            enkf_config_node_use_forward_init(node);
     } else
         util_abort("%s: internal error - tried to add NULL node to ensemble "
                    "configuration \n",
@@ -270,18 +253,13 @@ ensemble_config_alloc_keylist_from_impl_type(const ensemble_config_type *config,
     return key_list;
 }
 
-bool ensemble_config_has_impl_type(const ensemble_config_type *config,
-                                   const ert_impl_type impl_type) {
-    for (const auto &config_pair : config->config_nodes) {
-        if (impl_type == enkf_config_node_get_impl_type(config_pair.second))
+bool ensemble_config_require_summary(const ensemble_config_type *ens_config) {
+    for (const auto &config_pair : ens_config->config_nodes) {
+        if (SUMMARY == enkf_config_node_get_impl_type(config_pair.second))
             return true;
     }
 
     return false;
-}
-
-bool ensemble_config_require_summary(const ensemble_config_type *ens_config) {
-    return ensemble_config_has_impl_type(ens_config, SUMMARY);
 }
 
 /**
@@ -337,15 +315,10 @@ const summary_key_matcher_type *ensemble_config_get_summary_key_matcher(
     return ensemble_config->summary_key_matcher;
 }
 
-int ensemble_config_get_size(const ensemble_config_type *ensemble_config) {
-    return ensemble_config->config_nodes.size();
-}
-
 std::pair<fw_load_status, std::string>
 ensemble_config_forward_init(const ensemble_config_type *ens_config,
                              const int iens, const std::string &run_path,
                              enkf_fs_type *sim_fs) {
-
     auto result = LOAD_SUCCESSFUL;
     std::string error_msg;
     {
@@ -385,6 +358,11 @@ ensemble_config_forward_init(const ensemble_config_type *ens_config,
 
 ERT_CLIB_SUBMODULE("ensemble_config", m) {
     m.def("have_forward_init", [](Cwrap<ensemble_config_type> self) {
-        return self->have_forward_init;
+        for (auto const &[node_key, enkf_config_node] : self->config_nodes) {
+            if (enkf_config_node->forward_init)
+                return true;
+        }
+
+        return false;
     });
 }
