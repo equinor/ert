@@ -21,16 +21,8 @@
 
 typedef struct ensemble_config_struct ensemble_config_type;
 
-void ensemble_config_set_refcase(ensemble_config_type *ensemble_config,
-                                 const ecl_sum_type *refcase);
-void ensemble_config_set_gen_kw_format(ensemble_config_type *ensemble_config,
-                                       const char *gen_kw_format_string);
-
 extern "C" void ensemble_config_add_node(ensemble_config_type *ensemble_config,
                                          enkf_config_node_type *node);
-enkf_config_node_type *
-ensemble_config_add_gen_data(ensemble_config_type *config, const char *key,
-                             bool dynamic, bool forward_init);
 extern "C" enkf_config_node_type *
 ensemble_config_add_summary(ensemble_config_type *ensemble_config,
                             const char *key, load_fail_type load_fail);
@@ -44,8 +36,6 @@ void ensemble_config_add_obs_key(ensemble_config_type *, const char *,
 extern "C" void ensemble_config_free(ensemble_config_type *);
 extern "C" bool ensemble_config_has_key(const ensemble_config_type *,
                                         const char *);
-bool ensemble_config_has_impl_type(const ensemble_config_type *config,
-                                   const ert_impl_type impl_type);
 bool ensemble_config_have_forward_init(
     const ensemble_config_type *ensemble_config);
 bool ensemble_config_require_summary(const ensemble_config_type *config);
@@ -72,8 +62,6 @@ extern "C" void ensemble_config_init_SUMMARY_full(ensemble_config_type *,
 
 const summary_key_matcher_type *ensemble_config_get_summary_key_matcher(
     const ensemble_config_type *ensemble_config);
-extern "C" int
-ensemble_config_get_size(const ensemble_config_type *ensemble_config);
 std::pair<fw_load_status, std::string>
 ensemble_config_forward_init(const ensemble_config_type *ens_config,
                              const int iens, const std::string &run_path,

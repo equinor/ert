@@ -14,8 +14,10 @@ def test_create():
     conf_from_dict = EnsembleConfig.from_dict({})
 
     assert empty_ens_conf == conf_from_dict
+    assert conf_from_dict.get_refcase_file == None
+    assert conf_from_dict.grid_file == None
+    assert conf_from_dict.parameters == []
 
-    assert len(conf_from_dict) == 0
     assert "XYZ" not in conf_from_dict
 
     with pytest.raises(KeyError):
