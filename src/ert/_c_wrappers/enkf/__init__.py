@@ -11,7 +11,11 @@ from .config import (
     SummaryConfig,
 )
 from .config_keys import ConfigKeys
+<<<<<<< HEAD
 from .data import EnkfNode, Field
+=======
+from .data import EnkfNode, ExtParam, Field
+>>>>>>> 5be30c593 (Store GEN_KW using numpy files)
 from .enkf_fs import EnkfFs
 from .enkf_main import EnKFMain
 from .enkf_obs import EnkfObs
