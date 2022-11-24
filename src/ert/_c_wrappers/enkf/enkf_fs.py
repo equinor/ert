@@ -1,8 +1,10 @@
 import logging
+import math
+import shutil
 from datetime import datetime
 from multiprocessing.pool import ThreadPool
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, List, Tuple, Union
+from typing import TYPE_CHECKING, Any, Dict, List, Tuple, Union
 
 import numpy as np
 import numpy.typing as npt
@@ -22,6 +24,7 @@ if TYPE_CHECKING:
     from ecl.summary import EclSum
     from ecl.util.util import IntVector
 
+    from ert._c_wrappers.enkf.config import GenKwConfig
     from ert._c_wrappers.enkf.res_config import EnsembleConfig, ModelConfig
     from ert._c_wrappers.enkf.run_arg import RunArg
     from ert._c_wrappers.enkf.state_map import StateMap
@@ -246,6 +249,34 @@ class EnkfFs(BaseCClass):
             nodes,
             active,
         )
+        self._copy_parameter_files(other, nodes, [i for i, b in enumerate(active) if b])
+
+    def _copy_parameter_files(
+        self, to: "EnkfFs", parameter_keys: List[str], realizations: List[int]
+    ) -> None:
+        """
+        Copies selected parameter files from one storage to another.
+        Filters on realization and parameter keys
+        """
+        for gen_kw_folder in self.mount_point.glob("gen-kw-*"):
+            files_to_copy = []
+            realization = int(str(gen_kw_folder).rsplit("-", maxsplit=1)[-1])
+            if realization in realizations:
+                for parameter_file in gen_kw_folder.iterdir():
+                    base_name = str(parameter_file.stem)
+                    if base_name in parameter_keys:
+                        files_to_copy.append(parameter_file.name)
+                        files_to_copy.append(f"{base_name}-keys")
+
+            if not files_to_copy:
+                continue
+
+            Path.mkdir(to.mount_point / gen_kw_folder.stem)
+            for f in files_to_copy:
+                shutil.copy(
+                    src=self.mount_point / gen_kw_folder.stem / f,
+                    dst=to.mount_point / gen_kw_folder.stem / f,
+                )
 
     def save_summary_data(
         self,

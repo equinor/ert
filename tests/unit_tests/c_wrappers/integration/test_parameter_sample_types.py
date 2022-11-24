@@ -19,8 +19,6 @@ from ert.__main__ import ert_parser
 from ert._c_wrappers.config.config_parser import ConfigValidationError
 from ert._c_wrappers.enkf import EnKFMain, ResConfig
 from ert._clib import update
-from ert.cli import ENSEMBLE_SMOOTHER_MODE
-from ert.cli.main import run_cli
 from ert.libres_facade import LibresFacade
 
 
@@ -438,7 +436,7 @@ def test_that_first_three_parameters_sampled_snapshot(tmpdir):
         ert = create_runpath("config.ert", [True] * 3)
         fs = ert.getCurrentFileSystem()
         prior = fs.load_gen_kw("KW_NAME", list(range(3)))
-        expected = [-0.8814228, 1.5847818, 1.009956]
+        expected = [0.3797727, 0.7943204, 2.2610954]
         np.testing.assert_almost_equal(prior, np.array([expected]))
 
 

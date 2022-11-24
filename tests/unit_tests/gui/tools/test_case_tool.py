@@ -66,4 +66,4 @@ def test_that_case_tool_can_copy_case_state(qtbot):
     )
     assert new_case.load_gen_kw("KW_NAME", [0],).flatten()[
         0
-    ] == pytest.approx(-0.8814227775506998)
+    ] == pytest.approx(0.3797726974728599)

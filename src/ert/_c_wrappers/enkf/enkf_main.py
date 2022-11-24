@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, List, Mapping, Sequence, Union
 
 import numpy as np
+import pandas as pd
 from jinja2 import Template
 
 from ert import _clib
@@ -426,6 +427,53 @@ class EnKFMain:
         if parameters is None:
             parameters = self._parameter_keys
         state_map = storage.getStateMap()
+        for realization_nr in active_realizations:
+            current_status = state_map[realization_nr]
+            rng = self.realizations[realization_nr]
+            for parameter in parameters:
+                config_node = self.ensembleConfig().getNode(parameter)
+                if config_node.getUseForwardInit():
+                    continue
+                impl_type = config_node.getImplementationType()
+                if impl_type == ErtImplType.GEN_KW:
+                    gen_kw_config = config_node.getKeywordModelConfig()
+                    if len(gen_kw_config) > 0:
+                        if config_node.get_init_file_fmt():
+                            df = pd.read_csv(
+                                config_node.get_init_file_fmt() % realization_nr,
+                                delim_whitespace=True,
+                                header=None,
+                            )
+                            # This means we have a key: value mapping in the
+                            # file otherwise it is just a list of values
+                            if df.shape[1] == 2:
+                                # We need to sort the user input keys by the
+                                # internal order of sub-parameters:
+                                keys = list(gen_kw_config)
+                                df = df.set_index(df.columns[0])
+                                vals = df.reindex(keys).values.flatten()
+                            else:
+                                vals = df.values.flatten()
+                        else:
+                            vals = rng.standard_normal(len(gen_kw_config))
+
+                        storage.save_gen_kw(
+                            parameter_name=config_node.getKey(),
+                            parameter_keys=list(gen_kw_config),
+                            realization=realization_nr,
+                            data=vals,
+                        )
+                else:
+                    enkf_node = EnkfNode(config_node)
+                    if (
+                        not enkf_node.has_data(storage, NodeId(0, realization_nr))
+                        or current_status == STATE_LOAD_FAILURE
+                    ):
+                        _clib.enkf_state.state_initialize(
+                            enkf_node,
+                            storage,
+                            realization_nr,
+                        )
 
         for parameter in parameters:
             config_node = self.ensembleConfig().getNode(parameter)

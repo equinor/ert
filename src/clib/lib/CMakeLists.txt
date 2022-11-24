@@ -10,7 +10,6 @@ pybind11_add_module(
   python/init.cpp
   python/logging.cpp
   python/ensemble_config.cpp
-  python/enkf_fs_keyword_data.cpp
   python/enkf_defaults.cpp
   python/model_callbacks.cpp
   config/conf_util.cpp

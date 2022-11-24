@@ -14,7 +14,7 @@ from iterative_ensemble_smoother.experimental import (
 )
 from pandas import DataFrame
 
-from ert._c_wrappers.enkf.enums import ActiveMode, RealizationStateEnum
+from ert._c_wrappers.enkf.enums import ActiveMode, ErtImplType, RealizationStateEnum
 from ert._c_wrappers.enkf.row_scaling import RowScaling
 from ert._clib import update
 
