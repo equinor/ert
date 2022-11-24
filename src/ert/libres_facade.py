@@ -6,7 +6,6 @@ import numpy as np
 from ecl.grid import EclGrid
 from pandas import DataFrame, Series
 
-from ert import _clib
 from ert._c_wrappers.enkf import EnKFMain, EnkfNode, ErtConfig, ErtImplType
 from ert._c_wrappers.enkf.config import GenKwConfig
 from ert._c_wrappers.enkf.enums import (
@@ -361,23 +360,32 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
                 raise IndexError(f"No such realization ({realization_index})")
             realizations = [realization_index]
 
-        gen_kw_keys = self.gen_kw_keys()
+        gen_kw_keys = self.get_gen_kw()
+        ensemble_config = self._enkf_main.ensembleConfig()
+        all_data = {}
 
-        if keys is not None:
-            gen_kw_keys = [
-                key for key in keys if key in gen_kw_keys
-            ]  # ignore keys that doesn't exist
+        def _flatten(_gen_kw_dict: Dict[str, Any]) -> Dict[str, float]:
+            result = {}
+            for group, parameters in _gen_kw_dict.items():
+                for key, value in parameters.items():
+                    combined = f"{group}:{key}"
+                    if keys is not None and combined not in keys:
+                        continue
+                    result[f"{group}:{key}"] = value
+            return result
 
-        # pylint: disable=c-extension-no-member
-        gen_kw_array = _clib.enkf_fs_keyword_data.keyword_data_get_realizations(
-            self._enkf_main.ensembleConfig(), fs, gen_kw_keys, realizations
-        )
-        gen_kw_data = DataFrame(
-            data=gen_kw_array, index=realizations, columns=gen_kw_keys
-        )
+        for realization in realizations:
+            realization_data = {}
+            for key in gen_kw_keys:
+                gen_kw_config = ensemble_config[key].getKeywordModelConfig()
+                gen_kw_dict = fs.load_gen_kw_as_dict(key, realization, gen_kw_config)
+                realization_data.update(gen_kw_dict)
+            all_data[realization] = _flatten(realization_data)
+        gen_kw_df = DataFrame(all_data).T
 
-        gen_kw_data.index.name = "Realization"
-        return gen_kw_data
+        gen_kw_df.index.name = "Realization"
+
+        return gen_kw_df
 
     def gather_gen_kw_data(
         self,
