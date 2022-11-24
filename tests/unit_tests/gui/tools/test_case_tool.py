@@ -7,7 +7,6 @@ from qtpy.QtWidgets import QPushButton, QTextEdit
 
 from ert._c_wrappers.enkf import EnKFMain, ErtConfig
 from ert._clib.state_map import RealizationStateEnum
-from ert._clib.update import Parameter
 from ert.gui.tools.manage_cases.case_init_configuration import (
     CaseInitializationConfigurationPanel,
 )
@@ -66,15 +65,8 @@ def test_that_case_tool_can_copy_case_state(qtbot):
     qtbot.mouseClick(
         tool.findChild(QPushButton, name="initialize_existing_button"), Qt.LeftButton
     )
-    parameter = Parameter("KW_NAME")
-    config_node = ert.ensembleConfig().getNode(parameter.name)
-    assert new_case.load_parameter(
-        config_node,
-        [0],
-        parameter,
-    ).flatten()[
-        0
-    ] == pytest.approx(-0.8814227775506998)
+    kw_data = new_case.load_gen_kw("KW_NAME", [0]).flatten()
+    assert kw_data[0] == pytest.approx(-0.8814227775506998)
 
 
 @pytest.mark.usefixtures("copy_poly_case")
