@@ -6,7 +6,6 @@
 
 #include <ert/enkf/enkf_node.hpp>
 #include <ert/enkf/ext_param.hpp>
-#include <ert/enkf/field.hpp>
 #include <ert/enkf/surface.hpp>
 #include <ert/python.hpp>
 
@@ -416,15 +415,6 @@ enkf_node_alloc_empty(const enkf_config_node_type *config) {
         node->write_to_buffer = surface_write_to_buffer__;
         node->serialize = surface_serialize__;
         node->deserialize = surface_deserialize__;
-        break;
-    case (FIELD):
-        node->alloc = field_alloc__;
-        node->initialize = field_initialize__;
-        node->freef = field_free__;
-        node->read_from_buffer = field_read_from_buffer__;
-        node->write_to_buffer = field_write_to_buffer__;
-        node->serialize = field_serialize__;
-        node->deserialize = field_deserialize__;
         break;
     /* EXT_PARAM is used by Everest */
     case (EXT_PARAM):

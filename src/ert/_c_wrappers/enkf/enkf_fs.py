@@ -1,3 +1,4 @@
+import pickle
 import logging
 import math
 import shutil
@@ -5,12 +6,12 @@ from datetime import datetime
 from multiprocessing.pool import ThreadPool
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, List, Tuple, Union
-
+from ert._c_wrappers.enkf.node_id import NodeId
 import numpy as np
 import numpy.typing as npt
 import pandas as pd
 from cwrap import BaseCClass
-
+from ert._c_wrappers.enkf.enums.ert_impl_type_enum import ErtImplType
 from ert import _clib
 from ert._c_wrappers import ResPrototype
 from ert._c_wrappers.enkf.enums import EnKFFSType, RealizationStateEnum
@@ -220,9 +221,13 @@ class EnkfFs(BaseCClass):
         parameter: update.Parameter,
         values: npt.ArrayLike,
     ) -> None:
-        update.save_parameter(
-            self, ensemble_config, iens_active_index, parameter, values
-        )
+        config_node= ensemble_config.getNode(parameter.name)
+        if config_node.getImplementationType() == ErtImplType.FIELD:
+            pass
+        else:
+            update.save_parameter(
+                self, ensemble_config, iens_active_index, parameter, values
+            )
 
     def load_parameter(
         self,
@@ -230,9 +235,22 @@ class EnkfFs(BaseCClass):
         iens_active_index: List[int],
         parameter: update.Parameter,
     ) -> np.ndarray:
-        return update.load_parameter(
-            self, ensemble_config, iens_active_index, parameter
-        )
+        config_node= ensemble_config.getNode(parameter.name)
+        if config_node.getImplementationType() == ErtImplType.FIELD:
+            ## combine into np.ndarray, how ?
+            return np.empty(0)
+            
+            # for index in iens_active_index:
+            #     ret = _clib.enkf_fs.read_parameter(self, parameter.name, index)
+            #     p : np.ma.MaskedArray = pickle.loads(bytes(ret[12:]))
+            #     p= p.flatten()
+            #     return p.data
+
+        else:
+            return update.load_parameter(
+                self, ensemble_config, iens_active_index, parameter
+            )
+        
 
     def copy_from_case(
         self, other: "EnkfFs", report_step: int, nodes: List[str], active: List[bool]
@@ -415,3 +433,11 @@ class EnkfFs(BaseCClass):
                 logger.error(f"Realization: {iens}, load failure: {message}")
 
         return loaded
+
+    def parameter_has_data(self, name, iens) -> bool:
+        try:
+            _clib.enkf_fs.read_parameter(self, name,iens)        
+        except:
+            return False
+        return True
+       

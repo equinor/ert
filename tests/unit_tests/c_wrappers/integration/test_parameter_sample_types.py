@@ -164,14 +164,14 @@ def test_field_param(tmpdir, config_str, expect_forward_init):
             """
         JOBNAME my_name%d
         NUM_REALIZATIONS 1
-        GRID MY_GRID.GRID
+        GRID MY_GRID.EGRID
         """
         )
         config += config_str
         grid = EclGrid.create_rectangular(
             (4, 4, 1), (1, 1, 1)  # This is minimum size, any smaller will util_abort
         )
-        grid.save_GRID("MY_GRID.GRID")
+        grid.save_EGRID("MY_GRID.EGRID")
 
         expect_param = EclKW("MY_PARAM", grid.getGlobalSize(), EclDataType.ECL_FLOAT)
         for i in range(grid.getGlobalSize()):

@@ -11,7 +11,11 @@ from .config import (
     SummaryConfig,
 )
 from .config_keys import ConfigKeys
+<<<<<<< HEAD
 from .data import EnkfNode, ExtParam, Field
+=======
+from .data import EnkfNode, ExtParam,  GenKw
+>>>>>>> d0947b760... Remove field.cpp
 from .enkf_fs import EnkfFs
 from .enkf_main import EnKFMain
 from .enkf_obs import EnkfObs
@@ -47,7 +51,11 @@ __all__ = [
     "GenObservation",
     "BlockDataConfig",
     "ObsVector",
+<<<<<<< HEAD
     "Field",
+=======
+    "GenKw",
+>>>>>>> d0947b760... Remove field.cpp
     "ExtParam",
     "EnkfNode",
     "FieldConfig",

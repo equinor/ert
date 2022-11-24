@@ -1,11 +1,16 @@
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Tuple
-
+import xtgeo
 from ert._c_wrappers.enkf.data.enkf_node import EnkfNode
 from ert._c_wrappers.enkf.enkf_state import _internalize_results
 from ert._c_wrappers.enkf.model_callbacks import LoadStatus
 from ert._c_wrappers.enkf.node_id import NodeId
 from ert._c_wrappers.enkf.state_map import RealizationStateEnum
+from ert._c_wrappers.enkf.enums.ert_impl_type_enum import ErtImplType
+import pickle
+import io
+import struct
+from ert import _clib
 
 if TYPE_CHECKING:
     from ert._c_wrappers.enkf import EnsembleConfig, ModelConfig, RunArg
@@ -19,34 +24,72 @@ def _ensemble_config_forward_init(
     iens = run_arg.iens
     for config_key in ens_config.alloc_keylist():
         config_node = ens_config[config_key]
+                
         if not config_node.getUseForwardInit():
             continue
 
-        node = EnkfNode(config_node)
         node_id = NodeId(report_step=0, iens=run_arg.iens)
 
-        if node.has_data(run_arg.sim_fs, node_id):
-            # Already initialised, ignore
-            continue
+        if config_node.getImplementationType() == ErtImplType.FIELD:
+            storage_fs= run_arg.sim_fs
 
-        if node.forward_init(run_arg.runpath, iens):
-            node.save(run_arg.sim_fs, node_id)
+            if storage_fs.parameter_has_data(config_key, iens):
+                # Already initialised, ignore
+                continue
+
+            filename= run_arg.runpath + "/" + config_node.get_init_file_fmt()
+            grid= xtgeo.grid_from_file(ens_config.grid_file)
+            props= xtgeo.gridproperty_from_file(filename, name=config_key, grid=grid)
+
+            vals = props.values
+            p= pickle.dumps(vals)
+
+            s = io.BytesIO()
+            s.write(struct.pack("Qi", 0, int(ErtImplType.FIELD)))
+            s.write(p)
+            _clib.enkf_fs.write_parameter(
+                    storage_fs,
+                    config_node.getKey(),
+                    iens,
+                    s.getvalue(),
+                )
+        
         else:
-            if "%d" in config_node.get_init_file_fmt():
-                init_file = Path(config_node.get_init_file_fmt() % (iens,))
-            else:
-                init_file = Path(config_node.get_init_file_fmt())
-            if not init_file.exists():
-                error_msg = (
-                    "Failed to initialize node "
-                    f"'{node.name()}' in file {init_file}: File not found\n"
-                )
-            else:
-                error_msg = (
-                    f"Failed to initialize node '{node.name()}' in file {init_file}\n"
-                )
+            node = EnkfNode(config_node)
 
-            result = LoadStatus.LOAD_FAILURE
+            if node.forward_init(run_arg.runpath, iens):
+                node.save(run_arg.sim_fs, node_id)
+            else:
+                if "%d" in config_node.get_init_file_fmt():
+                    init_file = Path(config_node.get_init_file_fmt() % (iens,))
+                else:
+                    init_file = Path(config_node.get_init_file_fmt())
+                if not init_file.exists():
+                    error_msg = (
+                        "Failed to initialize node "
+                        f"'{node.name()}' in file {init_file}: File not found\n"
+                    )
+
+            if node.has_data(run_arg.sim_fs, node_id):
+                # Already initialised, ignore
+                continue
+
+            if node.forward_init(run_arg.runpath, iens):
+                node.save(run_arg.sim_fs, node_id)
+            else:
+                init_file = Path(config_node.get_init_file_fmt() % (iens,))
+                if not init_file.exists():
+                    error_msg = (
+                        "Failed to initialize node "
+                        f"'{node.name()}' in file {init_file}: File not found\n"
+                    )
+                else:
+                    error_msg = (
+                        f"Failed to initialize node '{node.name()}' in file {init_file}\n"
+                    )
+
+                result = LoadStatus.LOAD_FAILURE
+
     return (result, error_msg)
 
 

@@ -4,11 +4,11 @@ import os
 from datetime import datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, List, Mapping, Sequence, Union
-
+import pickle
 import numpy as np
 import pandas as pd
 from jinja2 import Template
-
+import xtgeo
 from ert import _clib
 from ert._c_wrappers.analysis.configuration import UpdateConfiguration
 from ert._c_wrappers.enkf import EnkfFs
@@ -145,6 +145,20 @@ def _generate_parameter_files(
 
         node = ens_config[key]
         type_ = node.getImplementationType()
+
+        if type_ == ErtImplType.FIELD:
+
+            if node.getUseForwardInit() and not fs.parameter_has_data(key, iens):
+                continue
+
+            ret = _clib.enkf_fs.read_parameter(fs, node.getKey(),iens)
+            p : np.ma.MaskedArray = pickle.loads(bytes(ret[12:]))
+            grid= xtgeo.grid_from_file(ens_config.grid_file)
+            gp= xtgeo.GridProperty(ncol=p.shape[0], nrow=p.shape[1], nlay=p.shape[2], values=p, grid=grid, name=key)   
+
+            file_out = run_path + "/" + node_eclfile
+            gp.to_file(file_out, fformat="grdecl")
+
         if type_ == ErtImplType.GEN_KW:
             _generate_gen_kw_parameter_file(
                 fs,
@@ -435,6 +449,24 @@ class EnKFMain:
                 if config_node.getUseForwardInit():
                     continue
                 impl_type = config_node.getImplementationType()
+                if impl_type == ErtImplType.FIELD:
+                    filename= config_node.get_init_file_fmt() % realization_nr
+                    ec = self.ensembleConfig()
+                    grid= xtgeo.grid_from_file(ec.grid_file)
+                    props= xtgeo.gridproperty_from_file(filename, name=parameter, grid=grid)
+
+                    vals = props.values
+                    p= pickle.dumps(vals)
+
+                    s = io.BytesIO()
+                    s.write(struct.pack("Qi", 0, int(ErtImplType.FIELD)))
+                    s.write(p)
+                    _clib.enkf_fs.write_parameter(
+                            storage,
+                            config_node.getKey(),
+                            realization_nr,
+                            s.getvalue(),
+                        )                
                 if impl_type == ErtImplType.GEN_KW:
                     gen_kw_config = config_node.getKeywordModelConfig()
                     if len(gen_kw_config) > 0:
