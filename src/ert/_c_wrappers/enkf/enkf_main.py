@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, List, Mapping, Sequence, Union
 
 import numpy as np
+from jinja2 import Template
 
 from ert import _clib
 from ert._c_wrappers.analysis.configuration import UpdateConfiguration
@@ -29,7 +30,7 @@ from ert._clib.state_map import STATE_LOAD_FAILURE, STATE_UNDEFINED
 
 if TYPE_CHECKING:
     from ert._c_wrappers.enkf.ert_config import ErtConfig
-
+    from ert._c_wrappers.enkf.config import GenKwConfig
 
 logger = logging.getLogger(__name__)
 
@@ -87,6 +88,40 @@ def _value_export_json(
     )
 
 
+def _generate_gen_kw_parameter_file(
+    fs: "EnkfFs",
+    realization: int,
+    config: "GenKwConfig",
+    target_file: str,
+    run_path: Path,
+    exports: dict,
+) -> None:
+    key = config.getKey()
+    gen_kw_dict = fs.load_gen_kw_as_dict(key, realization, config)
+    transformed = gen_kw_dict[key]
+    if not len(transformed) == len(config):
+        raise ValueError(
+            f"The configuration of GEN_KW parameter {key}"
+            f" is of size {len(config)}, expected {len(transformed)}"
+        )
+
+    with open(config.getTemplateFile(), "r") as f:
+        template = Template(
+            f.read(), variable_start_string="<", variable_end_string=">"
+        )
+
+    if target_file.startswith("/"):
+        target_file = target_file[1:]
+
+    Path.mkdir(Path(run_path / target_file).parent, exist_ok=True, parents=True)
+    with open(run_path / target_file, "w", encoding="utf-8") as f:
+        f.write(
+            template.render({key: f"{value:.6g}" for key, value in transformed.items()})
+        )
+
+    exports.update(gen_kw_dict)
+
+
 def _generate_parameter_files(
     ens_config: "EnsembleConfig",
     export_base_name: str,
@@ -112,6 +147,17 @@ def _generate_parameter_files(
         EnkfVarType.PARAMETER + EnkfVarType.EXT_PARAMETER
     ):
         node = ens_config[key]
+        type_ = node.getImplementationType()
+        if type_ == ErtImplType.GEN_KW:
+            _generate_gen_kw_parameter_file(
+                fs,
+                iens,
+                node.getKeywordModelConfig(),
+                node.get_enkf_outfile(),
+                Path(run_path),
+                exports,
+            )
+            continue
         enkf_node = EnkfNode(node)
         node_id = NodeId(report_step=0, iens=iens)
 
@@ -128,10 +174,6 @@ def _generate_parameter_files(
             _clib.surface.generate_parameter_file(enkf_node, run_path, node_eclfile)
         elif type_ == ErtImplType.EXT_PARAM:
             _clib.ext_param.generate_parameter_file(enkf_node, run_path, node_eclfile)
-        elif type_ == ErtImplType.GEN_KW:
-            _clib.gen_kw.generate_parameter_file(
-                enkf_node, run_path, node_eclfile, exports
-            )
         else:
             raise NotImplementedError
 
@@ -378,39 +420,40 @@ class EnKFMain:
 
         for parameter in parameters:
             config_node = self.ensembleConfig().getNode(parameter)
-            enkf_node = EnkfNode(config_node)
             if config_node.getUseForwardInit():
                 continue
-            impl_type = enkf_node.getImplType()
+            impl_type = config_node.getImplementationType()
             if impl_type == ErtImplType.GEN_KW:
-                gen_kw_node = enkf_node.asGenKw()
-                keys = [val[0] for val in gen_kw_node.items()]
+                gen_kw_config = config_node.getKeywordModelConfig()
+                keys = list(gen_kw_config)
                 if config_node.get_init_file_fmt():
                     logging.info(
                         f"Reading from init file {config_node.get_init_file_fmt()}"
                         + f" for {parameter}"
                     )
-                    parameter_values = gen_kw_node.values_from_files(
+                    parameter_values = gen_kw_config.values_from_files(
                         active_realizations,
                         config_node.get_init_file_fmt(),
                         keys,
                     )
                 else:
                     logging.info(f"Sampling parameter {parameter}")
-                    parameter_values = gen_kw_node.sample_values(
+                    parameter_values = gen_kw_config.sample_values(
                         parameter,
                         keys,
                         str(self._global_seed.entropy),
                         active_realizations,
                         self.getEnsembleSize(),
                     )
-                storage.save_parameters(
-                    config_node,
-                    active_realizations,
-                    _clib.update.Parameter(parameter),
-                    parameter_values,
-                )
+                for index, real in enumerate(active_realizations):
+                    storage.save_gen_kw(
+                        parameter_name=parameter,
+                        parameter_keys=keys,
+                        realization=real,
+                        data=parameter_values[:, index],
+                    )
             else:
+                enkf_node = EnkfNode(config_node)
                 for realization_nr in active_realizations:
                     _clib.enkf_state.state_initialize(
                         enkf_node,

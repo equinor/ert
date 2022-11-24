@@ -7,7 +7,7 @@ from iterative_ensemble_smoother import SIES
 
 from ert import LibresFacade
 from ert.__main__ import ert_parser
-from ert._c_wrappers.enkf import EnKFMain, EnkfNode, ErtConfig, NodeId
+from ert._c_wrappers.enkf import EnKFMain, ErtConfig
 from ert.analysis import ErtAnalysisError, ESUpdate
 from ert.analysis._es_update import _create_temporary_parameter_storage
 from ert.cli import ENSEMBLE_EXPERIMENT_MODE, ENSEMBLE_SMOOTHER_MODE
@@ -80,16 +80,9 @@ def test_update_snapshot(snake_oil_case_storage, module, expected_gen_kw):
     else:
         es_update.smootherUpdate(sim_fs, target_fs, "id")
 
-    conf = ert.ensembleConfig()["SNAKE_OIL_PARAM"]
-    sim_node = EnkfNode(conf)
-    target_node = EnkfNode(conf)
+    sim_gen_kw = list(sim_fs.load_gen_kw("SNAKE_OIL_PARAM", [0]).flatten())
 
-    node_id = NodeId(0, 0)
-    sim_node.load(sim_fs, node_id)
-    target_node.load(target_fs, node_id)
-
-    sim_gen_kw = list(sim_node.asGenKw())
-    target_gen_kw = list(target_node.asGenKw())
+    target_gen_kw = list(target_fs.load_gen_kw("SNAKE_OIL_PARAM", [0]).flatten())
 
     assert sim_gen_kw != target_gen_kw
 
@@ -217,16 +210,9 @@ def test_localization(snake_oil_case_storage, expected_target_gen_kw, update_ste
     )
     es_update.smootherUpdate(prior.sim_fs, posterior.sim_fs, prior.run_id)
 
-    conf = ert.ensembleConfig()["SNAKE_OIL_PARAM"]
-    sim_node = EnkfNode(conf)
-    target_node = EnkfNode(conf)
+    sim_gen_kw = list(prior.sim_fs.load_gen_kw("SNAKE_OIL_PARAM", [0]).flatten())
 
-    node_id = NodeId(0, 0)
-    sim_node.load(prior.sim_fs, node_id)
-    target_node.load(posterior.sim_fs, node_id)
-
-    sim_gen_kw = list(sim_node.asGenKw())
-    target_gen_kw = list(target_node.asGenKw())
+    target_gen_kw = list(posterior.sim_fs.load_gen_kw("SNAKE_OIL_PARAM", [0]).flatten())
 
     # Test that the localized values has been updated
     assert sim_gen_kw[1:3] != target_gen_kw[1:3]

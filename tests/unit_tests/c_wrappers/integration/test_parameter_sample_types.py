@@ -20,7 +20,6 @@ from ert.__main__ import ert_parser
 from ert._c_wrappers.config.config_parser import ConfigValidationError
 from ert._c_wrappers.enkf import EnKFMain, ErtConfig
 from ert._clib import update
-from ert._clib.update import Parameter
 from ert.cli import ENSEMBLE_SMOOTHER_MODE
 from ert.cli.main import run_cli
 from ert.libres_facade import LibresFacade
@@ -135,7 +134,8 @@ def test_gen_kw_outfile_will_use_paths(tmpdir, relpath: str):
             fh.writelines("MY_KEYWORD <MY_KEYWORD>")
         with open("prior.txt", mode="w", encoding="utf-8") as fh:
             fh.writelines("MY_KEYWORD NORMAL 0 1")
-
+        if relpath.startswith("/"):
+            relpath = relpath[1:]
         create_runpath("config.ert")
         assert os.path.exists(f"simulations/realization-0/iter-0/{relpath}kw.txt")
 
@@ -479,9 +479,7 @@ def test_that_first_three_parameters_sampled_snapshot(tmpdir):
             fh.writelines("MY_KEYWORD NORMAL 0 1")
         ert = create_runpath("config.ert", [True] * 3)
         fs = ert.storage_manager.current_case
-        parameter = Parameter("KW_NAME")
-        config_node = ert.ensembleConfig().getNode(parameter.name)
-        prior = fs.load_parameter(config_node, list(range(3)), parameter)
+        prior = fs.load_gen_kw("KW_NAME", list(range(3)))
         expected = [-0.8814228, 1.5847818, 1.009956]
         np.testing.assert_almost_equal(prior, np.array([expected]))
 
