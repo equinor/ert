@@ -7,7 +7,6 @@
 #include <ert/enkf/enkf_node.hpp>
 #include <ert/enkf/ext_param.hpp>
 #include <ert/enkf/field.hpp>
-#include <ert/enkf/gen_kw.hpp>
 #include <ert/enkf/surface.hpp>
 #include <ert/python.hpp>
 
@@ -128,7 +127,7 @@ struct enkf_node_struct {
     /** The (hash)key this node is identified with. */
     char *node_key;
 
-    /** A pointer to the underlying enkf_object, i.e. gen_kw_type instance, or
+    /** A pointer to the underlying enkf_object, i.e. surface_type instance, or
      * a field_type instance or ... */
     void *data;
     /** A pointer to a enkf_config_node instance (which again cointans a
@@ -409,14 +408,6 @@ enkf_node_alloc_empty(const enkf_config_node_type *config) {
     node->has_data = NULL;
 
     switch (impl_type) {
-    case (GEN_KW):
-        node->alloc = gen_kw_alloc__;
-        node->freef = gen_kw_free__;
-        node->write_to_buffer = gen_kw_write_to_buffer__;
-        node->read_from_buffer = gen_kw_read_from_buffer__;
-        node->serialize = gen_kw_serialize__;
-        node->deserialize = gen_kw_deserialize__;
-        break;
     case (SURFACE):
         node->initialize = surface_initialize__;
         node->alloc = surface_alloc__;
