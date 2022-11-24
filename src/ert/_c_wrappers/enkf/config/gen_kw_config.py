@@ -53,6 +53,10 @@ class GenKwConfig(BaseCClass):
         "double_vector_ref gen_kw_config_iget_function_parameter_values(gen_kw_config, int)"  # noqa
     )
 
+    _transform = ResPrototype(
+        "double gen_kw_config_transform(gen_kw_config, int, double)"  # noqa
+    )
+
     def __init__(
         self, key: str, template_file: str, parameter_file: str, tag_fmt: str = "<%s>"
     ):
@@ -146,3 +150,6 @@ class GenKwConfig(BaseCClass):
                 }
             )
         return priors
+
+    def transform(self, index, value):
+        return self._transform(index, value)

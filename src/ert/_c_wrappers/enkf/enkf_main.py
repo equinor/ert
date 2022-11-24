@@ -1,14 +1,13 @@
-import io
 import json
 import logging
 import os
-import struct
 from datetime import datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, List, Mapping, Sequence, Union
 
 import numpy as np
 import pandas as pd
+from jinja2 import Template
 
 from ert import _clib
 from ert._c_wrappers.analysis.configuration import UpdateConfiguration
@@ -33,8 +32,8 @@ from ert._c_wrappers.util.substitution_list import SubstitutionList
 from ert._clib.state_map import STATE_LOAD_FAILURE, STATE_UNDEFINED
 
 if TYPE_CHECKING:
+    from ert._c_wrappers.enkf.config import GenKwConfig
     from ert._c_wrappers.enkf.res_config import ResConfig
-
 
 logger = logging.getLogger(__name__)
 
@@ -92,6 +91,35 @@ def _value_export_json(
     )
 
 
+def _generate_gen_kw_parameter_file(
+    fs: "EnkfFs",
+    realization: int,
+    config: "GenKwConfig",
+    target_file: str,
+    run_path: Path,
+    exports: dict,
+) -> None:
+    key = config.getKey()
+    gen_kw_dict = fs.load_gen_kw_as_dict(key, realization, config)
+    transformed = gen_kw_dict[key]
+    if not len(transformed) == len(config):
+        raise ValueError(
+            f"The configuration of GEN_KW parameter {key}"
+            f" is of size {len(config)}, expected {len(transformed)}"
+        )
+
+    with open(config.getTemplateFile(), "r") as f:
+        template = Template(
+            f.read(), variable_start_string="<", variable_end_string=">"
+        )
+    with open(run_path / target_file, "w") as f:
+        f.write(
+            template.render({key: f"{value:.6g}" for key, value in transformed.items()})
+        )
+
+    exports.update(gen_kw_dict)
+
+
 def _generate_parameter_files(
     ens_config: "EnsembleConfig",
     export_base_name: str,
@@ -116,7 +144,19 @@ def _generate_parameter_files(
     for key in ens_config.getKeylistFromVarType(
         EnkfVarType.PARAMETER + EnkfVarType.EXT_PARAMETER
     ):
+
         node = ens_config[key]
+        type_ = node.getImplementationType()
+        if type_ == ErtImplType.GEN_KW:
+            _generate_gen_kw_parameter_file(
+                fs,
+                iens,
+                node.getKeywordModelConfig(),
+                node.get_enkf_outfile(),
+                Path(run_path),
+                exports,
+            )
+            continue
         enkf_node = EnkfNode(node)
         node_id = NodeId(report_step=0, iens=iens)
 
@@ -133,10 +173,6 @@ def _generate_parameter_files(
             _clib.surface.generate_parameter_file(enkf_node, run_path, node_eclfile)
         elif type_ == ErtImplType.EXT_PARAM:
             _clib.ext_param.generate_parameter_file(enkf_node, run_path, node_eclfile)
-        elif type_ == ErtImplType.GEN_KW:
-            _clib.gen_kw.generate_parameter_file(
-                enkf_node, run_path, node_eclfile, exports
-            )
         else:
             raise NotImplementedError
 
@@ -416,55 +452,46 @@ class EnKFMain:
         state_map = storage.getStateMap()
         for realization_nr in active_realizations:
             current_status = state_map[realization_nr]
+            rng = self.realizations[realization_nr]
             for parameter in parameters:
                 config_node = self.ensembleConfig().getNode(parameter)
-                enkf_node = EnkfNode(config_node)
-
                 if config_node.getUseForwardInit():
                     continue
-                if (
-                    not enkf_node.has_data(storage, NodeId(0, realization_nr))
-                    or current_status == STATE_LOAD_FAILURE
-                ):
-                    rng = self.realizations[realization_nr]
-                    impl_type = enkf_node.getImplType()
-
-                    if impl_type == ErtImplType.GEN_KW:
-                        gen_kw_node = enkf_node.asGenKw()
-                        if len(gen_kw_node) > 0:
-                            if config_node.get_init_file_fmt():
-                                df = pd.read_csv(
-                                    config_node.get_init_file_fmt() % realization_nr,
-                                    delim_whitespace=True,
-                                    header=None,
-                                )
-                                # This means we have a key: value mapping in the
-                                # file otherwise it is just a list of values
-                                if df.shape[1] == 2:
-                                    # We need to sort the user input keys by the
-                                    # internal order of sub-parameters:
-                                    keys = [val[0] for val in gen_kw_node.items()]
-                                    df = df.set_index(df.columns[0])
-                                    vals = df.reindex(keys).values.flatten()
-                                else:
-                                    vals = df.values.flatten()
-                            else:
-                                vals = rng.standard_normal(len(gen_kw_node))
-                            s = io.BytesIO()
-                            # The first element is time_t (64 bit integer), but
-                            # it is not used so we write 0 instead - for
-                            # padding purposes.
-                            s.write(struct.pack("Qi", 0, int(ErtImplType.GEN_KW)))
-                            s.write(vals.tobytes())
-
-                            _clib.enkf_fs.write_parameter(
-                                storage,
-                                config_node.getKey(),
-                                realization_nr,
-                                s.getvalue(),
+                impl_type = config_node.getImplementationType()
+                if impl_type == ErtImplType.GEN_KW:
+                    gen_kw_config = config_node.getKeywordModelConfig()
+                    if len(gen_kw_config) > 0:
+                        if config_node.get_init_file_fmt():
+                            df = pd.read_csv(
+                                config_node.get_init_file_fmt() % realization_nr,
+                                delim_whitespace=True,
+                                header=None,
                             )
+                            # This means we have a key: value mapping in the
+                            # file otherwise it is just a list of values
+                            if df.shape[1] == 2:
+                                # We need to sort the user input keys by the
+                                # internal order of sub-parameters:
+                                keys = list(gen_kw_config)
+                                df = df.set_index(df.columns[0])
+                                vals = df.reindex(keys).values.flatten()
+                            else:
+                                vals = df.values.flatten()
+                        else:
+                            vals = rng.standard_normal(len(gen_kw_config))
 
-                    else:
+                        storage.save_gen_kw(
+                            parameter_name=config_node.getKey(),
+                            parameter_keys=list(gen_kw_config),
+                            realization=realization_nr,
+                            data=vals,
+                        )
+                else:
+                    enkf_node = EnkfNode(config_node)
+                    if (
+                        not enkf_node.has_data(storage, NodeId(0, realization_nr))
+                        or current_status == STATE_LOAD_FAILURE
+                    ):
                         _clib.enkf_state.state_initialize(
                             enkf_node,
                             storage,
