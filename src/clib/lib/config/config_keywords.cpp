@@ -73,7 +73,6 @@ static void add_history_source_keyword(config_parser_type *config_parser) {
     auto item = add_single_arg_keyword(config_parser, HISTORY_SOURCE_KEY);
 
     stringlist_type *argv = stringlist_alloc_new();
-    stringlist_append_copy(argv, "SCHEDULE");
     stringlist_append_copy(argv, "REFCASE_SIMULATED");
     stringlist_append_copy(argv, "REFCASE_HISTORY");
 
