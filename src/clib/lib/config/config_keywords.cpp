@@ -206,6 +206,8 @@ add_schedule_prediction_file_keyword(config_parser_type *config_parser) {
     /* scedhule_prediction_file   filename  <parameters:> <init_files:> */
     config_schema_item_set_argc_minmax(item, 1, 3);
     config_schema_item_iset_type(item, 0, CONFIG_EXISTING_PATH);
+    config_schema_item_set_deprecated(
+        item, "The SCHEDULE_PREDICTION_FILE config key is deprecated.");
 }
 
 static void add_summary_keyword(config_parser_type *config_parser) {
