@@ -4,13 +4,15 @@ import stat
 
 import pytest
 
-from ert._c_wrappers.config import ContentTypeEnum
+from ert._c_wrappers.config import ConfigValidationError, ContentTypeEnum
 from ert._c_wrappers.job_queue.ext_job import ExtJob
 
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_load_forward_model_raises_on_missing():
-    with pytest.raises(IOError):
+    with pytest.raises(
+        ConfigValidationError, match="Could not open job config file CONFIG_FILE"
+    ):
         _ = ExtJob.from_config_file("CONFIG_FILE")
 
 
@@ -79,7 +81,7 @@ def test_load_forward_model_upgraded():
 def test_load_forward_model_missing_raises():
     with open("CONFIG", "w") as f:
         f.write("EXECUTABLE missing_script.sh\n")
-    with pytest.raises(ValueError):
+    with pytest.raises(ConfigValidationError, match="Could not find executable"):
         _ = ExtJob.from_config_file("CONFIG")
 
 
@@ -87,7 +89,7 @@ def test_load_forward_model_missing_raises():
 def test_load_forward_model_execu_missing_raises():
     with open("CONFIG", "w") as f:
         f.write("EXECU missing_script.sh\n")
-    with pytest.raises(ValueError):
+    with pytest.raises(ConfigValidationError, match="CONFIG failed"):
         _ = ExtJob.from_config_file("CONFIG")
 
 
@@ -95,7 +97,7 @@ def test_load_forward_model_execu_missing_raises():
 def test_load_forward_model_is_directory_raises():
     with open("CONFIG", "w") as f:
         f.write("EXECUTABLE /tmp\n")
-    with pytest.raises(ValueError):
+    with pytest.raises(ConfigValidationError, match="set to directory"):
         _ = ExtJob.from_config_file("CONFIG")
 
 
@@ -103,7 +105,7 @@ def test_load_forward_model_is_directory_raises():
 def test_load_forward_model_foriegn_raises():
     with open("CONFIG", "w") as f:
         f.write("EXECUTABLE /etc/passwd\n")
-    with pytest.raises(ValueError):
+    with pytest.raises(ConfigValidationError, match="execute permissions"):
         _ = ExtJob.from_config_file("CONFIG")
 
 

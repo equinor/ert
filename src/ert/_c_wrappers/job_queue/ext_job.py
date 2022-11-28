@@ -144,15 +144,19 @@ class ExtJob:
         if name is None:
             name = os.path.basename(config_file)
 
-        config_content = cls._parse_config_file(config_file)
+        try:
+            config_content = cls._parse_config_file(config_file)
+        except IOError as err:
+            raise ConfigValidationError(
+                f"Could not open job config file {config_file}"
+            ) from err
 
         content_dict = {}
 
         cls._read_str_keywords(content_dict, config_content)
         cls._read_int_keywords(content_dict, config_content)
 
-        if config_content.hasKey("EXECUTABLE"):
-            content_dict["executable"] = config_content.getValue("EXECUTABLE")
+        content_dict["executable"] = config_content.getValue("EXECUTABLE")
         if config_content.hasKey("ARGLIST"):
             # We unescape backslash here to keep backwards compatability ie. If
             # the arglist contains a '\n' we interpret it as a newline.
