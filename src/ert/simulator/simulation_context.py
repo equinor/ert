@@ -3,7 +3,7 @@ from threading import Thread
 from time import sleep
 from typing import TYPE_CHECKING, Any, List, Optional, Tuple
 
-from ert._c_wrappers.enkf.enums import HookRuntime
+from ert._c_wrappers.enkf.enums import HookRuntime, RealizationStateEnum
 from ert._c_wrappers.enkf.model_callbacks import LoadStatus
 from ert._c_wrappers.job_queue import JobQueueManager, RunStatusType
 from ert.ensemble_evaluator import forward_model_exit, forward_model_ok
@@ -109,9 +109,10 @@ class SimulationContext:
             active_mask=mask,
             iteration=itr,
         )
-        self._ert.sample_prior(
-            self._run_context.sim_fs, self._run_context.active_realizations
-        )
+        state_map = sim_fs.getStateMap()
+        for realization_nr in self._run_context.active_realizations:
+            state_map[realization_nr] = RealizationStateEnum.STATE_INITIALIZED
+
         self._ert.createRunPath(self._run_context)
         self._ert.runWorkflows(HookRuntime.PRE_SIMULATION)
         self._sim_thread = self._run_simulations_simple_step()

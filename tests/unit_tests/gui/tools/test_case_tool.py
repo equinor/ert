@@ -69,4 +69,4 @@ def test_that_case_tool_can_copy_case_state(qtbot):
         ert.ensembleConfig(),
         [0],
         Parameter("KW_NAME"),
-    ).flatten()[0] == pytest.approx(0.3797726974728599)
+    ).flatten()[0] == pytest.approx(-0.8814227775506998)
