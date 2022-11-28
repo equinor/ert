@@ -64,6 +64,20 @@ to a distribution in the same family as initially specified by the prior. A
 consequence of this is that the update process can *not* give you a posterior
 with updated parameters in the same distribution family as the Prior.
 
+REPRODUCIBILITY
+,,,,,,,,,,,,,,,
+
+When ERT samples values there is a seed for each parameter. This means that
+if ERT is started with a fixed :ref:`RANDOM_SEED <random_seed>` each prior
+that is sampled will be identical. When running without a random seed ERT
+will output which random seed was used, so it is possible to reproduce results
+as long as that is kept.
+
+This section only applies if a fixed seed is used:
+  * If the ensemble size is increased from N -> N+1 the N first realizations will be identical to before
+  * Parameter order is irrelevant
+  * Parameter names are case sensitive, PARAM:MY_PARAM != PARAM:myParam
+
 NORMAL
 ,,,,,,
 

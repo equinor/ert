@@ -635,22 +635,6 @@ int load_from_run_path(
 
     return loaded;
 }
-
-void bind_write_parameter(py::handle fs_, const std::string &node_key, int iens,
-                          py::bytes buffer) {
-    auto fs = ert::from_cwrap<enkf_fs_type>(fs_);
-    if (fs->read_only)
-        util_abort("%s: attempt to write to read_only filesystem mounted at:%s "
-                   "- aborting. \n",
-                   __func__, fs->mount_point);
-
-    ert::block_fs_driver *driver =
-        enkf_fs_select_driver(fs, PARAMETER, node_key.c_str());
-    char *bufferz;
-    Py_ssize_t size;
-    PyBytes_AsStringAndSize(buffer.ptr(), &bufferz, &size);
-    driver->save_node(node_key.c_str(), iens, bufferz, size);
-}
 } // namespace
 
 ERT_CLIB_SUBMODULE("enkf_fs", m) {
@@ -694,8 +678,6 @@ ERT_CLIB_SUBMODULE("enkf_fs", m) {
                                         last_history_restart, active_mask,
                                         enkf_fs, run_args);
           });
-
-    m.def("write_parameter", bind_write_parameter);
     m.def(
         "copy_from_case",
         [](Cwrap<enkf_fs_type> source_case,

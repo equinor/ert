@@ -1,6 +1,7 @@
 import logging
 import os
 from contextlib import ExitStack as does_not_raise
+from hashlib import sha256
 from pathlib import Path
 from textwrap import dedent
 
@@ -50,7 +51,7 @@ def load_from_forward_model(ert):
     [
         (
             "GEN_KW KW_NAME template.txt kw.txt prior.txt\nRANDOM_SEED 1234",
-            "MY_KEYWORD 0.379773",
+            "MY_KEYWORD -0.881423",
             [],
             does_not_raise(),
         ),
@@ -427,5 +428,125 @@ def test_that_first_three_parameters_sampled_snapshot(tmpdir):
         prior = fs.load_parameter(
             ert.ensembleConfig(), list(range(3)), Parameter("KW_NAME")
         )
-        expected = [0.3797727, 0.7943204, 2.2610954]
+        expected = [-0.8814228, 1.5847818, 1.009956]
         np.testing.assert_almost_equal(prior, np.array([expected]))
+
+
+@pytest.mark.parametrize(
+    "num_realisations",
+    [4, 5, 10],
+)
+@pytest.mark.parametrize(
+    "template, prior",
+    [
+        (
+            "MY_KEYWORD <MY_KEYWORD>\nMY_SECOND_KEYWORD <MY_SECOND_KEYWORD>",
+            "MY_KEYWORD NORMAL 0 1\nMY_SECOND_KEYWORD NORMAL 0 1",
+        ),
+        (
+            "MY_KEYWORD <MY_KEYWORD>",
+            "MY_KEYWORD NORMAL 0 1",
+        ),
+        (
+            "MY_FIRST_KEYWORD <MY_FIRST_KEYWORD>\nMY_KEYWORD <MY_KEYWORD>",
+            "MY_FIRST_KEYWORD NORMAL 0 1\nMY_KEYWORD NORMAL 0 1",
+        ),
+    ],
+)
+def test_that_sampling_is_fixed_from_name(tmpdir, template, prior, num_realisations):
+    """
+    Testing that the order and number of parameters is not relevant for the values,
+    only that name of the parameter and the global seed determine the values.
+    """
+    with tmpdir.as_cwd():
+        config = dedent(
+            f"""
+        NUM_REALIZATIONS {num_realisations}
+        RANDOM_SEED 1234
+        GEN_KW KW_NAME template.txt kw.txt prior.txt
+        """
+        )
+        with open("config.ert", "w") as fh:
+            fh.writelines(config)
+        with open("template.txt", "w") as fh:
+            fh.writelines(template)
+        with open("prior.txt", "w") as fh:
+            fh.writelines(prior)
+
+        res_config = ResConfig("config.ert")
+        ert = EnKFMain(res_config)
+
+        run_context = ert.create_ensemble_experiment_run_context(
+            active_mask=[True] * num_realisations,
+            iteration=0,
+        )
+        ert.sample_prior(run_context.sim_fs, run_context.active_realizations)
+
+        key_hash = sha256(b"1234" + b"KW_NAME:MY_KEYWORD")
+        seed = np.frombuffer(key_hash.digest(), dtype="uint32")
+        expected = np.random.default_rng(seed).standard_normal(num_realisations)
+        assert LibresFacade(ert).gather_gen_kw_data(
+            "default", "KW_NAME:MY_KEYWORD"
+        ).values.flatten().tolist() == list(expected)
+
+
+@pytest.mark.parametrize(
+    "mask, expected",
+    [
+        pytest.param(
+            [True] * 5,
+            [
+                -0.8814227775506998,
+                1.5847817694032422,
+                1.009956004559659,
+                -0.3614874716984976,
+                0.12143084130052884,
+            ],
+            id="Sampling all values, checking that we get length of 5",
+        ),
+        pytest.param(
+            [False, True, False, True],
+            [
+                1.5847817694032422,
+                -0.3614874716984976,
+            ],
+            id=(
+                "Sampling a subset of parameters (at index 1 and 4), checking"
+                "that those values match the corresponding values from the full"
+                "sample at the same index"
+            ),
+        ),
+    ],
+)
+def test_that_sub_sample_maintains_order(tmpdir, mask, expected):
+    with tmpdir.as_cwd():
+        config = dedent(
+            """
+        NUM_REALIZATIONS 5
+        RANDOM_SEED 1234
+        GEN_KW KW_NAME template.txt kw.txt prior.txt
+        """
+        )
+        with open("config.ert", "w") as fh:
+            fh.writelines(config)
+        with open("template.txt", "w") as fh:
+            fh.writelines("MY_KEYWORD <MY_KEYWORD>")
+        with open("prior.txt", "w") as fh:
+            fh.writelines("MY_KEYWORD NORMAL 0 1")
+
+        res_config = ResConfig("config.ert")
+        ert = EnKFMain(res_config)
+
+        run_context = ert.create_ensemble_experiment_run_context(
+            active_mask=mask,
+            iteration=0,
+        )
+        ert.sample_prior(run_context.sim_fs, run_context.active_realizations)
+
+        assert (
+            LibresFacade(ert)
+            .gather_gen_kw_data("default", "KW_NAME:MY_KEYWORD")
+            .values.flatten()
+            .tolist()
+            == expected
+        )
