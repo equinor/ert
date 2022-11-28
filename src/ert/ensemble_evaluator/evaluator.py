@@ -59,6 +59,7 @@ class EnsembleEvaluator:
 
         self._loop = asyncio.get_running_loop()
         self._done = self._loop.create_future()
+        self._shutdown_completed = self._loop.create_future()
 
         self._clients: Set[WebSocketServerProtocol] = set()
         self._dispatchers_connected: asyncio.Queue = None
@@ -334,10 +335,12 @@ class EnsembleEvaluator:
                 )
 
         logger.debug("Async server exiting.")
+        self._shutdown_completed.set_result(None)
 
     async def stop(self):
         if not self._done.done():
             self._done.set_result(None)
+        await self._shutdown_completed
 
     async def _signal_cancel(self):
         """
