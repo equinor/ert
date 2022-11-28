@@ -22,10 +22,12 @@ ERT_CLIB_SUBMODULE("enkf_fs_summary_data", m) {
                     auto iens = realizations[iens_index];
                     auto summary_vector =
                         enkf_node_user_get_vector(work_node, fs, iens);
-                    for (int index = 1; index < summary_vector.size();
-                         ++index) {
+                    for (int index = 1; index <= time_map_size; ++index) {
+                        double value = (index < summary_vector.size())
+                                           ? summary_vector[index]
+                                           : NAN;
                         data(iens_index * time_map_size + (index - 1),
-                             summary_key_index) = summary_vector[index];
+                             summary_key_index) = value;
                     }
                 }
                 summary_key_index++;
