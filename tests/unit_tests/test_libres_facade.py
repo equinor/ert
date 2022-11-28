@@ -2,7 +2,6 @@
 import logging
 from textwrap import dedent
 
-import pandas as pd
 import pytest
 from pandas.core.base import PandasObject
 
@@ -187,29 +186,22 @@ def test_case_history_data_missing_key(facade):
     assert isinstance(data, PandasObject)
 
 
-def _do_verify_indices_and_values(data):
-    # Verify indices
-    assert data.columns.name == "Realization"
-    assert all(data.columns == range(5))
-    assert data.index.name == "Date"
-    assert all(data.index == pd.date_range("2010-01-10", periods=200, freq="10D"))
-
-    # Verify selected datapoints
-    assert data.iloc[0][0] == pytest.approx(0.1153691, abs=1e-6)  # top-left
-    assert data.iloc[199][0] == pytest.approx(0.122272, abs=1e-6)  # bottom-left
-    assert data.iloc[4][4] == pytest.approx(
-        0.25907284, abs=1e-6
-    )  # somewhere in the middle
-    # bottom-right 5 entries in col
-    assert data.iloc[-5:][3].values == pytest.approx(
-        [0.24475138, 0.24395752, 0.24330144, 0.24303652, 0.24281485], abs=1e-6
-    )
-
-
-def test_summary_data_verify_indices_and_values(caplog, snake_oil_case_storage):
+def test_summary_data_verify_indices_and_values(
+    caplog, snake_oil_case_storage, snapshot
+):
     facade = LibresFacade(snake_oil_case_storage)
     with caplog.at_level(logging.WARNING):
-        _do_verify_indices_and_values(facade.gather_summary_data("default_0", "FOPR"))
+        data = facade.gather_summary_data("default_0", "FOPR")
+        snapshot.assert_match(
+            data.iloc[:5].to_csv(),
+            "summary_head.csv",
+        )
+        snapshot.assert_match(
+            data.iloc[-5:].to_csv(),
+            "summary_tail.csv",
+        )
+
+        assert data.shape == (200, 5)
         assert "contains duplicate timestamps" not in caplog.text
 
 
@@ -238,27 +230,23 @@ def test_gen_kw_priors(facade):
     } in priors["SNAKE_OIL_PARAM"]
 
 
-def test_summary_collector(monkeypatch, snake_oil_case_storage):
+def test_summary_collector(monkeypatch, snake_oil_case_storage, snapshot):
     facade = LibresFacade(snake_oil_case_storage)
     monkeypatch.setenv("TZ", "CET")  # The ert_statoil case was generated in CET
 
     data = facade.load_all_summary_data("default_0")
-
-    assert pytest.approx(data["WWCT:OP2"][0]["2010-01-10"], rel=1e-5) == 0.460843831
-    assert pytest.approx(data["WWCT:OP2"][4]["2010-01-10"]) == 0.4983681738
-
-    assert pytest.approx(data["FOPR"][0]["2010-01-10"], rel=1e-5) == 0.1153691932
-    assert pytest.approx(data["FOPR"][0]["2015-06-23"], rel=1e-5) == 0.1222724989
-
+    snapshot.assert_match(
+        data.iloc[:4].round(4).to_csv(index_label=[0, 1, 2, 3, 4]),
+        "summary_collector_1.csv",
+    )
+    assert data.shape == (1000, 46)
     with pytest.raises(KeyError):
         # realization 60:
         data.loc[60]
 
     data = facade.load_all_summary_data("default_0", ["WWCT:OP1", "WWCT:OP2"])
-
-    assert pytest.approx(data["WWCT:OP1"][0]["2010-01-10"]) == 0.21947261
-    assert pytest.approx(data["WWCT:OP2"][0]["2010-01-10"], rel=1e-5) == 0.46084383
-
+    snapshot.assert_match(data.iloc[:4].to_csv(), "summary_collector_2.csv")
+    assert data.shape == (1000, 2)
     with pytest.raises(KeyError):
         data["FOPR"]
 
@@ -268,48 +256,31 @@ def test_summary_collector(monkeypatch, snake_oil_case_storage):
         ["WWCT:OP1", "WWCT:OP2"],
         realization_index=realization_index,
     )
-
-    assert data.index.levels[0] == [realization_index]
-    assert len(data.index.levels[1]) == 200
-    assert list(data.columns) == ["WWCT:OP1", "WWCT:OP2"]
-
+    snapshot.assert_match(data.iloc[:4].to_csv(), "summary_collector_3.csv")
+    assert data.shape == (200, 2)
     non_existing_realization_index = 150
     with pytest.raises(IndexError):
-        data = facade.load_all_summary_data(
+        facade.load_all_summary_data(
             "default_0",
             ["WWCT:OP1", "WWCT:OP2"],
             realization_index=non_existing_realization_index,
         )
 
 
-def test_misfit_collector(snake_oil_case_storage):
+def test_misfit_collector(snake_oil_case_storage, snapshot):
     facade = LibresFacade(snake_oil_case_storage)
     data = facade.load_all_misfit_data("default_0")
-
-    assert pytest.approx(data["MISFIT:FOPR"][0]) == 1966.3584925069108
-    assert pytest.approx(data["MISFIT:FOPR"][4]) == 758.1662249270752
-
-    assert pytest.approx(data["MISFIT:TOTAL"][0]) == 2024.461010928874
-    assert pytest.approx(data["MISFIT:TOTAL"][4]) == 831.520534770889
+    snapshot.assert_match(data.to_csv(), "misfit_collector.csv")
 
     with pytest.raises(KeyError):
         # realization 60:
         data.loc[60]
 
 
-def test_gen_kw_collector(snake_oil_case_storage):
+def test_gen_kw_collector(snake_oil_case_storage, snapshot):
     facade = LibresFacade(snake_oil_case_storage)
     data = facade.load_all_gen_kw_data("default_0")
-
-    assert (
-        pytest.approx(data["SNAKE_OIL_PARAM:OP1_PERSISTENCE"][0], rel=1e-5) == 0.1404199
-    )
-    assert (
-        pytest.approx(data["SNAKE_OIL_PARAM:OP1_PERSISTENCE"][4], rel=1e-5) == 0.3845847
-    )
-
-    assert pytest.approx(data["SNAKE_OIL_PARAM:OP1_OFFSET"][0], rel=1e-5) == 0.028101138
-    assert pytest.approx(data["SNAKE_OIL_PARAM:OP1_OFFSET"][1], rel=1e-5) == 0.065297145
+    snapshot.assert_match(data.round(6).to_csv(), "gen_kw_collector.csv")
 
     with pytest.raises(KeyError):
         # realization 60:
@@ -319,11 +290,7 @@ def test_gen_kw_collector(snake_oil_case_storage):
         "default_0",
         ["SNAKE_OIL_PARAM:OP1_PERSISTENCE", "SNAKE_OIL_PARAM:OP1_OFFSET"],
     )
-
-    assert (
-        pytest.approx(data["SNAKE_OIL_PARAM:OP1_PERSISTENCE"][0], rel=1e-5) == 0.1404199
-    )
-    assert pytest.approx(data["SNAKE_OIL_PARAM:OP1_OFFSET"][0], rel=1e-5) == 0.028101138
+    snapshot.assert_match(data.round(6).to_csv(), "gen_kw_collector_2.csv")
 
     with pytest.raises(KeyError):
         data["SNAKE_OIL_PARAM:OP1_DIVERGENCE_SCALE"]
@@ -334,17 +301,11 @@ def test_gen_kw_collector(snake_oil_case_storage):
         ["SNAKE_OIL_PARAM:OP1_PERSISTENCE"],
         realization_index=realization_index,
     )
-
-    assert data.index == [realization_index]
-    assert len(data.index) == 1
-    assert list(data.columns) == ["SNAKE_OIL_PARAM:OP1_PERSISTENCE"]
-    assert (
-        pytest.approx(data["SNAKE_OIL_PARAM:OP1_PERSISTENCE"][3], rel=1e-5) == 0.2707831
-    )
+    snapshot.assert_match(data.round(6).to_csv(), "gen_kw_collector_3.csv")
 
     non_existing_realization_index = 150
     with pytest.raises(IndexError):
-        data = facade.load_all_gen_kw_data(
+        facade.load_all_gen_kw_data(
             "default_0",
             ["SNAKE_OIL_PARAM:OP1_PERSISTENCE"],
             realization_index=non_existing_realization_index,
@@ -407,7 +368,7 @@ def test_gen_data_report_steps():
     assert obs_key == []
 
 
-def test_gen_data_collector(snake_oil_case_storage):
+def test_gen_data_collector(snake_oil_case_storage, snapshot):
     facade = LibresFacade(snake_oil_case_storage)
     with pytest.raises(KeyError):
         facade.load_gen_data("default_0", "RFT_XX", 199)
@@ -416,11 +377,8 @@ def test_gen_data_collector(snake_oil_case_storage):
         facade.load_gen_data("default_0", "SNAKE_OIL_OPR_DIFF", 198)
 
     data1 = facade.load_gen_data("default_0", "SNAKE_OIL_OPR_DIFF", 199)
-
-    assert pytest.approx(data1[0][0]) == -0.057353
-    assert pytest.approx(data1[4][1]) == -0.04993
-    assert pytest.approx(data1[4][1000]) == 0.015464
-
+    snapshot.assert_match(data1.iloc[:4].to_csv(), "gen_data_collector_1.csv")
+    assert data1.shape == (2000, 5)
     realization_index = 3
     data1 = facade.load_gen_data(
         "default_0",
@@ -428,10 +386,8 @@ def test_gen_data_collector(snake_oil_case_storage):
         199,
         realization_index=realization_index,
     )
-
-    assert len(data1.index) == 2000
-    assert list(data1.columns) == [realization_index]
-
+    snapshot.assert_match(data1.iloc[:4].to_csv(), "gen_data_collector_2.csv")
+    assert data1.shape == (2000, 1)
     realization_index = 150
     with pytest.raises(IndexError):
         data1 = facade.load_gen_data(
