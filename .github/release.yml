@@ -1,5 +1,8 @@
 changelog:
   categories:
+    - title: User impact 🛠
+      labels:
+        - release-notes:user-impact
     - title: Breaking Changes 🛠
       labels:
         - release-notes:breaking-change
