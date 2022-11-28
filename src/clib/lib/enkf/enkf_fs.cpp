@@ -582,28 +582,7 @@ ERT_CLIB_SUBMODULE("enkf_fs", m) {
         py::arg("ensemble_size"));
 
     m.def("write_parameter", bind_write_parameter);
-    m.def("read_parameter", 
-        [](Cwrap<enkf_fs_type> fs, std::string &node_key, int iens) {
-            ert::block_fs_driver *driver =
-                enkf_fs_select_driver(fs, PARAMETER, node_key.c_str());
-            buffer_type *buffer = buffer_alloc(256);
-            try {
-                driver->load_node(node_key.c_str(), 0, iens, buffer);
-            } catch (const std::out_of_range &) {
-                buffer_free(buffer);
-                throw pybind11::key_error(
-                    fmt::format("No parameter: {} in storage", node_key.c_str()));
-
-            }
-            auto size= buffer_get_size(buffer);
-            std::vector<unsigned char> vec(size);
-            std::memcpy(vec.data(), buffer_get_data(buffer), size);
-
-            buffer_free(buffer);
-
-            return vec;
-        });
-        m.def(
+    m.def(
         "copy_from_case",
         [](Cwrap<enkf_fs_type> source_case,
            Cwrap<ensemble_config_type> ensemble_config,

@@ -234,3 +234,8 @@ def _shared_snake_oil_case(request, monkeypatch, source_root):
         monkeypatch.chdir("test_data")
 
     yield os.getcwd()
+
+
+@pytest.fixture()
+def snake_oil_field_example(setup_case):
+    return EnKFMain(setup_case("snake_oil_field", "snake_oil_field.ert"))

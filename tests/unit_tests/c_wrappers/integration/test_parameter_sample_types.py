@@ -672,3 +672,17 @@ if __name__ == "__main__":
         assert np.linalg.det(np.cov(prior_param)) > np.linalg.det(
             np.cov(posterior_param)
         )
+def test_snake_oil_field(snake_oil_field_example):
+    ert = snake_oil_field_example
+
+    # create directory structure
+    run_context = ert.create_ensemble_experiment_run_context(iteration=0)
+    ert.sample_prior(run_context.sim_fs, run_context.active_realizations)
+    ert.createRunPath(run_context)
+    fs = ert.getEnkfFsManager().getCurrentFileSystem()
+
+    A = fs.load_parameter(ert.ensembleConfig(), [0, 1, 5, 8], update.Parameter("PERMX"))
+
+    B = fs.load_parameter(ert.ensembleConfig(), [0, 1, 5, 8], update.Parameter("PORO"))
+
+    assert A != B

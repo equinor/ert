@@ -24,36 +24,24 @@ def _ensemble_config_forward_init(
     iens = run_arg.iens
     for config_key in ens_config.alloc_keylist():
         config_node = ens_config[config_key]
-                
+
         if not config_node.getUseForwardInit():
             continue
 
         node_id = NodeId(report_step=0, iens=run_arg.iens)
 
         if config_node.getImplementationType() == ErtImplType.FIELD:
-            storage_fs= run_arg.sim_fs
+            storage_fs = run_arg.sim_fs
 
-            if storage_fs.parameter_has_data(config_key, iens):
+            if storage_fs.field_parameter_has_data(config_key, iens):
                 # Already initialised, ignore
                 continue
 
-            filename= run_arg.runpath + "/" + config_node.get_init_file_fmt()
-            grid= xtgeo.grid_from_file(ens_config.grid_file)
-            props= xtgeo.gridproperty_from_file(filename, name=config_key, grid=grid)
+            filename = run_arg.runpath + "/" + config_node.get_init_file_fmt()
+            grid = xtgeo.grid_from_file(ens_config.grid_file)
+            props = xtgeo.gridproperty_from_file(filename, name=config_key, grid=grid)
+            storage_fs.save_field_data(config_key, iens, props.values.data)
 
-            vals = props.values
-            p= pickle.dumps(vals)
-
-            s = io.BytesIO()
-            s.write(struct.pack("Qi", 0, int(ErtImplType.FIELD)))
-            s.write(p)
-            _clib.enkf_fs.write_parameter(
-                    storage_fs,
-                    config_node.getKey(),
-                    iens,
-                    s.getvalue(),
-                )
-        
         else:
             node = EnkfNode(config_node)
 
@@ -84,9 +72,7 @@ def _ensemble_config_forward_init(
                         f"'{node.name()}' in file {init_file}: File not found\n"
                     )
                 else:
-                    error_msg = (
-                        f"Failed to initialize node '{node.name()}' in file {init_file}\n"
-                    )
+                    error_msg = f"Failed to initialize node '{node.name()}' in file {init_file}\n"
 
                 result = LoadStatus.LOAD_FAILURE
 

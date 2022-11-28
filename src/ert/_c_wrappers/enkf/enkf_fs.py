@@ -221,8 +221,11 @@ class EnkfFs(BaseCClass):
         parameter: update.Parameter,
         values: npt.ArrayLike,
     ) -> None:
-        config_node= ensemble_config.getNode(parameter.name)
+        config_node = ensemble_config.getNode(parameter.name)
         if config_node.getImplementationType() == ErtImplType.FIELD:
+            # for realization in iens_active_index:
+            # values[real] ?
+            #    self.save_field_data(parameter, realization, values)
             pass
         else:
             update.save_parameter(
@@ -235,22 +238,35 @@ class EnkfFs(BaseCClass):
         iens_active_index: List[int],
         parameter: update.Parameter,
     ) -> np.ndarray:
-        config_node= ensemble_config.getNode(parameter.name)
+        config_node = ensemble_config.getNode(parameter.name)
         if config_node.getImplementationType() == ErtImplType.FIELD:
-            ## combine into np.ndarray, how ?
-            return np.empty(0)
-            
-            # for index in iens_active_index:
-            #     ret = _clib.enkf_fs.read_parameter(self, parameter.name, index)
-            #     p : np.ma.MaskedArray = pickle.loads(bytes(ret[12:]))
-            #     p= p.flatten()
-            #     return p.data
+            data = []
+            for realization in iens_active_index:
+                np_data = self.load_field_data(parameter.name, realization)
+                data.append(np_data.reshape((np_data.size, 1), order="F"))
 
+            stack = np.stack(data)
+            return stack.reshape((stack.size, 1))
         else:
             return update.load_parameter(
                 self, ensemble_config, iens_active_index, parameter
             )
-        
+
+    def save_field_data(
+        self, parameter_name: str, realization: int, data: npt.NDArray[np.double]
+    ) -> None:
+        output_path = self.mount_point / f"field-{realization}"
+        Path.mkdir(output_path, exist_ok=True)
+        np.save(f"{output_path}/{parameter_name}", data)
+
+    def load_field_data(
+        self, parameter_name: str, realization: int
+    ) -> npt.NDArray[np.double]:
+        input_path = self.mount_point / f"field-{realization}"
+        if not input_path.exists():
+            raise KeyError(f"No parameter: {parameter_name} in storage")
+        np_data = np.load(f"{input_path}/{parameter_name}.npy")
+        return np_data
 
     def copy_from_case(
         self, other: "EnkfFs", report_step: int, nodes: List[str], active: List[bool]
@@ -434,10 +450,8 @@ class EnkfFs(BaseCClass):
 
         return loaded
 
-    def parameter_has_data(self, name, iens) -> bool:
-        try:
-            _clib.enkf_fs.read_parameter(self, name,iens)        
-        except:
+    def field_parameter_has_data(self, name, realization) -> bool:
+        path = self.mount_point / f"field-{realization}"
+        if not path.exists():
             return False
         return True
-       

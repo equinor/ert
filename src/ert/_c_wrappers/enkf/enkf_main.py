@@ -4,7 +4,6 @@ import os
 from datetime import datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, List, Mapping, Sequence, Union
-import pickle
 import numpy as np
 import pandas as pd
 from jinja2 import Template
@@ -142,22 +141,28 @@ def _generate_parameter_files(
     for key in ens_config.getKeylistFromVarType(
         EnkfVarType.PARAMETER + EnkfVarType.EXT_PARAMETER
     ):
-
         node = ens_config[key]
         type_ = node.getImplementationType()
 
         if type_ == ErtImplType.FIELD:
 
-            if node.getUseForwardInit() and not fs.parameter_has_data(key, iens):
+            if node.getUseForwardInit() and not fs.field_parameter_has_data(key, iens):
                 continue
 
-            ret = _clib.enkf_fs.read_parameter(fs, node.getKey(),iens)
-            p : np.ma.MaskedArray = pickle.loads(bytes(ret[12:]))
-            grid= xtgeo.grid_from_file(ens_config.grid_file)
-            gp= xtgeo.GridProperty(ncol=p.shape[0], nrow=p.shape[1], nlay=p.shape[2], values=p, grid=grid, name=key)   
+            data = fs.load_field_data(key, iens)
+            grid = xtgeo.grid_from_file(ens_config.grid_file)
+            gp = xtgeo.GridProperty(
+                ncol=data.shape[0],
+                nrow=data.shape[1],
+                nlay=data.shape[2],
+                values=data,
+                grid=grid,
+                name=key,
+            )
 
-            file_out = run_path + "/" + node_eclfile
+            file_out = run_path + "/" + node.get_enkf_outfile()
             gp.to_file(file_out, fformat="grdecl")
+            continue
 
         if type_ == ErtImplType.GEN_KW:
             _generate_gen_kw_parameter_file(
@@ -169,6 +174,7 @@ def _generate_parameter_files(
                 exports,
             )
             continue
+
         enkf_node = EnkfNode(node)
         node_id = NodeId(report_step=0, iens=iens)
 
@@ -179,9 +185,7 @@ def _generate_parameter_files(
         node_eclfile = node.get_enkf_outfile()
 
         type_ = enkf_node.getImplType()
-        if type_ == ErtImplType.FIELD:
-            _clib.field.generate_parameter_file(enkf_node, run_path, node_eclfile)
-        elif type_ == ErtImplType.SURFACE:
+        if type_ == ErtImplType.SURFACE:
             _clib.surface.generate_parameter_file(enkf_node, run_path, node_eclfile)
         elif type_ == ErtImplType.EXT_PARAM:
             _clib.ext_param.generate_parameter_file(enkf_node, run_path, node_eclfile)
@@ -450,24 +454,18 @@ class EnKFMain:
                     continue
                 impl_type = config_node.getImplementationType()
                 if impl_type == ErtImplType.FIELD:
-                    filename= config_node.get_init_file_fmt() % realization_nr
+                    filename = config_node.get_init_file_fmt() % realization_nr
                     ec = self.ensembleConfig()
-                    grid= xtgeo.grid_from_file(ec.grid_file)
-                    props= xtgeo.gridproperty_from_file(filename, name=parameter, grid=grid)
+                    grid = xtgeo.grid_from_file(ec.grid_file)
+                    props = xtgeo.gridproperty_from_file(
+                        filename, name=parameter, grid=grid
+                    )
 
-                    vals = props.values
-                    p= pickle.dumps(vals)
+                    storage.save_field_data(
+                        parameter, realization_nr, props.values.data
+                    )
 
-                    s = io.BytesIO()
-                    s.write(struct.pack("Qi", 0, int(ErtImplType.FIELD)))
-                    s.write(p)
-                    _clib.enkf_fs.write_parameter(
-                            storage,
-                            config_node.getKey(),
-                            realization_nr,
-                            s.getvalue(),
-                        )                
-                if impl_type == ErtImplType.GEN_KW:
+                elif impl_type == ErtImplType.GEN_KW:
                     gen_kw_config = config_node.getKeywordModelConfig()
                     if len(gen_kw_config) > 0:
                         if config_node.get_init_file_fmt():
