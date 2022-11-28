@@ -301,7 +301,9 @@ class LegacyEnsemble(Ensemble):
         return True
 
     async def cancel(self) -> None:
-        asyncio.get_running_loop().run_until_complete(self._job_queue.kill_all_jobs())
+        await asyncio.get_running_loop().run_until_complete(
+            self._job_queue.kill_all_jobs()
+        )
         logger.debug("evaluator cancelled")
 
     @property
