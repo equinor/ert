@@ -2,7 +2,7 @@ import os
 import os.path
 import shutil
 from collections import defaultdict
-from dataclasses import dataclass, field, replace
+from dataclasses import dataclass, field
 from typing import Dict, List, Optional
 
 from ert._c_wrappers.config import ConfigParser, ConfigValidationError, ContentTypeEnum
@@ -75,9 +75,6 @@ class ExtJob:
 
         return resolved
 
-    def copy(self):
-        return replace(self)
-
     _int_keywords = ["MAX_RUNNING", "MAX_RUNNING_MINUTES", "MIN_ARG", "MAX_ARG"]
     _str_keywords = [
         "STDIN",
@@ -115,29 +112,34 @@ class ExtJob:
         )
 
     @classmethod
-    def _read_str_keywords(cls, content_dict, config_content):
-        def set_nullable(keyword, key):
+    def _read_str_keywords(cls, config_content):
+        result = {}
+
+        def might_set_value_none(keyword, key):
             value = config_content.getValue(keyword)
             if value == "null":
                 value = None
-            content_dict[key] = value
+            result[key] = value
 
         for key in cls._str_keywords:
             if config_content.hasKey(key):
                 if key in ("STDIN", "STDOUT", "STDERR"):
-                    set_nullable(key, key.lower() + "_file")
+                    might_set_value_none(key, key.lower() + "_file")
                 else:
-                    set_nullable(key, key.lower())
+                    might_set_value_none(key, key.lower())
+        return result
 
     @classmethod
-    def _read_int_keywords(cls, content_dict, config_content):
+    def _read_int_keywords(cls, config_content):
+        result = {}
         for key in cls._int_keywords:
             if config_content.hasKey(key):
                 value = config_content.getValue(key)
                 if value > 0:
                     # less than 0 in the config is equivalent to setting None
                     # (backwards compatability)
-                    content_dict[key.lower()] = value
+                    result[key.lower()] = value
+        return result
 
     @classmethod
     def from_config_file(cls, config_file: str, name: Optional[str] = None):
@@ -153,8 +155,8 @@ class ExtJob:
 
         content_dict = {}
 
-        cls._read_str_keywords(content_dict, config_content)
-        cls._read_int_keywords(content_dict, config_content)
+        content_dict.update(**cls._read_str_keywords(config_content))
+        content_dict.update(**cls._read_int_keywords(config_content))
 
         content_dict["executable"] = config_content.getValue("EXECUTABLE")
         if config_content.hasKey("ARGLIST"):

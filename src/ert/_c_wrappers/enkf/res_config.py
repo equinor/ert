@@ -334,7 +334,6 @@ class ResConfig:
             job = copy.deepcopy(self.installed_jobs[job_description[0]])
             job.arglist = job_description[1:]
             job.define_args = self.substitution_list
-            # job.clear_deprecated_argv()
             jobs.append(job)
 
         self.forward_model = ForwardModel(jobs=jobs)
@@ -424,7 +423,9 @@ class ResConfig:
         # FORWARD_MODEL_KEY
         for job_description in config_dict.get(ConfigKeys.FORWARD_MODEL, []):
             try:
-                job = self.installed_jobs[job_description[ConfigKeys.NAME]].copy()
+                job = copy.deepcopy(
+                    self.installed_jobs[job_description[ConfigKeys.NAME]]
+                )
             except KeyError as err:
                 raise ValueError(
                     f"Could not find job `{job_description[ConfigKeys.NAME]}`"
@@ -436,9 +437,11 @@ class ResConfig:
 
         # SIMULATION_JOB_KEY
         for job_description in config_dict.get(ConfigKeys.SIMULATION_JOB, []):
-            job = self.installed_jobs[job_description[ConfigKeys.NAME]].copy()
+            job = copy.deepcopy(self.installed_jobs[job_description[ConfigKeys.NAME]])
             try:
-                job = self.installed_jobs[job_description[ConfigKeys.NAME]].copy()
+                job = copy.deepcopy(
+                    self.installed_jobs[job_description[ConfigKeys.NAME]]
+                )
             except KeyError as err:
                 raise ValueError(
                     f"Could not find job `{job_description[ConfigKeys.NAME]}` "
