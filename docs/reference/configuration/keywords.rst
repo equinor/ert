@@ -1524,32 +1524,19 @@ Keywords related to running the forward model
         keyword. A set of default jobs is available, and by default FORWARD_MODEL
         takes the value ECLIPSE100.
 
-        The FORWARD_MODEL keyword expects a series of keywords, each defined with
-        INSTALL_JOB. ERT will execute the jobs sequentially, in the order they
-        are entered.
+        The FORWARD_MODEL keyword expects one keyword defined with INSTALL_JOB.
 
-        *Example A:*
+        *Example:*
 
         ::
 
                 -- Suppose that "MY_RELPERM_SCRIPT" has been defined with
                 -- the INSTALL_JOB keyword. This FORWARD_MODEL will execute
                 -- "MY_RELPERM_SCRIPT" before ECLIPSE100.
-                FORWARD_MODEL MY_RELPERM_SCRIPT ECLIPSE100
+                FORWARD_MODEL MY_RELPERM_SCRIPT
+                FORWARD_MODEL ECLIPSE100
 
-        *Example B:*
-
-        ::
-
-                -- Suppose that "MY_RELPERM_SCRIPT" and "MY_ROCK_PHYSICS_MODEL"
-                -- has been defined with the INSTALL_JOB keyword.
-                -- This FORWARD_MODEL will execute "MY_RELPERM_SCRIPT", then
-                -- "ECLIPSE100" and in the end "MY_ROCK_PHYSICS_MODEL".
-                FORWARD_MODEL MY_RELPERM_SCRIPT ECLIPSE100 MY_ROCK_PHYSICS_MODEL
-
-        For advanced jobs you can pass string arguments to the job using a KEY=VALUE
-        based approach, this is further described in: passing arguments. In available
-        jobs in ERT you can see a list of the jobs which are available.
+      In available jobs in ERT you can see a list of the jobs which are available.
 
 
 .. _simulation_job:
