@@ -1,7 +1,12 @@
+import asyncio
 import os
+import uuid
 from unittest.mock import patch
 
 import pytest
+import websockets
+from cloudevents.conversion import to_json
+from cloudevents.http import CloudEvent
 from websockets.exceptions import ConnectionClosed
 
 from ert.ensemble_evaluator import identifiers, state
@@ -10,7 +15,8 @@ from ert.ensemble_evaluator.evaluator import EnsembleEvaluator
 
 
 @pytest.mark.timeout(60)
-def test_run_legacy_ensemble(tmpdir, make_ensemble_builder):
+@pytest.mark.asyncio
+async def test_run_legacy_ensemble(tmpdir, make_ensemble_builder):
     num_reals = 2
     custom_port_range = range(1024, 65535)
     with tmpdir.as_cwd():
@@ -21,19 +27,14 @@ def test_run_legacy_ensemble(tmpdir, make_ensemble_builder):
             use_token=False,
             generate_cert=False,
         )
-        evaluator = EnsembleEvaluator(ensemble, config, 0)
-        with evaluator.run() as monitor:
-            for e in monitor.track():
-                if e["type"] in (
-                    identifiers.EVTYPE_EE_SNAPSHOT_UPDATE,
-                    identifiers.EVTYPE_EE_SNAPSHOT,
-                ) and e.data.get(identifiers.STATUS) in [
-                    state.ENSEMBLE_STATE_FAILED,
-                    state.ENSEMBLE_STATE_STOPPED,
-                ]:
-                    monitor.signal_done()
-        assert evaluator._ensemble.status == state.ENSEMBLE_STATE_STOPPED
-        assert evaluator._ensemble.get_successful_realizations() == num_reals
+        server = EnsembleEvaluator(ensemble, config, 0)
+        asyncio.create_task(server.evaluator_server())
+
+        await ensemble.evaluate_async(config, experiment_id=None)
+        await server.stop()
+
+        assert ensemble.status == state.ENSEMBLE_STATE_STOPPED
+        assert ensemble.get_successful_realizations() == num_reals
 
         # realisations should finish, each creating a status-file
         for i in range(num_reals):
