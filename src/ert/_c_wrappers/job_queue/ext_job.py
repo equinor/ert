@@ -101,9 +101,9 @@ class ExtJob:
         parser.add("EXEC_ENV").set_argc_minmax(1, 2)
         parser.add("DEFAULT").set_argc_minmax(2, 2)
         parser.add("ARGLIST").set_argc_minmax(1, -1)
-        schema = parser.add("ARG_TYPE")
-        schema.set_argc_minmax(2, 2)
-        schema.iset_type(0, ContentTypeEnum.CONFIG_INT)
+        arg_type_schema = parser.add("ARG_TYPE")
+        arg_type_schema.set_argc_minmax(2, 2)
+        arg_type_schema.iset_type(0, ContentTypeEnum.CONFIG_INT)
 
         return parser.parse(
             config_file,
