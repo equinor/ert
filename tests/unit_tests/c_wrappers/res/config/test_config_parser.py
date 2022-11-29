@@ -10,7 +10,6 @@ from ert._c_wrappers.config import (
     SchemaItem,
     UnrecognizedEnum,
 )
-from ert._c_wrappers.enkf.ensemble_config import _option_dict
 
 
 def test_item_types(tmp_path):
@@ -314,25 +313,3 @@ def test_valid_string():
     assert ContentTypeEnum.CONFIG_BOOL.convert_string("True")
     assert not ContentTypeEnum.CONFIG_BOOL.convert_string("False")
     assert not ContentTypeEnum.CONFIG_BOOL.convert_string("F")
-
-
-@pytest.mark.parametrize(
-    "option_list, offset, expected",
-    [
-        (["a:1"], 0, {"a": "1"}),
-        (["B:abc"], 0, {"B": "abc"}),
-        (["A"], 0, {}),
-        (["a:1", "B:abc"], 0, {"a": "1", "B": "abc"}),
-        (["a:1", "T:"], 0, {"a": "1"}),
-        (["a:1", ":T"], 0, {"a": "1"}),
-        (["a:1", ":-:"], 0, {"a": "1"}),
-        (["a:1", "T:"], 0, {"a": "1"}),
-        (["a:1", "b:2", "c:3"], 2, {"c": "3"}),
-        (["a", "b", "c"], 0, {}),
-        ([], 0, {}),
-        ([1, 2, 3, 4], 0, {}),
-        ([1.1, "none", 2], 0, {}),
-    ],
-)
-def test_options_dic(option_list, offset, expected):
-    assert _option_dict(option_list, offset) == expected
