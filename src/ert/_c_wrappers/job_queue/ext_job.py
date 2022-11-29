@@ -139,6 +139,23 @@ class ExtJob:
                     result[key.lower()] = value
         return result
 
+    @staticmethod
+    def _make_arg_types_list(
+        config_content, max_arg: Optional[int]
+    ) -> List[ContentTypeEnum]:
+        arg_types_dict = defaultdict(lambda: ContentTypeEnum.CONFIG_STRING)
+        if max_arg is not None:
+            arg_types_dict[max_arg - 1] = ContentTypeEnum.CONFIG_STRING
+        for arg in config_content["ARG_TYPE"]:
+            arg_types_dict[arg[0]] = ContentTypeEnum(type_from_kw(arg[1]))
+        if arg_types_dict:
+            return [
+                arg_types_dict[j]
+                for j in range(max(i for i in arg_types_dict.keys()) + 1)
+            ]
+        else:
+            return []
+
     @classmethod
     def from_config_file(cls, config_file: str, name: Optional[str] = None):
         if name is None:
@@ -165,18 +182,12 @@ class ExtJob:
                 for s in config_content["ARGLIST"][-1]
             ]
 
-        arg_types_dict = defaultdict(lambda: ContentTypeEnum.CONFIG_STRING)
-        if "max_arg" in content_dict and content_dict["max_arg"] > 0:
-            arg_types_dict[content_dict["max_arg"] - 1] = ContentTypeEnum.CONFIG_STRING
-        for arg in config_content["ARG_TYPE"]:
-            arg_types_dict[arg[0]] = ContentTypeEnum(type_from_kw(arg[1]))
-        if arg_types_dict:
-            content_dict["arg_types"] = [
-                arg_types_dict[j]
-                for j in range(max(i for i in arg_types_dict.keys()) + 1)
-            ]
-        else:
-            content_dict["arg_types"] = []
+        content_dict["arg_types"] = cls._make_arg_types_list(
+            config_content,
+            content_dict["max_arg"]
+            if "max_arg" in content_dict and content_dict["max_arg"] > 0
+            else None,
+        )
 
         def set_env(key, keyword):
             content_dict[key] = {}
