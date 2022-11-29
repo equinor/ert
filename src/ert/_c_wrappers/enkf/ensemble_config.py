@@ -31,6 +31,30 @@ def _get_filename(file):
 
 
 def _option_dict(option_list: List[str], offset: int) -> Dict[str, str]:
+    """Gets the list of options given to a keywords such as GEN_DATA.
+
+    The first step of parsing will separate a line such as
+
+      GEN_DATA NAME INPUT_FORMAT:ASCII RESULT_FILE:file.txt REPORT_STEPS:3
+
+    into
+
+    >>> opts = ["NAME", "INPUT_FORMAT:ASCII", "RESULT_FILE:file.txt", "REPORT_STEPS:3"]
+
+    From there, _option_dict can be used to get a dictionary of the options:
+
+    >>> _option_dict(opts, 1)
+    {'INPUT_FORMAT': 'ASCII', 'RESULT_FILE': 'file.txt', 'REPORT_STEPS': '3'}
+
+    Errors are reported to the log, and erroring fields ignored:
+
+    >>> import sys
+    >>> logger.addHandler(logging.StreamHandler(sys.stdout))
+    >>> _option_dict(opts + [":T"], 1)
+    Ignoring argument :T not properly formatted should be of type ARG:VAL
+    {'INPUT_FORMAT': 'ASCII', 'RESULT_FILE': 'file.txt', 'REPORT_STEPS': '3'}
+
+    """
     option_dict = {}
     for option_pair in option_list[offset:]:
         if not isinstance(option_pair, str):
@@ -53,8 +77,8 @@ def _option_dict(option_list: List[str], offset: int) -> Dict[str, str]:
 
 
 def _str_to_bool(txt: str) -> bool:
-    """This function converts truthy text to boolean values according to the rules
-    of the FORWARD_INIT keyword.
+    """This function converts text to boolean values according to the rules of
+    the FORWARD_INIT keyword.
 
     The rules for str_to_bool is keep for backwards compatability
 
@@ -77,8 +101,6 @@ def _str_to_bool(txt: str) -> bool:
     Any text which is not correctly identified as true or false returns False, but
     with a failure message written to the log:
 
-    >>> import sys
-    >>> logger.addHandler(logging.StreamHandler(sys.stdout))
     >>> _str_to_bool("fail")
     Failed to parse fail as bool! Using FORWARD_INIT:FALSE
     False
