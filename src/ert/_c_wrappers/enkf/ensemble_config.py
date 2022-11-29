@@ -52,9 +52,37 @@ def _option_dict(option_list: List[str], offset: int) -> Dict[str, str]:
     return option_dict
 
 
-def _str_to_bool(txt: Optional[str]) -> bool:
-    if txt is None:
-        return False
+def _str_to_bool(txt: str) -> bool:
+    """This function converts truthy text to boolean values according to the rules
+    of the FORWARD_INIT keyword.
+
+    The rules for str_to_bool is keep for backwards compatability
+
+    First, any upper/lower case true/false value is converted to the corresponding
+    boolean value:
+
+    >>> _str_to_bool("TRUE")
+    True
+    >>> _str_to_bool("true")
+    True
+    >>> _str_to_bool("True")
+    True
+    >>> _str_to_bool("FALSE")
+    False
+    >>> _str_to_bool("false")
+    False
+    >>> _str_to_bool("False")
+    False
+
+    Any text which is not correctly identified as true or false returns False, but
+    with a failure message written to the log:
+
+    >>> import sys
+    >>> logger.addHandler(logging.StreamHandler(sys.stdout))
+    >>> _str_to_bool("fail")
+    Failed to parse fail as bool! Using FORWARD_INIT:FALSE
+    False
+    """
     if txt.lower() == "true":
         return True
     elif txt.lower() == "false":
@@ -217,7 +245,7 @@ class EnsembleConfig(BaseCClass):
             tmpl_path = _get_abs_path(gen_kw[1])
             out_file = _get_filename(_get_abs_path(gen_kw[2]))
             param_file_path = _get_abs_path(gen_kw[3])
-            forward_init = _str_to_bool(options.get(ConfigKeys.FORWARD_INIT))
+            forward_init = _str_to_bool(options.get(ConfigKeys.FORWARD_INIT, "FALSE"))
             init_files = _get_abs_path(options.get(ConfigKeys.INIT_FILES))
         return EnkfConfigNode.create_gen_kw(
             name,
@@ -243,7 +271,7 @@ class EnsembleConfig(BaseCClass):
             init_file = options.get(ConfigKeys.INIT_FILES)
             out_file = options.get("OUTPUT_FILE")
             base_surface = options.get(ConfigKeys.BASE_SURFACE_KEY)
-            forward_init = _str_to_bool(options.get(ConfigKeys.FORWARD_INIT))
+            forward_init = _str_to_bool(options.get(ConfigKeys.FORWARD_INIT, "FALSE"))
 
         return EnkfConfigNode.create_surface(
             name,
@@ -277,7 +305,7 @@ class EnsembleConfig(BaseCClass):
             options = _option_dict(field, 2)
             if var_type == ConfigKeys.GENERAL_KEY:
                 enkf_infile = field[3]
-            forward_init = _str_to_bool(options.get(ConfigKeys.FORWARD_INIT))
+            forward_init = _str_to_bool(options.get(ConfigKeys.FORWARD_INIT, "FALSE"))
             init_transform = options.get(ConfigKeys.INIT_TRANSFORM)
             output_transform = options.get(ConfigKeys.OUTPUT_TRANSFORM)
             input_transform = options.get(ConfigKeys.INPUT_TRANSFORM)
