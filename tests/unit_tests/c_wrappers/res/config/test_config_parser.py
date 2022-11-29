@@ -10,7 +10,7 @@ from ert._c_wrappers.config import (
     SchemaItem,
     UnrecognizedEnum,
 )
-from ert._c_wrappers.enkf.ensemble_config import _option_dict, _str_to_bool
+from ert._c_wrappers.enkf.ensemble_config import _option_dict
 
 
 def test_item_types(tmp_path):
@@ -336,27 +336,3 @@ def test_valid_string():
 )
 def test_options_dic(option_list, offset, expected):
     assert _option_dict(option_list, offset) == expected
-
-
-@pytest.mark.parametrize(
-    "text, expected, success",
-    [
-        ("True", True, True),
-        ("true", True, True),
-        ("TRUE", True, True),
-        ("False", False, True),
-        ("false", False, True),
-        ("FALSE", False, True),
-        (None, False, True),
-        ("1", False, False),
-        ("fail", False, False),
-        ("tru", False, False),
-        ("", False, False),
-    ],
-)
-def test_str_to_bool(text, expected, success, caplog):
-    assert _str_to_bool(text) == expected
-    if not success:
-        assert caplog.records[0].msg == (
-            f"Failed to parse {text} as bool! Using FORWARD_INIT:FALSE"
-        )
