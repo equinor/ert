@@ -1,6 +1,8 @@
 import asyncio
+import concurrent
 import pickle
 import sys
+import uuid
 from itertools import permutations
 from pathlib import Path
 from typing import Set
@@ -8,13 +10,19 @@ from typing import Set
 import cloudpickle
 import prefect
 import pytest
+import websockets
+from cloudevents.conversion import to_json
+from cloudevents.http import CloudEvent
 
 import ert.ensemble_evaluator as ee
 from ert.async_utils import get_event_loop
+from ert.ensemble_evaluator import identifiers
 from ert.ensemble_evaluator import identifiers as ids
 from ert.ensemble_evaluator import state
 from ert.ensemble_evaluator._builder._unix_task import UnixTask
+from ert.ensemble_evaluator._wait_for_evaluator import wait_for_evaluator
 from ert.ensemble_evaluator.evaluator import EnsembleEvaluator
+from ert.ensemble_evaluator.monitor import Monitor
 
 
 def test_get_flow(
@@ -69,28 +77,51 @@ def wait_until_done(monitor, event):
 
 
 @pytest.mark.timeout(60)
-def test_run_prefect_ensemble(evaluator_config, poly_ensemble, ensemble_size):
+@pytest.mark.asyncio
+async def test_run_prefect_ensemble(evaluator_config, poly_ensemble, ensemble_size):
     """Test successful realizations from prefect-run equals ensemble-size"""
-    evaluator = EnsembleEvaluator(poly_ensemble, evaluator_config, 0)
-    with evaluator.run() as mon:
-        for event in mon.track():
-            wait_until_done(mon, event)
-    assert evaluator._ensemble.status == state.ENSEMBLE_STATE_STOPPED
-    successful_realizations = evaluator._ensemble.get_successful_realizations()
+    server = EnsembleEvaluator(poly_ensemble, evaluator_config, 0)
+    asyncio.create_task(server.evaluator_server())
+
+    await poly_ensemble.evaluate_async(evaluator_config, experiment_id=None)
+    await server.stop()
+
+    assert poly_ensemble.status == state.ENSEMBLE_STATE_STOPPED
+    successful_realizations = poly_ensemble.get_successful_realizations()
     assert successful_realizations == ensemble_size
 
 
 @pytest.mark.timeout(60)
-def test_cancel_run_prefect_ensemble(evaluator_config, poly_ensemble):
+@pytest.mark.asyncio
+async def test_cancel_run_prefect_ensemble(evaluator_config, poly_ensemble):
     """Test cancellation of prefect-run"""
-    evaluator = EnsembleEvaluator(poly_ensemble, evaluator_config, 0)
-    with evaluator.run() as mon:
-        cancel = True
-        for _ in mon.track():
-            if cancel:
-                mon.signal_cancel()
-                cancel = False
-    assert evaluator._ensemble.status == state.ENSEMBLE_STATE_CANCELLED
+    server = EnsembleEvaluator(poly_ensemble, evaluator_config, 0)
+    server_task = asyncio.create_task(server.evaluator_server())
+
+    await wait_for_evaluator(
+        base_url=evaluator_config.url,
+        token=evaluator_config.token,
+        cert=evaluator_config.cert,
+    )
+    evaluation_task = asyncio.create_task(
+        poly_ensemble.evaluate_async(evaluator_config, experiment_id=None)
+    )
+    cancel_event = CloudEvent(
+        {
+            "type": identifiers.EVTYPE_EE_USER_CANCEL,
+            "source": f"/ert/monitor/0",
+            "id": str(uuid.uuid1()),
+        }
+    )
+
+    async with websockets.connect(f"{evaluator_config.client_uri}") as websocket:
+        await websocket.send(to_json(cancel_event))
+
+    await evaluation_task
+    await server.stop()
+    await server_task
+
+    assert poly_ensemble.status == state.ENSEMBLE_STATE_CANCELLED
 
 
 # This function is used by test_run_prefect_ensemble_exception, but
@@ -105,14 +136,18 @@ def dummy_get_flow(*args, **kwargs):
     sys.platform.startswith("darwin"),
     reason="On darwin patching is unreliable since processes may use 'spawn'.",
 )
-def test_run_prefect_ensemble_exception(evaluator_config, poly_ensemble):
+@pytest.mark.asyncio
+async def test_run_prefect_ensemble_exception(evaluator_config, poly_ensemble):
     """Test prefect on flow with runtime-error"""
     poly_ensemble.get_flow = dummy_get_flow
-    evaluator = EnsembleEvaluator(poly_ensemble, evaluator_config, 0)
-    with evaluator.run() as mon:
-        for event in mon.track():
-            wait_until_done(mon, event)
-    assert evaluator._ensemble.status == state.ENSEMBLE_STATE_FAILED
+    server = EnsembleEvaluator(poly_ensemble, evaluator_config, 0)
+    server_task = asyncio.create_task(server.evaluator_server())
+
+    await poly_ensemble.evaluate_async(evaluator_config, experiment_id=None)
+    await server.stop()
+    await server_task
+
+    assert poly_ensemble.status == state.ENSEMBLE_STATE_FAILED
 
 
 def function_that_fails_once(coeffs):
@@ -132,7 +167,8 @@ def function_that_fails_once(coeffs):
 
 
 @pytest.mark.timeout(60)
-def test_prefect_retries(
+@pytest.mark.asyncio
+async def just_not_yet_test_prefect_retries(
     evaluator_config, function_ensemble_builder_factory, tmpdir, ensemble_size
 ):
 
@@ -143,20 +179,43 @@ def test_prefect_retries(
 
     builder = function_ensemble_builder_factory(pickle_func)
     ensemble = builder.set_retry_delay(2).set_id("0").build()
-    evaluator = EnsembleEvaluator(ensemble, evaluator_config, 0)
-    with tmpdir.as_cwd():
+
+    server = EnsembleEvaluator(ensemble, evaluator_config, 0)
+    server_task = asyncio.create_task(server.evaluator_server())
+    con_info = evaluator_config.get_connection_info()
+    await wait_for_evaluator(
+        base_url=con_info.url, token=con_info.token, cert=con_info.cert
+    )
+
+    def run_function(con_config):
         error_event_reals: Set[str] = set()
-        with evaluator.run() as mon:
-            # close_events_in_ensemble_run(monitor=mon) # more strict as above
-            for event in mon.track():
+        with Monitor(con_config.get_connection_info()) as monitor:
+            for event in monitor.track():
                 # Capture the job error messages
                 if event.data is not None and "This is an expected ERROR" in str(
                     event.data
                 ):
                     error_event_reals.update(event.data["reals"].keys())
-                wait_until_done(mon, event)
-        assert evaluator._ensemble.status == state.ENSEMBLE_STATE_STOPPED
-        successful_realizations = evaluator._ensemble.get_successful_realizations()
+        return error_event_reals
+
+    with tmpdir.as_cwd():
+
+        evaluation_task = asyncio.create_task(
+            ensemble.evaluate_async(evaluator_config, experiment_id=None)
+        )
+        loop = asyncio.get_running_loop()
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            future = await loop.run_in_executor(
+                executor, run_function, evaluator_config
+            )
+            error_event_reals = future.result()
+
+        await evaluation_task
+        await server.stop()
+        await server_task
+
+        assert ensemble.status == state.ENSEMBLE_STATE_STOPPED
+        successful_realizations = ensemble.get_successful_realizations()
         assert successful_realizations == ensemble_size
         # Check we get only one job error message per realization
         assert len(error_event_reals) == ensemble_size
