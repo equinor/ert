@@ -81,8 +81,6 @@ class ExtJob:
         "STDOUT",
         "STDERR",
         "START_FILE",
-        "EXECUTABLE",
-        "PORTABLE_EXE",
         "TARGET_FILE",
         "ERROR_FILE",
         "START_FILE",
