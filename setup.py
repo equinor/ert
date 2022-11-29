@@ -148,7 +148,7 @@ args = dict(
         "qtpy",
         "requests",
         "SALib",
-        "scipy",
+        "scipy<1.9.2",
         "sqlalchemy",
         "uvicorn >= 0.17.0",
         "websockets >= 9.0.1",
