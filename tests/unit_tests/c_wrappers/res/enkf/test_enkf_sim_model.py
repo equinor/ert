@@ -7,10 +7,10 @@ from ert._c_wrappers.enkf import EnKFMain, ResConfig
 
 
 def valid_args(arg_types, arg_list: List[str], runtime: bool = False):
-    for arg, arg_type in zip(arg_list, arg_types):
-        if not arg_type.valid_string(arg, runtime):
-            return False
-    return True
+    return all(
+        arg_type.valid_string(arg, runtime)
+        for arg, arg_type in zip(arg_list, arg_types)
+    )
 
 
 @pytest.mark.usefixtures("use_tmpdir")
