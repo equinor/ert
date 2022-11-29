@@ -50,6 +50,8 @@ const char *kw_from_type(config_item_types typ) {
 
 ERT_CLIB_SUBMODULE("job_kw", m) {
     using namespace py::literals;
+    m.def("type_from_kw",
+          [](const char *arg_type) { return int(job_kw_get_type(arg_type)); });
     m.def("kw_from_type", [](int typ) {
         return kw_from_type(static_cast<config_item_types>(typ));
     });

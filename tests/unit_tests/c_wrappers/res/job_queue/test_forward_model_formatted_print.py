@@ -128,7 +128,6 @@ def _generate_job(
     arglist,
     max_running_minutes,
     max_running,
-    private,
 ):
     config_file = DEFAULT_NAME if name is None else name
     environment = (
@@ -162,7 +161,7 @@ def _generate_job(
     mode |= stat.S_IXUSR | stat.S_IXGRP
     os.chmod(executable, stat.S_IMODE(mode))
 
-    ext_job = ExtJob(config_file, private, name)
+    ext_job = ExtJob.from_config_file(config_file, name)
     os.unlink(config_file)
     os.unlink(executable)
 
@@ -201,33 +200,26 @@ JOBS_JSON_FILE = "jobs.json"
 
 
 def validate_ext_job(ext_job, ext_job_config):
-    def zero_if_none(x):
-        if x is None:
-            return 0
-        return x
-
-    assert ext_job.name() == default_name_if_none(ext_job_config["name"])
-    assert ext_job.get_executable() == ext_job_config["executable"]
-    assert ext_job.get_target_file() == ext_job_config["target_file"]
-    assert ext_job.get_error_file() == ext_job_config["error_file"]
-    assert ext_job.get_start_file() == ext_job_config["start_file"]
-    assert ext_job.get_stdout_file() == create_std_file(ext_job_config, std="stdout")
-    assert ext_job.get_stderr_file() == create_std_file(ext_job_config, std="stderr")
-    assert ext_job.get_stdin_file() == ext_job_config["stdin"]
-    assert ext_job.get_max_running_minutes() == zero_if_none(
-        ext_job_config["max_running_minutes"]
-    )
-    assert ext_job.get_max_running() == zero_if_none(ext_job_config["max_running"])
-    assert ext_job.get_arglist() == empty_list_if_none(ext_job_config["argList"])
+    assert ext_job.name == default_name_if_none(ext_job_config["name"])
+    assert ext_job.executable == ext_job_config["executable"]
+    assert ext_job.target_file == ext_job_config["target_file"]
+    assert ext_job.error_file == ext_job_config["error_file"]
+    assert ext_job.start_file == ext_job_config["start_file"]
+    assert ext_job.stdout_file == create_std_file(ext_job_config, std="stdout")
+    assert ext_job.stderr_file == create_std_file(ext_job_config, std="stderr")
+    assert ext_job.stdin_file == ext_job_config["stdin"]
+    assert ext_job.max_running_minutes == ext_job_config["max_running_minutes"]
+    assert ext_job.max_running == ext_job_config["max_running"]
+    assert ext_job.arglist == empty_list_if_none(ext_job_config["argList"])
     if ext_job_config["environment"] is None:
-        assert len(ext_job.get_environment().keys()) == 0
+        assert len(ext_job.environment.keys()) == 0
     else:
-        assert ext_job.get_environment().keys() == ext_job_config["environment"].keys()
+        assert ext_job.environment.keys() == ext_job_config["environment"].keys()
         for key in ext_job_config["environment"].keys():
-            assert ext_job.get_environment()[key] == ext_job_config["environment"][key]
+            assert ext_job.environment[key] == ext_job_config["environment"][key]
 
 
-def generate_job_from_dict(ext_job_config, private=True):
+def generate_job_from_dict(ext_job_config):
 
     ext_job_config = copy.deepcopy(ext_job_config)
     ext_job_config["executable"] = os.path.join(
@@ -246,7 +238,6 @@ def generate_job_from_dict(ext_job_config, private=True):
         ext_job_config["argList"],
         ext_job_config["max_running_minutes"],
         ext_job_config["max_running"],
-        private,
     )
 
     validate_ext_job(ext_job, ext_job_config)
@@ -323,7 +314,7 @@ def test_transfer_arg_types():
         f.write("ENV KEY1 VALUE2\n")
         f.write("ENV KEY2 VALUE2\n")
 
-    job = ExtJob("FWD_MODEL", True)
+    job = ExtJob.from_config_file("FWD_MODEL")
 
     forward_model = ForwardModel(jobs=[job])
 
@@ -486,7 +477,7 @@ def test_status_file():
 
 def test_that_values_with_brackets_are_ommitted(tmp_path, caplog):
     forward_model = set_up_forward_model()
-    forward_model.jobs[0].set_environment("ENV_VAR", "<SOME_BRACKETS>")
+    forward_model.jobs[0].environment["ENV_VAR"] = "<SOME_BRACKETS>"
     run_id = "test_no_jobs_id"
     forward_model.formatted_fprintf(
         run_id,

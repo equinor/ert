@@ -3,7 +3,7 @@ import logging
 import os
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING, List, Optional
+from typing import TYPE_CHECKING, Any, Dict, List
 
 from ert._c_wrappers.job_queue import EnvironmentVarlist, ExtJob
 from ert._clib import job_kw
@@ -19,7 +19,7 @@ class ForwardModel:
     jobs: List[ExtJob]
 
     def job_name_list(self) -> List[str]:
-        return [j.name() for j in self.jobs]
+        return [j.name for j in self.jobs]
 
     def formatted_fprintf(
         self,
@@ -32,19 +32,38 @@ class ForwardModel:
         env_varlist: EnvironmentVarlist,
         filename: str = "jobs.json",
     ):
+        with open(Path(path) / filename, mode="w", encoding="utf-8") as fptr:
+            json.dump(
+                self.get_job_data(
+                    run_id,
+                    data_root,
+                    iens,
+                    itr,
+                    substituter,
+                    env_varlist,
+                ),
+                fptr,
+            )
+
+    def get_job_data(
+        self,
+        run_id,
+        data_root,
+        iens: int,
+        itr: int,
+        substituter: "Substituter",
+        env_varlist: EnvironmentVarlist,
+    ) -> Dict[str, Any]:
         def substitute(job, string):
             if string is not None:
                 return substituter.substitute(
-                    job.get_private_args().substitute(string), iens, itr
+                    job.private_args.substitute(string), iens, itr
                 )
             else:
                 return string
 
-        def positive_or_null_int(integer: int) -> Optional[int]:
-            return integer if integer > 0 else None
-
         def handle_default(job: ExtJob, arg: str) -> str:
-            return job.get_default_mapping().get(arg, arg)
+            return job.default_mapping.get(arg, arg)
 
         def filter_env_dict(job, d):
             result = {}
@@ -69,44 +88,37 @@ class ForwardModel:
                 return None
             return result
 
-        with open(Path(path) / filename, mode="w", encoding="utf-8") as fptr:
-            json.dump(
+        return {
+            "DATA_ROOT": data_root,
+            "global_environment": env_varlist.varlist,
+            "global_update_path": env_varlist.updatelist,
+            "jobList": [
                 {
-                    "DATA_ROOT": data_root,
-                    "global_environment": env_varlist.varlist,
-                    "global_update_path": env_varlist.updatelist,
-                    "jobList": [
-                        {
-                            "name": substitute(job, job.name()),
-                            "executable": substitute(job, job.get_executable()),
-                            "target_file": substitute(job, job.get_target_file()),
-                            "error_file": substitute(job, job.get_error_file()),
-                            "start_file": substitute(job, job.get_start_file()),
-                            "stdout": substitute(job, job.get_stdout_file())
-                            + f".{idx}",
-                            "stderr": substitute(job, job.get_stderr_file())
-                            + f".{idx}",
-                            "stdin": substitute(job, job.get_stdin_file()),
-                            "argList": [
-                                handle_default(job, substitute(job, arg))
-                                for arg in job.get_arglist()
-                            ],
-                            "environment": filter_env_dict(job, job.get_environment()),
-                            "exec_env": filter_env_dict(job, job.get_exec_env()),
-                            "max_running_minutes": positive_or_null_int(
-                                job.get_max_running_minutes()
-                            ),
-                            "max_running": positive_or_null_int(job.get_max_running()),
-                            "min_arg": positive_or_null_int(job.min_arg),
-                            "arg_types": [
-                                job_kw.kw_from_type(typ) for typ in job.arg_types
-                            ],
-                            "max_arg": positive_or_null_int(job.max_arg),
-                        }
-                        for idx, job in enumerate(self.jobs)
+                    "name": substitute(job, job.name),
+                    "executable": substitute(job, job.executable),
+                    "target_file": substitute(job, job.target_file),
+                    "error_file": substitute(job, job.error_file),
+                    "start_file": substitute(job, job.start_file),
+                    "stdout": substitute(job, job.stdout_file) + f".{idx}"
+                    if job.stdout_file
+                    else None,
+                    "stderr": substitute(job, job.stderr_file) + f".{idx}"
+                    if job.stderr_file
+                    else None,
+                    "stdin": substitute(job, job.stdin_file),
+                    "argList": [
+                        handle_default(job, substitute(job, arg)) for arg in job.arglist
                     ],
-                    "run_id": run_id,
-                    "ert_pid": str(os.getpid()),
-                },
-                fptr,
-            )
+                    "environment": filter_env_dict(job, job.environment),
+                    "exec_env": filter_env_dict(job, job.exec_env),
+                    "max_running_minutes": job.max_running_minutes,
+                    "max_running": job.max_running,
+                    "min_arg": job.min_arg,
+                    "arg_types": [job_kw.kw_from_type(typ) for typ in job.arg_types],
+                    "max_arg": job.max_arg,
+                }
+                for idx, job in enumerate(self.jobs)
+            ],
+            "run_id": run_id,
+            "ert_pid": str(os.getpid()),
+        }

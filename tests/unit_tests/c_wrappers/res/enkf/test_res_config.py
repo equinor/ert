@@ -223,12 +223,8 @@ def test_extensive_config(setup_case):
 
         exp_job_data = snake_oil_structure_config["INSTALL_JOB"][job_name]
 
-        assert (
-            Path(exp_job_data["CONFIG"]).resolve()
-            == Path(job.get_config_file()).resolve()
-        )
-        assert exp_job_data["STDERR"] == job.get_stderr_file()
-        assert exp_job_data["STDOUT"] == job.get_stdout_file()
+        assert exp_job_data["STDERR"] == job.stderr_file
+        assert exp_job_data["STDOUT"] == job.stdout_file
 
     ensemble_config = res_config.ensemble_config
     for extension in ["SMSPEC", "UNSMRY"]:

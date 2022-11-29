@@ -4,14 +4,16 @@ import stat
 
 import pytest
 
-from ert._c_wrappers.config import ContentTypeEnum
+from ert._c_wrappers.config import ConfigValidationError, ContentTypeEnum
 from ert._c_wrappers.job_queue.ext_job import ExtJob
 
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_load_forward_model_raises_on_missing():
-    with pytest.raises(IOError):
-        _ = ExtJob("CONFIG_FILE", True)
+    with pytest.raises(
+        ConfigValidationError, match="Could not open job config file CONFIG_FILE"
+    ):
+        _ = ExtJob.from_config_file("CONFIG_FILE")
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -26,18 +28,18 @@ def test_load_forward_model():
     mode = os.stat(name).st_mode
     mode |= stat.S_IXUSR | stat.S_IXGRP
     os.chmod(name, stat.S_IMODE(mode))
-    job = ExtJob("CONFIG", True)
-    assert job.name() == "CONFIG"
-    assert job.get_stdout_file() == None
-    assert job.get_stderr_file() == None
+    job = ExtJob.from_config_file("CONFIG")
+    assert job.name == "CONFIG"
+    assert job.stdout_file == None
+    assert job.stderr_file == None
 
-    assert job.get_executable() == os.path.join(os.getcwd(), "script.sh")
-    assert os.access(job.get_executable(), os.X_OK)
+    assert job.executable == os.path.join(os.getcwd(), "script.sh")
+    assert os.access(job.executable, os.X_OK)
 
-    assert job.min_arg == -1
+    assert job.min_arg == None
 
-    job = ExtJob("CONFIG", True, name="Job")
-    assert job.name() == "Job"
+    job = ExtJob.from_config_file("CONFIG", name="Job")
+    assert job.name == "Job"
     assert repr(job).startswith("ExtJob(")
 
 
@@ -60,7 +62,7 @@ def test_load_forward_model_upgraded():
     mode = os.stat(name).st_mode
     mode |= stat.S_IXUSR | stat.S_IXGRP
     os.chmod(name, stat.S_IMODE(mode))
-    job = ExtJob("CONFIG", True)
+    job = ExtJob.from_config_file("CONFIG")
     assert job.min_arg == 2
     assert job.max_arg == 7
     argTypes = job.arg_types
@@ -79,54 +81,32 @@ def test_load_forward_model_upgraded():
 def test_load_forward_model_missing_raises():
     with open("CONFIG", "w") as f:
         f.write("EXECUTABLE missing_script.sh\n")
-    with pytest.raises(ValueError):
-        _ = ExtJob("CONFIG", True)
+    with pytest.raises(ConfigValidationError, match="Could not find executable"):
+        _ = ExtJob.from_config_file("CONFIG")
 
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_load_forward_model_execu_missing_raises():
     with open("CONFIG", "w") as f:
         f.write("EXECU missing_script.sh\n")
-    with pytest.raises(ValueError):
-        _ = ExtJob("CONFIG", True)
+    with pytest.raises(ConfigValidationError, match="CONFIG failed"):
+        _ = ExtJob.from_config_file("CONFIG")
 
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_load_forward_model_is_directory_raises():
     with open("CONFIG", "w") as f:
         f.write("EXECUTABLE /tmp\n")
-    with pytest.raises(ValueError):
-        _ = ExtJob("CONFIG", True)
+    with pytest.raises(ConfigValidationError, match="set to directory"):
+        _ = ExtJob.from_config_file("CONFIG")
 
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_load_forward_model_foriegn_raises():
     with open("CONFIG", "w") as f:
         f.write("EXECUTABLE /etc/passwd\n")
-    with pytest.raises(ValueError):
-        _ = ExtJob("CONFIG", True)
-
-
-def test_valid_args():
-    arg_types = [
-        ContentTypeEnum.CONFIG_FLOAT,
-        ContentTypeEnum.CONFIG_INT,
-        ContentTypeEnum.CONFIG_BOOL,
-        ContentTypeEnum.CONFIG_STRING,
-    ]
-    run_arg_types = [
-        ContentTypeEnum.CONFIG_RUNTIME_INT,
-        ContentTypeEnum.CONFIG_RUNTIME_INT,
-    ]
-
-    arg_list = ["5.6", "65", "True", "car"]
-    assert ExtJob.valid_args(arg_types, arg_list)
-    arg_list2 = ["True", "True", "8", "car"]
-    assert not ExtJob.valid_args(arg_types, arg_list2)
-
-    run_arg_list = ["Trjue", "76"]
-    assert ExtJob.valid_args(run_arg_types, run_arg_list)
-    assert not ExtJob.valid_args(run_arg_types, run_arg_list, True)
+    with pytest.raises(ConfigValidationError, match="execute permissions"):
+        _ = ExtJob.from_config_file("CONFIG")
 
 
 def test_ext_job_optionals(tmp_path):
@@ -136,5 +116,5 @@ def test_ext_job_optionals(tmp_path):
     os.chmod(executable, st.st_mode | stat.S_IEXEC)
     config_file = tmp_path / "config_file"
     config_file.write_text("EXECUTABLE exec\n")
-    ext_job = ExtJob(str(config_file), False)
-    assert ext_job.name() == "config_file"
+    ext_job = ExtJob.from_config_file(str(config_file))
+    assert ext_job.name == "config_file"

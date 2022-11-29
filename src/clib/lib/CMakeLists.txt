@@ -39,7 +39,6 @@ pybind11_add_module(
   rms/rms_type.cpp
   rms/rms_util.cpp
   analysis/update.cpp
-  job_queue/ext_job.cpp
   job_queue/job_status.cpp
   job_queue/job_list.cpp
   job_queue/job_node.cpp

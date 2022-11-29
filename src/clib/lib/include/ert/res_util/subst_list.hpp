@@ -9,7 +9,7 @@
 typedef struct subst_list_struct subst_list_type;
 void subst_list_fprintf(const subst_list_type *, FILE *stream);
 extern "C" subst_list_type *subst_list_alloc();
-subst_list_type *subst_list_alloc_deep_copy(const subst_list_type *);
+extern "C" subst_list_type *subst_list_alloc_deep_copy(const subst_list_type *);
 extern "C" void subst_list_free(subst_list_type *);
 void subst_list_clear(subst_list_type *subst_list);
 extern "C" void subst_list_append_copy(subst_list_type *, const char *,
@@ -29,6 +29,6 @@ extern "C" const char *subst_list_iget_key(const subst_list_type *subst_list,
                                            int index);
 extern "C" bool subst_list_has_key(const subst_list_type *subst_list,
                                    const char *key);
-void subst_list_add_from_string(subst_list_type *subst_list,
-                                const char *arg_string);
+extern "C" void subst_list_add_from_string(subst_list_type *subst_list,
+                                           const char *arg_string);
 #endif
