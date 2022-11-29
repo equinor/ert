@@ -340,7 +340,7 @@ class EnsembleEvaluator:
     async def stop(self):
         if not self._done.done():
             self._done.set_result(None)
-        await self._shutdown_completed
+            await self._shutdown_completed
 
     async def _signal_cancel(self):
         """
