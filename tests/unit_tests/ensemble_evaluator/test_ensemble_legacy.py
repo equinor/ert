@@ -29,10 +29,11 @@ async def test_run_legacy_ensemble(tmpdir, make_ensemble_builder):
             generate_cert=False,
         )
         server = EnsembleEvaluator(ensemble, config, 0)
-        asyncio.create_task(server.evaluator_server())
+        server_task = asyncio.create_task(server.evaluator_server())
 
         await ensemble.evaluate_async(config, experiment_id=None)
         await server.stop()
+        await server_task
 
         assert ensemble.status == state.ENSEMBLE_STATE_STOPPED
         assert ensemble.get_successful_realizations() == num_reals
