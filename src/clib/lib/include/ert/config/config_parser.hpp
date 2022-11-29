@@ -43,8 +43,6 @@ config_schema_item_type *config_add_key_value(config_parser_type *config,
                                               config_item_types item_type);
 
 extern "C" int config_get_schema_size(const config_parser_type *config);
-void config_parser_deprecate(config_parser_type *config, const char *kw,
-                             const char *msg);
 
 extern "C" void config_validate(config_parser_type *config,
                                 config_content_type *content);
