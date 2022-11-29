@@ -237,6 +237,7 @@ assert exec_env["NOT_SET"] is None
     with open("EXEC_ENV", "w") as f:
         f.write("EXECUTABLE exec_env.py\n")
         f.write("EXEC_ENV TEST_ENV 123\n")
+        f.write("EXEC_ENV NOT_SET 42\n")
         f.write("EXEC_ENV NOT_SET")
 
     ext_job = ExtJob.from_config_file(name=None, config_file="EXEC_ENV")
