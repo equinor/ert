@@ -134,8 +134,8 @@ class ExtJob:
             if config_content.hasKey(key):
                 value = config_content.getValue(key)
                 if value > 0:
-                    # less than 0 in the config is equivalent to setting None
-                    # (backwards compatability)
+                    # less than or equal to 0 in the config is equivalent to
+                    # setting None (backwards compatability)
                     result[key.lower()] = value
         return result
 
