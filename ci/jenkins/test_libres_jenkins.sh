@@ -54,7 +54,7 @@ build_ert_clib () {
 	mkdir ${ERT_SOURCE_ROOT}/build
 	pushd ${ERT_SOURCE_ROOT}/build
 	cmake ${ERT_SOURCE_ROOT}/src/clib \
-		  -DCMAKE_BUILD_TYPE=RelWithDebInfo
+		  -DCMAKE_BUILD_TYPE=Debug
 	make -j$(nproc)
 	popd
 }

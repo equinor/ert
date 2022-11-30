@@ -1,6 +1,6 @@
 build() {
     mkdir build
-    cmake -S src/clib -B build -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+    cmake -S src/clib -B build -DCMAKE_BUILD_TYPE=Debug \
           -DEQUINOR_TESTDATA_ROOT=/project/res-testdata/ErtTestData
     cmake --build build
 }

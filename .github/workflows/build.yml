@@ -50,7 +50,7 @@ jobs:
       run: |
         export PATH=$PATH:${{ env.PIP_PKGS_PATH }}
         mkdir cmake-build
-        cmake -S src/clib -B cmake-build -DCMAKE_BUILD_TYPE=RelWithDebInfo -DBUILD_TESTS=ON -DCOVERAGE=ON
+        cmake -S src/clib -B cmake-build -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTS=ON -DCOVERAGE=ON
         cmake --build cmake-build "-j$(nproc)"
 
     - name: Run tests
