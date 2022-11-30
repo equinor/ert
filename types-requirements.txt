@@ -1,5 +1,5 @@
 mypy
-mypy-protobuf
+mypy-protobuf<3.4
 types-aiofiles
 types-requests
 types-pkg_resources
