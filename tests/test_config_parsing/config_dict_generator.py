@@ -269,8 +269,8 @@ def defines(draw, config_files, cwds):
             }
         )
     )
-    random_defines = draw(st.dictionaries(st.just("key-" + draw(words)), words))
-    return {**random_defines, **pre_defined_kw_map}
+    random_defines = draw(st.lists(st.tuples(st.just("key-" + draw(words)), words)))
+    return list(pre_defined_kw_map.items()) + random_defines
 
 
 @st.composite
@@ -295,7 +295,7 @@ def config_dicts(draw):
                 ConfigKeys.MAX_RUNTIME: positives,
                 ConfigKeys.MIN_REALIZATIONS: positives,
                 ConfigKeys.DEFINE_KEY: defines(config_file_name, st.just(cwd)),
-                ConfigKeys.DATA_KW_KEY: st.dictionaries(words, words),
+                ConfigKeys.DATA_KW_KEY: st.lists(st.tuples(words, words)),
                 ConfigKeys.DATA_FILE: st.just(draw(file_names) + ".DATA"),
                 ConfigKeys.GRID: st.just(draw(words) + ".EGRID"),
                 ConfigKeys.JOB_SCRIPT: st.just(draw(file_names) + "job_script"),
@@ -502,7 +502,7 @@ def to_config_file(filename, config_dict):  # pylint: disable=too-many-branches
         )
         for keyword, keyword_value in config_dict.items():
             if keyword == ConfigKeys.DATA_KW_KEY:
-                for define_key, define_value in keyword_value.items():
+                for define_key, define_value in keyword_value:
                     config.write(f"{keyword} {define_key} {define_value}\n")
             elif keyword == ConfigKeys.FORWARD_MODEL:
                 for forward_model_job in keyword_value:
@@ -597,7 +597,7 @@ def to_config_file(filename, config_dict):  # pylint: disable=too-many-branches
                         f" {statement[ConfigKeys.VALUE]}\n"
                     )
             elif keyword == ConfigKeys.DEFINE_KEY:
-                for define_key, define_value in keyword_value.items():
+                for define_key, define_value in keyword_value:
                     config.write(f"{keyword} {define_key} {define_value}\n")
             elif keyword == ConfigKeys.INSTALL_JOB:
                 for job_name, job_path in keyword_value:

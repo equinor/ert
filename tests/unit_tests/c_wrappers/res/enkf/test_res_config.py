@@ -379,17 +379,17 @@ def test_res_config_dict_constructor(setup_case):
         ConfigKeys.RUNPATH_FILE: (
             "../output/run_path_file/.ert-runpath-list_<CASE_DIR>"
         ),  # subst
-        ConfigKeys.DEFINE_KEY: {
-            "<CWD>": absolute_config_dir,
-            "<CONFIG_PATH>": absolute_config_dir,
-            "<CONFIG_FILE>": config_file_name,
-            "<CONFIG_FILE_BASE>": config_file_name.split(".", maxsplit=1)[0],
-            "<DATE>": date.today().isoformat(),
-            "<USER>": "TEST_USER",
-            "<SCRATCH>": "scratch/ert",
-            "<CASE_DIR>": "the_extensive_case",
-            "<ECLIPSE_NAME>": "XYZ",
-        },  # subst
+        ConfigKeys.DEFINE_KEY: [
+            ("<CWD>", absolute_config_dir),
+            ("<CONFIG_PATH>", absolute_config_dir),
+            ("<CONFIG_FILE>", config_file_name),
+            ("<CONFIG_FILE_BASE>", config_file_name.split(".", maxsplit=1)[0]),
+            ("<DATE>", date.today().isoformat()),
+            ("<USER>", "TEST_USER"),
+            ("<SCRATCH>", "scratch/ert"),
+            ("<CASE_DIR>", "the_extensive_case"),
+            ("<ECLIPSE_NAME>", "XYZ"),
+        ],  # subst
         ConfigKeys.REFCASE: "../input/refcase/SNAKE_OIL_FIELD",  # ecl
         ConfigKeys.JOBNAME: "SNAKE_OIL_STRUCTURE_%d",  # model
         ConfigKeys.TIME_MAP: os.path.realpath("../input/refcase/time_map.txt"),  # model
@@ -442,12 +442,12 @@ def test_res_config_dict_constructor(setup_case):
 
     # replace define keys only in root strings, this should be updated
     # and validated in configsuite instead
-    for define_key in config_data_new[ConfigKeys.DEFINE_KEY]:
+    for define_key, define_value in config_data_new[ConfigKeys.DEFINE_KEY]:
         for data_key, data_value in config_data_new.items():
             if isinstance(data_value, str):
                 config_data_new[data_key] = data_value.replace(
                     define_key,
-                    config_data_new[ConfigKeys.DEFINE_KEY].get(define_key),
+                    define_value,
                 )
 
     # add missing entries to config file

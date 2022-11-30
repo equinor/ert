@@ -25,22 +25,22 @@ def fixture_snake_oil_structure_config(copy_case):
     return {
         ConfigKeys.NUM_REALIZATIONS: 1,
         ConfigKeys.RUNPATH_FILE: "runpath",
-        ConfigKeys.DEFINE_KEY: {
-            "<DATE>": datetime.date.today().isoformat(),
-            "<CWD>": cwd,
-            "<CONFIG_PATH>": cwd,
-            "<CONFIG_FILE>": config_file_name,
-            "<CONFIG_FILE_BASE>": config_file_name,
-            "keyA": "valA",
-            "keyB": "valB",
-        },
-        ConfigKeys.DATA_KW_KEY: {"keyC": "valC", "keyD": "valD"},
+        ConfigKeys.DEFINE_KEY: [
+            ("<DATE>", datetime.date.today().isoformat()),
+            ("<CWD>", cwd),
+            ("<CONFIG_PATH>", cwd),
+            ("<CONFIG_FILE>", config_file_name),
+            ("<CONFIG_FILE_BASE>", config_file_name),
+            ("keyA", "valA"),
+            ("keyB", "valB"),
+        ],
+        ConfigKeys.DATA_KW_KEY: [("keyC", "valC"), ("keyD", "valD")],
     }
 
 
 @pytest.fixture(name="snake_oil_structure_config_file")
 def fixture_snake_oil_structure_config_file(snake_oil_structure_config):
-    filename = snake_oil_structure_config[ConfigKeys.DEFINE_KEY]["<CONFIG_FILE>"]
+    filename = dict(snake_oil_structure_config[ConfigKeys.DEFINE_KEY])["<CONFIG_FILE>"]
     with open(file=filename, mode="w+", encoding="utf-8") as config:
         # necessary in the file, but irrelevant to this test
         config.write("JOBNAME  Job%d\n")
@@ -52,12 +52,10 @@ def fixture_snake_oil_structure_config_file(snake_oil_structure_config):
             f"{snake_oil_structure_config[ConfigKeys.RUNPATH_FILE]}\n"
         )
         defines = snake_oil_structure_config[ConfigKeys.DEFINE_KEY]
-        for key in defines:
-            val = defines[key]
+        for key, val in defines:
             config.write(f"{ConfigKeys.DEFINE_KEY} {key} {val}\n")
         data_kws = snake_oil_structure_config[ConfigKeys.DATA_KW_KEY]
-        for key in data_kws:
-            val = data_kws[key]
+        for key, val in data_kws:
             config.write(
                 f"{ConfigKeys.DATA_KW_KEY} {key} {val}\n".format(
                     ConfigKeys.DATA_KW_KEY, key, val

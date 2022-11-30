@@ -6,7 +6,7 @@ from collections.abc import Mapping
 from datetime import date
 from os.path import isfile
 from pathlib import Path
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 from ecl.ecl_util import get_num_cpu as get_num_cpu_from_data_file
 from ecl.util.util import StringList
@@ -815,8 +815,8 @@ class ResConfig:
 
     @staticmethod
     def _create_substitution_list(
-        defines: Dict[str, str],
-        data_kw: Dict[str, str],
+        defines: List[Tuple[str, str]],
+        data_kw: List[Tuple[str, str]],
         config_dir: str,
         runpath_file_name: str,
         num_cpu: int,
@@ -826,14 +826,14 @@ class ResConfig:
         # only needed by everest's init from `config` path
         subst_list.addItem("<CONFIG_PATH>", config_dir)
 
-        for key, value in defines.items():
+        for key, value in defines:
             subst_list.addItem(key, value)
-        for key, value in data_kw.items():
+        for key, value in data_kw:
             subst_list.addItem(key, value)
 
-        if "<CONFIG_PATH>" in defines:
+        if "<CONFIG_PATH>" in subst_list:
             runpath_file_path = os.path.normpath(
-                os.path.join(defines["<CONFIG_PATH>"], runpath_file_name)
+                os.path.join(subst_list["<CONFIG_PATH>"], runpath_file_name)
             )
         else:
             runpath_file_path = os.path.abspath(runpath_file_name)
@@ -846,8 +846,8 @@ class ResConfig:
 
     def create_substitution_list_from_dict(self, config_dict: dict):
         init_args = {
-            "defines": config_dict.get(ConfigKeys.DEFINE_KEY, {}),
-            "data_kw": config_dict.get(ConfigKeys.DATA_KW_KEY, {}),
+            "defines": config_dict.get(ConfigKeys.DEFINE_KEY, []),
+            "data_kw": config_dict.get(ConfigKeys.DATA_KW_KEY, []),
             "config_dir": config_dict.get(ConfigKeys.CONFIG_DIRECTORY, os.getcwd()),
             "runpath_file_name": config_dict.get(
                 ConfigKeys.RUNPATH_FILE, ConfigKeys.RUNPATH_LIST_FILE
@@ -865,19 +865,19 @@ class ResConfig:
                 if ConfigKeys.RUNPATH_FILE in config_content
                 else ConfigKeys.RUNPATH_LIST_FILE
             ),
-            "data_kw": {},
+            "data_kw": [],
             "config_dir": (
                 config_content.getValue(ConfigKeys.CONFIG_DIRECTORY)
                 if ConfigKeys.CONFIG_DIRECTORY in config_content
                 else os.getcwd()
             ),
-            "defines": dict(config_content.get_const_define_list()),
+            "defines": list(config_content.get_const_define_list()),
             "num_cpu": self.preferred_num_cpu(),
         }
 
         if ConfigKeys.DATA_KW_KEY in config_content:
             for data_kw_definition in config_content[ConfigKeys.DATA_KW_KEY]:
-                init_args["data_kw"][data_kw_definition[0]] = data_kw_definition[1]
+                init_args["data_kw"].append(data_kw_definition)
 
         return self._create_substitution_list(**init_args)
 
