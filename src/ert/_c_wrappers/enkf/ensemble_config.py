@@ -1,6 +1,6 @@
 import logging
 import os
-from typing import Any, Dict, List, Optional, Union
+from typing import Dict, List, Optional, Union
 
 from cwrap import BaseCClass
 from ecl.ecl_util import EclFileEnum, get_file_type
@@ -10,6 +10,7 @@ from ecl.util.util import StringList
 
 from ert import _clib
 from ert._c_wrappers import ResPrototype
+from ert._c_wrappers.config.config_parser import ConfigValidationError
 from ert._c_wrappers.config.rangestring import rangestring_to_list
 from ert._c_wrappers.enkf.config import EnkfConfigNode
 from ert._c_wrappers.enkf.config_keys import ConfigKeys
@@ -132,7 +133,6 @@ class EnsembleConfig(BaseCClass):
     _add_node = ResPrototype(
         "void ensemble_config_add_node( ens_config , enkf_config_node )"
     )
-    _get_trans_table = ResPrototype("void* ensemble_config_get_trans_table(ens_config)")
     _add_summary_full = ResPrototype(
         "void ensemble_config_init_SUMMARY_full(ens_config, char*, ecl_sum)"
     )
@@ -149,7 +149,8 @@ class EnsembleConfig(BaseCClass):
             raise ValueError(f"grid file {grid_file} does not have expected type")
         return EclGrid.load_from_file(grid_file)
 
-    def _load_refcase(self, refcase_file: Optional[str]) -> Optional[EclSum]:
+    @staticmethod
+    def _load_refcase(refcase_file: Optional[str]) -> Optional[EclSum]:
         """
         If the user has not given a refcase_file it will be
         impossible to use wildcards when expanding summary variables.
@@ -218,7 +219,7 @@ class EnsembleConfig(BaseCClass):
                 self.add_summary_full(key, self.refcase)
 
         for field in field_list:
-            field_node = self.get_field_node(field, self.grid, self._get_trans_table())
+            field_node = self.get_field_node(field, self.grid)
             self.addNode(field_node)
         if schedule_file:
             schedule_file_node = self._get_schedule_file_node(
@@ -305,7 +306,7 @@ class EnsembleConfig(BaseCClass):
 
     @staticmethod
     def get_field_node(
-        field: Union[dict, list], grid: Optional[EclGrid], trans_table: Any
+        field: Union[dict, list], grid: Optional[EclGrid]
     ) -> EnkfConfigNode:
         if isinstance(field, dict):
             name = field.get(ConfigKeys.NAME)
@@ -338,7 +339,6 @@ class EnsembleConfig(BaseCClass):
             name,
             var_type,
             grid,
-            trans_table,
             out_file,
             enkf_infile,
             forward_init,
@@ -402,6 +402,15 @@ class EnsembleConfig(BaseCClass):
 
         return ens_config
 
+    def check_forward_init_nodes(self) -> List[EnkfConfigNode]:
+        forward_init_nodes = []
+        for config_key in self.alloc_keylist():
+            config_node = self[config_key]
+            if config_node.getUseForwardInit():
+                forward_init_nodes.append(config_node)
+
+        return forward_init_nodes
+
     def _node_info(self, node: str) -> str:
         impl_type = ErtImplType.from_string(node)
         key_list = self.getKeylistFromImplType(impl_type)
@@ -439,6 +448,12 @@ class EnsembleConfig(BaseCClass):
 
     def addNode(self, config_node: EnkfConfigNode):
         assert isinstance(config_node, EnkfConfigNode)
+        assert config_node is not None
+        key = config_node.getKey()
+        if key in self:
+            raise ConfigValidationError(
+                f"Enkf config node with key {key} already present in ensemble config"
+            )
         self._add_node(config_node)
         config_node.convertToCReference(self)
 

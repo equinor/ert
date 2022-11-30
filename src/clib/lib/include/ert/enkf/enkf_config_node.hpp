@@ -82,14 +82,12 @@ extern "C" void enkf_config_node_update_general_field(
 
 extern "C" enkf_config_node_type *
 enkf_config_node_alloc_field(const char *key, ecl_grid_type *ecl_grid,
-                             field_trans_table_type *trans_table,
                              bool forward_init);
 int enkf_config_node_get_data_size(const enkf_config_node_type *node,
                                    int report_step);
 char *enkf_config_node_alloc_infile(const enkf_config_node_type *, int);
 extern "C" const stringlist_type *
 enkf_config_node_get_obs_keys(const enkf_config_node_type *);
-void enkf_config_node_add_obs_key(enkf_config_node_type *, const char *);
 extern "C" void enkf_config_node_free(enkf_config_node_type *);
 extern "C" ert_impl_type
 enkf_config_node_get_impl_type(const enkf_config_node_type *);

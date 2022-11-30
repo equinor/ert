@@ -21,13 +21,6 @@
 
 static auto logger = ert::get_logger("enkf");
 
-void enkf_state_initialize(enkf_fs_type *fs, enkf_node_type *param_node,
-                           int iens) {
-    node_id_type node_id = {.report_step = 0, .iens = iens};
-    if (enkf_node_initialize(param_node, iens))
-        enkf_node_store(param_node, fs, node_id);
-}
-
 ecl_sum_type *load_ecl_sum(const std::string run_path,
                            const std::string eclbase) {
     ecl_sum_type *summary = NULL;
@@ -268,11 +261,15 @@ enkf_state_internalize_results(ensemble_config_type *ens_config,
                                size_t num_steps, const std::string &job_name,
                                const int iens, const std::string &run_path,
                                enkf_fs_type *sim_fs) {
-    const summary_key_matcher_type *matcher =
-        ensemble_config_get_summary_key_matcher(ens_config);
+    const summary_key_matcher_type *matcher = ens_config->summary_key_matcher;
 
-    if (summary_key_matcher_get_size(matcher) > 0 ||
-        ensemble_config_require_summary(ens_config)) {
+    bool have_summary = false;
+    for (const auto &config_pair : ens_config->config_nodes) {
+        if (SUMMARY == enkf_config_node_get_impl_type(config_pair.second))
+            have_summary = true;
+    }
+
+    if (summary_key_matcher_get_size(matcher) > 0 || have_summary) {
         // We are expecting there to be summary data
         // The timing information - i.e. mainly what is the last report step
         // in these results are inferred from the loading of summary results,
@@ -308,7 +305,15 @@ std::pair<fw_load_status, std::string> enkf_state_load_from_forward_model(
     const std::string &run_path, const std::string &job_name,
     enkf_fs_type *sim_fs) {
     std::pair<fw_load_status, std::string> result;
-    if (ensemble_config_have_forward_init(ens_config))
+
+    bool have_forward_init = false;
+
+    for (auto const &[node_key, enkf_config_node] : ens_config->config_nodes) {
+        if (enkf_config_node_use_forward_init(enkf_config_node))
+            have_forward_init = true;
+    }
+
+    if (have_forward_init)
         result =
             ensemble_config_forward_init(ens_config, iens, run_path, sim_fs);
     if (result.first == LOAD_SUCCESSFUL) {
@@ -325,9 +330,14 @@ std::pair<fw_load_status, std::string> enkf_state_load_from_forward_model(
 }
 
 ERT_CLIB_SUBMODULE("enkf_state", m) {
-    m.def("state_initialize",
-          [](Cwrap<enkf_node_type> param_node, Cwrap<enkf_fs_type> fs,
-             int iens) { return enkf_state_initialize(fs, param_node, iens); });
+    m.def("state_initialize", [](Cwrap<enkf_node_type> param_node,
+                                 Cwrap<enkf_fs_type> fs, int iens) {
+        node_id_type node_id = {.report_step = 0, .iens = iens};
+        if (enkf_node_initialize(param_node, iens))
+            enkf_node_store(param_node, fs, node_id);
+
+        return;
+    });
 
     m.def("internalize_results",
           [](Cwrap<ensemble_config_type> ens_config, size_t num_steps,

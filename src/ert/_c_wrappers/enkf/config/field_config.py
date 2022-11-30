@@ -11,7 +11,7 @@ class FieldConfig(BaseCClass):
     TYPE_NAME = "field_config"
 
     _alloc = ResPrototype(
-        "void*  field_config_alloc_empty(char* , ecl_grid , void* , bool)", bind=False
+        "void*  field_config_alloc_empty(char* , ecl_grid , bool)", bind=False
     )
     _free = ResPrototype("void   field_config_free( field_config )")
     _get_type = ResPrototype("field_type_enum field_config_get_type(field_config)")
@@ -49,7 +49,7 @@ class FieldConfig(BaseCClass):
     )
 
     def __init__(self, kw, grid):
-        c_ptr = self._alloc(kw, grid, None, False)
+        c_ptr = self._alloc(kw, grid, False)
         super().__init__(c_ptr)
 
     @classmethod

@@ -110,7 +110,7 @@ void field_export3D(const field_type *field, void *_target_data,
         ecl_grid_type *grid = field_config_get_grid(config);
         bool global_size = true;
         initial_field_config = field_config_alloc_empty(
-            field_config_get_key(config), grid, NULL, global_size);
+            field_config_get_key(config), grid, global_size);
         initial_field = field_alloc(initial_field_config);
 
         field_fload_keep_inactive(initial_field, init_file);

@@ -19,9 +19,6 @@
 #include <ert/enkf/enkf_util.hpp>
 #include <ert/enkf/ensemble_config.hpp>
 
-void enkf_state_initialize(enkf_fs_type *fs, enkf_node_type *param_node,
-                           int iens);
-
 std::pair<fw_load_status, std::string> enkf_state_load_from_forward_model(
     ensemble_config_type *ens_config, int last_history_restart, const int iens,
     const std::string &run_path, const std::string &job_name,

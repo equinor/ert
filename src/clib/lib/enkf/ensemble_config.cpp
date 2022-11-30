@@ -30,16 +30,6 @@
 
 namespace fs = std::filesystem;
 
-static auto logger = ert::get_logger("ensemble_config");
-
-struct ensemble_config_struct {
-    std::map<std::string, enkf_config_node_type *>
-        config_nodes; /* a hash of enkf_config_node instances - which again contain pointers to e.g. field_config objects.  */
-    field_trans_table_type *
-        field_trans_table; /* a table of the transformations which are available to apply on fields. */
-    summary_key_matcher_type *summary_key_matcher;
-};
-
 /**
    setting the format string used to 'mangle' the string in the gen_kw
    template files. consider the following example:
@@ -70,16 +60,10 @@ struct ensemble_config_struct {
 
 */
 
-field_trans_table_type *
-ensemble_config_get_trans_table(const ensemble_config_type *ensemble_config) {
-    return ensemble_config->field_trans_table;
-}
-
 ensemble_config_type *
 ensemble_config_alloc_full(const char *gen_kw_format_string) {
     ensemble_config_type *ensemble_config = new ensemble_config_type();
 
-    ensemble_config->field_trans_table = field_trans_table_alloc();
     ensemble_config->summary_key_matcher = summary_key_matcher_alloc();
 
     if (strcmp(gen_kw_format_string, DEFAULT_GEN_KW_TAG_FORMAT) != 0) {
@@ -100,7 +84,6 @@ ensemble_config_alloc_full(const char *gen_kw_format_string) {
 }
 
 void ensemble_config_free(ensemble_config_type *ensemble_config) {
-    field_trans_table_free(ensemble_config->field_trans_table);
     summary_key_matcher_free(ensemble_config->summary_key_matcher);
 
     for (auto &config_pair : ensemble_config->config_nodes)
@@ -135,45 +118,14 @@ enkf_config_node_type *ensemble_config_get_or_create_summary_node(
     return ensemble_config_get_node(ensemble_config, key);
 }
 
-bool ensemble_config_have_forward_init(
-    const ensemble_config_type *ensemble_config) {
-
-    for (auto const &[node_key, enkf_config_node] :
-         ensemble_config->config_nodes) {
-        if (enkf_config_node_use_forward_init(enkf_config_node))
-            return true;
-    }
-
-    return false;
-}
-
 void ensemble_config_add_node(ensemble_config_type *ensemble_config,
                               enkf_config_node_type *node) {
-    if (node) {
-        const char *key = enkf_config_node_get_key(node);
-        if (ensemble_config_has_key(ensemble_config, key))
-            util_abort("%s: a configuration object:%s has already been added - "
-                       "aborting \n",
-                       __func__, key);
-
-        ensemble_config->config_nodes[key] = node;
-    } else
-        util_abort("%s: internal error - tried to add NULL node to ensemble "
-                   "configuration \n",
-                   __func__);
-}
-
-void ensemble_config_add_obs_key(ensemble_config_type *ensemble_config,
-                                 const char *key, const char *obs_key) {
-    enkf_config_node_type *node = ensemble_config->config_nodes.at(key);
-    enkf_config_node_add_obs_key(node, obs_key);
-}
-
-void ensemble_config_clear_obs_keys(ensemble_config_type *ensemble_config) {
-    for (auto &config_pair : ensemble_config->config_nodes) {
-        enkf_config_node_type *config_node = config_pair.second;
-        stringlist_clear(config_node->obs_keys);
-    }
+    if (node)
+        ensemble_config->config_nodes[node->key] = node;
+    else
+        fprintf(
+            stderr,
+            "** Warning: Invalid node passed to ensemble_config_add_node\n");
 }
 
 void ensemble_config_init_SUMMARY_full(ensemble_config_type *ensemble_config,
@@ -253,15 +205,6 @@ ensemble_config_alloc_keylist_from_impl_type(const ensemble_config_type *config,
     return key_list;
 }
 
-bool ensemble_config_require_summary(const ensemble_config_type *ens_config) {
-    for (const auto &config_pair : ens_config->config_nodes) {
-        if (SUMMARY == enkf_config_node_get_impl_type(config_pair.second))
-            return true;
-    }
-
-    return false;
-}
-
 /**
    this function ensures that object contains a node with 'key' and
    type == summary.
@@ -295,24 +238,6 @@ ensemble_config_add_summary(ensemble_config_type *ensemble_config,
     }
 
     return config_node;
-}
-
-enkf_config_node_type *
-ensemble_config_add_summary_observation(ensemble_config_type *ensemble_config,
-                                        const char *key,
-                                        load_fail_type load_fail) {
-    enkf_config_node_type *config_node =
-        ensemble_config_add_summary(ensemble_config, key, load_fail);
-
-    summary_key_matcher_add_summary_key(ensemble_config->summary_key_matcher,
-                                        key);
-
-    return config_node;
-}
-
-const summary_key_matcher_type *ensemble_config_get_summary_key_matcher(
-    const ensemble_config_type *ensemble_config) {
-    return ensemble_config->summary_key_matcher;
 }
 
 std::pair<fw_load_status, std::string>

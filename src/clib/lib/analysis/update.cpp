@@ -72,15 +72,12 @@ void serialize_node(enkf_fs_type *fs, const enkf_config_node_type *config_node,
     enkf_node_free(node);
 }
 
-void serialize_parameter(const ensemble_config_type *ens_config,
+void serialize_parameter(const enkf_config_node_type *config_node,
                          const Parameter parameter, enkf_fs_type *target_fs,
                          const std::vector<int> &iens_active_index,
                          Eigen::MatrixXd &A) {
 
     int ens_size = A.cols();
-
-    const enkf_config_node_type *config_node =
-        ensemble_config_get_node(ens_config, parameter.name.c_str());
 
     ensure_node_loaded(config_node, target_fs);
     int active_size = parameter.active_list.active_size(
@@ -127,7 +124,7 @@ load a  parameters from a enkf_fs_type storage into a
 matrix.
 */
 Eigen::MatrixXd load_parameter(Cwrap<enkf_fs_type> source_fs,
-                               Cwrap<ensemble_config_type> ensemble_config,
+                               Cwrap<enkf_config_node_type> enkf_config_node,
                                const std::vector<int> &iens_active_index,
                                const Parameter parameter) {
 
@@ -136,7 +133,7 @@ Eigen::MatrixXd load_parameter(Cwrap<enkf_fs_type> source_fs,
     Eigen::MatrixXd A =
         Eigen::MatrixXd::Zero(matrix_start_size, active_ens_size);
 
-    serialize_parameter(ensemble_config, parameter, source_fs,
+    serialize_parameter(enkf_config_node, parameter, source_fs,
                         iens_active_index, A);
     return A;
 }
@@ -145,13 +142,11 @@ Eigen::MatrixXd load_parameter(Cwrap<enkf_fs_type> source_fs,
 save a paramater matrix to enkf_fs_type storage
 */
 void save_parameter(Cwrap<enkf_fs_type> target_fs,
-                    Cwrap<ensemble_config_type> ensemble_config,
+                    Cwrap<enkf_config_node_type> config_node,
                     const std::vector<int> &iens_active_index,
                     const Parameter parameter, const Eigen::MatrixXd &A) {
 
     int ens_size = iens_active_index.size();
-    const enkf_config_node_type *config_node =
-        ensemble_config_get_node(ensemble_config, parameter.name.c_str());
 
     int active_size = parameter.active_list.active_size(
         enkf_config_node_get_data_size(config_node, 0));

@@ -26,7 +26,7 @@ from ert.libres_facade import LibresFacade
 
 
 def write_file(fname, contents):
-    with open(fname, "w") as fout:
+    with open(fname, mode="w", encoding="utf-8") as fout:
         fout.writelines(contents)
 
 
@@ -91,11 +91,11 @@ def test_gen_kw(tmpdir, config_str, expected, extra_files, expectation):
         """
         )
         config += config_str
-        with open("config.ert", "w") as fh:
+        with open("config.ert", mode="w", encoding="utf-8") as fh:
             fh.writelines(config)
-        with open("template.txt", "w") as fh:
+        with open("template.txt", mode="w", encoding="utf-8") as fh:
             fh.writelines("MY_KEYWORD <MY_KEYWORD>")
-        with open("prior.txt", "w") as fh:
+        with open("prior.txt", mode="w", encoding="utf-8") as fh:
             fh.writelines("MY_KEYWORD NORMAL 0 1")
         for fname, contents in extra_files:
             write_file(fname, contents)
@@ -130,13 +130,13 @@ def test_that_order_of_input_in_user_input_is_abritrary_for_gen_kw_init_files(
         """
         )
         config += config_str
-        with open("config.ert", "w") as fh:
+        with open("config.ert", mode="w", encoding="utf-8") as fh:
             fh.writelines(config)
-        with open("template.txt", "w") as fh:
+        with open("template.txt", mode="w", encoding="utf-8") as fh:
             fh.writelines(
                 "MY_KEYWORD <MY_KEYWORD>\nMY_SECOND_KEYWORD <MY_SECOND_KEYWORD>"
             )
-        with open("prior.txt", "w") as fh:
+        with open("prior.txt", mode="w", encoding="utf-8") as fh:
             fh.writelines("MY_KEYWORD NORMAL 0 1\nMY_SECOND_KEYWORD NORMAL 0 1")
         for fname, contents in extra_files:
             write_file(fname, contents)
@@ -152,7 +152,8 @@ def test_that_order_of_input_in_user_input_is_abritrary_for_gen_kw_init_files(
     "config_str, expect_forward_init",
     [
         (
-            "FIELD MY_PARAM PARAMETER my_param.grdecl INIT_FILES:../../../my_param_0.grdecl FORWARD_INIT:True",  # noqa
+            "FIELD MY_PARAM PARAMETER my_param.grdecl "
+            "INIT_FILES:../../../my_param_0.grdecl FORWARD_INIT:True",
             True,
         ),
         (
@@ -182,7 +183,7 @@ def test_field_param(tmpdir, config_str, expect_forward_init):
 
         with cwrap.open("my_param_0.grdecl", mode="w") as f:
             grid.write_grdecl(expect_param, f)
-        with open("config.ert", "w") as fh:
+        with open("config.ert", mode="w", encoding="utf-8") as fh:
             fh.writelines(config)
         ert = create_runpath("config.ert")
         assert (
@@ -196,10 +197,10 @@ def test_field_param(tmpdir, config_str, expect_forward_init):
             # forward model to internalise the data
             assert not Path("simulations/realization-0/iter-0/my_param.grdecl").exists()
 
+            parameter = update.Parameter("MY_PARAM")
+            config_node = ert.ensembleConfig().getNode(parameter.name)
             with pytest.raises(KeyError, match="No parameter: MY_PARAM in storage"):
-                fs.load_parameter(
-                    ert.ensembleConfig(), [0], update.Parameter("MY_PARAM")
-                )
+                fs.load_parameter(config_node, [0], parameter)
 
             # We try to load the parameters from the forward model, this would fail if
             # forward init was not set correctly
@@ -214,9 +215,10 @@ def test_field_param(tmpdir, config_str, expect_forward_init):
         assert actual_param == expect_param
 
         if expect_forward_init:
-            arr = fs.load_parameter(
-                ert.ensembleConfig(), [0], update.Parameter("MY_PARAM")
-            )
+            parameter = update.Parameter("MY_PARAM")
+            config_node = ert.ensembleConfig().getNode(parameter.name)
+            arr = fs.load_parameter(config_node, [0], parameter)
+
             assert len(arr) == 16
 
 
@@ -224,31 +226,36 @@ def test_field_param(tmpdir, config_str, expect_forward_init):
     "config_str, expect_forward_init, expect_num_loaded, error",
     [
         (
-            "SURFACE MY_PARAM OUTPUT_FILE:surf.irap   INIT_FILES:surf%d.irap   BASE_SURFACE:surf0.irap",  # noqa
+            "SURFACE MY_PARAM OUTPUT_FILE:surf.irap   INIT_FILES:surf%d.irap   "
+            "BASE_SURFACE:surf0.irap",
             False,
             1,
             "",
         ),
         (
-            "SURFACE MY_PARAM OUTPUT_FILE:surf.irap INIT_FILES:../../../surf%d.irap BASE_SURFACE:surf0.irap FORWARD_INIT:True",  # noqa
+            "SURFACE MY_PARAM OUTPUT_FILE:surf.irap INIT_FILES:../../../surf%d.irap "
+            "BASE_SURFACE:surf0.irap FORWARD_INIT:True",
             True,
             1,
             "",
         ),
         (
-            "SURFACE MY_PARAM OUTPUT_FILE:surf.irap INIT_FILES:../../../surf.irap BASE_SURFACE:surf0.irap FORWARD_INIT:True",  # noqa
+            "SURFACE MY_PARAM OUTPUT_FILE:surf.irap INIT_FILES:../../../surf.irap "
+            "BASE_SURFACE:surf0.irap FORWARD_INIT:True",
             True,
             1,
             "",
         ),
         (
-            "SURFACE MY_PARAM OUTPUT_FILE:surf.irap INIT_FILES:surf%d.irap BASE_SURFACE:surf0.irap FORWARD_INIT:True",  # noqa
+            "SURFACE MY_PARAM OUTPUT_FILE:surf.irap INIT_FILES:surf%d.irap "
+            "BASE_SURFACE:surf0.irap FORWARD_INIT:True",
             True,
             0,
             "surf0.irap - failed to initialize node: MY_PARAM",
         ),
         (
-            "SURFACE MY_PARAM OUTPUT_FILE:surf.irap INIT_FILES:surf.irap BASE_SURFACE:surf0.irap FORWARD_INIT:True",  # noqa
+            "SURFACE MY_PARAM OUTPUT_FILE:surf.irap INIT_FILES:surf.irap "
+            "BASE_SURFACE:surf0.irap FORWARD_INIT:True",
             True,
             0,
             "surf.irap - failed to initialize node: MY_PARAM",
@@ -279,7 +286,7 @@ def test_surface_param(
         expect_surface.write("surf.irap")
         expect_surface.write("surf0.irap")
 
-        with open("config.ert", "w") as fh:
+        with open("config.ert", mode="w", encoding="utf-8") as fh:
             fh.writelines(config)
         ert = create_runpath("config.ert")
         assert (
@@ -307,15 +314,15 @@ def test_surface_param(
         # Assert that the data has been internalised to storage
         fs = ert.getEnkfFsManager().getFileSystem("default")
         if expect_num_loaded > 0:
-            arr = fs.load_parameter(
-                ert.ensembleConfig(), [0], update.Parameter("MY_PARAM")
-            )
+            parameter = update.Parameter("MY_PARAM")
+            config_node = ert.ensembleConfig().getNode(parameter.name)
+            arr = fs.load_parameter(config_node, [0], parameter)
             assert arr.flatten().tolist() == [0.0, 1.0, 2.0, 3.0]
         else:
+            parameter = update.Parameter("MY_PARAM")
+            config_node = ert.ensembleConfig().getNode(parameter.name)
             with pytest.raises(KeyError, match="No parameter: MY_PARAM in storage"):
-                fs.load_parameter(
-                    ert.ensembleConfig(), [0], update.Parameter("MY_PARAM")
-                )
+                fs.load_parameter(config_node, [0], parameter)
 
 
 @pytest.mark.integration_test
@@ -323,18 +330,19 @@ def test_surface_param(
 def test_gen_kw_forward_init(tmpdir, load_forward_init):
     with tmpdir.as_cwd():
         config = dedent(
-            f"""
+            """
         JOBNAME my_name%d
         NUM_REALIZATIONS 1
-        GEN_KW KW_NAME template.txt kw.txt prior.txt FORWARD_INIT:{str(load_forward_init)} INIT_FILES:custom_param%d
-        """  # noqa
+        GEN_KW KW_NAME template.txt kw.txt prior.txt """
+            f"""FORWARD_INIT:{str(load_forward_init)} INIT_FILES:custom_param%d
+        """
         )
-        with open("config.ert", "w") as fh:
+        with open("config.ert", mode="w", encoding="utf-8") as fh:
             fh.writelines(config)
 
-        with open("template.txt", "w") as fh:
+        with open("template.txt", mode="w", encoding="utf-8") as fh:
             fh.writelines("MY_KEYWORD <MY_KEYWORD>")
-        with open("prior.txt", "w") as fh:
+        with open("prior.txt", mode="w", encoding="utf-8") as fh:
             fh.writelines("MY_KEYWORD NORMAL 0 1")
         if not load_forward_init:
             write_file("custom_param0", "1.31")
@@ -375,51 +383,46 @@ def test_initialize_random_seed(tmpdir, caplog, check_random_seed, expectation):
     This test initializes a case twice, the first time without a random
     seed.
     """
-    with caplog.at_level(logging.INFO):
-        with tmpdir.as_cwd():
-            config = dedent(
-                """
-            JOBNAME my_name%d
-            NUM_REALIZATIONS 1
-            GEN_KW KW_NAME template.txt kw.txt prior.txt
+    with caplog.at_level(logging.INFO), tmpdir.as_cwd():
+        config = dedent(
             """
-            )
-            with open("config.ert", "w") as fh:
-                fh.writelines(config)
-            with open("template.txt", "w") as fh:
-                fh.writelines("MY_KEYWORD <MY_KEYWORD>")
-            with open("prior.txt", "w") as fh:
-                fh.writelines("MY_KEYWORD NORMAL 0 1")
-            create_runpath("config.ert")
-            # We read the first parameter value as a reference value
-            expected = Path("simulations/realization-0/iter-0/kw.txt").read_text(
-                "utf-8"
-            )
+        JOBNAME my_name%d
+        NUM_REALIZATIONS 1
+        GEN_KW KW_NAME template.txt kw.txt prior.txt
+        """
+        )
+        with open("config.ert", mode="w", encoding="utf-8") as fh:
+            fh.writelines(config)
+        with open("template.txt", mode="w", encoding="utf-8") as fh:
+            fh.writelines("MY_KEYWORD <MY_KEYWORD>")
+        with open("prior.txt", mode="w", encoding="utf-8") as fh:
+            fh.writelines("MY_KEYWORD NORMAL 0 1")
+        create_runpath("config.ert")
+        # We read the first parameter value as a reference value
+        expected = Path("simulations/realization-0/iter-0/kw.txt").read_text("utf-8")
 
-            # Make a clean directory for the second case, which is identical
-            # to the first, except that it uses the random seed from the first
-            os.makedirs("second")
-            os.chdir("second")
-            random_seed = next(
-                message
-                for message in caplog.messages
-                if message.startswith("RANDOM_SEED")
-            ).split()[1]
-            if check_random_seed:
-                config += f"RANDOM_SEED {random_seed}"
-            with open("config_2.ert", "w") as fh:
-                fh.writelines(config)
-            with open("template.txt", "w") as fh:
-                fh.writelines("MY_KEYWORD <MY_KEYWORD>")
-            with open("prior.txt", "w") as fh:
-                fh.writelines("MY_KEYWORD NORMAL 0 1")
+        # Make a clean directory for the second case, which is identical
+        # to the first, except that it uses the random seed from the first
+        os.makedirs("second")
+        os.chdir("second")
+        random_seed = next(
+            message for message in caplog.messages if message.startswith("RANDOM_SEED")
+        ).split()[1]
+        if check_random_seed:
+            config += f"RANDOM_SEED {random_seed}"
+        with open("config_2.ert", mode="w", encoding="utf-8") as fh:
+            fh.writelines(config)
+        with open("template.txt", mode="w", encoding="utf-8") as fh:
+            fh.writelines("MY_KEYWORD <MY_KEYWORD>")
+        with open("prior.txt", mode="w", encoding="utf-8") as fh:
+            fh.writelines("MY_KEYWORD NORMAL 0 1")
 
-            create_runpath("config_2.ert")
-            with expectation:
-                assert (
-                    Path("simulations/realization-0/iter-0/kw.txt").read_text("utf-8")
-                    == expected
-                )
+        create_runpath("config_2.ert")
+        with expectation:
+            assert (
+                Path("simulations/realization-0/iter-0/kw.txt").read_text("utf-8")
+                == expected
+            )
 
 
 def test_that_first_three_parameters_sampled_snapshot(tmpdir):
@@ -436,17 +439,17 @@ def test_that_first_three_parameters_sampled_snapshot(tmpdir):
         RANDOM_SEED 1234
         """
         )
-        with open("config.ert", "w") as fh:
+        with open("config.ert", mode="w", encoding="utf-8") as fh:
             fh.writelines(config)
-        with open("template.txt", "w") as fh:
+        with open("template.txt", mode="w", encoding="utf-8") as fh:
             fh.writelines("MY_KEYWORD <MY_KEYWORD>")
-        with open("prior.txt", "w") as fh:
+        with open("prior.txt", mode="w", encoding="utf-8") as fh:
             fh.writelines("MY_KEYWORD NORMAL 0 1")
         ert = create_runpath("config.ert", [True] * 3)
         fs = ert.getCurrentFileSystem()
-        prior = fs.load_parameter(
-            ert.ensembleConfig(), list(range(3)), Parameter("KW_NAME")
-        )
+        parameter = Parameter("KW_NAME")
+        config_node = ert.ensembleConfig().getNode(parameter.name)
+        prior = fs.load_parameter(config_node, list(range(3)), parameter)
         expected = [-0.8814228, 1.5847818, 1.009956]
         np.testing.assert_almost_equal(prior, np.array([expected]))
 
@@ -674,11 +677,13 @@ if __name__ == "__main__":
         ert = EnKFMain(ResConfig("config.ert"))
         prior = ert.storage_manager["prior"]
         posterior = ert.storage_manager["smoother_update"]
+        parameter_name = "MY_PARAM"
+        parameter_config_node = ert.ensembleConfig().getNode(parameter_name)
         prior_param = prior.load_parameter(
-            ert.ensembleConfig(), list(range(5)), update.Parameter("MY_PARAM")
+            parameter_config_node, list(range(5)), update.Parameter(parameter_name)
         )
         posterior_param = posterior.load_parameter(
-            ert.ensembleConfig(), list(range(5)), update.Parameter("MY_PARAM")
+            parameter_config_node, list(range(5)), update.Parameter(parameter_name)
         )
         assert np.linalg.det(np.cov(prior_param)) > np.linalg.det(
             np.cov(posterior_param)

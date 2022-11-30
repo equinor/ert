@@ -18,7 +18,6 @@ foreach(
   enkf_active_list
   enkf_config_node
   enkf_ensemble
-  enkf_ensemble_config
   enkf_fs
   enkf_gen_data_config
   enkf_meas_data

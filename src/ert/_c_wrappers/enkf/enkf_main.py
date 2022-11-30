@@ -413,7 +413,7 @@ class EnKFMain:
                         self.getEnsembleSize(),
                     )
                 storage.save_parameters(
-                    self.ensembleConfig(),
+                    config_node,
                     active_realizations,
                     _clib.update.Parameter(parameter),
                     parameter_values,
