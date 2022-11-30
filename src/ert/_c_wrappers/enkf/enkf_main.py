@@ -2,12 +2,10 @@ import json
 import logging
 import os
 from datetime import datetime
-from hashlib import sha256
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, List, Mapping, Sequence, Union
 
 import numpy as np
-import pandas as pd
 
 from ert import _clib
 from ert._c_wrappers.analysis.configuration import UpdateConfiguration
@@ -399,44 +397,26 @@ class EnKFMain:
             impl_type = enkf_node.getImplType()
             if impl_type == ErtImplType.GEN_KW:
                 gen_kw_node = enkf_node.asGenKw()
+                keys = [val[0] for val in gen_kw_node.items()]
                 if config_node.get_init_file_fmt():
-                    df_values = pd.DataFrame()
-                    for iens in active_realizations:
-                        df = pd.read_csv(
-                            config_node.get_init_file_fmt() % iens,
-                            delim_whitespace=True,
-                            header=None,
-                        )
-                        # This means we have a key: value mapping in the
-                        # file otherwise it is just a list of values
-                        if df.shape[1] == 2:
-                            # We need to sort the user input keys by the
-                            # internal order of sub-parameters:
-                            keys = [val[0] for val in gen_kw_node.items()]
-                            df = df.set_index(df.columns[0])
-                            values = df.reindex(keys).values.flatten()
-                        else:
-                            values = df.values.flatten()
-                        df_values[f"{iens}"] = values
-                    parameter_values = df_values.values
+                    parameter_values = gen_kw_node.values_from_files(
+                        active_realizations,
+                        config_node.get_init_file_fmt(),
+                        keys,
+                    )
                 else:
-                    parameter_values = []
-                    for key, _ in gen_kw_node.items():
-                        key_hash = sha256(
-                            str(self._global_seed.entropy).encode("utf-8")
-                            + f"{parameter}:{key}".encode("utf-8")
-                        )
-                        seed = np.frombuffer(key_hash.digest(), dtype="uint32")
-                        rng = np.random.default_rng(seed)
-                        values = rng.standard_normal(self.getEnsembleSize())
-                        if len(active_realizations) != self.getEnsembleSize():
-                            values = values[active_realizations]
-                        parameter_values.append(values)
+                    parameter_values = gen_kw_node.sample_values(
+                        parameter,
+                        keys,
+                        str(self._global_seed.entropy),
+                        active_realizations,
+                        self.getEnsembleSize(),
+                    )
                 storage.save_parameters(
                     self.ensembleConfig(),
                     active_realizations,
                     _clib.update.Parameter(parameter),
-                    np.array(parameter_values),
+                    parameter_values,
                 )
             else:
                 for realization_nr in active_realizations:
