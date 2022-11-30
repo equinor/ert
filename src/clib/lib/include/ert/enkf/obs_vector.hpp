@@ -65,7 +65,7 @@ extern "C" void *obs_vector_iget_node(const obs_vector_type *, int);
 obs_vector_type *
 obs_vector_alloc_from_GENERAL_OBSERVATION(const conf_instance_type *,
                                           const std::vector<time_t> &obs_time,
-                                          const ensemble_config_type *);
+                                          enkf_config_node_type *);
 void obs_vector_load_from_SUMMARY_OBSERVATION(
     obs_vector_type *obs_vector, const conf_instance_type *,
     const std::vector<time_t> &obs_time, ensemble_config_type *);

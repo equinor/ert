@@ -54,7 +54,6 @@ class EnkfConfigNode(BaseCClass):
     _alloc_field_node = ResPrototype(
         "enkf_config_node_obj enkf_config_node_alloc_field(char*, \
                                                            ecl_grid, \
-                                                           void*, \
                                                            bool)",
         bind=False,
     )
@@ -341,7 +340,6 @@ class EnkfConfigNode(BaseCClass):
         key,
         var_type_string,
         grid,
-        field_trans_table,
         ecl_file,
         enkf_infile,
         forward_init,
@@ -369,7 +367,7 @@ class EnkfConfigNode(BaseCClass):
             value_max = max_key
             truncation = truncation | EnkfTruncationType.TRUNCATE_MAX
 
-        config_node = cls._alloc_field_node(key, grid, field_trans_table, forward_init)
+        config_node = cls._alloc_field_node(key, grid, forward_init)
         if config_node is None:
             raise ValueError(f"Failed to create FIELD node for:{key}")
 
@@ -451,19 +449,21 @@ class EnkfConfigNode(BaseCClass):
         ):
             return False
 
-        if self.getImplementationType() == ErtImplType.GEN_DATA:
-            if self.getDataModelConfig() != other.getDataModelConfig():
-                return False
-            if self.get_enkf_infile() != other.get_enkf_infile():
-                return False
-        elif self.getImplementationType() == ErtImplType.GEN_KW:
-            if self.getKeywordModelConfig() != other.getKeywordModelConfig():
-                return False
-        elif self.getImplementationType() == ErtImplType.SUMMARY:
-            if self.getSummaryModelConfig() != other.getSummaryModelConfig():
-                return False
-        elif self.getImplementationType() == ErtImplType.FIELD:
-            if self.getFieldModelConfig() != other.getFieldModelConfig():
-                return False
+        if any(
+            [
+                self.getImplementationType() == ErtImplType.GEN_DATA
+                and (
+                    self.getDataModelConfig() != other.getDataModelConfig()
+                    or self.get_enkf_infile() != other.get_enkf_infile()
+                ),
+                self.getImplementationType() == ErtImplType.GEN_KW
+                and self.getKeywordModelConfig() != other.getKeywordModelConfig(),
+                self.getImplementationType() == ErtImplType.SUMMARY
+                and self.getSummaryModelConfig() != other.getSummaryModelConfig(),
+                self.getImplementationType() == ErtImplType.FIELD
+                and self.getFieldModelConfig() != other.getFieldModelConfig(),
+            ]
+        ):
+            return False
 
         return True

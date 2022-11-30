@@ -44,11 +44,11 @@ def test_that_case_tool_can_copy_case_state(qtbot):
     RANDOM_SEED 1234
     """
     )
-    with open("config.ert", "w") as fh:
+    with open("config.ert", "w", encoding="utf-8") as fh:
         fh.writelines(config)
-    with open("template.txt", "w") as fh:
+    with open("template.txt", "w", encoding="utf-8") as fh:
         fh.writelines("MY_KEYWORD <MY_KEYWORD>")
-    with open("prior.txt", "w") as fh:
+    with open("prior.txt", "w", encoding="utf-8") as fh:
         fh.writelines("MY_KEYWORD NORMAL 0 1")
     ert = EnKFMain(ResConfig("config.ert"))
     storage_manager = ert.storage_manager
@@ -65,8 +65,8 @@ def test_that_case_tool_can_copy_case_state(qtbot):
     qtbot.mouseClick(
         tool.findChild(QPushButton, name="initialize_existing_button"), Qt.LeftButton
     )
-    assert new_case.load_parameter(
-        ert.ensembleConfig(),
-        [0],
-        Parameter("KW_NAME"),
-    ).flatten()[0] == pytest.approx(-0.8814227775506998)
+    parameter = Parameter("KW_NAME")
+    config_node = ert.ensembleConfig().getNode(parameter.name)
+    assert new_case.load_parameter(config_node, [0], parameter,).flatten()[
+        0
+    ] == pytest.approx(-0.8814227775506998)

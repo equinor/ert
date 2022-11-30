@@ -7,6 +7,7 @@ from cwrap import BaseCClass
 
 from ert import _clib
 from ert._c_wrappers import ResPrototype
+from ert._c_wrappers.enkf.config import EnkfConfigNode
 from ert._c_wrappers.enkf.enums import EnKFFSType
 from ert._c_wrappers.enkf.res_config import EnsembleConfig
 from ert._c_wrappers.enkf.summary_key_set import SummaryKeySet
@@ -105,24 +106,20 @@ class EnkfFs(BaseCClass):
 
     def save_parameters(
         self,
-        ensemble_config: "EnsembleConfig",
+        config_node: "EnkfConfigNode",
         iens_active_index: List[int],
         parameter: update.Parameter,
         values: npt.ArrayLike,
     ) -> None:
-        update.save_parameter(
-            self, ensemble_config, iens_active_index, parameter, values
-        )
+        update.save_parameter(self, config_node, iens_active_index, parameter, values)
 
     def load_parameter(
         self,
-        ensemble_config: EnsembleConfig,
+        config_node: EnkfConfigNode,
         iens_active_index: List[int],
         parameter: update.Parameter,
     ) -> np.ndarray:
-        return update.load_parameter(
-            self, ensemble_config, iens_active_index, parameter
-        )
+        return update.load_parameter(self, config_node, iens_active_index, parameter)
 
     def load_from_run_path(
         self,

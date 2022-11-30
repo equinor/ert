@@ -153,14 +153,12 @@ enkf_config_node_alloc_GEN_DATA_result(const char *key,
    This will create a new gen_kw_config instance which is NOT yet
    valid. Mainly support code for the GUI.
 */
-enkf_config_node_type *
-enkf_config_node_alloc_field(const char *key, ecl_grid_type *ecl_grid,
-                             field_trans_table_type *trans_table,
-                             bool forward_init) {
+enkf_config_node_type *enkf_config_node_alloc_field(const char *key,
+                                                    ecl_grid_type *ecl_grid,
+                                                    bool forward_init) {
     enkf_config_node_type *config_node =
         enkf_config_node_alloc__(INVALID_VAR, FIELD, key, forward_init);
-    config_node->data =
-        field_config_alloc_empty(key, ecl_grid, trans_table, false);
+    config_node->data = field_config_alloc_empty(key, ecl_grid, false);
     return config_node;
 }
 
@@ -334,12 +332,6 @@ const char *enkf_config_node_get_key(const enkf_config_node_type *config_node) {
 const stringlist_type *
 enkf_config_node_get_obs_keys(const enkf_config_node_type *config_node) {
     return config_node->obs_keys;
-}
-
-void enkf_config_node_add_obs_key(enkf_config_node_type *config_node,
-                                  const char *obs_key) {
-    if (!stringlist_contains(config_node->obs_keys, obs_key))
-        stringlist_append_copy(config_node->obs_keys, obs_key);
 }
 
 enkf_config_node_type *

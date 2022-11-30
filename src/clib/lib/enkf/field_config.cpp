@@ -13,6 +13,7 @@
 #include <ert/enkf/enkf_defaults.hpp>
 #include <ert/enkf/enkf_types.hpp>
 #include <ert/enkf/field_config.hpp>
+#include <ert/enkf/field_trans.hpp>
 
 /**
    About transformations and truncations
@@ -276,7 +277,6 @@ const char *field_config_get_grid_name(const field_config_type *config) {
 */
 field_config_type *field_config_alloc_empty(const char *ecl_kw_name,
                                             ecl_grid_type *ecl_grid,
-                                            field_trans_table_type *trans_table,
                                             bool keep_inactive_cells) {
 
     field_config_type *config =
@@ -298,7 +298,7 @@ field_config_type *field_config_alloc_empty(const char *ecl_kw_name,
     config->init_transform_name = NULL;
 
     config->truncation = TRUNCATE_NONE;
-    config->trans_table = trans_table;
+    config->trans_table = field_trans_table_alloc();
 
     field_config_set_grid(
         config, ecl_grid,
@@ -522,6 +522,7 @@ void field_config_free(field_config_type *config) {
     free(config->init_transform_name);
     if ((config->private_grid) && (config->grid != NULL))
         ecl_grid_free(config->grid);
+    field_trans_table_free(config->trans_table);
     free(config);
 }
 

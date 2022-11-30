@@ -7,6 +7,7 @@
 
 #include <ert/util/hash.hpp>
 #include <ert/util/stringlist.hpp>
+#include <map>
 
 #include <ert/ecl/ecl_grid.hpp>
 #include <ert/ecl/ecl_sum.hpp>
@@ -21,27 +22,20 @@
 
 typedef struct ensemble_config_struct ensemble_config_type;
 
+struct ensemble_config_struct {
+    std::map<std::string, enkf_config_node_type *>
+        config_nodes; /* a hash of enkf_config_node instances - which again contain pointers to e.g. field_config objects.  */
+    summary_key_matcher_type *summary_key_matcher;
+};
+
 extern "C" void ensemble_config_add_node(ensemble_config_type *ensemble_config,
                                          enkf_config_node_type *node);
 extern "C" enkf_config_node_type *
 ensemble_config_add_summary(ensemble_config_type *ensemble_config,
                             const char *key, load_fail_type load_fail);
-enkf_config_node_type *
-ensemble_config_add_summary_observation(ensemble_config_type *ensemble_config,
-                                        const char *key,
-                                        load_fail_type load_fail);
-void ensemble_config_clear_obs_keys(ensemble_config_type *ensemble_config);
-void ensemble_config_add_obs_key(ensemble_config_type *, const char *,
-                                 const char *);
 extern "C" void ensemble_config_free(ensemble_config_type *);
 extern "C" bool ensemble_config_has_key(const ensemble_config_type *,
                                         const char *);
-bool ensemble_config_have_forward_init(
-    const ensemble_config_type *ensemble_config);
-bool ensemble_config_require_summary(const ensemble_config_type *config);
-
-extern "C" field_trans_table_type *
-ensemble_config_get_trans_table(const ensemble_config_type *ensemble_config);
 extern "C" enkf_config_node_type *
 ensemble_config_get_node(const ensemble_config_type *, const char *);
 enkf_config_node_type *ensemble_config_get_or_create_summary_node(
@@ -59,9 +53,6 @@ ensemble_config_alloc_full(const char *gen_kw_format_string);
 extern "C" void ensemble_config_init_SUMMARY_full(ensemble_config_type *,
                                                   const char *,
                                                   const ecl_sum_type *);
-
-const summary_key_matcher_type *ensemble_config_get_summary_key_matcher(
-    const ensemble_config_type *ensemble_config);
 std::pair<fw_load_status, std::string>
 ensemble_config_forward_init(const ensemble_config_type *ens_config,
                              const int iens, const std::string &run_path,

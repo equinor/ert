@@ -331,8 +331,7 @@ void obs_vector_load_from_SUMMARY_OBSERVATION(
 
 obs_vector_type *obs_vector_alloc_from_GENERAL_OBSERVATION(
     const conf_instance_type *conf_instance,
-    const std::vector<time_t> &obs_time,
-    const ensemble_config_type *ensemble_config) {
+    const std::vector<time_t> &obs_time, enkf_config_node_type *config_node) {
     if (!conf_instance_is_of_class(conf_instance, "GENERAL_OBSERVATION"))
         util_abort("%s: internal error. expected \"GENERAL_OBSERVATION\" "
                    "instance, got \"%s\".\n",
@@ -340,82 +339,68 @@ obs_vector_type *obs_vector_alloc_from_GENERAL_OBSERVATION(
     const char *obs_key = conf_instance_get_name_ref(conf_instance);
     const char *state_kw =
         conf_instance_get_item_value_ref(conf_instance, "DATA");
-    if (ensemble_config_has_key(ensemble_config, state_kw)) {
-        const char *obs_key = conf_instance_get_name_ref(conf_instance);
-        int obs_restart_nr =
-            __conf_instance_get_restart_nr(conf_instance, obs_key, obs_time);
-        const char *index_file = NULL;
-        const char *index_list = NULL;
-        const char *obs_file = NULL;
 
-        if (conf_instance_has_item(conf_instance, "INDEX_FILE"))
-            index_file =
-                conf_instance_get_item_value_ref(conf_instance, "INDEX_FILE");
+    int obs_restart_nr =
+        __conf_instance_get_restart_nr(conf_instance, obs_key, obs_time);
+    const char *index_file = NULL;
+    const char *index_list = NULL;
+    const char *obs_file = NULL;
 
-        if (conf_instance_has_item(conf_instance, "INDEX_LIST"))
-            index_list =
-                conf_instance_get_item_value_ref(conf_instance, "INDEX_LIST");
+    if (conf_instance_has_item(conf_instance, "INDEX_FILE"))
+        index_file =
+            conf_instance_get_item_value_ref(conf_instance, "INDEX_FILE");
 
-        if (conf_instance_has_item(conf_instance, "OBS_FILE"))
-            obs_file =
-                conf_instance_get_item_value_ref(conf_instance, "OBS_FILE");
+    if (conf_instance_has_item(conf_instance, "INDEX_LIST"))
+        index_list =
+            conf_instance_get_item_value_ref(conf_instance, "INDEX_LIST");
 
-        {
-            obs_vector_type *obs_vector = NULL;
-            const enkf_config_node_type *config_node =
-                ensemble_config_get_node(ensemble_config, state_kw);
+    if (conf_instance_has_item(conf_instance, "OBS_FILE"))
+        obs_file = conf_instance_get_item_value_ref(conf_instance, "OBS_FILE");
 
-            if (enkf_config_node_get_impl_type(config_node) == GEN_DATA) {
-                double scalar_error = -1;
-                double scalar_value = -1;
-                gen_obs_type *gen_obs;
-                const gen_data_config_type *config =
+    {
+        obs_vector_type *obs_vector = NULL;
+
+        if (enkf_config_node_get_impl_type(config_node) == GEN_DATA) {
+            double scalar_error = -1;
+            double scalar_value = -1;
+            gen_obs_type *gen_obs;
+            const gen_data_config_type *config =
+                (const gen_data_config_type *)enkf_config_node_get_ref(
+                    config_node);
+
+            if (gen_data_config_has_report_step(config, obs_restart_nr)) {
+                obs_vector = obs_vector_alloc(GEN_OBS, obs_key, config_node,
+                                              obs_time.size());
+                if (conf_instance_has_item(conf_instance, "VALUE")) {
+                    scalar_value = conf_instance_get_item_value_double(
+                        conf_instance, "VALUE");
+                    scalar_error = conf_instance_get_item_value_double(
+                        conf_instance, "ERROR");
+                }
+
+                /* The config system has ensured that we have either OBS_FILE or (VALUE and ERROR). */
+                gen_obs = gen_obs_alloc(
                     (const gen_data_config_type *)enkf_config_node_get_ref(
-                        config_node);
-
-                if (gen_data_config_has_report_step(config, obs_restart_nr)) {
-                    obs_vector = obs_vector_alloc(
-                        GEN_OBS, obs_key,
-                        ensemble_config_get_node(ensemble_config, state_kw),
-                        obs_time.size());
-                    if (conf_instance_has_item(conf_instance, "VALUE")) {
-                        scalar_value = conf_instance_get_item_value_double(
-                            conf_instance, "VALUE");
-                        scalar_error = conf_instance_get_item_value_double(
-                            conf_instance, "ERROR");
-                    }
-
-                    /* The config system has ensured that we have either OBS_FILE or (VALUE and ERROR). */
-                    gen_obs = gen_obs_alloc(
-                        (const gen_data_config_type *)enkf_config_node_get_ref(
-                            config_node),
-                        obs_key, obs_file, scalar_value, scalar_error,
-                        index_file, index_list);
-                    obs_vector_install_node(obs_vector, obs_restart_nr,
-                                            gen_obs);
-                } else
-                    fprintf(stderr,
-                            "** ERROR: The GEN_DATA node:%s is not configured "
-                            "to load from report step:%d - the observation:%s "
-                            "will be ignored\n",
-                            state_kw, obs_restart_nr, obs_key);
-            } else {
-                ert_impl_type impl_type =
-                    enkf_config_node_get_impl_type(config_node);
+                        config_node),
+                    obs_key, obs_file, scalar_value, scalar_error, index_file,
+                    index_list);
+                obs_vector_install_node(obs_vector, obs_restart_nr, gen_obs);
+            } else
                 fprintf(stderr,
-                        "** ERROR: %s: %s has implementation type:\'%s\' - "
-                        "expected:\'%s\' - observation:%s ignored.\n",
-                        __func__, state_kw, enkf_types_get_impl_name(impl_type),
-                        enkf_types_get_impl_name(GEN_DATA), obs_key);
-            }
-            return obs_vector;
+                        "** ERROR: The GEN_DATA node:%s is not configured "
+                        "to load from report step:%d - the observation:%s "
+                        "will be ignored\n",
+                        state_kw, obs_restart_nr, obs_key);
+        } else {
+            ert_impl_type impl_type =
+                enkf_config_node_get_impl_type(config_node);
+            fprintf(stderr,
+                    "** ERROR: %s: %s has implementation type:\'%s\' - "
+                    "expected:\'%s\' - observation:%s ignored.\n",
+                    __func__, state_kw, enkf_types_get_impl_name(impl_type),
+                    enkf_types_get_impl_name(GEN_DATA), obs_key);
         }
-    } else {
-        fprintf(stderr,
-                "** Warning the ensemble key:%s does not exist - "
-                "observation:%s not added \n",
-                state_kw, obs_key);
-        return NULL;
+        return obs_vector;
     }
 }
 

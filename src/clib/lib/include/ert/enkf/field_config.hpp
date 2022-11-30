@@ -86,9 +86,9 @@ void field_config_update_general_field(
     const char *init_transform, const char *input_transform,
     const char *output_transform);
 
-extern "C" field_config_type *
-field_config_alloc_empty(const char *ecl_kw_name, ecl_grid_type *ecl_grid,
-                         field_trans_table_type *trans_table, bool global_size);
+extern "C" field_config_type *field_config_alloc_empty(const char *ecl_kw_name,
+                                                       ecl_grid_type *ecl_grid,
+                                                       bool global_size);
 
 C_USED const char *field_config_default_extension(field_file_format_type, bool);
 extern "C" field_file_format_type field_config_guess_file_type(const char *);

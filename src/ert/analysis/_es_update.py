@@ -107,8 +107,9 @@ def _save_temporary_storage_to_disk(
     iens_active_index: List[int],
 ) -> None:
     for key, matrix in temporary_storage.items():
+        config_node = ensemble_config.getNode(key)
         target_fs.save_parameters(
-            ensemble_config=ensemble_config,
+            config_node=config_node,
             iens_active_index=iens_active_index,
             parameter=update.Parameter(key),
             values=matrix,
@@ -122,8 +123,9 @@ def _create_temporary_parameter_storage(
 ) -> Dict[str, "npt.NDArray[np.double]"]:
     temporary_storage = {}
     for key in ensemble_config.parameters:
+        config_node = ensemble_config.getNode(key)
         matrix = source_fs.load_parameter(
-            ensemble_config=ensemble_config,
+            config_node=config_node,
             iens_active_index=iens_active_index,
             parameter=update.Parameter(key),
         )
