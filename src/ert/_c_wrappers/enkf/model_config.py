@@ -119,7 +119,7 @@ class ModelConfig:
             f"ens_path: {self.ens_path},\n"
             f"history_source: {self.history_source},\n"
             f"runpath_format_string: {self.runpath_format_string},\n"
-            f"job_name_format: {self.jobname_format_string},\n"
+            f"jobname_format_string: {self.jobname_format_string},\n"
             f"gen_kw_export_name: {self.gen_kw_export_name},\n"
             f"obs_config_file: {self.obs_config_file},\n"
             f"time_map_file: {self._time_map_file}"
