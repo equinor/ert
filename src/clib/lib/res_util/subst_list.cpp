@@ -276,7 +276,6 @@ static bool subst_list_replace_strings(const subst_list_type *subst_list,
 */
 bool subst_list_filter_file(const subst_list_type *subst_list,
                             const char *src_file, const char *target_file) {
-    bool match;
     char *backup_file = NULL;
     buffer_type *buffer = buffer_fread_alloc(src_file);
     // Ensure that the buffer is a \0 terminated string:
@@ -298,7 +297,19 @@ bool subst_list_filter_file(const subst_list_type *subst_list,
     }
 
     /* Doing the actual update */
-    match = subst_list_replace_strings(subst_list, buffer);
+    bool matched_at_least_once = false;
+    bool match = true;
+    const int max_iterations = 10000;
+    int iterations = 1;
+    while (match && iterations++ < max_iterations) {
+        match = subst_list_replace_strings(subst_list, buffer);
+        matched_at_least_once |= match;
+    }
+
+    if (iterations >= max_iterations) {
+        throw std::runtime_error(
+            "Reached max iterations while trying to resolve defines");
+    }
 
     /* Writing updated file */
     {
@@ -315,7 +326,7 @@ bool subst_list_filter_file(const subst_list_type *subst_list,
         free(backup_file);
     }
     buffer_free(buffer);
-    return match;
+    return matched_at_least_once;
 }
 
 /**
@@ -339,8 +350,19 @@ bool subst_list_update_string(const subst_list_type *subst_list,
 char *subst_list_alloc_filtered_string(const subst_list_type *subst_list,
                                        const char *string) {
     char *filtered_string = util_alloc_string_copy(string);
-    if (subst_list)
-        subst_list_update_string(subst_list, &filtered_string);
+    if (subst_list) {
+        bool match = true;
+        const int max_iterations = 1000;
+        int iterations = 1;
+        while (match && iterations++ < max_iterations) {
+            match = subst_list_update_string(subst_list, &filtered_string);
+        }
+
+        if (iterations >= max_iterations) {
+            throw std::runtime_error(
+                "Reached max iterations while trying to resolve defines");
+        }
+    }
     return filtered_string;
 }
 
