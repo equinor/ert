@@ -826,6 +826,9 @@ class ResConfig:
         # only needed by everest's init from `config` path
         subst_list.addItem("<CONFIG_PATH>", config_dir)
 
+        data_kw = data_kw.copy()
+        data_kw.reverse()
+
         for key, value in defines:
             subst_list.addItem(key, value)
         for key, value in data_kw:

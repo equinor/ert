@@ -1,6 +1,3 @@
-"""
-These tests currently only check existing behavior so to ensure backwards compatability.
-"""
 import pytest
 
 from ert._c_wrappers.enkf import EnKFMain, ResConfig
@@ -34,8 +31,8 @@ DATA_KW <A> <B><C>
 DATA_KW <B> my
 DATA_KW <C> name
 JOBNAME <A>%d""",
-            "myname0",
-            id="Testing of use before declaration works for data_kw",
+            "<B><C>0",
+            id="Testing of use before declaration fails for data_kw",
         ),
         pytest.param(
             """
@@ -54,8 +51,8 @@ DATA_KW <B> my
 DATA_KW <C> name
 DATA_KW <A> <B><C>
 JOBNAME <A>%d""",
-            "<B><C>0",
-            id="Testing of declaration before use fails for data_kw",
+            "myname0",
+            id="Testing of declaration before use works for data_kw",
         ),
     ],
 )
