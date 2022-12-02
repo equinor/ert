@@ -96,6 +96,8 @@ def create_dummy_run_path(tmpdir):
         ("out/realization-%d/iter-%d", 4, 1, [False, False, True, False], False),
         ("out/realization-%d/iter-%d", 4, 0, [False, False, False, False], False),
         ("out/realization-%d/iter-%d", 4, 0, [], False),
+        ("out/realization-%d", 2, 1, [True, False, True], True),
+        ("out/realization-%d", 2, 0, [False, False, True], False),
     ],
 )
 def test_check_if_runpath_exists(
