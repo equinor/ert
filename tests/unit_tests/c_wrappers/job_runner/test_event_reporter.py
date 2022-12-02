@@ -1,5 +1,6 @@
 import json
 import os
+import sys
 import time
 from unittest.mock import patch
 
@@ -199,6 +200,9 @@ def test_report_with_failed_reporter_but_finished_jobs(unused_tcp_port):
     assert len(lines) == 0, "expected 0 Job running messages"
 
 
+@pytest.mark.skipif(
+    sys.platform.startswith("darwin"), reason="Performance can be flaky"
+)
 def test_report_with_reconnected_reporter_but_finished_jobs(unused_tcp_port):
     # this is to show when the reporter fails but reconnects
     # reporter still manages to send events and completes fine
