@@ -57,9 +57,9 @@ Keyword name                                                            Required
 :ref:`LICENSE_PATH <license_path>`                                      NO                                                                      A path where ert-licenses to e.g. RMS are stored
 :ref:`LOG_FILE <log_file>`                                              NO                                      -                               Ignored
 :ref:`LOG_LEVEL <log_level>`                                            NO                                      -                               Ignored
-:ref:`MAX_RUNTIME <max_runtime>`                                        NO                                      0                               Set the maximum runtime in seconds for a realization
+:ref:`MAX_RUNTIME <max_runtime>`                                        NO                                      0                               Set the maximum runtime in seconds for a realization (0 means no runtime limit)
 :ref:`MAX_SUBMIT <max_submit>`                                          NO                                      2                               How many times should the queue system retry a simulation
-:ref:`MIN_REALIZATIONS <min_realizations>`                              NO                                      0                               Set the number of minimum reservoir realizations to run before long running realizations are stopped. Keyword STOP_LONG_RUNNING must be set to TRUE when MIN_REALIZATIONS are set
+:ref:`MIN_REALIZATIONS <min_realizations>`                              NO                                      0                               Set the number of minimum realizations that has to succeed in order for the run to continue (0 means identical to NUM_REALIZATIONS - all must pass).
 :ref:`NUM_CPU <num_cpu>`                                                NO                                      1                               Set the number of CPUs. Intepretation varies depending on context
 :ref:`NUM_REALIZATIONS <num_realizations>`                              YES                                                                     Set the number of reservoir realizations to use
 :ref:`OBS_CONFIG <obs_config>`                                          NO                                                                      File specifying observations with uncertainties
@@ -626,7 +626,7 @@ Keywords controlling the simulations
         to control the runtime of simulations. When STOP_LONG_RUNNING is set to TRUE,
         MIN_REALIZATIONS is the minimum number of realizations run before the
         simulation is stopped. After MIN_REALIZATIONS have succeded successfully, the
-        realizatons left are allowed to run for 25% of the average runtime for
+        realizations left are allowed to run for 25% of the average runtime for
         successful realizations, and then killed.
 
         *Example:*
