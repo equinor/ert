@@ -1,4 +1,7 @@
+import os
+
 from cwrap import BaseCClass
+from ecl.ecl_util import get_num_cpu as get_num_cpu_from_data_file
 
 from ert._c_wrappers import ResPrototype
 
@@ -28,6 +31,36 @@ class SubstitutionList(BaseCClass):
             super().__init__(c_ptr)
         else:
             raise ValueError("Failed to construct subst_list instance.")
+
+    @classmethod
+    def from_dict(cls, config_dict):
+        subst_list = SubstitutionList()
+
+        for key, val in config_dict.get("DEFINE", []):
+            subst_list.addItem(key, val)
+        for key, val in config_dict.get("DATA_KW", []):
+            subst_list.addItem(key, val)
+
+        if "<CONFIG_PATH>" not in subst_list:
+            config_dir = config_dict.get("CONFIG_DIRECTORY", os.getcwd())
+            subst_list.addItem("<CONFIG_PATH>", config_dir)
+        else:
+            config_dir = subst_list["<CONFIG_PATH>"]
+
+        runpath_file_name = config_dict.get("RUNPATH_FILE", ".ert_runpath_list")
+        runpath_file_path = os.path.normpath(
+            os.path.join(config_dir, runpath_file_name)
+        )
+        subst_list.addItem("<RUNPATH_FILE>", runpath_file_path)
+
+        num_cpus = config_dict.get("NUM_CPU")
+        if num_cpus is None and "DATA_FILE" in config_dict:
+            num_cpus = get_num_cpu_from_data_file(config_dict.get("DATA_FILE"))
+        if num_cpus is None:
+            num_cpus = 1
+        subst_list.addItem("<NUM_CPU>", str(num_cpus))
+
+        return subst_list
 
     def __len__(self):
         return self._size()

@@ -9,7 +9,6 @@ from os.path import isfile
 from pathlib import Path
 from typing import Any, Dict, Optional, Tuple
 
-from ecl.ecl_util import get_num_cpu as get_num_cpu_from_data_file
 from ecl.util.util import StringList
 
 from ert._c_wrappers.config import ConfigContent, ConfigParser
@@ -251,26 +250,12 @@ class ResConfig:
                 "Error loading configuration: " + str(self._errors)
             )
 
-        self.num_cpu_from_data_file = (
-            get_num_cpu_from_data_file(
-                user_config_content.getValue(ConfigKeys.DATA_FILE)
-            )
-            if user_config_content.hasKey(ConfigKeys.DATA_FILE)
-            else None
-        )
-        self.num_cpu_from_config = (
-            user_config_content.getValue(ConfigKeys.NUM_CPU)
-            if user_config_content.hasKey(ConfigKeys.NUM_CPU)
-            else None
-        )
-
-        self.substitution_list = self.create_substitution_list_from_config_content(
-            config_content=user_config_content, config_path=self.config_path
-        )
         config_content_dict = config_content_as_dict(
             user_config_content, site_config_content
         )
         ResConfig.apply_config_content_defaults(config_content_dict, self.config_path)
+        self.substitution_list = SubstitutionList.from_dict(config_content_dict)
+
         self.env_vars = self._read_env_vars(config_content_dict)
         self.random_seed = config_content_dict.get(ConfigKeys.RANDOM_SEED, None)
         self.analysis_config = AnalysisConfig.from_dict(config_content_dict)
@@ -303,11 +288,7 @@ class ResConfig:
         self.queue_config = QueueConfig(**queue_config_args)
 
         self.ert_workflow_list = ErtWorkflowList.from_dict(config_content_dict)
-
-        if user_config_content.hasKey(ConfigKeys.RUNPATH_FILE):
-            self.runpath_file = user_config_content.getValue(ConfigKeys.RUNPATH_FILE)
-        else:
-            self.runpath_file = ".ert_runpath_list"
+        self.runpath_file = self.substitution_list[f"<{ConfigKeys.RUNPATH_FILE}>"]
 
         if user_config_content.hasKey(
             ConfigKeys.DATA_FILE
@@ -387,23 +368,7 @@ class ResConfig:
         init_site_config_parser(site_config_parser)
         # treat the default config dir
 
-        self.num_cpu_from_config = config_dict.get(ConfigKeys.NUM_CPU, None)
-        self.num_cpu_from_data_file = (
-            get_num_cpu_from_data_file(config_dict[ConfigKeys.DATA_FILE])
-            if (
-                ConfigKeys.DATA_FILE in config_dict
-                and os.path.exists(config_dict[ConfigKeys.DATA_FILE])
-            )
-            else None
-        )
-
-        self.substitution_list = SubstitutionList()
-        for key, value in config_dict.get(ConfigKeys.DEFINE_KEY, []):
-            self.substitution_list.addItem(key, value)
-
-        for key, value in config_dict.get(ConfigKeys.DATA_KW_KEY, []):
-            self.substitution_list.addItem(key, value)
-
+        self.substitution_list = SubstitutionList.from_dict(config_dict=config_dict)
         self.env_vars = self._read_env_vars(config_dict)
         self.random_seed = config_dict.get(ConfigKeys.RANDOM_SEED, None)
         self.analysis_config = AnalysisConfig.from_dict(config_dict=config_dict)
@@ -845,56 +810,8 @@ class ResConfig:
 
         return config_content
 
-    def create_substitution_list_from_config_content(
-        self, config_content: ConfigContent, config_path: str
-    ):
-        runpath_file_name = (
-            config_content.getValue(ConfigKeys.RUNPATH_FILE)
-            if ConfigKeys.RUNPATH_FILE in config_content
-            else ConfigKeys.RUNPATH_LIST_FILE
-        )
-        config_dir = (
-            config_content.getValue(ConfigKeys.CONFIG_DIRECTORY)
-            if ConfigKeys.CONFIG_DIRECTORY in config_content
-            else config_path
-        )
-
-        defines = dict(config_content.get_const_define_list())
-        num_cpu = self.preferred_num_cpu()
-
-        data_kw = {}
-        if ConfigKeys.DATA_KW_KEY in config_content:
-            for data_kw_definition in config_content[ConfigKeys.DATA_KW_KEY]:
-                data_kw[data_kw_definition[0]] = data_kw_definition[1]
-        subst_list = SubstitutionList()
-
-        # only needed by everest's init from `config` path
-        subst_list.addItem("<CONFIG_PATH>", config_dir)
-
-        for key, value in defines.items():
-            subst_list.addItem(key, value)
-        for key, value in data_kw.items():
-            subst_list.addItem(key, value)
-
-        if "<CONFIG_PATH>" in defines:
-            runpath_file_path = os.path.normpath(
-                os.path.join(defines["<CONFIG_PATH>"], runpath_file_name)
-            )
-        else:
-            runpath_file_path = os.path.join(config_path, runpath_file_name)
-        subst_list.addItem("<RUNPATH_FILE>", runpath_file_path)
-        subst_list.addItem(
-            "<NUM_CPU>",
-            str(num_cpu),
-        )
-        return subst_list
-
     def preferred_num_cpu(self) -> int:
-        if self.num_cpu_from_config is not None:
-            return self.num_cpu_from_config
-        if self.num_cpu_from_data_file is not None:
-            return self.num_cpu_from_data_file
-        return 1
+        return int(self.substitution_list.get(f"<{ConfigKeys.NUM_CPU}>", 1))
 
     def preferred_job_fmt(self) -> str:
         in_config = self.model_config.jobname_format_string
@@ -923,8 +840,6 @@ class ResConfig:
             and self.installed_jobs == other.installed_jobs
             and self.env_vars == other.env_vars
             and self.random_seed == other.random_seed
-            and self.num_cpu_from_config == other.num_cpu_from_config
-            and self.num_cpu_from_data_file == other.num_cpu_from_data_file
             and self.analysis_config == other.analysis_config
             and self.ert_workflow_list == other.ert_workflow_list
             and self.ert_templates == other.ert_templates
@@ -945,8 +860,7 @@ class ResConfig:
             f"Installed jobs: {self.installed_jobs},\n"
             f"EnvironmentVarlist: {self.env_vars},\n"
             f"RandomSeed: {self.random_seed},\n"
-            f"Config Num CPUs: {self.num_cpu_from_config},\n"
-            f"Data File Num CPUs: {self.num_cpu_from_data_file},\n"
+            f"Num CPUs: {self.preferred_num_cpu()},\n"
             f"AnalysisConfig: {self.analysis_config},\n"
             f"ErtWorkflowList: {self.ert_workflow_list},\n"
             f"ErtTemplates: {self.ert_templates},\n"

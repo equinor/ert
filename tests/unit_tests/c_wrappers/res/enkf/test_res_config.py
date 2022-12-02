@@ -451,13 +451,10 @@ def test_res_config_dict_constructor(setup_case):
 
     # replace define keys only in root strings, this should be updated
     # and validated in configsuite instead
-    for define_key, define_value in config_data_new[ConfigKeys.DEFINE_KEY]:
+    for define_key, define_val in config_data_new[ConfigKeys.DEFINE_KEY]:
         for data_key, data_value in config_data_new.items():
             if isinstance(data_value, str):
-                config_data_new[data_key] = data_value.replace(
-                    define_key,
-                    define_value,
-                )
+                config_data_new[data_key] = data_value.replace(define_key, define_val)
 
     # add missing entries to config file
     with open(file=config_file_name, mode="a+", encoding="utf-8") as ert_file:
