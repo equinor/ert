@@ -147,7 +147,8 @@ void job_queue_node_fscanf_EXIT(job_queue_node_type *node) {
             node->error_reason = __alloc_tag_content(xml_buffer, "reason");
             node->stderr_capture = __alloc_tag_content(xml_buffer, "stderr");
             node->stderr_file = __alloc_tag_content(xml_buffer, "stderr_file");
-
+            logger->error(fmt::format("Job failed with reason: {}",
+                                      node->stderr_capture));
             free(xml_buffer);
         } else
             node->failed_job = util_alloc_sprintf(

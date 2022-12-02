@@ -184,13 +184,17 @@ class JobQueueNode(BaseCClass):
                 self._start_time = time.time()
             time.sleep(1)
             if self._should_be_killed():
+                logger.warning(
+                    f"Tying to stop in run path {self.run_path}, run time: "
+                    f"{self.runtime}, max run time: {self._max_runtime}"
+                )
                 self._kill(driver)
                 if self._max_runtime and self.runtime >= self._max_runtime:
                     # We sometimes end up in a state where we are not able to kill it,
                     # so we end up flooding the logs with identical statements, so we
                     # check before we log.
                     if self._tried_killing == 1:
-                        logger.info(f"MAX_RUNTIME reached in run path {self.run_path}")
+                        logger.error(f"MAX_RUNTIME reached in run path {self.run_path}")
                     elif self._tried_killing % 100 == 0:
                         logger.warning(
                             f"Tried killing with MAX_RUNTIME {self._tried_killing} "
