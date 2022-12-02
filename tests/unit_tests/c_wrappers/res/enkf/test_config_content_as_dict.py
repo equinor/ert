@@ -35,6 +35,9 @@ def test_config_content_as_dict(tmpdir):
             fileH.write("QUEUE_OPTION SLURM MAX_RUNNING 50\n")
             fileH.write("KEY VALUE1 VALUE1 100\n")
             fileH.write("KEY VALUE2 VALUE2 200\n")
+            fileH.write("DEFINE KEY13 VALUE1\n")
+            fileH.write("DEFINE KEY23 VALUE2\n")
+
         content = conf.parse("config")
         content_as_dict = config_content_as_dict(content, {})
         assert content_as_dict == {
@@ -44,6 +47,7 @@ def test_config_content_as_dict(tmpdir):
             "MULTIPLE_KEY_VALUE": [[6], [24], [12]],
             ConfigKeys.DATA_FILE: str(Path.cwd() / existing_file_2),
             ConfigKeys.REFCASE: str(Path.cwd() / existing_file_1),
+            ConfigKeys.DEFINE_KEY: [["KEY13", "VALUE1"], ["KEY23", "VALUE2"]],
         }
 
 

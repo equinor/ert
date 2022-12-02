@@ -33,8 +33,7 @@ def test_num_cpu_from_config_preferred():
     }
     res_config = ResConfig(config_dict=config_dict)
     enkf_main: EnKFMain = EnKFMain(res_config)
-    assert enkf_main.resConfig().num_cpu_from_config == config_num_cpu
-    assert enkf_main.resConfig().num_cpu_from_data_file == data_file_num_cpu
+    assert res_config.preferred_num_cpu() == config_num_cpu
     assert enkf_main.get_num_cpu() == config_num_cpu
 
 
@@ -56,6 +55,5 @@ PARALLEL
     }
     res_config = ResConfig(config_dict=config_dict)
     enkf_main: EnKFMain = EnKFMain(res_config)
-    assert enkf_main.resConfig().num_cpu_from_config is None
-    assert enkf_main.resConfig().num_cpu_from_data_file == data_file_num_cpu
+    assert enkf_main.resConfig().preferred_num_cpu() == data_file_num_cpu
     assert enkf_main.get_num_cpu() == data_file_num_cpu

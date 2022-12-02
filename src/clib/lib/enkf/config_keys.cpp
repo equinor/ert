@@ -83,7 +83,6 @@ ERT_CLIB_SUBMODULE("config_keys", m) {
     cls.attr("RUNMODE") = RUNMODE_KEY;
     cls.attr("RUNPATH") = RUNPATH_KEY;
     cls.attr("RUNPATH_FILE") = RUNPATH_FILE_KEY;
-    cls.attr("RUNPATH_LIST_FILE") = ".ert_runpath_list";
     cls.attr("RUN_TEMPLATE") = RUN_TEMPLATE_KEY;
     cls.attr("SCHEDULE_PREDICTION_FILE") = SCHEDULE_PREDICTION_FILE_KEY;
     cls.attr("SEED") = "SEED";

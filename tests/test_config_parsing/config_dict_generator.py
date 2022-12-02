@@ -288,9 +288,11 @@ def generate_config(draw):
                 ConfigKeys.MAX_RUNTIME: positives,
                 ConfigKeys.MIN_REALIZATIONS: positives,
                 ConfigKeys.DEFINE_KEY: st.lists(
-                    st.tuples(st.just("key-" + draw(words)), words)
+                    st.tuples(st.just(f"<key-{draw(words)}>"), words)
                 ),
-                ConfigKeys.DATA_KW_KEY: st.lists(st.tuples(words, words)),
+                ConfigKeys.DATA_KW_KEY: st.lists(
+                    st.tuples(st.just(f"<{draw(words)}>"), words)
+                ),
                 ConfigKeys.DATA_FILE: st.just(draw(file_names) + ".DATA"),
                 ConfigKeys.GRID: st.just(draw(words) + ".EGRID"),
                 ConfigKeys.JOB_SCRIPT: st.just(draw(file_names) + "job_script"),

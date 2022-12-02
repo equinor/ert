@@ -1,9 +1,7 @@
-from typing import TYPE_CHECKING, Any, Dict, List
+from typing import Any, Dict, List
 
+from ert._c_wrappers.config import ConfigContent
 from ert._c_wrappers.enkf.config_keys import ConfigKeys
-
-if TYPE_CHECKING:
-    from ert._c_wrappers.config import ConfigContent
 
 # keywords that have one argument and
 # the last occurrence of the keyword in the file
@@ -111,4 +109,18 @@ def config_content_as_dict(
                 if len(occurrence) > join_at:
                     occurrence[join_at] = " ".join(occurrence[join_at:])
                     del occurrence[join_at + 1 :]
+
+    # Add the defines if they exits
+    defines = []
+    if isinstance(site_config_content, ConfigContent):
+        defines += [
+            [key, val] for key, val in site_config_content.get_const_define_list()
+        ]
+    if isinstance(user_config_content, ConfigContent):
+        defines += [
+            [key, val] for key, val in user_config_content.get_const_define_list()
+        ]
+    if defines:
+        content_dict[ConfigKeys.DEFINE_KEY] = defines
+
     return content_dict
