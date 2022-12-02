@@ -525,17 +525,26 @@ class BaseRunModel:
         return update_id
 
     def check_if_runpath_exists(self) -> bool:
+        """
+        Determine if the run_path exists by checking if it contains
+        at least one iteration directory for the iterations in the active mask.
+        The run_path can contain one or two %d specifiers ie:
+            "realization-%d/iter-%d/"
+            "realization-%d/"
+        """
         run_path = self.facade.run_path
         start_iteration = self._simulation_arguments.get("start_iteration", 0)
         number_of_iterations = self.facade.number_of_iterations
         active_mask = []
         if "active_realizations" in self._simulation_arguments:
             active_mask = self._simulation_arguments["active_realizations"]
-
         idx = [i for i in range(len(active_mask)) if active_mask[i]]
         for i in range(start_iteration, number_of_iterations):
             for j in idx:
-                s = run_path % (j, i)
+                if run_path.count("%d") == 2:
+                    s = run_path % (j, i)
+                else:
+                    s = run_path % (j)
                 if Path(s).exists():
                     return True
         return False
