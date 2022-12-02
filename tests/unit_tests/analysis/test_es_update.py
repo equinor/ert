@@ -136,6 +136,8 @@ def test_that_posterior_has_lower_variance_than_prior(copy_case):
             "default",
             "--target-case",
             "target",
+            "--realizations",
+            "1-50",
             "poly.ert",
             "--port-range",
             "1024-65535",
