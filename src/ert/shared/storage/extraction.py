@@ -99,7 +99,7 @@ def create_response_records(ert, ensemble_name: str, observations: List[dict]):
     records = []
     for key, response in data.items():
         realizations = {}
-        for index, values in response.iteritems():
+        for index, values in response.items():
             df = pd.DataFrame(values.to_list())
             df = df.transpose()
             df.columns = _prepare_x_axis(response.index.tolist())
