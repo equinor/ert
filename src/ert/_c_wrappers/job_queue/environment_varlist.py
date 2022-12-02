@@ -1,4 +1,4 @@
-from typing import Dict, Optional
+from typing import Any, Dict, List, Optional
 
 from cwrap import BaseCClass
 
@@ -18,20 +18,26 @@ class EnvironmentVarlist(BaseCClass):
 
     def __init__(
         self,
-        env_vars: Optional[Dict[str, str]] = None,
-        paths: Optional[Dict[str, str]] = None,
+        env_vars: Optional[List[Any]] = None,
+        paths: Optional[List[Any]] = None,
     ):
-        if env_vars is None:
-            env_vars = {}
-        if paths is None:
-            paths = {}
+        env_vars = env_vars or []
+        paths = paths or []
+
         c_ptr = self._alloc()
         super().__init__(c_ptr)
 
-        for key, value in env_vars.items():
+        for key, value in env_vars:
             self.setenv(key, value)
-        for key, value in paths.items():
+        for key, value in paths:
             self.update_path(key, value)
+
+    @classmethod
+    def from_dict(cls, config_dict: Dict[str, Any]) -> "EnvironmentVarlist":
+        return EnvironmentVarlist(
+            env_vars=config_dict.get("SETENV", []),
+            paths=config_dict.get("UPDATE_PATH", []),
+        )
 
     def setenv(self, key, value):
         self._setenv(key, value)

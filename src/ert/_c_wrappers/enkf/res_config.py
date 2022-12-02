@@ -3,7 +3,6 @@ import logging
 import os
 import sys
 from collections import defaultdict
-from collections.abc import Mapping
 from datetime import date
 from os.path import isfile
 from pathlib import Path
@@ -270,7 +269,7 @@ class ResConfig:
         ResConfig.apply_config_content_defaults(config_content_dict, self.config_path)
         self.substitution_list = SubstitutionList.from_dict(config_content_dict)
 
-        self.env_vars = self._read_env_vars(config_content_dict)
+        self.env_vars = EnvironmentVarlist.from_dict(config_content_dict)
         self.random_seed = config_content_dict.get(ConfigKeys.RANDOM_SEED, None)
         self.analysis_config = AnalysisConfig.from_dict(config_content_dict)
 
@@ -383,7 +382,7 @@ class ResConfig:
         # treat the default config dir
 
         self.substitution_list = SubstitutionList.from_dict(config_dict=config_dict)
-        self.env_vars = self._read_env_vars(config_dict)
+        self.env_vars = EnvironmentVarlist.from_dict(config_dict=config_dict)
         self.random_seed = config_dict.get(ConfigKeys.RANDOM_SEED, None)
         self.analysis_config = AnalysisConfig.from_dict(config_dict=config_dict)
 
@@ -482,27 +481,6 @@ class ResConfig:
         self.model_config = ModelConfig.from_dict(
             self.ensemble_config.refcase, config_dict
         )
-
-    @staticmethod
-    def _read_env_vars(config_dict):
-        env_vars = EnvironmentVarlist()
-
-        environment_vars = config_dict.get(ConfigKeys.SETENV, [])
-
-        for item in iter(environment_vars):
-            if isinstance(item, Mapping):
-                key = item["NAME"]
-                value = item["VALUE"]
-            else:
-                key, value = item
-            env_vars.setenv(key, value)
-
-        paths = config_dict.get("UPDATE_PATH", [])
-
-        for key, value in iter(paths):
-            env_vars.update_path(key, value)
-
-        return env_vars
 
     @staticmethod
     def _installed_jobs_from_dict(config_dict):

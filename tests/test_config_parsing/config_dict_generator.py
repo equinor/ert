@@ -368,11 +368,7 @@ def generate_config(draw):
                 ConfigKeys.INSTALL_JOB_DIRECTORY: st.lists(directory_names()),
                 ConfigKeys.LICENSE_PATH: directory_names(),
                 ConfigKeys.RANDOM_SEED: words,
-                ConfigKeys.SETENV: st.lists(
-                    st.fixed_dictionaries(
-                        {ConfigKeys.NAME: words, ConfigKeys.VALUE: words}
-                    )
-                ),
+                ConfigKeys.SETENV: st.lists(st.tuples(words, words)),
             }
         )
     )
@@ -609,11 +605,8 @@ def to_config_file(filename, config_dict):  # pylint: disable=too-many-branches
                 for install_dir in keyword_value:
                     config.write(f"{keyword} {install_dir}\n")
             elif keyword == ConfigKeys.SETENV:
-                for statement in keyword_value:
-                    config.write(
-                        f"{keyword}"
-                        f" {statement[ConfigKeys.NAME]} {statement[ConfigKeys.VALUE]}\n"
-                    )
+                for key, value in keyword_value:
+                    config.write(f"{keyword} {key} {value}\n")
             elif keyword == ConfigKeys.ANALYSIS_COPY:
                 for statement in keyword_value:
                     config.write(
