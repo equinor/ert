@@ -355,7 +355,7 @@ def test_env_varlist():
     third_value = "$FIRST:$SECOND"
     third_value_correct = f"{first_value}:{second_value}"
     varlist = EnvironmentVarlist(
-        {first: first_value, second: second_value, third: third_value}
+        [[first, first_value], [second, second_value], [third, third_value]]
     )
     forward_model = set_up_forward_model([])
     run_id = "test_no_jobs_id"
@@ -367,8 +367,7 @@ def test_env_varlist():
     assert first_value == env_config[first]
     assert second_value == env_config[second]
     assert third_value_correct == env_config[third]
-    # pylint: disable=pointless-statement
-    config[update_string]
+    assert config.get(update_string) is not None
 
 
 @pytest.mark.usefixtures("use_tmpdir")

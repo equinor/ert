@@ -1,3 +1,7 @@
+import json
+import os
+from pathlib import Path
+
 import pytest
 
 from ert._c_wrappers.enkf import RunContext
@@ -44,3 +48,42 @@ def test_num_cpu_subst(monkeypatch, tmp_path, append, numcpu):
 
     with open("simulations/realization-0/iter-0/jobs.json") as f:
         assert f'"argList": ["{numcpu}"]' in f.read()
+
+
+def test_environment_var_list(tmpdir):
+    with tmpdir.as_cwd():
+        Path("test.ert").write_text(
+            """
+            NUM_REALIZATIONS 1
+            SETENV FIRST $PATH
+            SETENV SECOND $MYVAR
+            SETENV THIRD  TheThirdValue
+            UPDATE_PATH   FOURTH TheFourthValue
+            """
+        )
+        my_var_text = "THIS_IS_MY_VAR"
+        os.environ["MYVAR"] = my_var_text
+        path_env_var = os.getenv("PATH")
+        try:
+            config = ResConfig("test.ert")
+            enkf_main = EnKFMain(config)
+            _create_runpath(enkf_main)
+        except Exception as e:
+            raise e
+        finally:
+            del os.environ["MYVAR"]
+
+        with open("simulations/realization-0/iter-0/jobs.json") as f:
+            data = json.load(f)
+            global_env = data.get("global_environment")
+            global_update_path = data.get("global_update_path")
+
+        assert global_env["FIRST"] == path_env_var
+        assert config.env_vars.varlist["FIRST"] == path_env_var
+        assert global_env["SECOND"] == my_var_text
+        assert config.env_vars.varlist["SECOND"] == my_var_text
+        assert global_env["THIRD"] == "TheThirdValue"
+        assert config.env_vars.varlist["THIRD"] == "TheThirdValue"
+
+        assert global_update_path["FOURTH"] == "TheFourthValue"
+        assert config.env_vars.updatelist["FOURTH"] == "TheFourthValue"
