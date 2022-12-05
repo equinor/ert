@@ -112,6 +112,8 @@ class ResConfig:
         else:
             self._alloc_from_dict(config_dict=config_dict)
 
+        self._validate()
+
     def _assert_input(self, user_config_file, config, config_dict):
         configs = sum(
             1 for x in [user_config_file, config, config_dict] if x is not None
@@ -135,6 +137,21 @@ class ResConfig:
 
         if user_config_file is not None and not isfile(user_config_file):
             raise IOError(f'No such configuration file "{user_config_file}".')
+
+    def _validate(self):
+        for key, _ in self.substitution_list:
+            if (
+                key.count("<") != 1
+                or key.count(">") != 1
+                or key[0] != "<"
+                or key[-1] != ">"
+            ):
+                logger.warning(
+                    "Using DEFINE or DATA_KW with substitution"
+                    " strings that are not of the form '<KEY>' is deprecated"
+                    " and can result in undefined behavior."
+                    f" Please change {key} to <{key.replace('<', '').replace('>', '')}>"
+                )
 
     def _log_config_file(self, config_file: str) -> None:
         """

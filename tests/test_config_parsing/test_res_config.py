@@ -114,3 +114,23 @@ def test_res_config_throws_on_missing_forward_model_job(config_dict):
         ResConfig(user_config_file=filename)
     with pytest.raises(expected_exception=ValueError, match="Could not find job"):
         ResConfig(config_dict=config_dict)
+
+
+@pytest.mark.usefixtures("use_tmpdir", "set_site_config")
+@pytest.mark.parametrize(
+    "bad_define", ["DEFINE A B", "DEFINE <A<B>> C", "DEFINE <A><B> C"]
+)
+def test_that_non_bracketed_defines_warns(bad_define, caplog):
+    with open("test.ert", "w", encoding="utf-8") as fh:
+        fh.write(
+            dedent(
+                f"""
+                NUM_REALIZATIONS  1
+                {bad_define}
+                """
+            )
+        )
+
+    _ = ResConfig("test.ert")
+    assert len(caplog.records) == 1
+    assert "Using DEFINE or DATA_KW with substitution" in caplog.records[0].message
