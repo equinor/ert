@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 class ModelConfig:
     DEFAULT_HISTORY_SOURCE = HistorySourceEnum.REFCASE_HISTORY
-    DEFAULT_RUNPATH = "simulations/realization-<IENS>/iter-<ITER>"
+    DEFAULT_RUNPATH = "simulations/realization-%d/iter-%d"
     DEFAULT_GEN_KW_EXPORT_NAME = "parameters"
     DEFAULT_ENSPATH = "storage"
 
