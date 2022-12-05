@@ -17,34 +17,6 @@ def touch(filename):
         fh.write(" ")
 
 
-@pytest.mark.xfail(reason="https://github.com/equinor/ert/issues/4178")
-def test_res_config_simple_config_parsing(tmpdir, set_site_config, monkeypatch):
-    touch(tmpdir + "/rpfile")
-    touch(tmpdir + "/datafile")
-    os.mkdir(tmpdir + "/license")
-    with open(tmpdir + "/test.ert", "w", encoding="utf-8") as fh:
-        fh.write(
-            """
-JOBNAME  Job%d
-NUM_REALIZATIONS  1
-RUNPATH_FILE rpfile
-DATA_FILE datafile
-LICENSE_PATH license
-"""
-        )
-
-    monkeypatch.chdir(tmpdir)
-    assert ResConfig("test.ert") == ResConfig(
-        config_dict={
-            "NUM_REALIZATIONS": 1,
-            "DATA_FILE": "datafile",
-            "LICENSE_PATH": "license",
-            "RES_CONFIG_FILE": "test.ert",
-            "RUNPATH_FILE": "rpfile",
-        }
-    )
-
-
 def test_res_config_minimal_dict_init(tmpdir):
     with tmpdir.as_cwd():
         config_dict = {ConfigKeys.NUM_REALIZATIONS: 1}

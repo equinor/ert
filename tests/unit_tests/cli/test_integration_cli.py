@@ -35,32 +35,6 @@ def mock_cli_run(monkeypatch):
 
 
 @pytest.mark.integration_test
-def test_target_case_equal_current_case(tmpdir, source_root):
-    shutil.copytree(
-        os.path.join(source_root, "test-data", "poly_example"),
-        os.path.join(str(tmpdir), "poly_example"),
-    )
-    with tmpdir.as_cwd():
-        parser = ArgumentParser(prog="test_main")
-        parsed = ert_parser(
-            parser,
-            [
-                ENSEMBLE_SMOOTHER_MODE,
-                "--current-case",
-                "test_case",
-                "--target-case",
-                "test_case",
-                "poly_example/poly.ert",
-                "--port-range",
-                "1024-65535",
-            ],
-        )
-
-        with pytest.raises(ErtCliError, match="They were both: test_case"):
-            run_cli(parsed)
-
-
-@pytest.mark.integration_test
 def test_runpath_file(tmpdir, source_root):
     shutil.copytree(
         os.path.join(source_root, "test-data", "poly_example"),

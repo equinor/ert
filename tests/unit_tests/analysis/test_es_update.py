@@ -5,12 +5,11 @@ import numpy as np
 import pytest
 from iterative_ensemble_smoother import IterativeEnsembleSmoother
 
-from ert import LibresFacade
 from ert.__main__ import ert_parser
 from ert._c_wrappers.enkf import EnKFMain, EnkfNode, NodeId, ResConfig, RunContext
 from ert.analysis import ErtAnalysisError, ESUpdate
 from ert.analysis._es_update import _create_temporary_parameter_storage
-from ert.cli import ENSEMBLE_EXPERIMENT_MODE, ENSEMBLE_SMOOTHER_MODE
+from ert.cli import ENSEMBLE_EXPERIMENT_MODE
 from ert.cli.main import run_cli
 
 
@@ -121,41 +120,6 @@ def test_update_snapshot(snake_oil_case_storage, module, expected_gen_kw):
     )
 
     assert target_gen_kw == pytest.approx(expected_gen_kw)
-
-
-@pytest.mark.integration_test
-def test_that_posterior_has_lower_variance_than_prior(copy_case):
-    copy_case("poly_example")
-
-    parser = ArgumentParser(prog="test_main")
-    parsed = ert_parser(
-        parser,
-        [
-            ENSEMBLE_SMOOTHER_MODE,
-            "--current-case",
-            "default",
-            "--target-case",
-            "target",
-            "--realizations",
-            "1-50",
-            "poly.ert",
-            "--port-range",
-            "1024-65535",
-        ],
-    )
-
-    run_cli(parsed)
-    facade = LibresFacade.from_config_file("poly.ert")
-    df_default = facade.load_all_gen_kw_data("default")
-    df_target = facade.load_all_gen_kw_data("target")
-
-    # We expect that ERT's update step lowers the
-    # generalized variance for the parameters.
-    assert (
-        0
-        < np.linalg.det(df_target.cov().to_numpy())
-        < np.linalg.det(df_default.cov().to_numpy())
-    )
 
 
 @pytest.mark.parametrize(

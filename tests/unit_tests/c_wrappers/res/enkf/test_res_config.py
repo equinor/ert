@@ -9,13 +9,7 @@ from unittest.mock import MagicMock, mock_open, patch
 import pytest
 from ecl.util.enums import RngAlgTypeEnum
 
-from ert._c_wrappers.enkf import (
-    AnalysisConfig,
-    ConfigKeys,
-    GenDataFileType,
-    HookRuntime,
-    ResConfig,
-)
+from ert._c_wrappers.enkf import AnalysisConfig, ConfigKeys, GenDataFileType, ResConfig
 from ert._c_wrappers.enkf.res_config import parse_signature_job, site_config_location
 from ert._c_wrappers.job_queue import QueueDriverEnum
 from ert._c_wrappers.sched import HistorySourceEnum
@@ -526,89 +520,6 @@ def test_runpath_file(monkeypatch, tmp_path):
 
     config = ResConfig(os.path.relpath(config_path, workdir_path))
     assert config.runpath_file == str(runpath_path)
-
-
-def test_that_job_script_can_be_set_in_site_config(monkeypatch, tmp_path):
-    """
-    We use the jobscript field to inject a komodo environment onprem.
-    This overwrites the value by appending to the default siteconfig.
-    Need to check that the second JOB_SCRIPT is the one that gets used.
-    """
-    test_site_config = tmp_path / "test_site_config.ert"
-    my_script = (tmp_path / "my_script").resolve()
-    my_script.write_text("")
-    st = os.stat(my_script)
-    os.chmod(my_script, st.st_mode | stat.S_IEXEC)
-    test_site_config.write_text(
-        f"JOB_SCRIPT job_dispatch.py\nJOB_SCRIPT {my_script}\nQUEUE_SYSTEM LOCAL\n"
-    )
-    monkeypatch.setenv("ERT_SITE_CONFIG", str(test_site_config))
-
-    test_user_config = tmp_path / "user_config.ert"
-
-    test_user_config.write_text(
-        "JOBNAME  Job%d\nRUNPATH /tmp/simulations/run%d\nNUM_REALIZATIONS 10\n"
-    )
-
-    res_config = ResConfig(str(test_user_config))
-
-    assert Path(res_config.queue_config.job_script).resolve() == my_script
-
-
-def test_that_unknown_queue_option_gives_error_message(
-    caplog, monkeypatch, tmp_path, capsys
-):
-    test_site_config = tmp_path / "test_site_config.ert"
-    my_script = (tmp_path / "my_script").resolve()
-    my_script.write_text("")
-    st = os.stat(my_script)
-    os.chmod(my_script, st.st_mode | stat.S_IEXEC)
-    test_site_config.write_text(
-        f"JOB_SCRIPT job_dispatch.py\nJOB_SCRIPT {my_script}\nQUEUE_SYSTEM LOCAL\n"
-    )
-    monkeypatch.setenv("ERT_SITE_CONFIG", str(test_site_config))
-
-    test_user_config = tmp_path / "user_config.ert"
-
-    test_user_config.write_text(
-        "JOBNAME  Job%d\nRUNPATH /tmp/simulations/run%d\n"
-        "NUM_REALIZATIONS 10\nQUEUE_OPTION UNKNOWN_QUEUE unsetoption\n"
-    )
-
-    with pytest.raises(ValueError, match="Parsing"):
-        _ = ResConfig(str(test_user_config))
-
-    err = capsys.readouterr().err
-    assert "Errors parsing" in err
-    assert "UNKNOWN_QUEUE" in err
-
-
-@pytest.mark.parametrize(
-    "run_mode",
-    [
-        HookRuntime.POST_SIMULATION,
-        HookRuntime.PRE_SIMULATION,
-        HookRuntime.PRE_FIRST_UPDATE,
-        HookRuntime.PRE_UPDATE,
-        HookRuntime.POST_UPDATE,
-    ],
-)
-def test_that_workflow_run_modes_can_be_selected(tmp_path, run_mode):
-    my_script = (tmp_path / "my_script").resolve()
-    my_script.write_text("")
-    st = os.stat(my_script)
-    os.chmod(my_script, st.st_mode | stat.S_IEXEC)
-    test_user_config = tmp_path / "user_config.ert"
-    test_user_config.write_text(
-        "JOBNAME  Job%d\nRUNPATH /tmp/simulations/run%d\n"
-        "NUM_REALIZATIONS 10\n"
-        f"LOAD_WORKFLOW {my_script} SCRIPT\n"
-        f"HOOK_WORKFLOW SCRIPT {run_mode}\n"
-    )
-    res_config = ResConfig(str(test_user_config))
-    assert (
-        len(list(res_config.ert_workflow_list.get_workflows_hooked_at(run_mode))) == 1
-    )
 
 
 @pytest.mark.parametrize(

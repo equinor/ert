@@ -2,7 +2,6 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from ert._c_wrappers.enkf import EnKFMain, ResConfig
 from ert.shared.hook_implementations.workflows.disable_parameters import (
     DisableParametersUpdate,
 )
@@ -25,30 +24,3 @@ def test_parse_comma_list(tmpdir, monkeypatch, input_string, expected):
 def test_disable_parameters_is_loaded():
     pm = ErtPluginManager()
     assert "DISABLE_PARAMETERS" in pm.get_installable_workflow_jobs()
-
-
-@pytest.mark.usefixtures("copy_poly_case")
-def test_that_we_can_disable_a_parameter():
-    with open("poly.ert", "a") as fh:
-        fh.writelines("GEN_KW DONT_UPDATE_KW template.txt kw.txt prior.txt")
-    with open("template.txt", "w") as fh:
-        fh.writelines("MY_KEYWORD <MY_KEYWORD>")
-    with open("prior.txt", "w") as fh:
-        fh.writelines("MY_KEYWORD NORMAL 0 1")
-    ert = EnKFMain(ResConfig("poly.ert"))
-
-    # pylint: disable=no-member
-    # (pylint is unable to read the members of update_step objects)
-
-    parameters = [
-        parameter.name
-        for parameter in ert.update_configuration.update_steps[0].parameters
-    ]
-    assert "DONT_UPDATE_KW" in parameters
-    DisableParametersUpdate(ert).run("DONT_UPDATE_KW")
-
-    parameters = [
-        parameter.name
-        for parameter in ert.update_configuration.update_steps[0].parameters
-    ]
-    assert "DONT_UPDATE_KW" not in parameters
