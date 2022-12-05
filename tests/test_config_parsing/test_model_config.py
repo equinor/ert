@@ -46,9 +46,9 @@ ENSPATH storage
 
 
 def test_default_model_config_run_path(tmpdir):
-    assert ModelConfig(num_realizations=1,).runpath_format_string == os.path.abspath(
-        "simulations/realization-<IENS>/iter-<ITER>"
-    )
+    assert ModelConfig(
+        num_realizations=1,
+    ).runpath_format_string == os.path.abspath("simulations/realization-%d/iter-%d")
 
 
 @pytest.mark.usefixtures("use_tmpdir")
