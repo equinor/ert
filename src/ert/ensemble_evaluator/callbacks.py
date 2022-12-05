@@ -32,7 +32,10 @@ def _ensemble_config_forward_init(
         if node.forward_init(run_arg.runpath, iens):
             node.save(run_arg.sim_fs, node_id)
         else:
-            init_file = Path(config_node.get_init_file_fmt() % (iens,))
+            if "%d" in config_node.get_init_file_fmt():
+                init_file = Path(config_node.get_init_file_fmt() % (iens,))
+            else:
+                init_file = Path(config_node.get_init_file_fmt())
             if not init_file.exists():
                 error_msg = (
                     "Failed to initialize node "
