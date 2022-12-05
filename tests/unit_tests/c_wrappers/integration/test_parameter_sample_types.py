@@ -212,10 +212,22 @@ def test_field_param(tmpdir, config_str, expected):
             "",
         ),
         (
+            "SURFACE MY_PARAM OUTPUT_FILE:surf.irap INIT_FILES:../../../surf.irap BASE_SURFACE:surf0.irap FORWARD_INIT:True",  # noqa
+            True,
+            1,
+            "",
+        ),
+        (
             "SURFACE MY_PARAM OUTPUT_FILE:surf.irap INIT_FILES:surf%d.irap BASE_SURFACE:surf0.irap FORWARD_INIT:True",  # noqa
             True,
             0,
             "surf0.irap - failed to initialize node: MY_PARAM",
+        ),
+        (
+            "SURFACE MY_PARAM OUTPUT_FILE:surf.irap INIT_FILES:surf.irap BASE_SURFACE:surf0.irap FORWARD_INIT:True",  # noqa
+            True,
+            0,
+            "surf.irap - failed to initialize node: MY_PARAM",
         ),
     ],
 )
