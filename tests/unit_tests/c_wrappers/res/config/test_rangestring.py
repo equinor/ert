@@ -7,29 +7,6 @@ from ert._c_wrappers.config.rangestring import (
 )
 
 
-def testMaskToRangeConversion():
-    cases = (
-        ([0, 1, 0, 1, 1, 1, 0], "1, 3-5"),
-        ([0, 1, 0, 1, 1, 1, 1], "1, 3-6"),
-        ([0, 1, 0, 1, 0, 1, 0], "1, 3, 5"),
-        ([1, 1, 0, 0, 1, 1, 1, 0, 1], "0-1, 4-6, 8"),
-        ([1, 1, 1, 1, 1, 1, 1], "0-6"),
-        ([0, 0, 0, 0, 0, 0, 0], ""),
-        ([True, False, True, True], "0, 2-3"),
-        ([], ""),
-    )
-
-    def nospaces(s):
-        return "".join(s.split())
-
-    for mask, expected in cases:
-        rngstr = mask_to_rangestring(mask)
-        assert nospaces(rngstr) == nospaces(expected), (
-            f"Mask {mask} was converted to {rngstr} which is different "
-            f"from the expected range {expected}"
-        )
-
-
 @pytest.mark.parametrize(
     "mask, expected_string",
     [
