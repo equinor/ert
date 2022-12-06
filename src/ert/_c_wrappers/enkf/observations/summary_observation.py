@@ -1,8 +1,6 @@
 from cwrap import BaseCClass
 
-from ert import _clib
 from ert._c_wrappers import ResPrototype
-from ert._c_wrappers.enkf.active_list import ActiveList
 
 
 class SummaryObservation(BaseCClass):
@@ -52,9 +50,6 @@ class SummaryObservation(BaseCClass):
 
     def getSummaryKey(self) -> str:
         return self._get_summary_key()
-
-    def updateStdScaling(self, factor: float, active_list: ActiveList) -> None:
-        _clib.local.summary_obs.update_std_scaling(self, factor, active_list)
 
     def free(self):
         self._free()

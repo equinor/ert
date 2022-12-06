@@ -5,9 +5,7 @@ import numpy as np
 from cwrap import BaseCClass
 from ecl.util.util import IntVector
 
-from ert import _clib
 from ert._c_wrappers import ResPrototype
-from ert._c_wrappers.enkf import ActiveList
 from ert._c_wrappers.enkf.config import GenDataConfig
 
 
@@ -95,9 +93,6 @@ class GenObservation(BaseCClass):
 
     def getStdScaling(self, obs_index: int) -> float:
         return self._get_std_scaling(obs_index)
-
-    def updateStdScaling(self, factor, active_list: ActiveList):
-        _clib.local.gen_obs.update_std_scaling(self, factor, active_list)
 
     def get_data_points(self):
         np_vector = np.zeros(len(self))

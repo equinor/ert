@@ -7,8 +7,6 @@
 
 #include <ert/enkf/summary_obs.hpp>
 
-#include "ert/python.hpp"
-
 #define OBS_SIZE 1
 
 struct summary_obs_struct {
@@ -131,20 +129,3 @@ VOID_USER_GET_OBS(summary_obs)
 VOID_MEASURE(summary_obs, summary)
 VOID_CHI2(summary_obs, summary)
 VOID_UPDATE_STD_SCALE(summary_obs);
-
-class ActiveList;
-namespace {
-void update_std_scaling(py::handle obj, double scaling,
-                        const ActiveList &active_list) {
-    auto *summary_obs = reinterpret_cast<summary_obs_type *>(
-        PyLong_AsVoidPtr(obj.attr("_BaseCClass__c_pointer").ptr()));
-    summary_obs_update_std_scale(summary_obs, scaling, &active_list);
-}
-} // namespace
-
-ERT_CLIB_SUBMODULE("local.summary_obs", m) {
-    using namespace py::literals;
-
-    m.def("update_std_scaling", &update_std_scaling, "self"_a, "scaling"_a,
-          "active_list"_a);
-}

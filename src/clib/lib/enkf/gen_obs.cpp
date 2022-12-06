@@ -16,7 +16,6 @@
 #include <ert/enkf/gen_data.hpp>
 #include <ert/enkf/gen_obs.hpp>
 #include <ert/except.hpp>
-#include <ert/python.hpp>
 
 /**
    This file implemenets a structure for general observations. A
@@ -440,18 +439,3 @@ VOID_MEASURE(gen_obs, gen_data)
 VOID_USER_GET_OBS(gen_obs)
 VOID_CHI2(gen_obs, gen_data)
 VOID_UPDATE_STD_SCALE(gen_obs)
-
-class ActiveList;
-namespace {
-void update_std_scaling(Cwrap<gen_obs_type> self, double scaling,
-                        const ActiveList &active_list) {
-    gen_obs_update_std_scale(self, scaling, &active_list);
-}
-} // namespace
-
-ERT_CLIB_SUBMODULE("local.gen_obs", m) {
-    using namespace py::literals;
-
-    m.def("update_std_scaling", &update_std_scaling, "self"_a, "scaling"_a,
-          "active_list"_a);
-}

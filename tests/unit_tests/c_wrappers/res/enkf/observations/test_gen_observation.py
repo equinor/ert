@@ -1,6 +1,6 @@
 import pytest
 
-from ert._c_wrappers.enkf import ActiveList, GenDataConfig, GenObservation
+from ert._c_wrappers.enkf import GenDataConfig, GenObservation
 
 
 def test_create(tmp_path):
@@ -33,13 +33,3 @@ def test_create(tmp_path):
     assert gen_obs.getDataIndex(1) == 20
     assert gen_obs.getStdScaling(0) == 1
     assert gen_obs.getStdScaling(1) == 1
-
-    active_list = ActiveList()
-    gen_obs.updateStdScaling(0.25, active_list)
-    assert gen_obs.getStdScaling(0) == 0.25
-    assert gen_obs.getStdScaling(1) == 0.25
-
-    active_list.addActiveIndex(1)
-    gen_obs.updateStdScaling(2.00, active_list)
-    assert gen_obs.getStdScaling(0) == 0.25
-    assert gen_obs.getStdScaling(1) == 2.00
