@@ -1,6 +1,7 @@
 import copy
 import logging
 import os
+import sys
 from collections import defaultdict
 from collections.abc import Mapping
 from datetime import date
@@ -146,11 +147,12 @@ class ResConfig:
                 or key[0] != "<"
                 or key[-1] != ">"
             ):
-                logger.warning(
+                print(
                     "Using DEFINE or DATA_KW with substitution"
                     " strings that are not of the form '<KEY>' is deprecated"
-                    " and can result in undefined behavior."
-                    f" Please change {key} to <{key.replace('<', '').replace('>', '')}>"
+                    " and can result in undefined behavior. "
+                    f"Please change {key} to <{key.replace('<', '').replace('>', '')}>",
+                    file=sys.stderr,
                 )
 
     def _log_config_file(self, config_file: str) -> None:
