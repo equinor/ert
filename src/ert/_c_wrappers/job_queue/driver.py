@@ -47,7 +47,7 @@ class Driver(BaseCClass):
     def __init__(
         self,
         driver_type: QueueDriverEnum,
-        max_running: int = 1,
+        max_running: int = 0,
         options: List[Tuple[str, str]] = None,
     ):
         c_ptr = self._alloc(driver_type)
