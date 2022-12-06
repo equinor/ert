@@ -17,7 +17,22 @@ def byte_with_unit(byte_count):
 # this in python's standard library.
 def format_running_time(runtime: int) -> str:
     """Format runtime in seconds to a label ERT can use to indicate for how
-    long an experiment has been running."""
+    long an experiment has been running.
+
+    >>> format_running_time(0)
+    'Running time: 0 seconds'
+    >>> format_running_time(1)
+    'Running time: 1 seconds'
+    >>> format_running_time(100)
+    'Running time: 1 minutes 40 seconds'
+    >>> format_running_time(10000)
+    'Running time: 2 hours 46 minutes 40 seconds'
+    >>> format_running_time(100000)
+    'Running time: 1 days 3 hours 46 minutes 40 seconds'
+    >>> format_running_time(100000000)
+    'Running time: 1157 days 9 hours 46 minutes 40 seconds'
+
+    """
     days = 0
     hours = 0
     minutes = 0
