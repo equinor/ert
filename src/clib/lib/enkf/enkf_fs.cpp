@@ -115,7 +115,6 @@ static auto logger = ert::get_logger("enkf");
 */
 
 #define ENKF_MOUNT_MAP "enkf_mount_info"
-#define SUMMARY_KEY_SET_FILE "summary-key-set"
 #define TIME_MAP_FILE "time-map"
 #define STATE_MAP_FILE "state-map"
 #define MISFIT_ENSEMBLE_FILE "misfit-ensemble"
@@ -133,7 +132,6 @@ struct enkf_fs_struct {
     bool read_only;
     time_map_type *time_map;
     std::shared_ptr<StateMap> state_map;
-    summary_key_set_type *summary_key_set;
     /* The variables below here are for storing arbitrary files within the
      * enkf_fs storage directory, but not as serialized enkf_nodes. */
     misfit_ensemble_type *misfit_ensemble;
@@ -150,7 +148,6 @@ enkf_fs_type *enkf_fs_alloc_empty(const char *mount_point,
     enkf_fs_type *fs = new enkf_fs_type;
     fs->time_map = time_map_alloc();
     fs->state_map = std::make_shared<StateMap>(ensemble_size);
-    fs->summary_key_set = summary_key_set_alloc();
     fs->misfit_ensemble = misfit_ensemble_alloc();
     fs->read_only = read_only;
     fs->mount_point = strdup(mount_point);
@@ -280,12 +277,6 @@ static void enkf_fs_fsync_state_map(enkf_fs_type *fs) {
     free(filename);
 }
 
-static void enkf_fs_fsync_summary_key_set(enkf_fs_type *fs) {
-    char *filename = enkf_fs_alloc_case_filename(fs, SUMMARY_KEY_SET_FILE);
-    summary_key_set_fwrite(fs->summary_key_set, filename);
-    free(filename);
-}
-
 static void enkf_fs_fread_state_map(enkf_fs_type *fs) {
     char *filename = enkf_fs_alloc_case_filename(fs, STATE_MAP_FILE);
     try {
@@ -293,12 +284,6 @@ static void enkf_fs_fread_state_map(enkf_fs_type *fs) {
     } catch (const std::ios_base::failure &) {
         /* Read error is ignored. StateMap is reset */
     }
-    free(filename);
-}
-
-static void enkf_fs_fread_summary_key_set(enkf_fs_type *fs) {
-    char *filename = enkf_fs_alloc_case_filename(fs, SUMMARY_KEY_SET_FILE);
-    summary_key_set_fread(fs->summary_key_set, filename);
     free(filename);
 }
 
@@ -347,7 +332,6 @@ enkf_fs_type *enkf_fs_mount(const char *mount_point, unsigned ensemble_size,
     enkf_fs_init_path_fmt(fs);
     enkf_fs_fread_time_map(fs);
     enkf_fs_fread_state_map(fs);
-    enkf_fs_fread_summary_key_set(fs);
     enkf_fs_fread_misfit(fs);
 
     enkf_fs_get_ref(fs);
@@ -380,7 +364,6 @@ void enkf_fs_umount(enkf_fs_type *fs) {
     path_fmt_free(fs->case_tstep_fmt);
     path_fmt_free(fs->case_tstep_member_fmt);
 
-    summary_key_set_free(fs->summary_key_set);
     time_map_free(fs->time_map);
     misfit_ensemble_free(fs->misfit_ensemble);
     delete fs;
@@ -411,7 +394,6 @@ void enkf_fs_fsync(enkf_fs_type *fs) {
 
     enkf_fs_fsync_time_map(fs);
     enkf_fs_fsync_state_map(fs);
-    enkf_fs_fsync_summary_key_set(fs);
 }
 
 void enkf_fs_fread_node(enkf_fs_type *enkf_fs, buffer_type *buffer,
@@ -553,10 +535,6 @@ time_map_type *enkf_fs_get_time_map(const enkf_fs_type *fs) {
 }
 
 StateMap &enkf_fs_get_state_map(enkf_fs_type *fs) { return *fs->state_map; }
-
-summary_key_set_type *enkf_fs_get_summary_key_set(const enkf_fs_type *fs) {
-    return fs->summary_key_set;
-}
 
 misfit_ensemble_type *enkf_fs_get_misfit_ensemble(const enkf_fs_type *fs) {
     return fs->misfit_ensemble;

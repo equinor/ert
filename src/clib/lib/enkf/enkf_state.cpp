@@ -160,9 +160,6 @@ enkf_state_internalize_dynamic_eclipse_results(
         const char *key = smspec_node.get_gen_key1();
 
         if (summary_key_matcher_match_summary_key(matcher, key)) {
-            summary_key_set_type *key_set = enkf_fs_get_summary_key_set(sim_fs);
-            summary_key_set_add_summary_key(key_set, key);
-
             enkf_config_node_type *config_node =
                 ensemble_config_get_or_create_summary_node(ens_config, key);
             enkf_node_type *node = enkf_node_alloc(config_node);

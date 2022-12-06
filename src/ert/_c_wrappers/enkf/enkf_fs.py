@@ -9,7 +9,6 @@ from ert import _clib
 from ert._c_wrappers import ResPrototype
 from ert._c_wrappers.enkf.enums import EnKFFSType
 from ert._c_wrappers.enkf.res_config import EnsembleConfig
-from ert._c_wrappers.enkf.summary_key_set import SummaryKeySet
 from ert._c_wrappers.enkf.time_map import TimeMap
 from ert._clib import update
 
@@ -32,9 +31,6 @@ class EnkfFs(BaseCClass):
         bind=False,
     )
     _get_time_map = ResPrototype("time_map_ref  enkf_fs_get_time_map(enkf_fs)")
-    _summary_key_set = ResPrototype(
-        "summary_key_set_ref enkf_fs_get_summary_key_set(enkf_fs)"
-    )
     _umount = ResPrototype("void enkf_fs_umount(enkf_fs)")
 
     def __init__(
@@ -93,9 +89,6 @@ class EnkfFs(BaseCClass):
 
     def fsync(self):
         self._fsync()
-
-    def getSummaryKeySet(self) -> SummaryKeySet:
-        return self._summary_key_set().setParent(self)
 
     def realizationList(self, state: "RealizationStateEnum") -> "IntVector":
         """
