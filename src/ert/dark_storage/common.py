@@ -132,6 +132,14 @@ def _get_obs_data(key, obs) -> dict:
 
 
 def _prepare_x_axis(x_axis: List[Union[int, float, str, pd.Timestamp]]) -> List[str]:
+    """Converts the elements of x_axis of an observation to a string suitable
+    for json. If the elements are timestamps, convert to ISO-8601 format.
+
+    >>> _prepare_x_axis([1, 2, 3, 4])
+    ['1', '2', '3', '4']
+    >>> _prepare_x_axis([pd.Timestamp(x, unit="d") for x in range(3)])
+    ['1970-01-01T00:00:00', '1970-01-02T00:00:00', '1970-01-03T00:00:00']
+    """
     if isinstance(x_axis[0], pd.Timestamp):
         return [pd.Timestamp(x).isoformat() for x in x_axis]
 
