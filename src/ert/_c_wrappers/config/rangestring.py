@@ -5,20 +5,21 @@ of active realizations. The are of the form "0, 2-4" meaning, for instance,
 that realization 0, 2, 3, and 4 are active.
 
 The ranges can overlap. The end of each range is inclusive.
-
-Example:
-
-    >>> mask_to_rangestring([True, True, True])
-    '0-2'
-    >>> mask_to_rangestring([True, False, True, True])
-    '0, 2-3'
 """
 from typing import Collection, List, Optional, Union
 
 
 def mask_to_rangestring(mask: Collection[Union[bool, int]]) -> str:
     """Convert a mask (ordered collection of booleans or int) into a rangestring.
-    For instance, `0 1 0 1 1 1` would be converted to `1, 3-5`.
+
+    >>> mask_to_rangestring([0, 1, 0, 1, 1, 1])
+    '1, 3-5'
+    >>> mask_to_rangestring([True, False, True, True])
+    '0, 2-3'
+    >>> mask_to_rangestring([])
+    ''
+    >>> mask_to_rangestring([False, False, False])
+    ''
 
     The length of the collection is not encoded in the resulting string and
     must be stored elsewhere.
@@ -49,7 +50,17 @@ def mask_to_rangestring(mask: Collection[Union[bool, int]]) -> str:
 
 def rangestring_to_mask(rangestring: str, length: int) -> List[bool]:
     """Convert a string specifying ranges of elements, and the number of elements,
-    into a list of booleans. The ranges are end-inclusive."""
+    into a list of booleans. The ranges are end-inclusive.
+
+    >>> rangestring_to_mask("1, 3-5", 6)
+    [False, True, False, True, True, True]
+    >>> rangestring_to_mask("", 0)
+    []
+    >>> rangestring_to_mask("", 1)
+    [False]
+    >>> rangestring_to_mask("1", 2)
+    [False, True]
+    """
     mask = [False] * length
     if rangestring == "":
         # An empty string means no active indecies. Note that an
@@ -78,7 +89,16 @@ def rangestring_to_mask(rangestring: str, length: int) -> List[bool]:
 
 def rangestring_to_list(rangestring: str) -> List[int]:
     """Convert a string specifying ranges of elements, and the number of elements,
-    into a list of ints. The ranges are end-inclusive."""
+    into a list of ints. The ranges are end-inclusive.
+
+    >>> rangestring_to_list("0-1, 4-6, 8")
+    [0, 1, 4, 5, 6, 8]
+    >>> rangestring_to_list("")
+    []
+    >>> rangestring_to_list("1,2")
+    [1, 2]
+
+    """
     result = set()
     if rangestring == "":
         return []
