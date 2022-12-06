@@ -95,6 +95,14 @@ def test_res_config_parses_date():
     assert res_config.model_config.runpath_format_string == expected_run_path
 
 
+@pytest.mark.usefixtures("use_tmpdir", "set_site_config")
+@given(config_dicts())
+def test_env_vars_same_as_from_file(config_dict):
+    filename = "config.ert"
+    to_config_file(filename, config_dict)
+    assert ResConfig(config_dict=config_dict).env_vars == ResConfig(filename).env_vars
+
+
 @pytest.mark.usefixtures("use_tmpdir")
 @given(config_dicts())
 def test_res_config_throws_on_missing_forward_model_job(config_dict):
