@@ -125,7 +125,6 @@ def main() -> None:
         SOURCE_ROOT / "script",
         SOURCE_ROOT / "src",
         SOURCE_ROOT / "tests",
-        SOURCE_ROOT / "test-data",
     )
 
 

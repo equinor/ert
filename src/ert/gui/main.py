@@ -42,6 +42,7 @@ from ert.parsing import ConfigValidationError, ConfigWarning
 from ert.services import StorageService
 from ert.shared.plugins.plugin_manager import ErtPluginManager
 from ert.storage import EnsembleAccessor, StorageReader, open_storage
+from ert.storage.local_storage import local_storage_set_ert_config
 
 
 def run_gui(args: Namespace, plugin_manager: Optional[ErtPluginManager] = None):
@@ -125,6 +126,7 @@ def _start_initial_gui_window(
             # the config file to be the base name of the original config
             args.config = os.path.basename(args.config)
             ert_config = ErtConfig.from_file(args.config)
+            local_storage_set_ert_config(ert_config)
             suggestions += ErtConfig.make_suggestion_list(args.config)
             _log_difference_with_old_parser(args, ert_config)
             ert = EnKFMain(ert_config)

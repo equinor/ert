@@ -18,6 +18,8 @@ jobs:
     - uses: actions/checkout@v3
       with:
         fetch-depth: 0
+        submodules: true
+        lfs: true
 
     - uses: actions/setup-python@v4
       id: setup_python
@@ -59,8 +61,8 @@ jobs:
     - name: Test for a clean repository
       run: |
         # Run this before the 'Test CLI' entry below, which produces a few files that are accepted for now. Exclude the wheel.
-        git status --porcelain | sed '/ert.*.whl$/d'
-        test -z "$(git status --porcelain | sed '/ert.*.whl$/d')"
+        git status --porcelain | sed '/ert.*.whl$\|\/block_storage$/d'
+        test -z "$(git status --porcelain | sed '/ert.*.whl$\\|\\/block_storage$/d')"
 
     - name: Test CLI
       run: |

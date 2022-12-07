@@ -152,6 +152,7 @@ args = dict(
         "tables",
         "xarray",
         "xtgeo",
+        "netCDF4",
     ],
     entry_points={
         "console_scripts": [

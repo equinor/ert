@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import os
 import sys
 from pathlib import Path
@@ -18,7 +19,9 @@ from typing import (
 from uuid import UUID, uuid4
 
 from filelock import FileLock, Timeout
+from pydantic import BaseModel
 
+from ert._c_wrappers.enkf.ert_config import ErtConfig
 from ert.storage.local_ensemble import LocalEnsembleAccessor, LocalEnsembleReader
 from ert.storage.local_experiment import LocalExperimentAccessor, LocalExperimentReader
 
@@ -34,6 +37,13 @@ if TYPE_CHECKING:
     from ert._c_wrappers.enkf.config.parameter_config import ParameterConfig
 
 
+_LOCAL_STORAGE_VERSION = 1
+
+
+class _Index(BaseModel):
+    version: int = _LOCAL_STORAGE_VERSION
+
+
 class LocalStorageReader:
     def __init__(
         self, path: Union[str, os.PathLike[str]], refcase: Optional[EclSum] = None
@@ -46,11 +56,13 @@ class LocalStorageReader:
         self._ensembles: Union[
             Dict[UUID, LocalEnsembleReader], Dict[UUID, LocalEnsembleAccessor]
         ]
+        self._index: _Index
         self._refcase = refcase
 
         self.refresh()
 
     def refresh(self) -> None:
+        self._index = self._load_index()
         self._ensembles = self._load_ensembles()  # type: ignore
         self._experiments = self._load_experiments()
 
@@ -84,6 +96,12 @@ class LocalStorageReader:
     @property
     def ensembles(self) -> Generator[LocalEnsembleReader, None, None]:
         yield from self._ensembles.values()
+
+    def _load_index(self) -> _Index:
+        try:
+            return _Index.parse_file(self.path / "index.json")
+        except FileNotFoundError:
+            return _Index()
 
     @no_type_check
     def _load_ensembles(self):
@@ -135,8 +153,17 @@ class LocalStorageReader:
 class LocalStorageAccessor(LocalStorageReader):
     LOCK_TIMEOUT = 5
 
-    def __init__(self, path: Union[str, os.PathLike[str]]) -> None:
-        super().__init__(path)
+    def __init__(
+        self,
+        path: Union[str, os.PathLike[str]],
+        *,
+        ignore_migration_check: bool = False,
+    ) -> None:
+        self.path = Path(path)
+        if not ignore_migration_check and local_storage_needs_migration(self.path):
+            from ert.storage.migration.block_fs import migrate  # pylint: disable=C0415
+
+            migrate(self.path)
 
         self.path.mkdir(parents=True, exist_ok=True)
 
@@ -150,7 +177,12 @@ class LocalStorageAccessor(LocalStorageReader):
                 " or another user is using the same ENSPATH."
             )
 
+        super().__init__(path)
+
+        self._save_index()
+
     def close(self) -> None:
+        self._save_index()
         super().close()
 
         if self._lock.is_locked:
@@ -209,8 +241,74 @@ class LocalStorageAccessor(LocalStorageReader):
         self._ensembles[ens.id] = ens
         return ens
 
+    def _save_index(self) -> None:
+        if not hasattr(self, "_index"):
+            return
+
+        with open(self.path / "index.json", mode="w", encoding="utf-8") as f:
+            print(self._index.json(), file=f)
+
     def _load_experiment(self, uuid: UUID) -> LocalExperimentAccessor:
         return LocalExperimentAccessor(self, uuid, self._experiment_path(uuid))
 
     def _load_ensemble(self, path: Path) -> LocalEnsembleAccessor:
         return LocalEnsembleAccessor(self, path, refcase=self._refcase)
+
+
+def local_storage_needs_migration(path: os.PathLike[str]) -> bool:
+    """
+    Checks whether the path points to a LocalStorage that is in need of
+    migration. Returns true if the LocalStorage is outdated OR if the path does
+    not point to a LocalStorage directory (eg. it is a URL that points to a ERT
+    Storage Server)
+    """
+    path = Path(path)
+
+    if not path.exists():
+        return False
+
+    try:
+        with open("index.json", encoding="utf-8") as f:
+            version = json.load(f)["version"]
+        if version == _LOCAL_STORAGE_VERSION:
+            return False
+        elif version < _LOCAL_STORAGE_VERSION:
+            return True
+        elif version > _LOCAL_STORAGE_VERSION:
+            raise NotImplementedError("Incompatible ERT Local Storage")
+    except KeyError as exc:
+        raise NotImplementedError("Incompatible ERT Local Storage") from exc
+    except FileNotFoundError:
+        pass
+
+    return _is_block_storage(path)
+
+
+_migration_ert_config: Optional[ErtConfig] = None
+
+
+def local_storage_set_ert_config(ert_config: Optional[ErtConfig]) -> None:
+    """
+    Set the ErtConfig for migration hints
+    """
+    global _migration_ert_config  # pylint: disable=W0603
+    _migration_ert_config = ert_config
+
+
+def local_storage_get_ert_config() -> ErtConfig:
+    assert (
+        _migration_ert_config is not None
+    ), "Use 'local_storage_set_ert_config' before retrieving the config"
+    return _migration_ert_config
+
+
+def _is_block_storage(path: Path) -> bool:
+    """Looks for ert_fstab in subdirectories"""
+    for subpath in path.iterdir():
+        if subpath.name.startswith("_"):
+            continue
+
+        if (subpath / "ert_fstab").exists():
+            return True
+
+    return False

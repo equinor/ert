@@ -1,0 +1,113 @@
+import re
+
+import netCDF4
+import numpy as np
+import pytest
+import xarray as xr
+import xarray.backends
+
+import ert.storage.migration._block_fs_native as bfn
+import ert.storage.migration.block_fs as bf
+from ert._c_wrappers.enkf import ErtConfig
+from ert.storage.local_storage import local_storage_set_ert_config
+
+
+@pytest.fixture
+def ensemble(storage):
+    return storage.create_experiment().create_ensemble(name="default", ensemble_size=5)
+
+
+@pytest.fixture(scope="module")
+def enspath(block_storage_path):
+    return block_storage_path / "simple_case/storage"
+
+
+@pytest.fixture
+def ert_config(block_storage_path, monkeypatch):
+    monkeypatch.chdir(block_storage_path / "simple_case")
+    return ErtConfig.from_file(str(block_storage_path / "simple_case/config.ert"))
+
+
+@pytest.fixture
+def ens_config(ert_config):
+    return ert_config.ensemble_config
+
+
+@pytest.fixture(autouse=True)
+def set_ert_config(ert_config):
+    yield local_storage_set_ert_config(ert_config)
+    local_storage_set_ert_config(None)
+
+
+@pytest.fixture(scope="module")
+def data(block_storage_path):
+    return netCDF4.Dataset(block_storage_path / "data_dump/simple_case.nc")
+
+
+@pytest.fixture(scope="module")
+def forecast(enspath):
+    return bfn.DataFile(enspath / "default/Ensemble/mod_0/FORECAST.data_0")
+
+
+@pytest.fixture(scope="module")
+def parameter(enspath):
+    return bfn.DataFile(enspath / "default/Ensemble/mod_0/PARAMETER.data_0")
+
+
+def sorted_surface(data):
+    """Make sure that the data is sorted row-wise"""
+    dataset = xr.open_dataset(xarray.backends.NetCDF4DataStore(data))
+    return np.array(dataset.sortby(["Y_UTMN", "X_UTME"])["VALUES"]).ravel()
+
+
+def test_migrate_surface(data, storage, parameter, ens_config):
+    parameters = bf._migrate_surface_info(parameter, ens_config)
+    experiment = storage.create_experiment(parameters=parameters)
+
+    ensemble = experiment.create_ensemble(name="default", ensemble_size=5)
+    bf._migrate_surface(ensemble, parameter, ens_config)
+
+    for key, var in data["/REAL_0/SURFACE"].groups.items():
+        expect = sorted_surface(var)
+        actual = ensemble.load_surface_data(key, [0]).ravel()
+        assert list(expect) == list(actual), key
+
+
+def test_migrate_field(data, storage, parameter, ens_config):
+    parameters = bf._migrate_field_info(parameter, ens_config)
+    experiment = storage.create_experiment(parameters=parameters)
+
+    ensemble = experiment.create_ensemble(name="default", ensemble_size=5)
+    bf._migrate_field(ensemble, parameter, ens_config)
+
+    for key, var in data["/REAL_0/FIELD"].groups.items():
+        expect = np.array(var["VALUES"]).ravel()
+        actual = ensemble.load_field(key, [0]).ravel()
+        assert list(expect) == list(actual), key
+
+
+def test_migrate_case(data, storage, enspath):
+    bf.migrate_case(storage, enspath / "default")
+
+    ensemble = storage.get_ensemble_by_name("default")
+    for real_key, real_group in data.groups.items():
+        real_index = int(re.match(r"REAL_(\d+)", real_key)[1])
+
+        # Sanity check: Test data only contains FIELD and SURFACE
+        assert set(real_group.groups) == {"FIELD", "SURFACE"}
+
+        # Compare FIELDs
+        for key, data in real_group["FIELD"].groups.items():
+            expect = np.array(data["VALUES"]).ravel()
+            actual = ensemble.load_field(key, [real_index]).ravel()
+            assert list(expect) == list(actual), f"FIELD {key}"
+
+        # Compare SURFACEs
+        #
+        # `LocalEnsemble.save_surface_data` is broken and only saves the base
+        # surface. Uncomment when this is fixed.
+        #
+        # for key, data in real_group["SURFACE"].groups.items():
+        #     expect = sorted_surface(data)
+        #     actual = np.array(ensemble.load_surface_data(key, [real_index])).ravel()
+        #     assert list(expect) == list(actual), f"SURFACE {key}"
