@@ -1,3 +1,4 @@
+import logging
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Tuple
 
@@ -9,6 +10,9 @@ from ert._c_wrappers.enkf.state_map import RealizationStateEnum
 
 if TYPE_CHECKING:
     from ert._c_wrappers.enkf import EnsembleConfig, ModelConfig, RunArg
+
+
+logger = logging.getLogger(__name__)
 
 
 def _ensemble_config_forward_init(
@@ -27,10 +31,12 @@ def _ensemble_config_forward_init(
 
         if node.has_data(run_arg.sim_fs, node_id):
             # Already initialised, ignore
+            logger.info(f"{node.name()} already internalized")
             continue
 
         if node.forward_init(run_arg.runpath, iens):
             node.save(run_arg.sim_fs, node_id)
+            logger.info(f"{node.name()} loaded after forward model")
         else:
             if "%d" in config_node.get_init_file_fmt():
                 init_file = Path(config_node.get_init_file_fmt() % (iens,))
