@@ -166,11 +166,6 @@ class JobQueueNode(BaseCClass):
 
         return self._end_time - self._start_time
 
-    def _should_be_killed(self):
-        return self.thread_status == ThreadStatus.STOPPING or (
-            self._max_runtime is not None and self.runtime >= self._max_runtime
-        )
-
     def _job_monitor(self, driver, pool_sema, max_submit):
 
         submit_status = self.submit(driver)
@@ -186,23 +181,32 @@ class JobQueueNode(BaseCClass):
             ):
                 self._start_time = time.time()
             time.sleep(1)
-            if self._should_be_killed():
+            if self._max_runtime is not None and self.runtime >= self._max_runtime:
                 self._kill(driver)
-                if self._max_runtime and self.runtime >= self._max_runtime:
-                    # We sometimes end up in a state where we are not able to kill it,
-                    # so we end up flooding the logs with identical statements, so we
-                    # check before we log.
-                    if self._tried_killing == 1:
-                        logger.info(f"MAX_RUNTIME reached in run path {self.run_path}")
-                    elif self._tried_killing % 100 == 0:
-                        logger.warning(
-                            f"Tried killing with MAX_RUNTIME {self._tried_killing} "
-                            f"times without success in {self.run_path}"
-                        )
-                    if self.callback_timeout:
-                        self.callback_timeout(self.callback_arguments)
-                    with self._mutex:
-                        self._timed_out = True
+                # We sometimes end up in a state where we are not able to kill it,
+                # so we end up flooding the logs with identical statements, so we
+                # check before we log.
+                if self._tried_killing == 1:
+                    logger.info(
+                        f"MAX_RUNTIME reached in run path {self.run_path}. Runtime: "
+                        f"{self.runtime} (max runtime: {self._max_runtime})"
+                    )
+                elif self._tried_killing % 100 == 0:
+                    logger.warning(
+                        f"Tried killing with MAX_RUNTIME {self._tried_killing} "
+                        f"times without success in {self.run_path}"
+                    )
+                if self.callback_timeout:
+                    self.callback_timeout(self.callback_arguments)
+                with self._mutex:
+                    self._timed_out = True
+
+            elif self.thread_status == ThreadStatus.STOPPING:
+                if self._tried_killing == 1:
+                    logger.info(
+                        f"Killing job in {self.run_path} ({self.thread_status})."
+                    )
+                self._kill(driver)
 
             current_status = self.refresh_status(driver)
 
