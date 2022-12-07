@@ -596,7 +596,7 @@ bool job_queue_node_kill(job_queue_node_type *node,
         job_queue_status_transition(status, current_status,
                                     JOB_QUEUE_IS_KILLED);
         job_queue_node_set_status(node, JOB_QUEUE_IS_KILLED);
-        logger->info("job {} set to killed", node->job_name);
+        logger->info("Job {} set to killed", node->job_name);
         result = true;
     } else {
         logger->warning("node_kill called but cannot kill {}", node->job_name);
