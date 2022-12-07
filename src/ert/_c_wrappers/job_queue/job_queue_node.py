@@ -184,7 +184,7 @@ class JobQueueNode(BaseCClass):
                 # so we end up flooding the logs with identical statements, so we
                 # check before we log.
                 if self._tried_killing == 1:
-                    logger.info(
+                    logger.error(
                         f"MAX_RUNTIME reached in run path {self.run_path}. Runtime: "
                         f"{self.runtime} (max runtime: {self._max_runtime})"
                     )
@@ -200,7 +200,7 @@ class JobQueueNode(BaseCClass):
 
             elif self.thread_status == ThreadStatus.STOPPING:
                 if self._tried_killing == 1:
-                    logger.info(
+                    logger.error(
                         f"Killing job in {self.run_path} ({self.thread_status})."
                     )
                 self._kill(driver)
