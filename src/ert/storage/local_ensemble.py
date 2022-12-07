@@ -339,7 +339,7 @@ class LocalEnsembleReader:
 
     def load_field(self, key: str, realizations: List[int]) -> npt.NDArray[np.double]:
         result: Optional[npt.NDArray[np.double]] = None
-        for realization in realizations:
+        for index, realization in enumerate(realizations):
             input_path = self.mount_point / f"realization-{realization}"
             if not input_path.exists():
                 raise KeyError(
@@ -353,7 +353,7 @@ class LocalEnsembleReader:
             elif data.size != result.shape[1]:
                 raise ValueError(f"Data size mismatch for realization {realization}")
 
-            result[realization] = data
+            result[index] = data
 
         if result is None:
             raise ConfigValidationError(
@@ -613,9 +613,9 @@ class LocalEnsembleAccessor(LocalEnsembleReader):
 
     def save_summary_data(
         self,
-        data: npt.NDArray[np.double],
+        data: npt.NDArray[np.float64],
         keys: List[str],
-        axis: List[Any],
+        axis: npt.ArrayLike,
         realization: int,
     ) -> None:
         output_path = self.mount_point / f"realization-{realization}"
@@ -631,14 +631,18 @@ class LocalEnsembleAccessor(LocalEnsembleReader):
 
         ds.to_netcdf(output_path / "summary-data.nc", engine="scipy")
 
-    def save_gen_data(self, data: Dict[str, List[float]], realization: int) -> None:
-        output_path = self.mount_point / f"realization-{realization}"
-        Path.mkdir(output_path, exist_ok=True)
+    def save_gen_data(
+        self, data: Dict[str, npt.NDArray[np.float64]], realization: int
+    ) -> None:
+        output_path = self.mount_point / f"realization-{realization}/gen-data.nc"
+        Path.mkdir(output_path.parent, exist_ok=True)
         ds = xr.Dataset(
             data,
         )
 
-        ds.to_netcdf(output_path / "gen-data.nc", engine="scipy")
+        ds.to_netcdf(
+            output_path, mode="a" if output_path.exists() else "w", engine="scipy"
+        )
 
     def save_field(
         self,

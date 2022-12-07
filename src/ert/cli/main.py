@@ -26,6 +26,7 @@ from ert.ensemble_evaluator import EvaluatorServerConfig, EvaluatorTracker
 from ert.libres_facade import LibresFacade
 from ert.shared.feature_toggling import FeatureToggling
 from ert.storage import StorageAccessor, open_storage
+from ert.storage.local_storage import local_storage_set_ert_config
 
 
 class ErtCliError(Exception):
@@ -43,7 +44,7 @@ def run_cli(args, _=None):
     # the config file to be the base name of the original config
     args.config = os.path.basename(args.config)
     ert_config = ErtConfig.from_file(args.config)
-
+    local_storage_set_ert_config(ert_config)
     try:
         with warnings.catch_warnings(record=True) as silenced_warnings:
             warnings.simplefilter("always")
