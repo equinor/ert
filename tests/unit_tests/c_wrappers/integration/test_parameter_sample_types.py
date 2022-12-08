@@ -1,5 +1,7 @@
 import logging
 import os
+import stat
+from argparse import ArgumentParser
 from contextlib import ExitStack as does_not_raise
 from hashlib import sha256
 from pathlib import Path
@@ -13,10 +15,13 @@ from ecl.eclfile import EclKW
 from ecl.grid import EclGrid
 from ecl.util.geometry import Surface
 
+from ert.__main__ import ert_parser
 from ert._c_wrappers.config.config_parser import ConfigValidationError
 from ert._c_wrappers.enkf import EnKFMain, ResConfig
 from ert._clib import update
 from ert._clib.update import Parameter
+from ert.cli import ENSEMBLE_SMOOTHER_MODE
+from ert.cli.main import run_cli
 from ert.libres_facade import LibresFacade
 
 
@@ -269,6 +274,8 @@ def test_surface_param(
         expect_surface = Surface(
             nx=2, ny=2, xinc=1, yinc=1, xstart=1, ystart=1, angle=0
         )
+        for i in range(4):
+            expect_surface[i] = float(i)
         expect_surface.write("surf.irap")
         expect_surface.write("surf0.irap")
 
@@ -303,7 +310,7 @@ def test_surface_param(
             arr = fs.load_parameter(
                 ert.ensembleConfig(), [0], update.Parameter("MY_PARAM")
             )
-            assert len(arr) == 4
+            assert arr.flatten().tolist() == [0.0, 1.0, 2.0, 3.0]
         else:
             with pytest.raises(KeyError, match="No parameter: MY_PARAM in storage"):
                 fs.load_parameter(
@@ -561,4 +568,118 @@ def test_that_sub_sample_maintains_order(tmpdir, mask, expected):
             .values.flatten()
             .tolist()
             == expected
+        )
+
+
+@pytest.mark.integration_test
+def test_surface_param_update(tmpdir):
+    """Full update with a surface parameter, it mirrors the poly example,
+    except it uses SURFACE instead of GEN_KW.
+    """
+    with tmpdir.as_cwd():
+        config = dedent(
+            """
+NUM_REALIZATIONS 5
+OBS_CONFIG observations
+SURFACE MY_PARAM OUTPUT_FILE:surf.irap INIT_FILES:surf.irap BASE_SURFACE:surf.irap FORWARD_INIT:True
+GEN_DATA MY_RESPONSE RESULT_FILE:gen_data_%d.out REPORT_STEPS:0 INPUT_FORMAT:ASCII
+INSTALL_JOB poly_eval POLY_EVAL
+SIMULATION_JOB poly_eval
+TIME_MAP time_map
+        """  # pylint: disable=line-too-long  # noqa: E501
+        )
+        expect_surface = Surface(
+            nx=1, ny=3, xinc=1, yinc=1, xstart=1, ystart=1, angle=0
+        )
+        expect_surface.write("surf.irap")
+
+        with open("forward_model", "w") as f:
+            f.write(
+                dedent(
+                    """#!/usr/bin/env python
+from ecl.util.geometry import Surface
+import numpy as np
+import os
+
+if __name__ == "__main__":
+    if not os.path.exists("surf.irap"):
+        surf = Surface(nx=1, ny=3, xinc=1, yinc=1, xstart=1, ystart=1, angle=0)
+        values = np.random.standard_normal(surf.getNX() * surf.getNY())
+        for i, value in enumerate(values):
+            surf[i] = value
+            surf.write(f"surf.irap")
+    a, b, c = list(Surface(filename="surf.irap"))
+    output = [a * x**2 + b * x + c for x in range(10)]
+    with open("gen_data_0.out", "w") as f:
+        f.write("\\n".join(map(str, output)))
+        """
+                )
+            )
+        os.chmod(
+            "forward_model",
+            os.stat("forward_model").st_mode
+            | stat.S_IXUSR
+            | stat.S_IXGRP
+            | stat.S_IXOTH,
+        )
+        with open("POLY_EVAL", "w") as fout:
+            fout.write("EXECUTABLE forward_model")
+        with open("observations", "w") as fout:
+            fout.write(
+                dedent(
+                    """
+            GENERAL_OBSERVATION MY_OBS {
+                DATA       = MY_RESPONSE;
+                INDEX_LIST = 0,2,4,6,8;
+                RESTART    = 0;
+                OBS_FILE   = obs.txt;
+            };"""
+                )
+            )
+
+        with open("obs.txt", "w") as fobs:
+            fobs.write(
+                dedent(
+                    """
+            2.1457049781272213 0.6
+            8.769219841380755 1.4
+            12.388014786122742 3.0
+            25.600464531354252 5.4
+            42.35204755970952 8.6"""
+                )
+            )
+
+        with open("time_map", "w") as fobs:
+            fobs.write("2014-09-10")
+
+        with open("config.ert", "w") as fh:
+            fh.writelines(config)
+
+        parser = ArgumentParser(prog="test_main")
+        parsed = ert_parser(
+            parser,
+            [
+                ENSEMBLE_SMOOTHER_MODE,
+                "--current-case",
+                "prior",
+                "--target-case",
+                "smoother_update",
+                "config.ert",
+                "--port-range",
+                "1024-65535",
+            ],
+        )
+
+        run_cli(parsed)
+        ert = EnKFMain(ResConfig("config.ert"))
+        prior = ert.storage_manager["prior"]
+        posterior = ert.storage_manager["smoother_update"]
+        prior_param = prior.load_parameter(
+            ert.ensembleConfig(), list(range(5)), update.Parameter("MY_PARAM")
+        )
+        posterior_param = posterior.load_parameter(
+            ert.ensembleConfig(), list(range(5)), update.Parameter("MY_PARAM")
+        )
+        assert np.linalg.det(np.cov(prior_param)) > np.linalg.det(
+            np.cov(posterior_param)
         )
