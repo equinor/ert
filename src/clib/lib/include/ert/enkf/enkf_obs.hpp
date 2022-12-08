@@ -17,7 +17,7 @@
 #include <ert/enkf/obs_vector.hpp>
 #include <ert/enkf/time_map.hpp>
 
-extern "C" bool enkf_obs_is_valid(const enkf_obs_type *);
+extern "C" const char *enkf_obs_get_error(const enkf_obs_type *obs);
 
 enkf_obs_type *enkf_obs_alloc(const history_source_type history,
                               std::shared_ptr<TimeMap> external_time_map,

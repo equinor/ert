@@ -14,7 +14,7 @@ class EnkfObs(BaseCClass):
 
     _free = ResPrototype("void enkf_obs_free(enkf_obs)")
     _get_size = ResPrototype("int enkf_obs_get_size( enkf_obs )")
-    _valid = ResPrototype("bool enkf_obs_is_valid(enkf_obs)")
+    _error = ResPrototype("char* enkf_obs_get_error(enkf_obs)")
     _load = ResPrototype("void enkf_obs_load(enkf_obs, char*, double)")
     _clear = ResPrototype("void enkf_obs_clear( enkf_obs )")
     _alloc_typed_keylist = ResPrototype(
@@ -121,12 +121,11 @@ class EnkfObs(BaseCClass):
         self._load(config_file, std_cutoff)
 
     @property
-    def valid(self):
-        return self._valid()
+    def error(self):
+        return self._error()
 
     def clear(self):
         self._clear()
 
     def __repr__(self):
-        validity = "valid" if self.valid else "invalid"
-        return self._create_repr(f"{validity}, len={len(self)}")
+        return self._create_repr(f"{self.error}, len={len(self)}")
