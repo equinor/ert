@@ -34,6 +34,7 @@ class DeprecationMigrationSuggester:
         self._parser.add("END_DATE")
         self._parser.add("CASE_TABLE")
         self._parser.add("RERUN_START")
+        self._parser.add("DELETE_RUNPATH")
 
     def suggest_migrations(self, filename: str):
         suggestions = []
@@ -109,6 +110,11 @@ class DeprecationMigrationSuggester:
             "ENKF_ASSIMILATION which was removed in 2016. It does not have "
             "any effect on run modes currently supported by ERT, and can "
             "be safely removed.",
+        )
+        add_suggestion(
+            "DELETE_RUNPATH",
+            "The DELETE_RUNPATH keyword would clear the runpath directories "
+            "between runs. It was removed in 2017 and no longer has any effect.",
         )
 
         return suggestions
