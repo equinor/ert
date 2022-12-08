@@ -357,7 +357,7 @@ def test_batch_simulation_suffixes(batch_sim_example):
 
 def test_stop_sim(copy_case):
     copy_case("batch_sim")
-    with open("sleepy_time.ert", "a") as f:
+    with open("sleepy_time.ert", "a", encoding="utf-8") as f:
         f.write(
             """
 LOAD_WORKFLOW_JOB workflows/jobs/REALIZATION_NUMBER
@@ -408,7 +408,7 @@ LOAD_WORKFLOW_JOB workflows/jobs/REALIZATION_NUMBER
     )
     for idx, path in enumerate(paths):
         assert os.path.isfile(path)
-        with open(path, "r") as f:
+        with open(path, "r", encoding="utf-8") as f:
             assert f.readline(1) == str(idx)
 
 

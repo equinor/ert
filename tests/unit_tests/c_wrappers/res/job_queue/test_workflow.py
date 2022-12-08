@@ -48,10 +48,10 @@ def test_workflow_run():
 
     assert workflow.run(None, verbose=True, context=context)
 
-    with open("dump1", "r") as f:
+    with open("dump1", "r", encoding="utf-8") as f:
         assert f.read() == "dump_text_1"
 
-    with open("dump2", "r") as f:
+    with open("dump2", "r", encoding="utf-8") as f:
         assert f.read() == "dump_text_2"
 
 

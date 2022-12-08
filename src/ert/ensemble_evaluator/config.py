@@ -181,12 +181,12 @@ class EvaluatorServerConfig:
             with tempfile.TemporaryDirectory() as tmp_dir:
                 tmp_path = pathlib.Path(tmp_dir)
                 cert_path = tmp_path / "ee.crt"
-                with open(cert_path, "w") as f1:
-                    f1.write(self.cert)
+                with open(cert_path, "w", encoding="utf-8") as filehandle_1:
+                    filehandle_1.write(self.cert)
 
                 key_path = tmp_path / "ee.key"
-                with open(key_path, "wb") as f2:
-                    f2.write(self._key)
+                with open(key_path, "wb") as filehandle_2:
+                    filehandle_2.write(self._key)
                 context = ssl.SSLContext(protocol=protocol)
                 context.load_cert_chain(cert_path, key_path, self._key_pw)
                 return context

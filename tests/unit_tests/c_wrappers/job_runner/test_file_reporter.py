@@ -21,9 +21,9 @@ def test_report_with_init_message_argument(reporter):
 
     r.report(Init([job1], 1, 19))
 
-    with open(STATUS_file, "r") as f:
+    with open(STATUS_file, "r", encoding="utf-8") as f:
         assert "Current host" in f.readline(), "STATUS file missing expected value"
-    with open(STATUS_json, "r") as f:
+    with open(STATUS_json, "r", encoding="utf-8") as f:
         content = "".join(f.readlines())
         assert '"name": "job1"' in content, "status.json missing job1"
         assert '"status": "Waiting"' in content, "status.json missing Waiting status"
@@ -47,14 +47,14 @@ def test_report_with_successful_start_message_argument(reporter):
 
     reporter.report(msg)
 
-    with open(STATUS_file, "r") as f:
+    with open(STATUS_file, "r", encoding="utf-8") as f:
         assert "job1" in f.readline(), "STATUS file missing job1"
-    with open(LOG_file, "r") as f:
+    with open(LOG_file, "r", encoding="utf-8") as f:
         assert (
             "Calling: /bin/bash --foo 1 --bar 2" in f.readline()
         ), """JOB_LOG file missing executable and arguments"""
 
-    with open(STATUS_json, "r") as f:
+    with open(STATUS_json, "r", encoding="utf-8") as f:
         content = "".join(f.readlines())
         assert '"status": "Running"' in content, "status.json missing Running status"
         assert '"start_time": null' not in content, "start_time not set"
@@ -67,11 +67,11 @@ def test_report_with_failed_start_message_argument(reporter):
 
     reporter.report(msg)
 
-    with open(STATUS_file, "r") as f:
+    with open(STATUS_file, "r", encoding="utf-8") as f:
         assert (
             "EXIT: -10/massive_failure" in f.readline()
         ), "STATUS file missing EXIT message"
-    with open(STATUS_json, "r") as f:
+    with open(STATUS_json, "r", encoding="utf-8") as f:
         content = "".join(f.readlines())
         assert '"status": "Failure"' in content, "status.json missing Failure status"
         assert (
@@ -89,7 +89,7 @@ def test_report_with_successful_exit_message_argument(reporter):
 
     reporter.report(msg)
 
-    with open(STATUS_json, "r") as f:
+    with open(STATUS_json, "r", encoding="utf-8") as f:
         content = "".join(f.readlines())
         assert '"status": "Success"' in content, "status.json missing Success status"
 
@@ -101,9 +101,9 @@ def test_report_with_failed_exit_message_argument(reporter):
 
     reporter.report(msg)
 
-    with open(STATUS_file, "r") as f:
+    with open(STATUS_file, "r", encoding="utf-8") as f:
         assert "EXIT: 1/massive_failure" in f.readline()
-    with open(ERROR_file, "r") as f:
+    with open(ERROR_file, "r", encoding="utf-8") as f:
         content = "".join(f.readlines())
         assert "<job>job1</job>" in content, "ERROR file missing job"
         assert (
@@ -112,7 +112,7 @@ def test_report_with_failed_exit_message_argument(reporter):
         assert (
             "<stderr: Not redirected>" in content
         ), "ERROR had invalid stderr information"
-    with open(STATUS_json, "r") as f:
+    with open(STATUS_json, "r", encoding="utf-8") as f:
         content = "".join(f.readlines())
         assert '"status": "Failure"' in content, "status.json missing Failure status"
         assert (
@@ -128,7 +128,7 @@ def test_report_with_running_message_argument(reporter):
 
     reporter.report(msg)
 
-    with open(STATUS_json, "r") as f:
+    with open(STATUS_json, "r", encoding="utf-8") as f:
         content = "".join(f.readlines())
         assert '"status": "Running"' in content, "status.json missing status"
         assert (
@@ -154,7 +154,7 @@ def test_dump_error_file_with_stderr(reporter):
     that constitutes the ERROR file.
     The report system is left out, since this was tested in the fail case.
     """
-    with open("stderr.out.0", "a") as stderr:
+    with open("stderr.out.0", "a", encoding="utf-8") as stderr:
         stderr.write("Error:\n")
         stderr.write("E_MASSIVE_FAILURE\n")
 
@@ -162,7 +162,7 @@ def test_dump_error_file_with_stderr(reporter):
         Job({"name": "job1", "stderr": "stderr.out.0"}, 0), "massive_failure"
     )
 
-    with open(ERROR_file, "r") as f:
+    with open(ERROR_file, "r", encoding="utf-8") as f:
         content = "".join(f.readlines())
         assert "E_MASSIVE_FAILURE" in content, "ERROR file missing stderr content"
         assert "<stderr_file>" in content, "ERROR missing stderr_file part"
@@ -210,7 +210,7 @@ def test_status_file_is_correct(reporter):
         f"EXIT: {exited_j_2.exit_code}/{exited_j_2.error_message}\n"
     )
 
-    with open(STATUS_file, "r") as f:
+    with open(STATUS_file, "r", encoding="utf-8") as f:
         for expected in [
             "Current host",
             expected_j1_line,

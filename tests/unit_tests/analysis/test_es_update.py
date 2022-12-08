@@ -16,7 +16,7 @@ from ert.cli.main import run_cli
 
 @pytest.fixture()
 def minimal_config(use_tmpdir):
-    with open("config_file.ert", "w") as fout:
+    with open("config_file.ert", "w", encoding="utf-8") as fout:
         fout.write("NUM_REALIZATIONS 1")
     res_config = ResConfig("config_file.ert")
     yield res_config
@@ -270,7 +270,7 @@ def test_snapshot_alpha(alpha, expected):
     res_config = ResConfig("snake_oil.ert")
 
     obs_file = Path("observations") / "observations.txt"
-    with obs_file.open(mode="w") as fin:
+    with obs_file.open(mode="w", encoding="utf-8") as fin:
         fin.write(
             """
 SUMMARY_OBSERVATION LOW_STD

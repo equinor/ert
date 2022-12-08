@@ -3,12 +3,12 @@ import json
 
 
 def _load_coeffs(filename):
-    with open(filename) as f:
+    with open(filename, encoding="utf-8") as f:
         return json.load(f)
 
 
 def write_to_file(data, file):
-    with open(file, "w") as f:
+    with open(file, "w", encoding="utf-8") as f:
         json.dump(data, f)
 
 

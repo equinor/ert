@@ -115,10 +115,10 @@ def valid_args(arg_types, arg_list: List[str], runtime: bool = False):
     ],
 )
 def test_forward_model_job(job, forward_model, expected_args):
-    with open("job_file", "w") as fout:
+    with open("job_file", "w", encoding="utf-8") as fout:
         fout.write(job)
 
-    with open("config_file.ert", "w") as fout:
+    with open("config_file.ert", "w", encoding="utf-8") as fout:
         # Write a minimal config file
         fout.write(
             dedent(
@@ -195,10 +195,10 @@ def test_forward_model_job(job, forward_model, expected_args):
     ],
 )
 def test_simulation_job(job, forward_model, expected_args):
-    with open("job_file", "w") as fout:
+    with open("job_file", "w", encoding="utf-8") as fout:
         fout.write(job)
 
-    with open("config_file.ert", "w") as fout:
+    with open("config_file.ert", "w", encoding="utf-8") as fout:
         # Write a minimal config file
         fout.write("NUM_REALIZATIONS 1\n")
         fout.write("INSTALL_JOB job_name job_file\n")

@@ -92,7 +92,7 @@ def init_ecl100_config(monkeypatch, tmpdir):
         },
     }
     with tmpdir.as_cwd():
-        with open("ecl100_config.yml", "w") as f:
+        with open("ecl100_config.yml", "w", encoding="utf-8") as f:
             f.write(yaml.dump(conf))
         monkeypatch.setenv("ECL100_SITE_CONFIG", "ecl100_config.yml")
         yield
@@ -149,19 +149,19 @@ def test_create(monkeypatch):
             }
         }
     }
-    with open("ecl100_config.yml", "w") as f:
+    with open("ecl100_config.yml", "w", encoding="utf-8") as f:
         f.write(yaml.dump(conf))
 
     os.mkdir("bin")
     monkeypatch.setenv("ECL100_SITE_CONFIG", "ecl100_config.yml")
     for f in ["scalar_exe", "mpi_exe", "mpirun"]:
         fname = os.path.join("bin", f)
-        with open(fname, "w") as fh:
+        with open(fname, "w", encoding="utf-8") as fh:
             fh.write("This is an exectable ...")
 
         os.chmod(fname, stat.S_IEXEC)
 
-    with open("ECLIPSE.DATA", "w") as f:
+    with open("ECLIPSE.DATA", "w", encoding="utf-8") as f:
         f.write("Mock eclipse data file")
 
     econfig = ecl_config.Ecl100Config()
@@ -171,7 +171,7 @@ def test_create(monkeypatch):
     assert erun.runPath() == os.getcwd()
 
     os.mkdir("path")
-    with open("path/ECLIPSE.DATA", "w") as f:
+    with open("path/ECLIPSE.DATA", "w", encoding="utf-8") as f:
         f.write("Mock eclipse data file")
 
     erun = ecl_run.EclRun("path/ECLIPSE.DATA", sim)
@@ -219,7 +219,7 @@ def test_running_flow_given_env_config_can_still_read_parent_env(monkeypatch):
     version = "1111.11"
 
     # create a script that prints env vars ENV1 and ENV2 to a file
-    with open("flow", "w") as f:
+    with open("flow", "w", encoding="utf-8") as f:
         f.write("#!/bin/bash\n")
         f.write("echo $ENV1 > out.txt\n")
         f.write("echo $ENV2 >> out.txt\n")
@@ -236,17 +236,17 @@ def test_running_flow_given_env_config_can_still_read_parent_env(monkeypatch):
         },
     }
 
-    with open("flow_config.yml", "w") as f:
+    with open("flow_config.yml", "w", encoding="utf-8") as f:
         f.write(yaml.dump(conf))
 
     # set the environment variable ENV1
     monkeypatch.setenv("ENV1", "VAL1")
     monkeypatch.setenv("FLOW_SITE_CONFIG", "flow_config.yml")
 
-    with open("DUMMY.DATA", "w") as f:
+    with open("DUMMY.DATA", "w", encoding="utf-8") as f:
         f.write("dummy")
 
-    with open("DUMMY.PRT", "w") as f:
+    with open("DUMMY.PRT", "w", encoding="utf-8") as f:
         f.write("Errors 0\n")
         f.write("Bugs 0\n")
 
@@ -257,7 +257,7 @@ def test_running_flow_given_env_config_can_still_read_parent_env(monkeypatch):
     flow_run.runEclipse()
 
     # assert that the script was able to read both the variables correctly
-    with open("out.txt") as f:
+    with open("out.txt", encoding="utf-8") as f:
         lines = f.readlines()
 
     assert lines == ["VAL1\n", "VAL2\n"]
@@ -268,7 +268,7 @@ def test_running_flow_given_no_env_config_can_still_read_parent_env(monkeypatch)
     version = "1111.11"
 
     # create a script that prints env vars ENV1 and ENV2 to a file
-    with open("flow", "w") as f:
+    with open("flow", "w", encoding="utf-8") as f:
         f.write("#!/bin/bash\n")
         f.write("echo $ENV1 > out.txt\n")
         f.write("echo $ENV2 >> out.txt\n")
@@ -285,7 +285,7 @@ def test_running_flow_given_no_env_config_can_still_read_parent_env(monkeypatch)
         },
     }
 
-    with open("flow_config.yml", "w") as f:
+    with open("flow_config.yml", "w", encoding="utf-8") as f:
         f.write(yaml.dump(conf))
 
     # set the environment variable ENV1
@@ -293,10 +293,10 @@ def test_running_flow_given_no_env_config_can_still_read_parent_env(monkeypatch)
     monkeypatch.setenv("ENV2", "VAL2")
     monkeypatch.setenv("FLOW_SITE_CONFIG", "flow_config.yml")
 
-    with open("DUMMY.DATA", "w") as f:
+    with open("DUMMY.DATA", "w", encoding="utf-8") as f:
         f.write("dummy")
 
-    with open("DUMMY.PRT", "w") as f:
+    with open("DUMMY.PRT", "w", encoding="utf-8") as f:
         f.write("Errors 0\n")
         f.write("Bugs 0\n")
 
@@ -307,7 +307,7 @@ def test_running_flow_given_no_env_config_can_still_read_parent_env(monkeypatch)
     flow_run.runEclipse()
 
     # assert that the script was able to read both the variables correctly
-    with open("out.txt") as f:
+    with open("out.txt", encoding="utf-8") as f:
         lines = f.readlines()
 
     assert lines == ["VAL1\n", "VAL2\n"]
@@ -320,7 +320,7 @@ def test_running_flow_given_env_variables_with_same_name_as_parent_env_variables
     version = "1111.11"
 
     # create a script that prints env vars ENV1 and ENV2 to a file
-    with open("flow", "w") as f:
+    with open("flow", "w", encoding="utf-8") as f:
         f.write("#!/bin/bash\n")
         f.write("echo $ENV1 > out.txt\n")
         f.write("echo $ENV2 >> out.txt\n")
@@ -340,7 +340,7 @@ def test_running_flow_given_env_variables_with_same_name_as_parent_env_variables
         },
     }
 
-    with open("flow_config.yml", "w") as f:
+    with open("flow_config.yml", "w", encoding="utf-8") as f:
         f.write(yaml.dump(conf))
 
     # set the environment variable ENV1
@@ -348,10 +348,10 @@ def test_running_flow_given_env_variables_with_same_name_as_parent_env_variables
     monkeypatch.setenv("ENV2", "VAL2")
     monkeypatch.setenv("FLOW_SITE_CONFIG", "flow_config.yml")
 
-    with open("DUMMY.DATA", "w") as f:
+    with open("DUMMY.DATA", "w", encoding="utf-8") as f:
         f.write("dummy")
 
-    with open("DUMMY.PRT", "w") as f:
+    with open("DUMMY.PRT", "w", encoding="utf-8") as f:
         f.write("Errors 0\n")
         f.write("Bugs 0\n")
 
@@ -362,7 +362,7 @@ def test_running_flow_given_env_variables_with_same_name_as_parent_env_variables
     flow_run.runEclipse()
 
     # assert that the script was able to read both the variables correctly
-    with open("out.txt") as f:
+    with open("out.txt", encoding="utf-8") as f:
         lines = f.readlines()
 
     assert lines == ["OVERWRITTEN1\n", "OVERWRITTEN2\n"]

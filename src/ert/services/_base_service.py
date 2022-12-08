@@ -339,7 +339,7 @@ class BaseService:
             path = f"{self.service_name}_server.json"
 
         if isinstance(info, Mapping):
-            with open(path, "w") as f:
+            with open(path, "w", encoding="utf-8") as f:
                 json.dump(info, f, indent=4)
 
         self._conn_info_event.set()

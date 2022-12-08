@@ -23,7 +23,7 @@ except ImportError:
 def load_args(filename, column_names=None):
     rows = 0
     columns = 0
-    with open(filename, "r") as fileH:
+    with open(filename, "r", encoding="utf-8") as fileH:
         for line in fileH.readlines():
             rows += 1
             columns = max(columns, len(line.split()))
@@ -38,7 +38,7 @@ def load_args(filename, column_names=None):
     data.fill(numpy.nan)
 
     row = 0
-    with open(filename) as fileH:
+    with open(filename, encoding="utf-8") as fileH:
         for line in fileH.readlines():
             tmp = line.split()
             print(tmp)

@@ -5,18 +5,18 @@ import stat
 class WorkflowCommon:
     @staticmethod
     def createExternalDumpJob():
-        with open("dump_job", "w") as f:
+        with open("dump_job", "w", encoding="utf-8") as f:
             f.write("INTERNAL FALSE\n")
             f.write("EXECUTABLE dump.py\n")
             f.write("MIN_ARG 2\n")
             f.write("MAX_ARG 2\n")
             f.write("ARG_TYPE 0 STRING\n")
 
-        with open("dump_failing_job", "w") as f:
+        with open("dump_failing_job", "w", encoding="utf-8") as f:
             f.write("INTERNAL FALSE\n")
             f.write("EXECUTABLE dump_failing.py\n")
 
-        with open("dump.py", "w") as f:
+        with open("dump.py", "w", encoding="utf-8") as f:
             f.write("#!/usr/bin/env python\n")
             f.write("import sys\n")
             f.write("f = open('%s' % sys.argv[1], 'w')\n")
@@ -24,7 +24,7 @@ class WorkflowCommon:
             f.write("f.close()\n")
             f.write('print("Hello World")')
 
-        with open("dump_failing.py", "w") as f:
+        with open("dump_failing.py", "w", encoding="utf-8") as f:
             f.write("#!/usr/bin/env python\n")
             f.write('print("Hello Failing")\n')
             f.write("raise Exception")
@@ -36,13 +36,13 @@ class WorkflowCommon:
         st = os.stat("dump_failing.py")
         os.chmod("dump_failing.py", st.st_mode | stat.S_IEXEC)
 
-        with open("dump_workflow", "w") as f:
+        with open("dump_workflow", "w", encoding="utf-8") as f:
             f.write("DUMP dump1 dump_text_1\n")
             f.write("DUMP dump2 dump_<PARAM>_2\n")
 
     @staticmethod
     def createInternalFunctionJob():
-        with open("printf_job", "w") as f:
+        with open("printf_job", "w", encoding="utf-8") as f:
             f.write("INTERNAL True\n")
             f.write("FUNCTION printf\n")
             f.write("MIN_ARG 4\n")
@@ -53,7 +53,7 @@ class WorkflowCommon:
             f.write("ARG_TYPE 3 BOOL\n")
             f.write("ARG_TYPE 4 STRING\n")
 
-        with open("compare_job", "w") as f:
+        with open("compare_job", "w", encoding="utf-8") as f:
             f.write("INTERNAL True\n")
             f.write("FUNCTION strcmp\n")
             f.write("MIN_ARG 2\n")
@@ -63,14 +63,14 @@ class WorkflowCommon:
 
     @staticmethod
     def createErtScriptsJob():
-        with open("subtract_script.py", "w") as f:
+        with open("subtract_script.py", "w", encoding="utf-8") as f:
             f.write("from ert._c_wrappers.job_queue import ErtScript\n")
             f.write("\n")
             f.write("class SubtractScript(ErtScript):\n")
             f.write("    def run(self, arg1, arg2):\n")
             f.write("        return arg1 - arg2\n")
 
-        with open("subtract_script_job", "w") as f:
+        with open("subtract_script_job", "w", encoding="utf-8") as f:
             f.write("INTERNAL True\n")
             f.write("SCRIPT subtract_script.py\n")
             f.write("MIN_ARG 2\n")
@@ -80,7 +80,7 @@ class WorkflowCommon:
 
     @staticmethod
     def createWaitJob():
-        with open("wait_job.py", "w") as f:
+        with open("wait_job.py", "w", encoding="utf-8") as f:
             f.write("from ert._c_wrappers.job_queue import ErtScript\n")
             f.write("import time\n")
             f.write("\n")
@@ -104,7 +104,7 @@ class WorkflowCommon:
             f.write("\n")
             f.write("        return None\n")
 
-        with open("external_wait_job.sh", "w") as f:
+        with open("external_wait_job.sh", "w", encoding="utf-8") as f:
             f.write("#!/usr/bin/env bash\n")
             f.write('echo "text" > wait_started_$1\n')
             f.write("sleep $2\n")
@@ -115,7 +115,7 @@ class WorkflowCommon:
             "external_wait_job.sh", st.st_mode | stat.S_IEXEC
         )  # | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH
 
-        with open("wait_job", "w") as f:
+        with open("wait_job", "w", encoding="utf-8") as f:
             f.write("INTERNAL True\n")
             f.write("SCRIPT wait_job.py\n")
             f.write("MIN_ARG 2\n")
@@ -123,7 +123,7 @@ class WorkflowCommon:
             f.write("ARG_TYPE 0 INT\n")
             f.write("ARG_TYPE 1 INT\n")
 
-        with open("external_wait_job", "w") as f:
+        with open("external_wait_job", "w", encoding="utf-8") as f:
             f.write("INTERNAL False\n")
             f.write("EXECUTABLE external_wait_job.sh\n")
             f.write("MIN_ARG 2\n")
@@ -131,11 +131,11 @@ class WorkflowCommon:
             f.write("ARG_TYPE 0 INT\n")
             f.write("ARG_TYPE 1 INT\n")
 
-        with open("wait_workflow", "w") as f:
+        with open("wait_workflow", "w", encoding="utf-8") as f:
             f.write("WAIT 0 1\n")
             f.write("WAIT 1 10\n")
             f.write("WAIT 2 1\n")
 
-        with open("fast_wait_workflow", "w") as f:
+        with open("fast_wait_workflow", "w", encoding="utf-8") as f:
             f.write("WAIT 0 1\n")
             f.write("EXTERNAL_WAIT 1 1\n")

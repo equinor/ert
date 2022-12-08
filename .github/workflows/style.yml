@@ -126,6 +126,7 @@ jobs:
             unnecessary-lambda,\
             unnecessary-lambda-assignment,\
             unneeded-not,\
+            unspecified-encoding,\
             unsubscriptable-object,\
             unsupported-assignment-operation,\
             unsupported-binary-operation,\

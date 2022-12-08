@@ -317,7 +317,7 @@ def test_gen_kw_collector(snake_oil_case_storage, snapshot):
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_gen_data_report_steps():
-    with open("config_file.ert", "w") as fout:
+    with open("config_file.ert", "w", encoding="utf-8") as fout:
         # Write a minimal config file
         fout.write(
             dedent(
@@ -329,15 +329,15 @@ def test_gen_data_report_steps():
         """
             )
         )
-    with open("obs_data_0.txt", "w") as fout:
+    with open("obs_data_0.txt", "w", encoding="utf-8") as fout:
         fout.write("1.0 0.1")
-    with open("obs_data_1.txt", "w") as fout:
+    with open("obs_data_1.txt", "w", encoding="utf-8") as fout:
         fout.write("2.0 0.1")
 
-    with open("time_map", "w") as fout:
+    with open("time_map", "w", encoding="utf-8") as fout:
         fout.write("2014-09-10\n2017-02-05")
 
-    with open("observations", "w") as fout:
+    with open("observations", "w", encoding="utf-8") as fout:
         fout.write(
             dedent(
                 """

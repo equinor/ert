@@ -156,7 +156,7 @@ def test_tracking(
     ]
 
     with tmpdir.as_cwd():
-        with open(f"{experiment_folder}/poly.ert", "a") as fh:
+        with open(f"{experiment_folder}/poly.ert", "a", encoding="utf-8") as fh:
             fh.writelines(config_lines)
 
         with fileinput.input(f"{experiment_folder}/poly_eval.py", inplace=True) as fin:
@@ -273,7 +273,7 @@ def test_tracking_time_map(
 
         """
         )
-        with open("config.ert", "w") as fh:
+        with open("config.ert", "w", encoding="utf-8") as fh:
             fh.writelines(config)
         # We create a reference case
         run_sim(datetime(2014, 9, 10))
@@ -370,7 +370,7 @@ def test_tracking_missing_ecl(
 
         """
         )
-        with open("config.ert", "w") as fh:
+        with open("config.ert", "w", encoding="utf-8") as fh:
             fh.writelines(config)
         # We create a reference case, but there will be no response
         run_sim(datetime(2014, 9, 10))

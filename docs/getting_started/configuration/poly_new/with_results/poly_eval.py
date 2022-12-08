@@ -2,7 +2,7 @@
 
 import json
 
-with open("coeffs.json") as f:
+with open("coeffs.json", encoding="utf-8") as f:
     coeffs = json.load(f)
 
 
@@ -11,5 +11,5 @@ def evaluate(coeffs, x):
 
 
 output = [evaluate(coeffs, x) for x in range(10)]
-with open("poly_0.out", "w") as f:
+with open("poly_0.out", "w", encoding="utf-8") as f:
     f.write("\n".join(map(str, output)))

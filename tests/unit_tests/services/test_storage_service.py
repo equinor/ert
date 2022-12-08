@@ -80,7 +80,7 @@ def test_init_service_server_start_if_no_conf_file(tmpdir, mock_start_server):
 def test_init_service_server_start_conf_info_is_stale(tmpdir, mock_start_server):
     with tmpdir.as_cwd():
         config_file = f"{Storage.service_name}_server.json"
-        with open(config_file, "w") as f:
+        with open(config_file, "w", encoding="utf-8") as f:
             f.write(
                 """
             {"authtoken": "test123", "urls": ["http://127.0.0.1:51821"]}

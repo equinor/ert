@@ -13,7 +13,7 @@ from ert._c_wrappers.config import (
 
 
 def test_item_types(tmp_path):
-    with open(tmp_path / "config", "w") as f:
+    with open(tmp_path / "config", "w", encoding="utf-8") as f:
         f.write("TYPE_ITEM 10 3.14 TruE  String  file\n")
 
     conf = ConfigParser()
@@ -63,7 +63,7 @@ FIELD    SWAT          DYNAMIC   MIN:0   MAX:1
 FIELD    SGAS          DYNAMIC   MIN:0   MAX:1
 FIELD    RS            DYNAMIC   MIN:0
 FIELD    RV            DYNAMIC   MIN:0.0034"""
-    with open("simple_config", "w") as fout:
+    with open("simple_config", "w", encoding="utf-8") as fout:
         fout.write(config_file)
     conf = ConfigParser()
     conf.add("FIELD", False)
@@ -101,7 +101,7 @@ FIELD    RV            DYNAMIC   MIN:0.0034"""
 def test_parse_invalid():
     conf = ConfigParser()
     conf.add("INT", value_type=ContentTypeEnum.CONFIG_INT)
-    with open("config", "w") as fileH:
+    with open("config", "w", encoding="utf-8") as fileH:
         fileH.write("INT xx\n")
 
     with pytest.raises(ValueError):
@@ -118,7 +118,7 @@ def test_parse_deprecated():
     item = conf.add("INT", value_type=ContentTypeEnum.CONFIG_INT)
     msg = "ITEM INT IS DEPRECATED"
     item.setDeprecated(msg)
-    with open("config", "w") as fileH:
+    with open("config", "w", encoding="utf-8") as fileH:
         fileH.write("INT 100\n")
 
     content = conf.parse("config")
@@ -138,10 +138,10 @@ def test_parse_dotdot_relative(monkeypatch):
     os.makedirs("cwd/jobs")
     os.makedirs("eclipse/bin")
     script_path = os.path.join(os.getcwd(), "eclipse/bin/script.sh")
-    with open(script_path, "w") as f:
+    with open(script_path, "w", encoding="utf-8") as f:
         f.write("This is a test script")
 
-    with open("cwd/jobs/JOB", "w") as fileH:
+    with open("cwd/jobs/JOB", "w", encoding="utf-8") as fileH:
         fileH.write("EXECUTABLE ../../eclipse/bin/script.sh\n")
 
     os.makedirs("cwd/ert")
@@ -163,7 +163,7 @@ def test_parser_content():
     schema_item.iset_type(5, ContentTypeEnum.CONFIG_PATH)
     schema_item = conf.add("NOT_IN_CONTENT", False)
 
-    with open("config", "w") as fileH:
+    with open("config", "w", encoding="utf-8") as fileH:
         fileH.write("KEY VALUE1 VALUE2 100  True  3.14  path/file.txt\n")
 
     cwd0 = os.getcwd()
@@ -252,7 +252,7 @@ def test_schema():
 @pytest.mark.usefixtures("use_tmpdir")
 def test_add_unknown_keyowrds():
     parser = ConfigParser()
-    with open("config", "w") as fileH:
+    with open("config", "w", encoding="utf-8") as fileH:
         fileH.write("SETTINGS A 100.1\n")
         fileH.write("SETTINGS B 200  STRING1 STRING2\n")
         fileH.write("SETTINGS C 300\n")
@@ -285,7 +285,7 @@ def test_add_unknown_keyowrds():
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_valid_string_runtime_file():
-    with open("some_file", "w") as f:
+    with open("some_file", "w", encoding="utf-8") as f:
         f.write("This i.")
     assert ContentTypeEnum.CONFIG_RUNTIME_FILE.valid_string("no_file")
     assert ContentTypeEnum.CONFIG_RUNTIME_FILE.valid_string("some_file", True)

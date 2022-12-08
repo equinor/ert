@@ -48,7 +48,7 @@ def test_num_cpu_subst(monkeypatch, tmp_path, append, numcpu):
     enkf_main = EnKFMain(config)
     _create_runpath(enkf_main)
 
-    with open("simulations/realization-0/iter-0/jobs.json") as f:
+    with open("simulations/realization-0/iter-0/jobs.json", encoding="utf-8") as f:
         assert f'"argList": ["{numcpu}"]' in f.read()
 
 
@@ -61,7 +61,8 @@ def test_environment_var_list(tmpdir):
             SETENV SECOND $MYVAR
             SETENV THIRD  TheThirdValue
             UPDATE_PATH   FOURTH TheFourthValue
-            """
+            """,
+            encoding="utf-8",
         )
         my_var_text = "THIS_IS_MY_VAR"
         os.environ["MYVAR"] = my_var_text
@@ -75,7 +76,7 @@ def test_environment_var_list(tmpdir):
         finally:
             del os.environ["MYVAR"]
 
-        with open("simulations/realization-0/iter-0/jobs.json") as f:
+        with open("simulations/realization-0/iter-0/jobs.json", encoding="utf-8") as f:
             data = json.load(f)
             global_env = data.get("global_environment")
             global_update_path = data.get("global_update_path")

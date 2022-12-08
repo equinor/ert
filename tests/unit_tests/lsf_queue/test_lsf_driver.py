@@ -24,7 +24,7 @@ def mock_bjobs(tmp_path):
            # File written from the mocked bsub command which provides us with
            # the path to where the job actually runs and where we can find i.e
            # the job_id and status
-           with open("job_paths") as job_paths_file:
+           with open("job_paths", encoding="utf-8") as job_paths_file:
                job_paths = job_paths_file.read().splitlines()
 
            print("JOBID USER STAT QUEUE FROM_HOST EXEC_HOST JOB_NAME SUBMIT_TIME")
@@ -64,12 +64,12 @@ def mock_bjobs(tmp_path):
 
            # Just to have a log for test purposes what is actually thrown
            # towards the bjobs command
-           with open("bjobs_log", "a+") as f:
+           with open("bjobs_log", "a+", encoding="utf-8") as f:
                f.write(f"{str(sys.argv)}\\n")
            """
     )
     script_path = tmp_path / "mock_bjobs"
-    with open(script_path, "w") as fh:
+    with open(script_path, "w", encoding="utf-8") as fh:
         fh.write(script)
 
     os.chmod(script_path, 0o755)
@@ -90,12 +90,12 @@ def make_mock_bsub(script_path):
            # Write a file with the runpaths to where the jobs are running and
            # writing information we later need when providing statuses for the
            # jobs through the mocked bjobs command
-           with open("job_paths", "a+") as jobs_file:
+           with open("job_paths", "a+", encoding="utf-8") as jobs_file:
                jobs_file.write(f"{run_path}\\n")
 
            # Just a log for testpurposes showing what is thrown against the
            # bsub command
-           with open("bsub_log", "a+") as f:
+           with open("bsub_log", "a+", encoding="utf-8") as f:
                f.write(f"{str(sys.argv)}\\n")
 
            # Assigning a "unique" job id for each submitted job and print. This
@@ -168,7 +168,7 @@ def copy_lsf_poly_case(copy_poly_case):
         "INSTALL_JOB poly_eval POLY_EVAL\n",
         "SIMULATION_JOB poly_eval\n",
     ]
-    with open("poly.ert", "w") as fh:
+    with open("poly.ert", "w", encoding="utf-8") as fh:
         fh.writelines(config)
 
 
@@ -191,6 +191,6 @@ def test_run_mocked_lsf_queue():
             ],
         )
     )
-    log = Path("bsub_log").read_text()
+    log = Path("bsub_log").read_text(encoding="utf-8")
     for i in range(10):
         assert f"'-J', 'poly_{i}'" in log

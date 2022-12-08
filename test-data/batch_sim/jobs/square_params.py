@@ -7,7 +7,7 @@ keys = ["W1", "W2", "W3"]
 
 
 def square_file(input_file, output_file):
-    with open(input_file) as fin:
+    with open(input_file, encoding="utf-8") as fin:
         data0 = json.load(fin)
     out = []
     for key in keys:
@@ -16,7 +16,7 @@ def square_file(input_file, output_file):
             out.extend([str(v**2) for _, v in data1.items()])
         except AttributeError:
             out.append(str(data1**2))
-    with open(output_file, "w") as fout:
+    with open(output_file, "w", encoding="utf-8") as fout:
         fout.write("\n".join(out))
 
 

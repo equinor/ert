@@ -90,7 +90,7 @@ def test_workflow_config_write_workflow_config(tmpdir, monkeypatch):
     with tmpdir.as_cwd():
         assert os.path.isfile("DEFAULT_NAME")
 
-        with open("DEFAULT_NAME") as fin:
+        with open("DEFAULT_NAME", encoding="utf-8") as fin:
             content = fin.read()
 
         assert content == expected_config
