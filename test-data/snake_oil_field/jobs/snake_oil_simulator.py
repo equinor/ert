@@ -12,7 +12,7 @@ def globalIndex(i, j, k, nx=10, ny=10):
 
 def read_seed(filename):
     params = {}
-    with open(filename, "r") as f:
+    with open(filename, "r", encoding="utf-8") as f:
         for line in f:
             key, value = line.split(":")
             params[key] = value.strip()
@@ -22,7 +22,7 @@ def read_seed(filename):
 
 def read_parameters(filename):
     params = {}
-    with open(filename, "r") as f:
+    with open(filename, "r", encoding="utf-8") as f:
         for line in f:
             key, value = line.split(" ")
             _, name = key.split(":")

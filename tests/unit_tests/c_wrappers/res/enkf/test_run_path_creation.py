@@ -26,8 +26,8 @@ def test_that_run_template_replace_symlink_does_not_write_to_source():
         RUN_TEMPLATE template.tmpl result.txt
         """
     )
-    Path("template.tmpl").write_text("I want to replace: <IENS>")
-    Path("config.ert").write_text(config_text)
+    Path("template.tmpl").write_text("I want to replace: <IENS>", encoding="utf-8")
+    Path("config.ert").write_text(config_text, encoding="utf-8")
     res_config = ResConfig("config.ert")
     ert = EnKFMain(res_config)
     run_context = ert.create_ensemble_context("prior", [True], iteration=0)
@@ -35,12 +35,19 @@ def test_that_run_template_replace_symlink_does_not_write_to_source():
     os.makedirs(run_path)
     # Write a file that will be symlinked into the run run path with the
     # same name as the target_file
-    Path("start.txt").write_text("I dont want to replace in this file")
+    Path("start.txt").write_text(
+        "I dont want to replace in this file", encoding="utf-8"
+    )
     os.symlink("start.txt", run_path / "result.txt")
     ert.createRunPath(run_context)
-    assert (run_path / "result.txt").read_text() == "I want to replace: 0"
+    assert (run_path / "result.txt").read_text(
+        encoding="utf-8"
+    ) == "I want to replace: 0"
     # Check that the source of the symlinked file is not updated
-    assert Path("start.txt").read_text() == "I dont want to replace in this file"
+    assert (
+        Path("start.txt").read_text(encoding="utf-8")
+        == "I dont want to replace in this file"
+    )
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -57,8 +64,8 @@ def test_run_template_replace_in_file_with_custom_define():
         RUN_TEMPLATE template.tmpl result.txt
         """
     )
-    Path("template.tmpl").write_text("I WANT TO REPLACE:<MY_VAR>")
-    Path("config.ert").write_text(config_text)
+    Path("template.tmpl").write_text("I WANT TO REPLACE:<MY_VAR>", encoding="utf-8")
+    Path("config.ert").write_text(config_text, encoding="utf-8")
 
     res_config = ResConfig("config.ert")
     ert = EnKFMain(res_config)
@@ -93,16 +100,16 @@ def test_run_template_replace_in_file(key, expected):
         RUN_TEMPLATE template.tmpl result.txt
         """
     )
-    Path("template.tmpl").write_text(f"I WANT TO REPLACE:{key}")
-    Path("config.ert").write_text(config_text)
+    Path("template.tmpl").write_text(f"I WANT TO REPLACE:{key}", encoding="utf-8")
+    Path("config.ert").write_text(config_text, encoding="utf-8")
 
     res_config = ResConfig("config.ert")
     ert = EnKFMain(res_config)
     run_context = ert.create_ensemble_context("prior", [True], iteration=0)
     ert.createRunPath(run_context)
-    assert (
-        Path(run_context[0].runpath) / "result.txt"
-    ).read_text() == f"I WANT TO REPLACE:{expected}"
+    assert (Path(run_context[0].runpath) / "result.txt").read_text(
+        encoding="utf-8"
+    ) == f"I WANT TO REPLACE:{expected}"
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -123,8 +130,10 @@ def test_run_template_replace_in_ecl(ecl_base, expected_file):
         RUN_TEMPLATE BASE_ECL_FILE.DATA <ECLBASE>.DATA
         """
     )
-    Path("BASE_ECL_FILE.DATA").write_text("I WANT TO REPLACE:<NUM_CPU>")
-    Path("config.ert").write_text(config_text)
+    Path("BASE_ECL_FILE.DATA").write_text(
+        "I WANT TO REPLACE:<NUM_CPU>", encoding="utf-8"
+    )
+    Path("config.ert").write_text(config_text, encoding="utf-8")
 
     res_config = ResConfig("config.ert")
     ert = EnKFMain(res_config)
@@ -164,16 +173,16 @@ def test_run_template_replace_in_ecl_data_file(key, expected):
         DATA_FILE MY_DATA_FILE.DATA
         """
     )
-    Path("MY_DATA_FILE.DATA").write_text(f"I WANT TO REPLACE:{key}")
-    Path("config.ert").write_text(config_text)
+    Path("MY_DATA_FILE.DATA").write_text(f"I WANT TO REPLACE:{key}", encoding="utf-8")
+    Path("config.ert").write_text(config_text, encoding="utf-8")
 
     res_config = ResConfig("config.ert")
     ert = EnKFMain(res_config)
     run_context = ert.create_ensemble_context("prior", [True], iteration=0)
     ert.createRunPath(run_context)
-    assert (
-        Path(run_context[0].runpath) / "ECL_CASE0.DATA"
-    ).read_text() == f"I WANT TO REPLACE:{expected}"
+    assert (Path(run_context[0].runpath) / "ECL_CASE0.DATA").read_text(
+        encoding="utf-8"
+    ) == f"I WANT TO REPLACE:{expected}"
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -190,8 +199,10 @@ def test_run_template_replace_in_file_name():
         RUN_TEMPLATE template.tmpl <MY_FILE_NAME>
         """
     )
-    Path("template.tmpl").write_text("Not important, name of the file is important")
-    Path("config.ert").write_text(config_text)
+    Path("template.tmpl").write_text(
+        "Not important, name of the file is important", encoding="utf-8"
+    )
+    Path("config.ert").write_text(config_text, encoding="utf-8")
 
     res_config = ResConfig("config.ert")
     ert = EnKFMain(res_config)
@@ -215,11 +226,13 @@ def test_that_sampling_prior_makes_initialized_fs():
         GEN_KW KW_NAME template.txt kw.txt prior.txt
         """
     )
-    Path("template.tmpl").write_text("Not important, name of the file is important")
-    Path("config.ert").write_text(config_text)
-    with open("template.txt", "w") as fh:
+    Path("template.tmpl").write_text(
+        "Not important, name of the file is important", encoding="utf-8"
+    )
+    Path("config.ert").write_text(config_text, encoding="utf-8")
+    with open("template.txt", "w", encoding="utf-8") as fh:
         fh.writelines("MY_KEYWORD <MY_KEYWORD>")
-    with open("prior.txt", "w") as fh:
+    with open("prior.txt", "w", encoding="utf-8") as fh:
         fh.writelines("MY_KEYWORD NORMAL 0 1")
     res_config = ResConfig("config.ert")
     ert = EnKFMain(res_config)
@@ -261,8 +274,8 @@ def test_that_data_file_sets_num_cpu(eclipse_data, expected_cpus):
         DATA_FILE MY_DATA_FILE.DATA
         """
     )
-    Path("MY_DATA_FILE.DATA").write_text(eclipse_data)
-    Path("config.ert").write_text(config_text)
+    Path("MY_DATA_FILE.DATA").write_text(eclipse_data, encoding="utf-8")
+    Path("config.ert").write_text(config_text, encoding="utf-8")
 
     res_config = ResConfig("config.ert")
     ert = EnKFMain(res_config)
@@ -282,7 +295,7 @@ def test_that_runpath_substitution_remain_valid():
         FORWARD_MODEL COPY_DIRECTORY(<FROM>=<CONFIG_PATH>/, <TO>=<RUNPATH>/)
         """
     )
-    Path("config.ert").write_text(config_text)
+    Path("config.ert").write_text(config_text, encoding="utf-8")
 
     res_config = ResConfig("config.ert")
     ert = EnKFMain(res_config)
@@ -291,7 +304,6 @@ def test_that_runpath_substitution_remain_valid():
     ert.createRunPath(run_context)
 
     for i, realization in enumerate(run_context):
-        assert (
-            str(Path().absolute()) + "/realization-" + str(i) + "/iter-0"
-            in Path(realization.runpath + "/jobs.json").read_text()
-        )
+        assert str(Path().absolute()) + "/realization-" + str(i) + "/iter-0" in Path(
+            realization.runpath + "/jobs.json"
+        ).read_text(encoding="utf-8")

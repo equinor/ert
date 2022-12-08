@@ -7,7 +7,7 @@ class Runpaths:
     """The Runpaths are the ensemble workspace directories.
 
     Generally the is one runpath for each realization and iteration, although
-    depending on the given format string for the paths they may coinside. There
+    depending on the given format string for the paths they may coincide. There
     is one job name for each of the runpaths.
 
     :param job_name_format: The format of the job name, e.g., "job_%d"
@@ -102,7 +102,7 @@ class Runpaths:
 
     def _create_and_open_file(self, mode="w"):
         Path(self.runpath_list_filename).parent.mkdir(parents=True, exist_ok=True)
-        return open(self.runpath_list_filename, mode)
+        return open(self.runpath_list_filename, mode, encoding="utf-8")
 
     def format_job_name(self) -> str:
         return _maybe_format(self._job_name_format)

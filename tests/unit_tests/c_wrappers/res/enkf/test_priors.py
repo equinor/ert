@@ -17,7 +17,7 @@ def test_adding_priors(poly_case):
     del m
     gc.collect()
 
-    with open("coeff_priors", "a") as f:
+    with open("coeff_priors", "a", encoding="utf-8") as f:
         f.write("COEFF_D UNIFORM 0 5\n")
     m = EnKFMain(ResConfig("poly.ert"))
 

@@ -11,7 +11,7 @@ def test_create():
 
 def test_field_guess_filetype(tmp_path):
     fname = str(tmp_path / "test.kw.grdecl")
-    with open(fname, "w") as f:
+    with open(fname, "w", encoding="utf-8") as f:
         f.write("-- my comment\n")
         f.write("-- more comments\n")
         f.write("SOWCR\n")

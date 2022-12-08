@@ -18,7 +18,7 @@ class RMSConfig:
 
     def __init__(self):
         config_file = os.getenv("RMS_SITE_CONFIG", default=self.DEFAULT_CONFIG_FILE)
-        with open(config_file) as f:
+        with open(config_file, encoding="utf-8") as f:
             try:
                 config = yaml.safe_load(f)
             except yaml.YAMLError:
@@ -121,10 +121,10 @@ class RMSRun:
 
             if os.path.exists(single_seed_file):
                 # Using existing single seed file
-                with open(single_seed_file) as fileH:
+                with open(single_seed_file, encoding="utf-8") as fileH:
                     seed = int(float(fileH.readline()))
             elif os.path.exists(multi_seed_file):
-                with open(multi_seed_file) as fileH:
+                with open(multi_seed_file, encoding="utf-8") as fileH:
                     seed_list = [int(x) for x in fileH.readlines()]
                 seed = seed_list[iens + 1]
             else:
@@ -148,7 +148,7 @@ class RMSRun:
         exec_env_file = f"{self_exe}_exec_env.json"
         user_env = {}
         if os.path.isfile(exec_env_file):
-            with open(exec_env_file) as f:
+            with open(exec_env_file, encoding="utf-8") as f:
                 user_env = json.load(f)
 
         for var in set(config_env.keys()) | set(user_env.keys()):

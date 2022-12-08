@@ -166,7 +166,7 @@ def test_given_global_env_and_update_path_executable_env_is_updated():
     executable = "./x.py"
     outfile = "outfile.stdout.0"
 
-    with open(executable, "w") as f:
+    with open(executable, "w", encoding="utf-8") as f:
         f.write("#!/usr/bin/env python\n")
         f.write("import os\n")
         f.write("print(os.environ['KEY_ONE'])\n")
@@ -208,7 +208,7 @@ def test_given_global_env_and_update_path_executable_env_is_updated():
         number_of_finished_scripts == 1
     ), "guard check, script must finish successfully"
 
-    with open(outfile, "r") as out0:
+    with open(outfile, "r", encoding="utf-8") as out0:
         content = list(out0.read().splitlines())
         assert content[0] == "FirstValue"
         assert content[1] == "SecondValue"
@@ -221,7 +221,7 @@ def test_given_global_env_and_update_path_executable_env_is_updated():
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_exec_env():
-    with open("exec_env.py", "w") as f:
+    with open("exec_env.py", "w", encoding="utf-8") as f:
         f.write(
             """#!/usr/bin/env python\n
 import os
@@ -234,7 +234,7 @@ assert exec_env["NOT_SET"] is None
         )
     os.chmod("exec_env.py", stat.S_IEXEC + stat.S_IREAD)
 
-    with open("EXEC_ENV", "w") as f:
+    with open("EXEC_ENV", "w", encoding="utf-8") as f:
         f.write("EXECUTABLE exec_env.py\n")
         f.write("EXEC_ENV TEST_ENV 123\n")
         f.write("EXEC_ENV NOT_SET 42\n")
@@ -246,12 +246,12 @@ assert exec_env["NOT_SET"] is None
         "run_id", ".", "data_root", 0, 0, SubstitutionList(), EnvironmentVarlist()
     )
 
-    with open("jobs.json", "r") as f:
+    with open("jobs.json", "r", encoding="utf-8") as f:
         jobs_json = json.load(f)
 
     for msg in list(JobRunner(jobs_json).run([])):
         if isinstance(msg, Start):
-            with open("exec_env_exec_env.json") as f:
+            with open("exec_env_exec_env.json", encoding="utf-8") as f:
                 exec_env = json.load(f)
                 assert exec_env["TEST_ENV"] == "123"
                 assert exec_env["NOT_SET"] is None

@@ -16,7 +16,7 @@ def load_data(filename):
     """
     yaml_err = ""
     json_err = ""
-    with open(filename) as fin:
+    with open(filename, encoding="utf-8") as fin:
         try:
             return yaml.safe_load(fin)
         except yaml.YAMLError as err:
@@ -96,7 +96,7 @@ def render_template(input_files, template_file, output_file):
 
     template = _load_template(template_file)
     data = _load_input(all_input_files)
-    with open(output_file, "w") as fout:
+    with open(output_file, "w", encoding="utf-8") as fout:
         fout.write(template.render(**data))
 
 

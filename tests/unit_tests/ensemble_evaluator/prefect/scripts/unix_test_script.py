@@ -13,7 +13,7 @@ def parse_args(args=None):
 
 
 def write_to_file(file, data):
-    with open(file, "w") as f:
+    with open(file, "w", encoding="utf-8") as f:
         json.dump(data, f)
 
 

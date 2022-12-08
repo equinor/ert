@@ -8,7 +8,7 @@ def test_create(tmp_path):
     with pytest.raises(ValueError):
         gen_obs = GenObservation("KEY", data_config)
 
-    with open(tmp_path / "obs1.txt", "w") as f:
+    with open(tmp_path / "obs1.txt", "w", encoding="utf-8") as f:
         f.write("10  5  12 6\n")
 
     with pytest.raises(ValueError):

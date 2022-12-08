@@ -9,13 +9,13 @@ from ert._c_wrappers.enkf import EnKFMain, GenKwConfig, ResConfig
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_gen_kw_config():
-    with open("template.txt", "w") as f:
+    with open("template.txt", "w", encoding="utf-8") as f:
         f.write("Hello")
 
-    with open("parameters.txt", "w") as f:
+    with open("parameters.txt", "w", encoding="utf-8") as f:
         f.write("KEY  UNIFORM 0 1 \n")
 
-    with open("parameters_with_comments.txt", "w") as f:
+    with open("parameters_with_comments.txt", "w", encoding="utf-8") as f:
         f.write("KEY1  UNIFORM 0 1 -- COMMENT\n")
         f.write("\n\n")  # Two blank lines
         f.write("KEY2  UNIFORM 0 1\n")
@@ -41,10 +41,10 @@ def test_gen_kw_config_get_priors():
     parameter_file = "parameters.txt"
     template_file = "template.txt"
 
-    with open(template_file, "w") as f:
+    with open(template_file, "w", encoding="utf-8") as f:
         f.write("Hello")
 
-    with open(parameter_file, "w") as f:
+    with open(parameter_file, "w", encoding="utf-8") as f:
         f.write("KEY1  NORMAL 0 1\n")
         f.write("KEY2  LOGNORMAL 2 3\n")
         f.write("KEY3  TRUNCATED_NORMAL 4 5 6 7\n")
@@ -168,11 +168,11 @@ def test_gen_kw_is_log_or_not(tmpdir, distribution, expect_log, parameters_regex
         GEN_KW KW_NAME template.txt kw.txt prior.txt
         """
         )
-        with open("config.ert", "w") as fh:
+        with open("config.ert", "w", encoding="utf-8") as fh:
             fh.writelines(config)
-        with open("template.txt", "w") as fh:
+        with open("template.txt", "w", encoding="utf-8") as fh:
             fh.writelines("MY_KEYWORD <MY_KEYWORD>")
-        with open("prior.txt", "w") as fh:
+        with open("prior.txt", "w", encoding="utf-8") as fh:
             fh.writelines(f"MY_KEYWORD {distribution}")
 
         res_config = ResConfig("config.ert")
@@ -187,5 +187,7 @@ def test_gen_kw_is_log_or_not(tmpdir, distribution, expect_log, parameters_regex
         ert.createRunPath(prior)
         assert re.match(
             parameters_regex,
-            Path("simulations/realization-0/iter-0/parameters.txt").read_text(),
+            Path("simulations/realization-0/iter-0/parameters.txt").read_text(
+                encoding="utf-8"
+            ),
         )

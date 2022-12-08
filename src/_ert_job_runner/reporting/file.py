@@ -171,7 +171,7 @@ class File(Reporter):
             stderr_file = None
             if job.std_err:
                 if os.path.exists(job.std_err):
-                    with open(job.std_err, "r") as error_file_handler:
+                    with open(job.std_err, "r", encoding="utf-8") as error_file_handler:
                         stderr = error_file_handler.read()
                         if stderr:
                             stderr_file = os.path.join(os.getcwd(), job.std_err)
@@ -189,11 +189,11 @@ class File(Reporter):
             file.write("</error>\n")
 
     def _dump_ok_file(self):
-        with open(OK_file, "w") as f:
+        with open(OK_file, "w", encoding="utf-8") as f:
             f.write(
                 f"All jobs complete {time.strftime(TIME_FORMAT, time.localtime())} \n"
             )
 
     def _dump_status_json(self):
-        with open(STATUS_json, "w") as fp:
+        with open(STATUS_json, "w", encoding="utf-8") as fp:
             json.dump(self.status_dict, fp, indent=4)

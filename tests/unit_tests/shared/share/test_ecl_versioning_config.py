@@ -44,7 +44,7 @@ def test_load(monkeypatch):
         os.path.join(ecl_config_path, "ecl100_config.yml"),
     )
     conf = ecl_config.Ecl100Config()
-    with open("file.yml", "w") as f:
+    with open("file.yml", "w", encoding="utf-8") as f:
         f.write("this:\n -should\n-be\ninvalid:yaml?")
 
     monkeypatch.setenv("ECL100_SITE_CONFIG", "file.yml")
@@ -58,7 +58,7 @@ def test_load(monkeypatch):
     os.mkdir("bin")
     for f in ["scalar_exe", "mpi_exe", "mpi_run"]:
         fname = os.path.join("bin", f)
-        with open(fname, "w") as fh:
+        with open(fname, "w", encoding="utf-8") as fh:
             fh.write("This is an exectable ...")
 
         os.chmod(fname, stat.S_IEXEC)
@@ -99,7 +99,7 @@ def test_load(monkeypatch):
         },
     }
 
-    with open("file.yml", "w") as f:
+    with open("file.yml", "w", encoding="utf-8") as f:
         f.write(yaml.dump(d))
 
     conf = ecl_config.Ecl100Config()
@@ -151,7 +151,7 @@ def test_load(monkeypatch):
 def test_default(monkeypatch):
     os.mkdir("bin")
     scalar_exe = "bin/scalar_exe"
-    with open(scalar_exe, "w") as fh:
+    with open(scalar_exe, "w", encoding="utf-8") as fh:
         fh.write("This is an exectable ...")
     os.chmod(scalar_exe, stat.S_IEXEC)
 
@@ -171,7 +171,7 @@ def test_default(monkeypatch):
     }
 
     monkeypatch.setenv("ECL100_SITE_CONFIG", os.path.join("file.yml"))
-    with open("file.yml", "w") as f:
+    with open("file.yml", "w", encoding="utf-8") as f:
         f.write(yaml.dump(d1))
 
     conf = ecl_config.Ecl100Config()
@@ -185,7 +185,7 @@ def test_default(monkeypatch):
     sim = conf.sim("default")
     assert sim.version == "2015"
 
-    with open("file.yml", "w") as f:
+    with open("file.yml", "w", encoding="utf-8") as f:
         f.write(yaml.dump(d0))
 
     conf = ecl_config.Ecl100Config()

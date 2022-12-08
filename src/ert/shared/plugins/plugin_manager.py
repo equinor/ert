@@ -251,7 +251,7 @@ class ErtPluginContext:
         if site_config_content is not None:
             logging.debug("Creating temporary site-config")
             tmp_site_config_filename = os.path.join(self.tmp_dir, "site-config")
-            with open(tmp_site_config_filename, "w") as fh:
+            with open(tmp_site_config_filename, "w", encoding="utf-8") as fh:
                 fh.write(site_config_content)
             logging.debug(f"Temporary site-config created: {tmp_site_config_filename}")
         return tmp_site_config_filename

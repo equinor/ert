@@ -110,7 +110,7 @@ class WorkflowConfig:
 
     def _write_workflow_config(self, output_dir):
         file_path = os.path.join(output_dir, self.name.upper())
-        with open(file_path, "w") as f_out:
+        with open(file_path, "w", encoding="utf-8") as f_out:
             f_out.write("INTERNAL      True\n")
             f_out.write(f"SCRIPT        {self.function_dir}")
         return file_path

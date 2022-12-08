@@ -156,7 +156,7 @@ time.sleep(10)  # Wait for the test to read the JSON file
 def test_json_created(server):
     server.fetch_conn_info()  # wait for it to start
 
-    with open("dummy_server.json") as f:
+    with open("dummy_server.json", encoding="utf-8") as f:
         assert f.read()
 
 
@@ -302,14 +302,14 @@ def test_cleanup_service_files(tmpdir):
     with tmpdir.as_cwd():
         storage_service_name = "storage"
         storage_service_file = f"{storage_service_name}_server.json"
-        with open(storage_service_file, "w") as f:
+        with open(storage_service_file, "w", encoding="utf-8") as f:
             f.write("storage_service info")
         assert Path(storage_service_file).exists()
         SERVICE_CONF_PATHS.add(tmpdir / storage_service_file)
 
         webviz_service_name = "webviz-ert"
         webviz_service_file = f"{webviz_service_name}_server.json"
-        with open(webviz_service_file, "w") as f:
+        with open(webviz_service_file, "w", encoding="utf-8") as f:
             f.write("webviz-ert info")
         assert Path(webviz_service_file).exists()
         SERVICE_CONF_PATHS.add(tmpdir / webviz_service_file)

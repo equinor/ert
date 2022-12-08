@@ -144,7 +144,7 @@ def test_load_forward_model_summary(summary_configuration, expected, caplog):
     )
     if summary_configuration:
         config_text += summary_configuration
-    Path("config.ert").write_text(config_text)
+    Path("config.ert").write_text(config_text, encoding="utf-8")
     # Create refcase
     ecl_sum = run_simulator(1, datetime(2014, 9, 10))
     ecl_sum.fwrite()

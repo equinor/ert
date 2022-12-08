@@ -16,7 +16,7 @@ def read_os_release(pfx="LSB_"):
         return None
 
     props = {}
-    with open(fname, "r") as f:
+    with open(fname, "r", encoding="utf-8") as f:
         for line in f:
             kv = splitline(processline(line), pfx=pfx)
             if kv:
