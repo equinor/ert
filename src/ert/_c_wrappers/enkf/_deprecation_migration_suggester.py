@@ -20,6 +20,7 @@ class DeprecationMigrationSuggester:
         "SCHEDULE_PREDICTION_FILE",
     ]
     JUST_REMOVE_KEYWORDS = ["UMASK", "LOG_FILE", "LOG_LEVEL"]
+    RSH_KEYWORDS = ["RSH_HOST", "RHS_COMMAND"]
 
     def _add_deprecated_keywords_to_parser(self):
         for kw in self.REPLACE_WITH_GEN_KW:
@@ -53,6 +54,13 @@ class DeprecationMigrationSuggester:
             add_suggestion(
                 kw,
                 f"The {kw} keyword no longer has any effect "
+                "and can safely be removed from the config file.",
+            )
+        for kw in self.RSH_KEYWORDS:
+            add_suggestion(
+                kw,
+                f"The {kw} was used for the deprecated and removed "
+                "support for RHS queues. It no longer has any effect "
                 "and can safely be removed from the config file.",
             )
         add_suggestion(
