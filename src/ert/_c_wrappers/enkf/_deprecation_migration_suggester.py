@@ -29,6 +29,7 @@ class DeprecationMigrationSuggester:
         self._parser.add("RFTPATH")
         self._parser.add("END_DATE")
         self._parser.add("CASE_TABLE")
+        self._parser.add("RERUN_START")
 
     def suggest_migrations(self, filename: str):
         suggestions = []
@@ -85,6 +86,13 @@ class DeprecationMigrationSuggester:
                 "The CASE_TABLE keyword was used with a deprecated sensitivity "
                 "analysis feature to give descriptive names to cases. It no longer has "
                 " any effect and can safely be removed from the config file."
+            )
+        if content.hasKey("RERUN_START"):
+            suggestions.append(
+                "The RERUN_START keyword was used for the deprecated run mode "
+                "ENKF_ASSIMILATION which was removed in 2016. It does not have "
+                "any effect on run modes currently supported by ERT, and can "
+                "be safely removed."
             )
 
         return suggestions
