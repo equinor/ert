@@ -251,6 +251,11 @@ def analysis_IES(
         observation_values = observation_handle.observation_values
         observation_errors = observation_handle.observation_errors
         observation_mask = observation_handle.obs_mask
+
+        assert (
+            len(observation_values) == len(observation_errors) == len(observation_mask)
+        )
+
         if len(observation_values) == 0:
             raise ErtAnalysisError(
                 f"No active observations for update step: {update_step.name}."
