@@ -8,5 +8,5 @@ def evaluate(coeffs, x):
 
 
 output = [evaluate(coeffs, x) for x in range(10)]
-with open("poly_0.out", "w") as f:
+with open("poly_0.out", "w", encoding="utf-8") as f:
     f.write("\n".join(map(str, output)))

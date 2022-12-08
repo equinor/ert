@@ -30,7 +30,7 @@ def test_no_plugins(monkeypatch):
             os.environ["RMS_SITE_CONFIG"]
 
         assert os.path.isfile(os.environ["ERT_SITE_CONFIG"])
-        with open(os.environ["ERT_SITE_CONFIG"]) as f:
+        with open(os.environ["ERT_SITE_CONFIG"], encoding="utf-8") as f:
             assert c.plugin_manager.get_site_config_content() == f.read()
 
         path = os.environ["ERT_SITE_CONFIG"]
@@ -57,7 +57,7 @@ def test_with_plugins(monkeypatch):
             os.environ["RMS_SITE_CONFIG"]
 
         assert os.path.isfile(os.environ["ERT_SITE_CONFIG"])
-        with open(os.environ["ERT_SITE_CONFIG"]) as f:
+        with open(os.environ["ERT_SITE_CONFIG"], encoding="utf-8") as f:
             assert c.plugin_manager.get_site_config_content() == f.read()
 
         path = os.environ["ERT_SITE_CONFIG"]

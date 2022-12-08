@@ -12,7 +12,7 @@ def globalIndex(i, j, k, nx=10, ny=10, nz=10):
 
 def readParameters(filename):
     params = {}
-    with open(filename, "r") as f:
+    with open(filename, "r", encoding="utf-8") as f:
         for line in f:
             key, value = line.split(":", 1)
             params[key] = value.strip()

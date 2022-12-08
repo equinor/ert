@@ -78,11 +78,11 @@ def make_ensemble_builder(queue_config):
             ext_job_list = []
             for job_index in range(0, num_jobs):
                 ext_job_config = Path(tmpdir) / f"EXT_JOB_{job_index}"
-                with open(ext_job_config, "w") as f:
+                with open(ext_job_config, "w", encoding="utf-8") as f:
                     f.write(f"EXECUTABLE ext_{job_index}.py\n")
 
                 ext_job_exec = Path(tmpdir) / f"ext_{job_index}.py"
-                with open(ext_job_exec, "w") as f:
+                with open(ext_job_exec, "w", encoding="utf-8") as f:
                     f.write(
                         "#!/usr/bin/env python\n"
                         "import time\n"
@@ -90,7 +90,7 @@ def make_ensemble_builder(queue_config):
                         'if __name__ == "__main__":\n'
                         f'    print("stdout from {job_index}")\n'
                         f"    time.sleep({job_sleep})\n"
-                        f"    with open('status.txt', 'a'): pass\n"
+                        f"    with open('status.txt', 'a', encoding='utf-8'): pass\n"
                     )
                 mode = os.stat(ext_job_exec).st_mode
                 mode |= stat.S_IXUSR | stat.S_IXGRP
@@ -110,7 +110,7 @@ def make_ensemble_builder(queue_config):
                 run_path = Path(tmpdir / f"real_{iens}")
                 os.mkdir(run_path)
 
-                with open(run_path / "jobs.json", "w") as f:
+                with open(run_path / "jobs.json", "w", encoding="utf-8") as f:
                     json.dump(
                         {
                             "jobList": [

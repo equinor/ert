@@ -103,7 +103,9 @@ def test_gen_kw(tmpdir, config_str, expected, extra_files, expectation):
         with expectation:
             create_runpath("config.ert")
             assert (
-                Path("simulations/realization-0/iter-0/kw.txt").read_text("utf-8")
+                Path("simulations/realization-0/iter-0/kw.txt").read_text(
+                    encoding="utf-8"
+                )
                 == expected
             )
 
@@ -488,11 +490,11 @@ def test_that_sampling_is_fixed_from_name(tmpdir, template, prior, num_realisati
         GEN_KW KW_NAME template.txt kw.txt prior.txt
         """
         )
-        with open("config.ert", "w") as fh:
+        with open("config.ert", "w", encoding="utf-8") as fh:
             fh.writelines(config)
-        with open("template.txt", "w") as fh:
+        with open("template.txt", "w", encoding="utf-8") as fh:
             fh.writelines(template)
-        with open("prior.txt", "w") as fh:
+        with open("prior.txt", "w", encoding="utf-8") as fh:
             fh.writelines(prior)
 
         res_config = ResConfig("config.ert")
@@ -549,11 +551,11 @@ def test_that_sub_sample_maintains_order(tmpdir, mask, expected):
         GEN_KW KW_NAME template.txt kw.txt prior.txt
         """
         )
-        with open("config.ert", "w") as fh:
+        with open("config.ert", "w", encoding="utf-8") as fh:
             fh.writelines(config)
-        with open("template.txt", "w") as fh:
+        with open("template.txt", "w", encoding="utf-8") as fh:
             fh.writelines("MY_KEYWORD <MY_KEYWORD>")
-        with open("prior.txt", "w") as fh:
+        with open("prior.txt", "w", encoding="utf-8") as fh:
             fh.writelines("MY_KEYWORD NORMAL 0 1")
 
         res_config = ResConfig("config.ert")
@@ -596,7 +598,7 @@ TIME_MAP time_map
         )
         expect_surface.write("surf.irap")
 
-        with open("forward_model", "w") as f:
+        with open("forward_model", "w", encoding="utf-8") as f:
             f.write(
                 dedent(
                     """#!/usr/bin/env python
@@ -625,9 +627,9 @@ if __name__ == "__main__":
             | stat.S_IXGRP
             | stat.S_IXOTH,
         )
-        with open("POLY_EVAL", "w") as fout:
+        with open("POLY_EVAL", "w", encoding="utf-8") as fout:
             fout.write("EXECUTABLE forward_model")
-        with open("observations", "w") as fout:
+        with open("observations", "w", encoding="utf-8") as fout:
             fout.write(
                 dedent(
                     """
@@ -640,7 +642,7 @@ if __name__ == "__main__":
                 )
             )
 
-        with open("obs.txt", "w") as fobs:
+        with open("obs.txt", "w", encoding="utf-8") as fobs:
             fobs.write(
                 dedent(
                     """
@@ -652,10 +654,10 @@ if __name__ == "__main__":
                 )
             )
 
-        with open("time_map", "w") as fobs:
+        with open("time_map", "w", encoding="utf-8") as fobs:
             fobs.write("2014-09-10")
 
-        with open("config.ert", "w") as fh:
+        with open("config.ert", "w", encoding="utf-8") as fh:
             fh.writelines(config)
 
         parser = ArgumentParser(prog="test_main")

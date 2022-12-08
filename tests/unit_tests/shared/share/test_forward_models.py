@@ -4,7 +4,7 @@ import pkg_resources
 
 
 def extract_executable(filename):
-    with open(filename, "r") as filehandle:
+    with open(filename, "r", encoding="utf-8") as filehandle:
         for line in filehandle.readlines():
             splitline = line.strip().split()
             if len(splitline) > 1 and splitline[0] == "EXECUTABLE":

@@ -32,7 +32,7 @@ class _ForwardModelDocumentation:
             section_id=self.name + "-job-config", title="Job configuration used by ERT"
         )
 
-        with open(self.job_config_file) as fh:
+        with open(self.job_config_file, encoding="utf-8") as fh:
             job_config_text = fh.read()
         job_config_text_node = nodes.literal_block(text=job_config_text)
         config_section_node.append(job_config_text_node)

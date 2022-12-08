@@ -22,7 +22,7 @@ def test_queue_config_dict_same_as_from_file(tmp_path_factory, config_generator)
 @given(st.integers(min_value=1, max_value=300))
 def test_queue_config_default_max_running_is_unlimited(num_real):
     filename = "config.ert"
-    with open(filename, "w") as f:
+    with open(filename, "w", encoding="utf-8") as f:
         f.write(f"NUM_REALIZATIONS {num_real}\nQUEUE_SYSTEM SLURM\n")
     # get_max_running() == 0 means unlimited
     assert ResConfig(filename).queue_config.create_job_queue().get_max_running() == 0

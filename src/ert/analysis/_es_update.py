@@ -279,7 +279,7 @@ def _write_update_report(fname: Path, snapshot: SmootherSnapshot) -> None:
     # Make sure log file parents exist
     fname.parent.mkdir(parents=True, exist_ok=True)
     for update_step_name, update_step in snapshot.update_step_snapshots.items():
-        with open(fname, "w") as fout:
+        with open(fname, "w", encoding="utf-8") as fout:
             fout.write("=" * 127 + "\n")
             fout.write("Report step...: deprecated\n")
             fout.write(f"Update step......: {update_step_name:<10}\n")

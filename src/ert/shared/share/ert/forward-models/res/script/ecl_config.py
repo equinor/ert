@@ -77,7 +77,7 @@ class EclConfig:
     """
 
     def __init__(self, config_file, simulator_name="not_set"):
-        with open(config_file) as f:
+        with open(config_file, encoding="utf-8") as f:
             try:
                 config = yaml.safe_load(f)
             except yaml.YAMLError:

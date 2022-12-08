@@ -7,12 +7,12 @@ from ert._c_wrappers.enkf.data import GenKw
 def create_gen_kw(tmp_path):
     parameter_file = str(tmp_path / "MULTFLT.txt")
     template_file = str(tmp_path / "MULTFLT.tmpl")
-    with open(parameter_file, "w") as f:
+    with open(parameter_file, "w", encoding="utf-8") as f:
         f.write("MULTFLT1  NORMAL  0   1\n")
         f.write("MULTFLT2  RAW \n")
         f.write("MULTFLT3  NORMAL  0   1\n")
 
-    with open(template_file, "w") as f:
+    with open(template_file, "w", encoding="utf-8") as f:
         f.write("<MULTFLT1> <MULTFLT2> <MULTFLT3>\n")
         f.write("/\n")
 

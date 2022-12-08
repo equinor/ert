@@ -3,7 +3,7 @@ from ecl.summary import EclSum
 
 
 def writeDiff(filename, ecl_sum, key1, key2):
-    with open(filename, "w") as f:
+    with open(filename, "w", encoding="utf-8") as f:
         for v1, v2 in zip(ecl_sum.numpy_vector(key1), ecl_sum.numpy_vector(key2)):
             diff = v1 - v2
             f.write(f"{diff}\n")

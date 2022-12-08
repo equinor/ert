@@ -177,7 +177,7 @@ def default_name_if_none(name):
 
 
 def load_configs(config_file):
-    with open(config_file, "r") as cf:
+    with open(config_file, "r", encoding="utf-8") as cf:
         jobs = json.load(cf)
 
     return jobs
@@ -300,7 +300,7 @@ def test_no_jobs():
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_transfer_arg_types():
-    with open("FWD_MODEL", "w") as f:
+    with open("FWD_MODEL", "w", encoding="utf-8") as f:
         f.write("EXECUTABLE ls\n")
         f.write("MIN_ARG 2\n")
         f.write("MAX_ARG 6\n")
@@ -452,7 +452,7 @@ def test_status_file():
         EnvironmentVarlist(),
     )
 
-    with open("status.json", "w") as f:
+    with open("status.json", "w", encoding="utf-8") as f:
         json.dump(
             {
                 "start_time": None,
@@ -493,6 +493,6 @@ def test_that_values_with_brackets_are_ommitted(tmp_path, caplog):
         EnvironmentVarlist(),
     )
     assert "Environment variable ENV_VAR skipped due to" in caplog.text
-    with open(tmp_path / "jobs.json") as fp:
+    with open(tmp_path / "jobs.json", encoding="utf-8") as fp:
         data = json.load(fp)
     assert "ENV_VAR" not in data["jobList"][0]["environment"]

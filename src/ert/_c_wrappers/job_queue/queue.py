@@ -621,9 +621,11 @@ class JobQueue(BaseCClass):
         for q_index, q_node in enumerate(self.job_list):
             if cert is not None:
                 cert_path = f"{q_node.run_path}/{CERT_FILE}"
-                with open(cert_path, "w") as cert_file:
+                with open(cert_path, "w", encoding="utf-8") as cert_file:
                     cert_file.write(cert)
-            with open(f"{q_node.run_path}/{JOBS_FILE}", "r+") as jobs_file:
+            with open(
+                f"{q_node.run_path}/{JOBS_FILE}", "r+", encoding="utf-8"
+            ) as jobs_file:
                 data = json.load(jobs_file)
 
                 data["ens_id"] = ens_id

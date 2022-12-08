@@ -79,9 +79,9 @@ class FileSystemManager:
         version_file = self.storage_path / FS_VERSION_FILE
         if not version_file.exists():
             # If the version file does not exist it uses old fs
-            with open(version_file, "w") as f:
+            with open(version_file, "w", encoding="utf-8") as f:
                 json.dump({"version": 0}, f)
-        with open(version_file, "r") as f:
+        with open(version_file, "r", encoding="utf-8") as f:
             version_data = json.load(f)
         if version_data["version"] < FS_VERSION:
             raise FileSystemError(

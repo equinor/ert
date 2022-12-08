@@ -14,8 +14,8 @@ def test_config_content_as_dict(tmpdir):
         conf = ConfigParser()
         existing_file_1 = "test_1.t"
         existing_file_2 = "test_2.t"
-        Path(existing_file_2).write_text("something")
-        Path(existing_file_1).write_text("not important")
+        Path(existing_file_2).write_text("something", encoding="utf-8")
+        Path(existing_file_1).write_text("not important", encoding="utf-8")
         init_user_config_parser(conf)
 
         schema_item = conf.add("MULTIPLE_KEY_VALUE", False)
@@ -24,7 +24,7 @@ def test_config_content_as_dict(tmpdir):
         schema_item = conf.add("KEY", False)
         schema_item.iset_type(2, ContentTypeEnum.CONFIG_INT)
 
-        with open("config", "w") as fileH:
+        with open("config", "w", encoding="utf-8") as fileH:
             fileH.write(f"{ConfigKeys.NUM_REALIZATIONS} 42\n")
             fileH.write(f"{ConfigKeys.DATA_FILE} {existing_file_2} \n")
             fileH.write(f"{ConfigKeys.REFCASE} {existing_file_1} \n")
@@ -93,8 +93,8 @@ def test_config_content_as_dict_single_value_keys(tmpdir):
         conf = ConfigParser()
         existing_file_1 = "test_1.t"
         existing_file_2 = "test_2.t"
-        Path(existing_file_2).write_text("something")
-        Path(existing_file_1).write_text("not important")
+        Path(existing_file_2).write_text("something", encoding="utf-8")
+        Path(existing_file_1).write_text("not important", encoding="utf-8")
         init_user_config_parser(conf)
         type_value_map = {
             "str": "abc",
@@ -106,7 +106,7 @@ def test_config_content_as_dict_single_value_keys(tmpdir):
             "history_enum": "REFCASE_SIMULATED",
         }
 
-        with open("config.file", "w") as fileH:
+        with open("config.file", "w", encoding="utf-8") as fileH:
             for key in SINGLE_OCCURRENCE_SINGLE_ARG_KEYS:
                 key_type = SINGLE_OCCURRENCE_KEY_TYPES[key]
                 value = type_value_map[key_type]

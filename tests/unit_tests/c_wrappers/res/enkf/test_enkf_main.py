@@ -123,7 +123,7 @@ def test_that_current_case_file_is_written():
         JOBNAME my_case%d
         """
     )
-    Path("config.ert").write_text(config_text)
+    Path("config.ert").write_text(config_text, encoding="utf-8")
     res_config = ResConfig("config.ert")
     EnKFMain(res_config)
     assert (Path("storage") / "current_case").read_text() == "default"
@@ -137,12 +137,12 @@ def test_that_current_case_file_can_have_newline():
         JOBNAME my_case%d
         """
     )
-    Path("config.ert").write_text(config_text)
+    Path("config.ert").write_text(config_text, encoding="utf-8")
     res_config = ResConfig("config.ert")
     EnKFMain(res_config)
-    assert (Path("storage") / "current_case").read_text() == "default"
+    assert (Path("storage") / "current_case").read_text(encoding="utf-8") == "default"
     del res_config
-    (Path("storage") / "current_case").write_text("default\n")
+    (Path("storage") / "current_case").write_text("default\n", encoding="utf-8")
     res_config = ResConfig("config.ert")
     EnKFMain(res_config)
 
@@ -345,7 +345,7 @@ def test_random_seed_initialization_of_rngs(random_seed, tmpdir):
         RANDOM_SEED {random_seed}
         """
         )
-        with open("config.ert", "w") as fh:
+        with open("config.ert", "w", encoding="utf-8") as fh:
             fh.writelines(config)
 
         res_config = ResConfig("config.ert")
@@ -356,7 +356,7 @@ def test_random_seed_initialization_of_rngs(random_seed, tmpdir):
 @pytest.mark.usefixtures("use_tmpdir")
 def test_ert_context():
     # Write a minimal config file with DEFINE
-    with open("config_file.ert", "w") as fout:
+    with open("config_file.ert", "w", encoding="utf-8") as fout:
         fout.write("NUM_REALIZATIONS 1\nDEFINE MY_PATH <CONFIG_PATH>")
     res_config = ResConfig("config_file.ert")
     ert = EnKFMain(res_config)

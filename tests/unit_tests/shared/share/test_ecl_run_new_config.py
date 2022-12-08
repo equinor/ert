@@ -54,7 +54,7 @@ def eclrun_conf():
 
 @pytest.fixture
 def init_eclrun_config(tmp_path, monkeypatch, eclrun_conf):
-    with open(tmp_path / "ecl100_config.yml", "w") as f:
+    with open(tmp_path / "ecl100_config.yml", "w", encoding="utf-8") as f:
         f.write(yaml.dump(eclrun_conf))
     monkeypatch.setenv("ECL100_SITE_CONFIG", "ecl100_config.yml")
 
@@ -71,7 +71,9 @@ def test_get_version_raise():
 @pytest.mark.usefixtures("use_tmpdir", "init_eclrun_config")
 @mock.patch.dict(os.environ, {"LSB_JOBID": "some-id"})
 def test_env(eclrun_conf):
-    with open("eclrun", "w") as f, open("DUMMY.DATA", "w"):
+    with open("eclrun", "w", encoding="utf-8") as f, open(
+        "DUMMY.DATA", "w", encoding="utf-8"
+    ):
         f.write(
             """#!/usr/bin/env python
 import os
@@ -88,7 +90,7 @@ with open("env.json", "w") as f:
         erun, "_get_run_command", mock.MagicMock(return_value="./eclrun")
     ):
         erun.runEclipse(eclrun_config=eclrun_config)
-    with open("env.json") as f:
+    with open("env.json", encoding="utf-8") as f:
         run_env = json.load(f)
 
     eclrun_env = eclrun_conf["eclrun_env"]

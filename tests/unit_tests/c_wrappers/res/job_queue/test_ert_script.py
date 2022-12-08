@@ -51,13 +51,13 @@ def test_ert_script_failed_implementation():
 def test_ert_script_from_file():
     WorkflowCommon.createErtScriptsJob()
 
-    with open("syntax_error_script.py", "w") as f:
+    with open("syntax_error_script.py", "w", encoding="utf-8") as f:
         f.write("from ert._c_wrappers.enkf not_legal_syntax ErtScript\n")
 
-    with open("import_error_script.py", "w") as f:
+    with open("import_error_script.py", "w", encoding="utf-8") as f:
         f.write("from ert._c_wrappers.enkf import DoesNotExist\n")
 
-    with open("empty_script.py", "w") as f:
+    with open("empty_script.py", "w", encoding="utf-8") as f:
         f.write("from ert._c_wrappers.enkf import ErtScript\n")
 
     script_object = ErtScript.loadScriptFromFile("subtract_script.py")

@@ -17,7 +17,7 @@ def run():
         "{pwd}/poly_out/realization-{iens}/iter-{iter}  "
         "poly_{iens}  {iter:03d}\n"
     )
-    with open(runpath_file) as fh:
+    with open(runpath_file, encoding="utf-8") as fh:
         rpf = "".join(
             [
                 runpath_line.format(iens=iens, iter=iteration, pwd=curdir)
@@ -26,7 +26,7 @@ def run():
         )
         assert fh.read() == rpf
 
-    with open(ok_filename.format(iteration), "w") as fh:
+    with open(ok_filename.format(iteration), "w", encoding="utf-8") as fh:
         fh.write(":)")
 
 

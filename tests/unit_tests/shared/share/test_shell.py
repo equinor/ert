@@ -77,14 +77,14 @@ def shell(source_root):
 @pytest.mark.usefixtures("use_tmpdir")
 def test_symlink(shell):
     assert b"must exist" in shell.symlink("target/does/not/exist", "link").stderr
-    with open("target", "w") as fileH:
+    with open("target", "w", encoding="utf-8") as fileH:
         fileH.write("target ...")
 
     shell.symlink("target", "link")
     assert os.path.islink("link")
     assert os.readlink("link") == "target"
 
-    with open("target2", "w") as fileH:
+    with open("target2", "w", encoding="utf-8") as fileH:
         fileH.write("target ...")
 
     assert b"File exists" in shell.symlink("target2", "target").stderr
@@ -109,7 +109,7 @@ def test_symlink(shell):
 @pytest.mark.usefixtures("use_tmpdir")
 def test_symlink2(shell):
     os.makedirs("path")
-    with open("path/target", "w") as f:
+    with open("path/target", "w", encoding="utf-8") as f:
         f.write("1234")
 
     shell.symlink("path/target", "link")
@@ -119,14 +119,14 @@ def test_symlink2(shell):
     shell.symlink("path/target", "link")
     assert os.path.islink("link")
     assert os.path.isfile("path/target")
-    with open("link") as f:
+    with open("link", encoding="utf-8") as f:
         s = f.read()
         assert s == "1234"
 
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_mkdir(shell):
-    with open("file", "w") as f:
+    with open("file", "w", encoding="utf-8") as f:
         f.write("Hei")
 
     assert b"File exists" in shell.mkdir("file").stderr
@@ -141,7 +141,7 @@ def test_mkdir(shell):
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_move_file(shell):
-    with open("file", "w") as f:
+    with open("file", "w", encoding="utf-8") as f:
         f.write("Hei")
 
     shell.move_file("file", "file2")
@@ -159,7 +159,7 @@ def test_move_file(shell):
 
     assert b"not an existing file" in shell.move_file("not_existing", "target").stderr
 
-    with open("file2", "w") as f:
+    with open("file2", "w", encoding="utf-8") as f:
         f.write("123")
 
     shell.move_file("file2", "path/file2")
@@ -167,7 +167,7 @@ def test_move_file(shell):
     assert not os.path.isfile("file2")
 
     shell.mkdir("rms/ipl")
-    with open("global_variables.ipl", "w") as f:
+    with open("global_variables.ipl", "w", encoding="utf-8") as f:
         f.write("123")
 
     shell.move_file("global_variables.ipl", "rms/ipl/global_variables.ipl")
@@ -176,18 +176,18 @@ def test_move_file(shell):
 @pytest.mark.usefixtures("use_tmpdir")
 def test_move_file_into_folder_file_exists(shell):
     shell.mkdir("dst_folder")
-    with open("dst_folder/file", "w") as f:
+    with open("dst_folder/file", "w", encoding="utf-8") as f:
         f.write("old")
 
-    with open("file", "w") as f:
+    with open("file", "w", encoding="utf-8") as f:
         f.write("new")
 
-    with open("dst_folder/file", "r") as f:
+    with open("dst_folder/file", "r", encoding="utf-8") as f:
         content = f.read()
         assert content == "old"
 
     shell.move_file("file", "dst_folder")
-    with open("dst_folder/file", "r") as f:
+    with open("dst_folder/file", "r", encoding="utf-8") as f:
         content = f.read()
         assert content == "new"
 
@@ -198,11 +198,11 @@ def test_move_file_into_folder_file_exists(shell):
 def test_move_pathfile_into_folder(shell):
     shell.mkdir("dst_folder")
     shell.mkdir("source1/source2/")
-    with open("source1/source2/file", "w") as f:
+    with open("source1/source2/file", "w", encoding="utf-8") as f:
         f.write("stuff")
 
     shell.move_file("source1/source2/file", "dst_folder")
-    with open("dst_folder/file", "r") as f:
+    with open("dst_folder/file", "r", encoding="utf-8") as f:
         content = f.read()
         assert content == "stuff"
 
@@ -213,14 +213,14 @@ def test_move_pathfile_into_folder(shell):
 def test_move_pathfile_into_folder_file_exists(shell):
     shell.mkdir("dst_folder")
     shell.mkdir("source1/source2/")
-    with open("source1/source2/file", "w") as f:
+    with open("source1/source2/file", "w", encoding="utf-8") as f:
         f.write("stuff")
 
-    with open("dst_folder/file", "w") as f:
+    with open("dst_folder/file", "w", encoding="utf-8") as f:
         f.write("garbage")
 
     shell.move_file("source1/source2/file", "dst_folder")
-    with open("dst_folder/file", "r") as f:
+    with open("dst_folder/file", "r", encoding="utf-8") as f:
         content = f.read()
         assert content == "stuff"
 
@@ -267,14 +267,14 @@ def test_that_delete_directory_on_regular_file_fails(shell):
 @pytest.mark.usefixtures("use_tmpdir")
 def test_that_delete_directory_does_not_follow_symlinks(shell):
     shell.mkdir("link_target/subpath")
-    with open("link_target/link_file", "w") as f:
+    with open("link_target/link_file", "w", encoding="utf-8") as f:
         f.write("hei")
 
     shell.mkdir("path/subpath")
-    with open("path/file", "w") as f:
+    with open("path/file", "w", encoding="utf-8") as f:
         f.write("hei")
 
-    with open("path/subpath/file", "w") as f:
+    with open("path/subpath/file", "w", encoding="utf-8") as f:
         f.write("hei")
 
     shell.symlink("../link_target", "path/link")
@@ -303,7 +303,7 @@ def test_copy_directory_error(shell):
         b"existing directory" in shell.copy_directory("does/not/exist", "target").stderr
     )
 
-    with open("file", "w") as f:
+    with open("file", "w", encoding="utf-8") as f:
         f.write("hei")
 
     assert b"existing directory" in shell.copy_directory("hei", "target").stderr
@@ -316,7 +316,7 @@ def test_copy_file(shell):
     shell.mkdir("path")
     assert b"existing file" in shell.copy_file("path", "target").stderr
 
-    with open("file1", "w") as f:
+    with open("file1", "w", encoding="utf-8") as f:
         f.write("hei")
 
     shell.copy_file("file1", "file2")
@@ -333,13 +333,13 @@ def test_copy_file(shell):
 def test_copy_file2(shell):
     shell.mkdir("root/sub/path")
 
-    with open("file", "w") as f:
+    with open("file", "w", encoding="utf-8") as f:
         f.write("Hei ...")
 
     shell.copy_file("file", "root/sub/path/file")
     assert os.path.isfile("root/sub/path/file")
 
-    with open("file2", "w") as f:
+    with open("file2", "w", encoding="utf-8") as f:
         f.write("Hei ...")
 
     with pushd("root/sub/path"):
@@ -351,7 +351,7 @@ def test_copy_file2(shell):
 def test_copy_file3(shell):
     shell.mkdir("rms/output")
 
-    with open("file.txt", "w") as f:
+    with open("file.txt", "w", encoding="utf-8") as f:
         f.write("Hei")
 
     shell.copy_file("file.txt", "rms/output/")
@@ -360,13 +360,13 @@ def test_copy_file3(shell):
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_careful_copy_file(shell):
-    with open("file1", "w") as f:
+    with open("file1", "w", encoding="utf-8") as f:
         f.write("hei")
-    with open("file2", "w") as f:
+    with open("file2", "w", encoding="utf-8") as f:
         f.write("hallo")
 
     shell.careful_copy_file("file1", "file2")
-    with open("file2", "r") as f:
+    with open("file2", "r", encoding="utf-8") as f:
         assert f.readline() == "hallo"
 
     print(shell.careful_copy_file("file1", "file3"))
@@ -405,7 +405,7 @@ FORWARD_MODEL DELETE_DIRECTORY(<DIRECTORY>=mydir)
 
         subprocess.run(["ert", "test_run", ert_config_fname], check=True)
 
-        with open("realization-0/iter-0/moved.txt") as output_file:
+        with open("realization-0/iter-0/moved.txt", encoding="utf-8") as output_file:
             assert output_file.read() == "something"
         assert not os.path.exists("realization-0/iter-0/copied.txt")
         assert not os.path.exists("realization-0/iter-0/copied2.txt")
@@ -417,7 +417,7 @@ FORWARD_MODEL DELETE_DIRECTORY(<DIRECTORY>=mydir)
 @pytest.fixture
 def minimal_case(tmpdir):
     with tmpdir.as_cwd():
-        with open("config.ert", "w") as fout:
+        with open("config.ert", "w", encoding="utf-8") as fout:
             fout.write("NUM_REALIZATIONS 1")
         yield
 

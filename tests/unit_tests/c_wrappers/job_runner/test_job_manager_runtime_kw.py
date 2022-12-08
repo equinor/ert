@@ -36,7 +36,7 @@ def test_run_one_job_with_an_integer_arg_is_actually_a_fractional():
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_run_given_one_job_with_missing_file_and_one_file_present():
-    with open("a_file", "w") as f:
+    with open("a_file", "w", encoding="utf-8") as f:
         f.write("Hello")
 
     executable = "echo"

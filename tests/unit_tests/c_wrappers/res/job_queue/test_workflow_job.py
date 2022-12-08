@@ -77,7 +77,7 @@ def test_run_external_job():
     assert job.run(None, ["test", "text"]) is None
     assert job.stdoutdata() == "Hello World\n"
 
-    with open("test", "r") as f:
+    with open("test", "r", encoding="utf-8") as f:
         assert f.read() == "text"
 
 

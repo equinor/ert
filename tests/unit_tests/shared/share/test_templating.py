@@ -67,11 +67,11 @@ default_parameters = {
 def test_render_invalid():
     prod_wells = {f"PROD{idx}": 0.3 * idx for idx in range(4)}
     prod_in = "well_drill.json"
-    with open(prod_in, "w") as fout:
+    with open(prod_in, "w", encoding="utf-8") as fout:
         json.dump(prod_wells, fout)
-    with open("parameters.json", "w") as fout:
+    with open("parameters.json", "w", encoding="utf-8") as fout:
         json.dump(default_parameters, fout)
-    with open("template_file", "w") as fout:
+    with open("template_file", "w", encoding="utf-8") as fout:
         fout.write(well_drill_tmpl)
 
     wells_out = "wells.out"
@@ -107,11 +107,11 @@ def test_render():
     wells_tmpl = "well_drill_tmpl"
     wells_out = "wells.out"
 
-    with open(wells_in, "w") as fout:
+    with open(wells_in, "w", encoding="utf-8") as fout:
         json.dump(wells, fout)
-    with open("parameters.json", "w") as fout:
+    with open("parameters.json", "w", encoding="utf-8") as fout:
         json.dump(default_parameters, fout)
-    with open(wells_tmpl, "w") as fout:
+    with open(wells_tmpl, "w", encoding="utf-8") as fout:
         fout.write(well_drill_tmpl)
 
     render_template(wells_in, wells_tmpl, wells_out)
@@ -125,7 +125,7 @@ def test_render():
         "INJ4 takes value 0.2, implying off",
     ]
 
-    with open(wells_out) as fin:
+    with open(wells_out, encoding="utf-8") as fin:
         output = fin.readlines()
 
     assert output == expected_template_out
@@ -133,16 +133,16 @@ def test_render():
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_template_multiple_input():
-    with open("template", "w") as template_file:
+    with open("template", "w", encoding="utf-8") as template_file:
         template_file.write(mulitple_input_template)
 
-    with open("parameters.json", "w") as json_file:
+    with open("parameters.json", "w", encoding="utf-8") as json_file:
         json_file.write(json.dumps(default_parameters))
 
-    with open("second.json", "w") as json_file:
+    with open("second.json", "w", encoding="utf-8") as json_file:
         parameters = {"key1": {"subkey2": 1400}}
         json.dump(parameters, json_file)
-    with open("third.json", "w") as json_file:
+    with open("third.json", "w", encoding="utf-8") as json_file:
         parameters = {
             "key1": {
                 "subkey1": 3000.22,
@@ -152,7 +152,7 @@ def test_template_multiple_input():
 
     render_template(["second.json", "third.json"], "template", "out_file")
 
-    with open("out_file", "r") as parameter_file:
+    with open("out_file", "r", encoding="utf-8") as parameter_file:
         expected_output = (
             "FILENAME\n" + "F1 1999.22\n" + "OTH 1400\n" + "OTH_TEST 3000.22"
         )
@@ -162,16 +162,16 @@ def test_template_multiple_input():
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_no_parameters_json():
-    with open("template", "w") as template_file:
+    with open("template", "w", encoding="utf-8") as template_file:
         template_file.write(mulitple_input_template_no_param)
 
-    with open("not_the_standard_parameters.json", "w") as json_file:
+    with open("not_the_standard_parameters.json", "w", encoding="utf-8") as json_file:
         json_file.write(json.dumps(default_parameters))
 
-    with open("second.json", "w") as json_file:
+    with open("second.json", "w", encoding="utf-8") as json_file:
         parameters = {"key1": {"subkey2": 1400}}
         json.dump(parameters, json_file)
-    with open("third.json", "w") as json_file:
+    with open("third.json", "w", encoding="utf-8") as json_file:
         parameters = {
             "key1": {
                 "subkey1": 3000.22,
@@ -185,7 +185,7 @@ def test_no_parameters_json():
         "out_file",
     )
 
-    with open("out_file", "r") as parameter_file:
+    with open("out_file", "r", encoding="utf-8") as parameter_file:
         expected_output = (
             "FILENAME\n" + "F1 1999.22\n" + "OTH 1400\n" + "OTH_TEST 3000.22"
         )
@@ -195,17 +195,17 @@ def test_no_parameters_json():
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_template_executable():
-    with open("template", "w") as template_file:
+    with open("template", "w", encoding="utf-8") as template_file:
         template_file.write(
             "FILENAME\n"
             + "F1 {{parameters.key1.subkey1}}\n"
             + "F2 {{other.key1.subkey1}}"
         )
 
-    with open("parameters.json", "w") as json_file:
+    with open("parameters.json", "w", encoding="utf-8") as json_file:
         json_file.write(json.dumps(default_parameters))
 
-    with open("other.json", "w") as json_file:
+    with open("other.json", "w", encoding="utf-8") as json_file:
         parameters = {
             "key1": {
                 "subkey1": 200,
@@ -225,14 +225,14 @@ def test_template_executable():
 
     subprocess.call(template_render_exec + params, shell=True, stdout=subprocess.PIPE)
 
-    with open("out_file", "r") as parameter_file:
+    with open("out_file", "r", encoding="utf-8") as parameter_file:
         expected_output = "FILENAME\n" + "F1 1999.22\n" + "F2 200"
         assert parameter_file.read() == expected_output
 
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_load_parameters():
-    with open("parameters.json", "w") as json_file:
+    with open("parameters.json", "w", encoding="utf-8") as json_file:
         json_file.write(json.dumps(default_parameters))
 
     assert load_parameters() == default_parameters

@@ -146,7 +146,7 @@ def test_write_snakeoil_runpath_file(snake_oil_case, itr):
     ]
     exp_runpaths = list(map(os.path.realpath, exp_runpaths))
 
-    with open(runpath_list_path, "r") as f:
+    with open(runpath_list_path, "r", encoding="utf-8") as f:
         dumped_runpaths = list(zip(*[line.split() for line in f.readlines()]))[1]
 
     assert list(exp_runpaths) == list(dumped_runpaths)
@@ -155,7 +155,7 @@ def test_write_snakeoil_runpath_file(snake_oil_case, itr):
 @pytest.mark.usefixtures("use_tmpdir")
 def test_assert_export():
     # Write a minimal config file with env
-    with open("config_file.ert", "w") as fout:
+    with open("config_file.ert", "w", encoding="utf-8") as fout:
         fout.write(
             dedent(
                 """

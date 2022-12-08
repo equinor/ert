@@ -4,7 +4,7 @@ import sys
 
 
 def _load_coeffs(filename):
-    with open(filename) as f:
+    with open(filename, encoding="utf-8") as f:
         return json.load(f)
 
 
@@ -19,5 +19,5 @@ if __name__ == "__main__":
         sys.exit("My error message!!!!")
     coeffs = _load_coeffs("coeffs.json")
     output = [_evaluate(coeffs, x) for x in range(10)]
-    with open("poly_0.out", "w") as f:
+    with open("poly_0.out", "w", encoding="utf-8") as f:
         f.write("\n".join(map(str, output)))

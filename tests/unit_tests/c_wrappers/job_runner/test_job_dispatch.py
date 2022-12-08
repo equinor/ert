@@ -20,7 +20,7 @@ from tests.utils import _mock_ws_thread, wait_until
 @pytest.mark.usefixtures("use_tmpdir")
 def test_terminate_jobs():
     # Executes it self recursively and sleeps for 100 seconds
-    with open("dummy_executable", "w") as f:
+    with open("dummy_executable", "w", encoding="utf-8") as f:
         f.write(
             """#!/usr/bin/env python
 import sys, os, time
@@ -64,11 +64,11 @@ else:
         "ert_pid": "",
     }
 
-    with open("jobs.json", "w") as f:
+    with open("jobs.json", "w", encoding="utf-8") as f:
         f.write(json.dumps(job_list))
 
     # macOS doesn't provide /usr/bin/setsid, so we roll our own
-    with open("setsid", "w") as f:
+    with open("setsid", "w", encoding="utf-8") as f:
         f.write(
             dedent(
                 """\
@@ -110,12 +110,12 @@ else:
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_job_dispatch_run_subset_specified_as_parmeter():
-    with open("dummy_executable", "w") as f:
+    with open("dummy_executable", "w", encoding="utf-8") as f:
         f.write(
             "#!/usr/bin/env python\n"
             "import sys, os\n"
             'filename = "job_{}.out".format(sys.argv[1])\n'
-            'f = open(filename, "w")\n'
+            'f = open(filename, "w", encoding="utf-8")\n'
             "f.close()\n"
         )
 
@@ -189,11 +189,11 @@ def test_job_dispatch_run_subset_specified_as_parmeter():
         "ert_pid": "",
     }
 
-    with open("jobs.json", "w") as f:
+    with open("jobs.json", "w", encoding="utf-8") as f:
         f.write(json.dumps(job_list))
 
     # macOS doesn't provide /usr/bin/setsid, so we roll our own
-    with open("setsid", "w") as f:
+    with open("setsid", "w", encoding="utf-8") as f:
         f.write(
             dedent(
                 """\
@@ -241,7 +241,7 @@ def test_no_json_jobs_json_file():
     path = os.path.realpath(os.curdir)
     jobs_file = os.path.join(path, "jobs.json")
 
-    with open(jobs_file, "w") as f:
+    with open(jobs_file, "w", encoding="utf-8") as f:
         f.write("not json")
 
     with pytest.raises(OSError):

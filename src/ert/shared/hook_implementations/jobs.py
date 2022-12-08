@@ -32,7 +32,7 @@ def _get_jobs_from_directories(directories):
 
 def _get_file_content_if_exists(file_name, default=""):
     if os.path.isfile(file_name):
-        with open(file_name) as fh:
+        with open(file_name, encoding="utf-8") as fh:
             return fh.read()
     return default
 

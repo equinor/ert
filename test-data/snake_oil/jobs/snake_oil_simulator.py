@@ -11,7 +11,7 @@ def globalIndex(i, j, k, nx=10, ny=10, nz=10):
 
 def readParameters(filename):
     params = {}
-    with open(filename, "r") as f:
+    with open(filename, "r", encoding="utf-8") as f:
         for line in f:
             key, value = line.split(":", 1)
             params[key] = value.strip()
@@ -199,6 +199,6 @@ if __name__ == "__main__":
 
     ecl_sum.fwrite()
 
-    with open("time_map.txt", "w") as f:
+    with open("time_map.txt", "w", encoding="utf-8") as f:
         for t in time_map:
             f.write(f"{t}\n")
