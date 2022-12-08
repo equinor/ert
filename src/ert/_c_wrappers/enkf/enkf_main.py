@@ -157,6 +157,11 @@ class EnKFMain:
             config.ensemble_config,
         )
         if config.model_config.obs_config_file:
+            if not self._observations.valid:
+                raise ValueError(
+                    f"Incorrect observations file: "
+                    f"{config.model_config.obs_config_file}"
+                )
             self._observations.load(
                 config.model_config.obs_config_file,
                 config.analysis_config.get_std_cutoff(),

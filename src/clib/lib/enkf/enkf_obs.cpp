@@ -549,10 +549,6 @@ static void enkf_obs_reinterpret_DT_FILE(const char *errors) {
 void enkf_obs_load(enkf_obs_type *enkf_obs, const char *config_file,
                    double std_cutoff) {
 
-    if (!enkf_obs_is_valid(enkf_obs))
-        util_abort("%s cannot load invalid enkf observation config %s.\n",
-                   __func__, config_file);
-
     conf_class_type *enkf_conf_class = enkf_obs_get_obs_conf_class();
     conf_instance_type *enkf_conf = conf_instance_alloc_from_file(
         enkf_conf_class, "enkf_conf", config_file);
