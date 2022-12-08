@@ -157,10 +157,11 @@ class EnKFMain:
             config.ensemble_config,
         )
         if config.model_config.obs_config_file:
-            if not self._observations.valid:
+            if self._observations.error:
                 raise ValueError(
                     f"Incorrect observations file: "
                     f"{config.model_config.obs_config_file}"
+                    f": {self._observations.error}"
                 )
             self._observations.load(
                 config.model_config.obs_config_file,
