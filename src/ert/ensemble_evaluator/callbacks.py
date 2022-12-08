@@ -23,7 +23,7 @@ def _ensemble_config_forward_init(
             continue
 
         node = EnkfNode(config_node)
-        node_id = NodeId(report_step=0, realization_number=run_arg.iens)
+        node_id = NodeId(report_step=0, iens=run_arg.iens)
 
         if node.has_data(run_arg.sim_fs, node_id):
             # Already initialised, ignore
