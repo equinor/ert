@@ -10,7 +10,6 @@
 #include <ert/util/hash.hpp>
 #include <ert/util/parser.hpp>
 
-#include <ert/config/config_error.hpp>
 #include <ert/config/config_schema_item.hpp>
 
 namespace fs = std::filesystem;
@@ -260,26 +259,24 @@ bool config_schema_item_validate_set(const config_schema_item_type *item,
                                      stringlist_type *token_list,
                                      const char *config_file,
                                      const config_path_elm_type *path_elm,
-                                     config_error_type *error_list) {
+                                     std::vector<std::string> &error_list) {
     bool OK = true;
     int argc = stringlist_get_size(token_list) - 1;
     if (item->validate->argc_min >= 0) {
         if (argc < item->validate->argc_min) {
             OK = false;
-            {
-                char *error_message;
-                if (config_file != NULL)
-                    error_message = util_alloc_sprintf(
-                        "Error when parsing config_file:\"%s\" Keyword:%s must "
-                        "have at least %d arguments.",
-                        config_file, item->kw, item->validate->argc_min);
-                else
-                    error_message = util_alloc_sprintf(
-                        "Error:: Keyword:%s must have at least %d arguments.",
-                        item->kw, item->validate->argc_min);
+            char *error_message;
+            if (config_file != NULL)
+                error_message = util_alloc_sprintf(
+                    "Error when parsing config_file:\"%s\" Keyword:%s must "
+                    "have at least %d arguments.",
+                    config_file, item->kw, item->validate->argc_min);
+            else
+                error_message = util_alloc_sprintf(
+                    "Error:: Keyword:%s must have at least %d arguments.",
+                    item->kw, item->validate->argc_min);
 
-                config_error_add(error_list, error_message);
-            }
+            error_list.push_back(std::string(error_message));
         }
     }
 
@@ -299,7 +296,7 @@ bool config_schema_item_validate_set(const config_schema_item_type *item,
                         "Error:: Keyword:%s must have maximum %d arguments.",
                         item->kw, item->validate->argc_max);
 
-                config_error_add(error_list, error_message);
+                error_list.push_back(std::string(error_message));
             }
         }
     }
@@ -314,11 +311,10 @@ bool config_schema_item_validate_set(const config_schema_item_type *item,
             for (int iarg = 0; iarg < argc; iarg++) {
                 if (!item->validate->common_selection_set.count(
                         stringlist_iget(token_list, iarg + 1))) {
-                    config_error_add(error_list,
-                                     util_alloc_sprintf(
-                                         "%s: is not a valid value for: %s.",
-                                         stringlist_iget(token_list, iarg + 1),
-                                         item->kw));
+                    std::string error_message = util_alloc_sprintf(
+                        "%s: is not a valid value for: %s.",
+                        stringlist_iget(token_list, iarg + 1), item->kw);
+                    error_list.push_back(error_message);
                     OK = false;
                 }
             }
@@ -333,13 +329,12 @@ bool config_schema_item_validate_set(const config_schema_item_type *item,
                     if (selection_set && selection_set->size()) {
                         if (!selection_set->count(
                                 stringlist_iget(token_list, iarg + 1))) {
-                            config_error_add(
-                                error_list,
-                                util_alloc_sprintf(
-                                    "%s: is not a valid value for item %d of "
-                                    "\'%s\'.",
-                                    stringlist_iget(token_list, iarg + 1),
-                                    iarg + 1, item->kw));
+                            std::string error_message = util_alloc_sprintf(
+                                "%s: is not a valid value for item %d of "
+                                "\'%s\'.",
+                                stringlist_iget(token_list, iarg + 1), iarg + 1,
+                                item->kw);
+                            error_list.push_back(error_message);
                             OK = false;
                         }
                     }
@@ -365,23 +360,19 @@ bool config_schema_item_validate_set(const config_schema_item_type *item,
                     break;
                 case (CONFIG_ISODATE):
                     if (!util_sscanf_isodate(value, NULL))
-                        config_error_add(
-                            error_list,
+                        error_list.push_back(
                             util_alloc_sprintf("Failed to parse:%s as an ISO "
                                                "date: YYYY-MM-DD.",
                                                value));
                     break;
                 case (CONFIG_INT):
                     if (!util_sscanf_int(value, NULL))
-                        config_error_add(
-                            error_list,
-                            util_alloc_sprintf(
-                                "Failed to parse:%s as an integer.", value));
+                        error_list.push_back(util_alloc_sprintf(
+                            "Failed to parse:%s as an integer.", value));
                     break;
                 case (CONFIG_FLOAT):
                     if (!util_sscanf_double(value, NULL)) {
-                        config_error_add(
-                            error_list,
+                        error_list.push_back(
                             util_alloc_sprintf("Failed to parse:%s as a "
                                                "floating point number.",
                                                value));
@@ -394,11 +385,9 @@ bool config_schema_item_validate_set(const config_schema_item_type *item,
                 case (CONFIG_EXISTING_PATH): {
                     char *path = config_path_elm_alloc_abspath(path_elm, value);
                     if (!util_entry_exists(path)) {
-                        config_error_add(
-                            error_list,
-                            util_alloc_sprintf(
-                                "Can not find entry %s in %s ", value,
-                                config_path_elm_get_abspath(path_elm)));
+                        error_list.push_back(util_alloc_sprintf(
+                            "Can not find entry %s in %s ", value,
+                            config_path_elm_get_abspath(path_elm)));
                         OK = false;
                     }
                     free(path);
@@ -424,11 +413,10 @@ bool config_schema_item_validate_set(const config_schema_item_type *item,
                              * that wasn't found
                              */
 
-                            config_error_add(
-                                error_list,
+                            error_list.push_back(std::string(
                                 util_alloc_sprintf("Path to executable:%s is "
                                                    "actually a directory",
-                                                   value));
+                                                   value)));
                             break;
                         }
 
@@ -440,36 +428,28 @@ bool config_schema_item_validate_set(const config_schema_item_type *item,
                         if (path_exe != NULL)
                             stringlist_iset_copy(token_list, iarg, path_exe);
                         else
-                            config_error_add(
-                                error_list,
-                                util_alloc_sprintf(
-                                    "Executable:%s does not exist", value));
+                            error_list.push_back(util_alloc_sprintf(
+                                "Executable:%s does not exist", value));
 
                         free(path_exe);
                     } else {
                         if (!util_is_executable(value))
-                            config_error_add(
-                                error_list,
-                                util_alloc_sprintf("File not executable:%s ",
-                                                   value));
+                            error_list.push_back(util_alloc_sprintf(
+                                "File not executable:%s ", value));
                     }
                 } break;
                 case (CONFIG_BOOL):
                     if (!util_sscanf_bool(value, NULL)) {
-                        config_error_add(
-                            error_list,
-                            util_alloc_sprintf(
-                                "Failed to parse:%s as a boolean.", value));
+                        error_list.push_back(util_alloc_sprintf(
+                            "Failed to parse:%s as a boolean.", value));
                         OK = false;
                     }
                     break;
                 case (CONFIG_BYTESIZE):
                     if (!util_sscanf_bytesize(value, NULL)) {
-                        config_error_add(
-                            error_list,
-                            util_alloc_sprintf(
-                                "Failed to parse:\"%s\" as number of bytes.",
-                                value));
+                        error_list.push_back(util_alloc_sprintf(
+                            "Failed to parse:\"%s\" as number of bytes.",
+                            value));
                         OK = false;
                     }
                     break;

@@ -1,12 +1,40 @@
 #ifndef ERT_CONFIG_CONTENT_H
 #define ERT_CONFIG_CONTENT_H
 
+#include <filesystem>
+#include <set>
+#include <string>
+#include <vector>
+
 #include <ert/res_util/subst_list.hpp>
 #include <ert/util/stringlist.hpp>
+#include <ert/util/vector.hpp>
 
 #include <ert/config/config_content_item.hpp>
-#include <ert/config/config_error.hpp>
+#include <ert/config/config_path_elm.hpp>
+#include <ert/config/config_path_stack.hpp>
 #include <ert/config/config_schema_item.hpp>
+
+namespace fs = std::filesystem;
+
+struct config_content_struct {
+    /** A set of config files which have been parsed - to protect against
+     * circular includes. */
+    std::set<std::string> parsed_files;
+    vector_type *nodes;
+    hash_type *items;
+    std::vector<std::string> parse_errors;
+    stringlist_type *warnings;
+    subst_list_type *define_list;
+    char *config_file;
+    char *abs_path;
+    char *config_path;
+
+    config_path_stack_type *path_stack;
+    /** Absolute path to directory that contains current config */
+    fs::path invoke_path;
+    bool valid;
+};
 
 typedef struct config_content_struct config_content_type;
 
@@ -23,8 +51,6 @@ extern "C" config_content_item_type *
 config_content_get_item(const config_content_type *content, const char *key);
 void config_content_add_node(config_content_type *content,
                              config_content_node_type *content_node);
-extern "C" config_error_type *
-config_content_get_errors(const config_content_type *content);
 
 const char *config_content_iget(const config_content_type *content,
                                 const char *key, int occurence, int index);

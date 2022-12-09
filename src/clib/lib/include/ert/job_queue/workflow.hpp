@@ -3,14 +3,12 @@
 
 #include <ert/res_util/subst_list.hpp>
 
-#include <ert/config/config_error.hpp>
-
 #include <ert/job_queue/workflow_job.hpp>
 #include <ert/job_queue/workflow_joblist.hpp>
 
 typedef struct workflow_struct workflow_type;
 
-extern "C" const config_error_type *
+const std::vector<std::string>
 workflow_get_last_error(const workflow_type *workflow);
 extern "C" workflow_type *workflow_alloc(const char *src_file,
                                          workflow_joblist_type *joblist);

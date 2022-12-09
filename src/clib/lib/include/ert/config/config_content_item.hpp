@@ -5,7 +5,6 @@
 #include <ert/util/stringlist.hpp>
 
 #include <ert/config/config_content_node.hpp>
-#include <ert/config/config_error.hpp>
 #include <ert/config/config_path_elm.hpp>
 #include <ert/config/config_schema_item.hpp>
 

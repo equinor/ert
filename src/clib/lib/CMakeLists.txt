@@ -22,7 +22,6 @@ pybind11_add_module(
   config/config_path_stack.cpp
   config/config_content_item.cpp
   config/config_content_node.cpp
-  config/config_error.cpp
   config/config_path_elm.cpp
   config/config_schema_item.cpp
   config/config_keywords.cpp

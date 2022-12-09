@@ -5,7 +5,7 @@ import sys
 from datetime import date
 from os.path import isfile
 from pathlib import Path
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 from ecl.util.util import StringList
 
@@ -766,7 +766,7 @@ class ResConfig:
             return in_config
 
     @property
-    def errors(self):
+    def errors(self) -> List[str]:
         return self._errors
 
     @property
