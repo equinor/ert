@@ -96,7 +96,7 @@ def create_dummy_run_path(tmpdir):
         ("out/realization-%d/iter-%d", 4, 1, [False, False, True, False], False),
         ("out/realization-%d/iter-%d", 4, 0, [False, False, False, False], False),
         ("out/realization-%d/iter-%d", 4, 0, [], False),
-        ("out/realization-%d", 2, 1, [True, False, True], True),
+        ("out/realization-%d", 2, 1, [False, True, True], True),
         ("out/realization-%d", 2, 0, [False, False, True], False),
     ],
 )
@@ -113,7 +113,16 @@ def test_check_if_runpath_exists(
         "active_realizations": active_mask,
     }
 
+    def get_run_path_mock(realizations, iteration=None):
+        if iteration is not None:
+            return [f"out/realization-{r}/iter-{iteration}" for r in realizations]
+        return [f"out/realization-{r}" for r in realizations]
+
     brm = BaseRunModel(simulation_arguments, None, None, None)
-    brm.facade = MagicMock(run_path=run_path, number_of_iterations=number_of_iterations)
+    brm.facade = MagicMock(
+        run_path=run_path,
+        number_of_iterations=number_of_iterations,
+        get_run_paths=get_run_path_mock,
+    )
 
     assert brm.check_if_runpath_exists() == expected
