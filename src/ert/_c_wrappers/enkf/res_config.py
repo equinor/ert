@@ -30,6 +30,7 @@ from ert._c_wrappers.util import SubstitutionList
 from ert._clib.config_keywords import init_site_config_parser, init_user_config_parser
 
 from ._config_content_as_dict import config_content_as_dict
+from ._deprecation_migration_suggester import DeprecationMigrationSuggester
 
 logger = logging.getLogger(__name__)
 
@@ -223,14 +224,27 @@ class ResConfig:
                 config_path, ModelConfig.DEFAULT_ENSPATH
             )
 
+    def _create_user_config_parser(self):
+        config_parser = ConfigParser()
+        init_user_config_parser(config_parser)
+        return config_parser
+
+    def _display_suggestions(self, config_file):
+        suggestions = DeprecationMigrationSuggester(
+            self._create_user_config_parser()
+        ).suggest_migrations(config_file)
+        for suggestion in suggestions:
+            logging.error(suggestion)
+
     # build configs from config file or everest dict
     def _alloc_from_content(self, user_config_file=None, config=None):
         site_config_parser = ConfigParser()
         init_site_config_parser(site_config_parser)
         site_config_content = site_config_parser.parse(site_config_location())
         if user_config_file is not None:
+            self._display_suggestions(user_config_file)
             # initialize configcontent if user_file provided
-            config_parser = ConfigParser()
+            config_parser = self._create_user_config_parser()
             init_user_config_parser(config_parser)
             self.config_path = os.path.abspath(os.path.dirname(user_config_file))
             user_config_content = config_parser.parse(
