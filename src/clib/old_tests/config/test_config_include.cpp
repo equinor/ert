@@ -1,3 +1,4 @@
+#include <fmt/format.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -60,8 +61,8 @@ void parse_test(
                 abspath4);
 
         } else {
-            const config_error_type *error = config_content_get_errors(content);
-            config_error_fprintf(error, true, stdout);
+            for (auto error : content->parse_errors)
+                fprintf(stdout, "%s\n", error.c_str());
             test_error_exit("Hmm - parsing %s failed \n", config_file);
         }
         config_content_free(content);

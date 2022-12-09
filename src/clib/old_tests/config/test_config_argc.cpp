@@ -44,14 +44,12 @@ int main(int argc, char **argv) {
             test_assert_false(config_content_is_valid(content));
 
             {
-                const config_error_type *config_error =
-                    config_content_get_errors(content);
                 const char *error_msg =
                     "Error when parsing config_file:\"argc_less\" Keyword:ITEM "
                     "must have at least 2 arguments.";
 
-                test_assert_int_equal(config_error_count(config_error), 1);
-                test_assert_string_equal(config_error_iget(config_error, 0),
+                test_assert_int_equal(content->parse_errors.size(), 1);
+                test_assert_string_equal(content->parse_errors[0].c_str(),
                                          error_msg);
             }
             config_content_free(content);
@@ -63,14 +61,12 @@ int main(int argc, char **argv) {
                              CONFIG_UNRECOGNIZED_ERROR, true);
             test_assert_false(config_content_is_valid(content));
             {
-                const config_error_type *config_error =
-                    config_content_get_errors(content);
                 const char *error_msg =
                     "Error when parsing config_file:\"argc_more\" Keyword:ITEM "
                     "must have maximum 2 arguments.";
 
-                test_assert_int_equal(config_error_count(config_error), 1);
-                test_assert_string_equal(config_error_iget(config_error, 0),
+                test_assert_int_equal(content->parse_errors.size(), 1);
+                test_assert_string_equal(content->parse_errors[0].c_str(),
                                          error_msg);
             }
             config_content_free(content);

@@ -1,3 +1,4 @@
+#include "ert/python.hpp"
 #include <filesystem>
 
 #include <stdlib.h>
@@ -29,7 +30,7 @@ struct workflow_struct {
     char *src_file;
     vector_type *cmd_list;
     workflow_joblist_type *joblist;
-    config_error_type *last_error;
+    std::vector<std::string> last_error;
     vector_type *stack;
 };
 
@@ -57,17 +58,6 @@ static void workflow_add_cmd(workflow_type *workflow, cmd_type *cmd) {
 
 static void workflow_clear(workflow_type *workflow) {
     vector_clear(workflow->cmd_list);
-}
-
-static void workflow_store_error(workflow_type *workflow,
-                                 const config_error_type *error) {
-    if (workflow->last_error)
-        config_error_free(workflow->last_error);
-
-    if (error)
-        workflow->last_error = config_error_alloc_copy(error);
-    else
-        workflow->last_error = NULL;
 }
 
 bool workflow_try_compile(workflow_type *script,
@@ -131,8 +121,7 @@ bool workflow_try_compile(workflow_type *script,
                     }
                     script->compiled = true;
                 } else
-                    workflow_store_error(script,
-                                         config_content_get_errors(content));
+                    script->last_error = content->parse_errors;
 
                 config_content_free(content);
             }
@@ -183,13 +172,12 @@ void *workflow_pop_stack(workflow_type *workflow) {
 
 workflow_type *workflow_alloc(const char *src_file,
                               workflow_joblist_type *joblist) {
-    workflow_type *script = (workflow_type *)util_malloc(sizeof *script);
+    auto script = new workflow_type;
 
     script->src_file = util_alloc_string_copy(src_file);
     script->joblist = joblist;
     script->cmd_list = vector_alloc_new();
     script->compiled = false;
-    script->last_error = NULL;
     script->stack = vector_alloc_new();
 
     workflow_try_compile(script, NULL);
@@ -201,10 +189,7 @@ void workflow_free(workflow_type *workflow) {
     vector_free(workflow->cmd_list);
     vector_free(workflow->stack);
 
-    if (workflow->last_error)
-        config_error_free(workflow->last_error);
-
-    free(workflow);
+    delete workflow;
 }
 
 void workflow_free__(void *arg) {
@@ -212,7 +197,7 @@ void workflow_free__(void *arg) {
     workflow_free(workflow);
 }
 
-const config_error_type *
+const std::vector<std::string>
 workflow_get_last_error(const workflow_type *workflow) {
     return workflow->last_error;
 }
@@ -238,4 +223,9 @@ stringlist_type *workflow_iget_arguments(const workflow_type *workflow,
 extern "C" PY_USED const char *
 worflow_get_src_file(const workflow_type *workflow) {
     return workflow->src_file;
+}
+
+ERT_CLIB_SUBMODULE("workflow", m) {
+    m.def("get_last_error",
+          [](Cwrap<workflow_type> self) { return self->last_error; });
 }

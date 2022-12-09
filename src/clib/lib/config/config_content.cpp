@@ -1,37 +1,12 @@
+#include "ert/python.hpp"
 #include <stdlib.h>
-
-#include <filesystem>
-#include <set>
-#include <string>
 
 #include <ert/res_util/subst_list.hpp>
 #include <ert/util/hash.hpp>
-#include <ert/util/vector.hpp>
 
 #include <ert/config/config_content.hpp>
-#include <ert/config/config_path_elm.hpp>
-#include <ert/config/config_path_stack.hpp>
 
 namespace fs = std::filesystem;
-
-struct config_content_struct {
-    /** A set of config files which have been parsed - to protect against
-     * circular includes. */
-    std::set<std::string> parsed_files;
-    vector_type *nodes;
-    hash_type *items;
-    config_error_type *parse_errors;
-    stringlist_type *warnings;
-    subst_list_type *define_list;
-    char *config_file;
-    char *abs_path;
-    char *config_path;
-
-    config_path_stack_type *path_stack;
-    /** Absolute path to directory that contains current config */
-    fs::path invoke_path;
-    bool valid;
-};
 
 config_content_type *config_content_alloc(const char *filename) {
     auto content = new config_content_type;
@@ -39,7 +14,6 @@ config_content_type *config_content_alloc(const char *filename) {
     content->valid = false;
     content->items = hash_alloc();
     content->nodes = vector_alloc_new();
-    content->parse_errors = config_error_alloc();
     content->define_list = subst_list_alloc();
     content->warnings = stringlist_alloc_new();
 
@@ -91,11 +65,6 @@ bool config_content_is_valid(const config_content_type *content) {
     return content->valid;
 }
 
-config_error_type *
-config_content_get_errors(const config_content_type *content) {
-    return content->parse_errors;
-}
-
 const stringlist_type *
 config_content_get_warnings(const config_content_type *content) {
     return content->warnings;
@@ -108,7 +77,6 @@ void config_content_free(config_content_type *content) {
     stringlist_free(content->warnings);
     vector_free(content->nodes);
     hash_free(content->items);
-    config_error_free(content->parse_errors);
     subst_list_free(content->define_list);
     free(content->config_file);
     free(content->abs_path);
@@ -354,4 +322,9 @@ void config_content_pop_path_stack(config_content_type *content) {
 
 stringlist_type *config_content_alloc_keys(const config_content_type *content) {
     return hash_alloc_stringlist(content->items);
+}
+
+ERT_CLIB_SUBMODULE("config_content", m) {
+    m.def("get_errors",
+          [](Cwrap<config_content_type> self) { return self->parse_errors; });
 }

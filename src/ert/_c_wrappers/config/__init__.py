@@ -1,5 +1,4 @@
 from .config_content import ConfigContent, ContentItem, ContentNode
-from .config_error import ConfigError
 from .config_parser import ConfigParser, ConfigValidationError
 from .config_path_elm import ConfigPathElm
 from .content_type_enum import ContentTypeEnum
@@ -10,7 +9,6 @@ __all__ = [
     "ConfigPathElm",
     "UnrecognizedEnum",
     "ContentTypeEnum",
-    "ConfigError",
     "SchemaItem",
     "ConfigContent",
     "ContentItem",

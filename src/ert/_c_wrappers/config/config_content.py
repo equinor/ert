@@ -2,8 +2,8 @@ from typing import TYPE_CHECKING, Iterator, List
 
 from cwrap import BaseCClass
 
+from ert import _clib
 from ert._c_wrappers import ResPrototype
-from ert._c_wrappers.config.config_error import ConfigError
 from ert._c_wrappers.config.config_path_elm import ConfigPathElm
 from ert._c_wrappers.config.content_type_enum import ContentTypeEnum
 from ert._c_wrappers.config.schema_item import SchemaItem
@@ -169,9 +169,6 @@ class ConfigContent(BaseCClass):
     _get_item = ResPrototype(
         "content_item_ref config_content_get_item( config_content , char*)"
     )
-    _get_errors = ResPrototype(
-        "config_error_ref config_content_get_errors( config_content )"
-    )
     _get_warnings = ResPrototype(
         "stringlist_ref config_content_get_warnings( config_content )"
     )
@@ -244,8 +241,8 @@ class ConfigContent(BaseCClass):
     def free(self):
         self._free()
 
-    def getErrors(self) -> ConfigError:
-        return self._get_errors()
+    def getErrors(self) -> List[str]:
+        return _clib.config_content.get_errors(self)
 
     def getWarnings(self) -> List[str]:
         return list(self._get_warnings())

@@ -109,7 +109,7 @@ int config_get_schema_size(const config_parser_type *config) {
   calling scope will free it.
 */
 static config_content_node_type *config_content_item_set_arg__(
-    subst_list_type *define_list, config_error_type *parse_errors,
+    subst_list_type *define_list, std::vector<std::string> &parse_errors,
     config_content_item_type *item, stringlist_type *token_list,
     const config_path_elm_type *path_elm, const char *config_file) {
 
@@ -265,12 +265,10 @@ static void config_validate_content_item(const config_parser_type *config,
             const char *required_child =
                 config_schema_item_iget_required_child(schema_item, i);
             if (!config_content_has_item(content, required_child)) {
-                char *error_message = (char *)util_alloc_sprintf(
-                    "When:%s is set - you also must set:%s.", schema_kw,
-                    required_child);
-                config_error_add(config_content_get_errors(content),
-                                 error_message);
-                free(error_message);
+                std::string error_message =
+                    util_alloc_sprintf("When:%s is set - you also must set:%s.",
+                                       schema_kw, required_child);
+                content->parse_errors.push_back(error_message);
             }
         }
 
@@ -298,15 +296,11 @@ static void config_validate_content_item(const config_parser_type *config,
                             const char *req_child =
                                 stringlist_iget(required_children, ic);
                             if (!config_content_has_item(content, req_child)) {
-                                char *error_message =
-                                    (char *)util_alloc_sprintf(
-                                        "When:%s is set to:%s - you also must "
-                                        "set:%s.",
-                                        schema_kw, value, req_child);
-                                config_error_add(
-                                    config_content_get_errors(content),
-                                    error_message);
-                                free(error_message);
+                                std::string error_message = util_alloc_sprintf(
+                                    "When:%s is set to:%s - you also must "
+                                    "set:%s.",
+                                    schema_kw, value, req_child);
+                                content->parse_errors.push_back(error_message);
                             }
                         }
                     }
@@ -329,14 +323,11 @@ void config_validate(config_parser_type *config, config_content_type *content) {
                 config_content_get_item(content, content_key);
             config_validate_content_item(config, content, item);
         } else {
-            if (config_schema_item_required(
-                    schema_item)) { /* The item is not set ... */
-                char *error_message = (char *)util_alloc_sprintf(
+            if (config_schema_item_required(schema_item)) {
+                std::string error_message = util_alloc_sprintf(
                     "Item:%s must be set - parsing:%s", content_key,
                     config_content_get_config_file(content, true));
-                config_error_add(config_content_get_errors(content),
-                                 error_message);
-                free(error_message);
+                content->parse_errors.push_back(error_message);
             }
         }
     }
@@ -397,10 +388,9 @@ bool config_parser_add_key_values(
         }
 
         if (unrecognized == CONFIG_UNRECOGNIZED_ERROR) {
-            char *error_message =
-                (char *)util_alloc_sprintf("Keyword:%s is not recognized", kw);
-            config_error_add(config_content_get_errors(content), error_message);
-            free(error_message);
+            std::string error_message =
+                util_alloc_sprintf("Keyword:%s is not recognized", kw);
+            content->parse_errors.push_back(error_message);
             return false;
         }
 
@@ -426,9 +416,8 @@ bool config_parser_add_key_values(
         content, config_schema_item_get_kw(schema_item));
 
     config_content_node_type *new_node = config_content_item_set_arg__(
-        config_content_get_define_list(content),
-        config_content_get_errors(content), content_item, values,
-        current_path_elm, config_filename);
+        config_content_get_define_list(content), content->parse_errors,
+        content_item, values, current_path_elm, config_filename);
 
     if (new_node)
         config_content_add_node(content, new_node);
@@ -554,11 +543,9 @@ config_parse__(config_parser_type *config, config_content_type *content,
                 const char *include_file = stringlist_iget(token_list, 1);
 
                 if (!fs::exists(include_file)) {
-                    char *error_message = (char *)util_alloc_sprintf(
+                    std::string error_message = util_alloc_sprintf(
                         "%s file:%s not found", include_kw, include_file);
-                    config_error_add(config_content_get_errors(content),
-                                     error_message);
-                    free(error_message);
+                    content->parse_errors.push_back(error_message);
                 }
 
                 config_parse__(config, content, path_stack, include_file,
@@ -633,13 +620,12 @@ config_parse(config_parser_type *config, const char *filename,
                        include_kw, define_kw, unrecognized_behaviour, validate);
         path_stack_free(path_stack);
     } else {
-        char *error_message = (char *)util_alloc_sprintf(
-            "Could not open file:%s for parsing", filename);
-        config_error_add(config_content_get_errors(content), error_message);
-        free(error_message);
+        std::string error_message =
+            util_alloc_sprintf("Could not open file:%s for parsing", filename);
+        content->parse_errors.push_back(error_message);
     }
 
-    if (config_error_count(config_content_get_errors(content)) == 0)
+    if (content->parse_errors.size() == 0)
         config_content_set_valid(content);
 
     return content;

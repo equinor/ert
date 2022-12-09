@@ -1,9 +1,11 @@
 #ifndef ERT_CONFIG_SCHEMA_ITEM_H
 #define ERT_CONFIG_SCHEMA_ITEM_H
 
+#include <string>
+#include <vector>
+
 #include <ert/util/stringlist.hpp>
 
-#include <ert/config/config_error.hpp>
 #include <ert/config/config_path_elm.hpp>
 
 /**
@@ -43,7 +45,7 @@ bool config_schema_item_validate_set(const config_schema_item_type *item,
                                      stringlist_type *token_list,
                                      const char *config_file,
                                      const config_path_elm_type *path_elm,
-                                     config_error_type *error_list);
+                                     std::vector<std::string> &error_list);
 
 extern "C" void config_schema_item_free(config_schema_item_type *item);
 void config_schema_item_free__(void *void_item);
