@@ -5,9 +5,11 @@ import pytest
 from qtpy.QtCore import Qt
 from qtpy.QtWidgets import QPushButton
 
+from ert import LibresFacade
 from ert._c_wrappers.enkf import EnKFMain, ResConfig
 from ert._clib.state_map import RealizationStateEnum
 from ert._clib.update import Parameter
+from ert.gui.tools.load_results import LoadResultsTool
 from ert.gui.tools.manage_cases.case_init_configuration import (
     CaseInitializationConfigurationPanel,
 )
@@ -70,3 +72,19 @@ def test_that_case_tool_can_copy_case_state(qtbot):
     assert new_case.load_parameter(config_node, [0], parameter,).flatten()[
         0
     ] == pytest.approx(-0.8814227775506998)
+
+
+@pytest.mark.parametrize(
+    "run_path, expected",
+    [
+        ("valid_%d", False),
+        ("valid_%d/iter_%d", True),
+        ("real-<IENS>/iter-<ITER>", True),
+        ("invalid", False),
+    ],
+)
+def test_results_tool_valid_runpath(run_path, expected, tmp_path):
+    config_file = tmp_path / "config.ert"
+    config_file.write_text(f"NUM_REALIZATIONS 1\nRUNPATH {run_path}\n")
+    tool = LoadResultsTool(LibresFacade.from_config_file(str(config_file)))
+    assert tool.is_valid_run_path() is expected

@@ -66,7 +66,7 @@ Keyword name                                                            Required
 :ref:`QUEUE_SYSTEM <queue_system>`                                      NO                                      LOCAL_DRIVER                                System used for running simulation jobs
 :ref:`REFCASE <refcase>`                                                NO                                                                      Reference case used for observations and plotting (See HISTORY_SOURCE and SUMMARY)
 :ref:`RESULT_PATH  <result_path>`                                       NO                                      results/step_%d                 Define where ERT should store results
-:ref:`RUNPATH <runpath>`                                                NO                                      simulations/realization%d       Directory to run simulations
+:ref:`RUNPATH <runpath>`                                                NO                                      realization-<IENS>/iter-<ITER>  Directory to run simulations; simulations/realization-<IENS>/iter-<ITER>
 :ref:`RUNPATH_FILE <runpath_file>`                                      NO                                      .ert_runpath_list               Name of file with path for all forward models that ERT has run. To be used by user defined scripts to find the realizations
 :ref:`RUN_TEMPLATE <run_template>`                                      NO                                                                      Install arbitrary files in the runpath directory
 :ref:`SCHEDULE_PREDICTION_FILE <schedule_prediction_file>`              NO                                                                      Deprecated: Schedule prediction file
@@ -461,25 +461,25 @@ possible to do with ERT.
 .. topic:: RUNPATH
 
         The RUNPATH keyword should give the name of the folders where the ECLIPSE
-        simulations are executed. It should contain at least one %d specifier, which
-        will be replaced by the realization number when ERT creates the folders.
-        Optionally, it can contain one more %d specifier, which will be replaced by
-        the iteration number.
+        simulations are executed. It should contain <IENS> and <ITER>, which
+        will be replaced by the realization number and iteration number when ERT creates the folders.
+        By default, RUNPATH is set to "simulations/realization-<IENS>/iter-<ITER>".
 
-        By default, RUNPATH is set to "simulations/realization-%d".
+        Deprecated syntax still allow use of two %d specifers. Use of less than two %d is prohibited.
+        The behaviour is identical to the default substitution.
 
-        *Example A:*
-
-        ::
-
-                -- Giving a RUNPATH with just one %d specifer.
-                RUNPATH /mnt/my_scratch_disk/realization-%d
-
-        *Example B:*
+        *Example:*
 
         ::
 
-                -- Giving a RUNPATH with two %d specifers.
+                -- Using <IENS> & <ITER> specifiers for RUNPATH.
+                RUNPATH /mnt/my_scratch_disk/realization-<IENS>/iter-<ITER>
+
+        *Example deprecated syntax:*
+
+        ::
+
+                -- Using RUNPATH with two %d specifers.
                 RUNPATH /mnt/my_scratch_disk/realization-%d/iteration-%d
 
         The RUNPATH keyword is optional.

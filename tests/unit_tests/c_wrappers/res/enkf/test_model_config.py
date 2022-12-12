@@ -16,7 +16,7 @@ def test_eclbase_and_jobname():
                 "QUEUE_SYSTEM": {
                     "JOBNAME": "JOBNAME%d",
                 },
-                "RUNPATH": "/tmp/simulations/run%d",
+                "RUNPATH": "/tmp/simulations/realization-<IENS>/iter-<ITER>",
                 "NUM_REALIZATIONS": 1,
                 "JOB_SCRIPT": "script.sh",
                 "ENSPATH": "Ensemble",
@@ -35,7 +35,7 @@ def test_eclbase():
                 "CONFIG_DIRECTORY": ".",
             },
             "SIMULATION": {
-                "RUNPATH": "/tmp/simulations/run%d",
+                "RUNPATH": "/tmp/simulations/realization-<IENS>/iter-<ITER>",
                 "NUM_REALIZATIONS": 1,
                 "JOB_SCRIPT": "script.sh",
                 "ENSPATH": "Ensemble",
@@ -58,7 +58,7 @@ def test_jobname():
                 "QUEUE_SYSTEM": {
                     "JOBNAME": "JOBNAME%d",
                 },
-                "RUNPATH": "/tmp/simulations/run%d",
+                "RUNPATH": "/tmp/simulations/realization-<IENS>/iter-<ITER>",
                 "NUM_REALIZATIONS": 1,
                 "JOB_SCRIPT": "script.sh",
                 "ENSPATH": "Ensemble",
@@ -72,7 +72,7 @@ def test_model_config_dict_constructor(setup_case):
     res_config_from_file = setup_case("configuration_tests", "model_config.ert")
     config_dict = {
         ConfigKeys.JOBNAME: "model_config_test",
-        ConfigKeys.RUNPATH: "/tmp/simulations/run%d",
+        ConfigKeys.RUNPATH: "/tmp/simulations/realization-<IENS>/iter-<ITER>",
         ConfigKeys.NUM_REALIZATIONS: 10,
         ConfigKeys.ENSPATH: os.path.join(os.getcwd(), "Ensemble"),
         ConfigKeys.TIME_MAP: os.path.join(os.getcwd(), "input/refcase/time_map.txt"),

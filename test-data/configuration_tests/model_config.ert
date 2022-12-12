@@ -10,7 +10,7 @@ INSTALL_JOB SNAKE_OIL_DIFF input/jobs/SNAKE_OIL_DIFF
 -- ModelConfig specific input
 
 JOBNAME model_config_test
-RUNPATH /tmp/simulations/run%d
+RUNPATH /tmp/simulations/realization-<IENS>/iter-<ITER>
 NUM_REALIZATIONS 10
 ENSPATH  Ensemble
 
