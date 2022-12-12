@@ -320,11 +320,7 @@ def test_res_config_dict_constructor(setup_case):
         ConfigKeys.QUEUE_OPTION: [
             ["LOCAL", "MAX_RUNNING", "1"],
             ["LSF", "MAX_RUNNING", "100"],
-            [
-                "LSF",
-                "LSF_RESOURCE",
-                "select[x86_64Linux] same[type:model]",
-            ],
+            ["LSF", "LSF_RESOURCE", "select[x86_64Linux] same[type:model]"],
             ["LSF", "LSF_SERVER", "simulacrum"],
             ["LSF", "LSF_QUEUE", "mr"],
         ],

@@ -18,11 +18,7 @@ from ert._c_wrappers.enkf.enums import ErtImplType
 from ert._c_wrappers.enkf.ert_workflow_list import ErtWorkflowList
 from ert._c_wrappers.enkf.model_config import ModelConfig
 from ert._c_wrappers.enkf.queue_config import QueueConfig
-from ert._c_wrappers.job_queue import (
-    EnvironmentVarlist,
-    ExtJob,
-    ForwardModel,
-)
+from ert._c_wrappers.job_queue import EnvironmentVarlist, ExtJob, ForwardModel
 from ert._c_wrappers.util import SubstitutionList
 from ert._clib.config_keywords import init_site_config_parser, init_user_config_parser
 

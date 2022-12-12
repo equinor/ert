@@ -1,7 +1,7 @@
 import shutil
+from collections import defaultdict
 from dataclasses import dataclass, field
 from typing import Dict, List, Tuple, Union
-from collections import defaultdict
 
 from ert._c_wrappers.job_queue import Driver, JobQueue, QueueDriverEnum
 
