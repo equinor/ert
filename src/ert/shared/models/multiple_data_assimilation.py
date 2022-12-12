@@ -1,9 +1,6 @@
-import asyncio
-import concurrent
 import logging
 from typing import Any, Dict, List, Optional, Tuple
 
-import _ert_com_protocol
 from ert._c_wrappers.enkf import RunContext
 from ert._c_wrappers.enkf.enkf_main import EnKFMain, QueueConfig
 from ert._c_wrappers.enkf.enums import HookRuntime, RealizationStateEnum
@@ -37,112 +34,6 @@ class MultipleDataAssimilation(BaseRunModel):
 
         if not module_load_success:
             raise ErtRunError(f"Unable to load analysis module '{module_name}'!")
-
-    async def run(self, evaluator_server_config: EvaluatorServerConfig) -> None:
-        loop = asyncio.get_running_loop()
-        threadpool = concurrent.futures.ThreadPoolExecutor()
-
-        experiment_logger.debug("starting es-mda experiment")
-        event = _ert_com_protocol.node_status_builder(
-            status="EXPERIMENT_STARTED", experiment_id=self.id_
-        )
-        await self.dispatch(event)
-        self._checkMinimumActiveRealizations(
-            self._simulation_arguments["active_realizations"].count(True)
-        )
-
-        weights = self.parseWeights(self._simulation_arguments["weights"])
-        iteration_count = len(weights)
-        logger.info(
-            f"Running MDA ES for {iteration_count}  "
-            f'iterations\t{", ".join(str(weight) for weight in weights)}'
-        )
-
-        self.setAnalysisModule(self._simulation_arguments["analysis_module"])
-
-        weights = self.normalizeWeights(weights)
-
-        update_id = None
-        enumerated_weights = list(enumerate(weights))
-        weights_to_run = enumerated_weights[
-            min(self._simulation_arguments["start_iteration"], len(weights)) :
-        ]
-        starting_iteration = self._simulation_arguments["start_iteration"]
-        case_format = self._simulation_arguments["target_case"]
-        storage_manager = self.ert().storage_manager
-        if starting_iteration > 0:
-            if case_format % starting_iteration not in storage_manager:
-                raise ErtRunError(
-                    f"Source case {case_format % starting_iteration} for iteration "
-                    f"{starting_iteration} does not exists in {storage_manager.cases}."
-                    " If you are attempting to restart ESMDA from a iteration other "
-                    "than 0, make sure the target case format is the same as for the "
-                    f"original run.(Current target case format: {case_format})"
-                )
-        else:
-            prior_fs = storage_manager.add_case(case_format % starting_iteration)
-            active_realizations = [
-                i
-                for i, val in enumerate(
-                    self._simulation_arguments["active_realizations"]
-                )
-                if val
-            ]
-            self.ert().sample_prior(prior_fs, active_realizations)
-        for iteration, weight in weights_to_run:
-            is_first_iteration = iteration == 0
-
-            run_context = await loop.run_in_executor(
-                threadpool,
-                self.create_context,
-                iteration,
-                self._simulation_arguments["active_realizations"],
-            )
-
-            await loop.run_in_executor(
-                threadpool,
-                self.ert().createRunPath,
-                run_context,
-            )
-            await self._run_hook(
-                HookRuntime.PRE_SIMULATION, iteration, loop, threadpool
-            )
-            ensemble_id = await loop.run_in_executor(
-                threadpool, self._post_ensemble_data, update_id
-            )
-            await self._evaluate(run_context, evaluator_server_config)
-
-            num_successful_realizations = await self.successful_realizations(iteration)
-
-            # Push simulation results to storage
-            await loop.run_in_executor(
-                threadpool, self._post_ensemble_results, ensemble_id
-            )
-
-            num_successful_realizations += self._simulation_arguments.get(
-                "prev_successful_realizations", 0
-            )
-            self.checkHaveSufficientRealizations(num_successful_realizations)
-
-            await self._run_hook(
-                HookRuntime.POST_SIMULATION, iteration, loop, threadpool
-            )
-
-            if is_first_iteration:
-                await self._run_hook(
-                    HookRuntime.PRE_FIRST_UPDATE, iteration, loop, threadpool
-                )
-            await self._run_hook(HookRuntime.PRE_UPDATE, iteration, loop, threadpool)
-            update_id = self.update(
-                run_context=run_context, weight=weight, ensemble_id=ensemble_id
-            )
-            await self._run_hook(HookRuntime.POST_UPDATE, iteration, loop, threadpool)
-
-        assert run_context is not None  # mypy
-        event = _ert_com_protocol.node_status_builder(
-            status="EXPERIMENT_ANALYSIS_ENDED", experiment_id=self.id_
-        )
-        await self.dispatch(event)
 
     def runSimulations(
         self, evaluator_server_config: EvaluatorServerConfig
