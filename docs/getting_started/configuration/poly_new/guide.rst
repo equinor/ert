@@ -116,7 +116,7 @@ We need to have each iteration run in a different folder, so that they won't
 step on each others toes. Add to the config (``poly.ert``) file the following
 line::
 
-    RUNPATH poly_out/realization-%d/iter-%d
+    RUNPATH poly_out/realization-<IENS>/iter-<ITER>
 
 The second ``%d`` in the runpath is replaced by the iteration number of the
 algorithm. This is needed since the algorithm may run several iterations during

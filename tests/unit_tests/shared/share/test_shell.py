@@ -363,7 +363,7 @@ def test_shell_scripts_integration(tmpdir):
         with open(ert_config_fname, "w", encoding="utf-8") as file_h:
             file_h.write(
                 """
-RUNPATH realization-%d/iter-%d
+RUNPATH realization-<IENS>/iter-<ITER>
 JOBNAME TEST
 QUEUE_SYSTEM LOCAL
 NUM_REALIZATIONS 1
