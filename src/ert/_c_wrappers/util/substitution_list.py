@@ -1,3 +1,4 @@
+import copy
 import os
 
 from cwrap import BaseCClass
@@ -117,14 +118,13 @@ class SubstitutionList(BaseCClass):
     def substitute_real_iter(
         self, to_substitute: str, realization: int, iteration: int
     ) -> str:
-        to_substitute = self._alloc_filtered_string(to_substitute)
+        copy_substituter = copy.deepcopy(self)
         geo_id_key = f"<GEO_ID_{realization}_{iteration}>"
-        to_substitute = to_substitute.replace(
-            "<GEO_ID>", self.get(geo_id_key, "<GEO_ID>")
-        )
-        to_substitute = to_substitute.replace("<IENS>", str(realization))
-        to_substitute = to_substitute.replace("<ITER>", str(iteration))
-        return to_substitute
+        if geo_id_key in self:
+            copy_substituter.addItem("<GEO_ID>", self[geo_id_key])
+        copy_substituter.addItem("<IENS>", str(realization))
+        copy_substituter.addItem("<ITER>", str(iteration))
+        return copy_substituter.substitute(to_substitute)
 
     def __eq__(self, other):
         if self.keys() != other.keys():
