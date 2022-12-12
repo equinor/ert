@@ -158,7 +158,7 @@ def copy_lsf_poly_case(copy_poly_case):
         "QUEUE_OPTION LSF MAX_RUNNING 10\n",
         "QUEUE_OPTION LSF BJOBS_CMD ../mock_bjobs\n",
         "QUEUE_OPTION LSF BSUB_CMD ../mock_bsub\n",
-        "RUNPATH poly_out/realization-%d/iter-%d\n",
+        "RUNPATH poly_out/realization-<IENS>/iter-<ITER>\n",
         "OBS_CONFIG observations\n",
         "TIME_MAP time_map\n",
         "NUM_REALIZATIONS 10\n",

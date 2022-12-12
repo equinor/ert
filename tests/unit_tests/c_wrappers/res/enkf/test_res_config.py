@@ -28,7 +28,7 @@ config_defines = {
 }
 
 snake_oil_structure_config = {
-    "RUNPATH": "<SCRATCH>/<USER>/<CASE_DIR>/realization-%d/iter-%d",
+    "RUNPATH": "<SCRATCH>/<USER>/<CASE_DIR>/realization-<IENS>/iter-<ITER>",
     "NUM_REALIZATIONS": 10,
     "MAX_RUNTIME": 23400,
     "MIN_REALIZATIONS": "50%",
@@ -147,7 +147,7 @@ def test_missing_directory():
                     "QUEUE_SYSTEM": {
                         "JOBNAME": "Job%d",
                     },
-                    "RUNPATH": "/tmp/simulations/run%d",
+                    "RUNPATH": "/tmp/simulations/realization-<IENS>/iter-<ITER>",
                     "NUM_REALIZATIONS": 1,
                     "JOB_SCRIPT": "script.sh",
                     "ENSPATH": "Ensemble",
@@ -309,7 +309,7 @@ def test_res_config_dict_constructor(setup_case):
         ConfigKeys.MIN_REALIZATIONS: 5,
         # "MIN_REALIZATIONS"  : "50%", percentages need to be fixed or removed
         ConfigKeys.RUNPATH: os.path.join(
-            os.getcwd(), "<SCRATCH>/<USER>/<CASE_DIR>/realization-%d/iter-%d"
+            os.getcwd(), "<SCRATCH>/<USER>/<CASE_DIR>/realization-<IENS>/iter-<ITER>"
         ),
         ConfigKeys.NUM_REALIZATIONS: 10,  # model
         ConfigKeys.MAX_RUNTIME: 23400,
@@ -536,7 +536,8 @@ def test_that_job_script_can_be_set_in_site_config(monkeypatch, tmp_path):
     test_user_config = tmp_path / "user_config.ert"
 
     test_user_config.write_text(
-        "JOBNAME  Job%d\nRUNPATH /tmp/simulations/run%d\nNUM_REALIZATIONS 10\n"
+        "JOBNAME  Job%d\nRUNPATH /tmp/simulations/realization-<IENS>/iter-<ITER>\n"
+        "NUM_REALIZATIONS 10\n"
     )
 
     res_config = ResConfig(str(test_user_config))
@@ -560,7 +561,7 @@ def test_that_unknown_queue_option_gives_error_message(
     test_user_config = tmp_path / "user_config.ert"
 
     test_user_config.write_text(
-        "JOBNAME  Job%d\nRUNPATH /tmp/simulations/run%d\n"
+        "JOBNAME  Job%d\nRUNPATH /tmp/simulations/realization-<IENS>/iter-<ITER>\n"
         "NUM_REALIZATIONS 10\nQUEUE_OPTION UNKNOWN_QUEUE unsetoption\n"
     )
 
@@ -587,7 +588,7 @@ def test_that_workflow_run_modes_can_be_selected(tmp_path, run_mode):
     os.chmod(my_script, st.st_mode | stat.S_IEXEC)
     test_user_config = tmp_path / "user_config.ert"
     test_user_config.write_text(
-        "JOBNAME  Job%d\nRUNPATH /tmp/simulations/run%d\n"
+        "JOBNAME  Job%d\nRUNPATH /tmp/simulations/realization-<IENS>/iter-<ITER>\n"
         "NUM_REALIZATIONS 10\n"
         f"LOAD_WORKFLOW {my_script} SCRIPT\n"
         f"HOOK_WORKFLOW SCRIPT {run_mode}\n"
@@ -651,7 +652,7 @@ DEFINE  <CASE_DIR>      the_extensive_case
 DEFINE  <ECLIPSE_NAME>  XYZ
 DATA_FILE           ../../eclipse/model/SNAKE_OIL.DATA
 GRID                ../../eclipse/include/grid/CASE.EGRID
-RUNPATH             <SCRATCH>/<USER>/<CASE_DIR>/realization-%d/iter-%d
+RUNPATH             <SCRATCH>/<USER>/<CASE_DIR>/realization-<IENS>/iter-<ITER>
 ECLBASE             eclipse/model/<ECLIPSE_NAME>-%d
 ENSPATH             ../output/storage/<CASE_DIR>
 RUNPATH_FILE        ../output/run_path_file/.ert-runpath-list_<CASE_DIR>

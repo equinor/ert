@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 class ModelConfig:
     DEFAULT_HISTORY_SOURCE = HistorySourceEnum.REFCASE_HISTORY
-    DEFAULT_RUNPATH = "simulations/realization-%d/iter-%d"
+    DEFAULT_RUNPATH = "simulations/realization-<IENS>/iter-<ITER>"
     DEFAULT_GEN_KW_EXPORT_NAME = "parameters"
     DEFAULT_ENSPATH = "storage"
 
@@ -40,11 +40,21 @@ class ModelConfig:
             else self.DEFAULT_HISTORY_SOURCE
         )
 
-        self.runpath_format_string = (
-            runpath_format_string
-            if runpath_format_string is not None
-            else self.DEFAULT_RUNPATH
-        )
+        if runpath_format_string is None:
+            self.runpath_format_string = self.DEFAULT_RUNPATH
+        elif "%d" in runpath_format_string:
+            self.runpath_format_string = runpath_format_string
+            logger.warning(
+                "RUNPATH keyword should use syntax "
+                f"`{self.DEFAULT_RUNPATH}` "
+                "instead of deprecated syntax "
+                f"`{runpath_format_string}`"
+            )
+        elif not any(x in runpath_format_string for x in ["<ITER>, <IENS>"]):
+            self.runpath_format_string = runpath_format_string
+            logger.error(
+                "RUNPATH keyword should use syntax " f"`{self.DEFAULT_RUNPATH}`."
+            )
 
         self.jobname_format_string = jobname_format_string
         self.gen_kw_export_name = (

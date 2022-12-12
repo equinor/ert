@@ -1,5 +1,5 @@
 JOBNAME  Job%d
-RUNPATH /tmp/simulations/run%d
+RUNPATH /tmp/simulations/realization-<IENS>/iter-<ITER>
 NUM_REALIZATIONS 10
 MIN_REALIZATIONS 10
 JOB_SCRIPT script.sh
