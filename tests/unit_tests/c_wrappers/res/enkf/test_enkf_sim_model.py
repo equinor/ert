@@ -101,6 +101,17 @@ def valid_args(arg_types, arg_list: List[str], runtime: bool = False):
             ["DEFAULT_ARGA_VALUE", "<ARGUMENTB>", "<ARGUMENTC>"],
             id="No args, gives default argument A",
         ),
+        pytest.param(
+            dedent(
+                """
+            EXECUTABLE echo
+            ARGLIST <ITER>
+            """
+            ),
+            "FORWARD_MODEL job_name(<ITER>=<ITER>)",
+            ["0"],
+            id="This style of args works without infinite substitution loop.",
+        ),
     ],
 )
 def test_forward_model_job(job, forward_model, expected_args):
