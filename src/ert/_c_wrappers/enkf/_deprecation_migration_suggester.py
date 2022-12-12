@@ -91,7 +91,7 @@ class DeprecationMigrationSuggester:
         add_suggestion(
             "END_DATE",
             "The END_DATE keyword was used to check that a the dates in a summary "
-            "file would go beyond a certaind date. This would only display a "
+            "file would go beyond a certain date. This would only display a "
             "warning in case of problems. The keyword has since been deprecated, "
             "and can be safely removed from the config file.",
         )
