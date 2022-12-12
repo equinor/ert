@@ -94,6 +94,8 @@ class ConfigParser(BaseCClass):
 
         if not os.path.exists(config_file):
             raise IOError(f"File: {config_file} does not exists")
+        if not os.access(config_file, os.R_OK):
+            raise IOError(f"We do not have read permissions for file: {config_file}")
         config_content = self._parse(
             config_file,
             comment_string,
