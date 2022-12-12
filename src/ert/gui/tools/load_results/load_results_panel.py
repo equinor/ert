@@ -1,5 +1,3 @@
-import os
-
 from PyQt5.QtWidgets import QMessageBox
 from qtpy.QtWidgets import QComboBox, QFormLayout, QTextEdit, QWidget
 
@@ -50,7 +48,7 @@ class LoadResultsPanel(QWidget):
         self._active_realizations_field.setValidator(RangeStringArgument())
         layout.addRow("Realizations to load:", self._active_realizations_field)
 
-        self._iterations_model = ValueModel(self.iteration_count)
+        self._iterations_model = ValueModel(self.facade.get_number_of_iterations())
         self._iterations_field = StringBox(
             self._iterations_model, "load_results_manually/iterations"
         )
@@ -58,23 +56,6 @@ class LoadResultsPanel(QWidget):
         layout.addRow("Iteration to load:", self._iterations_field)
 
         self.setLayout(layout)
-
-    @property
-    def iteration_count(self) -> int:
-        try:
-            self.facade.run_path % (0, 0)
-        except TypeError:
-            return 0
-
-        iteration = 0
-        valid_directory = True
-        while valid_directory:
-            formatted = self.facade.run_path % (0, iteration + 1)
-            valid_directory = os.path.exists(formatted)
-            if valid_directory:
-                iteration += 1
-
-        return iteration
 
     def readCurrentRunPath(self):
         current_case = self.facade.get_current_case_name()

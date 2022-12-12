@@ -18,7 +18,7 @@ def fixture_minimum_config_dict():
             "QUEUE_SYSTEM": {
                 "JOBNAME": "Job%d",
             },
-            "RUNPATH": "/tmp/simulations/run%d",
+            "RUNPATH": "/tmp/simulations/realization-<IENS>/iter-<ITER>",
             "NUM_REALIZATIONS": 10,
             "MIN_REALIZATIONS": 10,
             "JOB_SCRIPT": "script.sh",
@@ -66,7 +66,7 @@ def test_errors():
                     "QUEUE_SYSTEM": {
                         "JOBNAME": "Job%d",
                     },
-                    "RUNPATH": "/tmp/simulations/run%d",
+                    "RUNPATH": "/tmp/simulations/realization-<IENS>/iter-<ITER>",
                     "NUM_REALIZATIONS": "/should/be/an/integer",
                     "JOB_SCRIPT": "script.sh",
                     "ENSPATH": "Ensemble",
@@ -87,7 +87,7 @@ def test_failed_keys():
                 "QUEUE_SYSTEM": {
                     "JOBNAME": "Job%d",
                 },
-                "RUNPATH": "/tmp/simulations/run%d",
+                "RUNPATH": "/tmp/simulations/realization-<IENS>/iter-<ITER>",
                 "NUM_REALIZATIONS": 10,
                 "JOB_SCRIPT": "script.sh",
                 "ENSPATH": "Ensemble",
@@ -185,7 +185,7 @@ def test_large_config(setup_case):
                     ],
                 },
                 "DATA_FILE": "eclipse/model/SNAKE_OIL.DATA",
-                "RUNPATH": "<SCRATCH>/<USER>/<CASE_DIR>/realization-%d/iter-%d",
+                "RUNPATH": "<SCRATCH>/<USER>/<CASE_DIR>/realization-<IENS>/iter-<ITER>",
                 "RUNPATH_FILE": "../output/run_path_file/.ert-runpath-list_<CASE_DIR>",
                 "ECLBASE": "eclipse/model/<ECLIPSE_NAME>-%d",
                 "NUM_REALIZATIONS": "10",

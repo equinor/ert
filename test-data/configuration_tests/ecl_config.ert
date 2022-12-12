@@ -4,7 +4,7 @@ REFCASE                         input/refcase/SNAKE_OIL_FIELD
 GRID                            input/CASE.EGRID
 SCHEDULE_PREDICTION_FILE        input/schedule.sch
 
-RUNPATH /tmp/simulations/run%d
+RUNPATH /tmp/simulations/realization-<IENS>/iter-<ITER>
 NUM_REALIZATIONS 10
 MIN_REALIZATIONS 10
 

@@ -80,7 +80,7 @@ def test_res_config_parses_date():
         """
         NUM_REALIZATIONS  1
         DEFINE <STORAGE> storage/<CONFIG_FILE_BASE>-<DATE>
-        RUNPATH <STORAGE>/runpath/realization-%d/iter-%d
+        RUNPATH <STORAGE>/runpath/realization-<IENS>/iter-<ITER>
         ENSPATH <STORAGE>/ensemble
         """
     )
@@ -90,7 +90,7 @@ def test_res_config_parses_date():
 
     date_string = date.today().isoformat()
     expected_storage = os.path.abspath(f"storage/{test_config_file_base}-{date_string}")
-    expected_run_path = f"{expected_storage}/runpath/realization-%d/iter-%d"
+    expected_run_path = f"{expected_storage}/runpath/realization-<IENS>/iter-<ITER>"
     expected_ens_path = f"{expected_storage}/ensemble"
     assert res_config.model_config.ens_path == expected_ens_path
     assert res_config.model_config.runpath_format_string == expected_run_path
