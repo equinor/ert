@@ -18,12 +18,12 @@ def test_load_forward_model_raises_on_missing():
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_load_forward_model():
-    with open("CONFIG", "w") as f:
+    with open("CONFIG", "w", encoding="utf-8") as f:
         f.write("STDOUT null\n")
         f.write("STDERR null\n")
         f.write("EXECUTABLE script.sh\n")
     name = "script.sh"
-    with open(name, "w") as f:
+    with open(name, "w", encoding="utf-8") as f:
         f.write("This is a script")
     mode = os.stat(name).st_mode
     mode |= stat.S_IXUSR | stat.S_IXGRP
@@ -45,7 +45,7 @@ def test_load_forward_model():
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_load_forward_model_upgraded():
-    with open("CONFIG", "w") as f:
+    with open("CONFIG", "w", encoding="utf-8") as f:
         f.write("EXECUTABLE script.sh\n")
         f.write("MIN_ARG 2\n")
         f.write("MAX_ARG 7\n")
@@ -57,7 +57,7 @@ def test_load_forward_model_upgraded():
         f.write("ARG_TYPE 5 RUNTIME_INT\n")
 
     name = "script.sh"
-    with open(name, "w") as f:
+    with open(name, "w", encoding="utf-8") as f:
         f.write("This is a script")
     mode = os.stat(name).st_mode
     mode |= stat.S_IXUSR | stat.S_IXGRP
@@ -79,7 +79,7 @@ def test_load_forward_model_upgraded():
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_load_forward_model_missing_raises():
-    with open("CONFIG", "w") as f:
+    with open("CONFIG", "w", encoding="utf-8") as f:
         f.write("EXECUTABLE missing_script.sh\n")
     with pytest.raises(ConfigValidationError, match="Could not find executable"):
         _ = ExtJob.from_config_file("CONFIG")
@@ -87,15 +87,15 @@ def test_load_forward_model_missing_raises():
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_load_forward_model_execu_missing_raises():
-    with open("CONFIG", "w") as f:
+    with open("CONFIG", "w", encoding="utf-8") as f:
         f.write("EXECU missing_script.sh\n")
-    with pytest.raises(ConfigValidationError, match="CONFIG failed"):
+    with pytest.raises(ConfigValidationError, match="EXECUTABLE must be set"):
         _ = ExtJob.from_config_file("CONFIG")
 
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_load_forward_model_is_directory_raises():
-    with open("CONFIG", "w") as f:
+    with open("CONFIG", "w", encoding="utf-8") as f:
         f.write("EXECUTABLE /tmp\n")
     with pytest.raises(ConfigValidationError, match="set to directory"):
         _ = ExtJob.from_config_file("CONFIG")
@@ -103,7 +103,7 @@ def test_load_forward_model_is_directory_raises():
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_load_forward_model_foriegn_raises():
-    with open("CONFIG", "w") as f:
+    with open("CONFIG", "w", encoding="utf-8") as f:
         f.write("EXECUTABLE /etc/passwd\n")
     with pytest.raises(ConfigValidationError, match="execute permissions"):
         _ = ExtJob.from_config_file("CONFIG")

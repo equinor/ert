@@ -581,12 +581,10 @@ def test_that_unknown_queue_option_gives_error_message(
         "NUM_REALIZATIONS 10\nQUEUE_OPTION UNKNOWN_QUEUE unsetoption\n"
     )
 
-    with pytest.raises(ValueError, match="Parsing"):
+    with pytest.raises(
+        ValueError, match="Parsing config file .* resulted in the errors:"
+    ):
         _ = ResConfig(str(test_user_config))
-
-    err = capsys.readouterr().err
-    assert "Errors parsing" in err
-    assert "UNKNOWN_QUEUE" in err
 
 
 @pytest.mark.parametrize(

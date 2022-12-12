@@ -55,7 +55,9 @@ def test_bad_user_config_file_error_message(tmp_path):
     (tmp_path / "test.ert").write_text("NUM_REL 10\n")
 
     rconfig = None
-    with pytest.raises(ConfigValidationError, match=r"Parsing.*failed"):
+    with pytest.raises(
+        ConfigValidationError, match=r"Parsing.*resulted in the errors:"
+    ):
         rconfig = ResConfig(user_config_file=str(tmp_path / "test.ert"))
 
     assert rconfig is None
@@ -63,7 +65,7 @@ def test_bad_user_config_file_error_message(tmp_path):
 
 def test_bad_config_provide_error_message(tmp_path):
     rconfig = None
-    with pytest.raises(ConfigValidationError, match=r"Error loading configuration.*"):
+    with pytest.raises(ConfigValidationError, match=r"NUM_REALIZATIONS must be set.*"):
         testDict = {"GEN_KW": "a"}
         rconfig = ResConfig(config=testDict)
 

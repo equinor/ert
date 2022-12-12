@@ -59,18 +59,23 @@ class ExtJob:
 
         if resolved is None:
             raise ConfigValidationError(
-                f"Could not find executable {executable} for job {name}"
+                config_file=config_file_location,
+                errors=[f"Could not find executable {executable} for job {name}"],
             )
 
         if not os.access(resolved, os.X_OK):  # is not executable
             raise ConfigValidationError(
-                f"ExtJob {name} with executable"
-                f" {resolved} does not have execute permissions"
+                config_file=config_file_location,
+                errors=[
+                    f"ExtJob {name} with executable"
+                    f" {resolved} does not have execute permissions"
+                ],
             )
 
         if os.path.isdir(resolved):
             raise ConfigValidationError(
-                f"ExtJob {name} has executable set to directory {resolved}"
+                config_file=config_file_location,
+                errors=[f"ExtJob {name} has executable set to directory {resolved}"],
             )
 
         return resolved
@@ -165,7 +170,8 @@ class ExtJob:
             config_content = cls._parse_config_file(config_file)
         except IOError as err:
             raise ConfigValidationError(
-                f"Could not open job config file {config_file}"
+                config_file=config_file,
+                errors=f"Could not open job config file {config_file}",
             ) from err
 
         content_dict = {}

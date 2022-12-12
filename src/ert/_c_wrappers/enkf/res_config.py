@@ -81,7 +81,7 @@ def parse_signature_job(signature: str) -> Tuple[str, Optional[str]]:
     close_paren = signature.find(")")
     if close_paren == -1:
         raise ConfigValidationError(
-            f"Missing ) in FORWARD_MODEL job description {signature}"
+            errors=[f"Missing ) in FORWARD_MODEL job description {signature}"]
         )
     if close_paren < len(signature) - 1:
         logger.warning(
@@ -260,7 +260,7 @@ class ResConfig:
         if self.errors:
             logging.error(f"Error loading configuration: {str(self._errors)}")
             raise ConfigValidationError(
-                "Error loading configuration: " + str(self._errors)
+                config_file=user_config_file, errors=self._errors
             )
 
         config_content_dict = config_content_as_dict(
@@ -331,7 +331,8 @@ class ResConfig:
                 and "%" not in self.ensemble_config.getNode(key).get_init_file_fmt()
             ):
                 raise ConfigValidationError(
-                    "Loading GEN_KW from files requires %d in file format"
+                    config_file=self.config_path,
+                    errors=["Loading GEN_KW from files requires %d in file format"],
                 )
 
         self.installed_jobs = self._installed_jobs_from_dict(config_content_dict)
@@ -425,16 +426,18 @@ class ResConfig:
 
         for key in self.ensemble_config.getKeylistFromImplType(ErtImplType.GEN_KW):
             if self.ensemble_config.getNode(key).getUseForwardInit():
-                raise KeyError(
-                    "Loading GEN_KW from files created by the forward model "
-                    "is not supported."
+                raise ConfigValidationError(
+                    errors=[
+                        "Loading GEN_KW from files created by the forward model "
+                        "is not supported."
+                    ]
                 )
             if (
                 self.ensemble_config.getNode(key).get_init_file_fmt() != None
                 and "%" not in self.ensemble_config.getNode(key).get_init_file_fmt()
             ):
                 raise ConfigValidationError(
-                    "Loading GEN_KW from files requires %d in file format"
+                    errors=["Loading GEN_KW from files requires %d in file format"]
                 )
 
         self.installed_jobs = self._installed_jobs_from_dict(config_dict)

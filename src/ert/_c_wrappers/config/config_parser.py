@@ -1,5 +1,4 @@
 import os.path
-import sys
 
 from cwrap import BaseCClass
 from ecl.util.util import StringHash
@@ -10,7 +9,17 @@ from ert._c_wrappers.config.unrecognized_enum import UnrecognizedEnum
 
 
 class ConfigValidationError(ValueError):
-    pass
+    def __init__(self, errors, config_file=None):
+        self.config_file = config_file
+        self.errors = errors
+        super().__init__(
+            (
+                f"Parsing config file `{self.config_file}` "
+                f"resulted in the errors: {self.errors}"
+            )
+            if self.config_file
+            else f"{self.errors}"
+        )
 
 
 class ConfigParser(BaseCClass):
@@ -108,10 +117,9 @@ class ConfigParser(BaseCClass):
         config_content.setParser(self)
 
         if validate and not config_content.isValid():
-            sys.stderr.write(f"Errors parsing:{config_file} \n")
-            for count, error in enumerate(config_content.getErrors()):
-                sys.stderr.write(f"  {count:02d}:{error}\n")
-            raise ConfigValidationError(f"Parsing:{config_file} failed")
+            raise ConfigValidationError(
+                config_file=config_file, errors=config_content.getErrors()
+            )
 
         return config_content
 

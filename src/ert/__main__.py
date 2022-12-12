@@ -561,8 +561,9 @@ def main():
         logger.exception(str(err))
         sys.exit(str(err))
     except ConfigValidationError as err:
-        logger.exception(str(err))
-        sys.exit(f"Error in configuration file: {err}")
+        errMsg = f"Error(s) in configuration file {err.config_file}: {err.errors}"
+        logger.exception(errMsg)
+        sys.exit(errMsg)
     except BaseException as err:  # pylint: disable=broad-except
         logger.exception(f'ERT crashed unexpectedly with "{err}"')
 

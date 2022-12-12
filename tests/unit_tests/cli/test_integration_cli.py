@@ -23,8 +23,8 @@ from ert.cli.main import ErtCliError, run_cli
 from ert.shared.feature_toggling import FeatureToggling
 
 
-@pytest.fixture()
-def mock_cli_run(monkeypatch):
+@pytest.fixture(name="mock_cli_run")
+def fixture_mock_cli_run(monkeypatch):
     mocked_monitor = Mock()
     mocked_thread_start = Mock()
     mocked_thread_join = Mock()
@@ -68,7 +68,7 @@ def test_runpath_file(tmpdir, source_root):
     )
 
     with tmpdir.as_cwd():
-        with open("poly_example/poly.ert", "a") as fh:
+        with open("poly_example/poly.ert", "a", encoding="utf-8") as fh:
             config_lines = [
                 "LOAD_WORKFLOW_JOB ASSERT_RUNPATH_FILE\n"
                 "LOAD_WORKFLOW TEST_RUNPATH_FILE\n",
@@ -324,5 +324,5 @@ def test_bad_config_error_message(tmp_path):
             str(tmp_path / "test.ert"),
         ],
     )
-    with pytest.raises(ConfigValidationError, match=r"Parsing.*failed"):
+    with pytest.raises(ConfigValidationError, match=r"Parsing config file.*errors"):
         run_cli(parsed)

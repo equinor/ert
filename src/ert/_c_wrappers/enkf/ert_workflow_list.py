@@ -206,7 +206,7 @@ class ErtWorkflowList:
 
         if hook_name not in self._workflow:
             raise ConfigValidationError(
-                f"Cannot setup hook for non-existing job name {hook_name}"
+                errors=[f"Cannot setup hook for non-existing job name {hook_name}"]
             )
 
         self._hook_workflow_list.append((hook_name, mode_name))
