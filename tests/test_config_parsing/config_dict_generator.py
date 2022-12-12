@@ -59,26 +59,7 @@ transforms = st.sampled_from(
 small_floats = st.floats(min_value=1.0, max_value=10.0, allow_nan=False)
 positives = st.integers(min_value=1, max_value=10000)
 
-queue_systems = st.sampled_from(
-    [
-        QueueDriverEnum.LSF_DRIVER,
-        QueueDriverEnum.LOCAL_DRIVER,
-        QueueDriverEnum.TORQUE_DRIVER,
-        QueueDriverEnum.SLURM_DRIVER,
-    ]
-)
-
-
-def queue_name(queue_driver):
-    if queue_driver == QueueDriverEnum.LSF_DRIVER:
-        return "LSF"
-    if queue_driver == QueueDriverEnum.LOCAL_DRIVER:
-        return "LOCAL"
-    if queue_driver == QueueDriverEnum.TORQUE_DRIVER:
-        return "TORQUE"
-    if queue_driver == QueueDriverEnum.SLURM_DRIVER:
-        return "SLURM"
-    raise ValueError(f"unexpected driver `{queue_driver}`")
+queue_systems = st.sampled_from(["LSF", "LOCAL", "TORQUE", "SLURM"])
 
 
 def valid_queue_options(queue_system):
@@ -186,17 +167,10 @@ def queue_options(draw, systems):
     name = draw(st.sampled_from(valid_queue_options(queue_system)))
     do_set = draw(st.booleans())
     if do_set:
-        return {
-            ConfigKeys.DRIVER_NAME: queue_system,
-            ConfigKeys.OPTION: name,
-            ConfigKeys.VALUE: draw(valid_queue_values(name)),
-        }
+        return [queue_system, name, draw(valid_queue_values(name))]
     else:
         # Missing VALUE means unset
-        return {
-            ConfigKeys.DRIVER_NAME: queue_system,
-            ConfigKeys.OPTION: name,
-        }
+        return [queue_system, name]
 
 
 def default_ext_job_names():
@@ -630,16 +604,10 @@ def to_config_file(filename, config_dict):  # pylint: disable=too-many-branches
             elif keyword == ConfigKeys.QUEUE_OPTION:
                 for setting in keyword_value:
                     config.write(
-                        f"{keyword}"
-                        + f" {queue_name(setting[ConfigKeys.DRIVER_NAME])}"
-                        + f" {setting[ConfigKeys.OPTION]}"
-                        + (
-                            f" {setting[ConfigKeys.VALUE]}\n"
-                            if ConfigKeys.VALUE in setting
-                            else "\n"
-                        )
+                        f"{keyword} {setting[0]} {setting[1]}"
+                        + (f" {setting[2]}\n" if len(setting) == 3 else "\n")
                     )
             elif keyword == ConfigKeys.QUEUE_SYSTEM:
-                config.write(f"{keyword}" f" {keyword_value.name[:-7]}\n")
+                config.write(f"{keyword}" f" {keyword_value}\n")
             else:
                 config.write(f"{keyword} {keyword_value}\n")

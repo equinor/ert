@@ -2,7 +2,6 @@ import copy
 import logging
 import os
 import sys
-from collections import defaultdict
 from datetime import date
 from os.path import isfile
 from pathlib import Path
@@ -23,7 +22,6 @@ from ert._c_wrappers.job_queue import (
     EnvironmentVarlist,
     ExtJob,
     ForwardModel,
-    QueueDriverEnum,
 )
 from ert._c_wrappers.util import SubstitutionList
 from ert._clib.config_keywords import init_site_config_parser, init_user_config_parser
@@ -272,33 +270,7 @@ class ResConfig:
         self.env_vars = EnvironmentVarlist.from_dict(config_content_dict)
         self.random_seed = config_content_dict.get(ConfigKeys.RANDOM_SEED, None)
         self.analysis_config = AnalysisConfig.from_dict(config_content_dict)
-
-        queue_config_args = {
-            key.lower(): value
-            for key, value in config_content_dict.items()
-            if key
-            in {
-                ConfigKeys.JOB_SCRIPT,
-                ConfigKeys.MAX_SUBMIT,
-                ConfigKeys.QUEUE_SYSTEM,
-            }
-        }
-        queue_config_args["queue_system"] = QueueDriverEnum.from_string(
-            queue_config_args["queue_system"] + "_DRIVER"
-        )
-        queue_config_args["queue_options"] = defaultdict(list)
-        for setting in config_content_dict.get(ConfigKeys.QUEUE_OPTION, []):
-            queue_driver_type = QueueDriverEnum.from_string(setting[0] + "_DRIVER")
-            option_name = setting[1]
-            if len(setting) == 2:
-                queue_config_args["queue_options"][queue_driver_type].append(setting[1])
-            else:
-                option_value = setting[2]
-                queue_config_args["queue_options"][queue_driver_type].append(
-                    (option_name, option_value)
-                )
-
-        self.queue_config = QueueConfig(**queue_config_args)
+        self.queue_config = QueueConfig.from_dict(config_content_dict)
 
         self.ert_workflow_list = ErtWorkflowList.from_dict(config_content_dict)
         self.runpath_file = self.substitution_list[f"<{ConfigKeys.RUNPATH_FILE}>"]
@@ -385,22 +357,7 @@ class ResConfig:
         self.env_vars = EnvironmentVarlist.from_dict(config_dict=config_dict)
         self.random_seed = config_dict.get(ConfigKeys.RANDOM_SEED, None)
         self.analysis_config = AnalysisConfig.from_dict(config_dict=config_dict)
-
-        queue_config_args = {}
-        if ConfigKeys.JOB_SCRIPT in config_dict:
-            queue_config_args["job_script"] = config_dict[ConfigKeys.JOB_SCRIPT]
-        if ConfigKeys.MAX_SUBMIT in config_dict:
-            queue_config_args["max_submit"] = config_dict[ConfigKeys.MAX_SUBMIT]
-        if ConfigKeys.QUEUE_SYSTEM in config_dict:
-            queue_config_args["queue_system"] = config_dict[ConfigKeys.QUEUE_SYSTEM]
-        queue_config_args["queue_options"] = defaultdict(list)
-        for setting in config_dict.get(ConfigKeys.QUEUE_OPTION, []):
-            queue_config_args["queue_options"][setting[ConfigKeys.DRIVER_NAME]].append(
-                setting[ConfigKeys.OPTION]
-                if len(setting) == 2
-                else (setting[ConfigKeys.OPTION], setting[ConfigKeys.VALUE])
-            )
-        self.queue_config = QueueConfig(**queue_config_args)
+        self.queue_config = QueueConfig.from_dict(config_dict)
 
         self.ert_workflow_list = ErtWorkflowList.from_dict(config_dict)
 

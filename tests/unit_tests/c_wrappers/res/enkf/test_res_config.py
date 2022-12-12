@@ -315,29 +315,18 @@ def test_res_config_dict_constructor(setup_case):
         ConfigKeys.NUM_REALIZATIONS: 10,  # model
         ConfigKeys.MAX_RUNTIME: 23400,
         ConfigKeys.JOB_SCRIPT: f"../../{script_file}",
-        ConfigKeys.QUEUE_SYSTEM: QueueDriverEnum.LSF_DRIVER,
+        ConfigKeys.QUEUE_SYSTEM: "LSF",
         ConfigKeys.MAX_SUBMIT: 13,
         ConfigKeys.QUEUE_OPTION: [
-            {
-                ConfigKeys.DRIVER_NAME: QueueDriverEnum.LSF_DRIVER,
-                ConfigKeys.OPTION: "MAX_RUNNING",
-                ConfigKeys.VALUE: "100",
-            },
-            {
-                ConfigKeys.DRIVER_NAME: QueueDriverEnum.LSF_DRIVER,
-                ConfigKeys.OPTION: "LSF_QUEUE",
-                ConfigKeys.VALUE: "mr",
-            },
-            {
-                ConfigKeys.DRIVER_NAME: QueueDriverEnum.LSF_DRIVER,
-                ConfigKeys.OPTION: "LSF_SERVER",
-                ConfigKeys.VALUE: "simulacrum",
-            },
-            {
-                ConfigKeys.DRIVER_NAME: QueueDriverEnum.LSF_DRIVER,
-                ConfigKeys.OPTION: "LSF_RESOURCE",
-                ConfigKeys.VALUE: "select[x86_64Linux] same[type:model]",
-            },
+            ["LOCAL", "MAX_RUNNING", "1"],
+            ["LSF", "MAX_RUNNING", "100"],
+            [
+                "LSF",
+                "LSF_RESOURCE",
+                "select[x86_64Linux] same[type:model]",
+            ],
+            ["LSF", "LSF_SERVER", "simulacrum"],
+            ["LSF", "LSF_QUEUE", "mr"],
         ],
         ConfigKeys.MAX_RUNNING: "100",
         ConfigKeys.DATA_FILE: "../../eclipse/model/SNAKE_OIL.DATA",
@@ -500,8 +489,7 @@ def test_res_config_dict_constructor(setup_case):
     assert res_config_dict.ert_templates == res_config_file.ert_templates
     assert res_config_dict.ensemble_config == res_config_file.ensemble_config
     assert res_config_dict.model_config == res_config_file.model_config
-    # https://github.com/equinor/ert/issues/2571
-    # assert res_config_file.queue_config == res_config_dict.queue_config
+    assert res_config_file.queue_config == res_config_dict.queue_config
 
 
 def test_runpath_file(monkeypatch, tmp_path):
