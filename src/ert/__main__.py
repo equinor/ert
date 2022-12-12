@@ -100,6 +100,8 @@ def strip_error_message_and_raise_exception(validated):
 def valid_file(fname):
     if not os.path.isfile(fname):
         raise ArgumentTypeError(f"File was not found: {fname}")
+    if not os.access(fname, os.R_OK):
+        raise ArgumentTypeError(f"We do not have read permissions for file: {fname}")
     return fname
 
 
