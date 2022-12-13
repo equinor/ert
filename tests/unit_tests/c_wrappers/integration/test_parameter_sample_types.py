@@ -281,14 +281,14 @@ def test_field_param(tmpdir, config_str, expect_forward_init):
             "BASE_SURFACE:surf0.irap FORWARD_INIT:True",
             True,
             0,
-            "Failed to initialize node 'MY_PARAM' in file surf0.irap",
+            "Failed to initialize parameter 'MY_PARAM' in file surf0.irap",
         ),
         (
             "SURFACE MY_PARAM OUTPUT_FILE:surf.irap INIT_FILES:surf.irap "
             "BASE_SURFACE:surf0.irap FORWARD_INIT:True",
             True,
             0,
-            "Failed to initialize node 'MY_PARAM' in file surf.irap",
+            "Failed to initialize parameter 'MY_PARAM' in file surf.irap",
         ),
     ],
 )
@@ -344,15 +344,56 @@ def test_surface_param(
         # Assert that the data has been internalised to storage
         fs = ert.storage_manager["default"]
         if expect_num_loaded > 0:
-            parameter = update.Parameter("MY_PARAM")
-            config_node = ert.ensembleConfig().getNode(parameter.name)
-            arr = fs.load_parameter(config_node, [0], parameter)
+            arr = fs.load_surface_data("MY_PARAM", [0])
             assert arr.flatten().tolist() == [0.0, 1.0, 2.0, 3.0]
         else:
-            parameter = update.Parameter("MY_PARAM")
-            config_node = ert.ensembleConfig().getNode(parameter.name)
             with pytest.raises(KeyError, match="No parameter: MY_PARAM in storage"):
-                fs.load_parameter(config_node, [0], parameter)
+                fs.load_surface_data("MY_PARAM", [0])
+
+
+@pytest.mark.parametrize(
+    "config_str",
+    [
+        "SURFACE MY_PARAM OUTPUT_FILE:surf.irap   INIT_FILES:surf.irap   BASE_SURFACE:surf0.irap",  # noqa
+    ],
+)
+def test_copy_case(
+    tmpdir,
+    config_str,
+):
+    with tmpdir.as_cwd():
+        config = dedent(
+            """
+        JOBNAME my_name%d
+        NUM_REALIZATIONS 10
+        """
+        )
+        config += config_str
+        expect_surface = Surface(
+            nx=2, ny=2, xinc=1, yinc=1, xstart=1, ystart=1, angle=0
+        )
+        for i in range(4):
+            expect_surface[i] = float(i)
+        expect_surface.write("surf.irap")
+        expect_surface.write("surf0.irap")
+
+        with open("config.ert", "w", encoding="utf-8") as fh:
+            fh.writelines(config)
+        ert = create_runpath("config.ert", active_mask=[True for _ in range(10)])
+
+        # Assert that the data has been internalised to storage
+        fs = ert.storage_manager["default"]
+        new_fs = ert.storage_manager.add_case("copy")
+        fs.copy_from_case(
+            new_fs,
+            0,
+            ["MY_PARAM"],
+            [True if x in range(5) else False for x in range(10)],
+        )
+        arr_old = fs.load_surface_data("MY_PARAM", [0, 2, 3])
+
+        arr_new = new_fs.load_surface_data("MY_PARAM", [0, 2, 3])
+        assert np.array_equal(arr_old, arr_new)
 
 
 @pytest.mark.integration_test
@@ -613,6 +654,7 @@ def test_surface_param_update(tmpdir):
         config = dedent(
             """
 NUM_REALIZATIONS 5
+QUEUE_OPTION LOCAL MAX_RUNNING 5
 OBS_CONFIG observations
 SURFACE MY_PARAM OUTPUT_FILE:surf.irap INIT_FILES:surf.irap BASE_SURFACE:surf.irap FORWARD_INIT:True
 GEN_DATA MY_RESPONSE RESULT_FILE:gen_data_%d.out REPORT_STEPS:0 INPUT_FORMAT:ASCII
@@ -707,14 +749,8 @@ if __name__ == "__main__":
         ert = EnKFMain(ErtConfig.from_file("config.ert"))
         prior = ert.storage_manager["prior"]
         posterior = ert.storage_manager["smoother_update"]
-        parameter_name = "MY_PARAM"
-        parameter_config_node = ert.ensembleConfig().getNode(parameter_name)
-        prior_param = prior.load_parameter(
-            parameter_config_node, list(range(5)), update.Parameter(parameter_name)
-        )
-        posterior_param = posterior.load_parameter(
-            parameter_config_node, list(range(5)), update.Parameter(parameter_name)
-        )
+        prior_param = prior.load_surface_data("MY_PARAM", list(range(5)))
+        posterior_param = posterior.load_surface_data("MY_PARAM", list(range(5)))
         assert np.linalg.det(np.cov(prior_param)) > np.linalg.det(
             np.cov(posterior_param)
         )

@@ -3,6 +3,7 @@ from typing import TYPE_CHECKING, Any, Tuple
 
 from ert._c_wrappers.enkf.data.enkf_node import EnkfNode
 from ert._c_wrappers.enkf.enkf_state import _internalize_results
+from ert._c_wrappers.enkf.enums import ErtImplType
 from ert._c_wrappers.enkf.model_callbacks import LoadStatus
 from ert._c_wrappers.enkf.node_id import NodeId
 from ert._c_wrappers.enkf.state_map import RealizationStateEnum
@@ -17,10 +18,33 @@ def forward_model_ok(
     num_steps: int,
 ) -> Tuple[LoadStatus, str]:
     result = (LoadStatus.LOAD_SUCCESSFUL, "")
+
     if ens_conf.have_forward_init():
         forward_init_config_nodes = ens_conf.check_forward_init_nodes()
-
+        error_msg = ""
         for config_node in forward_init_config_nodes:
+            if not config_node.getUseForwardInit():
+                continue
+            if config_node.getImplementationType() == ErtImplType.SURFACE:
+                run_path = Path(run_arg.runpath)
+                file_name = config_node.get_init_file_fmt()
+                if "%d" in file_name:
+                    file_name = file_name % run_arg.iens
+                file_path = run_path / file_name
+                if file_path.exists():
+                    run_arg.sim_fs.save_surface_file(
+                        config_node.getKey(), run_arg.iens, file_path
+                    )
+                else:
+                    error_msg += (
+                        "Failed to initialize parameter "
+                        f"'{config_node.getKey()}' in file {file_name}: "
+                        "File not found\n"
+                    )
+                    result = (LoadStatus.LOAD_FAILURE, error_msg)
+
+                continue
+
             node = EnkfNode(config_node)
             node_id = NodeId(report_step=0, iens=run_arg.iens)
 
@@ -36,14 +60,14 @@ def forward_model_ok(
                 else:
                     init_file = Path(config_node.get_init_file_fmt())
                 if not init_file.exists():
-                    error_msg = (
+                    error_msg += (
                         "Failed to initialize node "
                         f"'{node.name()}' in file {init_file}: File not found\n"
                     )
                 else:
-                    error_msg = (
+                    error_msg += (
                         f"Failed to initialize node '{node.name()}' "
-                        f"in file {init_file}\n"
+                        "in file {init_file}\n"
                     )
 
                 result = (LoadStatus.LOAD_FAILURE, error_msg)
