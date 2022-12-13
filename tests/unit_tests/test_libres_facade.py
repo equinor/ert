@@ -34,7 +34,6 @@ def test_data_fetching(snake_oil_case_storage):
     ]
 
     for dataframe in data:
-        print(f"{dataframe=}")
         assert isinstance(dataframe, PandasObject)
         assert not dataframe.empty
 
