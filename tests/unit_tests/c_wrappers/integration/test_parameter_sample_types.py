@@ -35,12 +35,10 @@ def create_runpath(config, active_mask=None):
     res_config = ResConfig(config)
     ert = EnKFMain(res_config)
 
-    run_context = ert.create_ensemble_experiment_run_context(
-        active_mask=active_mask,
-        iteration=0,
-    )
-    ert.sample_prior(run_context.sim_fs, run_context.active_realizations)
-    ert.createRunPath(run_context)
+    prior = ert.load_ensemble_context("default", active_mask, 0)
+
+    ert.sample_prior(prior.sim_fs, prior.active_realizations)
+    ert.createRunPath(prior)
     return ert
 
 
@@ -190,7 +188,7 @@ def test_field_param(tmpdir, config_str, expect_forward_init):
             ert.ensembleConfig()["MY_PARAM"].getUseForwardInit() is expect_forward_init
         )
 
-        fs = ert.getEnkfFsManager().getFileSystem("default")
+        fs = ert.storage_manager["default"]
         # Assert that the data has been written to runpath
         if expect_forward_init:
             # FORWARD_INIT: True means that ERT waits until the end of the
@@ -312,7 +310,7 @@ def test_surface_param(
             assert actual_surface == expect_surface
 
         # Assert that the data has been internalised to storage
-        fs = ert.getEnkfFsManager().getFileSystem("default")
+        fs = ert.storage_manager["default"]
         if expect_num_loaded > 0:
             parameter = update.Parameter("MY_PARAM")
             config_node = ert.ensembleConfig().getNode(parameter.name)
@@ -446,7 +444,7 @@ def test_that_first_three_parameters_sampled_snapshot(tmpdir):
         with open("prior.txt", mode="w", encoding="utf-8") as fh:
             fh.writelines("MY_KEYWORD NORMAL 0 1")
         ert = create_runpath("config.ert", [True] * 3)
-        fs = ert.getCurrentFileSystem()
+        fs = ert.storage_manager.current_case
         parameter = Parameter("KW_NAME")
         config_node = ert.ensembleConfig().getNode(parameter.name)
         prior = fs.load_parameter(config_node, list(range(3)), parameter)
@@ -498,8 +496,9 @@ def test_that_sampling_is_fixed_from_name(tmpdir, template, prior, num_realisati
         res_config = ResConfig("config.ert")
         ert = EnKFMain(res_config)
 
-        run_context = ert.create_ensemble_experiment_run_context(
-            active_mask=[True] * num_realisations,
+        run_context = ert.create_ensemble_context(
+            "prior",
+            [True] * num_realisations,
             iteration=0,
         )
         ert.sample_prior(run_context.sim_fs, run_context.active_realizations)
@@ -508,7 +507,7 @@ def test_that_sampling_is_fixed_from_name(tmpdir, template, prior, num_realisati
         seed = np.frombuffer(key_hash.digest(), dtype="uint32")
         expected = np.random.default_rng(seed).standard_normal(num_realisations)
         assert LibresFacade(ert).gather_gen_kw_data(
-            "default", "KW_NAME:MY_KEYWORD"
+            "prior", "KW_NAME:MY_KEYWORD"
         ).values.flatten().tolist() == list(expected)
 
 
@@ -559,15 +558,16 @@ def test_that_sub_sample_maintains_order(tmpdir, mask, expected):
         res_config = ResConfig("config.ert")
         ert = EnKFMain(res_config)
 
-        run_context = ert.create_ensemble_experiment_run_context(
-            active_mask=mask,
+        run_context = ert.create_ensemble_context(
+            "prior",
+            mask,
             iteration=0,
         )
         ert.sample_prior(run_context.sim_fs, run_context.active_realizations)
 
         assert (
             LibresFacade(ert)
-            .gather_gen_kw_data("default", "KW_NAME:MY_KEYWORD")
+            .gather_gen_kw_data("prior", "KW_NAME:MY_KEYWORD")
             .values.flatten()
             .tolist()
             == expected

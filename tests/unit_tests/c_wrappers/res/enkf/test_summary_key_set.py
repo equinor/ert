@@ -78,7 +78,7 @@ def test_with_enkf_fs():
     fs.sync()
 
     ert = EnKFMain(res_config)
-    fs = ert.getEnkfFsManager().getCurrentFileSystem()
+    fs = ert.storage_manager.current_case
     summary_key_set = fs.getSummaryKeySet()
     assert "FOPT" in summary_key_set
     assert "WWCT" in summary_key_set

@@ -207,7 +207,7 @@ class BatchSimulator:
         """
 
         self.ert.addDataKW("<CASE_NAME>", _slug(case_name))
-        file_system = self.ert.getEnkfFsManager().getFileSystem(case_name)
+        file_system = self.ert.storage_manager.add_case(case_name)
         for sim_id, (geo_id, controls) in enumerate(case_data):
             assert isinstance(geo_id, int)
             self._setup_sim(sim_id, controls, file_system)

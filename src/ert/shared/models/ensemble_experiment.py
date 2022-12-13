@@ -34,7 +34,13 @@ class EnsembleExperiment(BaseRunModel):
 
         loop = asyncio.get_running_loop()
         with concurrent.futures.ThreadPoolExecutor() as executor:
-            run_context = await loop.run_in_executor(executor, self.create_context)
+            prior_context = await loop.run_in_executor(
+                executor,
+                self.ert().load_ensemble_context,
+                self.ert().storage_manager.current_case.case_name,
+                self._simulation_arguments["active_realizations"],
+                self._simulation_arguments.get("iter_num", 0),
+            )
 
             def sample_and_create_run_path(
                 ert: "EnKFMain", run_context: "RunContext"
@@ -50,20 +56,20 @@ class EnsembleExperiment(BaseRunModel):
                 executor,
                 sample_and_create_run_path,
                 self.ert(),
-                run_context,
+                prior_context,
             )
 
             ensemble_id = await loop.run_in_executor(executor, self._post_ensemble_data)
 
             await self._run_hook(
-                HookRuntime.PRE_SIMULATION, run_context.iteration, loop, executor
+                HookRuntime.PRE_SIMULATION, prior_context.iteration, loop, executor
             )
 
             experiment_logger.debug("evaluating")
-            await self._evaluate(run_context, evaluator_server_config)
+            await self._evaluate(prior_context, evaluator_server_config)
 
             num_successful_realizations = await self.successful_realizations(
-                run_context.iteration
+                prior_context.iteration
             )
 
             num_successful_realizations += self._simulation_arguments.get(
@@ -80,7 +86,7 @@ class EnsembleExperiment(BaseRunModel):
                 return
 
             await self._run_hook(
-                HookRuntime.POST_SIMULATION, run_context.iteration, loop, executor
+                HookRuntime.POST_SIMULATION, prior_context.iteration, loop, executor
             )
 
             # Push simulation results to storage
@@ -101,26 +107,30 @@ class EnsembleExperiment(BaseRunModel):
         evaluator_server_config: EvaluatorServerConfig,
     ) -> RunContext:
 
-        run_context = self.create_context()
+        prior_context = self.ert().load_ensemble_context(
+            self.ert().storage_manager.current_case.case_name,
+            self._simulation_arguments["active_realizations"],
+            iteration=self._simulation_arguments.get("iter_num", 0),
+        )
 
         self.setPhase(0, "Running simulations...", indeterminate=False)
 
         self.setPhaseName("Pre processing...", indeterminate=True)
         self.ert().sample_prior(
-            run_context.sim_fs,
-            run_context.active_realizations,
+            prior_context.sim_fs,
+            prior_context.active_realizations,
         )
-        self.ert().createRunPath(run_context)
+        self.ert().createRunPath(prior_context)
 
         # Push ensemble, parameters, observations to new storage
-        ensemble_id = self._post_ensemble_data()
+        ensemble_id = self._post_ensemble_data(prior_context.sim_fs.case_name)
 
         self.ert().runWorkflows(HookRuntime.PRE_SIMULATION)
 
         self.setPhaseName(run_msg, indeterminate=False)
 
         num_successful_realizations = self.run_ensemble_evaluator(
-            run_context, evaluator_server_config
+            prior_context, evaluator_server_config
         )
 
         num_successful_realizations += self._simulation_arguments.get(
@@ -132,11 +142,11 @@ class EnsembleExperiment(BaseRunModel):
         self.ert().runWorkflows(HookRuntime.POST_SIMULATION)
 
         # Push simulation results to storage
-        self._post_ensemble_results(ensemble_id)
+        self._post_ensemble_results(prior_context.sim_fs.case_name, ensemble_id)
 
         self.setPhase(1, "Simulations completed.")  # done...
 
-        return run_context
+        return prior_context
 
     def runSimulations(
         self, evaluator_server_config: EvaluatorServerConfig
@@ -144,19 +154,6 @@ class EnsembleExperiment(BaseRunModel):
         return self.runSimulations__(
             "Running ensemble experiment...", evaluator_server_config
         )
-
-    def create_context(self) -> RunContext:
-        itr = self._simulation_arguments.get("iter_num", 0)
-        mask = self._simulation_arguments["active_realizations"]
-
-        run_context = self.ert().create_ensemble_experiment_run_context(
-            active_mask=mask,
-            iteration=itr,
-        )
-
-        self._run_context = run_context
-        self._last_run_iteration = run_context.iteration
-        return run_context
 
     @classmethod
     def name(cls) -> str:

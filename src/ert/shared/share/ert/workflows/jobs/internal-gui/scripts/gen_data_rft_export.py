@@ -142,7 +142,7 @@ class GenDataRFTCSVExportJob(ErtPlugin):
             cases = case_list.split(",")
 
         if case_list is None or len(cases) == 0:
-            cases = [self.ert().getEnkfFsManager().getCurrentFileSystem().getCaseName()]
+            cases = [facade.get_current_fs().case_name]
 
         data_frame = pandas.DataFrame()
         for index, case in enumerate(cases):
@@ -169,7 +169,7 @@ class GenDataRFTCSVExportJob(ErtPlugin):
                 obs_node = obs_vector.getNode(report_step)
 
                 rft_data = facade.load_gen_data(case, data_key, report_step)
-                fs = self.ert().getFileSystem(case)
+                fs = self.ert().storage_manager[case]
                 realizations = fs.realizationList(RealizationStateEnum.STATE_HAS_DATA)
 
                 # Trajectory

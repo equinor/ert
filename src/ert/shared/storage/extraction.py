@@ -25,8 +25,8 @@ def create_experiment(ert) -> dict:
 
 
 def create_ensemble(
-    ert,
     size: int,
+    case_name: str,
     active_realizations: List[int],
     parameter_names: List[str],
     response_names: List[str],
@@ -37,7 +37,7 @@ def create_ensemble(
         parameter_names=parameter_names,
         response_names=response_names,
         update_id=update_id,
-        userdata={"name": ert.get_current_case_name()},
+        userdata={"name": case_name},
         active_realizations=active_realizations,
     )
 
@@ -347,15 +347,15 @@ def post_update_data(
 
 
 @feature_enabled("new-storage")
-def post_ensemble_results(ert: "LibresFacade", ensemble_id: str) -> None:
+def post_ensemble_results(
+    ert: "LibresFacade", case_name: str, ensemble_id: str
+) -> None:
 
     observations = _get_from_server(
         f"ensembles/{ensemble_id}/observations",
     ).json()
 
-    for record in create_response_records(
-        ert, ert.get_current_case_name(), observations
-    ):
+    for record in create_response_records(ert, case_name, observations):
         realizations = record["data"]
         name = record["name"]
         for index, data in realizations.items():
@@ -378,6 +378,7 @@ def post_ensemble_results(ert: "LibresFacade", ensemble_id: str) -> None:
 @feature_enabled("new-storage")
 def post_ensemble_data(
     ert: "LibresFacade",
+    case_name: str,
     ensemble_size: int,
     update_id: Optional[str] = None,
     active_realizations: Optional[List[int]] = None,
@@ -410,8 +411,8 @@ def post_ensemble_data(
     ens_response = _post_to_server(
         f"experiments/{experiment_id}/ensembles",
         json=create_ensemble(
-            ert,
             size=ensemble_size,
+            case_name=case_name,
             parameter_names=[param["name"] for param in parameters],
             response_names=response_names,
             update_id=update_id,

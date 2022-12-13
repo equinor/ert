@@ -29,11 +29,8 @@ def test_update_report(snake_oil_case_storage, snapshot):
     """
     ert = snake_oil_case_storage
     es_update = ESUpdate(ert)
-    fsm = ert.getEnkfFsManager()
-    sim_fs = fsm.getFileSystem("default_0")
-    target_fs = fsm.getFileSystem("target")
-    run_context = RunContext(sim_fs, target_fs)
-    es_update.smootherUpdate(run_context)
+    fsm = ert.storage_manager
+    es_update.smootherUpdate(fsm["default_0"], fsm.add_case("target"), "id")
     log_file = Path(ert.analysisConfig().get_log_path()) / "deprecated"
     snapshot.assert_match(log_file.read_text("utf-8"), "update_log")
 
@@ -81,16 +78,15 @@ def test_update_snapshot(snake_oil_case_storage, module, expected_gen_kw):
     ert = snake_oil_case_storage
     es_update = ESUpdate(ert)
     ert.analysisConfig().select_module(module)
-    fsm = ert.getEnkfFsManager()
-    sim_fs = fsm.getFileSystem("default_0")
-    target_fs = fsm.getFileSystem("target")
-    run_context = RunContext(sim_fs, target_fs)
+    fsm = ert.storage_manager
+    sim_fs = fsm["default_0"]
+    target_fs = fsm.add_case("target")
 
     if module == "IES_ENKF":
         w_container = IterativeEnsembleSmoother(ert.getEnsembleSize())
-        es_update.iterative_smoother_update(run_context, w_container)
+        es_update.iterative_smoother_update(sim_fs, target_fs, w_container, "id")
     else:
-        es_update.smootherUpdate(run_context)
+        es_update.smootherUpdate(sim_fs, target_fs, "id")
 
     conf = ert.ensembleConfig()["SNAKE_OIL_PARAM"]
     sim_node = EnkfNode(conf)
@@ -217,25 +213,25 @@ def test_localization(snake_oil_case_storage, expected_target_gen_kw, update_ste
     """
     ert = snake_oil_case_storage
     es_update = ESUpdate(ert)
-    fsm = ert.getEnkfFsManager()
-    sim_fs = fsm.getFileSystem("default_0")
-    target_fs = fsm.getFileSystem("target")
     # perform localization
 
     ert.update_configuration = update_step
 
-    run_context = ert.create_ensemble_smoother_run_context(
-        source_filesystem=sim_fs, target_filesystem=target_fs, iteration=0
+    prior = ert.load_ensemble_context(
+        "default_0", [True] * ert.getEnsembleSize(), iteration=0
     )
-    es_update.smootherUpdate(run_context)
+    posterior = ert.create_ensemble_context(
+        "target", [True] * ert.getEnsembleSize(), iteration=1
+    )
+    es_update.smootherUpdate(prior.sim_fs, posterior.sim_fs, prior.run_id)
 
     conf = ert.ensembleConfig()["SNAKE_OIL_PARAM"]
     sim_node = EnkfNode(conf)
     target_node = EnkfNode(conf)
 
     node_id = NodeId(0, 0)
-    sim_node.load(sim_fs, node_id)
-    target_node.load(target_fs, node_id)
+    sim_node.load(prior.sim_fs, node_id)
+    target_node.load(posterior.sim_fs, node_id)
 
     sim_gen_kw = list(sim_node.asGenKw())
     target_gen_kw = list(target_node.asGenKw())
@@ -304,14 +300,13 @@ SUMMARY_OBSERVATION EXTREMELY_HIGH_STD
     ert = EnKFMain(res_config)
     es_update = ESUpdate(ert)
     ert.analysisConfig().select_module("IES_ENKF")
-    fsm = ert.getEnkfFsManager()
-    sim_fs = fsm.getFileSystem("default_0")
-    target_fs = fsm.getFileSystem("target")
-    run_context = RunContext(sim_fs, target_fs)
+    fsm = ert.storage_manager
+    sim_fs = fsm["default_0"]
+    target_fs = fsm.add_case("target")
     ert.analysisConfig().set_enkf_alpha(alpha)
     w_container = IterativeEnsembleSmoother(ert.getEnsembleSize())
-    es_update.iterative_smoother_update(run_context, w_container)
-    result_snapshot = es_update.update_snapshots[run_context.run_id]
+    es_update.iterative_smoother_update(sim_fs, target_fs, w_container, "id")
+    result_snapshot = es_update.update_snapshots["id"]
     assert result_snapshot.alpha == alpha
     assert result_snapshot.update_step_snapshots["ALL_ACTIVE"].obs_status == expected
 
@@ -338,14 +333,11 @@ def test_update_multiple_param(copy_case):
     res_config = ResConfig("snake_oil.ert")
     ert = EnKFMain(res_config)
     es_update = ESUpdate(ert)
-    fsm = ert.getEnkfFsManager()
-    sim_fs = fsm.getFileSystem("default")
-    target_fs = fsm.getFileSystem("target")
+    fsm = ert.storage_manager
+    sim_fs = fsm["default"]
+    target_fs = fsm.add_case("target")
 
-    run_context = ert.create_ensemble_smoother_run_context(
-        source_filesystem=sim_fs, target_filesystem=target_fs, iteration=0
-    )
-    es_update.smootherUpdate(run_context)
+    es_update.smootherUpdate(sim_fs, target_fs, "an id")
 
     prior = _create_temporary_parameter_storage(
         sim_fs, ert.ensembleConfig(), list(range(10))

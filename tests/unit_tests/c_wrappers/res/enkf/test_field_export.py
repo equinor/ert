@@ -32,12 +32,12 @@ def test_field_basics(snake_oil_field_example):
 
 def test_field_export(snake_oil_field_example):
     ert = snake_oil_field_example
-    fs_manager = ert.getEnkfFsManager()
+    fs_manager = ert.storage_manager
     ens_config = ert.ensembleConfig()
     config_node = ens_config["PERMX"]
     data_node = EnkfNode(config_node)
     node_id = NodeId(0, 0)
-    fs = fs_manager.getCurrentFileSystem()
+    fs = fs_manager.current_case
     data_node.tryLoad(fs, node_id)
 
     data_node.export("export/with/path/PERMX.grdecl")
@@ -46,11 +46,11 @@ def test_field_export(snake_oil_field_example):
 
 def test_field_export_many(snake_oil_field_example):
     ert = snake_oil_field_example
-    fs_manager = ert.getEnkfFsManager()
+    fs_manager = ert.storage_manager
     ens_config = ert.ensembleConfig()
     config_node = ens_config["PERMX"]
 
-    fs = fs_manager.getCurrentFileSystem()
+    fs = fs_manager.current_case
     ert.sample_prior(fs, list(range(ert.getEnsembleSize())))
     # Filename without embedded %d - TypeError
     with pytest.raises(TypeError):

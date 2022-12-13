@@ -124,7 +124,7 @@ def _chdir_tmp_path(monkeypatch, tmp_path):
 
 def test_empty_ensemble(client):
     ert = ErtConfigBuilder().build()
-    extraction.post_ensemble_data(ert, -1)
+    extraction.post_ensemble_data(ert, "default", -1)
 
     _id = client.fetch_experiment()
 
@@ -143,10 +143,10 @@ def test_empty_ensemble_with_name(client):
 
     # Create case with given name
     ert = ErtConfigBuilder().build()
-    ert.select_or_create_new_case(name)
+    ert._enkf_main.storage_manager.add_case(name)
 
     # Post initial ensemble
-    extraction.post_ensemble_data(ert, -1)
+    extraction.post_ensemble_data(ert, name, -1)
 
     # Compare results
     _id = client.fetch_experiment()
@@ -167,7 +167,7 @@ def test_priors(client):
     _create_runpath(ert)
 
     # Post initial ensemble
-    extraction.post_ensemble_data(ert, -1)
+    extraction.post_ensemble_data(ert, "name", -1)
 
     # Compare results
     _id = client.fetch_experiment()
@@ -191,7 +191,7 @@ def test_parameters(client):
     _create_runpath(ert)
 
     # Post initial ensemble
-    extraction.post_ensemble_data(ert, -1)
+    extraction.post_ensemble_data(ert, "name", -1)
 
     # Get ensemble_id
     experiment_id = client.fetch_experiment()
@@ -238,7 +238,7 @@ def test_observations(client):
     ert = builder.build()
 
     # Post ensemble
-    extraction.post_ensemble_data(ert, builder.ensemble_size)
+    extraction.post_ensemble_data(ert, "id", builder.ensemble_size)
 
     # Experiment should have 1 observation
     experiment_id = client.fetch_experiment()
@@ -264,21 +264,24 @@ def test_observation_transformation(client):
     ert = builder.build()
 
     # Post first ensemble
-    parent_ensemble_id = extraction.post_ensemble_data(ert, builder.ensemble_size)
+    parent_ensemble_id = extraction.post_ensemble_data(ert, "id", builder.ensemble_size)
 
     # Create runpath and run ERT
     run_context = _create_runpath(ert)
-    for nr, path in enumerate(run_context.paths):
-        (Path(path) / "poly_0.out").write_text(
+    for nr, run_arg in enumerate(run_context):
+        (Path(run_arg.runpath) / "poly_0.out").write_text(
             f"{1000 + nr}\n{1 + nr}\n{2 + nr}\n{3}\n"
         )
     ert.load_from_forward_model("default", [True] * len(run_context), 0)
-    ert.smoother_update(run_context)
+    posterior = ert._enkf_main.create_ensemble_context(
+        "posterior", [True] * ert.get_ensemble_size(), 1
+    )
+    ert.smoother_update(run_context.sim_fs, posterior.sim_fs, run_context.run_id)
 
     # Post second ensemble
     update_id = extraction.post_update_data(ert, parent_ensemble_id, "boruvka")
     child_ensemble_id = extraction.post_ensemble_data(
-        ert, builder.ensemble_size, update_id
+        ert, "default", builder.ensemble_size, update_id
     )
 
     # Ensemble should have 1 observation with transformation
@@ -314,15 +317,17 @@ def test_post_ensemble_results(client):
 
     # Create runpath and run ERT
     run_context = _create_runpath(ert)
-    for path in run_context.paths:
-        (Path(path) / "poly_0.out").write_text("\n".join([str(nr) for nr in data]))
+    for path in run_context:
+        (Path(path.runpath) / "poly_0.out").write_text(
+            "\n".join([str(nr) for nr in data])
+        )
     ert.load_from_forward_model("default", [True] * len(run_context), 0)
 
     # Post initial ensemble
-    ensemble_id = extraction.post_ensemble_data(ert, builder.ensemble_size)
+    ensemble_id = extraction.post_ensemble_data(ert, "default", builder.ensemble_size)
 
     # Post ensemble results
-    extraction.post_ensemble_results(ert, ensemble_id)
+    extraction.post_ensemble_results(ert, "default", ensemble_id)
 
     # Retrieve response data
     data = client.get(f"/ensembles/{ensemble_id}/responses/{response_name}/data")
@@ -340,10 +345,12 @@ def test_post_update_data(client):
     ert = builder.build()
 
     # Post two ensembles
-    parent_ensemble_id = extraction.post_ensemble_data(ert, builder.ensemble_size)
+    parent_ensemble_id = extraction.post_ensemble_data(
+        ert, "default", builder.ensemble_size
+    )
     update_id = extraction.post_update_data(ert, parent_ensemble_id, "boruvka")
     child_ensemble_id = extraction.post_ensemble_data(
-        ert, builder.ensemble_size, update_id
+        ert, "default", builder.ensemble_size, update_id
     )
 
     # Experiment should have two ensembles
@@ -484,9 +491,10 @@ def _create_runpath(ert: LibresFacade, iteration: int = 0) -> RunContext:
     """
     enkf_main = ert._enkf_main
 
-    run_context = enkf_main.create_ensemble_smoother_run_context(
+    run_context = enkf_main.load_ensemble_context(
+        "default",
+        [True] * ert.get_ensemble_size(),
         iteration=iteration,
-        target_filesystem=enkf_main.storage_manager.add_case("iter"),
     )
     enkf_main.sample_prior(run_context.sim_fs, run_context.active_realizations)
     enkf_main.createRunPath(run_context)

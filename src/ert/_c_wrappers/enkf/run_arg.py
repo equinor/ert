@@ -8,11 +8,12 @@ if TYPE_CHECKING:
 @dataclass
 class RunArg:
     run_id: str
-    sim_fs: "EnkfFs"
+    ensemble_storage: "EnkfFs"
     iens: int
     itr: int
     runpath: str
     job_name: str
+    active: bool = True
     # Below here is legacy related to Everest
     queue_index: Optional[int] = None
     submitted: bool = False
