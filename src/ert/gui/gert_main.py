@@ -5,6 +5,14 @@ import sys
 from pathlib import Path
 
 import filelock
+from PyQt5.QtWidgets import (
+    QHBoxLayout,
+    QLabel,
+    QPushButton,
+    QTextEdit,
+    QVBoxLayout,
+    QWidget,
+)
 from qtpy.QtCore import QLocale, Qt
 from qtpy.QtWidgets import QApplication, QMessageBox
 
@@ -30,9 +38,63 @@ from ert.libres_facade import LibresFacade
 from ert.services import Storage
 
 
+def display_suggester(app, suggestions, fatal=False):
+    if len(suggestions) > 0:
+
+        suggest = QWidget()
+        layout = QVBoxLayout()
+        heading = QLabel("Some problems detected")
+        lines = QTextEdit()
+        lines.setReadOnly(True)
+        text = "\n".join(suggestions)
+        lines.setPlainText(text)
+
+        buttons = QHBoxLayout()
+        layout.addWidget(heading)
+        layout.addWidget(lines)
+
+        copy = QPushButton("Copy messages")
+
+        def copy_text():
+            QApplication.clipboard().setText(text)
+
+        copy.pressed.connect(copy_text)
+
+        run = QPushButton("Run ert")
+        run.setEnabled(not fatal)
+        run.pressed.connect(suggest.close)
+        give_up = QPushButton("Exit")
+        quitted = False
+
+        def quit_pressed():
+            nonlocal quitted
+            quitted = True
+            suggest.close()
+
+        give_up.pressed.connect(quit_pressed)
+        buttons.addWidget(copy)
+        buttons.addWidget(run)
+        buttons.addWidget(give_up)
+
+        layout.addLayout(buttons)
+        suggest.setLayout(layout)
+        suggest.resize(800, 600)
+        suggest.show()
+        app.exec_()
+        return quitted
+
+
 def run_gui(args: argparse.Namespace):
     app = QApplication([])  # Early so that QT is initialized before other imports
     app.setWindowIcon(resourceIcon("application/window_icon_cutout"))
+
+    try:
+        if display_suggester(app, ResConfig.make_suggestion_list(args.config)):
+            return
+    except Exception as e:
+        display_suggester(app, [f"Fatal error while parsing config:\n {e}"], fatal=True)
+        return
+
     res_config = ResConfig(args.config)
 
     # Create logger inside function to make sure all handlers have been added to

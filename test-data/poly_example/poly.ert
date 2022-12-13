@@ -1,6 +1,7 @@
 JOBNAME poly_%d
 
 QUEUE_SYSTEM LOCAL
+UMASK 1
 QUEUE_OPTION LOCAL MAX_RUNNING 50
 
 RUNPATH poly_out/realization-%d/iter-%d
