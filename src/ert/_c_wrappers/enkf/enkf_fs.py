@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
 import numpy as np
 import numpy.typing as npt
 import pandas as pd
+import xtgeo
 from cwrap import BaseCClass
 
 from ert import _clib
@@ -25,6 +26,7 @@ from ert.storage import Storage
 if TYPE_CHECKING:
     from ecl.summary import EclSum
     from ecl.util.util import IntVector
+    from xtgeo import RegularSurface
 
     from ert._c_wrappers.enkf.config import GenKwConfig
     from ert._c_wrappers.enkf.res_config import ModelConfig
@@ -226,6 +228,12 @@ class EnkfFs(BaseCClass):
         Path.mkdir(output_path, exist_ok=True)
         with open(output_path / f"{key}.json", "w", encoding="utf-8") as f:
             json.dump(data, f)
+
+    def save_surface_file(self, key: str, realization: int, file_name: str) -> None:
+        output_path = self.mount_point / f"surface-{realization}"
+        Path.mkdir(output_path, exist_ok=True)
+        surf = xtgeo.surface_from_file(file_name, fformat="irap_ascii")
+        surf.to_file(output_path / f"{key}.irap", fformat="irap_ascii")
         self.getStateMap().update_matching(
             realization,
             RealizationStateEnum.STATE_UNDEFINED,
@@ -240,6 +248,44 @@ class EnkfFs(BaseCClass):
         with open(input_path, "r", encoding="utf-8") as f:
             data = json.load(f)
         return data
+
+    def save_surface_data(
+        self,
+        key: str,
+        realization: int,
+        base_file_name: str,
+        data: "npt.NDArray[np.double]",
+    ) -> None:
+        output_path = self.mount_point / f"surface-{realization}"
+        Path.mkdir(output_path, exist_ok=True)
+        surf = xtgeo.surface_from_file(base_file_name, fformat="irap_ascii")
+        surf.set_values1d(data, order="F")
+        surf.to_file(output_path / f"{key}.irap", fformat="irap_ascii")
+        self.getStateMap().update_matching(
+            realization,
+            RealizationStateEnum.STATE_UNDEFINED,
+            RealizationStateEnum.STATE_INITIALIZED,
+        )
+
+    def has_surface(self, key: str, realization: int) -> bool:
+        input_path = self.mount_point / f"surface-{realization}"
+        return (input_path / f"{key}.irap").exists()
+
+    def load_surface_file(self, key: str, realization: int) -> "RegularSurface":
+        input_path = self.mount_point / f"surface-{realization}" / f"{key}.irap"
+        if not input_path.exists():
+            raise KeyError(f"No parameter: {key} in storage")
+        surf = xtgeo.surface_from_file(input_path, fformat="irap_ascii")
+        return surf
+
+    def load_surface_data(
+        self, key: str, realizations: List[int]
+    ) -> "npt.NDArray[np.double]":
+        result = []
+        for realization in realizations:
+            surf = self.load_surface_file(key, realization)
+            result.append(surf.get_values1d(order="F"))
+        return np.stack(result).T
 
     def save_parameters(
         self,
@@ -300,6 +346,25 @@ class EnkfFs(BaseCClass):
                 shutil.copy(
                     src=self.mount_point / gen_kw_folder.stem / f,
                     dst=to.mount_point / gen_kw_folder.stem / f,
+                )
+
+        for surface_folder in self.mount_point.glob("surface-*"):
+            files_to_copy = []
+            realization = int(str(surface_folder).rsplit("-", maxsplit=1)[-1])
+            if realization in realizations:
+                for parameter_file in surface_folder.iterdir():
+                    base_name = str(parameter_file.stem)
+                    if base_name in parameter_keys:
+                        files_to_copy.append(parameter_file.name)
+
+            if not files_to_copy:
+                continue
+
+            Path.mkdir(to.mount_point / surface_folder.stem)
+            for f in files_to_copy:
+                shutil.copy(
+                    src=self.mount_point / surface_folder.stem / f,
+                    dst=to.mount_point / surface_folder.stem / f,
                 )
 
     def save_summary_data(
