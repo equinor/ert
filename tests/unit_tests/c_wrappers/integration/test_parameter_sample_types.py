@@ -347,7 +347,7 @@ def test_gen_kw_forward_init(tmpdir, load_forward_init):
 
         if load_forward_init:
             with pytest.raises(
-                KeyError,
+                ConfigValidationError,
                 match=(
                     "Loading GEN_KW from files created by "
                     "the forward model is not supported."

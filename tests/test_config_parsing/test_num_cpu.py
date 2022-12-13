@@ -7,7 +7,7 @@ from ert._c_wrappers.enkf import ConfigKeys, EnKFMain, ResConfig
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_default_num_cpu():
-    with open("file.ert", "w") as f:
+    with open("file.ert", mode="w", encoding="utf-8") as f:
         f.write(f"{ConfigKeys.NUM_REALIZATIONS} 1")
     res_config = ResConfig(user_config_file="file.ert")
     enkf_main = EnKFMain(res_config)
@@ -30,6 +30,7 @@ def test_num_cpu_from_config_preferred():
         ConfigKeys.NUM_CPU: config_num_cpu,
         ConfigKeys.DATA_FILE: os.path.join(os.getcwd(), data_file),
         ConfigKeys.ENSPATH: ".",
+        ConfigKeys.RUNPATH_FILE: os.path.join(os.getcwd(), "runpath.file"),
     }
     res_config = ResConfig(config_dict=config_dict)
     enkf_main: EnKFMain = EnKFMain(res_config)
@@ -52,6 +53,7 @@ PARALLEL
         ConfigKeys.NUM_REALIZATIONS: 1,
         ConfigKeys.DATA_FILE: data_file,
         ConfigKeys.ENSPATH: ".",
+        ConfigKeys.RUNPATH_FILE: os.path.join(os.getcwd(), "runpath.file"),
     }
     res_config = ResConfig(config_dict=config_dict)
     enkf_main: EnKFMain = EnKFMain(res_config)

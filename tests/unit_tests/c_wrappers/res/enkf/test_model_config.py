@@ -107,24 +107,19 @@ def test_model_config_dict_constructor(setup_case):
         ConfigKeys.HISTORY_SOURCE: "REFCASE_HISTORY",
         ConfigKeys.GEN_KW_EXPORT_NAME: "parameter_test.json",
         ConfigKeys.FORWARD_MODEL: [
-            {
-                ConfigKeys.NAME: "COPY_FILE",
-                ConfigKeys.ARGLIST: (
-                    "<FROM>=input/schedule.sch,<TO>=output/schedule_copy.sch"
-                ),
-            },
-            {
-                ConfigKeys.NAME: "SNAKE_OIL_SIMULATOR",
-                ConfigKeys.ARGLIST: "",
-            },
-            {
-                ConfigKeys.NAME: "SNAKE_OIL_NPV",
-                ConfigKeys.ARGLIST: "",
-            },
-            {
-                ConfigKeys.NAME: "SNAKE_OIL_DIFF",
-                ConfigKeys.ARGLIST: "",
-            },
+            ["COPY_FILE", "<FROM>=input/schedule.sch,<TO>=output/schedule_copy.sch"],
+            [
+                "SNAKE_OIL_SIMULATOR",
+                "",
+            ],
+            [
+                "SNAKE_OIL_NPV",
+                "",
+            ],
+            [
+                "SNAKE_OIL_DIFF",
+                "",
+            ],
         ],
         # needed to make up for lack of site config handling on config dict path
         ConfigKeys.INSTALL_JOB: [

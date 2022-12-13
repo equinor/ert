@@ -49,11 +49,7 @@ class SubstitutionList(BaseCClass):
         else:
             config_dir = subst_list["<CONFIG_PATH>"]
 
-        runpath_file_name = config_dict.get("RUNPATH_FILE", ".ert_runpath_list")
-        runpath_file_path = os.path.normpath(
-            os.path.join(config_dir, runpath_file_name)
-        )
-        subst_list.addItem("<RUNPATH_FILE>", runpath_file_path)
+        subst_list.addItem("<RUNPATH_FILE>", config_dict.get("RUNPATH_FILE"))
 
         num_cpus = config_dict.get("NUM_CPU")
         if num_cpus is None and "DATA_FILE" in config_dict:
