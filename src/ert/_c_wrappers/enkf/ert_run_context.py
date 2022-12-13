@@ -10,9 +10,6 @@ from ert._c_wrappers.util import SubstitutionList
 if TYPE_CHECKING:
     from ert._c_wrappers.enkf.enkf_fs import EnkfFs
 
-if TYPE_CHECKING:
-    from ert._c_wrappers.enkf.enkf_fs import EnkfFs
-
 
 @dataclass
 class RunContext:
