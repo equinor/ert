@@ -1,9 +1,10 @@
 import os
+from pathlib import Path
 from textwrap import dedent
 
 import pytest
 
-from ert._c_wrappers.enkf import EnKFMain, ResConfig
+from ert._c_wrappers.enkf import EnKFMain, ResConfig, RunContext
 from ert._c_wrappers.enkf.runpaths import Runpaths
 from ert._c_wrappers.util.substitution_list import SubstitutionList
 
@@ -101,8 +102,7 @@ def render_dynamic_values(s, itr, iens, geo_id):
 @pytest.mark.parametrize("itr", [0, 1, 2, 17])
 def test_write_snakeoil_runpath_file(snake_oil_case, itr):
     ert = snake_oil_case
-    fs_manager = ert.getEnkfFsManager()
-    sim_fs = fs_manager.getFileSystem("sim_fs")
+    fsm = ert.storage_manager
 
     num_realizations = 25
     mask = [True] * num_realizations
@@ -112,15 +112,17 @@ def test_write_snakeoil_runpath_file(snake_oil_case, itr):
         "magic-real-<IENS>/magic-iter-<ITER>"
     )
     jobname_fmt = "SNAKE_OIL_%d"
-    ert.runpaths._runpath_format = runpath_fmt
-    ert.runpaths._job_name_format = jobname_fmt
-
+    global_substitutions = dict(ert.get_context())
     for i in range(num_realizations):
-        ert.set_geo_id(str(10 * i), i, itr)
+        global_substitutions[f"<GEO_ID_{i}_{itr}>"] = str(10 * i)
 
-    run_context = ert.create_ensemble_experiment_run_context(
-        source_filesystem=sim_fs,
-        active_mask=mask,
+    run_context = RunContext(
+        sim_fs=fsm.add_case("sim_fs"),
+        path_format=jobname_fmt,
+        format_string=runpath_fmt,
+        runpath_file=Path("a_file_name"),
+        initial_mask=mask,
+        global_substitutions=global_substitutions,
         iteration=itr,
     )
 
@@ -133,7 +135,7 @@ def test_write_snakeoil_runpath_file(snake_oil_case, itr):
 
         assert os.path.isdir(f"simulations/{10*i}")
 
-    runpath_list_path = ".ert_runpath_list"
+    runpath_list_path = "a_file_name"
     assert os.path.isfile(runpath_list_path)
 
     exp_runpaths = [
@@ -170,7 +172,9 @@ def test_assert_export():
     runpath_list_file = ert.runpath_list_filename
     assert not runpath_list_file.exists()
 
-    run_context = ert.create_ensemble_experiment_run_context(
+    run_context = ert.create_ensemble_context(
+        "prior",
+        [True] * ert.getEnsembleSize(),
         iteration=0,
     )
     ert.sample_prior(run_context.sim_fs, run_context.active_realizations)

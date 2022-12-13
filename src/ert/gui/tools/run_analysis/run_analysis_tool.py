@@ -1,6 +1,7 @@
+import uuid
+
 from qtpy.QtWidgets import QMessageBox
 
-from ert._c_wrappers.enkf import RunContext
 from ert.analysis import ErtAnalysisError, ESUpdate
 from ert.gui.ertwidgets import resourceIcon
 from ert.gui.ertwidgets.closabledialog import ClosableDialog
@@ -11,16 +12,13 @@ from ert.gui.tools.run_analysis import RunAnalysisPanel
 def analyse(ert, target, source):
     """Runs analysis using target and source cases. Returns whether or not
     the analysis was successful."""
-    fs_manager = ert.getEnkfFsManager()
+    fs_manager = ert.storage_manager
     es_update = ESUpdate(ert)
 
-    target_fs = fs_manager.getFileSystem(target)
-    source_fs = fs_manager.getFileSystem(source)
-    run_context = RunContext(
-        source_fs,
-        target_fs,
-    )
-    es_update.smootherUpdate(run_context)
+    target_fs = fs_manager.add_case(target)
+    source_fs = fs_manager[source]
+
+    es_update.smootherUpdate(source_fs, target_fs, uuid.uuid4())
 
 
 class RunAnalysisTool(Tool):

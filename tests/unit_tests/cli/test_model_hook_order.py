@@ -79,7 +79,7 @@ class MockWContainer:
 
 
 class MockEsUpdate:
-    def iterative_smoother_update(self, _, w_container):
+    def iterative_smoother_update(self, _, posterior_storage, w_container, run_id):
         w_container.iteration_nr += 1
 
 

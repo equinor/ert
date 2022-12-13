@@ -32,8 +32,8 @@ def test_run_simulation_batch(setup_case):
     injection_node = EnkfNode(injection_control)
     injection_node_ext = injection_node.as_ext_param()
 
-    fs_manager = ert.getEnkfFsManager()
-    sim_fs = fs_manager.getFileSystem("sim_fs")
+    fs_manager = ert.storage_manager
+    sim_fs = fs_manager.add_case("sim_fs")
     state_map = sim_fs.getStateMap()
     batch_size = ens_size
     for iens in range(batch_size):
@@ -50,9 +50,7 @@ def test_run_simulation_batch(setup_case):
         state_map[iens] = RealizationStateEnum.STATE_INITIALIZED
 
     mask = [True] * batch_size
-    run_context = ert.create_ensemble_experiment_run_context(
-        source_filesystem=sim_fs, active_mask=mask, iteration=0
-    )
+    run_context = ert.load_ensemble_context(sim_fs.case_name, mask, iteration=0)
     ert.createRunPath(run_context)
     job_queue = ert.get_queue_config().create_job_queue()
 

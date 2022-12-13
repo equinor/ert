@@ -6,7 +6,7 @@ def test_load_active_masks(snake_oil_case_storage):
     case1 = "default_0"
     ert = snake_oil_case_storage
 
-    fs1 = ert.getEnkfFsManager().getFileSystem(case1)
+    fs1 = ert.storage_manager[case1]
     config_node = ert.ensembleConfig().getNode("SNAKE_OIL_OPR_DIFF")
     data_node = EnkfNode(config_node)
     data_node.tryLoad(fs1, NodeId(199, 0))
@@ -35,7 +35,7 @@ def test_load_active_masks(snake_oil_case_storage):
 
 def test_create(snake_oil_case_storage):
     ert = snake_oil_case_storage
-    fs1 = ert.getEnkfFsManager().getCurrentFileSystem()
+    fs1 = ert.storage_manager.current_case
     config_node = ert.ensembleConfig().getNode("SNAKE_OIL_OPR_DIFF")
 
     data_node = EnkfNode(config_node)

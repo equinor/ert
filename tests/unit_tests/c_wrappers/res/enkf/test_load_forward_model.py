@@ -151,13 +151,11 @@ def test_load_forward_model_summary(summary_configuration, expected, caplog):
 
     res_config = ResConfig("config.ert")
     ert = EnKFMain(res_config)
-    run_context = ert.create_ensemble_experiment_run_context(
-        iteration=0, active_mask=[True]
-    )
+    run_context = ert.create_ensemble_context("prior", [True], iteration=0)
     ert.createRunPath(run_context)
     facade = LibresFacade(ert)
     with caplog.at_level(logging.ERROR):
-        loaded = facade.load_from_forward_model("default", [True], 0)
+        loaded = facade.load_from_forward_model("prior", [True], 0)
     expected_loaded, expected_log_message = expected
     assert loaded == expected_loaded
     if expected_log_message:

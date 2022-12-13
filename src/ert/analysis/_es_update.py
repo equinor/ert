@@ -19,7 +19,7 @@ if TYPE_CHECKING:
 
     from ert._c_wrappers.analysis import AnalysisModule
     from ert._c_wrappers.analysis.configuration import UpdateConfiguration
-    from ert._c_wrappers.enkf import EnKFMain, RunContext
+    from ert._c_wrappers.enkf import EnKFMain
     from ert._c_wrappers.enkf.analysis_config import AnalysisConfig
     from ert._c_wrappers.enkf.enkf_fs import EnkfFs
     from ert._c_wrappers.enkf.enkf_obs import EnkfObs
@@ -325,11 +325,11 @@ def _assert_has_enough_realizations(
 
 
 def _create_smoother_snapshot(
-    source_fs: "EnkfFs", target_fs: "EnkfFs", analysis_config: "AnalysisConfig"
+    prior_name: "str", posterior_name: "str", analysis_config: "AnalysisConfig"
 ) -> SmootherSnapshot:
     return SmootherSnapshot(
-        source_fs.getCaseName(),
-        target_fs.getCaseName(),
+        prior_name,
+        posterior_name,
         analysis_config.active_module_name(),
         analysis_config.get_active_module().variable_value_dict(),
         analysis_config.get_enkf_alpha(),
@@ -342,10 +342,9 @@ class ESUpdate:
         self.ert = enkf_main
         self.update_snapshots: Dict[str, SmootherSnapshot] = {}
 
-    def smootherUpdate(self, run_context: "RunContext") -> None:
-        source_fs = run_context.sim_fs
-        target_fs = run_context.target_fs
-
+    def smootherUpdate(
+        self, prior_storage: "EnkfFs", posterior_storage: "EnkfFs", run_id: str
+    ) -> None:
         updatestep = self.ert.getLocalConfig()
 
         analysis_config = self.ert.analysisConfig()
@@ -356,12 +355,12 @@ class ESUpdate:
         alpha = analysis_config.get_enkf_alpha()
         std_cutoff = analysis_config.get_std_cutoff()
         global_scaling = analysis_config.get_global_std_scaling()
-        source_state_map = source_fs.getStateMap()
+        source_state_map = prior_storage.getStateMap()
         ens_mask = source_state_map.selectMatching(RealizationStateEnum.STATE_HAS_DATA)
         _assert_has_enough_realizations(ens_mask, analysis_config)
 
         smoother_snapshot = _create_smoother_snapshot(
-            source_fs, target_fs, analysis_config
+            prior_storage.case_name, posterior_storage.case_name, analysis_config
         )
 
         analysis_ES(
@@ -375,22 +374,23 @@ class ESUpdate:
             smoother_snapshot,
             ens_mask,
             ensemble_config,
-            source_fs,
-            target_fs,
+            prior_storage,
+            posterior_storage,
         )
 
         _write_update_report(
             Path(analysis_config.get_log_path()) / "deprecated", smoother_snapshot
         )
 
-        self.update_snapshots[run_context.run_id] = smoother_snapshot
+        self.update_snapshots[run_id] = smoother_snapshot
 
     def iterative_smoother_update(
-        self, run_context: "RunContext", w_container: ies.IterativeEnsembleSmoother
+        self,
+        prior_storage: "EnkfFs",
+        posterior_storage: "EnkfFs",
+        w_container: ies.IterativeEnsembleSmoother,
+        run_id: str,
     ) -> None:
-        source_fs = run_context.sim_fs
-        target_fs = run_context.target_fs
-
         updatestep = self.ert.getLocalConfig()
         if len(updatestep) > 1:
             raise ErtAnalysisError(
@@ -405,13 +405,13 @@ class ESUpdate:
         alpha = analysis_config.get_enkf_alpha()
         std_cutoff = analysis_config.get_std_cutoff()
         global_scaling = analysis_config.get_global_std_scaling()
-        source_state_map = source_fs.getStateMap()
+        source_state_map = prior_storage.getStateMap()
         ens_mask = source_state_map.selectMatching(RealizationStateEnum.STATE_HAS_DATA)
 
         _assert_has_enough_realizations(ens_mask, analysis_config)
 
         smoother_snapshot = _create_smoother_snapshot(
-            source_fs, target_fs, analysis_config
+            prior_storage.case_name, posterior_storage.case_name, analysis_config
         )
 
         analysis_IES(
@@ -425,8 +425,8 @@ class ESUpdate:
             smoother_snapshot,
             ens_mask,
             ensemble_config,
-            source_fs,
-            target_fs,
+            prior_storage,
+            posterior_storage,
             w_container,
         )
 
@@ -434,4 +434,4 @@ class ESUpdate:
             Path(analysis_config.get_log_path()) / "deprecated", smoother_snapshot
         )
 
-        self.update_snapshots[run_context.run_id] = smoother_snapshot
+        self.update_snapshots[run_id] = smoother_snapshot

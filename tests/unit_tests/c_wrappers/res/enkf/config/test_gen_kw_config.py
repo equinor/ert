@@ -182,9 +182,9 @@ def test_gen_kw_is_log_or_not(tmpdir, distribution, expect_log, parameters_regex
         gen_kw_config = node.getModelConfig()
         assert isinstance(gen_kw_config, GenKwConfig)
         assert gen_kw_config.shouldUseLogScale(0) is expect_log
-        run_context = ert.create_ensemble_experiment_run_context(0)
-        ert.sample_prior(run_context.sim_fs, run_context.active_realizations)
-        ert.createRunPath(run_context)
+        prior = ert.create_ensemble_context("prior", [True], 0)
+        ert.sample_prior(prior.sim_fs, prior.active_realizations)
+        ert.createRunPath(prior)
         assert re.match(
             parameters_regex,
             Path("simulations/realization-0/iter-0/parameters.txt").read_text(),

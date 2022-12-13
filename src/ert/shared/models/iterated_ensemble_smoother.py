@@ -53,7 +53,9 @@ class IteratedEnsembleSmoother(BaseRunModel):
         self.ert().createRunPath(run_context)
         self.ert().runWorkflows(HookRuntime.PRE_SIMULATION)
         # create ensemble
-        ensemble_id = self._post_ensemble_data(update_id=update_id)
+        ensemble_id = self._post_ensemble_data(
+            case_name=run_context.sim_fs.case_name, update_id=update_id
+        )
         self.setPhaseName("Running forecast...", indeterminate=False)
         num_successful_realizations = self.run_ensemble_evaluator(
             run_context, evaluator_server_config
@@ -63,21 +65,21 @@ class IteratedEnsembleSmoother(BaseRunModel):
 
         self.setPhaseName("Post processing...", indeterminate=True)
         self.ert().runWorkflows(HookRuntime.POST_SIMULATION)
-        self._post_ensemble_results(ensemble_id)
+        self._post_ensemble_results(run_context.sim_fs.case_name, ensemble_id)
         return ensemble_id
 
-    def createTargetCaseFileSystem(self, phase: int, target_case_format: str) -> EnkfFs:
-        target_fs = self.ert().getFileSystem(target_case_format % phase)
-        return target_fs
-
-    def analyzeStep(self, run_context: RunContext, ensemble_id: str) -> str:
+    def analyzeStep(
+        self, prior_storage: "EnkfFs", posterior_storage: "EnkfFs", ensemble_id: str
+    ) -> str:
         self.setPhaseName("Analyzing...", indeterminate=True)
 
         self.setPhaseName("Pre processing update...", indeterminate=True)
         self.ert().runWorkflows(HookRuntime.PRE_UPDATE)
 
         try:
-            self.facade.iterative_smoother_update(run_context, self._w_container)
+            self.facade.iterative_smoother_update(
+                prior_storage, posterior_storage, self._w_container, ensemble_id
+            )
         except ErtAnalysisError as e:
             raise ErtRunError(
                 f"Analysis of simulation failed with the following error: {e}"
@@ -100,97 +102,61 @@ class IteratedEnsembleSmoother(BaseRunModel):
         self.setPhaseCount(phase_count)
 
         target_case_format = self._simulation_arguments["target_case"]
-        run_context = self.create_context(0)
+        prior_context = self.ert().create_ensemble_context(
+            target_case_format % 0,
+            self._simulation_arguments["active_realizations"],
+            iteration=0,
+        )
 
         self.ert().analysisConfig().set_case_format(target_case_format)
 
-        self.ert().sample_prior(run_context.sim_fs, run_context.active_realizations)
-        ensemble_id = self._runAndPostProcess(run_context, evaluator_server_config)
+        self.ert().sample_prior(prior_context.sim_fs, prior_context.active_realizations)
+        ensemble_id = self._runAndPostProcess(prior_context, evaluator_server_config)
 
         analysis_config = self.ert().analysisConfig()
-        num_retries_per_iteration = analysis_config.num_retries_per_iter
-        num_retries = 0
-        current_iter = 0
-
-        while (
-            current_iter < self.facade.get_number_of_iterations()
-            and num_retries < num_retries_per_iteration
-        ):
-            pre_analysis_iter_num = self._w_container.iteration_nr - 1
-            # We run the PRE_FIRST_UPDATE hook here because the current_iter is
-            # explicitly available, versus in the run_context inside analyzeStep
-            if current_iter == 0:
-                self.ert().runWorkflows(HookRuntime.PRE_FIRST_UPDATE)
-            update_id = self.analyzeStep(run_context, ensemble_id)
-            current_iter = self._w_container.iteration_nr - 1
-
-            analysis_success = current_iter > pre_analysis_iter_num
-            if analysis_success:
-                run_context = self.create_context(
-                    current_iter, prior_context=run_context
-                )
-                ensemble_id = self._runAndPostProcess(
-                    run_context, evaluator_server_config, update_id
-                )
-                num_retries = 0
-            else:
-                run_context = self.create_context(
-                    current_iter, prior_context=run_context, rerun=True
-                )
-                ensemble_id = self._runAndPostProcess(
-                    run_context, evaluator_server_config, update_id
-                )
-                num_retries += 1
-
-        if current_iter == (phase_count - 1):
-            self.setPhase(phase_count, "Simulations completed.")
-        else:
-            raise ErtRunError(
-                (
-                    "Iterated ensemble smoother stopped: "
-                    "maximum number of iteration retries "
-                    f"({num_retries_per_iteration} retries) reached "
-                    f"for iteration {current_iter}"
-                )
-            )
-
-        return run_context
-
-    def create_context(
-        self,
-        itr: int,
-        prior_context: Optional[RunContext] = None,
-        rerun: bool = False,
-    ) -> RunContext:
-
-        target_case_format = self._simulation_arguments["target_case"]
-
-        sim_fs = self.createTargetCaseFileSystem(itr, target_case_format)
-
-        if prior_context is None:
-            mask = self._simulation_arguments["active_realizations"]
-        else:
-            state: RealizationStateEnum = (
+        self.ert().runWorkflows(HookRuntime.PRE_FIRST_UPDATE)
+        for current_iter in range(1, self.facade.get_number_of_iterations() + 1):
+            state = (
                 RealizationStateEnum.STATE_HAS_DATA  # type: ignore
                 | RealizationStateEnum.STATE_INITIALIZED
             )
-            mask = sim_fs.getStateMap().createMask(state)
+            posterior_context = self.ert().create_ensemble_context(
+                target_case_format % current_iter,
+                prior_context.sim_fs.getStateMap().createMask(state),
+                iteration=current_iter,
+            )
+            update_success = False
+            for iteration in range(analysis_config.num_retries_per_iter):
+                update_id = self.analyzeStep(
+                    prior_context.sim_fs,
+                    posterior_context.sim_fs,
+                    ensemble_id,
+                )
 
-        if rerun or itr >= self.facade.get_number_of_iterations():
-            target_fs = None
-        else:
-            target_fs = self.createTargetCaseFileSystem(itr + 1, target_case_format)
+                analysis_success = current_iter < self._w_container.iteration_nr
+                if analysis_success:
+                    update_success = True
+                    break
+                ensemble_id = self._runAndPostProcess(
+                    prior_context, evaluator_server_config, update_id
+                )
+            if update_success:
+                ensemble_id = self._runAndPostProcess(
+                    posterior_context, evaluator_server_config
+                )
+                self.setPhase(phase_count, "Simulations completed.")
+            else:
+                raise ErtRunError(
+                    (
+                        "Iterated ensemble smoother stopped: "
+                        "maximum number of iteration retries "
+                        f"({analysis_config.num_retries_per_iter} retries) reached "
+                        f"for iteration {current_iter}"
+                    )
+                )
+            prior_context = posterior_context
 
-        run_context = self.ert().create_ensemble_smoother_run_context(
-            source_filesystem=sim_fs,
-            target_filesystem=target_fs,
-            active_mask=mask,
-            iteration=itr,
-        )
-        self._run_context = run_context
-        self._last_run_iteration = run_context.iteration
-        self.ert().getEnkfFsManager().switchFileSystem(sim_fs.case_name)
-        return run_context
+        return posterior_context
 
     @classmethod
     def name(cls) -> str:

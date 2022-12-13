@@ -2,7 +2,6 @@ import logging
 import os
 from pathlib import Path
 from textwrap import dedent
-from unittest.mock import MagicMock
 
 import pytest
 from ecl.summary import EclSum
@@ -35,7 +34,7 @@ def test_ecl_config_creation(minimum_case):
     with pytest.raises(AssertionError):  # Null pointer!
         assert isinstance(minimum_case.ensembleConfig().refcase, EclSum)
 
-    file_system = minimum_case.getEnkfFsManager().getCurrentFileSystem()
+    file_system = minimum_case.storage_manager.current_case
     assert file_system.getCaseName() == "default"
     time_map = file_system.getTimeMap()
     assert isinstance(time_map, TimeMap)
@@ -48,71 +47,28 @@ def enkf_main(tmp_path, monkeypatch):
     yield EnKFMain(ResConfig("test.ert"))
 
 
-def test_create_ensemble_experiment_run_context(enkf_main):
-    fs = MagicMock()
-
-    enkf_main._create_run_context = MagicMock()
-
-    realizations = [True] * 10
-    iteration = 0
-
-    enkf_main.create_ensemble_experiment_run_context(
-        active_mask=realizations, source_filesystem=fs, iteration=iteration
-    )
-
-    enkf_main._create_run_context.assert_called_with(
-        iteration=iteration,
-        active_mask=realizations,
-        source_filesystem=fs,
-        target_fs=None,
-    )
-
-
-def test_create_ensemble_smoother_run_context(enkf_main):
-    fs = MagicMock()
-    fs2 = MagicMock()
-
-    enkf_main._create_run_context = MagicMock()
-
-    realizations = [True] * 10
-    iteration = 0
-
-    enkf_main.create_ensemble_smoother_run_context(
-        active_mask=realizations,
-        source_filesystem=fs,
-        target_filesystem=fs2,
-        iteration=iteration,
-    )
-
-    enkf_main._create_run_context.assert_called_with(
-        iteration=iteration,
-        active_mask=realizations,
-        source_filesystem=fs,
-        target_fs=fs2,
-    )
-
-
 def test_create_run_context(monkeypatch, enkf_main):
 
     iteration = 0
     ensemble_size = 10
 
-    run_context = enkf_main._create_run_context(
-        iteration=iteration, active_mask=[True] * ensemble_size
+    run_context = enkf_main.create_ensemble_context(
+        "prior", [True] * ensemble_size, iteration=iteration
     )
-    assert run_context.sim_fs == enkf_main.getCurrentFileSystem()
-    assert run_context.target_fs == enkf_main.getCurrentFileSystem()
+    assert run_context.sim_fs.case_name == "prior"
     assert run_context.mask == [True] * ensemble_size
-    assert run_context.paths == [
+    assert [real.runpath for real in run_context] == [
         f"{Path().absolute()}/simulations/realization-{i}/iter-0"
         for i in range(ensemble_size)
     ]
-    assert run_context.jobnames == [f"name{i}" for i in range(ensemble_size)]
+    assert [real.job_name for real in run_context] == [
+        f"name{i}" for i in range(ensemble_size)
+    ]
 
-    context = enkf_main.get_context()
-    assert "<RUNPATH>" in context
-    assert context.substitute_real_iter("<ECL_BASE>", 1, iteration) == "name1"
-    assert context.substitute_real_iter("<ECLBASE>", 1, iteration) == "name1"
+    substitutions = run_context.substituter
+    assert "<RUNPATH>" in substitutions
+    assert substitutions.get("<ECL_BASE>") == "name9"
+    assert substitutions.get("<ECLBASE>") == "name9"
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -151,7 +107,9 @@ def test_assert_symlink_deleted(snake_oil_field_example):
     ert = snake_oil_field_example
 
     # create directory structure
-    run_context = ert.create_ensemble_experiment_run_context(iteration=0)
+    run_context = ert.create_ensemble_context(
+        "prior", [True] * (ert.getEnsembleSize()), iteration=0
+    )
     ert.sample_prior(run_context.sim_fs, run_context.active_realizations)
     ert.createRunPath(run_context)
 
@@ -253,20 +211,16 @@ def test_config(minimum_case):
     assert isinstance(minimum_case.getModelConfig(), ModelConfig)
 
     assert isinstance(minimum_case.getObservations(), EnkfObs)
-    assert isinstance(minimum_case.getEnkfFsManager().getCurrentFileSystem(), EnkfFs)
+    assert isinstance(minimum_case.storage_manager.current_case, EnkfFs)
 
     assert minimum_case.storage_manager.storage_path.stem == "Ensemble"
 
 
 def test_run_context(minimum_case):
-    fs_manager = minimum_case.getEnkfFsManager()
-    fs = fs_manager.getCurrentFileSystem()
     iactive = [True] * 10
     iactive[0] = False
     iactive[1] = False
-    run_context = minimum_case.create_ensemble_experiment_run_context(
-        source_filesystem=fs, active_mask=iactive, iteration=0
-    )
+    run_context = minimum_case.load_ensemble_context("default", iactive, iteration=0)
 
     assert len(run_context) == 10
 
@@ -324,8 +278,7 @@ def test_load_results_manually2(setup_case, caplog, monkeypatch, lazy_load):
         monkeypatch.setenv("ERT_LAZY_LOAD_SUMMARYDATA", str(lazy_load))
     res_config = setup_case("snake_oil", "snake_oil.ert")
     ert = EnKFMain(res_config)
-    load_from = ert.getEnkfFsManager().getFileSystem("default_0")
-    ert.getEnkfFsManager().switchFileSystem(load_from)
+    load_from = ert.storage_manager.add_case("default_0")
     realisations = [False] * 25
     realisations[0] = True  # only need one to test what we want
     with caplog.at_level(logging.INFO):

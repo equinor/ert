@@ -1,15 +1,16 @@
 import logging
-from typing import Any, Dict, List, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
 
-from ert._c_wrappers.enkf import RunContext
 from ert._c_wrappers.enkf.enkf_main import EnKFMain, QueueConfig
 from ert._c_wrappers.enkf.enums import HookRuntime, RealizationStateEnum
 from ert.analysis import ErtAnalysisError
 from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.shared.models import BaseRunModel, ErtRunError
 
+if TYPE_CHECKING:
+    from ert._c_wrappers.enkf import RunContext
+
 logger = logging.getLogger(__file__)
-experiment_logger = logging.getLogger("ert.experiment_server.ensemble_experiment")
 
 
 class MultipleDataAssimilation(BaseRunModel):
@@ -37,7 +38,7 @@ class MultipleDataAssimilation(BaseRunModel):
 
     def runSimulations(
         self, evaluator_server_config: EvaluatorServerConfig
-    ) -> RunContext:
+    ) -> "RunContext":
         self._checkMinimumActiveRealizations(
             self._simulation_arguments["active_realizations"].count(True)
         )
@@ -65,9 +66,10 @@ class MultipleDataAssimilation(BaseRunModel):
         update_id = None
         enumerated_weights = list(enumerate(weights))
         starting_iteration = self._simulation_arguments["start_iteration"]
+        restart_run = starting_iteration != 0
         case_format = self._simulation_arguments["target_case"]
         storage_manager = self.ert().storage_manager
-        if starting_iteration > 0:
+        if restart_run:
             if case_format % starting_iteration not in storage_manager:
                 raise ErtRunError(
                     f"Source case {case_format % starting_iteration} for iteration "
@@ -76,59 +78,80 @@ class MultipleDataAssimilation(BaseRunModel):
                     "than 0, make sure the target case format is the same as for the "
                     f"original run.(Current target case format: {case_format})"
                 )
+            prior_context = self.ert().load_ensemble_context(
+                case_format % starting_iteration,
+                self._simulation_arguments["active_realizations"],
+                iteration=0,
+            )
         else:
-            prior_fs = storage_manager.add_case(case_format % starting_iteration)
-            active_realizations = [
-                i
-                for i, val in enumerate(
-                    self._simulation_arguments["active_realizations"]
-                )
-                if val
-            ]
-            self.ert().sample_prior(prior_fs, active_realizations)
+            prior_context = self.ert().create_ensemble_context(
+                case_format % 0,
+                self._simulation_arguments["active_realizations"],
+                iteration=0,
+            )
+            self.ert().sample_prior(
+                prior_context.sim_fs, prior_context.active_realizations
+            )
 
         weights_to_run = enumerated_weights[min(starting_iteration, len(weights)) :]
 
         for iteration, weight in weights_to_run:
             is_first_iteration = iteration == 0
-            if is_first_iteration:
-                mask = self._simulation_arguments["active_realizations"]
-            else:
-                mask = None
-            run_context = self.create_context(iteration, mask=mask)
             _, ensemble_id = self._simulateAndPostProcess(
-                run_context, evaluator_server_config, update_id=update_id
+                prior_context, evaluator_server_config, update_id=update_id
             )
             if is_first_iteration:
                 self.ert().runWorkflows(HookRuntime.PRE_FIRST_UPDATE)
             self.ert().runWorkflows(HookRuntime.PRE_UPDATE)
+            state = (
+                RealizationStateEnum.STATE_HAS_DATA  # type: ignore
+                | RealizationStateEnum.STATE_INITIALIZED
+            )
+            posterior_context = self.ert().create_ensemble_context(
+                case_format % (iteration + 1),
+                prior_context.sim_fs.getStateMap().createMask(state),
+                iteration=iteration,
+            )
             update_id = self.update(
-                run_context=run_context, weight=weight, ensemble_id=ensemble_id
+                prior_context,
+                posterior_context,
+                weight=weight,
+                ensemble_id=ensemble_id,
             )
             self.ert().runWorkflows(HookRuntime.POST_UPDATE)
+            prior_context = posterior_context
 
         self.setPhaseName("Post processing...", indeterminate=True)
-        run_context = self.create_context(len(weights), update=False)
         self._simulateAndPostProcess(
-            run_context, evaluator_server_config, update_id=update_id
+            posterior_context, evaluator_server_config, update_id=update_id
         )
 
         self.setPhase(iteration_count + 1, "Simulations completed.")
 
-        return run_context
+        return posterior_context
 
-    def _count_active_realizations(self, run_context: RunContext) -> int:
+    def _count_active_realizations(self, run_context: "RunContext") -> int:
         return sum(run_context.mask)
 
-    def update(self, run_context: RunContext, weight: float, ensemble_id: str) -> str:
-        next_iteration = run_context.iteration + 1
+    def update(
+        self,
+        prior_context: "RunContext",
+        posterior_context: "RunContext",
+        weight: float,
+        ensemble_id: str,
+    ) -> str:
+        next_iteration = prior_context.iteration + 1
 
         phase_string = f"Analyzing iteration: {next_iteration} with weight {weight}"
         self.setPhase(self.currentPhase() + 1, phase_string, indeterminate=True)
 
         self.facade.set_global_std_scaling(weight)
         try:
-            self.facade.smoother_update(run_context)
+            self.facade.smoother_update(
+                prior_context.sim_fs,
+                posterior_context.sim_fs,
+                prior_context.run_id,
+            )
         except ErtAnalysisError as e:
             raise ErtRunError(
                 "Analysis of simulation failed for iteration:"
@@ -144,7 +167,7 @@ class MultipleDataAssimilation(BaseRunModel):
 
     def _simulateAndPostProcess(
         self,
-        run_context: RunContext,
+        run_context: "RunContext",
         evaluator_server_config: EvaluatorServerConfig,
         update_id: Optional[str] = None,
     ) -> Tuple[int, str]:
@@ -159,7 +182,9 @@ class MultipleDataAssimilation(BaseRunModel):
         self.ert().runWorkflows(HookRuntime.PRE_SIMULATION)
 
         # Push ensemble, parameters, observations to new storage
-        new_ensemble_id = self._post_ensemble_data(update_id=update_id)
+        new_ensemble_id = self._post_ensemble_data(
+            run_context.sim_fs.case_name, update_id=update_id
+        )
 
         phase_string = f"Running forecast for iteration: {iteration}"
         self.setPhaseName(phase_string, indeterminate=False)
@@ -169,7 +194,7 @@ class MultipleDataAssimilation(BaseRunModel):
         )
 
         # Push simulation results to storage
-        self._post_ensemble_results(new_ensemble_id)
+        self._post_ensemble_results(run_context.sim_fs.case_name, new_ensemble_id)
 
         num_successful_realizations += self._simulation_arguments.get(
             "prev_successful_realizations", 0
@@ -218,45 +243,6 @@ class MultipleDataAssimilation(BaseRunModel):
                 raise ValueError(f"Warning: cannot parse weight {element}")
 
         return result
-
-    def create_context(
-        self,
-        itr: int,
-        mask: Optional[List[bool]] = None,
-        update: bool = True,
-    ) -> RunContext:
-        target_case_format = self._simulation_arguments["target_case"]
-        fs_manager = self.ert().storage_manager
-
-        source_case_name = target_case_format % itr
-        sim_fs = fs_manager[source_case_name]
-        if update:
-            target_fs = fs_manager.add_case(target_case_format % (itr + 1))
-        else:
-            target_fs = None
-
-        if mask is None:
-            initialized_and_has_data: RealizationStateEnum = (
-                RealizationStateEnum.STATE_HAS_DATA  # type: ignore
-                | RealizationStateEnum.STATE_INITIALIZED
-            )
-            mask = sim_fs.getStateMap().createMask(initialized_and_has_data)
-            # Make sure to only run the realizations which was passed in as argument
-            for idx, (valid_state, run_realization) in enumerate(
-                zip(mask, self._initial_realizations_mask)
-            ):
-                mask[idx] = valid_state and run_realization
-
-        run_context = self.ert().create_ensemble_smoother_run_context(
-            source_filesystem=sim_fs,
-            target_filesystem=target_fs,
-            active_mask=mask,
-            iteration=itr,
-        )
-        self._run_context = run_context
-        self._last_run_iteration = run_context.iteration
-        self.ert().getEnkfFsManager().switchFileSystem(sim_fs.case_name)
-        return run_context
 
     @classmethod
     def name(cls) -> str:
