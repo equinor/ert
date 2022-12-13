@@ -59,7 +59,9 @@ def forward_model_ok(
                     node.save(run_arg.ensemble_storage, node_id)
                 else:
                     if "%d" in config_node.get_init_file_fmt():
-                        init_file = Path(config_node.get_init_file_fmt() % (run_arg.iens,))
+                        init_file = Path(
+                            config_node.get_init_file_fmt() % (run_arg.iens,)
+                        )
                     else:
                         init_file = Path(config_node.get_init_file_fmt())
                     if not init_file.exists():
