@@ -62,8 +62,9 @@ static enkf_config_node_type *enkf_config_node_alloc__(enkf_var_type var_type,
         node->get_data_size = NULL;
         break;
     case (SURFACE):
-        node->freef = surface_config_free__;
-        node->get_data_size = surface_config_get_data_size__;
+        node->freef =
+            reinterpret_cast<config_free_ftype *>(surface_config_free);
+        node->get_data_size = NULL;
         break;
     case (EXT_PARAM):
         node->freef = ext_param_config_free__;
