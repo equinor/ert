@@ -160,6 +160,12 @@ def _save_temporary_storage_to_disk(
             parameter_keys = list(gen_kw_config)
             for i, realization in enumerate(iens_active_index):
                 target_fs.save_gen_kw(key, parameter_keys, realization, matrix[:, i])
+        elif config_node.getImplementationType() == ErtImplType.SURFACE:
+            surface_config = config_node.getSurfaceModelConfig()
+            for i, realization in enumerate(iens_active_index):
+                target_fs.save_surface_data(
+                    key, realization, surface_config.base_surface_path, matrix[:, i]
+                )
         else:
             target_fs.save_parameters(
                 config_node=config_node,
@@ -179,6 +185,8 @@ def _create_temporary_parameter_storage(
         config_node = ensemble_config.getNode(key)
         if config_node.getImplementationType() == ErtImplType.GEN_KW:
             matrix = source_fs.load_gen_kw(key, iens_active_index)
+        elif config_node.getImplementationType() == ErtImplType.SURFACE:
+            matrix = source_fs.load_surface_data(key, iens_active_index)
         else:
             matrix = source_fs.load_parameter(
                 config_node=config_node,
