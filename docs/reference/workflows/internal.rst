@@ -45,7 +45,7 @@ of this kind must:
 
             # Get a handle to the case / filesystem we are interested in;
             # this should ideally come as an argument - not just use current.
-            fs = ert.getEnkfFsManager().getCurrentFileSystem()
+            fs = ert.storage_manager.current_case
 
 
             # How many realisations:

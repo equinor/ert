@@ -57,18 +57,6 @@ def test_custom_realizations(poly_case):
     assert model_factory._realizations(args, ensemble_size) == active_mask
 
 
-def test_init_iteration_number(poly_case):
-    ert = poly_case
-    facade = LibresFacade(ert)
-    args = Namespace(iter_num=10, realizations=None)
-    model = model_factory._setup_ensemble_experiment(
-        ert, args, facade.get_ensemble_size(), "experiment_id"
-    )
-    run_context = model.create_context()
-    assert model._simulation_arguments["iter_num"] == 10
-    assert run_context.iteration == 10
-
-
 def test_setup_single_test_run(poly_case):
     ert = poly_case
 
@@ -76,8 +64,6 @@ def test_setup_single_test_run(poly_case):
     assert isinstance(model, SingleTestRun)
     assert len(model._simulation_arguments.keys()) == 1
     assert "active_realizations" in model._simulation_arguments
-
-    model.create_context()
 
 
 def test_setup_ensemble_experiment(poly_case):
@@ -90,8 +76,6 @@ def test_setup_ensemble_experiment(poly_case):
     assert isinstance(model, EnsembleExperiment)
     assert len(model._simulation_arguments.keys()) == 2
     assert "active_realizations" in model._simulation_arguments
-
-    model.create_context()
 
 
 def test_setup_ensemble_smoother(poly_case):
@@ -112,8 +96,6 @@ def test_setup_ensemble_smoother(poly_case):
     assert "active_realizations" in model._simulation_arguments
     assert "target_case" in model._simulation_arguments
     assert "analysis_module" in model._simulation_arguments
-
-    model.create_context()
 
 
 def test_setup_multiple_data_assimilation(poly_case):
@@ -165,5 +147,3 @@ def test_setup_iterative_ensemble_smoother(poly_case):
     assert "analysis_module" in model._simulation_arguments
     assert "num_iterations" in model._simulation_arguments
     assert facade.get_number_of_iterations() == 10
-
-    model.create_context(0)

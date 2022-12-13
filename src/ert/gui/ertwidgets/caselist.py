@@ -110,7 +110,18 @@ class CaseList(QWidget):
         )
         new_case_name = dialog.showAndTell()
         if not new_case_name == "":
-            self.facade.select_or_create_new_case(new_case_name)
+            try:
+                self.facade._enkf_main.storage_manager.add_case(new_case_name)
+                self.facade._enkf_main.switchFileSystem(new_case_name)
+            except KeyError:
+                msg = QMessageBox(
+                    QMessageBox.Critical,
+                    "Duplicate case",
+                    f"Case name {new_case_name} already exists",
+                    QMessageBox.Ok,
+                    self,
+                )
+                msg.exec_()
             self.notifier.ertChanged.emit()
 
     def removeItem(self):

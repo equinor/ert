@@ -6,7 +6,7 @@ import numpy as np
 from ecl.grid import EclGrid
 from pandas import DataFrame, Series
 
-from ert._c_wrappers.enkf import EnKFMain, EnkfNode, ErtImplType, ResConfig, RunContext
+from ert._c_wrappers.enkf import EnKFMain, EnkfNode, ErtImplType, ResConfig
 from ert._c_wrappers.enkf.config import GenKwConfig
 from ert._c_wrappers.enkf.enums import (
     EnkfObservationImplementationType,
@@ -44,13 +44,21 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
     ) -> None:
         self._enkf_main.write_runpath_list(iterations, realizations)
 
-    def smoother_update(self, prior_context: RunContext) -> None:
-        self._es_update.smootherUpdate(prior_context)
+    def smoother_update(
+        self, prior_storage: "EnkfFs", posterior_storage: "EnkfFs", run_id: str
+    ) -> None:
+        self._es_update.smootherUpdate(prior_storage, posterior_storage, run_id)
 
     def iterative_smoother_update(
-        self, run_context: RunContext, ies: "IterativeEnsembleSmoother"
+        self,
+        prior_storage: "EnkfFs",
+        posterior_storage: "EnkfFs",
+        ies: "IterativeEnsembleSmoother",
+        run_id: str,
     ) -> None:
-        self._es_update.iterative_smoother_update(run_context, ies)
+        self._es_update.iterative_smoother_update(
+            prior_storage, posterior_storage, ies, run_id
+        )
 
     def set_global_std_scaling(self, weight: float) -> None:
         self._enkf_main.analysisConfig().set_global_std_scaling(weight)
@@ -78,13 +86,6 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
     def number_of_iterations(self) -> int:
         return self._enkf_main.analysisConfig().num_iterations
 
-    def get_run_context(self, prior_name: str, target_name: str) -> RunContext:
-        fs_manager = self._enkf_main.getEnkfFsManager()
-        return RunContext(
-            fs_manager.getFileSystem(prior_name),
-            fs_manager.getFileSystem(target_name),
-        )
-
     def get_field_parameters(self) -> List[str]:
         return list(
             self._enkf_main.ensembleConfig().getKeylistFromImplType(ErtImplType.FIELD)
@@ -106,7 +107,7 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
     def export_field_parameter(
         self, parameter_name: str, case_name: str, filepath: str
     ) -> None:
-        file_system = self._enkf_main.getFileSystem(case_name)
+        file_system = self._enkf_main.storage_manager[case_name]
         config_node = self._enkf_main.ensembleConfig()[parameter_name]
         ext = config_node.get_enkf_outfile().rsplit(".")[-1]
         EnkfNode.exportMany(
@@ -135,10 +136,10 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
         return self._enkf_main.getEnsembleSize()
 
     def get_current_case_name(self) -> str:
-        return str(self._enkf_main.getCurrentFileSystem().getCaseName())
+        return str(self.get_current_fs().case_name)
 
     def get_active_realizations(self, case_name: str) -> List[int]:
-        fs = self._enkf_main.getFileSystem(case_name)
+        fs = self._enkf_main.storage_manager[case_name]
         state_map = fs.getStateMap()
         ens_mask = state_map.selectMatching(RealizationStateEnum.STATE_HAS_DATA)
         return [index for index, element in enumerate(ens_mask) if element]
@@ -170,7 +171,7 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
     def load_from_forward_model(
         self, case: str, realisations: List[bool], iteration: int
     ) -> int:
-        fs = self._enkf_main.getFileSystem(case)
+        fs = self._enkf_main.storage_manager[case]
         return self._enkf_main.loadFromForwardModel(realisations, iteration, fs)
 
     def get_observations(self) -> "EnkfObs":
@@ -193,7 +194,7 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
         )
 
     def get_current_fs(self) -> "EnkfFs":
-        return self._enkf_main.getCurrentFileSystem()
+        return self._enkf_main.storage_manager.current_case
 
     def get_data_key_for_obs_key(self, observation_key: Union[str, int]) -> str:
         return self._enkf_main.getObservations()[observation_key].getDataKey()
@@ -211,7 +212,7 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
         report_step: int,
         realization_index: Optional[int] = None,
     ) -> DataFrame:
-        fs = self._enkf_main.getFileSystem(case_name)
+        fs = self._enkf_main.storage_manager[case_name]
         realizations = fs.realizationList(RealizationStateEnum.STATE_HAS_DATA)
         if realization_index is not None:
             if realization_index not in realizations:
@@ -267,7 +268,10 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
 
     def select_or_create_new_case(self, case_name: str) -> None:
         if self.get_current_case_name() != case_name:
-            fs = self._enkf_main.getFileSystem(case_name)
+            if case_name not in self._enkf_main.storage_manager:
+                fs = self._enkf_main.storage_manager.add_case(case_name)
+            else:
+                fs = self._enkf_main.storage_manager[case_name]
             self._enkf_main.switchFileSystem(fs.case_name)
 
     def cases(self) -> List[str]:
@@ -342,7 +346,7 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
         keys: Optional[List[str]] = None,
         realization_index: Optional[int] = None,
     ) -> DataFrame:
-        fs = self._enkf_main.getFileSystem(case_name)
+        fs = self._enkf_main.storage_manager[case_name]
 
         ens_mask = fs.getStateMap().selectMatching(
             RealizationStateEnum.STATE_INITIALIZED
@@ -404,7 +408,7 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
         keys: Optional[List[str]] = None,
         realization_index: Optional[int] = None,
     ) -> DataFrame:
-        fs = self._enkf_main.getFileSystem(case_name)
+        fs = self._enkf_main.storage_manager[case_name]
 
         realizations = self.get_active_realizations(case_name)
         if realization_index is not None:
@@ -446,7 +450,7 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
 
     def load_all_misfit_data(self, case_name: str) -> DataFrame:
         realizations = self.get_active_realizations(case_name)
-        fs = self._enkf_main.getEnkfFsManager().getFileSystem(case_name)
+        fs = self._enkf_main.storage_manager[case_name]
         misfit_keys = []
         observations = self._enkf_main.getObservations()
         for obs_vector in observations:

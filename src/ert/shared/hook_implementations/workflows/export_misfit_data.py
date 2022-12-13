@@ -19,7 +19,7 @@ class ExportMisfitDataJob(ErtScript):
 
     def run(self, target_file=None):
         ert = self.ert()
-        fs = ert.getEnkfFsManager().getCurrentFileSystem()
+        fs = ert.storage_manager.current_case
 
         if target_file is None:
             target_file = "misfit.hdf"

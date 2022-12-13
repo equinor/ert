@@ -32,7 +32,7 @@ def forward_model_ok(
                     file_name = file_name % run_arg.iens
                 file_path = run_path / file_name
                 if file_path.exists():
-                    run_arg.sim_fs.save_surface_file(
+                    run_arg.ensemble_storage.save_surface_file(
                         config_node.getKey(), run_arg.iens, file_path
                     )
                 else:
@@ -48,12 +48,12 @@ def forward_model_ok(
             node = EnkfNode(config_node)
             node_id = NodeId(report_step=0, iens=run_arg.iens)
 
-            if node.has_data(run_arg.sim_fs, node_id):
+            if node.has_data(run_arg.ensemble_storage, node_id):
                 # Already initialised, ignore
                 continue
 
             if node.forward_init(run_arg.runpath, run_arg.iens):
-                node.save(run_arg.sim_fs, node_id)
+                node.save(run_arg.ensemble_storage, node_id)
             else:
                 if "%d" in config_node.get_init_file_fmt():
                     init_file = Path(config_node.get_init_file_fmt() % (run_arg.iens,))
@@ -75,7 +75,7 @@ def forward_model_ok(
     if result[0] == LoadStatus.LOAD_SUCCESSFUL:
         result = _internalize_results(ens_conf, num_steps, run_arg)
 
-    run_arg.sim_fs.getStateMap()[run_arg.iens] = (
+    run_arg.ensemble_storage.getStateMap()[run_arg.iens] = (
         RealizationStateEnum.STATE_HAS_DATA
         if result[0] == LoadStatus.LOAD_SUCCESSFUL
         else RealizationStateEnum.STATE_LOAD_FAILURE
@@ -85,4 +85,6 @@ def forward_model_ok(
 
 
 def forward_model_exit(run_arg: "RunArg", *_: Tuple[Any]):
-    run_arg.sim_fs.getStateMap()[run_arg.iens] = RealizationStateEnum.STATE_LOAD_FAILURE
+    run_arg.ensemble_storage.getStateMap()[
+        run_arg.iens
+    ] = RealizationStateEnum.STATE_LOAD_FAILURE

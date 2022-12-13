@@ -15,7 +15,7 @@ from ert.gui.tools.manage_cases.case_init_configuration import (
 @pytest.mark.usefixtures("copy_poly_case")
 def test_case_tool_init_prior(qtbot):
     ert = EnKFMain(ResConfig("poly.ert"))
-    storage = ert.getCurrentFileSystem()
+    storage = ert.storage_manager.current_case
     assert (
         list(storage.getStateMap())
         == [RealizationStateEnum.STATE_UNDEFINED] * ert.getEnsembleSize()
