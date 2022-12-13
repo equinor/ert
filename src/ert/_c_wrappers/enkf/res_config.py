@@ -5,7 +5,7 @@ import sys
 from datetime import date
 from os.path import isfile
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 from ecl.util.util import StringList
 
@@ -44,49 +44,9 @@ def site_config_location():
     return str(path)
 
 
-def parse_signature_job(signature: str) -> Tuple[str, Optional[str]]:
-    """Parses the job description as a signature type job.
-
-    A signature is on the form job(arg1=val1, arg2=val2, arg3=val3). This is used
-    in the FORWARD_MODEL keyword:
-
-        FORWARD_MODEL job(arg1=val1, arg2=val2, arg3=val3)
-
-    :returns: Tuple of the job name, and the string of argument assignments.
-
-
-    >>> parse_signature_job("job(arg1=val1, arg2=val2, arg3=val3)")
-    ('job', 'arg1=val1, arg2=val2, arg3=val3')
-
-    Function without arguments has arglist set to None:
-
-    >>> parse_signature_job("job")
-    ('job', None)
-
-
-    For backwards compatability, text after first closing parenthesis is closed,
-    but a warning is displayed.
-    """
-
-    open_paren = signature.find("(")
-    if open_paren == -1:
-        return signature, None
-    job_name = signature[:open_paren]
-    close_paren = signature.find(")")
-    if close_paren == -1:
-        raise ConfigValidationError(
-            errors=[f"Missing ) in FORWARD_MODEL job description {signature}"]
-        )
-    if close_paren < len(signature) - 1:
-        logger.warning(
-            f'Arguments after closing ) in "{signature}"'
-            f' ("{signature[close_paren:]}") is ignored.'
-        )
-    return job_name, signature[open_paren + 1 : close_paren]
-
-
 class ResConfig:
     DEFAULT_ENSPATH = "storage"
+    DEFAULT_RUNPATH_FILE = ".ert_runpath_list"
 
     def __init__(
         self,
@@ -218,6 +178,14 @@ class ResConfig:
             content_dict[ConfigKeys.ENSPATH] = os.path.join(
                 config_path, ResConfig.DEFAULT_ENSPATH
             )
+        if ConfigKeys.RUNPATH_FILE not in content_dict:
+            content_dict[ConfigKeys.RUNPATH_FILE] = os.path.join(
+                config_path, ResConfig.DEFAULT_RUNPATH_FILE
+            )
+        elif not os.path.isabs(content_dict[ConfigKeys.RUNPATH_FILE]):
+            content_dict[ConfigKeys.RUNPATH_FILE] = os.path.normpath(
+                os.path.join(config_path, content_dict[ConfigKeys.RUNPATH_FILE])
+            )
 
     @classmethod
     def _create_user_config_parser(cls):
@@ -277,129 +245,31 @@ class ResConfig:
             user_config_content, site_config_content
         )
         ResConfig.apply_config_content_defaults(config_content_dict, self.config_path)
-        self.ens_path: str = config_content_dict[ConfigKeys.ENSPATH]
-        self.substitution_list = SubstitutionList.from_dict(config_content_dict)
 
-        self.env_vars = EnvironmentVarlist.from_dict(config_content_dict)
-        self.random_seed = config_content_dict.get(ConfigKeys.RANDOM_SEED, None)
-        self.analysis_config = AnalysisConfig.from_dict(config_content_dict)
-        self.queue_config = QueueConfig.from_dict(config_content_dict)
+        self._alloc_from_dict(config_content_dict)
 
-        self.ert_workflow_list = ErtWorkflowList.from_dict(config_content_dict)
-        self.runpath_file = self.substitution_list[f"<{ConfigKeys.RUNPATH_FILE}>"]
-
-        if user_config_content.hasKey(
-            ConfigKeys.DATA_FILE
-        ) and user_config_content.hasKey(ConfigKeys.ECLBASE):
-            # This replicates the behavior of the DATA_FILE implementation
-            # in C, it adds the .DATA extension and facilitates magic string
-            # replacement in the data file
-            source_file = user_config_content[ConfigKeys.DATA_FILE]
-            target_file = user_config_content[ConfigKeys.ECLBASE]
-            target_file = target_file.getValue(0).replace("%d", "<IENS>")
-            self._templates.append([source_file.getValue(0), target_file + ".DATA"])
-
-        if user_config_content.hasKey(ConfigKeys.RUN_TEMPLATE):
-            for template in user_config_content[ConfigKeys.RUN_TEMPLATE]:
-                self._templates.append(list(template))
-
-        self.ensemble_config = EnsembleConfig.from_dict(config_dict=config_content_dict)
-
-        for key in self.ensemble_config.getKeylistFromImplType(ErtImplType.GEN_KW):
-            if self.ensemble_config.getNode(key).getUseForwardInit():
-                raise KeyError(
-                    "Loading GEN_KW from files created by the forward model "
-                    "is not supported."
-                )
-            if (
-                self.ensemble_config.getNode(key).get_init_file_fmt() != None
-                and "%" not in self.ensemble_config.getNode(key).get_init_file_fmt()
-            ):
-                raise ConfigValidationError(
-                    config_file=self.config_path,
-                    errors=["Loading GEN_KW from files requires %d in file format"],
-                )
-
-        self.installed_jobs = self._installed_jobs_from_dict(config_content_dict)
-        jobs = []
-        # FORWARD_MODEL_KEY
-        for job_description in config_content_dict.get(ConfigKeys.FORWARD_MODEL, []):
-            job_name, args = parse_signature_job("".join(job_description))
-            try:
-                job = copy.deepcopy(self.installed_jobs[job_name])
-            except KeyError as err:
-                raise ValueError(
-                    f"Could not find job `{job_name}` in list of installed jobs: "
-                    f"{list(self.installed_jobs.keys())}"
-                ) from err
-            if args is not None:
-                job.private_args = SubstitutionList()
-                job.private_args.add_from_string(args)
-                job.define_args = self.substitution_list
-            jobs.append(job)
-
-        # SIMULATION_JOB_KEY
-        for job_description in config_content_dict.get(ConfigKeys.SIMULATION_JOB, []):
-            job = copy.deepcopy(self.installed_jobs[job_description[0]])
-            job.arglist = job_description[1:]
-            job.define_args = self.substitution_list
-            jobs.append(job)
-
-        self.forward_model = ForwardModel(jobs=jobs)
-
-        if (
-            ConfigKeys.JOBNAME in config_content_dict
-            and ConfigKeys.ECLBASE in config_content_dict
-        ):
-            logger.warning(
-                "Can not have both JOBNAME and ECLBASE keywords. "
-                "ECLBASE ignored, using JOBNAME with value "
-                f"`{config_content_dict[ConfigKeys.JOBNAME]}` instead"
-            )
-
-        if (
-            ConfigKeys.SUMMARY in config_content_dict
-            and ConfigKeys.ECLBASE not in config_content_dict
-        ):
-            raise ConfigValidationError(
-                "When using SUMMARY keyword, the config must also specify ECLBASE"
-            )
-
-        self.model_config = ModelConfig.from_dict(
-            self.ensemble_config.refcase, config_content_dict
-        )
-
-    # build configs from config dict
     def _alloc_from_dict(self, config_dict):
-        site_config_parser = ConfigParser()
-        init_site_config_parser(site_config_parser)
-        # treat the default config dir
-
         self.ens_path: str = config_dict[ConfigKeys.ENSPATH]
         self.substitution_list = SubstitutionList.from_dict(config_dict=config_dict)
         self.env_vars = EnvironmentVarlist.from_dict(config_dict=config_dict)
         self.random_seed = config_dict.get(ConfigKeys.RANDOM_SEED, None)
         self.analysis_config = AnalysisConfig.from_dict(config_dict=config_dict)
         self.queue_config = QueueConfig.from_dict(config_dict)
-
         self.ert_workflow_list = ErtWorkflowList.from_dict(config_dict)
+        self.runpath_file = config_dict.get(ConfigKeys.RUNPATH_FILE)
 
         if ConfigKeys.DATA_FILE in config_dict and ConfigKeys.ECLBASE in config_dict:
             # This replicates the behavior of the DATA_FILE implementation
             # in C, it adds the .DATA extension and facilitates magic string
             # replacement in the data file
             source_file = config_dict[ConfigKeys.DATA_FILE]
-            target_file = config_dict[ConfigKeys.ECLBASE].replace("%d", "<IENS>")
-            self._templates.append(
-                [os.path.abspath(source_file), target_file + ".DATA"]
+            target_file = (
+                config_dict[ConfigKeys.ECLBASE].replace("%d", "<IENS>") + ".DATA"
             )
+            self._templates.append([source_file, target_file])
 
-        self.runpath_file = config_dict.get(
-            ConfigKeys.RUNPATH_FILE, ".ert_runpath_list"
-        )
-        templates = config_dict.get(ConfigKeys.RUN_TEMPLATE, [])
-        for source_file, target_file, *_ in templates:
-            self._templates.append([os.path.abspath(source_file), target_file])
+        for template in config_dict.get(ConfigKeys.RUN_TEMPLATE, []):
+            self._templates.append(template)
 
         self.ensemble_config = EnsembleConfig.from_dict(config_dict=config_dict)
 
@@ -412,47 +282,45 @@ class ResConfig:
                     ]
                 )
             if (
-                self.ensemble_config.getNode(key).get_init_file_fmt() != None
+                self.ensemble_config.getNode(key).get_init_file_fmt() is not None
                 and "%" not in self.ensemble_config.getNode(key).get_init_file_fmt()
             ):
                 raise ConfigValidationError(
-                    errors=["Loading GEN_KW from files requires %d in file format"]
+                    config_file=self.config_path,
+                    errors=["Loading GEN_KW from files requires %d in file format"],
                 )
 
         self.installed_jobs = self._installed_jobs_from_dict(config_dict)
         jobs = []
         # FORWARD_MODEL_KEY
-        for job_description in config_dict.get(ConfigKeys.FORWARD_MODEL, []):
+        for job_name, args in config_dict.get(ConfigKeys.FORWARD_MODEL, []):
             try:
-                job = copy.deepcopy(
-                    self.installed_jobs[job_description[ConfigKeys.NAME]]
-                )
+                job = copy.deepcopy(self.installed_jobs[job_name])
             except KeyError as err:
                 raise ValueError(
-                    f"Could not find job `{job_description[ConfigKeys.NAME]}`"
-                    f" in list of installed jobs: {list(self.installed_jobs.keys())}"
+                    f"Could not find job `{job_name}` in list of installed jobs: "
+                    f"{list(self.installed_jobs.keys())}"
                 ) from err
-            job.private_args = SubstitutionList()
-            job.private_args.add_from_string(job_description.get(ConfigKeys.ARGLIST))
+            if args:
+                job.private_args = SubstitutionList()
+                job.private_args.add_from_string(args)
+                job.define_args = self.substitution_list
             jobs.append(job)
 
         # SIMULATION_JOB_KEY
         for job_description in config_dict.get(ConfigKeys.SIMULATION_JOB, []):
-            job = copy.deepcopy(self.installed_jobs[job_description[ConfigKeys.NAME]])
             try:
-                job = copy.deepcopy(
-                    self.installed_jobs[job_description[ConfigKeys.NAME]]
-                )
+                job = copy.deepcopy(self.installed_jobs[job_description[0]])
             except KeyError as err:
                 raise ValueError(
-                    f"Could not find job `{job_description[ConfigKeys.NAME]}` "
+                    f"Could not find job `{job_description[0]}` "
                     "in list of installed jobs."
                 ) from err
-            job.arglist = job_description[ConfigKeys.ARGLIST]
+            job.arglist = job_description[1:]
+            job.define_args = self.substitution_list
             jobs.append(job)
 
         self.forward_model = ForwardModel(jobs=jobs)
-
         if ConfigKeys.JOBNAME in config_dict and ConfigKeys.ECLBASE in config_dict:
             logger.warning(
                 "Can not have both JOBNAME and ECLBASE keywords. "

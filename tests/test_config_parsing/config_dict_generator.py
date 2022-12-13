@@ -258,6 +258,9 @@ def generate_config(draw):
                 ConfigKeys.NUM_REALIZATIONS: positives,
                 ConfigKeys.ECLBASE: st.just(draw(words) + "%d"),
                 ConfigKeys.RUNPATH_FILE: st.just(draw(file_names) + "runpath"),
+                ConfigKeys.RUN_TEMPLATE: st.lists(
+                    st.builds(lambda fil: [fil + ".templ", fil], file_names)
+                ),
                 ConfigKeys.ALPHA_KEY: small_floats,
                 ConfigKeys.ITER_CASE: words,
                 ConfigKeys.ITER_COUNT: positives,
@@ -342,28 +345,32 @@ def generate_config(draw):
         )
     )
 
-    config_dict[ConfigKeys.FORWARD_MODEL] = draw(
-        st.lists(
-            st.fixed_dictionaries(
-                {
-                    ConfigKeys.NAME: st.sampled_from(
-                        [
-                            job_name
-                            for job_name, _ in config_dict[ConfigKeys.INSTALL_JOB]
-                        ]
-                    ),
-                    ConfigKeys.ARGLIST: st.just(
-                        ",".join(
-                            draw(st.lists(st.just(f"<{draw(words)}>={draw(words)}")))
-                        )
-                    ),
-                }
-            ),
-        )
-        if config_dict[ConfigKeys.INSTALL_JOB]
-        else st.just([])
+    installed_jobs = config_dict[ConfigKeys.INSTALL_JOB]
+    config_dict[ConfigKeys.FORWARD_MODEL] = (
+        draw(st.lists(job(installed_jobs))) if installed_jobs else []
+    )
+    config_dict[ConfigKeys.SIMULATION_JOB] = (
+        draw(st.lists(sim_job(installed_jobs))) if installed_jobs else []
     )
     return config_dict
+
+
+def job(installed_jobs):
+    possible_job_names = st.sampled_from([job_name for job_name, _ in installed_jobs])
+    arg = st.builds(lambda arg, value: f"<{arg}>={value}", words, words)
+    args = st.builds(",".join, st.lists(arg))
+    return st.builds(lambda name, args: [name, args], possible_job_names, args)
+
+
+def sim_job(installed_jobs):
+    possible_job_names = [job_name for job_name, _ in installed_jobs]
+    args = st.lists(st.builds(lambda arg, value: f"<{arg}>={value}", words, words))
+    x = st.builds(
+        lambda job_name, args: [job_name] + (args),
+        st.sampled_from(possible_job_names),
+        args,
+    )
+    return x
 
 
 @st.composite
@@ -373,10 +380,17 @@ def config_generators(draw):
     should_exist_files = [
         job_path for _, job_path in config_dict[ConfigKeys.INSTALL_JOB]
     ]
-    should_exist_files.append(config_dict[ConfigKeys.DATA_FILE])
-    should_exist_files.append(config_dict[ConfigKeys.JOB_SCRIPT])
-    should_exist_files.append(config_dict[ConfigKeys.TIME_MAP])
-    should_exist_files.append(config_dict[ConfigKeys.OBS_CONFIG])
+    should_exist_files.extend(
+        [
+            config_dict[ConfigKeys.DATA_FILE],
+            config_dict[ConfigKeys.JOB_SCRIPT],
+            config_dict[ConfigKeys.TIME_MAP],
+            config_dict[ConfigKeys.OBS_CONFIG],
+        ]
+    )
+    should_exist_files.extend(
+        [src for src, target in config_dict[ConfigKeys.RUN_TEMPLATE]]
+    )
 
     should_be_executable_files = [config_dict[ConfigKeys.JOB_SCRIPT]]
 
@@ -461,20 +475,27 @@ def config_generators(draw):
 
             # Make all paths absolute, as that should be the result after parsing
             cwd = os.getcwd()
-            config_dict[ConfigKeys.RUNPATH] = os.path.join(
-                cwd, config_dict[ConfigKeys.RUNPATH]
-            )
-            config_dict[ConfigKeys.ENSPATH] = os.path.join(
-                cwd, config_dict[ConfigKeys.ENSPATH]
-            )
-            config_dict[ConfigKeys.TIME_MAP] = os.path.join(
-                cwd, config_dict[ConfigKeys.TIME_MAP]
-            )
-            config_dict[ConfigKeys.OBS_CONFIG] = os.path.join(
-                cwd, config_dict[ConfigKeys.OBS_CONFIG]
-            )
-            config_dict[ConfigKeys.DATAROOT] = os.path.join(
-                cwd, config_dict[ConfigKeys.DATAROOT]
+            keys_that_should_be_absolute = [
+                ConfigKeys.RUNPATH,
+                ConfigKeys.RUNPATH_FILE,
+                ConfigKeys.ENSPATH,
+                ConfigKeys.TIME_MAP,
+                ConfigKeys.OBS_CONFIG,
+                ConfigKeys.DATAROOT,
+                ConfigKeys.DATA_FILE,
+            ]
+            for key in keys_that_should_be_absolute:
+                config_dict[key] = os.path.join(cwd, config_dict[key])
+
+            def make_run_template_abs(template):
+                src, target = template
+                return [os.path.join(cwd, src), target]
+
+            config_dict[ConfigKeys.RUN_TEMPLATE] = list(
+                map(
+                    make_run_template_abs,
+                    config_dict.get(ConfigKeys.RUN_TEMPLATE, []),
+                )
             )
 
             if config_file_name is not None:
@@ -497,14 +518,25 @@ def to_config_file(filename, config_dict):  # pylint: disable=too-many-branches
         config.write(
             f"{ConfigKeys.RUNPATH_FILE} {config_dict[ConfigKeys.RUNPATH_FILE]}\n"
         )
+        # keys whose values are lists of tuples of the form (KEY, VALUE)
+        tuple_value_keywords = [
+            ConfigKeys.SETENV,
+            ConfigKeys.RUN_TEMPLATE,
+            ConfigKeys.DATA_KW_KEY,
+            ConfigKeys.DEFINE_KEY,
+            ConfigKeys.INSTALL_JOB,
+        ]
         for keyword, keyword_value in config_dict.items():
-            if keyword == ConfigKeys.DATA_KW_KEY:
-                for define_key, define_value in keyword_value:
-                    config.write(f"{keyword} {define_key} {define_value}\n")
+            if keyword in tuple_value_keywords:
+                for tuple_key, tuple_value in keyword_value:
+                    config.write(f"{keyword} {tuple_key} {tuple_value}\n")
+            elif keyword == ConfigKeys.SIMULATION_JOB:
+                for job_config in keyword_value:
+                    job_name = job_config[0]
+                    job_args = " ".join(job_config[1:])
+                    config.write(f"{keyword} {job_name} {job_args}\n")
             elif keyword == ConfigKeys.FORWARD_MODEL:
-                for forward_model_job in keyword_value:
-                    job_name = forward_model_job[ConfigKeys.NAME]
-                    job_args = forward_model_job[ConfigKeys.ARGLIST]
+                for job_name, job_args in keyword_value:
                     config.write(f"{keyword} {job_name}({job_args})\n")
             elif keyword == ConfigKeys.FIELD_KEY:
                 # keyword_value is a list of dicts, each defining a field
@@ -517,9 +549,6 @@ def to_config_file(filename, config_dict):  # pylint: disable=too-many-branches
             elif keyword == ConfigKeys.INSTALL_JOB_DIRECTORY:
                 for install_dir in keyword_value:
                     config.write(f"{keyword} {install_dir}\n")
-            elif keyword == ConfigKeys.SETENV:
-                for key, value in keyword_value:
-                    config.write(f"{keyword} {key} {value}\n")
             elif keyword == ConfigKeys.ANALYSIS_COPY:
                 for statement in keyword_value:
                     config.write(
@@ -534,19 +563,11 @@ def to_config_file(filename, config_dict):  # pylint: disable=too-many-branches
                         f" {statement[ConfigKeys.VAR_NAME]}"
                         f" {statement[ConfigKeys.VALUE]}\n"
                     )
-            elif keyword == ConfigKeys.DEFINE_KEY:
-                for define_key, define_value in keyword_value:
-                    config.write(f"{keyword} {define_key} {define_value}\n")
-            elif keyword == ConfigKeys.INSTALL_JOB:
-                for job_name, job_path in keyword_value:
-                    config.write(f"{keyword}" f" {job_name} {job_path}\n")
             elif keyword == ConfigKeys.QUEUE_OPTION:
                 for setting in keyword_value:
                     config.write(
                         f"{keyword} {setting[0]} {setting[1]}"
                         + (f" {setting[2]}\n" if len(setting) == 3 else "\n")
                     )
-            elif keyword == ConfigKeys.QUEUE_SYSTEM:
-                config.write(f"{keyword}" f" {keyword_value}\n")
             else:
                 config.write(f"{keyword} {keyword_value}\n")

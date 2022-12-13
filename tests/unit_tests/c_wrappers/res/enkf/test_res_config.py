@@ -10,7 +10,8 @@ import pytest
 from ecl.util.enums import RngAlgTypeEnum
 
 from ert._c_wrappers.enkf import AnalysisConfig, ConfigKeys, HookRuntime, ResConfig
-from ert._c_wrappers.enkf.res_config import parse_signature_job, site_config_location
+from ert._c_wrappers.enkf._config_content_as_dict import parse_signature_job
+from ert._c_wrappers.enkf.res_config import site_config_location
 from ert._c_wrappers.job_queue import QueueDriverEnum
 from ert._c_wrappers.sched import HistorySourceEnum
 
@@ -317,7 +318,9 @@ def test_res_config_dict_constructor(setup_case):
             ["LSF", "LSF_QUEUE", "mr"],
         ],
         ConfigKeys.MAX_RUNNING: "100",
-        ConfigKeys.DATA_FILE: "../../eclipse/model/SNAKE_OIL.DATA",
+        ConfigKeys.DATA_FILE: os.path.normpath(
+            os.path.join(absolute_config_dir, "../../eclipse/model/SNAKE_OIL.DATA")
+        ),
         # "START"             : date(2017, 1, 1), no clue where this comes from
         ConfigKeys.GEN_KW_TAG_FORMAT: "<%s>",
         ConfigKeys.SUMMARY: [
@@ -353,8 +356,9 @@ def test_res_config_dict_constructor(setup_case):
         ConfigKeys.ENSPATH: os.path.realpath("../output/storage/<CASE_DIR>"),  # model
         "PLOT_PATH": "../output/results/plot/<CASE_DIR>",
         ConfigKeys.UPDATE_LOG_PATH: "../output/update_log/<CASE_DIR>",  # analysis
-        ConfigKeys.RUNPATH_FILE: (
-            "../output/run_path_file/.ert-runpath-list_<CASE_DIR>"
+        ConfigKeys.RUNPATH_FILE: str(
+            Path(absolute_config_dir).parent
+            / "output/run_path_file/.ert-runpath-list_the_extensive_case"
         ),  # subst
         ConfigKeys.DEFINE_KEY: [
             ("<CONFIG_PATH>", absolute_config_dir),
@@ -393,15 +397,15 @@ def test_res_config_dict_constructor(setup_case):
             ),
         ],
         ConfigKeys.FORWARD_MODEL: [
-            {
-                ConfigKeys.NAME: "SNAKE_OIL_SIMULATOR",
-                ConfigKeys.ARGLIST: "",
-            },
-            {
-                ConfigKeys.NAME: "SNAKE_OIL_NPV",
-                ConfigKeys.ARGLIST: "",
-            },
-            {ConfigKeys.NAME: "SNAKE_OIL_DIFF", ConfigKeys.ARGLIST: ""},  # model
+            [
+                "SNAKE_OIL_SIMULATOR",
+                "",
+            ],
+            [
+                "SNAKE_OIL_NPV",
+                "",
+            ],
+            ["SNAKE_OIL_DIFF", ""],
         ],
         ConfigKeys.HISTORY_SOURCE: "REFCASE_HISTORY",
         ConfigKeys.OBS_CONFIG: os.path.realpath(
@@ -418,10 +422,14 @@ def test_res_config_dict_constructor(setup_case):
         ConfigKeys.RANDOM_SEED: "3593114179000630026631423308983283277868",  # rng
         ConfigKeys.GRID: "../../eclipse/include/grid/CASE.EGRID",  # ecl
         ConfigKeys.RUN_TEMPLATE: [
-            (
-                "../input/templates/seed_template.txt",
+            [
+                os.path.normpath(
+                    os.path.join(
+                        absolute_config_dir, "../input/templates/seed_template.txt"
+                    )
+                ),
                 "seed.txt",
-            )  # ert_templates not sure about this we might do a proper dict instead?
+            ]
         ],
     }
 
