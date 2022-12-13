@@ -127,8 +127,22 @@ def _generate_ext_parameter_file(
     file_path = run_path / target_file
     Path.mkdir(file_path.parent, exist_ok=True, parents=True)
     data = fs.load_ext_param(key, realization)
+
     with open(file_path, "w", encoding="utf-8") as f:
         json.dump(data, f)
+
+
+def _generate_surface_file(
+    fs: "EnkfFs",
+    realization: int,
+    key: str,
+    target_file: str,
+    run_path: Path,
+) -> None:
+    file_path = run_path / target_file
+    Path.mkdir(file_path.parent, exist_ok=True, parents=True)
+    surf = fs.load_surface_file(key, realization)
+    surf.to_file(run_path / target_file, fformat="irap_ascii")
 
 
 def _generate_parameter_files(
@@ -173,6 +187,13 @@ def _generate_parameter_files(
                 fs, iens, node.getKey(), node.get_enkf_outfile(), Path(run_path)
             )
             continue
+        if type_ == ErtImplType.SURFACE:
+            if node.getUseForwardInit() and not fs.has_surface(node.getKey(), iens):
+                continue
+            _generate_surface_file(
+                fs, iens, node.getKey(), node.get_enkf_outfile(), Path(run_path)
+            )
+            continue
 
         enkf_node = EnkfNode(node)
         node_id = NodeId(report_step=0, iens=iens)
@@ -186,8 +207,6 @@ def _generate_parameter_files(
         type_ = enkf_node.getImplType()
         if type_ == ErtImplType.FIELD:
             _clib.field.generate_parameter_file(enkf_node, run_path, node_eclfile)
-        elif type_ == ErtImplType.SURFACE:
-            _clib.surface.generate_parameter_file(enkf_node, run_path, node_eclfile)
         else:
             raise NotImplementedError
 
@@ -461,6 +480,15 @@ class EnKFMain:
                         realization=real,
                         data=parameter_values[:, index],
                     )
+            elif impl_type == ErtImplType.SURFACE:
+                for realization_nr in active_realizations:
+                    init_file = config_node.get_init_file_fmt()
+                    if "%d" in init_file:
+                        init_file = init_file % realization_nr
+                    storage.save_surface_file(
+                        config_node.getKey(), realization_nr, init_file
+                    )
+
             else:
                 enkf_node = EnkfNode(config_node)
                 for realization_nr in active_realizations:
