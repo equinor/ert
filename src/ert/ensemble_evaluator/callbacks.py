@@ -32,7 +32,7 @@ def forward_model_ok(
                     file_name = file_name % run_arg.iens
                 file_path = run_path / file_name
                 if file_path.exists():
-                    run_arg.sim_fs.save_surface_file(
+                    run_arg.ensemble_storage.save_surface_file(
                         config_node.getKey(), run_arg.iens, file_path
                     )
                 else:
