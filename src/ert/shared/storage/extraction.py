@@ -78,8 +78,8 @@ def _create_response_observation_links(ert) -> Mapping[str, str]:
     return response_observation_link
 
 
-def create_response_records(ert, observations: List[dict]) -> dict:
-    fs = ert.get_current_fs()
+def create_response_records(ert, case_name: str, observations: List[dict]) -> dict:
+    fs = ert._enkf_main.storage_manager[case_name]
     realizations = fs.realizationList(RealizationStateEnum.STATE_HAS_DATA)
     summary_df = (
         fs.load_summary_data_as_df(ert.get_summary_keys(), realizations)
@@ -355,7 +355,7 @@ def post_ensemble_results(
         f"ensembles/{ensemble_id}/observations",
     ).json()
 
-    for record in create_response_records(ert, observations):
+    for record in create_response_records(ert, case_name, observations):
         realizations = record["data"]
         name = record["name"]
         for index, data in realizations.items():

@@ -40,7 +40,7 @@ def _load_realization(
     sim_fs: "EnkfFs",
     realisation: int,
     ensemble_config: "EnsembleConfig",
-    model_config: "ModelConfig",
+    history_length: int,
     run_args: List["RunArg"],
 ) -> Tuple["LoadStatus", str]:
     state_map = sim_fs.getStateMap()
@@ -50,7 +50,7 @@ def _load_realization(
         RealizationStateEnum.STATE_UNDEFINED,
         RealizationStateEnum.STATE_INITIALIZED,
     )
-    status = forward_model_ok(run_args[realisation], ensemble_config, model_config)
+    status = forward_model_ok(run_args[realisation], ensemble_config, history_length)
     state_map._set(
         realisation,
         RealizationStateEnum.STATE_HAS_DATA
@@ -405,7 +405,7 @@ class EnkfFs(BaseCClass):
         self,
         ensemble_size: int,
         ensemble_config: "EnsembleConfig",
-        model_config: "ModelConfig",
+        history_length: int,
         run_args: List["RunArg"],
         active_realizations: List[bool],
     ) -> int:
@@ -414,7 +414,8 @@ class EnkfFs(BaseCClass):
 
         async_result = [
             pool.apply_async(
-                _load_realization, (self, iens, ensemble_config, model_config, run_args)
+                _load_realization,
+                (self, iens, ensemble_config, history_length, run_args),
             )
             for iens in range(ensemble_size)
             if active_realizations[iens]
