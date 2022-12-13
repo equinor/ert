@@ -73,7 +73,6 @@ pybind11_add_module(
   enkf/summary_config.cpp
   enkf/summary_key_set.cpp
   enkf/summary_obs.cpp
-  enkf/surface.cpp
   enkf/surface_config.cpp
   enkf/trans_func.cpp)
 
