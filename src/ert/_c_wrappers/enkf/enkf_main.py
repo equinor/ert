@@ -317,9 +317,6 @@ class EnKFMain:
     def runpath_list_filename(self):
         return self._runpaths.runpath_list_filename
 
-    def getEnkfFsManager(self) -> "EnKFMain":
-        return self
-
     def getLocalConfig(self) -> "UpdateConfiguration":
         return self.update_configuration
 
@@ -327,9 +324,7 @@ class EnKFMain:
         self, realization: List[bool], iteration: int, fs: "EnkfFs"
     ) -> int:
         """Returns the number of loaded realizations"""
-        run_context = self.create_ensemble_experiment_run_context(
-            active_mask=realization, iteration=iteration, source_filesystem=fs
-        )
+        run_context = self.load_ensemble_context(fs.case_name, realization, iteration)
         nr_loaded = fs.load_from_run_path(
             self.getEnsembleSize(),
             self.ensembleConfig(),
@@ -340,63 +335,34 @@ class EnKFMain:
         fs.sync()
         return nr_loaded
 
-    def create_ensemble_experiment_run_context(
-        self, iteration: int, active_mask: List[bool] = None, source_filesystem=None
+    def create_ensemble_context(
+        self, case_name, active_realizations, iteration
     ) -> RunContext:
-        """Creates an ensemble experiment run context
-        :param fs: The source filesystem, defaults to
-            getEnkfFsManager().getCurrentFileSystem().
-        :param active_mask: Whether a realization is active or not,
-            defaults to all active.
-        """
-        return self._create_run_context(
-            iteration=iteration,
-            active_mask=active_mask,
-            source_filesystem=source_filesystem,
-            target_fs=None,
-        )
-
-    def create_ensemble_smoother_run_context(
-        self,
-        iteration: int,
-        target_filesystem,
-        active_mask: List[bool] = None,
-        source_filesystem=None,
-    ) -> RunContext:
-        """Creates an ensemble smoother run context
-        :param fs: The source filesystem, defaults to
-            getEnkfFsManager().getCurrentFileSystem().
-        """
-        return self._create_run_context(
-            iteration=iteration,
-            active_mask=active_mask,
-            source_filesystem=source_filesystem,
-            target_fs=target_filesystem,
-        )
-
-    def _create_run_context(
-        self,
-        iteration: int = 0,
-        active_mask: List[bool] = None,
-        source_filesystem=None,
-        target_fs=None,
-    ) -> RunContext:
-        if active_mask is None:
-            active_mask = [True] * self.getEnsembleSize()
-        if source_filesystem is None:
-            source_filesystem = self.getCurrentFileSystem()
-
-        realizations = list(range(len(active_mask)))
-        paths = self.runpaths.get_paths(realizations, iteration)
-        jobnames = self.runpaths.get_jobnames(realizations, iteration)
-
+        """This creates a new case in storage
+        and returns the run information for that case"""
         return RunContext(
-            sim_fs=source_filesystem,
-            target_fs=target_fs,
-            mask=active_mask,
+            sim_fs=self.storage_manager.add_case(case_name),
+            path_format=self.resConfig().preferred_job_fmt(),
+            format_string=self.getModelConfig().runpath_format_string,
+            runpath_file=self.resConfig().runpath_file,
+            initial_mask=active_realizations,
+            global_substitutions=dict(self.get_context()),
             iteration=iteration,
-            paths=paths,
-            jobnames=jobnames,
+        )
+
+    def load_ensemble_context(
+        self, case_name, active_realizations, iteration
+    ) -> RunContext:
+        """This loads an existing case from storage
+        and creates run information for that case"""
+        return RunContext(
+            sim_fs=self.storage_manager[case_name],
+            path_format=self.resConfig().preferred_job_fmt(),
+            format_string=self.getModelConfig().runpath_format_string,
+            runpath_file=self.resConfig().runpath_file,
+            initial_mask=active_realizations,
+            global_substitutions=dict(self.get_context()),
+            iteration=iteration,
         )
 
     def write_runpath_list(self, iterations: List[int], realizations: List[int]):
@@ -407,9 +373,6 @@ class EnKFMain:
 
     def get_num_cpu(self) -> int:
         return self.res_config.preferred_num_cpu()
-
-    def set_geo_id(self, geo_id: str, realization: int, iteration: int):
-        self.addDataKW(f"<GEO_ID_{realization}_{iteration}>", str(geo_id))
 
     def __repr__(self):
         return f"EnKFMain(size: {self.getEnsembleSize()}, config: {self.res_config})"
@@ -530,10 +493,6 @@ class EnKFMain:
             time_map.attach_refcase(self.res_config.ensemble_config.refcase)
         return case
 
-    def getCurrentFileSystem(self) -> "EnkfFs":
-        """Returns the currently selected file system"""
-        return self.getFileSystem(self.storage_manager.active_case)
-
     def switchFileSystem(self, case_name: str) -> None:
         if isinstance(case_name, EnkfFs):
             case_name = case_name.case_name
@@ -555,10 +514,10 @@ class EnKFMain:
                 )
 
                 for source_file, target_file in self.res_config.ert_templates:
-                    target_file = self.get_context().substitute_real_iter(
+                    target_file = run_context.substituter.substitute_real_iter(
                         target_file, run_arg.iens, run_context.iteration
                     )
-                    result = self.get_context().substitute_real_iter(
+                    result = run_context.substituter.substitute_real_iter(
                         Path(source_file).read_text("utf-8"),
                         run_arg.iens,
                         run_context.iteration,
@@ -578,7 +537,7 @@ class EnKFMain:
                     model_config.gen_kw_export_name,
                     run_arg.runpath,
                     run_arg.iens,
-                    run_arg.sim_fs,
+                    run_context.sim_fs,
                 )
                 res_config.forward_model.formatted_fprintf(
                     run_arg.get_run_id(),
@@ -586,7 +545,7 @@ class EnKFMain:
                     model_config.data_root,
                     iens,
                     run_context.iteration,
-                    self.get_context(),
+                    run_context.substituter,
                     res_config.env_vars,
                 )
 
@@ -596,7 +555,7 @@ class EnKFMain:
         iterations = sorted({runarg.iter_id for runarg in active_list})
         realizations = sorted({runarg.iens for runarg in active_list})
 
-        self.runpaths.write_runpath_list(iterations, realizations)
+        run_context.runpaths.write_runpath_list(iterations, realizations)
 
     def runWorkflows(self, runtime: int) -> None:
         workflow_list = self.getWorkflowList()

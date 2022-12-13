@@ -251,7 +251,7 @@ class CaseInitializationConfigurationPanel(QTabWidget):
 
     def _showInfoForCase(self, case_name=None):
         if case_name is None:
-            case_name = self.ert.getEnkfFsManager().getCurrentFileSystem().getCaseName()
+            case_name = self.ert.storage_manager.current_case.case_name
 
         states = list(self.ert.storage_manager.state_map(case_name))
 

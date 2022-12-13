@@ -3,6 +3,7 @@ from threading import Thread
 from time import sleep
 from typing import TYPE_CHECKING, Any, List, Optional, Tuple
 
+from ert._c_wrappers.enkf import RunContext
 from ert._c_wrappers.enkf.enums import HookRuntime, RealizationStateEnum
 from ert._c_wrappers.enkf.model_callbacks import LoadStatus
 from ert._c_wrappers.job_queue import JobQueueManager, RunStatusType
@@ -11,7 +12,7 @@ from ert.ensemble_evaluator import forward_model_exit, forward_model_ok
 from .forward_model_status import ForwardModelStatus
 
 if TYPE_CHECKING:
-    from ert._c_wrappers.enkf import EnkfFs, EnKFMain, ResConfig, RunArg, RunContext
+    from ert._c_wrappers.enkf import EnkfFs, EnKFMain, ResConfig, RunArg
     from ert._c_wrappers.job_queue import JobQueue, JobStatusType
 
 
@@ -100,19 +101,24 @@ class SimulationContext:
         job_queue = ert.get_queue_config().create_job_queue()
         job_queue.set_max_job_duration(max_runtime)
         self._queue_manager = JobQueueManager(job_queue)
+        # fill in the missing geo_id data
+        global_substitutions = dict(ert.get_context())
         for sim_id, (geo_id, _) in enumerate(case_data):
             if mask[sim_id]:
-                ert.set_geo_id(str(geo_id), sim_id, itr)
-
-        self._run_context = ert.create_ensemble_experiment_run_context(
-            source_filesystem=sim_fs,
-            active_mask=mask,
+                global_substitutions[f"<GEO_ID_{sim_id}_{itr}>"] = str(geo_id)
+        self._run_context = RunContext(
+            sim_fs=sim_fs,
+            path_format=ert.resConfig().preferred_job_fmt(),
+            format_string=ert.getModelConfig().runpath_format_string,
+            runpath_file=ert.resConfig().runpath_file,
+            initial_mask=mask,
+            global_substitutions=global_substitutions,
             iteration=itr,
         )
-        state_map = sim_fs.getStateMap()
+
+        state_map = self._run_context.sim_fs.getStateMap()
         for realization_nr in self._run_context.active_realizations:
             state_map[realization_nr] = RealizationStateEnum.STATE_INITIALIZED
-
         self._ert.createRunPath(self._run_context)
         self._ert.runWorkflows(HookRuntime.PRE_SIMULATION)
         self._sim_thread = self._run_simulations_simple_step()

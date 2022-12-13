@@ -7,12 +7,13 @@ from ert._c_wrappers.enkf import EnKFMain, ResConfig
 
 def test_adding_priors(poly_case):
     m = poly_case
-    run_context = m.create_ensemble_experiment_run_context(
-        active_mask=[True] * 10,
+    prior = m.create_ensemble_context(
+        "prior",
+        [True] * 10,
         iteration=0,
     )
-    m.sample_prior(run_context.sim_fs, run_context.active_realizations)
-    m.createRunPath(run_context)
+    m.sample_prior(prior.sim_fs, prior.active_realizations)
+    m.createRunPath(prior)
     del m
     gc.collect()
 
@@ -20,8 +21,9 @@ def test_adding_priors(poly_case):
         f.write("COEFF_D UNIFORM 0 5\n")
     m = EnKFMain(ResConfig("poly.ert"))
 
-    run_context = m.create_ensemble_experiment_run_context(
-        active_mask=[True] * 10,
+    prior = m.load_ensemble_context(
+        "prior",
+        [True] * 10,
         iteration=0,
     )
     with pytest.raises(
@@ -29,4 +31,4 @@ def test_adding_priors(poly_case):
         match="The configuration of GEN_KW "
         "parameter COEFFS is of size 4, expected 3",
     ):
-        m.createRunPath(run_context)
+        m.createRunPath(prior)

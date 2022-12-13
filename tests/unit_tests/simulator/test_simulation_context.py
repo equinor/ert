@@ -12,9 +12,9 @@ def test_simulation_context(setup_case):
     even_mask = [True, False] * (size // 2)
     odd_mask = [False, True] * (size // 2)
 
-    fs_manager = ert.getEnkfFsManager()
-    even_half = fs_manager.getFileSystem("even_half")
-    odd_half = fs_manager.getFileSystem("odd_half")
+    fs_manager = ert.storage_manager
+    even_half = fs_manager.add_case("even_half")
+    odd_half = fs_manager.add_case("odd_half")
 
     case_data = [(geo_id, {}) for geo_id in range(size)]
     even_ctx = SimulationContext(ert, even_half, even_mask, 0, case_data)

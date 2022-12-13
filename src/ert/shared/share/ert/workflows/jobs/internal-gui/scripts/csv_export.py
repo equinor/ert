@@ -102,7 +102,7 @@ class CSVExportJob(ErtPlugin):
                 cases = case_list.split(",")
 
         if case_list is None or len(cases) == 0:
-            cases = [self.ert().getCurrentFileSystem().getCaseName()]
+            cases = [facade.get_current_fs().case_name]
 
         if design_matrix_path is not None:
             if not os.path.exists(design_matrix_path):

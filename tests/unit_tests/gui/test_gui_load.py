@@ -22,7 +22,7 @@ def fixture_patch_enkf_main(monkeypatch, tmp_path):
     mocked_enkf_main = Mock()
     mocked_enkf_main.getWorkflowList.return_value = plugins_mock
     mocked_enkf_main.getEnsembleSize.return_value = 10
-    mocked_enkf_main.storage_manager = []
+    mocked_enkf_main.storage_manager = MagicMock()
 
     mocked_enkf_main.getWorkflowList.return_value.getWorkflowNames.return_value = [
         "my_workflow"

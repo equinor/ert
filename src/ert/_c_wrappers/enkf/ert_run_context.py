@@ -1,9 +1,11 @@
 import uuid
-from dataclasses import dataclass, field
-from datetime import datetime
-from typing import TYPE_CHECKING, Iterator, List
+from dataclasses import InitVar, dataclass, field
+from pathlib import Path
+from typing import TYPE_CHECKING, Dict, Iterator, List
 
 from ert._c_wrappers.enkf.run_arg import RunArg
+from ert._c_wrappers.enkf.runpaths import Runpaths
+from ert._c_wrappers.util import SubstitutionList
 
 if TYPE_CHECKING:
     from ert._c_wrappers.enkf.enkf_fs import EnkfFs
@@ -12,43 +14,65 @@ if TYPE_CHECKING:
 @dataclass
 class RunContext:
     sim_fs: "EnkfFs"
-    target_fs: "EnkfFs" = None
-    mask: List[bool] = field(default_factory=list)
-    paths: List[str] = field(default_factory=list)
-    jobnames: List[str] = field(default_factory=list)
+    path_format: str
+    format_string: str
+    runpath_file: Path
+    initial_mask: List[bool] = field(default_factory=list)
     iteration: int = 0
+    global_substitutions: InitVar[Dict[str, str]] = None
 
-    def __post_init__(self):
-        self.run_id = f"{uuid.uuid4()}:{datetime.now().strftime('%Y-%m-%dT%H%M')}"
+    def __post_init__(self, global_substitutions):
+        subst_list = SubstitutionList()
+        if global_substitutions:
+            for k, v in global_substitutions.items():
+                subst_list.addItem(k, v)
+        self.substituter = subst_list
+        self.runpaths = Runpaths(
+            self.path_format,
+            self.format_string,
+            self.runpath_file,
+            self.substituter.substitute_real_iter,
+        )
+        self.run_id = uuid.uuid4()
         self.run_args = []
-        if self.jobnames and self.paths:
-            for iens, (job_name, path) in enumerate(zip(self.jobnames, self.paths)):
-                self.run_args.append(
-                    RunArg(
-                        str(self.run_id),
-                        self.sim_fs,
-                        iens,
-                        self.iteration,
-                        path,
-                        job_name,
-                    )
+        paths = self.runpaths.get_paths(
+            list(range(len(self.initial_mask))), self.iteration
+        )
+        job_names = self.runpaths.get_jobnames(
+            list(range(len(self.initial_mask))), self.iteration
+        )
+        for iens, (run_path, job_name, active) in enumerate(
+            zip(paths, job_names, self.initial_mask)
+        ):
+            self.substituter.addItem("<RUNPATH>", run_path)
+            self.substituter.addItem("<ECL_BASE>", job_name)
+            self.substituter.addItem("<ECLBASE>", job_name)
+            self.substituter.addItem("<ITER>", str(self.iteration))
+            self.run_args.append(
+                RunArg(
+                    str(self.run_id),
+                    self.sim_fs,
+                    iens,
+                    self.iteration,
+                    run_path,
+                    job_name,
+                    active,
                 )
+            )
 
-        if not self.target_fs:
-            self.target_fs = self.sim_fs
+    @property
+    def mask(self):
+        return [real.active for real in self]
 
     def is_active(self, index: int) -> bool:
-        try:
-            return self.mask[index]
-        except IndexError:
-            return False
+        return self[index].active
 
     @property
     def active_realizations(self):
-        return [i for i, _ in enumerate(self) if self.is_active(i)]
+        return [i for i, real in enumerate(self) if real.active]
 
     def __len__(self):
-        return len(self.mask)
+        return len(self.initial_mask)
 
     def __getitem__(self, item) -> "RunArg":
         return self.run_args[item]
@@ -57,4 +81,4 @@ class RunContext:
         yield from self.run_args
 
     def deactivate_realization(self, realization_nr):
-        self.mask[realization_nr] = False
+        self[realization_nr].active = False

@@ -35,7 +35,7 @@ def _internalize_GEN_DATA(
             with open(run_path / filename, "r") as f:
                 data = [float(v.strip()) for v in f.readlines()]
 
-            run_arg.sim_fs.save_gen_data(f"{key}@{i}", data, run_arg.iens)
+            run_arg.ensemble_storage.save_gen_data(f"{key}@{i}", data, run_arg.iens)
 
     if errors:
         return (LoadStatus.LOAD_FAILURE, "\n".join(errors))
@@ -101,7 +101,7 @@ def _internalize_SUMMARY_DATA(ens_config: "EnsembleConfig", run_arg: "RunArg"):
 
         data.append(np_vector)
     total = np.stack(data, axis=0)
-    run_arg.sim_fs.save_summary_data(total, keys, axis, run_arg.iens)
+    run_arg.ensemble_storage.save_summary_data(total, keys, axis, run_arg.iens)
     return (LoadStatus.LOAD_SUCCESSFUL, "")
 
 
@@ -113,7 +113,7 @@ def _internalize_results(
     if status[0] != LoadStatus.LOAD_SUCCESSFUL:
         return status
 
-    num_timestamps = len(run_arg.sim_fs.getTimeMap())
+    num_timestamps = len(run_arg.ensemble_storage.getTimeMap())
     if num_timestamps > 0:
         num_reports = num_timestamps
     result = _internalize_GEN_DATA(ens_config, run_arg, num_reports)

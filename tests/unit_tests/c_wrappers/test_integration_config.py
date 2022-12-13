@@ -13,7 +13,9 @@ def _create_runpath(enkf_main: EnKFMain) -> RunContext:
     """
     Instantiate an ERT runpath. This will create the parameter coefficients.
     """
-    run_context = enkf_main.create_ensemble_experiment_run_context(iteration=0)
+    run_context = enkf_main.create_ensemble_context(
+        "prior", [True] * enkf_main.getEnsembleSize(), iteration=0
+    )
     enkf_main.createRunPath(run_context)
     return run_context
 

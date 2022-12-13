@@ -39,10 +39,13 @@ def test_data_fetching(snake_oil_case_storage):
 
 
 def test_data_fetching_missing_case(facade):
+    with pytest.raises(KeyError, match="No such case name: nocase in"):
+        facade.gather_summary_data("nocase", "BPR:1,3,8")
+    with pytest.raises(KeyError, match="No such case name: nocase in"):
+        facade.gather_gen_kw_data("nocase", "SNAKE_OIL_PARAM:BPR_138_PERSISTENCE")
+
     data = [
         facade.gather_gen_data_data("nocase", "SNAKE_OIL_GPR_DIFF@199"),
-        facade.gather_summary_data("nocase", "BPR:1,3,8"),
-        facade.gather_gen_kw_data("nocase", "SNAKE_OIL_PARAM:BPR_138_PERSISTENCE"),
     ]
 
     for dataframe in data:
@@ -52,9 +55,9 @@ def test_data_fetching_missing_case(facade):
 
 def test_data_fetching_missing_key(facade):
     data = [
-        facade.gather_gen_data_data("default_0", "nokey"),
-        facade.gather_summary_data("default_0", "nokey"),
-        facade.gather_gen_kw_data("default_0", "nokey"),
+        facade.gather_gen_data_data("default", "nokey"),
+        facade.gather_summary_data("default", "nokey"),
+        facade.gather_gen_kw_data("default", "nokey"),
     ]
 
     for dataframe in data:
@@ -174,7 +177,7 @@ def test_case_history_data(facade):
     data = facade.history_data("FOPRH")
     assert isinstance(data, PandasObject)
 
-    data = facade.history_data("FOPRH", case="default_1")
+    data = facade.history_data("FOPRH", case="default")
     assert isinstance(data, PandasObject)
 
     data = facade.history_data("WOPRH:OP1")

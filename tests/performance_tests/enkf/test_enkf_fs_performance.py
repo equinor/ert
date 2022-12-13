@@ -2,8 +2,8 @@ from ert._c_wrappers.enkf import EnKFMain, ResConfig
 
 
 def mount_and_umount(ert, case_name):
-    fs_manager = ert.getEnkfFsManager()
-    mount_point = fs_manager.getFileSystem(case_name)
+    fs_manager = ert.storage_manager
+    mount_point = fs_manager[case_name]
     del mount_point
 
 

@@ -30,10 +30,8 @@ def test_that_run_template_replace_symlink_does_not_write_to_source():
     Path("config.ert").write_text(config_text)
     res_config = ResConfig("config.ert")
     ert = EnKFMain(res_config)
-    run_context = ert.create_ensemble_experiment_run_context(
-        iteration=0, active_mask=[True]
-    )
-    run_path = Path(run_context.paths[0])
+    run_context = ert.create_ensemble_context("prior", [True], iteration=0)
+    run_path = Path(run_context[0].runpath)
     os.makedirs(run_path)
     # Write a file that will be symlinked into the run run path with the
     # same name as the target_file
@@ -64,12 +62,10 @@ def test_run_template_replace_in_file_with_custom_define():
 
     res_config = ResConfig("config.ert")
     ert = EnKFMain(res_config)
-    run_context = ert.create_ensemble_experiment_run_context(
-        iteration=0, active_mask=[True]
-    )
+    run_context = ert.create_ensemble_context("prior", [True], iteration=0)
     ert.createRunPath(run_context)
     assert (
-        Path(run_context.paths[0]) / "result.txt"
+        Path(run_context[0].runpath) / "result.txt"
     ).read_text() == "I WANT TO REPLACE:my_custom_variable"
 
 
@@ -102,12 +98,10 @@ def test_run_template_replace_in_file(key, expected):
 
     res_config = ResConfig("config.ert")
     ert = EnKFMain(res_config)
-    run_context = ert.create_ensemble_experiment_run_context(
-        iteration=0, active_mask=[True]
-    )
+    run_context = ert.create_ensemble_context("prior", [True], iteration=0)
     ert.createRunPath(run_context)
     assert (
-        Path(run_context.paths[0]) / "result.txt"
+        Path(run_context[0].runpath) / "result.txt"
     ).read_text() == f"I WANT TO REPLACE:{expected}"
 
 
@@ -134,12 +128,10 @@ def test_run_template_replace_in_ecl(ecl_base, expected_file):
 
     res_config = ResConfig("config.ert")
     ert = EnKFMain(res_config)
-    run_context = ert.create_ensemble_experiment_run_context(
-        iteration=0, active_mask=[True]
-    )
+    run_context = ert.create_ensemble_context("prior", [True], iteration=0)
     ert.createRunPath(run_context)
     assert (
-        Path(run_context.paths[0]) / expected_file
+        Path(run_context[0].runpath) / expected_file
     ).read_text() == "I WANT TO REPLACE:1"
 
 
@@ -177,12 +169,10 @@ def test_run_template_replace_in_ecl_data_file(key, expected):
 
     res_config = ResConfig("config.ert")
     ert = EnKFMain(res_config)
-    run_context = ert.create_ensemble_experiment_run_context(
-        iteration=0, active_mask=[True]
-    )
+    run_context = ert.create_ensemble_context("prior", [True], iteration=0)
     ert.createRunPath(run_context)
     assert (
-        Path(run_context.paths[0]) / "ECL_CASE0.DATA"
+        Path(run_context[0].runpath) / "ECL_CASE0.DATA"
     ).read_text() == f"I WANT TO REPLACE:{expected}"
 
 
@@ -205,12 +195,10 @@ def test_run_template_replace_in_file_name():
 
     res_config = ResConfig("config.ert")
     ert = EnKFMain(res_config)
-    run_context = ert.create_ensemble_experiment_run_context(
-        iteration=0, active_mask=[True]
-    )
+    run_context = ert.create_ensemble_context("prior", [True], iteration=0)
     ert.createRunPath(run_context)
     assert (
-        Path(run_context.paths[0]) / "result.txt"
+        Path(run_context[0].runpath) / "result.txt"
     ).read_text() == "Not important, name of the file is important"
 
 
@@ -235,13 +223,11 @@ def test_that_sampling_prior_makes_initialized_fs():
         fh.writelines("MY_KEYWORD NORMAL 0 1")
     res_config = ResConfig("config.ert")
     ert = EnKFMain(res_config)
-    run_context = ert.create_ensemble_experiment_run_context(
-        iteration=0, active_mask=[True]
-    )
+    run_context = ert.create_ensemble_context("prior", [True], iteration=0)
     storage_manager = ert.storage_manager
-    assert not storage_manager["default"].is_initalized
+    assert not storage_manager["prior"].is_initalized
     ert.sample_prior(run_context.sim_fs, run_context.active_realizations)
-    assert storage_manager["default"].is_initalized
+    assert storage_manager["prior"].is_initalized
 
 
 @pytest.mark.parametrize(

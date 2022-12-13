@@ -1,9 +1,7 @@
-import sys
-
 import pytest
 
 import ert
-from ert._c_wrappers.enkf import EnKFMain, ResConfig, RunContext
+from ert._c_wrappers.enkf import EnKFMain, ResConfig
 from ert._c_wrappers.enkf.enkf_fs_manager import FS_VERSION, FileSystemError
 
 
@@ -47,20 +45,20 @@ def test_enkf_fs_manager_wrong_version(
 
 def test_rotate(snake_oil_case):
     ert = snake_oil_case
-    fsm = ert.getEnkfFsManager()
-    assert len(fsm.storage_manager) == 1
+    fsm = ert.storage_manager
+    assert len(fsm) == 1
 
     fs_list = []
     for index in range(5):
-        fs_list.append(fsm.getFileSystem(f"fs_fill_{index}"))
+        fs_list.append(fsm.add_case(f"fs_fill_{index}"))
 
-    assert len(fsm.storage_manager) == 6
+    assert len(fsm) == 6
 
     for index in range(3 * 5):
         fs_name = f"fs_test_{index}"
-        sys.stderr.write(f"Mounting: {fs_name}\n")
-        fsm.getFileSystem(fs_name)
-        assert len(fsm.storage_manager) == 7 + index
+        fsm.add_case(fs_name)
+        assert len(fsm) == 7 + index
+        assert len(fsm.open_storages) == 5
 
 
 @pytest.mark.parametrize(
@@ -78,11 +76,12 @@ def test_custom_init_runs(snake_oil_case, state_mask, expected_length):
 
 def test_fs_init_from_scratch(snake_oil_case):
     ert = snake_oil_case
-    sim_fs = ert.getEnkfFsManager().getFileSystem("new_case")
     mask = [True] * 6 + [False] * 19
-    run_context = RunContext(sim_fs=sim_fs, mask=mask)
+    run_context = ert.create_ensemble_context("new_case", mask, 0)
 
-    ert.getEnkfFsManager().sample_prior(
-        run_context.sim_fs, run_context.active_realizations, ["SNAKE_OIL_PARAM"]
+    ert.sample_prior(
+        run_context.sim_fs,
+        run_context.active_realizations,
+        ["SNAKE_OIL_PARAM"],
     )
     assert len(ert.storage_manager.state_map("new_case")) == 25

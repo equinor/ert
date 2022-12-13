@@ -496,10 +496,13 @@ class BaseRunModel:
         return self._run_context
 
     @feature_enabled("new-storage")
-    def _post_ensemble_data(self, update_id: Optional[str] = None) -> str:
+    def _post_ensemble_data(
+        self, case_name: str, update_id: Optional[str] = None
+    ) -> str:
         self.setPhaseName("Uploading data...")
         ensemble_id = post_ensemble_data(
             ert=self.facade,
+            case_name=case_name,
             ensemble_size=self._ensemble_size,
             update_id=update_id,
             active_realizations=self._active_realizations,
@@ -508,9 +511,11 @@ class BaseRunModel:
         return ensemble_id
 
     @feature_enabled("new-storage")
-    def _post_ensemble_results(self, ensemble_id: str) -> None:
+    def _post_ensemble_results(self, case_name: str, ensemble_id: str) -> None:
         self.setPhaseName("Uploading results...")
-        post_ensemble_results(ert=self.facade, ensemble_id=ensemble_id)
+        post_ensemble_results(
+            ert=self.facade, case_name=case_name, ensemble_id=ensemble_id
+        )
         self.setPhaseName("Uploading done")
 
     @feature_enabled("new-storage")
