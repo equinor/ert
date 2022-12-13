@@ -21,6 +21,7 @@ from .field_config import FieldConfig
 from .gen_data_config import GenDataConfig
 from .gen_kw_config import GenKwConfig
 from .summary_config import SummaryConfig
+from .surface_config import SurfaceConfig
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
@@ -170,6 +171,9 @@ class EnkfConfigNode(BaseCClass):
 
     def getFieldModelConfig(self) -> FieldConfig:
         return FieldConfig.createCReference(self._get_ref(), parent=self)
+
+    def getSurfaceModelConfig(self) -> SurfaceConfig:
+        return SurfaceConfig.createCReference(self._get_ref(), parent=self)
 
     def getDataModelConfig(self) -> GenDataConfig:
         return GenDataConfig.createCReference(self._get_ref(), parent=self)

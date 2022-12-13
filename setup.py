@@ -150,6 +150,7 @@ args = dict(
         "websockets >= 9.0.1",
         "httpx",
         "tables",
+        "xtgeo",
     ],
     entry_points={
         "console_scripts": [
