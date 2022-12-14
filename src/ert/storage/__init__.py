@@ -1,10 +1,19 @@
+from __future__ import annotations
+
+import os
+import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Any, List, Tuple
+from typing import TYPE_CHECKING, Any, List, Tuple
 
 import numpy as np
-import numpy.typing as npt
 import pandas as pd
+import xtgeo
+
+if TYPE_CHECKING:
+    import numpy.typing as npt
+
+    from ert._c_wrappers.enkf.config import FieldConfig
 
 
 class Storage:
@@ -25,7 +34,7 @@ class Storage:
         parameter_name: str,
         parameter_keys: List[str],
         realization: int,
-        data: "npt.ArrayLike",
+        data: npt.ArrayLike,
     ) -> None:
         output_path = self.mount_point / f"gen-kw-{realization}"
         Path.mkdir(output_path, exist_ok=True)
@@ -36,7 +45,7 @@ class Storage:
 
     def save_summary_data(
         self,
-        data: "npt.NDArray[np.double]",
+        data: npt.NDArray[np.double],
         keys: List[str],
         axis: List[Any],
         realization: int,
@@ -53,7 +62,7 @@ class Storage:
 
     def load_summary_data(
         self, summary_keys: List[str], realizations: List[int]
-    ) -> Tuple["npt.NDArray[np.double]", List[datetime], List[int]]:
+    ) -> Tuple[npt.NDArray[np.double], List[datetime], List[int]]:
         result = []
         loaded = []
         dates: List[datetime] = []
@@ -107,7 +116,7 @@ class Storage:
 
     def load_gen_data(
         self, key: str, realizations: List[int]
-    ) -> Tuple["npt.NDArray[np.double]", List[int]]:
+    ) -> Tuple[npt.NDArray[np.double], List[int]]:
         result = []
         loaded = []
         for realization in realizations:
@@ -141,3 +150,74 @@ class Storage:
                 )
             )
         return pd.concat(dfs)
+
+    def save_field_data(
+        self,
+        parameter_name: str,
+        realization: int,
+        data: npt.ArrayLike,
+    ) -> None:
+        output_path = self.mount_point / f"field-{realization}"
+        Path.mkdir(output_path, exist_ok=True)
+        np.save(f"{output_path}/{parameter_name}", data)
+
+    def load_field(self, key: str, realizations: List[int]) -> npt.NDArray[np.double]:
+        result = []
+        for realization in realizations:
+            input_path = self.mount_point / f"field-{realization}"
+            if not input_path.exists():
+                raise KeyError(f"Unable to load FIELD for key: {key}")
+            data = np.load(input_path / f"{key}.npy")
+            result.append(data)
+        return np.stack(result).T  # type: ignore
+
+    def field_has_data(self, key: str, realization: int) -> bool:
+        path = self.mount_point / f"field-{realization}/{key}.npy"
+        return path.exists()
+
+    def export_field(
+        self, config_node: FieldConfig, realization: int, output_path: str, fformat: str
+    ) -> None:
+        input_path = self.mount_point / f"field-{realization}"
+        key = config_node.get_key()
+
+        if not input_path.exists():
+            raise KeyError(
+                f"Unable to load FIELD for key: {key}, realization: {realization} "
+            )
+        data = np.load(input_path / f"{key}.npy")
+
+        transform_name = config_node.get_output_transform_name()
+        data_transformed = config_node.transform(transform_name, data)
+        data_truncated = config_node.truncate(data_transformed)
+
+        gp = xtgeo.GridProperty(
+            ncol=config_node.get_nx(),
+            nrow=config_node.get_ny(),
+            nlay=config_node.get_nz(),
+            values=data_truncated,
+            grid=config_node.get_grid(),
+            name=key,
+        )
+
+        os.makedirs(Path(output_path).parent, exist_ok=True)
+
+        gp.to_file(output_path, fformat=fformat)
+
+    def export_field_many(
+        self,
+        config_node: FieldConfig,
+        realizations: List[int],
+        output_path: str,
+        fformat: str,
+    ) -> None:
+        for realization in realizations:
+            file_name = output_path % realization
+            try:
+                self.export_field(config_node, realization, file_name, fformat)
+                print(f"{config_node.get_key()}[{realization:03d}] -> {file_name}")
+            except ValueError:
+                sys.stderr.write(
+                    f"ERROR: Could not load realisation:{realization} - export failed"
+                )
+                pass

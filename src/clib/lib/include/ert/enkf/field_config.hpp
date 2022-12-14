@@ -112,7 +112,7 @@ field_config_get_export_format(const field_config_type *);
 void field_config_set_key(field_config_type *, const char *);
 void field_config_enkf_OFF(field_config_type *);
 bool field_config_enkf_mode(const field_config_type *config);
-const char *field_config_get_key(const field_config_type *);
+extern "C" const char *field_config_get_key(const field_config_type *);
 bool field_config_keep_inactive_cells(const field_config_type *);
 field_func_type *field_config_get_init_transform(const field_config_type *);
 field_func_type *field_config_get_output_transform(const field_config_type *);

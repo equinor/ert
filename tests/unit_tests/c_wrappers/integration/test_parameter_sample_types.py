@@ -1,4 +1,6 @@
+# pylint: disable=too-many-lines
 import logging
+import math
 import os
 import stat
 from argparse import ArgumentParser
@@ -7,18 +9,15 @@ from hashlib import sha256
 from pathlib import Path
 from textwrap import dedent
 
-import cwrap
 import numpy as np
+import numpy.testing
 import pytest
-from ecl import EclDataType
-from ecl.eclfile import EclKW
-from ecl.grid import EclGrid
+import xtgeo
 from ecl.util.geometry import Surface
 
 from ert.__main__ import ert_parser
 from ert._c_wrappers.config.config_parser import ConfigValidationError
 from ert._c_wrappers.enkf import EnKFMain, ErtConfig
-from ert._clib import update
 from ert.cli import ENSEMBLE_SMOOTHER_MODE
 from ert.cli.main import run_cli
 from ert.libres_facade import LibresFacade
@@ -178,6 +177,296 @@ def test_that_order_of_input_in_user_input_is_abritrary_for_gen_kw_init_files(
         )
 
 
+def test_field_load_two_parameters_forward_init(tmpdir):
+    with tmpdir.as_cwd():
+        config = dedent(
+            """
+        JOBNAME my_name%d
+        NUM_REALIZATIONS 1
+        FIELD PARAM_A PARAMETER param_a.grdecl INIT_FILES:../../../param_a.grdecl FORWARD_INIT:True
+        FIELD PARAM_B PARAMETER param_b.grdecl INIT_FILES:../../../param_b.grdecl FORWARD_INIT:True
+        GRID MY_EGRID.EGRID
+        """  # pylint: disable=line-too-long  # noqa: E501
+        )
+        with open("config.ert", "w", encoding="utf-8") as fh:
+            fh.writelines(config)
+
+        grid = xtgeo.create_box_grid(dimension=(10, 10, 1))
+        grid.to_file("MY_EGRID.EGRID", "egrid")
+
+        param_a = np.ndarray(shape=(10, 10, 1))
+        param_b = np.ndarray(shape=(10, 10, 1))
+        param_a.fill(22)
+        param_b.fill(77)
+
+        gp_a = xtgeo.GridProperty(
+            ncol=10,
+            nrow=10,
+            nlay=1,
+            values=param_a,
+            grid=grid,
+            name="PARAM_A",
+        )
+        gp_a.to_file("param_a.grdecl", fformat="grdecl")
+
+        gp_b = xtgeo.GridProperty(
+            ncol=10,
+            nrow=10,
+            nlay=1,
+            values=param_b,
+            grid=grid,
+            name="PARAM_B",
+        )
+        gp_b.to_file("param_b.grdecl", fformat="grdecl")
+
+        ert = create_runpath("config.ert")
+        fs = ert.storage_manager["default"]
+
+        assert ert.ensembleConfig()["PARAM_A"].getUseForwardInit()
+        assert ert.ensembleConfig()["PARAM_B"].getUseForwardInit()
+        assert not Path("simulations/realization-0/iter-0/param_a.grdecl").exists()
+        assert not Path("simulations/realization-0/iter-0/param_b.grdecl").exists()
+
+        # should not be loaded yet
+        with pytest.raises(KeyError, match="Unable to load FIELD for key: PARAM_A"):
+            fs.load_field("PARAM_A", [0])
+
+        with pytest.raises(KeyError, match="Unable to load FIELD for key: PARAM_B"):
+            fs.load_field("PARAM_B", [0])
+
+        assert load_from_forward_model(ert) == 1
+
+        create_runpath("config.ert")
+
+        prop_a = xtgeo.gridproperty_from_file(
+            pfile="simulations/realization-0/iter-0/param_a.grdecl",
+            name="PARAM_A",
+            grid=grid,
+        )
+        numpy.testing.assert_equal(prop_a.values.data, param_a)
+
+        prop_b = xtgeo.gridproperty_from_file(
+            pfile="simulations/realization-0/iter-0/param_b.grdecl",
+            name="PARAM_B",
+            grid=grid,
+        )
+        numpy.testing.assert_equal(prop_b.values.data, param_b)
+
+        # should be loaded now
+        loaded_a = fs.load_field("PARAM_A", [0])
+        for e in range(0, loaded_a.shape[0]):
+            assert loaded_a[e][0] == 22
+
+        loaded_b = fs.load_field("PARAM_B", [0])
+        for e in range(0, loaded_b.shape[0]):
+            assert loaded_b[e][0] == 77
+
+
+def test_field_load_two_parameters(tmpdir):
+    with tmpdir.as_cwd():
+        config = dedent(
+            """
+        JOBNAME my_name%d
+        NUM_REALIZATIONS 1
+        FIELD PARAM_A PARAMETER param_a.grdecl INIT_FILES:param_a_%d.grdecl
+        FIELD PARAM_B PARAMETER param_b.grdecl INIT_FILES:param_b_%d.grdecl
+        GRID MY_EGRID.EGRID
+        """
+        )
+        with open("config.ert", "w", encoding="utf-8") as fh:
+            fh.writelines(config)
+
+        grid = xtgeo.create_box_grid(dimension=(10, 10, 1))
+        grid.to_file("MY_EGRID.EGRID", "egrid")
+
+        param_a = np.ndarray(shape=(10, 10, 1))
+        param_b = np.ndarray(shape=(10, 10, 1))
+        param_a.fill(22)
+        param_b.fill(77)
+
+        gp_a = xtgeo.GridProperty(
+            ncol=10,
+            nrow=10,
+            nlay=1,
+            values=param_a,
+            grid=grid,
+            name="PARAM_A",
+        )
+        gp_a.to_file("param_a_0.grdecl", fformat="grdecl")
+
+        gp_b = xtgeo.GridProperty(
+            ncol=10,
+            nrow=10,
+            nlay=1,
+            values=param_b,
+            grid=grid,
+            name="PARAM_B",
+        )
+        gp_b.to_file("param_b_0.grdecl", fformat="grdecl")
+
+        ert = create_runpath("config.ert")
+        assert not ert.ensembleConfig()["PARAM_A"].getUseForwardInit()
+        assert not ert.ensembleConfig()["PARAM_B"].getUseForwardInit()
+
+        fs = ert.storage_manager["default"]
+        loaded_a = fs.load_field("PARAM_A", [0])
+        for e in range(0, loaded_a.shape[0]):
+            assert loaded_a[e][0] == 22
+
+        loaded_b = fs.load_field("PARAM_B", [0])
+        for e in range(0, loaded_b.shape[0]):
+            assert loaded_b[e][0] == 77
+
+        prop_a = xtgeo.gridproperty_from_file(
+            pfile="simulations/realization-0/iter-0/param_a.grdecl",
+            name="PARAM_A",
+            grid=grid,
+        )
+        numpy.testing.assert_equal(prop_a.values.data, param_a)
+
+        prop_b = xtgeo.gridproperty_from_file(
+            pfile="simulations/realization-0/iter-0/param_b.grdecl",
+            name="PARAM_B",
+            grid=grid,
+        )
+        numpy.testing.assert_equal(prop_b.values.data, param_b)
+
+
+@pytest.mark.parametrize(
+    "min_, max_, field_config",
+    [
+        (
+            0.5,
+            None,
+            "FIELD MY_PARAM PARAMETER my_param.grdecl INIT_FILES:my_param_%d.grdecl MIN:0.5",  # pylint: disable=line-too-long  # noqa: E501
+        ),
+        (
+            None,
+            0.8,
+            "FIELD MY_PARAM PARAMETER my_param.grdecl INIT_FILES:my_param_%d.grdecl MAX:0.8",  # pylint: disable=line-too-long  # noqa: E501
+        ),
+        (
+            0.5,
+            0.8,
+            "FIELD MY_PARAM PARAMETER my_param.grdecl INIT_FILES:my_param_%d.grdecl MIN:0.5 MAX:0.8",  # pylint: disable=line-too-long  # noqa: E501
+        ),
+    ],
+)
+def test_field_with_min_max(tmpdir, min_: int, max_: int, field_config: str):
+    with tmpdir.as_cwd():
+        config = dedent(
+            """
+        JOBNAME my_name%d
+        NUM_REALIZATIONS 1
+        GRID MY_EGRID.EGRID
+        """
+        )
+        config += field_config
+        with open("config.ert", "w", encoding="utf-8") as fh:
+            fh.writelines(config)
+
+        grid = xtgeo.create_box_grid(dimension=(10, 10, 1))
+        grid.to_file("MY_EGRID.EGRID", "egrid")
+
+        my_param = np.ndarray(shape=(10, 10, 1), buffer=np.random.random_sample(100))
+        my_param[8][7] = 0.001
+        my_param[8][3] = 1.001
+
+        gp_a = xtgeo.GridProperty(
+            ncol=10,
+            nrow=10,
+            nlay=1,
+            values=my_param,
+            grid=grid,
+            name="MY_PARAM",
+        )
+        gp_a.to_file("my_param_0.grdecl", fformat="grdecl")
+
+        create_runpath("config.ert", [True])
+
+        my_prop = xtgeo.gridproperty_from_file(
+            pfile="simulations/realization-0/iter-0/my_param.grdecl",
+            name="MY_PARAM",
+            grid=grid,
+        )
+        if min_ and max_:
+            vfunc = np.vectorize(
+                lambda x: ((x + 0.0001) >= min_) and ((x - 0.0001) <= max_)
+            )
+            assert vfunc(my_prop.values.data).all()
+        elif min_:
+            vfunc = np.vectorize(lambda x: (x + 0.0001) >= min_)
+            assert vfunc(my_prop.values.data).all()
+        elif max_:
+            vfunc = np.vectorize(lambda x: (x - 0.0001) <= max_)
+            assert vfunc(my_prop.values.data).all()
+
+
+def test_field_with_transformation(tmpdir):
+    with tmpdir.as_cwd():
+        config = dedent(
+            """
+        JOBNAME my_name%d
+        NUM_REALIZATIONS 2
+        FIELD PARAM_A PARAMETER param_a.grdecl INIT_FILES:param_a_%d.grdecl INIT_TRANSFORM:LN OUTPUT_TRANSFORM:EXP
+        GRID MY_EGRID.EGRID
+        """  # pylint: disable=line-too-long  # noqa: E501
+        )
+        with open("config.ert", "w", encoding="utf-8") as fh:
+            fh.writelines(config)
+
+        grid = xtgeo.create_box_grid(dimension=(10, 10, 1))
+        grid.to_file("MY_EGRID.EGRID", "egrid")
+
+        param_a_1 = np.ndarray(shape=(10, 10, 1), dtype=float)
+        param_a_2 = np.ndarray(shape=(10, 10, 1), dtype=float)
+        param_a_1.fill(math.exp(2.5))
+        param_a_2.fill(math.exp(1.5))
+
+        gp_a_1 = xtgeo.GridProperty(
+            ncol=10,
+            nrow=10,
+            nlay=1,
+            values=param_a_1,
+            grid=grid,
+            name="PARAM_A",
+        )
+        gp_a_1.to_file("param_a_0.grdecl", fformat="grdecl")
+
+        gp_a_2 = xtgeo.GridProperty(
+            ncol=10,
+            nrow=10,
+            nlay=1,
+            values=param_a_2,
+            grid=grid,
+            name="PARAM_A",
+        )
+        gp_a_2.to_file("param_a_1.grdecl", fformat="grdecl")
+
+        ert = create_runpath("config.ert", [True, True])
+        fs = ert.storage_manager["default"]
+
+        # stored internally as 2.5, 1.5
+        loaded_a = fs.load_field("PARAM_A", [0, 1])
+        for e in range(0, loaded_a.shape[0]):
+            assert loaded_a[e][0] == pytest.approx(2.5)
+            assert loaded_a[e][1] == pytest.approx(1.5)
+
+        prop_a_1 = xtgeo.gridproperty_from_file(
+            pfile="simulations/realization-0/iter-0/param_a.grdecl",
+            name="PARAM_A",
+            grid=grid,
+        )
+        numpy.testing.assert_almost_equal(prop_a_1.values.data, param_a_1, decimal=5)
+
+        prop_a_2 = xtgeo.gridproperty_from_file(
+            pfile="simulations/realization-1/iter-0/param_a.grdecl",
+            name="PARAM_A",
+            grid=grid,
+        )
+        numpy.testing.assert_almost_equal(prop_a_2.values.data, param_a_2, decimal=5)
+
+
 @pytest.mark.parametrize(
     "config_str, expect_forward_init",
     [
@@ -192,29 +481,35 @@ def test_that_order_of_input_in_user_input_is_abritrary_for_gen_kw_init_files(
         ),
     ],
 )
-def test_field_param(tmpdir, config_str, expect_forward_init):
+def test_field_forward_init(tmpdir, config_str, expect_forward_init):
     with tmpdir.as_cwd():
         config = dedent(
             """
         JOBNAME my_name%d
         NUM_REALIZATIONS 1
-        GRID MY_GRID.GRID
+        GRID MY_EGRID.EGRID
         """
         )
         config += config_str
-        grid = EclGrid.create_rectangular(
-            (4, 4, 1), (1, 1, 1)  # This is minimum size, any smaller will util_abort
-        )
-        grid.save_GRID("MY_GRID.GRID")
-
-        expect_param = EclKW("MY_PARAM", grid.getGlobalSize(), EclDataType.ECL_FLOAT)
-        for i in range(grid.getGlobalSize()):
-            expect_param[i] = i
-
-        with cwrap.open("my_param_0.grdecl", mode="w") as f:
-            grid.write_grdecl(expect_param, f)
         with open("config.ert", mode="w", encoding="utf-8") as fh:
             fh.writelines(config)
+
+        grid = xtgeo.create_box_grid(dimension=(4, 4, 1))
+        grid.to_file("MY_EGRID.EGRID", "egrid")
+
+        expect_param = np.ndarray(
+            shape=(4, 4, 1), buffer=np.arange(start=0, stop=4 * 4)
+        )
+        gp = xtgeo.GridProperty(
+            ncol=4,
+            nrow=4,
+            nlay=1,
+            values=expect_param,
+            grid=grid,
+            name="MY_PARAM",
+        )
+        gp.to_file("my_param_0.grdecl", fformat="grdecl")
+
         ert = create_runpath("config.ert")
         assert (
             ert.ensembleConfig()["MY_PARAM"].getUseForwardInit() is expect_forward_init
@@ -227,10 +522,10 @@ def test_field_param(tmpdir, config_str, expect_forward_init):
             # forward model to internalise the data
             assert not Path("simulations/realization-0/iter-0/my_param.grdecl").exists()
 
-            parameter = update.Parameter("MY_PARAM")
-            config_node = ert.ensembleConfig().getNode(parameter.name)
-            with pytest.raises(KeyError, match="No parameter: MY_PARAM in storage"):
-                fs.load_parameter(config_node, [0], parameter)
+            with pytest.raises(
+                KeyError, match="Unable to load FIELD for key: MY_PARAM"
+            ):
+                fs.load_field("MY_PARAM", [0])
 
             # We try to load the parameters from the forward model, this would fail if
             # forward init was not set correctly
@@ -240,15 +535,15 @@ def test_field_param(tmpdir, config_str, expect_forward_init):
             # parameter files
             create_runpath("config.ert")
 
-        with cwrap.open("simulations/realization-0/iter-0/my_param.grdecl", "rb") as f:
-            actual_param = EclKW.read_grdecl(f, "MY_PARAM")
-        assert actual_param == expect_param
+        prop = xtgeo.gridproperty_from_file(
+            pfile="simulations/realization-0/iter-0/my_param.grdecl",
+            name="MY_PARAM",
+            grid=grid,
+        )
+        numpy.testing.assert_equal(prop.values.data, expect_param)
 
         if expect_forward_init:
-            parameter = update.Parameter("MY_PARAM")
-            config_node = ert.ensembleConfig().getNode(parameter.name)
-            arr = fs.load_parameter(config_node, [0], parameter)
-
+            arr = fs.load_field("MY_PARAM", [0])
             assert len(arr) == 16
 
 
@@ -643,6 +938,149 @@ def test_that_sub_sample_maintains_order(tmpdir, mask, expected):
             .tolist()
             == expected
         )
+
+
+@pytest.mark.integration_test
+def test_field_param_update(tmpdir):
+    with tmpdir.as_cwd():
+        config = dedent(
+            """
+NUM_REALIZATIONS 5
+OBS_CONFIG observations
+
+FIELD MY_PARAM PARAMETER my_param.grdecl INIT_FILES:my_param.grdecl FORWARD_INIT:True
+GRID MY_EGRID.EGRID
+
+GEN_DATA MY_RESPONSE RESULT_FILE:gen_data_%d.out REPORT_STEPS:0 INPUT_FORMAT:ASCII
+INSTALL_JOB poly_eval POLY_EVAL
+SIMULATION_JOB poly_eval
+TIME_MAP time_map
+        """  # pylint: disable=line-too-long  # noqa: E501
+        )
+        with open("config.ert", "w", encoding="utf-8") as fh:
+            fh.writelines(config)
+
+        grid = xtgeo.create_box_grid(dimension=(10, 10, 1))
+        grid.to_file("MY_EGRID.EGRID", "egrid")
+
+        my_param = np.ndarray(shape=(10, 10, 1), dtype=float)
+        my_param.fill(math.exp(2.5))
+        gp = xtgeo.GridProperty(
+            ncol=10,
+            nrow=10,
+            nlay=1,
+            values=my_param,
+            grid=grid,
+            name="MY_PARAM",
+        )
+        gp.to_file("my_param.grdecl", fformat="grdecl")
+
+        with open("forward_model", "w", encoding="utf-8") as f:
+            f.write(
+                dedent(
+                    """#!/usr/bin/env python
+import xtgeo
+import numpy as np
+import os
+
+if __name__ == "__main__":
+    if not os.path.exists("my_param.grdecl"):
+        grid= xtgeo.create_box_grid(dimension=(10,10,1))
+        grid.to_file("MY_EGRID.EGRID", "egrid")
+
+        my_param = np.ndarray(shape=(10,10,1), buffer=np.random.random_sample(100))
+        gp = xtgeo.GridProperty(
+            ncol=10,
+            nrow=10,
+            nlay=1,
+            values=my_param,
+            grid=grid,
+            name="MY_PARAM",
+        )
+        gp.to_file("my_param.grdecl", fformat="grdecl")
+
+    a= np.random.standard_normal()
+    b= np.random.standard_normal()
+    c= np.random.standard_normal()
+    output = [a * x**2 + b * x + c for x in range(10)]
+    with open("gen_data_0.out", "w") as f:
+        f.write("\\n".join(map(str, output)))
+        """
+                )
+            )
+        os.chmod(
+            "forward_model",
+            os.stat("forward_model").st_mode
+            | stat.S_IXUSR
+            | stat.S_IXGRP
+            | stat.S_IXOTH,
+        )
+        with open("POLY_EVAL", "w", encoding="utf-8") as fout:
+            fout.write("EXECUTABLE forward_model")
+        with open("observations", "w", encoding="utf-8") as fout:
+            fout.write(
+                dedent(
+                    """
+            GENERAL_OBSERVATION MY_OBS {
+                DATA       = MY_RESPONSE;
+                INDEX_LIST = 0,2,4,6,8;
+                RESTART    = 0;
+                OBS_FILE   = obs.txt;
+            };"""
+                )
+            )
+
+        with open("obs.txt", "w", encoding="utf-8") as fobs:
+            fobs.write(
+                dedent(
+                    """
+            2.1457049781272213 0.6
+            8.769219841380755 1.4
+            12.388014786122742 3.0
+            25.600464531354252 5.4
+            42.35204755970952 8.6"""
+                )
+            )
+
+        with open("time_map", "w", encoding="utf-8") as fobs:
+            fobs.write("2014-09-10")
+
+        parser = ArgumentParser(prog="test_main")
+        parsed = ert_parser(
+            parser,
+            [
+                ENSEMBLE_SMOOTHER_MODE,
+                "--current-case",
+                "prior",
+                "--target-case",
+                "smoother_update",
+                "config.ert",
+                "--port-range",
+                "1024-65535",
+            ],
+        )
+
+        run_cli(parsed)
+        ert = EnKFMain(ErtConfig.from_file("config.ert"))
+        prior = ert.storage_manager["prior"]
+        posterior = ert.storage_manager["smoother_update"]
+
+        prior_param = prior.load_field("MY_PARAM", list(range(5)))
+        posterior_param = posterior.load_field("MY_PARAM", list(range(5)))
+
+        assert prior_param.shape == (100, 5)
+        assert posterior_param.shape == (100, 5)
+
+        pp0 = posterior_param[:, 0]
+        pp1 = posterior_param[:, 1]
+        pp2 = posterior_param[:, 2]
+        pp3 = posterior_param[:, 3]
+        pp4 = posterior_param[:, 4]
+
+        assert not np.equal(pp0, pp1).all()
+        assert not np.equal(pp1, pp2).all()
+        assert not np.equal(pp2, pp3).all()
+        assert not np.equal(pp3, pp4).all()
 
 
 @pytest.mark.integration_test
