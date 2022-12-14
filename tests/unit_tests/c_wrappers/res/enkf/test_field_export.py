@@ -30,6 +30,7 @@ def test_field_basics(snake_oil_field_example):
     assert fc.get_output_transform_name() == None
 
 
+@pytest.mark.skip(reason="pending refactor")
 def test_field_export(snake_oil_field_example):
     ert = snake_oil_field_example
     fs_manager = ert.storage_manager
@@ -44,6 +45,7 @@ def test_field_export(snake_oil_field_example):
     assert os.path.isfile("export/with/path/PERMX.grdecl")
 
 
+@pytest.mark.skip(reason="pending refactor")
 def test_field_export_many(snake_oil_field_example):
     ert = snake_oil_field_example
     fs_manager = ert.storage_manager
