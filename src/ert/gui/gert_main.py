@@ -115,11 +115,11 @@ def _start_initial_gui_window(args):
     args.config = os.path.basename(args.config)
     ert = EnKFMain(res_config)
     if not ert.have_observations():
-        return make_suggester(
-            ["No observations loaded. Model update algorithms disabled!"],
-            args,
-            res_config,
-        )
+        obs_msg = "No observations loaded. Model update algorithms disabled!"
+        return make_suggester([obs_msg], args, res_config)
+    locale_msg = _check_locale()
+    if locale_msg is not None:
+        return make_suggester([locale_msg], args, res_config)
     return _start_main_gui_window(ert, args)
 
 
@@ -155,9 +155,6 @@ def _start_window(
     args: argparse.Namespace,
     log_handler: GUILogHandler,
 ):
-
-    _check_locale()
-
     return _setup_main_window(ert, notifier, args, log_handler)
 
 
@@ -178,6 +175,9 @@ def _check_locale():
             alternatively a locale which uses '.' as decimalpoint.\n"""  # noqa
 
         sys.stderr.write(msg)
+        return msg
+    else:
+        return None
 
 
 def _setup_main_window(
