@@ -30,7 +30,7 @@ if TYPE_CHECKING:
     from ecl.util.util import IntVector
     from xtgeo import RegularSurface
 
-    from ert._c_wrappers.enkf.config import EnkfConfigNode, GenKwConfig
+    from ert._c_wrappers.enkf.config import EnkfConfigNode, FieldConfig, GenKwConfig
     from ert._c_wrappers.enkf.ert_config import EnsembleConfig
     from ert._c_wrappers.enkf.run_arg import RunArg
     from ert._c_wrappers.enkf.state_map import StateMap
@@ -310,6 +310,43 @@ class EnkfFs(BaseCClass):
         parameter: update.Parameter,
     ) -> Any:
         return update.load_parameter(self, config_node, iens_active_index, parameter)
+
+    def save_field_data(
+        self,
+        parameter_name: str,
+        realization: int,
+        data: npt.ArrayLike,
+    ) -> None:
+        self._storage.save_field_data(parameter_name, realization, data)
+        self.getStateMap().update_matching(
+            realization,
+            RealizationStateEnum.STATE_UNDEFINED,
+            RealizationStateEnum.STATE_INITIALIZED,
+        )
+
+    def load_field(self, key: str, realizations: List[int]) -> npt.NDArray[np.double]:
+        return self._storage.load_field(key, realizations)
+
+    def export_field(
+        self, config_node: FieldConfig, realization: int, output_path: str, fformat: str
+    ) -> None:
+        return self._storage.export_field(
+            config_node, realization, output_path, fformat
+        )
+
+    def export_field_many(
+        self,
+        config_node: FieldConfig,
+        realizations: List[int],
+        output_path: str,
+        fformat: str,
+    ) -> None:
+        return self._storage.export_field_many(
+            config_node, realizations, output_path, fformat
+        )
+
+    def field_has_data(self, key: str, realization: int) -> bool:
+        return self._storage.field_has_data(key, realization)
 
     def copy_from_case(
         self, other: EnkfFs, report_step: int, nodes: List[str], active: List[bool]
