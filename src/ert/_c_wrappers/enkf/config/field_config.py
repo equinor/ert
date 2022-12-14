@@ -1,10 +1,16 @@
+from __future__ import annotations
 from cwrap import BaseCClass
 from ecl.grid import EclGrid
-
+import math
+import numpy as np
 from ert._c_wrappers import ResPrototype
 from ert._c_wrappers.enkf.enums import EnkfFieldFileFormatEnum
-
 from .field_type_enum import FieldTypeEnum
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    import numpy.typing as npt
 
 
 class FieldConfig(BaseCClass):
@@ -47,13 +53,14 @@ class FieldConfig(BaseCClass):
     _guess_filetype = ResPrototype(
         "enkf_field_file_format_enum field_config_guess_file_type(char*)", bind=False
     )
+    _get_key = ResPrototype("char* field_config_get_key(field_config)")
 
-    def __init__(self, kw, grid):
+    def __init__(self, kw, grid) -> None:
         c_ptr = self._alloc(kw, grid, False)
         super().__init__(c_ptr)
 
     @classmethod
-    def exportFormat(cls, filename):
+    def exportFormat(cls, filename) -> EnkfFieldFileFormatEnum:
         export_format = cls._export_format(filename)
         if export_format in [
             EnkfFieldFileFormatEnum.ECL_GRDECL_FILE,
@@ -65,35 +72,38 @@ class FieldConfig(BaseCClass):
                 f"Could not determine grdecl / roff format from:{filename}"
             )
 
+    def get_key(self) -> str:
+        return self._get_key()
+
     @classmethod
-    def guessFiletype(cls, filename):
+    def guessFiletype(cls, filename) -> EnkfFieldFileFormatEnum:
         return cls._guess_filetype(filename)
 
     def get_type(self) -> FieldTypeEnum:
         return self._get_type()
 
-    def get_truncation_mode(self):
+    def get_truncation_mode(self) -> int:
         return self._get_truncation_mode()
 
-    def get_truncation_min(self):
+    def get_truncation_min(self) -> float:
         return self._get_truncation_min()
 
-    def get_init_transform_name(self):
+    def get_init_transform_name(self) -> str:
         return self._get_init_transform_name()
 
-    def get_output_transform_name(self):
+    def get_output_transform_name(self) -> str:
         return self._get_output_transform_name()
 
-    def get_truncation_max(self):
+    def get_truncation_max(self) -> float:
         return self._get_truncation_max()
 
-    def get_nx(self):
+    def get_nx(self) -> int:
         return self._get_nx()
 
-    def get_ny(self):
+    def get_ny(self) -> int:
         return self._get_ny()
 
-    def get_nz(self):
+    def get_nz(self) -> int:
         return self._get_nz()
 
     def get_data_size(self) -> int:
@@ -102,13 +112,74 @@ class FieldConfig(BaseCClass):
     def get_grid(self) -> EclGrid:
         return self._get_grid()
 
-    def ijk_active(self, i, j, k):
+    def ijk_active(self, i, j, k) -> bool:
         return self._ijk_active(i, j, k)
 
-    def free(self):
+    def free(self) -> None:
         self._free()
 
-    def __repr__(self):
+    def truncate(self, data: npt.ArrayLike) -> npt.ArrayLike:
+        # Truncation is not mentioned in the docs
+        # Its really min / max
+
+        truncation_mode = self._get_truncation_mode()
+        if truncation_mode == 1:
+            min_ = self.get_truncation_min()
+            vfunc = np.vectorize(lambda x: max(x, min_))
+            return vfunc(data)
+        if truncation_mode == 2:
+            max_ = self.get_truncation_max()
+            vfunc = np.vectorize(lambda x: min(x, max_))
+            return vfunc(data)
+        if truncation_mode == 3:
+            min_ = self.get_truncation_min()
+            max_ = self.get_truncation_max()
+            vfunc = np.vectorize(lambda x: max(min(x, max_), min_))
+            return vfunc(data)
+
+        return data
+
+    def transform(self, transform_name: str, data: npt.ArrayLike) -> npt.ArrayLike:
+
+        if not transform_name:
+            return data
+
+        func = None
+        if transform_name == "LN" or transform_name == "LOG":
+            func = lambda x: math.log(x, math.e)
+        elif transform_name == "LN0":
+            func = lambda x: math.log(x, math.e) + 0.000001
+        elif transform_name == "LOG10":
+            func = lambda x: math.log(x, 10)
+        elif transform_name == "EXP":
+            func = lambda x: math.exp(x)
+        elif transform_name == "EXP0":
+            func = lambda x: math.exp(x) + 0.000001
+        elif transform_name == "POW10":
+            func = lambda x: math.pow(x, 10)
+        elif transform_name == "TRUNC_POW10":
+            func = lambda x: math.pow(max(x, 0.001), 10)
+        elif transform_name == "DENORMALIZE_PERMX":  # not in docs
+            pass
+        elif transform_name == "DENORMALIZE_PORO":  # not in docs
+            pass
+        elif transform_name == "DENORMALIZE_PERMZ":  # not in docs
+            pass
+        elif transform_name == "NORMALIZE_PORO":  # not in docs
+            pass
+        elif transform_name == "NORMALIZE_PERMZ":  # not in docs
+            pass
+        elif transform_name == "NORMALIZE_PERMX":  # not in docs
+            pass
+
+        if not func:
+            return data
+
+        vfunc = np.vectorize(func)
+
+        return vfunc(data)
+
+    def __repr__(self) -> str:
         return self._create_repr(
             f"type = {self.get_type()}, "
             f"nx = {self.get_nx()}, ny = {self.get_ny()}, nz = {self.get_nz()}"

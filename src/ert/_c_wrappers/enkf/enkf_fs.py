@@ -13,7 +13,6 @@ import numpy as np
 import pandas as pd
 import xtgeo
 from cwrap import BaseCClass
-
 from ert import _clib
 from ert._c_wrappers import ResPrototype
 from ert._c_wrappers.enkf.enums import EnKFFSType, RealizationStateEnum
@@ -23,14 +22,15 @@ from ert._clib import update
 from ert.ensemble_evaluator.callbacks import forward_model_ok
 from ert.storage import Storage
 
+
 if TYPE_CHECKING:
     import numpy.typing as npt
     from ecl.summary import EclSum
     from ecl.util.util import IntVector
     from xtgeo import RegularSurface
 
-    from ert._c_wrappers.enkf.config import EnkfConfigNode, GenKwConfig
     from ert._c_wrappers.enkf.res_config import EnsembleConfig
+    from ert._c_wrappers.enkf.config import EnkfConfigNode, GenKwConfig
     from ert._c_wrappers.enkf.run_arg import RunArg
     from ert._c_wrappers.enkf.state_map import StateMap
 
@@ -303,6 +303,44 @@ class EnkfFs(BaseCClass):
         parameter: update.Parameter,
     ) -> Any:
         return update.load_parameter(self, config_node, iens_active_index, parameter)
+
+    def save_field_data(
+        self,
+        parameter_name: str,
+        realization: int,
+        data: npt.ArrayLike,
+    ) -> None:
+        output_path = self.mount_point / f"field-{realization}"
+        Path.mkdir(output_path, exist_ok=True)
+
+        np.save(f"{output_path}/{parameter_name}", data)
+
+        self.getStateMap().update_matching(
+            realization,
+            RealizationStateEnum.STATE_UNDEFINED,
+            RealizationStateEnum.STATE_INITIALIZED,
+        )
+
+    def load_field(self, key: str, realizations: List[int]) -> npt.NDArray[np.double]:
+        result = []
+        for realization in realizations:
+            data = self._load_field_realization(key, realization)
+            result.append(data)
+        return np.stack(result).T
+
+    def _load_field_realization(
+        self, key: str, realization: int
+    ) -> npt.NDArray[np.double]:
+        input_path = self.mount_point / f"field-{realization}"
+        if not input_path.exists():
+            raise KeyError(f"Unable to load FIELD for key: {key}")
+
+        np_data = np.load(input_path / f"{key}.npy")
+        return np_data
+
+    def field_has_data(self, key: str, realization: int) -> bool:
+        path = self.mount_point / f"field-{realization}/{key}.npy"
+        return path.exists()
 
     def copy_from_case(
         self, other: EnkfFs, report_step: int, nodes: List[str], active: List[bool]

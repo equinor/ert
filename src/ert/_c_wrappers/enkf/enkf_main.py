@@ -5,8 +5,9 @@ import logging
 import os
 from datetime import datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, List, Mapping, Optional, Sequence, Union
 
+from typing import TYPE_CHECKING, Any, Dict, List, Mapping, Optional, Sequence, Union
+import xtgeo
 import numpy as np
 from jinja2 import Template
 
@@ -33,6 +34,7 @@ from ert._clib.state_map import STATE_LOAD_FAILURE, STATE_UNDEFINED
 if TYPE_CHECKING:
     from ert._c_wrappers.enkf.config import GenKwConfig
     from ert._c_wrappers.enkf.enums import HookRuntime
+    from ert._c_wrappers.enkf.config import FieldConfig
     from ert._c_wrappers.enkf.res_config import ResConfig
 
 logger = logging.getLogger(__name__)
@@ -150,6 +152,38 @@ def _generate_surface_file(
     surf.to_file(run_path / target_file, fformat="irap_ascii")
 
 
+def _generate_field_parameter_file(
+    fs: "EnkfFs",
+    realization: int,
+    config: "FieldConfig",
+    target_file: str,
+    run_path: Path,
+    exports: dict,
+) -> None:
+    key = config.get_key()
+    grid = config.get_grid()
+    x = config.get_nx()
+    y = config.get_ny()
+    z = config.get_nz()
+
+    data = fs.load_field(key, [realization])
+    transform_name = config.get_output_transform_name()
+    data_transformed = config.transform(transform_name, data)
+    data_truncated = config.truncate(data_transformed)
+
+    gp = xtgeo.GridProperty(
+        ncol=x,
+        nrow=y,
+        nlay=z,
+        values=data_truncated,
+        grid=grid,
+        name=key,
+    )
+
+    file_out = run_path.joinpath(target_file)
+    gp.to_file(file_out, fformat="grdecl")
+
+
 def _generate_parameter_files(
     ens_config: "EnsembleConfig",
     export_base_name: str,
@@ -177,6 +211,21 @@ def _generate_parameter_files(
 
         node = ens_config[key]
         type_ = node.getImplementationType()
+
+        if type_ == ErtImplType.FIELD:
+            if node.getUseForwardInit() and not fs.field_has_data(key, iens):
+                continue
+            else:
+                _generate_field_parameter_file(
+                    fs,
+                    iens,
+                    node.getFieldModelConfig(),
+                    node.get_enkf_outfile(),
+                    Path(run_path),
+                    exports,
+                )
+                continue
+
         if type_ == ErtImplType.GEN_KW:
             _generate_gen_kw_parameter_file(
                 fs,
@@ -200,19 +249,6 @@ def _generate_parameter_files(
                 fs, iens, node.getKey(), node.get_enkf_outfile(), Path(run_path)
             )
             continue
-
-        enkf_node = EnkfNode(node)
-        node_id = NodeId(report_step=0, iens=iens)
-
-        if node.getUseForwardInit() and not enkf_node.has_data(fs, node_id):
-            continue
-        enkf_node.load(fs, node_id)
-
-        node_eclfile = node.get_enkf_outfile()
-
-        type_ = enkf_node.getImplType()
-        if type_ == ErtImplType.FIELD:
-            _clib.field.generate_parameter_file(enkf_node, run_path, node_eclfile)
         else:
             raise NotImplementedError
 
@@ -442,7 +478,22 @@ class EnKFMain:
             if config_node.getUseForwardInit():
                 continue
             impl_type = config_node.getImplementationType()
-            if impl_type == ErtImplType.GEN_KW:
+            if impl_type == ErtImplType.FIELD:
+                for _, real in enumerate(active_realizations):
+                    filename = config_node.get_init_file_fmt() % real
+                    grid = xtgeo.grid_from_file(self.ensembleConfig().grid_file)
+                    props = xtgeo.gridproperty_from_file(
+                        filename, name=parameter, grid=grid
+                    )
+
+                    data = props.values1d.data
+                    field_config = config_node.getFieldModelConfig()
+                    trans = field_config.get_init_transform_name()
+                    data_transformed = field_config.transform(trans, data)
+
+                    storage.save_field_data(parameter, real, data_transformed)
+
+            elif impl_type == ErtImplType.GEN_KW:
                 gen_kw_config = config_node.getKeywordModelConfig()
                 keys = list(gen_kw_config)
                 if config_node.get_init_file_fmt():

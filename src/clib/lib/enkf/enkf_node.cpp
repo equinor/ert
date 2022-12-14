@@ -5,7 +5,6 @@
 #include <ert/util/vector.h>
 
 #include <ert/enkf/enkf_node.hpp>
-#include <ert/enkf/field.hpp>
 #include <ert/python.hpp>
 
 /**
@@ -405,21 +404,6 @@ enkf_node_alloc_empty(const enkf_config_node_type *config) {
     node->deserialize = NULL;
     node->has_data = NULL;
 
-    switch (impl_type) {
-    case (FIELD):
-        node->alloc = field_alloc__;
-        node->initialize = field_initialize__;
-        node->freef = field_free__;
-        node->read_from_buffer = field_read_from_buffer__;
-        node->write_to_buffer = field_write_to_buffer__;
-        node->serialize = field_serialize__;
-        node->deserialize = field_deserialize__;
-        break;
-    default:
-        util_abort("%s: implementation type: %d unknown - all hell is loose - "
-                   "aborting \n",
-                   __func__, impl_type);
-    }
     return node;
 }
 

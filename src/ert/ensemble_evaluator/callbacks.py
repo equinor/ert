@@ -1,12 +1,14 @@
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Tuple
-
+import xtgeo
 from ert._c_wrappers.enkf.data.enkf_node import EnkfNode
 from ert._c_wrappers.enkf.enkf_state import _internalize_results
 from ert._c_wrappers.enkf.enums import ErtImplType
 from ert._c_wrappers.enkf.model_callbacks import LoadStatus
 from ert._c_wrappers.enkf.node_id import NodeId
 from ert._c_wrappers.enkf.state_map import RealizationStateEnum
+from ert._c_wrappers.enkf.enums import ErtImplType
+
 
 if TYPE_CHECKING:
     from ert._c_wrappers.enkf import EnsembleConfig, RunArg
@@ -42,6 +44,30 @@ def forward_model_ok(
                         "File not found\n"
                     )
                     result = (LoadStatus.LOAD_FAILURE, error_msg)
+
+                continue
+
+            if config_node.getImplementationType() == ErtImplType.FIELD:
+                if run_arg.ensemble_storage.field_has_data(
+                    config_node.getKey(), run_arg.iens
+                ):
+                    # Already initialised, ignore
+                    continue
+
+                filename = run_arg.runpath + "/" + config_node.get_init_file_fmt()
+                grid = xtgeo.grid_from_file(ens_conf.grid_file)
+                props = xtgeo.gridproperty_from_file(
+                    filename, name=config_node.getKey(), grid=grid
+                )
+
+                data = props.values1d.data
+                field_config = config_node.getFieldModelConfig()
+                trans = field_config.get_init_transform_name()
+                data_transformed = field_config.transform(trans, data)
+
+                run_arg.ensemble_storage.save_field_data(
+                    config_node.getKey(), run_arg.iens, data_transformed
+                )
 
                 continue
 
