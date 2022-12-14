@@ -129,12 +129,12 @@ def _save_temporary_storage_to_disk(
                 target_fs.save_surface_data(
                     key, realization, surface_config.base_surface_path, matrix[:, i]
                 )
+        elif config_node.getImplementationType() == ErtImplType.FIELD:
+            for i, realization in enumerate(iens_active_index):
+                target_fs.save_field_data(key, realization, matrix[:, i])
         else:
-            target_fs.save_parameters(
-                config_node=config_node,
-                iens_active_index=iens_active_index,
-                parameter=update.Parameter(key),
-                values=matrix,
+            raise NotImplementedError(
+                f"{config_node.getImplementationType()} is not supported"
             )
 
 
@@ -150,11 +150,11 @@ def _create_temporary_parameter_storage(
             matrix = source_fs.load_gen_kw(key, iens_active_index)
         elif config_node.getImplementationType() == ErtImplType.SURFACE:
             matrix = source_fs.load_surface_data(key, iens_active_index)
+        elif config_node.getImplementationType() == ErtImplType.FIELD:
+            matrix = source_fs.load_field(key, iens_active_index)
         else:
-            matrix = source_fs.load_parameter(
-                config_node=config_node,
-                iens_active_index=iens_active_index,
-                parameter=update.Parameter(key),
+            raise NotImplementedError(
+                f"{config_node.getImplementationType()} is not supported"
             )
         temporary_storage[key] = matrix
     return temporary_storage
