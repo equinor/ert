@@ -304,6 +304,25 @@ class EnkfFs(BaseCClass):
     ) -> Any:
         return update.load_parameter(self, config_node, iens_active_index, parameter)
 
+    def save_field_data(
+        self,
+        parameter_name: str,
+        realization: int,
+        data: npt.ArrayLike,
+    ) -> None:
+        self._storage.save_field_data(parameter_name, realization, data)
+        self.getStateMap().update_matching(
+            realization,
+            RealizationStateEnum.STATE_UNDEFINED,
+            RealizationStateEnum.STATE_INITIALIZED,
+        )
+
+    def load_field(self, key: str, realizations: List[int]) -> npt.NDArray[np.double]:
+        return self._storage.load_field(key, realizations)
+
+    def field_has_data(self, key: str, realization: int) -> bool:
+        return self._storage.field_has_data(key, realization)
+
     def copy_from_case(
         self, other: EnkfFs, report_step: int, nodes: List[str], active: List[bool]
     ) -> None:
