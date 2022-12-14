@@ -2,11 +2,10 @@ import logging
 import re
 from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Union
 
-import numpy as np
 from ecl.grid import EclGrid
 from pandas import DataFrame, Series
 
-from ert._c_wrappers.enkf import EnKFMain, EnkfNode, ErtConfig, ErtImplType
+from ert._c_wrappers.enkf import EnKFMain, ErtImplType, ErtConfig
 from ert._c_wrappers.enkf.config import GenKwConfig
 from ert._c_wrappers.enkf.enums import (
     EnkfObservationImplementationType,
@@ -110,11 +109,12 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
         file_system = self._enkf_main.storage_manager[case_name]
         config_node = self._enkf_main.ensembleConfig()[parameter_name]
         ext = config_node.get_enkf_outfile().rsplit(".")[-1]
-        EnkfNode.exportMany(
-            config_node,
+        field_config_node = config_node.getFieldModelConfig()
+        file_system.export_field_many(
+            field_config_node,
+            list(range(0, self.get_ensemble_size())),
             filepath + "." + ext,
-            file_system,
-            np.arange(0, self.get_ensemble_size()),
+            "grdecl",
         )
 
     def get_measured_data(  # pylint: disable=too-many-arguments

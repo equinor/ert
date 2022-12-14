@@ -5,7 +5,6 @@ from cwrap import BaseCClass
 
 from ert import _clib
 from ert._c_wrappers import ResPrototype
-from ert._c_wrappers.enkf.data.field import Field
 from ert._c_wrappers.enkf.enums import ErtImplType
 from ert._c_wrappers.enkf.node_id import NodeId
 
@@ -56,12 +55,7 @@ class EnkfNode(BaseCClass):
                 )
 
     def export(self, filename, file_type=None, arg=None):
-        impl_type = self.getImplType()
-        if impl_type == ErtImplType.FIELD:
-            field_node = self.asField()
-            return field_node.export(filename, file_type=file_type, init_file=arg)
-        else:
-            raise NotImplementedError("The export method is only implemented for field")
+        raise NotImplementedError("Not implemented yet")
 
     def has_data(self, fs: "EnkfFs", node_id: NodeId) -> bool:
         return _clib.enkf_node.has_data(self, fs, node_id.report_step, node_id.iens)
@@ -71,12 +65,6 @@ class EnkfNode(BaseCClass):
 
     def getImplType(self) -> ErtImplType:
         return self._get_impl_type()
-
-    def asField(self) -> Field:
-        impl_type = self.getImplType()
-        assert impl_type == ErtImplType.FIELD
-
-        return Field.createCReference(self.valuePointer(), self)
 
     def tryLoad(self, fs: "EnkfFs", node_id: NodeId) -> bool:
         return _clib.enkf_node.try_load(self, fs, node_id.report_step, node_id.iens)
