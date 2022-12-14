@@ -20,7 +20,6 @@ typedef int(get_data_size_ftype)(const void *);
 typedef void(config_fprintf_ftype)(const void *, enkf_var_type, FILE *);
 
 typedef struct enkf_config_node_struct enkf_config_node_type;
-typedef struct enkf_node_struct enkf_node_type;
 
 struct enkf_config_node_struct {
     ert_impl_type impl_type;
@@ -112,7 +111,6 @@ void enkf_config_node_set_internalize(enkf_config_node_type *node,
     That's not really the reason, because min_std doesn't exist anymore, but
     the function declaration is needed anyways.
   */
-extern "C" void enkf_node_free(enkf_node_type *enkf_node);
 
 extern "C" bool
 enkf_config_node_use_forward_init(const enkf_config_node_type *config_node);

@@ -13,7 +13,6 @@
 
 #include <ert/enkf/active_list.hpp>
 #include <ert/enkf/enkf_fs_type.hpp>
-#include <ert/enkf/enkf_serialize.hpp>
 #include <ert/enkf/enkf_types.hpp>
 
 #define VOID_CONFIG_FREE(prefix)                                               \
