@@ -38,7 +38,100 @@ from ert.libres_facade import LibresFacade
 from ert.services import Storage
 
 
-def make_suggester(suggestions, args, res_config=None):
+def run_gui(args: argparse.Namespace):
+    app = QApplication([])  # Early so that QT is initialized before other imports
+    app.setWindowIcon(resourceIcon("application/window_icon_cutout"))
+    window = _start_initial_gui_window(args)
+    window.show()
+    window.activateWindow()
+    window.raise_()
+    return app.exec_()
+
+
+def _start_initial_gui_window(args):
+    errors = None
+    res_config = None
+    try:
+        res_config = ResConfig(args.config)
+        suggestions = ResConfig.make_suggestion_list(args.config)
+    except Exception as error:
+        errors = [str(error)]
+
+    if errors:
+        return _setup_suggester(errors, args)
+    if suggestions:
+        return _setup_suggester(suggestions, args, res_config)
+
+    # Create logger inside function to make sure all handlers have been added to
+    # the root-logger.
+    logger = logging.getLogger(__name__)
+    logger.info(
+        "Logging forward model jobs",
+        extra={"workflow_jobs": str(res_config.forward_model.job_name_list())},
+    )
+    os.chdir(res_config.config_path)
+    # Changing current working directory means we need to update the config file to
+    # be the base name of the original config
+    args.config = os.path.basename(args.config)
+    ert = EnKFMain(res_config)
+    if not ert.have_observations():
+        obs_msg = "No observations loaded. Model update algorithms disabled!"
+        return _setup_suggester([obs_msg], args, res_config)
+    locale_msg = _check_locale()
+    if locale_msg is not None:
+        return _setup_suggester([locale_msg], args, res_config)
+    return _start_main_gui_window(ert, args)
+
+
+def _start_main_gui_window(ert, args):
+
+    facade = LibresFacade(ert)
+    ens_path = Path(facade.enspath)
+    storage_lock = filelock.FileLock(ens_path / (ens_path.stem + ".lock"))
+
+    try:
+        storage_lock.acquire(timeout=5)
+        with Storage.init_service(
+            res_config=args.config,
+            project=os.path.abspath(facade.enspath),
+        ), add_gui_log_handler() as log_handler:
+            notifier = ErtNotifier(args.config)
+            # window reference must be kept until app.exec returns:
+            return _setup_main_window(ert, notifier, args, log_handler)
+    except filelock.Timeout:
+        raise ErtTimeoutError(
+            f"Not able to acquire lock for: {ens_path}. You may already be running ert,"
+            f" or another user is using the same ENSPATH."
+        )
+    finally:
+        if storage_lock.is_locked:
+            storage_lock.release()
+            os.remove(storage_lock.lock_file)
+
+
+def _check_locale():
+    # There seems to be a setlocale() call deep down in the initialization of
+    # QApplication, if the user has set the LC_NUMERIC environment variables to
+    # a locale with decimalpoint different from "." the application will fail
+    # hard quite quickly.
+    current_locale = QLocale()
+    decimal_point = str(current_locale.decimalPoint())
+    if decimal_point != ".":
+        msg = f"""
+** WARNING: You are using a locale with decimalpoint: '{decimal_point}' - the ert application is
+            written with the assumption that '.' is  used as decimalpoint, and chances
+            are that something will break if you continue with this locale. It is highly
+            recommended that you set the decimalpoint to '.' using one of the environment
+            variables 'LANG', LC_ALL', or 'LC_NUMERIC' to either the 'C' locale or
+            alternatively a locale which uses '.' as decimalpoint.\n"""  # noqa
+
+        sys.stderr.write(msg)
+        return msg
+    else:
+        return None
+
+
+def _setup_suggester(suggestions, args, res_config=None):
     suggest = QWidget()
     layout = QVBoxLayout()
     suggest.setWindowTitle("Some problems detected")
@@ -76,108 +169,6 @@ def make_suggester(suggestions, args, res_config=None):
     suggest.setLayout(layout)
     suggest.resize(800, 600)
     return suggest
-
-
-def run_gui(args: argparse.Namespace):
-    app = QApplication([])  # Early so that QT is initialized before other imports
-    app.setWindowIcon(resourceIcon("application/window_icon_cutout"))
-    window = _start_initial_gui_window(args)
-    window.show()
-    window.activateWindow()
-    window.raise_()
-    return app.exec_()
-
-
-def _start_initial_gui_window(args):
-    errors = None
-    res_config = None
-    try:
-        res_config = ResConfig(args.config)
-        suggestions = ResConfig.make_suggestion_list(args.config)
-    except Exception as error:
-        errors = [str(error)]
-
-    if errors:
-        return make_suggester(errors, args)
-    if suggestions:
-        return make_suggester(suggestions, args, res_config)
-
-    # Create logger inside function to make sure all handlers have been added to
-    # the root-logger.
-    logger = logging.getLogger(__name__)
-    logger.info(
-        "Logging forward model jobs",
-        extra={"workflow_jobs": str(res_config.forward_model.job_name_list())},
-    )
-    os.chdir(res_config.config_path)
-    # Changing current working directory means we need to update the config file to
-    # be the base name of the original config
-    args.config = os.path.basename(args.config)
-    ert = EnKFMain(res_config)
-    if not ert.have_observations():
-        obs_msg = "No observations loaded. Model update algorithms disabled!"
-        return make_suggester([obs_msg], args, res_config)
-    locale_msg = _check_locale()
-    if locale_msg is not None:
-        return make_suggester([locale_msg], args, res_config)
-    return _start_main_gui_window(ert, args)
-
-
-def _start_main_gui_window(ert, args):
-
-    facade = LibresFacade(ert)
-    ens_path = Path(facade.enspath)
-    storage_lock = filelock.FileLock(ens_path / (ens_path.stem + ".lock"))
-
-    try:
-        storage_lock.acquire(timeout=5)
-        with Storage.init_service(
-            res_config=args.config,
-            project=os.path.abspath(facade.enspath),
-        ), add_gui_log_handler() as log_handler:
-            notifier = ErtNotifier(args.config)
-            # window reference must be kept until app.exec returns:
-            return _start_window(ert, notifier, args, log_handler)
-    except filelock.Timeout:
-        raise ErtTimeoutError(
-            f"Not able to acquire lock for: {ens_path}. You may already be running ert,"
-            f" or another user is using the same ENSPATH."
-        )
-    finally:
-        if storage_lock.is_locked:
-            storage_lock.release()
-            os.remove(storage_lock.lock_file)
-
-
-def _start_window(
-    ert: EnKFMain,
-    notifier: ErtNotifier,
-    args: argparse.Namespace,
-    log_handler: GUILogHandler,
-):
-    return _setup_main_window(ert, notifier, args, log_handler)
-
-
-def _check_locale():
-    # There seems to be a setlocale() call deep down in the initialization of
-    # QApplication, if the user has set the LC_NUMERIC environment variables to
-    # a locale with decimalpoint different from "." the application will fail
-    # hard quite quickly.
-    current_locale = QLocale()
-    decimal_point = str(current_locale.decimalPoint())
-    if decimal_point != ".":
-        msg = f"""
-** WARNING: You are using a locale with decimalpoint: '{decimal_point}' - the ert application is
-            written with the assumption that '.' is  used as decimalpoint, and chances
-            are that something will break if you continue with this locale. It is highly
-            recommended that you set the decimalpoint to '.' using one of the environment
-            variables 'LANG', LC_ALL', or 'LC_NUMERIC' to either the 'C' locale or
-            alternatively a locale which uses '.' as decimalpoint.\n"""  # noqa
-
-        sys.stderr.write(msg)
-        return msg
-    else:
-        return None
 
 
 def _setup_main_window(
