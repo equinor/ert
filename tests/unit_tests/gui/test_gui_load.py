@@ -8,11 +8,11 @@ from qtpy.QtCore import Qt, QTimer
 from qtpy.QtWidgets import QDialog, QMessageBox, QWidget
 
 import ert.gui
+from ert._c_wrappers.enkf import ResConfig
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets.message_box import ErtMessageBox
 from ert.gui.gert_main import GUILogHandler, _start_window, run_gui
 from ert.shared.models import BaseRunModel
-from ert._c_wrappers.enkf import ResConfig
 
 
 @pytest.fixture(name="patch_enkf_main")
