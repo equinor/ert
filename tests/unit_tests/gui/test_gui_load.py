@@ -179,7 +179,7 @@ def test_that_gui_gives_suggestions_when_you_have_umask_in_config(
 
     args = Mock()
     args.config = str(config_file)
-    gui = ert.gui.gert_main._open_gui(args)
+    gui = ert.gui.gert_main._start_initial_gui_window(args)
     assert gui.windowTitle() == "Some problems detected"
 
 
@@ -191,7 +191,7 @@ def test_that_errors_are_shown_in_the_suggester_window_when_present(
 
     args = Mock()
     args.config = str(config_file)
-    gui = ert.gui.gert_main._open_gui(args)
+    gui = ert.gui.gert_main._start_initial_gui_window(args)
     assert gui.windowTitle() == "Some problems detected"
 
 
@@ -203,7 +203,7 @@ def test_that_the_suggester_starts_when_there_are_no_observations(
 
     args = Mock()
     args.config = str(config_file)
-    gui = ert.gui.gert_main._open_gui(args)
+    gui = ert.gui.gert_main._start_initial_gui_window(args)
     assert gui.windowTitle() == "Some problems detected"
 
 
@@ -211,7 +211,7 @@ def test_that_the_suggester_starts_when_there_are_no_observations(
 def test_that_gert_starts_when_there_are_no_problems(monkeypatch, qapp, tmp_path):
     args = Mock()
     args.config = "poly.ert"
-    gui = ert.gui.gert_main._open_gui(args)
+    gui = ert.gui.gert_main._start_initial_gui_window(args)
     assert gui.windowTitle() == "ERT - poly.ert"
 
 

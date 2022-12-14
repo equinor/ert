@@ -61,7 +61,7 @@ def make_suggester(suggestions, args, res_config=None):
     run.setEnabled(res_config is not None)
 
     def run_pressed():
-        _start_ert_gui(res_config, args)
+        _start_main_gui_window(res_config, args)
         suggest.close()
 
     run.pressed.connect(run_pressed)
@@ -81,14 +81,14 @@ def make_suggester(suggestions, args, res_config=None):
 def run_gui(args: argparse.Namespace):
     app = QApplication([])  # Early so that QT is initialized before other imports
     app.setWindowIcon(resourceIcon("application/window_icon_cutout"))
-    window = _open_gui(args)
+    window = _start_initial_gui_window(args)
     window.show()
     window.activateWindow()
     window.raise_()
     return app.exec_()
 
 
-def _open_gui(args):
+def _start_initial_gui_window(args):
     errors = None
     res_config = None
     try:
@@ -120,10 +120,10 @@ def _open_gui(args):
             args,
             res_config,
         )
-    return _start_ert_gui(ert, args)
+    return _start_main_gui_window(ert, args)
 
 
-def _start_ert_gui(ert, args):
+def _start_main_gui_window(ert, args):
 
     facade = LibresFacade(ert)
     ens_path = Path(facade.enspath)
