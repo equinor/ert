@@ -105,7 +105,7 @@ def _generate_gen_kw_parameter_file(
             f" is of size {len(config)}, expected {len(transformed)}"
         )
 
-    with open(config.getTemplateFile(), "r") as f:
+    with open(config.getTemplateFile(), "r", encoding="utf-8") as f:
         template = Template(
             f.read(), variable_start_string="<", variable_end_string=">"
         )
