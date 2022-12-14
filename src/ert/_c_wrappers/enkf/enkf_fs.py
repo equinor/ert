@@ -179,7 +179,7 @@ class EnkfFs(BaseCClass):
         Path.mkdir(output_path, exist_ok=True)
 
         np.save(output_path / parameter_name, data)
-        with open(output_path / f"{parameter_name}-keys", "w") as f:
+        with open(output_path / f"{parameter_name}-keys", "w", encoding="utf-8") as f:
             f.write("\n".join(parameter_keys))
 
         self.getStateMap().update_matching(
@@ -196,7 +196,7 @@ class EnkfFs(BaseCClass):
             raise KeyError(f"Unable to load GEN_KW for key: {key}")
 
         np_data = np.load(input_path / f"{key}.npy")
-        with open(input_path / f"{key}-keys", "r") as f:
+        with open(input_path / f"{key}-keys", "r", encoding="utf-8") as f:
             keys = [k.strip() for k in f.readlines()]
 
         return np_data, keys
