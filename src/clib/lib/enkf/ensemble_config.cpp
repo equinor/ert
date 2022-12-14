@@ -217,47 +217,6 @@ ensemble_config_add_summary(ensemble_config_type *ensemble_config,
     return config_node;
 }
 
-std::pair<fw_load_status, std::string>
-ensemble_config_forward_init(const ensemble_config_type *ens_config,
-                             const int iens, const std::string &run_path,
-                             enkf_fs_type *sim_fs) {
-    auto result = LOAD_SUCCESSFUL;
-    std::string error_msg;
-    {
-        for (auto &config_pair : ens_config->config_nodes) {
-            enkf_config_node_type *config_node = config_pair.second;
-            if (enkf_config_node_use_forward_init(config_node)) {
-                enkf_node_type *node = enkf_node_alloc(config_node);
-                node_id_type node_id = {.report_step = 0, .iens = iens};
-
-                if (!enkf_node_has_data(node, sim_fs, node_id)) {
-                    if (enkf_node_forward_init(node, run_path, iens))
-                        enkf_node_store(node, sim_fs, node_id);
-                    else {
-                        char *init_file = enkf_config_node_alloc_initfile(
-                            enkf_node_get_config(node), run_path.c_str(), iens);
-
-                        if (init_file && !fs::exists(init_file))
-                            error_msg = fmt::format(
-                                "File not found: {} - failed to initialize "
-                                "node: {}\n",
-                                init_file, enkf_node_get_key(node));
-                        else
-                            error_msg =
-                                fmt::format("Failed to initialize node: {}\n",
-                                            enkf_node_get_key(node));
-
-                        free(init_file);
-                        result = LOAD_FAILURE;
-                    }
-                }
-                enkf_node_free(node);
-            }
-        }
-    }
-    return {result, error_msg};
-}
-
 ERT_CLIB_SUBMODULE("ensemble_config", m) {
     m.def("have_forward_init", [](Cwrap<ensemble_config_type> self) {
         for (auto const &[node_key, enkf_config_node] : self->config_nodes) {
