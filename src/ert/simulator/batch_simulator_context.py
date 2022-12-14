@@ -5,8 +5,6 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
 
 import numpy as np
 
-from ert._c_wrappers.enkf import NodeId
-
 from .simulation_context import SimulationContext
 
 if TYPE_CHECKING:
@@ -95,9 +93,8 @@ class BatchContext(SimulationContext):
 
         res: List[Optional[Dict[str, "npt.NDArray[np.float64]"]]] = []
         for sim_id in range(len(self)):
-            node_id = NodeId(0, sim_id)
             if not self.didRealizationSucceed(sim_id):
-                logging.error(f"Simulation {sim_id} (node {str(node_id)}) failed.")
+                logging.error(f"Simulation {sim_id} failed.")
                 res.append(None)
                 continue
             d = {}

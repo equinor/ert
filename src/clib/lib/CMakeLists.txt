@@ -22,11 +22,6 @@ pybind11_add_module(
   config/config_path_elm.cpp
   config/config_schema_item.cpp
   config/config_keywords.cpp
-  rms/rms_file.cpp
-  rms/rms_tag.cpp
-  rms/rms_tagkey.cpp
-  rms/rms_type.cpp
-  rms/rms_util.cpp
   analysis/update.cpp
   job_queue/job_status.cpp
   job_queue/job_list.cpp
@@ -46,14 +41,10 @@ pybind11_add_module(
   enkf/config_keys.cpp
   enkf/enkf_config_node.cpp
   enkf/enkf_fs.cpp
-  enkf/enkf_node.cpp
   enkf/enkf_obs.cpp
-  enkf/enkf_serialize.cpp
-  enkf/enkf_state.cpp
   enkf/enkf_types.cpp
   enkf/ensemble_config.cpp
   enkf/ext_param_config.cpp
-  enkf/field.cpp
   enkf/field_config.cpp
   enkf/field_trans.cpp
   enkf/fs_driver.cpp

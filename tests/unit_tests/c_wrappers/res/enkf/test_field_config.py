@@ -9,26 +9,6 @@ def test_create():
     FieldConfig("SWAT", EclGridGenerator.create_rectangular((10, 10, 5), (1, 1, 1)))
 
 
-def test_field_guess_filetype(tmp_path):
-    fname = str(tmp_path / "test.kw.grdecl")
-    with open(fname, "w", encoding="utf-8") as f:
-        f.write("-- my comment\n")
-        f.write("-- more comments\n")
-        f.write("SOWCR\n")
-        # The function guessing file types determines whether the file
-        # is binary or 7 bit ASCII based on bit 8 heuristics. For this
-        # to be "reliable" the file is required to be more than 256
-        # bytes.
-        for _ in range(256 // 8):
-            f.write("0 0 0 0\n")
-
-    ft = FieldConfig.guessFiletype(fname)
-    grdecl_type = EnkfFieldFileFormatEnum(5)
-    # pylint: disable=no-member
-    assert grdecl_type.name == "ECL_GRDECL_FILE"
-    assert grdecl_type == ft
-
-
 def test_field_type_enum():
     assert FieldTypeEnum.ECLIPSE_PARAMETER == FieldTypeEnum(2)
     gen = FieldTypeEnum.GENERAL
