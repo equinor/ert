@@ -12,6 +12,7 @@ from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets.message_box import ErtMessageBox
 from ert.gui.gert_main import GUILogHandler, _start_window, run_gui
 from ert.shared.models import BaseRunModel
+from ert._c_wrappers.enkf import ResConfig
 
 
 @pytest.fixture(name="patch_enkf_main")
@@ -168,6 +169,50 @@ def test_gui_iter_num(monkeypatch, qtbot, patch_enkf_main):
     start_simulation = gui.findChild(QWidget, name="start_simulation")
     qtbot.mouseClick(start_simulation, Qt.LeftButton)
     assert sim_panel.getSimulationArguments().iter_num == 10
+
+
+def test_that_gui_gives_suggestions_when_you_have_umask_in_config(
+    monkeypatch, qapp, tmp_path
+):
+    config_file = tmp_path / "config.ert"
+    config_file.write_text("NUM_REALIZATIONS 1\n UMASK 0222\n")
+
+    args = Mock()
+    args.config = str(config_file)
+    gui = ert.gui.gert_main._open_gui(args)
+    assert gui.windowTitle() == "Some problems detected"
+
+
+def test_that_errors_are_shown_in_the_suggester_window_when_present(
+    monkeypatch, qapp, tmp_path
+):
+    config_file = tmp_path / "config.ert"
+    config_file.write_text("NUM_REALIZATIONS 1 you_cant_do_this\n")
+
+    args = Mock()
+    args.config = str(config_file)
+    gui = ert.gui.gert_main._open_gui(args)
+    assert gui.windowTitle() == "Some problems detected"
+
+
+def test_that_the_suggester_starts_when_there_are_no_observations(
+    monkeypatch, qapp, tmp_path
+):
+    config_file = tmp_path / "config.ert"
+    config_file.write_text("NUM_REALIZATIONS 1\n")
+
+    args = Mock()
+    args.config = str(config_file)
+    gui = ert.gui.gert_main._open_gui(args)
+    assert gui.windowTitle() == "Some problems detected"
+
+
+@pytest.mark.usefixtures("copy_poly_case")
+def test_that_gert_starts_when_there_are_no_problems(monkeypatch, qapp, tmp_path):
+    args = Mock()
+    args.config = "poly.ert"
+    gui = ert.gui.gert_main._open_gui(args)
+    assert gui.windowTitle() == "ERT - poly.ert"
 
 
 def test_start_simulation_disabled(monkeypatch, qtbot, patch_enkf_main):
