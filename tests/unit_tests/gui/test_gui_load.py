@@ -8,10 +8,9 @@ from qtpy.QtCore import Qt, QTimer
 from qtpy.QtWidgets import QDialog, QMessageBox, QWidget
 
 import ert.gui
-from ert._c_wrappers.enkf import ResConfig
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets.message_box import ErtMessageBox
-from ert.gui.gert_main import GUILogHandler, _start_window, run_gui
+from ert.gui.gert_main import GUILogHandler, _setup_main_window, run_gui
 from ert.shared.models import BaseRunModel
 
 
@@ -81,7 +80,7 @@ def fixture_patch_enkf_main(monkeypatch, tmp_path):
 def test_gui_load(qtbot, patch_enkf_main):
     args = argparse.Namespace(config="does_not_matter.ert")
     notifier = ErtNotifier(args.config)
-    gui = _start_window(patch_enkf_main, notifier, args, GUILogHandler())
+    gui = _setup_main_window(patch_enkf_main, notifier, args, GUILogHandler())
     qtbot.addWidget(gui)
 
     sim_panel = gui.findChild(QWidget, name="Simulation_panel")
@@ -152,7 +151,7 @@ def test_gui_iter_num(monkeypatch, qtbot, patch_enkf_main):
     )
 
     notifier = ErtNotifier(args_mock.config)
-    gui = _start_window(patch_enkf_main, notifier, args_mock, GUILogHandler())
+    gui = _setup_main_window(patch_enkf_main, notifier, args_mock, GUILogHandler())
     qtbot.addWidget(gui)
 
     sim_mode = gui.findChild(QWidget, name="Simulation_mode")
@@ -238,7 +237,7 @@ def test_start_simulation_disabled(monkeypatch, qtbot, patch_enkf_main):
     )
 
     notifier = MagicMock()
-    gui = _start_window(patch_enkf_main, notifier, args_mock, GUILogHandler())
+    gui = _setup_main_window(patch_enkf_main, notifier, args_mock, GUILogHandler())
     qtbot.addWidget(gui)
 
     start_simulation = gui.findChild(QWidget, name="start_simulation")

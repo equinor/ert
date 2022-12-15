@@ -5,16 +5,9 @@ import sys
 from pathlib import Path
 
 import filelock
-from PyQt5.QtWidgets import (
-    QHBoxLayout,
-    QLabel,
-    QPushButton,
-    QTextEdit,
-    QVBoxLayout,
-    QWidget,
-)
+from PyQt5.QtWidgets import QHBoxLayout, QPushButton, QTextEdit, QVBoxLayout, QWidget
 from qtpy.QtCore import QLocale, Qt
-from qtpy.QtWidgets import QApplication, QMessageBox
+from qtpy.QtWidgets import QApplication
 
 from ert._c_wrappers.enkf import EnKFMain, ResConfig
 from ert.cli.main import ErtTimeoutError
