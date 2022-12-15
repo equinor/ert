@@ -37,7 +37,7 @@ class ErtAnalysisError(Exception):
 class SmootherSnapshot:
     source_case: str
     target_case: str
-    analyis_module: str
+    analysis_module: str
     analysis_configuration: Dict[str, Any]
     alpha: float
     std_cutoff: float
