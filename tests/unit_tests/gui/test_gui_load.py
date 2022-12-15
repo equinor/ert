@@ -10,7 +10,7 @@ from qtpy.QtWidgets import QDialog, QMessageBox, QWidget
 import ert.gui
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets.message_box import ErtMessageBox
-from ert.gui.gert_main import GUILogHandler, _start_window, run_gui
+from ert.gui.gert_main import GUILogHandler, _setup_main_window, run_gui
 from ert.shared.models import BaseRunModel
 
 
@@ -80,7 +80,7 @@ def fixture_patch_enkf_main(monkeypatch, tmp_path):
 def test_gui_load(qtbot, patch_enkf_main):
     args = argparse.Namespace(config="does_not_matter.ert")
     notifier = ErtNotifier(args.config)
-    gui = _start_window(patch_enkf_main, notifier, args, GUILogHandler())
+    gui = _setup_main_window(patch_enkf_main, notifier, args, GUILogHandler())
     qtbot.addWidget(gui)
 
     sim_panel = gui.findChild(QWidget, name="Simulation_panel")
@@ -151,7 +151,7 @@ def test_gui_iter_num(monkeypatch, qtbot, patch_enkf_main):
     )
 
     notifier = ErtNotifier(args_mock.config)
-    gui = _start_window(patch_enkf_main, notifier, args_mock, GUILogHandler())
+    gui = _setup_main_window(patch_enkf_main, notifier, args_mock, GUILogHandler())
     qtbot.addWidget(gui)
 
     sim_mode = gui.findChild(QWidget, name="Simulation_mode")
@@ -168,6 +168,50 @@ def test_gui_iter_num(monkeypatch, qtbot, patch_enkf_main):
     start_simulation = gui.findChild(QWidget, name="start_simulation")
     qtbot.mouseClick(start_simulation, Qt.LeftButton)
     assert sim_panel.getSimulationArguments().iter_num == 10
+
+
+def test_that_gui_gives_suggestions_when_you_have_umask_in_config(
+    monkeypatch, qapp, tmp_path
+):
+    config_file = tmp_path / "config.ert"
+    config_file.write_text("NUM_REALIZATIONS 1\n UMASK 0222\n")
+
+    args = Mock()
+    args.config = str(config_file)
+    gui = ert.gui.gert_main._start_initial_gui_window(args)
+    assert gui.windowTitle() == "Some problems detected"
+
+
+def test_that_errors_are_shown_in_the_suggester_window_when_present(
+    monkeypatch, qapp, tmp_path
+):
+    config_file = tmp_path / "config.ert"
+    config_file.write_text("NUM_REALIZATIONS 1 you_cant_do_this\n")
+
+    args = Mock()
+    args.config = str(config_file)
+    gui = ert.gui.gert_main._start_initial_gui_window(args)
+    assert gui.windowTitle() == "Some problems detected"
+
+
+def test_that_the_suggester_starts_when_there_are_no_observations(
+    monkeypatch, qapp, tmp_path
+):
+    config_file = tmp_path / "config.ert"
+    config_file.write_text("NUM_REALIZATIONS 1\n")
+
+    args = Mock()
+    args.config = str(config_file)
+    gui = ert.gui.gert_main._start_initial_gui_window(args)
+    assert gui.windowTitle() == "Some problems detected"
+
+
+@pytest.mark.usefixtures("copy_poly_case")
+def test_that_gert_starts_when_there_are_no_problems(monkeypatch, qapp, tmp_path):
+    args = Mock()
+    args.config = "poly.ert"
+    gui = ert.gui.gert_main._start_initial_gui_window(args)
+    assert gui.windowTitle() == "ERT - poly.ert"
 
 
 def test_start_simulation_disabled(monkeypatch, qtbot, patch_enkf_main):
@@ -193,7 +237,7 @@ def test_start_simulation_disabled(monkeypatch, qtbot, patch_enkf_main):
     )
 
     notifier = MagicMock()
-    gui = _start_window(patch_enkf_main, notifier, args_mock, GUILogHandler())
+    gui = _setup_main_window(patch_enkf_main, notifier, args_mock, GUILogHandler())
     qtbot.addWidget(gui)
 
     start_simulation = gui.findChild(QWidget, name="start_simulation")

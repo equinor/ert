@@ -5,8 +5,9 @@ import sys
 from pathlib import Path
 
 import filelock
+from PyQt5.QtWidgets import QHBoxLayout, QPushButton, QTextEdit, QVBoxLayout, QWidget
 from qtpy.QtCore import QLocale, Qt
-from qtpy.QtWidgets import QApplication, QMessageBox
+from qtpy.QtWidgets import QApplication
 
 from ert._c_wrappers.enkf import EnKFMain, ResConfig
 from ert.cli.main import ErtTimeoutError
@@ -33,7 +34,26 @@ from ert.services import Storage
 def run_gui(args: argparse.Namespace):
     app = QApplication([])  # Early so that QT is initialized before other imports
     app.setWindowIcon(resourceIcon("application/window_icon_cutout"))
-    res_config = ResConfig(args.config)
+    window = _start_initial_gui_window(args)
+    window.show()
+    window.activateWindow()
+    window.raise_()
+    return app.exec_()
+
+
+def _start_initial_gui_window(args):
+    errors = None
+    res_config = None
+    try:
+        res_config = ResConfig(args.config)
+        suggestions = ResConfig.make_suggestion_list(args.config)
+    except Exception as error:
+        errors = [str(error)]
+
+    if errors:
+        return _setup_suggester(errors, args)
+    if suggestions:
+        return _setup_suggester(suggestions, args, res_config)
 
     # Create logger inside function to make sure all handlers have been added to
     # the root-logger.
@@ -47,9 +67,19 @@ def run_gui(args: argparse.Namespace):
     # be the base name of the original config
     args.config = os.path.basename(args.config)
     ert = EnKFMain(res_config)
+    if not ert.have_observations():
+        obs_msg = "No observations loaded. Model update algorithms disabled!"
+        return _setup_suggester([obs_msg], args, res_config)
+    locale_msg = _check_locale()
+    if locale_msg is not None:
+        return _setup_suggester([locale_msg], args, res_config)
+    return _start_main_gui_window(ert, args)
+
+
+def _start_main_gui_window(ert, args):
 
     facade = LibresFacade(ert)
-    ens_path = Path(res_config.model_config.ens_path)
+    ens_path = Path(facade.enspath)
     storage_lock = filelock.FileLock(ens_path / (ens_path.stem + ".lock"))
 
     try:
@@ -60,8 +90,7 @@ def run_gui(args: argparse.Namespace):
         ), add_gui_log_handler() as log_handler:
             notifier = ErtNotifier(args.config)
             # window reference must be kept until app.exec returns:
-            window = _start_window(ert, notifier, args, log_handler)  # noqa
-            return app.exec_()
+            return _setup_main_window(ert, notifier, args, log_handler)
     except filelock.Timeout:
         raise ErtTimeoutError(
             f"Not able to acquire lock for: {ens_path}. You may already be running ert,"
@@ -71,30 +100,6 @@ def run_gui(args: argparse.Namespace):
         if storage_lock.is_locked:
             storage_lock.release()
             os.remove(storage_lock.lock_file)
-
-
-def _start_window(
-    ert: EnKFMain,
-    notifier: ErtNotifier,
-    args: argparse.Namespace,
-    log_handler: GUILogHandler,
-):
-
-    _check_locale()
-
-    window = _setup_main_window(ert, notifier, args, log_handler)
-    window.show()
-    window.activateWindow()
-    window.raise_()
-
-    if not ert.have_observations():
-        QMessageBox.warning(
-            window,
-            "Warning!",
-            "No observations loaded. Model update algorithms disabled!",
-        )
-
-    return window
 
 
 def _check_locale():
@@ -114,6 +119,49 @@ def _check_locale():
             alternatively a locale which uses '.' as decimalpoint.\n"""  # noqa
 
         sys.stderr.write(msg)
+        return msg
+    else:
+        return None
+
+
+def _setup_suggester(suggestions, args, res_config=None):
+    suggest = QWidget()
+    layout = QVBoxLayout()
+    suggest.setWindowTitle("Some problems detected")
+    lines = QTextEdit()
+    lines.setReadOnly(True)
+    text = "\n".join(suggestions)
+    lines.setPlainText(text)
+
+    buttons = QHBoxLayout()
+    layout.addWidget(lines)
+
+    copy = QPushButton("Copy messages")
+
+    def copy_text():
+        QApplication.clipboard().setText(text)
+
+    copy.pressed.connect(copy_text)
+
+    run = QPushButton("Run ert")
+    run.setEnabled(res_config is not None)
+
+    def run_pressed():
+        _start_main_gui_window(res_config, args)
+        suggest.close()
+
+    run.pressed.connect(run_pressed)
+    give_up = QPushButton("Exit")
+
+    give_up.pressed.connect(suggest.close)
+    buttons.addWidget(copy)
+    buttons.addWidget(run)
+    buttons.addWidget(give_up)
+
+    layout.addLayout(buttons)
+    suggest.setLayout(layout)
+    suggest.resize(800, 600)
+    return suggest
 
 
 def _setup_main_window(

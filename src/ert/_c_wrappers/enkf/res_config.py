@@ -217,17 +217,24 @@ class ResConfig:
                 config_path, ModelConfig.DEFAULT_ENSPATH
             )
 
-    def _create_user_config_parser(self):
+    @classmethod
+    def _create_user_config_parser(cls):
         config_parser = ConfigParser()
         init_user_config_parser(config_parser)
         return config_parser
 
     def _display_suggestions(self, config_file):
         suggestions = DeprecationMigrationSuggester(
-            self._create_user_config_parser()
+            ResConfig._create_user_config_parser()
         ).suggest_migrations(config_file)
         for suggestion in suggestions:
             logging.error(suggestion)
+
+    @classmethod
+    def make_suggestion_list(cls, config_file):
+        return DeprecationMigrationSuggester(
+            ResConfig._create_user_config_parser()
+        ).suggest_migrations(config_file)
 
     # build configs from config file or everest dict
     def _alloc_from_content(self, user_config_file=None, config=None):
@@ -237,7 +244,7 @@ class ResConfig:
         if user_config_file is not None:
             self._display_suggestions(user_config_file)
             # initialize configcontent if user_file provided
-            config_parser = self._create_user_config_parser()
+            config_parser = ResConfig._create_user_config_parser()
             init_user_config_parser(config_parser)
             self.config_path = os.path.abspath(os.path.dirname(user_config_file))
             user_config_content = config_parser.parse(
