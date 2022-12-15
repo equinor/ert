@@ -30,37 +30,36 @@ def test_ensemble_config_constructor(setup_case):
         config_dict={
             ConfigKeys.GEN_KW_TAG_FORMAT: "<%s>",
             ConfigKeys.GEN_DATA: [
-                {
-                    ConfigKeys.NAME: "SNAKE_OIL_OPR_DIFF",
-                    ConfigKeys.INPUT_FORMAT: GenDataFileType.ASCII,
-                    ConfigKeys.RESULT_FILE: "snake_oil_opr_diff_%d.txt",
-                    ConfigKeys.REPORT_STEPS: [0, 1, 2, 199],
-                },
-                {
-                    ConfigKeys.NAME: "SNAKE_OIL_GPR_DIFF",
-                    ConfigKeys.INPUT_FORMAT: GenDataFileType.ASCII,
-                    ConfigKeys.RESULT_FILE: "snake_oil_gpr_diff_%d.txt",
-                    ConfigKeys.REPORT_STEPS: [199],
-                },
+                [
+                    "SNAKE_OIL_OPR_DIFF",
+                    "INPUT_FORMAT:ASCII",
+                    "RESULT_FILE:snake_oil_opr_diff_%d.txt",
+                    "REPORT_STEPS:0,1,2,199",
+                ],
+                [
+                    "SNAKE_OIL_GPR_DIFF",
+                    "INPUT_FORMAT:ASCII",
+                    "RESULT_FILE:snake_oil_gpr_diff_%d.txt",
+                    "REPORT_STEPS:199",
+                ],
             ],
             ConfigKeys.GEN_KW: [
-                {
-                    ConfigKeys.NAME: "MULTFLT",
-                    ConfigKeys.TEMPLATE: "FAULT_TEMPLATE",
-                    ConfigKeys.OUT_FILE: "MULTFLT.INC",
-                    ConfigKeys.PARAMETER_FILE: "MULTFLT.TXT",
-                    ConfigKeys.INIT_FILES: None,
-                    ConfigKeys.FORWARD_INIT: False,
-                }
+                [
+                    "MULTFLT",
+                    "FAULT_TEMPLATE",
+                    "MULTFLT.INC",
+                    "MULTFLT.TXT",
+                    "FORWARD_INIT:FALSE",
+                ]
             ],
             ConfigKeys.SURFACE_KEY: [
-                {
-                    ConfigKeys.NAME: "TOP",
-                    ConfigKeys.INIT_FILES: "surface/small.irap",
-                    ConfigKeys.OUT_FILE: "surface/small_out.irap",
-                    ConfigKeys.BASE_SURFACE_KEY: ("surface/small.irap"),
-                    ConfigKeys.FORWARD_INIT: False,
-                }
+                [
+                    "TOP",
+                    "INIT_FILES:surface/small.irap",
+                    "OUTPUT_FILE:surface/small_out.irap",
+                    "BASE_SURFACE:surface/small.irap",
+                    "FORWARD_INIT:FALSE",
+                ]
             ],
             ConfigKeys.SUMMARY: [
                 "WOPR:OP_1",
@@ -76,25 +75,19 @@ def test_ensemble_config_constructor(setup_case):
                 "ROE:1",
             ],
             ConfigKeys.FIELD_KEY: [
-                {
-                    ConfigKeys.NAME: "PERMX",
-                    ConfigKeys.VAR_TYPE: "PARAMETER",
-                    ConfigKeys.INIT_FILES: "fields/permx%d.grdecl",
-                    ConfigKeys.OUT_FILE: "permx.grdcel",
-                    ConfigKeys.ENKF_INFILE: None,
-                    ConfigKeys.INIT_TRANSFORM: None,
-                    ConfigKeys.OUTPUT_TRANSFORM: None,
-                    ConfigKeys.INPUT_TRANSFORM: None,
-                    ConfigKeys.MIN_KEY: None,
-                    ConfigKeys.MAX_KEY: None,
-                    ConfigKeys.FORWARD_INIT: False,
-                }
+                [
+                    "PERMX",
+                    "PARAMETER",
+                    "permx.grdcel",
+                    "FORWARD_INIT:FALSE",
+                    "INIT_FILES:fields/permx%d.grdecl",
+                ],
             ],
-            ConfigKeys.SCHEDULE_PREDICTION_FILE: {
-                ConfigKeys.TEMPLATE: "input/schedule.sch",
-                ConfigKeys.INIT_FILES: "fields/permx%d.grdecl",
-                ConfigKeys.PARAMETER_KEY: "MULTFLT.TXT",
-            },
+            ConfigKeys.SCHEDULE_PREDICTION_FILE: [
+                "input/schedule.sch",
+                "PARAMETER:MULTFLT.TXT",
+                "INIT_FILES:fields/permx%d.grdecl",
+            ],
             ConfigKeys.GRID: "grid/CASE.EGRID",
             # ConfigKeys.REFCASE: "input/refcase/SNAKE_OIL_FIELD",
         },
