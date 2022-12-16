@@ -39,7 +39,6 @@ def test_analysis_config_constructor(setup_case):
             ConfigKeys.NUM_REALIZATIONS: 10,
             ConfigKeys.ALPHA_KEY: 3,
             ConfigKeys.RERUN_KEY: False,
-            ConfigKeys.RERUN_START_KEY: 0,
             ConfigKeys.UPDATE_LOG_PATH: "update_log",
             ConfigKeys.STD_CUTOFF_KEY: 1e-6,
             ConfigKeys.STOP_LONG_RUNNING: False,

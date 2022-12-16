@@ -39,7 +39,6 @@ SINGLE_OCCURRENCE_SINGLE_ARG_KEYS = [
     ConfigKeys.RANDOM_SEED,
     ConfigKeys.REFCASE,
     ConfigKeys.RERUN_KEY,
-    ConfigKeys.RERUN_START_KEY,
     ConfigKeys.RUNPATH,
     ConfigKeys.RUNPATH_FILE,
     ConfigKeys.STD_CUTOFF_KEY,

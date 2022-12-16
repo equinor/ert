@@ -303,7 +303,6 @@ def test_res_config_dict_constructor(setup_case):
         ConfigKeys.DATAROOT: absolute_config_dir,
         ConfigKeys.ALPHA_KEY: 3,
         ConfigKeys.RERUN_KEY: False,
-        ConfigKeys.RERUN_START_KEY: 0,
         ConfigKeys.STD_CUTOFF_KEY: 1e-6,
         ConfigKeys.STOP_LONG_RUNNING: False,
         ConfigKeys.GLOBAL_STD_SCALING: 1,
