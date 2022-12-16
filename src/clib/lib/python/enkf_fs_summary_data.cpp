@@ -8,8 +8,7 @@
 ERT_CLIB_SUBMODULE("enkf_fs_summary_data", m) {
     m.def(
         "get_summary_data",
-        [](Cwrap<ensemble_config_type> ensemble_config,
-           Cwrap<enkf_fs_type> enkfs_fs,
+        [](Cwrap<enkf_fs_type> enkfs_fs,
            const std::vector<std::string> &summary_keys,
            const std::vector<int> &realizations, const int time_map_size) {
             const int realization_size = std::size(realizations);
@@ -22,8 +21,12 @@ ERT_CLIB_SUBMODULE("enkf_fs_summary_data", m) {
 
             int summary_key_index = 0;
             for (const auto &key : summary_keys) {
+                if (!summary_key_set_has_summary_key(
+                        enkf_fs_get_summary_key_set(enkfs_fs), key.c_str()))
+                    throw std::invalid_argument(
+                        fmt::format("Summary key: {} not in storage", key));
                 auto ensemble_config_node =
-                    ensemble_config_get_node(ensemble_config, key.c_str());
+                    enkf_config_node_alloc_summary(key.c_str(), LOAD_FAIL_WARN);
                 auto ensemble_data = enkf_plot_data_alloc(ensemble_config_node);
 
                 auto user_key = nullptr;
@@ -51,6 +54,7 @@ ERT_CLIB_SUBMODULE("enkf_fs_summary_data", m) {
                     realization_index++;
                 }
                 enkf_plot_data_free(ensemble_data);
+                enkf_config_node_free(ensemble_config_node);
                 summary_key_index++;
             }
 
@@ -66,6 +70,6 @@ ERT_CLIB_SUBMODULE("enkf_fs_summary_data", m) {
                 data,             // the data pointer
                 free_when_done);  // numpy array references this parent
         },
-        py::arg("ens_cfg"), py::arg("fs"), py::arg("summary_keys"),
-        py::arg("realizations"), py::arg("time_map_size"));
+        py::arg("fs"), py::arg("summary_keys"), py::arg("realizations"),
+        py::arg("time_map_size"));
 }

@@ -399,14 +399,14 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
                 raise IndexError(f"No such realization {realization_index}")
             realizations = [realization_index]
 
-        summary_keys = self.get_summary_keys()
+        summary_keys = list(fs.getSummaryKeySet().keys())
         if keys is not None:
             summary_keys = [
                 key for key in keys if key in summary_keys
             ]  # ignore keys that doesn't exist
-
+        summary_keys.sort()
         summary_data = _clib.enkf_fs_summary_data.get_summary_data(
-            self._enkf_main.ensembleConfig(), fs, summary_keys, realizations, len(dates)
+            fs, summary_keys, realizations, len(dates)
         )
 
         if np.isnan(summary_data).all():
@@ -488,11 +488,11 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
     def history_data(
         self, key: str, case: Optional[str] = None
     ) -> Union[DataFrame, Series]:
-        if not self.is_summary_key(key):
-            return DataFrame()
-
         if case is None:
             return self.refcase_data(key)
+        storage = self._enkf_main.storage_manager[case]
+        if key not in storage.getSummaryKeySet():
+            return DataFrame()
 
         data = self.gather_summary_data(case, key)
         if data.empty and case is not None:
