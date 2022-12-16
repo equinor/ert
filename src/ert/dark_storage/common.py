@@ -18,14 +18,15 @@ def ensemble_parameters(res: LibresFacade) -> List[dict]:
     ]
 
 
-def get_response_names(res: LibresFacade) -> List[str]:
-    result = res.get_summary_keys().copy()
+def get_response_names(res: LibresFacade, case_name) -> List[str]:
+    storage = res._enkf_main.storage_manager[case_name]
+    result = list(storage.getSummaryKeySet().keys())
     result.extend(res.get_gen_data_keys().copy())
     return result
 
 
 def get_responses(res: LibresFacade, ensemble_name: str):
-    response_names = get_response_names(res)
+    response_names = get_response_names(res, ensemble_name)
     responses = []
     active_realizations = res.get_active_realizations(ensemble_name)
 
@@ -45,8 +46,8 @@ def data_for_key(res: LibresFacade, case, key, realization_index=None) -> pd.Dat
 
     if key.startswith("LOG10_"):
         key = key[6:]
-
-    if res.is_summary_key(key):
+    storage = res._enkf_main.storage_manager[case]
+    if key in storage.getSummaryKeySet():
         data = res.gather_summary_data(case, key, realization_index).T
     elif res.is_gen_kw_key(key):
         data = res.gather_gen_kw_data(case, key, realization_index)
@@ -54,7 +55,7 @@ def data_for_key(res: LibresFacade, case, key, realization_index=None) -> pd.Dat
     elif res.is_gen_data_key(key):
         data = res.gather_gen_data_data(case, key, realization_index).T
     else:
-        raise ValueError(f"no such key {key}")
+        return pd.DataFrame()
 
     try:
         return data.astype(float)
