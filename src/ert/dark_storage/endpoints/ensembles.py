@@ -29,7 +29,7 @@ def get_ensemble(
         userdata={"name": get_name("ensemble", ensemble_id)},
         size=get_size(res),
         parameter_names=ensemble_parameter_names(res),
-        response_names=get_response_names(res),
+        response_names=get_response_names(res, get_name("ensemble", ensemble_id)),
         child_ensemble_ids=[],
     )
 

@@ -498,16 +498,14 @@ multiple vectors:
    SUMMARY  GGPR:NORTH GOPR:SOUTH
 
 If you in the observation use the ``SUMMARY_OBSERVATION`` or
-``HISTORY_OBSERVATION`` keyword to compare simulatons and observations for a
+``HISTORY_OBSERVATION`` keyword to compare simulations and observations for a
 particular summary vector you need to add this vector after SUMMARY in the ERT
 configuration to have it plotted.
 
-If you use the keyword ``REFCASE`` to configure an Eclipse reference case you
-can use wildcard notation to all summary vectors matching a pattern, i.e. this:
+You can use wildcard notation to all summary vectors matching a pattern, i.e. this:
 
 ::
 
-   REFCASE eclipse/refcase/CASE
    SUMMARY WWCT*:* WGOR*:*
    SUMMARY F*
    SUMMARY G*:NORTH

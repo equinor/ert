@@ -174,7 +174,7 @@ def test_case_history_data(facade):
     data = facade.history_data("FOPRH")
     assert isinstance(data, PandasObject)
 
-    data = facade.history_data("FOPRH", case="default_1")
+    data = facade.history_data("FOPRH", case="default")
     assert isinstance(data, PandasObject)
 
     data = facade.history_data("WOPRH:OP1")
@@ -239,7 +239,7 @@ def test_summary_collector(monkeypatch, snake_oil_case_storage, snapshot):
         data.iloc[:4].round(4).to_csv(index_label=[0, 1, 2, 3, 4]),
         "summary_collector_1.csv",
     )
-    assert data.shape == (1000, 46)
+    assert data.shape == (1000, 45)
     with pytest.raises(KeyError):
         # realization 60:
         data.loc[60]
