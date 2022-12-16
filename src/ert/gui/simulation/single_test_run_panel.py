@@ -16,6 +16,10 @@ class Arguments:
     mode: str
 
 
+def escape_string(string):
+    return string.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+
+
 class SingleTestRunPanel(SimulationConfigPanel):
     def __init__(self, ert, notifier):
         self.ert = ert
@@ -28,7 +32,7 @@ class SingleTestRunPanel(SimulationConfigPanel):
         layout.addRow("Current case:", case_selector)
 
         run_path_label = QLabel(
-            f"<b>{self.ert.getModelConfig().runpath_format_string}</b>"
+            f"<b>{escape_string(self.ert.getModelConfig().runpath_format_string)}</b>"
         )
         addHelpToWidget(run_path_label, "config/simulation/runpath")
         layout.addRow("Runpath:", run_path_label)
