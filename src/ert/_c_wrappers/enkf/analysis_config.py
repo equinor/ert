@@ -19,7 +19,6 @@ class AnalysisConfig:
         self,
         alpha=3.0,
         rerun=False,
-        rerun_start=0,
         std_cutoff=1e-6,
         stop_long_running=False,
         global_std_scaling=1.0,
@@ -32,7 +31,6 @@ class AnalysisConfig:
         analysis_select=None,
     ):
         self._rerun = rerun
-        self._rerun_start = rerun_start
         self._max_runtime = max_runtime
         self._min_realization = min_realization
         self._global_std_scaling = global_std_scaling
@@ -105,7 +103,6 @@ class AnalysisConfig:
         config = cls(
             alpha=config_dict.get(ConfigKeys.ALPHA_KEY, 3.0),
             rerun=config_dict.get(ConfigKeys.RERUN_KEY, False),
-            rerun_start=config_dict.get(ConfigKeys.RERUN_START_KEY, 0),
             std_cutoff=config_dict.get(ConfigKeys.STD_CUTOFF_KEY, 1e-6),
             stop_long_running=config_dict.get(ConfigKeys.STOP_LONG_RUNNING, False),
             global_std_scaling=config_dict.get(ConfigKeys.GLOBAL_STD_SCALING, 1.0),
@@ -124,12 +121,6 @@ class AnalysisConfig:
 
     def set_rerun(self, rerun):
         self._rerun = rerun
-
-    def get_rerun_start(self):
-        return self._rerun_start
-
-    def set_rerun_start(self, index):
-        self._rerun_start = index
 
     def get_log_path(self) -> str:
         return realpath(self._update_log_path)
@@ -259,9 +250,6 @@ class AnalysisConfig:
             return False
 
         if self.get_rerun() != other.get_rerun():
-            return False
-
-        if self.get_rerun_start() != other.get_rerun_start():
             return False
 
         if set(self.get_module_list()) != set(other.get_module_list()):

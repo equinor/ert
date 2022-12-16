@@ -256,7 +256,6 @@ def generate_config(draw):
                 ConfigKeys.ITER_COUNT: positives,
                 ConfigKeys.ITER_RETRY_COUNT: positives,
                 ConfigKeys.RERUN_KEY: st.booleans(),
-                ConfigKeys.RERUN_START_KEY: positives,
                 ConfigKeys.UPDATE_LOG_PATH: directory_names(),
                 ConfigKeys.STD_CUTOFF_KEY: small_floats,
                 ConfigKeys.MAX_RUNTIME: positives,

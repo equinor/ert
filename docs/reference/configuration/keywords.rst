@@ -66,7 +66,6 @@ Keyword name                                                            Required
 :ref:`QUEUE_OPTION <queue_option>`                                      NO                                                                      Set options for an ERT queue system
 :ref:`QUEUE_SYSTEM <queue_system>`                                      NO                                      LOCAL_DRIVER                                System used for running simulation jobs
 :ref:`REFCASE <refcase>`                                                NO                                                                      Reference case used for observations and plotting (See HISTORY_SOURCE and SUMMARY)
-:ref:`RERUN_START  <rerun_start>`                                       NO                                      0                               Deprecated
 :ref:`RESULT_PATH  <result_path>`                                       NO                                      results/step_%d                 Define where ERT should store results
 :ref:`RUNPATH <runpath>`                                                NO                                      simulations/realization%d       Directory to run simulations
 :ref:`RUNPATH_FILE <runpath_file>`                                      NO                                      .ert_runpath_list               Name of file with path for all forward models that ERT has run. To be used by user defined scripts to find the realizations
@@ -290,12 +289,6 @@ possible to do with ERT.
 
         Ignored. Was used to specify log level to output. Today this is
         controlled via Python's logging module.
-
-
-.. _rerun_start:
-.. topic:: RERUN_START
-
-        `RERUN_START` is deprecated.
 
 
 .. _enspath:
