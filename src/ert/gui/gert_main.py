@@ -42,18 +42,14 @@ def run_gui(args: argparse.Namespace):
 
 
 def _start_initial_gui_window(args):
-    errors = None
+    messages = []
     res_config = None
     try:
         res_config = ResConfig(args.config)
-        suggestions = ResConfig.make_suggestion_list(args.config)
+        messages += ResConfig.make_suggestion_list(args.config)
     except Exception as error:
-        errors = [str(error)]
-
-    if errors:
-        return _setup_suggester(errors, args)
-    if suggestions:
-        return _setup_suggester(suggestions, args, res_config)
+        messages.append(str(error))
+        return _setup_suggester(messages, args, None)
 
     # Create logger inside function to make sure all handlers have been added to
     # the root-logger.
@@ -66,14 +62,21 @@ def _start_initial_gui_window(args):
     # Changing current working directory means we need to update the config file to
     # be the base name of the original config
     args.config = os.path.basename(args.config)
-    ert = EnKFMain(res_config)
+    try:
+        ert = EnKFMain(res_config)
+    except Exception as error:
+        messages.append(str(error))
+        return _setup_suggester(messages, args, None)
     if not ert.have_observations():
-        obs_msg = "No observations loaded. Model update algorithms disabled!"
-        return _setup_suggester([obs_msg], args, res_config)
+        messages.append("No observations loaded. Model update algorithms disabled!")
+
     locale_msg = _check_locale()
     if locale_msg is not None:
-        return _setup_suggester([locale_msg], args, res_config)
-    return _start_main_gui_window(ert, args)
+        messages.append(locale_msg)
+    if messages:
+        return _setup_suggester(messages, args, ert)
+    else:
+        return _start_main_gui_window(ert, args)
 
 
 def _start_main_gui_window(ert, args):
@@ -124,7 +127,7 @@ def _check_locale():
         return None
 
 
-def _setup_suggester(suggestions, args, res_config=None):
+def _setup_suggester(suggestions, args, ert):
     suggest = QWidget()
     layout = QVBoxLayout()
     suggest.setWindowTitle("Some problems detected")
@@ -144,10 +147,14 @@ def _setup_suggester(suggestions, args, res_config=None):
     copy.pressed.connect(copy_text)
 
     run = QPushButton("Run ert")
-    run.setEnabled(res_config is not None)
+    run.setObjectName("run_ert_button")
+    run.setEnabled(ert is not None)
 
     def run_pressed():
-        _start_main_gui_window(res_config, args)
+        window = _start_main_gui_window(ert, args)
+        window.show()
+        window.activateWindow()
+        window.raise_()
         suggest.close()
 
     run.pressed.connect(run_pressed)
