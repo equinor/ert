@@ -5,7 +5,7 @@ from unittest.mock import MagicMock, Mock, PropertyMock
 
 import pytest
 from qtpy.QtCore import Qt, QTimer
-from qtpy.QtWidgets import QDialog, QMessageBox, QWidget
+from qtpy.QtWidgets import QDialog, QMessageBox, QPushButton, QWidget
 
 import ert.gui
 from ert.gui.ertnotifier import ErtNotifier
@@ -195,7 +195,7 @@ def test_that_errors_are_shown_in_the_suggester_window_when_present(
 
 
 def test_that_the_suggester_starts_when_there_are_no_observations(
-    monkeypatch, qapp, tmp_path
+    monkeypatch, qapp, qtbot, tmp_path
 ):
     config_file = tmp_path / "config.ert"
     config_file.write_text("NUM_REALIZATIONS 1\n")
@@ -204,6 +204,14 @@ def test_that_the_suggester_starts_when_there_are_no_observations(
     args.config = str(config_file)
     gui = ert.gui.gert_main._start_initial_gui_window(args)
     assert gui.windowTitle() == "Some problems detected"
+    gui.show()
+    button = gui.findChild(QPushButton, name="run_ert_button")
+    qtbot.mouseClick(button, Qt.LeftButton)
+
+    qtbot.wait_until(
+        lambda: qapp.activeWindow() is not None
+        and qapp.activeWindow().windowTitle() == "ERT - config.ert"
+    )
 
 
 @pytest.mark.usefixtures("copy_poly_case")
