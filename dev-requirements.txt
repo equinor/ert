@@ -3,7 +3,7 @@ cmake-format
 decorator
 ecl_data_io
 flake8>=4.0.0
-grpcio-tools==1.41.0
+grpcio-tools
 isort
 jsonpath_ng
 jupytext
