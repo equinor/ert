@@ -132,7 +132,7 @@ args = dict(
         "pandas",
         "pluggy",
         "prefect<2",
-        "protobuf<4",
+        "protobuf",
         "psutil",
         "pydantic >= 1.9",
         "PyQt5",
