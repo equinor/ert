@@ -1,14 +1,6 @@
-import sys
-
-import pytest
-
 from ert._c_wrappers.enkf import EnKFMain, ResConfig
 
 
-@pytest.mark.skipif(
-    sys.platform.startswith("darwin"),
-    reason="https://github.com/equinor/ert/issues/4088",
-)
 def test_load_from_context(benchmark, template_config):
     with template_config["folder"].as_cwd():
         config = ResConfig("poly.ert")
@@ -21,10 +13,6 @@ def test_load_from_context(benchmark, template_config):
         assert loaded_reals == expected_reals
 
 
-@pytest.mark.skipif(
-    sys.platform.startswith("darwin"),
-    reason="https://github.com/equinor/ert/issues/4088",
-)
 def test_load_from_fs(benchmark, template_config):
     with template_config["folder"].as_cwd():
         config = ResConfig("poly.ert")
