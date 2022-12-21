@@ -78,7 +78,6 @@ SINGLE_OCCURRENCE_KEY_TYPES = {
     ConfigKeys.QUEUE_SYSTEM: "str",
     ConfigKeys.RANDOM_SEED: "str",
     ConfigKeys.REFCASE: "file_path",
-    ConfigKeys.RERUN_KEY: "bool",
     ConfigKeys.RUNPATH: "path",
     ConfigKeys.RUNPATH_FILE: "file_path",
     ConfigKeys.STD_CUTOFF_KEY: "float",
