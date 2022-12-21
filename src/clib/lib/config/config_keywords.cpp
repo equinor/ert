@@ -270,7 +270,6 @@ ERT_CLIB_SUBMODULE("config_keywords", m) {
             add_float_keyword(config_parser, ENKF_ALPHA_KEY);
             add_float_keyword(config_parser, STD_CUTOFF_KEY);
             add_update_setting_keyword(config_parser);
-            add_bool_keyword(config_parser, ENKF_RERUN_KEY);
             add_string_keyword(config_parser, UPDATE_LOG_PATH_KEY);
             add_string_keyword(config_parser, MIN_REALIZATIONS_KEY);
             add_int_keyword(config_parser, MAX_RUNTIME_KEY);

@@ -20,7 +20,7 @@ class DeprecationMigrationSuggester:
         "SCHEDULE_PREDICTION_FILE",
         "MULTFLT",
     ]
-    JUST_REMOVE_KEYWORDS = ["UMASK", "LOG_FILE", "LOG_LEVEL"]
+    JUST_REMOVE_KEYWORDS = ["UMASK", "LOG_FILE", "LOG_LEVEL", "ENKF_RERUN"]
     RSH_KEYWORDS = ["RSH_HOST", "RHS_COMMAND"]
 
     def _add_deprecated_keywords_to_parser(self):

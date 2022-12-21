@@ -77,7 +77,6 @@ ERT_CLIB_SUBMODULE("config_keys", m) {
     cls.attr("RANDOM_SEED") = RANDOM_SEED_KEY;
     cls.attr("REFCASE") = REFCASE_KEY;
     cls.attr("REPORT_STEPS") = REPORT_STEPS_KEY;
-    cls.attr("RERUN_KEY") = ENKF_RERUN_KEY;
     cls.attr("RESULT_FILE") = RESULT_FILE_KEY;
     cls.attr("RUNMODE") = RUNMODE_KEY;
     cls.attr("RUNPATH") = RUNPATH_KEY;

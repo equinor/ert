@@ -18,7 +18,6 @@ class AnalysisConfig:
     def __init__(
         self,
         alpha=3.0,
-        rerun=False,
         std_cutoff=1e-6,
         stop_long_running=False,
         global_std_scaling=1.0,
@@ -30,7 +29,6 @@ class AnalysisConfig:
         analysis_set_var=None,
         analysis_select=None,
     ):
-        self._rerun = rerun
         self._max_runtime = max_runtime
         self._min_realization = min_realization
         self._global_std_scaling = global_std_scaling
@@ -102,7 +100,6 @@ class AnalysisConfig:
 
         config = cls(
             alpha=config_dict.get(ConfigKeys.ALPHA_KEY, 3.0),
-            rerun=config_dict.get(ConfigKeys.RERUN_KEY, False),
             std_cutoff=config_dict.get(ConfigKeys.STD_CUTOFF_KEY, 1e-6),
             stop_long_running=config_dict.get(ConfigKeys.STOP_LONG_RUNNING, False),
             global_std_scaling=config_dict.get(ConfigKeys.GLOBAL_STD_SCALING, 1.0),
@@ -115,12 +112,6 @@ class AnalysisConfig:
             analysis_select=config_dict.get(ConfigKeys.ANALYSIS_SELECT),
         )
         return config
-
-    def get_rerun(self):
-        return self._rerun
-
-    def set_rerun(self, rerun):
-        self._rerun = rerun
 
     def get_log_path(self) -> str:
         return realpath(self._update_log_path)
@@ -217,7 +208,6 @@ class AnalysisConfig:
         return (
             "AnalysisConfig("
             f"alpha={self._alpha}"
-            f"rerun={self._rerun}"
             f"std_cutoff={self._std_cutoff}"
             f"stop_long_running={self._stop_long_running}"
             f"global_std_scaling={self._global_std_scaling}"
@@ -247,9 +237,6 @@ class AnalysisConfig:
             return False
 
         if self.get_enkf_alpha() != other.get_enkf_alpha():
-            return False
-
-        if self.get_rerun() != other.get_rerun():
             return False
 
         if set(self.get_module_list()) != set(other.get_module_list()):
