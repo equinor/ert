@@ -5,7 +5,6 @@
 #include <ert/util/vector.h>
 
 #include <ert/enkf/enkf_node.hpp>
-#include <ert/enkf/ext_param.hpp>
 #include <ert/enkf/field.hpp>
 #include <ert/enkf/surface.hpp>
 #include <ert/python.hpp>
@@ -425,13 +424,6 @@ enkf_node_alloc_empty(const enkf_config_node_type *config) {
         node->write_to_buffer = field_write_to_buffer__;
         node->serialize = field_serialize__;
         node->deserialize = field_deserialize__;
-        break;
-    /* EXT_PARAM is used by Everest */
-    case (EXT_PARAM):
-        node->alloc = ext_param_alloc__;
-        node->freef = ext_param_free__;
-        node->write_to_buffer = ext_param_write_to_buffer__;
-        node->read_from_buffer = ext_param_read_from_buffer__;
         break;
     default:
         util_abort("%s: implementation type: %d unknown - all hell is loose - "
