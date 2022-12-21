@@ -29,8 +29,6 @@ if TYPE_CHECKING:
     from ert._c_wrappers.enkf.enkf_fs import EnkfFs
     from ert._c_wrappers.enkf.enkf_obs import EnkfObs
     from ert._c_wrappers.enkf.ensemble_config import EnsembleConfig
-    from ert._c_wrappers.enkf.observations import ObsVector
-    from ert._c_wrappers.enkf.observations.summary_observation import SummaryObservation
 
 logger = logging.getLogger(__name__)
 
