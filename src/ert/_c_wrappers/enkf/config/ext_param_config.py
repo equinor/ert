@@ -96,10 +96,10 @@ class ExtParamConfig(BaseCClass):
         An IndexError is raised if the item is not found
         """
         if isinstance(index, str):
-            index = self._key_index(index)
-            if index < 0:
+            i = self._key_index(index)
+            if i < 0:
                 raise IndexError(f'Key "{index}" not found')
-            return self._get_suffixes(index)
+            return self._get_suffixes(i)
 
         # assume index is an integer
         if index < 0:

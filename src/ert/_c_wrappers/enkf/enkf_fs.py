@@ -1,3 +1,4 @@
+import json
 import logging
 import math
 import shutil
@@ -219,6 +220,26 @@ class EnkfFs(BaseCClass):
             data, _ = self._load_gen_kw_realization(key, realization)
             result.append(data)
         return np.stack(result).T
+
+    def save_ext_param(self, key: str, realization: int, data: dict) -> None:
+        output_path = self.mount_point / f"extparam-{realization}"
+        Path.mkdir(output_path, exist_ok=True)
+        with open(output_path / f"{key}.json", "w", encoding="utf-8") as f:
+            json.dump(data, f)
+        self.getStateMap().update_matching(
+            realization,
+            RealizationStateEnum.STATE_UNDEFINED,
+            RealizationStateEnum.STATE_INITIALIZED,
+        )
+
+    def load_ext_param(self, key: str, realization: int) -> dict:
+        input_path = self.mount_point / f"extparam-{realization}" / f"{key}.json"
+        if not input_path.exists():
+            raise KeyError(f"No parameter: {key} in storage")
+
+        with open(input_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        return data
 
     def save_parameters(
         self,
