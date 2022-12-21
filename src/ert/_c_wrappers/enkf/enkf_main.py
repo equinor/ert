@@ -117,6 +117,20 @@ def _generate_gen_kw_parameter_file(
     exports.update(gen_kw_dict)
 
 
+def _generate_ext_parameter_file(
+    fs: "EnkfFs",
+    realization: int,
+    key: str,
+    target_file: str,
+    run_path: Path,
+) -> None:
+    file_path = run_path / target_file
+    Path.mkdir(file_path.parent, exist_ok=True, parents=True)
+    data = fs.load_ext_param(key, realization)
+    with open(file_path, "w", encoding="utf-8") as f:
+        json.dump(data, f)
+
+
 def _generate_parameter_files(
     ens_config: "EnsembleConfig",
     export_base_name: str,
@@ -153,6 +167,13 @@ def _generate_parameter_files(
                 exports,
             )
             continue
+
+        if type_ == ErtImplType.EXT_PARAM:
+            _generate_ext_parameter_file(
+                fs, iens, node.getKey(), node.get_enkf_outfile(), Path(run_path)
+            )
+            continue
+
         enkf_node = EnkfNode(node)
         node_id = NodeId(report_step=0, iens=iens)
 
@@ -167,8 +188,6 @@ def _generate_parameter_files(
             _clib.field.generate_parameter_file(enkf_node, run_path, node_eclfile)
         elif type_ == ErtImplType.SURFACE:
             _clib.surface.generate_parameter_file(enkf_node, run_path, node_eclfile)
-        elif type_ == ErtImplType.EXT_PARAM:
-            _clib.ext_param.generate_parameter_file(enkf_node, run_path, node_eclfile)
         else:
             raise NotImplementedError
 
