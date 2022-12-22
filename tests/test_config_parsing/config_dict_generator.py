@@ -8,8 +8,8 @@ import stat
 from pathlib import Path
 
 import hypothesis.strategies as st
-import py
 from hypothesis import assume, note
+from py import path as py_path
 
 from ert._c_wrappers.enkf import ConfigKeys
 from ert._c_wrappers.enkf.enums import GenDataFileType
@@ -409,7 +409,7 @@ def config_generators(draw):
     # will write the config to that file.
     @contextlib.contextmanager
     def generate_files_and_dict(tmp_path_factory, config_file_name=None):
-        tmp = py.path.local(tmp_path_factory.mktemp("config_dict"))
+        tmp = py_path.local(tmp_path_factory.mktemp("config_dict"))
         note(f"Using tmp dir: {str(tmp)}")
         with tmp.as_cwd():
             config_dict[ConfigKeys.JOB_SCRIPT] = os.path.abspath(

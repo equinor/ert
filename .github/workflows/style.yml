@@ -65,79 +65,79 @@ jobs:
         pylint src/ert --ignore-paths=src/ert/_c_wrappers,src/ert/gui,src/ert/logging,src/ert/analysis/_es_update.py,src/ert/data,src/_ert_job_runner,src/ert/shared,src/ert/__main__.py,src/ert/cli,src/ert/ensemble_evaluator,src/ert/services
         pylint --disable=all \
           --enable="\
-            access-member-before-definition, \
-            arguments-differ, \
-            arguments-renamed, \
-            assert-on-string-literal, \
-            bad-classmethod-argument, \
-            bad-thread-instantiation, \
-            chained-comparison, \
-            comparison-with-callable, \
-            consider-iterating-dictionary, \
-            consider-using-dict-items, \
-            consider-using-enumerate, \
-            consider-using-f-string, \
-            consider-using-from-import, \
-            consider-using-generator, \
-            consider-using-get, \
-            consider-using-in, \
-            consider-using-max-builtin, \
-            consider-using-min-builtin, \
-            consider-using-set-comprehension, \
-            consider-using-with, \
-            dangerous-default-value, \
-            deprecated-method, \
-            duplicate-key, \
-            empty-docstring, \
-            expression-not-assigned, \
-            global-statement, \
-            global-variable-not-assigned, \
-            implicit-str-concat, \
-            logging-not-lazy, \
-            missing-final-newline, \
-            no-else-break, \
-            no-else-continue, \
-            no-else-raise, \
-            no-member, \
-            no-method-argument, \
-            no-value-for-parameter, \
-            not-async-context-manager, \
-            not-callable, \
-            parse-error, \
-            pointless-statement, \
-            pointless-string-statement, \
-            redefined-builtin, \
-            redundant-unittest-assert, \
-            reimported, \
-            simplifiable-if-statement, \
-            subprocess-run-check, \
-            super-with-arguments, \
-            superfluous-parens, \
-            too-many-lines, \
-            too-many-nested-blocks, \
-            undefined-all-variable, \
-            undefined-loop-variable, \
-            undefined-variable, \
-            unexpected-keyword-arg, \
-            ungrouped-imports, \
-            unidiomatic-typecheck, \
-            unnecessary-comprehension, \
-            unnecessary-dunder-call, \
-            unnecessary-lambda, \
-            unnecessary-lambda-assignment, \
-            unneeded-not, \
-            unsubscriptable-object, \
-            unsupported-assignment-operation, \
-            unsupported-binary-operation, \
-            unused-import, \
-            use-a-generator, \
-            use-dict-literal, \
-            use-implicit-booleaness-not-comparison, \
-            use-maxsplit-arg, \
-            used-before-assignment, \
-            useless-import-alias, \
-            useless-object-inheritance, \
-            useless-return, \
-            useless-super-delegation, \
+            access-member-before-definition,\
+            arguments-differ,\
+            arguments-renamed,\
+            assert-on-string-literal,\
+            bad-classmethod-argument,\
+            bad-thread-instantiation,\
+            chained-comparison,\
+            comparison-with-callable,\
+            consider-iterating-dictionary,\
+            consider-using-dict-items,\
+            consider-using-enumerate,\
+            consider-using-f-string,\
+            consider-using-from-import,\
+            consider-using-generator,\
+            consider-using-get,\
+            consider-using-in,\
+            consider-using-max-builtin,\
+            consider-using-min-builtin,\
+            consider-using-set-comprehension,\
+            consider-using-with,\
+            dangerous-default-value,\
+            deprecated-method,\
+            duplicate-key,\
+            empty-docstring,\
+            expression-not-assigned,\
+            global-statement,\
+            global-variable-not-assigned,\
+            implicit-str-concat,\
+            logging-not-lazy,\
+            missing-final-newline,\
+            no-else-break,\
+            no-else-continue,\
+            no-else-raise,\
+            no-member,\
+            no-method-argument,\
+            no-value-for-parameter,\
+            not-async-context-manager,\
+            not-callable,\
+            parse-error,\
+            pointless-statement,\
+            pointless-string-statement,\
+            redefined-builtin,\
+            redundant-unittest-assert,\
+            reimported,\
+            simplifiable-if-statement,\
+            subprocess-run-check,\
+            super-with-arguments,\
+            superfluous-parens,\
+            too-many-lines,\
+            too-many-nested-blocks,\
+            undefined-all-variable,\
+            undefined-loop-variable,\
+            undefined-variable,\
+            unexpected-keyword-arg,\
+            ungrouped-imports,\
+            unidiomatic-typecheck,\
+            unnecessary-comprehension,\
+            unnecessary-dunder-call,\
+            unnecessary-lambda,\
+            unnecessary-lambda-assignment,\
+            unneeded-not,\
+            unsubscriptable-object,\
+            unsupported-assignment-operation,\
+            unsupported-binary-operation,\
+            unused-import,\
+            use-a-generator,\
+            use-dict-literal,\
+            use-implicit-booleaness-not-comparison,\
+            use-maxsplit-arg,\
+            used-before-assignment,\
+            useless-import-alias,\
+            useless-object-inheritance,\
+            useless-return,\
+            useless-super-delegation,\
             " \
           docs src tests test-data
