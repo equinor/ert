@@ -40,7 +40,7 @@ class EnkfFs(BaseCClass):
     def __init__(
         self,
         mount_point: Union[str, Path],
-        ensemble_config: "EnsembleConfig",
+        ensemble_config: EnsembleConfig,
         ensemble_size: int,
         read_only: bool = False,
     ):
