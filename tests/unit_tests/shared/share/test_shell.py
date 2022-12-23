@@ -228,35 +228,44 @@ def test_move_pathfile_into_folder_file_exists(shell):
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_delete_file(shell):
+def test_that_delete_file_cannot_delete_directories(shell):
     shell.mkdir("pathx")
     assert b"not a regular file" in shell.delete_file("pathx").stderr
 
-    # deleteFile which does not exist - is silently ignored
-    shell.delete_file("does/not/exist")
 
-    with open("file", "w") as f:
-        f.write("hei")
-    shell.symlink("file", "link")
-    assert os.path.islink("link")
-
-    shell.delete_file("file")
-    assert not os.path.isfile("file")
-    assert os.path.islink("link")
-    shell.delete_file("link")
-    assert not os.path.islink("link")
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_delete_file_ignores_non_existing_files(shell):
+    assert b"ignored" in shell.delete_file("does/not/exist").stderr
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_delete_directory(shell):
-    # deleteDriecteory which does not exist - is silently ignored
-    shell.delete_directory("does/not/exist")
+def test_that_delete_file_deletes_broken_symlinks(shell):
+    Path("file").write_text("hei", encoding="utf-8")
+    shell.symlink("file", "link")
+    assert Path("link").is_symlink()
 
-    with open("file", "w") as f:
+    shell.delete_file("file")
+    assert not Path("file").exists()
+    assert Path("link").is_symlink() and not Path("link").exists()
+    shell.delete_file("link")
+    assert not Path("link").is_symlink() and not Path("link").exists()
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_delete_non_existing_directory_is_silently_ignored(shell):
+    assert b"delete ignored" in shell.delete_directory("does/not/exist").stderr
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_delete_directory_on_regular_file_fails(shell):
+    with open("file", mode="w", encoding="utf-8") as f:
         f.write("hei")
 
     assert b"not a directory" in shell.delete_directory("file").stderr
 
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_delete_directory_does_not_follow_symlinks(shell):
     shell.mkdir("link_target/subpath")
     with open("link_target/link_file", "w") as f:
         f.write("hei")
@@ -272,6 +281,20 @@ def test_delete_directory(shell):
     shell.delete_directory("path")
     assert not os.path.exists("path")
     assert os.path.exists("link_target/link_file")
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_delete_directory_can_delete_directories_with_internal_symlinks(shell):
+    shell.mkdir("to_be_deleted")
+    Path("to_be_deleted/link_target.txt").write_text("hei", encoding="utf-8")
+
+    os.chdir("to_be_deleted")  # shell.symlink() requires this
+    shell.symlink("link_target.txt", "link")
+    os.chdir("..")
+    assert Path("to_be_deleted/link").exists()
+
+    shell.delete_directory("to_be_deleted")
+    assert not Path("to_be_deleted").exists()
 
 
 @pytest.mark.usefixtures("use_tmpdir")
