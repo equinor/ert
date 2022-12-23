@@ -4,7 +4,7 @@ import sys
 
 
 def delete_file(filename):
-    stat_info = os.stat(filename)
+    stat_info = os.lstat(filename)
     uid = stat_info.st_uid
     if uid == os.getuid():
         os.unlink(filename)
@@ -56,7 +56,7 @@ def delete_directory(path):
 
         delete_empty_directory(path)
     else:
-        sys.stderr.write(f"Directory:'{path}' not exist - delete ignored\n")
+        sys.stderr.write(f"Directory:'{path}' does not exist - delete ignored\n")
 
 
 if __name__ == "__main__":
