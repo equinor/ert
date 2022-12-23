@@ -20,10 +20,6 @@ install_package () {
 }
 
 start_tests () {
-    if [[ ${CI_KOMODO_RELEASE} =~ py27$  ]]
-    then
-        export PYTEST_QT_API=pyqt4v2
-    fi
     export NO_PROXY=localhost,127.0.0.1
 
     pytest --hypothesis-profile=ci -m "not requires_window_manager" tests/
