@@ -70,7 +70,7 @@ class Shell:
 
     @staticmethod
     def __deleteFile(filename):
-        stat_info = os.stat(filename)
+        stat_info = os.lstat(filename)
         uid = stat_info.st_uid
         if uid == os.getuid():
             os.unlink(filename)
