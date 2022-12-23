@@ -250,6 +250,19 @@ def test_copy_directory_error():
         copy_directory("hei", "target")
 
 
+def test_that_delete_directory_can_delete_directories_with_internal_symlinks():
+    mkdir("to_be_deleted")
+    Path("to_be_deleted/link_target.txt").write_text("hei", encoding="utf-8")
+
+    os.chdir("to_be_deleted")
+    symlink("link_target.txt", "link")
+    os.chdir("..")
+    assert Path("to_be_deleted/link").exists()
+
+    delete_directory("to_be_deleted")
+    assert not Path("to_be_deleted").exists()
+
+
 @pytest.mark.usefixtures("use_tmpdir")
 def test_copy_file():
     with pytest.raises(IOError):
