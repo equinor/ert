@@ -31,3 +31,4 @@ sphinx_rtd_theme
 sphinxcontrib-plantuml
 sphinxcontrib.datatemplates
 testpath
+setuptools>=65.5.1 # not directly required, pinned by Snyk to avoid a vulnerability
