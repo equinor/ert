@@ -16,13 +16,8 @@ install_test_dependencies () {
 }
 
 start_tests () {
-    if [[ ${CI_KOMODO_RELEASE} =~ py27$  ]]
-    then
-        export PYTEST_QT_API=pyqt4v2
-    fi
     export NO_PROXY=localhost,127.0.0.1
 
-    ln -s /project/res-testdata/ErtTestData ${CI_TEST_ROOT}/test-data/Equinor
     export ECL_SKIP_SIGNAL=ON
 
     # The existence of a running xvfb process will produce
