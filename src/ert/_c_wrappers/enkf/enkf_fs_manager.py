@@ -9,8 +9,6 @@ from ert._c_wrappers.enkf.enums import RealizationStateEnum
 if TYPE_CHECKING:
     from ecl.summary import EclSum
 
-    from ert._c_wrappers.enkf import EnsembleConfig
-
 FS_VERSION = 0
 FS_VERSION_FILE = ".fs_version"
 
@@ -34,7 +32,6 @@ class FileSystemManager:
         self,
         capacity: int,
         storage_path: Path,
-        ensemble_config: "EnsembleConfig",
         ensemble_size: int,
         read_only: bool,
         refcase: Optional["EclSum"] = None,
@@ -46,7 +43,6 @@ class FileSystemManager:
             self.storage_path.mkdir(parents=True)
         self._check_version()
         self.read_only = read_only
-        self._ensemble_config = ensemble_config
         self._ensemble_size = ensemble_size
         current_case_file = storage_path / "current_case"
         if current_case_file.exists():
@@ -56,7 +52,6 @@ class FileSystemManager:
         if mount_path.exists():
             fs = EnkfFs(
                 mount_path,
-                self._ensemble_config,
                 self._ensemble_size,
                 read_only=read_only,
                 refcase=self.refcase,
@@ -64,7 +59,6 @@ class FileSystemManager:
         else:
             fs = EnkfFs.createFileSystem(
                 mount_path,
-                self._ensemble_config,
                 self._ensemble_size,
                 read_only=read_only,
                 refcase=self.refcase,
@@ -114,7 +108,6 @@ class FileSystemManager:
             raise ValueError(f"Duplicate case: {case_name} in {self.cases}")
         file_system = EnkfFs.createFileSystem(
             self.storage_path / case_name,
-            self._ensemble_config,
             self._ensemble_size,
             self.read_only,
             self.refcase,
@@ -150,7 +143,6 @@ class FileSystemManager:
         elif case_name in self.cases:
             file_system = EnkfFs(
                 self.storage_path / case_name,
-                self._ensemble_config,
                 self._ensemble_size,
                 self.read_only,
                 self.refcase,
