@@ -58,7 +58,6 @@ class EnkfFs:
     def __init__(
         self,
         mount_point: Union[str, Path],
-        ensemble_config: EnsembleConfig,
         ensemble_size: int,
         read_only: bool = False,
         refcase: Optional[EclSum] = None,
@@ -75,7 +74,6 @@ class EnkfFs:
         if self.refcase:
             time_map = self.getTimeMap()
             time_map.attach_refcase(self.refcase)
-        self._ensemble_config = ensemble_config
         self._ensemble_size = ensemble_size
         self._storage = Storage(self.mount_point)
         self._state_map = self._load_state_map()
@@ -130,15 +128,12 @@ class EnkfFs:
     def createFileSystem(
         cls,
         path: Union[str, Path],
-        ensemble_config: EnsembleConfig,
         ensemble_size: int,
         read_only: bool = False,
         refcase: Optional[EclSum] = None,
     ) -> "EnkfFs":
         path = Path(path).absolute()
-        return cls(
-            path, ensemble_config, ensemble_size, read_only=read_only, refcase=refcase
-        )
+        return cls(path, ensemble_size, read_only=read_only, refcase=refcase)
 
     def sync(self) -> None:
         self._save_state_map()
