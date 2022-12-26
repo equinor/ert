@@ -315,7 +315,6 @@ class EnKFMain:
         self.storage_manager = FileSystemManager(
             5,
             ens_path,
-            config.ensemble_config,
             self.getEnsembleSize(),
             read_only=read_only,
             refcase=self.res_config.ensemble_config.refcase,
