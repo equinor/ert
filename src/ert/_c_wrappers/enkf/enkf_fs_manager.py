@@ -33,7 +33,6 @@ class FileSystemManager:
         self,
         capacity: int,
         storage_path: Path,
-        ensemble_config: "EnsembleConfig",
         ensemble_size: int,
         read_only: bool,
     ):
@@ -43,20 +42,17 @@ class FileSystemManager:
             self.storage_path.mkdir(parents=True)
         self._check_version()
         self.read_only = read_only
-        self._ensemble_config = ensemble_config
         self._ensemble_size = ensemble_size
         current_case_file = storage_path / "current_case"
         if current_case_file.exists():
             fs = EnkfFs(
                 storage_path / current_case_file.read_text("utf-8").strip(),
-                self._ensemble_config,
                 self._ensemble_size,
                 read_only=read_only,
             )
         else:
             fs = EnkfFs.createFileSystem(
                 storage_path / "default",
-                self._ensemble_config,
                 self._ensemble_size,
                 read_only=read_only,
             )
@@ -104,7 +100,6 @@ class FileSystemManager:
             raise ValueError(f"Duplicate case: {case_name} in {self.cases}")
         file_system = EnkfFs.createFileSystem(
             self.storage_path / case_name,
-            self._ensemble_config,
             self._ensemble_size,
             self.read_only,
         )
@@ -138,7 +133,6 @@ class FileSystemManager:
         elif case_name in self.cases:
             file_system = EnkfFs.createFileSystem(
                 self.storage_path / case_name,
-                self._ensemble_config,
                 self._ensemble_size,
                 self.read_only,
             )

@@ -167,7 +167,9 @@ class CaseInitializationConfigurationPanel(QTabWidget):
             case_manager = self.ert.storage_manager
             if (
                 source_case_name in case_manager
-                and case_manager[source_case_name].is_initalized
+                and case_manager[source_case_name].is_initalized(
+                    self.ert.ensembleConfig()
+                )
                 and target_case_name in case_manager
             ):
                 member_mask = [False] * self.ert.getEnsembleSize()

@@ -146,7 +146,9 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
 
     def case_initialized(self, case: str) -> bool:
         if case in self._enkf_main.storage_manager:
-            return self._enkf_main.storage_manager[case].is_initalized
+            return self._enkf_main.storage_manager[case].is_initalized(
+                self._enkf_main.ensembleConfig()
+            )
         else:
             return False
 

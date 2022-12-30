@@ -225,9 +225,9 @@ def test_that_sampling_prior_makes_initialized_fs():
     ert = EnKFMain(res_config)
     run_context = ert.create_ensemble_context("prior", [True], iteration=0)
     storage_manager = ert.storage_manager
-    assert not storage_manager["prior"].is_initalized
+    assert not storage_manager["prior"].is_initalized(ert.ensembleConfig())
     ert.sample_prior(run_context.sim_fs, run_context.active_realizations)
-    assert storage_manager["prior"].is_initalized
+    assert storage_manager["prior"].is_initalized(ert.ensembleConfig())
 
 
 @pytest.mark.parametrize(

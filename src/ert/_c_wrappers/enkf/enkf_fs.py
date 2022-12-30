@@ -79,7 +79,6 @@ class EnkfFs(BaseCClass):
     def __init__(
         self,
         mount_point: Union[str, Path],
-        ensemble_config: "EnsembleConfig",
         ensemble_size: int,
         read_only: bool = False,
     ):
@@ -87,7 +86,6 @@ class EnkfFs(BaseCClass):
         self.case_name = self.mount_point.stem
         c_ptr = self._mount(self.mount_point.as_posix(), ensemble_size, read_only)
         super().__init__(c_ptr)
-        self._ensemble_config = ensemble_config
         self._ensemble_size = ensemble_size
         self._storage = Storage(self.mount_point)
 
@@ -100,13 +98,12 @@ class EnkfFs(BaseCClass):
     def getCaseName(self) -> str:
         return self.case_name
 
-    @property
-    def is_initalized(self) -> bool:
+    def is_initalized(self, ensemble_config: EnsembleConfig) -> bool:
         return (
             _clib.enkf_fs.is_initialized(
                 self,
-                self._ensemble_config,
-                self._ensemble_config.parameters,
+                ensemble_config,
+                ensemble_config.parameters,
                 self._ensemble_size,
             )
             or self._has_parameters()
@@ -116,14 +113,13 @@ class EnkfFs(BaseCClass):
     def createFileSystem(
         cls,
         path: Union[str, Path],
-        ensemble_config: "EnsembleConfig",
         ensemble_size: int,
         read_only: bool = False,
     ) -> "EnkfFs":
         path = Path(path).absolute()
         fs_type = EnKFFSType.BLOCK_FS_DRIVER_ID
         cls._create(path.as_posix(), fs_type, ensemble_size, False)
-        return cls(path, ensemble_config, ensemble_size, read_only=read_only)
+        return cls(path, ensemble_size, read_only=read_only)
 
     def sync(self):
         self._sync()
