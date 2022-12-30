@@ -136,11 +136,6 @@ def test_bootstrap(minimum_case):
     assert bool(minimum_case)
 
 
-def test_site_bootstrap():
-    with pytest.raises(TypeError):
-        EnKFMain(None)
-
-
 def test_invalid_res_config():
     with pytest.raises(TypeError):
         # pylint: disable=unexpected-keyword-arg, no-value-for-parameter
