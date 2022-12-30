@@ -142,12 +142,7 @@ def _generate_parameter_files(
 class EnKFMain:
     def __init__(self, config: "ResConfig", read_only: bool = False):
         self.res_config = config
-        self.update_snapshots = {}
         self._update_configuration = None
-        if config is None:
-            raise TypeError(
-                "Failed to construct EnKFMain instance due to invalid res_config."
-            )
 
         self._observations = EnkfObs(
             config.model_config.history_source,
