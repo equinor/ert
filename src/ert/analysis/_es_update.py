@@ -47,8 +47,8 @@ class SmootherSnapshot:
 def _get_A_matrix(
     temporary_storage: Dict[str, "npt.NDArray[np.double]"],
     parameters: List[update.Parameter],
-) -> Any:
-    matrices: Any = []
+) -> Optional["npt.NDArray[np.double]"]:
+    matrices: List["npt.NDArray[np.double]"] = []
     for p in parameters:
         if p.active_list.getMode() == ActiveMode.ALL_ACTIVE:
             matrices.append(temporary_storage[p.name])
@@ -56,9 +56,7 @@ def _get_A_matrix(
             matrices.append(
                 temporary_storage[p.name][p.active_list.get_active_index_list(), :]
             )
-    if not matrices:
-        return None
-    return np.vstack(matrices)
+    return np.vstack(matrices) if matrices else None
 
 
 def _get_row_scaling_A_matrices(
