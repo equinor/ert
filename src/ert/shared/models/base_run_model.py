@@ -99,8 +99,6 @@ class BaseRunModel:
         self._initial_realizations_mask: List[bool] = []
         self._completed_realizations_mask: List[bool] = []
         self.support_restart: bool = True
-        self._run_context: Optional[RunContext] = None
-        self._last_run_iteration: int = -1
         self._ert = ert
         self.facade = LibresFacade(ert)
         self._simulation_arguments = simulation_arguments
@@ -205,11 +203,6 @@ class BaseRunModel:
         self, evaluator_server_config: EvaluatorServerConfig
     ) -> RunContext:
         raise NotImplementedError("Method must be implemented by inheritors!")
-
-    def teardown_context(self) -> None:
-        # Used particularly to delete last active run_context to notify
-        # fs_manager that storage is not being written to.
-        self._run_context = None
 
     def phaseCount(self) -> int:
         return self._phase_count
@@ -491,9 +484,6 @@ class BaseRunModel:
 
     def get_forward_model(self) -> ForwardModel:
         return self.ert().resConfig().forward_model
-
-    def get_run_context(self) -> Optional[RunContext]:
-        return self._run_context
 
     @feature_enabled("new-storage")
     def _post_ensemble_data(
