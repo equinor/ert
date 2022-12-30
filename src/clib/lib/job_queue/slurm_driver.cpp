@@ -409,8 +409,8 @@ void *slurm_driver_submit_job(void *__driver, const char *cmd, int num_cpu,
     auto submit_script =
         make_submit_script(driver, cmd, job_name, num_cpu, argc, argv);
     std::vector<std::string> sbatch_argv = {
-        "--workdir=" + std::string(run_path),
-        "--job-name=" + std::string(job_name), "--parsable"};
+        "-D" + std::string(run_path), "--job-name=" + std::string(job_name),
+        "--parsable"};
     if (!driver->partition.empty())
         sbatch_argv.push_back("--partition=" + driver->partition);
     sbatch_argv.push_back(submit_script);
