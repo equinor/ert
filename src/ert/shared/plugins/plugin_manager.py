@@ -6,7 +6,7 @@ import shutil
 import tempfile
 from itertools import chain
 from types import TracebackType
-from typing import Any, List, Optional, Type
+from typing import Type
 
 import pluggy
 
@@ -240,7 +240,7 @@ class ErtPluginManager(pluggy.PluginManager):
 
 
 class ErtPluginContext:
-    def __init__(self, plugins: Optional[List[Any]] = None) -> None:
+    def __init__(self, plugins=None) -> None:
         self.plugin_manager = ErtPluginManager(plugins=plugins)
         self.tmp_dir = None
         self.tmp_site_config_filename = None
