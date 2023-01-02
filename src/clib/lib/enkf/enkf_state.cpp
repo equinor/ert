@@ -171,7 +171,6 @@ enkf_state_internalize_dynamic_eclipse_results(
     // data, and if there are observations for them. That is a problem.
     return enkf_state_check_for_missing_eclipse_summary_data(
         ens_config, matcher, smspec, iens);
-    return {LOAD_SUCCESSFUL, ""};
 }
 
 static fw_load_status enkf_state_load_gen_data_node(
