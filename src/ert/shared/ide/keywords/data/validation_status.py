@@ -11,13 +11,13 @@ class ValidationStatus:
     def setFailed(self):
         self.__fail = True
 
-    def failed(self):
+    def failed(self) -> bool:
         return self.__fail
 
     def addToMessage(self, message):
         self.__message += message + "\n"
 
-    def message(self):
+    def message(self) -> str:
         return self.__message.strip()
 
     def setValue(self, value):

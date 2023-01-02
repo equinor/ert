@@ -7,3 +7,5 @@ except ImportError:
 from ert.shared.hook_implementations.jobs import (
     _resolve_ert_share_path as ert_share_path,
 )
+
+__all__ = ["ert_share_path", "__version__"]

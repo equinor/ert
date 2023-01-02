@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 import logging.config
 import os
@@ -5,6 +7,7 @@ import re
 import sys
 from argparse import ArgumentParser, ArgumentTypeError
 from contextlib import contextmanager
+from typing import Any, Dict, Generator, Optional, Sequence, Union
 
 import yaml
 from ecl import set_abort_handler
@@ -23,8 +26,10 @@ from ert.cli import (
 from ert.cli.main import ErtCliError, ErtTimeoutError, run_cli
 from ert.logging import LOGGING_CONFIG
 from ert.logging._log_util_abort import _log_util_abort
+from ert.namespace import Namespace
 from ert.services import Storage, WebvizErt
 from ert.shared.feature_toggling import FeatureToggling
+from ert.shared.ide.keywords.data.validation_status import ValidationStatus
 from ert.shared.ide.keywords.definitions import (
     IntegerArgument,
     NumberListStringArgument,
@@ -37,7 +42,7 @@ from ert.shared.plugins.plugin_manager import ErtPluginContext
 from ert.shared.storage.command import add_parser_options as ert_api_add_parser_options
 
 
-def run_ert_storage(args):
+def run_ert_storage(args: Namespace) -> None:
     kwargs = {"res_config": args.config, "verbose": True}
 
     if args.database_url is not None:
@@ -47,16 +52,16 @@ def run_ert_storage(args):
         server.wait()
 
 
-def run_webviz_ert(args):
+def run_webviz_ert(args: Namespace) -> None:
     try:
         # pylint: disable=unused-import,import-outside-toplevel
-        import webviz_ert
+        import webviz_ert  # type: ignore
     except ImportError as err:
         raise ValueError(
             "Running `ert vis` requires that webviz_ert is installed"
         ) from err
 
-    kwargs = {"verbose": args.verbose}
+    kwargs: Dict[str, Any] = {"verbose": args.verbose}
     if args.config:
         res_config = ResConfig(args.config)
         os.chdir(res_config.config_path)
@@ -91,13 +96,13 @@ Starting up Webviz-ERT. This might take more than a minute.
             webviz_ert_server.wait()
 
 
-def strip_error_message_and_raise_exception(validated):
+def strip_error_message_and_raise_exception(validated: ValidationStatus) -> None:
     error = validated.message()
     error = re.sub(r"\<[^>]*\>", " ", error)
     raise ArgumentTypeError(error)
 
 
-def valid_file(fname):
+def valid_file(fname: str) -> str:
     if not os.path.isfile(fname):
         raise ArgumentTypeError(f"File was not found: {fname}")
     if not os.access(fname, os.R_OK):
@@ -105,7 +110,7 @@ def valid_file(fname):
     return fname
 
 
-def valid_realizations(user_input):
+def valid_realizations(user_input: str) -> str:
     validator = RangeStringArgument()
     validated = validator.validate(user_input)
     if validated.failed():
@@ -113,7 +118,7 @@ def valid_realizations(user_input):
     return user_input
 
 
-def valid_weights(user_input):
+def valid_weights(user_input: str) -> str:
     validator = NumberListStringArgument()
     validated = validator.validate(user_input)
     if validated.failed():
@@ -121,7 +126,7 @@ def valid_weights(user_input):
     return user_input
 
 
-def valid_name_format(user_input):
+def valid_name_format(user_input: str) -> str:
     validator = ProperNameFormatArgument()
     validated = validator.validate(user_input)
     if validated.failed():
@@ -129,7 +134,7 @@ def valid_name_format(user_input):
     return user_input
 
 
-def valid_name(user_input):
+def valid_name(user_input: str) -> str:
     validator = ProperNameArgument()
     validated = validator.validate(user_input)
     if validated.failed():
@@ -137,7 +142,7 @@ def valid_name(user_input):
     return user_input
 
 
-def valid_iter_num(user_input):
+def valid_iter_num(user_input: str) -> str:
     validator = IntegerArgument(from_value=0)
     validated = validator.validate(user_input)
     if validated.failed():
@@ -145,7 +150,7 @@ def valid_iter_num(user_input):
     return user_input
 
 
-def valid_num_iterations(user_input):
+def valid_num_iterations(user_input: str) -> str:
     validator = IntegerArgument(from_value=1)
     validated = validator.validate(user_input)
     if validated.failed():
@@ -180,7 +185,7 @@ def valid_port_range(user_input: str) -> range:
     return range(port_a, port_b + 1)
 
 
-def range_limited_int(user_input):
+def range_limited_int(user_input: str) -> int:
     try:
         i = int(user_input)
     except ValueError:
@@ -190,7 +195,7 @@ def range_limited_int(user_input):
     raise ArgumentTypeError("Range must be in range 1 - 99")
 
 
-def run_gui_wrapper(args):
+def run_gui_wrapper(args: Namespace) -> None:
     # pylint: disable=import-outside-toplevel
     from ert.gui.gert_main import run_gui
 
@@ -198,7 +203,7 @@ def run_gui_wrapper(args):
 
 
 # pylint: disable=too-many-statements
-def get_ert_parser(parser=None):
+def get_ert_parser(parser: Optional[ArgumentParser] = None) -> ArgumentParser:
     if parser is None:
         parser = ArgumentParser(description="ERT - Ensemble Reservoir Tool")
 
@@ -468,12 +473,12 @@ def get_ert_parser(parser=None):
     return parser
 
 
-def ert_parser(parser, argv):
-    return get_ert_parser(parser).parse_args(argv)
+def ert_parser(parser: Optional[ArgumentParser], args: Sequence[str]) -> Namespace:
+    return get_ert_parser(parser).parse_args(args, namespace=Namespace())
 
 
 @contextmanager
-def start_ert_server(mode: str):
+def start_ert_server(mode: str) -> Generator[None, None, None]:
     if mode in ("api", "vis") or not FeatureToggling.is_enabled("new-storage"):
         yield
         return
@@ -482,7 +487,7 @@ def start_ert_server(mode: str):
         yield
 
 
-def log_process_usage():
+def log_process_usage() -> None:
     try:
         # pylint: disable=import-outside-toplevel
         import resource
@@ -500,7 +505,7 @@ def log_process_usage():
 
         maxrss = usage.ru_maxrss // rss_scale
 
-        usage = {
+        usage_dict: Dict[str, Union[int, float]] = {
             "User time": usage.ru_utime,
             "System time": usage.ru_stime,
             "File system inputs": usage.ru_inblock,
@@ -511,7 +516,7 @@ def log_process_usage():
             "Swaps": usage.ru_nswap,
             "Peak memory use (kB)": maxrss,
         }
-        logging.info(f"Peak memory use: {maxrss} kB", extra=usage)
+        logging.info(f"Peak memory use: {maxrss} kB", extra=usage_dict)
     # pylint: disable=broad-except
     except Exception as exc:
         logging.warning(
@@ -519,7 +524,7 @@ def log_process_usage():
         )
 
 
-def main():
+def main() -> None:
     # pylint: disable=import-outside-toplevel
     import locale
 
@@ -531,7 +536,7 @@ def main():
     try:
         os.makedirs(log_dir, exist_ok=True)
     except PermissionError as err:
-        sys.exit(err)
+        sys.exit(str(err))
 
     os.environ["ERT_LOG_DIR"] = log_dir
 
@@ -568,9 +573,9 @@ def main():
         logger.exception(f'ERT crashed unexpectedly with "{err}"')
 
         logfiles = set()  # Use set to avoid duplicates...
-        for handler in logging.getLogger().handlers:
-            if isinstance(handler, logging.FileHandler):
-                logfiles.add(handler.baseFilename)
+        for loghandler in logging.getLogger().handlers:
+            if isinstance(loghandler, logging.FileHandler):
+                logfiles.add(loghandler.baseFilename)
 
         msg = f'ERT crashed unexpectedly with "{err}".\nSee logfile(s) for details:'
         msg += "\n   " + "\n   ".join(logfiles)

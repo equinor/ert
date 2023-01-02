@@ -2,7 +2,9 @@ import logging
 import traceback
 
 
-def _log_util_abort(filename, lineno, function, message, backtrace):
+def _log_util_abort(
+    filename: str, lineno: int, function: str, message: str, backtrace: str
+) -> None:
     """
     When this function is called we are in util_abort, so will not be able to recover
     so we flush the logs to make sure we are able to propagate them.
