@@ -5,6 +5,7 @@ The main goal is to facilitate data-analysis using scipy and similar tools,
 instead of having to implement analysis-functionality into ERT using C/C++.
 The API is typically meant used as part of workflows.
 """
+from __future__ import annotations
 
 from collections import defaultdict
 from typing import TYPE_CHECKING, List, Optional
@@ -84,7 +85,7 @@ class MeasuredData:
         self._set_data(filtered_dataset)
 
     def is_empty(self) -> bool:
-        return self.data.empty
+        return bool(self.data.empty)
 
     def _get_data(
         self, observation_keys: List[str], load_data: bool, case_name: str
@@ -173,4 +174,4 @@ class MeasuredData:
                 index_cond = [data_index == index for index in index_list]
                 index_cond = np.logical_or.reduce(index_cond)
                 conditions.append(np.logical_and(index_cond, (names == obs_key)))
-        return np.logical_or.reduce(conditions)
+        return np.logical_or.reduce(conditions)  # type: ignore

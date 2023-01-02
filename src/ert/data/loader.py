@@ -1,7 +1,12 @@
-from functools import partial
+from __future__ import annotations
 
-import deprecation  # type: ignore
+from functools import partial
+from typing import TYPE_CHECKING, Any, Callable, Optional, Protocol, Sequence
+
 import pandas as pd
+
+if TYPE_CHECKING:
+    from ert.libres_facade import LibresFacade
 
 # importlib.metadata added in python 3.8
 try:
@@ -14,7 +19,18 @@ except ImportError:
     __version__ = get_distribution("ert").version
 
 
-def data_loader_factory(observation_type):
+class DataLoader(Protocol):
+    def __call__(
+        self,
+        ert: LibresFacade,
+        obs_keys: Sequence[str],
+        case_name: str,
+        include_data: bool = False,
+    ) -> pd.DataFrame:
+        ...
+
+
+def data_loader_factory(observation_type: str) -> DataLoader:
     """
     Currently, the methods returned by this factory differ. They should not.
     TODO: Remove discrepancies between returned methods.
@@ -38,14 +54,14 @@ def data_loader_factory(observation_type):
 
 
 def _extract_data(
-    facade,
-    obs_keys,
-    case_name,
-    response_loader,
-    obs_loader,
-    expected_obs,
-    include_data=True,
-):
+    facade: LibresFacade,
+    obs_keys: Sequence[str],
+    case_name: str,
+    response_loader: Callable[[LibresFacade, str, str], pd.DataFrame],
+    obs_loader: Callable[[LibresFacade, Sequence[str], str], pd.DataFrame],
+    expected_obs: str,
+    include_data: bool = True,
+) -> pd.DataFrame:
     if isinstance(obs_keys, str):
         obs_keys = [obs_keys]
     data_map = {}
@@ -84,47 +100,16 @@ def _extract_data(
     return pd.concat(data_map, axis=1).astype(float)
 
 
-@deprecation.deprecated(
-    deprecated_in="2.19",
-    current_version=__version__,
-    details="Use the data_loader_factory",
-)
-def load_general_data(facade, obs_keys, case_name, include_data=True):
-    return _extract_data(
-        facade,
-        obs_keys,
-        case_name,
-        _load_general_response,
-        _load_general_obs,
-        "GEN_OBS",
-        include_data=include_data,
-    )
-
-
-@deprecation.deprecated(
-    deprecated_in="2.19",
-    current_version=__version__,
-    details="Use the data_loader_factory",
-)
-def load_summary_data(facade, obs_keys, case_name, include_data=True):
-    return _extract_data(
-        facade,
-        obs_keys,
-        case_name,
-        _load_summary_response,
-        _load_summary_obs,
-        "SUMMARY_OBS",
-        include_data=include_data,
-    )
-
-
-def _create_multi_index(key_index, data_index):
-    arrays = [key_index, data_index]
-    tuples = list(zip(*arrays))
+def _create_multi_index(
+    key_index: Sequence[int], data_index: Sequence[int]
+) -> pd.MultiIndex:
+    tuples = list(zip(key_index, data_index))
     return pd.MultiIndex.from_tuples(tuples, names=["key_index", "data_index"])
 
 
-def _load_general_response(facade, obs_key, case_name):
+def _load_general_response(
+    facade: LibresFacade, obs_key: str, case_name: str
+) -> pd.DataFrame:
     data_key = facade.get_data_key_for_obs_key(obs_key)
     try:
         time_steps = [
@@ -144,7 +129,9 @@ def _load_general_response(facade, obs_key, case_name):
     return data
 
 
-def _load_general_obs(facade, observation_keys, case_name):
+def _load_general_obs(
+    facade: LibresFacade, observation_keys: Sequence[str], case_name: str
+) -> pd.DataFrame:
     observations = []
     for observation_key in observation_keys:
         obs_vector = facade.get_observations()[observation_key]
@@ -175,14 +162,9 @@ def _load_general_obs(facade, observation_keys, case_name):
     return pd.concat(observations, axis=1)
 
 
-def _get_block_measured(ensemble_size, block_data):
-    data = []
-    for ensemble_nr in range(ensemble_size):
-        data.append(pd.DataFrame([block_data[ensemble_nr]], index=[ensemble_nr]))
-    return pd.concat(data)
-
-
-def _load_summary_response(facade, obs_key, case_name):
+def _load_summary_response(
+    facade: LibresFacade, obs_key: str, case_name: str
+) -> pd.DataFrame:
     data_key = facade.get_data_key_for_obs_key(obs_key)
     data = facade.load_all_summary_data(case_name, [data_key])
     if data.empty:
@@ -192,7 +174,9 @@ def _load_summary_response(facade, obs_key, case_name):
     return data
 
 
-def _load_summary_obs(facade, observation_keys, case_name):
+def _load_summary_obs(
+    facade: LibresFacade, observation_keys: Sequence[str], case_name: str
+) -> pd.DataFrame:
     data_key = facade.get_data_key_for_obs_key(observation_keys[0])
     args = (facade, data_key, case_name)
     data = _get_summary_observations(*args)
@@ -202,7 +186,9 @@ def _load_summary_obs(facade, observation_keys, case_name):
     return pd.concat(obs_map, axis=1)
 
 
-def _get_summary_observations(facade, data_key, case_name):
+def _get_summary_observations(
+    facade: LibresFacade, data_key: str, case_name: str
+) -> pd.DataFrame:
     data = facade.load_observation_data(case_name, [data_key]).transpose()
     # The index from SummaryObservationCollector is {data_key} and STD_{data_key}"
     # to match the other data types this needs to be changed to OBS and STD, hence
@@ -212,7 +198,9 @@ def _get_summary_observations(facade, data_key, case_name):
     return data
 
 
-def _remove_inactive_report_steps(data, facade, observation_key, *args):
+def _remove_inactive_report_steps(
+    data: pd.DataFrame, facade: LibresFacade, observation_key: str, *args: Any
+) -> pd.DataFrame:
     # XXX: the data returned from the SummaryObservationCollector is not
     # specific to an observation_key, this means that the dataset contains all
     # observations on the data_key. Here the extra data is removed.
@@ -229,7 +217,9 @@ def _remove_inactive_report_steps(data, facade, observation_key, *args):
     return data
 
 
-def _filter_df1_on_df2_by_index(data, obs):
+def _filter_df1_on_df2_by_index(
+    data: Optional[pd.DataFrame], obs: pd.DataFrame
+) -> Optional[pd.DataFrame]:
     if data is None:
         return None
     else:

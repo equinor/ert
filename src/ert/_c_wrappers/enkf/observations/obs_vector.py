@@ -1,4 +1,4 @@
-from typing import Union
+from typing import List, Union
 
 from cwrap import BaseCClass
 
@@ -85,7 +85,7 @@ class ObsVector(BaseCClass):
         for step in self.getStepList():
             yield self.getNode(step)
 
-    def getStepList(self):
+    def getStepList(self) -> List[int]:
         """
         Will return an IntVector with the active report steps.
         """
