@@ -92,7 +92,7 @@ def test_res_config_parses_date():
     expected_storage = os.path.abspath(f"storage/{test_config_file_base}-{date_string}")
     expected_run_path = f"{expected_storage}/runpath/realization-%d/iter-%d"
     expected_ens_path = f"{expected_storage}/ensemble"
-    assert res_config.model_config.ens_path == expected_ens_path
+    assert res_config.ens_path == expected_ens_path
     assert res_config.model_config.runpath_format_string == expected_run_path
 
 
@@ -156,3 +156,39 @@ def test_site_config_dict_same_as_from_file(tmp_path_factory, config_generator):
         assert (
             ResConfig(config_dict=config_dict).env_vars == ResConfig(filename).env_vars
         )
+
+
+def test_default_ens_path(tmpdir):
+    with tmpdir.as_cwd():
+        config_file = "test.ert"
+        with open(config_file, "w", encoding="utf-8") as f:
+            f.write(
+                """
+NUM_REALIZATIONS  1
+            """
+            )
+        res_config = ResConfig(config_file)
+        # By default, the ensemble path is set to 'storage'
+        default_ens_path = res_config.ens_path
+
+        with open(config_file, "a", encoding="utf-8") as f:
+            f.write(
+                """
+ENSPATH storage
+            """
+            )
+
+        # Set the ENSPATH in the config file
+        res_config = ResConfig(config_file)
+        set_in_file_ens_path = res_config.ens_path
+
+        assert default_ens_path == set_in_file_ens_path
+
+        config_dict = {
+            ConfigKeys.NUM_REALIZATIONS: 1,
+            "ENSPATH": os.path.join(os.getcwd(), "storage"),
+        }
+
+        dict_set_ens_path = ResConfig(config_dict=config_dict).ens_path
+
+        assert dict_set_ens_path == config_dict["ENSPATH"]

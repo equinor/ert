@@ -268,6 +268,7 @@ class ResConfig:
             user_config_content, site_config_content
         )
         ResConfig.apply_config_content_defaults(config_content_dict, self.config_path)
+        self.ens_path: str = config_content_dict[ConfigKeys.ENSPATH]
         self.substitution_list = SubstitutionList.from_dict(config_content_dict)
 
         self.env_vars = EnvironmentVarlist.from_dict(config_content_dict)
@@ -357,6 +358,7 @@ class ResConfig:
         init_site_config_parser(site_config_parser)
         # treat the default config dir
 
+        self.ens_path: str = config_dict[ConfigKeys.ENSPATH]
         self.substitution_list = SubstitutionList.from_dict(config_dict=config_dict)
         self.env_vars = EnvironmentVarlist.from_dict(config_dict=config_dict)
         self.random_seed = config_dict.get(ConfigKeys.RANDOM_SEED, None)
@@ -791,6 +793,7 @@ class ResConfig:
         return (
             other is not None
             and isinstance(other, ResConfig)
+            and self.ens_path == other.ens_path
             and self.substitution_list == other.substitution_list
             and self.installed_jobs == other.installed_jobs
             and self.env_vars == other.env_vars
@@ -812,6 +815,7 @@ class ResConfig:
     def __str__(self):
         return (
             f"SubstitutionList: {self.substitution_list},\n"
+            f"EnsPath: {self.ens_path},\n"
             f"Installed jobs: {self.installed_jobs},\n"
             f"EnvironmentVarlist: {self.env_vars},\n"
             f"RandomSeed: {self.random_seed},\n"

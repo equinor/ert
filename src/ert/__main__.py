@@ -60,7 +60,7 @@ def run_webviz_ert(args):
     if args.config:
         res_config = ResConfig(args.config)
         os.chdir(res_config.config_path)
-        ens_path = res_config.model_config.ens_path
+        ens_path = res_config.ens_path
 
         # Changing current working directory means we need to
         # only use the base name of the config file path

@@ -181,7 +181,7 @@ class EnKFMain:
         self.addDataKW("<ECLBASE>", jobname)
 
         # Initialize storage
-        ens_path = Path(config.model_config.ens_path)
+        ens_path = Path(config.ens_path)
         self.storage_manager = FileSystemManager(
             5,
             ens_path,
@@ -464,7 +464,7 @@ class EnKFMain:
         self.addDataKW("<ERT-CASE>", case_name)
         self.addDataKW("<ERTCASE>", case_name)
         self.storage_manager.active_case = case_name
-        (Path(self.getModelConfig().ens_path) / "current_case").write_text(case_name)
+        (Path(self.res_config.ens_path) / "current_case").write_text(case_name)
 
     def createRunPath(self, run_context: RunContext) -> None:
         for iens, run_arg in enumerate(run_context):

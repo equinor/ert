@@ -48,7 +48,7 @@ def run_cli(args):
     os.chdir(res_config.config_path)
     ert = EnKFMain(res_config)
     facade = LibresFacade(ert)
-    ens_path = Path(res_config.model_config.ens_path)
+    ens_path = Path(res_config.ens_path)
     storage_lock = filelock.FileLock(ens_path / f"{ens_path.stem}.lock")
     try:
         storage_lock.acquire(timeout=5)
