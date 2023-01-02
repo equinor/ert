@@ -1,8 +1,12 @@
+from __future__ import annotations
+
 import logging
 import os
 import shutil
 import tempfile
 from itertools import chain
+from types import TracebackType
+from typing import Any, List, Optional, Type
 
 import pluggy
 
@@ -22,7 +26,7 @@ import ert.shared.plugins.hook_specifications  # noqa
 # pylint: disable=no-member
 # (pylint does not know what the plugins offer)
 class ErtPluginManager(pluggy.PluginManager):
-    def __init__(self, plugins=None):
+    def __init__(self, plugins=None) -> None:
         super().__init__(_PLUGIN_NAMESPACE)
         self.add_hookspecs(ert.shared.plugins.hook_specifications)
         if plugins is None:
@@ -229,14 +233,14 @@ class ErtPluginManager(pluggy.PluginManager):
         self.hook.legacy_ertscript_workflow(config=config)
         return config
 
-    def add_logging_handle_to_root(self, logger):
+    def add_logging_handle_to_root(self, logger: logging.Logger) -> None:
         handles = self.hook.add_log_handle_to_root()
         for handle in handles:
             logger.addHandler(handle)
 
 
 class ErtPluginContext:
-    def __init__(self, plugins=None):
+    def __init__(self, plugins: Optional[List[Any]] = None) -> None:
         self.plugin_manager = ErtPluginManager(plugins=plugins)
         self.tmp_dir = None
         self.tmp_site_config_filename = None
@@ -252,7 +256,7 @@ class ErtPluginContext:
             logging.debug(f"Temporary site-config created: {tmp_site_config_filename}")
         return tmp_site_config_filename
 
-    def __enter__(self):
+    def __enter__(self) -> ErtPluginContext:
         logging.debug("Creating temporary directory for site-config")
         self.tmp_dir = tempfile.mkdtemp()
         logging.debug(f"Temporary directory created: {self.tmp_dir}")
@@ -278,13 +282,18 @@ class ErtPluginContext:
                     f"{name}={self.backup_env.get(name)}, leaving it as is"
                 )
 
-    def _reset_environment(self):
+    def _reset_environment(self) -> None:
         for name in self.env.keys():
             if self.backup_env.get(name) is None and name in os.environ:
                 logging.debug(f"Resetting environment variable {name}")
                 del os.environ[name]
 
-    def __exit__(self, *args):
+    def __exit__(
+        self,
+        exception: BaseException,
+        exception_type: Type[BaseException],
+        traceback: TracebackType,
+    ) -> None:
         self._reset_environment()
         logging.debug("Deleting temporary directory for site-config")
         shutil.rmtree(self.tmp_dir)

@@ -2,13 +2,14 @@ import os
 import pathlib
 from datetime import datetime
 from logging import FileHandler
+from typing import Any
 
 LOGGING_CONFIG = pathlib.Path(__file__).parent.resolve() / "logger.conf"
 STORAGE_LOG_CONFIG = pathlib.Path(__file__).parent.resolve() / "storage_log.conf"
 
 
 class TimestampedFileHandler(FileHandler):
-    def __init__(self, filename: str, *args, **kwargs) -> None:
+    def __init__(self, filename: str, *args: Any, **kwargs: Any) -> None:
 
         filename, extension = os.path.splitext(filename)
         filename = (
