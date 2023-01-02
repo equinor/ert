@@ -669,39 +669,7 @@ and/or history matching project.
 .. topic:: FIELD
 
         The FIELD keyword is used to parametrize quantities which have extent over the
-        full grid. Both dynamic properties like pressure, and static properties like
-        porosity, are implemented in terms of FIELD objects. When adding fields in the
-        config file the syntax is a bit different for dynamic fields (typically
-        solution data from ECLIPSE) and parameter fields like permeability and
-        porosity or Gaussian Random Fields used by APS.
-
-        **Dynamic fields**
-
-        To add a dynamic field the entry in the configuration file looks like this:
-
-        ::
-
-                FIELD   <ID>   DYNAMIC  MIN:X  MAX:Y
-
-        In this case ID is not an arbitrary string; it must coincide with the keyword
-        name found in the ECLIPSE restart file, e.g. PRESSURE. Optionally, you can add
-        a minimum and/or a maximum value with MIN:X and MAX:Y.
-
-        *Example A:*
-
-        ::
-
-                -- Adding pressure field (unbounded)
-                FIELD PRESSURE DYNAMIC
-
-        *Example B:*
-
-        ::
-
-                -- Adding a bounded water saturation field
-                FIELD SWAT DYNAMIC MIN:0.2 MAX:0.95
-
-        **Parameter fields**
+        full grid. 
 
         A parameter field (e.g. porosity or permeability or Gaussian Random Fields from APS) is defined as follows:
 
@@ -724,7 +692,9 @@ and/or history matching project.
         ERT and need an embedded %d.
 
         The input arguments MIN, MAX, INIT_TRANSFORM and OUTPUT_TRANSFORM are all
-        optional. MIN and MAX are as for dynamic fields.
+        optional. 
+        
+        MIN and MAX allows you to add a minimum and/or a maximum value with MIN:X and MAX:Y.
 
         For Assisted history matching, the variables in ERT should be normally
         distributed internally - the purpose of the transformations is to enable
@@ -769,7 +739,7 @@ and/or history matching project.
         are used to beforehand - but we recommend the IMPORT form. When using RMS APS
         plugin to create Gaussian Random Fields, the recommended file format is ROFF binary.
 
-        *Example C:*
+        *Example A:*
 
         ::
 
@@ -784,7 +754,7 @@ and/or history matching project.
                 FIELD  aps_Volon_GRF2  PARAMETER  aps_Volon_GRF2.roff  INIT_FILES:rms/output/aps/aps_Volon_GRF2.roff   MIN:-5.5  MAX:5.5  FORWARD_INIT:True
                 FIELD  aps_Volon_GRF3  PARAMETER  aps_Volon_GRF3.roff  INIT_FILES:rms/output/aps/aps_Volon_GRF3.roff   MIN:-5.5  MAX:5.5  FORWARD_INIT:True
 
-        *Example D:*
+        *Example B:*
 
         ::
 
@@ -795,21 +765,6 @@ and/or history matching project.
 		-- in INIT_FILES must be the same as the ID.
                 FIELD  perm_zone_A   PARAMETER  perm_zone_A.roff  INIT_FILES:/some/path/perm_zone_A.roff     INIT_TRANSFORM:LOG  OUTPUT_TRANSFORM:EXP   MIN:-5.5  MAX:5.5  FORWARD_INIT:True
 
-
-
-
-        **General fields**
-
-        In addition to dynamic and parameter field there is also a general field,
-        where you have fine grained control over input/output. Use of the general
-        field type is only relevant for advanced features. The arguments for the
-        general field type are as follows:
-
-        ::
-
-                FIELD   ID  GENERAL    FILE_GENERATED_BY_ERT  FILE_LOADED_BY_ERT    <OPTIONS>
-
-        The OPTIONS argument is the same as for the parameter field.
 
 .. _gen_data:
 .. topic:: GEN_DATA
