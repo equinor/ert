@@ -532,8 +532,7 @@ Pecularites of EnKF heritage include:
 
 1. The `FIELD` implementation can behave both as a dynamic quantity, i.e.
    pressure and saturation, and static property like porosity. In ERT it is
-   currently *only used* as a parameter, but that this *possible* dual usage
-   exists in the code adds a significant complexity.
+   currently *only used* as a parameter.
 
 2. The parameter types have an internal pseudo time dependence corresponding to
    the "update time" induced by the EnKF scheme. This pseudo time dependence is
