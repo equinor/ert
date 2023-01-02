@@ -2,7 +2,7 @@ from datetime import datetime
 from io import StringIO
 
 from ert.cli.monitor import Monitor
-from ert.ensemble_evaluator.event import _UpdateEvent
+from ert.ensemble_evaluator.event import UpdateEvent
 from ert.ensemble_evaluator.snapshot import RealizationSnapshot, Snapshot, SnapshotDict
 from ert.ensemble_evaluator.state import (
     REALIZATION_STATE_FINISHED,
@@ -66,7 +66,7 @@ def test_print_progress():
         sd.reals[i] = RealizationSnapshot(status=status, active=True)
     monitor._snapshots[0] = Snapshot(sd.dict())
     monitor._start_time = datetime.now()
-    general_event = _UpdateEvent(
+    general_event = UpdateEvent(
         phase_name="Test Phase",
         current_phase=0,
         total_phases=2,

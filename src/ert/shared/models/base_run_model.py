@@ -3,9 +3,7 @@ import concurrent
 import logging
 import time
 import uuid
-from abc import abstractmethod
 from contextlib import contextmanager
-from functools import singledispatchmethod
 from pathlib import Path
 from typing import Any, Dict, Iterator, List, Optional, Union
 
@@ -403,7 +401,6 @@ class BaseRunModel:
                 run_context.sim_fs.fsync,
             )
 
-    @abstractmethod
     async def run(self, evaluator_server_config: EvaluatorServerConfig) -> None:
         raise NotImplementedError
 
@@ -460,20 +457,16 @@ class BaseRunModel:
             ):
                 break
 
-    @singledispatchmethod
     async def dispatch(
         self,
         event: Union[CloudEvent, _ert_com_protocol.DispatcherMessage],
     ) -> None:
-        raise NotImplementedError("Not implemented")
-
-    @dispatch.register
-    async def _(self, event: CloudEvent) -> None:
-        event_logger.debug(f"dispatch cloudevent: {event} (experiment: {self.id_})")
-
-    @dispatch.register
-    async def _(self, event: _ert_com_protocol.DispatcherMessage) -> None:
-        await self._state_machine.update(event)
+        if isinstance(event, CloudEvent):
+            event_logger.debug(f"dispatch cloudevent: {event} (experiment: {self.id_})")
+        elif isinstance(event, _ert_com_protocol.DispatcherMessage):
+            await self._state_machine.update(event)
+        else:
+            raise NotImplementedError("Not implemented")
 
     def get_forward_model(self) -> ForwardModel:
         return self.ert().resConfig().forward_model

@@ -7,7 +7,7 @@ import sys
 import threading
 import uuid
 from pathlib import Path
-from typing import Any
+from typing import Any, TextIO
 
 import filelock
 
@@ -23,6 +23,7 @@ from ert.cli.monitor import Monitor
 from ert.cli.workflow import execute_workflow
 from ert.ensemble_evaluator import EvaluatorServerConfig, EvaluatorTracker
 from ert.libres_facade import LibresFacade
+from ert.namespace import Namespace
 from ert.shared.feature_toggling import FeatureToggling
 
 
@@ -34,7 +35,7 @@ class ErtTimeoutError(Exception):
     pass
 
 
-def run_cli(args):
+def run_cli(args: Namespace) -> None:
     res_config = ResConfig(args.config)
 
     # Create logger inside function to make sure all handlers have been added to
@@ -118,6 +119,7 @@ def run_cli(args):
     )
 
     with contextlib.ExitStack() as exit_stack:
+        out: TextIO
         if args.disable_monitoring:
             out = exit_stack.enter_context(open(os.devnull, "w", encoding="utf-8"))
         else:
@@ -147,7 +149,7 @@ async def _run_cli_async(
     args: Any,
     ee_config: EvaluatorServerConfig,
     experiment_id: str,
-):
+) -> None:
     # pylint: disable=import-outside-toplevel
     from ert.experiment_server import ExperimentServer
 

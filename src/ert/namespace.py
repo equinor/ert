@@ -16,3 +16,5 @@ class Namespace(argparse.Namespace):
     experimental_mode: bool
     logdir: str
     func: Callable[[Namespace], None]
+
+    target_case: str

@@ -9,3 +9,4 @@ types-six
 types-decorator
 types-docutils
 types-protobuf
+types-tqdm

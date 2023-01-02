@@ -5,7 +5,7 @@ from pydantic import BaseModel
 from .snapshot import PartialSnapshot, Snapshot
 
 
-class _UpdateEvent(BaseModel):
+class UpdateEvent(BaseModel):
     phase_name: str
     current_phase: int
     total_phases: int
@@ -14,14 +14,14 @@ class _UpdateEvent(BaseModel):
     iteration: int
 
 
-class FullSnapshotEvent(_UpdateEvent):
+class FullSnapshotEvent(UpdateEvent):
     snapshot: Optional[Snapshot]
 
     class Config:
         arbitrary_types_allowed = True
 
 
-class SnapshotUpdateEvent(_UpdateEvent):
+class SnapshotUpdateEvent(UpdateEvent):
     partial_snapshot: Optional[PartialSnapshot]
 
     class Config:

@@ -26,7 +26,7 @@ class MultipleDataAssimilation(BaseRunModel):
         ert: EnKFMain,
         queue_config: QueueConfig,
         id_: str,
-    ):
+    ) -> None:
         super().__init__(simulation_arguments, ert, queue_config, id_, phase_count=2)
         self.weights = MultipleDataAssimilation.default_weights
 

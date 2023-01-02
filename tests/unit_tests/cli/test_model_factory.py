@@ -141,7 +141,7 @@ def test_setup_iterative_ensemble_smoother(poly_case):
         "experiment_id",
     )
     assert isinstance(model, IteratedEnsembleSmoother)
-    assert len(model._simulation_arguments.keys()) == 4
+    assert len(model._simulation_arguments.keys()) == 3
     assert "active_realizations" in model._simulation_arguments
     assert "target_case" in model._simulation_arguments
     assert "analysis_module" in model._simulation_arguments

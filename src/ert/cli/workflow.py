@@ -1,7 +1,9 @@
 import logging
 
+from ert._c_wrappers.enkf.enkf_main import EnKFMain
 
-def execute_workflow(ert, workflow_name):
+
+def execute_workflow(ert: EnKFMain, workflow_name: str) -> None:
     logger = logging.getLogger(__name__)
     workflow_list = ert.getWorkflowList()
     try:
