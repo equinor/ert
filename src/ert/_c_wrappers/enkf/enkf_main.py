@@ -188,6 +188,7 @@ class EnKFMain:
             config.ensemble_config,
             self.getEnsembleSize(),
             read_only=read_only,
+            refcase=self.res_config.ensemble_config.refcase,
         )
         self.switchFileSystem(self.storage_manager.active_case)
 

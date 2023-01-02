@@ -1,12 +1,14 @@
 import json
 import logging
 from pathlib import Path
-from typing import TYPE_CHECKING, Dict, Generator, List
+from typing import TYPE_CHECKING, Dict, Generator, List, Optional
 
 from ert._c_wrappers.enkf.enkf_fs import EnkfFs
 from ert._clib.state_map import RealizationStateEnum
 
 if TYPE_CHECKING:
+    from ecl.summary import EclSum
+
     from ert._c_wrappers.enkf import EnsembleConfig
     from ert._clib.state_map import StateMap
 
@@ -36,9 +38,11 @@ class FileSystemManager:
         ensemble_config: "EnsembleConfig",
         ensemble_size: int,
         read_only: bool,
+        refcase: Optional["EclSum"] = None,
     ):
         self.capacity = capacity
         self.storage_path = storage_path
+        self.refcase = refcase
         if not self.storage_path.exists():
             self.storage_path.mkdir(parents=True)
         self._check_version()
@@ -52,6 +56,7 @@ class FileSystemManager:
                 self._ensemble_config,
                 self._ensemble_size,
                 read_only=read_only,
+                refcase=self.refcase,
             )
         else:
             fs = EnkfFs.createFileSystem(
@@ -59,6 +64,7 @@ class FileSystemManager:
                 self._ensemble_config,
                 self._ensemble_size,
                 read_only=read_only,
+                refcase=self.refcase,
             )
         self.open_storages: Dict[str, EnkfFs] = {fs.case_name: fs}
         self.active_case = fs.case_name
@@ -107,7 +113,9 @@ class FileSystemManager:
             self._ensemble_config,
             self._ensemble_size,
             self.read_only,
+            self.refcase,
         )
+
         self._add_to_open(file_system)
         return file_system
 
@@ -136,11 +144,12 @@ class FileSystemManager:
         if case_name in self.open_storages:
             return self.open_storages[case_name]
         elif case_name in self.cases:
-            file_system = EnkfFs.createFileSystem(
+            file_system = EnkfFs(
                 self.storage_path / case_name,
                 self._ensemble_config,
                 self._ensemble_size,
                 self.read_only,
+                self.refcase,
             )
             self._add_to_open(file_system)
             return file_system
