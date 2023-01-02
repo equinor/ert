@@ -56,7 +56,9 @@ JOBNAME <A>%d""",
         ),
     ],
 )
-def test_some_stuff(defines, expected, tmp_path, monkeypatch):
+def test_that_user_defined_substitution_works_as_expected(
+    defines, expected, tmp_path, monkeypatch
+):
     monkeypatch.chdir(tmp_path)
     config_file = tmp_path / "config_file.ert"
     config_file.write_text(defines)
