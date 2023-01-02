@@ -281,13 +281,14 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
                         df[f"STD_{key}"][obs_time] = std
         return df
 
-    def select_or_create_new_case(self, case_name: str) -> None:
+    def select_or_create_new_case(self, case_name: str) -> "EnkfFs":
+        if case_name not in self._enkf_main.storage_manager:
+            fs = self._enkf_main.storage_manager.add_case(case_name)
+        else:
+            fs = self._enkf_main.storage_manager[case_name]
         if self.get_current_case_name() != case_name:
-            if case_name not in self._enkf_main.storage_manager:
-                fs = self._enkf_main.storage_manager.add_case(case_name)
-            else:
-                fs = self._enkf_main.storage_manager[case_name]
             self._enkf_main.switchFileSystem(fs.case_name)
+        return fs
 
     def cases(self) -> List[str]:
         def sort_key(s: str) -> List[Union[int, str]]:
