@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import TYPE_CHECKING, List, Union
+from typing import TYPE_CHECKING, List, Optional, Union
 
 import numpy as np
 import numpy.typing as npt
@@ -15,6 +15,7 @@ from ert._c_wrappers.enkf.time_map import TimeMap
 from ert._clib import update
 
 if TYPE_CHECKING:
+    from ecl.summary import EclSum
     from ecl.util.util import IntVector
 
     from ert._c_wrappers.enkf import RunArg
@@ -43,11 +44,16 @@ class EnkfFs(BaseCClass):
         ensemble_config: EnsembleConfig,
         ensemble_size: int,
         read_only: bool = False,
+        refcase: Optional["EclSum"] = None,
     ):
         self.mount_point = Path(mount_point).absolute()
         self.case_name = self.mount_point.stem
+        self.refcase = refcase
         c_ptr = self._mount(self.mount_point.as_posix(), ensemble_size, read_only)
         super().__init__(c_ptr)
+        if self.refcase:
+            time_map = self.getTimeMap()
+            time_map.attach_refcase(self.refcase)
         self._ensemble_config = ensemble_config
         self._ensemble_size = ensemble_size
 
@@ -76,11 +82,14 @@ class EnkfFs(BaseCClass):
         ensemble_config: "EnsembleConfig",
         ensemble_size: int,
         read_only: bool = False,
+        refcase: Optional["EclSum"] = None,
     ) -> "EnkfFs":
         path = Path(path).absolute()
         fs_type = EnKFFSType.BLOCK_FS_DRIVER_ID
         cls._create(path.as_posix(), fs_type, ensemble_size, False)
-        return cls(path, ensemble_config, ensemble_size, read_only=read_only)
+        return cls(
+            path, ensemble_config, ensemble_size, read_only=read_only, refcase=refcase
+        )
 
     def sync(self):
         self._sync()
