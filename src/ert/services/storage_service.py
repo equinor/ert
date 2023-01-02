@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 from os import PathLike
 from typing import Any, Optional, Tuple
@@ -14,7 +16,7 @@ class Storage(BaseService):
 
     def __init__(
         self,
-        res_config: Optional[PathLike] = None,
+        res_config: Optional[PathLike[str]] = None,
         database_url: str = "sqlite:///ert.db",
         verbose: bool = False,
         *args: Any,
@@ -44,7 +46,7 @@ class Storage(BaseService):
         return ("__token__", self.fetch_conn_info()["authtoken"])
 
     @classmethod
-    def init_service(cls, *args: Any, **kwargs: Any) -> _Context:
+    def init_service(cls, *args: Any, **kwargs: Any) -> _Context[Storage]:
         try:
             service = cls.connect(timeout=0, project=kwargs.get("project"))
             # Check the server is up and running
@@ -63,7 +65,7 @@ class Storage(BaseService):
                 resp = requests.get(f"{url}/healthcheck", auth=self.fetch_auth())
                 if resp.status_code == 200:
                     self._url = url
-                    return url
+                    return str(url)
                 logging.getLogger(__name__).info(
                     f"Connecting to {url} got status: "
                     f"{resp.status_code}, {resp.headers}, {resp.reason}, {resp.text}"

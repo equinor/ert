@@ -18,7 +18,7 @@ from ert.shared.plugins import ErtPluginContext
 from ert.shared.storage.command import add_parser_options
 
 
-class Server(uvicorn.Server):
+class Server(uvicorn.Server):  # type: ignore
     def __init__(
         self,
         config: uvicorn.Config,
@@ -27,7 +27,7 @@ class Server(uvicorn.Server):
         super().__init__(config)
         self.connection_info = connection_info
 
-    async def startup(self, sockets: list = None) -> None:
+    async def startup(self, sockets: Optional[List[socket.socket]] = None) -> None:
         """Overridden startup that also sends connection information"""
         await super().startup(sockets)
         if not self.started:

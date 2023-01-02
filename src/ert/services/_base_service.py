@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import io
 import json
 import os
@@ -156,7 +158,7 @@ class _Proc(threading.Thread):
         self.join()
         return self._childproc.returncode
 
-    def _read_conn_info(self, proc: Popen) -> Optional[str]:
+    def _read_conn_info(self, proc: Popen[bytes]) -> Optional[str]:
         comm_buf = io.StringIO()
         first_iter = True
         while first_iter or proc.poll() is None:
@@ -272,7 +274,7 @@ class BaseService:
     def connect(
         cls: Type[T],
         *,
-        project: Optional[os.PathLike] = None,
+        project: Optional[os.PathLike[str]] = None,
         timeout: Optional[int] = None,
     ) -> T:
         if cls._instance is not None:
