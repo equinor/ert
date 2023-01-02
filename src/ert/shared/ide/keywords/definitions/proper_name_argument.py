@@ -1,5 +1,6 @@
 import re
 
+from ert.shared.ide.keywords.data import ValidationStatus
 from ert.shared.ide.keywords.definitions import ArgumentDefinition
 
 
@@ -17,10 +18,10 @@ class ProperNameArgument(ArgumentDefinition):
 
     PATTERN = re.compile(r"^[A-Za-z0-9_\-.<>]+$")
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)
 
-    def validate(self, token):
+    def validate(self, token) -> ValidationStatus:
         validation_status = super().validate(token)
 
         if not validation_status:

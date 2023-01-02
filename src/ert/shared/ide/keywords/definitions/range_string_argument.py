@@ -11,7 +11,7 @@ class RangeStringArgument(ArgumentDefinition):
     )
     VALUE_NOT_IN_RANGE = "A value must be in the range from 0 to %d."
 
-    def __init__(self, max_value=None, **kwargs):
+    def __init__(self, max_value=None, **kwargs) -> None:
         super().__init__(**kwargs)
         self.__max_value = max_value
 

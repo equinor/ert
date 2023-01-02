@@ -1,5 +1,8 @@
 import logging
+from argparse import ArgumentParser
 from copy import deepcopy
+
+from ert.namespace import Namespace
 
 
 class _Feature:
@@ -29,11 +32,11 @@ class FeatureToggling:
     _conf = deepcopy(_conf_original)
 
     @staticmethod
-    def is_enabled(feature_name):
+    def is_enabled(feature_name: str) -> bool:
         return FeatureToggling._conf[feature_name].is_enabled
 
     @staticmethod
-    def add_feature_toggling_args(parser):
+    def add_feature_toggling_args(parser: ArgumentParser) -> None:
         for feature_name in FeatureToggling._conf.keys():
             parser.add_argument(
                 f"--{FeatureToggling._get_arg_name(feature_name)}",
@@ -43,7 +46,7 @@ class FeatureToggling:
             )
 
     @staticmethod
-    def update_from_args(args):
+    def update_from_args(args: Namespace) -> None:
         args_dict = vars(args)
         for feature_name in FeatureToggling._conf.keys():
             arg_name = FeatureToggling._get_arg_name(feature_name)

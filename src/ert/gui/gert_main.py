@@ -1,4 +1,3 @@
-import argparse
 import logging
 import os
 import sys
@@ -29,10 +28,11 @@ from ert.gui.tools.plugins import PluginHandler, PluginsTool
 from ert.gui.tools.run_analysis import RunAnalysisTool
 from ert.gui.tools.workflows import WorkflowsTool
 from ert.libres_facade import LibresFacade
+from ert.namespace import Namespace
 from ert.services import Storage
 
 
-def run_gui(args: argparse.Namespace):
+def run_gui(args: Namespace):
     app = QApplication([])  # Early so that QT is initialized before other imports
     app.setWindowIcon(resourceIcon("application/window_icon_cutout"))
     with add_gui_log_handler() as log_handler:
@@ -185,7 +185,7 @@ def _setup_suggester(suggestions, args, log_handler, ert_window=None):
 
 def _setup_main_window(
     ert: EnKFMain,
-    args: argparse.Namespace,
+    args: Namespace,
     log_handler: GUILogHandler,
 ):
     # window reference must be kept until app.exec returns:

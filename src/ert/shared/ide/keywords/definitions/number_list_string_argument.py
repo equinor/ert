@@ -1,5 +1,6 @@
 import re
 
+from ert.shared.ide.keywords.data.validation_status import ValidationStatus
 from ert.shared.ide.keywords.definitions import ArgumentDefinition
 
 
@@ -13,10 +14,10 @@ class NumberListStringArgument(ArgumentDefinition):
 
     PATTERN = re.compile(r"^[0-9\.\-+, \t]+$")
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)
 
-    def validate(self, token):
+    def validate(self, token) -> ValidationStatus:
         validation_status = super().validate(token)
 
         if not validation_status:
