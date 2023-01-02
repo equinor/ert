@@ -173,7 +173,6 @@ void TimeMap::read_binary(const std::filesystem::path &path) {
    @returns status, empty string if success, error message otherwise
 */
 std::string TimeMap::summary_update(const ecl_sum_type *ecl_sum) {
-    bool updateOK = true;
     std::vector<Inconsistency> errors;
 
     int first_step = ecl_sum_get_first_report_step(ecl_sum);
