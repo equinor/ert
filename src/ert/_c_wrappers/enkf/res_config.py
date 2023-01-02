@@ -490,13 +490,12 @@ class ResConfig:
 
     @staticmethod
     def _create_job(job_path, job_name=None):
-        if not os.path.isfile(job_path):
-            logger.warning(f"Unable to locate job file {job_path}")
-            return None
-        return ExtJob.from_config_file(
-            name=job_name,
-            config_file=job_path,
-        )
+        if os.path.isfile(job_path):
+            return ExtJob.from_config_file(
+                name=job_name,
+                config_file=job_path,
+            )
+        return None
 
     def _extract_defines(self, config):
         defines = {}
