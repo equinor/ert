@@ -347,6 +347,14 @@ class ResConfig:
                 f"`{config_content_dict[ConfigKeys.JOBNAME]}` instead"
             )
 
+        if (
+            ConfigKeys.SUMMARY in config_content_dict
+            and ConfigKeys.ECLBASE not in config_content_dict
+        ):
+            raise ConfigValidationError(
+                "When using SUMMARY keyword, the config must also specify ECLBASE"
+            )
+
         self.model_config = ModelConfig.from_dict(
             self.ensemble_config.refcase, config_content_dict
         )
@@ -441,6 +449,12 @@ class ResConfig:
                 "ECLBASE ignored, using JOBNAME with value "
                 f"`{config_dict[ConfigKeys.JOBNAME]}` instead"
             )
+
+        if ConfigKeys.SUMMARY in config_dict and ConfigKeys.ECLBASE not in config_dict:
+            raise ConfigValidationError(
+                "When using SUMMARY keyword, the config must also specify ECLBASE"
+            )
+
         self.model_config = ModelConfig.from_dict(
             self.ensemble_config.refcase, config_dict
         )
