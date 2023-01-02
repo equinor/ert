@@ -173,14 +173,14 @@ def test_init(minimum_case):
 def test_extensive_config(setup_case):
     res_config = setup_case("snake_oil_structure", "ert/model/user_config.ert")
 
+    assert (
+        Path(snake_oil_structure_config["ENSPATH"]).resolve()
+        == Path(res_config.ens_path).resolve()
+    )
     model_config = res_config.model_config
     assert (
         Path(snake_oil_structure_config["RUNPATH"]).resolve()
         == Path(model_config.runpath_format_string).resolve()
-    )
-    assert (
-        Path(snake_oil_structure_config["ENSPATH"]).resolve()
-        == Path(model_config.ens_path).resolve()
     )
     assert snake_oil_structure_config["JOBNAME"] == model_config.jobname_format_string
     assert (

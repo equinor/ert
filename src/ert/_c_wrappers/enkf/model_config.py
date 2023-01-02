@@ -21,7 +21,6 @@ class ModelConfig:
         num_realizations: int,
         refcase: Optional[EclSum] = None,
         data_root: Optional[str] = None,
-        ens_path: str = None,
         history_source: Optional[HistorySourceEnum] = None,
         runpath_format_string: Optional[str] = None,
         jobname_format_string: Optional[str] = None,
@@ -32,7 +31,6 @@ class ModelConfig:
         self.num_realizations = num_realizations
         self.refcase = refcase
         self.data_root = data_root
-        self.ens_path = ens_path
 
         self.history_source = (
             history_source
@@ -83,7 +81,6 @@ class ModelConfig:
             num_realizations=config_dict.get(ConfigKeys.NUM_REALIZATIONS),
             refcase=refcase,
             data_root=config_dict.get(ConfigKeys.DATAROOT),
-            ens_path=config_dict[ConfigKeys.ENSPATH],
             history_source=HistorySourceEnum.from_string(
                 config_dict.get(ConfigKeys.HISTORY_SOURCE)
             )
@@ -113,7 +110,6 @@ class ModelConfig:
             f"num_realizations: {self.num_realizations},\n"
             f"refcase: {self.refcase},\n"
             f"data_root: {self.data_root},\n"
-            f"ens_path: {self.ens_path},\n"
             f"history_source: {self.history_source},\n"
             f"runpath_format_string: {self.runpath_format_string},\n"
             f"jobname_format_string: {self.jobname_format_string},\n"
@@ -127,7 +123,6 @@ class ModelConfig:
             [
                 self.num_realizations == other.num_realizations,
                 self.data_root == other.data_root,
-                self.ens_path == other.ens_path,
                 self.history_source == other.history_source,
                 self.runpath_format_string == other.runpath_format_string,
                 self.jobname_format_string == other.jobname_format_string,
