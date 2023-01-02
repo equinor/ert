@@ -387,13 +387,6 @@ class BaseRunModel:
         )
 
         with concurrent.futures.ThreadPoolExecutor() as pool:
-            await loop.run_in_executor(
-                pool,
-                self.ert().sample_prior,
-                run_context.sim_fs,
-                [i for i, _ in enumerate(run_context) if run_context.is_active(i)],
-            )
-
             await ensemble.evaluate_async(ee_config, self.id_)
 
             await ensemble_listener
