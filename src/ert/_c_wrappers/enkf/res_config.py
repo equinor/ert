@@ -476,7 +476,17 @@ class ResConfig:
             if not os.path.isdir(job_path):
                 logger.warning(f"Unable to locate job directory {job_path}")
                 continue
+
             files = os.listdir(job_path)
+
+            if not [
+                f
+                for f in files
+                if os.path.isfile(os.path.abspath(os.path.join(job_path, f)))
+            ]:
+                logger.warning(f"No files found in job directory {job_path}")
+                continue
+
             for file_name in files:
                 full_path = os.path.abspath(os.path.join(job_path, file_name))
                 new_job = ResConfig._create_job(full_path)
