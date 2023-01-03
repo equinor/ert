@@ -404,16 +404,6 @@ class EnKFMain:
         "Will return the random number generator used for updates."
         return self._shared_rng
 
-    def getFileSystem(self, case_name: str) -> "EnkfFs":
-        try:
-            case = self.storage_manager[case_name]
-        except KeyError:
-            case = self.storage_manager.add_case(case_name)
-        if self.res_config.ensemble_config.refcase:
-            time_map = case.getTimeMap()
-            time_map.attach_refcase(self.res_config.ensemble_config.refcase)
-        return case
-
     def switchFileSystem(self, case_name: str) -> None:
         if isinstance(case_name, EnkfFs):
             case_name = case_name.case_name
