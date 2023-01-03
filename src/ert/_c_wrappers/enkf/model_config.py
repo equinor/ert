@@ -14,7 +14,6 @@ class ModelConfig:
     DEFAULT_HISTORY_SOURCE = HistorySourceEnum.REFCASE_HISTORY
     DEFAULT_RUNPATH = "simulations/realization-<IENS>/iter-<ITER>"
     DEFAULT_GEN_KW_EXPORT_NAME = "parameters"
-    DEFAULT_ENSPATH = "storage"
 
     def __init__(
         self,
