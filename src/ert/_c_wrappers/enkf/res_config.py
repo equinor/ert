@@ -86,6 +86,8 @@ def parse_signature_job(signature: str) -> Tuple[str, Optional[str]]:
 
 
 class ResConfig:
+    DEFAULT_ENSPATH = "storage"
+
     def __init__(
         self,
         user_config_file: Optional[str] = None,
@@ -214,7 +216,7 @@ class ResConfig:
             content_dict[ConfigKeys.DATAROOT] = config_path
         if ConfigKeys.ENSPATH not in content_dict:
             content_dict[ConfigKeys.ENSPATH] = os.path.join(
-                config_path, ModelConfig.DEFAULT_ENSPATH
+                config_path, ResConfig.DEFAULT_ENSPATH
             )
 
     @classmethod
