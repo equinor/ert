@@ -127,9 +127,19 @@ static config_content_node_type *config_content_item_set_arg__(
         if (subst_list_get_size(define_list) > 0) {
             int iarg;
             for (iarg = 0; iarg < argc; iarg++) {
-                char *filtered_copy = subst_list_alloc_filtered_string(
-                    define_list, stringlist_iget(token_list, iarg + 1));
-                stringlist_iset_owned_ref(token_list, iarg + 1, filtered_copy);
+
+                try {
+                    char *filtered_copy = subst_list_alloc_filtered_string(
+                        define_list, stringlist_iget(token_list, iarg + 1));
+                    stringlist_iset_owned_ref(token_list, iarg + 1,
+                                              filtered_copy);
+                } catch (std::runtime_error err) {
+                    std::string error_message = util_alloc_sprintf(
+                        "Could not resolve defines in %s. Defines might have "
+                        "an infinite loop",
+                        stringlist_iget(token_list, iarg + 1));
+                    parse_errors.push_back(error_message);
+                }
             }
         }
 
