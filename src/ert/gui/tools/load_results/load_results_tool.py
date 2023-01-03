@@ -14,7 +14,6 @@ class LoadResultsTool(Tool):
         )
         self.__import_widget = None
         self.__dialog = None
-        self.setEnabled(self.is_valid_run_path())
 
     def trigger(self):
         if self.__import_widget is None:
