@@ -58,7 +58,11 @@ def test_that_summary_given_without_eclbase_gives_error_from_file(tmp_path):
 
 
 def test_that_summary_given_without_eclbase_gives_error_from_dict(tmp_path):
-    config_dict = {"NUM_REALIZATIONS": "1", "SUMMARY": "summary"}
+    config_dict = {
+        "NUM_REALIZATIONS": "1",
+        "ENSPATH": os.path.join(tmp_path, "storage"),
+        "SUMMARY": "summary",
+    }
     with pytest.raises(
         expected_exception=ConfigValidationError,
         match="When using SUMMARY keyword, the config must also specify ECLBASE",
