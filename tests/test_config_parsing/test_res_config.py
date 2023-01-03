@@ -192,3 +192,19 @@ ENSPATH storage
         dict_set_ens_path = ResConfig(config_dict=config_dict).ens_path
 
         assert dict_set_ens_path == config_dict["ENSPATH"]
+
+
+def test_that_when_there_is_an_infinite_loop_it_goes_into_the_errors(tmp_path):
+    with open(tmp_path / "test.ert", "w", encoding="utf-8") as fh:
+        fh.write(
+            dedent(
+                """
+                NUM_REALIZATIONS  1
+                DEFINE <A> <A>
+                RUNPATH <A>
+                """
+            )
+        )
+
+    with pytest.raises(ConfigValidationError, match="infinite loop"):
+        _ = ResConfig(str(tmp_path / "test.ert"))
