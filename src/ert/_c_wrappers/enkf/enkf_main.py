@@ -470,13 +470,9 @@ class EnKFMain:
                     res_config.env_vars,
                 )
 
-        active_list = [
-            run_context[i] for i in range(len(run_context)) if run_context.is_active(i)
-        ]
-        iterations = sorted({runarg.iter_id for runarg in active_list})
-        realizations = sorted({runarg.iens for runarg in active_list})
-
-        run_context.runpaths.write_runpath_list(iterations, realizations)
+        run_context.runpaths.write_runpath_list(
+            [run_context.iteration], run_context.active_realizations
+        )
 
     def runWorkflows(self, runtime: int) -> None:
         workflow_list = self.getWorkflowList()
