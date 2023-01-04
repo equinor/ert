@@ -9,12 +9,7 @@ from unittest.mock import MagicMock, mock_open, patch
 import pytest
 from ecl.util.enums import RngAlgTypeEnum
 
-from ert._c_wrappers.enkf import (
-    AnalysisConfig,
-    ConfigKeys,
-    HookRuntime,
-    ResConfig,
-)
+from ert._c_wrappers.enkf import AnalysisConfig, ConfigKeys, HookRuntime, ResConfig
 from ert._c_wrappers.enkf.res_config import parse_signature_job, site_config_location
 from ert._c_wrappers.job_queue import QueueDriverEnum
 from ert._c_wrappers.sched import HistorySourceEnum
