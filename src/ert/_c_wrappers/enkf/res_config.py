@@ -238,6 +238,13 @@ class ResConfig:
             ResConfig._create_user_config_parser()
         ).suggest_migrations(config_file)
 
+    @classmethod
+    def read_site_config(cls):
+        site_config_parser = ConfigParser()
+        init_site_config_parser(site_config_parser)
+        site_config_content = site_config_parser.parse(site_config_location())
+        return config_content_as_dict(site_config_content, {})
+
     # build configs from config file or everest dict
     def _alloc_from_content(self, user_config_file=None, config=None):
         site_config_parser = ConfigParser()
