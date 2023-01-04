@@ -12,7 +12,6 @@ from ecl.util.enums import RngAlgTypeEnum
 from ert._c_wrappers.enkf import (
     AnalysisConfig,
     ConfigKeys,
-    GenDataFileType,
     HookRuntime,
     ResConfig,
 )

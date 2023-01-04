@@ -1,5 +1,5 @@
 import pytest
-from hypothesis import assume, given, reproduce_failure
+from hypothesis import assume, given
 
 from ert._c_wrappers.config import ConfigValidationError
 from ert._c_wrappers.enkf import ConfigKeys, ResConfig

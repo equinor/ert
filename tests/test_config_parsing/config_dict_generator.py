@@ -12,7 +12,6 @@ from hypothesis import assume, note
 from py import path as py_path
 
 from ert._c_wrappers.enkf import ConfigKeys
-from ert._c_wrappers.enkf.enums import GenDataFileType
 from ert._c_wrappers.job_queue import QueueDriverEnum
 
 from .egrid_generator import egrids
