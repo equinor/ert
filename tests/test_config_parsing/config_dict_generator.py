@@ -250,6 +250,10 @@ def defines(config_dict, config_files, cwd):
     ]
 
 
+def small_list(*arg, max_size=5, **kw_args):
+    return st.lists(*arg, **kw_args, max_size=max_size)
+
+
 def generate_config(draw):
     queue_system = draw(queue_systems)
     config_dict = draw(
@@ -258,7 +262,7 @@ def generate_config(draw):
                 ConfigKeys.NUM_REALIZATIONS: positives,
                 ConfigKeys.ECLBASE: st.just(draw(words) + "%d"),
                 ConfigKeys.RUNPATH_FILE: st.just(draw(file_names) + "runpath"),
-                ConfigKeys.RUN_TEMPLATE: st.lists(
+                ConfigKeys.RUN_TEMPLATE: small_list(
                     st.builds(lambda fil: [fil + ".templ", fil], file_names)
                 ),
                 ConfigKeys.ALPHA_KEY: small_floats,
@@ -269,10 +273,10 @@ def generate_config(draw):
                 ConfigKeys.STD_CUTOFF_KEY: small_floats,
                 ConfigKeys.MAX_RUNTIME: positives,
                 ConfigKeys.MIN_REALIZATIONS: positives,
-                ConfigKeys.DEFINE_KEY: st.lists(
+                ConfigKeys.DEFINE_KEY: small_list(
                     st.tuples(st.just(f"<key-{draw(words)}>"), words)
                 ),
-                ConfigKeys.DATA_KW_KEY: st.lists(
+                ConfigKeys.DATA_KW_KEY: small_list(
                     st.tuples(st.just(f"<{draw(words)}>"), words)
                 ),
                 ConfigKeys.DATA_FILE: st.just(draw(file_names) + ".DATA"),
@@ -289,7 +293,7 @@ def generate_config(draw):
                 ConfigKeys.GEN_KW_EXPORT_NAME: st.just(
                     "gen-kw-export-name-" + draw(file_names)
                 ),
-                ConfigKeys.FIELD_KEY: st.lists(
+                ConfigKeys.FIELD_KEY: small_list(
                     st.tuples(
                         st.just("FIELD-" + draw(words)),
                         st.just("PARAMETER"),
@@ -303,7 +307,7 @@ def generate_config(draw):
                     ),
                     unique_by=lambda element: element[0],
                 ),
-                ConfigKeys.GEN_DATA: st.lists(
+                ConfigKeys.GEN_DATA: small_list(
                     st.tuples(
                         st.just(f"GEN_DATA-{draw(words)}"),
                         st.just(f"{ConfigKeys.RESULT_FILE}:{draw(format_file_names)}"),
@@ -315,8 +319,10 @@ def generate_config(draw):
                 ConfigKeys.MAX_SUBMIT: positives,
                 ConfigKeys.NUM_CPU: positives,
                 ConfigKeys.QUEUE_SYSTEM: st.just(queue_system),
-                ConfigKeys.QUEUE_OPTION: st.lists(queue_options(st.just(queue_system))),
-                ConfigKeys.ANALYSIS_COPY: st.lists(
+                ConfigKeys.QUEUE_OPTION: small_list(
+                    queue_options(st.just(queue_system))
+                ),
+                ConfigKeys.ANALYSIS_COPY: small_list(
                     st.fixed_dictionaries(
                         {
                             ConfigKeys.SRC_NAME: st.just("STD_ENKF"),
@@ -324,7 +330,7 @@ def generate_config(draw):
                         }
                     )
                 ),
-                ConfigKeys.ANALYSIS_SET_VAR: st.lists(
+                ConfigKeys.ANALYSIS_SET_VAR: small_list(
                     st.fixed_dictionaries(
                         {
                             ConfigKeys.MODULE_NAME: st.just("STD_ENKF"),
@@ -334,23 +340,23 @@ def generate_config(draw):
                     )
                 ),
                 ConfigKeys.ANALYSIS_SELECT: st.just("STD_ENKF"),
-                ConfigKeys.INSTALL_JOB: st.lists(
+                ConfigKeys.INSTALL_JOB: small_list(
                     random_ext_job_names(words, file_names)
                 ),
-                ConfigKeys.INSTALL_JOB_DIRECTORY: st.lists(directory_names()),
+                ConfigKeys.INSTALL_JOB_DIRECTORY: small_list(directory_names()),
                 ConfigKeys.LICENSE_PATH: directory_names(),
                 ConfigKeys.RANDOM_SEED: words,
-                ConfigKeys.SETENV: st.lists(st.tuples(words, words)),
+                ConfigKeys.SETENV: small_list(st.tuples(words, words)),
             }
         )
     )
 
     installed_jobs = config_dict[ConfigKeys.INSTALL_JOB]
     config_dict[ConfigKeys.FORWARD_MODEL] = (
-        draw(st.lists(job(installed_jobs))) if installed_jobs else []
+        draw(small_list(job(installed_jobs))) if installed_jobs else []
     )
     config_dict[ConfigKeys.SIMULATION_JOB] = (
-        draw(st.lists(sim_job(installed_jobs))) if installed_jobs else []
+        draw(small_list(sim_job(installed_jobs))) if installed_jobs else []
     )
     return config_dict
 
@@ -358,13 +364,13 @@ def generate_config(draw):
 def job(installed_jobs):
     possible_job_names = st.sampled_from([job_name for job_name, _ in installed_jobs])
     arg = st.builds(lambda arg, value: f"<{arg}>={value}", words, words)
-    args = st.builds(",".join, st.lists(arg))
+    args = st.builds(",".join, small_list(arg))
     return st.builds(lambda name, args: [name, args], possible_job_names, args)
 
 
 def sim_job(installed_jobs):
     possible_job_names = [job_name for job_name, _ in installed_jobs]
-    args = st.lists(st.builds(lambda arg, value: f"<{arg}>={value}", words, words))
+    args = small_list(st.builds(lambda arg, value: f"<{arg}>={value}", words, words))
     x = st.builds(
         lambda job_name, args: [job_name] + (args),
         st.sampled_from(possible_job_names),
