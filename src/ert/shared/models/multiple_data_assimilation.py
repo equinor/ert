@@ -110,7 +110,7 @@ class MultipleDataAssimilation(BaseRunModel):
             posterior_context = self.ert().create_ensemble_context(
                 case_format % (iteration + 1),
                 prior_context.sim_fs.getStateMap().createMask(state),
-                iteration=iteration,
+                iteration=iteration + 1,
             )
             update_id = self.update(
                 prior_context,
