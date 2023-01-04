@@ -47,6 +47,14 @@ class DeprecationMigrationSuggester:
                 logger.info("Deprecated keyword %s", kw)
                 suggestions.append(suggestion)
 
+        if content.hasKey("RUNPATH") and "%d" in content.getValue("RUNPATH"):
+            add_suggestion(
+                "RUNPATH",
+                "The use of %d in RUNPATH has been deprecated. "
+                "Instead use the <IENS>, <ITER> keywords, "
+                "e.g.: realization-<IENS>/iter-<ITER>",
+            )
+
         for kw in self.REPLACE_WITH_GEN_KW:
             add_suggestion(
                 kw,
