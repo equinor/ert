@@ -441,8 +441,7 @@ class ResConfig:
                     f"Could not find job `{job_description[ConfigKeys.NAME]}` "
                     "in list of installed jobs."
                 ) from err
-            job.private_args = SubstitutionList()
-            job.private_args.add_from_string(job_description.get(ConfigKeys.ARGLIST))
+            job.arglist = job_description[ConfigKeys.ARGLIST]
             jobs.append(job)
 
         self.forward_model = ForwardModel(jobs=jobs)
