@@ -24,7 +24,7 @@ pytest>6
 requests
 scikit-build
 setuptools_scm
-sphinx
+sphinx<6
 sphinx-argparse
 sphinx-autoapi
 sphinx_rtd_theme
