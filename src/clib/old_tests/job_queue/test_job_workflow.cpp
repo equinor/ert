@@ -9,7 +9,6 @@
 
 #include <ert/config/config_parser.hpp>
 
-#include <ert/job_queue/workflow.hpp>
 #include <ert/job_queue/workflow_job.hpp>
 #include <ert/job_queue/workflow_joblist.hpp>
 
@@ -86,62 +85,7 @@ int main(int argc, char **argv) {
                 test_error_exit("Config compiler - wrong size \n");
         }
 
-        {
-            const char *workflow_file = "workflow";
-            const char *tmp_file = "fileX";
-            workflow_type *workflow;
-
-            create_workflow(workflow_file, tmp_file, int_value);
-            workflow = workflow_alloc(workflow_file, joblist);
-            unlink(workflow_file);
-
-            {
-                bool runOK;
-                runOK = workflow_run(workflow, &read_value, false, NULL);
-                if (runOK) {
-                    if (int_value != read_value)
-                        test_error_exit("Wrong numeric value read back \n");
-
-                    test_assert_int_equal(workflow_get_stack_size(workflow), 2);
-                    test_assert_not_NULL(workflow_iget_stack_ptr(workflow, 0));
-                    test_assert_NULL(workflow_iget_stack_ptr(workflow, 1));
-
-                    {
-                        void *return_value =
-                            workflow_iget_stack_ptr(workflow, 0);
-                        int return_int = *((int *)return_value);
-                        if (int_value != return_int)
-                            test_error_exit("Wrong numeric value read back \n");
-
-                        test_assert_not_NULL(workflow_pop_stack(workflow));
-                        test_assert_NULL(workflow_pop_stack(workflow));
-                        test_assert_int_equal(workflow_get_stack_size(workflow),
-                                              0);
-
-                        free(return_value);
-                    }
-                } else {
-                    unlink(tmp_file);
-                    test_error_exit("Workflow did not run\n");
-                }
-                unlink(tmp_file);
-            }
-        }
         workflow_joblist_free(joblist);
-    }
-    {
-        workflow_joblist_type *joblist = workflow_joblist_alloc();
-        const char *workflow_file = "workflow";
-        const char *tmp_file = "fileX";
-        int read_value;
-        int int_value = 100;
-        workflow_type *workflow;
-
-        create_workflow(workflow_file, tmp_file, int_value);
-        workflow = workflow_alloc(workflow_file, joblist);
-        unlink(workflow_file);
-        test_assert_false(workflow_run(workflow, &read_value, false, NULL));
-        test_assert_int_equal(workflow_get_stack_size(workflow), 0);
     }
     exit(0);
 }

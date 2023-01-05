@@ -16,7 +16,7 @@ extern "C" bool
 workflow_joblist_add_job_from_file(workflow_joblist_type *joblist,
                                    const char *job_name,
                                    const char *config_file);
-config_parser_type *
+extern "C" config_parser_type *
 workflow_joblist_get_compiler(const workflow_joblist_type *joblist);
 extern "C" bool workflow_joblist_has_job(const workflow_joblist_type *joblist,
                                          const char *job_name);

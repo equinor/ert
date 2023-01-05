@@ -21,6 +21,7 @@ class ContentNode(BaseCClass):
     _get_full_string = ResPrototype(
         "char* config_content_node_get_full_string( content_node , char* )"
     )
+    _get_kw = ResPrototype("char* config_content_node_get_kw( content_node )")
     _iget_type = ResPrototype(
         "config_content_type_enum config_content_node_iget_type( content_node , int)"
     )
@@ -70,6 +71,9 @@ class ContentNode(BaseCClass):
 
     def __iter__(self):
         return iter([self[i] for i in range(len(self))])
+
+    def get_kw(self) -> str:
+        return self._get_kw()
 
     def __assertIndex(self, index):
         if isinstance(index, int):
@@ -184,6 +188,9 @@ class ConfigContent(BaseCClass):
     _add_define = ResPrototype(
         "void config_content_add_define(config_content, char*, char*)"
     )
+    _get_line = ResPrototype(
+        "content_node_ref config_content_iget_node(config_content, int)"
+    )
     _size = ResPrototype("int config_content_get_size(config_content)")
     _keys = ResPrototype("stringlist_obj config_content_alloc_keys(config_content)")
 
@@ -216,6 +223,10 @@ class ConfigContent(BaseCClass):
     def setParser(self, parser: "ConfigParser"):
         self._parser = parser
 
+    def __iter__(self):
+        for i in range(len(self)):
+            yield self.get_line(i)
+
     def __getitem__(self, key: str) -> ContentItem:
         if key in self:
             item = self._get_item(key)
@@ -234,6 +245,9 @@ class ConfigContent(BaseCClass):
     def getValue(self, key, item_index=-1, node_index=0):
         item = self[key]
         return item.getValue(item_index, node_index)
+
+    def get_line(self, index):
+        return self._get_line(index)
 
     def isValid(self):
         return self._is_valid()

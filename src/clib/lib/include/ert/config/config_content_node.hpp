@@ -52,7 +52,8 @@ const char *config_content_node_safe_iget(const config_content_node_type *node,
                                           int index);
 extern "C" int
 config_content_node_get_size(const config_content_node_type *node);
-const char *config_content_node_get_kw(const config_content_node_type *node);
+extern "C" const char *
+config_content_node_get_kw(const config_content_node_type *node);
 void config_content_node_assert_key_value(const config_content_node_type *node);
 
 #endif
