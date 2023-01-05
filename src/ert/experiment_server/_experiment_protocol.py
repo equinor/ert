@@ -27,7 +27,7 @@ class Experiment(Protocol):
         to set this more than once."""
         pass
 
-    async def dispatch(self, event: Union[CloudEvent, DispatcherMessage]) -> None:
+    async def dispatch(self, event: Union[CloudEvent, DispatcherMessage]) -> None:  # type: ignore
         """dispatch(self, event) -> None
         event is a ``CloudEvent`` https://github.com/cloudevents/sdk-python
         or a ``protocol buffer object`` https://developers.google.com/protocol-buffers

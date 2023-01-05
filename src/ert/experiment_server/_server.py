@@ -67,7 +67,7 @@ class ExperimentServer:
         Handle incoming "dispatch" connections, which refers to remote workers.
         websocket is a https://websockets.readthedocs.io/en/stable/reference/server.html#websockets.server.WebSocketServerProtocol  # pylint: disable=line-too-long
         """
-        event: Union[CloudEvent, DispatcherMessage]
+        event: Union[CloudEvent, DispatcherMessage]  # type: ignore
         async for msg in websocket:
             if isinstance(msg, bytes):
                 # all Protobuf objects come in DispatcherMessage container
