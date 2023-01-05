@@ -41,7 +41,7 @@ def test_workflow_run():
 
     workflow = Workflow("dump_workflow", joblist)
 
-    assert len(workflow), 2
+    assert len(workflow) == 2
 
     context = SubstitutionList()
     context.addItem("<PARAM>", "text")
