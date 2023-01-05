@@ -92,7 +92,7 @@ config_content_get_const_define_list(const config_content_type *content);
 const char *config_content_get_config_file(const config_content_type *content,
                                            bool abs_path);
 extern "C" int config_content_get_size(const config_content_type *content);
-const config_content_node_type *
+extern "C" const config_content_node_type *
 config_content_iget_node(const config_content_type *content, int index);
 bool config_content_add_file(config_content_type *content,
                              const char *config_file);

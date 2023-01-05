@@ -63,7 +63,5 @@ def test_failing_workflow_run():
     assert joblist.addJobFromFile("DUMP", "dump_job")
     assert "DUMP" in joblist
 
-    workflow = Workflow("undefined", joblist)
-    context = SubstitutionList()
-
-    assert not workflow.run(None, verbose=True, context=context)
+    with pytest.raises(ValueError, match="does not exist"):
+        _ = Workflow("undefined", joblist)

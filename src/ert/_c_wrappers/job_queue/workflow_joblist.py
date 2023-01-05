@@ -1,10 +1,13 @@
 import os
-from typing import Union
+from typing import TYPE_CHECKING, Union
 
 from cwrap import BaseCClass
 
 from ert._c_wrappers import ResPrototype
 from ert._c_wrappers.job_queue.workflow_job import WorkflowJob
+
+if TYPE_CHECKING:
+    from ert._c_wrappers.config import ConfigParser
 
 
 class WorkflowJoblist(BaseCClass):
@@ -21,10 +24,17 @@ class WorkflowJoblist(BaseCClass):
     _get_job = ResPrototype(
         "workflow_job_ref workflow_joblist_get_job(workflow_joblist, char*)"
     )
+    _get_compiler = ResPrototype(
+        "config_parser_ref workflow_joblist_get_compiler(workflow_joblist)"
+    )
 
     def __init__(self):
         c_ptr = self._alloc()
         super().__init__(c_ptr)
+
+    @property
+    def parser(self) -> "ConfigParser":
+        return self._get_compiler()
 
     def addJob(self, job) -> WorkflowJob:
         job.convertToCReference(self)

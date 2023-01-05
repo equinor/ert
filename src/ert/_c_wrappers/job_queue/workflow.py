@@ -2,12 +2,9 @@ import logging
 import os
 import sys
 import time
+from tempfile import mkdtemp
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
 
-from cwrap import BaseCClass  # pylint: disable=import-error
-
-from ert import _clib
-from ert._c_wrappers import ResPrototype
 from ert._c_wrappers.job_queue.workflow_joblist import WorkflowJoblist
 
 if TYPE_CHECKING:
@@ -16,41 +13,64 @@ if TYPE_CHECKING:
     from ert._c_wrappers.util import SubstitutionList
 
 
-class Workflow(BaseCClass):
-    TYPE_NAME = "workflow"
-    _alloc = ResPrototype("void* workflow_alloc(char*, workflow_joblist)", bind=False)
-    _free = ResPrototype("void     workflow_free(workflow)")
-    _count = ResPrototype("int      workflow_size(workflow)")
-    _iget_job = ResPrototype("workflow_job_ref workflow_iget_job(workflow, int)")
-    _iget_args = ResPrototype("stringlist_ref   workflow_iget_arguments(workflow, int)")
-
-    _try_compile = ResPrototype("bool workflow_try_compile(workflow, subst_list)")
-    _get_src_file = ResPrototype("char* worflow_get_src_file(workflow)")
-
+class Workflow:
     def __init__(self, src_file: str, job_list: WorkflowJoblist):
-        c_ptr = self._alloc(src_file, job_list)
-        super().__init__(c_ptr)
-
         self.__running = False
         self.__cancelled = False
         self.__current_job = None
         self.__status: Dict[str, Any] = {}
+        self._compile_time = None
+        self.job_list = job_list
+        self.src_file = src_file
+        self.cmd_list = []
+        self.last_error = []
+
+        self._try_compile(None)
 
     def __len__(self):
-        return self._count()
-
-    def __getitem__(self, index: int) -> Tuple["WorkflowJob", Any]:
-        job = self._iget_job(index)
-        args = self._iget_args(index)
-        return job, args
-
-    def __iter__(self):
-        for index in range(len(self)):
-            yield self[index]
+        return len(self.cmd_list)
 
     @property
-    def src_file(self):
-        return self._get_src_file()
+    def compiled(self):
+        return self._compile_time is None
+
+    def __getitem__(self, index: int) -> Tuple["WorkflowJob", Any]:
+        return self.cmd_list[index]
+
+    def __iter__(self):
+        return iter(self.cmd_list)
+
+    def _try_compile(self, context: Optional["SubstitutionList"]):
+        to_compile = self.src_file
+        if not os.path.exists(self.src_file):
+            raise ValueError(f"Workflow file {self.src_file} does not exist")
+        if context is not None:
+            tmpdir = mkdtemp("ert_workflow")
+            to_compile = os.path.join(tmpdir, "ert-workflow")
+            context.substitute_file(self.src_file, to_compile)
+            self._compile_time = None
+        mtime = os.path.getmtime(to_compile)
+        if self._compile_time is not None and mtime <= self._compile_time:
+            return
+
+        self.cmd_list = []
+        parser = self.job_list.parser
+        content = parser.parse(to_compile)
+
+        errors = content.getErrors()
+        if errors:
+            return errors
+
+        for line in content:
+            self.cmd_list.append(
+                (
+                    self.job_list[line.get_kw()],
+                    [line.igetString(i) for i in range(len(line))],
+                )
+            )
+
+        self._compile_time = mtime
+        return None
 
     def run(
         self,
@@ -63,13 +83,13 @@ class Workflow(BaseCClass):
         # Reset status
         self.__status = {}
         self.__running = True
-        success = self._try_compile(context)
-        if not success:
+        errors = self._try_compile(context)
+        if errors is not None:
             msg = (
                 "** Warning: The workflow file {} is not valid - "
-                "make sure the workflow jobs are defined accordingly\n"
+                "make sure the workflow jobs are defined correctly:\n {}\n"
             )
-            sys.stderr.write(msg.format(self.src_file))
+            sys.stderr.write(msg.format(self.src_file, errors))
 
             self.__running = False
             return False
@@ -103,10 +123,7 @@ class Workflow(BaseCClass):
 
         self.__current_job = None
         self.__running = False
-        return success
-
-    def free(self):
-        self._free()
+        return True
 
     def isRunning(self):
         return self.__running
@@ -125,18 +142,10 @@ class Workflow(BaseCClass):
             time.sleep(1)
 
     def getLastError(self) -> List[str]:
-        return _clib.workflow.get_last_error(self)
+        return self.last_error
 
     def getJobsReport(self) -> Dict[str, Any]:
         return self.__status
-
-    @classmethod
-    def createCReference(cls, c_pointer, parent=None):
-        workflow = super().createCReference(c_pointer, parent)
-        workflow.__running = False
-        workflow.__cancelled = False
-        workflow.__current_job = None
-        return workflow
 
     def __ne__(self, other):
         return not self == other
