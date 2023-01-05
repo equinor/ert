@@ -307,7 +307,7 @@ class EnkfConfigNode(BaseCClass):
         msg = "When entering a surface you must provide the argument:\n"
         valid = True
         if init_file_fmt is None:
-            msg = msg + f"{ConfigKeys.INIT_FILES}:/path/to/input/files%%d\n"
+            msg = msg + f"{ConfigKeys.INIT_FILES}:/path/to/input/files%d\n"
             valid = False
         if output_file is None:
             msg = msg + "OUTPUT_FILE:name_of_output_file\n"
