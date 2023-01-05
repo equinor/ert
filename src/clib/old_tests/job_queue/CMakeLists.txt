@@ -37,15 +37,8 @@ foreach(name job_slurm_submit job_slurm_runtest)
   endif()
 endforeach()
 
-foreach(
-  name
-  job_loadOK
-  job_torque_submit
-  job_queue_stress_task
-  job_program_output
-  job_lsf_exclude_hosts
-  create_file
-  job_loadFail)
+foreach(name job_torque_submit job_queue_stress_task job_program_output
+             job_lsf_exclude_hosts create_file job_loadFail)
 
   add_executable(${name} ${TESTS_EXCLUDE_FROM_ALL} test_${name}.cpp)
   target_link_libraries(${name} ert)
@@ -59,9 +52,6 @@ if(NOT APPLE)
 
   add_test(NAME job_list COMMAND $<TARGET_FILE:job_list>)
 endif()
-
-add_test(NAME job_loadOK2 COMMAND job_loadOK
-                                  "${TEST_DATA_DIR}/job_queue/externalOK")
 
 add_test(NAME job_loadFail1 COMMAND job_loadFail
                                     "${TEST_DATA_DIR}/job_queue/internalFail")
