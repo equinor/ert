@@ -1,10 +1,12 @@
 import os
+from textwrap import dedent
 
 import pytest
 
 from ert._c_wrappers.enkf import ConfigKeys, ErtWorkflowList, ResConfig
 from ert._c_wrappers.enkf.enums import HookRuntime
 from ert._c_wrappers.enkf.res_config import site_config_location
+from ert._c_wrappers.job_queue.workflow_job import WorkflowJob
 
 
 @pytest.mark.usefixtures("copy_minimum_case")
@@ -89,3 +91,23 @@ def test_workflow_list_constructor():
     )
 
     assert ert_workflow_list == res_config.ert_workflow_list
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_job_load_OK():
+    script_file_contents = dedent(
+        """
+        INTERNAL   False
+        EXECUTABLE /usr/bin/python
+        MIN_ARG    1
+        MAX_ARG    2
+        ARG_TYPE   0  STRING
+        ARG_TYPE   1  INT
+        """
+    )
+
+    script_file_path = os.path.join(os.getcwd(), "externalOK")
+    with open(script_file_path, mode="w", encoding="utf-8") as fh:
+        fh.write(script_file_contents)
+
+    WorkflowJob.fromFile(script_file_path)
