@@ -228,48 +228,33 @@ class EnsembleConfig(BaseCClass):
             self.addNode(schedule_file_node)
 
     @staticmethod
-    def gen_data_node(gen_data: Union[dict, list]) -> Optional[EnkfConfigNode]:
-        if isinstance(gen_data, dict):
-            name = gen_data.get(ConfigKeys.NAME)
-            res_file = gen_data.get(ConfigKeys.RESULT_FILE)
-            input_format = gen_data.get(ConfigKeys.INPUT_FORMAT)
-            report_steps = gen_data.get(ConfigKeys.REPORT_STEPS)
-        else:
-            options = _option_dict(gen_data, 1)
-            name = gen_data[0]
-            res_file = options.get(ConfigKeys.RESULT_FILE)
-            input_format_str = options.get(ConfigKeys.INPUT_FORMAT)
-            if input_format_str != "ASCII":
-                logger.error("The only supported INPUT_FORMAT is ASCII")
-                return None
-            input_format = GenDataFileType.from_string(input_format_str)
-            report_steps_str = options.get(ConfigKeys.REPORT_STEPS, "")
-            report_steps = rangestring_to_list(report_steps_str)
+    def gen_data_node(gen_data: List[str]) -> Optional[EnkfConfigNode]:
+        options = _option_dict(gen_data, 1)
+        name = gen_data[0]
+        res_file = options.get(ConfigKeys.RESULT_FILE)
+        input_format_str = options.get(ConfigKeys.INPUT_FORMAT)
+        if input_format_str != "ASCII":
+            logger.error("The only supported INPUT_FORMAT is ASCII")
+            return None
+        report_steps_str = options.get(ConfigKeys.REPORT_STEPS, "")
+        report_steps = rangestring_to_list(report_steps_str)
 
         return EnkfConfigNode.create_gen_data_full(
             name,
             res_file,
-            input_format,
+            GenDataFileType.ASCII,
             report_steps,
         )
 
     @staticmethod
-    def gen_kw_node(gen_kw: Union[dict, list], tag_format: str) -> EnkfConfigNode:
-        if isinstance(gen_kw, dict):
-            name = gen_kw.get(ConfigKeys.NAME)
-            tmpl_path = _get_abs_path(gen_kw.get(ConfigKeys.TEMPLATE))
-            out_file = _get_filename(gen_kw.get(ConfigKeys.OUT_FILE))
-            param_file_path = _get_abs_path(gen_kw.get(ConfigKeys.PARAMETER_FILE))
-            forward_init = gen_kw.get(ConfigKeys.FORWARD_INIT)
-            init_files = _get_abs_path(gen_kw.get(ConfigKeys.INIT_FILES))
-        else:
-            options = _option_dict(gen_kw, 4)
-            name = gen_kw[0]
-            tmpl_path = _get_abs_path(gen_kw[1])
-            out_file = _get_filename(_get_abs_path(gen_kw[2]))
-            param_file_path = _get_abs_path(gen_kw[3])
-            forward_init = _str_to_bool(options.get(ConfigKeys.FORWARD_INIT, "FALSE"))
-            init_files = _get_abs_path(options.get(ConfigKeys.INIT_FILES))
+    def gen_kw_node(gen_kw: List[str], tag_format: str) -> EnkfConfigNode:
+        options = _option_dict(gen_kw, 4)
+        name = gen_kw[0]
+        tmpl_path = _get_abs_path(gen_kw[1])
+        out_file = _get_filename(_get_abs_path(gen_kw[2]))
+        param_file_path = _get_abs_path(gen_kw[3])
+        forward_init = _str_to_bool(options.get(ConfigKeys.FORWARD_INIT, "FALSE"))
+        init_files = _get_abs_path(options.get(ConfigKeys.INIT_FILES))
         return EnkfConfigNode.create_gen_kw(
             name,
             tmpl_path,
@@ -281,20 +266,13 @@ class EnsembleConfig(BaseCClass):
         )
 
     @staticmethod
-    def get_surface_node(surface: Union[dict, list]) -> EnkfConfigNode:
-        if isinstance(surface, dict):
-            name = surface.get(ConfigKeys.NAME)
-            init_file = surface.get(ConfigKeys.INIT_FILES)
-            out_file = surface.get(ConfigKeys.OUT_FILE)
-            base_surface = surface.get(ConfigKeys.BASE_SURFACE_KEY)
-            forward_init = surface.get(ConfigKeys.FORWARD_INIT)
-        else:
-            options = _option_dict(surface, 1)
-            name = surface[0]
-            init_file = options.get(ConfigKeys.INIT_FILES)
-            out_file = options.get("OUTPUT_FILE")
-            base_surface = options.get(ConfigKeys.BASE_SURFACE_KEY)
-            forward_init = _str_to_bool(options.get(ConfigKeys.FORWARD_INIT, "FALSE"))
+    def get_surface_node(surface: List[str]) -> EnkfConfigNode:
+        options = _option_dict(surface, 1)
+        name = surface[0]
+        init_file = options.get(ConfigKeys.INIT_FILES)
+        out_file = options.get("OUTPUT_FILE")
+        base_surface = options.get(ConfigKeys.BASE_SURFACE_KEY)
+        forward_init = _str_to_bool(options.get(ConfigKeys.FORWARD_INIT, "FALSE"))
 
         return EnkfConfigNode.create_surface(
             name,
@@ -308,33 +286,20 @@ class EnsembleConfig(BaseCClass):
     def get_field_node(
         field: Union[dict, list], grid: Optional[EclGrid]
     ) -> EnkfConfigNode:
-        if isinstance(field, dict):
-            name = field.get(ConfigKeys.NAME)
-            var_type = field.get(ConfigKeys.VAR_TYPE)
-            out_file = field.get(ConfigKeys.OUT_FILE)
-            enkf_infile = field.get(ConfigKeys.ENKF_INFILE)
-            forward_init = field.get(ConfigKeys.FORWARD_INIT)
-            init_transform = field.get(ConfigKeys.INIT_TRANSFORM)
-            output_transform = field.get(ConfigKeys.OUTPUT_TRANSFORM)
-            input_transform = field.get(ConfigKeys.INPUT_TRANSFORM)
-            min_ = field.get(ConfigKeys.MIN_KEY)
-            max_ = field.get(ConfigKeys.MAX_KEY)
-            init_files = field.get(ConfigKeys.INIT_FILES)
-        else:
-            name = field[0]
-            var_type = field[1]
-            out_file = field[2]
-            enkf_infile = None
-            options = _option_dict(field, 2)
-            if var_type == ConfigKeys.GENERAL_KEY:
-                enkf_infile = field[3]
-            forward_init = _str_to_bool(options.get(ConfigKeys.FORWARD_INIT, "FALSE"))
-            init_transform = options.get(ConfigKeys.INIT_TRANSFORM)
-            output_transform = options.get(ConfigKeys.OUTPUT_TRANSFORM)
-            input_transform = options.get(ConfigKeys.INPUT_TRANSFORM)
-            min_ = options.get(ConfigKeys.MIN_KEY)
-            max_ = options.get(ConfigKeys.MAX_KEY)
-            init_files = options.get(ConfigKeys.INIT_FILES)
+        name = field[0]
+        var_type = field[1]
+        out_file = field[2]
+        enkf_infile = None
+        options = _option_dict(field, 2)
+        if var_type == ConfigKeys.GENERAL_KEY:
+            enkf_infile = field[3]
+        forward_init = _str_to_bool(options.get(ConfigKeys.FORWARD_INIT, "FALSE"))
+        init_transform = options.get(ConfigKeys.INIT_TRANSFORM)
+        output_transform = options.get(ConfigKeys.OUTPUT_TRANSFORM)
+        input_transform = options.get(ConfigKeys.INPUT_TRANSFORM)
+        min_ = options.get(ConfigKeys.MIN_KEY)
+        max_ = options.get(ConfigKeys.MAX_KEY)
+        init_files = options.get(ConfigKeys.INIT_FILES)
         return EnkfConfigNode.create_field(
             name,
             var_type,
@@ -354,17 +319,11 @@ class EnsembleConfig(BaseCClass):
     def _get_schedule_file_node(
         schedule_file: Union[dict, list], tag_format: str
     ) -> EnkfConfigNode:
-        if isinstance(schedule_file, dict):
-            file_path = schedule_file.get(ConfigKeys.TEMPLATE)
-            file_name = _get_filename(file_path)
-            parameter = schedule_file.get(ConfigKeys.PARAMETER_KEY)
-            init_files = schedule_file.get(ConfigKeys.INIT_FILES)
-        else:
-            file_path = schedule_file[0]
-            file_name = _get_filename(file_path)
-            options = _option_dict(schedule_file, 1)
-            parameter = options.get(ConfigKeys.PARAMETER_KEY)
-            init_files = options.get(ConfigKeys.INIT_FILES)
+        file_path = _get_abs_path(schedule_file[0])
+        file_name = _get_filename(file_path)
+        options = _option_dict(schedule_file, 1)
+        parameter = options.get(ConfigKeys.PARAMETER_KEY)
+        init_files = options.get(ConfigKeys.INIT_FILES)
 
         return EnkfConfigNode.create_gen_kw(
             ConfigKeys.PRED_KEY,

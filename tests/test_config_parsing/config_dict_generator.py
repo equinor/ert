@@ -12,7 +12,6 @@ from hypothesis import assume, note
 from py import path as py_path
 
 from ert._c_wrappers.enkf import ConfigKeys
-from ert._c_wrappers.enkf.enums import GenDataFileType
 from ert._c_wrappers.job_queue import QueueDriverEnum
 
 from .egrid_generator import egrids
@@ -34,6 +33,14 @@ format_file_names = st.builds(lambda file_name: file_name + "-%d", file_names)
 @st.composite
 def directory_names(draw):
     return "dir" + draw(words)
+
+
+@st.composite
+def report_steps(draw):
+    rep_steps = draw(
+        st.lists(st.integers(min_value=0, max_value=100), min_size=4, unique=True)
+    )
+    return ",".join(str(step) for step in sorted(rep_steps))
 
 
 transforms = st.sampled_from(
@@ -280,37 +287,27 @@ def generate_config(draw):
                     "gen-kw-export-name-" + draw(file_names)
                 ),
                 ConfigKeys.FIELD_KEY: st.lists(
-                    st.fixed_dictionaries(
-                        {
-                            ConfigKeys.NAME: st.just("FIELD-" + draw(words)),
-                            ConfigKeys.VAR_TYPE: st.just("PARAMETER"),
-                            ConfigKeys.OUT_FILE: file_names,
-                            # ConfigKeys.ENKF_INFILE: file_names, only used in general
-                            ConfigKeys.FORWARD_INIT: st.booleans(),
-                            ConfigKeys.INIT_TRANSFORM: transforms,
-                            ConfigKeys.OUTPUT_TRANSFORM: transforms,
-                            # ConfigKeys.INPUT_TRANSFORM: func, only used in general
-                            ConfigKeys.MIN_KEY: small_floats,
-                            ConfigKeys.MAX_KEY: small_floats,
-                            ConfigKeys.INIT_FILES: file_names,
-                        }
+                    st.tuples(
+                        st.just("FIELD-" + draw(words)),
+                        st.just("PARAMETER"),
+                        file_names,
+                        st.just(f"FORWARD_INIT:{draw(st.booleans())}"),
+                        st.just(f"INIT_TRANSFORM:{draw(transforms)}"),
+                        st.just(f"OUTPUT_TRANSFORM:{draw(transforms)}"),
+                        st.just(f"MIN:{draw(small_floats)}"),
+                        st.just(f"MAX:{draw(small_floats)}"),
+                        st.just(f"INIT_FILES:{draw(file_names)}"),
                     ),
-                    unique_by=lambda field_dict: field_dict[ConfigKeys.NAME],
+                    unique_by=lambda element: element[0],
                 ),
                 ConfigKeys.GEN_DATA: st.lists(
-                    st.fixed_dictionaries(
-                        {
-                            ConfigKeys.NAME: st.just("GEN_DATA-" + draw(words)),
-                            ConfigKeys.RESULT_FILE: format_file_names,
-                            ConfigKeys.INPUT_FORMAT: st.just(GenDataFileType.ASCII),
-                            ConfigKeys.REPORT_STEPS: st.lists(
-                                st.integers(min_value=0, max_value=100),
-                                min_size=2,
-                                unique=True,
-                            ),
-                        }
+                    st.tuples(
+                        st.just(f"GEN_DATA-{draw(words)}"),
+                        st.just(f"{ConfigKeys.RESULT_FILE}:{draw(format_file_names)}"),
+                        st.just(f"{ConfigKeys.INPUT_FORMAT}:ASCII"),
+                        st.just(f"{ConfigKeys.REPORT_STEPS}:{draw(report_steps())}"),
                     ),
-                    unique_by=lambda field_dict: field_dict[ConfigKeys.NAME],
+                    unique_by=lambda tup: tup[0],
                 ),
                 ConfigKeys.MAX_SUBMIT: positives,
                 ConfigKeys.NUM_CPU: positives,
@@ -511,68 +508,12 @@ def to_config_file(filename, config_dict):  # pylint: disable=too-many-branches
                     config.write(f"{keyword} {job_name}({job_args})\n")
             elif keyword == ConfigKeys.FIELD_KEY:
                 # keyword_value is a list of dicts, each defining a field
-                for field_dict in keyword_value:
-                    config.write(
-                        " ".join(
-                            [
-                                keyword,
-                                field_dict.get(ConfigKeys.NAME, ""),
-                                field_dict.get(ConfigKeys.VAR_TYPE, ""),
-                                field_dict.get(ConfigKeys.OUT_FILE, ""),
-                                f"INIT_FILES:{field_dict.get(ConfigKeys.INIT_FILES)}"
-                                if ConfigKeys.INIT_FILES in field_dict
-                                else "",
-                                f"MIN:{field_dict.get(ConfigKeys.MIN_KEY)}"
-                                if ConfigKeys.MIN_KEY in field_dict
-                                else "",
-                                f"MAX:{field_dict.get(ConfigKeys.MAX_KEY)}"
-                                if ConfigKeys.MAX_KEY in field_dict
-                                else "",
-                                (
-                                    "OUTPUT_TRANSFORM:"
-                                    f"{field_dict.get(ConfigKeys.OUTPUT_TRANSFORM)}"
-                                )
-                                if ConfigKeys.OUTPUT_TRANSFORM in field_dict
-                                else "",
-                                (
-                                    "INIT_TRANSFORM:"
-                                    f"{field_dict.get(ConfigKeys.INIT_TRANSFORM)}"
-                                )
-                                if ConfigKeys.INIT_TRANSFORM in field_dict
-                                else "",
-                                (
-                                    "FORWARD_INIT:"
-                                    f"{field_dict.get(ConfigKeys.FORWARD_INIT)}"
-                                )
-                                if ConfigKeys.FORWARD_INIT in field_dict
-                                else "",
-                                field_dict.get(ConfigKeys.ENKF_INFILE, ""),
-                                field_dict.get(ConfigKeys.INPUT_TRANSFORM, ""),
-                            ]
-                        )
-                        + "\n"
-                    )
+                for field_vals in keyword_value:
+                    config.write(" ".join([keyword, *field_vals]) + "\n")
             elif keyword == ConfigKeys.GEN_DATA:
                 # keyword_value is a list of dicts, each defining a field
-                for field_dict in keyword_value:
-                    report_steps_as_string = ",".join(
-                        map(str, field_dict.get(ConfigKeys.REPORT_STEPS))
-                    )
-                    config.write(
-                        " ".join(
-                            [
-                                keyword,
-                                field_dict.get(ConfigKeys.NAME, ""),
-                                f"RESULT_FILE:{field_dict.get(ConfigKeys.RESULT_FILE)}",
-                                (
-                                    "INPUT_FORMAT:"
-                                    f"{field_dict.get(ConfigKeys.INPUT_FORMAT)}"
-                                ),
-                                f"REPORT_STEPS:{report_steps_as_string}",
-                            ]
-                        )
-                        + "\n"
-                    )
+                for gen_data_entry in keyword_value:
+                    config.write(" ".join([keyword, *gen_data_entry]) + "\n")
             elif keyword == ConfigKeys.INSTALL_JOB_DIRECTORY:
                 for install_dir in keyword_value:
                     config.write(f"{keyword} {install_dir}\n")

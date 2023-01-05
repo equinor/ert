@@ -9,13 +9,7 @@ from unittest.mock import MagicMock, mock_open, patch
 import pytest
 from ecl.util.enums import RngAlgTypeEnum
 
-from ert._c_wrappers.enkf import (
-    AnalysisConfig,
-    ConfigKeys,
-    GenDataFileType,
-    HookRuntime,
-    ResConfig,
-)
+from ert._c_wrappers.enkf import AnalysisConfig, ConfigKeys, HookRuntime, ResConfig
 from ert._c_wrappers.enkf.res_config import parse_signature_job, site_config_location
 from ert._c_wrappers.job_queue import QueueDriverEnum
 from ert._c_wrappers.sched import HistorySourceEnum
@@ -339,22 +333,21 @@ def test_res_config_dict_constructor(setup_case):
             "ROE:1",
         ],  # ensemble
         ConfigKeys.GEN_KW: [
-            {
-                ConfigKeys.NAME: "SIGMA",
-                ConfigKeys.TEMPLATE: "../input/templates/sigma.tmpl",
-                ConfigKeys.OUT_FILE: "coarse.sigma",
-                ConfigKeys.PARAMETER_FILE: "../input/distributions/sigma.dist",
-                ConfigKeys.INIT_FILES: None,
-                ConfigKeys.FORWARD_INIT: False,
-            }  # ensemble
+            [
+                "SIGMA",
+                "../input/templates/sigma.tmpl",
+                "coarse.sigma",
+                "../input/distributions/sigma.dist",
+                f"{ConfigKeys.FORWARD_INIT}:FALSE",
+            ]
         ],
         ConfigKeys.GEN_DATA: [
-            {
-                ConfigKeys.NAME: "super_data",
-                ConfigKeys.INPUT_FORMAT: GenDataFileType.ASCII,
-                ConfigKeys.RESULT_FILE: "super_data_%d",
-                ConfigKeys.REPORT_STEPS: [1],
-            }  # ensemble
+            [
+                "super_data",
+                f"{ConfigKeys.INPUT_FORMAT}:ASCII",
+                f"{ConfigKeys.RESULT_FILE}:super_data_%d",
+                f"{ConfigKeys.REPORT_STEPS}:1",
+            ]  # ensemble
         ],
         ConfigKeys.ECLBASE: "eclipse/model/<ECLIPSE_NAME>-%d",  # model, ecl
         ConfigKeys.ENSPATH: os.path.realpath("../output/storage/<CASE_DIR>"),  # model
