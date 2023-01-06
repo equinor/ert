@@ -72,7 +72,7 @@ class FileSystemManager:
             )
 
         self.open_storages: Dict[str, EnkfFs] = {fs.case_name: fs}
-        self.active_case = fs.case_name
+        self.active_case: str = fs.case_name
 
     @property
     def current_case(self) -> "EnkfFs":
@@ -161,5 +161,5 @@ class FileSystemManager:
         else:
             raise KeyError(f"No such case name: {case_name} in {self.cases}")
 
-    def __iter__(self) -> Generator:
+    def __iter__(self) -> Generator[str, None, None]:
         yield from self.cases
