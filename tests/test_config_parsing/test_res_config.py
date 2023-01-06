@@ -192,3 +192,42 @@ ENSPATH storage
         dict_set_ens_path = ResConfig(config_dict=config_dict).ens_path
 
         assert dict_set_ens_path == config_dict["ENSPATH"]
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_queue_config_content_negative_value_invalid():
+    test_config_file_base = "test"
+    test_config_file_name = f"{test_config_file_base}.ert"
+    test_config_contents = dedent(
+        """
+        NUM_REALIZATIONS  1
+        DEFINE <STORAGE> storage/<CONFIG_FILE_BASE>-<DATE>
+        RUNPATH <STORAGE>/runpath/realization-<IENS>/iter-<ITER>
+        ENSPATH <STORAGE>/ensemble
+        QUEUE_SYSTEM LOCAL
+        QUEUE_OPTION LOCAL MAX_RUNNING -4
+        """
+    )
+    with open(test_config_file_name, "w", encoding="utf-8") as fh:
+        fh.write(test_config_contents)
+    with pytest.raises(
+        expected_exception=ConfigValidationError,
+        match="QUEUE_OPTION MAX_RUNNING is negative",
+    ):
+        ResConfig(user_config_file=test_config_file_name)
+
+
+@given(config_generators())
+def test_that_queue_config_dict_negative_value_invalid(
+    tmp_path_factory, config_generator
+):
+    with config_generator(tmp_path_factory) as config_dict:
+        config_dict[ConfigKeys.QUEUE_OPTION].append(
+            ["LSF", "MAX_RUNNING", "-6"],
+        )
+
+    with pytest.raises(
+        expected_exception=ConfigValidationError,
+        match="QUEUE_OPTION MAX_RUNNING is negative",
+    ):
+        ResConfig(config_dict=config_dict)

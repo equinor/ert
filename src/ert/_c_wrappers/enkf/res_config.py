@@ -213,6 +213,16 @@ class ResConfig:
         site_config_content = site_config_parser.parse(site_config_location())
         return config_content_as_dict(site_config_content, {})
 
+    def _validate_queue_option_max_running(self, config_path, config_dict):
+        for _, option_name, *values in config_dict.get("QUEUE_OPTION", []):
+            if option_name == "MAX_RUNNING" and int(*values) < 0:
+                raise ConfigValidationError(
+                    config_file=config_path,
+                    errors=[
+                        f"QUEUE_OPTION MAX_RUNNING is negative: {str(*values)}",
+                    ],
+                )
+
     # build configs from config file or everest dict
     def _alloc_from_content(self, user_config_file=None, config=None):
         site_config_parser = ConfigParser()
@@ -254,6 +264,7 @@ class ResConfig:
         self.env_vars = EnvironmentVarlist.from_dict(config_dict=config_dict)
         self.random_seed = config_dict.get(ConfigKeys.RANDOM_SEED, None)
         self.analysis_config = AnalysisConfig.from_dict(config_dict=config_dict)
+        self._validate_queue_option_max_running(None, config_dict)
         self.queue_config = QueueConfig.from_dict(config_dict)
         self.ert_workflow_list = ErtWorkflowList.from_dict(config_dict)
         self.runpath_file = config_dict.get(ConfigKeys.RUNPATH_FILE)
