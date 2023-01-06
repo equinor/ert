@@ -449,7 +449,7 @@ class EnKFMain:
                     run_arg.get_run_id(),
                     run_arg.runpath,
                     model_config.data_root,
-                    iens,
+                    run_arg.iens,
                     run_context.iteration,
                     run_context.substituter,
                     res_config.env_vars,

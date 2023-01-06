@@ -267,3 +267,31 @@ def test_that_data_file_sets_num_cpu(eclipse_data, expected_cpus):
     res_config = ResConfig("config.ert")
     ert = EnKFMain(res_config)
     assert int(ert.get_context()["<NUM_CPU>"]) == expected_cpus
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_runpath_substitution_remain_valid():
+    """
+    This checks that runpath substitution remain intact.
+    """
+    config_text = dedent(
+        """
+        NUM_REALIZATIONS 2
+        JOBNAME my_case%d
+        RUNPATH realization-%d/iter-%d
+        FORWARD_MODEL COPY_DIRECTORY(<FROM>=<CONFIG_PATH>/, <TO>=<RUNPATH>/)
+        """
+    )
+    Path("config.ert").write_text(config_text)
+
+    res_config = ResConfig("config.ert")
+    ert = EnKFMain(res_config)
+
+    run_context = ert.create_ensemble_context("prior", [True, True], iteration=0)
+    ert.createRunPath(run_context)
+
+    for i, realization in enumerate(run_context):
+        assert (
+            str(Path().absolute()) + "/realization-" + str(i) + "/iter-0"
+            in Path(realization.runpath + "/jobs.json").read_text()
+        )

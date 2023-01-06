@@ -41,13 +41,13 @@ class RunContext:
         job_names = self.runpaths.get_jobnames(
             list(range(len(self.initial_mask))), self.iteration
         )
+        self.substituter.addItem("<ITER>", str(self.iteration))
+
         for iens, (run_path, job_name, active) in enumerate(
             zip(paths, job_names, self.initial_mask)
         ):
-            self.substituter.addItem("<RUNPATH>", run_path)
             self.substituter.addItem("<ECL_BASE>", job_name)
             self.substituter.addItem("<ECLBASE>", job_name)
-            self.substituter.addItem("<ITER>", str(self.iteration))
             self.run_args.append(
                 RunArg(
                     str(self.run_id),
