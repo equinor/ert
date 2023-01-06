@@ -19,20 +19,15 @@ class Workflow:
         self.__cancelled = False
         self.__current_job = None
         self.__status: Dict[str, Any] = {}
-        self._compile_time = None
         self.job_list = job_list
         self.src_file = src_file
         self.cmd_list = []
         self.last_error = []
 
-        self._try_compile(None)
+        self._parse_src_file(None)
 
     def __len__(self):
         return len(self.cmd_list)
-
-    @property
-    def compiled(self):
-        return self._compile_time is None
 
     def __getitem__(self, index: int) -> Tuple["WorkflowJob", Any]:
         return self.cmd_list[index]
@@ -40,7 +35,7 @@ class Workflow:
     def __iter__(self):
         return iter(self.cmd_list)
 
-    def _try_compile(self, context: Optional["SubstitutionList"]):
+    def _parse_src_file(self, context: Optional["SubstitutionList"]):
         to_compile = self.src_file
         if not os.path.exists(self.src_file):
             raise ValueError(f"Workflow file {self.src_file} does not exist")
@@ -48,10 +43,6 @@ class Workflow:
             tmpdir = mkdtemp("ert_workflow")
             to_compile = os.path.join(tmpdir, "ert-workflow")
             context.substitute_file(self.src_file, to_compile)
-            self._compile_time = None
-        mtime = os.path.getmtime(to_compile)
-        if self._compile_time is not None and mtime <= self._compile_time:
-            return
 
         self.cmd_list = []
         parser = self.job_list.parser
@@ -69,7 +60,6 @@ class Workflow:
                 )
             )
 
-        self._compile_time = mtime
         return None
 
     def run(
@@ -83,7 +73,7 @@ class Workflow:
         # Reset status
         self.__status = {}
         self.__running = True
-        errors = self._try_compile(context)
+        errors = self._parse_src_file(context)
         if errors is not None:
             msg = (
                 "** Warning: The workflow file {} is not valid - "
