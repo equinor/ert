@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import asyncio
 import logging
 import pickle
@@ -33,7 +35,7 @@ class ExperimentServer:
     workers can connect.
     """
 
-    def __init__(self, ee_config: "EvaluatorServerConfig") -> None:
+    def __init__(self, ee_config: EvaluatorServerConfig) -> None:
         self._config = ee_config
         self._registry = _Registry()
         self._clients: Set[WebSocketServerProtocol] = set()
