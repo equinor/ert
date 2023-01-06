@@ -1,18 +1,19 @@
+from __future__ import annotations
+
 from typing import TYPE_CHECKING, Union
 
 from cloudevents.http import CloudEvent
 from typing_extensions import Protocol
 
-from _ert_com_protocol import DispatcherMessage
-
 if TYPE_CHECKING:
+    from _ert_com_protocol import DispatcherMessage
     from ert.ensemble_evaluator import EvaluatorServerConfig
 
 
 class Experiment(Protocol):
     """The experiment protocol which all experiments must implement."""
 
-    async def run(self, evaluator_server_config: "EvaluatorServerConfig") -> None:
+    async def run(self, evaluator_server_config: EvaluatorServerConfig) -> None:
         """Run the experiment to completion."""
         pass
 
