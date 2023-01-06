@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import shutil
 from collections import defaultdict
 from dataclasses import dataclass, field
@@ -16,7 +18,7 @@ class QueueConfig:
     )
 
     @classmethod
-    def from_dict(cls, config_dict):
+    def from_dict(cls, config_dict) -> QueueConfig:
         queue_system = config_dict.get("QUEUE_SYSTEM", "LOCAL")
         queue_system = QueueDriverEnum.from_string(f"{queue_system}_DRIVER")
         job_script = config_dict.get("JOB_SCRIPT", shutil.which("job_dispatch.py"))

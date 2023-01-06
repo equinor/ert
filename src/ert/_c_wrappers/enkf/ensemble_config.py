@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 import os
 from typing import Dict, List, Optional, Union
@@ -338,7 +340,7 @@ class EnsembleConfig(BaseCClass):
         )
 
     @classmethod
-    def from_dict(cls, config_dict):
+    def from_dict(cls, config_dict) -> EnsembleConfig:
         grid_file_path = _get_abs_path(config_dict.get(ConfigKeys.GRID))
         refcase_file_path = _get_abs_path(config_dict.get(ConfigKeys.REFCASE))
         tag_format = config_dict.get(ConfigKeys.GEN_KW_TAG_FORMAT, "<%s>")

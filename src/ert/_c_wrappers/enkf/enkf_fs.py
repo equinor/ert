@@ -1,20 +1,21 @@
+from __future__ import annotations
+
 import json
 import logging
 import math
 import shutil
+from datetime import datetime
 from multiprocessing.pool import ThreadPool
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
-import numpy.typing as npt
 import pandas as pd
 import xtgeo
 from cwrap import BaseCClass
 
 from ert import _clib
 from ert._c_wrappers import ResPrototype
-from ert._c_wrappers.enkf.config import EnkfConfigNode
 from ert._c_wrappers.enkf.enums import EnKFFSType, RealizationStateEnum
 from ert._c_wrappers.enkf.model_callbacks import LoadStatus
 from ert._c_wrappers.enkf.ert_config import EnsembleConfig
@@ -24,12 +25,12 @@ from ert.ensemble_evaluator.callbacks import forward_model_ok
 from ert.storage import Storage
 
 if TYPE_CHECKING:
+    import numpy.typing as npt
     from ecl.summary import EclSum
     from ecl.util.util import IntVector
     from xtgeo import RegularSurface
 
-    from ert._c_wrappers.enkf.config import GenKwConfig
-    from ert._c_wrappers.enkf.res_config import ModelConfig
+    from ert._c_wrappers.enkf.config import EnkfConfigNode, GenKwConfig
     from ert._c_wrappers.enkf.run_arg import RunArg
     from ert._c_wrappers.enkf.state_map import StateMap
 
@@ -37,12 +38,12 @@ logger = logging.getLogger(__name__)
 
 
 def _load_realization(
-    sim_fs: "EnkfFs",
+    sim_fs: EnkfFs,
     realisation: int,
-    ensemble_config: "EnsembleConfig",
+    ensemble_config: EnsembleConfig,
     history_length: int,
-    run_args: List["RunArg"],
-) -> Tuple["LoadStatus", str]:
+    run_args: List[RunArg],
+) -> Tuple[LoadStatus, int]:
     state_map = sim_fs.getStateMap()
 
     state_map.update_matching(
@@ -78,7 +79,7 @@ class EnkfFs(BaseCClass):
         ensemble_config: EnsembleConfig,
         ensemble_size: int,
         read_only: bool = False,
-        refcase: Optional["EclSum"] = None,
+        refcase: Optional[EclSum] = None,
     ):
         self.mount_point = Path(mount_point).absolute()
         self.case_name = self.mount_point.stem
@@ -95,7 +96,7 @@ class EnkfFs(BaseCClass):
     def getTimeMap(self) -> TimeMap:
         return _clib.enkf_fs.get_time_map(self)
 
-    def getStateMap(self) -> "StateMap":
+    def getStateMap(self) -> StateMap:
         return _clib.enkf_fs.get_state_map(self)
 
     def getCaseName(self) -> str:
@@ -117,10 +118,10 @@ class EnkfFs(BaseCClass):
     def createFileSystem(
         cls,
         path: Union[str, Path],
-        ensemble_config: "EnsembleConfig",
+        ensemble_config: EnsembleConfig,
         ensemble_size: int,
         read_only: bool = False,
-        refcase: Optional["EclSum"] = None,
+        refcase: Optional[EclSum] = None,
     ) -> "EnkfFs":
         path = Path(path).absolute()
         fs_type = EnKFFSType.BLOCK_FS_DRIVER_ID
@@ -129,16 +130,16 @@ class EnkfFs(BaseCClass):
             path, ensemble_config, ensemble_size, read_only=read_only, refcase=refcase
         )
 
-    def sync(self):
+    def sync(self) -> None:
         self._sync()
 
-    def free(self):
+    def free(self) -> None:
         self._umount()
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"EnkfFs(case_name = {self.getCaseName()}) {self._ad_str()}"
 
-    def fsync(self):
+    def fsync(self) -> None:
         self._fsync()
 
     def getSummaryKeySet(self) -> List[str]:
@@ -150,7 +151,7 @@ class EnkfFs(BaseCClass):
             keys = [k.strip() for k in f.readlines()]
         return sorted(keys)
 
-    def realizationList(self, state: "RealizationStateEnum") -> "IntVector":
+    def realizationList(self, state: RealizationStateEnum) -> IntVector:
         """
         Will return list of realizations with state == the specified state.
         """
@@ -164,6 +165,7 @@ class EnkfFs(BaseCClass):
         for path in self.mount_point.iterdir():
             if "gen-kw" in str(path):
                 return True
+        return False
 
     def save_gen_kw(
         self,
@@ -182,7 +184,7 @@ class EnkfFs(BaseCClass):
 
     def _load_gen_kw_realization(
         self, key: str, realization: int
-    ) -> Tuple["npt.NDArray[np.double]", List[str]]:
+    ) -> Tuple[npt.NDArray[np.double], List[str]]:
         input_path = self.mount_point / f"gen-kw-{realization}"
         if not input_path.exists():
             raise KeyError(f"Unable to load GEN_KW for key: {key}")
@@ -194,8 +196,8 @@ class EnkfFs(BaseCClass):
         return np_data, keys
 
     def load_gen_kw_as_dict(
-        self, key: str, realization: int, gen_kw_config: "GenKwConfig"
-    ) -> Dict[str, float]:
+        self, key: str, realization: int, gen_kw_config: GenKwConfig
+    ) -> Dict[str, Dict[str, float]]:
         data, keys = self._load_gen_kw_realization(key, realization)
 
         transformed = {
@@ -214,16 +216,16 @@ class EnkfFs(BaseCClass):
             result.update({f"LOG10_{key}": log10})
         return result
 
-    def load_gen_kw(
-        self, key: str, realizations: List[int]
-    ) -> "npt.NDArray[np.double]":
+    def load_gen_kw(self, key: str, realizations: List[int]) -> npt.NDArray[np.double]:
         result = []
         for realization in realizations:
             data, _ = self._load_gen_kw_realization(key, realization)
             result.append(data)
         return np.stack(result).T
 
-    def save_ext_param(self, key: str, realization: int, data: dict) -> None:
+    def save_ext_param(
+        self, key: str, realization: int, data: Dict[str, Dict[str, Any]]
+    ) -> None:
         output_path = self.mount_point / f"extparam-{realization}"
         Path.mkdir(output_path, exist_ok=True)
         with open(output_path / f"{key}.json", "w", encoding="utf-8") as f:
@@ -240,7 +242,7 @@ class EnkfFs(BaseCClass):
             RealizationStateEnum.STATE_INITIALIZED,
         )
 
-    def load_ext_param(self, key: str, realization: int) -> dict:
+    def load_ext_param(self, key: str, realization: int) -> Any:
         input_path = self.mount_point / f"extparam-{realization}" / f"{key}.json"
         if not input_path.exists():
             raise KeyError(f"No parameter: {key} in storage")
@@ -254,7 +256,7 @@ class EnkfFs(BaseCClass):
         key: str,
         realization: int,
         base_file_name: str,
-        data: "npt.NDArray[np.double]",
+        data: npt.NDArray[np.double],
     ) -> None:
         output_path = self.mount_point / f"surface-{realization}"
         Path.mkdir(output_path, exist_ok=True)
@@ -271,16 +273,14 @@ class EnkfFs(BaseCClass):
         input_path = self.mount_point / f"surface-{realization}"
         return (input_path / f"{key}.irap").exists()
 
-    def load_surface_file(self, key: str, realization: int) -> "RegularSurface":
+    def load_surface_file(self, key: str, realization: int) -> RegularSurface:
         input_path = self.mount_point / f"surface-{realization}" / f"{key}.irap"
         if not input_path.exists():
             raise KeyError(f"No parameter: {key} in storage")
         surf = xtgeo.surface_from_file(input_path, fformat="irap_ascii")
         return surf
 
-    def load_surface_data(
-        self, key: str, realizations: List[int]
-    ) -> "npt.NDArray[np.double]":
+    def load_surface_data(self, key: str, realizations: List[int]) -> Any:
         result = []
         for realization in realizations:
             surf = self.load_surface_file(key, realization)
@@ -289,7 +289,7 @@ class EnkfFs(BaseCClass):
 
     def save_parameters(
         self,
-        config_node: "EnkfConfigNode",
+        config_node: EnkfConfigNode,
         iens_active_index: List[int],
         parameter: update.Parameter,
         values: npt.ArrayLike,
@@ -301,11 +301,11 @@ class EnkfFs(BaseCClass):
         config_node: EnkfConfigNode,
         iens_active_index: List[int],
         parameter: update.Parameter,
-    ) -> np.ndarray:
+    ) -> Any:
         return update.load_parameter(self, config_node, iens_active_index, parameter)
 
     def copy_from_case(
-        self, other: "EnkfFs", report_step: int, nodes: List[str], active: List[bool]
+        self, other: EnkfFs, report_step: int, nodes: List[str], active: List[bool]
     ) -> None:
         """
         This copies parameters from self into other, checking if nodes exists
@@ -322,7 +322,7 @@ class EnkfFs(BaseCClass):
         self._copy_parameter_files(other, nodes, [i for i, b in enumerate(active) if b])
 
     def _copy_parameter_files(
-        self, to: "EnkfFs", parameter_keys: List[str], realizations: List[int]
+        self, to: EnkfFs, parameter_keys: List[str], realizations: List[int]
     ) -> None:
         """
         Copies selected parameter files from one storage to another.
@@ -369,7 +369,7 @@ class EnkfFs(BaseCClass):
 
     def save_summary_data(
         self,
-        data: "npt.NDArray[np.double]",
+        data: npt.NDArray[np.double],
         keys: List[str],
         axis: List[Any],
         realization: int,
@@ -378,7 +378,7 @@ class EnkfFs(BaseCClass):
 
     def load_summary_data(
         self, summary_keys: List[str], realizations: List[int]
-    ) -> Tuple["npt.NDArray[np.double]", List[str], List[int]]:
+    ) -> Tuple[npt.NDArray[np.double], List[datetime], List[int]]:
         return self._storage.load_summary_data(summary_keys, realizations)
 
     def load_summary_data_as_df(
@@ -393,7 +393,7 @@ class EnkfFs(BaseCClass):
 
     def load_gen_data(
         self, key: str, realizations: List[int]
-    ) -> Tuple["npt.NDArray[np.double]", List[int]]:
+    ) -> Tuple[npt.NDArray[np.double], List[int]]:
         return self._storage.load_gen_data(key, realizations)
 
     def load_gen_data_as_df(
@@ -404,9 +404,9 @@ class EnkfFs(BaseCClass):
     def load_from_run_path(
         self,
         ensemble_size: int,
-        ensemble_config: "EnsembleConfig",
+        ensemble_config: EnsembleConfig,
         history_length: int,
-        run_args: List["RunArg"],
+        run_args: List[RunArg],
         active_realizations: List[bool],
     ) -> int:
         """Returns the number of loaded realizations"""
