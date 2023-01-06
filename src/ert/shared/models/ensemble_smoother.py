@@ -45,8 +45,6 @@ class EnsembleSmoother(BaseRunModel):
         self._checkMinimumActiveRealizations(len(prior_context.active_realizations))
         self.setPhase(0, "Running simulations...", indeterminate=False)
 
-        # self.setAnalysisModule(arguments["analysis_module"])
-
         self.setPhaseName("Pre processing...", indeterminate=True)
         self.ert().sample_prior(prior_context.sim_fs, prior_context.active_realizations)
         self.ert().createRunPath(prior_context)
