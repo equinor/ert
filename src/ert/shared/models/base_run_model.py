@@ -109,6 +109,7 @@ class BaseRunModel:
         self._state_machine = _ert_com_protocol.ExperimentStateMachine()
         # mapping from iteration number to ensemble id
         self._iter_map: Dict[int, str] = {}
+        self.validate()
 
     def ert(self) -> EnKFMain:
         return self._ert
@@ -530,3 +531,41 @@ class BaseRunModel:
                 if Path(run_path).exists():
                     return True
         return False
+
+    def validate(self) -> None:
+        if self._simulation_arguments is None:
+            return
+        errors = []
+
+        current_case = self._simulation_arguments.get("current_case", None)
+        target_case = self._simulation_arguments.get("target_case", None)
+
+        if current_case is not None and current_case in self._ert.storage_manager:
+            if (
+                len(self._ert.storage_manager[current_case].getStateMap())
+                < self._ert._ensemble_size
+            ):
+                errors.append(
+                    f"- Existing case: {current_case} was created with ensemble "
+                    f"size smaller than specified in the ert configuration file ("
+                    f"{len(self._ert.storage_manager[current_case].getStateMap())} "
+                    f" < {self._ert._ensemble_size})"
+                )
+        if target_case is not None:
+            if target_case == current_case:
+                errors.append(
+                    f"- Target case and current case can not have the same name. "
+                    f"They were both: {current_case}"
+                )
+
+            if "%d" in target_case:
+                num_iterations = self._simulation_arguments["num_iterations"]
+                for i in range(num_iterations):
+                    if target_case % i in self._ert.storage_manager:
+                        errors.append(f"- Target case: {target_case % i} exists")
+
+            elif target_case in self._ert.storage_manager:
+                errors.append(f"- Target case: {target_case} exists")
+
+        if errors:
+            raise ValueError("\n".join(errors))

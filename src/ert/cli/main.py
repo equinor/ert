@@ -12,12 +12,7 @@ from typing import Any
 import filelock
 
 from ert._c_wrappers.enkf import EnKFMain, ResConfig
-from ert.cli import (
-    ENSEMBLE_SMOOTHER_MODE,
-    ES_MDA_MODE,
-    ITERATIVE_ENSEMBLE_SMOOTHER_MODE,
-    WORKFLOW_MODE,
-)
+from ert.cli import WORKFLOW_MODE
 from ert.cli.model_factory import create_model
 from ert.cli.monitor import Monitor
 from ert.cli.workflow import execute_workflow
@@ -78,14 +73,16 @@ def run_cli(args):
             debug=False,
         )
         return
-
-    model = create_model(
-        ert,
-        facade.get_ensemble_size(),
-        facade.get_current_case_name(),
-        args,
-        experiment_id,
-    )
+    try:
+        model = create_model(
+            ert,
+            facade.get_ensemble_size(),
+            facade.get_current_case_name(),
+            args,
+            experiment_id,
+        )
+    except ValueError as e:
+        raise ErtCliError(e)
 
     if model.check_if_runpath_exists():
         print("Warning: ERT is running in an existing runpath")
@@ -94,17 +91,6 @@ def run_cli(args):
     # Test run does not have a current_case
     if "current_case" in args and args.current_case:
         facade.select_or_create_new_case(args.current_case)
-
-    if (
-        args.mode
-        in [ENSEMBLE_SMOOTHER_MODE, ITERATIVE_ENSEMBLE_SMOOTHER_MODE, ES_MDA_MODE]
-        and args.target_case == facade.get_current_case_name()
-    ):
-        msg = (
-            "ERROR: Target file system and source file system can not be the same. "
-            f"They were both: {args.target_case}."
-        )
-        raise ErtCliError(msg)
 
     thread = threading.Thread(
         name="ert_cli_simulation_thread",

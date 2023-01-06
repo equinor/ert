@@ -7,6 +7,7 @@ def test_that_all_iterations_gets_correct_name_and_iteration_number():
     minimum_args = {
         "start_iteration": 0,
         "weights": "1, 2, 3",
+        "num_iterations": 3,
         "analysis_module": "some_module",
         "active_realizations": [True],
         "target_case": "target_%d",

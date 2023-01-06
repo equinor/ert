@@ -60,9 +60,11 @@ def test_custom_realizations(poly_case):
 def test_setup_single_test_run(poly_case):
     ert = poly_case
 
-    model = model_factory._setup_single_test_run(ert, "experiment_id")
+    model = model_factory._setup_single_test_run(
+        ert, ert.storage_manager.active_case, "experiment_id"
+    )
     assert isinstance(model, SingleTestRun)
-    assert len(model._simulation_arguments.keys()) == 1
+    assert len(model._simulation_arguments.keys()) == 2
     assert "active_realizations" in model._simulation_arguments
 
 
@@ -71,10 +73,14 @@ def test_setup_ensemble_experiment(poly_case):
     facade = LibresFacade(ert)
     args = Namespace(realizations=None, iter_num=1)
     model = model_factory._setup_ensemble_experiment(
-        ert, args, facade.get_ensemble_size(), "experiment_id"
+        ert,
+        args,
+        facade.get_ensemble_size(),
+        ert.storage_manager.active_case,
+        "experiment_id",
     )
     assert isinstance(model, EnsembleExperiment)
-    assert len(model._simulation_arguments.keys()) == 2
+    assert len(model._simulation_arguments.keys()) == 3
     assert "active_realizations" in model._simulation_arguments
 
 
@@ -92,7 +98,7 @@ def test_setup_ensemble_smoother(poly_case):
         "experiment_id",
     )
     assert isinstance(model, EnsembleSmoother)
-    assert len(model._simulation_arguments.keys()) == 3
+    assert len(model._simulation_arguments.keys()) == 4
     assert "active_realizations" in model._simulation_arguments
     assert "target_case" in model._simulation_arguments
     assert "analysis_module" in model._simulation_arguments
@@ -116,7 +122,7 @@ def test_setup_multiple_data_assimilation(poly_case):
         "experiment_id",
     )
     assert isinstance(model, MultipleDataAssimilation)
-    assert len(model._simulation_arguments.keys()) == 5
+    assert len(model._simulation_arguments.keys()) == 6
     assert "active_realizations" in model._simulation_arguments
     assert "target_case" in model._simulation_arguments
     assert "analysis_module" in model._simulation_arguments
