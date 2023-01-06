@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import copy
 import os
 
@@ -33,7 +35,7 @@ class SubstitutionList(BaseCClass):
             raise ValueError("Failed to construct subst_list instance.")
 
     @classmethod
-    def from_dict(cls, config_dict):
+    def from_dict(cls, config_dict) -> SubstitutionList:
         subst_list = SubstitutionList()
 
         for key, val in config_dict.get("DEFINE", []):
@@ -62,7 +64,7 @@ class SubstitutionList(BaseCClass):
     def __len__(self):
         return self._size()
 
-    def addItem(self, key, value):
+    def addItem(self, key: str, value: str):
         self._append_copy(key, value)
 
     def keys(self):
