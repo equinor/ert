@@ -3,6 +3,8 @@
 #include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
+#include <string>
+#include <vector>
 
 #include <ert/res_util/file_utils.hpp>
 #include <ert/util/buffer.hpp>
@@ -12,6 +14,7 @@
 #include <ert/util/vector.hpp>
 
 #include <ert/res_util/subst_list.hpp>
+#include <fmt/format.h>
 
 namespace fs = std::filesystem;
 
@@ -242,10 +245,11 @@ void subst_list_free(subst_list_type *subst_list) {
    Updates the buffer inplace with all the string substitutions in the
    subst_list.
 */
-static bool subst_list_replace_strings(const subst_list_type *subst_list,
-                                       buffer_type *buffer) {
+static std::vector<std::string>
+subst_list_replace_strings(const subst_list_type *subst_list,
+                           buffer_type *buffer) {
     int index;
-    bool global_match = false;
+    std::vector<std::string> matches;
     for (index = 0; index < vector_get_size(subst_list->string_data); index++) {
         const subst_list_string_type *node =
             (const subst_list_string_type *)vector_iget_const(
@@ -256,11 +260,11 @@ static bool subst_list_replace_strings(const subst_list_type *subst_list,
             do {
                 match = buffer_search_replace(buffer, node->key, node->value);
                 if (match)
-                    global_match = true;
+                    matches.push_back(node->key);
             } while (match);
         }
     }
-    return global_match;
+    return matches;
 }
 
 /**
@@ -298,17 +302,19 @@ bool subst_list_filter_file(const subst_list_type *subst_list,
 
     /* Doing the actual update */
     bool matched_at_least_once = false;
-    bool match = true;
+    std::vector<std::string> matches = {"ANY"};
     const int max_iterations = 10000;
     int iterations = 1;
-    while (match && iterations++ < max_iterations) {
-        match = subst_list_replace_strings(subst_list, buffer);
-        matched_at_least_once |= match;
+    while (matches.size() > 0 && iterations++ < max_iterations) {
+        matches = subst_list_replace_strings(subst_list, buffer);
+        matched_at_least_once |= matches.size() > 0;
     }
 
     if (iterations >= max_iterations) {
         throw std::runtime_error(
-            "Reached max iterations while trying to resolve defines");
+            fmt::format("Reached max iterations while trying to resolve "
+                        "defines in file '{}'. Matched to '{}'",
+                        src_file, fmt::join(matches, ", ")));
     }
 
     /* Writing updated file */
@@ -332,15 +338,15 @@ bool subst_list_filter_file(const subst_list_type *subst_list,
 /**
    This function does search-replace on string instance inplace.
 */
-bool subst_list_update_string(const subst_list_type *subst_list,
-                              char **string) {
+std::vector<std::string>
+subst_list_update_string(const subst_list_type *subst_list, char **string) {
     buffer_type *buffer =
         buffer_alloc_private_wrapper(*string, strlen(*string) + 1);
-    bool match = subst_list_replace_strings(subst_list, buffer);
+    auto matches = subst_list_replace_strings(subst_list, buffer);
     *string = (char *)buffer_get_data(buffer);
     buffer_free_container(buffer);
 
-    return match;
+    return matches;
 }
 
 /**
@@ -351,16 +357,18 @@ char *subst_list_alloc_filtered_string(const subst_list_type *subst_list,
                                        const char *string) {
     char *filtered_string = util_alloc_string_copy(string);
     if (subst_list) {
-        bool match = true;
+        std::vector<std::string> matches = {"<ANY>"};
         const int max_iterations = 1000;
         int iterations = 1;
-        while (match && iterations++ < max_iterations) {
-            match = subst_list_update_string(subst_list, &filtered_string);
+        while (matches.size() > 0 && iterations++ < max_iterations) {
+            matches = subst_list_update_string(subst_list, &filtered_string);
         }
 
         if (iterations >= max_iterations) {
-            throw std::runtime_error(
-                "Reached max iterations while trying to resolve defines");
+            throw std::runtime_error(fmt::format(
+                "Reached max iterations while trying to resolve defines in "
+                "'{}', it matched to '{}' and resulted in '{}'",
+                string, fmt::join(matches, ", "), filtered_string));
         }
     }
     return filtered_string;
