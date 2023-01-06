@@ -24,8 +24,18 @@ def test_hook_call_order_ensemble_smoother(monkeypatch):
     The goal of this test is to assert that the hook call order is the same
     across different models.
     """
-    ert_mock = MagicMock()
-    minimum_args = MagicMock()
+
+    ert_mock = MagicMock(
+        _ensemble_size=0,
+        storage_manager=MagicMock(
+            __get_item__=lambda x: MagicMock(getStateMap=lambda y: [])
+        ),
+    )
+    minimum_args = {
+        "current_case": "default",
+        "active_realizations": [True],
+        "target_case": "smooth",
+    }
     test_class = EnsembleSmoother(minimum_args, ert_mock, MagicMock(), "experiment_id")
     test_class.create_context = MagicMock()
     test_class.run_ensemble_evaluator = MagicMock(return_value=1)
@@ -46,6 +56,7 @@ def test_hook_call_order_es_mda(monkeypatch):
     minimum_args = {
         "start_iteration": 0,
         "weights": [1],
+        "num_iterations": 1,
         "analysis_module": "some_module",
         "active_realizations": [True],
         "target_case": "target_%d",
@@ -88,12 +99,22 @@ def test_hook_call_order_iterative_ensemble_smoother(monkeypatch):
     The goal of this test is to assert that the hook call order is the same
     across different models.
     """
-    ert_mock = MagicMock()
+    ert_mock = MagicMock(
+        _ensemble_size=10,
+        storage_manager=MagicMock(
+            __get_item__=lambda x: MagicMock(getStateMap=lambda y: list(range(10)))
+        ),
+    )
     ert_mock.analysisConfig.return_value.num_retries_per_iter = 1
     ert_mock.runWorkflows = MagicMock()
+    minimum_args = {
+        "num_iterations": 1,
+        "active_realizations": [True],
+        "target_case": "target_%d",
+    }
 
     test_class = IteratedEnsembleSmoother(
-        MagicMock(), ert_mock, MagicMock(), "experiment_id"
+        minimum_args, ert_mock, MagicMock(), "experiment_id"
     )
     test_class.create_context = MagicMock()
     test_class._checkMinimumActiveRealizations = MagicMock()
