@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import shutil
 from collections import defaultdict
 from dataclasses import dataclass, field
@@ -17,7 +19,7 @@ class QueueConfig:
     )
 
     @classmethod
-    def from_dict(cls, config_dict):
+    def from_dict(cls, config_dict) -> QueueConfig:
         queue_system = config_dict.get("QUEUE_SYSTEM", "LOCAL")
 
         valid_queue_systems = []

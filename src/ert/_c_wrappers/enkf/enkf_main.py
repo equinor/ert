@@ -1,9 +1,11 @@
+from __future__ import annotations
+
 import json
 import logging
 import os
 from datetime import datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, List, Mapping, Sequence, Union
+from typing import TYPE_CHECKING, Any, Dict, List, Mapping, Optional, Sequence, Union
 
 import numpy as np
 from jinja2 import Template
@@ -31,6 +33,7 @@ from ert._clib.state_map import STATE_LOAD_FAILURE, STATE_UNDEFINED
 if TYPE_CHECKING:
     from ert._c_wrappers.enkf.ert_config import ErtConfig
     from ert._c_wrappers.enkf.config import GenKwConfig
+    from ert._c_wrappers.enkf.enums import HookRuntime
 
 logger = logging.getLogger(__name__)
 
@@ -68,7 +71,9 @@ def _value_export_json(
         return
 
     # Hierarchical
-    json_out = {key: dict(param_map.items()) for key, param_map in values.items()}
+    json_out: Dict[str, Union[float, Dict[str, float]]] = {
+        key: dict(param_map.items()) for key, param_map in values.items()
+    }
 
     # Composite
     json_out.update(
@@ -94,7 +99,7 @@ def _generate_gen_kw_parameter_file(
     config: "GenKwConfig",
     target_file: str,
     run_path: Path,
-    exports: dict,
+    exports: Dict[str, Dict[str, float]],
 ) -> None:
     key = config.getKey()
     gen_kw_dict = fs.load_gen_kw_as_dict(key, realization, config)
@@ -170,9 +175,9 @@ def _generate_parameter_files(
         iens: Realisation index
         fs: EnkfFs from which to load parameter data
     """
-    exports = {}
+    exports: Dict[str, Dict[str, float]] = {}
     for key in ens_config.getKeylistFromVarType(
-        EnkfVarType.PARAMETER + EnkfVarType.EXT_PARAMETER
+        EnkfVarType.PARAMETER + EnkfVarType.EXT_PARAMETER  # type: ignore
     ):
         node = ens_config[key]
         type_ = node.getImplementationType()
@@ -236,9 +241,9 @@ class ObservationConfigError(ConfigValidationError):
 class EnKFMain:
     def __init__(self, config: "ErtConfig", read_only: bool = False) -> None:
         self.ert_config = config
-        self._update_configuration = None
+        self._update_configuration: Optional[UpdateConfiguration] = None
 
-        self._observations = EnkfObs(
+        self._observations = EnkfObs(  # type: ignore
             config.model_config.history_source,
             config.model_config.time_map,
             config.ensemble_config.refcase,
@@ -304,7 +309,7 @@ class EnKFMain:
         else:
             seed: Union[int, Sequence[int]]
             try:
-                seed = int(config_seed)
+                seed = int(config_seed)  # type: ignore
             except ValueError:
                 seed = [ord(x) for x in config_seed]
             seed_seq = np.random.SeedSequence(seed)
@@ -327,25 +332,25 @@ class EnKFMain:
         return self._update_configuration
 
     @update_configuration.setter
-    def update_configuration(self, user_config: Any):
+    def update_configuration(self, user_config: Any) -> None:
         config = UpdateConfiguration(update_steps=user_config)
         config.context_validate(self._observation_keys, self._parameter_keys)
         self._update_configuration = config
 
     @property
-    def _observation_keys(self):
+    def _observation_keys(self) -> List[str]:
         return list(self._observations.getMatchingKeys("*"))
 
     @property
-    def _parameter_keys(self):
+    def _parameter_keys(self) -> List[str]:
         return self.ensembleConfig().parameters
 
     @property
-    def runpaths(self):
+    def runpaths(self) -> Runpaths:
         return self._runpaths
 
     @property
-    def runpath_list_filename(self):
+    def runpath_list_filename(self) -> os.PathLike[str]:
         return self._runpaths.runpath_list_filename
 
     def getLocalConfig(self) -> "UpdateConfiguration":
@@ -367,7 +372,7 @@ class EnKFMain:
         return nr_loaded
 
     def create_ensemble_context(
-        self, case_name, active_realizations, iteration
+        self, case_name: str, active_realizations: List[bool], iteration: int
     ) -> RunContext:
         """This creates a new case in storage
         and returns the run information for that case"""
@@ -382,7 +387,7 @@ class EnKFMain:
         )
 
     def load_ensemble_context(
-        self, case_name, active_realizations, iteration
+        self, case_name: str, active_realizations: List[bool], iteration: int
     ) -> RunContext:
         """This loads an existing case from storage
         and creates run information for that case"""
@@ -396,7 +401,9 @@ class EnKFMain:
             iteration=iteration,
         )
 
-    def write_runpath_list(self, iterations: List[int], realizations: List[int]):
+    def write_runpath_list(
+        self, iterations: List[int], realizations: List[int]
+    ) -> None:
         self.runpaths.write_runpath_list(iterations, realizations)
 
     def get_queue_config(self) -> QueueConfig:
@@ -405,7 +412,7 @@ class EnKFMain:
     def get_num_cpu(self) -> int:
         return self.ert_config.preferred_num_cpu()
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"EnKFMain(size: {self.getEnsembleSize()}, config: {self.ert_config})"
 
     def getEnsembleSize(self) -> int:
@@ -442,7 +449,7 @@ class EnKFMain:
         self,
         storage: "EnkfFs",
         active_realizations: List[int],
-        parameters: List[str] = None,
+        parameters: Optional[List[str]] = None,
     ) -> None:
         """This function is responsible for getting the prior into storage,
         in the case of GEN_KW we sample the data and store it, and if INIT_FILES
@@ -581,6 +588,6 @@ class EnKFMain:
             [run_context.iteration], run_context.active_realizations
         )
 
-    def runWorkflows(self, runtime: int) -> None:
+    def runWorkflows(self, runtime: Union[int, HookRuntime]) -> None:
         for workflow in self.ert_config.hooked_workflows[runtime]:
             workflow.run(self)

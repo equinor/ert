@@ -1,9 +1,10 @@
+from __future__ import annotations
+
 import os
 from hashlib import sha256
 from typing import TYPE_CHECKING, Dict, List, TypedDict
 
 import numpy as np
-import numpy.typing as npt
 import pandas as pd
 from cwrap import BaseCClass
 from ecl.util.util import StringList
@@ -11,6 +12,7 @@ from ecl.util.util import StringList
 from ert._c_wrappers import ResPrototype
 
 if TYPE_CHECKING:
+    import numpy.typing as npt
 
     class PriorDict(TypedDict):
         key: str
@@ -82,7 +84,7 @@ class GenKwConfig(BaseCClass):
         self._set_template_file(template_file)
         self.__str__ = self.__repr__
 
-    def getTemplateFile(self):
+    def getTemplateFile(self) -> os.PathLike[str]:
         path = self._get_template_file()
         return None if path is None else os.path.abspath(path)
 
@@ -155,13 +157,13 @@ class GenKwConfig(BaseCClass):
             )
         return priors
 
-    def transform(self, index, value):
+    def transform(self, index: int, value: float) -> float:
         return self._transform(index, value)
 
     @staticmethod
     def values_from_files(
         realizations: List[int], name_format: str, keys: List[str]
-    ) -> npt.ArrayLike:
+    ) -> npt.NDArray[np.double]:
         df_values = pd.DataFrame()
         for iens in realizations:
             df = pd.read_csv(
@@ -188,7 +190,7 @@ class GenKwConfig(BaseCClass):
         global_seed: str,
         active_realizations: List[int],
         nr_samples: int,
-    ) -> npt.ArrayLike:
+    ) -> npt.NDArray[np.double]:
         parameter_values = []
         for key in keys:
             key_hash = sha256(
