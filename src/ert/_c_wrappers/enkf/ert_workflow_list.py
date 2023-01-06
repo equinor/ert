@@ -1,6 +1,6 @@
 import logging
 import os
-from typing import Iterator, List
+from typing import Iterator, List, Union
 
 from ert._c_wrappers.config.config_parser import ConfigValidationError
 from ert._c_wrappers.enkf.config_keys import ConfigKeys
@@ -210,7 +210,9 @@ class ErtWorkflowList:
     def _hook_workflows(self) -> List[Workflow]:
         return [self._workflow[name] for name, _ in self._hook_workflow_list]
 
-    def get_workflows_hooked_at(self, run_time: HookRuntime) -> Iterator[Workflow]:
+    def get_workflows_hooked_at(
+        self, run_time: Union[int, HookRuntime]
+    ) -> Iterator[Workflow]:
         return map(
             lambda hookname: self._workflow[hookname[0]],
             filter(lambda hook: hook[1] == run_time.name, self._hook_workflow_list),
