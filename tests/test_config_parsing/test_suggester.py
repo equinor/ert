@@ -91,3 +91,22 @@ def test_that_suggester_gives_delete_runpath_migration(suggester, tmp_path):
 
     assert len(suggestions) == 1
     assert "It was removed in 2017" in suggestions[0]
+
+
+def test_suggester_gives_runpath_deprecated_specifier_migration(suggester, tmp_path):
+    (tmp_path / "config.ert").write_text(
+        "NUM_REALIZATIONS 1\nRUNPATH real-%d/iter-%d\n"
+    )
+    suggestions = suggester.suggest_migrations(str(tmp_path / "config.ert"))
+
+    assert len(suggestions) == 1
+    assert "Instead use the <IENS>, <ITER> keywords" in suggestions[0]
+
+
+def test_suggester_gives_no_runpath_deprecated_specifier_migration(suggester, tmp_path):
+    (tmp_path / "config.ert").write_text(
+        "NUM_REALIZATIONS 1\nRUNPATH real-<IENS>/iter-<ITER>\n"
+    )
+    suggestions = suggester.suggest_migrations(str(tmp_path / "config.ert"))
+
+    assert len(suggestions) == 0

@@ -37,6 +37,7 @@ class DeprecationMigrationSuggester:
         self._parser.add("CASE_TABLE")
         self._parser.add("RERUN_START")
         self._parser.add("DELETE_RUNPATH")
+        self._parser.add("RUNPATH")
 
     def suggest_migrations(self, filename: str):
         suggestions = []
