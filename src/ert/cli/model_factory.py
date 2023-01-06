@@ -18,41 +18,46 @@ def create_model(ert, ensemble_size, current_case_name, args, id_):
             "ensemble_size": ensemble_size,
         },
     )
+    if hasattr(args, "current_case") and args.current_case is not None:
+        current_case_name = args.current_case
 
-    # Setup model
     if args.mode == "test_run":
-        model = _setup_single_test_run(ert, id_)
+        return _setup_single_test_run(ert, current_case_name, id_)
     elif args.mode == "ensemble_experiment":
-        model = _setup_ensemble_experiment(ert, args, ensemble_size, id_)
+        return _setup_ensemble_experiment(
+            ert, args, ensemble_size, current_case_name, id_
+        )
     elif args.mode == "ensemble_smoother":
-        model = _setup_ensemble_smoother(
+        return _setup_ensemble_smoother(
             ert, args, ensemble_size, current_case_name, id_
         )
     elif args.mode == "es_mda":
-        model = _setup_multiple_data_assimilation(
+        return _setup_multiple_data_assimilation(
             ert, args, ensemble_size, current_case_name, id_
         )
     elif args.mode == "iterative_ensemble_smoother":
-        model = _setup_iterative_ensemble_smoother(
+        return _setup_iterative_ensemble_smoother(
             ert, args, ensemble_size, current_case_name, id_
         )
 
     else:
         raise NotImplementedError(f"Run type not supported {args.mode}")
 
-    return model
 
-
-def _setup_single_test_run(ert, id_):
-    simulations_argument = {"active_realizations": [True]}
+def _setup_single_test_run(ert, current_case_name, id_):
+    simulations_argument = {
+        "active_realizations": [True],
+        "current_case": current_case_name,
+    }
     model = SingleTestRun(simulations_argument, ert, id_)
     return model
 
 
-def _setup_ensemble_experiment(ert, args, ensemble_size, id_):
+def _setup_ensemble_experiment(ert, args, ensemble_size, current_case_name, id_):
     simulations_argument = {
         "active_realizations": _realizations(args, ensemble_size),
         "iter_num": int(args.iter_num),
+        "current_case": current_case_name,
     }
     model = EnsembleExperiment(simulations_argument, ert, ert.get_queue_config(), id_)
     return model
@@ -61,6 +66,7 @@ def _setup_ensemble_experiment(ert, args, ensemble_size, id_):
 def _setup_ensemble_smoother(ert, args, ensemble_size, current_case_name, id_):
     simulations_argument = {
         "active_realizations": _realizations(args, ensemble_size),
+        "current_case": current_case_name,
         "target_case": _target_case_name(
             ert, args, current_case_name, format_mode=False
         ),
@@ -79,6 +85,7 @@ def _setup_multiple_data_assimilation(ert, args, ensemble_size, current_case_nam
         "analysis_module": "STD_ENKF",
         "weights": args.weights,
         "start_iteration": int(args.start_iteration),
+        "num_iterations": len(args.weights),
     }
     model = MultipleDataAssimilation(
         simulations_argument, ert, ert.get_queue_config(), id_
@@ -126,3 +133,4 @@ def _target_case_name(ert, args, current_case_name, format_mode=False) -> str:
 def _num_iterations(ert, args) -> None:
     if args.num_iterations is not None:
         ert.analysisConfig().set_num_iterations(int(args.num_iterations))
+    return ert.analysisConfig().num_iterations

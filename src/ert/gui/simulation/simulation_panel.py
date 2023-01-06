@@ -129,16 +129,22 @@ class SimulationPanel(QWidget):
             )
             == QMessageBox.Yes
         ):
-            model = create_model(
-                self.ert,
-                self.facade.get_ensemble_size(),
-                self.facade.get_current_case_name(),
-                self.getSimulationArguments(),
-                str(uuid.uuid4()),
-            )
-
             abort = False
-            if model.check_if_runpath_exists():
+            try:
+                model = create_model(
+                    self.ert,
+                    self.facade.get_ensemble_size(),
+                    self.facade.get_current_case_name(),
+                    self.getSimulationArguments(),
+                    str(uuid.uuid4()),
+                )
+            except ValueError as e:
+                QMessageBox.warning(
+                    self, "ERROR: Failed to create experiment", (str(e)), QMessageBox.Ok
+                )
+                abort = True
+
+            if not abort and model.check_if_runpath_exists():
                 if (
                     QMessageBox.warning(
                         self,

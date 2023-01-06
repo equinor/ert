@@ -122,3 +122,20 @@ def test_check_if_runpath_exists(
     )
 
     assert brm.check_if_runpath_exists() == expected
+
+
+def test_validation():
+    simulation_arguments = {
+        "start_iteration": 0,
+        "active_realizations": list(range(50)),
+        "current_case": "something",
+    }
+    ert = MagicMock(
+        _ensemble_size=100,
+        storage_manager=MagicMock(
+            __get_item__=lambda _: MagicMock(getStateMap=lambda _: list(range(10))),
+            __contains__=lambda _, __: True,
+        ),
+    )
+    with pytest.raises(ValueError):
+        BaseRunModel(simulation_arguments, ert, None, None, None)
