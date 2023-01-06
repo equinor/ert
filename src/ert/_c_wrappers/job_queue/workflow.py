@@ -35,7 +35,7 @@ class Workflow:
     def __iter__(self):
         return iter(self.cmd_list)
 
-    def _parse_src_file(self, context: Optional["SubstitutionList"]):
+    def _parse_src_file(self, context: Optional["SubstitutionList"]) -> None:
         to_compile = self.src_file
         if not os.path.exists(self.src_file):
             raise ValueError(f"Workflow file {self.src_file} does not exist")
@@ -50,7 +50,9 @@ class Workflow:
 
         errors = content.getErrors()
         if errors:
-            return errors
+            raise ValueError(
+                f"Parsing of workflow file {self.src_file} resulted in errors: {errors}"
+            )
 
         for line in content:
             self.cmd_list.append(
@@ -59,8 +61,6 @@ class Workflow:
                     [line.igetString(i) for i in range(len(line))],
                 )
             )
-
-        return None
 
     def run(
         self,
@@ -73,13 +73,14 @@ class Workflow:
         # Reset status
         self.__status = {}
         self.__running = True
-        errors = self._parse_src_file(context)
-        if errors is not None:
+        try:
+            self._parse_src_file(context)
+        except ValueError as err:
             msg = (
                 "** Warning: The workflow file {} is not valid - "
                 "make sure the workflow jobs are defined correctly:\n {}\n"
             )
-            sys.stderr.write(msg.format(self.src_file, errors))
+            sys.stderr.write(msg.format(self.src_file, err))
 
             self.__running = False
             return False
