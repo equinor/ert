@@ -107,7 +107,7 @@ class Runpaths:
     def format_job_name(self) -> str:
         return replace_runpath_format(self._job_name_format)
 
-    def format_runpath(self):
+    def format_runpath(self) -> str:
         return str(Path(replace_runpath_format(self._runpath_format)).resolve())
 
 

@@ -93,11 +93,7 @@ class EnkfObs(BaseCClass):
         """
         key_list = self._alloc_matching_keylist(pattern)
         if obs_type:
-            new_key_list = []
-            for key in key_list:
-                if self.obsType(key) == obs_type:
-                    new_key_list.append(key)
-            return new_key_list
+            return [key for key in key_list if self.obsType(key) == obs_type]
         else:
             return key_list
 
@@ -117,7 +113,7 @@ class EnkfObs(BaseCClass):
     def free(self):
         self._free()
 
-    def load(self, config_file, std_cutoff):
+    def load(self, config_file: str, std_cutoff: float) -> None:
         _clib.enkf_obs.load(self, config_file, std_cutoff)
 
     @property
