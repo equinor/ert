@@ -309,18 +309,27 @@ class EnkfConfigNode(BaseCClass):
         if init_file_fmt is None:
             msg = msg + f"{ConfigKeys.INIT_FILES}:/path/to/input/files%d\n"
             valid = False
+        elif (
+            not forward_init
+            and "%d" not in init_file_fmt
+            and not os.path.exists(os.path.realpath(init_file_fmt))
+        ):
+            msg += f"{ConfigKeys.INIT_FILES}: {init_file_fmt} File not found "
+            valid = False
         if output_file is None:
             msg = msg + "OUTPUT_FILE:name_of_output_file\n"
             valid = False
         if base_surface_file is None:
             valid = False
             msg = msg + f"{ConfigKeys.BASE_SURFACE_KEY}:base_surface_file\n"
+        elif not os.path.exists(os.path.realpath(base_surface_file)):
+            msg += f"{ConfigKeys.BASE_SURFACE_KEY}: {base_surface_file} File not found "
+            valid = False
         if not valid:
             logger.error(msg)
             raise ValueError(msg)
 
-        if base_surface_file is not None:
-            base_surface_file = os.path.realpath(base_surface_file)
+        base_surface_file = os.path.realpath(base_surface_file)
         config_node = cls._alloc_surface_full(
             key,
             forward_init,

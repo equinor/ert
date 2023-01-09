@@ -246,3 +246,20 @@ def test_get_surface_node(setup_case, caplog):
     surface_str += " FORWARD_INIT:TRUE"
     surface_node = EnsembleConfig.get_surface_node(surface_str.split(" "))
     assert surface_node.getUseForwardInit()
+
+
+def test_surface_bad_init_values(setup_case):
+    _ = setup_case("configuration_tests", "ensemble_config.ert")
+    surface_in = "path/42"
+    surface_out = "surface/small_out.irap"
+    surface_str = (
+        f"TOP INIT_FILES:{surface_in}"
+        f" OUTPUT_FILE:{surface_out}"
+        f" BASE_SURFACE:{surface_in}"
+    )
+    error = (
+        f"INIT_FILES: {surface_in} File not found"
+        f" BASE_SURFACE: {surface_in} File not found "
+    )
+    with pytest.raises(ValueError, match=error):
+        EnsembleConfig.get_surface_node(surface_str.split(" "))
