@@ -596,7 +596,7 @@ void field_config_set_key(field_config_type *config, const char *key) {
     config->ecl_kw_name = util_realloc_string_copy(config->ecl_kw_name, key);
 }
 
-const char * field_config_get_key(const field_config_type *field_config) {
+const char *field_config_get_key(const field_config_type *field_config) {
     return field_config->ecl_kw_name;
 }
 
