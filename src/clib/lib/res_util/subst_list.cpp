@@ -6,6 +6,7 @@
 #include <string>
 #include <vector>
 
+#include <ert/logging.hpp>
 #include <ert/res_util/file_utils.hpp>
 #include <ert/util/buffer.hpp>
 #include <ert/util/hash.hpp>
@@ -15,6 +16,8 @@
 
 #include <ert/res_util/subst_list.hpp>
 #include <fmt/format.h>
+
+static auto logger = ert::get_logger("config");
 
 namespace fs = std::filesystem;
 
@@ -311,7 +314,7 @@ bool subst_list_filter_file(const subst_list_type *subst_list,
     }
 
     if (iterations >= max_iterations) {
-        throw std::runtime_error(
+        logger->warning(
             fmt::format("Reached max iterations while trying to resolve "
                         "defines in file '{}'. Matched to '{}'",
                         src_file, fmt::join(matches, ", ")));
@@ -365,7 +368,7 @@ char *subst_list_alloc_filtered_string(const subst_list_type *subst_list,
         }
 
         if (iterations >= max_iterations) {
-            throw std::runtime_error(fmt::format(
+            logger->warning(fmt::format(
                 "Reached max iterations while trying to resolve defines in "
                 "'{}', it matched to '{}' and resulted in '{}'",
                 string, fmt::join(matches, ", "), filtered_string));
