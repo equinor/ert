@@ -34,14 +34,43 @@ from ert.services import Storage
 def run_gui(args: argparse.Namespace):
     app = QApplication([])  # Early so that QT is initialized before other imports
     app.setWindowIcon(resourceIcon("application/window_icon_cutout"))
-    window = _start_initial_gui_window(args)
-    window.show()
-    window.activateWindow()
-    window.raise_()
-    return app.exec_()
+    with add_gui_log_handler() as log_handler:
+        window, ens_path = _start_initial_gui_window(args, log_handler)
+
+        def show_window():
+            window.show()
+            window.activateWindow()
+            window.raise_()
+            return app.exec_()
+
+        # ens_path is None indicates that there was an error in the setup and
+        # window is now just showing that error message, in which
+        # case display it and don't show an error message
+        if ens_path is None:
+            return show_window()
+
+        storage_lock = filelock.FileLock(
+            Path(ens_path) / (Path(ens_path).stem + ".lock")
+        )
+        try:
+            storage_lock.acquire(timeout=5)
+            with Storage.init_service(
+                res_config=args.config,
+                project=os.path.abspath(ens_path),
+            ):
+                return show_window()
+        except filelock.Timeout:
+            raise ErtTimeoutError(
+                f"Not able to acquire lock for: {ens_path}. You may already be running"
+                f" ert, or another user is using the same ENSPATH."
+            )
+        finally:
+            if storage_lock.is_locked:
+                storage_lock.release()
+                os.remove(storage_lock.lock_file)
 
 
-def _start_initial_gui_window(args):
+def _start_initial_gui_window(args, log_handler):
     messages = []
     res_config = None
     try:
@@ -49,7 +78,7 @@ def _start_initial_gui_window(args):
         messages += ResConfig.make_suggestion_list(args.config)
     except Exception as error:
         messages.append(str(error))
-        return _setup_suggester(messages, args, None)
+        return _setup_suggester(messages, args, None, log_handler), None
 
     # Create logger inside function to make sure all handlers have been added to
     # the root-logger.
@@ -66,7 +95,7 @@ def _start_initial_gui_window(args):
         ert = EnKFMain(res_config)
     except Exception as error:
         messages.append(str(error))
-        return _setup_suggester(messages, args, None)
+        return _setup_suggester(messages, args, None, log_handler), None
     if not ert.have_observations():
         messages.append("No observations loaded. Model update algorithms disabled!")
 
@@ -74,35 +103,15 @@ def _start_initial_gui_window(args):
     if locale_msg is not None:
         messages.append(locale_msg)
     if messages:
-        return _setup_suggester(messages, args, ert)
-    else:
-        return _start_main_gui_window(ert, args)
-
-
-def _start_main_gui_window(ert, args):
-
-    facade = LibresFacade(ert)
-    ens_path = Path(facade.enspath)
-    storage_lock = filelock.FileLock(ens_path / (ens_path.stem + ".lock"))
-
-    try:
-        storage_lock.acquire(timeout=5)
-        with Storage.init_service(
-            res_config=args.config,
-            project=os.path.abspath(facade.enspath),
-        ), add_gui_log_handler() as log_handler:
-            notifier = ErtNotifier(args.config)
-            # window reference must be kept until app.exec returns:
-            return _setup_main_window(ert, notifier, args, log_handler)
-    except filelock.Timeout:
-        raise ErtTimeoutError(
-            f"Not able to acquire lock for: {ens_path}. You may already be running ert,"
-            f" or another user is using the same ENSPATH."
+        return (
+            _setup_suggester(messages, args, ert, log_handler),
+            res_config.model_config.ens_path,
         )
-    finally:
-        if storage_lock.is_locked:
-            storage_lock.release()
-            os.remove(storage_lock.lock_file)
+    else:
+        return (
+            _setup_main_window(ert, args, log_handler),
+            res_config.model_config.ens_path,
+        )
 
 
 def _check_locale():
@@ -127,7 +136,7 @@ def _check_locale():
         return None
 
 
-def _setup_suggester(suggestions, args, ert):
+def _setup_suggester(suggestions, args, ert, log_handler):
     suggest = QWidget()
     layout = QVBoxLayout()
     suggest.setWindowTitle("Some problems detected")
@@ -151,7 +160,7 @@ def _setup_suggester(suggestions, args, ert):
     run.setEnabled(ert is not None)
 
     def run_pressed():
-        window = _start_main_gui_window(ert, args)
+        window = _setup_main_window(ert, args, log_handler)
         window.show()
         window.activateWindow()
         window.raise_()
@@ -173,12 +182,13 @@ def _setup_suggester(suggestions, args, ert):
 
 def _setup_main_window(
     ert: EnKFMain,
-    notifier: ErtNotifier,
     args: argparse.Namespace,
     log_handler: GUILogHandler,
 ):
+    # window reference must be kept until app.exec returns:
     facade = LibresFacade(ert)
     config_file = args.config
+    notifier = ErtNotifier(config_file)
     window = GertMainWindow(config_file)
     window.setWidget(SimulationPanel(ert, notifier, config_file))
     plugin_handler = PluginHandler(ert, ert.getWorkflowList().getPluginJobs(), window)
