@@ -1,3 +1,5 @@
+import shutil
+
 import pytest
 
 import ert
@@ -85,3 +87,14 @@ def test_fs_init_from_scratch(snake_oil_case):
         ["SNAKE_OIL_PARAM"],
     )
     assert len(ert.storage_manager.state_map("new_case")) == 25
+
+
+def test_missing_current_case(snake_oil_case):
+    ert = snake_oil_case
+    current_case_name = ert.storage_manager.active_case
+    config_file = ert.res_config.user_config_file
+    storage_path = ert.storage_manager.storage_path
+
+    shutil.rmtree(storage_path / current_case_name)
+    ert = EnKFMain(ResConfig(config_file))
+    assert ert.storage_manager.active_case == current_case_name
