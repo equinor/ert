@@ -51,8 +51,12 @@ class FileSystemManager:
         self._ensemble_size = ensemble_size
         current_case_file = storage_path / "current_case"
         if current_case_file.exists():
+            mount_path = storage_path / current_case_file.read_text("utf-8").strip()
+        else:
+            mount_path = storage_path / "default"
+        if mount_path.exists():
             fs = EnkfFs(
-                storage_path / current_case_file.read_text("utf-8").strip(),
+                mount_path,
                 self._ensemble_config,
                 self._ensemble_size,
                 read_only=read_only,
@@ -60,12 +64,13 @@ class FileSystemManager:
             )
         else:
             fs = EnkfFs.createFileSystem(
-                storage_path / "default",
+                mount_path,
                 self._ensemble_config,
                 self._ensemble_size,
                 read_only=read_only,
                 refcase=self.refcase,
             )
+
         self.open_storages: Dict[str, EnkfFs] = {fs.case_name: fs}
         self.active_case = fs.case_name
 
