@@ -1,14 +1,14 @@
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Tuple
+
 import xtgeo
+
 from ert._c_wrappers.enkf.data.enkf_node import EnkfNode
 from ert._c_wrappers.enkf.enkf_state import _internalize_results
 from ert._c_wrappers.enkf.enums import ErtImplType
 from ert._c_wrappers.enkf.model_callbacks import LoadStatus
 from ert._c_wrappers.enkf.node_id import NodeId
 from ert._c_wrappers.enkf.state_map import RealizationStateEnum
-from ert._c_wrappers.enkf.enums import ErtImplType
-
 
 if TYPE_CHECKING:
     from ert._c_wrappers.enkf import EnsembleConfig, RunArg
@@ -48,16 +48,21 @@ def forward_model_ok(
                 continue
 
             if config_node.getImplementationType() == ErtImplType.FIELD:
+                run_path = Path(run_arg.runpath)
+                file_name = config_node.get_init_file_fmt()
+                if "%d" in file_name:
+                    file_name = file_name % run_arg.iens
+                file_path = run_path / file_name
+
                 if run_arg.ensemble_storage.field_has_data(
                     config_node.getKey(), run_arg.iens
                 ):
                     # Already initialised, ignore
                     continue
 
-                filename = run_arg.runpath + "/" + config_node.get_init_file_fmt()
                 grid = xtgeo.grid_from_file(ens_conf.grid_file)
                 props = xtgeo.gridproperty_from_file(
-                    filename, name=config_node.getKey(), grid=grid
+                    pfile=file_path, name=config_node.getKey(), grid=grid
                 )
 
                 data = props.values1d.data

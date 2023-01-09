@@ -1,4 +1,6 @@
+# pylint: disable=too-many-lines
 import logging
+import math
 import os
 import stat
 from argparse import ArgumentParser
@@ -6,16 +8,16 @@ from contextlib import ExitStack as does_not_raise
 from hashlib import sha256
 from pathlib import Path
 from textwrap import dedent
-import math
-import xtgeo
+
 import numpy as np
 import numpy.testing
 import pytest
+import xtgeo
 from ecl.util.geometry import Surface
+
 from ert.__main__ import ert_parser
 from ert._c_wrappers.config.config_parser import ConfigValidationError
 from ert._c_wrappers.enkf import EnKFMain, ResConfig
-from ert._clib import update
 from ert.cli import ENSEMBLE_SMOOTHER_MODE
 from ert.cli.main import run_cli
 from ert.libres_facade import LibresFacade
@@ -151,7 +153,7 @@ def test_field_load_two_parameters_forward_init(tmpdir):
         FIELD PARAM_A PARAMETER param_a.grdecl INIT_FILES:../../../param_a.grdecl FORWARD_INIT:True
         FIELD PARAM_B PARAMETER param_b.grdecl INIT_FILES:../../../param_b.grdecl FORWARD_INIT:True
         GRID MY_EGRID.EGRID
-        """
+        """  # pylint: disable=line-too-long  # noqa: E501
         )
         with open("config.ert", "w") as fh:
             fh.writelines(config)
@@ -298,26 +300,26 @@ def test_field_load_two_parameters(tmpdir):
 
 
 @pytest.mark.parametrize(
-    "min, max, field_config",
+    "min_, max_, field_config",
     [
         (
             0.5,
             None,
-            "FIELD MY_PARAM PARAMETER my_param.grdecl INIT_FILES:my_param_%d.grdecl MIN:0.5",
+            "FIELD MY_PARAM PARAMETER my_param.grdecl INIT_FILES:my_param_%d.grdecl MIN:0.5",  # pylint: disable=line-too-long  # noqa: E501
         ),
         (
             None,
             0.8,
-            "FIELD MY_PARAM PARAMETER my_param.grdecl INIT_FILES:my_param_%d.grdecl MAX:0.8",
+            "FIELD MY_PARAM PARAMETER my_param.grdecl INIT_FILES:my_param_%d.grdecl MAX:0.8",  # pylint: disable=line-too-long  # noqa: E501
         ),
         (
             0.5,
             0.8,
-            "FIELD MY_PARAM PARAMETER my_param.grdecl INIT_FILES:my_param_%d.grdecl MIN:0.5 MAX:0.8",
+            "FIELD MY_PARAM PARAMETER my_param.grdecl INIT_FILES:my_param_%d.grdecl MIN:0.5 MAX:0.8",  # pylint: disable=line-too-long  # noqa: E501
         ),
     ],
 )
-def test_field_with_min_max(tmpdir, min: int, max: int, field_config: str):
+def test_field_with_min_max(tmpdir, min_: int, max_: int, field_config: str):
     with tmpdir.as_cwd():
         config = dedent(
             """
@@ -354,16 +356,16 @@ def test_field_with_min_max(tmpdir, min: int, max: int, field_config: str):
             name="MY_PARAM",
             grid=grid,
         )
-        if min and max:
+        if min_ and max_:
             vfunc = np.vectorize(
-                lambda x: ((x + 0.0001) >= min) and ((x - 0.0001) <= max)
+                lambda x: ((x + 0.0001) >= min_) and ((x - 0.0001) <= max_)
             )
             assert vfunc(my_prop.values.data).all()
-        elif min:
-            vfunc = np.vectorize(lambda x: (x + 0.0001) >= min)
+        elif min_:
+            vfunc = np.vectorize(lambda x: (x + 0.0001) >= min_)
             assert vfunc(my_prop.values.data).all()
-        elif max:
-            vfunc = np.vectorize(lambda x: (x - 0.0001) <= max)
+        elif max_:
+            vfunc = np.vectorize(lambda x: (x - 0.0001) <= max_)
             assert vfunc(my_prop.values.data).all()
 
 
@@ -375,7 +377,7 @@ def test_field_with_transformation(tmpdir):
         NUM_REALIZATIONS 2
         FIELD PARAM_A PARAMETER param_a.grdecl INIT_FILES:param_a_%d.grdecl INIT_TRANSFORM:LN OUTPUT_TRANSFORM:EXP
         GRID MY_EGRID.EGRID
-        """
+        """  # pylint: disable=line-too-long  # noqa: E501
         )
         with open("config.ert", "w") as fh:
             fh.writelines(config)
@@ -959,7 +961,7 @@ if __name__ == "__main__":
         grid= xtgeo.create_box_grid(dimension=(10,10,1))
         grid.to_file("MY_EGRID.EGRID", "egrid")
 
-        my_param = np.ndarray(shape=(10,10,1), buffer=np.random.random_sample(100)) 
+        my_param = np.ndarray(shape=(10,10,1), buffer=np.random.random_sample(100))
         gp = xtgeo.GridProperty(
             ncol=10,
             nrow=10,

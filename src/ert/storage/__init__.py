@@ -1,10 +1,14 @@
+from __future__ import annotations
+
 from datetime import datetime
 from pathlib import Path
-from typing import Any, List, Tuple
+from typing import TYPE_CHECKING, Any, List, Tuple
 
 import numpy as np
-import numpy.typing as npt
 import pandas as pd
+
+if TYPE_CHECKING:
+    import numpy.typing as npt
 
 
 class Storage:
@@ -25,7 +29,7 @@ class Storage:
         parameter_name: str,
         parameter_keys: List[str],
         realization: int,
-        data: "npt.ArrayLike",
+        data: npt.ArrayLike,
     ) -> None:
         output_path = self.mount_point / f"gen-kw-{realization}"
         Path.mkdir(output_path, exist_ok=True)
@@ -36,7 +40,7 @@ class Storage:
 
     def save_summary_data(
         self,
-        data: "npt.NDArray[np.double]",
+        data: npt.NDArray[np.double],
         keys: List[str],
         axis: List[Any],
         realization: int,
@@ -53,7 +57,7 @@ class Storage:
 
     def load_summary_data(
         self, summary_keys: List[str], realizations: List[int]
-    ) -> Tuple["npt.NDArray[np.double]", List[datetime], List[int]]:
+    ) -> Tuple[npt.NDArray[np.double], List[datetime], List[int]]:
         result = []
         loaded = []
         dates: List[datetime] = []
@@ -107,7 +111,7 @@ class Storage:
 
     def load_gen_data(
         self, key: str, realizations: List[int]
-    ) -> Tuple["npt.NDArray[np.double]", List[int]]:
+    ) -> Tuple[npt.NDArray[np.double], List[int]]:
         result = []
         loaded = []
         for realization in realizations:
@@ -141,3 +145,27 @@ class Storage:
                 )
             )
         return pd.concat(dfs)
+
+    def save_field_data(
+        self,
+        parameter_name: str,
+        realization: int,
+        data: npt.ArrayLike,
+    ) -> None:
+        output_path = self.mount_point / f"field-{realization}"
+        Path.mkdir(output_path, exist_ok=True)
+        np.save(f"{output_path}/{parameter_name}", data)
+
+    def load_field(self, key: str, realizations: List[int]) -> npt.NDArray[np.double]:
+        result = []
+        for realization in realizations:
+            input_path = self.mount_point / f"field-{realization}"
+            if not input_path.exists():
+                raise KeyError(f"Unable to load FIELD for key: {key}")
+            data = np.load(input_path / f"{key}.npy")
+            result.append(data)
+        return np.stack(result).T  # type: ignore
+
+    def field_has_data(self, key: str, realization: int) -> bool:
+        path = self.mount_point / f"field-{realization}/{key}.npy"
+        return path.exists()

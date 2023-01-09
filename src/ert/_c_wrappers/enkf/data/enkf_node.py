@@ -55,12 +55,7 @@ class EnkfNode(BaseCClass):
                 )
 
     def export(self, filename, file_type=None, arg=None):
-        impl_type = self.getImplType()
-        if impl_type == ErtImplType.FIELD:
-            field_node = self.asField()
-            return field_node.export(filename, file_type=file_type, init_file=arg)
-        else:
-            raise NotImplementedError("The export method is only implemented for field")
+        raise NotImplementedError("Not implemented yet")
 
     def has_data(self, fs: "EnkfFs", node_id: NodeId) -> bool:
         return _clib.enkf_node.has_data(self, fs, node_id.report_step, node_id.iens)

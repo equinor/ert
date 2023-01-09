@@ -1,13 +1,16 @@
 from __future__ import annotations
+
+import math
+from typing import TYPE_CHECKING
+
+import numpy as np
 from cwrap import BaseCClass
 from ecl.grid import EclGrid
-import math
-import numpy as np
-from ert._c_wrappers import ResPrototype
-from ert._c_wrappers.enkf.enums import EnkfFieldFileFormatEnum
-from .field_type_enum import FieldTypeEnum
 
-from typing import TYPE_CHECKING
+from ert._c_wrappers import ResPrototype
+from ert._c_wrappers.enkf.enums import EnkfFieldFileFormatEnum, EnkfTruncationType
+
+from .field_type_enum import FieldTypeEnum
 
 if TYPE_CHECKING:
     import numpy.typing as npt
@@ -82,7 +85,7 @@ class FieldConfig(BaseCClass):
     def get_type(self) -> FieldTypeEnum:
         return self._get_type()
 
-    def get_truncation_mode(self) -> int:
+    def get_truncation_mode(self) -> EnkfTruncationType:
         return self._get_truncation_mode()
 
     def get_truncation_min(self) -> float:
@@ -119,19 +122,20 @@ class FieldConfig(BaseCClass):
         self._free()
 
     def truncate(self, data: npt.ArrayLike) -> npt.ArrayLike:
-        # Truncation is not mentioned in the docs
-        # Its really min / max
 
         truncation_mode = self._get_truncation_mode()
-        if truncation_mode == 1:
+        if truncation_mode == EnkfTruncationType.TRUNCATE_MIN:
             min_ = self.get_truncation_min()
             vfunc = np.vectorize(lambda x: max(x, min_))
             return vfunc(data)
-        if truncation_mode == 2:
+        if truncation_mode == EnkfTruncationType.TRUNCATE_MAX:
             max_ = self.get_truncation_max()
             vfunc = np.vectorize(lambda x: min(x, max_))
             return vfunc(data)
-        if truncation_mode == 3:
+        if (
+            truncation_mode
+            == EnkfTruncationType.TRUNCATE_MAX | EnkfTruncationType.TRUNCATE_MIN
+        ):
             min_ = self.get_truncation_min()
             max_ = self.get_truncation_max()
             vfunc = np.vectorize(lambda x: max(min(x, max_), min_))
@@ -144,38 +148,24 @@ class FieldConfig(BaseCClass):
         if not transform_name:
             return data
 
-        func = None
-        if transform_name == "LN" or transform_name == "LOG":
-            func = lambda x: math.log(x, math.e)
-        elif transform_name == "LN0":
-            func = lambda x: math.log(x, math.e) + 0.000001
-        elif transform_name == "LOG10":
-            func = lambda x: math.log(x, 10)
-        elif transform_name == "EXP":
-            func = lambda x: math.exp(x)
-        elif transform_name == "EXP0":
-            func = lambda x: math.exp(x) + 0.000001
-        elif transform_name == "POW10":
-            func = lambda x: math.pow(x, 10)
-        elif transform_name == "TRUNC_POW10":
-            func = lambda x: math.pow(max(x, 0.001), 10)
-        elif transform_name == "DENORMALIZE_PERMX":  # not in docs
-            pass
-        elif transform_name == "DENORMALIZE_PORO":  # not in docs
-            pass
-        elif transform_name == "DENORMALIZE_PERMZ":  # not in docs
-            pass
-        elif transform_name == "NORMALIZE_PORO":  # not in docs
-            pass
-        elif transform_name == "NORMALIZE_PERMZ":  # not in docs
-            pass
-        elif transform_name == "NORMALIZE_PERMX":  # not in docs
-            pass
+        def f(x):
+            if transform_name in ("LN", "LOG"):
+                return math.log(x, math.e)
+            if transform_name == "LN0":
+                return math.log(x, math.e) + 0.000001
+            if transform_name == "LOG10":
+                return math.log(x, 10)
+            if transform_name == "EXP":
+                return math.exp(x)
+            if transform_name == "EXP0":
+                return math.exp(x) + 0.000001
+            if transform_name == "POW10":
+                return math.pow(x, 10)
+            if transform_name == "TRUNC_POW10":
+                return math.pow(max(x, 0.001), 10)
+            return x
 
-        if not func:
-            return data
-
-        vfunc = np.vectorize(func)
+        vfunc = np.vectorize(f)
 
         return vfunc(data)
 

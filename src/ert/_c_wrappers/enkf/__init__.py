@@ -46,7 +46,6 @@ __all__ = [
     "GenObservation",
     "BlockDataConfig",
     "ObsVector",
-    "Field",
     "EnkfNode",
     "FieldConfig",
     "FieldTypeEnum",
