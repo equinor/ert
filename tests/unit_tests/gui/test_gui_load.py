@@ -1,16 +1,16 @@
 import argparse
 import os
 import shutil
-from unittest.mock import MagicMock, Mock, PropertyMock
+from unittest.mock import Mock, PropertyMock
 
 import pytest
 from qtpy.QtCore import Qt, QTimer
 from qtpy.QtWidgets import QDialog, QMessageBox, QPushButton, QWidget
 
 import ert.gui
-from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets.message_box import ErtMessageBox
 from ert.gui.gert_main import GUILogHandler, _setup_main_window, run_gui
+from ert.gui.tools.event_viewer import add_gui_log_handler
 from ert.shared.models import BaseRunModel
 
 
@@ -30,9 +30,13 @@ def fixture_patch_enkf_main(monkeypatch, tmp_path):
 
     res_config_mock = Mock()
     type(res_config_mock).config_path = PropertyMock(return_value=tmp_path)
+    analysis_mock = Mock()
+    analysis_mock.case_format_is_set.return_value = False
     facade_mock = Mock()
     facade_mock.get_ensemble_size.return_value = 1
     facade_mock.get_number_of_iterations.return_value = 1
+    facade_mock.get_current_case_name.return_value = "default"
+    facade_mock.get_analysis_config.return_value = analysis_mock
     monkeypatch.setattr(
         ert.gui.simulation.simulation_panel,
         "LibresFacade",
@@ -79,8 +83,7 @@ def fixture_patch_enkf_main(monkeypatch, tmp_path):
 
 def test_gui_load(qtbot, patch_enkf_main):
     args = argparse.Namespace(config="does_not_matter.ert")
-    notifier = ErtNotifier(args.config)
-    gui = _setup_main_window(patch_enkf_main, notifier, args, GUILogHandler())
+    gui = _setup_main_window(patch_enkf_main, args, GUILogHandler())
     qtbot.addWidget(gui)
 
     sim_panel = gui.findChild(QWidget, name="Simulation_panel")
@@ -109,10 +112,9 @@ def test_gui_full(monkeypatch, tmp_path, qapp, mock_start_server, source_root):
 
     qapp.exec_ = lambda: None  # exec_ starts the event loop, and will stall the test.
     monkeypatch.setattr(ert.gui.gert_main, "QApplication", Mock(return_value=qapp))
-    monkeypatch.setattr(ert.gui.gert_main.LibresFacade, "enspath", tmp_path)
     run_gui(args)
     mock_start_server.assert_called_once_with(
-        project=str(tmp_path), res_config="poly.ert"
+        project=str(tmp_path / "poly_example" / "storage"), res_config="poly.ert"
     )
 
 
@@ -150,8 +152,7 @@ def test_gui_iter_num(monkeypatch, qtbot, patch_enkf_main):
         _assert_iter_in_args,
     )
 
-    notifier = ErtNotifier(args_mock.config)
-    gui = _setup_main_window(patch_enkf_main, notifier, args_mock, GUILogHandler())
+    gui = _setup_main_window(patch_enkf_main, args_mock, GUILogHandler())
     qtbot.addWidget(gui)
 
     sim_mode = gui.findChild(QWidget, name="Simulation_mode")
@@ -178,7 +179,7 @@ def test_that_gui_gives_suggestions_when_you_have_umask_in_config(
 
     args = Mock()
     args.config = str(config_file)
-    gui = ert.gui.gert_main._start_initial_gui_window(args)
+    gui, _ = ert.gui.gert_main._start_initial_gui_window(args, None)
     assert gui.windowTitle() == "Some problems detected"
 
 
@@ -190,7 +191,7 @@ def test_that_errors_are_shown_in_the_suggester_window_when_present(
 
     args = Mock()
     args.config = str(config_file)
-    gui = ert.gui.gert_main._start_initial_gui_window(args)
+    gui, _ = ert.gui.gert_main._start_initial_gui_window(args, None)
     assert gui.windowTitle() == "Some problems detected"
 
 
@@ -202,24 +203,26 @@ def test_that_the_suggester_starts_when_there_are_no_observations(
 
     args = Mock()
     args.config = str(config_file)
-    gui = ert.gui.gert_main._start_initial_gui_window(args)
-    assert gui.windowTitle() == "Some problems detected"
-    gui.show()
-    button = gui.findChild(QPushButton, name="run_ert_button")
-    qtbot.mouseClick(button, Qt.LeftButton)
+    with add_gui_log_handler() as log_handler:
+        gui, _ = ert.gui.gert_main._start_initial_gui_window(args, log_handler)
+        assert gui.windowTitle() == "Some problems detected"
+        gui.show()
+        button = gui.findChild(QPushButton, name="run_ert_button")
+        qtbot.mouseClick(button, Qt.LeftButton)
 
-    qtbot.wait_until(
-        lambda: qapp.activeWindow() is not None
-        and qapp.activeWindow().windowTitle() == "ERT - config.ert"
-    )
+        qtbot.wait_until(
+            lambda: qapp.activeWindow() is not None
+            and qapp.activeWindow().windowTitle() == "ERT - config.ert"
+        )
 
 
 @pytest.mark.usefixtures("copy_poly_case")
 def test_that_gert_starts_when_there_are_no_problems(monkeypatch, qapp, tmp_path):
     args = Mock()
     args.config = "poly.ert"
-    gui = ert.gui.gert_main._start_initial_gui_window(args)
-    assert gui.windowTitle() == "ERT - poly.ert"
+    with add_gui_log_handler() as log_handler:
+        gui, _ = ert.gui.gert_main._start_initial_gui_window(args, log_handler)
+        assert gui.windowTitle() == "ERT - poly.ert"
 
 
 def test_start_simulation_disabled(monkeypatch, qtbot, patch_enkf_main):
@@ -244,8 +247,7 @@ def test_start_simulation_disabled(monkeypatch, qtbot, patch_enkf_main):
         ert.gui.simulation.simulation_panel, "create_model", lambda *args: dummy_model
     )
 
-    notifier = MagicMock()
-    gui = _setup_main_window(patch_enkf_main, notifier, args_mock, GUILogHandler())
+    gui = _setup_main_window(patch_enkf_main, args_mock, GUILogHandler())
     qtbot.addWidget(gui)
 
     start_simulation = gui.findChild(QWidget, name="start_simulation")
