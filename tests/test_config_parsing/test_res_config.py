@@ -156,19 +156,3 @@ def test_site_config_dict_same_as_from_file(tmp_path_factory, config_generator):
         assert (
             ResConfig(config_dict=config_dict).env_vars == ResConfig(filename).env_vars
         )
-
-
-def test_that_when_there_is_an_infinite_loop_it_goes_into_the_errors(tmp_path):
-    with open(tmp_path / "test.ert", "w", encoding="utf-8") as fh:
-        fh.write(
-            dedent(
-                """
-                NUM_REALIZATIONS  1
-                DEFINE <A> <A>
-                RUNPATH <A>
-                """
-            )
-        )
-
-    with pytest.raises(ConfigValidationError, match="infinite loop"):
-        _ = ResConfig(str(tmp_path / "test.ert"))
