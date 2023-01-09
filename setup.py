@@ -121,7 +121,7 @@ args = dict(
         "dnspython >= 2",
         "ecl >= 2.14.1",
         "ert-storage >= 0.3.16",
-        "fastapi",
+        "fastapi < 0.89",
         "filelock",
         "graphlib_backport; python_version < '3.9'",
         "iterative_ensemble_smoother>=0.0.3",
