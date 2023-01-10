@@ -1,6 +1,7 @@
 changelog:
   exclude:
-    labels: release-notes:skip
+    labels:
+        - release-notes:skip
   categories:
     - title: User impact 🛠
       labels:
