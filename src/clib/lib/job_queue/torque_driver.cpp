@@ -3,7 +3,6 @@
 #include <array>
 #include <fstream>
 #include <iostream>
-#include <math.h>
 #include <sstream>
 #include <stdio.h>
 #include <string.h>
@@ -31,11 +30,13 @@ struct torque_driver_struct {
     char *num_cpus_per_node_char;
     char *job_prefix;
     char *num_nodes_char;
+    char *timeout_char;
     bool keep_qsub_output;
     int num_cpus_per_node;
     int num_nodes;
     char *cluster_label;
     int submit_sleep;
+    int timeout;
     FILE *debug_stream;
 };
 
@@ -61,6 +62,8 @@ void *torque_driver_alloc() {
     torque_driver->cluster_label = NULL;
     torque_driver->job_prefix = NULL;
     torque_driver->debug_stream = NULL;
+    torque_driver->timeout = 0;
+    torque_driver->timeout_char = NULL;
 
     torque_driver_set_option(torque_driver, TORQUE_QSUB_CMD,
                              TORQUE_DEFAULT_QSUB_CMD);
@@ -74,6 +77,8 @@ void *torque_driver_alloc() {
     torque_driver_set_option(torque_driver, TORQUE_NUM_NODES, "1");
     torque_driver_set_option(torque_driver, TORQUE_SUBMIT_SLEEP,
                              TORQUE_DEFAULT_SUBMIT_SLEEP);
+    torque_driver_set_option(torque_driver, TORQUE_TIMEOUT,
+                             TORQUE_DEFAULT_TIMEOUT);
 
     return torque_driver;
 }
@@ -178,6 +183,18 @@ torque_driver_set_num_cpus_per_node(torque_driver_type *driver,
     }
 }
 
+static bool torque_driver_set_timeout(torque_driver_type *driver,
+                                      const char *timeout_char) {
+    int timeout = 0;
+    if (util_sscanf_int(timeout_char, &timeout)) {
+        driver->timeout = std::max(timeout, 0);
+        driver->timeout_char =
+            util_realloc_string_copy(driver->timeout_char, timeout_char);
+        return true;
+    } else
+        return false;
+}
+
 bool torque_driver_set_option(void *__driver, const char *option_key,
                               const void *value_) {
     const char *value = (const char *)value_;
@@ -208,6 +225,8 @@ bool torque_driver_set_option(void *__driver, const char *option_key,
             torque_driver_set_debug_output(driver, value);
         else if (strcmp(TORQUE_SUBMIT_SLEEP, option_key) == 0)
             option_set = torque_driver_set_submit_sleep(driver, value);
+        else if (strcmp(TORQUE_TIMEOUT, option_key) == 0)
+            option_set = torque_driver_set_timeout(driver, value);
         else
             option_set = false;
     }
@@ -238,6 +257,8 @@ const void *torque_driver_get_option(const void *__driver,
             return driver->cluster_label;
         else if (strcmp(TORQUE_JOB_PREFIX_KEY, option_key) == 0)
             return driver->job_prefix;
+        else if (strcmp(TORQUE_TIMEOUT, option_key) == 0)
+            return driver->timeout_char;
         else {
             util_abort("%s: option_id:%s not recognized for TORQUE driver \n",
                        __func__, option_key);
@@ -257,6 +278,7 @@ void torque_driver_init_option_list(stringlist_type *option_list) {
     stringlist_append_copy(option_list, TORQUE_KEEP_QSUB_OUTPUT);
     stringlist_append_copy(option_list, TORQUE_CLUSTER_LABEL);
     stringlist_append_copy(option_list, TORQUE_JOB_PREFIX_KEY);
+    stringlist_append_copy(option_list, TORQUE_TIMEOUT);
 }
 
 torque_job_type *torque_job_alloc() {
@@ -442,20 +464,35 @@ static int torque_driver_submit_shell_job(torque_driver_type *driver,
                 /* The qsub command might fail intermittently for acceptable reasons,
 ￼                  retry a couple of times with exponential sleep.  */
                 int return_value = -1;
-                int sleep_time = 2;
-                int max_sleep_time = pow(sleep_time, 5);
-                // This gives a maximum cumulative sleep of 2+4+8+16+32 = 62 seconds
-                while ((return_value != 0) & (sleep_time <= max_sleep_time)) {
+                int retry_interval = 2; /* seconds */
+                int slept_time = 0;
+                while (return_value != 0) {
                     return_value = util_spawn_blocking(
                         driver->qsub_cmd, stringlist_get_size(remote_argv),
                         (const char **)argv, tmp_std_file, tmp_err_file);
                     if (return_value != 0) {
-                        torque_debug(
-                            driver,
-                            "qsub failed for job %s, retrying in %d seconds",
-                            job_name, sleep_time);
-                        sleep(sleep_time);
-                        sleep_time *= 2;
+                        if (slept_time + retry_interval <= driver->timeout) {
+                            torque_debug(driver,
+                                         "qsub failed for job %s, retrying in "
+                                         "%d seconds",
+                                         job_name, retry_interval);
+                            sleep(retry_interval);
+                            slept_time += retry_interval;
+                            retry_interval *= 2;
+                        } else {
+                            torque_debug(
+                                driver,
+                                "qsub failed for job %s, no (more) retries",
+                                job_name);
+                            break;
+                        }
+                    } else {
+                        if (slept_time > 0) {
+                            torque_debug(driver,
+                                         "qsub succeeded for job %s after "
+                                         "waiting %d seconds",
+                                         job_name, slept_time);
+                        }
                     }
                 }
                 if (return_value != 0) {
@@ -553,23 +590,37 @@ torque_driver_get_qstat_status(torque_driver_type *driver,
            every second for every realization, thus the initial sleep time
            is 2 seconds. */
         int return_value = -1;
-        int sleep_time = 2; /* seconds */
-        int max_sleep_time = pow(sleep_time, 5);
-        // This gives a maximum cumulative sleep of 2+4+8+16+32 = 62 seconds
-        while ((return_value != 0) && (sleep_time <= max_sleep_time)) {
+        int retry_interval = 2; /* seconds */
+        int slept_time = 0;
+        while ((return_value != 0) && (slept_time <= driver->timeout)) {
             return_value =
                 util_spawn_blocking(driver->qstat_cmd, argv.size(), argv.data(),
                                     tmp_std_file, tmp_err_file);
             if (return_value != 0) {
-                torque_debug(driver,
-                             "qstat failed for job %s, retrying in %d seconds",
-                             jobnr_char, sleep_time);
-                sleep(sleep_time);
-                sleep_time *= 2;
+                if (slept_time + retry_interval <= driver->timeout) {
+                    torque_debug(
+                        driver,
+                        "qstat failed for job %s, retrying in %d seconds",
+                        jobnr_char, retry_interval);
+                    sleep(retry_interval);
+                    slept_time += retry_interval;
+                    retry_interval *= 2;
+                } else {
+                    torque_debug(driver,
+                                 "qstat failed for job %s, no (more) retries",
+                                 jobnr_char);
+                    break;
+                }
+            } else {
+                if (slept_time > 0) {
+                    torque_debug(driver,
+                                 "qstat succeeded for job %s after waiting "
+                                 "%d seconds",
+                                 jobnr_char, slept_time);
+                }
             }
         }
     }
-
     if (fs::exists(tmp_std_file)) {
         status = torque_driver_parse_status(tmp_std_file, jobnr_char);
         if (status != JOB_QUEUE_STATUS_FAILURE) {
@@ -752,6 +803,10 @@ int torque_driver_get_submit_sleep(const torque_driver_type *driver) {
 
 FILE *torque_driver_get_debug_stream(const torque_driver_type *driver) {
     return driver->debug_stream;
+}
+
+int torque_driver_get_timeout(const torque_driver_type *driver) {
+    return driver->timeout;
 }
 
 ERT_CLIB_SUBMODULE("torque_driver", m) {

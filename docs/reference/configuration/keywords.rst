@@ -669,7 +669,7 @@ and/or history matching project.
 .. topic:: FIELD
 
         The FIELD keyword is used to parametrize quantities which have extent over the
-        full grid. 
+        full grid.
 
         A parameter field (e.g. porosity or permeability or Gaussian Random Fields from APS) is defined as follows:
 
@@ -692,8 +692,8 @@ and/or history matching project.
         ERT and need an embedded %d.
 
         The input arguments MIN, MAX, INIT_TRANSFORM and OUTPUT_TRANSFORM are all
-        optional. 
-        
+        optional.
+
         MIN and MAX allows you to add a minimum and/or a maximum value with MIN:X and MAX:Y.
 
         For Assisted history matching, the variables in ERT should be normally
@@ -1855,6 +1855,22 @@ bjobs.
 
                 QUEUE_OPTION TORQUE DEBUG_OUTPUT torque_log.txt
 
+.. _torque_timeout:
+.. topic:: TIMEOUT
+
+        The driver allows the backend Torque system to be flaky, i.e. it may
+        intermittently not respond and give error messages when submitting jobs
+        or asking for job statuses. The timeout (in seconds) determines how long
+        ERT will wait before it will give up. Applies to job submission (qsub)
+        and job status queries (qstat). Default is 62 seconds.
+
+        ERT will do exponential sleeps, starting at 2 seconds, and the provided
+        timeout is a maximum. Let the timeout be sums of series like 2+4+8+16+32+64
+        in order to be explicit about the number of retries. Set to zero to disallow
+        flakyness.
+
+        ::
+                QUEUE_OPTION TORQUE TIMEOUT 126
 
 .. _configuring_the_slurm_queue:
 
