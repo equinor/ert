@@ -1,5 +1,5 @@
 from typing import Any, List, Mapping
-from uuid import UUID, uuid4
+from uuid import UUID
 
 from ert_storage import json_schema as js
 from fastapi import APIRouter, Body, Depends
@@ -30,7 +30,7 @@ def get_observations(
 ) -> List[js.ObservationOut]:
     return [
         js.ObservationOut(
-            id=uuid4(),
+            id=UUID(int=0),
             userData=[],
             errors=obs["errors"],
             values=obs["values"],

@@ -1,9 +1,7 @@
 import logging
 import os
 import warnings
-from pathlib import Path
 
-import filelock
 from PyQt5.QtWidgets import QHBoxLayout, QPushButton, QScrollArea, QVBoxLayout, QWidget
 from qtpy.QtCore import QLocale, Qt
 from qtpy.QtWidgets import QApplication
@@ -31,6 +29,7 @@ from ert.gui.tools.workflows import WorkflowsTool
 from ert.libres_facade import LibresFacade
 from ert.namespace import Namespace
 from ert.services import StorageService
+from ert.storage import open_storage
 
 
 def run_gui(args: Namespace):
@@ -51,25 +50,13 @@ def run_gui(args: Namespace):
         if ens_path is None:
             return show_window()
 
-        storage_lock = filelock.FileLock(
-            Path(ens_path) / (Path(ens_path).stem + ".lock")
-        )
-        try:
-            storage_lock.acquire(timeout=5)
-            with StorageService.init_service(
-                ert_config=args.config,
-                project=os.path.abspath(ens_path),
-            ):
-                return show_window()
-        except filelock.Timeout:
-            raise ErtTimeoutError(
-                f"Not able to acquire lock for: {ens_path}. You may already be running"
-                f" ert, or another user is using the same ENSPATH."
-            )
-        finally:
-            if storage_lock.is_locked:
-                storage_lock.release()
-                os.remove(storage_lock.lock_file)
+        mode = "r" if args.read_only else "w"
+        with StorageService.init_service(
+            res_config=args.config, project=os.path.abspath(ens_path)
+        ), open_storage(ens_path, mode=mode) as storage:
+            if hasattr(window, "notifier"):
+                window.notifier.set_storage(storage)
+            return show_window()
 
 
 def _start_initial_gui_window(args, log_handler):
@@ -135,6 +122,8 @@ alternatively a locale which uses '.' as decimalpoint.\n"""  # noqa
 
 def _setup_suggester(errors, warning_msgs, suggestions, ert_window=None):
     container = QWidget()
+    if ert_window is not None:
+        container.notifier = ert_window.notifier
     container.setWindowTitle("Some problems detected")
     container_layout = QVBoxLayout()
 
@@ -201,11 +190,11 @@ def _setup_main_window(
     # window reference must be kept until app.exec returns:
     facade = LibresFacade(ert)
     config_file = args.config
-    notifier = ErtNotifier(config_file)
     window = ErtMainWindow(config_file)
-    window.setWidget(SimulationPanel(ert, notifier, config_file))
+    window.setWidget(SimulationPanel(ert, window.notifier, config_file))
     plugin_handler = PluginHandler(
         ert,
+        window.notifier,
         [wfj for wfj in ert.resConfig().workflow_jobs.values() if wfj.isPlugin()],
         window,
     )
@@ -215,10 +204,10 @@ def _setup_main_window(
     )
     window.addTool(PlotTool(config_file, window))
     window.addTool(ExportTool(ert))
-    window.addTool(WorkflowsTool(ert, notifier))
-    window.addTool(ManageCasesTool(ert, notifier))
-    window.addTool(PluginsTool(plugin_handler, notifier))
-    window.addTool(RunAnalysisTool(ert, notifier))
+    window.addTool(WorkflowsTool(ert, window.notifier))
+    window.addTool(ManageCasesTool(ert, window.notifier))
+    window.addTool(PluginsTool(plugin_handler, window.notifier))
+    window.addTool(RunAnalysisTool(ert, window.notifier))
     window.addTool(LoadResultsTool(facade))
     event_viewer = EventViewerTool(log_handler)
     window.addTool(event_viewer)

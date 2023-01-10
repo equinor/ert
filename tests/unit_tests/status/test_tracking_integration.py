@@ -31,7 +31,6 @@ from ert.ensemble_evaluator.state import (
     JOB_STATE_START,
     REALIZATION_STATE_FINISHED,
 )
-from ert.libres_facade import LibresFacade
 from ert.shared.feature_toggling import FeatureToggling
 
 
@@ -143,6 +142,7 @@ def test_tracking(
     assert_present_in_snapshot,
     tmpdir,
     source_root,
+    storage,
 ):
     experiment_folder = "poly_example"
     shutil.copytree(
@@ -172,17 +172,23 @@ def test_tracking(
         )
         FeatureToggling.update_from_args(parsed)
 
+<<<<<<< HEAD
         ert_config = ErtConfig.from_file(parsed.config)
         os.chdir(ert_config.config_path)
         ert = EnKFMain(ert_config)
         facade = LibresFacade(ert)
+=======
+        res_config = ErtConfig.from_file(parsed.config)
+        os.chdir(res_config.config_path)
+        ert = EnKFMain(res_config)
+        experiment_id = storage.create_experiment()
+>>>>>>> 3fdceb37f (EnkfFsManager refactor)
 
         model = create_model(
             ert,
-            facade.get_ensemble_size(),
-            facade.get_current_case_name(),
+            storage,
             parsed,
-            "experiment_id",
+            experiment_id,
         )
 
         evaluator_server_config = EvaluatorServerConfig(
@@ -260,6 +266,7 @@ def test_tracking_missing_ecl(
     tmpdir,
     source_root,
     caplog,
+    storage,
 ):
     with tmpdir.as_cwd():
         config = dedent(
@@ -290,14 +297,12 @@ def test_tracking_missing_ecl(
         ert_config = ErtConfig.from_file(parsed.config)
         os.chdir(ert_config.config_path)
         ert = EnKFMain(ert_config)
-        facade = LibresFacade(ert)
 
         model = create_model(
             ert,
-            facade.get_ensemble_size(),
-            facade.get_current_case_name(),
+            storage,
             parsed,
-            "experiment_id",
+            storage.create_experiment(),
         )
 
         evaluator_server_config = EvaluatorServerConfig(

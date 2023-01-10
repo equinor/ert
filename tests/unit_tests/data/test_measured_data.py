@@ -48,13 +48,15 @@ def test_get_data(
     facade.get_impl_type_name_for_obs_key.return_value = obs_type
     facade.get_data_key_for_obs_key.return_value = "data_key"
 
+    ensemble = Mock()
+
     factory = measured_data_setup(valid_data, valid_obs_data, monkeypatch)
-    md = MeasuredData(facade, ["obs_key"], index_lists=[[1, 2]])
+    md = MeasuredData(facade, ensemble, ["obs_key"], index_lists=[[1, 2]])
 
     factory.assert_called_once_with(obs_type)
     mocked_data_loader = factory()
     mocked_data_loader.assert_called_once_with(
-        facade, ["obs_key"], "test_case", include_data=True
+        facade, ensemble, ["obs_key"], include_data=True
     )
     df = pd.DataFrame(
         data=[[2.0, 3.0], [5.0, 6.0], [8.0, 9.0]],
@@ -99,7 +101,7 @@ def test_remove_failed_realizations(
     valid_obs_data,
 ):
     measured_data_setup(input_dataframe, valid_obs_data, monkeypatch)
-    md = MeasuredData(facade, ["obs_key"])
+    md = MeasuredData(facade, Mock(), ["obs_key"])
 
     md.remove_failed_realizations()
 
@@ -185,7 +187,7 @@ def test_remove_inactive_observations(
 ):
     input_header.columns = _set_multiindex(input_header)
     measured_data_setup(measured_data, input_header, monkeypatch)
-    md = MeasuredData(facade, ["obs_key"])
+    md = MeasuredData(facade, Mock(), ["obs_key"])
 
     expected_result.columns = _set_multiindex(expected_result)
     expected_result = pd.concat({"obs_key": expected_result}, axis=1)
@@ -219,7 +221,7 @@ def test_empty_dataset_from_remove_inactive_observations(
 ):
     input_header.columns = _set_multiindex(input_header)
     measured_data_setup(measured_data, input_header, monkeypatch)
-    md = MeasuredData(facade, ["obs_key"])
+    md = MeasuredData(facade, Mock(), ["obs_key"])
 
     with pytest.raises(ValueError, match="This operation results in an empty dataset"):
         md.remove_inactive_observations()
@@ -254,7 +256,7 @@ def test_filter_ensemble_std(
     input_obs = pd.DataFrame(data=[[1, 2], [0.1, 0.2]], index=["OBS", "STD"])
     input_obs.columns = _set_multiindex(input_obs)
     measured_data_setup(input_dataframe, input_obs, monkeypatch)
-    md = MeasuredData(facade, ["obs_key"])
+    md = MeasuredData(facade, Mock(), ["obs_key"])
 
     md.filter_ensemble_std(std_cutoff)
     assert md.data.equals(pd.concat({"obs_key": expected_result}, axis=1))
@@ -292,7 +294,7 @@ def test_filter_ens_mean_obs(
     input_obs.columns = _set_multiindex(input_obs)
 
     measured_data_setup(input_dataframe, input_obs, monkeypatch)
-    md = MeasuredData(facade, ["obs_key"])
+    md = MeasuredData(facade, Mock(), ["obs_key"])
 
     md.filter_ensemble_mean_obs(alpha)
     assert md.data.equals(pd.concat({"obs_key": expected_result}, axis=1))
@@ -326,7 +328,7 @@ def test_get_simulated_data(
     valid_obs_data,
 ):
     measured_data_setup(input_dataframe, valid_obs_data, monkeypatch)
-    md = MeasuredData(facade, ["obs_key"])
+    md = MeasuredData(facade, Mock(), ["obs_key"])
 
     expected_result.columns = _set_multiindex(expected_result)
 

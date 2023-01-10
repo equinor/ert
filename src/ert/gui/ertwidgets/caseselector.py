@@ -1,8 +1,11 @@
+from qtpy.QtCore import Qt
+from qtpy.QtGui import QFont
 from qtpy.QtWidgets import QComboBox
 
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets import addHelpToWidget
 from ert.libres_facade import LibresFacade
+from ert.storage import StorageAccessor
 
 
 class CaseSelector(QComboBox):
@@ -14,8 +17,11 @@ class CaseSelector(QComboBox):
         show_only_initialized: bool = False,
         ignore_current: bool = False,
         help_link: str = "init/current_case_selection",
+        *,
+        show_create_new_case: bool = False,
     ):
         self.facade = facade
+        self.notifier = notifier
         QComboBox.__init__(self)
         self._update_ert = update_ert  # If true current case of ert will be change
         self._show_only_initialized = (
@@ -24,48 +30,60 @@ class CaseSelector(QComboBox):
         self._ignore_current = (
             ignore_current  # ignore the currently selected case if it changes
         )
+        self._show_create_new_case = show_create_new_case
 
         addHelpToWidget(self, help_link)
         self.setSizeAdjustPolicy(QComboBox.AdjustToContents)
 
-        self.populate()
-
-        self.currentIndexChanged[int].connect(self.selectionChanged)
+        self.currentIndexChanged[int].connect(self.on_current_index_changed)
         notifier.ertChanged.connect(self.populate)
+        notifier.storage_changed.connect(self.populate)
 
-    def _getAllCases(self):
-        if self._show_only_initialized:
-            return [
-                case
-                for case in self.facade.cases()
-                if self.facade.case_initialized(case)
-            ]
-        else:
-            return self.facade.cases()
+        if notifier._storage is not None:
+            self.populate()
 
-    def selectionChanged(self, index):
+    @property
+    def storage(self) -> StorageAccessor:
+        return self.notifier.storage
+
+    def on_current_index_changed(self, index: int) -> None:
         if self._update_ert:
             assert (
                 0 <= index < self.count()
             ), f"Should not happen! Index out of range: 0 <= {index} < {self.count()}"
 
-            item = self._getAllCases()[index]
-            self.facade.select_or_create_new_case(item)
+            self.notifier.set_current_case(self.itemData(index))
 
     def populate(self):
         block = self.signalsBlocked()
         self.blockSignals(True)
 
-        case_list = self._getAllCases()
+        if self._show_only_initialized:
+            case_list = (x for x in self.storage.ensembles if x.is_initalized)
+        else:
+            case_list = self.storage.ensembles
+
+        case_list = sorted(case_list, key=lambda x: x.started_at, reverse=True)
+
         self.clear()
 
+        if self._show_create_new_case:
+            new_case_font = QFont(self.font())
+            new_case_font.setItalic(True)
+            self.addItem("New case", userData=None)
+            self.setItemData(0, new_case_font, Qt.FontRole)
+
         for case in case_list:
-            self.addItem(case)
+            self.addItem(f"{case.name} - {case.started_at}", userData=case)
 
         current_index = 0
-        current_case = self.facade.get_current_case_name()
+        current_case = self.notifier.current_case
         if current_case in case_list:
             current_index = case_list.index(current_case)
+
+        if self._show_create_new_case:
+            # The first entry is "New case"
+            current_index += 1
 
         if current_index != self.currentIndex() and not self._ignore_current:
             self.setCurrentIndex(current_index)

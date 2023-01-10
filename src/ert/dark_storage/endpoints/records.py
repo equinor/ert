@@ -12,7 +12,8 @@ from ert.dark_storage.common import (
     ensemble_parameters,
     observations_for_obs_keys,
 )
-from ert.dark_storage.enkf import LibresFacade, get_id, get_name, get_res
+from ert.dark_storage.enkf import LibresFacade, get_res, get_storage
+from ert.storage import StorageReader
 
 router = APIRouter(tags=["record"])
 
@@ -133,13 +134,13 @@ async def post_record_observations(
 async def get_record_observations(
     *,
     res: LibresFacade = Depends(get_res),
+    db: StorageReader = Depends(get_storage),
     ensemble_id: UUID,
     name: str,
     realization_index: Optional[int] = None,
 ) -> List[js.ObservationOut]:
     obs_keys = res.observation_keys(name)
-    case = get_name("ensemble", ensemble_id)
-    obss = observations_for_obs_keys(res, case, obs_keys)
+    obss = observations_for_obs_keys(res, db.get_ensemble(ensemble_id), obs_keys)
     return [
         js.ObservationOut(
             id=uuid4(),
@@ -168,14 +169,14 @@ async def get_record_observations(
 async def get_ensemble_record(
     *,
     res: LibresFacade = Depends(get_res),
+    db: StorageReader = Depends(get_storage),
     name: str,
     ensemble_id: UUID,
     accept: str = Header("application/json"),
     realization_index: Optional[int] = None,
     label: Optional[str] = None,
 ) -> Any:
-    ensemble_name = get_name("ensemble", ensemble_id)
-    dataframe = data_for_key(res, ensemble_name, name, realization_index)
+    dataframe = data_for_key(res, db.get_ensemble(ensemble_id), name, realization_index)
     if realization_index is not None:
         # dataframe.loc returns a Series, and when we reconstruct a DataFrame
         # from a Series, it defaults to be oriented the wrong way, so we must
@@ -246,15 +247,18 @@ async def get_record_data(
     "/ensembles/{ensemble_id}/responses", response_model=Mapping[str, js.RecordOut]
 )
 def get_ensemble_responses(
-    *, res: LibresFacade = Depends(get_res), ensemble_id: UUID
+    *,
+    res: LibresFacade = Depends(get_res),
+    db: StorageReader = Depends(get_storage),
+    ensemble_id: UUID,
 ) -> Mapping[str, js.RecordOut]:
     response_map: Mapping[str, js.RecordOut] = {}
-    storage = res._enkf_main.storage_manager[get_name("ensemble", ensemble_id)]
 
-    for name in storage.getSummaryKeySet():
+    ens = db.get_ensemble(ensemble_id)
+    for name in ens.getSummaryKeySet():
         obs_keys = res.observation_keys(name)
         response_map[str(name)] = js.RecordOut(
-            id=get_id("response", f"{ensemble_id}/{name}"),
+            id=UUID(int=0),
             name=name,
             userdata={"data_origin": "Summary"},
             has_observations=len(obs_keys) != 0,
@@ -263,7 +267,7 @@ def get_ensemble_responses(
     for name in res.get_gen_data_keys():
         obs_keys = res.observation_keys(name)
         response_map[str(name)] = js.RecordOut(
-            id=get_id("response", f"{ensemble_id}/{name}"),
+            id=UUID(int=0),
             name=name,
             userdata={"data_origin": "GEN_DATA"},
             has_observations=len(obs_keys) != 0,

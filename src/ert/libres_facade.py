@@ -1,5 +1,4 @@
 import logging
-import re
 from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Union
 
 from ecl.grid import EclGrid
@@ -14,6 +13,7 @@ from ert._c_wrappers.enkf.enums import (
 from ert.analysis import ESUpdate, SmootherSnapshot
 from ert.analysis._es_update import _get_obs_and_measure_data
 from ert.data import MeasuredData
+from ert.storage import EnsembleAccessor, EnsembleReader
 
 _logger = logging.getLogger(__name__)
 
@@ -24,7 +24,6 @@ if TYPE_CHECKING:
     from ert._c_wrappers.analysis.configuration import UpdateConfiguration
     from ert._c_wrappers.enkf import AnalysisConfig, QueueConfig
     from ert._c_wrappers.enkf.config.gen_kw_config import PriorDict
-    from ert._c_wrappers.enkf.enkf_fs import EnkfFs
     from ert._c_wrappers.enkf.enkf_obs import EnkfObs
     from ert._c_wrappers.job_queue import WorkflowJob
 
@@ -44,14 +43,17 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
         self._enkf_main.write_runpath_list(iterations, realizations)
 
     def smoother_update(
-        self, prior_storage: "EnkfFs", posterior_storage: "EnkfFs", run_id: str
+        self,
+        prior_storage: EnsembleReader,
+        posterior_storage: EnsembleAccessor,
+        run_id: str,
     ) -> None:
         self._es_update.smootherUpdate(prior_storage, posterior_storage, run_id)
 
     def iterative_smoother_update(
         self,
-        prior_storage: "EnkfFs",
-        posterior_storage: "EnkfFs",
+        prior_storage: EnsembleReader,
+        posterior_storage: EnsembleAccessor,
         ies: "IterativeEnsembleSmoother",
         run_id: str,
     ) -> None:
@@ -104,13 +106,12 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
         return self._enkf_main.ensembleConfig().grid
 
     def export_field_parameter(
-        self, parameter_name: str, case_name: str, filepath: str
+        self, parameter_name: str, ensemble: EnsembleReader, filepath: str
     ) -> None:
-        file_system = self._enkf_main.storage_manager[case_name]
         config_node = self._enkf_main.ensembleConfig()[parameter_name]
         ext = config_node.get_enkf_outfile().rsplit(".")[-1]
         field_config_node = config_node.getFieldModelConfig()
-        file_system.export_field_many(
+        ensemble.export_field_many(
             field_config_node.get_key(),
             list(range(0, self.get_ensemble_size())),
             filepath + "." + ext,
@@ -122,9 +123,9 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
         keys: List[str],
         index_lists: Optional[List[List[int]]] = None,
         load_data: bool = True,
-        case_name: Optional[str] = None,
+        ensemble: Optional[EnsembleReader] = None,
     ) -> MeasuredData:
-        return MeasuredData(self, keys, index_lists, load_data, case_name)
+        return MeasuredData(self, ensemble, keys, index_lists, load_data)
 
     def get_analysis_config(self) -> "AnalysisConfig":
         return self._enkf_main.analysisConfig()
@@ -135,18 +136,8 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
     def get_ensemble_size(self) -> int:
         return self._enkf_main.getEnsembleSize()
 
-    def get_current_case_name(self) -> str:
-        return str(self.get_current_fs().case_name)
-
-    def get_active_realizations(self, case_name: str) -> List[int]:
-        fs = self._enkf_main.storage_manager[case_name]
-        return fs.realizationList(RealizationStateEnum.STATE_HAS_DATA)
-
-    def case_initialized(self, case: str) -> bool:
-        if case in self._enkf_main.storage_manager:
-            return self._enkf_main.storage_manager[case].is_initalized
-        else:
-            return False
+    def get_active_realizations(self, ensemble: EnsembleReader) -> List[int]:
+        return ensemble.realizationList(RealizationStateEnum.STATE_HAS_DATA)
 
     def get_queue_config(self) -> "QueueConfig":
         return self._enkf_main.get_queue_config()
@@ -167,10 +158,9 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
         return list(run_paths)
 
     def load_from_forward_model(
-        self, case: str, realisations: List[bool], iteration: int
+        self, ensemble: EnsembleAccessor, realisations: List[bool], iteration: int
     ) -> int:
-        fs = self._enkf_main.storage_manager[case]
-        return self._enkf_main.loadFromForwardModel(realisations, iteration, fs)
+        return self._enkf_main.loadFromForwardModel(realisations, iteration, ensemble)
 
     def get_observations(self) -> "EnkfObs":
         return self._enkf_main.getObservations()
@@ -191,9 +181,6 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
             .get_data_size()
         )
 
-    def get_current_fs(self) -> "EnkfFs":
-        return self._enkf_main.storage_manager.current_case
-
     def get_data_key_for_obs_key(self, observation_key: Union[str, int]) -> str:
         return self._enkf_main.getObservations()[observation_key].getDataKey()
 
@@ -205,24 +192,23 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
 
     def load_gen_data(
         self,
-        case_name: str,
+        ensemble: EnsembleReader,
         key: str,
         report_step: int,
         realization_index: Optional[int] = None,
     ) -> DataFrame:
-        fs = self._enkf_main.storage_manager[case_name]
-        realizations = fs.realizationList(RealizationStateEnum.STATE_HAS_DATA)
+        realizations = ensemble.realizationList(RealizationStateEnum.STATE_HAS_DATA)
         if realization_index is not None:
             if realization_index not in realizations:
                 raise IndexError(f"No such realization {realization_index}")
             realizations = [realization_index]
 
-        return fs.load_gen_data_as_df([f"{key}@{report_step}"], realizations).droplevel(
-            "data_key"
-        )
+        return ensemble.load_gen_data_as_df(
+            [f"{key}@{report_step}"], realizations
+        ).droplevel("data_key")
 
     def load_observation_data(
-        self, case_name: str, keys: Optional[List[str]] = None
+        self, ensemble: EnsembleReader, keys: Optional[List[str]] = None
     ) -> DataFrame:
         observations = self._enkf_main.getObservations()
         history_length = self._enkf_main.getHistoryLength()
@@ -263,25 +249,6 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
                         df[key][obs_time] = value
                         df[f"STD_{key}"][obs_time] = std
         return df
-
-    def select_or_create_new_case(self, case_name: str) -> "EnkfFs":
-        if case_name not in self._enkf_main.storage_manager:
-            fs = self._enkf_main.storage_manager.add_case(case_name)
-        else:
-            fs = self._enkf_main.storage_manager[case_name]
-        if self.get_current_case_name() != case_name:
-            self._enkf_main.switchFileSystem(fs.case_name)
-        return fs
-
-    def cases(self) -> List[str]:
-        def sort_key(s: str) -> List[Union[int, str]]:
-            _nsre = re.compile("([0-9]+)")
-            return [
-                int(text) if text.isdigit() else text.lower()
-                for text in re.split(_nsre, s)
-            ]
-
-        return sorted(self._enkf_main.storage_manager.cases, key=sort_key)
 
     def all_data_type_keys(self) -> List[str]:
         return self.get_summary_keys() + self.gen_kw_keys() + self.get_gen_data_keys()
@@ -341,12 +308,10 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
 
     def load_all_gen_kw_data(
         self,
-        case_name: str,
+        fs: EnsembleReader,
         keys: Optional[List[str]] = None,
         realization_index: Optional[int] = None,
     ) -> DataFrame:
-        fs = self._enkf_main.storage_manager[case_name]
-
         ens_mask = fs.get_realization_mask_from_state(
             [
                 RealizationStateEnum.STATE_INITIALIZED,
@@ -387,12 +352,12 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
 
     def gather_gen_kw_data(
         self,
-        case: str,
+        ensemble: EnsembleReader,
         key: str,
         realization_index: Optional[int] = None,
     ) -> DataFrame:
         data = self.load_all_gen_kw_data(
-            case,
+            ensemble,
             [key],
             realization_index=realization_index,
         )
@@ -403,26 +368,24 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
 
     def load_all_summary_data(
         self,
-        case_name: str,
+        ensemble: EnsembleReader,
         keys: Optional[List[str]] = None,
         realization_index: Optional[int] = None,
     ) -> DataFrame:
-        fs = self._enkf_main.storage_manager[case_name]
-
-        realizations = self.get_active_realizations(case_name)
+        realizations = self.get_active_realizations(ensemble)
         if realization_index is not None:
             if realization_index not in realizations:
                 raise IndexError(f"No such realization {realization_index}")
             realizations = [realization_index]
 
-        summary_keys = fs.getSummaryKeySet()
+        summary_keys = ensemble.getSummaryKeySet()
         if keys:
             summary_keys = [
                 key for key in keys if key in summary_keys
             ]  # ignore keys that doesn't exist
 
         try:
-            df = fs.load_summary_data_as_df(summary_keys, realizations)
+            df = ensemble.load_summary_data_as_df(summary_keys, realizations)
         except KeyError:
             return DataFrame()
         df = df.stack().unstack(level=0).swaplevel()
@@ -431,11 +394,11 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
 
     def gather_summary_data(
         self,
-        case: str,
+        ensemble: EnsembleReader,
         key: str,
         realization_index: Optional[int] = None,
     ) -> Union[DataFrame, Series]:
-        data = self.load_all_summary_data(case, [key], realization_index)
+        data = self.load_all_summary_data(ensemble, [key], realization_index)
         if not data.empty:
             idx = data.index.duplicated()
             if idx.any():
@@ -448,9 +411,8 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
             data = data.unstack(level="Realization").droplevel("data_key", axis=1)
         return data
 
-    def load_all_misfit_data(self, case_name: str) -> DataFrame:
-        realizations = self.get_active_realizations(case_name)
-        fs = self._enkf_main.storage_manager[case_name]
+    def load_all_misfit_data(self, ensemble: EnsembleReader) -> DataFrame:
+        realizations = self.get_active_realizations(ensemble)
         misfit_keys = []
         observations = self._enkf_main.getObservations()
         for obs_vector in observations:
@@ -458,7 +420,7 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
 
         all_observations = [(n.getObsKey(), n.getStepList()) for n in observations]
         measured_data, obs_data = _get_obs_and_measure_data(
-            observations, fs, all_observations, realizations
+            observations, ensemble, all_observations, realizations
         )
         joined = obs_data.join(measured_data, on=["data_key", "axis"], how="inner")
         misfit = DataFrame(index=joined.index)
@@ -486,23 +448,25 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
         return data.iloc[1:]
 
     def history_data(
-        self, key: str, case: Optional[str] = None
+        self, key: str, ensemble: Optional[EnsembleReader] = None
     ) -> Union[DataFrame, Series]:
-        if case is None:
+        if ensemble is None:
             return self.refcase_data(key)
 
-        storage = self._enkf_main.storage_manager[case]
-        if key not in storage.getSummaryKeySet():
+        if key not in ensemble.getSummaryKeySet():
             return DataFrame()
 
-        data = self.gather_summary_data(case, key)
-        if data.empty and case is not None:
+        data = self.gather_summary_data(ensemble, key)
+        if data.empty and ensemble is not None:
             data = self.refcase_data(key)
 
         return data
 
     def gather_gen_data_data(
-        self, case: str, key: str, realization_index: Optional[int] = None
+        self,
+        ensemble: EnsembleReader,
+        key: str,
+        realization_index: Optional[int] = None,
     ) -> DataFrame:
         key_parts = key.split("@")
         key = key_parts[0]
@@ -513,7 +477,7 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
 
         try:
             data = self.load_gen_data(
-                case,
+                ensemble,
                 key,
                 report_step,
                 realization_index,

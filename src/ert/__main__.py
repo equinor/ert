@@ -221,6 +221,12 @@ def get_ert_parser(parser: Optional[ArgumentParser] = None) -> ArgumentParser:
         help="Directory where ERT will store the logs. Default is ./logs",
     )
 
+    parser.add_argument(
+        "--read-only",
+        action="store_true",
+        help="Start ERT in read-only mode",
+    )
+
     subparsers = parser.add_subparsers(
         title="Available user entries",
         description="ERT can be accessed through a GUI or CLI interface. Include "
@@ -274,6 +280,13 @@ def get_ert_parser(parser: Optional[ArgumentParser] = None) -> ArgumentParser:
     test_run_parser = subparsers.add_parser(
         TEST_RUN_MODE, help=test_run_description, description=test_run_description
     )
+    test_run_parser.add_argument(
+        "--current-case",
+        type=valid_name,
+        default="default",
+        help="Name of the case where the results for the simulation "
+        "using the prior parameters will be stored.",
+    )
 
     # ensemble_experiment_parser
     ensemble_experiment_description = (
@@ -295,7 +308,7 @@ def get_ert_parser(parser: Optional[ArgumentParser] = None) -> ArgumentParser:
     ensemble_experiment_parser.add_argument(
         "--current-case",
         type=valid_name,
-        required=False,
+        default="default",
         help="Name of the case where the results for the simulation "
         "using the prior parameters will be stored.",
     )
@@ -337,7 +350,7 @@ def get_ert_parser(parser: Optional[ArgumentParser] = None) -> ArgumentParser:
     ensemble_smoother_parser.add_argument(
         "--current-case",
         type=valid_name,
-        required=False,
+        default="default",
         help="Name of the case where the results for the simulation "
         "using the prior parameters will be stored.",
     )
@@ -372,7 +385,7 @@ def get_ert_parser(parser: Optional[ArgumentParser] = None) -> ArgumentParser:
     iterative_ensemble_smoother_parser.add_argument(
         "--current-case",
         type=valid_name,
-        required=False,
+        default="default",
         help="Name of the case where the results for the simulation "
         "using the prior parameters will be stored.",
     )
@@ -415,7 +428,7 @@ def get_ert_parser(parser: Optional[ArgumentParser] = None) -> ArgumentParser:
     es_mda_parser.add_argument(
         "--current-case",
         type=valid_name,
-        required=False,
+        default="default",
         help="Name of the case where the results for the simulation "
         "using the prior parameters will be stored.",
     )
@@ -426,6 +439,12 @@ def get_ert_parser(parser: Optional[ArgumentParser] = None) -> ArgumentParser:
         required=False,
         help="Which iteration the evaluation should start from. "
         "Requires cases previous to the specified iteration to exist.",
+    )
+    es_mda_parser.add_argument(
+        "--prior-case",
+        type=str,
+        required=False,
+        help="Which case the evaluation should start from.",
     )
 
     workflow_description = "Executes the workflow given"

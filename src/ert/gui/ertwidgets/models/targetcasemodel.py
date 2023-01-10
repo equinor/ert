@@ -5,13 +5,18 @@ from ert.libres_facade import LibresFacade
 
 class TargetCaseModel(ValueModel):
     def __init__(
-        self, facade: LibresFacade, notifier: ErtNotifier, format_mode: bool = False
+        self,
+        facade: LibresFacade,
+        notifier: ErtNotifier,
+        format_mode: bool = False,
     ):
         self.facade = facade
+        self.notifier = notifier
         self._format_mode = format_mode
         self._custom = False
-        ValueModel.__init__(self, self.getDefaultValue())
-        notifier.ertChanged.connect(self._caseChanged)
+        super().__init__(self.getDefaultValue())
+        notifier.ertChanged.connect(self.on_current_case_changed)
+        notifier.current_case_changed.connect(self.on_current_case_changed)
 
     def setValue(self, value: str):
         """Set a new target case"""
@@ -28,12 +33,12 @@ class TargetCaseModel(ValueModel):
             if analysis_config.case_format_is_set():
                 return analysis_config.case_format
             else:
-                case_name = self.facade.get_current_case_name()
+                case_name = self.notifier.current_case_name
                 return f"{case_name}_%d"
         else:
-            case_name = self.facade.get_current_case_name()
+            case_name = self.notifier.current_case_name
             return f"{case_name}_smoother_update"
 
-    def _caseChanged(self):
+    def on_current_case_changed(self, *args) -> None:
         if not self._custom:
-            ValueModel.setValue(self, self.getDefaultValue())
+            super().setValue(self.getDefaultValue())
