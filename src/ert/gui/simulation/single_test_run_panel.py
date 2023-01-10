@@ -8,16 +8,12 @@ from ert.gui.ertwidgets.models.activerealizationsmodel import ActiveRealizations
 from ert.libres_facade import LibresFacade
 from ert.shared.models import SingleTestRun
 
-from .simulation_config_panel import SimulationConfigPanel
+from .simulation_config_panel import SimulationConfigPanel, escape_string
 
 
 @dataclass
 class Arguments:
     mode: str
-
-
-def escape_string(string):
-    return string.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
 
 
 class SingleTestRunPanel(SimulationConfigPanel):
@@ -31,9 +27,7 @@ class SingleTestRunPanel(SimulationConfigPanel):
         case_selector = CaseSelector(facade, notifier)
         layout.addRow("Current case:", case_selector)
 
-        run_path_label = QLabel(
-            f"<b>{escape_string(self.ert.getModelConfig().runpath_format_string)}</b>"
-        )
+        run_path_label = QLabel(f"<b>{escape_string(facade.run_path)}</b>")
         addHelpToWidget(run_path_label, "config/simulation/runpath")
         layout.addRow("Runpath:", run_path_label)
 
