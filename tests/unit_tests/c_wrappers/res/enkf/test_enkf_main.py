@@ -67,8 +67,8 @@ def test_create_run_context(monkeypatch, enkf_main):
 
     substitutions = run_context.substituter
     assert "<RUNPATH>" in substitutions
-    assert substitutions.get("<ECL_BASE>") == "name9"
-    assert substitutions.get("<ECLBASE>") == "name9"
+    assert substitutions.get("<ECL_BASE>") == "name<IENS>"
+    assert substitutions.get("<ECLBASE>") == "name<IENS>"
 
 
 @pytest.mark.usefixtures("use_tmpdir")
