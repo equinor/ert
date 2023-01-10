@@ -22,11 +22,13 @@ class Arguments:
     mode: str
     realizations: str
     iter_num: int
+    current_case: str
 
 
 class EnsembleExperimentPanel(SimulationConfigPanel):
     def __init__(self, ert: EnKFMain, notifier: ErtNotifier):
         self.ert = ert
+        self.notifier = notifier
         self.facade = LibresFacade(ert)
         super().__init__(EnsembleExperiment)
         self.setObjectName("Ensemble_experiment_panel")
@@ -72,19 +74,18 @@ class EnsembleExperimentPanel(SimulationConfigPanel):
         )
         self._case_selector.currentIndexChanged.connect(self._realizations_from_fs)
 
-        self._realizations_from_fs()  # update with the current case
-
     def isConfigurationValid(self):
         return self._active_realizations_field.isValid() and self._iter_field.isValid()
 
     def getSimulationArguments(self):
         return Arguments(
             mode="ensemble_experiment",
+            current_case=self.notifier.current_case_name,
             iter_num=int(self._iter_field.text()),
             realizations=self._active_realizations_field.text(),
         )
 
     def _realizations_from_fs(self):
         case = str(self._case_selector.currentText())
-        mask = get_runnable_realizations_mask(self.ert, case)
+        mask = get_runnable_realizations_mask(self.storage, case)
         self._active_realizations_field.model.setValueFromMask(mask)

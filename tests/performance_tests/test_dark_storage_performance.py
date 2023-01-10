@@ -7,12 +7,14 @@ from ert._c_wrappers.enkf import EnKFMain, ResConfig
 from ert.async_utils import run_in_loop
 from ert.dark_storage.endpoints import ensembles, experiments, records, responses
 from ert.libres_facade import LibresFacade
+from ert.storage import open_storage
 
 
-def get_single_record_csv(ert, ensemble_id1, keyword, poly_ran):
+def get_single_record_csv(ert, storage, ensemble_id1, keyword, poly_ran):
     csv = run_in_loop(
         records.get_ensemble_record(
             res=ert,
+            db=storage,
             name=keyword,
             ensemble_id=ensemble_id1,
             realization_index=poly_ran["reals"] - 1,
@@ -25,9 +27,11 @@ def get_single_record_csv(ert, ensemble_id1, keyword, poly_ran):
     assert len(record_df1_indexed.index) == 1
 
 
-def get_observations(ert, ensemble_id1, keyword: str, poly_ran):
+def get_observations(ert, storage, ensemble_id1, keyword: str, poly_ran):
     obs = run_in_loop(
-        records.get_record_observations(res=ert, ensemble_id=ensemble_id1, name=keyword)
+        records.get_record_observations(
+            res=ert, db=storage, ensemble_id=ensemble_id1, name=keyword
+        )
     )
 
     if "PSUM" in keyword:
@@ -55,10 +59,11 @@ def get_observations(ert, ensemble_id1, keyword: str, poly_ran):
         assert False, f"should never get here, keyword is {keyword}"
 
 
-def get_single_record_parquet(ert, ensemble_id1, keyword, poly_ran):
+def get_single_record_parquet(ert, storage, ensemble_id1, keyword, poly_ran):
     parquet = run_in_loop(
         records.get_ensemble_record(
             res=ert,
+            db=storage,
             name=keyword,
             ensemble_id=ensemble_id1,
             realization_index=poly_ran["reals"] - 1,
@@ -70,10 +75,11 @@ def get_single_record_parquet(ert, ensemble_id1, keyword, poly_ran):
     assert len(record_df1_indexed.index) == 1
 
 
-def get_record_parquet(ert, ensemble_id1, keyword, poly_ran):
+def get_record_parquet(ert, storage, ensemble_id1, keyword, poly_ran):
     parquet = run_in_loop(
         records.get_ensemble_record(
             res=ert,
+            db=storage,
             name=keyword,
             ensemble_id=ensemble_id1,
             accept="application/x-parquet",
@@ -84,19 +90,21 @@ def get_record_parquet(ert, ensemble_id1, keyword, poly_ran):
     assert len(record_df1.index) == poly_ran["reals"]
 
 
-def get_record_csv(ert, ensemble_id1, keyword, poly_ran):
+def get_record_csv(ert, storage, ensemble_id1, keyword, poly_ran):
     csv = run_in_loop(
-        records.get_ensemble_record(res=ert, name=keyword, ensemble_id=ensemble_id1)
+        records.get_ensemble_record(
+            res=ert, db=storage, name=keyword, ensemble_id=ensemble_id1
+        )
     ).body
     record_df1 = pd.read_csv(io.BytesIO(csv), index_col=0, float_precision="round_trip")
     assert len(record_df1.columns) == poly_ran["gen_data_entries"]
     assert len(record_df1.index) == poly_ran["reals"]
 
 
-def get_result(ert, ensemble_id1, keyword, poly_ran):
+def get_result(ert, storage, ensemble_id1, keyword, poly_ran):
     csv = run_in_loop(
         responses.get_ensemble_response_dataframe(
-            res=ert, ensemble_id=ensemble_id1, response_name=keyword
+            res=ert, db=storage, ensemble_id=ensemble_id1, response_name=keyword
         )
     ).body
     response_df1 = pd.read_csv(
@@ -106,7 +114,7 @@ def get_result(ert, ensemble_id1, keyword, poly_ran):
     assert len(response_df1.index) == poly_ran["reals"]
 
 
-def get_parameters(ert, ensemble_id1, keyword, poly_ran):
+def get_parameters(ert, storage, ensemble_id1, keyword, poly_ran):
     parameters_json = run_in_loop(
         records.get_ensemble_parameters(res=ert, ensemble_id=ensemble_id1)
     )
@@ -145,15 +153,18 @@ def test_direct_dark_performance(
         config = ResConfig("poly.ert")
         ert = EnKFMain(config)
         enkf_facade = LibresFacade(ert)
-        experiment_json = experiments.get_experiments(res=enkf_facade)
+        storage = open_storage(enkf_facade.enspath)
+        experiment_json = experiments.get_experiments(res=enkf_facade, db=storage)
         ensemble_json_default = None
         ensemble_id_default = None
         for ensemble_id in experiment_json[0].ensemble_ids:
             ensemble_json = ensembles.get_ensemble(
-                res=enkf_facade, ensemble_id=ensemble_id
+                res=enkf_facade, db=storage, ensemble_id=ensemble_id
             )
             if ensemble_json.userdata["name"] == "default":
                 ensemble_json_default = ensemble_json
                 ensemble_id_default = ensemble_id
         assert key in ensemble_json_default.response_names
-        benchmark(function, enkf_facade, ensemble_id_default, key, template_config)
+        benchmark(
+            function, enkf_facade, storage, ensemble_id_default, key, template_config
+        )

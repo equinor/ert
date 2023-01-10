@@ -17,7 +17,7 @@ from ert.cli import (
     ITERATIVE_ENSEMBLE_SMOOTHER_MODE,
     TEST_RUN_MODE,
 )
-from ert.cli.main import ErtCliError, run_cli
+from ert.cli.main import run_cli
 from ert.shared.feature_toggling import FeatureToggling
 
 
@@ -30,32 +30,6 @@ def fixture_mock_cli_run(monkeypatch):
     monkeypatch.setattr(threading.Thread, "join", mocked_thread_join)
     monkeypatch.setattr(ert.cli.monitor.Monitor, "monitor", mocked_monitor)
     yield mocked_monitor, mocked_thread_join, mocked_thread_start
-
-
-@pytest.mark.integration_test
-def test_target_case_equal_current_case(tmpdir, source_root):
-    shutil.copytree(
-        os.path.join(source_root, "test-data", "poly_example"),
-        os.path.join(str(tmpdir), "poly_example"),
-    )
-    with tmpdir.as_cwd():
-        parser = ArgumentParser(prog="test_main")
-        parsed = ert_parser(
-            parser,
-            [
-                ENSEMBLE_SMOOTHER_MODE,
-                "--current-case",
-                "test_case",
-                "--target-case",
-                "test_case",
-                "poly_example/poly.ert",
-                "--port-range",
-                "1024-65535",
-            ],
-        )
-
-        with pytest.raises(ErtCliError, match="They were both: test_case"):
-            run_cli(parsed)
 
 
 @pytest.mark.integration_test

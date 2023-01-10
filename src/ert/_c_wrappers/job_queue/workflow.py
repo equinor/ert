@@ -10,6 +10,7 @@ if TYPE_CHECKING:
     from ert._c_wrappers.enkf import EnKFMain
     from ert._c_wrappers.job_queue import WorkflowJob
     from ert._c_wrappers.util import SubstitutionList
+    from ert.storage import EnsembleAccessor
 
 
 def _workflow_parser(workflow_jobs: Dict[str, "WorkflowJob"]) -> ConfigParser:
@@ -76,6 +77,7 @@ class Workflow:
     def run(
         self,
         ert: "EnKFMain",
+        storage: Optional["EnsembleAccessor"],
         verbose: bool = False,
     ) -> bool:
         logger = logging.getLogger(__name__)
@@ -87,7 +89,7 @@ class Workflow:
         for job, args in self:
             self.__current_job = job
             if not self.__cancelled:
-                return_value = job.run(ert, args, verbose)
+                return_value = job.run(ert, storage, args, verbose)
                 self.__status[job.name] = {
                     "stdout": job.stdoutdata(),
                     "stderr": job.stderrdata(),

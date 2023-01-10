@@ -159,7 +159,9 @@ number_regex = r"[-+]?(?:\d*\.\d+|\d+)"
         ("TRIANGULAR 0 0.5 1", False, r"KW_NAME:MY_KEYWORD " + number_regex),
     ],
 )
-def test_gen_kw_is_log_or_not(tmpdir, distribution, expect_log, parameters_regex):
+def test_gen_kw_is_log_or_not(
+    tmpdir, prior_ensemble, distribution, expect_log, parameters_regex
+):
     with tmpdir.as_cwd():
         config = dedent(
             """
@@ -182,7 +184,7 @@ def test_gen_kw_is_log_or_not(tmpdir, distribution, expect_log, parameters_regex
         gen_kw_config = node.getModelConfig()
         assert isinstance(gen_kw_config, GenKwConfig)
         assert gen_kw_config.shouldUseLogScale(0) is expect_log
-        prior = ert.create_ensemble_context("prior", [True], 0)
+        prior = ert.ensemble_context(prior_ensemble, [True], 0)
         ert.sample_prior(prior.sim_fs, prior.active_realizations)
         ert.createRunPath(prior)
         assert re.match(

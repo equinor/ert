@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 import time
 from collections import namedtuple
@@ -12,7 +14,8 @@ if TYPE_CHECKING:
 
     import numpy.typing as npt
 
-    from ert._c_wrappers.enkf import EnkfFs, EnKFMain
+    from ert._c_wrappers.enkf import EnKFMain
+    from ert.storage import EnsembleAccessor
 
 Status = namedtuple("Status", "waiting pending running complete failed")
 
@@ -22,7 +25,7 @@ class BatchContext(SimulationContext):
         self,
         result_keys: "Iterable[str]",
         ert: "EnKFMain",
-        fs: "EnkfFs",
+        fs: EnsembleAccessor,
         mask: List[bool],
         itr: int,
         case_data: List[Tuple[Any, Any]],

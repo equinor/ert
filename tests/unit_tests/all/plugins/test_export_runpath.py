@@ -7,13 +7,15 @@ from ert._c_wrappers.enkf import EnKFMain
 from ert._c_wrappers.enkf.runpaths import Runpaths
 from ert.shared.hook_implementations.workflows.export_runpath import ExportRunpathJob
 from ert.shared.plugins import ErtPluginManager
+from ert.storage import open_storage
 
 
 @pytest.fixture
 def snake_oil_export_runpath_job(setup_case):
     res_config = setup_case("snake_oil", "snake_oil.ert")
     ert = EnKFMain(res_config)
-    return ExportRunpathJob(ert)
+    with open_storage(ert.res_config.ens_path, mode="w") as storage:
+        yield ExportRunpathJob(ert, storage)
 
 
 def test_export_runpath_number_of_realizations(snake_oil_export_runpath_job):
@@ -35,7 +37,7 @@ def writing_setup(setup_case):
     with patch.object(Runpaths, "write_runpath_list") as write_mock:
         res_config = setup_case("snake_oil", "snake_oil.ert")
         ert = EnKFMain(res_config)
-        yield WritingSetup(write_mock, ExportRunpathJob(ert))
+        yield WritingSetup(write_mock, ExportRunpathJob(ert, None))
 
 
 def test_export_runpath_no_parameters(writing_setup):

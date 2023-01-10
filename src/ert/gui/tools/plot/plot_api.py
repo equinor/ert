@@ -49,11 +49,11 @@ class PlotApi:
                     response_json = response.json()
                     case_name = response_json["userdata"]["name"]
                     self._all_cases.append(
-                        dict(
-                            name=case_name,
-                            id=ensemble_id,
-                            hidden=case_name.startswith("."),
-                        )
+                        {
+                            "name": case_name,
+                            "id": ensemble_id,
+                            "hidden": case_name.startswith("."),
+                        }
                     )
                 return self._all_cases
             except IndexError as exc:

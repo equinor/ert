@@ -5,7 +5,8 @@ from ert_storage import json_schema as js
 from fastapi import APIRouter, Body, Depends
 
 from ert.dark_storage.common import ensemble_parameter_names, get_response_names
-from ert.dark_storage.enkf import LibresFacade, get_id, get_name, get_res, get_size
+from ert.dark_storage.enkf import LibresFacade, get_res, get_size, get_storage
+from ert.storage import StorageAccessor
 
 router = APIRouter(tags=["ensemble"])
 
@@ -19,17 +20,21 @@ def post_ensemble(
 
 @router.get("/ensembles/{ensemble_id}", response_model=js.EnsembleOut)
 def get_ensemble(
-    *, res: LibresFacade = Depends(get_res), ensemble_id: UUID
+    *,
+    res: LibresFacade = Depends(get_res),
+    db: StorageAccessor = Depends(get_storage),
+    ensemble_id: UUID,
 ) -> js.EnsembleOut:
+    ens = db.get_ensemble(ensemble_id)
     return js.EnsembleOut(
         id=ensemble_id,
         children=[],
         parent=None,
-        experiment_id=get_id("experiment", "default"),
-        userdata={"name": get_name("ensemble", ensemble_id)},
+        experiment_id=ens.experiment_id,
+        userdata={"name": ens.name},
         size=get_size(res),
         parameter_names=ensemble_parameter_names(res),
-        response_names=get_response_names(res, get_name("ensemble", ensemble_id)),
+        response_names=get_response_names(res, ens),
         child_ensemble_ids=[],
     )
 

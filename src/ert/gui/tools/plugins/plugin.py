@@ -7,14 +7,18 @@ if TYPE_CHECKING:
 
     from ert._c_wrappers.enkf import EnKFMain
     from ert._c_wrappers.job_queue import ErtPlugin, WorkflowJob
+    from ert.gui.ertnotifier import ErtNotifier
 
 
 class Plugin:
-    def __init__(self, ert: "EnKFMain", workflow_job: "WorkflowJob"):
+    def __init__(
+        self, ert: "EnKFMain", notifier: "ErtNotifier", workflow_job: "WorkflowJob"
+    ):
         """
         @type workflow_job: WorkflowJob
         """
         self.__ert = ert
+        self.__notifier = notifier
         self.__workflow_job = workflow_job
         self.__parent_window = None
 
@@ -24,7 +28,7 @@ class Plugin:
 
     def __loadPlugin(self) -> "ErtPlugin":
         script_obj = ErtScript.loadScriptFromFile(self.__workflow_job.script)
-        script = script_obj(self.__ert)
+        script = script_obj(self.__ert, self.__notifier._storage)
         return script
 
     def getName(self) -> str:

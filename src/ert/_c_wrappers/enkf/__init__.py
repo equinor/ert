@@ -11,7 +11,6 @@ from .config import (
     SummaryConfig,
 )
 from .config_keys import ConfigKeys
-from .enkf_fs import EnkfFs
 from .enkf_main import EnKFMain, ObservationConfigError
 from .enkf_obs import EnkfObs
 from .ensemble_config import EnsembleConfig
@@ -49,7 +48,6 @@ __all__ = [
     "SummaryConfig",
     "ExtParamConfig",
     "TimeMap",
-    "EnkfFs",
     "RowScaling",
     "ActiveList",
     "EnkfFieldFileFormatEnum",
