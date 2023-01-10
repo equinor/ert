@@ -5,7 +5,7 @@ import logging.config
 import os
 import socket
 import sys
-from typing import Any, Dict, List, Optional, Union, no_type_check
+from typing import Any, Dict, List, Optional, Union
 
 import uvicorn
 import yaml

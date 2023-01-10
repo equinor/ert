@@ -104,11 +104,11 @@ class FunctionTask(prefect.Task):  # type: ignore
                 ev_data={ids.ERROR_MSG: str(e)},
             )
             raise e
-        else:
-            client.send_event(
-                ev_type=ids.EVTYPE_FM_JOB_SUCCESS,
-                ev_source=job.source(),
-            )
+
+        client.send_event(
+            ev_type=ids.EVTYPE_FM_JOB_SUCCESS,
+            ev_source=job.source(),
+        )
         return output
 
     def run(self, inputs: _stage_transmitter_mapping):  # type: ignore  # pylint: disable=arguments-differ  # noqa

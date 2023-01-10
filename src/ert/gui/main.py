@@ -4,9 +4,8 @@ import logging
 import os
 import warnings
 import webbrowser
-from pathlib import Path
+from typing import Optional
 
-import filelock
 from PyQt5.QtWidgets import (
     QFrame,
     QHBoxLayout,
@@ -22,9 +21,7 @@ from qtpy.QtWidgets import QApplication
 from ert._c_wrappers.config import ConfigWarning
 from ert._c_wrappers.config.config_parser import ConfigValidationError
 from ert._c_wrappers.enkf import EnKFMain, ErtConfig
-from ert.cli.main import ErtTimeoutError
 from ert.gui.about_dialog import AboutDialog
-from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets import SuggestorMessage, SummaryPanel, resourceIcon
 from ert.gui.main_window import ErtMainWindow
 from ert.gui.simulation import SimulationPanel
@@ -44,13 +41,14 @@ from ert.libres_facade import LibresFacade
 from ert.namespace import Namespace
 from ert.services import StorageService
 from ert.shared.plugins.plugin_manager import ErtPluginManager
+from ert.storage import EnsembleAccessor, StorageReader, open_storage
 
 
 def run_gui(args: Namespace):
     app = QApplication([])  # Early so that QT is initialized before other imports
     app.setWindowIcon(resourceIcon("application/window_icon_cutout"))
     with add_gui_log_handler() as log_handler:
-        window, ens_path = _start_initial_gui_window(args, log_handler)
+        window, ens_path, ensemble_size = _start_initial_gui_window(args, log_handler)
 
         def show_window():
             window.show()
@@ -64,25 +62,16 @@ def run_gui(args: Namespace):
         if ens_path is None:
             return show_window()
 
-        storage_lock = filelock.FileLock(
-            Path(ens_path) / (Path(ens_path).stem + ".lock")
-        )
-        try:
-            storage_lock.acquire(timeout=5)
-            with StorageService.init_service(
-                ert_config=args.config,
-                project=os.path.abspath(ens_path),
-            ):
-                return show_window()
-        except filelock.Timeout:
-            raise ErtTimeoutError(
-                f"Not able to acquire lock for: {ens_path}. You may already be running"
-                f" ert, or another user is using the same ENSPATH."
-            )
-        finally:
-            if storage_lock.is_locked:
-                storage_lock.release()
-                os.remove(storage_lock.lock_file)
+        mode = "r" if args.read_only else "w"
+        with StorageService.init_service(
+            ert_config=args.config, project=os.path.abspath(ens_path)
+        ), open_storage(ens_path, mode=mode) as storage:
+            if hasattr(window, "notifier"):
+                window.notifier.set_storage(storage)
+                window.notifier.set_current_case(
+                    _get_or_create_default_case(storage, ensemble_size)
+                )
+            return show_window()
 
 
 def _start_initial_gui_window(args, log_handler):
@@ -136,7 +125,11 @@ def _start_initial_gui_window(args, log_handler):
     except ConfigValidationError as error:
         error_messages.append(str(error))
         logger.info("Error in config file shown in gui: '%s'", str(error))
-        return _setup_suggester(error_messages, warning_messages, suggestions), None
+        return (
+            _setup_suggester(error_messages, warning_messages, suggestions),
+            None,
+            None,
+        )
 
     for job in ert_config.forward_model_list:
         logger.info("Config contains forward model job %s", job.name)
@@ -151,9 +144,29 @@ def _start_initial_gui_window(args, log_handler):
         return (
             _setup_suggester(error_messages, warning_msgs, suggestions, _main_window),
             ert_config.ens_path,
+            ert_config.model_config.num_realizations,
         )
     else:
-        return _main_window, ert_config.ens_path
+        return (
+            _main_window,
+            ert_config.ens_path,
+            ert_config.model_config.num_realizations,
+        )
+
+
+def _get_or_create_default_case(
+    storage: StorageReader, ensemble_size: int
+) -> Optional[EnsembleAccessor]:
+    try:
+        storage_accessor = storage.to_accessor()
+        try:
+            return storage_accessor.get_ensemble_by_name("default")
+        except KeyError:
+            return storage_accessor.create_experiment().create_ensemble(
+                name="default", ensemble_size=ensemble_size
+            )
+    except TypeError:
+        return None
 
 
 def _check_locale():
@@ -188,6 +201,8 @@ def _clicked_about_button(about_dialog):
 
 def _setup_suggester(errors, warning_msgs, suggestions, ert_window=None):
     container = QWidget()
+    if ert_window is not None:
+        container.notifier = ert_window.notifier
     container.setWindowTitle("Some problems detected")
     container_layout = QVBoxLayout()
 
@@ -297,11 +312,11 @@ def _setup_main_window(
     # window reference must be kept until app.exec returns:
     facade = LibresFacade(ert)
     config_file = args.config
-    notifier = ErtNotifier(config_file)
     window = ErtMainWindow(config_file)
-    window.setWidget(SimulationPanel(ert, notifier, config_file))
+    window.setWidget(SimulationPanel(ert, window.notifier, config_file))
     plugin_handler = PluginHandler(
         ert,
+        window.notifier,
         [wfj for wfj in ert.resConfig().workflow_jobs.values() if wfj.isPlugin()],
         window,
     )
@@ -311,10 +326,10 @@ def _setup_main_window(
     )
     window.addTool(PlotTool(config_file, window))
     window.addTool(ExportTool(ert))
-    window.addTool(WorkflowsTool(ert, notifier))
-    window.addTool(ManageCasesTool(ert, notifier))
-    window.addTool(PluginsTool(plugin_handler, notifier))
-    window.addTool(RunAnalysisTool(ert, notifier))
+    window.addTool(WorkflowsTool(ert, window.notifier))
+    window.addTool(ManageCasesTool(ert, window.notifier))
+    window.addTool(PluginsTool(plugin_handler, window.notifier))
+    window.addTool(RunAnalysisTool(ert, window.notifier))
     window.addTool(LoadResultsTool(facade))
     event_viewer = EventViewerTool(log_handler)
     window.addTool(event_viewer)

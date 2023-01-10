@@ -15,10 +15,11 @@ from ert._clib import gen_kw_config
 if TYPE_CHECKING:
     import numpy.typing as npt
 
-    class PriorDict(TypedDict):
-        key: str
-        function: str
-        parameters: Dict[str, float]
+
+class PriorDict(TypedDict):
+    key: str
+    function: str
+    parameters: Dict[str, float]
 
 
 class GenKwConfig(BaseCClass):

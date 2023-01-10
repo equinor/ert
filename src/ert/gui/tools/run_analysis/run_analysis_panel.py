@@ -32,4 +32,4 @@ class RunAnalysisPanel(QWidget):
         return str(self.target_case_text.text())
 
     def source_case(self):
-        return str(self.source_case_selector.currentText())
+        return self.source_case_selector.currentData()

@@ -5,17 +5,22 @@ from .plugin import Plugin
 if TYPE_CHECKING:
     from ert._c_wrappers.enkf import EnKFMain
     from ert._c_wrappers.job_queue import WorkflowJob
+    from ert.gui.ertnotifier import ErtNotifier
 
 
 class PluginHandler:
     def __init__(
-        self, ert: "EnKFMain", plugin_jobs: List["WorkflowJob"], parent_window
+        self,
+        ert: "EnKFMain",
+        notifier: "ErtNotifier",
+        plugin_jobs: List["WorkflowJob"],
+        parent_window,
     ):
         self.__ert = ert
         self.__plugins = []
 
         for job in plugin_jobs:
-            plugin = Plugin(self.__ert, job)
+            plugin = Plugin(self.__ert, notifier, job)
             self.__plugins.append(plugin)
             plugin.setParentWindow(parent_window)
 

@@ -1,13 +1,18 @@
 import pytest
 
 from ert._c_wrappers.enkf import EnKFMain, ErtConfig
+from ert.storage import open_storage
 
 
 def read_jobname(config_file):
     ert_config = ErtConfig.from_file(config_file)
     ert = EnKFMain(ert_config)
-    run_context = ert.create_ensemble_context("prior", range(ert.getEnsembleSize()), 0)
-    ert.createRunPath(run_context)
+    with open_storage(ert_config.ens_path, mode="w") as storage:
+        prior = storage.create_experiment().create_ensemble(
+            name="prior", ensemble_size=ert.getEnsembleSize()
+        )
+        run_context = ert.ensemble_context(prior, [True] * ert.getEnsembleSize(), 0)
+        ert.createRunPath(run_context)
     return run_context[0].job_name
 
 

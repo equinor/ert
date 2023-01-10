@@ -1,4 +1,5 @@
 import asyncio
+import fileinput
 import os
 import shutil
 import threading
@@ -20,8 +21,9 @@ from ert.cli import (
     ITERATIVE_ENSEMBLE_SMOOTHER_MODE,
     TEST_RUN_MODE,
 )
-from ert.cli.main import ErtCliError, run_cli
+from ert.cli.main import run_cli, ErtCliError
 from ert.shared.feature_toggling import FeatureToggling
+from ert.storage import open_storage
 
 
 @pytest.fixture(name="mock_cli_run")
@@ -33,32 +35,6 @@ def fixture_mock_cli_run(monkeypatch):
     monkeypatch.setattr(threading.Thread, "join", mocked_thread_join)
     monkeypatch.setattr(ert.cli.monitor.Monitor, "monitor", mocked_monitor)
     yield mocked_monitor, mocked_thread_join, mocked_thread_start
-
-
-@pytest.mark.integration_test
-def test_target_case_equal_current_case(tmpdir, source_root):
-    shutil.copytree(
-        os.path.join(source_root, "test-data", "poly_example"),
-        os.path.join(str(tmpdir), "poly_example"),
-    )
-    with tmpdir.as_cwd():
-        parser = ArgumentParser(prog="test_main")
-        parsed = ert_parser(
-            parser,
-            [
-                ENSEMBLE_SMOOTHER_MODE,
-                "--current-case",
-                "test_case",
-                "--target-case",
-                "test_case",
-                "poly_example/poly.ert",
-                "--port-range",
-                "1024-65535",
-            ],
-        )
-
-        with pytest.raises(ErtCliError, match="They were both: test_case"):
-            run_cli(parsed)
 
 
 @pytest.mark.integration_test
@@ -161,8 +137,9 @@ def test_es_mda(tmpdir, source_root, snapshot):
         run_cli(parsed)
         FeatureToggling.reset()
         facade = LibresFacade.from_config_file("poly.ert")
-        iter_0 = facade.load_all_gen_kw_data("iter-0")
-        iter_1 = facade.load_all_gen_kw_data("iter-1")
+        with open_storage("storage", "r") as storage:
+            iter_0 = facade.load_all_gen_kw_data(storage.get_ensemble_by_name("iter-0"))
+            iter_1 = facade.load_all_gen_kw_data(storage.get_ensemble_by_name("iter-1"))
         result = pd.concat([iter_0, iter_1], keys=["iter-0", "iter-1"])
         snapshot.assert_match(
             result.to_csv(float_format="%.12g"), "es_mda_integration_snapshot"
@@ -366,7 +343,12 @@ def test_bad_config_error_message(tmp_path):
     ],
 )
 def test_that_prior_is_not_overwritten_in_ensemble_experiment(
-    prior_mask, reals_rerun_option, should_resample, tmpdir, source_root, capsys
+    prior_mask,
+    reals_rerun_option,
+    should_resample,
+    tmpdir,
+    source_root,
+    capsys,
 ):
     shutil.copytree(
         os.path.join(source_root, "test-data", "poly_example"),
@@ -376,10 +358,19 @@ def test_that_prior_is_not_overwritten_in_ensemble_experiment(
     with tmpdir.as_cwd():
         ert = EnKFMain(ErtConfig.from_file("poly_example/poly.ert"))
         prior_mask = prior_mask or [True] * ert.getEnsembleSize()
-        prior_context = ert.load_ensemble_context("default", prior_mask, 0)
+        storage = open_storage(ert.ert_config.ens_path, mode="w")
+        experiment_id = storage.create_experiment()
+        ensemble = storage.create_ensemble(
+            experiment_id, name="iter-0", ensemble_size=ert.getEnsembleSize()
+        )
+        prior_ensemble_id = ensemble.id
+        prior_context = ert.ensemble_context(ensemble, prior_mask, 0)
         ert.sample_prior(prior_context.sim_fs, prior_context.active_realizations)
         facade = LibresFacade(ert)
-        prior_values = facade.load_all_gen_kw_data("default")
+        prior_values = facade.load_all_gen_kw_data(
+            storage.get_ensemble_by_name("iter-0")
+        )
+        storage.close()
 
         parser = ArgumentParser(prog="test_main")
         parsed = ert_parser(
@@ -387,6 +378,7 @@ def test_that_prior_is_not_overwritten_in_ensemble_experiment(
             [
                 ENSEMBLE_EXPERIMENT_MODE,
                 "poly_example/poly.ert",
+                "--current-case=iter-0",
                 "--port-range",
                 "1024-65535",
                 "--realizations",
@@ -397,13 +389,17 @@ def test_that_prior_is_not_overwritten_in_ensemble_experiment(
         FeatureToggling.update_from_args(parsed)
         run_cli(parsed)
         post_facade = LibresFacade.from_config_file("poly.ert")
-        parameter_values = post_facade.load_all_gen_kw_data("default")
+        storage = open_storage(ert.ert_config.ens_path, mode="w")
+        parameter_values = post_facade.load_all_gen_kw_data(
+            storage.get_ensemble(prior_ensemble_id)
+        )
 
         if should_resample:
             with pytest.raises(AssertionError):
                 pd.testing.assert_frame_equal(parameter_values, prior_values)
         else:
             pd.testing.assert_frame_equal(parameter_values, prior_values)
+        storage.close()
 
 
 @pytest.mark.parametrize(

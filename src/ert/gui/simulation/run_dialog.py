@@ -276,9 +276,9 @@ class RunDialog(QDialog):
                 evaluator_server_config=evaluator_server_config,
             )
 
-        simulation_thread = Thread(name="ert_gui_simulation_thread")
-        simulation_thread.daemon = True
-        simulation_thread.run = run
+        simulation_thread = Thread(
+            name="ert_gui_simulation_thread", target=run, daemon=True
+        )
         simulation_thread.start()
 
         self._ticker.start(1000)
