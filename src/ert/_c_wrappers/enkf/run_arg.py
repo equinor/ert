@@ -1,14 +1,16 @@
+from __future__ import annotations
+
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Optional
 
 if TYPE_CHECKING:
-    from ert._c_wrappers.enkf import EnkfFs
+    from ert.storage import EnsembleAccessor
 
 
 @dataclass
 class RunArg:
     run_id: str
-    ensemble_storage: "EnkfFs"
+    ensemble_storage: EnsembleAccessor
     iens: int
     itr: int
     runpath: str

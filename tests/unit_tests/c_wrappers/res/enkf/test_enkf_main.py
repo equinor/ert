@@ -1,4 +1,3 @@
-import logging
 import os
 from pathlib import Path
 from textwrap import dedent
@@ -8,7 +7,6 @@ from ecl.summary import EclSum
 
 from ert._c_wrappers.enkf import (
     AnalysisConfig,
-    EnkfFs,
     EnKFMain,
     EnkfObs,
     EnsembleConfig,
@@ -16,8 +14,6 @@ from ert._c_wrappers.enkf import (
     ModelConfig,
     ObservationConfigError,
     ObsVector,
-    RunArg,
-    TimeMap,
 )
 from ert._c_wrappers.enkf.config import EnkfConfigNode
 from ert._c_wrappers.enkf.enums import (
@@ -35,22 +31,23 @@ def test_ecl_config_creation(minimum_case):
     with pytest.raises(AssertionError):  # Null pointer!
         assert isinstance(minimum_case.ensembleConfig().refcase, EclSum)
 
-    file_system = minimum_case.storage_manager.current_case
-    assert file_system.getCaseName() == "default"
-    time_map = file_system.getTimeMap()
-    assert isinstance(time_map, TimeMap)
+
+@pytest.fixture(name="enkf_main")
+def enkf_main_fixture(tmp_path, monkeypatch):
+    (tmp_path / "test.ert").write_text("NUM_REALIZATIONS 1\nJOBNAME name%d")
+    monkeypatch.chdir(tmp_path)
+    yield EnKFMain(ErtConfig.from_file("test.ert"))
 
 
-@pytest.mark.usefixtures("use_tmpdir")
-def test_create_run_context():
+def test_create_run_context(monkeypatch, enkf_main, prior_ensemble):
     iteration = 0
     ensemble_size = 10
     enkf_main = EnKFMain(ErtConfig.from_dict({"JOBNAME": "name%d"}))
 
-    run_context = enkf_main.create_ensemble_context(
-        "prior", [True] * ensemble_size, iteration=iteration
+    run_context = enkf_main.ensemble_context(
+        prior_ensemble, [True] * ensemble_size, iteration=iteration
     )
-    assert run_context.sim_fs.case_name == "prior"
+    assert run_context.sim_fs.name == "prior"
     assert run_context.mask == [True] * ensemble_size
     assert [real.runpath for real in run_context] == [
         f"{Path().absolute()}/simulations/realization-{i}/iter-0"
@@ -66,28 +63,12 @@ def test_create_run_context():
     assert substitutions.get("<ECLBASE>") == "name<IENS>"
 
 
-@pytest.mark.usefixtures("use_tmpdir")
-def test_that_current_case_file_is_written():
-    EnKFMain(ErtConfig())
-    assert (Path("storage") / "current_case").read_text() == "default"
-
-
-@pytest.mark.usefixtures("use_tmpdir")
-def test_that_current_case_file_can_have_newline():
-    ert_config = ErtConfig()
-    EnKFMain(ert_config)
-    assert (Path("storage") / "current_case").read_text(encoding="utf-8") == "default"
-    del ert_config
-    (Path("storage") / "current_case").write_text("default\n", encoding="utf-8")
-    EnKFMain(ErtConfig())
-
-
-def test_assert_symlink_deleted(snake_oil_field_example):
+def test_assert_symlink_deleted(snake_oil_field_example, prior_ensemble):
     ert = snake_oil_field_example
 
     # create directory structure
-    run_context = ert.create_ensemble_context(
-        "prior", [True] * (ert.getEnsembleSize()), iteration=0
+    run_context = ert.ensemble_context(
+        prior_ensemble, [True] * (ert.getEnsembleSize()), iteration=0
     )
     ert.sample_prior(run_context.sim_fs, run_context.active_realizations)
     ert.createRunPath(run_context)
@@ -292,28 +273,6 @@ def test_config(minimum_case):
     assert isinstance(minimum_case.getModelConfig(), ModelConfig)
 
     assert isinstance(minimum_case.getObservations(), EnkfObs)
-    assert isinstance(minimum_case.storage_manager.current_case, EnkfFs)
-
-    assert minimum_case.storage_manager.storage_path.stem == "Ensemble"
-
-
-def test_run_context(minimum_case):
-    iactive = [True] * 10
-    iactive[0] = False
-    iactive[1] = False
-    run_context = minimum_case.load_ensemble_context("default", iactive, iteration=0)
-
-    assert len(run_context) == 10
-
-    with pytest.raises(IndexError):
-        _ = run_context[10]
-
-    with pytest.raises(TypeError):
-        _ = run_context["String"]
-
-    assert not run_context.is_active(0)
-    run_arg = run_context[2]
-    assert isinstance(run_arg, RunArg)
 
 
 @pytest.mark.parametrize(
@@ -350,19 +309,3 @@ def test_ert_context():
     context = ert.get_context()
     my_path = context["MY_PATH"]
     assert my_path == os.getcwd()
-
-
-@pytest.mark.skip
-@pytest.mark.parametrize("lazy_load", [True, False])
-def test_load_results_manually2(setup_case, caplog, monkeypatch, lazy_load):
-    if lazy_load:
-        monkeypatch.setenv("ERT_LAZY_LOAD_SUMMARYDATA", str(lazy_load))
-    ert_config = setup_case("snake_oil", "snake_oil.ert")
-    ert = EnKFMain(ert_config)
-    load_from = ert.storage_manager.add_case("default_0")
-    realisations = [False] * 25
-    realisations[0] = True  # only need one to test what we want
-    with caplog.at_level(logging.INFO):
-        loaded = ert.loadFromForwardModel(realisations, 0, load_from)
-        assert loaded == 0  # they will in fact all fail, but that's ok
-        assert f"lazy={lazy_load}".lower() in caplog.text

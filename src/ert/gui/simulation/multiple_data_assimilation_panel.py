@@ -12,13 +12,11 @@ from ert.gui.ertwidgets import (
 )
 from ert.gui.ertwidgets.copyablelabel import CopyableLabel
 from ert.gui.ertwidgets.models.activerealizationsmodel import ActiveRealizationsModel
-from ert.gui.ertwidgets.models.init_iter_value import IterValueModel
 from ert.gui.ertwidgets.models.targetcasemodel import TargetCaseModel
 from ert.gui.ertwidgets.models.valuemodel import ValueModel
 from ert.gui.ertwidgets.stringbox import StringBox
 from ert.libres_facade import LibresFacade
 from ert.shared.ide.keywords.definitions import (
-    IntegerArgument,
     NumberListStringArgument,
     ProperNameFormatArgument,
     RangeStringArgument,
@@ -31,6 +29,7 @@ from .simulation_config_panel import SimulationConfigPanel
 @dataclass
 class Arguments:
     mode: str
+    current_case: str
     target_case: str
     realizations: str
     weights: List[float]
@@ -42,6 +41,7 @@ class Arguments:
 class MultipleDataAssimilationPanel(SimulationConfigPanel):
     def __init__(self, facade: LibresFacade, notifier: ErtNotifier):
         SimulationConfigPanel.__init__(self, MultipleDataAssimilation)
+        self.notifier = notifier
 
         layout = QFormLayout()
         self.setObjectName("ES_MDA_panel")
@@ -88,7 +88,7 @@ class MultipleDataAssimilationPanel(SimulationConfigPanel):
         self._restart_box.toggled.connect(self.restart_run)
         layout.addRow("Restart run:", self._restart_box)
 
-        self._case_selector = CaseSelector(facade, notifier)
+        self._case_selector = CaseSelector(notifier)
         layout.addRow("Restart from:", self._case_selector)
         self._case_selector.setDisabled(True)
         value_model = IterValueModel(notifier, default_value=1)
@@ -174,6 +174,7 @@ class MultipleDataAssimilationPanel(SimulationConfigPanel):
     def getSimulationArguments(self):
         return Arguments(
             mode="es_mda",
+            current_case=self.notifier.current_case_name,
             target_case=self._target_case_format_model.getValue(),
             realizations=self._active_realizations_field.text(),
             weights=self.weights,

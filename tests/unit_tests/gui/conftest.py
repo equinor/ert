@@ -42,6 +42,7 @@ from ert.gui.tools.manage_cases.case_init_configuration import (
 )
 from ert.services import StorageService
 from ert.shared.models import EnsembleExperiment, MultipleDataAssimilation
+from ert.storage import open_storage
 
 
 def find_cases_dialog_and_panel(
@@ -79,8 +80,14 @@ def opened_main_window(source_root, tmpdir_factory):
         with StorageService.init_service(
             ert_config=args_mock.config,
             project=os.path.abspath(poly_case.ert_config.ens_path),
-        ):
+        ), open_storage(poly_case.ert_config.ens_path, mode="w") as storage:
             gui = _setup_main_window(poly_case, args_mock, GUILogHandler())
+            gui.notifier.set_storage(storage)
+            gui.notifier.set_current_case(
+                storage.create_experiment().create_ensemble(
+                    name="default", ensemble_size=poly_case.getEnsembleSize()
+                )
+            )
             yield gui
             gui.close()
 

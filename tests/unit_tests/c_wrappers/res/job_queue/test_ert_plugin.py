@@ -37,7 +37,7 @@ class CanceledPlugin(ErtPlugin):
 
 
 def test_simple_ert_plugin():
-    simple_plugin = SimplePlugin("ert")
+    simple_plugin = SimplePlugin("ert", storage=None)
 
     arguments = simple_plugin.getArguments()
 
@@ -48,7 +48,7 @@ def test_simple_ert_plugin():
 
 
 def test_full_ert_plugin():
-    plugin = FullPlugin("ert")
+    plugin = FullPlugin("ert", storage=None)
 
     assert plugin.getName() == "FullPlugin"
     assert plugin.getDescription() == "Fully described!"
@@ -59,7 +59,7 @@ def test_full_ert_plugin():
 
 
 def test_cancel_plugin():
-    plugin = CanceledPlugin("ert")
+    plugin = CanceledPlugin("ert", storage=None)
 
     with pytest.raises(CancelPluginException):
         plugin.getArguments()

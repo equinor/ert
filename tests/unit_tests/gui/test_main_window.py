@@ -53,11 +53,11 @@ def test_that_the_plot_window_contains_the_expected_elements(
     assert len(combo_boxes) == 1
     combo_box = combo_boxes[0]
     for i in range(combo_box.count()):
-        data_names = []
         combo_box.setCurrentIndex(i)
         case_names.append(combo_box.currentText())
-    assert case_names == [
+    assert sorted(case_names) == [
         "default",
+        "default_0",
         "default_0",
         "default_1",
         "default_2",
@@ -160,7 +160,7 @@ def test_that_the_manage_cases_tool_can_be_used(
 
         # Select "new_case"
         current_index = 0
-        while combo_box.currentText() != "new_case":
+        while combo_box.currentText().startswith("new_case"):
             current_index += 1
             combo_box.setCurrentIndex(current_index)
 

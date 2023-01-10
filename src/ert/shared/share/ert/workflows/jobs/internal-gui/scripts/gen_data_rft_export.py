@@ -144,23 +144,20 @@ class GenDataRFTCSVExportJob(ErtPlugin):
             cases = case_list.split(",")
 
         if case_list is None or len(cases) == 0:
-            cases = [facade.get_current_fs().case_name]
+            cases = ["default"]
 
         data_frame = pandas.DataFrame()
         for index, case in enumerate(cases):
             case = case.strip()
             case_frame = pandas.DataFrame()
 
-            if case not in self.ert().storage_manager:
-                raise UserWarning(f"The case '{case}' does not exist!")
+            try:
+                ensemble = self.storage.get_ensemble_by_name(case)
+            except KeyError as exc:
+                raise UserWarning(f"The case '{case}' does not exist!") from exc
 
-            if not self.ert().storage_manager.has_data(case):
+            if not ensemble.has_data():
                 raise UserWarning(f"The case '{case}' does not have any data!")
-
-            if infer_iteration:
-                iteration_number = self.inferIterationNumber(case)
-            else:
-                iteration_number = index
 
             for obs_key in obs_keys:
                 well = obs_key.replace("RFT_", "")
@@ -171,7 +168,7 @@ class GenDataRFTCSVExportJob(ErtPlugin):
                 obs_node = obs_vector.getNode(report_step)
 
                 rft_data = facade.load_gen_data(case, data_key, report_step)
-                fs = self.ert().storage_manager[case]
+                fs = self.storage.get_ensemble_by_name(case)
                 realizations = fs.realizationList(RealizationStateEnum.STATE_HAS_DATA)
 
                 # Trajectory
@@ -209,7 +206,7 @@ class GenDataRFTCSVExportJob(ErtPlugin):
                     realization_frame["Realization"] = iens
                     realization_frame["Well"] = well
                     realization_frame["Case"] = case
-                    realization_frame["Iteration"] = iteration_number
+                    realization_frame["Iteration"] = ensemble.iteration
 
                     case_frame = case_frame.append(realization_frame)
 
@@ -240,8 +237,7 @@ class GenDataRFTCSVExportJob(ErtPlugin):
         )
         trajectory_chooser = PathChooser(trajectory_model)
 
-        fs_manager = self.ert().storage_manager
-        all_case_list = [case for case in fs_manager if fs_manager.has_data(case)]
+        all_case_list = [case for case in self.storage.ensembles if case.has_data]
         list_edit = ListEditBox(all_case_list)
 
         infer_iteration_check = QCheckBox()
