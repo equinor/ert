@@ -1,4 +1,5 @@
 from unittest.mock import MagicMock, call
+from uuid import UUID
 
 from ert._c_wrappers.enkf.enums import HookRuntime
 from ert.shared.models import (
@@ -18,21 +19,23 @@ EXPECTED_CALL_ORDER = [
 ]
 
 
-def test_hook_call_order_ensemble_smoother(monkeypatch):
+def test_hook_call_order_ensemble_smoother(storage):
     """
     The goal of this test is to assert that the hook call order is the same
     across different models.
     """
     ert_mock = MagicMock(
         _ensemble_size=0,
-        storage_manager=MagicMock(__get_item__=lambda x: MagicMock(state_map=[])),
     )
+    ert_mock.resConfig.return_value.preferred_job_fmt.return_value = "job_%d"
     minimum_args = {
         "current_case": "default",
         "active_realizations": [True],
         "target_case": "smooth",
     }
-    test_class = EnsembleSmoother(minimum_args, ert_mock, MagicMock(), "experiment_id")
+    test_class = EnsembleSmoother(
+        minimum_args, ert_mock, storage, MagicMock(), UUID(int=0)
+    )
     test_class.run_ensemble_evaluator = MagicMock(return_value=1)
     test_class.runSimulations(MagicMock())
 
@@ -40,7 +43,7 @@ def test_hook_call_order_ensemble_smoother(monkeypatch):
     assert ert_mock.runWorkflows.mock_calls == expected_calls
 
 
-def test_hook_call_order_es_mda(monkeypatch):
+def test_hook_call_order_es_mda(storage):
     """
     The goal of this test is to assert that the hook call order is the same
     across different models.
@@ -51,11 +54,13 @@ def test_hook_call_order_es_mda(monkeypatch):
         "num_iterations": 1,
         "analysis_module": "some_module",
         "active_realizations": [True],
+        "current_case": "default",
         "target_case": "target_%d",
     }
     ert_mock = MagicMock()
+    ert_mock.ensemble_context.return_value.sim_fs.id = UUID(int=0)
     test_class = MultipleDataAssimilation(
-        minimum_args, ert_mock, MagicMock(), "experiment_id"
+        minimum_args, ert_mock, storage, MagicMock(), UUID(int=0), prior_ensemble=None
     )
     ert_mock.runWorkflows = MagicMock()
     test_class.run_ensemble_evaluator = MagicMock(return_value=1)
@@ -75,25 +80,24 @@ class MockEsUpdate:
         w_container.iteration_nr += 1
 
 
-def test_hook_call_order_iterative_ensemble_smoother(monkeypatch):
+def test_hook_call_order_iterative_ensemble_smoother(storage):
     """
     The goal of this test is to assert that the hook call order is the same
     across different models.
     """
     ert_mock = MagicMock(
         _ensemble_size=10,
-        storage_manager=MagicMock(
-            __get_item__=lambda x: MagicMock(state_map=list(range(10)))
-        ),
     )
+    ert_mock.ensemble_context.return_value.sim_fs.id = UUID(int=0)
     minimum_args = {
         "num_iterations": 1,
         "active_realizations": [True],
+        "current_case": "default",
         "target_case": "target_%d",
     }
 
     test_class = IteratedEnsembleSmoother(
-        minimum_args, ert_mock, MagicMock(), "experiment_id"
+        minimum_args, ert_mock, storage, MagicMock(), UUID(int=0)
     )
     test_class.run_ensemble_evaluator = MagicMock(return_value=1)
 

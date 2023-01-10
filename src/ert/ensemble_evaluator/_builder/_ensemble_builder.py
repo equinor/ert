@@ -14,8 +14,9 @@ from ._realization import RealizationBuilder
 
 if TYPE_CHECKING:
     import ert
-    from ._ensemble import Ensemble
     from ert._c_wrappers.enkf import AnalysisConfig, QueueConfig
+
+    from ._ensemble import Ensemble
 
 SOURCE_TEMPLATE_ENS = "/ert/ensemble/{ens_id}"
 logger = logging.getLogger(__name__)

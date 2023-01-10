@@ -17,7 +17,7 @@ def test_parse_comma_list(tmpdir, monkeypatch, input_string, expected):
     ert_mock._observation_keys = ["OBSERVATION"]
     ert_mock._parameter_keys = ["a", "b", "c"]
 
-    DisableParametersUpdate(ert_mock).run(input_string)
+    DisableParametersUpdate(ert_mock, storage=None).run(input_string)
     assert ert_mock.update_configuration[0]["parameters"] == expected
 
 
@@ -44,7 +44,7 @@ def test_that_we_can_disable_a_parameter():
         for parameter in ert.update_configuration.update_steps[0].parameters
     ]
     assert "DONT_UPDATE_KW" in parameters
-    DisableParametersUpdate(ert).run("DONT_UPDATE_KW")
+    DisableParametersUpdate(ert, storage=None).run("DONT_UPDATE_KW")
 
     parameters = [
         parameter.name

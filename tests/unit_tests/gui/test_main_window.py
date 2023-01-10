@@ -39,6 +39,7 @@ from ert.gui.tools.plot.plot_case_selection_widget import CaseSelectionWidget
 from ert.gui.tools.plot.plot_window import PlotWindow
 from ert.services import StorageService
 from ert.shared.models import EnsembleExperiment, MultipleDataAssimilation
+from ert.storage import open_storage
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -68,8 +69,9 @@ def opened_main_window(source_root, tmpdir_factory, request):
         with StorageService.init_service(
             ert_config=args_mock.config,
             project=os.path.abspath(poly_case.ert_config.ens_path),
-        ):
+        ), open_storage(poly_case.ert_config.ens_path, mode="w") as storage:
             gui = _setup_main_window(poly_case, args_mock, GUILogHandler())
+            gui.notifier.set_storage(storage)
             yield gui
 
 
@@ -228,11 +230,10 @@ def test_that_the_plot_window_contains_the_expected_elements(
     assert len(combo_boxes) == 1
     combo_box = combo_boxes[0]
     for i in range(combo_box.count()):
-        data_names = []
         combo_box.setCurrentIndex(i)
         case_names.append(combo_box.currentText())
-    assert case_names == [
-        "default",
+    assert sorted(case_names) == [
+        "default_0",
         "default_0",
         "default_1",
         "default_2",
@@ -339,7 +340,7 @@ def test_that_the_manage_cases_tool_can_be_used(
 
         # Select "new_case"
         current_index = 0
-        while combo_box.currentText() != "new_case":
+        while combo_box.currentText().startswith("new_case"):
             current_index += 1
             combo_box.setCurrentIndex(current_index)
 
@@ -374,9 +375,10 @@ def test_that_the_manual_analysis_tool_works(
         run_panel = analysis_tool._run_widget
         run_panel.target_case_text.setText("iter-1")
 
-        # Source case is "iter-0"
+        # Set source case to "default_3"
         case_selector = run_panel.source_case_selector
-        assert case_selector.currentText() == "iter-0"
+        case_selector.setCurrentIndex(1)
+        assert case_selector.currentText().startswith("default_3")
 
         # Click on "Run" and click ok on the message box
         def handle_dialog():
@@ -406,7 +408,10 @@ def test_that_the_manual_analysis_tool_works(
         assert current_tab.objectName() == "create_new_case_tab"
         case_list = current_tab.findChild(CaseList)
         assert isinstance(case_list, CaseList)
-        assert len(case_list._list.findItems("iter-1", Qt.MatchFlag.MatchExactly)) == 1
+        assert (
+            len(case_list._list.findItems("analysis_case", Qt.MatchFlag.MatchContains))
+            == 1
+        )
         dialog.close()
 
     QTimer.singleShot(1000, handle_manage_dialog)

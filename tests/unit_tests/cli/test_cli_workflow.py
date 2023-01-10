@@ -9,7 +9,7 @@ from ert.shared.plugins.plugin_manager import ErtPluginContext
 
 
 @pytest.mark.usefixtures("copy_poly_case")
-def test_executing_workflow():
+def test_executing_workflow(storage):
     with ErtPluginContext():
         with open("test_wf", "w", encoding="utf-8") as wf_file:
             wf_file.write("EXPORT_RUNPATH")
@@ -23,5 +23,5 @@ def test_executing_workflow():
         args = Namespace(name="test_wf")
         # pylint: disable=no-member
         # (pylint not able to verify contents of Namespace)
-        execute_workflow(ert, args.name)
+        execute_workflow(ert, storage, args.name)
         assert os.path.isfile(".ert_runpath_list")

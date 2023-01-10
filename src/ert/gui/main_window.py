@@ -12,6 +12,7 @@ from qtpy.QtWidgets import (
 )
 
 from ert.gui.about_dialog import AboutDialog
+from ert.gui.ertnotifier import ErtNotifier
 from ert.shared.plugins import ErtPluginManager
 
 
@@ -20,6 +21,7 @@ class ErtMainWindow(QMainWindow):
 
     def __init__(self, config_file):
         QMainWindow.__init__(self)
+        self.notifier = ErtNotifier(config_file)
         self.tools = {}
 
         self.resize(300, 700)

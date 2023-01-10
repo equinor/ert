@@ -21,6 +21,7 @@ from .simulation_config_panel import SimulationConfigPanel
 @dataclass
 class Arguments:
     mode: str
+    current_case: str
     target_case: str
     realizations: str
     num_iterations: int
@@ -110,6 +111,7 @@ class IteratedEnsembleSmootherPanel(SimulationConfigPanel):
     def getSimulationArguments(self):
         return Arguments(
             mode="iterative_ensemble_smoother",
+            current_case=self.notifier.current_case_name,
             target_case=self._iterated_target_case_format_model.getValue(),
             realizations=self._active_realizations_field.text(),
             num_iterations=self._num_iterations_spinner.value(),

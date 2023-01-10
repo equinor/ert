@@ -6,8 +6,8 @@ from ert._c_wrappers.job_queue import ErtScript
 
 
 class ExternalErtScript(ErtScript):
-    def __init__(self, ert, executable):
-        super().__init__(ert)
+    def __init__(self, ert, storage, executable):
+        super().__init__(ert, storage)
 
         self.__executable = executable
         self.__job = None
