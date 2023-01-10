@@ -9,8 +9,8 @@ logger = logging.getLogger(__name__)
 
 
 class FunctionErtScript(ErtScript):
-    def __init__(self, ert, function_name, argument_types, argument_count):
-        super().__init__(ert)
+    def __init__(self, ert, storage, function_name, argument_types, argument_count):
+        super().__init__(ert, storage)
 
         parsed_argument_types = []
 

@@ -69,7 +69,7 @@ class CSVExportJob(ErtScript):
                 cases = case_list.split(",")
 
         if case_list is None or len(cases) == 0:
-            cases = [facade.get_current_fs().case_name]
+            cases = "default"
 
         if design_matrix_path is not None:
             if not os.path.exists(design_matrix_path):
@@ -80,39 +80,36 @@ class CSVExportJob(ErtScript):
 
         data = pandas.DataFrame()
 
-        for index, case in enumerate(cases):
+        for case in cases:
             case = case.strip()
-            case_manager = self.ert().storage_manager
-            if case not in case_manager:
-                raise UserWarning(f"The case '{case}' does not exist!")
 
-            if not case_manager.has_data(case):
+            try:
+                ensemble = self.storage.get_ensemble_by_name(case)
+            except KeyError as exc:
+                raise UserWarning(f"The case '{case}' does not exist!") from exc
+
+            if not ensemble.has_data:
                 raise UserWarning(f"The case '{case}' does not have any data!")
 
-            if infer_iteration:
-                iteration_number = self.inferIterationNumber(case)
-            else:
-                iteration_number = index
-
-            case_data = facade.load_all_gen_kw_data(case)
+            case_data = facade.load_all_gen_kw_data(ensemble)
 
             if design_matrix_path is not None:
                 design_matrix_data = loadDesignMatrix(design_matrix_path)
                 if not design_matrix_data.empty:
                     case_data = case_data.join(design_matrix_data, how="outer")
 
-            misfit_data = facade.load_all_misfit_data(case)
+            misfit_data = facade.load_all_misfit_data(ensemble)
             if not misfit_data.empty:
                 case_data = case_data.join(misfit_data, how="outer")
 
-            summary_data = facade.load_all_summary_data(case)
+            summary_data = facade.load_all_summary_data(ensemble)
             if not summary_data.empty:
                 case_data = case_data.join(summary_data, how="outer")
             else:
                 case_data["Date"] = None
                 case_data.set_index(["Date"], append=True, inplace=True)
 
-            case_data["Iteration"] = iteration_number
+            case_data["Iteration"] = ensemble.iteration
             case_data["Case"] = case
             case_data.set_index(["Case", "Iteration"], append=True, inplace=True)
 
@@ -131,6 +128,5 @@ class CSVExportJob(ErtScript):
         return export_info
 
     def getAllCaseList(self):
-        fs_manager = self.ert().storage_manager
-        all_case_list = [case for case in fs_manager if fs_manager.has_data(case)]
+        all_case_list = [case.name for case in self.storage.ensembles if case.has_data]
         return all_case_list

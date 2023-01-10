@@ -41,7 +41,7 @@ def test_workflow_run():
 
     assert len(workflow) == 2
 
-    assert workflow.run(None)
+    assert workflow.run(None, None)
 
     with open("dump1", "r", encoding="utf-8") as f:
         assert f.read() == "dump_text_1"

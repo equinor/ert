@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from functools import partial
 from pathlib import Path
 from threading import Thread
@@ -8,13 +10,14 @@ from ert._c_wrappers.enkf import RunContext
 from ert._c_wrappers.enkf.enums import HookRuntime, RealizationStateEnum
 from ert._c_wrappers.enkf.model_callbacks import LoadStatus
 from ert._c_wrappers.job_queue import JobQueueManager, RunStatusType
-from ert.ensemble_evaluator import forward_model_exit, forward_model_ok
+from ert.callbacks import forward_model_exit, forward_model_ok
 
 from .forward_model_status import ForwardModelStatus
 
 if TYPE_CHECKING:
-    from ert._c_wrappers.enkf import EnkfFs, EnKFMain, ErtConfig, RunArg
+    from ert._c_wrappers.enkf import EnKFMain, ErtConfig, RunArg
     from ert._c_wrappers.job_queue import JobQueue, JobStatusType
+    from ert.storage import EnsembleAccessor
 
 
 def done_callback(args: Tuple["RunArg", "ErtConfig"]) -> Tuple[LoadStatus, str]:
@@ -89,7 +92,7 @@ class SimulationContext:
     def __init__(  # pylint: disable=too-many-arguments
         self,
         ert: "EnKFMain",
-        sim_fs: "EnkfFs",
+        sim_fs: EnsembleAccessor,
         mask: List[bool],
         itr: int,
         case_data: List[Tuple[Any, Any]],
@@ -206,7 +209,7 @@ class SimulationContext:
             f"#success = {numSucc}, #failed = {numFail}, #waiting = {numWait})"
         )
 
-    def get_sim_fs(self) -> "EnkfFs":
+    def get_sim_fs(self) -> EnsembleAccessor:
         return self._run_context.sim_fs
 
     def get_run_context(self) -> "RunContext":

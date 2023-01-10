@@ -1,9 +1,11 @@
-from unittest.mock import ANY, MagicMock, call
+from unittest.mock import MagicMock
+from uuid import UUID
 
 from ert.shared.models import MultipleDataAssimilation
+from ert.storage import EnsembleAccessor
 
 
-def test_that_all_iterations_gets_correct_name_and_iteration_number():
+def test_that_all_iterations_gets_correct_name_and_iteration_number(storage):
     minimum_args = {
         "start_iteration": 0,
         "weights": "1, 2, 3",
@@ -13,14 +15,21 @@ def test_that_all_iterations_gets_correct_name_and_iteration_number():
         "target_case": "target_%d",
     }
     ert_mock = MagicMock()
+    ert_mock.ensemble_context.return_value.sim_fs.id = UUID(int=0)
+
     test_class = MultipleDataAssimilation(
-        minimum_args, ert_mock, MagicMock(), "experiment_id"
+        minimum_args, ert_mock, storage, MagicMock(), UUID(int=0), prior_ensemble=None
     )
-    ert_mock.create_ensemble_context.return_value = MagicMock()
     test_class.run_ensemble_evaluator = MagicMock(return_value=1)
     test_class.runSimulations(MagicMock())
 
-    calls = ert_mock.create_ensemble_context.mock_calls
-    assert call("target_0", ANY, iteration=0) in calls
-    assert call("target_1", ANY, iteration=1) in calls
-    assert call("target_2", ANY, iteration=2) in calls
+    # Find all the ensemble_context calls and fetch the ensemble name and
+    # iteration number
+    calls = set(
+        (x.args[0].name, x.kwargs["iteration"])
+        for x in ert_mock.ensemble_context.mock_calls
+        if len(x.args) > 0 and isinstance(x.args[0], EnsembleAccessor)
+    )
+    assert ("target_0", 0) in calls
+    assert ("target_1", 1) in calls
+    assert ("target_2", 2) in calls

@@ -1,12 +1,13 @@
 from __future__ import annotations
 
 from functools import partial
-from typing import TYPE_CHECKING, Any, Callable, Optional, Protocol, Sequence
+from typing import TYPE_CHECKING, Callable, Optional, Protocol, Sequence
 
 import pandas as pd
 
 if TYPE_CHECKING:
     from ert.libres_facade import LibresFacade
+    from ert.storage import EnsembleReader
 
 # importlib.metadata added in python 3.8
 try:
@@ -23,8 +24,8 @@ class DataLoader(Protocol):
     def __call__(
         self,
         ert: LibresFacade,
+        ensemble: Optional[EnsembleReader],
         obs_keys: Sequence[str],
-        case_name: str,
         include_data: bool = False,
     ) -> pd.DataFrame:
         ...
@@ -55,10 +56,10 @@ def data_loader_factory(observation_type: str) -> DataLoader:
 
 def _extract_data(
     facade: LibresFacade,
+    ensemble: EnsembleReader,
     obs_keys: Sequence[str],
-    case_name: str,
-    response_loader: Callable[[LibresFacade, str, str], pd.DataFrame],
-    obs_loader: Callable[[LibresFacade, Sequence[str], str], pd.DataFrame],
+    response_loader: Callable[[LibresFacade, EnsembleReader, str], pd.DataFrame],
+    obs_loader: Callable[[LibresFacade, EnsembleReader, Sequence[str]], pd.DataFrame],
     expected_obs: str,
     include_data: bool = True,
 ) -> pd.DataFrame:
@@ -80,7 +81,7 @@ def _extract_data(
     if include_data:
         # Because all observations in this loop are pointing to the same data
         # key, we can use any of them as input to the response loader.
-        data = response_loader(facade, obs_keys[0], case_name)
+        data = response_loader(facade, ensemble, obs_keys[0])
         data.columns = _create_multi_index(
             data.columns.to_list(), list(range(len(data.columns)))
         )
@@ -88,7 +89,7 @@ def _extract_data(
             raise ResponseError(f"No response loaded for observation keys: {obs_keys}")
     else:
         data = None
-    obs = obs_loader(facade, obs_keys, case_name)
+    obs = obs_loader(facade, ensemble, obs_keys)
     if obs.empty:
         raise ObservationError(
             f"No observations loaded for observation keys: {obs_keys}"
@@ -108,7 +109,7 @@ def _create_multi_index(
 
 
 def _load_general_response(
-    facade: LibresFacade, obs_key: str, case_name: str
+    facade: LibresFacade, ensemble: EnsembleReader, obs_key: str
 ) -> pd.DataFrame:
     data_key = facade.get_data_key_for_obs_key(obs_key)
     try:
@@ -120,7 +121,7 @@ def _load_general_response(
         data = pd.DataFrame()
 
         for time_step in time_steps:
-            gen_data = facade.load_gen_data(case_name, data_key, time_step).T
+            gen_data = facade.load_gen_data(ensemble, data_key, time_step).T
             data = data.append(gen_data)
     except KeyError as err:
         raise ResponseError(
@@ -130,7 +131,7 @@ def _load_general_response(
 
 
 def _load_general_obs(
-    facade: LibresFacade, observation_keys: Sequence[str], case_name: str
+    facade: LibresFacade, ensemble: EnsembleReader, observation_keys: Sequence[str]
 ) -> pd.DataFrame:
     observations = []
     for observation_key in observation_keys:
@@ -163,10 +164,10 @@ def _load_general_obs(
 
 
 def _load_summary_response(
-    facade: LibresFacade, obs_key: str, case_name: str
+    facade: LibresFacade, ensemble: EnsembleReader, obs_key: str
 ) -> pd.DataFrame:
     data_key = facade.get_data_key_for_obs_key(obs_key)
-    data = facade.load_all_summary_data(case_name, [data_key])
+    data = facade.load_all_summary_data(ensemble, [data_key])
     if data.empty:
         return data
     data = data[data_key].unstack(level=-1)
@@ -175,21 +176,21 @@ def _load_summary_response(
 
 
 def _load_summary_obs(
-    facade: LibresFacade, observation_keys: Sequence[str], case_name: str
+    facade: LibresFacade, ensemble: EnsembleReader, observation_keys: Sequence[str]
 ) -> pd.DataFrame:
     data_key = facade.get_data_key_for_obs_key(observation_keys[0])
-    args = (facade, data_key, case_name)
+    args = (facade, ensemble, data_key)
     data = _get_summary_observations(*args)
     obs_map = {}
     for obs_key in observation_keys:
-        obs_map[obs_key] = data.pipe(_remove_inactive_report_steps, *(facade, obs_key))
+        obs_map[obs_key] = data.pipe(_remove_inactive_report_steps, facade, obs_key)
     return pd.concat(obs_map, axis=1)
 
 
 def _get_summary_observations(
-    facade: LibresFacade, data_key: str, case_name: str
+    facade: LibresFacade, ensemble: EnsembleReader, data_key: str
 ) -> pd.DataFrame:
-    data = facade.load_observation_data(case_name, [data_key]).transpose()
+    data = facade.load_observation_data(ensemble, [data_key]).transpose()
     # The index from SummaryObservationCollector is {data_key} and STD_{data_key}"
     # to match the other data types this needs to be changed to OBS and STD, hence
     # the regex.
@@ -199,7 +200,7 @@ def _get_summary_observations(
 
 
 def _remove_inactive_report_steps(
-    data: pd.DataFrame, facade: LibresFacade, observation_key: str, *args: Any
+    data: pd.DataFrame, facade: LibresFacade, observation_key: str
 ) -> pd.DataFrame:
     # XXX: the data returned from the SummaryObservationCollector is not
     # specific to an observation_key, this means that the dataset contains all
