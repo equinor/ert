@@ -14,7 +14,7 @@ from ert.libres_facade import LibresFacade
 from ert.shared.ide.keywords.definitions import ProperNameArgument, RangeStringArgument
 from ert.shared.models import EnsembleSmoother
 
-from .simulation_config_panel import SimulationConfigPanel
+from .simulation_config_panel import SimulationConfigPanel, escape_string
 
 
 @dataclass
@@ -34,7 +34,7 @@ class EnsembleSmootherPanel(SimulationConfigPanel):
         self._case_selector = CaseSelector(facade, notifier)
         layout.addRow("Current case:", self._case_selector)
 
-        run_path_label = QLabel(f"<b>{facade.run_path}</b>")
+        run_path_label = QLabel(f"<b>{escape_string(facade.run_path)}</b>")
         addHelpToWidget(run_path_label, "config/simulation/runpath")
         layout.addRow("Runpath:", run_path_label)
 
