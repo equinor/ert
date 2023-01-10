@@ -3,6 +3,7 @@
 #include <array>
 #include <fstream>
 #include <iostream>
+#include <math.h>
 #include <sstream>
 #include <stdio.h>
 #include <string.h>
@@ -442,8 +443,9 @@ static int torque_driver_submit_shell_job(torque_driver_type *driver,
 ￼                  retry a couple of times with exponential sleep.  */
                 int return_value = -1;
                 int sleep_time = 2;
-                int max_sleep_time = 2 * 2 * 2 * 2; /* max 4 attempts */
-                while ((return_value != 0) & (sleep_time < max_sleep_time)) {
+                int max_sleep_time = pow(sleep_time, 5);
+                // This gives a maximum cumulative sleep of 2+4+8+16+32 = 62 seconds
+                while ((return_value != 0) & (sleep_time <= max_sleep_time)) {
                     return_value = util_spawn_blocking(
                         driver->qsub_cmd, stringlist_get_size(remote_argv),
                         (const char **)argv, tmp_std_file, tmp_err_file);
@@ -551,9 +553,10 @@ torque_driver_get_qstat_status(torque_driver_type *driver,
            every second for every realization, thus the initial sleep time
            is 2 seconds. */
         int return_value = -1;
-        int sleep_time = 2;                 /* seconds */
-        int max_sleep_time = 2 * 2 * 2 * 2; /* max 4 attempts */
-        while ((return_value != 0) && (sleep_time < max_sleep_time)) {
+        int sleep_time = 2; /* seconds */
+        int max_sleep_time = pow(sleep_time, 5);
+        // This gives a maximum cumulative sleep of 2+4+8+16+32 = 62 seconds
+        while ((return_value != 0) && (sleep_time <= max_sleep_time)) {
             return_value =
                 util_spawn_blocking(driver->qstat_cmd, argv.size(), argv.data(),
                                     tmp_std_file, tmp_err_file);
