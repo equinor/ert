@@ -24,7 +24,7 @@ from ert.shared.ide.keywords.definitions import (
 )
 from ert.shared.models import MultipleDataAssimilation
 
-from .simulation_config_panel import SimulationConfigPanel
+from .simulation_config_panel import SimulationConfigPanel, escape_string
 
 
 @dataclass
@@ -45,7 +45,7 @@ class MultipleDataAssimilationPanel(SimulationConfigPanel):
         case_selector = CaseSelector(facade, notifier)
         layout.addRow("Current case:", case_selector)
 
-        run_path_label = QLabel(f"<b>{facade.run_path}</b>")
+        run_path_label = QLabel(f"<b>{escape_string(facade.run_path)}</b>")
         addHelpToWidget(run_path_label, "config/simulation/runpath")
         layout.addRow("Runpath:", run_path_label)
 
