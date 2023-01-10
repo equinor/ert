@@ -67,7 +67,7 @@ class DeprecationMigrationSuggester:
         for kw in self.JUST_REMOVE_KEYWORDS:
             add_suggestion(
                 kw,
-                f"The keyword {kw} no longer has any effect, and can"
+                f"The keyword {kw} no longer has any effect, and can "
                 "be safely removed.",
             )
         for kw in self.RSH_KEYWORDS:
