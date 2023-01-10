@@ -26,13 +26,13 @@ class NoneScript(ErtScript):
 
 
 def test_ert_script_return_ert():
-    script = ReturnErtScript("ert")
+    script = ReturnErtScript("ert", storage=None)
     result = script.initializeAndRun([], [])
     assert result == "ert"
 
 
 def test_ert_script_add():
-    script = AddScript("ert")
+    script = AddScript("ert", storage=None)
 
     result = script.initializeAndRun([int, int], ["5", "4"])
 
@@ -44,7 +44,7 @@ def test_ert_script_add():
 
 def test_ert_script_failed_implementation():
     with pytest.raises(UserWarning):
-        FailScript("ert")
+        FailScript("ert", storage=None)
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -62,7 +62,7 @@ def test_ert_script_from_file():
 
     script_object = ErtScript.loadScriptFromFile("subtract_script.py")
 
-    script = script_object("ert")
+    script = script_object("ert", storage=None)
     result = script.initializeAndRun([int, int], ["1", "2"])
     assert result == -1
 
@@ -76,6 +76,6 @@ def test_ert_script_from_file():
 
 def test_none_ert_script():
     # Check if None is not converted to string "None"
-    script = NoneScript("ert")
+    script = NoneScript("ert", storage=None)
 
     script.initializeAndRun([str], [None])

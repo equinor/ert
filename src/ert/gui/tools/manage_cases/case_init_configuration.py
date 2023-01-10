@@ -71,14 +71,16 @@ class CaseInitializationConfigurationPanel(QTabWidget):
         self.addInitializeFromExistingTab()
         self.addShowCaseInfo()
 
+    @property
+    def storage(self):
+        return self.notifier.storage
+
     def addCreateNewCaseTab(self):
         panel = QWidget()
         layout = QVBoxLayout()
         case_list = CaseList(LibresFacade(self.ert), self.notifier)
-        case_list.setMaximumWidth(250)
 
-        layout.addWidget(case_list)
-        layout.addStretch()
+        layout.addWidget(case_list, stretch=1)
 
         panel.setLayout(layout)
 
@@ -89,7 +91,8 @@ class CaseInitializationConfigurationPanel(QTabWidget):
         layout = QVBoxLayout()
 
         row1 = createRow(
-            QLabel("Target case:"), CaseSelector(LibresFacade(self.ert), self.notifier)
+            QLabel("Target case:"),
+            CaseSelector(LibresFacade(self.ert), self.notifier),
         )
         layout.addLayout(row1)
 
@@ -108,10 +111,9 @@ class CaseInitializationConfigurationPanel(QTabWidget):
         @showWaitCursorWhileWaiting
         def initializeFromScratch(_):
             parameters = parameter_model.getSelectedItems()
-            case_manager = self.ert.storage_manager
-            sim_fs = case_manager.current_case
+            ensemble = self.notifier.current_case
             self.ert.sample_prior(
-                storage=sim_fs,
+                ensemble=ensemble,
                 active_realizations=[int(i) for i in members_model.getSelectedItems()],
                 parameters=parameters,
             )
@@ -159,22 +161,15 @@ class CaseInitializationConfigurationPanel(QTabWidget):
 
         @showWaitCursorWhileWaiting
         def initializeFromExisting(_):
-            source_case_name = str(source_case.currentText())
-            target_case_name = str(target_case.currentText())
+            source_ensemble = source_case.currentData()
+            target_ensemble = target_case.currentData()
             parameters = parameter_model.getSelectedItems()
             members = members_model.getSelectedItems()
-            case_manager = self.ert.storage_manager
-            if (
-                source_case_name in case_manager
-                and case_manager[source_case_name].is_initalized
-                and target_case_name in case_manager
-            ):
+            if source_ensemble.is_initalized:
                 member_mask = [False] * self.ert.getEnsembleSize()
                 for member in members:
                     member_mask[int(member)] = True
-                source_fs = case_manager[source_case_name]
-                target_fs = case_manager[target_case_name]
-                source_fs.copy_from_case(target_fs, parameters, member_mask)
+                source_ensemble.copy_from_case(target_ensemble, parameters, member_mask)
 
         initialize_button.clicked.connect(initializeFromExisting)
         layout.addWidget(initialize_button, 0, Qt.AlignCenter)
@@ -239,18 +234,21 @@ class CaseInitializationConfigurationPanel(QTabWidget):
 
         case_widget.setLayout(layout)
 
-        case_selector.currentIndexChanged[str].connect(self._showInfoForCase)
+        self.show_case_info_case_selector = case_selector
+        case_selector.currentIndexChanged[int].connect(self._showInfoForCase)
         self.notifier.ertChanged.connect(self._showInfoForCase)
 
         self.addTab(case_widget, "Case info")
 
-        self._showInfoForCase()
-
-    def _showInfoForCase(self, case_name=None):
-        if case_name is None:
-            case_name = self.ert.storage_manager.current_case.case_name
-
-        states = list(self.ert.storage_manager.state_map(case_name))
+    def _showInfoForCase(self, index=None):
+        if index is None:
+            states = self.notifier.current_case.state_map
+        else:
+            ensemble = self.show_case_info_case_selector.itemData(index)
+            if ensemble is not None:
+                states = ensemble.state_map
+            else:
+                states = []
 
         html = "<table>"
         for index, value in enumerate(states):

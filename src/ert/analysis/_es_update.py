@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 from collections import defaultdict
 from dataclasses import dataclass, field
@@ -24,9 +26,9 @@ if TYPE_CHECKING:
     from ert._c_wrappers.analysis.configuration import UpdateConfiguration
     from ert._c_wrappers.enkf import EnKFMain
     from ert._c_wrappers.enkf.analysis_config import AnalysisConfig
-    from ert._c_wrappers.enkf.enkf_fs import EnkfFs
     from ert._c_wrappers.enkf.enkf_obs import EnkfObs
     from ert._c_wrappers.enkf.ensemble_config import EnsembleConfig
+    from ert.storage import EnsembleAccessor, EnsembleReader
 
 logger = logging.getLogger(__name__)
 
@@ -111,7 +113,7 @@ def _save_to_temporary_storage(
 
 
 def _save_temporary_storage_to_disk(
-    target_fs: "EnkfFs",
+    target_fs: EnsembleAccessor,
     ensemble_config: "EnsembleConfig",
     temporary_storage: Dict[str, "npt.NDArray[np.double]"],
     iens_active_index: List[int],
@@ -157,7 +159,7 @@ def _save_temporary_storage_to_disk(
 
 
 def _create_temporary_parameter_storage(
-    source_fs: "EnkfFs",
+    source_fs: EnsembleReader,
     ensemble_config: "EnsembleConfig",
     iens_active_index: List[int],
 ) -> Dict[str, "npt.NDArray[np.double]"]:
@@ -180,7 +182,7 @@ def _create_temporary_parameter_storage(
 
 def _get_obs_and_measure_data(
     obs: "EnkfObs",
-    source_fs: "EnkfFs",
+    source_fs: EnsembleReader,
     selected_observations: List[Tuple[str, List[int]]],
     ens_active_list: List[int],
 ) -> Tuple[DataFrame, DataFrame]:
@@ -271,7 +273,7 @@ def _create_update_snapshot(data: DataFrame, obs_mask: List[bool]) -> UpdateSnap
 
 
 def _load_observations_and_responses(
-    source_fs: "EnkfFs",
+    source_fs: EnsembleReader,
     obs: "EnkfObs",
     alpha: float,
     std_cutoff: float,
@@ -332,8 +334,8 @@ def analysis_ES(
     smoother_snapshot: SmootherSnapshot,
     ens_mask: List[bool],
     ensemble_config: "EnsembleConfig",
-    source_fs: "EnkfFs",
-    target_fs: "EnkfFs",
+    source_fs: EnsembleReader,
+    target_fs: EnsembleAccessor,
 ) -> None:
     iens_active_index = [i for i in range(len(ens_mask)) if ens_mask[i]]
 
@@ -413,8 +415,8 @@ def analysis_IES(
     smoother_snapshot: SmootherSnapshot,
     ens_mask: List[bool],
     ensemble_config: "EnsembleConfig",
-    source_fs: "EnkfFs",
-    target_fs: "EnkfFs",
+    source_fs: EnsembleReader,
+    target_fs: EnsembleAccessor,
     iterative_ensemble_smoother: ies.IterativeEnsembleSmoother,
 ) -> None:
     iens_active_index = [i for i in range(len(ens_mask)) if ens_mask[i]]
@@ -536,7 +538,10 @@ class ESUpdate:
         self.update_snapshots: Dict[str, SmootherSnapshot] = {}
 
     def smootherUpdate(
-        self, prior_storage: "EnkfFs", posterior_storage: "EnkfFs", run_id: str
+        self,
+        prior_storage: EnsembleReader,
+        posterior_storage: EnsembleAccessor,
+        run_id: str,
     ) -> None:
         updatestep = self.ert.getLocalConfig()
 
@@ -554,7 +559,7 @@ class ESUpdate:
         _assert_has_enough_realizations(ens_mask, analysis_config)
 
         smoother_snapshot = _create_smoother_snapshot(
-            prior_storage.case_name, posterior_storage.case_name, analysis_config
+            prior_storage.name, posterior_storage.name, analysis_config
         )
 
         analysis_ES(
@@ -580,8 +585,8 @@ class ESUpdate:
 
     def iterative_smoother_update(
         self,
-        prior_storage: "EnkfFs",
-        posterior_storage: "EnkfFs",
+        prior_storage: EnsembleReader,
+        posterior_storage: EnsembleAccessor,
         w_container: ies.IterativeEnsembleSmoother,
         run_id: str,
     ) -> None:
@@ -606,7 +611,7 @@ class ESUpdate:
         _assert_has_enough_realizations(ens_mask, analysis_config)
 
         smoother_snapshot = _create_smoother_snapshot(
-            prior_storage.case_name, posterior_storage.case_name, analysis_config
+            prior_storage.name, posterior_storage.name, analysis_config
         )
 
         analysis_IES(

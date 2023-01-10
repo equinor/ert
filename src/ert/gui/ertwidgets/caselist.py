@@ -1,9 +1,10 @@
-from qtpy.QtCore import QSize
+from qtpy.QtCore import QSize, Qt
 from qtpy.QtWidgets import (
     QAbstractItemView,
     QHBoxLayout,
     QLabel,
     QListWidget,
+    QListWidgetItem,
     QMessageBox,
     QToolButton,
     QVBoxLayout,
@@ -14,6 +15,7 @@ from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets import addHelpToWidget, resourceIcon
 from ert.gui.ertwidgets.validateddialog import ValidatedDialog
 from ert.libres_facade import LibresFacade
+from ert.storage import StorageAccessor
 
 
 class AddRemoveWidget(QWidget):
@@ -76,13 +78,11 @@ class CaseList(QWidget):
         layout = QVBoxLayout()
 
         self._list = QListWidget(self)
-        self._list.setMinimumHeight(100)
-        self._list.setMaximumHeight(250)
         self._default_selection_mode = self._list.selectionMode()
         self.setSelectable(False)
 
         layout.addWidget(QLabel("Available cases:"))
-        layout.addWidget(self._list)
+        layout.addWidget(self._list, stretch=1)
 
         self._addRemoveWidget = AddRemoveWidget(
             self.addItem, self.removeItem, horizontal=True
@@ -98,6 +98,10 @@ class CaseList(QWidget):
         notifier.ertChanged.connect(self.updateList)
         self.updateList()
 
+    @property
+    def storage(self) -> StorageAccessor:
+        return self.notifier.storage
+
     def setSelectable(self, selectable):
         if selectable:
             self._list.setSelectionMode(self._default_selection_mode)
@@ -106,22 +110,15 @@ class CaseList(QWidget):
 
     def addItem(self):
         dialog = ValidatedDialog(
-            "New case", "Enter name of new case:", self.facade.cases()
+            "New case", "Enter name of new case:", self.storage.ensembles
         )
         new_case_name = dialog.showAndTell()
         if not new_case_name == "":
-            try:
-                self.facade._enkf_main.storage_manager.add_case(new_case_name)
-                self.facade._enkf_main.switchFileSystem(new_case_name)
-            except KeyError:
-                msg = QMessageBox(
-                    QMessageBox.Critical,
-                    "Duplicate case",
-                    f"Case name {new_case_name} already exists",
-                    QMessageBox.Ok,
-                    self,
-                )
-                msg.exec_()
+            self.storage.create_ensemble(
+                self.storage.create_experiment(),
+                name=new_case_name,
+                ensemble_size=self.facade.get_ensemble_size(),
+            )
             self.notifier.ertChanged.emit()
 
     def removeItem(self):
@@ -130,9 +127,13 @@ class CaseList(QWidget):
 
     def updateList(self):
         """Retrieves data from the model and inserts it into the list"""
-        case_list = self.facade.cases()
+        case_list = sorted(
+            self.storage.ensembles, key=lambda x: x.started_at, reverse=True
+        )
 
         self._list.clear()
 
         for case in case_list:
-            self._list.addItem(case)
+            item = QListWidgetItem(f"{case.name} - {case.started_at} ({case.id})")
+            item.setData(Qt.UserRole, case)
+            self._list.addItem(item)

@@ -11,14 +11,21 @@ from ert._c_wrappers.enkf.enkf_main import EnKFMain
 from ert._c_wrappers.enkf.res_config import ResConfig
 from ert.cli import TEST_RUN_MODE
 from ert.cli.main import run_cli
+from ert.storage import StorageAccessor
 
 
-def _create_runpath(enkf_main: EnKFMain) -> RunContext:
+def _create_runpath(enkf_main: EnKFMain, storage: StorageAccessor) -> RunContext:
     """
     Instantiate an ERT runpath. This will create the parameter coefficients.
     """
-    run_context = enkf_main.create_ensemble_context(
-        "prior", [True] * enkf_main.getEnsembleSize(), iteration=0
+    run_context = enkf_main.ensemble_context(
+        storage.create_ensemble(
+            storage.create_experiment(),
+            name="prior",
+            ensemble_size=enkf_main.getEnsembleSize(),
+        ),
+        [True] * enkf_main.getEnsembleSize(),
+        iteration=0,
     )
     enkf_main.createRunPath(run_context)
     return run_context
@@ -33,7 +40,7 @@ def _create_runpath(enkf_main: EnKFMain) -> RunContext:
         ("NUM_CPU 3\nDATA_FILE DATA\n", 3),  # Explicit NUM_CPU supersedes PARALLEL
     ],
 )
-def test_num_cpu_subst(monkeypatch, tmp_path, append, numcpu):
+def test_num_cpu_subst(monkeypatch, tmp_path, append, numcpu, storage):
     """
     Make sure that <NUM_CPU> is substituted to the correct values
     """
@@ -50,7 +57,7 @@ def test_num_cpu_subst(monkeypatch, tmp_path, append, numcpu):
 
     config = ResConfig(str(tmp_path / "test.ert"))
     enkf_main = EnKFMain(config)
-    _create_runpath(enkf_main)
+    _create_runpath(enkf_main, storage)
 
     with open("simulations/realization-0/iter-0/jobs.json", encoding="utf-8") as f:
         assert f'"argList": ["{numcpu}"]' in f.read()

@@ -1,5 +1,4 @@
 from textwrap import dedent
-from unittest.mock import MagicMock
 
 import pytest
 from qtpy.QtCore import Qt
@@ -7,31 +6,38 @@ from qtpy.QtWidgets import QPushButton
 
 from ert._c_wrappers.enkf import EnKFMain, ResConfig
 from ert._c_wrappers.enkf.enums import RealizationStateEnum
+from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.tools.manage_cases.case_init_configuration import (
     CaseInitializationConfigurationPanel,
 )
 
 
 @pytest.mark.usefixtures("copy_poly_case")
-def test_case_tool_init_prior(qtbot):
+def test_case_tool_init_prior(qtbot, storage):
     ert = EnKFMain(ResConfig("poly.ert"))
-    storage = ert.storage_manager.current_case
+    notifier = ErtNotifier(ert.res_config.config_path)
+    notifier.set_storage(storage)
+    ensemble = storage.create_experiment().create_ensemble(
+        ensemble_size=ert.getEnsembleSize(),
+        name="prior",
+    )
+    notifier.set_current_case(ensemble)
     assert (
-        storage.state_map
+        ensemble.state_map
         == [RealizationStateEnum.STATE_UNDEFINED] * ert.getEnsembleSize()
     )
-    tool = CaseInitializationConfigurationPanel(ert, MagicMock())
+    tool = CaseInitializationConfigurationPanel(ert, notifier)
     qtbot.mouseClick(
         tool.findChild(QPushButton, name="initialize_scratch_button"), Qt.LeftButton
     )
     assert (
-        storage.state_map
+        ensemble.state_map
         == [RealizationStateEnum.STATE_INITIALIZED] * ert.getEnsembleSize()
     )
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_that_case_tool_can_copy_case_state(qtbot):
+def test_that_case_tool_can_copy_case_state(qtbot, storage):
     """Test that we can copy state from one case to another, first
     need to set up a prior so we have a case with data, then copy
     that case into a new one.
@@ -50,13 +56,19 @@ def test_that_case_tool_can_copy_case_state(qtbot):
     with open("prior.txt", "w", encoding="utf-8") as fh:
         fh.writelines("MY_KEYWORD NORMAL 0 1")
     ert = EnKFMain(ResConfig("config.ert"))
-    storage_manager = ert.storage_manager
+    notifier = ErtNotifier(ert.res_config.config_path)
+    notifier.set_storage(storage)
 
-    prior = storage_manager["default"]
+    experiment_id = storage.create_experiment()
+    prior = storage.create_ensemble(
+        experiment_id, name="prior", ensemble_size=ert.getEnsembleSize()
+    )
     ert.sample_prior(prior, list(range(ert.getEnsembleSize())))
-    new_case = storage_manager.add_case("new_case")
-    ert.switchFileSystem("new_case")
-    tool = CaseInitializationConfigurationPanel(ert, MagicMock())
+    new_case = storage.create_ensemble(
+        experiment_id, name="new_case", ensemble_size=ert.getEnsembleSize()
+    )
+    notifier.set_current_case(new_case)
+    tool = CaseInitializationConfigurationPanel(ert, notifier)
     assert (
         new_case.state_map
         == [RealizationStateEnum.STATE_UNDEFINED] * ert.getEnsembleSize()

@@ -119,7 +119,9 @@ class WorkflowJob:
             return "internal C"
         return "external"
 
-    def run(self, ert: "EnKFMain", arguments: List[Any], verbose: bool = False) -> Any:
+    def run(
+        self, ert: "EnKFMain", storage, arguments: List[Any], verbose: bool = False
+    ) -> Any:
         self.__running = True
 
         if self.min_args and len(arguments) < self.min_args:
@@ -136,7 +138,7 @@ class WorkflowJob:
 
         if self.internal and self.script is not None:
             script_obj = ErtScript.loadScriptFromFile(self.script)
-            self.__script = script_obj(ert)
+            self.__script = script_obj(ert, storage=storage)
             result = self.__script.initializeAndRun(
                 self.argumentTypes(), arguments, verbose=verbose
             )
@@ -144,6 +146,7 @@ class WorkflowJob:
         elif self.internal and self.script is None:
             self.__script = FunctionErtScript(
                 ert,
+                storage,
                 self.function,
                 self.argumentTypes(),
                 argument_count=len(arguments),
@@ -153,7 +156,7 @@ class WorkflowJob:
             )
 
         elif not self.internal:
-            self.__script = ExternalErtScript(ert, self.executable)
+            self.__script = ExternalErtScript(ert, storage, self.executable)
             result = self.__script.initializeAndRun(
                 self.argumentTypes(), arguments, verbose=verbose
             )
