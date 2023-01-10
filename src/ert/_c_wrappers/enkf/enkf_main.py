@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import logging
+import math
 import os
 from datetime import datetime
 from pathlib import Path
@@ -13,9 +14,7 @@ from jinja2 import Template
 
 from ert._c_wrappers.analysis.configuration import UpdateConfiguration
 from ert._c_wrappers.config.config_parser import ConfigValidationError
-from ert._c_wrappers.enkf import EnkfFs
 from ert._c_wrappers.enkf.analysis_config import AnalysisConfig
-from ert._c_wrappers.enkf.enkf_fs_manager import FileSystemManager
 from ert._c_wrappers.enkf.enkf_obs import EnkfObs
 from ert._c_wrappers.enkf.ensemble_config import EnsembleConfig
 from ert._c_wrappers.enkf.enums import RealizationStateEnum
@@ -26,11 +25,15 @@ from ert._c_wrappers.enkf.model_config import ModelConfig
 from ert._c_wrappers.enkf.queue_config import QueueConfig
 from ert._c_wrappers.enkf.runpaths import Runpaths
 from ert._c_wrappers.util.substitution_list import SubstitutionList
-from ert.storage import _field_transform
+from ert._clib import trans_func  # noqa: no_type_check
 
 if TYPE_CHECKING:
+    import numpy.typing as npt
+
+    from ert._c_wrappers.enkf import ErtConfig
     from ert._c_wrappers.enkf.config import FieldConfig, GenKwConfig
     from ert._c_wrappers.enkf.enums import HookRuntime
+    from ert.storage import EnsembleAccessor, EnsembleReader, StorageAccessor
 
 logger = logging.getLogger(__name__)
 
@@ -91,7 +94,7 @@ def _value_export_json(
 
 
 def _generate_gen_kw_parameter_file(
-    fs: "EnkfFs",
+    fs: EnsembleReader,
     realization: int,
     config: "GenKwConfig",
     target_file: str,
@@ -125,7 +128,7 @@ def _generate_gen_kw_parameter_file(
 
 
 def _generate_ext_parameter_file(
-    fs: "EnkfFs",
+    fs: EnsembleReader,
     realization: int,
     key: str,
     target_file: str,
@@ -139,7 +142,7 @@ def _generate_ext_parameter_file(
 
 
 def _generate_surface_file(
-    fs: "EnkfFs",
+    fs: EnsembleReader,
     realization: int,
     key: str,
     target_file: str,
@@ -152,7 +155,7 @@ def _generate_surface_file(
 
 
 def _generate_field_parameter_file(
-    fs: "EnkfFs",
+    fs: EnsembleReader,
     realization: int,
     config: "FieldConfig",
     target_file: str,
@@ -172,7 +175,7 @@ def _generate_parameter_files(
     export_base_name: str,
     run_path: str,
     iens: int,
-    fs: "EnkfFs",
+    fs: EnsembleReader,
 ) -> None:
     """
     Generate parameter files that are placed in each runtime directory for
@@ -185,7 +188,7 @@ def _generate_parameter_files(
             `parameters` in `parameters.json`.
         run_path: Path to the runtime directory
         iens: Realisation index
-        fs: EnkfFs from which to load parameter data
+        fs: EnsembleReader from which to load parameter data
     """
     exports: Dict[str, Dict[str, float]] = {}
     for key in ens_config.getKeylistFromVarType(
@@ -234,6 +237,32 @@ def _generate_parameter_files(
 
     _value_export_txt(run_path, export_base_name, exports)
     _value_export_json(run_path, export_base_name, exports)
+
+
+def field_transform(data: npt.ArrayLike, transform_name: str) -> Any:
+    if not transform_name:
+        return data
+
+    def f(x: float) -> float:  # pylint: disable=too-many-return-statements
+        if transform_name in ("LN", "LOG"):
+            return math.log(x, math.e)
+        if transform_name == "LN0":
+            return math.log(x, math.e) + 0.000001
+        if transform_name == "LOG10":
+            return math.log(x, 10)
+        if transform_name == "EXP":
+            return math.exp(x)
+        if transform_name == "EXP0":
+            return math.exp(x) + 0.000001
+        if transform_name == "POW10":
+            return math.pow(x, 10)
+        if transform_name == "TRUNC_POW10":
+            return math.pow(max(x, 0.001), 10)
+        return x
+
+    vfunc = np.vectorize(f)
+
+    return vfunc(data)
 
 
 class ObservationConfigError(ConfigValidationError):
@@ -297,17 +326,6 @@ class EnKFMain:
             substitute=self.get_context().substitute_real_iter,
         )
 
-        # Initialize storage
-        ens_path = Path(config.ens_path)
-        self.storage_manager = FileSystemManager(
-            5,
-            ens_path,
-            self.getEnsembleSize(),
-            read_only=read_only,
-            refcase=self.ert_config.ensemble_config.refcase,
-        )
-        self.switchFileSystem(self.storage_manager.active_case)
-
         # Set up RNG
         config_seed = self.resConfig().random_seed
         if config_seed is None:
@@ -368,10 +386,10 @@ class EnKFMain:
         return self.update_configuration
 
     def loadFromForwardModel(
-        self, realization: List[bool], iteration: int, fs: "EnkfFs"
+        self, realization: List[bool], iteration: int, fs: EnsembleAccessor
     ) -> int:
         """Returns the number of loaded realizations"""
-        run_context = self.load_ensemble_context(fs.case_name, realization, iteration)
+        run_context = self.ensemble_context(fs, realization, iteration)
         nr_loaded = fs.load_from_run_path(
             self.getEnsembleSize(),
             self.ensembleConfig(),
@@ -381,28 +399,15 @@ class EnKFMain:
         fs.sync()
         return nr_loaded
 
-    def create_ensemble_context(
-        self, case_name: str, active_realizations: List[bool], iteration: int
-    ) -> RunContext:
-        """This creates a new case in storage
-        and returns the run information for that case"""
-        return RunContext(
-            sim_fs=self.storage_manager.add_case(case_name),
-            path_format=self.getModelConfig().jobname_format_string,
-            format_string=self.getModelConfig().runpath_format_string,
-            runpath_file=Path(self.getModelConfig().runpath_file),
-            initial_mask=active_realizations,
-            global_substitutions=dict(self.get_context()),
-            iteration=iteration,
-        )
-
-    def load_ensemble_context(
-        self, case_name: str, active_realizations: List[bool], iteration: int
+    def ensemble_context(
+        self, case: EnsembleAccessor, active_realizations: List[bool], iteration: int
     ) -> RunContext:
         """This loads an existing case from storage
         and creates run information for that case"""
+        self.addDataKW("<ERT-CASE>", case.name)
+        self.addDataKW("<ERTCASE>", case.name)
         return RunContext(
-            sim_fs=self.storage_manager[case_name],
+            sim_fs=case,
             path_format=self.getModelConfig().jobname_format_string,
             format_string=self.getModelConfig().runpath_format_string,
             runpath_file=Path(self.getModelConfig().runpath_file),
@@ -457,7 +462,7 @@ class EnKFMain:
 
     def sample_prior(
         self,
-        storage: "EnkfFs",
+        ensemble: EnsembleAccessor,
         active_realizations: List[int],
         parameters: Optional[List[str]] = None,
     ) -> None:
@@ -492,9 +497,9 @@ class EnKFMain:
                     data = props.values1d.data
                     field_config = config_node.getFieldModelConfig()
                     trans = field_config.get_init_transform_name()
-                    data_transformed = _field_transform(data, trans)
-                    if not storage.field_has_info(parameter):
-                        storage.save_field_info(
+                    data_transformed = field_transform(data, trans)
+                    if not ensemble.field_has_info(parameter):
+                        ensemble.save_field_info(
                             parameter,
                             grid_file,
                             field_config.get_output_transform_name(),
@@ -505,7 +510,9 @@ class EnKFMain:
                             field_config.get_ny(),
                             field_config.get_nz(),
                         )
-                    storage.save_field_data(parameter, realization_nr, data_transformed)
+                    ensemble.save_field_data(
+                        parameter, realization_nr, data_transformed
+                    )
 
             elif impl_type == ErtImplType.GEN_KW:
                 gen_kw_config = config_node.getKeywordModelConfig()
@@ -530,7 +537,7 @@ class EnKFMain:
                         self.getEnsembleSize(),
                     )
 
-                storage.save_gen_kw(
+                ensemble.save_gen_kw(
                     parameter_name=parameter,
                     parameter_keys=keys,
                     parameter_transfer_functions=gen_kw_config.get_priors(),
@@ -542,13 +549,13 @@ class EnKFMain:
                     init_file = config_node.get_init_file_fmt()
                     if "%d" in init_file:
                         init_file = init_file % realization_nr
-                    storage.save_surface_file(
+                    ensemble.save_surface_file(
                         config_node.getKey(), realization_nr, init_file
                     )
             else:
                 raise NotImplementedError(f"{impl_type} is not supported")
         for realization_nr in active_realizations:
-            storage.update_realization_state(
+            ensemble.update_realization_state(
                 realization_nr,
                 [
                     RealizationStateEnum.STATE_UNDEFINED,
@@ -557,23 +564,11 @@ class EnKFMain:
                 RealizationStateEnum.STATE_INITIALIZED,
             )
 
-        storage.sync()
+        ensemble.sync()
 
     def rng(self) -> np.random.Generator:
         "Will return the random number generator used for updates."
         return self._shared_rng
-
-    def switchFileSystem(self, case_name: str) -> None:
-        if isinstance(case_name, EnkfFs):
-            case_name = case_name.case_name
-        if case_name not in self.storage_manager.cases:
-            raise KeyError(
-                f"Unknown case: {case_name}, valid: {self.storage_manager.cases}"
-            )
-        self.addDataKW("<ERT-CASE>", case_name)
-        self.addDataKW("<ERTCASE>", case_name)
-        self.storage_manager.active_case = case_name
-        (Path(self.ert_config.ens_path) / "current_case").write_text(case_name)
 
     def createRunPath(self, run_context: RunContext) -> None:
         for iens, run_arg in enumerate(run_context):
@@ -628,6 +623,13 @@ class EnKFMain:
             [run_context.iteration], run_context.active_realizations
         )
 
-    def runWorkflows(self, runtime: Union[int, HookRuntime]) -> None:
+    def runWorkflows(
+        self,
+        runtime: Union[int, HookRuntime],
+        storage: "Optional[StorageAccessor]" = None,
+    ) -> None:
         for workflow in self.ert_config.hooked_workflows[runtime]:
-            workflow.run(self)
+            workflow.run(self, storage)
+
+
+__all__ = ["trans_func"]

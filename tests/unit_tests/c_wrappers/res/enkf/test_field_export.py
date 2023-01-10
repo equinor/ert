@@ -28,10 +28,10 @@ def test_field_basics(snake_oil_field_example):
     assert fc.get_output_transform_name() is None
 
 
-def test_field_export_many(snake_oil_field_example):
+def test_field_export_many(snake_oil_field_example, prior_ensemble):
     ert = snake_oil_field_example
 
-    prior = ert.load_ensemble_context("default", [True, True, True, True, True], 0)
+    prior = ert.ensemble_context(prior_ensemble, [True, True, True, True, True], 0)
     ert.sample_prior(prior.sim_fs, prior.active_realizations)
     ert.createRunPath(prior)
     ens_config = ert.ensembleConfig()
@@ -51,16 +51,16 @@ def test_field_export_many(snake_oil_field_example):
     assert os.path.isfile("export/with/path/PERMX_4.grdecl")
 
 
-def test_field_export(snake_oil_field_example):
+def test_field_export(snake_oil_field_example, prior_ensemble):
     ert = snake_oil_field_example
 
-    prior = ert.load_ensemble_context("default", [True, False, False, True, True], 0)
+    prior = ert.ensemble_context(prior_ensemble, [True, False, False, True, True], 0)
     ert.sample_prior(prior.sim_fs, prior.active_realizations)
     ert.createRunPath(prior)
     ens_config = ert.ensembleConfig()
     config_node = ens_config["PERMX"]
-    fs = ert.storage_manager["default"]
 
+    fs = prior_ensemble
     fs.export_field(
         config_node.getFieldModelConfig().get_key(),
         0,

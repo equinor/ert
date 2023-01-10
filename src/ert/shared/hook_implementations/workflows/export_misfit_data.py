@@ -19,18 +19,19 @@ class ExportMisfitDataJob(ErtScript):
 
     def run(self, target_file=None):
         ert = self.ert()
-        fs = ert.storage_manager.current_case
 
         if target_file is None:
             target_file = "misfit.hdf"
-        realizations = fs.realizationList(RealizationStateEnum.STATE_HAS_DATA)
+        realizations = self.ensemble.realizationList(
+            RealizationStateEnum.STATE_HAS_DATA
+        )
 
         if not realizations:
             raise StorageError("No responses loaded")
 
         all_observations = [(n.getObsKey(), []) for n in ert.getObservations()]
         measured_data, obs_data = _get_obs_and_measure_data(
-            ert.getObservations(), fs, all_observations, realizations
+            ert.getObservations(), self.ensemble, all_observations, realizations
         )
         joined = obs_data.join(measured_data, on=["data_key", "axis"], how="inner")
         misfit = pd.DataFrame(index=joined.index)

@@ -7,7 +7,7 @@ from ert import LibresFacade
 from ert._c_wrappers.enkf import EnKFMain, ErtConfig
 
 
-def test_load_summary_response_restart_not_zero(tmpdir, snapshot, request):
+def test_load_summary_response_restart_not_zero(tmpdir, snapshot, request, storage):
     """
     This is a regression test for summary responses where the index map
     was not correctly loaded, this is relevant for restart cases from eclipse.
@@ -29,18 +29,23 @@ def test_load_summary_response_restart_not_zero(tmpdir, snapshot, request):
         sim_path = Path("simulations") / "realization-0" / "iter-0"
         ert_config = ErtConfig.from_file("config.ert")
         ert = EnKFMain(ert_config)
-        run_context = ert.create_ensemble_context("prior", [True], iteration=0)
-        ert.createRunPath(run_context)
 
+        experiment_id = storage.create_experiment()
+        ensemble = storage.create_ensemble(
+            experiment_id, name="prior", ensemble_size=ert.getEnsembleSize()
+        )
+        prior = ert.ensemble_context(ensemble, [True], 0)
+
+        ert.createRunPath(prior)
         os.chdir(sim_path)
         shutil.copy(test_path / "PRED_RUN.SMSPEC", "PRED_RUN.SMSPEC")
         shutil.copy(test_path / "PRED_RUN.UNSMRY", "PRED_RUN.UNSMRY")
         os.chdir(cwd)
 
         facade = LibresFacade(ert)
-        facade.load_from_forward_model("prior", [True], 0)
+        facade.load_from_forward_model(ensemble, [True], 0)
 
         snapshot.assert_match(
-            facade.load_all_summary_data("prior").dropna().iloc[:, :15].to_csv(),
+            facade.load_all_summary_data(ensemble).dropna().iloc[:, :15].to_csv(),
             "summary_restart",
         )

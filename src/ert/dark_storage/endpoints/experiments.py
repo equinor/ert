@@ -4,34 +4,43 @@ from uuid import UUID
 from ert_storage import json_schema as js
 from fastapi import APIRouter, Body, Depends
 
-from ert.dark_storage.enkf import LibresFacade, get_id, get_res, get_size
+from ert.dark_storage.enkf import LibresFacade, get_res, get_size, get_storage
 from ert.shared.storage.extraction import create_priors
+from ert.storage import StorageReader
 
 router = APIRouter(tags=["experiment"])
 
 
 @router.get("/experiments", response_model=List[js.ExperimentOut])
-def get_experiments(*, res: LibresFacade = Depends(get_res)) -> List[js.ExperimentOut]:
+def get_experiments(
+    *, res: LibresFacade = Depends(get_res), db: StorageReader = Depends(get_storage)
+) -> List[js.ExperimentOut]:
     priors = create_priors(res)
     return [
         js.ExperimentOut(
+            id=exp.id,
             name="default",
-            id=get_id("experiment", "default"),
-            ensemble_ids=[get_id("ensemble", case) for case in res.cases()],
+            ensemble_ids=[ens.id for ens in exp.ensembles],
             priors=priors,
             userdata={},
         )
+        for exp in db.experiments
     ]
 
 
 @router.get("/experiments/{experiment_id}", response_model=js.ExperimentOut)
 def get_experiment_by_id(
-    *, res: LibresFacade = Depends(get_res), experiment_id: UUID
+    *,
+    res: LibresFacade = Depends(get_res),
+    db: StorageReader = Depends(get_storage),
+    experiment_id: UUID,
 ) -> js.ExperimentOut:
+    exp = db.get_experiment(experiment_id)
+
     return js.ExperimentOut(
         name="default",
-        id=get_id("experiment", "default"),
-        ensemble_ids=[get_id("ensemble", case) for case in res.cases()],
+        id=exp.id,
+        ensemble_ids=[ens.id for ens in exp.ensembles],
         priors=create_priors(res),
         userdata={},
     )
@@ -50,21 +59,24 @@ def post_experiments(
     "/experiments/{experiment_id}/ensembles", response_model=List[js.EnsembleOut]
 )
 def get_experiment_ensembles(
-    *, res: LibresFacade = Depends(get_res), experiment_id: UUID
+    *,
+    res: LibresFacade = Depends(get_res),
+    db: StorageReader = Depends(get_storage),
+    experiment_id: UUID,
 ) -> List[js.EnsembleOut]:
     return [
         js.EnsembleOut(
-            id=get_id("ensemble", case),
+            id=ens.id,
             children=[],
             parent=None,
-            experiment_id=get_id("experiment", "default"),
-            userdata={"name": case},
+            experiment_id=ens.experiment_id,
+            userdata={"name": ens.name},
             size=get_size(res),
             parameter_names=[],
             response_names=[],
             child_ensemble_ids=[],
         )
-        for case in res.cases()
+        for ens in db.get_experiment(experiment_id).ensembles
     ]
 
 

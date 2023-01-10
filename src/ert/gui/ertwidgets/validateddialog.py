@@ -22,8 +22,9 @@ class ValidatedDialog(QDialog):
         title="Title",
         description="Description",
         unique_names=None,
+        parent=None,
     ):
-        QDialog.__init__(self)
+        QDialog.__init__(self, parent=parent)
         self.setModal(True)
         self.setWindowTitle(title)
 

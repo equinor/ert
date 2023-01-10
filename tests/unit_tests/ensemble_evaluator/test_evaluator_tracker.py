@@ -330,7 +330,7 @@ def test_tracking_progress(
 
     The final update event and end event is also tested."""
 
-    brm = run_model(None, None, None, None)
+    brm = run_model(None, None, None, None, None)
     ee_config = EvaluatorServerConfig(
         custom_port_range=range(1024, 65535),
         custom_host="127.0.0.1",
