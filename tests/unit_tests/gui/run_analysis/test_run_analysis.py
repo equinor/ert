@@ -35,6 +35,7 @@ def mock_tool():
 def test_show_dialogue_at_success(mock_messagebox, mock_analyse, mock_tool):
     mock_tool._run_widget.source_case.return_value = "source"
     mock_tool._run_widget.target_case.return_value = "target"
+    mock_tool.notifier.storage.get_ensemble_by_name = lambda x: x
 
     ert_mock = Mock()
     mock_tool.ert = ert_mock
@@ -56,6 +57,7 @@ def test_show_dialogue_at_success(mock_messagebox, mock_analyse, mock_tool):
 def test_show_dialogue_at_failure(mock_messagebox, mock_analyse, mock_tool):
     mock_tool._run_widget.source_case.return_value = "source"
     mock_tool._run_widget.target_case.return_value = "target"
+    mock_tool.notifier.storage.get_ensemble_by_name = lambda x: x
     ert_mock = Mock()
     mock_tool.ert = ert_mock
     mock_tool.run()

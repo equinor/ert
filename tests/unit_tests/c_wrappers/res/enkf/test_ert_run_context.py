@@ -3,17 +3,18 @@ from pathlib import Path
 import pytest
 
 from ert._c_wrappers.enkf import RunContext
-from ert._c_wrappers.enkf.enkf_fs import EnkfFs
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_create():
+def test_create(storage):
     mask = [True] * 100
     mask[50] = False
     itr = 0
     realizations = list(range(len(mask)))
     run_context1 = RunContext(
-        EnkfFs.createFileSystem("test", True, len(realizations)),
+        storage.create_experiment().create_ensemble(
+            name="test", ensemble_size=len(realizations)
+        ),
         "path/to/sim%d",
         "job%d",
         Path("runpath_file_name"),
@@ -30,7 +31,9 @@ def test_create():
     assert run_arg0.get_run_id() == str(run_id1)
 
     run_context2 = RunContext(
-        EnkfFs.createFileSystem("test", True, len(realizations)),
+        storage.create_experiment().create_ensemble(
+            name="test", ensemble_size=len(realizations)
+        ),
         "path/to/sim%d",
         "job%d",
         Path("runpath_file_name"),

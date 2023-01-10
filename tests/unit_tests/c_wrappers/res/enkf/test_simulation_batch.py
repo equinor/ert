@@ -6,7 +6,7 @@ from ert.simulator.simulation_context import _run_forward_model
 
 
 @pytest.mark.integration_test
-def test_run_simulation_batch(setup_case):
+def test_run_simulation_batch(setup_case, prior_ensemble):
     ert = EnKFMain(setup_case("config/simulation_batch", "config.ert"))
     ens_size = 4
     ens_config = ert.ensembleConfig()
@@ -27,9 +27,6 @@ def test_run_simulation_batch(setup_case):
     ens_config.addNode(order_result)
     ens_config.addNode(injection_result)
 
-    fs_manager = ert.storage_manager
-    sim_fs = fs_manager.add_case("sim_fs")
-
     batch_size = ens_size
     order_node_ext = {}
     injection_node_ext = {}
@@ -37,15 +34,15 @@ def test_run_simulation_batch(setup_case):
         order_node_ext["W1"] = iens
         order_node_ext["W2"] = iens * 10
         order_node_ext["W3"] = iens * 100
-        sim_fs.save_ext_param("WELL_ORDER", iens, order_node_ext)
+        prior_ensemble.save_ext_param("WELL_ORDER", iens, order_node_ext)
 
         injection_node_ext["W1"] = iens + 1
         injection_node_ext["W4"] = 3 * (iens + 1)
-        sim_fs.save_ext_param("WELL_INJECTION", iens, injection_node_ext)
-        sim_fs.state_map[iens] = RealizationStateEnum.STATE_INITIALIZED
+        prior_ensemble.save_ext_param("WELL_INJECTION", iens, injection_node_ext)
+        prior_ensemble.state_map[iens] = RealizationStateEnum.STATE_INITIALIZED
 
     mask = [True] * batch_size
-    run_context = ert.load_ensemble_context(sim_fs.case_name, mask, iteration=0)
+    run_context = ert.ensemble_context(prior_ensemble, mask, iteration=0)
     ert.createRunPath(run_context)
     job_queue = ert.get_queue_config().create_job_queue()
 
@@ -54,10 +51,10 @@ def test_run_simulation_batch(setup_case):
     assert num == batch_size
 
     for iens in range(batch_size):
-        data, _ = sim_fs.load_gen_data("ORDER@0", [iens])
+        data, _ = prior_ensemble.load_gen_data("ORDER@0", [iens])
         data = data.flatten()
 
-        order_node_ext = sim_fs.load_ext_param("WELL_ORDER", iens)
+        order_node_ext = prior_ensemble.load_ext_param("WELL_ORDER", iens)
         assert order_node_ext["W1"] == data[0]
         assert order_node_ext["W2"] == data[1]
         assert order_node_ext["W3"] == data[2]

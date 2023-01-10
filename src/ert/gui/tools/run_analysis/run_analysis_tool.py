@@ -9,16 +9,11 @@ from ert.gui.tools import Tool
 from ert.gui.tools.run_analysis import RunAnalysisPanel
 
 
-def analyse(ert, target, source):
+def analyse(ert, target_fs, source_fs):
     """Runs analysis using target and source cases. Returns whether or not
     the analysis was successful."""
-    fs_manager = ert.storage_manager
     es_update = ESUpdate(ert)
-
-    target_fs = fs_manager.add_case(target)
-    source_fs = fs_manager[source]
-
-    es_update.smootherUpdate(source_fs, target_fs, uuid.uuid4())
+    es_update.smootherUpdate(source_fs, target_fs, str(uuid.uuid4()))
 
 
 class RunAnalysisTool(Tool):
@@ -43,12 +38,15 @@ class RunAnalysisTool(Tool):
         target = self._run_widget.target_case()
         source = self._run_widget.source_case()
 
+        target_fs = self.notifier.storage.get_ensemble_by_name(target)
+        source_fs = self.notifier.storage.get_ensemble_by_name(source)
+
         if len(target) == 0:
             self._report_empty_target()
             return
 
         try:
-            analyse(self.ert, target, source)
+            analyse(self.ert, target_fs, source_fs)
             error = None
         except ErtAnalysisError as e:
             error = str(e)

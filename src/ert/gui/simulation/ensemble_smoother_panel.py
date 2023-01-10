@@ -22,12 +22,14 @@ class Arguments:
     mode: str
     target_case: str
     realizations: str
+    current_case: str = "default"
 
 
 class EnsembleSmootherPanel(SimulationConfigPanel):
     def __init__(self, ert: EnKFMain, notifier: ErtNotifier):
         super().__init__(EnsembleSmoother)
         self.ert = ert
+        self.notifier = notifier
         facade = LibresFacade(ert)
         layout = QFormLayout()
 
@@ -77,8 +79,6 @@ class EnsembleSmootherPanel(SimulationConfigPanel):
         )
         self._case_selector.currentIndexChanged.connect(self._realizations_from_fs)
 
-        self._realizations_from_fs()  # update with the current case
-
     def isConfigurationValid(self):
         return (
             self._target_case_field.isValid()
@@ -88,6 +88,7 @@ class EnsembleSmootherPanel(SimulationConfigPanel):
     def getSimulationArguments(self):
         arguments = Arguments(
             mode="ensemble_smoother",
+            current_case="gui",
             target_case=self._target_case_model.getValue(),
             realizations=self._active_realizations_field.text(),
         )
@@ -95,5 +96,5 @@ class EnsembleSmootherPanel(SimulationConfigPanel):
 
     def _realizations_from_fs(self):
         case = str(self._case_selector.currentText())
-        mask = get_runnable_realizations_mask(self.ert, case)
+        mask = get_runnable_realizations_mask(self.notifier.storage, case)
         self._active_realizations_field.model.setValueFromMask(mask)

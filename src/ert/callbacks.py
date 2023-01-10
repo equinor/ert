@@ -4,10 +4,10 @@ from typing import TYPE_CHECKING, Any, Tuple
 
 import xtgeo
 
+from ert._c_wrappers.enkf.enkf_main import field_transform
 from ert._c_wrappers.enkf.enkf_state import _internalize_results
 from ert._c_wrappers.enkf.enums import ErtImplType, RealizationStateEnum
 from ert._c_wrappers.enkf.model_callbacks import LoadStatus
-from ert.storage import _field_transform
 
 if TYPE_CHECKING:
     from ert._c_wrappers.enkf import EnsembleConfig, RunArg
@@ -27,6 +27,36 @@ def forward_model_ok(
             error_msg = ""
             for config_node in forward_init_config_nodes:
                 if not config_node.getUseForwardInit():
+                    continue
+                if config_node.getImplementationType() == ErtImplType.SURFACE:
+                    run_path = Path(run_arg.runpath)
+                    file_name = config_node.get_init_file_fmt()
+                    if "%d" in file_name:
+                        file_name = file_name % run_arg.iens
+                    file_path = run_path / file_name
+                    if file_path.exists():
+                        run_arg.ensemble_storage.save_surface_file(
+                            config_node.getKey(), run_arg.iens, str(file_path)
+                        )
+                    else:
+                        error_msg += (
+                            "Failed to initialize parameter "
+                            f"'{config_node.getKey()}' in file {file_name}: "
+                            "File not found\n"
+                        )
+                        result = (LoadStatus.LOAD_FAILURE, error_msg)
+
+                    continue
+
+                if config_node.getImplementationType() == ErtImplType.FIELD:
+                    run_path = Path(run_arg.runpath)
+                    file_name = config_node.get_init_file_fmt()
+                    if "%d" in file_name:
+                        file_name = file_name % run_arg.iens
+                    file_path = run_path / file_name
+                    key = config_node.getKey()
+                    if run_arg.ensemble_storage.field_has_data(key, run_arg.iens):
+                        # Already initialised, ignore
                     continue
                 if config_node.getImplementationType() == ErtImplType.SURFACE:
                     run_path = Path(run_arg.runpath)
@@ -67,7 +97,7 @@ def forward_model_ok(
                     data = props.values1d.data
                     field_config = config_node.getFieldModelConfig()
                     trans = field_config.get_init_transform_name()
-                    data_transformed = field_config.transform(trans, data)
+                    data_transformed = field_transform(data, trans)
                     if not run_arg.ensemble_storage.field_has_info(key):
                         run_arg.ensemble_storage.save_field_info(
                             key,
@@ -102,7 +132,8 @@ def forward_model_ok(
     return result
 
 
-def forward_model_exit(run_arg: "RunArg", *_: Tuple[Any]):
+def forward_model_exit(run_arg: "RunArg", *_: Tuple[Any]) -> Tuple[Any, str]:
     run_arg.ensemble_storage.state_map[
         run_arg.iens
     ] = RealizationStateEnum.STATE_LOAD_FAILURE
+    return (None, "")

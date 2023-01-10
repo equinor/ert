@@ -14,11 +14,13 @@ from .simulation_config_panel import SimulationConfigPanel, escape_string
 @dataclass
 class Arguments:
     mode: str
+    current_case: str
 
 
 class SingleTestRunPanel(SimulationConfigPanel):
     def __init__(self, ert, notifier):
         self.ert = ert
+        self.notifier = notifier
         facade = LibresFacade(ert)
         SimulationConfigPanel.__init__(self, SingleTestRun)
         self.setObjectName("Single_test_run_panel")
@@ -36,4 +38,4 @@ class SingleTestRunPanel(SimulationConfigPanel):
         self.setLayout(layout)
 
     def getSimulationArguments(self):
-        return Arguments("test_run")
+        return Arguments("test_run", self.notifier.current_case_name)

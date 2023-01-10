@@ -1,7 +1,8 @@
 from ert._c_wrappers.enkf.enums import RealizationStateEnum
+from ert.storage import StorageReader
 
 
-def get_runnable_realizations_mask(ert, casename):
+def get_runnable_realizations_mask(storage: StorageReader, casename: str):
     """Return the list of IDs corresponding to realizations that can be run.
 
     A realization is considered "runnable" if its status is any other than
@@ -10,8 +11,9 @@ def get_runnable_realizations_mask(ert, casename):
     realization is sane or not.
     If the requested case does not exist, an empty list is returned
     """
-    fsm = ert.storage_manager
-    if casename not in fsm:
+    try:
+        ensemble = storage.get_ensemble_by_name(casename)
+    except KeyError:
         return []
 
     runnable_states = [
@@ -20,4 +22,4 @@ def get_runnable_realizations_mask(ert, casename):
         RealizationStateEnum.STATE_LOAD_FAILURE,
         RealizationStateEnum.STATE_HAS_DATA,
     ]
-    return fsm[casename].get_realization_mask_from_state(runnable_states)
+    return ensemble.get_realization_mask_from_state(runnable_states)

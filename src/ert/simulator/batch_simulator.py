@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Tuple, Union
 
 from ert._c_wrappers.enkf import EnKFMain, ErtConfig
@@ -6,7 +8,7 @@ from ert._c_wrappers.enkf.config import EnkfConfigNode, ExtParamConfig
 from .batch_simulator_context import BatchContext
 
 if TYPE_CHECKING:
-    from ert._c_wrappers.enkf import EnkfFs
+    from ert.storage import EnsembleAccessor
 
 
 def _slug(entity: str) -> str:
@@ -103,7 +105,10 @@ class BatchSimulator:
             ens_config.addNode(EnkfConfigNode.create_gen_data(key, f"{key}_%d"))
 
     def _setup_sim(
-        self, sim_id: int, controls: Dict[str, Dict[str, Any]], file_system: "EnkfFs"
+        self,
+        sim_id: int,
+        controls: Dict[str, Dict[str, Any]],
+        file_system: EnsembleAccessor,
     ) -> None:
         def _check_suffix(
             ext_config: "ExtParamConfig",
@@ -154,7 +159,9 @@ class BatchSimulator:
             file_system.save_ext_param(control_name, sim_id, control)
 
     def start(
-        self, case_name: str, case_data: List[Tuple[int, Dict[str, Dict[str, Any]]]]
+        self,
+        ensemble: EnsembleAccessor,
+        case_data: List[Tuple[int, Dict[str, Dict[str, Any]]]],
     ) -> BatchContext:
         """Start batch simulation, return a simulation context
 
@@ -214,11 +221,10 @@ class BatchSimulator:
         batch complete before you start a new batch.
         """
 
-        self.ert.addDataKW("<CASE_NAME>", _slug(case_name))
-        file_system = self.ert.storage_manager.add_case(case_name)
+        self.ert.addDataKW("<CASE_NAME>", _slug(ensemble.name))
         for sim_id, (geo_id, controls) in enumerate(case_data):
             assert isinstance(geo_id, int)
-            self._setup_sim(sim_id, controls, file_system)
+            self._setup_sim(sim_id, controls, ensemble)
 
         # The input should be validated before we instantiate the BatchContext
         # object, at that stage a job_queue object with multiple threads is
@@ -227,7 +233,7 @@ class BatchSimulator:
         itr = 0
         mask = [True] * len(case_data)
         sim_context = BatchContext(
-            self.result_keys, self.ert, file_system, mask, itr, case_data
+            self.result_keys, self.ert, ensemble, mask, itr, case_data
         )
 
         if self.callback:

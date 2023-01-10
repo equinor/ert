@@ -2,6 +2,7 @@ import asyncio
 import concurrent
 import logging
 from typing import Any, Dict
+from uuid import UUID
 
 import _ert_com_protocol
 from ert._c_wrappers.enkf import RunContext
@@ -11,6 +12,7 @@ from ert._clib.state_map import STATE_INITIALIZED, STATE_LOAD_FAILURE, STATE_UND
 from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.shared.models import BaseRunModel
 from ert.shared.models.base_run_model import ErtRunError
+from ert.storage import StorageAccessor
 
 experiment_logger = logging.getLogger("ert.experiment_server.ensemble_experiment")
 
@@ -20,24 +22,31 @@ class EnsembleExperiment(BaseRunModel):
         self,
         simulation_arguments: Dict[str, Any],
         ert: EnKFMain,
+        storage: StorageAccessor,
         queue_config: QueueConfig,
-        id_: str,
+        id_: UUID,
     ):
-        super().__init__(simulation_arguments, ert, queue_config, id_)
+        super().__init__(simulation_arguments, ert, storage, queue_config, id_)
 
     async def run(self, evaluator_server_config: EvaluatorServerConfig) -> None:
         experiment_logger.debug("starting ensemble experiment")
         event = _ert_com_protocol.node_status_builder(
-            status="EXPERIMENT_STARTED", experiment_id=self.id_
+            status="EXPERIMENT_STARTED", experiment_id=str(self.id)
         )
         await self.dispatch(event)
+
+        ensemble = self._storage.create_ensemble(
+            self._experiment_id,
+            name=self._simulation_arguments["current_case"],
+            ensemble_size=self._ert.getEnsembleSize(),
+        )
 
         loop = asyncio.get_running_loop()
         with concurrent.futures.ThreadPoolExecutor() as executor:
             prior_context = await loop.run_in_executor(
                 executor,
-                self.ert().load_ensemble_context,
-                self.ert().storage_manager.current_case.case_name,
+                self.ert().ensemble_context,
+                ensemble,
                 self._simulation_arguments["active_realizations"],
                 self._simulation_arguments.get("iter_num", 0),
             )
@@ -59,8 +68,6 @@ class EnsembleExperiment(BaseRunModel):
                 prior_context,
             )
 
-            ensemble_id = await loop.run_in_executor(executor, self._post_ensemble_data)
-
             await self._run_hook(
                 HookRuntime.PRE_SIMULATION, prior_context.iteration, loop, executor
             )
@@ -79,7 +86,7 @@ class EnsembleExperiment(BaseRunModel):
                 self.checkHaveSufficientRealizations(num_successful_realizations)
             except ErtRunError as e:
                 event = _ert_com_protocol.node_status_builder(
-                    status="EXPERIMENT_FAILED", experiment_id=self.id_
+                    status="EXPERIMENT_FAILED", experiment_id=str(self._experiment_id)
                 )
                 event.experiment.message = str(e)
                 await self.dispatch(event)
@@ -89,15 +96,8 @@ class EnsembleExperiment(BaseRunModel):
                 HookRuntime.POST_SIMULATION, prior_context.iteration, loop, executor
             )
 
-            # Push simulation results to storage
-            await loop.run_in_executor(
-                executor,
-                self._post_ensemble_results,
-                ensemble_id,
-            )
-
         event = _ert_com_protocol.node_status_builder(
-            status="EXPERIMENT_SUCCEEDED", experiment_id=self.id_
+            status="EXPERIMENT_SUCCEEDED", experiment_id=str(self.id)
         )
         await self.dispatch(event)
 
@@ -106,8 +106,13 @@ class EnsembleExperiment(BaseRunModel):
         run_msg: str,
         evaluator_server_config: EvaluatorServerConfig,
     ) -> RunContext:
-        prior_context = self.ert().load_ensemble_context(
-            self.ert().storage_manager.current_case.case_name,
+        prior_context = self._ert.ensemble_context(
+            self._storage.create_ensemble(
+                self._experiment_id,
+                name=self._simulation_arguments["current_case"],
+                ensemble_size=self._ert.getEnsembleSize(),
+                iteration=self._simulation_arguments.get("item_num", 0),
+            ),
             self._simulation_arguments["active_realizations"],
             iteration=self._simulation_arguments.get("iter_num", 0),
         )
@@ -127,9 +132,6 @@ class EnsembleExperiment(BaseRunModel):
                     state_map[realization_nr] = STATE_INITIALIZED
         self.ert().createRunPath(prior_context)
 
-        # Push ensemble, parameters, observations to new storage
-        ensemble_id = self._post_ensemble_data(prior_context.sim_fs.case_name)
-
         self.ert().runWorkflows(HookRuntime.PRE_SIMULATION)
 
         self.setPhaseName(run_msg, indeterminate=False)
@@ -145,9 +147,6 @@ class EnsembleExperiment(BaseRunModel):
 
         self.setPhaseName("Post processing...", indeterminate=True)
         self.ert().runWorkflows(HookRuntime.POST_SIMULATION)
-
-        # Push simulation results to storage
-        self._post_ensemble_results(prior_context.sim_fs.case_name, ensemble_id)
 
         self.setPhase(1, "Simulations completed.")  # done...
 

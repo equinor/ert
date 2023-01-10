@@ -30,6 +30,7 @@ from .simulation_config_panel import SimulationConfigPanel, escape_string
 @dataclass
 class Arguments:
     mode: str
+    current_case: str
     target_case: str
     realizations: str
     weights: List[float]
@@ -39,6 +40,7 @@ class Arguments:
 class MultipleDataAssimilationPanel(SimulationConfigPanel):
     def __init__(self, facade: LibresFacade, notifier: ErtNotifier):
         SimulationConfigPanel.__init__(self, MultipleDataAssimilation)
+        self.notifier = notifier
 
         layout = QFormLayout()
 
@@ -150,6 +152,7 @@ class MultipleDataAssimilationPanel(SimulationConfigPanel):
     def getSimulationArguments(self):
         return Arguments(
             mode="es_mda",
+            current_case=self.notifier.current_case_name,
             target_case=self._target_case_format_model.getValue(),
             realizations=self._active_realizations_field.text(),
             weights=self.weights,

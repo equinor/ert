@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import uuid
 from dataclasses import InitVar, dataclass, field
 from pathlib import Path
@@ -8,12 +10,12 @@ from ert._c_wrappers.enkf.runpaths import Runpaths
 from ert._c_wrappers.util import SubstitutionList
 
 if TYPE_CHECKING:
-    from ert._c_wrappers.enkf.enkf_fs import EnkfFs
+    from ert.storage import EnsembleAccessor
 
 
 @dataclass
 class RunContext:
-    sim_fs: "EnkfFs"
+    sim_fs: EnsembleAccessor
     path_format: str
     format_string: str
     runpath_file: Path

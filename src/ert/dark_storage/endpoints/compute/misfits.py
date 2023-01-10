@@ -9,7 +9,8 @@ from fastapi import APIRouter, Depends, status
 from fastapi.responses import Response
 
 from ert.dark_storage.common import data_for_key, observations_for_obs_keys
-from ert.dark_storage.enkf import LibresFacade, get_name, get_res
+from ert.dark_storage.enkf import LibresFacade, get_res, get_storage
+from ert.storage import StorageReader
 
 router = APIRouter(tags=["misfits"])
 
@@ -25,13 +26,14 @@ router = APIRouter(tags=["misfits"])
 async def get_response_misfits(
     *,
     res: LibresFacade = Depends(get_res),
+    db: StorageReader = Depends(get_storage),
     ensemble_id: UUID,
     response_name: str,
     realization_index: Optional[int] = None,
     summary_misfits: bool = False,
 ) -> Response:
-    ensemble_name = get_name("ensemble", ensemble_id)
-    dataframe = data_for_key(res, ensemble_name, response_name)
+    ensemble = db.get_ensemble(ensemble_id)
+    dataframe = data_for_key(res, ensemble, response_name)
     if realization_index is not None:
         dataframe = pd.DataFrame(dataframe.loc[realization_index]).T
 
@@ -41,7 +43,7 @@ async def get_response_misfits(
         response_dict[index] = data_df
 
     obs_keys = res.observation_keys(response_name)
-    obs = observations_for_obs_keys(res, ensemble_name, obs_keys)
+    obs = observations_for_obs_keys(res, ensemble, obs_keys)
 
     if not obs_keys:
         raise ValueError(f"No observations for key {response_name}")

@@ -8,6 +8,7 @@ from contextlib import ExitStack as does_not_raise
 from hashlib import sha256
 from pathlib import Path
 from textwrap import dedent
+from typing import Optional
 
 import numpy as np
 import numpy.testing
@@ -21,6 +22,7 @@ from ert._c_wrappers.enkf import EnKFMain, ErtConfig
 from ert.cli import ENSEMBLE_SMOOTHER_MODE
 from ert.cli.main import run_cli
 from ert.libres_facade import LibresFacade
+from ert.storage import EnsembleAccessor, open_storage
 
 
 def write_file(fname, contents):
@@ -28,22 +30,40 @@ def write_file(fname, contents):
         fout.writelines(contents)
 
 
-def create_runpath(config, active_mask=None):
+def create_runpath(
+    storage, config, active_mask=None, *, ensemble: Optional[EnsembleAccessor] = None
+):
     active_mask = [True] if active_mask is None else active_mask
     res_config = ErtConfig.from_file(config)
     ert = EnKFMain(res_config)
 
-    prior = ert.load_ensemble_context("default", active_mask, 0)
+    if ensemble is None:
+        experiment_id = storage.create_experiment()
+        ensemble = storage.create_ensemble(
+            experiment_id, name="default", ensemble_size=ert.getEnsembleSize()
+        )
+
+    prior = ert.ensemble_context(
+        ensemble,
+        active_mask,
+        0,
+    )
 
     ert.sample_prior(prior.sim_fs, prior.active_realizations)
     ert.createRunPath(prior)
-    return ert
+    return ert, ensemble
 
 
-def load_from_forward_model(ert):
+def load_from_forward_model(ert, ensemble):
     facade = LibresFacade(ert)
     realizations = [True] * facade.get_ensemble_size()
-    return facade.load_from_forward_model("default", realizations, 0)
+    return facade.load_from_forward_model(ensemble, realizations, 0)
+
+
+@pytest.fixture
+def storage(tmp_path):
+    with open_storage(tmp_path / "storage", mode="w") as storage:
+        yield storage
 
 
 @pytest.mark.integration_test
@@ -78,7 +98,7 @@ def load_from_forward_model(ert):
         ),
     ],
 )
-def test_gen_kw(tmpdir, config_str, expected, extra_files, expectation):
+def test_gen_kw(storage, tmpdir, config_str, expected, extra_files, expectation):
     with tmpdir.as_cwd():
         config = dedent(
             """
@@ -97,7 +117,7 @@ def test_gen_kw(tmpdir, config_str, expected, extra_files, expectation):
             write_file(fname, contents)
 
         with expectation:
-            create_runpath("config.ert")
+            create_runpath(storage, "config.ert")
             assert (
                 Path("simulations/realization-0/iter-0/kw.txt").read_text(
                     encoding="utf-8"
@@ -116,7 +136,7 @@ def test_gen_kw(tmpdir, config_str, expected, extra_files, expectation):
         "/tmp/somepath/",  # ert removes leading '/'
     ],
 )
-def test_gen_kw_outfile_will_use_paths(tmpdir, relpath: str):
+def test_gen_kw_outfile_will_use_paths(tmpdir, storage, relpath: str):
     with tmpdir.as_cwd():
         config = dedent(
             f"""
@@ -134,7 +154,7 @@ def test_gen_kw_outfile_will_use_paths(tmpdir, relpath: str):
             fh.writelines("MY_KEYWORD NORMAL 0 1")
         if relpath.startswith("/"):
             relpath = relpath[1:]
-        create_runpath("config.ert")
+        create_runpath(storage, "config.ert")
         assert os.path.exists(f"simulations/realization-0/iter-0/{relpath}kw.txt")
 
 
@@ -150,7 +170,7 @@ def test_gen_kw_outfile_will_use_paths(tmpdir, relpath: str):
     ],
 )
 def test_that_order_of_input_in_user_input_is_abritrary_for_gen_kw_init_files(
-    tmpdir, config_str, expected, extra_files
+    tmpdir, config_str, expected, extra_files, storage
 ):
     with tmpdir.as_cwd():
         config = dedent(
@@ -171,14 +191,14 @@ def test_that_order_of_input_in_user_input_is_abritrary_for_gen_kw_init_files(
         for fname, contents in extra_files:
             write_file(fname, contents)
 
-        create_runpath("config.ert")
+        create_runpath(storage, "config.ert")
         assert (
             Path("simulations/realization-0/iter-0/kw.txt").read_text("utf-8")
             == expected
         )
 
 
-def test_field_load_two_parameters_forward_init(tmpdir):
+def test_field_load_two_parameters_forward_init(tmpdir, storage):
     with tmpdir.as_cwd():
         config = dedent(
             """
@@ -220,8 +240,7 @@ def test_field_load_two_parameters_forward_init(tmpdir):
         )
         gp_b.to_file("param_b.grdecl", fformat="grdecl")
 
-        ert = create_runpath("config.ert")
-        fs = ert.storage_manager["default"]
+        ert, fs = create_runpath(storage, "config.ert")
 
         assert ert.ensembleConfig()["PARAM_A"].getUseForwardInit()
         assert ert.ensembleConfig()["PARAM_B"].getUseForwardInit()
@@ -235,9 +254,9 @@ def test_field_load_two_parameters_forward_init(tmpdir):
         with pytest.raises(KeyError, match="Unable to load FIELD for key: PARAM_B"):
             fs.load_field("PARAM_B", [0])
 
-        assert load_from_forward_model(ert) == 1
+        assert load_from_forward_model(ert, fs) == 1
 
-        create_runpath("config.ert")
+        create_runpath(storage, "config.ert", ensemble=fs)
 
         prop_a = xtgeo.gridproperty_from_file(
             pfile="simulations/realization-0/iter-0/param_a.grdecl",
@@ -263,7 +282,7 @@ def test_field_load_two_parameters_forward_init(tmpdir):
             assert loaded_b[e][0] == 77
 
 
-def test_field_load_two_parameters(tmpdir):
+def test_field_load_two_parameters(tmpdir, storage):
     with tmpdir.as_cwd():
         config = dedent(
             """
@@ -305,11 +324,10 @@ def test_field_load_two_parameters(tmpdir):
         )
         gp_b.to_file("param_b_0.grdecl", fformat="grdecl")
 
-        ert = create_runpath("config.ert")
+        ert, fs = create_runpath(storage, "config.ert")
         assert not ert.ensembleConfig()["PARAM_A"].getUseForwardInit()
         assert not ert.ensembleConfig()["PARAM_B"].getUseForwardInit()
 
-        fs = ert.storage_manager["default"]
         loaded_a = fs.load_field("PARAM_A", [0])
         for e in range(0, loaded_a.shape[0]):
             assert loaded_a[e][0] == 22
@@ -353,7 +371,7 @@ def test_field_load_two_parameters(tmpdir):
         ),
     ],
 )
-def test_field_with_min_max(tmpdir, min_: int, max_: int, field_config: str):
+def test_field_with_min_max(tmpdir, min_: int, max_: int, field_config: str, storage):
     with tmpdir.as_cwd():
         config = dedent(
             """
@@ -383,7 +401,7 @@ def test_field_with_min_max(tmpdir, min_: int, max_: int, field_config: str):
         )
         gp_a.to_file("my_param_0.grdecl", fformat="grdecl")
 
-        create_runpath("config.ert", [True])
+        create_runpath(storage, "config.ert", [True])
 
         my_prop = xtgeo.gridproperty_from_file(
             pfile="simulations/realization-0/iter-0/my_param.grdecl",
@@ -403,7 +421,7 @@ def test_field_with_min_max(tmpdir, min_: int, max_: int, field_config: str):
             assert vfunc(my_prop.values.data).all()
 
 
-def test_field_with_transformation(tmpdir):
+def test_field_with_transformation(tmpdir, storage):
     with tmpdir.as_cwd():
         config = dedent(
             """
@@ -444,8 +462,7 @@ def test_field_with_transformation(tmpdir):
         )
         gp_a_2.to_file("param_a_1.grdecl", fformat="grdecl")
 
-        ert = create_runpath("config.ert", [True, True])
-        fs = ert.storage_manager["default"]
+        _, fs = create_runpath(storage, "config.ert", [True, True])
 
         # stored internally as 2.5, 1.5
         loaded_a = fs.load_field("PARAM_A", [0, 1])
@@ -482,7 +499,7 @@ def test_field_with_transformation(tmpdir):
         ),
     ],
 )
-def test_field_forward_init(tmpdir, config_str, expect_forward_init):
+def test_field_forward_init(tmpdir, config_str, expect_forward_init, storage):
     with tmpdir.as_cwd():
         config = dedent(
             """
@@ -511,12 +528,11 @@ def test_field_forward_init(tmpdir, config_str, expect_forward_init):
         )
         gp.to_file("my_param_0.grdecl", fformat="grdecl")
 
-        ert = create_runpath("config.ert")
+        ert, fs = create_runpath(storage, "config.ert")
         assert (
             ert.ensembleConfig()["MY_PARAM"].getUseForwardInit() is expect_forward_init
         )
 
-        fs = ert.storage_manager["default"]
         # Assert that the data has been written to runpath
         if expect_forward_init:
             # FORWARD_INIT: True means that ERT waits until the end of the
@@ -530,11 +546,11 @@ def test_field_forward_init(tmpdir, config_str, expect_forward_init):
 
             # We try to load the parameters from the forward model, this would fail if
             # forward init was not set correctly
-            assert load_from_forward_model(ert) == 1
+            assert load_from_forward_model(ert, fs) == 1
 
             # Once data has been internalised, ERT will generate the
             # parameter files
-            create_runpath("config.ert")
+            create_runpath(storage, "config.ert", ensemble=fs)
 
         prop = xtgeo.gridproperty_from_file(
             pfile="simulations/realization-0/iter-0/my_param.grdecl",
@@ -589,6 +605,7 @@ def test_field_forward_init(tmpdir, config_str, expect_forward_init):
     ],
 )
 def test_surface_param(
+    storage,
     tmpdir,
     config_str,
     expect_forward_init,
@@ -614,13 +631,13 @@ def test_surface_param(
 
         with open("config.ert", mode="w", encoding="utf-8") as fh:
             fh.writelines(config)
-        ert = create_runpath("config.ert")
+        ert, fs = create_runpath(storage, "config.ert")
         assert (
             ert.ensembleConfig()["MY_PARAM"].getUseForwardInit() is expect_forward_init
         )
         # We try to load the parameters from the forward model, this would fail if
         # forward init was not set correctly
-        assert load_from_forward_model(ert) == expect_num_loaded
+        assert load_from_forward_model(ert, fs) == expect_num_loaded
         assert error in "".join(caplog.messages)
 
         # Assert that the data has been written to runpath
@@ -632,13 +649,12 @@ def test_surface_param(
 
                 # Once data has been internalised, ERT will generate the
                 # parameter files
-                create_runpath("config.ert")
+                create_runpath(storage, "config.ert", ensemble=fs)
 
             actual_surface = Surface("simulations/realization-0/iter-0/surf.irap")
             assert actual_surface == expect_surface
 
         # Assert that the data has been internalised to storage
-        fs = ert.storage_manager["default"]
         if expect_num_loaded > 0:
             arr = fs.load_surface_data("MY_PARAM", [0])
             assert arr.flatten().tolist() == [0.0, 1.0, 2.0, 3.0]
@@ -655,6 +671,7 @@ def test_surface_param(
 )
 def test_copy_case(
     tmpdir,
+    storage,
     config_str,
 ):
     with tmpdir.as_cwd():
@@ -675,11 +692,16 @@ def test_copy_case(
 
         with open("config.ert", "w", encoding="utf-8") as fh:
             fh.writelines(config)
-        ert = create_runpath("config.ert", active_mask=[True for _ in range(10)])
+        ert, fs = create_runpath(
+            storage, "config.ert", active_mask=[True for _ in range(10)]
+        )
 
         # Assert that the data has been internalised to storage
-        fs = ert.storage_manager["default"]
-        new_fs = ert.storage_manager.add_case("copy")
+        new_fs = storage.create_ensemble(
+            storage.create_experiment(),
+            name="copy",
+            ensemble_size=ert.getEnsembleSize(),
+        )
         fs.copy_from_case(
             new_fs,
             ["MY_PARAM"],
@@ -693,7 +715,7 @@ def test_copy_case(
 
 @pytest.mark.integration_test
 @pytest.mark.parametrize("load_forward_init", [True, False])
-def test_gen_kw_forward_init(tmpdir, load_forward_init):
+def test_gen_kw_forward_init(tmpdir, storage, load_forward_init):
     with tmpdir.as_cwd():
         config = dedent(
             """
@@ -721,12 +743,12 @@ def test_gen_kw_forward_init(tmpdir, load_forward_init):
                     "the forward model is not supported."
                 ),
             ):
-                create_runpath("config.ert")
+                create_runpath(storage, "config.ert")
         else:
-            ert = create_runpath("config.ert")
+            ert, fs = create_runpath(storage, "config.ert")
             assert Path("simulations/realization-0/iter-0/kw.txt").exists()
             facade = LibresFacade(ert)
-            df = facade.load_all_gen_kw_data("default")
+            df = facade.load_all_gen_kw_data(fs)
             assert df["KW_NAME:MY_KEYWORD"][0] == 1.31
 
 
@@ -744,7 +766,9 @@ def test_gen_kw_forward_init(tmpdir, load_forward_init):
         ),
     ],
 )
-def test_initialize_random_seed(tmpdir, caplog, check_random_seed, expectation):
+def test_initialize_random_seed(
+    tmpdir, storage, caplog, check_random_seed, expectation
+):
     """
     This test initializes a case twice, the first time without a random
     seed.
@@ -763,7 +787,7 @@ def test_initialize_random_seed(tmpdir, caplog, check_random_seed, expectation):
             fh.writelines("MY_KEYWORD <MY_KEYWORD>")
         with open("prior.txt", mode="w", encoding="utf-8") as fh:
             fh.writelines("MY_KEYWORD NORMAL 0 1")
-        create_runpath("config.ert")
+        create_runpath(storage, "config.ert")
         # We read the first parameter value as a reference value
         expected = Path("simulations/realization-0/iter-0/kw.txt").read_text("utf-8")
 
@@ -783,7 +807,7 @@ def test_initialize_random_seed(tmpdir, caplog, check_random_seed, expectation):
         with open("prior.txt", mode="w", encoding="utf-8") as fh:
             fh.writelines("MY_KEYWORD NORMAL 0 1")
 
-        create_runpath("config_2.ert")
+        create_runpath(storage, "config_2.ert")
         with expectation:
             assert (
                 Path("simulations/realization-0/iter-0/kw.txt").read_text("utf-8")
@@ -791,7 +815,7 @@ def test_initialize_random_seed(tmpdir, caplog, check_random_seed, expectation):
             )
 
 
-def test_that_first_three_parameters_sampled_snapshot(tmpdir):
+def test_that_first_three_parameters_sampled_snapshot(tmpdir, storage):
     """
     Nothing special about the first three, but there was a regression
     in nr. 2, so added one extra.
@@ -811,8 +835,7 @@ def test_that_first_three_parameters_sampled_snapshot(tmpdir):
             fh.writelines("MY_KEYWORD <MY_KEYWORD>")
         with open("prior.txt", mode="w", encoding="utf-8") as fh:
             fh.writelines("MY_KEYWORD NORMAL 0 1")
-        ert = create_runpath("config.ert", [True] * 3)
-        fs = ert.storage_manager.current_case
+        _, fs = create_runpath(storage, "config.ert", [True] * 3)
         prior = fs.load_gen_kw("KW_NAME", list(range(3)))
         expected = [-0.8814228, 1.5847818, 1.009956]
         np.testing.assert_almost_equal(prior, np.array([expected]))
@@ -839,7 +862,9 @@ def test_that_first_three_parameters_sampled_snapshot(tmpdir):
         ),
     ],
 )
-def test_that_sampling_is_fixed_from_name(tmpdir, template, prior, num_realisations):
+def test_that_sampling_is_fixed_from_name(
+    tmpdir, storage, template, prior, num_realisations
+):
     """
     Testing that the order and number of parameters is not relevant for the values,
     only that name of the parameter and the global seed determine the values.
@@ -862,8 +887,13 @@ def test_that_sampling_is_fixed_from_name(tmpdir, template, prior, num_realisati
         res_config = ErtConfig.from_file("config.ert")
         ert = EnKFMain(res_config)
 
-        run_context = ert.create_ensemble_context(
-            "prior",
+        fs = storage.create_ensemble(
+            storage.create_experiment(),
+            name="prior",
+            ensemble_size=ert.getEnsembleSize(),
+        )
+        run_context = ert.ensemble_context(
+            fs,
             [True] * num_realisations,
             iteration=0,
         )
@@ -873,7 +903,7 @@ def test_that_sampling_is_fixed_from_name(tmpdir, template, prior, num_realisati
         seed = np.frombuffer(key_hash.digest(), dtype="uint32")
         expected = np.random.default_rng(seed).standard_normal(num_realisations)
         assert LibresFacade(ert).gather_gen_kw_data(
-            "prior", "KW_NAME:MY_KEYWORD"
+            fs, "KW_NAME:MY_KEYWORD"
         ).values.flatten().tolist() == list(expected)
 
 
@@ -905,7 +935,7 @@ def test_that_sampling_is_fixed_from_name(tmpdir, template, prior, num_realisati
         ),
     ],
 )
-def test_that_sub_sample_maintains_order(tmpdir, mask, expected):
+def test_that_sub_sample_maintains_order(tmpdir, storage, mask, expected):
     with tmpdir.as_cwd():
         config = dedent(
             """
@@ -923,17 +953,22 @@ def test_that_sub_sample_maintains_order(tmpdir, mask, expected):
 
         res_config = ErtConfig.from_file("config.ert")
         ert = EnKFMain(res_config)
+        facade = LibresFacade(ert)
 
-        run_context = ert.create_ensemble_context(
-            "prior",
+        fs = storage.create_ensemble(
+            storage.create_experiment(),
+            name="prior",
+            ensemble_size=ert.getEnsembleSize(),
+        )
+        run_context = ert.ensemble_context(
+            fs,
             mask,
             iteration=0,
         )
         ert.sample_prior(run_context.sim_fs, run_context.active_realizations)
 
         assert (
-            LibresFacade(ert)
-            .gather_gen_kw_data("prior", "KW_NAME:MY_KEYWORD")
+            facade.gather_gen_kw_data(fs, "KW_NAME:MY_KEYWORD")
             .values.flatten()
             .tolist()
             == expected
@@ -1062,11 +1097,12 @@ if __name__ == "__main__":
 
         run_cli(parsed)
         ert = EnKFMain(ErtConfig.from_file("config.ert"))
-        prior = ert.storage_manager["prior"]
-        posterior = ert.storage_manager["smoother_update"]
+        with open_storage(ert.resConfig().ens_path) as storage:
+            prior = storage.get_ensemble_by_name("prior")
+            posterior = storage.get_ensemble_by_name("smoother_update")
 
-        prior_param = prior.load_field("MY_PARAM", list(range(5)))
-        posterior_param = posterior.load_field("MY_PARAM", list(range(5)))
+            prior_param = prior.load_field("MY_PARAM", list(range(5)))
+            posterior_param = posterior.load_field("MY_PARAM", list(range(5)))
 
         assert prior_param.shape == (100, 5)
         assert posterior_param.shape == (100, 5)
@@ -1185,10 +1221,12 @@ if __name__ == "__main__":
 
         run_cli(parsed)
         ert = EnKFMain(ErtConfig.from_file("config.ert"))
-        prior = ert.storage_manager["prior"]
-        posterior = ert.storage_manager["smoother_update"]
-        prior_param = prior.load_surface_data("MY_PARAM", list(range(5)))
-        posterior_param = posterior.load_surface_data("MY_PARAM", list(range(5)))
-        assert np.linalg.det(np.cov(prior_param)) > np.linalg.det(
-            np.cov(posterior_param)
-        )
+
+        with open_storage(str(tmpdir / "storage")) as storage:
+            prior = storage.get_ensemble_by_name("prior")
+            posterior = storage.get_ensemble_by_name("smoother_update")
+            prior_param = prior.load_surface_data("MY_PARAM", list(range(5)))
+            posterior_param = posterior.load_surface_data("MY_PARAM", list(range(5)))
+            assert np.linalg.det(np.cov(prior_param)) > np.linalg.det(
+                np.cov(posterior_param)
+            )

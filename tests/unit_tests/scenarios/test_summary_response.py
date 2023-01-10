@@ -13,6 +13,16 @@ from ert.analysis import ErtAnalysisError, ESUpdate
 
 
 @pytest.fixture
+def prior_ensemble(storage):
+    return storage.create_experiment().create_ensemble(ensemble_size=100, name="prior")
+
+
+@pytest.fixture
+def target_ensemble(storage):
+    return storage.create_experiment().create_ensemble(ensemble_size=100, name="target")
+
+
+@pytest.fixture
 def setup_configuration(tmpdir):
     with tmpdir.as_cwd():
         config = dedent(
@@ -52,7 +62,7 @@ def setup_configuration(tmpdir):
         yield ert
 
 
-def create_responses(ert, response_times):
+def create_responses(ert, prior_ensemble, response_times):
     cwd = Path().absolute()
     rng = np.random.default_rng(seed=1234)
     for i, response_time in enumerate(response_times):
@@ -62,32 +72,31 @@ def create_responses(ert, response_times):
         run_sim(response_time, rng.standard_normal())
     os.chdir(cwd)
     facade = LibresFacade(ert)
-    facade.load_from_forward_model("default", [True] * facade.get_ensemble_size(), 0)
+    facade.load_from_forward_model(
+        prior_ensemble, [True] * facade.get_ensemble_size(), 0
+    )
 
 
 def test_that_reading_matching_time_is_ok(
-    setup_configuration,
+    setup_configuration, prior_ensemble, target_ensemble
 ):
     ert = setup_configuration
-    fsm = ert.storage_manager
-    sim_fs = fsm["default"]
-    ert.sample_prior(sim_fs, list(range(ert.getEnsembleSize())))
+    ert.sample_prior(prior_ensemble, list(range(ert.getEnsembleSize())))
 
-    create_responses(ert, ert.getEnsembleSize() * [[datetime(2014, 9, 9)]])
+    create_responses(
+        ert, prior_ensemble, ert.getEnsembleSize() * [[datetime(2014, 9, 9)]]
+    )
 
     es_update = ESUpdate(ert)
 
-    target_fs = fsm.add_case("target")
-    es_update.smootherUpdate(sim_fs, target_fs, "an id")
+    es_update.smootherUpdate(prior_ensemble, target_ensemble, "an id")
 
 
 def test_that_mismatched_responses_give_error(
-    setup_configuration,
+    setup_configuration, prior_ensemble, target_ensemble
 ):
     ert = setup_configuration
-    fsm = ert.storage_manager
-    sim_fs = fsm["default"]
-    ert.sample_prior(sim_fs, list(range(ert.getEnsembleSize())))
+    ert.sample_prior(prior_ensemble, list(range(ert.getEnsembleSize())))
 
     response_times = [
         [
@@ -96,22 +105,21 @@ def test_that_mismatched_responses_give_error(
             datetime(2017, 9, 9),
         ]
     ]
-    create_responses(ert, response_times)
+    create_responses(ert, prior_ensemble, response_times)
 
     es_update = ESUpdate(ert)
 
-    target_fs = fsm.add_case("target")
     with pytest.raises(ErtAnalysisError):
-        es_update.smootherUpdate(sim_fs, target_fs, "an id")
+        es_update.smootherUpdate(prior_ensemble, target_ensemble, "an id")
 
 
 def test_that_different_length_is_ok_as_long_as_observation_time_exists(
     setup_configuration,
+    prior_ensemble,
+    target_ensemble,
 ):
     ert = setup_configuration
-    fsm = ert.storage_manager
-    sim_fs = fsm["default"]
-    ert.sample_prior(sim_fs, list(range(ert.getEnsembleSize())))
+    ert.sample_prior(prior_ensemble, list(range(ert.getEnsembleSize())))
     response_times = [
         [datetime(2014, 9, 9)],
         [datetime(2014, 9, 9)],
@@ -119,12 +127,11 @@ def test_that_different_length_is_ok_as_long_as_observation_time_exists(
         [datetime(2014, 9, 9)],
         [datetime(2014, 9, 9), datetime(1988, 9, 9)],
     ]
-    create_responses(ert, response_times)
+    create_responses(ert, prior_ensemble, response_times)
 
     es_update = ESUpdate(ert)
 
-    target_fs = fsm.add_case("target")
-    es_update.smootherUpdate(sim_fs, target_fs, "an id")
+    es_update.smootherUpdate(prior_ensemble, target_ensemble, "an id")
 
 
 def run_sim(dates, value):
