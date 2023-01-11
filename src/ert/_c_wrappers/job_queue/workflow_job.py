@@ -101,22 +101,24 @@ class WorkflowJob(BaseCClass):
 
         return False
 
-    def argumentTypes(self) -> List[Optional["ContentTypes"]]:
-        result: List[Optional["ContentTypes"]] = []
-        for index in range(self.maximumArgumentCount()):
-            t = self._arg_type(index)
-            if t == ContentTypeEnum.CONFIG_BOOL:
-                result.append(bool)
-            elif t == ContentTypeEnum.CONFIG_FLOAT:
-                result.append(float)
-            elif t == ContentTypeEnum.CONFIG_INT:
-                result.append(int)
-            elif t == ContentTypeEnum.CONFIG_STRING:
-                result.append(str)
-            else:
-                result.append(None)
+    def contentTypes(self) -> List[Optional["ContentTypeEnum"]]:
+        return [self._arg_type(i) for i in range(self.maximumArgumentCount())]
 
-        return result
+    def argumentTypes(
+        self,
+    ) -> List[Optional[Union[Type[bool], Type[float], Type[int], Type[str]]]]:
+        def content_to_type(c: Optional[ContentTypeEnum]):
+            if c == ContentTypeEnum.CONFIG_BOOL:
+                return bool
+            if c == ContentTypeEnum.CONFIG_FLOAT:
+                return float
+            if c == ContentTypeEnum.CONFIG_INT:
+                return int
+            if c == ContentTypeEnum.CONFIG_STRING:
+                return str
+            return None
+
+        return list(map(content_to_type, self.contentTypes()))
 
     @property
     def execution_type(self):

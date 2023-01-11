@@ -3,7 +3,7 @@ from unittest.mock import patch
 
 import pytest
 
-from ert._c_wrappers.job_queue import Workflow, WorkflowJoblist, WorkflowRunner
+from ert._c_wrappers.job_queue import Workflow, WorkflowJob, WorkflowRunner
 from ert._c_wrappers.util.substitution_list import SubstitutionList
 from tests.utils import wait_until
 
@@ -14,11 +14,9 @@ from .workflow_common import WorkflowCommon
 def test_workflow_thread_cancel_ert_script():
     WorkflowCommon.createWaitJob()
 
-    joblist = WorkflowJoblist()
-    assert joblist.addJobFromFile("WAIT", "wait_job")
-    assert "WAIT" in joblist
+    wait_job = WorkflowJob.fromFile("wait_job", name="WAIT")
 
-    workflow = Workflow("wait_workflow", joblist)
+    workflow = Workflow("wait_workflow", {"WAIT": wait_job})
 
     assert len(workflow) == 3
 
@@ -52,11 +50,11 @@ def test_workflow_thread_cancel_ert_script():
 def test_workflow_thread_cancel_external():
     WorkflowCommon.createWaitJob()
 
-    joblist = WorkflowJoblist()
-    assert joblist.addJobFromFile("WAIT", "external_wait_job")
-    assert "WAIT" in joblist
-
-    workflow = Workflow("wait_workflow", joblist)
+    wait_job = WorkflowJob.fromFile(
+        name="WAIT",
+        config_file="wait_job",
+    )
+    workflow = Workflow("wait_workflow", {"WAIT": wait_job})
 
     assert len(workflow) == 3
 
@@ -82,9 +80,11 @@ def test_workflow_thread_cancel_external():
 def test_workflow_failed_job():
     WorkflowCommon.createExternalDumpJob()
 
-    joblist = WorkflowJoblist()
-    assert joblist.addJobFromFile("DUMP", "dump_failing_job")
-    workflow = Workflow("dump_workflow", joblist)
+    dump_job = WorkflowJob.fromFile(
+        name="DUMP",
+        config_file="dump_job",
+    )
+    workflow = Workflow("dump_workflow", {"DUMP": dump_job})
     assert len(workflow) == 2
 
     workflow_runner = WorkflowRunner(workflow, ert=None, context=SubstitutionList())
@@ -101,11 +101,16 @@ def test_workflow_failed_job():
 def test_workflow_success():
     WorkflowCommon.createWaitJob()
 
-    joblist = WorkflowJoblist()
-    assert joblist.addJobFromFile("WAIT", "wait_job")
-    assert joblist.addJobFromFile("EXTERNAL_WAIT", "external_wait_job")
-
-    workflow = Workflow("fast_wait_workflow", joblist)
+    external_job = WorkflowJob.fromFile(
+        name="EXTERNAL_WAIT", config_file="external_wait_job"
+    )
+    wait_job = WorkflowJob.fromFile(
+        name="WAIT",
+        config_file="wait_job",
+    )
+    workflow = Workflow(
+        "fast_wait_workflow", {"WAIT": wait_job, "EXTERNAL_WAIT": external_job}
+    )
 
     assert len(workflow) == 2
 

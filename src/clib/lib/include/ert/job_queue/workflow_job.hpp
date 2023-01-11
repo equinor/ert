@@ -21,8 +21,6 @@ extern "C" workflow_job_type *
 workflow_job_config_alloc(const char *name, config_parser_type *config,
                           const char *config_file);
 
-void workflow_job_update_config_compiler(const workflow_job_type *workflow_job,
-                                         config_parser_type *config_compiler);
 void workflow_job_set_executable(workflow_job_type *workflow_job,
                                  const char *executable);
 extern "C" PY_USED char *

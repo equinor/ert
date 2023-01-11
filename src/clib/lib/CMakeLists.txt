@@ -42,7 +42,6 @@ pybind11_add_module(
   job_queue/slurm_driver.cpp
   job_queue/torque_driver.cpp
   job_queue/workflow_job.cpp
-  job_queue/workflow_joblist.cpp
   job_queue/environment_varlist.cpp
   job_queue/job_kw_definitions.cpp
   ${lsb}
