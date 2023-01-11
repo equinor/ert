@@ -9,10 +9,9 @@
 #include <ert/util/test_util.h>
 #include <ert/util/test_work_area.hpp>
 
-void test_report_steps_dynamic() {
+void test_report_steps() {
     gen_data_config_type *config =
         gen_data_config_alloc_GEN_DATA_result("KEY", ASCII);
-    test_assert_true(gen_data_config_is_dynamic(config));
     test_assert_int_equal(0, gen_data_config_num_report_step(config));
     test_assert_false(gen_data_config_has_report_step(config, 0));
 
@@ -122,7 +121,7 @@ int main(int argc, char **argv) {
     const char *gendata_file = argv[1];
     const char *gendata_file_empty = argv[2];
     util_install_signals();
-    test_report_steps_dynamic();
+    test_report_steps();
     test_result_format();
     test_set_invalid_format();
     test_format_check();

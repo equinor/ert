@@ -43,8 +43,6 @@ struct gen_data_config_struct {
     /* All the fields below this line are related to the capability of the
      * forward model to deactivate elements in a gen_data instance. See
      * documentation above. */
-    bool dynamic;
-    /** NBNB This will be NULL in the case of instances which are used as parameters. */
     enkf_fs_type *last_read_fs;
     int ens_size;
     bool mask_modified;
@@ -85,8 +83,7 @@ int gen_data_config_get_initial_size(const gen_data_config_type *config) {
     return initial_size;
 }
 
-static gen_data_config_type *gen_data_config_alloc(const char *key,
-                                                   bool dynamic) {
+static gen_data_config_type *gen_data_config_alloc(const char *key) {
     gen_data_config_type *config =
         (gen_data_config_type *)util_malloc(sizeof *config);
 
@@ -102,7 +99,6 @@ static gen_data_config_type *gen_data_config_alloc(const char *key,
     config->active_report_step = -1;
     config->ens_size = -1;
     config->last_read_fs = NULL;
-    config->dynamic = dynamic;
     pthread_mutex_init(&config->update_lock, NULL);
 
     return config;
@@ -111,7 +107,7 @@ static gen_data_config_type *gen_data_config_alloc(const char *key,
 gen_data_config_type *
 gen_data_config_alloc_GEN_DATA_result(const char *key,
                                       gen_data_file_format_type input_format) {
-    gen_data_config_type *config = gen_data_config_alloc(key, true);
+    gen_data_config_type *config = gen_data_config_alloc(key);
 
     if (input_format == ASCII_TEMPLATE)
         util_abort("%s: Sorry can not use INPUT_FORMAT:ASCII_TEMPLATE\n",
@@ -127,10 +123,7 @@ gen_data_config_alloc_GEN_DATA_result(const char *key,
 
 const bool_vector_type *
 gen_data_config_get_active_mask(const gen_data_config_type *config) {
-    if (config->dynamic)
-        return config->active_mask;
-    else
-        return NULL;
+    return config->active_mask;
 }
 
 /**
@@ -290,9 +283,6 @@ bool gen_data_config_has_active_mask(const gen_data_config_type *config,
 */
 void gen_data_config_load_active(gen_data_config_type *config, enkf_fs_type *fs,
                                  int report_step, bool force_load) {
-    if (!config->dynamic)
-        return;
-
     bool fs_changed = false;
     if (fs != config->last_read_fs) {
         config->last_read_fs = fs;
@@ -360,11 +350,9 @@ bool gen_data_config_has_report_step(const gen_data_config_type *config,
 
 void gen_data_config_add_report_step(gen_data_config_type *config,
                                      int report_step) {
-    if (config->dynamic) {
-        if (!gen_data_config_has_report_step(config, report_step)) {
-            int_vector_append(config->active_report_steps, report_step);
-            int_vector_sort(config->active_report_steps);
-        }
+    if (!gen_data_config_has_report_step(config, report_step)) {
+        int_vector_append(config->active_report_steps, report_step);
+        int_vector_sort(config->active_report_steps);
     }
 }
 
@@ -380,10 +368,6 @@ gen_data_config_get_active_report_steps(const gen_data_config_type *config) {
 
 void gen_data_config_set_ens_size(gen_data_config_type *config, int ens_size) {
     config->ens_size = ens_size;
-}
-
-bool gen_data_config_is_dynamic(const gen_data_config_type *config) {
-    return config->dynamic;
 }
 
 bool gen_data_config_valid_result_format(const char *result_file_fmt) {
