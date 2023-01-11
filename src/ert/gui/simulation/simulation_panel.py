@@ -9,6 +9,7 @@ from qtpy.QtWidgets import (
     QLabel,
     QMessageBox,
     QStackedWidget,
+    QStyle,
     QToolButton,
     QVBoxLayout,
     QWidget,
@@ -55,7 +56,21 @@ class SimulationPanel(QWidget):
             self._simulation_mode_combo, 0, Qt.AlignVCenter
         )
 
-        simulation_mode_layout.addSpacing(20)
+        if not self.facade.have_observations:
+            self.warn_button = QToolButton()
+            self.warn_button.setObjectName("Warn_icon_button")
+            self.warn_button.setIcon(
+                self.style().standardIcon(QStyle.SP_MessageBoxWarning)
+            )
+            self.warn_button.setStyleSheet("border: 0px solid;")
+            self.warn_button.setToolTip(
+                "Some simulation modes are disabled due to no observations found"
+            )
+            height = 20
+            self.warn_button.setIconSize(QSize(height, height))
+            simulation_mode_layout.addWidget(self.warn_button)
+        else:
+            simulation_mode_layout.addSpacing(20)
 
         self.run_button = QToolButton()
         self.run_button.setObjectName("start_simulation")
@@ -81,26 +96,37 @@ class SimulationPanel(QWidget):
 
         self._simulation_widgets = OrderedDict()
         """ :type: OrderedDict[BaseRunModel,SimulationConfigPanel]"""
-        self.addSimulationConfigPanel(SingleTestRunPanel(ert, notifier))
-        self.addSimulationConfigPanel(EnsembleExperimentPanel(ert, notifier))
-        if self.facade.have_observations:
-            self.addSimulationConfigPanel(EnsembleSmootherPanel(ert, notifier))
-            self.addSimulationConfigPanel(
-                MultipleDataAssimilationPanel(self.facade, notifier)
-            )
-            self.addSimulationConfigPanel(
-                IteratedEnsembleSmootherPanel(self.facade, notifier)
-            )
+        self.addSimulationConfigPanel(SingleTestRunPanel(ert, notifier), True)
+        self.addSimulationConfigPanel(EnsembleExperimentPanel(ert, notifier), True)
+        self.addSimulationConfigPanel(
+            EnsembleSmootherPanel(ert, notifier), self.facade.have_observations
+        )
+        self.addSimulationConfigPanel(
+            MultipleDataAssimilationPanel(self.facade, notifier),
+            self.facade.have_observations,
+        )
+        self.addSimulationConfigPanel(
+            IteratedEnsembleSmootherPanel(self.facade, notifier),
+            self.facade.have_observations,
+        )
 
         self.setLayout(layout)
 
-    def addSimulationConfigPanel(self, panel):
+    def addSimulationConfigPanel(self, panel, mode_enabled: bool):
 
         assert isinstance(panel, SimulationConfigPanel)
         self._simulation_stack.addWidget(panel)
         simulation_model = panel.getSimulationModel()
         self._simulation_widgets[simulation_model] = panel
         self._simulation_mode_combo.addItem(simulation_model.name(), simulation_model)
+
+        if not mode_enabled:
+            item_count = self._simulation_mode_combo.count() - 1
+            sim_item = self._simulation_mode_combo.model().item(item_count)
+            sim_item.setEnabled(False)
+            sim_item.setToolTip("Disabled due to no observations")
+            sim_item.setIcon(self.style().standardIcon(QStyle.SP_MessageBoxWarning))
+
         panel.simulationConfigurationChanged.connect(self.validationStatusChanged)
 
     def getActions(self):
