@@ -699,12 +699,12 @@ and/or history matching project.
         For Assisted history matching, the variables in ERT should be normally
         distributed internally - the purpose of the transformations is to enable
         working with normally distributed variables internally in ERT. Thus, the
-        optional arguments INIT_TRANSFORM:FUNC and OUTPUT_TRANSFORM:FUNC are used to
-        transform the user input of parameter distribution. INIT_TRANSFORM:FUNC is a
-        function which will be applied when they are loaded to ERT.
-        OUTPUT_TRANSFORM:FUNC is a function which will be applied to the field when it
-        is exported from ERT, and FUNC is the name of a transformation function to be
-        applied. The avaialble functions are listed below:
+        optional arguments ``INIT_TRANSFORM:FUNC`` and ``OUTPUT_TRANSFORM:FUNC`` are used to
+        transform the user input of parameter distribution. ``INIT_TRANSFORM:FUNC`` is a
+        function which will be applied when the field is loaded into ERT.
+        ``OUTPUT_TRANSFORM:FUNC`` is a function which will be applied to the field when it
+        is exported from ERT, and ``FUNC`` is the name of a transformation function to be
+        applied. The available functions are listed below:
 
         | "POW10"                       : This function will raise x to the power of 10: :math:`y = 10^x`
         | "TRUNC_POW10" : This function will raise x to the power of 10 - and truncate lower values at 0.001.
@@ -715,19 +715,15 @@ and/or history matching project.
         | "LN0"                 : This function will calculate :math:`y = \ln{x} + 0.000001`
         | "EXP0"                        : This function will calculate :math:`y = e^x - 0.000001`
 
-        For example, the most common scenario is that underlying log-normal
-        distributed permeability in RMS are transformed to normally distributted in
-        ERT, then you do:
+        The most common scenario is that underlying log-normal distributed permeability in the
+        geo modelling software is transformed to become normally distributed in ERT, to achieve this you do:
 
-        INIT_TRANSFORM:LOG To ensure that the variables which were initially
+        1. ``INIT_TRANSFORM:LOG`` To ensure that the variables which were initially
         log-normal distributed are transformed to normal distribution when they are
         loaded into ERT.
 
-        OUTPUT_TRANSFORM:EXP To ensure that the variables are reexponentiated to be
+        2. ``OUTPUT_TRANSFORM:EXP`` To ensure that the variables are reexponentiated to be
         log-normal distributed before going out to Eclipse.
-
-        If users specify the wrong function name (e.g INIT_TRANSFORM:I_DONT_KNOW), ERT
-        will stop and print all the valid function names.
 
         Regarding format of ECLIPSE_FILE: The default format for the parameter fields
         is binary format of the same type as used in the ECLIPSE restart files. This

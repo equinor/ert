@@ -153,49 +153,6 @@ void field_trans_table_free(field_trans_table_type *table) {
     free(table);
 }
 
-/* Rubakumar specials: start  */
-#define PERMX_MEAN 100
-#define PERMX_STD 1
-
-#define PERMZ_MEAN 100
-#define PERMZ_STD 1
-
-#define PORO_MEAN 100
-#define PORO_STD 1
-
-static float normalize(float x, float mean, float std) {
-    return (x - mean) / std;
-}
-
-static float denormalize(float x, float mean, float std) {
-    return (x * std) + mean;
-}
-
-static float normalize_permx(float x) {
-    return normalize(x, PERMX_MEAN, PERMX_STD);
-}
-
-static float denormalize_permx(float x) {
-    return denormalize(x, PERMX_MEAN, PERMX_STD);
-}
-
-static float normalize_permz(float x) {
-    return normalize(x, PERMZ_MEAN, PERMZ_STD);
-}
-
-static float denormalize_permz(float x) {
-    return denormalize(x, PERMZ_MEAN, PERMZ_STD);
-}
-
-static float normalize_poro(float x) {
-    return normalize(x, PORO_MEAN, PORO_STD);
-}
-
-static float denormalize_poro(float x) {
-    return denormalize(x, PORO_MEAN, PORO_STD);
-}
-/* Rubakumar specials: end  */
-
 static float field_trans_pow10(float x) { return powf(10.0, x); }
 
 static float trunc_pow10f(float x) {
@@ -238,16 +195,6 @@ field_trans_table_type *field_trans_table_alloc() {
     field_trans_table_add(table, "EXP0",
                           "This function will calculate y = exp(x) - 0.000001",
                           field_trans_exp0);
-
-    // Rubakumar specials:
-    field_trans_table_add(table, "NORMALIZE_PERMX", "...", normalize_permx);
-    field_trans_table_add(table, "DENORMALIZE_PERMX", "...", denormalize_permx);
-
-    field_trans_table_add(table, "NORMALIZE_PERMZ", "...", normalize_permz);
-    field_trans_table_add(table, "DENORMALIZE_PERMZ", "...", denormalize_permz);
-
-    field_trans_table_add(table, "NORMALIZE_PORO", "...", normalize_poro);
-    field_trans_table_add(table, "DENORMALIZE_PORO", "...", denormalize_poro);
 
     table->case_sensitive = false;
     return table;

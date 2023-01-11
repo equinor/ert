@@ -12,6 +12,7 @@ from hypothesis import assume, note
 from py import path as py_path
 
 from ert._c_wrappers.enkf import ConfigKeys
+from ert._c_wrappers.enkf.config.enkf_config_node import FIELD_FUNCTION_NAMES
 from ert._c_wrappers.job_queue import QueueDriverEnum
 
 from .egrid_generator import egrids
@@ -43,29 +44,9 @@ def report_steps(draw):
     return ",".join(str(step) for step in sorted(rep_steps))
 
 
-transforms = st.sampled_from(
-    [
-        "DENORMALIZE_PERMX",
-        "NORMALIZE_PORO",
-        "LN",
-        "LOG10",
-        "EXP0",
-        "LOG",
-        "EXP",
-        "TRUNC_POW10",
-        "LN0",
-        "DENORMALIZE_PORO",
-        "NORMALIZE_PERMZ",
-        "NORMALIZE_PERMX",
-        "DENORMALIZE_PERMZ",
-        "POW10",
-    ]
-)
-
-
+transforms = st.sampled_from(FIELD_FUNCTION_NAMES)
 small_floats = st.floats(min_value=1.0, max_value=10.0, allow_nan=False)
 positives = st.integers(min_value=1, max_value=10000)
-
 queue_systems = st.sampled_from(["LSF", "LOCAL", "TORQUE", "SLURM"])
 
 

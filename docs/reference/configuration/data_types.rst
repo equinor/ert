@@ -398,10 +398,10 @@ with normally distributed variables internally in ERT and expose another
 distribution to the forward model through the use of transformations. Thus, the
 optional arguments ``INIT_TRANSFORM:FUNC`` and ``OUTPUT_TRANSFORM:FUNC`` are
 used to transform the user input of parameter distribution.
-``INIT_TRANSFORM:FUNC`` is a function which will be applied when the field are
+``INIT_TRANSFORM:FUNC`` is a function which will be applied when the field is
 loaded into ERT. ``OUTPUT_TRANSFORM:FUNC`` is a function which will be applied to
 the field when it is exported from ERT, and ``FUNC`` is the name of a transformation
-function to be applied. The avaialble functions are listed below:
+function to be applied. The available functions are listed below:
 
 | "POW10"			: This function will raise x to the power of 10: :math:`y = 10^x`
 | "TRUNC_POW10"	: This function will raise x to the power of 10 - and truncate lower values at 0.001.
@@ -419,7 +419,7 @@ achieve this you do:
 
 1. ``INIT_TRANSFORM:LOG`` To ensure that the variables which were initially
    log-normal distributed are transformed to normal distribution when they are
-   loaded into ert.
+   loaded into ERT.
 
 2. ``OUTPUT_TRANSFORM:EXP`` To ensure that the variables are reexponentiated to
    be log-normal distributed before going out to Eclipse.
