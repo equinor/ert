@@ -152,6 +152,15 @@ class EnKFMain:
             config.ensemble_config,
         )
         if config.model_config.obs_config_file:
+            if (
+                os.path.isfile(config.model_config.obs_config_file)
+                and os.path.getsize(config.model_config.obs_config_file) == 0
+            ):
+                raise ValueError(
+                    f"Empty observations file: "
+                    f"{config.model_config.obs_config_file}"
+                )
+
             if self._observations.error:
                 raise ValueError(
                     f"Incorrect observations file: "

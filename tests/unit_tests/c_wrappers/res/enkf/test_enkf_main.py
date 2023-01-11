@@ -199,6 +199,29 @@ def test_observations(minimum_case):
         assert summary_observation_node.getSummaryKey() == summary_key
 
 
+def test_empty_observations_file_cause_exception(tmpdir):
+    with tmpdir.as_cwd():
+        config = dedent(
+            """
+        JOBNAME my_name%d
+        NUM_REALIZATIONS 10
+        OBS_CONFIG observations
+        """
+        )
+        with open("config.ert", "w", encoding="utf-8") as fh:
+            fh.writelines(config)
+        with open("observations", "w", encoding="utf-8") as fh:
+            fh.writelines("")
+
+        res_config = ResConfig("config.ert")
+
+        with pytest.raises(
+            expected_exception=ValueError,
+            match="Empty observations file.*",
+        ):
+            EnKFMain(res_config)
+
+
 def test_config(minimum_case):
 
     assert isinstance(minimum_case.ensembleConfig(), EnsembleConfig)
