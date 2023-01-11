@@ -5,7 +5,7 @@ from unittest.mock import MagicMock, Mock, PropertyMock
 
 import pytest
 from qtpy.QtCore import Qt, QTimer
-from qtpy.QtWidgets import QDialog, QMessageBox, QPushButton, QWidget
+from qtpy.QtWidgets import QComboBox, QDialog, QMessageBox, QToolButton, QWidget
 
 import ert.gui
 from ert.gui.ertwidgets.message_box import ErtMessageBox
@@ -195,8 +195,27 @@ def test_that_errors_are_shown_in_the_suggester_window_when_present(
     assert gui.windowTitle() == "Some problems detected"
 
 
-def test_that_the_suggester_starts_when_there_are_no_observations(
-    monkeypatch, qapp, qtbot, tmp_path
+@pytest.mark.usefixtures("copy_poly_case")
+def test_that_the_ui_show_no_warnings_when_observations_found(
+    monkeypatch, qapp, tmp_path
+):
+    args = Mock()
+    args.config = "poly.ert"
+    with add_gui_log_handler() as log_handler:
+        gui, _ = ert.gui.gert_main._start_initial_gui_window(args, log_handler)
+        button = gui.findChild(QToolButton, name="Warn_icon_button")
+        assert not button
+        combo_box = gui.findChild(QComboBox, name="Simulation_mode")
+        assert combo_box.count() == 5
+
+        for i in range(combo_box.count()):
+            assert combo_box.model().item(i).isEnabled()
+
+        assert gui.windowTitle() == "ERT - poly.ert"
+
+
+def test_that_the_ui_show_warnings_when_there_are_no_observations(
+    monkeypatch, qapp, tmp_path
 ):
     config_file = tmp_path / "config.ert"
     config_file.write_text("NUM_REALIZATIONS 1\n")
@@ -205,15 +224,21 @@ def test_that_the_suggester_starts_when_there_are_no_observations(
     args.config = str(config_file)
     with add_gui_log_handler() as log_handler:
         gui, _ = ert.gui.gert_main._start_initial_gui_window(args, log_handler)
-        assert gui.windowTitle() == "Some problems detected"
-        gui.show()
-        button = gui.findChild(QPushButton, name="run_ert_button")
-        qtbot.mouseClick(button, Qt.LeftButton)
-
-        qtbot.wait_until(
-            lambda: qapp.activeWindow() is not None
-            and qapp.activeWindow().windowTitle() == "ERT - config.ert"
+        button = gui.findChild(QToolButton, name="Warn_icon_button")
+        assert button
+        assert (
+            button.toolTip()
+            == "Some simulation modes are disabled due to no observations found"
         )
+        combo_box = gui.findChild(QComboBox, name="Simulation_mode")
+        assert combo_box.count() == 5
+
+        for i in range(2):
+            assert combo_box.model().item(i).isEnabled()
+        for i in range(2, 5):
+            assert not combo_box.model().item(i).isEnabled()
+
+        assert gui.windowTitle() == "ERT - config.ert"
 
 
 @pytest.mark.usefixtures("copy_poly_case")

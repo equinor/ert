@@ -96,8 +96,6 @@ def _start_initial_gui_window(args, log_handler):
     except Exception as error:
         messages.append(str(error))
         return _setup_suggester(messages, args, None, log_handler), None
-    if not ert.have_observations():
-        messages.append("No observations loaded. Model update algorithms disabled!")
 
     locale_msg = _check_locale()
     if locale_msg is not None:
