@@ -153,10 +153,7 @@ C_USED void gen_data_read_from_buffer(gen_data_type *gen_data,
                                 byte_size);
     }
     gen_data_assert_size(gen_data, size, report_step);
-
-    if (gen_data_config_is_dynamic(gen_data->config)) {
-        gen_data_config_load_active(gen_data->config, fs, report_step, false);
-    }
+    gen_data_config_load_active(gen_data->config, fs, report_step, false);
 }
 
 void gen_data_serialize(const gen_data_type *gen_data, node_id_type node_id,
@@ -190,9 +187,8 @@ static void gen_data_set_data__(gen_data_type *gen_data, int size,
                                 int report_step, const void *data,
                                 enkf_fs_type *sim_fs) {
     gen_data_assert_size(gen_data, size, report_step);
-    if (gen_data_config_is_dynamic(gen_data->config))
-        gen_data_config_update_active(gen_data->config, report_step,
-                                      gen_data->active_mask, sim_fs);
+    gen_data_config_update_active(gen_data->config, report_step,
+                                  gen_data->active_mask, sim_fs);
 
     gen_data_realloc_data(gen_data);
 
@@ -218,40 +214,36 @@ static bool gen_data_fload_active__(gen_data_type *gen_data,
      all-true (i.e. the default true value is invoked).
   */
     bool file_exists = false;
-    if (gen_data_config_is_dynamic(gen_data->config)) {
-        bool_vector_reset(gen_data->active_mask);
-        bool_vector_iset(gen_data->active_mask, size - 1, true);
-        {
-            char *active_file = util_alloc_sprintf("%s_active", filename);
-            if (fs::exists(active_file)) {
-                file_exists = true;
-                FILE *stream = util_fopen(active_file, "r");
-                int active_int;
-                for (int index = 0; index < size; index++) {
-                    if (fscanf(stream, "%d", &active_int) == 1) {
-                        if (active_int == 1)
-                            bool_vector_iset(gen_data->active_mask, index,
-                                             true);
-                        else if (active_int == 0)
-                            bool_vector_iset(gen_data->active_mask, index,
-                                             false);
-                        else
-                            util_abort("%s: error when loading active mask "
-                                       "from:%s only 0 and 1 allowed \n",
-                                       __func__, active_file);
-                    } else
-                        util_abort("%s: error when loading active mask from:%s "
-                                   "- file not long enough.\n",
+    bool_vector_reset(gen_data->active_mask);
+    bool_vector_iset(gen_data->active_mask, size - 1, true);
+    {
+        char *active_file = util_alloc_sprintf("%s_active", filename);
+        if (fs::exists(active_file)) {
+            file_exists = true;
+            FILE *stream = util_fopen(active_file, "r");
+            int active_int;
+            for (int index = 0; index < size; index++) {
+                if (fscanf(stream, "%d", &active_int) == 1) {
+                    if (active_int == 1)
+                        bool_vector_iset(gen_data->active_mask, index, true);
+                    else if (active_int == 0)
+                        bool_vector_iset(gen_data->active_mask, index, false);
+                    else
+                        util_abort("%s: error when loading active mask "
+                                   "from:%s only 0 and 1 allowed \n",
                                    __func__, active_file);
-                }
-                fclose(stream);
-                logger->info("GEN_DATA({}): active information loaded from:{}.",
-                             gen_data_get_key(gen_data), active_file);
-            } else
-                logger->info("GEN_DATA({}): active information not provided.",
-                             gen_data_get_key(gen_data));
-            free(active_file);
-        }
+                } else
+                    util_abort("%s: error when loading active mask from:%s "
+                               "- file not long enough.\n",
+                               __func__, active_file);
+            }
+            fclose(stream);
+            logger->info("GEN_DATA({}): active information loaded from:{}.",
+                         gen_data_get_key(gen_data), active_file);
+        } else
+            logger->info("GEN_DATA({}): active information not provided.",
+                         gen_data_get_key(gen_data));
+        free(active_file);
     }
     return file_exists;
 }

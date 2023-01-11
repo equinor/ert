@@ -20,7 +20,6 @@ typedef enum {
 } /*   The data is in a binary file with floats. */
 gen_data_file_format_type;
 
-bool gen_data_config_is_dynamic(const gen_data_config_type *config);
 void gen_data_config_load_active(gen_data_config_type *config, enkf_fs_type *fs,
                                  int report_step, bool force_load);
 bool gen_data_config_valid_result_format(const char *result_file_fmt);
