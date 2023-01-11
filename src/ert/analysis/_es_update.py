@@ -153,16 +153,18 @@ def analysis_ES(
     )
     # Looping over local analysis update_step
     for update_step in updatestep:
-
-        S, observation_handle = update.load_observations_and_responses(
-            source_fs,
-            obs,
-            alpha,
-            std_cutoff,
-            global_scaling,
-            ens_mask,
-            update_step.observation_config(),
-        )
+        try:
+            S, observation_handle = update.load_observations_and_responses(
+                source_fs,
+                obs,
+                alpha,
+                std_cutoff,
+                global_scaling,
+                ens_mask,
+                update_step.observation_config(),
+            )
+        except IndexError as e:
+            raise ErtAnalysisError(e)
         # pylint: disable=unsupported-assignment-operation
         smoother_snapshot.update_step_snapshots[
             update_step.name
@@ -234,16 +236,18 @@ def analysis_IES(
 
     # Looping over local analysis update_step
     for update_step in updatestep:
-
-        S, observation_handle = update.load_observations_and_responses(
-            source_fs,
-            obs,
-            alpha,
-            std_cutoff,
-            global_scaling,
-            ens_mask,
-            update_step.observation_config(),
-        )
+        try:
+            S, observation_handle = update.load_observations_and_responses(
+                source_fs,
+                obs,
+                alpha,
+                std_cutoff,
+                global_scaling,
+                ens_mask,
+                update_step.observation_config(),
+            )
+        except IndexError as e:
+            raise ErtAnalysisError(e)
         # pylint: disable=unsupported-assignment-operation
         smoother_snapshot.update_step_snapshots[
             update_step.name
