@@ -40,8 +40,8 @@ def test_ecl_config_creation(minimum_case):
     assert isinstance(time_map, TimeMap)
 
 
-@pytest.fixture
-def enkf_main(tmp_path, monkeypatch):
+@pytest.fixture(name="enkf_main")
+def enkf_main_fixture(tmp_path, monkeypatch):
     (tmp_path / "test.ert").write_text("NUM_REALIZATIONS 1\nJOBNAME name%d")
     monkeypatch.chdir(tmp_path)
     yield EnKFMain(ResConfig("test.ert"))
