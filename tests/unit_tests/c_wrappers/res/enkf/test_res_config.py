@@ -115,42 +115,6 @@ def test_invalid_user_config():
         ResConfig("this/is/not/a/file")
 
 
-def test_missing_config():
-    with pytest.raises(
-        ValueError,
-        match="Error trying to create ResConfig without any configuration",
-    ):
-        ResConfig()
-
-
-def test_multiple_configs():
-    with pytest.raises(
-        ValueError,
-        match="Attempting to create ResConfig object with multiple config objects",
-    ):
-        ResConfig(user_config_file="test", config="test")
-
-
-def test_missing_directory():
-    with pytest.raises(IOError):
-        ResConfig(
-            config={
-                "INTERNALS": {
-                    "CONFIG_DIRECTORY": "does_not_exist",
-                },
-                "SIMULATION": {
-                    "QUEUE_SYSTEM": {
-                        "JOBNAME": "Job%d",
-                    },
-                    "RUNPATH": "/tmp/simulations/realization-<IENS>/iter-<ITER>",
-                    "NUM_REALIZATIONS": 1,
-                    "JOB_SCRIPT": "script.sh",
-                    "ENSPATH": "Ensemble",
-                },
-            }
-        )
-
-
 def test_init(minimum_case):
     res_config = minimum_case.resConfig()
     assert res_config.model_config.data_root == res_config.config_path

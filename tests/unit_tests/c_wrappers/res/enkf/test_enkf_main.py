@@ -144,12 +144,7 @@ def test_invalid_res_config():
 
 def test_invalid_parameter_count_2_res_config():
     with pytest.raises(ValueError):
-        ResConfig(user_config_file="a", config="b")
-
-
-def test_invalid_parameter_count_3_res_config():
-    with pytest.raises(ValueError):
-        ResConfig(user_config_file="a", config="b", config_dict="c")
+        ResConfig(user_config_file="a", config_dict="b")
 
 
 def test_observations(minimum_case):
@@ -262,7 +257,7 @@ def test_random_seed_initialization_of_rngs(random_seed, tmpdir):
     and that it wraps on int32 overflow.
     """
     with tmpdir.as_cwd():
-        config = dedent(
+        config_content = dedent(
             f"""
         JOBNAME my_name%d
         NUM_REALIZATIONS 10
@@ -270,7 +265,7 @@ def test_random_seed_initialization_of_rngs(random_seed, tmpdir):
         """
         )
         with open("config.ert", "w", encoding="utf-8") as fh:
-            fh.writelines(config)
+            fh.writelines(config_content)
 
         res_config = ResConfig("config.ert")
         EnKFMain(res_config)
