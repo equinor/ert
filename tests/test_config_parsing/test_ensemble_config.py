@@ -6,7 +6,6 @@ from ert._c_wrappers.enkf import ConfigKeys, ResConfig
 from .config_dict_generator import config_generators, to_config_file
 
 
-@pytest.mark.skip(reason="github.com/equinor/ert/issues/4070")
 @given(config_generators())
 def test_ensemble_config_errors_on_unknown_function_in_field(
     tmp_path_factory, config_generator
@@ -17,13 +16,25 @@ def test_ensemble_config_errors_on_unknown_function_in_field(
             ConfigKeys.FIELD_KEY in config_dict
             and len(config_dict[ConfigKeys.FIELD_KEY]) > 0
         )
+
         silly_function_name = "NORMALIZE_EGGS"
-        config_dict[ConfigKeys.FIELD_KEY][
-            ConfigKeys.INIT_TRANSFORM
-        ] = silly_function_name
+        fieldlist = list(config_dict[ConfigKeys.FIELD_KEY][0])
+        alteredfieldlist = []
+
+        for val in fieldlist:
+            if "INIT_TRANSFORM" in val:
+                alteredfieldlist.append("INIT_TRANSFORM:" + silly_function_name)
+            else:
+                alteredfieldlist.append(val)
+
+        mylist = []
+        mylist.append(tuple(alteredfieldlist))
+
+        config_dict[ConfigKeys.FIELD_KEY] = mylist
+
         to_config_file(filename, config_dict)
         with pytest.raises(
             expected_exception=ValueError,
-            match=f"unknown function.*{silly_function_name}",
+            match=f"FIELD INIT_TRANSFORM:{silly_function_name} is an invalid function",
         ):
             ResConfig(user_config_file=filename)

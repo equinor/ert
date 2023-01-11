@@ -1,6 +1,6 @@
 import logging
 import os
-from typing import TYPE_CHECKING, Dict, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Dict, Final, List, Optional, Tuple, Union
 
 from cwrap import BaseCClass
 from ecl.grid import EclGrid
@@ -25,6 +25,18 @@ if TYPE_CHECKING:
     from collections.abc import Iterable
 
 logger = logging.getLogger(__name__)
+
+
+FIELD_FUNCTION_NAMES: Final = [
+    "LN",
+    "LOG10",
+    "EXP0",
+    "LOG",
+    "EXP",
+    "TRUNC_POW10",
+    "LN0",
+    "POW10",
+]
 
 
 class EnkfConfigNode(BaseCClass):
@@ -380,6 +392,10 @@ class EnkfConfigNode(BaseCClass):
         if config_node is None:
             raise ValueError(f"Failed to create FIELD node for:{key}")
 
+        cls.verifyValidFieldName(init_transform, "INIT_TRANSFORM")
+        cls.verifyValidFieldName(input_transform, "INPUT_TRANSFORM")
+        cls.verifyValidFieldName(output_transform, "OUTPUT_TRANSFORM")
+
         if var_type_string == ConfigKeys.PARAMETER_KEY:
             config_node._update_parameter_field(
                 ecl_file,
@@ -414,6 +430,10 @@ class EnkfConfigNode(BaseCClass):
             f"key = {self.getKey()}, var_type = {self.getVariableType()}, "
             f"implementation = {self.getImplementationType()}"
         )
+
+    def verifyValidFieldName(func_name: str, field_name: str):
+        if func_name and func_name not in FIELD_FUNCTION_NAMES:
+            raise ValueError(f"FIELD {field_name}:{func_name} is an invalid function")
 
     def getModelConfig(
         self,
