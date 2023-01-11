@@ -214,14 +214,12 @@ class ResConfig:
                     ],
                 )
 
-    # build configs from config file or everest dict
     def _alloc_from_content(self, user_config_file):
         site_config_parser = ConfigParser()
         init_site_config_parser(site_config_parser)
         site_config_content = site_config_parser.parse(site_config_location())
 
         self._display_suggestions(user_config_file)
-        # initialize configcontent if user_file provided
         config_parser = ResConfig._create_user_config_parser()
         init_user_config_parser(config_parser)
         self.config_path = os.path.abspath(os.path.dirname(user_config_file))
@@ -291,7 +289,6 @@ class ResConfig:
 
         self.installed_jobs = self._installed_jobs_from_dict(config_dict)
         jobs = []
-        # FORWARD_MODEL_KEY
         for job_name, args in config_dict.get(ConfigKeys.FORWARD_MODEL, []):
             try:
                 job = copy.deepcopy(self.installed_jobs[job_name])
@@ -306,7 +303,6 @@ class ResConfig:
                 job.define_args = self.substitution_list
             jobs.append(job)
 
-        # SIMULATION_JOB_KEY
         for job_description in config_dict.get(ConfigKeys.SIMULATION_JOB, []):
             try:
                 job = copy.deepcopy(self.installed_jobs[job_description[0]])
@@ -339,7 +335,6 @@ class ResConfig:
     @staticmethod
     def _installed_jobs_from_dict(config_dict):
         jobs = {}
-        # fill in joblist
         for job in config_dict.get(ConfigKeys.INSTALL_JOB, []):
             name = job[0]
             new_job = ResConfig._create_job(
