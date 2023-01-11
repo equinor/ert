@@ -5,7 +5,7 @@ from typing import Iterator, List
 from ert._c_wrappers.config.config_parser import ConfigValidationError
 from ert._c_wrappers.enkf.config_keys import ConfigKeys
 from ert._c_wrappers.enkf.enums import HookRuntime
-from ert._c_wrappers.job_queue import Workflow, WorkflowJob, WorkflowJoblist
+from ert._c_wrappers.job_queue import Workflow, WorkflowJob
 
 logger = logging.getLogger(__name__)
 
@@ -28,7 +28,6 @@ class ErtWorkflowList:
         self._workflow_jobs = {}
         self._workflow = {}
         self._hook_workflow_list = []
-        self._workflow_joblist = WorkflowJoblist()
         self._parser = WorkflowJob.configParser()
 
         for workflow_job in workflow_job_info:
@@ -36,8 +35,6 @@ class ErtWorkflowList:
 
         for job_path in workflow_job_dir_info:
             self._add_workflow_job_dir(job_path)
-
-        self._workflow_joblist.convertToCReference(None)
 
         for work in workflow_info:
             self._add_workflow(work)
@@ -177,9 +174,7 @@ class ErtWorkflowList:
                 parser=self._parser,
             )
             if new_job is not None:
-                self._workflow_jobs[new_job.name()] = self._workflow_joblist.addJob(
-                    new_job
-                )
+                self._workflow_jobs[new_job.name()] = new_job
                 new_job.convertToCReference(None)
                 logger.info(f"Adding workflow job:{new_job.name()}")
 
@@ -198,7 +193,7 @@ class ErtWorkflowList:
 
     def _add_workflow(self, work):
         filename = os.path.basename(work[0]) if len(work) == 1 else work[1]
-        self._workflow[filename] = Workflow(work[0], self._workflow_joblist)
+        self._workflow[filename] = Workflow(work[0], self._workflow_jobs)
 
     def _add_hook_workflow(self, hook_name, mode_name):
         if mode_name not in [runtime.name for runtime in HookRuntime.enums()]:

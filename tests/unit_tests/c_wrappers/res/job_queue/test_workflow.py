@@ -1,6 +1,6 @@
 import pytest
 
-from ert._c_wrappers.job_queue import Workflow, WorkflowJoblist
+from ert._c_wrappers.job_queue import Workflow, WorkflowJob
 from ert._c_wrappers.util.substitution_list import SubstitutionList
 
 from .workflow_common import WorkflowCommon
@@ -10,36 +10,30 @@ from .workflow_common import WorkflowCommon
 def test_workflow():
     WorkflowCommon.createExternalDumpJob()
 
-    joblist = WorkflowJoblist()
-    assert joblist.addJobFromFile("DUMP", "dump_job")
+    dump_job = WorkflowJob.fromFile("dump_job", name="DUMP")
 
-    with pytest.raises(UserWarning):
-        joblist.addJobFromFile("KNOCK", "knock_job")
+    with pytest.raises(IOError, match="Could not open config_file"):
+        _ = WorkflowJob.fromFile("knock_job", name="KNOCK")
 
-    assert "DUMP" in joblist
-
-    workflow = Workflow("dump_workflow", joblist)
+    workflow = Workflow("dump_workflow", {"DUMP": dump_job})
 
     assert len(workflow) == 2
 
     job, args = workflow[0]
-    assert job == joblist["DUMP"]
     assert args[0] == "dump1"
     assert args[1] == "dump_text_1"
 
     job, args = workflow[1]
-    assert job == joblist["DUMP"]
+    assert job.name() == "DUMP"
 
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_workflow_run():
     WorkflowCommon.createExternalDumpJob()
 
-    joblist = WorkflowJoblist()
-    assert joblist.addJobFromFile("DUMP", "dump_job")
-    assert "DUMP" in joblist
+    dump_job = WorkflowJob.fromFile("dump_job", name="DUMP")
 
-    workflow = Workflow("dump_workflow", joblist)
+    workflow = Workflow("dump_workflow", {"DUMP": dump_job})
 
     assert len(workflow) == 2
 
@@ -58,10 +52,5 @@ def test_workflow_run():
 @pytest.mark.usefixtures("use_tmpdir")
 def test_failing_workflow_run():
     WorkflowCommon.createExternalDumpJob()
-
-    joblist = WorkflowJoblist()
-    assert joblist.addJobFromFile("DUMP", "dump_job")
-    assert "DUMP" in joblist
-
     with pytest.raises(ValueError, match="does not exist"):
-        _ = Workflow("undefined", joblist)
+        _ = Workflow("undefined", {})

@@ -5,7 +5,7 @@ import time
 from tempfile import mkdtemp
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
 
-from ert._c_wrappers.job_queue.workflow_joblist import WorkflowJoblist
+from ert._c_wrappers.config import ConfigParser
 
 if TYPE_CHECKING:
     from ert._c_wrappers.enkf import EnKFMain
@@ -13,8 +13,18 @@ if TYPE_CHECKING:
     from ert._c_wrappers.util import SubstitutionList
 
 
+def _workflow_parser(workflow_jobs: Dict[str, "WorkflowJob"]) -> ConfigParser:
+    parser = ConfigParser()
+    for name, job in workflow_jobs.items():
+        item = parser.add(name)
+        item.set_argc_minmax(job.minimumArgumentCount(), job.maximumArgumentCount())
+        for i, t in enumerate(job.contentTypes()):
+            item.iset_type(i, t)
+    return parser
+
+
 class Workflow:
-    def __init__(self, src_file: str, job_list: WorkflowJoblist):
+    def __init__(self, src_file: str, job_list: Dict[str, "WorkflowJob"]):
         self.__running = False
         self.__cancelled = False
         self.__current_job = None
@@ -45,7 +55,7 @@ class Workflow:
             context.substitute_file(self.src_file, to_compile)
 
         self.cmd_list = []
-        parser = self.job_list.parser
+        parser = _workflow_parser(self.job_list)
         content = parser.parse(to_compile)
 
         errors = content.getErrors()

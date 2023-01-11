@@ -77,7 +77,6 @@ from .run_status_type_enum import RunStatusType  # noqa
 from .thread_status_type_enum import ThreadStatus  # noqa
 from .workflow import Workflow  # noqa
 from .workflow_job import WorkflowJob  # noqa
-from .workflow_joblist import WorkflowJoblist  # noqa
 from .workflow_runner import WorkflowRunner  # noqa
 
 __all__ = [
@@ -104,7 +103,6 @@ __all__ = [
     "FunctionErtScript",
     "ExternalErtScript",
     "WorkflowJob",
-    "WorkflowJoblist",
     "Workflow",
     "WorkflowRunner",
 ]
