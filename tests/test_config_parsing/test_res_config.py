@@ -63,13 +63,14 @@ def test_bad_user_config_file_error_message(tmp_path):
     assert rconfig is None
 
 
-def test_bad_config_provide_error_message(tmp_path):
-    rconfig = None
+def test_num_realizations_required_in_config_file(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    config_file_name = "config.ert"
+    config_file_contents = "ENSPATH storage"
+    with open(config_file_name, mode="w", encoding="utf-8") as fh:
+        fh.write(config_file_contents)
     with pytest.raises(ConfigValidationError, match=r"NUM_REALIZATIONS must be set.*"):
-        testDict = {"GEN_KW": "a"}
-        rconfig = ResConfig(config=testDict)
-
-    assert rconfig is None
+        ResConfig(user_config_file=config_file_name)
 
 
 @pytest.mark.usefixtures("use_tmpdir")
