@@ -252,6 +252,14 @@ void gen_obs_measure(const gen_obs_type *gen_obs, const gen_data_type *gen_data,
             int data_index = gen_obs->data_index_list[iobs];
 
             if (forward_model_active != NULL) {
+                if (data_index >= bool_vector_size(forward_model_active)) {
+                    throw exc::out_of_range(fmt::format(
+                        "GEN_OBS: {}, index {} is not in GEN_DATA: {} of size "
+                        "{}",
+                        gen_obs->obs_key, data_index,
+                        gen_data_config_get_key(gen_obs->data_config),
+                        bool_vector_size(forward_model_active)));
+                }
                 if (!bool_vector_iget(forward_model_active, data_index))
                     continue; /* Forward model has deactivated this index - just continue. */
             }
@@ -286,7 +294,9 @@ C_USED void gen_obs_get_observations(gen_obs_type *gen_obs,
         if (forward_model_active != NULL) {
             for (int iobs = 0; iobs < gen_obs->obs_size; iobs++) {
                 int data_index = gen_obs->data_index_list[iobs];
-                if (!bool_vector_iget(forward_model_active, data_index))
+                if (data_index >= bool_vector_size(forward_model_active)) {
+                    obs_block_iset_missing(obs_block, iobs);
+                } else if (!bool_vector_iget(forward_model_active, data_index))
                     obs_block_iset_missing(obs_block, iobs);
             }
         }

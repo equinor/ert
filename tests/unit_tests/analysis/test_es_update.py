@@ -351,3 +351,27 @@ def test_update_multiple_param(copy_case):
     # https://en.wikipedia.org/wiki/Variance#For_vector-valued_random_variables
     for prior_name, prior_data in prior.items():
         assert np.trace(np.cov(posterior[prior_name])) < np.trace(np.cov(prior_data))
+
+
+@pytest.mark.integration_test
+def test_gen_data_obs_data_mismatch(snake_oil_case_storage):
+    with open("observations/observations.txt", "r") as file:
+        obs_text = file.read()
+    obs_text = obs_text.replace(
+        "INDEX_LIST = 400,800,1200,1800;", "INDEX_LIST = 400,800,1200,1800,2400;"
+    )
+    with open("observations/observations.txt", "w") as file:
+        file.write(obs_text)
+    with open("observations/wpr_diff_obs.txt", "a") as file:
+        file.write("0.0 0.05\n")
+    res_config = ResConfig("snake_oil.ert")
+    ert = EnKFMain(res_config)
+    es_update = ESUpdate(ert)
+    fsm = ert.storage_manager
+    sim_fs = fsm["default_0"]
+    target_fs = fsm.add_case("smooth")
+    with pytest.raises(
+        ErtAnalysisError,
+        match="WPR_DIFF_1, index 2400 is not in GEN_DATA: SNAKE_OIL_WPR_DIFF",
+    ):
+        es_update.smootherUpdate(sim_fs, target_fs, "an id")
