@@ -22,11 +22,6 @@ pybind11_add_module(
   config/config_path_elm.cpp
   config/config_schema_item.cpp
   config/config_keywords.cpp
-  rms/rms_file.cpp
-  rms/rms_tag.cpp
-  rms/rms_tagkey.cpp
-  rms/rms_type.cpp
-  rms/rms_util.cpp
   analysis/update.cpp
   job_queue/job_status.cpp
   job_queue/job_list.cpp
