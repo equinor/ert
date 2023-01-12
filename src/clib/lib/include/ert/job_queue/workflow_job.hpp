@@ -10,7 +10,6 @@ extern "C" const char *
 workflow_job_get_name(const workflow_job_type *workflow_job);
 extern "C" PY_USED bool
 workflow_job_internal(const workflow_job_type *workflow_job);
-extern "C" config_parser_type *workflow_job_alloc_config();
 extern "C" workflow_job_type *workflow_job_alloc(const char *name,
                                                  bool internal);
 extern "C" void workflow_job_free(workflow_job_type *workflow_job);

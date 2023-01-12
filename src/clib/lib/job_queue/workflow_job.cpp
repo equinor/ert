@@ -43,48 +43,6 @@ const char *workflow_job_get_name(const workflow_job_type *workflow_job) {
     return workflow_job->name;
 }
 
-config_parser_type *workflow_job_alloc_config() {
-    config_parser_type *config = config_alloc();
-    {
-        config_schema_item_type *item;
-
-        item = config_add_schema_item(config, MIN_ARG_KEY, false);
-        config_schema_item_set_argc_minmax(item, 1, 1);
-        config_schema_item_iset_type(item, 0, CONFIG_INT);
-
-        item = config_add_schema_item(config, MAX_ARG_KEY, false);
-        config_schema_item_set_argc_minmax(item, 1, 1);
-        config_schema_item_iset_type(item, 0, CONFIG_INT);
-
-        item = config_add_schema_item(config, ARG_TYPE_KEY, false);
-        config_schema_item_set_argc_minmax(item, 2, 2);
-        config_schema_item_iset_type(item, 0, CONFIG_INT);
-
-        stringlist_type *var_types = stringlist_alloc_new();
-        stringlist_append_copy(var_types, JOB_STRING_TYPE);
-        stringlist_append_copy(var_types, JOB_INT_TYPE);
-        stringlist_append_copy(var_types, JOB_FLOAT_TYPE);
-        stringlist_append_copy(var_types, JOB_BOOL_TYPE);
-        config_schema_item_set_indexed_selection_set(item, 1, var_types);
-
-        item = config_add_schema_item(config, EXECUTABLE_KEY, false);
-        config_schema_item_set_argc_minmax(item, 1, 1);
-        config_schema_item_iset_type(item, 0, CONFIG_EXECUTABLE);
-
-        item = config_add_schema_item(config, SCRIPT_KEY, false);
-        config_schema_item_set_argc_minmax(item, 1, 1);
-        config_schema_item_iset_type(item, 0, CONFIG_PATH);
-
-        item = config_add_schema_item(config, FUNCTION_KEY, false);
-        config_schema_item_set_argc_minmax(item, 1, 1);
-
-        item = config_add_schema_item(config, INTERNAL_KEY, false);
-        config_schema_item_set_argc_minmax(item, 1, 1);
-        config_schema_item_iset_type(item, 0, CONFIG_BOOL);
-    }
-    return config;
-}
-
 workflow_job_type *workflow_job_alloc(const char *name, bool internal) {
     workflow_job_type *workflow_job =
         (workflow_job_type *)util_malloc(sizeof *workflow_job);
