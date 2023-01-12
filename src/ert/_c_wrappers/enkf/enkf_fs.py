@@ -19,7 +19,6 @@ from ert._c_wrappers import ResPrototype
 from ert._c_wrappers.enkf.enums import EnKFFSType, RealizationStateEnum
 from ert._c_wrappers.enkf.model_callbacks import LoadStatus
 from ert._c_wrappers.enkf.time_map import TimeMap
-from ert._clib import update
 from ert.ensemble_evaluator.callbacks import forward_model_ok
 from ert.storage import Storage
 
@@ -287,23 +286,6 @@ class EnkfFs(BaseCClass):
             result.append(surf.get_values1d(order="F"))
         return np.stack(result).T
 
-    def save_parameters(
-        self,
-        config_node: EnkfConfigNode,
-        iens_active_index: List[int],
-        parameter: update.Parameter,
-        values: npt.ArrayLike,
-    ) -> None:
-        update.save_parameter(self, config_node, iens_active_index, parameter, values)
-
-    def load_parameter(
-        self,
-        config_node: EnkfConfigNode,
-        iens_active_index: List[int],
-        parameter: update.Parameter,
-    ) -> Any:
-        return update.load_parameter(self, config_node, iens_active_index, parameter)
-
     def save_field_data(
         self,
         parameter_name: str,
@@ -324,20 +306,12 @@ class EnkfFs(BaseCClass):
         return self._storage.field_has_data(key, realization)
 
     def copy_from_case(
-        self, other: EnkfFs, report_step: int, nodes: List[str], active: List[bool]
+        self, other: EnkfFs, nodes: List[str], active: List[bool]
     ) -> None:
         """
         This copies parameters from self into other, checking if nodes exists
         in self before performing copy.
         """
-        _clib.enkf_fs.copy_from_case(
-            self,
-            self._ensemble_config,
-            other,
-            report_step,
-            nodes,
-            active,
-        )
         self._copy_parameter_files(other, nodes, [i for i, b in enumerate(active) if b])
 
     def _copy_parameter_files(
