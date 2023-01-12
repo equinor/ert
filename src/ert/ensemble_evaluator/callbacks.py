@@ -4,11 +4,9 @@ from typing import TYPE_CHECKING, Any, Tuple
 
 import xtgeo
 
-from ert._c_wrappers.enkf.data.enkf_node import EnkfNode
 from ert._c_wrappers.enkf.enkf_state import _internalize_results
 from ert._c_wrappers.enkf.enums import ErtImplType
 from ert._c_wrappers.enkf.model_callbacks import LoadStatus
-from ert._c_wrappers.enkf.node_id import NodeId
 from ert._c_wrappers.enkf.state_map import RealizationStateEnum
 
 if TYPE_CHECKING:
@@ -79,32 +77,9 @@ def forward_model_ok(
 
                     continue
 
-                node = EnkfNode(config_node)
-                node_id = NodeId(report_step=0, iens=run_arg.iens)
-
-                if node.has_data(run_arg.ensemble_storage, node_id):
-                    # Already initialised, ignore
-                    continue
-
-                if node.forward_init(run_arg.runpath, run_arg.iens):
-                    node.save(run_arg.ensemble_storage, node_id)
-                else:
-                    if "%d" in config_node.get_init_file_fmt():
-                        init_file = Path(config_node.get_init_file_fmt() % (run_arg.iens,))
-                    else:
-                        init_file = Path(config_node.get_init_file_fmt())
-                    if not init_file.exists():
-                        error_msg += (
-                            "Failed to initialize node "
-                            f"'{node.name()}' in file {init_file}: File not found\n"
-                        )
-                    else:
-                        error_msg += (
-                            f"Failed to initialize node '{node.name()}' "
-                            "in file {init_file}\n"
-                        )
-
-                    result = (LoadStatus.LOAD_FAILURE, error_msg)
+                raise NotImplementedError(
+                    f"{config_node.getImplementationType()} is not supported"
+                )
 
         if result[0] == LoadStatus.LOAD_SUCCESSFUL:
             result = _internalize_results(ens_conf, num_steps, run_arg)

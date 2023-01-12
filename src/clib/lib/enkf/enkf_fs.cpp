@@ -24,7 +24,6 @@
 #include <ert/enkf/block_fs_driver.hpp>
 #include <ert/enkf/enkf_defaults.hpp>
 #include <ert/enkf/enkf_fs.hpp>
-#include <ert/enkf/enkf_state.hpp>
 #include <ert/enkf/ensemble_config.hpp>
 
 namespace fs = std::filesystem;
@@ -541,40 +540,4 @@ ERT_CLIB_SUBMODULE("enkf_fs", m) {
         },
         py::arg("self"), py::arg("ensemble_config"), py::arg("parameter_names"),
         py::arg("ensemble_size"));
-    m.def(
-        "copy_from_case",
-        [](Cwrap<enkf_fs_type> source_case,
-           Cwrap<ensemble_config_type> ensemble_config,
-           Cwrap<enkf_fs_type> target_case, int report_step,
-           std::vector<std::string> &node_list, std::vector<bool> &iactive) {
-            auto &target_state_map = enkf_fs_get_state_map(target_case);
-
-            for (auto &node : node_list) {
-                enkf_config_node_type *config_node =
-                    ensemble_config_get_node(ensemble_config, node.c_str());
-
-                int src_iens = 0;
-                for (auto mask : iactive) {
-                    if (mask) {
-                        node_id_type src_id = {.report_step = report_step,
-                                               .iens = src_iens};
-                        node_id_type target_id = {.report_step = 0,
-                                                  .iens = src_iens};
-
-                        /* The copy is careful ... */
-                        if (enkf_fs_has_node(source_case, config_node->key,
-                                             config_node->var_type, report_step,
-                                             src_iens))
-                            enkf_node_copy(config_node, source_case,
-                                           target_case, src_id, target_id);
-
-                        target_state_map.set(src_iens, STATE_INITIALIZED);
-                    }
-                    src_iens++;
-                }
-            }
-            enkf_fs_fsync(target_case);
-        },
-        py::arg("self"), py::arg("ensemble_config"), py::arg("target_case"),
-        py::arg("report_step"), py::arg("node_list"), py::arg("iactive"));
 }

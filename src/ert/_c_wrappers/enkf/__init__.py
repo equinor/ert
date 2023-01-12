@@ -11,7 +11,6 @@ from .config import (
     SummaryConfig,
 )
 from .config_keys import ConfigKeys
-from .data import EnkfNode
 from .enkf_fs import EnkfFs
 from .enkf_main import EnKFMain, ObservationConfigError
 from .enkf_obs import EnkfObs
@@ -32,7 +31,6 @@ from .enums import (
 from .ert_config import ErtConfig
 from .ert_run_context import RunContext
 from .model_config import ModelConfig
-from .node_id import NodeId
 from .observations import BlockDataConfig, GenObservation, ObsVector, SummaryObservation
 from .queue_config import QueueConfig
 from .row_scaling import RowScaling
@@ -45,7 +43,6 @@ __all__ = [
     "GenObservation",
     "BlockDataConfig",
     "ObsVector",
-    "EnkfNode",
     "FieldConfig",
     "FieldTypeEnum",
     "GenKwConfig",
@@ -53,7 +50,6 @@ __all__ = [
     "EnkfConfigNode",
     "SummaryConfig",
     "ExtParamConfig",
-    "NodeId",
     "TimeMap",
     "StateMap",
     "EnkfFs",
