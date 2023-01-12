@@ -16,7 +16,6 @@
 #include <ert/enkf/active_list.hpp>
 #include <ert/enkf/enkf_config_node.hpp>
 #include <ert/enkf/enkf_fs.hpp>
-#include <ert/enkf/enkf_serialize.hpp>
 #include <ert/enkf/enkf_types.hpp>
 #include <ert/enkf/enkf_util.hpp>
 
