@@ -53,9 +53,7 @@ class FieldConfig(BaseCClass):
         "enkf_field_file_format_enum field_config_default_export_format(char*)",
         bind=False,
     )
-    _guess_filetype = ResPrototype(
-        "enkf_field_file_format_enum field_config_guess_file_type(char*)", bind=False
-    )
+
     _get_key = ResPrototype("char* field_config_get_key(field_config)")
 
     def __init__(self, kw, grid) -> None:
@@ -77,10 +75,6 @@ class FieldConfig(BaseCClass):
 
     def get_key(self) -> str:
         return self._get_key()
-
-    @classmethod
-    def guessFiletype(cls, filename) -> EnkfFieldFileFormatEnum:
-        return cls._guess_filetype(filename)
 
     def get_type(self) -> FieldTypeEnum:
         return self._get_type()
