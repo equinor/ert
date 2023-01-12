@@ -58,12 +58,6 @@ class Workflow:
         parser = _workflow_parser(self.job_list)
         content = parser.parse(to_compile)
 
-        errors = content.getErrors()
-        if errors:
-            raise ValueError(
-                f"Parsing of workflow file {self.src_file} resulted in errors: {errors}"
-            )
-
         for line in content:
             self.cmd_list.append(
                 (
