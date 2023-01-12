@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Any, List, Optional, Type, Union
 from cwrap import BaseCClass
 
 from ert._c_wrappers import ResPrototype
-from ert._c_wrappers.config import ContentTypeEnum
+from ert._c_wrappers.config import ConfigParser, ContentTypeEnum
 from ert._c_wrappers.job_queue import (
     ErtPlugin,
     ErtScript,
@@ -21,9 +21,6 @@ if TYPE_CHECKING:
 class WorkflowJob(BaseCClass):
     TYPE_NAME = "workflow_job"
     _alloc = ResPrototype("void* workflow_job_alloc(char*, bool)", bind=False)
-    _alloc_parser = ResPrototype(
-        "config_parser_obj workflow_job_alloc_config( )", bind=False
-    )
     _alloc_from_file = ResPrototype(
         "workflow_job_obj workflow_job_config_alloc( char* , config_parser , char*)",
         bind=False,
@@ -46,8 +43,29 @@ class WorkflowJob(BaseCClass):
     )
 
     @classmethod
-    def configParser(cls):
-        return cls._alloc_parser()
+    def configParser(cls) -> ConfigParser:
+        parser = ConfigParser()
+        parser.add("MIN_ARG", value_type=ContentTypeEnum.CONFIG_INT).set_argc_minmax(
+            1, 1
+        )
+        parser.add("MAX_ARG", value_type=ContentTypeEnum.CONFIG_INT).set_argc_minmax(
+            1, 1
+        )
+        parser.add(
+            "EXECUTABLE", value_type=ContentTypeEnum.CONFIG_EXECUTABLE
+        ).set_argc_minmax(1, 1)
+        parser.add("SCRIPT", value_type=ContentTypeEnum.CONFIG_PATH).set_argc_minmax(
+            1, 1
+        )
+        parser.add("FUNCTION").set_argc_minmax(1, 1)
+        parser.add("INTERNAL", value_type=ContentTypeEnum.CONFIG_BOOL).set_argc_minmax(
+            1, 1
+        )
+        item = parser.add("ARG_TYPE")
+        item.set_argc_minmax(2, 2)
+        item.iset_type(0, ContentTypeEnum.CONFIG_INT)
+        item.initSelection(1, ["STRING", "INT", "FLOAT", "BOOL"])
+        return parser
 
     @classmethod
     def fromFile(cls, config_file, name=None, parser=None):
@@ -106,7 +124,7 @@ class WorkflowJob(BaseCClass):
 
     def argumentTypes(
         self,
-    ) -> List[Optional[Union[Type[bool], Type[float], Type[int], Type[str]]]]:
+    ) -> List[Optional["ContentTypes"]]:
         def content_to_type(c: Optional[ContentTypeEnum]):
             if c == ContentTypeEnum.CONFIG_BOOL:
                 return bool
