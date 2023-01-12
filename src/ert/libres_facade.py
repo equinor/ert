@@ -106,7 +106,16 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
     def export_field_parameter(
         self, parameter_name: str, case_name: str, filepath: str
     ) -> None:
-        raise NotImplementedError("Exporting fields is currently not supported")
+        file_system = self._enkf_main.storage_manager[case_name]
+        config_node = self._enkf_main.ensembleConfig()[parameter_name]
+        ext = config_node.get_enkf_outfile().rsplit(".")[-1]
+        field_config_node = config_node.getFieldModelConfig()
+        file_system.export_field_many(
+            field_config_node,
+            list(range(0, self.get_ensemble_size())),
+            filepath + "." + ext,
+            "grdecl",
+        )
 
     def get_measured_data(  # pylint: disable=too-many-arguments
         self,

@@ -28,7 +28,7 @@ if TYPE_CHECKING:
     from ecl.util.util import IntVector
     from xtgeo import RegularSurface
 
-    from ert._c_wrappers.enkf.config import EnkfConfigNode, GenKwConfig
+    from ert._c_wrappers.enkf.config import EnkfConfigNode, FieldConfig, GenKwConfig
     from ert._c_wrappers.enkf.res_config import EnsembleConfig
     from ert._c_wrappers.enkf.run_arg import RunArg
     from ert._c_wrappers.enkf.state_map import StateMap
@@ -334,6 +334,24 @@ class EnkfFs(BaseCClass):
 
     def load_field(self, key: str, realizations: List[int]) -> npt.NDArray[np.double]:
         return self._storage.load_field(key, realizations)
+
+    def export_field(
+        self, config_node: FieldConfig, realization: int, output_path: str, fformat: str
+    ) -> None:
+        return self._storage.export_field(
+            config_node, realization, output_path, fformat
+        )
+
+    def export_field_many(
+        self,
+        config_node: FieldConfig,
+        realizations: List[int],
+        output_path: str,
+        fformat: str,
+    ) -> None:
+        return self._storage.export_field_many(
+            config_node, realizations, output_path, fformat
+        )
 
     def field_has_data(self, key: str, realization: int) -> bool:
         return self._storage.field_has_data(key, realization)

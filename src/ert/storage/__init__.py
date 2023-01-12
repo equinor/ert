@@ -1,14 +1,19 @@
 from __future__ import annotations
 
+import os
+import sys
 from datetime import datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, List, Tuple
 
 import numpy as np
 import pandas as pd
+import xtgeo
 
 if TYPE_CHECKING:
     import numpy.typing as npt
+
+    from ert._c_wrappers.enkf.config import FieldConfig
 
 
 class Storage:
@@ -169,3 +174,50 @@ class Storage:
     def field_has_data(self, key: str, realization: int) -> bool:
         path = self.mount_point / f"field-{realization}/{key}.npy"
         return path.exists()
+
+    def export_field(
+        self, config_node: FieldConfig, realization: int, output_path: str, fformat: str
+    ) -> None:
+        input_path = self.mount_point / f"field-{realization}"
+        key = config_node.get_key()
+
+        if not input_path.exists():
+            raise KeyError(
+                f"Unable to load FIELD for key: {key}, realization: {realization} "
+            )
+        data = np.load(input_path / f"{key}.npy")
+
+        transform_name = config_node.get_output_transform_name()
+        data_transformed = config_node.transform(transform_name, data)
+        data_truncated = config_node.truncate(data_transformed)
+
+        gp = xtgeo.GridProperty(
+            ncol=config_node.get_nx(),
+            nrow=config_node.get_ny(),
+            nlay=config_node.get_nz(),
+            values=data_truncated,
+            grid=config_node.get_grid(),
+            name=key,
+        )
+
+        os.makedirs(Path(output_path).parent, exist_ok=True)
+
+        gp.to_file(output_path, fformat=fformat)
+
+    def export_field_many(
+        self,
+        config_node: FieldConfig,
+        realizations: List[int],
+        output_path: str,
+        fformat: str,
+    ) -> None:
+        for realization in realizations:
+            file_name = output_path % realization
+            try:
+                self.export_field(config_node, realization, file_name, fformat)
+                print(f"{config_node.get_key()}[{realization:03d}] -> {file_name}")
+            except ValueError:
+                sys.stderr.write(
+                    f"ERROR: Could not load realisation:{realization} - export failed"
+                )
+                pass
