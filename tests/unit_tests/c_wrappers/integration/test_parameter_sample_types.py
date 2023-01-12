@@ -681,7 +681,6 @@ def test_copy_case(
         new_fs = ert.storage_manager.add_case("copy")
         fs.copy_from_case(
             new_fs,
-            0,
             ["MY_PARAM"],
             [True if x in range(5) else False for x in range(10)],
         )

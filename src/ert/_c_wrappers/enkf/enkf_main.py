@@ -11,12 +11,10 @@ import numpy as np
 import xtgeo
 from jinja2 import Template
 
-from ert import _clib
 from ert._c_wrappers.analysis.configuration import UpdateConfiguration
 from ert._c_wrappers.config.config_parser import ConfigValidationError
 from ert._c_wrappers.enkf import EnkfFs
 from ert._c_wrappers.enkf.analysis_config import AnalysisConfig
-from ert._c_wrappers.enkf.data import EnkfNode
 from ert._c_wrappers.enkf.enkf_fs_manager import FileSystemManager
 from ert._c_wrappers.enkf.enkf_obs import EnkfObs
 from ert._c_wrappers.enkf.ensemble_config import EnsembleConfig
@@ -547,15 +545,8 @@ class EnKFMain:
                     storage.save_surface_file(
                         config_node.getKey(), realization_nr, init_file
                     )
-
             else:
-                enkf_node = EnkfNode(config_node)
-                for realization_nr in active_realizations:
-                    _clib.enkf_state.state_initialize(
-                        enkf_node,
-                        storage,
-                        realization_nr,
-                    )
+                raise NotImplementedError(f"{impl_type} is not supported")
         for realization_nr in active_realizations:
             if state_map[realization_nr] in [STATE_UNDEFINED, STATE_LOAD_FAILURE]:
                 state_map[realization_nr] = RealizationStateEnum.STATE_INITIALIZED

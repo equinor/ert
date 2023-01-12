@@ -164,7 +164,6 @@ class CaseInitializationConfigurationPanel(QTabWidget):
         def initializeFromExisting(_):
             source_case_name = str(source_case.currentText())
             target_case_name = str(target_case.currentText())
-            report_step = history_length_spinner.value()
             parameters = parameter_model.getSelectedItems()
             members = members_model.getSelectedItems()
             case_manager = self.ert.storage_manager
@@ -178,9 +177,7 @@ class CaseInitializationConfigurationPanel(QTabWidget):
                     member_mask[int(member)] = True
                 source_fs = case_manager[source_case_name]
                 target_fs = case_manager[target_case_name]
-                source_fs.copy_from_case(
-                    target_fs, report_step, parameters, member_mask
-                )
+                source_fs.copy_from_case(target_fs, parameters, member_mask)
 
         initialize_button.clicked.connect(initializeFromExisting)
         layout.addWidget(initialize_button, 0, Qt.AlignCenter)
