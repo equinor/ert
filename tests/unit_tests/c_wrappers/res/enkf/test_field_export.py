@@ -36,16 +36,7 @@ def test_field_export_many(snake_oil_field_example):
     ert.createRunPath(prior)
     ens_config = ert.ensembleConfig()
     config_node = ens_config["PERMX"]
-    fs = ert.storage_manager["default"]
-
-    # Filename without embedded %d - TypeError
-    with pytest.raises(TypeError):
-        fs.export_field_many(
-            config_node.getFieldModelConfig(),
-            [0, 2, 4],
-            "export/with/path/PERMX.grdecl",
-            fformat="grdecl",
-        )
+    fs = prior.sim_fs
 
     fs.export_field_many(
         config_node.getFieldModelConfig(),

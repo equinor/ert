@@ -46,9 +46,7 @@ pybind11_add_module(
   enkf/config_keys.cpp
   enkf/enkf_config_node.cpp
   enkf/enkf_fs.cpp
-  enkf/enkf_node.cpp
   enkf/enkf_obs.cpp
-  enkf/enkf_state.cpp
   enkf/enkf_types.cpp
   enkf/ensemble_config.cpp
   enkf/ext_param_config.cpp
