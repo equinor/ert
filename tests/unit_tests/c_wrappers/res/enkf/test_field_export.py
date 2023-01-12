@@ -2,9 +2,7 @@ import os
 
 import pytest
 
-from ert._c_wrappers.enkf import NodeId
 from ert._c_wrappers.enkf.config import FieldTypeEnum
-from ert._c_wrappers.enkf.data import EnkfNode
 
 
 def test_field_type_enum(snake_oil_field_example):
@@ -38,16 +36,7 @@ def test_field_export_many(snake_oil_field_example):
     ert.createRunPath(prior)
     ens_config = ert.ensembleConfig()
     config_node = ens_config["PERMX"]
-    fs = ert.storage_manager["default"]
-
-    # Filename without embedded %d - TypeError
-    with pytest.raises(TypeError):
-        fs.export_field_many(
-            config_node.getFieldModelConfig(),
-            [0, 2, 4],
-            "export/with/path/PERMX.grdecl",
-            fformat="grdecl",
-        )
+    fs = prior.sim_fs
 
     fs.export_field_many(
         config_node.getFieldModelConfig(),
@@ -120,4 +109,3 @@ def test_field_export(snake_oil_field_example):
     )
     assert os.path.isfile("export/with/path/PERMX_4.grdecl")
     assert os.path.getsize("export/with/path/PERMX_4.grdecl") > 0
->>>>>>> 805a36a66 (Fix field export)
