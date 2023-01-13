@@ -23,7 +23,6 @@ foreach(
   enkf_obs_invalid_path
   enkf_obs
   enkf_obs_vector
-  enkf_state_map
   obs_vector
   row_scaling
   trans_func)

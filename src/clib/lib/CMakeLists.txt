@@ -55,8 +55,6 @@ pybind11_add_module(
   enkf/gen_obs.cpp
   enkf/obs_vector.cpp
   enkf/row_scaling.cpp
-  enkf/state_map.cpp
-  enkf/state_map.cpp
   enkf/summary_config.cpp
   enkf/summary_obs.cpp
   enkf/surface_config.cpp

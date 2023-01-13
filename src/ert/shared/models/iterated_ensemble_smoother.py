@@ -116,13 +116,13 @@ class IteratedEnsembleSmoother(BaseRunModel):
         analysis_config = self.ert().analysisConfig()
         self.ert().runWorkflows(HookRuntime.PRE_FIRST_UPDATE)
         for current_iter in range(1, self.facade.get_number_of_iterations() + 1):
-            state = (
-                RealizationStateEnum.STATE_HAS_DATA  # type: ignore
-                | RealizationStateEnum.STATE_INITIALIZED
-            )
+            states = [
+                RealizationStateEnum.STATE_HAS_DATA,  # type: ignore
+                RealizationStateEnum.STATE_INITIALIZED,
+            ]
             posterior_context = self.ert().create_ensemble_context(
                 target_case_format % current_iter,
-                prior_context.sim_fs.getStateMap().createMask(state),
+                prior_context.sim_fs.get_realization_mask_from_state(states),
                 iteration=current_iter,
             )
             update_success = False
