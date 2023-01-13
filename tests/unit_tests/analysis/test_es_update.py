@@ -364,6 +364,7 @@ def test_gen_data_obs_data_mismatch(snake_oil_case_storage):
         file.write(obs_text)
     with open("observations/wpr_diff_obs.txt", "a", encoding="utf-8") as file:
         file.write("0.0 0.05\n")
+
     res_config = ResConfig("snake_oil.ert")
     ert = EnKFMain(res_config)
     es_update = ESUpdate(ert)
@@ -372,6 +373,6 @@ def test_gen_data_obs_data_mismatch(snake_oil_case_storage):
     target_fs = fsm.add_case("smooth")
     with pytest.raises(
         ErtAnalysisError,
-        match="WPR_DIFF_1, index 2400 is not in GEN_DATA: SNAKE_OIL_WPR_DIFF",
+        match="Observation: WPR_DIFF_1 attached to response: SNAKE_OIL_WPR_DIFF",
     ):
         es_update.smootherUpdate(sim_fs, target_fs, "an id")
