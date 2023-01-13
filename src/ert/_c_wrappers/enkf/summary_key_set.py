@@ -1,5 +1,4 @@
 from cwrap import BaseCClass
-from ecl.util.util import StringList
 
 from ert._c_wrappers import ResPrototype
 
@@ -41,8 +40,9 @@ class SummaryKeySet(BaseCClass):
     def __contains__(self, key):
         return self._has_key(key)
 
-    def keys(self) -> StringList:
-        return self._keys()
+    def keys(self) -> list:
+        keys = list(self._keys())
+        return sorted(keys)
 
     def isReadOnly(self) -> bool:
         return self._is_read_only()
