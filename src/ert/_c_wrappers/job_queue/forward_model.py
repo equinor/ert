@@ -5,7 +5,6 @@ import os
 from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, List
-from warnings import warn
 
 from ert._c_wrappers.job_queue import EnvironmentVarlist, ExtJob
 from ert._clib import job_kw
@@ -59,35 +58,20 @@ class ForwardModel:
         def substitute(job, string):
             if string is not None:
                 copy_private_args = copy.deepcopy(job.private_args)
-                # The user might have already added <ITER> and <IENS> as
-                # expicit arguments, in which case we shouldn't touch them. The
-                # weird "passing through" of arguments needs to be preserved
-                # but deprecated.
+                # We need to still be able to handle that the user has
+                # written e.g. FORWARD_MODEL JOB(<ITER>=<ITER>). The
+                # way this argument passing works is at odds with expected
+                # behavior, and is a known bug/problem.
+
                 if (
-                    "<ITER>" in copy_private_args
-                    and copy_private_args["<ITER>"] == "<ITER>"
+                    "<ITER>" not in copy_private_args
+                    or copy_private_args["<ITER>"] == "<ITER>"
                 ):
-                    warn(
-                        f"Found <IENS>=<IENS> in {job.name} forward model."
-                        " This argument can safely be removed and setting it in this "
-                        " way is deprecated. Using for instance <ITER>=1 is still "
-                        " possible."
-                    )
                     copy_private_args.addItem("<ITER>", str(itr))
                 if (
-                    "<IENS>" in copy_private_args
-                    and copy_private_args["<IENS>"] == "<IENS>"
+                    "<IENS>" not in copy_private_args
+                    or copy_private_args["<IENS>"] == "<IENS>"
                 ):
-                    warn(
-                        f"Found <IENS>=<IENS> in {job.name} forward model."
-                        " This argument can safely be removed and setting it in this"
-                        " way is deprecated. Using for instance <IENS>=1 is still "
-                        " possible."
-                    )
-                    copy_private_args.addItem("<IENS>", str(iens))
-                if "<ITER>" not in copy_private_args:
-                    copy_private_args.addItem("<ITER>", str(itr))
-                if "<IENS>" not in copy_private_args:
                     copy_private_args.addItem("<IENS>", str(iens))
                 string = copy_private_args.substitute(string)
                 return context.substitute_real_iter(string, iens, itr)
