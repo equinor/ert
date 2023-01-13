@@ -116,7 +116,6 @@ static auto logger = ert::get_logger("enkf");
 #define ENKF_MOUNT_MAP "enkf_mount_info"
 #define SUMMARY_KEY_SET_FILE "summary-key-set"
 #define TIME_MAP_FILE "time-map"
-#define STATE_MAP_FILE "state-map"
 #define CASE_CONFIG_FILE "case_config"
 
 struct enkf_fs_struct {
@@ -130,7 +129,6 @@ struct enkf_fs_struct {
     /** Whether this filesystem has been mounted read-only. */
     bool read_only;
     std::shared_ptr<TimeMap> time_map;
-    std::shared_ptr<StateMap> state_map;
     /* The variables below here are for storing arbitrary files within the
      * enkf_fs storage directory, but not as serialized enkf_nodes. */
     path_fmt_type *case_fmt;
@@ -145,7 +143,6 @@ enkf_fs_type *enkf_fs_alloc_empty(const char *mount_point,
                                   unsigned ensemble_size, bool read_only) {
     enkf_fs_type *fs = new enkf_fs_type;
     fs->time_map = std::make_shared<TimeMap>();
-    fs->state_map = std::make_shared<StateMap>(ensemble_size);
     fs->read_only = read_only;
     fs->mount_point = strdup(mount_point);
     auto mount_path = fs::path(mount_point);
@@ -264,26 +261,6 @@ static void enkf_fs_fread_time_map(enkf_fs_type *fs) {
     free(filename);
 }
 
-static void enkf_fs_fsync_state_map(enkf_fs_type *fs) {
-    char *filename = enkf_fs_alloc_case_filename(fs, STATE_MAP_FILE);
-    try {
-        fs->state_map->write(filename);
-    } catch (std::ios_base::failure &) {
-        // Write errors are ignored
-    }
-    free(filename);
-}
-
-static void enkf_fs_fread_state_map(enkf_fs_type *fs) {
-    char *filename = enkf_fs_alloc_case_filename(fs, STATE_MAP_FILE);
-    try {
-        fs->state_map->read(filename);
-    } catch (const std::ios_base::failure &) {
-        /* Read error is ignored. StateMap is reset */
-    }
-    free(filename);
-}
-
 enkf_fs_type *enkf_fs_mount(const char *mount_point, unsigned ensemble_size,
                             bool read_only) {
     FILE *stream = fs_driver_open_fstab(mount_point, false);
@@ -310,7 +287,6 @@ enkf_fs_type *enkf_fs_mount(const char *mount_point, unsigned ensemble_size,
     fclose(stream);
     enkf_fs_init_path_fmt(fs);
     enkf_fs_fread_time_map(fs);
-    enkf_fs_fread_state_map(fs);
 
     enkf_fs_get_ref(fs);
     return fs;
@@ -368,7 +344,6 @@ void enkf_fs_fsync(enkf_fs_type *fs) {
     fs->index->fsync();
 
     enkf_fs_fsync_time_map(fs);
-    enkf_fs_fsync_state_map(fs);
 }
 
 void enkf_fs_fread_node(enkf_fs_type *enkf_fs, buffer_type *buffer,
@@ -507,14 +482,9 @@ FILE *enkf_fs_open_excase_tstep_file(const enkf_fs_type *fs,
 
 TimeMap &enkf_fs_get_time_map(const enkf_fs_type *fs) { return *fs->time_map; }
 
-StateMap &enkf_fs_get_state_map(enkf_fs_type *fs) { return *fs->state_map; }
-
 ERT_CLIB_SUBMODULE("enkf_fs", m) {
     using namespace py::literals;
 
-    m.def(
-        "get_state_map",
-        [](Cwrap<enkf_fs_type> self) { return self->state_map; }, "self"_a);
     m.def(
         "get_time_map", [](Cwrap<enkf_fs_type> self) { return self->time_map; },
         "self"_a);

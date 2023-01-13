@@ -4,13 +4,12 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Dict, Generator, List, Optional
 
 from ert._c_wrappers.enkf.enkf_fs import EnkfFs
-from ert._clib.state_map import RealizationStateEnum
+from ert._c_wrappers.enkf.enums import RealizationStateEnum
 
 if TYPE_CHECKING:
     from ecl.summary import EclSum
 
     from ert._c_wrappers.enkf import EnsembleConfig
-    from ert._clib.state_map import StateMap
 
 FS_VERSION = 0
 FS_VERSION_FILE = ".fs_version"
@@ -129,8 +128,8 @@ class FileSystemManager:
             self._drop_oldest_file_system()
         self.open_storages[file_system.case_name] = file_system
 
-    def state_map(self, case_name: str) -> "StateMap":
-        return self[case_name].getStateMap()
+    def state_map(self, case_name: str) -> "List[RealizationStateEnum]":
+        return self[case_name].state_map
 
     def has_data(self, case: str) -> bool:
         state_map = self.state_map(case)
