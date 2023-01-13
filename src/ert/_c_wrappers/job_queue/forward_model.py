@@ -52,14 +52,20 @@ class ForwardModel:
         context: "SubstitutionList",
         env_varlist: EnvironmentVarlist,
     ) -> Dict[str, Any]:
-        def substitute(job, string):
+        def substitute(job, string: str):
+            job_args = ",".join([f"{key}={value}" for key, value in job.private_args])
+            job_description = f"{job.name}({job_args})"
+            substitution_context = (
+                f"parsing forward model job `FORWARD_MODEL {job_description}` - "
+                "reconstructed, with defines applied during parsing"
+            )
             if string is not None:
                 copy_private_args = SubstitutionList()
                 for key, val in job.private_args:
                     copy_private_args.addItem(
                         key, context.substitute_real_iter(val, iens, itr)
                     )
-                string = copy_private_args.substitute(string)
+                string = copy_private_args.substitute(string, substitution_context)
                 return context.substitute_real_iter(string, iens, itr)
             else:
                 return string
