@@ -130,13 +130,18 @@ def test_ensemble_evaluator(tmpdir, source_root):
 
 
 @pytest.mark.integration_test
-def test_es_mda(tmpdir, source_root):
+def test_es_mda(tmpdir, source_root, snapshot):
     shutil.copytree(
         os.path.join(source_root, "test-data", "poly_example"),
         os.path.join(str(tmpdir), "poly_example"),
     )
 
     with tmpdir.as_cwd():
+        with fileinput.input("poly_example/poly.ert", inplace=True) as fin:
+            for line_nr, line in enumerate(fin):
+                if line_nr == 1:
+                    print("RANDOM_SEED 1234", end="")
+                print(line, end="")
         parser = ArgumentParser(prog="test_main")
         parsed = ert_parser(
             parser,
@@ -157,6 +162,13 @@ def test_es_mda(tmpdir, source_root):
 
         run_cli(parsed)
         FeatureToggling.reset()
+        facade = LibresFacade.from_config_file("poly.ert")
+        iter_0 = facade.load_all_gen_kw_data("iter-0")
+        iter_1 = facade.load_all_gen_kw_data("iter-1")
+        result = pd.concat([iter_0, iter_1], keys=["iter-0", "iter-1"])
+        snapshot.assert_match(
+            result.to_csv(float_format="%.12g"), "es_mda_integration_snapshot"
+        )
 
 
 @pytest.mark.parametrize(
