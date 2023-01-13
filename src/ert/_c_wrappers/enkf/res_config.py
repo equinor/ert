@@ -4,8 +4,9 @@ import os
 import sys
 from datetime import date
 from os.path import isfile
-from pathlib import Path
 from typing import Any, Dict, List, Optional
+
+import pkg_resources
 
 from ert._c_wrappers.config import ConfigContent, ConfigParser
 from ert._c_wrappers.config.config_parser import ConfigValidationError
@@ -30,16 +31,7 @@ def site_config_location():
 
     if "ERT_SITE_CONFIG" in os.environ:
         return os.environ["ERT_SITE_CONFIG"]
-
-    path = Path(__file__).parent
-    for p in path.parents:
-        npath = p / "ert" / "shared" / "share" / "ert" / "site-config"
-        if npath.is_file():
-            path = npath
-            break
-    else:
-        raise SystemError("Could not find `share/ert/site-config`")
-    return str(path)
+    return pkg_resources.resource_filename("ert.shared", "share/ert/site-config")
 
 
 class ResConfig:
