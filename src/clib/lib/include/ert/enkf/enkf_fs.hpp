@@ -8,7 +8,6 @@
 #include <ert/enkf/enkf_types.hpp>
 #include <ert/enkf/fs_driver.hpp>
 #include <ert/enkf/fs_types.hpp>
-#include <ert/enkf/state_map.hpp>
 #include <ert/enkf/time_map.hpp>
 
 const char *enkf_fs_get_mount_point(const enkf_fs_type *fs);
@@ -65,8 +64,6 @@ FILE *enkf_fs_open_excase_file(const enkf_fs_type *fs, const char *input_name);
 FILE *enkf_fs_open_excase_tstep_file(const enkf_fs_type *fs,
                                      const char *input_name, int tstep);
 
-StateMap enkf_fs_read_state_map(const char *mount_point);
-StateMap &enkf_fs_get_state_map(enkf_fs_type *fs);
 TimeMap &enkf_fs_get_time_map(const enkf_fs_type *fs);
 
 #endif

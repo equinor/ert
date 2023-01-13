@@ -25,13 +25,11 @@ from ert.storage import Storage
 if TYPE_CHECKING:
     import numpy.typing as npt
     from ecl.summary import EclSum
-    from ecl.util.util import IntVector
     from xtgeo import RegularSurface
 
     from ert._c_wrappers.enkf.config import FieldConfig, GenKwConfig
     from ert._c_wrappers.enkf.ert_config import EnsembleConfig
     from ert._c_wrappers.enkf.run_arg import RunArg
-    from ert._c_wrappers.enkf.state_map import StateMap
 
 logger = logging.getLogger(__name__)
 
@@ -43,19 +41,16 @@ def _load_realization(
     history_length: int,
     run_args: List[RunArg],
 ) -> Tuple[LoadStatus, int]:
-    state_map = sim_fs.getStateMap()
-
-    state_map.update_matching(
+    sim_fs.update_realization_state(
         realisation,
-        RealizationStateEnum.STATE_UNDEFINED,
+        [RealizationStateEnum.STATE_UNDEFINED],
         RealizationStateEnum.STATE_INITIALIZED,
     )
     status = forward_model_ok(run_args[realisation], ensemble_config, history_length)
-    state_map._set(
-        realisation,
+    sim_fs.state_map[realisation] = (
         RealizationStateEnum.STATE_HAS_DATA
         if status[0] == LoadStatus.LOAD_SUCCESSFUL
-        else RealizationStateEnum.STATE_LOAD_FAILURE,
+        else RealizationStateEnum.STATE_LOAD_FAILURE
     )
     return status, realisation
 
@@ -91,12 +86,46 @@ class EnkfFs(BaseCClass):
         self._ensemble_config = ensemble_config
         self._ensemble_size = ensemble_size
         self._storage = Storage(self.mount_point)
+        self._state_map = self._load_state_map()
+        self._save_state_map()
 
     def getTimeMap(self) -> TimeMap:
         return _clib.enkf_fs.get_time_map(self)
 
-    def getStateMap(self) -> StateMap:
-        return _clib.enkf_fs.get_state_map(self)
+    def get_realization_mask_from_state(
+        self, states: List[RealizationStateEnum]
+    ) -> List[bool]:
+        return [s in states for s in self._state_map]
+
+    def _load_state_map(self) -> List[RealizationStateEnum]:
+        state_map_file = self.mount_point / "state_map.json"
+        if state_map_file.exists():
+            with open(state_map_file, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                return [RealizationStateEnum(v) for v in data["state_map"]]
+        else:
+            return [
+                RealizationStateEnum.STATE_UNDEFINED for _ in range(self._ensemble_size)
+            ]
+
+    def _save_state_map(self):
+        state_map_file = self.mount_point / "state_map.json"
+        with open(state_map_file, "w", encoding="utf-8") as f:
+            data = {"state_map": [v.value for v in self._state_map]}
+            f.write(json.dumps(data))
+
+    @property
+    def state_map(self) -> List[RealizationStateEnum]:
+        return self._state_map
+
+    def update_realization_state(
+        self,
+        realization: int,
+        old_states: List[RealizationStateEnum],
+        new_state: RealizationStateEnum,
+    ):
+        if self._state_map[realization] in old_states:
+            self._state_map[realization] = new_state
 
     def getCaseName(self) -> str:
         return self.case_name
@@ -130,6 +159,7 @@ class EnkfFs(BaseCClass):
         )
 
     def sync(self) -> None:
+        self._save_state_map()
         self._sync()
 
     def free(self) -> None:
@@ -139,6 +169,7 @@ class EnkfFs(BaseCClass):
         return f"EnkfFs(case_name = {self.getCaseName()}) {self._ad_str()}"
 
     def fsync(self) -> None:
+        self._save_state_map()
         self._fsync()
 
     def getSummaryKeySet(self) -> List[str]:
@@ -150,12 +181,11 @@ class EnkfFs(BaseCClass):
             keys = [k.strip() for k in f.readlines()]
         return sorted(keys)
 
-    def realizationList(self, state: RealizationStateEnum) -> IntVector:
+    def realizationList(self, state: RealizationStateEnum) -> List[int]:
         """
         Will return list of realizations with state == the specified state.
         """
-        state_map = self.getStateMap()
-        return state_map.realizationList(state)
+        return [i for i, s in enumerate(self._state_map) if s == state]
 
     def _has_parameters(self) -> bool:
         """
@@ -175,9 +205,9 @@ class EnkfFs(BaseCClass):
     ) -> None:
         self._storage.save_gen_kw(parameter_name, parameter_keys, realization, data)
 
-        self.getStateMap().update_matching(
+        self.update_realization_state(
             realization,
-            RealizationStateEnum.STATE_UNDEFINED,
+            [RealizationStateEnum.STATE_UNDEFINED],
             RealizationStateEnum.STATE_INITIALIZED,
         )
 
@@ -235,9 +265,9 @@ class EnkfFs(BaseCClass):
         Path.mkdir(output_path, exist_ok=True)
         surf = xtgeo.surface_from_file(file_name, fformat="irap_ascii")
         surf.to_file(output_path / f"{key}.irap", fformat="irap_ascii")
-        self.getStateMap().update_matching(
+        self.update_realization_state(
             realization,
-            RealizationStateEnum.STATE_UNDEFINED,
+            [RealizationStateEnum.STATE_UNDEFINED],
             RealizationStateEnum.STATE_INITIALIZED,
         )
 
@@ -262,9 +292,9 @@ class EnkfFs(BaseCClass):
         surf = xtgeo.surface_from_file(base_file_name, fformat="irap_ascii")
         surf.set_values1d(data, order="F")
         surf.to_file(output_path / f"{key}.irap", fformat="irap_ascii")
-        self.getStateMap().update_matching(
+        self.update_realization_state(
             realization,
-            RealizationStateEnum.STATE_UNDEFINED,
+            [RealizationStateEnum.STATE_UNDEFINED],
             RealizationStateEnum.STATE_INITIALIZED,
         )
 
@@ -293,9 +323,9 @@ class EnkfFs(BaseCClass):
         data: npt.ArrayLike,
     ) -> None:
         self._storage.save_field_data(parameter_name, realization, data)
-        self.getStateMap().update_matching(
+        self.update_realization_state(
             realization,
-            RealizationStateEnum.STATE_UNDEFINED,
+            [RealizationStateEnum.STATE_UNDEFINED],
             RealizationStateEnum.STATE_INITIALIZED,
         )
 
