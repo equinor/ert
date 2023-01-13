@@ -17,7 +17,7 @@
 #include <ert/res_util/subst_list.hpp>
 #include <fmt/format.h>
 
-static auto logger = ert::get_logger("config");
+static auto logger = ert::get_logger("subst_list");
 
 namespace fs = std::filesystem;
 
