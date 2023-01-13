@@ -35,7 +35,6 @@ from .observations import BlockDataConfig, GenObservation, ObsVector, SummaryObs
 from .queue_config import QueueConfig
 from .row_scaling import RowScaling
 from .run_arg import RunArg
-from .state_map import StateMap
 from .time_map import TimeMap
 
 __all__ = [
@@ -51,7 +50,6 @@ __all__ = [
     "SummaryConfig",
     "ExtParamConfig",
     "TimeMap",
-    "StateMap",
     "EnkfFs",
     "RowScaling",
     "ActiveList",

@@ -580,8 +580,9 @@ class ESUpdate:
         alpha = analysis_config.get_enkf_alpha()
         std_cutoff = analysis_config.get_std_cutoff()
         global_scaling = analysis_config.get_global_std_scaling()
-        source_state_map = prior_storage.getStateMap()
-        ens_mask = source_state_map.selectMatching(RealizationStateEnum.STATE_HAS_DATA)
+        ens_mask = prior_storage.get_realization_mask_from_state(
+            [RealizationStateEnum.STATE_HAS_DATA]
+        )
         _assert_has_enough_realizations(ens_mask, analysis_config)
 
         smoother_snapshot = _create_smoother_snapshot(
@@ -630,8 +631,9 @@ class ESUpdate:
         alpha = analysis_config.get_enkf_alpha()
         std_cutoff = analysis_config.get_std_cutoff()
         global_scaling = analysis_config.get_global_std_scaling()
-        source_state_map = prior_storage.getStateMap()
-        ens_mask = source_state_map.selectMatching(RealizationStateEnum.STATE_HAS_DATA)
+        ens_mask = prior_storage.get_realization_mask_from_state(
+            [RealizationStateEnum.STATE_HAS_DATA]
+        )
 
         _assert_has_enough_realizations(ens_mask, analysis_config)
 
