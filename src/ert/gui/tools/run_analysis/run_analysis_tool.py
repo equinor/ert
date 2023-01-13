@@ -2,11 +2,7 @@ import uuid
 
 from qtpy.QtWidgets import QMessageBox
 
-from ert._clib.state_map import (
-    STATE_LOAD_FAILURE,
-    STATE_PARENT_FAILURE,
-    STATE_UNDEFINED,
-)
+from ert._c_wrappers.enkf.enums.realization_state_enum import RealizationStateEnum
 from ert.analysis import ErtAnalysisError, ESUpdate
 from ert.gui.ertwidgets import resourceIcon
 from ert.gui.ertwidgets.closabledialog import ClosableDialog
@@ -22,10 +18,13 @@ def analyse(ert, target, source):
 
     target_fs = fs_manager.add_case(target)
     source_fs = fs_manager[source]
-    for iens in source_fs.getStateMap().realizationList(
-        STATE_LOAD_FAILURE | STATE_UNDEFINED
-    ):
-        target_fs.getStateMap()[iens] = STATE_PARENT_FAILURE
+    for iens, state in enumerate(source_fs.state_map):
+        if state not in (
+            RealizationStateEnum.STATE_LOAD_FAILURE,
+            RealizationStateEnum.STATE_UNDEFINED,
+        ):
+            continue
+        target_fs.state_map[iens] = RealizationStateEnum.STATE_PARENT_FAILURE
     es_update.smootherUpdate(source_fs, target_fs, uuid.uuid4())
 
 

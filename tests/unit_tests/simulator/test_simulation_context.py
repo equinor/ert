@@ -46,19 +46,16 @@ def test_simulation_context(setup_case):
     assert odd_ctx.getNumRunning() == 0
     assert odd_ctx.getNumSuccess() == size / 2
 
-    even_state_map = even_half.getStateMap()
-    odd_state_map = odd_half.getStateMap()
-
     for iens in range(size):
         if iens % 2 == 0:
             assert even_ctx.didRealizationSucceed(iens)
             assert not even_ctx.didRealizationFail(iens)
             assert even_ctx.isRealizationFinished(iens)
 
-            assert even_state_map[iens] == RealizationStateEnum.STATE_HAS_DATA
+            assert even_half.state_map[iens] == RealizationStateEnum.STATE_HAS_DATA
         else:
             assert odd_ctx.didRealizationSucceed(iens)
             assert not odd_ctx.didRealizationFail(iens)
             assert odd_ctx.isRealizationFinished(iens)
 
-            assert odd_state_map[iens] == RealizationStateEnum.STATE_HAS_DATA
+            assert odd_half.state_map[iens] == RealizationStateEnum.STATE_HAS_DATA

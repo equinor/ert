@@ -540,13 +540,13 @@ class BaseRunModel:
 
         if current_case is not None and current_case in self._ert.storage_manager:
             if (
-                len(self._ert.storage_manager[current_case].getStateMap())
+                len(self._ert.storage_manager[current_case].state_map)
                 < self._ert._ensemble_size
             ):
                 errors.append(
                     f"- Existing case: {current_case} was created with ensemble "
                     f"size smaller than specified in the ert configuration file ("
-                    f"{len(self._ert.storage_manager[current_case].getStateMap())} "
+                    f"{len(self._ert.storage_manager[current_case].state_map)} "
                     f" < {self._ert._ensemble_size})"
                 )
         if target_case is not None:
