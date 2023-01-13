@@ -1,5 +1,6 @@
 import pytest
 
+from ert._c_wrappers.config.config_parser import ConfigValidationError
 from ert._c_wrappers.job_queue import Workflow, WorkflowJob
 from ert._c_wrappers.util.substitution_list import SubstitutionList
 
@@ -12,7 +13,7 @@ def test_workflow():
 
     dump_job = WorkflowJob.fromFile("dump_job", name="DUMP")
 
-    with pytest.raises(IOError, match="Could not open config_file"):
+    with pytest.raises(ConfigValidationError, match="Could not open config_file"):
         _ = WorkflowJob.fromFile("knock_job", name="KNOCK")
 
     workflow = Workflow("dump_workflow", {"DUMP": dump_job})
@@ -24,7 +25,7 @@ def test_workflow():
     assert args[1] == "dump_text_1"
 
     job, args = workflow[1]
-    assert job.name() == "DUMP"
+    assert job.name == "DUMP"
 
 
 @pytest.mark.usefixtures("use_tmpdir")

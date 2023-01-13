@@ -434,7 +434,7 @@ def test_shell_script_jobs_availability(minimal_case):
     list_from_content = res_config.ert_workflow_list
     wf_shell_jobs = {}
     for wf_name in list_from_content.getJobNames():
-        exe = list_from_content.getJob(wf_name).executable()
+        exe = list_from_content.getJob(wf_name).executable
         if exe and "shell_scripts" in exe:
             wf_shell_jobs[wf_name] = Path(exe).resolve()
 
@@ -458,7 +458,7 @@ def test_shell_script_jobs_names(minimal_case):
     found_jobs = set()
     list_from_content = res_config.ert_workflow_list
     for wf_name in list_from_content.getJobNames():
-        exe = list_from_content.getJob(wf_name).executable()
+        exe = list_from_content.getJob(wf_name).executable
         if exe and "shell_scripts" in exe:
             assert wf_name in shell_job_names
             found_jobs.add(wf_name)

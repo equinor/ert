@@ -1,5 +1,6 @@
 import pytest
 
+from ert._c_wrappers.config.config_parser import ConfigValidationError
 from ert._c_wrappers.job_queue import WorkflowJob
 
 from .workflow_common import WorkflowCommon
@@ -9,5 +10,5 @@ from .workflow_common import WorkflowCommon
 def test_compare():
     WorkflowCommon.createInternalFunctionJob()
 
-    with pytest.raises(IOError):
+    with pytest.raises(ConfigValidationError):
         WorkflowJob.fromFile("no/such/file")

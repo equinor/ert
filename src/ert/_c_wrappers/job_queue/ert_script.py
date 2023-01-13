@@ -3,7 +3,7 @@ import inspect
 import logging
 import sys
 import traceback
-from typing import TYPE_CHECKING, List, Optional
+from typing import TYPE_CHECKING, Any, Callable, List, Type
 
 if TYPE_CHECKING:
     from ert._c_wrappers.enkf import EnKFMain
@@ -61,7 +61,7 @@ class ErtScript:
 
     def initializeAndRun(
         self,
-        argument_types: List[type],
+        argument_types: List[Type[Any]],
         argument_values: List[str],
         verbose: bool = False,
     ):
@@ -99,9 +99,8 @@ class ErtScript:
         finally:
             self.cleanup()
 
-    __module_count = (
-        0  # Need to have unique modules in case of identical object naming in scripts
-    )
+    # Need to have unique modules in case of identical object naming in scripts
+    __module_count = 0
 
     def outputStackTrace(self, error=None):
         stack_trace = error or "".join(traceback.format_exception(*sys.exc_info()))
@@ -112,41 +111,40 @@ class ErtScript:
         self.__failed = True
 
     @staticmethod
-    def loadScriptFromFile(path) -> Optional["ErtScript"]:
-        try:
-            module_name = f"ErtScriptModule_{ErtScript.__module_count}"
-            ErtScript.__module_count += 1
+    def loadScriptFromFile(path) -> Callable[["EnKFMain"], "ErtScript"]:
+        module_name = f"ErtScriptModule_{ErtScript.__module_count}"
+        ErtScript.__module_count += 1
 
-            spec = importlib.util.spec_from_file_location(module_name, path)
-            if spec is None:
-                raise ValueError(f"Could not find spec for {module_name}")
-            module = importlib.util.module_from_spec(spec)
-            if module is None:
-                raise ValueError(f"Could not find {module_name} with spec {spec}")
-            if spec.loader is None:
-                raise ValueError(f"No loader for module {module} with spec {spec}")
+        spec = importlib.util.spec_from_file_location(module_name, path)
+        if spec is None:
+            raise ValueError(f"Could not find spec for {module_name}")
+        module = importlib.util.module_from_spec(spec)
+        if module is None:
+            raise ValueError(f"Could not find {module_name} with spec {spec}")
+        if spec.loader is None:
+            raise ValueError(f"No loader for module {module} with spec {spec}")
+        try:
             spec.loader.exec_module(module)
-            return ErtScript.__findErtScriptImplementations(module)
-        except Exception:
-            sys.stderr.write(f"The script '{path}' caused an error during load:\n")
-            traceback.print_exception(sys.exc_info()[0], sys.exc_info()[1], None)
-            return None
+        except (SyntaxError, ImportError) as err:
+            raise ValueError(f"ErtScript {path} contains syntax error {err}") from err
+        return ErtScript.__findErtScriptImplementations(module)
 
     @staticmethod
-    def __findErtScriptImplementations(module) -> "ErtScript":
+    def __findErtScriptImplementations(module) -> Callable[["EnKFMain"], "ErtScript"]:
         result = []
-        predicate = (
-            # pylint: disable=unnecessary-lambda-assignment
+        for _, member in inspect.getmembers(
+            module,
             lambda member: inspect.isclass(member)
-            and member.__module__ == module.__name__
-        )
-        for _, member in inspect.getmembers(module, predicate):
+            and member.__module__ == module.__name__,
+        ):
             if ErtScript in inspect.getmro(member):
                 result.append(member)
 
-        if len(result) != 1:
-            raise UserWarning(
-                "Must have (only) one implementation of ErtScript in a module!"
+        if len(result) == 0:
+            raise ValueError(f"Module {module.__name__} does not contain an ErtScript!")
+        if len(result) > 1:
+            raise ValueError(
+                f"Module {module.__name__} contains more than one ErtScript"
             )
 
         return result[0]

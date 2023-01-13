@@ -98,7 +98,7 @@ def test_job_load_OK():
     script_file_contents = dedent(
         """
         INTERNAL   False
-        EXECUTABLE /usr/bin/python
+        EXECUTABLE ls
         MIN_ARG    1
         MAX_ARG    2
         ARG_TYPE   0  STRING

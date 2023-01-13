@@ -236,3 +236,64 @@ def test_that_empty_job_directory_gives_warning(caplog):
             f"No files found in job directory {os.path.abspath('empty')}"
             in caplog.messages
         )
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_loading_non_existant_workflow_gives_validation_error():
+    test_config_file_base = "test"
+    test_config_file_name = f"{test_config_file_base}.ert"
+    test_config_contents = dedent(
+        """
+        NUM_REALIZATIONS  1
+        LOAD_WORKFLOW does_not_exist
+        """
+    )
+    with open(test_config_file_name, "w", encoding="utf-8") as fh:
+        fh.write(test_config_contents)
+    with pytest.raises(
+        expected_exception=ConfigValidationError,
+        match="Can not find entry does_not_exist",
+    ):
+        ResConfig(user_config_file=test_config_file_name)
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_loading_non_existant_workflow_job_gives_validation_error():
+    test_config_file_base = "test"
+    test_config_file_name = f"{test_config_file_base}.ert"
+    test_config_contents = dedent(
+        """
+        NUM_REALIZATIONS  1
+        LOAD_WORKFLOW_JOB does_not_exist
+        """
+    )
+    with open(test_config_file_name, "w", encoding="utf-8") as fh:
+        fh.write(test_config_contents)
+    with pytest.raises(
+        expected_exception=ConfigValidationError,
+        match="Can not find entry does_not_exist",
+    ):
+        ResConfig(user_config_file=test_config_file_name)
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_errors_in_job_files_give_validation_errors():
+    test_config_file_base = "test"
+    test_config_file_name = f"{test_config_file_base}.ert"
+    jobfile = os.path.abspath("not_executable")
+    test_config_contents = dedent(
+        """
+        NUM_REALIZATIONS  1
+        LOAD_WORKFLOW_JOB job
+        """
+    )
+    with open("job", "w", encoding="utf-8") as fh:
+        fh.write(f"EXECUTABLE {jobfile}\n")
+    with open(jobfile, "w", encoding="utf-8") as fh:
+        fh.write("#!/bin/bash\n")
+    with open(test_config_file_name, "w", encoding="utf-8") as fh:
+        fh.write(test_config_contents)
+    with pytest.raises(
+        expected_exception=ConfigValidationError,
+    ):
+        _ = ResConfig(user_config_file=test_config_file_name)
