@@ -1302,13 +1302,8 @@ if __name__ == "__main__":
         prior = ert.storage_manager["prior"]
         posterior = ert.storage_manager["smoother_update"]
 
-        parameter = update.Parameter("MY_PARAM")
-        config_node = ert.ensembleConfig().getNode(parameter.name)
-
-        prior_result = prior.load_parameter(config_node, list(range(5)), parameter)
-        posterior_result = posterior.load_parameter(
-            config_node, list(range(5)), parameter
-        )
+        prior_result = prior.load_field("MY_PARAM", list(range(5)))
+        posterior_result = posterior.load_field("MY_PARAM", list(range(5)))
         # Only assert on the first three rows, as there are only three parameters,
         # a, b and c, the rest have no correlation to the results.
         assert np.linalg.det(np.cov(prior_result[:3])) > np.linalg.det(

@@ -26,7 +26,6 @@ from ert._c_wrappers.enkf.model_config import ModelConfig
 from ert._c_wrappers.enkf.queue_config import QueueConfig
 from ert._c_wrappers.enkf.runpaths import Runpaths
 from ert._c_wrappers.util.substitution_list import SubstitutionList
-from ert._clib.state_map import STATE_LOAD_FAILURE, STATE_UNDEFINED
 
 if TYPE_CHECKING:
     from ert._c_wrappers.enkf.config import FieldConfig, GenKwConfig
@@ -493,7 +492,6 @@ class EnKFMain:
         # (this is a real code smell that we mute for now)
         if parameters is None:
             parameters = self._parameter_keys
-        state_map = storage.getStateMap()
 
         for parameter in parameters:
             config_node = self.ensembleConfig().getNode(parameter)
@@ -557,8 +555,15 @@ class EnKFMain:
             else:
                 raise NotImplementedError(f"{impl_type} is not supported")
         for realization_nr in active_realizations:
-            if state_map[realization_nr] in [STATE_UNDEFINED, STATE_LOAD_FAILURE]:
-                state_map[realization_nr] = RealizationStateEnum.STATE_INITIALIZED
+            storage.update_realization_state(
+                realization_nr,
+                [
+                    RealizationStateEnum.STATE_UNDEFINED,
+                    RealizationStateEnum.STATE_LOAD_FAILURE,
+                ],
+                RealizationStateEnum.STATE_INITIALIZED,
+            )
+
         storage.sync()
 
     def rng(self) -> np.random.Generator:

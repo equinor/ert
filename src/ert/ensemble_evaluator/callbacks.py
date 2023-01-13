@@ -5,9 +5,8 @@ from typing import TYPE_CHECKING, Any, Tuple
 import xtgeo
 
 from ert._c_wrappers.enkf.enkf_state import _internalize_results
-from ert._c_wrappers.enkf.enums import ErtImplType
+from ert._c_wrappers.enkf.enums import ErtImplType, RealizationStateEnum
 from ert._c_wrappers.enkf.model_callbacks import LoadStatus
-from ert._c_wrappers.enkf.state_map import RealizationStateEnum
 
 if TYPE_CHECKING:
     from ert._c_wrappers.enkf import EnsembleConfig, RunArg
@@ -89,19 +88,16 @@ def forward_model_ok(
             LoadStatus.LOAD_FAILURE,
             "Unhandled exception in callback for forward_model",
         )
-
-    state_map = run_arg.ensemble_storage.getStateMap()
-    state_map._set(
-        run_arg.iens,
+    run_arg.ensemble_storage.state_map[run_arg.iens] = (
         RealizationStateEnum.STATE_HAS_DATA
         if result[0] == LoadStatus.LOAD_SUCCESSFUL
-        else RealizationStateEnum.STATE_LOAD_FAILURE,
+        else RealizationStateEnum.STATE_LOAD_FAILURE
     )
 
     return result
 
 
 def forward_model_exit(run_arg: "RunArg", *_: Tuple[Any]):
-    run_arg.ensemble_storage.getStateMap()[
+    run_arg.ensemble_storage.state_map[
         run_arg.iens
     ] = RealizationStateEnum.STATE_LOAD_FAILURE

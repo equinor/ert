@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Union
 from ecl.grid import EclGrid
 from pandas import DataFrame, Series
 
-from ert._c_wrappers.enkf import EnKFMain, ErtImplType, ErtConfig
+from ert._c_wrappers.enkf import EnKFMain, ErtConfig, ErtImplType
 from ert._c_wrappers.enkf.config import GenKwConfig
 from ert._c_wrappers.enkf.enums import (
     EnkfObservationImplementationType,
@@ -145,9 +145,7 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
 
     def get_active_realizations(self, case_name: str) -> List[int]:
         fs = self._enkf_main.storage_manager[case_name]
-        state_map = fs.getStateMap()
-        ens_mask = state_map.selectMatching(RealizationStateEnum.STATE_HAS_DATA)
-        return [index for index, element in enumerate(ens_mask) if element]
+        return fs.realizationList(RealizationStateEnum.STATE_HAS_DATA)
 
     def case_initialized(self, case: str) -> bool:
         if case in self._enkf_main.storage_manager:
@@ -362,9 +360,11 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
     ) -> DataFrame:
         fs = self._enkf_main.storage_manager[case_name]
 
-        ens_mask = fs.getStateMap().selectMatching(
-            RealizationStateEnum.STATE_INITIALIZED
-            | RealizationStateEnum.STATE_HAS_DATA,
+        ens_mask = fs.get_realization_mask_from_state(
+            [
+                RealizationStateEnum.STATE_INITIALIZED,
+                RealizationStateEnum.STATE_HAS_DATA,
+            ]
         )
         realizations = [index for index, active in enumerate(ens_mask) if active]
 
