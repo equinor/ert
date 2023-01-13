@@ -316,6 +316,15 @@ def _load_observations_and_responses(
     joined = obs_data.join(
         measured_data, on=["data_key", "axis"], how="inner"
     ).drop_duplicates()
+    if len(obs_data) > len(joined):
+        missing_indices = set(obs_data.index) - set(joined.index)
+        error_msg = []
+        for i in missing_indices:
+            error_msg.append(
+                f"Observation: {i[0]} attached to response: {i[1]} "
+                f"at: {i[2]} has no response"
+            )
+        raise IndexError("\n".join(error_msg))
     obs_filter = _deactivate_outliers(joined, std_cutoff, alpha)
     obs_mask = [True if i not in obs_filter else False for i in joined.index]
     update_snapshot = _create_update_snapshot(joined, obs_mask)
