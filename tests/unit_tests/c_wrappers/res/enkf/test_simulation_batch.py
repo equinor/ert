@@ -29,7 +29,7 @@ def test_run_simulation_batch(setup_case):
 
     fs_manager = ert.storage_manager
     sim_fs = fs_manager.add_case("sim_fs")
-    state_map = sim_fs.getStateMap()
+
     batch_size = ens_size
     order_node_ext = {}
     injection_node_ext = {}
@@ -42,7 +42,7 @@ def test_run_simulation_batch(setup_case):
         injection_node_ext["W1"] = iens + 1
         injection_node_ext["W4"] = 3 * (iens + 1)
         sim_fs.save_ext_param("WELL_INJECTION", iens, injection_node_ext)
-        state_map[iens] = RealizationStateEnum.STATE_INITIALIZED
+        sim_fs.state_map[iens] = RealizationStateEnum.STATE_INITIALIZED
 
     mask = [True] * batch_size
     run_context = ert.load_ensemble_context(sim_fs.case_name, mask, iteration=0)

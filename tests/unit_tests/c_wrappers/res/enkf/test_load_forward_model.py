@@ -9,6 +9,7 @@ import pytest
 from ecl.summary import EclSum
 
 from ert._c_wrappers.enkf import EnKFMain, ErtConfig
+from ert._c_wrappers.enkf.enums import RealizationStateEnum
 from ert.libres_facade import LibresFacade
 
 
@@ -54,8 +55,8 @@ def test_load_inconsistent_time_map_summary(caplog):
     facade = LibresFacade(ert)
     realisation_number = 0
     assert (
-        facade.get_current_fs().getStateMap()[realisation_number].name
-        == "STATE_HAS_DATA"
+        facade.get_current_fs().state_map[realisation_number]
+        == RealizationStateEnum.STATE_HAS_DATA
     )  # Check prior state
 
     # Create a result that is incompatible with the refcase
@@ -101,8 +102,8 @@ def test_load_forward_model():
     loaded = facade.load_from_forward_model("default_0", realizations, 0)
     assert loaded == 1
     assert (
-        facade.get_current_fs().getStateMap()[realisation_number].name
-        == "STATE_HAS_DATA"
+        facade.get_current_fs().state_map[realisation_number]
+        == RealizationStateEnum.STATE_HAS_DATA
     )  # Check that status is as expected
 
 
