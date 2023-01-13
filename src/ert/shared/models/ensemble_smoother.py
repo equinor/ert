@@ -71,14 +71,14 @@ class EnsembleSmoother(BaseRunModel):
         self.setPhaseName("Analyzing...")
         self.ert().runWorkflows(HookRuntime.PRE_FIRST_UPDATE)
         self.ert().runWorkflows(HookRuntime.PRE_UPDATE)
-        state = (
-            RealizationStateEnum.STATE_HAS_DATA  # type: ignore
-            | RealizationStateEnum.STATE_INITIALIZED
-        )
+        states = [
+            RealizationStateEnum.STATE_HAS_DATA,  # type: ignore
+            RealizationStateEnum.STATE_INITIALIZED,
+        ]
         target_case_format = self._simulation_arguments["target_case"]
         posterior_context = self.ert().create_ensemble_context(
             target_case_format,
-            prior_context.sim_fs.getStateMap().createMask(state),
+            prior_context.sim_fs.get_realization_mask_from_state(states),
             iteration=1,
         )
 
