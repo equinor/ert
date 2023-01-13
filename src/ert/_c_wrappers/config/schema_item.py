@@ -1,3 +1,5 @@
+from typing import Optional
+
 from cwrap import BaseCClass
 
 from ert._c_wrappers import ResPrototype
@@ -36,8 +38,11 @@ class SchemaItem(BaseCClass):
         assert isinstance(schema_type, ContentTypeEnum)
         self._iset_type(index, schema_type)
 
-    def set_argc_minmax(self, minimum, maximum):
-        self._set_argc_minmax(minimum, maximum)
+    def set_argc_minmax(self, minimum: Optional[int], maximum: Optional[int]):
+        self._set_argc_minmax(
+            minimum if minimum is not None else -1,
+            maximum if maximum is not None else -1,
+        )
 
     def initSelection(self, index, alternatives):
         for alt in alternatives:

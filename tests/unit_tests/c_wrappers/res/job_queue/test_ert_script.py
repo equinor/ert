@@ -66,10 +66,12 @@ def test_ert_script_from_file():
     result = script.initializeAndRun([int, int], ["1", "2"])
     assert result == -1
 
-    # with pytest.raises(ErtScriptError):
-    assert ErtScript.loadScriptFromFile("syntax_error_script.py") is None
-    assert ErtScript.loadScriptFromFile("import_error_script.py") is None
-    assert ErtScript.loadScriptFromFile("empty_script.py") is None
+    with pytest.raises(ValueError):
+        _ = ErtScript.loadScriptFromFile("syntax_error_script.py")
+    with pytest.raises(ValueError):
+        _ = ErtScript.loadScriptFromFile("import_error_script.py")
+    with pytest.raises(ValueError):
+        _ = ErtScript.loadScriptFromFile("empty_script.py")
 
 
 def test_none_ert_script():

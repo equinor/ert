@@ -1,16 +1,11 @@
 import os
+from collections import defaultdict
+from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, List, Optional, Type, Union
 
-from cwrap import BaseCClass
-
-from ert._c_wrappers import ResPrototype
-from ert._c_wrappers.config import ConfigParser, ContentTypeEnum
-from ert._c_wrappers.job_queue import (
-    ErtPlugin,
-    ErtScript,
-    ExternalErtScript,
-    FunctionErtScript,
-)
+from ert._c_wrappers.config import ConfigParser, ConfigValidationError, ContentTypeEnum
+from ert._c_wrappers.job_queue import ErtScript, ExternalErtScript, FunctionErtScript
+from ert._clib.job_kw import type_from_kw
 
 if TYPE_CHECKING:
     from ert._c_wrappers.enkf import EnKFMain
@@ -18,113 +13,87 @@ if TYPE_CHECKING:
     ContentTypes = Union[Type[int], Type[bool], Type[float], Type[str]]
 
 
-class WorkflowJob(BaseCClass):
-    TYPE_NAME = "workflow_job"
-    _alloc = ResPrototype("void* workflow_job_alloc(char*, bool)", bind=False)
-    _alloc_from_file = ResPrototype(
-        "workflow_job_obj workflow_job_config_alloc( char* , config_parser , char*)",
-        bind=False,
-    )
-    _free = ResPrototype("void     workflow_job_free(workflow_job)")
-    _name = ResPrototype("char*    workflow_job_get_name(workflow_job)")
-    _internal = ResPrototype("bool     workflow_job_internal(workflow_job)")
-    _is_internal_script = ResPrototype(
-        "bool   workflow_job_is_internal_script(workflow_job)"
-    )
-    _get_internal_script = ResPrototype(
-        "char*  workflow_job_get_internal_script_path(workflow_job)"
-    )
-    _get_function = ResPrototype("char*  workflow_job_get_function(workflow_job)")
-    _get_executable = ResPrototype("char*  workflow_job_get_executable(workflow_job)")
-    _min_arg = ResPrototype("int  workflow_job_get_min_arg(workflow_job)")
-    _max_arg = ResPrototype("int  workflow_job_get_max_arg(workflow_job)")
-    _arg_type = ResPrototype(
-        "config_content_type_enum workflow_job_iget_argtype(workflow_job, int)"
-    )
+def _workflow_job_config_parser() -> ConfigParser:
+    parser = ConfigParser()
+    parser.add("MIN_ARG", value_type=ContentTypeEnum.CONFIG_INT).set_argc_minmax(1, 1)
+    parser.add("MAX_ARG", value_type=ContentTypeEnum.CONFIG_INT).set_argc_minmax(1, 1)
+    parser.add(
+        "EXECUTABLE", value_type=ContentTypeEnum.CONFIG_EXECUTABLE
+    ).set_argc_minmax(1, 1)
+    parser.add("SCRIPT", value_type=ContentTypeEnum.CONFIG_PATH).set_argc_minmax(1, 1)
+    parser.add("FUNCTION").set_argc_minmax(1, 1)
+    parser.add("INTERNAL", value_type=ContentTypeEnum.CONFIG_BOOL).set_argc_minmax(1, 1)
+    item = parser.add("ARG_TYPE")
+    item.set_argc_minmax(2, 2)
+    item.iset_type(0, ContentTypeEnum.CONFIG_INT)
+    item.initSelection(1, ["STRING", "INT", "FLOAT", "BOOL"])
+    return parser
+
+
+_config_parser = _workflow_job_config_parser()
+
+
+@dataclass
+class WorkflowJob:
+    name: str
+    internal: bool
+    min_args: Optional[int]
+    max_args: Optional[int]
+    arg_types: List[ContentTypeEnum]
+    executable: Optional[str]
+    script: Optional[str]
+    function: Optional[str]
+
+    def __post_init__(self):
+        self.__running = False
+
+    @staticmethod
+    def _make_arg_types_list(
+        config_content, max_arg: Optional[int]
+    ) -> List[ContentTypeEnum]:
+        arg_types_dict = defaultdict(lambda: ContentTypeEnum.CONFIG_STRING)
+        if max_arg is not None:
+            arg_types_dict[max_arg - 1] = ContentTypeEnum.CONFIG_STRING
+        for arg in config_content["ARG_TYPE"]:
+            arg_types_dict[arg[0]] = ContentTypeEnum(type_from_kw(arg[1]))
+        if arg_types_dict:
+            return [
+                arg_types_dict[j]
+                for j in range(max(i for i in arg_types_dict.keys()) + 1)
+            ]
+        else:
+            return []
 
     @classmethod
-    def configParser(cls) -> ConfigParser:
-        parser = ConfigParser()
-        parser.add("MIN_ARG", value_type=ContentTypeEnum.CONFIG_INT).set_argc_minmax(
-            1, 1
-        )
-        parser.add("MAX_ARG", value_type=ContentTypeEnum.CONFIG_INT).set_argc_minmax(
-            1, 1
-        )
-        parser.add(
-            "EXECUTABLE", value_type=ContentTypeEnum.CONFIG_EXECUTABLE
-        ).set_argc_minmax(1, 1)
-        parser.add("SCRIPT", value_type=ContentTypeEnum.CONFIG_PATH).set_argc_minmax(
-            1, 1
-        )
-        parser.add("FUNCTION").set_argc_minmax(1, 1)
-        parser.add("INTERNAL", value_type=ContentTypeEnum.CONFIG_BOOL).set_argc_minmax(
-            1, 1
-        )
-        item = parser.add("ARG_TYPE")
-        item.set_argc_minmax(2, 2)
-        item.iset_type(0, ContentTypeEnum.CONFIG_INT)
-        item.initSelection(1, ["STRING", "INT", "FLOAT", "BOOL"])
-        return parser
-
-    @classmethod
-    def fromFile(cls, config_file, name=None, parser=None):
+    def fromFile(cls, config_file, name=None):
         if os.path.isfile(config_file) and os.access(config_file, os.R_OK):
-            if parser is None:
-                parser = cls.configParser()
-
             if name is None:
                 name = os.path.basename(config_file)
 
-            # NB: Observe argument reoredring.
-            return cls._alloc_from_file(name, parser, config_file)
+            content = _config_parser.parse(config_file)
+
+            def optional_get(key):
+                return content.getValue(key) if content.hasKey(key) else None
+
+            max_arg = optional_get("MAX_ARG")
+
+            return cls(
+                name,
+                optional_get("INTERNAL"),
+                optional_get("MIN_ARG"),
+                max_arg,
+                cls._make_arg_types_list(content, max_arg),
+                optional_get("EXECUTABLE"),
+                optional_get("SCRIPT"),
+                optional_get("FUNCTION"),
+            )
         else:
-            raise IOError(f"Could not open config_file:{config_file}")
-
-    def __init__(self, name, internal=True):
-        c_ptr = self._alloc(name, internal)
-        super().__init__(c_ptr)
-
-        self.__script: Optional[ErtScript] = None
-        self.__running = False
-
-    def isInternal(self) -> bool:
-        return self._internal()
-
-    def name(self) -> str:
-        return self._name()
-
-    def minimumArgumentCount(self) -> int:
-        return self._min_arg()
-
-    def maximumArgumentCount(self) -> int:
-        return self._max_arg()
-
-    def functionName(self) -> str:
-        return self._get_function()
-
-    def executable(self) -> str:
-        return self._get_executable()
-
-    def isInternalScript(self) -> bool:
-        return self._is_internal_script()
-
-    def getInternalScriptPath(self) -> str:
-        return self._get_internal_script()
+            raise ConfigValidationError(f"Could not open config_file:{config_file}")
 
     def isPlugin(self) -> bool:
-        if self.isInternalScript():
-            script_obj = ErtScript.loadScriptFromFile(self.getInternalScriptPath())
-            return script_obj is not None and issubclass(script_obj, ErtPlugin)
+        return self.internal and self.script is not None
 
-        return False
-
-    def contentTypes(self) -> List[Optional["ContentTypeEnum"]]:
-        return [self._arg_type(i) for i in range(self.maximumArgumentCount())]
-
-    def argumentTypes(
-        self,
-    ) -> List[Optional["ContentTypes"]]:
+    def argumentTypes(self) -> List["ContentTypes"]:
         def content_to_type(c: Optional[ContentTypeEnum]):
             if c == ContentTypeEnum.CONFIG_BOOL:
                 return bool
@@ -134,46 +103,44 @@ class WorkflowJob(BaseCClass):
                 return int
             if c == ContentTypeEnum.CONFIG_STRING:
                 return str
-            return None
+            raise ValueError(f"Unknown job type {c} in {self}")
 
-        return list(map(content_to_type, self.contentTypes()))
+        return list(map(content_to_type, self.arg_types))
 
     @property
     def execution_type(self):
-        if self.isInternal() and self.isInternalScript():
+        if self.internal and self.script is not None:
             return "internal python"
-        elif self.isInternal():
+        elif self.internal:
             return "internal C"
         return "external"
 
-    def run(self, ert: "EnKFMain", arguments: List[str], verbose: bool = False) -> Any:
+    def run(self, ert: "EnKFMain", arguments: List[Any], verbose: bool = False) -> Any:
         self.__running = True
 
-        min_arg = self.minimumArgumentCount()
-        if min_arg > 0 and len(arguments) < min_arg:
-            raise UserWarning(
-                f"The job: {self.name()} requires at least "
-                f"{min_arg} arguments, {len(arguments)} given."
+        if self.min_args and len(arguments) < self.min_args:
+            raise ValueError(
+                f"The job: {self.name} requires at least "
+                f"{self.min_args} arguments, {len(arguments)} given."
             )
 
-        max_arg = self.maximumArgumentCount()
-        if 0 < max_arg < len(arguments):
-            raise UserWarning(
-                f"The job: {self.name()} can only have "
-                f"{max_arg} arguments, {len(arguments)} given."
+        if self.max_args and self.max_args < len(arguments):
+            raise ValueError(
+                f"The job: {self.name} can only have "
+                f"{self.max_args} arguments, {len(arguments)} given."
             )
 
-        if self.isInternalScript():
-            script_obj = ErtScript.loadScriptFromFile(self.getInternalScriptPath())
+        if self.internal and self.script is not None:
+            script_obj = ErtScript.loadScriptFromFile(self.script)
             self.__script = script_obj(ert)
             result = self.__script.initializeAndRun(
                 self.argumentTypes(), arguments, verbose=verbose
             )
 
-        elif self.isInternal() and not self.isInternalScript():
+        elif self.internal and self.script is None:
             self.__script = FunctionErtScript(
                 ert,
-                self.functionName(),
+                self.function,
                 self.argumentTypes(),
                 argument_count=len(arguments),
             )
@@ -181,8 +148,8 @@ class WorkflowJob(BaseCClass):
                 self.argumentTypes(), arguments, verbose=verbose
             )
 
-        elif not self.isInternal():
-            self.__script = ExternalErtScript(ert, self.executable())
+        elif not self.internal:
+            self.__script = ExternalErtScript(ert, self.executable)
             result = self.__script.initializeAndRun(
                 self.argumentTypes(), arguments, verbose=verbose
             )
@@ -210,9 +177,6 @@ class WorkflowJob(BaseCClass):
             raise ValueError("The job must be run before calling hasFailed")
         return self.__script.hasFailed()
 
-    def free(self):
-        self._free()
-
     def stdoutdata(self) -> str:
         if self.__script is None:
             raise ValueError("The job must be run before getting stdoutdata")
@@ -222,38 +186,3 @@ class WorkflowJob(BaseCClass):
         if self.__script is None:
             raise ValueError("The job must be run before getting stderrdata")
         return self.__script.stderrdata
-
-    @classmethod
-    def createCReference(cls, c_pointer, parent=None):
-        workflow = super().createCReference(c_pointer, parent)
-        workflow.__script = None
-        workflow.__running = False
-        return workflow
-
-    def __ne__(self, other) -> bool:
-        return not self == other
-
-    def __eq__(self, other) -> bool:
-
-        if self.executable() != other.executable():
-            return False
-
-        if self._is_internal_script() != other._is_internal_script():
-            return False
-
-        if (
-            self._is_internal_script()
-            and self._get_internal_script() != other._get_internal_script()
-        ):
-            return False
-
-        if self._name() != other._name():
-            return False
-
-        if self._min_arg() != other._min_arg():
-            return False
-
-        if self._max_arg() != other._max_arg():
-            return False
-
-        return True

@@ -28,7 +28,6 @@ class ErtWorkflowList:
         self._workflow_jobs = {}
         self._workflow = {}
         self._hook_workflow_list = []
-        self._parser = WorkflowJob.configParser()
 
         for workflow_job in workflow_job_info:
             self._add_workflow_job(workflow_job)
@@ -110,7 +109,7 @@ class ErtWorkflowList:
 
     def __repr__(self):
         job_dicts = [
-            {ConfigKeys.NAME: name, ConfigKeys.PATH: self.getJob(name).executable()}
+            {ConfigKeys.NAME: name, ConfigKeys.PATH: self.getJob(name).executable}
             for name in self.getJobNames()
         ]
 
@@ -167,19 +166,13 @@ class ErtWorkflowList:
         return True
 
     def _add_workflow_job(self, workflow_job):
-        try:
-            new_job = WorkflowJob.fromFile(
-                config_file=workflow_job[0],
-                name=None if len(workflow_job) == 1 else workflow_job[1],
-                parser=self._parser,
-            )
-            if new_job is not None:
-                self._workflow_jobs[new_job.name()] = new_job
-                new_job.convertToCReference(None)
-                logger.info(f"Adding workflow job:{new_job.name()}")
-
-        except OSError:
-            print(f"WARNING: Unable to create job from {workflow_job[0]}")
+        new_job = WorkflowJob.fromFile(
+            config_file=workflow_job[0],
+            name=None if len(workflow_job) == 1 else workflow_job[1],
+        )
+        if new_job is not None:
+            self._workflow_jobs[new_job.name] = new_job
+            logger.info(f"Adding workflow job:{new_job.name}")
 
     def _add_workflow_job_dir(self, job_path):
         if not os.path.isdir(job_path):

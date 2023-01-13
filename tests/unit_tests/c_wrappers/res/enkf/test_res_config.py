@@ -273,8 +273,8 @@ def test_extensive_config(setup_case):
         assert ert_workflow_list.hasJob(wj_name)
         job = ert_workflow_list.getJob(wj_name)
 
-        assert wj_name == job.name()
-        assert Path(wj_path).resolve() == Path(job.executable()).resolve()
+        assert wj_name == job.name
+        assert Path(wj_path).resolve() == Path(job.executable).resolve()
 
     assert snake_oil_structure_config["RNG_ALG_TYPE"] == RngAlgTypeEnum.MZRAN
 

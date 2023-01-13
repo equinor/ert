@@ -23,9 +23,7 @@ class Plugin:
         self.__description = script.getDescription()
 
     def __loadPlugin(self) -> "ErtPlugin":
-        script_obj = ErtScript.loadScriptFromFile(
-            self.__workflow_job.getInternalScriptPath()
-        )
+        script_obj = ErtScript.loadScriptFromFile(self.__workflow_job.script)
         script = script_obj(self.__ert)
         return script
 

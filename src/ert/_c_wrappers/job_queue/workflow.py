@@ -17,8 +17,8 @@ def _workflow_parser(workflow_jobs: Dict[str, "WorkflowJob"]) -> ConfigParser:
     parser = ConfigParser()
     for name, job in workflow_jobs.items():
         item = parser.add(name)
-        item.set_argc_minmax(job.minimumArgumentCount(), job.maximumArgumentCount())
-        for i, t in enumerate(job.contentTypes()):
+        item.set_argc_minmax(job.min_args, job.max_args)
+        for i, t in enumerate(job.arg_types):
             item.iset_type(i, t)
     return parser
 
@@ -93,7 +93,7 @@ class Workflow:
             self.__current_job = job
             if not self.__cancelled:
                 return_value = job.run(ert, args, verbose)
-                self.__status[job.name()] = {
+                self.__status[job.name] = {
                     "stdout": job.stdoutdata(),
                     "stderr": job.stderrdata(),
                     "completed": not job.hasFailed(),
@@ -102,7 +102,7 @@ class Workflow:
 
                 info = {
                     "class": "WORKFLOW_JOB",
-                    "job_name": job.name(),
+                    "job_name": job.name,
                     "arguments": " ".join(args),
                     "stdout": job.stdoutdata(),
                     "stderr": job.stderrdata(),
@@ -110,10 +110,10 @@ class Workflow:
                 }
 
                 if job.hasFailed():
-                    logger.error(f"Workflow job {job.name()} failed", extra=info)
+                    logger.error(f"Workflow job {job.name} failed", extra=info)
                 else:
                     logger.info(
-                        f"Workflow job {job.name()} completed successfully", extra=info
+                        f"Workflow job {job.name} completed successfully", extra=info
                     )
 
         self.__current_job = None
