@@ -23,13 +23,8 @@ class ExportMisfitDataJob(ErtScript):
 
         if target_file is None:
             target_file = "misfit.hdf"
-        realizations = [
-            i
-            for i, has_data in enumerate(
-                fs.getStateMap().selectMatching(RealizationStateEnum.STATE_HAS_DATA)
-            )
-            if has_data
-        ]
+        realizations = fs.realizationList(RealizationStateEnum.STATE_HAS_DATA)
+
         if not realizations:
             raise StorageError("No responses loaded")
 
