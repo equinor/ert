@@ -134,7 +134,7 @@ def test_validation():
     ert = MagicMock(
         _ensemble_size=100,
         storage_manager=MagicMock(
-            __get_item__=lambda _: MagicMock(getStateMap=lambda _: list(range(10))),
+            __get_item__=lambda _: MagicMock(state_map=list(range(10))),
             __contains__=lambda _, __: True,
         ),
     )
