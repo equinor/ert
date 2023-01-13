@@ -18,7 +18,7 @@ class SubstitutionList(BaseCClass):
     _has_key = ResPrototype("bool subst_list_has_key(subst_list, char*)")
     _append_copy = ResPrototype("void subst_list_append_copy(subst_list, char*, char*)")
     _alloc_filtered_string = ResPrototype(
-        "char* subst_list_alloc_filtered_string(subst_list, char*)"
+        "char* subst_list_alloc_filtered_string(subst_list, char*, char*)"
     )
     _filter_file = ResPrototype("bool subst_list_filter_file(subst_list, char*,char*)")
     _add_from_string = ResPrototype(
@@ -109,8 +109,8 @@ class SubstitutionList(BaseCClass):
 
         return None  # Should never happen!
 
-    def substitute(self, to_substitute: str) -> str:
-        return self._alloc_filtered_string(to_substitute)
+    def substitute(self, to_substitute: str, context: str = "") -> str:
+        return self._alloc_filtered_string(to_substitute, context)
 
     def substitute_file(self, to_substitute: str, tmp_file: str):
         self._filter_file(to_substitute, tmp_file)

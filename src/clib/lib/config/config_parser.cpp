@@ -126,11 +126,19 @@ static config_content_node_type *config_content_item_set_arg__(
         /* Filtering based on DEFINE statements */
         if (subst_list_get_size(define_list) > 0 &&
             config_schema_item_substitutions_enabled(schema_item)) {
+            char *parsing_line =
+                stringlist_alloc_joined_string(token_list, " ");
+            char *config_file_path =
+                config_path_elm_alloc_abspath(path_elm, config_file);
+            std::string context =
+                fmt::format("parsing config file `{}` line: `{}`",
+                            config_file_path, parsing_line);
             int iarg;
             for (iarg = 0; iarg < argc; iarg++) {
 
                 char *filtered_copy = subst_list_alloc_filtered_string(
-                    define_list, stringlist_iget(token_list, iarg + 1));
+                    define_list, stringlist_iget(token_list, iarg + 1),
+                    context.c_str());
                 stringlist_iset_owned_ref(token_list, iarg + 1, filtered_copy);
             }
         }

@@ -355,9 +355,12 @@ subst_list_update_string(const subst_list_type *subst_list, char **string) {
 /**
    This function allocates a new string where the search-replace
    operation has been performed.
+   The `context` argument may be used to add information to
+   warnings emitted during substitution.
 */
 char *subst_list_alloc_filtered_string(const subst_list_type *subst_list,
-                                       const char *string) {
+                                       const char *string,
+                                       const char *context) {
     char *filtered_string = util_alloc_string_copy(string);
     if (subst_list) {
         std::vector<std::string> matches = {"<ANY>"};
@@ -366,12 +369,28 @@ char *subst_list_alloc_filtered_string(const subst_list_type *subst_list,
         while (matches.size() > 0 && iterations++ < max_iterations) {
             matches = subst_list_update_string(subst_list, &filtered_string);
         }
+        std::vector<std::string> matches_substituted;
+        for (int counter = 0; counter < matches.size(); counter++) {
+            std::string match = matches[counter];
+            std::string match_substituted =
+                subst_list_get_value(subst_list, match.c_str());
+            matches_substituted.push_back(match_substituted);
+        }
 
         if (iterations >= max_iterations) {
-            logger->warning(fmt::format(
-                "Reached max iterations while trying to resolve defines in "
-                "'{}', it matched to '{}' and resulted in '{}'",
-                string, fmt::join(matches, ", "), filtered_string));
+            std::string warning_message = fmt::format(
+                "Reached max iterations while trying to resolve defines in the "
+                "string `{}` - after iteratively applying substitutions given "
+                "by defines, we ended up with the string `{}`, and would "
+                "proceed substituting on the substring(s) `{}`, which would in "
+                "the next iteration become `{}`, respectively (circular "
+                "define?)",
+                string, filtered_string, fmt::join(matches, ","),
+                fmt::join(matches_substituted, ","));
+            if (strlen(context) > 0) {
+                warning_message += fmt::format(" - context was {}", context);
+            }
+            logger->warning(warning_message);
         }
     }
     return filtered_string;
