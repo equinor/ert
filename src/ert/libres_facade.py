@@ -431,7 +431,6 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
             summary_keys = [
                 key for key in keys if key in summary_keys
             ]  # ignore keys that doesn't exist
-        summary_keys.sort()
         # pylint: disable=c-extension-no-member
         summary_data = _clib.enkf_fs_summary_data.get_summary_data(
             fs, summary_keys, realizations, len(dates)
