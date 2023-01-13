@@ -355,14 +355,14 @@ def test_update_multiple_param(copy_case):
 
 @pytest.mark.integration_test
 def test_gen_data_obs_data_mismatch(snake_oil_case_storage):
-    with open("observations/observations.txt", "r") as file:
+    with open("observations/observations.txt", "r", encoding="utf-8") as file:
         obs_text = file.read()
     obs_text = obs_text.replace(
         "INDEX_LIST = 400,800,1200,1800;", "INDEX_LIST = 400,800,1200,1800,2400;"
     )
-    with open("observations/observations.txt", "w") as file:
+    with open("observations/observations.txt", "w", encoding="utf-8") as file:
         file.write(obs_text)
-    with open("observations/wpr_diff_obs.txt", "a") as file:
+    with open("observations/wpr_diff_obs.txt", "a", encoding="utf-8") as file:
         file.write("0.0 0.05\n")
     res_config = ResConfig("snake_oil.ert")
     ert = EnKFMain(res_config)
