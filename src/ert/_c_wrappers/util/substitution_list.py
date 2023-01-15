@@ -38,8 +38,6 @@ class SubstitutionList(BaseCClass):
 
         for key, val in config_dict.get("DEFINE", []):
             subst_list.addItem(key, val)
-        for key, val in config_dict.get("DATA_KW", []):
-            subst_list.addItem(key, val)
 
         if "<CONFIG_PATH>" not in subst_list:
             config_dir = config_dict.get("CONFIG_DIRECTORY", os.getcwd())
@@ -55,6 +53,9 @@ class SubstitutionList(BaseCClass):
         if num_cpus is None:
             num_cpus = 1
         subst_list.addItem("<NUM_CPU>", str(num_cpus))
+
+        for key, val in config_dict.get("DATA_KW", []):
+            subst_list.addItem(key, val)
 
         return subst_list
 

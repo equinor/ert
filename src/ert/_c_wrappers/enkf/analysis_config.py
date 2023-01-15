@@ -81,6 +81,8 @@ class AnalysisConfig:
                 )
             else:
                 min_realization = int(min_realization)
+        if isinstance(num_realization, str):
+            num_realization = int(num_realization)
         # Make sure min_realization is not greater than num_realization
         if min_realization == 0:
             min_realization = num_realization

@@ -31,6 +31,7 @@ from ert._clib.config_keywords import init_site_config_parser, init_user_config_
 
 from ._config_content_as_dict import config_content_as_dict
 from ._deprecation_migration_suggester import DeprecationMigrationSuggester
+from .lark_parser import parse
 
 logger = logging.getLogger(__name__)
 
@@ -181,11 +182,11 @@ class ErtConfig:
         config_file_name = os.path.basename(config_file_path)
         config_file_basename = os.path.splitext(config_file_name)[0]
         return {
+            "<CONFIG_PATH>": config_file_dir,
+            "<CONFIG_FILE_BASE>": config_file_basename,
             "<DATE>": date_string,
             "<CWD>": config_file_dir,
-            "<CONFIG_PATH>": config_file_dir,
             "<CONFIG_FILE>": config_file_name,
-            "<CONFIG_FILE_BASE>": config_file_basename,
         }
 
     @staticmethod
@@ -211,27 +212,21 @@ class ErtConfig:
 
     @classmethod
     def make_suggestion_list(cls, config_file):
-        return DeprecationMigrationSuggester(
-            ErtConfig._create_user_config_parser(),
-            ErtConfig._create_pre_defines(config_file),
-        ).suggest_migrations(config_file)
+        return DeprecationMigrationSuggester().suggest_migrations(config_file)
 
     @classmethod
     def read_site_config(cls):
-        site_config_parser = ConfigParser()
-        init_site_config_parser(site_config_parser)
-        site_config_content = site_config_parser.parse(site_config_location())
-        return config_content_as_dict(site_config_content, {})
+        return parse(site_config_location())
 
     @classmethod
     def read_user_config(cls, user_config_file):
-        site_config_dict = ErtConfig.read_site_config()
-        user_config_parser = ErtConfig._create_user_config_parser()
-        user_config_content = user_config_parser.parse(
-            user_config_file,
-            pre_defined_kw_map=ErtConfig._create_pre_defines(user_config_file),
-        )
-        return config_content_as_dict(user_config_content, site_config_dict)
+        user_config_dict = parse(user_config_file, cls.read_site_config())
+        config_file_name = os.path.normpath(os.path.abspath(user_config_file))
+        defines = user_config_dict.get("DEFINE", [])
+        for key, val in cls._create_pre_defines(config_file_name).items():
+            defines.append([key, val])
+        user_config_dict["DEFINE"] = defines
+        return user_config_dict
 
     @classmethod
     def _validate_queue_option_max_running(cls, config_path, config_dict):
@@ -302,9 +297,14 @@ class ErtConfig:
         cls, installed_jobs, substitution_list, config_dict, config_file
     ):
         jobs = []
-        for unsubstituted_job_name, args in config_dict.get(
+        for job in config_dict.get(
             ConfigKeys.FORWARD_MODEL, []
         ):
+            if len(job) > 1:
+                unsubstituted_job_name, args = job
+            else:
+                unsubstituted_job_name = job[0]
+                args = []
             job_name = substitution_list.substitute(unsubstituted_job_name)
             try:
                 job = copy.deepcopy(installed_jobs[job_name])
@@ -319,7 +319,8 @@ class ErtConfig:
             if args:
                 job.private_args = SubstitutionList()
                 try:
-                    job.private_args.add_from_string(args)
+                    for key, val in args:
+                        job.private_args.addItem(key, val)
                 except ValueError as err:
                     raise ConfigValidationError(
                         errors=f"{err}: 'FORWARD_MODEL {job_name}({args})'\n",
