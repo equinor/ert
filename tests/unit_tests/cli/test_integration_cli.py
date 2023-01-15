@@ -372,7 +372,7 @@ def test_bad_config_error_message(tmp_path):
             str(tmp_path / "test.ert"),
         ],
     )
-    with pytest.raises(ConfigValidationError, match=r"Parsing config file.*errors"):
+    with pytest.raises(ConfigValidationError, match="NUM_REALIZATIONS must be set."):
         run_cli(parsed)
 
 

@@ -96,6 +96,28 @@ def test_ert_config_throws_on_missing_forward_model_job(
             ErtConfig.from_dict(config_dict)
 
 
+@pytest.mark.usefixtures("use_tmpdir", "set_site_config")
+@pytest.mark.parametrize(
+    "bad_define", ["DEFINE A B", "DEFINE <A<B>> C", "DEFINE <A><B> C"]
+)
+@pytest.mark.skip
+def test_that_non_bracketed_defines_gives_error(bad_define):
+    with open("test.ert", "w", encoding="utf-8") as fh:
+        fh.write(
+            dedent(
+                f"""
+                NUM_REALIZATIONS  1
+                {bad_define}
+                """
+            )
+        )
+
+    with pytest.raises(
+        ConfigValidationError, match="DEFINE or DATA_KW must be followed by"
+    ):
+        _ = ErtConfig.from_file("test.ert")
+
+
 def test_default_ens_path(tmpdir):
     with tmpdir.as_cwd():
         config_file = "test.ert"
@@ -292,14 +314,94 @@ def test_that_a_config_warning_is_given_when_eclbase_and_jobname_is_given():
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_parsing_forward_model_with_quotes_does_not_introduce_spaces():
-    """this is a regression test, making sure that we do not by mistake introduce
-    spaces while parsing forward model lines that contain quotation marks
+def test_parsing_forward_model_with_double_dash_is_possible():
+    """This is a regression test, making sure that we can put double dashes in strings.
+    The use case is that a file name is utilized that contains two consecutive hyphens,
+    which by the ert config parser used to be interpreted as a comment. In the new
+    parser this is allowed"""
 
-    the use case is that a file name is utilized that contains two consecutive hyphens,
-    which by the ert config parser is interpreted as a comment - to circumvent the
-    comment interpretation, quotation marks are used"""
+    test_config_file_name = "test.ert"
+    test_config_contents = dedent(
+        """
+        NUM_REALIZATIONS  1
+        JOBNAME job_%d--hei
+        FORWARD_MODEL COPY_FILE(<FROM>=foo,<TO>=something/hello--there.txt)
+        """
+    )
+    with open(test_config_file_name, "w", encoding="utf-8") as fh:
+        fh.write(test_config_contents)
 
+    res_config = ErtConfig.from_file(user_config_file=test_config_file_name)
+    assert res_config.model_config.jobname_format_string == "job_<IENS>--hei"
+    assert (
+        res_config.forward_model_list[0].private_args["<TO>"]
+        == "something/hello--there.txt"
+    )
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_comments_are_ignored():
+    """This is a regression test, making sure that we can put double dashes in strings.
+    The use case is that a file name is utilized that contains two consecutive hyphens,
+    which by the ert config parser used to be interpreted as a comment. In the new
+    parser this is allowed"""
+
+    test_config_file_name = "test.ert"
+    test_config_contents = dedent(
+        """
+        NUM_REALIZATIONS  1
+        --comment
+        JOBNAME job_%d--hei --hei
+        FORWARD_MODEL COPY_FILE(<FROM>=foo,<TO>=something/hello--there.txt)--foo
+        """
+    )
+    with open(test_config_file_name, "w", encoding="utf-8") as fh:
+        fh.write(test_config_contents)
+
+    res_config = ErtConfig.from_file(test_config_file_name)
+    assert res_config.model_config.jobname_format_string == "job_%d--hei"
+    assert (
+        res_config.forward_model.jobs[0].private_args["<TO>"]
+        == "something/hello--there.txt"
+    )
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_quotations_in_forward_model_arglist():
+    """This is a regression test, making sure that string behave consistently
+    The previous fail cases are described in the comments of the config. They
+     should all result in the same
+     See https://github.com/equinor/ert/issues/2766"""
+
+    test_config_file_name = "test.ert"
+    test_config_contents = dedent(
+        """
+        NUM_REALIZATIONS  1
+        FORWARD_MODEL COPY_FILE(<FROM>='some, thing', <TO>="some stuff", <FILE>=file.txt) -- success
+        FORWARD_MODEL COPY_FILE(<FROM>='some, thing', <TO>='some stuff', <FILE>=file.txt) -- some stuff becomes somestuff
+        FORWARD_MODEL COPY_FILE(<FROM>="some, thing", <TO>="some stuff", <FILE>=file.txt) -- util abort
+        """  # noqa: E501
+    )
+    with open(test_config_file_name, "w", encoding="utf-8") as fh:
+        fh.write(test_config_contents)
+
+    res_config = ErtConfig.from_file(test_config_file_name)
+
+    assert res_config.forward_model.jobs[0].private_args["<FROM>"] == "some, thing"
+    assert res_config.forward_model.jobs[0].private_args["<TO>"] == "some stuff"
+    assert res_config.forward_model.jobs[0].private_args["<FILE>"] == "file.txt"
+
+    assert res_config.forward_model.jobs[1].private_args["<FROM>"] == "some, thing"
+    assert res_config.forward_model.jobs[1].private_args["<TO>"] == "some stuff"
+    assert res_config.forward_model.jobs[1].private_args["<FILE>"] == "file.txt"
+
+    assert res_config.forward_model.jobs[2].private_args["<FROM>"] == "some, thing"
+    assert res_config.forward_model.jobs[2].private_args["<TO>"] == "some stuff"
+    assert res_config.forward_model.jobs[2].private_args["<FILE>"] == "file.txt"
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_parsing_forward_model_with_quotes_in_unquoted_string_fails():
     test_config_file_name = "test.ert"
     test_config_contents = dedent(
         """
@@ -311,9 +413,8 @@ def test_parsing_forward_model_with_quotes_does_not_introduce_spaces():
     with open(test_config_file_name, "w", encoding="utf-8") as fh:
         fh.write(test_config_contents)
 
-    ert_config = ErtConfig.from_file(test_config_file_name)
-    for _, value in ert_config.forward_model_list[0].private_args:
-        assert " " not in value
+    with pytest.raises(ConfigValidationError, match="Expected one of"):
+        _ = ErtConfig.from_file(test_config_file_name)
 
 
 @pytest.mark.usefixtures("use_tmpdir")

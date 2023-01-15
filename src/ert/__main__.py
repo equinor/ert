@@ -571,6 +571,9 @@ def main() -> None:
         sys.exit(errMsg)
     except BaseException as err:  # pylint: disable=broad-except
         logger.exception(f'ERT crashed unexpectedly with "{err}"')
+        import traceback
+
+        print(traceback.format_exc())
 
         logfiles = set()  # Use set to avoid duplicates...
         for loghandler in logging.getLogger().handlers:
