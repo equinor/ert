@@ -215,34 +215,14 @@ class ResConfig:
                 )
 
     def _alloc_from_content(self, user_config_file):
-        site_config_parser = ConfigParser()
-        init_site_config_parser(site_config_parser)
-        site_config_content = site_config_parser.parse(site_config_location())
-
+        from .lark_parser import parse
+        site_config_dict = parse(site_config_location())
+        user_config_dict = parse(user_config_file, site_config_dict)
         self._display_suggestions(user_config_file)
-        config_parser = ResConfig._create_user_config_parser()
-        init_user_config_parser(config_parser)
         self.config_path = os.path.abspath(os.path.dirname(user_config_file))
-        user_config_content = config_parser.parse(
-            user_config_file,
-            pre_defined_kw_map=ResConfig._create_pre_defines(user_config_file),
-        )
-
         self._log_config_file(user_config_file)
-        self._log_config_content(user_config_content)
-
-        if self.errors:
-            logging.error(f"Error loading configuration: {str(self._errors)}")
-            raise ConfigValidationError(
-                config_file=user_config_file, errors=self._errors
-            )
-
-        config_content_dict = config_content_as_dict(
-            user_config_content, site_config_content
-        )
-        ResConfig.apply_config_content_defaults(config_content_dict, self.config_path)
-
-        self._alloc_from_dict(config_content_dict)
+        ResConfig.apply_config_content_defaults(user_config_dict, self.config_path)
+        self._alloc_from_dict(user_config_dict)
 
     def _alloc_from_dict(self, config_dict):
         self.ens_path: str = config_dict[ConfigKeys.ENSPATH]
