@@ -126,6 +126,7 @@ args = dict(
         "graphlib_backport; python_version < '3.9'",
         "iterative_ensemble_smoother>=0.0.5",
         "jinja2",
+        "lark",
         "matplotlib",
         "numpy",
         "packaging",
