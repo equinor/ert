@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import logging
 import math
+import os
 import shutil
 from datetime import datetime
 from multiprocessing.pool import ThreadPool
@@ -12,11 +13,8 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
 import numpy as np
 import pandas as pd
 import xtgeo
-from cwrap import BaseCClass
 
-from ert import _clib
-from ert._c_wrappers import ResPrototype
-from ert._c_wrappers.enkf.enums import EnKFFSType, RealizationStateEnum
+from ert._c_wrappers.enkf.enums import RealizationStateEnum
 from ert._c_wrappers.enkf.model_callbacks import LoadStatus
 from ert._c_wrappers.enkf.time_map import TimeMap
 from ert.ensemble_evaluator.callbacks import forward_model_ok
@@ -56,18 +54,7 @@ def _load_realization(
     return status, realisation
 
 
-class EnkfFs(BaseCClass):
-    TYPE_NAME = "enkf_fs"
-
-    _mount = ResPrototype("void* enkf_fs_mount(char*, int, bool)", bind=False)
-    _sync = ResPrototype("void enkf_fs_sync(enkf_fs)")
-    _fsync = ResPrototype("void  enkf_fs_fsync(enkf_fs)")
-    _create = ResPrototype(
-        "void*   enkf_fs_create_fs(char* , enkf_fs_type_enum ,int, bool)",
-        bind=False,
-    )
-    _umount = ResPrototype("void enkf_fs_umount(enkf_fs)")
-
+class EnkfFs:
     def __init__(
         self,
         mount_point: Union[str, Path],
@@ -77,10 +64,14 @@ class EnkfFs(BaseCClass):
         refcase: Optional[EclSum] = None,
     ):
         self.mount_point = Path(mount_point).absolute()
+        os.makedirs(
+            self.mount_point,
+            exist_ok=True,
+        )
         self.case_name = self.mount_point.stem
         self.refcase = refcase
-        c_ptr = self._mount(self.mount_point.as_posix(), ensemble_size, read_only)
-        super().__init__(c_ptr)
+        self.time_map = TimeMap()
+        self.time_map.read(str(self.mount_point / "time_map"))
         if self.refcase:
             time_map = self.getTimeMap()
             time_map.attach_refcase(self.refcase)
@@ -91,7 +82,7 @@ class EnkfFs(BaseCClass):
         self._save_state_map()
 
     def getTimeMap(self) -> TimeMap:
-        return _clib.enkf_fs.get_time_map(self)
+        return self.time_map
 
     def get_realization_mask_from_state(
         self, states: List[RealizationStateEnum]
@@ -133,15 +124,7 @@ class EnkfFs(BaseCClass):
 
     @property
     def is_initalized(self) -> bool:
-        return (
-            _clib.enkf_fs.is_initialized(
-                self,
-                self._ensemble_config,
-                self._ensemble_config.parameters,
-                self._ensemble_size,
-            )
-            or self._has_parameters()
-        )
+        return self._has_parameters()
 
     def realizations_initialized(self, realizations: List[int]):
         initialized_realisations = self.realizationList(
@@ -159,25 +142,16 @@ class EnkfFs(BaseCClass):
         refcase: Optional[EclSum] = None,
     ) -> "EnkfFs":
         path = Path(path).absolute()
-        fs_type = EnKFFSType.BLOCK_FS_DRIVER_ID
-        cls._create(path.as_posix(), fs_type, ensemble_size, False)
         return cls(
             path, ensemble_config, ensemble_size, read_only=read_only, refcase=refcase
         )
 
     def sync(self) -> None:
         self._save_state_map()
-        self._sync()
-
-    def free(self) -> None:
-        self._umount()
+        self.time_map.write(str(self.mount_point / "time_map"))
 
     def __repr__(self) -> str:
-        return f"EnkfFs(case_name = {self.getCaseName()}) {self._ad_str()}"
-
-    def fsync(self) -> None:
-        self._save_state_map()
-        self._fsync()
+        return f"EnkfFs(case_name = {self.getCaseName()})"
 
     def getSummaryKeySet(self) -> List[str]:
         summary_folders = list(self.mount_point.glob("summary-*"))
