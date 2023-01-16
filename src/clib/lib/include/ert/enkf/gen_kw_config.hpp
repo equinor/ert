@@ -15,8 +15,6 @@ typedef struct gen_kw_config_struct gen_kw_config_type;
 extern "C" const char *
 gen_kw_config_get_tag_fmt(const gen_kw_config_type *config);
 bool gen_kw_config_is_valid(const gen_kw_config_type *config);
-void gen_kw_config_fprintf_config(const gen_kw_config_type *config,
-                                  const char *outfile, FILE *stream);
 extern "C" void gen_kw_config_set_parameter_file(gen_kw_config_type *config,
                                                  const char *parameter_file);
 extern "C" PY_USED const char *
