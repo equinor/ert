@@ -129,7 +129,6 @@ def _generate_ext_parameter_file(
     file_path = run_path / target_file
     Path.mkdir(file_path.parent, exist_ok=True, parents=True)
     data = fs.load_ext_param(key, realization)
-
     with open(file_path, "w", encoding="utf-8") as f:
         json.dump(data, f)
 
