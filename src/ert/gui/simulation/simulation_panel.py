@@ -56,21 +56,7 @@ class SimulationPanel(QWidget):
             self._simulation_mode_combo, 0, Qt.AlignVCenter
         )
 
-        if not self.facade.have_observations:
-            self.warn_button = QToolButton()
-            self.warn_button.setObjectName("Warn_icon_button")
-            self.warn_button.setIcon(
-                self.style().standardIcon(QStyle.SP_MessageBoxWarning)
-            )
-            self.warn_button.setStyleSheet("border: 0px solid;")
-            self.warn_button.setToolTip(
-                "Some simulation modes are disabled due to no observations found"
-            )
-            height = 20
-            self.warn_button.setIconSize(QSize(height, height))
-            simulation_mode_layout.addWidget(self.warn_button)
-        else:
-            simulation_mode_layout.addSpacing(20)
+        simulation_mode_layout.addSpacing(20)
 
         self.run_button = QToolButton()
         self.run_button.setObjectName("start_simulation")
