@@ -13,7 +13,6 @@
 #include <ert/enkf/active_list.hpp>
 #include <ert/enkf/enkf_macros.hpp>
 #include <ert/enkf/enkf_types.hpp>
-#include <ert/enkf/enkf_util.hpp>
 #include <ert/enkf/field_common.hpp>
 #include <ert/enkf/field_trans.hpp>
 
