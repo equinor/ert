@@ -10,7 +10,6 @@
 #include <ert/util/util.h>
 
 #include <ert/enkf/enkf_macros.hpp>
-#include <ert/enkf/enkf_util.hpp>
 #include <ert/enkf/gen_common.hpp>
 #include <ert/enkf/gen_obs.hpp>
 #include <ert/except.hpp>
