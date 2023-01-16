@@ -6,7 +6,6 @@ pybind11_add_module(
   res_util/subst_list.cpp
   res_util/path_fmt.cpp
   res_util/res_env.cpp
-  res_util/block_fs.cpp
   python/init.cpp
   python/logging.cpp
   python/ensemble_config.cpp
@@ -37,18 +36,14 @@ pybind11_add_module(
   ${lsb}
   enkf/active_list.cpp
   enkf/time_map.cpp
-  enkf/block_fs_driver.cpp
   enkf/config_keys.cpp
   enkf/enkf_config_node.cpp
-  enkf/enkf_fs.cpp
   enkf/enkf_obs.cpp
   enkf/enkf_types.cpp
   enkf/ensemble_config.cpp
   enkf/ext_param_config.cpp
   enkf/field_config.cpp
   enkf/field_trans.cpp
-  enkf/fs_driver.cpp
-  enkf/fs_types.cpp
   enkf/gen_common.cpp
   enkf/gen_data_config.cpp
   enkf/gen_kw_config.cpp
