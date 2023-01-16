@@ -12,7 +12,6 @@
 
 #include <ert/enkf/config_keys.hpp>
 #include <ert/enkf/enkf_defaults.hpp>
-#include <ert/enkf/enkf_fs.hpp>
 #include <ert/enkf/enkf_macros.hpp>
 #include <ert/enkf/gen_data_config.hpp>
 
@@ -43,7 +42,6 @@ struct gen_data_config_struct {
     /* All the fields below this line are related to the capability of the
      * forward model to deactivate elements in a gen_data instance. See
      * documentation above. */
-    enkf_fs_type *last_read_fs;
     int ens_size;
     bool mask_modified;
     bool_vector_type *active_mask;
@@ -98,7 +96,6 @@ static gen_data_config_type *gen_data_config_alloc(const char *key) {
         true); /* Elements are explicitly set to FALSE - this MUST default to true. */
     config->active_report_step = -1;
     config->ens_size = -1;
-    config->last_read_fs = NULL;
     pthread_mutex_init(&config->update_lock, NULL);
 
     return config;
@@ -205,137 +202,6 @@ void gen_data_config_assert_size(gen_data_config_type *config, int data_size,
                        current_size, report_step);
         }
     }
-    pthread_mutex_unlock(&config->update_lock);
-}
-
-static void update_config_to_datamask(gen_data_config_type *config,
-                                      const bool_vector_type *data_mask,
-                                      int report_step, enkf_fs_type *sim_fs) {
-    // Is this the first ensemble member loading for this particular report_step?
-    if (config->active_report_step != report_step) {
-        bool_vector_reset(config->active_mask);
-        bool_vector_iset(
-            config->active_mask,
-            int_vector_iget(config->data_size_vector, report_step) - 1, true);
-        config->mask_modified = true;
-    }
-
-    // set config inactive according to data_mask
-    for (int i = 0; i < bool_vector_size(data_mask); ++i) {
-        if (bool_vector_iget(data_mask, i))
-            continue;
-        bool_vector_iset(config->active_mask, i, false);
-        config->mask_modified = true;
-    }
-
-    if (!config->mask_modified)
-        return; // nothing to do
-
-    // The global mask has been modified after the last load;
-    // i.e. we update the on-disk representation.
-    char *filename = util_alloc_sprintf("%s_active", config->key);
-    FILE *stream =
-        enkf_fs_open_case_tstep_file(sim_fs, filename, report_step, "w");
-    free(filename);
-
-    bool_vector_fwrite(config->active_mask, stream);
-    fclose(stream);
-    config->mask_modified = false;
-}
-
-/**
-   When the forward model is creating results for GEN_DATA instances,
-   it can optionally signal that not all elements in the gen_data
-   should be active (i.e. the forward model failed in some way); that
-   is handled through this function. When all ensemble members have
-   called this function the mask config->active_mask should be true
-   ONLY for the elements which are true for all members.
-
-   This MUST be called after gen_data_config_assert_size().
-*/
-void gen_data_config_update_active(gen_data_config_type *config,
-                                   int report_step,
-                                   const bool_vector_type *data_mask,
-                                   enkf_fs_type *sim_fs) {
-    pthread_mutex_lock(&config->update_lock);
-    if (int_vector_iget(config->data_size_vector, report_step) > 0)
-        update_config_to_datamask(config, data_mask, report_step, sim_fs);
-    config->active_report_step = report_step;
-    pthread_mutex_unlock(&config->update_lock);
-}
-
-bool gen_data_config_has_active_mask(const gen_data_config_type *config,
-                                     enkf_fs_type *fs, int report_step) {
-    char *filename = util_alloc_sprintf("%s_active", config->key);
-    FILE *stream = enkf_fs_open_excase_tstep_file(fs, filename, report_step);
-
-    bool has_mask = false;
-    if (stream) {
-        has_mask = true;
-        fclose(stream);
-    }
-    free(filename);
-    return has_mask;
-}
-
-/**
-   This function will load an active map from the enkf_fs filesystem.
-*/
-void gen_data_config_load_active(gen_data_config_type *config, enkf_fs_type *fs,
-                                 int report_step, bool force_load) {
-    bool fs_changed = false;
-    if (fs != config->last_read_fs) {
-        config->last_read_fs = fs;
-        fs_changed = true;
-    }
-
-    pthread_mutex_lock(&config->update_lock);
-
-    if (force_load ||
-        (int_vector_iget(config->data_size_vector, report_step) > 0)) {
-        if (config->active_report_step != report_step || fs_changed) {
-            char *filename = util_alloc_sprintf("%s_active", config->key);
-            FILE *stream =
-                enkf_fs_open_excase_tstep_file(fs, filename, report_step);
-
-            if (stream != NULL) {
-                bool_vector_fread(config->active_mask, stream);
-                fclose(stream);
-            } else {
-                int gen_data_size =
-                    int_vector_safe_iget(config->data_size_vector, report_step);
-                if (gen_data_size < 0) {
-                    fprintf(stderr, "** Fatal internal error in function:%s \n",
-                            __func__);
-                    fprintf(stderr, "\n");
-                    fprintf(stderr,
-                            "   1: The active mask file:%s was not found \n",
-                            filename);
-                    fprintf(stderr, "   2: The size of the gen_data vectors "
-                                    "has not been set\n");
-                    fprintf(stderr, "\n");
-                    fprintf(stderr,
-                            "We can not create a suitable active_mask. ");
-                    fprintf(stderr, "Code should call "
-                                    "gen_data_config_has_active_mask()\n\n");
-
-                    util_abort("%s: fatal internal error - could not create a "
-                               "suitable active_mask\n",
-                               __func__);
-                } else {
-                    logger->info(
-                        "Could not locate active data elements file {}, "
-                        "filling active vector with true all elements active.",
-                        filename);
-                    bool_vector_reset(config->active_mask);
-                    bool_vector_iset(config->active_mask, gen_data_size - 1,
-                                     true);
-                }
-            }
-            free(filename);
-        }
-    }
-    config->active_report_step = report_step;
     pthread_mutex_unlock(&config->update_lock);
 }
 

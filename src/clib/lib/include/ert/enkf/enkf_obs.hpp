@@ -10,7 +10,6 @@
 
 #include <ert/ecl/ecl_sum.h>
 
-#include <ert/enkf/enkf_fs.hpp>
 #include <ert/enkf/enkf_types.hpp>
 #include <ert/enkf/obs_vector.hpp>
 #include <ert/enkf/time_map.hpp>

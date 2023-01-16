@@ -11,7 +11,6 @@
 
 #include <ert/ecl/ecl_sum.h>
 
-#include <ert/enkf/enkf_fs.hpp>
 #include <ert/enkf/enkf_macros.hpp>
 #include <ert/enkf/enkf_types.hpp>
 #include <ert/enkf/ensemble_config.hpp>
@@ -35,9 +34,6 @@ typedef double(obs_chi2_ftype)(const void *, const void *, node_id_type);
 extern "C" void obs_vector_free(obs_vector_type *);
 extern "C" int obs_vector_get_num_active(const obs_vector_type *);
 extern "C" bool obs_vector_iget_active(const obs_vector_type *, int);
-extern "C" bool obs_vector_has_data(const obs_vector_type *obs_vector,
-                                    const bool_vector_type *active_mask,
-                                    enkf_fs_type *fs);
 extern "C" const char *obs_vector_get_state_kw(const obs_vector_type *);
 extern "C" const char *obs_vector_get_key(const obs_vector_type *);
 extern "C" obs_impl_type obs_vector_get_impl_type(const obs_vector_type *);
@@ -65,11 +61,6 @@ extern "C" obs_vector_type *obs_vector_alloc(obs_impl_type obs_type,
 
 extern "C" void obs_vector_install_node(obs_vector_type *obs_vector,
                                         int obs_index, void *node);
-
-void obs_vector_ensemble_chi2(const obs_vector_type *obs_vector,
-                              enkf_fs_type *fs, bool_vector_type *valid,
-                              int step1, int step2, int iens1, int iens2,
-                              double **chi2);
 
 extern "C" enkf_config_node_type *
 obs_vector_get_config_node(const obs_vector_type *);
