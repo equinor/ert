@@ -311,7 +311,7 @@ class BaseRunModel:
 
         self.deactivate_failed_jobs(run_context)
 
-        run_context.sim_fs.fsync()
+        run_context.sim_fs.sync()
         return totalOk
 
     @staticmethod
@@ -403,7 +403,7 @@ class BaseRunModel:
 
             await loop.run_in_executor(
                 pool,
-                run_context.sim_fs.fsync,
+                run_context.sim_fs.sync,
             )
 
     @abstractmethod
