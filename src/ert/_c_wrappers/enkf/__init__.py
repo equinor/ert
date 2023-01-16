@@ -18,7 +18,6 @@ from .ensemble_config import EnsembleConfig
 from .enums import (
     ActiveMode,
     EnkfFieldFileFormatEnum,
-    EnKFFSType,
     EnkfObservationImplementationType,
     EnkfTruncationType,
     EnkfVarType,
@@ -61,7 +60,6 @@ __all__ = [
     "ErtImplType",
     "RealizationStateEnum",
     "EnkfTruncationType",
-    "EnKFFSType",
     "GenDataFileType",
     "ActiveMode",
     "HookRuntime",
