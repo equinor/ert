@@ -157,7 +157,7 @@ def test_field_load_two_parameters_forward_init(tmpdir):
         GRID MY_EGRID.EGRID
         """  # pylint: disable=line-too-long  # noqa: E501
         )
-        with open("config.ert", "w") as fh:
+        with open("config.ert", "w", encoding="utf-8") as fh:
             fh.writelines(config)
 
         grid = xtgeo.create_box_grid(dimension=(10, 10, 1))
@@ -242,7 +242,7 @@ def test_field_load_two_parameters(tmpdir):
         GRID MY_EGRID.EGRID
         """
         )
-        with open("config.ert", "w") as fh:
+        with open("config.ert", "w", encoding="utf-8") as fh:
             fh.writelines(config)
 
         grid = xtgeo.create_box_grid(dimension=(10, 10, 1))
@@ -331,7 +331,7 @@ def test_field_with_min_max(tmpdir, min_: int, max_: int, field_config: str):
         """
         )
         config += field_config
-        with open("config.ert", "w") as fh:
+        with open("config.ert", "w", encoding="utf-8") as fh:
             fh.writelines(config)
 
         grid = xtgeo.create_box_grid(dimension=(10, 10, 1))
@@ -381,7 +381,7 @@ def test_field_with_transformation(tmpdir):
         GRID MY_EGRID.EGRID
         """  # pylint: disable=line-too-long  # noqa: E501
         )
-        with open("config.ert", "w") as fh:
+        with open("config.ert", "w", encoding="utf-8") as fh:
             fh.writelines(config)
 
         grid = xtgeo.create_box_grid(dimension=(10, 10, 1))
@@ -641,7 +641,7 @@ def test_copy_case(
         expect_surface.write("surf.irap")
         expect_surface.write("surf0.irap")
 
-        with open("config.ert", "w") as fh:
+        with open("config.ert", "w", encoding="utf-8") as fh:
             fh.writelines(config)
         ert = create_runpath("config.ert", active_mask=[True for _ in range(10)])
 
@@ -925,7 +925,7 @@ SIMULATION_JOB poly_eval
 TIME_MAP time_map
         """  # pylint: disable=line-too-long  # noqa: E501
         )
-        with open("config.ert", "w") as fh:
+        with open("config.ert", "w", encoding="utf-8") as fh:
             fh.writelines(config)
 
         grid = xtgeo.create_box_grid(dimension=(10, 10, 1))
@@ -949,7 +949,7 @@ TIME_MAP time_map
         )
         gp.to_file("my_param.grdecl", fformat="grdecl")
 
-        with open("forward_model", "w") as f:
+        with open("forward_model", "w", encoding="utf-8") as f:
             f.write(
                 dedent(
                     """#!/usr/bin/env python
@@ -977,7 +977,7 @@ if __name__ == "__main__":
     b= np.random.standard_normal()
     c= np.random.standard_normal()
     output = [a * x**2 + b * x + c for x in range(10)]
-    with open("gen_data_0.out", "w") as f:
+    with open("gen_data_0.out", "w", encoding="utf-8") as f:
         f.write("\\n".join(map(str, output)))
         """
                 )
@@ -989,9 +989,9 @@ if __name__ == "__main__":
             | stat.S_IXGRP
             | stat.S_IXOTH,
         )
-        with open("POLY_EVAL", "w") as fout:
+        with open("POLY_EVAL", "w", encoding="utf-8") as fout:
             fout.write("EXECUTABLE forward_model")
-        with open("observations", "w") as fout:
+        with open("observations", "w", encoding="utf-8") as fout:
             fout.write(
                 dedent(
                     """
@@ -1004,7 +1004,7 @@ if __name__ == "__main__":
                 )
             )
 
-        with open("obs.txt", "w") as fobs:
+        with open("obs.txt", "w", encoding="utf-8") as fobs:
             fobs.write(
                 dedent(
                     """
@@ -1016,7 +1016,7 @@ if __name__ == "__main__":
                 )
             )
 
-        with open("time_map", "w") as fobs:
+        with open("time_map", "w", encoding="utf-8") as fobs:
             fobs.write("2014-09-10")
 
         parser = ArgumentParser(prog="test_main")
@@ -1097,7 +1097,7 @@ if __name__ == "__main__":
             surf.write(f"surf.irap")
     a, b, c = list(Surface(filename="surf.irap"))
     output = [a * x**2 + b * x + c for x in range(10)]
-    with open("gen_data_0.out", "w") as f:
+    with open("gen_data_0.out", "w", encoding="utf-8") as f:
         f.write("\\n".join(map(str, output)))
         """
                 )
