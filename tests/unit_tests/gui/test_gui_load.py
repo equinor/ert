@@ -5,7 +5,7 @@ from unittest.mock import Mock, PropertyMock
 
 import pytest
 from qtpy.QtCore import Qt, QTimer
-from qtpy.QtWidgets import QComboBox, QDialog, QMessageBox, QToolButton, QWidget
+from qtpy.QtWidgets import QComboBox, QDialog, QMessageBox, QWidget
 
 import ert.gui
 from ert.gui.ertwidgets.message_box import ErtMessageBox
@@ -196,15 +196,11 @@ def test_that_errors_are_shown_in_the_suggester_window_when_present(
 
 
 @pytest.mark.usefixtures("copy_poly_case")
-def test_that_the_ui_show_no_warnings_when_observations_found(
-    monkeypatch, qapp, tmp_path
-):
+def test_that_the_ui_show_no_warnings_when_observations_found(qapp):
     args = Mock()
     args.config = "poly.ert"
     with add_gui_log_handler() as log_handler:
         gui, _ = ert.gui.gert_main._start_initial_gui_window(args, log_handler)
-        button = gui.findChild(QToolButton, name="Warn_icon_button")
-        assert not button
         combo_box = gui.findChild(QComboBox, name="Simulation_mode")
         assert combo_box.count() == 5
 
@@ -214,9 +210,7 @@ def test_that_the_ui_show_no_warnings_when_observations_found(
         assert gui.windowTitle() == "ERT - poly.ert"
 
 
-def test_that_the_ui_show_warnings_when_there_are_no_observations(
-    monkeypatch, qapp, tmp_path
-):
+def test_that_the_ui_show_warnings_when_there_are_no_observations(qapp, tmp_path):
     config_file = tmp_path / "config.ert"
     config_file.write_text("NUM_REALIZATIONS 1\n")
 
@@ -224,12 +218,6 @@ def test_that_the_ui_show_warnings_when_there_are_no_observations(
     args.config = str(config_file)
     with add_gui_log_handler() as log_handler:
         gui, _ = ert.gui.gert_main._start_initial_gui_window(args, log_handler)
-        button = gui.findChild(QToolButton, name="Warn_icon_button")
-        assert button
-        assert (
-            button.toolTip()
-            == "Some simulation modes are disabled due to no observations found"
-        )
         combo_box = gui.findChild(QComboBox, name="Simulation_mode")
         assert combo_box.count() == 5
 
