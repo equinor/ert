@@ -32,7 +32,7 @@ def _internalize_GEN_DATA(
                 errors.append(f"{key} report step {i} missing")
                 continue
 
-            with open(run_path / filename, "r") as f:
+            with open(run_path / filename, "r", encoding="utf-8") as f:
                 data = [float(v.strip()) for v in f.readlines()]
 
             run_arg.ensemble_storage.save_gen_data(f"{key}@{i}", data, run_arg.iens)
