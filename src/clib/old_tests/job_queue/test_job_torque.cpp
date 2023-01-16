@@ -7,7 +7,6 @@
 
 void test_option(torque_driver_type *driver, const char *option,
                  const char *value) {
-    printf("test_option %s %s\n", option, value);
     test_assert_true(torque_driver_set_option(driver, option, value));
     test_assert_string_equal(
         (const char *)torque_driver_get_option(driver, option), value);
