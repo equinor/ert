@@ -78,7 +78,7 @@ def _start_initial_gui_window(args, log_handler):
         messages += ResConfig.make_suggestion_list(args.config)
     except Exception as error:
         messages.append(str(error))
-        return _setup_suggester(messages, args, None, log_handler), None
+        return _setup_suggester(messages, args, log_handler), None
 
     # Create logger inside function to make sure all handlers have been added to
     # the root-logger.
@@ -95,13 +95,18 @@ def _start_initial_gui_window(args, log_handler):
         ert = EnKFMain(res_config)
     except Exception as error:
         messages.append(str(error))
-        return _setup_suggester(messages, args, None, log_handler), None
+        return _setup_suggester(messages, args, log_handler), None
 
     locale_msg = _check_locale()
     if locale_msg is not None:
         messages.append(locale_msg)
     if messages:
-        return _setup_suggester(messages, args, ert, log_handler), res_config.ens_path
+        return (
+            _setup_suggester(
+                messages, args, log_handler, _setup_main_window(ert, args, log_handler)
+            ),
+            res_config.ens_path,
+        )
     else:
         return _setup_main_window(ert, args, log_handler), res_config.ens_path
 
@@ -128,7 +133,7 @@ def _check_locale():
         return None
 
 
-def _setup_suggester(suggestions, args, ert, log_handler):
+def _setup_suggester(suggestions, args, log_handler, ert_window=None):
     suggest = QWidget()
     layout = QVBoxLayout()
     suggest.setWindowTitle("Some problems detected")
@@ -149,13 +154,12 @@ def _setup_suggester(suggestions, args, ert, log_handler):
 
     run = QPushButton("Run ert")
     run.setObjectName("run_ert_button")
-    run.setEnabled(ert is not None)
+    run.setEnabled(ert_window is not None)
 
     def run_pressed():
-        window = _setup_main_window(ert, args, log_handler)
-        window.show()
-        window.activateWindow()
-        window.raise_()
+        ert_window.show()
+        ert_window.activateWindow()
+        ert_window.raise_()
         suggest.close()
 
     run.pressed.connect(run_pressed)

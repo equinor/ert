@@ -179,8 +179,9 @@ def test_that_gui_gives_suggestions_when_you_have_umask_in_config(
 
     args = Mock()
     args.config = str(config_file)
-    gui, _ = ert.gui.gert_main._start_initial_gui_window(args, None)
-    assert gui.windowTitle() == "Some problems detected"
+    with add_gui_log_handler() as log_handler:
+        gui, _ = ert.gui.gert_main._start_initial_gui_window(args, log_handler)
+        assert gui.windowTitle() == "Some problems detected"
 
 
 def test_that_errors_are_shown_in_the_suggester_window_when_present(
@@ -191,8 +192,9 @@ def test_that_errors_are_shown_in_the_suggester_window_when_present(
 
     args = Mock()
     args.config = str(config_file)
-    gui, _ = ert.gui.gert_main._start_initial_gui_window(args, None)
-    assert gui.windowTitle() == "Some problems detected"
+    with add_gui_log_handler() as log_handler:
+        gui, _ = ert.gui.gert_main._start_initial_gui_window(args, log_handler)
+        assert gui.windowTitle() == "Some problems detected"
 
 
 @pytest.mark.usefixtures("copy_poly_case")
