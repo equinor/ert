@@ -336,7 +336,7 @@ class EnKFMain:
         else:
             seed: Union[int, Sequence[int]]
             try:
-                seed = int(config_seed)  # type: ignore
+                seed = int(config_seed)
             except ValueError:
                 seed = [ord(x) for x in config_seed]
             seed_seq = np.random.SeedSequence(seed)
