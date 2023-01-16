@@ -81,7 +81,7 @@ def _run_forward_model(
             else:
                 totalOk += 1
 
-    run_context.sim_fs.fsync()
+    run_context.sim_fs.sync()
 
     return totalOk
 
