@@ -1003,7 +1003,7 @@ if __name__ == "__main__":
     b= np.random.standard_normal()
     c= np.random.standard_normal()
     output = [a * x**2 + b * x + c for x in range(10)]
-    with open("gen_data_0.out", "w") as f:
+    with open("gen_data_0.out", "w", encoding="utf-8") as f:
         f.write("\\n".join(map(str, output)))
         """
                 )
@@ -1123,7 +1123,7 @@ if __name__ == "__main__":
             surf.write(f"surf.irap")
     a, b, c = list(Surface(filename="surf.irap"))
     output = [a * x**2 + b * x + c for x in range(10)]
-    with open("gen_data_0.out", "w") as f:
+    with open("gen_data_0.out", "w", encoding="utf-8") as f:
         f.write("\\n".join(map(str, output)))
         """
                 )
