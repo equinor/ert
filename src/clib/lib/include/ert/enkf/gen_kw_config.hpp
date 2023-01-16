@@ -8,7 +8,6 @@
 #include <ert/util/util.h>
 
 #include <ert/enkf/enkf_macros.hpp>
-#include <ert/enkf/enkf_util.hpp>
 
 typedef struct gen_kw_config_struct gen_kw_config_type;
 
