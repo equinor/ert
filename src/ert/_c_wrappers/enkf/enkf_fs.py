@@ -103,7 +103,7 @@ class EnkfFs(BaseCClass):
     def _load_state_map(self) -> List[RealizationStateEnum]:
         state_map_file = self.mount_point / "state_map.json"
         if state_map_file.exists():
-            with open(state_map_file, "r") as f:
+            with open(state_map_file, "r", encoding="utf-8") as f:
                 data = json.load(f)
                 return [RealizationStateEnum(v) for v in data["state_map"]]
         else:
@@ -113,7 +113,7 @@ class EnkfFs(BaseCClass):
 
     def _save_state_map(self):
         state_map_file = self.mount_point / "state_map.json"
-        with open(state_map_file, "w") as f:
+        with open(state_map_file, "w", encoding="utf-8") as f:
             data = {"state_map": [v.value for v in self._state_map]}
             f.write(json.dumps(data))
 
@@ -180,7 +180,7 @@ class EnkfFs(BaseCClass):
         if not summary_folders:
             return []
         summary_path = summary_folders[0]
-        with open(summary_path / "keys", "r") as f:
+        with open(summary_path / "keys", "r", encoding="utf-8") as f:
             keys = [k.strip() for k in f.readlines()]
         return sorted(keys)
 
@@ -222,7 +222,7 @@ class EnkfFs(BaseCClass):
             raise KeyError(f"Unable to load GEN_KW for key: {key}")
 
         np_data = np.load(input_path / f"{key}.npy")
-        with open(input_path / f"{key}-keys", "r") as f:
+        with open(input_path / f"{key}-keys", "r", encoding="utf-8") as f:
             keys = [k.strip() for k in f.readlines()]
 
         return np_data, keys
@@ -260,7 +260,7 @@ class EnkfFs(BaseCClass):
     ) -> None:
         output_path = self.mount_point / f"extparam-{realization}"
         Path.mkdir(output_path, exist_ok=True)
-        with open(output_path / f"{key}.json", "w") as f:
+        with open(output_path / f"{key}.json", "w", encoding="utf-8") as f:
             json.dump(data, f)
 
     def save_surface_file(self, key: str, realization: int, file_name: str) -> None:
@@ -279,7 +279,7 @@ class EnkfFs(BaseCClass):
         if not input_path.exists():
             raise KeyError(f"No parameter: {key} in storage")
 
-        with open(input_path) as f:
+        with open(input_path, encoding="utf-8") as f:
             data = json.load(f)
         return data
 
