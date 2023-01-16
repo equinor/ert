@@ -275,13 +275,6 @@ int gen_kw_config_get_index(const gen_kw_config_type *config, const char *key) {
         return -1;
 }
 
-void gen_kw_config_fprintf_config(const gen_kw_config_type *config,
-                                  const char *outfile, FILE *stream) {
-    fprintf(stream, CONFIG_VALUE_FORMAT, config->template_file);
-    fprintf(stream, CONFIG_VALUE_FORMAT, outfile);
-    fprintf(stream, CONFIG_VALUE_FORMAT, config->parameter_file);
-}
-
 const char *gen_kw_config_iget_function_type(const gen_kw_config_type *config,
                                              int index) {
     const gen_kw_parameter_type *parameter =
