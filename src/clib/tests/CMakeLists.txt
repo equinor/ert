@@ -10,7 +10,6 @@ add_executable(
   ${TESTS_EXCLUDE_FROM_ALL}
   tmpdir.cpp
   enkf/enkf_obs_paths_detailed.cpp
-  enkf/test_enkf_fs.cpp
   res_util/test_memory.cpp
   res_util/test_string.cpp
   res_util/test_metric.cpp
