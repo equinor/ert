@@ -229,7 +229,7 @@ class ResConfig:
             ResConfig._create_pre_defines(config_file),
         ).suggest_migrations(config_file)
         for suggestion in suggestions:
-            logging.error(suggestion)
+            logging.warning(suggestion)
 
     @classmethod
     def make_suggestion_list(cls, config_file):
