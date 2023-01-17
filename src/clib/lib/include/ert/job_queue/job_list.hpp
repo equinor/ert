@@ -15,8 +15,6 @@ job_queue_node_type *job_list_iget_job(const job_list_type *job_list,
 void job_list_reset(job_list_type *job_list);
 void job_list_get_wrlock(job_list_type *list);
 void job_list_get_rdlock(job_list_type *list);
-void job_list_reader_wait(job_list_type *list, int usleep_time1,
-                          int usleep_time2);
 void job_list_unlock(job_list_type *list);
 
 #endif
