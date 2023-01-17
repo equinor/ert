@@ -1,6 +1,8 @@
 import logging
 from typing import TYPE_CHECKING
 
+from ert._c_wrappers.enkf.runpaths import replace_runpath_format
+
 if TYPE_CHECKING:
     from ert._c_wrappers.config import ConfigParser
 
@@ -37,7 +39,6 @@ class DeprecationMigrationSuggester:
         self._parser.add("CASE_TABLE")
         self._parser.add("RERUN_START")
         self._parser.add("DELETE_RUNPATH")
-        self._parser.add("RUNPATH")
 
     def suggest_migrations(self, filename: str):
         suggestions = []
@@ -49,11 +50,11 @@ class DeprecationMigrationSuggester:
                 suggestions.append(suggestion)
 
         if content.hasKey("RUNPATH") and "%d" in content.getValue("RUNPATH"):
+            runpath = replace_runpath_format(content.getValue("RUNPATH"))
             add_suggestion(
                 "RUNPATH",
-                "The use of %d in RUNPATH has been deprecated. "
-                "Instead use the <IENS>, <ITER> keywords, "
-                "e.g.: realization-<IENS>/iter-<ITER>",
+                "RUNPATH keyword contains deprecated value placeholders, "
+                f"instead use: {runpath}",
             )
 
         for kw in self.REPLACE_WITH_GEN_KW:

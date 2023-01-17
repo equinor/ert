@@ -105,13 +105,13 @@ class Runpaths:
         return open(self.runpath_list_filename, mode, encoding="utf-8")
 
     def format_job_name(self) -> str:
-        return _maybe_format(self._job_name_format)
+        return replace_runpath_format(self._job_name_format)
 
     def format_runpath(self):
-        return str(Path(_maybe_format(self._runpath_format)).resolve())
+        return str(Path(replace_runpath_format(self._runpath_format)).resolve())
 
 
-def _maybe_format(format_string: str) -> str:
+def replace_runpath_format(format_string: str) -> str:
     format_string = format_string.replace("%d", "<IENS>", 1)
     format_string = format_string.replace("%d", "<ITER>", 1)
     return format_string
