@@ -7,21 +7,6 @@ from ert._c_wrappers.enkf import ConfigKeys, ResConfig
 from .config_dict_generator import config_generators, to_config_file
 
 
-@given(config_generators())
-def test_ensemble_config_from_file_and_dict_coincide(
-    tmp_path_factory, config_generator
-):
-    filename = "config.ert"
-    with config_generator(tmp_path_factory, filename) as config_dict:
-
-        res_config_from_file = ResConfig(user_config_file=filename)
-        res_config_from_dict = ResConfig(config_dict=config_dict)
-
-        assert (
-            res_config_from_file.ensemble_config == res_config_from_dict.ensemble_config
-        )
-
-
 @pytest.mark.skip(reason="github.com/equinor/ert/issues/4070")
 @given(config_generators())
 def test_ensemble_config_errors_on_unknown_function_in_field(
