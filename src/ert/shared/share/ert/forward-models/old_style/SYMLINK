@@ -1,8 +1,5 @@
 -- The SYMLINK and MAKE_SYMLINK jobs are aliases to the same
 -- underlying script.
-STDERR    make_symlink.stderr
-STDOUT    make_symlink.stdout
-
 EXECUTABLE  ../../shell_scripts/symlink.py
 ARGLIST     <TARGET> <LINKNAME>
 

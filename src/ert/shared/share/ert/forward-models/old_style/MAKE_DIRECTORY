@@ -1,6 +1,3 @@
-STDERR    make_directory.stderr
-STDOUT    make_directory.stdout
-
 ARGLIST   <DIRECTORY>
 EXECUTABLE    ../../shell_scripts/make_directory.py
 

@@ -1,5 +1,3 @@
-STDOUT      copy_file.stdout
-STDERR      copy_file.stderr
 EXECUTABLE  ../../shell_scripts/copy_file.py
 ARGLIST     <FROM> <TO>
 
