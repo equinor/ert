@@ -63,18 +63,16 @@ def valid_args(arg_types, arg_list: List[str], runtime: bool = False):
             ARGLIST <ARGUMENTA> <ARGUMENTB> <ARGUMENTC>
                 """
             ),
-            dedent(
-                """
-            DEFINE <TO_BE_DEFINED> <ARGUMENTB>
-            FORWARD_MODEL job_name(<ARGUMENTA>=configured_argumentA, <TO_BE_DEFINED>=configured_argumentB)
-            """  # noqa E501
-            ),
+            "DEFINE <TO_BE_DEFINED> <ARGUMENTB>\n"
+            "FORWARD_MODEL job_name(<ARGUMENTA>=configured_argumentA,"
+            " <TO_BE_DEFINED>=configured_argumentB)",
             [
                 "configured_argumentA",
                 "<ARGUMENTB>",
                 "<ARGUMENTC>",
             ],
-            id="Keywords in argument list are not substituted, so argument B gets no value",
+            id="Keywords in argument list are not substituted, "
+            "so argument B gets no value",
         ),
         pytest.param(
             dedent(
