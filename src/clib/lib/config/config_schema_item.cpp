@@ -514,7 +514,8 @@ void config_schema_item_disable_substitutions(config_schema_item_type *item) {
     item->do_substitutions = false;
 }
 
-bool config_schema_item_substitutions_enabled(const config_schema_item_type *item) {
+bool config_schema_item_substitutions_enabled(
+    const config_schema_item_type *item) {
     return item->do_substitutions;
 }
 
