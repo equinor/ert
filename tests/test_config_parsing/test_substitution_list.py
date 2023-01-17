@@ -22,20 +22,6 @@ def test_different_defines_give_different_subst_lists(
             )
 
 
-@given(config_generators())
-def test_from_dict_and_from_file_creates_equal_subst_lists(
-    tmp_path_factory, config_generator
-):
-    filename = "config.ert"
-    with config_generator(tmp_path_factory, filename) as config_dict:
-        res_config_from_file = ResConfig(user_config_file=filename)
-        res_config_from_dict = ResConfig(config_dict=config_dict)
-        assert (
-            res_config_from_dict.substitution_list
-            == res_config_from_file.substitution_list
-        )
-
-
 def test_subst_list_reads_correct_values():
     substitution_list = ResConfig(
         config_dict={

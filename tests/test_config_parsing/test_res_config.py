@@ -17,40 +17,6 @@ def touch(filename):
         fh.write(" ")
 
 
-@pytest.mark.xfail(reason="https://github.com/equinor/ert/issues/4178")
-def test_res_config_simple_config_parsing(tmpdir, set_site_config, monkeypatch):
-    touch(tmpdir + "/rpfile")
-    touch(tmpdir + "/datafile")
-    os.mkdir(tmpdir + "/license")
-    with open(tmpdir + "/test.ert", "w", encoding="utf-8") as fh:
-        fh.write(
-            """
-JOBNAME  Job%d
-NUM_REALIZATIONS  1
-RUNPATH_FILE rpfile
-DATA_FILE datafile
-LICENSE_PATH license
-"""
-        )
-
-    monkeypatch.chdir(tmpdir)
-    assert ResConfig("test.ert") == ResConfig(
-        config_dict={
-            "NUM_REALIZATIONS": 1,
-            "DATA_FILE": "datafile",
-            "LICENSE_PATH": "license",
-            "RES_CONFIG_FILE": "test.ert",
-            "RUNPATH_FILE": "rpfile",
-        }
-    )
-
-
-def test_res_config_minimal_dict_init():
-    config_dict = {ConfigKeys.NUM_REALIZATIONS: 1, ConfigKeys.ENSPATH: "test"}
-    res_config = ResConfig(config_dict=config_dict)
-    assert res_config is not None
-
-
 def test_bad_user_config_file_error_message(tmp_path):
     (tmp_path / "test.ert").write_text("NUM_REL 10\n")
 
@@ -99,12 +65,12 @@ def test_res_config_parses_date():
 
 @pytest.mark.usefixtures("set_site_config")
 @given(config_generators())
-def test_env_vars_same_as_from_file(tmp_path_factory, config_generator):
+def test_that_creating_res_config_from_dict_is_same_as_from_file(
+    tmp_path_factory, config_generator
+):
     filename = "config.ert"
     with config_generator(tmp_path_factory, filename) as config_dict:
-        assert (
-            ResConfig(config_dict=config_dict).env_vars == ResConfig(filename).env_vars
-        )
+        assert ResConfig(config_dict=config_dict) == ResConfig(filename)
 
 
 @given(config_generators())
@@ -147,16 +113,6 @@ def test_that_non_bracketed_defines_warns(bad_define, capsys):
 
     _ = ResConfig("test.ert")
     assert "Using DEFINE or DATA_KW with substitution" in capsys.readouterr().err
-
-
-@pytest.mark.usefixtures("set_site_config")
-@given(config_generators())
-def test_site_config_dict_same_as_from_file(tmp_path_factory, config_generator):
-    filename = "config.ert"
-    with config_generator(tmp_path_factory, filename) as config_dict:
-        assert (
-            ResConfig(config_dict=config_dict).env_vars == ResConfig(filename).env_vars
-        )
 
 
 def test_default_ens_path(tmpdir):
