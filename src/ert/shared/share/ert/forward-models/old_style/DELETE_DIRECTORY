@@ -1,6 +1,3 @@
-STDERR    delete_dir.stderr
-STDOUT    delete_dir.stdout
-
 EXECUTABLE  ../../shell_scripts/delete_directory.py
 ARGLIST     <DIRECTORY>
 

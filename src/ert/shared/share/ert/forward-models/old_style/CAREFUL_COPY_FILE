@@ -1,5 +1,3 @@
-STDOUT      careful_copy_file.stdout
-STDERR      careful_copy_file.stderr
 EXECUTABLE  ../../shell_scripts/careful_copy_file.py
 ARGLIST     <FROM> <TO>
 
