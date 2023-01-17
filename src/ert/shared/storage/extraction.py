@@ -12,7 +12,7 @@ from ert._c_wrappers.enkf.enums import (
     RealizationStateEnum,
 )
 from ert.data import MeasuredData
-from ert.services import Storage
+from ert.services import StorageService
 from ert.shared.feature_toggling import feature_enabled
 
 if TYPE_CHECKING:
@@ -291,7 +291,7 @@ def create_priors(ert) -> Mapping[str, dict]:
 def _get_from_server(url, headers=None, status_code=200) -> requests.Response:
     if headers is None:
         headers = {}
-    session = Storage.session()
+    session = StorageService.session()
     resp = session.get(
         url,
         headers=headers,
@@ -307,7 +307,7 @@ def _post_to_server(
 ) -> requests.Response:
     if headers is None:
         headers = {}
-    session = Storage.session()
+    session = StorageService.session()
     resp = session.post(
         url,
         headers=headers,

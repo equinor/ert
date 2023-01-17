@@ -27,7 +27,7 @@ from ert.cli.main import ErtCliError, ErtTimeoutError, run_cli
 from ert.logging import LOGGING_CONFIG
 from ert.logging._log_util_abort import _log_util_abort
 from ert.namespace import Namespace
-from ert.services import Storage, WebvizErt
+from ert.services import StorageService, WebvizErt
 from ert.shared.feature_toggling import FeatureToggling
 from ert.shared.ide.keywords.data.validation_status import ValidationStatus
 from ert.shared.ide.keywords.definitions import (
@@ -48,7 +48,7 @@ def run_ert_storage(args: Namespace) -> None:
     if args.database_url is not None:
         kwargs["database_url"] = args.database_url
 
-    with Storage.start_server(**kwargs) as server:
+    with StorageService.start_server(**kwargs) as server:
         server.wait()
 
 
@@ -75,7 +75,7 @@ def run_webviz_ert(args: Namespace) -> None:
     if args.database_url is not None:
         kwargs["database_url"] = args.database_url
 
-    with Storage.init_service(**kwargs) as storage:
+    with StorageService.init_service(**kwargs) as storage:
         storage.wait_until_ready()
         print(
             """
@@ -483,7 +483,7 @@ def start_ert_server(mode: str) -> Generator[None, None, None]:
         yield
         return
 
-    with Storage.start_server():
+    with StorageService.start_server():
         yield
 
 

@@ -11,7 +11,7 @@ from ert_storage.client import Client, ConnInfo
 from ert.services._base_service import BaseService, _Context, local_exec_args
 
 
-class Storage(BaseService):
+class StorageService(BaseService):
     service_name = "storage"
 
     def __init__(
@@ -46,7 +46,7 @@ class Storage(BaseService):
         return ("__token__", self.fetch_conn_info()["authtoken"])
 
     @classmethod
-    def init_service(cls, *args: Any, **kwargs: Any) -> _Context[Storage]:
+    def init_service(cls, *args: Any, **kwargs: Any) -> _Context[StorageService]:
         try:
             service = cls.connect(timeout=0, project=kwargs.get("project"))
             # Check the server is up and running
