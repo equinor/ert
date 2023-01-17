@@ -32,6 +32,22 @@ def valid_args(arg_types, arg_list: List[str], runtime: bool = False):
             dedent(
                 """
             EXECUTABLE echo
+            ARGLIST <ARGUMENTA>
+            """
+            ),
+            dedent(
+                """
+            DEFINE <ARGUMENTA> foo
+            FORWARD_MODEL job_name
+            """
+            ),
+            ["foo"],
+            id="Global arguments are used inside job definition",
+        ),
+        pytest.param(
+            dedent(
+                """
+            EXECUTABLE echo
             ARGLIST <ARGUMENT>
             """
             ),
@@ -55,10 +71,10 @@ def valid_args(arg_types, arg_list: List[str], runtime: bool = False):
             ),
             [
                 "configured_argumentA",
-                "configured_argumentB",
+                "<ARGUMENTB>",
                 "<ARGUMENTC>",
             ],
-            id="Using DEFINE, substituting arg name, default argument C",
+            id="Keywords in argument list are not substituted, so argument B gets no value",
         ),
         pytest.param(
             dedent(
@@ -74,8 +90,8 @@ def valid_args(arg_types, arg_list: List[str], runtime: bool = False):
             FORWARD_MODEL job_name(<ARGUMENTB>=configured_argumentB)
             """
             ),
-            ["DEFAULT_ARGA_VALUE", "DEFINED_ARGUMENTB_VALUE", "<ARGUMENTC>"],
-            id="Resolved argument given by DEFINE, even though user specified value",
+            ["DEFAULT_ARGA_VALUE", "configured_argumentB", "<ARGUMENTC>"],
+            id="Resolved argument given by argument list, not overridden by global",
         ),
         pytest.param(
             dedent(

@@ -7,9 +7,8 @@ from pathlib import Path
 from typing import Any, Dict, List
 
 from ert._c_wrappers.job_queue import EnvironmentVarlist, ExtJob
-from ert._clib import job_kw
-
 from ert._c_wrappers.util.substitution_list import SubstitutionList
+from ert._clib import job_kw
 
 logger = logging.getLogger(__name__)
 
@@ -58,7 +57,9 @@ class ForwardModel:
             if string is not None:
                 copy_private_args = SubstitutionList()
                 for key, val in job.private_args:
-                    copy_private_args.addItem(key, context.substitute_real_iter(val, iens, itr))
+                    copy_private_args.addItem(
+                        key, context.substitute_real_iter(val, iens, itr)
+                    )
                 string = copy_private_args.substitute(string)
                 return context.substitute_real_iter(string, iens, itr)
             else:
