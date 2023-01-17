@@ -13,7 +13,7 @@ from ert.__main__ import ert_parser
 from ert._c_wrappers.enkf import EnKFMain, ErtConfig
 from ert.cli import ENSEMBLE_EXPERIMENT_MODE
 from ert.cli.main import run_cli
-from ert.services import Storage
+from ert.services import StorageService
 from ert.shared.feature_toggling import FeatureToggling
 
 from .utils import SOURCE_DIR
@@ -137,14 +137,14 @@ def use_tmpdir(tmp_path, monkeypatch):
 @pytest.fixture()
 def mock_start_server(monkeypatch):
     start_server = MagicMock()
-    monkeypatch.setattr(Storage, "start_server", start_server)
+    monkeypatch.setattr(StorageService, "start_server", start_server)
     yield start_server
 
 
 @pytest.fixture()
 def mock_connect(monkeypatch):
     connect = MagicMock()
-    monkeypatch.setattr(Storage, "connect", connect)
+    monkeypatch.setattr(StorageService, "connect", connect)
     yield connect
 
 
