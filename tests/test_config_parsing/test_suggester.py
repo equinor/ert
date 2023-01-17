@@ -1,14 +1,14 @@
 import pytest
 
-from ert._c_wrappers.config import ConfigParser
 from ert._c_wrappers.enkf._deprecation_migration_suggester import (
     DeprecationMigrationSuggester,
 )
+from ert._c_wrappers.enkf.res_config import ResConfig
 
 
 @pytest.fixture
 def suggester():
-    return DeprecationMigrationSuggester(ConfigParser())
+    return DeprecationMigrationSuggester(ResConfig._create_user_config_parser())
 
 
 @pytest.mark.parametrize("kw", DeprecationMigrationSuggester.JUST_REMOVE_KEYWORDS)
@@ -100,7 +100,7 @@ def test_suggester_gives_runpath_deprecated_specifier_migration(suggester, tmp_p
     suggestions = suggester.suggest_migrations(str(tmp_path / "config.ert"))
 
     assert len(suggestions) == 1
-    assert "Instead use the <IENS>, <ITER> keywords" in suggestions[0]
+    assert "RUNPATH keyword contains deprecated value placeholders" in suggestions[0]
 
 
 def test_suggester_gives_no_runpath_deprecated_specifier_migration(suggester, tmp_path):
