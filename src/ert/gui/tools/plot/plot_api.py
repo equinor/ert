@@ -9,7 +9,7 @@ import pandas as pd
 import requests
 from pandas.errors import ParserError
 
-from ert.services import Storage
+from ert.services import StorageService
 
 logger = logging.getLogger(__name__)
 
@@ -21,7 +21,7 @@ class PlotApi:
         self._reset_storage_facade()
 
     def _reset_storage_facade(self):
-        with Storage.session() as client:
+        with StorageService.session() as client:
             client.post("/updates/facade", timeout=self._timeout)
 
     def _get_case(self, name: str) -> Optional[dict]:
@@ -35,7 +35,7 @@ class PlotApi:
             return self._all_cases
 
         self._all_cases = []
-        with Storage.session() as client:
+        with StorageService.session() as client:
             try:
                 response = client.get("/experiments", timeout=self._timeout)
                 self._check_response(response)
@@ -69,7 +69,7 @@ class PlotApi:
             )
 
     def _get_experiment(self) -> dict:
-        with Storage.session() as client:
+        with StorageService.session() as client:
             response: requests.Response = client.get(
                 "/experiments", timeout=self._timeout
             )
@@ -78,7 +78,7 @@ class PlotApi:
             return response_json[0]
 
     def _get_ensembles(self, experiement_id) -> List:
-        with Storage.session() as client:
+        with StorageService.session() as client:
             response: requests.Response = client.get(
                 f"/experiments/{experiement_id}/ensembles", timeout=self._timeout
             )
@@ -97,7 +97,7 @@ class PlotApi:
         all_keys = {}
         experiment = self._get_experiment()
 
-        with Storage.session() as client:
+        with StorageService.session() as client:
             for ensemble in self._get_ensembles(experiment["id"]):
                 response: requests.Response = client.get(
                     f"/ensembles/{ensemble['id']}/responses", timeout=self._timeout
@@ -148,7 +148,7 @@ class PlotApi:
 
         case = self._get_case(case_name)
 
-        with Storage.session() as client:
+        with StorageService.session() as client:
             response: requests.Response = client.get(
                 f"/ensembles/{case['id']}/records/{key}",
                 headers={"accept": "application/x-parquet"},
@@ -178,7 +178,7 @@ class PlotApi:
 
         case = self._get_case(case_name)
 
-        with Storage.session() as client:
+        with StorageService.session() as client:
             response = client.get(
                 f"/ensembles/{case['id']}/records/{key}/observations",
                 timeout=self._timeout,
