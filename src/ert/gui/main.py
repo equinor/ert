@@ -41,7 +41,7 @@ from ert.gui.tools.run_analysis import RunAnalysisTool
 from ert.gui.tools.workflows import WorkflowsTool
 from ert.libres_facade import LibresFacade
 from ert.namespace import Namespace
-from ert.services import Storage
+from ert.services import StorageService
 from ert.shared.plugins.plugin_manager import ErtPluginManager
 
 
@@ -68,7 +68,7 @@ def run_gui(args: Namespace):
         )
         try:
             storage_lock.acquire(timeout=5)
-            with Storage.init_service(
+            with StorageService.init_service(
                 ert_config=args.config,
                 project=os.path.abspath(ens_path),
             ):
