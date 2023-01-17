@@ -26,8 +26,6 @@ int job_queue_add_job(job_queue_type *, const char *run_cmd,
 
 bool job_queue_accept_jobs(const job_queue_type *queue);
 
-void *job_queue_run_jobs__(void *);
-
 int job_queue_iget_status_summary(const job_queue_type *queue,
                                   job_status_type status);
 
@@ -35,7 +33,6 @@ extern "C" PY_USED void
 job_queue_set_max_job_duration(job_queue_type *queue, int max_duration_seconds);
 extern "C" bool job_queue_kill_job(job_queue_type *queue, int job_index);
 extern "C" PY_USED bool job_queue_is_running(const job_queue_type *queue);
-void job_queue_set_max_submit(job_queue_type *job_queue, int max_submit);
 extern "C" int job_queue_get_max_submit(const job_queue_type *job_queue);
 extern "C" int job_queue_get_num_running(const job_queue_type *queue);
 extern "C" int job_queue_get_num_pending(const job_queue_type *queue);
@@ -43,7 +40,6 @@ extern "C" int job_queue_get_num_waiting(const job_queue_type *queue);
 extern "C" int job_queue_get_num_complete(const job_queue_type *queue);
 extern "C" PY_USED void *job_queue_iget_driver_data(job_queue_type *queue,
                                                     int job_index);
-job_queue_node_type *job_queue_iget_job(job_queue_type *job_queue, int job_nr);
 
 extern "C" PY_USED char *job_queue_get_exit_file(const job_queue_type *queue);
 extern "C" PY_USED char *job_queue_get_status_file(const job_queue_type *queue);

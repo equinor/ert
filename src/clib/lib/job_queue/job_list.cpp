@@ -87,14 +87,3 @@ void job_list_get_rdlock(job_list_type *list) {
 void job_list_unlock(job_list_type *list) {
     pthread_rwlock_unlock(&list->lock);
 }
-
-void job_list_reader_wait(job_list_type *list, int usleep_time1,
-                          int usleep_time2) {
-    if (pthread_rwlock_tryrdlock(&list->lock) == 0) {
-        // Seems to be no writers waiting - take a short sleep and return.
-        pthread_rwlock_unlock(&list->lock);
-        usleep(usleep_time1);
-    } else
-        // A writer already has the lock - let more writers get access; sleep longer.
-        usleep(usleep_time2);
-}
