@@ -547,11 +547,11 @@ config_parse__(config_parser_type *config, config_content_type *content,
                     std::string error_message = util_alloc_sprintf(
                         "%s file:%s not found", include_kw, include_file);
                     content->parse_errors.push_back(error_message);
+                } else {
+                    config_parse__(config, content, path_stack, include_file,
+                                   comment_string, include_kw, define_kw,
+                                   unrecognized, false);
                 }
-
-                config_parse__(config, content, path_stack, include_file,
-                               comment_string, include_kw, define_kw,
-                               unrecognized, false);
             }
 
             // Add define

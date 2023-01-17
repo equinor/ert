@@ -9,6 +9,7 @@ from unittest.mock import MagicMock, mock_open, patch
 import pytest
 from ecl.util.enums import RngAlgTypeEnum
 
+from ert._c_wrappers.config.config_parser import ConfigValidationError
 from ert._c_wrappers.enkf import AnalysisConfig, ConfigKeys, HookRuntime, ResConfig
 from ert._c_wrappers.enkf._config_content_as_dict import parse_signature_job
 from ert._c_wrappers.enkf.res_config import site_config_location
@@ -113,6 +114,44 @@ expand_config_defs(config_defines, snake_oil_structure_config)
 def test_invalid_user_config():
     with pytest.raises(IOError):
         ResConfig("this/is/not/a/file")
+
+
+def test_include_non_existing_file(tmpdir):
+    with tmpdir.as_cwd():
+        config = """
+        JOBNAME my_name%d
+        NUM_REALIZATIONS 1
+        INCLUDE does_not_exists
+        """
+        with open("config.ert", mode="w", encoding="utf-8") as fh:
+            fh.writelines(config)
+
+        with pytest.raises(
+            ConfigValidationError, match="INCLUDE file:does_not_exists not found"
+        ):
+            _ = ResConfig("config.ert")
+
+
+def test_include_existing_file(tmpdir):
+    with tmpdir.as_cwd():
+        config = """
+        JOBNAME my_name%d
+        INCLUDE include_me
+        NUM_REALIZATIONS 1
+        """
+        rand_seed = 420
+        include_me_text = f"""
+        RANDOM_SEED {rand_seed}
+        """
+
+        with open("config.ert", mode="w", encoding="utf-8") as fh:
+            fh.writelines(config)
+
+        with open("include_me", mode="w", encoding="utf-8") as fh:
+            fh.writelines(include_me_text)
+
+        res_config = ResConfig("config.ert")
+        assert res_config.random_seed == str(rand_seed)
 
 
 def test_init(minimum_case):
