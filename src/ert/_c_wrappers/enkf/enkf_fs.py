@@ -23,13 +23,11 @@ from ert.storage import Storage
 if TYPE_CHECKING:
     import numpy.typing as npt
     from ecl.summary import EclSum
-    from ecl.util.util import IntVector
     from xtgeo import RegularSurface
 
-    from ert._c_wrappers.enkf.config import EnkfConfigNode, FieldConfig, GenKwConfig
+    from ert._c_wrappers.enkf.config import FieldConfig, GenKwConfig
     from ert._c_wrappers.enkf.res_config import EnsembleConfig
     from ert._c_wrappers.enkf.run_arg import RunArg
-    from ert._c_wrappers.enkf.state_map import StateMap
 
 logger = logging.getLogger(__name__)
 
