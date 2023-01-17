@@ -172,7 +172,6 @@ class ErtWorkflowList:
         )
         if new_job is not None:
             self._workflow_jobs[new_job.name] = new_job
-            logger.info(f"Adding workflow job:{new_job.name}")
 
     def _add_workflow_job_dir(self, job_path):
         if not os.path.isdir(job_path):
