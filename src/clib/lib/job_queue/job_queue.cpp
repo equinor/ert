@@ -392,10 +392,6 @@ void job_queue_set_driver(job_queue_type *queue, queue_driver_type *driver) {
     queue->driver = driver;
 }
 
-void job_queue_set_max_submit(job_queue_type *job_queue, int max_submit) {
-    job_queue->max_submit = max_submit;
-}
-
 int job_queue_get_max_submit(const job_queue_type *job_queue) {
     return job_queue->max_submit;
 }

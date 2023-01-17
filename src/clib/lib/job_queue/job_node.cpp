@@ -199,14 +199,6 @@ job_status_type job_queue_node_get_status(const job_queue_node_type *node) {
     return node->job_status;
 }
 
-void job_queue_node_reset_submit_attempt(job_queue_node_type *node) {
-    node->submit_attempt = 0;
-}
-
-void job_queue_node_dec_submit_attempt(job_queue_node_type *node) {
-    node->submit_attempt--;
-}
-
 int job_queue_node_get_submit_attempt(const job_queue_node_type *node) {
     return node->submit_attempt;
 }
@@ -295,41 +287,8 @@ job_queue_node_alloc(const char *job_name, const char *run_path,
     return node;
 }
 
-const char *job_queue_node_get_exit_file(const job_queue_node_type *node) {
-    return node->exit_file;
-}
-
-time_t job_queue_node_get_sim_start(const job_queue_node_type *node) {
-    return node->sim_start;
-}
-
-time_t job_queue_node_get_sim_end(const job_queue_node_type *node) {
-    return node->sim_end;
-}
-
 double job_queue_node_time_since_sim_start(const job_queue_node_type *node) {
     return util_difftime_seconds(node->sim_start, time(NULL));
-}
-
-bool job_queue_node_run_DONE_callback(job_queue_node_type *node) {
-    bool OK = true;
-    if (node->done_callback)
-        OK = node->done_callback(node->callback_arg);
-
-    return OK;
-}
-
-bool job_queue_node_run_RETRY_callback(job_queue_node_type *node) {
-    bool retry = false;
-    if (node->retry_callback)
-        retry = node->retry_callback(node->callback_arg);
-
-    return retry;
-}
-
-void job_queue_node_run_EXIT_callback(job_queue_node_type *node) {
-    if (node->exit_callback)
-        node->exit_callback(node->callback_arg);
 }
 
 void job_queue_node_set_status(job_queue_node_type *node,
@@ -631,26 +590,6 @@ bool job_queue_node_kill_simple(job_queue_node_type *node,
 }
 
 /**
-   This frees the storage allocated by the driver - the storage
-   allocated by the queue layer is retained.
-
-   In the case of jobs which are first marked as successful by the
-   queue layer, and then subsequently set to status EXIT by the
-   DONE_callback this function will be called twice; i.e. we must
-   protect against a double free.
-*/
-void job_queue_node_free_driver_data(job_queue_node_type *node,
-                                     queue_driver_type *driver) {
-    pthread_mutex_lock(&node->data_mutex);
-
-    if (node->job_data)
-        queue_driver_free_job(driver, node->job_data);
-    node->job_data = NULL;
-
-    pthread_mutex_unlock(&node->data_mutex);
-}
-
-/**
   This returns a pointer to a very internal datastructure; used by the
   Job class in Python which interacts directly with the driver
   implementation. This is too low level, and the whole Driver / Job
@@ -659,12 +598,4 @@ void job_queue_node_free_driver_data(job_queue_node_type *node,
 */
 void *job_queue_node_get_driver_data(job_queue_node_type *node) {
     return node->job_data;
-}
-
-time_t job_queue_node_get_timestamp(const job_queue_node_type *node) {
-    return node->progress_timestamp;
-}
-
-char *job_queue_node_get_name(job_queue_node_type *node) {
-    return (node->job_name);
 }
