@@ -124,7 +124,8 @@ static config_content_node_type *config_content_item_set_arg__(
             config_content_item_get_schema(item);
 
         /* Filtering based on DEFINE statements */
-        if (subst_list_get_size(define_list) > 0) {
+        if (subst_list_get_size(define_list) > 0 &&
+            config_schema_item_substitutions_enabled(schema_item)) {
             int iarg;
             for (iarg = 0; iarg < argc; iarg++) {
 
