@@ -7,7 +7,7 @@ import pandas as pd
 import pytest
 
 from ert.gui.tools.plot.plot_api import PlotApi
-from ert.services import Storage
+from ert.services import StorageService
 
 
 class MockResponse:
@@ -36,7 +36,7 @@ def api(tmpdir, source_root, monkeypatch):
     def session():
         yield MagicMock(get=mocked_requests_get)
 
-    monkeypatch.setattr(Storage, "session", session)
+    monkeypatch.setattr(StorageService, "session", session)
 
     with tmpdir.as_cwd():
         test_data_root = source_root / "test-data"
