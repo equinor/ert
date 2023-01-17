@@ -16,12 +16,12 @@ def _enable_new_storage(monkeypatch):
 def client(monkeypatch, ert_storage_client):
     from ert.shared.storage import extraction
 
-    class MockStorage:
+    class MockStorageService:
         @staticmethod
         def session():
             return ert_storage_client
 
-    monkeypatch.setattr(extraction, "Storage", MockStorage)
+    monkeypatch.setattr(extraction, "StorageService", MockStorageService)
     monkeypatch.setenv("ERT_STORAGE_NO_TOKEN", "ON")
 
     # Store a list of experiment IDs that exist in the database, in case the
