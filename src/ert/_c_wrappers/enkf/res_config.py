@@ -4,7 +4,7 @@ import os
 import sys
 from datetime import date
 from os.path import isfile
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
 import pkg_resources
 
@@ -47,7 +47,6 @@ class ResConfig:
         self._assert_input(user_config_file, config_dict)
         self.user_config_file = user_config_file
 
-        self._errors = None
         self._templates = []
         if user_config_file:
             self._alloc_from_content(
@@ -223,12 +222,6 @@ class ResConfig:
         self._log_config_file(user_config_file)
         self._log_config_content(user_config_content)
 
-        if self.errors:
-            logging.error(f"Error loading configuration: {str(self._errors)}")
-            raise ConfigValidationError(
-                config_file=user_config_file, errors=self._errors
-            )
-
         config_content_dict = config_content_as_dict(
             user_config_content, site_config_content
         )
@@ -338,8 +331,9 @@ class ResConfig:
 
         for job_path in config_dict.get(ConfigKeys.INSTALL_JOB_DIRECTORY, []):
             if not os.path.isdir(job_path):
-                logger.warning(f"Unable to locate job directory {job_path}")
-                continue
+                raise ConfigValidationError(
+                    f"Unable to locate job directory {job_path}"
+                )
 
             files = os.listdir(job_path)
 
@@ -369,20 +363,6 @@ class ResConfig:
             )
         return None
 
-    def _parse_value(self, value):
-        if isinstance(value, str):
-            return value
-        elif isinstance(value, list):
-            return [str(elem) for elem in value]
-        else:
-            return str(value)
-
-    def _assert_keys(self, mother_key, exp_keys, keys):
-        if set(exp_keys) != set(keys):
-            raise ValueError(
-                f"Did expect the keys {exp_keys} in {mother_key}, received {keys}."
-            )
-
     def preferred_num_cpu(self) -> int:
         return int(self.substitution_list.get(f"<{ConfigKeys.NUM_CPU}>", 1))
 
@@ -392,10 +372,6 @@ class ResConfig:
             return "JOB%d"
         else:
             return in_config
-
-    @property
-    def errors(self) -> List[str]:
-        return self._errors
 
     @property
     def ert_templates(self):

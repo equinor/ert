@@ -1,3 +1,4 @@
+import logging
 import os
 from datetime import date
 from textwrap import dedent
@@ -187,4 +188,51 @@ def test_that_queue_config_dict_negative_value_invalid(
         expected_exception=ConfigValidationError,
         match="QUEUE_OPTION MAX_RUNNING is negative",
     ):
+
         ResConfig(config_dict=config_dict)
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_non_existant_job_directory_gives_config_validation_error():
+    test_config_file_base = "test"
+    test_config_file_name = f"{test_config_file_base}.ert"
+    test_config_contents = dedent(
+        """
+        NUM_REALIZATIONS  1
+        DEFINE <STORAGE> storage/<CONFIG_FILE_BASE>-<DATE>
+        RUNPATH <STORAGE>/runpath/realization-<IENS>/iter-<ITER>
+        ENSPATH <STORAGE>/ensemble
+        INSTALL_JOB_DIRECTORY does_not_exist
+        """
+    )
+    with open(test_config_file_name, "w", encoding="utf-8") as fh:
+        fh.write(test_config_contents)
+    with pytest.raises(
+        expected_exception=ConfigValidationError,
+        match="Unable to locate job directory",
+    ):
+        ResConfig(user_config_file=test_config_file_name)
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_empty_job_directory_gives_warning(caplog):
+    test_config_file_base = "test"
+    test_config_file_name = f"{test_config_file_base}.ert"
+    test_config_contents = dedent(
+        """
+        NUM_REALIZATIONS  1
+        DEFINE <STORAGE> storage/<CONFIG_FILE_BASE>-<DATE>
+        RUNPATH <STORAGE>/runpath/realization-<IENS>/iter-<ITER>
+        ENSPATH <STORAGE>/ensemble
+        INSTALL_JOB_DIRECTORY empty
+        """
+    )
+    os.mkdir("empty")
+    with open(test_config_file_name, "w", encoding="utf-8") as fh:
+        fh.write(test_config_contents)
+    with caplog.at_level(logging.WARNING):
+        _ = ResConfig(user_config_file=test_config_file_name)
+        assert (
+            f"No files found in job directory {os.path.abspath('empty')}"
+            in caplog.messages
+        )
