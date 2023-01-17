@@ -115,10 +115,12 @@ class ForwardModel:
                     "target_file": substitute(job, job.target_file),
                     "error_file": substitute(job, job.error_file),
                     "start_file": substitute(job, job.start_file),
-                    "stdout": substitute(job, job.stdout_file) + f".{idx}"
+                    "stdout": substitute(job, os.path.join("logs", job.stdout_file))
+                    + f".{idx}"
                     if job.stdout_file
                     else None,
-                    "stderr": substitute(job, job.stderr_file) + f".{idx}"
+                    "stderr": substitute(job, os.path.join("logs", job.stderr_file))
+                    + f".{idx}"
                     if job.stderr_file
                     else None,
                     "stdin": substitute(job, job.stdin_file),

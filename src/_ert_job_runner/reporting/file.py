@@ -20,16 +20,13 @@ from _ert_job_runner.reporting.message import (
     Start,
 )
 from _ert_job_runner.util import data as data_util
+from ert.constant_filenames import LOG_file, ERROR_file, STATUS_file, STATUS_json
 
 TIME_FORMAT = "%H:%M:%S"
 logger = logging.getLogger(__name__)
 append = functools.partial(open, mode="a")
 
-LOG_file = "JOB_LOG"
-ERROR_file = "ERROR"
-STATUS_file = "STATUS"
 OK_file = "OK"
-STATUS_json = "status.json"
 
 
 class File(Reporter):
