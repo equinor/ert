@@ -84,12 +84,12 @@ def reset_enkf():
 def new_storage_client(monkeypatch, ert_storage_client):
     from ert.shared.storage import extraction
 
-    class MockStorage:
+    class MockStorageService:
         @staticmethod
         def session():
             return ert_storage_client
 
-    monkeypatch.setattr(extraction, "Storage", MockStorage)
+    monkeypatch.setattr(extraction, "StorageService", MockStorageService)
 
     return ert_storage_client
 

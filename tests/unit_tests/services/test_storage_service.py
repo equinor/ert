@@ -4,7 +4,7 @@ import os
 import pytest
 import requests
 
-from ert.services import Storage, _storage_main
+from ert.services import StorageService, _storage_main
 from ert.shared import port_handler
 
 
@@ -19,13 +19,13 @@ def test_integration(tmp_path, monkeypatch):
     # an unloaded M1-based Mac using local disk. On the CI-server
     # we have less control of available resources, so set timeout-
     # value large to allow time for sqlite to get ready
-    with Storage.start_server(timeout=120) as server:
+    with StorageService.start_server(timeout=120) as server:
         resp = requests.get(
             f"{server.fetch_url()}/healthcheck", auth=server.fetch_auth()
         )
         assert "ALL OK!" in resp.json()
 
-        with Storage.session() as session:
+        with StorageService.session() as session:
             session.get("/healthcheck")
 
     assert not (tmp_path / "storage_server.json").exists()
@@ -39,7 +39,7 @@ def test_integration_timeout(tmp_path, monkeypatch):
 
     with pytest.raises(TimeoutError):
         # Note timeout-value here in context of note above
-        with Storage.start_server(timeout=0.01) as server:
+        with StorageService.start_server(timeout=0.01) as server:
             requests.get(f"{server.fetch_url()}/healthcheck", auth=server.fetch_auth())
 
     assert not (tmp_path / "storage_server.json").exists()
@@ -63,7 +63,7 @@ def test_create_connection_string(monkeypatch):
 @pytest.mark.requires_ert_storage
 def test_init_service_no_server_start(tmpdir, mock_start_server, mock_connect):
     with tmpdir.as_cwd():
-        Storage.init_service(project=str(tmpdir))
+        StorageService.init_service(project=str(tmpdir))
         mock_connect.assert_called_once_with(project=str(tmpdir), timeout=0)
         mock_start_server.assert_not_called()
 
@@ -71,19 +71,19 @@ def test_init_service_no_server_start(tmpdir, mock_start_server, mock_connect):
 @pytest.mark.requires_ert_storage
 def test_init_service_server_start_if_no_conf_file(tmpdir, mock_start_server):
     with tmpdir.as_cwd():
-        Storage.init_service(project=str(tmpdir))
+        StorageService.init_service(project=str(tmpdir))
         mock_start_server.assert_called_once_with(project=str(tmpdir))
 
 
 @pytest.mark.requires_ert_storage
 def test_init_service_server_start_conf_info_is_stale(tmpdir, mock_start_server):
     with tmpdir.as_cwd():
-        config_file = f"{Storage.service_name}_server.json"
+        config_file = f"{StorageService.service_name}_server.json"
         with open(config_file, "w", encoding="utf-8") as f:
             f.write(
                 """
             {"authtoken": "test123", "urls": ["http://127.0.0.1:51821"]}
             """
             )
-        Storage.init_service(project=str(tmpdir))
+        StorageService.init_service(project=str(tmpdir))
         mock_start_server.assert_called_once_with(project=str(tmpdir))
