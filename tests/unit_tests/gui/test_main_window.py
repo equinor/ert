@@ -37,7 +37,7 @@ from ert.gui.tools.manage_cases.case_init_configuration import (
 from ert.gui.tools.plot.data_type_keys_widget import DataTypeKeysWidget
 from ert.gui.tools.plot.plot_case_selection_widget import CaseSelectionWidget
 from ert.gui.tools.plot.plot_window import PlotWindow
-from ert.services import Storage
+from ert.services import StorageService
 from ert.shared.models import EnsembleExperiment, MultipleDataAssimilation
 
 
@@ -65,7 +65,7 @@ def opened_main_window(source_root, tmpdir_factory, request):
         args_mock = Mock()
         args_mock.config = "poly.ert"
 
-        with Storage.init_service(
+        with StorageService.init_service(
             ert_config=args_mock.config,
             project=os.path.abspath(poly_case.ert_config.ens_path),
         ):
