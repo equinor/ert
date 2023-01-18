@@ -111,3 +111,52 @@ def test_job_load_OK():
         fh.write(script_file_contents)
 
     WorkflowJob.fromFile(script_file_path)
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_get_plugin_jobs_fetches_exactly_ert_plugins():
+    script_file_contents = dedent(
+        """
+        SCRIPT script.py
+        """
+    )
+    plugin_file_contents = dedent(
+        """
+        SCRIPT plugin.py
+        """
+    )
+
+    script_file_path = os.path.join(os.getcwd(), "script")
+    plugin_file_path = os.path.join(os.getcwd(), "plugin")
+    with open(script_file_path, mode="w", encoding="utf-8") as fh:
+        fh.write(script_file_contents)
+    with open(plugin_file_path, mode="w", encoding="utf-8") as fh:
+        fh.write(plugin_file_contents)
+
+    with open("script.py", mode="w", encoding="utf-8") as fh:
+        fh.write(
+            dedent(
+                """
+                from ert._c_wrappers.job_queue import ErtScript
+                class Script(ErtScript):
+                    def run(self, *args):
+                        pass
+                """
+            )
+        )
+    with open("plugin.py", mode="w", encoding="utf-8") as fh:
+        fh.write(
+            dedent(
+                """
+                from ert._c_wrappers.job_queue import ErtPlugin
+                class Plugin(ErtPlugin):
+                    def run(self, *args):
+                        pass
+                """
+            )
+        )
+
+    assert (
+        len(ErtWorkflowList([[script_file_path], [plugin_file_path]]).getPluginJobs())
+        == 1
+    )
