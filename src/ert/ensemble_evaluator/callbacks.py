@@ -17,7 +17,6 @@ logger = logging.getLogger(__name__)
 def forward_model_ok(
     run_arg: "RunArg",
     ens_conf: "EnsembleConfig",
-    num_steps: int,
 ) -> Tuple[LoadStatus, str]:
     try:
         result = (LoadStatus.LOAD_SUCCESSFUL, "")
@@ -81,7 +80,7 @@ def forward_model_ok(
                 )
 
         if result[0] == LoadStatus.LOAD_SUCCESSFUL:
-            result = _internalize_results(ens_conf, num_steps, run_arg)
+            result = _internalize_results(ens_conf, run_arg)
 
     except Exception:
         logging.exception("Unhandled exception in callback for forward_model")
