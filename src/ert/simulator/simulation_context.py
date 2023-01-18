@@ -21,7 +21,6 @@ def done_callback(args: Tuple["RunArg", "ErtConfig"]) -> Tuple[LoadStatus, str]:
     return forward_model_ok(
         args[0],
         args[1].ensemble_config,
-        args[1].model_config.get_history_num_steps(),
     )
 
 

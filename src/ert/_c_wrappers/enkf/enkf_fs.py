@@ -38,7 +38,6 @@ def _load_realization(
     sim_fs: EnkfFs,
     realisation: int,
     ensemble_config: EnsembleConfig,
-    history_length: int,
     run_args: List[RunArg],
 ) -> Tuple[LoadStatus, int]:
     sim_fs.update_realization_state(
@@ -46,7 +45,7 @@ def _load_realization(
         [RealizationStateEnum.STATE_UNDEFINED],
         RealizationStateEnum.STATE_INITIALIZED,
     )
-    status = forward_model_ok(run_args[realisation], ensemble_config, history_length)
+    status = forward_model_ok(run_args[realisation], ensemble_config)
     sim_fs.state_map[realisation] = (
         RealizationStateEnum.STATE_HAS_DATA
         if status[0] == LoadStatus.LOAD_SUCCESSFUL
@@ -415,7 +414,6 @@ class EnkfFs:
         self,
         ensemble_size: int,
         ensemble_config: EnsembleConfig,
-        history_length: int,
         run_args: List[RunArg],
         active_realizations: List[bool],
     ) -> int:
@@ -425,7 +423,7 @@ class EnkfFs:
         async_result = [
             pool.apply_async(
                 _load_realization,
-                (self, iens, ensemble_config, history_length, run_args),
+                (self, iens, ensemble_config, run_args),
             )
             for iens in range(ensemble_size)
             if active_realizations[iens]
