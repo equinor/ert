@@ -1,16 +1,13 @@
-import copy
 import json
 import logging
 import os
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, List
+from typing import Any, Dict, List
 
 from ert._c_wrappers.job_queue import EnvironmentVarlist, ExtJob
+from ert._c_wrappers.util.substitution_list import SubstitutionList
 from ert._clib import job_kw
-
-if TYPE_CHECKING:
-    from ert._c_wrappers.util.substitution_list import SubstitutionList
 
 logger = logging.getLogger(__name__)
 
@@ -57,22 +54,11 @@ class ForwardModel:
     ) -> Dict[str, Any]:
         def substitute(job, string):
             if string is not None:
-                copy_private_args = copy.deepcopy(job.private_args)
-                # We need to still be able to handle that the user has
-                # written e.g. FORWARD_MODEL JOB(<ITER>=<ITER>). The
-                # way this argument passing works is at odds with expected
-                # behavior, and is a known bug/problem.
-
-                if (
-                    "<ITER>" not in copy_private_args
-                    or copy_private_args["<ITER>"] == "<ITER>"
-                ):
-                    copy_private_args.addItem("<ITER>", str(itr))
-                if (
-                    "<IENS>" not in copy_private_args
-                    or copy_private_args["<IENS>"] == "<IENS>"
-                ):
-                    copy_private_args.addItem("<IENS>", str(iens))
+                copy_private_args = SubstitutionList()
+                for key, val in job.private_args:
+                    copy_private_args.addItem(
+                        key, context.substitute_real_iter(val, iens, itr)
+                    )
                 string = copy_private_args.substitute(string)
                 return context.substitute_real_iter(string, iens, itr)
             else:

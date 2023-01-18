@@ -85,6 +85,7 @@ struct config_schema_item_struct {
     bool expand_envvar;
     bool deprecated;
     char *deprecate_msg;
+    bool do_substitutions;
 };
 
 static void validate_set_default_type(validate_type *validate,
@@ -208,6 +209,7 @@ config_schema_item_type *config_schema_item_alloc(const char *kw,
                                 //     item,
                                 //     false);
     item->validate = validate_alloc();
+    item->do_substitutions = true;
     return item;
 }
 
@@ -506,6 +508,15 @@ void config_schema_item_set_argc_minmax(config_schema_item_type *item,
 void config_schema_item_iset_type(config_schema_item_type *item, int index,
                                   config_item_types type) {
     validate_iset_type(item->validate, index, type);
+}
+
+void config_schema_item_disable_substitutions(config_schema_item_type *item) {
+    item->do_substitutions = false;
+}
+
+bool config_schema_item_substitutions_enabled(
+    const config_schema_item_type *item) {
+    return item->do_substitutions;
 }
 
 void config_schema_item_set_default_type(config_schema_item_type *item,
