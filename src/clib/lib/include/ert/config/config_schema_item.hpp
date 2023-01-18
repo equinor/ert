@@ -58,6 +58,9 @@ void config_schema_item_set_common_selection_set(config_schema_item_type *item,
 void config_schema_item_set_indexed_selection_set(config_schema_item_type *item,
                                                   int index,
                                                   const stringlist_type *argv);
+void config_schema_item_disable_substitutions(config_schema_item_type *item);
+bool config_schema_item_substitutions_enabled(
+    const config_schema_item_type *item);
 extern "C" void
 config_schema_item_add_indexed_alternative(config_schema_item_type *item,
                                            int index, const char *value);

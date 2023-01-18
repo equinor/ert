@@ -56,6 +56,7 @@ static void add_run_template_keyword(config_parser_type *config_parser) {
 static void add_forward_model_keyword(config_parser_type *config_parser) {
     auto item = config_add_schema_item(config_parser, FORWARD_MODEL_KEY, false);
     config_schema_item_set_argc_minmax(item, 1, CONFIG_DEFAULT_ARG_MAX);
+    config_schema_item_disable_substitutions(item);
 }
 
 static void add_simulation_job_keyword(config_parser_type *config_parser) {
