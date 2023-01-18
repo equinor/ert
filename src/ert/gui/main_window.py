@@ -15,7 +15,7 @@ from ert.gui.about_dialog import AboutDialog
 from ert.shared.plugins import ErtPluginManager
 
 
-class GertMainWindow(QMainWindow):
+class ErtMainWindow(QMainWindow):
     close_signal = Signal()
 
     def __init__(self, config_file):
