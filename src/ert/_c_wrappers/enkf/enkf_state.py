@@ -16,9 +16,7 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-def _internalize_GEN_DATA(
-    ensemble_config: "EnsembleConfig", run_arg: "RunArg", last_report: int
-):
+def _internalize_GEN_DATA(ensemble_config: "EnsembleConfig", run_arg: "RunArg"):
     keys = ensemble_config.getKeylistFromImplType(ErtImplType.GEN_DATA)
 
     run_path = Path(run_arg.runpath)
@@ -107,16 +105,13 @@ def _internalize_SUMMARY_DATA(ens_config: "EnsembleConfig", run_arg: "RunArg"):
 
 
 def _internalize_results(
-    ens_config: "EnsembleConfig", num_reports: int, run_arg: "RunArg"
+    ens_config: "EnsembleConfig", run_arg: "RunArg"
 ) -> Tuple[LoadStatus, str]:
     status = _internalize_SUMMARY_DATA(ens_config, run_arg)
     if status[0] != LoadStatus.LOAD_SUCCESSFUL:
         return status
 
-    num_timestamps = len(run_arg.ensemble_storage.getTimeMap())
-    if num_timestamps > 0:
-        num_reports = num_timestamps
-    result = _internalize_GEN_DATA(ens_config, run_arg, num_reports)
+    result = _internalize_GEN_DATA(ens_config, run_arg)
 
     if result[0] == LoadStatus.LOAD_FAILURE:
         return (LoadStatus.LOAD_FAILURE, "Failed to internalize GEN_DATA")
