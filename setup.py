@@ -149,6 +149,7 @@ args = dict(
         "websockets >= 9.0.1",
         "httpx",
         "tables",
+        "xarray",
         "xtgeo",
     ],
     entry_points={
