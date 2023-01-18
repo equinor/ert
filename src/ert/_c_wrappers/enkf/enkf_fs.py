@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
+import xarray as xr
 import xtgeo
 
 from ert._c_wrappers.enkf.enums import RealizationStateEnum
@@ -147,9 +148,9 @@ class EnkfFs:
         if not summary_folders:
             return []
         summary_path = summary_folders[0]
-        with open(summary_path / "keys", "r", encoding="utf-8") as f:
-            keys = [k.strip() for k in f.readlines()]
-        return sorted(keys)
+        with xr.open_dataset(summary_path / "data.nc", engine="scipy") as ds_disk:
+            keys = sorted(ds_disk["key"].values)
+        return keys
 
     def realizationList(self, state: RealizationStateEnum) -> List[int]:
         """
@@ -397,10 +398,8 @@ class EnkfFs:
     ) -> pd.DataFrame:
         return self._storage.load_summary_data_as_df(summary_keys, realizations)
 
-    def save_gen_data(
-        self, key: str, data: List[List[float]], realization: int
-    ) -> None:
-        self._storage.save_gen_data(key, data, realization)
+    def save_gen_data(self, data: Dict[str, List[float]], realization: int) -> None:
+        self._storage.save_gen_data(data, realization)
 
     def load_gen_data(
         self, key: str, realizations: List[int]

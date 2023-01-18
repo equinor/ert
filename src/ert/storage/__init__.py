@@ -4,10 +4,11 @@ import os
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, List, Tuple
+from typing import TYPE_CHECKING, Any, Dict, List, Tuple
 
 import numpy as np
 import pandas as pd
+import xarray as xr
 import xtgeo
 
 if TYPE_CHECKING:
@@ -53,12 +54,15 @@ class Storage:
         output_path = self.mount_point / f"summary-{realization}"
         Path.mkdir(output_path, exist_ok=True)
 
-        np.save(output_path / "data", data)
-        with open(output_path / "keys", "w", encoding="utf-8") as f:
-            f.write("\n".join(keys))
+        ds = xr.Dataset(
+            {"data": (("key", "time"), data)},
+            coords={
+                "key": keys,
+                "time": axis,
+            },
+        )
 
-        with open(output_path / "time_map", "w", encoding="utf-8") as f:
-            f.write("\n".join([t.strftime("%Y-%m-%d") for t in axis]))
+        ds.to_netcdf(output_path / "data.nc", engine="scipy")
 
     def load_summary_data(
         self, summary_keys: List[str], realizations: List[int]
@@ -71,20 +75,15 @@ class Storage:
             if not input_path.exists():
                 continue
             loaded.append(realization)
-            np_data = np.load(input_path / "data.npy")
-
-            keys = []
-            with open(input_path / "keys", "r", encoding="utf-8") as f:
-                keys = [k.strip() for k in f.readlines()]
-            if not dates:
-                with open(input_path / "time_map", "r", encoding="utf-8") as f:
-                    dates = [
-                        datetime.strptime(k.strip(), "%Y-%m-%d") for k in f.readlines()
-                    ]
+            with xr.open_dataset(input_path / "data.nc", engine="scipy") as ds_disk:
+                np_data = ds_disk["data"].to_numpy()
+                keys = list(ds_disk["data"]["key"].values)
+                if not dates:
+                    dates = list(ds_disk["data"]["time"].values)
             indices = [keys.index(summary_key) for summary_key in summary_keys]
             selected_data = np_data[indices, :]
 
-            result.append(selected_data.reshape(1, len(indices) * len(dates)).T)
+            result.append(selected_data.reshape(1, len(selected_data) * len(dates)).T)
         if not result:
             return np.array([]), dates, loaded
         return np.concatenate(result, axis=1), dates, loaded
@@ -106,13 +105,14 @@ class Storage:
             columns=realizations,
         )
 
-    def save_gen_data(
-        self, key: str, data: List[List[float]], realization: int
-    ) -> None:
+    def save_gen_data(self, data: Dict[str, List[float]], realization: int) -> None:
         output_path = self.mount_point / f"gen-data-{realization}"
         Path.mkdir(output_path, exist_ok=True)
-        np_data = np.array(data)
-        np.save(output_path / key, np_data)
+        ds = xr.Dataset(
+            data,
+        )
+
+        ds.to_netcdf(output_path / "data.nc", engine="scipy")
 
     def load_gen_data(
         self, key: str, realizations: List[int]
@@ -120,14 +120,14 @@ class Storage:
         result = []
         loaded = []
         for realization in realizations:
-            input_path = self.mount_point / f"gen-data-{realization}" / f"{key}.npy"
+            input_path = self.mount_point / f"gen-data-{realization}"
             if not input_path.exists():
                 continue
 
-            np_data = np.load(input_path)
-
-            result.append(np_data)
-            loaded.append(realization)
+            with xr.open_dataset(input_path / "data.nc", engine="scipy") as ds_disk:
+                np_data = ds_disk[key].as_numpy()
+                result.append(np_data)
+                loaded.append(realization)
         if not result:
             raise KeyError(f"Unable to load GEN_DATA for key: {key}")
         return np.stack(result).T, loaded
