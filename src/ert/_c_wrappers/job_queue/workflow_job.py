@@ -7,6 +7,8 @@ from ert._c_wrappers.config import ConfigParser, ConfigValidationError, ContentT
 from ert._c_wrappers.job_queue import ErtScript, ExternalErtScript, FunctionErtScript
 from ert._clib.job_kw import type_from_kw
 
+from .ert_plugin import ErtPlugin
+
 if TYPE_CHECKING:
     from ert._c_wrappers.enkf import EnKFMain
 
@@ -91,7 +93,9 @@ class WorkflowJob:
             raise ConfigValidationError(f"Could not open config_file:{config_file}")
 
     def isPlugin(self) -> bool:
-        return self.internal and self.script is not None
+        if self.script is not None:
+            return issubclass(ErtScript.loadScriptFromFile(self.script), ErtPlugin)
+        return False
 
     def argumentTypes(self) -> List["ContentTypes"]:
         def content_to_type(c: Optional[ContentTypeEnum]):
