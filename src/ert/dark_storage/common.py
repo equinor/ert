@@ -51,6 +51,8 @@ def data_for_key(res: LibresFacade, case, key, realization_index=None) -> pd.Dat
         data = res.gather_summary_data(case, key, realization_index).T
     elif res.is_gen_kw_key(key):
         data = res.gather_gen_kw_data(case, key, realization_index)
+        if data.empty:
+            return data
         data.columns = pd.Index([0])
     elif res.is_gen_data_key(key):
         data = res.gather_gen_data_data(case, key, realization_index).T
