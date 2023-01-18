@@ -14,7 +14,6 @@ if TYPE_CHECKING:
 def forward_model_ok(
     run_arg: "RunArg",
     ens_conf: "EnsembleConfig",
-    num_steps: int,
 ) -> Tuple[LoadStatus, str]:
     result = (LoadStatus.LOAD_SUCCESSFUL, "")
 
@@ -78,7 +77,7 @@ def forward_model_ok(
             )
 
     if result[0] == LoadStatus.LOAD_SUCCESSFUL:
-        result = _internalize_results(ens_conf, num_steps, run_arg)
+        result = _internalize_results(ens_conf, run_arg)
 
     run_arg.ensemble_storage.state_map[run_arg.iens] = (
         RealizationStateEnum.STATE_HAS_DATA
