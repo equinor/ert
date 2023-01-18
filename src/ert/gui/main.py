@@ -12,7 +12,7 @@ from ert._c_wrappers.enkf import EnKFMain, ResConfig
 from ert.cli.main import ErtTimeoutError
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets import SummaryPanel, resourceIcon
-from ert.gui.main_window import GertMainWindow
+from ert.gui.main_window import ErtMainWindow
 from ert.gui.simulation import SimulationPanel
 from ert.gui.tools.event_viewer import (
     EventViewerTool,
@@ -185,7 +185,7 @@ def _setup_main_window(
     facade = LibresFacade(ert)
     config_file = args.config
     notifier = ErtNotifier(config_file)
-    window = GertMainWindow(config_file)
+    window = ErtMainWindow(config_file)
     window.setWidget(SimulationPanel(ert, notifier, config_file))
     plugin_handler = PluginHandler(ert, ert.getWorkflowList().getPluginJobs(), window)
 

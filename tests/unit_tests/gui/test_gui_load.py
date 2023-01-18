@@ -9,7 +9,7 @@ from qtpy.QtWidgets import QComboBox, QDialog, QMessageBox, QWidget
 
 import ert.gui
 from ert.gui.ertwidgets.message_box import ErtMessageBox
-from ert.gui.gert_main import GUILogHandler, _setup_main_window, run_gui
+from ert.gui.main import GUILogHandler, _setup_main_window, run_gui
 from ert.gui.tools.event_viewer import add_gui_log_handler
 from ert.shared.models import BaseRunModel
 
@@ -111,7 +111,7 @@ def test_gui_full(monkeypatch, tmp_path, qapp, mock_start_server, source_root):
     monkeypatch.chdir(tmp_path)
 
     qapp.exec_ = lambda: None  # exec_ starts the event loop, and will stall the test.
-    monkeypatch.setattr(ert.gui.gert_main, "QApplication", Mock(return_value=qapp))
+    monkeypatch.setattr(ert.gui.main, "QApplication", Mock(return_value=qapp))
     run_gui(args)
     mock_start_server.assert_called_once_with(
         project=str(tmp_path / "poly_example" / "storage"), res_config="poly.ert"
@@ -132,8 +132,8 @@ def test_that_loading_gui_creates_a_single_storage_folder(
     args = argparse.Namespace(config="poly_example/poly.ert")
 
     qapp.exec_ = lambda: None  # exec_ starts the event loop, and will stall the test.
-    monkeypatch.setattr(ert.gui.gert_main, "QApplication", Mock(return_value=qapp))
-    monkeypatch.setattr(ert.gui.gert_main.LibresFacade, "enspath", tmp_path)
+    monkeypatch.setattr(ert.gui.main, "QApplication", Mock(return_value=qapp))
+    monkeypatch.setattr(ert.gui.main.LibresFacade, "enspath", tmp_path)
     run_gui(args)
     assert [p.stem for p in tmp_path.glob("**/*")].count("storage") == 1
 
@@ -180,7 +180,7 @@ def test_that_gui_gives_suggestions_when_you_have_umask_in_config(
     args = Mock()
     args.config = str(config_file)
     with add_gui_log_handler() as log_handler:
-        gui, _ = ert.gui.gert_main._start_initial_gui_window(args, log_handler)
+        gui, _ = ert.gui.main._start_initial_gui_window(args, log_handler)
         assert gui.windowTitle() == "Some problems detected"
 
 
@@ -193,7 +193,7 @@ def test_that_errors_are_shown_in_the_suggester_window_when_present(
     args = Mock()
     args.config = str(config_file)
     with add_gui_log_handler() as log_handler:
-        gui, _ = ert.gui.gert_main._start_initial_gui_window(args, log_handler)
+        gui, _ = ert.gui.main._start_initial_gui_window(args, log_handler)
         assert gui.windowTitle() == "Some problems detected"
 
 
@@ -202,7 +202,7 @@ def test_that_the_ui_show_no_warnings_when_observations_found(qapp):
     args = Mock()
     args.config = "poly.ert"
     with add_gui_log_handler() as log_handler:
-        gui, _ = ert.gui.gert_main._start_initial_gui_window(args, log_handler)
+        gui, _ = ert.gui.main._start_initial_gui_window(args, log_handler)
         combo_box = gui.findChild(QComboBox, name="Simulation_mode")
         assert combo_box.count() == 5
 
@@ -219,7 +219,7 @@ def test_that_the_ui_show_warnings_when_there_are_no_observations(qapp, tmp_path
     args = Mock()
     args.config = str(config_file)
     with add_gui_log_handler() as log_handler:
-        gui, _ = ert.gui.gert_main._start_initial_gui_window(args, log_handler)
+        gui, _ = ert.gui.main._start_initial_gui_window(args, log_handler)
         combo_box = gui.findChild(QComboBox, name="Simulation_mode")
         assert combo_box.count() == 5
 
@@ -232,11 +232,11 @@ def test_that_the_ui_show_warnings_when_there_are_no_observations(qapp, tmp_path
 
 
 @pytest.mark.usefixtures("copy_poly_case")
-def test_that_gert_starts_when_there_are_no_problems(monkeypatch, qapp, tmp_path):
+def test_that_ert_starts_when_there_are_no_problems(monkeypatch, qapp, tmp_path):
     args = Mock()
     args.config = "poly.ert"
     with add_gui_log_handler() as log_handler:
-        gui, _ = ert.gui.gert_main._start_initial_gui_window(args, log_handler)
+        gui, _ = ert.gui.main._start_initial_gui_window(args, log_handler)
         assert gui.windowTitle() == "ERT - poly.ert"
 
 

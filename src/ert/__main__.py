@@ -197,7 +197,7 @@ def range_limited_int(user_input: str) -> int:
 
 def run_gui_wrapper(args: Namespace) -> None:
     # pylint: disable=import-outside-toplevel
-    from ert.gui.gert_main import run_gui
+    from ert.gui.main import run_gui
 
     run_gui(args)
 
