@@ -5,6 +5,7 @@ import pytest
 from ecl.grid.ecl_grid import EclGrid
 from ecl.summary import EclSum
 
+from ert._c_wrappers.config import ConfigValidationError
 from ert._c_wrappers.enkf import ConfigKeys, EnsembleConfig
 from ert._c_wrappers.enkf.enums import EnkfVarType, ErtImplType, GenDataFileType
 
@@ -193,3 +194,31 @@ def test_surface_bad_init_values(setup_case):
     )
     with pytest.raises(ValueError, match=error):
         EnsembleConfig.get_surface_node(surface_str.split(" "))
+
+
+def test_ensemble_config_duplicate_node_names(setup_case):
+    _ = setup_case("configuration_tests", "ensemble_config.ert")
+    duplicate_name = "Test_name"
+    config_dict = {
+        ConfigKeys.GEN_DATA: [
+            [
+                duplicate_name,
+                "INPUT_FORMAT:ASCII",
+                "RESULT_FILE:snake_oil_opr_diff_%d.txt",
+                "REPORT_STEPS:0,1,2,199",
+            ],
+        ],
+        ConfigKeys.GEN_KW: [
+            [
+                duplicate_name,
+                "FAULT_TEMPLATE",
+                "MULTFLT.INC",
+                "MULTFLT.TXT",
+                "FORWARD_INIT:FALSE",
+            ]
+        ],
+    }
+    error_match = f"key {duplicate_name} already present in ensemble config"
+
+    with pytest.raises(ConfigValidationError, match=error_match):
+        EnsembleConfig.from_dict(config_dict=config_dict)
