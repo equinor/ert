@@ -23,6 +23,7 @@ def _internalize_GEN_DATA(
 
     run_path = Path(run_arg.runpath)
     errors = []
+    all_data = {}
     for key in keys:
         config_node = ensemble_config[key]
         filename_fmt = config_node.get_enkf_infile()
@@ -34,9 +35,9 @@ def _internalize_GEN_DATA(
 
             with open(run_path / filename, "r", encoding="utf-8") as f:
                 data = [float(v.strip()) for v in f.readlines()]
+            all_data[f"{key}@{i}"] = np.array(data)
 
-            run_arg.ensemble_storage.save_gen_data(f"{key}@{i}", data, run_arg.iens)
-
+    run_arg.ensemble_storage.save_gen_data(all_data, run_arg.iens)
     if errors:
         return (LoadStatus.LOAD_FAILURE, "\n".join(errors))
     return (LoadStatus.LOAD_SUCCESSFUL, "")
