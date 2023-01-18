@@ -393,7 +393,6 @@ class EnKFMain:
         nr_loaded = fs.load_from_run_path(
             self.getEnsembleSize(),
             self.ensembleConfig(),
-            self.getHistoryLength(),
             run_context.run_args,
             run_context.mask,
         )
