@@ -1203,10 +1203,9 @@ static void conf_instance_parser_skip_unknown_class(char **buffer_pos) {
     }
 }
 
-static void
-conf_instance_add_data_from_token_buffer(conf_instance_type *conf_instance,
-                                         char **buffer_pos,
-                                         bool allow_inclusion, bool is_root) {
+static void conf_instance_add_data_from_token_buffer(
+    conf_instance_type *conf_instance, char **buffer_pos, bool allow_inclusion,
+    bool is_root, const char *current_file_name) {
     const conf_class_type *conf_class = conf_instance->conf_class;
     char *token = conf_util_alloc_next_token(buffer_pos);
 
@@ -1229,16 +1228,20 @@ conf_instance_add_data_from_token_buffer(conf_instance_type *conf_instance,
                 conf_instance_insert_owned_sub_instance(conf_instance,
                                                         sub_conf_instance);
                 conf_instance_add_data_from_token_buffer(
-                    sub_conf_instance, buffer_pos, allow_inclusion, false);
+                    sub_conf_instance, buffer_pos, allow_inclusion, false,
+                    current_file_name);
             } else
-                printf("WARNING: Unexpected EOF after \"%s\".\n\n", token);
+                printf("WARNING: Unexpected EOF after \"%s\" in file %s.\n\n",
+                       token, current_file_name);
         } else if (strcmp(token, "}") == 0) {
             if (scope_start_set) {
                 scope_end_set = true;
                 free(token);
                 break;
             } else
-                printf("WARNING: Skipping unexpected token \"%s\".\n\n", token);
+                printf("WARNING: Skipping unexpected token \"%s\" in file "
+                       "%s.\n\n",
+                       token, current_file_name);
         } else if (strcmp(token, "{") == 0) {
             if (!scope_start_set && !is_root)
                 scope_start_set = true;
@@ -1249,7 +1252,9 @@ conf_instance_add_data_from_token_buffer(conf_instance_type *conf_instance,
                 free(token);
                 break;
             } else
-                printf("WARNING: Skipping unexpected token \"%s\".\n\n", token);
+                printf("WARNING: Skipping unexpected token \"%s\" in file "
+                       "%s.\n\n",
+                       token, current_file_name);
         } else if (strcmp(token, "include") == 0) {
             char *file_name =
                 util_alloc_abs_path(conf_util_alloc_next_token(buffer_pos));
@@ -1274,7 +1279,7 @@ conf_instance_add_data_from_token_buffer(conf_instance_type *conf_instance,
                     char *buffer_pos_new = buffer_new;
 
                     conf_instance_add_data_from_token_buffer(
-                        conf_instance, &buffer_pos_new, false, true);
+                        conf_instance, &buffer_pos_new, false, true, file_name);
 
                     free(buffer_new);
                 }
@@ -1307,7 +1312,9 @@ conf_instance_add_data_from_token_buffer(conf_instance_type *conf_instance,
             fprintf(stderr, "%s", msg.c_str());
             util_abort(msg.c_str());
         } else {
-            printf("WARNING: Skipping unexpected token \"%s\".\n\n", token);
+            printf("WARNING: Skipping unexpected token \"%s\" in file "
+                   "%s.\n\n",
+                   token, current_file_name);
         }
 
         free(token);
@@ -1317,10 +1324,13 @@ conf_instance_add_data_from_token_buffer(conf_instance_type *conf_instance,
     if (scope_end_set) {
         token = conf_util_alloc_next_token(buffer_pos);
         if (token == NULL) {
-            printf("WARNING: Unexpected EOF. Missing terminating \";\".\n");
+            printf("WARNING: Unexpected EOF. Missing terminating \";\" in file "
+                   "%s.\n",
+                   current_file_name);
         } else if (strcmp(token, ";") != 0) {
-            printf("WARNING: Missing terminating \";\" at the end of \"%s\".\n",
-                   conf_instance->name);
+            printf("WARNING: Missing terminating \";\" at the end of \"%s\" in "
+                   "file %s.\n",
+                   conf_instance->name, current_file_name);
             free(token);
         } else
             free(token);
@@ -1335,13 +1345,14 @@ conf_instance_alloc_from_file(const conf_class_type *conf_class,
     path_stack_type *path_stack = path_stack_alloc();
     char *file_arg = util_split_alloc_filename(file_name);
     path_stack_push_cwd(path_stack);
+
     util_chdir_file(file_name);
     {
         char *buffer = conf_util_fscanf_alloc_token_buffer(file_arg);
         char *buffer_pos = buffer;
 
         conf_instance_add_data_from_token_buffer(conf_instance, &buffer_pos,
-                                                 true, true);
+                                                 true, true, file_name);
 
         free(buffer);
     }
