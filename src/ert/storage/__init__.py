@@ -1,10 +1,11 @@
 from __future__ import annotations
 
+import json
 import os
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, List, Tuple
+from typing import TYPE_CHECKING, Any, Dict, List, Literal, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -21,28 +22,55 @@ class Storage:
     def __init__(self, mount_point: Path) -> None:
         self.mount_point = mount_point
 
-    def _has_parameters(self) -> bool:
+    def has_parameters(self) -> bool:
         """
         Checks if a parameter folder has been created
         """
-        for path in self.mount_point.iterdir():
-            if "gen-kw" in str(path):
-                return True
+        if Path(self.mount_point / "gen-kw.nc").exists():
+            return True
+
         return False
 
-    def save_gen_kw(
+    def save_gen_kw(  # pylint: disable=R0913
         self,
         parameter_name: str,
         parameter_keys: List[str],
-        realization: int,
+        parameter_transfer_functions: List[Dict[str, Union[str, Dict[str, float]]]],
+        realizations: List[int],
         data: npt.ArrayLike,
     ) -> None:
-        output_path = self.mount_point / f"gen-kw-{realization}"
-        Path.mkdir(output_path, exist_ok=True)
+        ds = xr.Dataset(
+            {
+                parameter_name: ((f"{parameter_name}_keys", "iens"), data),
+            },
+            coords={f"{parameter_name}_keys": parameter_keys, "iens": realizations},
+        )
+        mode: Literal["a", "w"] = (
+            "a" if Path.exists(self.mount_point / "gen-kw.nc") else "w"
+        )
 
-        np.save(output_path / parameter_name, data)
-        with open(output_path / f"{parameter_name}-keys", "w", encoding="utf-8") as f:
-            f.write("\n".join(parameter_keys))
+        ds.to_netcdf(self.mount_point / "gen-kw.nc", mode=mode, engine="scipy")
+        priors = {}
+        if Path.exists(self.mount_point / "gen-kw-priors.json"):
+            with open(
+                self.mount_point / "gen-kw-priors.json", "r", encoding="utf-8"
+            ) as f:
+                priors = json.load(f)
+        priors.update({parameter_name: parameter_transfer_functions})
+        with open(self.mount_point / "gen-kw-priors.json", "w", encoding="utf-8") as f:
+            json.dump(priors, f)
+
+    def load_gen_kw_realization(
+        self, key: str, realization: int
+    ) -> Tuple[npt.NDArray[np.double], List[str]]:
+        input_file = self.mount_point / "gen-kw.nc"
+        if not input_file.exists():
+            raise KeyError(f"Unable to load GEN_KW for key: {key}")
+        with xr.open_dataset(input_file, engine="scipy") as ds_disk:
+            np_data = ds_disk.sel(iens=realization)[key].to_numpy()
+            keys = list(ds_disk[key][f"{key}_keys"].values)
+
+        return np_data, keys
 
     def save_summary_data(
         self,
