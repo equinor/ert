@@ -158,8 +158,7 @@ def _save_temporary_storage_to_disk(
         if config_node.getImplementationType() == ErtImplType.GEN_KW:
             gen_kw_config = config_node.getKeywordModelConfig()
             parameter_keys = list(gen_kw_config)
-            for i, realization in enumerate(iens_active_index):
-                target_fs.save_gen_kw(key, parameter_keys, realization, matrix[:, i])
+            target_fs.save_gen_kw(key, parameter_keys, [], iens_active_index, matrix)
         elif config_node.getImplementationType() == ErtImplType.SURFACE:
             surface_config = config_node.getSurfaceModelConfig()
             for i, realization in enumerate(iens_active_index):
