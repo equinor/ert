@@ -8,7 +8,7 @@ import shutil
 from datetime import datetime
 from multiprocessing.pool import ThreadPool
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, TypedDict, Union
 
 import numpy as np
 import pandas as pd
@@ -121,7 +121,7 @@ class EnkfFs:
 
     @property
     def is_initalized(self) -> bool:
-        return self._has_parameters()
+        return self._storage.has_parameters()
 
     @classmethod
     def createFileSystem(
@@ -156,47 +156,32 @@ class EnkfFs:
         """
         return [i for i, s in enumerate(self._state_map) if s == state]
 
-    def _has_parameters(self) -> bool:
-        """
-        Checks if a parameter folder has been created
-        """
-        for path in self.mount_point.iterdir():
-            if "gen-kw" in str(path):
-                return True
-        return False
-
     def save_gen_kw(
         self,
         parameter_name: str,
         parameter_keys: List[str],
-        realization: int,
+        parameter_transfer_functions: List[TypedDict],
+        realizations: List[int],
         data: npt.ArrayLike,
     ) -> None:
-        self._storage.save_gen_kw(parameter_name, parameter_keys, realization, data)
-
-        self.update_realization_state(
-            realization,
-            [RealizationStateEnum.STATE_UNDEFINED],
-            RealizationStateEnum.STATE_INITIALIZED,
+        self._storage.save_gen_kw(
+            parameter_name,
+            parameter_keys,
+            parameter_transfer_functions,
+            realizations,
+            data,
         )
-
-    def _load_gen_kw_realization(
-        self, key: str, realization: int
-    ) -> Tuple[npt.NDArray[np.double], List[str]]:
-        input_path = self.mount_point / f"gen-kw-{realization}"
-        if not input_path.exists():
-            raise KeyError(f"Unable to load GEN_KW for key: {key}")
-
-        np_data = np.load(input_path / f"{key}.npy")
-        with open(input_path / f"{key}-keys", "r", encoding="utf-8") as f:
-            keys = [k.strip() for k in f.readlines()]
-
-        return np_data, keys
+        for realization in realizations:
+            self.update_realization_state(
+                realization,
+                [RealizationStateEnum.STATE_UNDEFINED],
+                RealizationStateEnum.STATE_INITIALIZED,
+            )
 
     def load_gen_kw_as_dict(
         self, key: str, realization: int, gen_kw_config: GenKwConfig
     ) -> Dict[str, Dict[str, float]]:
-        data, keys = self._load_gen_kw_realization(key, realization)
+        data, keys = self._storage.load_gen_kw_realization(key, realization)
 
         transformed = {
             parameter_key: gen_kw_config.transform(index, value)
@@ -217,7 +202,7 @@ class EnkfFs:
     def load_gen_kw(self, key: str, realizations: List[int]) -> npt.NDArray[np.double]:
         result = []
         for realization in realizations:
-            data, _ = self._load_gen_kw_realization(key, realization)
+            data, _ = self._storage.load_gen_kw_realization(key, realization)
             result.append(data)
         return np.stack(result).T
 
@@ -338,25 +323,14 @@ class EnkfFs:
         Copies selected parameter files from one storage to another.
         Filters on realization and parameter keys
         """
-        for gen_kw_folder in self.mount_point.glob("gen-kw-*"):
-            files_to_copy = []
-            realization = int(str(gen_kw_folder).rsplit("-", maxsplit=1)[-1])
-            if realization in realizations:
-                for parameter_file in gen_kw_folder.iterdir():
-                    base_name = str(parameter_file.stem)
-                    if base_name in parameter_keys:
-                        files_to_copy.append(parameter_file.name)
-                        files_to_copy.append(f"{base_name}-keys")
 
-            if not files_to_copy:
+        for f in ["gen-kw.nc", "gen-kw-priors.json"]:
+            if not (self.mount_point / f).exists():
                 continue
-
-            Path.mkdir(to.mount_point / gen_kw_folder.stem)
-            for f in files_to_copy:
-                shutil.copy(
-                    src=self.mount_point / gen_kw_folder.stem / f,
-                    dst=to.mount_point / gen_kw_folder.stem / f,
-                )
+            shutil.copy(
+                src=self.mount_point / f,
+                dst=to.mount_point / f,
+            )
 
         for surface_folder in self.mount_point.glob("surface-*"):
             files_to_copy = []
