@@ -4,14 +4,11 @@ from os.path import realpath
 from typing import Dict, List, Optional
 
 from ert._c_wrappers.analysis import AnalysisMode, AnalysisModule
+from ert._c_wrappers.config.config_parser import ConfigValidationError
 from ert._c_wrappers.enkf.analysis_iter_config import AnalysisIterConfig
 from ert._c_wrappers.enkf.config_keys import ConfigKeys
 
 logger = logging.getLogger(__name__)
-
-
-class AnalysisConfigError(Exception):
-    pass
 
 
 class AnalysisConfig:
@@ -66,8 +63,8 @@ class AnalysisConfig:
                     new_module = AnalysisModule.iterated_ens_smoother_module(dst_name)
                 self._modules[dst_name] = new_module
             else:
-                raise AnalysisConfigError(
-                    f"Trying to copy module {src_name}" f" which does not exist"
+                raise ConfigValidationError(
+                    f"Trying to copy module {src_name} which does not exist"
                 )
 
     def _set_modules_var_list(self):
@@ -152,7 +149,7 @@ class AnalysisConfig:
     def get_module(self, module_name: str) -> AnalysisModule:
         if module_name in self._modules:
             return self._modules[module_name]
-        raise AnalysisConfigError(f"Analysis module {module_name} not found!")
+        raise ConfigValidationError(f"Analysis module {module_name} not found!")
 
     def select_module(self, module_name: str) -> bool:
         if module_name in self._modules:

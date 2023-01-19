@@ -1,7 +1,7 @@
 import pytest
 
+from ert._c_wrappers.config.config_parser import ConfigValidationError
 from ert._c_wrappers.enkf import AnalysisConfig, ConfigKeys
-from ert._c_wrappers.enkf.analysis_config import AnalysisConfigError
 
 
 @pytest.fixture
@@ -194,7 +194,9 @@ def test_analysis_config_modules():
 
     es_module = analysis_config.get_module("STD_ENKF")
     assert es_module.name == "STD_ENKF"
-    with pytest.raises(AnalysisConfigError):
+    with pytest.raises(
+        ConfigValidationError, match="Analysis module UNKNOWN not found!"
+    ):
         analysis_config.get_module("UNKNOWN")
     assert not analysis_config.select_module("UNKNOWN")
 
