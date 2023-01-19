@@ -13,24 +13,20 @@ def test_get_executable_list(tmpdir):
     path_elm = content.create_path_elm(str(tmpdir))
     content.setParser(parser)
 
-    parser.add_key_value(
-        content,
-        "MYKEYWORD",
-        StringList(["MYKEYWORD", "MY_EXECUTABLE"]),
-        path_elm=path_elm,
-    )
-    parser.add_key_value(
-        content,
-        "MYKEYWORD",
-        StringList(["MYKEYWORD", "MY_EXECUTABLE2"]),
-        path_elm=path_elm,
-    )
+    values = ["MY_EXECUTABLE", "MY_EXECUTABLE2", "PATH/MY_EXECUTABLE"]
+
+    for value in values:
+        parser.add_key_value(
+            content,
+            "MYKEYWORD",
+            StringList(["MYKEYWORD", value]),
+            path_elm=path_elm,
+        )
 
     my_keyword_sets = list(content["MYKEYWORD"])
-    assert len(my_keyword_sets) == 2
+    assert len(my_keyword_sets) == 3
 
     errors = list(content.getErrors())
-    assert "MY_EXECUTABLE" in errors[0]
-    assert " does not exist" in errors[0]
-    assert "MY_EXECUTABLE2" in errors[1]
-    assert " does not exist" in errors[1]
+    for value, error in zip(values, errors):
+        expected_error = f"Executable:{value} does not exist"
+        assert expected_error == error

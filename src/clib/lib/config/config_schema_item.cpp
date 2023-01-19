@@ -409,19 +409,6 @@ bool config_schema_item_validate_set(const config_schema_item_type *item,
 
                         free(relocated);
 
-                        if (strstr(value, "/")) {
-                            /*
-                             * value not naked name, which means it was relative path
-                             * that wasn't found
-                             */
-
-                            error_list.push_back(std::string(
-                                util_alloc_sprintf("Path to executable:%s is "
-                                                   "actually a directory",
-                                                   value)));
-                            break;
-                        }
-
                         /*
                          * res_env_alloc_PATH_executable aborts if some parts of the path is
                          * not an existing dir, so call it only when its an absolute path
