@@ -22,7 +22,12 @@ class DeprecationMigrationSuggester:
         "SCHEDULE_PREDICTION_FILE",
         "MULTFLT",
     ]
-    JUST_REMOVE_KEYWORDS = ["UMASK", "LOG_FILE", "LOG_LEVEL", "ENKF_RERUN"]
+    JUST_REMOVE_KEYWORDS = [
+        "UMASK",
+        "LOG_FILE",
+        "LOG_LEVEL",
+        "ENKF_RERUN",
+    ]
     RSH_KEYWORDS = ["RSH_HOST", "RHS_COMMAND"]
 
     def _add_deprecated_keywords_to_parser(self):
@@ -32,6 +37,7 @@ class DeprecationMigrationSuggester:
             self._parser.add(kw)
         for kw in self.RSH_KEYWORDS:
             self._parser.add(kw)
+        self._parser.add("PLOT_SETTINGS")
         self._parser.add("HAVANA_FAULT")
         self._parser.add("REFCASE_LIST")
         self._parser.add("RFTPATH")
@@ -122,6 +128,13 @@ class DeprecationMigrationSuggester:
             "DELETE_RUNPATH",
             "The DELETE_RUNPATH keyword would clear the runpath directories "
             "between runs. It was removed in 2017 and no longer has any effect.",
+        )
+        add_suggestion(
+            "PLOT_SETTINGS",
+            f"The keyword {kw} no longer has any effect, and can be safely removed."
+            " The PLOT_SETTINGS keyword was once used to set up parameters for"
+            " visualising results after running ERT. This is now done in the graphical"
+            " user interface instead.",
         )
 
         return suggestions
