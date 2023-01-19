@@ -525,13 +525,14 @@ class EnKFMain:
                         active_realizations,
                         self.getEnsembleSize(),
                     )
-                for index, real in enumerate(active_realizations):
-                    storage.save_gen_kw(
-                        parameter_name=parameter,
-                        parameter_keys=keys,
-                        realization=real,
-                        data=parameter_values[:, index],
-                    )
+
+                storage.save_gen_kw(
+                    parameter_name=parameter,
+                    parameter_keys=keys,
+                    parameter_transfer_functions=gen_kw_config.get_priors(),
+                    realizations=active_realizations,
+                    data=parameter_values,
+                )
             elif impl_type == ErtImplType.SURFACE:
                 for realization_nr in active_realizations:
                     init_file = config_node.get_init_file_fmt()
