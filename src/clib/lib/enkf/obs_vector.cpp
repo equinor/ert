@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cppitertools/enumerate.hpp>
 #include <optional>
 #include <stdlib.h>
 #include <string.h>
@@ -53,6 +54,23 @@ struct obs_vector_struct {
     std::vector<int> step_list;
 };
 
+static int find_nearest_time_index(std::vector<time_t> time_map,
+                                   time_t external_time) {
+    int nearest_index = -1;
+    auto nearest_diff = std::numeric_limits<double>::infinity();
+    for (auto &&[index, time] : iter::enumerate(time_map)) {
+        time_t diff = std::abs(external_time - time);
+        if (diff == 0)
+            return index;
+        /** The tolerance of 30s is arbitrarily chosen */
+        if (diff < 30 && diff < nearest_diff) {
+            nearest_diff = diff;
+            nearest_index = index;
+        }
+    }
+    return nearest_index;
+}
+
 static int
 __conf_instance_get_restart_nr(const conf_instance_type *conf_instance,
                                const char *obs_key,
@@ -82,10 +100,8 @@ __conf_instance_get_restart_nr(const conf_instance_type *conf_instance,
         util_inplace_forward_seconds_utc(&obs_time, hours * 3600);
     } else
         util_abort("%s: Internal error. Invalid conf_instance?\n", __func__);
-
-    auto it = std::lower_bound(time_map.begin(), time_map.end(), obs_time);
-    const time_t tolerance = 30;
-    if (it == time_map.end() || std::abs(obs_time - *it) >= tolerance) {
+    obs_restart_nr = find_nearest_time_index(time_map, obs_time);
+    if (obs_restart_nr < 0) {
         if (conf_instance_has_item(conf_instance, "DATE"))
             logger->error(
                 "Could not determine REPORT step "
@@ -97,12 +113,8 @@ __conf_instance_get_restart_nr(const conf_instance_type *conf_instance,
                 "Could not determine REPORT step "
                 "corresponding to DAYS={}",
                 conf_instance_get_item_value_ref(conf_instance, "DAYS"));
-    } else {
-        obs_restart_nr = std::distance(time_map.begin(), it);
-    }
-
-    if (obs_restart_nr < 0)
         util_abort("%s: Failed to look up restart nr correctly \n", __func__);
+    }
 
     return obs_restart_nr;
 }
