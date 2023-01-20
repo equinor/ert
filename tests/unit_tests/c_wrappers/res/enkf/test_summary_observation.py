@@ -1,4 +1,5 @@
 import os
+from contextlib import ExitStack as does_not_raise
 from datetime import datetime
 from textwrap import dedent
 
@@ -37,16 +38,29 @@ def run_sim(start_date):
 
 
 @pytest.mark.parametrize(
-    "time_delta",
+    "time_delta, expectation",
     [
-        pytest.param("1.000347222", id="30 seconds offset from 1 day"),
-        pytest.param("0.999664355", id="~30 seconds offset from 1 day"),
-        pytest.param("1.0", id="1 day"),
+        pytest.param(
+            "1.000347222", does_not_raise(), id="30 seconds offset from 1 day"
+        ),
+        pytest.param(
+            "0.999664355", does_not_raise(), id="~30 seconds offset from 1 day"
+        ),
+        pytest.param("1.0", does_not_raise(), id="1 day"),
+        pytest.param(
+            "2.0",
+            pytest.raises(
+                IndexError,
+                match="FOPR_1 failed to match time, corresponding to DAYS=2",
+            ),
+            id="Outside tolerance",
+        ),
     ],
 )
 def test_that_loading_summary_obs_with_days_is_within_tolerance(
     tmpdir,
     time_delta,
+    expectation,
 ):
     with tmpdir.as_cwd():
         config = dedent(
@@ -80,5 +94,6 @@ def test_that_loading_summary_obs_with_days_is_within_tolerance(
 
         res_config = ResConfig("config.ert")
         os.chdir(res_config.config_path)
-        ert = EnKFMain(res_config)
-        assert ert.getObservations().hasKey("FOPR_1")
+        with expectation:
+            ert = EnKFMain(res_config)
+            assert ert.getObservations().hasKey("FOPR_1")

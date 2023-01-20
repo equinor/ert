@@ -1,20 +1,20 @@
 #include <cmath>
 #include <cppitertools/enumerate.hpp>
 
+#include <ert/config/conf.hpp>
 #include <ert/ecl/ecl_grid.h>
 #include <ert/ecl/ecl_sum.h>
-#include <ert/util/hash.h>
-#include <ert/util/type_vector_functions.h>
-#include <ert/util/vector.h>
-
-#include <ert/config/conf.hpp>
 #include <ert/enkf/enkf_analysis.hpp>
 #include <ert/enkf/enkf_fs.hpp>
 #include <ert/enkf/enkf_obs.hpp>
 #include <ert/enkf/obs_vector.hpp>
 #include <ert/enkf/summary_obs.hpp>
+#include <ert/except.hpp>
 #include <ert/python.hpp>
 #include <ert/res_util/string.hpp>
+#include <ert/util/hash.h>
+#include <ert/util/type_vector_functions.h>
+#include <ert/util/vector.h>
 
 /**
 
@@ -212,8 +212,7 @@ void enkf_obs_add_obs_vector(enkf_obs_type *enkf_obs,
     if (vector != NULL) {
         const char *obs_key = obs_vector_get_key(vector);
         if (hash_has_key(enkf_obs->obs_hash, obs_key))
-            util_abort("%s: Observation with key:%s already added.\n", __func__,
-                       obs_key);
+            throw exc::runtime_error("Duplicate observation: {}", obs_key);
 
         hash_insert_ref(enkf_obs->obs_hash, obs_key, vector);
         vector_append_owned_ref(enkf_obs->obs_vector, vector,
@@ -558,41 +557,6 @@ static void enkf_obs_reinterpret_DT_FILE(const char *errors) {
     fprintf(stderr, "\n");
     fprintf(stderr, "*****************************************\n");
     // clang-format on
-}
-
-/**
- This function will load an observation configuration from the
-   observation file @config_file.
-
-   If called several times during one invocation the function will
-   start by clearing the current content.
-*/
-void enkf_obs_load(enkf_obs_type *enkf_obs, const char *config_file,
-                   double std_cutoff) {
-
-    conf_class_type *enkf_conf_class = enkf_obs_get_obs_conf_class();
-    conf_instance_type *enkf_conf = conf_instance_alloc_from_file(
-        enkf_conf_class, "enkf_conf", config_file);
-
-    const char *errors = conf_instance_get_path_error(enkf_conf);
-    if (errors) {
-        enkf_obs_reinterpret_DT_FILE(errors);
-        exit(1); // No need to free errors...
-    }
-
-    if (!conf_instance_validate(enkf_conf))
-        util_abort("%s: Can not proceed with this configuration: %s\n",
-                   __func__, config_file);
-
-    handle_history_observation(enkf_obs, enkf_conf, enkf_obs->obs_time.size(),
-                               std_cutoff);
-    handle_summary_observation(enkf_obs, enkf_conf, enkf_obs->obs_time.size());
-    handle_general_observation(enkf_obs, enkf_conf);
-
-    conf_instance_free(enkf_conf);
-    conf_class_free(enkf_conf_class);
-
-    enkf_obs_update_keys(enkf_obs);
 }
 
 conf_class_type *enkf_obs_get_obs_conf_class(void) {
@@ -1036,6 +1000,41 @@ py::handle pybind_alloc(int history_,
                               ensemble_config);
     return PyLong_FromVoidPtr(ptr);
 }
+/**
+ This function will load an observation configuration from the
+   observation file @config_file.
+
+   If called several times during one invocation the function will
+   start by clearing the current content.
+*/
+void enkf_obs_load(Cwrap<enkf_obs_type> enkf_obs, const char *config_file,
+                   double std_cutoff) {
+
+    conf_class_type *enkf_conf_class = enkf_obs_get_obs_conf_class();
+    conf_instance_type *enkf_conf = conf_instance_alloc_from_file(
+        enkf_conf_class, "enkf_conf", config_file);
+
+    const char *errors = conf_instance_get_path_error(enkf_conf);
+    if (errors) {
+        enkf_obs_reinterpret_DT_FILE(errors);
+        exit(1); // No need to free errors...
+    }
+
+    if (!conf_instance_validate(enkf_conf))
+        throw exc::runtime_error("Error in configuration file: {}",
+                                 config_file);
+
+    handle_history_observation(enkf_obs, enkf_conf, enkf_obs->obs_time.size(),
+                               std_cutoff);
+    handle_summary_observation(enkf_obs, enkf_conf, enkf_obs->obs_time.size());
+    handle_general_observation(enkf_obs, enkf_conf);
+
+    conf_instance_free(enkf_conf);
+    conf_class_free(enkf_conf_class);
+
+    enkf_obs_update_keys(enkf_obs);
+}
+
 } // namespace
 
 ERT_CLIB_SUBMODULE("enkf_obs", m) {
@@ -1043,4 +1042,5 @@ ERT_CLIB_SUBMODULE("enkf_obs", m) {
 
     m.def("alloc", pybind_alloc, "history"_a, "time_map"_a, "grid"_a,
           "refcase"_a, "ensemble_config"_a);
+    m.def("load", enkf_obs_load, "obs"_a, "config_file"_a, "std_cutoff"_a);
 }

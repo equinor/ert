@@ -5,17 +5,17 @@
 #include <algorithm>
 #include <cmath>
 #include <cppitertools/enumerate.hpp>
-#include <optional>
-#include <stdlib.h>
-#include <string.h>
-#include <time.h>
-#include <vector>
-
+#include <ert/except.hpp>
 #include <ert/logging.hpp>
 #include <ert/util/bool_vector.h>
 #include <ert/util/double_vector.h>
 #include <ert/util/util.h>
 #include <ert/util/vector.h>
+#include <optional>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
+#include <vector>
 
 #include <ert/config/conf.hpp>
 
@@ -81,9 +81,10 @@ __conf_instance_get_restart_nr(const conf_instance_type *conf_instance,
         obs_restart_nr =
             conf_instance_get_item_value_int(conf_instance, "RESTART");
         if (obs_restart_nr >= time_map.size())
-            util_abort("%s: Observation %s occurs at restart %i, but history "
-                       "file has only %i restarts.\n",
-                       __func__, obs_key, obs_restart_nr, time_map.size());
+            throw exc::out_of_range(
+                "Observation: {} at restart {}, but history "
+                "file has only {} restarts.",
+                obs_key, obs_restart_nr, time_map.size());
         return obs_restart_nr;
     }
 
@@ -99,23 +100,22 @@ __conf_instance_get_restart_nr(const conf_instance_type *conf_instance,
             conf_instance_get_item_value_double(conf_instance, "HOURS");
         util_inplace_forward_seconds_utc(&obs_time, hours * 3600);
     } else
-        util_abort("%s: Internal error. Invalid conf_instance?\n", __func__);
+        throw exc::runtime_error("Observation: {} missing DATE, DAYS or HOURS",
+                                 obs_key);
     obs_restart_nr = find_nearest_time_index(time_map, obs_time);
     if (obs_restart_nr < 0) {
+        std::string error =
+            fmt::format("Observation: {} failed to match time", obs_key);
         if (conf_instance_has_item(conf_instance, "DATE"))
-            logger->error(
-                "Could not determine REPORT step "
-                "corresponding to DATE={}",
+            error += fmt::format(
+                ", corresponding to DATE={}",
                 conf_instance_get_item_value_ref(conf_instance, "DATE"));
-
-        if (conf_instance_has_item(conf_instance, "DAYS"))
-            logger->error(
-                "Could not determine REPORT step "
-                "corresponding to DAYS={}",
+        else if (conf_instance_has_item(conf_instance, "DAYS"))
+            error += fmt::format(
+                ", corresponding to DAYS={}",
                 conf_instance_get_item_value_ref(conf_instance, "DAYS"));
-        util_abort("%s: Failed to look up restart nr correctly \n", __func__);
+        throw exc::out_of_range(error);
     }
-
     return obs_restart_nr;
 }
 
