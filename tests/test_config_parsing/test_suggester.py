@@ -120,5 +120,6 @@ def test_suggester_gives_plot_settings_migration(suggester, tmp_path):
 
     assert len(suggestions) == 1
     assert (
-        "The PLOT_SETTINGS keyword was once used to set up parameters" in suggestions[0]
+        "The keyword PLOT_SETTINGS was removed in 2019 and has no effect"
+        in suggestions[0]
     )
