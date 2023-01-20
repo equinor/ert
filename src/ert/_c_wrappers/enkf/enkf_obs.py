@@ -15,7 +15,6 @@ class EnkfObs(BaseCClass):
     _free = ResPrototype("void enkf_obs_free(enkf_obs)")
     _get_size = ResPrototype("int enkf_obs_get_size( enkf_obs )")
     _error = ResPrototype("char* enkf_obs_get_error(enkf_obs)")
-    _load = ResPrototype("void enkf_obs_load(enkf_obs, char*, double)")
     _alloc_typed_keylist = ResPrototype(
         "stringlist_obj enkf_obs_alloc_typed_keylist(enkf_obs, enkf_obs_impl_type)"
     )
@@ -117,7 +116,7 @@ class EnkfObs(BaseCClass):
         self._free()
 
     def load(self, config_file, std_cutoff):
-        self._load(config_file, std_cutoff)
+        _clib.enkf_obs.load(self, config_file, std_cutoff)
 
     @property
     def error(self):
