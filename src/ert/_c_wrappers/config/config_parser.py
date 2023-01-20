@@ -8,6 +8,10 @@ from ert._c_wrappers.config.config_content import ConfigContent
 from ert._c_wrappers.config.unrecognized_enum import UnrecognizedEnum
 
 
+class ConfigWarning(UserWarning):
+    pass
+
+
 class ConfigValidationError(ValueError):
     def __init__(self, errors, config_file=None):
         self.config_file = config_file

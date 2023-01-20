@@ -40,6 +40,9 @@ def run_cli(args):
         extra={"workflow_jobs": str(res_config.forward_model.job_name_list())},
     )
 
+    for suggestion in ResConfig.make_suggestion_list(args.config):
+        print(f"Warning: {suggestion}")
+
     os.chdir(res_config.config_path)
     ert = EnKFMain(res_config)
     facade = LibresFacade(ert)

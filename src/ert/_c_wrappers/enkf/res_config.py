@@ -2,6 +2,7 @@ import copy
 import logging
 import os
 import sys
+import warnings
 from datetime import date
 from os.path import isfile
 from typing import Any, Dict, Optional
@@ -9,7 +10,7 @@ from typing import Any, Dict, Optional
 import pkg_resources
 
 from ert._c_wrappers.config import ConfigContent, ConfigParser
-from ert._c_wrappers.config.config_parser import ConfigValidationError
+from ert._c_wrappers.config.config_parser import ConfigValidationError, ConfigWarning
 from ert._c_wrappers.enkf.analysis_config import AnalysisConfig
 from ert._c_wrappers.enkf.config_keys import ConfigKeys
 from ert._c_wrappers.enkf.ensemble_config import EnsembleConfig
@@ -180,7 +181,7 @@ class ResConfig:
             ResConfig._create_user_config_parser()
         ).suggest_migrations(config_file)
         for suggestion in suggestions:
-            logging.warning(suggestion)
+            warnings.warn(suggestion, category=ConfigWarning)
 
     @classmethod
     def make_suggestion_list(cls, config_file):
@@ -210,7 +211,6 @@ class ResConfig:
         init_site_config_parser(site_config_parser)
         site_config_content = site_config_parser.parse(site_config_location())
 
-        self._display_suggestions(user_config_file)
         config_parser = ResConfig._create_user_config_parser()
         init_user_config_parser(config_parser)
         self.config_path = os.path.abspath(os.path.dirname(user_config_file))
@@ -302,10 +302,11 @@ class ResConfig:
 
         self.forward_model = ForwardModel(jobs=jobs)
         if ConfigKeys.JOBNAME in config_dict and ConfigKeys.ECLBASE in config_dict:
-            logger.warning(
+            warnings.warn(
                 "Can not have both JOBNAME and ECLBASE keywords. "
                 "ECLBASE ignored, using JOBNAME with value "
-                f"`{config_dict[ConfigKeys.JOBNAME]}` instead"
+                f"`{config_dict[ConfigKeys.JOBNAME]}` instead",
+                category=ConfigWarning,
             )
 
         if ConfigKeys.SUMMARY in config_dict and ConfigKeys.ECLBASE not in config_dict:
@@ -342,7 +343,10 @@ class ResConfig:
                 for f in files
                 if os.path.isfile(os.path.abspath(os.path.join(job_path, f)))
             ]:
-                logger.warning(f"No files found in job directory {job_path}")
+                warnings.warn(
+                    f"No files found in job directory {job_path}",
+                    category=ConfigWarning,
+                )
                 continue
 
             for file_name in files:
