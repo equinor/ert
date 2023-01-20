@@ -1,4 +1,3 @@
-import logging
 import os
 from datetime import date
 from textwrap import dedent
@@ -6,7 +5,7 @@ from textwrap import dedent
 import pytest
 from hypothesis import given
 
-from ert._c_wrappers.config.config_parser import ConfigValidationError
+from ert._c_wrappers.config.config_parser import ConfigValidationError, ConfigWarning
 from ert._c_wrappers.enkf import ResConfig
 from ert._c_wrappers.enkf.config_keys import ConfigKeys
 
@@ -215,7 +214,7 @@ def test_that_non_existant_job_directory_gives_config_validation_error():
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_that_empty_job_directory_gives_warning(caplog):
+def test_that_empty_job_directory_gives_warning():
     test_config_file_base = "test"
     test_config_file_name = f"{test_config_file_base}.ert"
     test_config_contents = dedent(
@@ -230,12 +229,8 @@ def test_that_empty_job_directory_gives_warning(caplog):
     os.mkdir("empty")
     with open(test_config_file_name, "w", encoding="utf-8") as fh:
         fh.write(test_config_contents)
-    with caplog.at_level(logging.WARNING):
+    with pytest.warns(ConfigWarning, match="No files found in job directory"):
         _ = ResConfig(user_config_file=test_config_file_name)
-        assert (
-            f"No files found in job directory {os.path.abspath('empty')}"
-            in caplog.messages
-        )
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -296,4 +291,21 @@ def test_that_errors_in_job_files_give_validation_errors():
     with pytest.raises(
         expected_exception=ConfigValidationError,
     ):
+        _ = ResConfig(user_config_file=test_config_file_name)
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_a_config_warning_is_given_when_eclbase_and_jobname_is_given():
+    test_config_file_base = "test"
+    test_config_file_name = f"{test_config_file_base}.ert"
+    test_config_contents = dedent(
+        """
+        NUM_REALIZATIONS  1
+        JOBNAME job_%d
+        ECLBASE base_%d
+        """
+    )
+    with open(test_config_file_name, "w", encoding="utf-8") as fh:
+        fh.write(test_config_contents)
+    with pytest.warns(ConfigWarning):
         _ = ResConfig(user_config_file=test_config_file_name)

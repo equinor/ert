@@ -1,6 +1,7 @@
 import logging
 import os
 import sys
+import warnings
 from pathlib import Path
 
 import filelock
@@ -8,6 +9,7 @@ from PyQt5.QtWidgets import QHBoxLayout, QPushButton, QTextEdit, QVBoxLayout, QW
 from qtpy.QtCore import QLocale, Qt
 from qtpy.QtWidgets import QApplication
 
+from ert._c_wrappers.config import ConfigWarning
 from ert._c_wrappers.enkf import EnKFMain, ResConfig
 from ert.cli.main import ErtTimeoutError
 from ert.gui.ertnotifier import ErtNotifier
@@ -74,8 +76,12 @@ def _start_initial_gui_window(args, log_handler):
     messages = []
     res_config = None
     try:
-        res_config = ResConfig(args.config)
+        with warnings.catch_warnings(record=True) as warning_messages:
+            res_config = ResConfig(args.config)
         messages += ResConfig.make_suggestion_list(args.config)
+        messages += [
+            str(wm.message) for wm in warning_messages if wm.category == ConfigWarning
+        ]
     except Exception as error:
         messages.append(str(error))
         return _setup_suggester(messages, args, log_handler), None
@@ -87,6 +93,9 @@ def _start_initial_gui_window(args, log_handler):
         "Logging forward model jobs",
         extra={"workflow_jobs": str(res_config.forward_model.job_name_list())},
     )
+    for wm in warning_messages:
+        if wm.category != ConfigWarning:
+            logger.warning(wm.message)
     os.chdir(res_config.config_path)
     # Changing current working directory means we need to update the config file to
     # be the base name of the original config
