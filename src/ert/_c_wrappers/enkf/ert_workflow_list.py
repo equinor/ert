@@ -189,7 +189,9 @@ class ErtWorkflowList:
 
     def _add_hook_workflow(self, hook_name, mode_name):
         if mode_name not in [runtime.name for runtime in HookRuntime.enums()]:
-            raise ValueError(f"Run mode {mode_name} not supported")
+            raise ConfigValidationError(
+                errors=[f"Run mode {mode_name} not supported for Hook Workflow"]
+            )
 
         if hook_name not in self._workflow:
             raise ConfigValidationError(
