@@ -131,11 +131,11 @@ class DeprecationMigrationSuggester:
         )
         add_suggestion(
             "PLOT_SETTINGS",
-            f"The keyword PLOT_SETTINGS was removed in 2019 and has no effect. It can"
-            f" safely be removed. It was used for controlling settings for outputting"
-            f" qc plots to disk and what plots were shown in the GUI. All plots can now"
-            f" be selected on request from the GUI, and there is also an alternative"
-            f" view accessible by using ert viz in the commandline.",
+            "The keyword PLOT_SETTINGS was removed in 2019 and has no effect. It can"
+            " safely be removed. It was used for controlling settings for outputting"
+            " qc plots to disk and what plots were shown in the GUI. All plots can now"
+            " be selected on request from the GUI, and there is also an alternative"
+            " view accessible by using ert viz in the commandline.",
         )
 
         return suggestions
