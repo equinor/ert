@@ -5,7 +5,6 @@ import logging
 import math
 import os
 import shutil
-from datetime import datetime
 from multiprocessing.pool import ThreadPool
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, TypedDict, Union
@@ -169,7 +168,7 @@ class EnkfFs:
             return []
         summary_path = summary_folders[0]
         with xr.open_dataset(summary_path / "data.nc", engine="scipy") as ds_disk:
-            keys = sorted(ds_disk["key"].values)
+            keys = sorted(ds_disk["data_key"].values)
         return keys
 
     def realizationList(self, state: RealizationStateEnum) -> List[int]:
@@ -408,11 +407,6 @@ class EnkfFs:
     ) -> None:
         self._storage.save_summary_data(data, keys, axis, realization)
 
-    def load_summary_data(
-        self, summary_keys: List[str], realizations: List[int]
-    ) -> Tuple[npt.NDArray[np.double], List[datetime], List[int]]:
-        return self._storage.load_summary_data(summary_keys, realizations)
-
     def load_summary_data_as_df(
         self, summary_keys: List[str], realizations: List[int]
     ) -> pd.DataFrame:
@@ -456,6 +450,7 @@ class EnkfFs:
 
             if status == LoadStatus.LOAD_SUCCESSFUL:
                 loaded += 1
+                self.state_map[iens] = RealizationStateEnum.STATE_HAS_DATA
             else:
                 logger.error(f"Realization: {iens}, load failure: {message}")
 
