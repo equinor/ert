@@ -7,14 +7,14 @@
 #include <vector>
 
 #include <ert/logging.hpp>
+#include <ert/python.hpp>
 #include <ert/res_util/file_utils.hpp>
+#include <ert/res_util/subst_list.hpp>
 #include <ert/util/buffer.hpp>
 #include <ert/util/hash.hpp>
 #include <ert/util/parser.hpp>
 #include <ert/util/util.hpp>
 #include <ert/util/vector.hpp>
-
-#include <ert/res_util/subst_list.hpp>
 #include <fmt/format.h>
 
 static auto logger = ert::get_logger("subst_list");
@@ -551,8 +551,8 @@ void subst_list_add_from_string(subst_list_type *subst_list,
         // Find the next argument/value pair, by splitting on a ','.
         int arg_len = find_substring(arg_string, ",");
         if (arg_len < 0)
-            util_abort("%s: missing string delimiter in argument: %s\n",
-                       __func__, arg_string_orig);
+            throw std::invalid_argument(
+                std::string("Missing string delimiter in argument"));
 
         // Extract the argument/value pair, and parse it.
         tmp = util_alloc_substring_copy(arg_string, 0, arg_len);
@@ -561,11 +561,11 @@ void subst_list_add_from_string(subst_list_type *subst_list,
         int key_len = find_substring(tmp, "=");
 
         if (key_len < 0) // There is a ' or " string that is not closed.
-            util_abort("%s: missing string delimiter in argument: %s\n",
-                       __func__, arg_string_orig);
+            throw std::invalid_argument(
+                std::string("Missing string delimiter in argument"));
+
         if (key_len == strlen(tmp)) // There is no '=".
-            util_abort("%s: missing '=' in argument: %s\n", __func__,
-                       arg_string_orig);
+            throw std::invalid_argument(std::string("Missing '=' in argument"));
 
         // Split the string into trimmed key and value strings.
         tmp[key_len] = '\0';
@@ -574,16 +574,17 @@ void subst_list_add_from_string(subst_list_type *subst_list,
 
         // Check that the key and value strings are not empty.
         if (strlen(key) == 0)
-            util_abort("%s: missing key in argument list: %s\n", __func__,
-                       arg_string_orig);
+            throw std::invalid_argument(
+                std::string("Missing key in argument list"));
+
         if (strlen(value) == 0)
-            util_abort("%s: missing value in argument list: %s\n", __func__,
-                       arg_string_orig);
+            throw std::invalid_argument(
+                std::string("Missing value in argument list"));
 
         // Check that the key does not contain string delimiters.
         if (strchr(key, '\'') || strchr(key, '"'))
-            util_abort("%s: key cannot be a string: %s\n", __func__,
-                       arg_string_orig);
+            throw std::invalid_argument(
+                std::string("Key cannot contain quotation marks"));
 
         // Add to the list of parsed arguments.
         subst_list_append_copy(subst_list, key, value);
@@ -598,10 +599,19 @@ void subst_list_add_from_string(subst_list_type *subst_list,
         if (*arg_string == ',') {
             arg_string = trim_string(arg_string + 1);
             if (strlen(arg_string) == 0) // trailing comma.
-                util_abort("%s: trailing comma in argument list: %s\n",
-                           __func__, arg_string_orig);
+                throw std::invalid_argument(
+                    std::string("Trailing comma in argument list"));
         }
     }
 
     free(arg_string_copy);
+}
+
+ERT_CLIB_SUBMODULE("subst_list", m) {
+    using namespace py::literals;
+
+    m.def("subst_list_add_from_string",
+          [](Cwrap<subst_list_type> self, const char *arg_string) {
+              return subst_list_add_from_string(self, arg_string);
+          });
 }
