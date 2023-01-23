@@ -322,6 +322,9 @@ def _load_observations_and_responses(
     )
 
     joined = obs_data.join(measured_data, on=["data_key", "axis"], how="inner")
+
+    if joined.isna().any().any():
+        raise ErtAnalysisError("Missing response for observations")
     if len(obs_data) > len(joined):
         missing_indices = set(obs_data.index) - set(joined.index)
         error_msg = []
