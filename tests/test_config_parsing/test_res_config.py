@@ -84,10 +84,7 @@ def test_res_config_throws_on_missing_forward_model_job(
         config_dict.pop(ConfigKeys.INSTALL_JOB)
         config_dict.pop(ConfigKeys.INSTALL_JOB_DIRECTORY)
         config_dict[ConfigKeys.FORWARD_MODEL].append(
-            {
-                ConfigKeys.NAME: "this-is-not-the-job-you-are-looking-for",
-                ConfigKeys.ARGLIST: "<WAVE-HAND>=casually",
-            }
+            ["this-is-not-the-job-you-are-looking-for", "<WAVE-HAND>=casually"]
         )
 
         to_config_file(filename, config_dict)
