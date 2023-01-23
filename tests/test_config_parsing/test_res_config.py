@@ -1,4 +1,6 @@
+import logging
 import os
+import re
 from datetime import date
 from textwrap import dedent
 
@@ -253,19 +255,19 @@ def test_that_loading_non_existant_workflow_job_gives_validation_error():
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_that_errors_in_job_files_give_validation_errors():
-    test_config_file_base = "test"
-    test_config_file_name = f"{test_config_file_base}.ert"
-    jobfile = os.path.abspath("not_executable")
+def test_that_job_definition_file_with_unexecutable_script_gives_validation_error():
+    test_config_file_name = "test.ert"
+    job_script_file = os.path.abspath("not_executable")
+    job_name = "JOB_NAME"
     test_config_contents = dedent(
-        """
+        f"""
         NUM_REALIZATIONS  1
-        LOAD_WORKFLOW_JOB job
+        LOAD_WORKFLOW_JOB {job_name}
         """
     )
-    with open("job", "w", encoding="utf-8") as fh:
-        fh.write(f"EXECUTABLE {jobfile}\n")
-    with open(jobfile, "w", encoding="utf-8") as fh:
+    with open(job_name, "w", encoding="utf-8") as fh:
+        fh.write(f"EXECUTABLE {job_script_file}\n")
+    with open(job_script_file, "w", encoding="utf-8") as fh:
         fh.write("#!/bin/bash\n")
     with open(test_config_file_name, "w", encoding="utf-8") as fh:
         fh.write(test_config_contents)
@@ -289,7 +291,7 @@ def test_that_a_config_warning_is_given_when_eclbase_and_jobname_is_given():
     with open(test_config_file_name, "w", encoding="utf-8") as fh:
         fh.write(test_config_contents)
     with pytest.warns(ConfigWarning):
-        _ = ResConfig(user_config_file=test_config_file_name)
+        ResConfig(user_config_file=test_config_file_name)
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -315,3 +317,106 @@ def test_parsing_forward_model_with_quotes_does_not_introduce_spaces():
     res_config = ResConfig(user_config_file=test_config_file_name)
     for _, value in res_config.forward_model.jobs[0].private_args:
         assert " " not in value
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_forward_model_with_all_args_resolved_gives_no_warning(caplog):
+    # given a forward model that references a job
+    # and that job has args in its arglist that require substitution
+    # and the defines or the private args or defaults resolve all substitutions
+    # then we should have no warning
+
+    test_config_file_name = "test.ert"
+    # We're using the job old-style/COPY_FILE, included through site-config, and rely
+    # on it having two arguments, TO and FROM
+    test_config_contents = dedent(
+        """
+        NUM_REALIZATIONS  1
+        FORWARD_MODEL COPY_FILE(<FROM>=bar,<TO>=foo)
+        """
+    )
+    with open(test_config_file_name, "w", encoding="utf-8") as fh:
+        fh.write(test_config_contents)
+
+    with caplog.at_level(logging.WARNING):
+        ResConfig(user_config_file=test_config_file_name)
+        assert len(caplog.records) == 0
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_forward_model_with_unsubstituted_arg_gives_warning(caplog):
+    # given a forward model that references a job
+    # and that job has args in its arglist that require substitution
+    # and the defines and defaults and the private args do not resolve all args
+    # then we should have a warning
+
+    test_config_file_name = "test.ert"
+    # We're using the job old-style/COPY_FILE, included through site-config, and rely
+    # on it having two arguments, TO and FROM
+    test_config_contents = dedent(
+        """
+        NUM_REALIZATIONS  1
+        FORWARD_MODEL COPY_FILE(<TO>=foo, <FROM>=some-<BLA>)
+        """
+    )
+    with open(test_config_file_name, "w", encoding="utf-8") as fh:
+        fh.write(test_config_contents)
+
+    with caplog.at_level(logging.WARNING):
+        ResConfig(user_config_file=test_config_file_name)
+        assert len(caplog.records) == 1
+        assert re.search(
+            r"unresolved arguments.*<FROM>.*some-<BLA>", caplog.messages[0]
+        )
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_forward_model_with_unresolved_IENS_or_ITER_gives_no_warning(caplog):
+    # given a forward model that references a job
+    # and that job has args in its arglist that require substitution
+    # and the defines and defaults and the private args do not resolve all args
+    # and the unresolved strings are <ITER> or <IENS>
+    # then we should have no warning
+    test_config_file_name = "test.ert"
+    # We're using the job old-style/COPY_FILE, included through site-config, and rely
+    # on it having two arguments, TO and FROM
+    test_config_contents = dedent(
+        """
+        NUM_REALIZATIONS  1
+        FORWARD_MODEL COPY_FILE(<FROM>=something-<ITER>, <TO>=foo)
+        """
+    )
+    with open(test_config_file_name, "w", encoding="utf-8") as fh:
+        fh.write(test_config_contents)
+
+    with caplog.at_level(logging.WARNING):
+        ResConfig(user_config_file=test_config_file_name)
+        assert len(caplog.records) == 0
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_forward_model_with_resolved_substitutions_by_default_values_gives_no_error(
+    caplog,
+):
+    # given a forward model that references a job
+    # and that job has args in its arglist that require substitution
+    # and the job has default values for some arguments
+    # and defines and private args cover the arguments without default value
+    # then we should have no warning
+    test_config_file_name = "test.ert"
+    # We're using the job old-style/RMS, included through site-config, which has a
+    # bunch of args, and some default values
+    test_config_contents = dedent(
+        """
+        NUM_REALIZATIONS  1
+        DEFINE <RMS_PROJECT> spam
+        DEFINE <RMS_WORKFLOW> frying
+        DEFINE <RMS_TARGET_FILE> result
+        FORWARD_MODEL RMS(<IENS>=2, <RMS_VERSION>=2.1)
+        """
+    )
+    with open(test_config_file_name, "w", encoding="utf-8") as fh:
+        fh.write(test_config_contents)
+
+    with caplog.at_level(logging.WARNING):
+        ResConfig(user_config_file=test_config_file_name)

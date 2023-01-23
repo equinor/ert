@@ -20,6 +20,7 @@ from ert._c_wrappers.enkf.queue_config import QueueConfig
 from ert._c_wrappers.job_queue import (
     EnvironmentVarlist,
     ExtJob,
+    ExtJobInvalidArgsException,
     ForwardModel,
     Workflow,
     WorkflowJob,
@@ -280,6 +281,10 @@ class ResConfig:
                     raise ConfigValidationError(err_string)
 
                 job.define_args = self.substitution_list
+            try:
+                job.validate_args(self.substitution_list)
+            except ExtJobInvalidArgsException as err:
+                logger.warning(str(err))
             jobs.append(job)
 
         for job_description in config_dict.get(ConfigKeys.SIMULATION_JOB, []):
