@@ -98,6 +98,11 @@ class DeprecationMigrationSuggester:
                 "and can safely be removed from the config file.",
             )
         add_suggestion(
+            "SCHEDULE_PREDICTION_FILE",
+            "The feature of the SCHEDULE_PREDICTION_FILE keyword can be achieved using"
+            " templating.",
+        )
+        add_suggestion(
             "HAVANA_FAULT",
             "Direct interoperability with havana was removed from ert in 2009."
             " The behavior of HAVANA_FAULT can be reproduced using"
