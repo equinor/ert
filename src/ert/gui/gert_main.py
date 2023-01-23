@@ -9,6 +9,7 @@ from PyQt5.QtWidgets import QHBoxLayout, QPushButton, QTextEdit, QVBoxLayout, QW
 from qtpy.QtCore import QLocale, Qt
 from qtpy.QtWidgets import QApplication
 
+from ert._c_wrappers.config.config_parser import ConfigValidationError
 from ert._c_wrappers.enkf import EnKFMain, ResConfig
 from ert.cli.main import ErtTimeoutError
 from ert.gui.ertnotifier import ErtNotifier
@@ -76,7 +77,7 @@ def _start_initial_gui_window(args, log_handler):
     try:
         res_config = ResConfig(args.config)
         messages += ResConfig.make_suggestion_list(args.config)
-    except Exception as error:
+    except ConfigValidationError as error:
         messages.append(str(error))
         return _setup_suggester(messages, args, log_handler), None
 
@@ -93,7 +94,7 @@ def _start_initial_gui_window(args, log_handler):
     args.config = os.path.basename(args.config)
     try:
         ert = EnKFMain(res_config)
-    except Exception as error:
+    except ConfigValidationError as error:
         messages.append(str(error))
         return _setup_suggester(messages, args, log_handler), None
 
