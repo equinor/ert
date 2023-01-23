@@ -110,3 +110,16 @@ def test_suggester_gives_no_runpath_deprecated_specifier_migration(suggester, tm
     suggestions = suggester.suggest_migrations(str(tmp_path / "config.ert"))
 
     assert len(suggestions) == 0
+
+
+def test_suggester_gives_plot_settings_migration(suggester, tmp_path):
+    (tmp_path / "config.ert").write_text(
+        "NUM_REALIZATIONS 1\nPLOT_SETTINGS some args\n"
+    )
+    suggestions = suggester.suggest_migrations(str(tmp_path / "config.ert"))
+
+    assert len(suggestions) == 1
+    assert (
+        "The keyword PLOT_SETTINGS was removed in 2019 and has no effect"
+        in suggestions[0]
+    )

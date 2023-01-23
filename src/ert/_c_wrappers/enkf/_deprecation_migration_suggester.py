@@ -22,7 +22,12 @@ class DeprecationMigrationSuggester:
         "SCHEDULE_PREDICTION_FILE",
         "MULTFLT",
     ]
-    JUST_REMOVE_KEYWORDS = ["UMASK", "LOG_FILE", "LOG_LEVEL", "ENKF_RERUN"]
+    JUST_REMOVE_KEYWORDS = [
+        "UMASK",
+        "LOG_FILE",
+        "LOG_LEVEL",
+        "ENKF_RERUN",
+    ]
     RSH_KEYWORDS = ["RSH_HOST", "RHS_COMMAND"]
 
     def _add_deprecated_keywords_to_parser(self):
@@ -32,6 +37,7 @@ class DeprecationMigrationSuggester:
             self._parser.add(kw)
         for kw in self.RSH_KEYWORDS:
             self._parser.add(kw)
+        self._parser.add("PLOT_SETTINGS")
         self._parser.add("HAVANA_FAULT")
         self._parser.add("REFCASE_LIST")
         self._parser.add("RFTPATH")
@@ -122,6 +128,14 @@ class DeprecationMigrationSuggester:
             "DELETE_RUNPATH",
             "The DELETE_RUNPATH keyword would clear the runpath directories "
             "between runs. It was removed in 2017 and no longer has any effect.",
+        )
+        add_suggestion(
+            "PLOT_SETTINGS",
+            "The keyword PLOT_SETTINGS was removed in 2019 and has no effect. It can"
+            " safely be removed. It was used for controlling settings for outputting"
+            " qc plots to disk and what plots were shown in the GUI. All plots can now"
+            " be selected on request from the GUI, and there is also an alternative"
+            " view accessible by using ert viz in the commandline.",
         )
 
         return suggestions
