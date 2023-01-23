@@ -96,25 +96,6 @@ def test_res_config_throws_on_missing_forward_model_job(
             ResConfig(config_dict=config_dict)
 
 
-@pytest.mark.usefixtures("use_tmpdir", "set_site_config")
-@pytest.mark.parametrize(
-    "bad_define", ["DEFINE A B", "DEFINE <A<B>> C", "DEFINE <A><B> C"]
-)
-def test_that_non_bracketed_defines_warns(bad_define, capsys):
-    with open("test.ert", "w", encoding="utf-8") as fh:
-        fh.write(
-            dedent(
-                f"""
-                NUM_REALIZATIONS  1
-                {bad_define}
-                """
-            )
-        )
-
-    _ = ResConfig("test.ert")
-    assert "Using DEFINE or DATA_KW with substitution" in capsys.readouterr().err
-
-
 def test_default_ens_path(tmpdir):
     with tmpdir.as_cwd():
         config_file = "test.ert"

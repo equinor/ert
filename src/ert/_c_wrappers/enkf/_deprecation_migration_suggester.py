@@ -3,6 +3,8 @@ from typing import TYPE_CHECKING
 
 from ert._c_wrappers.enkf.runpaths import replace_runpath_format
 
+from ._config_content_as_dict import config_content_as_dict
+
 if TYPE_CHECKING:
     from ert._c_wrappers.config import ConfigParser
 
@@ -49,11 +51,22 @@ class DeprecationMigrationSuggester:
     def suggest_migrations(self, filename: str):
         suggestions = []
         content = self._parser.parse(filename)
+        defines = config_content_as_dict(content, {}).get("DEFINE", [])
 
         def add_suggestion(kw, suggestion):
             if content.hasKey(kw):
                 logger.info("Deprecated keyword %s", kw)
                 suggestions.append(suggestion)
+
+        for key, _ in defines:
+            if key.count("<") + key.count(">") != 2 or key[0] != "<" or key[-1] != ">":
+                _suggestion = (
+                    "Using DEFINE or DATA_KW with substitution"
+                    " strings that are not of the form '<KEY>' is deprecated"
+                    " and can result in undefined behavior. "
+                    f"Please change {key} to <{key.replace('<', '').replace('>', '')}>"
+                )
+                suggestions.append(_suggestion)
 
         if content.hasKey("RUNPATH") and "%d" in content.getValue("RUNPATH"):
             runpath = replace_runpath_format(content.getValue("RUNPATH"))

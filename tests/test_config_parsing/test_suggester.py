@@ -123,3 +123,19 @@ def test_suggester_gives_plot_settings_migration(suggester, tmp_path):
         "The keyword PLOT_SETTINGS was removed in 2019 and has no effect"
         in suggestions[0]
     )
+
+
+def test_suggester_gives_deprecated_define_migration_hint(suggester, tmp_path):
+    (tmp_path / "config.ert").write_text(
+        "NUM_REALIZATIONS 1\n"
+        "DEFINE <KEY1> x1\n"
+        "DEFINE A B\n"
+        "DEFINE <A<B>> C\n"
+        "DEFINE <A><B> C\n"
+    )
+    suggestions = suggester.suggest_migrations(str(tmp_path / "config.ert"))
+
+    assert len(suggestions) == 3
+    assert "Please change A to <A>" in suggestions[0]
+    assert "Please change <A<B>> to <AB>" in suggestions[1]
+    assert "Please change <A><B> to <AB>" in suggestions[2]

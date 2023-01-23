@@ -1,7 +1,6 @@
 import copy
 import logging
 import os
-import sys
 import warnings
 from datetime import date
 from os.path import isfile
@@ -56,8 +55,6 @@ class ResConfig:
         else:
             self._alloc_from_dict(config_dict=config_dict)
 
-        self._validate()
-
     def _assert_input(self, user_config_file, config_dict):
         user_config_file_given = user_config_file is not None
         config_dict_given = config_dict is not None
@@ -76,22 +73,6 @@ class ResConfig:
 
         if user_config_file_given and not isfile(user_config_file):
             raise IOError(f'No such configuration file "{user_config_file}".')
-
-    def _validate(self):
-        for key, _ in self.substitution_list:
-            if (
-                key.count("<") != 1
-                or key.count(">") != 1
-                or key[0] != "<"
-                or key[-1] != ">"
-            ):
-                print(
-                    "Using DEFINE or DATA_KW with substitution"
-                    " strings that are not of the form '<KEY>' is deprecated"
-                    " and can result in undefined behavior. "
-                    f"Please change {key} to <{key.replace('<', '').replace('>', '')}>",
-                    file=sys.stderr,
-                )
 
     def _log_config_file(self, config_file: str) -> None:
         """
@@ -176,13 +157,6 @@ class ResConfig:
         init_user_config_parser(config_parser)
         return config_parser
 
-    def _display_suggestions(self, config_file):
-        suggestions = DeprecationMigrationSuggester(
-            ResConfig._create_user_config_parser()
-        ).suggest_migrations(config_file)
-        for suggestion in suggestions:
-            warnings.warn(suggestion, category=ConfigWarning)
-
     @classmethod
     def make_suggestion_list(cls, config_file):
         return DeprecationMigrationSuggester(
@@ -212,7 +186,6 @@ class ResConfig:
         site_config_content = site_config_parser.parse(site_config_location())
 
         config_parser = ResConfig._create_user_config_parser()
-        init_user_config_parser(config_parser)
         self.config_path = os.path.abspath(os.path.dirname(user_config_file))
         user_config_content = config_parser.parse(
             user_config_file,
