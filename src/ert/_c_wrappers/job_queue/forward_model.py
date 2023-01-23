@@ -55,7 +55,7 @@ class ForwardModel:
         def substitute(job, string: str):
             job_args = ",".join([f"{key}={value}" for key, value in job.private_args])
             job_description = f"{job.name}({job_args})"
-            substitution_context = (
+            substitution_context_hint = (
                 f"parsing forward model job `FORWARD_MODEL {job_description}` - "
                 "reconstructed, with defines applied during parsing"
             )
@@ -65,7 +65,7 @@ class ForwardModel:
                     copy_private_args.addItem(
                         key, context.substitute_real_iter(val, iens, itr)
                     )
-                string = copy_private_args.substitute(string, substitution_context)
+                string = copy_private_args.substitute(string, substitution_context_hint)
                 return context.substitute_real_iter(string, iens, itr)
             else:
                 return string
