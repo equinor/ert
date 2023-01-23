@@ -1,13 +1,18 @@
 import os
 import os.path
+import re
 import shutil
 from collections import defaultdict
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 
 from ert._c_wrappers.config import ConfigParser, ConfigValidationError, ContentTypeEnum
 from ert._c_wrappers.util import SubstitutionList
 from ert._clib.job_kw import type_from_kw
+
+
+class ExtJobInvalidArgsException(BaseException):
+    pass
 
 
 @dataclass
@@ -226,3 +231,46 @@ class ExtJob:
             name,
             **content_dict,
         )
+
+    def validate_args(self, context: SubstitutionList) -> None:
+        """raises InvalidArgsException if validation fails"""
+        args_substituted_with_private_list = [
+            (arg, self.private_args.substitute(arg)) for arg in self.arglist
+        ]
+        args_substituted_with_context_and_private_list = [
+            (orig_arg, context.substitute(modified_arg))
+            for orig_arg, modified_arg in args_substituted_with_private_list
+        ]
+        defaulted_and_substituted_args = [
+            (orig_arg, self.default_mapping.get(modified_arg, modified_arg))
+            for orig_arg, modified_arg in args_substituted_with_context_and_private_list
+        ]
+
+        def arg_has_unresolved_substring(arg_tuple: Tuple[str, str]) -> bool:
+            _, arg = arg_tuple
+            unresolved_substrings = re.findall(r"<.*>", arg)
+            relevant_unresolved_substrings = list(
+                filter(
+                    lambda substr: substr not in _SUBTITUTED_AT_EXECUTION_TIME,
+                    unresolved_substrings,
+                )
+            )
+            return bool(relevant_unresolved_substrings)
+
+        args_with_unresolved_substrings = list(
+            filter(
+                arg_has_unresolved_substring,
+                defaulted_and_substituted_args,
+            )
+        )
+        if args_with_unresolved_substrings:
+            unresolved_args_representation = [
+                f"original arg: `{orig_arg}`, after attempted substituting: "
+                f"`{modified_arg}`"
+                for orig_arg, modified_arg in args_with_unresolved_substrings
+            ]
+            raise ExtJobInvalidArgsException(
+                "job has unresolved arguments after applying argument substitutions, "
+                "defines and default values: "
+                f"{', '.join(unresolved_args_representation)}"
+            )
