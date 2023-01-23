@@ -5,9 +5,8 @@ import math
 import os
 import shutil
 import sys
-from datetime import datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, List, Literal, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Any, Dict, List, Literal, Optional, Set, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -138,55 +137,36 @@ class Storage:
         Path.mkdir(output_path, exist_ok=True)
 
         ds = xr.Dataset(
-            {"data": (("key", "time"), data)},
+            {str(realization): (("data_key", "axis"), data)},
             coords={
-                "key": keys,
-                "time": axis,
+                "data_key": keys,
+                "axis": axis,
             },
         )
 
         ds.to_netcdf(output_path / "data.nc", engine="scipy")
 
-    def load_summary_data(
+    def load_summary_data_as_df(
         self, summary_keys: List[str], realizations: List[int]
-    ) -> Tuple[npt.NDArray[np.double], List[datetime], List[int]]:
+    ) -> pd.DataFrame:
         result = []
-        loaded = []
-        dates: List[datetime] = []
+        key_set: Set[str] = set()
         for realization in realizations:
             input_path = self.mount_point / f"summary-{realization}"
             if not input_path.exists():
                 continue
-            loaded.append(realization)
             with xr.open_dataset(input_path / "data.nc", engine="scipy") as ds_disk:
-                np_data = ds_disk["data"].to_numpy()
-                keys = list(ds_disk["data"]["key"].values)
-                if not dates:
-                    dates = list(ds_disk["data"]["time"].values)
-            indices = [keys.index(summary_key) for summary_key in summary_keys]
-            selected_data = np_data[indices, :]
-
-            result.append(selected_data.reshape(1, len(selected_data) * len(dates)).T)
+                result.append(ds_disk)
+                if not key_set:
+                    key_set = set(sorted(ds_disk["data_key"].values))
         if not result:
-            return np.array([]), dates, loaded
-        return np.concatenate(result, axis=1), dates, loaded
-
-    def load_summary_data_as_df(
-        self, summary_keys: List[str], realizations: List[int]
-    ) -> pd.DataFrame:
-        data, time_axis, realizations = self.load_summary_data(
-            summary_keys, realizations
-        )
-        if not data.any():
             raise KeyError(f"Unable to load SUMMARY_DATA for keys: {summary_keys}")
-        multi_index = pd.MultiIndex.from_product(
-            [summary_keys, time_axis], names=["data_key", "axis"]
-        )
-        return pd.DataFrame(
-            data=data,
-            index=multi_index,
-            columns=realizations,
-        )
+        df = xr.merge(result).to_dataframe(dim_order=["data_key", "axis"])
+        # realization nr is stored as str in netcdf
+        dropped_keys = key_set - set(summary_keys)
+        df.drop(dropped_keys, level="data_key", inplace=True)
+        df.columns = [int(x) for x in df.columns]
+        return df
 
     def save_gen_data(self, data: Dict[str, List[float]], realization: int) -> None:
         output_path = self.mount_point / f"gen-data-{realization}"
