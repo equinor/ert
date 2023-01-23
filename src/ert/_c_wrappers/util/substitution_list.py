@@ -4,6 +4,7 @@ import os
 from cwrap import BaseCClass
 from ecl.ecl_util import get_num_cpu as get_num_cpu_from_data_file
 
+from ert import _clib
 from ert._c_wrappers import ResPrototype
 
 
@@ -21,9 +22,6 @@ class SubstitutionList(BaseCClass):
         "char* subst_list_alloc_filtered_string(subst_list, char*, char*)"
     )
     _filter_file = ResPrototype("bool subst_list_filter_file(subst_list, char*,char*)")
-    _add_from_string = ResPrototype(
-        "void subst_list_add_from_string(subst_list, char*)"
-    )
     _deep_copy = ResPrototype("subst_list_obj subst_list_alloc_deep_copy(subst_list)")
 
     def __init__(self):
@@ -94,7 +92,7 @@ class SubstitutionList(BaseCClass):
             raise KeyError(f"No such key:{key}")
 
     def add_from_string(self, string):
-        self._add_from_string(string)
+        _clib.subst_list.subst_list_add_from_string(self, string)
 
     def get(self, key, default=None):
         return self[key] if key in self else default

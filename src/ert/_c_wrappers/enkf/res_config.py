@@ -263,7 +263,21 @@ class ResConfig:
                 ) from err
             if args:
                 job.private_args = SubstitutionList()
-                job.private_args.add_from_string(args)
+
+                try:
+                    job.private_args.add_from_string(args)
+                except ValueError as e:
+                    conffile = self.substitution_list.get("<CONFIG_FILE>", "")
+                    confpath = self.substitution_list.get("<CONFIG_PATH>", "")
+
+                    err_string = f"{e}: FORWARD_MODEL {job_name} ({args})\n"
+                    err_string += (
+                        f"Occurred in configuration file: {confpath}/{conffile}"
+                        if conffile and confpath
+                        else ""
+                    )
+                    raise ConfigValidationError(err_string)
+
                 job.define_args = self.substitution_list
             jobs.append(job)
 
