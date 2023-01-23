@@ -304,20 +304,16 @@ def generate_config(draw):
                     queue_options(st.just(queue_system))
                 ),
                 ConfigKeys.ANALYSIS_COPY: small_list(
-                    st.fixed_dictionaries(
-                        {
-                            ConfigKeys.SRC_NAME: st.just("STD_ENKF"),
-                            ConfigKeys.DST_NAME: words,
-                        }
+                    st.tuples(
+                        st.just("STD_ENKF"),
+                        words,
                     )
                 ),
                 ConfigKeys.ANALYSIS_SET_VAR: small_list(
-                    st.fixed_dictionaries(
-                        {
-                            ConfigKeys.MODULE_NAME: st.just("STD_ENKF"),
-                            ConfigKeys.VAR_NAME: st.just("ENKF_NCOMP"),
-                            ConfigKeys.VALUE: st.integers(),
-                        }
+                    st.tuples(
+                        st.just("STD_ENKF"),
+                        st.just("ENKF_NCOMP"),
+                        st.integers(),
                     )
                 ),
                 ConfigKeys.ANALYSIS_SELECT: st.just("STD_ENKF"),
@@ -538,17 +534,11 @@ def to_config_file(filename, config_dict):  # pylint: disable=too-many-branches
                     config.write(f"{keyword} {install_dir}\n")
             elif keyword == ConfigKeys.ANALYSIS_COPY:
                 for statement in keyword_value:
-                    config.write(
-                        f"{keyword}"
-                        f" {statement[ConfigKeys.SRC_NAME]}"
-                        f" {statement[ConfigKeys.DST_NAME]}\n"
-                    )
+                    config.write(f"{keyword} {statement[0]} {statement[1]}\n")
             elif keyword == ConfigKeys.ANALYSIS_SET_VAR:
                 for statement in keyword_value:
                     config.write(
-                        f"{keyword} {statement[ConfigKeys.MODULE_NAME]}"
-                        f" {statement[ConfigKeys.VAR_NAME]}"
-                        f" {statement[ConfigKeys.VALUE]}\n"
+                        f"{keyword} {statement[0]} {statement[1]} {statement[2]}\n"
                     )
             elif keyword == ConfigKeys.QUEUE_OPTION:
                 for setting in keyword_value:
