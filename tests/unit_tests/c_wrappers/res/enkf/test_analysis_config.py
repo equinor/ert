@@ -45,22 +45,22 @@ def test_analysis_config_constructor(setup_case):
             ConfigKeys.MAX_RUNTIME: 0,
             ConfigKeys.MIN_REALIZATIONS: 10,
             ConfigKeys.ANALYSIS_COPY: [
-                {
-                    ConfigKeys.SRC_NAME: "STD_ENKF",
-                    ConfigKeys.DST_NAME: "ENKF_HIGH_TRUNCATION",
-                }
+                (
+                    "STD_ENKF",
+                    "ENKF_HIGH_TRUNCATION",
+                )
             ],
             ConfigKeys.ANALYSIS_SET_VAR: [
-                {
-                    ConfigKeys.MODULE_NAME: "STD_ENKF",
-                    ConfigKeys.VAR_NAME: "ENKF_NCOMP",
-                    ConfigKeys.VALUE: 2,
-                },
-                {
-                    ConfigKeys.MODULE_NAME: "ENKF_HIGH_TRUNCATION",
-                    ConfigKeys.VAR_NAME: "ENKF_TRUNCATION",
-                    ConfigKeys.VALUE: 0.99,
-                },
+                (
+                    "STD_ENKF",
+                    "ENKF_NCOMP",
+                    2,
+                ),
+                (
+                    "ENKF_HIGH_TRUNCATION",
+                    "ENKF_TRUNCATION",
+                    0.99,
+                ),
             ],
             ConfigKeys.ANALYSIS_SELECT: "ENKF_HIGH_TRUNCATION",
         }

@@ -49,11 +49,7 @@ class AnalysisConfig:
 
     def _copy_modules(self):
         for element in self._analysis_copy:
-            if isinstance(element, list):
-                src_name, dst_name = element
-            else:
-                src_name = element[ConfigKeys.SRC_NAME]
-                dst_name = element[ConfigKeys.DST_NAME]
+            src_name, dst_name = element
 
             module = self._modules.get(src_name)
             if module is not None:
@@ -69,12 +65,7 @@ class AnalysisConfig:
 
     def _set_modules_var_list(self):
         for set_var in self._analysis_set_var:
-            if isinstance(set_var, list):
-                module_name, var_name, value = set_var
-            else:
-                module_name = set_var[ConfigKeys.MODULE_NAME]
-                var_name = set_var[ConfigKeys.VAR_NAME]
-                value = set_var[ConfigKeys.VALUE]
+            module_name, var_name, value = set_var
 
             module = self.get_module(module_name)
             module.set_var(var_name, value)
