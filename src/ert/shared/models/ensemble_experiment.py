@@ -6,7 +6,8 @@ from typing import Any, Dict
 import _ert_com_protocol
 from ert._c_wrappers.enkf import RunContext
 from ert._c_wrappers.enkf.enkf_main import EnKFMain, QueueConfig
-from ert._c_wrappers.enkf.enums import HookRuntime
+from ert._c_wrappers.enkf.enums import HookRuntime, RealizationStateEnum
+from ert._clib.state_map import STATE_LOAD_FAILURE, STATE_UNDEFINED
 from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.shared.models import BaseRunModel
 from ert.shared.models.base_run_model import ErtRunError
@@ -106,10 +107,16 @@ class EnsembleExperiment(BaseRunModel):
         self.setPhase(0, "Running simulations...", indeterminate=False)
 
         self.setPhaseName("Pre processing...", indeterminate=True)
-        self.ert().sample_prior(
-            run_context.sim_fs,
-            run_context.active_realizations,
-        )
+        if not run_context.sim_fs.is_initalized:
+            self.ert().sample_prior(
+                run_context.sim_fs,
+                run_context.active_realizations,
+            )
+        else:
+            state_map = run_context.sim_fs.getStateMap()
+            for realization_nr in run_context.active_realizations:
+                if state_map[realization_nr] in [STATE_UNDEFINED, STATE_LOAD_FAILURE]:
+                    state_map[realization_nr] = RealizationStateEnum.STATE_INITIALIZED
         self.ert().createRunPath(run_context)
 
         # Push ensemble, parameters, observations to new storage
