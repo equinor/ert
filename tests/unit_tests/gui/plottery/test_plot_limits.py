@@ -7,28 +7,28 @@ from ert.gui.plottery import PlotLimits
 
 def test_plot_limits_construction():
     plot_limits = PlotLimits()
-    assert plot_limits.value_minimum == None
-    assert plot_limits.value_maximum == None
+    assert plot_limits.value_minimum is None
+    assert plot_limits.value_maximum is None
     assert plot_limits.value_limits == (None, None)
 
-    assert plot_limits.index_minimum == None
-    assert plot_limits.index_maximum == None
+    assert plot_limits.index_minimum is None
+    assert plot_limits.index_maximum is None
     assert plot_limits.index_limits == (None, None)
 
-    assert plot_limits.count_minimum == None
-    assert plot_limits.count_maximum == None
+    assert plot_limits.count_minimum is None
+    assert plot_limits.count_maximum is None
     assert plot_limits.count_limits == (None, None)
 
-    assert plot_limits.density_minimum == None
-    assert plot_limits.density_maximum == None
+    assert plot_limits.density_minimum is None
+    assert plot_limits.density_maximum is None
     assert plot_limits.density_limits == (None, None)
 
-    assert plot_limits.depth_minimum == None
-    assert plot_limits.depth_maximum == None
+    assert plot_limits.depth_minimum is None
+    assert plot_limits.depth_maximum is None
     assert plot_limits.depth_limits == (None, None)
 
-    assert plot_limits.date_minimum == None
-    assert plot_limits.date_maximum == None
+    assert plot_limits.date_minimum is None
+    assert plot_limits.date_maximum is None
     assert plot_limits.date_limits == (None, None)
 
 

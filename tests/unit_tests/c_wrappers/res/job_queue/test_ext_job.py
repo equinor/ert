@@ -30,13 +30,13 @@ def test_load_forward_model():
     os.chmod(name, stat.S_IMODE(mode))
     job = ExtJob.from_config_file("CONFIG")
     assert job.name == "CONFIG"
-    assert job.stdout_file == None
-    assert job.stderr_file == None
+    assert job.stdout_file is None
+    assert job.stderr_file is None
 
     assert job.executable == os.path.join(os.getcwd(), "script.sh")
     assert os.access(job.executable, os.X_OK)
 
-    assert job.min_arg == None
+    assert job.min_arg is None
 
     job = ExtJob.from_config_file("CONFIG", name="Job")
     assert job.name == "Job"

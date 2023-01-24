@@ -43,6 +43,7 @@ from ._schema_pb2 import (
     StepStatus,
 )
 from ._state_machine import ExperimentStateMachine, node_status_builder
+from .status_type_enum import queue_state_to_pbuf_type
 
 __all__ = (
     "ExperimentStateMachine",
@@ -85,5 +86,5 @@ __all__ = (
     "JobStatus",
     "StepStatus",
     "ExperimentStatus",
+    "queue_state_to_pbuf_type",
 )
-from .status_type_enum import queue_state_to_pbuf_type

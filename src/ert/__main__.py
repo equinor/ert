@@ -55,7 +55,7 @@ def run_ert_storage(args: Namespace) -> None:
 def run_webviz_ert(args: Namespace) -> None:
     try:
         # pylint: disable=unused-import,import-outside-toplevel
-        import webviz_ert  # type: ignore
+        import webviz_ert  # type: ignore  # noqa
     except ImportError as err:
         raise ValueError(
             "Running `ert vis` requires that webviz_ert is installed"

@@ -4,14 +4,17 @@ Ert - Ensemble Reservoir Tool - a package for reservoir modeling.
 import os.path
 import warnings
 
-import ecl  # This needs to be here for ... reasons
+import ecl
 
 warnings.filterwarnings(action="always", category=DeprecationWarning, module=r"res|ert")
 
-from cwrap import Prototype  # noqa
+from cwrap import Prototype  # noqa: E402 module level import not at top of file
 
+__all__ = [ecl, Prototype]
 try:
     from ._version import version as __version__
+
+    __all__ += [__version__]
 except ImportError:
     pass
 
