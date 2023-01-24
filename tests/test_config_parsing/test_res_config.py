@@ -156,3 +156,28 @@ def test_site_config_dict_same_as_from_file(tmp_path_factory, config_generator):
         assert (
             ResConfig(config_dict=config_dict).env_vars == ResConfig(filename).env_vars
         )
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_parsing_forward_model_with_quotes_does_not_introduce_spaces():
+    """this is a regression test, making sure that we do not by mistake introduce
+    spaces while parsing forward model lines that contain quotation marks
+
+    the use case is that a file name is utilized that contains two consecutive hyphens,
+    which by the ert config parser is interpreted as a comment - to circumvent the
+    comment interpretation, quotation marks are used"""
+
+    test_config_file_name = "test.ert"
+    test_config_contents = dedent(
+        """
+        NUM_REALIZATIONS  1
+        JOBNAME job_%d
+        FORWARD_MODEL COPY_FILE(<FROM>=foo,<TO>=something/"hello--there.txt")
+        """
+    )
+    with open(test_config_file_name, "w", encoding="utf-8") as fh:
+        fh.write(test_config_contents)
+
+    res_config = ResConfig(user_config_file=test_config_file_name)
+    for _, value in res_config.forward_model.jobs[0].private_args:
+        assert " " not in value
