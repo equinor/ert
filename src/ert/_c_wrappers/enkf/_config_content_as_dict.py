@@ -72,8 +72,8 @@ MULTI_OCCURRENCE_SINGLE_ARG_KEYS = [
 # Should be interpreted as having three arguments:
 # ["LOCAL", "opt", "the value of the option"]
 JOIN_KEYS = [
-    (ConfigKeys.QUEUE_OPTION, 2),
-    (ConfigKeys.FORWARD_MODEL, 0),
+    (ConfigKeys.QUEUE_OPTION, 2, " "),
+    (ConfigKeys.FORWARD_MODEL, 0, ""),
 ]
 
 
@@ -105,11 +105,11 @@ def config_content_as_dict(
                     values = list(node)
                     content_dict[key].append(values)
 
-    for key, join_at in JOIN_KEYS:
+    for key, join_at, join_on in JOIN_KEYS:
         if key in content_dict:
             for occurrence in content_dict[key]:
                 if len(occurrence) > join_at:
-                    occurrence[join_at] = " ".join(occurrence[join_at:])
+                    occurrence[join_at] = join_on.join(occurrence[join_at:])
                     del occurrence[join_at + 1 :]
 
     if ConfigKeys.FORWARD_MODEL in content_dict:
