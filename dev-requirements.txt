@@ -2,7 +2,7 @@ click
 cmake-format
 decorator
 ecl_data_io
-flake8>=4.0.0
+flake8
 grpcio-tools==1.41.0
 isort
 jsonpath_ng

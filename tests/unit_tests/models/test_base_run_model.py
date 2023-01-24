@@ -3,7 +3,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from ert._c_wrappers.enkf import EnKFMain, RunContext
+from ert._c_wrappers.enkf import EnKFMain
 from ert._c_wrappers.job_queue import RunStatusType
 from ert.shared.models import BaseRunModel
 

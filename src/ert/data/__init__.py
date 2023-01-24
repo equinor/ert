@@ -63,5 +63,6 @@ __all__ = (
     "TarTransformation",
     "TransformationDirection",
     "TransformationType",
+    "TreeSerializationTransformation",
     "transmitter_factory",
 )

@@ -432,7 +432,7 @@ def external_sum_function(tmpdir):
         # Check module is not in the python environment
         with pytest.raises(ModuleNotFoundError):
             # pylint: disable=unused-import,import-error
-            import foo.bar
+            import foo.bar  # noqa
 
         # Make sure the function is no longer available before we start creating
         # the flow and task
