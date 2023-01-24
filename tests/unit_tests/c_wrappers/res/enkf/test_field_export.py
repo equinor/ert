@@ -26,8 +26,8 @@ def test_field_basics(snake_oil_field_example):
     assert fc.get_truncation_mode() == 0
     assert fc.get_truncation_min() == -1.0
     assert fc.get_truncation_max() == -1.0
-    assert fc.get_init_transform_name() == None
-    assert fc.get_output_transform_name() == None
+    assert fc.get_init_transform_name() is None
+    assert fc.get_output_transform_name() is None
 
 
 def test_field_export(snake_oil_field_example):

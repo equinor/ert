@@ -274,4 +274,4 @@ def test_argparse_no_port_range():
             "path/to/config.ert",
         ],
     )
-    assert parsed.port_range == None
+    assert parsed.port_range is None

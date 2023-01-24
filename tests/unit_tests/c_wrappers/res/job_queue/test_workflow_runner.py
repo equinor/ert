@@ -94,7 +94,7 @@ def test_workflow_failed_job():
         Workflow, "run", side_effect=Exception("mocked workflow error")
     ), workflow_runner:
         workflow_runner.wait()
-        assert workflow_runner.exception() != None
+        assert workflow_runner.exception() is not None
 
 
 @pytest.mark.usefixtures("use_tmpdir")

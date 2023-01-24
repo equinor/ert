@@ -44,6 +44,8 @@ from cwrap import Prototype
 
 import ert._c_wrappers
 
+__all__ = [Prototype, ert._c_wrappers]
+
 
 def setenv(var, value):
     if not os.getenv(var):
