@@ -16,11 +16,7 @@ from ert.shared.models import BaseRunModel
 
 @pytest.fixture(name="patch_enkf_main")
 def fixture_patch_enkf_main(monkeypatch, tmp_path):
-    plugins_mock = Mock()
-    plugins_mock.getPluginJobs.return_value = []
-
     mocked_enkf_main = Mock()
-    mocked_enkf_main.getWorkflowList.return_value = plugins_mock
     mocked_enkf_main.getEnsembleSize.return_value = 10
     mocked_enkf_main.storage_manager = MagicMock()
 
@@ -29,7 +25,9 @@ def fixture_patch_enkf_main(monkeypatch, tmp_path):
     ]
 
     res_config_mock = Mock()
+    res_config_mock.workflow_jobs = {}
     type(res_config_mock).config_path = PropertyMock(return_value=tmp_path)
+    mocked_enkf_main.resConfig.return_value = res_config_mock
     analysis_mock = Mock()
     analysis_mock.case_format_is_set.return_value = False
     facade_mock = Mock()

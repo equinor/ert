@@ -19,7 +19,6 @@ from ert._c_wrappers.enkf.enums import RealizationStateEnum
 from ert._c_wrappers.enkf.enums.enkf_var_type_enum import EnkfVarType
 from ert._c_wrappers.enkf.enums.ert_impl_type_enum import ErtImplType
 from ert._c_wrappers.enkf.ert_run_context import RunContext
-from ert._c_wrappers.enkf.ert_workflow_list import ErtWorkflowList
 from ert._c_wrappers.enkf.model_config import ModelConfig
 from ert._c_wrappers.enkf.node_id import NodeId
 from ert._c_wrappers.enkf.queue_config import QueueConfig
@@ -342,9 +341,6 @@ class EnKFMain:
     def getHistoryLength(self) -> int:
         return self.resConfig().model_config.get_history_num_steps()
 
-    def getWorkflowList(self) -> ErtWorkflowList:
-        return self.resConfig().ert_workflow_list
-
     def sample_prior(
         self,
         storage: "EnkfFs",
@@ -469,6 +465,5 @@ class EnKFMain:
         )
 
     def runWorkflows(self, runtime: int) -> None:
-        workflow_list = self.getWorkflowList()
-        for workflow in workflow_list.get_workflows_hooked_at(runtime):
+        for workflow in self.res_config.hooked_workflows[runtime]:
             workflow.run(self, context=self.res_config.substitution_list)

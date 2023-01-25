@@ -30,7 +30,6 @@ from .enums import (
     RealizationStateEnum,
 )
 from .ert_run_context import RunContext
-from .ert_workflow_list import ErtWorkflowList
 from .model_config import ModelConfig
 from .node_id import NodeId
 from .observations import BlockDataConfig, GenObservation, ObsVector, SummaryObservation
@@ -81,7 +80,6 @@ __all__ = [
     "AnalysisConfig",
     "ConfigKeys",
     "QueueConfig",
-    "ErtWorkflowList",
     "EnsembleConfig",
     "EnkfObs",
     "ModelConfig",

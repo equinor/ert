@@ -622,9 +622,7 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
         return self._enkf_main.analysisConfig().get_std_cutoff()
 
     def get_workflow_job(self, name: str) -> Optional["WorkflowJob"]:
-        if self._enkf_main.getWorkflowList().hasJob(name):
-            return self._enkf_main.getWorkflowList().getJob(name)
-        return None
+        return self._enkf_main.resConfig().workflow_jobs.get(name)
 
     def run_ertscript(self, ertscript, *args, **kwargs):  # type: ignore
         return ertscript(self._enkf_main).run(*args, **kwargs)

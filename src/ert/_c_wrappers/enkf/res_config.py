@@ -2,6 +2,7 @@ import copy
 import logging
 import os
 import warnings
+from collections import defaultdict
 from datetime import date
 from os.path import isfile
 from typing import Any, Dict, Optional
@@ -13,11 +14,16 @@ from ert._c_wrappers.config.config_parser import ConfigValidationError, ConfigWa
 from ert._c_wrappers.enkf.analysis_config import AnalysisConfig
 from ert._c_wrappers.enkf.config_keys import ConfigKeys
 from ert._c_wrappers.enkf.ensemble_config import EnsembleConfig
-from ert._c_wrappers.enkf.enums import ErtImplType
-from ert._c_wrappers.enkf.ert_workflow_list import ErtWorkflowList
+from ert._c_wrappers.enkf.enums import ErtImplType, HookRuntime
 from ert._c_wrappers.enkf.model_config import ModelConfig
 from ert._c_wrappers.enkf.queue_config import QueueConfig
-from ert._c_wrappers.job_queue import EnvironmentVarlist, ExtJob, ForwardModel
+from ert._c_wrappers.job_queue import (
+    EnvironmentVarlist,
+    ExtJob,
+    ForwardModel,
+    Workflow,
+    WorkflowJob,
+)
 from ert._c_wrappers.util import SubstitutionList
 from ert._clib.config_keywords import init_site_config_parser, init_user_config_parser
 
@@ -210,7 +216,7 @@ class ResConfig:
         self.analysis_config = AnalysisConfig.from_dict(config_dict=config_dict)
         self._validate_queue_option_max_running(None, config_dict)
         self.queue_config = QueueConfig.from_dict(config_dict)
-        self.ert_workflow_list = ErtWorkflowList.from_dict(config_dict)
+        self._workflows_from_dict(config_dict)
         self.runpath_file = config_dict.get(ConfigKeys.RUNPATH_FILE)
 
         if ConfigKeys.DATA_FILE in config_dict and ConfigKeys.ECLBASE in config_dict:
@@ -291,6 +297,57 @@ class ResConfig:
             self.ensemble_config.refcase, config_dict
         )
 
+    def _workflows_from_dict(self, content_dict):
+        workflow_job_info = content_dict.get(ConfigKeys.LOAD_WORKFLOW_JOB, [])
+        workflow_job_dir_info = content_dict.get(ConfigKeys.WORKFLOW_JOB_DIRECTORY, [])
+        hook_workflow_info = content_dict.get(ConfigKeys.HOOK_WORKFLOW_KEY, [])
+        workflow_info = content_dict.get(ConfigKeys.LOAD_WORKFLOW, [])
+
+        self.workflow_jobs = {}
+        self.workflows = {}
+        self.hooked_workflows = defaultdict(list)
+
+        for workflow_job in workflow_job_info:
+            new_job = WorkflowJob.fromFile(
+                config_file=workflow_job[0],
+                name=None if len(workflow_job) == 1 else workflow_job[1],
+            )
+            if new_job is not None:
+                self.workflow_jobs[new_job.name] = new_job
+
+        for job_path in workflow_job_dir_info:
+            if not os.path.isdir(job_path):
+                warnings.warn(
+                    f"Unable to open job directory {job_path}", category=ConfigWarning
+                )
+                continue
+
+            files = os.listdir(job_path)
+            for file_name in files:
+                full_path = os.path.join(job_path, file_name)
+                new_job = WorkflowJob.fromFile(config_file=full_path)
+                if new_job is not None:
+                    self.workflow_jobs[new_job.name] = new_job
+
+        for work in workflow_info:
+            filename = os.path.basename(work[0]) if len(work) == 1 else work[1]
+            self.workflows[filename] = Workflow(work[0], self.workflow_jobs)
+
+        for hook_name, mode_name in hook_workflow_info:
+            if mode_name not in [runtime.name for runtime in HookRuntime.enums()]:
+                raise ConfigValidationError(
+                    errors=[f"Run mode {mode_name} not supported for Hook Workflow"]
+                )
+
+            if hook_name not in self.workflows:
+                raise ConfigValidationError(
+                    errors=[f"Cannot setup hook for non-existing job name {hook_name}"]
+                )
+
+            self.hooked_workflows[HookRuntime.from_string(mode_name)].append(
+                self.workflows[hook_name]
+            )
+
     @staticmethod
     def _installed_jobs_from_dict(config_dict):
         jobs = {}
@@ -364,7 +421,9 @@ class ResConfig:
             and self.env_vars == other.env_vars
             and self.random_seed == other.random_seed
             and self.analysis_config == other.analysis_config
-            and self.ert_workflow_list == other.ert_workflow_list
+            and self.workflow_jobs == other.workflow_jobs
+            and self.workflows == other.workflows
+            and self.hooked_workflows == other.hooked_workflows
             and self.ert_templates == other.ert_templates
             and self.ensemble_config == other.ensemble_config
             and self.model_config == other.model_config
@@ -386,7 +445,9 @@ class ResConfig:
             f"RandomSeed: {self.random_seed},\n"
             f"Num CPUs: {self.preferred_num_cpu()},\n"
             f"AnalysisConfig: {self.analysis_config},\n"
-            f"ErtWorkflowList: {self.ert_workflow_list},\n"
+            f"workflow_jobs: {self.workflow_jobs},\n"
+            f"hooked_workflows: {self.hooked_workflows},\n"
+            f"workflows: {self.workflows},\n"
             f"ErtTemplates: {self.ert_templates},\n"
             f"EnsembleConfig: {self.ensemble_config},\n"
             f"ModelConfig: {self.model_config},\n"

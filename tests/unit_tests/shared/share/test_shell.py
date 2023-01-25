@@ -431,12 +431,10 @@ def test_shell_script_jobs_availability(minimal_case):
         if "shell_scripts" in exe:
             fm_shell_jobs[job.name.upper()] = Path(exe).resolve()
 
-    list_from_content = res_config.ert_workflow_list
     wf_shell_jobs = {}
-    for wf_name in list_from_content.getJobNames():
-        exe = list_from_content.getJob(wf_name).executable
-        if exe and "shell_scripts" in exe:
-            wf_shell_jobs[wf_name] = Path(exe).resolve()
+    for wf_name, wf in res_config.workflow_jobs.items():
+        if wf.executable is not None and "shell_scripts" in wf.executable:
+            wf_shell_jobs[wf_name] = Path(wf.executable).resolve()
 
     assert fm_shell_jobs == wf_shell_jobs
 
@@ -456,10 +454,8 @@ def test_shell_script_jobs_names(minimal_case):
 
     res_config = ResConfig("config.ert")
     found_jobs = set()
-    list_from_content = res_config.ert_workflow_list
-    for wf_name in list_from_content.getJobNames():
-        exe = list_from_content.getJob(wf_name).executable
-        if exe and "shell_scripts" in exe:
+    for wf_name, wf in res_config.workflow_jobs.items():
+        if wf.executable is not None and "shell_scripts" in wf.executable:
             assert wf_name in shell_job_names
             found_jobs.add(wf_name)
 

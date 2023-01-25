@@ -197,7 +197,11 @@ def _setup_main_window(
     notifier = ErtNotifier(config_file)
     window = ErtMainWindow(config_file)
     window.setWidget(SimulationPanel(ert, notifier, config_file))
-    plugin_handler = PluginHandler(ert, ert.getWorkflowList().getPluginJobs(), window)
+    plugin_handler = PluginHandler(
+        ert,
+        [wfj for wfj in ert.resConfig().workflow_jobs.values() if wfj.isPlugin()],
+        window,
+    )
 
     window.addDock(
         "Configuration summary", SummaryPanel(ert), area=Qt.BottomDockWidgetArea
