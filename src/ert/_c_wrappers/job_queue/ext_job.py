@@ -10,6 +10,8 @@ from ert._c_wrappers.config import ConfigParser, ConfigValidationError, ContentT
 from ert._c_wrappers.util import SubstitutionList
 from ert._clib.job_kw import type_from_kw
 
+_SUBSTITUTED_AT_EXECUTION_TIME: List[str] = ["<ITER>", "<IENS>"]
+
 
 class ExtJobInvalidArgsException(BaseException):
     pass
@@ -233,6 +235,39 @@ class ExtJob:
         )
 
     def validate_args(self, context: SubstitutionList) -> None:
+        self._validate_all_passed_private_args_have_an_effect()
+        self._validate_all_magic_string_in_arglist_get_resolved(context)
+
+    def _validate_all_passed_private_args_have_an_effect(self) -> None:
+        """raises InvalidArgsException if validation fails"""
+        # private args are always applied first, so we can grab the keys of the private
+        # args list, and for every key, check if it matches on a substring of any
+        # argument from the argument list
+        relevant_private_args_keys = [
+            key
+            for key in self.private_args.keys()
+            if key not in _SUBSTITUTED_AT_EXECUTION_TIME
+        ]
+        unused_private_args_keys = list(
+            filter(
+                lambda private_arg_key: all(
+                    private_arg_key not in arg for arg in self.arglist
+                ),
+                relevant_private_args_keys,
+            )
+        )
+        if unused_private_args_keys:
+            unused_private_args_representation = [
+                f"{key}={self.private_args[key]}" for key in unused_private_args_keys
+            ]
+            raise ExtJobInvalidArgsException(
+                "following arguments to job have no effect (values after "
+                f"applying defines): {','.join(unused_private_args_representation)}"
+            )
+
+    def _validate_all_magic_string_in_arglist_get_resolved(
+        self, context: SubstitutionList
+    ) -> None:
         """raises InvalidArgsException if validation fails"""
         args_substituted_with_private_list = [
             (arg, self.private_args.substitute(arg)) for arg in self.arglist
@@ -251,7 +286,7 @@ class ExtJob:
             unresolved_substrings = re.findall(r"<.*>", arg)
             relevant_unresolved_substrings = list(
                 filter(
-                    lambda substr: substr not in _SUBTITUTED_AT_EXECUTION_TIME,
+                    lambda substr: substr not in _SUBSTITUTED_AT_EXECUTION_TIME,
                     unresolved_substrings,
                 )
             )
