@@ -417,3 +417,31 @@ def test_forward_model_with_resolved_substitutions_by_default_values_gives_no_er
 
     with caplog.at_level(logging.WARNING):
         ResConfig(user_config_file=test_config_file_name)
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_forward_model_warns_for_private_arg_without_effect(caplog):
+    # given a forward model that references a job
+    # and there is a key=value private arg given in the forward model
+    # and that substitution has no effect on the arglist
+    # then we should have a warning
+    test_config_file_name = "test.ert"
+    # We're using the job old-style/RMS, included through site-config, which has a
+    # bunch of args. use case here is a typo
+    test_config_contents = dedent(
+        """
+        NUM_REALIZATIONS  1
+        DEFINE <RMS_VERSION> 2.4
+        DEFINE <RMS_PROJECT> spam
+        DEFINE <RMS_WORKFLOW> frying
+        DEFINE <RMS_TARGET_FILE> result
+        FORWARD_MODEL RMS(<IENS>=<FOO>-2,<RMS_VERSJON>=2.1)
+        """
+    )
+    with open(test_config_file_name, "w", encoding="utf-8") as fh:
+        fh.write(test_config_contents)
+
+    with caplog.at_level(logging.WARNING):
+        ResConfig(user_config_file=test_config_file_name)
+        assert len(caplog.records) == 1
+        assert re.search(r"no effect.*<RMS_VERSJON>=2.1", caplog.messages[0])
