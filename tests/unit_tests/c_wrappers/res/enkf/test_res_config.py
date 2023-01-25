@@ -4,14 +4,16 @@ import os.path
 import stat
 from datetime import date
 from pathlib import Path
+from textwrap import dedent
 from unittest.mock import MagicMock, mock_open, patch
 
 import pytest
 from ecl.util.enums import RngAlgTypeEnum
 
 from ert._c_wrappers.config.config_parser import ConfigValidationError
-from ert._c_wrappers.enkf import AnalysisConfig, HookRuntime, ResConfig
+from ert._c_wrappers.enkf import AnalysisConfig, ConfigKeys, HookRuntime, ResConfig
 from ert._c_wrappers.enkf._config_content_as_dict import parse_signature_job
+from ert._c_wrappers.enkf.res_config import site_config_location
 from ert._c_wrappers.job_queue import QueueDriverEnum
 from ert._c_wrappers.sched import HistorySourceEnum
 
@@ -258,20 +260,20 @@ def test_extensive_config(setup_case):
         == Path(ensemble_config["SIGMA"]._get_enkf_outfile()).resolve()
     )
 
-    ert_workflow_list = res_config.ert_workflow_list
     assert len(snake_oil_structure_config["LOAD_WORKFLOW"]) == len(
-        ert_workflow_list.getWorkflowNames()
+        list(res_config.workflows.keys())
     )
 
     for w_path, w_name in snake_oil_structure_config["LOAD_WORKFLOW"]:
-        assert w_name in ert_workflow_list
+        assert w_name in res_config.workflows
         assert (
-            Path(w_path).resolve() == Path(ert_workflow_list[w_name].src_file).resolve()
+            Path(w_path).resolve()
+            == Path(res_config.workflows[w_name].src_file).resolve()
         )
 
     for wj_path, wj_name in snake_oil_structure_config["LOAD_WORKFLOW_JOB"]:
-        assert ert_workflow_list.hasJob(wj_name)
-        job = ert_workflow_list.getJob(wj_name)
+        assert wj_name in res_config.workflow_jobs
+        job = res_config.workflow_jobs[wj_name]
 
         assert wj_name == job.name
         assert Path(wj_path).resolve() == Path(job.executable).resolve()
@@ -386,9 +388,7 @@ def test_that_workflow_run_modes_can_be_selected(tmp_path, run_mode):
         f"HOOK_WORKFLOW SCRIPT {run_mode}\n"
     )
     res_config = ResConfig(str(test_user_config))
-    assert (
-        len(list(res_config.ert_workflow_list.get_workflows_hooked_at(run_mode))) == 1
-    )
+    assert len(list(res_config.hooked_workflows[run_mode])) == 1
 
 
 @pytest.mark.parametrize(
@@ -500,3 +500,131 @@ def test_that_parse_job_signature_warns_for_extra_parens(caplog):
         "<ARG1>=val1, <ARG2>=val2",
     )
     assert "Arguments after closing )" in caplog.text
+
+
+@pytest.mark.usefixtures("copy_minimum_case")
+def test_that_parsing_workflows_gives_expected():
+    ERT_SITE_CONFIG = site_config_location()
+    ERT_SHARE_PATH = os.path.dirname(ERT_SITE_CONFIG)
+    cwd = os.getcwd()
+
+    config_dict = {
+        ConfigKeys.LOAD_WORKFLOW_JOB: [
+            [cwd + "/workflows/UBER_PRINT", "print_uber"],
+            [cwd + "/workflows/HIDDEN_PRINT", "HIDDEN_PRINT"],
+        ],
+        ConfigKeys.LOAD_WORKFLOW: [
+            [cwd + "/workflows/MAGIC_PRINT", "magic_print"],
+            [cwd + "/workflows/NO_PRINT", "no_print"],
+            [cwd + "/workflows/SOME_PRINT", "some_print"],
+        ],
+        ConfigKeys.WORKFLOW_JOB_DIRECTORY: [
+            ERT_SHARE_PATH + "/workflows/jobs/shell",
+            ERT_SHARE_PATH + "/workflows/jobs/internal/config",
+            ERT_SHARE_PATH + "/workflows/jobs/internal-gui/config",
+        ],
+        ConfigKeys.HOOK_WORKFLOW_KEY: [
+            ["magic_print", "POST_UPDATE"],
+            ["no_print", "PRE_UPDATE"],
+        ],
+    }
+
+    config_dict["ENSPATH"] = "enspath"
+    config_dict["NUM_REALIZATIONS"] = 1
+
+    with open("minimum_config", "a+", encoding="utf-8") as ert_file:
+        ert_file.write("LOAD_WORKFLOW_JOB workflows/UBER_PRINT print_uber\n")
+        ert_file.write("LOAD_WORKFLOW_JOB workflows/HIDDEN_PRINT\n")
+        ert_file.write("LOAD_WORKFLOW workflows/MAGIC_PRINT magic_print\n")
+        ert_file.write("LOAD_WORKFLOW workflows/NO_PRINT no_print\n")
+        ert_file.write("LOAD_WORKFLOW workflows/SOME_PRINT some_print\n")
+        ert_file.write("HOOK_WORKFLOW magic_print POST_UPDATE\n")
+        ert_file.write("HOOK_WORKFLOW no_print PRE_UPDATE\n")
+
+    os.mkdir("workflows")
+
+    with open("workflows/MAGIC_PRINT", "w", encoding="utf-8") as f:
+        f.write("print_uber\n")
+    with open("workflows/NO_PRINT", "w", encoding="utf-8") as f:
+        f.write("print_uber\n")
+    with open("workflows/SOME_PRINT", "w", encoding="utf-8") as f:
+        f.write("print_uber\n")
+    with open("workflows/UBER_PRINT", "w", encoding="utf-8") as f:
+        f.write("EXECUTABLE ls\n")
+    with open("workflows/HIDDEN_PRINT", "w", encoding="utf-8") as f:
+        f.write("EXECUTABLE ls\n")
+
+    res_config = ResConfig(config_dict=config_dict)
+
+    # verify name generated from filename
+    assert "HIDDEN_PRINT" in res_config.workflow_jobs
+    assert "print_uber" in res_config.workflow_jobs
+
+    assert [
+        "magic_print",
+        "no_print",
+        "some_print",
+    ] == list(res_config.workflows.keys())
+
+    assert len(res_config.hooked_workflows[HookRuntime.PRE_UPDATE]) == 1
+    assert len(res_config.hooked_workflows[HookRuntime.POST_UPDATE]) == 1
+    assert len(res_config.hooked_workflows[HookRuntime.PRE_FIRST_UPDATE]) == 0
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_get_plugin_jobs_fetches_exactly_ert_plugins():
+    script_file_contents = dedent(
+        """
+        SCRIPT script.py
+        """
+    )
+    plugin_file_contents = dedent(
+        """
+        SCRIPT plugin.py
+        """
+    )
+
+    script_file_path = os.path.join(os.getcwd(), "script")
+    plugin_file_path = os.path.join(os.getcwd(), "plugin")
+    with open(script_file_path, mode="w", encoding="utf-8") as fh:
+        fh.write(script_file_contents)
+    with open(plugin_file_path, mode="w", encoding="utf-8") as fh:
+        fh.write(plugin_file_contents)
+
+    with open("script.py", mode="w", encoding="utf-8") as fh:
+        fh.write(
+            dedent(
+                """
+                from ert._c_wrappers.job_queue import ErtScript
+                class Script(ErtScript):
+                    def run(self, *args):
+                        pass
+                """
+            )
+        )
+    with open("plugin.py", mode="w", encoding="utf-8") as fh:
+        fh.write(
+            dedent(
+                """
+                from ert._c_wrappers.job_queue import ErtPlugin
+                class Plugin(ErtPlugin):
+                    def run(self, *args):
+                        pass
+                """
+            )
+        )
+    with open("config.ert", mode="w", encoding="utf-8") as fh:
+        fh.write(
+            dedent(
+                f"""
+                NUM_REALIZATIONS 1
+                LOAD_WORKFLOW_JOB {plugin_file_path} plugin
+                LOAD_WORKFLOW_JOB {script_file_path} script
+                """
+            )
+        )
+
+    res_config = ResConfig("config.ert")
+
+    assert res_config.workflow_jobs["plugin"].isPlugin()
+    assert not res_config.workflow_jobs["script"].isPlugin()
