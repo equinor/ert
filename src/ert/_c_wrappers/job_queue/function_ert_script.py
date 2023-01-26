@@ -23,7 +23,7 @@ class FunctionErtScript(ErtScript):
             return function(pointer, str_args)
         else:
             parsed_argument_types = []
-            for arg in self._arg_types[:self._arg_count]:
+            for arg in self._arg_types[: self._arg_count]:
                 if arg in [bool, int, float]:
                     parsed_argument_types.append(arg.__name__)
                 elif arg is str:
@@ -31,8 +31,7 @@ class FunctionErtScript(ErtScript):
                 else:
                     raise TypeError(f"Unknown type: {arg}")
             function = ResPrototype(
-                f"void* {self._func_name}("
-                f"{', '.join(parsed_argument_types)})"
+                f"void* {self._func_name}(" f"{', '.join(parsed_argument_types)})"
             )
             return function(*args)
 

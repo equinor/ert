@@ -147,9 +147,7 @@ class WorkflowJob:
             self.__script = ExternalErtScript(ert, self.executable)
         else:
             raise UserWarning("Unknown script type!")
-        result = self.__script.initializeAndRun(
-            self.argumentTypes(), arguments
-        )
+        result = self.__script.initializeAndRun(self.argumentTypes(), arguments)
         self.__running = False
         return result
 
