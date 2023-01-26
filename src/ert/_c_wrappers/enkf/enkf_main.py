@@ -466,4 +466,4 @@ class EnKFMain:
 
     def runWorkflows(self, runtime: int) -> None:
         for workflow in self.res_config.hooked_workflows[runtime]:
-            workflow.run(self, context=self.res_config.substitution_list)
+            workflow.run(self)

@@ -1,11 +1,10 @@
 import logging
 import os
-import sys
 import time
 from tempfile import mkdtemp
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
 
-from ert._c_wrappers.config import ConfigParser
+from ert._c_wrappers.config import ConfigParser, ConfigValidationError
 
 if TYPE_CHECKING:
     from ert._c_wrappers.enkf import EnKFMain
@@ -24,17 +23,17 @@ def _workflow_parser(workflow_jobs: Dict[str, "WorkflowJob"]) -> ConfigParser:
 
 
 class Workflow:
-    def __init__(self, src_file: str, job_list: Dict[str, "WorkflowJob"]):
+    def __init__(
+        self,
+        src_file: str,
+        cmd_list: List["WorkflowJob"],
+    ):
         self.__running = False
         self.__cancelled = False
         self.__current_job = None
         self.__status: Dict[str, Any] = {}
-        self.job_list = job_list
         self.src_file = src_file
-        self.cmd_list = []
-        self.last_error = []
-
-        self._parse_src_file(None)
+        self.cmd_list = cmd_list
 
     def __len__(self):
         return len(self.cmd_list)
@@ -45,49 +44,45 @@ class Workflow:
     def __iter__(self):
         return iter(self.cmd_list)
 
-    def _parse_src_file(self, context: Optional["SubstitutionList"]) -> None:
-        to_compile = self.src_file
-        if not os.path.exists(self.src_file):
-            raise ValueError(f"Workflow file {self.src_file} does not exist")
+    @classmethod
+    def from_file(
+        cls,
+        src_file: str,
+        context: Optional["SubstitutionList"],
+        job_list: Dict[str, "WorkflowJob"],
+    ):
+        to_compile = src_file
+        if not os.path.exists(src_file):
+            raise ConfigValidationError(f"Workflow file {src_file} does not exist")
         if context is not None:
             tmpdir = mkdtemp("ert_workflow")
             to_compile = os.path.join(tmpdir, "ert-workflow")
-            context.substitute_file(self.src_file, to_compile)
+            context.substitute_file(src_file, to_compile)
 
-        self.cmd_list = []
-        parser = _workflow_parser(self.job_list)
+        cmd_list = []
+        parser = _workflow_parser(job_list)
         content = parser.parse(to_compile)
 
         for line in content:
-            self.cmd_list.append(
+            cmd_list.append(
                 (
-                    self.job_list[line.get_kw()],
+                    job_list[line.get_kw()],
                     [line.igetString(i) for i in range(len(line))],
                 )
             )
+
+        return cls(src_file, cmd_list)
 
     def run(
         self,
         ert: "EnKFMain",
         verbose: bool = False,
-        context: Optional["SubstitutionList"] = None,
     ) -> bool:
         logger = logging.getLogger(__name__)
 
         # Reset status
         self.__status = {}
         self.__running = True
-        try:
-            self._parse_src_file(context)
-        except ValueError as err:
-            msg = (
-                "** Warning: The workflow file {} is not valid - "
-                "make sure the workflow jobs are defined correctly:\n {}\n"
-            )
-            sys.stderr.write(msg.format(self.src_file, err))
-
-            self.__running = False
-            return False
 
         for job, args in self:
             self.__current_job = job
@@ -135,9 +130,6 @@ class Workflow:
     def wait(self):
         while self.isRunning():
             time.sleep(1)
-
-    def getLastError(self) -> List[str]:
-        return self.last_error
 
     def getJobsReport(self) -> Dict[str, Any]:
         return self.__status

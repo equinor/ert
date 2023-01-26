@@ -16,7 +16,9 @@ def test_workflow_thread_cancel_ert_script():
 
     wait_job = WorkflowJob.fromFile("wait_job", name="WAIT")
 
-    workflow = Workflow("wait_workflow", {"WAIT": wait_job})
+    workflow = Workflow.from_file(
+        "wait_workflow", SubstitutionList(), {"WAIT": wait_job}
+    )
 
     assert len(workflow) == 3
 
@@ -54,11 +56,13 @@ def test_workflow_thread_cancel_external():
         name="WAIT",
         config_file="wait_job",
     )
-    workflow = Workflow("wait_workflow", {"WAIT": wait_job})
+    workflow = Workflow.from_file(
+        "wait_workflow", SubstitutionList(), {"WAIT": wait_job}
+    )
 
     assert len(workflow) == 3
 
-    workflow_runner = WorkflowRunner(workflow, ert=None, context=SubstitutionList())
+    workflow_runner = WorkflowRunner(workflow, ert=None)
 
     assert not workflow_runner.isRunning()
 
@@ -84,10 +88,12 @@ def test_workflow_failed_job():
         name="DUMP",
         config_file="dump_job",
     )
-    workflow = Workflow("dump_workflow", {"DUMP": dump_job})
+    workflow = Workflow.from_file(
+        "dump_workflow", SubstitutionList(), {"DUMP": dump_job}
+    )
     assert len(workflow) == 2
 
-    workflow_runner = WorkflowRunner(workflow, ert=None, context=SubstitutionList())
+    workflow_runner = WorkflowRunner(workflow, ert=None)
 
     assert not workflow_runner.isRunning()
     with patch.object(
@@ -108,13 +114,15 @@ def test_workflow_success():
         name="WAIT",
         config_file="wait_job",
     )
-    workflow = Workflow(
-        "fast_wait_workflow", {"WAIT": wait_job, "EXTERNAL_WAIT": external_job}
+    workflow = Workflow.from_file(
+        "fast_wait_workflow",
+        SubstitutionList(),
+        {"WAIT": wait_job, "EXTERNAL_WAIT": external_job},
     )
 
     assert len(workflow) == 2
 
-    workflow_runner = WorkflowRunner(workflow, ert=None, context=SubstitutionList())
+    workflow_runner = WorkflowRunner(workflow, ert=None)
 
     assert not workflow_runner.isRunning()
     with workflow_runner:

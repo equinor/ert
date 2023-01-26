@@ -2,7 +2,6 @@ from concurrent import futures
 from typing import TYPE_CHECKING, Optional
 
 from ert._c_wrappers.job_queue import Workflow
-from ert._c_wrappers.util.substitution_list import SubstitutionList
 
 if TYPE_CHECKING:
     from ert._c_wrappers.enkf import EnKFMain
@@ -13,17 +12,12 @@ class WorkflowRunner:
         self,
         workflow: Workflow,
         ert: Optional["EnKFMain"] = None,
-        context: Optional[SubstitutionList] = None,
     ):
         super().__init__()
 
         self.__workflow = workflow
         self.__ert = ert
 
-        if context is None:
-            context = SubstitutionList()
-
-        self.__context = context
         self.__workflow_result = None
         self._workflow_executor = futures.ThreadPoolExecutor(max_workers=1)
         self._workflow_job = None
@@ -41,7 +35,7 @@ class WorkflowRunner:
         self._workflow_job = self._workflow_executor.submit(self.__runWorkflow)
 
     def __runWorkflow(self):
-        self.__workflow_result = self.__workflow.run(self.__ert, context=self.__context)
+        self.__workflow_result = self.__workflow.run(self.__ert)
 
     def isRunning(self) -> bool:
         if self.__workflow.isRunning():
@@ -78,13 +72,3 @@ class WorkflowRunner:
     def workflowReport(self):
         """@rtype: {dict}"""
         return self.__workflow.getJobsReport()
-
-    def workflowError(self) -> str:
-        error = self.__workflow.getLastError()
-
-        error_message = ""
-
-        for error_line in error:
-            error_message += error_line + "\n"
-
-        return error_message
