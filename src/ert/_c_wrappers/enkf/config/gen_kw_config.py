@@ -10,6 +10,7 @@ from cwrap import BaseCClass
 from ecl.util.util import StringList
 
 from ert._c_wrappers import ResPrototype
+from ert._clib import gen_kw_config
 
 if TYPE_CHECKING:
     import numpy.typing as npt
@@ -54,9 +55,6 @@ class GenKwConfig(BaseCClass):
     )
     _get_function_parameter_names = ResPrototype(
         "stringlist_ref gen_kw_config_iget_function_parameter_names(gen_kw_config, int)"
-    )
-    _get_function_parameter_values = ResPrototype(
-        "double_vector_ref gen_kw_config_iget_function_parameter_values(gen_kw_config, int)"  # noqa
     )
 
     _transform = ResPrototype(
@@ -147,7 +145,7 @@ class GenKwConfig(BaseCClass):
         for i, key in enumerate(keys):
             function_type = self._get_function_type(i)
             parameter_names = self._get_function_parameter_names(i)
-            parameter_values = self._get_function_parameter_values(i)
+            parameter_values = gen_kw_config.get_function_parameter_values(self, i)
             priors.append(
                 {
                     "key": key,

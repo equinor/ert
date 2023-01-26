@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <ert/util/double_vector.h>
+#include <ert/python.hpp>
 #include <ert/util/stringlist.h>
 #include <ert/util/util.h>
 
@@ -12,7 +12,7 @@ struct trans_func_struct {
     /** The name this function is registered as. */
     char *name;
     /** The parameter values registered for this function. */
-    double_vector_type *params;
+    std::vector<double> params;
     /** A pointer to the actual transformation function. */
     transform_ftype *func;
     /** A pointer to a a function which can be used to validate the parameters can be NULL. */
@@ -35,30 +35,30 @@ struct trans_func_struct {
    The width is a relavant scale for the value of skewness.
 */
 
-static double trans_errf(double x, const double_vector_type *arg) {
-    double min = double_vector_iget(arg, 0);
-    double max = double_vector_iget(arg, 1);
-    double skewness = double_vector_iget(arg, 2);
-    double width = double_vector_iget(arg, 3);
+static double trans_errf(double x, const std::vector<double> arg) {
+    double min = arg[0];
+    double max = arg[1];
+    double skewness = arg[2];
+    double width = arg[3];
     double y;
 
     y = 0.5 * (1 + erf((x + skewness) / (width * sqrt(2.0))));
     return min + y * (max - min);
 }
 
-static double trans_const(double x, const double_vector_type *arg) {
-    return double_vector_iget(arg, 0);
+static double trans_const(double x, const std::vector<double> arg) {
+    return arg[0];
 }
 
-static double trans_raw(double x, const double_vector_type *arg) { return x; }
+static double trans_raw(double x, const std::vector<double> arg) { return x; }
 
 /* Observe that the argument of the shift should be "+" */
-static double trans_derrf(double x, const double_vector_type *arg) {
-    int steps = double_vector_iget(arg, 0);
-    double min = double_vector_iget(arg, 1);
-    double max = double_vector_iget(arg, 2);
-    double skewness = double_vector_iget(arg, 3);
-    double width = double_vector_iget(arg, 4);
+static double trans_derrf(double x, const std::vector<double> arg) {
+    int steps = arg[0];
+    double min = arg[1];
+    double max = arg[2];
+    double skewness = arg[3];
+    double width = arg[4];
     double y;
 
     y = floor(steps * 0.5 * (1 + erf((x + skewness) / (width * sqrt(2.0)))) /
@@ -66,38 +66,38 @@ static double trans_derrf(double x, const double_vector_type *arg) {
     return min + y * (max - min);
 }
 
-static double trans_unif(double x, const double_vector_type *arg) {
+static double trans_unif(double x, const std::vector<double> arg) {
     double y;
-    double min = double_vector_iget(arg, 0);
-    double max = double_vector_iget(arg, 1);
+    double min = arg[0];
+    double max = arg[1];
     y = 0.5 * (1 + erf(x / sqrt(2.0))); /* 0 - 1 */
     return y * (max - min) + min;
 }
 
-static double trans_dunif(double x, const double_vector_type *arg) {
+static double trans_dunif(double x, const std::vector<double> arg) {
     double y;
-    int steps = double_vector_iget(arg, 0);
-    double min = double_vector_iget(arg, 1);
-    double max = double_vector_iget(arg, 2);
+    int steps = arg[0];
+    double min = arg[1];
+    double max = arg[2];
 
     y = 0.5 * (1 + erf(x / sqrt(2.0))); /* 0 - 1 */
     return (floor(y * steps) / (steps - 1)) * (max - min) + min;
 }
 
-static double trans_normal(double x, const double_vector_type *arg) {
+static double trans_normal(double x, const std::vector<double> arg) {
     double mu, std;
-    mu = double_vector_iget(arg, 0);
-    std = double_vector_iget(arg, 1);
+    mu = arg[0];
+    std = arg[1];
     return x * std + mu;
 }
 
-static double trans_truncated_normal(double x, const double_vector_type *arg) {
+static double trans_truncated_normal(double x, const std::vector<double> arg) {
     double mu, std, min, max;
 
-    mu = double_vector_iget(arg, 0);
-    std = double_vector_iget(arg, 1);
-    min = double_vector_iget(arg, 2);
-    max = double_vector_iget(arg, 3);
+    mu = arg[0];
+    std = arg[1];
+    min = arg[2];
+    max = arg[3];
 
     {
         double y = x * std + mu;
@@ -106,10 +106,10 @@ static double trans_truncated_normal(double x, const double_vector_type *arg) {
     }
 }
 
-static double trans_lognormal(double x, const double_vector_type *arg) {
+static double trans_lognormal(double x, const std::vector<double> arg) {
     double mu, std;
-    mu = double_vector_iget(arg, 0); /* The expectation of log( y ) */
-    std = double_vector_iget(arg, 1);
+    mu = arg[0]; /* The expectation of log( y ) */
+    std = arg[1];
     return exp(x * std + mu);
 }
 
@@ -119,9 +119,9 @@ static double trans_lognormal(double x, const double_vector_type *arg) {
    distribution in the same manner as the lognormal distribution
    relates to the normal distribution.
 */
-static double trans_logunif(double x, const double_vector_type *arg) {
-    double log_min = log(double_vector_iget(arg, 0));
-    double log_max = log(double_vector_iget(arg, 1));
+static double trans_logunif(double x, const std::vector<double> arg) {
+    double log_min = log(arg[0]);
+    double log_max = log(arg[1]);
     double log_y;
     {
         double tmp = 0.5 * (1 + erf(x / sqrt(2.0))); /* 0 - 1 */
@@ -131,10 +131,10 @@ static double trans_logunif(double x, const double_vector_type *arg) {
     return exp(log_y);
 }
 
-static double trans_triangular(double x, const double_vector_type *arg) {
-    double xmin = double_vector_iget(arg, 0);
-    double xmode = double_vector_iget(arg, 1);
-    double xmax = double_vector_iget(arg, 2);
+static double trans_triangular(double x, const std::vector<double> arg) {
+    double xmin = arg[0];
+    double xmode = arg[1];
+    double xmax = arg[2];
 
     double inv_norm_left = (xmax - xmin) * (xmode - xmin);
     double inv_norm_right = (xmax - xmin) * (xmax - xmode);
@@ -149,16 +149,13 @@ static double trans_triangular(double x, const double_vector_type *arg) {
 
 void trans_func_free(trans_func_type *trans_func) {
     stringlist_free(trans_func->param_names);
-    double_vector_free(trans_func->params);
     free(trans_func->name);
-    free(trans_func);
+    delete trans_func;
 }
 
 static trans_func_type *trans_func_alloc_empty(const char *func_name) {
-    trans_func_type *trans_func =
-        (trans_func_type *)util_malloc(sizeof *trans_func);
+    auto trans_func = new trans_func_type;
 
-    trans_func->params = double_vector_alloc(0, 0);
     trans_func->func = NULL;
     trans_func->validate = NULL;
     trans_func->name = util_alloc_string_copy(func_name);
@@ -270,7 +267,7 @@ trans_func_type *trans_func_alloc(const stringlist_type *args) {
         double param_value;
 
         if (util_sscanf_double(stringlist_iget(args, iarg + 1), &param_value))
-            double_vector_append(trans_func->params, param_value);
+            trans_func->params.push_back(param_value);
         else {
             fprintf(stderr, "%s: could not parse: %s as floating point value\n",
                     __func__, stringlist_iget(args, iarg + 1));
@@ -294,9 +291,24 @@ bool trans_func_use_log_scale(const trans_func_type *trans_func) {
 stringlist_type *trans_func_get_param_names(const trans_func_type *trans_func) {
     return trans_func->param_names;
 }
-double_vector_type *trans_func_get_params(const trans_func_type *trans_func) {
+std::vector<double> trans_func_get_params(const trans_func_type *trans_func) {
     return trans_func->params;
 }
 const char *trans_func_get_name(const trans_func_type *trans_func) {
     return trans_func->name;
+}
+
+ERT_CLIB_SUBMODULE("trans_func", m) {
+    using namespace py::literals;
+    m.def("errf", trans_errf, "x"_a, "args"_a);
+    m.def("const", trans_const, "x"_a, "args"_a);
+    m.def("raw", trans_raw, "x"_a, "args"_a);
+    m.def("derrf", trans_derrf, "x"_a, "args"_a);
+    m.def("uniform", trans_unif, "x"_a, "args"_a);
+    m.def("dunform", trans_dunif, "x"_a, "args"_a);
+    m.def("normal", trans_normal, "x"_a, "args"_a);
+    m.def("truncated_normal", trans_truncated_normal, "x"_a, "args"_a);
+    m.def("log_normal", trans_lognormal, "x"_a, "args"_a);
+    m.def("log_uniform", trans_logunif, "x"_a, "args"_a);
+    m.def("triangular", trans_triangular, "x"_a, "args"_a);
 }
