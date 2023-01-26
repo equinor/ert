@@ -31,6 +31,3 @@ class LoadResultsTool(Tool):
         self.__dialog.toggleButton(caption="Load", enabled=False)
         self.__import_widget.load()
         self.__dialog.accept()
-
-    def is_valid_run_path(self) -> bool:
-        return self.facade.is_valid_runpath()
