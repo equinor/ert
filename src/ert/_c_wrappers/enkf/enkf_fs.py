@@ -18,6 +18,7 @@ import xtgeo
 from ert._c_wrappers.enkf.enums import RealizationStateEnum
 from ert._c_wrappers.enkf.model_callbacks import LoadStatus
 from ert._c_wrappers.enkf.time_map import TimeMap
+from ert._clib import trans_func
 from ert.ensemble_evaluator.callbacks import forward_model_ok
 from ert.storage import Storage
 
@@ -26,7 +27,7 @@ if TYPE_CHECKING:
     from ecl.summary import EclSum
     from xtgeo import RegularSurface
 
-    from ert._c_wrappers.enkf.config import FieldConfig, GenKwConfig
+    from ert._c_wrappers.enkf.config import FieldConfig
     from ert._c_wrappers.enkf.ert_config import EnsembleConfig
     from ert._c_wrappers.enkf.run_arg import RunArg
 
@@ -51,6 +52,21 @@ def _load_realization(
         else RealizationStateEnum.STATE_LOAD_FAILURE
     )
     return status, realisation
+
+
+PRIOR_FUNCTIONS = {
+    "NORMAL": trans_func.normal,
+    "LOGNORMAL": trans_func.log_normal,
+    "TRUNCATED_NORMAL": trans_func.truncated_normal,
+    "TRIANGULAR": trans_func.triangular,
+    "UNIFORM": trans_func.uniform,
+    "DUNIF": trans_func.dunform,
+    "ERRF": trans_func.errf,
+    "DERRF": trans_func.derrf,
+    "LOGUNIF": trans_func.log_uniform,
+    "CONST": trans_func.const,
+    "RAW": trans_func.raw,
+}
 
 
 class EnkfFs:
@@ -179,21 +195,24 @@ class EnkfFs:
             )
 
     def load_gen_kw_as_dict(
-        self, key: str, realization: int, gen_kw_config: GenKwConfig
+        self, key: str, realization: int
     ) -> Dict[str, Dict[str, float]]:
         data, keys = self._storage.load_gen_kw_realization(key, realization)
+        priors = {p["key"]: p for p in self._storage.load_gen_kw_priors()[key]}
 
         transformed = {
-            parameter_key: gen_kw_config.transform(index, value)
-            for index, (parameter_key, value) in enumerate(zip(keys, data))
+            parameter_key: PRIOR_FUNCTIONS[priors[parameter_key]["function"]](
+                value, list(priors[parameter_key]["parameters"].values())
+            )
+            for parameter_key, value in zip(keys, data)
         }
 
         result = {key: transformed}
 
         log10 = {
             parameter_key: math.log(value, 10)
-            for index, (parameter_key, value) in enumerate(transformed.items())
-            if gen_kw_config.shouldUseLogScale(index)
+            for parameter_key, value in transformed.items()
+            if "LOG" in priors[parameter_key]["function"]
         }
         if log10:
             result.update({f"LOG10_{key}": log10})
