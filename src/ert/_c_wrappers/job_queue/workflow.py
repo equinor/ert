@@ -83,12 +83,11 @@ class Workflow:
         for job, args in self:
             self.__current_job = job
             if not self.__cancelled:
-                return_value = job.run(ert, args)
+                job.run(ert, args)
                 self.__status[job.name] = {
                     "stdout": job.stdoutdata(),
                     "stderr": job.stderrdata(),
                     "completed": not job.hasFailed(),
-                    "return": return_value,
                 }
 
                 info = {

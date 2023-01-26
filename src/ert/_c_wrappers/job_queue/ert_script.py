@@ -60,8 +60,6 @@ class ErtScript:
         argument_types: List[Type[Any]],
         argument_values: List[str],
     ):
-        self.__failed = False
-
         arguments = []
         for index, arg_value in enumerate(argument_values):
             if index < len(argument_types):
@@ -77,18 +75,17 @@ class ErtScript:
         try:
             return self.run(*arguments)
         except AttributeError as e:
+            error_msg = str(e)
             if not hasattr(self, "run"):
-                self.__failed = True
-                return (
-                    f"Script '{self.__class__.__name__}' "
-                    "has not implemented a 'run' function"
-                )
-            self.outputStackTrace(e)
+                error_msg = "No 'run' function implemented"
+            self.output_stack_trace(error=error_msg)
             return None
         except KeyboardInterrupt:
-            return f"Script '{self.__class__.__name__}' cancelled (CTRL+C)"
+            error_msg = "Script cancelled (CTRL+C)"
+            self.output_stack_trace(error=error_msg)
+            return None
         except Exception as e:
-            self.outputStackTrace(e)
+            self.output_stack_trace(str(e))
             return None
         finally:
             self.cleanup()
@@ -96,7 +93,7 @@ class ErtScript:
     # Need to have unique modules in case of identical object naming in scripts
     __module_count = 0
 
-    def outputStackTrace(self, error=None):
+    def output_stack_trace(self, error: str = ""):
         stack_trace = error or "".join(traceback.format_exception(*sys.exc_info()))
         sys.stderr.write(
             f"The script '{self.__class__.__name__}' caused an "
