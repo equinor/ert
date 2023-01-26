@@ -1,87 +1,31 @@
 import argparse
 import os
 import shutil
-from unittest.mock import MagicMock, Mock, PropertyMock
+from pathlib import Path
+from unittest.mock import Mock, PropertyMock
 
 import pytest
 from qtpy.QtCore import Qt, QTimer
 from qtpy.QtWidgets import QComboBox, QDialog, QMessageBox, QWidget
 
 import ert.gui
+from ert._c_wrappers.enkf import EnKFMain, ResConfig
 from ert.gui.ertwidgets.message_box import ErtMessageBox
 from ert.gui.main import GUILogHandler, _setup_main_window, run_gui
 from ert.gui.tools.event_viewer import add_gui_log_handler
 from ert.shared.models import BaseRunModel
 
 
-@pytest.fixture(name="patch_enkf_main")
-def fixture_patch_enkf_main(monkeypatch, tmp_path):
-    mocked_enkf_main = Mock()
-    mocked_enkf_main.getEnsembleSize.return_value = 10
-    mocked_enkf_main.storage_manager = MagicMock()
+@pytest.mark.usefixtures("use_tmpdir")
+def test_gui_load(qtbot):
+    config_file = Path("config.ert")
+    config_file.write_text("NUM_REALIZATIONS 1\n", encoding="utf-8")
 
-    mocked_enkf_main.getWorkflowList.return_value.getWorkflowNames.return_value = [
-        "my_workflow"
-    ]
-
-    res_config_mock = Mock()
-    res_config_mock.workflow_jobs = {}
-    type(res_config_mock).config_path = PropertyMock(return_value=tmp_path)
-    mocked_enkf_main.resConfig.return_value = res_config_mock
-    analysis_mock = Mock()
-    analysis_mock.case_format_is_set.return_value = False
-    facade_mock = Mock()
-    facade_mock.get_ensemble_size.return_value = 1
-    facade_mock.get_number_of_iterations.return_value = 1
-    facade_mock.get_current_case_name.return_value = "default"
-    facade_mock.get_analysis_config.return_value = analysis_mock
-    monkeypatch.setattr(
-        ert.gui.simulation.simulation_panel,
-        "LibresFacade",
-        Mock(return_value=facade_mock),
+    args = Mock()
+    args.config = str(config_file)
+    gui = _setup_main_window(
+        EnKFMain(ResConfig(str(config_file))), args, GUILogHandler()
     )
-
-    monkeypatch.setattr(
-        ert.gui.simulation.ensemble_smoother_panel,
-        "LibresFacade",
-        Mock(return_value=facade_mock),
-    )
-    monkeypatch.setattr(
-        ert.gui.ertwidgets.caseselector.CaseSelector,
-        "_getAllCases",
-        Mock(return_value=["test"]),
-    )
-
-    def patched_mask_to_rangestring(mask):
-        return ""
-
-    monkeypatch.setattr(
-        "ert._c_wrappers.config.rangestring.mask_to_rangestring.__code__",
-        patched_mask_to_rangestring.__code__,
-    )
-
-    monkeypatch.setattr(
-        ert.gui.ertwidgets.summarypanel.ErtSummary,
-        "getForwardModels",
-        Mock(return_value=[]),
-    )
-    monkeypatch.setattr(
-        ert.gui.ertwidgets.summarypanel.ErtSummary,
-        "getParameters",
-        Mock(return_value=[]),
-    )
-    monkeypatch.setattr(
-        ert.gui.ertwidgets.summarypanel.ErtSummary,
-        "getObservations",
-        Mock(return_value=[]),
-    )
-
-    yield mocked_enkf_main
-
-
-def test_gui_load(qtbot, patch_enkf_main):
-    args = argparse.Namespace(config="does_not_matter.ert")
-    gui = _setup_main_window(patch_enkf_main, args, GUILogHandler())
     qtbot.addWidget(gui)
 
     sim_panel = gui.findChild(QWidget, name="Simulation_panel")
@@ -136,12 +80,20 @@ def test_that_loading_gui_creates_a_single_storage_folder(
     assert [p.stem for p in tmp_path.glob("**/*")].count("storage") == 1
 
 
-def test_gui_iter_num(monkeypatch, qtbot, patch_enkf_main):
+@pytest.mark.usefixtures("use_tmpdir")
+def test_gui_iter_num(monkeypatch, qtbot):
+    config_file = Path("config.ert")
+    config_file.write_text("NUM_REALIZATIONS 1\n", encoding="utf-8")
+
+    args_mock = Mock()
+    args_mock.config = str(config_file)
+
     # won't run simulations so we mock it and test whether "iter_num" is in arguments
     def _assert_iter_in_args(panel):
         assert panel.getSimulationArguments().iter_num == 10
 
     args_mock = Mock()
+    args_mock.config = "poly.ert"
     type(args_mock).config = PropertyMock(return_value="config.ert")
 
     monkeypatch.setattr(
@@ -150,7 +102,9 @@ def test_gui_iter_num(monkeypatch, qtbot, patch_enkf_main):
         _assert_iter_in_args,
     )
 
-    gui = _setup_main_window(patch_enkf_main, args_mock, GUILogHandler())
+    gui = _setup_main_window(
+        EnKFMain(ResConfig(str(config_file))), args_mock, GUILogHandler()
+    )
     qtbot.addWidget(gui)
 
     sim_mode = gui.findChild(QWidget, name="Simulation_mode")
@@ -238,9 +192,13 @@ def test_that_ert_starts_when_there_are_no_problems(monkeypatch, qapp, tmp_path)
         assert gui.windowTitle() == "ERT - poly.ert"
 
 
-def test_start_simulation_disabled(monkeypatch, qtbot, patch_enkf_main):
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_start_simulation_is_disabled_until_dialog_is_accepted(monkeypatch, qtbot):
+    config_file = Path("config.ert")
+    config_file.write_text("NUM_REALIZATIONS 1\n", encoding="utf-8")
+
     args_mock = Mock()
-    type(args_mock).config = PropertyMock(return_value="config.ert")
+    args_mock.config = str(config_file)
 
     monkeypatch.setattr(
         ert.gui.simulation.simulation_panel.QMessageBox,
@@ -260,7 +218,9 @@ def test_start_simulation_disabled(monkeypatch, qtbot, patch_enkf_main):
         ert.gui.simulation.simulation_panel, "create_model", lambda *args: dummy_model
     )
 
-    gui = _setup_main_window(patch_enkf_main, args_mock, GUILogHandler())
+    gui = _setup_main_window(
+        EnKFMain(ResConfig(str(config_file))), args_mock, GUILogHandler()
+    )
     qtbot.addWidget(gui)
 
     start_simulation = gui.findChild(QWidget, name="start_simulation")
