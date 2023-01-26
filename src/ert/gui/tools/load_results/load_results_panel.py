@@ -48,7 +48,7 @@ class LoadResultsPanel(QWidget):
         self._active_realizations_field.setValidator(RangeStringArgument())
         layout.addRow("Realizations to load:", self._active_realizations_field)
 
-        self._iterations_model = ValueModel(self.facade.get_number_of_iterations())
+        self._iterations_model = ValueModel(0)
         self._iterations_field = StringBox(
             self._iterations_model, "load_results_manually/iterations"
         )
