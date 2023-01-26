@@ -160,14 +160,6 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
     def have_observations(self) -> bool:
         return self._enkf_main.have_observations()
 
-    def is_valid_runpath(self) -> bool:
-        iter_0_paths = set(self.get_run_paths([True] * self.get_ensemble_size(), 0))
-        iter_1_paths = set(self.get_run_paths([True] * self.get_ensemble_size(), 1))
-        return (
-            len(iter_0_paths) == self.get_ensemble_size()
-            and iter_0_paths != iter_1_paths
-        )
-
     @property
     def run_path(self) -> str:
         return self._enkf_main.getModelConfig().runpath_format_string
