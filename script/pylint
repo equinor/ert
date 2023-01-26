@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-from pathlib import Path
 import subprocess
+from pathlib import Path
 from typing import Union
 
 SOURCE_ROOT = Path(__file__).parent.parent
@@ -115,6 +115,7 @@ def main() -> None:
         "--enable",
         ",".join(sorted(CHECKS)),
         SOURCE_ROOT / "docs",
+        SOURCE_ROOT / "script",
         SOURCE_ROOT / "src",
         SOURCE_ROOT / "tests",
         SOURCE_ROOT / "test-data",

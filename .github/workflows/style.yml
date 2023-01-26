@@ -48,7 +48,7 @@ jobs:
     - name: Run isort
       if: ${{ always() }}
       run: |
-        isort --check src/ tests/
+        isort --check script/ src/ tests/
 
     - name: Lint with flake8
       if: ${{ always() }}
