@@ -374,7 +374,6 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
             realizations = [realization_index]
 
         gen_kw_keys = self.get_gen_kw()
-        ensemble_config = self._enkf_main.ensembleConfig()
         all_data = {}
 
         def _flatten(_gen_kw_dict: Dict[str, Any]) -> Dict[str, float]:
@@ -390,8 +389,7 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
         for realization in realizations:
             realization_data = {}
             for key in gen_kw_keys:
-                gen_kw_config = ensemble_config[key].getKeywordModelConfig()
-                gen_kw_dict = fs.load_gen_kw_as_dict(key, realization, gen_kw_config)
+                gen_kw_dict = fs.load_gen_kw_as_dict(key, realization)
                 realization_data.update(gen_kw_dict)
             all_data[realization] = _flatten(realization_data)
         gen_kw_df = DataFrame(all_data).T

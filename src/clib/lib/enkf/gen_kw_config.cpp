@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <ert/python.hpp>
 #include <ert/util/hash.h>
 #include <ert/util/util.h>
 #include <ert/util/vector.h>
@@ -292,7 +293,7 @@ gen_kw_config_iget_function_parameter_names(const gen_kw_config_type *config,
     return trans_func_get_param_names(parameter->trans_func);
 }
 
-double_vector_type *
+std::vector<double>
 gen_kw_config_iget_function_parameter_values(const gen_kw_config_type *config,
                                              int index) {
     const gen_kw_parameter_type *parameter =
@@ -303,3 +304,12 @@ gen_kw_config_iget_function_parameter_values(const gen_kw_config_type *config,
 
 VOID_FREE(gen_kw_config)
 VOID_GET_DATA_SIZE(gen_kw)
+
+ERT_CLIB_SUBMODULE("gen_kw_config", m) {
+    m.def(
+        "get_function_parameter_values",
+        [](Cwrap<gen_kw_config_type> self, int index) {
+            return gen_kw_config_iget_function_parameter_values(self, index);
+        },
+        py::arg("self"), py::arg("index"));
+}
