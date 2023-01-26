@@ -15,7 +15,7 @@ from ert._c_wrappers.enkf.config_keywords import (
 )
 
 grammar = r"""
-WHITESPACE: (" ")+
+WHITESPACE: (" "|"\t")+
 %ignore WHITESPACE
 
 %import common.CNAME
@@ -38,18 +38,18 @@ WORD: LETTER+
 CHAR: /[&$\[\]=,.\*a-zæøåA-ZÆØÅ10-9_%:\<\>\/-]/
 UNQUOTED: CHAR+
 
-CHAR_NO_EQ: /[.\*a-zæøåA-ZÆØÅ10-9_%:\<\>\/-]/
-UNQUOTED_NO_EQ: CHAR_NO_EQ+
+CHAR_NO_EQ: /[ +.\*a-zæøåA-ZÆØÅ10-9_%:\<\>\/-]/
+UNQUOTED_NO_EQ: /(?!([ ]))/ CHAR_NO_EQ+
 
 CHAR_KW: /[a-zæøåA-ZÆØÅ10-9_:-]/
 UNQUOTED_KW: CHAR_KW+
-
+ENV_STRING: "$" UNQUOTED_NO_EQ
 
 arg: NUMBER | STRING | UNQUOTED
 arglist: UNQUOTED kw_list
 
 kw_list: "(" [ kw_pair ("," kw_pair)*] ")"
-kw_val: NUMBER | UNQUOTED_NO_EQ | STRING
+kw_val: NUMBER | UNQUOTED_NO_EQ | STRING | ENV_STRING 
 kw_pair: KW_NAME "=" kw_val
 KW_NAME_STRICT: "<" UNQUOTED_KW ">"
 KW_NAME: UNQUOTED_KW | "<" KEYWORD_NAME ">"
@@ -82,6 +82,8 @@ def substitute(defines, string: str):
     if n >= 100:
         print(f"reached max iterations for {string}")
 
+    if current == string:
+        return string
     return current
 
 
@@ -136,7 +138,10 @@ class MakeDict:
                 if val_type == SchemaType.CONFIG_EXISTING_PATH and not os.path.exists(
                     path
                 ):
-                    raise ConfigValidationError(f"File {path} does not exist")
+                    err = f"File {path} does not exist.\n"
+                    if path != val:
+                        err += f"The configured value was {val}"
+                    raise ConfigValidationError(err)
                 return path
             return check_valid(val, item, index)
 
@@ -159,40 +164,50 @@ class MakeDict:
             else:
                 return with_types(line[1], item) if len(line) > 1 else None
 
-        for line in self.keywords:
-            key = line[0]
-            if key not in schema:
-                if self.add_invalid:
-                    self.config_dict[key] = line[1:]
-                self.errors.append(f"unknown key {key}")
-                continue
-            item = schema[key]
-            if item.multi_occurrence:
-                val = self.config_dict.get(key, [])
-                value = get_value(item, line)
-                val.append(value)
-                self.config_dict[key] = val
-            else:
-                self.config_dict[key] = get_value(item, line)
+        line = None
+        try:
+            for line in self.keywords:
+                key = line[0]
+                if key not in schema:
+                    if self.add_invalid:
+                        self.config_dict[key] = line[1:]
+                    self.errors.append(f"unknown key {key}")
+                    continue
+                item = schema[key]
+                if item.multi_occurrence:
+                    val = self.config_dict.get(key, [])
+                    value = get_value(item, line)
+                    val.append(value)
+                    self.config_dict[key] = val
+                else:
+                    self.config_dict[key] = get_value(item, line)
 
-        for kw, item in schema.items():
-            if item.required_set:
-                if item.kw not in self.config_dict:
-                    raise ConfigValidationError(f"{item.kw} must be set.")
+            for kw, item in schema.items():
+                if item.required_set:
+                    if item.kw not in self.config_dict:
+                        raise ConfigValidationError(f"{item.kw} must be set.")
 
-        if self.defines:
-            self.config_dict["DEFINE"] = []
-            for define in self.defines:
-                self.config_dict["DEFINE"].append(define)
+            if self.defines:
+                self.config_dict["DEFINE"] = []
+                for define in self.defines:
+                    self.config_dict["DEFINE"].append(define)
 
-        if self.data_kws:
-            self.config_dict["DATA_KW"] = []
-            for data_kw in self.data_kws:
-                self.config_dict["DATA_KW"].append(data_kw)
+            if self.data_kws:
+                self.config_dict["DATA_KW"] = []
+                for data_kw in self.data_kws:
+                    self.config_dict["DATA_KW"].append(data_kw)
+        except ConfigValidationError as e:
+            line_msg = " ".join(line) if line else ""
+            # should always be a token as no replacement should be done to keywords
+            token: Token = line[0]
+            raise ConfigValidationError(
+                f"{e.errors}\nWas used in {line_msg} at line {token.line}",
+                config_file=self.config_file,
+            )
 
         return self.config_dict
 
-    def __init__(self, config_dir, config_file_base, add_invalid=False):
+    def __init__(self, config_file, config_dir, config_file_base, add_invalid=False):
         self.defines = []
         self.data_kws = []
         self.keywords = []
@@ -201,6 +216,7 @@ class MakeDict:
         self.add_invalid = add_invalid
         self.config_dir = config_dir
         self.config_file_base = config_file_base
+        self.config_file = config_file
 
     def include(self, tree):
         pass
@@ -266,7 +282,6 @@ class MakeDict:
 
         self.keywords.append(inst)
 
-
 def do_includes(tree: Tree, config_dir):
     to_include = []
     for i, node in enumerate(tree.children):
@@ -325,6 +340,7 @@ def parse(file, site_config=None, add_invalid=False):
         config_dir=config_dir,
         config_file_base=config_file_base,
         add_invalid=add_invalid,
+        config_file=file,
     )
     config_dict = do_defines.do_it(tree, site_config)
     # import json
