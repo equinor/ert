@@ -60,6 +60,15 @@ class Storage:
         with open(self.mount_point / "gen-kw-priors.json", "w", encoding="utf-8") as f:
             json.dump(priors, f)
 
+    def load_gen_kw_priors(
+        self,
+    ) -> Dict[str, List[Dict[str, Union[str, Dict[str, float]]]]]:
+        with open(self.mount_point / "gen-kw-priors.json", "r", encoding="utf-8") as f:
+            priors: Dict[
+                str, List[Dict[str, Union[str, Dict[str, float]]]]
+            ] = json.load(f)
+        return priors
+
     def load_gen_kw_realization(
         self, key: str, realization: int
     ) -> Tuple[npt.NDArray[np.double], List[str]]:
