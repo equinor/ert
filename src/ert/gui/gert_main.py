@@ -72,6 +72,9 @@ def run_gui(args: argparse.Namespace):
 
 
 def _start_initial_gui_window(args, log_handler):
+    # Create logger inside function to make sure all handlers have been added to
+    # the root-logger.
+    logger = logging.getLogger(__name__)
     messages = []
     res_config = None
     try:
@@ -79,11 +82,9 @@ def _start_initial_gui_window(args, log_handler):
         messages += ResConfig.make_suggestion_list(args.config)
     except ConfigValidationError as error:
         messages.append(str(error))
+        logger.error("Error shown in gui suggester %s", str(messages))
         return _setup_suggester(messages, args, log_handler), None
 
-    # Create logger inside function to make sure all handlers have been added to
-    # the root-logger.
-    logger = logging.getLogger(__name__)
     logger.info(
         "Logging forward model jobs",
         extra={"workflow_jobs": str(res_config.forward_model.job_name_list())},
@@ -96,12 +97,14 @@ def _start_initial_gui_window(args, log_handler):
         ert = EnKFMain(res_config)
     except ConfigValidationError as error:
         messages.append(str(error))
+        logger.error("Error shown in gui suggester %s", str(messages))
         return _setup_suggester(messages, args, log_handler), None
 
     locale_msg = _check_locale()
     if locale_msg is not None:
         messages.append(locale_msg)
     if messages:
+        logger.warning("Warning shown in gui suggester %s", str(messages))
         return (
             _setup_suggester(
                 messages, args, log_handler, _setup_main_window(ert, args, log_handler)
