@@ -34,7 +34,7 @@ class Exporter:
         export_job = self.facade.get_workflow_job(self._export_job)
         runpath_job = self.facade.get_workflow_job(self._runpath_job)
 
-        runpath_job.run(ert=self.ert, arguments=[], verbose=True)
+        runpath_job.run(ert=self.ert, arguments=[])
         if runpath_job.hasFailed():
             raise UserWarning(f"Failed to execute {self._runpath_job}")
 
@@ -46,7 +46,6 @@ class Exporter:
                 parameters["time_index"],
                 parameters["column_keys"],
             ],
-            verbose=True,
         )
         if export_job.hasFailed():
             raise UserWarning(f"Failed to execute {self._export_job}")
