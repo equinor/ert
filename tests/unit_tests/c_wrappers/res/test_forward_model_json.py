@@ -4,13 +4,23 @@ import json
 import os
 import os.path
 import stat
+from pathlib import Path
+from typing import List
 
 import pytest
 
+from ert._c_wrappers.enkf import ResConfig
 from ert._c_wrappers.job_queue.ext_job import ExtJob
-from ert._c_wrappers.job_queue.forward_model import ForwardModel
-from ert._c_wrappers.util.substitution_list import SubstitutionList
 from ert.simulator.forward_model_status import ForwardModelStatus
+
+
+def write_jobs_json(path, forward_model_json):
+    with open(Path(path) / "jobs.json", mode="w", encoding="utf-8") as fptr:
+        json.dump(
+            forward_model_json,
+            fptr,
+        )
+
 
 joblist = [
     {
@@ -242,14 +252,11 @@ def generate_job_from_dict(ext_job_config):
     return ext_job
 
 
-def set_up_forward_model(selected_jobs=None):
+def set_up_forward_model(selected_jobs=None) -> List[ExtJob]:
     if selected_jobs is None:
         selected_jobs = range(len(joblist))
     jobs = [generate_job_from_dict(job) for job in joblist]
-
-    forward_model = ForwardModel(jobs=[jobs[i] for i in selected_jobs])
-
-    return forward_model
+    return [jobs[i] for i in selected_jobs]
 
 
 def verify_json_dump(selected_jobs, run_id):
@@ -288,10 +295,11 @@ def verify_json_dump(selected_jobs, run_id):
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_no_jobs():
-    forward_model = set_up_forward_model([])
+    forward_model_list = set_up_forward_model([])
     run_id = "test_no_jobs_id"
-    forward_model.formatted_fprintf(
-        run_id, os.getcwd(), "data_root", 0, 0, SubstitutionList(), {}
+
+    write_jobs_json(
+        ".", ResConfig.forward_model_data_to_json(forward_model_list, run_id)
     )
 
     verify_json_dump([], run_id)
@@ -313,20 +321,13 @@ def test_transfer_arg_types():
         f.write("ENV KEY2 VALUE2\n")
 
     job = ExtJob.from_config_file("FWD_MODEL")
-
-    forward_model = ForwardModel(jobs=[job])
-
+    forward_model_list = [job]
     run_id = "test_no_jobs_id"
 
-    forward_model.formatted_fprintf(
-        run_id,
-        os.getcwd(),
-        "data_root",
-        0,
-        0,
-        SubstitutionList(),
-        {},
+    write_jobs_json(
+        ".", ResConfig.forward_model_data_to_json(forward_model_list, run_id)
     )
+
     config = load_configs(JOBS_JSON_FILE)
     printed_job = config["jobList"][0]
     assert printed_job["min_arg"] == 2
@@ -342,34 +343,23 @@ def test_transfer_arg_types():
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_repr():
-    forward_model = set_up_forward_model()
-    assert repr(forward_model).startswith("ForwardModel")
-
-
-@pytest.mark.usefixtures("use_tmpdir")
 def test_one_job():
     for i in range(len(joblist)):
         forward_model = set_up_forward_model([i])
         run_id = "test_one_job"
-        forward_model.formatted_fprintf(
-            run_id,
-            os.getcwd(),
-            "data_root",
-            0,
-            0,
-            SubstitutionList(),
-            {},
-        )
 
+        write_jobs_json(
+            ".", ResConfig.forward_model_data_to_json(forward_model, run_id)
+        )
         verify_json_dump([i], run_id)
 
 
 def run_all():
-    forward_model = set_up_forward_model(range(len(joblist)))
+    forward_model_list = set_up_forward_model(range(len(joblist)))
     run_id = "run_all"
-    forward_model.formatted_fprintf(
-        run_id, os.getcwd(), "data_root", 0, 0, SubstitutionList(), {}
+
+    write_jobs_json(
+        ".", ResConfig.forward_model_data_to_json(forward_model_list, run_id)
     )
 
     verify_json_dump(range(len(joblist)), run_id)
@@ -412,16 +402,11 @@ def test_various_null_fields():
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_status_file():
-    forward_model = set_up_forward_model()
+    forward_model_list: List[ExtJob] = set_up_forward_model()
     run_id = "test_no_jobs_id"
-    forward_model.formatted_fprintf(
-        run_id,
-        os.getcwd(),
-        "data_root",
-        0,
-        0,
-        SubstitutionList(),
-        {},
+
+    write_jobs_json(
+        ".", ResConfig.forward_model_data_to_json(forward_model_list, run_id)
     )
 
     with open("status.json", "w", encoding="utf-8") as f:
@@ -452,18 +437,14 @@ def test_status_file():
 
 
 def test_that_values_with_brackets_are_ommitted(tmp_path, caplog):
-    forward_model = set_up_forward_model()
-    forward_model.jobs[0].environment["ENV_VAR"] = "<SOME_BRACKETS>"
+    forward_model_list: List[ExtJob] = set_up_forward_model()
+    forward_model_list[0].environment["ENV_VAR"] = "<SOME_BRACKETS>"
     run_id = "test_no_jobs_id"
-    forward_model.formatted_fprintf(
-        run_id,
-        tmp_path,
-        "data_root",
-        0,
-        0,
-        SubstitutionList(),
-        {},
+
+    write_jobs_json(
+        tmp_path, ResConfig.forward_model_data_to_json(forward_model_list, run_id)
     )
+
     assert "Environment variable ENV_VAR skipped due to" in caplog.text
     with open(tmp_path / "jobs.json", encoding="utf-8") as fp:
         data = json.load(fp)

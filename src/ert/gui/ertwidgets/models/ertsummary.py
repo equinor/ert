@@ -12,7 +12,7 @@ class ErtSummary:
         self.ert = ert
 
     def getForwardModels(self) -> List[str]:
-        return self.ert.resConfig().forward_model.job_name_list()
+        return self.ert.resConfig().forward_model_job_name_list()
 
     def getParameters(self) -> List[str]:
         parameters = self.ert.ensembleConfig().getKeylistFromVarType(

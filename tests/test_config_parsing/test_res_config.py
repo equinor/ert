@@ -1,5 +1,6 @@
 import logging
 import os
+import os.path
 import re
 from datetime import date
 from textwrap import dedent
@@ -311,7 +312,7 @@ def test_parsing_forward_model_with_quotes_does_not_introduce_spaces():
         fh.write(test_config_contents)
 
     res_config = ResConfig(user_config_file=test_config_file_name)
-    for _, value in res_config.forward_model.jobs[0].private_args:
+    for _, value in res_config.forward_model_list[0].private_args:
         assert " " not in value
 
 
@@ -581,8 +582,8 @@ def test_that_substitutions_can_be_done_in_job_names():
         fh.write(test_config_contents)
 
     res_config = ResConfig(user_config_file=test_config_file_name)
-    assert len(res_config.forward_model.jobs) == 1
-    job = res_config.forward_model.jobs[0]
+    assert len(res_config.forward_model_list) == 1
+    job = res_config.forward_model_list[0]
     assert job.name == "ECLIPSE100"
 
 

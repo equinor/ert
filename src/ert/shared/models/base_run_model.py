@@ -14,7 +14,7 @@ from cloudevents.http import CloudEvent
 import _ert_com_protocol
 from ert._c_wrappers.enkf import EnKFMain, QueueConfig
 from ert._c_wrappers.enkf.ert_run_context import RunContext
-from ert._c_wrappers.job_queue import ForwardModel, RunStatusType
+from ert._c_wrappers.job_queue import RunStatusType
 from ert.ensemble_evaluator import (
     Ensemble,
     EnsembleBuilder,
@@ -338,7 +338,9 @@ class BaseRunModel:
             step = StepBuilder().set_id("0").set_dummy_io().set_name("legacy step")
             if active:
                 real.active(True).add_step(step)
-                for index, ext_job in enumerate(self.get_forward_model().jobs):
+                for index, ext_job in enumerate(
+                    self.ert().resConfig().forward_model_list
+                ):
                     step.add_job(
                         LegacyJobBuilder()
                         .set_id(str(index))
@@ -474,9 +476,6 @@ class BaseRunModel:
     @dispatch.register
     async def _(self, event: _ert_com_protocol.DispatcherMessage) -> None:
         await self._state_machine.update(event)
-
-    def get_forward_model(self) -> ForwardModel:
-        return self.ert().resConfig().forward_model
 
     @feature_enabled("new-storage")
     def _post_ensemble_data(

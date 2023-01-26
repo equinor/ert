@@ -185,7 +185,7 @@ def test_extensive_config(setup_case):
     assert jobname_format == model_config.jobname_format_string
     assert (
         snake_oil_structure_config["FORWARD_MODEL"]
-        == res_config.forward_model.job_name_list()
+        == res_config.forward_model_job_name_list()
     )
     assert (
         HistorySourceEnum.from_string(snake_oil_structure_config["HISTORY_SOURCE"])
