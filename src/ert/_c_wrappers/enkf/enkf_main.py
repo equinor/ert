@@ -468,28 +468,27 @@ class EnKFMain:
                     run_arg.iens,
                     run_context.sim_fs,
                 )
-                res_config.forward_model.formatted_fprintf(
-                    run_arg.get_run_id(),
-                    run_arg.runpath,
-                    model_config.data_root,
-                    run_arg.iens,
-                    run_context.iteration,
-                    run_context.substituter,
-                    res_config.env_vars,
-                )
-                if first_time:
-                    first_time = False
-                    logger.info(
-                        "content of first jobs.json",
-                        extra=res_config.forward_model.get_job_data(
-                            run_arg.get_run_id(),
-                            model_config.data_root,
-                            run_arg.iens,
-                            run_context.iteration,
-                            run_context.substituter,
-                            res_config.env_vars,
-                        ),
+
+                with open(
+                    Path(run_arg.runpath) / "jobs.json", mode="w", encoding="utf-8"
+                ) as fptr:
+                    forward_model_output = res_config.forward_model_data_to_json(
+                        res_config.forward_model_list,
+                        run_arg.get_run_id(),
+                        model_config.data_root,
+                        run_arg.iens,
+                        run_context.iteration,
+                        run_context.substituter,
+                        res_config.env_vars,
                     )
+
+                    json.dump(forward_model_output, fptr)
+
+                    if first_time:
+                        first_time = False
+                        logger.info(
+                            "Content of first jobs.json", extra=forward_model_output
+                        )
 
         run_context.runpaths.write_runpath_list(
             [run_context.iteration], run_context.active_realizations

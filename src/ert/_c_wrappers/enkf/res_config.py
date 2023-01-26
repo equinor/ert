@@ -5,7 +5,7 @@ import warnings
 from collections import defaultdict
 from datetime import date
 from os.path import isfile
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Mapping, Optional
 
 import pkg_resources
 
@@ -20,11 +20,11 @@ from ert._c_wrappers.enkf.queue_config import QueueConfig
 from ert._c_wrappers.job_queue import (
     ExtJob,
     ExtJobInvalidArgsException,
-    ForwardModel,
     Workflow,
     WorkflowJob,
 )
 from ert._c_wrappers.util import SubstitutionList
+from ert._clib import job_kw
 from ert._clib.config_keywords import init_site_config_parser, init_user_config_parser
 
 from ._config_content_as_dict import config_content_as_dict
@@ -308,7 +308,8 @@ class ResConfig:
             job.define_args = self.substitution_list
             jobs.append(job)
 
-        self.forward_model = ForwardModel(jobs=jobs)
+        self.forward_model_list: List[ExtJob] = jobs
+
         if ConfigKeys.JOBNAME in config_dict and ConfigKeys.ECLBASE in config_dict:
             warnings.warn(
                 "Can not have both JOBNAME and ECLBASE keywords. "
@@ -322,6 +323,113 @@ class ResConfig:
                 "When using SUMMARY keyword, the config must also specify ECLBASE",
                 config_file=config_file,
             )
+
+    def forward_model_job_name_list(self) -> List[str]:
+        return [j.name for j in self.forward_model_list]
+
+    @staticmethod
+    def forward_model_data_to_json(
+        forward_model_list: List[ExtJob],
+        run_id: str,
+        data_root: str = "data_root",
+        iens: int = 0,
+        itr: int = 0,
+        context: "SubstitutionList" = None,
+        env_varlist: Mapping[str, str] = None,
+    ) -> Dict[str, Any]:
+        def substitute(job, string: str):
+            job_args = ",".join([f"{key}={value}" for key, value in job.private_args])
+            job_description = f"{job.name}({job_args})"
+            substitution_context_hint = (
+                f"parsing forward model job `FORWARD_MODEL {job_description}` - "
+                "reconstructed, with defines applied during parsing"
+            )
+            if string is not None:
+                copy_private_args = SubstitutionList()
+                for key, val in job.private_args:
+                    copy_private_args.addItem(
+                        key, context.substitute_real_iter(val, iens, itr)
+                    )
+                string = copy_private_args.substitute(
+                    string, substitution_context_hint, 1
+                )
+                return context.substitute_real_iter(string, iens, itr)
+            else:
+                return string
+
+        def handle_default(job: ExtJob, arg: str) -> str:
+            return job.default_mapping.get(arg, arg)
+
+        def filter_env_dict(job, d):
+            result = {}
+            for key, value in d.items():
+                new_key = substitute(job, key)
+                new_value = substitute(job, value)
+                if new_value is None:
+                    result[new_key] = None
+                elif not (new_value[0] == "<" and new_value[-1] == ">"):
+                    # Remove values containing "<XXX>". These are expected to be
+                    # replaced by substitute, but were not.
+                    result[new_key] = new_value
+                else:
+                    logger.warning(
+                        "Environment variable %s skipped due to unmatched define %s",
+                        new_key,
+                        new_value,
+                    )
+            # Its expected that empty dicts be replaced with "null"
+            # in jobs.json
+            if not result:
+                return None
+            return result
+
+        if context is None:
+            context = SubstitutionList()
+
+        if env_varlist is None:
+            env_varlist = {}
+
+        for job in forward_model_list:
+            for key, val in job.private_args:
+                if key in context and key != val:
+                    logger.info(
+                        f"Private arg '{key}':'{val}' chosen over"
+                        f" global '{context[key]}' in forward model {job.name}"
+                    )
+
+        return {
+            "DATA_ROOT": data_root,
+            "global_environment": env_varlist,
+            "jobList": [
+                {
+                    "name": substitute(job, job.name),
+                    "executable": substitute(job, job.executable),
+                    "target_file": substitute(job, job.target_file),
+                    "error_file": substitute(job, job.error_file),
+                    "start_file": substitute(job, job.start_file),
+                    "stdout": substitute(job, job.stdout_file) + f".{idx}"
+                    if job.stdout_file
+                    else None,
+                    "stderr": substitute(job, job.stderr_file) + f".{idx}"
+                    if job.stderr_file
+                    else None,
+                    "stdin": substitute(job, job.stdin_file),
+                    "argList": [
+                        handle_default(job, substitute(job, arg)) for arg in job.arglist
+                    ],
+                    "environment": filter_env_dict(job, job.environment),
+                    "exec_env": filter_env_dict(job, job.exec_env),
+                    "max_running_minutes": job.max_running_minutes,
+                    "max_running": job.max_running,
+                    "min_arg": job.min_arg,
+                    "arg_types": [job_kw.kw_from_type(typ) for typ in job.arg_types],
+                    "max_arg": job.max_arg,
+                }
+                for idx, job in enumerate(forward_model_list)
+            ],
+            "run_id": run_id,
+            "ert_pid": str(os.getpid()),
+        }
 
     def _workflows_from_dict(self, content_dict):
         workflow_job_info = content_dict.get(ConfigKeys.LOAD_WORKFLOW_JOB, [])

@@ -91,7 +91,7 @@ def _start_initial_gui_window(args, log_handler):
         logger.info("Error in config file shown in gui: '%s'", error)
         return _setup_suggester(messages), None
 
-    for job in res_config.forward_model.jobs:
+    for job in res_config.forward_model_list:
         logger.info("Config contains forward model job %s", job)
     for wm in warning_messages:
         if wm.category != ConfigWarning:
