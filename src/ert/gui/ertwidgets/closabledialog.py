@@ -17,6 +17,7 @@ class ClosableDialog(QDialog):
 
         self.__button_layout = QHBoxLayout()
         self.close_button = QPushButton("Close")
+        self.close_button.setAutoDefault(False)
         self.close_button.setObjectName("CLOSE")
         self.close_button.clicked.connect(self.accept)
         self.__button_layout.addStretch()
