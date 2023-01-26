@@ -16,7 +16,7 @@ def test_workflow():
     with pytest.raises(ConfigValidationError, match="Could not open config_file"):
         _ = WorkflowJob.fromFile("knock_job", name="KNOCK")
 
-    workflow = Workflow("dump_workflow", {"DUMP": dump_job})
+    workflow = Workflow.from_file("dump_workflow", None, {"DUMP": dump_job})
 
     assert len(workflow) == 2
 
@@ -34,14 +34,14 @@ def test_workflow_run():
 
     dump_job = WorkflowJob.fromFile("dump_job", name="DUMP")
 
-    workflow = Workflow("dump_workflow", {"DUMP": dump_job})
-
-    assert len(workflow) == 2
-
     context = SubstitutionList()
     context.addItem("<PARAM>", "text")
 
-    assert workflow.run(None, verbose=True, context=context)
+    workflow = Workflow.from_file("dump_workflow", context, {"DUMP": dump_job})
+
+    assert len(workflow) == 2
+
+    assert workflow.run(None, verbose=True)
 
     with open("dump1", "r", encoding="utf-8") as f:
         assert f.read() == "dump_text_1"
@@ -54,4 +54,4 @@ def test_workflow_run():
 def test_failing_workflow_run():
     WorkflowCommon.createExternalDumpJob()
     with pytest.raises(ValueError, match="does not exist"):
-        _ = Workflow("undefined", {})
+        _ = Workflow.from_file("undefined", None, {})

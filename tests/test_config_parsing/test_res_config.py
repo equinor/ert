@@ -445,3 +445,52 @@ def test_forward_model_warns_for_private_arg_without_effect(caplog):
         ResConfig(user_config_file=test_config_file_name)
         assert len(caplog.records) == 1
         assert re.search(r"no effect.*<RMS_VERSJON>=2.1", caplog.messages[0])
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_magic_strings_get_substituted_in_workflow():
+    script_file_contents = dedent(
+        """
+        SCRIPT script.py
+        ARGLIST <A>
+        ARG_TYPE 0 INT
+        """
+    )
+    workflow_file_contents = dedent(
+        """
+        script <ZERO>
+        """
+    )
+    script_file_path = os.path.join(os.getcwd(), "script")
+    workflow_file_path = os.path.join(os.getcwd(), "workflow")
+    with open(script_file_path, mode="w", encoding="utf-8") as fh:
+        fh.write(script_file_contents)
+    with open(workflow_file_path, mode="w", encoding="utf-8") as fh:
+        fh.write(workflow_file_contents)
+
+    with open("script.py", mode="w", encoding="utf-8") as fh:
+        fh.write(
+            dedent(
+                """
+                from ert._c_wrappers.job_queue import ErtScript
+                class Script(ErtScript):
+                    def run(self, *args):
+                        pass
+                """
+            )
+        )
+    with open("config.ert", mode="w", encoding="utf-8") as fh:
+        fh.write(
+            dedent(
+                f"""
+                NUM_REALIZATIONS 1
+                DEFINE <ZERO> 0
+                LOAD_WORKFLOW_JOB {script_file_path} script
+                LOAD_WORKFLOW {workflow_file_path}
+                """
+            )
+        )
+
+    res_config = ResConfig("config.ert")
+
+    assert res_config.workflows["workflow"].cmd_list[0][1] == ["0"]

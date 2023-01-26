@@ -350,7 +350,9 @@ class ResConfig:
 
         for work in workflow_info:
             filename = os.path.basename(work[0]) if len(work) == 1 else work[1]
-            self.workflows[filename] = Workflow(work[0], self.workflow_jobs)
+            self.workflows[filename] = Workflow.from_file(
+                work[0], self.substitution_list, self.workflow_jobs
+            )
 
         for hook_name, mode_name in hook_workflow_info:
             if mode_name not in [runtime.name for runtime in HookRuntime.enums()]:

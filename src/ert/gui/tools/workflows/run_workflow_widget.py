@@ -120,8 +120,7 @@ class RunWorkflowWidget(QWidget):
         workflow_list = self.ert.getWorkflowList()
 
         workflow = workflow_list[self.getCurrentWorkflowName()]
-        context = self.ert.get_context()
-        self._workflow_runner = WorkflowRunner(workflow, self.ert, context)
+        self._workflow_runner = WorkflowRunner(workflow, self.ert)
         self._workflow_runner.run()
 
         workflow_thread.start()
@@ -163,12 +162,10 @@ class RunWorkflowWidget(QWidget):
     def workflowFinishedWithFail(self):
         workflow_name = self.getCurrentWorkflowName()
 
-        error = self._workflow_runner.workflowError()
-
         QMessageBox.critical(
             self,
             "Workflow failed!",
-            f"The workflow '{workflow_name}' failed!\n\n{error}",
+            f"The workflow '{workflow_name}' failed!\n\n",
         )
         self._running_workflow_dialog.reject()
         self._running_workflow_dialog = None
