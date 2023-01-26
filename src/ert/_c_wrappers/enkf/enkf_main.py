@@ -98,7 +98,7 @@ def _generate_gen_kw_parameter_file(
     exports: Dict[str, Dict[str, float]],
 ) -> None:
     key = config.getKey()
-    gen_kw_dict = fs.load_gen_kw_as_dict(key, realization, config)
+    gen_kw_dict = fs.load_gen_kw_as_dict(key, realization)
     transformed = gen_kw_dict[key]
     if not len(transformed) == len(config):
         raise ValueError(
