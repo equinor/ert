@@ -1,5 +1,5 @@
 import logging
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Dict
 
 if TYPE_CHECKING:
     from ert._c_wrappers.config import ConfigParser
@@ -8,8 +8,9 @@ logger = logging.getLogger(__name__)
 
 
 class DeprecationMigrationSuggester:
-    def __init__(self, parser: "ConfigParser"):
+    def __init__(self, parser: "ConfigParser", pre_defines: Dict[str, str]):
         self._parser = parser
+        self._pre_defines = pre_defines
         self._add_deprecated_keywords_to_parser()
 
     REPLACE_WITH_GEN_KW = [
@@ -40,7 +41,9 @@ class DeprecationMigrationSuggester:
 
     def suggest_migrations(self, filename: str):
         suggestions = []
-        content = self._parser.parse(filename)
+        content = self._parser.parse(
+            filename, pre_defined_kw_map=self._pre_defines, validate=False
+        )
 
         def add_suggestion(kw, suggestion):
             if content.hasKey(kw):

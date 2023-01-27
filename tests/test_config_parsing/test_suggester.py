@@ -1,14 +1,17 @@
 import pytest
 
-from ert._c_wrappers.config import ConfigParser
+from ert._c_wrappers.enkf import ResConfig
 from ert._c_wrappers.enkf._deprecation_migration_suggester import (
     DeprecationMigrationSuggester,
 )
 
 
 @pytest.fixture
-def suggester():
-    return DeprecationMigrationSuggester(ConfigParser())
+def suggester(tmp_path):
+    return DeprecationMigrationSuggester(
+        ResConfig._create_user_config_parser(),
+        ResConfig._create_pre_defines(str(tmp_path / "config.ert")),
+    )
 
 
 @pytest.mark.parametrize("kw", DeprecationMigrationSuggester.JUST_REMOVE_KEYWORDS)
@@ -91,3 +94,13 @@ def test_that_suggester_gives_delete_runpath_migration(suggester, tmp_path):
 
     assert len(suggestions) == 1
     assert "It was removed in 2017" in suggestions[0]
+
+
+def test_suggester_does_not_report_non_existent_path_due_to_missing_pre_defines(
+    suggester, tmp_path
+):
+    (tmp_path / "workflow").write_text("")
+    (tmp_path / "config.ert").write_text(
+        "NUM_REALIZATIONS 1\nLOAD_WORKFLOW <CONFIG_PATH>/workflow\n"
+    )
+    assert suggester.suggest_migrations(str(tmp_path / "config.ert")) == []
