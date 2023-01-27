@@ -195,7 +195,7 @@ class ResConfig:
     @staticmethod
     def _create_pre_defines(
         config_file_path: str,
-    ) -> dict:
+    ) -> Dict[str, str]:
         date_string = date.today().isoformat()
         config_file_dir = os.path.abspath(os.path.dirname(config_file_path))
         config_file_name = os.path.basename(config_file_path)
@@ -225,7 +225,8 @@ class ResConfig:
 
     def _display_suggestions(self, config_file):
         suggestions = DeprecationMigrationSuggester(
-            ResConfig._create_user_config_parser()
+            ResConfig._create_user_config_parser(),
+            ResConfig._create_pre_defines(config_file),
         ).suggest_migrations(config_file)
         for suggestion in suggestions:
             logging.error(suggestion)
@@ -233,7 +234,8 @@ class ResConfig:
     @classmethod
     def make_suggestion_list(cls, config_file):
         return DeprecationMigrationSuggester(
-            ResConfig._create_user_config_parser()
+            ResConfig._create_user_config_parser(),
+            ResConfig._create_pre_defines(config_file),
         ).suggest_migrations(config_file)
 
     # build configs from config file or everest dict
