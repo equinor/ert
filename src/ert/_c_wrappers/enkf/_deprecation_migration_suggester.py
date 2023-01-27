@@ -66,6 +66,7 @@ class DeprecationMigrationSuggester:
                     " and can result in undefined behavior. "
                     f"Please change {key} to <{key.replace('<', '').replace('>', '')}>"
                 )
+                logger.info("Deprecated use of DEFINE without <>: %s", _suggestion)
                 suggestions.append(_suggestion)
 
         if content.hasKey("RUNPATH") and "%d" in content.getValue("RUNPATH"):
