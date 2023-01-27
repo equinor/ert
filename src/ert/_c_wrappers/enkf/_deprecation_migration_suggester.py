@@ -55,7 +55,7 @@ class DeprecationMigrationSuggester:
 
         def add_suggestion(kw, suggestion):
             if content.hasKey(kw):
-                logger.info("Deprecated keyword %s", kw)
+                logger.info("Added suggestion for keyword %s: %s", kw, suggestion)
                 suggestions.append(suggestion)
 
         for key, _ in defines:
