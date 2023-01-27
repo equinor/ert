@@ -9,7 +9,7 @@ from typing import Any, Dict, Optional
 
 import pkg_resources
 
-from ert._c_wrappers.config import ConfigContent, ConfigParser
+from ert._c_wrappers.config import ConfigParser
 from ert._c_wrappers.config.config_parser import ConfigValidationError, ConfigWarning
 from ert._c_wrappers.enkf.analysis_config import AnalysisConfig
 from ert._c_wrappers.enkf.config_keys import ConfigKeys
@@ -114,16 +114,15 @@ class ResConfig:
                 f"Content of the configuration file ({config_file}):\n" + config_context
             )
 
-    def _log_config_content(self, config_content: ConfigContent) -> None:
-        tmp_dict = config_content_as_dict(config_content, {}).copy()
+    def _log_config_dict(self, content_dict: Dict[str, Any]) -> None:
+        tmp_dict = content_dict.copy()
         tmp_dict.pop("FORWARD_MODEL", None)
         tmp_dict.pop("LOAD_WORKFLOW", None)
         tmp_dict.pop("LOAD_WORKFLOW_JOB", None)
         tmp_dict.pop("HOOK_WORKFLOW", None)
         tmp_dict.pop("WORKFLOW_JOB_DIRECTORY", None)
 
-        logger.info("Content of the config_content:")
-        logger.info(tmp_dict)
+        logger.info("Content of the config_dict: %s", tmp_dict)
 
     @staticmethod
     def _create_pre_defines(
@@ -201,11 +200,11 @@ class ResConfig:
         )
 
         self._log_config_file(user_config_file)
-        self._log_config_content(user_config_content)
 
         config_content_dict = config_content_as_dict(
             user_config_content, site_config_content
         )
+        self._log_config_dict(config_content_dict)
         ResConfig.apply_config_content_defaults(config_content_dict, self.config_path)
 
         self._alloc_from_dict(config_content_dict)
