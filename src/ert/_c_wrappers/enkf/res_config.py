@@ -181,16 +181,15 @@ class ResConfig:
                 f"Content of the configuration file ({config_file}):\n" + config_context
             )
 
-    def _log_config_content(self, config_content: ConfigContent) -> None:
-        tmp_dict = config_content_as_dict(config_content, {}).copy()
+    def _log_config_dict(self, content_dict: Dict[str, Any]) -> None:
+        tmp_dict = content_dict.copy()
         tmp_dict.pop("FORWARD_MODEL", None)
         tmp_dict.pop("LOAD_WORKFLOW", None)
         tmp_dict.pop("LOAD_WORKFLOW_JOB", None)
         tmp_dict.pop("HOOK_WORKFLOW", None)
         tmp_dict.pop("WORKFLOW_JOB_DIRECTORY", None)
 
-        logger.info("Content of the config_content:")
-        logger.info(tmp_dict)
+        logger.info("Content of the config_dict: %s", tmp_dict)
 
     @staticmethod
     def _create_pre_defines(
@@ -256,7 +255,6 @@ class ResConfig:
             user_config_content = self._build_config_content(config)
 
         self._log_config_file(user_config_file)
-        self._log_config_content(user_config_content)
 
         if self.errors:
             logging.error(f"Error loading configuration: {str(self._errors)}")
@@ -267,6 +265,7 @@ class ResConfig:
         config_content_dict = config_content_as_dict(
             user_config_content, site_config_content
         )
+        self._log_config_dict(config_content_dict)
         ResConfig.apply_config_content_defaults(config_content_dict, self.config_path)
         self.substitution_list = SubstitutionList.from_dict(config_content_dict)
 
