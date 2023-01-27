@@ -7,8 +7,11 @@ from ert._c_wrappers.enkf.res_config import ResConfig
 
 
 @pytest.fixture
-def suggester():
-    return DeprecationMigrationSuggester(ResConfig._create_user_config_parser())
+def suggester(tmp_path):
+    return DeprecationMigrationSuggester(
+        ResConfig._create_user_config_parser(),
+        ResConfig._create_pre_defines(str(tmp_path / "config.ert")),
+    )
 
 
 @pytest.mark.parametrize("kw", DeprecationMigrationSuggester.JUST_REMOVE_KEYWORDS)
@@ -139,3 +142,13 @@ def test_suggester_gives_deprecated_define_migration_hint(suggester, tmp_path):
     assert "Please change A to <A>" in suggestions[0]
     assert "Please change <A<B>> to <AB>" in suggestions[1]
     assert "Please change <A><B> to <AB>" in suggestions[2]
+
+
+def test_suggester_does_not_report_non_existent_path_due_to_missing_pre_defines(
+    suggester, tmp_path
+):
+    (tmp_path / "workflow").write_text("")
+    (tmp_path / "config.ert").write_text(
+        "NUM_REALIZATIONS 1\nLOAD_WORKFLOW <CONFIG_PATH>/workflow\n"
+    )
+    assert suggester.suggest_migrations(str(tmp_path / "config.ert")) == []
