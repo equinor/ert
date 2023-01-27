@@ -388,7 +388,7 @@ bool config_schema_item_validate_set(const config_schema_item_type *item,
                     char *path = config_path_elm_alloc_abspath(path_elm, value);
                     if (!util_entry_exists(path)) {
                         error_list.push_back(util_alloc_sprintf(
-                            "Can not find entry %s in %s ", value,
+                            "Cannot find file or directory %s in %s ", value,
                             config_path_elm_get_abspath(path_elm)));
                         OK = false;
                     }
