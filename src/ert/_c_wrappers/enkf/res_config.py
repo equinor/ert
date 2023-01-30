@@ -253,31 +253,34 @@ class ResConfig:
                 )
 
         self.installed_jobs = self._installed_jobs_from_dict(config_dict)
+        config_file = (
+            self.substitution_list.get("<CONFIG_PATH>", "")
+            + "/"
+            + self.substitution_list.get("<CONFIG_FILE>", "")
+        )
         jobs = []
         for job_name, args in config_dict.get(ConfigKeys.FORWARD_MODEL, []):
             try:
                 job = copy.deepcopy(self.installed_jobs[job_name])
             except KeyError as err:
-                raise ValueError(
-                    f"Could not find job `{job_name}` in list of installed jobs: "
-                    f"{list(self.installed_jobs.keys())}"
+                raise ConfigValidationError(
+                    errors=(
+                        f"Could not find job `{job_name}` in list of installed jobs: "
+                        f"{list(self.installed_jobs.keys())}"
+                    ),
+                    config_file=config_file,
                 ) from err
             if args:
                 job.private_args = SubstitutionList()
 
                 try:
                     job.private_args.add_from_string(args)
-                except ValueError as e:
-                    conffile = self.substitution_list.get("<CONFIG_FILE>", "")
-                    confpath = self.substitution_list.get("<CONFIG_PATH>", "")
+                except ValueError as err:
 
-                    err_string = f"{e}: FORWARD_MODEL {job_name} ({args})\n"
-                    err_string += (
-                        f"Occurred in configuration file: {confpath}/{conffile}"
-                        if conffile and confpath
-                        else ""
-                    )
-                    raise ConfigValidationError(err_string)
+                    raise ConfigValidationError(
+                        errors=f"{err}: FORWARD_MODEL {job_name} ({args})\n",
+                        config_file=config_file,
+                    ) from err
 
                 job.define_args = self.substitution_list
             try:
@@ -290,9 +293,10 @@ class ResConfig:
             try:
                 job = copy.deepcopy(self.installed_jobs[job_description[0]])
             except KeyError as err:
-                raise ValueError(
+                raise ConfigValidationError(
                     f"Could not find job `{job_description[0]}` "
-                    "in list of installed jobs."
+                    "in list of installed jobs.",
+                    config_file=config_file,
                 ) from err
             job.arglist = job_description[1:]
             job.define_args = self.substitution_list
@@ -309,7 +313,8 @@ class ResConfig:
 
         if ConfigKeys.SUMMARY in config_dict and ConfigKeys.ECLBASE not in config_dict:
             raise ConfigValidationError(
-                "When using SUMMARY keyword, the config must also specify ECLBASE"
+                "When using SUMMARY keyword, the config must also specify ECLBASE",
+                config_file=config_file,
             )
 
         self.model_config = ModelConfig.from_dict(
