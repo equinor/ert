@@ -97,16 +97,6 @@ class SubstitutionList(BaseCClass):
     def get(self, key, default=None):
         return self[key] if key in self else default
 
-    def indexForKey(self, key):
-        if key not in self:
-            raise KeyError(f"Key '{key}' not in substitution list!")
-
-        for index, key_value in enumerate(self):
-            if key == key_value[0]:
-                return index
-
-        return None  # Should never happen!
-
     def substitute(self, to_substitute: str, context: str = "") -> str:
         return self._alloc_filtered_string(to_substitute, context)
 
