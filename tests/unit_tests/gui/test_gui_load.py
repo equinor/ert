@@ -9,7 +9,7 @@ from qtpy.QtCore import Qt, QTimer
 from qtpy.QtWidgets import QComboBox, QDialog, QMessageBox, QWidget
 
 import ert.gui
-from ert._c_wrappers.enkf import EnKFMain, ResConfig
+from ert._c_wrappers.enkf import EnKFMain, ErtConfig
 from ert.gui.ertwidgets.message_box import ErtMessageBox
 from ert.gui.main import GUILogHandler, _setup_main_window, run_gui
 from ert.gui.simulation.run_dialog import RunDialog
@@ -27,7 +27,7 @@ def test_gui_load(qtbot):
     args = Mock()
     args.config = str(config_file)
     gui = _setup_main_window(
-        EnKFMain(ResConfig(str(config_file))), args, GUILogHandler()
+        EnKFMain(ErtConfig.from_file(str(config_file))), args, GUILogHandler()
     )
     qtbot.addWidget(gui)
 
@@ -106,7 +106,7 @@ def test_gui_iter_num(monkeypatch, qtbot):
     )
 
     gui = _setup_main_window(
-        EnKFMain(ResConfig(str(config_file))), args_mock, GUILogHandler()
+        EnKFMain(ErtConfig.from_file(str(config_file))), args_mock, GUILogHandler()
     )
     qtbot.addWidget(gui)
 
@@ -222,7 +222,7 @@ def test_that_start_simulation_is_disabled_until_dialog_is_accepted(monkeypatch,
     )
 
     gui = _setup_main_window(
-        EnKFMain(ResConfig(str(config_file))), args_mock, GUILogHandler()
+        EnKFMain(ErtConfig.from_file(str(config_file))), args_mock, GUILogHandler()
     )
     qtbot.addWidget(gui)
 
@@ -262,7 +262,7 @@ def test_that_run_dialog_can_be_closed_after_used_to_open_plots(qtbot):
         project="storage",
     ):
         gui = _setup_main_window(
-            EnKFMain(ResConfig(str(config_file))), args_mock, GUILogHandler()
+            EnKFMain(ErtConfig.from_file(str(config_file))), args_mock, GUILogHandler()
         )
         qtbot.addWidget(gui)
 

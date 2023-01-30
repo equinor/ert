@@ -2,7 +2,7 @@ import gc
 
 import pytest
 
-from ert._c_wrappers.enkf import EnKFMain, ResConfig
+from ert._c_wrappers.enkf import EnKFMain, ErtConfig
 
 
 def test_adding_priors(poly_case):
@@ -19,7 +19,7 @@ def test_adding_priors(poly_case):
 
     with open("coeff_priors", "a", encoding="utf-8") as f:
         f.write("COEFF_D UNIFORM 0 5\n")
-    m = EnKFMain(ResConfig("poly.ert"))
+    m = EnKFMain(ErtConfig.from_file("poly.ert"))
 
     prior = m.load_ensemble_context(
         "prior",

@@ -7,19 +7,11 @@ from iterative_ensemble_smoother import IterativeEnsembleSmoother
 
 from ert import LibresFacade
 from ert.__main__ import ert_parser
-from ert._c_wrappers.enkf import EnKFMain, EnkfNode, NodeId, ResConfig
+from ert._c_wrappers.enkf import EnKFMain, EnkfNode, ErtConfig, NodeId
 from ert.analysis import ErtAnalysisError, ESUpdate
 from ert.analysis._es_update import _create_temporary_parameter_storage
 from ert.cli import ENSEMBLE_EXPERIMENT_MODE, ENSEMBLE_SMOOTHER_MODE
 from ert.cli.main import run_cli
-
-
-@pytest.fixture()
-def minimal_config(use_tmpdir):
-    with open("config_file.ert", "w", encoding="utf-8") as fout:
-        fout.write("NUM_REALIZATIONS 1")
-    res_config = ResConfig("config_file.ert")
-    yield res_config
 
 
 def test_update_report(snake_oil_case_storage, snapshot):
@@ -267,7 +259,7 @@ def test_snapshot_alpha(alpha, expected):
     Note that this is now a snapshot test, so there is no guarantee that the
     snapshots are correct, they are just documenting the current behavior.
     """
-    res_config = ResConfig("snake_oil.ert")
+    res_config = ErtConfig.from_file("snake_oil.ert")
 
     obs_file = Path("observations") / "observations.txt"
     with obs_file.open(mode="w", encoding="utf-8") as fin:
@@ -330,7 +322,7 @@ def test_update_multiple_param(copy_case):
     )
     run_cli(parsed)
 
-    res_config = ResConfig("snake_oil.ert")
+    res_config = ErtConfig.from_file("snake_oil.ert")
     ert = EnKFMain(res_config)
     es_update = ESUpdate(ert)
     fsm = ert.storage_manager
@@ -364,7 +356,7 @@ def test_gen_data_obs_data_mismatch(snake_oil_case_storage):
         file.write(obs_text)
     with open("observations/wpr_diff_obs.txt", "a", encoding="utf-8") as file:
         file.write("0.0 0.05\n")
-    res_config = ResConfig("snake_oil.ert")
+    res_config = ErtConfig.from_file("snake_oil.ert")
     ert = EnKFMain(res_config)
     es_update = ESUpdate(ert)
     fsm = ert.storage_manager

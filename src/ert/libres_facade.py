@@ -7,7 +7,7 @@ from ecl.grid import EclGrid
 from pandas import DataFrame, MultiIndex, Series
 
 from ert import _clib
-from ert._c_wrappers.enkf import EnKFMain, EnkfNode, ErtImplType, ResConfig
+from ert._c_wrappers.enkf import EnKFMain, EnkfNode, ErtConfig, ErtImplType
 from ert._c_wrappers.enkf.config import GenKwConfig
 from ert._c_wrappers.enkf.enums import (
     EnkfObservationImplementationType,
@@ -622,4 +622,4 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
     def from_config_file(
         cls, config_file: str, read_only: bool = False
     ) -> "LibresFacade":
-        return cls(EnKFMain(ResConfig(config_file), read_only))
+        return cls(EnKFMain(ErtConfig.from_file(config_file), read_only))

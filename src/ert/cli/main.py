@@ -11,7 +11,7 @@ from typing import Any
 
 import filelock
 
-from ert._c_wrappers.enkf import EnKFMain, ResConfig
+from ert._c_wrappers.enkf import EnKFMain, ErtConfig
 from ert.cli import ENSEMBLE_EXPERIMENT_MODE, TEST_RUN_MODE, WORKFLOW_MODE
 from ert.cli.model_factory import create_model
 from ert.cli.monitor import Monitor
@@ -30,7 +30,7 @@ class ErtTimeoutError(Exception):
 
 
 def run_cli(args):
-    res_config = ResConfig(args.config)
+    res_config = ErtConfig.from_file(args.config)
 
     # Create logger inside function to make sure all handlers have been added to
     # the root-logger.
@@ -38,7 +38,7 @@ def run_cli(args):
     for job in res_config.forward_model_list:
         logger.info("Config contains forward model job %s", job)
 
-    for suggestion in ResConfig.make_suggestion_list(args.config):
+    for suggestion in ErtConfig.make_suggestion_list(args.config):
         print(f"Warning: {suggestion}")
 
     os.chdir(res_config.config_path)

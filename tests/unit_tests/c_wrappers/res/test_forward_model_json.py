@@ -9,7 +9,7 @@ from typing import List
 
 import pytest
 
-from ert._c_wrappers.enkf import ResConfig
+from ert._c_wrappers.enkf import ErtConfig
 from ert._c_wrappers.job_queue.ext_job import ExtJob
 from ert.simulator.forward_model_status import ForwardModelStatus
 
@@ -299,7 +299,7 @@ def test_no_jobs():
     run_id = "test_no_jobs_id"
 
     write_jobs_json(
-        ".", ResConfig.forward_model_data_to_json(forward_model_list, run_id)
+        ".", ErtConfig.forward_model_data_to_json(forward_model_list, run_id)
     )
 
     verify_json_dump([], run_id)
@@ -325,7 +325,7 @@ def test_transfer_arg_types():
     run_id = "test_no_jobs_id"
 
     write_jobs_json(
-        ".", ResConfig.forward_model_data_to_json(forward_model_list, run_id)
+        ".", ErtConfig.forward_model_data_to_json(forward_model_list, run_id)
     )
 
     config = load_configs(JOBS_JSON_FILE)
@@ -349,7 +349,7 @@ def test_one_job():
         run_id = "test_one_job"
 
         write_jobs_json(
-            ".", ResConfig.forward_model_data_to_json(forward_model, run_id)
+            ".", ErtConfig.forward_model_data_to_json(forward_model, run_id)
         )
         verify_json_dump([i], run_id)
 
@@ -359,7 +359,7 @@ def run_all():
     run_id = "run_all"
 
     write_jobs_json(
-        ".", ResConfig.forward_model_data_to_json(forward_model_list, run_id)
+        ".", ErtConfig.forward_model_data_to_json(forward_model_list, run_id)
     )
 
     verify_json_dump(range(len(joblist)), run_id)
@@ -406,7 +406,7 @@ def test_status_file():
     run_id = "test_no_jobs_id"
 
     write_jobs_json(
-        ".", ResConfig.forward_model_data_to_json(forward_model_list, run_id)
+        ".", ErtConfig.forward_model_data_to_json(forward_model_list, run_id)
     )
 
     with open("status.json", "w", encoding="utf-8") as f:
@@ -442,7 +442,7 @@ def test_that_values_with_brackets_are_ommitted(tmp_path, caplog):
     run_id = "test_no_jobs_id"
 
     write_jobs_json(
-        tmp_path, ResConfig.forward_model_data_to_json(forward_model_list, run_id)
+        tmp_path, ErtConfig.forward_model_data_to_json(forward_model_list, run_id)
     )
 
     assert "Environment variable ENV_VAR skipped due to" in caplog.text

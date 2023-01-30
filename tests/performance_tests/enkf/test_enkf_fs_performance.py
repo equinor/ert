@@ -1,4 +1,4 @@
-from ert._c_wrappers.enkf import EnKFMain, ResConfig
+from ert._c_wrappers.enkf import EnKFMain, ErtConfig
 
 
 def mount_and_umount(ert, case_name):
@@ -9,6 +9,6 @@ def mount_and_umount(ert, case_name):
 
 def test_mount_fs(benchmark, template_config):
     with template_config["folder"].as_cwd():
-        config = ResConfig("poly.ert")
+        config = ErtConfig.from_file("poly.ert")
         ert = EnKFMain(config)
         benchmark(mount_and_umount, ert, "default")

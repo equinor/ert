@@ -17,7 +17,7 @@ class ModelConfig:
 
     def __init__(
         self,
-        num_realizations: int,
+        num_realizations: int = 1,
         refcase: Optional[EclSum] = None,
         data_root: Optional[str] = None,
         history_source: Optional[HistorySourceEnum] = None,

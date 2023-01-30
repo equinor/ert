@@ -11,7 +11,7 @@ from qtpy.QtWidgets import QApplication
 
 from ert._c_wrappers.config import ConfigWarning
 from ert._c_wrappers.config.config_parser import ConfigValidationError
-from ert._c_wrappers.enkf import EnKFMain, ResConfig
+from ert._c_wrappers.enkf import EnKFMain, ErtConfig
 from ert.cli.main import ErtTimeoutError
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets import SummaryPanel, resourceIcon
@@ -81,8 +81,8 @@ def _start_initial_gui_window(args, log_handler):
     res_config = None
     try:
         with warnings.catch_warnings(record=True) as warning_messages:
-            res_config = ResConfig(args.config)
-        messages += ResConfig.make_suggestion_list(args.config)
+            res_config = ErtConfig.from_file(args.config)
+        messages += ErtConfig.make_suggestion_list(args.config)
         messages += [
             str(wm.message) for wm in warning_messages if wm.category == ConfigWarning
         ]

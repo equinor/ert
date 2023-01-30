@@ -8,7 +8,7 @@ import pytest
 from ert.__main__ import ert_parser
 from ert._c_wrappers.enkf import RunContext
 from ert._c_wrappers.enkf.enkf_main import EnKFMain
-from ert._c_wrappers.enkf.res_config import ResConfig
+from ert._c_wrappers.enkf.ert_config import ErtConfig
 from ert.cli import TEST_RUN_MODE
 from ert.cli.main import run_cli
 
@@ -48,7 +48,7 @@ def test_num_cpu_subst(monkeypatch, tmp_path, append, numcpu):
     (tmp_path / "DATA").write_text("PARALLEL 8 /")
     (tmp_path / "DUMP").write_text("EXECUTABLE echo\nARGLIST <NUM_CPU>\n")
 
-    config = ResConfig(str(tmp_path / "test.ert"))
+    config = ErtConfig.from_file(str(tmp_path / "test.ert"))
     enkf_main = EnKFMain(config)
     _create_runpath(enkf_main)
 
@@ -106,7 +106,7 @@ expected_vars = {
 
 
 def test_that_setenv_config_is_parsed_correctly(setenv_config):
-    config = ResConfig(str(setenv_config))
+    config = ErtConfig.from_file(str(setenv_config))
     # then res config should read the SETENV as is
     assert config.env_vars == expected_vars
 

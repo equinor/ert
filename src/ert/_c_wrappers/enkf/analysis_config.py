@@ -72,7 +72,7 @@ class AnalysisConfig:
 
     @classmethod
     def from_dict(cls, config_dict) -> "AnalysisConfig":
-        num_realization = config_dict.get(ConfigKeys.NUM_REALIZATIONS)
+        num_realization = config_dict.get(ConfigKeys.NUM_REALIZATIONS, 1)
         min_realization = config_dict.get(ConfigKeys.MIN_REALIZATIONS, 0)
         if isinstance(min_realization, str):
             if "%" in min_realization:

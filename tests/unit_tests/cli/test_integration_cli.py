@@ -14,7 +14,7 @@ import ert.shared
 from ert import LibresFacade
 from ert.__main__ import ert_parser
 from ert._c_wrappers.config.config_parser import ConfigValidationError
-from ert._c_wrappers.enkf import EnKFMain, ResConfig
+from ert._c_wrappers.enkf import EnKFMain, ErtConfig
 from ert.cli import (
     ENSEMBLE_EXPERIMENT_MODE,
     ENSEMBLE_SMOOTHER_MODE,
@@ -386,7 +386,7 @@ def test_that_prior_is_not_overwritten_in_ensemble_experiment(
     )
 
     with tmpdir.as_cwd():
-        ert = EnKFMain(ResConfig("poly_example/poly.ert"))
+        ert = EnKFMain(ErtConfig.from_file("poly_example/poly.ert"))
         prior_context = ert.load_ensemble_context(
             "default", list(range(ert.getEnsembleSize())), 0
         )

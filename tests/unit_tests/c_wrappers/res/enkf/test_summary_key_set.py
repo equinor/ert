@@ -2,7 +2,7 @@ import os
 
 import pytest
 
-from ert._c_wrappers.enkf import EnKFMain, ResConfig, SummaryKeySet
+from ert._c_wrappers.enkf import EnKFMain, ErtConfig, SummaryKeySet
 from ert._c_wrappers.enkf.enkf_fs import EnkfFs
 
 
@@ -65,7 +65,7 @@ def test_write_to_and_read_from_file(tmp_path):
 
 @pytest.mark.usefixtures("copy_snake_oil_case_storage")
 def test_with_enkf_fs():
-    res_config = ResConfig("snake_oil.ert")
+    res_config = ErtConfig.from_file("snake_oil.ert")
 
     fs = EnkfFs(
         "storage/snake_oil/ensemble/default_0", res_config.ensemble_config, 4, False

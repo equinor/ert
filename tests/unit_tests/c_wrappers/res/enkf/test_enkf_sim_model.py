@@ -4,7 +4,7 @@ from typing import List
 
 import pytest
 
-from ert._c_wrappers.enkf import EnKFMain, ResConfig
+from ert._c_wrappers.enkf import EnKFMain, ErtConfig
 
 
 def valid_args(arg_types, arg_list: List[str], runtime: bool = False):
@@ -156,7 +156,7 @@ def test_forward_model_job(job, forward_model, expected_args):
         fout.write("INSTALL_JOB job_name job_file\n")
         fout.write(forward_model)
 
-    res_config = ResConfig("config_file.ert")
+    res_config = ErtConfig.from_file("config_file.ert")
 
     forward_model = res_config.forward_model_list
     assert len(forward_model) == 1
@@ -188,7 +188,7 @@ def test_validate_job_args_no_warning(caplog):
             "FORWARD_MODEL job_name(<ECLBASE>=A/<ECLBASE>, <RUNPATH>=<RUNPATH>/x)\n"
         )
 
-    ResConfig("config_file.ert")
+    ErtConfig.from_file("config_file.ert")
     # Check no warning is logged when config contains
     # forward model with <ECLBASE> and <RUNPATH> as arguments
     assert caplog.text == ""
@@ -255,12 +255,12 @@ def test_simulation_job(job, forward_model, expected_args):
         fout.write("INSTALL_JOB job_name job_file\n")
         fout.write(forward_model)
 
-    res_config = ResConfig("config_file.ert")
+    res_config = ErtConfig.from_file("config_file.ert")
     ert = EnKFMain(res_config)
 
     forward_model_list = ert.resConfig().forward_model_list
     forward_model_job = forward_model_list[0]
-    job_data = ResConfig.forward_model_data_to_json(
+    job_data = ErtConfig.forward_model_data_to_json(
         forward_model_list, "", "", 0, 0, ert.get_context(), res_config.env_vars
     )["jobList"][0]
     assert len(forward_model_list) == 1
@@ -289,11 +289,11 @@ def test_that_private_over_global_args_gives_logging_message(caplog):
         fout.write("INSTALL_JOB job_name job_file\n")
         fout.write("FORWARD_MODEL job_name(<ARG>=B)")
 
-    res_config = ResConfig("config_file.ert")
+    res_config = ErtConfig.from_file("config_file.ert")
     ert = EnKFMain(res_config)
 
     forward_model_list = ert.resConfig().forward_model_list
-    job_data = ResConfig.forward_model_data_to_json(
+    job_data = ErtConfig.forward_model_data_to_json(
         forward_model_list, "", "", 0, 0, ert.get_context(), res_config.env_vars
     )["jobList"][0]
     assert len(forward_model_list) == 1
@@ -324,11 +324,11 @@ def test_that_private_over_global_args_does_not_give_logging_message_for_argpass
         fout.write("INSTALL_JOB job_name job_file\n")
         fout.write("FORWARD_MODEL job_name(<ARG>=<ARG>)")
 
-    res_config = ResConfig("config_file.ert")
+    res_config = ErtConfig.from_file("config_file.ert")
     ert = EnKFMain(res_config)
 
     forward_model_list = ert.resConfig().forward_model_list
-    job_data = ResConfig.forward_model_data_to_json(
+    job_data = ErtConfig.forward_model_data_to_json(
         forward_model_list, "", "", 0, 0, ert.get_context(), res_config.env_vars
     )["jobList"][0]
     assert len(forward_model_list) == 1
@@ -372,7 +372,7 @@ def test_that_environment_variables_are_set_in_forward_model(
         fout.write("INSTALL_JOB job_name job_file\n")
         fout.write(forward_model)
 
-    res_config = ResConfig("config_file.ert")
+    res_config = ErtConfig.from_file("config_file.ert")
 
     forward_model_list = res_config.forward_model_list
     assert len(forward_model_list) == 1

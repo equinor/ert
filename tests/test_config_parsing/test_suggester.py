@@ -3,14 +3,14 @@ import pytest
 from ert._c_wrappers.enkf._deprecation_migration_suggester import (
     DeprecationMigrationSuggester,
 )
-from ert._c_wrappers.enkf.res_config import ResConfig
+from ert._c_wrappers.enkf.ert_config import ErtConfig
 
 
 @pytest.fixture
 def suggester(tmp_path):
     return DeprecationMigrationSuggester(
-        ResConfig._create_user_config_parser(),
-        ResConfig._create_pre_defines(str(tmp_path / "config.ert")),
+        ErtConfig._create_user_config_parser(),
+        ErtConfig._create_pre_defines(str(tmp_path / "config.ert")),
     )
 
 

@@ -2,7 +2,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from ert._c_wrappers.enkf import EnKFMain, ResConfig
+from ert._c_wrappers.enkf import EnKFMain, ErtConfig
 from ert.shared.hook_implementations.workflows.disable_parameters import (
     DisableParametersUpdate,
 )
@@ -34,7 +34,7 @@ def test_that_we_can_disable_a_parameter():
         fh.writelines("MY_KEYWORD <MY_KEYWORD>")
     with open("prior.txt", "w", encoding="utf-8") as fh:
         fh.writelines("MY_KEYWORD NORMAL 0 1")
-    ert = EnKFMain(ResConfig("poly.ert"))
+    ert = EnKFMain(ErtConfig.from_file("poly.ert"))
 
     # pylint: disable=no-member
     # (pylint is unable to read the members of update_step objects)
