@@ -48,6 +48,7 @@ class DeprecationMigrationSuggester:
         self._parser.add("CASE_TABLE")
         self._parser.add("RERUN_START")
         self._parser.add("DELETE_RUNPATH")
+        self._parser.add("UPDATE_PATH")
 
     def suggest_migrations(self, filename: str):
         suggestions = []
@@ -153,6 +154,14 @@ class DeprecationMigrationSuggester:
             " qc plots to disk and what plots were shown in the GUI. All plots can now"
             " be selected on request from the GUI, and there is also an alternative"
             " view accessible by using ert viz in the commandline.",
+        )
+        add_suggestion(
+            "UPDATE_PATH",
+            "The UPDATE_PATH keyword has been removed and no longer has any effect. "
+            "It has been used in the past to set different python versions for the "
+            "forward model. This should no longer be necessary."
+            "\n\n"
+            "If your setup is not longer working, do not hesitate to contact us.",
         )
 
         return suggestions

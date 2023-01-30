@@ -7,7 +7,6 @@ import stat
 
 import pytest
 
-from ert._c_wrappers.job_queue.environment_varlist import EnvironmentVarlist
 from ert._c_wrappers.job_queue.ext_job import ExtJob
 from ert._c_wrappers.job_queue.forward_model import ForwardModel
 from ert._c_wrappers.util.substitution_list import SubstitutionList
@@ -292,7 +291,7 @@ def test_no_jobs():
     forward_model = set_up_forward_model([])
     run_id = "test_no_jobs_id"
     forward_model.formatted_fprintf(
-        run_id, os.getcwd(), "data_root", 0, 0, SubstitutionList(), EnvironmentVarlist()
+        run_id, os.getcwd(), "data_root", 0, 0, SubstitutionList(), {}
     )
 
     verify_json_dump([], run_id)
@@ -326,7 +325,7 @@ def test_transfer_arg_types():
         0,
         0,
         SubstitutionList(),
-        EnvironmentVarlist(),
+        {},
     )
     config = load_configs(JOBS_JSON_FILE)
     printed_job = config["jobList"][0]
@@ -340,33 +339,6 @@ def test_transfer_arg_types():
         "RUNTIME_FILE",
         "RUNTIME_INT",
     ]
-
-
-@pytest.mark.usefixtures("use_tmpdir")
-def test_env_varlist():
-    varlist_string = "global_environment"
-    update_string = "global_update_path"
-    first = "FIRST"
-    second = "SECOND"
-    third = "THIRD"
-    first_value = "TheFirstValue"
-    second_value = "TheSecondValue"
-    third_value = "$FIRST:$SECOND"
-    third_value_correct = f"{first_value}:{second_value}"
-    varlist = EnvironmentVarlist(
-        [[first, first_value], [second, second_value], [third, third_value]]
-    )
-    forward_model = set_up_forward_model([])
-    run_id = "test_no_jobs_id"
-    forward_model.formatted_fprintf(
-        run_id, os.getcwd(), "data_root", 0, 0, SubstitutionList(), varlist
-    )
-    config = load_configs(JOBS_JSON_FILE)
-    env_config = config[varlist_string]
-    assert first_value == env_config[first]
-    assert second_value == env_config[second]
-    assert third_value_correct == env_config[third]
-    assert config.get(update_string) is not None
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -387,7 +359,7 @@ def test_one_job():
             0,
             0,
             SubstitutionList(),
-            EnvironmentVarlist(),
+            {},
         )
 
         verify_json_dump([i], run_id)
@@ -397,7 +369,7 @@ def run_all():
     forward_model = set_up_forward_model(range(len(joblist)))
     run_id = "run_all"
     forward_model.formatted_fprintf(
-        run_id, os.getcwd(), "data_root", 0, 0, SubstitutionList(), EnvironmentVarlist()
+        run_id, os.getcwd(), "data_root", 0, 0, SubstitutionList(), {}
     )
 
     verify_json_dump(range(len(joblist)), run_id)
@@ -449,7 +421,7 @@ def test_status_file():
         0,
         0,
         SubstitutionList(),
-        EnvironmentVarlist(),
+        {},
     )
 
     with open("status.json", "w", encoding="utf-8") as f:
@@ -490,7 +462,7 @@ def test_that_values_with_brackets_are_ommitted(tmp_path, caplog):
         0,
         0,
         SubstitutionList(),
-        EnvironmentVarlist(),
+        {},
     )
     assert "Environment variable ENV_VAR skipped due to" in caplog.text
     with open(tmp_path / "jobs.json", encoding="utf-8") as fp:

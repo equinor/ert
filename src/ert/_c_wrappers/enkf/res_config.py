@@ -18,7 +18,6 @@ from ert._c_wrappers.enkf.enums import ErtImplType, HookRuntime
 from ert._c_wrappers.enkf.model_config import ModelConfig
 from ert._c_wrappers.enkf.queue_config import QueueConfig
 from ert._c_wrappers.job_queue import (
-    EnvironmentVarlist,
     ExtJob,
     ExtJobInvalidArgsException,
     ForwardModel,
@@ -210,7 +209,9 @@ class ResConfig:
     def _alloc_from_dict(self, config_dict):
         self.ens_path: str = config_dict[ConfigKeys.ENSPATH]
         self.substitution_list = SubstitutionList.from_dict(config_dict=config_dict)
-        self.env_vars = EnvironmentVarlist.from_dict(config_dict=config_dict)
+        self.env_vars = {}
+        for key, val in config_dict.get("SETENV", []):
+            self.env_vars[key] = val
         self.random_seed = config_dict.get(ConfigKeys.RANDOM_SEED, None)
         self.analysis_config = AnalysisConfig.from_dict(config_dict=config_dict)
         self._validate_queue_option_max_running(None, config_dict)

@@ -3,9 +3,9 @@ import logging
 import os
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Mapping
 
-from ert._c_wrappers.job_queue import EnvironmentVarlist, ExtJob
+from ert._c_wrappers.job_queue import ExtJob
 from ert._c_wrappers.util.substitution_list import SubstitutionList
 from ert._clib import job_kw
 
@@ -27,7 +27,7 @@ class ForwardModel:
         iens: int,
         itr: int,
         context: "SubstitutionList",
-        env_varlist: EnvironmentVarlist,
+        env_varlist: Mapping[str, str],
         filename: str = "jobs.json",
     ):
         with open(Path(path) / filename, mode="w", encoding="utf-8") as fptr:
@@ -50,7 +50,7 @@ class ForwardModel:
         iens: int,
         itr: int,
         context: "SubstitutionList",
-        env_varlist: EnvironmentVarlist,
+        env_varlist: Mapping[str, str],
     ) -> Dict[str, Any]:
         def substitute(job, string: str):
             job_args = ",".join([f"{key}={value}" for key, value in job.private_args])
@@ -108,8 +108,7 @@ class ForwardModel:
 
         return {
             "DATA_ROOT": data_root,
-            "global_environment": env_varlist.varlist,
-            "global_update_path": env_varlist.updatelist,
+            "global_environment": env_varlist,
             "jobList": [
                 {
                     "name": substitute(job, job.name),
