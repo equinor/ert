@@ -17,7 +17,6 @@ class JobRunner:
         self.step_id = jobs_data.get("step_id")
         self.ert_pid = jobs_data.get("ert_pid")
         self.global_environment = jobs_data.get("global_environment")
-        self.global_update_path = jobs_data.get("global_update_path")
         job_data_list = jobs_data["jobList"]
 
         if self.simulation_id is not None:
@@ -28,7 +27,6 @@ class JobRunner:
             self.jobs.append(Job(job_data, index))
 
         self._set_environment()
-        self._update_path()
 
     def run(self, names_of_jobs_to_run):
         # if names_of_jobs_to_run, create job_queue which contains jobs that
@@ -71,15 +69,7 @@ class JobRunner:
 
     def _set_environment(self):
         if self.global_environment:
-            data = self.global_environment
-            for key in data.keys():
-                os.environ[key] = data[key]
-
-    def _update_path(self):
-        if self.global_update_path:
-            data = self.global_update_path
-            for key in data.keys():
-                if os.environ.get(key):
-                    os.environ[key] = data[key] + ":" + os.environ[key]
-                else:
-                    os.environ[key] = data[key]
+            for key, value in self.global_environment.items():
+                for env_key, env_val in os.environ.items():
+                    value = value.replace(f"${env_key}", env_val)
+                os.environ[key] = value

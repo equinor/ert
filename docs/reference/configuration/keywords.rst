@@ -77,7 +77,6 @@ Keyword name                                                            Required
 :ref:`SURFACE <surface>`                                                NO                                                                      Surface parameter read from RMS IRAP file
 :ref:`TIME_MAP  <time_map>`                                             NO                                                                      Ability to manually enter a list of dates to establish report step <-> dates mapping
 :ref:`UPDATE_LOG_PATH  <update_log_path>`                               NO                                      update_log                      Summary of the update steps are stored in this directory
-:ref:`UPDATE_PATH  <update_path>`                                       NO                                                                      Modify a UNIX path variable like LD_LIBRARY_PATH
 :ref:`WORKFLOW_JOB_DIRECTORY  <workflow_job_directory>`                 NO                                                                      Directory containing workflow jobs
 =====================================================================   ======================================  ==============================  ==============================================================================================================================================
 
@@ -2089,51 +2088,22 @@ Workflow hooks
 
 Manipulating the Unix environment
 ---------------------------------
-.. _manipulating_the_unix_environment:
-
-The two keywords SETENV and UPDATE_PATH can be used to manipulate the Unix
-environment of the ERT process, the manipulations only apply to the running ERT
-instance, and are not applied to the shell.
-
 
 .. _setenv:
 .. topic:: SETENV
 
-        You can use the SETENV keyword to alter the unix environment ERT is running
-        in. This is probably most relevant for setting up the environment for the
-        external jobs invoked by ERT.
+        You can use the SETENV keyword to alter the unix environment where ERT runs
+        forward models.
 
         *Example:*
 
         ::
 
                 -- Setting up LSF
-                SETENV  LSF_BINDIR      /prog/LSF/7.0/linux2.6-glibc2.3-x86_64/bin
-                SETENV  LSF_LIBDIR      /prog/LSF/7.0/linux2.6-glibc2.3-x86_64/lib
-                SETENV  LSF_UIDDIR      /prog/LSF/7.0/linux2.6-glibc2.3-x86_64/lib/uid
-                SETENV  LSF_SERVERDIR   /prog/LSF/7.0/linux2.6-glibc2.3-x86_64/etc
-                SETENV  LSF_ENVDIR      /prog/LSF/conf
+                SETENV  MY_VAR          World
+                SETENV  MY_OTHER_VAR    Hello$MY_VAR
 
-        Observe that the SETENV command is not as powerful as the corresponding shell
-        utility. In particular you can not use $VAR to refer to the existing value of
-        an environment variable. To add elements to the PATH variable it is easier to
-        use the UPDATE_PATH keyword.
-
-
-.. _update_path:
-.. topic:: UPDATE_PATH
-
-        The UPDATE_PATH keyword will prepend a new element to an existing PATH
-        variable, i.e. the config.
-
-        ::
-
-                UPDATE_PATH   PATH  /some/funky/path/bin
-
-        will be equivalent to the shell command:
-
-        ::
-
-                setenv PATH /some/funky/path/bin:$PATH
-
-        The whole thing is just a workaround because we can not use $PATH.
+        This will result in two environment variables being set in the compute side
+        and available to all jobs. MY_VAR will be "World", and MY_OTHER_VAR will be
+        "HelloWorld". The variables are expanded in order on the compute side, so
+        the environment where ERT is running has no impact, and is not changed.
