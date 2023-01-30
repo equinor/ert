@@ -6,7 +6,7 @@ import time
 import numpy as np
 import pytest
 
-from ert._c_wrappers.enkf import EnKFMain, ResConfig
+from ert._c_wrappers.enkf import EnKFMain, ErtConfig
 from ert.data import MeasuredData, loader
 from ert.libres_facade import LibresFacade
 
@@ -54,7 +54,7 @@ def test_summary_obs_runtime():
     with obs_file.open(mode="a") as fin:
         fin.write(create_summary_observation())
 
-    res_config = ResConfig("snake_oil.ert")
+    res_config = ErtConfig.from_file("snake_oil.ert")
     ert = EnKFMain(res_config)
 
     facade = LibresFacade(ert)
@@ -93,7 +93,7 @@ def test_summary_obs_last_entry(formatted_date):
             "};\n"
         )
 
-    res_config = ResConfig("snake_oil.ert")
+    res_config = ErtConfig.from_file("snake_oil.ert")
     ert = EnKFMain(res_config)
 
     facade = LibresFacade(ert)
@@ -112,7 +112,7 @@ def test_gen_obs_runtime(snapshot):
     with obs_file.open(mode="a") as fin:
         fin.write(create_general_observation())
 
-    res_config = ResConfig("snake_oil.ert")
+    res_config = ErtConfig.from_file("snake_oil.ert")
     ert = EnKFMain(res_config)
 
     facade = LibresFacade(ert)
@@ -179,7 +179,7 @@ def test_gen_obs_and_summary_index_range(facade_snake_oil):
 )
 @pytest.mark.usefixtures("copy_snake_oil_case")
 def test_no_storage(obs_key, expected_msg):
-    res_config = ResConfig("snake_oil.ert")
+    res_config = ErtConfig.from_file("snake_oil.ert")
     ert = EnKFMain(res_config)
 
     facade = LibresFacade(ert)
@@ -194,7 +194,7 @@ def test_no_storage(obs_key, expected_msg):
 @pytest.mark.usefixtures("copy_snake_oil_case_storage")
 def test_no_storage_obs_only(obs_key):
     shutil.rmtree("storage")
-    res_config = ResConfig("snake_oil.ert")
+    res_config = ErtConfig.from_file("snake_oil.ert")
     ert = EnKFMain(res_config)
 
     facade = LibresFacade(ert)

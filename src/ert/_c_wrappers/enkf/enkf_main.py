@@ -28,7 +28,7 @@ from ert._c_wrappers.util.substitution_list import SubstitutionList
 from ert._clib.state_map import STATE_LOAD_FAILURE, STATE_UNDEFINED
 
 if TYPE_CHECKING:
-    from ert._c_wrappers.enkf.res_config import ResConfig
+    from ert._c_wrappers.enkf.ert_config import ErtConfig
 
 
 logger = logging.getLogger(__name__)
@@ -154,7 +154,7 @@ class ObservationConfigError(ConfigValidationError):
 
 
 class EnKFMain:
-    def __init__(self, config: "ResConfig", read_only: bool = False):
+    def __init__(self, config: "ErtConfig", read_only: bool = False):
         self.res_config = config
         self._update_configuration = None
 
@@ -340,7 +340,7 @@ class EnKFMain:
     def getModelConfig(self) -> ModelConfig:
         return self.res_config.model_config
 
-    def resConfig(self) -> "ResConfig":
+    def resConfig(self) -> "ErtConfig":
         return self.res_config
 
     def get_context(self) -> SubstitutionList:

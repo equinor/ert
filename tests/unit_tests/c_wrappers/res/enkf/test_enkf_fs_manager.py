@@ -3,7 +3,7 @@ import shutil
 import pytest
 
 import ert
-from ert._c_wrappers.enkf import EnKFMain, ResConfig
+from ert._c_wrappers.enkf import EnKFMain, ErtConfig
 from ert._c_wrappers.enkf.enkf_fs_manager import FS_VERSION, FileSystemError
 
 
@@ -41,7 +41,7 @@ def test_enkf_fs_manager_wrong_version(
     )
 
     with pytest.raises(FileSystemError) as e:
-        EnKFMain(ResConfig("snake_oil.ert"))
+        EnKFMain(ErtConfig.from_file("snake_oil.ert"))
     assert expected_error in str(e.value)
 
 
@@ -96,5 +96,5 @@ def test_missing_current_case(snake_oil_case):
     storage_path = ert.storage_manager.storage_path
 
     shutil.rmtree(storage_path / current_case_name)
-    ert = EnKFMain(ResConfig(config_file))
+    ert = EnKFMain(ErtConfig.from_file(config_file))
     assert ert.storage_manager.active_case == current_case_name

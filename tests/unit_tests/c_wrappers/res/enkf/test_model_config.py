@@ -1,7 +1,7 @@
 import pytest
 
 from ert._c_wrappers.config import ConfigValidationError
-from ert._c_wrappers.enkf import ResConfig
+from ert._c_wrappers.enkf import ErtConfig
 
 
 @pytest.mark.parametrize(
@@ -26,7 +26,7 @@ from ert._c_wrappers.enkf import ResConfig
 )
 def test_model_config_jobname_and_eclbase(extra_config, expected):
     config_dict = {"NUM_REALIZATIONS": 1, "ENSPATH": "Ensemble", **extra_config}
-    res_config = ResConfig(config_dict=config_dict)
+    res_config = ErtConfig.from_dict(config_dict)
     assert res_config.model_config.jobname_format_string == expected
 
 
@@ -36,4 +36,4 @@ def test_that_summary_given_without_eclbase_gives_error(tmp_path):
         expected_exception=ConfigValidationError,
         match="When using SUMMARY keyword, the config must also specify ECLBASE",
     ):
-        ResConfig(user_config_file=str(tmp_path / "config.ert"))
+        ErtConfig.from_file(str(tmp_path / "config.ert"))

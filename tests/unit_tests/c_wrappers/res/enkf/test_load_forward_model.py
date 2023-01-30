@@ -8,7 +8,7 @@ from textwrap import dedent
 import pytest
 from ecl.summary import EclSum
 
-from ert._c_wrappers.enkf import EnKFMain, ResConfig
+from ert._c_wrappers.enkf import EnKFMain, ErtConfig
 from ert.libres_facade import LibresFacade
 
 
@@ -49,7 +49,7 @@ def test_load_inconsistent_time_map_summary(caplog):
                 continue
             print(line, end="")
 
-    res_config = ResConfig("snake_oil.ert")
+    res_config = ErtConfig.from_file("snake_oil.ert")
     ert = EnKFMain(res_config)
     facade = LibresFacade(ert)
     realisation_number = 0
@@ -95,7 +95,7 @@ def test_load_forward_model():
                 continue
             print(line, end="")
 
-    res_config = ResConfig("snake_oil.ert")
+    res_config = ErtConfig.from_file("snake_oil.ert")
     ert = EnKFMain(res_config)
     facade = LibresFacade(ert)
     realisation_number = 0
@@ -149,7 +149,7 @@ def test_load_forward_model_summary(summary_configuration, expected, caplog):
     ecl_sum = run_simulator(1, datetime(2014, 9, 10))
     ecl_sum.fwrite()
 
-    res_config = ResConfig("config.ert")
+    res_config = ErtConfig.from_file("config.ert")
     ert = EnKFMain(res_config)
     run_context = ert.create_ensemble_context("prior", [True], iteration=0)
     ert.createRunPath(run_context)

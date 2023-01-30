@@ -11,9 +11,9 @@ import pytest
 from ecl.util.enums import RngAlgTypeEnum
 
 from ert._c_wrappers.config.config_parser import ConfigValidationError
-from ert._c_wrappers.enkf import AnalysisConfig, ConfigKeys, HookRuntime, ResConfig
+from ert._c_wrappers.enkf import AnalysisConfig, ConfigKeys, ErtConfig, HookRuntime
 from ert._c_wrappers.enkf._config_content_as_dict import parse_signature_job
-from ert._c_wrappers.enkf.res_config import site_config_location
+from ert._c_wrappers.enkf.ert_config import site_config_location
 from ert._c_wrappers.job_queue import QueueDriverEnum
 from ert._c_wrappers.sched import HistorySourceEnum
 
@@ -114,7 +114,7 @@ expand_config_defs(config_defines, snake_oil_structure_config)
 
 def test_invalid_user_config():
     with pytest.raises(IOError):
-        ResConfig("this/is/not/a/file")
+        ErtConfig.from_file("this/is/not/a/file")
 
 
 def test_include_non_existing_file(tmpdir):
@@ -130,7 +130,7 @@ def test_include_non_existing_file(tmpdir):
         with pytest.raises(
             ConfigValidationError, match="INCLUDE file:does_not_exists not found"
         ):
-            _ = ResConfig("config.ert")
+            _ = ErtConfig.from_file("config.ert")
 
 
 def test_include_existing_file(tmpdir):
@@ -151,7 +151,7 @@ def test_include_existing_file(tmpdir):
         with open("include_me", mode="w", encoding="utf-8") as fh:
             fh.writelines(include_me_text)
 
-        res_config = ResConfig("config.ert")
+        res_config = ErtConfig.from_file("config.ert")
         assert res_config.random_seed == str(rand_seed)
 
 
@@ -284,7 +284,7 @@ def test_extensive_config(setup_case):
 
 def test_runpath_file(monkeypatch, tmp_path):
     """
-    There was an issue relating to `ResConfig.runpath_file` returning a
+    There was an issue relating to `ErtConfig.runpath_file` returning a
     relative path rather than an absolute path. This test simulates the
     conditions that caused the original bug. That is, the user starts
     somewhere else and points to the ERT config file using a relative
@@ -303,12 +303,12 @@ def test_runpath_file(monkeypatch, tmp_path):
             [
                 "DEFINE <FOO> foo\n",
                 "RUNPATH_FILE ../output/my_custom_runpath_path.<FOO>\n",
-                # Required for this to be a valid ResConfig
+                # Required for this to be a valid ErtConfig
                 "NUM_REALIZATIONS 1\n",
             ]
         )
 
-    config = ResConfig(os.path.relpath(config_path, workdir_path))
+    config = ErtConfig.from_file(os.path.relpath(config_path, workdir_path))
     assert config.model_config.runpath_file == str(runpath_path)
 
 
@@ -335,7 +335,7 @@ def test_that_job_script_can_be_set_in_site_config(monkeypatch, tmp_path):
         "NUM_REALIZATIONS 10\n"
     )
 
-    res_config = ResConfig(str(test_user_config))
+    res_config = ErtConfig.from_file(str(test_user_config))
 
     assert Path(res_config.queue_config.job_script).resolve() == my_script
 
@@ -363,7 +363,7 @@ def test_that_unknown_queue_option_gives_error_message(
     with pytest.raises(
         ValueError, match="Parsing config file .* resulted in the errors:"
     ):
-        _ = ResConfig(str(test_user_config))
+        _ = ErtConfig.from_file(str(test_user_config))
 
 
 @pytest.mark.parametrize(
@@ -388,7 +388,7 @@ def test_that_workflow_run_modes_can_be_selected(tmp_path, run_mode):
         f"LOAD_WORKFLOW {my_script} SCRIPT\n"
         f"HOOK_WORKFLOW SCRIPT {run_mode}\n"
     )
-    res_config = ResConfig(str(test_user_config))
+    res_config = ErtConfig.from_file(str(test_user_config))
     assert len(list(res_config.hooked_workflows[run_mode])) == 1
 
 
@@ -408,11 +408,8 @@ def test_logging_config(caplog, config_content, expected):
 
     with patch("builtins.open", mock_open(read_data=config_content)), patch(
         "os.path.isfile", MagicMock(return_value=True)
-    ), caplog.at_level(logging.INFO), patch.object(
-        ResConfig, "__init__", lambda x: None
-    ):
-        res_config = ResConfig()
-        res_config._log_config_file(config_path)
+    ), caplog.at_level(logging.INFO):
+        ErtConfig._log_config_file(config_path)
     expected = base_content.format(expected)
     assert expected in caplog.messages
 
@@ -431,11 +428,8 @@ def test_logging_snake_oil_config(caplog, source_root):
         "model",
         "user_config.ert",
     )
-    with caplog.at_level(logging.INFO), patch.object(
-        ResConfig, "__init__", lambda x: None
-    ):
-        res_config = ResConfig()
-        res_config._log_config_file(config_path)
+    with caplog.at_level(logging.INFO):
+        ErtConfig._log_config_file(config_path)
     assert (
         """
 JOBNAME SNAKE_OIL_STRUCTURE_%d
@@ -555,7 +549,7 @@ def test_that_parsing_workflows_gives_expected():
     with open("workflows/HIDDEN_PRINT", "w", encoding="utf-8") as f:
         f.write("EXECUTABLE ls\n")
 
-    res_config = ResConfig(config_dict=config_dict)
+    res_config = ErtConfig.from_dict(config_dict)
 
     # verify name generated from filename
     assert "HIDDEN_PRINT" in res_config.workflow_jobs
@@ -625,7 +619,7 @@ def test_that_get_plugin_jobs_fetches_exactly_ert_plugins():
             )
         )
 
-    res_config = ResConfig("config.ert")
+    res_config = ErtConfig.from_file("config.ert")
 
     assert res_config.workflow_jobs["plugin"].isPlugin()
     assert not res_config.workflow_jobs["script"].isPlugin()

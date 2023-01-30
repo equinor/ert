@@ -9,8 +9,8 @@ from ecl.summary import EclSum
 from ert._c_wrappers.enkf import (
     ActiveList,
     EnKFMain,
+    ErtConfig,
     ObservationConfigError,
-    ResConfig,
     SummaryObservation,
 )
 
@@ -98,7 +98,7 @@ def test_that_loading_summary_obs_with_days_is_within_tolerance(
         # We create a reference case
         run_sim(datetime(2014, 9, 10))
 
-        res_config = ResConfig("config.ert")
+        res_config = ErtConfig.from_file("config.ert")
         os.chdir(res_config.config_path)
         with expectation:
             ert = EnKFMain(res_config)

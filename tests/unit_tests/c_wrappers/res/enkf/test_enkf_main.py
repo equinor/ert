@@ -12,10 +12,10 @@ from ert._c_wrappers.enkf import (
     EnKFMain,
     EnkfObs,
     EnsembleConfig,
+    ErtConfig,
     ModelConfig,
     ObservationConfigError,
     ObsVector,
-    ResConfig,
     RunArg,
     TimeMap,
 )
@@ -41,16 +41,11 @@ def test_ecl_config_creation(minimum_case):
     assert isinstance(time_map, TimeMap)
 
 
-@pytest.fixture(name="enkf_main")
-def enkf_main_fixture(tmp_path, monkeypatch):
-    (tmp_path / "test.ert").write_text("NUM_REALIZATIONS 1\nJOBNAME name%d")
-    monkeypatch.chdir(tmp_path)
-    yield EnKFMain(ResConfig("test.ert"))
-
-
-def test_create_run_context(monkeypatch, enkf_main):
+@pytest.mark.usefixtures("use_tmpdir")
+def test_create_run_context():
     iteration = 0
     ensemble_size = 10
+    enkf_main = EnKFMain(ErtConfig.from_dict({"JOBNAME": "name%d"}))
 
     run_context = enkf_main.create_ensemble_context(
         "prior", [True] * ensemble_size, iteration=iteration
@@ -73,34 +68,18 @@ def test_create_run_context(monkeypatch, enkf_main):
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_that_current_case_file_is_written():
-    config_text = dedent(
-        """
-        NUM_REALIZATIONS 1
-        JOBNAME my_case%d
-        """
-    )
-    Path("config.ert").write_text(config_text, encoding="utf-8")
-    res_config = ResConfig("config.ert")
-    EnKFMain(res_config)
+    EnKFMain(ErtConfig())
     assert (Path("storage") / "current_case").read_text() == "default"
 
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_that_current_case_file_can_have_newline():
-    config_text = dedent(
-        """
-        NUM_REALIZATIONS 1
-        JOBNAME my_case%d
-        """
-    )
-    Path("config.ert").write_text(config_text, encoding="utf-8")
-    res_config = ResConfig("config.ert")
+    res_config = ErtConfig()
     EnKFMain(res_config)
     assert (Path("storage") / "current_case").read_text(encoding="utf-8") == "default"
     del res_config
     (Path("storage") / "current_case").write_text("default\n", encoding="utf-8")
-    res_config = ResConfig("config.ert")
-    EnKFMain(res_config)
+    EnKFMain(ErtConfig())
 
 
 def test_assert_symlink_deleted(snake_oil_field_example):
@@ -139,12 +118,7 @@ def test_bootstrap(minimum_case):
 def test_invalid_res_config():
     with pytest.raises(TypeError):
         # pylint: disable=unexpected-keyword-arg, no-value-for-parameter
-        EnKFMain(res_config="This is not a ResConfig instance")
-
-
-def test_invalid_parameter_count_2_res_config():
-    with pytest.raises(ValueError):
-        ResConfig(user_config_file="a", config_dict="b")
+        EnKFMain(res_config="This is not a ErtConfig instance")
 
 
 def test_observations(minimum_case):
@@ -208,7 +182,7 @@ def test_that_empty_observations_file_causes_exception(tmpdir):
         with open("observations", "w", encoding="utf-8") as fh:
             fh.writelines("")
 
-        res_config = ResConfig("config.ert")
+        res_config = ErtConfig.from_file("config.ert")
 
         with pytest.raises(
             expected_exception=ObservationConfigError,
@@ -234,7 +208,7 @@ def test_that_having_no_refcase_but_history_observations_causes_exception(tmpdir
         with open("time_map.txt", "w", encoding="utf-8") as fo:
             fo.writelines("2023-02-01")
 
-        res_config = ResConfig("config.ert")
+        res_config = ErtConfig.from_file("config.ert")
 
         with pytest.raises(
             expected_exception=ObservationConfigError,
@@ -269,7 +243,7 @@ def test_that_missing_obs_file_raises_exception(tmpdir):
         with open("time_map.txt", "w", encoding="utf-8") as fo:
             fo.writelines("2023-02-01")
 
-        res_config = ResConfig("config.ert")
+        res_config = ErtConfig.from_file("config.ert")
 
         with pytest.raises(
             expected_exception=ObservationConfigError,
@@ -303,7 +277,7 @@ def test_that_missing_time_map_raises_exception(tmpdir):
         with open("time_map.txt", "w", encoding="utf-8") as fo:
             fo.writelines("2023-02-01")
 
-        res_config = ResConfig("config.ert")
+        res_config = ErtConfig.from_file("config.ert")
 
         with pytest.raises(
             expected_exception=ObservationConfigError,
@@ -361,7 +335,7 @@ def test_random_seed_initialization_of_rngs(random_seed, tmpdir):
         with open("config.ert", "w", encoding="utf-8") as fh:
             fh.writelines(config_content)
 
-        res_config = ResConfig("config.ert")
+        res_config = ErtConfig.from_file("config.ert")
         EnKFMain(res_config)
         assert res_config.random_seed == str(random_seed)
 
@@ -371,7 +345,7 @@ def test_ert_context():
     # Write a minimal config file with DEFINE
     with open("config_file.ert", "w", encoding="utf-8") as fout:
         fout.write("NUM_REALIZATIONS 1\nDEFINE MY_PATH <CONFIG_PATH>")
-    res_config = ResConfig("config_file.ert")
+    res_config = ErtConfig.from_file("config_file.ert")
     ert = EnKFMain(res_config)
     context = ert.get_context()
     my_path = context["MY_PATH"]

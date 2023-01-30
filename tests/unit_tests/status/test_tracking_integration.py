@@ -15,7 +15,7 @@ from jsonpath_ng import parse
 
 from ert.__main__ import ert_parser
 from ert._c_wrappers.enkf.enkf_main import EnKFMain
-from ert._c_wrappers.enkf.res_config import ResConfig
+from ert._c_wrappers.enkf.ert_config import ErtConfig
 from ert.cli import ENSEMBLE_EXPERIMENT_MODE, ENSEMBLE_SMOOTHER_MODE, TEST_RUN_MODE
 from ert.cli.model_factory import create_model
 from ert.ensemble_evaluator import EvaluatorTracker
@@ -172,7 +172,7 @@ def test_tracking(
         )
         FeatureToggling.update_from_args(parsed)
 
-        res_config = ResConfig(parsed.config)
+        res_config = ErtConfig.from_file(parsed.config)
         os.chdir(res_config.config_path)
         ert = EnKFMain(res_config)
         facade = LibresFacade(ert)
@@ -297,7 +297,7 @@ def test_tracking_time_map(
         )
         FeatureToggling.update_from_args(parsed)
 
-        res_config = ResConfig(parsed.config)
+        res_config = ErtConfig.from_file(parsed.config)
         os.chdir(res_config.config_path)
         ert = EnKFMain(res_config)
         facade = LibresFacade(ert)
@@ -384,7 +384,7 @@ def test_tracking_missing_ecl(
         )
         FeatureToggling.update_from_args(parsed)
 
-        res_config = ResConfig(parsed.config)
+        res_config = ErtConfig.from_file(parsed.config)
         os.chdir(res_config.config_path)
         ert = EnKFMain(res_config)
         facade = LibresFacade(ert)

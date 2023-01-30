@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Tuple, Union
 
-from ert._c_wrappers.enkf import EnKFMain, NodeId, ResConfig
+from ert._c_wrappers.enkf import EnKFMain, ErtConfig, NodeId
 from ert._c_wrappers.enkf.config import EnkfConfigNode
 from ert._c_wrappers.enkf.data import EnkfNode
 
@@ -18,14 +18,14 @@ def _slug(entity: str) -> str:
 class BatchSimulator:
     def __init__(  # pylint: disable: too-many-arguments
         self,
-        res_config: ResConfig,
+        res_config: ErtConfig,
         controls: Dict[str, List[str]],
         results: List[str],
         callback: Optional[Callable[[BatchContext], None]] = None,
     ):
         """Will create simulator which can be used to run multiple simulations.
 
-        The @res_config argument should be a ResConfig object.
+        The @res_config argument should be a ErtConfig object.
 
 
         The @controls argument configures which parameters the simulator should
@@ -87,8 +87,8 @@ class BatchSimulator:
                  ....
 
         """
-        if not isinstance(res_config, ResConfig):
-            raise ValueError("The first argument must be valid ResConfig instance")
+        if not isinstance(res_config, ErtConfig):
+            raise ValueError("The first argument must be valid ErtConfig instance")
 
         self.res_config = res_config
         self.ert = EnKFMain(self.res_config)

@@ -4,7 +4,7 @@ import time
 
 import pytest
 
-from ert._c_wrappers.enkf import ResConfig
+from ert._c_wrappers.enkf import ErtConfig
 from ert._c_wrappers.job_queue import JobStatusType
 from ert.simulator import BatchSimulator
 
@@ -36,7 +36,7 @@ def batch_sim_example(setup_case):
 
 
 def test_that_simulator_raises_error_when_missing_resconfig():
-    with pytest.raises(ValueError, match="The first argument must be valid ResConfig"):
+    with pytest.raises(ValueError, match="The first argument must be valid ErtConfig"):
         _ = BatchSimulator(
             "ARG",
             {
@@ -366,7 +366,7 @@ LOAD_WORKFLOW_JOB workflows/jobs/REALIZATION_NUMBER
         """
         )
 
-    res_config = ResConfig("sleepy_time.ert")
+    res_config = ErtConfig.from_file("sleepy_time.ert")
 
     rsim = BatchSimulator(
         res_config,

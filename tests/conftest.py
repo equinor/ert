@@ -10,7 +10,7 @@ import pytest
 from hypothesis import HealthCheck, settings
 
 from ert.__main__ import ert_parser
-from ert._c_wrappers.enkf import EnKFMain, ResConfig
+from ert._c_wrappers.enkf import EnKFMain, ErtConfig
 from ert.cli import ENSEMBLE_EXPERIMENT_MODE
 from ert.cli.main import run_cli
 from ert.services import Storage
@@ -71,7 +71,7 @@ def fixture_setup_case(tmp_path, source_root, monkeypatch):
     def copy_case(path, config_file):
         shutil.copytree(os.path.join(source_root, "test-data", path), "test_data")
         monkeypatch.chdir(tmp_path / "test_data")
-        return ResConfig(config_file)
+        return ErtConfig.from_file(config_file)
 
     monkeypatch.chdir(tmp_path)
     yield copy_case
@@ -84,7 +84,7 @@ def poly_case(setup_case):
 
 @pytest.fixture()
 def snake_oil_case_storage(copy_snake_oil_case_storage, tmp_path, source_root):
-    return EnKFMain(ResConfig("snake_oil.ert"))
+    return EnKFMain(ErtConfig.from_file("snake_oil.ert"))
 
 
 @pytest.fixture()

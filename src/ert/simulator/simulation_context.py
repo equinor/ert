@@ -13,11 +13,11 @@ from ert.ensemble_evaluator import forward_model_exit, forward_model_ok
 from .forward_model_status import ForwardModelStatus
 
 if TYPE_CHECKING:
-    from ert._c_wrappers.enkf import EnkfFs, EnKFMain, ResConfig, RunArg
+    from ert._c_wrappers.enkf import EnkfFs, EnKFMain, ErtConfig, RunArg
     from ert._c_wrappers.job_queue import JobQueue, JobStatusType
 
 
-def done_callback(args: Tuple["RunArg", "ResConfig"]) -> Tuple[LoadStatus, str]:
+def done_callback(args: Tuple["RunArg", "ErtConfig"]) -> Tuple[LoadStatus, str]:
     return forward_model_ok(
         args[0],
         args[1].ensemble_config,

@@ -14,7 +14,7 @@ from ecl import set_abort_handler
 
 import ert.shared
 from ert._c_wrappers.config.config_parser import ConfigValidationError
-from ert._c_wrappers.enkf import ResConfig
+from ert._c_wrappers.enkf import ErtConfig
 from ert.cli import (
     ENSEMBLE_EXPERIMENT_MODE,
     ENSEMBLE_SMOOTHER_MODE,
@@ -63,7 +63,7 @@ def run_webviz_ert(args: Namespace) -> None:
 
     kwargs: Dict[str, Any] = {"verbose": args.verbose}
     if args.config:
-        res_config = ResConfig(args.config)
+        res_config = ErtConfig.from_file(args.config)
         os.chdir(res_config.config_path)
         ens_path = res_config.ens_path
 

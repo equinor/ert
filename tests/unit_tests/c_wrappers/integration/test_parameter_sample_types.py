@@ -17,7 +17,7 @@ from ecl.util.geometry import Surface
 
 from ert.__main__ import ert_parser
 from ert._c_wrappers.config.config_parser import ConfigValidationError
-from ert._c_wrappers.enkf import EnKFMain, ResConfig
+from ert._c_wrappers.enkf import EnKFMain, ErtConfig
 from ert._clib import update
 from ert._clib.update import Parameter
 from ert.cli import ENSEMBLE_SMOOTHER_MODE
@@ -32,7 +32,7 @@ def write_file(fname, contents):
 
 def create_runpath(config, active_mask=None):
     active_mask = [True] if active_mask is None else active_mask
-    res_config = ResConfig(config)
+    res_config = ErtConfig.from_file(config)
     ert = EnKFMain(res_config)
 
     prior = ert.load_ensemble_context("default", active_mask, 0)
@@ -526,7 +526,7 @@ def test_that_sampling_is_fixed_from_name(tmpdir, template, prior, num_realisati
         with open("prior.txt", "w", encoding="utf-8") as fh:
             fh.writelines(prior)
 
-        res_config = ResConfig("config.ert")
+        res_config = ErtConfig.from_file("config.ert")
         ert = EnKFMain(res_config)
 
         run_context = ert.create_ensemble_context(
@@ -588,7 +588,7 @@ def test_that_sub_sample_maintains_order(tmpdir, mask, expected):
         with open("prior.txt", "w", encoding="utf-8") as fh:
             fh.writelines("MY_KEYWORD NORMAL 0 1")
 
-        res_config = ResConfig("config.ert")
+        res_config = ErtConfig.from_file("config.ert")
         ert = EnKFMain(res_config)
 
         run_context = ert.create_ensemble_context(
@@ -707,7 +707,7 @@ if __name__ == "__main__":
         )
 
         run_cli(parsed)
-        ert = EnKFMain(ResConfig("config.ert"))
+        ert = EnKFMain(ErtConfig.from_file("config.ert"))
         prior = ert.storage_manager["prior"]
         posterior = ert.storage_manager["smoother_update"]
         parameter_name = "MY_PARAM"

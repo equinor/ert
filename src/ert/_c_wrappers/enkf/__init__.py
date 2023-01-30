@@ -29,6 +29,7 @@ from .enums import (
     LoadFailTypeEnum,
     RealizationStateEnum,
 )
+from .ert_config import ErtConfig
 from .ert_run_context import RunContext
 from .model_config import ModelConfig
 from .node_id import NodeId
@@ -83,6 +84,7 @@ __all__ = [
     "EnsembleConfig",
     "EnkfObs",
     "ModelConfig",
+    "ErtConfig",
     "ResConfig",
     "RunArg",
     "RunContext",

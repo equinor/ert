@@ -5,7 +5,7 @@ from textwrap import dedent
 import pytest
 from ecl.summary import EclSum
 
-from ert._c_wrappers.enkf import EnkfObs, ResConfig
+from ert._c_wrappers.enkf import EnkfObs, ErtConfig
 
 
 def run_simulator():
@@ -59,7 +59,7 @@ def test_that_correct_key_observation_is_loaded(extra_config, expected):
     )
     Path("config.ert").write_text(config_text + extra_config, encoding="utf-8")
     run_simulator()
-    res_config = ResConfig("config.ert")
+    res_config = ErtConfig.from_file("config.ert")
     observations = EnkfObs(
         res_config.model_config.history_source,
         res_config.model_config.time_map,
@@ -99,7 +99,7 @@ def test_date_parsing_in_observations(datestring, deprecated, capfd):
     )
     Path("config.ert").write_text(config_text, encoding="utf-8")
     run_simulator()
-    res_config = ResConfig("config.ert")
+    res_config = ErtConfig.from_file("config.ert")
     observations = EnkfObs(
         res_config.model_config.history_source,
         res_config.model_config.time_map,

@@ -9,7 +9,7 @@ from ert import _clib
 from ert._c_wrappers import ResPrototype
 from ert._c_wrappers.enkf.config import EnkfConfigNode
 from ert._c_wrappers.enkf.enums import EnKFFSType
-from ert._c_wrappers.enkf.res_config import EnsembleConfig
+from ert._c_wrappers.enkf.ert_config import EnsembleConfig
 
 # flake8: noqa pylint: disable=unused-import
 from ert._c_wrappers.enkf.summary_key_set import SummaryKeySet
