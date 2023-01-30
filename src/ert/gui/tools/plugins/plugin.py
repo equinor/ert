@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from ert._c_wrappers.job_queue import ErtScript
 
@@ -7,6 +7,7 @@ if TYPE_CHECKING:
 
     from ert._c_wrappers.enkf import EnKFMain
     from ert._c_wrappers.job_queue import ErtPlugin, WorkflowJob
+    from ert._c_wrappers.job_queue.run_status import RunStatus
 
 
 class Plugin:
@@ -18,14 +19,13 @@ class Plugin:
         self.__workflow_job = workflow_job
         self.__parent_window = None
 
-        script = self.__loadPlugin()
-        self.__name = script.getName()
-        self.__description = script.getDescription()
+        self.loaded_script = self.__loadPlugin()
+        self.__name = self.loaded_script.getName()
+        self.__description = self.loaded_script.getDescription()
 
     def __loadPlugin(self) -> "ErtPlugin":
         script_obj = ErtScript.loadScriptFromFile(self.__workflow_job.script)
-        script = script_obj(self.__ert)
-        return script
+        return script_obj(self.__ert)
 
     def getName(self) -> str:
         return self.__name
@@ -38,8 +38,7 @@ class Plugin:
          Returns a list of arguments. Either from GUI or from arbitrary code.
          If the user for example cancels in the GUI a CancelPluginException is raised.
         @rtype: list"""
-        script = self.__loadPlugin()
-        return script.getArguments(self.__parent_window)
+        return self.loaded_script.getArguments(self.__parent_window)
 
     def setParentWindow(self, parent_window):
         self.__parent_window = parent_window
@@ -47,8 +46,12 @@ class Plugin:
     def getParentWindow(self) -> "QWidget":
         return self.__parent_window
 
-    def ert(self) -> "EnKFMain":
-        return self.__ert
+    def cancel(self):
+        self.__workflow_job.cancel()
 
-    def getWorkflowJob(self) -> "WorkflowJob":
-        return self.__workflow_job
+    def run(self, arguments) -> Any:
+        return self.__workflow_job.run(self.__ert, arguments)
+
+    @property
+    def run_status(self) -> "RunStatus":
+        return self.__workflow_job.run_status

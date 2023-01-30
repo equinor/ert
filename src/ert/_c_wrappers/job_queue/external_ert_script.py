@@ -12,7 +12,7 @@ class ExternalErtScript(ErtScript):
         self.__executable = executable
         self.__job = None
 
-    def run(self, *args) -> None:
+    def run(self, *args) -> str:
         command = [self.__executable]
         command.extend([str(arg) for arg in args])
 
@@ -23,13 +23,15 @@ class ExternalErtScript(ErtScript):
         # The job will complete before stdout and stderr is returned
         stdoutdata, stderrdata = self.__job.communicate()
 
-        self._stdoutdata = codecs.decode(stdoutdata, "utf8", "replace")
-        self._stderrdata = codecs.decode(stderrdata, "utf8", "replace")
+        stdoutdata = codecs.decode(stdoutdata, "utf8", "replace")
+        stderrdata = codecs.decode(stderrdata, "utf8", "replace")
 
-        sys.stdout.write(self._stdoutdata)
+        sys.stdout.write(stderrdata)
 
         if self.__job.returncode != 0:
-            raise Exception(self._stderrdata)
+            raise RuntimeError(stderrdata)
+
+        return stdoutdata
 
     def cancel(self):
         super().cancel()

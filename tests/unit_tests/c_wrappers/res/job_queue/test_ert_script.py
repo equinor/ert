@@ -27,19 +27,19 @@ class NoneScript(ErtScript):
 
 def test_ert_script_return_ert():
     script = ReturnErtScript("ert")
-    result = script.initializeAndRun([], [])
-    assert result == "ert"
+    script.initializeAndRun([], [])
+    assert script.run_status.stdoutdata == "ert"
 
 
 def test_ert_script_add():
     script = AddScript("ert")
 
-    result = script.initializeAndRun([int, int], ["5", "4"])
+    script.initializeAndRun([int, int], ["5", "4"])
 
-    assert result == 9
+    assert script.run_status.stdoutdata == 9
 
     with pytest.raises(ValueError):
-        result = script.initializeAndRun([int, int], ["5", "4.6"])
+        script.initializeAndRun([int, int], ["5", "4.6"])
 
 
 def test_ert_script_failed_implementation():
@@ -63,8 +63,8 @@ def test_ert_script_from_file():
     script_object = ErtScript.loadScriptFromFile("subtract_script.py")
 
     script = script_object("ert")
-    result = script.initializeAndRun([int, int], ["1", "2"])
-    assert result == -1
+    script.initializeAndRun([int, int], ["1", "2"])
+    assert script.run_status.stdoutdata == -1
 
     with pytest.raises(ValueError):
         _ = ErtScript.loadScriptFromFile("syntax_error_script.py")

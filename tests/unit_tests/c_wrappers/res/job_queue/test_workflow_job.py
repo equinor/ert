@@ -35,7 +35,7 @@ def test_arguments():
     assert job.max_args == 2
     assert job.argumentTypes() == [float, float]
 
-    assert job.run(None, [1, 2.5])
+    job.run(None, [1, 2.5])
 
     with pytest.raises(ValueError, match="requires at least 2 arguments"):
         job.run(None, [1])
@@ -55,9 +55,10 @@ def test_run_external_job():
 
     assert not job.internal
     argTypes = job.argumentTypes()
+    job.run(None, ["test", "text"])
     assert argTypes == [str, str]
-    assert job.run(None, ["test", "text"]) is None
-    assert job.stdoutdata() == "Hello World\n"
+
+    assert job.run_status.stdoutdata == "Hello World\n"
 
     with open("test", "r", encoding="utf-8") as f:
         assert f.read() == "text"
@@ -74,8 +75,10 @@ def test_error_handling_external_job():
 
     assert not job.internal
     job.argumentTypes()
-    assert job.run(None, []) is None
-    assert job.stderrdata().startswith("Traceback")
+    job.run(None, [])
+    job_status = job.run_status
+    assert job_status.has_failed()
+    assert "Traceback" in job_status.stderrdata
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -87,6 +90,8 @@ def test_run_internal_script():
         config_file="subtract_script_job",
     )
 
-    result = job.run(None, ["1", "2"])
+    job.run(None, ["1", "2"])
+    job_status = job.run_status
 
-    assert result == -1
+    assert job_status.has_finished()
+    assert job_status.stdoutdata == -1

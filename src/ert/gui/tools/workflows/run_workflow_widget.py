@@ -88,7 +88,7 @@ class RunWorkflowWidget(QWidget):
         return widget
 
     def cancelWorkflow(self):
-        if self._workflow_runner.isRunning():
+        if self._workflow_runner.workflow_status.is_running():
             cancel = QMessageBox.question(
                 self,
                 "Confirm cancel",
@@ -112,7 +112,7 @@ class RunWorkflowWidget(QWidget):
 
         workflow_thread = Thread(name="ert_gui_workflow_thread")
         workflow_thread.daemon = True
-        workflow_thread.run = self.runWorkflow
+        workflow_thread.run = self.monitor_workflow
 
         workflow = self.ert.resConfig().workflows[self.getCurrentWorkflowName()]
         self._workflow_runner = WorkflowRunner(workflow, self.ert)
@@ -122,23 +122,18 @@ class RunWorkflowWidget(QWidget):
 
         self._running_workflow_dialog.show()
 
-    def runWorkflow(self):
-        while self._workflow_runner.isRunning():
+    def monitor_workflow(self):
+        workflow_status = self._workflow_runner.workflow_status
+        while workflow_status.is_running():
             time.sleep(2)
 
-        cancelled = self._workflow_runner.isCancelled()
-
-        if cancelled:
+        if workflow_status.was_canceled():
             self.workflowKilled.emit()
-        else:
-            success = self._workflow_runner.workflowResult()
-
-            if success:
-                report = self._workflow_runner.workflowReport()
-                failed_jobs = [k for k, v in report.items() if not v["completed"]]
-                self.workflowSucceeded.emit(failed_jobs)
-            else:
-                self.workflowFailed.emit()
+        if workflow_status.has_finished():
+            failed_jobs = self._workflow_runner.get_failed_jobs()
+            self.workflowSucceeded.emit(failed_jobs)
+        if workflow_status.has_failed():
+            self.workflowFailed.emit()
 
     def workflowFinished(self, failed_jobs):
         workflow_name = self.getCurrentWorkflowName()

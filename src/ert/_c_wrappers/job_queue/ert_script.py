@@ -5,6 +5,8 @@ import sys
 import traceback
 from typing import TYPE_CHECKING, Any, Callable, List, Type
 
+from ert._c_wrappers.job_queue.run_status import RunStatus
+
 if TYPE_CHECKING:
     from ert._c_wrappers.enkf import EnKFMain
 
@@ -18,36 +20,18 @@ class ErtScript:
                 "ErtScript implementations must provide a method run(self, ert, ...)"
             )
         self.__ert = ert
-
-        self.__is_cancelled = False
-        self.__failed = False
-        self._stdoutdata = ""
-        self._stderrdata = ""
-
-    @property
-    def stdoutdata(self) -> str:
-        if isinstance(self._stdoutdata, bytes):
-            self._stdoutdata = self._stdoutdata.decode()
-        return self._stdoutdata
-
-    @property
-    def stderrdata(self) -> str:
-        if isinstance(self._stderrdata, bytes):
-            self._stderrdata = self._stderrdata.decode()
-        return self._stderrdata
+        self.__run_status = RunStatus()
 
     def ert(self) -> "EnKFMain":
         logger.info(f"Accessing EnKFMain from workflow: {self.__class__.__name__}")
         return self.__ert
 
-    def isCancelled(self) -> bool:
-        return self.__is_cancelled
-
-    def hasFailed(self) -> bool:
-        return self.__failed
+    @property
+    def run_status(self):
+        return self.__run_status
 
     def cancel(self):
-        self.__is_cancelled = True
+        self.run_status.cancel()
 
     def cleanup(self):
         """
@@ -73,20 +57,19 @@ class ErtScript:
                 arguments.append(None)
 
         try:
-            return self.run(*arguments)
+            self.run_status.start()
+            msg = self.run(*arguments)
+            self.run_status.finish(msg)
         except AttributeError as e:
             error_msg = str(e)
             if not hasattr(self, "run"):
                 error_msg = "No 'run' function implemented"
             self.output_stack_trace(error=error_msg)
-            return None
         except KeyboardInterrupt:
             error_msg = "Script cancelled (CTRL+C)"
             self.output_stack_trace(error=error_msg)
-            return None
         except Exception as e:
             self.output_stack_trace(str(e))
-            return None
         finally:
             self.cleanup()
 
@@ -95,11 +78,12 @@ class ErtScript:
 
     def output_stack_trace(self, error: str = ""):
         stack_trace = error or "".join(traceback.format_exception(*sys.exc_info()))
-        sys.stderr.write(
+        msg = (
             f"The script '{self.__class__.__name__}' caused an "
             f"error while running:\n{str(stack_trace).strip()}\n"
         )
-        self.__failed = True
+        sys.stderr.write(msg)
+        self.run_status.error(msg)
 
     @staticmethod
     def loadScriptFromFile(path) -> Callable[["EnKFMain"], "ErtScript"]:

@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING, Any, List, Optional, Type, Union
 
 from ert._c_wrappers.config import ConfigParser, ConfigValidationError, ContentTypeEnum
 from ert._c_wrappers.job_queue import ErtScript, ExternalErtScript, FunctionErtScript
+from ert._c_wrappers.job_queue.run_status import RunStatus
 from ert._clib.job_kw import type_from_kw
 
 from .ert_plugin import ErtPlugin
@@ -47,7 +48,7 @@ class WorkflowJob:
     function: Optional[str]
 
     def __post_init__(self):
-        self.__running = False
+        self.__script = None
 
     @staticmethod
     def _make_arg_types_list(
@@ -120,7 +121,6 @@ class WorkflowJob:
         return "external"
 
     def run(self, ert: "EnKFMain", arguments: List[Any]) -> Any:
-        self.__running = True
         if self.min_args and len(arguments) < self.min_args:
             raise ValueError(
                 f"The job: {self.name} requires at least "
@@ -147,33 +147,14 @@ class WorkflowJob:
             self.__script = ExternalErtScript(ert, self.executable)
         else:
             raise UserWarning("Unknown script type!")
-        result = self.__script.initializeAndRun(self.argumentTypes(), arguments)
-        self.__running = False
-        return result
+        self.__script.initializeAndRun(self.argumentTypes(), arguments)
 
     def cancel(self) -> None:
         if self.__script is not None:
             self.__script.cancel()
 
-    def isRunning(self) -> bool:
-        return self.__running
-
-    def isCancelled(self) -> bool:
-        if self.__script is None:
-            raise ValueError("The job must be run before calling isCancelled")
-        return self.__script.isCancelled()
-
-    def hasFailed(self) -> bool:
-        if self.__script is None:
-            raise ValueError("The job must be run before calling hasFailed")
-        return self.__script.hasFailed()
-
-    def stdoutdata(self) -> str:
-        if self.__script is None:
-            raise ValueError("The job must be run before getting stdoutdata")
-        return self.__script.stdoutdata
-
-    def stderrdata(self) -> str:
-        if self.__script is None:
-            raise ValueError("The job must be run before getting stderrdata")
-        return self.__script.stderrdata
+    @property
+    def run_status(self) -> RunStatus:
+        if self.__script is not None:
+            return self.__script.run_status
+        return RunStatus()

@@ -25,8 +25,7 @@ class PluginsTool(Tool):
 
         menu = QMenu()
         for plugin in plugin_handler:
-            plugin_runner = PluginRunner(plugin)
-            plugin_runner.setPluginFinishedCallback(self.trigger)
+            plugin_runner = PluginRunner(plugin, self.trigger)
 
             self.__plugins[plugin] = plugin_runner
             plugin_action = menu.addAction(plugin.getName())

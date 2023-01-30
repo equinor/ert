@@ -24,23 +24,23 @@ def test_workflow_thread_cancel_ert_script():
 
     workflow_runner = WorkflowRunner(workflow)
 
-    assert not workflow_runner.isRunning()
-
+    assert not workflow_runner.workflow_status.is_running()
     with workflow_runner:
-        assert workflow_runner.workflowResult() is None
-
-        wait_until(workflow_runner.isRunning)
         wait_until(lambda: os.path.exists("wait_started_0"))
-
+        assert workflow_runner.workflow_status.is_running()
         wait_until(lambda: os.path.exists("wait_finished_0"))
-
         wait_until(lambda: os.path.exists("wait_started_1"))
 
         workflow_runner.cancel()
-
         wait_until(lambda: os.path.exists("wait_cancelled_1"))
 
-        assert workflow_runner.isCancelled()
+        assert workflow_runner.workflow_status.was_canceled()
+        result = workflow_runner.workflow_status.stdoutdata
+        assert len(result) == 2
+        _, status = result[0]
+        assert status.has_finished()
+        _, status = result[1]
+        assert status.was_canceled()
 
     assert not os.path.exists("wait_finished_1")
     assert not os.path.exists("wait_started_2")
@@ -64,15 +64,16 @@ def test_workflow_thread_cancel_external():
 
     workflow_runner = WorkflowRunner(workflow, ert=None)
 
-    assert not workflow_runner.isRunning()
+    assert not workflow_runner.workflow_status.is_running()
 
     with workflow_runner:
-        wait_until(workflow_runner.isRunning)
         wait_until(lambda: os.path.exists("wait_started_0"))
+        assert workflow_runner.workflow_status.is_running()
         wait_until(lambda: os.path.exists("wait_finished_0"))
         wait_until(lambda: os.path.exists("wait_started_1"))
+
         workflow_runner.cancel()
-        assert workflow_runner.isCancelled()
+        assert workflow_runner.workflow_status.was_canceled()
 
     assert not os.path.exists("wait_finished_1")
     assert not os.path.exists("wait_started_2")
@@ -95,7 +96,7 @@ def test_workflow_failed_job():
 
     workflow_runner = WorkflowRunner(workflow, ert=None)
 
-    assert not workflow_runner.isRunning()
+    assert not workflow_runner.workflow_status.is_running()
     with patch.object(
         Workflow, "run", side_effect=Exception("mocked workflow error")
     ), workflow_runner:
@@ -124,7 +125,7 @@ def test_workflow_success():
 
     workflow_runner = WorkflowRunner(workflow, ert=None)
 
-    assert not workflow_runner.isRunning()
+    assert not workflow_runner.workflow_status.is_running()
     with workflow_runner:
         workflow_runner.wait()
     assert os.path.exists("wait_started_0")
@@ -135,4 +136,4 @@ def test_workflow_success():
     assert not os.path.exists("wait_cancelled_1")
     assert os.path.exists("wait_finished_1")
 
-    assert workflow_runner.workflowResult()
+    assert workflow_runner.workflow_status.has_finished()

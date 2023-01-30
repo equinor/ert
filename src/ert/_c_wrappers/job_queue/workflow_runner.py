@@ -20,7 +20,7 @@ class WorkflowRunner:
 
         self.__workflow_result = None
         self._workflow_executor = futures.ThreadPoolExecutor(max_workers=1)
-        self._workflow_job = None
+        self._workflow_future: futures.Future = None
 
     def __enter__(self):
         self.run()
@@ -30,45 +30,32 @@ class WorkflowRunner:
         self.wait()
 
     def run(self):
-        if self.isRunning():
+        if self._workflow_future and self._workflow_future.running():
             raise AssertionError("An instance of workflow is already running!")
-        self._workflow_job = self._workflow_executor.submit(self.__runWorkflow)
+        self._workflow_future = self._workflow_executor.submit(
+            self.__workflow.run, self.__ert
+        )
 
-    def __runWorkflow(self):
-        self.__workflow_result = self.__workflow.run(self.__ert)
-
-    def isRunning(self) -> bool:
-        if self.__workflow.isRunning():
-            return True
-
-        # Completion of _workflow does not indicate that __workflow_result is
-        # set. Check future status, since __workflow_result follows future
-        # completion.
-        return self._workflow_job is not None and not self._workflow_job.done()
-
-    def isCancelled(self) -> bool:
-        return self.__workflow.isCancelled()
+    @property
+    def workflow_status(self):
+        return self.__workflow.get_status()
 
     def cancel(self):
-        if self.isRunning():
+        if self.workflow_status.is_running():
             self.__workflow.cancel()
         self.wait()
 
     def exception(self):
-        if self._workflow_job is not None:
-            return self._workflow_job._exception
+        if self._workflow_future is not None:
+            return self._workflow_future._exception
         return None
 
     def wait(self):
         # This returns a tuple (done, pending), since we run only one job we don't
         # need to use it
         _, _ = futures.wait(
-            [self._workflow_job], timeout=None, return_when=futures.FIRST_EXCEPTION
+            [self._workflow_future], timeout=None, return_when=futures.FIRST_EXCEPTION
         )
 
-    def workflowResult(self) -> Optional[bool]:
-        return self.__workflow_result
-
-    def workflowReport(self):
-        """@rtype: {dict}"""
-        return self.__workflow.getJobsReport()
+    def get_failed_jobs(self):
+        return self.__workflow.get_failed_jobs()

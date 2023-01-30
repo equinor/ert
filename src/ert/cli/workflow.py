@@ -10,5 +10,9 @@ def execute_workflow(ert, workflow_name):
         logger.error(msg.format(workflow_name))
         return
     workflow.run(ert=ert)
-    if not all(v["completed"] for v in workflow.getJobsReport().values()):
-        logger.error(f"Workflow {workflow_name} failed!")
+    failed_jobs = workflow.get_failed_jobs()
+    if failed_jobs:
+        failed_jobs_str = ",".join(failed_jobs)
+        logger.error(
+            f"Workflow {workflow_name} Failed! Jobs: [{failed_jobs_str}] Failed!"
+        )

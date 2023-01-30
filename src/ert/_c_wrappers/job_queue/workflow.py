@@ -5,6 +5,7 @@ from tempfile import mkdtemp
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
 
 from ert._c_wrappers.config import ConfigParser, ConfigValidationError
+from ert._c_wrappers.job_queue.run_status import RunStatus
 
 if TYPE_CHECKING:
     from ert._c_wrappers.enkf import EnKFMain
@@ -28,10 +29,9 @@ class Workflow:
         src_file: str,
         cmd_list: List["WorkflowJob"],
     ):
-        self.__running = False
-        self.__cancelled = False
+        self.__status = RunStatus()
         self.__current_job = None
-        self.__status: Dict[str, Any] = {}
+        self.__report: List[List[str, Any]] = []
         self.src_file = src_file
         self.cmd_list = cmd_list
 
@@ -73,61 +73,54 @@ class Workflow:
 
         return cls(src_file, cmd_list)
 
-    def run(self, ert: "EnKFMain") -> bool:
+    def run(self, ert: "EnKFMain") -> List[List[Any]]:
         logger = logging.getLogger(__name__)
 
         # Reset status
-        self.__status = {}
-        self.__running = True
-
+        self.__report = []
+        self.__status.start()
         for job, args in self:
             self.__current_job = job
-            if not self.__cancelled:
-                job.run(ert, args)
-                self.__status[job.name] = {
-                    "stdout": job.stdoutdata(),
-                    "stderr": job.stderrdata(),
-                    "completed": not job.hasFailed(),
-                }
+            if self.__status.was_canceled():
+                continue
+            job.run(ert, args)
+            status = job.run_status
+            self.__report.append([job.name, status])
 
-                info = {
-                    "class": "WORKFLOW_JOB",
-                    "job_name": job.name,
-                    "arguments": " ".join(args),
-                    "stdout": job.stdoutdata(),
-                    "stderr": job.stderrdata(),
-                    "execution_type": job.execution_type,
-                }
+            info = {
+                "class": "WORKFLOW_JOB",
+                "job_name": job.name,
+                "arguments": " ".join(args),
+                "stdout": status.stdoutdata,
+                "stderr": status.stderrdata,
+                "execution_type": job.execution_type,
+            }
 
-                if job.hasFailed():
-                    logger.error(f"Workflow job {job.name} failed", extra=info)
-                else:
-                    logger.info(
-                        f"Workflow job {job.name} completed successfully", extra=info
-                    )
+            if status.has_failed():
+                logger.error(f"Workflow job {job.name} failed", extra=info)
+            else:
+                logger.info(
+                    f"Workflow job {job.name} completed successfully", extra=info
+                )
 
         self.__current_job = None
-        self.__running = False
-        return True
-
-    def isRunning(self):
-        return self.__running
+        self.__status.finish(self.__report)
+        return self.__report
 
     def cancel(self):
         if self.__current_job is not None:
             self.__current_job.cancel()
+        self.__status.cancel()
 
-        self.__cancelled = True
-
-    def isCancelled(self):
-        return self.__cancelled
+    def get_status(self):
+        return self.__status
 
     def wait(self):
-        while self.isRunning():
+        while self.__status.is_running():
             time.sleep(1)
 
-    def getJobsReport(self) -> Dict[str, Any]:
-        return self.__status
+    def get_failed_jobs(self) -> List[str]:
+        return [job for job, status in self.__report if status.has_failed()]
 
     def __ne__(self, other):
         return not self == other

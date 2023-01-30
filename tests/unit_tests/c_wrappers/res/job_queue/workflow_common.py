@@ -82,6 +82,7 @@ class WorkflowCommon:
     def createWaitJob():
         with open("wait_job.py", "w", encoding="utf-8") as f:
             f.write("from ert._c_wrappers.job_queue import ErtScript\n")
+            f.write("from ert._c_wrappers.job_queue.run_status import RunStatus\n")
             f.write("import time\n")
             f.write("\n")
             f.write("class WaitScript(ErtScript):\n")
@@ -93,11 +94,14 @@ class WorkflowCommon:
             f.write("        self.dump('wait_started_%d' % number, 'text')\n")
             f.write("        start = time.time()\n")
             f.write("        diff = 0\n")
-            f.write("        while not self.isCancelled() and diff < wait_time: \n")
+            f.write(
+                "        while not self.run_status.was_canceled()\
+                                    and diff < wait_time: \n"
+            )
             f.write("           time.sleep(0.2)\n")
             f.write("           diff = time.time() - start\n")
             f.write("\n")
-            f.write("        if self.isCancelled():\n")
+            f.write("        if self.run_status.was_canceled():\n")
             f.write("            self.dump('wait_cancelled_%d' % number, 'text')\n")
             f.write("        else:\n")
             f.write("            self.dump('wait_finished_%d' % number, 'text')\n")
