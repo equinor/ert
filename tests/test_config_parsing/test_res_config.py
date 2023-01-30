@@ -494,3 +494,71 @@ def test_that_magic_strings_get_substituted_in_workflow():
     res_config = ResConfig("config.ert")
 
     assert res_config.workflows["workflow"].cmd_list[0][1] == ["0"]
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_positional_forward_model_args_gives_config_validation_error():
+    test_config_file_name = "test.ert"
+    test_config_contents = dedent(
+        """
+        NUM_REALIZATIONS  1
+        FORWARD_MODEL RMS(<IENS>)
+        """
+    )
+    with open(test_config_file_name, "w", encoding="utf-8") as fh:
+        fh.write(test_config_contents)
+
+    with pytest.raises(ConfigValidationError, match="FORWARD_MODEL RMS"):
+        _ = ResConfig(user_config_file=test_config_file_name)
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_unknown_job_gives_config_validation_error():
+    test_config_file_name = "test.ert"
+    test_config_contents = dedent(
+        """
+        NUM_REALIZATIONS  1
+        SIMULATION_JOB NO_SUCH_JOB
+        """
+    )
+    with open(test_config_file_name, "w", encoding="utf-8") as fh:
+        fh.write(test_config_contents)
+
+    with pytest.raises(ConfigValidationError, match="Could not find job `NO_SUCH_JOB`"):
+        _ = ResConfig(user_config_file=test_config_file_name)
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_giving_both_jobname_and_eclbase_gives_warning():
+    test_config_file_name = "test.ert"
+    test_config_contents = dedent(
+        """
+        NUM_REALIZATIONS  1
+        JOBNAME job1
+        ECLBASE job2
+        """
+    )
+    with open(test_config_file_name, "w", encoding="utf-8") as fh:
+        fh.write(test_config_contents)
+
+    with pytest.warns(ConfigWarning, match="Can not have both JOBNAME and ECLBASE"):
+        _ = ResConfig(user_config_file=test_config_file_name)
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_unknown_hooked_job_gives_config_validation_error():
+    test_config_file_name = "test.ert"
+    test_config_contents = dedent(
+        """
+        NUM_REALIZATIONS  1
+        HOOK_WORKFLOW NO_SUCH_JOB PRE_SIMULATION
+        """
+    )
+    with open(test_config_file_name, "w", encoding="utf-8") as fh:
+        fh.write(test_config_contents)
+
+    with pytest.raises(
+        ConfigValidationError,
+        match="Cannot setup hook for non-existing job name NO_SUCH_JOB",
+    ):
+        _ = ResConfig(user_config_file=test_config_file_name)
