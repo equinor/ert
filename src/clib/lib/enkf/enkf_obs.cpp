@@ -419,6 +419,12 @@ static void handle_history_observation(enkf_obs_type *enkf_obs,
             enkf_conf, "HISTORY_OBSERVATION");
     int num_hist_obs = stringlist_get_size(hist_obs_keys);
 
+    if (num_hist_obs > 0 && enkf_obs->refcase == NULL) {
+        stringlist_free(hist_obs_keys);
+        throw exc::invalid_argument(
+            "REFCASE is required for HISTORY_OBSERVATION");
+    }
+
     for (int i = 0; i < num_hist_obs; i++) {
         const char *obs_key = stringlist_iget(hist_obs_keys, i);
 
@@ -460,6 +466,7 @@ static void handle_history_observation(enkf_obs_type *enkf_obs,
                         "** Could not load historical data for observation:%s "
                         "- ignored\n",
                         obs_key);
+
                 obs_vector_free(obs_vector);
             }
         }
@@ -1024,8 +1031,15 @@ void enkf_obs_load(Cwrap<enkf_obs_type> enkf_obs, const char *config_file,
         throw exc::runtime_error("Error in configuration file: {}",
                                  config_file);
 
-    handle_history_observation(enkf_obs, enkf_conf, enkf_obs->obs_time.size(),
-                               std_cutoff);
+    try {
+        handle_history_observation(enkf_obs, enkf_conf,
+                                   enkf_obs->obs_time.size(), std_cutoff);
+    } catch (exc::invalid_argument err) {
+        conf_instance_free(enkf_conf);
+        conf_class_free(enkf_conf_class);
+        throw exc::invalid_argument(err.what());
+    }
+
     handle_summary_observation(enkf_obs, enkf_conf, enkf_obs->obs_time.size());
     handle_general_observation(enkf_obs, enkf_conf);
 
