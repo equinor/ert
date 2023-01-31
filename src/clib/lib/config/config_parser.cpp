@@ -138,7 +138,7 @@ static config_content_node_type *config_content_item_set_arg__(
 
                 char *filtered_copy = subst_list_alloc_filtered_string(
                     define_list, stringlist_iget(token_list, iarg + 1),
-                    context.c_str());
+                    context.c_str(), 1000);
                 stringlist_iset_owned_ref(token_list, iarg + 1, filtered_copy);
             }
         }

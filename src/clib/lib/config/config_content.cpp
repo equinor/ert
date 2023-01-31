@@ -268,7 +268,7 @@ void config_content_add_define(config_content_type *content, const char *key,
                                const char *value) {
     std::string context_msg = fmt::format("adding DEFINE `{}={}`", key, value);
     char *filtered_value = subst_list_alloc_filtered_string(
-        content->define_list, value, context_msg.c_str());
+        content->define_list, value, context_msg.c_str(), 1000);
     subst_list_append_copy(content->define_list, key, filtered_value);
     free(filtered_value);
 }

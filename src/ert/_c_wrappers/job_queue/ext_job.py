@@ -270,7 +270,7 @@ class ExtJob:
     ) -> None:
         """raises InvalidArgsException if validation fails"""
         args_substituted_with_private_list = [
-            (arg, self.private_args.substitute(arg)) for arg in self.arglist
+            (arg, self.private_args.substitute(arg, "", 1)) for arg in self.arglist
         ]
         args_substituted_with_context_and_private_list = [
             (orig_arg, context.substitute(modified_arg))

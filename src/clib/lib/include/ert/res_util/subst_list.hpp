@@ -19,7 +19,8 @@ void subst_list_append_owned_ref(subst_list_type *, const char *, const char *);
 extern "C" bool subst_list_filter_file(const subst_list_type *, const char *,
                                        const char *);
 extern "C" char *subst_list_alloc_filtered_string(const subst_list_type *,
-                                                  const char *, const char *);
+                                                  const char *, const char *,
+                                                  const int);
 extern "C" int subst_list_get_size(const subst_list_type *);
 extern "C" const char *subst_list_get_value(const subst_list_type *subst_list,
                                             const char *key);

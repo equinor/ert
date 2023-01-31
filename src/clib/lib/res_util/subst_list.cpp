@@ -359,13 +359,12 @@ subst_list_update_string(const subst_list_type *subst_list, char **string) {
    warnings emitted during substitution.
 */
 char *subst_list_alloc_filtered_string(const subst_list_type *subst_list,
-                                       const char *string,
-                                       const char *context) {
+                                       const char *string, const char *context,
+                                       const int max_iterations) {
     char *filtered_string = util_alloc_string_copy(string);
     if (subst_list) {
         std::vector<std::string> matches = {"<ANY>"};
-        const int max_iterations = 1000;
-        int iterations = 1;
+        int iterations = 0;
         while (matches.size() > 0 && iterations++ < max_iterations) {
             matches = subst_list_update_string(subst_list, &filtered_string);
         }
@@ -377,7 +376,10 @@ char *subst_list_alloc_filtered_string(const subst_list_type *subst_list,
             matches_substituted.push_back(match_substituted);
         }
 
-        if (iterations >= max_iterations) {
+        // For max_iterations = 1, matches.size() > 0
+        // means that any substitution happened and does not indicate
+        // that there is an infinite loop.
+        if (matches.size() > 0 && max_iterations > 1) {
             std::string warning_message = fmt::format(
                 "Reached max iterations while trying to resolve defines in the "
                 "string `{}` - after iteratively applying substitutions given "
