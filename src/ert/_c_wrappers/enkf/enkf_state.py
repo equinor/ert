@@ -80,10 +80,10 @@ def _internalize_SUMMARY_DATA(ens_config: "EnsembleConfig", run_arg: "RunArg"):
             logger.warning(
                 f"Realization: {run_arg.iens}, load warning: {len(missing)} "
                 "inconsistencies in time map, first: "
-                f"Time mismatch for step: 1, response time: {missing[0][0]}, reference "
-                f"case: {missing[0][1]}, last: Time mismatch for step: "
-                f"{missing[-1][2]}, response time: {missing[-1][0]}, reference "
-                f"case: {missing[-1][1]} from: {run_arg.runpath}/"
+                f"Time mismatch for step: {missing[0][2]}, response time: "
+                f"{missing[0][0]}, reference case: {missing[0][1]}, last: Time "
+                f"mismatch for step: {missing[-1][2]}, response time: {missing[-1][0]}"
+                f", reference case: {missing[-1][1]} from: {run_arg.runpath}/"
                 f"{run_arg.job_name}.UNSMRY"
             )
 
