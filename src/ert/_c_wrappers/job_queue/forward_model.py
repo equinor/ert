@@ -65,7 +65,9 @@ class ForwardModel:
                     copy_private_args.addItem(
                         key, context.substitute_real_iter(val, iens, itr)
                     )
-                string = copy_private_args.substitute(string, substitution_context_hint)
+                string = copy_private_args.substitute(
+                    string, substitution_context_hint, 1
+                )
                 return context.substitute_real_iter(string, iens, itr)
             else:
                 return string
