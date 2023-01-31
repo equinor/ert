@@ -134,14 +134,7 @@ void ensemble_config_init_SUMMARY_full(ensemble_config_type *ensemble_config,
                 ensemble_config_add_summary(ensemble_config,
                                             stringlist_iget(keys, k),
                                             LOAD_FAIL_SILENT);
-
             stringlist_free(keys);
-        } else {
-            fprintf(stderr,
-                    "** Warning: Cannot expand %s due to missing refcase file."
-                    " Provide refcase file or add fully expanded SUMMARY key"
-                    " to configuration\n",
-                    key);
         }
     } else {
         ensemble_config_add_summary(ensemble_config, key, LOAD_FAIL_SILENT);
