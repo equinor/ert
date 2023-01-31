@@ -9,6 +9,7 @@ import numpy as np
 
 from ert import _clib
 from ert._c_wrappers.analysis.configuration import UpdateConfiguration
+from ert._c_wrappers.config.config_parser import ConfigValidationError
 from ert._c_wrappers.enkf import EnkfFs
 from ert._c_wrappers.enkf.analysis_config import AnalysisConfig
 from ert._c_wrappers.enkf.data import EnkfNode
@@ -166,10 +167,14 @@ class EnKFMain:
                     f"{config.model_config.obs_config_file}"
                     f": {self._observations.error}"
                 )
-            self._observations.load(
-                config.model_config.obs_config_file,
-                config.analysis_config.get_std_cutoff(),
-            )
+            try:
+                self._observations.load(
+                    config.model_config.obs_config_file,
+                    config.analysis_config.get_std_cutoff(),
+                )
+            except ValueError as err:
+                raise ConfigValidationError(err)
+
         self._ensemble_size = self.res_config.model_config.num_realizations
         self._runpaths = Runpaths(
             self.resConfig().preferred_job_fmt(),
