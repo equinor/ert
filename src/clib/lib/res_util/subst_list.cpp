@@ -357,17 +357,20 @@ subst_list_update_string(const subst_list_type *subst_list, char **string) {
    operation has been performed.
 */
 char *subst_list_alloc_filtered_string(const subst_list_type *subst_list,
-                                       const char *string) {
+                                       const char *string,
+                                       const int max_iterations) {
     char *filtered_string = util_alloc_string_copy(string);
     if (subst_list) {
         std::vector<std::string> matches = {"<ANY>"};
-        const int max_iterations = 1000;
-        int iterations = 1;
+        int iterations = 0;
         while (matches.size() > 0 && iterations++ < max_iterations) {
             matches = subst_list_update_string(subst_list, &filtered_string);
         }
 
-        if (iterations >= max_iterations) {
+        // For max_iterations = 1, matches.size() > 0
+        // means that any substitution happened and does not indicate
+        // that there is an infinite loop.
+        if (matches.size() > 0 && max_iterations > 1) {
             logger->warning(fmt::format(
                 "Reached max iterations while trying to resolve defines in "
                 "'{}', it matched to '{}' and resulted in '{}'",

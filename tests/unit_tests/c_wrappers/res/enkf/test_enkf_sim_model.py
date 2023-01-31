@@ -112,6 +112,17 @@ def valid_args(arg_types, arg_list: List[str], runtime: bool = False):
             ["0"],
             id="This style of args works without infinite substitution loop.",
         ),
+        pytest.param(
+            dedent(
+                """
+            EXECUTABLE echo
+            ARGLIST <ECLBASE>
+            """
+            ),
+            "FORWARD_MODEL job_name(<ECLBASE>=A/<ECLBASE>)",
+            ["A/JOB0"],
+            id="The NOSIM job takes <ECLBASE> as args. Expect no infinite loop.",
+        ),
     ],
 )
 def test_forward_model_job(job, forward_model, expected_args):
