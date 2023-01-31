@@ -57,9 +57,10 @@ def test_invalid_model_config_run_path(tmpdir):
 
 
 def test_deprecated_model_config_run_path(tmpdir):
+    suggested_path = "simulations/realization-<IENS>/iter-<ITER>"
     runpath = "simulations/realization-%d/iter-%d"
     mc = ModelConfig(num_realizations=1, runpath_format_string=runpath)
-    assert mc.runpath_format_string == runpath
+    assert mc.runpath_format_string == suggested_path
 
 
 @given(config_generators())

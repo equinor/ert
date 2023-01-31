@@ -4,6 +4,7 @@ from typing import Optional
 from ecl.summary import EclSum
 
 from ert._c_wrappers.enkf.config_keys import ConfigKeys
+from ert._c_wrappers.enkf.runpaths import replace_runpath_format
 from ert._c_wrappers.enkf.time_map import TimeMap
 from ert._c_wrappers.sched import HistorySourceEnum
 
@@ -42,19 +43,20 @@ class ModelConfig:
 
         if runpath_format_string is None:
             self.runpath_format_string = self.DEFAULT_RUNPATH
-        elif "%d" in runpath_format_string:
-            self.runpath_format_string = runpath_format_string
-            logger.warning(
-                "RUNPATH keyword should use syntax "
-                f"`{self.DEFAULT_RUNPATH}` "
-                "instead of deprecated syntax "
-                f"`{runpath_format_string}`"
-            )
-        elif not any(x in runpath_format_string for x in ["<ITER>, <IENS>"]):
-            self.runpath_format_string = runpath_format_string
-            logger.error(
-                "RUNPATH keyword should use syntax " f"`{self.DEFAULT_RUNPATH}`."
-            )
+        else:
+            self.runpath_format_string = replace_runpath_format(runpath_format_string)
+
+            if "%d" in runpath_format_string:
+                logger.warning(
+                    "RUNPATH keyword contains deprecated value placeholders, "
+                    f"`instead use: {self.runpath_format_string}`"
+                )
+            elif not any(x in runpath_format_string for x in ["<ITER>", "<IENS>"]):
+                logger.warning(
+                    "RUNPATH keyword contains no value placeholders: "
+                    f"`{runpath_format_string}`. Valid example: "
+                    f"`{self.DEFAULT_RUNPATH}` "
+                )
 
         self.jobname_format_string = jobname_format_string
         self.gen_kw_export_name = (
