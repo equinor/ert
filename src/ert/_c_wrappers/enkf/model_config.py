@@ -40,19 +40,20 @@ class ModelConfig:
 
         if runpath_format_string is None:
             self.runpath_format_string = self.DEFAULT_RUNPATH
-        elif "%d" in runpath_format_string:
+        else:
             self.runpath_format_string = replace_runpath_format(runpath_format_string)
-            logger.warning(
-                "RUNPATH keyword contains deprecated value placeholders, "
-                f"`instead use: {self.runpath_format_string}`"
-            )
-        elif not any(x in runpath_format_string for x in ["<ITER>, <IENS>"]):
-            self.runpath_format_string = runpath_format_string
-            logger.warning(
-                "RUNPATH keyword contains no value placeholders: "
-                f"`{runpath_format_string}`. Valid example: "
-                f"`{self.DEFAULT_RUNPATH}` "
-            )
+
+            if "%d" in runpath_format_string:
+                logger.warning(
+                    "RUNPATH keyword contains deprecated value placeholders, "
+                    f"`instead use: {self.runpath_format_string}`"
+                )
+            elif not any(x in runpath_format_string for x in ["<ITER>", "<IENS>"]):
+                logger.warning(
+                    "RUNPATH keyword contains no value placeholders: "
+                    f"`{runpath_format_string}`. Valid example: "
+                    f"`{self.DEFAULT_RUNPATH}` "
+                )
 
         self.jobname_format_string = jobname_format_string
         self.gen_kw_export_name = (
