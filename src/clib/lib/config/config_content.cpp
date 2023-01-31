@@ -267,7 +267,7 @@ config_content_iget_stringlist_ref(const config_content_type *content,
 void config_content_add_define(config_content_type *content, const char *key,
                                const char *value) {
     char *filtered_value =
-        subst_list_alloc_filtered_string(content->define_list, value);
+        subst_list_alloc_filtered_string(content->define_list, value, 1000);
     subst_list_append_copy(content->define_list, key, filtered_value);
     free(filtered_value);
 }
