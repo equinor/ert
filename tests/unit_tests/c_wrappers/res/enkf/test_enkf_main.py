@@ -7,6 +7,7 @@ from unittest.mock import MagicMock
 import pytest
 from ecl.summary import EclSum
 
+from ert._c_wrappers.config.config_parser import ConfigValidationError
 from ert._c_wrappers.enkf import (
     AnalysisConfig,
     EnkfFs,
@@ -264,6 +265,32 @@ def test_empty_observations_file_cause_exception(tmpdir):
         with pytest.raises(
             expected_exception=ValueError,
             match="Empty observations file.*",
+        ):
+            EnKFMain(res_config)
+
+
+def test_no_refcase_but_history_observations_cause_exception(tmpdir):
+    with tmpdir.as_cwd():
+        config = dedent(
+            """
+        JOBNAME my_name%d
+        NUM_REALIZATIONS 10
+        OBS_CONFIG observations
+        TIME_MAP time_map.txt
+        """
+        )
+        with open("config.ert", "w", encoding="utf-8") as fh:
+            fh.writelines(config)
+        with open("observations", "w", encoding="utf-8") as fo:
+            fo.writelines("HISTORY_OBSERVATION FOPR;")
+        with open("time_map.txt", "w", encoding="utf-8") as fo:
+            fo.writelines("2023-02-01")
+
+        res_config = ResConfig("config.ert")
+
+        with pytest.raises(
+            expected_exception=ConfigValidationError,
+            match="REFCASE is required for HISTORY_OBSERVATION",
         ):
             EnKFMain(res_config)
 
