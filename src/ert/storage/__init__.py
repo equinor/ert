@@ -1,21 +1,67 @@
 from __future__ import annotations
 
 import json
+import math
 import os
+import shutil
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, List, Literal, Tuple, Union
+from typing import TYPE_CHECKING, Any, Dict, List, Literal, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
 import xarray as xr
 import xtgeo
 
+from ert._c_wrappers.enkf.enums import EnkfTruncationType
+
 if TYPE_CHECKING:
     import numpy.typing as npt
 
-    from ert._c_wrappers.enkf.config import FieldConfig
+
+def _field_transform(data: npt.ArrayLike, transform_name: str) -> Any:
+    if not transform_name:
+        return data
+
+    def f(x: float) -> float:  # pylint: disable=too-many-return-statements
+        if transform_name in ("LN", "LOG"):
+            return math.log(x, math.e)
+        if transform_name == "LN0":
+            return math.log(x, math.e) + 0.000001
+        if transform_name == "LOG10":
+            return math.log(x, 10)
+        if transform_name == "EXP":
+            return math.exp(x)
+        if transform_name == "EXP0":
+            return math.exp(x) + 0.000001
+        if transform_name == "POW10":
+            return math.pow(x, 10)
+        if transform_name == "TRUNC_POW10":
+            return math.pow(max(x, 0.001), 10)
+        return x
+
+    vfunc = np.vectorize(f)
+
+    return vfunc(data)
+
+
+def _field_truncate(
+    data: npt.ArrayLike, truncation_mode: EnkfTruncationType, min_: float, max_: float
+) -> Any:
+    if truncation_mode == EnkfTruncationType.TRUNCATE_MIN:
+        vfunc = np.vectorize(lambda x: max(x, min_))
+        return vfunc(data)
+    if truncation_mode == EnkfTruncationType.TRUNCATE_MAX:
+        vfunc = np.vectorize(lambda x: min(x, max_))
+        return vfunc(data)
+    if (
+        truncation_mode
+        == EnkfTruncationType.TRUNCATE_MAX | EnkfTruncationType.TRUNCATE_MIN
+    ):
+        vfunc = np.vectorize(lambda x: max(min(x, max_), min_))
+        return vfunc(data)
+    return data
 
 
 class Storage:
@@ -188,6 +234,43 @@ class Storage:
             )
         return pd.concat(dfs)
 
+    def save_field_info(  # pylint: disable=too-many-arguments
+        self,
+        key: str,
+        grid_file: Optional[str],
+        transfer_out: str,
+        truncation_mode: EnkfTruncationType,
+        trunc_min: float,
+        trunc_max: float,
+        nx: int,
+        ny: int,
+        nz: int,
+    ) -> None:
+        input_path = self.mount_point / "field-info"
+        Path.mkdir(input_path, exist_ok=True)
+        info = {
+            key: {
+                "nx": nx,
+                "ny": ny,
+                "nz": nz,
+                "transfer_out": transfer_out,
+                "truncation_mode": truncation_mode,
+                "truncation_min": trunc_min,
+                "truncation_max": trunc_max,
+            }
+        }
+        if grid_file is not None and not (input_path / "field-info.egrid").exists():
+            shutil.copy(grid_file, input_path / "field-info.egrid")
+
+        existing_info = {}
+        if (input_path / "field-info.json").exists():
+            with open(input_path / "field-info.json", encoding="utf-8", mode="r") as f:
+                existing_info = json.load(f)
+        existing_info.update(info)
+
+        with open(input_path / "field-info.json", encoding="utf-8", mode="w") as f:
+            json.dump(existing_info, f)
+
     def save_field_data(
         self,
         parameter_name: str,
@@ -212,11 +295,28 @@ class Storage:
         path = self.mount_point / f"field-{realization}/{key}.npy"
         return path.exists()
 
+    def field_has_info(self, key: str) -> bool:
+        path = self.mount_point / "field-info" / "field-info.json"
+        if not path.exists():
+            return False
+        with open(path, encoding="utf-8", mode="r") as f:
+            info = json.load(f)
+        return key in info
+
     def export_field(
-        self, config_node: FieldConfig, realization: int, output_path: str, fformat: str
+        self, key: str, realization: int, output_path: Path, fformat: str
     ) -> None:
+        info_path = self.mount_point / "field-info"
+
+        with open(info_path / "field-info.json", encoding="utf-8", mode="r") as f:
+            info = json.load(f)[key]
+
+        if (info_path / "field-info.egrid").exists():
+            grid = xtgeo.grid_from_file(info_path / "field-info.egrid")
+        else:
+            grid = None
+
         input_path = self.mount_point / f"field-{realization}"
-        key = config_node.get_key()
 
         if not input_path.exists():
             raise KeyError(
@@ -224,16 +324,20 @@ class Storage:
             )
         data = np.load(input_path / f"{key}.npy")
 
-        transform_name = config_node.get_output_transform_name()
-        data_transformed = config_node.transform(transform_name, data)
-        data_truncated = config_node.truncate(data_transformed)
+        data_transformed = _field_transform(data, transform_name=info["transfer_out"])
+        data_truncated = _field_truncate(
+            data_transformed,
+            info["truncation_mode"],
+            info["truncation_min"],
+            info["truncation_max"],
+        )
 
         gp = xtgeo.GridProperty(
-            ncol=config_node.get_nx(),
-            nrow=config_node.get_ny(),
-            nlay=config_node.get_nz(),
+            ncol=info["nx"],
+            nrow=info["ny"],
+            nlay=info["nz"],
             values=data_truncated,
-            grid=config_node.get_grid(),
+            grid=grid,
             name=key,
         )
 
@@ -243,18 +347,19 @@ class Storage:
 
     def export_field_many(
         self,
-        config_node: FieldConfig,
+        key: str,
         realizations: List[int],
         output_path: str,
         fformat: str,
     ) -> None:
         for realization in realizations:
-            file_name = output_path % realization
+            file_name = Path(output_path % realization)
             try:
-                self.export_field(config_node, realization, file_name, fformat)
-                print(f"{config_node.get_key()}[{realization:03d}] -> {file_name}")
+                self.export_field(key, realization, file_name, fformat)
+                print(f"{key}[{realization:03d}] -> {file_name}")
             except ValueError:
                 sys.stderr.write(
-                    f"ERROR: Could not load realisation:{realization} - export failed"
+                    f"ERROR: Could not load field: {key}, "
+                    f"realization:{realization} - export failed"
                 )
                 pass
