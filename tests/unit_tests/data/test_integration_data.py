@@ -1,5 +1,6 @@
 import pathlib
 import shutil
+import sys
 import time
 
 import numpy as np
@@ -34,6 +35,9 @@ def test_summary_obs(facade_snake_oil):
     ] == np.datetime64("2011-12-21")
 
 
+@pytest.mark.skipif(
+    sys.platform.startswith("darwin"), reason="Performance of mac is unreliable"
+)
 @pytest.mark.usefixtures("copy_snake_oil_case_storage")
 @pytest.mark.integration_test
 def test_summary_obs_runtime():
