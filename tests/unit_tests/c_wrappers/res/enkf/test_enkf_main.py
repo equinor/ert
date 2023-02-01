@@ -48,7 +48,6 @@ def enkf_main_fixture(tmp_path, monkeypatch):
 
 
 def test_create_run_context(monkeypatch, enkf_main):
-
     iteration = 0
     ensemble_size = 10
 
@@ -218,7 +217,6 @@ def test_empty_observations_file_cause_exception(tmpdir):
 
 
 def test_config(minimum_case):
-
     assert isinstance(minimum_case.ensembleConfig(), EnsembleConfig)
     assert isinstance(minimum_case.analysisConfig(), AnalysisConfig)
     assert isinstance(minimum_case.getModelConfig(), ModelConfig)

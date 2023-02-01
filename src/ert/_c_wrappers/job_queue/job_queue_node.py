@@ -164,7 +164,6 @@ class JobQueueNode(BaseCClass):
         return self._end_time - self._start_time
 
     def _job_monitor(self, driver, pool_sema, max_submit):
-
         submit_status = self.submit(driver)
         if submit_status is not JobSubmitStatusType.SUBMIT_OK:
             self._set_status(JobStatusType.JOB_QUEUE_DONE)

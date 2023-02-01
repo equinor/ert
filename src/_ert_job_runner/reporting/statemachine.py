@@ -19,7 +19,6 @@ class TransitionError(ValueError):
 
 class StateMachine:
     def __init__(self) -> None:
-
         logger.debug("Initializing state machines")
         initialized = (Init,)
         jobs = (Start, Running, Exited)

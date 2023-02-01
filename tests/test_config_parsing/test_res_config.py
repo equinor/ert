@@ -167,7 +167,6 @@ def test_that_queue_config_dict_negative_value_invalid(
         expected_exception=ConfigValidationError,
         match="QUEUE_OPTION MAX_RUNNING is negative",
     ):
-
         ResConfig(config_dict=config_dict)
 
 

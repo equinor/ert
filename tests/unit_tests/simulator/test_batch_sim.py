@@ -198,7 +198,6 @@ def test_batch_simulation(batch_simulator):
             ("ORDER", "WELL_ORDER"),
             ("ON_OFF", "WELL_ON_OFF"),
         ):
-
             # The forward model job SQUARE_PARAMS will load the control
             # values and square them before writing results to disk in
             # the order W1, W2, W3.
@@ -437,7 +436,6 @@ def assertContextStatusOddFailures(batch_ctx, final_state_only=False):
 
 
 def test_batch_ctx_status_failing_jobs(setup_case):
-
     res_config = setup_case("batch_sim", "batch_sim_sleep_and_fail.ert")
 
     external_parameters = {

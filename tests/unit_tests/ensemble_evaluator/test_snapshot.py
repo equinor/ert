@@ -126,7 +126,6 @@ def test_snapshot_merge(snapshot: Snapshot):
     ],
 )
 def test_source_get_ids(source_string, expected_ids):
-
     assert _get_real_id(source_string) == expected_ids["real"]
     assert _get_step_id(source_string) == expected_ids["step"]
     assert _get_job_id(source_string) == expected_ids["job"]

@@ -37,7 +37,6 @@ class CanceledPlugin(ErtPlugin):
 
 
 def test_simple_ert_plugin():
-
     simple_plugin = SimplePlugin("ert")
 
     arguments = simple_plugin.getArguments()

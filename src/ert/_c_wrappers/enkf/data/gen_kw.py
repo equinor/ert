@@ -87,7 +87,7 @@ class GenKw(BaseCClass):
                 self._set_values(values)
             else:
                 d = DoubleVector()
-                for (index, v) in enumerate(values):
+                for index, v in enumerate(values):
                     if isinstance(v, numbers.Number):
                         d[index] = v
                     else:

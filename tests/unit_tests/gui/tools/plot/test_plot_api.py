@@ -54,7 +54,6 @@ def test_case_structure(api):
 
 
 def test_can_load_data_and_observations(api):
-
     keys = {
         "SNAKE_OIL_PARAM:BPR_138_PERSISTENCE": {
             "key": "SNAKE_OIL_PARAM:BPR_138_PERSISTENCE",

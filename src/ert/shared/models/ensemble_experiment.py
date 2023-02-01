@@ -25,7 +25,6 @@ class EnsembleExperiment(BaseRunModel):
         super().__init__(simulation_arguments, ert, queue_config, id_)
 
     async def run(self, evaluator_server_config: EvaluatorServerConfig) -> None:
-
         experiment_logger.debug("starting ensemble experiment")
         event = _ert_com_protocol.node_status_builder(
             status="EXPERIMENT_STARTED", experiment_id=self.id_
@@ -106,7 +105,6 @@ class EnsembleExperiment(BaseRunModel):
         run_msg: str,
         evaluator_server_config: EvaluatorServerConfig,
     ) -> RunContext:
-
         prior_context = self.ert().load_ensemble_context(
             self.ert().storage_manager.current_case.case_name,
             self._simulation_arguments["active_realizations"],

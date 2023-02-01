@@ -97,7 +97,6 @@ class ConfigParser(BaseCClass):
         unrecognized=UnrecognizedEnum.CONFIG_UNRECOGNIZED_WARN,
         validate=True,
     ) -> ConfigContent:
-
         assert isinstance(unrecognized, UnrecognizedEnum)
 
         hash_value = StringHash()

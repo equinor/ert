@@ -45,7 +45,6 @@ class LegendDelegate(QStyledItemDelegate):
         d = math.ceil(option.rect.width() / total_states)
         x_pos = 0
         for state, color_ref in REAL_STATE_TO_COLOR.items():
-
             state_progress = 0
             if state in status:
                 state_progress = status[state]

@@ -13,7 +13,6 @@ from ert.shared.plugins import ErtPluginManager
     "input_string, expected", [("a", ["b", "c"]), ("a,b", ["c"]), ("a, b", ["c"])]
 )
 def test_parse_comma_list(tmpdir, monkeypatch, input_string, expected):
-
     ert_mock = MagicMock()
     ert_mock._observation_keys = ["OBSERVATION"]
     ert_mock._parameter_keys = ["a", "b", "c"]

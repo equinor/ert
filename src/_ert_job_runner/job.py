@@ -121,7 +121,6 @@ class Job:
                     max_running_minutes is not None
                     and run_time.seconds > max_running_minutes * 60
                 ):
-
                     # If the spawned process is not in the same process group as
                     # the callee (job_dispatch), we will kill the process group
                     # explicitly.

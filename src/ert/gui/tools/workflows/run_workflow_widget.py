@@ -17,7 +17,6 @@ from ert.gui.tools.workflows.workflow_dialog import WorkflowDialog
 
 
 class RunWorkflowWidget(QWidget):
-
     workflowSucceeded = Signal(list)
     workflowFailed = Signal()
     workflowKilled = Signal()

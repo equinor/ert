@@ -174,7 +174,6 @@ class EclConfig:
 
 
 class Ecl100Config(EclConfig):
-
     DEFAULT_CONFIG_FILE = os.path.join(os.path.dirname(__file__), "ecl100_config.yml")
 
     def __init__(self):
@@ -183,7 +182,6 @@ class Ecl100Config(EclConfig):
 
 
 class Ecl300Config(EclConfig):
-
     DEFAULT_CONFIG_FILE = os.path.join(os.path.dirname(__file__), "ecl300_config.yml")
 
     def __init__(self):
@@ -192,7 +190,6 @@ class Ecl300Config(EclConfig):
 
 
 class FlowConfig(EclConfig):
-
     DEFAULT_CONFIG_FILE = os.path.join(os.path.dirname(__file__), "flow_config.yml")
 
     def __init__(self):

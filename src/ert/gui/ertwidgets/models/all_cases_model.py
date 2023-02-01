@@ -50,7 +50,6 @@ class AllCasesModel(QAbstractItemModel):
         items = self.getAllItems()
 
         if item in items:
-
             return items.index(item)
 
         return -1

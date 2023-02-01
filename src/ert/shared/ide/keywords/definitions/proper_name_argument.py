@@ -5,7 +5,6 @@ from ert.shared.ide.keywords.definitions import ArgumentDefinition
 
 
 class ProperNameArgument(ArgumentDefinition):
-
     NOT_A_VALID_NAME = (
         "The argument must be a valid string "
         "containing only characters of these types: "
@@ -34,7 +33,6 @@ class ProperNameArgument(ArgumentDefinition):
                 validation_status.setFailed()
                 validation_status.addToMessage(ProperNameArgument.NOT_A_VALID_NAME)
             else:
-
                 if not validation_status.failed():
                     validation_status.setValue(token)
 

@@ -291,7 +291,6 @@ class EnkfConfigNode(BaseCClass):
         init_file_fmt,
         gen_kw_format,
     ):
-
         config_node = cls._alloc_gen_kw_full(
             key,
             forward_init,
@@ -371,7 +370,6 @@ class EnkfConfigNode(BaseCClass):
         max_key,
         init_file_fmt,
     ):
-
         # pylint: disable=unsupported-binary-operation
         # (false positive from the cwrap class BaseCEnum)
         truncation = EnkfTruncationType.TRUNCATE_NONE

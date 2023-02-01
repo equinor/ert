@@ -3,7 +3,6 @@ from qtpy.QtWidgets import QDialog, QHBoxLayout, QLayout, QPushButton, QVBoxLayo
 
 
 class WorkflowDialog(QDialog):
-
     closeButtonPressed = Signal()
 
     def __init__(self, title, widget, parent=None):

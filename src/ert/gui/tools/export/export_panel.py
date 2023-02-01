@@ -58,7 +58,6 @@ class ExportPanel(QWidget):
             self._file_name.setText(str(directory))
 
     def export(self):
-
         path = self._file_name.text()
         time_index = self._time_index_input.text()
         column_keys = self._column_keys_input.text()

@@ -49,7 +49,6 @@ class FeatureToggling:
     def update_from_args(args: Namespace) -> None:
         args_dict = vars(args)
         for feature_name in FeatureToggling._conf.keys():
-
             arg_name = FeatureToggling._get_arg_name(feature_name)
             feature_name_escaped = arg_name.replace("-", "_")
 
