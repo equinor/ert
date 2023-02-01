@@ -31,3 +31,4 @@ sphinx_rtd_theme
 sphinxcontrib-plantuml
 sphinxcontrib.datatemplates
 testpath
+xtgeo
