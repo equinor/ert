@@ -30,7 +30,6 @@ async def get_response_misfits(
     realization_index: Optional[int] = None,
     summary_misfits: bool = False,
 ) -> Response:
-
     ensemble_name = get_name("ensemble", ensemble_id)
     dataframe = data_for_key(res, ensemble_name, response_name)
     if realization_index is not None:

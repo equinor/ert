@@ -53,7 +53,7 @@ class Driver(BaseCClass):
         c_ptr = self._alloc(driver_type)
         super().__init__(c_ptr)
         if options:
-            for (key, value) in options:
+            for key, value in options:
                 self.set_option(key, value)
         self.set_max_running(max_running)
 

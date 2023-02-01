@@ -7,9 +7,7 @@ from ert.gui.ertwidgets.models.analysismodulevariablesmodel import (
 
 
 def test_createSpinBox(qtbot):
-
     with patch.object(AnalysisModuleVariablesPanel, "__init__", lambda x, y: None):
-
         analysis_module_variables_model = AnalysisModuleVariablesModel
 
         # pylint: disable=no-value-for-parameter

@@ -38,7 +38,6 @@ class WorkflowJoblist(BaseCClass):
         return self._add_job_from_file(name, filepath)
 
     def __contains__(self, item: Union[str, WorkflowJob]) -> bool:
-
         if isinstance(item, WorkflowJob):
             item = item.name()
 

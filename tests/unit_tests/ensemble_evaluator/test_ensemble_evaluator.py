@@ -46,7 +46,6 @@ def test_dispatchers_can_connect_and_monitor_can_shut_down_evaluator(evaluator):
             max_retries=1,
             timeout_multiplier=1,
         ) as dispatch2:
-
             # first dispatcher informs that job 0 is running
             send_dispatch_event(
                 dispatch1,
@@ -227,7 +226,6 @@ def test_dying_batcher(evaluator):
 def test_ens_eval_run_and_get_successful_realizations_connection_refused_no_recover(
     make_ee_config, num_realizations, num_failing
 ):
-
     ee_config = make_ee_config(use_token=False, generate_cert=False)
     ensemble = AutorunTestEnsemble(
         _iter=1, reals=num_realizations, steps=1, jobs=2, id_="0"

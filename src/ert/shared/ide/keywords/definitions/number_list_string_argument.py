@@ -4,7 +4,6 @@ from ert.shared.ide.keywords.definitions import ArgumentDefinition
 
 
 class NumberListStringArgument(ArgumentDefinition):
-
     NOT_A_VALID_NUMBER_LIST_STRING = (
         "The input should be of the type: "
         "<b><pre>\n\t23,5.5,11,1.01,3\n</pre></b>"
@@ -31,7 +30,6 @@ class NumberListStringArgument(ArgumentDefinition):
                     NumberListStringArgument.NOT_A_VALID_NUMBER_LIST_STRING
                 )
             else:
-
                 groups = token.split(",")
 
                 for group in groups:

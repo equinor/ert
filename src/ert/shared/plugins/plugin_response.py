@@ -3,7 +3,6 @@ from decorator import decorator
 
 @decorator
 def plugin_response(_func=None, plugin_name="", *args, **kwargs):
-
     if _func is None:
         return None
 

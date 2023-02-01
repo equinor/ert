@@ -134,7 +134,6 @@ def get_parameters(ert, ensemble_id1, keyword, poly_ran):
 def test_direct_dark_performance(
     benchmark, template_config, monkeypatch, function, keyword
 ):
-
     key = {
         "summary": "PSUM1",
         "gen_data": "POLY_RES_1@0",

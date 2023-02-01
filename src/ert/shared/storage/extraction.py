@@ -323,7 +323,6 @@ def _post_to_server(
 def post_update_data(
     ert: "LibresFacade", parent_ensemble_id: str, algorithm: str
 ) -> str:
-
     observations = _get_from_server(
         f"ensembles/{parent_ensemble_id}/observations",
     ).json()
@@ -348,7 +347,6 @@ def post_update_data(
 
 @feature_enabled("new-storage")
 def post_ensemble_results(ert: "LibresFacade", ensemble_id: str) -> None:
-
     observations = _get_from_server(
         f"ensembles/{ensemble_id}/observations",
     ).json()

@@ -203,7 +203,6 @@ def test_verbose_flag(flag_val, expected_value):
 
 
 def test_version_valid_Version(capsys):
-
     try:
         ert_parser(None, ["--version"])
     except SystemExit as e:
@@ -254,7 +253,6 @@ def test_argparse_invalid_port_range(
     port_input,
 ):
     with pytest.raises(SystemExit):
-
         ert_parser(
             None,
             [

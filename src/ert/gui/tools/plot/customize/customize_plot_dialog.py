@@ -28,7 +28,6 @@ if TYPE_CHECKING:
 
 
 class PlotCustomizer(QObject):
-
     settingsChanged = Signal()
 
     def __init__(self, parent, key_defs):

@@ -214,7 +214,6 @@ class WorkflowJob(BaseCClass):
         return not self == other
 
     def __eq__(self, other) -> bool:
-
         if self.executable() != other.executable():
             return False
 

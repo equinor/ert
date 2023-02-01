@@ -48,7 +48,6 @@ def api(tmpdir, source_root, monkeypatch):
 
 
 def mocked_requests_get(*args, **kwargs):
-
     summary_data = {
         "2010-01-20 00:00:00": [0.1, 0.2, 0.3, 0.4],
         "2010-02-20 00:00:00": [0.2, 0.21, 0.19, 0.18],

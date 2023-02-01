@@ -6,7 +6,6 @@ from ert.libres_facade import LibresFacade
 
 
 class AnalysisModuleVariablesModel:
-
     _VARIABLE_NAMES = get_mode_variables(AnalysisMode.ITERATED_ENSEMBLE_SMOOTHER)
 
     @classmethod

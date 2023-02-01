@@ -13,7 +13,6 @@ def test_ensemble_config_from_file_and_dict_coincide(
 ):
     filename = "config.ert"
     with config_generator(tmp_path_factory, filename) as config_dict:
-
         res_config_from_file = ResConfig(user_config_file=filename)
         res_config_from_dict = ResConfig(config_dict=config_dict)
 

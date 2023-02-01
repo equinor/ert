@@ -477,7 +477,6 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
         misfit_array[misfit_sum_index] = 0.0
 
         for column_index, obs_vector in enumerate(self._enkf_main.getObservations()):
-
             for realization_index, realization_number in enumerate(realizations):
                 misfit = obs_vector.getTotalChi2(
                     self._enkf_main.getFileSystem(case_name),

@@ -122,7 +122,6 @@ class _ErtDocumentation(SphinxDirective):
 
     @staticmethod
     def _divide_into_categories(jobs):
-
         categories = defaultdict(lambda: defaultdict(list))
         for job_name, docs in jobs.items():
             # Job names in ERT traditionally used upper case letters
@@ -180,7 +179,6 @@ class _ErtDocumentation(SphinxDirective):
         return node
 
     def _generate_job_documentation(self, jobs, section_id, title):
-
         job_categories = _ErtDocumentation._divide_into_categories(jobs)
 
         main_node = self._create_forward_model_section_node(section_id, title)

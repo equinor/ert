@@ -45,7 +45,6 @@ def _set_multiindex(df):
 def test_get_data(
     obs_type, monkeypatch, facade, valid_data, measured_data_setup, valid_obs_data
 ):
-
     facade.get_impl_type_name_for_obs_key.return_value = obs_type
     facade.get_data_key_for_obs_key.return_value = "data_key"
 
