@@ -2,7 +2,7 @@ import os
 
 import pytest
 
-from ert._c_wrappers.enkf import NodeId, RunContext
+from ert._c_wrappers.enkf import NodeId
 from ert._c_wrappers.enkf.config import FieldTypeEnum
 from ert._c_wrappers.enkf.data import EnkfNode
 
