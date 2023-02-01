@@ -172,6 +172,19 @@ def _save_temporary_storage_to_disk(
                     key, realization, surface_config.base_surface_path, matrix[:, i]
                 )
         elif config_node.getImplementationType() == ErtImplType.FIELD:
+            if not target_fs.field_has_info(key):
+                field_config = config_node.getFieldModelConfig()
+                target_fs.save_field_info(
+                    key,
+                    ensemble_config.grid_file,
+                    field_config.get_output_transform_name(),
+                    field_config.get_truncation_mode(),
+                    field_config.get_truncation_min(),
+                    field_config.get_truncation_max(),
+                    field_config.get_nx(),
+                    field_config.get_ny(),
+                    field_config.get_nz(),
+                )
             for i, realization in enumerate(iens_active_index):
                 target_fs.save_field_data(key, realization, matrix[:, i])
         else:
