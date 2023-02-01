@@ -35,7 +35,6 @@ class ForwardModelJobStatus:  # pylint: disable=too-many-instance-attributes
         current_memory_usage: int = 0,
         max_memory_usage: int = 0,
     ):
-
         self.start_time = start_time
         self.end_time = end_time
         self.name = name

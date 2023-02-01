@@ -9,7 +9,6 @@ def test_failed_enkf_config_node_creation():
 
 
 def test_gen_data():
-
     # Must have %d in filename argument
     with pytest.raises(ValueError):
         config_node = EnkfConfigNode.create_gen_data("KEY", "FILE")

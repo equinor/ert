@@ -230,7 +230,6 @@ class EclRun:
         return my_env
 
     def initMPI(self):
-
         # If the environment variable LSB_MCPU_HOSTS is set we assume the job is
         # running on LSF - otherwise we assume it is running on the current host.
         #

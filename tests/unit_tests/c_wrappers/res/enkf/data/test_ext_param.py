@@ -45,7 +45,7 @@ def test_config_with_suffixes():
     assert ("key3", "not_me_either") not in config
     assert ("who", "b") not in config
 
-    for (configkey, configsuffixes) in config:
+    for configkey, configsuffixes in config:
         assert configkey in input_dict
         assert configsuffixes in input_suffixes
 

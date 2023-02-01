@@ -8,7 +8,6 @@ from ert.ensemble_evaluator.dispatch import BatchingDispatcher
 
 class DummyEventHandler:
     def __init__(self, batching=False):
-
         self.dispatcher = BatchingDispatcher(
             loop=None,
             timeout=1,

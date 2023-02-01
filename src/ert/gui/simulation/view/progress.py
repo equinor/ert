@@ -78,7 +78,6 @@ class ProgressDelegate(QStyledItemDelegate):
 
         i = 0
         for state, color_ref in REAL_STATE_TO_COLOR.items():
-
             if state not in status:
                 continue
 

@@ -29,7 +29,6 @@ logger = logging.getLogger(__name__)
 
 
 def site_config_location():
-
     if "ERT_SITE_CONFIG" in os.environ:
         return os.environ["ERT_SITE_CONFIG"]
 
@@ -92,7 +91,6 @@ class ResConfig:
         config: Optional[Dict[ConfigKeys, Any]] = None,
         config_dict: Optional[Dict[ConfigKeys, Any]] = None,
     ):
-
         self._assert_input(user_config_file, config, config_dict)
         self.user_config_file = user_config_file
 

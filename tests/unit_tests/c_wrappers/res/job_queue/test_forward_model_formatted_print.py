@@ -220,7 +220,6 @@ def validate_ext_job(ext_job, ext_job_config):
 
 
 def generate_job_from_dict(ext_job_config):
-
     ext_job_config = copy.deepcopy(ext_job_config)
     ext_job_config["executable"] = os.path.join(
         os.getcwd(), ext_job_config["executable"]

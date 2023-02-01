@@ -135,7 +135,6 @@ def function_that_fails_once(coeffs):
 def test_prefect_retries(
     evaluator_config, function_ensemble_builder_factory, tmpdir, ensemble_size
 ):
-
     """Evaluator fails once through pickled-fail-function. Asserts fail and retries"""
     cloudpickle.register_pickle_by_value(sys.modules[__name__])
     pickle_func = cloudpickle.dumps(function_that_fails_once)
@@ -168,7 +167,6 @@ def test_prefect_retries(
 def test_prefect_no_retries(
     evaluator_config, function_ensemble_builder_factory, tmpdir
 ):
-
     """Evaluator tries and fails once. Asserts if job and step fails"""
     cloudpickle.register_pickle_by_value(sys.modules[__name__])
     pickle_func = cloudpickle.dumps(function_that_fails_once)

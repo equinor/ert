@@ -162,7 +162,6 @@ class IteratedEnsembleSmoother(BaseRunModel):
         prior_context: Optional[RunContext] = None,
         rerun: bool = False,
     ) -> RunContext:
-
         target_case_format = self._simulation_arguments["target_case"]
 
         sim_fs = self.createTargetCaseFileSystem(itr, target_case_format)

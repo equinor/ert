@@ -188,7 +188,6 @@ async def _get_from_server_async(
     headers: Dict[str, str],
     **kwargs: Any,
 ) -> httpx.Response:
-
     loop = get_event_loop()
 
     # Using sync code because one of the httpx dependencies (anyio) throws an

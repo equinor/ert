@@ -7,7 +7,6 @@ from .plot_case_model import PlotCaseModel
 
 
 class CaseSelectionWidget(QWidget):
-
     caseSelectionChanged = Signal()
 
     def __init__(self, case_names):

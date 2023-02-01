@@ -4,7 +4,6 @@ from ert.shared.ide.keywords.definitions.range_string_argument import (
 
 
 def test_proper_name_argument():
-
     argument = RangeStringArgument()
 
     assert argument.validate("1")

@@ -16,7 +16,6 @@ def facade_snake_oil(snake_oil_case_storage):
 
 
 def test_history_obs(facade_snake_oil):
-
     fopr = MeasuredData(facade_snake_oil, ["FOPR"])
     fopr.remove_inactive_observations()
 
@@ -77,7 +76,6 @@ def test_summary_obs_runtime():
 @pytest.mark.usefixtures("copy_snake_oil_case_storage")
 @pytest.mark.parametrize("formatted_date", ["2015-06-23", "23/06/2015", "23.06.2015"])
 def test_summary_obs_last_entry(formatted_date):
-
     obs_file = pathlib.Path.cwd() / "observations" / "observations.txt"
     with obs_file.open(mode="w") as fin:
         fin.write(

@@ -99,7 +99,6 @@ class SimulationPanel(QWidget):
         self.setLayout(layout)
 
     def addSimulationConfigPanel(self, panel, mode_enabled: bool):
-
         assert isinstance(panel, SimulationConfigPanel)
         self._simulation_stack.addWidget(panel)
         simulation_model = panel.getSimulationModel()

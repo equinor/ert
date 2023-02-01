@@ -61,7 +61,6 @@ def test_arguments():
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_run_external_job():
-
     WorkflowCommon.createExternalDumpJob()
 
     config = WorkflowJob.configParser()
@@ -84,7 +83,6 @@ def test_run_external_job():
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_error_handling_external_job():
-
     WorkflowCommon.createExternalDumpJob()
 
     config = WorkflowJob.configParser()

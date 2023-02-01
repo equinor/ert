@@ -432,7 +432,6 @@ class BaseRunModel:
         loop: asyncio.AbstractEventLoop,
         executor: concurrent.futures.Executor,
     ) -> None:
-
         event = _ert_com_protocol.node_status_builder(
             status="EXPERIMENT_HOOK_STARTED", experiment_id=self.id_
         )
