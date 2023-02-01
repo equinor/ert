@@ -15,7 +15,7 @@ import pandas as pd
 import xarray as xr
 import xtgeo
 
-from ert._c_wrappers.enkf.enums import RealizationStateEnum
+from ert._c_wrappers.enkf.enums import EnkfTruncationType, RealizationStateEnum
 from ert._c_wrappers.enkf.model_callbacks import LoadStatus
 from ert._c_wrappers.enkf.time_map import TimeMap
 from ert._clib import trans_func
@@ -28,7 +28,6 @@ if TYPE_CHECKING:
     from ecl.summary import EclSum
     from xtgeo import RegularSurface
 
-    from ert._c_wrappers.enkf.config import FieldConfig
     from ert._c_wrappers.enkf.ert_config import EnsembleConfig
     from ert._c_wrappers.enkf.run_arg import RunArg
 
@@ -296,6 +295,33 @@ class EnkfFs:
             result.append(surf.get_values1d(order="F"))
         return np.stack(result).T
 
+    def save_field_info(  # pylint: disable=too-many-arguments
+        self,
+        key: str,
+        grid_file: Optional[str],
+        transfer_out: str,
+        truncation_mode: EnkfTruncationType,
+        trunc_min: float,
+        trunc_max: float,
+        nx: int,
+        ny: int,
+        nz: int,
+    ) -> None:
+        self._storage.save_field_info(
+            key,
+            grid_file,
+            transfer_out,
+            truncation_mode,
+            trunc_min,
+            trunc_max,
+            nx,
+            ny,
+            nz,
+        )
+
+    def field_has_info(self, key: str) -> bool:
+        return self._storage.field_has_info(key)
+
     def save_field_data(
         self,
         parameter_name: str,
@@ -313,22 +339,18 @@ class EnkfFs:
         return self._storage.load_field(key, realizations)
 
     def export_field(
-        self, config_node: FieldConfig, realization: int, output_path: str, fformat: str
+        self, key: str, realization: int, output_path: Path, fformat: str
     ) -> None:
-        return self._storage.export_field(
-            config_node, realization, output_path, fformat
-        )
+        return self._storage.export_field(key, realization, output_path, fformat)
 
     def export_field_many(
         self,
-        config_node: FieldConfig,
+        key: str,
         realizations: List[int],
         output_path: str,
         fformat: str,
     ) -> None:
-        return self._storage.export_field_many(
-            config_node, realizations, output_path, fformat
-        )
+        return self._storage.export_field_many(key, realizations, output_path, fformat)
 
     def field_has_data(self, key: str, realization: int) -> bool:
         return self._storage.field_has_data(key, realization)
