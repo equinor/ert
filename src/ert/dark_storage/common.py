@@ -13,7 +13,7 @@ def ensemble_parameter_names(res: LibresFacade) -> List[str]:
 
 def ensemble_parameters(res: LibresFacade) -> List[dict]:
     return [
-        dict(name=key, userdata=dict(data_origin="GEN_KW"), labels=[])
+        {"name": key, "userdata": {"data_origin": "GEN_KW"}, "labels": []}
         for key in ensemble_parameter_names(res)
     ]
 
@@ -124,12 +124,12 @@ def observations_for_obs_keys(res: LibresFacade, case, obs_keys):
 
 
 def _get_obs_data(key, obs) -> dict:
-    return dict(
-        name=key,
-        x_axis=obs.columns.get_level_values(0).to_list(),
-        values=obs.loc["OBS"].to_list(),
-        errors=obs.loc["STD"].to_list(),
-    )
+    return {
+        "name": key,
+        "x_axis": obs.columns.get_level_values(0).to_list(),
+        "values": obs.loc["OBS"].to_list(),
+        "errors": obs.loc["STD"].to_list(),
+    }
 
 
 def _prepare_x_axis(x_axis: List[Union[int, float, str, pd.Timestamp]]) -> List[str]:

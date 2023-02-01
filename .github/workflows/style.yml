@@ -70,7 +70,6 @@ jobs:
             arguments-renamed, \
             assert-on-string-literal, \
             bad-classmethod-argument, \
-            bad-thread-instantiation, \
             chained-comparison, \
             comparison-with-callable, \
             consider-iterating-dictionary, \
@@ -97,7 +96,6 @@ jobs:
             missing-final-newline, \
             no-else-break, \
             no-else-continue, \
-            no-else-raise, \
             no-member, \
             no-method-argument, \
             no-value-for-parameter, \
@@ -112,7 +110,6 @@ jobs:
             simplifiable-if-statement, \
             subprocess-run-check, \
             super-with-arguments, \
-            superfluous-parens, \
             too-many-lines, \
             too-many-nested-blocks, \
             undefined-all-variable, \
@@ -131,7 +128,6 @@ jobs:
             unsupported-binary-operation, \
             unused-import, \
             use-a-generator, \
-            use-dict-literal, \
             use-implicit-booleaness-not-comparison, \
             use-maxsplit-arg, \
             used-before-assignment, \
