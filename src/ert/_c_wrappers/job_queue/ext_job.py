@@ -1,9 +1,11 @@
+import logging
 import os
 import os.path
 import re
 import shutil
 from collections import defaultdict
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
 from ert._c_wrappers.config import ConfigParser, ConfigValidationError, ContentTypeEnum
@@ -11,6 +13,8 @@ from ert._c_wrappers.util import SubstitutionList
 from ert._clib.job_kw import type_from_kw
 
 _SUBSTITUTED_AT_EXECUTION_TIME: List[str] = ["<ITER>", "<IENS>"]
+
+logger = logging.getLogger(__name__)
 
 
 class ExtJobInvalidArgsException(BaseException):
@@ -172,7 +176,6 @@ class ExtJob:
     def from_config_file(cls, config_file: str, name: Optional[str] = None):
         if name is None:
             name = os.path.basename(config_file)
-
         try:
             config_content = cls._parse_config_file(config_file)
         except IOError as err:
@@ -181,6 +184,11 @@ class ExtJob:
                 errors=f"Could not open job config file {config_file}",
             ) from err
 
+        logger.info(
+            "Content of job config %s: %s",
+            name,
+            Path(config_file).read_text(encoding="utf-8"),
+        )
         content_dict = {}
 
         content_dict.update(**cls._read_str_keywords(config_content))
