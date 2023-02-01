@@ -39,7 +39,7 @@ def test_field_export_many(snake_oil_field_example):
     fs = prior.sim_fs
 
     fs.export_field_many(
-        config_node.getFieldModelConfig(),
+        config_node.getFieldModelConfig().get_key(),
         [0, 2, 4],
         "export/with/path/PERMX_%d.grdecl",
         fformat="grdecl",
@@ -62,7 +62,7 @@ def test_field_export(snake_oil_field_example):
     fs = ert.storage_manager["default"]
 
     fs.export_field(
-        config_node.getFieldModelConfig(),
+        config_node.getFieldModelConfig().get_key(),
         0,
         "export/with/path/PERMX_0.grdecl",
         fformat="grdecl",
@@ -74,7 +74,7 @@ def test_field_export(snake_oil_field_example):
         KeyError, match="Unable to load FIELD for key: PERMX, realization: 1"
     ):
         fs.export_field(
-            config_node.getFieldModelConfig(),
+            config_node.getFieldModelConfig().get_key(),
             1,
             "export/with/path/PERMX_1.grdecl",
             fformat="grdecl",
@@ -85,7 +85,7 @@ def test_field_export(snake_oil_field_example):
         KeyError, match="Unable to load FIELD for key: PERMX, realization: 2"
     ):
         fs.export_field(
-            config_node.getFieldModelConfig(),
+            config_node.getFieldModelConfig().get_key(),
             2,
             "export/with/path/PERMX_2.grdecl",
             fformat="grdecl",
@@ -93,7 +93,7 @@ def test_field_export(snake_oil_field_example):
     assert not os.path.isfile("export/with/path/PERMX_2.grdecl")
 
     fs.export_field(
-        config_node.getFieldModelConfig(),
+        config_node.getFieldModelConfig().get_key(),
         3,
         "export/with/path/PERMX_3.grdecl",
         fformat="grdecl",
@@ -102,7 +102,7 @@ def test_field_export(snake_oil_field_example):
     assert os.path.getsize("export/with/path/PERMX_3.grdecl") > 0
 
     fs.export_field(
-        config_node.getFieldModelConfig(),
+        config_node.getFieldModelConfig().get_key(),
         4,
         "export/with/path/PERMX_4.grdecl",
         fformat="grdecl",
