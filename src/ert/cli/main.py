@@ -35,10 +35,8 @@ def run_cli(args):
     # Create logger inside function to make sure all handlers have been added to
     # the root-logger.
     logger = logging.getLogger(__name__)
-    logger.info(
-        "Logging forward model jobs",
-        extra={"workflow_jobs": str(res_config.forward_model.job_name_list())},
-    )
+    for job in res_config.forward_model.jobs:
+        logger.info("Config contains forward model job %s", job)
 
     for suggestion in ResConfig.make_suggestion_list(args.config):
         print(f"Warning: {suggestion}")
