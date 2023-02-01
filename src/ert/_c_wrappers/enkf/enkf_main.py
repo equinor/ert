@@ -26,6 +26,7 @@ from ert._c_wrappers.enkf.model_config import ModelConfig
 from ert._c_wrappers.enkf.queue_config import QueueConfig
 from ert._c_wrappers.enkf.runpaths import Runpaths
 from ert._c_wrappers.util.substitution_list import SubstitutionList
+from ert.storage import _field_transform
 
 if TYPE_CHECKING:
     from ert._c_wrappers.enkf.ert_config import ErtConfig
@@ -159,31 +160,12 @@ def _generate_field_parameter_file(
     run_path: Path,
 ) -> None:
     key = config.get_key()
-    grid = config.get_grid()
-    x = config.get_nx()
-    y = config.get_ny()
-    z = config.get_nz()
-
-    data = fs.load_field(key, [realization])
-    transform_name = config.get_output_transform_name()
-    data_transformed = config.transform(transform_name, data)
-    data_truncated = config.truncate(data_transformed)
-
-    gp = xtgeo.GridProperty(
-        ncol=x,
-        nrow=y,
-        nlay=z,
-        values=data_truncated,
-        grid=grid,
-        name=key,
-    )
-
     target_path = Path(run_path) / target_file
     if os.path.islink(target_path):
         os.unlink(target_path)
 
     file_out = run_path.joinpath(target_file)
-    gp.to_file(file_out, fformat="grdecl")
+    fs.export_field(key, realization, file_out, "grdecl")
 
 
 def _generate_parameter_files(
@@ -501,7 +483,9 @@ class EnKFMain:
                     init_file = config_node.get_init_file_fmt()
                     if "%d" in init_file:
                         init_file = init_file % realization_nr
-                    grid = xtgeo.grid_from_file(self.ensembleConfig().grid_file)
+                    grid_file = self.ensembleConfig().grid_file
+                    assert grid_file is not None
+                    grid = xtgeo.grid_from_file(grid_file)
                     props = xtgeo.gridproperty_from_file(
                         init_file, name=parameter, grid=grid
                     )
@@ -509,8 +493,19 @@ class EnKFMain:
                     data = props.values1d.data
                     field_config = config_node.getFieldModelConfig()
                     trans = field_config.get_init_transform_name()
-                    data_transformed = field_config.transform(trans, data)
-
+                    data_transformed = _field_transform(data, trans)
+                    if not storage.field_has_info(parameter):
+                        storage.save_field_info(
+                            parameter,
+                            grid_file,
+                            field_config.get_output_transform_name(),
+                            field_config.get_truncation_mode(),
+                            field_config.get_truncation_min(),
+                            field_config.get_truncation_max(),
+                            field_config.get_nx(),
+                            field_config.get_ny(),
+                            field_config.get_nz(),
+                        )
                     storage.save_field_data(parameter, realization_nr, data_transformed)
 
             elif impl_type == ErtImplType.GEN_KW:
