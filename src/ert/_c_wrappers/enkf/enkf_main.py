@@ -177,16 +177,11 @@ class EnKFMain:
 
         self._ensemble_size = self.res_config.model_config.num_realizations
         self._runpaths = Runpaths(
-            self.resConfig().preferred_job_fmt(),
-            self.getModelConfig().runpath_format_string,
-            Path(config.runpath_file),
-            self.get_context().substitute_real_iter,
+            jobname_format=self.getModelConfig().jobname_format_string,
+            runpath_format=self.getModelConfig().runpath_format_string,
+            filename=self.getModelConfig().runpath_file,
+            substitute=self.get_context().substitute_real_iter,
         )
-        run_path = self.runpaths.format_runpath()
-        jobname = self.runpaths.format_job_name()
-        self.addDataKW("<RUNPATH>", run_path)
-        self.addDataKW("<ECL_BASE>", jobname)
-        self.addDataKW("<ECLBASE>", jobname)
 
         # Initialize storage
         ens_path = Path(config.ens_path)
@@ -281,9 +276,9 @@ class EnKFMain:
         and returns the run information for that case"""
         return RunContext(
             sim_fs=self.storage_manager.add_case(case_name),
-            path_format=self.resConfig().preferred_job_fmt(),
+            path_format=self.getModelConfig().jobname_format_string,
             format_string=self.getModelConfig().runpath_format_string,
-            runpath_file=self.resConfig().runpath_file,
+            runpath_file=self.getModelConfig().runpath_file,
             initial_mask=active_realizations,
             global_substitutions=dict(self.get_context()),
             iteration=iteration,
@@ -296,9 +291,9 @@ class EnKFMain:
         and creates run information for that case"""
         return RunContext(
             sim_fs=self.storage_manager[case_name],
-            path_format=self.resConfig().preferred_job_fmt(),
+            path_format=self.getModelConfig().jobname_format_string,
             format_string=self.getModelConfig().runpath_format_string,
-            runpath_file=self.resConfig().runpath_file,
+            runpath_file=self.getModelConfig().runpath_file,
             initial_mask=active_realizations,
             global_substitutions=dict(self.get_context()),
             iteration=iteration,

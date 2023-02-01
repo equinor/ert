@@ -74,7 +74,7 @@ def test_runpath_file_writer_substitution(tmp_path):
     context.addItem("<casename>", "my_case")
     runpaths = Runpaths(
         "<casename>_job",
-        "/path/<casename>/ensemble-%d/iteration%d",
+        "/path/<casename>/ensemble-<IENS>/iteration<ITER>",
         runpath_file,
         context.substitute_real_iter,
     )

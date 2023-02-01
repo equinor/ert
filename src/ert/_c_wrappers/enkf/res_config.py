@@ -216,7 +216,15 @@ class ResConfig:
         self._validate_queue_option_max_running(None, config_dict)
         self.queue_config = QueueConfig.from_dict(config_dict)
         self._workflows_from_dict(config_dict)
-        self.runpath_file = config_dict.get(ConfigKeys.RUNPATH_FILE)
+        self.ensemble_config = EnsembleConfig.from_dict(config_dict=config_dict)
+        self.model_config = ModelConfig.from_dict(
+            self.ensemble_config.refcase, config_dict
+        )
+        runpath = self.model_config.runpath_format_string
+        jobname = self.model_config.jobname_format_string
+        self.substitution_list.addItem("<RUNPATH>", runpath)
+        self.substitution_list.addItem("<ECL_BASE>", jobname)
+        self.substitution_list.addItem("<ECLBASE>", jobname)
 
         if ConfigKeys.DATA_FILE in config_dict and ConfigKeys.ECLBASE in config_dict:
             # This replicates the behavior of the DATA_FILE implementation
@@ -230,8 +238,6 @@ class ResConfig:
 
         for template in config_dict.get(ConfigKeys.RUN_TEMPLATE, []):
             self._templates.append(template)
-
-        self.ensemble_config = EnsembleConfig.from_dict(config_dict=config_dict)
 
         for key in self.ensemble_config.getKeylistFromImplType(ErtImplType.GEN_KW):
             if self.ensemble_config.getNode(key).getUseForwardInit():
@@ -270,7 +276,6 @@ class ResConfig:
                 ) from err
             if args:
                 job.private_args = SubstitutionList()
-
                 try:
                     job.private_args.add_from_string(args)
                 except ValueError as err:
@@ -313,10 +318,6 @@ class ResConfig:
                 "When using SUMMARY keyword, the config must also specify ECLBASE",
                 config_file=config_file,
             )
-
-        self.model_config = ModelConfig.from_dict(
-            self.ensemble_config.refcase, config_dict
-        )
 
     def _workflows_from_dict(self, content_dict):
         workflow_job_info = content_dict.get(ConfigKeys.LOAD_WORKFLOW_JOB, [])
@@ -423,12 +424,8 @@ class ResConfig:
     def preferred_num_cpu(self) -> int:
         return int(self.substitution_list.get(f"<{ConfigKeys.NUM_CPU}>", 1))
 
-    def preferred_job_fmt(self) -> str:
-        in_config = self.model_config.jobname_format_string
-        if in_config is None:
-            return "JOB%d"
-        else:
-            return in_config
+    def jobname_format_string(self) -> str:
+        return self.model_config.jobname_format_string
 
     @property
     def ert_templates(self):

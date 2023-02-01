@@ -108,9 +108,9 @@ class SimulationContext:
                 global_substitutions[f"<GEO_ID_{sim_id}_{itr}>"] = str(geo_id)
         self._run_context = RunContext(
             sim_fs=sim_fs,
-            path_format=ert.resConfig().preferred_job_fmt(),
+            path_format=ert.getModelConfig().jobname_format_string,
             format_string=ert.getModelConfig().runpath_format_string,
-            runpath_file=ert.resConfig().runpath_file,
+            runpath_file=ert.getModelConfig().runpath_file,
             initial_mask=mask,
             global_substitutions=global_substitutions,
             iteration=itr,

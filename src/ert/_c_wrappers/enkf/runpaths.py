@@ -1,4 +1,3 @@
-from os import PathLike
 from pathlib import Path
 from typing import Callable, List
 
@@ -29,25 +28,25 @@ class Runpaths:
 
     def __init__(
         self,
-        job_name_format: str,
+        jobname_format: str,
         runpath_format: str,
-        filename: PathLike = Path(".ert_runpath_list"),
+        filename: str = ".ert_runpath_list",
         substitute: Callable[[str, int, int], str] = lambda x, *_: x,
     ):
-        self.runpath_list_filename = filename
-        self._job_name_format = job_name_format
-        self._runpath_format = runpath_format
+        self._jobname_format = jobname_format
+        self.runpath_list_filename = Path(filename)
+        self._runpath_format = str(Path(runpath_format).resolve())
         self._substitute = substitute
 
     def get_paths(self, realizations: List[int], iteration: int) -> List[str]:
         return [
-            self._substitute(self.format_runpath(), realization, iteration)
+            self._substitute(self._runpath_format, realization, iteration)
             for realization in realizations
         ]
 
     def get_jobnames(self, realizations: List[int], iteration: int) -> List[str]:
         return [
-            self._substitute(self.format_job_name(), realization, iteration)
+            self._substitute(self._jobname_format, realization, iteration)
             for realization in realizations
         ]
 
@@ -65,8 +64,8 @@ class Runpaths:
 
             >>> runpath_file = "._ert_runpath_list"
             >>> runpaths = Runpaths(
-            ...    "job%d",
-            ...    "realization-%d/iteration-%d",
+            ...    "job<ITER>",
+            ...    "realization-<IENS>/iteration-<ITER>",
             ...    runpath_file,
             ... )
             >>> runpaths.write_runpath_list([0,1], [3,4])
@@ -91,10 +90,10 @@ class Runpaths:
             for iteration in iteration_numbers:
                 for realization in realization_numbers:
                     job_name = self._substitute(
-                        self.format_job_name(), realization, iteration
+                        self._jobname_format, realization, iteration
                     )
                     runpath = self._substitute(
-                        self.format_runpath(), realization, iteration
+                        self._runpath_format, realization, iteration
                     )
                     f.write(
                         f"{realization:03d}  {runpath}  {job_name}  {iteration:03d}\n"
@@ -103,15 +102,3 @@ class Runpaths:
     def _create_and_open_file(self, mode="w"):
         Path(self.runpath_list_filename).parent.mkdir(parents=True, exist_ok=True)
         return open(self.runpath_list_filename, mode, encoding="utf-8")
-
-    def format_job_name(self) -> str:
-        return replace_runpath_format(self._job_name_format)
-
-    def format_runpath(self):
-        return str(Path(replace_runpath_format(self._runpath_format)).resolve())
-
-
-def replace_runpath_format(format_string: str) -> str:
-    format_string = format_string.replace("%d", "<IENS>", 1)
-    format_string = format_string.replace("%d", "<ITER>", 1)
-    return format_string

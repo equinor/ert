@@ -283,7 +283,7 @@ class ExtJob:
 
         def arg_has_unresolved_substring(arg_tuple: Tuple[str, str]) -> bool:
             _, arg = arg_tuple
-            unresolved_substrings = re.findall(r"<.*>", arg)
+            unresolved_substrings = re.findall(r"<.*?>", arg)
             relevant_unresolved_substrings = list(
                 filter(
                     lambda substr: substr not in _SUBSTITUTED_AT_EXECUTION_TIME,
@@ -305,7 +305,7 @@ class ExtJob:
                 for orig_arg, modified_arg in args_with_unresolved_substrings
             ]
             raise ExtJobInvalidArgsException(
-                "job has unresolved arguments after applying argument substitutions, "
-                "defines and default values: "
+                f"Job {self.name} has unresolved arguments after "
+                "applying argument substitutions, defines and default values: "
                 f"{', '.join(unresolved_args_representation)}"
             )

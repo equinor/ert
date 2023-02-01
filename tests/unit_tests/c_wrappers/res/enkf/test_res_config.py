@@ -308,7 +308,7 @@ def test_runpath_file(monkeypatch, tmp_path):
         )
 
     config = ResConfig(os.path.relpath(config_path, workdir_path))
-    assert config.runpath_file == str(runpath_path)
+    assert config.model_config.runpath_file == str(runpath_path)
 
 
 def test_that_job_script_can_be_set_in_site_config(monkeypatch, tmp_path):

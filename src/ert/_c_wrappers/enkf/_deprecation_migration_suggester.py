@@ -1,7 +1,7 @@
 import logging
 from typing import TYPE_CHECKING, Dict
 
-from ert._c_wrappers.enkf.runpaths import replace_runpath_format
+from ert._c_wrappers.enkf.model_config import replace_runpath_format
 
 from ._config_content_as_dict import config_content_as_dict
 
@@ -76,7 +76,7 @@ class DeprecationMigrationSuggester:
             runpath = replace_runpath_format(content.getValue("RUNPATH"))
             add_suggestion(
                 "RUNPATH",
-                "RUNPATH keyword contains deprecated value placeholders, "
+                "RUNPATH keyword contains deprecated value placeholders: %d, "
                 f"instead use: {runpath}",
             )
 
