@@ -6,6 +6,7 @@ import xtgeo
 from ert._c_wrappers.enkf.enkf_state import _internalize_results
 from ert._c_wrappers.enkf.enums import ErtImplType, RealizationStateEnum
 from ert._c_wrappers.enkf.model_callbacks import LoadStatus
+from ert.storage import _field_transform
 
 if TYPE_CHECKING:
     from ert._c_wrappers.enkf import EnsembleConfig, RunArg
@@ -49,25 +50,34 @@ def forward_model_ok(
                 if "%d" in file_name:
                     file_name = file_name % run_arg.iens
                 file_path = run_path / file_name
-
-                if run_arg.ensemble_storage.field_has_data(
-                    config_node.getKey(), run_arg.iens
-                ):
+                key = config_node.getKey()
+                if run_arg.ensemble_storage.field_has_data(key, run_arg.iens):
                     # Already initialised, ignore
                     continue
 
                 grid = xtgeo.grid_from_file(ens_conf.grid_file)
                 props = xtgeo.gridproperty_from_file(
-                    pfile=file_path, name=config_node.getKey(), grid=grid
+                    pfile=file_path, name=key, grid=grid
                 )
 
                 data = props.values1d.data
                 field_config = config_node.getFieldModelConfig()
                 trans = field_config.get_init_transform_name()
-                data_transformed = field_config.transform(trans, data)
-
+                data_transformed = _field_transform(data, trans)
+                if not run_arg.ensemble_storage.field_has_info(key):
+                    run_arg.ensemble_storage.save_field_info(
+                        key,
+                        ens_conf.grid_file,
+                        field_config.get_output_transform_name(),
+                        field_config.get_truncation_mode(),
+                        field_config.get_truncation_min(),
+                        field_config.get_truncation_max(),
+                        field_config.get_nx(),
+                        field_config.get_ny(),
+                        field_config.get_nz(),
+                    )
                 run_arg.ensemble_storage.save_field_data(
-                    config_node.getKey(), run_arg.iens, data_transformed
+                    key, run_arg.iens, data_transformed
                 )
 
                 continue

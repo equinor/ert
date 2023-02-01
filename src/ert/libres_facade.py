@@ -111,7 +111,7 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
         ext = config_node.get_enkf_outfile().rsplit(".")[-1]
         field_config_node = config_node.getFieldModelConfig()
         file_system.export_field_many(
-            field_config_node,
+            field_config_node.get_key(),
             list(range(0, self.get_ensemble_size())),
             filepath + "." + ext,
             "grdecl",
