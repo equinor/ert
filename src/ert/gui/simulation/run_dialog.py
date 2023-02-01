@@ -302,7 +302,6 @@ class RunDialog(QDialog):
         self._worker_thread.start()
 
     def killJobs(self):
-
         msg = "Are you sure you want to kill the currently running simulations?"
         kill_job = QMessageBox.question(
             self, "Kill simulations?", msg, QMessageBox.Yes | QMessageBox.No
@@ -372,7 +371,6 @@ class RunDialog(QDialog):
             )
 
     def restart_failed_realizations(self):
-
         msg = QMessageBox(self)
         msg.setIcon(QMessageBox.Information)
         msg.setText(

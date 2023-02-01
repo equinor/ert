@@ -35,7 +35,6 @@ logger = logging.getLogger(__name__)
 
 
 def site_config_location():
-
     if "ERT_SITE_CONFIG" in os.environ:
         return os.environ["ERT_SITE_CONFIG"]
     return pkg_resources.resource_filename("ert.shared", "share/ert/site-config")
@@ -50,7 +49,6 @@ class ResConfig:
         user_config_file: Optional[str] = None,
         config_dict: Optional[Dict[ConfigKeys, Any]] = None,
     ):
-
         self._assert_input(user_config_file, config_dict)
         self.user_config_file = user_config_file
 
@@ -276,7 +274,6 @@ class ResConfig:
                 try:
                     job.private_args.add_from_string(args)
                 except ValueError as err:
-
                     raise ConfigValidationError(
                         errors=f"{err}: FORWARD_MODEL {job_name} ({args})\n",
                         config_file=config_file,

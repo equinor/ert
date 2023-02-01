@@ -374,7 +374,7 @@ class EnsembleEvaluator:
                 for _ in monitor.track():
                     unsuccessful_connection_attempts = 0
                 break
-            except (ConnectionClosedError) as e:
+            except ConnectionClosedError as e:
                 logger.debug(
                     "Connection closed unexpectedly in "
                     f"run_and_get_successful_realizations: {e}"

@@ -46,7 +46,6 @@ def test_integration_timeout(tmp_path, monkeypatch):
 
 
 def test_create_connection_string(monkeypatch):
-
     authtoken = "very_secret_token"
     _, _, sock = port_handler.find_available_port()
 

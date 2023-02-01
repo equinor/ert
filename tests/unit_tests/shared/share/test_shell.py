@@ -381,7 +381,6 @@ def test_shell_scripts_integration(tmpdir):
     are not broken, and correctly installed through site-config.
     """
     with tmpdir.as_cwd():
-
         ert_config_fname = "test.ert"
         with open(ert_config_fname, "w", encoding="utf-8") as file_h:
             file_h.write(

@@ -492,7 +492,6 @@ def config_generators(draw):
 
 
 def to_config_file(filename, config_dict):  # pylint: disable=too-many-branches
-
     predefines = defines(config_dict, filename, os.getcwd())
     predefines.extend(config_dict[ConfigKeys.DEFINE_KEY])
     config_dict[ConfigKeys.DEFINE_KEY] = predefines

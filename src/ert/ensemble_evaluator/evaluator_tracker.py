@@ -96,7 +96,7 @@ class EvaluatorTracker:
             except (ConnectionRefusedError, ClientError) as e:
                 if not self._model.isFinished():
                     drainer_logger.debug(f"connection refused: {e}")
-            except (ConnectionClosedError) as e:
+            except ConnectionClosedError as e:
                 # The monitor connection closed unexpectedly
                 drainer_logger.debug(f"connection closed error: {e}")
             except BaseException:  # pylint: disable=broad-except
@@ -187,7 +187,6 @@ class EvaluatorTracker:
                 # Empty ensemble or all realizations deactivated
                 return 1.0
             for real in all_reals.values():
-
                 if real.status in [
                     REALIZATION_STATE_FINISHED,
                     REALIZATION_STATE_FAILED,

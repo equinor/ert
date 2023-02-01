@@ -65,7 +65,6 @@ class ErtPluginManager(pluggy.PluginManager):
 
     @staticmethod
     def _evaluate_job_doc_hook(hook, job_name):
-
         response = hook(job_name=job_name)
 
         if response is None:

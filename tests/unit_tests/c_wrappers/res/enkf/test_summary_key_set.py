@@ -7,7 +7,6 @@ from ert._c_wrappers.enkf.enkf_fs import EnkfFs
 
 
 def test_creation():
-
     keys = SummaryKeySet()
 
     assert len(keys) == 0

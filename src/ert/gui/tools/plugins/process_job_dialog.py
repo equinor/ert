@@ -16,7 +16,6 @@ from ert.gui.ertwidgets import resourceMovie
 
 
 class ProcessJobDialog(QDialog):
-
     disposeDialog = Signal()
     presentInformation = Signal(str, str, str)
     presentError = Signal(str, str, str)

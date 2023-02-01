@@ -248,7 +248,6 @@ async def get_record_data(
 def get_ensemble_responses(
     *, res: LibresFacade = Depends(get_res), ensemble_id: UUID
 ) -> Mapping[str, js.RecordOut]:
-
     response_map: Mapping[str, js.RecordOut] = {}
     storage = res._enkf_main.storage_manager[get_name("ensemble", ensemble_id)]
 

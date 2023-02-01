@@ -5,7 +5,6 @@ from ert.shared.ide.keywords.definitions import ArgumentDefinition
 
 
 class IntegerArgument(ArgumentDefinition):
-
     NOT_INTEGER = "The argument must be an integer."
     NOT_IN_RANGE = "The argument is not in range: %s"
 

@@ -4,7 +4,6 @@ from ert.shared.ide.keywords.definitions import ArgumentDefinition
 
 
 class RangeStringArgument(ArgumentDefinition):
-
     NOT_A_VALID_RANGE_STRING = (
         "The input should be of the type: "
         "<b><pre>\n\t1,3-5,9,17\n</pre></b>"
@@ -17,7 +16,6 @@ class RangeStringArgument(ArgumentDefinition):
         self.__max_value = max_value
 
     def validate(self, token: str) -> ValidationStatus:
-
         validation_status = super().validate(token)
 
         if not validation_status:

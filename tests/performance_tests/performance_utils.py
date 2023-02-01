@@ -102,7 +102,6 @@ def make_poly_example(folder, source, **kwargs):
             str(folder) + "/refcase/REFCASE", datetime.datetime(2010, 1, 1), 10, 10, 10
         )
         for s in range(summary_count):
-
             ecl_sum.addVariable(f"PSUM{s}")
             render_template(
                 folder,

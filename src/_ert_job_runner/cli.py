@@ -65,7 +65,6 @@ def _setup_logging(directory: str = "logs"):
 
 
 def main(args):
-
     parser = argparse.ArgumentParser(
         description=(
             "Run all the jobs specified in jobs.json, "

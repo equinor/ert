@@ -2,7 +2,6 @@ from .customization_view import CustomizationView, WidgetProperty
 
 
 class DefaultCustomizationView(CustomizationView):
-
     title = WidgetProperty()
     x_label = WidgetProperty()
     y_label = WidgetProperty()

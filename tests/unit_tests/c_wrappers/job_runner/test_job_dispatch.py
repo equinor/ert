@@ -19,7 +19,6 @@ from tests.utils import _mock_ws_thread, wait_until
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_terminate_jobs():
-
     # Executes it self recursively and sleeps for 100 seconds
     with open("dummy_executable", "w", encoding="utf-8") as f:
         f.write(

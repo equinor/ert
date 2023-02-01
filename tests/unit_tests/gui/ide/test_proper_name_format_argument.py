@@ -2,7 +2,6 @@ from ert.shared.ide.keywords.definitions import ProperNameFormatArgument
 
 
 def test_proper_name_format_argument():
-
     argument = ProperNameFormatArgument()
 
     assert argument.validate("NAME%d")

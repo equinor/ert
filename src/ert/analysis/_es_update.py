@@ -145,7 +145,6 @@ def analysis_ES(
     source_fs: "EnkfFs",
     target_fs: "EnkfFs",
 ) -> None:
-
     iens_active_index = [i for i in range(len(ens_mask)) if ens_mask[i]]
 
     temp_storage = _create_temporary_parameter_storage(
@@ -227,7 +226,6 @@ def analysis_IES(
     target_fs: "EnkfFs",
     iterative_ensemble_smoother: ies.IterativeEnsembleSmoother,
 ) -> None:
-
     iens_active_index = [i for i in range(len(ens_mask)) if ens_mask[i]]
 
     temp_storage = _create_temporary_parameter_storage(

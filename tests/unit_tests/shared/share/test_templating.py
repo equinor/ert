@@ -99,7 +99,6 @@ def test_render_invalid():
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_render():
-
     wells = {f"PROD{idx}": 0.2 * idx for idx in range(1, 5)}
     wells.update(
         {"INJ": [{"name": f"INJ{idx}", "value": 1 - 0.2 * idx} for idx in range(1, 5)]}

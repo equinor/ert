@@ -10,7 +10,6 @@ def analysis_config(minimum_case):
 
 
 def test_keywords_for_monitoring_simulation_runtime(analysis_config):
-
     # Unless the MIN_REALIZATIONS is set in config, one is required to
     # have "all" realizations.
     assert not analysis_config.have_enough_realisations(5)
