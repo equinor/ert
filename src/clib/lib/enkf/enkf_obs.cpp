@@ -478,13 +478,14 @@ static void handle_history_observation(enkf_obs_type *enkf_obs,
 static void handle_summary_observation(enkf_obs_type *enkf_obs,
                                        conf_instance_type *enkf_conf,
                                        size_t num_reports) {
-    stringlist_type *sum_obs_keys =
-        conf_instance_alloc_list_of_sub_instances_of_class_by_name(
-            enkf_conf, "SUMMARY_OBSERVATION");
-    int num_sum_obs = stringlist_get_size(sum_obs_keys);
+    const std::unique_ptr<stringlist_type, void (*)(stringlist_type *)>
+        sum_obs_keys(conf_instance_alloc_list_of_sub_instances_of_class_by_name(
+                         enkf_conf, "SUMMARY_OBSERVATION"),
+                     stringlist_free);
+    const int num_sum_obs = stringlist_get_size(sum_obs_keys.get());
 
     for (int i = 0; i < num_sum_obs; i++) {
-        const char *obs_key = stringlist_iget(sum_obs_keys, i);
+        const char *obs_key = stringlist_iget(sum_obs_keys.get(), i);
         const conf_instance_type *sum_obs_conf =
             conf_instance_get_sub_instance_ref(enkf_conf, obs_key);
         const char *sum_key =
@@ -518,7 +519,6 @@ static void handle_summary_observation(enkf_obs_type *enkf_obs,
                                                  enkf_obs->ensemble_config);
         enkf_obs_add_obs_vector(enkf_obs, obs_vector);
     }
-    stringlist_free(sum_obs_keys);
 }
 
 /** Handle GENERAL_OBSERVATION instances. */
@@ -553,17 +553,6 @@ static void handle_general_observation(enkf_obs_type *enkf_obs,
             enkf_obs_add_obs_vector(enkf_obs, obs_vector);
     }
     stringlist_free(obs_keys);
-}
-
-static void enkf_obs_reinterpret_DT_FILE(const char *errors) {
-    // clang-format off
-    fprintf(stderr, "*****************************************\n");
-    fprintf(stderr, "The following keywords in your configuration did not resolve to a valid path: \n");
-    fprintf(stderr, "\n");
-    fprintf(stderr, "%s\n", errors);
-    fprintf(stderr, "\n");
-    fprintf(stderr, "*****************************************\n");
-    // clang-format on
 }
 
 conf_class_type *enkf_obs_get_obs_conf_class(void) {
@@ -1017,34 +1006,41 @@ py::handle pybind_alloc(int history_,
 void enkf_obs_load(Cwrap<enkf_obs_type> enkf_obs, const char *config_file,
                    double std_cutoff) {
 
-    conf_class_type *enkf_conf_class = enkf_obs_get_obs_conf_class();
-    conf_instance_type *enkf_conf = conf_instance_alloc_from_file(
-        enkf_conf_class, "enkf_conf", config_file);
+    const std::unique_ptr<conf_class_type, void (*)(conf_class_type *)>
+        enkf_conf_class(enkf_obs_get_obs_conf_class(), conf_class_free);
+    const std::unique_ptr<conf_instance_type, void (*)(conf_instance_type *)>
+        enkf_conf(conf_instance_alloc_from_file(enkf_conf_class.get(),
+                                                "enkf_conf", config_file),
+                  conf_instance_free);
 
-    const char *errors = conf_instance_get_path_error(enkf_conf);
+    const char *errors = conf_instance_get_path_error(enkf_conf.get());
     if (errors) {
-        enkf_obs_reinterpret_DT_FILE(errors);
-        exit(1); // No need to free errors...
+        throw exc::invalid_argument{
+            "The following keywords in your configuration did not resolve to a "
+            "valid path:\n {}",
+            errors};
     }
 
-    if (!conf_instance_validate(enkf_conf))
+    if (!conf_instance_validate(enkf_conf.get()))
         throw exc::runtime_error("Error in configuration file: {}",
                                  config_file);
 
+    handle_history_observation(enkf_obs, enkf_conf.get(),
+                               enkf_obs->obs_time.size(), std_cutoff);
     try {
-        handle_history_observation(enkf_obs, enkf_conf,
-                                   enkf_obs->obs_time.size(), std_cutoff);
-    } catch (exc::invalid_argument err) {
-        conf_instance_free(enkf_conf);
-        conf_class_free(enkf_conf_class);
-        throw exc::invalid_argument(err.what());
+        handle_summary_observation(enkf_obs, enkf_conf.get(),
+                                   enkf_obs->obs_time.size());
+        handle_general_observation(enkf_obs, enkf_conf.get());
+    } catch (exc::out_of_range err) {
+        if (enkf_obs->refcase) {
+            throw exc::out_of_range(
+                "{}, the time map is set from the REFCASE keyword", err.what());
+        } else {
+            throw exc::out_of_range(
+                "{}, the time map is set from the TIME_MAP keyword",
+                err.what());
+        }
     }
-
-    handle_summary_observation(enkf_obs, enkf_conf, enkf_obs->obs_time.size());
-    handle_general_observation(enkf_obs, enkf_conf);
-
-    conf_instance_free(enkf_conf);
-    conf_class_free(enkf_conf_class);
 
     enkf_obs_update_keys(enkf_obs);
 }

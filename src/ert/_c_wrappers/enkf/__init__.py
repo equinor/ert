@@ -13,7 +13,7 @@ from .config import (
 from .config_keys import ConfigKeys
 from .data import EnkfNode, ExtParam, Field, GenData, GenKw
 from .enkf_fs import EnkfFs
-from .enkf_main import EnKFMain
+from .enkf_main import EnKFMain, ObservationConfigError
 from .enkf_obs import EnkfObs
 from .ensemble_config import EnsembleConfig
 from .enums import (
@@ -87,4 +87,5 @@ __all__ = [
     "RunArg",
     "RunContext",
     "EnKFMain",
+    "ObservationConfigError",
 ]
