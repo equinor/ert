@@ -62,11 +62,6 @@ class ForwardModel:
             if string is not None:
                 copy_private_args = SubstitutionList()
                 for key, val in job.private_args:
-                    if key in context:
-                        logger.info(
-                            f"Private arg '{key}':'{val}' chosen over"
-                            f" global '{context[key]}' in forward model {job.name}"
-                        )
                     copy_private_args.addItem(
                         key, context.substitute_real_iter(val, iens, itr)
                     )
@@ -102,6 +97,14 @@ class ForwardModel:
             if not result:
                 return None
             return result
+
+        for job in self.jobs:
+            for key, val in job.private_args:
+                if key in context:
+                    logger.info(
+                        f"Private arg '{key}':'{val}' chosen over"
+                        f" global '{context[key]}' in forward model {job.name}"
+                    )
 
         return {
             "DATA_ROOT": data_root,
