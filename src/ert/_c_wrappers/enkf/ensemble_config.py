@@ -258,7 +258,7 @@ class EnsembleConfig(BaseCClass):
         if isinstance(gen_kw, dict):
             name = gen_kw.get(ConfigKeys.NAME)
             tmpl_path = _get_abs_path(gen_kw.get(ConfigKeys.TEMPLATE))
-            out_file = _get_filename(gen_kw.get(ConfigKeys.OUT_FILE))
+            out_file = gen_kw.get(ConfigKeys.OUT_FILE)
             param_file_path = _get_abs_path(gen_kw.get(ConfigKeys.PARAMETER_FILE))
             forward_init = gen_kw.get(ConfigKeys.FORWARD_INIT)
             init_files = _get_abs_path(gen_kw.get(ConfigKeys.INIT_FILES))
@@ -266,7 +266,7 @@ class EnsembleConfig(BaseCClass):
             options = _option_dict(gen_kw, 4)
             name = gen_kw[0]
             tmpl_path = _get_abs_path(gen_kw[1])
-            out_file = _get_filename(_get_abs_path(gen_kw[2]))
+            out_file = gen_kw[2]
             param_file_path = _get_abs_path(gen_kw[3])
             forward_init = _str_to_bool(options.get(ConfigKeys.FORWARD_INIT, "FALSE"))
             init_files = _get_abs_path(options.get(ConfigKeys.INIT_FILES))
