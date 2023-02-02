@@ -100,7 +100,7 @@ class ForwardModel:
 
         for job in self.jobs:
             for key, val in job.private_args:
-                if key in context:
+                if key in context and key != val:
                     logger.info(
                         f"Private arg '{key}':'{val}' chosen over"
                         f" global '{context[key]}' in forward model {job.name}"
