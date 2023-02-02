@@ -6,7 +6,13 @@ from textwrap import dedent
 import pytest
 from ecl.summary import EclSum
 
-from ert._c_wrappers.enkf import ActiveList, EnKFMain, ResConfig, SummaryObservation
+from ert._c_wrappers.enkf import (
+    ActiveList,
+    EnKFMain,
+    ObservationConfigError,
+    ResConfig,
+    SummaryObservation,
+)
 
 
 def test_create():
@@ -50,7 +56,7 @@ def run_sim(start_date):
         pytest.param(
             "2.0",
             pytest.raises(
-                IndexError,
+                ObservationConfigError,
                 match="FOPR_1 failed to match time, corresponding to DAYS=2",
             ),
             id="Outside tolerance",

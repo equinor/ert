@@ -139,6 +139,20 @@ def _generate_parameter_files(
     _value_export_json(run_path, export_base_name, exports)
 
 
+class ObservationConfigError(ConfigValidationError):
+    def __init__(self, errors, config_file=None):
+        self.config_file = config_file
+        self.errors = errors
+        super().__init__(
+            (
+                f"Parsing observations config file `{self.config_file}` "
+                f"resulted in the errors: {self.errors}"
+            )
+            if self.config_file
+            else f"{self.errors}"
+        )
+
+
 class EnKFMain:
     def __init__(self, config: "ResConfig", read_only: bool = False):
         self.res_config = config
@@ -156,24 +170,28 @@ class EnKFMain:
                 os.path.isfile(config.model_config.obs_config_file)
                 and os.path.getsize(config.model_config.obs_config_file) == 0
             ):
-                raise ValueError(
+                raise ObservationConfigError(
                     f"Empty observations file: "
                     f"{config.model_config.obs_config_file}"
                 )
 
             if self._observations.error:
-                raise ValueError(
+                raise ObservationConfigError(
                     f"Incorrect observations file: "
                     f"{config.model_config.obs_config_file}"
-                    f": {self._observations.error}"
+                    f": {self._observations.error}",
+                    config_file=config.model_config.obs_config_file,
                 )
             try:
                 self._observations.load(
                     config.model_config.obs_config_file,
                     config.analysis_config.get_std_cutoff(),
                 )
-            except ValueError as err:
-                raise ConfigValidationError(err)
+            except (ValueError, IndexError) as err:
+                raise ObservationConfigError(
+                    str(err),
+                    config_file=config.model_config.obs_config_file,
+                ) from err
 
         self._ensemble_size = self.res_config.model_config.num_realizations
         self._runpaths = Runpaths(
