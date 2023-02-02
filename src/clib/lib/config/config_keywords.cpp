@@ -196,7 +196,7 @@ static void add_gen_kw_keyword(config_parser_type *config_parser) {
     auto item = config_add_schema_item(config_parser, GEN_KW_KEY, false);
     config_schema_item_set_argc_minmax(item, 4, 6);
     config_schema_item_iset_type(item, 1, CONFIG_EXISTING_PATH);
-    config_schema_item_iset_type(item, 2, CONFIG_PATH);
+    config_schema_item_iset_type(item, 2, CONFIG_STRING);
     config_schema_item_iset_type(item, 3, CONFIG_EXISTING_PATH);
 }
 
