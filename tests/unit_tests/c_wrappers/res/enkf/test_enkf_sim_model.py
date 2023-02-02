@@ -274,3 +274,38 @@ def test_that_private_over_global_args_gives_logging_message(caplog):
     assert len(forward_model.jobs) == 1
     assert job_data["argList"] == ["B"]
     assert "Private arg '<ARG>':'B' chosen over global 'A'" in caplog.text
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_private_over_global_args_does_not_give_logging_message_for_argpassing(
+    caplog,
+):
+    caplog.set_level(logging.INFO)
+    with open("job_file", "w", encoding="utf-8") as fout:
+        fout.write(
+            dedent(
+                """
+            EXECUTABLE echo
+            ARGLIST <ARG>
+            ARG_TYPE 0 STRING
+            """
+            )
+        )
+
+    with open("config_file.ert", "w", encoding="utf-8") as fout:
+        # Write a minimal config file
+        fout.write("NUM_REALIZATIONS 1\n")
+        fout.write("DEFINE <ARG> A\n")
+        fout.write("INSTALL_JOB job_name job_file\n")
+        fout.write("FORWARD_MODEL job_name(<ARG>=<ARG>)")
+
+    res_config = ResConfig("config_file.ert")
+    ert = EnKFMain(res_config)
+
+    forward_model = ert.resConfig().forward_model
+    job_data = forward_model.get_job_data(
+        "", "", 0, 0, ert.get_context(), res_config.env_vars
+    )["jobList"][0]
+    assert len(forward_model.jobs) == 1
+    assert job_data["argList"] == ["A"]
+    assert "Private arg '<ARG>':'<ARG>' chosen over global 'A'" not in caplog.text
