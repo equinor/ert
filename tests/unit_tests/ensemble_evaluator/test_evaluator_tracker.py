@@ -1,3 +1,4 @@
+import math
 from typing import Any, List, Optional, Tuple
 from unittest.mock import MagicMock, patch
 
@@ -56,6 +57,34 @@ def make_mock_ee_monitor():
                     {"source": "/", "type": ids.EVTYPE_EE_SNAPSHOT},
                     data={
                         **(build_snapshot(["0", "1"]).to_dict()),
+                        "iter": 2,
+                    },
+                ),
+                CloudEvent(
+                    {"source": "/", "type": ids.EVTYPE_EE_SNAPSHOT_UPDATE},
+                    data={
+                        **(
+                            build_partial(["0", "1"])
+                            .update_step(
+                                "0", "0", Step(status=state.STEP_STATE_SUCCESS)
+                            )
+                            .to_dict()
+                        ),
+                        "iter": 2,
+                    },
+                ),
+            ],
+            [("_phase_count", 1)],
+            [0, 0.5],
+            id="ensemble_experiment_50",
+        ),
+        pytest.param(
+            BaseRunModel,
+            [
+                CloudEvent(
+                    {"source": "/", "type": ids.EVTYPE_EE_SNAPSHOT},
+                    data={
+                        **(build_snapshot(["0", "1"]).to_dict()),
                         "iter": 0,
                     },
                 ),
@@ -74,7 +103,7 @@ def make_mock_ee_monitor():
                 ),
             ],
             [("_phase_count", 1)],
-            [(0 / 2) / 1, (1 / 2) / 1],
+            [0, 0.5],
             id="ensemble_experiment_50",
         ),
         pytest.param(
@@ -102,7 +131,7 @@ def make_mock_ee_monitor():
                 ),
             ],
             [("_phase_count", 2)],
-            [(0 / 2 + 0) / 2, (1 / 2 + 0) / 2],
+            [0, 0.25],
             id="ensemble_smoother_25",
         ),
         pytest.param(
@@ -154,10 +183,10 @@ def make_mock_ee_monitor():
             ],
             [("_phase_count", 2)],
             [
-                (0 / 2 + 0 / 2) / 2,
-                (2 / 2 + 0 / 2) / 2,
-                (2 / 2 + 0 / 2) / 2,
-                (2 / 2 + 1 / 2) / 2,
+                0,
+                0.5,
+                0.5,
+                0.75,
             ],
             id="ensemble_smoother_75",
         ),
@@ -213,10 +242,10 @@ def make_mock_ee_monitor():
             ],
             [("_phase_count", 2)],
             [
-                (0 / 2 + 0 / 2) / 2,
-                (2 / 2 + 0 / 2) / 2,
-                (2 / 2 + 0 / 2) / 2,
-                (2 / 2 + 2 / 2) / 2,
+                0,
+                0.5,
+                0.5,
+                1.0,
             ],
             id="ensemble_smoother_100",
         ),
@@ -272,10 +301,10 @@ def make_mock_ee_monitor():
             ],
             [("_phase_count", 3)],
             [
-                (1 + 0 / 2 + 0 / 2) / 3,
-                (1 + 2 / 2 + 0 / 2) / 3,
-                (1 + 2 / 2 + 0 / 2) / 3,
-                (1 + 2 / 2 + 2 / 2) / 3,
+                0.3333,
+                0.6666,
+                0.6666,
+                1.0,
             ],
             id="ensemble_smoother_100",
         ),
@@ -321,7 +350,9 @@ def test_tracking_progress(
         update_event = None
         for i in range(len(monitor_events)):
             update_event = next(tracker_gen)
-            assert update_event.progress == expected_progress[i]
+            assert math.isclose(
+                update_event.progress, expected_progress[i], rel_tol=0.0001
+            )
         assert isinstance(update_event, SnapshotUpdateEvent)
         brm._phase = brm._phase_count
         assert isinstance(next(tracker_gen), EndEvent)
