@@ -37,7 +37,7 @@ class ModelConfig:
             else self.DEFAULT_HISTORY_SOURCE
         )
         self.jobname_format_string = (
-            replace_runpath_format(jobname_format_string) or "JOB<ITER>"
+            replace_runpath_format(jobname_format_string) or "JOB<IENS>"
         )
         self.runpath_format_string = (
             replace_runpath_format(runpath_format_string) or self.DEFAULT_RUNPATH

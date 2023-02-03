@@ -55,37 +55,7 @@ class Runpaths:
         iteration_numbers: List[int],
         realization_numbers: List[int],
     ):
-        """Writes the runpath_list_file, which lists jobs and runpaths.
-
-        The runpath list file is parsed by some workflows in order to find
-        which path was used by each iteration and ensemble.
-
-        The following example code:
-
-            >>> runpath_file = "._ert_runpath_list"
-            >>> runpaths = Runpaths(
-            ...    "job<ITER>",
-            ...    "realization-<IENS>/iteration-<ITER>",
-            ...    runpath_file,
-            ... )
-            >>> runpaths.write_runpath_list([0,1], [3,4])
-
-        Will result in runpath_file containing, when run with "/cwd/"
-        as current working directory:
-
-            003  /cwd/realization-3/iteration-0  job0  000
-            004  /cwd/realization-4/iteration-0  job0  000
-            003  /cwd/realization-3/iteration-1  job1  001
-            004  /cwd/realization-4/iteration-1  job1  001
-
-
-        Will create the runpath_list_file, with parent directories,
-        if it does not exist.
-
-
-        :param iteration_numbers: The list of iterations to write entries for
-        :param realization_numbers: The list of realizations to write entries for
-        """
+        """Writes the runpath_list_file, which lists jobs and runpaths."""
         with self._create_and_open_file() as f:
             for iteration in iteration_numbers:
                 for realization in realization_numbers:
