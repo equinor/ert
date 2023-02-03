@@ -25,7 +25,7 @@ typedef struct ensemble_config_struct ensemble_config_type;
 struct ensemble_config_struct {
     std::map<std::string, enkf_config_node_type *>
         config_nodes; /* a hash of enkf_config_node instances - which again contain pointers to e.g. field_config objects.  */
-    summary_key_matcher_type *summary_key_matcher;
+    std::vector<std::string> summary_keys;
 };
 
 extern "C" void ensemble_config_add_node(ensemble_config_type *ensemble_config,

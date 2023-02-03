@@ -364,6 +364,6 @@ def test_gen_data_obs_data_mismatch(snake_oil_case_storage):
     target_fs = fsm.add_case("smooth")
     with pytest.raises(
         ErtAnalysisError,
-        match="WPR_DIFF_1, index 2400 is not in GEN_DATA: SNAKE_OIL_WPR_DIFF",
+        match="Observation: WPR_DIFF_1 attached to response: SNAKE_OIL_WPR_DIFF",
     ):
         es_update.smootherUpdate(sim_fs, target_fs, "an id")
