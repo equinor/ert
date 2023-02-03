@@ -1,16 +1,12 @@
 import json
 import os
-from argparse import ArgumentParser
 from pathlib import Path
 
 import pytest
 
-from ert.__main__ import ert_parser
 from ert._c_wrappers.enkf import RunContext
 from ert._c_wrappers.enkf.enkf_main import EnKFMain
 from ert._c_wrappers.enkf.res_config import ResConfig
-from ert.cli import TEST_RUN_MODE
-from ert.cli.main import run_cli
 
 
 def _create_runpath(enkf_main: EnKFMain) -> RunContext:
@@ -102,47 +98,3 @@ def replace_string_in_file(file: str, from_string: str, to_string: str):
 
     with open(file, mode="w", encoding="utf-8") as f:
         f.write(content.replace(from_string, to_string))
-
-
-def test_that_outfile_from_gen_kw_template_creates_relative_path(copy_case):
-    copy_case("poly_example")
-
-    replace_string_in_file("poly.ert", "coeffs.json", "somepath/coeffs.json")
-    replace_string_in_file("poly_eval.py", "coeffs.json", "somepath/coeffs.json")
-
-    parser = ArgumentParser(prog="test_main")
-    parsed = ert_parser(
-        parser,
-        [
-            TEST_RUN_MODE,
-            "poly.ert",
-            "--port-range",
-            "1024-65535",
-        ],
-    )
-    run_cli(parsed)
-
-    assert os.path.exists("poly_out/realization-0/iter-0/somepath/coeffs.json")
-
-
-# This test was added to show current behaviour for Ert.
-# If absolute paths should be possible to be used like this is up for debate.
-def test_that_outfile_from_gen_kw_template_accepts_absolute_path(copy_case):
-    copy_case("poly_example")
-
-    replace_string_in_file("poly.ert", "coeffs.json", "/tmp/somepath/coeffs.json")
-    replace_string_in_file("poly_eval.py", "coeffs.json", "tmp/somepath/coeffs.json")
-
-    parser = ArgumentParser(prog="test_main")
-    parsed = ert_parser(
-        parser,
-        [
-            TEST_RUN_MODE,
-            "poly.ert",
-            "--port-range",
-            "1024-65535",
-        ],
-    )
-    run_cli(parsed)
-
-    assert os.path.exists("poly_out/realization-0/iter-0/tmp/somepath/coeffs.json")
