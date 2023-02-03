@@ -59,35 +59,6 @@ const char *summary_obs_get_summary_key(const summary_obs_type *summary_obs) {
     return summary_obs->summary_key;
 }
 
-void summary_obs_get_observations(const summary_obs_type *summary_obs,
-                                  obs_data_type *obs_data, enkf_fs_type *fs,
-                                  int report_step) {
-
-    obs_block_type *obs_block =
-        obs_data_add_block(obs_data, summary_obs->obs_key, OBS_SIZE);
-    obs_block_iset(obs_block, 0, summary_obs->value,
-                   summary_obs->std * summary_obs->std_scaling);
-}
-
-void summary_obs_measure(const summary_obs_type *obs,
-                         const summary_type *summary, node_id_type node_id,
-                         meas_data_type *meas_data) {
-    {
-        meas_block_type *meas_block = meas_data_add_block(
-            meas_data, obs->obs_key, node_id.report_step, OBS_SIZE);
-        meas_block_iset(meas_block, node_id.iens, 0,
-                        summary_get(summary, node_id.report_step));
-    }
-}
-
-C_USED double summary_obs_chi2(const summary_obs_type *obs,
-                               const summary_type *summary,
-                               node_id_type node_id) {
-    double x =
-        (summary_get(summary, node_id.report_step) - obs->value) / obs->std;
-    return x * x;
-}
-
 void summary_obs_user_get(const summary_obs_type *summary_obs,
                           const char *index_key, double *value, double *std,
                           bool *valid) {
@@ -126,10 +97,7 @@ void summary_obs_set_std_scale(summary_obs_type *summary_obs,
 }
 
 VOID_FREE(summary_obs)
-VOID_GET_OBS(summary_obs)
 VOID_USER_GET_OBS(summary_obs)
-VOID_MEASURE(summary_obs, summary)
-VOID_CHI2(summary_obs, summary)
 VOID_UPDATE_STD_SCALE(summary_obs);
 
 class ActiveList;

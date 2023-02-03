@@ -49,8 +49,6 @@ void enkf_node_deserialize(enkf_node_type *enkf_node, enkf_fs_type *fs,
 
 typedef void(enkf_node_ftype1)(enkf_node_type *);
 
-std::vector<double> enkf_node_user_get_vector(enkf_node_type *enkf_node,
-                                              enkf_fs_type *fs, int iens);
 enkf_node_type *enkf_node_deep_alloc(const enkf_config_node_type *config);
 extern "C" enkf_node_type *enkf_node_alloc(const enkf_config_node_type *);
 

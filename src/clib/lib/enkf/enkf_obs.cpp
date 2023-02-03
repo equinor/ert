@@ -4,7 +4,13 @@
 #include <ert/config/conf.hpp>
 #include <ert/ecl/ecl_grid.h>
 #include <ert/ecl/ecl_sum.h>
-#include <ert/enkf/enkf_analysis.hpp>
+#include <ert/util/hash.h>
+#include <ert/util/type_vector_functions.h>
+#include <ert/util/vector.h>
+
+#include <ert/config/conf.hpp>
+#include <ert/ecl/ecl_grid.h>
+#include <ert/ecl/ecl_sum.h>
 #include <ert/enkf/enkf_fs.hpp>
 #include <ert/enkf/enkf_obs.hpp>
 #include <ert/enkf/obs_vector.hpp>
@@ -240,143 +246,6 @@ int enkf_obs_get_size(const enkf_obs_type *obs) {
     return vector_get_size(obs->obs_vector);
 }
 
-static void enkf_obs_get_obs_and_measure_summary(
-    const enkf_obs_type *enkf_obs, obs_vector_type *obs_vector,
-    enkf_fs_type *fs, const std::vector<int> &ens_active_list,
-    meas_data_type *meas_data, obs_data_type *obs_data) {
-
-    int active_count = 0;
-    int last_step = -1;
-    int step = -1;
-
-    /*1: Determine which report_steps have active observations; and collect the observed values. */
-    std::vector<std::pair<double, double>> observations;
-    while (true) {
-        step = obs_vector_get_next_active_step(obs_vector, step);
-        if (step < 0)
-            break;
-
-        const summary_obs_type *summary_obs =
-            (const summary_obs_type *)obs_vector_iget_node(obs_vector, step);
-        observations.push_back({summary_obs_get_value(summary_obs),
-                                summary_obs_get_std(summary_obs) *
-                                    summary_obs_get_std_scaling(summary_obs)});
-        last_step = step;
-        active_count++;
-    }
-
-    if (active_count <= 0)
-        return;
-
-    /*
-    3: Fill up the obs_block and meas_block structures with this
-    time-aggregated summary observation.
-  */
-
-    {
-        obs_block_type *obs_block = obs_data_add_block(
-            obs_data, obs_vector_get_obs_key(obs_vector), active_count);
-        meas_block_type *meas_block =
-            meas_data_add_block(meas_data, obs_vector_get_obs_key(obs_vector),
-                                last_step, active_count);
-
-        enkf_node_type *work_node =
-            enkf_node_alloc(obs_vector_get_config_node(obs_vector));
-
-        for (int i = 0; i < active_count; i++)
-            obs_block_iset(obs_block, i, observations[i].first,
-                           observations[i].second);
-
-        int active_size = ens_active_list.size();
-        active_count = 0;
-        step = -1;
-        while (true) {
-            step = obs_vector_get_next_active_step(obs_vector, step);
-            if (step < 0)
-                break;
-
-            for (int iens_index = 0; iens_index < active_size; iens_index++) {
-                const int iens = ens_active_list[iens_index];
-                node_id_type node_id = {.report_step = step, .iens = iens};
-                enkf_node_load(work_node, fs, node_id);
-
-                int smlength = summary_length(
-                    (const summary_type *)enkf_node_value_ptr(work_node));
-                if (step >= smlength) {
-                    // if obs vector and sim vector have different length
-                    // deactivate and continue to next
-                    char *msg = util_alloc_sprintf(
-                        "length of observation vector and simulated "
-                        "differ: %d vs. %d ",
-                        step, smlength);
-                    meas_block_deactivate(meas_block, active_count);
-                    obs_block_deactivate(obs_block, active_count, msg);
-                    free(msg);
-                    break;
-                } else {
-                    meas_block_iset(
-                        meas_block, iens, active_count,
-                        summary_get((const summary_type *)enkf_node_value_ptr(
-                                        work_node),
-                                    node_id.report_step));
-                }
-            }
-            active_count++;
-        }
-        enkf_node_free(work_node);
-    }
-}
-
-static void enkf_obs_get_obs_and_measure_node(
-    const enkf_obs_type *enkf_obs, enkf_fs_type *fs, std::string obs_key,
-    const std::vector<int> &ens_active_list, meas_data_type *meas_data,
-    obs_data_type *obs_data) {
-
-    obs_vector_type *obs_vector =
-        (obs_vector_type *)hash_get(enkf_obs->obs_hash, obs_key.c_str());
-    obs_impl_type obs_type = obs_vector_get_impl_type(obs_vector);
-
-    switch (obs_type) {
-    case SUMMARY_OBS:
-        enkf_obs_get_obs_and_measure_summary(
-            enkf_obs, obs_vector, fs, ens_active_list, meas_data, obs_data);
-
-        return;
-    case GEN_OBS:
-        int report_step = -1;
-        while (true) {
-            report_step =
-                obs_vector_get_next_active_step(obs_vector, report_step);
-            if (report_step < 0)
-                return;
-
-            if (obs_vector_iget_active(obs_vector, report_step)) {
-                /* Collect the observed data in the obs_data instance. */
-                obs_vector_iget_observations(obs_vector, report_step, obs_data,
-                                             fs);
-                obs_vector_measure(obs_vector, fs, report_step, ens_active_list,
-                                   meas_data);
-            }
-        }
-    }
-}
-
-/**
-  This will append observations and simulated responses from
-  report_step to obs_data and meas_data.
-*/
-void enkf_obs_get_obs_and_measure_data(
-    const enkf_obs_type *enkf_obs, enkf_fs_type *fs,
-    const std::vector<std::pair<std::string, std::vector<int>>> &observations,
-    const std::vector<int> &ens_active_list, meas_data_type *meas_data,
-    obs_data_type *obs_data) {
-
-    for (auto &observation : observations) {
-        enkf_obs_get_obs_and_measure_node(enkf_obs, fs, observation.first,
-                                          ens_active_list, meas_data, obs_data);
-    }
-}
-
 /**
    Adding inverse observation keys to the enkf_nodes; can be called
    several times.
@@ -438,8 +307,7 @@ static void handle_history_observation(enkf_obs_type *enkf_obs,
         enkf_config_node_type *config_node = ensemble_config_add_summary(
             enkf_obs->ensemble_config, obs_key, LOAD_FAIL_WARN);
 
-        summary_key_matcher_add_summary_key(
-            enkf_obs->ensemble_config->summary_key_matcher, obs_key);
+        enkf_obs->ensemble_config->summary_keys.push_back(obs_key);
 
         if (config_node == NULL) {
             fprintf(stderr,
@@ -492,8 +360,7 @@ static void handle_summary_observation(enkf_obs_type *enkf_obs,
         enkf_config_node_type *config_node = ensemble_config_add_summary(
             enkf_obs->ensemble_config, sum_key, LOAD_FAIL_WARN);
 
-        summary_key_matcher_add_summary_key(
-            enkf_obs->ensemble_config->summary_key_matcher, sum_key);
+        enkf_obs->ensemble_config->summary_keys.push_back(sum_key);
 
         if (config_node == NULL) {
             fprintf(stderr,

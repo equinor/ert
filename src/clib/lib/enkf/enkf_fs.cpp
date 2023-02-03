@@ -25,7 +25,7 @@
 #include <ert/enkf/enkf_defaults.hpp>
 #include <ert/enkf/enkf_fs.hpp>
 #include <ert/enkf/enkf_state.hpp>
-#include <ert/enkf/misfit_ensemble.hpp>
+#include <ert/enkf/ensemble_config.hpp>
 
 namespace fs = std::filesystem;
 static auto logger = ert::get_logger("enkf");
@@ -118,7 +118,6 @@ static auto logger = ert::get_logger("enkf");
 #define SUMMARY_KEY_SET_FILE "summary-key-set"
 #define TIME_MAP_FILE "time-map"
 #define STATE_MAP_FILE "state-map"
-#define MISFIT_ENSEMBLE_FILE "misfit-ensemble"
 #define CASE_CONFIG_FILE "case_config"
 
 struct enkf_fs_struct {
@@ -133,10 +132,8 @@ struct enkf_fs_struct {
     bool read_only;
     std::shared_ptr<TimeMap> time_map;
     std::shared_ptr<StateMap> state_map;
-    summary_key_set_type *summary_key_set;
     /* The variables below here are for storing arbitrary files within the
      * enkf_fs storage directory, but not as serialized enkf_nodes. */
-    misfit_ensemble_type *misfit_ensemble;
     path_fmt_type *case_fmt;
     path_fmt_type *case_member_fmt;
     path_fmt_type *case_tstep_fmt;
@@ -150,8 +147,6 @@ enkf_fs_type *enkf_fs_alloc_empty(const char *mount_point,
     enkf_fs_type *fs = new enkf_fs_type;
     fs->time_map = std::make_shared<TimeMap>();
     fs->state_map = std::make_shared<StateMap>(ensemble_size);
-    fs->summary_key_set = summary_key_set_alloc();
-    fs->misfit_ensemble = misfit_ensemble_alloc();
     fs->read_only = read_only;
     fs->mount_point = strdup(mount_point);
     auto mount_path = fs::path(mount_point);
@@ -280,12 +275,6 @@ static void enkf_fs_fsync_state_map(enkf_fs_type *fs) {
     free(filename);
 }
 
-static void enkf_fs_fsync_summary_key_set(enkf_fs_type *fs) {
-    char *filename = enkf_fs_alloc_case_filename(fs, SUMMARY_KEY_SET_FILE);
-    summary_key_set_fwrite(fs->summary_key_set, filename);
-    free(filename);
-}
-
 static void enkf_fs_fread_state_map(enkf_fs_type *fs) {
     char *filename = enkf_fs_alloc_case_filename(fs, STATE_MAP_FILE);
     try {
@@ -294,30 +283,6 @@ static void enkf_fs_fread_state_map(enkf_fs_type *fs) {
         /* Read error is ignored. StateMap is reset */
     }
     free(filename);
-}
-
-static void enkf_fs_fread_summary_key_set(enkf_fs_type *fs) {
-    char *filename = enkf_fs_alloc_case_filename(fs, SUMMARY_KEY_SET_FILE);
-    summary_key_set_fread(fs->summary_key_set, filename);
-    free(filename);
-}
-
-static void enkf_fs_fread_misfit(enkf_fs_type *fs) {
-    FILE *stream = enkf_fs_open_excase_file(fs, MISFIT_ENSEMBLE_FILE);
-    if (stream != NULL) {
-        misfit_ensemble_fread(fs->misfit_ensemble, stream);
-        fclose(stream);
-    }
-}
-
-void enkf_fs_fwrite_misfit(enkf_fs_type *fs) {
-    if (misfit_ensemble_initialized(fs->misfit_ensemble)) {
-        char *filename = enkf_fs_alloc_case_filename(fs, MISFIT_ENSEMBLE_FILE);
-        auto stream = mkdir_fopen(fs::path(filename), "w");
-        free(filename);
-        misfit_ensemble_fwrite(fs->misfit_ensemble, stream);
-        fclose(stream);
-    }
 }
 
 enkf_fs_type *enkf_fs_mount(const char *mount_point, unsigned ensemble_size,
@@ -347,8 +312,6 @@ enkf_fs_type *enkf_fs_mount(const char *mount_point, unsigned ensemble_size,
     enkf_fs_init_path_fmt(fs);
     enkf_fs_fread_time_map(fs);
     enkf_fs_fread_state_map(fs);
-    enkf_fs_fread_summary_key_set(fs);
-    enkf_fs_fread_misfit(fs);
 
     enkf_fs_get_ref(fs);
     return fs;
@@ -369,7 +332,6 @@ bool enkf_fs_exists(const char *mount_point) {
 void enkf_fs_sync(enkf_fs_type *fs) {
     if (!fs->read_only) {
         enkf_fs_fsync(fs);
-        enkf_fs_fwrite_misfit(fs);
     }
 }
 
@@ -380,8 +342,6 @@ void enkf_fs_umount(enkf_fs_type *fs) {
     path_fmt_free(fs->case_tstep_fmt);
     path_fmt_free(fs->case_tstep_member_fmt);
 
-    summary_key_set_free(fs->summary_key_set);
-    misfit_ensemble_free(fs->misfit_ensemble);
     delete fs;
 }
 
@@ -410,7 +370,6 @@ void enkf_fs_fsync(enkf_fs_type *fs) {
 
     enkf_fs_fsync_time_map(fs);
     enkf_fs_fsync_state_map(fs);
-    enkf_fs_fsync_summary_key_set(fs);
 }
 
 void enkf_fs_fread_node(enkf_fs_type *enkf_fs, buffer_type *buffer,
@@ -551,89 +510,6 @@ TimeMap &enkf_fs_get_time_map(const enkf_fs_type *fs) { return *fs->time_map; }
 
 StateMap &enkf_fs_get_state_map(enkf_fs_type *fs) { return *fs->state_map; }
 
-summary_key_set_type *enkf_fs_get_summary_key_set(const enkf_fs_type *fs) {
-    return fs->summary_key_set;
-}
-
-misfit_ensemble_type *enkf_fs_get_misfit_ensemble(const enkf_fs_type *fs) {
-    return fs->misfit_ensemble;
-}
-
-namespace {
-int load_from_run_path(
-    const int ens_size, ensemble_config_type *ensemble_config,
-    int last_history_restart, std::vector<bool> active_mask,
-    enkf_fs_type *sim_fs,
-    const std::vector<std::tuple<int, const std::string, const std::string>>
-        &run_args) {
-    // Loading state from a fwd-model is mainly io-bound so we can
-    // allow a lot more than #cores threads to execute in parallel.
-    // The number 100 is quite arbitrarily chosen though and should
-    // probably come from some resource like a site-config or similar.
-    // NOTE that this mechanism only limits the number of *concurrently
-    // executing* threads. The number of instantiated and stored futures
-    // will be equal to the number of active realizations.
-    Semafoor concurrently_executing_threads(100);
-    std::vector<
-        std::tuple<int, std::future<std::pair<fw_load_status, std::string>>>>
-        futures;
-
-    // If this function is called via pybind11 we need to release
-    // the GIL here because this function may spin up several
-    // threads which also may need the GIL (e.g. for logging)
-    PyThreadState *state = nullptr;
-    if (PyGILState_Check() == 1)
-        state = PyEval_SaveThread();
-
-    for (int iens = 0; iens < ens_size; ++iens) {
-        if (active_mask[iens]) {
-
-            futures.push_back(std::make_tuple(
-                iens, // for logging later
-                std::async(
-                    std::launch::async,
-                    [=](const int realisation, Semafoor &execution_limiter) {
-                        // Acquire permit from semaphore or pause execution
-                        // until one becomes available. A successfully acquired
-                        // permit is released when exiting scope.
-                        std::scoped_lock lock(execution_limiter);
-
-                        auto &state_map = enkf_fs_get_state_map(sim_fs);
-
-                        state_map.update_matching(realisation, STATE_UNDEFINED,
-                                                  STATE_INITIALIZED);
-                        auto status = enkf_state_load_from_forward_model(
-                            ensemble_config, last_history_restart,
-                            std::get<0>(run_args[iens]),
-                            std::get<1>(run_args[iens]).c_str(),
-                            std::get<2>(run_args[iens]).c_str(), sim_fs);
-                        state_map.set(realisation,
-                                      status.first == LOAD_SUCCESSFUL
-                                          ? STATE_HAS_DATA
-                                          : STATE_LOAD_FAILURE);
-                        return status;
-                    },
-                    iens, std::ref(concurrently_executing_threads))));
-        }
-    }
-
-    int loaded = 0;
-    for (auto &[iens, fut] : futures) {
-        auto result = fut.get();
-        if (result.first == LOAD_SUCCESSFUL) {
-            loaded++;
-        } else {
-            logger->error("Realization: {}, load failure: {}", iens,
-                          result.second);
-        }
-    }
-    if (state)
-        PyEval_RestoreThread(state);
-
-    return loaded;
-}
-} // namespace
-
 ERT_CLIB_SUBMODULE("enkf_fs", m) {
     using namespace py::literals;
 
@@ -665,19 +541,6 @@ ERT_CLIB_SUBMODULE("enkf_fs", m) {
         },
         py::arg("self"), py::arg("ensemble_config"), py::arg("parameter_names"),
         py::arg("ensemble_size"));
-
-    m.def("load_from_run_path",
-          [](Cwrap<enkf_fs_type> enkf_fs, int ens_size,
-             Cwrap<ensemble_config_type> ensemble_config,
-             int last_history_restart,
-             const std::vector<
-                 std::tuple<int, const std::string, const std::string>>
-                 run_args,
-             std::vector<bool> active_mask) {
-              return load_from_run_path(ens_size, ensemble_config,
-                                        last_history_restart, active_mask,
-                                        enkf_fs, run_args);
-          });
     m.def(
         "copy_from_case",
         [](Cwrap<enkf_fs_type> source_case,
