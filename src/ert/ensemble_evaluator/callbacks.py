@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, Tuple
 
 from ert._c_wrappers.enkf.data.enkf_node import EnkfNode
-from ert._c_wrappers.enkf.enkf_state import internalize_results
+from ert._c_wrappers.enkf.enkf_state import _internalize_results
 from ert._c_wrappers.enkf.model_callbacks import LoadStatus
 from ert._c_wrappers.enkf.node_id import NodeId
 from ert._c_wrappers.enkf.state_map import RealizationStateEnum
@@ -55,20 +55,7 @@ def forward_model_ok(
                     result = (LoadStatus.LOAD_FAILURE, error_msg)
 
         if result[0] == LoadStatus.LOAD_SUCCESSFUL:
-            result = internalize_results(
-                ens_conf,
-                num_steps,
-                run_arg.job_name,
-                run_arg.iens,
-                run_arg.runpath,
-                run_arg.ensemble_storage,
-            )
-
-        run_arg.ensemble_storage.getStateMap()[run_arg.iens] = (
-            RealizationStateEnum.STATE_HAS_DATA
-            if result[0] == LoadStatus.LOAD_SUCCESSFUL
-            else RealizationStateEnum.STATE_LOAD_FAILURE
-        )
+            result = _internalize_results(ens_conf, num_steps, run_arg)
 
     except Exception:
         logging.exception("Unhandled exception in callback for forward_model")
@@ -76,6 +63,14 @@ def forward_model_ok(
             LoadStatus.LOAD_FAILURE,
             "Unhandled exception in callback for forward_model",
         )
+
+    state_map = run_arg.ensemble_storage.getStateMap()
+    state_map._set(
+        run_arg.iens,
+        RealizationStateEnum.STATE_HAS_DATA
+        if result[0] == LoadStatus.LOAD_SUCCESSFUL
+        else RealizationStateEnum.STATE_LOAD_FAILURE,
+    )
 
     return result
 
