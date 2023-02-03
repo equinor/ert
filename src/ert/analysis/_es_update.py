@@ -1,18 +1,22 @@
 from __future__ import annotations
 
 import logging
+from collections import defaultdict
 from dataclasses import dataclass, field
+from datetime import datetime
+from math import sqrt
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
 
 import iterative_ensemble_smoother as ies
 import numpy as np
+import pandas
 from iterative_ensemble_smoother.experimental import (
     ensemble_smoother_update_step_row_scaling,
 )
+from pandas import DataFrame, MultiIndex
 
-from ert._c_wrappers.enkf import ActiveMode
-from ert._c_wrappers.enkf.enums import RealizationStateEnum
+from ert._c_wrappers.enkf.enums import ActiveMode, RealizationStateEnum
 from ert._c_wrappers.enkf.row_scaling import RowScaling
 from ert._clib import update
 
@@ -26,13 +30,24 @@ if TYPE_CHECKING:
     from ert._c_wrappers.enkf.enkf_fs import EnkfFs
     from ert._c_wrappers.enkf.enkf_obs import EnkfObs
     from ert._c_wrappers.enkf.ensemble_config import EnsembleConfig
-    from ert._clib.enkf_analysis import UpdateSnapshot
+    from ert._c_wrappers.enkf.observations import ObsVector
+    from ert._c_wrappers.enkf.observations.summary_observation import SummaryObservation
 
 logger = logging.getLogger(__name__)
 
 
 class ErtAnalysisError(Exception):
     pass
+
+
+@dataclass
+class UpdateSnapshot:
+    obs_name: List[str]
+    obs_value: List[float]
+    obs_std: List[float]
+    obs_status: List[str]
+    response_mean: List[float]
+    response_std: List[float]
 
 
 @dataclass
@@ -168,6 +183,208 @@ def _create_temporary_parameter_storage(
     return temporary_storage
 
 
+# should be moved as member in obs_vector
+def get_gen_obs_data(self: "ObsVector") -> DataFrame:
+    data = []
+    data_key = self.getDataKey()
+    for time_step in self.getStepList():
+        node = self.getNode(time_step)
+        index_list = [node.getIndex(nr) for nr in range(len(node))]
+        index = MultiIndex.from_product(
+            [[self.getKey()], [f"{data_key}-{time_step}"], index_list],
+            names=["key", "data_key", "axis"],
+        )
+        values = node.get_data_points()
+        errors = node.get_std()
+
+        data.append(
+            DataFrame(
+                data=np.array([values, errors]).T, index=index, columns=["OBS", "STD"]
+            )
+        )
+    return pandas.concat(data)
+
+
+# should be moved as member in obs_vector
+def get_summary_obs_data(self: "ObsVector", obs: "EnkfObs") -> DataFrame:
+    observations = []
+    for time_step in self.getStepList():
+        n: "SummaryObservation" = self.getNode(time_step)
+        observations.append([n.getValue(), n.getStandardDeviation()])
+    data_key = self.getDataKey()
+    time_axis = [
+        datetime.strptime(str(obs.getObservationTime(i)), "%Y-%m-%d %H:%M:%S")
+        for i in self.getStepList()
+    ]
+    index = MultiIndex.from_product(
+        [[self.getObsKey()], [data_key], time_axis], names=["key", "data_key", "axis"]
+    )
+    return DataFrame(data=np.array(observations), index=index, columns=["OBS", "STD"])
+
+
+def _get_obs_and_measure_data(
+    obs: "EnkfObs",
+    source_fs: "EnkfFs",
+    selected_observations: List[Tuple[str, List[int]]],
+    ens_active_list: List[int],
+) -> Tuple[DataFrame, DataFrame]:
+    data_keys = defaultdict(set)
+    obs_data = []
+    for obs_key, active_mask in selected_observations:
+        obs_vector = obs[obs_key]
+
+        try:
+            data_key = obs_vector.getDataKey()
+        except KeyError:
+            raise KeyError(f"No data key for obs key: {obs_key}")
+        imp_type = obs_vector.getImplementationType().name
+        if imp_type == "GEN_OBS":
+            obs_data.append(get_gen_obs_data(obs_vector))
+            data_key = f"{data_key}-{obs_vector.activeStep()}"
+        elif imp_type == "SUMMARY_OBS":
+            obs_data.append(get_summary_obs_data(obs_vector, obs))
+
+        data_keys[imp_type].add((data_key, obs_vector.getObsKey()))
+
+    measured_data = []
+    for imp_type, keys in data_keys.items():
+        if imp_type == "SUMMARY_OBS":
+            datas = [v[0] for v in keys]
+            data, x_axis, realizations = source_fs.load_summary_data(
+                datas, ens_active_list
+            )
+            time_axis = x_axis
+            multi_index = MultiIndex.from_product(
+                [datas, time_axis], names=["data_key", "axis"]
+            )
+            measured_data.append(
+                DataFrame(
+                    data=data.reshape(len(time_axis) * len(keys), len(realizations)),
+                    index=multi_index,
+                    columns=realizations,
+                )
+            )
+
+        if imp_type == "GEN_OBS":
+            for d_key, o_key in keys:
+                data, realizations = source_fs.load_gen_data(d_key, ens_active_list)
+                x_axis = [*range(data.shape[0])]
+                multi_index = MultiIndex.from_product(
+                    [[d_key], x_axis], names=["data_key", "axis"]
+                )
+                measured_data.append(
+                    DataFrame(
+                        data=data.reshape(len(x_axis), len(realizations)),
+                        index=multi_index,
+                        columns=realizations,
+                    )
+                )
+
+    return pandas.concat(measured_data), pandas.concat(obs_data)
+
+
+def _deactivate_outliers(
+    meas_data: DataFrame, std_cutoff: float, alpha: float
+) -> pandas.Index:
+    """
+    Extracts indices for which outliers that are to be extracted
+    """
+    filter_std = _filter_ensemble_std(meas_data, std_cutoff)
+    filter_mean_obs = _filter_ensemble_mean_obs(meas_data, alpha)
+    return filter_std.index.union(filter_mean_obs.index)
+
+
+def _filter_ensemble_std(data: DataFrame, std_cutoff: float) -> pandas.Series:
+    """
+    Filters on ensemble variation versus a user defined standard
+    deviation cutoff. If there is not enough variation in the measurements
+    the data point is removed.
+    """
+    S = data.loc[:, ~data.columns.isin(["OBS", "STD"])]
+    ens_std = S.std(axis=1, ddof=0)
+    std_filter = ens_std <= std_cutoff
+    return std_filter[std_filter]
+
+
+def _filter_ensemble_mean_obs(data: DataFrame, alpha: float) -> pandas.Series:
+    """
+    Filters on distance between the observed data and the ensemble mean
+    based on variation and a user defined alpha.
+    """
+    S = data.loc[:, ~data.columns.isin(["OBS", "STD"])]
+    ens_mean = S.mean(axis=1)
+    ens_std = S.std(axis=1, ddof=0)
+    obs_values = data.loc[:, "OBS"]
+    obs_std = data.loc[:, "STD"]
+
+    mean_filter = abs(obs_values - ens_mean) > alpha * (ens_std + obs_std)
+    return mean_filter[mean_filter]
+
+
+def _create_update_snapshot(data: DataFrame, obs_mask: List[bool]) -> UpdateSnapshot:
+    observation_values = data.loc[:, "OBS"].to_numpy()
+    observation_errors = data.loc[:, "STD"].to_numpy()
+    S = data.loc[:, ~data.columns.isin(["OBS", "STD"])]
+
+    return UpdateSnapshot(
+        obs_name=[obs_key for (obs_key, _, _) in data.index.to_list()],
+        obs_value=observation_values,
+        obs_std=observation_errors,
+        obs_status=["ACTIVE" if v else "DEACTIVATED" for v in obs_mask],
+        response_mean=S.mean(axis=1),
+        response_std=S.std(axis=1, ddof=0),
+    )
+
+
+def _load_observations_and_responses(
+    source_fs: "EnkfFs",
+    obs: "EnkfObs",
+    alpha: float,
+    std_cutoff: float,
+    global_std_scaling: float,
+    ens_mask: List[bool],
+    selected_observations: List[Tuple[str, List[int]]],
+) -> Any:
+    ens_active_list = [i for i, b in enumerate(ens_mask) if b]
+    measured_data, obs_data = _get_obs_and_measure_data(
+        obs, source_fs, selected_observations, ens_active_list
+    )
+
+    joined = obs_data.join(
+        measured_data, on=["data_key", "axis"], how="inner"
+    ).drop_duplicates()
+    if len(obs_data) > len(joined):
+        missing_indices = set(obs_data.index) - set(joined.index)
+        error_msg = []
+        for i in missing_indices:
+            error_msg.append(
+                f"Observation: {i[0]} attached to response: {i[1]} "
+                f"at: {i[2]} has no response"
+            )
+        raise IndexError("\n".join(error_msg))
+    obs_filter = _deactivate_outliers(joined, std_cutoff, alpha)
+    obs_mask = [True if i not in obs_filter else False for i in joined.index]
+    update_snapshot = _create_update_snapshot(joined, obs_mask)
+
+    joined.drop(index=obs_filter, inplace=True)
+    observation_values = joined.loc[:, "OBS"].to_numpy()
+    observation_errors = joined.loc[:, "STD"].to_numpy()
+    S = joined.loc[:, ~joined.columns.isin(["OBS", "STD"])]
+
+    # Inflating measurement errors by a factor sqrt(global_std_scaling) as shown
+    # in for example evensen2018 - Analysis of iterative ensemble smoothers for
+    # solving inverse problems.
+    # `global_std_scaling` is 1.0 for ES.
+    observation_errors *= sqrt(global_std_scaling)
+
+    return S.to_numpy(), (
+        observation_values,
+        observation_errors,
+        obs_mask,
+        update_snapshot,
+    )
+
+
 def analysis_ES(
     updatestep: "UpdateConfiguration",
     obs: "EnkfObs",
@@ -196,7 +413,12 @@ def analysis_ES(
     # Looping over local analysis update_step
     for update_step in updatestep:
         try:
-            S, observation_handle = update.load_observations_and_responses(
+            S, (
+                observation_values,
+                observation_errors,
+                _,
+                update_snapshot,
+            ) = _load_observations_and_responses(
                 source_fs,
                 obs,
                 alpha,
@@ -209,11 +431,7 @@ def analysis_ES(
             raise ErtAnalysisError(e) from e
 
         # pylint: disable=unsupported-assignment-operation
-        smoother_snapshot.update_step_snapshots[
-            update_step.name
-        ] = observation_handle.update_snapshot
-        observation_values = observation_handle.observation_values
-        observation_errors = observation_handle.observation_errors
+        smoother_snapshot.update_step_snapshots[update_step.name] = update_snapshot
         if len(observation_values) == 0:
             raise ErtAnalysisError(
                 f"No active observations for update step: {update_step.name}."
@@ -287,7 +505,12 @@ def analysis_IES(
     # Looping over local analysis update_step
     for update_step in updatestep:
         try:
-            S, observation_handle = update.load_observations_and_responses(
+            S, (
+                observation_values,
+                observation_errors,
+                observation_mask,
+                update_snapshot,
+            ) = _load_observations_and_responses(
                 source_fs,
                 obs,
                 alpha,
@@ -299,11 +522,7 @@ def analysis_IES(
         except IndexError as e:
             raise ErtAnalysisError(e)
         # pylint: disable=unsupported-assignment-operation
-        smoother_snapshot.update_step_snapshots[
-            update_step.name
-        ] = observation_handle.update_snapshot
-        observation_values = observation_handle.observation_values
-        observation_errors = observation_handle.observation_errors
+        smoother_snapshot.update_step_snapshots[update_step.name] = update_snapshot
         if len(observation_values) == 0:
             raise ErtAnalysisError(
                 f"No active observations for update step: {update_step.name}."

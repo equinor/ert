@@ -1,10 +1,8 @@
 import asyncio
-import fileinput
 import os
 import shutil
 import threading
 from argparse import ArgumentParser
-from pathlib import Path
 from unittest.mock import Mock, call
 
 import pandas as pd
@@ -269,48 +267,6 @@ def test_cli_test_run(tmpdir, source_root, mock_cli_run):
     monitor_mock.assert_called_once()
     thread_join_mock.assert_called_once()
     thread_start_mock.assert_has_calls([[call(), call()]])
-
-
-@pytest.mark.integration_test
-def test_that_logged_errors_are_propagated_from_callback(copy_case):
-    """We create a case where the forward model is out of sync with the refcase
-    and check that the error message is shown to the user. To do that we remove
-    the other parts of the forward model and the GEN_DATA from the case
-    """
-    copy_case("snake_oil")
-    with fileinput.input("snake_oil.ert", inplace=True) as fin:
-        for line in fin:
-            if (
-                line.startswith("GEN_DATA")
-                or "SNAKE_OIL_NPV" in line
-                or "SNAKE_OIL_DIFF" in line
-            ):
-                continue
-            print(line, end="")
-    with fileinput.input(
-        Path() / "jobs" / "snake_oil_simulator.py", inplace=True
-    ) as fin:
-        for line in fin:
-            if "datetime(2010, 1, 1)" in line:
-                line = line.replace("datetime(2010, 1, 1)", "datetime(2000, 1, 1)")
-            print(line, end="")
-
-    parser = ArgumentParser(prog="test_main")
-    parsed = ert_parser(
-        parser,
-        [
-            TEST_RUN_MODE,
-            "snake_oil.ert",
-            "--port-range",
-            "1024-65535",
-        ],
-    )
-    FeatureToggling.update_from_args(parsed)
-    with pytest.raises(
-        ErtCliError, match="Realization: 0 failed with: 201 inconsistencies in time_map"
-    ):
-        run_cli(parsed)
-    FeatureToggling.reset()
 
 
 @pytest.mark.integration_test

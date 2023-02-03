@@ -14,6 +14,7 @@ from ert._c_wrappers.enkf.enums import (
     RealizationStateEnum,
 )
 from ert.analysis import ESUpdate, SmootherSnapshot
+from ert.analysis._es_update import _get_obs_and_measure_data
 from ert.data import MeasuredData
 
 _logger = logging.getLogger(__name__)
@@ -231,17 +232,15 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
             if realization_index not in realizations:
                 raise IndexError(f"No such realization {realization_index}")
             realizations = [realization_index]
-        config_node = self._enkf_main.ensembleConfig().getNode(key)
-        if report_step not in config_node.getDataModelConfig().getReportSteps():
-            raise ValueError(
-                f"No report step {report_step} in report steps: "
-                f"{config_node.getDataModelConfig().getReportSteps()}"
-            )
-        # pylint: disable=c-extension-no-member
-        data_array = _clib.enkf_fs_general_data.gendata_get_realizations(
-            config_node, fs, realizations, report_step
+
+        data_array, realizations = fs.load_gen_data(
+            f"{key}-{report_step}", realizations
         )
-        return DataFrame(data=data_array, columns=np.array(realizations))
+
+        return DataFrame(
+            data=data_array.reshape(len(data_array), len(realizations)),
+            columns=np.array(realizations),
+        )
 
     def load_observation_data(
         self, case_name: str, keys: Optional[List[str]] = None
@@ -422,9 +421,6 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
     ) -> DataFrame:
         fs = self._enkf_main.storage_manager[case_name]
 
-        time_map = fs.getTimeMap()
-        dates = [time_map[index] for index in range(1, len(time_map))]
-
         realizations = self.get_active_realizations(case_name)
         if realization_index is not None:
             if realization_index not in realizations:
@@ -436,19 +432,24 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
             summary_keys = [
                 key for key in keys if key in summary_keys
             ]  # ignore keys that doesn't exist
-        # pylint: disable=c-extension-no-member
-        summary_data = _clib.enkf_fs_summary_data.get_summary_data(
-            fs, summary_keys, realizations, len(dates)
-        )
 
-        if np.isnan(summary_data).all():
+        data, x_axis, realizations = fs.load_summary_data(summary_keys, realizations)
+        if np.isnan(data).all():
             return DataFrame()
 
+        time_axis = x_axis
         multi_index = MultiIndex.from_product(
-            [realizations, dates], names=["Realization", "Date"]
+            [summary_keys, time_axis], names=["data_key", "axis"]
         )
 
-        return DataFrame(data=summary_data, index=multi_index, columns=summary_keys)
+        df = DataFrame(
+            data=data.reshape(len(time_axis) * len(summary_keys), len(realizations)),
+            index=multi_index,
+            columns=realizations,
+        )
+        df = df.stack().unstack(level=0).swaplevel()
+        df.index.names = ["Realization", "Date"]
+        return df
 
     def gather_summary_data(
         self,
@@ -473,35 +474,26 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
         realizations = self.get_active_realizations(case_name)
         fs = self._enkf_main.storage_manager[case_name]
         misfit_keys = []
-        for obs_vector in self._enkf_main.getObservations():
+        observations = self._enkf_main.getObservations()
+        for obs_vector in observations:
             misfit_keys.append(f"MISFIT:{obs_vector.getObservationKey()}")
 
-        misfit_keys.append("MISFIT:TOTAL")
-
-        misfit_sum_index = len(misfit_keys) - 1
-
-        misfit_array = np.empty(
-            shape=(len(misfit_keys), len(realizations)), dtype=np.float64
+        all_observations = [(n.getObsKey(), list(range(len(n)))) for n in observations]
+        measured_data, obs_data = _get_obs_and_measure_data(
+            observations, fs, all_observations, realizations
         )
-        misfit_array.fill(np.nan)
-        misfit_array[misfit_sum_index] = 0.0
+        joined = obs_data.join(
+            measured_data, on=["data_key", "axis"], how="inner"
+        ).drop_duplicates()
+        misfit = DataFrame(index=joined.index)
+        for col in measured_data:
+            misfit[col] = ((joined["OBS"] - joined[col]) / joined["STD"]) ** 2
+        misfit = misfit.groupby("key").sum().T
+        misfit.columns = misfit_keys
+        misfit["MISFIT:TOTAL"] = misfit.sum(axis=1)
+        misfit.index.name = "Realization"
 
-        for column_index, obs_vector in enumerate(self._enkf_main.getObservations()):
-            for realization_index, realization_number in enumerate(realizations):
-                misfit = obs_vector.getTotalChi2(
-                    fs,
-                    realization_number,
-                )
-
-                misfit_array[column_index][realization_index] = misfit
-                misfit_array[misfit_sum_index][realization_index] += misfit
-
-        misfit_data = DataFrame(
-            data=np.transpose(misfit_array), index=realizations, columns=misfit_keys
-        )
-        misfit_data.index.name = "Realization"
-
-        return misfit_data
+        return misfit
 
     def refcase_data(self, key: str) -> DataFrame:
         refcase = self._enkf_main.ensembleConfig().refcase
