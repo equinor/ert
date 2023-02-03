@@ -154,7 +154,7 @@ class ObservationConfigError(ConfigValidationError):
 
 
 class EnKFMain:
-    def __init__(self, config: "ResConfig", read_only: bool = False):
+    def __init__(self, config: "ResConfig", read_only: bool = False) -> None:
         self.res_config = config
         self._update_configuration = None
 
