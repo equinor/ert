@@ -110,6 +110,37 @@ def test_gen_kw(tmpdir, config_str, expected, extra_files, expectation):
 
 @pytest.mark.integration_test
 @pytest.mark.parametrize(
+    "relpath",
+    [
+        "somepath/",
+        # This test was added to show current behaviour for Ert.
+        # If absolute paths should be possible to be used like this is up for debate.
+        "/tmp/somepath/",  # ert removes leading '/'
+    ],
+)
+def test_gen_kw_outfile_will_use_paths(tmpdir, relpath: str):
+    with tmpdir.as_cwd():
+        config = dedent(
+            f"""
+        JOBNAME my_name%d
+        NUM_REALIZATIONS 1
+        GEN_KW KW_NAME template.txt {relpath}kw.txt prior.txt
+        """
+        )
+
+        with open("config.ert", mode="w", encoding="utf-8") as fh:
+            fh.writelines(config)
+        with open("template.txt", mode="w", encoding="utf-8") as fh:
+            fh.writelines("MY_KEYWORD <MY_KEYWORD>")
+        with open("prior.txt", mode="w", encoding="utf-8") as fh:
+            fh.writelines("MY_KEYWORD NORMAL 0 1")
+
+        create_runpath("config.ert")
+        assert os.path.exists(f"simulations/realization-0/iter-0/{relpath}kw.txt")
+
+
+@pytest.mark.integration_test
+@pytest.mark.parametrize(
     "config_str, expected, extra_files",
     [
         (
