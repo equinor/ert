@@ -193,7 +193,12 @@ class EvaluatorTracker:
                 ]:
                     done_reals += 1
             real_progress = float(done_reals) / len(all_reals)
-            return (current_iter + real_progress) / self._model.phaseCount()
+
+            return (
+                (current_iter + real_progress) / self._model.phaseCount()
+                if self._model.phaseCount() != 1
+                else real_progress
+            )
 
     def _clear_work_queue(self) -> None:
         try:
