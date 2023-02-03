@@ -349,6 +349,7 @@ class RunDialog(QDialog):
                 self._snapshot_model._add_snapshot(event.snapshot, event.iteration)
             self._progress_view.setIndeterminate(event.indeterminate)
             progress = int(event.progress * 100)
+            self.validate_percentage_range(progress)
             self._total_progress_bar.setValue(progress)
             self._total_progress_label.setText(
                 _TOTAL_PROGRESS_TEMPLATE.format(
@@ -363,12 +364,18 @@ class RunDialog(QDialog):
                 )
             self._progress_view.setIndeterminate(event.indeterminate)
             progress = int(event.progress * 100)
+            self.validate_percentage_range(progress)
             self._total_progress_bar.setValue(progress)
             self._total_progress_label.setText(
                 _TOTAL_PROGRESS_TEMPLATE.format(
                     total_progress=progress, phase_name=event.phase_name
                 )
             )
+
+    def validate_percentage_range(self, progress: int):
+        if progress not in range(0, 101):
+            logger = logging.getLogger(__name__)
+            logger.warning(f"Total progress bar exceeds [0-100] range: {progress}")
 
     def restart_failed_realizations(self):
         msg = QMessageBox(self)
