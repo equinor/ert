@@ -12,8 +12,6 @@
 
 #include <ert/enkf/enkf_fs.hpp>
 #include <ert/enkf/enkf_types.hpp>
-#include <ert/enkf/meas_data.hpp>
-#include <ert/enkf/obs_data.hpp>
 #include <ert/enkf/obs_vector.hpp>
 #include <ert/enkf/time_map.hpp>
 
@@ -35,12 +33,6 @@ extern "C" void enkf_obs_add_obs_vector(enkf_obs_type *enkf_obs,
 
 extern "C" obs_impl_type enkf_obs_get_type(const enkf_obs_type *enkf_obs,
                                            const char *key);
-
-void enkf_obs_get_obs_and_measure_data(
-    const enkf_obs_type *enkf_obs, enkf_fs_type *fs,
-    const std::vector<std::pair<std::string, std::vector<int>>> &observations,
-    const std::vector<int> &ens_active_list, meas_data_type *meas_data,
-    obs_data_type *obs_data);
 
 extern "C" stringlist_type *
 enkf_obs_alloc_typed_keylist(enkf_obs_type *enkf_obs, obs_impl_type);

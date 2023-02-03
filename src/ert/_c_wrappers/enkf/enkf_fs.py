@@ -1,5 +1,8 @@
+import logging
+from datetime import datetime
+from multiprocessing.pool import ThreadPool
 from pathlib import Path
-from typing import TYPE_CHECKING, List, Optional, Union
+from typing import TYPE_CHECKING, Any, List, Optional, Tuple, Union
 
 import numpy as np
 import numpy.typing as npt
@@ -8,21 +11,47 @@ from cwrap import BaseCClass
 from ert import _clib
 from ert._c_wrappers import ResPrototype
 from ert._c_wrappers.enkf.config import EnkfConfigNode
-from ert._c_wrappers.enkf.enums import EnKFFSType
+from ert._c_wrappers.enkf.enums import EnKFFSType, RealizationStateEnum
+from ert._c_wrappers.enkf.model_callbacks import LoadStatus
 from ert._c_wrappers.enkf.ert_config import EnsembleConfig
-
-# flake8: noqa pylint: disable=unused-import
-from ert._c_wrappers.enkf.summary_key_set import SummaryKeySet
 from ert._c_wrappers.enkf.time_map import TimeMap
 from ert._clib import update
+from ert.ensemble_evaluator.callbacks import forward_model_ok
 from ert._clib.state_map import RealizationStateEnum
 
 if TYPE_CHECKING:
     from ecl.summary import EclSum
     from ecl.util.util import IntVector
 
-    from ert._c_wrappers.enkf import RunArg
+    from ert._c_wrappers.enkf.model_config import ModelConfig
+    from ert._c_wrappers.enkf.run_arg import RunArg
     from ert._c_wrappers.enkf.state_map import StateMap
+
+logger = logging.getLogger(__name__)
+
+
+def _load_realization(
+    sim_fs: "EnkfFs",
+    realisation: int,
+    ensemble_config: "EnsembleConfig",
+    model_config: "ModelConfig",
+    run_args: List["RunArg"],
+) -> Tuple["LoadStatus", str]:
+    state_map = sim_fs.getStateMap()
+
+    state_map.update_matching(
+        realisation,
+        RealizationStateEnum.STATE_UNDEFINED,
+        RealizationStateEnum.STATE_INITIALIZED,
+    )
+    status = forward_model_ok(run_args[realisation], ensemble_config, model_config)
+    state_map._set(
+        realisation,
+        RealizationStateEnum.STATE_HAS_DATA
+        if status[0] == LoadStatus.LOAD_SUCCESSFUL
+        else RealizationStateEnum.STATE_LOAD_FAILURE,
+    )
+    return status, realisation
 
 
 class EnkfFs(BaseCClass):
@@ -34,9 +63,6 @@ class EnkfFs(BaseCClass):
     _create = ResPrototype(
         "void*   enkf_fs_create_fs(char* , enkf_fs_type_enum ,int, bool)",
         bind=False,
-    )
-    _summary_key_set = ResPrototype(
-        "summary_key_set_ref enkf_fs_get_summary_key_set(enkf_fs)"
     )
     _umount = ResPrototype("void enkf_fs_umount(enkf_fs)")
 
@@ -112,7 +138,13 @@ class EnkfFs(BaseCClass):
         self._fsync()
 
     def getSummaryKeySet(self) -> List[str]:
-        return list(self._summary_key_set().keys())
+        summary_folders = list(self.mount_point.glob("summary-*"))
+        if not summary_folders:
+            return []
+        summary_path = summary_folders[0]
+        with open(summary_path / "keys", "r", encoding="utf-8") as f:
+            keys = [k.strip() for k in f.readlines()]
+        return sorted(keys)
 
     def realizationList(self, state: "RealizationStateEnum") -> "IntVector":
         """
@@ -138,25 +170,6 @@ class EnkfFs(BaseCClass):
     ) -> np.ndarray:
         return update.load_parameter(self, config_node, iens_active_index, parameter)
 
-    def load_from_run_path(
-        self,
-        ensemble_size,
-        ensemble_config,
-        last_history_restart: int,
-        run_args: List["RunArg"],
-        active_realizations,
-    ) -> int:
-        """Returns the number of loaded realizations"""
-        run_args = [(real.iens, real.runpath, real.job_name) for real in run_args]
-        return _clib.enkf_fs.load_from_run_path(
-            self,
-            ensemble_size,
-            ensemble_config,
-            last_history_restart,
-            run_args,
-            active_realizations,
-        )
-
     def copy_from_case(
         self, other: "EnkfFs", report_step: int, nodes: List[str], active: List[bool]
     ):
@@ -172,3 +185,105 @@ class EnkfFs(BaseCClass):
             nodes,
             active,
         )
+
+    def save_summary_data(
+        self,
+        data: "npt.NDArray[np.double]",
+        keys: List[str],
+        axis: List[Any],
+        realization: int,
+    ) -> None:
+        output_path = self.mount_point / f"summary-{realization}"
+        Path.mkdir(output_path, exist_ok=True)
+
+        np.save(output_path / "data", data)
+        with open(output_path / "keys", "w", encoding="utf-8") as f:
+            f.write("\n".join(keys))
+
+        with open(output_path / "time_map", "w", encoding="utf-8") as f:
+            f.write("\n".join([t.strftime("%Y-%m-%d") for t in axis]))
+
+    def load_summary_data(
+        self, summary_keys: List[str], realizations: List[int]
+    ) -> Tuple["npt.NDArray[np.double]", List[str], List[int]]:
+        result = []
+        loaded = []
+        dates = []
+        for realization in realizations:
+            input_path = self.mount_point / f"summary-{realization}"
+            if not input_path.exists():
+                continue
+            loaded.append(realization)
+            np_data = np.load(input_path / "data.npy")
+
+            keys = []
+            with open(input_path / "keys", "r", encoding="utf-8") as f:
+                keys = [k.strip() for k in f.readlines()]
+            if not dates:
+                with open(input_path / "time_map", "r", encoding="utf-8") as f:
+                    dates = [
+                        datetime.strptime(k.strip(), "%Y-%m-%d") for k in f.readlines()
+                    ]
+            indices = [keys.index(summary_key) for summary_key in summary_keys]
+            selected_data = np_data[indices, :]
+
+            result.append(selected_data.reshape(1, len(indices) * len(dates)).T)
+        if not result:
+            return np.array([]), dates, loaded
+        return np.concatenate(result, axis=1), dates, loaded
+
+    def save_gen_data(
+        self, key: str, data: List[List[float]], realization: int
+    ) -> None:
+        output_path = self.mount_point / f"gen-data-{realization}"
+        Path.mkdir(output_path, exist_ok=True)
+        np_data = np.array(data)
+        np.save(output_path / key, np_data)
+
+    def load_gen_data(
+        self, key: str, realizations: List[int]
+    ) -> Tuple["npt.NDArray[np.double]", List[int]]:
+        result = []
+        loaded = []
+        for realization in realizations:
+            input_path = self.mount_point / f"gen-data-{realization}" / f"{key}.npy"
+            if not input_path.exists():
+                continue
+
+            np_data = np.load(input_path)
+
+            result.append(np_data)
+            loaded.append(realization)
+        if not result:
+            raise KeyError(f"Unable to load GEN_DATA for key: {key}")
+        return np.stack(result).T, loaded
+
+    def load_from_run_path(
+        self,
+        ensemble_size: int,
+        ensemble_config: "EnsembleConfig",
+        model_config: "ModelConfig",
+        run_args: List["RunArg"],
+        active_realizations: List[bool],
+    ) -> int:
+        """Returns the number of loaded realizations"""
+        pool = ThreadPool(processes=8)
+
+        async_result = [
+            pool.apply_async(
+                _load_realization, (self, iens, ensemble_config, model_config, run_args)
+            )
+            for iens in range(ensemble_size)
+            if active_realizations[iens]
+        ]
+
+        loaded = 0
+        for t in async_result:
+            ((status, message), iens) = t.get()
+
+            if status == LoadStatus.LOAD_SUCCESSFUL:
+                loaded += 1
+            else:
+                logger.error(f"Realization: {iens}, load failure: {message}")
+
+        return loaded

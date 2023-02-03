@@ -58,13 +58,10 @@ def test_run_simulation_batch(setup_case):
     num = _run_forward_model(ert, job_queue, run_context)
     assert num == batch_size
 
-    order_result = EnkfNode(ens_config["ORDER"])
-    injection_result = EnkfNode(ens_config["INJECTION"])
-
     for iens in range(batch_size):
         node_id = NodeId(0, iens)
-        order_result.load(sim_fs, node_id)
-        data = order_result.asGenData()
+        data, _ = sim_fs.load_gen_data("ORDER-0", [iens])
+        data = data.flatten()
 
         order_node.load(sim_fs, node_id)
         assert order_node_ext["W1"] == data[0]

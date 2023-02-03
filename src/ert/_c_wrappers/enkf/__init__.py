@@ -11,7 +11,7 @@ from .config import (
     SummaryConfig,
 )
 from .config_keys import ConfigKeys
-from .data import EnkfNode, ExtParam, Field, GenData, GenKw
+from .data import EnkfNode, ExtParam, Field, GenKw
 from .enkf_fs import EnkfFs
 from .enkf_main import EnKFMain, ObservationConfigError
 from .enkf_obs import EnkfObs
@@ -38,7 +38,6 @@ from .queue_config import QueueConfig
 from .row_scaling import RowScaling
 from .run_arg import RunArg
 from .state_map import StateMap
-from .summary_key_set import SummaryKeySet
 from .time_map import TimeMap
 
 __all__ = [
@@ -48,7 +47,6 @@ __all__ = [
     "ObsVector",
     "Field",
     "GenKw",
-    "GenData",
     "ExtParam",
     "EnkfNode",
     "FieldConfig",
@@ -61,7 +59,6 @@ __all__ = [
     "NodeId",
     "TimeMap",
     "StateMap",
-    "SummaryKeySet",
     "EnkfFs",
     "RowScaling",
     "ActiveList",
