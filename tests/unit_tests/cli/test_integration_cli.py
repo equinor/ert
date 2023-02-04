@@ -78,6 +78,20 @@ def test_runpath_file(tmpdir, source_root):
         assert os.path.isfile("RUNPATH_WORKFLOW_1.OK")
 
 
+# def test_reek_case():
+#     parser = ArgumentParser(prog="test_reek")
+#     parsed = ert_parser(
+#         parser,
+#         [
+#             ENSEMBLE_SMOOTHER_MODE,
+#             "--target-case",
+#             "ES_loc",
+#             "/Users/fedacuric/reek/ert/config.ert",
+#         ],
+#     )
+#     run_cli(parsed)
+
+
 @pytest.mark.integration_test
 def test_ensemble_evaluator(tmpdir, source_root):
     shutil.copytree(

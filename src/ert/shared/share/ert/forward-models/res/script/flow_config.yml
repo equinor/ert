@@ -1,0 +1,4 @@
+versions:
+  '2023.04-pre':
+    scalar:
+      executable: /Users/fedacuric/opm-simulators/build/bin/flow
