@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 import re
 from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Union
@@ -67,7 +69,7 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
         self._enkf_main.analysisConfig().set_log_path(output_path)
 
     @property
-    def update_configuration(self) -> "UpdateConfiguration":
+    def update_configuration(self) -> Optional[UpdateConfiguration]:
         return self._enkf_main.update_configuration
 
     @update_configuration.setter

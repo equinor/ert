@@ -3,7 +3,7 @@ import logging
 import os
 from datetime import datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, List, Mapping, Sequence, Union
+from typing import TYPE_CHECKING, Any, List, Mapping, Optional, Sequence, Union
 
 import numpy as np
 
@@ -156,7 +156,6 @@ class ObservationConfigError(ConfigValidationError):
 class EnKFMain:
     def __init__(self, config: "ResConfig", read_only: bool = False):
         self.res_config = config
-        self._update_configuration = None
 
         self._observations = EnkfObs(
             config.model_config.history_source,
@@ -165,6 +164,7 @@ class EnKFMain:
             config.ensemble_config.refcase,
             config.ensemble_config,
         )
+
         if config.model_config.obs_config_file:
             if (
                 os.path.isfile(config.model_config.obs_config_file)
@@ -232,9 +232,7 @@ class EnKFMain:
         self._global_seed = seed_seq
         self._shared_rng = np.random.default_rng(seed_seq)
 
-    @property
-    def update_configuration(self) -> UpdateConfiguration:
-        if not self._update_configuration:
+        if self._observation_keys and self._parameter_keys:
             global_update_step = [
                 {
                     "name": "ALL_ACTIVE",
@@ -245,6 +243,11 @@ class EnKFMain:
             self._update_configuration = UpdateConfiguration(
                 update_steps=global_update_step
             )
+        else:
+            self._update_configuration = None
+
+    @property
+    def update_configuration(self) -> Optional[UpdateConfiguration]:
         return self._update_configuration
 
     @update_configuration.setter
