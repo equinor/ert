@@ -1,4 +1,5 @@
 import os.path
+from typing import Optional
 
 from cwrap import BaseCClass
 from ecl.util.util import StringHash
@@ -13,7 +14,7 @@ class ConfigWarning(UserWarning):
 
 
 class ConfigValidationError(ValueError):
-    def __init__(self, errors: str, config_file: str = None) -> None:
+    def __init__(self, errors: str, config_file: Optional[str] = None) -> None:
         self.config_file = config_file
         self.errors = errors
         super().__init__(
