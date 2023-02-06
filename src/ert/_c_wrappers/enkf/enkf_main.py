@@ -255,7 +255,7 @@ def _generate_parameter_files(
 
 
 class ObservationConfigError(ConfigValidationError):
-    def __init__(self, errors, config_file=None):
+    def __init__(self, errors: str, config_file: Optional[str] = None) -> None:
         self.config_file = config_file
         self.errors = errors
         super().__init__(
