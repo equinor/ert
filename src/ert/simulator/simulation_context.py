@@ -1,4 +1,5 @@
 from functools import partial
+from pathlib import Path
 from threading import Thread
 from time import sleep
 from typing import TYPE_CHECKING, Any, List, Optional, Tuple
@@ -110,7 +111,7 @@ class SimulationContext:
             sim_fs=sim_fs,
             path_format=ert.getModelConfig().jobname_format_string,
             format_string=ert.getModelConfig().runpath_format_string,
-            runpath_file=ert.getModelConfig().runpath_file,
+            runpath_file=Path(ert.getModelConfig().runpath_file),
             initial_mask=mask,
             global_substitutions=global_substitutions,
             iteration=itr,

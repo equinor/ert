@@ -165,7 +165,8 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
         return self._enkf_main.getModelConfig().runpath_format_string
 
     def get_run_paths(self, realizations: List[int], iteration: int) -> List[str]:
-        return self._enkf_main.runpaths.get_paths(realizations, iteration)
+        run_paths = self._enkf_main.runpaths.get_paths(realizations, iteration)
+        return list(run_paths)
 
     def load_from_forward_model(
         self, case: str, realisations: List[bool], iteration: int

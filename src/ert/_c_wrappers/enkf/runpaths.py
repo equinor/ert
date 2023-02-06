@@ -9,7 +9,7 @@ class Runpaths:
     depending on the given format string for the paths they may coincide. There
     is one job name for each of the runpaths.
 
-    :param job_name_format: The format of the job name, e.g., "job_%d"
+    :param jobname_format: The format of the job name, e.g., "job_%d"
     :param runpath_format: The format of the runpath, e.g.
         "/path/<case>/ensemble-%d/iteration-%d"
     :param substitute: Function called to perform arbitrary substitution on
@@ -55,7 +55,25 @@ class Runpaths:
         iteration_numbers: List[int],
         realization_numbers: List[int],
     ):
-        """Writes the runpath_list_file, which lists jobs and runpaths."""
+        """Writes the runpath_list_file, which lists jobs and runpaths.
+
+        The runpath list file is parsed by some workflows in order to find
+        which path was used by each iteration and ensemble.
+
+        Calling write_runpath_list([0,1], [3,4]) with "/cwd/" as the
+        current working directory will result in a runpath list file containing:
+
+            003  /cwd/realization-3/iteration-0  job3  000
+            004  /cwd/realization-4/iteration-0  job4  000
+            003  /cwd/realization-3/iteration-1  job3  001
+            004  /cwd/realization-4/iteration-1  job4  001
+
+        The example assumes that jobname_format is "job<IENS>" and
+        runpath_format is "realization<ITER>/iteration-<IENS>"
+
+        :param iteration_numbers: The list of iterations to write entries for
+        :param realization_numbers: The list of realizations to write entries for
+        """
         with self._create_and_open_file() as f:
             for iteration in iteration_numbers:
                 for realization in realization_numbers:

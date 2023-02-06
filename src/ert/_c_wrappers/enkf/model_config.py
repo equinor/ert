@@ -23,7 +23,7 @@ class ModelConfig:
         history_source: Optional[HistorySourceEnum] = None,
         runpath_format_string: Optional[str] = None,
         jobname_format_string: Optional[str] = None,
-        runpath_file: Optional[str] = None,
+        runpath_file: str = ".ert_runpath_list",
         gen_kw_export_name: Optional[str] = None,
         obs_config_file: Optional[str] = None,
         time_map_file: Optional[str] = None,
@@ -44,13 +44,14 @@ class ModelConfig:
         )
         self.runpath_file = runpath_file
 
-        if self.runpath_format_string is not None:
-            if not any(x in self.runpath_format_string for x in ["<ITER>", "<IENS>"]):
-                logger.warning(
-                    "RUNPATH keyword contains no value placeholders: "
-                    f"`{runpath_format_string}`. Valid example: "
-                    f"`{self.DEFAULT_RUNPATH}` "
-                )
+        if self.runpath_format_string is not None and not any(
+            x in self.runpath_format_string for x in ["<ITER>", "<IENS>"]
+        ):
+            logger.warning(
+                "RUNPATH keyword contains no value placeholders: "
+                f"`{runpath_format_string}`. Valid example: "
+                f"`{self.DEFAULT_RUNPATH}` "
+            )
 
         self.gen_kw_export_name = (
             gen_kw_export_name
@@ -73,7 +74,7 @@ class ModelConfig:
     @classmethod
     def from_dict(cls, refcase: EclSum, config_dict: dict) -> "ModelConfig":
         return cls(
-            num_realizations=config_dict.get(ConfigKeys.NUM_REALIZATIONS),
+            num_realizations=config_dict.get(ConfigKeys.NUM_REALIZATIONS, 1),
             refcase=refcase,
             data_root=config_dict.get(ConfigKeys.DATAROOT),
             history_source=HistorySourceEnum.from_string(
@@ -130,7 +131,7 @@ class ModelConfig:
         )
 
     def __ne__(self, other):
-        return not self == other
+        return self != other
 
 
 def replace_runpath_format(format_string: Optional[str]) -> Optional[str]:
