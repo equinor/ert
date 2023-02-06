@@ -28,9 +28,9 @@ class EnkfObs(BaseCClass):
     _iget_obs_time = ResPrototype("time_t enkf_obs_iget_obs_time(enkf_obs, int)")
     _add_obs_vector = ResPrototype("void enkf_obs_add_obs_vector(enkf_obs, obs_vector)")
 
-    def __init__(self, history_type, time_map, grid, refcase, ensemble_config):
+    def __init__(self, history_type, time_map, refcase, ensemble_config):
         c_ptr = _clib.enkf_obs.alloc(
-            int(history_type), time_map, grid, refcase, ensemble_config
+            int(history_type), time_map, refcase, ensemble_config
         )
         if c_ptr:
             super().__init__(c_ptr)

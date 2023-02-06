@@ -21,7 +21,6 @@ extern "C" const char *enkf_obs_get_error(const enkf_obs_type *obs);
 
 enkf_obs_type *enkf_obs_alloc(const history_source_type history,
                               std::shared_ptr<TimeMap> external_time_map,
-                              const ecl_grid_type *grid,
                               const ecl_sum_type *refcase,
                               ensemble_config_type *ensemble_config);
 

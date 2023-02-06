@@ -5,7 +5,7 @@ from datetime import date
 from textwrap import dedent
 
 import pytest
-from hypothesis import given
+from hypothesis import assume, given
 
 from ert._c_wrappers.config.config_parser import ConfigValidationError, ConfigWarning
 from ert._c_wrappers.enkf import ResConfig
@@ -584,3 +584,18 @@ def test_that_substitutions_can_be_done_in_job_names():
     assert len(res_config.forward_model.jobs) == 1
     job = res_config.forward_model.jobs[0]
     assert job.name == "ECLIPSE100"
+
+
+@pytest.mark.usefixtures("set_site_config")
+@given(config_generators())
+def test_that_if_field_is_given_and_grid_is_missing_you_get_error(
+    tmp_path_factory, config_generator
+):
+    with config_generator(tmp_path_factory) as config_dict:
+        del config_dict[ConfigKeys.GRID]
+        assume(len(config_dict.get(ConfigKeys.FIELD_KEY, [])) > 0)
+        with pytest.raises(
+            ConfigValidationError,
+            match="In order to use the FIELD keyword, a GRID must be supplied",
+        ):
+            _ = ResConfig(config_dict=config_dict)
