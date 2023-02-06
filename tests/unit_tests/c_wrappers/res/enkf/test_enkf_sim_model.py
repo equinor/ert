@@ -157,16 +157,35 @@ def test_forward_model_job(job, forward_model, expected_args):
         fout.write(forward_model)
 
     res_config = ResConfig("config_file.ert")
-    ert = EnKFMain(res_config)
 
-    forward_model = ert.resConfig().forward_model
+    forward_model = res_config.forward_model
     assert len(forward_model.jobs) == 1
     assert (
         forward_model.get_job_data(
-            "", "", 0, 0, ert.get_context(), res_config.env_vars
+            "", "", 0, 0, res_config.substitution_list, res_config.env_vars
         )["jobList"][0]["argList"]
         == expected_args
     )
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_validate_job_args_no_warning(caplog):
+    caplog.set_level(logging.WARNING)
+    with open("job_file", "w", encoding="utf-8") as fout:
+        fout.write("EXECUTABLE echo\nARGLIST <ECLBASE> <RUNPATH>\n")
+
+    with open("config_file.ert", "w", encoding="utf-8") as fout:
+        # Write a minimal config file
+        fout.write("NUM_REALIZATIONS 1\n")
+        fout.write("INSTALL_JOB job_name job_file\n")
+        fout.write(
+            "FORWARD_MODEL job_name(<ECLBASE>=A/<ECLBASE>, <RUNPATH>=<RUNPATH>/x)\n"
+        )
+
+    ResConfig("config_file.ert")
+    # Check no warning is logged when config contains
+    # forward model with <ECLBASE> and <RUNPATH> as arguments
+    assert caplog.text == ""
 
 
 @pytest.mark.usefixtures("use_tmpdir")

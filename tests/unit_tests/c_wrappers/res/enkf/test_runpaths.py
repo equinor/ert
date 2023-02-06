@@ -13,8 +13,8 @@ from ert._c_wrappers.util.substitution_list import SubstitutionList
     "job_format, runpath_format, expected_contents",
     [
         (
-            "job%d",
-            "/path/to/realization-%d/iteration-%d",
+            "job<IENS>",
+            "/path/to/realization-<IENS>/iteration-<ITER>",
             (
                 "003  /path/to/realization-3/iteration-0  job3  000\n"
                 "004  /path/to/realization-4/iteration-0  job4  000\n"
@@ -24,7 +24,7 @@ from ert._c_wrappers.util.substitution_list import SubstitutionList
         ),
         (
             "job",
-            "/path/to/realization-%d/iteration-%d",
+            "/path/to/realization-<IENS>/iteration-<ITER>",
             (
                 "003  /path/to/realization-3/iteration-0  job  000\n"
                 "004  /path/to/realization-4/iteration-0  job  000\n"
@@ -34,7 +34,7 @@ from ert._c_wrappers.util.substitution_list import SubstitutionList
         ),
         (
             "job",
-            "/path/to/realization-%d",
+            "/path/to/realization-<IENS>",
             (
                 "003  /path/to/realization-3  job  000\n"
                 "004  /path/to/realization-4  job  000\n"
@@ -74,7 +74,7 @@ def test_runpath_file_writer_substitution(tmp_path):
     context.addItem("<casename>", "my_case")
     runpaths = Runpaths(
         "<casename>_job",
-        "/path/<casename>/ensemble-%d/iteration%d",
+        "/path/<casename>/ensemble-<IENS>/iteration<ITER>",
         runpath_file,
         context.substitute_real_iter,
     )
@@ -108,7 +108,7 @@ def test_write_snakeoil_runpath_file(snake_oil_case, itr):
     mask = [True] * num_realizations
     mask[13] = False
     runpath_fmt = (
-        "simulations/<GEO_ID>/realization-%d/iter-%d/"
+        "simulations/<GEO_ID>/realization-<IENS>/iter-<ITER>/"
         "magic-real-<IENS>/magic-iter-<ITER>"
     )
     jobname_fmt = "SNAKE_OIL_%d"
@@ -142,7 +142,6 @@ def test_write_snakeoil_runpath_file(snake_oil_case, itr):
         runpath_fmt.replace("<ITER>", str(itr))
         .replace("<IENS>", str(iens))
         .replace("<GEO_ID>", str(10 * iens))
-        % (iens, itr)
         for iens, _ in enumerate(run_context)
         if mask[iens]
     ]

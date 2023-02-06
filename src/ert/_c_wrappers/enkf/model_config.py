@@ -4,7 +4,6 @@ from typing import Optional
 from ecl.summary import EclSum
 
 from ert._c_wrappers.enkf.config_keys import ConfigKeys
-from ert._c_wrappers.enkf.runpaths import replace_runpath_format
 from ert._c_wrappers.enkf.time_map import TimeMap
 from ert._c_wrappers.sched import HistorySourceEnum
 
@@ -24,6 +23,7 @@ class ModelConfig:
         history_source: Optional[HistorySourceEnum] = None,
         runpath_format_string: Optional[str] = None,
         jobname_format_string: Optional[str] = None,
+        runpath_file: str = ".ert_runpath_list",
         gen_kw_export_name: Optional[str] = None,
         obs_config_file: Optional[str] = None,
         time_map_file: Optional[str] = None,
@@ -31,39 +31,34 @@ class ModelConfig:
         self.num_realizations = num_realizations
         self.refcase = refcase
         self.data_root = data_root
-
         self.history_source = (
             history_source
             if self.refcase is not None and history_source is not None
             else self.DEFAULT_HISTORY_SOURCE
         )
+        self.jobname_format_string = (
+            replace_runpath_format(jobname_format_string) or "JOB<IENS>"
+        )
+        self.runpath_format_string = (
+            replace_runpath_format(runpath_format_string) or self.DEFAULT_RUNPATH
+        )
+        self.runpath_file = runpath_file
 
-        if runpath_format_string is None:
-            self.runpath_format_string = self.DEFAULT_RUNPATH
-        else:
-            self.runpath_format_string = replace_runpath_format(runpath_format_string)
+        if self.runpath_format_string is not None and not any(
+            x in self.runpath_format_string for x in ["<ITER>", "<IENS>"]
+        ):
+            logger.warning(
+                "RUNPATH keyword contains no value placeholders: "
+                f"`{runpath_format_string}`. Valid example: "
+                f"`{self.DEFAULT_RUNPATH}` "
+            )
 
-            if "%d" in runpath_format_string:
-                logger.warning(
-                    "RUNPATH keyword contains deprecated value placeholders, "
-                    f"`instead use: {self.runpath_format_string}`"
-                )
-            elif not any(x in runpath_format_string for x in ["<ITER>", "<IENS>"]):
-                logger.warning(
-                    "RUNPATH keyword contains no value placeholders: "
-                    f"`{runpath_format_string}`. Valid example: "
-                    f"`{self.DEFAULT_RUNPATH}` "
-                )
-
-        self.jobname_format_string = jobname_format_string
         self.gen_kw_export_name = (
             gen_kw_export_name
             if gen_kw_export_name is not None
             else self.DEFAULT_GEN_KW_EXPORT_NAME
         )
-
         self.obs_config_file = obs_config_file
-
         self.time_map = None
         self._time_map_file = time_map_file
 
@@ -79,7 +74,7 @@ class ModelConfig:
     @classmethod
     def from_dict(cls, refcase: EclSum, config_dict: dict) -> "ModelConfig":
         return cls(
-            num_realizations=config_dict.get(ConfigKeys.NUM_REALIZATIONS),
+            num_realizations=config_dict.get(ConfigKeys.NUM_REALIZATIONS, 1),
             refcase=refcase,
             data_root=config_dict.get(ConfigKeys.DATAROOT),
             history_source=HistorySourceEnum.from_string(
@@ -91,6 +86,7 @@ class ModelConfig:
             jobname_format_string=config_dict.get(
                 ConfigKeys.JOBNAME, config_dict.get(ConfigKeys.ECLBASE, None)
             ),
+            runpath_file=config_dict.get(ConfigKeys.RUNPATH_FILE, ".ert_runpath_list"),
             gen_kw_export_name=config_dict.get(ConfigKeys.GEN_KW_EXPORT_NAME),
             obs_config_file=config_dict.get(ConfigKeys.OBS_CONFIG),
             time_map_file=config_dict.get(ConfigKeys.TIME_MAP),
@@ -135,4 +131,12 @@ class ModelConfig:
         )
 
     def __ne__(self, other):
-        return not self == other
+        return self != other
+
+
+def replace_runpath_format(format_string: Optional[str]) -> Optional[str]:
+    if format_string is None:
+        return format_string
+    format_string = format_string.replace("%d", "<IENS>", 1)
+    format_string = format_string.replace("%d", "<ITER>", 1)
+    return format_string

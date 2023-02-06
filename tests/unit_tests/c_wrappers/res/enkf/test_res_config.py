@@ -62,7 +62,7 @@ snake_oil_structure_config = {
         "RESULT": "coarse.sigma",
         "PARAMETER": "ert/input/distributions/sigma.dist",
     },
-    "JOBNAME": "SNAKE_OIL_STRUCTURE_%d",
+    "JOBNAME": "SNAKE_OIL_STRUCTURE_<IENS>",
     "INSTALL_JOB": {
         "SNAKE_OIL_SIMULATOR": {
             "CONFIG": "snake_oil/jobs/SNAKE_OIL_SIMULATOR",
@@ -181,7 +181,8 @@ def test_extensive_config(setup_case):
         Path(snake_oil_structure_config["RUNPATH"]).resolve()
         == Path(model_config.runpath_format_string).resolve()
     )
-    assert snake_oil_structure_config["JOBNAME"] == model_config.jobname_format_string
+    jobname_format = snake_oil_structure_config["JOBNAME"].replace("%d", "<IENS>")
+    assert jobname_format == model_config.jobname_format_string
     assert (
         snake_oil_structure_config["FORWARD_MODEL"]
         == res_config.forward_model.job_name_list()
@@ -308,7 +309,7 @@ def test_runpath_file(monkeypatch, tmp_path):
         )
 
     config = ResConfig(os.path.relpath(config_path, workdir_path))
-    assert config.runpath_file == str(runpath_path)
+    assert config.model_config.runpath_file == str(runpath_path)
 
 
 def test_that_job_script_can_be_set_in_site_config(monkeypatch, tmp_path):
