@@ -132,7 +132,8 @@ def test_gen_kw_outfile_will_use_paths(tmpdir, relpath: str):
             fh.writelines("MY_KEYWORD <MY_KEYWORD>")
         with open("prior.txt", mode="w", encoding="utf-8") as fh:
             fh.writelines("MY_KEYWORD NORMAL 0 1")
-
+        if relpath.startswith("/"):
+            relpath = relpath[1:]
         create_runpath("config.ert")
         assert os.path.exists(f"simulations/realization-0/iter-0/{relpath}kw.txt")
 
