@@ -111,6 +111,11 @@ def _generate_gen_kw_parameter_file(
         template = Template(
             f.read(), variable_start_string="<", variable_end_string=">"
         )
+
+    if target_file.startswith("/"):
+        target_file = target_file[1:]
+
+    Path.mkdir(Path(run_path / target_file).parent, exist_ok=True, parents=True)
     with open(run_path / target_file, "w", encoding="utf-8") as f:
         f.write(
             template.render({key: f"{value:.6g}" for key, value in transformed.items()})
