@@ -89,7 +89,7 @@ def _start_initial_gui_window(args, log_handler):
     except ConfigValidationError as error:
         messages.append(str(error))
         logger.info("Error in config file shown in gui: '%s'", error)
-        return _setup_suggester(messages, args, log_handler), None
+        return _setup_suggester(messages), None
 
     logger.info(
         "Logging forward model jobs",
@@ -107,7 +107,7 @@ def _start_initial_gui_window(args, log_handler):
     except ConfigValidationError as error:
         messages.append(str(error))
         logger.info("Error in config file shown in gui: '%s'", error)
-        return _setup_suggester(messages, args, log_handler), None
+        return _setup_suggester(messages), None
 
     locale_msg = _check_locale()
     if locale_msg is not None:
@@ -116,9 +116,7 @@ def _start_initial_gui_window(args, log_handler):
         for msg in messages:
             logger.info("Suggestion shown in gui '%s'", msg)
         return (
-            _setup_suggester(
-                messages, args, log_handler, _setup_main_window(ert, args, log_handler)
-            ),
+            _setup_suggester(messages, _setup_main_window(ert, args, log_handler)),
             res_config.ens_path,
         )
     else:
@@ -147,7 +145,7 @@ def _check_locale():
         return None
 
 
-def _setup_suggester(suggestions, args, log_handler, ert_window=None):
+def _setup_suggester(suggestions, ert_window=None):
     suggest = QWidget()
     layout = QVBoxLayout()
     suggest.setWindowTitle("Some problems detected")
