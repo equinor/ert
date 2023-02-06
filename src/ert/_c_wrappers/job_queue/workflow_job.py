@@ -119,9 +119,8 @@ class WorkflowJob:
             return "internal C"
         return "external"
 
-    def run(self, ert: "EnKFMain", arguments: List[Any], verbose: bool = False) -> Any:
+    def run(self, ert: "EnKFMain", arguments: List[Any]) -> Any:
         self.__running = True
-
         if self.min_args and len(arguments) < self.min_args:
             raise ValueError(
                 f"The job: {self.name} requires at least "
@@ -137,30 +136,18 @@ class WorkflowJob:
         if self.internal and self.script is not None:
             script_obj = ErtScript.loadScriptFromFile(self.script)
             self.__script = script_obj(ert)
-            result = self.__script.initializeAndRun(
-                self.argumentTypes(), arguments, verbose=verbose
-            )
-
-        elif self.internal and self.script is None:
+        elif self.internal:
             self.__script = FunctionErtScript(
                 ert,
                 self.function,
                 self.argumentTypes(),
                 argument_count=len(arguments),
             )
-            result = self.__script.initializeAndRun(
-                self.argumentTypes(), arguments, verbose=verbose
-            )
-
         elif not self.internal:
             self.__script = ExternalErtScript(ert, self.executable)
-            result = self.__script.initializeAndRun(
-                self.argumentTypes(), arguments, verbose=verbose
-            )
-
         else:
             raise UserWarning("Unknown script type!")
-
+        result = self.__script.initializeAndRun(self.argumentTypes(), arguments)
         self.__running = False
         return result
 

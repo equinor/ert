@@ -73,11 +73,7 @@ class Workflow:
 
         return cls(src_file, cmd_list)
 
-    def run(
-        self,
-        ert: "EnKFMain",
-        verbose: bool = False,
-    ) -> bool:
+    def run(self, ert: "EnKFMain") -> bool:
         logger = logging.getLogger(__name__)
 
         # Reset status
@@ -87,7 +83,7 @@ class Workflow:
         for job, args in self:
             self.__current_job = job
             if not self.__cancelled:
-                return_value = job.run(ert, args, verbose)
+                return_value = job.run(ert, args)
                 self.__status[job.name] = {
                     "stdout": job.stdoutdata(),
                     "stderr": job.stderrdata(),

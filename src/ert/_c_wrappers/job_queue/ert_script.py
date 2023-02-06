@@ -17,7 +17,6 @@ class ErtScript:
             raise UserWarning(
                 "ErtScript implementations must provide a method run(self, ert, ...)"
             )
-        self.__verbose = False
         self.__ert = ert
 
         self.__is_cancelled = False
@@ -36,9 +35,6 @@ class ErtScript:
         if isinstance(self._stderrdata, bytes):
             self._stderrdata = self._stderrdata.decode()
         return self._stderrdata
-
-    def isVerbose(self):
-        return self.__verbose
 
     def ert(self) -> "EnKFMain":
         logger.info(f"Accessing EnKFMain from workflow: {self.__class__.__name__}")
@@ -63,9 +59,7 @@ class ErtScript:
         self,
         argument_types: List[Type[Any]],
         argument_values: List[str],
-        verbose: bool = False,
     ):
-        self.__verbose = verbose
         self.__failed = False
 
         arguments = []
