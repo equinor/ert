@@ -1,8 +1,8 @@
 from cwrap import Prototype
 
-import ert._c_wrappers
+import ert._c_wrappers  # noqa
 
 from .path_format import PathFormat
 from .substitution_list import SubstitutionList
 
-__all__ = [Prototype, ert._c_wrappers, PathFormat, SubstitutionList]
+__all__ = ["Prototype", "PathFormat", "SubstitutionList"]

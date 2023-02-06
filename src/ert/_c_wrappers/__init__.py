@@ -10,11 +10,11 @@ warnings.filterwarnings(action="always", category=DeprecationWarning, module=r"r
 
 from cwrap import Prototype  # noqa: E402 module level import not at top of file
 
-__all__ = [ecl, Prototype]
+__all__ = ["ecl", "Prototype"]
 try:
     from ._version import version as __version__
 
-    __all__ += [__version__]
+    __all__ += ["__version__"]
 except ImportError:
     pass
 

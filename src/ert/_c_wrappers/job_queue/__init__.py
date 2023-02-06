@@ -42,9 +42,7 @@ import os
 
 from cwrap import Prototype
 
-import ert._c_wrappers
-
-__all__ = [Prototype, ert._c_wrappers]
+import ert._c_wrappers  # noqa
 
 
 def setenv(var, value):
@@ -83,6 +81,7 @@ from .workflow_joblist import WorkflowJoblist  # noqa
 from .workflow_runner import WorkflowRunner  # noqa
 
 __all__ = [
+    "Prototype",
     "JobStatusType",
     "RunStatusType",
     "ThreadStatus",
