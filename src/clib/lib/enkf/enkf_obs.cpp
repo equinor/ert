@@ -150,13 +150,11 @@ struct enkf_obs_struct {
     /* Several shared resources - can generally be NULL*/
     history_source_type history;
     const ecl_sum_type *refcase;
-    const ecl_grid_type *grid;
     ensemble_config_type *ensemble_config;
 };
 
 enkf_obs_type *enkf_obs_alloc(const history_source_type history,
                               std::shared_ptr<TimeMap> external_time_map,
-                              const ecl_grid_type *grid,
                               const ecl_sum_type *refcase,
                               ensemble_config_type *ensemble_config) {
     auto enkf_obs = new enkf_obs_type;
@@ -165,7 +163,6 @@ enkf_obs_type *enkf_obs_alloc(const history_source_type history,
 
     enkf_obs->history = history;
     enkf_obs->refcase = refcase;
-    enkf_obs->grid = grid;
     enkf_obs->ensemble_config = ensemble_config;
     enkf_obs->error = "";
 
@@ -989,11 +986,11 @@ hash_iter_type *enkf_obs_alloc_iter(const enkf_obs_type *enkf_obs) {
 namespace {
 py::handle pybind_alloc(int history_,
                         std::shared_ptr<TimeMap> external_time_map,
-                        Cwrap<ecl_grid_type> grid, Cwrap<ecl_sum_type> refcase,
+                        Cwrap<ecl_sum_type> refcase,
                         Cwrap<ensemble_config_type> ensemble_config) {
     auto history = static_cast<history_source_type>(history_);
-    auto ptr = enkf_obs_alloc(history, external_time_map, grid, refcase,
-                              ensemble_config);
+    auto ptr =
+        enkf_obs_alloc(history, external_time_map, refcase, ensemble_config);
     return PyLong_FromVoidPtr(ptr);
 }
 /**
@@ -1050,7 +1047,7 @@ void enkf_obs_load(Cwrap<enkf_obs_type> enkf_obs, const char *config_file,
 ERT_CLIB_SUBMODULE("enkf_obs", m) {
     using namespace py::literals;
 
-    m.def("alloc", pybind_alloc, "history"_a, "time_map"_a, "grid"_a,
-          "refcase"_a, "ensemble_config"_a);
+    m.def("alloc", pybind_alloc, "history"_a, "time_map"_a, "refcase"_a,
+          "ensemble_config"_a);
     m.def("load", enkf_obs_load, "obs"_a, "config_file"_a, "std_cutoff"_a);
 }

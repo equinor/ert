@@ -161,7 +161,6 @@ class EnKFMain:
         self._observations = EnkfObs(
             config.model_config.history_source,
             config.model_config.time_map,
-            config.ensemble_config.grid,
             config.ensemble_config.refcase,
             config.ensemble_config,
         )

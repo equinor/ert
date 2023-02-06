@@ -219,6 +219,10 @@ class EnsembleConfig(BaseCClass):
                 self.add_summary_full(key, self.refcase)
 
         for field in field_list:
+            if self.grid is None:
+                raise ConfigValidationError(
+                    "In order to use the FIELD keyword, a GRID must be supplied."
+                )
             field_node = self.get_field_node(field, self.grid)
             self.addNode(field_node)
         if schedule_file:
@@ -283,9 +287,7 @@ class EnsembleConfig(BaseCClass):
         )
 
     @staticmethod
-    def get_field_node(
-        field: Union[dict, list], grid: Optional[EclGrid]
-    ) -> EnkfConfigNode:
+    def get_field_node(field: Union[dict, list], grid: EclGrid) -> EnkfConfigNode:
         name = field[0]
         var_type = field[1]
         out_file = field[2]
