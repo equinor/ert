@@ -6,16 +6,15 @@ List of keywords
 For your convenience, the description of the keywords in the ERT configuration file
 are divided into the following groups:
 
-* Basic required keywords not related to parametrization. I.e. keywords giving
-  the data, grid, schedule and observation file, defining how to run simulations
-  and how to store results. These keywords are described in :ref:`Basic required
-  keywords.<basic_required_keywords>`
-* Basic optional keywords not related to parametrization. These keywords are
-  described in :ref:`Basic optional keywords <basic_optional_keywords>`.
+* Commonly used keywords not related to parametrization. I.e. keywords giving
+  the data, grid, and observation file, defining how to run simulations
+  and how to store results. These keywords are described in :ref:`Commonly used
+  keywords.<commonly_used_keywords>`
 * Keywords related to parametrization of the ECLIPSE model. These keywords are
   described in :ref:`Parametrization keywords<parameterization_keywords>`.
+* Keywords related to the simulation in :ref:`Keywords controlling the simulation<keywords_controlling_the_simulations>`.
 * Advanced keywords not related to parametrization. These keywords are described
-  in :ref:`Advanced optional keywords<advanced_optional_keywords>`.
+  in :ref:`Advanced keywords<advanced_keywords>`.
 
 
 Table of keywords
@@ -54,8 +53,6 @@ Keyword name                                                            Required
 :ref:`LOAD_WORKFLOW <load_workflow>`                                    NO                                                                      Load a workflow into ERT
 :ref:`LOAD_WORKFLOW_JOB <load_workflow_job>`                            NO                                                                      Load a workflow job into ERT
 :ref:`LICENSE_PATH <license_path>`                                      NO                                                                      A path where ert-licenses to e.g. RMS are stored
-:ref:`LOG_FILE <log_file>`                                              NO                                      -                               Ignored
-:ref:`LOG_LEVEL <log_level>`                                            NO                                      -                               Ignored
 :ref:`MAX_RUNTIME <max_runtime>`                                        NO                                      0                               Set the maximum runtime in seconds for a realization (0 means no runtime limit)
 :ref:`MAX_SUBMIT <max_submit>`                                          NO                                      2                               How many times should the queue system retry a simulation
 :ref:`MIN_REALIZATIONS <min_realizations>`                              NO                                      0                               Set the number of minimum realizations that has to succeed in order for the run to continue (0 means identical to NUM_REALIZATIONS - all must pass).
@@ -82,21 +79,63 @@ Keyword name                                                            Required
 
 
 
-Basic required keywords
+Commonly used keywords
 -----------------------
-.. _basic_required_keywords:
+.. _commonly_used_keywords:
 
-These keywords must be set to make ERT function properly.
+.. _num_realizations:
+.. topic:: NUM_REALIZATIONS
+
+        This is the size of the ensemble, i.e. the number of
+        realizations/members in the ensemble. All configs must contain this
+        keyword.
+
+        *Example:*
+
+        ::
+
+                -- Use 200 realizations/members
+                NUM_REALIZATIONS 200
+
+.. _define:
+.. topic:: DEFINE
+
+        With the DEFINE keyword you can define key-value pairs which will be
+        substituted in the rest of the configuration file. The DEFINE keyword expects
+        two arguments: a key and a value to replace for that key. Later instances of
+        the key enclosed in '<' and '>' will be substituted with the value. The value
+        can consist of several strings, in that case they will be joined by one single
+        space.
+
+        *Example:*
+
+        ::
+
+                -- Define ECLIPSE_PATH and ECLIPSE_BASE
+                DEFINE  <ECLIPSE_PATH>  /path/to/eclipse/run
+                DEFINE  <ECLIPSE_BASE>  STATF02
+                DEFINE  <KEY>           VALUE1       VALUE2 VALUE3            VALUE4
+
+                -- Set the GRID in terms of the ECLIPSE_PATH
+                -- and ECLIPSE_BASE keys.
+                GRID    <ECLIPSE_PATH>/<ECLIPSE_BASE>.EGRID
+
+        The last key defined above (KEY) will be replaced with VALUE1 VALUE2
+        VALUE3 VALUE4 - i.e. the extra spaces will be discarded.
+
 
 .. _data_file:
 .. topic:: DATA_FILE
 
-        Name of the template ECLIPSE data file used to control the simulations.
-        A modified realization specific version of this file will be prepared by ERT,
-        named according to :ref:`ECLBASE <ECLBASE>` and copied to the runpath
-        folder. Note that support for parsing the ECLIPSE data file is limited,
-        and using explicit templating with :ref:`RUN_TEMPLATE <run_template>` is
-        recommended where possible.
+        Meant to be set to the filepath of an eclipse simulator input, when such
+        a simulator is used. This does two things. First, the DATA_FILE will be
+        templated, see :ref:`RUN_TEMPLATE <run_template>`. Second, ert will look
+        for the PARALLEL keyword in this file in order to set :ref:`NUM_CPU <num_cpu>`.
+
+        The templated file will be named according to :ref:`ECLBASE <ECLBASE>`
+        and copied to the runpath folder. Note that support for parsing the
+        ECLIPSE data file is limited, and using explicit templating with
+        :ref:`RUN_TEMPLATE <run_template>` is recommended where possible.
 
 
         *Example:*
@@ -155,7 +194,8 @@ These keywords must be set to make ERT function properly.
 
         **Note:** JOBNAME can be used as an alternative to ECLBASE. Note that
         if both are supplied, ECLBASE will be ignored, and the value provided
-        by JOBNAME will be used.
+        by JOBNAME will be used. If none are supplied, the default jobname "JOB<IENS>"
+        is used.
 
 .. _jobname:
 .. topic::  JOBNAME
@@ -163,44 +203,45 @@ These keywords must be set to make ERT function properly.
         As an alternative to the ECLBASE keyword you can use the JOBNAME keyword; in
         particular in cases where your forward model does not include ECLIPSE at all
         that makes more sense. If JOBNAME is used instead of ECLBASE the same rules of
-        no-mixed-case apply.
+        no-mixed-case apply. Defaults to "JOB<IENS>".
 
 .. _grid:
 .. topic:: GRID
 
-        This is the name of an existing GRID/EGRID file for your ECLIPSE model. If you
-        had to create a new grid file when preparing your ECLIPSE reservoir model for
-        use with ERT, this should point to the new .EGRID file. The main use of the
-        grid is to map out active and inactive cells when using FIELD data and define
-	the dimension of the property parameter files in the FIELD keyword. If you do
-        not use FIELD data you do not need the GRID keyword. The grid argument will
-        only be used by the main ERT application and not passed down to the forward
-        model in any way.
+        This is the name of an existing GRID/EGRID file for your ECLIPSE model.
+        It is used to enable parametrization via the FIELD keyword. If you had
+        to create a new grid file when preparing your ECLIPSE reservoir model
+        for use with ERT, this should point to the new .EGRID file. The main
+        use of the grid is to map out active and inactive cells when using
+        FIELD data and define the dimension of the property parameter files in
+        the FIELD keyword. The grid argument will only be used by the main ERT
+        application and not passed down to the forward model in any way.
 
-	A new way of handling property values for the FIELD keyword is to use a
-        help grid called ERTBOX grid. The GRID keyword should in this case specify
-        the ERTBOX filename (which is in EGRID format). The ERTBOX grid
-        is a grid with the same spatial location and rotation (x,y location) as the
-	modelling grid, but it is a regular grid in a rectangular box. The dimensions
-	of the ERTBOX grid laterally is the same as the modelling grid, but the number
-	of layers is only large enough to store the properties for one zone, not the
-	whole modelling grid.
+        A new way of handling property values for the FIELD keyword is to use a
+        help grid called ERTBOX grid. The GRID keyword should in this case
+        specify the ERTBOX filename (which is in EGRID format). The ERTBOX grid
+        is a grid with the same spatial location and rotation (x,y location) as
+        the modelling grid, but it is a regular grid in a rectangular box. The
+        dimensions of the ERTBOX grid laterally is the same as the modelling
+        grid, but the number of layers is only large enough to store the
+        properties for one zone, not the whole modelling grid.
 
-	The number of layers must at least be as large as the number of layers
-        in the zone in the modelling grid with most layers. The properties used in
-	the FIELD keyword have the dimension of the ERTBOX grid and represents
-	properties of one zone from the modelling grid. Each grid cell in the modelling
-	grid for a given zone corresponds to one unique grid cell
-	in the ERTBOX grid. Inactive grid cells in the modelling grid also corresponds
-	to grid cells in the ERTBOX grid. There may exists layers of grid cells in the
-	ERTBOX grid that does not corresponds to grid cells in the modelling grid.
-	It is recommended to let all grid cells in the ERTBOX grid be active and have
-	realistic values and not a 'missing code'. For cases where the modelling grid
-	is kept fixed for all realisations, this is not important, but for cases where
-	the number of layers for the zones in the modelling grid may vary from
-	realisation to realisation, this approach is more robust. It avoids mixing real
-	physical values from one realisation with missing code value from another
-	realization when calculating updated ensemble vectors.
+        The number of layers must at least be as large as the number of layers
+        in the zone in the modelling grid with most layers. The properties used
+        in the FIELD keyword have the dimension of the ERTBOX grid and
+        represents properties of one zone from the modelling grid. Each grid
+        cell in the modelling grid for a given zone corresponds to one unique
+        grid cell in the ERTBOX grid. Inactive grid cells in the modelling grid
+        also corresponds to grid cells in the ERTBOX grid. There may exists
+        layers of grid cells in the ERTBOX grid that does not corresponds to
+        grid cells in the modelling grid. It is recommended to let all grid
+        cells in the ERTBOX grid be active and have realistic values and not a
+        'missing code'. For cases where the modelling grid is kept fixed for
+        all realisations, this is not important, but for cases where the number
+        of layers for the zones in the modelling grid may vary from realisation
+        to realisation, this approach is more robust. It avoids mixing real
+        physical values from one realisation with missing code value from
+        another realization when calculating updated ensemble vectors.
 
 
         *Example:*
@@ -211,39 +252,18 @@ These keywords must be set to make ERT function properly.
                 GRID MY_GRID.EGRID
 
 
-.. _num_realizations:
-.. topic:: NUM_REALIZATIONS
-
-        This is just the size of the ensemble, i.e. the number of realizations/members
-        in the ensemble.
-
-        *Example:*
-
-        ::
-
-                -- Use 200 realizations/members
-                NUM_REALIZATIONS 200
-
 .. _num_cpu:
 .. topic:: NUM_CPU
 
     Equates to the ``-n`` argument in the context of LSF. For TORQUE, it is
     simply a upper bound for the product of nodes and CPUs per node.
 
+
     *Example:*
 
     ::
 
         NUM_CPU 2
-
-
-Basic optional keywords
------------------------
-.. _basic_optional_keywords:
-
-These keywords are optional. However, they serve many useful purposes, and it is
-recommended that you read through this section to get a thorough idea of what's
-possible to do with ERT.
 
 .. _data_kw:
 .. topic:: DATA_KW
@@ -263,31 +283,10 @@ possible to do with ERT.
         The DATA_KW keyword is of course optional. Note also that ERT has some
         built in magic strings.
 
-
-.. _license_path:
-.. topic:: LICENSE_PATH
-
-    A path where ert-licenses to e.g. RMS are stored.
-
-
 .. _random_seed:
 .. topic:: RANDOM_SEED
 
         Set specific seed for reproducibility.
-
-
-.. _log_file:
-.. topic:: LOG_FILE
-
-        Ignored. Was used to specify log output file.
-
-
-.. _log_level:
-.. topic:: LOG_LEVEL
-
-        Ignored. Was used to specify log level to output. Today this is
-        controlled via Python's logging module.
-
 
 .. _enspath:
 .. topic:: ENSPATH
@@ -668,7 +667,7 @@ and/or history matching project.
 .. topic:: FIELD
 
         The FIELD keyword is used to parametrize quantities which have extent over the
-        full grid.
+        full grid. In order to use the FIELD keyword, the GRID keyword must be supplied.
 
         A parameter field (e.g. porosity or permeability or Gaussian Random Fields from APS) is defined as follows:
 
@@ -1361,45 +1360,15 @@ to load, select and modify the analysis modules are documented here.
                 Default is 2.
 
 
-Advanced optional keywords
+Advanced keywords
 --------------------------
-.. _advanced_optional_keywords:
+.. _advanced_keywords:
 
 The keywords in this section, controls advanced features of ERT. Insight in
 the internals of ERT and/or ECLIPSE may
 be required to fully understand their effect. Moreover, many of these keywords
 are defined in the site configuration, and thus optional to set for the user,
 but required when installing ERT at a new site.
-
-
-.. _define:
-.. topic:: DEFINE
-
-        With the DEFINE keyword you can define key-value pairs which will be
-        substituted in the rest of the configuration file. The DEFINE keyword expects
-        two arguments: a key and a value to replace for that key. Later instances of
-        the key enclosed in '<' and '>' will be substituted with the value. The value
-        can consist of several strings, in that case they will be joined by one single
-        space.
-
-        *Example:*
-
-        ::
-
-                -- Define ECLIPSE_PATH and ECLIPSE_BASE
-                DEFINE  ECLIPSE_PATH  /path/to/eclipse/run
-                DEFINE  ECLIPSE_BASE  STATF02
-                DEFINE  KEY           VALUE1       VALUE2 VALUE3            VALUE4
-
-                -- Set the GRID in terms of the ECLIPSE_PATH
-                -- and ECLIPSE_BASE keys.
-                GRID    <ECLIPSE_PATH>/<ECLIPSE_BASE>.EGRID
-
-        Observe that when you refer to the keys later in the config file they must be
-        enclosed in '<' and '>'. Furthermore, a key-value pair must be defined in the
-        config file before it can be used. The last key defined above (KEY) will be
-        replaced with VALUE1 VALUE2 VALUE3 VALUE4 - i.e. the extra spaces will be
-        discarded.
 
 
 .. _time_map:
@@ -1436,6 +1405,14 @@ but required when installing ERT at a new site.
         This is the name of a schedule prediction file. It can contain %d to get
         different files for different members. Observe that the ECLIPSE datafile
         should include only one schedule file, even if you are doing predictions.
+
+
+.. _license_path:
+.. topic:: LICENSE_PATH
+
+    A path where ert-licenses to e.g. RMS are stored.
+
+
 
 
 Keywords related to running the forward model
