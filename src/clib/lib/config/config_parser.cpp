@@ -10,6 +10,7 @@
 #include <ert/util/hash.hpp>
 #include <ert/util/parser.hpp>
 #include <ert/util/path_stack.hpp>
+#include <optional>
 
 #include <ert/config/config_parser.hpp>
 
@@ -435,6 +436,10 @@ bool config_parser_add_key_values(
     return new_node != NULL;
 }
 
+static std::optional<std::string> char_to_optstr(std::unique_ptr<char> p) {
+    return p ? std::optional<std::string>(p.get()) : std::nullopt;
+}
+
 /**
    This function parses the config file 'filename', and updated the
    internal state of the config object as parsing proceeds. If
@@ -532,30 +537,34 @@ config_parse__(config_parser_type *config, config_content_type *content,
     bool at_eof = false;
 
     while (!at_eof) {
-        char *line_buffer = util_fscanf_alloc_line(stream, &at_eof);
-        if (!line_buffer)
+        auto line_buffer = char_to_optstr(
+            std::unique_ptr<char>(util_fscanf_alloc_line(stream, &at_eof)));
+        if (!line_buffer.has_value())
             continue;
 
-        stringlist_type *token_list =
-            basic_parser_tokenize_buffer(parser, line_buffer, true);
-        int active_tokens = stringlist_get_size(token_list);
+        const std::unique_ptr<stringlist_type, void (*)(stringlist_type *)>
+            token_list(basic_parser_tokenize_buffer(
+                           parser, line_buffer.value().c_str(), true),
+                       stringlist_free);
+        const int active_tokens = stringlist_get_size(token_list.get());
 
         if (active_tokens > 0) {
-            const char *kw = stringlist_iget(token_list, 0);
+            const char *kw = stringlist_iget(token_list.get(), 0);
 
             // Include config file
             if (include_kw && (strcmp(include_kw, kw) == 0)) {
-                if (active_tokens != 2)
-                    util_abort(
-                        "%s: keyword:%s must have exactly one argument. \n",
-                        __func__, include_kw);
+                if (active_tokens != 2) {
+                    content->parse_errors.push_back(fmt::format(
+                        "Keyword:{} must have exactly one argument.",
+                        include_kw));
+                    return;
+                }
 
-                const char *include_file = stringlist_iget(token_list, 1);
+                const char *include_file = stringlist_iget(token_list.get(), 1);
 
                 if (!fs::exists(include_file)) {
-                    std::string error_message = util_alloc_sprintf(
-                        "%s file:%s not found", include_kw, include_file);
-                    content->parse_errors.push_back(error_message);
+                    content->parse_errors.push_back(fmt::format(
+                        "{} file:{} not found", include_kw, include_file));
                 } else {
                     config_parse__(config, content, path_stack, include_file,
                                    comment_string, include_kw, define_kw,
@@ -565,31 +574,55 @@ config_parse__(config_parser_type *config, config_content_type *content,
 
             // Add define
             else if (define_kw && (strcmp(define_kw, kw) == 0)) {
-                if (active_tokens < 3)
-                    util_abort("%s: keyword:%s must have exactly one (or more) "
-                               "arguments. \n",
-                               __func__, define_kw);
+                if (active_tokens < 3) {
+                    content->parse_errors.push_back(fmt::format(
+                        "Keyword:{} must have two or more arguments.",
+                        define_kw));
+                    return;
+                }
 
-                char *key = (char *)util_alloc_string_copy(
-                    stringlist_iget(token_list, 1));
-                char *value = stringlist_alloc_joined_substring(
-                    token_list, 2, active_tokens, " ");
+                const std::string key = stringlist_iget(token_list.get(), 1);
+                const int argc = stringlist_get_size(token_list.get());
+                for (int iarg = 2; iarg < argc; iarg++) {
+                    int env_offset = 0;
+                    while (true) {
+                        auto env_var = char_to_optstr(
+                            std::unique_ptr<char>(res_env_isscanf_alloc_envvar(
+                                stringlist_iget(token_list.get(), iarg),
+                                env_offset)));
+                        if (!env_var.has_value())
+                            break;
 
-                config_content_add_define(content, key, value);
-
-                free(key);
-                free(value);
+                        const char *env_value =
+                            getenv(env_var.value().substr(1).c_str());
+                        if (env_value != nullptr) {
+                            stringlist_iset_owned_ref(
+                                token_list.get(), iarg,
+                                util_string_replace_alloc(
+                                    stringlist_iget(token_list.get(), iarg),
+                                    env_var.value().c_str(), env_value));
+                        } else {
+                            env_offset += 1;
+                            logger->warning(
+                                "Environment variable: {} is not defined",
+                                env_var.value());
+                        }
+                    }
+                }
+                config_content_add_define(
+                    content, key.c_str(),
+                    std::unique_ptr<char>(
+                        stringlist_alloc_joined_substring(token_list.get(), 2,
+                                                          active_tokens, " "))
+                        .get());
             }
 
             // Add keyword
             else
-                config_parser_add_key_values(config, content, kw, token_list,
-                                             current_path_elm, config_file,
-                                             unrecognized);
+                config_parser_add_key_values(config, content, kw,
+                                             token_list.get(), current_path_elm,
+                                             config_file, unrecognized);
         }
-
-        stringlist_free(token_list);
-        free(line_buffer);
     }
 
     fclose(stream);

@@ -599,3 +599,39 @@ def test_that_if_field_is_given_and_grid_is_missing_you_get_error(
             match="In order to use the FIELD keyword, a GRID must be supplied",
         ):
             _ = ResConfig(config_dict=config_dict)
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_include_statements_with_multiple_values_raises_error():
+    test_config_file_name = "test.ert"
+    test_config_contents = dedent(
+        """
+        NUM_REALIZATIONS  1
+        INCLUDE this and that and some-other
+        """
+    )
+    with open(test_config_file_name, "w", encoding="utf-8") as fh:
+        fh.write(test_config_contents)
+
+    with pytest.raises(
+        ConfigValidationError, match="Keyword:INCLUDE must have exactly one argument"
+    ):
+        _ = ResConfig(user_config_file=test_config_file_name)
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_define_statements_with_less_than_one_argument_raises_error():
+    test_config_file_name = "test.ert"
+    test_config_contents = dedent(
+        """
+        NUM_REALIZATIONS  1
+        DEFINE <USER>
+        """
+    )
+    with open(test_config_file_name, "w", encoding="utf-8") as fh:
+        fh.write(test_config_contents)
+
+    with pytest.raises(
+        ConfigValidationError, match="Keyword:DEFINE must have two or more"
+    ):
+        _ = ResConfig(user_config_file=test_config_file_name)
