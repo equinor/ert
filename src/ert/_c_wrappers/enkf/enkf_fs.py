@@ -10,6 +10,8 @@ from ert._c_wrappers import ResPrototype
 from ert._c_wrappers.enkf.config import EnkfConfigNode
 from ert._c_wrappers.enkf.enums import EnKFFSType
 from ert._c_wrappers.enkf.res_config import EnsembleConfig
+
+# flake8: noqa pylint: disable=unused-import
 from ert._c_wrappers.enkf.summary_key_set import SummaryKeySet
 from ert._c_wrappers.enkf.time_map import TimeMap
 from ert._clib import update
@@ -103,8 +105,8 @@ class EnkfFs(BaseCClass):
     def fsync(self):
         self._fsync()
 
-    def getSummaryKeySet(self) -> SummaryKeySet:
-        return self._summary_key_set().setParent(self)
+    def getSummaryKeySet(self) -> List[str]:
+        return list(self._summary_key_set().keys())
 
     def realizationList(self, state: "RealizationStateEnum") -> "IntVector":
         """
