@@ -29,7 +29,7 @@ class Server(uvicorn.Server):
 
     async def startup(self, sockets: list = None) -> None:
         """Overridden startup that also sends connection information"""
-        await super().startup(sockets)
+        await super().startup(sockets)  # type: ignore
         if not self.started:
             return
         write_to_pipe(self.connection_info)
