@@ -314,6 +314,7 @@ class ResConfig:
         # FORWARD_MODEL_KEY
         for job_description in config_content_dict.get(ConfigKeys.FORWARD_MODEL, []):
             job_name, args = parse_signature_job("".join(job_description))
+            job_name = self.substitution_list.substitute(job_name)
             try:
                 job = copy.deepcopy(self.installed_jobs[job_name])
             except KeyError as err:
@@ -329,7 +330,8 @@ class ResConfig:
 
         # SIMULATION_JOB_KEY
         for job_description in config_content_dict.get(ConfigKeys.SIMULATION_JOB, []):
-            job = copy.deepcopy(self.installed_jobs[job_description[0]])
+            job_name = self.substitution_list.substitute(job_description[0])
+            job = copy.deepcopy(self.installed_jobs[job_name])
             job.arglist = job_description[1:]
             job.define_args = self.substitution_list
             jobs.append(job)
@@ -411,13 +413,14 @@ class ResConfig:
         jobs = []
         # FORWARD_MODEL_KEY
         for job_description in config_dict.get(ConfigKeys.FORWARD_MODEL, []):
+            job_name = self.substitution_list.substitute(
+                job_description[ConfigKeys.NAME]
+            )
             try:
-                job = copy.deepcopy(
-                    self.installed_jobs[job_description[ConfigKeys.NAME]]
-                )
+                job = copy.deepcopy(self.installed_jobs[job_name])
             except KeyError as err:
                 raise ValueError(
-                    f"Could not find job `{job_description[ConfigKeys.NAME]}`"
+                    f"Could not find job `{job_name}`"
                     f" in list of installed jobs: {list(self.installed_jobs.keys())}"
                 ) from err
             job.private_args = SubstitutionList()
@@ -426,15 +429,14 @@ class ResConfig:
 
         # SIMULATION_JOB_KEY
         for job_description in config_dict.get(ConfigKeys.SIMULATION_JOB, []):
-            job = copy.deepcopy(self.installed_jobs[job_description[ConfigKeys.NAME]])
+            job_name = self.substitution_list.substitute(
+                job_description[ConfigKeys.NAME]
+            )
             try:
-                job = copy.deepcopy(
-                    self.installed_jobs[job_description[ConfigKeys.NAME]]
-                )
+                job = copy.deepcopy(self.installed_jobs[job_name])
             except KeyError as err:
                 raise ValueError(
-                    f"Could not find job `{job_description[ConfigKeys.NAME]}` "
-                    "in list of installed jobs."
+                    f"Could not find job `{job_name}` " "in list of installed jobs."
                 ) from err
             job.private_args = SubstitutionList()
             job.private_args.add_from_string(job_description.get(ConfigKeys.ARGLIST))

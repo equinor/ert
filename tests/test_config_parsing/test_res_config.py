@@ -159,25 +159,23 @@ def test_site_config_dict_same_as_from_file(tmp_path_factory, config_generator):
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_parsing_forward_model_with_quotes_does_not_introduce_spaces():
-    """this is a regression test, making sure that we do not by mistake introduce
-    spaces while parsing forward model lines that contain quotation marks
-
-    the use case is that a file name is utilized that contains two consecutive hyphens,
-    which by the ert config parser is interpreted as a comment - to circumvent the
-    comment interpretation, quotation marks are used"""
-
+def test_that_substitutions_can_be_done_in_job_names():
+    """
+    Regression test for a usage case involving setting ECL100 or ECL300
+    that was broken by changes to forward_model substitutions.
+    """
     test_config_file_name = "test.ert"
     test_config_contents = dedent(
         """
         NUM_REALIZATIONS  1
-        JOBNAME job_%d
-        FORWARD_MODEL COPY_FILE(<FROM>=foo,<TO>=something/"hello--there.txt")
+        DEFINE <ECL100OR300> E100
+        FORWARD_MODEL ECLIPS<ECL100OR300>(<VERSION>=1, <NUM_CPU>=42, <OPTS>="-m")
         """
     )
     with open(test_config_file_name, "w", encoding="utf-8") as fh:
         fh.write(test_config_contents)
 
     res_config = ResConfig(user_config_file=test_config_file_name)
-    for _, value in res_config.forward_model.jobs[0].private_args:
-        assert " " not in value
+    assert len(res_config.forward_model.jobs) == 1
+    job = res_config.forward_model.jobs[0]
+    assert job.name == "ECLIPSE100"
