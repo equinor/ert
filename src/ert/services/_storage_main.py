@@ -5,7 +5,7 @@ import logging.config
 import os
 import socket
 import sys
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union, no_type_check
 
 import uvicorn
 import yaml
@@ -18,6 +18,7 @@ from ert.shared.plugins import ErtPluginContext
 from ert.shared.storage.command import add_parser_options
 
 
+@no_type_check
 class Server(uvicorn.Server):
     def __init__(
         self,
@@ -27,6 +28,7 @@ class Server(uvicorn.Server):
         super().__init__(config)
         self.connection_info = connection_info
 
+    @no_type_check
     async def startup(self, sockets: Optional[List[socket.socket]] = None) -> None:
         """Overridden startup that also sends connection information"""
         await super().startup(sockets)  # type: ignore
