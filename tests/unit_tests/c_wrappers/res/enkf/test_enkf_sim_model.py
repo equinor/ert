@@ -328,3 +328,51 @@ def test_that_private_over_global_args_does_not_give_logging_message_for_argpass
     assert len(forward_model.jobs) == 1
     assert job_data["argList"] == ["A"]
     assert "Private arg '<ARG>':'<ARG>' chosen over global 'A'" not in caplog.text
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.parametrize(
+    "job, forward_model, expected_args",
+    [
+        pytest.param(
+            dedent(
+                """
+            EXECUTABLE echo
+            ARGLIST <ARG>
+            """
+            ),
+            "DEFINE <ENV> $ENV\nFORWARD_MODEL job_name(<ARG>=<ENV>)",
+            ["env_value"],
+            id="Test that the environment variable $ENV is put into the forward model",
+        ),
+    ],
+)
+def test_that_environment_variables_are_set_in_forward_model(
+    monkeypatch, job, forward_model, expected_args
+):
+    monkeypatch.setenv("ENV", "env_value")
+    with open("job_file", "w", encoding="utf-8") as fout:
+        fout.write(job)
+
+    with open("config_file.ert", "w", encoding="utf-8") as fout:
+        # Write a minimal config file
+        fout.write(
+            dedent(
+                """
+        NUM_REALIZATIONS 1
+        """
+            )
+        )
+        fout.write("INSTALL_JOB job_name job_file\n")
+        fout.write(forward_model)
+
+    res_config = ResConfig("config_file.ert")
+
+    forward_model = res_config.forward_model
+    assert len(forward_model.jobs) == 1
+    assert (
+        forward_model.get_job_data(
+            "", "", 0, 0, res_config.substitution_list, res_config.env_vars
+        )["jobList"][0]["argList"]
+        == expected_args
+    )
