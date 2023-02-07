@@ -264,7 +264,10 @@ class ResConfig:
             + self.substitution_list.get("<CONFIG_FILE>", "")
         )
         jobs = []
-        for job_name, args in config_dict.get(ConfigKeys.FORWARD_MODEL, []):
+        for unsubstituted_job_name, args in config_dict.get(
+            ConfigKeys.FORWARD_MODEL, []
+        ):
+            job_name = self.substitution_list.substitute(unsubstituted_job_name)
             try:
                 job = copy.deepcopy(self.installed_jobs[job_name])
             except KeyError as err:
