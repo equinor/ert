@@ -561,3 +561,26 @@ def test_that_unknown_hooked_job_gives_config_validation_error():
         match="Cannot setup hook for non-existing job name NO_SUCH_JOB",
     ):
         _ = ResConfig(user_config_file=test_config_file_name)
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_substitutions_can_be_done_in_job_names():
+    """
+    Regression test for a usage case involving setting ECL100 or ECL300
+    that was broken by changes to forward_model substitutions.
+    """
+    test_config_file_name = "test.ert"
+    test_config_contents = dedent(
+        """
+        NUM_REALIZATIONS  1
+        DEFINE <ECL100OR300> E100
+        FORWARD_MODEL ECLIPS<ECL100OR300>(<VERSION>=1, <NUM_CPU>=42, <OPTS>="-m")
+        """
+    )
+    with open(test_config_file_name, "w", encoding="utf-8") as fh:
+        fh.write(test_config_contents)
+
+    res_config = ResConfig(user_config_file=test_config_file_name)
+    assert len(res_config.forward_model.jobs) == 1
+    job = res_config.forward_model.jobs[0]
+    assert job.name == "ECLIPSE100"
