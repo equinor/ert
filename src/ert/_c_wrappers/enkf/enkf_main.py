@@ -272,7 +272,7 @@ class EnKFMain:
     def runpath_list_filename(self):
         return self._runpaths.runpath_list_filename
 
-    def getLocalConfig(self) -> "UpdateConfiguration":
+    def getLocalConfig(self) -> Optional[UpdateConfiguration]:
         return self.update_configuration
 
     def loadFromForwardModel(

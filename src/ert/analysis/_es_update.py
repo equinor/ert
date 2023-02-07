@@ -343,11 +343,18 @@ class ESUpdate:
     def __init__(self, enkf_main: "EnKFMain"):
         self.ert = enkf_main
         self.update_snapshots: Dict[str, SmootherSnapshot] = {}
+        self._warning_msg = (
+            "Not possible to run update."
+            " Make sure both parameters and observations are specified."
+        )
 
     def smootherUpdate(
         self, prior_storage: "EnkfFs", posterior_storage: "EnkfFs", run_id: str
     ) -> None:
         updatestep = self.ert.getLocalConfig()
+
+        if updatestep is None:
+            raise Warning(self._warning_msg)
 
         analysis_config = self.ert.analysisConfig()
 
@@ -394,6 +401,10 @@ class ESUpdate:
         run_id: str,
     ) -> None:
         updatestep = self.ert.getLocalConfig()
+
+        if updatestep is None:
+            raise Warning(self._warning_msg)
+
         if len(updatestep) > 1:
             raise ErtAnalysisError(
                 "Can not combine IES_ENKF modules with multi step updates"
