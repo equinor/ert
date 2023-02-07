@@ -70,7 +70,7 @@ def test_with_enkf_fs():
     fs = EnkfFs(
         "storage/snake_oil/ensemble/default_0", res_config.ensemble_config, 4, False
     )
-    summary_key_set = fs.getSummaryKeySet()
+    summary_key_set = fs._summary_key_set().setParent(fs)
     summary_key_set.addSummaryKey("FOPT")
     summary_key_set.addSummaryKey("WWCT")
     summary_key_set.addSummaryKey("WOPR")

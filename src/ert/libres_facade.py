@@ -418,7 +418,7 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
                 raise IndexError(f"No such realization {realization_index}")
             realizations = [realization_index]
 
-        summary_keys = list(fs.getSummaryKeySet().keys())
+        summary_keys = fs.getSummaryKeySet()
         if keys:
             summary_keys = [
                 key for key in keys if key in summary_keys
