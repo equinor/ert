@@ -158,16 +158,15 @@ def _generate_field_parameter_file(
     fs: EnsembleReader,
     realization: int,
     config: "FieldConfig",
-    target_file: str,
+    target_file: Path,
     run_path: Path,
 ) -> None:
     key = config.get_key()
-    target_path = Path(run_path) / target_file
-    if os.path.islink(target_path):
-        os.unlink(target_path)
-
     file_out = run_path.joinpath(target_file)
-    fs.export_field(key, realization, file_out, "grdecl")
+    if os.path.islink(file_out):
+        os.unlink(file_out)
+    file_type = file_out.suffix[1:]
+    fs.export_field(key, realization, file_out, file_type)
 
 
 def _generate_parameter_files(
@@ -204,7 +203,7 @@ def _generate_parameter_files(
                 fs,
                 iens,
                 node.getFieldModelConfig(),
-                node.get_enkf_outfile(),
+                Path(node.get_enkf_outfile()),
                 Path(run_path),
             )
             continue

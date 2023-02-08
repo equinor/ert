@@ -73,8 +73,8 @@ def test_assert_symlink_deleted(snake_oil_field_example, prior_ensemble):
     ert.createRunPath(run_context)
 
     # replace field file with symlink
-    linkpath = f"{run_context[0].runpath}/permx.grdcel"
-    targetpath = f"{run_context[0].runpath}/permx.grdcel.target"
+    linkpath = f"{run_context[0].runpath}/permx.grdecl"
+    targetpath = f"{run_context[0].runpath}/permx.grdecl.target"
     with open(targetpath, "a", encoding="utf-8"):
         pass
     os.remove(linkpath)
