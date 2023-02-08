@@ -7,7 +7,7 @@ if TYPE_CHECKING:
 
     from ert._c_wrappers.enkf import EnKFMain
     from ert._c_wrappers.job_queue import ErtPlugin, WorkflowJob
-    from ert._c_wrappers.job_queue.run_status import RunStatus
+    from ert._c_wrappers.job_queue.run_status import RunTracker
 
 
 class Plugin:
@@ -53,5 +53,5 @@ class Plugin:
         return self.__workflow_job.run(self.__ert, arguments)
 
     @property
-    def run_status(self) -> "RunStatus":
+    def run_status(self) -> "RunTracker":
         return self.__workflow_job.run_status

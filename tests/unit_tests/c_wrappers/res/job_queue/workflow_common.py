@@ -82,7 +82,6 @@ class WorkflowCommon:
     def createWaitJob():
         with open("wait_job.py", "w", encoding="utf-8") as f:
             f.write("from ert._c_wrappers.job_queue import ErtScript\n")
-            f.write("from ert._c_wrappers.job_queue.run_status import RunStatus\n")
             f.write("import time\n")
             f.write("\n")
             f.write("class WaitScript(ErtScript):\n")

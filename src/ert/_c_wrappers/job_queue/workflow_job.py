@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Any, List, Optional, Type, Union
 
 from ert._c_wrappers.config import ConfigParser, ConfigValidationError, ContentTypeEnum
 from ert._c_wrappers.job_queue import ErtScript, ExternalErtScript, FunctionErtScript
-from ert._c_wrappers.job_queue.run_status import RunStatus
+from ert._c_wrappers.job_queue.run_status import RunTracker
 from ert._clib.job_kw import type_from_kw
 
 from .ert_plugin import ErtPlugin
@@ -154,7 +154,7 @@ class WorkflowJob:
             self.__script.cancel()
 
     @property
-    def run_status(self) -> RunStatus:
+    def run_status(self) -> RunTracker:
         if self.__script is not None:
             return self.__script.run_status
-        return RunStatus()
+        return RunTracker()

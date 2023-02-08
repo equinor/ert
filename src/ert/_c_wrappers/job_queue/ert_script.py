@@ -5,7 +5,7 @@ import sys
 import traceback
 from typing import TYPE_CHECKING, Any, Callable, List, Type
 
-from ert._c_wrappers.job_queue.run_status import RunStatus
+from ert._c_wrappers.job_queue.run_status import RunTracker
 
 if TYPE_CHECKING:
     from ert._c_wrappers.enkf import EnKFMain
@@ -20,7 +20,7 @@ class ErtScript:
                 "ErtScript implementations must provide a method run(self, ert, ...)"
             )
         self.__ert = ert
-        self.__run_status = RunStatus()
+        self.__run_status = RunTracker()
 
     def ert(self) -> "EnKFMain":
         logger.info(f"Accessing EnKFMain from workflow: {self.__class__.__name__}")

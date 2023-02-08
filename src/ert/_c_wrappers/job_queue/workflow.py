@@ -5,7 +5,7 @@ from tempfile import mkdtemp
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
 
 from ert._c_wrappers.config import ConfigParser, ConfigValidationError
-from ert._c_wrappers.job_queue.run_status import RunStatus
+from ert._c_wrappers.job_queue.run_status import RunTracker
 
 if TYPE_CHECKING:
     from ert._c_wrappers.enkf import EnKFMain
@@ -29,7 +29,7 @@ class Workflow:
         src_file: str,
         cmd_list: List["WorkflowJob"],
     ):
-        self.__status = RunStatus()
+        self.__status = RunTracker()
         self.__current_job = None
         self.__report: List[List[str, Any]] = []
         self.src_file = src_file
