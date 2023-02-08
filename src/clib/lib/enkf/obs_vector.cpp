@@ -114,7 +114,7 @@ __conf_instance_get_restart_nr(const conf_instance_type *conf_instance,
             error += fmt::format(
                 ", corresponding to DAYS={}",
                 conf_instance_get_item_value_ref(conf_instance, "DAYS"));
-        throw exc::out_of_range(error);
+        throw exc::out_of_range(error + " the date could be incorrect");
     }
     return obs_restart_nr;
 }
