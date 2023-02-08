@@ -1031,10 +1031,15 @@ void enkf_obs_load(Cwrap<enkf_obs_type> enkf_obs, const char *config_file,
     } catch (exc::out_of_range err) {
         if (enkf_obs->refcase) {
             throw exc::out_of_range(
-                "{}, the time map is set from the REFCASE keyword", err.what());
+                "{}, the time map is set from the REFCASE keyword.\n Either "
+                "the REFCASE has a incorrect/missing date, or the observation "
+                "is given an incorrect date.",
+                err.what());
         } else {
             throw exc::out_of_range(
-                "{}, the time map is set from the TIME_MAP keyword",
+                "{}, the time map is set from the TIME_MAP keyword.\n Either "
+                "the time map file has an incorrect/missing date, or the "
+                "observation is given an incorrect date.",
                 err.what());
         }
     }
