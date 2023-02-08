@@ -61,7 +61,7 @@ class ErtConfig:
     queue_config: QueueConfig = field(default_factory=QueueConfig)
     workflow_jobs: Dict[str, WorkflowJob] = field(default_factory=dict)
     workflows: Dict[str, Workflow] = field(default_factory=dict)
-    hooked_workflows: Dict[HookRuntime, Workflow] = field(default_factory=dict)
+    hooked_workflows: Dict[int, Workflow] = field(default_factory=dict)
     runpath_file: Path = Path(DEFAULT_RUNPATH_FILE)
     ert_templates: List[List[str]] = field(default_factory=list)
     installed_jobs: Dict[str, ExtJob] = field(default_factory=dict)
