@@ -7,11 +7,14 @@ from argparse import ArgumentParser
 from pathlib import Path
 from unittest.mock import Mock, call
 
+import pandas as pd
 import pytest
 
 import ert.shared
+from ert import LibresFacade
 from ert.__main__ import ert_parser
 from ert._c_wrappers.config.config_parser import ConfigValidationError
+from ert._c_wrappers.enkf import EnKFMain, ResConfig
 from ert.cli import (
     ENSEMBLE_EXPERIMENT_MODE,
     ENSEMBLE_SMOOTHER_MODE,
@@ -326,3 +329,40 @@ def test_bad_config_error_message(tmp_path):
     )
     with pytest.raises(ConfigValidationError, match=r"Parsing config file.*errors"):
         run_cli(parsed)
+
+
+@pytest.mark.integration_test
+def test_that_prior_is_not_overwritten_in_ensemble_experiment(
+    tmpdir, source_root, capsys
+):
+    shutil.copytree(
+        os.path.join(source_root, "test-data", "poly_example"),
+        os.path.join(str(tmpdir), "poly_example"),
+    )
+
+    with tmpdir.as_cwd():
+        ert = EnKFMain(ResConfig("poly_example/poly.ert"))
+        prior_context = ert.load_ensemble_context(
+            "default", list(range(ert.getEnsembleSize())), 0
+        )
+        ert.sample_prior(prior_context.sim_fs, prior_context.active_realizations)
+        facade = LibresFacade(ert)
+        prior_values = facade.load_all_gen_kw_data("default")
+
+        parser = ArgumentParser(prog="test_main")
+        parsed = ert_parser(
+            parser,
+            [
+                ENSEMBLE_EXPERIMENT_MODE,
+                "poly_example/poly.ert",
+                "--port-range",
+                "1024-65535",
+                "--realizations",
+                "0-4",
+            ],
+        )
+
+        FeatureToggling.update_from_args(parsed)
+        run_cli(parsed)
+        parameter_values = facade.load_all_gen_kw_data("default")
+        pd.testing.assert_frame_equal(parameter_values, prior_values)
