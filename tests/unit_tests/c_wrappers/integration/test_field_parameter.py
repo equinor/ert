@@ -590,11 +590,6 @@ if __name__ == "__main__":
 
             prior_param = prior.load_field("MY_PARAM", list(range(5)))
             posterior_param = posterior.load_field("MY_PARAM", list(range(5)))
-        # prior = ert.storage_manager["prior"]
-        # posterior = ert.storage_manager["smoother_update"]
-
-        # prior_param = prior.load_field("MY_PARAM", list(range(5)))
-        # posterior_param = posterior.load_field("MY_PARAM", list(range(5)))
 
         assert prior_param.shape == (100, 5)
         assert posterior_param.shape == (100, 5)
