@@ -395,14 +395,13 @@ def analysis_ES(
                 f"No active observations for update step: {update_step.name}."
             )
 
-        A = _get_A_matrix(temp_storage, update_step.parameters)
         A_with_rowscaling = _get_row_scaling_A_matrices(
             temp_storage, update_step.row_scaling_parameters
         )
         noise = rng.standard_normal(size=(len(observation_values), S.shape[1]))
 
-        if A is not None:
-            smoother = ies.ES()
+        smoother = ies.ES()
+        for parameter in update_step.parameters:
             smoother.fit(
                 S,
                 observation_errors,
@@ -412,8 +411,15 @@ def analysis_ES(
                 inversion=ies.InversionType(module.inversion),
                 param_ensemble=param_ensemble,
             )
-            A = smoother.update(A)
-            _save_to_temporary_storage(temp_storage, update_step.parameters, A)
+            if active_indices := parameter.active_list.get_active_index_list():
+                temp_storage[parameter.name][active_indices, :] = smoother.update(
+                    temp_storage[parameter.name][active_indices, :]
+                )
+            else:
+                temp_storage[parameter.name] = smoother.update(
+                    temp_storage[parameter.name]
+                )
+
         if A_with_rowscaling:
             A_with_rowscaling = ensemble_smoother_update_step_row_scaling(
                 S,
@@ -486,22 +492,28 @@ def analysis_IES(
                 f"No active observations for update step: {update_step.name}."
             )
 
-        A = _get_A_matrix(temp_storage, update_step.parameters)
-
         noise = rng.standard_normal(size=(len(observation_values), S.shape[1]))
-
-        iterative_ensemble_smoother.fit(
-            S,
-            observation_errors,
-            observation_values,
-            noise=noise,
-            ensemble_mask=np.array(ens_mask),
-            truncation=module.get_truncation(),
-            inversion=ies.InversionType(module.inversion),
-            param_ensemble=param_ensemble,
-        )
-        A = iterative_ensemble_smoother.update(A)
-        _save_to_temporary_storage(temp_storage, update_step.parameters, A)
+        for parameter in update_step.parameters:
+            iterative_ensemble_smoother.fit(
+                S,
+                observation_errors,
+                observation_values,
+                noise=noise,
+                ensemble_mask=np.array(ens_mask),
+                inversion=ies.InversionType(module.inversion),
+                truncation=module.get_truncation(),
+                param_ensemble=param_ensemble,
+            )
+            if active_indices := parameter.active_list.get_active_index_list():
+                temp_storage[parameter.name][
+                    active_indices, :
+                ] = iterative_ensemble_smoother.update(
+                    temp_storage[parameter.name][active_indices, :]
+                )
+            else:
+                temp_storage[parameter.name] = iterative_ensemble_smoother.update(
+                    temp_storage[parameter.name]
+                )
 
     _save_temporary_storage_to_disk(
         target_fs, ensemble_config, temp_storage, iens_active_index
