@@ -1,5 +1,6 @@
 import logging
 import os
+import warnings
 from typing import Dict, List, Optional, Union
 
 from cwrap import BaseCClass
@@ -10,7 +11,7 @@ from ecl.util.util import StringList
 
 from ert import _clib
 from ert._c_wrappers import ResPrototype
-from ert._c_wrappers.config.config_parser import ConfigValidationError
+from ert._c_wrappers.config.config_parser import ConfigValidationError, ConfigWarning
 from ert._c_wrappers.config.rangestring import rangestring_to_list
 from ert._c_wrappers.enkf.config import EnkfConfigNode
 from ert._c_wrappers.enkf.config_keys import ConfigKeys
@@ -405,6 +406,12 @@ class EnsembleConfig(BaseCClass):
         return self._alloc_keylist()
 
     def add_summary_full(self, key, refcase) -> EnkfConfigNode:
+        if "*" in key and refcase is None:
+            warnings.warn(
+                f"** Warning: Cannot expand key {key} due to missing refcase file."
+                " Provide refcase file or add fully expanded SUMMARY key to configuration",
+                category=ConfigWarning,
+            )
         return self._add_summary_full(key, refcase)
 
     def addNode(self, config_node: EnkfConfigNode):
