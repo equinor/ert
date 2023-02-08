@@ -379,6 +379,14 @@ class LocalEnsembleReader:
             info = json.load(f)
         return key in info
 
+    def load_field_info(self, key: str) -> Dict[Any, Any]:
+        path = self._experiment_path / "field-info.json"
+        if not path.exists():
+            return {}
+        with open(path, encoding="utf-8", mode="r") as f:
+            info = json.load(f)
+            return dict(info[key])
+
     def export_field(
         self, key: str, realization: int, output_path: Path, fformat: str
     ) -> None:
@@ -694,6 +702,7 @@ class LocalEnsembleAccessor(LocalEnsembleReader):
         self,
         key: str,
         grid_file: Optional[str],
+        file_format: str,
         transfer_out: str,
         truncation_mode: EnkfTruncationType,
         trunc_min: float,
@@ -708,6 +717,7 @@ class LocalEnsembleAccessor(LocalEnsembleReader):
                 "nx": nx,
                 "ny": ny,
                 "nz": nz,
+                "file_format": file_format,
                 "transfer_out": transfer_out,
                 "truncation_mode": truncation_mode,
                 "truncation_min": trunc_min,

@@ -40,8 +40,8 @@ GEN_DATA SNAKE_OIL_GPR_DIFF INPUT_FORMAT:ASCII RESULT_FILE:snake_oil_gpr_diff_%d
 -- field parameters into account, they are mainly here to create a
 -- test case with field parameters.
 
-FIELD PERMX PARAMETER  permx.grdcel  INIT_FILES:fields/permx%d.grdecl
-FIELD PORO  PARAMETER  poro.grdcel   INIT_FILES:fields/poro%d.grdecl
+FIELD PERMX PARAMETER  permx.grdecl  INIT_FILES:fields/permx%d.grdecl
+FIELD PORO  PARAMETER  poro.grdecl   INIT_FILES:fields/poro%d.grdecl
 
 
 UPDATE_LOG_PATH log/update
