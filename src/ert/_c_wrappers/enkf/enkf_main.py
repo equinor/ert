@@ -31,7 +31,7 @@ if TYPE_CHECKING:
     import numpy.typing as npt
 
     from ert._c_wrappers.enkf import ErtConfig
-    from ert._c_wrappers.enkf.config import FieldConfig, GenKwConfig
+    from ert._c_wrappers.enkf.config import GenKwConfig
     from ert._c_wrappers.enkf.enums import HookRuntime
     from ert.storage import EnsembleAccessor, EnsembleReader, StorageAccessor
 
@@ -157,17 +157,16 @@ def _generate_surface_file(
 def _generate_field_parameter_file(
     fs: EnsembleReader,
     realization: int,
-    config: "FieldConfig",
-    target_file: str,
+    key: str,
+    target_file: Path,
     run_path: Path,
 ) -> None:
-    key = config.get_key()
-    target_path = Path(run_path) / target_file
-    if os.path.islink(target_path):
-        os.unlink(target_path)
-
+    field_info = fs.load_field_info(key)
+    file_format = field_info["file_format"]
     file_out = run_path.joinpath(target_file)
-    fs.export_field(key, realization, file_out, "grdecl")
+    if os.path.islink(file_out):
+        os.unlink(file_out)
+    fs.export_field(key, realization, file_out, file_format)
 
 
 def _generate_parameter_files(
@@ -203,8 +202,8 @@ def _generate_parameter_files(
             _generate_field_parameter_file(
                 fs,
                 iens,
-                node.getFieldModelConfig(),
-                node.get_enkf_outfile(),
+                key,
+                Path(node.get_enkf_outfile()),
                 Path(run_path),
             )
             continue
@@ -502,6 +501,7 @@ class EnKFMain:
                         ensemble.save_field_info(
                             parameter,
                             grid_file,
+                            Path(config_node.get_enkf_outfile()).suffix[1:],
                             field_config.get_output_transform_name(),
                             field_config.get_truncation_mode(),
                             field_config.get_truncation_min(),
