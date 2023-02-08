@@ -101,6 +101,7 @@ def forward_model_ok(
                         run_arg.ensemble_storage.save_field_info(
                             key,
                             ens_conf.grid_file,
+                            Path(config_node.get_enkf_outfile()).suffix[1:],
                             field_config.get_output_transform_name(),
                             field_config.get_truncation_mode(),
                             field_config.get_truncation_min(),
