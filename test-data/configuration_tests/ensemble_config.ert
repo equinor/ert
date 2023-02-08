@@ -13,7 +13,7 @@ SURFACE TOP INIT_FILES:surface/small.irap OUTPUT_FILE:surface/small_out.irap BAS
 
 GRID grid/CASE.EGRID
 
-FIELD PERMX PARAMETER  permx.grdcel  INIT_FILES:fields/permx%d.grdecl
+FIELD PERMX PARAMETER  permx.grdecl  INIT_FILES:fields/permx%d.grdecl
 
 SCHEDULE_PREDICTION_FILE input/schedule.sch PARAMETER:MULTFLT.TXT INIT_FILES:fields/permx%d.grdecl
 
