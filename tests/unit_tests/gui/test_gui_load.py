@@ -12,7 +12,10 @@ import ert.gui
 from ert._c_wrappers.enkf import EnKFMain, ResConfig
 from ert.gui.ertwidgets.message_box import ErtMessageBox
 from ert.gui.main import GUILogHandler, _setup_main_window, run_gui
+from ert.gui.simulation.run_dialog import RunDialog
 from ert.gui.tools.event_viewer import add_gui_log_handler
+from ert.gui.tools.plot.plot_window import PlotWindow
+from ert.services import Storage
 from ert.shared.models import BaseRunModel
 
 
@@ -239,3 +242,51 @@ def test_dialog(qtbot):
     qtbot.addWidget(msg)
     assert msg.label_text.text() == "Simulations failed!"
     assert msg.details_text.toPlainText() == "failed_msg\nwith two lines"
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_run_dialog_can_be_closed_after_used_to_open_plots(qtbot):
+    """
+    This is a regression test for a bug where the plot window opened from run dialog
+    would have run dialog as parent. Because of that it would be destroyed when
+    run dialog was closed and end in a c++ QTObject lifetime crash.
+    """
+    config_file = Path("config.ert")
+    config_file.write_text("NUM_REALIZATIONS 1\n", encoding="utf-8")
+
+    args_mock = Mock()
+    args_mock.config = str(config_file)
+
+    with Storage.init_service(
+        res_config=args_mock.config,
+        project="storage",
+    ):
+        gui = _setup_main_window(
+            EnKFMain(ResConfig(str(config_file))), args_mock, GUILogHandler()
+        )
+        qtbot.addWidget(gui)
+
+        start_simulation = gui.findChild(QWidget, name="start_simulation")
+
+        def handle_dialog():
+            message_box = gui.findChild(QMessageBox)
+            qtbot.mouseClick(message_box.buttons()[0], Qt.LeftButton)
+
+        QTimer.singleShot(500, handle_dialog)
+
+        def use_rundialog():
+            qtbot.waitUntil(lambda: gui.findChild(RunDialog) is not None)
+            run_dialog = gui.findChild(RunDialog)
+            qtbot.mouseClick(run_dialog.plot_button, Qt.LeftButton)
+            qtbot.waitUntil(run_dialog.done_button.isVisible, timeout=20000)
+            qtbot.mouseClick(run_dialog.done_button, Qt.LeftButton)
+
+        QTimer.singleShot(1000, use_rundialog)
+        qtbot.mouseClick(start_simulation, Qt.LeftButton)
+
+        qtbot.waitUntil(lambda: gui.findChild(PlotWindow) is not None)
+
+        # Cycle through showing all the tabs
+        plot_window = gui.findChild(PlotWindow)
+        for tab in plot_window._plot_widgets:
+            plot_window._central_tab.setCurrentWidget(tab)
