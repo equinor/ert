@@ -52,6 +52,17 @@ def test_workflow_run():
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_failing_workflow_run():
-    WorkflowCommon.createExternalDumpJob()
-    with pytest.raises(ValueError, match="does not exist"):
+    with pytest.raises(ConfigValidationError, match="does not exist") as err:
         _ = Workflow.from_file("undefined", None, {})
+    assert err.value.config_file == "undefined"
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_failure_in_parsing_workflow_gives_config_validation_error():
+    with open("workflow", "w", encoding="utf-8") as f:
+        f.write("DEFINE\n")
+    with pytest.raises(
+        ConfigValidationError, match="DEFINE must have two or more arguments"
+    ) as err:
+        _ = Workflow.from_file("workflow", None, {})
+    assert err.value.config_file == "workflow"
