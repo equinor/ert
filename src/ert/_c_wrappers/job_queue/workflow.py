@@ -83,6 +83,7 @@ class Workflow:
         for job, args in self:
             self.__current_job = job
             if not self.__cancelled:
+                logger.info(f"Workflow job {job.name} starting")
                 job.run(ert, args)
                 self.__status[job.name] = {
                     "stdout": job.stdoutdata(),
