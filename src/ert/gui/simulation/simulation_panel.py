@@ -175,10 +175,7 @@ class SimulationPanel(QWidget):
                     abort = True
 
             if not abort:
-                dialog = RunDialog(
-                    self._config_file,
-                    model,
-                )
+                dialog = RunDialog(self._config_file, model, self.parent())
                 self.run_button.setDisabled(True)
                 self.run_button.setText("Simulation running...")
                 dialog.startSimulation()
