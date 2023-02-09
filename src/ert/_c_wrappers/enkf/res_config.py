@@ -422,7 +422,9 @@ class ResConfig:
                     "max_running_minutes": job.max_running_minutes,
                     "max_running": job.max_running,
                     "min_arg": job.min_arg,
-                    "arg_types": [job_kw.kw_from_type(typ) for typ in job.arg_types],
+                    "arg_types": [
+                        job_kw.kw_from_type(int(typ)) for typ in job.arg_types
+                    ],
                     "max_arg": job.max_arg,
                 }
                 for idx, job in enumerate(forward_model_list)
