@@ -53,7 +53,9 @@ class Workflow:
     ):
         to_compile = src_file
         if not os.path.exists(src_file):
-            raise ConfigValidationError(f"Workflow file {src_file} does not exist")
+            raise ConfigValidationError(
+                f"Workflow file {src_file} does not exist", config_file=src_file
+            )
         if context is not None:
             tmpdir = mkdtemp("ert_workflow")
             to_compile = os.path.join(tmpdir, "ert-workflow")
@@ -61,7 +63,11 @@ class Workflow:
 
         cmd_list = []
         parser = _workflow_parser(job_list)
-        content = parser.parse(to_compile)
+        try:
+            content = parser.parse(to_compile)
+        except ConfigValidationError as err:
+            err.config_file = src_file
+            raise err from None
 
         for line in content:
             cmd_list.append(
