@@ -5,6 +5,7 @@ from argparse import ArgumentParser
 from pathlib import Path
 from textwrap import dedent
 from typing import Optional
+
 import numpy as np
 import numpy.testing
 import pytest
@@ -67,7 +68,6 @@ def test_unknown_file_extension(storage, tmpdir):
     with tmpdir.as_cwd():
         config = dedent(
             """
-        JOBNAME my_name%d
         NUM_REALIZATIONS 1
         FIELD PARAM PARAMETER param.wrong INIT_FILES:../../../param.grdecl FORWARD_INIT:True
         GRID MY_EGRID.EGRID
@@ -78,14 +78,9 @@ def test_unknown_file_extension(storage, tmpdir):
 
         grid = xtgeo.create_box_grid(dimension=(10, 10, 1))
         grid.to_file("MY_EGRID.EGRID", "egrid")
-
+        rng = np.random.default_rng()
         write_grid_property(
-            "PARAM",
-            grid,
-            "param.grdecl",
-            "grdecl",
-            (10, 10, 1),
-            np.random.random_sample(100),
+            "PARAM", grid, "param.grdecl", "grdecl", (10, 10, 1), rng.random(size=100)
         )
 
         ert, ensemble = create_runpath(storage, "config.ert")
@@ -99,7 +94,6 @@ def test_load_two_parameters_forward_init(storage, tmpdir):
     with tmpdir.as_cwd():
         config = dedent(
             """
-        JOBNAME my_name%d
         NUM_REALIZATIONS 1
         FIELD PARAM_A PARAMETER param_a.grdecl INIT_FILES:../../../param_a.grdecl FORWARD_INIT:True
         FIELD PARAM_B PARAMETER param_b.grdecl INIT_FILES:../../../param_b.grdecl FORWARD_INIT:True
@@ -165,7 +159,6 @@ def test_load_two_parameters_roff(storage, tmpdir):
     with tmpdir.as_cwd():
         config = dedent(
             """
-        JOBNAME my_name%d
         NUM_REALIZATIONS 1
         FIELD PARAM_A PARAMETER param_a.roff INIT_FILES:param_a_%d.roff
         FIELD PARAM_B PARAMETER param_b.roff INIT_FILES:param_b_%d.roff
@@ -214,7 +207,6 @@ def test_load_two_parameters(storage, tmpdir):
     with tmpdir.as_cwd():
         config = dedent(
             """
-        JOBNAME my_name%d
         NUM_REALIZATIONS 1
         FIELD PARAM_A PARAMETER param_a.grdecl INIT_FILES:param_a_%d.grdecl
         FIELD PARAM_B PARAMETER param_b.grdecl INIT_FILES:param_b_%d.grdecl
@@ -295,7 +287,6 @@ def test_min_max(storage, tmpdir, min_: int, max_: int, field_config: str):
     with tmpdir.as_cwd():
         config = dedent(
             """
-        JOBNAME my_name%d
         NUM_REALIZATIONS 1
         GRID MY_EGRID.EGRID
         """
@@ -338,7 +329,6 @@ def test_transformation(storage, tmpdir):
     with tmpdir.as_cwd():
         config = dedent(
             """
-        JOBNAME my_name%d
         NUM_REALIZATIONS 2
         FIELD PARAM_A PARAMETER param_a.grdecl INIT_FILES:param_a_%d.grdecl INIT_TRANSFORM:LN OUTPUT_TRANSFORM:EXP
         GRID MY_EGRID.EGRID
@@ -408,7 +398,6 @@ def test_forward_init(storage, tmpdir, config_str, expect_forward_init):
     with tmpdir.as_cwd():
         config = dedent(
             """
-        JOBNAME my_name%d
         NUM_REALIZATIONS 1
         GRID MY_EGRID.EGRID
         """

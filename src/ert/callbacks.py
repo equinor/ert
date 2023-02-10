@@ -60,8 +60,8 @@ def forward_model_ok(
                     props = xtgeo.gridproperty_from_file(
                         pfile=file_path, name=key, grid=grid
                     )
-                    data = props.values1d.data
 
+                    data = props.values1d.data
                     field_config = config_node.getFieldModelConfig()
                     trans = field_config.get_init_transform_name()
                     data_transformed = field_transform(data, trans)
