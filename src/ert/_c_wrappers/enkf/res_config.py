@@ -179,7 +179,7 @@ class ResConfig:
             if option_name == "MAX_RUNNING" and int(*values) < 0:
                 raise ConfigValidationError(
                     errors=[
-                        f"QUEUE_OPTION MAX_RUNNING is negative: {str(*values)}",
+                        f"QUEUE_OPTION MAX_RUNNING is negative: {str(*values)!r}",
                     ],
                 )
 
@@ -281,8 +281,8 @@ class ResConfig:
             except KeyError as err:
                 raise ConfigValidationError(
                     errors=(
-                        f"Could not find job `{job_name}` in list of installed jobs: "
-                        f"{list(self.installed_jobs.keys())}"
+                        f"Could not find job {job_name!r} in list of installed jobs: "
+                        f"{list(self.installed_jobs.keys())!r}"
                     ),
                     config_file=config_file,
                 ) from err
@@ -292,7 +292,7 @@ class ResConfig:
                     job.private_args.add_from_string(args)
                 except ValueError as err:
                     raise ConfigValidationError(
-                        errors=f"{err}: FORWARD_MODEL {job_name} ({args})\n",
+                        errors=f"{err}: 'FORWARD_MODEL {job_name}({args})'\n",
                         config_file=config_file,
                     ) from err
 
@@ -308,7 +308,7 @@ class ResConfig:
                 job = copy.deepcopy(self.installed_jobs[job_description[0]])
             except KeyError as err:
                 raise ConfigValidationError(
-                    f"Could not find job `{job_description[0]}` "
+                    f"Could not find job {job_description[0]!r} "
                     "in list of installed jobs.",
                     config_file=config_file,
                 ) from err
@@ -482,12 +482,14 @@ class ResConfig:
         for hook_name, mode_name in hook_workflow_info:
             if mode_name not in [runtime.name for runtime in HookRuntime.enums()]:
                 raise ConfigValidationError(
-                    errors=[f"Run mode {mode_name} not supported for Hook Workflow"]
+                    errors=[f"Run mode {mode_name!r} not supported for Hook Workflow"]
                 )
 
             if hook_name not in self.workflows:
                 raise ConfigValidationError(
-                    errors=[f"Cannot setup hook for non-existing job name {hook_name}"]
+                    errors=[
+                        f"Cannot setup hook for non-existing job name {hook_name!r}"
+                    ]
                 )
 
             self.hooked_workflows[HookRuntime.from_string(mode_name)].append(
@@ -509,7 +511,7 @@ class ResConfig:
         for job_path in config_dict.get(ConfigKeys.INSTALL_JOB_DIRECTORY, []):
             if not os.path.isdir(job_path):
                 raise ConfigValidationError(
-                    f"Unable to locate job directory {job_path}"
+                    f"Unable to locate job directory {job_path!r}"
                 )
 
             files = os.listdir(job_path)

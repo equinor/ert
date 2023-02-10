@@ -524,7 +524,7 @@ def test_that_unknown_job_gives_config_validation_error():
     with open(test_config_file_name, "w", encoding="utf-8") as fh:
         fh.write(test_config_contents)
 
-    with pytest.raises(ConfigValidationError, match="Could not find job `NO_SUCH_JOB`"):
+    with pytest.raises(ConfigValidationError, match="Could not find job 'NO_SUCH_JOB'"):
         _ = ResConfig(user_config_file=test_config_file_name)
 
 
@@ -559,7 +559,7 @@ def test_that_unknown_hooked_job_gives_config_validation_error():
 
     with pytest.raises(
         ConfigValidationError,
-        match="Cannot setup hook for non-existing job name NO_SUCH_JOB",
+        match="Cannot setup hook for non-existing job name 'NO_SUCH_JOB'",
     ):
         _ = ResConfig(user_config_file=test_config_file_name)
 
