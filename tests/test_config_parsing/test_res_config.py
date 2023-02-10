@@ -227,7 +227,7 @@ def test_that_loading_non_existant_workflow_gives_validation_error():
         fh.write(test_config_contents)
     with pytest.raises(
         expected_exception=ConfigValidationError,
-        match="Cannot find file or directory does_not_exist",
+        match='Cannot find file or directory "does_not_exist" ',
     ):
         ResConfig(user_config_file=test_config_file_name)
 
@@ -246,7 +246,7 @@ def test_that_loading_non_existant_workflow_job_gives_validation_error():
         fh.write(test_config_contents)
     with pytest.raises(
         expected_exception=ConfigValidationError,
-        match="Cannot find file or directory does_not_exist",
+        match='Cannot find file or directory "does_not_exist"',
     ):
         ResConfig(user_config_file=test_config_file_name)
 
