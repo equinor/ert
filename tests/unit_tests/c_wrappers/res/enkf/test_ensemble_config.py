@@ -218,7 +218,7 @@ def test_ensemble_config_duplicate_node_names(setup_case):
             ]
         ],
     }
-    error_match = f"key {duplicate_name} already present in ensemble config"
+    error_match = f"key {duplicate_name!r} already present in ensemble config"
 
     with pytest.raises(ConfigValidationError, match=error_match):
         EnsembleConfig.from_dict(config_dict=config_dict)

@@ -165,7 +165,7 @@ def parse_signature_job(signature: str) -> Tuple[str, Optional[str]]:
     close_paren = signature.find(")")
     if close_paren == -1:
         raise ConfigValidationError(
-            errors=[f"Missing ) in FORWARD_MODEL job description {signature}"]
+            errors=[f"Missing ) in FORWARD_MODEL job description {signature!r}"]
         )
     if close_paren < len(signature) - 1:
         logger.warning(
