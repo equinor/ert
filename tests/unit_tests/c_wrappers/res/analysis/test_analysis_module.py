@@ -9,6 +9,7 @@ from ert._c_wrappers.analysis.analysis_module import (
     DEFAULT_IES_MIN_STEPLENGTH,
     get_mode_variables,
 )
+from ert._c_wrappers.config.config_parser import ConfigValidationError
 
 
 def test_analysis_module_default_values():
@@ -67,13 +68,13 @@ def test_analysis_module_set_get_values():
 def test_set_get_var_errors():
     mod = AnalysisModule.ens_smoother_module()
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ConfigValidationError):
         mod.set_var("ENKF_TRUNCATION", "super1.0")
 
-    with pytest.raises(KeyError):
+    with pytest.raises(ConfigValidationError):
         mod.set_var("NO-NOT_THIS_KEY", 100)
 
-    with pytest.raises(KeyError):
+    with pytest.raises(ConfigValidationError):
         mod.get_variable_value("NO-NOT_THIS_KEY")
 
 
