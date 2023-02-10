@@ -214,3 +214,27 @@ def test_analysis_config_iter_config_default_initialisation():
     assert new_config.num_iterations == 4
     assert new_config.case_format is None
     assert new_config.case_format_is_set() is False
+
+
+def test_analysis_config_wrong_argument_type():
+    config_dict = {
+        ConfigKeys.NUM_REALIZATIONS: 10,
+        ConfigKeys.ANALYSIS_SET_VAR: [["STD_ENKF", "IES_INVERSION", "FOO"]],
+    }
+
+    with pytest.raises(
+        ConfigValidationError, match="Variable 'IES_INVERSION' with value 'FOO'"
+    ):
+        _ = AnalysisConfig.from_dict(config_dict)
+
+
+def test_analysis_config_wrong_unknown_argument():
+    config_dict = {
+        ConfigKeys.NUM_REALIZATIONS: 10,
+        ConfigKeys.ANALYSIS_SET_VAR: [["STD_ENKF", "BAR", "1"]],
+    }
+
+    with pytest.raises(
+        ConfigValidationError, match="Variable 'BAR' not found in 'STD_ENKF' analysis"
+    ):
+        _ = AnalysisConfig.from_dict(config_dict)
