@@ -90,7 +90,7 @@ class WorkflowJob:
                 optional_get("FUNCTION"),
             )
         else:
-            raise ConfigValidationError(f"Could not open config_file:{config_file}")
+            raise ConfigValidationError(f"Could not open config_file:{config_file!r}")
 
     def isPlugin(self) -> bool:
         if self.script is not None:

@@ -60,7 +60,7 @@ class AnalysisConfig:
                 self._modules[dst_name] = new_module
             else:
                 raise ConfigValidationError(
-                    f"Trying to copy module {src_name} which does not exist"
+                    f"Trying to copy module {src_name!r} which does not exist"
                 )
 
     def _set_modules_var_list(self):

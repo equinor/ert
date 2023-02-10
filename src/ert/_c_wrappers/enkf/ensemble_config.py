@@ -413,7 +413,7 @@ class EnsembleConfig(BaseCClass):
         key = config_node.getKey()
         if key in self:
             raise ConfigValidationError(
-                f"Enkf config node with key {key} already present in ensemble config"
+                f"Enkf config node with key {key!r} already present in ensemble config"
             )
         self._add_node(config_node)
         config_node.convertToCReference(self)
