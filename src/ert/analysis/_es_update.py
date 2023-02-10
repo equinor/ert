@@ -142,6 +142,7 @@ def _save_temporary_storage_to_disk(
                 target_fs.save_field_info(
                     key,
                     ensemble_config.grid_file,
+                    Path(config_node.get_enkf_outfile()).suffix[1:],
                     field_config.get_output_transform_name(),
                     field_config.get_truncation_mode(),
                     field_config.get_truncation_min(),
