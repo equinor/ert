@@ -32,5 +32,8 @@ asyncio_mode = "auto"
 [tool.isort]
 profile = "black"
 
+[tool.black]
+include = '(\.pyi?|\.ipynb|\.py\.j2)$'
+
 [tool.setuptools_scm]
 write_to = "src/ert/shared/version.py"
