@@ -44,6 +44,21 @@ class SmootherSnapshot:
     update_step_snapshots: Dict[str, "UpdateSnapshot"] = field(default_factory=dict)
 
 
+def _get_A_matrix(
+    temporary_storage: Dict[str, "npt.NDArray[np.double]"],
+    parameters: List[update.Parameter],
+) -> Optional["npt.NDArray[np.double]"]:
+    matrices: List["npt.NDArray[np.double]"] = []
+    for p in parameters:
+        if p.active_list.getMode() == ActiveMode.ALL_ACTIVE:
+            matrices.append(temporary_storage[p.name])
+        elif p.active_list.getMode() == ActiveMode.PARTLY_ACTIVE:
+            matrices.append(
+                temporary_storage[p.name][p.active_list.get_active_index_list(), :]
+            )
+    return np.vstack(matrices) if matrices else None
+
+
 def _get_row_scaling_A_matrices(
     temporary_storage: Dict[str, "npt.NDArray[np.double]"],
     parameters: List[update.RowScalingParameter],
@@ -135,6 +150,7 @@ def analysis_ES(
     temp_storage = _create_temporary_parameter_storage(
         source_fs, ensemble_config, iens_active_index
     )
+    # Looping over local analysis update_step
     for update_step in updatestep:
         try:
             S, observation_handle = update.load_observations_and_responses(
@@ -159,39 +175,23 @@ def analysis_ES(
                 f"No active observations for update step: {update_step.name}."
             )
 
-        noise = rng.standard_normal(size=(len(observation_values), S.shape[1]))
-        ensemble_size = S.shape[1]
-        num_params = sum(arr.shape[0] for arr in temp_storage.values())
-        projection = num_params < ensemble_size - 1
-        for parameter in update_step.parameters:
-            if active_indices := parameter.active_list.get_active_index_list():
-                temp_storage[parameter.name][
-                    active_indices, :
-                ] = ies.ensemble_smoother_update_step(
-                    S,
-                    temp_storage[parameter.name][active_indices, :],
-                    observation_errors,
-                    observation_values,
-                    noise,
-                    module.get_truncation(),
-                    ies.InversionType(module.inversion),
-                    projection=projection,
-                )
-            else:
-                temp_storage[parameter.name] = ies.ensemble_smoother_update_step(
-                    S,
-                    temp_storage[parameter.name],
-                    observation_errors,
-                    observation_values,
-                    noise,
-                    module.get_truncation(),
-                    ies.InversionType(module.inversion),
-                    projection=projection,
-                )
-
-        if A_with_rowscaling := _get_row_scaling_A_matrices(
+        A = _get_A_matrix(temp_storage, update_step.parameters)
+        A_with_rowscaling = _get_row_scaling_A_matrices(
             temp_storage, update_step.row_scaling_parameters
-        ):
+        )
+        noise = rng.standard_normal(size=(len(observation_values), S.shape[1]))
+        if A is not None:
+            A = ies.ensemble_smoother_update_step(
+                S,
+                A,
+                observation_errors,
+                observation_values,
+                noise,
+                module.get_truncation(),
+                ies.InversionType(module.inversion),
+            )
+            _save_to_temporary_storage(temp_storage, update_step.parameters, A)
+        if A_with_rowscaling:
             A_with_rowscaling = ensemble_smoother_update_step_row_scaling(
                 S,
                 A_with_rowscaling,
@@ -258,39 +258,21 @@ def analysis_IES(
                 f"No active observations for update step: {update_step.name}."
             )
 
+        A = _get_A_matrix(temp_storage, update_step.parameters)
+
         noise = rng.standard_normal(size=(len(observation_values), S.shape[1]))
-        ensemble_size = S.shape[1]
-        num_params = sum(arr.shape[0] for arr in temp_storage.values())
-        projection = num_params < ensemble_size - 1
-        for parameter in update_step.parameters:
-            if active_indices := parameter.active_list.get_active_index_list():
-                temp_storage[parameter.name][
-                    active_indices, :
-                ] = iterative_ensemble_smoother.update_step(
-                    S,
-                    temp_storage[parameter.name][active_indices, :],
-                    observation_errors,
-                    observation_values,
-                    noise,
-                    ensemble_mask=np.array(ens_mask),
-                    observation_mask=observation_mask,
-                    inversion=ies.InversionType(module.inversion),
-                    truncation=module.get_truncation(),
-                    projection=projection,
-                )
-            else:
-                temp_storage[parameter.name] = iterative_ensemble_smoother.update_step(
-                    S,
-                    temp_storage[parameter.name],
-                    observation_errors,
-                    observation_values,
-                    noise,
-                    ensemble_mask=np.array(ens_mask),
-                    observation_mask=observation_mask,
-                    inversion=ies.InversionType(module.inversion),
-                    truncation=module.get_truncation(),
-                    projection=projection,
-                )
+        A = iterative_ensemble_smoother.update_step(
+            S,
+            A,
+            observation_errors,
+            observation_values,
+            noise,
+            ensemble_mask=np.array(ens_mask),
+            observation_mask=observation_mask,
+            inversion=ies.InversionType(module.inversion),
+            truncation=module.get_truncation(),
+        )
+        _save_to_temporary_storage(temp_storage, update_step.parameters, A)
 
     _save_temporary_storage_to_disk(
         target_fs, ensemble_config, temp_storage, iens_active_index
