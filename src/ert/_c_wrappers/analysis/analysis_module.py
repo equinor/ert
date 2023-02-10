@@ -2,6 +2,8 @@ import logging
 from enum import Enum
 from typing import TYPE_CHECKING, Dict, List, Type, TypedDict, Union
 
+from ert._c_wrappers.config.config_parser import ConfigValidationError
+
 logger = logging.getLogger(__name__)
 
 
@@ -120,7 +122,9 @@ class AnalysisModule:
     def get_variable_value(self, name) -> Union[int, float, bool]:
         if name in self._variables:
             return self._variables[name]["value"]
-        raise KeyError(f"Variable {name} not found in module {self.name}")
+        raise ConfigValidationError(
+            f"Variable {name!r} not found in module {self.name!r}"
+        )
 
     def variable_value_dict(self) -> Dict[str, Union[float, int]]:
         return {name: var["value"] for name, var in self._variables.items()}
@@ -172,12 +176,15 @@ class AnalysisModule:
                     var["value"] = new_value
 
             except ValueError:
-                raise ValueError(
-                    f"Variable {var_name} expected type {var['type']}"
-                    f" received value `{value}` of type `{type(value)}`"
+                raise ConfigValidationError(
+                    f"Variable {var_name!r} with value {value!r} has incorrect type."
+                    f" Expected type {var['type'].__name__!r} but received"
+                    f" value {value!r} of type {type(value).__name__!r}"
                 )
         else:
-            raise KeyError(f"Variable {var_name} not found in module")
+            raise ConfigValidationError(
+                f"Variable {var_name!r} not found in {self.name!r} analysis module"
+            )
 
     @property
     def inversion(self):
