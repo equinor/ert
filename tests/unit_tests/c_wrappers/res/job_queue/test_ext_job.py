@@ -11,7 +11,7 @@ from ert._c_wrappers.job_queue.ext_job import ExtJob
 @pytest.mark.usefixtures("use_tmpdir")
 def test_load_forward_model_raises_on_missing():
     with pytest.raises(
-        ConfigValidationError, match="Could not open job config file CONFIG_FILE"
+        ConfigValidationError, match="Could not open job config file 'CONFIG_FILE'"
     ):
         _ = ExtJob.from_config_file("CONFIG_FILE")
 
