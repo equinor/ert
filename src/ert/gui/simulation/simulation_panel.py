@@ -166,7 +166,8 @@ class SimulationPanel(QWidget):
                             "- Previously generated results "
                             "might be overwritten.\n"
                             "- Previously generated files might "
-                            "be used if not configured correctly."
+                            "be used if not configured correctly.\n"
+                            "Are you sure you want to continue?"
                         ),
                         QMessageBox.Yes | QMessageBox.No,
                     )
