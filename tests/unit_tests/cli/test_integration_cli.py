@@ -159,6 +159,51 @@ def test_es_mda(tmpdir, source_root):
         FeatureToggling.reset()
 
 
+@pytest.mark.parametrize(
+    "mode, target",
+    [
+        pytest.param(ENSEMBLE_SMOOTHER_MODE, "target", id=f"{ENSEMBLE_SMOOTHER_MODE}"),
+        pytest.param(
+            ITERATIVE_ENSEMBLE_SMOOTHER_MODE,
+            "iter-%d",
+            id=f"{ITERATIVE_ENSEMBLE_SMOOTHER_MODE}",
+        ),
+        pytest.param(ES_MDA_MODE, "iter-%d", id=f"{ES_MDA_MODE}"),
+    ],
+)
+@pytest.mark.integration_test
+def test_cli_does_not_run_without_observations(tmpdir, source_root, mode, target):
+    shutil.copytree(
+        os.path.join(source_root, "test-data", "poly_example"),
+        os.path.join(str(tmpdir), "poly_example"),
+    )
+
+    def remove_line(file_name, line_num):
+        with open(file_name, "r", encoding="utf-8") as f:
+            lines = f.readlines()
+        with open(file_name, "w", encoding="utf-8") as f:
+            f.writelines(lines[: line_num - 1] + lines[line_num:])
+
+    with tmpdir.as_cwd():
+        # Remove observations from config file
+        remove_line("poly_example/poly.ert", 8)
+
+        parser = ArgumentParser(prog="test_main")
+        parsed = ert_parser(
+            parser,
+            [
+                mode,
+                "--target-case",
+                target,
+                "poly_example/poly.ert",
+            ],
+        )
+        with pytest.raises(
+            RuntimeError, match=f"To run {mode}, observations are needed."
+        ):
+            run_cli(parsed)
+
+
 @pytest.mark.integration_test
 def test_ensemble_evaluator_disable_monitoring(tmpdir, source_root):
     shutil.copytree(
