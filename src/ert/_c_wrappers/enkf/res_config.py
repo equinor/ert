@@ -174,11 +174,10 @@ class ResConfig:
         site_config_content = site_config_parser.parse(site_config_location())
         return config_content_as_dict(site_config_content, {})
 
-    def _validate_queue_option_max_running(self, config_path, config_dict):
+    def _validate_queue_option_max_running(self, config_dict):
         for _, option_name, *values in config_dict.get("QUEUE_OPTION", []):
             if option_name == "MAX_RUNNING" and int(*values) < 0:
                 raise ConfigValidationError(
-                    config_file=config_path,
                     errors=[
                         f"QUEUE_OPTION MAX_RUNNING is negative: {str(*values)}",
                     ],
@@ -207,16 +206,30 @@ class ResConfig:
         self._alloc_from_dict(config_content_dict)
 
     def _alloc_from_dict(self, config_dict):
-        self.ens_path: str = config_dict[ConfigKeys.ENSPATH]
         self.substitution_list = SubstitutionList.from_dict(config_dict=config_dict)
+        if self.user_config_file:
+            config_file = (
+                self.substitution_list.get("<CONFIG_PATH>", "")
+                + "/"
+                + self.substitution_list.get("<CONFIG_FILE>", "")
+            )
+        else:
+            config_file = None
+        self.ens_path: str = config_dict[ConfigKeys.ENSPATH]
         self.env_vars = {}
         for key, val in config_dict.get("SETENV", []):
             self.env_vars[key] = val
         self.random_seed = config_dict.get(ConfigKeys.RANDOM_SEED, None)
-        self.analysis_config = AnalysisConfig.from_dict(config_dict=config_dict)
-        self._validate_queue_option_max_running(None, config_dict)
+        try:
+            self.analysis_config = AnalysisConfig.from_dict(config_dict=config_dict)
+            self._workflows_from_dict(config_dict)
+            self._validate_queue_option_max_running(config_dict)
+            self.installed_jobs = self._installed_jobs_from_dict(config_dict)
+        except ConfigValidationError as err:
+            err.config_file = config_file
+            raise err from None
+
         self.queue_config = QueueConfig.from_dict(config_dict)
-        self._workflows_from_dict(config_dict)
         self.ensemble_config = EnsembleConfig.from_dict(config_dict=config_dict)
         self.model_config = ModelConfig.from_dict(
             self.ensemble_config.refcase, config_dict
@@ -243,26 +256,21 @@ class ResConfig:
         for key in self.ensemble_config.getKeylistFromImplType(ErtImplType.GEN_KW):
             if self.ensemble_config.getNode(key).getUseForwardInit():
                 raise ConfigValidationError(
+                    config_file=config_file,
                     errors=[
                         "Loading GEN_KW from files created by the forward model "
                         "is not supported."
-                    ]
+                    ],
                 )
             if (
                 self.ensemble_config.getNode(key).get_init_file_fmt() is not None
                 and "%" not in self.ensemble_config.getNode(key).get_init_file_fmt()
             ):
                 raise ConfigValidationError(
-                    config_file=self.config_path,
+                    config_file=config_file,
                     errors=["Loading GEN_KW from files requires %d in file format"],
                 )
 
-        self.installed_jobs = self._installed_jobs_from_dict(config_dict)
-        config_file = (
-            self.substitution_list.get("<CONFIG_PATH>", "")
-            + "/"
-            + self.substitution_list.get("<CONFIG_FILE>", "")
-        )
         jobs = []
         for unsubstituted_job_name, args in config_dict.get(
             ConfigKeys.FORWARD_MODEL, []
