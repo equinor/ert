@@ -30,7 +30,7 @@ from ert._clib import trans_func
 if TYPE_CHECKING:
     import numpy.typing as npt
 
-    from ert._c_wrappers.enkf.config import FieldConfig, GenKwConfig
+    from ert._c_wrappers.enkf.config import GenKwConfig
     from ert._c_wrappers.enkf.enums import HookRuntime
     from ert._c_wrappers.enkf.res_config import ResConfig
     from ert.storage import EnsembleAccessor, EnsembleReader, StorageAccessor
