@@ -12,7 +12,7 @@ from typing import Any
 import filelock
 
 from ert._c_wrappers.enkf import EnKFMain, ResConfig
-from ert.cli import WORKFLOW_MODE
+from ert.cli import ENSEMBLE_EXPERIMENT_MODE, TEST_RUN_MODE, WORKFLOW_MODE
 from ert.cli.model_factory import create_model
 from ert.cli.monitor import Monitor
 from ert.cli.workflow import execute_workflow
@@ -44,6 +44,16 @@ def run_cli(args):
     os.chdir(res_config.config_path)
     ert = EnKFMain(res_config)
     facade = LibresFacade(ert)
+    if not facade.have_observations and args.mode not in [
+        ENSEMBLE_EXPERIMENT_MODE,
+        TEST_RUN_MODE,
+        WORKFLOW_MODE,
+    ]:
+        raise RuntimeError(
+            f"To run {args.mode}, observations are needed. \n"
+            f"Please add an observation file to {args.config}. Example: \n"
+            f"'OBS_CONFIG observation_file.txt'."
+        )
     ens_path = Path(res_config.ens_path)
     storage_lock = filelock.FileLock(ens_path / f"{ens_path.stem}.lock")
     try:
