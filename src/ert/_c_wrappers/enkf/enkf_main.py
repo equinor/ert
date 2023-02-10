@@ -157,16 +157,16 @@ def _generate_surface_file(
 def _generate_field_parameter_file(
     fs: EnsembleReader,
     realization: int,
-    config: "FieldConfig",
+    key: str,
     target_file: Path,
     run_path: Path,
 ) -> None:
-    key = config.get_key()
+    field_info = fs.load_field_info(key)
+    file_format = field_info["file_format"]
     file_out = run_path.joinpath(target_file)
     if os.path.islink(file_out):
         os.unlink(file_out)
-    file_type = file_out.suffix[1:]
-    fs.export_field(key, realization, file_out, file_type)
+    fs.export_field(key, realization, file_out, file_format)
 
 
 def _generate_parameter_files(
@@ -202,7 +202,7 @@ def _generate_parameter_files(
             _generate_field_parameter_file(
                 fs,
                 iens,
-                node.getFieldModelConfig(),
+                key,
                 Path(node.get_enkf_outfile()),
                 Path(run_path),
             )
@@ -502,6 +502,7 @@ class EnKFMain:
                         ensemble.save_field_info(
                             parameter,
                             grid_file,
+                            Path(config_node.get_enkf_outfile()).suffix[1:],
                             field_config.get_output_transform_name(),
                             field_config.get_truncation_mode(),
                             field_config.get_truncation_min(),
