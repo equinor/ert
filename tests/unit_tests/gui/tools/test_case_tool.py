@@ -23,7 +23,8 @@ def test_case_tool_init_prior(qtbot):
     )
     tool = CaseInitializationConfigurationPanel(ert, MagicMock())
     qtbot.mouseClick(
-        tool.findChild(QPushButton, name="initialize_scratch_button"), Qt.LeftButton
+        tool.findChild(QPushButton, name="initialize_from_scratch_button"),
+        Qt.LeftButton,
     )
     assert (
         list(storage.getStateMap())
