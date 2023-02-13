@@ -78,6 +78,27 @@ def test_load_forward_model_upgraded():
 
 
 @pytest.mark.usefixtures("use_tmpdir")
+def test_portable_exe_error_message():
+    with open("CONFIG", "w", encoding="utf-8") as f:
+        f.write("PORTABLE_EXE script.sh\n")
+
+    name = "script.sh"
+    with open(name, "w", encoding="utf-8") as f:
+        f.write("This is a script")
+        name = "script.sh"
+        with open(name, "w", encoding="utf-8") as f:
+            f.write("This is a script")
+        mode = os.stat(name).st_mode
+        mode |= stat.S_IXUSR | stat.S_IXGRP
+        os.chmod(name, stat.S_IMODE(mode))
+    with pytest.raises(
+        ConfigValidationError,
+        match='"PORTABLE_EXE" key is deprecated, please replace with "EXECUTABLE"',
+    ):
+        _ = ExtJob.from_config_file("CONFIG")
+
+
+@pytest.mark.usefixtures("use_tmpdir")
 def test_load_forward_model_missing_raises():
     with open("CONFIG", "w", encoding="utf-8") as f:
         f.write("EXECUTABLE missing_script.sh\n")
