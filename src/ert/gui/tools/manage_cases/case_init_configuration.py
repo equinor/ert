@@ -73,6 +73,7 @@ class CaseInitializationConfigurationPanel(QTabWidget):
 
     def addCreateNewCaseTab(self):
         panel = QWidget()
+        panel.setObjectName("create_new_case_tab")
         layout = QVBoxLayout()
         case_list = CaseList(LibresFacade(self.ert), self.notifier)
         case_list.setMaximumWidth(250)
@@ -86,6 +87,7 @@ class CaseInitializationConfigurationPanel(QTabWidget):
 
     def addInitializeFromScratchTab(self):
         panel = QWidget()
+        panel.setObjectName("initialize_from_scratch_panel")
         layout = QVBoxLayout()
 
         row1 = createRow(
@@ -99,7 +101,7 @@ class CaseInitializationConfigurationPanel(QTabWidget):
         layout.addSpacing(10)
 
         initialize_button = QPushButton(
-            "Initialize", objectName="initialize_scratch_button"
+            "Initialize", objectName="initialize_from_scratch_button"
         )
         addHelpToWidget(initialize_button, "init/initialize_from_scratch")
         initialize_button.setMinimumWidth(75)
@@ -126,6 +128,7 @@ class CaseInitializationConfigurationPanel(QTabWidget):
 
     def addInitializeFromExistingTab(self):
         widget = QWidget()
+        widget.setObjectName("intialize_from_existing_panel")
         layout = QVBoxLayout()
 
         target_case = CaseSelector(LibresFacade(self.ert), self.notifier)

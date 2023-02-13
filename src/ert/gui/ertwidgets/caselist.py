@@ -108,6 +108,7 @@ class CaseList(QWidget):
         dialog = ValidatedDialog(
             "New case", "Enter name of new case:", self.facade.cases()
         )
+        dialog.setParent(self)
         new_case_name = dialog.showAndTell()
         if not new_case_name == "":
             try:
