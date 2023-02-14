@@ -19,7 +19,7 @@ class ModelConfig:
         self,
         num_realizations: int = 1,
         refcase: Optional[EclSum] = None,
-        data_root: Optional[str] = None,
+        data_root: Optional[str] = "data_root",
         history_source: Optional[HistorySourceEnum] = None,
         runpath_format_string: Optional[str] = None,
         jobname_format_string: Optional[str] = None,
