@@ -80,10 +80,12 @@ class EnkfFs:
             self.mount_point,
             exist_ok=True,
         )
+        self.experiment_path: Path = mount_point / "experiment"
+        Path.mkdir(self.experiment_path, exist_ok=True)
         self.case_name = self.mount_point.stem
         self.refcase = refcase
         self.time_map = TimeMap()
-        self.time_map.read(str(self.mount_point / "time_map"))
+        self.time_map.read(str(self.experiment_path / "time_map"))
         if self.refcase:
             time_map = self.getTimeMap()
             time_map.attach_refcase(self.refcase)
@@ -101,7 +103,7 @@ class EnkfFs:
         return [s in states for s in self._state_map]
 
     def _load_state_map(self) -> List[RealizationStateEnum]:
-        state_map_file = self.mount_point / "state_map.json"
+        state_map_file = self.experiment_path / "state_map.json"
         if state_map_file.exists():
             with open(state_map_file, "r", encoding="utf-8") as f:
                 data = json.load(f)
@@ -112,7 +114,7 @@ class EnkfFs:
             ]
 
     def _save_state_map(self):
-        state_map_file = self.mount_point / "state_map.json"
+        state_map_file = self.experiment_path / "state_map.json"
         with open(state_map_file, "w", encoding="utf-8") as f:
             data = {"state_map": [v.value for v in self._state_map]}
             f.write(json.dumps(data))
@@ -150,17 +152,19 @@ class EnkfFs:
 
     def sync(self) -> None:
         self._save_state_map()
-        self.time_map.write(str(self.mount_point / "time_map"))
+        self.time_map.write(str(self.experiment_path / "time_map"))
 
     def __repr__(self) -> str:
         return f"EnkfFs(case_name = {self.getCaseName()})"
 
     def getSummaryKeySet(self) -> List[str]:
-        summary_folders = list(self.mount_point.glob("summary-*"))
-        if not summary_folders:
+        realization_folders = list(self.mount_point.glob("realization-*"))
+        if not realization_folders:
             return []
-        summary_path = summary_folders[0]
-        with xr.open_dataset(summary_path / "data.nc", engine="scipy") as ds_disk:
+        summary_path = realization_folders[0] / "summary-data.nc"
+        if not summary_path.exists():
+            return []
+        with xr.open_dataset(summary_path, engine="scipy") as ds_disk:
             keys = sorted(ds_disk["data_key"].values)
         return keys
 
@@ -226,13 +230,13 @@ class EnkfFs:
     def save_ext_param(
         self, key: str, realization: int, data: Dict[str, Dict[str, Any]]
     ) -> None:
-        output_path = self.mount_point / f"extparam-{realization}"
+        output_path = self.mount_point / f"realization-{realization}"
         Path.mkdir(output_path, exist_ok=True)
         with open(output_path / f"{key}.json", "w", encoding="utf-8") as f:
             json.dump(data, f)
 
     def save_surface_file(self, key: str, realization: int, file_name: str) -> None:
-        output_path = self.mount_point / f"surface-{realization}"
+        output_path = self.mount_point / f"realization-{realization}"
         Path.mkdir(output_path, exist_ok=True)
         surf = xtgeo.surface_from_file(file_name, fformat="irap_ascii")
         surf.to_file(output_path / f"{key}.irap", fformat="irap_ascii")
@@ -243,7 +247,7 @@ class EnkfFs:
         )
 
     def load_ext_param(self, key: str, realization: int) -> Any:
-        input_path = self.mount_point / f"extparam-{realization}" / f"{key}.json"
+        input_path = self.mount_point / f"realization-{realization}" / f"{key}.json"
         if not input_path.exists():
             raise KeyError(f"No parameter: {key} in storage")
 
@@ -258,7 +262,7 @@ class EnkfFs:
         base_file_name: str,
         data: npt.NDArray[np.double],
     ) -> None:
-        output_path = self.mount_point / f"surface-{realization}"
+        output_path = self.mount_point / f"realization-{realization}"
         Path.mkdir(output_path, exist_ok=True)
         surf = xtgeo.surface_from_file(base_file_name, fformat="irap_ascii")
         surf.set_values1d(data, order="F")
@@ -270,11 +274,11 @@ class EnkfFs:
         )
 
     def has_surface(self, key: str, realization: int) -> bool:
-        input_path = self.mount_point / f"surface-{realization}"
+        input_path = self.mount_point / f"realization-{realization}"
         return (input_path / f"{key}.irap").exists()
 
     def load_surface_file(self, key: str, realization: int) -> RegularSurface:
-        input_path = self.mount_point / f"surface-{realization}" / f"{key}.irap"
+        input_path = self.mount_point / f"realization-{realization}" / f"{key}.irap"
         if not input_path.exists():
             raise KeyError(f"No parameter: {key} in storage")
         surf = xtgeo.surface_from_file(input_path, fformat="irap_ascii")
@@ -372,11 +376,11 @@ class EnkfFs:
                 dst=to.mount_point / f,
             )
 
-        for surface_folder in self.mount_point.glob("surface-*"):
+        for realization_folder in self.mount_point.glob("realization-*"):
             files_to_copy = []
-            realization = int(str(surface_folder).rsplit("-", maxsplit=1)[-1])
+            realization = int(str(realization_folder).rsplit("-", maxsplit=1)[-1])
             if realization in realizations:
-                for parameter_file in surface_folder.iterdir():
+                for parameter_file in realization_folder.iterdir():
                     base_name = str(parameter_file.stem)
                     if base_name in parameter_keys:
                         files_to_copy.append(parameter_file.name)
@@ -384,11 +388,11 @@ class EnkfFs:
             if not files_to_copy:
                 continue
 
-            Path.mkdir(to.mount_point / surface_folder.stem)
+            Path.mkdir(to.mount_point / realization_folder.stem)
             for f in files_to_copy:
                 shutil.copy(
-                    src=self.mount_point / surface_folder.stem / f,
-                    dst=to.mount_point / surface_folder.stem / f,
+                    src=self.mount_point / realization_folder.stem / f,
+                    dst=to.mount_point / realization_folder.stem / f,
                 )
 
     def save_summary_data(
