@@ -70,6 +70,7 @@ class CaseInitializationConfigurationPanel(QTabWidget):
         self.addInitializeFromScratchTab()
         self.addInitializeFromExistingTab()
         self.addShowCaseInfo()
+        self.currentChanged.connect(self.on_tab_changed)
 
     def addCreateNewCaseTab(self):
         panel = QWidget()
@@ -235,7 +236,7 @@ class CaseInitializationConfigurationPanel(QTabWidget):
 
         layout.addLayout(row1)
 
-        self._case_info_area = QTextEdit()
+        self._case_info_area = QTextEdit(objectName="html_text")
         self._case_info_area.setReadOnly(True)
         self._case_info_area.setMinimumHeight(300)
 
@@ -250,8 +251,6 @@ class CaseInitializationConfigurationPanel(QTabWidget):
 
         self.addTab(case_widget, "Case info")
 
-        self._showInfoForCase()
-
     def _showInfoForCase(self, case_name=None):
         if case_name is None:
             case_name = self.ert.storage_manager.current_case.case_name
@@ -265,3 +264,8 @@ class CaseInitializationConfigurationPanel(QTabWidget):
         html += "</table>"
 
         self._case_info_area.setHtml(html)
+
+    @showWaitCursorWhileWaiting
+    def on_tab_changed(self, p_int):
+        if self.tabText(p_int) == "Case info":
+            self._showInfoForCase()
