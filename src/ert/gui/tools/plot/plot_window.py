@@ -1,4 +1,5 @@
 import logging
+from typing import List
 
 from httpx import RequestError
 from pandas import DataFrame
@@ -74,8 +75,7 @@ class PlotWindow(QMainWindow):
 
         self.setCentralWidget(central_widget)
 
-        self._plot_widgets = []
-        """:type: list of PlotWidget"""
+        self._plot_widgets: List[PlotWidget] = []
 
         self.addPlotWidget(ENSEMBLE, EnsemblePlot())
         self.addPlotWidget(STATISTICS, StatisticsPlot())
@@ -168,8 +168,7 @@ class PlotWindow(QMainWindow):
 
                 plot_widget.updatePlot(plot_context, case_to_data_map, observations)
 
-    def _updateCustomizer(self, plot_widget):
-        """@type plot_widget: PlotWidget"""
+    def _updateCustomizer(self, plot_widget: PlotWidget):
         key_def = self.getSelectedKey()
         if key_def is None:
             return

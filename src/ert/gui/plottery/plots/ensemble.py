@@ -1,17 +1,23 @@
+from typing import TYPE_CHECKING
+
 from ert.gui.plottery.plots.history import plotHistory
 
 from .observations import plotObservations
 from .plot_tools import PlotTools
+
+if TYPE_CHECKING:
+    import pandas as pd
+
+    from ert.gui.plottery import PlotConfig, PlotContext
 
 
 class EnsemblePlot:
     def __init__(self):
         self.dimensionality = 2
 
-    def plot(self, figure, plot_context, case_to_data_map, observation_data):
-        """
-        @type plot_context: ert.gui.plottery.PlotContext
-        """
+    def plot(
+        self, figure, plot_context: "PlotContext", case_to_data_map, observation_data
+    ):
         config = plot_context.plotConfig()
         axes = figure.add_subplot(111)
 
@@ -43,12 +49,16 @@ class EnsemblePlot:
             default_y_label="Value",
         )
 
-    def _plotLines(self, axes, plot_config, data, ensemble_label, is_date_supported):
+    def _plotLines(
+        self,
+        axes,
+        plot_config: "PlotConfig",
+        data: "pd.DataFrame",
+        ensemble_label: str,
+        is_date_supported,
+    ):
         """
         @type axes: matplotlib.axes.Axes
-        @type plot_config: ert.gui.plottery.PlotConfig
-        @type data: pandas.DataFrame
-        @type ensemble_label: Str
         """
 
         style = plot_config.defaultStyle()
