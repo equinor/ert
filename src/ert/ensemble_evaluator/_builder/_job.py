@@ -3,6 +3,8 @@ import uuid
 from pathlib import Path
 from typing import Any, Callable, List, Optional, Tuple, Union
 
+from typing_extensions import Self
+
 from ert._c_wrappers.job_queue.ext_job import ExtJob
 
 SOURCE_TEMPLATE_JOB = "/job/{job_id}/index/{job_index}"
@@ -69,19 +71,19 @@ class BaseJobBuilder:
         self._name: Optional[str] = None
         self._parent_source: Optional[str] = None
 
-    def set_id(self: "BaseJobBuilder", id_: str) -> "BaseJobBuilder":
+    def set_id(self, id_: str) -> Self:
         self._id = id_
         return self
 
-    def set_parent_source(self: "BaseJobBuilder", source: str) -> "BaseJobBuilder":
+    def set_parent_source(self, source: str) -> Self:
         self._parent_source = source
         return self
 
-    def set_name(self: "BaseJobBuilder", name: str) -> "BaseJobBuilder":
+    def set_name(self, name: str) -> Self:
         self._name = name
         return self
 
-    def set_index(self: "BaseJobBuilder", index: str) -> "BaseJobBuilder":
+    def set_index(self, index: str) -> Self:
         self._index = index
         return self
 
@@ -95,11 +97,11 @@ class JobBuilder(BaseJobBuilder):
         self._executable: Optional[_callable_or_path] = None
         self._args: Optional[Tuple[str, ...]] = None
 
-    def set_executable(self, executable: _callable_or_path) -> "JobBuilder":
+    def set_executable(self, executable: _callable_or_path) -> Self:
         self._executable = executable
         return self
 
-    def set_args(self, args: Tuple[str, ...]) -> "JobBuilder":
+    def set_args(self, args: Tuple[str, ...]) -> Self:
         self._args = args
         return self
 
@@ -154,7 +156,7 @@ class LegacyJobBuilder(BaseJobBuilder):
         self._callback_arguments: Optional[List[Any]] = None
         self._max_runtime: Optional[int] = None
 
-    def set_ext_job(self, ext_job: ExtJob) -> "LegacyJobBuilder":
+    def set_ext_job(self, ext_job: ExtJob) -> Self:
         self._ext_job = ext_job
         return self
 

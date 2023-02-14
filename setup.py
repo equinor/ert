@@ -125,6 +125,7 @@ args = dict(
         "filelock",
         "graphlib_backport; python_version < '3.9'",
         "iterative_ensemble_smoother>=0.0.5",
+        "typing_extensions>=4.4",
         "jinja2",
         "matplotlib",
         "numpy",
