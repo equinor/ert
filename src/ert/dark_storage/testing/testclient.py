@@ -1,25 +1,16 @@
 import os
-import requests
-from typing import (
-    Any,
-    AsyncGenerator,
-    Generator,
-    Optional,
-    Tuple,
-    Union,
-)
-
 from contextlib import contextmanager
+from typing import Any, AsyncGenerator, Generator, Optional, Tuple, Union
+
+import requests
 from fastapi import Depends
-from sqlalchemy.exc import DBAPIError
-from sqlalchemy.orm.session import Session
 from sqlalchemy.engine.base import Transaction
-from starlette.testclient import (
-    TestClient as StarletteTestClient,
-    ASGI2App,
-    ASGI3App,
-)
+from sqlalchemy.exc import DBAPIError
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm.session import Session
+from sqlalchemy.sql import text
+from starlette.testclient import ASGI2App, ASGI3App
+from starlette.testclient import TestClient as StarletteTestClient
 
 from ert_storage.security import security
 
@@ -161,10 +152,7 @@ _TransactionInfo = Tuple[sessionmaker, Transaction, Any]
 
 def _override_get_db(session: sessionmaker) -> None:
     from ert_storage.app import app
-    from ert_storage.database import (
-        get_db,
-        IS_POSTGRES,
-    )
+    from ert_storage.database import IS_POSTGRES, get_db
 
     async def override_get_db(
         *, _: None = Depends(security)
@@ -174,7 +162,7 @@ def _override_get_db(session: sessionmaker) -> None:
         # Make PostgreSQL return float8 columns with highest precision. If we don't
         # do this, we may lose up to 3 of the least significant digits.
         if IS_POSTGRES:
-            db.execute("SET extra_float_digits=3")
+            db.execute(text("SET extra_float_digits=3"))
         try:
             yield db
             db.commit()
@@ -188,17 +176,14 @@ def _override_get_db(session: sessionmaker) -> None:
 
 
 def _begin_transaction() -> _TransactionInfo:
-    from ert_storage.database import (
-        engine,
-        IS_SQLITE,
-        HAS_AZURE_BLOB_STORAGE,
-    )
+    from ert_storage.database import HAS_AZURE_BLOB_STORAGE, IS_SQLITE, engine
     from ert_storage.database_schema import Base
 
     if IS_SQLITE:
         Base.metadata.create_all(bind=engine)
     if HAS_AZURE_BLOB_STORAGE:
         import asyncio
+
         from ert_storage.database import create_container_if_not_exist
 
         loop = asyncio.get_event_loop()

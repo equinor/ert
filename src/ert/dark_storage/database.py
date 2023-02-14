@@ -1,12 +1,14 @@
 import os
 from typing import Any
+
 from fastapi import Depends
-from sqlalchemy.exc import DBAPIError
 from sqlalchemy import create_engine
+from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
-from ert_storage.security import security
+from sqlalchemy.sql import text
 
+from ert_storage.security import security
 
 ENV_RDBMS = "ERT_STORAGE_DATABASE_URL"
 ENV_BLOB = "ERT_STORAGE_AZURE_CONNECTION_STRING"
@@ -42,7 +44,7 @@ async def get_db(*, _: None = Depends(security)) -> Any:
     # Make PostgreSQL return float8 columns with highest precision. If we don't
     # do this, we may lose up to 3 of the least significant digits.
     if IS_POSTGRES:
-        db.execute("SET extra_float_digits=3")
+        db.execute(text("SET extra_float_digits=3"))
     try:
         yield db
         db.commit()
@@ -55,6 +57,7 @@ async def get_db(*, _: None = Depends(security)) -> Any:
 
 if HAS_AZURE_BLOB_STORAGE:
     import asyncio
+
     from azure.core.exceptions import ResourceNotFoundError
     from azure.storage.blob.aio import ContainerClient
 
