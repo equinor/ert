@@ -3,7 +3,7 @@ from unittest.mock import MagicMock
 
 import pytest
 from qtpy.QtCore import Qt
-from qtpy.QtWidgets import QPushButton
+from qtpy.QtWidgets import QPushButton, QTextEdit
 
 from ert._c_wrappers.enkf import EnKFMain, ErtConfig
 from ert._clib.state_map import RealizationStateEnum
@@ -75,3 +75,26 @@ def test_that_case_tool_can_copy_case_state(qtbot):
     ).flatten()[
         0
     ] == pytest.approx(-0.8814227775506998)
+
+
+@pytest.mark.usefixtures("copy_poly_case")
+def test_case_tool_init_updates_the_case_info_tab(qtbot):
+    ert = EnKFMain(ErtConfig.from_file("poly.ert"))
+    tool = CaseInitializationConfigurationPanel(ert, MagicMock())
+    html_edit = tool.findChild(QTextEdit, name="html_text")
+
+    assert not html_edit.toPlainText()
+    # Change to the "case info" tab
+    tool.setCurrentIndex(3)
+    assert "STATE_UNDEFINED" in html_edit.toPlainText()
+
+    # Change to the "initialize from scratch" tab
+    tool.setCurrentIndex(1)
+    qtbot.mouseClick(
+        tool.findChild(QPushButton, name="initialize_from_scratch_button"),
+        Qt.LeftButton,
+    )
+
+    # Change to the "case info" tab
+    tool.setCurrentIndex(3)
+    assert "STATE_INITIALIZED" in html_edit.toPlainText()
