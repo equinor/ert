@@ -1061,7 +1061,7 @@ if __name__ == "__main__":
         )
 
         run_cli(parsed)
-        ert = EnKFMain(ResConfig("config.ert"))
+        ert = EnKFMain(ErtConfig.from_file("config.ert"))
         prior = ert.storage_manager["prior"]
         posterior = ert.storage_manager["smoother_update"]
 

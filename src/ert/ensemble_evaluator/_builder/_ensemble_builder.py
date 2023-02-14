@@ -4,9 +4,6 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
 
 from typing_extensions import Self
 
-from ert._c_wrappers.enkf import QueueConfig
-from ert._c_wrappers.enkf.analysis_config import AnalysisConfig
-
 from ._io_ import DummyIOBuilder
 from ._io_map import InputMap, OutputMap
 from ._legacy import LegacyEnsemble
@@ -132,7 +129,7 @@ class EnsembleBuilder:  # pylint: disable=too-many-instance-attributes
         self._inputs = InputMap.from_dict(i_matrix).validate().to_dict()
         self._outputs = OutputMap.from_dict(o_matrix).validate().to_dict()
 
-    def build(self) -> Ensemble:
+    def build(self) -> Self:
         if not (self._reals or self._forward_model):
             raise ValueError("Either forward model or realizations needs to be set")
 
