@@ -409,7 +409,7 @@ def test_that_prior_is_not_overwritten_in_ensemble_experiment(
 
         FeatureToggling.update_from_args(parsed)
         run_cli(parsed)
-        post_ert = EnKFMain(ResConfig("poly.ert"))
+        post_ert = EnKFMain(ErtConfig.from_file("poly.ert"))
         post_facade = LibresFacade(post_ert)
         parameter_values = post_facade.load_all_gen_kw_data("default")
         pd.testing.assert_frame_equal(parameter_values, prior_values)
