@@ -388,7 +388,7 @@ def test_that_prior_is_not_overwritten_in_ensemble_experiment(
     with tmpdir.as_cwd():
         ert = EnKFMain(ResConfig("poly_example/poly.ert"))
         prior_context = ert.load_ensemble_context(
-            "default", list(range(ert.getEnsembleSize())), 0
+            "default", [True] * ert.getEnsembleSize(), 0
         )
         ert.sample_prior(prior_context.sim_fs, prior_context.active_realizations)
         facade = LibresFacade(ert)
@@ -409,5 +409,7 @@ def test_that_prior_is_not_overwritten_in_ensemble_experiment(
 
         FeatureToggling.update_from_args(parsed)
         run_cli(parsed)
-        parameter_values = facade.load_all_gen_kw_data("default")
+        post_ert = EnKFMain(ResConfig("poly.ert"))
+        post_facade = LibresFacade(post_ert)
+        parameter_values = post_facade.load_all_gen_kw_data("default")
         pd.testing.assert_frame_equal(parameter_values, prior_values)
