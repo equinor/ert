@@ -67,6 +67,8 @@ class Storage:
     def __init__(self, mount_point: Path, ensemble_size: int) -> None:
         self.mount_point = mount_point
         self.ensemble_size = ensemble_size
+        self.experiment_path: Path = mount_point / "experiment"
+        Path.mkdir(self.experiment_path, exist_ok=True)
 
     def has_parameters(self) -> bool:
         """
@@ -143,7 +145,7 @@ class Storage:
         axis: List[Any],
         realization: int,
     ) -> None:
-        output_path = self.mount_point / f"summary-{realization}"
+        output_path = self.mount_point / f"realization-{realization}"
         Path.mkdir(output_path, exist_ok=True)
 
         ds = xr.Dataset(
@@ -154,7 +156,7 @@ class Storage:
             },
         )
 
-        ds.to_netcdf(output_path / "data.nc", engine="scipy")
+        ds.to_netcdf(output_path / "summary-data.nc", engine="scipy")
 
     def load_summary_data_as_df(
         self, summary_keys: List[str], realizations: List[int]
@@ -162,10 +164,12 @@ class Storage:
         result = []
         key_set: Set[str] = set()
         for realization in realizations:
-            input_path = self.mount_point / f"summary-{realization}"
+            input_path = self.mount_point / f"realization-{realization}"
             if not input_path.exists():
                 continue
-            with xr.open_dataset(input_path / "data.nc", engine="scipy") as ds_disk:
+            with xr.open_dataset(
+                input_path / "summary-data.nc", engine="scipy"
+            ) as ds_disk:
                 result.append(ds_disk)
                 if not key_set:
                     key_set = set(sorted(ds_disk["data_key"].values))
@@ -179,13 +183,13 @@ class Storage:
         return df
 
     def save_gen_data(self, data: Dict[str, List[float]], realization: int) -> None:
-        output_path = self.mount_point / f"gen-data-{realization}"
+        output_path = self.mount_point / f"realization-{realization}"
         Path.mkdir(output_path, exist_ok=True)
         ds = xr.Dataset(
             data,
         )
 
-        ds.to_netcdf(output_path / "data.nc", engine="scipy")
+        ds.to_netcdf(output_path / "gen-data.nc", engine="scipy")
 
     def load_gen_data(
         self, key: str, realizations: List[int]
@@ -193,11 +197,11 @@ class Storage:
         result = []
         loaded = []
         for realization in realizations:
-            input_path = self.mount_point / f"gen-data-{realization}"
+            input_path = self.mount_point / f"realization-{realization}"
             if not input_path.exists():
                 continue
 
-            with xr.open_dataset(input_path / "data.nc", engine="scipy") as ds_disk:
+            with xr.open_dataset(input_path / "gen-data.nc", engine="scipy") as ds_disk:
                 np_data = ds_disk[key].as_numpy()
                 result.append(np_data)
                 loaded.append(realization)
@@ -236,8 +240,7 @@ class Storage:
         ny: int,
         nz: int,
     ) -> None:
-        input_path = self.mount_point / "field-info"
-        Path.mkdir(input_path, exist_ok=True)
+        Path.mkdir(self.experiment_path, exist_ok=True)
         info = {
             key: {
                 "nx": nx,
@@ -249,16 +252,23 @@ class Storage:
                 "truncation_max": trunc_max,
             }
         }
-        if grid_file is not None and not (input_path / "field-info.egrid").exists():
-            shutil.copy(grid_file, input_path / "field-info.egrid")
+        if (
+            grid_file is not None
+            and not (self.experiment_path / "field-info.egrid").exists()
+        ):
+            shutil.copy(grid_file, self.experiment_path / "field-info.egrid")
 
         existing_info = {}
-        if (input_path / "field-info.json").exists():
-            with open(input_path / "field-info.json", encoding="utf-8", mode="r") as f:
+        if (self.experiment_path / "field-info.json").exists():
+            with open(
+                self.experiment_path / "field-info.json", encoding="utf-8", mode="r"
+            ) as f:
                 existing_info = json.load(f)
         existing_info.update(info)
 
-        with open(input_path / "field-info.json", encoding="utf-8", mode="w") as f:
+        with open(
+            self.experiment_path / "field-info.json", encoding="utf-8", mode="w"
+        ) as f:
             json.dump(existing_info, f)
 
     def save_field_data(
@@ -267,14 +277,14 @@ class Storage:
         realization: int,
         data: npt.ArrayLike,
     ) -> None:
-        output_path = self.mount_point / f"field-{realization}"
+        output_path = self.mount_point / f"realization-{realization}"
         Path.mkdir(output_path, exist_ok=True)
         np.save(f"{output_path}/{parameter_name}", data)
 
     def load_field(self, key: str, realizations: List[int]) -> npt.NDArray[np.double]:
         result = []
         for realization in realizations:
-            input_path = self.mount_point / f"field-{realization}"
+            input_path = self.mount_point / f"realization-{realization}"
             if not input_path.exists():
                 raise KeyError(f"Unable to load FIELD for key: {key}")
             data = np.load(input_path / f"{key}.npy")
@@ -282,11 +292,11 @@ class Storage:
         return np.stack(result).T  # type: ignore
 
     def field_has_data(self, key: str, realization: int) -> bool:
-        path = self.mount_point / f"field-{realization}/{key}.npy"
+        path = self.mount_point / f"realization-{realization}/{key}.npy"
         return path.exists()
 
     def field_has_info(self, key: str) -> bool:
-        path = self.mount_point / "field-info" / "field-info.json"
+        path = self.experiment_path / "field-info.json"
         if not path.exists():
             return False
         with open(path, encoding="utf-8", mode="r") as f:
@@ -296,17 +306,17 @@ class Storage:
     def export_field(
         self, key: str, realization: int, output_path: Path, fformat: str
     ) -> None:
-        info_path = self.mount_point / "field-info"
-
-        with open(info_path / "field-info.json", encoding="utf-8", mode="r") as f:
+        with open(
+            self.experiment_path / "field-info.json", encoding="utf-8", mode="r"
+        ) as f:
             info = json.load(f)[key]
 
-        if (info_path / "field-info.egrid").exists():
-            grid = xtgeo.grid_from_file(info_path / "field-info.egrid")
+        if (self.experiment_path / "field-info.egrid").exists():
+            grid = xtgeo.grid_from_file(self.experiment_path / "field-info.egrid")
         else:
             grid = None
 
-        input_path = self.mount_point / f"field-{realization}"
+        input_path = self.mount_point / f"realization-{realization}"
 
         if not input_path.exists():
             raise KeyError(
