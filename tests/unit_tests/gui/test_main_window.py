@@ -30,7 +30,7 @@ from ert.gui.tools.manage_cases.case_init_configuration import (
 from ert.gui.tools.plot.data_type_keys_widget import DataTypeKeysWidget
 from ert.gui.tools.plot.plot_case_selection_widget import CaseSelectionWidget
 from ert.gui.tools.plot.plot_window import PlotWindow
-from ert.services import Storage
+from ert.services import StorageService
 from ert.shared.models import MultipleDataAssimilation
 
 
