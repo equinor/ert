@@ -326,7 +326,7 @@ class BaseRunModel:
     def _build_ensemble(
         self,
         run_context: RunContext,
-    ) -> "Ensemble":
+    ) -> "EnsembeBuilder":
         builder = EnsembleBuilder().set_legacy_dependencies(
             self._queue_config,
             self.ert().analysisConfig(),
