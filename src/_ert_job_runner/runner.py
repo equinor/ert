@@ -6,10 +6,6 @@ from _ert_job_runner.reporting.message import Finish, Init
 
 class JobRunner:
     def __init__(self, jobs_data):
-        self._data_root = jobs_data.get("DATA_ROOT")
-        if self._data_root:
-            os.environ["DATA_ROOT"] = self._data_root
-
         self.simulation_id = jobs_data.get("run_id")
         self.experiment_id = jobs_data.get("experiment_id")
         self.ens_id = jobs_data.get("ens_id")

@@ -474,7 +474,6 @@ class EnKFMain:
                     forward_model_output = res_config.forward_model_data_to_json(
                         res_config.forward_model_list,
                         run_arg.get_run_id(),
-                        model_config.data_root,
                         run_arg.iens,
                         run_context.iteration,
                         run_context.substituter,

@@ -157,7 +157,6 @@ def test_include_existing_file(tmpdir):
 
 def test_init(minimum_case):
     res_config = minimum_case.resConfig()
-    assert res_config.model_config.data_root == res_config.config_path
 
     assert res_config is not None
 
