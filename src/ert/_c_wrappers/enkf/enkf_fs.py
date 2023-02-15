@@ -17,7 +17,6 @@ import xtgeo
 
 from ert._c_wrappers.enkf.enums import EnkfTruncationType, RealizationStateEnum
 from ert._c_wrappers.enkf.model_callbacks import LoadStatus
-from ert._c_wrappers.enkf.ert_config import EnsembleConfig
 from ert._c_wrappers.enkf.time_map import TimeMap
 from ert._clib import trans_func
 from ert.ensemble_evaluator.callbacks import forward_model_ok
@@ -37,7 +36,7 @@ logger = logging.getLogger(__name__)
 def _load_realization(
     sim_fs: EnkfFs,
     realisation: int,
-    ensemble_config: EnsembleConfig,
+    ensemble_config: "EnsembleConfig",
     run_args: List[RunArg],
 ) -> Tuple[LoadStatus, int]:
     sim_fs.update_realization_state(
@@ -428,7 +427,7 @@ class EnkfFs:
     def load_from_run_path(
         self,
         ensemble_size: int,
-        ensemble_config: EnsembleConfig,
+        ensemble_config: "EnsembleConfig",
         run_args: List[RunArg],
         active_realizations: List[bool],
     ) -> int:
