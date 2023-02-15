@@ -88,11 +88,11 @@ def _start_initial_gui_window(args, log_handler):
         ]
     except ConfigValidationError as error:
         messages.append(str(error))
-        logger.info("Error in config file shown in gui: '%s'", error)
+        logger.info("Error in config file shown in gui: '%s'", str(error))
         return _setup_suggester(messages), None
 
     for job in res_config.forward_model_list:
-        logger.info("Config contains forward model job %s", job)
+        logger.info("Config contains forward model job %s", job.name)
     for wm in warning_messages:
         if wm.category != ConfigWarning:
             logger.warning(wm.message)

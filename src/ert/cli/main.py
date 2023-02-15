@@ -36,7 +36,7 @@ def run_cli(args):
     # the root-logger.
     logger = logging.getLogger(__name__)
     for job in res_config.forward_model_list:
-        logger.info("Config contains forward model job %s", job)
+        logger.info("Config contains forward model job %s", job.name)
 
     for suggestion in ErtConfig.make_suggestion_list(args.config):
         print(f"Warning: {suggestion}")
