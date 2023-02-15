@@ -332,8 +332,28 @@ def test_bad_config_error_message(tmp_path):
 
 
 @pytest.mark.integration_test
+@pytest.mark.parametrize(
+    "prior_mask,reals_rerun_option,should_resample",
+    [
+        pytest.param(
+            None, "0-4", False, id="All realisations first, subset second run"
+        ),
+        pytest.param(
+            [False, True, True, True, True],
+            "2-3",
+            False,
+            id="Subset of realisation first run, subs-subset second run",
+        ),
+        pytest.param(
+            [True] * 3,
+            "0-5",
+            True,
+            id="Subset of realisation first, superset in second run - must resample",
+        ),
+    ],
+)
 def test_that_prior_is_not_overwritten_in_ensemble_experiment(
-    tmpdir, source_root, capsys
+    prior_mask, reals_rerun_option, should_resample, tmpdir, source_root, capsys
 ):
     shutil.copytree(
         os.path.join(source_root, "test-data", "poly_example"),
@@ -342,9 +362,8 @@ def test_that_prior_is_not_overwritten_in_ensemble_experiment(
 
     with tmpdir.as_cwd():
         ert = EnKFMain(ResConfig("poly_example/poly.ert"))
-        prior_context = ert.load_ensemble_context(
-            "default", list(range(ert.getEnsembleSize())), 0
-        )
+        prior_mask = prior_mask or [True] * ert.getEnsembleSize()
+        prior_context = ert.load_ensemble_context("default", prior_mask, 0)
         ert.sample_prior(prior_context.sim_fs, prior_context.active_realizations)
         facade = LibresFacade(ert)
         prior_values = facade.load_all_gen_kw_data("default")
@@ -358,11 +377,17 @@ def test_that_prior_is_not_overwritten_in_ensemble_experiment(
                 "--port-range",
                 "1024-65535",
                 "--realizations",
-                "0-4",
+                reals_rerun_option,
             ],
         )
 
         FeatureToggling.update_from_args(parsed)
         run_cli(parsed)
-        parameter_values = facade.load_all_gen_kw_data("default")
-        pd.testing.assert_frame_equal(parameter_values, prior_values)
+        post_facade = LibresFacade.from_config_file("poly.ert")
+        parameter_values = post_facade.load_all_gen_kw_data("default")
+
+        if should_resample:
+            with pytest.raises(AssertionError):
+                pd.testing.assert_frame_equal(parameter_values, prior_values)
+        else:
+            pd.testing.assert_frame_equal(parameter_values, prior_values)
