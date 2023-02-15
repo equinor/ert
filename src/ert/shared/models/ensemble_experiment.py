@@ -115,7 +115,9 @@ class EnsembleExperiment(BaseRunModel):
         self.setPhase(0, "Running simulations...", indeterminate=False)
 
         self.setPhaseName("Pre processing...", indeterminate=True)
-        if not prior_context.sim_fs.is_initalized:
+        if not prior_context.sim_fs.realizations_initialized(
+            prior_context.active_realizations
+        ):
             self.ert().sample_prior(
                 prior_context.sim_fs,
                 prior_context.active_realizations,

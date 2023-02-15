@@ -386,12 +386,17 @@ class EnKFMain:
                 gen_kw_node = enkf_node.asGenKw()
                 keys = [val[0] for val in gen_kw_node.items()]
                 if config_node.get_init_file_fmt():
+                    logging.info(
+                        f"Reading from init file {config_node.get_init_file_fmt()}"
+                        + f" for {parameter}"
+                    )
                     parameter_values = gen_kw_node.values_from_files(
                         active_realizations,
                         config_node.get_init_file_fmt(),
                         keys,
                     )
                 else:
+                    logging.info(f"Sampling parameter {parameter}")
                     parameter_values = gen_kw_node.sample_values(
                         parameter,
                         keys,
