@@ -49,7 +49,16 @@ def test_that_suggester_gives_rsh_migrations(suggester, tmp_path, kw):
     suggestions = suggester.suggest_migrations(str(tmp_path / "config.ert"))
 
     assert len(suggestions) == 1
-    assert "deprecated and removed support for RHS queues." in suggestions[0]
+    assert "deprecated and removed support for RSH queues." in suggestions[0]
+
+
+@pytest.mark.parametrize("kw", DeprecationMigrationSuggester.USE_QUEUE_OPTION)
+def test_that_suggester_gives_queue_option_migrations(suggester, tmp_path, kw):
+    (tmp_path / "config.ert").write_text(f"NUM_REALIZATIONS 1\n{kw}\n")
+    suggestions = suggester.suggest_migrations(str(tmp_path / "config.ert"))
+
+    assert len(suggestions) == 1
+    assert f"The {kw} keyword has been removed. For most cases " in suggestions[0]
 
 
 def test_that_suggester_gives_refcase_list_migration(suggester, tmp_path):
