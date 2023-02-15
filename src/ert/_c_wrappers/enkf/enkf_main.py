@@ -434,7 +434,6 @@ class EnKFMain:
         (Path(self.res_config.ens_path) / "current_case").write_text(case_name)
 
     def createRunPath(self, run_context: RunContext) -> None:
-        first_time = True
         for iens, run_arg in enumerate(run_context):
             if run_context.is_active(iens):
                 os.makedirs(
@@ -483,12 +482,6 @@ class EnKFMain:
                     )
 
                     json.dump(forward_model_output, fptr)
-
-                    if first_time:
-                        first_time = False
-                        logger.info(
-                            "Content of first jobs.json", extra=forward_model_output
-                        )
 
         run_context.runpaths.write_runpath_list(
             [run_context.iteration], run_context.active_realizations
