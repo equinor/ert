@@ -1,6 +1,3 @@
-import os
-import os.path
-
 import pytest
 
 from _ert_job_runner.reporting.message import Exited, Finish, Start
@@ -22,7 +19,7 @@ def test_run_one_job_with_an_integer_arg_is_actually_a_fractional():
         "arg_types": ["STRING", "RUNTIME_INT"],
     }
 
-    data = {"DATA_ROOT": "/path/to/data", "jobList": [job_0]}
+    data = {"jobList": [job_0]}
 
     runner = JobRunner(data)
     statuses = list(runner.run([]))
@@ -30,8 +27,6 @@ def test_run_one_job_with_an_integer_arg_is_actually_a_fractional():
 
     assert len(starts) == 1, "There should be 1 start message"
     assert not starts[0].success(), "job should not start with success"
-    if "DATA_ROOT" in os.environ:
-        del os.environ["DATA_ROOT"]
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -64,7 +59,6 @@ def test_run_given_one_job_with_missing_file_and_one_file_present():
     }
 
     data = {
-        "DATA_ROOT": "/path/to/data",
         "jobList": [job_0, job_1],
     }
 
@@ -83,5 +77,3 @@ def test_run_given_one_job_with_missing_file_and_one_file_present():
 
     assert isinstance(statuses[-1], Finish), "last message should be Finish"
     assert not statuses[-1].success(), "Finish status should not be success"
-    if "DATA_ROOT" in os.environ:
-        del os.environ["DATA_ROOT"]

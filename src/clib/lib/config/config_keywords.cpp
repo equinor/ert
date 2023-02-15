@@ -297,7 +297,6 @@ ERT_CLIB_SUBMODULE("config_keywords", m) {
             add_num_realizations_keyword(config_parser);
             add_run_template_keyword(config_parser);
             add_path_keyword(config_parser, RUNPATH_KEY);
-            add_path_keyword(config_parser, DATA_ROOT_KEY);
             add_path_keyword(config_parser, ENSPATH_KEY);
             add_single_arg_keyword(config_parser, JOBNAME_KEY);
             add_forward_model_keyword(config_parser);

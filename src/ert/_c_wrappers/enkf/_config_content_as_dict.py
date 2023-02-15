@@ -19,7 +19,6 @@ SINGLE_OCCURRENCE_SINGLE_ARG_KEYS = [
     ConfigKeys.ALPHA_KEY,
     ConfigKeys.ANALYSIS_SELECT,
     ConfigKeys.CONFIG_DIRECTORY,
-    ConfigKeys.DATAROOT,
     ConfigKeys.DATA_FILE,
     ConfigKeys.ECLBASE,
     ConfigKeys.ENSPATH,

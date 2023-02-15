@@ -189,8 +189,6 @@ class ErtConfig:
 
     @staticmethod
     def apply_config_content_defaults(content_dict: dict, config_dir: str):
-        if ConfigKeys.DATAROOT not in content_dict:
-            content_dict[ConfigKeys.DATAROOT] = config_dir
         if ConfigKeys.ENSPATH not in content_dict:
             content_dict[ConfigKeys.ENSPATH] = os.path.join(
                 config_dir, ErtConfig.DEFAULT_ENSPATH
@@ -355,7 +353,6 @@ class ErtConfig:
     def forward_model_data_to_json(
         forward_model_list: List[ExtJob],
         run_id: str,
-        data_root: str = "data_root",
         iens: int = 0,
         itr: int = 0,
         context: "SubstitutionList" = None,
@@ -422,7 +419,6 @@ class ErtConfig:
                     )
 
         return {
-            "DATA_ROOT": data_root,
             "global_environment": env_varlist,
             "jobList": [
                 {

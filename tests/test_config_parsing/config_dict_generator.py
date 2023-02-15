@@ -268,7 +268,6 @@ def generate_config(draw):
                 ConfigKeys.ENSPATH: st.just(draw(words) + ".enspath"),
                 ConfigKeys.TIME_MAP: st.just(draw(file_names) + ".timemap"),
                 ConfigKeys.OBS_CONFIG: st.just("obs-config-" + draw(file_names)),
-                ConfigKeys.DATAROOT: st.just("dataroot"),
                 ConfigKeys.HISTORY_SOURCE: st.just("REFCASE_SIMULATED"),
                 ConfigKeys.REFCASE: st.just("refcase/" + draw(file_names)),
                 ConfigKeys.GEN_KW_EXPORT_NAME: st.just(
@@ -464,7 +463,6 @@ def config_generators(draw):
                 ConfigKeys.ENSPATH,
                 ConfigKeys.TIME_MAP,
                 ConfigKeys.OBS_CONFIG,
-                ConfigKeys.DATAROOT,
                 ConfigKeys.DATA_FILE,
             ]
             for key in keys_that_should_be_absolute:
