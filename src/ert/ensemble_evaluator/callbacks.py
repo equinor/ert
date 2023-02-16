@@ -55,30 +55,33 @@ def forward_model_ok(
                     # Already initialised, ignore
                     continue
 
-                grid = xtgeo.grid_from_file(ens_conf.grid_file)
-                props = xtgeo.gridproperty_from_file(
-                    pfile=file_path, name=key, grid=grid
-                )
-
-                data = props.values1d.data
-                field_config = config_node.getFieldModelConfig()
-                trans = field_config.get_init_transform_name()
-                data_transformed = _field_transform(data, trans)
-                if not run_arg.ensemble_storage.field_has_info(key):
-                    run_arg.ensemble_storage.save_field_info(
-                        key,
-                        ens_conf.grid_file,
-                        field_config.get_output_transform_name(),
-                        field_config.get_truncation_mode(),
-                        field_config.get_truncation_min(),
-                        field_config.get_truncation_max(),
-                        field_config.get_nx(),
-                        field_config.get_ny(),
-                        field_config.get_nz(),
+                try:
+                    grid = xtgeo.grid_from_file(ens_conf.grid_file)
+                    props = xtgeo.gridproperty_from_file(
+                        pfile=file_path, name=key, grid=grid
                     )
-                run_arg.ensemble_storage.save_field_data(
-                    key, run_arg.iens, data_transformed
-                )
+                    data = props.values1d.data
+
+                    field_config = config_node.getFieldModelConfig()
+                    trans = field_config.get_init_transform_name()
+                    data_transformed = _field_transform(data, trans)
+                    if not run_arg.ensemble_storage.field_has_info(key):
+                        run_arg.ensemble_storage.save_field_info(
+                            key,
+                            ens_conf.grid_file,
+                            field_config.get_output_transform_name(),
+                            field_config.get_truncation_mode(),
+                            field_config.get_truncation_min(),
+                            field_config.get_truncation_max(),
+                            field_config.get_nx(),
+                            field_config.get_ny(),
+                            field_config.get_nz(),
+                        )
+                    run_arg.ensemble_storage.save_field_data(
+                        key, run_arg.iens, data_transformed
+                    )
+                except BaseException as ex:
+                    result = (LoadStatus.LOAD_FAILURE, str(ex))
 
                 continue
 
