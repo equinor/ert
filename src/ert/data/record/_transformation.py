@@ -30,19 +30,6 @@ class TransformationDirection(Flag):
     BIDIRECTIONAL = FROM_RECORD | TO_RECORD
     """Transformation is able to transform in both directions."""
 
-    @classmethod
-    def from_direction(cls, direction_string: str) -> "TransformationDirection":
-        """Return a direction from string."""
-        if direction_string == "from_record":
-            return cls.FROM_RECORD
-        elif direction_string == "to_record":
-            return cls.TO_RECORD
-        elif direction_string == "bidirectional":
-            return cls.BIDIRECTIONAL
-        elif direction_string == "none":
-            return cls.NONE
-        raise ValueError(f"unknown TransformationDirection for '{direction_string}'")
-
     def __str__(self) -> str:
         if self == self.__class__.FROM_RECORD:
             return "from_record"
