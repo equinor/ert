@@ -1,4 +1,6 @@
-from ert.ensemble_evaluator.config import EvaluatorServerConfig
+from dns import resolver  # noqa # pylint: disable=unused-import
+
+from ert.ensemble_evaluator.config import EvaluatorServerConfig, get_machine_name
 
 
 def test_load_config(unused_tcp_port):
@@ -35,3 +37,32 @@ def test_load_config(unused_tcp_port):
     assert sock is not None
     assert not sock._closed
     sock.close()
+
+
+def test_that_get_machine_name_is_predictive(mocker):
+    """For ip addresses with multiple PTR records we must ensure
+    that get_machine_name() is predictive to avoid mismatch for SSL certificates.
+
+    The order DNS servers respond to reverse DNS lookups for such hosts is not
+    defined."""
+
+    # GIVEN that reverse DNS resolution results in two names (in random order):
+    ptr_records = ["barfoo01.internaldomain.barf.", "foobar01.equinor.com."]
+
+    # It is important that get_machine_name() is predictive for each
+    # invocation, not how it attains predictiveness. Currently the PTR records
+    # are sorted and the first element is returned, but that should be regarded
+    # as an implementation detail.
+    expected_resolved_name = ptr_records[0].rstrip(".")
+
+    mocker.patch("dns.resolver.resolve", return_value=ptr_records)
+
+    # ASSERT the returned name
+    assert get_machine_name() == expected_resolved_name
+
+    # Shuffle the the list and try again:
+    ptr_records.reverse()
+    mocker.patch("dns.resolver.resolve", return_value=ptr_records)
+
+    # ASSERT that we still get the same name
+    assert get_machine_name() == expected_resolved_name
