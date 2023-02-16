@@ -17,29 +17,37 @@ from ert.ensemble_evaluator._builder import (
     RealizationBuilder,
     StepBuilder,
 )
-from ert.ensemble_evaluator._builder._job import JobBuilder
+from ert.ensemble_evaluator._builder._job import LegacyJobBuilder
 
 
 @pytest.mark.parametrize("active_real", [True, False])
 def test_build_ensemble(active_real):
     ensemble = (
         EnsembleBuilder()
+        .set_legacy_dependencies(MagicMock(), MagicMock())
         .add_realization(
             RealizationBuilder()
             .set_iens(2)
             .add_step(
                 StepBuilder()
+                .set_run_path(pathlib.Path("."))
+                .set_run_arg(MagicMock())
+                .set_job_script("job_script")
+                .set_job_name("job_name")
+                .set_num_cpu(1)
+                .set_callback_arguments(MagicMock())
+                .set_done_callback(MagicMock())
+                .set_exit_callback(MagicMock())
                 .add_job(
-                    JobBuilder()
+                    LegacyJobBuilder()
+                    .set_ext_job(MagicMock())
                     .set_id("4")
                     .set_index("5")
                     .set_name("echo_command")
-                    .set_executable(pathlib.Path("some_path_object"))
                 )
                 .set_id("3")
                 .set_name("some_step")
                 .set_dummy_io()
-                .set_type("unix")
             )
             .active(active_real)
         )
@@ -50,10 +58,6 @@ def test_build_ensemble(active_real):
     real = ensemble.reals[0]
     assert real.active == active_real
     assert real.source() == "/ert/ensemble/1/real/2"
-    step = real.steps[0]
-    assert step.source() == "/ert/ensemble/1/real/2/step/3"
-    job = step.jobs[0]
-    assert job.source() == "/ert/ensemble/1/real/2/step/3/job/4/index/5"
 
 
 @pytest.mark.parametrize(
@@ -163,7 +167,19 @@ def test_topological_sort(steps, expected, ambiguous):
     non_transmitted_factory = MagicMock().return_value = MagicMock()
     non_transmitted_factory.return_value.is_transmitted.return_value = False
     for step_def in steps:
-        step = StepBuilder().set_id("0").set_name(step_def["name"]).set_type("unix")
+        step = (
+            StepBuilder()
+            .set_run_path(pathlib.Path("."))
+            .set_run_arg(MagicMock())
+            .set_job_script("job_script")
+            .set_job_name("job_name")
+            .set_num_cpu(1)
+            .set_callback_arguments(MagicMock())
+            .set_done_callback(MagicMock())
+            .set_exit_callback(MagicMock())
+            .set_id("0")
+            .set_name(step_def["name"])
+        )
         for input_ in step_def["inputs"]:
             step.add_input(
                 InputBuilder()
@@ -184,7 +200,13 @@ def test_topological_sort(steps, expected, ambiguous):
             )
         real.add_step(step)
 
-    ensemble = EnsembleBuilder().add_realization(real).set_id("0").build()
+    ensemble = (
+        EnsembleBuilder()
+        .set_legacy_dependencies(MagicMock(), MagicMock())
+        .add_realization(real)
+        .set_id("0")
+        .build()
+    )
     real = ensemble.reals[0]
 
     if ambiguous:
@@ -198,18 +220,6 @@ def test_topological_sort(steps, expected, ambiguous):
             for step in real.get_steps_sorted_topologically()
             if step.name not in ambiguous
         ]
-
-
-def test_io_transformation_required_for_unix():
-    with pytest.raises(ValueError, match="has no transformation"):
-        (
-            StepBuilder()
-            .add_input(InputBuilder().set_name("input"))
-            .set_type("unix")
-            .set_name("stage")
-            .set_parent_source("/")
-            .build()
-        )
 
 
 @pytest.mark.parametrize(

@@ -1,15 +1,11 @@
 from __future__ import annotations
 
-from itertools import chain
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, List, Optional, Sequence, Union
+from typing import TYPE_CHECKING, List, Optional, Sequence
 
-from ._function_task import FunctionTask
-from ._io_ import IO, DummyIO, DummyIOBuilder, InputBuilder, IOBuilder, OutputBuilder
-from ._io_map import _stage_transmitter_mapping
-from ._job import BaseJob, FunctionJob, JobBuilder, LegacyJob, LegacyJobBuilder, UnixJob
+from ._io_ import IO, DummyIOBuilder, InputBuilder, IOBuilder, OutputBuilder
+from ._job import BaseJob, LegacyJob, LegacyJobBuilder
 from ._stage import Stage, StageBuilder
-from ._unix_task import UnixTask
 
 SOURCE_TEMPLATE_STEP = "/step/{step_id}"
 if TYPE_CHECKING:
@@ -33,43 +29,6 @@ class Step(Stage):
 
     def source(self) -> str:
         return self._source
-
-
-class UnixStep(Step):
-    def __init__(  # pylint: disable=too-many-arguments
-        self,
-        id_: str,
-        inputs: Sequence[IO],
-        outputs: Sequence[IO],
-        jobs: Sequence[BaseJob],
-        name: str,
-        source: str,
-        run_path: Optional[Path] = None,
-    ) -> None:
-        super().__init__(id_, inputs, outputs, jobs, name, source)
-        self._run_path = run_path
-
-    def get_task(
-        self,
-        output_transmitters: _stage_transmitter_mapping,
-        ens_id: str,
-        *args: Any,
-        **kwargs: Any,
-    ) -> UnixTask:
-        return UnixTask(
-            self, output_transmitters, ens_id, *args, run_path=self._run_path, **kwargs
-        )
-
-
-class FunctionStep(Step):
-    def get_task(
-        self,
-        output_transmitters: _stage_transmitter_mapping,
-        ens_id: str,
-        *args: Any,
-        **kwargs: Any,
-    ) -> FunctionTask:
-        return FunctionTask(self, output_transmitters, ens_id, *args, **kwargs)
 
 
 class LegacyStep(Step):  # pylint: disable=too-many-instance-attributes
@@ -109,7 +68,7 @@ class LegacyStep(Step):  # pylint: disable=too-many-instance-attributes
 class StepBuilder(StageBuilder):  # pylint: disable=too-many-instance-attributes
     def __init__(self) -> None:
         super().__init__()
-        self._jobs: List[Union[JobBuilder, LegacyJobBuilder]] = []
+        self._jobs: List[LegacyJobBuilder] = []
         self._type: Optional[str] = None
         self._parent_source: Optional[str] = None
 
@@ -152,7 +111,7 @@ class StepBuilder(StageBuilder):  # pylint: disable=too-many-instance-attributes
         self._parent_source = source
         return self
 
-    def add_job(self, job: Union[JobBuilder, LegacyJobBuilder]) -> "StepBuilder":
+    def add_job(self, job: LegacyJobBuilder) -> "StepBuilder":
         self._jobs.append(job)
         return self
 
@@ -199,7 +158,7 @@ class StepBuilder(StageBuilder):  # pylint: disable=too-many-instance-attributes
         return self
 
     # pylint: disable=too-many-branches
-    def build(self) -> Union[LegacyStep, FunctionStep, UnixStep]:
+    def build(self) -> LegacyStep:
         stage = super().build()
         if not self._parent_source:
             raise ValueError(f"need parent_source for {self._name}")
@@ -245,47 +204,6 @@ class StepBuilder(StageBuilder):  # pylint: disable=too-many-instance-attributes
                 self._job_script,
                 self._job_name,
                 self._run_arg,
-            )
-        if self._type == "function":
-            function_jobs: List[FunctionJob] = []
-            for builder in self._jobs:
-                job = builder.set_parent_source(source).build()
-                if isinstance(job, FunctionJob):
-                    function_jobs.append(job)
-
-            return FunctionStep(
-                stage.id_,
-                stage.inputs,
-                stage.outputs,
-                function_jobs,
-                stage.name,
-                source,
-            )
-        elif self._type == "unix":
-            for io_ in chain(stage.inputs, stage.outputs):
-                # dummy io are used for legacy ensembles can not transform
-                if isinstance(io_, DummyIO):
-                    continue
-
-                if not io_.transformation:
-                    raise ValueError(
-                        f"cannot build {self._type} step: {io_} has no transformation"
-                    )
-
-            unix_jobs: List[UnixJob] = []
-            for builder in self._jobs:
-                job = builder.set_parent_source(source).build()
-                if isinstance(job, UnixJob):
-                    unix_jobs.append(job)
-
-            return UnixStep(
-                stage.id_,
-                stage.inputs,
-                stage.outputs,
-                unix_jobs,
-                stage.name,
-                source,
-                run_path=self._run_path,
             )
         else:
             raise ValueError("Unexpected type while building step: {self._type}")
