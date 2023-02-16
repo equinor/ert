@@ -52,7 +52,7 @@ class LoadResultsPanel(QWidget):
         self._iterations_field = StringBox(
             self._iterations_model, "load_results_manually/iterations"
         )
-        self._iterations_field.setValidator(IntegerArgument())
+        self._iterations_field.setValidator(IntegerArgument(from_value=0))
         layout.addRow("Iteration to load:", self._iterations_field)
 
         self.setLayout(layout)
