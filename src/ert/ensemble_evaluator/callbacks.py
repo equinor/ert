@@ -81,8 +81,8 @@ def forward_model_ok(
                             field_config.get_nz(),
                         )
                     run_arg.ensemble_storage.save_field_data(
-                    key, run_arg.iens, data_transformed
-                )
+                        key, run_arg.iens, data_transformed
+                    )
 
         if result[0] == LoadStatus.LOAD_SUCCESSFUL:
             result = _internalize_results(ens_conf, run_arg)
