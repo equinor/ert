@@ -133,7 +133,6 @@ args = dict(
         "packaging",
         "pandas",
         "pluggy",
-        "prefect<2",
         "protobuf<4",
         "psutil",
         "pydantic >= 1.9",

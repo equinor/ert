@@ -28,8 +28,8 @@ from ._ensemble import Ensemble
 if TYPE_CHECKING:
     from ert._c_wrappers.enkf import AnalysisConfig, QueueConfig, RunArg
 
+    from ..config import EvaluatorServerConfig
     from ._realization import Realization
-    from .config import EvaluatorServerConfig
 
 
 CONCURRENT_INTERNALIZATION = 10
