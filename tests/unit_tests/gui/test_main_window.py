@@ -52,7 +52,7 @@ def opened_main_window(source_root, tmpdir_factory, request):
 
         with Storage.init_service(
             res_config=args_mock.config,
-            project="storage",
+            project=os.path.abspath(poly_case.res_config.ens_path),
         ):
             gui = _setup_main_window(poly_case, args_mock, GUILogHandler())
             yield gui

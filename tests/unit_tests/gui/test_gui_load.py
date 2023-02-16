@@ -209,13 +209,13 @@ def test_that_run_dialog_can_be_closed_after_used_to_open_plots(qtbot):
     args_mock = Mock()
     args_mock.config = str(config_file)
 
+    ert_config = ErtConfig.from_file(str(config_file))
+    enkf_main = EnKFMain(ert_config)
     with Storage.init_service(
-        res_config=args_mock.config,
-        project="storage",
+        res_config=str(config_file),
+        project=os.path.abspath(ert_config.ens_path),
     ):
-        gui = _setup_main_window(
-            EnKFMain(ErtConfig.from_file(str(config_file))), args_mock, GUILogHandler()
-        )
+        gui = _setup_main_window(enkf_main, args_mock, GUILogHandler())
         qtbot.addWidget(gui)
 
         start_simulation = gui.findChild(QToolButton, name="start_simulation")
