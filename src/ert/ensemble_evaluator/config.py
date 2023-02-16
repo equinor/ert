@@ -33,11 +33,13 @@ def get_machine_name():
         # We need the ip-address to perform a reverse lookup to deal with
         # differences in how the clusters are getting their fqdn's
         ip_addr = socket.gethostbyname(hostname)
-        rev_name = reversename.from_address(ip_addr)
-        resolved_host = str(resolver.resolve(rev_name, "PTR")[0])
-        if resolved_host[-1] == ".":
-            resolved_host = resolved_host[:-1]
-        return resolved_host
+        reverse_name = reversename.from_address(ip_addr)
+        resolved_hosts = [
+            str(ptr_record).rstrip(".")
+            for ptr_record in resolver.resolve(reverse_name, "PTR")
+        ]
+        resolved_hosts.sort()
+        return resolved_hosts[0]
     except (resolver.NXDOMAIN, exception.Timeout):
         # If local address and reverse lookup not working - fallback
         # to socket fqdn which are using /etc/hosts to retrieve this name
