@@ -119,9 +119,7 @@ class WorkflowJob:
             return "internal C"
         return "external"
 
-    def run(
-        self, ert: "EnKFMain", storage, arguments: List[Any]
-    ) -> Any:
+    def run(self, ert: "EnKFMain", storage, arguments: List[Any]) -> Any:
         self.__running = True
         if self.min_args and len(arguments) < self.min_args:
             raise ValueError(

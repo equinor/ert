@@ -8,6 +8,7 @@ import threading
 import uuid
 from typing import Any
 
+from ert import LibresFacade
 from ert._c_wrappers.enkf import EnKFMain, ErtConfig
 from ert.cli import ENSEMBLE_EXPERIMENT_MODE, TEST_RUN_MODE, WORKFLOW_MODE
 from ert.cli.model_factory import create_model
@@ -53,9 +54,21 @@ def run_cli(args):
             f"'OBS_CONFIG observation_file.txt'."
         )
     storage = open_storage(ert_config.ens_path, "w")
+
     if args.mode == WORKFLOW_MODE:
         execute_workflow(ert, storage, args.name)
         return
+    facade = LibresFacade(ert)
+    if not facade.have_observations and args.mode not in [
+        ENSEMBLE_EXPERIMENT_MODE,
+        TEST_RUN_MODE,
+        WORKFLOW_MODE,
+    ]:
+        raise RuntimeError(
+            f"To run {args.mode}, observations are needed. \n"
+            f"Please add an observation file to {args.config}. Example: \n"
+            f"'OBS_CONFIG observation_file.txt'."
+        )
 
     evaluator_server_config = EvaluatorServerConfig(custom_port_range=args.port_range)
     experiment = storage.create_experiment()

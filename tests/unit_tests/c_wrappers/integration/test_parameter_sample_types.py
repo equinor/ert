@@ -1220,9 +1220,8 @@ if __name__ == "__main__":
         )
 
         run_cli(parsed)
-        ert = EnKFMain(ErtConfig.from_file("config.ert"))
 
-        with open_storage(str(tmpdir / "storage")) as storage:
+        with open_storage(tmpdir / "storage") as storage:
             prior = storage.get_ensemble_by_name("prior")
             posterior = storage.get_ensemble_by_name("smoother_update")
             prior_param = prior.load_surface_data("MY_PARAM", list(range(5)))

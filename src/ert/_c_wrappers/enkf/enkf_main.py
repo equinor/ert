@@ -25,11 +25,12 @@ from ert._c_wrappers.enkf.model_config import ModelConfig
 from ert._c_wrappers.enkf.queue_config import QueueConfig
 from ert._c_wrappers.enkf.runpaths import Runpaths
 from ert._c_wrappers.util.substitution_list import SubstitutionList
-from ert._clib import trans_func
+from ert._clib import trans_func  # noqa: no_type_check
 
 if TYPE_CHECKING:
     import numpy.typing as npt
 
+    from ert._c_wrappers.enkf import ErtConfig
     from ert._c_wrappers.enkf.config import FieldConfig, GenKwConfig
     from ert._c_wrappers.enkf.enums import HookRuntime
     from ert.storage import EnsembleAccessor, EnsembleReader, StorageAccessor
