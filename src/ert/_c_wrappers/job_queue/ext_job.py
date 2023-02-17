@@ -287,8 +287,8 @@ class ExtJob:
                 f"{key}={self.private_args[key]}" for key in unused_private_args_keys
             ]
             raise ExtJobInvalidArgsException(
-                "following arguments to job have no effect (values after "
-                f"applying defines): {','.join(unused_private_args_representation)}"
+                f"following arguments to job {self.name!r} have no effect (values after"
+                f" applying defines): {','.join(unused_private_args_representation)}"
             )
 
     def _validate_all_magic_string_in_arglist_get_resolved(
@@ -326,12 +326,12 @@ class ExtJob:
         )
         if args_with_unresolved_substrings:
             unresolved_args_representation = [
-                f"original arg: `{orig_arg}`, after attempted substituting: "
-                f"`{modified_arg}`"
+                f"original arg: {orig_arg!r}, after attempted substituting: "
+                f"{modified_arg!r}"
                 for orig_arg, modified_arg in args_with_unresolved_substrings
             ]
             raise ExtJobInvalidArgsException(
-                f"Job {self.name} has unresolved arguments after "
+                f"Job {self.name!r} has unresolved arguments after "
                 "applying argument substitutions, defines and default values: "
                 f"{', '.join(unresolved_args_representation)}"
             )
