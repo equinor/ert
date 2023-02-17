@@ -57,7 +57,7 @@ def run_sim(start_date):
             "2.0",
             pytest.raises(
                 ObservationConfigError,
-                match="FOPR_1 failed to match time, corresponding to DAYS=2",
+                match="FOPR_1 does not have a matching time in the time map. DAYS=2",
             ),
             id="Outside tolerance",
         ),
