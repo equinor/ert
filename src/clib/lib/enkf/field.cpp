@@ -1,3 +1,4 @@
+#include <fcntl.h>
 #include <filesystem>
 
 #include <Eigen/Dense>
@@ -825,16 +826,27 @@ bool field_fload_typed(field_type *field, const char *filename,
 
 static bool field_fload_custom__(field_type *field, const char *filename,
                                  bool keep_inactive) {
-    if (util_file_readable(filename)) {
-        field_file_format_type file_type =
-            field_config_guess_file_type(filename);
-        if (file_type == UNDEFINED_FORMAT)
-            util_abort("%s - could not automagically infer type for file: %s\n",
-                       __func__, filename);
+    int test_file_readability = open(filename, O_RDONLY);
+    if (test_file_readability == -1) {
+        auto errMsg =
+            fmt::format("failed to open `{}` - {}", filename, strerror(errno));
+        throw std::runtime_error(errMsg);
+    }
+    if (close(test_file_readability) == -1) {
+        auto errMsg = fmt::format("unexpected failure to close `{}` - {}",
+                                  filename, strerror(errno));
+        throw std::runtime_error(errMsg);
+    }
 
-        return field_fload_typed(field, filename, file_type, keep_inactive);
-    } else
-        return false;
+    field_file_format_type file_type = field_config_guess_file_type(filename);
+    if (file_type == UNDEFINED_FORMAT) {
+        std::string errMsg = fmt::format("could not automagically infer type "
+                                         "for file: %s\n",
+                                         filename);
+        throw std::runtime_error(errMsg);
+    }
+
+    return field_fload_typed(field, filename, file_type, keep_inactive);
 }
 
 bool field_fload(field_type *field, const char *filename) {

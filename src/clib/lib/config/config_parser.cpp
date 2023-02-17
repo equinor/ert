@@ -1,3 +1,4 @@
+#include <fcntl.h>
 #include <filesystem>
 
 #include <stdio.h>
@@ -657,15 +658,26 @@ config_parse(config_parser_type *config, const char *filename,
         hash_iter_free(keys);
     }
 
-    if (util_file_readable(filename)) {
+    int test_file_readability = open(filename, O_RDONLY);
+    if (test_file_readability == -1) {
+        auto error_message =
+            fmt::format("Could not open file:{} for parsing", filename);
+        content->parse_errors.push_back(error_message);
+    }
+    int test_file_readability_close = close(test_file_readability);
+    if (test_file_readability_close == -1) {
+        auto error_message =
+            fmt::format("unexpected failure to close `{}` while "
+                        "checking if readable for parsing",
+                        filename, strerror(errno));
+        content->parse_errors.push_back(error_message);
+    }
+
+    if (test_file_readability != -1 && test_file_readability_close != -1) {
         path_stack_type *path_stack = path_stack_alloc();
         config_parse__(config, content, path_stack, filename, comment_string,
                        include_kw, define_kw, unrecognized_behaviour, validate);
         path_stack_free(path_stack);
-    } else {
-        std::string error_message =
-            util_alloc_sprintf("Could not open file:%s for parsing", filename);
-        content->parse_errors.push_back(error_message);
     }
 
     if (content->parse_errors.size() == 0)
