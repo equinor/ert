@@ -308,7 +308,7 @@ def test_bad_config_error_message(tmp_path):
 
 @pytest.mark.integration_test
 def test_that_prior_is_not_overwritten_in_ensemble_experiment(
-    tmpdir, source_root, capsys
+    tmpdir, source_root, capsys, storage
 ):
     shutil.copytree(
         os.path.join(source_root, "test-data", "poly_example"),
@@ -317,12 +317,18 @@ def test_that_prior_is_not_overwritten_in_ensemble_experiment(
 
     with tmpdir.as_cwd():
         ert = EnKFMain(ErtConfig.from_file("poly_example/poly.ert"))
-        prior_context = ert.load_ensemble_context(
-            "default", [True] * ert.getEnsembleSize(), 0
+        experiment_id = storage.create_experiment()
+        ensemble = storage.create_ensemble(
+            experiment_id, name="default", ensemble_size=ert.getEnsembleSize()
+        )
+        prior_context = ert.ensemble_context(
+            ensemble, [True] * ert.getEnsembleSize(), 0
         )
         ert.sample_prior(prior_context.sim_fs, prior_context.active_realizations)
         facade = LibresFacade(ert)
-        prior_values = facade.load_all_gen_kw_data("default")
+        prior_values = facade.load_all_gen_kw_data(
+            storage.get_ensemble_by_name("default")
+        )
 
         parser = ArgumentParser(prog="test_main")
         parsed = ert_parser(
@@ -340,5 +346,7 @@ def test_that_prior_is_not_overwritten_in_ensemble_experiment(
         FeatureToggling.update_from_args(parsed)
         run_cli(parsed)
         post_facade = LibresFacade.from_config_file("poly.ert")
-        parameter_values = post_facade.load_all_gen_kw_data("default")
+        parameter_values = post_facade.load_all_gen_kw_data(
+            storage.get_ensemble_by_name("default")
+        )
         pd.testing.assert_frame_equal(parameter_values, prior_values)

@@ -14,7 +14,7 @@ from ert.gui.main import GUILogHandler, _setup_main_window, run_gui
 from ert.gui.simulation.run_dialog import RunDialog
 from ert.gui.tools.event_viewer import add_gui_log_handler
 from ert.gui.tools.plot.plot_window import PlotWindow
-from ert.services import Storage
+from ert.services import StorageService
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -212,7 +212,7 @@ def test_that_run_dialog_can_be_closed_after_used_to_open_plots(qtbot, storage):
 
     ert_config = ErtConfig.from_file(str(config_file))
     enkf_main = EnKFMain(ert_config)
-    with Storage.init_service(
+    with StorageService.init_service(
         res_config=str(config_file),
         project=os.path.abspath(ert_config.ens_path),
     ):

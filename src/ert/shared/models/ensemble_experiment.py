@@ -7,8 +7,7 @@ from uuid import UUID
 import _ert_com_protocol
 from ert._c_wrappers.enkf import RunContext
 from ert._c_wrappers.enkf.enkf_main import EnKFMain, QueueConfig
-from ert._c_wrappers.enkf.enums import HookRuntime
-from ert._clib.state_map import STATE_INITIALIZED, STATE_LOAD_FAILURE, STATE_UNDEFINED
+from ert._c_wrappers.enkf.enums import HookRuntime, RealizationStateEnum
 from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.shared.models import BaseRunModel
 from ert.shared.models.base_run_model import ErtRunError
@@ -126,10 +125,13 @@ class EnsembleExperiment(BaseRunModel):
                 prior_context.active_realizations,
             )
         else:
-            state_map = prior_context.sim_fs.getStateMap()
+            state_map = prior_context.sim_fs.state_map
             for realization_nr in prior_context.active_realizations:
-                if state_map[realization_nr] in [STATE_UNDEFINED, STATE_LOAD_FAILURE]:
-                    state_map[realization_nr] = STATE_INITIALIZED
+                if state_map[realization_nr] in [
+                    RealizationStateEnum.STATE_UNDEFINED,
+                    RealizationStateEnum.STATE_LOAD_FAILURE,
+                ]:
+                    state_map[realization_nr] = RealizationStateEnum.STATE_INITIALIZED
         self.ert().createRunPath(prior_context)
 
         self.ert().runWorkflows(HookRuntime.PRE_SIMULATION)

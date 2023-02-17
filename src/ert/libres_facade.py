@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Union
 from ecl.grid import EclGrid
 from pandas import DataFrame, Series
 
-from ert._c_wrappers.enkf import EnKFMain, ErtImplType, ErtConfig
+from ert._c_wrappers.enkf import EnKFMain, ErtConfig, ErtImplType
 from ert._c_wrappers.enkf.config import GenKwConfig
 from ert._c_wrappers.enkf.enums import (
     EnkfObservationImplementationType,

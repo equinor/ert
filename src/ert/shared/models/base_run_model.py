@@ -14,7 +14,7 @@ from cloudevents.http import CloudEvent
 import _ert_com_protocol
 from ert._c_wrappers.enkf import EnKFMain, QueueConfig
 from ert._c_wrappers.enkf.ert_run_context import RunContext
-from ert._c_wrappers.job_queue import ForwardModel, RunStatusType
+from ert._c_wrappers.job_queue import RunStatusType
 from ert.callbacks import forward_model_exit, forward_model_ok
 from ert.ensemble_evaluator import (
     Ensemble,
@@ -462,9 +462,6 @@ class BaseRunModel:
     @dispatch.register
     async def _(self, event: _ert_com_protocol.DispatcherMessage) -> None:
         await self._state_machine.update(event)
-
-    def get_forward_model(self) -> ForwardModel:
-        return self.ert().resConfig().forward_model
 
     def check_if_runpath_exists(self) -> bool:
         """

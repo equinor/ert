@@ -57,7 +57,7 @@ def forward_model_ok(
                     key = config_node.getKey()
                     if run_arg.ensemble_storage.field_has_data(key, run_arg.iens):
                         # Already initialised, ignore
-                    continue
+                        continue
                 if config_node.getImplementationType() == ErtImplType.SURFACE:
                     run_path = Path(run_arg.runpath)
                     file_name = config_node.get_init_file_fmt()
@@ -66,7 +66,7 @@ def forward_model_ok(
                     file_path = run_path / file_name
                     if file_path.exists():
                         run_arg.ensemble_storage.save_surface_file(
-                            config_node.getKey(), run_arg.iens, file_path
+                            config_node.getKey(), run_arg.iens, str(file_path)
                         )
                     else:
                         error_msg += (
