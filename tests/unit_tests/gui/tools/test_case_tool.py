@@ -1,4 +1,5 @@
 from textwrap import dedent
+from unittest.mock import MagicMock
 
 import pytest
 from qtpy.QtCore import Qt
