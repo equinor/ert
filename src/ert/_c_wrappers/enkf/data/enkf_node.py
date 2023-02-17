@@ -107,10 +107,10 @@ class EnkfNode(BaseCClass):
     def name(self) -> str:
         return self._get_name()
 
-    def load(self, fs: EnkfFs, node_id: NodeId):
+    def load(self, fs: EnkfFs, node_id: NodeId) -> None:
         if not self.tryLoad(fs, node_id):
-            raise Exception(
-                f"Could not load node: {self.name()} iens: {node_id.iens} "
+            raise RuntimeError(
+                f"Could not load node: {self.name()!r}, iens: {node_id.iens} "
                 f"report: {node_id.report_step}"
             )
 

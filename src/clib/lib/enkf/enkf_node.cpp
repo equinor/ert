@@ -257,8 +257,22 @@ bool enkf_node_store(enkf_node_type *enkf_node, enkf_fs_type *fs,
 bool enkf_node_try_load(enkf_node_type *enkf_node, enkf_fs_type *fs,
                         node_id_type node_id) {
     if (enkf_node_has_data(enkf_node, fs, node_id)) {
-        enkf_node_load(enkf_node, fs, node_id);
-        return true;
+        try {
+            enkf_node_load(enkf_node, fs, node_id);
+            return true;
+        } catch (std::range_error &err) {
+            std::string error_message = fmt::format(
+                "failed to load node `{}` of type `{}` - {}",
+                enkf_node->node_key,
+                enkf_types_get_impl_name(enkf_node->config->impl_type),
+                err.what());
+            throw std::range_error(error_message);
+        } catch (...) {
+            std::string context_message = fmt::format(
+                "failed to load node `{}` of type `{}`", enkf_node->node_key,
+                enkf_types_get_impl_name(enkf_node->config->impl_type));
+            std::throw_with_nested(std::runtime_error(context_message));
+        }
     } else
         return false;
 }
@@ -419,11 +433,21 @@ void enkf_node_deserialize(enkf_node_type *enkf_node, enkf_fs_type *fs,
 */
 bool enkf_node_initialize(enkf_node_type *enkf_node, int iens) {
     if (enkf_node->initialize != NULL) {
-        char *init_file =
-            enkf_config_node_alloc_initfile(enkf_node->config, NULL, iens);
-        bool init = enkf_node->initialize(enkf_node->data, iens, init_file);
-        free(init_file);
-        return init;
+        std::unique_ptr<char> init_file(
+            enkf_config_node_alloc_initfile(enkf_node->config, NULL, iens));
+        try {
+            bool init =
+                enkf_node->initialize(enkf_node->data, iens, init_file.get());
+            return init;
+        } catch (std::exception &err) {
+            std::string err_msg = fmt::format(
+                "failed to initialize node `{}` of type `{}` for realization "
+                "number {} - {}",
+                enkf_node->node_key,
+                enkf_types_get_impl_name(enkf_node->config->impl_type), iens,
+                err.what());
+            throw std::runtime_error(err_msg);
+        }
     } else
         return false; /* No init performed */
 }

@@ -1,10 +1,14 @@
 import os
+from argparse import ArgumentParser
 
 import pytest
 
+from ert.__main__ import ert_parser
 from ert._c_wrappers.enkf import NodeId
 from ert._c_wrappers.enkf.config import FieldTypeEnum
 from ert._c_wrappers.enkf.data import EnkfNode
+from ert.cli import TEST_RUN_MODE
+from ert.cli.main import ErtCliError, run_cli
 
 
 def test_field_type_enum(snake_oil_field_example):
@@ -60,3 +64,35 @@ def test_field_export_many(snake_oil_field_example):
     assert os.path.isfile("export/with/path/PERMX_0.grdecl")
     assert os.path.isfile("export/with/path/PERMX_2.grdecl")
     assert os.path.isfile("export/with/path/PERMX_4.grdecl")
+
+
+def test_field_init_file_not_readable(copy_case):
+    copy_case("snake_oil_field")
+    config_file_name = "snake_oil_field.ert"
+    field_file_rel_path = "fields/permx0.grdecl"
+    os.chmod(field_file_rel_path, 0x0)
+    parser = ArgumentParser(prog="test_field_init_segfault")
+    parsed = ert_parser(
+        parser,
+        [
+            TEST_RUN_MODE,
+            config_file_name,
+        ],
+    )
+
+    try:
+        run_cli(parsed)
+    except ErtCliError as err:
+        assert "failed to open" in str(err)
+
+
+def run_ert_test_run(config_file: str) -> None:
+    parser = ArgumentParser(prog="test_run")
+    parsed = ert_parser(
+        parser,
+        [
+            TEST_RUN_MODE,
+            config_file,
+        ],
+    )
+    run_cli(parsed)
