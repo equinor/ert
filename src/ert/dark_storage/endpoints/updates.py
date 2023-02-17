@@ -12,7 +12,6 @@ def create_update(
     db: Session = Depends(get_db),
     update: js.UpdateIn,
 ) -> js.UpdateOut:
-
     ensemble = db.query(ds.Ensemble).filter_by(id=update.ensemble_reference_id).one()
     update_obj = ds.Update(
         algorithm=update.algorithm,

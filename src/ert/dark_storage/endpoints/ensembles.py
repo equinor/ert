@@ -14,7 +14,6 @@ router = APIRouter(tags=["ensemble"])
 def post_ensemble(
     *, db: Session = Depends(get_db), ens_in: js.EnsembleIn, experiment_id: UUID
 ) -> ds.Ensemble:
-
     experiment = db.query(ds.Experiment).filter_by(id=experiment_id).one()
     active_reals = (
         ens_in.active_realizations
