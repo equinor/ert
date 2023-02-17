@@ -8,7 +8,7 @@ import pytest
 from ecl.summary import EclSum
 
 from ert import LibresFacade
-from ert._c_wrappers.enkf import EnKFMain, ResConfig
+from ert._c_wrappers.enkf import EnKFMain, ErtConfig
 from ert.analysis import ErtAnalysisError, ESUpdate
 
 
@@ -57,7 +57,7 @@ def setup_configuration(tmpdir):
         # We create a reference case
         ref_time = [datetime(2014, 9, 9) + timedelta(days=i) for i in range(10)]
         run_sim(ref_time, 0.5)
-        res_config = ResConfig("config.ert")
+        res_config = ErtConfig.from_file("config.ert")
         ert = EnKFMain(res_config)
         yield ert
 
