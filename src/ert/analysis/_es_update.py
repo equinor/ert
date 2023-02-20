@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -57,6 +59,41 @@ def _get_A_matrix(
                 temporary_storage[p.name][p.active_list.get_active_index_list(), :]
             )
     return np.vstack(matrices) if matrices else None
+
+
+def _param_ensemble_for_projection(
+    temp_storage: Dict[str, npt.NDArray[np.double]],
+    ensemble_size: int,
+    updatestep: UpdateConfiguration,
+) -> Optional[npt.NDArray[np.double]]:
+    """Responses must be projected when num_params < ensemble_size - 1.
+    The number of parameters here refers to the total number of parameters used to
+    drive the model and not the number of parameters in a local update step.
+
+    Scenario 1:
+        - p < N - 1, meaning that projection needs to be done.
+        - User wants to loop through each parameter and update it separately,
+          perhaps to do distance based localization.
+        In this case, we need to pass `param_ensemble` to the smoother
+        so that the responses are projected using the same `param_ensemble`
+        in every loop.
+    Scenario 2:
+        - p > N - 1, meaning that projection is not necessary.
+        - User wants to loop through every parameter as in Scenario 1.
+        In this case `param_ensemble` should be `None` which means
+        that no projection will be done even when updating a single parameter.
+    """
+    num_params = sum(arr.shape[0] for arr in temp_storage.values())
+    if num_params < ensemble_size - 1:
+        _params: List[List[update.Parameter]] = [
+            update_step.parameters for update_step in updatestep
+        ]
+        # Flatten list of lists
+        params: List[update.Parameter] = [
+            item for sublist in _params for item in sublist
+        ]
+        return _get_A_matrix(temp_storage, params)
+    return None
 
 
 def _get_row_scaling_A_matrices(
@@ -150,6 +187,12 @@ def analysis_ES(
     temp_storage = _create_temporary_parameter_storage(
         source_fs, ensemble_config, iens_active_index
     )
+
+    ensemble_size = sum(ens_mask)
+    param_ensemble = _param_ensemble_for_projection(
+        temp_storage, ensemble_size, updatestep
+    )
+
     # Looping over local analysis update_step
     for update_step in updatestep:
         try:
@@ -163,7 +206,8 @@ def analysis_ES(
                 update_step.observation_config(),
             )
         except IndexError as e:
-            raise ErtAnalysisError(e)
+            raise ErtAnalysisError(e) from e
+
         # pylint: disable=unsupported-assignment-operation
         smoother_snapshot.update_step_snapshots[
             update_step.name
@@ -180,16 +224,19 @@ def analysis_ES(
             temp_storage, update_step.row_scaling_parameters
         )
         noise = rng.standard_normal(size=(len(observation_values), S.shape[1]))
+
         if A is not None:
-            A = ies.ensemble_smoother_update_step(
+            smoother = ies.ES()
+            smoother.fit(
                 S,
-                A,
                 observation_errors,
                 observation_values,
-                noise,
-                module.get_truncation(),
-                ies.InversionType(module.inversion),
+                noise=noise,
+                truncation=module.get_truncation(),
+                inversion=ies.InversionType(module.inversion),
+                param_ensemble=param_ensemble,
             )
+            A = smoother.update(A)
             _save_to_temporary_storage(temp_storage, update_step.parameters, A)
         if A_with_rowscaling:
             A_with_rowscaling = ensemble_smoother_update_step_row_scaling(
@@ -224,12 +271,17 @@ def analysis_IES(
     ensemble_config: "EnsembleConfig",
     source_fs: "EnkfFs",
     target_fs: "EnkfFs",
-    iterative_ensemble_smoother: ies.IterativeEnsembleSmoother,
+    iterative_ensemble_smoother: ies.SIES,
 ) -> None:
     iens_active_index = [i for i in range(len(ens_mask)) if ens_mask[i]]
 
     temp_storage = _create_temporary_parameter_storage(
         source_fs, ensemble_config, iens_active_index
+    )
+
+    ensemble_size = sum(ens_mask)
+    param_ensemble = _param_ensemble_for_projection(
+        temp_storage, ensemble_size, updatestep
     )
 
     # Looping over local analysis update_step
@@ -252,7 +304,6 @@ def analysis_IES(
         ] = observation_handle.update_snapshot
         observation_values = observation_handle.observation_values
         observation_errors = observation_handle.observation_errors
-        observation_mask = observation_handle.obs_mask
         if len(observation_values) == 0:
             raise ErtAnalysisError(
                 f"No active observations for update step: {update_step.name}."
@@ -261,17 +312,18 @@ def analysis_IES(
         A = _get_A_matrix(temp_storage, update_step.parameters)
 
         noise = rng.standard_normal(size=(len(observation_values), S.shape[1]))
-        A = iterative_ensemble_smoother.update_step(
+
+        iterative_ensemble_smoother.fit(
             S,
-            A,
             observation_errors,
             observation_values,
-            noise,
+            noise=noise,
             ensemble_mask=np.array(ens_mask),
-            observation_mask=observation_mask,
-            inversion=ies.InversionType(module.inversion),
             truncation=module.get_truncation(),
+            inversion=ies.InversionType(module.inversion),
+            param_ensemble=param_ensemble,
         )
+        A = iterative_ensemble_smoother.update(A)
         _save_to_temporary_storage(temp_storage, update_step.parameters, A)
 
     _save_temporary_storage_to_disk(
@@ -390,7 +442,7 @@ class ESUpdate:
         self,
         prior_storage: "EnkfFs",
         posterior_storage: "EnkfFs",
-        w_container: ies.IterativeEnsembleSmoother,
+        w_container: ies.SIES,
         run_id: str,
     ) -> None:
         updatestep = self.ert.getLocalConfig()

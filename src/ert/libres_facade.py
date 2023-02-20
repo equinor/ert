@@ -19,7 +19,7 @@ from ert.data import MeasuredData
 _logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
-    from iterative_ensemble_smoother import IterativeEnsembleSmoother
+    from iterative_ensemble_smoother import SIES
 
     from ert._c_wrappers.analysis import AnalysisModule
     from ert._c_wrappers.analysis.configuration import UpdateConfiguration
@@ -53,7 +53,7 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
         self,
         prior_storage: "EnkfFs",
         posterior_storage: "EnkfFs",
-        ies: "IterativeEnsembleSmoother",
+        ies: "SIES",
         run_id: str,
     ) -> None:
         self._es_update.iterative_smoother_update(
