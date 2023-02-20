@@ -20,7 +20,11 @@ class QueueConfig:
     def from_dict(cls, config_dict):
         queue_system = config_dict.get("QUEUE_SYSTEM", "LOCAL")
 
-        valid_queue_systems = ["LSF", "LOCAL", "TORQUE", "SLURM"]
+        valid_queue_systems = []
+
+        for driver_names in QueueDriverEnum.enums():
+            if driver_names.name not in str(QueueDriverEnum.NULL_DRIVER):
+                valid_queue_systems.append(driver_names.name[: -len("_DRIVER")])
 
         if queue_system not in valid_queue_systems:
             raise ConfigValidationError(
