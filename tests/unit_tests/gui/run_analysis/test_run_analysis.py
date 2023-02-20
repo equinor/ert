@@ -32,16 +32,20 @@ def mock_tool():
 @pytest.mark.requires_window_manager
 @patch("ert.gui.tools.run_analysis.run_analysis_tool.analyse", return_value=None)
 @patch("ert.gui.tools.run_analysis.run_analysis_tool.QMessageBox")
-def test_show_dialogue_at_success(mock_messagebox, mock_analyse, mock_tool):
-    mock_tool._run_widget.source_case.return_value = "source"
-    mock_tool._run_widget.target_case.return_value = "target"
-    mock_tool.notifier.storage.get_ensemble_by_name = lambda x: x
+def test_show_dialogue_at_success(mock_messagebox, mock_analyse, mock_tool, storage):
+    experiment = storage.create_experiment()
+    source = experiment.create_ensemble(ensemble_size=1, name="source")
+    target = experiment.create_ensemble(ensemble_size=1, name="target")
+
+    mock_tool._run_widget.source_case.return_value = source
+    mock_tool._run_widget.target_case.return_value = target.name
+    mock_tool.notifier.storage.create_ensemble.return_value = target
 
     ert_mock = Mock()
     mock_tool.ert = ert_mock
     mock_tool.run()
 
-    mock_analyse.assert_called_once_with(ert_mock, "target", "source")
+    mock_analyse.assert_called_once_with(ert_mock, target, source)
     mock_messagebox.return_value.setText.assert_called_once_with(
         "Successfully ran analysis for case 'source'."
     )
@@ -54,15 +58,20 @@ def test_show_dialogue_at_success(mock_messagebox, mock_analyse, mock_tool):
     side_effect=ErtAnalysisError("some error"),
 )
 @patch("ert.gui.tools.run_analysis.run_analysis_tool.QMessageBox")
-def test_show_dialogue_at_failure(mock_messagebox, mock_analyse, mock_tool):
-    mock_tool._run_widget.source_case.return_value = "source"
-    mock_tool._run_widget.target_case.return_value = "target"
-    mock_tool.notifier.storage.get_ensemble_by_name = lambda x: x
+def test_show_dialogue_at_failure(mock_messagebox, mock_analyse, mock_tool, storage):
+    experiment = storage.create_experiment()
+    source = experiment.create_ensemble(ensemble_size=1, name="source")
+    target = experiment.create_ensemble(ensemble_size=1, name="target")
+
+    mock_tool._run_widget.source_case.return_value = source
+    mock_tool._run_widget.target_case.return_value = target.name
+    mock_tool.notifier.storage.create_ensemble.return_value = target
+
     ert_mock = Mock()
     mock_tool.ert = ert_mock
     mock_tool.run()
 
-    mock_analyse.assert_called_once_with(ert_mock, "target", "source")
+    mock_analyse.assert_called_once_with(ert_mock, target, source)
     mock_messagebox.return_value.setText.assert_called_once_with(
         "Unable to run analysis for case 'source'.\n"
         "The following error occured: some error"

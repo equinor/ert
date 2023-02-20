@@ -205,7 +205,9 @@ def test_that_run_dialog_can_be_closed_after_used_to_open_plots(qtbot, storage):
     but simulations cannot be clicked from the main window while the run dialog is open.
     """
     config_file = Path("config.ert")
-    config_file.write_text("NUM_REALIZATIONS 1\n", encoding="utf-8")
+    config_file.write_text(
+        f"NUM_REALIZATIONS 1\nENSPATH {storage.path}\n", encoding="utf-8"
+    )
 
     args_mock = Mock()
     args_mock.config = str(config_file)

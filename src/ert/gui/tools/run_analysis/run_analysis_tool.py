@@ -36,10 +36,15 @@ class RunAnalysisTool(Tool):
 
     def run(self):
         target = self._run_widget.target_case()
-        source = self._run_widget.source_case()
+        source_fs = self._run_widget.source_case()
 
-        target_fs = self.notifier.storage.get_ensemble_by_name(target)
-        source_fs = self.notifier.storage.get_ensemble_by_name(source)
+        target_fs = self.notifier.storage.create_ensemble(
+            source_fs.experiment_id,
+            name=target,
+            ensemble_size=source_fs.ensemble_size,
+            iteration=source_fs.iteration + 1,
+            prior_ensemble=source_fs,
+        )
 
         if len(target) == 0:
             self._report_empty_target()
@@ -59,12 +64,12 @@ class RunAnalysisTool(Tool):
 
         if not error:
             msg.setIcon(QMessageBox.Information)
-            msg.setText(f"Successfully ran analysis for case '{source}'.")
+            msg.setText(f"Successfully ran analysis for case '{source_fs.name}'.")
             msg.exec_()
         else:
             msg.setIcon(QMessageBox.Warning)
             msg.setText(
-                f"Unable to run analysis for case '{source}'.\n"
+                f"Unable to run analysis for case '{source_fs.name}'.\n"
                 f"The following error occured: {error}"
             )
             msg.exec_()

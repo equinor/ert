@@ -32,6 +32,7 @@ from ert.gui.tools.plot.plot_case_selection_widget import CaseSelectionWidget
 from ert.gui.tools.plot.plot_window import PlotWindow
 from ert.services import StorageService
 from ert.shared.models import MultipleDataAssimilation
+from ert.storage import open_storage
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -53,8 +54,9 @@ def opened_main_window(source_root, tmpdir_factory, request):
         with StorageService.init_service(
             res_config=args_mock.config,
             project=os.path.abspath(poly_case.res_config.ens_path),
-        ):
+        ), open_storage(poly_case.res_config.ens_path, mode="w") as storage:
             gui = _setup_main_window(poly_case, args_mock, GUILogHandler())
+            gui.notifier.set_storage(storage)
             yield gui
 
 
@@ -136,11 +138,10 @@ def test_that_the_plot_window_contains_the_expected_elements(
     assert len(combo_boxes) == 1
     combo_box = combo_boxes[0]
     for i in range(combo_box.count()):
-        data_names = []
         combo_box.setCurrentIndex(i)
         case_names.append(combo_box.currentText())
-    assert case_names == [
-        "default",
+    assert sorted(case_names) == [
+        "default_0",
         "default_0",
         "default_1",
         "default_2",
@@ -247,7 +248,7 @@ def test_that_the_manage_cases_tool_can_be_used(
 
         # Select "new_case"
         current_index = 0
-        while combo_box.currentText() != "new_case":
+        while combo_box.currentText().startswith("new_case"):
             current_index += 1
             combo_box.setCurrentIndex(current_index)
 
@@ -277,10 +278,10 @@ def test_that_the_manual_analysis_tool_works(esmda_has_run, opened_main_window, 
         run_panel = analysis_tool._run_widget
         run_panel.target_case_text.setText("analysis_case")
 
-        # Set source case to "default_0"
+        # Set source case to "default_3"
         case_selector = run_panel.source_case_selector
         case_selector.setCurrentIndex(1)
-        assert case_selector.currentText() == "default_0"
+        assert case_selector.currentText().startswith("default_3")
 
         # Click on "Run" and click ok on the message box
         def handle_dialog():
@@ -311,7 +312,7 @@ def test_that_the_manual_analysis_tool_works(esmda_has_run, opened_main_window, 
         case_list = current_tab.findChild(CaseList)
         assert isinstance(case_list, CaseList)
         assert (
-            len(case_list._list.findItems("analysis_case", Qt.MatchFlag.MatchExactly))
+            len(case_list._list.findItems("analysis_case", Qt.MatchFlag.MatchContains))
             == 1
         )
         dialog.close()
