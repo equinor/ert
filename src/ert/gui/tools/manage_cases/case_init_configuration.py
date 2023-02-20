@@ -241,14 +241,14 @@ class CaseInitializationConfigurationPanel(QTabWidget):
         self.addTab(case_widget, "Case info")
 
     def _showInfoForCase(self, index=None):
+        states = []
         if index is None:
-            states = self.notifier.current_case.state_map
+            if self.notifier.current_case:
+                states = self.notifier.current_case.state_map
         else:
             ensemble = self.show_case_info_case_selector.itemData(index)
             if ensemble is not None:
                 states = ensemble.state_map
-            else:
-                states = []
 
         html = "<table>"
         for index, value in enumerate(states):
