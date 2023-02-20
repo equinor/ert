@@ -3,7 +3,7 @@ from functools import partial
 
 import numpy as np
 import pytest
-from iterative_ensemble_smoother import ensemble_smoother_update_step
+from iterative_ensemble_smoother import ES
 from iterative_ensemble_smoother.experimental import (
     ensemble_smoother_update_step_row_scaling,
 )
@@ -111,9 +111,9 @@ def test_row_scaling_factor_1_for_either_parameter():
         noise=noise,
     )
 
-    A_no_row_scaling = ensemble_smoother_update_step(
-        S, A_no_row_scaling, np.full(observations.shape, 0.5), observations, noise=noise
-    )
+    smoother = ES()
+    smoother.fit(S, np.full(observations.shape, 0.5), observations, noise=noise)
+    A_no_row_scaling = smoother.update(A_no_row_scaling)
 
     assert np.all(A[0] == A_prior[0])
     np.testing.assert_allclose(A[1], A_no_row_scaling[1])

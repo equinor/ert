@@ -1,7 +1,7 @@
 import logging
 from typing import Any, Dict, Optional
 
-from iterative_ensemble_smoother import IterativeEnsembleSmoother
+from iterative_ensemble_smoother import SIES
 
 from ert._c_wrappers.analysis.analysis_module import AnalysisModule
 from ert._c_wrappers.enkf import RunContext
@@ -25,9 +25,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
     ):
         super().__init__(simulation_arguments, ert, queue_config, id_, phase_count=2)
         self.support_restart = False
-        self._w_container = IterativeEnsembleSmoother(
-            len(simulation_arguments["active_realizations"])
-        )
+        self._w_container = SIES(len(simulation_arguments["active_realizations"]))
 
     def setAnalysisModule(self, module_name: str) -> AnalysisModule:
         module_load_success = self.ert().analysisConfig().select_module(module_name)

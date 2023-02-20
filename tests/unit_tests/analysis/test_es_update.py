@@ -3,7 +3,7 @@ from pathlib import Path
 
 import numpy as np
 import pytest
-from iterative_ensemble_smoother import IterativeEnsembleSmoother
+from iterative_ensemble_smoother import SIES
 
 from ert import LibresFacade
 from ert.__main__ import ert_parser
@@ -75,7 +75,7 @@ def test_update_snapshot(snake_oil_case_storage, module, expected_gen_kw):
     target_fs = fsm.add_case("target")
 
     if module == "IES_ENKF":
-        w_container = IterativeEnsembleSmoother(ert.getEnsembleSize())
+        w_container = SIES(ert.getEnsembleSize())
         es_update.iterative_smoother_update(sim_fs, target_fs, w_container, "id")
     else:
         es_update.smootherUpdate(sim_fs, target_fs, "id")
@@ -152,8 +152,8 @@ def test_that_posterior_has_lower_variance_than_prior(copy_case):
         (
             [
                 0.5895781800838542,
-                -0.732401196722254,
-                -1.0913320833716744,
+                -1.6225405348397028,
+                -0.24931876604132294,
                 0.7564469588868706,
                 0.21572672272162152,
                 -0.24082711750101563,
@@ -172,9 +172,9 @@ def test_that_posterior_has_lower_variance_than_prior(copy_case):
         ),
         (
             [
-                -1.5836182533774308,
-                -0.732401196722254,
-                -0.8951194275529923,
+                -0.6692568481556169,
+                -1.6225405348397028,
+                -0.22247423865074156,
                 0.7564469588868706,
                 0.21572672272162152,
                 -0.24082711750101563,
@@ -296,7 +296,7 @@ SUMMARY_OBSERVATION EXTREMELY_HIGH_STD
     sim_fs = fsm["default_0"]
     target_fs = fsm.add_case("target")
     ert.analysisConfig().set_enkf_alpha(alpha)
-    w_container = IterativeEnsembleSmoother(ert.getEnsembleSize())
+    w_container = SIES(ert.getEnsembleSize())
     es_update.iterative_smoother_update(sim_fs, target_fs, w_container, "id")
     result_snapshot = es_update.update_snapshots["id"]
     assert result_snapshot.alpha == alpha
