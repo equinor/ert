@@ -136,7 +136,7 @@ class WorkflowJob:
         if self.internal and self.script is not None:
             script_obj = ErtScript.loadScriptFromFile(self.script)
             self.__script = script_obj(ert)
-        elif self.internal:
+        elif self.internal and self.function is not None:
             self.__script = FunctionErtScript(
                 ert,
                 self.function,
