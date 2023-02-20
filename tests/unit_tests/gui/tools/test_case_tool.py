@@ -1,5 +1,4 @@
 from textwrap import dedent
-from unittest.mock import MagicMock
 
 import pytest
 from qtpy.QtCore import Qt
@@ -83,9 +82,15 @@ def test_that_case_tool_can_copy_case_state(qtbot, storage):
 
 
 @pytest.mark.usefixtures("copy_poly_case")
-def test_case_tool_init_updates_the_case_info_tab(qtbot):
+def test_case_tool_init_updates_the_case_info_tab(qtbot, storage):
     ert = EnKFMain(ErtConfig.from_file("poly.ert"))
-    tool = CaseInitializationConfigurationPanel(ert, MagicMock())
+    notifier = ErtNotifier(ert.res_config.config_path)
+    notifier.set_storage(storage)
+    ensemble = storage.create_experiment().create_ensemble(
+        ensemble_size=ert.getEnsembleSize(), name="default"
+    )
+    notifier.set_current_case(ensemble)
+    tool = CaseInitializationConfigurationPanel(ert, notifier)
     html_edit = tool.findChild(QTextEdit, name="html_text")
 
     assert not html_edit.toPlainText()

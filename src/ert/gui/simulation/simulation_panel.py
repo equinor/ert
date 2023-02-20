@@ -30,12 +30,7 @@ from .single_test_run_panel import SingleTestRunPanel
 
 
 class SimulationPanel(QWidget):
-    def __init__(
-        self,
-        ert: EnKFMain,
-        notifier: ErtNotifier,
-        config_file: str,
-    ):
+    def __init__(self, ert: EnKFMain, notifier: ErtNotifier, config_file: str):
         self.notifier = notifier
         QWidget.__init__(self)
         self.ert = ert
@@ -133,52 +128,63 @@ class SimulationPanel(QWidget):
         return args
 
     def runSimulation(self):
-        abort = False
-        try:
-            model = create_model(
-                self.ert,
-                self.notifier.storage,
-                self.getSimulationArguments(),
-                self.notifier.storage.create_experiment(),
+        message = (
+            f"Are you sure you want to use case '{self.notifier.current_case_name}' "
+            "for initialization of the initial ensemble when running the simulations?"
+        )
+        if (
+            QMessageBox.question(
+                self, "Start simulations?", message, QMessageBox.Yes | QMessageBox.No
             )
-        except ValueError as e:
-            QMessageBox.warning(
-                self, "ERROR: Failed to create experiment", (str(e)), QMessageBox.Ok
-            )
-            abort = True
-
-        if not abort and model.check_if_runpath_exists():
-            if (
-                QMessageBox.warning(
-                    self,
-                    "Start simulations?",
-                    (
-                        "ERT is running in an existing runpath.\n\n"
-                        "Please be aware of the following:\n"
-                        "- Previously generated results "
-                        "might be overwritten.\n"
-                        "- Previously generated files might "
-                        "be used if not configured correctly."
-                    ),
-                    QMessageBox.Yes | QMessageBox.No,
+            == QMessageBox.Yes
+        ):
+            abort = False
+            try:
+                model = create_model(
+                    self.ert,
+                    self.notifier.storage,
+                    self.getSimulationArguments(),
+                    self.notifier.storage.create_experiment(),
                 )
-                == QMessageBox.No
-            ):
+            except ValueError as e:
+                QMessageBox.warning(
+                    self, "ERROR: Failed to create experiment", (str(e)), QMessageBox.Ok
+                )
                 abort = True
 
-        if not abort:
-            dialog = RunDialog(
-                self._config_file,
-                model,
-            )
-            self.run_button.setDisabled(True)
-            self.run_button.setText("Simulation running...")
-            dialog.startSimulation()
-            dialog.exec_()
-            self.run_button.setText("Start simulation")
-            self.run_button.setDisabled(False)
+            if not abort and model.check_if_runpath_exists():
+                if (
+                    QMessageBox.warning(
+                        self,
+                        "Start simulations?",
+                        (
+                            "ERT is running in an existing runpath.\n\n"
+                            "Please be aware of the following:\n"
+                            "- Previously generated results "
+                            "might be overwritten.\n"
+                            "- Previously generated files might "
+                            "be used if not configured correctly."
+                        ),
+                        QMessageBox.Yes | QMessageBox.No,
+                    )
+                    == QMessageBox.No
+                ):
+                    abort = True
 
-            self.notifier.emitErtChange()  # simulations may have added new cases
+            if not abort:
+                dialog = RunDialog(self._config_file, model, self.parent())
+                self.run_button.setDisabled(True)
+                self.run_button.setText("Simulation running...")
+                dialog.startSimulation()
+                dialog.show()
+
+                def exit_handler():
+                    self.run_button.setText("Start simulation")
+                    self.run_button.setDisabled(False)
+
+                dialog.finished.connect(exit_handler)
+
+                self.notifier.emitErtChange()  # simulations may have added new cases
 
     def toggleSimulationMode(self):
         current_model = self.getCurrentSimulationModel()
