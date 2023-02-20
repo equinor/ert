@@ -32,7 +32,6 @@ if TYPE_CHECKING:
 
     from ert._c_wrappers.enkf import ErtConfig
     from ert._c_wrappers.enkf.config import GenKwConfig
-    from ert._c_wrappers.enkf.enums import HookRuntime
     from ert.storage import EnsembleAccessor, EnsembleReader, StorageAccessor
 
 logger = logging.getLogger(__name__)
@@ -625,7 +624,7 @@ class EnKFMain:
 
     def runWorkflows(
         self,
-        runtime: Union[int, HookRuntime],
+        runtime: int,
         storage: "Optional[StorageAccessor]" = None,
     ) -> None:
         for workflow in self.ert_config.hooked_workflows[runtime]:
