@@ -1,7 +1,11 @@
+import logging
+
 from ecl.util.util.stringlist import StringList
 
 from ert._c_wrappers import ResPrototype
 from ert._c_wrappers.job_queue import ErtScript
+
+logger = logging.getLogger(__name__)
 
 
 class FunctionErtScript(ErtScript):
@@ -10,6 +14,7 @@ class FunctionErtScript(ErtScript):
 
         parsed_argument_types = []
 
+        logger.info("Used FunctionErtScript %s", function_name)
         if ert is not None:
             self.__function = ResPrototype(f"void* {function_name}(void*, stringlist)")
 
