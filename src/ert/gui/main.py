@@ -325,7 +325,7 @@ def _setup_main_window(
         "Configuration summary", SummaryPanel(ert), area=Qt.BottomDockWidgetArea
     )
     window.addTool(PlotTool(config_file, window))
-    window.addTool(ExportTool(ert))
+    window.addTool(ExportTool(ert, window.notifier))
     window.addTool(WorkflowsTool(ert, window.notifier))
     window.addTool(ManageCasesTool(ert, window.notifier))
     window.addTool(PluginsTool(plugin_handler, window.notifier))
