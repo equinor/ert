@@ -330,7 +330,7 @@ def _setup_main_window(
     window.addTool(ManageCasesTool(ert, window.notifier))
     window.addTool(PluginsTool(plugin_handler, window.notifier))
     window.addTool(RunAnalysisTool(ert, window.notifier))
-    window.addTool(LoadResultsTool(facade))
+    window.addTool(LoadResultsTool(facade, window.notifier))
     event_viewer = EventViewerTool(log_handler)
     window.addTool(event_viewer)
     window.close_signal.connect(event_viewer.close_wnd)
