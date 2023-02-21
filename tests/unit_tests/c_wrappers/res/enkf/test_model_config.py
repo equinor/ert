@@ -26,8 +26,8 @@ from ert._c_wrappers.enkf import ErtConfig
 )
 def test_model_config_jobname_and_eclbase(extra_config, expected):
     config_dict = {"NUM_REALIZATIONS": 1, "ENSPATH": "Ensemble", **extra_config}
-    res_config = ErtConfig.from_dict(config_dict)
-    assert res_config.model_config.jobname_format_string == expected
+    ert_config = ErtConfig.from_dict(config_dict)
+    assert ert_config.model_config.jobname_format_string == expected
 
 
 def test_that_summary_given_without_eclbase_gives_error(tmp_path):

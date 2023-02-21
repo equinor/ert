@@ -32,8 +32,8 @@ def test_analysis_config_global_std_scaling(analysis_config):
 
 
 def test_analysis_config_constructor(setup_case):
-    res_config = setup_case("simple_config", "analysis_config")
-    assert res_config.analysis_config == AnalysisConfig.from_dict(
+    ert_config = setup_case("simple_config", "analysis_config")
+    assert ert_config.analysis_config == AnalysisConfig.from_dict(
         config_dict={
             ConfigKeys.NUM_REALIZATIONS: 10,
             ConfigKeys.ALPHA_KEY: 3,

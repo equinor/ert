@@ -9,7 +9,7 @@ import pytest
 from hypothesis import assume, given
 
 from ert._c_wrappers.config.config_parser import ConfigValidationError, ConfigWarning
-from ert._c_wrappers.enkf import ErtConfig, ResConfig
+from ert._c_wrappers.enkf import ErtConfig
 from ert._c_wrappers.enkf.config_keys import ConfigKeys
 
 from .config_dict_generator import config_generators, to_config_file
@@ -43,7 +43,7 @@ def test_num_realizations_required_in_config_file(tmp_path, monkeypatch):
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_res_config_parses_date():
+def test_ert_config_parses_date():
     test_config_file_base = "test"
     test_config_file_name = f"{test_config_file_base}.ert"
     test_config_contents = dedent(
@@ -56,30 +56,28 @@ def test_res_config_parses_date():
     )
     with open(test_config_file_name, "w", encoding="utf-8") as fh:
         fh.write(test_config_contents)
-    res_config = ErtConfig.from_file(test_config_file_name)
+    ert_config = ErtConfig.from_file(test_config_file_name)
 
     date_string = date.today().isoformat()
     expected_storage = os.path.abspath(f"storage/{test_config_file_base}-{date_string}")
     expected_run_path = f"{expected_storage}/runpath/realization-<IENS>/iter-<ITER>"
     expected_ens_path = f"{expected_storage}/ensemble"
-    assert res_config.ens_path == expected_ens_path
-    assert res_config.model_config.runpath_format_string == expected_run_path
+    assert ert_config.ens_path == expected_ens_path
+    assert ert_config.model_config.runpath_format_string == expected_run_path
 
 
 @pytest.mark.usefixtures("set_site_config")
 @given(config_generators())
-def test_that_creating_res_config_from_dict_is_same_as_from_file(
+def test_that_creating_ert_config_from_dict_is_same_as_from_file(
     tmp_path_factory, config_generator
 ):
     filename = "config.ert"
     with config_generator(tmp_path_factory, filename) as config_dict:
-        assert ResConfig(config_dict=config_dict) == ResConfig(
-            user_config_file=filename
-        )
+        assert ErtConfig.from_dict(config_dict) == ErtConfig.from_file(filename)
 
 
 @given(config_generators())
-def test_res_config_throws_on_missing_forward_model_job(
+def test_ert_config_throws_on_missing_forward_model_job(
     tmp_path_factory, config_generator
 ):
     filename = "config.ert"
@@ -107,9 +105,9 @@ def test_default_ens_path(tmpdir):
 NUM_REALIZATIONS  1
             """
             )
-        res_config = ErtConfig.from_file(config_file)
+        ert_config = ErtConfig.from_file(config_file)
         # By default, the ensemble path is set to 'storage'
-        default_ens_path = res_config.ens_path
+        default_ens_path = ert_config.ens_path
 
         with open(config_file, "a", encoding="utf-8") as f:
             f.write(
@@ -119,8 +117,8 @@ ENSPATH storage
             )
 
         # Set the ENSPATH in the config file
-        res_config = ErtConfig.from_file(config_file)
-        set_in_file_ens_path = res_config.ens_path
+        ert_config = ErtConfig.from_file(config_file)
+        set_in_file_ens_path = ert_config.ens_path
 
         assert default_ens_path == set_in_file_ens_path
 
@@ -313,8 +311,8 @@ def test_parsing_forward_model_with_quotes_does_not_introduce_spaces():
     with open(test_config_file_name, "w", encoding="utf-8") as fh:
         fh.write(test_config_contents)
 
-    res_config = ErtConfig.from_file(test_config_file_name)
-    for _, value in res_config.forward_model_list[0].private_args:
+    ert_config = ErtConfig.from_file(test_config_file_name)
+    for _, value in ert_config.forward_model_list[0].private_args:
         assert " " not in value
 
 
@@ -493,9 +491,9 @@ def test_that_magic_strings_get_substituted_in_workflow():
             )
         )
 
-    res_config = ErtConfig.from_file("config.ert")
+    ert_config = ErtConfig.from_file("config.ert")
 
-    assert res_config.workflows["workflow"].cmd_list[0][1] == ["0"]
+    assert ert_config.workflows["workflow"].cmd_list[0][1] == ["0"]
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -583,9 +581,9 @@ def test_that_substitutions_can_be_done_in_job_names():
     with open(test_config_file_name, "w", encoding="utf-8") as fh:
         fh.write(test_config_contents)
 
-    res_config = ErtConfig.from_file(user_config_file=test_config_file_name)
-    assert len(res_config.forward_model_list) == 1
-    job = res_config.forward_model_list[0]
+    ert_config = ErtConfig.from_file(user_config_file=test_config_file_name)
+    assert len(ert_config.forward_model_list) == 1
+    job = ert_config.forward_model_list[0]
     assert job.name == "ECLIPSE100"
 
 

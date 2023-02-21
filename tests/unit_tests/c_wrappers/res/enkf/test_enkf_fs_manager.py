@@ -92,7 +92,7 @@ def test_fs_init_from_scratch(snake_oil_case):
 def test_missing_current_case(snake_oil_case):
     ert = snake_oil_case
     current_case_name = ert.storage_manager.active_case
-    config_file = ert.res_config.user_config_file
+    config_file = ert.ert_config.user_config_file
     storage_path = ert.storage_manager.storage_path
 
     shutil.rmtree(storage_path / current_case_name)

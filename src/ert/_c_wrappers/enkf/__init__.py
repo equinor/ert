@@ -35,7 +35,6 @@ from .model_config import ModelConfig
 from .node_id import NodeId
 from .observations import BlockDataConfig, GenObservation, ObsVector, SummaryObservation
 from .queue_config import QueueConfig
-from .res_config import ResConfig
 from .row_scaling import RowScaling
 from .run_arg import RunArg
 from .state_map import StateMap
@@ -85,7 +84,6 @@ __all__ = [
     "EnkfObs",
     "ModelConfig",
     "ErtConfig",
-    "ResConfig",
     "RunArg",
     "RunContext",
     "EnKFMain",

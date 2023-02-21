@@ -57,7 +57,7 @@ def test_gui_full(monkeypatch, tmp_path, qapp, mock_start_server, source_root):
     monkeypatch.setattr(ert.gui.main, "QApplication", Mock(return_value=qapp))
     run_gui(args)
     mock_start_server.assert_called_once_with(
-        project=str(tmp_path / "poly_example" / "storage"), res_config="poly.ert"
+        project=str(tmp_path / "poly_example" / "storage"), ert_config="poly.ert"
     )
 
 
@@ -212,7 +212,7 @@ def test_that_run_dialog_can_be_closed_after_used_to_open_plots(qtbot):
     ert_config = ErtConfig.from_file(str(config_file))
     enkf_main = EnKFMain(ert_config)
     with Storage.init_service(
-        res_config=str(config_file),
+        ert_config=str(config_file),
         project=os.path.abspath(ert_config.ens_path),
     ):
         gui = _setup_main_window(enkf_main, args_mock, GUILogHandler())

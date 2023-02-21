@@ -16,7 +16,7 @@ class Storage(BaseService):
 
     def __init__(
         self,
-        res_config: Optional[PathLike[str]] = None,
+        ert_config: Optional[PathLike[str]] = None,
         database_url: str = "sqlite:///ert.db",
         verbose: bool = False,
         *args: Any,
@@ -25,8 +25,8 @@ class Storage(BaseService):
         self._url: Optional[str] = None
 
         exec_args = local_exec_args("storage")
-        if res_config:
-            exec_args.append(str(res_config))
+        if ert_config:
+            exec_args.append(str(ert_config))
         else:
             exec_args.extend(("--database-url", database_url))
         if verbose:

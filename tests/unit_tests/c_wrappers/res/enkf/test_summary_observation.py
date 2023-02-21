@@ -98,8 +98,8 @@ def test_that_loading_summary_obs_with_days_is_within_tolerance(
         # We create a reference case
         run_sim(datetime(2014, 9, 10))
 
-        res_config = ErtConfig.from_file("config.ert")
-        os.chdir(res_config.config_path)
+        ert_config = ErtConfig.from_file("config.ert")
+        os.chdir(ert_config.config_path)
         with expectation:
-            ert = EnKFMain(res_config)
+            ert = EnKFMain(ert_config)
             assert ert.getObservations().hasKey("FOPR_1")
