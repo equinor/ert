@@ -1,11 +1,10 @@
 import logging
 import os
-import sys
 import warnings
 from pathlib import Path
 
 import filelock
-from PyQt5.QtWidgets import QHBoxLayout, QPushButton, QTextEdit, QVBoxLayout, QWidget
+from PyQt5.QtWidgets import QHBoxLayout, QPushButton, QScrollArea, QVBoxLayout, QWidget
 from qtpy.QtCore import QLocale, Qt
 from qtpy.QtWidgets import QApplication
 
@@ -14,7 +13,7 @@ from ert._c_wrappers.config.config_parser import ConfigValidationError
 from ert._c_wrappers.enkf import EnKFMain, ErtConfig
 from ert.cli.main import ErtTimeoutError
 from ert.gui.ertnotifier import ErtNotifier
-from ert.gui.ertwidgets import SummaryPanel, resourceIcon
+from ert.gui.ertwidgets import SuggestorMessage, SummaryPanel, resourceIcon
 from ert.gui.main_window import ErtMainWindow
 from ert.gui.simulation import SimulationPanel
 from ert.gui.tools.event_viewer import (
@@ -77,48 +76,43 @@ def _start_initial_gui_window(args, log_handler):
     # Create logger inside function to make sure all handlers have been added to
     # the root-logger.
     logger = logging.getLogger(__name__)
-    messages = []
+    suggestions = []
+    error_messages = []
+    warning_msgs = []
     ert_config = None
     try:
         with warnings.catch_warnings(record=True) as warning_messages:
+            _check_locale()
+            suggestions += ErtConfig.make_suggestion_list(args.config)
             ert_config = ErtConfig.from_file(args.config)
-        messages += ErtConfig.make_suggestion_list(args.config)
-        messages += [
-            str(wm.message) for wm in warning_messages if wm.category == ConfigWarning
-        ]
+        os.chdir(ert_config.config_path)
+        # Changing current working directory means we need to update the config file to
+        # be the base name of the original config
+        args.config = os.path.basename(args.config)
+        ert = EnKFMain(ert_config)
+        warning_msgs = warning_messages
+
     except ConfigValidationError as error:
-        messages.append(str(error))
+        error_messages.append(str(error))
         logger.info("Error in config file shown in gui: '%s'", str(error))
-        return _setup_suggester(messages), None
+        return _setup_suggester(error_messages, warning_messages, suggestions), None
 
     for job in ert_config.forward_model_list:
         logger.info("Config contains forward model job %s", job.name)
-    for wm in warning_messages:
-        if wm.category != ConfigWarning:
-            logger.warning(wm.message)
-    os.chdir(ert_config.config_path)
-    # Changing current working directory means we need to update the config file to
-    # be the base name of the original config
-    args.config = os.path.basename(args.config)
-    try:
-        ert = EnKFMain(ert_config)
-    except ConfigValidationError as error:
-        messages.append(str(error))
-        logger.info("Error in config file shown in gui: '%s'", error)
-        return _setup_suggester(messages), None
 
-    locale_msg = _check_locale()
-    if locale_msg is not None:
-        messages.append(locale_msg)
-    if messages:
-        for msg in messages:
-            logger.info("Suggestion shown in gui '%s'", msg)
+    for wm in warning_msgs:
+        if wm.category != ConfigWarning:
+            logger.warning(str(wm.message))
+    for msg in suggestions:
+        logger.info("Suggestion shown in gui '%s'", msg)
+    _main_window = _setup_main_window(ert, args, log_handler)
+    if suggestions or warning_msgs:
         return (
-            _setup_suggester(messages, _setup_main_window(ert, args, log_handler)),
+            _setup_suggester(error_messages, warning_msgs, suggestions, _main_window),
             ert_config.ens_path,
         )
     else:
-        return _setup_main_window(ert, args, log_handler), ert_config.ens_path
+        return _main_window, ert_config.ens_path
 
 
 def _check_locale():
@@ -131,59 +125,72 @@ def _check_locale():
     if decimal_point != ".":
         msg = f"""
 ** WARNING: You are using a locale with decimalpoint: '{decimal_point}' - the ert application is
-            written with the assumption that '.' is  used as decimalpoint, and chances
-            are that something will break if you continue with this locale. It is highly
-            recommended that you set the decimalpoint to '.' using one of the environment
-            variables 'LANG', LC_ALL', or 'LC_NUMERIC' to either the 'C' locale or
-            alternatively a locale which uses '.' as decimalpoint.\n"""  # noqa
-
-        sys.stderr.write(msg)
-        return msg
-    else:
-        return None
+written with the assumption that '.' is  used as decimalpoint, and chances
+are that something will break if you continue with this locale. It is highly
+recommended that you set the decimalpoint to '.' using one of the environment
+variables 'LANG', LC_ALL', or 'LC_NUMERIC' to either the 'C' locale or
+alternatively a locale which uses '.' as decimalpoint.\n"""  # noqa
+        warnings.warn(msg, category=UserWarning)
 
 
-def _setup_suggester(suggestions, ert_window=None):
-    suggest = QWidget()
-    layout = QVBoxLayout()
-    suggest.setWindowTitle("Some problems detected")
-    lines = QTextEdit()
-    lines.setReadOnly(True)
-    text = "\n".join(suggestions)
-    lines.setPlainText(text)
+def _setup_suggester(errors, warning_msgs, suggestions, ert_window=None):
+    container = QWidget()
+    container.setWindowTitle("Some problems detected")
+    container_layout = QVBoxLayout()
 
-    buttons = QHBoxLayout()
-    layout.addWidget(lines)
+    suggest_msgs = QWidget()
+    buttons = QWidget()
+    suggest_layout = QVBoxLayout()
+    buttons_layout = QHBoxLayout()
+    text = ""
+    for msg in errors:
+        text += msg + "\n"
+        suggest_layout.addWidget(SuggestorMessage.error_msg(msg))
+    for msg in warning_msgs:
+        msg = str(msg.message)
+        text += msg + "\n"
+        suggest_layout.addWidget(SuggestorMessage.warning_msg(msg))
+    for msg in suggestions:
+        text += msg + "\n"
+        suggest_layout.addWidget(SuggestorMessage.suggestion_msg(msg))
 
-    copy = QPushButton("Copy messages")
+    suggest_layout.addStretch()
+    suggest_msgs.setLayout(suggest_layout)
+    scroll = QScrollArea()
+    scroll.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+    scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+    scroll.setWidgetResizable(True)
+    scroll.setWidget(suggest_msgs)
 
     def copy_text():
         QApplication.clipboard().setText(text)
-
-    copy.pressed.connect(copy_text)
-
-    run = QPushButton("Run ert")
-    run.setObjectName("run_ert_button")
-    run.setEnabled(ert_window is not None)
 
     def run_pressed():
         ert_window.show()
         ert_window.activateWindow()
         ert_window.raise_()
-        suggest.close()
+        container.close()
 
-    run.pressed.connect(run_pressed)
+    run = QPushButton("Run ert")
     give_up = QPushButton("Exit")
+    copy = QPushButton("Copy messages")
 
-    give_up.pressed.connect(suggest.close)
-    buttons.addWidget(copy)
-    buttons.addWidget(run)
-    buttons.addWidget(give_up)
+    run.setObjectName("run_ert_button")
+    run.setEnabled(ert_window is not None)
+    run.pressed.connect(run_pressed)
+    copy.pressed.connect(copy_text)
+    give_up.pressed.connect(container.close)
 
-    layout.addLayout(buttons)
-    suggest.setLayout(layout)
-    suggest.resize(800, 600)
-    return suggest
+    buttons_layout.addWidget(copy)
+    buttons_layout.addWidget(run)
+    buttons_layout.addWidget(give_up)
+
+    buttons.setLayout(buttons_layout)
+    container_layout.addWidget(scroll)
+    container_layout.addWidget(buttons)
+    container.setLayout(container_layout)
+    container.resize(800, 600)
+    return container
 
 
 def _setup_main_window(

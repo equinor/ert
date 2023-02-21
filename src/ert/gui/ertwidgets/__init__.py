@@ -67,3 +67,4 @@ from .listeditbox import ListEditBox  # noqa
 from .customdialog import CustomDialog  # noqa
 from .summarypanel import SummaryPanel  # noqa
 from .pathchooser import PathChooser  # noqa
+from .suggestor_message import SuggestorMessage  # noqa
