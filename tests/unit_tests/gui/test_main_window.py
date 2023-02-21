@@ -1,5 +1,6 @@
 import os.path
 import shutil
+from pathlib import Path
 from typing import List
 from unittest.mock import Mock
 
@@ -24,6 +25,7 @@ from ert.gui.main import GUILogHandler, _setup_main_window
 from ert.gui.simulation.run_dialog import RunDialog
 from ert.gui.simulation.simulation_panel import SimulationPanel
 from ert.gui.simulation.view import RealizationWidget
+from ert.gui.tools.load_results.load_results_panel import LoadResultsPanel
 from ert.gui.tools.manage_cases.case_init_configuration import (
     CaseInitializationConfigurationPanel,
 )
@@ -47,6 +49,12 @@ def opened_main_window(source_root, tmpdir_factory, request):
             tmp_path / "test_data",
         )
         mp.chdir(tmp_path / "test_data")
+
+        path = Path("poly.ert")
+        text = path.read_text(encoding="utf-8")
+        text = text.replace("NUM_REALIZATIONS 100", "NUM_REALIZATIONS 10")
+        path.write_text(text, encoding="utf-8")
+
         poly_case = EnKFMain(ErtConfig.from_file("poly.ert"))
         args_mock = Mock()
         args_mock.config = "poly.ert"
@@ -57,7 +65,7 @@ def opened_main_window(source_root, tmpdir_factory, request):
         ), open_storage(poly_case.ert_config.ens_path, mode="w") as storage:
             gui = _setup_main_window(poly_case, args_mock, GUILogHandler())
             gui.notifier.set_storage(storage)
-            yield gui
+            yield gui, poly_case.getEnsembleSize()
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -72,6 +80,12 @@ def opened_main_window_clean(source_root, tmpdir_factory, request):
             tmp_path / "test_data",
         )
         mp.chdir(tmp_path / "test_data")
+
+        path = Path("poly.ert")
+        text = path.read_text(encoding="utf-8")
+        text = text.replace("NUM_REALIZATIONS 100", "NUM_REALIZATIONS 10")
+        path.write_text(text, encoding="utf-8")
+
         poly_case = EnKFMain(ErtConfig.from_file("poly.ert"))
         args_mock = Mock()
         args_mock.config = "poly.ert"
@@ -89,7 +103,7 @@ def opened_main_window_clean(source_root, tmpdir_factory, request):
 @pytest.fixture(scope="module")
 def esmda_has_run(opened_main_window, request):
     qtbot = QtBot(request)
-    gui = opened_main_window
+    gui, _ = opened_main_window
     qtbot.addWidget(gui)
 
     # Select Multiple Data Assimilation in the simulation panel
@@ -140,7 +154,7 @@ def esmda_has_run(opened_main_window, request):
 def test_that_the_plot_window_contains_the_expected_elements(
     esmda_has_run, opened_main_window, qtbot
 ):
-    gui = opened_main_window
+    gui, _ = opened_main_window
 
     # Click on Create plot after esmda has run
     plot_tool = gui.tools["Create plot"]
@@ -233,7 +247,7 @@ def test_that_the_manage_cases_tool_can_be_used(
     opened_main_window,
     qtbot,
 ):
-    gui = opened_main_window
+    gui, _ = opened_main_window
 
     # Click on "Manage Cases"
     def handle_dialog():
@@ -294,7 +308,7 @@ def test_that_the_manage_cases_tool_can_be_used(
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_that_the_manual_analysis_tool_works(esmda_has_run, opened_main_window, qtbot):
-    gui = opened_main_window
+    gui, _ = opened_main_window
     analysis_tool = gui.tools["Run analysis"]
 
     # Open the "Run analysis" tool in the main window after esmda has run
@@ -307,12 +321,13 @@ def test_that_the_manual_analysis_tool_works(esmda_has_run, opened_main_window, 
 
         # Set source case to "default_3"
         case_selector = run_panel.source_case_selector
-        case_selector.setCurrentIndex(1)
+        index = case_selector.findText("default_3", Qt.MatchFlag.MatchContains)
+        case_selector.setCurrentIndex(index)
         assert case_selector.currentText().startswith("default_3")
 
         # Click on "Run" and click ok on the message box
         def handle_dialog():
-            messagebox = QApplication.activeWindow()
+            messagebox = QApplication.activeModalWidget()
             assert isinstance(messagebox, QMessageBox)
             ok_button = messagebox.button(QMessageBox.Ok)
             qtbot.mouseClick(ok_button, Qt.LeftButton)
@@ -323,12 +338,12 @@ def test_that_the_manual_analysis_tool_works(esmda_has_run, opened_main_window, 
             Qt.LeftButton,
         )
 
-    QTimer.singleShot(2000, handle_analysis_dialog)
+    QTimer.singleShot(1000, handle_analysis_dialog)
     analysis_tool.trigger()
 
     # Open the manage cases dialog
     def handle_manage_dialog():
-        dialog = QApplication.activeWindow()
+        dialog = gui.findChild(ClosableDialog, name="manage_cases_tool")
         cases_panel = dialog.findChild(CaseInitializationConfigurationPanel)
         assert isinstance(cases_panel, CaseInitializationConfigurationPanel)
 
@@ -406,3 +421,53 @@ def test_that_the_manage_cases_tool_can_be_used_with_clean_storage(
     QTimer.singleShot(1000, handle_dialog)
     manage_tool = gui.tools["Manage cases"]
     manage_tool.trigger()
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_the_load_results_manually_tool_works(
+    esmda_has_run, opened_main_window, qtbot
+):
+    gui, ensemble_size = opened_main_window
+
+    # Add a new case
+    gui.notifier.storage.create_ensemble(
+        gui.notifier.storage.create_experiment(),
+        name="new_case_for_load",
+        ensemble_size=ensemble_size,
+    )
+    gui.notifier.ertChanged.emit()
+
+    def handle_load_results_dialog():
+        qtbot.waitUntil(
+            lambda: gui.findChild(ClosableDialog, name="load_results_manually_tool")
+            is not None
+        )
+        dialog = gui.findChild(ClosableDialog, name="load_results_manually_tool")
+        panel = dialog.findChild(LoadResultsPanel)
+        assert isinstance(panel, LoadResultsPanel)
+
+        combo_box = panel.findChild(QComboBox, "load_results_panel_case_combobox")
+        assert isinstance(combo_box, QComboBox)
+        index = combo_box.findText("new_case_for_load", Qt.MatchFlag.MatchContains)
+        assert index != -1
+        combo_box.setCurrentIndex(index)
+
+        # click on "initialize"
+        load_button = panel.parent().findChild(QPushButton, name="Load")
+        assert isinstance(load_button, QPushButton)
+
+        # Verify that the messagebox is the success kind
+        def handle_popup_dialog():
+            messagebox = QApplication.activeModalWidget()
+            assert isinstance(messagebox, QMessageBox)
+            assert messagebox.windowTitle() == "Success"
+            ok_button = messagebox.button(QMessageBox.Ok)
+            qtbot.mouseClick(ok_button, Qt.LeftButton)
+
+        QTimer.singleShot(1000, handle_popup_dialog)
+        qtbot.mouseClick(load_button, Qt.LeftButton)
+        dialog.close()
+
+    QTimer.singleShot(1000, handle_load_results_dialog)
+    load_results_tool = gui.tools["Load results manually"]
+    load_results_tool.trigger()
