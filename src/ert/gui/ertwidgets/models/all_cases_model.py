@@ -1,12 +1,12 @@
 from qtpy.QtCore import QAbstractItemModel, QModelIndex, Qt
 
-from ert.libres_facade import LibresFacade
+from ert.gui.ertnotifier import ErtNotifier
 
 
 class AllCasesModel(QAbstractItemModel):
-    def __init__(self, facade: LibresFacade):
-        self.facade = facade
+    def __init__(self, notifier: ErtNotifier):
         QAbstractItemModel.__init__(self)
+        self._notifier = notifier
 
     def index(self, row, column, parent=None, *args, **kwargs):
         return self.createIndex(row, column)
@@ -27,10 +27,10 @@ class AllCasesModel(QAbstractItemModel):
         if index.isValid():
             items = self.getAllItems()
             row = index.row()
-            item = items[row]
+            case = items[row]
 
             if role == Qt.DisplayRole:
-                return item
+                return f"{case.name} - {case.started_at}"
 
         return None
 
@@ -44,7 +44,8 @@ class AllCasesModel(QAbstractItemModel):
         return None
 
     def getAllItems(self):
-        return self.facade.cases()
+        all_case_list = list(self._notifier.storage.ensembles)
+        return all_case_list
 
     def indexOf(self, item):
         items = self.getAllItems()
