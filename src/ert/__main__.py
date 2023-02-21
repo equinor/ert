@@ -43,7 +43,7 @@ from ert.shared.storage.command import add_parser_options as ert_api_add_parser_
 
 
 def run_ert_storage(args: Namespace) -> None:
-    kwargs = {"res_config": args.config, "verbose": True}
+    kwargs = {"ert_config": args.config, "verbose": True}
 
     if args.database_url is not None:
         kwargs["database_url"] = args.database_url
@@ -63,13 +63,13 @@ def run_webviz_ert(args: Namespace) -> None:
 
     kwargs: Dict[str, Any] = {"verbose": args.verbose}
     if args.config:
-        res_config = ErtConfig.from_file(args.config)
-        os.chdir(res_config.config_path)
-        ens_path = res_config.ens_path
+        ert_config = ErtConfig.from_file(args.config)
+        os.chdir(ert_config.config_path)
+        ens_path = ert_config.ens_path
 
         # Changing current working directory means we need to
         # only use the base name of the config file path
-        kwargs["res_config"] = os.path.basename(args.config)
+        kwargs["ert_config"] = os.path.basename(args.config)
         kwargs["project"] = os.path.abspath(ens_path)
 
     if args.database_url is not None:
@@ -89,7 +89,7 @@ Starting up Webviz-ERT. This might take more than a minute.
         webviz_kwargs = {
             "experimental_mode": args.experimental_mode,
             "verbose": args.verbose,
-            "title": kwargs.get("res_config", "ERT - Visualization tool"),
+            "title": kwargs.get("ert_config", "ERT - Visualization tool"),
             "project": kwargs.get("project", os.getcwd()),
         }
         with WebvizErt.start_server(**webviz_kwargs) as webviz_ert_server:

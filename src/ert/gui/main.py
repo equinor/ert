@@ -58,7 +58,7 @@ def run_gui(args: Namespace):
         try:
             storage_lock.acquire(timeout=5)
             with Storage.init_service(
-                res_config=args.config,
+                ert_config=args.config,
                 project=os.path.abspath(ens_path),
             ):
                 return show_window()
@@ -78,10 +78,10 @@ def _start_initial_gui_window(args, log_handler):
     # the root-logger.
     logger = logging.getLogger(__name__)
     messages = []
-    res_config = None
+    ert_config = None
     try:
         with warnings.catch_warnings(record=True) as warning_messages:
-            res_config = ErtConfig.from_file(args.config)
+            ert_config = ErtConfig.from_file(args.config)
         messages += ErtConfig.make_suggestion_list(args.config)
         messages += [
             str(wm.message) for wm in warning_messages if wm.category == ConfigWarning
@@ -91,17 +91,17 @@ def _start_initial_gui_window(args, log_handler):
         logger.info("Error in config file shown in gui: '%s'", str(error))
         return _setup_suggester(messages), None
 
-    for job in res_config.forward_model_list:
+    for job in ert_config.forward_model_list:
         logger.info("Config contains forward model job %s", job.name)
     for wm in warning_messages:
         if wm.category != ConfigWarning:
             logger.warning(wm.message)
-    os.chdir(res_config.config_path)
+    os.chdir(ert_config.config_path)
     # Changing current working directory means we need to update the config file to
     # be the base name of the original config
     args.config = os.path.basename(args.config)
     try:
-        ert = EnKFMain(res_config)
+        ert = EnKFMain(ert_config)
     except ConfigValidationError as error:
         messages.append(str(error))
         logger.info("Error in config file shown in gui: '%s'", error)
@@ -115,10 +115,10 @@ def _start_initial_gui_window(args, log_handler):
             logger.info("Suggestion shown in gui '%s'", msg)
         return (
             _setup_suggester(messages, _setup_main_window(ert, args, log_handler)),
-            res_config.ens_path,
+            ert_config.ens_path,
         )
     else:
-        return _setup_main_window(ert, args, log_handler), res_config.ens_path
+        return _setup_main_window(ert, args, log_handler), ert_config.ens_path
 
 
 def _check_locale():

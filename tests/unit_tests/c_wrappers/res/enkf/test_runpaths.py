@@ -166,8 +166,8 @@ def test_assert_export():
         """
             )
         )
-    res_config = ErtConfig.from_file("config_file.ert")
-    ert = EnKFMain(res_config)
+    ert_config = ErtConfig.from_file("config_file.ert")
+    ert = EnKFMain(ert_config)
     runpath_list_file = ert.runpath_list_filename
     assert not runpath_list_file.exists()
 

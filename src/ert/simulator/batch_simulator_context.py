@@ -35,7 +35,7 @@ class BatchContext(SimulationContext):
         """
         super().__init__(ert, fs, mask, itr, case_data)
         self.result_keys = result_keys
-        self.res_config = ert.resConfig()
+        self.ert_config = ert.resConfig()
 
     def join(self) -> None:
         """
@@ -96,7 +96,7 @@ class BatchContext(SimulationContext):
 
         res: List[Optional[Dict[str, "npt.NDArray[np.float64]"]]] = []
         nodes = [
-            EnkfNode(self.res_config.ensemble_config[key]) for key in self.result_keys
+            EnkfNode(self.ert_config.ensemble_config[key]) for key in self.result_keys
         ]
         for sim_id in range(len(self)):
             node_id = NodeId(0, sim_id)

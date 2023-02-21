@@ -15,7 +15,7 @@ from qtpy.QtWidgets import (
     QWidget,
 )
 
-from ert._c_wrappers.enkf import EnKFMain, ResConfig
+from ert._c_wrappers.enkf import EnKFMain, ErtConfig
 from ert.gui.ertwidgets.caselist import AddRemoveWidget, CaseList
 from ert.gui.ertwidgets.caseselector import CaseSelector
 from ert.gui.ertwidgets.closabledialog import ClosableDialog
@@ -46,13 +46,13 @@ def opened_main_window(source_root, tmpdir_factory, request):
             tmp_path / "test_data",
         )
         mp.chdir(tmp_path / "test_data")
-        poly_case = EnKFMain(ResConfig("poly.ert"))
+        poly_case = EnKFMain(ErtConfig.from_file("poly.ert"))
         args_mock = Mock()
         args_mock.config = "poly.ert"
 
         with Storage.init_service(
-            res_config=args_mock.config,
-            project=os.path.abspath(poly_case.res_config.ens_path),
+            ert_config=args_mock.config,
+            project=os.path.abspath(poly_case.ert_config.ens_path),
         ):
             gui = _setup_main_window(poly_case, args_mock, GUILogHandler())
             yield gui

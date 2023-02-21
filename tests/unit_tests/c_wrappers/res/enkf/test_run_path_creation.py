@@ -28,8 +28,8 @@ def test_that_run_template_replace_symlink_does_not_write_to_source():
     )
     Path("template.tmpl").write_text("I want to replace: <IENS>", encoding="utf-8")
     Path("config.ert").write_text(config_text, encoding="utf-8")
-    res_config = ErtConfig.from_file("config.ert")
-    ert = EnKFMain(res_config)
+    ert_config = ErtConfig.from_file("config.ert")
+    ert = EnKFMain(ert_config)
     run_context = ert.create_ensemble_context("prior", [True], iteration=0)
     run_path = Path(run_context[0].runpath)
     os.makedirs(run_path)
@@ -67,8 +67,8 @@ def test_run_template_replace_in_file_with_custom_define():
     Path("template.tmpl").write_text("I WANT TO REPLACE:<MY_VAR>", encoding="utf-8")
     Path("config.ert").write_text(config_text, encoding="utf-8")
 
-    res_config = ErtConfig.from_file("config.ert")
-    ert = EnKFMain(res_config)
+    ert_config = ErtConfig.from_file("config.ert")
+    ert = EnKFMain(ert_config)
     run_context = ert.create_ensemble_context("prior", [True], iteration=0)
     ert.createRunPath(run_context)
     assert (
@@ -103,8 +103,8 @@ def test_run_template_replace_in_file(key, expected):
     Path("template.tmpl").write_text(f"I WANT TO REPLACE:{key}", encoding="utf-8")
     Path("config.ert").write_text(config_text, encoding="utf-8")
 
-    res_config = ErtConfig.from_file("config.ert")
-    ert = EnKFMain(res_config)
+    ert_config = ErtConfig.from_file("config.ert")
+    ert = EnKFMain(ert_config)
     run_context = ert.create_ensemble_context("prior", [True], iteration=0)
     ert.createRunPath(run_context)
     assert (Path(run_context[0].runpath) / "result.txt").read_text(
@@ -135,8 +135,8 @@ def test_run_template_replace_in_ecl(ecl_base, expected_file):
     )
     Path("config.ert").write_text(config_text, encoding="utf-8")
 
-    res_config = ErtConfig.from_file("config.ert")
-    ert = EnKFMain(res_config)
+    ert_config = ErtConfig.from_file("config.ert")
+    ert = EnKFMain(ert_config)
     run_context = ert.create_ensemble_context("prior", [True], iteration=0)
     ert.createRunPath(run_context)
     assert (
@@ -176,8 +176,8 @@ def test_run_template_replace_in_ecl_data_file(key, expected):
     Path("MY_DATA_FILE.DATA").write_text(f"I WANT TO REPLACE:{key}", encoding="utf-8")
     Path("config.ert").write_text(config_text, encoding="utf-8")
 
-    res_config = ErtConfig.from_file("config.ert")
-    ert = EnKFMain(res_config)
+    ert_config = ErtConfig.from_file("config.ert")
+    ert = EnKFMain(ert_config)
     run_context = ert.create_ensemble_context("prior", [True], iteration=0)
     ert.createRunPath(run_context)
     assert (Path(run_context[0].runpath) / "ECL_CASE0.DATA").read_text(
@@ -204,8 +204,8 @@ def test_run_template_replace_in_file_name():
     )
     Path("config.ert").write_text(config_text, encoding="utf-8")
 
-    res_config = ErtConfig.from_file("config.ert")
-    ert = EnKFMain(res_config)
+    ert_config = ErtConfig.from_file("config.ert")
+    ert = EnKFMain(ert_config)
     run_context = ert.create_ensemble_context("prior", [True], iteration=0)
     ert.createRunPath(run_context)
     assert (
@@ -234,8 +234,8 @@ def test_that_sampling_prior_makes_initialized_fs():
         fh.writelines("MY_KEYWORD <MY_KEYWORD>")
     with open("prior.txt", "w", encoding="utf-8") as fh:
         fh.writelines("MY_KEYWORD NORMAL 0 1")
-    res_config = ErtConfig.from_file("config.ert")
-    ert = EnKFMain(res_config)
+    ert_config = ErtConfig.from_file("config.ert")
+    ert = EnKFMain(ert_config)
     run_context = ert.create_ensemble_context("prior", [True], iteration=0)
     storage_manager = ert.storage_manager
     assert not storage_manager["prior"].is_initalized
@@ -277,8 +277,8 @@ def test_that_data_file_sets_num_cpu(eclipse_data, expected_cpus):
     Path("MY_DATA_FILE.DATA").write_text(eclipse_data, encoding="utf-8")
     Path("config.ert").write_text(config_text, encoding="utf-8")
 
-    res_config = ErtConfig.from_file("config.ert")
-    ert = EnKFMain(res_config)
+    ert_config = ErtConfig.from_file("config.ert")
+    ert = EnKFMain(ert_config)
     assert int(ert.get_context()["<NUM_CPU>"]) == expected_cpus
 
 
@@ -297,8 +297,8 @@ def test_that_runpath_substitution_remain_valid():
     )
     Path("config.ert").write_text(config_text, encoding="utf-8")
 
-    res_config = ErtConfig.from_file("config.ert")
-    ert = EnKFMain(res_config)
+    ert_config = ErtConfig.from_file("config.ert")
+    ert = EnKFMain(ert_config)
 
     run_context = ert.create_ensemble_context("prior", [True, True], iteration=0)
     ert.createRunPath(run_context)

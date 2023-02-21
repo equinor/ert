@@ -259,7 +259,7 @@ def test_snapshot_alpha(alpha, expected):
     Note that this is now a snapshot test, so there is no guarantee that the
     snapshots are correct, they are just documenting the current behavior.
     """
-    res_config = ErtConfig.from_file("snake_oil.ert")
+    ert_config = ErtConfig.from_file("snake_oil.ert")
 
     obs_file = Path("observations") / "observations.txt"
     with obs_file.open(mode="w", encoding="utf-8") as fin:
@@ -289,7 +289,7 @@ SUMMARY_OBSERVATION EXTREMELY_HIGH_STD
 """
         )
 
-    ert = EnKFMain(res_config)
+    ert = EnKFMain(ert_config)
     es_update = ESUpdate(ert)
     ert.analysisConfig().select_module("IES_ENKF")
     fsm = ert.storage_manager
@@ -322,8 +322,8 @@ def test_update_multiple_param(copy_case):
     )
     run_cli(parsed)
 
-    res_config = ErtConfig.from_file("snake_oil.ert")
-    ert = EnKFMain(res_config)
+    ert_config = ErtConfig.from_file("snake_oil.ert")
+    ert = EnKFMain(ert_config)
     es_update = ESUpdate(ert)
     fsm = ert.storage_manager
     sim_fs = fsm["default"]
@@ -356,8 +356,8 @@ def test_gen_data_obs_data_mismatch(snake_oil_case_storage):
         file.write(obs_text)
     with open("observations/wpr_diff_obs.txt", "a", encoding="utf-8") as file:
         file.write("0.0 0.05\n")
-    res_config = ErtConfig.from_file("snake_oil.ert")
-    ert = EnKFMain(res_config)
+    ert_config = ErtConfig.from_file("snake_oil.ert")
+    ert = EnKFMain(ert_config)
     es_update = ESUpdate(ert)
     fsm = ert.storage_manager
     sim_fs = fsm["default_0"]

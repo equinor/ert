@@ -10,14 +10,14 @@ def test_different_defines_give_different_subst_lists(
     tmp_path_factory, config_generator1, config_generator2
 ):
     with config_generator1(tmp_path_factory) as config_dict1:
-        res_config1 = ErtConfig.from_dict(config_dict1)
+        ert_config1 = ErtConfig.from_dict(config_dict1)
         with config_generator2(tmp_path_factory) as config_dict2:
             assume(
                 config_dict1[ConfigKeys.DEFINE_KEY]
                 != config_dict2[ConfigKeys.DEFINE_KEY]
             )
             assert (
-                res_config1.substitution_list
+                ert_config1.substitution_list
                 != ErtConfig.from_dict(config_dict2).substitution_list
             )
 
