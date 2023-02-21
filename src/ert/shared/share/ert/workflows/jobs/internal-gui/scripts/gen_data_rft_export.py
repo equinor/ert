@@ -237,7 +237,7 @@ class GenDataRFTCSVExportJob(ErtPlugin):
         )
         trajectory_chooser = PathChooser(trajectory_model)
 
-        all_case_list = [case for case in self.storage.ensembles if case.has_data]
+        all_case_list = [case.name for case in self.storage.ensembles]
         list_edit = ListEditBox(all_case_list)
 
         infer_iteration_check = QCheckBox()
