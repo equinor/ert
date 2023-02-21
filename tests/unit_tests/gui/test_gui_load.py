@@ -141,7 +141,7 @@ def test_that_errors_are_shown_in_the_suggester_window_when_present(
     monkeypatch, qapp, tmp_path
 ):
     config_file = tmp_path / "config.ert"
-    config_file.write_text("NUM_REALIZATIONS 1 you_cant_do_this\n")
+    config_file.write_text("NUM_REALIZATIONS you_cant_do_this\n")
 
     args = Mock()
     args.config = str(config_file)
