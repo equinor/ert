@@ -34,7 +34,7 @@ class EnsembleSmootherPanel(SimulationConfigPanel):
         layout = QFormLayout()
 
         self._case_selector = CaseSelector(facade, notifier)
-        layout.addRow("Current case:", self._case_selector)
+        layout.addRow("Prior case:", self._case_selector)
 
         run_path_label = QLabel(f"<b>{escape_string(facade.run_path)}</b>")
         addHelpToWidget(run_path_label, "config/simulation/runpath")

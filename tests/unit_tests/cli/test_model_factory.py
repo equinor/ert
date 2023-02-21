@@ -117,12 +117,11 @@ def test_setup_multiple_data_assimilation(poly_case, storage):
         prior_ensemble=None,
     )
     assert isinstance(model, MultipleDataAssimilation)
-    assert len(model._simulation_arguments.keys()) == 7
+    assert len(model._simulation_arguments.keys()) == 6
     assert "active_realizations" in model._simulation_arguments
     assert "target_case" in model._simulation_arguments
     assert "analysis_module" in model._simulation_arguments
     assert "weights" in model._simulation_arguments
-    assert "start_iteration" in model._simulation_arguments
 
 
 def test_setup_iterative_ensemble_smoother(poly_case, storage):

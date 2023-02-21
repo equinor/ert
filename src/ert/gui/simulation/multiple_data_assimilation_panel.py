@@ -11,13 +11,11 @@ from ert.gui.ertwidgets import (
     addHelpToWidget,
 )
 from ert.gui.ertwidgets.models.activerealizationsmodel import ActiveRealizationsModel
-from ert.gui.ertwidgets.models.init_iter_value import IterValueModel
 from ert.gui.ertwidgets.models.targetcasemodel import TargetCaseModel
 from ert.gui.ertwidgets.models.valuemodel import ValueModel
 from ert.gui.ertwidgets.stringbox import StringBox
 from ert.libres_facade import LibresFacade
 from ert.shared.ide.keywords.definitions import (
-    IntegerArgument,
     NumberListStringArgument,
     ProperNameFormatArgument,
     RangeStringArgument,
@@ -34,7 +32,6 @@ class Arguments:
     target_case: str
     realizations: str
     weights: List[float]
-    start_iteration: int
 
 
 class MultipleDataAssimilationPanel(SimulationConfigPanel):
@@ -45,7 +42,7 @@ class MultipleDataAssimilationPanel(SimulationConfigPanel):
         layout = QFormLayout()
 
         case_selector = CaseSelector(facade, notifier)
-        layout.addRow("Current case:", case_selector)
+        layout.addRow("Prior case:", case_selector)
 
         run_path_label = QLabel(f"<b>{escape_string(facade.run_path)}</b>")
         addHelpToWidget(run_path_label, "config/simulation/runpath")
@@ -68,15 +65,6 @@ class MultipleDataAssimilationPanel(SimulationConfigPanel):
 
         self.weights = MultipleDataAssimilation.default_weights
         self._createInputForWeights(layout)
-
-        self._iter_field = StringBox(
-            IterValueModel(notifier),
-            "config/simulation/iter_num",
-        )
-        self._iter_field.setValidator(
-            IntegerArgument(from_value=0),
-        )
-        layout.addRow("Start iteration:", self._iter_field)
 
         self._analysis_module_edit = AnalysisModuleEdit(
             facade,
@@ -156,7 +144,6 @@ class MultipleDataAssimilationPanel(SimulationConfigPanel):
             target_case=self._target_case_format_model.getValue(),
             realizations=self._active_realizations_field.text(),
             weights=self.weights,
-            start_iteration=int(self._iter_field.model.getValue()),
         )
 
     def setWeights(self, weights):

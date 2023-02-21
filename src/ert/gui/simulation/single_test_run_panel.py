@@ -27,7 +27,7 @@ class SingleTestRunPanel(SimulationConfigPanel):
         layout = QFormLayout()
 
         case_selector = CaseSelector(facade, notifier)
-        layout.addRow("Current case:", case_selector)
+        layout.addRow("Prior case:", case_selector)
 
         run_path_label = QLabel(f"<b>{escape_string(facade.run_path)}</b>")
         addHelpToWidget(run_path_label, "config/simulation/runpath")

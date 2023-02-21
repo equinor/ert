@@ -100,7 +100,6 @@ def _setup_multiple_data_assimilation(
         "target_case": _target_case_name(ert, args, format_mode=True),
         "analysis_module": "STD_ENKF",
         "weights": args.weights,
-        "start_iteration": int(args.start_iteration),
         "num_iterations": len(args.weights),
     }
     model = MultipleDataAssimilation(
