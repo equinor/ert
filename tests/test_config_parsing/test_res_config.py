@@ -675,3 +675,35 @@ def test_that_installing_two_forward_model_jobs_with_the_same_name_warn_with_dir
 
     with pytest.warns(ConfigWarning, match="Duplicate forward model job"):
         _ = ErtConfig.from_file(user_config_file=test_config_file_name)
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_workflows_with_errors_are_not_loaded():
+    """
+    The user may install several workflows with LOAD_WORKFLOW_DIRECTORY that
+    does not work with the current versions of plugins installed in the system,
+    but could have worked with an older or newer version of the packages installed.
+
+    Therefore the user should be warned about workflows that have issues, and not be
+    able to run those later. If a workflow with errors are hooked, then the user will
+    get an error indicating that there is no such workflow.
+    """
+    test_config_file_name = "test.ert"
+    Path("WFJOB").write_text("EXECUTABLE echo\n", encoding="utf-8")
+    # intentionally misspelled WFJOB as WFJAB
+    Path("wf").write_text("WFJAB hello world\n", encoding="utf-8")
+    test_config_contents = dedent(
+        """
+        NUM_REALIZATIONS  1
+        JOBNAME JOOOOOB
+        LOAD_WORKFLOW_JOB WFJOB
+        LOAD_WORKFLOW wf
+        """
+    )
+
+    with open(test_config_file_name, "w", encoding="utf-8") as fh:
+        fh.write(test_config_contents)
+
+    with pytest.warns(ConfigWarning, match="Encountered error.*while reading workflow"):
+        ert_config = ErtConfig.from_file(user_config_file=test_config_file_name)
+        assert "wf" not in ert_config.workflows

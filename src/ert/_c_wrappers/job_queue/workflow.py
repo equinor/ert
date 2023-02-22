@@ -4,7 +4,7 @@ import time
 from tempfile import mkdtemp
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
 
-from ert._c_wrappers.config import ConfigParser, ConfigValidationError
+from ert._c_wrappers.config import ConfigParser, ConfigValidationError, UnrecognizedEnum
 
 if TYPE_CHECKING:
     from ert._c_wrappers.enkf import EnKFMain
@@ -64,7 +64,9 @@ class Workflow:
         cmd_list = []
         parser = _workflow_parser(job_list)
         try:
-            content = parser.parse(to_compile)
+            content = parser.parse(
+                to_compile, unrecognized=UnrecognizedEnum.CONFIG_UNRECOGNIZED_ERROR
+            )
         except ConfigValidationError as err:
             err.config_file = src_file
             raise err from None

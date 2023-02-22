@@ -488,9 +488,22 @@ class ErtConfig:
 
         for work in workflow_info:
             filename = os.path.basename(work[0]) if len(work) == 1 else work[1]
-            workflows[filename] = Workflow.from_file(
-                work[0], substitution_list, workflow_jobs
-            )
+            try:
+                existed = filename in workflows
+                workflows[filename] = Workflow.from_file(
+                    work[0], substitution_list, workflow_jobs
+                )
+                if existed:
+                    warnings.warn(
+                        f"Workflow {filename!r} was added twice",
+                        category=ConfigWarning,
+                    )
+            except ConfigValidationError as err:
+                warnings.warn(
+                    f"Encountered error(s) {err.errors!r} while"
+                    f" reading workflow {filename!r}. It will not be loaded.",
+                    category=ConfigWarning,
+                )
 
         for hook_name, mode_name in hook_workflow_info:
             if mode_name not in [runtime.name for runtime in HookRuntime.enums()]:
