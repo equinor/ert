@@ -57,8 +57,8 @@ def setup_configuration(tmpdir):
         # We create a reference case
         ref_time = [datetime(2014, 9, 9) + timedelta(days=i) for i in range(10)]
         run_sim(ref_time, 0.5)
-        res_config = ErtConfig.from_file("config.ert")
-        ert = EnKFMain(res_config)
+        ert_config = ErtConfig.from_file("config.ert")
+        ert = EnKFMain(ert_config)
         yield ert
 
 

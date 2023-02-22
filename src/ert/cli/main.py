@@ -8,7 +8,6 @@ import threading
 import uuid
 from typing import Any
 
-from ert import LibresFacade
 from ert._c_wrappers.enkf import EnKFMain, ErtConfig
 from ert.cli import ENSEMBLE_EXPERIMENT_MODE, TEST_RUN_MODE, WORKFLOW_MODE
 from ert.cli.model_factory import create_model

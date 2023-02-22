@@ -8,6 +8,7 @@ import sys
 from argparse import ArgumentParser, ArgumentTypeError
 from contextlib import contextmanager
 from typing import Any, Dict, Generator, Optional, Sequence, Union
+from uuid import UUID
 
 import yaml
 from ecl import set_abort_handler
@@ -140,6 +141,12 @@ def valid_name(user_input: str) -> str:
     if validated.failed():
         strip_error_message_and_raise_exception(validated)
     return user_input
+
+
+def valid_case(user_input: str) -> Union[str, UUID]:
+    if user_input.startswith("UUID="):
+        return UUID(user_input[5:])
+    return valid_name(user_input)
 
 
 def valid_iter_num(user_input: str) -> str:
@@ -307,7 +314,7 @@ def get_ert_parser(parser: Optional[ArgumentParser] = None) -> ArgumentParser:
     )
     ensemble_experiment_parser.add_argument(
         "--current-case",
-        type=valid_name,
+        type=valid_case,
         default="default",
         help="Name of the case where the results for the simulation "
         "using the prior parameters will be stored.",

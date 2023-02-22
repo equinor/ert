@@ -19,8 +19,8 @@ from ert.storage import open_storage
 def minimal_config(use_tmpdir):
     with open("config_file.ert", "w", encoding="utf-8") as fout:
         fout.write("NUM_REALIZATIONS 1")
-    res_config = ErtConfig.from_file("config_file.ert")
-    yield res_config
+    ert_config = ErtConfig.from_file("config_file.ert")
+    yield ert_config
 
 
 def test_update_report(
@@ -341,7 +341,7 @@ def test_update_multiple_param(copy_case, new_ensemble):
     ert = EnKFMain(ert_config)
     es_update = ESUpdate(ert)
 
-    storage = open_storage(res_config.ens_path)
+    storage = open_storage(ert_config.ens_path)
     sim_fs = storage.get_ensemble_by_name("default")
 
     es_update.smootherUpdate(sim_fs, new_ensemble, "an id")
@@ -375,7 +375,7 @@ def test_gen_data_obs_data_mismatch(snake_oil_case_storage):
     ert = EnKFMain(ert_config)
     es_update = ESUpdate(ert)
 
-    with open_storage(ert.res_config.ens_path, mode="w") as storage:
+    with open_storage(ert.ert_config.ens_path, mode="w") as storage:
         sim_fs = storage.get_ensemble_by_name("default_0")
         target_fs = storage.create_ensemble(
             sim_fs.experiment_id,

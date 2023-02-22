@@ -19,7 +19,7 @@ def facade_snake_oil(snake_oil_case_storage):
 
 @pytest.fixture
 def default_ensemble(snake_oil_case_storage):
-    with open_storage(snake_oil_case_storage.res_config.ens_path) as storage:
+    with open_storage(snake_oil_case_storage.ert_config.ens_path) as storage:
         yield storage.get_ensemble_by_name("default_0")
 
 
@@ -79,7 +79,7 @@ def test_summary_obs_runtime(create_measured_data):
 
     facade = LibresFacade(ert)
 
-    storage = open_storage(res_config.ens_path)
+    storage = open_storage(ert_config.ens_path)
     ensemble = storage.get_ensemble_by_name("default_0")
     start_time = time.time()
     foprh = MeasuredData(
@@ -121,7 +121,7 @@ def test_summary_obs_last_entry(formatted_date):
     ert = EnKFMain(ert_config)
 
     facade = LibresFacade(ert)
-    storage = open_storage(res_config.ens_path)
+    storage = open_storage(ert_config.ens_path)
     ensemble = storage.get_ensemble_by_name("default_0")
 
     foprh = MeasuredData(facade, ensemble, ["LAST_DATE"])
@@ -142,7 +142,7 @@ def test_gen_obs_runtime(snapshot, create_measured_data):
     ert = EnKFMain(ert_config)
 
     facade = LibresFacade(ert)
-    storage = open_storage(res_config.ens_path)
+    storage = open_storage(ert_config.ens_path)
     ensemble = storage.get_ensemble_by_name("default_0")
 
     df = MeasuredData(

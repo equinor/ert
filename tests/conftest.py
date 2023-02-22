@@ -253,7 +253,7 @@ def new_ensemble(storage):
 
 @pytest.fixture
 def snake_oil_storage(snake_oil_case_storage):
-    with open_storage(snake_oil_case_storage.res_config.ens_path, mode="w") as storage:
+    with open_storage(snake_oil_case_storage.ert_config.ens_path, mode="w") as storage:
         yield storage
 
 

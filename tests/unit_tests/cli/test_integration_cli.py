@@ -22,6 +22,7 @@ from ert.cli import (
 )
 from ert.cli.main import run_cli
 from ert.shared.feature_toggling import FeatureToggling
+from ert.storage import open_storage
 
 
 @pytest.fixture(name="mock_cli_run")
@@ -334,7 +335,6 @@ def test_that_prior_is_not_overwritten_in_ensemble_experiment(
     tmpdir,
     source_root,
     capsys,
-    storage,
 ):
     shutil.copytree(
         os.path.join(source_root, "test-data", "poly_example"),
@@ -344,16 +344,19 @@ def test_that_prior_is_not_overwritten_in_ensemble_experiment(
     with tmpdir.as_cwd():
         ert = EnKFMain(ErtConfig.from_file("poly_example/poly.ert"))
         prior_mask = prior_mask or [True] * ert.getEnsembleSize()
+        storage = open_storage(ert.ert_config.ens_path, mode="w")
         experiment_id = storage.create_experiment()
         ensemble = storage.create_ensemble(
             experiment_id, name="default", ensemble_size=ert.getEnsembleSize()
         )
+        prior_ensemble_id = ensemble.id
         prior_context = ert.ensemble_context(ensemble, prior_mask, 0)
         ert.sample_prior(prior_context.sim_fs, prior_context.active_realizations)
         facade = LibresFacade(ert)
         prior_values = facade.load_all_gen_kw_data(
             storage.get_ensemble_by_name("default")
         )
+        storage.close()
 
         parser = ArgumentParser(prog="test_main")
         parsed = ert_parser(
@@ -361,6 +364,7 @@ def test_that_prior_is_not_overwritten_in_ensemble_experiment(
             [
                 ENSEMBLE_EXPERIMENT_MODE,
                 "poly_example/poly.ert",
+                f"--current-case=UUID={prior_ensemble_id}",
                 "--port-range",
                 "1024-65535",
                 "--realizations",
@@ -371,8 +375,9 @@ def test_that_prior_is_not_overwritten_in_ensemble_experiment(
         FeatureToggling.update_from_args(parsed)
         run_cli(parsed)
         post_facade = LibresFacade.from_config_file("poly.ert")
+        storage = open_storage(ert.ert_config.ens_path, mode="w")
         parameter_values = post_facade.load_all_gen_kw_data(
-            storage.get_ensemble_by_name("default")
+            storage.get_ensemble(prior_ensemble_id)
         )
 
         if should_resample:
@@ -380,3 +385,4 @@ def test_that_prior_is_not_overwritten_in_ensemble_experiment(
                 pd.testing.assert_frame_equal(parameter_values, prior_values)
         else:
             pd.testing.assert_frame_equal(parameter_values, prior_values)
+        storage.close()

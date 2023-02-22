@@ -626,13 +626,22 @@ class LocalEnsembleAccessor(LocalEnsembleReader):
         parameter_keys: List[str],
         parameter_transfer_functions: List[PriorDict],
         realizations: List[int],
-        data: npt.ArrayLike,
+        data: npt.NDArray[np.float64],
     ) -> None:
+        if self.ensemble_size != len(realizations):
+            padded_data = np.empty((len(parameter_keys), self.ensemble_size))
+            for index, real in enumerate(realizations):
+                padded_data[:, real] = data[:, index]
+            data = padded_data
+
         ds = xr.Dataset(
             {
                 parameter_name: ((f"{parameter_name}_keys", "iens"), data),
             },
-            coords={f"{parameter_name}_keys": parameter_keys, "iens": realizations},
+            coords={
+                f"{parameter_name}_keys": parameter_keys,
+                "iens": range(self.ensemble_size),
+            },
         )
         mode: Literal["a", "w"] = (
             "a" if Path.exists(self.mount_point / "gen-kw.nc") else "w"

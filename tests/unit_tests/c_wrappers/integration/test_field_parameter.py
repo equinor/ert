@@ -12,7 +12,7 @@ import pytest
 import xtgeo
 
 from ert.__main__ import ert_parser
-from ert._c_wrappers.enkf import EnKFMain, ResConfig
+from ert._c_wrappers.enkf import EnKFMain, ErtConfig
 from ert.cli import ENSEMBLE_SMOOTHER_MODE
 from ert.cli.main import run_cli
 from ert.libres_facade import LibresFacade
@@ -23,8 +23,8 @@ def create_runpath(
     storage, config, active_mask=None, *, ensemble: Optional[EnsembleAccessor] = None
 ):
     active_mask = [True] if active_mask is None else active_mask
-    res_config = ResConfig(config)
-    ert = EnKFMain(res_config)
+    ert_config = ErtConfig.from_file(config)
+    ert = EnKFMain(ert_config)
 
     if ensemble is None:
         experiment_id = storage.create_experiment()
@@ -455,7 +455,7 @@ def test_forward_init(storage, tmpdir, config_str, expect_forward_init):
 
 
 @pytest.mark.integration_test
-def test_paramerter_update(tmpdir):
+def test_parameter_update(tmpdir):
     with tmpdir.as_cwd():
         config = dedent(
             """
@@ -572,8 +572,8 @@ if __name__ == "__main__":
         )
 
         run_cli(parsed)
-        ert = EnKFMain(ResConfig("config.ert"))
-        with open_storage(ert.resConfig().ens_path) as storage:
+        ert = EnKFMain(ErtConfig.from_file("config.ert"))
+        with open_storage(ert.ert_config.ens_path) as storage:
             prior = storage.get_ensemble_by_name("prior")
             posterior = storage.get_ensemble_by_name("smoother_update")
 

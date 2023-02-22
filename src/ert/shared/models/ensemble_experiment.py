@@ -11,7 +11,7 @@ from ert._c_wrappers.enkf.enums import HookRuntime, RealizationStateEnum
 from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.shared.models import BaseRunModel
 from ert.shared.models.base_run_model import ErtRunError
-from ert.storage import StorageAccessor
+from ert.storage import EnsembleAccessor, StorageAccessor
 
 experiment_logger = logging.getLogger("ert.experiment_server.ensemble_experiment")
 
@@ -34,11 +34,15 @@ class EnsembleExperiment(BaseRunModel):
         )
         await self.dispatch(event)
 
-        ensemble = self._storage.create_ensemble(
-            self._experiment_id,
-            name=self._simulation_arguments["current_case"],
-            ensemble_size=self._ert.getEnsembleSize(),
-        )
+        current_case = self._simulation_arguments["current_case"]
+        if isinstance(current_case, UUID):
+            ensemble = self._storage.get_ensemble(current_case)
+        else:
+            ensemble = self._storage.create_ensemble(
+                self._experiment_id,
+                name=current_case,
+                ensemble_size=self._ert.getEnsembleSize(),
+            )
 
         loop = asyncio.get_running_loop()
         with concurrent.futures.ThreadPoolExecutor() as executor:
@@ -105,13 +109,20 @@ class EnsembleExperiment(BaseRunModel):
         run_msg: str,
         evaluator_server_config: EvaluatorServerConfig,
     ) -> RunContext:
-        prior_context = self._ert.ensemble_context(
-            self._storage.create_ensemble(
+        current_case = self._simulation_arguments["current_case"]
+        if isinstance(current_case, UUID):
+            ensemble = self._storage.get_ensemble(current_case)
+            assert isinstance(ensemble, EnsembleAccessor)
+        else:
+            ensemble = self._storage.create_ensemble(
                 self._experiment_id,
-                name=self._simulation_arguments["current_case"],
+                name=current_case,
                 ensemble_size=self._ert.getEnsembleSize(),
                 iteration=self._simulation_arguments.get("item_num", 0),
-            ),
+            )
+
+        prior_context = self._ert.ensemble_context(
+            ensemble,
             self._simulation_arguments["active_realizations"],
             iteration=self._simulation_arguments.get("iter_num", 0),
         )

@@ -15,7 +15,7 @@ from ert.gui.tools.manage_cases.case_init_configuration import (
 @pytest.mark.usefixtures("copy_poly_case")
 def test_case_tool_init_prior(qtbot, storage):
     ert = EnKFMain(ErtConfig.from_file("poly.ert"))
-    notifier = ErtNotifier(ert.res_config.config_path)
+    notifier = ErtNotifier(ert.ert_config.config_path)
     notifier.set_storage(storage)
     ensemble = storage.create_experiment().create_ensemble(
         ensemble_size=ert.getEnsembleSize(),
@@ -57,7 +57,7 @@ def test_that_case_tool_can_copy_case_state(qtbot, storage):
     with open("prior.txt", "w", encoding="utf-8") as fh:
         fh.writelines("MY_KEYWORD NORMAL 0 1")
     ert = EnKFMain(ErtConfig.from_file("config.ert"))
-    notifier = ErtNotifier(ert.res_config.config_path)
+    notifier = ErtNotifier(ert.ert_config.config_path)
     notifier.set_storage(storage)
 
     experiment_id = storage.create_experiment()
@@ -84,7 +84,7 @@ def test_that_case_tool_can_copy_case_state(qtbot, storage):
 @pytest.mark.usefixtures("copy_poly_case")
 def test_case_tool_init_updates_the_case_info_tab(qtbot, storage):
     ert = EnKFMain(ErtConfig.from_file("poly.ert"))
-    notifier = ErtNotifier(ert.res_config.config_path)
+    notifier = ErtNotifier(ert.ert_config.config_path)
     notifier.set_storage(storage)
     ensemble = storage.create_experiment().create_ensemble(
         ensemble_size=ert.getEnsembleSize(), name="default"

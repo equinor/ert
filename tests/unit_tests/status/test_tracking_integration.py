@@ -172,17 +172,10 @@ def test_tracking(
         )
         FeatureToggling.update_from_args(parsed)
 
-<<<<<<< HEAD
         ert_config = ErtConfig.from_file(parsed.config)
         os.chdir(ert_config.config_path)
         ert = EnKFMain(ert_config)
-        facade = LibresFacade(ert)
-=======
-        res_config = ErtConfig.from_file(parsed.config)
-        os.chdir(res_config.config_path)
-        ert = EnKFMain(res_config)
         experiment_id = storage.create_experiment()
->>>>>>> 3fdceb37f (EnkfFsManager refactor)
 
         model = create_model(
             ert,

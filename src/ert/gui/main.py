@@ -9,8 +9,6 @@ from qtpy.QtWidgets import QApplication
 from ert._c_wrappers.config import ConfigWarning
 from ert._c_wrappers.config.config_parser import ConfigValidationError
 from ert._c_wrappers.enkf import EnKFMain, ErtConfig
-from ert.cli.main import ErtTimeoutError
-from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets import SuggestorMessage, SummaryPanel, resourceIcon
 from ert.gui.main_window import ErtMainWindow
 from ert.gui.simulation import SimulationPanel
@@ -52,7 +50,7 @@ def run_gui(args: Namespace):
 
         mode = "r" if args.read_only else "w"
         with StorageService.init_service(
-            res_config=args.config, project=os.path.abspath(ens_path)
+            ert_config=args.config, project=os.path.abspath(ens_path)
         ), open_storage(ens_path, mode=mode) as storage:
             if hasattr(window, "notifier"):
                 window.notifier.set_storage(storage)
