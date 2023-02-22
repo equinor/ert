@@ -26,7 +26,7 @@ jobs:
 
     - name: Install dependencies from PyPI
       run: |
-        python3 -m pip install conan pybind11 ecl
+        python3 -m pip install "conan<2" pybind11 ecl
 
     - name: Create compile commands for clib
       run: |
