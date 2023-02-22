@@ -515,11 +515,18 @@ class ErtConfig:
         jobs = {}
         for job in config_dict.get(ConfigKeys.INSTALL_JOB, []):
             name = job[0]
+            job_config_file = os.path.abspath(job[1])
             new_job = cls._create_job(
-                os.path.abspath(job[1]),
+                job_config_file,
                 name,
             )
             if new_job is not None:
+                if name in jobs:
+                    warnings.warn(
+                        f"Duplicate forward model job with name {name!r}, "
+                        f"choosing {job_config_file!r} over {jobs[name].executable!r}",
+                        category=ConfigWarning,
+                    )
                 jobs[name] = new_job
 
         for job_path in config_dict.get(ConfigKeys.INSTALL_JOB_DIRECTORY, []):
@@ -546,6 +553,12 @@ class ErtConfig:
                 new_job = cls._create_job(full_path)
                 if new_job is not None:
                     name = new_job.name
+                    if name in jobs:
+                        warnings.warn(
+                            f"Duplicate forward model job with name {name!r}, "
+                            f"choosing {full_path!r} over {jobs[name].executable!r}",
+                            category=ConfigWarning,
+                        )
                     jobs[name] = new_job
 
         return jobs

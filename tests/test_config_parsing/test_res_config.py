@@ -3,6 +3,7 @@ import os
 import os.path
 import re
 from datetime import date
+from pathlib import Path
 from textwrap import dedent
 
 import pytest
@@ -635,4 +636,42 @@ def test_that_define_statements_with_less_than_one_argument_raises_error():
     with pytest.raises(
         ConfigValidationError, match="Keyword:DEFINE must have two or more"
     ):
+        _ = ErtConfig.from_file(user_config_file=test_config_file_name)
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_installing_two_forward_model_jobs_with_the_same_name_warn():
+    test_config_file_name = "test.ert"
+    Path("job").write_text("EXECUTABLE echo\n", encoding="utf-8")
+    test_config_contents = dedent(
+        """
+        NUM_REALIZATIONS 1
+        INSTALL_JOB job job
+        INSTALL_JOB job job
+        """
+    )
+    with open(test_config_file_name, "w", encoding="utf-8") as fh:
+        fh.write(test_config_contents)
+
+    with pytest.warns(ConfigWarning, match="Duplicate forward model job"):
+        _ = ErtConfig.from_file(user_config_file=test_config_file_name)
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_installing_two_forward_model_jobs_with_the_same_name_warn_with_dir():
+    test_config_file_name = "test.ert"
+    os.mkdir("jobs")
+    Path("jobs/job").write_text("EXECUTABLE echo\n", encoding="utf-8")
+    Path("job").write_text("EXECUTABLE echo\n", encoding="utf-8")
+    test_config_contents = dedent(
+        """
+        NUM_REALIZATIONS 1
+        INSTALL_JOB_DIRECTORY jobs
+        INSTALL_JOB job job
+        """
+    )
+    with open(test_config_file_name, "w", encoding="utf-8") as fh:
+        fh.write(test_config_contents)
+
+    with pytest.warns(ConfigWarning, match="Duplicate forward model job"):
         _ = ErtConfig.from_file(user_config_file=test_config_file_name)
