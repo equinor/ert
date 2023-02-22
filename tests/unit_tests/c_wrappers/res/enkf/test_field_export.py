@@ -86,6 +86,28 @@ def test_field_init_file_not_readable(copy_case):
         assert "failed to open" in str(err)
 
 
+def test_surface_init_fails_during_forward_model_callback(copy_case):
+    copy_case("snake_oil_field")
+    config_file_name = "snake_oil_surface.ert"
+    with open(config_file_name, mode="r+", encoding="utf-8") as config_file_handler:
+        content_lines = config_file_handler.read().splitlines()
+        index_line_with_surface_top = [
+            index
+            for index, line in enumerate(content_lines)
+            if line.startswith("SURFACE TOP")
+        ][0]
+        line_with_surface_top = content_lines[index_line_with_surface_top]
+        breaking_line_with_surface_top = line_with_surface_top + " FORWARD_INIT:True"
+        content_lines[index_line_with_surface_top] = breaking_line_with_surface_top
+        config_file_handler.seek(0)
+        config_file_handler.write("\n".join(content_lines))
+
+    try:
+        run_ert_test_run(config_file_name)
+    except ErtCliError as err:
+        assert "Failed to initialize node" in str(err)
+
+
 def run_ert_test_run(config_file: str) -> None:
     parser = ArgumentParser(prog="test_run")
     parsed = ert_parser(
