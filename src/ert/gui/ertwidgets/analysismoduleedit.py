@@ -17,7 +17,7 @@ class AnalysisModuleEdit(QWidget):
         self.facade = facade
         QWidget.__init__(self)
 
-        addHelpToWidget(self, help_link)
+        addHelpToWidget(self)
 
         layout = QHBoxLayout()
         self._name = module_name

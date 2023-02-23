@@ -5,7 +5,7 @@ from qtpy.QtGui import QCursor, QIcon, QMovie, QPixmap
 from qtpy.QtWidgets import QApplication
 
 
-def addHelpToWidget(widget, link):
+def addHelpToWidget(widget):
     original_enter_event = widget.enterEvent
 
     def enterEvent(event):

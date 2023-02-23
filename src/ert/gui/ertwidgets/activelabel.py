@@ -8,7 +8,7 @@ class ActiveLabel(QLabel):
     def __init__(self, model, help_link=""):
         QLabel.__init__(self)
 
-        addHelpToWidget(self, help_link)
+        addHelpToWidget(self)
         self._model = model
 
         font = self.font()

@@ -104,7 +104,7 @@ class CaseInitializationConfigurationPanel(QTabWidget):
         initialize_button = QPushButton(
             "Initialize", objectName="initialize_from_scratch_button"
         )
-        addHelpToWidget(initialize_button, "init/initialize_from_scratch")
+        addHelpToWidget(initialize_button)
         initialize_button.setMinimumWidth(75)
         initialize_button.setMaximumWidth(150)
 
@@ -157,7 +157,7 @@ class CaseInitializationConfigurationPanel(QTabWidget):
         initialize_button = QPushButton(
             "Initialize", objectName="initialize_existing_button"
         )
-        addHelpToWidget(initialize_button, "init/initialize_from_existing")
+        addHelpToWidget(initialize_button)
         initialize_button.setMinimumWidth(75)
         initialize_button.setMaximumWidth(150)
 
@@ -194,13 +194,13 @@ class CaseInitializationConfigurationPanel(QTabWidget):
 
     def createTimeStepRow(self):
         history_length_spinner = QSpinBox()
-        addHelpToWidget(history_length_spinner, "config/init/history_length")
+        addHelpToWidget(history_length_spinner)
         history_length_spinner.setMinimum(0)
         history_length_spinner.setMaximum(max(0, self.ert.getHistoryLength()))
 
         initial = QToolButton()
         initial.setText("Initial")
-        addHelpToWidget(initial, "config/init/history_length")
+        addHelpToWidget(initial)
 
         def setToMin():
             history_length_spinner.setValue(0)
@@ -209,7 +209,7 @@ class CaseInitializationConfigurationPanel(QTabWidget):
 
         end_of_time = QToolButton()
         end_of_time.setText("End of time")
-        addHelpToWidget(end_of_time, "config/init/history_length")
+        addHelpToWidget(end_of_time)
 
         def setToMax():
             history_length_spinner.setValue(self.ert.getHistoryLength())

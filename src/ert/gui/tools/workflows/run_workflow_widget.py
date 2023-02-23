@@ -29,7 +29,7 @@ class RunWorkflowWidget(QWidget):
         layout.addSpacing(10)
 
         self._workflow_combo = QComboBox()
-        addHelpToWidget(self._workflow_combo, "run/workflow")
+        addHelpToWidget(self._workflow_combo)
 
         self._workflow_combo.addItems(
             sorted(ert.resConfig().workflows.keys(), key=str.lower)

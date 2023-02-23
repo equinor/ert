@@ -60,7 +60,7 @@ class CaseList(QWidget):
         self.notifier = notifier
         QWidget.__init__(self)
 
-        addHelpToWidget(self, "init/case_list")
+        addHelpToWidget(self)
 
         layout = QVBoxLayout()
 

@@ -43,9 +43,7 @@ class IteratedEnsembleSmootherPanel(SimulationConfigPanel):
         number_of_realizations_label = QLabel(
             f"<b>{self.facade.get_ensemble_size()}</b>"
         )
-        addHelpToWidget(
-            number_of_realizations_label, "config/ensemble/num_realizations"
-        )
+        addHelpToWidget(number_of_realizations_label)
         layout.addRow(QLabel("Number of realizations:"), number_of_realizations_label)
 
         # The num_iterations_spinner does not track any external changes (will
@@ -54,9 +52,7 @@ class IteratedEnsembleSmootherPanel(SimulationConfigPanel):
         self._num_iterations_spinner.setMinimum(1)
         self._num_iterations_spinner.setMaximum(100)
         self._num_iterations_spinner.setValue(self.facade.get_number_of_iterations())
-        addHelpToWidget(
-            self._num_iterations_spinner, "config/simulation/number_of_iterations"
-        )
+        addHelpToWidget(self._num_iterations_spinner)
         self._num_iterations_spinner.valueChanged[int].connect(self.setNumberIterations)
 
         layout.addRow("Number of iterations:", self._num_iterations_spinner)

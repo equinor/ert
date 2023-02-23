@@ -35,7 +35,7 @@ class PathChooser(QWidget):
         :param help_link: str
         """
         QWidget.__init__(self)
-        addHelpToWidget(self, help_link)
+        addHelpToWidget(self)
         self._validation_support = ValidationSupport(self)
 
         self._editing = True

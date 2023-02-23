@@ -62,4 +62,4 @@ class CopyableLabel(QHBoxLayout):
         self.addWidget(self.copy_button)
 
         if (executeAddHelpToWidget):
-            addHelpToWidget(self.label, "")
+            addHelpToWidget(self.label)

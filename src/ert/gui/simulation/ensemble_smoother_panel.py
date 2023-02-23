@@ -39,9 +39,7 @@ class EnsembleSmootherPanel(SimulationConfigPanel):
         layout.addRow("Runpath:", runpath_label)
 
         number_of_realizations_label = QLabel(f"<b>{facade.get_ensemble_size()}</b>")
-        addHelpToWidget(
-            number_of_realizations_label, "config/ensemble/num_realizations"
-        )
+        addHelpToWidget(number_of_realizations_label)
         layout.addRow(QLabel("Number of realizations:"), number_of_realizations_label)
 
         self._target_case_model = TargetCaseModel(facade, notifier)

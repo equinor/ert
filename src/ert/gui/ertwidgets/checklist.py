@@ -27,7 +27,7 @@ class CheckList(QWidget):
         self._model = model
 
         if help_link != "":
-            addHelpToWidget(self, help_link)
+            addHelpToWidget(self)
 
         layout = QVBoxLayout()
 

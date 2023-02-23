@@ -42,9 +42,7 @@ class EnsembleExperimentPanel(SimulationConfigPanel):
         number_of_realizations_label = QLabel(
             f"<b>{self.facade.get_ensemble_size()}</b>"
         )
-        addHelpToWidget(
-            number_of_realizations_label, "config/ensemble/num_realizations"
-        )
+        addHelpToWidget(number_of_realizations_label)
         layout.addRow(QLabel("Number of realizations:"), number_of_realizations_label)
 
         self._active_realizations_field = StringBox(

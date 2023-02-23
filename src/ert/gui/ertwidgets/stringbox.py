@@ -16,7 +16,7 @@ class StringBox(QLineEdit):
         :type continuous_update: bool
         """
         QLineEdit.__init__(self)
-        addHelpToWidget(self, help_link)
+        addHelpToWidget(self)
         self.setMinimumWidth(250)
         self._validation = ValidationSupport(self)
         self._validator = None

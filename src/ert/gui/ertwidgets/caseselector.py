@@ -25,7 +25,7 @@ class CaseSelector(QComboBox):
             ignore_current  # ignore the currently selected case if it changes
         )
 
-        addHelpToWidget(self, help_link)
+        addHelpToWidget(self)
         self.setSizeAdjustPolicy(QComboBox.AdjustToContents)
 
         self.populate()

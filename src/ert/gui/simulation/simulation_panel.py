@@ -43,7 +43,7 @@ class SimulationPanel(QWidget):
 
         self._simulation_mode_combo = QComboBox()
         self._simulation_mode_combo.setObjectName("Simulation_mode")
-        addHelpToWidget(self._simulation_mode_combo, "run/simulation_mode")
+        addHelpToWidget(self._simulation_mode_combo)
 
         self._simulation_mode_combo.currentIndexChanged.connect(
             self.toggleSimulationMode
@@ -65,7 +65,7 @@ class SimulationPanel(QWidget):
         self.run_button.setIconSize(QSize(32, 32))
         self.run_button.clicked.connect(self.runSimulation)
         self.run_button.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
-        addHelpToWidget(self.run_button, "run/start_simulation")
+        addHelpToWidget(self.run_button)
 
         simulation_mode_layout.addWidget(self.run_button)
         simulation_mode_layout.addStretch(1)
