@@ -4,6 +4,7 @@ from qtpy.QtWidgets import QFormLayout, QLabel, QSpinBox
 
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets import AnalysisModuleEdit, CaseSelector, addHelpToWidget
+from ert.gui.ertwidgets.copyablelabel import CopyableLabel
 from ert.gui.ertwidgets.models.activerealizationsmodel import ActiveRealizationsModel
 from ert.gui.ertwidgets.models.targetcasemodel import TargetCaseModel
 from ert.gui.ertwidgets.stringbox import StringBox
@@ -14,7 +15,7 @@ from ert.shared.ide.keywords.definitions import (
 )
 from ert.shared.models import IteratedEnsembleSmoother
 
-from .simulation_config_panel import SimulationConfigPanel, escape_string
+from .simulation_config_panel import SimulationConfigPanel
 
 
 @dataclass
@@ -36,10 +37,8 @@ class IteratedEnsembleSmootherPanel(SimulationConfigPanel):
         case_selector = CaseSelector(self.facade, notifier)
         layout.addRow("Current case:", case_selector)
 
-        run_path_label = QLabel(f"<b>{escape_string(self.facade.run_path)}</b>")
-
-        addHelpToWidget(run_path_label, "config/simulation/runpath")
-        layout.addRow("Runpath:", run_path_label)
+        runpath_label = CopyableLabel(text=self.facade.run_path)
+        layout.addRow("Runpath:", runpath_label)
 
         number_of_realizations_label = QLabel(
             f"<b>{self.facade.get_ensemble_size()}</b>"
