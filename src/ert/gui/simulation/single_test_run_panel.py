@@ -1,14 +1,14 @@
 from dataclasses import dataclass
 
-from qtpy.QtWidgets import QFormLayout, QLabel
+from qtpy.QtWidgets import QFormLayout
 
-from ert.gui.ertwidgets import addHelpToWidget
 from ert.gui.ertwidgets.caseselector import CaseSelector
 from ert.gui.ertwidgets.models.activerealizationsmodel import ActiveRealizationsModel
+from ert.gui.ertwidgets.copyablelabel import CopyableLabel
 from ert.libres_facade import LibresFacade
 from ert.shared.models import SingleTestRun
 
-from .simulation_config_panel import SimulationConfigPanel, escape_string
+from .simulation_config_panel import SimulationConfigPanel
 
 
 @dataclass
@@ -18,18 +18,17 @@ class Arguments:
 
 class SingleTestRunPanel(SimulationConfigPanel):
     def __init__(self, ert, notifier):
+        super().__init__(SingleTestRun)
         self.ert = ert
         facade = LibresFacade(ert)
-        SimulationConfigPanel.__init__(self, SingleTestRun)
         self.setObjectName("Single_test_run_panel")
         layout = QFormLayout()
 
         case_selector = CaseSelector(facade, notifier)
         layout.addRow("Current case:", case_selector)
 
-        run_path_label = QLabel(f"<b>{escape_string(facade.run_path)}</b>")
-        addHelpToWidget(run_path_label, "config/simulation/runpath")
-        layout.addRow("Runpath:", run_path_label)
+        runpath_label = CopyableLabel(text=facade.run_path)
+        layout.addRow("Runpath:", runpath_label)
 
         self._active_realizations_model = ActiveRealizationsModel(facade)
 

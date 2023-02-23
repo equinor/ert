@@ -6,6 +6,7 @@ from ert._c_wrappers.enkf import EnKFMain
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets import addHelpToWidget
 from ert.gui.ertwidgets.caseselector import CaseSelector
+from ert.gui.ertwidgets.copyablelabel import CopyableLabel
 from ert.gui.ertwidgets.models.activerealizationsmodel import ActiveRealizationsModel
 from ert.gui.ertwidgets.models.ertmodel import get_runnable_realizations_mask
 from ert.gui.ertwidgets.models.init_iter_value import IterValueModel
@@ -14,7 +15,7 @@ from ert.libres_facade import LibresFacade
 from ert.shared.ide.keywords.definitions import IntegerArgument, RangeStringArgument
 from ert.shared.models import EnsembleExperiment
 
-from .simulation_config_panel import SimulationConfigPanel, escape_string
+from .simulation_config_panel import SimulationConfigPanel
 
 
 @dataclass
@@ -26,18 +27,17 @@ class Arguments:
 
 class EnsembleExperimentPanel(SimulationConfigPanel):
     def __init__(self, ert: EnKFMain, notifier: ErtNotifier):
+        super().__init__(EnsembleExperiment)
         self.ert = ert
         self.facade = LibresFacade(ert)
-        super().__init__(EnsembleExperiment)
         self.setObjectName("Ensemble_experiment_panel")
 
         layout = QFormLayout()
 
         self._case_selector = CaseSelector(self.facade, notifier)
         layout.addRow("Current case:", self._case_selector)
-        run_path_label = QLabel(f"<b>{escape_string(self.facade.run_path)}</b>")
-        addHelpToWidget(run_path_label, "config/simulation/runpath")
-        layout.addRow("Runpath:", run_path_label)
+        runpath_label = CopyableLabel(text=self.facade.run_path)
+        layout.addRow("Runpath:", runpath_label)
 
         number_of_realizations_label = QLabel(
             f"<b>{self.facade.get_ensemble_size()}</b>"
