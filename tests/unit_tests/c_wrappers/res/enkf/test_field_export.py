@@ -3,6 +3,7 @@ from argparse import ArgumentParser
 
 import pytest
 
+from ert import ensemble_evaluator
 from ert.__main__ import ert_parser
 from ert._c_wrappers.enkf import NodeId
 from ert._c_wrappers.enkf.config import FieldTypeEnum
@@ -66,7 +67,10 @@ def test_field_export_many(snake_oil_field_example):
     assert os.path.isfile("export/with/path/PERMX_4.grdecl")
 
 
-def test_field_init_file_not_readable(copy_case):
+def test_field_init_file_not_readable(copy_case, monkeypatch):
+    monkeypatch.setattr(
+        ensemble_evaluator._wait_for_evaluator, "WAIT_FOR_EVALUATOR_TIMEOUT", 5
+    )
     copy_case("snake_oil_field")
     config_file_name = "snake_oil_field.ert"
     field_file_rel_path = "fields/permx0.grdecl"
