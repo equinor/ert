@@ -32,7 +32,7 @@ def unescape_string(string):
     '<some>&<thing>'
     """
     return (
-        string.replace("&amp", "&;")
+        string.replace("&amp;", "&")
         .replace("&lt;", "<")
         .replace("&gt;", ">")
         .replace("<b>", "")
