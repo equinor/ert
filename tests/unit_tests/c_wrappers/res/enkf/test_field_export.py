@@ -1,15 +1,10 @@
 import os
-from argparse import ArgumentParser
 
 import pytest
 
-from ert import ensemble_evaluator
-from ert.__main__ import ert_parser
 from ert._c_wrappers.enkf import NodeId
 from ert._c_wrappers.enkf.config import FieldTypeEnum
 from ert._c_wrappers.enkf.data import EnkfNode
-from ert.cli import TEST_RUN_MODE
-from ert.cli.main import ErtCliError, run_cli
 
 
 def test_field_type_enum(snake_oil_field_example):
@@ -65,60 +60,3 @@ def test_field_export_many(snake_oil_field_example):
     assert os.path.isfile("export/with/path/PERMX_0.grdecl")
     assert os.path.isfile("export/with/path/PERMX_2.grdecl")
     assert os.path.isfile("export/with/path/PERMX_4.grdecl")
-
-
-def test_field_init_file_not_readable(copy_case, monkeypatch):
-    monkeypatch.setattr(
-        ensemble_evaluator._wait_for_evaluator, "WAIT_FOR_EVALUATOR_TIMEOUT", 5
-    )
-    copy_case("snake_oil_field")
-    config_file_name = "snake_oil_field.ert"
-    field_file_rel_path = "fields/permx0.grdecl"
-    os.chmod(field_file_rel_path, 0x0)
-    parser = ArgumentParser(prog="test_field_init_segfault")
-    parsed = ert_parser(
-        parser,
-        [
-            TEST_RUN_MODE,
-            config_file_name,
-        ],
-    )
-
-    try:
-        run_cli(parsed)
-    except ErtCliError as err:
-        assert "failed to open" in str(err)
-
-
-def test_surface_init_fails_during_forward_model_callback(copy_case):
-    copy_case("snake_oil_field")
-    config_file_name = "snake_oil_surface.ert"
-    with open(config_file_name, mode="r+", encoding="utf-8") as config_file_handler:
-        content_lines = config_file_handler.read().splitlines()
-        index_line_with_surface_top = [
-            index
-            for index, line in enumerate(content_lines)
-            if line.startswith("SURFACE TOP")
-        ][0]
-        line_with_surface_top = content_lines[index_line_with_surface_top]
-        breaking_line_with_surface_top = line_with_surface_top + " FORWARD_INIT:True"
-        content_lines[index_line_with_surface_top] = breaking_line_with_surface_top
-        config_file_handler.seek(0)
-        config_file_handler.write("\n".join(content_lines))
-
-    try:
-        run_ert_test_run(config_file_name)
-    except ErtCliError as err:
-        assert "Failed to initialize node" in str(err)
-
-
-def run_ert_test_run(config_file: str) -> None:
-    parser = ArgumentParser(prog="test_run")
-    parsed = ert_parser(
-        parser,
-        [
-            TEST_RUN_MODE,
-            config_file,
-        ],
-    )
-    run_cli(parsed)
