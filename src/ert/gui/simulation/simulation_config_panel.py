@@ -1,7 +1,6 @@
-from qtpy.QtCore import Signal, Qt
-from qtpy.QtWidgets import QWidget, QHBoxLayout, QLabel, QPushButton, QApplication
-from threading import Timer
-from ert.gui.ertwidgets import addHelpToWidget
+from qtpy.QtCore import Signal
+from qtpy.QtWidgets import QWidget
+
 
 class SimulationConfigPanel(QWidget):
     simulationConfigurationChanged = Signal()
