@@ -1,6 +1,8 @@
-from qtpy.QtCore import Signal, Qt
-from qtpy.QtWidgets import QHBoxLayout, QLabel, QPushButton, QApplication
 from threading import Timer
+
+from qtpy.QtCore import Qt
+from qtpy.QtWidgets import QApplication, QHBoxLayout, QLabel, QPushButton
+
 from ert.gui.ertwidgets import addHelpToWidget
 
 

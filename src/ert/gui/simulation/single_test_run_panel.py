@@ -3,8 +3,8 @@ from dataclasses import dataclass
 from qtpy.QtWidgets import QFormLayout
 
 from ert.gui.ertwidgets.caseselector import CaseSelector
-from ert.gui.ertwidgets.models.activerealizationsmodel import ActiveRealizationsModel
 from ert.gui.ertwidgets.copyablelabel import CopyableLabel
+from ert.gui.ertwidgets.models.activerealizationsmodel import ActiveRealizationsModel
 from ert.libres_facade import LibresFacade
 from ert.shared.models import SingleTestRun
 

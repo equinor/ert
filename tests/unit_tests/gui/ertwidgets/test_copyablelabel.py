@@ -1,7 +1,8 @@
 import pytest
-from ert.gui.ertwidgets.copyablelabel import CopyableLabel
 from qtpy.QtCore import Qt
 from qtpy.QtWidgets import QApplication, QWidget
+
+from ert.gui.ertwidgets.copyablelabel import CopyableLabel
 
 
 @pytest.fixture(
