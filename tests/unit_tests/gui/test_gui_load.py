@@ -223,7 +223,7 @@ def test_that_run_dialog_can_be_closed_after_used_to_open_plots(qtbot):
 
         def handle_dialog():
             message_box = gui.findChild(QMessageBox)
-            qtbot.mouseClick(message_box.buttons()[0], Qt.LeftButton)
+            qtbot.mouseClick(message_box.button(QMessageBox.Yes), Qt.LeftButton)
 
         QTimer.singleShot(500, handle_dialog)
 
