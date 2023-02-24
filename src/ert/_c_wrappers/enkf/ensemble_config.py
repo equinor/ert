@@ -237,6 +237,10 @@ class EnsembleConfig(BaseCClass):
         options = _option_dict(gen_data, 1)
         name = gen_data[0]
         res_file = options.get(ConfigKeys.RESULT_FILE)
+        if res_file is None:
+            raise ConfigValidationError(
+                f"Missing or unsupported RESULT_FILE for GEN_DATA key {name!r}"
+            )
         input_format_str = options.get(ConfigKeys.INPUT_FORMAT)
         if input_format_str != "ASCII":
             warnings.warn(
