@@ -847,10 +847,9 @@ static bool field_fload_custom__(field_type *field, const char *filename,
 
     field_file_format_type file_type = field_config_guess_file_type(filename);
     if (file_type == UNDEFINED_FORMAT) {
-        std::string error_meessage =
-            fmt::format("could not automagically infer type "
-                        "for file: %s\n",
-                        filename);
+        std::string error_meessage = fmt::format("could not infer type "
+                                                 "for file: %s\n",
+                                                 filename);
         throw std::runtime_error(error_meessage);
     }
 
