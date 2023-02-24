@@ -120,7 +120,9 @@ def test_that_the_plot_window_contains_the_expected_elements(
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_that_the_manage_cases_tool_can_be_used(
-    esmda_has_run, opened_main_window, qtbot
+    esmda_has_run,
+    opened_main_window,
+    qtbot,
 ):
     gui = opened_main_window
 
@@ -257,3 +259,61 @@ def test_that_csv_export_plugin_generates_a_file(
 
     assert file_name == "output.csv"
     qtbot.waitUntil(lambda: os.path.exists(file_name))
+
+
+def test_that_the_manage_cases_tool_can_be_used_with_clean_storage(
+    opened_main_window_clean, qtbot
+):
+    gui = opened_main_window_clean
+
+    # Click on "Manage Cases"
+    def handle_dialog():
+        qtbot.waitUntil(lambda: gui.findChild(ClosableDialog) is not None)
+        dialog = gui.findChild(ClosableDialog)
+        cases_panel = dialog.findChild(CaseInitializationConfigurationPanel)
+        assert isinstance(cases_panel, CaseInitializationConfigurationPanel)
+
+        # Open the create new cases tab
+        cases_panel.setCurrentIndex(0)
+        current_tab = cases_panel.currentWidget()
+        assert current_tab.objectName() == "create_new_case_tab"
+        create_widget = current_tab.findChild(AddRemoveWidget)
+        case_list = current_tab.findChild(CaseList)
+        assert isinstance(case_list, CaseList)
+
+        assert case_list._list.count() == 0
+
+        # Click add case and name it "new_case"
+        def handle_add_dialog():
+            qtbot.waitUntil(lambda: current_tab.findChild(ValidatedDialog) is not None)
+            dialog = gui.findChild(ValidatedDialog)
+            dialog.param_name.setText("new_case")
+            qtbot.mouseClick(dialog.ok_button, Qt.LeftButton)
+
+        QTimer.singleShot(1000, handle_add_dialog)
+        qtbot.mouseClick(create_widget.addButton, Qt.LeftButton)
+
+        # The list should now contain "new_case"
+        assert case_list._list.count() == 1
+        assert case_list._list.item(0).data(Qt.UserRole).name == "new_case"
+
+        # Go to the "initialize from scratch" panel
+        cases_panel.setCurrentIndex(1)
+        current_tab = cases_panel.currentWidget()
+        assert current_tab.objectName() == "initialize_from_scratch_panel"
+        combo_box = current_tab.findChild(CaseSelector)
+        assert isinstance(combo_box, CaseSelector)
+
+        assert combo_box.currentText().startswith("new_case")
+
+        # click on "initialize"
+        initialize_button = current_tab.findChild(
+            QPushButton, name="initialize_from_scratch_button"
+        )
+        qtbot.mouseClick(initialize_button, Qt.LeftButton)
+
+        dialog.close()
+
+    QTimer.singleShot(1000, handle_dialog)
+    manage_tool = gui.tools["Manage cases"]
+    manage_tool.trigger()
