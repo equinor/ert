@@ -8,6 +8,7 @@
 #include <ert/util/vector.h>
 
 #include <ert/config/config_parser.hpp>
+#include <ert/logging.hpp>
 
 #include <ert/enkf/config_keys.hpp>
 #include <ert/enkf/enkf_defaults.hpp>
@@ -17,6 +18,7 @@
 #include <ert/enkf/trans_func.hpp>
 
 namespace fs = std::filesystem;
+static auto logger = ert::get_logger("gen_kw_config");
 
 typedef struct {
     char *name;
@@ -102,6 +104,14 @@ void gen_kw_config_set_parameter_file(gen_kw_config_type *config,
         config_content_type *content =
             config_parse(parser, parameter_file, "--", NULL, NULL, NULL,
                          CONFIG_UNRECOGNIZED_ADD, false);
+        if (!content->valid) {
+            logger->warning(
+                "encountered errors while parsing GEN_KW parameter file {}",
+                parameter_file);
+        }
+        for (auto parse_error : content->parse_errors) {
+            logger->warning(parse_error);
+        }
         for (int item_index = 0; item_index < config_content_get_size(content);
              item_index++) {
             const config_content_node_type *node =
