@@ -1,4 +1,5 @@
 #include <filesystem>
+#include <numeric>
 
 #include <stdlib.h>
 #include <string.h>
@@ -105,9 +106,13 @@ void gen_kw_config_set_parameter_file(gen_kw_config_type *config,
             config_parse(parser, parameter_file, "--", NULL, NULL, NULL,
                          CONFIG_UNRECOGNIZED_ADD, false);
         if (!content->valid) {
-            logger->warning(
+            auto header = fmt::format(
                 "encountered errors while parsing GEN_KW parameter file {}",
                 parameter_file);
+            auto errors =
+                std::reduce(content->parse_errors.begin(),
+                            content->parse_errors.end(), std::string("\n"));
+            logger->warning("{}\n{}", header, errors);
         }
         for (auto parse_error : content->parse_errors) {
             logger->warning(parse_error);
