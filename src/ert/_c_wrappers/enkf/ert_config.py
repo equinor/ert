@@ -219,7 +219,8 @@ class ErtConfig:
 
     @classmethod
     def read_user_config(cls, user_config_file):
-        user_config_dict = parse(user_config_file, cls.read_site_config())
+        site_config = cls.read_site_config()
+        user_config_dict = parse(user_config_file, site_config)
         config_file_name = os.path.normpath(os.path.abspath(user_config_file))
         defines = user_config_dict.get("DEFINE", [])
         for key, val in cls._create_pre_defines(config_file_name).items():
@@ -318,8 +319,11 @@ class ErtConfig:
             if args:
                 job.private_args = SubstitutionList()
                 try:
-                    for key, val in args:
-                        job.private_args.addItem(key, val)
+                    if isinstance(args, str):
+                        job.private_args.add_from_string(args)
+                    else:
+                        for key, val in args:
+                            job.private_args.addItem(key, val)
                 except ValueError as err:
                     raise ConfigValidationError(
                         errors=f"{err}: 'FORWARD_MODEL {job_name}({args})'\n",
