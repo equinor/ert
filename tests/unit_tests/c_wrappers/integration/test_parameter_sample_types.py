@@ -850,3 +850,164 @@ if __name__ == "__main__":
         ) != Path("simulations/realization-0/iter-1/my_param.grdecl").read_text(
             encoding="utf-8"
         )
+
+
+@pytest.mark.parametrize(
+    "actnum",
+    [
+        [True] * 16,
+        [True] * 8 + [False] * 8,
+        [False] * 8 + [True] * 8,
+    ],
+)
+@pytest.mark.parametrize("fformat", ["roff"])
+def test_field_param_inactive_grdecl(tmpdir, actnum, fformat):
+    with tmpdir.as_cwd():
+        config = dedent(
+            f"""
+        JOBNAME my_name%d
+        NUM_REALIZATIONS 1
+        GRID MY_GRID.EGRID
+        FIELD MY_PARAM PARAMETER my_param.{fformat} INIT_FILES:my_param_%d.{fformat}
+        """
+        )
+
+        expected_result = [float(i) if mask else 0.0 for (i, mask) in enumerate(actnum)]
+        import xtgeo
+
+        grid = xtgeo.create_box_grid(dimension=(4, 4, 1))
+        mask = grid.get_actnum()
+        mask.values = [int(mask) for mask in actnum]
+        grid.set_actnum(mask)
+
+        # grid = EclGrid.create_rectangular((4, 4, 1), (1, 1, 1), actnum=actnum)
+        # # grid.save_GRID("MY_ECL_GRID.GRID")
+        # grid.save_EGRID("MY_ECL_GRID.EGRID")
+
+        # grid = xtgeo.grid_from_file("MY_ECL_GRID.EGRID", fformat="egrid")
+        grid.to_file("MY_GRID.EGRID", "egrid")
+
+        prop = xtgeo.GridProperty(
+            ncol=grid.ncol,
+            nrow=grid.nrow,
+            nlay=grid.nlay,
+            grid=grid,
+            name="MY_PARAM",
+            values=np.arange(16),
+        )
+        prop.to_file(f"my_param_0.{fformat}", fformat=fformat)
+        # expect_param = EclKW("MY_PARAM", grid.getGlobalSize(), EclDataType.ECL_FLOAT)
+        # for i in range(grid.getGlobalSize()):
+        #     expect_param[i] = i
+        #
+        # with cwrap.open("my_param_0.grdecl", mode="w") as f:
+        #     grid.write_grdecl(expect_param, f)
+
+        with open("config.ert", mode="w", encoding="utf-8") as fh:
+            fh.writelines(config)
+        create_runpath("config.ert")
+
+        read_prop = xtgeo.grid_property.gridproperty_from_file(
+            f"simulations/realization-0/iter-0/my_param.{fformat}", fformat="roff"
+        )
+        assert list(read_prop.values1d.data) == expected_result
+        # # Assert that the data has been written to runpath
+        # with cwrap.open(
+        #     f"simulations/realization-0/iter-0/my_param.{fformat}", "rb"
+        # ) as f:
+        #     actual_param = EclKW.read_grdecl(f, "MY_PARAM")
+        # assert list(actual_param.numpy_view()) == expected_result
+
+
+@pytest.mark.parametrize(
+    "actnum",
+    [
+        [True] * 16,
+        [True] * 8 + [False] * 8,
+        [False] * 8 + [True] * 8,
+        ],
+)
+def test_field_param_inactive_grdecl(tmpdir, actnum):
+    fformat = "grdecl"
+    with tmpdir.as_cwd():
+        config = dedent(
+            f"""
+        JOBNAME my_name%d
+        NUM_REALIZATIONS 1
+        GRID MY_GRID.GRID
+        FIELD MY_PARAM PARAMETER my_param.{fformat} INIT_FILES:my_param_%d.{fformat}
+        """
+        )
+        missing_val = 0.0 if fformat == "grdecl" else -999
+        expected_result = [float(i) if mask else missing_val for (i, mask) in enumerate(actnum)]
+
+        grid = EclGrid.create_rectangular((4, 4, 1), (1, 1, 1), actnum=actnum)
+        grid.save_GRID("MY_GRID.GRID")
+
+        expect_param = EclKW("MY_PARAM", grid.getGlobalSize(), EclDataType.ECL_FLOAT)
+        for i in range(grid.getGlobalSize()):
+            expect_param[i] = i
+
+        with cwrap.open("my_param_0.grdecl", mode="w") as f:
+            grid.write_grdecl(expect_param, f)
+
+        with open("config.ert", mode="w", encoding="utf-8") as fh:
+            fh.writelines(config)
+        create_runpath("config.ert")
+
+        # # Assert that the data has been written to runpath
+        with cwrap.open(
+            f"simulations/realization-0/iter-0/my_param.{fformat}", "rb"
+        ) as f:
+            actual_param = EclKW.read_grdecl(f, "MY_PARAM")
+        assert list(actual_param.numpy_view()) == expected_result
+
+
+@pytest.mark.parametrize(
+    "actnum",
+    [
+        [True] * 16,
+        [True] * 8 + [False] * 8,
+        [False] * 8 + [True] * 8,
+        ],
+)
+def test_field_param_inactive_roff(tmpdir, actnum):
+    fformat = "roff"
+    with tmpdir.as_cwd():
+        config = dedent(
+            f"""
+        JOBNAME my_name%d
+        NUM_REALIZATIONS 1
+        GRID MY_GRID.EGRID
+        FIELD MY_PARAM PARAMETER my_param.{fformat} INIT_FILES:my_param_%d.{fformat}
+        """
+        )
+        missing_val = 0.0 if fformat == "grdecl" else -999
+        expected_result = [float(i) if mask else missing_val for (i, mask) in enumerate(actnum)]
+        import xtgeo
+
+        grid = xtgeo.create_box_grid(dimension=(4, 4, 1))
+        mask = grid.get_actnum()
+        mask.values = [int(mask) for mask in actnum]
+        grid.set_actnum(mask)
+
+        grid.to_file("MY_GRID.EGRID", "egrid")
+
+        prop = xtgeo.GridProperty(
+            ncol=grid.ncol,
+            nrow=grid.nrow,
+            nlay=grid.nlay,
+            grid=grid,
+            name="MY_PARAM",
+            values=np.arange(16),
+        )
+        prop.to_file(f"my_param_0.{fformat}", fformat=fformat)
+
+        with open("config.ert", mode="w", encoding="utf-8") as fh:
+            fh.writelines(config)
+        create_runpath("config.ert")
+
+        read_prop = xtgeo.grid_property.gridproperty_from_file(
+            f"simulations/realization-0/iter-0/my_param.{fformat}", fformat=fformat
+        )
+        assert list(read_prop.values1d.data) == expected_result
