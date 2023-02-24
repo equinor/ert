@@ -36,15 +36,15 @@ class SuggestorMessage(QWidget):
 
     @classmethod
     def error_msg(cls, text):
-        color = "#ff2f00"
+        color = "#ff0000"
         return SuggestorMessage("ERROR", color, text)
 
     @classmethod
     def warning_msg(cls, text):
-        color = "#ff8000"
+        color = "#ff6a00"
         return SuggestorMessage("WARNING", color, text)
 
     @classmethod
-    def suggestion_msg(cls, text):
-        color = "#3b8dd4"
-        return SuggestorMessage("SUGGESTION", color, text)
+    def deprecation_msg(cls, text):
+        color = "#faf339"
+        return SuggestorMessage("DEPRECATION", color, text)

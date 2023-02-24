@@ -152,7 +152,7 @@ def _setup_suggester(errors, warning_msgs, suggestions, ert_window=None):
         suggest_layout.addWidget(SuggestorMessage.warning_msg(msg))
     for msg in suggestions:
         text += msg + "\n"
-        suggest_layout.addWidget(SuggestorMessage.suggestion_msg(msg))
+        suggest_layout.addWidget(SuggestorMessage.deprecation_msg(msg))
 
     suggest_layout.addStretch()
     suggest_msgs.setLayout(suggest_layout)
