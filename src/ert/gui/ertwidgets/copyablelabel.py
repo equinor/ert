@@ -1,8 +1,14 @@
+from os import path
 from threading import Timer
 
-from ert.gui.ertwidgets import addHelpToWidget
 from qtpy.QtCore import Qt
+from qtpy.QtGui import QIcon
 from qtpy.QtWidgets import QApplication, QHBoxLayout, QLabel, QPushButton
+
+from ert.gui.ertwidgets import addHelpToWidget
+
+# Get the absolute path of the directory that contains the current script
+current_dir = path.dirname(path.abspath(__file__))
 
 
 def escape_string(string):
@@ -50,6 +56,8 @@ class CopyableLabel(QHBoxLayout):
         self.label.setTextInteractionFlags(Qt.TextSelectableByMouse)
 
         self.copy_button = QPushButton("copy")
+        icon_path = path.join(current_dir, "..", "resources", "gui", "img", "copy.svg")
+        self.copy_button.setIcon(QIcon(icon_path))
 
         def copy_text() -> None:
             text = unescape_string(self.label.text())
