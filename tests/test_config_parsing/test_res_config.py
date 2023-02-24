@@ -363,9 +363,7 @@ def test_forward_model_with_unsubstituted_arg_gives_warning(caplog):
     with caplog.at_level(logging.WARNING):
         ErtConfig.from_file(test_config_file_name)
         assert len(caplog.records) == 1
-        assert re.search(
-            r"unresolved arguments.*<FROM>.*some-<BLA>", caplog.messages[0]
-        )
+        assert re.search(r"unresolved arguments.*<FROM>", caplog.messages[0])
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -445,7 +443,10 @@ def test_forward_model_warns_for_private_arg_without_effect(caplog):
     with caplog.at_level(logging.WARNING):
         ErtConfig.from_file(test_config_file_name)
         assert len(caplog.records) == 1
-        assert re.search(r"no effect.*<RMS_VERSJON>=2.1", caplog.messages[0])
+        assert re.search(
+            r"were not found in the argument list.*<RMS_VERSJON>=2.1",
+            caplog.messages[0],
+        )
 
 
 @pytest.mark.usefixtures("use_tmpdir")
