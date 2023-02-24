@@ -1,5 +1,5 @@
-#include <fcntl.h>
 #include <filesystem>
+#include <fstream>
 
 #include <Eigen/Dense>
 #include <cmath>
@@ -826,24 +826,32 @@ bool field_fload_typed(field_type *field, const char *filename,
 
 static bool field_fload_custom__(field_type *field, const char *filename,
                                  bool keep_inactive) {
-    int test_file_readability = open(filename, O_RDONLY);
-    if (test_file_readability == -1) {
-        auto errMsg =
-            fmt::format("failed to open `{}` - {}", filename, strerror(errno));
-        throw std::runtime_error(errMsg);
+    std::ifstream file_handler;
+    file_handler.exceptions(std::ifstream::failbit | std::ifstream::badbit);
+    try {
+        file_handler.open(filename);
+    } catch (std::ios_base::failure &err) {
+        auto error_meessage =
+            fmt::format("failed to open `{}` - {}", filename, err.what());
+        throw std::runtime_error(error_meessage);
     }
-    if (close(test_file_readability) == -1) {
-        auto errMsg = fmt::format("unexpected failure to close `{}` - {}",
-                                  filename, strerror(errno));
-        throw std::runtime_error(errMsg);
+    try {
+        file_handler.close();
+    } catch (std::ios_base::failure &err) {
+        auto error_meessage =
+            fmt::format("unexpected failure to close `{}` while checkinf if "
+                        "file readable - {}",
+                        filename, err.what());
+        throw std::runtime_error(error_meessage);
     }
 
     field_file_format_type file_type = field_config_guess_file_type(filename);
     if (file_type == UNDEFINED_FORMAT) {
-        std::string errMsg = fmt::format("could not automagically infer type "
-                                         "for file: %s\n",
-                                         filename);
-        throw std::runtime_error(errMsg);
+        std::string error_meessage =
+            fmt::format("could not automagically infer type "
+                        "for file: %s\n",
+                        filename);
+        throw std::runtime_error(error_meessage);
     }
 
     return field_fload_typed(field, filename, file_type, keep_inactive);

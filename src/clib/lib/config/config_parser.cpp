@@ -1,5 +1,5 @@
-#include <fcntl.h>
 #include <filesystem>
+#include <fstream>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -658,22 +658,29 @@ config_parse(config_parser_type *config, const char *filename,
         hash_iter_free(keys);
     }
 
-    int test_file_readability = open(filename, O_RDONLY);
-    if (test_file_readability == -1) {
-        auto error_message =
-            fmt::format("Could not open file:{} for parsing", filename);
+    std::ifstream file_handler;
+    file_handler.exceptions(std::ifstream::failbit | std::ifstream::badbit);
+    bool file_readable_check_succeeded = true;
+    try {
+        file_handler.open(filename);
+    } catch (std::ios_base::failure &err) {
+        file_readable_check_succeeded = false;
+        auto error_message = fmt::format(
+            "could not open file `{}` for parsing - {}", filename, err.what());
         content->parse_errors.push_back(error_message);
     }
-    int test_file_readability_close = close(test_file_readability);
-    if (test_file_readability_close == -1) {
+    try {
+        file_handler.close();
+    } catch (std::ios_base::failure &err) {
+        file_readable_check_succeeded = false;
         auto error_message =
             fmt::format("unexpected failure to close `{}` while "
                         "checking if readable for parsing",
-                        filename, strerror(errno));
+                        filename, err.what());
         content->parse_errors.push_back(error_message);
     }
 
-    if (test_file_readability != -1 && test_file_readability_close != -1) {
+    if (file_readable_check_succeeded) {
         path_stack_type *path_stack = path_stack_alloc();
         config_parse__(config, content, path_stack, filename, comment_string,
                        include_kw, define_kw, unrecognized_behaviour, validate);
