@@ -475,6 +475,30 @@ def test_surface_init_fails_during_forward_model_callback(copy_case):
         assert "Failed to initialize node" in str(err)
 
 
+def test_unopenable_observation_config_fails_gracefully(copy_case):
+    copy_case("snake_oil_field")
+    config_file_name = "snake_oil_field.ert"
+    with open(config_file_name, mode="r", encoding="utf-8") as config_file_handler:
+        content_lines = config_file_handler.read().splitlines()
+    index_line_with_observation_config = [
+        index
+        for index, line in enumerate(content_lines)
+        if line.startswith("OBS_CONFIG")
+    ][0]
+    line_with_observation_config = content_lines[index_line_with_observation_config]
+    observation_config_rel_path = line_with_observation_config.split(" ")[1]
+    observation_config_abs_path = os.path.join(os.getcwd(), observation_config_rel_path)
+    os.chmod(observation_config_abs_path, 0x0)
+
+    try:
+        run_ert_test_run(config_file_name)
+    except RuntimeError as err:
+        assert (
+            f"Failed to open observation config file {observation_config_abs_path!r}"
+            in str(err)
+        )
+
+
 def run_ert_test_run(config_file: str) -> None:
     parser = ArgumentParser(prog="test_run")
     parsed = ert_parser(
