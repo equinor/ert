@@ -93,11 +93,9 @@ class CaseInitializationConfigurationPanel(QTabWidget):
         panel.setObjectName("initialize_from_scratch_panel")
         layout = QVBoxLayout()
 
-        row1 = createRow(
-            QLabel("Target case:"),
-            CaseSelector(LibresFacade(self.ert), self.notifier),
-        )
-        layout.addLayout(row1)
+        target_case = CaseSelector(LibresFacade(self.ert), self.notifier)
+        row = createRow(QLabel("Target case:"), target_case)
+        layout.addLayout(row)
 
         check_list_layout, parameter_model, members_model = createCheckLists(self.ert)
         layout.addLayout(check_list_layout)
@@ -114,9 +112,9 @@ class CaseInitializationConfigurationPanel(QTabWidget):
         @showWaitCursorWhileWaiting
         def initializeFromScratch(_):
             parameters = parameter_model.getSelectedItems()
-            ensemble = self.notifier.current_case
+            target_ensemble = target_case.currentData()
             self.ert.sample_prior(
-                ensemble=ensemble,
+                ensemble=target_ensemble,
                 active_realizations=[int(i) for i in members_model.getSelectedItems()],
                 parameters=parameters,
             )
@@ -148,7 +146,7 @@ class CaseInitializationConfigurationPanel(QTabWidget):
         row = createRow(QLabel("Source case:"), source_case)
         layout.addLayout(row)
 
-        row, history_length_spinner = self.createTimeStepRow()
+        row, _ = self.createTimeStepRow()
         layout.addLayout(row)
 
         layout.addSpacing(10)
