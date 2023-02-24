@@ -2,20 +2,6 @@ from qtpy.QtCore import Signal
 from qtpy.QtWidgets import QWidget
 
 
-def escape_string(string):
-    """
-    Designed to replace/escape invalid html characters for
-    correct display in Qt QWidgets
-
-    >>> escape_string("realization-<IENS>/iteration-<ITER>")
-    'realization-&lt;IENS&gt;/iteration-&lt;ITER&gt;'
-
-    >>> escape_string("<some>&<thing>")
-    '&lt;some&gt;&amp;&lt;thing&gt;'
-    """
-    return string.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
-
-
 class SimulationConfigPanel(QWidget):
     simulationConfigurationChanged = Signal()
 
