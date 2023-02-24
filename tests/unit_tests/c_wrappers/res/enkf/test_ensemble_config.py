@@ -6,7 +6,7 @@ from ecl.grid.ecl_grid import EclGrid
 from ecl.summary import EclSum
 
 from ert._c_wrappers.config import ConfigValidationError, ConfigWarning
-from ert._c_wrappers.enkf import ConfigKeys, EnsembleConfig
+from ert._c_wrappers.enkf import ConfigKeys, EnsembleConfig, ErtConfig
 from ert._c_wrappers.enkf.enums import EnkfVarType, ErtImplType, GenDataFileType
 
 
@@ -251,3 +251,47 @@ def test_ensemble_config_duplicate_node_names(setup_case):
 
     with pytest.raises(ConfigValidationError, match=error_match):
         EnsembleConfig.from_dict(config_dict=config_dict)
+
+
+@pytest.mark.parametrize(
+    "result_file, fail",
+    [
+        pytest.param(
+            "RESULT_FILE:",
+            True,
+            id="RESULT_FILE key but no file",
+        ),
+        pytest.param(
+            "",
+            True,
+            id="No RESULT_FILE key",
+        ),
+        pytest.param(
+            'RESULT_FILE:"file_in_quotes_%d.out"',
+            True,
+            id="File in quotes",
+        ),
+        pytest.param(
+            "RESULT_FILE:poly_%d.out",
+            False,
+            id="This should not fail",
+        ),
+    ],
+)
+def test_malformed_or_missing_gen_data_result_file(setup_case, result_file, fail):
+    _ = setup_case("poly_example", "poly.ert")
+    # Add extra GEN_DATA key to config file
+    config_line = f"""
+    GEN_DATA POLY_RES_2 {result_file} REPORT_STEPS:0 INPUT_FORMAT:ASCII
+    """
+    with open("poly.ert", "a", encoding="utf-8") as f:
+        f.write(config_line)
+
+    if fail:
+        with pytest.raises(
+            ConfigValidationError,
+            match="Missing or unsupported RESULT_FILE for GEN_DATA",
+        ):
+            ErtConfig.from_file("poly.ert")
+    else:
+        ErtConfig.from_file("poly.ert")
