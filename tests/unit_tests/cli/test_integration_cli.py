@@ -522,8 +522,8 @@ def test_unopenable_observation_config_fails_gracefully(copy_case):
         run_ert_test_run(config_file_name)
     except RuntimeError as err:
         assert (
-            f"Failed to open observation config file {observation_config_abs_path!r}"
-            in str(err)
+            "Do not have permission to open observation config file "
+            f"{observation_config_abs_path!r}" in str(err)
         )
 
 
