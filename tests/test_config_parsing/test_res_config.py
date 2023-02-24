@@ -360,9 +360,9 @@ def test_comments_are_ignored():
         fh.write(test_config_contents)
 
     res_config = ErtConfig.from_file(test_config_file_name)
-    assert res_config.model_config.jobname_format_string == "job_%d--hei"
+    assert res_config.model_config.jobname_format_string == "job_<IENS>--hei"
     assert (
-        res_config.forward_model.jobs[0].private_args["<TO>"]
+        res_config.forward_model_list[0].private_args["<TO>"]
         == "something/hello--there.txt"
     )
 
@@ -388,17 +388,17 @@ def test_quotations_in_forward_model_arglist():
 
     res_config = ErtConfig.from_file(test_config_file_name)
 
-    assert res_config.forward_model.jobs[0].private_args["<FROM>"] == "some, thing"
-    assert res_config.forward_model.jobs[0].private_args["<TO>"] == "some stuff"
-    assert res_config.forward_model.jobs[0].private_args["<FILE>"] == "file.txt"
+    assert res_config.forward_model_list[0].private_args["<FROM>"] == "some, thing"
+    assert res_config.forward_model_list[0].private_args["<TO>"] == "some stuff"
+    assert res_config.forward_model_list[0].private_args["<FILE>"] == "file.txt"
 
-    assert res_config.forward_model.jobs[1].private_args["<FROM>"] == "some, thing"
-    assert res_config.forward_model.jobs[1].private_args["<TO>"] == "some stuff"
-    assert res_config.forward_model.jobs[1].private_args["<FILE>"] == "file.txt"
+    assert res_config.forward_model_list[1].private_args["<FROM>"] == "some, thing"
+    assert res_config.forward_model_list[1].private_args["<TO>"] == "some stuff"
+    assert res_config.forward_model_list[1].private_args["<FILE>"] == "file.txt"
 
-    assert res_config.forward_model.jobs[2].private_args["<FROM>"] == "some, thing"
-    assert res_config.forward_model.jobs[2].private_args["<TO>"] == "some stuff"
-    assert res_config.forward_model.jobs[2].private_args["<FILE>"] == "file.txt"
+    assert res_config.forward_model_list[2].private_args["<FROM>"] == "some, thing"
+    assert res_config.forward_model_list[2].private_args["<TO>"] == "some stuff"
+    assert res_config.forward_model_list[2].private_args["<FILE>"] == "file.txt"
 
 
 @pytest.mark.usefixtures("use_tmpdir")

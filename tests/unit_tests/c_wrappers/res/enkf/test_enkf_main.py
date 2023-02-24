@@ -348,7 +348,7 @@ def test_ert_context():
     ert_config = ErtConfig.from_file("config_file.ert")
     ert = EnKFMain(ert_config)
     context = ert.get_context()
-    my_path = context["<MY_PATH>"]
+    my_path = context["MY_PATH"]
     assert my_path == os.getcwd()
 
 

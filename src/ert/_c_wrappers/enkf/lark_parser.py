@@ -62,16 +62,20 @@ start: instruction+
 
 inst: "DEFINE" KW_NAME kw_val -> define
     | "DATA_KW" KW_NAME kw_val -> data_kw
-    | "INCLUDE" arg -> include
+    | "INCLUDE" arg* -> include
     | KEYWORD_NAME (arg* | arglist) -> keyword
 
 instruction: inst COMMENT | COMMENT | inst NEWLINE | NEWLINE
 """  # noqa: E501
 
 
-def substitute(defines, string: str):
+def substitute(defines, string: str, expand_env=True):
+
     prev = None
     current = string
+    if expand_env:
+        for key, val in os.environ.items():
+            current = current.replace(f"${key}", val)
     n = 0
     while defines and prev != current and n < 100:
         n = n + 1
@@ -82,8 +86,9 @@ def substitute(defines, string: str):
     if n >= 100:
         print(f"reached max iterations for {string}")
 
-    if current == string:
-        return string
+    if isinstance(current, Token):
+        current = current.value
+
     return current
 
 
@@ -138,7 +143,7 @@ class MakeDict:
                 if val_type == SchemaType.CONFIG_EXISTING_PATH and not os.path.exists(
                     path
                 ):
-                    err = f"File {path} does not exist.\n"
+                    err = f"Cannot find file or directory \"{val}\" \n"
                     if path != val:
                         err += f"The configured value was {val}"
                     raise ConfigValidationError(err)
@@ -152,6 +157,8 @@ class MakeDict:
                 return convert(args, item, 0)
 
         def get_value(item: SchemaItem, line: List):
+            if item.argc_max != -1 and item.argc_max < len(line) - 1:
+                raise ConfigValidationError(f"Keyword: {item.kw} takes at most {item.argc_max} arguments")
             if item.join_after > 0:
                 n = item.join_after + 1
                 args = " ".join(str(x) for x in line[n:])
@@ -172,6 +179,7 @@ class MakeDict:
                     if self.add_invalid:
                         self.config_dict[key] = line[1:]
                     self.errors.append(f"unknown key {key}")
+                    raise ConfigValidationError(f"Unknown key {key}")
                     continue
                 item = schema[key]
                 if item.multi_occurrence:
@@ -234,12 +242,17 @@ class MakeDict:
     def keyword(self, tree):
         inst = []
         # print(tree)
-        for node in tree.children:
+        kw = tree.children[0]
+        do_env = True
+        if kw in self.schema:
+            do_env = self.schema[kw].expand_envvar
+        inst.append(kw)
+        for node in tree.children[1:]:
             if isinstance(node, Token):
                 if node.type == "STRING":
                     # remove quotation marks
                     node.value = node[1 : len(node) - 1]
-                inst.append(substitute(self.defines, node))
+                inst.append(substitute(self.defines, node, expand_env=do_env))
             elif node.data == "arglist":
                 name = node.children[0]
                 args = []
@@ -252,7 +265,7 @@ class MakeDict:
                     if isinstance(val, Token) and val.type == "STRING":
                         # remove quotation marks
                         val = val[1 : len(val) - 1]
-                    val = substitute(self.defines, val)
+                    val = substitute(self.defines, val, expand_env=do_env)
                     # args.append(f"{key}={val}")
                     args.append((key, val))
                 # argstring = ",".join(args)
@@ -260,7 +273,7 @@ class MakeDict:
                 inst.append(args)
             elif node.data == "arg":
                 val = node.children[0]
-                inst.append(substitute(self.defines, val))
+                inst.append(substitute(self.defines, val, expand_env=do_env))
 
         kw = inst[0]
         if kw in self.schema:
@@ -291,6 +304,8 @@ def do_includes(tree: Tree, config_dir):
             continue  # This is either a newline or a comment
         if node.children[0].data == "include":
             inc_node = node.children[0]
+            if len(inc_node.children) > 1:
+                raise ConfigValidationError("Keyword:INCLUDE must have exactly one argument")
             val = inc_node.children[0].children[0]
             if not os.path.isabs(val):
                 val = os.path.normpath(os.path.join(config_dir, val))
@@ -319,8 +334,8 @@ def _parse_file(file, error_context_string=""):
         msg = str(e)
         if "DEFINE" in msg or "DATA_KW" in msg:
             msg = (
-                "\nA DEFINE or DATA_KW must be followed by a valid substitution "
-                "keyword.\n"
+                f"\nKeyword:{'DEFINE' if 'DEFINE' in msg else 'DATA_KW'} must have two or more"
+                " arguments.\n"
                 "It must be of the form: <ABC>  Inside the angle brackets, only"
                 " characters, numbers, _ or - is allowed.\n"
                 "\n"
