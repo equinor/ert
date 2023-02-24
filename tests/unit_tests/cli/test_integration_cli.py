@@ -446,17 +446,9 @@ def test_field_init_file_not_readable(copy_case, monkeypatch):
     config_file_name = "snake_oil_field.ert"
     field_file_rel_path = "fields/permx0.grdecl"
     os.chmod(field_file_rel_path, 0x0)
-    parser = ArgumentParser(prog="test_field_init_segfault")
-    parsed = ert_parser(
-        parser,
-        [
-            TEST_RUN_MODE,
-            config_file_name,
-        ],
-    )
 
     try:
-        run_cli(parsed)
+        run_ert_test_run(config_file_name)
     except ErtCliError as err:
         assert "failed to open" in str(err)
 
