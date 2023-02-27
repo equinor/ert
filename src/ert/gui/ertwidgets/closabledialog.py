@@ -5,7 +5,6 @@ from qtpy.QtWidgets import QDialog, QHBoxLayout, QLayout, QPushButton, QVBoxLayo
 class ClosableDialog(QDialog):
     def __init__(self, title, widget, parent=None):
         QDialog.__init__(self, parent)
-
         self.setWindowTitle(title)
         self.setModal(True)
         self.setWindowFlags(self.windowFlags() & ~Qt.WindowContextHelpButtonHint)
