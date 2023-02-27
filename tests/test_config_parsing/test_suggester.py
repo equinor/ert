@@ -3,11 +3,15 @@ import pytest
 from ert._c_wrappers.enkf._deprecation_migration_suggester import (
     DeprecationMigrationSuggester,
 )
+from ert._c_wrappers.enkf.ert_config import ErtConfig
 
 
 @pytest.fixture
-def suggester():
-    return DeprecationMigrationSuggester()
+def suggester(tmp_path):
+    return DeprecationMigrationSuggester(
+        ErtConfig._create_user_config_parser(),
+        ErtConfig._create_pre_defines(str(tmp_path / "config.ert")),
+    )
 
 
 @pytest.mark.parametrize("kw", DeprecationMigrationSuggester.JUST_REMOVE_KEYWORDS)

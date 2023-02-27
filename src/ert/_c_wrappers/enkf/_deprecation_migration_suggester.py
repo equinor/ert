@@ -1,12 +1,22 @@
 import logging
+from typing import TYPE_CHECKING, Dict
 
-from ert._c_wrappers.enkf.lark_parser import parse
 from ert._c_wrappers.enkf.model_config import replace_runpath_format
+
+from ._config_content_as_dict import config_content_as_dict
+
+if TYPE_CHECKING:
+    from ert._c_wrappers.config import ConfigParser
 
 logger = logging.getLogger(__name__)
 
 
 class DeprecationMigrationSuggester:
+    def __init__(self, parser: "ConfigParser", pre_defines: Dict[str, str]):
+        self._parser = parser
+        self._pre_defines = pre_defines
+        self._add_deprecated_keywords_to_parser()
+
     REPLACE_WITH_GEN_KW = [
         "RELPERM",
         "MULTZ",
@@ -29,16 +39,34 @@ class DeprecationMigrationSuggester:
         "MAX_RUNNING_LOCAL",
     ]
 
-    def suggest_migrations(self, filename: str):
-        from ert._c_wrappers.enkf.ert_config import site_config_location
+    def _add_deprecated_keywords_to_parser(self):
+        for kw in self.REPLACE_WITH_GEN_KW:
+            self._parser.add(kw)
+        for kw in self.JUST_REMOVE_KEYWORDS:
+            self._parser.add(kw)
+        for kw in self.RSH_KEYWORDS:
+            self._parser.add(kw)
+        for kw in self.USE_QUEUE_OPTION:
+            self._parser.add(kw)
+        self._parser.add("PLOT_SETTINGS")
+        self._parser.add("HAVANA_FAULT")
+        self._parser.add("REFCASE_LIST")
+        self._parser.add("RFTPATH")
+        self._parser.add("END_DATE")
+        self._parser.add("CASE_TABLE")
+        self._parser.add("RERUN_START")
+        self._parser.add("DELETE_RUNPATH")
+        self._parser.add("UPDATE_PATH")
 
-        site_content = parse(site_config_location())
-        content = parse(filename, site_config=site_content, add_invalid=True)
-        defines = content.get("DEFINE", [])
+    def suggest_migrations(self, filename: str):
         suggestions = []
+        content = self._parser.parse(
+            filename, pre_defined_kw_map=self._pre_defines, validate=False
+        )
+        defines = config_content_as_dict(content, {}).get("DEFINE", [])
 
         def add_suggestion(kw, suggestion):
-            if kw in content:
+            if content.hasKey(kw):
                 logger.info("Added suggestion for keyword %s: %s", kw, suggestion)
                 suggestions.append(suggestion)
 
@@ -53,8 +81,8 @@ class DeprecationMigrationSuggester:
                 logger.info("Deprecated use of DEFINE without <>: %s", _suggestion)
                 suggestions.append(_suggestion)
 
-        if "RUNPATH" in content and "%d" in content["RUNPATH"]:
-            runpath = replace_runpath_format(content["RUNPATH"])
+        if content.hasKey("RUNPATH") and "%d" in content.getValue("RUNPATH"):
+            runpath = replace_runpath_format(content.getValue("RUNPATH"))
             add_suggestion(
                 "RUNPATH",
                 "RUNPATH keyword contains deprecated value placeholders: %d, "

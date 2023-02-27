@@ -27,11 +27,18 @@ from ert._c_wrappers.job_queue import (
 )
 from ert._c_wrappers.util import SubstitutionList
 from ert._clib import job_kw
+from ert._clib.config_keywords import init_site_config_parser, init_user_config_parser
 
+from ._config_content_as_dict import config_content_as_dict
 from ._deprecation_migration_suggester import DeprecationMigrationSuggester
 from .lark_parser import parse
 
 logger = logging.getLogger(__name__)
+
+USE_NEW_PARSER_BY_DEFAULT = False
+
+if "USE_NEW_ERT_PARSER" in os.environ:
+    USE_NEW_PARSER_BY_DEFAULT = True
 
 
 def site_config_location():
@@ -71,8 +78,12 @@ class ErtConfig:
         )
 
     @classmethod
-    def from_file(cls, user_config_file) -> "ErtConfig":
-        user_config_dict = ErtConfig.read_user_config(user_config_file)
+    def from_file(
+        cls, user_config_file, new_parser=USE_NEW_PARSER_BY_DEFAULT
+    ) -> "ErtConfig":
+        user_config_dict = ErtConfig.read_user_config(
+            user_config_file, new_parser=new_parser
+        )
         config_dir = os.path.abspath(os.path.dirname(user_config_file))
         ErtConfig._log_config_file(user_config_file)
         ErtConfig._log_config_dict(user_config_dict)
@@ -203,23 +214,46 @@ class ErtConfig:
             )
 
     @classmethod
+    def _create_user_config_parser(cls):
+        config_parser = ConfigParser()
+        init_user_config_parser(config_parser)
+        return config_parser
+
+    @classmethod
     def make_suggestion_list(cls, config_file):
-        return DeprecationMigrationSuggester().suggest_migrations(config_file)
+        return DeprecationMigrationSuggester(
+            ErtConfig._create_user_config_parser(),
+            ErtConfig._create_pre_defines(config_file),
+        ).suggest_migrations(config_file)
 
     @classmethod
-    def read_site_config(cls):
-        return parse(site_config_location())
+    def read_site_config(cls, new_parser=USE_NEW_PARSER_BY_DEFAULT):
+        if new_parser:
+            return parse(site_config_location())
+        else:
+            site_config_parser = ConfigParser()
+            init_site_config_parser(site_config_parser)
+            site_config_content = site_config_parser.parse(site_config_location())
+            return config_content_as_dict(site_config_content, {})
 
     @classmethod
-    def read_user_config(cls, user_config_file):
-        site_config = cls.read_site_config()
-        user_config_dict = parse(user_config_file, site_config)
-        config_file_name = os.path.normpath(os.path.abspath(user_config_file))
-        defines = user_config_dict.get("DEFINE", [])
-        for key, val in cls._create_pre_defines(config_file_name).items():
-            defines.append([key, val])
-        user_config_dict["DEFINE"] = defines
-        return user_config_dict
+    def read_user_config(cls, user_config_file, new_parser=USE_NEW_PARSER_BY_DEFAULT):
+        site_config = cls.read_site_config(new_parser=new_parser)
+        if new_parser:
+            user_config_dict = parse(user_config_file, site_config)
+            config_file_name = os.path.normpath(os.path.abspath(user_config_file))
+            defines = user_config_dict.get("DEFINE", [])
+            for key, val in cls._create_pre_defines(config_file_name).items():
+                defines.append([key, val])
+            user_config_dict["DEFINE"] = defines
+            return user_config_dict
+        else:
+            user_config_parser = ErtConfig._create_user_config_parser()
+            user_config_content = user_config_parser.parse(
+                user_config_file,
+                pre_defined_kw_map=ErtConfig._create_pre_defines(user_config_file),
+            )
+            return config_content_as_dict(user_config_content, site_config)
 
     @classmethod
     def _validate_queue_option_max_running(cls, config_path, config_dict):

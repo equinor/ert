@@ -1,4 +1,5 @@
 import datetime
+import os
 import os.path
 from typing import List, Mapping
 
@@ -190,7 +191,7 @@ class MakeDict:
                 else:
                     self.config_dict[key] = get_value(item, line)
 
-            for kw, item in schema.items():
+            for _, item in schema.items():
                 if item.required_set:
                     if item.kw not in self.config_dict:
                         raise ConfigValidationError(f"{item.kw} must be set.")
@@ -205,13 +206,17 @@ class MakeDict:
                 for data_kw in self.data_kws:
                     self.config_dict["DATA_KW"].append(data_kw)
         except ConfigValidationError as e:
+            if line is None:
+                raise ValueError(
+                    "Parsing of config failed before fetching keywords"
+                ) from e
             line_msg = " ".join(line) if line else ""
             # should always be a token as no replacement should be done to keywords
             token: Token = line[0]
             raise ConfigValidationError(
                 f"{e.errors}\nWas used in {line_msg} at line {token.line}",
                 config_file=self.config_file,
-            )
+            ) from e
 
         return self.config_dict
 
@@ -307,6 +312,10 @@ def do_includes(tree: Tree, config_dir):
                     "Keyword:INCLUDE must have exactly one argument"
                 )
             val = inc_node.children[0].children[0]
+            if not isinstance(val, str):
+                raise ConfigValidationError(
+                    "INCLUDE keyword must be given filepath, got {val!r}"
+                )
             if not os.path.isabs(val):
                 val = os.path.normpath(os.path.join(config_dir, val))
 
