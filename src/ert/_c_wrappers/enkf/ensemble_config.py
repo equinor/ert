@@ -1,5 +1,6 @@
 import logging
 import os
+import warnings
 from typing import Dict, List, Optional, Union
 
 from cwrap import BaseCClass
@@ -10,7 +11,7 @@ from ecl.util.util import StringList
 
 from ert import _clib
 from ert._c_wrappers import ResPrototype
-from ert._c_wrappers.config.config_parser import ConfigValidationError
+from ert._c_wrappers.config.config_parser import ConfigValidationError, ConfigWarning
 from ert._c_wrappers.config.rangestring import rangestring_to_list
 from ert._c_wrappers.enkf.config import EnkfConfigNode
 from ert._c_wrappers.enkf.config_keys import ConfigKeys
@@ -238,8 +239,11 @@ class EnsembleConfig(BaseCClass):
         res_file = options.get(ConfigKeys.RESULT_FILE)
         input_format_str = options.get(ConfigKeys.INPUT_FORMAT)
         if input_format_str != "ASCII":
-            logger.error("The only supported INPUT_FORMAT is ASCII")
-            return None
+            warnings.warn(
+                f"Missing or unsupported GEN_DATA INPUT_FORMAT for key {name!r}. "
+                f"Assuming INPUT_FORMAT is ASCII.",
+                category=ConfigWarning,
+            )
         report_steps_str = options.get(ConfigKeys.REPORT_STEPS, "")
         report_steps = rangestring_to_list(report_steps_str)
 
