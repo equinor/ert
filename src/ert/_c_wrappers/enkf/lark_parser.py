@@ -329,7 +329,12 @@ def _parse_file(file, error_context_string=""):
         tree = parser.parse(content + "\n")
         return tree
     except FileNotFoundError:
-        raise IOError(f"{error_context_string} file: {file} not found")
+        if error_context_string == "INCLUDE":
+            raise ConfigValidationError(
+                f"{error_context_string} file: {file} not found"
+            )
+        else:
+            raise IOError(f"{error_context_string} file: {file} not found")
     except UnexpectedCharacters as e:
         msg = str(e)
         if "DEFINE" in msg or "DATA_KW" in msg:
