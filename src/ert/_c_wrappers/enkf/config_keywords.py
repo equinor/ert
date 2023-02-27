@@ -191,7 +191,7 @@ def single_arg_keyword(keyword):
 def num_realizations_keyword():
     return SchemaItem(
         kw=NUM_REALIZATIONS_KEY,
-        required_set=False,
+        required_set=True,
         argc_min=1,
         argc_max=1,
         type_map=[SchemaType.CONFIG_INT],
