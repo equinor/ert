@@ -55,7 +55,7 @@ class CopyableLabel(QHBoxLayout):
         self.label = QLabel(f"<b>{escape_string(text)}</b>")
         self.label.setTextInteractionFlags(Qt.TextSelectableByMouse)
 
-        self.copy_button = QPushButton("copy")
+        self.copy_button = QPushButton("")
         icon_path = path.join(current_dir, "..", "resources", "gui", "img", "copy.svg")
         self.copy_button.setIcon(QIcon(icon_path))
 
@@ -65,7 +65,7 @@ class CopyableLabel(QHBoxLayout):
             self.copy_button.setText("copied!")
 
             def restore_text():
-                self.copy_button.setText("copy")
+                self.copy_button.setText("")
 
             Timer(1.0, restore_text).start()
 
