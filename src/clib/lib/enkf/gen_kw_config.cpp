@@ -109,9 +109,10 @@ void gen_kw_config_set_parameter_file(gen_kw_config_type *config,
             auto header = fmt::format(
                 "encountered errors while parsing GEN_KW parameter file {}",
                 parameter_file);
-            auto errors =
-                std::reduce(content->parse_errors.begin(),
-                            content->parse_errors.end(), std::string("\n"));
+            std::string errors;
+            for (auto &error : content->parse_errors) {
+                errors += error;
+            }
             logger->warning("{}\n{}", header, errors);
         }
         for (auto parse_error : content->parse_errors) {
