@@ -33,7 +33,7 @@ class EnsembleSmootherPanel(SimulationConfigPanel):
         facade = LibresFacade(ert)
         layout = QFormLayout()
 
-        self._case_selector = CaseSelector(facade, notifier)
+        self._case_selector = CaseSelector(facade, notifier, show_create_new_case=True)
         layout.addRow("Current case:", self._case_selector)
 
         run_path_label = QLabel(f"<b>{escape_string(facade.run_path)}</b>")

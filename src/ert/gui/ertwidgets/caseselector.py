@@ -35,12 +35,12 @@ class CaseSelector(QComboBox):
         addHelpToWidget(self, help_link)
         self.setSizeAdjustPolicy(QComboBox.AdjustToContents)
 
+        self._add_create_new_case()
+        self.setCurrentIndex(0)
+
         self.currentIndexChanged[int].connect(self.on_current_index_changed)
         notifier.ertChanged.connect(self.populate)
         notifier.storage_changed.connect(self.populate)
-
-        if notifier._storage is not None:
-            self.populate()
 
     @property
     def storage(self) -> StorageAccessor:
@@ -67,25 +67,31 @@ class CaseSelector(QComboBox):
 
         self.clear()
 
-        if self._show_create_new_case:
-            new_case_font = QFont(self.font())
-            new_case_font.setItalic(True)
-            self.addItem("New case", userData=None)
-            self.setItemData(0, new_case_font, Qt.FontRole)
+        self._add_create_new_case()
 
         for case in case_list:
             self.addItem(f"{case.name} - {case.started_at}", userData=case)
 
         current_index = 0
         current_case = self.notifier.current_case
-        if current_case in case_list:
-            current_index = case_list.index(current_case)
+        if current_case is not None:
+            if current_case in case_list:
+                current_index = case_list.index(current_case)
 
-        if self._show_create_new_case:
-            # The first entry is "New case"
-            current_index += 1
+            if self._show_create_new_case:
+                # The first entry is "New case"
+                current_index += 1
 
         if current_index != self.currentIndex() and not self._ignore_current:
             self.setCurrentIndex(current_index)
 
         self.blockSignals(block)
+
+    def _add_create_new_case(self):
+        if not self._show_create_new_case:
+            return
+
+        new_case_font = QFont(self.font())
+        new_case_font.setItalic(True)
+        self.addItem("New case", userData=None)
+        self.setItemData(0, new_case_font, Qt.FontRole)
