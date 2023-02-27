@@ -179,7 +179,7 @@ class MakeDict:
                     if self.add_invalid:
                         self.config_dict[key] = line[1:]
                     self.errors.append(f"unknown key {key}")
-                    raise ConfigValidationError(f"Unknown key {key}")
+                    # raise ConfigValidationError(f"Unknown key {key}")
                     continue
                 item = schema[key]
                 if item.multi_occurrence:
@@ -329,7 +329,7 @@ def _parse_file(file, error_context_string=""):
         tree = parser.parse(content + "\n")
         return tree
     except FileNotFoundError:
-        raise ConfigValidationError(f"{error_context_string} file: {file} not found")
+        raise IOError(f"{error_context_string} file: {file} not found")
     except UnexpectedCharacters as e:
         msg = str(e)
         if "DEFINE" in msg or "DATA_KW" in msg:
