@@ -10,6 +10,7 @@ from ert.gui.ertwidgets import (
     CaseSelector,
     addHelpToWidget,
 )
+from ert.gui.ertwidgets.copyablelabel import CopyableLabel
 from ert.gui.ertwidgets.models.activerealizationsmodel import ActiveRealizationsModel
 from ert.gui.ertwidgets.models.init_iter_value import IterValueModel
 from ert.gui.ertwidgets.models.targetcasemodel import TargetCaseModel
@@ -24,7 +25,7 @@ from ert.shared.ide.keywords.definitions import (
 )
 from ert.shared.models import MultipleDataAssimilation
 
-from .simulation_config_panel import SimulationConfigPanel, escape_string
+from .simulation_config_panel import SimulationConfigPanel
 
 
 @dataclass
@@ -45,9 +46,8 @@ class MultipleDataAssimilationPanel(SimulationConfigPanel):
         case_selector = CaseSelector(facade, notifier)
         layout.addRow("Current case:", case_selector)
 
-        run_path_label = QLabel(f"<b>{escape_string(facade.run_path)}</b>")
-        addHelpToWidget(run_path_label, "config/simulation/runpath")
-        layout.addRow("Runpath:", run_path_label)
+        runpath_label = CopyableLabel(text=facade.run_path)
+        layout.addRow("Runpath:", runpath_label)
 
         number_of_realizations_label = QLabel(f"<b>{facade.get_ensemble_size()}</b>")
         addHelpToWidget(
