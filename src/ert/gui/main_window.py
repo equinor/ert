@@ -77,9 +77,6 @@ class ErtMainWindow(QMainWindow):
     def __createMenu(self):
         self.__view_menu = self.menuBar().addMenu("&View")
         self.__help_menu = self.menuBar().addMenu("&Help")
-        show_about = self.__help_menu.addAction("About")
-        show_about.setMenuRole(QAction.ApplicationSpecificRole)
-        show_about.triggered.connect(self.__showAboutMessage)
 
         pm = ErtPluginManager()
         help_links = pm.get_help_links()
@@ -88,6 +85,10 @@ class ErtMainWindow(QMainWindow):
             help_link_item = self.__help_menu.addAction(menu_label)
             help_link_item.setMenuRole(QAction.ApplicationSpecificRole)
             help_link_item.triggered.connect(functools.partial(webbrowser.open, link))
+
+        show_about = self.__help_menu.addAction("About")
+        show_about.setMenuRole(QAction.ApplicationSpecificRole)
+        show_about.triggered.connect(self.__showAboutMessage)
 
     def __saveSettings(self):
         settings = QSettings("Equinor", "Ert-Gui")
