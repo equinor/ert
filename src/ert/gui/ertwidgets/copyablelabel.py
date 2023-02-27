@@ -3,7 +3,7 @@ from threading import Timer
 
 from qtpy.QtCore import Qt
 from qtpy.QtGui import QIcon
-from qtpy.QtWidgets import QApplication, QHBoxLayout, QLabel, QPushButton
+from qtpy.QtWidgets import QApplication, QHBoxLayout, QLabel, QPushButton, QSizePolicy
 
 from ert.gui.ertwidgets import addHelpToWidget
 
@@ -56,6 +56,10 @@ class CopyableLabel(QHBoxLayout):
         self.label.setTextInteractionFlags(Qt.TextSelectableByMouse)
 
         self.copy_button = QPushButton("")
+        self.copy_button.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
+        self.copy_button.setStyleSheet(
+            "QPushButton { padding: 8px; max-width: 150px; min-width: 30px; }"
+        )
         icon_path = path.join(current_dir, "..", "resources", "gui", "img", "copy.svg")
         self.copy_button.setIcon(QIcon(icon_path))
 
