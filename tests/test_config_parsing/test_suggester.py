@@ -3,7 +3,6 @@ import pytest
 from ert._c_wrappers.enkf._deprecation_migration_suggester import (
     DeprecationMigrationSuggester,
 )
-from ert._c_wrappers.enkf.ert_config import ErtConfig
 
 
 @pytest.fixture

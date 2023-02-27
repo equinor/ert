@@ -1,11 +1,7 @@
 import logging
-from typing import TYPE_CHECKING, Dict
 
 from ert._c_wrappers.enkf.lark_parser import parse
 from ert._c_wrappers.enkf.model_config import replace_runpath_format
-
-if TYPE_CHECKING:
-    pass
 
 logger = logging.getLogger(__name__)
 

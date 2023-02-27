@@ -49,7 +49,7 @@ arg: NUMBER | STRING | UNQUOTED
 arglist: UNQUOTED kw_list
 
 kw_list: "(" [ kw_pair ("," kw_pair)*] ")"
-kw_val: NUMBER | UNQUOTED_NO_EQ | STRING | ENV_STRING 
+kw_val: NUMBER | UNQUOTED_NO_EQ | STRING | ENV_STRING
 kw_pair: KW_NAME "=" kw_val
 KW_NAME_STRICT: "<" UNQUOTED_KW ">"
 KW_NAME: UNQUOTED_KW | "<" KEYWORD_NAME ">"
@@ -70,7 +70,6 @@ instruction: inst COMMENT | COMMENT | inst NEWLINE | NEWLINE
 
 
 def substitute(defines, string: str, expand_env=True):
-
     prev = None
     current = string
     if expand_env:
@@ -143,7 +142,7 @@ class MakeDict:
                 if val_type == SchemaType.CONFIG_EXISTING_PATH and not os.path.exists(
                     path
                 ):
-                    err = f"Cannot find file or directory \"{val}\" \n"
+                    err = f'Cannot find file or directory "{val}" \n'
                     if path != val:
                         err += f"The configured value was {val}"
                     raise ConfigValidationError(err)
@@ -158,7 +157,9 @@ class MakeDict:
 
         def get_value(item: SchemaItem, line: List):
             if item.argc_max != -1 and item.argc_max < len(line) - 1:
-                raise ConfigValidationError(f"Keyword: {item.kw} takes at most {item.argc_max} arguments")
+                raise ConfigValidationError(
+                    f"Keyword: {item.kw} takes at most {item.argc_max} arguments"
+                )
             if item.join_after > 0:
                 n = item.join_after + 1
                 args = " ".join(str(x) for x in line[n:])
@@ -179,7 +180,6 @@ class MakeDict:
                     if self.add_invalid:
                         self.config_dict[key] = line[1:]
                     self.errors.append(f"unknown key {key}")
-                    # raise ConfigValidationError(f"Unknown key {key}")
                     continue
                 item = schema[key]
                 if item.multi_occurrence:
@@ -241,7 +241,6 @@ class MakeDict:
 
     def keyword(self, tree):
         inst = []
-        # print(tree)
         kw = tree.children[0]
         do_env = True
         if kw in self.schema:
@@ -266,9 +265,7 @@ class MakeDict:
                         # remove quotation marks
                         val = val[1 : len(val) - 1]
                     val = substitute(self.defines, val, expand_env=do_env)
-                    # args.append(f"{key}={val}")
                     args.append((key, val))
-                # argstring = ",".join(args)
                 inst.append(name)
                 inst.append(args)
             elif node.data == "arg":
@@ -295,6 +292,7 @@ class MakeDict:
 
         self.keywords.append(inst)
 
+
 def do_includes(tree: Tree, config_dir):
     to_include = []
     for i, node in enumerate(tree.children):
@@ -305,7 +303,9 @@ def do_includes(tree: Tree, config_dir):
         if node.children[0].data == "include":
             inc_node = node.children[0]
             if len(inc_node.children) > 1:
-                raise ConfigValidationError("Keyword:INCLUDE must have exactly one argument")
+                raise ConfigValidationError(
+                    "Keyword:INCLUDE must have exactly one argument"
+                )
             val = inc_node.children[0].children[0]
             if not os.path.isabs(val):
                 val = os.path.normpath(os.path.join(config_dir, val))
@@ -334,8 +334,8 @@ def _parse_file(file, error_context_string=""):
         msg = str(e)
         if "DEFINE" in msg or "DATA_KW" in msg:
             msg = (
-                f"\nKeyword:{'DEFINE' if 'DEFINE' in msg else 'DATA_KW'} must have two or more"
-                " arguments.\n"
+                f"\nKeyword:{'DEFINE' if 'DEFINE' in msg else 'DATA_KW'} "
+                f"must have two or more arguments.\n"
                 "It must be of the form: <ABC>  Inside the angle brackets, only"
                 " characters, numbers, _ or - is allowed.\n"
                 "\n"
@@ -358,7 +358,4 @@ def parse(file, site_config=None, add_invalid=False):
         config_file=file,
     )
     config_dict = do_defines.do_it(tree, site_config)
-    # import json
-
-    # print(json.dumps(config_dict, indent=2))
     return config_dict
