@@ -32,6 +32,8 @@ class EnsembleSmootherPanel(SimulationConfigPanel):
         facade = LibresFacade(ert)
         layout = QFormLayout()
 
+        self.setObjectName("ensemble_smoother_panel")
+
         self._case_selector = CaseSelector(facade, notifier)
         layout.addRow("Current case:", self._case_selector)
 
@@ -56,6 +58,7 @@ class EnsembleSmootherPanel(SimulationConfigPanel):
             module_name="STD_ENKF",
             help_link="config/analysis/analysis_module",
         )
+        self._analysis_module_edit.setObjectName("ensemble_smoother_edit")
         layout.addRow("Analysis module:", self._analysis_module_edit)
 
         active_realizations_model = ActiveRealizationsModel(facade)

@@ -65,6 +65,7 @@ class AnalysisModuleVariablesPanel(QWidget):
                     spinner = self.createSpinBox(
                         variable_name,
                         variable_value,
+                        variable_type,
                         analysis_module_variables_model,
                     )
 
@@ -145,6 +146,7 @@ class AnalysisModuleVariablesPanel(QWidget):
         self,
         variable_name,
         variable_value,
+        variable_type,
         analysis_module_variables_model,
     ):
         spinner = QSpinBox()
@@ -161,6 +163,10 @@ class AnalysisModuleVariablesPanel(QWidget):
         spinner.setObjectName(variable_name)
         if variable_value is not None:
             spinner.setValue(variable_value)
+            spinner.valueChanged.connect(
+                partial(self.valueChanged, variable_name, variable_type, spinner)
+            )
+
         return spinner
 
     def createCheckBox(self, variable_name, variable_value, variable_type):

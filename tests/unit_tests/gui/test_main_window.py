@@ -11,11 +11,13 @@ from qtpy.QtWidgets import (
     QComboBox,
     QMessageBox,
     QPushButton,
+    QSpinBox,
     QToolButton,
     QWidget,
 )
 
 from ert._c_wrappers.enkf import EnKFMain, ErtConfig
+from ert.gui.ertwidgets.analysismodulevariablespanel import AnalysisModuleVariablesPanel
 from ert.gui.ertwidgets.caselist import AddRemoveWidget, CaseList
 from ert.gui.ertwidgets.caseselector import CaseSelector
 from ert.gui.ertwidgets.closabledialog import ClosableDialog
@@ -319,3 +321,37 @@ def test_that_the_manual_analysis_tool_works(esmda_has_run, opened_main_window, 
     QTimer.singleShot(1000, handle_manage_dialog)
     manage_tool = gui.tools["Manage cases"]
     manage_tool.trigger()
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_inversion_type_can_be_set_from_gui(qtbot, opened_main_window):
+    gui = opened_main_window
+    qtbot.addWidget(gui)
+
+    sim_mode = gui.findChild(QWidget, name="Simulation_mode")
+    qtbot.keyClick(sim_mode, Qt.Key_Down)
+    es_panel = gui.findChild(QWidget, name="ensemble_smoother_panel")
+    es_edit = es_panel.findChild(QWidget, name="ensemble_smoother_edit")
+
+    # Testing modal dialogs requires some care.
+    # A helpful discussion on the topic is here:
+    # https://github.com/pytest-dev/pytest-qt/issues/256
+    def handle_dialog_first_time():
+        var_panel = gui.findChild(AnalysisModuleVariablesPanel)
+        inversion_spin_box = var_panel.findChild(QSpinBox, name="IES_INVERSION")
+        assert inversion_spin_box.value() == 0
+        qtbot.keyClick(inversion_spin_box, Qt.Key_Up)
+        assert inversion_spin_box.value() == 1
+        var_panel.parent().close()
+
+    QTimer.singleShot(500, handle_dialog_first_time)
+    qtbot.mouseClick(es_edit.findChild(QToolButton), Qt.LeftButton, delay=1)
+
+    def handle_dialog_second_time():
+        var_panel = gui.findChild(AnalysisModuleVariablesPanel)
+        inversion_spin_box = var_panel.findChild(QSpinBox, name="IES_INVERSION")
+        assert inversion_spin_box.value() == 1
+        var_panel.parent().close()
+
+    QTimer.singleShot(500, handle_dialog_second_time)
+    qtbot.mouseClick(es_edit.findChild(QToolButton), Qt.LeftButton, delay=1)
