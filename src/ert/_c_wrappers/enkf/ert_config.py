@@ -27,9 +27,7 @@ from ert._c_wrappers.job_queue import (
 )
 from ert._c_wrappers.util import SubstitutionList
 from ert._clib import job_kw
-from ert._clib.config_keywords import init_site_config_parser, init_user_config_parser
 
-from ._config_content_as_dict import config_content_as_dict
 from ._deprecation_migration_suggester import DeprecationMigrationSuggester
 from .lark_parser import parse
 
@@ -205,12 +203,6 @@ class ErtConfig:
             )
 
     @classmethod
-    def _create_user_config_parser(cls):
-        config_parser = ConfigParser()
-        init_user_config_parser(config_parser)
-        return config_parser
-
-    @classmethod
     def make_suggestion_list(cls, config_file):
         return DeprecationMigrationSuggester().suggest_migrations(config_file)
 
@@ -298,9 +290,7 @@ class ErtConfig:
         cls, installed_jobs, substitution_list, config_dict, config_file
     ):
         jobs = []
-        for job in config_dict.get(
-            ConfigKeys.FORWARD_MODEL, []
-        ):
+        for job in config_dict.get(ConfigKeys.FORWARD_MODEL, []):
             if len(job) > 1:
                 unsubstituted_job_name, args = job
             else:
