@@ -139,7 +139,8 @@ class MakeDict:
                     return int(val)
                 except ValueError:
                     raise ConfigValidationError(
-                        f"{item.kw!r} must have an integer value as argument {index + 1!r}"
+                        f"{item.kw!r} must have an integer value"
+                        f" as argument {index + 1!r}"
                     ) from None
             if val_type == SchemaType.CONFIG_FLOAT:
                 try:

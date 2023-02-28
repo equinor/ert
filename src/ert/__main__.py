@@ -63,7 +63,7 @@ def run_webviz_ert(args: Namespace) -> None:
 
     kwargs: Dict[str, Any] = {"verbose": args.verbose}
     if args.config:
-        ert_config = ErtConfig.from_file(args.config, new_parser=False)
+        ert_config = ErtConfig.from_file(args.config)
         os.chdir(ert_config.config_path)
         ens_path = ert_config.ens_path
 
