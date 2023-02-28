@@ -135,9 +135,19 @@ class MakeDict:
             if val_type is None:
                 return check_valid(val, item, index)
             if val_type == SchemaType.CONFIG_INT:
-                return int(check_valid(val, item, index))
+                try:
+                    return int(check_valid(val, item, index))
+                except ValueError:
+                    raise ConfigValidationError(
+                        f"{item.kw} must have an integer value as argument {index + 1}"
+                    )
             if val_type == SchemaType.CONFIG_FLOAT:
-                return float(check_valid(val, item, index))
+                try:
+                    return float(check_valid(val, item, index))
+                except ValueError:
+                    raise ConfigValidationError(
+                        f"{item.kw} must have a number as argument {index + 1}"
+                    )
             if val_type in [SchemaType.CONFIG_PATH, SchemaType.CONFIG_EXISTING_PATH]:
                 path = val
                 if not os.path.isabs(val):
