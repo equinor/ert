@@ -31,6 +31,18 @@ class ErtTimeoutError(Exception):
 
 def run_cli(args):
     ert_config = ErtConfig.from_file(args.config)
+    try:
+        ert_config_new = ErtConfig.from_file(args.config, new_parser=True)
+        if ert_config != ert_config_new:
+            logging.info(
+                f"New parser gave different result.\n"
+                f"Old parser: {ert_config!r}\n\n"
+                f"New parser: {ert_config_new!r}"
+            )
+        else:
+            logging.info("New parser gave equal result.")
+    except Exception as e:
+        logging.info("The new parser failed", e)
 
     # Create logger inside function to make sure all handlers have been added to
     # the root-logger.

@@ -97,6 +97,18 @@ def _start_initial_gui_window(args, log_handler):
             _check_locale()
             suggestions += ErtConfig.make_suggestion_list(args.config)
             ert_config = ErtConfig.from_file(args.config)
+            try:
+                ert_config_new = ErtConfig.from_file(args.config, new_parser=True)
+                if ert_config != ert_config_new:
+                    logging.info(
+                        f"New parser gave different result.\n"
+                        f"Old parser: {ert_config!r}\n\n"
+                        f"New parser: {ert_config_new!r}"
+                    )
+                else:
+                    logging.info("New parser gave equal result.")
+            except Exception as e:
+                logging.info("The new parser failed", e)
         os.chdir(ert_config.config_path)
         # Changing current working directory means we need to update the config file to
         # be the base name of the original config
