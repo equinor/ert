@@ -95,8 +95,25 @@ def substitute(
     return current
 
 
-class MakeDict:
-    def do_it(self, tree: Tree, site_config: Optional[Dict[str, Any]] = None):
+class _TreeToDictTransformer:
+    def __init__(
+        self,
+        config_file: str,
+        config_dir: str,
+        config_file_base: str,
+        add_invalid: bool = False,
+    ):
+        self.defines = []
+        self.data_kws = []
+        self.keywords = []
+        self.config_dict = None
+        self.errors = []
+        self.add_invalid = add_invalid
+        self.config_dir = config_dir
+        self.config_file_base = config_file_base
+        self.config_file = config_file
+
+    def __call__(self, tree: Tree, site_config: Optional[Dict[str, Any]] = None):
         schema: Mapping[str, SchemaItem] = (
             init_user_config() if site_config is not None else init_site_config()
         )
@@ -238,23 +255,6 @@ class MakeDict:
 
         return self.config_dict
 
-    def __init__(
-        self,
-        config_file: str,
-        config_dir: str,
-        config_file_base: str,
-        add_invalid: bool = False,
-    ):
-        self.defines = []
-        self.data_kws = []
-        self.keywords = []
-        self.config_dict = None
-        self.errors = []
-        self.add_invalid = add_invalid
-        self.config_dir = config_dir
-        self.config_file_base = config_file_base
-        self.config_file = config_file
-
     def include(self, tree: Tree):
         raise NotImplementedError()
 
@@ -336,7 +336,7 @@ class MakeDict:
         self.keywords.append(inst)
 
 
-def do_includes(tree: Tree, config_dir: str):
+def handle_includes(tree: Tree, config_dir: str):
     to_include = []
     for i, node in enumerate(tree.children):
         if not isinstance(node, Tree):
@@ -358,7 +358,7 @@ def do_includes(tree: Tree, config_dir: str):
                 val = os.path.normpath(os.path.join(config_dir, val))
 
             sub_tree = _parse_file(val, "INCLUDE")
-            do_includes(sub_tree, os.path.dirname(val))
+            handle_includes(sub_tree, os.path.dirname(val))
 
             to_include.append((sub_tree, i))
 
@@ -404,14 +404,12 @@ def parse(
     tree = _parse_file(file)
     config_dir = os.path.dirname(os.path.normpath(os.path.abspath(file)))
 
-    do_includes(tree, config_dir)
+    handle_includes(tree, config_dir)
     config_file_name = os.path.basename(file)
     config_file_base = config_file_name.split(".")[0]
-    do_defines = MakeDict(
+    return _TreeToDictTransformer(
         config_dir=config_dir,
         config_file_base=config_file_base,
         add_invalid=add_invalid,
         config_file=file,
-    )
-    config_dict = do_defines.do_it(tree, site_config)
-    return config_dict
+    )(tree, site_config)
