@@ -87,5 +87,5 @@ class EnsembleExperimentPanel(SimulationConfigPanel):
 
     def _realizations_from_fs(self):
         case = str(self._case_selector.currentText())
-        mask = get_runnable_realizations_mask(self.storage, case)
+        mask = get_runnable_realizations_mask(self.notifier.storage, case)
         self._active_realizations_field.model.setValueFromMask(mask)
