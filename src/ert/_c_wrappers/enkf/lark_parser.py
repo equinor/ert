@@ -1,6 +1,7 @@
 import datetime
 import os
 import os.path
+import shutil
 from typing import Any, Dict, Iterable, List, Mapping, Optional, Tuple, Union
 
 from lark import Lark, Token, Tree, UnexpectedCharacters
@@ -159,6 +160,11 @@ class MakeDict:
                     if path != val:
                         err += f"The configured value was {val}"
                     raise ConfigValidationError(err)
+                return path
+            if val_type == SchemaType.CONFIG_EXECUTABLE:
+                path = val
+                if not os.path.isabs(val):
+                    path = shutil.which(val)
                 return path
             return check_valid(val, item, index)
 
