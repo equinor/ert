@@ -14,28 +14,58 @@ concurrency:
 env:
   ERT_SHOW_BACKTRACE: 1
   ECL_SKIP_SIGNAL: 1
+  USE_NEW_ERT_PARSER: "YES"
 
 jobs:
-  build-linux-lark:
+  python-test-coverage-lark:
+    name: Python Coverage
+    timeout-minutes: 40
+    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        python-version: [ '3.10' ]
-    uses: ./.github/workflows/build-wheels-linux.yml
-    with:
-      python-version: ${{ matrix.python-version }}
+        test-type: ['integration-tests', 'unit-tests', 'gui-tests']
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
 
-  test-linux-lark:
-    needs: [build-linux-lark]
-    strategy:
-      fail-fast: false
-      matrix:
-        python-version: ['3.10' ]
-        os: [ ubuntu-latest ]
-        test-type: [ 'integration-tests', 'unit-tests', 'gui-test' ]
-    uses: ./.github/workflows/test_ert.yml
-    with:
-      os: ${{ matrix.os }}
-      python-version: ${{ matrix.python-version }}
-      test-type: ${{ matrix.test-type }}
-      use-lark: "YES"
+    - uses: './.github/actions/install_dependencies'
+      if: matrix.test-type == 'gui-tests'
+      with:
+        os: ubuntu-latest
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+
+    - name: Install with dependencies
+      run: |
+        pip install .
+        pip install -r dev-requirements.txt
+
+    - name: Test GUI
+      if: matrix.test-type == 'gui-tests'
+      env:
+        DISPLAY: ':99.0'
+      run: |
+        ci/github/start_herbstluftwm.sh &
+        sleep 5
+        pytest tests/ --cov=ert --hypothesis-profile=ci -m "requires_window_manager" --cov-report=xml:cov.xml
+
+    - name: Test Integration
+      if: matrix.test-type == 'integration-tests'
+      run: |
+        pytest tests/ --cov=ert --hypothesis-profile=ci -m "integration_test" --cov-report=xml:cov.xml
+
+    - name: Test units
+      if: matrix.test-type == 'unit-tests'
+      run: |
+        pytest tests/ --cov=ert --hypothesis-profile=ci -m "not integration_test and not requires_window_manager" --cov-report=xml:cov.xml
+
+    - name: Upload python coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        files: cov.xml
