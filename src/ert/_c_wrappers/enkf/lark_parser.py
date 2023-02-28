@@ -2,11 +2,12 @@ import datetime
 import os
 import os.path
 import shutil
+import warnings
 from typing import Any, Dict, Iterable, List, Mapping, Optional, Tuple, Union
 
 from lark import Lark, Token, Tree, UnexpectedCharacters
 
-from ert._c_wrappers.config import ConfigValidationError
+from ert._c_wrappers.config import ConfigValidationError, ConfigWarning
 from ert._c_wrappers.enkf.config_keywords import (
     CONFIG_DEFAULT_ARG_MAX,
     CONFIG_DEFAULT_ARG_MIN,
@@ -105,9 +106,8 @@ class _TreeToDictTransformer:
     ):
         self.defines = []
         self.data_kws = []
-        self.keywords = []
+        self.keywords: List[List[Token]] = []
         self.config_dict = None
-        self.errors = []
         self.add_invalid = add_invalid
         self.config_dir = config_dir
         self.config_file_base = config_file_base
@@ -219,7 +219,7 @@ class _TreeToDictTransformer:
                 if key not in schema:
                     if self.add_invalid:
                         self.config_dict[key] = line[1:]
-                    self.errors.append(f"unknown key {key!r}")
+                    warnings.warn(f"unknown key {key!r}", category=ConfigWarning)
                     continue
                 item = schema[key]
                 if item.multi_occurrence:
@@ -246,9 +246,7 @@ class _TreeToDictTransformer:
                     self.config_dict["DATA_KW"].append(data_kw)
         except ConfigValidationError as e:
             if line is None:
-                raise ValueError(
-                    "Parsing of config failed before fetching keywords"
-                ) from e
+                raise e from None
             line_msg = " ".join(line) if line else ""
             # should always be a token as no replacement should be done to keywords
             token: Token = line[0]
@@ -324,18 +322,16 @@ class _TreeToDictTransformer:
                 item.argc_min != CONFIG_DEFAULT_ARG_MIN
                 and len(inst) - 1 < item.argc_min
             ):
-                self.errors.append(
-                    f"{inst!r} does not have required number of arguments"
+                raise ConfigValidationError(
+                    f"{inst!r} needs at least {item.argc_min} arguments"
                 )
-                if not self.add_invalid:
-                    return
             if (
                 item.argc_max != CONFIG_DEFAULT_ARG_MAX
                 and len(inst) - 1 > item.argc_max
             ):
-                self.errors.append(f"{inst!r} does has too many arguments")
-                if not self.add_invalid:
-                    return
+                raise ConfigValidationError(
+                    f"{inst!r} takes maximum {item.argc_max} arguments"
+                )
 
         self.keywords.append(inst)
 

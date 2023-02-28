@@ -848,3 +848,99 @@ def test_that_failing_to_load_ert_script_with_errors_fails_gracefully(load_state
     ):
         ert_config = ErtConfig.from_file(user_config_file=test_config_file_name)
         assert "wf" not in ert_config.workflows
+
+
+def test_that_define_statements_with_less_than_one_argument_raises_error():
+    test_config_file_name = "test.ert"
+    test_config_contents = dedent(
+        """
+        NUM_REALIZATIONS  1
+        DEFINE <USER>
+        """
+    )
+    with open(test_config_file_name, "w", encoding="utf-8") as fh:
+        fh.write(test_config_contents)
+
+    with pytest.raises(
+        ConfigValidationError, match="Keyword:DEFINE must have two or more"
+    ):
+        _ = ErtConfig.from_file(user_config_file=test_config_file_name)
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_giving_non_int_values_give_config_validation_error():
+    test_config_file_name = "test.ert"
+    test_config_contents = dedent(
+        """
+        NUM_REALIZATIONS  hello
+        """
+    )
+    with open(test_config_file_name, "w", encoding="utf-8") as fh:
+        fh.write(test_config_contents)
+
+    with pytest.raises(ConfigValidationError, match="integer"):
+        _ = ErtConfig.from_file(test_config_file_name)
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_giving_non_float_values_give_config_validation_error():
+    test_config_file_name = "test.ert"
+    test_config_contents = dedent(
+        """
+        NUM_REALIZATIONS  1
+        ENKF_ALPHA  hello
+        """
+    )
+    with open(test_config_file_name, "w", encoding="utf-8") as fh:
+        fh.write(test_config_contents)
+
+    with pytest.raises(ConfigValidationError, match="number"):
+        _ = ErtConfig.from_file(test_config_file_name)
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_giving_non_executable_gives_config_validation_error():
+    test_config_file_name = "test.ert"
+    test_config_contents = dedent(
+        """
+        NUM_REALIZATIONS  1
+        JOB_SCRIPT  hello
+        """
+    )
+    with open(test_config_file_name, "w", encoding="utf-8") as fh:
+        fh.write(test_config_contents)
+
+    with pytest.raises(ConfigValidationError, match="[Ee]xecutable"):
+        _ = ErtConfig.from_file(test_config_file_name)
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_giving_too_many_arguments_gives_config_validation_error():
+    test_config_file_name = "test.ert"
+    test_config_contents = dedent(
+        """
+        NUM_REALIZATIONS  1
+        ENKF_ALPHA 1.0 2.0 3.0
+        """
+    )
+    with open(test_config_file_name, "w", encoding="utf-8") as fh:
+        fh.write(test_config_contents)
+
+    with pytest.raises(ConfigValidationError, match="maximum 1 arguments"):
+        _ = ErtConfig.from_file(test_config_file_name)
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_giving_too_many_arguments_gives_config_validation_error():
+    test_config_file_name = "test.ert"
+    test_config_contents = dedent(
+        """
+        NUM_REALIZATIONS  1
+        ENKF_ALPHA
+        """
+    )
+    with open(test_config_file_name, "w", encoding="utf-8") as fh:
+        fh.write(test_config_contents)
+
+    with pytest.raises(ConfigValidationError, match="at least 1 arguments"):
+        _ = ErtConfig.from_file(test_config_file_name)
