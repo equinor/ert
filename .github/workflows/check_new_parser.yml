@@ -16,7 +16,7 @@ env:
   ECL_SKIP_SIGNAL: 1
 
 jobs:
-  build-linux:
+  build-linux-lark:
     strategy:
       fail-fast: false
       matrix:
@@ -25,8 +25,8 @@ jobs:
     with:
       python-version: ${{ matrix.python-version }}
 
-  test-linux:
-    needs: [build-linux]
+  test-linux-lark:
+    needs: [build-linux-lark]
     strategy:
       fail-fast: false
       matrix:
@@ -38,3 +38,4 @@ jobs:
       os: ${{ matrix.os }}
       python-version: ${{ matrix.python-version }}
       test-type: ${{ matrix.test-type }}
+      use-lark: "YES"

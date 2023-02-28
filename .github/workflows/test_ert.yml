@@ -7,6 +7,9 @@ on:
         type: string
       test-type:
         type: string
+      use-lark:
+        type: string
+        default: "NO"
 jobs:
 
   tests-ert:
@@ -50,6 +53,7 @@ jobs:
       if: inputs.test-type == 'gui-test'
       env:
         DISPLAY: ':99.0'
+        USE_NEW_ERT_PARSER: ${{ inputs.use-lark }}
       run: |
         ci/github/start_herbstluftwm.sh &
         sleep 5
@@ -57,11 +61,15 @@ jobs:
 
     - name: Unit Test
       if: inputs.test-type == 'unit-tests'
+      env:
+        USE_NEW_ERT_PARSER: ${{ inputs.use-lark }}
       run: |
         pytest tests -n4 --show-capture=stderr -sv --hypothesis-profile=ci -m "not integration_test and not requires_window_manager" --benchmark-disable
 
     - name: Integration Test
       if: inputs.test-type == 'integration-tests'
+      env:
+        USE_NEW_ERT_PARSER: ${{ inputs.use-lark }}
       run: |
         pytest tests -n4 --show-capture=stderr -sv --hypothesis-profile=ci -m "integration_test and not requires_window_manager" --benchmark-disable
 
