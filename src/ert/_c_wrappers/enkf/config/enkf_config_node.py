@@ -7,6 +7,7 @@ from ecl.grid import EclGrid
 from ecl.util.util import IntVector, StringList
 
 from ert._c_wrappers import ResPrototype
+from ert._c_wrappers.config.config_parser import ConfigValidationError
 from ert._c_wrappers.enkf.config_keys import ConfigKeys
 from ert._c_wrappers.enkf.enums import (
     EnkfTruncationType,
@@ -315,30 +316,35 @@ class EnkfConfigNode(BaseCClass):
         base_surface_file,
         forward_init,
     ):
-        msg = "When entering a surface you must provide the argument:\n"
+        msg = f"Following issues found for SURFACE node {key!r}:\n"
         valid = True
         if init_file_fmt is None:
-            msg = msg + f"{ConfigKeys.INIT_FILES}:/path/to/input/files%d\n"
+            msg = msg + f"Missing {ConfigKeys.INIT_FILES}:/path/to/input/files\n"
             valid = False
         elif (
             not forward_init
             and "%d" not in init_file_fmt
             and not os.path.exists(os.path.realpath(init_file_fmt))
         ):
-            msg += f"{ConfigKeys.INIT_FILES}: {init_file_fmt} File not found "
+            msg += f"{ConfigKeys.INIT_FILES}:{init_file_fmt!r} File not found "
             valid = False
         if output_file is None:
-            msg = msg + "OUTPUT_FILE:name_of_output_file\n"
+            msg = msg + "Missing OUTPUT_FILE:/path/to/output_file\n"
             valid = False
         if base_surface_file is None:
             valid = False
-            msg = msg + f"{ConfigKeys.BASE_SURFACE_KEY}:base_surface_file\n"
+            msg = (
+                msg
+                + f"Missing {ConfigKeys.BASE_SURFACE_KEY}:/path/to/base_surface_file\n"
+            )
         elif not os.path.exists(os.path.realpath(base_surface_file)):
-            msg += f"{ConfigKeys.BASE_SURFACE_KEY}: {base_surface_file} File not found "
+            msg += (
+                f"{ConfigKeys.BASE_SURFACE_KEY}:{base_surface_file!r} File not found "
+            )
             valid = False
         if not valid:
             logger.error(msg)
-            raise ValueError(msg)
+            raise ConfigValidationError(msg)
 
         base_surface_file = os.path.realpath(base_surface_file)
         config_node = cls._alloc_surface_full(
@@ -349,7 +355,7 @@ class EnkfConfigNode(BaseCClass):
             init_file_fmt,
         )
         if config_node is None:
-            raise ValueError(f"Failed to create SURFACE node for:{key}")
+            raise ConfigValidationError(f"Failed to create SURFACE node for:{key}")
 
         return config_node
 
