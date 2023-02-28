@@ -387,6 +387,7 @@ def test_that_prior_is_not_overwritten_in_ensemble_experiment(
             pd.testing.assert_frame_equal(parameter_values, prior_values)
         storage.close()
 
+
 def test_reek_case():
     parser = ArgumentParser(prog="test_reek")
     parsed = ert_parser(
