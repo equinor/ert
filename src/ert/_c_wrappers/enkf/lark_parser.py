@@ -123,32 +123,31 @@ class MakeDict:
             if index in item.indexed_selection_set:
                 if val not in item.indexed_selection_set[index]:
                     raise ConfigValidationError(
-                        f"{item.kw} argument {index} must be one of"
-                        f" {item.indexed_selection_set[index]}"
+                        f"{item.kw!r} argument {index!r} must be one of"
+                        f" {item.indexed_selection_set[index]!r}"
                     )
-
-            return val
 
         def convert(val, item: SchemaItem, index: int):
+            check_valid(val, item, index)
             if not len(item.type_map) > index:
-                return check_valid(val, item, index)
+                return val
             val_type = item.type_map[index]
             if val_type is None:
-                return check_valid(val, item, index)
+                return val
             if val_type == SchemaType.CONFIG_INT:
                 try:
-                    return int(check_valid(val, item, index))
+                    return int(val)
                 except ValueError:
                     raise ConfigValidationError(
-                        f"{item.kw} must have an integer value as argument {index + 1}"
-                    )
+                        f"{item.kw!r} must have an integer value as argument {index + 1!r}"
+                    ) from None
             if val_type == SchemaType.CONFIG_FLOAT:
                 try:
-                    return float(check_valid(val, item, index))
+                    return float(val)
                 except ValueError:
                     raise ConfigValidationError(
-                        f"{item.kw} must have a number as argument {index + 1}"
-                    )
+                        f"{item.kw!r} must have a number as argument {index + 1!r}"
+                    ) from None
             if val_type in [SchemaType.CONFIG_PATH, SchemaType.CONFIG_EXISTING_PATH]:
                 path = val
                 if not os.path.isabs(val):
@@ -156,9 +155,9 @@ class MakeDict:
                 if val_type == SchemaType.CONFIG_EXISTING_PATH and not os.path.exists(
                     path
                 ):
-                    err = f'Cannot find file or directory "{val}" \n'
+                    err = f"Cannot find file or directory {path!r} \n"
                     if path != val:
-                        err += f"The configured value was {val}"
+                        err += f"The configured value was {val!r}"
                     raise ConfigValidationError(err)
                 return path
             if val_type == SchemaType.CONFIG_EXECUTABLE:
@@ -166,7 +165,7 @@ class MakeDict:
                 if not os.path.isabs(val):
                     path = shutil.which(val)
                 return path
-            return check_valid(val, item, index)
+            return val
 
         def with_types(args, item: SchemaItem):
             if isinstance(args, list):
@@ -177,7 +176,7 @@ class MakeDict:
         def get_value(item: SchemaItem, line: List):
             if item.argc_max != -1 and item.argc_max < len(line) - 1:
                 raise ConfigValidationError(
-                    f"Keyword: {item.kw} takes at most {item.argc_max} arguments"
+                    f"Keyword: {item.kw!r} takes at most {item.argc_max!r} arguments"
                 )
             if item.join_after > 0:
                 n = item.join_after + 1
@@ -198,7 +197,7 @@ class MakeDict:
                 if key not in schema:
                     if self.add_invalid:
                         self.config_dict[key] = line[1:]
-                    self.errors.append(f"unknown key {key}")
+                    self.errors.append(f"unknown key {key!r}")
                     continue
                 item = schema[key]
                 if item.multi_occurrence:
@@ -212,7 +211,7 @@ class MakeDict:
             for _, item in schema.items():
                 if item.required_set:
                     if item.kw not in self.config_dict:
-                        raise ConfigValidationError(f"{item.kw} must be set.")
+                        raise ConfigValidationError(f"{item.kw!r} must be set.")
 
             if self.defines:
                 self.config_dict["DEFINE"] = []
@@ -320,14 +319,16 @@ class MakeDict:
                 item.argc_min != CONFIG_DEFAULT_ARG_MIN
                 and len(inst) - 1 < item.argc_min
             ):
-                self.errors.append(f"{inst} does not have required number of arguments")
+                self.errors.append(
+                    f"{inst!r} does not have required number of arguments"
+                )
                 if not self.add_invalid:
                     return
             if (
                 item.argc_max != CONFIG_DEFAULT_ARG_MAX
                 and len(inst) - 1 > item.argc_max
             ):
-                self.errors.append(f"{inst} does has too many arguments")
+                self.errors.append(f"{inst!r} does has too many arguments")
                 if not self.add_invalid:
                     return
 
@@ -350,7 +351,7 @@ def do_includes(tree: Tree, config_dir: str):
             val = inc_node.children[0].children[0]
             if not isinstance(val, str):
                 raise ConfigValidationError(
-                    "INCLUDE keyword must be given filepath, got {val!r}"
+                    f"INCLUDE keyword must be given filepath, got {val!r}"
                 )
             if not os.path.isabs(val):
                 val = os.path.normpath(os.path.join(config_dir, val))
@@ -384,18 +385,18 @@ def _parse_file(file: Union[str, bytes, os.PathLike], error_context_string: str 
         msg = str(e)
         if "DEFINE" in msg or "DATA_KW" in msg:
             msg = (
-                f"\nKeyword:{'DEFINE' if 'DEFINE' in msg else 'DATA_KW'} "
+                f"\nKeyword:{'DEFINE' if 'DEFINE' in msg else 'DATA_KW'!r} "
                 f"must have two or more arguments.\n"
                 "It must be of the form: <ABC>  Inside the angle brackets, only"
                 " characters, numbers, _ or - is allowed.\n"
                 "\n"
-                f"The parser said: {msg}"
+                f"The parser said: {msg!r}"
             )
         raise ConfigValidationError(msg, config_file=file)
 
 
 def parse(
-    file: Union[str, os.PathLike],
+    file: str,
     site_config: Optional[Dict[str, Any]] = None,
     add_invalid: bool = False,
 ):
