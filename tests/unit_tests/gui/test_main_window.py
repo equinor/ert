@@ -1,3 +1,4 @@
+import fileinput
 import os.path
 import shutil
 import stat
@@ -52,7 +53,15 @@ def opened_main_window(source_root, tmpdir_factory, request):
             tmp_path / "test_data",
         )
         mp.chdir(tmp_path / "test_data")
-        poly_case = EnKFMain(ErtConfig.from_file("poly.ert"))
+        with fileinput.input("poly.ert", inplace=True) as fin:
+            for line in fin:
+                if "NUM_REALIZATIONS" in line:
+                    # Decrease the number of realizations to speed up the test,
+                    # if there is flakyness, this can be increased.
+                    print("NUM_REALIZATIONS 20", end="\n")
+                else:
+                    print(line, end="")
+            poly_case = EnKFMain(ErtConfig.from_file("poly.ert"))
         args_mock = Mock()
         args_mock.config = "poly.ert"
 
@@ -64,10 +73,10 @@ def opened_main_window(source_root, tmpdir_factory, request):
             yield gui
 
 
-@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.usefixtures("use_tmpdir, opened_main_window")
 @pytest.fixture(scope="module")
-def esmda_has_run(opened_main_window, run_experiment):
-    # Select Multiple Data Assimilation in the simulation panel
+def esmda_has_run(run_experiment):
+    # Runs a default ES-MDA run
     run_experiment(MultipleDataAssimilation)
 
 
@@ -87,11 +96,7 @@ def run_experiment(request, opened_main_window):
         assert isinstance(simulation_panel, SimulationPanel)
         simulation_mode_combo = simulation_panel.findChild(QComboBox)
         assert isinstance(simulation_mode_combo, QComboBox)
-        current_select = 0
-        simulation_mode_combo.setCurrentIndex(current_select)
-        while simulation_mode_combo.currentText() != experiment_mode.name():
-            current_select += 1
-            simulation_mode_combo.setCurrentIndex(current_select)
+        simulation_mode_combo.setCurrentText(experiment_mode.name())
 
         # Click start simulation and agree to the message
         start_simulation = simulation_panel.findChild(QWidget, name="start_simulation")
@@ -110,7 +115,7 @@ def run_experiment(request, opened_main_window):
 
             qtbot.mouseClick(run_dialog.show_details_button, Qt.LeftButton)
 
-            qtbot.waitUntil(run_dialog.done_button.isVisible, timeout=2000000)
+            qtbot.waitUntil(run_dialog.done_button.isVisible, timeout=100000)
             qtbot.waitUntil(lambda: run_dialog._tab_widget.currentWidget() is not None)
 
             # Assert that the number of boxes in the detailed view is
@@ -395,7 +400,7 @@ def test_that_the_manual_analysis_tool_works(
         cases_panel = dialog.findChild(CaseInitializationConfigurationPanel)
         assert isinstance(cases_panel, CaseInitializationConfigurationPanel)
 
-        # In the "create new case" tab, it should now contain "analysis_case"
+        # In the "create new case" tab, it should now contain "iter-1"
         cases_panel.setCurrentIndex(0)
         current_tab = cases_panel.currentWidget()
         assert current_tab.objectName() == "create_new_case_tab"
@@ -412,11 +417,7 @@ def test_that_the_manual_analysis_tool_works(
     simulation_panel = gui.findChild(SimulationPanel)
     simulation_mode_combo = simulation_panel.findChild(QComboBox)
     simulation_settings = simulation_panel.findChild(EnsembleExperimentPanel)
-    current_select = 0
-    simulation_mode_combo.setCurrentIndex(current_select)
-    while simulation_mode_combo.currentText() != EnsembleExperiment.name():
-        current_select += 1
-        simulation_mode_combo.setCurrentIndex(current_select)
+    simulation_mode_combo.setCurrentText(EnsembleExperiment.name())
     shutil.rmtree("poly_out")
 
     current_select = 0
@@ -435,7 +436,7 @@ def test_that_the_manual_analysis_tool_works(
         simulation_settings._case_selector.setCurrentIndex(current_select)
 
     # We have selected the updated case and because some realizations failed in the
-    # parent ensemble we expect the actve realizations string to be longer as it
+    # parent ensemble we expect the active realizations string to be longer as it
     # needs to account for the missing realizations.
     assert (
         len(simulation_panel.getSimulationArguments().realizations)
@@ -459,7 +460,7 @@ def test_that_the_manual_analysis_tool_works(
 
         qtbot.mouseClick(run_dialog.show_details_button, Qt.LeftButton)
 
-        qtbot.waitUntil(run_dialog.done_button.isVisible, timeout=2000000)
+        qtbot.waitUntil(run_dialog.done_button.isVisible, timeout=100000)
         qtbot.waitUntil(lambda: run_dialog._tab_widget.currentWidget() is not None)
 
         qtbot.mouseClick(run_dialog.done_button, Qt.LeftButton)
@@ -478,6 +479,7 @@ def test_that_the_manual_analysis_tool_works(
         < np.linalg.det(df_posterior.cov().to_numpy())
         < np.linalg.det(df_prior.cov().to_numpy())
     )
+
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_that_inversion_type_can_be_set_from_gui(qtbot, opened_main_window):
