@@ -39,6 +39,7 @@ def test_gui_load(qtbot):
     qtbot.keyClick(sim_mode, Qt.Key_Down)
 
     ensemble_panel = gui.findChild(QWidget, name="Ensemble_experiment_panel")
+    assert ensemble_panel._case_selector.currentText() == "default"
     assert sim_panel.getCurrentSimulationModel() == ensemble_panel.getSimulationModel()
 
 
