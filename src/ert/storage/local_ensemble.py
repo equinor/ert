@@ -423,7 +423,7 @@ class LocalEnsembleReader:
 
         os.makedirs(Path(output_path).parent, exist_ok=True)
 
-        gp.to_file(output_path, fformat=fformat)
+        gp.to_file(output_path, fformat=fformat.lower())
 
     def export_field_many(
         self,
