@@ -1,7 +1,7 @@
 import datetime
 import os
 import os.path
-from typing import List, Mapping
+from typing import Any, Dict, Iterable, List, Mapping, Optional, Tuple, Union
 
 from lark import Lark, Token, Tree, UnexpectedCharacters
 
@@ -70,7 +70,9 @@ instruction: inst COMMENT | COMMENT | inst NEWLINE | NEWLINE
 """  # noqa: E501
 
 
-def substitute(defines, string: str, expand_env=True):
+def substitute(
+    defines: Iterable[Tuple[str, str]], string: str, expand_env: bool = True
+):
     prev = None
     current = string
     if expand_env:
@@ -93,7 +95,7 @@ def substitute(defines, string: str, expand_env=True):
 
 
 class MakeDict:
-    def do_it(self, tree, site_config=None):
+    def do_it(self, tree: Tree, site_config: Optional[Dict[str, Any]] = None):
         schema: Mapping[str, SchemaItem] = (
             init_user_config() if site_config is not None else init_site_config()
         )
@@ -220,7 +222,13 @@ class MakeDict:
 
         return self.config_dict
 
-    def __init__(self, config_file, config_dir, config_file_base, add_invalid=False):
+    def __init__(
+        self,
+        config_file: str,
+        config_dir: str,
+        config_file_base: str,
+        add_invalid: bool = False,
+    ):
         self.defines = []
         self.data_kws = []
         self.keywords = []
@@ -231,22 +239,28 @@ class MakeDict:
         self.config_file_base = config_file_base
         self.config_file = config_file
 
-    def include(self, tree):
-        pass
+    def include(self, tree: Tree):
+        raise NotImplementedError()
 
-    def define(self, tree):
-        self.defines.append(
-            [tree.children[0], substitute(self.defines, tree.children[1].children[0])]
-        )
+    def define(self, tree: Tree):
+        kw = tree.children[0]
+        value = tree.children[1].children[0]
+        if not isinstance(value, str):
+            raise ConfigValidationError(f"Cannot define {kw!r} to {value!r}")
+        self.defines.append([kw, substitute(self.defines, value)])
 
-    def data_kw(self, tree):
-        self.data_kws.append(
-            [tree.children[0], substitute(self.defines, tree.children[1].children[0])]
-        )
+    def data_kw(self, tree: Tree):
+        kw = tree.children[0]
+        value = tree.children[1].children[0]
+        if not isinstance(value, str):
+            raise ConfigValidationError(f"Cannot define {kw!r} to {value!r}")
+        self.data_kws.append([kw, substitute(self.defines, value)])
 
-    def keyword(self, tree):
+    def keyword(self, tree: Tree):
         inst = []
         kw = tree.children[0]
+        if not isinstance(kw, str):
+            raise ConfigValidationError(f"Unrecognized keyword {kw!r}")
         do_env = True
         if kw in self.schema:
             do_env = self.schema[kw].expand_envvar
@@ -266,6 +280,10 @@ class MakeDict:
                         break
                     key = kw_pair.children[0]
                     val = kw_pair.children[1].children[0]
+                    if not isinstance(val, str):
+                        raise ConfigValidationError(
+                            f"Could not read keyword value {kw!r} for {key!r}"
+                        )
                     if isinstance(val, Token) and val.type == "STRING":
                         # remove quotation marks
                         val = val[1 : len(val) - 1]
@@ -275,6 +293,8 @@ class MakeDict:
                 inst.append(args)
             elif node.data == "arg":
                 val = node.children[0]
+                if not isinstance(val, str):
+                    raise ConfigValidationError(f"Could not read argument {val!r}")
                 inst.append(substitute(self.defines, val, expand_env=do_env))
 
         kw = inst[0]
@@ -298,7 +318,7 @@ class MakeDict:
         self.keywords.append(inst)
 
 
-def do_includes(tree: Tree, config_dir):
+def do_includes(tree: Tree, config_dir: str):
     to_include = []
     for i, node in enumerate(tree.children):
         if not isinstance(node, Tree):
@@ -330,7 +350,7 @@ def do_includes(tree: Tree, config_dir):
         tree.children[i:i] = sub_tree.children
 
 
-def _parse_file(file, error_context_string=""):
+def _parse_file(file: Union[str, bytes, os.PathLike], error_context_string: str = ""):
     try:
         with open(file, encoding="utf-8") as f:
             content = f.read()
@@ -358,7 +378,11 @@ def _parse_file(file, error_context_string=""):
         raise ConfigValidationError(msg, config_file=file)
 
 
-def parse(file, site_config=None, add_invalid=False):
+def parse(
+    file: Union[str, os.PathLike],
+    site_config: Optional[Dict[str, Any]] = None,
+    add_invalid: bool = False,
+):
     tree = _parse_file(file)
     config_dir = os.path.dirname(os.path.normpath(os.path.abspath(file)))
 
