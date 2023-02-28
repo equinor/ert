@@ -173,9 +173,9 @@ class _TreeToDictTransformer:
                 if val_type == SchemaType.CONFIG_EXISTING_PATH and not os.path.exists(
                     path
                 ):
-                    err = f"Cannot find file or directory {path!r} \n"
+                    err = f'Cannot find file or directory "{val}" \n'
                     if path != val:
-                        err += f"The configured value was {val!r}"
+                        err += f"The configured value was {path!r} "
                     raise ConfigValidationError(err)
                 return path
             if val_type == SchemaType.CONFIG_EXECUTABLE:
@@ -229,7 +229,7 @@ class _TreeToDictTransformer:
             for _, item in schema.items():
                 if item.required_set:
                     if item.kw not in self.config_dict:
-                        raise ConfigValidationError(f"{item.kw!r} must be set.")
+                        raise ConfigValidationError(f"{item.kw} must be set.")
 
             if self.defines:
                 self.config_dict["DEFINE"] = []
@@ -386,7 +386,7 @@ def _parse_file(file: Union[str, bytes, os.PathLike], error_context_string: str 
         msg = str(e)
         if "DEFINE" in msg or "DATA_KW" in msg:
             msg = (
-                f"\nKeyword:{'DEFINE' if 'DEFINE' in msg else 'DATA_KW'!r} "
+                f"\nKeyword:{'DEFINE' if 'DEFINE' in msg else 'DATA_KW'} "
                 f"must have two or more arguments.\n"
                 "It must be of the form: <ABC>  Inside the angle brackets, only"
                 " characters, numbers, _ or - is allowed.\n"

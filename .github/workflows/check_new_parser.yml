@@ -18,7 +18,7 @@ env:
 
 jobs:
   python-test-coverage-lark:
-    name: Python Coverage
+    name: Test new Parser
     timeout-minutes: 40
     runs-on: ubuntu-latest
     strategy:
