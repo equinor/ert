@@ -1,4 +1,7 @@
+import os
 import os.path
+import stat
+from pathlib import Path
 
 from ert._c_wrappers.enkf import QueueConfig
 from ert._c_wrappers.job_queue import QueueDriverEnum
@@ -12,6 +15,9 @@ def test_get_queue_config(minimum_case):
 
 
 def test_queue_config_constructor(minimum_case):
+    Path("script.sh").write_text("", encoding="utf-8")
+    current_mode = os.stat("script.sh").st_mode
+    os.chmod("script.sh", current_mode | stat.S_IEXEC)
     queue_config_relative = QueueConfig(
         job_script="script.sh",
         queue_system=QueueDriverEnum(2),

@@ -180,8 +180,12 @@ class _TreeToDictTransformer:
                 return path
             if val_type == SchemaType.CONFIG_EXECUTABLE:
                 path = val
-                if not os.path.isabs(val):
+                if not os.path.isabs(val) and not os.path.exists(val):
                     path = shutil.which(val)
+                    if path is None:
+                        raise ConfigValidationError(
+                            f"Could not find executable {val!r}"
+                        )
                 return path
             return val
 
