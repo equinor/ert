@@ -40,21 +40,21 @@ class PlotApi:
                 response = client.get("/experiments", timeout=self._timeout)
                 self._check_response(response)
                 experiments = response.json()
-                experiment = experiments[0]
-                for ensemble_id in experiment["ensemble_ids"]:
-                    response = client.get(
-                        f"/ensembles/{ensemble_id}", timeout=self._timeout
-                    )
-                    self._check_response(response)
-                    response_json = response.json()
-                    case_name = response_json["userdata"]["name"]
-                    self._all_cases.append(
-                        {
-                            "name": case_name,
-                            "id": ensemble_id,
-                            "hidden": case_name.startswith("."),
-                        }
-                    )
+                for experiment in experiments:
+                    for ensemble_id in experiment["ensemble_ids"]:
+                        response = client.get(
+                            f"/ensembles/{ensemble_id}", timeout=self._timeout
+                        )
+                        self._check_response(response)
+                        response_json = response.json()
+                        case_name = response_json["userdata"]["name"]
+                        self._all_cases.append(
+                            {
+                                "name": case_name,
+                                "id": ensemble_id,
+                                "hidden": case_name.startswith("."),
+                            }
+                        )
                 return self._all_cases
             except IndexError as exc:
                 logging.exception(exc)
@@ -68,14 +68,13 @@ class PlotApi:
                 f"{response.text} from url: {response.url}."
             )
 
-    def _get_experiment(self) -> dict:
+    def _get_experiments(self) -> dict:
         with StorageService.session() as client:
             response: requests.Response = client.get(
                 "/experiments", timeout=self._timeout
             )
             self._check_response(response)
-            response_json = response.json()
-            return response_json[0]
+            return response.json()
 
     def _get_ensembles(self, experiement_id) -> List:
         with StorageService.session() as client:
@@ -95,38 +94,37 @@ class PlotApi:
         the key"""
 
         all_keys = {}
-        experiment = self._get_experiment()
-
         with StorageService.session() as client:
-            for ensemble in self._get_ensembles(experiment["id"]):
-                response: requests.Response = client.get(
-                    f"/ensembles/{ensemble['id']}/responses", timeout=self._timeout
-                )
-                self._check_response(response)
-                for key, value in response.json().items():
-                    all_keys[key] = {
-                        "key": key,
-                        "index_type": "VALUE",
-                        "observations": value["has_observations"],
-                        "dimensionality": 2,
-                        "metadata": value["userdata"],
-                        "log_scale": key.startswith("LOG10_"),
-                    }
+            for experiment in self._get_experiments():
+                for ensemble in self._get_ensembles(experiment["id"]):
+                    response: requests.Response = client.get(
+                        f"/ensembles/{ensemble['id']}/responses", timeout=self._timeout
+                    )
+                    self._check_response(response)
+                    for key, value in response.json().items():
+                        all_keys[key] = {
+                            "key": key,
+                            "index_type": "VALUE",
+                            "observations": value["has_observations"],
+                            "dimensionality": 2,
+                            "metadata": value["userdata"],
+                            "log_scale": key.startswith("LOG10_"),
+                        }
 
-                response: requests.Response = client.get(
-                    f"/ensembles/{ensemble['id']}/parameters", timeout=self._timeout
-                )
-                self._check_response(response)
-                for e in response.json():
-                    key = e["name"]
-                    all_keys[key] = {
-                        "key": key,
-                        "index_type": None,
-                        "observations": False,
-                        "dimensionality": 1,
-                        "metadata": e["userdata"],
-                        "log_scale": key.startswith("LOG10_"),
-                    }
+                    response: requests.Response = client.get(
+                        f"/ensembles/{ensemble['id']}/parameters", timeout=self._timeout
+                    )
+                    self._check_response(response)
+                    for e in response.json():
+                        key = e["name"]
+                        all_keys[key] = {
+                            "key": key,
+                            "index_type": None,
+                            "observations": False,
+                            "dimensionality": 1,
+                            "metadata": e["userdata"],
+                            "log_scale": key.startswith("LOG10_"),
+                        }
 
         return list(all_keys.values())
 
