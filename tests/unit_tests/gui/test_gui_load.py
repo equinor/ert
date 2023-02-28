@@ -35,7 +35,7 @@ def test_gui_load(qtbot):
         sim_panel.getCurrentSimulationModel() == single_run_panel.getSimulationModel()
     )
 
-    sim_mode = gui.findChild(QWidget, name="Simulation_mode")
+    sim_mode = gui.findChild(QComboBox, name="Simulation_mode")
     qtbot.keyClick(sim_mode, Qt.Key_Down)
 
     ensemble_panel = gui.findChild(QWidget, name="Ensemble_experiment_panel")
@@ -220,6 +220,8 @@ def test_that_run_dialog_can_be_closed_after_used_to_open_plots(qtbot, storage):
     ):
         gui = _setup_main_window(enkf_main, args_mock, GUILogHandler())
         gui.notifier.set_storage(storage)
+        case_selector = gui.findChild(QComboBox, name="case_selector")
+        assert case_selector.currentText() == "default"
         qtbot.addWidget(gui)
 
         start_simulation = gui.findChild(QToolButton, name="start_simulation")
