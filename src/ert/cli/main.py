@@ -41,8 +41,8 @@ def run_cli(args):
             )
         else:
             logging.info("New parser gave equal result.")
-    except Exception as e:
-        logging.info("The new parser failed", e)
+    except Exception:
+        logging.exception("The new parser failed")
 
     # Create logger inside function to make sure all handlers have been added to
     # the root-logger.

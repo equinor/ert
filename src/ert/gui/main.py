@@ -107,8 +107,8 @@ def _start_initial_gui_window(args, log_handler):
                     )
                 else:
                     logging.info("New parser gave equal result.")
-            except Exception as e:
-                logging.info("The new parser failed", e)
+            except Exception:
+                logging.exception("The new parser failed")
         os.chdir(ert_config.config_path)
         # Changing current working directory means we need to update the config file to
         # be the base name of the original config
