@@ -1,6 +1,7 @@
 import argparse
 import os
 import shutil
+from argparse import ArgumentParser
 from pathlib import Path
 from unittest.mock import MagicMock, Mock, PropertyMock, patch
 
@@ -9,8 +10,15 @@ from qtpy.QtCore import Qt, QTimer
 from qtpy.QtWidgets import QComboBox, QMessageBox, QToolButton, QWidget
 
 import ert.gui
+from ert.__main__ import ert_parser
 from ert._c_wrappers.enkf import EnKFMain, ErtConfig
 from ert.gui.about_dialog import AboutDialog
+from ert.cli import (
+    ENSEMBLE_SMOOTHER_MODE,
+    ES_MDA_MODE,
+    ITERATIVE_ENSEMBLE_SMOOTHER_MODE,
+)
+from ert.cli.main import ErtCliError, run_cli
 from ert.gui.main import GUILogHandler, _setup_main_window, run_gui
 from ert.gui.simulation.run_dialog import RunDialog
 from ert.gui.tools.event_viewer import add_gui_log_handler
@@ -183,6 +191,75 @@ def test_that_the_ui_show_warnings_when_there_are_no_observations(qapp, tmp_path
             assert not combo_box.model().item(i).isEnabled()
 
         assert gui.windowTitle() == "ERT - config.ert"
+
+
+@pytest.mark.usefixtures("copy_poly_case")
+def test_that_the_ui_show_warnings_when_parameters_are_missing(qapp, tmp_path):
+
+    with open("poly.ert", "r", encoding="utf-8") as fin:
+        with open("poly-no-gen-kw.ert", "w", encoding="utf-8") as fout:
+            for line in fin:
+                if "GEN_KW" not in line:
+                    fout.write(line)
+
+    args = Mock()
+
+    args.config = "poly-no-gen-kw.ert"
+    with add_gui_log_handler() as log_handler:
+        gui, _ = ert.gui.main._start_initial_gui_window(args, log_handler)
+        combo_box = gui.findChild(QComboBox, name="Simulation_mode")
+        assert combo_box.count() == 5
+
+        for i in range(2):
+            assert combo_box.model().item(i).isEnabled()
+        for i in range(2, 5):
+            assert not combo_box.model().item(i).isEnabled()
+
+        assert gui.windowTitle() == "ERT - poly-no-gen-kw.ert"
+
+
+@pytest.mark.parametrize(
+    "mode",
+    [
+        pytest.param(ENSEMBLE_SMOOTHER_MODE),
+        pytest.param(ITERATIVE_ENSEMBLE_SMOOTHER_MODE),
+        pytest.param(ES_MDA_MODE),
+    ],
+)
+@pytest.mark.usefixtures("copy_poly_case")
+def test_that_the_cli_raises_exceptions_when_parameters_are_missing(mode):
+
+    with open("poly.ert", "r", encoding="utf-8") as fin:
+        with open("poly-no-gen-kw.ert", "w", encoding="utf-8") as fout:
+            for line in fin:
+                if "GEN_KW" not in line:
+                    fout.write(line)
+
+    args = Mock()
+    args.config = "poly-no-gen-kw.ert"
+    parser = ArgumentParser(prog="test_main")
+
+    ert_args = [
+        mode,
+        "poly-no-gen-kw.ert",
+        "--port-range",
+        "1024-65535",
+        "--target-case",
+    ]
+
+    testcase = "testcase" if mode is ENSEMBLE_SMOOTHER_MODE else "testcase-%d"
+    ert_args.append(testcase)
+
+    parsed = ert_parser(
+        parser,
+        ert_args,
+    )
+
+    with pytest.raises(
+        ErtCliError,
+        match=f"To run {mode}, GEN_KW, FIELD or SURFACE parameters are needed.",
+    ):
+        run_cli(parsed)
 
 
 @pytest.mark.usefixtures("copy_poly_case")

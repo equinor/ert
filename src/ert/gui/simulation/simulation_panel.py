@@ -84,16 +84,20 @@ class SimulationPanel(QWidget):
         """ :type: OrderedDict[BaseRunModel,SimulationConfigPanel]"""
         self.addSimulationConfigPanel(SingleTestRunPanel(ert, notifier), True)
         self.addSimulationConfigPanel(EnsembleExperimentPanel(ert, notifier), True)
+
+        simulation_mode_valid = (
+            self.facade.have_smoother_parameters and self.facade.have_observations
+        )
+
         self.addSimulationConfigPanel(
-            EnsembleSmootherPanel(ert, notifier), self.facade.have_observations
+            EnsembleSmootherPanel(ert, notifier), simulation_mode_valid
         )
         self.addSimulationConfigPanel(
-            MultipleDataAssimilationPanel(self.facade, notifier),
-            self.facade.have_observations,
+            MultipleDataAssimilationPanel(self.facade, notifier), simulation_mode_valid
         )
         self.addSimulationConfigPanel(
             IteratedEnsembleSmootherPanel(self.facade, notifier),
-            self.facade.have_observations,
+            simulation_mode_valid,
         )
 
         self.setLayout(layout)
@@ -109,7 +113,7 @@ class SimulationPanel(QWidget):
             item_count = self._simulation_mode_combo.count() - 1
             sim_item = self._simulation_mode_combo.model().item(item_count)
             sim_item.setEnabled(False)
-            sim_item.setToolTip("Disabled due to no observations")
+            sim_item.setToolTip("Both observations and parameters must be defined")
             sim_item.setIcon(self.style().standardIcon(QStyle.SP_MessageBoxWarning))
 
         panel.simulationConfigurationChanged.connect(self.validationStatusChanged)

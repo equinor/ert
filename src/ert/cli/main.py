@@ -13,7 +13,14 @@ from typing import Any
 import filelock
 
 from ert._c_wrappers.enkf import EnKFMain, ErtConfig
-from ert.cli import ENSEMBLE_EXPERIMENT_MODE, TEST_RUN_MODE, WORKFLOW_MODE
+from ert.cli import (
+    ENSEMBLE_EXPERIMENT_MODE,
+    ENSEMBLE_SMOOTHER_MODE,
+    ES_MDA_MODE,
+    ITERATIVE_ENSEMBLE_SMOOTHER_MODE,
+    TEST_RUN_MODE,
+    WORKFLOW_MODE,
+)
 from ert.cli.model_factory import create_model
 from ert.cli.monitor import Monitor
 from ert.cli.workflow import execute_workflow
@@ -68,11 +75,22 @@ def run_cli(args):
         TEST_RUN_MODE,
         WORKFLOW_MODE,
     ]:
-        raise RuntimeError(
+        raise ErtCliError(
             f"To run {args.mode}, observations are needed. \n"
             f"Please add an observation file to {args.config}. Example: \n"
             f"'OBS_CONFIG observation_file.txt'."
         )
+
+    if not facade.have_smoother_parameters and args.mode in [
+        ENSEMBLE_SMOOTHER_MODE,
+        ES_MDA_MODE,
+        ITERATIVE_ENSEMBLE_SMOOTHER_MODE,
+    ]:
+        raise ErtCliError(
+            f"To run {args.mode}, GEN_KW, FIELD or SURFACE parameters are needed. \n"
+            f"Please add to file {args.config}"
+        )
+
     ens_path = Path(ert_config.ens_path)
     storage_lock = filelock.FileLock(ens_path / f"{ens_path.stem}.lock")
     try:

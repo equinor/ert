@@ -86,6 +86,11 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
     def number_of_iterations(self) -> int:
         return self._enkf_main.analysisConfig().num_iterations
 
+    def get_surface_parameters(self) -> List[str]:
+        return list(
+            self._enkf_main.ensembleConfig().getKeylistFromImplType(ErtImplType.SURFACE)
+        )
+
     def get_field_parameters(self) -> List[str]:
         return list(
             self._enkf_main.ensembleConfig().getKeylistFromImplType(ErtImplType.FIELD)
@@ -155,6 +160,14 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
 
     def get_number_of_iterations(self) -> int:
         return self._enkf_main.analysisConfig().num_iterations
+
+    @property
+    def have_smoother_parameters(self) -> bool:
+        return bool(
+            self.get_surface_parameters()
+            or self.get_gen_kw()
+            or self.get_field_parameters()
+        )
 
     @property
     def have_observations(self) -> bool:
