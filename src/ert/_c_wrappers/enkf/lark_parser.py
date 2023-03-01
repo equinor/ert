@@ -4,6 +4,7 @@ import os
 import os.path
 import shutil
 import warnings
+from dataclasses import dataclass
 from typing import Any, Dict, Iterable, List, Mapping, Optional, Tuple, Union
 
 from lark import Lark, Token, Transformer, Tree, UnexpectedCharacters
@@ -135,6 +136,19 @@ def substitute(
         return current
 
 
+@dataclass
+class Instruction:
+    keyword: FileContextToken
+    args: List[FileContextToken]
+
+
+@dataclass
+class JobInstruction:
+    keyword: FileContextToken
+    job_name: FileContextToken
+    args: List[FileContextToken]
+
+
 class _TreeToDictTransformer:
     def __init__(
         self,
@@ -144,7 +158,7 @@ class _TreeToDictTransformer:
     ):
         self.defines = []
         self.data_kws = []
-        self.keywords: List[List[FileContextToken]] = []
+        self.keywords: List[Union[Instruction, JobInstruction]] = []
         self.config_dict = None
         self.config_dir = config_dir
         self.config_file_base = config_file_base
@@ -178,7 +192,7 @@ class _TreeToDictTransformer:
                 if val not in item.indexed_selection_set[index]:
                     raise ConfigValidationError(
                         f"{item.kw!r} argument {index!r} must be one of"
-                        f" {item.indexed_selection_set[index]!r}",
+                        f" {item.indexed_selection_set[index]!r} was {val.value!r}",
                         config_file=val.filename,
                     )
 
@@ -237,45 +251,50 @@ class _TreeToDictTransformer:
         def with_types(args: List[FileContextToken], item: SchemaItem):
             return [convert(x, item, i) for i, x in enumerate(args)]
 
-        def get_value(item: SchemaItem, line: List[FileContextToken]):
+        def get_values(item: SchemaItem, line: List[FileContextToken]):
             if item.argc_max != -1 and item.argc_max < len(line) - 1:
                 raise ConfigValidationError(
                     f"Keyword: {item.kw!r} takes at most {item.argc_max!r} arguments"
                 )
             if item.join_after > 0:
-                n = item.join_after + 1
+                n = item.join_after
                 args = " ".join(str(x) for x in line[n:])
-                new_line = line[1:n]
+                new_line = line[0:n]
                 if len(args) > 0:
                     new_line.append(
                         FileContextToken(Token(line[n].type, args), line[n].filename)
                     )
                 return with_types(new_line, item)
             if item.argc_max > 1 or item.argc_max == CONFIG_DEFAULT_ARG_MAX:
-                return with_types(line[1:], item)
+                return with_types(line, item)
             else:
-                return with_types([line[1]], item)[0] if len(line) > 1 else None
+                return with_types([line[0]], item)[0] if len(line) > 0 else None
 
         for line in self.keywords:
             try:
-                key = line[0]
+                key = line.keyword
                 if key not in schema:
                     warnings.warn(f"unknown key {key!r}", category=ConfigWarning)
                     continue
                 item = schema[key]
                 if item.multi_occurrence:
                     val = self.config_dict.get(key, [])
-                    value = get_value(item, line)
-                    val.append(value)
-                    self.config_dict[key] = val
+                    if isinstance(line, Instruction):
+                        value = get_values(item, line.args)
+                        val.append(value)
+                        self.config_dict[key] = val
+                    elif isinstance(line, JobInstruction):
+                        val.append((line.job_name, line.args))
+                        self.config_dict[key]
                 else:
-                    self.config_dict[key] = get_value(item, line)
+                    if isinstance(line, Instruction):
+                        self.config_dict[key] = get_values(item, line.args)
+                    elif isinstance(line, JobInstruction):
+                        self.config_dict[key] = (line.job_name, line.args)
             except ConfigValidationError as e:
-                line_msg = " ".join(line) if line else ""
-                # should always be a token as no replacement should be done to keywords
-                token: Token = line[0]
+                token: Token = line.keyword
                 raise ConfigValidationError(
-                    f"{e.errors}\nWas used in {line_msg} at line {token.line}",
+                    f"{e.errors}\nWas used in {token.value} at line {token.line}",
                     config_file=token.filename,
                 ) from e
 
@@ -317,69 +336,75 @@ class _TreeToDictTransformer:
         self.data_kws.append([kw, substitute(self.defines, value)])
 
     def keyword(self, tree: Tree):
-        inst = []
+        arguments = []
         kw = tree.children[0]
-        if not isinstance(kw, str):
+        if not isinstance(kw, FileContextToken):
             raise ConfigValidationError(
                 f"Unrecognized keyword {kw!r}", config_file=self.config_file
             )
         do_env = True
         if kw in self.schema:
             do_env = self.schema[kw].expand_envvar
-        inst.append(kw)
-        for node in tree.children[1:]:
-            if node.data == "arglist":
-                name = node.children[0]
-                args = []
-                kw_list = node.children[1]
-                for kw_pair in kw_list.children:
-                    if kw_pair is None:
-                        break
-                    key = kw_pair.children[0]
-                    val = kw_pair.children[1].children[0]
-                    if not isinstance(val, FileContextToken):
-                        raise ConfigValidationError(
-                            f"Could not read keyword value {kw!r} for {key!r}",
-                            config_file=self.config_file,
-                        )
-                    if val.type == "STRING":
-                        # remove quotation marks
-                        val = FileContextToken(
-                            Token(val.type, val[1 : len(val) - 1]), val.filename
-                        )
-                    val = substitute(self.defines, val, expand_env=do_env)
-                    args.append((key, val))
-                inst.append(name)
-                inst.append(args)
-            elif node.data == "arg":
+        instruction: Union[Instruction, JobInstruction]
+        if len(tree.children) == 2 and tree.children[1].data == "arglist":
+            node = tree.children[1]
+            name = node.children[0]
+            args = []
+            kw_list = node.children[1]
+            for kw_pair in kw_list.children:
+                if kw_pair is None:
+                    break
+                key = kw_pair.children[0]
+                val = kw_pair.children[1].children[0]
+                if not isinstance(val, FileContextToken):
+                    raise ConfigValidationError(
+                        f"Could not read keyword value {kw!r} for {key!r}",
+                        config_file=self.config_file,
+                    )
+                if val.type == "STRING":
+                    # remove quotation marks
+                    val = FileContextToken(
+                        Token(val.type, val[1 : len(val) - 1]), val.filename
+                    )
+                val = substitute(self.defines, val, expand_env=do_env)  # type: ignore
+                args.append((key, val))
+            job_name = name
+            arguments = args
+            instruction = JobInstruction(kw, job_name, arguments)
+        else:
+            for node in tree.children[1:]:
+                if node.data != "arg":
+                    raise ConfigValidationError(
+                        "Cannot mix argument list with parenthesis and without in {node}"
+                    )
+
                 val = node.children[0]
                 if not isinstance(val, FileContextToken):
                     raise ConfigValidationError(
                         f"Could not read argument {val!r}", config_file=self.config_file
                     )
-                inst.append(substitute(self.defines, val, expand_env=do_env))
-
-        kw = inst[0]
+                arguments.append(substitute(self.defines, val, expand_env=do_env))
+            instruction = Instruction(kw, arguments)
         if kw in self.schema:
             item = self.schema[kw]
             if (
                 item.argc_min != CONFIG_DEFAULT_ARG_MIN
-                and len(inst) - 1 < item.argc_min
+                and len(instruction.args) < item.argc_min
             ):
                 raise ConfigValidationError(
-                    f"{inst!r} needs at least {item.argc_min} arguments",
+                    f"{instruction.keyword!r} needs at least {item.argc_min} arguments",
                     config_file=kw.filename,
                 )
             if (
                 item.argc_max != CONFIG_DEFAULT_ARG_MAX
-                and len(inst) - 1 > item.argc_max
+                and len(instruction.args) > item.argc_max
             ):
                 raise ConfigValidationError(
-                    f"{inst!r} takes maximum {item.argc_max} arguments",
+                    f"{kw!r} takes maximum {item.argc_max} arguments",
                     config_file=kw.filename,
                 )
 
-        self.keywords.append(inst)
+        self.keywords.append(instruction)
 
 
 def handle_includes(tree: Tree, config_file: str):
