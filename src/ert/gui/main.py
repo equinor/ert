@@ -9,6 +9,7 @@ import filelock
 from PyQt5.QtWidgets import (
     QFrame,
     QHBoxLayout,
+    QLabel,
     QPushButton,
     QScrollArea,
     QVBoxLayout,
@@ -162,18 +163,20 @@ def _setup_suggester(errors, warning_msgs, suggestions, ert_window=None):
     container_layout = QVBoxLayout()
 
     help_button_frame = QFrame()
-    help_button_frame.setFrameStyle(QFrame.StyledPanel)
     help_buttons_layout = QHBoxLayout()
     help_button_frame.setLayout(help_buttons_layout)
 
     button_size = QSize(-1, -1)
     helpbuttons = []
 
+    help_label = QLabel("Help:")
+    help_buttons_layout.addWidget(help_label)
     pm = ErtPluginManager()
     help_links = pm.get_help_links()
 
     for menu_label, link in help_links.items():
         button = QPushButton(menu_label)
+        button.setObjectName(menu_label)
         button.clicked.connect(
             functools.partial(_clicked_help_button, menu_label, link)
         )
@@ -181,6 +184,7 @@ def _setup_suggester(errors, warning_msgs, suggestions, ert_window=None):
         help_buttons_layout.addWidget(button)
 
     about_button = QPushButton("About")
+    about_button.setObjectName("about_button")
     helpbuttons.append(about_button)
     help_buttons_layout.addWidget(about_button)
 

@@ -2,7 +2,7 @@ import argparse
 import os
 import shutil
 from pathlib import Path
-from unittest.mock import Mock, PropertyMock
+from unittest.mock import MagicMock, Mock, PropertyMock, patch
 
 import pytest
 from qtpy.QtCore import Qt, QTimer
@@ -10,6 +10,7 @@ from qtpy.QtWidgets import QComboBox, QMessageBox, QToolButton, QWidget
 
 import ert.gui
 from ert._c_wrappers.enkf import EnKFMain, ErtConfig
+from ert.gui.about_dialog import AboutDialog
 from ert.gui.main import GUILogHandler, _setup_main_window, run_gui
 from ert.gui.simulation.run_dialog import RunDialog
 from ert.gui.tools.event_viewer import add_gui_log_handler
@@ -258,3 +259,37 @@ def test_that_run_dialog_can_be_closed_after_used_to_open_plots(qtbot):
         plot_window = gui.findChild(PlotWindow)
         for tab in plot_window._plot_widgets:
             plot_window._central_tab.setCurrentWidget(tab)
+
+
+def test_help_buttons_in_suggester_dialog(monkeypatch, qapp, tmp_path, qtbot):
+    """
+    WHEN I am shown an error in the gui
+    THEN the suggester gui comes up
+    AND I can find the version of ert by opening the about panel
+    AND go to github to submit an issue by clicking a button.
+    """
+    config_file = tmp_path / "config.ert"
+    config_file.write_text(
+        "NUM_REALIZATIONS 1\n RUNPATH iens-%d/iter-%d\n", encoding="utf-8"
+    )
+
+    args = Mock()
+    args.config = str(config_file)
+    with add_gui_log_handler() as log_handler:
+        gui, _ = ert.gui.main._start_initial_gui_window(args, log_handler)
+        assert gui.windowTitle() == "Some problems detected"
+
+        about_button = gui.findChild(QWidget, name="about_button")
+        qtbot.mouseClick(about_button, Qt.LeftButton)
+
+        help_dialog = gui.findChild(AboutDialog)
+        assert isinstance(help_dialog, AboutDialog)
+        assert help_dialog.windowTitle() == "About"
+
+        about_close_button = help_dialog.findChild(QWidget, name="close_button")
+        qtbot.mouseClick(about_close_button, Qt.LeftButton)
+
+        with patch("webbrowser.open", MagicMock(return_value=True)) as browser_open:
+            github_button = gui.findChild(QWidget, name="GitHub page")
+            qtbot.mouseClick(github_button, Qt.LeftButton)
+            assert browser_open.called
