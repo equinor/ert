@@ -729,24 +729,6 @@ def test_that_include_statements_with_multiple_values_raises_error():
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_that_define_statements_with_less_than_one_argument_raises_error():
-    test_config_file_name = "test.ert"
-    test_config_contents = dedent(
-        """
-        NUM_REALIZATIONS  1
-        DEFINE <USER>
-        """
-    )
-    with open(test_config_file_name, "w", encoding="utf-8") as fh:
-        fh.write(test_config_contents)
-
-    with pytest.raises(
-        ConfigValidationError, match="Keyword:DEFINE must have two or more"
-    ):
-        _ = ErtConfig.from_file(user_config_file=test_config_file_name)
-
-
-@pytest.mark.usefixtures("use_tmpdir")
 def test_that_installing_two_forward_model_jobs_with_the_same_name_warn():
     test_config_file_name = "test.ert"
     Path("job").write_text("EXECUTABLE echo\n", encoding="utf-8")
@@ -931,7 +913,7 @@ def test_that_giving_too_many_arguments_gives_config_validation_error():
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_that_giving_too_many_arguments_gives_config_validation_error():
+def test_that_giving_too_few_arguments_gives_config_validation_error():
     test_config_file_name = "test.ert"
     test_config_contents = dedent(
         """

@@ -294,7 +294,7 @@ class _TreeToDictTransformer:
                         )
                     if isinstance(val, Token) and val.type == "STRING":
                         # remove quotation marks
-                        val = val[1: len(val) - 1]
+                        val = val[1 : len(val) - 1]
                     val = substitute(self.defines, val, expand_env=do_env)
                     args.append((key, val))
                 inst.append(name)
