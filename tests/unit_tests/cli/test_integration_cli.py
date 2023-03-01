@@ -1,4 +1,5 @@
 import asyncio
+import logging
 import os
 import shutil
 import threading
@@ -386,3 +387,30 @@ def test_that_prior_is_not_overwritten_in_ensemble_experiment(
         else:
             pd.testing.assert_frame_equal(parameter_values, prior_values)
         storage.close()
+
+
+def test_config_parser_fails_gracefully_on_unreadable_config_file(copy_case, caplog):
+    """we cannot test on the config file directly, as the argument parser already check
+    if the file is readable. so we use the GEN_KW parameter file which is also parsed
+    using our config parser."""
+
+    copy_case("snake_oil_field")
+    config_file_name = "snake_oil_surface.ert"
+
+    with open(config_file_name, mode="r", encoding="utf-8") as config_file_handler:
+        content_lines = config_file_handler.read().splitlines()
+
+    index_line_with_gen_kw = [
+        index for index, line in enumerate(content_lines) if line.startswith("GEN_KW")
+    ][0]
+    gen_kw_parameter_file = content_lines[index_line_with_gen_kw].split(" ")[4]
+    os.chmod(gen_kw_parameter_file, 0x0)
+    gen_kw_parameter_file_abs_path = os.path.join(os.getcwd(), gen_kw_parameter_file)
+    caplog.set_level(logging.WARNING)
+
+    ErtConfig.from_file(config_file_name)
+
+    assert (
+        f"could not open file `{gen_kw_parameter_file_abs_path}` for parsing"
+        in caplog.text
+    )
