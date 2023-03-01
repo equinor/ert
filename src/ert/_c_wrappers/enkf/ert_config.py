@@ -240,13 +240,7 @@ class ErtConfig:
     def read_user_config(cls, user_config_file, new_parser=USE_NEW_PARSER_BY_DEFAULT):
         site_config = cls.read_site_config(new_parser=new_parser)
         if new_parser:
-            user_config_dict = parse(user_config_file, site_config)
-            config_file_name = os.path.normpath(os.path.abspath(user_config_file))
-            defines = user_config_dict.get("DEFINE", [])
-            for key, val in cls._create_pre_defines(config_file_name).items():
-                defines.append([key, val])
-            user_config_dict["DEFINE"] = defines
-            return user_config_dict
+            return parse(user_config_file, site_config)
         else:
             user_config_parser = ErtConfig._create_user_config_parser()
             user_config_content = user_config_parser.parse(
