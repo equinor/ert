@@ -45,7 +45,12 @@ class FileContextTransformer(Transformer):
         super().__init__(visit_tokens=True)
 
     def __default_token__(self, token) -> FileContextToken:
-        return FileContextToken(token, self.filename)
+        new_token = FileContextToken(token, self.filename)
+        if token.type == "STRING":
+            # remove quotation marks
+            new_token.value = token.value[1 : len(token.value) - 1]
+
+        return new_token
 
 
 grammar = r"""
@@ -174,6 +179,9 @@ class _TreeToDictTransformer:
         self.defines.append(["<CONFIG_PATH>", self.config_dir])
         self.defines.append(["<CONFIG_FILE_BASE>", self.config_file_base])
         self.defines.append(["<DATE>", datetime.date.today().isoformat()])
+        self.defines.append(["<CWD>", self.config_dir])
+        self.defines.append(["<CONFIG_FILE>", os.path.basename(self.config_file)])
+
         self.schema = schema
         self.config_dict = site_config if site_config else {}
         for node in tree.children:
@@ -285,7 +293,7 @@ class _TreeToDictTransformer:
                         self.config_dict[key] = val
                     elif isinstance(line, JobInstruction):
                         val.append((line.job_name, line.args))
-                        self.config_dict[key]
+                        self.config_dict[key] = val
                 else:
                     if isinstance(line, Instruction):
                         self.config_dict[key] = get_values(item, line.args)
@@ -379,6 +387,7 @@ class _TreeToDictTransformer:
                     )
 
                 val = node.children[0]
+
                 if not isinstance(val, FileContextToken):
                     raise ConfigValidationError(
                         f"Could not read argument {val!r}", config_file=self.config_file
