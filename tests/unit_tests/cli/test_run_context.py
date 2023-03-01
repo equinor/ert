@@ -11,6 +11,8 @@ def test_that_all_iterations_gets_correct_name_and_iteration_number():
         "analysis_module": "some_module",
         "active_realizations": [True],
         "target_case": "target_%d",
+        "restart_run": False,
+        "prior_ensemble": "",
     }
     ert_mock = MagicMock()
     test_class = MultipleDataAssimilation(

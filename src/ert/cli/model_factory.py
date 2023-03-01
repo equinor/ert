@@ -77,6 +77,14 @@ def _setup_ensemble_smoother(ert, args, ensemble_size, current_case_name, id_):
 
 
 def _setup_multiple_data_assimilation(ert, args, ensemble_size, current_case_name, id_):
+    # Because the configuration of the CLI is different from the gui, we
+    # infer the restart status from the starting iteration.
+    if not hasattr(args, "restart_run"):
+        restart_run = int(args.start_iteration) != 0
+        prior_ensemble = None if not restart_run else args.current_case
+    else:
+        restart_run = args.restart_run
+        prior_ensemble = args.prior_ensemble
     simulations_argument = {
         "active_realizations": _realizations(args, ensemble_size),
         "target_case": _target_case_name(
@@ -86,6 +94,8 @@ def _setup_multiple_data_assimilation(ert, args, ensemble_size, current_case_nam
         "weights": args.weights,
         "start_iteration": int(args.start_iteration),
         "num_iterations": len(args.weights),
+        "restart_run": restart_run,
+        "prior_ensemble": prior_ensemble,
     }
     model = MultipleDataAssimilation(
         simulations_argument, ert, ert.get_queue_config(), id_

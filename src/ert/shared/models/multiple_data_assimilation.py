@@ -66,23 +66,23 @@ class MultipleDataAssimilation(BaseRunModel):
         update_id = None
         enumerated_weights = list(enumerate(weights))
         starting_iteration = self._simulation_arguments["start_iteration"]
-        restart_run = starting_iteration != 0
+        restart_run = self._simulation_arguments["restart_run"]
         case_format = self._simulation_arguments["target_case"]
+        prior_ensemble = self._simulation_arguments["prior_ensemble"]
         storage_manager = self.ert().storage_manager
         if restart_run:
-            if case_format % starting_iteration not in storage_manager:
+            assert starting_iteration > 0
+            if prior_ensemble not in storage_manager:
                 raise ErtRunError(
-                    f"Source case {case_format % starting_iteration} for iteration "
-                    f"{starting_iteration} does not exists in {storage_manager.cases}."
-                    " If you are attempting to restart ESMDA from a iteration other "
-                    "than 0, make sure the target case format is the same as for the "
-                    f"original run.(Current target case format: {case_format})"
+                    f"Prior ensemble: {prior_ensemble} does not exists in"
+                    f" {storage_manager.cases}."
                 )
             prior_context = self.ert().load_ensemble_context(
-                case_format % starting_iteration,
+                prior_ensemble,
                 self._simulation_arguments["active_realizations"],
-                iteration=0,
+                iteration=starting_iteration - 1,
             )
+            ensemble_id = "prior_ensemble"
         else:
             prior_context = self.ert().create_ensemble_context(
                 case_format % 0,
@@ -92,14 +92,14 @@ class MultipleDataAssimilation(BaseRunModel):
             self.ert().sample_prior(
                 prior_context.sim_fs, prior_context.active_realizations
             )
-
-        weights_to_run = enumerated_weights[min(starting_iteration, len(weights)) :]
-
-        for iteration, weight in weights_to_run:
-            is_first_iteration = iteration == 0
             _, ensemble_id = self._simulateAndPostProcess(
                 prior_context, evaluator_server_config, update_id=update_id
             )
+
+        weights_to_run = enumerated_weights[max(starting_iteration - 1, 0) :]
+
+        for iteration, weight in weights_to_run:
+            is_first_iteration = iteration == 0
             if is_first_iteration:
                 self.ert().runWorkflows(HookRuntime.PRE_FIRST_UPDATE)
             self.ert().runWorkflows(HookRuntime.PRE_UPDATE)
@@ -119,12 +119,12 @@ class MultipleDataAssimilation(BaseRunModel):
                 ensemble_id=ensemble_id,
             )
             self.ert().runWorkflows(HookRuntime.POST_UPDATE)
+            _, ensemble_id = self._simulateAndPostProcess(
+                posterior_context, evaluator_server_config, update_id=update_id
+            )
             prior_context = posterior_context
 
         self.setPhaseName("Post processing...", indeterminate=True)
-        self._simulateAndPostProcess(
-            posterior_context, evaluator_server_config, update_id=update_id
-        )
 
         self.setPhase(iteration_count + 1, "Simulations completed.")
 
