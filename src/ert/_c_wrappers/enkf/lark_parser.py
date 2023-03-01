@@ -337,7 +337,7 @@ def handle_includes(tree: Tree, config_dir: str):
     to_include = []
     for i, node in enumerate(tree.children):
         if not isinstance(node, Tree):
-            continue
+            raise ConfigValidationError("Unexpected top level statement {node!r}")
         if isinstance(node.children[0], Token):
             continue  # This is either a newline or a comment
         if node.children[0].data == "include":
