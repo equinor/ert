@@ -347,14 +347,14 @@ def test_that_prior_is_not_overwritten_in_ensemble_experiment(
         storage = open_storage(ert.ert_config.ens_path, mode="w")
         experiment_id = storage.create_experiment()
         ensemble = storage.create_ensemble(
-            experiment_id, name="default", ensemble_size=ert.getEnsembleSize()
+            experiment_id, name="iter-0", ensemble_size=ert.getEnsembleSize()
         )
         prior_ensemble_id = ensemble.id
         prior_context = ert.ensemble_context(ensemble, prior_mask, 0)
         ert.sample_prior(prior_context.sim_fs, prior_context.active_realizations)
         facade = LibresFacade(ert)
         prior_values = facade.load_all_gen_kw_data(
-            storage.get_ensemble_by_name("default")
+            storage.get_ensemble_by_name("iter-0")
         )
         storage.close()
 
@@ -364,7 +364,7 @@ def test_that_prior_is_not_overwritten_in_ensemble_experiment(
             [
                 ENSEMBLE_EXPERIMENT_MODE,
                 "poly_example/poly.ert",
-                f"--current-case=UUID={prior_ensemble_id}",
+                "--current-case=iter-0",
                 "--port-range",
                 "1024-65535",
                 "--realizations",
