@@ -110,10 +110,10 @@ class EnsembleExperiment(BaseRunModel):
         evaluator_server_config: EvaluatorServerConfig,
     ) -> RunContext:
         current_case = self._simulation_arguments["current_case"]
-        if isinstance(current_case, UUID):
-            ensemble = self._storage.get_ensemble(current_case)
+        try:
+            ensemble = self._storage.get_ensemble_by_name(current_case)
             assert isinstance(ensemble, EnsembleAccessor)
-        else:
+        except KeyError:
             ensemble = self._storage.create_ensemble(
                 self._experiment_id,
                 name=current_case,
