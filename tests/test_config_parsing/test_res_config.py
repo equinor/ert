@@ -996,3 +996,36 @@ def test_that_recursive_defines_fails_gracefully_and_logs(caplog):
         _ = ErtConfig.from_file(test_config_file_name)
         assert len(caplog.records) == 1
         assert "max iterations" in caplog.records[0]
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_include_checks_for_one_argument():
+    test_config_file_name = "test.ert"
+    test_config_contents = dedent(
+        """
+        NUM_REALIZATIONS 1
+        INCLUDE includes/install_jobs.ert
+        """
+    )
+    os.mkdir("includes")
+    test_include_file_name = "includes/install_jobs.ert"
+    test_include_contents = dedent(
+        """
+        INSTALL_JOB FM ../FM
+        """
+    )
+    test_fm_file_name = "FM"
+    test_fm_contents = dedent(
+        """
+        EXECUTABLE echo
+        """
+    )
+    with open(test_config_file_name, "w", encoding="utf-8") as fh:
+        fh.write(test_config_contents)
+    with open(test_include_file_name, "w", encoding="utf-8") as fh:
+        fh.write(test_include_contents)
+    with open(test_fm_file_name, "w", encoding="utf-8") as fh:
+        fh.write(test_fm_contents)
+
+    ert_config = ErtConfig.from_file(test_config_file_name)
+    assert ert_config.installed_jobs["FM"].name == "FM"
