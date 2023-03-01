@@ -61,15 +61,18 @@ class CopyableLabel(QHBoxLayout):
             "QPushButton { padding: 8px; max-width: 150px; min-width: 30px; }"
         )
         icon_path = path.join(current_dir, "..", "resources", "gui", "img", "copy.svg")
+        icon_path_check = path.join(
+            current_dir, "..", "resources", "gui", "img", "check.svg"
+        )
         self.copy_button.setIcon(QIcon(icon_path))
 
         def copy_text() -> None:
             text = unescape_string(self.label.text())
             QApplication.clipboard().setText(text)
-            self.copy_button.setText("copied!")
+            self.copy_button.setIcon(QIcon(icon_path_check))
 
             def restore_text():
-                self.copy_button.setText("")
+                self.copy_button.setIcon(QIcon(icon_path))
 
             Timer(1.0, restore_text).start()
 
