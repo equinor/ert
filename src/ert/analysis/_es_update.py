@@ -6,7 +6,7 @@ from collections import defaultdict
 from dataclasses import dataclass, field
 from math import sqrt
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Tuple
 
 import iterative_ensemble_smoother as ies
 import numpy as np
@@ -60,6 +60,38 @@ class SmootherSnapshot:
     alpha: float
     std_cutoff: float
     update_step_snapshots: Dict[str, "UpdateSnapshot"] = field(default_factory=dict)
+
+
+@dataclass
+class Progress:
+    task: Task
+    sub_task: Optional[Task]
+
+    def __str__(self) -> str:
+        ret = f"tasks: {self.task}"
+        if self.sub_task is not None:
+            ret += f"\nsub tasks: {self.sub_task}"
+        return ret
+
+
+@dataclass
+class Task:
+    description: str
+    current: int
+    total: Optional[int]
+
+    def __str__(self) -> str:
+        ret: str = f"running #{self.current}"
+        if self.total is not None:
+            ret += f" of {self.total}"
+        return ret + f" - {self.description}"
+
+
+ProgressCallback = Callable[[Progress], None]
+
+
+def noop_progress_callback(_: Progress) -> None:
+    pass
 
 
 def _get_A_matrix(
@@ -390,9 +422,11 @@ def analysis_ES(
     ensemble_config: "EnsembleConfig",
     source_fs: EnsembleReader,
     target_fs: EnsembleAccessor,
+    progress_callback: ProgressCallback,
 ) -> None:
     iens_active_index = [i for i in range(len(ens_mask)) if ens_mask[i]]
 
+    progress_callback(Progress(Task("Loading data", 1, 3), None))
     temp_storage = _create_temporary_parameter_storage(
         source_fs, ensemble_config, iens_active_index
     )
@@ -402,6 +436,7 @@ def analysis_ES(
         temp_storage, ensemble_size, updatestep
     )
 
+    progress_callback(Progress(Task("Updating data", 2, 3), None))
     # Looping over local analysis update_step
     for update_step in updatestep:
         try:
@@ -469,6 +504,7 @@ def analysis_ES(
             ):
                 _save_to_temporary_storage(temp_storage, [parameter], A)
 
+    progress_callback(Progress(Task("Storing data", 3, 3), None))
     _save_temporary_storage_to_disk(
         target_fs, ensemble_config, temp_storage, iens_active_index
     )
@@ -488,12 +524,15 @@ def analysis_IES(
     source_fs: EnsembleReader,
     target_fs: EnsembleAccessor,
     iterative_ensemble_smoother: ies.SIES,
+    progress_callback: ProgressCallback,
 ) -> None:
     iens_active_index = [i for i in range(len(ens_mask)) if ens_mask[i]]
 
+    progress_callback(Progress(Task("Loading data", 1, 3), None))
     temp_storage = _create_temporary_parameter_storage(
         source_fs, ensemble_config, iens_active_index
     )
+    progress_callback(Progress(Task("Updating data", 2, 3), None))
 
     ensemble_size = sum(ens_mask)
     param_ensemble = _param_ensemble_for_projection(
@@ -549,6 +588,7 @@ def analysis_IES(
                     temp_storage[parameter.name]
                 )
 
+    progress_callback(Progress(Task("Storing data", 3, 3), None))
     _save_temporary_storage_to_disk(
         target_fs, ensemble_config, temp_storage, iens_active_index
     )
@@ -624,7 +664,11 @@ class ESUpdate:
         prior_storage: EnsembleReader,
         posterior_storage: EnsembleAccessor,
         run_id: str,
+        progress_callback: Optional[ProgressCallback] = None,
     ) -> None:
+        if not progress_callback:
+            progress_callback = noop_progress_callback
+
         updatestep = self.ert.getLocalConfig()
 
         analysis_config = self.ert.analysisConfig()
@@ -657,6 +701,7 @@ class ESUpdate:
             ensemble_config,
             prior_storage,
             posterior_storage,
+            progress_callback,
         )
 
         _write_update_report(
@@ -671,7 +716,11 @@ class ESUpdate:
         posterior_storage: EnsembleAccessor,
         w_container: ies.SIES,
         run_id: str,
+        progress_callback: Optional[ProgressCallback] = None,
     ) -> None:
+        if not progress_callback:
+            progress_callback = noop_progress_callback
+
         updatestep = self.ert.getLocalConfig()
         if len(updatestep) > 1:
             raise ErtAnalysisError(
@@ -710,6 +759,7 @@ class ESUpdate:
             prior_storage,
             posterior_storage,
             w_container,
+            progress_callback,
         )
 
         _write_update_report(

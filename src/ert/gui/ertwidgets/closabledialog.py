@@ -7,6 +7,7 @@ class ClosableDialog(QDialog):
         QDialog.__init__(self, parent)
         self.setWindowTitle(title)
         self.setModal(True)
+        self.setWindowFlags(self.windowFlags() | Qt.CustomizeWindowHint)
         self.setWindowFlags(self.windowFlags() & ~Qt.WindowContextHelpButtonHint)
         self.setWindowFlags(self.windowFlags() & ~Qt.WindowCloseButtonHint)
 
@@ -39,11 +40,11 @@ class ClosableDialog(QDialog):
         else:
             QDialog.keyPressEvent(self, q_key_event)
 
-    def addButton(self, caption, listner):
+    def addButton(self, caption, listener):
         button = QPushButton(caption)
         button.setObjectName(str(caption).capitalize())
         self.__button_layout.insertWidget(1, button)
-        button.clicked.connect(listner)
+        button.clicked.connect(listener)
 
     def toggleButton(self, caption, enabled):
         button = self.findChild(QPushButton, str(caption).capitalize())

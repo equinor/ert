@@ -45,7 +45,7 @@ def test_that_the_manual_analysis_tool_works(
 
         QTimer.singleShot(1000, handle_dialog)
         qtbot.mouseClick(
-            dialog.findChild(QPushButton, name="Run"),
+            dialog.findChild(QPushButton, name="RUN"),
             Qt.LeftButton,
         )
 
