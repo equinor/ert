@@ -133,8 +133,6 @@ class _TreeToDictTransformer:
                     self.data_kw(node.children[0])
                 elif node.children[0].data == "keyword":
                     self.keyword(node.children[0])
-                elif node.children[0].data == "include":
-                    self.include(node.children[0])
 
         def check_valid(val, item: SchemaItem, index: int):
             if index in item.indexed_selection_set:
@@ -256,9 +254,6 @@ class _TreeToDictTransformer:
             ) from e
 
         return self.config_dict
-
-    def include(self, tree: Tree):
-        raise NotImplementedError()
 
     def define(self, tree: Tree):
         kw = tree.children[0]

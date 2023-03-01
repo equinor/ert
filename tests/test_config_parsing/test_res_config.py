@@ -944,3 +944,27 @@ def test_that_giving_too_many_arguments_gives_config_validation_error():
 
     with pytest.raises(ConfigValidationError, match="at least 1 arguments"):
         _ = ErtConfig.from_file(test_config_file_name)
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_include_statements_work():
+    test_config_file_name = "test.ert"
+    test_config_contents = dedent(
+        """
+        NUM_REALIZATIONS  1
+        INCLUDE include.ert
+        """
+    )
+    test_include_file_name = "include.ert"
+    test_include_contents = dedent(
+        """
+        JOBNAME included
+        """
+    )
+    with open(test_config_file_name, "w", encoding="utf-8") as fh:
+        fh.write(test_config_contents)
+    with open(test_include_file_name, "w", encoding="utf-8") as fh:
+        fh.write(test_include_contents)
+
+    ert_config = ErtConfig.from_file(test_config_file_name)
+    assert ert_config.model_config.jobname_format_string == "included"
