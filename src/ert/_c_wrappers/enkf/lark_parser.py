@@ -110,13 +110,11 @@ class _TreeToDictTransformer:
         config_file: str,
         config_dir: str,
         config_file_base: str,
-        add_invalid: bool = False,
     ):
         self.defines = []
         self.data_kws = []
         self.keywords: List[List[Token]] = []
         self.config_dict = None
-        self.add_invalid = add_invalid
         self.config_dir = config_dir
         self.config_file_base = config_file_base
         self.config_file = config_file
@@ -398,7 +396,6 @@ def _parse_file(file: Union[str, bytes, os.PathLike], error_context_string: str 
 def parse(
     file: str,
     site_config: Optional[Dict[str, Any]] = None,
-    add_invalid: bool = False,
 ):
     tree = _parse_file(file)
     config_dir = os.path.dirname(os.path.normpath(os.path.abspath(file)))
@@ -409,6 +406,5 @@ def parse(
     return _TreeToDictTransformer(
         config_dir=config_dir,
         config_file_base=config_file_base,
-        add_invalid=add_invalid,
         config_file=file,
     )(tree, site_config)
