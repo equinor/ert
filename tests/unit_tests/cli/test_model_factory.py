@@ -112,6 +112,8 @@ def test_setup_multiple_data_assimilation(poly_case):
         weights="6,4,2",
         target_case="test_case_%d",
         start_iteration="0",
+        restart_run=False,
+        prior_ensemble="default",
     )
 
     model = model_factory._setup_multiple_data_assimilation(
@@ -122,7 +124,7 @@ def test_setup_multiple_data_assimilation(poly_case):
         "experiment_id",
     )
     assert isinstance(model, MultipleDataAssimilation)
-    assert len(model._simulation_arguments.keys()) == 6
+    assert len(model._simulation_arguments.keys()) == 8
     assert "active_realizations" in model._simulation_arguments
     assert "target_case" in model._simulation_arguments
     assert "analysis_module" in model._simulation_arguments

@@ -54,6 +54,8 @@ def test_hook_call_order_es_mda(monkeypatch):
         "analysis_module": "some_module",
         "active_realizations": [True],
         "target_case": "target_%d",
+        "restart_run": False,
+        "prior_ensemble": "",
     }
     ert_mock = MagicMock()
     test_class = MultipleDataAssimilation(
