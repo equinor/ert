@@ -950,3 +950,19 @@ def test_that_include_statements_work():
 
     ert_config = ErtConfig.from_file(test_config_file_name)
     assert ert_config.model_config.jobname_format_string == "included"
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_giving_incorrect_queue_name_in_queue_option_fails():
+    test_config_file_name = "test.ert"
+    test_config_contents = dedent(
+        """
+        NUM_REALIZATIONS  1
+        QUEUE_OPTION VOCAL MAX_RUNNING 50
+        """
+    )
+    with open(test_config_file_name, "w", encoding="utf-8") as fh:
+        fh.write(test_config_contents)
+
+    with pytest.raises(ConfigValidationError, match="VOCAL"):
+        _ = ErtConfig.from_file(test_config_file_name)
