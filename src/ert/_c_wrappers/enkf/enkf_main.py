@@ -488,9 +488,15 @@ class EnKFMain:
                     grid_file = self.ensembleConfig().grid_file
                     assert grid_file is not None
                     grid = xtgeo.grid_from_file(grid_file)
-                    props = xtgeo.gridproperty_from_file(
-                        init_file, name=parameter, grid=grid
-                    )
+                    try:
+                        props = xtgeo.gridproperty_from_file(
+                            init_file, name=parameter, grid=grid
+                        )
+                    except PermissionError as err:
+                        context_message = (
+                            f"Failed to open init file for parameter {parameter!r}"
+                        )
+                        raise RuntimeError(context_message) from err
 
                     data = props.values1d.data
                     field_config = config_node.getFieldModelConfig()

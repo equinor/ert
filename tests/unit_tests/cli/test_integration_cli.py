@@ -10,7 +10,7 @@ import pandas as pd
 import pytest
 
 import ert.shared
-from ert import LibresFacade
+from ert import LibresFacade, ensemble_evaluator
 from ert.__main__ import ert_parser
 from ert._c_wrappers.config.config_parser import ConfigValidationError
 from ert._c_wrappers.enkf import EnKFMain, ErtConfig
@@ -21,7 +21,7 @@ from ert.cli import (
     ITERATIVE_ENSEMBLE_SMOOTHER_MODE,
     TEST_RUN_MODE,
 )
-from ert.cli.main import run_cli
+from ert.cli.main import ErtCliError, run_cli
 from ert.shared.feature_toggling import FeatureToggling
 from ert.storage import open_storage
 
@@ -414,3 +414,77 @@ def test_config_parser_fails_gracefully_on_unreadable_config_file(copy_case, cap
         f"could not open file `{gen_kw_parameter_file_abs_path}` for parsing"
         in caplog.text
     )
+
+
+def test_field_init_file_not_readable(copy_case, monkeypatch):
+    monkeypatch.setattr(
+        ensemble_evaluator._wait_for_evaluator, "WAIT_FOR_EVALUATOR_TIMEOUT", 5
+    )
+    copy_case("snake_oil_field")
+    config_file_name = "snake_oil_field.ert"
+    field_file_rel_path = "fields/permx0.grdecl"
+    os.chmod(field_file_rel_path, 0x0)
+
+    try:
+        run_ert_test_run(config_file_name)
+    except ErtCliError as err:
+        assert "Failed to open init file for parameter 'PERMX'" in str(err)
+
+
+def test_surface_init_fails_during_forward_model_callback(copy_case):
+    copy_case("snake_oil_field")
+    config_file_name = "snake_oil_surface.ert"
+    parameter_name = "TOP"
+    with open(config_file_name, mode="r+", encoding="utf-8") as config_file_handler:
+        content_lines = config_file_handler.read().splitlines()
+        index_line_with_surface_top = [
+            index
+            for index, line in enumerate(content_lines)
+            if line.startswith(f"SURFACE {parameter_name}")
+        ][0]
+        line_with_surface_top = content_lines[index_line_with_surface_top]
+        breaking_line_with_surface_top = line_with_surface_top + " FORWARD_INIT:True"
+        content_lines[index_line_with_surface_top] = breaking_line_with_surface_top
+        config_file_handler.seek(0)
+        config_file_handler.write("\n".join(content_lines))
+
+    try:
+        run_ert_test_run(config_file_name)
+    except ErtCliError as err:
+        assert f"Failed to initialize parameter {parameter_name!r}" in str(err)
+
+
+def test_unopenable_observation_config_fails_gracefully(copy_case):
+    copy_case("snake_oil_field")
+    config_file_name = "snake_oil_field.ert"
+    with open(config_file_name, mode="r", encoding="utf-8") as config_file_handler:
+        content_lines = config_file_handler.read().splitlines()
+    index_line_with_observation_config = [
+        index
+        for index, line in enumerate(content_lines)
+        if line.startswith("OBS_CONFIG")
+    ][0]
+    line_with_observation_config = content_lines[index_line_with_observation_config]
+    observation_config_rel_path = line_with_observation_config.split(" ")[1]
+    observation_config_abs_path = os.path.join(os.getcwd(), observation_config_rel_path)
+    os.chmod(observation_config_abs_path, 0x0)
+
+    try:
+        run_ert_test_run(config_file_name)
+    except RuntimeError as err:
+        assert (
+            "Do not have permission to open observation config file "
+            f"{observation_config_abs_path!r}" in str(err)
+        )
+
+
+def run_ert_test_run(config_file: str) -> None:
+    parser = ArgumentParser(prog="test_run")
+    parsed = ert_parser(
+        parser,
+        [
+            TEST_RUN_MODE,
+            config_file,
+        ],
+    )
+    run_cli(parsed)
