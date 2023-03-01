@@ -976,3 +976,23 @@ def test_that_giving_no_keywords_fails_gracefully():
 
     with pytest.raises(ConfigValidationError, match="must be set"):
         _ = ErtConfig.from_file(test_config_file_name)
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_recursive_defines_fails_gracefully_and_logs(caplog):
+    test_config_file_name = "test.ert"
+    test_config_contents = dedent(
+        """
+        DEFINE <A> <A>
+        NUM_REALIZATIONS  <A>
+        """
+    )
+    with open(test_config_file_name, "w", encoding="utf-8") as fh:
+        fh.write(test_config_contents)
+
+    with pytest.raises(ConfigValidationError, match="integer"), caplog.at_level(
+        logging.WARNING
+    ):
+        _ = ErtConfig.from_file(test_config_file_name)
+        assert len(caplog.records) == 1
+        assert "max iterations" in caplog.records[0]

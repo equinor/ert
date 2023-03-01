@@ -1,4 +1,5 @@
 import datetime
+import logging
 import os
 import os.path
 import shutil
@@ -71,9 +72,14 @@ inst: "DEFINE" KW_NAME kw_val -> define
 instruction: inst COMMENT | COMMENT | inst NEWLINE | NEWLINE
 """  # noqa: E501
 
+logger = logging.getLogger(__name__)
+
 
 def substitute(
-    defines: Iterable[Tuple[str, str]], string: str, expand_env: bool = True
+    defines: Iterable[Tuple[str, str]],
+    string: str,
+    filename: str,
+    expand_env: bool = True,
 ):
     prev = None
     current = string
@@ -88,7 +94,12 @@ def substitute(
             current = current.replace(key, str(val))
 
     if n >= 100:
-        print(f"reached max iterations for {string}")
+        logger.warn(
+            "reached max iterations while"
+            " trying to resolve defines in file '%s'. Matched to '%s'",
+            filename,
+            string,
+        )
 
     return current
 
@@ -254,14 +265,14 @@ class _TreeToDictTransformer:
         value = tree.children[1].children[0]
         if not isinstance(value, str):
             raise ConfigValidationError(f"Cannot define {kw!r} to {value!r}")
-        self.defines.append([kw, substitute(self.defines, value)])
+        self.defines.append([kw, substitute(self.defines, value, self.config_file)])
 
     def data_kw(self, tree: Tree):
         kw = tree.children[0]
         value = tree.children[1].children[0]
         if not isinstance(value, str):
             raise ConfigValidationError(f"Cannot define {kw!r} to {value!r}")
-        self.data_kws.append([kw, substitute(self.defines, value)])
+        self.data_kws.append([kw, substitute(self.defines, value, self.config_file)])
 
     def keyword(self, tree: Tree):
         inst = []
@@ -289,7 +300,9 @@ class _TreeToDictTransformer:
                     if isinstance(val, Token) and val.type == "STRING":
                         # remove quotation marks
                         val = val[1 : len(val) - 1]
-                    val = substitute(self.defines, val, expand_env=do_env)
+                    val = substitute(
+                        self.defines, val, self.config_file, expand_env=do_env
+                    )
                     args.append((key, val))
                 inst.append(name)
                 inst.append(args)
@@ -297,7 +310,9 @@ class _TreeToDictTransformer:
                 val = node.children[0]
                 if not isinstance(val, str):
                     raise ConfigValidationError(f"Could not read argument {val!r}")
-                inst.append(substitute(self.defines, val, expand_env=do_env))
+                inst.append(
+                    substitute(self.defines, val, self.config_file, expand_env=do_env)
+                )
 
         kw = inst[0]
         if kw in self.schema:
