@@ -18,7 +18,7 @@ from ert._c_wrappers.enkf.enums import (
     RealizationStateEnum,
 )
 from ert.analysis import ESUpdate, SmootherSnapshot
-from ert.analysis._es_update import _get_obs_and_measure_data
+from ert.analysis._es_update import ProgressCallback, _get_obs_and_measure_data
 from ert.data import MeasuredData
 from ert.shared.version import __version__
 
@@ -55,18 +55,23 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
         prior_storage: EnsembleReader,
         posterior_storage: EnsembleAccessor,
         run_id: str,
+        progress_callback: Optional[ProgressCallback] = None,
     ) -> None:
-        self._es_update.smootherUpdate(prior_storage, posterior_storage, run_id)
+        self._es_update.smootherUpdate(
+            prior_storage, posterior_storage, run_id, progress_callback
+        )
 
+    # pylint: disable-msg=too-many-arguments
     def iterative_smoother_update(
         self,
         prior_storage: EnsembleReader,
         posterior_storage: EnsembleAccessor,
         ies: "SIES",
         run_id: str,
+        progress_callback: Optional[ProgressCallback] = None,
     ) -> None:
         self._es_update.iterative_smoother_update(
-            prior_storage, posterior_storage, ies, run_id
+            prior_storage, posterior_storage, ies, run_id, progress_callback
         )
 
     def set_global_std_scaling(self, weight: float) -> None:

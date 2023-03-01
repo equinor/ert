@@ -1,99 +1,190 @@
 import uuid
+from contextlib import contextmanager
+from typing import Optional
 
-from qtpy.QtWidgets import QMessageBox
+from qtpy.QtCore import QObject, Qt, QThread, Signal, Slot
+from qtpy.QtWidgets import QApplication, QMessageBox
 
+from ert._c_wrappers.enkf import EnKFMain
 from ert._c_wrappers.enkf.enums.realization_state_enum import RealizationStateEnum
-from ert.analysis import ErtAnalysisError, ESUpdate
+from ert.analysis import ErtAnalysisError, ESUpdate, Progress
+from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets import resourceIcon
-from ert.gui.ertwidgets.closabledialog import ClosableDialog
+from ert.gui.ertwidgets.statusdialog import StatusDialog
 from ert.gui.tools import Tool
 from ert.gui.tools.run_analysis import RunAnalysisPanel
+from ert.storage import EnsembleAccessor, EnsembleReader, StorageAccessor
 
 
-def analyse(ert, target_fs, source_fs):
-    """Runs analysis using target and source cases. Returns whether or not
-    the analysis was successful."""
-    es_update = ESUpdate(ert)
+class Analyse(QObject):
+    finished = Signal(str, str)
+    """Signal(Optional[str], str)
+    Note: first argument is optional even though it is not declared that way
 
-    for iens in (
-        i
-        for i, s in enumerate(source_fs.state_map)
-        if s
-        in (
-            RealizationStateEnum.STATE_LOAD_FAILURE,
-            RealizationStateEnum.STATE_UNDEFINED,
-        )
+    Signals emitted contain:
+    first arg -- optional error string
+    second arg -- always returns source_fs.name"""
+    progress_update = Signal(object)
+    """Signal(Progress)"""
+
+    def __init__(
+        self,
+        ert: EnKFMain,
+        target_fs: EnsembleAccessor,
+        source_fs: EnsembleReader,
     ):
-        target_fs.state_map[iens] = RealizationStateEnum.STATE_PARENT_FAILURE
-    es_update.smootherUpdate(source_fs, target_fs, str(uuid.uuid4()))
+        QObject.__init__(self)
+        self._ert = ert
+        self._target_fs = target_fs
+        self._source_fs = source_fs
+
+    @Slot()
+    def run(self):
+        """Runs analysis using target and source cases. Returns whether
+        the analysis was successful."""
+        error: Optional[str] = None
+        try:
+            es_update = ESUpdate(self._ert)
+            es_update.smootherUpdate(
+                self._source_fs,
+                self._target_fs,
+                str(uuid.uuid4()),
+                self.progress_callback,
+            )
+        except ErtAnalysisError as e:
+            error = str(e)
+        except Exception as e:
+            error = f"Unknown exception occurred with error: {str(e)}"
+
+        self.finished.emit(error, self._source_fs.name)
+
+    def progress_callback(self, progress: Progress):
+        self.progress_update.emit(progress)
 
 
 class RunAnalysisTool(Tool):
-    def __init__(self, ert, notifier):
-        self.ert = ert
-        self.notifier = notifier
+    def __init__(self, ert: EnKFMain, notifier: ErtNotifier):
         super().__init__(
             "Run analysis", "tools/run_analysis", resourceIcon("formula.svg")
         )
-        self._run_widget = None
-        self._dialog = None
-        self._selected_case_name = None
+        self.ert = ert
+        self.notifier = notifier
+        self._run_widget: Optional[RunAnalysisPanel] = None
+        self._dialog: Optional[StatusDialog] = None
+        self._thread: Optional[QThread] = None
+        self._analyse: Optional[Analyse] = None
 
     def trigger(self):
         if self._run_widget is None:
             self._run_widget = RunAnalysisPanel(self.ert, self.notifier)
-        self._dialog = ClosableDialog("Run analysis", self._run_widget, self.parent())
-        self._dialog.addButton("Run", self.run)
-        self._dialog.exec_()
+        if self._dialog is None:
+            self._dialog = StatusDialog(
+                "Run analysis",
+                self._run_widget,
+                self.parent(),
+            )
+            self._dialog.run.connect(self.run)
+            self._dialog.exec_()
+        else:
+            self._run_widget.target_case_text.clear()
+            self._dialog.show()
 
     def run(self):
-        target = self._run_widget.target_case()
-        source_fs = self._run_widget.source_case()
-
+        target: str = self._run_widget.target_case()
         if len(target.strip()) == 0:
             self._report_empty_target()
             return
 
-        target_fs = self.notifier.storage.create_ensemble(
+        self._enable_dialog(False)
+        try:
+            self._init_analyse(self._run_widget.source_case(), target)
+            self._init_and_start_thread()
+        except Exception as e:
+            self._enable_dialog(True)
+            QMessageBox.critical(None, "Error", str(e))
+
+    def _on_finished(self, error: Optional[str], case_name: str):
+        self._enable_dialog(True)
+
+        if not error:
+            QMessageBox.information(
+                None,
+                "Analysis finished",
+                f"Successfully ran analysis for case '{case_name}'.",
+            )
+        else:
+            QMessageBox.warning(
+                None,
+                "Failed",
+                f"Unable to run analysis for case '{case_name}'.\n"
+                f"The following error occurred: {error}",
+            )
+            return
+
+        self.notifier.ertChanged.emit()
+        self._dialog.accept()
+
+    def _init_and_start_thread(self):
+        self._thread = QThread()
+
+        self._analyse.moveToThread(self._thread)
+        self._thread.started.connect(self._analyse.run)
+        self._analyse.finished.connect(self._thread.quit)
+        self._thread.finished.connect(self._analyse.deleteLater)
+        self._thread.finished.connect(self._thread.deleteLater)
+
+        self._analyse.finished.connect(self._on_finished)
+        self._analyse.finished.connect(self._dialog.clear_status)
+        self._analyse.progress_update.connect(self._dialog.progress_update)
+
+        self._thread.start()
+
+    @staticmethod
+    def _report_empty_target():
+        QMessageBox.warning(None, "Invalid target", "Target case can not be empty")
+
+    def _enable_dialog(self, enable: bool):
+        self._dialog.enable_buttons(enable)
+        if enable:
+            QApplication.restoreOverrideCursor()
+        else:
+            QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
+
+    def _init_analyse(self, source_fs: EnsembleReader, target: str):
+        with add_context_to_error(
+            "Could not get StorageAccessor for writing to ensemble"
+        ):
+            accessor: StorageAccessor = self.notifier.storage.to_accessor()
+        target_fs: EnsembleAccessor = accessor.create_ensemble(
             source_fs.experiment_id,
             name=target,
             ensemble_size=source_fs.ensemble_size,
             iteration=source_fs.iteration + 1,
             prior_ensemble=source_fs,
         )
-
-        try:
-            analyse(self.ert, target_fs, source_fs)
-            error = None
-        except ErtAnalysisError as e:
-            error = str(e)
-        except Exception as e:
-            error = f"Uknown exception occured with error: {str(e)}"
-
-        msg = QMessageBox()
-        msg.setWindowTitle("Run analysis")
-        msg.setStandardButtons(QMessageBox.Ok)
-
-        if not error:
-            msg.setIcon(QMessageBox.Information)
-            msg.setText(f"Successfully ran analysis for case '{source_fs.name}'.")
-            msg.exec_()
-        else:
-            msg.setIcon(QMessageBox.Warning)
-            msg.setText(
-                f"Unable to run analysis for case '{source_fs.name}'.\n"
-                f"The following error occured: {error}"
+        for iens in (
+            i
+            for i, s in enumerate(source_fs.state_map)
+            if s
+            in (
+                RealizationStateEnum.STATE_LOAD_FAILURE,
+                RealizationStateEnum.STATE_UNDEFINED,
             )
-            msg.exec_()
-            return
+        ):
+            target_fs.state_map[iens] = RealizationStateEnum.STATE_PARENT_FAILURE
 
-        self.notifier.ertChanged.emit()
-        self._dialog.accept()
+        self._analyse = Analyse(
+            self.ert,
+            target_fs,
+            source_fs,
+        )
 
-    def _report_empty_target(self):
-        msg = QMessageBox()
-        msg.setWindowTitle("Invalid target")
-        msg.setIcon(QMessageBox.Warning)
-        msg.setText("Target case can not be empty")
-        msg.setStandardButtons(QMessageBox.Ok)
-        msg.exec_()
+
+@contextmanager
+def add_context_to_error(msg: str):
+    try:
+        yield
+    except Exception as e:
+        text = f"{msg}:\n{e.args[0]}" if e.args else str(msg)
+        e.args = (text,) + e.args[1:]
+        raise
