@@ -966,3 +966,13 @@ def test_that_giving_incorrect_queue_name_in_queue_option_fails():
 
     with pytest.raises(ConfigValidationError, match="VOCAL"):
         _ = ErtConfig.from_file(test_config_file_name)
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_giving_no_keywords_fails_gracefully():
+    test_config_file_name = "test.ert"
+    with open(test_config_file_name, "w", encoding="utf-8") as fh:
+        fh.write("")
+
+    with pytest.raises(ConfigValidationError, match="must be set"):
+        _ = ErtConfig.from_file(test_config_file_name)

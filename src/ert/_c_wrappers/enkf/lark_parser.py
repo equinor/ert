@@ -210,9 +210,8 @@ class _TreeToDictTransformer:
             else:
                 return with_types(line[1], item) if len(line) > 1 else None
 
-        line = None
-        try:
-            for line in self.keywords:
+        for line in self.keywords:
+            try:
                 key = line[0]
                 if key not in schema:
                     if self.add_invalid:
@@ -227,31 +226,29 @@ class _TreeToDictTransformer:
                     self.config_dict[key] = val
                 else:
                     self.config_dict[key] = get_value(item, line)
+            except ConfigValidationError as e:
+                line_msg = " ".join(line) if line else ""
+                # should always be a token as no replacement should be done to keywords
+                token: Token = line[0]
+                raise ConfigValidationError(
+                    f"{e.errors}\nWas used in {line_msg} at line {token.line}",
+                    config_file=self.config_file,
+                ) from e
 
-            for _, item in schema.items():
-                if item.required_set:
-                    if item.kw not in self.config_dict:
-                        raise ConfigValidationError(f"{item.kw} must be set.")
+        for _, item in schema.items():
+            if item.required_set:
+                if item.kw not in self.config_dict:
+                    raise ConfigValidationError(f"{item.kw} must be set.")
 
-            if self.defines:
-                self.config_dict["DEFINE"] = []
-                for define in self.defines:
-                    self.config_dict["DEFINE"].append(define)
+        if self.defines:
+            self.config_dict["DEFINE"] = []
+            for define in self.defines:
+                self.config_dict["DEFINE"].append(define)
 
-            if self.data_kws:
-                self.config_dict["DATA_KW"] = []
-                for data_kw in self.data_kws:
-                    self.config_dict["DATA_KW"].append(data_kw)
-        except ConfigValidationError as e:
-            if line is None:
-                raise e from None
-            line_msg = " ".join(line) if line else ""
-            # should always be a token as no replacement should be done to keywords
-            token: Token = line[0]
-            raise ConfigValidationError(
-                f"{e.errors}\nWas used in {line_msg} at line {token.line}",
-                config_file=self.config_file,
-            ) from e
+        if self.data_kws:
+            self.config_dict["DATA_KW"] = []
+            for data_kw in self.data_kws:
+                self.config_dict["DATA_KW"].append(data_kw)
 
         return self.config_dict
 
