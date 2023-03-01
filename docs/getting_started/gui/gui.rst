@@ -3,20 +3,22 @@ Graphical user interface
 
 Restarting ES-MDA
 -----------------
-It is possible to restart ES-MDA runs from an intermediate iteration. Note
-that this requires a bit of care due to the lack of metadata in current storage.
-We are aiming at resolving this in the future in the new storage that soon will
-be the standard.
+It is possible to restart ES-MDA runs from an intermediate iteration.
 
-After selecting the ES-MDA algorithm, you first need to set `Current case` to
-the case you intend to be your first case to reevaluate. After which the
-iteration number will be wrongly injected into the `Target case format`, which
-you have to remove manually (reset it to the original `Target case format`).
-After which you have to set `Start iteration` to the iteration for which you
-are to start from; this number must correspond to the iteration number of the
-case you have selected as your `Current case`. We recognize that this induces
-some manual checking, but this is due to the lack of metadata mentioned above.
-We still hope that this can aid our users and prevent the need of a complete
-restart due to cluster issues etc.
+After selecting the ES-MDA algorithm, check the `Restart run` check box. This
+will enable the prior ensemble and start iteration fields. The prior ensemble
+must be an ensemble where simulation has been performed and the data has been
+loaded, for example by running an `ensemble experiment`. Start iteration is the
+next iteration that will be performed. Setting this to 1 means that the `Prior ensemble`
+will be set to iteration 0, and be used as the prior in the first update step,
+and by default, 3 additional steps will be performed. If for example the ES-MDA failed
+during simulation after iteration 2 for reasons unrelated to the parameterization,
+restart from `<case_name>_1` and set the starting iteration to `2`. This will rerun
+the analysis from iteration 2 and then run the simulations, before proceeding to iteration
+`3`.
+
+Note that when restarting, the `PRE_FIRST_UPDATE` only be run if the starting iteration
+is `1`. This means that any workflows that for example manipulate observations will have
+run manually before doing the restart.
 
 .. image:: restart-es-mda.png
