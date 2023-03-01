@@ -284,12 +284,7 @@ class _TreeToDictTransformer:
             do_env = self.schema[kw].expand_envvar
         inst.append(kw)
         for node in tree.children[1:]:
-            if isinstance(node, Token):
-                if node.type == "STRING":
-                    # remove quotation marks
-                    node.value = node[1 : len(node) - 1]
-                inst.append(substitute(self.defines, node, expand_env=do_env))
-            elif node.data == "arglist":
+            if node.data == "arglist":
                 name = node.children[0]
                 args = []
                 kw_list = node.children[1]
@@ -304,7 +299,7 @@ class _TreeToDictTransformer:
                         )
                     if isinstance(val, Token) and val.type == "STRING":
                         # remove quotation marks
-                        val = val[1 : len(val) - 1]
+                        val = val[1: len(val) - 1]
                     val = substitute(self.defines, val, expand_env=do_env)
                     args.append((key, val))
                 inst.append(name)
