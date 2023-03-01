@@ -28,7 +28,7 @@ def test_bad_user_config_file_error_message(tmp_path):
     with pytest.raises(
         ConfigValidationError, match=r"Parsing.*resulted in the errors:"
     ):
-        rconfig = ErtConfig.from_file(str(tmp_path / "test.ert"))
+        rconfig = ErtConfig.from_file(str(tmp_path / "test.ert"), new_parser=False)
 
     assert rconfig is None
 
