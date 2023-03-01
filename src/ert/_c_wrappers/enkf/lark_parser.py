@@ -90,9 +90,6 @@ def substitute(
     if n >= 100:
         print(f"reached max iterations for {string}")
 
-    if isinstance(current, Token):
-        current = current.value
-
     return current
 
 
