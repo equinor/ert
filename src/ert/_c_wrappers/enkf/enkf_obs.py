@@ -1,3 +1,4 @@
+import os
 from typing import Iterator, List, Optional, Union
 
 from cwrap import BaseCClass
@@ -112,6 +113,11 @@ class EnkfObs(BaseCClass):
         self._free()
 
     def load(self, config_file: str, std_cutoff: float) -> None:
+        if not os.access(config_file, os.R_OK):
+            raise RuntimeError(
+                "Do not have permission to open observation "
+                f"config file {config_file!r}"
+            )
         _clib.enkf_obs.load(self, config_file, std_cutoff)
 
     @property
