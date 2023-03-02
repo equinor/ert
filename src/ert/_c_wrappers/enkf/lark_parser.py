@@ -23,11 +23,11 @@ from ert._c_wrappers.enkf.config_keywords import (
 class FileContextToken(Token):
     filename: str
 
-    def __new__(cls, token, filename, value=None):
+    def __new__(cls, token, filename):
         inst = super(FileContextToken, cls).__new__(
             cls,
             token.type,
-            token.value if value is None else value,
+            token.value,
             token.start_pos,
             token.line,
             token.column,
@@ -39,19 +39,27 @@ class FileContextToken(Token):
         return inst
 
 
+class StringQuotationTransformer(Transformer):
+    def STRING(self, token: Token) -> Token:
+        return Token(
+            token.type,
+            token.value[1 : len(token.value) - 1],
+            token.start_pos,
+            token.line,
+            token.column,
+            token.end_line,
+            token.end_column,
+            token.end_pos,
+        )
+
+
 class FileContextTransformer(Transformer):
     def __init__(self, filename):
         self.filename = filename
         super().__init__(visit_tokens=True)
 
     def __default_token__(self, token) -> FileContextToken:
-        if token.type == "STRING":
-            # remove quotation marks
-            return FileContextToken(token, self.filename, value=token.value[1: len(token.value) - 1])
-        else:
-            return FileContextToken(token, self.filename)
-
-        return new_token
+        return FileContextToken(token, self.filename)
 
 
 grammar = r"""
@@ -370,11 +378,6 @@ class _TreeToDictTransformer:
                         f"Could not read keyword value {kw!r} for {key!r}",
                         config_file=self.config_file,
                     )
-                if val.type == "STRING":
-                    # remove quotation marks
-                    val = FileContextToken(
-                        Token(val.type, val[1 : len(val) - 1]), val.filename
-                    )
                 val = substitute(self.defines, val, expand_env=do_env)  # type: ignore
                 args.append((key, val))
             job_name = name
@@ -464,7 +467,9 @@ def _parse_file(
             content = f.read()
         parser = Lark(grammar, propagate_positions=True)
         tree = parser.parse(content + "\n")
-        return FileContextTransformer(file).transform(tree)
+        return FileContextTransformer(file).transform(
+            StringQuotationTransformer().transform(tree)
+        )
     except FileNotFoundError:
         if error_context_string == "INCLUDE":
             raise ConfigValidationError(
