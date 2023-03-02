@@ -128,7 +128,7 @@ def substitute(
             current = current.replace(key, str(val))
 
     if n >= 100:
-        logger.warn(
+        logger.warning(
             "reached max iterations while"
             " trying to resolve defines in file '%s'. Matched to '%s'",
             token.filename,
