@@ -570,11 +570,13 @@ def test_that_get_plugin_jobs_fetches_exactly_ert_plugins():
     script_file_contents = dedent(
         """
         SCRIPT script.py
+        INTERNAL True
         """
     )
     plugin_file_contents = dedent(
         """
         SCRIPT plugin.py
+        INTERNAL True
         """
     )
 
