@@ -708,3 +708,37 @@ def test_that_workflows_with_errors_are_not_loaded():
     with pytest.warns(ConfigWarning, match="Encountered error.*while reading workflow"):
         ert_config = ErtConfig.from_file(user_config_file=test_config_file_name)
         assert "wf" not in ert_config.workflows
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.parametrize(
+    "load_statement", ["LOAD_WORKFLOW_JOB wfs/WFJOB", "WORKFLOW_JOB_DIRECTORY wfs"]
+)
+def test_that_failing_to_load_ert_script_with_errors_fails_gracefully(load_statement):
+    """
+    The user may install several workflow jobs with LOAD_WORKFLOW_JOB_DIRECTORY that
+    does not work with the current versions of plugins installed in the system,
+    but could have worked with an older or newer version of the packages installed.
+
+    Therefore the user should be warned about workflow jobs that have issues, and not be
+    able to run those later.
+    """
+    test_config_file_name = "test.ert"
+    Path("wfs").mkdir()
+    Path("wfs/WFJOB").write_text("SCRIPT wf_script.py\nINTERNAL True", encoding="utf-8")
+    Path("wf_script.py").write_text("", encoding="utf-8")
+    test_config_contents = dedent(
+        f"""
+        NUM_REALIZATIONS  1
+        {load_statement}
+        """
+    )
+
+    with open(test_config_file_name, "w", encoding="utf-8") as fh:
+        fh.write(test_config_contents)
+
+    with pytest.warns(
+        ConfigWarning, match="Loading workflow job.*failed.*It will not be loaded."
+    ):
+        ert_config = ErtConfig.from_file(user_config_file=test_config_file_name)
+        assert "wf" not in ert_config.workflows
