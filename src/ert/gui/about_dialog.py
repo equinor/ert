@@ -84,6 +84,7 @@ class AboutDialog(QDialog):
         button_layout = QHBoxLayout()
 
         close_button = QPushButton("Close")
+        close_button.setObjectName("close_button")
         close_button.clicked.connect(self.accept)
 
         button_layout.addStretch()

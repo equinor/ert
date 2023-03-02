@@ -1,17 +1,28 @@
+import functools
 import logging
 import os
 import warnings
+import webbrowser
 from pathlib import Path
 
 import filelock
-from PyQt5.QtWidgets import QHBoxLayout, QPushButton, QScrollArea, QVBoxLayout, QWidget
-from qtpy.QtCore import QLocale, Qt
+from PyQt5.QtWidgets import (
+    QFrame,
+    QHBoxLayout,
+    QLabel,
+    QPushButton,
+    QScrollArea,
+    QVBoxLayout,
+    QWidget,
+)
+from qtpy.QtCore import QLocale, QSize, Qt
 from qtpy.QtWidgets import QApplication
 
 from ert._c_wrappers.config import ConfigWarning
 from ert._c_wrappers.config.config_parser import ConfigValidationError
 from ert._c_wrappers.enkf import EnKFMain, ErtConfig
 from ert.cli.main import ErtTimeoutError
+from ert.gui.about_dialog import AboutDialog
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets import SuggestorMessage, SummaryPanel, resourceIcon
 from ert.gui.main_window import ErtMainWindow
@@ -31,6 +42,7 @@ from ert.gui.tools.workflows import WorkflowsTool
 from ert.libres_facade import LibresFacade
 from ert.namespace import Namespace
 from ert.services import Storage
+from ert.shared.plugins.plugin_manager import ErtPluginManager
 
 
 def run_gui(args: Namespace):
@@ -133,15 +145,69 @@ alternatively a locale which uses '.' as decimalpoint.\n"""  # noqa
         warnings.warn(msg, category=UserWarning)
 
 
+def _clicked_help_button(menu_label: str, link: str):
+    logger = logging.getLogger(__name__)
+    logger.info(f"Pressed help button {menu_label}")
+    webbrowser.open(link)
+
+
+def _clicked_about_button(about_dialog):
+    logger = logging.getLogger(__name__)
+    logger.info("Pressed help button About")
+    about_dialog.show()
+
+
 def _setup_suggester(errors, warning_msgs, suggestions, ert_window=None):
     container = QWidget()
     container.setWindowTitle("Some problems detected")
     container_layout = QVBoxLayout()
 
+    help_button_frame = QFrame()
+    help_buttons_layout = QHBoxLayout()
+    help_button_frame.setLayout(help_buttons_layout)
+
+    button_size = QSize(-1, -1)
+    helpbuttons = []
+
+    help_label = QLabel("Help:")
+    help_buttons_layout.addWidget(help_label)
+    pm = ErtPluginManager()
+    help_links = pm.get_help_links()
+
+    for menu_label, link in help_links.items():
+        button = QPushButton(menu_label)
+        button.setObjectName(menu_label)
+        button.clicked.connect(
+            functools.partial(_clicked_help_button, menu_label, link)
+        )
+        helpbuttons.append(button)
+        help_buttons_layout.addWidget(button)
+
+    about_button = QPushButton("About")
+    about_button.setObjectName("about_button")
+    helpbuttons.append(about_button)
+    help_buttons_layout.addWidget(about_button)
+
+    diag = AboutDialog(container)
+    about_button.clicked.connect(lambda: _clicked_about_button(diag))
+
+    for b in helpbuttons:
+        b.adjustSize()
+        if b.size().width() > button_size.width():
+            button_size = b.size()
+
+    for b in helpbuttons:
+        b.setMinimumSize(button_size)
+
+    help_buttons_layout.insertStretch(-1, -1)
+
+    container_layout.addWidget(help_button_frame)
+
     suggest_msgs = QWidget()
     buttons = QWidget()
     suggest_layout = QVBoxLayout()
     buttons_layout = QHBoxLayout()
+
     text = ""
     for msg in errors:
         text += msg + "\n"
@@ -182,6 +248,7 @@ def _setup_suggester(errors, warning_msgs, suggestions, ert_window=None):
     give_up.pressed.connect(container.close)
 
     buttons_layout.addWidget(copy)
+    buttons_layout.insertStretch(-1, -1)
     buttons_layout.addWidget(run)
     buttons_layout.addWidget(give_up)
 
