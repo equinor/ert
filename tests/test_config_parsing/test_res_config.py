@@ -1045,3 +1045,22 @@ def test_that_include_checks_for_one_argument():
 
     ert_config = ErtConfig.from_file(test_config_file_name)
     assert ert_config.installed_jobs["FM"].name == "FM"
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_spaces_in_forward_model_args_are_dropped():
+    test_config_file_name = "test.ert"
+    # Intentionally inserted several spaces before comma
+    test_config_contents = dedent(
+        """
+        NUM_REALIZATIONS  1
+        FORWARD_MODEL ECLIPSE100(<VERSION>=smersion                    , <NUM_CPU>=42)
+        """
+    )
+    with open(test_config_file_name, "w", encoding="utf-8") as fh:
+        fh.write(test_config_contents)
+
+    ert_config = ErtConfig.from_file(user_config_file=test_config_file_name)
+    assert len(ert_config.forward_model_list) == 1
+    job = ert_config.forward_model_list[0]
+    assert job.private_args.get("<VERSION>") == "smersion"

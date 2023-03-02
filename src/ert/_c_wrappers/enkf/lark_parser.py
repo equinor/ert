@@ -86,7 +86,7 @@ WORD: LETTER+
 CHAR: /[&$\[\]=,.\*a-zæøåA-ZÆØÅ10-9_%:\<\>\/-]/
 UNQUOTED: CHAR+
 
-CHAR_NO_EQ: /[ +.\*a-zæøåA-ZÆØÅ10-9_%:\<\>\/-]/
+CHAR_NO_EQ: /[+.\*a-zæøåA-ZÆØÅ10-9_%:\<\>\/-]/
 UNQUOTED_NO_EQ: /(?!([ ]))/ CHAR_NO_EQ+
 
 CHAR_KW: /[a-zæøåA-ZÆØÅ10-9_:-]/
@@ -378,7 +378,6 @@ class _TreeToDictTransformer:
                         f"Could not read keyword value {kw!r} for {key!r}",
                         config_file=self.config_file,
                     )
-                val = substitute(self.defines, val, expand_env=do_env)  # type: ignore
                 args.append((key, val))
             job_name = name
             arguments = args
