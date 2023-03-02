@@ -999,6 +999,22 @@ def test_that_recursive_defines_fails_gracefully_and_logs(caplog):
 
 
 @pytest.mark.usefixtures("use_tmpdir")
+def test_that_define_string_quotes_are_removed(caplog):
+    test_config_file_name = "test.ert"
+    test_config_contents = dedent(
+        """
+        DEFINE <A> "A"
+        NUM_REALIZATIONS 1
+        """
+    )
+    with open(test_config_file_name, "w", encoding="utf-8") as fh:
+        fh.write(test_config_contents)
+
+    ert_Config = ErtConfig.from_file(test_config_file_name)
+    assert ert_Config.substitution_list.get("<A>") == "A"
+
+
+@pytest.mark.usefixtures("use_tmpdir")
 def test_that_include_checks_for_one_argument():
     test_config_file_name = "test.ert"
     test_config_contents = dedent(

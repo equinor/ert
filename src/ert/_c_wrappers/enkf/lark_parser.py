@@ -23,11 +23,11 @@ from ert._c_wrappers.enkf.config_keywords import (
 class FileContextToken(Token):
     filename: str
 
-    def __new__(cls, token, filename):
+    def __new__(cls, token, filename, value=None):
         inst = super(FileContextToken, cls).__new__(
             cls,
             token.type,
-            token.value,
+            token.value if value is None else value,
             token.start_pos,
             token.line,
             token.column,
@@ -45,10 +45,11 @@ class FileContextTransformer(Transformer):
         super().__init__(visit_tokens=True)
 
     def __default_token__(self, token) -> FileContextToken:
-        new_token = FileContextToken(token, self.filename)
         if token.type == "STRING":
             # remove quotation marks
-            new_token.value = token.value[1 : len(token.value) - 1]
+            return FileContextToken(token, self.filename, value=token.value[1: len(token.value) - 1])
+        else:
+            return FileContextToken(token, self.filename)
 
         return new_token
 
