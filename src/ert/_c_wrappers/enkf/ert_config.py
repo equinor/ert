@@ -19,6 +19,7 @@ from ert._c_wrappers.enkf.enums import ErtImplType, HookRuntime
 from ert._c_wrappers.enkf.model_config import ModelConfig
 from ert._c_wrappers.enkf.queue_config import QueueConfig
 from ert._c_wrappers.job_queue import (
+    ErtScriptLoadFailure,
     ExtJob,
     ExtJobInvalidArgsException,
     Workflow,
@@ -465,12 +466,18 @@ class ErtConfig:
         hooked_workflows = defaultdict(list)
 
         for workflow_job in workflow_job_info:
-            new_job = WorkflowJob.fromFile(
-                config_file=workflow_job[0],
-                name=None if len(workflow_job) == 1 else workflow_job[1],
-            )
-            if new_job is not None:
+            try:
+                new_job = WorkflowJob.fromFile(
+                    config_file=workflow_job[0],
+                    name=None if len(workflow_job) == 1 else workflow_job[1],
+                )
                 workflow_jobs[new_job.name] = new_job
+            except ErtScriptLoadFailure as err:
+                warnings.warn(
+                    f"Loading workflow job {workflow_job[0]!r} failed with '{err}'."
+                    f" It will not be loaded.",
+                    category=ConfigWarning,
+                )
 
         for job_path in workflow_job_dir_info:
             if not os.path.isdir(job_path):
@@ -482,9 +489,15 @@ class ErtConfig:
             files = os.listdir(job_path)
             for file_name in files:
                 full_path = os.path.join(job_path, file_name)
-                new_job = WorkflowJob.fromFile(config_file=full_path)
-                if new_job is not None:
+                try:
+                    new_job = WorkflowJob.fromFile(config_file=full_path)
                     workflow_jobs[new_job.name] = new_job
+                except ErtScriptLoadFailure as err:
+                    warnings.warn(
+                        f"Loading workflow job {full_path!r} failed with '{err}'."
+                        f" It will not be loaded.",
+                        category=ConfigWarning,
+                    )
 
         for work in workflow_info:
             filename = os.path.basename(work[0]) if len(work) == 1 else work[1]
