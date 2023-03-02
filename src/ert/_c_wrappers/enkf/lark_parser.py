@@ -383,14 +383,16 @@ class _TreeToDictTransformer:
             for node in tree.children[1:]:
                 if node.data != "arg":
                     raise ConfigValidationError(
-                        "Cannot mix argument list with parenthesis and without in {node}"
+                        "Cannot mix argument list with"
+                        f" parenthesis and without in {node}"
                     )
 
                 val = node.children[0]
 
                 if not isinstance(val, FileContextToken):
                     raise ConfigValidationError(
-                        f"Could not read argument {val!r}", config_file=self.config_file
+                        f"Could not read argument {val!r}",
+                        config_file=self.config_file,
                     )
                 arguments.append(substitute(self.defines, val, expand_env=do_env))
             instruction = Instruction(kw, arguments)

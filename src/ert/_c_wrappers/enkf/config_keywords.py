@@ -211,7 +211,7 @@ def run_template_keyword():
 def forward_model_keyword():
     return SchemaItem(
         kw=FORWARD_MODEL_KEY,
-        argc_min=1,
+        argc_min=0,
         argc_max=CONFIG_DEFAULT_ARG_MAX,
         multi_occurrence=True,
     )
