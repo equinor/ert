@@ -452,7 +452,7 @@ def test_that_the_load_results_manually_tool_works(
         assert index != -1
         combo_box.setCurrentIndex(index)
 
-        # click on "initialize"
+        # click on "Load"
         load_button = panel.parent().findChild(QPushButton, name="Load")
         assert isinstance(load_button, QPushButton)
 
@@ -460,7 +460,7 @@ def test_that_the_load_results_manually_tool_works(
         def handle_popup_dialog():
             messagebox = QApplication.activeModalWidget()
             assert isinstance(messagebox, QMessageBox)
-            assert messagebox.windowTitle() == "Success"
+            assert messagebox.text() == "Successfully loaded all realisations"
             ok_button = messagebox.button(QMessageBox.Ok)
             qtbot.mouseClick(ok_button, Qt.LeftButton)
 
