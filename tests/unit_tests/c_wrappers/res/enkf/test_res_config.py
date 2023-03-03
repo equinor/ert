@@ -362,7 +362,7 @@ def test_that_unknown_queue_option_gives_error_message(
     with pytest.raises(
         ConfigValidationError, match="UNKNOWN_QUEUE: is not a valid value for item 1"
     ):
-        _ = ErtConfig.from_file(str(test_user_config), new_parser=False)
+        _ = ErtConfig.from_file(str(test_user_config), use_new_parser=False)
 
 
 @pytest.mark.parametrize(
