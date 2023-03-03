@@ -247,6 +247,8 @@ std::vector<int> TimeMap::indices(const ecl_sum_type *ecl_sum) const {
 
     int sum_index = ecl_sum_get_first_report_step(ecl_sum);
     int time_map_index = ecl_sum_get_first_report_step(ecl_sum);
+
+    indices.resize(time_map_index, -1);
     for (; time_map_index < size(); ++time_map_index) {
         time_t map_time = (*this)[time_map_index];
         if (map_time == DEFAULT_TIME) {
