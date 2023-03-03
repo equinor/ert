@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import asyncio
 import contextlib
+import dataclasses
 import logging
 import os
 import sys
@@ -34,10 +35,15 @@ def run_cli(args):
     try:
         ert_config_new = ErtConfig.from_file(args.config, new_parser=True)
         if ert_config != ert_config_new:
+            fields = dataclasses.fields(ert_config)
+            difference = [
+                f"{getattr(ert_config, field.name)} != {getattr(ert_config_new, field.name)}"
+                for field in fields
+                if getattr(ert_config, field.name)
+                != getattr(ert_config_new, field.name)
+            ]
             logging.info(
-                f"New parser gave different result.\n"
-                f"Old parser: {ert_config!r}\n\n"
-                f"New parser: {ert_config_new!r}"
+                f"New parser gave different result.\n Difference: {difference!r}"
             )
         else:
             logging.info("New parser gave equal result.")
