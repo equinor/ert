@@ -274,6 +274,7 @@ ERT_CLIB_SUBMODULE("config_keywords", m) {
             add_string_keyword(config_parser, UPDATE_LOG_PATH_KEY);
             add_string_keyword(config_parser, MIN_REALIZATIONS_KEY);
             add_int_keyword(config_parser, MAX_RUNTIME_KEY);
+            add_stop_long_running_keyword(config_parser);
             add_string_keyword(config_parser, ANALYSIS_SELECT_KEY);
             add_analysis_copy_keyword(config_parser);
             add_analysis_set_var_keyword(config_parser);

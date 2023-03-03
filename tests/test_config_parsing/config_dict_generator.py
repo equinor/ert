@@ -257,6 +257,7 @@ def generate_config(draw):
                 ConfigKeys.DEFINE_KEY: small_list(
                     st.tuples(st.just(f"<key-{draw(words)}>"), words)
                 ),
+                ConfigKeys.STOP_LONG_RUNNING: st.booleans(),
                 ConfigKeys.DATA_KW_KEY: small_list(
                     st.tuples(st.just(f"<{draw(words)}>"), words)
                 ),
