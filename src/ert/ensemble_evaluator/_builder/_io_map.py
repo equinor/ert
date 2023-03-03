@@ -1,6 +1,7 @@
 from typing import TYPE_CHECKING, Dict, List, Optional, cast
 
 from beartype import beartype
+from typing_extensions import Self
 
 if TYPE_CHECKING:
     import ert.data
@@ -25,7 +26,7 @@ class _IOMap:
 
     def set_transmitter(
         self, iens: int, io_name: str, transmitter: "ert.data.RecordTransmitter"
-    ) -> "_IOMap":
+    ) -> Self:
         if self._validated:
             raise RuntimeError("mutating validated iomap")
         self._matrix[iens][io_name] = transmitter
@@ -37,7 +38,7 @@ class _IOMap:
                 if trans is None:
                     raise ValueError(f"'{name}' for real {real_id} was not set")
 
-    def validate(self) -> "_IOMap":
+    def validate(self) -> Self:
         self._assert_all_transmitters_specified()
         self._validated = True
         return self
@@ -59,7 +60,7 @@ class _IOMap:
 
 
 class InputMap(_IOMap):
-    def validate(self) -> "_IOMap":
+    def validate(self) -> Self:
         super().validate()
         for real_id, ios in self._matrix.items():
             for name, trans in ios.items():
@@ -72,7 +73,7 @@ class InputMap(_IOMap):
 
 
 class OutputMap(_IOMap):
-    def validate(self) -> "_IOMap":
+    def validate(self) -> Self:
         super().validate()
         for real_id, ios in self._matrix.items():
             for name, trans in ios.items():

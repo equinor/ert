@@ -5,7 +5,7 @@ from textwrap import dedent
 import pytest
 from ecl.summary import EclSum
 
-from ert._c_wrappers.enkf import EnkfObs, ResConfig
+from ert._c_wrappers.enkf import EnkfObs, ErtConfig
 
 
 def run_simulator():
@@ -59,16 +59,16 @@ def test_that_correct_key_observation_is_loaded(extra_config, expected):
     )
     Path("config.ert").write_text(config_text + extra_config, encoding="utf-8")
     run_simulator()
-    res_config = ResConfig("config.ert")
+    ert_config = ErtConfig.from_file("config.ert")
     observations = EnkfObs(
-        res_config.model_config.history_source,
-        res_config.model_config.time_map,
-        res_config.ensemble_config.refcase,
-        res_config.ensemble_config,
+        ert_config.model_config.history_source,
+        ert_config.model_config.time_map,
+        ert_config.ensemble_config.refcase,
+        ert_config.ensemble_config,
     )
     observations.load(
-        res_config.model_config.obs_config_file,
-        res_config.analysis_config.get_std_cutoff(),
+        ert_config.model_config.obs_config_file,
+        ert_config.analysis_config.get_std_cutoff(),
     )
     assert [obs.getValue() for obs in observations["FOPR"]] == [expected]
 
@@ -99,16 +99,16 @@ def test_date_parsing_in_observations(datestring, deprecated, capfd):
     )
     Path("config.ert").write_text(config_text, encoding="utf-8")
     run_simulator()
-    res_config = ResConfig("config.ert")
+    ert_config = ErtConfig.from_file("config.ert")
     observations = EnkfObs(
-        res_config.model_config.history_source,
-        res_config.model_config.time_map,
-        res_config.ensemble_config.refcase,
-        res_config.ensemble_config,
+        ert_config.model_config.history_source,
+        ert_config.model_config.time_map,
+        ert_config.ensemble_config.refcase,
+        ert_config.ensemble_config,
     )
     observations.load(
-        res_config.model_config.obs_config_file,
-        res_config.analysis_config.get_std_cutoff(),
+        ert_config.model_config.obs_config_file,
+        ert_config.analysis_config.get_std_cutoff(),
     )
     captured = capfd.readouterr()
     if deprecated:

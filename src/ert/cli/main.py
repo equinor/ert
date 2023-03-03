@@ -11,7 +11,7 @@ from typing import Any
 
 import filelock
 
-from ert._c_wrappers.enkf import EnKFMain, ResConfig
+from ert._c_wrappers.enkf import EnKFMain, ErtConfig
 from ert.cli import ENSEMBLE_EXPERIMENT_MODE, TEST_RUN_MODE, WORKFLOW_MODE
 from ert.cli.model_factory import create_model
 from ert.cli.monitor import Monitor
@@ -30,19 +30,19 @@ class ErtTimeoutError(Exception):
 
 
 def run_cli(args):
-    res_config = ResConfig(args.config)
+    ert_config = ErtConfig.from_file(args.config)
 
     # Create logger inside function to make sure all handlers have been added to
     # the root-logger.
     logger = logging.getLogger(__name__)
-    for job in res_config.forward_model_list:
-        logger.info("Config contains forward model job %s", job)
+    for job in ert_config.forward_model_list:
+        logger.info("Config contains forward model job %s", job.name)
 
-    for suggestion in ResConfig.make_suggestion_list(args.config):
+    for suggestion in ErtConfig.make_suggestion_list(args.config):
         print(f"Warning: {suggestion}")
 
-    os.chdir(res_config.config_path)
-    ert = EnKFMain(res_config)
+    os.chdir(ert_config.config_path)
+    ert = EnKFMain(ert_config)
     facade = LibresFacade(ert)
     if not facade.have_observations and args.mode not in [
         ENSEMBLE_EXPERIMENT_MODE,
@@ -54,7 +54,7 @@ def run_cli(args):
             f"Please add an observation file to {args.config}. Example: \n"
             f"'OBS_CONFIG observation_file.txt'."
         )
-    ens_path = Path(res_config.ens_path)
+    ens_path = Path(ert_config.ens_path)
     storage_lock = filelock.FileLock(ens_path / f"{ens_path.stem}.lock")
     try:
         storage_lock.acquire(timeout=5)

@@ -11,7 +11,7 @@ from ert._c_wrappers.job_queue.ext_job import ExtJob
 @pytest.mark.usefixtures("use_tmpdir")
 def test_load_forward_model_raises_on_missing():
     with pytest.raises(
-        ConfigValidationError, match="Could not open job config file CONFIG_FILE"
+        ConfigValidationError, match="Could not open job config file 'CONFIG_FILE'"
     ):
         _ = ExtJob.from_config_file("CONFIG_FILE")
 
@@ -75,6 +75,27 @@ def test_load_forward_model_upgraded():
         ContentTypeEnum.CONFIG_RUNTIME_INT,
         ContentTypeEnum.CONFIG_STRING,
     ]
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_portable_exe_error_message():
+    with open("CONFIG", "w", encoding="utf-8") as f:
+        f.write("PORTABLE_EXE script.sh\n")
+
+    name = "script.sh"
+    with open(name, "w", encoding="utf-8") as f:
+        f.write("This is a script")
+        name = "script.sh"
+        with open(name, "w", encoding="utf-8") as f:
+            f.write("This is a script")
+        mode = os.stat(name).st_mode
+        mode |= stat.S_IXUSR | stat.S_IXGRP
+        os.chmod(name, stat.S_IMODE(mode))
+    with pytest.raises(
+        ConfigValidationError,
+        match='"PORTABLE_EXE" key is deprecated, please replace with "EXECUTABLE"',
+    ):
+        _ = ExtJob.from_config_file("CONFIG")
 
 
 @pytest.mark.usefixtures("use_tmpdir")

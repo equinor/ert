@@ -14,7 +14,6 @@ ERT_CLIB_SUBMODULE("config_keys", m) {
     cls.attr("ARGLIST") = "ARGLIST";
     cls.attr("BASE_SURFACE_KEY") = BASE_SURFACE_KEY;
     cls.attr("CONFIG_DIRECTORY") = CONFIG_DIRECTORY_KEY;
-    cls.attr("DATAROOT") = DATA_ROOT_KEY;
     cls.attr("DATA_FILE") = DATA_FILE_KEY;
     cls.attr("DATA_KW_KEY") = DATA_KW_KEY;
     cls.attr("DEFINES") = "DEFINES";

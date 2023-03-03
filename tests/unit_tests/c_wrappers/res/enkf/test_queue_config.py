@@ -57,8 +57,8 @@ def test_set_and_unset_option():
 
 
 def test_get_slurm_queue_config(setup_case):
-    res_config = setup_case("simple_config", "slurm_config")
-    queue_config = res_config.queue_config
+    ert_config = setup_case("simple_config", "slurm_config")
+    queue_config = ert_config.queue_config
 
     assert queue_config.queue_system == QueueDriverEnum.SLURM_DRIVER
     driver = queue_config.create_driver()

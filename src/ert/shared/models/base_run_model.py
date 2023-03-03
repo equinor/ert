@@ -346,7 +346,7 @@ class BaseRunModel:
                         .set_id(str(index))
                         .set_index(str(index))
                         .set_name(ext_job.name)
-                        .set_ext_job(ext_job)  # type: ignore
+                        .set_ext_job(ext_job)
                     )
                 step.set_max_runtime(
                     self.ert().analysisConfig().get_max_runtime()

@@ -35,6 +35,10 @@ def _workflow_job_config_parser() -> ConfigParser:
 _config_parser = _workflow_job_config_parser()
 
 
+class ErtScriptLoadFailure(ValueError):
+    pass
+
+
 @dataclass
 class WorkflowJob:
     name: str
@@ -48,6 +52,18 @@ class WorkflowJob:
 
     def __post_init__(self):
         self.__running = False
+        self._ert_script: Optional[type] = None
+        if self.script is not None and self.internal:
+            try:
+                self._ert_script = ErtScript.loadScriptFromFile(
+                    self.script,
+                )  # type: ignore
+            # Bare Exception here as we have no control
+            # of exceptions in the loaded ErtScript
+            except Exception as err:  # noqa
+                raise ErtScriptLoadFailure(
+                    f"Failed to load {self.name}: {err}"
+                ) from err
 
     @staticmethod
     def _make_arg_types_list(
@@ -90,11 +106,11 @@ class WorkflowJob:
                 optional_get("FUNCTION"),
             )
         else:
-            raise ConfigValidationError(f"Could not open config_file:{config_file}")
+            raise ConfigValidationError(f"Could not open config_file:{config_file!r}")
 
     def isPlugin(self) -> bool:
-        if self.script is not None:
-            return issubclass(ErtScript.loadScriptFromFile(self.script), ErtPlugin)
+        if self._ert_script is not None:
+            return issubclass(self._ert_script, ErtPlugin)
         return False
 
     def argumentTypes(self) -> List["ContentTypes"]:
@@ -133,10 +149,9 @@ class WorkflowJob:
                 f"{self.max_args} arguments, {len(arguments)} given."
             )
 
-        if self.internal and self.script is not None:
-            script_obj = ErtScript.loadScriptFromFile(self.script)
-            self.__script = script_obj(ert)
-        elif self.internal:
+        if self._ert_script is not None:
+            self.__script = self._ert_script(ert)
+        elif self.internal and self.function is not None:
             self.__script = FunctionErtScript(
                 ert,
                 self.function,

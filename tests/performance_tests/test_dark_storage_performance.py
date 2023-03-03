@@ -3,7 +3,7 @@ import io
 import pandas as pd
 import pytest
 
-from ert._c_wrappers.enkf import EnKFMain, ResConfig
+from ert._c_wrappers.enkf import EnKFMain, ErtConfig
 from ert.async_utils import run_in_loop
 from ert.dark_storage.endpoints import ensembles, experiments, records, responses
 from ert.libres_facade import LibresFacade
@@ -142,7 +142,7 @@ def test_direct_dark_performance(
     }[keyword]
 
     with template_config["folder"].as_cwd():
-        config = ResConfig("poly.ert")
+        config = ErtConfig.from_file("poly.ert")
         ert = EnKFMain(config)
         enkf_facade = LibresFacade(ert)
         experiment_json = experiments.get_experiments(res=enkf_facade)

@@ -70,9 +70,11 @@ class CaseInitializationConfigurationPanel(QTabWidget):
         self.addInitializeFromScratchTab()
         self.addInitializeFromExistingTab()
         self.addShowCaseInfo()
+        self.currentChanged.connect(self.on_tab_changed)
 
     def addCreateNewCaseTab(self):
         panel = QWidget()
+        panel.setObjectName("create_new_case_tab")
         layout = QVBoxLayout()
         case_list = CaseList(LibresFacade(self.ert), self.notifier)
         case_list.setMaximumWidth(250)
@@ -86,6 +88,7 @@ class CaseInitializationConfigurationPanel(QTabWidget):
 
     def addInitializeFromScratchTab(self):
         panel = QWidget()
+        panel.setObjectName("initialize_from_scratch_panel")
         layout = QVBoxLayout()
 
         row1 = createRow(
@@ -99,7 +102,7 @@ class CaseInitializationConfigurationPanel(QTabWidget):
         layout.addSpacing(10)
 
         initialize_button = QPushButton(
-            "Initialize", objectName="initialize_scratch_button"
+            "Initialize", objectName="initialize_from_scratch_button"
         )
         addHelpToWidget(initialize_button, "init/initialize_from_scratch")
         initialize_button.setMinimumWidth(75)
@@ -126,6 +129,7 @@ class CaseInitializationConfigurationPanel(QTabWidget):
 
     def addInitializeFromExistingTab(self):
         widget = QWidget()
+        widget.setObjectName("intialize_from_existing_panel")
         layout = QVBoxLayout()
 
         target_case = CaseSelector(LibresFacade(self.ert), self.notifier)
@@ -232,7 +236,7 @@ class CaseInitializationConfigurationPanel(QTabWidget):
 
         layout.addLayout(row1)
 
-        self._case_info_area = QTextEdit()
+        self._case_info_area = QTextEdit(objectName="html_text")
         self._case_info_area.setReadOnly(True)
         self._case_info_area.setMinimumHeight(300)
 
@@ -247,8 +251,6 @@ class CaseInitializationConfigurationPanel(QTabWidget):
 
         self.addTab(case_widget, "Case info")
 
-        self._showInfoForCase()
-
     def _showInfoForCase(self, case_name=None):
         if case_name is None:
             case_name = self.ert.storage_manager.current_case.case_name
@@ -262,3 +264,8 @@ class CaseInitializationConfigurationPanel(QTabWidget):
         html += "</table>"
 
         self._case_info_area.setHtml(html)
+
+    @showWaitCursorWhileWaiting
+    def on_tab_changed(self, p_int):
+        if self.tabText(p_int) == "Case info":
+            self._showInfoForCase()

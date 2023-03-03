@@ -28,7 +28,7 @@ from ert._c_wrappers.job_queue.thread_status_type_enum import ThreadStatus
 from ert.constant_filenames import CERT_FILE, JOBS_FILE, ERROR_file, STATUS_file
 
 if TYPE_CHECKING:
-    from ert._c_wrappers.enkf.res_config import ResConfig
+    from ert._c_wrappers.enkf.ert_config import ErtConfig
     from ert._c_wrappers.enkf.run_arg import RunArg
 
 
@@ -539,7 +539,7 @@ class JobQueue(BaseCClass):
     def add_job_from_run_arg(
         self,
         run_arg: "RunArg",
-        res_config: "ResConfig",
+        ert_config: "ErtConfig",
         max_runtime: Optional[int],
         ok_cb: Callable[..., Any],
         exit_cb: Callable[..., Any],
@@ -547,7 +547,7 @@ class JobQueue(BaseCClass):
     ) -> None:
         job_name = run_arg.job_name
         run_path = run_arg.runpath
-        job_script = res_config.queue_config.job_script
+        job_script = ert_config.queue_config.job_script
 
         job = JobQueueNode(
             job_script=job_script,
@@ -558,7 +558,7 @@ class JobQueue(BaseCClass):
             exit_file=self.exit_file,
             done_callback_function=ok_cb,
             exit_callback_function=exit_cb,
-            callback_arguments=[run_arg, res_config],
+            callback_arguments=[run_arg, ert_config],
             max_runtime=max_runtime,
         )
 

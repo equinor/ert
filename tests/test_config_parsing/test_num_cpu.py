@@ -2,15 +2,15 @@ import os
 
 import pytest
 
-from ert._c_wrappers.enkf import ConfigKeys, EnKFMain, ResConfig
+from ert._c_wrappers.enkf import ConfigKeys, EnKFMain, ErtConfig
 
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_default_num_cpu():
     with open("file.ert", mode="w", encoding="utf-8") as f:
         f.write(f"{ConfigKeys.NUM_REALIZATIONS} 1")
-    res_config = ResConfig(user_config_file="file.ert")
-    enkf_main = EnKFMain(res_config)
+    ert_config = ErtConfig.from_file("file.ert")
+    enkf_main = EnKFMain(ert_config)
     assert enkf_main.get_num_cpu() == 1
 
 
@@ -32,9 +32,9 @@ def test_num_cpu_from_config_preferred():
         ConfigKeys.ENSPATH: ".",
         ConfigKeys.RUNPATH_FILE: os.path.join(os.getcwd(), "runpath.file"),
     }
-    res_config = ResConfig(config_dict=config_dict)
-    enkf_main: EnKFMain = EnKFMain(res_config)
-    assert res_config.preferred_num_cpu() == config_num_cpu
+    ert_config = ErtConfig.from_dict(config_dict)
+    enkf_main: EnKFMain = EnKFMain(ert_config)
+    assert ert_config.preferred_num_cpu() == config_num_cpu
     assert enkf_main.get_num_cpu() == config_num_cpu
 
 
@@ -55,7 +55,7 @@ PARALLEL
         ConfigKeys.ENSPATH: ".",
         ConfigKeys.RUNPATH_FILE: os.path.join(os.getcwd(), "runpath.file"),
     }
-    res_config = ResConfig(config_dict=config_dict)
-    enkf_main: EnKFMain = EnKFMain(res_config)
+    ert_config = ErtConfig.from_dict(config_dict)
+    enkf_main: EnKFMain = EnKFMain(ert_config)
     assert enkf_main.resConfig().preferred_num_cpu() == data_file_num_cpu
     assert enkf_main.get_num_cpu() == data_file_num_cpu

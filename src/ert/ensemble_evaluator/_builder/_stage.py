@@ -2,6 +2,8 @@ import logging
 import uuid
 from typing import MutableSequence, Sequence
 
+from typing_extensions import Self
+
 from ._io_ import IO, DummyIOBuilder, IOBuilder
 
 logger = logging.getLogger(__name__)
@@ -24,19 +26,19 @@ class StageBuilder:
         self._inputs: MutableSequence[IOBuilder] = []
         self._outputs: MutableSequence[IOBuilder] = []
 
-    def set_id(self, id_: str) -> "StageBuilder":
+    def set_id(self, id_: str) -> Self:
         self._id = id_
         return self
 
-    def set_name(self, name: str) -> "StageBuilder":
+    def set_name(self, name: str) -> Self:
         self._name = name
         return self
 
-    def add_output(self, output: IOBuilder) -> "StageBuilder":
+    def add_output(self, output: IOBuilder) -> Self:
         self._outputs.append(output)
         return self
 
-    def add_input(self, input_: IOBuilder) -> "StageBuilder":
+    def add_input(self, input_: IOBuilder) -> Self:
         self._inputs.append(input_)
         return self
 
@@ -49,7 +51,7 @@ class StageBuilder:
         outputs = [builder.build() for builder in self._outputs]
         return Stage(self._id, self._name, inputs, outputs)
 
-    def set_dummy_io(self) -> "StageBuilder":
+    def set_dummy_io(self) -> Self:
         self.add_input(DummyIOBuilder())
         self.add_output(DummyIOBuilder())
         return self

@@ -5,8 +5,8 @@ import pytest
 from ecl.grid.ecl_grid import EclGrid
 from ecl.summary import EclSum
 
-from ert._c_wrappers.config import ConfigValidationError
-from ert._c_wrappers.enkf import ConfigKeys, EnsembleConfig
+from ert._c_wrappers.config import ConfigValidationError, ConfigWarning
+from ert._c_wrappers.enkf import ConfigKeys, EnsembleConfig, ErtConfig
 from ert._c_wrappers.enkf.enums import EnkfVarType, ErtImplType, GenDataFileType
 
 
@@ -112,14 +112,6 @@ def test_that_refcase_gets_correct_name(tmpdir):
             id="REPORT_STEPS missing",
         ),
         pytest.param(
-            "GDK RESULT_FILE:Results%d INPUT_FORMAT:ASCIIX REPORT_STEPS:10",
-            None,
-            id="Unsupported INPUT_FORMAT",
-        ),
-        pytest.param(
-            "GDK RESULT_FILE:Results%d REPORT_STEPS:10", None, id="Missing INPUT_FORMAT"
-        ),
-        pytest.param(
             "GDK RESULT_FILE:Results%d INPUT_FORMAT:ASCII REPORT_STEPS:10,20,30",
             "Valid",
             id="Valid case",
@@ -144,10 +136,43 @@ def test_gen_data_node(gen_data_str, expected):
         assert node.getDataModelConfig().getInputFormat() == GenDataFileType.ASCII
 
 
-def test_get_surface_node(setup_case, caplog):
+@pytest.mark.parametrize(
+    "input_format",
+    [
+        pytest.param(
+            "INPUT_FORMAT:ASCIIX",
+            id="Unsupported INPUT_FORMAT",
+        ),
+        pytest.param(
+            "INPUT_FORMAT:",
+            id="Missing INPUT_FORMAT no format",
+        ),
+        pytest.param(
+            "",
+            id="Missing INPUT_FORMAT no key and format",
+        ),
+    ],
+)
+def test_gen_data_node_input_format(input_format):
+    gen_data_str = f"GDK RESULT_FILE:Results%d {input_format} REPORT_STEPS:10,20,30"
+
+    with pytest.warns(
+        ConfigWarning,
+        match="Missing or unsupported GEN_DATA INPUT_FORMAT for key 'GDK'.",
+    ):
+        node = EnsembleConfig.gen_data_node(gen_data_str.split(" "))
+        assert node is not None
+        assert node.getVariableType() == EnkfVarType.DYNAMIC_RESULT
+        assert node.getImplementationType() == ErtImplType.GEN_DATA
+        assert node.getDataModelConfig().getNumReportStep() == 3
+
+
+def test_get_surface_node(setup_case):
     _ = setup_case("configuration_tests", "ensemble_config.ert")
     surface_str = "TOP"
-    with pytest.raises(ValueError):
+    with pytest.raises(
+        ConfigValidationError, match="Missing INIT_FILES:/path/to/input/files"
+    ):
         EnsembleConfig.get_surface_node(surface_str.split(" "))
 
     surface_in = "surface/small.irap"
@@ -155,12 +180,16 @@ def test_get_surface_node(setup_case, caplog):
     # add init file
     surface_str += f" INIT_FILES:{surface_in}"
 
-    with pytest.raises(ValueError):
+    with pytest.raises(
+        ConfigValidationError, match="Missing OUTPUT_FILE:/path/to/output_file"
+    ):
         EnsembleConfig.get_surface_node(surface_str.split(" "))
 
     # add output file
     surface_str += f" OUTPUT_FILE:{surface_out}"
-    with pytest.raises(ValueError):
+    with pytest.raises(
+        ConfigValidationError, match="Missing BASE_SURFACE:/path/to/base_surface_file"
+    ):
         EnsembleConfig.get_surface_node(surface_str.split(" "))
 
     # add base surface
@@ -189,10 +218,10 @@ def test_surface_bad_init_values(setup_case):
         f" BASE_SURFACE:{surface_in}"
     )
     error = (
-        f"INIT_FILES: {surface_in} File not found"
-        f" BASE_SURFACE: {surface_in} File not found "
+        f"INIT_FILES:{surface_in!r} File not found"
+        f" BASE_SURFACE:{surface_in!r} File not found "
     )
-    with pytest.raises(ValueError, match=error):
+    with pytest.raises(ConfigValidationError, match=error):
         EnsembleConfig.get_surface_node(surface_str.split(" "))
 
 
@@ -218,7 +247,51 @@ def test_ensemble_config_duplicate_node_names(setup_case):
             ]
         ],
     }
-    error_match = f"key {duplicate_name} already present in ensemble config"
+    error_match = f"key {duplicate_name!r} already present in ensemble config"
 
     with pytest.raises(ConfigValidationError, match=error_match):
         EnsembleConfig.from_dict(config_dict=config_dict)
+
+
+@pytest.mark.parametrize(
+    "result_file, fail",
+    [
+        pytest.param(
+            "RESULT_FILE:",
+            True,
+            id="RESULT_FILE key but no file",
+        ),
+        pytest.param(
+            "",
+            True,
+            id="No RESULT_FILE key",
+        ),
+        pytest.param(
+            'RESULT_FILE:"file_in_quotes_%d.out"',
+            True,
+            id="File in quotes",
+        ),
+        pytest.param(
+            "RESULT_FILE:poly_%d.out",
+            False,
+            id="This should not fail",
+        ),
+    ],
+)
+def test_malformed_or_missing_gen_data_result_file(setup_case, result_file, fail):
+    _ = setup_case("poly_example", "poly.ert")
+    # Add extra GEN_DATA key to config file
+    config_line = f"""
+    GEN_DATA POLY_RES_2 {result_file} REPORT_STEPS:0 INPUT_FORMAT:ASCII
+    """
+    with open("poly.ert", "a", encoding="utf-8") as f:
+        f.write(config_line)
+
+    if fail:
+        with pytest.raises(
+            ConfigValidationError,
+            match="Missing or unsupported RESULT_FILE for GEN_DATA",
+        ):
+            ErtConfig.from_file("poly.ert")
+    else:
+        ErtConfig.from_file("poly.ert")

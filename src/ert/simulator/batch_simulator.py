@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Tuple, Union
 
-from ert._c_wrappers.enkf import EnKFMain, NodeId, ResConfig
+from ert._c_wrappers.enkf import EnKFMain, ErtConfig, NodeId
 from ert._c_wrappers.enkf.config import EnkfConfigNode
 from ert._c_wrappers.enkf.data import EnkfNode
 
@@ -18,14 +18,14 @@ def _slug(entity: str) -> str:
 class BatchSimulator:
     def __init__(  # pylint: disable: too-many-arguments
         self,
-        res_config: ResConfig,
+        ert_config: ErtConfig,
         controls: Dict[str, List[str]],
         results: List[str],
         callback: Optional[Callable[[BatchContext], None]] = None,
     ):
         """Will create simulator which can be used to run multiple simulations.
 
-        The @res_config argument should be a ResConfig object.
+        The @ert_config argument should be a ErtConfig object.
 
 
         The @controls argument configures which parameters the simulator should
@@ -87,16 +87,16 @@ class BatchSimulator:
                  ....
 
         """
-        if not isinstance(res_config, ResConfig):
-            raise ValueError("The first argument must be valid ResConfig instance")
+        if not isinstance(ert_config, ErtConfig):
+            raise ValueError("The first argument must be valid ErtConfig instance")
 
-        self.res_config = res_config
-        self.ert = EnKFMain(self.res_config)
+        self.ert_config = ert_config
+        self.ert = EnKFMain(self.ert_config)
         self.control_keys = set(controls.keys())
         self.result_keys = set(results)
         self.callback = callback
 
-        ens_config = self.res_config.ensemble_config
+        ens_config = self.ert_config.ensemble_config
         for control_name, variables in controls.items():
             ens_config.addNode(EnkfConfigNode.create_ext_param(control_name, variables))
 
@@ -130,7 +130,7 @@ class BatchSimulator:
             raise KeyError(err_msg)
 
         for control_name, control in controls.items():
-            ens_config = self.res_config.ensemble_config
+            ens_config = self.ert_config.ensemble_config
             node = EnkfNode(ens_config[control_name])
             ext_node = node.as_ext_param()
             if len(ext_node) != len(control.keys()):

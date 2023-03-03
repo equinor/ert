@@ -17,9 +17,8 @@ class ModelConfig:
 
     def __init__(
         self,
-        num_realizations: int,
+        num_realizations: int = 1,
         refcase: Optional[EclSum] = None,
-        data_root: Optional[str] = None,
         history_source: Optional[HistorySourceEnum] = None,
         runpath_format_string: Optional[str] = None,
         jobname_format_string: Optional[str] = None,
@@ -30,7 +29,6 @@ class ModelConfig:
     ):
         self.num_realizations = num_realizations
         self.refcase = refcase
-        self.data_root = data_root
         self.history_source = (
             history_source
             if self.refcase is not None and history_source is not None
@@ -76,7 +74,6 @@ class ModelConfig:
         return cls(
             num_realizations=config_dict.get(ConfigKeys.NUM_REALIZATIONS, 1),
             refcase=refcase,
-            data_root=config_dict.get(ConfigKeys.DATAROOT),
             history_source=HistorySourceEnum.from_string(
                 config_dict.get(ConfigKeys.HISTORY_SOURCE)
             )
@@ -106,7 +103,6 @@ class ModelConfig:
         return (
             f"num_realizations: {self.num_realizations},\n"
             f"refcase: {self.refcase},\n"
-            f"data_root: {self.data_root},\n"
             f"history_source: {self.history_source},\n"
             f"runpath_format_string: {self.runpath_format_string},\n"
             f"jobname_format_string: {self.jobname_format_string},\n"
@@ -119,7 +115,6 @@ class ModelConfig:
         return all(
             [
                 self.num_realizations == other.num_realizations,
-                self.data_root == other.data_root,
                 self.history_source == other.history_source,
                 self.runpath_format_string == other.runpath_format_string,
                 self.jobname_format_string == other.jobname_format_string,

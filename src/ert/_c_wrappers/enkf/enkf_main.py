@@ -28,7 +28,7 @@ from ert._c_wrappers.util.substitution_list import SubstitutionList
 from ert._clib.state_map import STATE_LOAD_FAILURE, STATE_UNDEFINED
 
 if TYPE_CHECKING:
-    from ert._c_wrappers.enkf.res_config import ResConfig
+    from ert._c_wrappers.enkf.ert_config import ErtConfig
 
 
 logger = logging.getLogger(__name__)
@@ -154,8 +154,8 @@ class ObservationConfigError(ConfigValidationError):
 
 
 class EnKFMain:
-    def __init__(self, config: "ResConfig", read_only: bool = False):
-        self.res_config = config
+    def __init__(self, config: "ErtConfig", read_only: bool = False):
+        self.ert_config = config
         self._update_configuration = None
 
         self._observations = EnkfObs(
@@ -192,7 +192,7 @@ class EnKFMain:
                     config_file=config.model_config.obs_config_file,
                 ) from err
 
-        self._ensemble_size = self.res_config.model_config.num_realizations
+        self._ensemble_size = self.ert_config.model_config.num_realizations
         self._runpaths = Runpaths(
             jobname_format=self.getModelConfig().jobname_format_string,
             runpath_format=self.getModelConfig().runpath_format_string,
@@ -208,7 +208,7 @@ class EnKFMain:
             config.ensemble_config,
             self.getEnsembleSize(),
             read_only=read_only,
-            refcase=self.res_config.ensemble_config.refcase,
+            refcase=self.ert_config.ensemble_config.refcase,
         )
         self.switchFileSystem(self.storage_manager.active_case)
 
@@ -323,10 +323,10 @@ class EnKFMain:
         return self.resConfig().queue_config
 
     def get_num_cpu(self) -> int:
-        return self.res_config.preferred_num_cpu()
+        return self.ert_config.preferred_num_cpu()
 
     def __repr__(self):
-        return f"EnKFMain(size: {self.getEnsembleSize()}, config: {self.res_config})"
+        return f"EnKFMain(size: {self.getEnsembleSize()}, config: {self.ert_config})"
 
     def getEnsembleSize(self) -> int:
         return self._ensemble_size
@@ -338,13 +338,13 @@ class EnKFMain:
         return self.resConfig().analysis_config
 
     def getModelConfig(self) -> ModelConfig:
-        return self.res_config.model_config
+        return self.ert_config.model_config
 
-    def resConfig(self) -> "ResConfig":
-        return self.res_config
+    def resConfig(self) -> "ErtConfig":
+        return self.ert_config
 
     def get_context(self) -> SubstitutionList:
-        return self.res_config.substitution_list
+        return self.ert_config.substitution_list
 
     def addDataKW(self, key: str, value: str) -> None:
         self.get_context().addItem(key, value)
@@ -386,12 +386,17 @@ class EnKFMain:
                 gen_kw_node = enkf_node.asGenKw()
                 keys = [val[0] for val in gen_kw_node.items()]
                 if config_node.get_init_file_fmt():
+                    logging.info(
+                        f"Reading from init file {config_node.get_init_file_fmt()}"
+                        + f" for {parameter}"
+                    )
                     parameter_values = gen_kw_node.values_from_files(
                         active_realizations,
                         config_node.get_init_file_fmt(),
                         keys,
                     )
                 else:
+                    logging.info(f"Sampling parameter {parameter}")
                     parameter_values = gen_kw_node.sample_values(
                         parameter,
                         keys,
@@ -431,10 +436,9 @@ class EnKFMain:
         self.addDataKW("<ERT-CASE>", case_name)
         self.addDataKW("<ERTCASE>", case_name)
         self.storage_manager.active_case = case_name
-        (Path(self.res_config.ens_path) / "current_case").write_text(case_name)
+        (Path(self.ert_config.ens_path) / "current_case").write_text(case_name)
 
     def createRunPath(self, run_context: RunContext) -> None:
-        first_time = True
         for iens, run_arg in enumerate(run_context):
             if run_context.is_active(iens):
                 os.makedirs(
@@ -442,7 +446,7 @@ class EnKFMain:
                     exist_ok=True,
                 )
 
-                for source_file, target_file in self.res_config.ert_templates:
+                for source_file, target_file in self.ert_config.ert_templates:
                     target_file = run_context.substituter.substitute_real_iter(
                         target_file, run_arg.iens, run_context.iteration
                     )
@@ -459,10 +463,10 @@ class EnKFMain:
                         )
                     target.write_text(result)
 
-                res_config = self.resConfig()
-                model_config = res_config.model_config
+                ert_config = self.resConfig()
+                model_config = ert_config.model_config
                 _generate_parameter_files(
-                    res_config.ensemble_config,
+                    ert_config.ensemble_config,
                     model_config.gen_kw_export_name,
                     run_arg.runpath,
                     run_arg.iens,
@@ -472,28 +476,21 @@ class EnKFMain:
                 with open(
                     Path(run_arg.runpath) / "jobs.json", mode="w", encoding="utf-8"
                 ) as fptr:
-                    forward_model_output = res_config.forward_model_data_to_json(
-                        res_config.forward_model_list,
+                    forward_model_output = ert_config.forward_model_data_to_json(
+                        ert_config.forward_model_list,
                         run_arg.get_run_id(),
-                        model_config.data_root,
                         run_arg.iens,
                         run_context.iteration,
                         run_context.substituter,
-                        res_config.env_vars,
+                        ert_config.env_vars,
                     )
 
                     json.dump(forward_model_output, fptr)
-
-                    if first_time:
-                        first_time = False
-                        logger.info(
-                            "Content of first jobs.json", extra=forward_model_output
-                        )
 
         run_context.runpaths.write_runpath_list(
             [run_context.iteration], run_context.active_realizations
         )
 
     def runWorkflows(self, runtime: int) -> None:
-        for workflow in self.res_config.hooked_workflows[runtime]:
+        for workflow in self.ert_config.hooked_workflows[runtime]:
             workflow.run(self)

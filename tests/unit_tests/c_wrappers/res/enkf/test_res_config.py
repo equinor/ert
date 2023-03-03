@@ -11,9 +11,9 @@ import pytest
 from ecl.util.enums import RngAlgTypeEnum
 
 from ert._c_wrappers.config.config_parser import ConfigValidationError
-from ert._c_wrappers.enkf import AnalysisConfig, ConfigKeys, HookRuntime, ResConfig
+from ert._c_wrappers.enkf import AnalysisConfig, ConfigKeys, ErtConfig, HookRuntime
 from ert._c_wrappers.enkf._config_content_as_dict import parse_signature_job
-from ert._c_wrappers.enkf.res_config import site_config_location
+from ert._c_wrappers.enkf.ert_config import site_config_location
 from ert._c_wrappers.job_queue import QueueDriverEnum
 from ert._c_wrappers.sched import HistorySourceEnum
 
@@ -114,7 +114,7 @@ expand_config_defs(config_defines, snake_oil_structure_config)
 
 def test_invalid_user_config():
     with pytest.raises(IOError):
-        ResConfig("this/is/not/a/file")
+        ErtConfig.from_file("this/is/not/a/file")
 
 
 def test_include_non_existing_file(tmpdir):
@@ -130,7 +130,7 @@ def test_include_non_existing_file(tmpdir):
         with pytest.raises(
             ConfigValidationError, match="INCLUDE file:does_not_exists not found"
         ):
-            _ = ResConfig("config.ert")
+            _ = ErtConfig.from_file("config.ert")
 
 
 def test_include_existing_file(tmpdir):
@@ -151,32 +151,31 @@ def test_include_existing_file(tmpdir):
         with open("include_me", mode="w", encoding="utf-8") as fh:
             fh.writelines(include_me_text)
 
-        res_config = ResConfig("config.ert")
-        assert res_config.random_seed == str(rand_seed)
+        ert_config = ErtConfig.from_file("config.ert")
+        assert ert_config.random_seed == str(rand_seed)
 
 
 def test_init(minimum_case):
-    res_config = minimum_case.resConfig()
-    assert res_config.model_config.data_root == res_config.config_path
+    ert_config = minimum_case.resConfig()
 
-    assert res_config is not None
+    assert ert_config is not None
 
-    assert res_config.analysis_config is not None
-    assert isinstance(res_config.analysis_config, AnalysisConfig)
+    assert ert_config.analysis_config is not None
+    assert isinstance(ert_config.analysis_config, AnalysisConfig)
 
-    assert res_config.config_path == os.getcwd()
+    assert ert_config.config_path == os.getcwd()
 
-    assert res_config.substitution_list["<CONFIG_PATH>"] == os.getcwd()
+    assert ert_config.substitution_list["<CONFIG_PATH>"] == os.getcwd()
 
 
 def test_extensive_config(setup_case):
-    res_config = setup_case("snake_oil_structure", "ert/model/user_config.ert")
+    ert_config = setup_case("snake_oil_structure", "ert/model/user_config.ert")
 
     assert (
         Path(snake_oil_structure_config["ENSPATH"]).resolve()
-        == Path(res_config.ens_path).resolve()
+        == Path(ert_config.ens_path).resolve()
     )
-    model_config = res_config.model_config
+    model_config = ert_config.model_config
     assert (
         Path(snake_oil_structure_config["RUNPATH"]).resolve()
         == Path(model_config.runpath_format_string).resolve()
@@ -185,7 +184,7 @@ def test_extensive_config(setup_case):
     assert jobname_format == model_config.jobname_format_string
     assert (
         snake_oil_structure_config["FORWARD_MODEL"]
-        == res_config.forward_model_job_name_list()
+        == ert_config.forward_model_job_name_list()
     )
     assert (
         HistorySourceEnum.from_string(snake_oil_structure_config["HISTORY_SOURCE"])
@@ -199,7 +198,7 @@ def test_extensive_config(setup_case):
         == Path(model_config.obs_config_file).resolve()
     )
 
-    analysis_config = res_config.analysis_config
+    analysis_config = ert_config.analysis_config
     assert (
         snake_oil_structure_config["MAX_RUNTIME"] == analysis_config.get_max_runtime()
     )
@@ -208,7 +207,7 @@ def test_extensive_config(setup_case):
         == Path(analysis_config.get_log_path()).resolve()
     )
 
-    queue_config = res_config.queue_config
+    queue_config = ert_config.queue_config
     assert queue_config.queue_system == QueueDriverEnum.LSF_DRIVER
     assert snake_oil_structure_config["MAX_SUBMIT"] == queue_config.max_submit
     driver = queue_config.create_driver()
@@ -219,14 +218,14 @@ def test_extensive_config(setup_case):
     )
 
     for job_name in snake_oil_structure_config["INSTALL_JOB"]:
-        job = res_config.installed_jobs[job_name]
+        job = ert_config.installed_jobs[job_name]
 
         exp_job_data = snake_oil_structure_config["INSTALL_JOB"][job_name]
 
         assert exp_job_data["STDERR"] == job.stderr_file
         assert exp_job_data["STDOUT"] == job.stdout_file
 
-    ensemble_config = res_config.ensemble_config
+    ensemble_config = ert_config.ensemble_config
     for extension in ["SMSPEC", "UNSMRY"]:
         assert (
             Path(snake_oil_structure_config["REFCASE"] + "." + extension).resolve()
@@ -237,7 +236,7 @@ def test_extensive_config(setup_case):
         == Path(ensemble_config._grid_file).resolve()
     )
 
-    ensemble_config = res_config.ensemble_config
+    ensemble_config = ert_config.ensemble_config
     assert set(
         snake_oil_structure_config["SUMMARY"]
         + snake_oil_structure_config["GEN_KW"]
@@ -262,19 +261,19 @@ def test_extensive_config(setup_case):
     )
 
     assert len(snake_oil_structure_config["LOAD_WORKFLOW"]) == len(
-        list(res_config.workflows.keys())
+        list(ert_config.workflows.keys())
     )
 
     for w_path, w_name in snake_oil_structure_config["LOAD_WORKFLOW"]:
-        assert w_name in res_config.workflows
+        assert w_name in ert_config.workflows
         assert (
             Path(w_path).resolve()
-            == Path(res_config.workflows[w_name].src_file).resolve()
+            == Path(ert_config.workflows[w_name].src_file).resolve()
         )
 
     for wj_path, wj_name in snake_oil_structure_config["LOAD_WORKFLOW_JOB"]:
-        assert wj_name in res_config.workflow_jobs
-        job = res_config.workflow_jobs[wj_name]
+        assert wj_name in ert_config.workflow_jobs
+        job = ert_config.workflow_jobs[wj_name]
 
         assert wj_name == job.name
         assert Path(wj_path).resolve() == Path(job.executable).resolve()
@@ -284,7 +283,7 @@ def test_extensive_config(setup_case):
 
 def test_runpath_file(monkeypatch, tmp_path):
     """
-    There was an issue relating to `ResConfig.runpath_file` returning a
+    There was an issue relating to `ErtConfig.runpath_file` returning a
     relative path rather than an absolute path. This test simulates the
     conditions that caused the original bug. That is, the user starts
     somewhere else and points to the ERT config file using a relative
@@ -303,12 +302,12 @@ def test_runpath_file(monkeypatch, tmp_path):
             [
                 "DEFINE <FOO> foo\n",
                 "RUNPATH_FILE ../output/my_custom_runpath_path.<FOO>\n",
-                # Required for this to be a valid ResConfig
+                # Required for this to be a valid ErtConfig
                 "NUM_REALIZATIONS 1\n",
             ]
         )
 
-    config = ResConfig(os.path.relpath(config_path, workdir_path))
+    config = ErtConfig.from_file(os.path.relpath(config_path, workdir_path))
     assert config.model_config.runpath_file == str(runpath_path)
 
 
@@ -335,9 +334,9 @@ def test_that_job_script_can_be_set_in_site_config(monkeypatch, tmp_path):
         "NUM_REALIZATIONS 10\n"
     )
 
-    res_config = ResConfig(str(test_user_config))
+    ert_config = ErtConfig.from_file(str(test_user_config))
 
-    assert Path(res_config.queue_config.job_script).resolve() == my_script
+    assert Path(ert_config.queue_config.job_script).resolve() == my_script
 
 
 def test_that_unknown_queue_option_gives_error_message(
@@ -363,7 +362,7 @@ def test_that_unknown_queue_option_gives_error_message(
     with pytest.raises(
         ValueError, match="Parsing config file .* resulted in the errors:"
     ):
-        _ = ResConfig(str(test_user_config))
+        _ = ErtConfig.from_file(str(test_user_config))
 
 
 @pytest.mark.parametrize(
@@ -388,8 +387,8 @@ def test_that_workflow_run_modes_can_be_selected(tmp_path, run_mode):
         f"LOAD_WORKFLOW {my_script} SCRIPT\n"
         f"HOOK_WORKFLOW SCRIPT {run_mode}\n"
     )
-    res_config = ResConfig(str(test_user_config))
-    assert len(list(res_config.hooked_workflows[run_mode])) == 1
+    ert_config = ErtConfig.from_file(str(test_user_config))
+    assert len(list(ert_config.hooked_workflows[run_mode])) == 1
 
 
 @pytest.mark.parametrize(
@@ -408,11 +407,8 @@ def test_logging_config(caplog, config_content, expected):
 
     with patch("builtins.open", mock_open(read_data=config_content)), patch(
         "os.path.isfile", MagicMock(return_value=True)
-    ), caplog.at_level(logging.INFO), patch.object(
-        ResConfig, "__init__", lambda x: None
-    ):
-        res_config = ResConfig()
-        res_config._log_config_file(config_path)
+    ), caplog.at_level(logging.INFO):
+        ErtConfig._log_config_file(config_path)
     expected = base_content.format(expected)
     assert expected in caplog.messages
 
@@ -431,11 +427,8 @@ def test_logging_snake_oil_config(caplog, source_root):
         "model",
         "user_config.ert",
     )
-    with caplog.at_level(logging.INFO), patch.object(
-        ResConfig, "__init__", lambda x: None
-    ):
-        res_config = ResConfig()
-        res_config._log_config_file(config_path)
+    with caplog.at_level(logging.INFO):
+        ErtConfig._log_config_file(config_path)
     assert (
         """
 JOBNAME SNAKE_OIL_STRUCTURE_%d
@@ -555,21 +548,21 @@ def test_that_parsing_workflows_gives_expected():
     with open("workflows/HIDDEN_PRINT", "w", encoding="utf-8") as f:
         f.write("EXECUTABLE ls\n")
 
-    res_config = ResConfig(config_dict=config_dict)
+    ert_config = ErtConfig.from_dict(config_dict)
 
     # verify name generated from filename
-    assert "HIDDEN_PRINT" in res_config.workflow_jobs
-    assert "print_uber" in res_config.workflow_jobs
+    assert "HIDDEN_PRINT" in ert_config.workflow_jobs
+    assert "print_uber" in ert_config.workflow_jobs
 
     assert [
         "magic_print",
         "no_print",
         "some_print",
-    ] == list(res_config.workflows.keys())
+    ] == list(ert_config.workflows.keys())
 
-    assert len(res_config.hooked_workflows[HookRuntime.PRE_UPDATE]) == 1
-    assert len(res_config.hooked_workflows[HookRuntime.POST_UPDATE]) == 1
-    assert len(res_config.hooked_workflows[HookRuntime.PRE_FIRST_UPDATE]) == 0
+    assert len(ert_config.hooked_workflows[HookRuntime.PRE_UPDATE]) == 1
+    assert len(ert_config.hooked_workflows[HookRuntime.POST_UPDATE]) == 1
+    assert len(ert_config.hooked_workflows[HookRuntime.PRE_FIRST_UPDATE]) == 0
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -577,11 +570,13 @@ def test_that_get_plugin_jobs_fetches_exactly_ert_plugins():
     script_file_contents = dedent(
         """
         SCRIPT script.py
+        INTERNAL True
         """
     )
     plugin_file_contents = dedent(
         """
         SCRIPT plugin.py
+        INTERNAL True
         """
     )
 
@@ -625,7 +620,7 @@ def test_that_get_plugin_jobs_fetches_exactly_ert_plugins():
             )
         )
 
-    res_config = ResConfig("config.ert")
+    ert_config = ErtConfig.from_file("config.ert")
 
-    assert res_config.workflow_jobs["plugin"].isPlugin()
-    assert not res_config.workflow_jobs["script"].isPlugin()
+    assert ert_config.workflow_jobs["plugin"].isPlugin()
+    assert not ert_config.workflow_jobs["script"].isPlugin()

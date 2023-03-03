@@ -5,8 +5,8 @@ from tests.utils import wait_until
 
 
 def test_simulation_context(setup_case):
-    res_config = setup_case("batch_sim", "sleepy_time.ert")
-    ert = EnKFMain(res_config)
+    ert_config = setup_case("batch_sim", "sleepy_time.ert")
+    ert = EnKFMain(ert_config)
 
     size = 4
     even_mask = [True, False] * (size // 2)

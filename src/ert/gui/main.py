@@ -1,20 +1,30 @@
+import functools
 import logging
 import os
-import sys
 import warnings
+import webbrowser
 from pathlib import Path
 
 import filelock
-from PyQt5.QtWidgets import QHBoxLayout, QPushButton, QTextEdit, QVBoxLayout, QWidget
-from qtpy.QtCore import QLocale, Qt
+from PyQt5.QtWidgets import (
+    QFrame,
+    QHBoxLayout,
+    QLabel,
+    QPushButton,
+    QScrollArea,
+    QVBoxLayout,
+    QWidget,
+)
+from qtpy.QtCore import QLocale, QSize, Qt
 from qtpy.QtWidgets import QApplication
 
 from ert._c_wrappers.config import ConfigWarning
 from ert._c_wrappers.config.config_parser import ConfigValidationError
-from ert._c_wrappers.enkf import EnKFMain, ResConfig
+from ert._c_wrappers.enkf import EnKFMain, ErtConfig
 from ert.cli.main import ErtTimeoutError
+from ert.gui.about_dialog import AboutDialog
 from ert.gui.ertnotifier import ErtNotifier
-from ert.gui.ertwidgets import SummaryPanel, resourceIcon
+from ert.gui.ertwidgets import SuggestorMessage, SummaryPanel, resourceIcon
 from ert.gui.main_window import ErtMainWindow
 from ert.gui.simulation import SimulationPanel
 from ert.gui.tools.event_viewer import (
@@ -32,6 +42,7 @@ from ert.gui.tools.workflows import WorkflowsTool
 from ert.libres_facade import LibresFacade
 from ert.namespace import Namespace
 from ert.services import Storage
+from ert.shared.plugins.plugin_manager import ErtPluginManager
 
 
 def run_gui(args: Namespace):
@@ -58,7 +69,7 @@ def run_gui(args: Namespace):
         try:
             storage_lock.acquire(timeout=5)
             with Storage.init_service(
-                res_config=args.config,
+                ert_config=args.config,
                 project=os.path.abspath(ens_path),
             ):
                 return show_window()
@@ -77,48 +88,43 @@ def _start_initial_gui_window(args, log_handler):
     # Create logger inside function to make sure all handlers have been added to
     # the root-logger.
     logger = logging.getLogger(__name__)
-    messages = []
-    res_config = None
+    suggestions = []
+    error_messages = []
+    warning_msgs = []
+    ert_config = None
     try:
         with warnings.catch_warnings(record=True) as warning_messages:
-            res_config = ResConfig(args.config)
-        messages += ResConfig.make_suggestion_list(args.config)
-        messages += [
-            str(wm.message) for wm in warning_messages if wm.category == ConfigWarning
-        ]
-    except ConfigValidationError as error:
-        messages.append(str(error))
-        logger.info("Error in config file shown in gui: '%s'", error)
-        return _setup_suggester(messages), None
+            _check_locale()
+            suggestions += ErtConfig.make_suggestion_list(args.config)
+            ert_config = ErtConfig.from_file(args.config)
+        os.chdir(ert_config.config_path)
+        # Changing current working directory means we need to update the config file to
+        # be the base name of the original config
+        args.config = os.path.basename(args.config)
+        ert = EnKFMain(ert_config)
+        warning_msgs = warning_messages
 
-    for job in res_config.forward_model_list:
-        logger.info("Config contains forward model job %s", job)
-    for wm in warning_messages:
+    except ConfigValidationError as error:
+        error_messages.append(str(error))
+        logger.info("Error in config file shown in gui: '%s'", str(error))
+        return _setup_suggester(error_messages, warning_messages, suggestions), None
+
+    for job in ert_config.forward_model_list:
+        logger.info("Config contains forward model job %s", job.name)
+
+    for wm in warning_msgs:
         if wm.category != ConfigWarning:
-            logger.warning(wm.message)
-    os.chdir(res_config.config_path)
-    # Changing current working directory means we need to update the config file to
-    # be the base name of the original config
-    args.config = os.path.basename(args.config)
-    try:
-        ert = EnKFMain(res_config)
-    except ConfigValidationError as error:
-        messages.append(str(error))
-        logger.info("Error in config file shown in gui: '%s'", error)
-        return _setup_suggester(messages), None
-
-    locale_msg = _check_locale()
-    if locale_msg is not None:
-        messages.append(locale_msg)
-    if messages:
-        for msg in messages:
-            logger.info("Suggestion shown in gui '%s'", msg)
+            logger.warning(str(wm.message))
+    for msg in suggestions:
+        logger.info("Suggestion shown in gui '%s'", msg)
+    _main_window = _setup_main_window(ert, args, log_handler)
+    if suggestions or warning_msgs:
         return (
-            _setup_suggester(messages, _setup_main_window(ert, args, log_handler)),
-            res_config.ens_path,
+            _setup_suggester(error_messages, warning_msgs, suggestions, _main_window),
+            ert_config.ens_path,
         )
     else:
-        return _setup_main_window(ert, args, log_handler), res_config.ens_path
+        return _main_window, ert_config.ens_path
 
 
 def _check_locale():
@@ -131,59 +137,127 @@ def _check_locale():
     if decimal_point != ".":
         msg = f"""
 ** WARNING: You are using a locale with decimalpoint: '{decimal_point}' - the ert application is
-            written with the assumption that '.' is  used as decimalpoint, and chances
-            are that something will break if you continue with this locale. It is highly
-            recommended that you set the decimalpoint to '.' using one of the environment
-            variables 'LANG', LC_ALL', or 'LC_NUMERIC' to either the 'C' locale or
-            alternatively a locale which uses '.' as decimalpoint.\n"""  # noqa
-
-        sys.stderr.write(msg)
-        return msg
-    else:
-        return None
+written with the assumption that '.' is  used as decimalpoint, and chances
+are that something will break if you continue with this locale. It is highly
+recommended that you set the decimalpoint to '.' using one of the environment
+variables 'LANG', LC_ALL', or 'LC_NUMERIC' to either the 'C' locale or
+alternatively a locale which uses '.' as decimalpoint.\n"""  # noqa
+        warnings.warn(msg, category=UserWarning)
 
 
-def _setup_suggester(suggestions, ert_window=None):
-    suggest = QWidget()
-    layout = QVBoxLayout()
-    suggest.setWindowTitle("Some problems detected")
-    lines = QTextEdit()
-    lines.setReadOnly(True)
-    text = "\n".join(suggestions)
-    lines.setPlainText(text)
+def _clicked_help_button(menu_label: str, link: str):
+    logger = logging.getLogger(__name__)
+    logger.info(f"Pressed help button {menu_label}")
+    webbrowser.open(link)
 
-    buttons = QHBoxLayout()
-    layout.addWidget(lines)
 
-    copy = QPushButton("Copy messages")
+def _clicked_about_button(about_dialog):
+    logger = logging.getLogger(__name__)
+    logger.info("Pressed help button About")
+    about_dialog.show()
+
+
+def _setup_suggester(errors, warning_msgs, suggestions, ert_window=None):
+    container = QWidget()
+    container.setWindowTitle("Some problems detected")
+    container_layout = QVBoxLayout()
+
+    help_button_frame = QFrame()
+    help_buttons_layout = QHBoxLayout()
+    help_button_frame.setLayout(help_buttons_layout)
+
+    button_size = QSize(-1, -1)
+    helpbuttons = []
+
+    help_label = QLabel("Help:")
+    help_buttons_layout.addWidget(help_label)
+    pm = ErtPluginManager()
+    help_links = pm.get_help_links()
+
+    for menu_label, link in help_links.items():
+        button = QPushButton(menu_label)
+        button.setObjectName(menu_label)
+        button.clicked.connect(
+            functools.partial(_clicked_help_button, menu_label, link)
+        )
+        helpbuttons.append(button)
+        help_buttons_layout.addWidget(button)
+
+    about_button = QPushButton("About")
+    about_button.setObjectName("about_button")
+    helpbuttons.append(about_button)
+    help_buttons_layout.addWidget(about_button)
+
+    diag = AboutDialog(container)
+    about_button.clicked.connect(lambda: _clicked_about_button(diag))
+
+    for b in helpbuttons:
+        b.adjustSize()
+        if b.size().width() > button_size.width():
+            button_size = b.size()
+
+    for b in helpbuttons:
+        b.setMinimumSize(button_size)
+
+    help_buttons_layout.insertStretch(-1, -1)
+
+    container_layout.addWidget(help_button_frame)
+
+    suggest_msgs = QWidget()
+    buttons = QWidget()
+    suggest_layout = QVBoxLayout()
+    buttons_layout = QHBoxLayout()
+
+    text = ""
+    for msg in errors:
+        text += msg + "\n"
+        suggest_layout.addWidget(SuggestorMessage.error_msg(msg))
+    for msg in warning_msgs:
+        msg = str(msg.message)
+        text += msg + "\n"
+        suggest_layout.addWidget(SuggestorMessage.warning_msg(msg))
+    for msg in suggestions:
+        text += msg + "\n"
+        suggest_layout.addWidget(SuggestorMessage.deprecation_msg(msg))
+
+    suggest_layout.addStretch()
+    suggest_msgs.setLayout(suggest_layout)
+    scroll = QScrollArea()
+    scroll.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+    scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+    scroll.setWidgetResizable(True)
+    scroll.setWidget(suggest_msgs)
 
     def copy_text():
         QApplication.clipboard().setText(text)
-
-    copy.pressed.connect(copy_text)
-
-    run = QPushButton("Run ert")
-    run.setObjectName("run_ert_button")
-    run.setEnabled(ert_window is not None)
 
     def run_pressed():
         ert_window.show()
         ert_window.activateWindow()
         ert_window.raise_()
-        suggest.close()
+        container.close()
 
-    run.pressed.connect(run_pressed)
+    run = QPushButton("Run ert")
     give_up = QPushButton("Exit")
+    copy = QPushButton("Copy messages")
 
-    give_up.pressed.connect(suggest.close)
-    buttons.addWidget(copy)
-    buttons.addWidget(run)
-    buttons.addWidget(give_up)
+    run.setObjectName("run_ert_button")
+    run.setEnabled(ert_window is not None)
+    run.pressed.connect(run_pressed)
+    copy.pressed.connect(copy_text)
+    give_up.pressed.connect(container.close)
 
-    layout.addLayout(buttons)
-    suggest.setLayout(layout)
-    suggest.resize(800, 600)
-    return suggest
+    buttons_layout.addWidget(copy)
+    buttons_layout.insertStretch(-1, -1)
+    buttons_layout.addWidget(run)
+    buttons_layout.addWidget(give_up)
+
+    buttons.setLayout(buttons_layout)
+    container_layout.addWidget(scroll)
+    container_layout.addWidget(buttons)
+    container.setLayout(container_layout)
+    container.resize(800, 600)
+    return container
 
 
 def _setup_main_window(
@@ -206,7 +280,7 @@ def _setup_main_window(
     window.addDock(
         "Configuration summary", SummaryPanel(ert), area=Qt.BottomDockWidgetArea
     )
-    window.addTool(PlotTool(config_file))
+    window.addTool(PlotTool(config_file, window))
     window.addTool(ExportTool(ert))
     window.addTool(WorkflowsTool(ert, notifier))
     window.addTool(ManageCasesTool(ert, notifier))

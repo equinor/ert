@@ -1,6 +1,8 @@
 import logging
 from typing import TYPE_CHECKING, Dict, Optional, Type, cast
 
+from typing_extensions import Self
+
 from ert.data import TransformationDirection
 
 if TYPE_CHECKING:
@@ -42,13 +44,13 @@ class IOBuilder:
         self._transformation: Optional["ert.data.RecordTransformation"] = None
         self._transmitter_factories: Dict[int, "ert.data.transmitter_factory"] = {}
 
-    def set_name(self: "IOBuilder", name: str) -> "IOBuilder":
+    def set_name(self, name: str) -> Self:
         self._name = name
         return self
 
     def set_transformation(
         self, transformation: "ert.data.RecordTransformation"
-    ) -> "IOBuilder":
+    ) -> Self:
         # Validate that a transformation can transform in the required direction.
         # The constraints are in tuple form: (IO type, required direction).
         constraints = (
@@ -69,7 +71,7 @@ class IOBuilder:
 
     def set_transmitter_factory(
         self, factory: "ert.data.transmitter_factory", index: Optional[int] = None
-    ) -> "IOBuilder":
+    ) -> Self:
         """Fix the transmitter factory for this IO to index if index is >= 0. If the
         index is omitted or is < 0, it the factory will be called for all indices not
         fixed to an index. So either one transmitter factory is used for all indices

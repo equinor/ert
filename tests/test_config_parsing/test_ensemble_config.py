@@ -1,7 +1,7 @@
 import pytest
 from hypothesis import assume, given
 
-from ert._c_wrappers.enkf import ConfigKeys, ResConfig
+from ert._c_wrappers.enkf import ConfigKeys, ErtConfig
 
 from .config_dict_generator import config_generators, to_config_file
 
@@ -37,4 +37,4 @@ def test_ensemble_config_errors_on_unknown_function_in_field(
             expected_exception=ValueError,
             match=f"FIELD INIT_TRANSFORM:{silly_function_name} is an invalid function",
         ):
-            ResConfig(user_config_file=filename)
+            ErtConfig.from_file(filename)

@@ -104,15 +104,16 @@ __conf_instance_get_restart_nr(const conf_instance_type *conf_instance,
                                  obs_key);
     obs_restart_nr = find_nearest_time_index(time_map, obs_time);
     if (obs_restart_nr < 0) {
-        std::string error =
-            fmt::format("Observation: {} failed to match time", obs_key);
+        std::string error = fmt::format(
+            "Observation {} does not have a matching time in the time map.",
+            obs_key);
         if (conf_instance_has_item(conf_instance, "DATE"))
             error += fmt::format(
-                ", corresponding to DATE={}",
+                " DATE={} is not in the time map.",
                 conf_instance_get_item_value_ref(conf_instance, "DATE"));
         else if (conf_instance_has_item(conf_instance, "DAYS"))
             error += fmt::format(
-                ", corresponding to DAYS={}",
+                " DAYS={} is not in the time map.",
                 conf_instance_get_item_value_ref(conf_instance, "DAYS"));
         throw exc::out_of_range(error);
     }

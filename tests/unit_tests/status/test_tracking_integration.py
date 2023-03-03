@@ -15,7 +15,7 @@ from jsonpath_ng import parse
 
 from ert.__main__ import ert_parser
 from ert._c_wrappers.enkf.enkf_main import EnKFMain
-from ert._c_wrappers.enkf.res_config import ResConfig
+from ert._c_wrappers.enkf.ert_config import ErtConfig
 from ert.cli import ENSEMBLE_EXPERIMENT_MODE, ENSEMBLE_SMOOTHER_MODE, TEST_RUN_MODE
 from ert.cli.model_factory import create_model
 from ert.ensemble_evaluator import EvaluatorTracker
@@ -172,9 +172,9 @@ def test_tracking(
         )
         FeatureToggling.update_from_args(parsed)
 
-        res_config = ResConfig(parsed.config)
-        os.chdir(res_config.config_path)
-        ert = EnKFMain(res_config)
+        ert_config = ErtConfig.from_file(parsed.config)
+        os.chdir(ert_config.config_path)
+        ert = EnKFMain(ert_config)
         facade = LibresFacade(ert)
 
         model = create_model(
@@ -297,9 +297,9 @@ def test_tracking_time_map(
         )
         FeatureToggling.update_from_args(parsed)
 
-        res_config = ResConfig(parsed.config)
-        os.chdir(res_config.config_path)
-        ert = EnKFMain(res_config)
+        ert_config = ErtConfig.from_file(parsed.config)
+        os.chdir(ert_config.config_path)
+        ert = EnKFMain(ert_config)
         facade = LibresFacade(ert)
 
         model = create_model(
@@ -336,7 +336,7 @@ def test_tracking_time_map(
                 if isinstance(event, EndEvent):
                     failures.append(event)
         # Check that max submit > 1
-        assert res_config.queue_config.max_submit == 5
+        assert ert_config.queue_config.max_submit == 5
         # We check that the job was submitted first time
         assert "Submitted job ECLIPSE_CASE (attempt 0)" in caplog.messages
         # We check that the job was not submitted after the first failed
@@ -384,9 +384,9 @@ def test_tracking_missing_ecl(
         )
         FeatureToggling.update_from_args(parsed)
 
-        res_config = ResConfig(parsed.config)
-        os.chdir(res_config.config_path)
-        ert = EnKFMain(res_config)
+        ert_config = ErtConfig.from_file(parsed.config)
+        os.chdir(ert_config.config_path)
+        ert = EnKFMain(ert_config)
         facade = LibresFacade(ert)
 
         model = create_model(

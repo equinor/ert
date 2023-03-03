@@ -60,7 +60,7 @@ class AnalysisConfig:
                 self._modules[dst_name] = new_module
             else:
                 raise ConfigValidationError(
-                    f"Trying to copy module {src_name} which does not exist"
+                    f"Trying to copy module {src_name!r} which does not exist"
                 )
 
     def _set_modules_var_list(self):
@@ -72,7 +72,7 @@ class AnalysisConfig:
 
     @classmethod
     def from_dict(cls, config_dict) -> "AnalysisConfig":
-        num_realization = config_dict.get(ConfigKeys.NUM_REALIZATIONS)
+        num_realization = config_dict.get(ConfigKeys.NUM_REALIZATIONS, 1)
         min_realization = config_dict.get(ConfigKeys.MIN_REALIZATIONS, 0)
         if isinstance(min_realization, str):
             if "%" in min_realization:

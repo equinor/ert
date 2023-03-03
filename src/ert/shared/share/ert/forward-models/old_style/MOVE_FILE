@@ -1,6 +1,3 @@
-STDERR    move_file.stderr
-STDOUT    move_file.stdout
-
 EXECUTABLE    ../../shell_scripts/move_file.py
 ARGLIST       <FROM>  <TO>
 

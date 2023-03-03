@@ -3,6 +3,7 @@ from collections import defaultdict
 from dataclasses import dataclass, field
 from typing import Dict, List, Tuple, Union
 
+from ert._c_wrappers.config.config_parser import ConfigValidationError
 from ert._c_wrappers.job_queue import Driver, JobQueue, QueueDriverEnum
 
 
@@ -18,6 +19,19 @@ class QueueConfig:
     @classmethod
     def from_dict(cls, config_dict):
         queue_system = config_dict.get("QUEUE_SYSTEM", "LOCAL")
+
+        valid_queue_systems = []
+
+        for driver_names in QueueDriverEnum.enums():
+            if driver_names.name not in str(QueueDriverEnum.NULL_DRIVER):
+                valid_queue_systems.append(driver_names.name[: -len("_DRIVER")])
+
+        if queue_system not in valid_queue_systems:
+            raise ConfigValidationError(
+                f"Invalid QUEUE_SYSTEM provided: {queue_system!r}. Valid choices for "
+                f"QUEUE_SYSTEM are {valid_queue_systems!r}"
+            )
+
         queue_system = QueueDriverEnum.from_string(f"{queue_system}_DRIVER")
         job_script = config_dict.get("JOB_SCRIPT", shutil.which("job_dispatch.py"))
         job_script = job_script or "job_dispatch.py"

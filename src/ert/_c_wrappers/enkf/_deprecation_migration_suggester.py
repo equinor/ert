@@ -31,7 +31,13 @@ class DeprecationMigrationSuggester:
         "LOG_LEVEL",
         "ENKF_RERUN",
     ]
-    RSH_KEYWORDS = ["RSH_HOST", "RHS_COMMAND"]
+    RSH_KEYWORDS = ["RSH_HOST", "RSH_COMMAND", "MAX_RUNNING_RSH"]
+    USE_QUEUE_OPTION = [
+        "LSF_SERVER",
+        "LSF_QUEUE",
+        "MAX_RUNNING_LSF",
+        "MAX_RUNNING_LOCAL",
+    ]
 
     def _add_deprecated_keywords_to_parser(self):
         for kw in self.REPLACE_WITH_GEN_KW:
@@ -39,6 +45,8 @@ class DeprecationMigrationSuggester:
         for kw in self.JUST_REMOVE_KEYWORDS:
             self._parser.add(kw)
         for kw in self.RSH_KEYWORDS:
+            self._parser.add(kw)
+        for kw in self.USE_QUEUE_OPTION:
             self._parser.add(kw)
         self._parser.add("PLOT_SETTINGS")
         self._parser.add("HAVANA_FAULT")
@@ -99,9 +107,18 @@ class DeprecationMigrationSuggester:
             add_suggestion(
                 kw,
                 f"The {kw} was used for the deprecated and removed "
-                "support for RHS queues. It no longer has any effect "
+                "support for RSH queues. It no longer has any effect "
                 "and can safely be removed from the config file.",
             )
+        for kw in self.USE_QUEUE_OPTION:
+            add_suggestion(
+                kw,
+                f"The {kw} keyword has been removed. For most cases this option "
+                "should be set in the site config, and as a regular user you can "
+                "simply remove this from your config. If you need to set these "
+                "options it is now done via the QUEUE_OPTION keyword.",
+            )
+
         add_suggestion(
             "HAVANA_FAULT",
             "Direct interoperability with havana was removed from ert in 2009."

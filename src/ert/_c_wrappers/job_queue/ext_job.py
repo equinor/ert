@@ -71,22 +71,24 @@ class ExtJob:
         if resolved is None:
             raise ConfigValidationError(
                 config_file=config_file_location,
-                errors=[f"Could not find executable {executable} for job {name}"],
+                errors=[f"Could not find executable {executable!r} for job {name!r}"],
             )
 
         if not os.access(resolved, os.X_OK):  # is not executable
             raise ConfigValidationError(
                 config_file=config_file_location,
                 errors=[
-                    f"ExtJob {name} with executable"
-                    f" {resolved} does not have execute permissions"
+                    f"ExtJob {name!r} with executable"
+                    f" {resolved!r} does not have execute permissions"
                 ],
             )
 
         if os.path.isdir(resolved):
             raise ConfigValidationError(
                 config_file=config_file_location,
-                errors=[f"ExtJob {name} has executable set to directory {resolved}"],
+                errors=[
+                    f"ExtJob {name!r} has executable set to directory {resolved!r}"
+                ],
             )
 
         return resolved
@@ -178,10 +180,26 @@ class ExtJob:
             name = os.path.basename(config_file)
         try:
             config_content = cls._parse_config_file(config_file)
+        except ConfigValidationError as conf_err:
+            err_msg = "Item:EXECUTABLE must be set - parsing"
+            err_index = next(
+                (i_err for i_err, err in enumerate(conf_err.errors) if err_msg in err),
+                None,
+            )
+            if err_index is None:
+                raise conf_err from None
+            with open(config_file, encoding="utf-8") as f:
+                if "PORTABLE_EXE " in f.read():
+                    conf_err.errors[err_index] = conf_err.errors[err_index].replace(
+                        err_msg,
+                        '"PORTABLE_EXE" key is deprecated, '
+                        'please replace with "EXECUTABLE" in',
+                    )
+            raise ConfigValidationError(conf_err.errors, conf_err.config_file) from None
         except IOError as err:
             raise ConfigValidationError(
                 config_file=config_file,
-                errors=f"Could not open job config file {config_file}",
+                errors=f"Could not open job config file {config_file!r}",
             ) from err
 
         logger.info(
@@ -269,8 +287,8 @@ class ExtJob:
                 f"{key}={self.private_args[key]}" for key in unused_private_args_keys
             ]
             raise ExtJobInvalidArgsException(
-                "following arguments to job have no effect (values after "
-                f"applying defines): {','.join(unused_private_args_representation)}"
+                f"following arguments to job {self.name!r} were not found in the"
+                f" argument list: {','.join(unused_private_args_representation)}"
             )
 
     def _validate_all_magic_string_in_arglist_get_resolved(
@@ -308,12 +326,10 @@ class ExtJob:
         )
         if args_with_unresolved_substrings:
             unresolved_args_representation = [
-                f"original arg: `{orig_arg}`, after attempted substituting: "
-                f"`{modified_arg}`"
-                for orig_arg, modified_arg in args_with_unresolved_substrings
+                repr(orig_arg) for orig_arg, _ in args_with_unresolved_substrings
             ]
             raise ExtJobInvalidArgsException(
-                f"Job {self.name} has unresolved arguments after "
-                "applying argument substitutions, defines and default values: "
+                f"Job {self.name!r} has unresolved arguments after "
+                "applying argument substitutions: "
                 f"{', '.join(unresolved_args_representation)}"
             )

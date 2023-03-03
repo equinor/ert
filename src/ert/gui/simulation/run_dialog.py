@@ -48,8 +48,6 @@ class RunDialog(QDialog):
         QDialog.__init__(self, parent)
         self.setWindowFlags(Qt.Window)
         self.setWindowFlags(self.windowFlags() & ~Qt.WindowContextHelpButtonHint)
-        self.setModal(True)
-        self.setWindowModality(Qt.WindowModal)
         self.setWindowTitle(f"Simulations - {config_file}")
 
         self._snapshot_model = SnapshotModel(self)
@@ -106,8 +104,7 @@ class RunDialog(QDialog):
 
         self.running_time = QLabel("")
 
-        self.plot_tool = PlotTool(config_file)
-        self.plot_tool.setParent(self)
+        self.plot_tool = PlotTool(config_file, self.parent())
         self.plot_button = QPushButton(self.plot_tool.getName())
         self.plot_button.clicked.connect(self.plot_tool.trigger)
         self.plot_button.setEnabled(ert is not None)

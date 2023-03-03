@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from ert._c_wrappers.enkf import ResConfig
+from ert._c_wrappers.enkf import ErtConfig
 
 
 @contextlib.contextmanager
@@ -423,15 +423,15 @@ def minimal_case(tmpdir):
 
 
 def test_shell_script_jobs_availability(minimal_case):
-    res_config = ResConfig("config.ert")
+    ert_config = ErtConfig.from_file("config.ert")
     fm_shell_jobs = {}
-    for job in res_config.installed_jobs.values():
+    for job in ert_config.installed_jobs.values():
         exe = job.executable
         if "shell_scripts" in exe:
             fm_shell_jobs[job.name.upper()] = Path(exe).resolve()
 
     wf_shell_jobs = {}
-    for wf_name, wf in res_config.workflow_jobs.items():
+    for wf_name, wf in ert_config.workflow_jobs.items():
         if wf.executable is not None and "shell_scripts" in wf.executable:
             wf_shell_jobs[wf_name] = Path(wf.executable).resolve()
 
@@ -451,9 +451,9 @@ def test_shell_script_jobs_names(minimal_case):
         "COPY_FILE",
     ]
 
-    res_config = ResConfig("config.ert")
+    ert_config = ErtConfig.from_file("config.ert")
     found_jobs = set()
-    for wf_name, wf in res_config.workflow_jobs.items():
+    for wf_name, wf in ert_config.workflow_jobs.items():
         if wf.executable is not None and "shell_scripts" in wf.executable:
             assert wf_name in shell_job_names
             found_jobs.add(wf_name)

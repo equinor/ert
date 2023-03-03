@@ -6,6 +6,7 @@ from ert._c_wrappers.enkf import EnKFMain
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets import AnalysisModuleEdit, addHelpToWidget
 from ert.gui.ertwidgets.caseselector import CaseSelector
+from ert.gui.ertwidgets.copyablelabel import CopyableLabel
 from ert.gui.ertwidgets.models.activerealizationsmodel import ActiveRealizationsModel
 from ert.gui.ertwidgets.models.ertmodel import get_runnable_realizations_mask
 from ert.gui.ertwidgets.models.targetcasemodel import TargetCaseModel
@@ -14,7 +15,7 @@ from ert.libres_facade import LibresFacade
 from ert.shared.ide.keywords.definitions import ProperNameArgument, RangeStringArgument
 from ert.shared.models import EnsembleSmoother
 
-from .simulation_config_panel import SimulationConfigPanel, escape_string
+from .simulation_config_panel import SimulationConfigPanel
 
 
 @dataclass
@@ -31,12 +32,13 @@ class EnsembleSmootherPanel(SimulationConfigPanel):
         facade = LibresFacade(ert)
         layout = QFormLayout()
 
+        self.setObjectName("ensemble_smoother_panel")
+
         self._case_selector = CaseSelector(facade, notifier)
         layout.addRow("Current case:", self._case_selector)
 
-        run_path_label = QLabel(f"<b>{escape_string(facade.run_path)}</b>")
-        addHelpToWidget(run_path_label, "config/simulation/runpath")
-        layout.addRow("Runpath:", run_path_label)
+        runpath_label = CopyableLabel(text=facade.run_path)
+        layout.addRow("Runpath:", runpath_label)
 
         number_of_realizations_label = QLabel(f"<b>{facade.get_ensemble_size()}</b>")
         addHelpToWidget(
@@ -56,6 +58,7 @@ class EnsembleSmootherPanel(SimulationConfigPanel):
             module_name="STD_ENKF",
             help_link="config/analysis/analysis_module",
         )
+        self._analysis_module_edit.setObjectName("ensemble_smoother_edit")
         layout.addRow("Analysis module:", self._analysis_module_edit)
 
         active_realizations_model = ActiveRealizationsModel(facade)

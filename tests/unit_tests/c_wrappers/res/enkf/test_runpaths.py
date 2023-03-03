@@ -4,7 +4,7 @@ from textwrap import dedent
 
 import pytest
 
-from ert._c_wrappers.enkf import EnKFMain, ResConfig, RunContext
+from ert._c_wrappers.enkf import EnKFMain, ErtConfig, RunContext
 from ert._c_wrappers.enkf.runpaths import Runpaths
 from ert._c_wrappers.util.substitution_list import SubstitutionList
 
@@ -166,8 +166,8 @@ def test_assert_export():
         """
             )
         )
-    res_config = ResConfig("config_file.ert")
-    ert = EnKFMain(res_config)
+    ert_config = ErtConfig.from_file("config_file.ert")
+    ert = EnKFMain(ert_config)
     runpath_list_file = ert.runpath_list_filename
     assert not runpath_list_file.exists()
 

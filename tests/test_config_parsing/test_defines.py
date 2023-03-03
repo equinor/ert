@@ -1,11 +1,11 @@
 import pytest
 
-from ert._c_wrappers.enkf import EnKFMain, ResConfig
+from ert._c_wrappers.enkf import EnKFMain, ErtConfig
 
 
 def read_jobname(config_file):
-    res_config = ResConfig(config_file)
-    ert = EnKFMain(res_config)
+    ert_config = ErtConfig.from_file(config_file)
+    ert = EnKFMain(ert_config)
     run_context = ert.create_ensemble_context("prior", range(ert.getEnsembleSize()), 0)
     ert.createRunPath(run_context)
     return run_context[0].job_name

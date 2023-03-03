@@ -4,7 +4,7 @@ from textwrap import dedent
 
 import pytest
 
-from ert._c_wrappers.enkf import EnKFMain, GenKwConfig, ResConfig
+from ert._c_wrappers.enkf import EnKFMain, ErtConfig, GenKwConfig
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -175,8 +175,8 @@ def test_gen_kw_is_log_or_not(tmpdir, distribution, expect_log, parameters_regex
         with open("prior.txt", "w", encoding="utf-8") as fh:
             fh.writelines(f"MY_KEYWORD {distribution}")
 
-        res_config = ResConfig("config.ert")
-        ert = EnKFMain(res_config)
+        ert_config = ErtConfig.from_file("config.ert")
+        ert = EnKFMain(ert_config)
 
         node = ert.ensembleConfig().getNode("KW_NAME")
         gen_kw_config = node.getModelConfig()

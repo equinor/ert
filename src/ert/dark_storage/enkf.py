@@ -5,7 +5,7 @@ from typing import Optional
 from ert_storage.security import security
 from fastapi import Depends
 
-from ert._c_wrappers.enkf import EnKFMain, ResConfig
+from ert._c_wrappers.enkf import EnKFMain, ErtConfig
 from ert.libres_facade import LibresFacade
 
 __all__ = ["LibresFacade", "get_res"]
@@ -13,7 +13,7 @@ __all__ = ["LibresFacade", "get_res"]
 
 _libres_facade: Optional[LibresFacade] = None
 _ert: Optional[EnKFMain] = None
-_config: Optional[ResConfig] = None
+_config: Optional[ErtConfig] = None
 ids = {}
 
 
@@ -25,7 +25,7 @@ def init_facade() -> None:
 
     configfile = os.environ["ERT_STORAGE_RES_CONFIG"]
 
-    _config = ResConfig(configfile)
+    _config = ErtConfig.from_file(configfile)
     os.chdir(_config.config_path)
     _ert = EnKFMain(_config, read_only=True)
     _libres_facade = LibresFacade(_ert)

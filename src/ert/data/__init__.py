@@ -9,7 +9,6 @@ from ert.data.record._record import (
     RecordIndex,
     RecordType,
     RecordValidationError,
-    load_collection_from_file,
     record_data,
 )
 
@@ -44,7 +43,6 @@ __all__ = (
     "FileTransformation",
     "InMemoryRecordTransmitter",
     "loader",
-    "load_collection_from_file",
     "MeasuredData",
     "NumericalRecord",
     "NumericalRecordTree",

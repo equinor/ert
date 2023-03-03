@@ -9,8 +9,8 @@ from ecl.summary import EclSum
 from ert._c_wrappers.enkf import (
     ActiveList,
     EnKFMain,
+    ErtConfig,
     ObservationConfigError,
-    ResConfig,
     SummaryObservation,
 )
 
@@ -57,7 +57,7 @@ def run_sim(start_date):
             "2.0",
             pytest.raises(
                 ObservationConfigError,
-                match="FOPR_1 failed to match time, corresponding to DAYS=2",
+                match="FOPR_1 does not have a matching time in the time map. DAYS=2",
             ),
             id="Outside tolerance",
         ),
@@ -98,8 +98,8 @@ def test_that_loading_summary_obs_with_days_is_within_tolerance(
         # We create a reference case
         run_sim(datetime(2014, 9, 10))
 
-        res_config = ResConfig("config.ert")
-        os.chdir(res_config.config_path)
+        ert_config = ErtConfig.from_file("config.ert")
+        os.chdir(ert_config.config_path)
         with expectation:
-            ert = EnKFMain(res_config)
+            ert = EnKFMain(ert_config)
             assert ert.getObservations().hasKey("FOPR_1")

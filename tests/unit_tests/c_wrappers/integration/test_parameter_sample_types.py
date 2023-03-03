@@ -10,6 +10,7 @@ from textwrap import dedent
 import cwrap
 import numpy as np
 import pytest
+import xtgeo
 from ecl import EclDataType
 from ecl.eclfile import EclKW
 from ecl.grid import EclGrid
@@ -17,7 +18,7 @@ from ecl.util.geometry import Surface
 
 from ert.__main__ import ert_parser
 from ert._c_wrappers.config.config_parser import ConfigValidationError
-from ert._c_wrappers.enkf import EnKFMain, ResConfig
+from ert._c_wrappers.enkf import EnKFMain, ErtConfig
 from ert._clib import update
 from ert._clib.update import Parameter
 from ert.cli import ENSEMBLE_SMOOTHER_MODE
@@ -32,8 +33,8 @@ def write_file(fname, contents):
 
 def create_runpath(config, active_mask=None):
     active_mask = [True] if active_mask is None else active_mask
-    res_config = ResConfig(config)
-    ert = EnKFMain(res_config)
+    ert_config = ErtConfig.from_file(config)
+    ert = EnKFMain(ert_config)
 
     prior = ert.load_ensemble_context("default", active_mask, 0)
 
@@ -526,8 +527,8 @@ def test_that_sampling_is_fixed_from_name(tmpdir, template, prior, num_realisati
         with open("prior.txt", "w", encoding="utf-8") as fh:
             fh.writelines(prior)
 
-        res_config = ResConfig("config.ert")
-        ert = EnKFMain(res_config)
+        ert_config = ErtConfig.from_file("config.ert")
+        ert = EnKFMain(ert_config)
 
         run_context = ert.create_ensemble_context(
             "prior",
@@ -588,8 +589,8 @@ def test_that_sub_sample_maintains_order(tmpdir, mask, expected):
         with open("prior.txt", "w", encoding="utf-8") as fh:
             fh.writelines("MY_KEYWORD NORMAL 0 1")
 
-        res_config = ResConfig("config.ert")
-        ert = EnKFMain(res_config)
+        ert_config = ErtConfig.from_file("config.ert")
+        ert = EnKFMain(ert_config)
 
         run_context = ert.create_ensemble_context(
             "prior",
@@ -707,7 +708,7 @@ if __name__ == "__main__":
         )
 
         run_cli(parsed)
-        ert = EnKFMain(ResConfig("config.ert"))
+        ert = EnKFMain(ErtConfig.from_file("config.ert"))
         prior = ert.storage_manager["prior"]
         posterior = ert.storage_manager["smoother_update"]
         parameter_name = "MY_PARAM"
@@ -720,4 +721,132 @@ if __name__ == "__main__":
         )
         assert np.linalg.det(np.cov(prior_param)) > np.linalg.det(
             np.cov(posterior_param)
+        )
+
+
+@pytest.mark.integration_test
+def test_field_param_update(tmpdir):
+    """
+    This replicates the poly example, only it uses FIELD parameter
+    """
+    with tmpdir.as_cwd():
+        config = dedent(
+            """
+            NUM_REALIZATIONS 5
+            OBS_CONFIG observations
+
+            FIELD MY_PARAM PARAMETER my_param.grdecl INIT_FILES:my_param.grdecl FORWARD_INIT:True
+            GRID MY_EGRID.EGRID
+
+            GEN_DATA MY_RESPONSE RESULT_FILE:gen_data_%d.out REPORT_STEPS:0 INPUT_FORMAT:ASCII
+            INSTALL_JOB poly_eval POLY_EVAL
+            SIMULATION_JOB poly_eval
+            TIME_MAP time_map
+        """  # pylint: disable=line-too-long  # noqa: E501
+        )
+        with open("config.ert", "w", encoding="utf-8") as fh:
+            fh.writelines(config)
+
+        grid = xtgeo.create_box_grid(dimension=(4, 4, 1))
+        grid.to_file("MY_EGRID.EGRID", "egrid")
+
+        with open("forward_model", "w", encoding="utf-8") as f:
+            f.write(
+                dedent(
+                    """#!/usr/bin/env python
+import xtgeo
+import numpy as np
+import os
+
+if __name__ == "__main__":
+    if not os.path.exists("my_param.grdecl"):
+        values = np.random.standard_normal(4*4)
+        with open("my_param.grdecl", "w") as fout:
+            fout.write("MY_PARAM\\n")
+            fout.write(" ".join([str(val) for val in values]) + " /\\n")
+    with open("my_param.grdecl", "r") as fin:
+        for line_nr, line in enumerate(fin):
+            if line_nr == 1:
+                a, b, c, *_ = line.split()
+
+    output = [float(a) * x**2 + float(b) * x + float(c) for x in range(10)]
+    with open("gen_data_0.out", "w", encoding="utf-8") as f:
+        f.write("\\n".join(map(str, output)))
+        """
+                )
+            )
+        os.chmod(
+            "forward_model",
+            os.stat("forward_model").st_mode
+            | stat.S_IXUSR
+            | stat.S_IXGRP
+            | stat.S_IXOTH,
+        )
+        with open("POLY_EVAL", "w", encoding="utf-8") as fout:
+            fout.write("EXECUTABLE forward_model")
+        with open("observations", "w", encoding="utf-8") as fout:
+            fout.write(
+                dedent(
+                    """
+            GENERAL_OBSERVATION MY_OBS {
+                DATA       = MY_RESPONSE;
+                INDEX_LIST = 0,2,4,6,8;
+                RESTART    = 0;
+                OBS_FILE   = obs.txt;
+            };"""
+                )
+            )
+
+        with open("obs.txt", "w", encoding="utf-8") as fobs:
+            fobs.write(
+                dedent(
+                    """
+            2.1457049781272213 0.6
+            8.769219841380755 1.4
+            12.388014786122742 3.0
+            25.600464531354252 5.4
+            42.35204755970952 8.6"""
+                )
+            )
+
+        with open("time_map", "w", encoding="utf-8") as fobs:
+            fobs.write("2014-09-10")
+
+        parser = ArgumentParser(prog="test_main")
+        parsed = ert_parser(
+            parser,
+            [
+                ENSEMBLE_SMOOTHER_MODE,
+                "--current-case",
+                "prior",
+                "--target-case",
+                "smoother_update",
+                "config.ert",
+                "--port-range",
+                "1024-65535",
+            ],
+        )
+
+        run_cli(parsed)
+        ert = EnKFMain(ErtConfig.from_file("config.ert"))
+        prior = ert.storage_manager["prior"]
+        posterior = ert.storage_manager["smoother_update"]
+
+        parameter = update.Parameter("MY_PARAM")
+        config_node = ert.ensembleConfig().getNode(parameter.name)
+
+        prior_result = prior.load_parameter(config_node, list(range(5)), parameter)
+        posterior_result = posterior.load_parameter(
+            config_node, list(range(5)), parameter
+        )
+        # Only assert on the first three rows, as there are only three parameters,
+        # a, b and c, the rest have no correlation to the results.
+        assert np.linalg.det(np.cov(prior_result[:3])) > np.linalg.det(
+            np.cov(posterior_result[:3])
+        )
+        # This checks that the fields in the runpath are different between iterations
+        assert Path("simulations/realization-0/iter-0/my_param.grdecl").read_text(
+            encoding="utf-8"
+        ) != Path("simulations/realization-0/iter-1/my_param.grdecl").read_text(
+            encoding="utf-8"
         )

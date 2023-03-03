@@ -3,7 +3,7 @@ from argparse import Namespace
 
 import pytest
 
-from ert._c_wrappers.enkf import EnKFMain, ResConfig
+from ert._c_wrappers.enkf import EnKFMain, ErtConfig
 from ert.cli.workflow import execute_workflow
 from ert.shared.plugins.plugin_manager import ErtPluginContext
 
@@ -18,7 +18,7 @@ def test_executing_workflow():
         with open(config_file, "a", encoding="utf-8") as file_handle:
             file_handle.write("LOAD_WORKFLOW test_wf")
 
-        rc = ResConfig(user_config_file=config_file)
+        rc = ErtConfig.from_file(config_file)
         ert = EnKFMain(rc)
         args = Namespace(name="test_wf")
         # pylint: disable=no-member

@@ -4,6 +4,7 @@ import ssl
 from typing import Any, AnyStr, Dict, Optional, Union
 
 import cloudevents
+from typing_extensions import Self
 from websockets.client import WebSocketClientProtocol, connect
 from websockets.datastructures import Headers
 from websockets.exceptions import (
@@ -25,7 +26,7 @@ class ClientConnectionClosedOK(Exception):
 
 
 class Client:  # pylint: disable=too-many-instance-attributes
-    def __enter__(self) -> "Client":
+    def __enter__(self) -> Self:
         return self
 
     def __exit__(self, exc_type: Any, exc_value: Any, exc_traceback: Any) -> None:

@@ -4,7 +4,7 @@ import time
 
 import pytest
 
-from ert._c_wrappers.enkf import ResConfig
+from ert._c_wrappers.enkf import ErtConfig
 from ert._c_wrappers.job_queue import JobStatusType
 from ert.simulator import BatchSimulator
 
@@ -35,8 +35,8 @@ def batch_sim_example(setup_case):
     return setup_case("batch_sim", "batch_sim.ert")
 
 
-def test_that_simulator_raises_error_when_missing_resconfig():
-    with pytest.raises(ValueError, match="The first argument must be valid ResConfig"):
+def test_that_simulator_raises_error_when_missing_ertconfig():
+    with pytest.raises(ValueError, match="The first argument must be valid ErtConfig"):
         _ = BatchSimulator(
             "ARG",
             {
@@ -290,10 +290,10 @@ def test_that_batch_simulator_handles_invalid_suffixes_at_start(
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_batch_simulation_suffixes(batch_sim_example):
-    res_config = batch_sim_example
+    ert_config = batch_sim_example
     monitor = MockMonitor()
     rsim = BatchSimulator(
-        res_config,
+        ert_config,
         {
             "WELL_ORDER": {
                 "W1": ["a", "b"],
@@ -366,10 +366,10 @@ LOAD_WORKFLOW_JOB workflows/jobs/REALIZATION_NUMBER
         """
         )
 
-    res_config = ResConfig("sleepy_time.ert")
+    ert_config = ErtConfig.from_file("sleepy_time.ert")
 
     rsim = BatchSimulator(
-        res_config,
+        ert_config,
         {"WELL_ORDER": ["W1", "W2", "W3"], "WELL_ON_OFF": ["W1", "W2", "W3"]},
         ["ORDER", "ON_OFF"],
     )
@@ -436,14 +436,14 @@ def assertContextStatusOddFailures(batch_ctx, final_state_only=False):
 
 
 def test_batch_ctx_status_failing_jobs(setup_case):
-    res_config = setup_case("batch_sim", "batch_sim_sleep_and_fail.ert")
+    ert_config = setup_case("batch_sim", "batch_sim_sleep_and_fail.ert")
 
     external_parameters = {
         "WELL_ORDER": ("W1", "W2", "W3"),
         "WELL_ON_OFF": ("W1", "W2", "W3"),
     }
     results = ("ORDER", "ON_OFF")
-    rsim = BatchSimulator(res_config, external_parameters, results)
+    rsim = BatchSimulator(ert_config, external_parameters, results)
 
     cases = [
         (

@@ -1,5 +1,5 @@
 import logging
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, Optional, Tuple
 
 from ert._c_wrappers.config import ConfigContent
 from ert._c_wrappers.config.config_parser import ConfigValidationError
@@ -19,7 +19,6 @@ SINGLE_OCCURRENCE_SINGLE_ARG_KEYS = [
     ConfigKeys.ALPHA_KEY,
     ConfigKeys.ANALYSIS_SELECT,
     ConfigKeys.CONFIG_DIRECTORY,
-    ConfigKeys.DATAROOT,
     ConfigKeys.DATA_FILE,
     ConfigKeys.ECLBASE,
     ConfigKeys.ENSPATH,
@@ -78,13 +77,11 @@ JOIN_KEYS = [
 
 
 def config_content_as_dict(
-    user_config_content: "ConfigContent", site_config_content: "ConfigContent"
-) -> Dict[str, List[Any]]:
-    content_dict: Dict[str, List[Any]] = {}
-    for key in set(list(user_config_content.keys()) + list(site_config_content.keys())):
+    user_config_content: "ConfigContent", site_config_content: Optional[Dict[str, Any]]
+) -> Dict[str, Any]:
+    content_dict: Dict[str, Any] = site_config_content if site_config_content else {}
+    for key in set(list(user_config_content.keys())):
         items = []
-        if key in site_config_content:
-            items.append(site_config_content[key])
         if key in user_config_content:
             items.append(user_config_content[key])
         for item in items:
@@ -118,18 +115,13 @@ def config_content_as_dict(
             job_name, args = parse_signature_job("".join(model))
             parsed_jobs.append([job_name, args])
         content_dict[ConfigKeys.FORWARD_MODEL] = parsed_jobs
-    # Add the defines if they exits
-    defines = []
-    if isinstance(site_config_content, ConfigContent):
-        defines += [
-            [key, val] for key, val in site_config_content.get_const_define_list()
-        ]
+
     if isinstance(user_config_content, ConfigContent):
-        defines += [
+        defines = [
             [key, val] for key, val in user_config_content.get_const_define_list()
         ]
-    if defines:
-        content_dict[ConfigKeys.DEFINE_KEY] = defines
+        if defines:
+            content_dict[ConfigKeys.DEFINE_KEY] = defines
 
     return content_dict
 
@@ -165,7 +157,7 @@ def parse_signature_job(signature: str) -> Tuple[str, Optional[str]]:
     close_paren = signature.find(")")
     if close_paren == -1:
         raise ConfigValidationError(
-            errors=[f"Missing ) in FORWARD_MODEL job description {signature}"]
+            errors=[f"Missing ) in FORWARD_MODEL job description {signature!r}"]
         )
     if close_paren < len(signature) - 1:
         logger.warning(

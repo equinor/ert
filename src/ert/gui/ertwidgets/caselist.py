@@ -23,7 +23,7 @@ class AddRemoveWidget(QWidget):
     provided.
     """
 
-    def __init__(self, addFunction=None, removeFunction=None, horizontal=False):
+    def __init__(self, addFunction=None, removeFunction=None):
         QWidget.__init__(self)
 
         self.addButton = QToolButton(self)
@@ -36,29 +36,18 @@ class AddRemoveWidget(QWidget):
         self.removeButton.setIconSize(QSize(16, 16))
         self.removeButton.clicked.connect(removeFunction)
 
-        if horizontal:
-            self.buttonLayout = QHBoxLayout()
-        else:
-            self.buttonLayout = QVBoxLayout()
+        self.buttonLayout = QHBoxLayout()
 
         self.buttonLayout.setContentsMargins(0, 0, 0, 0)
 
-        if horizontal:
-            self.buttonLayout.addStretch(1)
+        self.buttonLayout.addStretch(1)
 
         self.buttonLayout.addWidget(self.addButton)
         self.buttonLayout.addWidget(self.removeButton)
 
-        if not horizontal:
-            self.buttonLayout.addStretch(1)
-        else:
-            self.buttonLayout.addSpacing(2)
+        self.buttonLayout.addSpacing(2)
 
         self.setLayout(self.buttonLayout)
-
-    def enableAddButton(self, state):
-        """Enable or disable the add button"""
-        self.addButton.setEnabled(state)
 
     def enableRemoveButton(self, state):
         """Enable or disable the remove button"""
@@ -79,14 +68,12 @@ class CaseList(QWidget):
         self._list.setMinimumHeight(100)
         self._list.setMaximumHeight(250)
         self._default_selection_mode = self._list.selectionMode()
-        self.setSelectable(False)
+        self._list.setSelectionMode(QAbstractItemView.NoSelection)
 
         layout.addWidget(QLabel("Available cases:"))
         layout.addWidget(self._list)
 
-        self._addRemoveWidget = AddRemoveWidget(
-            self.addItem, self.removeItem, horizontal=True
-        )
+        self._addRemoveWidget = AddRemoveWidget(self.addItem, self.removeItem)
         self._addRemoveWidget.enableRemoveButton(False)
         layout.addWidget(self._addRemoveWidget)
 
@@ -98,16 +85,11 @@ class CaseList(QWidget):
         notifier.ertChanged.connect(self.updateList)
         self.updateList()
 
-    def setSelectable(self, selectable):
-        if selectable:
-            self._list.setSelectionMode(self._default_selection_mode)
-        else:
-            self._list.setSelectionMode(QAbstractItemView.NoSelection)
-
     def addItem(self):
         dialog = ValidatedDialog(
             "New case", "Enter name of new case:", self.facade.cases()
         )
+        dialog.setParent(self)
         new_case_name = dialog.showAndTell()
         if not new_case_name == "":
             try:

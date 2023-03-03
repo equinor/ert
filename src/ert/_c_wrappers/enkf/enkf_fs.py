@@ -9,12 +9,13 @@ from ert import _clib
 from ert._c_wrappers import ResPrototype
 from ert._c_wrappers.enkf.config import EnkfConfigNode
 from ert._c_wrappers.enkf.enums import EnKFFSType
-from ert._c_wrappers.enkf.res_config import EnsembleConfig
+from ert._c_wrappers.enkf.ert_config import EnsembleConfig
 
 # flake8: noqa pylint: disable=unused-import
 from ert._c_wrappers.enkf.summary_key_set import SummaryKeySet
 from ert._c_wrappers.enkf.time_map import TimeMap
 from ert._clib import update
+from ert._clib.state_map import RealizationStateEnum
 
 if TYPE_CHECKING:
     from ecl.summary import EclSum
@@ -22,7 +23,6 @@ if TYPE_CHECKING:
 
     from ert._c_wrappers.enkf import RunArg
     from ert._c_wrappers.enkf.state_map import StateMap
-    from ert._clib.state_map import RealizationStateEnum
 
 
 class EnkfFs(BaseCClass):
@@ -76,6 +76,12 @@ class EnkfFs(BaseCClass):
             self._ensemble_config.parameters,
             self._ensemble_size,
         )
+
+    def realizations_initialized(self, realizations: List[int]):
+        initialized_realisations = self.realizationList(
+            RealizationStateEnum.STATE_INITIALIZED
+        )
+        return all(real in initialized_realisations for real in realizations)
 
     @classmethod
     def createFileSystem(

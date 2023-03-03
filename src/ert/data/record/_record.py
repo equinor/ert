@@ -1,11 +1,9 @@
 import json
-import pathlib
 import warnings
 from abc import ABC, abstractmethod
 from collections import deque
 from enum import Enum
 from typing import (
-    TYPE_CHECKING,
     Any,
     Dict,
     Generic,
@@ -22,11 +20,6 @@ from typing import (
 from beartype import beartype
 from beartype.roar import BeartypeDecorHintPepDeprecationWarning, BeartypeException
 from pydantic import PositiveInt
-
-import ert
-
-if TYPE_CHECKING:
-    from ._transformation import RecordTransformation
 
 # Mute PEP-585 warnings from Python 3.9:
 warnings.simplefilter(action="ignore", category=BeartypeDecorHintPepDeprecationWarning)
@@ -480,34 +473,3 @@ class RecordCollection:
         :class:`RecordCollectionType.UNIFORM`.
         """
         return self._collection_type
-
-
-async def load_collection_from_file(
-    transformation: "RecordTransformation",
-    length: int = 1,
-    root_path: pathlib.Path = pathlib.Path(),
-) -> RecordCollection:
-    """Creates :py:class:`RecordCollection` from the given path.
-
-    Args:
-        transformation: the transformation that will be used to get the
-            record(s) from disk
-        length: the number of records in the resulting collection. Defaults to 1.
-    """
-    assert isinstance(
-        transformation, ert.data.FileTransformation
-    ), f"file operation must have file transformation: '{type(transformation)}'"
-    if transformation.type == ert.data.TransformationType.NUMERICAL:
-        raw_ensrecord = await ert.serialization.get_serializer(
-            transformation.mime
-        ).decode_from_path(root_path / transformation.location)
-        return RecordCollection(
-            records=tuple(
-                NumericalRecord(data=raw_record) for raw_record in raw_ensrecord
-            )
-        )
-    return RecordCollection(
-        records=(await transformation.to_record(root_path),),
-        length=length,
-        collection_type=RecordCollectionType.UNIFORM,
-    )

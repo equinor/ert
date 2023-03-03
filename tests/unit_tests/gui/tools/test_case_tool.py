@@ -3,9 +3,9 @@ from unittest.mock import MagicMock
 
 import pytest
 from qtpy.QtCore import Qt
-from qtpy.QtWidgets import QPushButton
+from qtpy.QtWidgets import QPushButton, QTextEdit
 
-from ert._c_wrappers.enkf import EnKFMain, ResConfig
+from ert._c_wrappers.enkf import EnKFMain, ErtConfig
 from ert._clib.state_map import RealizationStateEnum
 from ert._clib.update import Parameter
 from ert.gui.tools.manage_cases.case_init_configuration import (
@@ -15,7 +15,7 @@ from ert.gui.tools.manage_cases.case_init_configuration import (
 
 @pytest.mark.usefixtures("copy_poly_case")
 def test_case_tool_init_prior(qtbot):
-    ert = EnKFMain(ResConfig("poly.ert"))
+    ert = EnKFMain(ErtConfig.from_file("poly.ert"))
     storage = ert.storage_manager.current_case
     assert (
         list(storage.getStateMap())
@@ -23,7 +23,8 @@ def test_case_tool_init_prior(qtbot):
     )
     tool = CaseInitializationConfigurationPanel(ert, MagicMock())
     qtbot.mouseClick(
-        tool.findChild(QPushButton, name="initialize_scratch_button"), Qt.LeftButton
+        tool.findChild(QPushButton, name="initialize_from_scratch_button"),
+        Qt.LeftButton,
     )
     assert (
         list(storage.getStateMap())
@@ -50,7 +51,7 @@ def test_that_case_tool_can_copy_case_state(qtbot):
         fh.writelines("MY_KEYWORD <MY_KEYWORD>")
     with open("prior.txt", "w", encoding="utf-8") as fh:
         fh.writelines("MY_KEYWORD NORMAL 0 1")
-    ert = EnKFMain(ResConfig("config.ert"))
+    ert = EnKFMain(ErtConfig.from_file("config.ert"))
     storage_manager = ert.storage_manager
 
     prior = storage_manager["default"]
@@ -74,3 +75,26 @@ def test_that_case_tool_can_copy_case_state(qtbot):
     ).flatten()[
         0
     ] == pytest.approx(-0.8814227775506998)
+
+
+@pytest.mark.usefixtures("copy_poly_case")
+def test_case_tool_init_updates_the_case_info_tab(qtbot):
+    ert = EnKFMain(ErtConfig.from_file("poly.ert"))
+    tool = CaseInitializationConfigurationPanel(ert, MagicMock())
+    html_edit = tool.findChild(QTextEdit, name="html_text")
+
+    assert not html_edit.toPlainText()
+    # Change to the "case info" tab
+    tool.setCurrentIndex(3)
+    assert "STATE_UNDEFINED" in html_edit.toPlainText()
+
+    # Change to the "initialize from scratch" tab
+    tool.setCurrentIndex(1)
+    qtbot.mouseClick(
+        tool.findChild(QPushButton, name="initialize_from_scratch_button"),
+        Qt.LeftButton,
+    )
+
+    # Change to the "case info" tab
+    tool.setCurrentIndex(3)
+    assert "STATE_INITIALIZED" in html_edit.toPlainText()
