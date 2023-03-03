@@ -6,6 +6,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <fmt/format.h>
+
 #include <ert/res_util/res_env.hpp>
 #include <ert/util/hash.hpp>
 #include <ert/util/parser.hpp>
@@ -403,7 +405,9 @@ bool config_schema_item_validate_set(const config_schema_item_type *item,
                             if (util_is_executable(relocated))
                                 stringlist_iset_copy(token_list, iarg,
                                                      relocated);
-
+                            else
+                                error_list.push_back(fmt::format(
+                                    "File not executable:{}", value));
                             free(relocated);
                             break;
                         }
