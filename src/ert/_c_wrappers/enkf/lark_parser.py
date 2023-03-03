@@ -38,6 +38,12 @@ class FileContextToken(Token):
         inst.filename = filename
         return inst
 
+    def __repr__(self):
+        return f"{self.value!r}"
+
+    def __str__(self):
+        return self.value
+
 
 class StringQuotationTransformer(Transformer):
     def STRING(self, token: Token) -> Token:
