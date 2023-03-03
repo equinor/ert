@@ -99,7 +99,7 @@ def _start_initial_gui_window(args, log_handler):
             suggestions += ErtConfig.make_suggestion_list(args.config)
             ert_config = ErtConfig.from_file(args.config)
             try:
-                ert_config_new = ErtConfig.from_file(args.config, new_parser=True)
+                ert_config_new = ErtConfig.from_file(args.config, use_new_parser=True)
                 if ert_config != ert_config_new:
                     fields = dataclasses.fields(ert_config)
                     difference = [

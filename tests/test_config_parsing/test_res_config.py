@@ -29,7 +29,7 @@ def test_bad_user_config_file_error_message(tmp_path):
     with pytest.raises(
         ConfigValidationError, match=r"Parsing.*resulted in the errors:"
     ):
-        rconfig = ErtConfig.from_file(str(tmp_path / "test.ert"), new_parser=False)
+        rconfig = ErtConfig.from_file(str(tmp_path / "test.ert"), use_new_parser=False)
 
     assert rconfig is None
 
@@ -312,7 +312,7 @@ def test_parsing_forward_model_with_double_dash_is_possible():
         fh.write(test_config_contents)
 
     res_config = ErtConfig.from_file(
-        user_config_file=test_config_file_name, new_parser=True
+        user_config_file=test_config_file_name, use_new_parser=True
     )
     assert res_config.model_config.jobname_format_string == "job_<IENS>--hei"
     assert (
@@ -341,7 +341,7 @@ def test_parsing_forward_model_with_quotes_does_not_introduce_spaces():
     with open(test_config_file_name, "w", encoding="utf-8") as fh:
         fh.write(test_config_contents)
 
-    ert_config = ErtConfig.from_file(test_config_file_name, new_parser=False)
+    ert_config = ErtConfig.from_file(test_config_file_name, use_new_parser=False)
     for _, value in ert_config.forward_model_list[0].private_args:
         assert " " not in value
 
@@ -365,7 +365,7 @@ def test_that_comments_are_ignored():
     with open(test_config_file_name, "w", encoding="utf-8") as fh:
         fh.write(test_config_contents)
 
-    res_config = ErtConfig.from_file(test_config_file_name, new_parser=True)
+    res_config = ErtConfig.from_file(test_config_file_name, use_new_parser=True)
     assert res_config.model_config.jobname_format_string == "job_<IENS>--hei"
     assert (
         res_config.forward_model_list[0].private_args["<TO>"]
@@ -392,7 +392,7 @@ def test_that_quotations_in_forward_model_arglist_are_handled_correctly():
     with open(test_config_file_name, "w", encoding="utf-8") as fh:
         fh.write(test_config_contents)
 
-    res_config = ErtConfig.from_file(test_config_file_name, new_parser=True)
+    res_config = ErtConfig.from_file(test_config_file_name, use_new_parser=True)
 
     assert res_config.forward_model_list[0].private_args["<FROM>"] == "some, thing"
     assert res_config.forward_model_list[0].private_args["<TO>"] == "some stuff"
@@ -421,7 +421,7 @@ def test_parsing_forward_model_with_quotes_in_unquoted_string_fails():
         fh.write(test_config_contents)
 
     with pytest.raises(ConfigValidationError, match="Expected one of"):
-        _ = ErtConfig.from_file(test_config_file_name, new_parser=True)
+        _ = ErtConfig.from_file(test_config_file_name, use_new_parser=True)
 
 
 @pytest.mark.usefixtures("use_tmpdir")

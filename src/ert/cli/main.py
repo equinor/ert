@@ -33,7 +33,7 @@ class ErtTimeoutError(Exception):
 def run_cli(args):
     ert_config = ErtConfig.from_file(args.config)
     try:
-        ert_config_new = ErtConfig.from_file(args.config, new_parser=True)
+        ert_config_new = ErtConfig.from_file(args.config, use_new_parser=True)
         if ert_config != ert_config_new:
             fields = dataclasses.fields(ert_config)
             difference = [
