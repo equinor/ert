@@ -135,7 +135,7 @@ def test_that_gui_gives_suggestions_when_you_have_umask_in_config(
     args = Mock()
     args.config = str(config_file)
     with add_gui_log_handler() as log_handler:
-        gui, _ = ert.gui.main._start_initial_gui_window(args, log_handler)
+        gui, _, _ = ert.gui.main._start_initial_gui_window(args, log_handler)
         assert gui.windowTitle() == "Some problems detected"
 
 
@@ -148,7 +148,7 @@ def test_that_errors_are_shown_in_the_suggester_window_when_present(
     args = Mock()
     args.config = str(config_file)
     with add_gui_log_handler() as log_handler:
-        gui, _ = ert.gui.main._start_initial_gui_window(args, log_handler)
+        gui, _, _ = ert.gui.main._start_initial_gui_window(args, log_handler)
         assert gui.windowTitle() == "Some problems detected"
 
 
@@ -157,7 +157,7 @@ def test_that_the_ui_show_no_warnings_when_observations_found(qapp):
     args = Mock()
     args.config = "poly.ert"
     with add_gui_log_handler() as log_handler:
-        gui, _ = ert.gui.main._start_initial_gui_window(args, log_handler)
+        gui, _, _ = ert.gui.main._start_initial_gui_window(args, log_handler)
         combo_box = gui.findChild(QComboBox, name="Simulation_mode")
         assert combo_box.count() == 5
 
@@ -174,7 +174,7 @@ def test_that_the_ui_show_warnings_when_there_are_no_observations(qapp, tmp_path
     args = Mock()
     args.config = str(config_file)
     with add_gui_log_handler() as log_handler:
-        gui, _ = ert.gui.main._start_initial_gui_window(args, log_handler)
+        gui, _, _ = ert.gui.main._start_initial_gui_window(args, log_handler)
         combo_box = gui.findChild(QComboBox, name="Simulation_mode")
         assert combo_box.count() == 5
 
@@ -191,7 +191,7 @@ def test_that_ert_starts_when_there_are_no_problems(monkeypatch, qapp, tmp_path)
     args = Mock()
     args.config = "poly.ert"
     with add_gui_log_handler() as log_handler:
-        gui, _ = ert.gui.main._start_initial_gui_window(args, log_handler)
+        gui, _, _ = ert.gui.main._start_initial_gui_window(args, log_handler)
         assert gui.windowTitle() == "ERT - poly.ert"
 
 
@@ -280,7 +280,7 @@ def test_help_buttons_in_suggester_dialog(monkeypatch, qapp, tmp_path, qtbot):
     args = Mock()
     args.config = str(config_file)
     with add_gui_log_handler() as log_handler:
-        gui, _ = ert.gui.main._start_initial_gui_window(args, log_handler)
+        gui, _, _ = ert.gui.main._start_initial_gui_window(args, log_handler)
         assert gui.windowTitle() == "Some problems detected"
 
         about_button = gui.findChild(QWidget, name="about_button")

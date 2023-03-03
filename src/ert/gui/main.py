@@ -3,6 +3,7 @@ import logging
 import os
 import warnings
 import webbrowser
+from typing import Optional
 
 from PyQt5.QtWidgets import (
     QFrame,
@@ -39,14 +40,14 @@ from ert.libres_facade import LibresFacade
 from ert.namespace import Namespace
 from ert.services import StorageService
 from ert.shared.plugins.plugin_manager import ErtPluginManager
-from ert.storage import open_storage
+from ert.storage import EnsembleAccessor, StorageReader, open_storage
 
 
 def run_gui(args: Namespace):
     app = QApplication([])  # Early so that QT is initialized before other imports
     app.setWindowIcon(resourceIcon("application/window_icon_cutout"))
     with add_gui_log_handler() as log_handler:
-        window, ens_path = _start_initial_gui_window(args, log_handler)
+        window, ens_path, ensemble_size = _start_initial_gui_window(args, log_handler)
 
         def show_window():
             window.show()
@@ -66,6 +67,9 @@ def run_gui(args: Namespace):
         ), open_storage(ens_path, mode=mode) as storage:
             if hasattr(window, "notifier"):
                 window.notifier.set_storage(storage)
+                window.notifier.set_current_case(
+                    _get_or_create_default_case(storage, ensemble_size)
+                )
             return show_window()
 
 
@@ -92,7 +96,11 @@ def _start_initial_gui_window(args, log_handler):
     except ConfigValidationError as error:
         error_messages.append(str(error))
         logger.info("Error in config file shown in gui: '%s'", str(error))
-        return _setup_suggester(error_messages, warning_messages, suggestions), None
+        return (
+            _setup_suggester(error_messages, warning_messages, suggestions),
+            None,
+            None,
+        )
 
     for job in ert_config.forward_model_list:
         logger.info("Config contains forward model job %s", job.name)
@@ -107,9 +115,29 @@ def _start_initial_gui_window(args, log_handler):
         return (
             _setup_suggester(error_messages, warning_msgs, suggestions, _main_window),
             ert_config.ens_path,
+            ert_config.model_config.num_realizations,
         )
     else:
-        return _main_window, ert_config.ens_path
+        return (
+            _main_window,
+            ert_config.ens_path,
+            ert_config.model_config.num_realizations,
+        )
+
+
+def _get_or_create_default_case(
+    storage: StorageReader, ensemble_size: int
+) -> Optional[EnsembleAccessor]:
+    try:
+        storage_accessor = storage.to_accessor()
+        try:
+            return storage_accessor.get_ensemble_by_name("default")
+        except KeyError:
+            return storage_accessor.create_experiment().create_ensemble(
+                name="default", ensemble_size=ensemble_size
+            )
+    except TypeError:
+        return None
 
 
 def _check_locale():
