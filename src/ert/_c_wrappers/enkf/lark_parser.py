@@ -279,6 +279,16 @@ class _TreeToDictTransformer:
                             f"Could not find executable {val.value!r}",
                             config_file=val.filename,
                         )
+                if not os.access(path, os.X_OK):
+                    context = (
+                        f"{val.value!r} which was resolved to {path!r}"
+                        if val.value != path
+                        else f"{val.value!r}"
+                    )
+                    raise ConfigValidationError(
+                        f"File not executable: {context}",
+                        config_file=val.filename,
+                    )
                 return path
             return str(val)
 

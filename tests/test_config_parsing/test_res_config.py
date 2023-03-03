@@ -1097,3 +1097,21 @@ def test_that_boolean_values_can_be_any_case(val, expected):
 
     ert_config = ErtConfig.from_file(test_config_file_name)
     assert ert_config.analysis_config.get_stop_long_running() == expected
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_not_executable_job_script_fails_gracefully():
+    """Given a non executable job script, we should fail gracefully"""
+
+    config_file_name = "config.ert"
+    script_name = "not-executable-script.py"
+    touch(script_name)
+    config_file_contents = dedent(
+        f"""NUM_REALIZATIONS 1
+         JOB_SCRIPT {script_name}
+         """
+    )
+    with open(config_file_name, mode="w", encoding="utf-8") as fh:
+        fh.write(config_file_contents)
+    with pytest.raises(ConfigValidationError, match=f"not executable.*{script_name}"):
+        ErtConfig.from_file(config_file_name)
