@@ -494,6 +494,7 @@ def init_user_config():
         string_keyword(MIN_REALIZATIONS_KEY),
         int_keyword(MAX_RUNTIME_KEY),
         string_keyword(ANALYSIS_SELECT_KEY),
+        stop_long_running_keyword(),
         analysis_copy_keyword(),
         analysis_set_var_keyword(),
         string_keyword(ITER_CASE_KEY),
