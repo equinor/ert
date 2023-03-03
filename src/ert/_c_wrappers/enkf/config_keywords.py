@@ -157,7 +157,7 @@ class SchemaItem(BaseModel):
     # Allowed values for arguments, if empty, all values allowed
     common_selection_set: List[str] = []
     # Allowed values for specific arguments, if no entry, all values allowed
-    indexed_selection_set: Mapping[int, List[str]] = []
+    indexed_selection_set: Mapping[int, List[str]] = {}
 
 
 def float_keyword(keyword):
