@@ -1017,7 +1017,7 @@ def test_that_define_string_quotes_are_removed():
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_that_include_checks_for_one_argument():
+def test_that_included_files_uses_paths_relative_to_itself():
     test_config_file_name = "test.ert"
     test_config_contents = dedent(
         """

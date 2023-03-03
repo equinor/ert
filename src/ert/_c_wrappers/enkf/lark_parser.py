@@ -228,6 +228,17 @@ class _TreeToDictTransformer:
             val_type = item.type_map[index]
             if val_type is None:
                 return val
+            if val_type == SchemaType.CONFIG_BOOL:
+                if val == "True":
+                    return True
+                elif val == "False":
+                    return False
+                else:
+                    raise ConfigValidationError(
+                        f"{item.kw!r} must have a boolean value"
+                        f" as argument {index + 1!r}",
+                        config_file=val.filename,
+                    ) from None
             if val_type == SchemaType.CONFIG_INT:
                 try:
                     return int(val)

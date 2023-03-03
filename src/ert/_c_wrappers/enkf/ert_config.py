@@ -341,8 +341,11 @@ class ErtConfig:
                 job.private_args = SubstitutionList()
                 try:
                     if isinstance(args, str):
+                        # this path is for the old parser, which still concatenates the args
                         job.private_args.add_from_string(args)
                     else:
+                        # this path is for the new parser, which parser the args into
+                        # separate keys and values
                         for key, val in args:
                             job.private_args.addItem(key, val)
                 except ValueError as err:
