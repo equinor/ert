@@ -134,7 +134,7 @@ def esmda_has_run(opened_main_window, request):
 
         qtbot.mouseClick(run_dialog.show_details_button, Qt.LeftButton)
 
-        qtbot.waitUntil(run_dialog.done_button.isVisible, timeout=2000000)
+        qtbot.waitUntil(run_dialog.done_button.isVisible, timeout=120000)
         qtbot.waitUntil(lambda: run_dialog._tab_widget.currentWidget() is not None)
 
         # Assert that the number of boxes in the detailed view is
