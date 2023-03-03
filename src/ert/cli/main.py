@@ -37,13 +37,14 @@ def run_cli(args):
         if ert_config != ert_config_new:
             fields = dataclasses.fields(ert_config)
             difference = [
-                f"{getattr(ert_config, field.name)} != {getattr(ert_config_new, field.name)}"
+                f"{getattr(ert_config, field.name)} !="
+                f" {getattr(ert_config_new, field.name)}"
                 for field in fields
                 if getattr(ert_config, field.name)
                 != getattr(ert_config_new, field.name)
             ]
             logging.info(
-                f"New parser gave different result.\n Difference: {difference!r}"
+                f"New parser gave different result.\n" f" Difference: {difference!r}"
             )
         else:
             logging.info("New parser gave equal result.")
