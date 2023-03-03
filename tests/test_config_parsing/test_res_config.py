@@ -1000,7 +1000,7 @@ def test_that_recursive_defines_fails_gracefully_and_logs(caplog):
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_that_define_string_quotes_are_removed(caplog):
+def test_that_define_string_quotes_are_removed():
     test_config_file_name = "test.ert"
     test_config_contents = dedent(
         """
