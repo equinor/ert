@@ -1,6 +1,7 @@
 #include <ert/enkf/enkf_config_node.hpp>
 #include <ert/enkf/enkf_node.hpp>
 #include <ert/enkf/ensemble_config.hpp>
+#include <ert/enkf/summary.hpp>
 
 #include <ert/python.hpp>
 
@@ -31,6 +32,8 @@ ERT_CLIB_SUBMODULE("enkf_fs_summary_data", m) {
                         double value = (index < summary_vector.size())
                                            ? summary_vector[index]
                                            : NAN;
+                        if (value == summary_undefined_value())
+                            value = NAN;
                         data(iens_index * time_map_size + (index - 1),
                              summary_key_index) = value;
                     }

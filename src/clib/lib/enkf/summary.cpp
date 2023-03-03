@@ -12,7 +12,7 @@
 #include <ert/enkf/enkf_util.hpp>
 #include <ert/enkf/summary.hpp>
 
-#define SUMMARY_UNDEF NAN
+#define SUMMARY_UNDEF -9999
 
 struct summary_struct {
     /** Can not be NULL - var_type is set on first load. */
