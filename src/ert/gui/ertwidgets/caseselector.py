@@ -1,5 +1,3 @@
-from qtpy.QtCore import Qt
-from qtpy.QtGui import QFont
 from qtpy.QtWidgets import QComboBox
 
 from ert.gui.ertnotifier import ErtNotifier
@@ -17,8 +15,6 @@ class CaseSelector(QComboBox):
         show_only_initialized: bool = False,
         ignore_current: bool = False,
         help_link: str = "init/current_case_selection",
-        *,
-        show_create_new_case: bool = False,
     ):
         self.facade = facade
         self.notifier = notifier
@@ -30,7 +26,6 @@ class CaseSelector(QComboBox):
         self._ignore_current = (
             ignore_current  # ignore the currently selected case if it changes
         )
-        self._show_create_new_case = show_create_new_case
 
         addHelpToWidget(self, help_link)
         self.setSizeAdjustPolicy(QComboBox.AdjustToContents)
@@ -67,23 +62,13 @@ class CaseSelector(QComboBox):
 
         self.clear()
 
-        if self._show_create_new_case:
-            new_case_font = QFont(self.font())
-            new_case_font.setItalic(True)
-            self.addItem("New case", userData=None)
-            self.setItemData(0, new_case_font, Qt.FontRole)
-
         for case in case_list:
-            self.addItem(f"{case.name} - {case.started_at}", userData=case)
+            self.addItem(case.name, userData=case)
 
         current_index = 0
         current_case = self.notifier.current_case
         if current_case in case_list:
             current_index = case_list.index(current_case)
-
-        if self._show_create_new_case:
-            # The first entry is "New case"
-            current_index += 1
 
         if current_index != self.currentIndex() and not self._ignore_current:
             self.setCurrentIndex(current_index)
