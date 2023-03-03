@@ -31,7 +31,7 @@ from ert._clib.config_keywords import init_site_config_parser, init_user_config_
 
 from ._config_content_as_dict import config_content_as_dict
 from ._deprecation_migration_suggester import DeprecationMigrationSuggester
-from .lark_parser import parse
+from .lark_parser import parse as lark_parse
 
 logger = logging.getLogger(__name__)
 
@@ -229,7 +229,7 @@ class ErtConfig:
     @classmethod
     def read_site_config(cls, new_parser=USE_NEW_PARSER_BY_DEFAULT):
         if new_parser:
-            return parse(site_config_location())
+            return lark_parse(site_config_location())
         else:
             site_config_parser = ConfigParser()
             init_site_config_parser(site_config_parser)
@@ -240,7 +240,7 @@ class ErtConfig:
     def read_user_config(cls, user_config_file, new_parser=USE_NEW_PARSER_BY_DEFAULT):
         site_config = cls.read_site_config(new_parser=new_parser)
         if new_parser:
-            return parse(user_config_file, site_config)
+            return lark_parse(user_config_file, site_config)
         else:
             user_config_parser = ErtConfig._create_user_config_parser()
             user_config_content = user_config_parser.parse(
