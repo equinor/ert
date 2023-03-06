@@ -983,7 +983,7 @@ def test_that_recursive_defines_fails_gracefully_and_logs(caplog):
     test_config_file_name = "test.ert"
     test_config_contents = dedent(
         """
-        DEFINE <A> <A>
+        DEFINE <A> 1<A>
         NUM_REALIZATIONS  <A>
         """
     )
@@ -994,8 +994,8 @@ def test_that_recursive_defines_fails_gracefully_and_logs(caplog):
         logging.WARNING
     ):
         _ = ErtConfig.from_file(test_config_file_name)
-        assert len(caplog.records) == 1
-        assert "max iterations" in caplog.records[0]
+    assert len(caplog.records) == 1
+    assert "max iterations" in caplog.records[0].msg
 
 
 @pytest.mark.usefixtures("use_tmpdir")
