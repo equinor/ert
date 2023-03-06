@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 from ert._c_wrappers.config import ConfigParser, ContentTypeEnum
@@ -66,7 +67,7 @@ SINGLE_OCCURRENCE_KEY_TYPES = {
     ConfigKeys.ITER_COUNT: "int",
     ConfigKeys.ITER_RETRY_COUNT: "int",
     ConfigKeys.JOBNAME: "str",
-    ConfigKeys.JOB_SCRIPT: "file_path",
+    ConfigKeys.JOB_SCRIPT: "executable_file_path",
     ConfigKeys.LICENSE_PATH: "file_path",
     ConfigKeys.MAX_RUNTIME: "int",
     ConfigKeys.MAX_SUBMIT: "int",
@@ -91,13 +92,17 @@ def test_config_content_as_dict_single_value_keys(tmpdir):
         conf = ConfigParser()
         existing_file_1 = "test_1.t"
         existing_file_2 = "test_2.t"
+        executable_existing_file = "script.py"
         Path(existing_file_2).write_text("something", encoding="utf-8")
         Path(existing_file_1).write_text("not important", encoding="utf-8")
+        Path(executable_existing_file).write_text("import gravity", encoding="utf-8")
+        os.chmod(executable_existing_file, 0x755)
         init_user_config_parser(conf)
         type_value_map = {
             "str": "abc",
             "path": tmpdir,
             "file_path": existing_file_1,
+            "executable_file_path": executable_existing_file,
             "bool": "TRUE",
             "float": 4.2,
             "int": 2,
