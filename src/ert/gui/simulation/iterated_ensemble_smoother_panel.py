@@ -35,7 +35,7 @@ class IteratedEnsembleSmootherPanel(SimulationConfigPanel):
 
         layout = QFormLayout()
 
-        case_selector = CaseSelector(self.facade, notifier)
+        case_selector = CaseSelector(notifier)
         layout.addRow("Current case:", case_selector)
 
         runpath_label = CopyableLabel(text=self.facade.run_path)

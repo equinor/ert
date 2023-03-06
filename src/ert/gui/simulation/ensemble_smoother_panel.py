@@ -36,7 +36,7 @@ class EnsembleSmootherPanel(SimulationConfigPanel):
 
         self.setObjectName("ensemble_smoother_panel")
 
-        self._case_selector = CaseSelector(facade, notifier)
+        self._case_selector = CaseSelector(notifier)
         layout.addRow("Current case:", self._case_selector)
 
         runpath_label = CopyableLabel(text=facade.run_path)

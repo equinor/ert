@@ -93,7 +93,7 @@ class CaseInitializationConfigurationPanel(QTabWidget):
         panel.setObjectName("initialize_from_scratch_panel")
         layout = QVBoxLayout()
 
-        target_case = CaseSelector(LibresFacade(self.ert), self.notifier)
+        target_case = CaseSelector(self.notifier)
         row = createRow(QLabel("Target case:"), target_case)
         layout.addLayout(row)
 
@@ -132,12 +132,11 @@ class CaseInitializationConfigurationPanel(QTabWidget):
         widget.setObjectName("intialize_from_existing_panel")
         layout = QVBoxLayout()
 
-        target_case = CaseSelector(LibresFacade(self.ert), self.notifier)
+        target_case = CaseSelector(self.notifier)
         row = createRow(QLabel("Target case:"), target_case)
         layout.addLayout(row)
 
         source_case = CaseSelector(
-            LibresFacade(self.ert),
             self.notifier,
             update_ert=False,
             show_only_initialized=True,
@@ -219,7 +218,6 @@ class CaseInitializationConfigurationPanel(QTabWidget):
         layout = QVBoxLayout()
 
         case_selector = CaseSelector(
-            LibresFacade(self.ert),
             self.notifier,
             update_ert=False,
             help_link="init/selected_case_info",

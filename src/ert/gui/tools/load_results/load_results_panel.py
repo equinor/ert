@@ -34,10 +34,7 @@ class LoadResultsPanel(QWidget):
 
         layout.addRow("Load data from current run path: ", run_path_text)
 
-        case_selector = CaseSelector(
-            self._facade,
-            self._notifier,
-        )
+        case_selector = CaseSelector(self._notifier)
         layout.addRow("Load into case:", case_selector)
 
         self._active_realizations_model = ActiveRealizationsModel(self._facade)

@@ -36,7 +36,7 @@ class EnsembleExperimentPanel(SimulationConfigPanel):
 
         layout = QFormLayout()
 
-        self._case_selector = CaseSelector(self.facade, notifier)
+        self._case_selector = CaseSelector(notifier)
         layout.addRow("Current case:", self._case_selector)
         runpath_label = CopyableLabel(text=self.facade.run_path)
         layout.addRow("Runpath:", runpath_label)
