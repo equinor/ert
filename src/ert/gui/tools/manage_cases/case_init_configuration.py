@@ -157,6 +157,8 @@ class CaseInitializationConfigurationPanel(QTabWidget):
         initialize_button = QPushButton(
             "Initialize", objectName="initialize_existing_button"
         )
+        if source_case.currentData() is None or target_case.currentData() is None:
+            initialize_button.setEnabled(False)
         addHelpToWidget(initialize_button, "init/initialize_from_existing")
         initialize_button.setMinimumWidth(75)
         initialize_button.setMaximumWidth(150)
