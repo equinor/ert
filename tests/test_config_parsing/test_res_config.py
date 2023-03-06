@@ -311,9 +311,7 @@ def test_parsing_forward_model_with_double_dash_is_possible():
     with open(test_config_file_name, "w", encoding="utf-8") as fh:
         fh.write(test_config_contents)
 
-    res_config = ErtConfig.from_file(
-        user_config_file=test_config_file_name, use_new_parser=True
-    )
+    res_config = ErtConfig.from_file(test_config_file_name, use_new_parser=True)
     assert res_config.model_config.jobname_format_string == "job_<IENS>--hei"
     assert (
         res_config.forward_model_list[0].private_args["<TO>"]
@@ -690,7 +688,7 @@ def test_that_substitutions_can_be_done_in_job_names():
     with open(test_config_file_name, "w", encoding="utf-8") as fh:
         fh.write(test_config_contents)
 
-    ert_config = ErtConfig.from_file(user_config_file=test_config_file_name)
+    ert_config = ErtConfig.from_file(test_config_file_name)
     assert len(ert_config.forward_model_list) == 1
     job = ert_config.forward_model_list[0]
     assert job.name == "ECLIPSE100"
@@ -744,7 +742,7 @@ def test_that_installing_two_forward_model_jobs_with_the_same_name_warn():
         fh.write(test_config_contents)
 
     with pytest.warns(ConfigWarning, match="Duplicate forward model job"):
-        _ = ErtConfig.from_file(user_config_file=test_config_file_name)
+        _ = ErtConfig.from_file(test_config_file_name)
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -764,7 +762,7 @@ def test_that_installing_two_forward_model_jobs_with_the_same_name_warn_with_dir
         fh.write(test_config_contents)
 
     with pytest.warns(ConfigWarning, match="Duplicate forward model job"):
-        _ = ErtConfig.from_file(user_config_file=test_config_file_name)
+        _ = ErtConfig.from_file(test_config_file_name)
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -795,7 +793,7 @@ def test_that_workflows_with_errors_are_not_loaded():
         fh.write(test_config_contents)
 
     with pytest.warns(ConfigWarning, match="Encountered error.*while reading workflow"):
-        ert_config = ErtConfig.from_file(user_config_file=test_config_file_name)
+        ert_config = ErtConfig.from_file(test_config_file_name)
         assert "wf" not in ert_config.workflows
 
 
@@ -829,7 +827,7 @@ def test_that_failing_to_load_ert_script_with_errors_fails_gracefully(load_state
     with pytest.warns(
         ConfigWarning, match="Loading workflow job.*failed.*It will not be loaded."
     ):
-        ert_config = ErtConfig.from_file(user_config_file=test_config_file_name)
+        ert_config = ErtConfig.from_file(test_config_file_name)
         assert "wf" not in ert_config.workflows
 
 
@@ -848,7 +846,7 @@ def test_that_define_statements_with_less_than_one_argument_raises_error():
     with pytest.raises(
         ConfigValidationError, match="Keyword:DEFINE must have two or more"
     ):
-        _ = ErtConfig.from_file(user_config_file=test_config_file_name)
+        _ = ErtConfig.from_file(test_config_file_name)
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -1062,7 +1060,7 @@ def test_that_spaces_in_forward_model_args_are_dropped():
     with open(test_config_file_name, "w", encoding="utf-8") as fh:
         fh.write(test_config_contents)
 
-    ert_config = ErtConfig.from_file(user_config_file=test_config_file_name)
+    ert_config = ErtConfig.from_file(test_config_file_name)
     assert len(ert_config.forward_model_list) == 1
     job = ert_config.forward_model_list[0]
     assert job.private_args.get("<VERSION>") == "smersion"
