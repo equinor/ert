@@ -101,11 +101,11 @@ class CaseList(QWidget):
         )
         new_case_name = dialog.showAndTell()
         if not new_case_name == "":
-            self.storage.create_ensemble(
-                self.storage.create_experiment(),
+            ensemble = self.storage.create_experiment().create_ensemble(
                 name=new_case_name,
                 ensemble_size=self.facade.get_ensemble_size(),
             )
+            self.notifier.set_current_case(ensemble)
             self.notifier.ertChanged.emit()
 
     def removeItem(self):

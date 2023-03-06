@@ -65,6 +65,11 @@ def opened_main_window(source_root, tmpdir_factory, request):
         ), open_storage(poly_case.ert_config.ens_path, mode="w") as storage:
             gui = _setup_main_window(poly_case, args_mock, GUILogHandler())
             gui.notifier.set_storage(storage)
+            gui.notifier.set_current_case(
+                storage.create_experiment().create_ensemble(
+                    name="default", ensemble_size=poly_case.getEnsembleSize()
+                )
+            )
             yield gui, poly_case.getEnsembleSize()
 
 
@@ -180,6 +185,7 @@ def test_that_the_plot_window_contains_the_expected_elements(
         combo_box.setCurrentIndex(i)
         case_names.append(combo_box.currentText())
     assert sorted(case_names) == [
+        "default",
         "default_0",
         "default_0",
         "default_1",
@@ -223,7 +229,13 @@ def test_that_the_plot_window_contains_the_expected_elements(
         combo_boxes: List[QComboBox] = case_selection.findChildren(
             QComboBox
         )  # type: ignore
-    assert len(case_selection.findChildren(QComboBox)) == len(case_names)
+    assert {x.currentText() for x in case_selection.findChildren(QComboBox)} == {
+        "default",
+        "default_0",
+        "default_1",
+        "default_2",
+        "default_3",
+    }
 
     # Cycle through showing all the tabs and plot each data key
 
@@ -265,7 +277,7 @@ def test_that_the_manage_cases_tool_can_be_used(
         assert isinstance(case_list, CaseList)
 
         # The case list should contain the expected cases
-        assert case_list._list.count() == 5
+        assert case_list._list.count() == 6
 
         # Click add case and name it "new_case"
         def handle_add_dialog():
@@ -278,7 +290,7 @@ def test_that_the_manage_cases_tool_can_be_used(
         qtbot.mouseClick(create_widget.addButton, Qt.LeftButton)
 
         # The list should now contain "new_case"
-        assert case_list._list.count() == 6
+        assert case_list._list.count() == 7
 
         # Go to the "initialize from scratch" panel
         cases_panel.setCurrentIndex(1)
