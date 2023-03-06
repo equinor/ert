@@ -64,7 +64,6 @@ def test_that_the_plot_window_contains_the_expected_elements(
     assert sorted(case_names) == [
         "default",
         "default_0",
-        "default_0",
         "default_1",
         "default_2",
         "default_3",
@@ -144,7 +143,7 @@ def test_that_the_manage_cases_tool_can_be_used(
         assert isinstance(case_list, CaseList)
 
         # The case list should contain the expected cases
-        assert case_list._list.count() == 5
+        assert case_list._list.count() == 4
 
         # Click add case and name it "new_case"
         def handle_add_dialog():
@@ -157,7 +156,7 @@ def test_that_the_manage_cases_tool_can_be_used(
         qtbot.mouseClick(create_widget.addButton, Qt.LeftButton)
 
         # The list should now contain "new_case"
-        assert case_list._list.count() == 6
+        assert case_list._list.count() == 5
 
         # Go to the "initialize from scratch" panel
         cases_panel.setCurrentIndex(1)

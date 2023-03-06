@@ -86,22 +86,18 @@ def _setup_ensemble_smoother(ert: EnKFMain, storage, args, experiment_id):
 
 def _setup_multiple_data_assimilation(ert, storage, args, experiment_id):
     # Because the configuration of the CLI is different from the gui, we
-    # infer the restart status from the starting iteration.
-    if not hasattr(args, "restart_run"):
-        restart_run = int(args.start_iteration) != 0
-        prior_ensemble = (
-            None if not restart_run else storage.get_ensemble_by_name(args.current_case)
-        )
+    # have a different way to get the restart information.
+    if hasattr(args, "restart_case"):
+        restart_run = args.restart_case is not None
+        prior_ensemble = args.restart_case
     else:
         restart_run = args.restart_run
         prior_ensemble = args.prior_ensemble
     simulations_argument = {
         "active_realizations": _realizations(args, ert.getEnsembleSize()),
-        "current_case": args.current_case,
         "target_case": _target_case_name(ert, args, format_mode=True),
         "analysis_module": "STD_ENKF",
         "weights": args.weights,
-        "start_iteration": int(args.start_iteration),
         "num_iterations": len(args.weights),
         "restart_run": restart_run,
         "prior_ensemble": prior_ensemble,

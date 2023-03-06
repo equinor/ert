@@ -29,11 +29,9 @@ from .simulation_config_panel import SimulationConfigPanel
 @dataclass
 class Arguments:
     mode: str
-    current_case: str
     target_case: str
     realizations: str
     weights: List[float]
-    start_iteration: int
     restart_run: bool
     prior_ensemble: str
 
@@ -91,14 +89,6 @@ class MultipleDataAssimilationPanel(SimulationConfigPanel):
         self._case_selector = CaseSelector(notifier)
         layout.addRow("Restart from:", self._case_selector)
         self._case_selector.setDisabled(True)
-        value_model = IterValueModel(notifier, default_value=1)
-        self._iter_field = StringBox(value_model, "config/simulation/iter_num")
-        self._iter_field.setValidator(
-            IntegerArgument(from_value=1),
-        )
-
-        self._iter_field.setDisabled(True)
-        layout.addRow("Start iteration:", self._iter_field)
 
         self._target_case_format_field.getValidationSupport().validationChanged.connect(  # noqa
             self.simulationConfigurationChanged
@@ -114,10 +104,8 @@ class MultipleDataAssimilationPanel(SimulationConfigPanel):
 
     def restart_run(self):
         if self._restart_box.isChecked():
-            self._iter_field.setEnabled(True)
             self._case_selector.setEnabled(True)
         else:
-            self._iter_field.setEnabled(False)
             self._case_selector.setEnabled(False)
 
     def _createInputForWeights(self, layout):
@@ -174,11 +162,9 @@ class MultipleDataAssimilationPanel(SimulationConfigPanel):
     def getSimulationArguments(self):
         return Arguments(
             mode="es_mda",
-            current_case=self.notifier.current_case_name,
             target_case=self._target_case_format_model.getValue(),
             realizations=self._active_realizations_field.text(),
             weights=self.weights,
-            start_iteration=int(self._iter_field.model.getValue()),
             restart_run=self._restart_box.isChecked(),
             prior_ensemble=self._case_selector.currentText(),
         )
