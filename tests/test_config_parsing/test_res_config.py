@@ -1,3 +1,4 @@
+# pylint: disable=too-many-lines
 import logging
 import os
 import os.path
@@ -28,7 +29,7 @@ def test_bad_user_config_file_error_message(tmp_path):
     with pytest.raises(
         ConfigValidationError, match=r"Parsing.*resulted in the errors:"
     ):
-        rconfig = ErtConfig.from_file(str(tmp_path / "test.ert"))
+        rconfig = ErtConfig.from_file(str(tmp_path / "test.ert"), use_new_parser=False)
 
     assert rconfig is None
 
@@ -293,6 +294,32 @@ def test_that_a_config_warning_is_given_when_eclbase_and_jobname_is_given():
 
 
 @pytest.mark.usefixtures("use_tmpdir")
+def test_parsing_forward_model_with_double_dash_is_possible():
+    """This is a regression test, making sure that we can put double dashes in strings.
+    The use case is that a file name is utilized that contains two consecutive hyphens,
+    which by the ert config parser used to be interpreted as a comment. In the new
+    parser this is allowed"""
+
+    test_config_file_name = "test.ert"
+    test_config_contents = dedent(
+        """
+        NUM_REALIZATIONS  1
+        JOBNAME job_%d--hei
+        FORWARD_MODEL COPY_FILE(<FROM>=foo,<TO>=something/hello--there.txt)
+        """
+    )
+    with open(test_config_file_name, "w", encoding="utf-8") as fh:
+        fh.write(test_config_contents)
+
+    res_config = ErtConfig.from_file(test_config_file_name, use_new_parser=True)
+    assert res_config.model_config.jobname_format_string == "job_<IENS>--hei"
+    assert (
+        res_config.forward_model_list[0].private_args["<TO>"]
+        == "something/hello--there.txt"
+    )
+
+
+@pytest.mark.usefixtures("use_tmpdir")
 def test_parsing_forward_model_with_quotes_does_not_introduce_spaces():
     """this is a regression test, making sure that we do not by mistake introduce
     spaces while parsing forward model lines that contain quotation marks
@@ -312,9 +339,87 @@ def test_parsing_forward_model_with_quotes_does_not_introduce_spaces():
     with open(test_config_file_name, "w", encoding="utf-8") as fh:
         fh.write(test_config_contents)
 
-    ert_config = ErtConfig.from_file(test_config_file_name)
+    ert_config = ErtConfig.from_file(test_config_file_name, use_new_parser=False)
     for _, value in ert_config.forward_model_list[0].private_args:
         assert " " not in value
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_comments_are_ignored():
+    """This is a regression test, making sure that we can put double dashes in strings.
+    The use case is that a file name is utilized that contains two consecutive hyphens,
+    which by the ert config parser used to be interpreted as a comment. In the new
+    parser this is allowed"""
+
+    test_config_file_name = "test.ert"
+    test_config_contents = dedent(
+        """
+        NUM_REALIZATIONS  1
+        --comment
+        JOBNAME job_%d--hei --hei
+        FORWARD_MODEL COPY_FILE(<FROM>=foo,<TO>=something/hello--there.txt)--foo
+        """
+    )
+    with open(test_config_file_name, "w", encoding="utf-8") as fh:
+        fh.write(test_config_contents)
+
+    res_config = ErtConfig.from_file(test_config_file_name, use_new_parser=True)
+    assert res_config.model_config.jobname_format_string == "job_<IENS>--hei"
+    assert (
+        res_config.forward_model_list[0].private_args["<TO>"]
+        == "something/hello--there.txt"
+    )
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_quotations_in_forward_model_arglist_are_handled_correctly():
+    """This is a regression test, making sure that string behave consistently
+    The previous fail cases are described in the comments of the config. They
+     should all result in the same
+     See https://github.com/equinor/ert/issues/2766"""
+
+    test_config_file_name = "test.ert"
+    test_config_contents = dedent(
+        """
+        NUM_REALIZATIONS  1
+        FORWARD_MODEL COPY_FILE(<FROM>='some, thing', <TO>="some stuff", <FILE>=file.txt) -- success
+        FORWARD_MODEL COPY_FILE(<FROM>='some, thing', <TO>='some stuff', <FILE>=file.txt) -- some stuff becomes somestuff
+        FORWARD_MODEL COPY_FILE(<FROM>="some, thing", <TO>="some stuff", <FILE>=file.txt) -- util abort
+        """  # noqa: E501
+    )
+    with open(test_config_file_name, "w", encoding="utf-8") as fh:
+        fh.write(test_config_contents)
+
+    res_config = ErtConfig.from_file(test_config_file_name, use_new_parser=True)
+
+    assert res_config.forward_model_list[0].private_args["<FROM>"] == "some, thing"
+    assert res_config.forward_model_list[0].private_args["<TO>"] == "some stuff"
+    assert res_config.forward_model_list[0].private_args["<FILE>"] == "file.txt"
+
+    assert res_config.forward_model_list[1].private_args["<FROM>"] == "some, thing"
+    assert res_config.forward_model_list[1].private_args["<TO>"] == "some stuff"
+    assert res_config.forward_model_list[1].private_args["<FILE>"] == "file.txt"
+
+    assert res_config.forward_model_list[2].private_args["<FROM>"] == "some, thing"
+    assert res_config.forward_model_list[2].private_args["<TO>"] == "some stuff"
+    assert res_config.forward_model_list[2].private_args["<FILE>"] == "file.txt"
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_parsing_forward_model_with_quotes_in_unquoted_string_fails():
+    test_config_file_name = "test.ert"
+    test_config_contents = dedent(
+        """
+        NUM_REALIZATIONS  1
+        JOBNAME job_%d
+        FORWARD_MODEL COPY_FILE(<FROM>=foo,<TO>=something/"hello--there.txt")
+        """
+    )
+    with open(test_config_file_name, "w", encoding="utf-8") as fh:
+        fh.write(test_config_contents)
+
+    with pytest.raises(ConfigValidationError, match="Expected one of"):
+        _ = ErtConfig.from_file(test_config_file_name, use_new_parser=True)
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -583,7 +688,7 @@ def test_that_substitutions_can_be_done_in_job_names():
     with open(test_config_file_name, "w", encoding="utf-8") as fh:
         fh.write(test_config_contents)
 
-    ert_config = ErtConfig.from_file(user_config_file=test_config_file_name)
+    ert_config = ErtConfig.from_file(test_config_file_name)
     assert len(ert_config.forward_model_list) == 1
     job = ert_config.forward_model_list[0]
     assert job.name == "ECLIPSE100"
@@ -623,24 +728,6 @@ def test_that_include_statements_with_multiple_values_raises_error():
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_that_define_statements_with_less_than_one_argument_raises_error():
-    test_config_file_name = "test.ert"
-    test_config_contents = dedent(
-        """
-        NUM_REALIZATIONS  1
-        DEFINE <USER>
-        """
-    )
-    with open(test_config_file_name, "w", encoding="utf-8") as fh:
-        fh.write(test_config_contents)
-
-    with pytest.raises(
-        ConfigValidationError, match="Keyword:DEFINE must have two or more"
-    ):
-        _ = ErtConfig.from_file(user_config_file=test_config_file_name)
-
-
-@pytest.mark.usefixtures("use_tmpdir")
 def test_that_installing_two_forward_model_jobs_with_the_same_name_warn():
     test_config_file_name = "test.ert"
     Path("job").write_text("EXECUTABLE echo\n", encoding="utf-8")
@@ -655,7 +742,7 @@ def test_that_installing_two_forward_model_jobs_with_the_same_name_warn():
         fh.write(test_config_contents)
 
     with pytest.warns(ConfigWarning, match="Duplicate forward model job"):
-        _ = ErtConfig.from_file(user_config_file=test_config_file_name)
+        _ = ErtConfig.from_file(test_config_file_name)
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -675,7 +762,7 @@ def test_that_installing_two_forward_model_jobs_with_the_same_name_warn_with_dir
         fh.write(test_config_contents)
 
     with pytest.warns(ConfigWarning, match="Duplicate forward model job"):
-        _ = ErtConfig.from_file(user_config_file=test_config_file_name)
+        _ = ErtConfig.from_file(test_config_file_name)
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -706,7 +793,7 @@ def test_that_workflows_with_errors_are_not_loaded():
         fh.write(test_config_contents)
 
     with pytest.warns(ConfigWarning, match="Encountered error.*while reading workflow"):
-        ert_config = ErtConfig.from_file(user_config_file=test_config_file_name)
+        ert_config = ErtConfig.from_file(test_config_file_name)
         assert "wf" not in ert_config.workflows
 
 
@@ -740,5 +827,273 @@ def test_that_failing_to_load_ert_script_with_errors_fails_gracefully(load_state
     with pytest.warns(
         ConfigWarning, match="Loading workflow job.*failed.*It will not be loaded."
     ):
-        ert_config = ErtConfig.from_file(user_config_file=test_config_file_name)
+        ert_config = ErtConfig.from_file(test_config_file_name)
         assert "wf" not in ert_config.workflows
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_define_statements_with_less_than_one_argument_raises_error():
+    test_config_file_name = "test.ert"
+    test_config_contents = dedent(
+        """
+        NUM_REALIZATIONS  1
+        DEFINE <USER>
+        """
+    )
+    with open(test_config_file_name, "w", encoding="utf-8") as fh:
+        fh.write(test_config_contents)
+
+    with pytest.raises(
+        ConfigValidationError, match="Keyword:DEFINE must have two or more"
+    ):
+        _ = ErtConfig.from_file(test_config_file_name)
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_giving_non_int_values_give_config_validation_error():
+    test_config_file_name = "test.ert"
+    test_config_contents = dedent(
+        """
+        NUM_REALIZATIONS  hello
+        """
+    )
+    with open(test_config_file_name, "w", encoding="utf-8") as fh:
+        fh.write(test_config_contents)
+
+    with pytest.raises(ConfigValidationError, match="integer"):
+        _ = ErtConfig.from_file(test_config_file_name)
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_giving_non_float_values_give_config_validation_error():
+    test_config_file_name = "test.ert"
+    test_config_contents = dedent(
+        """
+        NUM_REALIZATIONS  1
+        ENKF_ALPHA  hello
+        """
+    )
+    with open(test_config_file_name, "w", encoding="utf-8") as fh:
+        fh.write(test_config_contents)
+
+    with pytest.raises(ConfigValidationError, match="number"):
+        _ = ErtConfig.from_file(test_config_file_name)
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_giving_non_executable_gives_config_validation_error():
+    test_config_file_name = "test.ert"
+    test_config_contents = dedent(
+        """
+        NUM_REALIZATIONS  1
+        JOB_SCRIPT  hello
+        """
+    )
+    with open(test_config_file_name, "w", encoding="utf-8") as fh:
+        fh.write(test_config_contents)
+
+    with pytest.raises(ConfigValidationError, match="[Ee]xecutable"):
+        _ = ErtConfig.from_file(test_config_file_name)
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_giving_too_many_arguments_gives_config_validation_error():
+    test_config_file_name = "test.ert"
+    test_config_contents = dedent(
+        """
+        NUM_REALIZATIONS  1
+        ENKF_ALPHA 1.0 2.0 3.0
+        """
+    )
+    with open(test_config_file_name, "w", encoding="utf-8") as fh:
+        fh.write(test_config_contents)
+
+    with pytest.raises(ConfigValidationError, match="maximum 1 arguments"):
+        _ = ErtConfig.from_file(test_config_file_name)
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_giving_too_few_arguments_gives_config_validation_error():
+    test_config_file_name = "test.ert"
+    test_config_contents = dedent(
+        """
+        NUM_REALIZATIONS  1
+        ENKF_ALPHA
+        """
+    )
+    with open(test_config_file_name, "w", encoding="utf-8") as fh:
+        fh.write(test_config_contents)
+
+    with pytest.raises(ConfigValidationError, match="at least 1 arguments"):
+        _ = ErtConfig.from_file(test_config_file_name)
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_include_statements_work():
+    test_config_file_name = "test.ert"
+    test_config_contents = dedent(
+        """
+        NUM_REALIZATIONS  1
+        INCLUDE include.ert
+        """
+    )
+    test_include_file_name = "include.ert"
+    test_include_contents = dedent(
+        """
+        JOBNAME included
+        """
+    )
+    with open(test_config_file_name, "w", encoding="utf-8") as fh:
+        fh.write(test_config_contents)
+    with open(test_include_file_name, "w", encoding="utf-8") as fh:
+        fh.write(test_include_contents)
+
+    ert_config = ErtConfig.from_file(test_config_file_name)
+    assert ert_config.model_config.jobname_format_string == "included"
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_giving_incorrect_queue_name_in_queue_option_fails():
+    test_config_file_name = "test.ert"
+    test_config_contents = dedent(
+        """
+        NUM_REALIZATIONS  1
+        QUEUE_OPTION VOCAL MAX_RUNNING 50
+        """
+    )
+    with open(test_config_file_name, "w", encoding="utf-8") as fh:
+        fh.write(test_config_contents)
+
+    with pytest.raises(ConfigValidationError, match="VOCAL"):
+        _ = ErtConfig.from_file(test_config_file_name)
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_giving_no_keywords_fails_gracefully():
+    test_config_file_name = "test.ert"
+    with open(test_config_file_name, "w", encoding="utf-8") as fh:
+        fh.write("")
+
+    with pytest.raises(ConfigValidationError, match="must be set"):
+        _ = ErtConfig.from_file(test_config_file_name)
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_recursive_defines_fails_gracefully_and_logs(caplog):
+    test_config_file_name = "test.ert"
+    test_config_contents = dedent(
+        """
+        DEFINE <A> 1<A>
+        NUM_REALIZATIONS  <A>
+        """
+    )
+    with open(test_config_file_name, "w", encoding="utf-8") as fh:
+        fh.write(test_config_contents)
+
+    with pytest.raises(ConfigValidationError, match="integer"), caplog.at_level(
+        logging.WARNING
+    ):
+        _ = ErtConfig.from_file(test_config_file_name)
+    assert len(caplog.records) == 1
+    assert "max iterations" in caplog.records[0].msg
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_define_string_quotes_are_removed():
+    test_config_file_name = "test.ert"
+    test_config_contents = dedent(
+        """
+        DEFINE <A> "A"
+        NUM_REALIZATIONS 1
+        """
+    )
+    with open(test_config_file_name, "w", encoding="utf-8") as fh:
+        fh.write(test_config_contents)
+
+    ert_Config = ErtConfig.from_file(test_config_file_name)
+    assert ert_Config.substitution_list.get("<A>") == "A"
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_included_files_uses_paths_relative_to_itself():
+    test_config_file_name = "test.ert"
+    test_config_contents = dedent(
+        """
+        NUM_REALIZATIONS 1
+        INCLUDE includes/install_jobs.ert
+        """
+    )
+    os.mkdir("includes")
+    test_include_file_name = "includes/install_jobs.ert"
+    test_include_contents = dedent(
+        """
+        INSTALL_JOB FM ../FM
+        """
+    )
+    test_fm_file_name = "FM"
+    test_fm_contents = dedent(
+        """
+        EXECUTABLE echo
+        """
+    )
+    with open(test_config_file_name, "w", encoding="utf-8") as fh:
+        fh.write(test_config_contents)
+    with open(test_include_file_name, "w", encoding="utf-8") as fh:
+        fh.write(test_include_contents)
+    with open(test_fm_file_name, "w", encoding="utf-8") as fh:
+        fh.write(test_fm_contents)
+
+    ert_config = ErtConfig.from_file(test_config_file_name)
+    assert ert_config.installed_jobs["FM"].name == "FM"
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_spaces_in_forward_model_args_are_dropped():
+    test_config_file_name = "test.ert"
+    # Intentionally inserted several spaces before comma
+    test_config_contents = dedent(
+        """
+        NUM_REALIZATIONS  1
+        FORWARD_MODEL ECLIPSE100(<VERSION>=smersion                    , <NUM_CPU>=42)
+        """
+    )
+    with open(test_config_file_name, "w", encoding="utf-8") as fh:
+        fh.write(test_config_contents)
+
+    ert_config = ErtConfig.from_file(test_config_file_name)
+    assert len(ert_config.forward_model_list) == 1
+    job = ert_config.forward_model_list[0]
+    assert job.private_args.get("<VERSION>") == "smersion"
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_invalid_boolean_values_are_handled_gracefully():
+    test_config_file_name = "test.ert"
+    test_config_contents = dedent(
+        """
+        NUM_REALIZATIONS  1
+        STOP_LONG_RUNNING NOT_YES
+        """
+    )
+    with open(test_config_file_name, "w", encoding="utf-8") as fh:
+        fh.write(test_config_contents)
+
+    with pytest.raises(ConfigValidationError, match="boolean"):
+        _ = ErtConfig.from_file(test_config_file_name)
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.parametrize("val, expected", [("TrUe", True), ("FaLsE", False)])
+def test_that_boolean_values_can_be_any_case(val, expected):
+    test_config_file_name = "test.ert"
+    test_config_contents = dedent(
+        f"""
+        NUM_REALIZATIONS  1
+        STOP_LONG_RUNNING {val}
+        """
+    )
+    with open(test_config_file_name, "w", encoding="utf-8") as fh:
+        fh.write(test_config_contents)
+
+    ert_config = ErtConfig.from_file(test_config_file_name)
+    assert ert_config.analysis_config.get_stop_long_running() == expected

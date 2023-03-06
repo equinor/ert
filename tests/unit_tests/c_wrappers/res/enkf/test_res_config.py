@@ -128,7 +128,7 @@ def test_include_non_existing_file(tmpdir):
             fh.writelines(config)
 
         with pytest.raises(
-            ConfigValidationError, match="INCLUDE file:does_not_exists not found"
+            ConfigValidationError, match=r"INCLUDE file:.*does_not_exists not found"
         ):
             _ = ErtConfig.from_file("config.ert")
 
@@ -360,9 +360,9 @@ def test_that_unknown_queue_option_gives_error_message(
     )
 
     with pytest.raises(
-        ValueError, match="Parsing config file .* resulted in the errors:"
+        ConfigValidationError, match="UNKNOWN_QUEUE: is not a valid value for item 1"
     ):
-        _ = ErtConfig.from_file(str(test_user_config))
+        _ = ErtConfig.from_file(str(test_user_config), use_new_parser=False)
 
 
 @pytest.mark.parametrize(

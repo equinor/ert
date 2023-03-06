@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import asyncio
 import contextlib
+import dataclasses
 import logging
 import os
 import sys
@@ -31,6 +32,24 @@ class ErtTimeoutError(Exception):
 
 def run_cli(args):
     ert_config = ErtConfig.from_file(args.config)
+    try:
+        ert_config_new = ErtConfig.from_file(args.config, use_new_parser=True)
+        if ert_config != ert_config_new:
+            fields = dataclasses.fields(ert_config)
+            difference = [
+                f"{getattr(ert_config, field.name)} !="
+                f" {getattr(ert_config_new, field.name)}"
+                for field in fields
+                if getattr(ert_config, field.name)
+                != getattr(ert_config_new, field.name)
+            ]
+            logging.info(
+                f"New parser gave different result.\n" f" Difference: {difference!r}"
+            )
+        else:
+            logging.info("New parser gave equal result.")
+    except Exception:
+        logging.exception("The new parser failed")
 
     # Create logger inside function to make sure all handlers have been added to
     # the root-logger.

@@ -31,8 +31,14 @@ from ert._clib.config_keywords import init_site_config_parser, init_user_config_
 
 from ._config_content_as_dict import config_content_as_dict
 from ._deprecation_migration_suggester import DeprecationMigrationSuggester
+from .lark_parser import parse as lark_parse
 
 logger = logging.getLogger(__name__)
+
+USE_NEW_PARSER_BY_DEFAULT = False
+
+if "USE_NEW_ERT_PARSER" in os.environ and os.environ["USE_NEW_ERT_PARSER"] == "YES":
+    USE_NEW_PARSER_BY_DEFAULT = True
 
 
 def site_config_location():
@@ -72,8 +78,12 @@ class ErtConfig:
         )
 
     @classmethod
-    def from_file(cls, user_config_file) -> "ErtConfig":
-        user_config_dict = ErtConfig.read_user_config(user_config_file)
+    def from_file(
+        cls, user_config_file, use_new_parser: bool = USE_NEW_PARSER_BY_DEFAULT
+    ) -> "ErtConfig":
+        user_config_dict = ErtConfig.read_user_config(
+            user_config_file, use_new_parser=use_new_parser
+        )
         config_dir = os.path.abspath(os.path.dirname(user_config_file))
         ErtConfig._log_config_file(user_config_file)
         ErtConfig._log_config_dict(user_config_dict)
@@ -181,11 +191,11 @@ class ErtConfig:
         config_file_name = os.path.basename(config_file_path)
         config_file_basename = os.path.splitext(config_file_name)[0]
         return {
+            "<CONFIG_PATH>": config_file_dir,
+            "<CONFIG_FILE_BASE>": config_file_basename,
             "<DATE>": date_string,
             "<CWD>": config_file_dir,
-            "<CONFIG_PATH>": config_file_dir,
             "<CONFIG_FILE>": config_file_name,
-            "<CONFIG_FILE_BASE>": config_file_basename,
         }
 
     @staticmethod
@@ -217,21 +227,29 @@ class ErtConfig:
         ).suggest_migrations(config_file)
 
     @classmethod
-    def read_site_config(cls):
-        site_config_parser = ConfigParser()
-        init_site_config_parser(site_config_parser)
-        site_config_content = site_config_parser.parse(site_config_location())
-        return config_content_as_dict(site_config_content, {})
+    def read_site_config(cls, use_new_parser: bool = USE_NEW_PARSER_BY_DEFAULT):
+        if use_new_parser:
+            return lark_parse(site_config_location())
+        else:
+            site_config_parser = ConfigParser()
+            init_site_config_parser(site_config_parser)
+            site_config_content = site_config_parser.parse(site_config_location())
+            return config_content_as_dict(site_config_content, {})
 
     @classmethod
-    def read_user_config(cls, user_config_file):
-        site_config_dict = ErtConfig.read_site_config()
-        user_config_parser = ErtConfig._create_user_config_parser()
-        user_config_content = user_config_parser.parse(
-            user_config_file,
-            pre_defined_kw_map=ErtConfig._create_pre_defines(user_config_file),
-        )
-        return config_content_as_dict(user_config_content, site_config_dict)
+    def read_user_config(
+        cls, user_config_file, use_new_parser: bool = USE_NEW_PARSER_BY_DEFAULT
+    ):
+        site_config = cls.read_site_config(use_new_parser=use_new_parser)
+        if use_new_parser:
+            return lark_parse(user_config_file, site_config)
+        else:
+            user_config_parser = ErtConfig._create_user_config_parser()
+            user_config_content = user_config_parser.parse(
+                user_config_file,
+                pre_defined_kw_map=ErtConfig._create_pre_defines(user_config_file),
+            )
+            return config_content_as_dict(user_config_content, site_config)
 
     @classmethod
     def _validate_queue_option_max_running(cls, config_path, config_dict):
@@ -302,9 +320,12 @@ class ErtConfig:
         cls, installed_jobs, substitution_list, config_dict, config_file
     ):
         jobs = []
-        for unsubstituted_job_name, args in config_dict.get(
-            ConfigKeys.FORWARD_MODEL, []
-        ):
+        for job in config_dict.get(ConfigKeys.FORWARD_MODEL, []):
+            if len(job) > 1:
+                unsubstituted_job_name, args = job
+            else:
+                unsubstituted_job_name = job[0]
+                args = []
             job_name = substitution_list.substitute(unsubstituted_job_name)
             try:
                 job = copy.deepcopy(installed_jobs[job_name])
@@ -319,7 +340,15 @@ class ErtConfig:
             if args:
                 job.private_args = SubstitutionList()
                 try:
-                    job.private_args.add_from_string(args)
+                    if isinstance(args, str):
+                        # this path is for the old parser,
+                        # which still concatenates the args
+                        job.private_args.add_from_string(args)
+                    else:
+                        # this path is for the new parser, which parser the args into
+                        # separate keys and values
+                        for key, val in args:
+                            job.private_args.addItem(key, val)
                 except ValueError as err:
                     raise ConfigValidationError(
                         errors=f"{err}: 'FORWARD_MODEL {job_name}({args})'\n",

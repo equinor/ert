@@ -1,3 +1,4 @@
+import dataclasses
 import functools
 import logging
 import os
@@ -97,6 +98,25 @@ def _start_initial_gui_window(args, log_handler):
             _check_locale()
             suggestions += ErtConfig.make_suggestion_list(args.config)
             ert_config = ErtConfig.from_file(args.config)
+            try:
+                ert_config_new = ErtConfig.from_file(args.config, use_new_parser=True)
+                if ert_config != ert_config_new:
+                    fields = dataclasses.fields(ert_config)
+                    difference = [
+                        f"{getattr(ert_config, field.name)} !="
+                        f" {getattr(ert_config_new, field.name)}"
+                        for field in fields
+                        if getattr(ert_config, field.name)
+                        != getattr(ert_config_new, field.name)
+                    ]
+                    logging.info(
+                        f"New parser gave different result.\n"
+                        f" Difference: {difference!r}"
+                    )
+                else:
+                    logging.info("New parser gave equal result.")
+            except Exception:
+                logging.exception("The new parser failed")
         os.chdir(ert_config.config_path)
         # Changing current working directory means we need to update the config file to
         # be the base name of the original config
