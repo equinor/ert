@@ -1064,3 +1064,19 @@ def test_that_spaces_in_forward_model_args_are_dropped():
     assert len(ert_config.forward_model_list) == 1
     job = ert_config.forward_model_list[0]
     assert job.private_args.get("<VERSION>") == "smersion"
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_invalid_boolean_values_are_handled_gracefully():
+    test_config_file_name = "test.ert"
+    test_config_contents = dedent(
+        """
+        NUM_REALIZATIONS  1
+        STOP_LONG_RUNNING NOT_YES
+        """
+    )
+    with open(test_config_file_name, "w", encoding="utf-8") as fh:
+        fh.write(test_config_contents)
+
+    with pytest.raises(ConfigValidationError, match="boolean"):
+        _ = ErtConfig.from_file(test_config_file_name)
