@@ -1140,3 +1140,33 @@ def test_not_executable_job_script_fails_gracefully():
         fh.write(config_file_contents)
     with pytest.raises(ConfigValidationError, match=f"not executable.*{script_name}"):
         ErtConfig.from_file(config_file_name)
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_not_executable_job_script_somewhere_in_PATH_fails_gracefully(monkeypatch):
+    """Given a non executable job script referred to by relative path (in this case:
+    just the filename) in the config file, where the relative path is not relative to
+    the location of the config file / current directory, but rather some location
+    specified by the env var PATH, we should fail gracefully"""
+
+    config_file_name = "config.ert"
+    script_name = "not-executable-script.py"
+    path_location = os.path.join(os.getcwd(), "bin")
+    os.mkdir(path_location)
+    touch(os.path.join(path_location, script_name))
+    os.chmod(path_location, 0x0)
+    monkeypatch.setenv("PATH", path_location, ":")
+    config_file_contents = dedent(
+        f"""NUM_REALIZATIONS 1
+         JOB_SCRIPT {script_name}
+         """
+    )
+    with open(config_file_name, mode="w", encoding="utf-8") as fh:
+        fh.write(config_file_contents)
+    with pytest.raises(
+        ConfigValidationError,
+        match="Could not find executable|Executable.*does not exist",
+    ):
+        ErtConfig.from_file(config_file_name)
+
+    os.chmod(path_location, 0x775)
