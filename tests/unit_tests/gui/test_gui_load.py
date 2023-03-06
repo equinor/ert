@@ -186,6 +186,30 @@ def test_that_the_ui_show_warnings_when_there_are_no_observations(qapp, tmp_path
 
 
 @pytest.mark.usefixtures("copy_poly_case")
+def test_that_the_ui_show_warnings_when_parameters_are_missing(qapp, tmp_path):
+    with open("poly.ert", "r", encoding="utf-8") as fin:
+        with open("poly-no-gen-kw.ert", "w", encoding="utf-8") as fout:
+            for line in fin:
+                if "GEN_KW" not in line:
+                    fout.write(line)
+
+    args = Mock()
+
+    args.config = "poly-no-gen-kw.ert"
+    with add_gui_log_handler() as log_handler:
+        gui, _ = ert.gui.main._start_initial_gui_window(args, log_handler)
+        combo_box = gui.findChild(QComboBox, name="Simulation_mode")
+        assert combo_box.count() == 5
+
+        for i in range(2):
+            assert combo_box.model().item(i).isEnabled()
+        for i in range(2, 5):
+            assert not combo_box.model().item(i).isEnabled()
+
+        assert gui.windowTitle() == "ERT - poly-no-gen-kw.ert"
+
+
+@pytest.mark.usefixtures("copy_poly_case")
 def test_that_ert_starts_when_there_are_no_problems(monkeypatch, qapp, tmp_path):
     args = Mock()
     args.config = "poly.ert"
