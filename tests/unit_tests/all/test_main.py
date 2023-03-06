@@ -121,8 +121,6 @@ def test_argparse_exec_es_mda_valid_case():
             "1-10",
             "--weights",
             "1, 2, 4",
-            "--start-iteration",
-            "1",
             "path/to/config.ert",
         ],
     )
@@ -130,7 +128,6 @@ def test_argparse_exec_es_mda_valid_case():
     assert parsed.target_case == "some_case%d"
     assert parsed.realizations == "1-10"
     assert parsed.weights == "1, 2, 4"
-    assert parsed.start_iteration == "1"
     assert parsed.func.__name__ == "run_cli"
 
 
@@ -141,12 +138,12 @@ def test_argparse_exec_es_mda_default_weights():
     assert parsed.func.__name__ == "run_cli"
 
 
-def test_argparse_exec_ensemble_es_mda_current_case():
+def test_argparse_exec_ensemble_es_mda_restart_case():
     parsed = ert_parser(
-        None, [ES_MDA_MODE, "--current-case", "test_case", "path/to/config.ert"]
+        None, [ES_MDA_MODE, "--restart-case", "test_case", "path/to/config.ert"]
     )
     assert parsed.mode == ES_MDA_MODE
-    assert parsed.current_case == "test_case"
+    assert parsed.restart_case == "test_case"
     assert parsed.func.__name__ == "run_cli"
 
 

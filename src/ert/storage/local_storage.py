@@ -66,7 +66,9 @@ class LocalStorageReader:
     def get_ensemble(self, uuid: UUID) -> LocalEnsembleReader:
         return self._ensembles[uuid]
 
-    def get_ensemble_by_name(self, name: str) -> LocalEnsembleReader:
+    def get_ensemble_by_name(
+        self, name: str
+    ) -> Union[LocalEnsembleReader, LocalEnsembleAccessor]:
         for ens in self._ensembles.values():
             if ens.name == name:
                 return ens

@@ -433,25 +433,12 @@ def get_ert_parser(parser: Optional[ArgumentParser] = None) -> ArgumentParser:
         "observation errors from one iteration to the next across 4 iterations.",
     )
     es_mda_parser.add_argument(
-        "--current-case",
+        "--restart-case",
         type=valid_name,
-        default="default",
+        default=None,
         help="Name of the case where the results for the simulation "
-        "using the prior parameters will be stored.",
-    )
-    es_mda_parser.add_argument(
-        "--start-iteration",
-        default="0",
-        type=valid_iter_num,
-        required=False,
-        help="Which iteration the evaluation should start from. "
-        "Requires cases previous to the specified iteration to exist.",
-    )
-    es_mda_parser.add_argument(
-        "--prior-case",
-        type=str,
-        required=False,
-        help="Which case the evaluation should start from.",
+        "using the prior parameters will be stored. Iteration number is read "
+        "from this case. If provided this will be a restart a run",
     )
 
     workflow_description = "Executes the workflow given"
