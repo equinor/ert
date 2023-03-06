@@ -25,7 +25,6 @@ class LoadResultsTool(Tool):
             "Load results manually", self.__import_widget, self.parent()
         )
         self.__dialog.setObjectName("load_results_manually_tool")
-        self.__import_widget.setCurrentCase()
         self.__dialog.addButton("Load", self.load)
         self.__dialog.exec_()
 

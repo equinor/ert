@@ -446,11 +446,11 @@ def test_that_the_load_results_manually_tool_works(
         panel = dialog.findChild(LoadResultsPanel)
         assert isinstance(panel, LoadResultsPanel)
 
-        combo_box = panel.findChild(QComboBox, "load_results_panel_case_combobox")
-        assert isinstance(combo_box, QComboBox)
-        index = combo_box.findText("new_case_for_load", Qt.MatchFlag.MatchContains)
+        case_selector = panel.findChild(CaseSelector)
+        assert isinstance(case_selector, CaseSelector)
+        index = case_selector.findText("new_case_for_load", Qt.MatchFlag.MatchContains)
         assert index != -1
-        combo_box.setCurrentIndex(index)
+        case_selector.setCurrentIndex(index)
 
         # click on "Load"
         load_button = panel.parent().findChild(QPushButton, name="Load")
