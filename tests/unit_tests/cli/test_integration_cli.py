@@ -199,7 +199,7 @@ def test_cli_does_not_run_without_observations(tmpdir, source_root, mode, target
             ],
         )
         with pytest.raises(
-            RuntimeError, match=f"To run {mode}, observations are needed."
+            ErtCliError, match=f"To run {mode}, observations are needed."
         ):
             run_cli(parsed)
 
@@ -436,3 +436,46 @@ def test_that_prior_is_not_overwritten_in_ensemble_experiment(
                 pd.testing.assert_frame_equal(parameter_values, prior_values)
         else:
             pd.testing.assert_frame_equal(parameter_values, prior_values)
+
+
+@pytest.mark.parametrize(
+    "mode",
+    [
+        pytest.param(ENSEMBLE_SMOOTHER_MODE),
+        pytest.param(ITERATIVE_ENSEMBLE_SMOOTHER_MODE),
+        pytest.param(ES_MDA_MODE),
+    ],
+)
+@pytest.mark.usefixtures("copy_poly_case")
+def test_that_the_cli_raises_exceptions_when_parameters_are_missing(mode):
+    with open("poly.ert", "r", encoding="utf-8") as fin:
+        with open("poly-no-gen-kw.ert", "w", encoding="utf-8") as fout:
+            for line in fin:
+                if "GEN_KW" not in line:
+                    fout.write(line)
+
+    args = Mock()
+    args.config = "poly-no-gen-kw.ert"
+    parser = ArgumentParser(prog="test_main")
+
+    ert_args = [
+        mode,
+        "poly-no-gen-kw.ert",
+        "--port-range",
+        "1024-65535",
+        "--target-case",
+    ]
+
+    testcase = "testcase" if mode is ENSEMBLE_SMOOTHER_MODE else "testcase-%d"
+    ert_args.append(testcase)
+
+    parsed = ert_parser(
+        parser,
+        ert_args,
+    )
+
+    with pytest.raises(
+        ErtCliError,
+        match=f"To run {mode}, GEN_KW, FIELD or SURFACE parameters are needed.",
+    ):
+        run_cli(parsed)
