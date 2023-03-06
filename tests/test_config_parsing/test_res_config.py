@@ -1080,3 +1080,20 @@ def test_that_invalid_boolean_values_are_handled_gracefully():
 
     with pytest.raises(ConfigValidationError, match="boolean"):
         _ = ErtConfig.from_file(test_config_file_name)
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.parametrize("val, expected", [("TrUe", True), ("FaLsE", False)])
+def test_that_boolean_values_can_be_any_case(val, expected):
+    test_config_file_name = "test.ert"
+    test_config_contents = dedent(
+        f"""
+        NUM_REALIZATIONS  1
+        STOP_LONG_RUNNING {val}
+        """
+    )
+    with open(test_config_file_name, "w", encoding="utf-8") as fh:
+        fh.write(test_config_contents)
+
+    ert_config = ErtConfig.from_file(test_config_file_name)
+    assert ert_config.analysis_config.get_stop_long_running() == expected

@@ -229,9 +229,9 @@ class _TreeToDictTransformer:
             if val_type is None:
                 return val
             if val_type == SchemaType.CONFIG_BOOL:
-                if val == "True":
+                if val.lower() == "true":
                     return True
-                elif val == "False":
+                elif val.lower() == "false":
                     return False
                 else:
                     raise ConfigValidationError(
