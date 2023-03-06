@@ -186,6 +186,7 @@ class SimulationPanel(QWidget):
                 def exit_handler():
                     self.run_button.setText("Start simulation")
                     self.run_button.setDisabled(False)
+                    self.notifier.emitErtChange()
 
                 dialog.finished.connect(exit_handler)
 
