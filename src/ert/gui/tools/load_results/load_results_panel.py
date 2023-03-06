@@ -1,10 +1,10 @@
 from PyQt5.QtWidgets import QMessageBox
-from qtpy.QtWidgets import QComboBox, QFormLayout, QTextEdit, QWidget
+from qtpy.QtWidgets import QFormLayout, QTextEdit, QWidget
 
 from ert.gui.ertnotifier import ErtNotifier
+from ert.gui.ertwidgets.caseselector import CaseSelector
 from ert.gui.ertwidgets.message_box import ErtMessageBox
 from ert.gui.ertwidgets.models.activerealizationsmodel import ActiveRealizationsModel
-from ert.gui.ertwidgets.models.all_cases_model import AllCasesModel
 from ert.gui.ertwidgets.models.valuemodel import ValueModel
 from ert.gui.ertwidgets.stringbox import StringBox
 from ert.libres_facade import LibresFacade
@@ -14,7 +14,7 @@ from ert.shared.models.base_run_model import _LogAggregration, captured_logs
 
 class LoadResultsPanel(QWidget):
     def __init__(self, facade: LibresFacade, notifier: ErtNotifier):
-        self.facade = facade
+        self._facade = facade
         QWidget.__init__(self)
 
         self.setMinimumWidth(500)
@@ -34,18 +34,13 @@ class LoadResultsPanel(QWidget):
 
         layout.addRow("Load data from current run path: ", run_path_text)
 
-        self._case_model = AllCasesModel(self._notifier)
-        self._case_combo = QComboBox()
-        self._case_combo.setObjectName("load_results_panel_case_combobox")
-        self._case_combo.setSizeAdjustPolicy(QComboBox.AdjustToMinimumContentsLength)
-        self._case_combo.setMinimumContentsLength(20)
-        self._case_combo.setModel(self._case_model)
-        self._case_combo.setCurrentIndex(
-            self._case_model.indexOf(self._notifier.current_case_name)
+        case_selector = CaseSelector(
+            self._facade,
+            self._notifier,
         )
-        layout.addRow("Load into case:", self._case_combo)
+        layout.addRow("Load into case:", case_selector)
 
-        self._active_realizations_model = ActiveRealizationsModel(self.facade)
+        self._active_realizations_model = ActiveRealizationsModel(self._facade)
         self._active_realizations_field = StringBox(
             self._active_realizations_model, "load_results_manually/Realizations"
         )
@@ -63,14 +58,13 @@ class LoadResultsPanel(QWidget):
 
     def readCurrentRunPath(self):
         current_case = self._notifier.current_case_name
-        run_path = self.facade.run_path
+        run_path = self._facade.run_path
         run_path = run_path.replace("<ERTCASE>", current_case)
         run_path = run_path.replace("<ERT-CASE>", current_case)
         return run_path
 
     def load(self) -> int:
-        all_cases = self._case_model.getAllItems()
-        selected_case = all_cases[self._case_combo.currentIndex()]
+        selected_case = self._notifier.current_case
         realizations = self._active_realizations_model.getActiveRealizationsMask()
         iteration = self._iterations_model.getValue()
         try:
@@ -89,7 +83,7 @@ class LoadResultsPanel(QWidget):
             return False
         logs: _LogAggregration = _LogAggregration()
         with captured_logs() as logs:
-            loaded = self.facade.load_from_forward_model(
+            loaded = self._facade.load_from_forward_model(
                 selected_case, realizations, iteration
             )
 
@@ -106,7 +100,3 @@ class LoadResultsPanel(QWidget):
             msg = ErtMessageBox("No realizations loaded", "\n".join(logs.messages))
             msg.exec_()
         return loaded
-
-    def setCurrentCase(self):
-        current_case = self._notifier.current_case_name
-        self._case_combo.setCurrentIndex(self._case_model.indexOf(current_case))
