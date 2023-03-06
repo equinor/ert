@@ -105,6 +105,7 @@ class BaseRunModel:
         self._state_machine = _ert_com_protocol.ExperimentStateMachine()
         # mapping from iteration number to ensemble id
         self._iter_map: Dict[int, str] = {}
+        self.validate()
 
     def ert(self) -> EnKFMain:
         return self._ert
@@ -481,3 +482,47 @@ class BaseRunModel:
                 if Path(run_path).exists():
                     return True
         return False
+
+    def validate(self) -> None:
+        if self._simulation_arguments is None:
+            return
+        errors = []
+
+        current_case = self._simulation_arguments.get("current_case", None)
+        target_case = self._simulation_arguments.get("target_case", None)
+
+        if current_case is not None:
+            try:
+                case = self._storage.get_ensemble_by_name(current_case)
+                if case.ensemble_size != self._ert.getEnsembleSize():
+                    errors.append(
+                        f"- Existing case: {current_case} was created with ensemble "
+                        f"size smaller than specified in the ert configuration file ("
+                        f"{case.ensemble_size} "
+                        f" < {self._ert.getEnsembleSize()})"
+                    )
+            except KeyError:
+                pass
+        if target_case is not None:
+            if target_case == current_case:
+                errors.append(
+                    f"- Target case and current case can not have the same name. "
+                    f"They were both: {current_case}"
+                )
+
+            if "%d" in target_case:
+                num_iterations = self._simulation_arguments["num_iterations"]
+                for i in range(num_iterations):
+                    try:
+                        self._storage.get_ensemble_by_name(target_case % i)
+                        errors.append(f"- Target case: {target_case % i} exists")
+                    except KeyError:
+                        pass
+            else:
+                try:
+                    self._storage.get_ensemble_by_name(target_case)
+                    errors.append(f"- Target case: {target_case} exists")
+                except KeyError:
+                    pass
+        if errors:
+            raise ValueError("\n".join(errors))
