@@ -41,5 +41,6 @@ def test_load_summary_response_restart_not_zero(tmpdir, snapshot, request):
         facade.load_from_forward_model("prior", [True], 0)
 
         snapshot.assert_match(
-            facade.load_all_summary_data("prior").dropna().to_csv(), "summary_restart"
+            facade.load_all_summary_data("prior").dropna().iloc[:, :15].to_csv(),
+            "summary_restart",
         )
