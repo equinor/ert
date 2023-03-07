@@ -278,7 +278,7 @@ def test_forward_model_with_resolved_substitutions_by_default_values_gives_no_er
         DEFINE <RMS_PROJECT> spam
         DEFINE <RMS_WORKFLOW> frying
         DEFINE <RMS_TARGET_FILE> result
-        FORWARD_MODEL RMS(<IENS>=2, <RMS_VERSION>=2.1)
+        FORWARD_MODEL RMS(<RMS_VERSION>=2.1)
         """
     )
     with open(test_config_file_name, "w", encoding="utf-8") as fh:
