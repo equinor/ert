@@ -272,7 +272,7 @@ class ExtJob:
         relevant_private_args_keys = [
             key
             for key in self.private_args.keys()
-            if key not in _SUBSTITUTED_AT_EXECUTION_TIME
+            if key not in _SUBSTITUTED_AT_EXECUTION_TIME and key not in self.exec_env
         ]
         unused_private_args_keys = list(
             filter(

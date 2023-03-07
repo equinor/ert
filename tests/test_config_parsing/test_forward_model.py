@@ -290,6 +290,36 @@ def test_forward_model_with_resolved_substitutions_by_default_values_gives_no_er
 
 
 @pytest.mark.usefixtures("use_tmpdir")
+def test_forward_model_with_arguments_for_exec_env_gives_no_error(
+    caplog,
+):
+    # given a forward model that references a job
+    # and that job has the EXEC_ENV keyword specified in its config file
+    #   with some arguments `KEY <VALUE_VAR>`
+    # and there is an argument in the forward model for said `VALUE_VAR`
+    # and that `VALUE_VAR` is not given in the job's arglist
+    # then there should be no error about the argument not having any effect
+    test_config_file_name = "test.ert"
+    # We're using the job old-style/RMS, included through site-config, which satisfies
+    # the requirements
+    test_config_contents = dedent(
+        """
+        NUM_REALIZATIONS  1
+        DEFINE <RMS_PROJECT> spam
+        DEFINE <RMS_WORKFLOW> frying
+        DEFINE <RMS_TARGET_FILE> result
+        FORWARD_MODEL RMS(<RMS_VERSION>=2.1,PYTHONPATH=/usr/bin/python)
+        """
+    )
+    with open(test_config_file_name, "w", encoding="utf-8") as fh:
+        fh.write(test_config_contents)
+
+    with caplog.at_level(logging.WARNING):
+        ErtConfig.from_file(test_config_file_name)
+        assert len(caplog.records) == 0
+
+
+@pytest.mark.usefixtures("use_tmpdir")
 def test_forward_model_warns_for_private_arg_without_effect(caplog):
     # given a forward model that references a job
     # and there is a key=value private arg given in the forward model
