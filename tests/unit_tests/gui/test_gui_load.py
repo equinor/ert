@@ -317,3 +317,39 @@ def test_help_buttons_in_suggester_dialog(monkeypatch, qapp, tmp_path, qtbot):
             github_button = gui.findChild(QWidget, name="GitHub page")
             qtbot.mouseClick(github_button, Qt.LeftButton)
             assert browser_open.called
+
+
+@pytest.mark.usefixtures("copy_poly_case")
+def test_that_run_workflow_component_disabled_when_no_workflows(qapp):
+    args = Mock()
+    args.config = "poly.ert"
+    with add_gui_log_handler() as log_handler:
+        gui, _ = ert.gui.main._start_initial_gui_window(args, log_handler)
+        assert gui.windowTitle() == "ERT - poly.ert"
+        run_workflow_button = gui.tools["Run workflow"]
+        assert not run_workflow_button.isEnabled()
+
+
+def test_that_run_workflow_component_enabled_when_workflows(qapp, tmp_path):
+    config_file = tmp_path / "config.ert"
+
+    with open(config_file, "a+", encoding="utf-8") as ert_file:
+        ert_file.write("NUM_REALIZATIONS 1\n")
+        ert_file.write("LOAD_WORKFLOW_JOB workflows/UBER_PRINT print_uber\n")
+        ert_file.write("LOAD_WORKFLOW workflows/MAGIC_PRINT magic_print\n")
+
+    os.mkdir(tmp_path / "workflows")
+
+    with open(tmp_path / "workflows/MAGIC_PRINT", "w", encoding="utf-8") as f:
+        f.write("print_uber\n")
+    with open(tmp_path / "workflows/UBER_PRINT", "w", encoding="utf-8") as f:
+        f.write("EXECUTABLE ls\n")
+
+    args = Mock()
+    args.config = str(config_file)
+
+    with add_gui_log_handler() as log_handler:
+        gui, _ = ert.gui.main._start_initial_gui_window(args, log_handler)
+        assert gui.windowTitle() == "ERT - config.ert"
+        run_workflow_button = gui.tools["Run workflow"]
+        assert run_workflow_button.isEnabled()
