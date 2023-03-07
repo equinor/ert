@@ -287,6 +287,7 @@ def test_forward_model_with_resolved_substitutions_by_default_values_gives_no_er
 
     with caplog.at_level(logging.WARNING):
         ErtConfig.from_file(test_config_file_name)
+        assert len(caplog.records) == 0
 
 
 @pytest.mark.usefixtures("use_tmpdir")
