@@ -139,19 +139,18 @@ def test_that_comments_are_ignored():
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_that_quotations_in_forward_model_arglist_are_handled_correctly():
-    """This is a regression test, making sure that string behave consistently
-    The previous fail cases are described in the comments of the config. They
-     should all result in the same
-     See https://github.com/equinor/ert/issues/2766"""
+    """This is a regression test, making sure that quoted strings behave consistently.
+    They should all result in the same.
+    See https://github.com/equinor/ert/issues/2766"""
 
     test_config_file_name = "test.ert"
     test_config_contents = dedent(
         """
-        NUM_REALIZATIONS  1
-        FORWARD_MODEL COPY_FILE(<FROM>='some, thing', <TO>="some stuff", <FILE>=file.txt) -- success
-        FORWARD_MODEL COPY_FILE(<FROM>='some, thing', <TO>='some stuff', <FILE>=file.txt) -- some stuff becomes somestuff
-        FORWARD_MODEL COPY_FILE(<FROM>="some, thing", <TO>="some stuff", <FILE>=file.txt) -- util abort
-        """  # noqa: E501
+    NUM_REALIZATIONS  1
+    FORWARD_MODEL COPY_FILE(<FROM>='some, thing', <TO>="some stuff", <FILE>=file.txt)
+    FORWARD_MODEL COPY_FILE(<FROM>='some, thing', <TO>='some stuff', <FILE>=file.txt)
+    FORWARD_MODEL COPY_FILE(<FROM>="some, thing", <TO>="some stuff", <FILE>=file.txt)
+    """
     )
     with open(test_config_file_name, "w", encoding="utf-8") as fh:
         fh.write(test_config_contents)
