@@ -57,9 +57,6 @@ class CopyableLabel(QHBoxLayout):
 
         self.copy_button = QPushButton("")
         self.copy_button.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
-        self.copy_button.setStyleSheet(
-            "QPushButton { padding: 8px; max-width: 150px; min-width: 30px; }"
-        )
         icon_path = path.join(current_dir, "..", "resources", "gui", "img", "copy.svg")
         icon_path_check = path.join(
             current_dir, "..", "resources", "gui", "img", "check.svg"
@@ -79,7 +76,7 @@ class CopyableLabel(QHBoxLayout):
         self.copy_button.clicked.connect(copy_text)
 
         self.addWidget(self.label)
-        self.addWidget(self.copy_button)
+        self.addWidget(self.copy_button, alignment=Qt.AlignLeft)
 
         if executeAddHelpToWidget:
             addHelpToWidget(self.label, "")
