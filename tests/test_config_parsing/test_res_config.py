@@ -953,6 +953,31 @@ def test_that_include_statements_work():
 
 
 @pytest.mark.usefixtures("use_tmpdir")
+def test_include_cyclical_raises_error():
+    test_config_file_name = "test.ert"
+    test_config_contents = dedent(
+        """
+        NUM_REALIZATIONS  1
+        INCLUDE include.ert
+        """
+    )
+    test_include_file_name = "include.ert"
+    test_include_contents = dedent(
+        """
+        JOBNAME included
+        INCLUDE test.ert
+        """
+    )
+    with open(test_config_file_name, "w", encoding="utf-8") as fh:
+        fh.write(test_config_contents)
+    with open(test_include_file_name, "w", encoding="utf-8") as fh:
+        fh.write(test_include_contents)
+
+    with pytest.raises(ConfigValidationError, match="Cyclical .*test.ert"):
+        ErtConfig.from_file(test_config_file_name, use_new_parser=True)
+
+
+@pytest.mark.usefixtures("use_tmpdir")
 def test_that_giving_incorrect_queue_name_in_queue_option_fails():
     test_config_file_name = "test.ert"
     test_config_contents = dedent(

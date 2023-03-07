@@ -438,7 +438,12 @@ class _TreeToDictTransformer:
         self.keywords.append(instruction)
 
 
-def handle_includes(tree: Tree, config_file: str):
+def handle_includes(
+    tree: Tree, config_file: str, already_included_files: List[str] = None
+):
+    if already_included_files is None:
+        already_included_files = [config_file]
+
     config_dir = os.path.dirname(config_file)
     to_include = []
     for i, node in enumerate(tree.children):
@@ -450,22 +455,33 @@ def handle_includes(tree: Tree, config_file: str):
             continue  # This is either a newline or a comment
         if node.children[0].data == "include":
             inc_node = node.children[0]
+
             if len(inc_node.children) > 1:
                 raise ConfigValidationError(
                     "Keyword:INCLUDE must have exactly one argument",
                     config_file=config_file,
                 )
-            val = inc_node.children[0].children[0]
-            if not isinstance(val, FileContextToken):
+            file_to_include = inc_node.children[0].children[0]
+            if not isinstance(file_to_include, FileContextToken):
                 raise ConfigValidationError(
-                    f"INCLUDE keyword must be given filepath, got {val!r}",
+                    f"INCLUDE keyword must be given filepath, got {file_to_include!r}",
                     config_file=config_file,
                 )
-            if not os.path.isabs(val):
-                val = os.path.normpath(os.path.join(config_dir, val))
+            if not os.path.isabs(file_to_include):
+                file_to_include = os.path.normpath(
+                    os.path.join(config_dir, file_to_include)
+                )
 
-            sub_tree = _parse_file(val, "INCLUDE")
-            handle_includes(sub_tree, val)
+            if file_to_include in already_included_files:
+                raise ConfigValidationError(
+                    f"Cyclical import detected, {file_to_include} is already included"
+                )
+
+            sub_tree = _parse_file(file_to_include, "INCLUDE")
+
+            handle_includes(
+                sub_tree, file_to_include, [*already_included_files, file_to_include]
+            )
 
             to_include.append((sub_tree, i))
 
