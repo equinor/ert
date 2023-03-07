@@ -792,3 +792,40 @@ def test_not_executable_job_script_somewhere_in_PATH_fails_gracefully(monkeypatc
         ErtConfig.from_file(config_file_name)
 
     os.chmod(path_location, 0x775)
+
+
+@pytest.mark.usefixtures("use_tmpdir", "set_site_config")
+def test_that_include_take_into_account_path():
+    """
+    Tests that use_new_parser resolves an issue
+    with the old parser where the first relative path
+    FORWARD_MODEL is chosen for all.
+    """
+    test_config_file_name = "test.ert"
+    test_config_contents = dedent(
+        """
+        NUM_REALIZATIONS  1
+        INCLUDE dir/include.ert
+        INSTALL_JOB job2 job2
+        """
+    )
+    test_include_file_name = "dir/include.ert"
+    test_include_contents = dedent(
+        """
+        INSTALL_JOB job1 job1
+        """
+    )
+    # The old parser tries to find dir/job2
+    os.mkdir("dir")
+    Path("dir/job1").write_text("EXECUTABLE echo\n", encoding="utf-8")
+    Path("job2").write_text("EXECUTABLE ls\n", encoding="utf-8")
+    with open(test_config_file_name, "w", encoding="utf-8") as fh:
+        fh.write(test_config_contents)
+    with open(test_include_file_name, "w", encoding="utf-8") as fh:
+        fh.write(test_include_contents)
+
+    ert_config = ErtConfig.from_file(test_config_file_name, use_new_parser=True)
+    assert list(ert_config.installed_jobs.keys()) == [
+        "job1",
+        "job2",
+    ]
