@@ -43,6 +43,10 @@ class MultipleDataAssimilation(BaseRunModel):
             self._simulation_arguments["active_realizations"].count(True)
         )
         weights = self.parseWeights(self._simulation_arguments["weights"])
+
+        if not weights:
+            raise ErtRunError("Cannot perform ES_MDA with no weights provided!")
+
         iteration_count = len(weights)
 
         self.setAnalysisModule(self._simulation_arguments["analysis_module"])

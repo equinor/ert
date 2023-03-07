@@ -44,6 +44,7 @@ class MultipleDataAssimilationPanel(SimulationConfigPanel):
         SimulationConfigPanel.__init__(self, MultipleDataAssimilation)
 
         layout = QFormLayout()
+        self.setObjectName("ES_MDA_panel")
 
         runpath_label = CopyableLabel(text=facade.run_path)
         layout.addRow("Runpath:", runpath_label)
@@ -64,6 +65,7 @@ class MultipleDataAssimilationPanel(SimulationConfigPanel):
         layout.addRow("Target case format:", self._target_case_format_field)
 
         self.weights = MultipleDataAssimilation.default_weights
+        self.weights_valid = True
         self._createInputForWeights(layout)
 
         self._analysis_module_edit = AnalysisModuleEdit(
@@ -137,6 +139,8 @@ class MultipleDataAssimilationPanel(SimulationConfigPanel):
         layout.addRow("Normalized weights:", normalized_weights_widget)
 
         def updateVisualizationOfNormalizedWeights():
+            self.weights_valid = False
+
             if self._relative_iteration_weights_box.isValid():
                 weights = MultipleDataAssimilation.parseWeights(
                     relative_iteration_weights_model.getValue()
@@ -145,6 +149,11 @@ class MultipleDataAssimilationPanel(SimulationConfigPanel):
                 normalized_weights_model.setValue(
                     ", ".join(f"{x:.2f}" for x in normalized_weights)
                 )
+
+                if not weights:
+                    normalized_weights_model.setValue("The weights are invalid!")
+                else:
+                    self.weights_valid = True
             else:
                 normalized_weights_model.setValue("The weights are invalid!")
 
@@ -159,6 +168,7 @@ class MultipleDataAssimilationPanel(SimulationConfigPanel):
             self._target_case_format_field.isValid()
             and self._active_realizations_field.isValid()
             and self._relative_iteration_weights_box.isValid()
+            and self.weights_valid
         )
 
     def getSimulationArguments(self):
@@ -173,6 +183,4 @@ class MultipleDataAssimilationPanel(SimulationConfigPanel):
         )
 
     def setWeights(self, weights):
-        str_weights = str(weights)
-        print(f"Weights changed: {str_weights}")
-        self.weights = str_weights
+        self.weights = str(weights)
