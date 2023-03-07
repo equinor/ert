@@ -532,6 +532,18 @@ def _parse_file(
                 f"The parser said: {msg!r}"
             )
         raise ConfigValidationError(msg, config_file=file)
+    except UnicodeDecodeError as e:
+        error_words = str(e).split(" ")
+        hex_str = error_words[error_words.index("byte") + 1]
+        try:
+            unknown_char = chr(int(hex_str, 16))
+        except ValueError:
+            unknown_char = f"hex:{hex_str}"
+        raise ConfigValidationError(
+            f"Unsupported non UTF-8 character {unknown_char!r} "
+            f"found in config file: {file!r}",
+            config_file=file,
+        )
 
 
 def parse(
