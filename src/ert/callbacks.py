@@ -46,36 +46,6 @@ def forward_model_ok(
                         result = (LoadStatus.LOAD_FAILURE, error_msg)
 
                     continue
-
-                if config_node.getImplementationType() == ErtImplType.FIELD:
-                    run_path = Path(run_arg.runpath)
-                    file_name = config_node.get_init_file_fmt()
-                    if "%d" in file_name:
-                        file_name = file_name % run_arg.iens
-                    file_path = run_path / file_name
-                    key = config_node.getKey()
-                    if run_arg.ensemble_storage.field_has_data(key, run_arg.iens):
-                        # Already initialised, ignore
-                        continue
-                if config_node.getImplementationType() == ErtImplType.SURFACE:
-                    run_path = Path(run_arg.runpath)
-                    file_name = config_node.get_init_file_fmt()
-                    if "%d" in file_name:
-                        file_name = file_name % run_arg.iens
-                    file_path = run_path / file_name
-                    if file_path.exists():
-                        run_arg.ensemble_storage.save_surface_file(
-                            config_node.getKey(), run_arg.iens, str(file_path)
-                        )
-                    else:
-                        error_msg += (
-                            "Failed to initialize parameter "
-                            f"'{config_node.getKey()}' in file {file_name}: "
-                            "File not found\n"
-                        )
-                        result = (LoadStatus.LOAD_FAILURE, error_msg)
-
-                    continue
                 if config_node.getImplementationType() == ErtImplType.FIELD:
                     run_path = Path(run_arg.runpath)
                     file_name = config_node.get_init_file_fmt()
