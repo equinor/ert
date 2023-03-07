@@ -418,6 +418,18 @@ Commonly used keywords
 
         The INSTALL_JOB keyword is optional.
 
+.. _include:
+.. topic:: INCLUDE
+
+        The INCLUDE keyword is used to include the contents from another ERT workflow.
+
+        *Example:*
+
+        ::
+
+                INCLUDE other_config.ert
+
+
 .. _obs_config:
 .. topic:: OBS_CONFIG
 
