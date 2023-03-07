@@ -41,7 +41,12 @@ def class_source_root(request, source_root):
 
 @pytest.fixture(autouse=True)
 def env_save():
-    exceptions = ["PYTEST_CURRENT_TEST", "KMP_DUPLICATE_LIB_OK", "KMP_INIT_AT_FORK"]
+    exceptions = [
+        "PYTEST_CURRENT_TEST",
+        "KMP_DUPLICATE_LIB_OK",
+        "KMP_INIT_AT_FORK",
+        "QT_API",
+    ]
     environment_pre = [
         (key, val) for key, val in os.environ.items() if key not in exceptions
     ]
