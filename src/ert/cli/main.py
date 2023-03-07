@@ -7,6 +7,7 @@ import os
 import sys
 import threading
 import uuid
+import warnings
 from pathlib import Path
 from typing import Any
 
@@ -40,7 +41,14 @@ class ErtTimeoutError(Exception):
 def run_cli(args):
     ert_config = ErtConfig.from_file(args.config)
     try:
-        ert_config_new = ErtConfig.from_file(args.config, use_new_parser=True)
+        with warnings.catch_warnings(record=True) as silenced_warnings:
+            warnings.simplefilter("always")
+
+            ert_config_new = ErtConfig.from_file(args.config, use_new_parser=True)
+
+            for w in silenced_warnings:
+                logging.info(f"Parser warning: {w.message}")
+
         if ert_config != ert_config_new:
             fields = dataclasses.fields(ert_config)
             difference = [

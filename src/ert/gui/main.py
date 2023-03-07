@@ -99,7 +99,16 @@ def _start_initial_gui_window(args, log_handler):
             suggestions += ErtConfig.make_suggestion_list(args.config)
             ert_config = ErtConfig.from_file(args.config)
             try:
-                ert_config_new = ErtConfig.from_file(args.config, use_new_parser=True)
+                with warnings.catch_warnings(record=True) as silenced_warnings:
+                    warnings.simplefilter("always")
+
+                    ert_config_new = ErtConfig.from_file(
+                        args.config, use_new_parser=True
+                    )
+
+                    for w in silenced_warnings:
+                        logging.info(f"Parser warning: {w.message}")
+
                 if ert_config != ert_config_new:
                     fields = dataclasses.fields(ert_config)
                     difference = [
