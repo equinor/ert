@@ -88,6 +88,24 @@ class ConfigParser(BaseCClass):
         else:
             raise KeyError(f"Config parser does not have item:{keyword}")
 
+    @staticmethod
+    def check_non_utf_chars(config_file):
+        try:
+            with open(config_file, "r", encoding="utf-8") as f:
+                f.read()
+        except UnicodeDecodeError as e:
+            error_words = str(e).split(" ")
+            hex_str = error_words[error_words.index("byte") + 1]
+            try:
+                unknown_char = chr(int(hex_str, 16))
+            except ValueError:
+                unknown_char = f"hex:{hex_str}"
+            raise ConfigValidationError(
+                f"Unsupported non UTF-8 character {unknown_char!r} "
+                f"found in config file: {config_file!r}",
+                config_file=config_file,
+            )
+
     def parse(
         self,
         config_file,
@@ -109,6 +127,7 @@ class ConfigParser(BaseCClass):
             raise IOError(f"File: {config_file} does not exists")
         if not os.access(config_file, os.R_OK):
             raise IOError(f"We do not have read permissions for file: {config_file}")
+        self.check_non_utf_chars(config_file)
         config_content = self._parse(
             config_file,
             comment_string,

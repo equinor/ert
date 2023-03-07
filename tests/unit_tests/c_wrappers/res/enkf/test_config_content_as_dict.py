@@ -1,7 +1,9 @@
 import os
 from pathlib import Path
 
-from ert._c_wrappers.config import ConfigParser, ContentTypeEnum
+import pytest
+
+from ert._c_wrappers.config import ConfigParser, ConfigValidationError, ContentTypeEnum
 from ert._c_wrappers.enkf import ConfigKeys
 from ert._c_wrappers.enkf._config_content_as_dict import (
     SINGLE_OCCURRENCE_SINGLE_ARG_KEYS,
@@ -138,3 +140,16 @@ def test_that_as_dict_joins_queue_option_values():
         },
         {},
     ) == {ConfigKeys.QUEUE_OPTION: [["queue_type", "opt", "rest of the values"]]}
+
+
+def test_check_non_utf_characters(tmpdir):
+    with tmpdir.as_cwd():
+        config_file = "test.ert"
+        with open(config_file, "ab") as f:
+            f.write(b"\xff")
+        with pytest.raises(
+            ConfigValidationError,
+            match="Unsupported non UTF-8 character "
+            f"'ÿ' found in config file: {config_file!r}",
+        ):
+            ConfigParser.check_non_utf_chars(config_file)
