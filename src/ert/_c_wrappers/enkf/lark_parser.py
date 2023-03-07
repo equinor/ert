@@ -472,11 +472,12 @@ def handle_includes(
                     os.path.join(config_dir, file_to_include)
                 )
 
-            sub_tree = _parse_file(file_to_include, "INCLUDE")
             if file_to_include in already_included_files:
                 raise ConfigValidationError(
                     f"Cyclical import detected, {file_to_include} is already included"
                 )
+
+            sub_tree = _parse_file(file_to_include, "INCLUDE")
 
             handle_includes(
                 sub_tree, file_to_include, [*already_included_files, file_to_include]
