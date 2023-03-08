@@ -314,7 +314,8 @@ class LocalEnsembleReader:
         df = xr.merge(result).to_dataframe(dim_order=["data_key", "axis"])
         # realization nr is stored as str in netcdf
         dropped_keys = key_set - set(summary_keys)
-        df.drop(dropped_keys, level="data_key", inplace=True)
+        if len(dropped_keys) > 0:
+            df.drop(dropped_keys, level="data_key", inplace=True)
         df.columns = [int(x) for x in df.columns]
         return df
 

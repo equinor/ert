@@ -310,8 +310,14 @@ def _load_observations_and_responses(
 
     joined = obs_data.join(measured_data, on=["data_key", "axis"], how="inner")
 
-    if joined.isna().any().any():
-        raise ErtAnalysisError("Missing response for observations")
+    rows_with_na = joined[joined.isna().any(axis=1)]
+    if rows_with_na.shape[0]:
+        _keys_with_na = rows_with_na.index.get_level_values("data_key").to_list()
+        _is_or_are = "is" if len(_keys_with_na) == 1 else "are"
+        raise ErtAnalysisError(
+            f"{_keys_with_na} {_is_or_are} missing one or more responses"
+        )
+
     if len(obs_data) > len(joined):
         missing_indices = set(obs_data.index) - set(joined.index)
         error_msg = []

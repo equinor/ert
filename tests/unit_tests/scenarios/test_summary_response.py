@@ -1,4 +1,5 @@
 import os
+import re
 from datetime import datetime, timedelta
 from pathlib import Path
 from textwrap import dedent
@@ -99,17 +100,17 @@ def test_that_mismatched_responses_give_error(
     ert.sample_prior(prior_ensemble, list(range(ert.getEnsembleSize())))
 
     response_times = [
-        [
-            datetime(2014, 9, 9),
-            datetime(2014, 9, 9),
-            datetime(2017, 9, 9),
-        ]
+        [datetime(2014, 9, 9)],
+        [datetime(2014, 9, 9)],
+        [datetime(2017, 9, 9)],
     ]
     create_responses(ert, prior_ensemble, response_times)
 
     es_update = ESUpdate(ert)
 
-    with pytest.raises(ErtAnalysisError):
+    with pytest.raises(
+        ErtAnalysisError, match=re.escape("['FOPR'] is missing one or more responses")
+    ):
         es_update.smootherUpdate(prior_ensemble, target_ensemble, "an id")
 
 
