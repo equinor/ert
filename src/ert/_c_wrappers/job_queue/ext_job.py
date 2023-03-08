@@ -41,7 +41,6 @@ class ExtJob:
     exec_env: Dict[str, str] = field(default_factory=dict)
     default_mapping: Dict[str, str] = field(default_factory=dict)
     private_args: SubstitutionList = field(default_factory=SubstitutionList)
-    define_args: SubstitutionList = field(default_factory=SubstitutionList)
     help_text: str = ""
 
     @staticmethod

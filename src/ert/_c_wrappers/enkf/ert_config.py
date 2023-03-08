@@ -355,7 +355,6 @@ class ErtConfig:
                         config_file=config_file,
                     ) from err
 
-                job.define_args = substitution_list
             try:
                 job.validate_args(substitution_list)
             except ExtJobInvalidArgsException as err:
@@ -371,7 +370,6 @@ class ErtConfig:
                     config_file=config_file,
                 ) from err
             job.arglist = job_description[1:]
-            job.define_args = substitution_list
             jobs.append(job)
 
         return jobs
