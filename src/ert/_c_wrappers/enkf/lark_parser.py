@@ -122,6 +122,8 @@ inst: "DEFINE" KW_NAME kw_val -> define
 instruction: inst COMMENT | COMMENT | inst NEWLINE | NEWLINE
 """  # noqa: E501
 
+parser = Lark(grammar, propagate_positions=True)
+
 logger = logging.getLogger(__name__)
 
 
@@ -507,7 +509,6 @@ def _parse_file(
     try:
         with open(file, encoding="utf-8") as f:
             content = f.read()
-        parser = Lark(grammar, propagate_positions=True)
         tree = parser.parse(content + "\n")
         return FileContextTransformer(file).transform(
             StringQuotationTransformer().transform(tree)
