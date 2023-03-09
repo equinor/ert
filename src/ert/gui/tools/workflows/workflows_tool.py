@@ -8,7 +8,7 @@ class WorkflowsTool(Tool):
     def __init__(self, ert, notifier):
         self.notifier = notifier
         self.ert = ert
-        enabled = len(ert.resConfig().workflow_jobs) > 0
+        enabled = len(ert.resConfig().workflows) > 0
         super().__init__(
             "Run workflow",
             "tools/workflows",
