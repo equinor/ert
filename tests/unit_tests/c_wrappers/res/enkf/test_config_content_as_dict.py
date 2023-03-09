@@ -9,6 +9,7 @@ from ert._c_wrappers.enkf._config_content_as_dict import (
     SINGLE_OCCURRENCE_SINGLE_ARG_KEYS,
     config_content_as_dict,
 )
+from ert._c_wrappers.enkf.lark_parser import parse
 from ert._clib.config_keywords import init_user_config_parser
 
 
@@ -153,3 +154,16 @@ def test_check_non_utf_characters(tmpdir):
             f"'ÿ' found in file: {config_file!r}",
         ):
             ConfigParser.check_non_utf_chars(config_file)
+
+
+def test_check_non_utf_characters_lark_parser(tmpdir):
+    with tmpdir.as_cwd():
+        config_file = "test.ert"
+        with open(config_file, "ab") as f:
+            f.write(b"\xff")
+        with pytest.raises(
+            ConfigValidationError,
+            match="Unsupported non UTF-8 character "
+            f"'ÿ' found in file: .*{config_file}",
+        ):
+            parse(config_file)
