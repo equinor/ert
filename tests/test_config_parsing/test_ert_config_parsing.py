@@ -485,7 +485,8 @@ def test_that_define_statements_with_less_than_one_argument_raises_error():
         fh.write(test_config_contents)
 
     with pytest.raises(
-        ConfigValidationError, match="Keyword:DEFINE must have two or more"
+        ConfigValidationError,
+        match="DEFINE must have (two or more|at least 2) arguments",
     ):
         _ = ErtConfig.from_file(test_config_file_name)
 
@@ -829,3 +830,60 @@ def test_that_include_take_into_account_path():
         "job1",
         "job2",
     ]
+
+
+@pytest.mark.usefixtures("use_tmpdir", "set_site_config")
+def test_that_substitution_happens_for_include():
+    test_config_file_name = "test.ert"
+    test_config_contents = dedent(
+        """
+        NUM_REALIZATIONS  1
+        DEFINE <file> include.ert
+        INCLUDE dir/<file>
+        """
+    )
+    test_include_file_name = "dir/include.ert"
+    test_include_contents = dedent(
+        """
+        RUNPATH my_silly_runpath<ITER>-<IENS>
+        """
+    )
+    # The old parser tries to find dir/job2
+    os.mkdir("dir")
+    with open(test_config_file_name, "w", encoding="utf-8") as fh:
+        fh.write(test_config_contents)
+    with open(test_include_file_name, "w", encoding="utf-8") as fh:
+        fh.write(test_include_contents)
+
+    ert_config = ErtConfig.from_file(test_config_file_name, use_new_parser=True)
+    assert (
+        "my_silly_runpath<ITER>-<IENS>" in ert_config.model_config.runpath_format_string
+    )
+
+
+@pytest.mark.usefixtures("use_tmpdir", "set_site_config")
+def test_that_defines_in_included_files_has_immediate_effect():
+    test_config_file_name = "test.ert"
+    test_config_contents = dedent(
+        """
+        NUM_REALIZATIONS  1
+        INCLUDE dir/include.ert
+        RUNPATH <FOO>-<ITER>-<IENS>
+        DEFINE <FOO> bar
+        """
+    )
+    test_include_file_name = "dir/include.ert"
+    test_include_contents = dedent(
+        """
+        DEFINE <FOO> baz
+        """
+    )
+    # The old parser tries to find dir/job2
+    os.mkdir("dir")
+    with open(test_config_file_name, "w", encoding="utf-8") as fh:
+        fh.write(test_config_contents)
+    with open(test_include_file_name, "w", encoding="utf-8") as fh:
+        fh.write(test_include_contents)
+
+    ert_config = ErtConfig.from_file(test_config_file_name, use_new_parser=True)
+    assert "baz-<ITER>-<IENS>" in ert_config.model_config.runpath_format_string
