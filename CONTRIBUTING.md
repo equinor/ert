@@ -27,19 +27,29 @@ We expect commit messages to follow this style:
 1. Wrap the body at 72 characters
 1. Use the body to explain what and why vs. how
 
-This list is taken from [here](https://chris.beams.io/posts/git-commit/). 
+This list is taken from [here](https://chris.beams.io/posts/git-commit/).
 
-Also, focus on making clear the reasons why you made the change in the first place—the way things worked before the change (and what was wrong with that), the way they work now, and why you decided to solve it the way you did. A commit body is required for anything except very small changes.
+Also, focus on making clear the reasons why you made the change in the first
+place—the way things worked before the change (and what was wrong with that),
+the way they work now, and why you decided to solve it the way you did. A
+commit body is required for anything except very small changes.
 
-(*) Tip for making sure all tests passes, try out --exec while rebasing. You can then have all tests run per commit in a single command.
+(*) Tip for making sure all tests passes, try out --exec while rebasing. You
+can then have all tests run per commit in a single command.
+
 ## Pull Request Process
 
 1. Work on your own fork of the main repo
+1. Squash/organize your work into meaningful atomic commits, if possible.
 1. Push your commits and make a draft pull request using the pull request template.
 1. Check that your pull request passes all tests.
-1. When all tests have passed and your are happy with your changes, change your pull request to "ready for review"
-   and ask for a code review.
-1. When your code has been approved—rebase, squash and merge your changes.
+1. While you wait, carefully review the diff yourself.
+1. When all tests have passed and your are happy with your changes, change your
+   pull request to "ready for review" and ask for a code review.
+1. When your code has been approved
+  * rebase onto the base branch
+  * squash whatever still needs squashing, and
+  * merge.
 
 ### Build documentation
 
