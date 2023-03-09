@@ -71,6 +71,7 @@ def opened_main_window(source_root, tmpdir_factory, request):
         ):
             gui = _setup_main_window(poly_case, args_mock, GUILogHandler())
             yield gui
+            gui.close()
 
 
 @pytest.mark.usefixtures("use_tmpdir, opened_main_window")
@@ -86,7 +87,6 @@ def run_experiment(request, opened_main_window):
     def func(experiment_mode):
         qtbot = QtBot(request)
         gui = opened_main_window
-        qtbot.addWidget(gui)
         try:
             shutil.rmtree("poly_out")
         except FileNotFoundError:
@@ -484,7 +484,6 @@ def test_that_the_manual_analysis_tool_works(
 @pytest.mark.usefixtures("use_tmpdir")
 def test_that_inversion_type_can_be_set_from_gui(qtbot, opened_main_window):
     gui = opened_main_window
-    qtbot.addWidget(gui)
 
     sim_mode = gui.findChild(QWidget, name="Simulation_mode")
     qtbot.keyClick(sim_mode, Qt.Key_Down)
