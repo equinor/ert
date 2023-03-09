@@ -20,4 +20,5 @@ class ManageCasesTool(Tool):
         )
 
         dialog = ClosableDialog("Manage cases", case_management_widget, self.parent())
+        dialog.setObjectName("manage-cases")
         dialog.exec_()
