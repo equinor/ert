@@ -43,11 +43,9 @@ from ert.shared.models import EnsembleExperiment, MultipleDataAssimilation
 
 @pytest.mark.usefixtures("use_tmpdir")
 @pytest.fixture(scope="module")
-def opened_main_window(source_root, tmpdir_factory, request):
+def opened_main_window(source_root, tmpdir_factory):
     with pytest.MonkeyPatch.context() as mp:
         tmp_path = tmpdir_factory.mktemp("test-data")
-
-        request.addfinalizer(lambda: shutil.rmtree(tmp_path))
         shutil.copytree(
             os.path.join(source_root, "test-data", "poly_example"),
             tmp_path / "test_data",
