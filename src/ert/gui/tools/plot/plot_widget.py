@@ -41,7 +41,7 @@ class PlotWidget(QWidget):
         """:type: list of functions """
 
         self._figure = Figure()
-        self._figure.set_tight_layout(True)
+        self._figure.set_layout_engine("tight")
         self._canvas = FigureCanvas(self._figure)
         self._canvas.setParent(self)
         self._canvas.setFocusPolicy(Qt.StrongFocus)
