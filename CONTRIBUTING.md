@@ -34,7 +34,7 @@ place—the way things worked before the change (and what was wrong with that),
 the way they work now, and why you decided to solve it the way you did. A
 commit body is required for anything except very small changes.
 
-(*) Tip for making sure all tests passes, try out --exec while rebasing. You
+(*) Tip for making sure all tests pass, try out --exec while rebasing. You
 can then have all tests run per commit in a single command.
 
 ## Pull Request Scoping
@@ -60,8 +60,10 @@ noise in the review process.
 1. As a courtesy to the reviewer(s), you may mark commits that react to review
    comments with `fixup` (check out `git commit --fixup`) rather than
    immediately squashing / fixing up and force pushing
-1. When the review is concluded, squash whatever still needs squashing, and
-   [fast-forward](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/defining-the-mergeability-of-pull-requests/about-protected-branches#require-linear-history) merge.
+1. When the review is concluded
+  * rebase onto base branch if necessary,
+  * squash whatever still needs squashing, and
+  * [fast-forward](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/defining-the-mergeability-of-pull-requests/about-protected-branches#require-linear-history) merge.
 
 ### Build documentation
 
