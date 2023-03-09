@@ -46,6 +46,7 @@ class RunDialog(QDialog):
 
     def __init__(self, config_file, run_model, parent=None):
         QDialog.__init__(self, parent)
+        self.setAttribute(Qt.WA_DeleteOnClose)
         self.setWindowFlags(Qt.Window)
         self.setWindowFlags(self.windowFlags() & ~Qt.WindowContextHelpButtonHint)
         self.setWindowTitle(f"Simulations - {config_file}")

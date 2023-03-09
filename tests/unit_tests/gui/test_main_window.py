@@ -3,7 +3,7 @@ import os.path
 import shutil
 import stat
 from textwrap import dedent
-from typing import List
+from typing import List, Tuple
 from unittest.mock import Mock
 
 import numpy as np
@@ -42,6 +42,16 @@ from ert.gui.tools.plot.plot_case_selection_widget import CaseSelectionWidget
 from ert.gui.tools.plot.plot_window import PlotWindow
 from ert.services import Storage
 from ert.shared.models import EnsembleExperiment, MultipleDataAssimilation
+
+
+def find_cases_dialog_and_panel(
+    gui, qtbot: QtBot
+) -> Tuple[ClosableDialog, CaseInitializationConfigurationPanel]:
+    qtbot.waitUntil(lambda: gui.findChild(ClosableDialog, "manage-cases") is not None)
+    dialog = gui.findChild(ClosableDialog, "manage-cases")
+    cases_panel = dialog.findChild(CaseInitializationConfigurationPanel)
+    assert isinstance(cases_panel, CaseInitializationConfigurationPanel)
+    return (dialog, cases_panel)
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -111,8 +121,8 @@ def run_experiment(request, opened_main_window):
         # The Run dialog opens, click show details and wait until done appears
         # then click it
         def use_rundialog():
-            qtbot.waitUntil(lambda: isinstance(QApplication.activeWindow(), RunDialog))
-            run_dialog = QApplication.activeWindow()
+            qtbot.waitUntil(lambda: gui.findChild(RunDialog) is not None)
+            run_dialog = gui.findChild(RunDialog)
 
             qtbot.mouseClick(run_dialog.show_details_button, Qt.LeftButton)
 
@@ -141,10 +151,7 @@ def ensemble_experiment_has_run(opened_main_window, run_experiment, request):
     qtbot = QtBot(request)
 
     def handle_dialog():
-        qtbot.waitUntil(lambda: gui.findChild(ClosableDialog) is not None)
-        dialog = gui.findChild(ClosableDialog)
-        cases_panel = dialog.findChild(CaseInitializationConfigurationPanel)
-        assert isinstance(cases_panel, CaseInitializationConfigurationPanel)
+        dialog, cases_panel = find_cases_dialog_and_panel(gui, qtbot)
 
         # Open the create new cases tab
         cases_panel.setCurrentIndex(0)
@@ -302,11 +309,7 @@ def test_that_the_manage_cases_tool_can_be_used(
 
     # Click on "Manage Cases"
     def handle_dialog():
-        qtbot.waitUntil(lambda: gui.findChild(ClosableDialog) is not None)
-        dialog = gui.findChild(ClosableDialog)
-        cases_panel = dialog.findChild(CaseInitializationConfigurationPanel)
-        assert isinstance(cases_panel, CaseInitializationConfigurationPanel)
-
+        dialog, cases_panel = find_cases_dialog_and_panel(gui, qtbot)
         # Open the create new cases tab
         cases_panel.setCurrentIndex(0)
         current_tab = cases_panel.currentWidget()
@@ -397,9 +400,7 @@ def test_that_the_manual_analysis_tool_works(
 
     # Open the manage cases dialog
     def handle_manage_dialog():
-        dialog = QApplication.activeWindow()
-        cases_panel = dialog.findChild(CaseInitializationConfigurationPanel)
-        assert isinstance(cases_panel, CaseInitializationConfigurationPanel)
+        dialog, cases_panel = find_cases_dialog_and_panel(gui, qtbot)
 
         # In the "create new case" tab, it should now contain "iter-1"
         cases_panel.setCurrentIndex(0)
@@ -456,8 +457,8 @@ def test_that_the_manual_analysis_tool_works(
     # The Run dialog opens, click show details and wait until done appears
     # then click it
     def use_rundialog():
-        qtbot.waitUntil(lambda: isinstance(QApplication.activeWindow(), RunDialog))
-        run_dialog = QApplication.activeWindow()
+        qtbot.waitUntil(lambda: gui.findChild(RunDialog) is not None)
+        run_dialog = gui.findChild(RunDialog)
 
         qtbot.mouseClick(run_dialog.show_details_button, Qt.LeftButton)
 
