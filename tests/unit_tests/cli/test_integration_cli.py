@@ -479,3 +479,32 @@ def test_that_the_cli_raises_exceptions_when_parameters_are_missing(mode):
         match=f"To run {mode}, GEN_KW, FIELD or SURFACE parameters are needed.",
     ):
         run_cli(parsed)
+
+
+@pytest.mark.usefixtures("copy_poly_case")
+def test_that_the_cli_raises_exceptions_when_no_weight_provided_for_es_mda():
+    args = Mock()
+    args.config = "poly.ert"
+    parser = ArgumentParser(prog="test_main")
+
+    ert_args = [
+        "es_mda",
+        "poly.ert",
+        "--port-range",
+        "1024-65535",
+        "--target-case",
+        "testcase-%d",
+        "--weights",
+        "0",
+    ]
+
+    parsed = ert_parser(
+        parser,
+        ert_args,
+    )
+
+    with pytest.raises(
+        ErtCliError,
+        match="Cannot perform ES_MDA with no weights provided!",
+    ):
+        run_cli(parsed)

@@ -125,9 +125,7 @@ def test_gui_iter_num(monkeypatch, qtbot):
     assert sim_panel.getSimulationArguments().iter_num == 10
 
 
-def test_that_gui_gives_suggestions_when_you_have_umask_in_config(
-    monkeypatch, qapp, tmp_path
-):
+def test_that_gui_gives_suggestions_when_you_have_umask_in_config(qapp, tmp_path):
     config_file = tmp_path / "config.ert"
     config_file.write_text("NUM_REALIZATIONS 1\n UMASK 0222\n")
 
@@ -138,9 +136,7 @@ def test_that_gui_gives_suggestions_when_you_have_umask_in_config(
         assert gui.windowTitle() == "Some problems detected"
 
 
-def test_that_errors_are_shown_in_the_suggester_window_when_present(
-    monkeypatch, qapp, tmp_path
-):
+def test_that_errors_are_shown_in_the_suggester_window_when_present(qapp, tmp_path):
     config_file = tmp_path / "config.ert"
     config_file.write_text("NUM_REALIZATIONS you_cant_do_this\n")
 
@@ -210,7 +206,7 @@ def test_that_the_ui_show_warnings_when_parameters_are_missing(qapp, tmp_path):
 
 
 @pytest.mark.usefixtures("copy_poly_case")
-def test_that_ert_starts_when_there_are_no_problems(monkeypatch, qapp, tmp_path):
+def test_that_ert_starts_when_there_are_no_problems(qapp):
     args = Mock()
     args.config = "poly.ert"
     with add_gui_log_handler() as log_handler:
@@ -285,7 +281,7 @@ def test_that_run_dialog_can_be_closed_after_used_to_open_plots(qtbot):
             plot_window._central_tab.setCurrentWidget(tab)
 
 
-def test_help_buttons_in_suggester_dialog(monkeypatch, qapp, tmp_path, qtbot):
+def test_help_buttons_in_suggester_dialog(tmp_path, qtbot):
     """
     WHEN I am shown an error in the gui
     THEN the suggester gui comes up
@@ -353,3 +349,42 @@ def test_that_run_workflow_component_enabled_when_workflows(qapp, tmp_path):
         assert gui.windowTitle() == "ERT - config.ert"
         run_workflow_button = gui.tools["Run workflow"]
         assert run_workflow_button.isEnabled()
+
+
+@pytest.mark.usefixtures("copy_poly_case")
+def test_that_es_mda_disabled_when_invalid_weights(qtbot):
+    args = Mock()
+    args.config = "poly.ert"
+    with add_gui_log_handler() as log_handler:
+        gui, _ = ert.gui.main._start_initial_gui_window(args, log_handler)
+        assert gui.windowTitle() == "ERT - poly.ert"
+
+        combo_box = gui.findChild(QComboBox, name="Simulation_mode")
+        assert combo_box.count() == 5
+        combo_box.setCurrentIndex(3)
+
+        assert (
+            combo_box.currentText()
+            == "Multiple Data Assimilation (ES MDA) - Recommended"
+        )
+
+        es_mda_panel = gui.findChild(QWidget, name="ES_MDA_panel")
+        assert es_mda_panel
+
+        run_sim_button = gui.findChild(QToolButton, name="start_simulation")
+        assert run_sim_button
+        assert run_sim_button.isEnabled()
+
+        qtbot.keyClick(
+            es_mda_panel._relative_iteration_weights_box,
+            Qt.Key_Home,
+            modifier=Qt.ShiftModifier,
+        )
+        qtbot.keyClick(es_mda_panel._relative_iteration_weights_box, Qt.Key_Backspace)
+        qtbot.keyClicks(es_mda_panel._relative_iteration_weights_box, "0")
+
+        assert not run_sim_button.isEnabled()
+
+        qtbot.keyClick(es_mda_panel._relative_iteration_weights_box, Qt.Key_Backspace)
+        qtbot.keyClicks(es_mda_panel._relative_iteration_weights_box, "1")
+        assert run_sim_button.isEnabled()
