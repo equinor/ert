@@ -16,7 +16,9 @@ def test_that_all_iterations_gets_correct_name_and_iteration_number(storage):
         "restart_run": False,
         "prior_ensemble": "",
     }
-    ert_mock = MagicMock()
+    ert_mock = MagicMock(
+        analysisConfig=lambda: MagicMock(minimum_required_realizations=0),
+    )
     ert_mock.ensemble_context.return_value.sim_fs.id = UUID(int=0)
 
     test_class = MultipleDataAssimilation(

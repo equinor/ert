@@ -117,6 +117,7 @@ def test_check_if_runpath_exists(
         return [f"out/realization-{r}" for r in realizations]
 
     brm = BaseRunModel(simulation_arguments, None, None, None, None)
+
     brm.facade = MagicMock(
         run_path=run_path,
         number_of_iterations=number_of_iterations,
