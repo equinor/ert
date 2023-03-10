@@ -316,7 +316,7 @@ def generate_config(draw):
                         st.integers(),
                     )
                 ),
-                ConfigKeys.ANALYSIS_SELECT: st.just("STD_ENKF"),
+                ConfigKeys.ANALYSIS_SELECT: st.sampled_from(["STD_ENKF", "IES_ENKF"]),
                 ConfigKeys.INSTALL_JOB: small_list(
                     random_ext_job_names(words, file_names)
                 ),

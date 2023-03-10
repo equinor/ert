@@ -25,7 +25,18 @@ class IteratedEnsembleSmoother(BaseRunModel):
     ):
         super().__init__(simulation_arguments, ert, queue_config, id_, phase_count=2)
         self.support_restart = False
-        self._w_container = SIES(len(simulation_arguments["active_realizations"]))
+        analysis_module = ert.resConfig().analysis_config.get_active_module()
+        variable_dict = analysis_module.variable_value_dict()
+        kwargs = {}
+        if "IES_MIN_STEPLENGTH" in variable_dict:
+            kwargs["min_steplength"] = variable_dict["IES_MIN_STEPLENGTH"]
+        if "IES_MAX_STEPLENGTH" in variable_dict:
+            kwargs["max_steplength"] = variable_dict["IES_MAX_STEPLENGTH"]
+        if "IES_DEC_STEPLENGTH" in variable_dict:
+            kwargs["dec_steplength"] = variable_dict["IES_DEC_STEPLENGTH"]
+        self._w_container = SIES(
+            len(simulation_arguments["active_realizations"]), **kwargs
+        )
 
     def setAnalysisModule(self, module_name: str) -> AnalysisModule:
         module_load_success = self.ert().analysisConfig().select_module(module_name)

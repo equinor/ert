@@ -342,6 +342,61 @@ def test_ies(tmpdir, source_root):
 
 
 @pytest.mark.integration_test
+def test_that_running_ies_with_different_steplength_produces_different_result(
+    tmpdir, source_root, snapshot
+):
+    shutil.copytree(
+        os.path.join(source_root, "test-data", "poly_example"),
+        os.path.join(str(tmpdir), "poly_example"),
+    )
+
+    with tmpdir.as_cwd():
+        with open("poly_example/poly.ert", mode="a", encoding="utf-8") as fh:
+            fh.write(
+                """
+ANALYSIS_SET_VAR IES_ENKF ENKF_SUBSPACE_DIMENSION -1
+ANALYSIS_SET_VAR IES_ENKF ENKF_TRUNCATION 0.999
+ANALYSIS_SET_VAR IES_ENKF IES_MAX_STEPLENGTH 0.5
+ANALYSIS_SET_VAR IES_ENKF IES_MIN_STEPLENGTH 0.2
+ANALYSIS_SET_VAR IES_ENKF IES_DEC_STEPLENGTH 2.5
+ANALYSIS_SET_VAR IES_ENKF IES_INVERSION 0
+ANALYSIS_SELECT IES_ENKF
+"""
+            )
+
+        parser = ArgumentParser(prog="test_main")
+        parsed = ert_parser(
+            parser,
+            [
+                ITERATIVE_ENSEMBLE_SMOOTHER_MODE,
+                "--target-case",
+                "iter-%d",
+                "--realizations",
+                "1,2,4,8,16",
+                "poly_example/poly.ert",
+                "--port-range",
+                "1024-65535",
+            ],
+        )
+        FeatureToggling.update_from_args(parsed)
+
+        run_cli(parsed)
+        FeatureToggling.reset()
+        facade = LibresFacade.from_config_file("poly.ert")
+        iter_0 = facade.load_all_gen_kw_data("iter-0")
+        iter_1 = facade.load_all_gen_kw_data("iter-1")
+        iter_2 = facade.load_all_gen_kw_data("iter-2")
+        iter_3 = facade.load_all_gen_kw_data("iter-3")
+        result = pd.concat(
+            [iter_0, iter_1, iter_2, iter_3],
+            keys=["iter-0", "iter-1", "iter-2", "iter-3"],
+        )
+        snapshot.assert_match(
+            result.to_csv(float_format="%.12g"), "ies_steplength_snapshot"
+        )
+
+
+@pytest.mark.integration_test
 @pytest.mark.timeout(40)
 def test_experiment_server_ensemble_experiment(tmpdir, source_root, capsys):
     shutil.copytree(
