@@ -11,6 +11,7 @@ from qtpy.QtWidgets import (
     QWidget,
 )
 
+from ert.config.analysis_module import correlation_threshold
 from ert.gui.ertwidgets.models.analysismodulevariablesmodel import (
     AnalysisModuleVariablesModel,
 )
@@ -41,9 +42,15 @@ class AnalysisModuleVariablesPanel(QWidget):
                 variable_type = analysis_module_variables_model.getVariableType(
                     variable_name
                 )
+
                 variable_value = analysis_module_variables_model.getVariableValue(
                     self.facade, self._analysis_module_name, variable_name
                 )
+
+                if variable_name == "LOCALIZATION_CORRELATION_THRESHOLD":
+                    variable_value = correlation_threshold(
+                        self.facade.get_ensemble_size(), variable_value
+                    )
 
                 label_name = analysis_module_variables_model.getVariableLabelName(
                     variable_name
@@ -123,6 +130,17 @@ class AnalysisModuleVariablesPanel(QWidget):
             lambda value: self.update_truncation_spinners(value, truncation_spinner)
         )
 
+        localization_checkbox = self.widget_from_layout(layout, "LOCALIZATION")
+        localization_correlation_spinner = self.widget_from_layout(
+            layout, "LOCALIZATION_CORRELATION_THRESHOLD"
+        )
+        localization_correlation_spinner.setEnabled(localization_checkbox.isChecked())
+        localization_checkbox.stateChanged.connect(
+            lambda localization_is_on: localization_correlation_spinner.setEnabled(True)
+            if localization_is_on
+            else localization_correlation_spinner.setEnabled(False)
+        )
+
         self.setLayout(layout)
         self.blockSignals(False)
 
@@ -172,6 +190,7 @@ class AnalysisModuleVariablesPanel(QWidget):
     def createCheckBox(self, variable_name, variable_value, variable_type):
         spinner = QCheckBox()
         spinner.setChecked(variable_value)
+        spinner.setObjectName(variable_name)
         spinner.clicked.connect(
             partial(self.valueChanged, variable_name, variable_type, spinner)
         )
