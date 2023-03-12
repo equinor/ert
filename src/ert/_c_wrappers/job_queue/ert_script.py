@@ -56,9 +56,12 @@ class ErtScript:
         return self.__storage
 
     @property
-    def ensemble(self) -> EnsembleAccessor:
-        assert self.__ensemble is not None
+    def ensemble(self) -> Optional[EnsembleAccessor]:
         return self.__ensemble
+
+    @ensemble.setter
+    def ensemble(self, ensemble: Optional[EnsembleAccessor]) -> None:
+        self.__ensemble = ensemble
 
     def isCancelled(self) -> bool:
         return self.__is_cancelled
