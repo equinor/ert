@@ -446,6 +446,9 @@ def get_ert_parser(parser: Optional[ArgumentParser] = None) -> ArgumentParser:
         WORKFLOW_MODE, help=workflow_description, description=workflow_description
     )
     workflow_parser.add_argument(help="Name of workflow", dest="name")
+    workflow_parser.add_argument(
+        "--ensemble", help="Which ensemble to use", default=None
+    )
 
     # Common arguments/defaults for all non-gui modes
     for cli_parser in [
