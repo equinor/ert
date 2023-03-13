@@ -183,13 +183,13 @@ def _check_locale():
     current_locale = QLocale()
     decimal_point = str(current_locale.decimalPoint())
     if decimal_point != ".":
-        msg = f"""
-** WARNING: You are using a locale with decimalpoint: '{decimal_point}' - the ert application is
-written with the assumption that '.' is  used as decimalpoint, and chances
-are that something will break if you continue with this locale. It is highly
-recommended that you set the decimalpoint to '.' using one of the environment
-variables 'LANG', LC_ALL', or 'LC_NUMERIC' to either the 'C' locale or
-alternatively a locale which uses '.' as decimalpoint.\n"""  # noqa
+        msg = f"""You are using a locale with decimalpoint: '{decimal_point}'
+the ert application is written with the assumption that '.' is  used as
+decimalpoint, and chances are that something will break if you continue with
+this locale. It is highly recommended that you set the decimalpoint to '.'
+using one of the environment variables 'LANG', LC_ALL', or 'LC_NUMERIC' to
+either the 'C' locale or alternatively a locale which uses '.' as
+decimalpoint.\n"""  # noqa
         warnings.warn(msg, category=ConfigWarning)
 
 
