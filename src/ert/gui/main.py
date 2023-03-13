@@ -74,59 +74,63 @@ def run_gui(args: Namespace):
             return show_window()
 
 
+def _log_difference_with_new_parser(args, ert_config):
+    try:
+        with warnings.catch_warnings(record=True) as silenced_warnings:
+            warnings.simplefilter("always")
+
+            ert_config_new = ErtConfig.from_file(args.config, use_new_parser=True)
+
+            for w in silenced_warnings:
+                logging.info(f"Parser warning: {w.message}")
+
+        if ert_config != ert_config_new:
+            fields = dataclasses.fields(ert_config)
+            difference = [
+                f"{getattr(ert_config, field.name)} !="
+                f" {getattr(ert_config_new, field.name)}"
+                for field in fields
+                if getattr(ert_config, field.name)
+                != getattr(ert_config_new, field.name)
+            ]
+            logging.info(
+                f"New parser gave different result.\n" f" Difference: {difference!r}"
+            )
+        else:
+            logging.info("New parser gave equal result.")
+    except Exception:
+        logging.exception("The new parser failed")
+
+
 def _start_initial_gui_window(args, log_handler):
     # Create logger inside function to make sure all handlers have been added to
     # the root-logger.
     logger = logging.getLogger(__name__)
     suggestions = []
     error_messages = []
-    warning_msgs = []
+    all_warnings = []
+    config_warnings = []
     ert_config = None
     try:
-        with warnings.catch_warnings(record=True) as warning_messages:
+        with warnings.catch_warnings(record=True) as all_warnings:
             _check_locale()
             suggestions += ErtConfig.make_suggestion_list(args.config)
             ert_config = ErtConfig.from_file(args.config)
-            try:
-                with warnings.catch_warnings(record=True) as silenced_warnings:
-                    warnings.simplefilter("always")
-
-                    ert_config_new = ErtConfig.from_file(
-                        args.config, use_new_parser=True
-                    )
-
-                    for w in silenced_warnings:
-                        logging.info(f"Parser warning: {w.message}")
-
-                if ert_config != ert_config_new:
-                    fields = dataclasses.fields(ert_config)
-                    difference = [
-                        f"{getattr(ert_config, field.name)} !="
-                        f" {getattr(ert_config_new, field.name)}"
-                        for field in fields
-                        if getattr(ert_config, field.name)
-                        != getattr(ert_config_new, field.name)
-                    ]
-                    logging.info(
-                        f"New parser gave different result.\n"
-                        f" Difference: {difference!r}"
-                    )
-                else:
-                    logging.info("New parser gave equal result.")
-            except Exception:
-                logging.exception("The new parser failed")
+        _log_difference_with_new_parser(args, ert_config)
         os.chdir(ert_config.config_path)
         # Changing current working directory means we need to update the config file to
         # be the base name of the original config
         args.config = os.path.basename(args.config)
         ert = EnKFMain(ert_config)
-        warning_msgs = warning_messages
+        config_warnings = [
+            str(w.message) for w in all_warnings if w.category == ConfigWarning
+        ]
 
     except ConfigValidationError as error:
         error_messages.append(str(error))
         logger.info("Error in config file shown in gui: '%s'", str(error))
         return (
-            _setup_suggester(error_messages, warning_messages, suggestions),
+            _setup_suggester(error_messages, config_warnings, suggestions),
             None,
             None,
         )
@@ -134,15 +138,19 @@ def _start_initial_gui_window(args, log_handler):
     for job in ert_config.forward_model_list:
         logger.info("Config contains forward model job %s", job.name)
 
-    for wm in warning_msgs:
+    for wm in all_warnings:
         if wm.category != ConfigWarning:
             logger.warning(str(wm.message))
     for msg in suggestions:
         logger.info("Suggestion shown in gui '%s'", msg)
+    for msg in config_warnings:
+        logger.info("Warning shown in gui '%s'", msg)
     _main_window = _setup_main_window(ert, args, log_handler)
-    if suggestions or warning_msgs:
+    if suggestions or config_warnings:
         return (
-            _setup_suggester(error_messages, warning_msgs, suggestions, _main_window),
+            _setup_suggester(
+                error_messages, config_warnings, suggestions, _main_window
+            ),
             ert_config.ens_path,
             ert_config.model_config.num_realizations,
         )
@@ -184,7 +192,7 @@ are that something will break if you continue with this locale. It is highly
 recommended that you set the decimalpoint to '.' using one of the environment
 variables 'LANG', LC_ALL', or 'LC_NUMERIC' to either the 'C' locale or
 alternatively a locale which uses '.' as decimalpoint.\n"""  # noqa
-        warnings.warn(msg, category=UserWarning)
+        warnings.warn(msg, category=ConfigWarning)
 
 
 def _clicked_help_button(menu_label: str, link: str):
@@ -257,7 +265,6 @@ def _setup_suggester(errors, warning_msgs, suggestions, ert_window=None):
         text += msg + "\n"
         suggest_layout.addWidget(SuggestorMessage.error_msg(msg))
     for msg in warning_msgs:
-        msg = str(msg.message)
         text += msg + "\n"
         suggest_layout.addWidget(SuggestorMessage.warning_msg(msg))
     for msg in suggestions:
