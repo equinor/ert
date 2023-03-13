@@ -5,8 +5,10 @@ import os
 import shutil
 import threading
 from argparse import ArgumentParser
+from textwrap import dedent
 from unittest.mock import Mock, call
 
+import numpy as np
 import pandas as pd
 import pytest
 
@@ -273,6 +275,88 @@ def test_ies(tmpdir, source_root):
 
         run_cli(parsed)
         FeatureToggling.reset()
+
+
+@pytest.mark.integration_test
+def test_that_running_ies_with_different_steplength_produces_different_result(
+    tmpdir, source_root
+):
+    """This is a regression test to make sure that different step-lengths
+    give different results when running SIES.
+    """
+    shutil.copytree(
+        os.path.join(source_root, "test-data", "poly_example"),
+        os.path.join(str(tmpdir), "poly_example"),
+    )
+
+    def _run(target):
+        parser = ArgumentParser(prog="test_main")
+        parsed = ert_parser(
+            parser,
+            [
+                ITERATIVE_ENSEMBLE_SMOOTHER_MODE,
+                "--target-case",
+                f"{target}-%d",
+                "--realizations",
+                "1,2,4,8",
+                "poly_example/poly.ert",
+                "--num-iterations",
+                "1",
+            ],
+        )
+        run_cli(parsed)
+        facade = LibresFacade.from_config_file("poly.ert")
+
+        with open_storage(facade.enspath) as storage:
+            iter_0_fs = storage.get_ensemble_by_name(f"{target}-0")
+            df_iter_0 = facade.load_all_gen_kw_data(iter_0_fs)
+            iter_1_fs = storage.get_ensemble_by_name(f"{target}-1")
+            df_iter_1 = facade.load_all_gen_kw_data(iter_1_fs)
+
+            result = pd.concat(
+                [df_iter_0, df_iter_1],
+                keys=["iter-0", "iter-1"],
+            )
+            return result
+
+    # Run SIES with step-lengths defined
+    with tmpdir.as_cwd():
+        with open("poly_example/poly.ert", mode="a", encoding="utf-8") as fh:
+            fh.write(
+                dedent(
+                    """
+                RANDOM_SEED 123456
+                ANALYSIS_SELECT IES_ENKF
+                ANALYSIS_SET_VAR IES_ENKF IES_MAX_STEPLENGTH 0.5
+                ANALYSIS_SET_VAR IES_ENKF IES_MIN_STEPLENGTH 0.2
+                ANALYSIS_SET_VAR IES_ENKF IES_DEC_STEPLENGTH 2.5
+                """
+                )
+            )
+
+        result_1 = _run("target_result_1")
+
+    # Run SIES with different step-lengths defined
+    with tmpdir.as_cwd():
+        with open("poly_example/poly.ert", mode="a", encoding="utf-8") as fh:
+            fh.write(
+                dedent(
+                    """
+                ANALYSIS_SELECT IES_ENKF
+                ANALYSIS_SET_VAR IES_ENKF IES_MAX_STEPLENGTH 0.6
+                ANALYSIS_SET_VAR IES_ENKF IES_MIN_STEPLENGTH 0.3
+                ANALYSIS_SET_VAR IES_ENKF IES_DEC_STEPLENGTH 2.0
+                """
+                )
+            )
+
+        result_2 = _run("target_result_2")
+
+        # Prior should be the same
+        assert result_1.loc["iter-0"].equals(result_2.loc["iter-0"])
+
+        # Posterior should be different
+        assert not np.isclose(result_1.loc["iter-1"], result_2.loc["iter-1"]).all()
 
 
 @pytest.mark.integration_test
