@@ -272,6 +272,7 @@ class ErtConfig:
             target_file = (
                 config_dict[ConfigKeys.ECLBASE].replace("%d", "<IENS>") + ".DATA"
             )
+            ConfigParser.check_non_utf_chars(source_file)
             templates.append([source_file, target_file])
 
         for template in config_dict.get(ConfigKeys.RUN_TEMPLATE, []):
