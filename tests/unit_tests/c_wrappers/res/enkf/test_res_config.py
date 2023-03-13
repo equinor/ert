@@ -624,3 +624,34 @@ def test_that_get_plugin_jobs_fetches_exactly_ert_plugins():
 
     assert ert_config.workflow_jobs["plugin"].isPlugin()
     assert not ert_config.workflow_jobs["script"].isPlugin()
+
+
+def test_data_file_with_non_utf_8_character_gives_error_message(tmpdir):
+    with tmpdir.as_cwd():
+        data_file = "data_file.DATA"
+        with open("config.ert", mode="w", encoding="utf-8") as fh:
+            fh.write(
+                """NUM_REALIZATIONS 1
+            DATA_FILE data_file.DATA
+            ECLBASE data_file_<ITER>
+            """
+            )
+        with open(data_file, mode="w", encoding="utf-8") as fh:
+            fh.write(
+                dedent(
+                    """
+                        START
+                        --  DAY   MONTH  YEAR
+                        1    'JAN'  2017   /
+                    """
+                )
+            )
+        with open(data_file, "ab") as f:
+            f.write(b"\xff")
+        data_file_path = f"{tmpdir}/{data_file}"
+        with pytest.raises(
+            ConfigValidationError,
+            match="Unsupported non UTF-8 character "
+            f"'ÿ' found in file: {data_file_path!r}",
+        ):
+            ErtConfig.from_file("config.ert")

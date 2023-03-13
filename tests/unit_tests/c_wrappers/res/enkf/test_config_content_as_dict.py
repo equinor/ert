@@ -150,6 +150,6 @@ def test_check_non_utf_characters(tmpdir):
         with pytest.raises(
             ConfigValidationError,
             match="Unsupported non UTF-8 character "
-            f"'ÿ' found in config file: {config_file!r}",
+            f"'ÿ' found in file: {config_file!r}",
         ):
             ConfigParser.check_non_utf_chars(config_file)

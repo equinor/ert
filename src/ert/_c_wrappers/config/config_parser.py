@@ -88,9 +88,9 @@ class ConfigParser(BaseCClass):
             raise KeyError(f"Config parser does not have item:{keyword}")
 
     @staticmethod
-    def check_non_utf_chars(config_file):
+    def check_non_utf_chars(file_path):
         try:
-            with open(config_file, "r", encoding="utf-8") as f:
+            with open(file_path, "r", encoding="utf-8") as f:
                 f.read()
         except UnicodeDecodeError as e:
             error_words = str(e).split(" ")
@@ -101,8 +101,8 @@ class ConfigParser(BaseCClass):
                 unknown_char = f"hex:{hex_str}"
             raise ConfigValidationError(
                 f"Unsupported non UTF-8 character {unknown_char!r} "
-                f"found in config file: {config_file!r}",
-                config_file=config_file,
+                f"found in file: {file_path!r}",
+                config_file=file_path,
             )
 
     def parse(
