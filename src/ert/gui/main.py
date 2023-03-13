@@ -77,12 +77,10 @@ def run_gui(args: Namespace):
 def _log_difference_with_new_parser(args, ert_config):
     try:
         with warnings.catch_warnings(record=True) as silenced_warnings:
-            warnings.simplefilter("always")
-
             ert_config_new = ErtConfig.from_file(args.config, use_new_parser=True)
 
             for w in silenced_warnings:
-                logging.info(f"Parser warning: {w.message}")
+                logging.info(f"New Parser warning: {w.message}")
 
         if ert_config != ert_config_new:
             fields = dataclasses.fields(ert_config)
