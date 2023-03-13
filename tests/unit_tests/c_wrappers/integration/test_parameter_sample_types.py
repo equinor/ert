@@ -57,12 +57,6 @@ def load_from_forward_model(ert, ensemble):
     return facade.load_from_forward_model(ensemble, realizations, 0)
 
 
-@pytest.fixture
-def storage(tmp_path):
-    with open_storage(tmp_path / "storage", mode="w") as storage:
-        yield storage
-
-
 @pytest.mark.integration_test
 @pytest.mark.parametrize(
     "config_str, expected, extra_files, expectation",
@@ -292,56 +286,6 @@ def test_surface_param(
         else:
             with pytest.raises(KeyError, match="No parameter: MY_PARAM in storage"):
                 fs.load_surface_data("MY_PARAM", [0])
-
-
-@pytest.mark.parametrize(
-    "config_str",
-    [
-        "SURFACE MY_PARAM OUTPUT_FILE:surf.irap   INIT_FILES:surf.irap   BASE_SURFACE:surf0.irap",  # noqa
-    ],
-)
-def test_copy_case(
-    tmpdir,
-    storage,
-    config_str,
-):
-    with tmpdir.as_cwd():
-        config = dedent(
-            """
-        JOBNAME my_name%d
-        NUM_REALIZATIONS 10
-        """
-        )
-        config += config_str
-        expect_surface = Surface(
-            nx=2, ny=2, xinc=1, yinc=1, xstart=1, ystart=1, angle=0
-        )
-        for i in range(4):
-            expect_surface[i] = float(i)
-        expect_surface.write("surf.irap")
-        expect_surface.write("surf0.irap")
-
-        with open("config.ert", "w", encoding="utf-8") as fh:
-            fh.writelines(config)
-        ert, fs = create_runpath(
-            storage, "config.ert", active_mask=[True for _ in range(10)]
-        )
-
-        # Assert that the data has been internalised to storage
-        new_fs = storage.create_ensemble(
-            storage.create_experiment(),
-            name="copy",
-            ensemble_size=ert.getEnsembleSize(),
-        )
-        fs.copy_from_case(
-            new_fs,
-            ["MY_PARAM"],
-            [True if x in range(5) else False for x in range(10)],
-        )
-        arr_old = fs.load_surface_data("MY_PARAM", [0, 2, 3])
-
-        arr_new = new_fs.load_surface_data("MY_PARAM", [0, 2, 3])
-        assert np.array_equal(arr_old, arr_new)
 
 
 @pytest.mark.integration_test

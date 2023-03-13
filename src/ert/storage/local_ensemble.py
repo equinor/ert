@@ -553,7 +553,45 @@ class LocalEnsembleAccessor(LocalEnsembleReader):
         This copies parameters from self into other, checking if nodes exists
         in self before performing copy.
         """
-        self._copy_parameter_files(other, nodes, [i for i, b in enumerate(active) if b])
+        realizations = [i for i, b in enumerate(active) if b]
+        self._copy_parameter_files(other, nodes, realizations)
+        self._copy_experiment_files(other, realizations)
+        self._copy_response_files(other, realizations)
+
+    def _copy_response_files(
+        self, to: LocalEnsembleAccessor, realizations: List[int]
+    ) -> None:
+        for realization_folder in self.mount_point.glob("realization-*"):
+            files_to_copy = []
+            realization = int(str(realization_folder).rsplit("-", maxsplit=1)[-1])
+            if realization in realizations:
+                gen_data_file = realization_folder / "gen-data.nc"
+                if gen_data_file.exists():
+                    files_to_copy.append(gen_data_file.name)
+                summary_data_file = realization_folder / "summary-data.nc"
+                if summary_data_file.exists():
+                    files_to_copy.append(summary_data_file.name)
+
+            if not files_to_copy:
+                continue
+
+            Path.mkdir(to.mount_point / realization_folder.stem)
+            for f in files_to_copy:
+                shutil.copy(
+                    src=self.mount_point / realization_folder.stem / f,
+                    dst=to.mount_point / realization_folder.stem / f,
+                )
+
+    def _copy_experiment_files(
+        self, to: LocalEnsembleAccessor, realizations: List[int]
+    ) -> None:
+        for realization in realizations:
+            to.update_realization_state(
+                realization,
+                [RealizationStateEnum.STATE_UNDEFINED],
+                self.state_map[realization],
+            )
+        # copy time map
 
     def _copy_parameter_files(
         self,

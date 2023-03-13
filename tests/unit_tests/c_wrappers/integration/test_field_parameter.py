@@ -58,12 +58,6 @@ def write_grid_property(name, grid, filename, file_format, shape, buffer):
     return arr
 
 
-@pytest.fixture
-def storage(tmp_path):
-    with open_storage(tmp_path / "storage", mode="w") as storage:
-        yield storage
-
-
 def test_unknown_file_extension(storage, tmpdir):
     with tmpdir.as_cwd():
         config = dedent(
