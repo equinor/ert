@@ -11,5 +11,8 @@ Then you can test the installation by running::
 
 If you get a message explaining how to use ERT, you are ready.
 
-If you don't have access to komodo, you might have another means of using it in your
-organisation. If not, you have to `build and install <https://github.com/equinor/ert>`_ it yourself.
+If not, you can install ert from PyPi into your own environment::
+
+    $ pip install ert
+
+If you want to build and install the latest development version, please see the `ERT Github page <https://github.com/equinor/ert>`_.
