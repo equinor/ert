@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 import argparse
 import os
+import re
 import shutil
 import subprocess
 import sys
-import re
-from typing import Optional, Union
 from pathlib import Path
+from typing import List, Optional, Union
 
 SOURCE_ROOT = Path(__file__).parent.parent
 VERBOSE = False
@@ -61,7 +61,8 @@ def check_cxx_version() -> None:
 
     if version[0] < min_version:
         print_error(
-            f"Your C++ compiler is too old. ERT needs GCC {MIN_GCC_VERSION}+ or clang {MIN_CLANG_VERSION}+"
+            f"Your C++ compiler is too old. ERT needs GCC {MIN_GCC_VERSION}"
+            f"+ or clang {MIN_CLANG_VERSION}+"
         )
         sys.exit(1)
 
@@ -140,7 +141,7 @@ def install_build_requires() -> None:
     """
     extra_req: List[str] = []
     try:
-        import importlib.metadata
+        import importlib.metadata  # noqa: F401 imported but unused
     except ImportError:
         # Add 'importlib_metadata' to dependencies so that we can later detect
         # the runtime dependencies of this project.
@@ -268,7 +269,7 @@ def main() -> None:
                 *cmake_args,
                 verbose=True,
             )
-        except subprocess.CalledProcessError as exc:
+        except subprocess.CalledProcessError:
             print_error("Build failed. If the output makes no sense, try these steps:")
             print_error("1. Delete '_skbuild' directory")
             print_error(f"2. Delete conan directory: {Path.home() / '.conan'}")

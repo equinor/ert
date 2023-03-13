@@ -28,9 +28,9 @@ if "target_file" in config:
     base_sleep_time = 1
     for sleep_pow in range(5):
         if mtime is not None and mtime == os.path.getmtime(target_file):
-            time.sleep(base_sleep_time * 2 ** sleep_pow)
+            time.sleep(base_sleep_time * 2**sleep_pow)
             write_target_file(target_file)
-            time.sleep(base_sleep_time * 2 ** sleep_pow)
+            time.sleep(base_sleep_time * 2**sleep_pow)
         else:
             break
 
