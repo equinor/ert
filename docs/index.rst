@@ -35,11 +35,6 @@ with model updates and uncertainty estimation. You can read more about the theor
 
    theory/index
 
-.. toctree::
-   :hidden:
-   :caption: Installation
-
-   installation/index
 
 .. This is commented out until the api is ready for public use
    .. toctree::
