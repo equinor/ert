@@ -7,7 +7,6 @@ import pytest
 from ert._c_wrappers.enkf import ErtConfig
 from ert._c_wrappers.job_queue import JobStatusType
 from ert.simulator import BatchSimulator
-from ert.storage import open_storage
 
 
 class MockMonitor:
@@ -34,13 +33,6 @@ def _wait_for_completion(ctx):
 @pytest.fixture
 def batch_sim_example(setup_case):
     return setup_case("batch_sim", "batch_sim.ert")
-
-
-@pytest.fixture
-def ensemble():
-    with open_storage("_storage", mode="w") as storage:
-        experiment_id = storage.create_experiment()
-        yield storage.create_ensemble(experiment_id, ensemble_size=10)
 
 
 def test_that_simulator_raises_error_when_missing_ertconfig():
@@ -150,16 +142,16 @@ def batch_simulator(batch_sim_example):
     ],
 )
 def test_that_starting_with_invalid_key_raises_key_error(
-    batch_simulator, ensemble, _input, match
+    batch_simulator, _input, match
 ):
     with pytest.raises(KeyError, match=match):
         batch_simulator.start(
-            ensemble,
+            "case",
             _input,
         )
 
 
-def test_batch_simulation(batch_simulator, ensemble):
+def test_batch_simulation(batch_simulator):
     # Starting a simulation which should actually run through.
     case_data = [
         (
@@ -178,7 +170,7 @@ def test_batch_simulation(batch_simulator, ensemble):
         ),
     ]
 
-    ctx = batch_simulator.start(ensemble, case_data)
+    ctx = batch_simulator.start("case", case_data)
     assert len(case_data) == len(ctx)
 
     # Asking for results before it is complete.
@@ -280,7 +272,7 @@ def test_that_batch_simulation_handles_invalid_suffixes_at_init(
     ],
 )
 def test_that_batch_simulator_handles_invalid_suffixes_at_start(
-    batch_sim_example, inp, match, ensemble
+    batch_sim_example, inp, match
 ):
     rsim = BatchSimulator(
         batch_sim_example,
@@ -293,11 +285,11 @@ def test_that_batch_simulator_handles_invalid_suffixes_at_start(
         ["ORDER"],
     )
     with pytest.raises(KeyError, match=match):
-        rsim.start(ensemble, inp)
+        rsim.start("case", inp)
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_batch_simulation_suffixes(batch_sim_example, ensemble):
+def test_batch_simulation_suffixes(batch_sim_example):
     ert_config = batch_sim_example
     monitor = MockMonitor()
     rsim = BatchSimulator(
@@ -339,7 +331,7 @@ def test_batch_simulation_suffixes(batch_sim_example, ensemble):
         ),
     ]
 
-    ctx = rsim.start(ensemble, case_data)
+    ctx = rsim.start("case", case_data)
     assert len(case_data) == len(ctx)
     _wait_for_completion(ctx)
 
@@ -362,7 +354,7 @@ def test_batch_simulation_suffixes(batch_sim_example, ensemble):
             assert act == pytest.approx(exp)
 
 
-def test_stop_sim(copy_case, ensemble):
+def test_stop_sim(copy_case):
     copy_case("batch_sim")
     with open("sleepy_time.ert", "a", encoding="utf-8") as f:
         f.write(
@@ -382,6 +374,7 @@ LOAD_WORKFLOW_JOB workflows/jobs/REALIZATION_NUMBER
         ["ORDER", "ON_OFF"],
     )
 
+    case_name = "MyCaseName_123"
     case_data = [
         (
             2,
@@ -400,7 +393,7 @@ LOAD_WORKFLOW_JOB workflows/jobs/REALIZATION_NUMBER
     ]
 
     # Starting a simulation which should actually run through.
-    ctx = rsim.start(ensemble, case_data)
+    ctx = rsim.start(case_name, case_data)
 
     ctx.stop()
     status = ctx.status
@@ -442,7 +435,7 @@ def assertContextStatusOddFailures(batch_ctx, final_state_only=False):
             assert status == JobStatusType.JOB_QUEUE_FAILED
 
 
-def test_batch_ctx_status_failing_jobs(setup_case, ensemble):
+def test_batch_ctx_status_failing_jobs(setup_case):
     ert_config = setup_case("batch_sim", "batch_sim_sleep_and_fail.ert")
 
     external_parameters = {
@@ -463,7 +456,7 @@ def test_batch_ctx_status_failing_jobs(setup_case, ensemble):
         for idx in range(10)
     ]
 
-    batch_ctx = rsim.start(ensemble, cases)
+    batch_ctx = rsim.start("case_name", cases)
     while batch_ctx.running():
         assertContextStatusOddFailures(batch_ctx)
         time.sleep(1)

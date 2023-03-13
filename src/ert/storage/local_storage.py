@@ -33,7 +33,7 @@ if TYPE_CHECKING:
 
 class LocalStorageReader:
     def __init__(
-        self, path: os.PathLike[str], refcase: Optional[EclSum] = None
+        self, path: Union[str, os.PathLike[str]], refcase: Optional[EclSum] = None
     ) -> None:
         self.path = Path(path).absolute()
 
@@ -132,7 +132,7 @@ class LocalStorageReader:
 class LocalStorageAccessor(LocalStorageReader):
     LOCK_TIMEOUT = 5
 
-    def __init__(self, path: os.PathLike[str]) -> None:
+    def __init__(self, path: Union[str, os.PathLike[str]]) -> None:
         super().__init__(path)
 
         self.path.mkdir(parents=True, exist_ok=True)
@@ -164,7 +164,7 @@ class LocalStorageAccessor(LocalStorageReader):
 
     def create_ensemble(
         self,
-        experiment: Union[LocalEnsembleReader, UUID],
+        experiment: Union[LocalEnsembleReader, LocalEnsembleAccessor, UUID],
         *,
         ensemble_size: int,
         iteration: int = 0,

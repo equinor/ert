@@ -22,17 +22,21 @@ EnsembleAccessor = LocalEnsembleAccessor
 
 
 @overload
-def open_storage(path: os.PathLike[str], mode: Literal["r"] = "r") -> StorageReader:
+def open_storage(
+    path: Union[str, os.PathLike[str]], mode: Literal["r"] = "r"
+) -> StorageReader:
     ...
 
 
 @overload
-def open_storage(path: os.PathLike[str], mode: Literal["w"]) -> StorageAccessor:
+def open_storage(
+    path: Union[str, os.PathLike[str]], mode: Literal["w"]
+) -> StorageAccessor:
     ...
 
 
 def open_storage(
-    path: os.PathLike[str], mode: Literal["r", "w"] = "r"
+    path: Union[str, os.PathLike[str]], mode: Literal["r", "w"] = "r"
 ) -> Union[StorageReader, StorageAccessor]:
     if mode == "r":
         return LocalStorageReader(path)
