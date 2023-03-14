@@ -7,7 +7,7 @@ from ecl.summary import EclSum
 
 from ert._c_wrappers.config import ConfigValidationError, ConfigWarning
 from ert._c_wrappers.enkf import ConfigKeys, EnsembleConfig, ErtConfig
-from ert._c_wrappers.enkf.enums import EnkfVarType, ErtImplType, GenDataFileType
+from ert._c_wrappers.enkf.enums import ErtImplType, GenDataFileType
 
 
 def test_create():
@@ -17,7 +17,7 @@ def test_create():
     assert empty_ens_conf == conf_from_dict
     assert conf_from_dict.get_refcase_file is None
     assert conf_from_dict.grid_file is None
-    assert conf_from_dict.parameters == []
+    assert not conf_from_dict.parameters
 
     assert "XYZ" not in conf_from_dict
 
@@ -159,15 +159,12 @@ def test_gen_data_node(gen_data_str, expected):
         assert node == expected
     else:
         assert node is not None
-        assert node.getVariableType() == EnkfVarType.DYNAMIC_RESULT
         assert node.getImplementationType() == ErtImplType.GEN_DATA
         assert node.getDataModelConfig().getNumReportStep() == 3
         assert node.getDataModelConfig().hasReportStep(10)
         assert node.getDataModelConfig().hasReportStep(20)
         assert node.getDataModelConfig().hasReportStep(30)
         assert not node.getDataModelConfig().hasReportStep(32)
-        assert node.get_init_file_fmt() is None
-        assert node.get_enkf_outfile() is None
         assert node.getDataModelConfig().getInputFormat() == GenDataFileType.ASCII
 
 
@@ -197,7 +194,6 @@ def test_gen_data_node_input_format(input_format):
     ):
         node = EnsembleConfig.gen_data_node(gen_data_str.split(" "))
         assert node is not None
-        assert node.getVariableType() == EnkfVarType.DYNAMIC_RESULT
         assert node.getImplementationType() == ErtImplType.GEN_DATA
         assert node.getDataModelConfig().getNumReportStep() == 3
 
@@ -234,13 +230,8 @@ def test_get_surface_node(setup_case):
 
     assert surface_node is not None
 
-    assert surface_node.get_init_file_fmt() == surface_in
-    assert surface_node.get_enkf_outfile() == surface_out
-    assert not surface_node.getUseForwardInit()
-
     surface_str += " FORWARD_INIT:TRUE"
     surface_node = EnsembleConfig.get_surface_node(surface_str.split(" "))
-    assert surface_node.getUseForwardInit()
 
 
 def test_surface_bad_init_values(setup_case):

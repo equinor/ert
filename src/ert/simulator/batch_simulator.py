@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Tuple, Un
 
 from ert._c_wrappers.enkf import EnKFMain, ErtConfig
 from ert._c_wrappers.enkf.config import EnkfConfigNode, ExtParamConfig
+from ert._c_wrappers.enkf.enums import EnkfVarType
 from ert.storage import open_storage
 
 from .batch_simulator_context import BatchContext
@@ -101,9 +102,19 @@ class BatchSimulator:
         ens_config = self.ert_config.ensemble_config
         for control_name, variables in controls.items():
             ens_config.addNode(EnkfConfigNode.create_ext_param(control_name, variables))
+            ens_config.add_config_node_meta(
+                key=control_name,
+                output_file=control_name + ".json",
+                var_type=EnkfVarType.EXT_PARAMETER,
+            )
 
         for key in results:
-            ens_config.addNode(EnkfConfigNode.create_gen_data(key, f"{key}_%d"))
+            ens_config.addNode(EnkfConfigNode.create_gen_data(key))
+            ens_config.add_config_node_meta(
+                key=key,
+                input_file=f"{key}_%d",
+                var_type=EnkfVarType.DYNAMIC_RESULT,
+            )
 
     def _setup_sim(
         self,

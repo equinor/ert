@@ -30,14 +30,13 @@ def forward_model_ok(
             forward_init_config_nodes = ens_conf.check_forward_init_nodes()
             error_msg = ""
             for config_node in forward_init_config_nodes:
-                if not config_node.getUseForwardInit():
-                    continue
+                run_path = Path(run_arg.runpath)
+                file_name = ens_conf.get_init_file_fmt(config_node.getKey())
+                if "%d" in file_name:
+                    file_name = file_name % run_arg.iens
+                file_path = run_path / file_name
+
                 if config_node.getImplementationType() == ErtImplType.SURFACE:
-                    run_path = Path(run_arg.runpath)
-                    file_name = config_node.get_init_file_fmt()
-                    if "%d" in file_name:
-                        file_name = file_name % run_arg.iens
-                    file_path = run_path / file_name
                     if file_path.exists():
                         run_arg.ensemble_storage.save_surface_file(
                             config_node.getKey(), run_arg.iens, str(file_path)
@@ -52,12 +51,6 @@ def forward_model_ok(
 
                     continue
                 if config_node.getImplementationType() == ErtImplType.FIELD:
-                    run_path = Path(run_arg.runpath)
-                    file_name = config_node.get_init_file_fmt()
-                    if "%d" in file_name:
-                        file_name = file_name % run_arg.iens
-                    file_path = run_path / file_name
-
                     key = config_node.getKey()
                     if run_arg.ensemble_storage.field_has_data(key, run_arg.iens):
                         # Already initialised, ignore

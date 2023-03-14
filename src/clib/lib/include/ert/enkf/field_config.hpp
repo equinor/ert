@@ -68,21 +68,13 @@ typedef enum {
 
 /* active_cells currently not really implemented */
 
-void field_config_update_parameter_field(field_config_type *config,
-                                         int truncation, double min_value,
-                                         double max_value,
-                                         field_file_format_type export_format,
-                                         const char *init_transform,
-                                         const char *output_transform,
-                                         const char *output_field_name);
-
-void field_config_update_general_field(
-    field_config_type *config, int truncation, double min_value,
-    double max_value,
-    field_file_format_type
-        export_format, /* This can be guessed with the field_config_default_export_format( ecl_file ) function. */
-    const char *init_transform, const char *input_transform,
-    const char *output_transform);
+void field_config_update_field(field_config_type *config, int truncation,
+                               double min_value, double max_value,
+                               field_file_format_type export_format,
+                               const char *init_transform,
+                               const char *input_transform,
+                               const char *output_transform,
+                               const char *output_field_name);
 
 extern "C" field_config_type *field_config_alloc_empty(const char *ecl_kw_name,
                                                        ecl_grid_type *ecl_grid,

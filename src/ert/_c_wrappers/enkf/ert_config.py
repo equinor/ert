@@ -299,7 +299,7 @@ class ErtConfig:
     @classmethod
     def _validate_ensemble_config(cls, ensemble_config, config_path):
         for key in ensemble_config.getKeylistFromImplType(ErtImplType.GEN_KW):
-            if ensemble_config.getNode(key).getUseForwardInit():
+            if ensemble_config.getUseForwardInit(key):
                 raise ConfigValidationError(
                     config_file=config_path,
                     errors=[
@@ -307,10 +307,9 @@ class ErtConfig:
                         "is not supported."
                     ],
                 )
-            if (
-                ensemble_config.getNode(key).get_init_file_fmt() is not None
-                and "%" not in ensemble_config.getNode(key).get_init_file_fmt()
-            ):
+
+            init_file_fmt = ensemble_config.get_init_file_fmt(key)
+            if init_file_fmt and "%" not in init_file_fmt:
                 raise ConfigValidationError(
                     config_file=config_path,
                     errors=["Loading GEN_KW from files requires %d in file format"],

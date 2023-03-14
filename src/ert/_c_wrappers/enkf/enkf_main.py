@@ -195,15 +195,16 @@ def _generate_parameter_files(
     ):
         node = ens_config[key]
         type_ = node.getImplementationType()
+        outfile = ens_config.get_enkf_outfile(key)
 
         if type_ == ErtImplType.FIELD:
-            if node.getUseForwardInit() and not fs.field_has_data(key, iens):
+            if ens_config.getUseForwardInit(key) and not fs.field_has_data(key, iens):
                 continue
             _generate_field_parameter_file(
                 fs,
                 iens,
                 key,
-                Path(node.get_enkf_outfile()),
+                Path(outfile),
                 Path(run_path),
             )
             continue
@@ -213,7 +214,7 @@ def _generate_parameter_files(
                 fs,
                 iens,
                 node.getKeywordModelConfig(),
-                node.get_enkf_outfile(),
+                outfile,
                 Path(run_path),
                 exports,
             )
@@ -221,15 +222,15 @@ def _generate_parameter_files(
 
         if type_ == ErtImplType.EXT_PARAM:
             _generate_ext_parameter_file(
-                fs, iens, node.getKey(), node.get_enkf_outfile(), Path(run_path)
+                fs, iens, node.getKey(), outfile, Path(run_path)
             )
             continue
         if type_ == ErtImplType.SURFACE:
-            if node.getUseForwardInit() and not fs.has_surface(node.getKey(), iens):
+            if ens_config.getUseForwardInit(key) and not fs.has_surface(
+                node.getKey(), iens
+            ):
                 continue
-            _generate_surface_file(
-                fs, iens, node.getKey(), node.get_enkf_outfile(), Path(run_path)
-            )
+            _generate_surface_file(fs, iens, node.getKey(), outfile, Path(run_path))
             continue
 
         raise NotImplementedError
@@ -432,12 +433,12 @@ class EnKFMain:
 
         for parameter in parameters:
             config_node = self.ensembleConfig().getNode(parameter)
-            if config_node.getUseForwardInit():
+            if self.ensembleConfig().getUseForwardInit(parameter):
                 continue
             impl_type = config_node.getImplementationType()
             if impl_type == ErtImplType.FIELD:
                 for _, realization_nr in enumerate(active_realizations):
-                    init_file = config_node.get_init_file_fmt()
+                    init_file = self.ensembleConfig().get_init_file_fmt(parameter)
                     if "%d" in init_file:
                         init_file = init_file % realization_nr
 
@@ -473,14 +474,14 @@ class EnKFMain:
             elif impl_type == ErtImplType.GEN_KW:
                 gen_kw_config = config_node.getKeywordModelConfig()
                 keys = list(gen_kw_config)
-                if config_node.get_init_file_fmt():
+                init_file = self.ensembleConfig().get_init_file_fmt(parameter)
+                if init_file:
                     logging.info(
-                        f"Reading from init file {config_node.get_init_file_fmt()}"
-                        + f" for {parameter}"
+                        f"Reading from init file {init_file}" + f" for {parameter}"
                     )
                     parameter_values = gen_kw_config.values_from_files(
                         active_realizations,
-                        config_node.get_init_file_fmt(),
+                        init_file,
                         keys,
                     )
                 else:
@@ -501,8 +502,8 @@ class EnKFMain:
                 )
             elif impl_type == ErtImplType.SURFACE:
                 for realization_nr in active_realizations:
-                    init_file = config_node.get_init_file_fmt()
-                    if "%d" in init_file:
+                    init_file = self.ensembleConfig().get_init_file_fmt(parameter)
+                    if init_file and "%d" in init_file:
                         init_file = init_file % realization_nr
                     ensemble.save_surface_file(
                         config_node.getKey(), realization_nr, init_file

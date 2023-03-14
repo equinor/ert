@@ -1,3 +1,4 @@
+# pylint: disable=too-many-lines
 import math
 import os
 import stat
@@ -14,9 +15,11 @@ import xtgeo
 from ecl import EclDataType
 from ecl.eclfile import EclKW
 from ecl.grid import EclGrid
+from ecl.util.geometry import Surface
 
 from ert.__main__ import ert_parser
 from ert._c_wrappers.enkf import EnKFMain, ErtConfig
+from ert._c_wrappers.enkf.enums import EnkfVarType
 from ert.cli import ENSEMBLE_SMOOTHER_MODE
 from ert.cli.main import run_cli
 from ert.libres_facade import LibresFacade
@@ -119,9 +122,8 @@ def test_load_two_parameters_forward_init(storage, tmpdir):
         )
 
         ert, fs = create_runpath(storage, "config.ert")
-
-        assert ert.ensembleConfig()["PARAM_A"].getUseForwardInit()
-        assert ert.ensembleConfig()["PARAM_B"].getUseForwardInit()
+        assert ert.ensembleConfig().getUseForwardInit("PARAM_A")
+        assert ert.ensembleConfig().getUseForwardInit("PARAM_B")
         assert not Path("simulations/realization-0/iter-0/param_a.grdecl").exists()
         assert not Path("simulations/realization-0/iter-0/param_b.grdecl").exists()
 
@@ -184,8 +186,8 @@ def test_load_two_parameters_roff(storage, tmpdir):
         )
 
         ert, fs = create_runpath(storage, "config.ert")
-        assert not ert.ensembleConfig()["PARAM_A"].getUseForwardInit()
-        assert not ert.ensembleConfig()["PARAM_B"].getUseForwardInit()
+        assert not ert.ensembleConfig().getUseForwardInit("PARAM_A")
+        assert not ert.ensembleConfig().getUseForwardInit("PARAM_B")
 
         loaded_a = fs.load_field("PARAM_A", [0])
         for e in range(0, loaded_a.shape[0]):
@@ -242,8 +244,8 @@ def test_load_two_parameters(storage, tmpdir):
         )
 
         ert, fs = create_runpath(storage, "config.ert")
-        assert not ert.ensembleConfig()["PARAM_A"].getUseForwardInit()
-        assert not ert.ensembleConfig()["PARAM_B"].getUseForwardInit()
+        assert not ert.ensembleConfig().getUseForwardInit("PARAM_A")
+        assert not ert.ensembleConfig().getUseForwardInit("PARAM_B")
 
         loaded_a = fs.load_field("PARAM_A", [0])
         for e in range(0, loaded_a.shape[0]):
@@ -424,9 +426,7 @@ def test_forward_init(storage, tmpdir, config_str, expect_forward_init):
         )
 
         ert, fs = create_runpath(storage, "config.ert")
-        assert (
-            ert.ensembleConfig()["MY_PARAM"].getUseForwardInit() is expect_forward_init
-        )
+        assert ert.ensembleConfig().getUseForwardInit("MY_PARAM") is expect_forward_init
 
         # Assert that the data has been written to runpath
         if expect_forward_init:
@@ -903,3 +903,114 @@ def test_inactive_roff_xtgeo(tmpdir, storage, actnum):
         )
         read_result = list(read_prop.get_npvalues1d(fill_value=missing_value))
         numpy.testing.assert_array_equal(read_result, expected_result)
+
+
+def test_config_node_meta_information(storage, tmpdir):
+    """
+    Populate nodes GEN_DATA, GEN_KW, FIELD, SURFACE & SUMMARY in configuration
+    Verify that properties stored for these nodes are correct
+    """
+
+    with tmpdir.as_cwd():
+        config = dedent(
+            """
+        NUM_REALIZATIONS 1
+        GRID MY_EGRID.EGRID
+        SURFACE TOP     OUTPUT_FILE:surf.irap   INIT_FILES:Surfaces/surf%d.irap   BASE_SURFACE:Surfaces/surf0.irap
+        SURFACE BOTTOM  OUTPUT_FILE:surf.wrap   INIT_FILES:Surfaces/surf%d.wrap   BASE_SURFACE:Surfaces/surf0.wrap  FORWARD_INIT:True
+
+        GEN_DATA ABC  RESULT_FILE:SimulatedABC_%d.txt  INPUT_FORMAT:ASCII   REPORT_STEPS:0
+        GEN_DATA DEF  RESULT_FILE:SimulatedDEF_%d.txt  INPUT_FORMAT:ASCII   REPORT_STEPS:0
+
+        GEN_KW KW_NAME  template.txt kw.txt prior.txt INIT_FILES:custom_param%d.txt
+
+        ECLBASE eclipse/model/MY_VERY_OWN_OIL_FIELD-%d
+        SUMMARY WOPR:MY_WELL
+        SUMMARY WOPR:MY_BASIN
+
+        FIELD MY_PARAM PARAMETER my_param.grdecl INIT_FILES:my_param_%d.grdecl MIN:0.5 MAX:0.8
+        FIELD MY_PARAM2 PARAMETER my_param.grdecl INIT_FILES:my_param_%d.grdecl MIN:0.5 MAX:0.8 FORWARD_INIT:True
+        """  # pylint: disable=line-too-long  # noqa: E501
+        )
+
+        expect_surface = Surface(
+            nx=1, ny=3, xinc=1, yinc=1, xstart=1, ystart=1, angle=0
+        )
+        expect_surface.write("Surfaces/surf0.irap")
+        expect_surface_top = Surface(
+            nx=1, ny=3, xinc=1, yinc=1, xstart=1, ystart=1, angle=0
+        )
+        expect_surface_top.write("Surfaces/surf0.wrap")
+
+        with open("template.txt", mode="w", encoding="utf-8") as fh:
+            fh.writelines("MY_KEYWORD <MY_KEYWORD>")
+        with open("prior.txt", mode="w", encoding="utf-8") as fh:
+            fh.writelines("MY_KEYWORD NORMAL 0 1")
+        with open("custom_param0.txt", mode="w", encoding="utf-8") as fh:
+            fh.writelines("MY_KEYWORD 1.31")
+
+        with open("config.ert", "w", encoding="utf-8") as fh:
+            fh.writelines(config)
+
+        grid = xtgeo.create_box_grid(dimension=(10, 10, 1))
+        grid.to_file("MY_EGRID.EGRID", "egrid")
+
+        buffer = np.random.random_sample(100)
+        buffer[56] = 0.001
+        buffer[34] = 1.001
+        write_grid_property(
+            "MY_PARAM", grid, "my_param_0.grdecl", "grdecl", (10, 10, 1), buffer
+        )
+
+        ert, _ = create_runpath(storage, "config.ert", [True])
+        ensemble_config = ert.ensembleConfig()
+
+        # invalid object
+        assert ensemble_config.getUseForwardInit("X") is False
+        assert ensemble_config.get_enkf_infile("X") == ""
+        assert ensemble_config.get_enkf_outfile("X") == ""
+        assert ensemble_config.get_init_file_fmt("X") == ""
+        assert ensemble_config.get_var_type("X") == EnkfVarType.INVALID_VAR
+
+        # surface
+        assert ensemble_config.getUseForwardInit("TOP") is False
+        assert ensemble_config.get_enkf_infile("TOP") == ""
+        assert ensemble_config.get_enkf_outfile("TOP") == "surf.irap"
+        assert ensemble_config.get_init_file_fmt("TOP") == "Surfaces/surf%d.irap"
+        assert ensemble_config.get_var_type("TOP") == EnkfVarType.PARAMETER
+
+        assert ensemble_config.getUseForwardInit("BOTTOM") is True
+
+        # gen_data
+        assert ensemble_config.getUseForwardInit("ABC") is False
+        assert ensemble_config.get_enkf_infile("ABC") == "SimulatedABC_%d.txt"
+        assert ensemble_config.get_enkf_outfile("ABC") == ""
+        assert ensemble_config.get_init_file_fmt("ABC") == ""
+        assert ensemble_config.get_var_type("ABC") == EnkfVarType.DYNAMIC_RESULT
+
+        # gen_kw - should have had forward_init possibility?
+        assert ensemble_config.getUseForwardInit("KW_NAME") is False
+        assert ensemble_config.get_enkf_infile("KW_NAME") == ""
+        assert ensemble_config.get_enkf_outfile("KW_NAME") == "kw.txt"
+        assert ensemble_config.get_init_file_fmt("KW_NAME") == os.path.abspath(
+            "custom_param%d.txt"
+        )
+        assert ensemble_config.get_var_type("KW_NAME") == EnkfVarType.PARAMETER
+
+        # summary
+        assert ensemble_config.getUseForwardInit("WOPR:MY_WELL") is False
+        assert ensemble_config.get_enkf_infile("WOPR:MY_WELL") == ""
+        assert ensemble_config.get_enkf_outfile("WOPR:MY_WELL") == ""
+        assert ensemble_config.get_init_file_fmt("WOPR:MY_WELL") == ""
+        assert (
+            ensemble_config.get_var_type("WOPR:MY_WELL") == EnkfVarType.DYNAMIC_RESULT
+        )
+
+        # field
+        assert ensemble_config.getUseForwardInit("MY_PARAM2") is True
+
+        assert ensemble_config.getUseForwardInit("MY_PARAM") is False
+        assert ensemble_config.get_enkf_infile("MY_PARAM") == ""
+        assert ensemble_config.get_enkf_outfile("MY_PARAM") == "my_param.grdecl"
+        assert ensemble_config.get_init_file_fmt("MY_PARAM") == "my_param_%d.grdecl"
+        assert ensemble_config.get_var_type("MY_PARAM") == EnkfVarType.PARAMETER
