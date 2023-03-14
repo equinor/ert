@@ -37,13 +37,9 @@ extern "C" bool ensemble_config_has_key(const ensemble_config_type *,
                                         const char *);
 extern "C" enkf_config_node_type *
 ensemble_config_get_node(const ensemble_config_type *, const char *);
-enkf_config_node_type *ensemble_config_get_or_create_summary_node(
-    ensemble_config_type *ensemble_config, const char *key);
 extern "C" stringlist_type *
 ensemble_config_alloc_keylist(const ensemble_config_type *);
-std::vector<std::string>
-ensemble_config_keylist_from_var_type(const ensemble_config_type *,
-                                      int var_mask);
+
 extern "C" stringlist_type *
 ensemble_config_alloc_keylist_from_impl_type(const ensemble_config_type *,
                                              ert_impl_type);

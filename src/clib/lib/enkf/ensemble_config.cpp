@@ -95,14 +95,6 @@ ensemble_config_get_node(const ensemble_config_type *ensemble_config,
     }
 }
 
-enkf_config_node_type *ensemble_config_get_or_create_summary_node(
-    ensemble_config_type *ensemble_config, const char *key) {
-    if (ensemble_config->config_nodes.count(key) == 0)
-        ensemble_config_add_summary(ensemble_config, key, LOAD_FAIL_SILENT);
-
-    return ensemble_config_get_node(ensemble_config, key);
-}
-
 void ensemble_config_add_node(ensemble_config_type *ensemble_config,
                               enkf_config_node_type *node) {
     if (node)
@@ -141,31 +133,6 @@ ensemble_config_alloc_keylist(const ensemble_config_type *config) {
     for (const auto &config_pair : config->config_nodes)
         stringlist_append_copy(s, config_pair.first.c_str());
     return s;
-}
-
-/*
-   observe that var_type here is an integer - naturally written as a
-   sum of enkf_var_type values:
-
-     ensemble_config_keylist_from_var_type( config , parameter + dynamic_state);
-
-*/
-
-std::vector<std::string>
-ensemble_config_keylist_from_var_type(const ensemble_config_type *config,
-                                      int var_mask) {
-    std::vector<std::string> key_list;
-
-    for (const auto &config_pair : config->config_nodes) {
-        const std::string key = config_pair.first;
-        enkf_var_type var_type =
-            enkf_config_node_get_var_type(config_pair.second);
-
-        if (var_type & var_mask)
-            key_list.push_back(key);
-    }
-
-    return key_list;
 }
 
 stringlist_type *
@@ -218,14 +185,6 @@ ensemble_config_add_summary(ensemble_config_type *ensemble_config,
 }
 
 ERT_CLIB_SUBMODULE("ensemble_config", m) {
-    m.def("have_forward_init", [](Cwrap<ensemble_config_type> self) {
-        for (auto const &[node_key, enkf_config_node] : self->config_nodes) {
-            if (enkf_config_node->forward_init)
-                return true;
-        }
-
-        return false;
-    });
     m.def("get_summary_keys",
           [](Cwrap<ensemble_config_type> self) { return self->summary_keys; });
 }

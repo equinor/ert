@@ -24,7 +24,7 @@ def _internalize_GEN_DATA(ensemble_config: "EnsembleConfig", run_arg: "RunArg"):
     all_data = {}
     for key in keys:
         config_node = ensemble_config[key]
-        filename_fmt = config_node.get_enkf_infile()
+        filename_fmt = ensemble_config.get_enkf_infile(key)
         for i in config_node.getModelConfig().getReportSteps():
             filename = filename_fmt % i
             if not Path.exists(run_path / filename):

@@ -7,7 +7,6 @@ pybind11_add_module(
   res_util/res_env.cpp
   python/init.cpp
   python/logging.cpp
-  python/ensemble_config.cpp
   python/model_callbacks.cpp
   config/conf_util.cpp
   config/conf.cpp

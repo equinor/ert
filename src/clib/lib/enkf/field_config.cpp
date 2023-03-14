@@ -317,69 +317,22 @@ field_config_set_output_transform(field_config_type *config,
         config->output_transform = NULL;
 }
 
-static void
-field_config_set_input_transform(field_config_type *config,
-                                 const char *__input_transform_name) {
-    const char *input_transform_name = NULL;
-    if (field_trans_table_has_key(config->trans_table, __input_transform_name))
-        input_transform_name = __input_transform_name;
-    else if (__input_transform_name != NULL) {
-        fprintf(stderr,
-                "Sorry: the field transformation function:%s is not recognized "
-                "\n\n",
-                __input_transform_name);
-        field_trans_table_fprintf(config->trans_table, stderr);
-        util_exit("Exiting ... \n");
-    }
-
-    config->input_transform_name = util_realloc_string_copy(
-        config->input_transform_name, input_transform_name);
-    if (input_transform_name != NULL)
-        config->input_transform =
-            field_trans_table_lookup(config->trans_table, input_transform_name);
-    else
-        config->input_transform = NULL;
-}
-
-void field_config_update_parameter_field(
-    field_config_type *config, int truncation, double min_value,
-    double max_value,
-    field_file_format_type
-        export_format, /* This can be guessed with the field_config_default_export_format( ecl_file ) function. */
-    const char *init_transform, const char *output_transform,
-    const char *output_field_name) {
-    field_config_set_truncation(config, truncation, min_value, max_value);
-    config->type = ECLIPSE_PARAMETER;
-
-    config->export_format = export_format;
-    config->output_field_name = util_alloc_string_copy(output_field_name);
-    config->import_format =
-        UNDEFINED_FORMAT; /* Guess from filename when loading. */
-
-    config->input_transform = NULL;
-
-    field_config_set_input_transform(config, NULL);
-    field_config_set_init_transform(config, init_transform);
-    field_config_set_output_transform(config, output_transform);
-}
-
-void field_config_update_general_field(
+void field_config_update_field(
     field_config_type *config, int truncation, double min_value,
     double max_value,
     field_file_format_type
         export_format, /* This can be guessed with the field_config_default_export_format( ecl_file ) function. */
     const char *init_transform, const char *input_transform,
-    const char *output_transform) {
-    field_config_set_truncation(config, truncation, min_value, max_value);
-    config->type = GENERAL;
+    const char *output_transform, const char *output_field_name) {
 
+    field_config_set_truncation(config, truncation, min_value, max_value);
     config->export_format = export_format;
     config->import_format =
         UNDEFINED_FORMAT; /* Guess from filename when loading. */
-
-    field_config_set_input_transform(config, input_transform);
+    config->type = ECLIPSE_PARAMETER;
     field_config_set_init_transform(config, init_transform);
     field_config_set_output_transform(config, output_transform);
+    config->output_field_name = util_alloc_string_copy(output_field_name);
 }
 
 /**
