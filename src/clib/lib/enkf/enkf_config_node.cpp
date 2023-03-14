@@ -36,7 +36,6 @@ static enkf_config_node_type *enkf_config_node_alloc__(enkf_var_type var_type,
     node->init_file_fmt = NULL;
     node->enkf_infile_fmt = NULL;
     node->enkf_outfile_fmt = NULL;
-    node->internalize = NULL;
     node->data = NULL;
     node->obs_keys = stringlist_alloc_new();
 
@@ -127,7 +126,6 @@ enkf_config_node_alloc_GEN_DATA_everest(const char *key,
     for (int i = 0; i < int_vector_size(report_steps); i++) {
         int report_step = int_vector_iget(report_steps, i);
         gen_data_config_add_report_step(gen_data_config, report_step);
-        enkf_config_node_set_internalize(config_node, report_step);
     }
 
     return config_node;
@@ -238,9 +236,6 @@ void enkf_config_node_free(enkf_config_node_type *node) {
     if (node->init_file_fmt != NULL)
         path_fmt_free(node->init_file_fmt);
 
-    if (node->internalize != NULL)
-        bool_vector_free(node->internalize);
-
     free(node);
 }
 
@@ -257,22 +252,6 @@ enkf_config_node_get_enkf_infile(const enkf_config_node_type *config_node) {
 const char *
 enkf_config_node_get_init_file_fmt(const enkf_config_node_type *config_node) {
     return path_fmt_get_fmt(config_node->init_file_fmt);
-}
-
-/**
- * @brief Sets the given node to be internalized at the given report step
- *
- * Internalize means loaded from the forward simulation and stored in the
- * enkf_fs 'database'.
- *
- * @param node The config node to be internalized
- * @param report_step The report step for which the node should be internalized.
- */
-void enkf_config_node_set_internalize(enkf_config_node_type *node,
-                                      int report_step) {
-    if (node->internalize == NULL)
-        node->internalize = bool_vector_alloc(0, false);
-    bool_vector_iset(node->internalize, report_step, true);
 }
 
 /**
@@ -353,7 +332,6 @@ enkf_config_node_alloc_GEN_DATA_full(const char *node_key,
     for (int i = 0; i < int_vector_size(report_steps); i++) {
         int report_step = int_vector_iget(report_steps, i);
         gen_data_config_add_report_step(gen_data_config, report_step);
-        enkf_config_node_set_internalize(config_node, report_step);
     }
 
     return config_node;
