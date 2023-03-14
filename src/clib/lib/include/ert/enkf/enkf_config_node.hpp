@@ -28,10 +28,6 @@ struct enkf_config_node_struct {
      * Forward model? */
     bool forward_init;
 
-    /** Should this node be internalized - observe that question of what to
-     * internalize is MOSTLY handled at a higher level - without consulting
-     * this variable. Can be NULL. */
-    bool_vector_type *internalize;
     /** Keys of observations which observe this node. */
     stringlist_type *obs_keys;
     char *key;
@@ -102,9 +98,6 @@ extern "C" const char *
 enkf_config_node_get_init_file_fmt(const enkf_config_node_type *config_node);
 char *enkf_config_node_alloc_initfile(const enkf_config_node_type *node,
                                       const char *path, int iens);
-
-void enkf_config_node_set_internalize(enkf_config_node_type *node,
-                                      int report_step);
 /*
     The enkf_node_free() function declaration is in the enkf_config_node.h header,
     because the enkf_config_node needs to know how to free the min_std node.
