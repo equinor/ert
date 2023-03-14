@@ -209,6 +209,12 @@ def run_gui_wrapper(args: Namespace) -> None:
     run_gui(args)
 
 
+def run_lint_wrapper(args: Namespace) -> None:
+    # pylint: disable=import-outside-toplevel
+
+    print(f"This feature is not yet implemented, but would lint the file {args.config}")
+
+
 # pylint: disable=too-many-statements
 def get_ert_parser(parser: Optional[ArgumentParser] = None) -> ArgumentParser:
     if parser is None:
@@ -260,6 +266,18 @@ def get_ert_parser(parser: Optional[ArgumentParser] = None) -> ArgumentParser:
         "--verbose", action="store_true", help="Show verbose output.", default=False
     )
     FeatureToggling.add_feature_toggling_args(gui_parser)
+
+    # lint_parser
+    lint_parser = subparsers.add_parser(
+        "lint",
+        description="Lints an existing .ert config file.",
+    )
+    lint_parser.set_defaults(func=run_lint_wrapper)
+    lint_parser.add_argument("config", type=valid_file, help=config_help)
+    lint_parser.add_argument(
+        "--verbose", action="store_true", help="Show verbose output.", default=False
+    )
+    FeatureToggling.add_feature_toggling_args(lint_parser)
 
     # ert_api
     ert_api_parser = subparsers.add_parser(
