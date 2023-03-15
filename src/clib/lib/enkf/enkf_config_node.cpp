@@ -173,9 +173,10 @@ void enkf_config_node_update_parameter_field(enkf_config_node_type *config_node,
 
     field_file_format_type export_format = field_config_default_export_format(
         enkf_outfile_fmt); /* Purely based on extension, recognizes ROFF and GRDECL, the rest will be ecl_kw format. */
-    field_config_update_parameter_field(
-        (field_config_type *)config_node->data, truncation, value_min,
-        value_max, export_format, init_transform, output_transform);
+    field_config_update_parameter_field((field_config_type *)config_node->data,
+                                        truncation, value_min, value_max,
+                                        export_format, init_transform,
+                                        output_transform, enkf_outfile_fmt);
     config_node->var_type = PARAMETER;
     enkf_config_node_update(config_node, init_file_fmt, enkf_outfile_fmt, NULL);
 }
@@ -383,13 +384,9 @@ enkf_config_node_type *enkf_config_node_alloc_SURFACE_full(
 
     enkf_config_node_type *config_node =
         enkf_config_node_alloc__(PARAMETER, SURFACE, node_key, forward_init);
-    config_node->data = surface_config_alloc_empty();
+    config_node->data = surface_config_alloc(node_key, base_surface);
 
-    /* 1: Update the data owned by the surface node. */
-    surface_config_set_base_surface((surface_config_type *)config_node->data,
-                                    base_surface);
-
-    /* 2: Update the stuff which is owned by the upper-level enkf_config_node instance. */
+    /* Update the stuff which is owned by the upper-level enkf_config_node instance. */
     enkf_config_node_update(config_node, init_file_fmt, output_file, NULL);
 
     return config_node;

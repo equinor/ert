@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Union
 from ecl.grid import EclGrid
 from pandas import DataFrame, Series
 
-from ert._c_wrappers.enkf import EnKFMain, ErtConfig, ErtImplType
+from ert._c_wrappers.enkf import EnKFMain, EnsembleConfig, ErtConfig, ErtImplType
 from ert._c_wrappers.enkf.config import GenKwConfig
 from ert._c_wrappers.enkf.enums import (
     EnkfObservationImplementationType,
@@ -111,6 +111,10 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
     @property
     def grid(self) -> Optional[EclGrid]:
         return self._enkf_main.ensembleConfig().grid
+
+    @property
+    def ensemble_config(self) -> EnsembleConfig:
+        return self._enkf_main.ensembleConfig()
 
     def export_field_parameter(
         self, parameter_name: str, ensemble: EnsembleReader, filepath: str

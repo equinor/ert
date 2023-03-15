@@ -30,6 +30,8 @@ else:
 if TYPE_CHECKING:
     from ecl.summary import EclSum
 
+    from ert._c_wrappers.enkf.ensemble_config import ParameterConfiguration
+
 
 class LocalStorageReader:
     def __init__(
@@ -109,10 +111,13 @@ class LocalStorageReader:
         return {exp_id: self._load_experiment(exp_id) for exp_id in experiment_ids}
 
     def _load_experiment(self, uuid: UUID) -> LocalExperimentReader:
-        return LocalExperimentReader(self, uuid)
+        return LocalExperimentReader(self, uuid, self._experiment_path(uuid))
 
     def _ensemble_path(self, ensemble_id: UUID) -> Path:
         return self.path / "ensembles" / str(ensemble_id)
+
+    def _experiment_path(self, experiment_id: UUID) -> Path:
+        return self.path / "experiments" / str(experiment_id)
 
     def __del__(self) -> None:
         self.close()
@@ -157,14 +162,19 @@ class LocalStorageAccessor(LocalStorageReader):
     def to_accessor(self) -> LocalStorageAccessor:
         return self
 
-    def create_experiment(self) -> LocalExperimentAccessor:
-        exp = LocalExperimentAccessor(self, uuid4())
+    def create_experiment(
+        self, parameters: Optional[ParameterConfiguration] = None
+    ) -> LocalExperimentAccessor:
+        exp_id = uuid4()
+        path = self._experiment_path(exp_id)
+        path.mkdir(parents=True, exist_ok=False)
+        exp = LocalExperimentAccessor(self, exp_id, path, parameters=parameters)
         self._experiments[exp.id] = exp
         return exp
 
     def create_ensemble(
         self,
-        experiment: Union[LocalEnsembleReader, LocalEnsembleAccessor, UUID],
+        experiment: Union[LocalExperimentReader, LocalExperimentAccessor, UUID],
         *,
         ensemble_size: int,
         iteration: int = 0,
@@ -202,7 +212,7 @@ class LocalStorageAccessor(LocalStorageReader):
         return ens
 
     def _load_experiment(self, uuid: UUID) -> LocalExperimentAccessor:
-        return LocalExperimentAccessor(self, uuid)
+        return LocalExperimentAccessor(self, uuid, self._experiment_path(uuid))
 
     def _load_ensemble(self, path: Path) -> LocalEnsembleAccessor:
         return LocalEnsembleAccessor(self, path, refcase=self._refcase)

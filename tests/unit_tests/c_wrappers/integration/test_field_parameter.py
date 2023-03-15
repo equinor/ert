@@ -27,7 +27,9 @@ def create_runpath(
     ert = EnKFMain(res_config)
 
     if ensemble is None:
-        experiment_id = storage.create_experiment()
+        experiment_id = storage.create_experiment(
+            res_config.ensemble_config.parameter_configuration
+        )
         ensemble = storage.create_ensemble(
             experiment_id, name="default", ensemble_size=ert.getEnsembleSize()
         )
@@ -82,7 +84,6 @@ def test_unknown_file_extension(storage, tmpdir):
         write_grid_property(
             "PARAM", grid, "param.grdecl", "grdecl", (10, 10, 1), rng.random(size=100)
         )
-
         ert, ensemble = create_runpath(storage, "config.ert")
         load_from_forward_model(ert, ensemble)
 

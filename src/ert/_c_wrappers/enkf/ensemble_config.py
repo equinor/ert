@@ -15,11 +15,15 @@ from ert import _clib
 from ert._c_wrappers import ResPrototype
 from ert._c_wrappers.config.config_parser import ConfigValidationError, ConfigWarning
 from ert._c_wrappers.config.rangestring import rangestring_to_list
+from ert._c_wrappers.enkf import FieldConfig, GenKwConfig
 from ert._c_wrappers.enkf.config import EnkfConfigNode
+from ert._c_wrappers.enkf.config.surface_config import SurfaceConfig
 from ert._c_wrappers.enkf.config_keys import ConfigKeys
 from ert._c_wrappers.enkf.enums import EnkfVarType, ErtImplType, GenDataFileType
 
 logger = logging.getLogger(__name__)
+
+ParameterConfiguration = List[Union[FieldConfig, SurfaceConfig, GenKwConfig]]
 
 
 def _get_abs_path(file):
@@ -488,3 +492,17 @@ class EnsembleConfig(BaseCClass):
 
     def get_gen_data_keys(self) -> List[str]:
         return _clib.ensemble_config.get_gen_data_keys(self)
+
+    @property
+    def parameter_configuration(self) -> ParameterConfiguration:
+        parameter_configs = []
+        for parameter in self.parameters:
+            config_node = self.getNode(parameter)
+            if config_node.getImplementationType() == ErtImplType.GEN_KW:
+                parameter_configs.append(config_node.getKeywordModelConfig())
+            elif config_node.getImplementationType() == ErtImplType.SURFACE:
+                parameter_configs.append(config_node.getSurfaceModelConfig())
+            elif config_node.getImplementationType() == ErtImplType.FIELD:
+                parameter_configs.append(config_node.getFieldModelConfig())
+
+        return parameter_configs

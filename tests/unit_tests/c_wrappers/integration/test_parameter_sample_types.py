@@ -35,7 +35,9 @@ def create_runpath(
     ert = EnKFMain(ert_config)
 
     if ensemble is None:
-        experiment_id = storage.create_experiment()
+        experiment_id = storage.create_experiment(
+            ert_config.ensemble_config.parameter_configuration
+        )
         ensemble = storage.create_ensemble(
             experiment_id, name="default", ensemble_size=ert.getEnsembleSize()
         )
@@ -519,7 +521,9 @@ def test_that_sampling_is_fixed_from_name(
         ert = EnKFMain(ert_config)
 
         fs = storage.create_ensemble(
-            storage.create_experiment(),
+            storage.create_experiment(
+                ert_config.ensemble_config.parameter_configuration
+            ),
             name="prior",
             ensemble_size=ert.getEnsembleSize(),
         )
@@ -587,7 +591,9 @@ def test_that_sub_sample_maintains_order(tmpdir, storage, mask, expected):
         facade = LibresFacade(ert)
 
         fs = storage.create_ensemble(
-            storage.create_experiment(),
+            storage.create_experiment(
+                ert_config.ensemble_config.parameter_configuration
+            ),
             name="prior",
             ensemble_size=ert.getEnsembleSize(),
         )

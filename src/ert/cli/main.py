@@ -104,7 +104,9 @@ def run_cli(args, _=None):
         return
 
     evaluator_server_config = EvaluatorServerConfig(custom_port_range=args.port_range)
-    experiment = storage.create_experiment()
+    experiment = storage.create_experiment(
+        parameters=ert.ensembleConfig().parameter_configuration
+    )
 
     # Note that asyncio.run should be called once in ert/shared/main.py
     if FeatureToggling.is_enabled("experiment-server"):

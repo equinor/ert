@@ -134,7 +134,7 @@ def test_that_gui_gives_suggestions_when_you_have_umask_in_config(qapp, tmp_path
     args = Mock()
     args.config = str(config_file)
     with add_gui_log_handler() as log_handler:
-        gui, _, _ = ert.gui.main._start_initial_gui_window(args, log_handler)
+        gui, *_ = ert.gui.main._start_initial_gui_window(args, log_handler)
         assert gui.windowTitle() == "Some problems detected"
 
 
@@ -145,7 +145,7 @@ def test_that_errors_are_shown_in_the_suggester_window_when_present(qapp, tmp_pa
     args = Mock()
     args.config = str(config_file)
     with add_gui_log_handler() as log_handler:
-        gui, _, _ = ert.gui.main._start_initial_gui_window(args, log_handler)
+        gui, *_ = ert.gui.main._start_initial_gui_window(args, log_handler)
         assert gui.windowTitle() == "Some problems detected"
 
 
@@ -154,7 +154,7 @@ def test_that_the_ui_show_no_warnings_when_observations_found(qapp):
     args = Mock()
     args.config = "poly.ert"
     with add_gui_log_handler() as log_handler:
-        gui, _, _ = ert.gui.main._start_initial_gui_window(args, log_handler)
+        gui, *_ = ert.gui.main._start_initial_gui_window(args, log_handler)
         combo_box = gui.findChild(QComboBox, name="Simulation_mode")
         assert combo_box.count() == 5
 
@@ -171,7 +171,7 @@ def test_that_the_ui_show_warnings_when_there_are_no_observations(qapp, tmp_path
     args = Mock()
     args.config = str(config_file)
     with add_gui_log_handler() as log_handler:
-        gui, _, _ = ert.gui.main._start_initial_gui_window(args, log_handler)
+        gui, *_ = ert.gui.main._start_initial_gui_window(args, log_handler)
         combo_box = gui.findChild(QComboBox, name="Simulation_mode")
         assert combo_box.count() == 5
 
@@ -195,7 +195,7 @@ def test_that_the_ui_show_warnings_when_parameters_are_missing(qapp, tmp_path):
 
     args.config = "poly-no-gen-kw.ert"
     with add_gui_log_handler() as log_handler:
-        gui, _, _ = ert.gui.main._start_initial_gui_window(args, log_handler)
+        gui, *_ = ert.gui.main._start_initial_gui_window(args, log_handler)
         combo_box = gui.findChild(QComboBox, name="Simulation_mode")
         assert combo_box.count() == 5
 
@@ -212,7 +212,7 @@ def test_that_ert_starts_when_there_are_no_problems(qapp):
     args = Mock()
     args.config = "poly.ert"
     with add_gui_log_handler() as log_handler:
-        gui, _, _ = ert.gui.main._start_initial_gui_window(args, log_handler)
+        gui, *_ = ert.gui.main._start_initial_gui_window(args, log_handler)
         assert gui.windowTitle() == "ERT - poly.ert"
 
 
@@ -301,7 +301,7 @@ def test_help_buttons_in_suggester_dialog(tmp_path, qtbot):
     args = Mock()
     args.config = str(config_file)
     with add_gui_log_handler() as log_handler:
-        gui, _, _ = ert.gui.main._start_initial_gui_window(
+        gui, *_ = ert.gui.main._start_initial_gui_window(
             args, log_handler, ErtPluginManager()
         )
         assert gui.windowTitle() == "Some problems detected"
@@ -327,7 +327,7 @@ def test_that_run_workflow_component_disabled_when_no_workflows(qapp):
     args = Mock()
     args.config = "poly.ert"
     with add_gui_log_handler() as log_handler:
-        gui, _, _ = ert.gui.main._start_initial_gui_window(args, log_handler)
+        gui, *_ = ert.gui.main._start_initial_gui_window(args, log_handler)
         assert gui.windowTitle() == "ERT - poly.ert"
         run_workflow_button = gui.tools["Run workflow"]
         assert not run_workflow_button.isEnabled()
@@ -352,7 +352,7 @@ def test_that_run_workflow_component_enabled_when_workflows(qapp, tmp_path):
     args.config = str(config_file)
 
     with add_gui_log_handler() as log_handler:
-        gui, _, _ = ert.gui.main._start_initial_gui_window(args, log_handler)
+        gui, *_ = ert.gui.main._start_initial_gui_window(args, log_handler)
         assert gui.windowTitle() == "ERT - config.ert"
         run_workflow_button = gui.tools["Run workflow"]
         assert run_workflow_button.isEnabled()
@@ -363,7 +363,7 @@ def test_that_es_mda_disabled_when_invalid_weights(qtbot):
     args = Mock()
     args.config = "poly.ert"
     with add_gui_log_handler() as log_handler:
-        gui, _, _ = ert.gui.main._start_initial_gui_window(args, log_handler)
+        gui, *_ = ert.gui.main._start_initial_gui_window(args, log_handler)
         assert gui.windowTitle() == "ERT - poly.ert"
 
         combo_box = gui.findChild(QComboBox, name="Simulation_mode")

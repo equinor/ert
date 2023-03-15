@@ -175,7 +175,9 @@ def test_tracking(
         ert_config = ErtConfig.from_file(parsed.config)
         os.chdir(ert_config.config_path)
         ert = EnKFMain(ert_config)
-        experiment_id = storage.create_experiment()
+        experiment_id = storage.create_experiment(
+            ert.ensembleConfig().parameter_configuration
+        )
 
         model = create_model(
             ert,
@@ -295,7 +297,9 @@ def test_tracking_missing_ecl(
             ert,
             storage,
             parsed,
-            storage.create_experiment(),
+            storage.create_experiment(
+                ert_config.ensemble_config.parameter_configuration
+            ),
         )
 
         evaluator_server_config = EvaluatorServerConfig(

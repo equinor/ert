@@ -444,7 +444,9 @@ def test_that_prior_is_not_overwritten_in_ensemble_experiment(
         ert = EnKFMain(ErtConfig.from_file("poly_example/poly.ert"))
         prior_mask = prior_mask or [True] * ert.getEnsembleSize()
         storage = open_storage(ert.ert_config.ens_path, mode="w")
-        experiment_id = storage.create_experiment()
+        experiment_id = storage.create_experiment(
+            ert.ensembleConfig().parameter_configuration
+        )
         ensemble = storage.create_ensemble(
             experiment_id, name="iter-0", ensemble_size=ert.getEnsembleSize()
         )

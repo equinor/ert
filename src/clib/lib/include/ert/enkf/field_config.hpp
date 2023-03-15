@@ -73,7 +73,8 @@ void field_config_update_parameter_field(field_config_type *config,
                                          double max_value,
                                          field_file_format_type export_format,
                                          const char *init_transform,
-                                         const char *output_transform);
+                                         const char *output_transform,
+                                         const char *output_field_name);
 
 void field_config_update_general_field(
     field_config_type *config, int truncation, double min_value,
@@ -124,7 +125,7 @@ field_config_get_truncation_min(const field_config_type *config);
 extern "C" double
 field_config_get_truncation_max(const field_config_type *config);
 extern "C" ecl_grid_type *field_config_get_grid(const field_config_type *);
-const char *field_config_get_grid_name(const field_config_type *);
+extern "C" const char *field_config_get_grid_name(const field_config_type *);
 
 int field_config_parse_user_key(const field_config_type *config,
                                 const char *index_key, int *i, int *j, int *k);
@@ -135,6 +136,8 @@ extern "C" field_file_format_type
 field_config_default_export_format(const char *filename);
 extern "C" const char *
 field_config_get_output_transform_name(const field_config_type *field_config);
+extern "C" const char *
+field_config_get_output_file_name(const field_config_type *field_config);
 extern "C" const char *
 field_config_get_init_transform_name(const field_config_type *field_config);
 

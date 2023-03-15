@@ -21,6 +21,7 @@ from qtpy.QtWidgets import QApplication
 from ert._c_wrappers.config import ConfigWarning
 from ert._c_wrappers.config.config_parser import ConfigValidationError
 from ert._c_wrappers.enkf import EnKFMain, ErtConfig
+from ert._c_wrappers.enkf.ensemble_config import ParameterConfiguration
 from ert.gui.about_dialog import AboutDialog
 from ert.gui.ertwidgets import SuggestorMessage, SummaryPanel, resourceIcon
 from ert.gui.main_window import ErtMainWindow
@@ -48,7 +49,7 @@ def run_gui(args: Namespace, plugin_manager: Optional[ErtPluginManager] = None):
     app = QApplication([])  # Early so that QT is initialized before other imports
     app.setWindowIcon(resourceIcon("application/window_icon_cutout"))
     with add_gui_log_handler() as log_handler:
-        window, ens_path, ensemble_size = _start_initial_gui_window(
+        window, ens_path, ensemble_size, parameter_config = _start_initial_gui_window(
             args, log_handler, plugin_manager
         )
 
@@ -71,7 +72,9 @@ def run_gui(args: Namespace, plugin_manager: Optional[ErtPluginManager] = None):
             if hasattr(window, "notifier"):
                 window.notifier.set_storage(storage)
                 window.notifier.set_current_case(
-                    _get_or_create_default_case(storage, ensemble_size)
+                    _get_or_create_default_case(
+                        storage, ensemble_size, parameter_config
+                    )
                 )
             return show_window()
 
@@ -140,6 +143,7 @@ def _start_initial_gui_window(
             ),
             None,
             None,
+            None,
         )
 
     for job in ert_config.forward_model_list:
@@ -164,26 +168,28 @@ def _start_initial_gui_window(
             ),
             ert_config.ens_path,
             ert_config.model_config.num_realizations,
+            ert_config.ensemble_config.parameter_configuration,
         )
     else:
         return (
             _main_window,
             ert_config.ens_path,
             ert_config.model_config.num_realizations,
+            ert_config.ensemble_config.parameter_configuration,
         )
 
 
 def _get_or_create_default_case(
-    storage: StorageReader, ensemble_size: int
+    storage: StorageReader, ensemble_size: int, parameter_config: ParameterConfiguration
 ) -> Optional[EnsembleAccessor]:
     try:
         storage_accessor = storage.to_accessor()
         try:
             return storage_accessor.get_ensemble_by_name("default")
         except KeyError:
-            return storage_accessor.create_experiment().create_ensemble(
-                name="default", ensemble_size=ensemble_size
-            )
+            return storage_accessor.create_experiment(
+                parameters=parameter_config
+            ).create_ensemble(name="default", ensemble_size=ensemble_size)
     except TypeError:
         return None
 

@@ -110,6 +110,7 @@ struct field_config_struct {
 
     field_file_format_type export_format;
     field_file_format_type import_format;
+    char *output_field_name;
     /** See doc of functions field_config_set_key() / field_config_enkf_OFF() */
     bool __enkf_mode;
     bool write_compressed;
@@ -189,6 +190,11 @@ field_config_get_export_format(const field_config_type *field_config) {
     return field_config->export_format;
 }
 
+const char *
+field_config_get_output_file_name(const field_config_type *field_config) {
+    return field_config->output_field_name;
+}
+
 /**
    Will return the name of the init_transform function, or NULL if no
    init_transform function has been registered.
@@ -241,6 +247,7 @@ field_config_type *field_config_alloc_empty(const char *ecl_kw_name,
 
     config->keep_inactive_cells = keep_inactive_cells;
     config->ecl_kw_name = util_alloc_string_copy(ecl_kw_name);
+    config->output_field_name = NULL;
     config->private_grid = false;
     config->__enkf_mode = true;
     config->grid = NULL;
@@ -339,11 +346,13 @@ void field_config_update_parameter_field(
     double max_value,
     field_file_format_type
         export_format, /* This can be guessed with the field_config_default_export_format( ecl_file ) function. */
-    const char *init_transform, const char *output_transform) {
+    const char *init_transform, const char *output_transform,
+    const char *output_field_name) {
     field_config_set_truncation(config, truncation, min_value, max_value);
     config->type = ECLIPSE_PARAMETER;
 
     config->export_format = export_format;
+    config->output_field_name = util_alloc_string_copy(output_field_name);
     config->import_format =
         UNDEFINED_FORMAT; /* Guess from filename when loading. */
 

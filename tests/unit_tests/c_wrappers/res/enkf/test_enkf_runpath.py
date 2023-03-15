@@ -8,10 +8,16 @@ from ert._c_wrappers.enkf import ErtConfig
 from ert._c_wrappers.enkf.enkf_main import EnKFMain
 
 
-def test_with_gen_kw(copy_case, prior_ensemble):
+def test_with_gen_kw(copy_case, storage):
     copy_case("snake_oil")
     ert_config = ErtConfig.from_file("snake_oil.ert")
     main = EnKFMain(ert_config)
+    experiment_id = storage.create_experiment(
+        parameters=ert_config.ensemble_config.parameter_configuration
+    )
+    prior_ensemble = storage.create_ensemble(
+        experiment_id, name="prior", ensemble_size=5
+    )
     prior = main.ensemble_context(prior_ensemble, [True], 0)
     main.sample_prior(prior.sim_fs, prior.active_realizations)
     main.createRunPath(prior)

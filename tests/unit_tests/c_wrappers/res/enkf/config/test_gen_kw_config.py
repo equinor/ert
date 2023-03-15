@@ -160,7 +160,7 @@ number_regex = r"[-+]?(?:\d*\.\d+|\d+)"
     ],
 )
 def test_gen_kw_is_log_or_not(
-    tmpdir, prior_ensemble, distribution, expect_log, parameters_regex
+    tmpdir, storage, distribution, expect_log, parameters_regex
 ):
     with tmpdir.as_cwd():
         config = dedent(
@@ -184,6 +184,12 @@ def test_gen_kw_is_log_or_not(
         gen_kw_config = node.getModelConfig()
         assert isinstance(gen_kw_config, GenKwConfig)
         assert gen_kw_config.shouldUseLogScale(0) is expect_log
+        experiment_id = storage.create_experiment(
+            parameters=ert_config.ensemble_config.parameter_configuration
+        )
+        prior_ensemble = storage.create_ensemble(
+            experiment_id, name="prior", ensemble_size=1
+        )
         prior = ert.ensemble_context(prior_ensemble, [True], 0)
         ert.sample_prior(prior.sim_fs, prior.active_realizations)
         ert.createRunPath(prior)

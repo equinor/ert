@@ -3,13 +3,13 @@
 #include <ert/enkf/enkf_macros.hpp>
 typedef struct surface_config_struct surface_config_type;
 
-surface_config_type *surface_config_alloc_empty();
+surface_config_type *surface_config_alloc(std::string name,
+                                          std::string base_surface);
 void surface_config_free(surface_config_type *config);
 
 extern "C" const char *
 surface_config_base_surface_path(surface_config_type *config);
 
-void surface_config_set_base_surface(surface_config_type *config,
-                                     const char *base_surface);
+extern "C" const char *surface_config_name(surface_config_type *config);
 
 #endif
