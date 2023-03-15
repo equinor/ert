@@ -270,12 +270,12 @@ class LocalEnsembleReader:
 
     def has_parameters(self) -> bool:
         """
-        Checks if a parameter folder has been created
+        Checks if a parameter file has been created
         """
-        if Path(self.mount_point / "gen-kw.nc").exists():
-            return True
-
-        return False
+        realization_folders = list(self.mount_point.glob("realization-*"))
+        if not realization_folders:
+            return False
+        return (realization_folders[0] / "gen-kw.nc").exists()
 
     def load_gen_kw_priors(
         self,
@@ -287,11 +287,11 @@ class LocalEnsembleReader:
     def load_gen_kw_realization(
         self, key: str, realization: int
     ) -> Tuple[npt.NDArray[np.double], List[str]]:
-        input_file = self.mount_point / "gen-kw.nc"
+        input_file = self.mount_point / f"realization-{realization}" / "gen-kw.nc"
         if not input_file.exists():
             raise KeyError(f"Unable to load GEN_KW for key: {key}")
         with xr.open_dataset(input_file, engine="scipy") as ds_disk:
-            np_data = ds_disk.sel(iens=realization)[key].to_numpy()
+            np_data = ds_disk[key].to_numpy()
             keys = list(ds_disk[key][f"{key}_keys"].values)
 
         return np_data, keys
@@ -566,7 +566,7 @@ class LocalEnsembleAccessor(LocalEnsembleReader):
         Filters on realization and parameter keys
         """
 
-        for f in ["gen-kw.nc", "gen-kw-priors.json"]:
+        for f in ["gen-kw-priors.json"]:
             if not (self.mount_point / f).exists():
                 continue
             shutil.copy(
@@ -580,7 +580,10 @@ class LocalEnsembleAccessor(LocalEnsembleReader):
             if realization in realizations:
                 for parameter_file in realization_folder.iterdir():
                     base_name = str(parameter_file.stem)
-                    if base_name in parameter_keys:
+                    if (
+                        base_name in parameter_keys
+                        or parameter_file.name == "gen-kw.nc"
+                    ):
                         files_to_copy.append(parameter_file.name)
 
             if not files_to_copy:
@@ -632,26 +635,23 @@ class LocalEnsembleAccessor(LocalEnsembleReader):
         realizations: List[int],
         data: npt.NDArray[np.float64],
     ) -> None:
-        if self.ensemble_size != len(realizations):
-            padded_data = np.empty((len(parameter_keys), self.ensemble_size))
-            for index, real in enumerate(realizations):
-                padded_data[:, real] = data[:, index]
-            data = padded_data
+        for index, realization in enumerate(realizations):
+            ds = xr.Dataset(
+                {parameter_name: ((f"{parameter_name}_keys"), data[:, index])},
+                coords={f"{parameter_name}_keys": parameter_keys},
+            )
+            output_path = self.mount_point / f"realization-{realization}"
+            Path.mkdir(output_path, exist_ok=True)
+            mode: Literal["a", "w"] = (
+                "a" if Path.exists(output_path / "gen-kw.nc") else "w"
+            )
+            ds.to_netcdf(output_path / "gen-kw.nc", mode=mode, engine="scipy")
+            self.update_realization_state(
+                realization,
+                [RealizationStateEnum.STATE_UNDEFINED],
+                RealizationStateEnum.STATE_INITIALIZED,
+            )
 
-        ds = xr.Dataset(
-            {
-                parameter_name: ((f"{parameter_name}_keys", "iens"), data),
-            },
-            coords={
-                f"{parameter_name}_keys": parameter_keys,
-                "iens": range(self.ensemble_size),
-            },
-        )
-        mode: Literal["a", "w"] = (
-            "a" if Path.exists(self.mount_point / "gen-kw.nc") else "w"
-        )
-
-        ds.to_netcdf(self.mount_point / "gen-kw.nc", mode=mode, engine="scipy")
         priors = {}
         if Path.exists(self.mount_point / "gen-kw-priors.json"):
             with open(
@@ -661,13 +661,6 @@ class LocalEnsembleAccessor(LocalEnsembleReader):
         priors.update({parameter_name: parameter_transfer_functions})
         with open(self.mount_point / "gen-kw-priors.json", "w", encoding="utf-8") as f:
             json.dump(priors, f)
-
-        for realization in realizations:
-            self.update_realization_state(
-                realization,
-                [RealizationStateEnum.STATE_UNDEFINED],
-                RealizationStateEnum.STATE_INITIALIZED,
-            )
 
     def save_summary_data(
         self,
