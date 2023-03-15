@@ -30,11 +30,13 @@ if TYPE_CHECKING:
     from ecl.summary import EclSum
     from xtgeo import RegularSurface
 
-    from ert._c_wrappers.enkf.config.gen_kw_config import PriorDict
     from ert._c_wrappers.enkf.ensemble_config import EnsembleConfig
     from ert._c_wrappers.enkf.run_arg import RunArg
+    from ert.storage.local_experiment import (
+        LocalExperimentAccessor,
+        LocalExperimentReader,
+    )
     from ert.storage.local_storage import LocalStorageAccessor, LocalStorageReader
-
 
 logger = logging.getLogger(__name__)
 
@@ -157,6 +159,10 @@ class LocalEnsembleReader:
     def state_map(self) -> List[RealizationStateEnum]:
         return self._state_map
 
+    @property
+    def experiment(self) -> Union[LocalExperimentReader, LocalExperimentAccessor]:
+        return self._storage.get_experiment(self.experiment_id)
+
     def close(self) -> None:
         self.sync()
 
@@ -214,7 +220,7 @@ class LocalEnsembleReader:
         self, key: str, realization: int
     ) -> Dict[str, Dict[str, float]]:
         data, keys = self.load_gen_kw_realization(key, realization)
-        priors = {p["key"]: p for p in self.load_gen_kw_priors()[key]}
+        priors = {p["key"]: p for p in self.experiment.gen_kw_info[key]}
 
         transformed = {
             parameter_key: PRIOR_FUNCTIONS[priors[parameter_key]["function"]](
@@ -276,13 +282,6 @@ class LocalEnsembleReader:
         if not realization_folders:
             return False
         return (realization_folders[0] / "gen-kw.nc").exists()
-
-    def load_gen_kw_priors(
-        self,
-    ) -> Dict[str, List[PriorDict]]:
-        with open(self.mount_point / "gen-kw-priors.json", "r", encoding="utf-8") as f:
-            priors: Dict[str, List[PriorDict]] = json.load(f)
-        return priors
 
     def load_gen_kw_realization(
         self, key: str, realization: int
@@ -372,34 +371,21 @@ class LocalEnsembleReader:
         return path.exists()
 
     def field_has_info(self, key: str) -> bool:
-        path = self._experiment_path / "field-info.json"
-        if not path.exists():
-            return False
-        with open(path, encoding="utf-8", mode="r") as f:
-            info = json.load(f)
-        return key in info
-
-    def load_field_info(self, key: str) -> Dict[Any, Any]:
-        path = self._experiment_path / "field-info.json"
-        if not path.exists():
-            return {}
-        with open(path, encoding="utf-8", mode="r") as f:
-            info = json.load(f)
-            return dict(info[key])
+        return key in self.experiment.field_info
 
     def export_field(
-        self, key: str, realization: int, output_path: Path, fformat: str
+        self,
+        key: str,
+        realization: int,
+        output_path: Path,
+        fformat: Optional[str] = None,
     ) -> None:
-        with open(
-            self._experiment_path / "field-info.json", encoding="utf-8", mode="r"
-        ) as f:
-            info = json.load(f)[key]
-
-        if (self._experiment_path / "field-info.egrid").exists():
-            grid = xtgeo.grid_from_file(self._experiment_path / "field-info.egrid")
-        else:
-            grid = None
-
+        info = self.experiment.field_info[key]
+        grid = (
+            xtgeo.grid_from_file(self.experiment.grid) if self.experiment.grid else None
+        )
+        if fformat is None:
+            fformat = info["file_format"]
         input_path = self.mount_point / f"realization-{realization}"
 
         if not input_path.exists():
@@ -532,12 +518,11 @@ class LocalEnsembleAccessor(LocalEnsembleReader):
         self,
         key: str,
         realization: int,
-        base_file_name: str,
         data: npt.NDArray[np.double],
     ) -> None:
         output_path = self.mount_point / f"realization-{realization}"
         Path.mkdir(output_path, exist_ok=True)
-        surf = xtgeo.surface_from_file(base_file_name, fformat="irap_ascii")
+        surf = self.experiment.get_surface(key)
         surf.set_values1d(data, order="F")
         surf.to_file(output_path / f"{key}.irap", fformat="irap_ascii")
         self.update_realization_state(
@@ -631,7 +616,6 @@ class LocalEnsembleAccessor(LocalEnsembleReader):
         self,
         parameter_name: str,
         parameter_keys: List[str],
-        parameter_transfer_functions: List[PriorDict],
         realizations: List[int],
         data: npt.NDArray[np.float64],
     ) -> None:
@@ -651,16 +635,6 @@ class LocalEnsembleAccessor(LocalEnsembleReader):
                 [RealizationStateEnum.STATE_UNDEFINED],
                 RealizationStateEnum.STATE_INITIALIZED,
             )
-
-        priors = {}
-        if Path.exists(self.mount_point / "gen-kw-priors.json"):
-            with open(
-                self.mount_point / "gen-kw-priors.json", "r", encoding="utf-8"
-            ) as f:
-                priors = json.load(f)
-        priors.update({parameter_name: parameter_transfer_functions})
-        with open(self.mount_point / "gen-kw-priors.json", "w", encoding="utf-8") as f:
-            json.dump(priors, f)
 
     def save_summary_data(
         self,
@@ -691,52 +665,7 @@ class LocalEnsembleAccessor(LocalEnsembleReader):
 
         ds.to_netcdf(output_path / "gen-data.nc", engine="scipy")
 
-    def save_field_info(  # pylint: disable=too-many-arguments
-        self,
-        key: str,
-        grid_file: Optional[str],
-        file_format: str,
-        transfer_out: str,
-        truncation_mode: EnkfTruncationType,
-        trunc_min: float,
-        trunc_max: float,
-        nx: int,
-        ny: int,
-        nz: int,
-    ) -> None:
-        Path.mkdir(self._experiment_path, exist_ok=True)
-        info = {
-            key: {
-                "nx": nx,
-                "ny": ny,
-                "nz": nz,
-                "file_format": file_format,
-                "transfer_out": transfer_out,
-                "truncation_mode": truncation_mode,
-                "truncation_min": trunc_min,
-                "truncation_max": trunc_max,
-            }
-        }
-        if (
-            grid_file is not None
-            and not (self._experiment_path / "field-info.egrid").exists()
-        ):
-            shutil.copy(grid_file, self._experiment_path / "field-info.egrid")
-
-        existing_info = {}
-        if (self._experiment_path / "field-info.json").exists():
-            with open(
-                self._experiment_path / "field-info.json", encoding="utf-8", mode="r"
-            ) as f:
-                existing_info = json.load(f)
-        existing_info.update(info)
-
-        with open(
-            self._experiment_path / "field-info.json", encoding="utf-8", mode="w"
-        ) as f:
-            json.dump(existing_info, f)
-
-    def save_field_data(
+    def save_field(
         self,
         parameter_name: str,
         realization: int,

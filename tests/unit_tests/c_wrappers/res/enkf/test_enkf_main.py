@@ -55,8 +55,14 @@ def test_create_run_context(monkeypatch, enkf_main, prior_ensemble):
     assert substitutions.get("<ECLBASE>") == "name<IENS>"
 
 
-def test_assert_symlink_deleted(snake_oil_field_example, prior_ensemble):
+def test_assert_symlink_deleted(snake_oil_field_example, storage):
     ert = snake_oil_field_example
+    experiment_id = storage.create_experiment(
+        parameters=ert.ensembleConfig().parameter_configuration
+    )
+    prior_ensemble = storage.create_ensemble(
+        experiment_id, name="prior", ensemble_size=100
+    )
 
     # create directory structure
     run_context = ert.ensemble_context(

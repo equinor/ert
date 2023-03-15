@@ -100,8 +100,14 @@ def render_dynamic_values(s, itr, iens, geo_id):
 
 
 @pytest.mark.parametrize("itr", [0, 1, 2, 17])
-def test_write_snakeoil_runpath_file(snake_oil_case, prior_ensemble, itr):
+def test_write_snakeoil_runpath_file(snake_oil_case, storage, itr):
     ert = snake_oil_case
+    experiment_id = storage.create_experiment(
+        parameters=ert.ensembleConfig().parameter_configuration
+    )
+    prior_ensemble = storage.create_ensemble(
+        experiment_id, name="prior", ensemble_size=25
+    )
 
     num_realizations = 25
     mask = [True] * num_realizations

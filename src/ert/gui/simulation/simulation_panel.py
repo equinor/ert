@@ -148,7 +148,9 @@ class SimulationPanel(QWidget):
                     self.ert,
                     self.notifier.storage,
                     self.getSimulationArguments(),
-                    self.notifier.storage.create_experiment(),
+                    self.notifier.storage.create_experiment(
+                        parameters=self.ert.ensembleConfig().parameter_configuration
+                    ),
                 )
             except ValueError as e:
                 QMessageBox.warning(

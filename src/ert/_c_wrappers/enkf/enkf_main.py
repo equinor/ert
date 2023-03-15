@@ -159,12 +159,10 @@ def _generate_field_parameter_file(
     target_file: Path,
     run_path: Path,
 ) -> None:
-    field_info = fs.load_field_info(key)
-    file_format = field_info["file_format"]
     file_out = run_path.joinpath(target_file)
     if os.path.islink(file_out):
         os.unlink(file_out)
-    fs.export_field(key, realization, file_out, file_format)
+    fs.export_field(key, realization, file_out)
 
 
 def _generate_parameter_files(
@@ -438,7 +436,7 @@ class EnKFMain:
                     init_file = config_node.get_init_file_fmt()
                     if "%d" in init_file:
                         init_file = init_file % realization_nr
-                    grid_file = self.ensembleConfig().grid_file
+                    grid_file = ensemble.experiment.grid
                     assert grid_file is not None
                     grid = xtgeo.grid_from_file(grid_file)
                     try:
@@ -455,22 +453,7 @@ class EnKFMain:
                     field_config = config_node.getFieldModelConfig()
                     trans = field_config.get_init_transform_name()
                     data_transformed = field_transform(data, trans)
-                    if not ensemble.field_has_info(parameter):
-                        ensemble.save_field_info(
-                            parameter,
-                            grid_file,
-                            Path(config_node.get_enkf_outfile()).suffix[1:],
-                            field_config.get_output_transform_name(),
-                            field_config.get_truncation_mode(),
-                            field_config.get_truncation_min(),
-                            field_config.get_truncation_max(),
-                            field_config.get_nx(),
-                            field_config.get_ny(),
-                            field_config.get_nz(),
-                        )
-                    ensemble.save_field_data(
-                        parameter, realization_nr, data_transformed
-                    )
+                    ensemble.save_field(parameter, realization_nr, data_transformed)
 
             elif impl_type == ErtImplType.GEN_KW:
                 gen_kw_config = config_node.getKeywordModelConfig()
@@ -498,7 +481,6 @@ class EnKFMain:
                 ensemble.save_gen_kw(
                     parameter_name=parameter,
                     parameter_keys=keys,
-                    parameter_transfer_functions=gen_kw_config.get_priors(),
                     realizations=active_realizations,
                     data=parameter_values,
                 )

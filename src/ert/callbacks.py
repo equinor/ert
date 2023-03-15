@@ -67,20 +67,7 @@ def forward_model_ok(
                     field_config = config_node.getFieldModelConfig()
                     trans = field_config.get_init_transform_name()
                     data_transformed = field_transform(data, trans)
-                    if not run_arg.ensemble_storage.field_has_info(key):
-                        run_arg.ensemble_storage.save_field_info(
-                            key,
-                            ens_conf.grid_file,
-                            Path(config_node.get_enkf_outfile()).suffix[1:],
-                            field_config.get_output_transform_name(),
-                            field_config.get_truncation_mode(),
-                            field_config.get_truncation_min(),
-                            field_config.get_truncation_max(),
-                            field_config.get_nx(),
-                            field_config.get_ny(),
-                            field_config.get_nz(),
-                        )
-                    run_arg.ensemble_storage.save_field_data(
+                    run_arg.ensemble_storage.save_field(
                         key, run_arg.iens, data_transformed
                     )
 

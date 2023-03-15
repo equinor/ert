@@ -84,8 +84,11 @@ def opened_main_window(source_root, tmpdir_factory):
             gui = _setup_main_window(poly_case, args_mock, GUILogHandler())
             gui.notifier.set_storage(storage)
             gui.notifier.set_current_case(
-                storage.create_experiment().create_ensemble(
-                    name="default", ensemble_size=poly_case.getEnsembleSize()
+                storage.create_experiment(
+                    parameters=poly_case.ensembleConfig().parameter_configuration
+                ).create_ensemble(
+                    name="default",
+                    ensemble_size=poly_case.getEnsembleSize(),
                 )
             )
             yield gui

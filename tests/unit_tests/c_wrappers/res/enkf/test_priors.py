@@ -5,8 +5,14 @@ import pytest
 from ert._c_wrappers.enkf import EnKFMain, ErtConfig
 
 
-def test_adding_priors(poly_case, prior_ensemble):
+def test_adding_priors(poly_case, storage):
     m = poly_case
+    experiment_id = storage.create_experiment(
+        parameters=m.ensembleConfig().parameter_configuration
+    )
+    prior_ensemble = storage.create_ensemble(
+        experiment_id, name="prior", ensemble_size=10
+    )
     prior = m.ensemble_context(
         prior_ensemble,
         [True] * 10,

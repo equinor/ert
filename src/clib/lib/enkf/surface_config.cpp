@@ -2,21 +2,24 @@
 #include <string>
 
 struct surface_config_struct {
+    std::string name;
     std::string base_surface_path;
 };
 
-surface_config_type *surface_config_alloc_empty() {
+surface_config_type *surface_config_alloc(std::string name,
+                                          std::string base_surface) {
     auto config = new surface_config_type;
-
+    config->name = name;
+    config->base_surface_path = base_surface;
     return config;
 }
 
 void surface_config_free(surface_config_type *config) { delete config; }
 
-void surface_config_set_base_surface(surface_config_type *config,
-                                     const char *base_surface) {
-    config->base_surface_path = std::string(base_surface);
-}
 const char *surface_config_base_surface_path(surface_config_type *config) {
     return config->base_surface_path.c_str();
+}
+
+const char *surface_config_name(surface_config_type *config) {
+    return config->name.c_str();
 }

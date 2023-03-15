@@ -28,8 +28,14 @@ def test_field_basics(snake_oil_field_example):
     assert fc.get_output_transform_name() is None
 
 
-def test_field_export_many(snake_oil_field_example, prior_ensemble):
+def test_field_export_many(snake_oil_field_example, storage):
     ert = snake_oil_field_example
+    experiment_id = storage.create_experiment(
+        parameters=ert.ensembleConfig().parameter_configuration
+    )
+    prior_ensemble = storage.create_ensemble(
+        experiment_id, name="prior", ensemble_size=5
+    )
 
     prior = ert.ensemble_context(prior_ensemble, [True, True, True, True, True], 0)
     ert.sample_prior(prior.sim_fs, prior.active_realizations)
@@ -51,8 +57,14 @@ def test_field_export_many(snake_oil_field_example, prior_ensemble):
     assert os.path.isfile("export/with/path/PERMX_4.grdecl")
 
 
-def test_field_export(snake_oil_field_example, prior_ensemble):
+def test_field_export(snake_oil_field_example, storage):
     ert = snake_oil_field_example
+    experiment_id = storage.create_experiment(
+        parameters=ert.ensembleConfig().parameter_configuration
+    )
+    prior_ensemble = storage.create_ensemble(
+        experiment_id, name="prior", ensemble_size=5
+    )
 
     prior = ert.ensemble_context(prior_ensemble, [True, False, False, True, True], 0)
     ert.sample_prior(prior.sim_fs, prior.active_realizations)
