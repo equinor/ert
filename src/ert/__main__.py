@@ -39,11 +39,11 @@ from ert.shared.ide.keywords.definitions import (
     RangeStringArgument,
 )
 from ert.shared.models.multiple_data_assimilation import MultipleDataAssimilation
-from ert.shared.plugins.plugin_manager import ErtPluginContext
+from ert.shared.plugins.plugin_manager import ErtPluginContext, ErtPluginManager
 from ert.shared.storage.command import add_parser_options as ert_api_add_parser_options
 
 
-def run_ert_storage(args: Namespace) -> None:
+def run_ert_storage(args: Namespace, _: Optional[ErtPluginManager] = None) -> None:
     kwargs = {"ert_config": args.config, "verbose": True}
 
     if args.database_url is not None:
@@ -53,7 +53,7 @@ def run_ert_storage(args: Namespace) -> None:
         server.wait()
 
 
-def run_webviz_ert(args: Namespace) -> None:
+def run_webviz_ert(args: Namespace, _: Optional[ErtPluginManager] = None) -> None:
     try:
         # pylint: disable=unused-import,import-outside-toplevel
         import webviz_ert  # type: ignore  # noqa
@@ -202,11 +202,11 @@ def range_limited_int(user_input: str) -> int:
     raise ArgumentTypeError("Range must be in range 1 - 99")
 
 
-def run_gui_wrapper(args: Namespace) -> None:
+def run_gui_wrapper(args: Namespace, ert_plugin_manager: ErtPluginManager) -> None:
     # pylint: disable=import-outside-toplevel
     from ert.gui.main import run_gui
 
-    run_gui(args)
+    run_gui(args, ert_plugin_manager)
 
 
 # pylint: disable=too-many-statements
@@ -577,7 +577,7 @@ def main() -> None:
                     raise NotImplementedError(
                         f"experiment-server can only run '{ENSEMBLE_EXPERIMENT_MODE}'"
                     )
-            args.func(args)
+            args.func(args, context.plugin_manager)
     except (ErtCliError, ErtTimeoutError) as err:
         logger.exception(str(err))
         sys.exit(str(err))

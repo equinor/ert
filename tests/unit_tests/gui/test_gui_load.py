@@ -16,6 +16,7 @@ from ert.gui.simulation.run_dialog import RunDialog
 from ert.gui.tools.event_viewer import add_gui_log_handler
 from ert.gui.tools.plot.plot_window import PlotWindow
 from ert.services import StorageService
+from ert.shared.plugins.plugin_manager import ErtPluginManager
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -300,7 +301,9 @@ def test_help_buttons_in_suggester_dialog(tmp_path, qtbot):
     args = Mock()
     args.config = str(config_file)
     with add_gui_log_handler() as log_handler:
-        gui, _, _ = ert.gui.main._start_initial_gui_window(args, log_handler)
+        gui, _, _ = ert.gui.main._start_initial_gui_window(
+            args, log_handler, ErtPluginManager()
+        )
         assert gui.windowTitle() == "Some problems detected"
 
         about_button = gui.findChild(QWidget, name="about_button")
