@@ -57,9 +57,9 @@ noise in the review process.
 1. While you wait, carefully review the diff yourself.
 1. When all tests have passed and your are happy with your changes, change your
    pull request to "ready for review" and ask for a code review.
-1. As a courtesy to the reviewer(s), mark commits that react to review comments
-   with `fixup` (check out `git commit --fixup`) rather than immediately
-   squashing / fixing up and force pushing
+1. As a courtesy to the reviewer(s), you may mark commits that react to review
+   comments with `fixup` (check out `git commit --fixup`) rather than
+   immediately squashing / fixing up and force pushing
 1. When the review is concluded, squash whatever still needs squashing, and
    [fast-forward](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/defining-the-mergeability-of-pull-requests/about-protected-branches#require-linear-history) merge.
 
