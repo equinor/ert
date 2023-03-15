@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
 from ert._c_wrappers.config import ConfigParser, ConfigValidationError, ContentTypeEnum
+from ert._c_wrappers.config.config_parser import CombinedConfigError
 from ert._c_wrappers.util import SubstitutionList
 from ert._clib.job_kw import type_from_kw
 
@@ -70,24 +71,20 @@ class ExtJob:
         if resolved is None:
             raise ConfigValidationError(
                 config_file=config_file_location,
-                errors=[f"Could not find executable {executable!r} for job {name!r}"],
+                errors=f"Could not find executable {executable!r} for job {name!r}",
             )
 
         if not os.access(resolved, os.X_OK):  # is not executable
             raise ConfigValidationError(
                 config_file=config_file_location,
-                errors=[
-                    f"ExtJob {name!r} with executable"
-                    f" {resolved!r} does not have execute permissions"
-                ],
+                errors=f"ExtJob {name!r} with executable"
+                f" {resolved!r} does not have execute permissions",
             )
 
         if os.path.isdir(resolved):
             raise ConfigValidationError(
                 config_file=config_file_location,
-                errors=[
-                    f"ExtJob {name!r} has executable set to directory {resolved!r}"
-                ],
+                errors=f"ExtJob {name!r} has executable set to directory {resolved!r}",
             )
 
         return resolved
@@ -179,22 +176,23 @@ class ExtJob:
             name = os.path.basename(config_file)
         try:
             config_content = cls._parse_config_file(config_file)
-        except ConfigValidationError as conf_err:
+        except CombinedConfigError as conf_err:
             err_msg = "Item:EXECUTABLE must be set - parsing"
-            err_index = next(
-                (i_err for i_err, err in enumerate(conf_err.errors) if err_msg in err),
-                None,
-            )
-            if err_index is None:
+            matching_error = conf_err.find_matching_error(match=err_msg)
+
+            if matching_error is None:
                 raise conf_err from None
             with open(config_file, encoding="utf-8") as f:
                 if "PORTABLE_EXE " in f.read():
-                    conf_err.errors[err_index] = conf_err.errors[err_index].replace(
-                        err_msg,
-                        '"PORTABLE_EXE" key is deprecated, '
-                        'please replace with "EXECUTABLE" in',
+                    conf_err.add_error(
+                        matching_error.replace(
+                            err_msg,
+                            '"PORTABLE_EXE" key is deprecated, '
+                            'please replace with "EXECUTABLE" in',
+                        )
                     )
-            raise ConfigValidationError(conf_err.errors, conf_err.config_file) from None
+
+            raise conf_err
         except IOError as err:
             raise ConfigValidationError(
                 config_file=config_file,
@@ -213,7 +211,7 @@ class ExtJob:
 
         content_dict["executable"] = config_content.getValue("EXECUTABLE")
         if config_content.hasKey("ARGLIST"):
-            # We unescape backslash here to keep backwards compatability ie. If
+            # We unescape backslash here to keep backwards compatibility i.e., If
             # the arglist contains a '\n' we interpret it as a newline.
             content_dict["arglist"] = [
                 s.encode("utf-8", "backslashreplace").decode("unicode_escape")

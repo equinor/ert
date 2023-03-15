@@ -129,7 +129,7 @@ def _start_initial_gui_window(
         ]
 
     except ConfigValidationError as error:
-        error_messages.append(str(error))
+        error_messages.append(*error.get_error_messages())
         logger.info("Error in config file shown in gui: '%s'", str(error))
         return (
             _setup_suggester(
@@ -276,6 +276,7 @@ def _setup_suggester(
     suggest_layout = QVBoxLayout()
     buttons_layout = QHBoxLayout()
 
+    print(errors)
     text = ""
     for msg in errors:
         text += msg + "\n"
