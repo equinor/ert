@@ -569,18 +569,17 @@ class ErtConfig:
         for job in config_dict.get(ConfigKeys.INSTALL_JOB, []):
             name = job[0]
             job_config_file = os.path.abspath(job[1])
-            new_job = cls._create_job(
-                job_config_file,
-                name,
+            new_job = ExtJob.from_config_file(
+                name=name,
+                config_file=job_config_file,
             )
-            if new_job is not None:
-                if name in jobs:
-                    warnings.warn(
-                        f"Duplicate forward model job with name {name!r}, "
-                        f"choosing {job_config_file!r} over {jobs[name].executable!r}",
-                        category=ConfigWarning,
-                    )
-                jobs[name] = new_job
+            if name in jobs:
+                warnings.warn(
+                    f"Duplicate forward model job with name {name!r}, "
+                    f"choosing {job_config_file!r} over {jobs[name].executable!r}",
+                    category=ConfigWarning,
+                )
+            jobs[name] = new_job
 
         for job_path in config_dict.get(ConfigKeys.INSTALL_JOB_DIRECTORY, []):
             if not os.path.isdir(job_path):
@@ -603,27 +602,19 @@ class ErtConfig:
 
             for file_name in files:
                 full_path = os.path.abspath(os.path.join(job_path, file_name))
-                new_job = cls._create_job(full_path)
-                if new_job is not None:
-                    name = new_job.name
-                    if name in jobs:
-                        warnings.warn(
-                            f"Duplicate forward model job with name {name!r}, "
-                            f"choosing {full_path!r} over {jobs[name].executable!r}",
-                            category=ConfigWarning,
-                        )
-                    jobs[name] = new_job
+                if not os.path.isfile(full_path):
+                    continue
+                new_job = ExtJob.from_config_file(config_file=full_path)
+                name = new_job.name
+                if name in jobs:
+                    warnings.warn(
+                        f"Duplicate forward model job with name {name!r}, "
+                        f"choosing {full_path!r} over {jobs[name].executable!r}",
+                        category=ConfigWarning,
+                    )
+                jobs[name] = new_job
 
         return jobs
-
-    @staticmethod
-    def _create_job(job_path, job_name=None):
-        if os.path.isfile(job_path):
-            return ExtJob.from_config_file(
-                name=job_name,
-                config_file=job_path,
-            )
-        return None
 
     def preferred_num_cpu(self) -> int:
         return int(self.substitution_list.get(f"<{ConfigKeys.NUM_CPU}>", 1))
