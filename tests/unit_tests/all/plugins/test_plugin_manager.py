@@ -3,12 +3,12 @@ import tempfile
 from unittest.mock import Mock
 
 import ert.shared.hook_implementations
-from ert.shared.plugins import ErtPluginManager
+from ert.shared.plugins.plugin_manager import _ErtPluginManager
 from tests.unit_tests.all.plugins import dummy_plugins
 
 
 def test_no_plugins():
-    pm = ErtPluginManager(plugins=[ert.shared.hook_implementations])
+    pm = _ErtPluginManager(plugins=[ert.shared.hook_implementations])
     assert pm.get_help_links() == {"GitHub page": "https://github.com/equinor/ert"}
     assert pm.get_flow_config_path() is None
     assert pm.get_ecl100_config_path() is None
@@ -27,7 +27,7 @@ def test_no_plugins():
 
 
 def test_with_plugins():
-    pm = ErtPluginManager(plugins=[ert.shared.hook_implementations, dummy_plugins])
+    pm = _ErtPluginManager(plugins=[ert.shared.hook_implementations, dummy_plugins])
     assert pm.get_help_links() == {
         "GitHub page": "https://github.com/equinor/ert",
         "test": "test",
@@ -55,7 +55,7 @@ def test_with_plugins():
 
 
 def test_job_documentation():
-    pm = ErtPluginManager(plugins=[dummy_plugins])
+    pm = _ErtPluginManager(plugins=[dummy_plugins])
     expected = {
         "job1": {
             "config_file": "/dummy/path/job1",
@@ -82,13 +82,13 @@ def test_workflows_merge(monkeypatch, tmpdir):
     }
     tempfile_mock = Mock(return_value=tmpdir)
     monkeypatch.setattr(tempfile, "mkdtemp", tempfile_mock)
-    pm = ErtPluginManager(plugins=[dummy_plugins])
+    pm = _ErtPluginManager(plugins=[dummy_plugins])
     result = pm.get_installable_workflow_jobs()
     assert result == expected_result
 
 
 def test_workflows_merge_duplicate(caplog):
-    pm = ErtPluginManager(plugins=[dummy_plugins])
+    pm = _ErtPluginManager(plugins=[dummy_plugins])
 
     dict_1 = {"some_job": "/a/path"}
     dict_2 = {"some_job": "/a/path"}
@@ -106,7 +106,7 @@ def test_workflows_merge_duplicate(caplog):
 
 def test_add_logging_handle(tmpdir):
     with tmpdir.as_cwd():
-        pm = ErtPluginManager(plugins=[dummy_plugins])
+        pm = _ErtPluginManager(plugins=[dummy_plugins])
         pm.add_logging_handle_to_root(logging.getLogger())
         logging.critical("I should write this to spam.log")
         with open("spam.log", encoding="utf-8") as fin:

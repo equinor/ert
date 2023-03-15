@@ -6,7 +6,7 @@ from ert._c_wrappers.enkf import EnKFMain, ErtConfig
 from ert.shared.hook_implementations.workflows.disable_parameters import (
     DisableParametersUpdate,
 )
-from ert.shared.plugins import ErtPluginManager
+from ert.shared.plugins import ert_plugin_manager
 
 
 @pytest.mark.parametrize(
@@ -22,7 +22,7 @@ def test_parse_comma_list(tmpdir, monkeypatch, input_string, expected):
 
 
 def test_disable_parameters_is_loaded():
-    pm = ErtPluginManager()
+    pm = ert_plugin_manager()
     assert "DISABLE_PARAMETERS" in pm.get_installable_workflow_jobs()
 
 

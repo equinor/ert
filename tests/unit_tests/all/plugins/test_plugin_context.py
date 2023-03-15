@@ -5,6 +5,7 @@ from unittest.mock import Mock
 import pytest
 
 from ert.shared.plugins import ErtPluginContext
+from ert.shared.plugins.plugin_manager import _ErtPluginManager
 from tests.unit_tests.all.plugins import dummy_plugins
 
 env_vars = [
@@ -16,10 +17,16 @@ env_vars = [
 ]
 
 
+def plugin_context(plugins):
+    ctx = ErtPluginContext()
+    ctx.plugin_manager = _ErtPluginManager(plugins)
+    return ctx
+
+
 def test_no_plugins(monkeypatch):
     # pylint: disable=pointless-statement
     monkeypatch.delenv("ERT_SITE_CONFIG", raising=False)
-    with ErtPluginContext(plugins=[]) as c:
+    with plugin_context(plugins=[]) as c:
         with pytest.raises(KeyError):
             os.environ["ECL100_SITE_CONFIG"]
         with pytest.raises(KeyError):
@@ -46,7 +53,7 @@ def test_with_plugins(monkeypatch):
     # We are comparing two function calls, both of which generate a tmpdir,
     # this makes sure that the same tmpdir is called on both occasions.
     monkeypatch.setattr(tempfile, "mkdtemp", Mock(return_value=tempfile.mkdtemp()))
-    with ErtPluginContext(plugins=[dummy_plugins]) as c:
+    with plugin_context(plugins=[dummy_plugins]) as c:
         with pytest.raises(KeyError):
             os.environ["ECL100_SITE_CONFIG"]
         with pytest.raises(KeyError):
@@ -71,7 +78,7 @@ def test_already_set(monkeypatch):
     for var in env_vars:
         monkeypatch.setenv(var, "TEST")
 
-    with ErtPluginContext(plugins=[dummy_plugins]):
+    with plugin_context(plugins=[dummy_plugins]):
         for var in env_vars:
             assert os.environ[var] == "TEST"
 

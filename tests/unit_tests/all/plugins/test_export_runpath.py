@@ -6,7 +6,7 @@ import pytest
 from ert._c_wrappers.enkf import EnKFMain
 from ert._c_wrappers.enkf.runpaths import Runpaths
 from ert.shared.hook_implementations.workflows.export_runpath import ExportRunpathJob
-from ert.shared.plugins import ErtPluginManager
+from ert.shared.plugins import ert_plugin_manager
 from ert.storage import open_storage
 
 
@@ -91,5 +91,5 @@ def test_export_runpath_bad_arguments(writing_setup):
 
 
 def test_export_runpath_job_is_loaded():
-    pm = ErtPluginManager()
+    pm = ert_plugin_manager()
     assert "EXPORT_RUNPATH" in pm.get_installable_workflow_jobs().keys()

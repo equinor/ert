@@ -5,7 +5,7 @@ from docutils import nodes
 from sphinx.util import nested_parse_with_titles
 from sphinx.util.docutils import SphinxDirective
 
-from ert.shared.plugins import ErtPluginManager
+from ert.shared.plugins import ert_plugin_manager
 
 
 class _ForwardModelDocumentation:
@@ -235,7 +235,7 @@ def _create_section_with_title(section_id, title):
 
 
 class ErtForwardModelDocumentation(_ErtDocumentation):
-    pm = ErtPluginManager()
+    pm = ert_plugin_manager()
     _JOBS = pm.get_documentation_for_jobs()
     _TITLE = "Forward models"
     _SECTION_ID = "ert-forward-models"
@@ -249,7 +249,7 @@ class ErtForwardModelDocumentation(_ErtDocumentation):
 
 
 class ErtWorkflowDocumentation(_ErtDocumentation):
-    pm = ErtPluginManager()
+    pm = ert_plugin_manager()
     _JOBS = pm.get_documentation_for_workflows()
     _TITLE = "Workflow jobs"
     _SECTION_ID = "ert-workflow-jobs"

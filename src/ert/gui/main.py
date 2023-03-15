@@ -40,7 +40,7 @@ from ert.gui.tools.workflows import WorkflowsTool
 from ert.libres_facade import LibresFacade
 from ert.namespace import Namespace
 from ert.services import StorageService
-from ert.shared.plugins.plugin_manager import ErtPluginManager
+from ert.shared.plugins.plugin_manager import ert_plugin_manager
 from ert.storage import EnsembleAccessor, StorageReader, open_storage
 
 
@@ -221,7 +221,7 @@ def _setup_suggester(errors, warning_msgs, suggestions, ert_window=None):
 
     help_label = QLabel("Help:")
     help_buttons_layout.addWidget(help_label)
-    pm = ErtPluginManager()
+    pm = ert_plugin_manager()
     help_links = pm.get_help_links()
 
     for menu_label, link in help_links.items():

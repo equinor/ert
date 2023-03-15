@@ -13,7 +13,7 @@ from qtpy.QtWidgets import (
 
 from ert.gui.about_dialog import AboutDialog
 from ert.gui.ertnotifier import ErtNotifier
-from ert.shared.plugins import ErtPluginManager
+from ert.shared.plugins import ert_plugin_manager
 
 
 class ErtMainWindow(QMainWindow):
@@ -80,7 +80,7 @@ class ErtMainWindow(QMainWindow):
         self.__view_menu = self.menuBar().addMenu("&View")
         self.__help_menu = self.menuBar().addMenu("&Help")
 
-        pm = ErtPluginManager()
+        pm = ert_plugin_manager()
         help_links = pm.get_help_links()
 
         for menu_label, link in help_links.items():

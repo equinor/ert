@@ -22,10 +22,26 @@ import ert.shared.hook_implementations  # noqa
 # Imports below hook_implementation and hook_specification to avoid circular imports
 import ert.shared.plugins.hook_specifications  # noqa
 
+_PLUGIN_MANAGER_INSTANCE = None
+
+
+def ert_plugin_manager() -> _ErtPluginManager:
+    """Singleton for _ErtPluginManager
+
+    Creating _ErtPluginManager is a slow operation because it
+    finds and imports all plugins. Therefore we need to ensure
+    that this only happens once.
+    """
+    # pylint: disable=global-statement
+    global _PLUGIN_MANAGER_INSTANCE
+    if _PLUGIN_MANAGER_INSTANCE is None:
+        _PLUGIN_MANAGER_INSTANCE = _ErtPluginManager()
+    return _PLUGIN_MANAGER_INSTANCE
+
 
 # pylint: disable=no-member
 # (pylint does not know what the plugins offer)
-class ErtPluginManager(pluggy.PluginManager):
+class _ErtPluginManager(pluggy.PluginManager):
     def __init__(self, plugins=None) -> None:
         super().__init__(_PLUGIN_NAMESPACE)
         self.add_hookspecs(ert.shared.plugins.hook_specifications)
@@ -46,7 +62,7 @@ class ErtPluginManager(pluggy.PluginManager):
         return self_str
 
     def get_help_links(self):
-        return ErtPluginManager._merge_dicts(self.hook.help_links())
+        return _ErtPluginManager._merge_dicts(self.hook.help_links())
 
     @staticmethod
     def _evaluate_config_hook(hook, config_name):
@@ -74,22 +90,22 @@ class ErtPluginManager(pluggy.PluginManager):
         return response.data
 
     def get_ecl100_config_path(self):
-        return ErtPluginManager._evaluate_config_hook(
+        return _ErtPluginManager._evaluate_config_hook(
             hook=self.hook.ecl100_config_path, config_name="ecl100"
         )
 
     def get_ecl300_config_path(self):
-        return ErtPluginManager._evaluate_config_hook(
+        return _ErtPluginManager._evaluate_config_hook(
             hook=self.hook.ecl300_config_path, config_name="ecl300"
         )
 
     def get_flow_config_path(self):
-        return ErtPluginManager._evaluate_config_hook(
+        return _ErtPluginManager._evaluate_config_hook(
             hook=self.hook.flow_config_path, config_name="flow"
         )
 
     def get_rms_config_path(self):
-        return ErtPluginManager._evaluate_config_hook(
+        return _ErtPluginManager._evaluate_config_hook(
             hook=self.hook.rms_config_path, config_name="rms"
         )
 
@@ -181,17 +197,17 @@ class ErtPluginManager(pluggy.PluginManager):
                     f"with data from {d.plugin_metadata.plugin_name}"
                     f"({d.plugin_metadata.function_name})"
                 )
-            merged_dict.update(ErtPluginManager._add_plugin_info_to_dict(d.data, d))
+            merged_dict.update(_ErtPluginManager._add_plugin_info_to_dict(d.data, d))
 
         if include_plugin_data:
             return merged_dict
         return {k: v[0] for k, v in merged_dict.items()}
 
     def get_installable_jobs(self):
-        return ErtPluginManager._merge_dicts(self.hook.installable_jobs())
+        return _ErtPluginManager._merge_dicts(self.hook.installable_jobs())
 
     def _get_config_workflow_jobs(self):
-        return ErtPluginManager._merge_dicts(self.hook.installable_workflow_jobs())
+        return _ErtPluginManager._merge_dicts(self.hook.installable_workflow_jobs())
 
     def get_documentation_for_jobs(self):
         job_docs = {
@@ -200,13 +216,13 @@ class ErtPluginManager(pluggy.PluginManager):
                 "source_package": v[1].plugin_name,
                 "source_function_name": v[1].function_name,
             }
-            for k, v in ErtPluginManager._merge_dicts(
+            for k, v in _ErtPluginManager._merge_dicts(
                 self.hook.installable_jobs(), include_plugin_data=True
             ).items()
         }
         for k in job_docs.keys():
             job_docs[k].update(
-                ErtPluginManager._evaluate_job_doc_hook(self.hook.job_documentation, k)
+                _ErtPluginManager._evaluate_job_doc_hook(self.hook.job_documentation, k)
             )
         return job_docs
 
@@ -239,8 +255,8 @@ class ErtPluginManager(pluggy.PluginManager):
 
 
 class ErtPluginContext:
-    def __init__(self, plugins=None) -> None:
-        self.plugin_manager = ErtPluginManager(plugins=plugins)
+    def __init__(self) -> None:
+        self.plugin_manager = ert_plugin_manager()
         self.tmp_dir = None
         self.tmp_site_config_filename = None
 
