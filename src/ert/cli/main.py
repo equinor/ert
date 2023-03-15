@@ -36,7 +36,7 @@ class ErtTimeoutError(Exception):
     pass
 
 
-def run_cli(args):
+def run_cli(args, _=None):
     ert_config = ErtConfig.from_file(args.config)
     try:
         with warnings.catch_warnings(record=True) as silenced_warnings:

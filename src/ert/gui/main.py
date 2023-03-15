@@ -44,11 +44,13 @@ from ert.shared.plugins.plugin_manager import ErtPluginManager
 from ert.storage import EnsembleAccessor, StorageReader, open_storage
 
 
-def run_gui(args: Namespace):
+def run_gui(args: Namespace, plugin_manager: Optional[ErtPluginManager] = None):
     app = QApplication([])  # Early so that QT is initialized before other imports
     app.setWindowIcon(resourceIcon("application/window_icon_cutout"))
     with add_gui_log_handler() as log_handler:
-        window, ens_path, ensemble_size = _start_initial_gui_window(args, log_handler)
+        window, ens_path, ensemble_size = _start_initial_gui_window(
+            args, log_handler, plugin_manager
+        )
 
         def show_window():
             window.show()
@@ -100,7 +102,9 @@ def _log_difference_with_new_parser(args, ert_config):
         logging.exception("The new parser failed")
 
 
-def _start_initial_gui_window(args, log_handler):
+def _start_initial_gui_window(
+    args, log_handler, plugin_manager: Optional[ErtPluginManager] = None
+):
     # Create logger inside function to make sure all handlers have been added to
     # the root-logger.
     logger = logging.getLogger(__name__)
@@ -128,7 +132,12 @@ def _start_initial_gui_window(args, log_handler):
         error_messages.append(str(error))
         logger.info("Error in config file shown in gui: '%s'", str(error))
         return (
-            _setup_suggester(error_messages, config_warnings, suggestions),
+            _setup_suggester(
+                error_messages,
+                config_warnings,
+                suggestions,
+                plugin_manager=plugin_manager,
+            ),
             None,
             None,
         )
@@ -147,7 +156,11 @@ def _start_initial_gui_window(args, log_handler):
     if suggestions or config_warnings:
         return (
             _setup_suggester(
-                error_messages, config_warnings, suggestions, _main_window
+                error_messages,
+                config_warnings,
+                suggestions,
+                _main_window,
+                plugin_manager=plugin_manager,
             ),
             ert_config.ens_path,
             ert_config.model_config.num_realizations,
@@ -205,7 +218,13 @@ def _clicked_about_button(about_dialog):
     about_dialog.show()
 
 
-def _setup_suggester(errors, warning_msgs, suggestions, ert_window=None):
+def _setup_suggester(
+    errors,
+    warning_msgs,
+    suggestions,
+    ert_window=None,
+    plugin_manager: Optional[ErtPluginManager] = None,
+):
     container = QWidget()
     if ert_window is not None:
         container.notifier = ert_window.notifier
@@ -221,8 +240,7 @@ def _setup_suggester(errors, warning_msgs, suggestions, ert_window=None):
 
     help_label = QLabel("Help:")
     help_buttons_layout.addWidget(help_label)
-    pm = ErtPluginManager()
-    help_links = pm.get_help_links()
+    help_links = plugin_manager.get_help_links() if plugin_manager else {}
 
     for menu_label, link in help_links.items():
         button = QPushButton(menu_label)
@@ -313,11 +331,12 @@ def _setup_main_window(
     ert: EnKFMain,
     args: Namespace,
     log_handler: GUILogHandler,
+    plugin_manager: Optional[ErtPluginManager] = None,
 ):
     # window reference must be kept until app.exec returns:
     facade = LibresFacade(ert)
     config_file = args.config
-    window = ErtMainWindow(config_file)
+    window = ErtMainWindow(config_file, plugin_manager)
     window.setWidget(SimulationPanel(ert, window.notifier, config_file))
     plugin_handler = PluginHandler(
         ert,
