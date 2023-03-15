@@ -20,15 +20,14 @@ if TYPE_CHECKING:
 
 class ObservationConfigError(ConfigValidationError):
     def __init__(self, errors: str, config_file: Optional[str] = None) -> None:
-        self.config_file = config_file
-        self.errors = errors
         super().__init__(
-            (
-                f"Parsing observations config file `{self.config_file}` "
-                f"resulted in the errors: {self.errors}"
+            errors=(
+                f"Parsing observations config file `{config_file}` "
+                f"resulted in the errors: {errors}"
             )
-            if self.config_file
-            else f"{self.errors}"
+            if config_file
+            else f"{errors}",
+            config_file=config_file,
         )
 
 
