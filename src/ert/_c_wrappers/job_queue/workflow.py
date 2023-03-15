@@ -5,6 +5,7 @@ from tempfile import mkdtemp
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
 
 from ert._c_wrappers.config import ConfigParser, ConfigValidationError, UnrecognizedEnum
+from ert._c_wrappers.config.config_parser import CombinedConfigError
 
 if TYPE_CHECKING:
     from ert._c_wrappers.enkf import EnKFMain
@@ -68,6 +69,9 @@ class Workflow:
             content = parser.parse(
                 to_compile, unrecognized=UnrecognizedEnum.CONFIG_UNRECOGNIZED_ERROR
             )
+        except CombinedConfigError as err:
+            err.config_file = src_file
+            raise err from None
         except ConfigValidationError as err:
             err.config_file = src_file
             raise err from None

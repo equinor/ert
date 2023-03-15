@@ -11,7 +11,11 @@ from typing import Any, ClassVar, Dict, List, Mapping
 import pkg_resources
 
 from ert._c_wrappers.config import ConfigParser
-from ert._c_wrappers.config.config_parser import ConfigValidationError, ConfigWarning
+from ert._c_wrappers.config.config_parser import (
+    CombinedConfigError,
+    ConfigValidationError,
+    ConfigWarning,
+)
 from ert._c_wrappers.enkf.analysis_config import AnalysisConfig
 from ert._c_wrappers.enkf.config_keys import ConfigKeys
 from ert._c_wrappers.enkf.ensemble_config import EnsembleConfig
@@ -84,10 +88,12 @@ class ErtConfig:
         user_config_dict = ErtConfig.read_user_config(
             user_config_file, use_new_parser=use_new_parser
         )
+
         config_dir = os.path.abspath(os.path.dirname(user_config_file))
         ErtConfig._log_config_file(user_config_file)
         ErtConfig._log_config_dict(user_config_dict)
         ErtConfig.apply_config_content_defaults(user_config_dict, config_dir)
+
         return ErtConfig.from_dict(user_config_dict)
 
     @classmethod
@@ -253,13 +259,19 @@ class ErtConfig:
 
     @classmethod
     def _validate_queue_option_max_running(cls, config_path, config_dict):
+        combined_error = CombinedConfigError()
+
         for _, option_name, *values in config_dict.get("QUEUE_OPTION", []):
             if option_name == "MAX_RUNNING" and int(*values) < 0:
-                raise ConfigValidationError(
-                    errors=[
-                        f"QUEUE_OPTION MAX_RUNNING is negative: {str(*values)!r}",
-                    ],
+                combined_error.add_error(
+                    ConfigValidationError(
+                        errors=f"QUEUE_OPTION MAX_RUNNING is negative: "
+                        f"{str(*values)!r}",
+                    )
                 )
+
+        if not combined_error.is_empty():
+            raise combined_error
 
     @classmethod
     def _read_templates(cls, config_dict):
@@ -289,55 +301,80 @@ class ErtConfig:
                 category=ConfigWarning,
             )
 
+        combined_error = CombinedConfigError()
+
         if ConfigKeys.SUMMARY in config_dict and ConfigKeys.ECLBASE not in config_dict:
-            raise ConfigValidationError(
-                "When using SUMMARY keyword, the config must also specify ECLBASE",
-                config_file=config_file,
+            combined_error.add_error(
+                ConfigValidationError(
+                    "When using SUMMARY keyword, the config must also specify ECLBASE",
+                    config_file=config_file,
+                )
             )
-        cls._validate_queue_option_max_running(config_file, config_dict)
+
+        try:
+            cls._validate_queue_option_max_running(config_file, config_dict)
+        except ConfigValidationError as err:
+            combined_error.add_error(err)
+
+        if not combined_error.is_empty():
+            raise combined_error
 
     @classmethod
     def _validate_ensemble_config(cls, ensemble_config, config_path):
+        combined_error = CombinedConfigError()
+
         for key in ensemble_config.getKeylistFromImplType(ErtImplType.GEN_KW):
             if ensemble_config.getNode(key).getUseForwardInit():
-                raise ConfigValidationError(
-                    config_file=config_path,
-                    errors=[
-                        "Loading GEN_KW from files created by the forward model "
-                        "is not supported."
-                    ],
+                combined_error.add_error(
+                    ConfigValidationError(
+                        config_file=config_path,
+                        errors="Loading GEN_KW from files created by the forward "
+                        "model "
+                        "is not supported.",
+                    )
                 )
             if (
                 ensemble_config.getNode(key).get_init_file_fmt() is not None
                 and "%" not in ensemble_config.getNode(key).get_init_file_fmt()
             ):
-                raise ConfigValidationError(
-                    config_file=config_path,
-                    errors=["Loading GEN_KW from files requires %d in file format"],
+                combined_error.add_error(
+                    ConfigValidationError(
+                        config_file=config_path,
+                        errors="Loading GEN_KW from files requires %d in file format",
+                    )
                 )
+
+        if not combined_error.is_empty():
+            raise combined_error
 
     @classmethod
     def read_forward_model(
         cls, installed_jobs, substitution_list, config_dict, config_file
     ):
         jobs = []
-        for job in config_dict.get(ConfigKeys.FORWARD_MODEL, []):
-            if len(job) > 1:
-                unsubstituted_job_name, args = job
+        combined_error = CombinedConfigError()
+
+        for job_as_list in config_dict.get(ConfigKeys.FORWARD_MODEL, []):
+            if len(job_as_list) > 1:
+                unsubstituted_job_name, args = job_as_list
             else:
-                unsubstituted_job_name = job[0]
+                unsubstituted_job_name = job_as_list[0]
                 args = []
             job_name = substitution_list.substitute(unsubstituted_job_name)
             try:
                 job = copy.deepcopy(installed_jobs[job_name])
-            except KeyError as err:
-                raise ConfigValidationError(
-                    errors=(
-                        f"Could not find job {job_name!r} in list of installed jobs: "
-                        f"{list(installed_jobs.keys())!r}"
-                    ),
-                    config_file=config_file,
-                ) from err
+            except KeyError:
+                combined_error.add_error(
+                    ConfigValidationError(
+                        errors=(
+                            f"Could not find job {job_name!r} in list of installed "
+                            f"jobs: "
+                            f"{list(installed_jobs.keys())!r}"
+                        ),
+                        config_file=config_file,
+                    )
+                )
+                continue
             if args:
                 job.private_args = SubstitutionList()
                 try:
@@ -351,27 +388,36 @@ class ErtConfig:
                         for key, val in args:
                             job.private_args.addItem(key, val)
                 except ValueError as err:
-                    raise ConfigValidationError(
-                        errors=f"{err}: 'FORWARD_MODEL {job_name}({args})'\n",
-                        config_file=config_file,
-                    ) from err
+                    combined_error.add_error(
+                        ConfigValidationError(
+                            errors=f"{err}: 'FORWARD_MODEL {job_name}({args})'\n",
+                            config_file=config_file,
+                        )
+                    )
 
             try:
                 job.validate_args(substitution_list)
             except ExtJobInvalidArgsException as err:
                 logger.warning(str(err))
             jobs.append(job)
-        for job_description in config_dict.get(ConfigKeys.SIMULATION_JOB, []):
+        for job_as_list in config_dict.get(ConfigKeys.SIMULATION_JOB, []):
             try:
-                job = copy.deepcopy(installed_jobs[job_description[0]])
-            except KeyError as err:
-                raise ConfigValidationError(
-                    f"Could not find job {job_description[0]!r} "
-                    "in list of installed jobs.",
-                    config_file=config_file,
-                ) from err
-            job.arglist = job_description[1:]
+                name, *args = job_as_list
+                job = copy.deepcopy(installed_jobs[name])
+            except KeyError:
+                combined_error.add_error(
+                    ConfigValidationError(
+                        f"Could not find job {name!r} " "in list of installed jobs.",
+                        config_file=config_file,
+                    )
+                )
+                continue
+
+            job.arglist = args
             jobs.append(job)
+
+        if not combined_error.is_empty():
+            raise combined_error
 
         return jobs
 
@@ -493,6 +539,8 @@ class ErtConfig:
         workflows = {}
         hooked_workflows = defaultdict(list)
 
+        combined_error = CombinedConfigError()
+
         for workflow_job in workflow_job_info:
             try:
                 new_job = WorkflowJob.fromFile(
@@ -548,32 +596,49 @@ class ErtConfig:
 
         for hook_name, mode_name in hook_workflow_info:
             if mode_name not in [runtime.name for runtime in HookRuntime.enums()]:
-                raise ConfigValidationError(
-                    errors=[f"Run mode {mode_name!r} not supported for Hook Workflow"]
+                combined_error.add_error(
+                    ConfigValidationError(
+                        errors=f"Run mode {mode_name!r} not supported for Hook "
+                        f"Workflow"
+                    )
                 )
+                continue
 
             if hook_name not in workflows:
-                raise ConfigValidationError(
-                    errors=[
-                        f"Cannot setup hook for non-existing job name {hook_name!r}"
-                    ]
+                combined_error.add_error(
+                    ConfigValidationError(
+                        errors=f"Cannot setup hook for non-existing jo"
+                        f"b name {hook_name!r}"
+                    )
                 )
+                continue
 
             hooked_workflows[HookRuntime.from_string(mode_name)].append(
                 workflows[hook_name]
             )
+
+        if not combined_error.is_empty():
+            raise combined_error
+
         return workflow_jobs, workflows, hooked_workflows
 
     @classmethod
     def _installed_jobs_from_dict(cls, config_dict):
         jobs = {}
+        combined_error = CombinedConfigError()
         for job in config_dict.get(ConfigKeys.INSTALL_JOB, []):
             name = job[0]
             job_config_file = os.path.abspath(job[1])
-            new_job = ExtJob.from_config_file(
-                name=name,
-                config_file=job_config_file,
-            )
+
+            try:
+                new_job = ExtJob.from_config_file(
+                    name=name,
+                    config_file=job_config_file,
+                )
+            except ConfigValidationError as err:
+                combined_error.add_error(err)
+                continue
+
             if name in jobs:
                 warnings.warn(
                     f"Duplicate forward model job with name {name!r}, "
@@ -584,9 +649,12 @@ class ErtConfig:
 
         for job_path in config_dict.get(ConfigKeys.INSTALL_JOB_DIRECTORY, []):
             if not os.path.isdir(job_path):
-                raise ConfigValidationError(
-                    f"Unable to locate job directory {job_path!r}"
+                combined_error.add_error(
+                    ConfigValidationError(
+                        f"Unable to locate job directory {job_path!r}"
+                    )
                 )
+                continue
 
             files = os.listdir(job_path)
 
@@ -614,6 +682,9 @@ class ErtConfig:
                         category=ConfigWarning,
                     )
                 jobs[name] = new_job
+
+        if not combined_error.is_empty():
+            raise combined_error
 
         return jobs
 
