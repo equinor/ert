@@ -45,7 +45,7 @@ QUEUE_OPTION LSF LSF_RESOURCE select[x86_64Linux] same[type:model] -- arbitrary 
 QUEUE_OPTION LSF LSF_SERVER   simulacrum  -- name of server
 QUEUE_OPTION LSF LSF_QUEUE    mr  -- name of queue, mr=multiple realizations
 
-MAX_SUBMIT                    13  -- How many times should the queue system
+MAX_SUBMIT                    13  -- How many times the queue system should
                                   -- retry a simulation.  Default == 2.  Use
                                   -- 1 when debugging)
 
