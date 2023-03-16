@@ -55,7 +55,7 @@ Keyword name                                                            Required
 :ref:`LOAD_WORKFLOW_JOB <load_workflow_job>`                            NO                                                                      Load a workflow job into ERT
 :ref:`LICENSE_PATH <license_path>`                                      NO                                                                      A path where ert-licenses to e.g. RMS are stored
 :ref:`MAX_RUNTIME <max_runtime>`                                        NO                                      0                               Set the maximum runtime in seconds for a realization (0 means no runtime limit)
-:ref:`MAX_SUBMIT <max_submit>`                                          NO                                      2                               How many times should the queue system retry a simulation
+:ref:`MAX_SUBMIT <max_submit>`                                          NO                                      2                               How many times the queue system should retry a simulation
 :ref:`MIN_REALIZATIONS <min_realizations>`                              NO                                      0                               Set the number of minimum realizations that has to succeed in order for the run to continue (0 means identical to NUM_REALIZATIONS - all must pass).
 :ref:`NUM_CPU <num_cpu>`                                                NO                                      1                               Set the number of CPUs. Intepretation varies depending on context
 :ref:`NUM_REALIZATIONS <num_realizations>`                              YES                                                                     Set the number of reservoir realizations to use
@@ -1369,7 +1369,7 @@ to load, select and modify the analysis modules are documented here.
 .. _max_submit:
 .. topic:: MAX_SUBMIT
 
-        How many times should the queue system retry a simulation.
+        How many times the queue system should retry a simulation.
                 Default is 2.
 
 
