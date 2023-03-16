@@ -21,5 +21,6 @@ def test_job_runner_startup_overhead():
                 "-m",
                 "_ert_job_runner.job_dispatch",
                 "-h",
-            )
+            ),
+            stdout=subprocess.DEVNULL,
         )
