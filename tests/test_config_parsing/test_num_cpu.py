@@ -33,7 +33,7 @@ def test_num_cpu_from_config_preferred():
         ConfigKeys.RUNPATH_FILE: os.path.join(os.getcwd(), "runpath.file"),
     }
     ert_config = ErtConfig.from_dict(config_dict)
-    enkf_main: EnKFMain = EnKFMain(ert_config)
+    enkf_main = EnKFMain(ert_config)
     assert ert_config.preferred_num_cpu() == config_num_cpu
     assert enkf_main.get_num_cpu() == config_num_cpu
 
@@ -56,6 +56,6 @@ PARALLEL
         ConfigKeys.RUNPATH_FILE: os.path.join(os.getcwd(), "runpath.file"),
     }
     ert_config = ErtConfig.from_dict(config_dict)
-    enkf_main: EnKFMain = EnKFMain(ert_config)
+    enkf_main = EnKFMain(ert_config)
     assert enkf_main.resConfig().preferred_num_cpu() == data_file_num_cpu
     assert enkf_main.get_num_cpu() == data_file_num_cpu
