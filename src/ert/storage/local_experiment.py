@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING, Any, Dict, Generator, List, Optional, Union
 from uuid import UUID
 
 import xtgeo
+from ecl.grid import EclGrid
 
 from ert._c_wrappers.enkf import EnkfTruncationType, FieldConfig
 from ert._c_wrappers.enkf.config.gen_kw_config import GenKwConfig, PriorDict
@@ -23,7 +24,6 @@ class LocalExperimentReader:
         self._storage: Union[LocalStorageReader, LocalStorageAccessor] = storage
         self._id = uuid
         self._path = path
-        self.grid: Optional[Path] = None
 
     @property
     def ensembles(self) -> Generator[LocalEnsembleReader, None, None]:
@@ -35,12 +35,9 @@ class LocalExperimentReader:
     def id(self) -> UUID:
         return self._id
 
-    def load_gen_kw_priors(
-        self,
-    ) -> Dict[str, List[PriorDict]]:
-        with open(self.mount_point / "gen-kw-priors.json", "r", encoding="utf-8") as f:
-            priors: Dict[str, List[PriorDict]] = json.load(f)
-        return priors
+    @property
+    def grid(self) -> Optional[Union[xtgeo.Grid, EclGrid]]:
+        return self._load_grid()
 
     @property
     def mount_point(self) -> Path:
@@ -68,6 +65,18 @@ class LocalExperimentReader:
             info = json.load(f)
         return info
 
+    def _load_grid(self) -> Optional[Union[xtgeo.Grid, EclGrid]]:
+        if (self._path / "grid.EGRID").exists():
+            return xtgeo.grid_from_file(self._path / "grid.EGRID")
+        if (self._path / "grid.GRID").exists():
+            return EclGrid(str(self._path / "grid.GRID"))
+        return None
+
+    def load_gen_kw_priors(self) -> Dict[str, List[PriorDict]]:
+        with open(self.mount_point / "gen-kw-priors.json", "r", encoding="utf-8") as f:
+            priors: Dict[str, List[PriorDict]] = json.load(f)
+        return priors
+
     def get_surface(self, name: str) -> xtgeo.RegularSurface:
         return xtgeo.surface_from_file(
             str(self.mount_point / f"{name}.irap"), fformat="irap_ascii"
@@ -83,9 +92,10 @@ class LocalExperimentAccessor(LocalExperimentReader):
         parameters: Optional[ParameterConfiguration] = None,
     ) -> None:
         self._storage: LocalStorageAccessor = storage
+
         self._id = uuid
         self._path = path
-        self.grid: Optional[Path] = None
+
         parameters = [] if parameters is None else parameters
         for parameter in parameters:
             if isinstance(parameter, GenKwConfig):
@@ -111,6 +121,10 @@ class LocalExperimentAccessor(LocalExperimentReader):
             else:
                 raise NotImplementedError("Unknown parameter type")
 
+    @property
+    def ensembles(self) -> Generator[LocalEnsembleAccessor, None, None]:
+        yield from super().ensembles  # type: ignore
+
     def create_ensemble(
         self,
         *,
@@ -126,10 +140,6 @@ class LocalExperimentAccessor(LocalExperimentReader):
             name=name,
             prior_ensemble=prior_ensemble,
         )
-
-    @property
-    def ensembles(self) -> Generator[LocalEnsembleAccessor, None, None]:
-        yield from super().ensembles  # type: ignore
 
     def save_field_info(  # pylint: disable=too-many-arguments
         self,
@@ -156,10 +166,10 @@ class LocalExperimentAccessor(LocalExperimentReader):
         }
         # Grid file is shared between all FIELD keywords, so we can avoid
         # copying for each FIELD keyword.
-        grid_path = self.mount_point / "field-info.egrid"
-        if not Path(grid_path).exists():
-            shutil.copy(grid_file, self.mount_point / "field-info.egrid")
-            self.grid = self.mount_point / "field-info.egrid"
+        if grid_file is not None:
+            grid_filename = "grid" + Path(grid_file).suffix.upper()
+            if not (self._path / grid_filename).exists():
+                shutil.copy(grid_file, self._path / grid_filename)
 
         field_info_path = self._path / "field-info.json"
         field_info = {}

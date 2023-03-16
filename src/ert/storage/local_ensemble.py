@@ -11,10 +11,15 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, List, Literal, Optional, Set, Tuple, Union
 from uuid import UUID
 
+import cwrap
 import numpy as np
 import pandas as pd
 import xarray as xr
 import xtgeo
+from ecl import EclDataType
+from ecl.eclfile import EclKW
+from ecl.grid import EclGrid
+from numpy import ma
 from pydantic import BaseModel
 
 from ert._c_wrappers.enkf.enkf_main import field_transform, trans_func
@@ -362,7 +367,8 @@ class LocalEnsembleReader:
             if not input_path.exists():
                 raise KeyError(f"Unable to load FIELD for key: {key}")
             data = np.load(input_path / f"{key}.npy")
-            result.append(data)
+            data_no_nans = data[~np.isnan(data)]
+            result.append(data_no_nans)
         return np.stack(result).T  # type: ignore
 
     def field_has_data(self, key: str, realization: int) -> bool:
@@ -372,27 +378,16 @@ class LocalEnsembleReader:
     def field_has_info(self, key: str) -> bool:
         return key in self.experiment.field_info
 
-    def export_field(
+    def _export_property_egrid(  # pylint: disable=too-many-arguments
         self,
+        grid: xtgeo.Grid,
         key: str,
-        realization: int,
+        data_path: Path,
         output_path: Path,
-        fformat: Optional[str] = None,
+        fformat: str,
+        info: Any,
     ) -> None:
-        info = self.experiment.field_info[key]
-        grid = (
-            xtgeo.grid_from_file(self.experiment.grid) if self.experiment.grid else None
-        )
-        if fformat is None:
-            fformat = info["file_format"]
-        input_path = self.mount_point / f"realization-{realization}"
-
-        if not input_path.exists():
-            raise KeyError(
-                f"Unable to load FIELD for key: {key}, realization: {realization} "
-            )
-        data = np.load(input_path / f"{key}.npy")
-
+        data = np.load(data_path / f"{key}.npy")
         data_transformed = field_transform(data, transform_name=info["transfer_out"])
         data_truncated = _field_truncate(
             data_transformed,
@@ -401,18 +396,78 @@ class LocalEnsembleReader:
             info["truncation_max"],
         )
 
-        gp = xtgeo.GridProperty(
+        prop = xtgeo.GridProperty(
             ncol=info["nx"],
             nrow=info["ny"],
             nlay=info["nz"],
-            values=data_truncated,
-            grid=grid,
             name=key,
+            values=ma.array(
+                data=data_truncated,
+                mask=np.logical_not(grid.get_actnum().values1d.data),
+            ),  # type: ignore
         )
 
         os.makedirs(Path(output_path).parent, exist_ok=True)
 
-        gp.to_file(output_path, fformat=fformat.lower())
+        # We append the property to the grid inorder to use the
+        # active mask stored in the grid
+        grid.append_prop(prop)
+        grid.get_prop_by_name(key).to_file(output_path, fformat=fformat.lower())
+        grid.props.remove(prop)
+
+    def _export_property_grid(  # pylint: disable=too-many-arguments
+        self,
+        grid: EclGrid,
+        key: str,
+        data_path: Path,
+        output_path: Path,
+        fformat: str,
+        info: Any,
+    ) -> None:
+        data = np.load(data_path / f"{key}.npy")
+        data_transformed = field_transform(data, transform_name=info["transfer_out"])
+        data_truncated = _field_truncate(
+            data_transformed,
+            info["truncation_mode"],
+            info["truncation_min"],
+            info["truncation_max"],
+        )
+        os.makedirs(Path(output_path).parent, exist_ok=True)
+
+        param = EclKW(key, grid.get_global_size(), EclDataType.ECL_FLOAT)
+        for i, e in enumerate(data_truncated):
+            param[i] = e
+
+        with cwrap.open(str(output_path), mode="w") as f:
+            grid.write_grdecl(param, f, default_value=np.nan)
+
+    def export_field(
+        self,
+        key: str,
+        realization: int,
+        output_path: Path,
+        fformat: Optional[str] = None,
+    ) -> None:
+        info = self.experiment.field_info[key]
+        if fformat is None:
+            fformat = info["file_format"]
+
+        data_path = self.mount_point / f"realization-{realization}"
+
+        if not data_path.exists():
+            raise KeyError(
+                f"Unable to load FIELD for key: {key}, realization: {realization} "
+            )
+
+        grid = self.experiment.grid
+        if isinstance(grid, xtgeo.Grid):
+            self._export_property_egrid(
+                grid, key, data_path, output_path, fformat, info
+            )
+        elif isinstance(grid, EclGrid):
+            self._export_property_grid(grid, key, data_path, output_path, fformat, info)
+        else:
+            logger.warning(f"No grid found in {self._experiment_path}")
 
 
 class LocalEnsembleAccessor(LocalEnsembleReader):
@@ -650,10 +705,27 @@ class LocalEnsembleAccessor(LocalEnsembleReader):
         parameter_name: str,
         realization: int,
         data: npt.ArrayLike,
+        unmasked: bool = False,
     ) -> None:
         output_path = self.mount_point / f"realization-{realization}"
         Path.mkdir(output_path, exist_ok=True)
-        np.save(f"{output_path}/{parameter_name}", data)
+
+        if unmasked:
+            grid = self.experiment.grid
+            if isinstance(grid, xtgeo.Grid):
+                masked_data = np.empty(grid.ntotal)
+                masked_data.fill(np.nan)
+                masked_data[grid.actnum_indices] = data
+                np.save(f"{output_path}/{parameter_name}", masked_data)
+            elif isinstance(grid, EclGrid):
+                masked_data = np.empty(grid.get_global_size())
+                masked_data.fill(np.nan)
+                active_indices = [i for i, e in enumerate(grid.export_actnum()) if e]
+                masked_data[active_indices] = data
+                np.save(f"{output_path}/{parameter_name}", masked_data)
+        else:
+            np.save(f"{output_path}/{parameter_name}", data)
+
         self.update_realization_state(
             realization,
             [RealizationStateEnum.STATE_UNDEFINED],

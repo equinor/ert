@@ -2,7 +2,12 @@ import logging
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Tuple
 
+import cwrap
+import numpy as np
 import xtgeo
+from ecl.eclfile import EclKW
+from ecl.grid import EclGrid
+from numpy import ma
 
 from ert._c_wrappers.enkf.enkf_main import field_transform
 from ert._c_wrappers.enkf.enkf_state import _internalize_results
@@ -19,7 +24,7 @@ def forward_model_ok(
     run_arg: "RunArg",
     ens_conf: "EnsembleConfig",
 ) -> Tuple[LoadStatus, str]:
-    try:
+    try:  # pylint: disable=R1702
         result = (LoadStatus.LOAD_SUCCESSFUL, "")
         if ens_conf.have_forward_init():
             forward_init_config_nodes = ens_conf.check_forward_init_nodes()
@@ -58,12 +63,27 @@ def forward_model_ok(
                         # Already initialised, ignore
                         continue
 
-                    grid = xtgeo.grid_from_file(ens_conf.grid_file)
-                    props = xtgeo.gridproperty_from_file(
-                        pfile=file_path, name=config_node.getKey(), grid=grid
-                    )
+                    grid = run_arg.ensemble_storage.experiment.grid
+                    if isinstance(grid, xtgeo.Grid):
+                        try:
+                            props = xtgeo.gridproperty_from_file(
+                                pfile=file_path,
+                                name=key,
+                                grid=grid,
+                            )
+                            data = props.get_npvalues1d(order="C", fill_value=np.nan)
+                        except PermissionError as err:
+                            msg = f"Failed to open init file for parameter {key}"
+                            raise RuntimeError(msg) from err
+                    elif isinstance(grid, EclGrid):
+                        with cwrap.open(str(file_path), "rb") as f:
+                            param = EclKW.read_grdecl(f, config_node.getKey())
+                        mask = [not e for e in grid.export_actnum()]
+                        masked_array = ma.MaskedArray(
+                            data=param.numpy_view(), mask=mask, fill_value=np.nan
+                        )
+                        data = masked_array.filled()
 
-                    data = props.values1d.data
                     field_config = config_node.getFieldModelConfig()
                     trans = field_config.get_init_transform_name()
                     data_transformed = field_transform(data, trans)
