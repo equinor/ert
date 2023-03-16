@@ -83,8 +83,8 @@ def _start_initial_gui_window(args, log_handler):
     try:
         with warnings.catch_warnings(record=True) as warning_messages:
             _check_locale()
-            suggestions += ErtConfig.make_suggestion_list(args.config)
             ert_config = ErtConfig.from_file(args.config)
+            suggestions += ErtConfig.make_suggestion_list(args.config)
         os.chdir(ert_config.config_path)
         # Changing current working directory means we need to update the config file to
         # be the base name of the original config
