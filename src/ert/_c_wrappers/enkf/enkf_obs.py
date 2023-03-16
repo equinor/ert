@@ -1,13 +1,31 @@
 import os
-from typing import Iterator, List, Optional, Union
+from typing import TYPE_CHECKING, Iterator, List, Optional, Union
 
 from cwrap import BaseCClass
 from ecl.util.util import CTime, StringList
 
 from ert import _clib
 from ert._c_wrappers import ResPrototype
+from ert._c_wrappers.config.config_parser import ConfigValidationError
 from ert._c_wrappers.enkf.enums import EnkfObservationImplementationType
 from ert._c_wrappers.enkf.observations import ObsVector
+
+if TYPE_CHECKING:
+    from ert._c_wrappers.enkf import ErtConfig
+
+
+class ObservationConfigError(ConfigValidationError):
+    def __init__(self, errors: str, config_file: Optional[str] = None) -> None:
+        self.config_file = config_file
+        self.errors = errors
+        super().__init__(
+            (
+                f"Parsing observations config file `{self.config_file}` "
+                f"resulted in the errors: {self.errors}"
+            )
+            if self.config_file
+            else f"{self.errors}"
+        )
 
 
 class EnkfObs(BaseCClass):
@@ -126,3 +144,40 @@ class EnkfObs(BaseCClass):
 
     def __repr__(self):
         return self._create_repr(f"{self.error}, len={len(self)}")
+
+    @classmethod
+    def from_ert_config(cls, config: "ErtConfig") -> "EnkfObs":
+        ret = cls(
+            config.model_config.history_source,
+            config.model_config.time_map,
+            config.ensemble_config.refcase,
+            config.ensemble_config,
+        )
+        if config.model_config.obs_config_file:
+            if (
+                os.path.isfile(config.model_config.obs_config_file)
+                and os.path.getsize(config.model_config.obs_config_file) == 0
+            ):
+                raise ObservationConfigError(
+                    f"Empty observations file: "
+                    f"{config.model_config.obs_config_file}"
+                )
+
+            if ret.error:
+                raise ObservationConfigError(
+                    f"Incorrect observations file: "
+                    f"{config.model_config.obs_config_file}"
+                    f": {ret.error}",
+                    config_file=config.model_config.obs_config_file,
+                )
+            try:
+                ret.load(
+                    config.model_config.obs_config_file,
+                    config.analysis_config.get_std_cutoff(),
+                )
+            except (ValueError, IndexError) as err:
+                raise ObservationConfigError(
+                    str(err),
+                    config_file=config.model_config.obs_config_file,
+                ) from err
+        return ret

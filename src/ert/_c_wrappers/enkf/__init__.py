@@ -11,8 +11,8 @@ from .config import (
     SummaryConfig,
 )
 from .config_keys import ConfigKeys
-from .enkf_main import EnKFMain, ObservationConfigError
-from .enkf_obs import EnkfObs
+from .enkf_main import EnKFMain
+from .enkf_obs import EnkfObs, ObservationConfigError
 from .ensemble_config import EnsembleConfig
 from .enums import (
     ActiveMode,

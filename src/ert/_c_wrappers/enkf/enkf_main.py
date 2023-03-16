@@ -13,7 +13,6 @@ import xtgeo
 from jinja2 import Template
 
 from ert._c_wrappers.analysis.configuration import UpdateConfiguration
-from ert._c_wrappers.config.config_parser import ConfigValidationError
 from ert._c_wrappers.enkf.analysis_config import AnalysisConfig
 from ert._c_wrappers.enkf.enkf_obs import EnkfObs
 from ert._c_wrappers.enkf.ensemble_config import EnsembleConfig
@@ -263,58 +262,12 @@ def field_transform(data: npt.ArrayLike, transform_name: str) -> Any:
     return vfunc(data)
 
 
-class ObservationConfigError(ConfigValidationError):
-    def __init__(self, errors: str, config_file: Optional[str] = None) -> None:
-        self.config_file = config_file
-        self.errors = errors
-        super().__init__(
-            (
-                f"Parsing observations config file `{self.config_file}` "
-                f"resulted in the errors: {self.errors}"
-            )
-            if self.config_file
-            else f"{self.errors}"
-        )
-
-
 class EnKFMain:
     def __init__(self, config: "ErtConfig", read_only: bool = False) -> None:
         self.ert_config = config
         self._update_configuration: Optional[UpdateConfiguration] = None
 
-        self._observations = EnkfObs(  # type: ignore
-            config.model_config.history_source,
-            config.model_config.time_map,
-            config.ensemble_config.refcase,
-            config.ensemble_config,
-        )
-        if config.model_config.obs_config_file:
-            if (
-                os.path.isfile(config.model_config.obs_config_file)
-                and os.path.getsize(config.model_config.obs_config_file) == 0
-            ):
-                raise ObservationConfigError(
-                    f"Empty observations file: "
-                    f"{config.model_config.obs_config_file}"
-                )
-
-            if self._observations.error:
-                raise ObservationConfigError(
-                    f"Incorrect observations file: "
-                    f"{config.model_config.obs_config_file}"
-                    f": {self._observations.error}",
-                    config_file=config.model_config.obs_config_file,
-                )
-            try:
-                self._observations.load(
-                    config.model_config.obs_config_file,
-                    config.analysis_config.get_std_cutoff(),
-                )
-            except (ValueError, IndexError) as err:
-                raise ObservationConfigError(
-                    str(err),
-                    config_file=config.model_config.obs_config_file,
-                ) from err
+        self._observations = EnkfObs.from_ert_config(config)
 
         self._ensemble_size = self.ert_config.model_config.num_realizations
         self._runpaths = Runpaths(
