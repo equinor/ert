@@ -51,9 +51,7 @@ def test_load_inconsistent_time_map_summary(caplog):
                 continue
             print(line, end="")
 
-    ert_config = ErtConfig.from_file("snake_oil.ert")
-    ert = EnKFMain(ert_config)
-    facade = LibresFacade(ert)
+    facade = LibresFacade.from_config_file("snake_oil.ert")
     realisation_number = 0
     storage = open_storage(facade.enspath, mode="w")
     ensemble = storage.get_ensemble_by_name("default_0")
@@ -94,15 +92,13 @@ def test_load_forward_model(snake_oil_default_storage):
                 continue
             print(line, end="")
 
-    ert_config = ErtConfig.from_file("snake_oil.ert")
-    ert = EnKFMain(ert_config)
-    facade = LibresFacade(ert)
+    facade = LibresFacade.from_config_file("snake_oil.ert")
     realisation_number = 0
 
     realizations = [False] * facade.get_ensemble_size()
     realizations[realisation_number] = True
 
-    with open_storage(ert_config.ens_path, mode="w") as storage:
+    with open_storage(facade.enspath, mode="w") as storage:
         # 'load_from_forward_model' requires the ensemble to be writeable...
         default = storage.get_ensemble_by_name("default_0")
 
