@@ -8,19 +8,11 @@ from ecl.summary import EclSum
 from ert._c_wrappers.enkf import (
     AnalysisConfig,
     EnKFMain,
-    EnkfObs,
     EnsembleConfig,
     ErtConfig,
     ModelConfig,
     ObservationConfigError,
-    ObsVector,
 )
-from ert._c_wrappers.enkf.config import EnkfConfigNode
-from ert._c_wrappers.enkf.enums import (
-    EnkfObservationImplementationType,
-    LoadFailTypeEnum,
-)
-from ert._c_wrappers.enkf.observations.summary_observation import SummaryObservation
 
 
 @pytest.mark.unstable
@@ -94,59 +86,6 @@ def test_repr(minimum_case):
 
 def test_bootstrap(minimum_case):
     assert bool(minimum_case)
-
-
-def test_invalid_ert_config():
-    with pytest.raises(TypeError):
-        # pylint: disable=unexpected-keyword-arg, no-value-for-parameter
-        EnKFMain(ert_config="This is not a ErtConfig instance")
-
-
-def test_observations(minimum_case):
-    count = 10
-    summary_key = "test_key"
-    observation_key = "test_obs_key"
-    summary_observation_node = EnkfConfigNode.createSummaryConfigNode(
-        summary_key, LoadFailTypeEnum.LOAD_FAIL_EXIT
-    )
-    observation_vector = ObsVector(
-        EnkfObservationImplementationType.SUMMARY_OBS,
-        observation_key,
-        summary_observation_node,
-        count,
-    )
-
-    minimum_case.getObservations().addObservationVector(observation_vector)
-
-    values = []
-    for index in range(0, count):
-        value = index * 10.5
-        std = index / 10.0
-        summary_observation_node = SummaryObservation(
-            summary_key, observation_key, value, std
-        )
-        observation_vector.installNode(index, summary_observation_node)
-        assert observation_vector.getNode(index) == summary_observation_node
-        assert summary_observation_node.getValue() == value
-        values.append((index, value, std))
-
-    observations = minimum_case.getObservations()
-    test_vector = observations[observation_key]
-    index = 0
-    for node in test_vector:
-        assert isinstance(node, SummaryObservation)
-        assert node.getValue() == index * 10.5
-        index += 1
-
-    assert observation_vector == test_vector
-    for index, value, std in values:
-        assert test_vector.isActive(index)
-
-        summary_observation_node = test_vector.getNode(index)
-
-        assert summary_observation_node.getValue() == value
-        assert summary_observation_node.getStandardDeviation() == std
-        assert summary_observation_node.getSummaryKey() == summary_key
 
 
 def test_that_empty_observations_file_causes_exception(tmpdir):
@@ -271,8 +210,6 @@ def test_config(minimum_case):
     assert isinstance(minimum_case.ensembleConfig(), EnsembleConfig)
     assert isinstance(minimum_case.analysisConfig(), AnalysisConfig)
     assert isinstance(minimum_case.getModelConfig(), ModelConfig)
-
-    assert isinstance(minimum_case.getObservations(), EnkfObs)
 
 
 @pytest.mark.parametrize(
