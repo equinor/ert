@@ -572,8 +572,8 @@ if __name__ == "__main__":
         )
 
         run_cli(parsed)
-        ert = EnKFMain(ErtConfig.from_file("config.ert"))
-        with open_storage(ert.resConfig().ens_path) as storage:
+        facade = LibresFacade.from_config_file("config.ert")
+        with open_storage(facade.enspath) as storage:
             prior = storage.get_ensemble_by_name("prior")
             posterior = storage.get_ensemble_by_name("smoother_update")
 

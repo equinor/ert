@@ -6,7 +6,6 @@ import time
 import numpy as np
 import pytest
 
-from ert._c_wrappers.enkf import EnKFMain, ErtConfig
 from ert.data import MeasuredData, loader
 from ert.libres_facade import LibresFacade
 from ert.storage import open_storage
@@ -74,12 +73,9 @@ def test_summary_obs_runtime(create_measured_data):
     with obs_file.open(mode="a") as fin:
         fin.write(create_summary_observation())
 
-    ert_config = ErtConfig.from_file("snake_oil.ert")
-    ert = EnKFMain(ert_config)
+    facade = LibresFacade.from_config_file("snake_oil.ert")
 
-    facade = LibresFacade(ert)
-
-    storage = open_storage(ert_config.ens_path)
+    storage = open_storage(facade.enspath)
     ensemble = storage.get_ensemble_by_name("default_0")
     start_time = time.time()
     foprh = MeasuredData(
@@ -117,11 +113,8 @@ def test_summary_obs_last_entry(formatted_date):
             "};\n"
         )
 
-    ert_config = ErtConfig.from_file("snake_oil.ert")
-    ert = EnKFMain(ert_config)
-
-    facade = LibresFacade(ert)
-    storage = open_storage(ert_config.ens_path)
+    facade = LibresFacade.from_config_file("snake_oil.ert")
+    storage = open_storage(facade.enspath)
     ensemble = storage.get_ensemble_by_name("default_0")
 
     foprh = MeasuredData(facade, ensemble, ["LAST_DATE"])
@@ -138,11 +131,8 @@ def test_gen_obs_runtime(snapshot, create_measured_data):
     with obs_file.open(mode="a") as fin:
         fin.write(create_general_observation())
 
-    ert_config = ErtConfig.from_file("snake_oil.ert")
-    ert = EnKFMain(ert_config)
-
-    facade = LibresFacade(ert)
-    storage = open_storage(ert_config.ens_path)
+    facade = LibresFacade.from_config_file("snake_oil.ert")
+    storage = open_storage(facade.enspath)
     ensemble = storage.get_ensemble_by_name("default_0")
 
     df = MeasuredData(
