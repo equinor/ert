@@ -8,9 +8,13 @@ from datetime import datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, List, Mapping, Optional, Sequence, Union
 
+import cwrap
 import numpy as np
 import xtgeo
+from ecl.eclfile import EclKW
+from ecl.grid import EclGrid
 from jinja2 import Template
+from numpy import ma
 
 from ert._c_wrappers.analysis.configuration import UpdateConfiguration
 from ert._c_wrappers.enkf.analysis_config import AnalysisConfig
@@ -436,20 +440,31 @@ class EnKFMain:
                     init_file = config_node.get_init_file_fmt()
                     if "%d" in init_file:
                         init_file = init_file % realization_nr
-                    grid_file = ensemble.experiment.grid
-                    assert grid_file is not None
-                    grid = xtgeo.grid_from_file(grid_file)
-                    try:
-                        props = xtgeo.gridproperty_from_file(
-                            init_file, name=parameter, grid=grid
-                        )
-                    except PermissionError as err:
-                        context_message = (
-                            f"Failed to open init file for parameter {parameter!r}"
-                        )
-                        raise RuntimeError(context_message) from err
 
-                    data = props.values1d.data
+                    grid = ensemble.experiment.grid
+                    if isinstance(grid, xtgeo.Grid):
+                        try:
+                            props = xtgeo.gridproperty_from_file(
+                                init_file,
+                                name=parameter,
+                                grid=grid,
+                            )
+                            data = props.get_npvalues1d(order="C", fill_value=np.nan)
+                        except PermissionError as err:
+                            context_message = (
+                                f"Failed to open init file for parameter {parameter!r}"
+                            )
+                            raise RuntimeError(context_message) from err
+                    elif isinstance(grid, EclGrid):
+                        with cwrap.open(init_file, "rb") as f:
+                            param = EclKW.read_grdecl(f, parameter)
+
+                        mask = [not e for e in grid.export_actnum()]
+                        masked_array = ma.MaskedArray(
+                            data=param.numpy_view(), mask=mask, fill_value=np.nan
+                        )  # type: ignore
+                        data = masked_array.filled()  # type: ignore
+
                     field_config = config_node.getFieldModelConfig()
                     trans = field_config.get_init_transform_name()
                     data_transformed = field_transform(data, trans)
