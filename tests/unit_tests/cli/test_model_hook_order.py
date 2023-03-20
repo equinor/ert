@@ -28,6 +28,7 @@ def test_hook_call_order_ensemble_smoother(monkeypatch):
         storage_manager=MagicMock(
             __get_item__=lambda x: MagicMock(getStateMap=lambda y: [])
         ),
+        analysisConfig=lambda: MagicMock(minimum_required_realizations=0),
     )
     minimum_args = {
         "current_case": "default",
@@ -57,7 +58,9 @@ def test_hook_call_order_es_mda(monkeypatch):
         "restart_run": False,
         "prior_ensemble": "",
     }
-    ert_mock = MagicMock()
+    ert_mock = MagicMock(
+        analysisConfig=lambda: MagicMock(minimum_required_realizations=0),
+    )
     test_class = MultipleDataAssimilation(
         minimum_args, ert_mock, MagicMock(), "experiment_id"
     )
@@ -89,6 +92,7 @@ def test_hook_call_order_iterative_ensemble_smoother(monkeypatch):
         storage_manager=MagicMock(
             __get_item__=lambda x: MagicMock(getStateMap=lambda y: list(range(10)))
         ),
+        analysisConfig=lambda: MagicMock(minimum_required_realizations=0),
     )
     minimum_args = {
         "num_iterations": 1,

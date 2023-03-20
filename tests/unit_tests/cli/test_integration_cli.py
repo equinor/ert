@@ -520,3 +520,57 @@ def test_that_the_cli_raises_exceptions_when_no_weight_provided_for_es_mda():
         match="Cannot perform ES_MDA with no weights provided!",
     ):
         run_cli(parsed)
+
+
+@pytest.mark.parametrize(
+    "mode",
+    [
+        pytest.param(ENSEMBLE_SMOOTHER_MODE),
+        pytest.param(ITERATIVE_ENSEMBLE_SMOOTHER_MODE),
+        pytest.param(ES_MDA_MODE),
+        pytest.param(ENSEMBLE_EXPERIMENT_MODE),
+    ],
+)
+@pytest.mark.usefixtures("copy_poly_case")
+def test_that_the_model_raises_exception_if_active_less_than_minimum_realizations(mode):
+    """
+    Verify that the run model checks that active realizations 20 is less than 100
+    Omit testing of SingleTestRun because that executes with 1 active realization
+    regardless of configuration.
+    """
+    with open("poly.ert", "r", encoding="utf-8") as fin:
+        with open("poly_high_min_reals.ert", "w", encoding="utf-8") as fout:
+            for line in fin:
+                if "MIN_REALIZATIONS" in line:
+                    fout.write("MIN_REALIZATIONS 100")
+                else:
+                    fout.write(line)
+
+    args = Mock()
+    args.config = "poly_high_min_reals.ert"
+    parser = ArgumentParser(prog="test_main")
+
+    ert_args = [
+        mode,
+        "poly_high_min_reals.ert",
+        "--port-range",
+        "1024-65535",
+        "--realizations",
+        "0-19",
+    ]
+
+    if mode is not ENSEMBLE_EXPERIMENT_MODE:
+        ert_args.append("--target-case")
+        testcase = "testcase" if mode is ENSEMBLE_SMOOTHER_MODE else "testcase-%d"
+        ert_args.append(testcase)
+
+    parsed = ert_parser(
+        parser,
+        ert_args,
+    )
+
+    with pytest.raises(
+        ErtCliError,
+        match="Number of active realizations",
+    ):
+        run_cli(parsed)
