@@ -473,7 +473,9 @@ def get_ert_parser(parser: Optional[ArgumentParser] = None) -> ArgumentParser:
         cli_parser.add_argument(
             "--disable-monitoring",
             action="store_true",
-            help="Disable monitoring.",
+            help="Monitoring will continuously print the status of the realisations"
+            + " classified into Waiting, Pending, Running, Failed, Finished"
+            + " and Unknown.",
             default=False,
         )
         cli_parser.add_argument(
