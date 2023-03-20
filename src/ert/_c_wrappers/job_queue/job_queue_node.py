@@ -237,7 +237,7 @@ class JobQueueNode(BaseCClass):
                     self._set_status(JobStatusType.JOB_QUEUE_FAILED)
                     self.run_exit_callback()
             elif current_status == JobStatusType.JOB_QUEUE_IS_KILLED:
-                pass
+                self.run_exit_callback()
             elif current_status == JobStatusType.JOB_QUEUE_FAILED:
                 logger.error(
                     f"Realization: {self.callback_arguments[0].iens} "
