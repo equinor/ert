@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from functools import partial
-from typing import TYPE_CHECKING, Callable, Optional, Protocol, Sequence
+from typing import TYPE_CHECKING, Callable, List, Optional, Protocol, Sequence
 
 import pandas as pd
 
@@ -118,11 +118,10 @@ def _load_general_response(
             for key in facade.all_data_type_keys()
             if facade.is_gen_data_key(key) and data_key in key
         ]
-        data = pd.DataFrame()
-
+        gen_data_list: List[pd.DataFrame] = []
         for time_step in time_steps:
-            gen_data = facade.load_gen_data(ensemble, data_key, time_step).T
-            data = data.append(gen_data)
+            gen_data_list.append(facade.load_gen_data(ensemble, data_key, time_step).T)
+        data = pd.concat(gen_data_list)
     except KeyError as err:
         raise ResponseError(
             f"No response loaded for observation key: {obs_key}"
