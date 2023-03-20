@@ -1,5 +1,5 @@
 import logging
-from typing import List, Mapping, Union
+from typing import Any, List, Mapping, Union
 
 import pandas as pd
 
@@ -16,13 +16,13 @@ def _prepare_x_axis(x_axis: List[Union[int, float, str, pd.Timestamp]]) -> List[
     return [str(x) for x in x_axis]
 
 
-def _get_obs_data(key, obs) -> dict:
-    return dict(
-        name=key,
-        x_axis=obs.columns.get_level_values(0).to_list(),
-        values=obs.loc["OBS"].to_list(),
-        errors=obs.loc["STD"].to_list(),
-    )
+def _get_obs_data(key, obs) -> Mapping[str, Any]:
+    return {
+        "name": key,
+        "x_axis": obs.columns.get_level_values(0).to_list(),
+        "values": obs.loc["OBS"].to_list(),
+        "errors": obs.loc["STD"].to_list(),
+    }
 
 
 def create_observations(ert) -> List[Mapping[str, dict]]:

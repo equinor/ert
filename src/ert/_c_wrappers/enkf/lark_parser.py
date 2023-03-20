@@ -23,6 +23,7 @@ from ert._c_wrappers.enkf.config_keywords import (
 class FileContextToken(Token):
     filename: str
 
+    # pylint: disable=signature-differs
     def __new__(cls, token, filename):
         inst = super(FileContextToken, cls).__new__(
             cls,
@@ -518,8 +519,7 @@ def _parse_file(
             raise ConfigValidationError(
                 f"{error_context_string} file: {file} not found"
             )
-        else:
-            raise IOError(f"{error_context_string} file: {file} not found")
+        raise IOError(f"{error_context_string} file: {file} not found")
     except UnexpectedCharacters as e:
         msg = str(e)
         if "DEFINE" in msg or "DATA_KW" in msg:

@@ -29,7 +29,7 @@ def measured_data_setup():
         )
 
         mocked_data_loader = Mock(return_value=mock_data)
-        factory = Mock(return_value=(mocked_data_loader))
+        factory = Mock(return_value=mocked_data_loader)
         monkeypatch.setattr(loader, "data_loader_factory", factory)
         return factory
 
