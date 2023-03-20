@@ -15,6 +15,7 @@ from jsonpath_ng import parse
 
 from ert.__main__ import ert_parser
 from ert._c_wrappers.enkf.enkf_main import EnKFMain
+from ert._c_wrappers.enkf.enums import RealizationStateEnum
 from ert._c_wrappers.enkf.ert_config import ErtConfig
 from ert.cli import ENSEMBLE_EXPERIMENT_MODE, ENSEMBLE_SMOOTHER_MODE, TEST_RUN_MODE
 from ert.cli.model_factory import create_model
@@ -52,7 +53,7 @@ def check_expression(original, path_expression, expected, msg_start):
 @pytest.mark.parametrize(
     (
         "extra_config, extra_poly_eval, cmd_line_arguments,"
-        "num_successful,num_iters,progress,assert_present_in_snapshot"
+        "num_successful,num_iters,progress,assert_present_in_snapshot, expected_state"
     ),
     [
         pytest.param(
@@ -75,6 +76,7 @@ def check_expression(original, path_expression, expected, msg_start):
                     "The run is cancelled due to reaching MAX_RUNTIME",
                 ),
             ],
+            [RealizationStateEnum.STATE_LOAD_FAILURE] * 2,
             id="ee_poly_experiment_cancelled_by_max_runtime",
         ),
         pytest.param(
@@ -90,6 +92,7 @@ def check_expression(original, path_expression, expected, msg_start):
             1,
             1.0,
             [(".*", "reals.*.steps.*.jobs.*.status", JOB_STATE_FINISHED)],
+            [RealizationStateEnum.STATE_HAS_DATA] * 2,
             id="ee_poly_experiment",
         ),
         pytest.param(
@@ -100,13 +103,14 @@ def check_expression(original, path_expression, expected, msg_start):
                 "--target-case",
                 "poly_runpath_file",
                 "--realizations",
-                "12,13",
+                "0,1",
                 "poly_example/poly.ert",
             ],
             2,
             2,
             1.0,
             [(".*", "reals.*.steps.*.jobs.*.status", JOB_STATE_FINISHED)],
+            [RealizationStateEnum.STATE_HAS_DATA] * 2,
             id="ee_poly_smoother",
         ),
         pytest.param(
@@ -129,6 +133,10 @@ def check_expression(original, path_expression, expected, msg_start):
                 ("0", "reals.'0'.steps.*.jobs.'1'.status", JOB_STATE_START),
                 (".*", "reals.'1'.steps.*.jobs.*.status", JOB_STATE_FINISHED),
             ],
+            [
+                RealizationStateEnum.STATE_LOAD_FAILURE,
+                RealizationStateEnum.STATE_HAS_DATA,
+            ],
             id="ee_failing_poly_smoother",
         ),
     ],
@@ -141,6 +149,7 @@ def test_tracking(
     num_iters,
     progress,
     assert_present_in_snapshot,
+    expected_state,
     tmpdir,
     source_root,
 ):
@@ -241,6 +250,8 @@ def test_tracking(
                         f"Snapshot {i} did not match:\n",
                     )
         thread.join()
+        state_map = list(facade.select_or_create_new_case("default").getStateMap())
+        assert state_map[:2] == expected_state
     FeatureToggling.reset()
 
 
