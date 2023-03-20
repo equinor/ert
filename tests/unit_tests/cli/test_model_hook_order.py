@@ -26,8 +26,9 @@ def test_hook_call_order_ensemble_smoother(storage):
     """
     ert_mock = MagicMock(
         _ensemble_size=0,
+        analysisConfig=lambda: MagicMock(minimum_required_realizations=0),
     )
-    ert_mock.resConfig.return_value.preferred_job_fmt.return_value = "job_%d"
+
     minimum_args = {
         "current_case": "default",
         "active_realizations": [True],
@@ -59,7 +60,9 @@ def test_hook_call_order_es_mda(storage):
         "restart_run": False,
         "prior_ensemble": "",
     }
-    ert_mock = MagicMock()
+    ert_mock = MagicMock(
+        analysisConfig=lambda: MagicMock(minimum_required_realizations=0),
+    )
     ert_mock.ensemble_context.return_value.sim_fs.id = UUID(int=0)
     test_class = MultipleDataAssimilation(
         minimum_args, ert_mock, storage, MagicMock(), UUID(int=0), prior_ensemble=None
@@ -89,6 +92,7 @@ def test_hook_call_order_iterative_ensemble_smoother(storage):
     """
     ert_mock = MagicMock(
         _ensemble_size=10,
+        analysisConfig=lambda: MagicMock(minimum_required_realizations=0),
     )
     ert_mock.ensemble_context.return_value.sim_fs.id = UUID(int=0)
     minimum_args = {
