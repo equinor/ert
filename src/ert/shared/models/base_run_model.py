@@ -535,6 +535,28 @@ class BaseRunModel:
             return
         errors = []
 
+        active_mask = self._simulation_arguments.get("active_realizations", [])
+        active_realizations_count = len(
+            [i for i in range(len(active_mask)) if active_mask[i]]
+        )
+
+        min_realization_count: int = 0
+
+        if self._ert:
+            min_realization_count = (
+                self.ert().analysisConfig().minimum_required_realizations
+            )
+
+        if (
+            "SingleTestRun" not in str(type(self))
+            and active_realizations_count < min_realization_count
+        ):
+            raise ValueError(
+                f"Number of active realizations ({active_realizations_count}) is less "
+                f"than the specified MIN_REALIZATIONS in the config file "
+                f"({min_realization_count})"
+            )
+
         current_case = self._simulation_arguments.get("current_case", None)
         target_case = self._simulation_arguments.get("target_case", None)
 

@@ -136,6 +136,7 @@ def test_validation():
             __get_item__=lambda _: MagicMock(getStateMap=lambda _: list(range(10))),
             __contains__=lambda _, __: True,
         ),
+        analysisConfig=lambda: MagicMock(minimum_required_realizations=0),
     )
     with pytest.raises(ValueError):
         BaseRunModel(simulation_arguments, ert, None, None, None)
