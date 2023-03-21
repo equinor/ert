@@ -1,11 +1,10 @@
 import contextlib
 import datetime
-import glob
 import os
 import os.path
-import shutil
 import stat
 from pathlib import Path
+from typing import List
 
 import hypothesis.strategies as st
 from hypothesis import assume, note
@@ -16,6 +15,8 @@ from ert._c_wrappers.enkf.config.enkf_config_node import FIELD_FUNCTION_NAMES
 from ert._c_wrappers.job_queue import QueueDriverEnum
 
 from .egrid_generator import egrids
+from .observations_generator import observations
+from .summary_generator import summaries
 
 words = st.text(
     min_size=4, max_size=8, alphabet=st.characters(min_codepoint=65, max_codepoint=90)
@@ -356,9 +357,31 @@ def sim_job(installed_jobs):
     return x
 
 
+def _observation_dates(
+    observations, start_date: datetime.datetime
+) -> List[datetime.datetime]:
+    """
+    :returns: the dates that need to exist in the refcase for ert to accept the
+        observations
+    """
+    dates = list(set([start_date] + [o.get_date(start_date) for o in observations]))
+    restart_obs = [
+        o for o in observations if hasattr(o, "restart") and o.restart is not None
+    ]
+    max_restart = max(o.restart for o in restart_obs) if restart_obs else 0
+    i = 0
+    while len(dates) <= max(max_restart, 2):
+        dates.append(start_date + datetime.timedelta(days=i))
+        dates = list(set(dates))
+        i += 1
+    return dates
+
+
 @st.composite
 def config_generators(draw):
     config_dict = generate_config(draw)
+    egrid = draw(egrids)
+    obs = draw(observations([g[0] for g in config_dict.get(ConfigKeys.GEN_DATA, [])]))
 
     should_exist_files = [
         job_path for _, job_path in config_dict[ConfigKeys.INSTALL_JOB]
@@ -371,6 +394,16 @@ def config_generators(draw):
             config_dict[ConfigKeys.OBS_CONFIG],
         ]
     )
+    for o in obs:
+        if hasattr(o, "obs_file") and o.obs_file is not None:
+            should_exist_files.append(o.obs_file)
+        if hasattr(o, "index_file") and o.index_file is not None:
+            should_exist_files.append(o.index_file)
+
+    dates = _observation_dates(obs, datetime.datetime.strptime("1999-1-1", "%Y-%m-%d"))
+
+    ref_smspec, ref_unsmry = draw(summaries(dates=st.just(dates)))
+
     should_exist_files.extend(
         [src for src, target in config_dict[ConfigKeys.RUN_TEMPLATE]]
     )
@@ -394,8 +427,6 @@ def config_generators(draw):
         config_dict[ConfigKeys.REFCASE] if ConfigKeys.REFCASE in config_dict else None
     )
 
-    egrid = draw(egrids)
-
     # Context manager is returned from the generator and given to test function
     # Run this function to get dict, and as a side effect all required files
     # (not config) will then be written to a temp dir which is returned in a
@@ -418,6 +449,11 @@ def config_generators(draw):
                 if not os.path.isfile(filename):
                     touch(filename)
 
+            with open(config_dict[ConfigKeys.OBS_CONFIG], "w", encoding="utf-8") as fh:
+                for o in obs:
+                    fh.write(str(o))
+                    fh.write("\n")
+
             def make_executable(filename):
                 current_mode = os.stat(filename).st_mode
                 os.chmod(filename, current_mode | stat.S_IEXEC)
@@ -437,22 +473,13 @@ def config_generators(draw):
                 )
 
             if should_exist_refcase is not None:
-                dest_basename = os.path.splitext(
+                summary_basename = os.path.splitext(
                     os.path.basename(should_exist_refcase)
                 )[0]
-                refcase_src_files_glob = os.path.join(
-                    os.path.dirname(os.path.abspath(__file__)),
-                    "../../test-data/configuration_tests/input/"
-                    "refcase/SNAKE_OIL_FIELD*",
-                )
                 with contextlib.suppress(FileExistsError):
                     os.mkdir("./refcase")
-                refcase_src_files = glob.glob(refcase_src_files_glob)
-                for refcase_src_file in refcase_src_files:
-                    dest = os.path.basename(refcase_src_file).replace(
-                        "SNAKE_OIL_FIELD", dest_basename
-                    )
-                    shutil.copy(refcase_src_file, "./refcase/" + dest)
+                ref_smspec.to_file(f"./refcase/{summary_basename}.SMSPEC")
+                ref_unsmry.to_file(f"./refcase/{summary_basename}.UNSMRY")
 
             egrid.to_file(config_dict[ConfigKeys.GRID])
 
