@@ -455,7 +455,7 @@ def test_forward_init(storage, tmpdir, config_str, expect_forward_init):
 
 
 @pytest.mark.integration_test
-def test_paramerter_update(tmpdir):
+def test_parameter_update(tmpdir):
     with tmpdir.as_cwd():
         config = dedent(
             """
