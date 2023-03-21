@@ -11,7 +11,11 @@ from ert._c_wrappers.enkf.enums import EnkfObservationImplementationType
 from ert._c_wrappers.enkf.observations import ObsVector
 
 if TYPE_CHECKING:
-    from ert._c_wrappers.enkf import ErtConfig
+    from ecl.summary import EclSum
+
+    from ert._c_wrappers.enkf import EnsembleConfig, ErtConfig
+    from ert._c_wrappers.enkf.time_map import TimeMap
+    from ert._c_wrappers.sched import HistorySourceEnum
 
 
 class ObservationConfigError(ConfigValidationError):
@@ -47,7 +51,13 @@ class EnkfObs(BaseCClass):
     _iget_obs_time = ResPrototype("time_t enkf_obs_iget_obs_time(enkf_obs, int)")
     _add_obs_vector = ResPrototype("void enkf_obs_add_obs_vector(enkf_obs, obs_vector)")
 
-    def __init__(self, history_type, time_map, refcase, ensemble_config):
+    def __init__(
+        self,
+        history_type: "HistorySourceEnum",
+        time_map: Optional["TimeMap"],
+        refcase: Optional["EclSum"],
+        ensemble_config: "EnsembleConfig",
+    ):
         c_ptr = _clib.enkf_obs.alloc(
             int(history_type), time_map, refcase, ensemble_config
         )
@@ -56,10 +66,10 @@ class EnkfObs(BaseCClass):
         else:
             raise ValueError("Failed to construct EnkfObs")
 
-    def __len__(self):
+    def __len__(self) -> int:
         return self._get_size()
 
-    def __contains__(self, key):
+    def __contains__(self, key: str) -> bool:
         return self._has_key(key)
 
     def __iter__(self) -> Iterator[ObsVector]:
@@ -95,7 +105,7 @@ class EnkfObs(BaseCClass):
     ) -> StringList:
         return self._alloc_typed_keylist(observation_implementation_type)
 
-    def obsType(self, key):
+    def obsType(self, key: str) -> EnkfObservationImplementationType:
         if key in self:
             return self._obs_type(key)
         else:
@@ -114,13 +124,13 @@ class EnkfObs(BaseCClass):
         else:
             return key_list
 
-    def hasKey(self, key) -> bool:
+    def hasKey(self, key: str) -> bool:
         return key in self
 
     def getObservationTime(self, index: int) -> CTime:
         return self._iget_obs_time(index)
 
-    def addObservationVector(self, observation_vector):
+    def addObservationVector(self, observation_vector: ObsVector) -> None:
         assert isinstance(observation_vector, ObsVector)
 
         observation_vector.convertToCReference(self)
@@ -139,10 +149,10 @@ class EnkfObs(BaseCClass):
         _clib.enkf_obs.load(self, config_file, std_cutoff)
 
     @property
-    def error(self):
+    def error(self) -> str:
         return self._error()
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return self._create_repr(f"{self.error}, len={len(self)}")
 
     @classmethod
