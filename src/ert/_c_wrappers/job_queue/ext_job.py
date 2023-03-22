@@ -102,6 +102,11 @@ class ExtJob:
         "ERROR_FILE",
         "START_FILE",
     ]
+    default_env = {
+        "_ERT_ITERATION_NUMBER": "<ITER>",
+        "_ERT_REALIZATION_NUMBER": "<IENS>",
+        "_ERT_RUNPATH": "<RUNPATH>",
+    }
 
     @classmethod
     def _parse_config_file(cls, config_file: str):
@@ -114,8 +119,8 @@ class ExtJob:
             parser.add(path_key).set_argc_minmax(1, 1)
 
         parser.add("EXECUTABLE", required=True).set_argc_minmax(1, 1)
-        parser.add("ENV").set_argc_minmax(1, 2)
-        parser.add("EXEC_ENV").set_argc_minmax(1, 2)
+        parser.add("ENV").set_argc_minmax(2, 2)
+        parser.add("EXEC_ENV").set_argc_minmax(2, 2)
         parser.add("DEFAULT").set_argc_minmax(2, 2)
         parser.add("ARGLIST").set_argc_minmax(1, -1)
         arg_type_schema = parser.add("ARG_TYPE")
@@ -238,6 +243,8 @@ class ExtJob:
 
         set_env("environment", "ENV")
         set_env("exec_env", "EXEC_ENV")
+        # Add default run information to job environment vars
+        content_dict["environment"].update(cls.default_env)
 
         content_dict["default_mapping"] = {}
         if config_content.hasKey("DEFAULT"):
