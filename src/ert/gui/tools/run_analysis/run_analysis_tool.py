@@ -50,6 +50,10 @@ class RunAnalysisTool(Tool):
         target = self._run_widget.target_case()
         source_fs = self._run_widget.source_case()
 
+        if len(target.strip()) == 0:
+            self._report_empty_target()
+            return
+
         target_fs = self.notifier.storage.create_ensemble(
             source_fs.experiment_id,
             name=target,
@@ -57,10 +61,6 @@ class RunAnalysisTool(Tool):
             iteration=source_fs.iteration + 1,
             prior_ensemble=source_fs,
         )
-
-        if len(target) == 0:
-            self._report_empty_target()
-            return
 
         try:
             analyse(self.ert, target_fs, source_fs)
