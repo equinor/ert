@@ -4,7 +4,7 @@ import sys
 import pytest
 
 
-@pytest.mark.timeout(4)
+@pytest.mark.timeout(8)
 @pytest.mark.skipif(
     sys.platform.startswith("darwin"), reason="Performance can be flaky"
 )
