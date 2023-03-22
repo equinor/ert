@@ -76,23 +76,17 @@ class Job:
                 stat = os.stat(target_file)
                 target_file_mtime = stat.st_mtime_ns
 
-        exec_env = self.job_data.get("exec_env")
-        if exec_env:
-            exec_name, _ = os.path.splitext(
-                os.path.basename(self.job_data.get("executable"))
-            )
-            with open(f"{exec_name}_exec_env.json", "w", encoding="utf-8") as f_handle:
-                f_handle.write(json.dumps(exec_env, indent=4))
-
         max_running_minutes = self.job_data.get("max_running_minutes")
         run_start_time = dt.now()
-
+        environment = self.job_data.get("environment")
+        if environment is not None:
+            environment = {**os.environ, **environment}
         proc = Popen(
             arg_list,
             stdin=stdin,
             stdout=stdout,
             stderr=stderr,
-            env=self.job_data.get("environment"),
+            env=environment,
         )
 
         exit_code = None
@@ -209,7 +203,7 @@ class Job:
                 os.path.basename(self.job_data.get("executable"))
             )
             with open(f"{exec_name}_exec_env.json", "w", encoding="utf-8") as f_handle:
-                f_handle.write(json.dumps(exec_env))
+                f_handle.write(json.dumps(exec_env, indent=4))
 
     def _check_job_files(self):
         """
