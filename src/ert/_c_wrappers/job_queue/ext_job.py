@@ -8,18 +8,19 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
-from ert._c_wrappers.config import ConfigParser, ConfigValidationError, ContentTypeEnum
-from ert._c_wrappers.config.config_parser import CombinedConfigError
+from ert._c_wrappers.config import (
+    CombinedConfigError,
+    ConfigParser,
+    ConfigValidationError,
+    ContentTypeEnum,
+)
+from ert._c_wrappers.config.config_errors import ExtJobInvalidArgsException
 from ert._c_wrappers.util import SubstitutionList
 from ert._clib.job_kw import type_from_kw
 
 _SUBSTITUTED_AT_EXECUTION_TIME: List[str] = ["<ITER>", "<IENS>"]
 
 logger = logging.getLogger(__name__)
-
-
-class ExtJobInvalidArgsException(BaseException):
-    pass
 
 
 @dataclass

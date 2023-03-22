@@ -9,7 +9,7 @@ from textwrap import dedent
 import pytest
 from hypothesis import given
 
-from ert._c_wrappers.config.config_parser import ConfigValidationError, ConfigWarning
+from ert._c_wrappers.config import ConfigValidationError, ConfigWarning
 from ert._c_wrappers.enkf import ErtConfig
 from ert._c_wrappers.enkf.config_keys import ConfigKeys
 

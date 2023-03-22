@@ -44,6 +44,8 @@ from cwrap import Prototype
 
 import ert._c_wrappers  # noqa
 
+from ..config.config_errors import ExtJobInvalidArgsException
+
 
 def setenv(var, value):
     if not os.getenv(var):
@@ -62,7 +64,7 @@ if LSF_HOME:
 from .driver import Driver, LocalDriver, LSFDriver, QueueDriverEnum  # noqa
 from .ert_plugin import CancelPluginException, ErtPlugin  # noqa
 from .ert_script import ErtScript  # noqa
-from .ext_job import ExtJob, ExtJobInvalidArgsException  # noqa
+from .ext_job import ExtJob  # noqa
 from .external_ert_script import ExternalErtScript  # noqa
 from .function_ert_script import FunctionErtScript  # noqa
 from .job import Job  # noqa

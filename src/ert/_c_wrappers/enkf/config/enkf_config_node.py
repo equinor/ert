@@ -7,7 +7,7 @@ from ecl.grid import EclGrid
 from ecl.util.util import IntVector, StringList
 
 from ert._c_wrappers import ResPrototype
-from ert._c_wrappers.config.config_parser import ConfigValidationError
+from ert._c_wrappers.config import ConfigValidationError
 from ert._c_wrappers.enkf.config_keys import ConfigKeys
 from ert._c_wrappers.enkf.enums import (
     EnkfTruncationType,
@@ -27,7 +27,6 @@ if TYPE_CHECKING:
     from collections.abc import Iterable
 
 logger = logging.getLogger(__name__)
-
 
 FIELD_FUNCTION_NAMES: Final = [
     "LN",
@@ -338,8 +337,8 @@ class EnkfConfigNode(BaseCClass):
         if base_surface_file is None:
             valid = False
             msg = (
-                msg
-                + f"Missing {ConfigKeys.BASE_SURFACE_KEY}:/path/to/base_surface_file\n"
+                msg + f"Missing "
+                f"{ConfigKeys.BASE_SURFACE_KEY}:/path/to/base_surface_file\n"
             )
         elif not os.path.exists(os.path.realpath(base_surface_file)):
             msg += (

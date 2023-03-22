@@ -6,25 +6,12 @@ from ecl.util.util import CTime, StringList
 
 from ert import _clib
 from ert._c_wrappers import ResPrototype
-from ert._c_wrappers.config.config_parser import ConfigValidationError
+from ert._c_wrappers.config.config_errors import ObservationConfigError
 from ert._c_wrappers.enkf.enums import EnkfObservationImplementationType
 from ert._c_wrappers.enkf.observations import ObsVector
 
 if TYPE_CHECKING:
     from ert._c_wrappers.enkf import ErtConfig
-
-
-class ObservationConfigError(ConfigValidationError):
-    def __init__(self, errors: str, config_file: Optional[str] = None) -> None:
-        super().__init__(
-            errors=(
-                f"Parsing observations config file `{config_file}` "
-                f"resulted in the errors: {errors}"
-            )
-            if config_file
-            else f"{errors}",
-            config_file=config_file,
-        )
 
 
 class EnkfObs(BaseCClass):

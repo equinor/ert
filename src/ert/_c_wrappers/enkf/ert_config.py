@@ -10,9 +10,9 @@ from typing import Any, ClassVar, Dict, List, Mapping
 
 import pkg_resources
 
-from ert._c_wrappers.config import ConfigParser
-from ert._c_wrappers.config.config_parser import (
+from ert._c_wrappers.config import (
     CombinedConfigError,
+    ConfigParser,
     ConfigValidationError,
     ConfigWarning,
 )

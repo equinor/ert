@@ -6,7 +6,8 @@ import pytest
 from ecl.summary import EclSum
 
 from ert import LibresFacade
-from ert._c_wrappers.enkf import ActiveList, ObservationConfigError, SummaryObservation
+from ert._c_wrappers.config.config_errors import ObservationConfigError
+from ert._c_wrappers.enkf import ActiveList, SummaryObservation
 
 
 def test_create():

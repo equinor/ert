@@ -5,13 +5,13 @@ from textwrap import dedent
 import pytest
 from ecl.summary import EclSum
 
+from ert._c_wrappers.config.config_errors import ObservationConfigError
 from ert._c_wrappers.enkf import (
     AnalysisConfig,
     EnKFMain,
     EnsembleConfig,
     ErtConfig,
     ModelConfig,
-    ObservationConfigError,
 )
 
 

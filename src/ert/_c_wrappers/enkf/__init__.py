@@ -12,7 +12,7 @@ from .config import (
 )
 from .config_keys import ConfigKeys
 from .enkf_main import EnKFMain
-from .enkf_obs import EnkfObs, ObservationConfigError
+from .enkf_obs import EnkfObs
 from .ensemble_config import EnsembleConfig
 from .enums import (
     ActiveMode,
@@ -71,5 +71,4 @@ __all__ = [
     "RunArg",
     "RunContext",
     "EnKFMain",
-    "ObservationConfigError",
 ]

@@ -2,10 +2,9 @@ import logging
 from enum import Enum
 from typing import TYPE_CHECKING, Dict, List, Type, TypedDict, Union
 
-from ert._c_wrappers.config.config_parser import ConfigValidationError
+from ert._c_wrappers.config import ConfigValidationError
 
 logger = logging.getLogger(__name__)
-
 
 if TYPE_CHECKING:
 
@@ -132,7 +131,9 @@ class AnalysisModule:
     def handle_special_key_set(self, var_name, value):
         if var_name in self.DEPRECATED_KEYS:
             logger.warning(
-                f"The {var_name} key have been removed" f"use the INVERSION key instead"
+                f"The {var_name} key have been removed"
+                f"use the INVERSION key "
+                f"instead"
             )
         elif var_name == "INVERSION":
             inversion_str_map = {

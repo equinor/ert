@@ -9,7 +9,7 @@ from textwrap import dedent
 import pytest
 from hypothesis import assume, given
 
-from ert._c_wrappers.config.config_parser import ConfigValidationError, ConfigWarning
+from ert._c_wrappers.config import ConfigValidationError, ConfigWarning
 from ert._c_wrappers.enkf import ErtConfig
 from ert._c_wrappers.enkf.config_keys import ConfigKeys
 
@@ -448,7 +448,8 @@ def test_that_failing_to_load_ert_script_with_errors_fails_gracefully(load_state
     does not work with the current versions of plugins installed in the system,
     but could have worked with an older or newer version of the packages installed.
 
-    Therefore the user should be warned about workflow jobs that have issues, and not be
+    Therefore the user should be warned about workflow jobs that have issues,
+    and not be
     able to run those later.
     """
     test_config_file_name = "test.ert"
