@@ -5,7 +5,6 @@ import logging
 import math
 import os
 import shutil
-import sys
 from datetime import datetime
 from multiprocessing.pool import ThreadPool
 from pathlib import Path
@@ -414,25 +413,6 @@ class LocalEnsembleReader:
         os.makedirs(Path(output_path).parent, exist_ok=True)
 
         gp.to_file(output_path, fformat=fformat.lower())
-
-    def export_field_many(
-        self,
-        key: str,
-        realizations: List[int],
-        output_path: str,
-        fformat: str,
-    ) -> None:
-        for realization in realizations:
-            file_name = Path(output_path % realization)
-            try:
-                self.export_field(key, realization, file_name, fformat)
-                print(f"{key}[{realization:03d}] -> {file_name}")
-            except ValueError:
-                sys.stderr.write(
-                    f"ERROR: Could not load field: {key}, "
-                    f"realization:{realization} - export failed"
-                )
-                pass
 
 
 class LocalEnsembleAccessor(LocalEnsembleReader):
