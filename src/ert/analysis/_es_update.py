@@ -256,13 +256,13 @@ def _get_obs_and_measure_data(
 
 
 def _deactivate_outliers(
-    meas_data: DataFrame, std_cutoff: float, alpha: float
+    meas_data: DataFrame, std_cutoff: float, alpha: float, global_std_scaling: float
 ) -> pandas.Index:
     """
     Extracts indices for which outliers that are to be extracted
     """
     filter_std = _filter_ensemble_std(meas_data, std_cutoff)
-    filter_mean_obs = _filter_ensemble_mean_obs(meas_data, alpha)
+    filter_mean_obs = _filter_ensemble_mean_obs(meas_data, alpha, global_std_scaling)
     return filter_std.index.union(filter_mean_obs.index)
 
 
@@ -278,7 +278,9 @@ def _filter_ensemble_std(data: DataFrame, std_cutoff: float) -> pandas.Series:
     return std_filter[std_filter]
 
 
-def _filter_ensemble_mean_obs(data: DataFrame, alpha: float) -> pandas.Series:
+def _filter_ensemble_mean_obs(
+    data: DataFrame, alpha: float, global_std_scaling: float
+) -> pandas.Series:
     """
     Filters on distance between the observed data and the ensemble mean
     based on variation and a user defined alpha.
@@ -287,7 +289,7 @@ def _filter_ensemble_mean_obs(data: DataFrame, alpha: float) -> pandas.Series:
     ens_mean = S.mean(axis=1)
     ens_std = S.std(axis=1, ddof=0)
     obs_values = data.loc[:, "OBS"]
-    obs_std = data.loc[:, "STD"]
+    obs_std = data.loc[:, "STD"] * global_std_scaling
 
     mean_filter = abs(obs_values - ens_mean) > alpha * (ens_std + obs_std)
     return mean_filter[mean_filter]
@@ -336,20 +338,20 @@ def _load_observations_and_responses(
             )
         raise IndexError("\n".join(error_msg))
 
-    obs_filter = _deactivate_outliers(joined, std_cutoff, alpha)
+    obs_filter = _deactivate_outliers(joined, std_cutoff, alpha, global_std_scaling)
     obs_mask = [True if i not in obs_filter else False for i in joined.index]
-    update_snapshot = _create_update_snapshot(joined, obs_mask)
-
-    joined.drop(index=obs_filter, inplace=True)
-    observation_values = joined.loc[:, "OBS"].to_numpy()
-    observation_errors = joined.loc[:, "STD"].to_numpy()
-    S = joined.loc[:, ~joined.columns.isin(["OBS", "STD"])]
 
     # Inflating measurement errors by a factor sqrt(global_std_scaling) as shown
     # in for example evensen2018 - Analysis of iterative ensemble smoothers for
     # solving inverse problems.
     # `global_std_scaling` is 1.0 for ES.
-    observation_errors *= sqrt(global_std_scaling)
+    joined.loc[:, "STD"] *= sqrt(global_std_scaling)
+    joined.drop(index=obs_filter, inplace=True)
+    update_snapshot = _create_update_snapshot(joined, obs_mask)
+
+    observation_values = joined.loc[:, "OBS"].to_numpy()
+    observation_errors = joined.loc[:, "STD"].to_numpy()
+    S = joined.loc[:, ~joined.columns.isin(["OBS", "STD"])]
 
     return S.to_numpy(), (
         observation_values,
