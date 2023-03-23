@@ -372,6 +372,19 @@ def test_no_such_job_id(tmpdir, monkeypatch):
 
 
 @pytest.mark.skipif(sys.platform.startswith("darwin"), reason="No flock on MacOS")
+def test_proxy_fails_if_backend_fails(tmpdir, monkeypatch):
+    monkeypatch.chdir(tmpdir)
+    with pytest.raises(subprocess.CalledProcessError), testpath.MockCommand(
+        "qstat", python=MOCKED_QSTAT_BACKEND_FAILS
+    ):
+        subprocess.run(
+            [PROXYSCRIPT, "15399", PROXYFILE_FOR_TESTS],
+            check=True,
+            capture_output=False,
+        )
+
+
+@pytest.mark.skipif(sys.platform.startswith("darwin"), reason="No flock on MacOS")
 def test_no_argument(tmpdir, monkeypatch):
     """qstat with no arguments lists all jobs. So should the proxy."""
     monkeypatch.chdir(tmpdir)
