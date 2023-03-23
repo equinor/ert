@@ -170,7 +170,7 @@ class EnsembleConfig(BaseCClass):
             "load_case": refcase_file,
             "join_string": ":",
             "include_restart": True,
-            "lazy_load": True,
+            "lazy_load": False,
             "file_options": 0,
         }
         return EclSum(**refcase_load_args)
