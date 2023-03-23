@@ -28,35 +28,6 @@ def test_field_basics(snake_oil_field_example):
     assert fc.get_output_transform_name() is None
 
 
-def test_field_export_many(snake_oil_field_example, storage):
-    ert = snake_oil_field_example
-    experiment_id = storage.create_experiment(
-        parameters=ert.ensembleConfig().parameter_configuration
-    )
-    prior_ensemble = storage.create_ensemble(
-        experiment_id, name="prior", ensemble_size=5
-    )
-
-    prior = ert.ensemble_context(prior_ensemble, [True, True, True, True, True], 0)
-    ert.sample_prior(prior.sim_fs, prior.active_realizations)
-    ert.createRunPath(prior)
-    ens_config = ert.ensembleConfig()
-    config_node = ens_config["PERMX"]
-    fs = prior.sim_fs
-
-    fs.export_field_many(
-        config_node.getFieldModelConfig().get_key(),
-        [0, 2, 4],
-        "export/with/path/PERMX_%d.grdecl",
-        fformat="grdecl",
-    )
-    assert os.path.isfile("export/with/path/PERMX_0.grdecl")
-    assert not os.path.isfile("export/with/path/PERMX_1.grdecl")
-    assert os.path.isfile("export/with/path/PERMX_2.grdecl")
-    assert not os.path.isfile("export/with/path/PERMX_3.grdecl")
-    assert os.path.isfile("export/with/path/PERMX_4.grdecl")
-
-
 def test_field_export(snake_oil_field_example, storage):
     ert = snake_oil_field_example
     experiment_id = storage.create_experiment(

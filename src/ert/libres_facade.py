@@ -116,19 +116,6 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
     def ensemble_config(self) -> EnsembleConfig:
         return self._enkf_main.ensembleConfig()
 
-    def export_field_parameter(
-        self, parameter_name: str, ensemble: EnsembleReader, filepath: str
-    ) -> None:
-        config_node = self._enkf_main.ensembleConfig()[parameter_name]
-        ext = config_node.get_enkf_outfile().rsplit(".")[-1]
-        field_config_node = config_node.getFieldModelConfig()
-        ensemble.export_field_many(
-            field_config_node.get_key(),
-            list(range(0, self.get_ensemble_size())),
-            filepath + "." + ext,
-            "grdecl",
-        )
-
     def get_measured_data(  # pylint: disable=too-many-arguments
         self,
         keys: List[str],
