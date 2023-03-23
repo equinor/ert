@@ -224,7 +224,7 @@ class BatchSimulator:
         with open_storage(self.ert_config.ens_path, "w") as storage:
             experiment = storage.create_experiment()
             ensemble = storage.create_ensemble(
-                experiment.id, ensemble_size=self.ert.getEnsembleSize()
+                experiment.id, name=case_name, ensemble_size=self.ert.getEnsembleSize()
             )
             self.ert.addDataKW("<CASE_NAME>", _slug(ensemble.name))
             for sim_id, (geo_id, controls) in enumerate(case_data):
