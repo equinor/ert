@@ -9,7 +9,11 @@ from textwrap import dedent
 import pytest
 from hypothesis import assume, given
 
-from ert._c_wrappers.config.config_parser import ConfigValidationError, ConfigWarning
+from ert._c_wrappers.config.config_parser import (
+    CombinedConfigError,
+    ConfigValidationError,
+    ConfigWarning,
+)
 from ert._c_wrappers.enkf import ErtConfig
 from ert._c_wrappers.enkf.config_keys import ConfigKeys
 from ert._c_wrappers.util import SubstitutionList
@@ -20,6 +24,44 @@ from .config_dict_generator import config_generators
 def touch(filename):
     with open(filename, "w", encoding="utf-8") as fh:
         fh.write(" ")
+
+
+def test_add_combined_config_error_to_combined_config_error():
+    dummy_src_combined_error = CombinedConfigError(
+        [
+            ConfigValidationError(errors="1"),
+            ConfigValidationError(errors="2"),
+            ConfigValidationError(errors="3"),
+        ]
+    )
+
+    dummy_dest_combined_error = CombinedConfigError(
+        [ConfigValidationError(errors="ZERO")]
+    )
+
+    dummy_dest_combined_error.add_error(dummy_src_combined_error)
+    expected_str = "".join(str(x) for x in dummy_dest_combined_error.errors)
+
+    assert expected_str == "ZERO123"
+
+
+def test_add_config_error_to_combined_config_error():
+    combined_error = CombinedConfigError()
+    combined_error.add_error(ConfigValidationError("123"))
+
+    assert str(combined_error) == "123"
+
+
+def test_add_combined_config_error_to_itself_raises_error():
+    combined_error = CombinedConfigError()
+    combined_error.add_error(ConfigValidationError("123"))
+
+    with pytest.raises(ValueError, match=".* itself"):
+        combined_error.add_error(combined_error)
+
+
+def test_add_config_error_to_combined_config_error():
+    pass
 
 
 def test_bad_user_config_file_error_message(tmp_path):

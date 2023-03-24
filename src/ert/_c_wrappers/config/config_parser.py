@@ -90,6 +90,9 @@ class CombinedConfigError(ConfigValidationError):
 
     def add_error(self, error: ConfigValidationError):
         if isinstance(error, CombinedConfigError):
+            if error == self:
+                raise ValueError("Cannot add a combined configuration error to itself")
+
             self.errors += error.errors
         else:
             self.errors.append(error)
