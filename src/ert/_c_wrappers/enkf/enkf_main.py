@@ -581,10 +581,11 @@ class EnKFMain:
     def runWorkflows(
         self,
         runtime: int,
-        storage: "Optional[StorageAccessor]" = None,
+        storage: Optional[StorageAccessor] = None,
+        ensemble: Optional[EnsembleReader] = None,
     ) -> None:
         for workflow in self.ert_config.hooked_workflows[runtime]:
-            workflow.run(self, storage)
+            workflow.run(self, storage, ensemble)
 
 
 __all__ = ["trans_func"]

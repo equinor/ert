@@ -1,9 +1,13 @@
+from __future__ import annotations
+
 import time
 from threading import Thread
+from typing import TYPE_CHECKING
 
 from qtpy.QtCore import QSize, Qt, Signal
 from qtpy.QtWidgets import (
     QComboBox,
+    QFormLayout,
     QHBoxLayout,
     QLabel,
     QMessageBox,
@@ -12,8 +16,16 @@ from qtpy.QtWidgets import (
 )
 
 from ert._c_wrappers.job_queue import WorkflowRunner
-from ert.gui.ertwidgets import addHelpToWidget, resourceIcon, resourceMovie
+from ert.gui.ertwidgets import (
+    CaseSelector,
+    addHelpToWidget,
+    resourceIcon,
+    resourceMovie,
+)
 from ert.gui.tools.workflows.workflow_dialog import WorkflowDialog
+
+if TYPE_CHECKING:
+    from ert.gui.ertnotifier import ErtNotifier
 
 
 class RunWorkflowWidget(QWidget):
@@ -21,12 +33,13 @@ class RunWorkflowWidget(QWidget):
     workflowFailed = Signal()
     workflowKilled = Signal()
 
-    def __init__(self, ert):
+    def __init__(self, ert, notifier: ErtNotifier):
         self.ert = ert
+        self.storage = notifier.storage
+        self.notifier = notifier
         QWidget.__init__(self)
 
-        layout = QHBoxLayout()
-        layout.addSpacing(10)
+        layout = QFormLayout()
 
         self._workflow_combo = QComboBox()
         addHelpToWidget(self._workflow_combo, "run/workflow")
@@ -35,11 +48,10 @@ class RunWorkflowWidget(QWidget):
             sorted(ert.resConfig().workflows.keys(), key=str.lower)
         )
 
-        layout.addWidget(QLabel("Select workflow:"), 0, Qt.AlignVCenter)
-        layout.addWidget(self._workflow_combo, 0, Qt.AlignVCenter)
+        layout.addRow("Workflow", self._workflow_combo)
 
-        # simulation_mode_layout.addStretch()
-        layout.addSpacing(20)
+        self.source_case_selector = CaseSelector(notifier, update_ert=False)
+        layout.addRow("Ensemble", self.source_case_selector)
 
         self.run_button = QToolButton()
         self.run_button.setIconSize(QSize(32, 32))
@@ -48,8 +60,7 @@ class RunWorkflowWidget(QWidget):
         self.run_button.clicked.connect(self.startWorkflow)
         self.run_button.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
 
-        layout.addWidget(self.run_button)
-        layout.addStretch(1)
+        layout.addRow(self.run_button)
 
         self.setLayout(layout)
 
@@ -115,7 +126,12 @@ class RunWorkflowWidget(QWidget):
         workflow_thread.run = self.runWorkflow
 
         workflow = self.ert.resConfig().workflows[self.getCurrentWorkflowName()]
-        self._workflow_runner = WorkflowRunner(workflow, self.ert)
+        self._workflow_runner = WorkflowRunner(
+            workflow,
+            self.ert,
+            storage=self.storage,
+            ensemble=self.source_case_selector.currentData(),
+        )
         self._workflow_runner.run()
 
         workflow_thread.start()

@@ -32,7 +32,8 @@ class MeasuredData:
         load_data: bool = True,
     ):
         self._facade = facade
-
+        if load_data:
+            assert ensemble is not None
         if not keys:
             raise loader.ObservationError("No observation keys provided")
         if index_lists is not None and len(index_lists) != len(keys):

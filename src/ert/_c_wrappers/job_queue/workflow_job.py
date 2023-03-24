@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import os
 from collections import defaultdict
 from dataclasses import dataclass
@@ -11,6 +13,7 @@ from .ert_plugin import ErtPlugin
 
 if TYPE_CHECKING:
     from ert._c_wrappers.enkf import EnKFMain
+    from ert.storage import EnsembleAccessor, StorageAccessor
 
     ContentTypes = Union[Type[int], Type[bool], Type[float], Type[str]]
 
@@ -136,7 +139,13 @@ class WorkflowJob:
             return "internal C"
         return "external"
 
-    def run(self, ert: "EnKFMain", storage, arguments: List[Any]) -> Any:
+    def run(
+        self,
+        ert: EnKFMain,
+        storage: StorageAccessor,
+        ensemble: EnsembleAccessor,
+        arguments: List[Any],
+    ) -> Any:
         self.__running = True
         if self.min_args and len(arguments) < self.min_args:
             raise ValueError(
@@ -151,7 +160,7 @@ class WorkflowJob:
             )
 
         if self._ert_script is not None:
-            self.__script = self._ert_script(ert, storage)
+            self.__script = self._ert_script(ert, storage, ensemble)
         elif self.internal and self.function is not None:
             self.__script = FunctionErtScript(
                 ert,

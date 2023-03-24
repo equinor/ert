@@ -70,7 +70,9 @@ class IteratedEnsembleSmoother(BaseRunModel):
 
         self.setPhaseName("Pre processing...", indeterminate=True)
         self.ert().createRunPath(run_context)
-        self.ert().runWorkflows(HookRuntime.PRE_SIMULATION)
+        self.ert().runWorkflows(
+            HookRuntime.PRE_SIMULATION, self._storage, run_context.sim_fs
+        )
         self.setPhaseName("Running forecast...", indeterminate=False)
         num_successful_realizations = self.run_ensemble_evaluator(
             run_context, evaluator_server_config
@@ -79,7 +81,9 @@ class IteratedEnsembleSmoother(BaseRunModel):
         self.checkHaveSufficientRealizations(num_successful_realizations)
 
         self.setPhaseName("Post processing...", indeterminate=True)
-        self.ert().runWorkflows(HookRuntime.POST_SIMULATION)
+        self.ert().runWorkflows(
+            HookRuntime.POST_SIMULATION, self._storage, run_context.sim_fs
+        )
 
     def analyzeStep(
         self,
@@ -90,7 +94,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
         self.setPhaseName("Analyzing...", indeterminate=True)
 
         self.setPhaseName("Pre processing update...", indeterminate=True)
-        self.ert().runWorkflows(HookRuntime.PRE_UPDATE)
+        self.ert().runWorkflows(HookRuntime.PRE_UPDATE, self._storage, prior_storage)
 
         try:
             self.facade.iterative_smoother_update(
@@ -102,7 +106,9 @@ class IteratedEnsembleSmoother(BaseRunModel):
             ) from e
 
         self.setPhaseName("Post processing update...", indeterminate=True)
-        self.ert().runWorkflows(HookRuntime.POST_UPDATE)
+        self.ert().runWorkflows(
+            HookRuntime.POST_UPDATE, self._storage, posterior_storage
+        )
 
     def runSimulations(
         self, evaluator_server_config: EvaluatorServerConfig
@@ -128,7 +134,9 @@ class IteratedEnsembleSmoother(BaseRunModel):
         self._runAndPostProcess(prior_context, evaluator_server_config)
 
         analysis_config = self.ert().analysisConfig()
-        self.ert().runWorkflows(HookRuntime.PRE_FIRST_UPDATE)
+        self.ert().runWorkflows(
+            HookRuntime.PRE_FIRST_UPDATE, self._storage, prior_context.sim_fs
+        )
         for current_iter in range(1, self.facade.get_number_of_iterations() + 1):
             states = [
                 RealizationStateEnum.STATE_HAS_DATA,  # type: ignore

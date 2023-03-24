@@ -1,4 +1,4 @@
-from unittest.mock import MagicMock, call
+from unittest.mock import ANY, MagicMock, call
 from uuid import UUID
 
 from ert._c_wrappers.enkf.enums import HookRuntime
@@ -40,7 +40,9 @@ def test_hook_call_order_ensemble_smoother(storage):
     test_class.run_ensemble_evaluator = MagicMock(return_value=1)
     test_class.runSimulations(MagicMock())
 
-    expected_calls = [call(expected_call) for expected_call in EXPECTED_CALL_ORDER]
+    expected_calls = [
+        call(expected_call, ANY, ANY) for expected_call in EXPECTED_CALL_ORDER
+    ]
     assert ert_mock.runWorkflows.mock_calls == expected_calls
 
 
@@ -71,7 +73,9 @@ def test_hook_call_order_es_mda(storage):
     test_class.run_ensemble_evaluator = MagicMock(return_value=1)
     test_class.runSimulations(MagicMock())
 
-    expected_calls = [call(expected_call) for expected_call in EXPECTED_CALL_ORDER]
+    expected_calls = [
+        call(expected_call, ANY, ANY) for expected_call in EXPECTED_CALL_ORDER
+    ]
     assert ert_mock.runWorkflows.mock_calls == expected_calls
 
 
@@ -113,5 +117,7 @@ def test_hook_call_order_iterative_ensemble_smoother(storage):
     test_class._w_container = MockWContainer()
     test_class.runSimulations(MagicMock())
 
-    expected_calls = [call(expected_call) for expected_call in EXPECTED_CALL_ORDER]
+    expected_calls = [
+        call(expected_call, ANY, ANY) for expected_call in EXPECTED_CALL_ORDER
+    ]
     assert ert_mock.runWorkflows.mock_calls == expected_calls
