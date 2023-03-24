@@ -75,36 +75,40 @@ class CombinedConfigError(ConfigValidationError):
             List[Union[ConfigValidationError, "CombinedConfigError"]]
         ] = None,
     ):
-        self.errors = []
+        self.errors_list = []
 
         for err in errors or []:
             self.add_error(err)
 
+    @property
+    def errors(self):
+        return self.errors_list
+
     def __str__(self):
-        return ", ".join(str(x) for x in self.errors)
+        return ", ".join(str(x) for x in self.errors_list)
 
     def is_empty(self):
-        return len(self.errors) == 0
+        return len(self.errors_list) == 0
 
     def add_error(self, error: Union[ConfigValidationError, "CombinedConfigError"]):
         if isinstance(error, CombinedConfigError):
-            self.errors.append(*error.errors)
+            self.errors_list.append(*error.errors_list)
         else:
-            self.errors.append(error)
+            self.errors_list.append(error)
 
     def get_error_messages(self):
         all_messages = []
-        for e in self.errors:
+        for e in self.errors_list:
             all_messages.append(*e.get_error_messages())
 
         return all_messages
 
     def find_matching_error(self, match: str) -> Optional[ConfigValidationError]:
-        return next(x for x in self.errors if match in str(x))
+        return next(x for x in self.errors_list if match in str(x))
 
     @property
     def config_file(self):
-        return self.errors[0].location.filename
+        return self.errors_list[0].location.filename
 
 
 class ObservationConfigError(ConfigValidationError):

@@ -329,8 +329,7 @@ class ErtConfig:
                     ConfigValidationError(
                         config_file=config_path,
                         errors="Loading GEN_KW from files created by the forward "
-                        "model "
-                        "is not supported.",
+                        "model is not supported.",
                     )
                 )
             if (

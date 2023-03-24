@@ -131,9 +131,7 @@ class AnalysisModule:
     def handle_special_key_set(self, var_name, value):
         if var_name in self.DEPRECATED_KEYS:
             logger.warning(
-                f"The {var_name} key have been removed"
-                f"use the INVERSION key "
-                f"instead"
+                f"The {var_name} key has been removed" f"use the INVERSION key instead"
             )
         elif var_name == "INVERSION":
             inversion_str_map = {
