@@ -60,5 +60,9 @@ class Plugin:
     def storage(self):
         return self.__notifier.storage
 
+    @property
+    def ensemble(self):
+        return self.__notifier.current_case
+
     def getWorkflowJob(self) -> "WorkflowJob":
         return self.__workflow_job

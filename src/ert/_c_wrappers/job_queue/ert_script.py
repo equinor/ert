@@ -19,7 +19,6 @@ class ErtScript:
         self,
         ert: EnKFMain,
         storage: StorageAccessor,
-        *,
         ensemble: Optional[EnsembleAccessor] = None,
     ) -> None:
         if not hasattr(self, "run"):
@@ -56,11 +55,11 @@ class ErtScript:
         return self.__storage
 
     @property
-    def ensemble(self) -> Optional[EnsembleAccessor]:
+    def ensemble(self) -> EnsembleAccessor:
         return self.__ensemble
 
     @ensemble.setter
-    def ensemble(self, ensemble: Optional[EnsembleAccessor]) -> None:
+    def ensemble(self, ensemble: EnsembleAccessor) -> None:
         self.__ensemble = ensemble
 
     def isCancelled(self) -> bool:

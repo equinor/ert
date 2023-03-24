@@ -124,7 +124,9 @@ class SimulationContext:
                 realization_nr
             ] = RealizationStateEnum.STATE_INITIALIZED
         self._ert.createRunPath(self._run_context)
-        self._ert.runWorkflows(HookRuntime.PRE_SIMULATION)
+        self._ert.runWorkflows(
+            HookRuntime.PRE_SIMULATION, None, self._run_context.sim_fs
+        )
         self._sim_thread = self._run_simulations_simple_step()
 
         # Wait until the queue is active before we finish the creation

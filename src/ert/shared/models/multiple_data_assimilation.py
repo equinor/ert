@@ -122,8 +122,10 @@ class MultipleDataAssimilation(BaseRunModel):
         for iteration, weight in weights_to_run:
             is_first_iteration = iteration == 0
             if is_first_iteration:
-                self.ert().runWorkflows(HookRuntime.PRE_FIRST_UPDATE)
-            self.ert().runWorkflows(HookRuntime.PRE_UPDATE)
+                self.ert().runWorkflows(
+                    HookRuntime.PRE_FIRST_UPDATE, self._storage, prior_fs
+                )
+            self.ert().runWorkflows(HookRuntime.PRE_UPDATE, self._storage, prior_fs)
             states = [
                 RealizationStateEnum.STATE_HAS_DATA,  # type: ignore
                 RealizationStateEnum.STATE_INITIALIZED,
@@ -143,7 +145,9 @@ class MultipleDataAssimilation(BaseRunModel):
                 posterior_context,
                 weight=weight,
             )
-            self.ert().runWorkflows(HookRuntime.POST_UPDATE)
+            self.ert().runWorkflows(
+                HookRuntime.POST_UPDATE, self._storage, posterior_context.sim_fs
+            )
             self._simulateAndPostProcess(posterior_context, evaluator_server_config)
             prior_context = posterior_context
 
@@ -193,7 +197,9 @@ class MultipleDataAssimilation(BaseRunModel):
 
         phase_string = f"Pre processing for iteration: {iteration}"
         self.setPhaseName(phase_string)
-        self.ert().runWorkflows(HookRuntime.PRE_SIMULATION)
+        self.ert().runWorkflows(
+            HookRuntime.PRE_SIMULATION, self._storage, run_context.sim_fs
+        )
 
         phase_string = f"Running forecast for iteration: {iteration}"
         self.setPhaseName(phase_string, indeterminate=False)
@@ -209,7 +215,9 @@ class MultipleDataAssimilation(BaseRunModel):
 
         phase_string = f"Post processing for iteration: {iteration}"
         self.setPhaseName(phase_string, indeterminate=True)
-        self.ert().runWorkflows(HookRuntime.POST_SIMULATION)
+        self.ert().runWorkflows(
+            HookRuntime.POST_SIMULATION, self._storage, run_context.sim_fs
+        )
 
         return num_successful_realizations
 

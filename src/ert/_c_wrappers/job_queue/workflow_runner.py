@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from concurrent import futures
 from typing import TYPE_CHECKING, Optional
 
@@ -5,21 +7,23 @@ from ert._c_wrappers.job_queue import Workflow
 
 if TYPE_CHECKING:
     from ert._c_wrappers.enkf import EnKFMain
-    from ert.storage import StorageAccessor
+    from ert.storage import EnsembleAccessor, StorageAccessor
 
 
 class WorkflowRunner:
     def __init__(
         self,
         workflow: Workflow,
-        ert: Optional["EnKFMain"] = None,
-        storage: Optional["StorageAccessor"] = None,
+        ert: Optional[EnKFMain] = None,
+        storage: Optional[StorageAccessor] = None,
+        ensemble: Optional[EnsembleAccessor] = None,
     ):
         super().__init__()
 
         self.__workflow = workflow
-        self.__ert = ert
-        self.__storage = storage
+        self._ert = ert
+        self._storage = storage
+        self._ensemble = ensemble
 
         self.__workflow_result = None
         self._workflow_executor = futures.ThreadPoolExecutor(max_workers=1)
@@ -38,7 +42,9 @@ class WorkflowRunner:
         self._workflow_job = self._workflow_executor.submit(self.__runWorkflow)
 
     def __runWorkflow(self):
-        self.__workflow_result = self.__workflow.run(self.__ert, self.__storage)
+        self.__workflow_result = self.__workflow.run(
+            self._ert, self._storage, self._ensemble
+        )
 
     def isRunning(self) -> bool:
         if self.__workflow.isRunning():
