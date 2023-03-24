@@ -12,6 +12,7 @@ from hypothesis import assume, given
 from ert._c_wrappers.config.config_parser import ConfigValidationError, ConfigWarning
 from ert._c_wrappers.enkf import ErtConfig
 from ert._c_wrappers.enkf.config_keys import ConfigKeys
+from ert._c_wrappers.util import SubstitutionList
 
 from .config_dict_generator import config_generators
 
@@ -370,7 +371,22 @@ def test_that_unknown_hooked_job_gives_config_validation_error():
         ConfigValidationError,
         match="Cannot setup hook for non-existing job name 'NO_SUCH_JOB'",
     ):
-        _ = ErtConfig.from_file(test_config_file_name)
+        ErtConfig.from_file(test_config_file_name)
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_unknown_run_mode_gives_config_validation_error():
+    content_dict = {
+        "HOOK_WORKFLOW": [["MAKE_DIRECTORY", "PRE_SIMULATIONnn"]],
+    }
+
+    substitution_list = SubstitutionList.from_dict({})
+
+    with pytest.raises(
+        ConfigValidationError,
+        match="Run mode .* not supported for Hook Workflow",
+    ):
+        _ = ErtConfig._workflows_from_dict(content_dict, substitution_list)
 
 
 @pytest.mark.usefixtures("set_site_config")

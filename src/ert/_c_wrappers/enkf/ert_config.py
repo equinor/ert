@@ -595,7 +595,9 @@ class ErtConfig:
                 )
 
         for hook_name, mode_name in hook_workflow_info:
-            if mode_name not in [runtime.name for runtime in HookRuntime.enums()]:
+            try:
+                run_mode = HookRuntime.from_string(mode_name)
+            except ValueError:
                 combined_error.add_error(
                     ConfigValidationError(
                         errors=f"Run mode {mode_name!r} not supported for Hook "
@@ -604,7 +606,9 @@ class ErtConfig:
                 )
                 continue
 
-            if hook_name not in workflows:
+            try:
+                workflow = workflows[hook_name]
+            except KeyError:
                 combined_error.add_error(
                     ConfigValidationError(
                         errors=f"Cannot setup hook for non-existing jo"
@@ -613,9 +617,7 @@ class ErtConfig:
                 )
                 continue
 
-            hooked_workflows[HookRuntime.from_string(mode_name)].append(
-                workflows[hook_name]
-            )
+            hooked_workflows[run_mode].append(workflow)
 
         if not combined_error.is_empty():
             raise combined_error
