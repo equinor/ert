@@ -394,6 +394,7 @@ class ErtConfig:
                             config_file=config_file,
                         )
                     )
+                    continue
 
             try:
                 job.validate_args(substitution_list)
