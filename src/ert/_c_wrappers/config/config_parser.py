@@ -90,14 +90,14 @@ class CombinedConfigError(ConfigValidationError):
 
     def add_error(self, error: ConfigValidationError):
         if isinstance(error, CombinedConfigError):
-            self.errors.append(*error.errors)
+            self.errors += error.errors
         else:
             self.errors.append(error)
 
     def get_error_messages(self):
         all_messages = []
         for e in self.errors:
-            all_messages.append(*e.get_error_messages())
+            all_messages += e.get_error_messages()
 
         return all_messages
 
