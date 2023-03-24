@@ -60,10 +60,6 @@ def test_add_combined_config_error_to_itself_raises_error():
         combined_error.add_error(combined_error)
 
 
-def test_add_config_error_to_combined_config_error():
-    pass
-
-
 def test_bad_user_config_file_error_message(tmp_path):
     (tmp_path / "test.ert").write_text("NUM_REL 10\n")
 
