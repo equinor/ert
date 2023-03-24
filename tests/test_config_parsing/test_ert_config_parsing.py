@@ -407,7 +407,7 @@ def test_that_unknown_hooked_job_gives_config_validation_error():
 
     with pytest.raises(
         ConfigValidationError,
-        match="Cannot setup hook for non-existing job name 'NO_SUCH_JOB'",
+        match=r".* non-existing workflow .* 'NO_SUCH_JOB'",
     ):
         ErtConfig.from_file(test_config_file_name)
 

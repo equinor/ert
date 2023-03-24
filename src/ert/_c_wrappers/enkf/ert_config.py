@@ -612,8 +612,8 @@ class ErtConfig:
             except KeyError:
                 combined_error.add_error(
                     ConfigValidationError(
-                        errors=f"Cannot setup hook for non-existing jo"
-                        f"b name {hook_name!r}"
+                        errors=f"Cannot setup hook for non-existing workflow named "
+                        f"{hook_name!r}"
                     )
                 )
                 continue
