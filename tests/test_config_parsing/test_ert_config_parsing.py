@@ -174,7 +174,7 @@ def test_that_queue_config_content_negative_value_invalid():
         fh.write(test_config_contents)
     with pytest.raises(
         expected_exception=ConfigValidationError,
-        match="QUEUE_OPTION MAX_RUNNING is negative",
+        match="QUEUE_OPTION LOCAL MAX_RUNNING is negative",
     ):
         ErtConfig.from_file(test_config_file_name)
 
@@ -190,7 +190,7 @@ def test_that_queue_config_dict_negative_value_invalid(
 
     with pytest.raises(
         expected_exception=ConfigValidationError,
-        match="QUEUE_OPTION MAX_RUNNING is negative",
+        match="QUEUE_OPTION LSF MAX_RUNNING is negative",
     ):
         ErtConfig.from_dict(config_dict)
 
