@@ -5,8 +5,8 @@ from collections import defaultdict
 from dataclasses import dataclass, field
 from typing import Dict, List, Tuple, Union
 
-from ..config import ConfigValidationError
-from ..job_queue import Driver, JobQueue, QueueDriverEnum
+from ert._c_wrappers.config import ConfigValidationError
+from ert._c_wrappers.job_queue import Driver, JobQueue, QueueDriverEnum
 
 
 @dataclass
