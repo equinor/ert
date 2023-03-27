@@ -1855,7 +1855,27 @@ bjobs.
         flakyness.
 
         ::
+
                 QUEUE_OPTION TORQUE TIMEOUT 126
+
+.. _torque_max_runtime:
+.. topic:: MAX_RUNTIME
+
+        By default, there is no limit on how long jobs are allowed to run for.
+        In other words, the queue will wait for ever for a job to finish. The
+        ``MAX_RUNTIME`` option sets a limit in seconds. If the job has not
+        finished within the limit, it will be killed.
+
+        To set a time limit of 90 seconds, use this option:
+
+        ::
+
+                QUEUE_OPTION TORQUE MAX_RUNTIME 90
+
+        Specifying a time of 0 s will be interpreted as unlimited runtime.
+        Internally, the option is passed to the TORQUE resource list as
+        ``walltime``. 
+
 
 .. _configuring_the_slurm_queue:
 

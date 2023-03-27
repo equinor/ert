@@ -27,6 +27,7 @@ void setoption_setalloptions_optionsset() {
     test_option(driver, TORQUE_CLUSTER_LABEL, "thecluster");
     test_option(driver, TORQUE_JOB_PREFIX_KEY, "coolJob");
     test_option(driver, TORQUE_TIMEOUT, "128");
+    test_option(driver, TORQUE_MAX_RUNTIME, "90");
 
     test_assert_int_equal(0, torque_driver_get_submit_sleep(driver));
     test_assert_NULL(torque_driver_get_debug_stream(driver));
@@ -37,6 +38,9 @@ void setoption_setalloptions_optionsset() {
 
     test_assert_true(torque_driver_set_option(driver, TORQUE_TIMEOUT, "5"));
     test_assert_int_equal(5, torque_driver_get_timeout(driver));
+
+    test_assert_true(torque_driver_set_option(driver, TORQUE_MAX_RUNTIME, "90"));
+    test_assert_int_equal(5, torque_driver_get_max_runtime(driver));
 
     char tmp_path[] = "/tmp/torque_debug_XXXXXX";
     // We do not strictly need the file, we are only interested in a path name
@@ -69,6 +73,7 @@ void setoption_setalloptions_optionsset() {
     torque_driver_set_option(driver, TORQUE_NUM_NODES, NULL);
     torque_driver_set_option(driver, TORQUE_KEEP_QSUB_OUTPUT, NULL);
     torque_driver_set_option(driver, TORQUE_TIMEOUT, NULL);
+    torque_driver_set_option(driver, TORQUE_MAX_RUNTIME, NULL);
     test_assert_string_equal((const char *)torque_driver_get_option(
                                  driver, TORQUE_NUM_CPUS_PER_NODE),
                              "42");
@@ -79,6 +84,8 @@ void setoption_setalloptions_optionsset() {
         "0");
     test_assert_string_equal(
         (const char *)torque_driver_get_option(driver, TORQUE_TIMEOUT), "5");
+    test_assert_string_equal(
+        (const char *)torque_driver_get_option(driver, TORQUE_MAX_RUNTIME), "90");
 
     torque_driver_free(driver);
 }
@@ -105,7 +112,10 @@ void setoption_set_typed_options_wrong_format_returns_false() {
         torque_driver_set_option(driver, TORQUE_KEEP_QSUB_OUTPUT, "1.1"));
     test_assert_false(
         torque_driver_set_option(driver, TORQUE_SUBMIT_SLEEP, "X45"));
-    test_assert_false(torque_driver_set_option(driver, TORQUE_TIMEOUT, "X45"));
+    test_assert_false(
+        torque_driver_set_option(driver, TORQUE_TIMEOUT, "X45"));
+    test_assert_false(
+        torque_driver_set_option(driver, TORQUE_MAX_RUNTIME, "X90"));
 }
 
 void getoption_nooptionsset_defaultoptionsreturned() {
@@ -136,6 +146,12 @@ void getoption_nooptionsset_defaultoptionsreturned() {
     test_assert_string_equal(
         (const char *)torque_driver_get_option(driver, TORQUE_JOB_PREFIX_KEY),
         NULL);
+    test_assert_string_equal(
+        (const char *)torque_driver_get_option(driver, TORQUE_TIMEOUT),
+        "62");
+    test_assert_string_equal(
+        (const char *)torque_driver_get_option(driver, TORQUE_MAX_RUNTIME),
+        "0");
 
     printf("Default options OK\n");
     torque_driver_free(driver);

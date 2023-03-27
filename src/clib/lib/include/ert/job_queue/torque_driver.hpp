@@ -19,6 +19,7 @@
 #define TORQUE_SUBMIT_SLEEP "SUBMIT_SLEEP"
 #define TORQUE_DEBUG_OUTPUT "DEBUG_OUTPUT"
 #define TORQUE_TIMEOUT "TIMEOUT"
+#define TORQUE_MAX_RUNTIME "MAX_RUNTIME"
 
 #define TORQUE_DEFAULT_QSUB_CMD "qsub"
 #define TORQUE_DEFAULT_QSTAT_CMD "qstat_proxy.sh"
@@ -26,6 +27,7 @@
 #define TORQUE_DEFAULT_QDEL_CMD "qdel"
 #define TORQUE_DEFAULT_SUBMIT_SLEEP "0"
 #define TORQUE_DEFAULT_TIMEOUT "62"
+#define TORQUE_DEFAULT_MAX_RUNTIME "0"
 
 typedef struct torque_driver_struct torque_driver_type;
 typedef struct torque_job_struct torque_job_type;
@@ -54,6 +56,7 @@ void torque_job_create_submit_script(const char *run_path,
                                      const char *const *job_argv);
 int torque_driver_get_submit_sleep(const torque_driver_type *driver);
 int torque_driver_get_timeout(const torque_driver_type *driver);
+int torque_driver_get_max_runtime(const torque_driver_type *driver);
 FILE *torque_driver_get_debug_stream(const torque_driver_type *driver);
 job_status_type torque_driver_parse_status(const char *qstat_file,
                                            const char *jobnr);
