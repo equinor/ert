@@ -4,6 +4,7 @@ from textwrap import dedent
 
 import pytest
 
+from ert._c_wrappers.config import ConfigValidationError
 from ert._c_wrappers.enkf import EnKFMain, ErtConfig, GenKwConfig
 
 
@@ -199,3 +200,48 @@ def test_gen_kw_is_log_or_not(
                 encoding="utf-8"
             ),
         )
+
+
+@pytest.mark.parametrize(
+    "distribution, mean, std, error",
+    [
+        ("LOGNORMAL", "0", "1", None),
+        ("LOGNORMAL", "-1", "1", ["MEAN"]),
+        ("LOGNORMAL", "0", "-1", ["STD"]),
+        ("LOGNORMAL", "-1", "-1", ["MEAN", "STD"]),
+        ("NORMAL", "0", "1", None),
+        ("NORMAL", "-1", "1", None),
+        ("NORMAL", "0", "-1", ["STD"]),
+        ("TRUNCATED_NORMAL", "-1", "1", None),
+        ("TRUNCATED_NORMAL", "0", "1", None),
+        ("TRUNCATED_NORMAL", "0", "-1", ["STD"]),
+    ],
+)
+def test_gen_kw_distribution_errors(tmpdir, distribution, mean, std, error):
+    with tmpdir.as_cwd():
+        config = dedent(
+            """
+        JOBNAME my_name%d
+        NUM_REALIZATIONS 1
+        GEN_KW KW_NAME template.txt kw.txt prior.txt
+        """
+        )
+        with open("config.ert", "w", encoding="utf-8") as fh:
+            fh.writelines(config)
+        with open("template.txt", "w", encoding="utf-8") as fh:
+            fh.writelines("MY_KEYWORD <MY_KEYWORD>")
+        with open("prior.txt", "w", encoding="utf-8") as fh:
+            if distribution == "TRUNCATED_NORMAL":
+                fh.writelines(f"MY_KEYWORD {distribution} {mean} {std} -1 1")
+            else:
+                fh.writelines(f"MY_KEYWORD {distribution} {mean} {std}")
+
+        if error:
+            for e in error:
+                with pytest.raises(
+                    ConfigValidationError,
+                    match=f"Negative {e} {mean if e == 'MEAN' else std}",
+                ):
+                    ErtConfig.from_file("config.ert")
+        else:
+            ErtConfig.from_file("config.ert")
