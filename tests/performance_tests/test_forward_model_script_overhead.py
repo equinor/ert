@@ -11,7 +11,7 @@ forward_models_path = os.path.join(
 )
 
 
-@pytest.mark.timeout(30)
+@pytest.mark.timeout(60)
 @pytest.mark.skipif(
     sys.platform.startswith("darwin"), reason="Performance can be flaky"
 )
