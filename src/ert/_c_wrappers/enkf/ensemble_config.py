@@ -432,6 +432,32 @@ class EnsembleConfig(BaseCClass):
     def add_summary_full(self, key, refcase) -> EnkfConfigNode:
         return self._add_summary_full(key, refcase)
 
+    def _check_config_node(self, node: EnkfConfigNode):
+        mode_config = node.getModelConfig()
+        errors = []
+
+        def _check_non_negative_parameter(param: str) -> Optional[str]:
+            key = prior["key"]
+            dist = prior["function"]
+            param_val = prior["parameters"][param]
+            if param_val < 0:
+                errors.append(
+                    f"Negative {param} {param_val!r}"
+                    f" for {dist} distributed parameter {key!r}"
+                )
+
+        for prior in mode_config.get_priors():
+            if prior["function"] == "LOGNORMAL":
+                _check_non_negative_parameter("MEAN")
+                _check_non_negative_parameter("STD")
+            elif prior["function"] in ["NORMAL", "TRUNCATED_NORMAL"]:
+                _check_non_negative_parameter("STD")
+        if errors:
+            raise ConfigValidationError(
+                config_file=mode_config.getParameterFile(),
+                errors=errors,
+            )
+
     def addNode(self, config_node: EnkfConfigNode):
         assert isinstance(config_node, EnkfConfigNode)
         assert config_node is not None
@@ -440,6 +466,8 @@ class EnsembleConfig(BaseCClass):
             raise ConfigValidationError(
                 f"Enkf config node with key {key!r} already present in ensemble config"
             )
+        if config_node.getImplementationType() == ErtImplType.GEN_KW:
+            self._check_config_node(config_node)
         self._add_node(config_node)
         config_node.convertToCReference(self)
 
