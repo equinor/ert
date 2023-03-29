@@ -11,6 +11,7 @@ from qtpy.QtWidgets import QComboBox, QMessageBox, QToolButton, QWidget
 import ert.gui
 from ert._c_wrappers.enkf import EnKFMain, ErtConfig
 from ert.gui.about_dialog import AboutDialog
+from ert.gui.ertwidgets import SuggestorMessage
 from ert.gui.main import GUILogHandler, _setup_main_window, run_gui
 from ert.gui.simulation.run_dialog import RunDialog
 from ert.gui.tools.event_viewer import add_gui_log_handler
@@ -147,6 +148,25 @@ def test_that_errors_are_shown_in_the_suggester_window_when_present(qapp, tmp_pa
     with add_gui_log_handler() as log_handler:
         gui, *_ = ert.gui.main._start_initial_gui_window(args, log_handler)
         assert gui.windowTitle() == "Some problems detected"
+
+
+def test_that_both_errors_are_warnings_are_shown(qapp, tmp_path):
+    config_file = tmp_path / "config.ert"
+    config_file.write_text(
+        "NUM_REALIZATIONS 1\n"
+        "JOBNAME something\n"
+        "ECLBASE something\n"
+        "FORWARD_MODEL not_installed\n"
+    )
+
+    args = Mock()
+    args.config = str(config_file)
+    with add_gui_log_handler() as log_handler:
+        gui, *_ = ert.gui.main._start_initial_gui_window(args, log_handler)
+        assert gui.windowTitle() == "Some problems detected"
+        suggestions = gui.findChildren(SuggestorMessage)
+        shown_messages = [elem.type_lbl.text() for elem in suggestions]
+        assert shown_messages == ["ERROR", "WARNING"]
 
 
 @pytest.mark.usefixtures("copy_poly_case")
