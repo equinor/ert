@@ -116,36 +116,38 @@ def _start_initial_gui_window(
     all_warnings = []
     config_warnings = []
     ert_config = None
-    try:
-        with warnings.catch_warnings(record=True) as all_warnings:
+
+    with warnings.catch_warnings(record=True) as all_warnings:
+        try:
             _check_locale()
             ert_config = ErtConfig.from_file(args.config)
             suggestions += ErtConfig.make_suggestion_list(args.config)
-        _log_difference_with_new_parser(args, ert_config)
-        os.chdir(ert_config.config_path)
-        # Changing current working directory means we need to update the config file to
-        # be the base name of the original config
-        args.config = os.path.basename(args.config)
-        ert = EnKFMain(ert_config)
-        config_warnings = [
-            str(w.message) for w in all_warnings if w.category == ConfigWarning
-        ]
-
-    except ConfigValidationError as error:
-        error_messages.append(str(error))
-        logger.info("Error in config file shown in gui: '%s'", str(error))
-        return (
-            _setup_suggester(
-                error_messages,
-                config_warnings,
-                suggestions,
-                plugin_manager=plugin_manager,
-            ),
-            None,
-            None,
-            None,
-        )
-
+            _log_difference_with_new_parser(args, ert_config)
+            os.chdir(ert_config.config_path)
+            # Changing current working directory means we need to update
+            # the config file to be the base name of the original config
+            args.config = os.path.basename(args.config)
+            ert = EnKFMain(ert_config)
+        except ConfigValidationError as error:
+            config_warnings = [
+                str(w.message) for w in all_warnings if w.category == ConfigWarning
+            ]
+            error_messages.append(str(error))
+            logger.info("Error in config file shown in gui: '%s'", str(error))
+            return (
+                _setup_suggester(
+                    error_messages,
+                    config_warnings,
+                    suggestions,
+                    plugin_manager=plugin_manager,
+                ),
+                None,
+                None,
+                None,
+            )
+    config_warnings = [
+        str(w.message) for w in all_warnings if w.category == ConfigWarning
+    ]
     for job in ert_config.forward_model_list:
         logger.info("Config contains forward model job %s", job.name)
 
