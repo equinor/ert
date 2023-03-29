@@ -340,17 +340,16 @@ stringlist_type *torque_driver_alloc_cmd(torque_driver_type *driver,
 
 static void torque_debug(const torque_driver_type *driver, const char *fmt,
                          ...) {
-    if (driver->debug_stream) {
-        {
-            va_list ap;
-            va_start(ap, fmt);
-            vfprintf(driver->debug_stream, fmt, ap);
-            va_end(ap);
-        }
-        fprintf(driver->debug_stream, "\n");
-        fsync(fileno(driver->debug_stream));
-        fflush(driver->debug_stream);
+    if (!driver->debug_stream) {
+        return;
     }
+    va_list ap;
+    va_start(ap, fmt);
+    vfprintf(driver->debug_stream, fmt, ap);
+    va_end(ap);
+    fprintf(driver->debug_stream, "\n");
+    fsync(fileno(driver->debug_stream));
+    fflush(driver->debug_stream);
 }
 
 static int torque_job_parse_qsub_stdout(const torque_driver_type *driver,
