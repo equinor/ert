@@ -1,7 +1,9 @@
 #include <filesystem>
 
 #include <array>
+#include <chrono>
 #include <fstream>
+#include <iomanip>
 #include <iostream>
 #include <sstream>
 #include <stdio.h>
@@ -337,6 +339,22 @@ static void torque_debug(const torque_driver_type *driver, const char *fmt,
     if (!driver->debug_stream) {
         return;
     }
+    auto now = std::chrono::system_clock::now();
+
+    // Separate the time_point into time_t (seconds) and the remaining microseconds
+    auto now_t = std::chrono::system_clock::to_time_t(now);
+    auto now_us = std::chrono::duration_cast<std::chrono::microseconds>(
+                      now.time_since_epoch()) %
+                  1000000;
+
+    // Convert the time_t to a tm structure in UTC (gmtime)
+    std::tm *now_tm = std::gmtime(&now_t);
+
+    // Format the time string using put_time and a stringstream
+    std::ostringstream ss;
+    ss << std::put_time(now_tm, "%FT%T") << '.' << std::setfill('0')
+       << std::setw(6) << now_us.count() << "Z";
+    fprintf(driver->debug_stream, "%s ", ss.str().c_str());
     va_list ap;
     va_start(ap, fmt);
     vfprintf(driver->debug_stream, fmt, ap);
