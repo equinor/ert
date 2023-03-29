@@ -586,24 +586,27 @@ torque_driver_get_qstat_status(torque_driver_type *driver,
                         (const char *)driver->qstat_opts, jobnr_char};
 
         /* The qstat command might fail intermittently for acceptable reasons,
-           retry a couple of times with exponential sleep. ERT pings qstat
-           every second for every realization, thus the initial sleep time
-           is 2 seconds. */
+           retry a couple of times with exponential sleep plus some randonmess.
+           ERT pings qstat every second for every realization, the initial
+           sleep time is between 1 and 3 seconds. */
         int return_value = -1;
         int retry_interval = 2; /* seconds */
-        int slept_time = 0;
+        float next_sleep = 0.0; /* seconds */
+        float slept_time = 0;
         while ((return_value != 0) && (slept_time <= driver->timeout)) {
             return_value =
                 util_spawn_blocking(driver->qstat_cmd, argv.size(), argv.data(),
                                     tmp_std_file, tmp_err_file);
             if (return_value != 0) {
-                if (slept_time + retry_interval <= driver->timeout) {
+                next_sleep =
+                    1.0 + float(rand() % int(1000 * retry_interval)) / 1000.0;
+                if (slept_time + next_sleep <= driver->timeout) {
                     torque_debug(
                         driver,
-                        "qstat failed for job %s, retrying in %d seconds",
-                        jobnr_char, retry_interval);
-                    sleep(retry_interval);
-                    slept_time += retry_interval;
+                        "qstat failed for job %s, retrying in %f seconds (%d)",
+                        jobnr_char, next_sleep, retry_interval);
+                    usleep(int(next_sleep * 1000));
+                    slept_time += next_sleep;
                     retry_interval *= 2;
                 } else {
                     torque_debug(driver,
@@ -615,7 +618,7 @@ torque_driver_get_qstat_status(torque_driver_type *driver,
                 if (slept_time > 0) {
                     torque_debug(driver,
                                  "qstat succeeded for job %s after waiting "
-                                 "%d seconds",
+                                 "%f seconds",
                                  jobnr_char, slept_time);
                 }
             }
