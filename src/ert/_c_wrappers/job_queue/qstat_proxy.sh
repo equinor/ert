@@ -89,22 +89,26 @@ if [ $proxyage_seconds -gt $CACHE_INVALID ]; then
     exit 1
 fi
 
+# Read the contents into memory to avoid race conditions. Other
+# instances of this proxy might edit the proxyfile at any time.
+proxyfilecontents=$(cat $proxyfile)
+
 # Replicate qstat's error behaviour:
 if [ -n "$1" ]; then
-    grep -e "Job Id: ${1}" $proxyfile >/dev/null 2>&1 || {
-        echo "qstat: Unknown Job Id $1" && cat $proxyfile >&2 && exit 1;
+    echo "$proxyfilecontents" | grep -e "Job Id: ${1}" >/dev/null 2>&1 || {
+        echo "qstat: Unknown Job Id $1" && echo "$proxyfilecontents" >&2 && exit 1;
         }
 fi
 
 # Extract the job id from the proxyfile:
 if [ -n "$1" ]; then
-    awk "BEGIN { RS=\"Job Id: \"} /^$1/,/Job/ {printf \"Job Id: \"; print}" $proxyfile \
+    echo "$proxyfilecontents" | awk "BEGIN { RS=\"Job Id: \"} /^$1/,/Job/ {printf \"Job Id: \"; print}" \
         | grep -v ^$
     exit 0
 fi
 
 # Empty $1, give out all we have (ert never asks for this)
-cat $proxyfile
+echo "$proxyfilecontents"
 
 exit 0
 
