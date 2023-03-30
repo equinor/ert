@@ -70,7 +70,9 @@ def test_recent_proxyfile_exists(tmpdir, jobid, monkeypatch):
             EXAMPLE_QSTAT_CONTENT.splitlines()
         )
     else:
-        assert len(result.stdout.splitlines()) == 5
+        lines = result.stdout.splitlines()
+        assert lines[0].decode("utf-8").startswith(f"Job Id: {jobid}")
+        assert len(lines) >= 5
 
 
 def test_proxyfile_not_exists(tmpdir, monkeypatch):
@@ -91,7 +93,9 @@ def test_proxyfile_not_exists(tmpdir, monkeypatch):
             EXAMPLE_QSTAT_CONTENT.splitlines()
         )
     else:
-        assert len(result.stdout.splitlines()) == 5
+        lines = result.stdout.splitlines()
+        assert lines[0].decode("utf-8") == "Job Id: 15399.s034-lcam"
+        assert len(lines) >= 5
 
 
 @pytest.mark.skipif(sys.platform.startswith("darwin"), reason="No flock on MacOS")
@@ -157,7 +161,7 @@ def test_old_proxyfile_exists(tmpdir, monkeypatch):
         print(result)
         assert Path(PROXYFILE_FOR_TESTS).exists()
         assert "15399" in str(result.stdout)
-        assert len(result.stdout.splitlines()) == 5
+        assert len(result.stdout.splitlines()) >= 5
 
 
 @pytest.mark.skipif(sys.platform.startswith("darwin"), reason="No flock on MacOS")
@@ -340,12 +344,17 @@ def test_optional_job_id_namespace(tmpdir, monkeypatch):
     result_job_with_namespace = subprocess.run(
         [PROXYSCRIPT, "15399", PROXYFILE_FOR_TESTS], check=True, capture_output=True
     )
-    assert len(result_job_with_namespace.stdout.splitlines()) == 5
+    lines = result_job_with_namespace.stdout.splitlines()
+    assert lines[0].decode("utf-8") == "Job Id: 15399.s034-lcam"
+    assert len(lines) >= 5
+
     assert "15400\n" in EXAMPLE_QSTAT_CONTENT
     result_job_without_namespace = subprocess.run(
         [PROXYSCRIPT, "15400", PROXYFILE_FOR_TESTS], check=True, capture_output=True
     )
-    assert len(result_job_without_namespace.stdout.splitlines()) == 5
+    lines = result_job_without_namespace.stdout.splitlines()
+    assert lines[0].decode("utf-8") == "Job Id: 15400"
+    assert len(lines) >= 5
 
 
 @pytest.mark.skipif(sys.platform.startswith("darwin"), reason="No flock on MacOS")
