@@ -13,7 +13,6 @@ typedef struct gen_kw_config_struct gen_kw_config_type;
 
 extern "C" const char *
 gen_kw_config_get_tag_fmt(const gen_kw_config_type *config);
-bool gen_kw_config_is_valid(const gen_kw_config_type *config);
 extern "C" void gen_kw_config_set_parameter_file(gen_kw_config_type *config,
                                                  const char *parameter_file);
 extern "C" PY_USED const char *
@@ -28,10 +27,8 @@ extern "C" bool
 gen_kw_config_should_use_log_scale(const gen_kw_config_type *config, int index);
 extern "C" int gen_kw_config_get_data_size(const gen_kw_config_type *);
 extern "C" const char *gen_kw_config_iget_name(const gen_kw_config_type *, int);
-const char *gen_kw_config_get_tagged_name(const gen_kw_config_type *, int);
 extern "C" stringlist_type *
 gen_kw_config_alloc_name_list(const gen_kw_config_type *config);
-int gen_kw_config_get_index(const gen_kw_config_type *, const char *);
 extern "C" void gen_kw_config_set_template_file(gen_kw_config_type *config,
                                                 const char *template_file);
 extern "C" gen_kw_config_type *gen_kw_config_alloc_empty(const char *key,

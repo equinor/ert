@@ -146,24 +146,6 @@ const char *gen_kw_config_get_parameter_file(const gen_kw_config_type *config) {
 }
 
 /**
-   Unfortunately the GUI makes it necessary(??) to be able to create
-   halfways initialized gen_kw_config objects; and we then have to be
-   able to query the gen_kw_config object if it is valid.
-
-   Requirements:
-   -------------
-    * template_file  != NULL
-    * parameter_file != NULL  (this means that the special schedule_prediction_file keyword will be invalid).
-
-*/
-bool gen_kw_config_is_valid(const gen_kw_config_type *config) {
-    if (config->template_file != NULL && config->parameter_file != NULL)
-        return true;
-    else
-        return false;
-}
-
-/**
    A call to gen_kw_config_update_tag_format() must be called
    afterwards, otherwise all tagged strings will just be NULL.
 */
@@ -232,13 +214,6 @@ const char *gen_kw_config_iget_name(const gen_kw_config_type *config,
     return parameter->name;
 }
 
-const char *gen_kw_config_get_tagged_name(const gen_kw_config_type *config,
-                                          int kw_nr) {
-    const gen_kw_parameter_type *parameter =
-        (const gen_kw_parameter_type *)vector_iget(config->parameters, kw_nr);
-    return parameter->tagged_name;
-}
-
 void gen_kw_config_update_tag_format(gen_kw_config_type *config,
                                      const char *tag_format) {
     int i;
@@ -266,30 +241,6 @@ gen_kw_config_alloc_name_list(const gen_kw_config_type *config) {
     }
 
     return name_list;
-}
-
-/**
-   Will return -1 if the index is invalid.
-*/
-int gen_kw_config_get_index(const gen_kw_config_type *config, const char *key) {
-    const int size = gen_kw_config_get_data_size(config);
-    bool have_key = false;
-    int index = 0;
-
-    while (index < size && !have_key) {
-        const gen_kw_parameter_type *parameter =
-            (const gen_kw_parameter_type *)vector_iget_const(config->parameters,
-                                                             index);
-        if (strcmp(parameter->name, key) == 0)
-            have_key = true;
-        else
-            index++;
-    }
-
-    if (have_key)
-        return index;
-    else
-        return -1;
 }
 
 const char *gen_kw_config_iget_function_type(const gen_kw_config_type *config,
