@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import logging
+from pathlib import Path
 from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Union
 
+from deprecation import deprecated
 from ecl.grid import EclGrid
 from pandas import DataFrame, Series
 
@@ -18,6 +20,7 @@ from ert._c_wrappers.enkf.enums import (
 from ert.analysis import ESUpdate, SmootherSnapshot
 from ert.analysis._es_update import _get_obs_and_measure_data
 from ert.data import MeasuredData
+from ert.shared.version import __version__
 
 _logger = logging.getLogger(__name__)
 
@@ -114,8 +117,21 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
         return self._enkf_main.ensembleConfig().grid_file
 
     @property
+    @deprecated(
+        deprecated_in="5.0",
+        current_version=__version__,
+        details=(
+            "Grid's statefullness is linked to the configuration and not stored data.\n"
+            "This can lead to inconsistencies between field and grid."
+        ),
+    )  # type: ignore
     def grid(self) -> Optional[EclGrid]:
-        return self._enkf_main.ensembleConfig().grid
+        path = self.grid_file
+        if path:
+            ext = Path(path).suffix
+            if ext in [".EGRID", ".GRID"]:
+                return EclGrid.load_from_file(path)
+        return None
 
     @property
     def ensemble_config(self) -> EnsembleConfig:

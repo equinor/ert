@@ -12,9 +12,9 @@ def test_save_field_xtgeo(tmp_path):
         ensemble_dir = tmp_path / "ensembles" / str(ensemble.id)
         assert ensemble_dir.exists()
 
-        grid = xtgeo.create_box_grid(dimension=(4, 4, 1))
+        grid = xtgeo.create_box_grid(dimension=(4, 5, 1))
         mask = grid.get_actnum()
-        mask.values = [True] * 3 + [False] * 12 + [True]
+        mask.values = [True] * 3 + [False] * 16 + [True]
         grid.set_actnum(mask)
         grid.to_file(f"{experiment.mount_point}/grid.EGRID", "egrid")
 
@@ -23,14 +23,15 @@ def test_save_field_xtgeo(tmp_path):
             parameter_name="MY_PARAM",
             realization=1,
             data=data,
-            unmasked=True,
         )
 
         saved_file = ensemble_dir / "realization-1" / "MY_PARAM.npy"
         assert saved_file.exists()
 
         loaded_data = numpy.load(saved_file)
-        expected_data = data[:-1] + [numpy.nan] * 12 + [data[3]]
+        expected_data = data[:-1] + [numpy.nan] * 16 + [data[3]]
+        expected_data = numpy.asarray(expected_data)
+        expected_data = expected_data.reshape(4, 5, 1)
         numpy.testing.assert_array_equal(loaded_data, expected_data)
 
 
@@ -41,8 +42,8 @@ def test_save_field_ecl(tmp_path):
         ensemble_dir = tmp_path / "ensembles" / str(ensemble.id)
         assert ensemble_dir.exists()
 
-        mask = [True] * 3 + [False] * 12 + [True]
-        grid = EclGrid.create_rectangular((4, 4, 1), (1, 1, 1), actnum=mask)
+        mask = [True] * 3 + [False] * 16 + [True]
+        grid = EclGrid.create_rectangular((4, 5, 1), (1, 1, 1), actnum=mask)
         grid.save_GRID(f"{experiment.mount_point}/grid.GRID")
 
         data = [1.2, 1.1, 4.3, 3.1]
@@ -50,12 +51,13 @@ def test_save_field_ecl(tmp_path):
             parameter_name="MY_PARAM",
             realization=1,
             data=data,
-            unmasked=True,
         )
 
         saved_file = ensemble_dir / "realization-1" / "MY_PARAM.npy"
         assert saved_file.exists()
 
         loaded_data = numpy.load(saved_file)
-        expected_data = data[:-1] + [numpy.nan] * 12 + [data[3]]
+        expected_data = data[:-1] + [numpy.nan] * 16 + [data[3]]
+        expected_data = numpy.asarray(expected_data)
+        expected_data = expected_data.reshape(4, 5, 1, order="F")
         numpy.testing.assert_array_equal(loaded_data, expected_data)

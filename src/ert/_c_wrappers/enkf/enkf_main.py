@@ -425,7 +425,7 @@ class EnKFMain:
         logger.debug(f"sample_prior() time_used {(time.perf_counter() - t):.4f}s")
 
     def rng(self) -> np.random.Generator:
-        "Will return the random number generator used for updates."
+        """Will return the random number generator used for updates."""
         return self._shared_rng
 
     def createRunPath(self, run_context: RunContext) -> None:
