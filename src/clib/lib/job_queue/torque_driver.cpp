@@ -297,6 +297,8 @@ stringlist_type *torque_driver_alloc_cmd(torque_driver_type *driver,
     stringlist_type *argv = stringlist_alloc_new();
 
     if (driver->keep_qsub_output) {
+        // Retain both standard output and standard error streams on the
+        // execution host:
         stringlist_append_copy(argv, "-k");
         stringlist_append_copy(argv, "oe");
     }
@@ -326,6 +328,10 @@ stringlist_type *torque_driver_alloc_cmd(torque_driver_type *driver,
         stringlist_append_copy(argv, "-N");
         stringlist_append_copy(argv, job_name);
     }
+
+    // Declare the job as not rerunnable
+    stringlist_append_copy(argv, "-r");
+    stringlist_append_copy(argv, "n");
 
     stringlist_append_copy(argv, submit_script);
 
