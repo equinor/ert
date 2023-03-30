@@ -39,9 +39,7 @@ void gen_kw_config_update_tag_format(gen_kw_config_type *config,
                                      const char *tag_format);
 extern "C" PY_USED const char *
 gen_kw_config_iget_function_type(const gen_kw_config_type *config, int index);
-std::vector<double>
-gen_kw_config_iget_function_parameter_values(const gen_kw_config_type *config,
-                                             int index);
+
 extern "C" stringlist_type *
 gen_kw_config_iget_function_parameter_names(const gen_kw_config_type *config,
                                             int index);
