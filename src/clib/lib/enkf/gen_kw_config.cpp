@@ -23,7 +23,6 @@ static auto logger = ert::get_logger("gen_kw_config");
 
 typedef struct {
     char *name;
-    char *tagged_name;
     trans_func_type *trans_func;
 } gen_kw_parameter_type;
 
@@ -37,28 +36,17 @@ struct gen_kw_config_struct {
     const char *tag_fmt;
 };
 
-static void
-gen_kw_parameter_update_tagged_name(gen_kw_parameter_type *parameter,
-                                    const char *tag_fmt) {
-    if (tag_fmt != NULL)
-        parameter->tagged_name = util_realloc_sprintf(parameter->tagged_name,
-                                                      tag_fmt, parameter->name);
-}
-
-static gen_kw_parameter_type *gen_kw_parameter_alloc(const char *parameter_name,
-                                                     const char *tag_fmt) {
+static gen_kw_parameter_type *
+gen_kw_parameter_alloc(const char *parameter_name) {
     gen_kw_parameter_type *parameter =
         (gen_kw_parameter_type *)util_malloc(sizeof *parameter);
     parameter->name = util_alloc_string_copy(parameter_name);
-    parameter->tagged_name = NULL;
     parameter->trans_func = NULL;
-    gen_kw_parameter_update_tagged_name(parameter, tag_fmt);
     return parameter;
 }
 
 static void gen_kw_parameter_free(gen_kw_parameter_type *parameter) {
     free(parameter->name);
-    free(parameter->tagged_name);
     if (parameter->trans_func != NULL)
         trans_func_free(parameter->trans_func);
     free(parameter);
@@ -124,7 +112,7 @@ void gen_kw_config_set_parameter_file(gen_kw_config_type *config,
                 config_content_iget_node(content, item_index);
             const char *parameter_name = config_content_node_get_kw(node);
             gen_kw_parameter_type *parameter =
-                gen_kw_parameter_alloc(parameter_name, config->tag_fmt);
+                gen_kw_parameter_alloc(parameter_name);
             trans_func_type *trans_func =
                 trans_func_alloc(config_content_node_get_stringlist(node));
             if (trans_func) {
@@ -216,13 +204,7 @@ const char *gen_kw_config_iget_name(const gen_kw_config_type *config,
 
 void gen_kw_config_update_tag_format(gen_kw_config_type *config,
                                      const char *tag_format) {
-    int i;
-
     config->tag_fmt = tag_format;
-    for (i = 0; i < vector_get_size(config->parameters); i++)
-        gen_kw_parameter_update_tagged_name(
-            (gen_kw_parameter_type *)vector_iget(config->parameters, i),
-            config->tag_fmt);
 }
 
 stringlist_type *
