@@ -464,36 +464,30 @@ def test_forward_init(storage, tmpdir, config_str, expect_forward_init):
 
 
 @pytest.mark.integration_test
-def test_parameter_update(tmpdir):
+def test_field_param_update(tmpdir):
+    """
+    This replicates the poly example, only it uses FIELD parameter
+    """
     with tmpdir.as_cwd():
         config = dedent(
             """
-NUM_REALIZATIONS 5
-OBS_CONFIG observations
+            NUM_REALIZATIONS 5
+            OBS_CONFIG observations
 
-FIELD MY_PARAM PARAMETER my_param.grdecl INIT_FILES:my_param.grdecl FORWARD_INIT:True
-GRID MY_EGRID.EGRID
+            FIELD MY_PARAM PARAMETER my_param.grdecl INIT_FILES:my_param.grdecl FORWARD_INIT:True
+            GRID MY_EGRID.EGRID
 
-GEN_DATA MY_RESPONSE RESULT_FILE:gen_data_%d.out REPORT_STEPS:0 INPUT_FORMAT:ASCII
-INSTALL_JOB poly_eval POLY_EVAL
-SIMULATION_JOB poly_eval
-TIME_MAP time_map
+            GEN_DATA MY_RESPONSE RESULT_FILE:gen_data_%d.out REPORT_STEPS:0 INPUT_FORMAT:ASCII
+            INSTALL_JOB poly_eval POLY_EVAL
+            SIMULATION_JOB poly_eval
+            TIME_MAP time_map
         """  # pylint: disable=line-too-long  # noqa: E501
         )
         with open("config.ert", "w", encoding="utf-8") as fh:
             fh.writelines(config)
 
-        grid = xtgeo.create_box_grid(dimension=(10, 10, 1))
+        grid = xtgeo.create_box_grid(dimension=(4, 4, 1))
         grid.to_file("MY_EGRID.EGRID", "egrid")
-
-        write_grid_property(
-            "MY_PARAM",
-            grid,
-            "my_param.grdecl",
-            "grdecl",
-            (10, 10, 1),
-            np.full((100), math.exp(2.5), dtype=float),
-        )
 
         with open("forward_model", "w", encoding="utf-8") as f:
             f.write(
@@ -505,24 +499,16 @@ import os
 
 if __name__ == "__main__":
     if not os.path.exists("my_param.grdecl"):
-        grid= xtgeo.create_box_grid(dimension=(10,10,1))
-        grid.to_file("MY_EGRID.EGRID", "egrid")
+        values = np.random.standard_normal(4*4)
+        with open("my_param.grdecl", "w") as fout:
+            fout.write("MY_PARAM\\n")
+            fout.write(" ".join([str(val) for val in values]) + " /\\n")
+    with open("my_param.grdecl", "r") as fin:
+        for line_nr, line in enumerate(fin):
+            if line_nr == 1:
+                a, b, c, *_ = line.split()
 
-        my_param = np.ndarray(shape=(10,10,1), buffer=np.random.random_sample(100))
-        gp = xtgeo.GridProperty(
-            ncol=10,
-            nrow=10,
-            nlay=1,
-            values=my_param,
-            grid=grid,
-            name="MY_PARAM",
-        )
-        gp.to_file("my_param.grdecl", fformat="grdecl")
-
-    a= np.random.standard_normal()
-    b= np.random.standard_normal()
-    c= np.random.standard_normal()
-    output = [a * x**2 + b * x + c for x in range(10)]
+    output = [float(a) * x**2 + float(b) * x + float(c) for x in range(10)]
     with open("gen_data_0.out", "w", encoding="utf-8") as f:
         f.write("\\n".join(map(str, output)))
         """
@@ -581,27 +567,24 @@ if __name__ == "__main__":
         )
 
         run_cli(parsed)
-        facade = LibresFacade.from_config_file("config.ert")
-        with open_storage(facade.enspath) as storage:
+        ert = EnKFMain(ErtConfig.from_file("config.ert"))
+        with open_storage(ert.resConfig().ens_path, mode="w") as storage:
             prior = storage.get_ensemble_by_name("prior")
             posterior = storage.get_ensemble_by_name("smoother_update")
 
-            prior_param = prior.load_field("MY_PARAM", list(range(5)))
-            posterior_param = posterior.load_field("MY_PARAM", list(range(5)))
-
-            assert prior_param.shape == (100, 5)
-            assert posterior_param.shape == (100, 5)
-
-            pp0 = posterior_param[:, 0]
-            pp1 = posterior_param[:, 1]
-            pp2 = posterior_param[:, 2]
-            pp3 = posterior_param[:, 3]
-            pp4 = posterior_param[:, 4]
-
-            assert not np.equal(pp0, pp1).all()
-            assert not np.equal(pp1, pp2).all()
-            assert not np.equal(pp2, pp3).all()
-            assert not np.equal(pp3, pp4).all()
+        prior_result = prior.load_field("MY_PARAM", list(range(5)))
+        posterior_result = posterior.load_field("MY_PARAM", list(range(5)))
+        # Only assert on the first three rows, as there are only three parameters,
+        # a, b and c, the rest have no correlation to the results.
+        assert np.linalg.det(np.cov(prior_result[:3])) > np.linalg.det(
+            np.cov(posterior_result[:3])
+        )
+        # This checks that the fields in the runpath are different between iterations
+        assert Path("simulations/realization-0/iter-0/my_param.grdecl").read_text(
+            encoding="utf-8"
+        ) != Path("simulations/realization-0/iter-1/my_param.grdecl").read_text(
+            encoding="utf-8"
+        )
 
 
 @pytest.mark.integration_test
