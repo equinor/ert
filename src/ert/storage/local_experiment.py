@@ -7,7 +7,6 @@ from typing import TYPE_CHECKING, Any, Dict, Generator, List, Optional, Union
 from uuid import UUID
 
 import xtgeo
-from ecl.grid import EclGrid
 
 from ert._c_wrappers.enkf.config.field_config import Field
 from ert._c_wrappers.enkf.config.gen_kw_config import GenKwConfig, PriorDict
@@ -36,8 +35,12 @@ class LocalExperimentReader:
         return self._id
 
     @property
-    def grid(self) -> Optional[Union[xtgeo.Grid, EclGrid]]:
-        return self._load_grid()
+    def grid_path(self) -> Optional[str]:
+        if (self._path / "grid.EGRID").exists():
+            return str(self._path / "grid.EGRID")
+        if (self._path / "grid.GRID").exists():
+            return str(self._path / "grid.GRID")
+        return None
 
     @property
     def mount_point(self) -> Path:
@@ -64,13 +67,6 @@ class LocalExperimentReader:
         with open(path, encoding="utf-8", mode="r") as f:
             info = json.load(f)
         return info
-
-    def _load_grid(self) -> Optional[Union[xtgeo.Grid, EclGrid]]:
-        if (self._path / "grid.EGRID").exists():
-            return xtgeo.grid_from_file(self._path / "grid.EGRID")
-        if (self._path / "grid.GRID").exists():
-            return EclGrid(str(self._path / "grid.GRID"))
-        return None
 
     def load_gen_kw_priors(self) -> Dict[str, List[PriorDict]]:
         with open(self.mount_point / "gen-kw-priors.json", "r", encoding="utf-8") as f:

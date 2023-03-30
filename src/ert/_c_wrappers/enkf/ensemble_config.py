@@ -8,8 +8,6 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Dict, List, Optional, Union
 
 from cwrap import BaseCClass
-from ecl.ecl_util import EclFileEnum, get_file_type
-from ecl.grid import EclGrid
 from ecl.summary import EclSum
 
 from ert import _clib
@@ -24,6 +22,7 @@ from ert._c_wrappers.enkf.config_keys import ConfigKeys
 from ert._c_wrappers.enkf.enums import EnkfVarType, ErtImplType, GenDataFileType
 from ert.parsing import ConfigValidationError, ConfigWarning
 from ert.parsing.error_info import ErrorInfo
+from ert.storage.field_utils.field_utils import Shape, get_shape
 
 if TYPE_CHECKING:
     from ecl.util.util import StringList
@@ -164,18 +163,6 @@ class EnsembleConfig(BaseCClass):
     )
 
     @staticmethod
-    def _load_grid(grid_file: Optional[str]) -> Optional[EclGrid]:
-        if grid_file is None:
-            return None
-        ecl_grid_file_types = [
-            EclFileEnum.ECL_GRID_FILE,
-            EclFileEnum.ECL_EGRID_FILE,
-        ]
-        if get_file_type(grid_file) not in ecl_grid_file_types:
-            raise ValueError(f"grid file {grid_file} does not have expected type")
-        return EclGrid.load_from_file(grid_file)
-
-    @staticmethod
     def _load_refcase(refcase_file: Optional[str]) -> Optional[EclSum]:
         if refcase_file is None:
             return None
@@ -223,7 +210,6 @@ class EnsembleConfig(BaseCClass):
 
         self._grid_file = grid_file
         self._refcase_file = ref_case_file
-        self.grid: Optional[EclGrid] = self._load_grid(grid_file)
         self.refcase: Optional[EclSum] = self._load_refcase(ref_case_file)
         c_ptr = self._alloc_full()
         self.py_nodes = {}
@@ -282,11 +268,12 @@ class EnsembleConfig(BaseCClass):
                 self.add_summary_full(s_key, self.refcase)
 
         for field in field_list:
-            if self.grid is None:
+            if self.grid_file is None:
                 raise ConfigValidationError(
                     "In order to use the FIELD keyword, a GRID must be supplied."
                 )
-            field_node = self.get_field_node(field, self.grid, grid_file)
+            dims = get_shape(grid_file)
+            field_node = self.get_field_node(field, grid_file, dims)
             self._create_node_metainfo(field, 2)
             self._storeFieldMetaInfo(field)
             self.addNode(field_node)
@@ -400,7 +387,7 @@ class EnsembleConfig(BaseCClass):
 
     @staticmethod
     def get_field_node(
-        field: Union[dict, list], grid: EclGrid, grid_file: str
+        field: Union[dict, list], grid_file: str, dimensions: Shape
     ) -> Field:
         name = field[0]
         out_file = Path(field[2])
@@ -434,9 +421,9 @@ class EnsembleConfig(BaseCClass):
             max_ = float(max_)
         return Field(
             name=name,
-            nx=grid.nx,
-            ny=grid.ny,
-            nz=grid.nz,
+            nx=dimensions.nx,
+            ny=dimensions.ny,
+            nz=dimensions.nz,
             file_format=out_file.suffix[1:],
             output_transformation=output_transform,
             input_transformation=init_transform,

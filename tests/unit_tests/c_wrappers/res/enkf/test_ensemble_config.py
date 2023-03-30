@@ -2,7 +2,6 @@ import os
 from datetime import datetime
 
 import pytest
-from ecl.grid.ecl_grid import EclGrid
 from ecl.summary import EclSum
 
 from ert._c_wrappers.enkf import ConfigKeys, EnsembleConfig, ErtConfig
@@ -45,24 +44,6 @@ _________________________________________     _____    ____________________
         EnsembleConfig.from_dict(config_dict=config_dict)
 
 
-@pytest.mark.usefixtures("use_tmpdir")
-def test_ensemble_config_fails_on_non_sensical_grid_file():
-    grid_file = "BRICKWALL"
-    # NB: this is just silly ASCII content, not even close to a correct GRID file
-    grid_file_content = """
-_|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|
-___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|__
-_|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|
-___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|__
-_|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|
-"""
-    with open(grid_file, "w+", encoding="utf-8") as grid_file_handler:
-        grid_file_handler.write(grid_file_content)
-    with pytest.raises(expected_exception=ValueError, match=grid_file):
-        config_dict = {ConfigKeys.GRID: grid_file}
-        EnsembleConfig.from_dict(config_dict=config_dict)
-
-
 def test_ensemble_config_construct_refcase_and_grid(setup_case):
     setup_case("configuration_tests", "ensemble_config.ert")
     grid_file = "grid/CASE.EGRID"
@@ -76,7 +57,6 @@ def test_ensemble_config_construct_refcase_and_grid(setup_case):
     )
 
     assert isinstance(ec, EnsembleConfig)
-    assert isinstance(ec.grid, EclGrid)
     assert isinstance(ec.refcase, EclSum)
 
     assert ec._grid_file == os.path.realpath(grid_file)

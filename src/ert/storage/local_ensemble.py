@@ -3,7 +3,6 @@ from __future__ import annotations
 import json
 import logging
 import math
-import os
 import shutil
 from datetime import datetime
 from multiprocessing.pool import ThreadPool
@@ -11,15 +10,10 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, List, Literal, Optional, Set, Tuple, Union
 from uuid import UUID
 
-import cwrap
 import numpy as np
 import pandas as pd
 import xarray as xr
 import xtgeo
-from ecl import EclDataType
-from ecl.eclfile import EclKW
-from ecl.grid import EclGrid
-from numpy import ma
 from pydantic import BaseModel
 
 from ert._c_wrappers.enkf.config.field_config import field_transform
@@ -28,6 +22,8 @@ from ert._c_wrappers.enkf.enums import RealizationStateEnum
 from ert._c_wrappers.enkf.time_map import TimeMap
 from ert.callbacks import forward_model_ok
 from ert.load_status import LoadResult, LoadStatus
+from ert.parsing import ConfigValidationError
+from ert.storage.field_utils.field_utils import Shape, read_mask, save_field
 
 if TYPE_CHECKING:
     import numpy.typing as npt
@@ -342,15 +338,28 @@ class LocalEnsembleReader:
         return pd.concat(dfs)
 
     def load_field(self, key: str, realizations: List[int]) -> npt.NDArray[np.double]:
-        result = []
+        result: Optional[npt.NDArray[np.double]] = None
         for realization in realizations:
             input_path = self.mount_point / f"realization-{realization}"
             if not input_path.exists():
-                raise KeyError(f"Unable to load FIELD for key: {key}")
-            data = np.load(input_path / f"{key}.npy")
-            data_no_nans = data[~np.isnan(data)]
-            result.append(data_no_nans)
-        return np.stack(result).T  # type: ignore
+                raise KeyError(
+                    f"Unable to load FIELD for key: {key}, realization: {realization}"
+                )
+            data = np.load(input_path / f"{key}.npy", mmap_mode="r")
+            data = data[np.isfinite(data)]
+
+            if result is None:
+                result = np.empty((len(realizations), data.size), dtype=np.double)
+            elif data.size != result.shape[1]:
+                raise ValueError(f"Data size mismatch for realization {realization}")
+
+            result[realization] = data
+
+        if result is None:
+            raise ConfigValidationError(
+                "No realizations found when trying to load field"
+            )
+        return result.T
 
     def field_has_data(self, key: str, realization: int) -> bool:
         path = self.mount_point / f"realization-{realization}/{key}.npy"
@@ -358,77 +367,6 @@ class LocalEnsembleReader:
 
     def field_has_info(self, key: str) -> bool:
         return key in self.experiment.field_info
-
-    def _export_property_egrid(  # pylint: disable=too-many-arguments
-        self,
-        grid: xtgeo.Grid,
-        key: str,
-        data_path: Path,
-        output_path: Path,
-        fformat: str,
-        info: Any,
-    ) -> None:
-        data = np.load(data_path / f"{key}.npy")
-        transform_name = info["transfer_out"]
-        data_transformed = (
-            field_transform(data, transform_name=transform_name)
-            if transform_name
-            else data
-        )
-        data_truncated = _field_truncate(
-            data_transformed,
-            info["truncation_min"],
-            info["truncation_max"],
-        )
-
-        prop = xtgeo.GridProperty(
-            ncol=info["nx"],
-            nrow=info["ny"],
-            nlay=info["nz"],
-            name=key,
-            values=ma.array(
-                data=data_truncated,
-                mask=np.logical_not(grid.get_actnum().values1d.data),
-            ),  # type: ignore
-        )
-
-        os.makedirs(Path(output_path).parent, exist_ok=True)
-
-        # We append the property to the grid inorder to use the
-        # active mask stored in the grid
-        grid.append_prop(prop)
-        grid.get_prop_by_name(key).to_file(output_path, fformat=fformat.lower())
-        grid.props.remove(prop)
-
-    def _export_property_grid(  # pylint: disable=too-many-arguments
-        self,
-        grid: EclGrid,
-        key: str,
-        data_path: Path,
-        output_path: Path,
-        fformat: str,
-        info: Any,
-    ) -> None:
-        data = np.load(data_path / f"{key}.npy")
-        transform_name = info["transfer_out"]
-        data_transformed = (
-            field_transform(data, transform_name=transform_name)
-            if transform_name
-            else data
-        )
-        data_truncated = _field_truncate(
-            data_transformed,
-            info["truncation_min"],
-            info["truncation_max"],
-        )
-        os.makedirs(Path(output_path).parent, exist_ok=True)
-
-        param = EclKW(key, grid.get_global_size(), EclDataType.ECL_FLOAT)
-        for i, e in enumerate(data_truncated):
-            param[i] = e
-
-        with cwrap.open(str(output_path), mode="w") as f:
-            grid.write_grdecl(param, f, default_value=np.nan)
 
     def export_field(
         self,
@@ -447,16 +385,22 @@ class LocalEnsembleReader:
             raise KeyError(
                 f"Unable to load FIELD for key: {key}, realization: {realization} "
             )
+        data = np.load(data_path / f"{key}.npy")
+        data = field_transform(data, transform_name=info["transfer_out"])
+        data = _field_truncate(
+            data,
+            info["truncation_min"],
+            info["truncation_max"],
+        )
 
-        grid = self.experiment.grid
-        if isinstance(grid, xtgeo.Grid):
-            self._export_property_egrid(
-                grid, key, data_path, output_path, fformat, info
-            )
-        elif isinstance(grid, EclGrid):
-            self._export_property_grid(grid, key, data_path, output_path, fformat, info)
-        else:
-            logger.warning(f"No grid found in {self._experiment_path}")
+        save_field(
+            data,
+            key,
+            self.experiment.grid_path,
+            Shape(info["nx"], info["ny"], info["nz"]),
+            output_path,
+            fformat,
+        )
 
 
 class LocalEnsembleAccessor(LocalEnsembleReader):
@@ -635,12 +579,12 @@ class LocalEnsembleAccessor(LocalEnsembleReader):
 
         return loaded
 
-    def save_gen_kw(  # pylint: disable=R0913
+    def save_gen_kw(
         self,
         parameter_name: str,
         parameter_keys: List[str],
         realizations: List[int],
-        data: npt.NDArray[np.float64],
+        data: npt.NDArray[np.double],
     ) -> None:
         for index, realization in enumerate(realizations):
             ds = xr.Dataset(
@@ -692,28 +636,29 @@ class LocalEnsembleAccessor(LocalEnsembleReader):
         self,
         parameter_name: str,
         realization: int,
-        data: npt.ArrayLike,
-        unmasked: bool = False,
+        data: Union[
+            npt.NDArray[np.double], np.ma.MaskedArray[Any, np.dtype[np.double]]
+        ],
     ) -> None:
         output_path = self.mount_point / f"realization-{realization}"
         Path.mkdir(output_path, exist_ok=True)
+        if not np.ma.isMaskedArray(data):  # type: ignore
+            grid_path = self.experiment.grid_path
+            if grid_path is None:
+                raise ConfigValidationError(
+                    f"Missing path to grid file for realization-{realization}"
+                )
+            mask, shape = read_mask(grid_path)
+            if mask is not None:
+                data_full = np.full_like(mask, np.nan, dtype=np.double)
+                np.place(data_full, np.logical_not(mask), data)
+                data = np.ma.MaskedArray(
+                    data_full, mask, fill_value=np.nan
+                )  # type: ignore
+            else:
+                data = np.ma.MaskedArray(data.reshape(shape))  # type: ignore
 
-        if unmasked:
-            grid = self.experiment.grid
-            if isinstance(grid, xtgeo.Grid):
-                masked_data = np.empty(grid.ntotal)
-                masked_data.fill(np.nan)
-                masked_data[grid.actnum_indices] = data
-                np.save(f"{output_path}/{parameter_name}", masked_data)
-            elif isinstance(grid, EclGrid):
-                masked_data = np.empty(grid.get_global_size())
-                masked_data.fill(np.nan)
-                active_indices = [i for i, e in enumerate(grid.export_actnum()) if e]
-                masked_data[active_indices] = data
-                np.save(f"{output_path}/{parameter_name}", masked_data)
-        else:
-            np.save(f"{output_path}/{parameter_name}", data)
-
+        np.save(f"{output_path}/{parameter_name}", data.filled(np.nan))  # type: ignore
         self.update_realization_state(
             realization,
             [RealizationStateEnum.STATE_UNDEFINED],

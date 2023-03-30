@@ -173,7 +173,7 @@ def _save_temporary_storage_to_disk(
                 target_fs.save_surface_data(key, realization, matrix[:, i])
         elif isinstance(config_node, Field):
             for i, realization in enumerate(iens_active_index):
-                target_fs.save_field(key, realization, matrix[:, i], unmasked=True)
+                target_fs.save_field(key, realization, matrix[:, i])
         else:
             raise NotImplementedError(
                 f"{ensemble_config.getNode(key).getImplementationType()}"

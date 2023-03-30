@@ -1,17 +1,14 @@
 import os
 
 import pytest
-from ecl.grid import EclGrid
 
 
 def test_field_basics(snake_oil_field_example):
     ert = snake_oil_field_example
     ens_config = ert.ensembleConfig()
     fc = ens_config["PERMX"]
-    grid = EclGrid(fc.grid_file)
 
     assert (fc.nx, fc.ny, fc.nz) == (10, 10, 5)
-    assert (grid.nx, grid.ny, grid.nz) == (10, 10, 5)
     assert fc.truncation_min is None
     assert fc.truncation_max is None
     assert fc.input_transformation is None

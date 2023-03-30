@@ -98,7 +98,9 @@ def test_unknown_file_extension(storage, tmpdir):
         ert, ensemble = create_runpath(storage, "config.ert")
         load_from_forward_model(ert, ensemble)
 
-        with pytest.raises(ValueError, match="Cannot export, invalid fformat: wrong"):
+        with pytest.raises(
+            ValueError, match="Cannot export, invalid file format: wrong"
+        ):
             create_runpath(storage, "config.ert", ensemble=ensemble, iteration=1)
 
 
@@ -744,9 +746,9 @@ if __name__ == "__main__":
 @pytest.mark.parametrize(
     "actnum",
     [
-        [True] * 16,
-        [True] * 8 + [False] * 8,
-        [False] * 8 + [True] * 8,
+        [True] * 24,
+        [True] * 12 + [False] * 12,
+        [False] * 12 + [True] * 12,
     ],
 )
 def test_inactive_grdecl_ecl(tmpdir, storage, actnum):
@@ -764,7 +766,7 @@ def test_inactive_grdecl_ecl(tmpdir, storage, actnum):
             float(i) if mask else missing_value for (i, mask) in enumerate(actnum)
         ]
 
-        grid = EclGrid.create_rectangular((4, 4, 1), (1, 1, 1), actnum=actnum)
+        grid = EclGrid.create_rectangular((4, 3, 2), (1, 1, 1), actnum=actnum)
         grid.save_GRID("MY_GRID.GRID")
 
         expect_param = EclKW("MY_PARAM", grid.get_global_size(), EclDataType.ECL_FLOAT)
@@ -791,9 +793,9 @@ def test_inactive_grdecl_ecl(tmpdir, storage, actnum):
 @pytest.mark.parametrize(
     "actnum",
     [
-        [True] * 16,
-        [True] * 8 + [False] * 8,
-        [False] * 8 + [True] * 8,
+        [True] * 24,
+        [True] * 12 + [False] * 12,
+        [False] * 12 + [True] * 12,
     ],
 )
 def test_inactive_grdecl_xtgeo(tmpdir, storage, actnum):
@@ -811,7 +813,7 @@ def test_inactive_grdecl_xtgeo(tmpdir, storage, actnum):
             float(i) if mask else missing_value for (i, mask) in enumerate(actnum)
         ]
 
-        grid = xtgeo.create_box_grid(dimension=(4, 4, 1))
+        grid = xtgeo.create_box_grid(dimension=(2, 3, 4))
         mask = grid.get_actnum()
         mask.values = [int(mask) for mask in actnum]
         grid.set_actnum(mask)
@@ -824,7 +826,7 @@ def test_inactive_grdecl_xtgeo(tmpdir, storage, actnum):
             nlay=grid.nlay,
             name="MY_PARAM",
             grid=grid,
-            values=np.arange(16),
+            values=np.arange(24),
         )
         prop.to_file(f"my_param_0.{fformat}", fformat=fformat)
 
@@ -845,9 +847,9 @@ def test_inactive_grdecl_xtgeo(tmpdir, storage, actnum):
 @pytest.mark.parametrize(
     "actnum",
     [
-        [True] * 16,
-        [True] * 8 + [False] * 8,
-        [False] * 8 + [True] * 8,
+        [True] * 24,
+        [True] * 12 + [False] * 12,
+        [False] * 12 + [True] * 12,
     ],
 )
 def test_inactive_roff_xtgeo(tmpdir, storage, actnum):
@@ -865,7 +867,7 @@ def test_inactive_roff_xtgeo(tmpdir, storage, actnum):
             float(i) if mask else missing_value for (i, mask) in enumerate(actnum)
         ]
 
-        grid = xtgeo.create_box_grid(dimension=(4, 4, 1))
+        grid = xtgeo.create_box_grid(dimension=(4, 2, 3))
         mask = grid.get_actnum()
         mask.values = [int(mask) for mask in actnum]
         grid.set_actnum(mask)
@@ -877,7 +879,7 @@ def test_inactive_roff_xtgeo(tmpdir, storage, actnum):
             nrow=grid.nrow,
             nlay=grid.nlay,
             name="MY_PARAM",
-            values=np.arange(16),
+            values=np.arange(24),
         )
         prop.to_file(f"my_param_0.{fformat}", fformat=fformat)
 

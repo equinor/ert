@@ -7,14 +7,10 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING, Optional
 
-import cwrap
 import numpy as np
-import xtgeo
-from ecl.eclfile import EclKW
-from ecl.grid import EclGrid
-from numpy import ma
 
 from ert._c_wrappers.enkf.config.parameter_config import ParameterConfig
+from ert.storage.field_utils.field_utils import get_masked_field
 
 if TYPE_CHECKING:
     import numpy.typing as npt
@@ -46,29 +42,11 @@ class Field(ParameterConfig):
         file_path = run_path / file_name
 
         key = self.name
-        grid = ensemble.experiment.grid
-        if isinstance(grid, xtgeo.Grid):
-            try:
-                props = xtgeo.gridproperty_from_file(
-                    pfile=file_path,
-                    name=key,
-                    grid=grid,
-                )
-                data = props.get_npvalues1d(order="C", fill_value=np.nan)
-            except PermissionError as err:
-                msg = f"Failed to open init file for parameter {key}"
-                raise RuntimeError(msg) from err
-        elif isinstance(grid, EclGrid):
-            with cwrap.open(str(file_path), "rb") as f:
-                param = EclKW.read_grdecl(f, self.name)
-            mask = [not e for e in grid.export_actnum()]
-            masked_array = ma.MaskedArray(
-                data=param.numpy_view(), mask=mask, fill_value=np.nan
-            )
-            data = masked_array.filled()
+        grid_path = ensemble.experiment.grid_path
+        data = get_masked_field(file_path, key, grid_path)
 
         trans = self.input_transformation
-        data_transformed = field_transform(data, trans) if trans else data
+        data_transformed = field_transform(data, trans)
         ensemble.save_field(key, real_nr, data_transformed)
         _logger.debug(f"load() time_used {(time.perf_counter() - t):.4f}s")
 
@@ -94,5 +72,9 @@ TRANSFORM_FUNCTIONS = {
 }
 
 
-def field_transform(data: npt.ArrayLike, transform_name: str) -> npt.ArrayLike:
+def field_transform(
+    data: npt.ArrayLike, transform_name: Optional[str]
+) -> npt.ArrayLike:
+    if transform_name is None:
+        return data
     return TRANSFORM_FUNCTIONS[transform_name](data)
