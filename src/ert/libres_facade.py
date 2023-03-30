@@ -14,7 +14,6 @@ from ert._c_wrappers.enkf.enums import (
 )
 from ert.analysis import ESUpdate, SmootherSnapshot
 from ert.analysis._es_update import _get_obs_and_measure_data
-from ert.data import MeasuredData
 
 _logger = logging.getLogger(__name__)
 
@@ -27,7 +26,7 @@ if TYPE_CHECKING:
     from ert._c_wrappers.enkf.config.gen_kw_config import PriorDict
     from ert._c_wrappers.enkf.enkf_obs import EnkfObs
     from ert._c_wrappers.job_queue import WorkflowJob
-    from ert.storage import EnsembleAccessor, EnsembleReader, StorageAccessor
+    from ert.storage import EnsembleAccessor, EnsembleReader
 
 
 class LibresFacade:  # pylint: disable=too-many-public-methods
@@ -116,15 +115,6 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
     def ensemble_config(self) -> EnsembleConfig:
         return self._enkf_main.ensembleConfig()
 
-    def get_measured_data(  # pylint: disable=too-many-arguments
-        self,
-        keys: List[str],
-        index_lists: Optional[List[List[int]]] = None,
-        load_data: bool = True,
-        ensemble: Optional[EnsembleReader] = None,
-    ) -> MeasuredData:
-        return MeasuredData(self, ensemble, keys, index_lists, load_data)
-
     def get_analysis_config(self) -> "AnalysisConfig":
         return self._enkf_main.analysisConfig()
 
@@ -174,18 +164,6 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
     def get_impl_type_name_for_obs_key(self, key: str) -> str:
         observation = self._enkf_main.getObservations()[key]
         return observation.getImplementationType().name  # type: ignore
-
-    def get_impl_type_name_for_ensemble_config_node(self, name: str) -> str:
-        node = self._enkf_main.ensembleConfig().getNode(name)
-        return node.getImplementationType().name  # type: ignore
-
-    def get_data_size_for_ensemble_config_node(self, name: str) -> int:
-        return (
-            self._enkf_main.ensembleConfig()
-            .getNode(name)
-            .getFieldModelConfig()
-            .get_data_size()
-        )
 
     def get_data_key_for_obs_key(self, observation_key: Union[str, int]) -> str:
         return self._enkf_main.getObservations()[observation_key].getDataKey()
@@ -258,26 +236,6 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
 
     def all_data_type_keys(self) -> List[str]:
         return self.get_summary_keys() + self.gen_kw_keys() + self.get_gen_data_keys()
-
-    def get_all_gen_data_observation_keys(self) -> List[str]:
-        return list(
-            self._enkf_main.getObservations().getTypedKeylist(
-                EnkfObservationImplementationType.GEN_OBS  # type: ignore
-            )
-        )
-
-    def get_all_summary_observation_keys(self) -> List[str]:
-        return sorted(
-            [
-                key
-                for key in self.get_summary_keys()
-                if len(
-                    self._enkf_main.ensembleConfig().getNode(key).getObservationKeys()
-                )
-                > 0
-            ],
-            key=lambda k: k.lower(),
-        )
 
     def observation_keys(self, key: str) -> List[str]:
         if self.is_gen_data_key(key):
@@ -557,26 +515,11 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
     def update_snapshots(self) -> Dict[str, SmootherSnapshot]:
         return self._es_update.update_snapshots
 
-    def get_alpha(self) -> float:
-        return self._enkf_main.analysisConfig().get_enkf_alpha()
-
     def get_std_cutoff(self) -> float:
         return self._enkf_main.analysisConfig().get_std_cutoff()
 
     def get_workflow_job(self, name: str) -> Optional["WorkflowJob"]:
         return self._enkf_main.resConfig().workflow_jobs.get(name)
-
-    def run_ertscript(  # type: ignore
-        self,
-        ertscript,
-        storage: StorageAccessor,
-        ensemble: EnsembleAccessor,
-        *args: Optional[Any],
-        **kwargs: Optional[Any],
-    ) -> Any:
-        return ertscript(self._enkf_main, storage, ensemble=ensemble).run(
-            *args, **kwargs
-        )
 
     @classmethod
     def from_config_file(
