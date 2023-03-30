@@ -36,7 +36,9 @@ _________________________________________     _____    ____________________
  |____|_  /_______  / \\___  /    \\______  /\\____|__  /_______  //_______  /
         \\/        \\/      \\/            \\/         \\/        \\/         \\/
 """
-    with open(refcase_file, "w+", encoding="utf-8") as refcase_file_handler:
+    with open(refcase_file + ".UNSMRY", "w+", encoding="utf-8") as refcase_file_handler:
+        refcase_file_handler.write(refcase_file_content)
+    with open(refcase_file + ".SMSPEC", "w+", encoding="utf-8") as refcase_file_handler:
         refcase_file_handler.write(refcase_file_content)
     with pytest.raises(expected_exception=IOError, match=refcase_file):
         config_dict = {ConfigKeys.REFCASE: refcase_file}
@@ -96,6 +98,39 @@ def test_that_refcase_gets_correct_name(tmpdir):
 
         ec = EnsembleConfig.from_dict(config_dict=config_dict)
         assert os.path.realpath(refcase_name) == ec.refcase.case
+
+
+@pytest.mark.parametrize(
+    "existing_suffix, expected_suffix",
+    [
+        pytest.param(
+            "UNSMRY",
+            "SMSPEC",
+        ),
+        pytest.param(
+            "SMSPEC",
+            "UNSMRY",
+        ),
+    ],
+)
+def test_that_files_for_refcase_exists(setup_case, existing_suffix, expected_suffix):
+    setup_case("configuration_tests", "ensemble_config.ert")
+    refcase_file = "missing_refcase_file"
+
+    with open(
+        refcase_file + "." + existing_suffix, "w+", encoding="utf-8"
+    ) as refcase_writer:
+        refcase_writer.write("")
+
+    with pytest.raises(
+        ConfigValidationError,
+        match="Cannot find " + expected_suffix + " file for refcase provided!",
+    ):
+        _ = EnsembleConfig.from_dict(
+            config_dict={
+                ConfigKeys.REFCASE: refcase_file,
+            },
+        )
 
 
 @pytest.mark.parametrize(
