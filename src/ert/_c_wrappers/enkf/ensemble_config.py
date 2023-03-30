@@ -158,6 +158,17 @@ class EnsembleConfig(BaseCClass):
         """
         if refcase_file is None:
             return None
+
+        if not os.path.exists(refcase_file + ".UNSMRY"):
+            raise ConfigValidationError(
+                f"Cannot find UNSMRY file for refcase provided! {refcase_file}.UNSMRY"
+            )
+
+        if not os.path.exists(refcase_file + ".SMSPEC"):
+            raise ConfigValidationError(
+                f"Cannot find SMSPEC file for refcase provided! {refcase_file}.SMSPEC"
+            )
+
         # defaults for loading refcase - necessary for using the function
         # exposed in python part of ecl
         refcase_load_args = {
