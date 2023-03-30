@@ -29,6 +29,10 @@ CACHE_INVALID=10
 
 QSTAT=`which qstat 2>/dev/null`
 
+# This is a number that must be larger then largest amount of lines
+# the qstat backend can display pr. job
+MAX_JOB_LINES=200
+
 QSTAT_OPTIONS=""
 # while the first arg starts with a - character:
 while [ "$1" != "${1#-}" ]; do
@@ -84,29 +88,21 @@ fi
 # The file is potentially updated:
 proxyage_seconds=`file_age_seconds $proxyfile`
 
-if [ $proxyage_seconds -gt $CACHE_INVALID ]; then
-    echo "qstat_proxy: proxyfile $proxyfile was too old ($proxyage_seconds seconds). Giving up!"
+fail() {
+    echo "$1"
     exit 1
+}
+
+if [ $proxyage_seconds -gt $CACHE_INVALID ]; then
+    fail "qstat_proxy: proxyfile $proxyfile was too old ($proxyage_seconds seconds). Giving up!"
 fi
 
-# Replicate qstat's error behaviour:
 if [ -n "$1" ]; then
-    grep -e "Job Id: ${1}" $proxyfile >/dev/null 2>&1 || {
-        echo "qstat: Unknown Job Id $1" && cat $proxyfile >&2 && exit 1;
-        }
+    grep -A $MAX_JOB_LINES "Job Id: $1" $proxyfile || fail "qstat: Unknown Job Id $1"
+else
+    # Empty $1, give out all we have (ert never asks for this)
+    cat $proxyfile
 fi
-
-# Extract the job id from the proxyfile:
-if [ -n "$1" ]; then
-    awk "BEGIN { RS=\"Job Id: \"} /^$1/,/Job/ {printf \"Job Id: \"; print}" $proxyfile \
-        | grep -v ^$
-    exit 0
-fi
-
-# Empty $1, give out all we have (ert never asks for this)
-cat $proxyfile
-
-exit 0
 
 # Example qstat output (when called with '-f'):
 # Job Id: 15399.s034-lcam
