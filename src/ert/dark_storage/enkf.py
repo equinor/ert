@@ -45,6 +45,7 @@ def get_storage(*, res: LibresFacade = Depends(get_res)) -> StorageReader:
     global _storage
     if _storage is None:
         return (_storage := open_storage(res.enspath))
+    _storage.refresh()
     return _storage
 
 
