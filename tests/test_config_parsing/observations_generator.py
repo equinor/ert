@@ -141,11 +141,13 @@ def general_observations(draw, ensemble_keys):
         kws["obs_file"] = draw(names)
         kws["error"] = None
     if time_type == "date":
-        kws["date"] = (
-            f"{draw(st.integers(min_value=1999, max_value=2037))}"
-            f"-{draw(st.integers(min_value=1, max_value=12))}"
-            f"-{draw(st.integers(min_value=1, max_value=30))}"
+        date = draw(
+            st.datetimes(
+                max_value=datetime.datetime(year=2037, month=1, day=1),
+                min_value=datetime.datetime(year=1999, month=1, day=2),
+            )
         )
+        kws["date"] = date.strftime("%Y-%m-%d")
     if time_type in ["days", "hours"]:
         kws[time_type] = draw(st.floats(min_value=1.0, max_value=10000))
     if time_type == "restart":
@@ -167,11 +169,13 @@ def summary_observations(draw):
     kws["value"] = draw(positive_floats)
     time_type = draw(st.sampled_from(["date", "days", "restart", "hours"]))
     if time_type == "date":
-        kws["date"] = (
-            f"{draw(st.integers(min_value=1999, max_value=2037))}"
-            f"-{draw(st.integers(min_value=1, max_value=12))}"
-            f"-{draw(st.integers(min_value=2, max_value=30))}"
+        date = draw(
+            st.datetimes(
+                max_value=datetime.datetime(year=2037, month=1, day=1),
+                min_value=datetime.datetime(year=1999, month=1, day=2),
+            )
         )
+        kws["date"] = date.strftime("%Y-%m-%d")
     if time_type in ["days", "hours"]:
         kws[time_type] = draw(st.floats(min_value=1, max_value=10000))
     if time_type == "restart":
