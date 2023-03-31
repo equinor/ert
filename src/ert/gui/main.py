@@ -284,7 +284,7 @@ def _setup_suggester(errors, warning_msgs, suggestions, ert_window=None):
         ert_window.raise_()
         container.close()
 
-    run = QPushButton("Run ert")
+    run = QPushButton("Open ERT")
     give_up = QPushButton("Exit")
     copy = QPushButton("Copy messages")
 
