@@ -1,3 +1,5 @@
+import os
+
 from hypothesis import assume, given
 
 from ert._c_wrappers.enkf import ConfigKeys, ErtConfig
@@ -9,16 +11,17 @@ from .config_dict_generator import config_generators
 def test_different_defines_give_different_subst_lists(
     tmp_path_factory, config_generator1, config_generator2
 ):
-    with config_generator1(tmp_path_factory) as config_dict1:
-        ert_config1 = ErtConfig.from_dict(config_dict1)
-        with config_generator2(tmp_path_factory) as config_dict2:
-            assume(
-                config_dict1[ConfigKeys.DEFINE_KEY]
-                != config_dict2[ConfigKeys.DEFINE_KEY]
-            )
+    with config_generator1(tmp_path_factory) as config_values1:
+        ert_config1 = ErtConfig.from_dict(
+            config_values1.to_config_dict("test.ert", os.getcwd())
+        )
+        with config_generator2(tmp_path_factory) as config_values2:
+            assume(config_values1.define != config_values2.define)
             assert (
                 ert_config1.substitution_list
-                != ErtConfig.from_dict(config_dict2).substitution_list
+                != ErtConfig.from_dict(
+                    config_values2.to_config_dict("test.ert", os.getcwd())
+                ).substitution_list
             )
 
 

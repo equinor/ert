@@ -73,8 +73,32 @@ def test_that_creating_ert_config_from_dict_is_same_as_from_file(
     tmp_path_factory, config_generator
 ):
     filename = "config.ert"
-    with config_generator(tmp_path_factory, filename) as config_dict:
-        assert ErtConfig.from_dict(config_dict) == ErtConfig.from_file(filename)
+    with config_generator(tmp_path_factory, filename) as config_values:
+        assert ErtConfig.from_dict(
+            config_values.to_config_dict("config.ert", os.getcwd())
+        ) == ErtConfig.from_file(filename)
+
+
+@pytest.mark.usefixtures("set_site_config")
+@given(config_generators())
+def test_that_parsing_ert_config_result_in_expected_values(
+    tmp_path_factory, config_generator
+):
+    filename = "config.ert"
+    with config_generator(tmp_path_factory, filename) as config_values:
+        ert_config = ErtConfig.from_file(filename)
+        assert ert_config.ens_path == config_values.enspath
+        assert ert_config.random_seed == config_values.random_seed
+        assert ert_config.queue_config.max_submit == config_values.max_submit
+        assert ert_config.queue_config.job_script == config_values.job_script
+        assert ert_config.user_config_file == os.path.abspath(filename)
+        assert ert_config.config_path == os.getcwd()
+        assert str(ert_config.runpath_file) == os.path.abspath(
+            config_values.runpath_file
+        )
+        assert (
+            ert_config.model_config.num_realizations == config_values.num_realizations
+        )
 
 
 def test_default_ens_path(tmpdir):
@@ -140,7 +164,8 @@ def test_that_queue_config_content_negative_value_invalid():
 def test_that_queue_config_dict_negative_value_invalid(
     tmp_path_factory, config_generator
 ):
-    with config_generator(tmp_path_factory) as config_dict:
+    with config_generator(tmp_path_factory) as config_values:
+        config_dict = config_values.to_config_dict("test.ert", os.getcwd())
         config_dict[ConfigKeys.QUEUE_OPTION].append(
             ["LSF", "MAX_RUNNING", "-6"],
         )
@@ -378,7 +403,8 @@ def test_that_unknown_hooked_job_gives_config_validation_error():
 def test_that_if_field_is_given_and_grid_is_missing_you_get_error(
     tmp_path_factory, config_generator
 ):
-    with config_generator(tmp_path_factory) as config_dict:
+    with config_generator(tmp_path_factory) as config_values:
+        config_dict = config_values.to_config_dict("test.ert", os.getcwd())
         del config_dict[ConfigKeys.GRID]
         assume(len(config_dict.get(ConfigKeys.FIELD_KEY, [])) > 0)
         with pytest.raises(
