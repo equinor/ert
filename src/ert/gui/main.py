@@ -70,12 +70,11 @@ def run_gui(args: Namespace, plugin_manager: Optional[ErtPluginManager] = None):
             ert_config=args.config, project=os.path.abspath(ens_path)
         ), open_storage(ens_path, mode=mode) as storage:
             if hasattr(window, "notifier"):
-                window.notifier.set_storage(storage)
-                window.notifier.set_current_case(
-                    _get_or_create_default_case(
-                        storage, ensemble_size, parameter_config
-                    )
+                default_case = _get_or_create_default_case(
+                    storage, ensemble_size, parameter_config
                 )
+                window.notifier.set_storage(storage)
+                window.notifier.set_current_case(default_case)
             return show_window()
 
 
