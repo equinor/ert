@@ -189,7 +189,11 @@ def observations(ensemble_keys):
             st.one_of(
                 summary_observations(),
                 general_observations(st.sampled_from(ensemble_keys)),
-                st.builds(HistoryObservation, name=names),
+                st.builds(
+                    HistoryObservation,
+                    segment=st.lists(st.builds(Segment, name=names), max_size=2),
+                    name=names,
+                ),
             ),
             min_size=1,
             max_size=5,
@@ -198,7 +202,11 @@ def observations(ensemble_keys):
         return st.lists(
             st.one_of(
                 summary_observations(),
-                st.builds(HistoryObservation, name=names),
+                st.builds(
+                    HistoryObservation,
+                    segment=st.lists(st.builds(Segment, name=names), max_size=2),
+                    name=names,
+                ),
             ),
             min_size=1,
             max_size=5,
