@@ -500,6 +500,9 @@ static int torque_driver_submit_shell_job(torque_driver_type *driver,
                                          "%d seconds",
                                          job_name, retry_interval);
                             sleep(retry_interval);
+                            // Sleep some more at random, to avoid
+                            // synchronized retries from all threads:
+                            usleep(rand() % 2000000); // max 2 seconds
                             slept_time += retry_interval;
                             retry_interval *= 2;
                         } else {
