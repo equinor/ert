@@ -57,6 +57,6 @@ updated accordingly.
 Although we don't really have a clear concept of time in this case _ERT_
 expects us to have so. Since we have specified that all of our data is for time
 step `0`, we had to create an artificial time map `time_map` that specifies
-that the very first and only report step corresponds to `1/10/2006`. This could
+that the very first and only report step corresponds to `2006-10-01`. This could
 be any date, so we put it to the date of the first commit of the
 `ensembles/ert` repository on _Github_.
