@@ -777,6 +777,10 @@ job_status_type torque_driver_parse_status(const char *qstat_file,
     }
 
     if (exit_status != 0) {
+        fprintf(stderr,
+                "** Warning: Exit code %d from queue system on job: "
+                "%s, job_state: %s\n",
+                exit_status, jobnr_char, job_state.c_str());
         status = JOB_QUEUE_EXIT;
     }
 
