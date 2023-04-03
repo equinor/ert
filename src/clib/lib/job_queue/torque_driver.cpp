@@ -202,12 +202,12 @@ static bool torque_driver_set_timeout(torque_driver_type *driver,
 }
 
 static bool torque_driver_set_max_runtime(torque_driver_type *driver,
-                                      const char *max_runtime_char) {
+                                          const char *max_runtime_char) {
     int max_runtime = 0;
     if (util_sscanf_int(max_runtime_char, &max_runtime)) {
         driver->max_runtime = std::max(max_runtime, 0);
-        driver->max_runtime_char =
-            util_realloc_string_copy(driver->max_runtime_char, max_runtime_char);
+        driver->max_runtime_char = util_realloc_string_copy(
+            driver->max_runtime_char, max_runtime_char);
         return true;
     } else
         return false;
