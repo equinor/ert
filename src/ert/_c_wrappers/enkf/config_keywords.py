@@ -371,6 +371,7 @@ def define_keyword():
         argc_max=2,
         multi_occurrence=True,
         substitute_from=2,
+        join_after=1,
     )
 
 
