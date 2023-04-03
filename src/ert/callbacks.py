@@ -26,7 +26,7 @@ def forward_model_ok(
 ) -> Tuple[LoadStatus, str]:
     try:  # pylint: disable=R1702
         result = (LoadStatus.LOAD_SUCCESSFUL, "")
-        if ens_conf.have_forward_init():
+        if ens_conf.have_forward_init() and run_arg.itr == 0:
             forward_init_config_nodes = ens_conf.check_forward_init_nodes()
             error_msg = ""
             for config_node in forward_init_config_nodes:
