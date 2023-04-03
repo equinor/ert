@@ -41,7 +41,7 @@ void setoption_setalloptions_optionsset() {
 
     test_assert_true(
         torque_driver_set_option(driver, TORQUE_MAX_RUNTIME, "90"));
-    test_assert_int_equal(5, torque_driver_get_max_runtime(driver));
+    test_assert_int_equal(90, torque_driver_get_max_runtime(driver));
 
     char tmp_path[] = "/tmp/torque_debug_XXXXXX";
     // We do not strictly need the file, we are only interested in a path name
