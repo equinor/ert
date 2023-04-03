@@ -147,7 +147,7 @@ args = dict(
         "scipy<1.9.2",
         "sqlalchemy",
         "uvicorn >= 0.17.0",
-        "websockets >= 9.0.1",
+        "websockets >= 9.0.1, <11.0",
         "httpx",
         "tables",
         "xarray",
