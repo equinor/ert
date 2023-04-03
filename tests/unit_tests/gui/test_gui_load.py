@@ -379,7 +379,7 @@ def test_that_run_workflow_component_enabled_when_workflows(qapp, tmp_path):
 
 
 @pytest.mark.usefixtures("copy_poly_case")
-def test_that_es_mda_disabled_when_invalid_weights(qtbot):
+def test_that_es_mda_is_disabled_when_weights_are_invalid(qtbot):
     args = Mock()
     args.config = "poly.ert"
     with add_gui_log_handler() as log_handler:
@@ -402,16 +402,10 @@ def test_that_es_mda_disabled_when_invalid_weights(qtbot):
         assert run_sim_button
         assert run_sim_button.isEnabled()
 
-        qtbot.keyClick(
-            es_mda_panel._relative_iteration_weights_box,
-            Qt.Key_Home,
-            modifier=Qt.ShiftModifier,
-        )
-        qtbot.keyClick(es_mda_panel._relative_iteration_weights_box, Qt.Key_Backspace)
-        qtbot.keyClicks(es_mda_panel._relative_iteration_weights_box, "0")
+        es_mda_panel._relative_iteration_weights_box.setText("0")
 
         assert not run_sim_button.isEnabled()
 
-        qtbot.keyClick(es_mda_panel._relative_iteration_weights_box, Qt.Key_Backspace)
-        qtbot.keyClicks(es_mda_panel._relative_iteration_weights_box, "1")
+        es_mda_panel._relative_iteration_weights_box.setText("1")
+
         assert run_sim_button.isEnabled()
