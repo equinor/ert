@@ -1,5 +1,5 @@
 import os
-from typing import List
+from typing import Optional
 
 import pytest
 from qtpy.QtCore import Qt, QTimer
@@ -37,6 +37,13 @@ def test_that_the_plot_window_contains_the_expected_elements(
     esmda_has_run, opened_main_window, qtbot
 ):
     gui = opened_main_window
+    expected_cases = [
+        "default",
+        "default_0",
+        "default_1",
+        "default_2",
+        "default_3",
+    ]
 
     # Click on Create plot after esmda has run
     plot_tool = gui.tools["Create plot"]
@@ -50,24 +57,16 @@ def test_that_the_plot_window_contains_the_expected_elements(
     case_selection = plot_window.findChild(CaseSelectionWidget)
     data_types = plot_window.findChild(DataTypeKeysWidget)
     assert isinstance(data_types, DataTypeKeysWidget)
-    combo_boxes: List[QComboBox] = case_selection.findChildren(
-        QComboBox
+    combo_box: Optional[QComboBox] = case_selection.findChild(
+        QComboBox, "case_selector"
     )  # type: ignore
+    assert combo_box is not None
 
     # Assert that the Case selection widget contains the expected cases
     case_names = []
-    assert len(combo_boxes) == 1
-    combo_box = combo_boxes[0]
     for i in range(combo_box.count()):
-        combo_box.setCurrentIndex(i)
-        case_names.append(combo_box.currentText())
-    assert sorted(case_names) == [
-        "default",
-        "default_0",
-        "default_1",
-        "default_2",
-        "default_3",
-    ]
+        case_names.append(combo_box.itemText(i))
+    assert sorted(case_names) == expected_cases
 
     data_names = []
     data_keys = data_types.data_type_keys_widget
@@ -93,25 +92,21 @@ def test_that_the_plot_window_contains_the_expected_elements(
         "Statistics",
     }
 
-    # Add all the cases
-    for name in case_names:
-        combo_box = combo_boxes[-1]
-        for i in range(combo_box.count()):
-            if combo_box.itemText(i) == name:
-                combo_box.setCurrentIndex(i)
+    # Add cases to plot
+    for _ in expected_cases:
         qtbot.mouseClick(
             case_selection.findChild(QToolButton, name="add_case_button"), Qt.LeftButton
         )
-        combo_boxes: List[QComboBox] = case_selection.findChildren(
-            QComboBox
-        )  # type: ignore
-    assert {x.currentText() for x in case_selection.findChildren(QComboBox)} == {
-        "default",
-        "default_0",
-        "default_1",
-        "default_2",
-        "default_3",
-    }
+    all_added_combo_boxes = case_selection.findChildren(QComboBox, name="case_selector")
+    assert len(expected_cases) == len(all_added_combo_boxes)
+
+    # make sure pairwise different and all cases are selected
+    for case_index, case_name in enumerate(expected_cases):
+        combo_box = all_added_combo_boxes[case_index]
+        for i in range(combo_box.count()):
+            if case_name == combo_box.itemText(i):
+                combo_box.setCurrentIndex(i)
+    assert {box.currentText() for box in all_added_combo_boxes} == set(expected_cases)
 
     # Cycle through showing all the tabs and plot each data key
 
