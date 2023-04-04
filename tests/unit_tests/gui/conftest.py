@@ -221,26 +221,27 @@ def ensemble_experiment_has_run(opened_main_window, run_experiment, request):
     with open("poly_eval.py", "w", encoding="utf-8") as f:
         f.write(
             dedent(
-                """#!/usr/bin/env python
-import numpy as np
-import sys
-import json
+                """\
+                #!/usr/bin/env python
+                import numpy as np
+                import sys
+                import json
 
-def _load_coeffs(filename):
-    with open(filename, encoding="utf-8") as f:
-        return json.load(f)
+                def _load_coeffs(filename):
+                    with open(filename, encoding="utf-8") as f:
+                        return json.load(f)
 
-def _evaluate(coeffs, x):
-    return coeffs["a"] * x**2 + coeffs["b"] * x + coeffs["c"]
+                def _evaluate(coeffs, x):
+                    return coeffs["a"] * x**2 + coeffs["b"] * x + coeffs["c"]
 
-if __name__ == "__main__":
-    if np.random.random(1) > 0.5:
-        sys.exit(1)
-    coeffs = _load_coeffs("coeffs.json")
-    output = [_evaluate(coeffs, x) for x in range(10)]
-    with open("poly_0.out", "w", encoding="utf-8") as f:
-        f.write("\\n".join(map(str, output)))
-        """
+                if __name__ == "__main__":
+                    if np.random.random(1) > 0.5:
+                        sys.exit(1)
+                    coeffs = _load_coeffs("coeffs.json")
+                    output = [_evaluate(coeffs, x) for x in range(10)]
+                    with open("poly_0.out", "w", encoding="utf-8") as f:
+                        f.write("\\n".join(map(str, output)))
+                """
             )
         )
     os.chmod(
