@@ -342,8 +342,11 @@ stringlist_type *torque_driver_alloc_cmd(torque_driver_type *driver,
 
     if (driver->max_runtime != 0) {
         stringlist_append_copy(argv, "-l");
-        stringlist_append_copy(argv, "walltime=");
-        stringlist_append_copy(argv, driver->max_runtime_char);
+        char *walltime_string;
+        walltime_string =
+            util_alloc_sprintf("walltime=%d", driver->max_runtime);
+        stringlist_append_copy(argv, walltime_string);
+        free(walltime_string);
     }
 
     if (driver->queue_name != NULL) {
