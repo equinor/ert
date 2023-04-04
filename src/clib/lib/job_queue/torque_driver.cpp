@@ -340,18 +340,13 @@ stringlist_type *torque_driver_alloc_cmd(torque_driver_type *driver,
         free(resource_string);
     }
 
-    /* Not certain how stringlist_append_copy concatenates, eg
-       does it add spaces? Or... maybe it's fine without spaces.
-
-       TODO:
-       - Write tests.
-       - Add error checking, eg =>> PBS: job killed: walltime exceeded limit.
-         (NB PBS seems to count in units of 5 s)
-       */
     if (driver->max_runtime != 0) {
         stringlist_append_copy(argv, "-l");
-        stringlist_append_copy(argv, "walltime=");
-        stringlist_append_copy(argv, driver->max_runtime_char);
+        char *walltime_string;
+        walltime_string =
+            util_alloc_sprintf("walltime=%d", driver->max_runtime);
+        stringlist_append_copy(argv, walltime_string);
+        free(walltime_string);
     }
 
     if (driver->queue_name != NULL) {
