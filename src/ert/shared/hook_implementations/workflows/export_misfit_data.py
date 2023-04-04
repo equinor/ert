@@ -1,9 +1,8 @@
-from collections import defaultdict
-
 import pandas as pd
 
-from ert._c_wrappers.enkf import RealizationStateEnum
+from ert._c_wrappers.enkf.enums import RealizationStateEnum
 from ert._c_wrappers.job_queue import ErtScript
+from ert.analysis._es_update import _get_obs_and_measure_data
 from ert.exceptions import StorageError
 
 
@@ -33,12 +32,15 @@ class ExportMisfitDataJob(ErtScript):
         ]
         if not realizations:
             raise StorageError("No responses loaded")
-        misfits = defaultdict(list)
-        for realization in realizations:
-            for obs_vector in ert.getObservations():
-                misfits[obs_vector.getObservationKey()].append(
-                    obs_vector.getTotalChi2(fs, realization)
-                )
-        pd.DataFrame(misfits, index=realizations).to_hdf(
-            target_file, key="misfit", mode="w"
+
+        all_observations = [(n.getObsKey(), []) for n in ert.getObservations()]
+        measured_data, obs_data = _get_obs_and_measure_data(
+            ert.getObservations(), fs, all_observations, realizations
         )
+        joined = obs_data.join(
+            measured_data, on=["data_key", "axis"], how="inner"
+        ).drop_duplicates()
+        misfit = pd.DataFrame(index=joined.index)
+        for col in measured_data:
+            misfit[col] = ((joined["OBS"] - joined[col]) / joined["STD"]) ** 2
+        misfit.groupby("key").sum().T.to_hdf(target_file, key="misfit", mode="w")

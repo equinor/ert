@@ -10,9 +10,7 @@ pybind11_add_module(
   python/init.cpp
   python/logging.cpp
   python/ensemble_config.cpp
-  python/enkf_fs_general_data.cpp
   python/enkf_fs_keyword_data.cpp
-  python/enkf_fs_summary_data.cpp
   python/model_callbacks.cpp
   config/conf_util.cpp
   config/conf.cpp
@@ -47,7 +45,6 @@ pybind11_add_module(
   enkf/time_map.cpp
   enkf/block_fs_driver.cpp
   enkf/config_keys.cpp
-  enkf/enkf_analysis.cpp
   enkf/enkf_config_node.cpp
   enkf/enkf_fs.cpp
   enkf/enkf_node.cpp
@@ -64,24 +61,15 @@ pybind11_add_module(
   enkf/fs_driver.cpp
   enkf/fs_types.cpp
   enkf/gen_common.cpp
-  enkf/gen_data.cpp
   enkf/gen_data_config.cpp
   enkf/gen_kw.cpp
   enkf/gen_kw_config.cpp
   enkf/gen_obs.cpp
-  enkf/meas_data.cpp
-  enkf/misfit_ensemble.cpp
-  enkf/misfit_member.cpp
-  enkf/misfit_ts.cpp
-  enkf/obs_data.cpp
   enkf/obs_vector.cpp
   enkf/row_scaling.cpp
   enkf/state_map.cpp
   enkf/state_map.cpp
-  enkf/summary.cpp
   enkf/summary_config.cpp
-  enkf/summary_key_matcher.cpp
-  enkf/summary_key_set.cpp
   enkf/summary_obs.cpp
   enkf/surface.cpp
   enkf/surface_config.cpp
