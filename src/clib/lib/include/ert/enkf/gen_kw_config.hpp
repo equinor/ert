@@ -8,14 +8,12 @@
 #include <ert/util/util.h>
 
 #include <ert/enkf/enkf_macros.hpp>
-#include <ert/enkf/enkf_util.hpp>
-#include <ert/enkf/gen_kw_common.hpp>
+
+typedef struct gen_kw_config_struct gen_kw_config_type;
 
 extern "C" const char *
 gen_kw_config_get_tag_fmt(const gen_kw_config_type *config);
 bool gen_kw_config_is_valid(const gen_kw_config_type *config);
-void gen_kw_config_fprintf_config(const gen_kw_config_type *config,
-                                  const char *outfile, FILE *stream);
 extern "C" void gen_kw_config_set_parameter_file(gen_kw_config_type *config,
                                                  const char *parameter_file);
 extern "C" PY_USED const char *
@@ -24,7 +22,8 @@ extern "C" const char *gen_kw_config_get_key(const gen_kw_config_type *config);
 extern "C" const char *
 gen_kw_config_get_template_file(const gen_kw_config_type *);
 extern "C" void gen_kw_config_free(gen_kw_config_type *);
-double gen_kw_config_transform(const gen_kw_config_type *, int index, double x);
+extern "C" PY_USED double gen_kw_config_transform(const gen_kw_config_type *,
+                                                  int index, double x);
 extern "C" bool
 gen_kw_config_should_use_log_scale(const gen_kw_config_type *config, int index);
 extern "C" int gen_kw_config_get_data_size(const gen_kw_config_type *);

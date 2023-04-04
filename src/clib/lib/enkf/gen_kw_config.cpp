@@ -12,7 +12,6 @@
 #include <ert/enkf/config_keys.hpp>
 #include <ert/enkf/enkf_defaults.hpp>
 #include <ert/enkf/enkf_macros.hpp>
-#include <ert/enkf/gen_kw_common.hpp>
 #include <ert/enkf/gen_kw_config.hpp>
 #include <ert/enkf/trans_func.hpp>
 
@@ -274,13 +273,6 @@ int gen_kw_config_get_index(const gen_kw_config_type *config, const char *key) {
         return index;
     else
         return -1;
-}
-
-void gen_kw_config_fprintf_config(const gen_kw_config_type *config,
-                                  const char *outfile, FILE *stream) {
-    fprintf(stream, CONFIG_VALUE_FORMAT, config->template_file);
-    fprintf(stream, CONFIG_VALUE_FORMAT, outfile);
-    fprintf(stream, CONFIG_VALUE_FORMAT, config->parameter_file);
 }
 
 const char *gen_kw_config_iget_function_type(const gen_kw_config_type *config,

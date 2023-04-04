@@ -9,11 +9,8 @@
 #include <ert/util/string_util.h>
 #include <ert/util/util.h>
 
-#include <ert/enkf/enkf_fs.hpp>
 #include <ert/enkf/enkf_macros.hpp>
-#include <ert/enkf/enkf_util.hpp>
 #include <ert/enkf/gen_common.hpp>
-#include <ert/enkf/gen_data.hpp>
 #include <ert/enkf/gen_obs.hpp>
 #include <ert/except.hpp>
 #include <ert/python.hpp>
@@ -34,8 +31,7 @@
 
   When querying for the observation standard deviation using
   gen_obs_iget_std() the user input value of standard deviation will
-  be returned, whereas when the function gen_obs_measure() is used the
-  std_scaling will be incorporated in the result.
+  be returned.
 */
 struct gen_obs_struct {
     /** This is the total size of the observation vector. */
@@ -198,111 +194,6 @@ gen_obs_type *gen_obs_alloc(const gen_data_config_type *data_config,
     return obs;
 }
 
-static void gen_obs_assert_data_size(const gen_obs_type *gen_obs,
-                                     const gen_data_type *gen_data) {
-    if (gen_obs->observe_all_data) {
-        int data_size = gen_data_get_size(gen_data);
-        if (gen_obs->obs_size != data_size)
-            util_abort(
-                "%s: size mismatch: Observation: %s:%d      Data: %s:%d \n",
-                __func__, gen_obs->obs_key, gen_obs->obs_size,
-                gen_data_get_key(gen_data), data_size);
-    }
-    /*
-    Else the user has explicitly entered indices to observe in the
-    gen_data instances, and we just have to trust them (however the
-    gen_data_iget() does a range check.
-  */
-}
-
-double gen_obs_chi2(const gen_obs_type *gen_obs, const gen_data_type *gen_data,
-                    node_id_type node_id) {
-    gen_obs_assert_data_size(gen_obs, gen_data);
-    {
-        const bool_vector_type *forward_model_active =
-            gen_data_config_get_active_mask(gen_obs->data_config);
-        double sum_chi2 = 0;
-        for (int iobs = 0; iobs < gen_obs->obs_size; iobs++) {
-            int data_index = gen_obs->data_index_list[iobs];
-            if (forward_model_active &&
-                (bool_vector_iget(forward_model_active, data_index) == false))
-                continue; /* Forward model has deactivated this index - just continue. */
-            {
-                double d = gen_data_iget_double(gen_data, data_index);
-                double x =
-                    (d - gen_obs->obs_data[iobs]) / gen_obs->obs_std[iobs];
-                sum_chi2 += x * x;
-            }
-        }
-        return sum_chi2;
-    }
-}
-
-void gen_obs_measure(const gen_obs_type *gen_obs, const gen_data_type *gen_data,
-                     node_id_type node_id, meas_data_type *meas_data) {
-    gen_obs_assert_data_size(gen_obs, gen_data);
-    {
-        meas_block_type *meas_block =
-            meas_data_add_block(meas_data, gen_obs->obs_key,
-                                node_id.report_step, gen_obs->obs_size);
-        const bool_vector_type *forward_model_active =
-            gen_data_config_get_active_mask(gen_obs->data_config);
-
-        for (int iobs = 0; iobs < gen_obs->obs_size; iobs++) {
-            int data_index = gen_obs->data_index_list[iobs];
-
-            if (forward_model_active != NULL) {
-                if (data_index >= bool_vector_size(forward_model_active)) {
-                    throw exc::out_of_range(fmt::format(
-                        "GEN_OBS: {}, index {} is not in GEN_DATA: {} of size "
-                        "{}",
-                        gen_obs->obs_key, data_index,
-                        gen_data_config_get_key(gen_obs->data_config),
-                        bool_vector_size(forward_model_active)));
-                }
-                if (!bool_vector_iget(forward_model_active, data_index))
-                    continue; /* Forward model has deactivated this index - just continue. */
-            }
-
-            meas_block_iset(meas_block, node_id.iens, iobs,
-                            gen_data_iget_double(gen_data, data_index));
-        }
-    }
-}
-
-C_USED void gen_obs_get_observations(gen_obs_type *gen_obs,
-                                     obs_data_type *obs_data, enkf_fs_type *fs,
-                                     int report_step) {
-    const bool_vector_type *forward_model_active = NULL;
-    if (gen_data_config_has_active_mask(gen_obs->data_config, fs,
-                                        report_step)) {
-        gen_data_config_load_active(gen_obs->data_config, fs, report_step,
-                                    true);
-        forward_model_active =
-            gen_data_config_get_active_mask(gen_obs->data_config);
-    }
-
-    {
-        obs_block_type *obs_block =
-            obs_data_add_block(obs_data, gen_obs->obs_key, gen_obs->obs_size);
-
-        for (int iobs = 0; iobs < gen_obs->obs_size; iobs++)
-            obs_block_iset(obs_block, iobs, gen_obs->obs_data[iobs],
-                           IGET_SCALED_STD(gen_obs, iobs));
-
-        /* Setting some of the elements as missing, i.e. deactivated by the forward model. */
-        if (forward_model_active != NULL) {
-            for (int iobs = 0; iobs < gen_obs->obs_size; iobs++) {
-                int data_index = gen_obs->data_index_list[iobs];
-                if (data_index >= bool_vector_size(forward_model_active)) {
-                    obs_block_iset_missing(obs_block, iobs);
-                } else if (!bool_vector_iget(forward_model_active, data_index))
-                    obs_block_iset_missing(obs_block, iobs);
-            }
-        }
-    }
-}
-
 /*
    In general the gen_obs observation vector can be smaller than the
    gen_data field it is observing, i.e. we can have a situation like
@@ -445,10 +336,7 @@ int gen_obs_get_obs_index(const gen_obs_type *gen_obs, int index) {
 }
 
 VOID_FREE(gen_obs)
-VOID_GET_OBS(gen_obs)
-VOID_MEASURE(gen_obs, gen_data)
 VOID_USER_GET_OBS(gen_obs)
-VOID_CHI2(gen_obs, gen_data)
 VOID_UPDATE_STD_SCALE(gen_obs)
 
 class ActiveList;

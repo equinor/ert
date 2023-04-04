@@ -1,4 +1,4 @@
-from ert._c_wrappers.enkf import RealizationStateEnum
+from ert._c_wrappers.enkf.enums import RealizationStateEnum
 
 
 def get_runnable_realizations_mask(ert, casename):
@@ -13,11 +13,11 @@ def get_runnable_realizations_mask(ert, casename):
     fsm = ert.storage_manager
     if casename not in fsm:
         return []
-    sm = fsm.state_map(casename)
-    runnable_flag = (
-        RealizationStateEnum.STATE_UNDEFINED
-        | RealizationStateEnum.STATE_INITIALIZED
-        | RealizationStateEnum.STATE_LOAD_FAILURE
-        | RealizationStateEnum.STATE_HAS_DATA
-    )
-    return sm.createMask(runnable_flag)
+
+    runnable_states = [
+        RealizationStateEnum.STATE_UNDEFINED,
+        RealizationStateEnum.STATE_INITIALIZED,
+        RealizationStateEnum.STATE_LOAD_FAILURE,
+        RealizationStateEnum.STATE_HAS_DATA,
+    ]
+    return fsm[casename].get_realization_mask_from_state(runnable_states)

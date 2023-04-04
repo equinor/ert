@@ -7,10 +7,10 @@
 #include <ert/enkf/config_keys.hpp>
 #include <ert/enkf/enkf_defaults.hpp>
 #include <ert/enkf/enkf_macros.hpp>
-#include <ert/enkf/enkf_node.hpp>
 #include <ert/enkf/enkf_obs.hpp>
 #include <ert/enkf/ext_param_config.hpp>
 #include <ert/enkf/field_config.hpp>
+#include <ert/enkf/gen_data_config.hpp>
 #include <ert/enkf/gen_kw_config.hpp>
 #include <ert/enkf/gen_obs.hpp>
 #include <ert/enkf/surface_config.hpp>
@@ -61,8 +61,9 @@ static enkf_config_node_type *enkf_config_node_alloc__(enkf_var_type var_type,
         node->get_data_size = NULL;
         break;
     case (SURFACE):
-        node->freef = surface_config_free__;
-        node->get_data_size = surface_config_get_data_size__;
+        node->freef =
+            reinterpret_cast<config_free_ftype *>(surface_config_free);
+        node->get_data_size = NULL;
         break;
     case (EXT_PARAM):
         node->freef = ext_param_config_free__;

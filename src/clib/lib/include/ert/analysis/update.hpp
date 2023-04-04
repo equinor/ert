@@ -1,9 +1,6 @@
 #pragma once
 
-#include <ert/enkf/enkf_analysis.hpp>
-#include <ert/enkf/enkf_fs.hpp>
 #include <ert/enkf/ensemble_config.hpp>
-#include <ert/enkf/obs_data.hpp>
 #include <ert/enkf/row_scaling.hpp>
 #include <iterator>
 #include <stdexcept>
@@ -16,24 +13,6 @@ namespace analysis {
  * are active. In addition a flag has_observations which is used to determine wheter
  * it is possible to do an update step.
 */
-class ObservationHandler
-    : public std::enable_shared_from_this<ObservationHandler> {
-public:
-    ObservationHandler() = default;
-    ObservationHandler(Eigen::VectorXd observation_values_in,
-                       Eigen::VectorXd observation_errors_in,
-                       const std::vector<bool> &obs_mask_in,
-                       const UpdateSnapshot &update_snapshot_in)
-        : observation_values(observation_values_in),
-          observation_errors(observation_errors_in),
-          obs_mask(std::move(obs_mask_in)),
-          update_snapshot(std::move(update_snapshot_in)) {}
-
-    Eigen::VectorXd observation_values;
-    Eigen::VectorXd observation_errors;
-    std::vector<bool> obs_mask;
-    UpdateSnapshot update_snapshot;
-};
 
 class Parameter : public std::enable_shared_from_this<Parameter> {
 public:

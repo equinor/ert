@@ -72,8 +72,8 @@ def test_custom_init_runs(snake_oil_case, state_mask, expected_length):
     fs_manager = ert.storage_manager
     source_fs = fs_manager.current_case
     new_fs = fs_manager.add_case("new_case")
-    source_fs.copy_from_case(new_fs, 0, ["SNAKE_OIL_PARAM"], state_mask)
-    assert len(new_fs.getStateMap()) == expected_length
+    source_fs.copy_from_case(new_fs, ["SNAKE_OIL_PARAM"], state_mask)
+    assert len(new_fs.state_map) == expected_length
 
 
 def test_fs_init_from_scratch(snake_oil_case):

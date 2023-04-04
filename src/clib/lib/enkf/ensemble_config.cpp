@@ -19,7 +19,6 @@
 #include <ert/logging.hpp>
 
 namespace fs = std::filesystem;
-
 /**
    setting the format string used to 'mangle' the string in the gen_kw
    template files. consider the following example:
@@ -54,8 +53,6 @@ ensemble_config_type *
 ensemble_config_alloc_full(const char *gen_kw_format_string) {
     ensemble_config_type *ensemble_config = new ensemble_config_type();
 
-    ensemble_config->summary_key_matcher = summary_key_matcher_alloc();
-
     if (strcmp(gen_kw_format_string, DEFAULT_GEN_KW_TAG_FORMAT) != 0) {
         stringlist_type *gen_kw_keys =
             ensemble_config_alloc_keylist_from_impl_type(ensemble_config,
@@ -74,8 +71,6 @@ ensemble_config_alloc_full(const char *gen_kw_format_string) {
 }
 
 void ensemble_config_free(ensemble_config_type *ensemble_config) {
-    summary_key_matcher_free(ensemble_config->summary_key_matcher);
-
     for (auto &config_pair : ensemble_config->config_nodes)
         enkf_config_node_free(config_pair.second);
 
@@ -121,8 +116,7 @@ void ensemble_config_add_node(ensemble_config_type *ensemble_config,
 void ensemble_config_init_SUMMARY_full(ensemble_config_type *ensemble_config,
                                        const char *key,
                                        const ecl_sum_type *refcase) {
-    summary_key_matcher_add_summary_key(ensemble_config->summary_key_matcher,
-                                        key);
+    ensemble_config->summary_keys.push_back(std::string(key));
     if (util_string_has_wildcard(key)) {
         if (refcase != NULL) {
             stringlist_type *keys = stringlist_alloc_new();
@@ -223,47 +217,6 @@ ensemble_config_add_summary(ensemble_config_type *ensemble_config,
     return config_node;
 }
 
-std::pair<fw_load_status, std::string>
-ensemble_config_forward_init(const ensemble_config_type *ens_config,
-                             const int iens, const std::string &run_path,
-                             enkf_fs_type *sim_fs) {
-    auto result = LOAD_SUCCESSFUL;
-    std::string error_msg;
-    {
-        for (auto &config_pair : ens_config->config_nodes) {
-            enkf_config_node_type *config_node = config_pair.second;
-            if (enkf_config_node_use_forward_init(config_node)) {
-                enkf_node_type *node = enkf_node_alloc(config_node);
-                node_id_type node_id = {.report_step = 0, .iens = iens};
-
-                if (!enkf_node_has_data(node, sim_fs, node_id)) {
-                    if (enkf_node_forward_init(node, run_path, iens))
-                        enkf_node_store(node, sim_fs, node_id);
-                    else {
-                        char *init_file = enkf_config_node_alloc_initfile(
-                            enkf_node_get_config(node), run_path.c_str(), iens);
-
-                        if (init_file && !fs::exists(init_file))
-                            error_msg = fmt::format(
-                                "File not found: {} - failed to initialize "
-                                "node: {}\n",
-                                init_file, enkf_node_get_key(node));
-                        else
-                            error_msg =
-                                fmt::format("Failed to initialize node: {}\n",
-                                            enkf_node_get_key(node));
-
-                        free(init_file);
-                        result = LOAD_FAILURE;
-                    }
-                }
-                enkf_node_free(node);
-            }
-        }
-    }
-    return {result, error_msg};
-}
-
 ERT_CLIB_SUBMODULE("ensemble_config", m) {
     m.def("have_forward_init", [](Cwrap<ensemble_config_type> self) {
         for (auto const &[node_key, enkf_config_node] : self->config_nodes) {
@@ -273,4 +226,6 @@ ERT_CLIB_SUBMODULE("ensemble_config", m) {
 
         return false;
     });
+    m.def("get_summary_keys",
+          [](Cwrap<ensemble_config_type> self) { return self->summary_keys; });
 }

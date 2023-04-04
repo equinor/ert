@@ -6,8 +6,7 @@ from qtpy.QtCore import Qt
 from qtpy.QtWidgets import QPushButton, QTextEdit
 
 from ert._c_wrappers.enkf import EnKFMain, ErtConfig
-from ert._clib.state_map import RealizationStateEnum
-from ert._clib.update import Parameter
+from ert._c_wrappers.enkf.enums import RealizationStateEnum
 from ert.gui.tools.manage_cases.case_init_configuration import (
     CaseInitializationConfigurationPanel,
 )
@@ -18,7 +17,7 @@ def test_case_tool_init_prior(qtbot):
     ert = EnKFMain(ErtConfig.from_file("poly.ert"))
     storage = ert.storage_manager.current_case
     assert (
-        list(storage.getStateMap())
+        storage.state_map
         == [RealizationStateEnum.STATE_UNDEFINED] * ert.getEnsembleSize()
     )
     tool = CaseInitializationConfigurationPanel(ert, MagicMock())
@@ -27,7 +26,7 @@ def test_case_tool_init_prior(qtbot):
         Qt.LeftButton,
     )
     assert (
-        list(storage.getStateMap())
+        storage.state_map
         == [RealizationStateEnum.STATE_INITIALIZED] * ert.getEnsembleSize()
     )
 
@@ -60,21 +59,14 @@ def test_that_case_tool_can_copy_case_state(qtbot):
     ert.switchFileSystem("new_case")
     tool = CaseInitializationConfigurationPanel(ert, MagicMock())
     assert (
-        list(new_case.getStateMap())
+        new_case.state_map
         == [RealizationStateEnum.STATE_UNDEFINED] * ert.getEnsembleSize()
     )
     qtbot.mouseClick(
         tool.findChild(QPushButton, name="initialize_existing_button"), Qt.LeftButton
     )
-    parameter = Parameter("KW_NAME")
-    config_node = ert.ensembleConfig().getNode(parameter.name)
-    assert new_case.load_parameter(
-        config_node,
-        [0],
-        parameter,
-    ).flatten()[
-        0
-    ] == pytest.approx(-0.8814227775506998)
+    kw_data = new_case.load_gen_kw("KW_NAME", [0]).flatten()
+    assert kw_data[0] == pytest.approx(-0.8814227775506998)
 
 
 @pytest.mark.usefixtures("copy_poly_case")

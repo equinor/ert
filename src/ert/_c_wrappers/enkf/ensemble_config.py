@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 import os
 import warnings
@@ -346,7 +348,7 @@ class EnsembleConfig(BaseCClass):
         )
 
     @classmethod
-    def from_dict(cls, config_dict):
+    def from_dict(cls, config_dict) -> EnsembleConfig:
         grid_file_path = _get_abs_path(config_dict.get(ConfigKeys.GRID))
         refcase_file_path = _get_abs_path(config_dict.get(ConfigKeys.REFCASE))
         tag_format = config_dict.get(ConfigKeys.GEN_KW_TAG_FORMAT, "<%s>")
@@ -480,3 +482,9 @@ class EnsembleConfig(BaseCClass):
 
     def have_forward_init(self) -> bool:
         return _clib.ensemble_config.have_forward_init(self)
+
+    def get_summary_keys(self) -> List[str]:
+        return _clib.ensemble_config.get_summary_keys(self)
+
+    def get_gen_data_keys(self) -> List[str]:
+        return _clib.ensemble_config.get_gen_data_keys(self)

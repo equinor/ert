@@ -1,12 +1,18 @@
+from __future__ import annotations
+
 import os
+from hashlib import sha256
 from typing import TYPE_CHECKING, Dict, List, TypedDict
 
+import numpy as np
+import pandas as pd
 from cwrap import BaseCClass
 from ecl.util.util import StringList
 
 from ert._c_wrappers import ResPrototype
 
 if TYPE_CHECKING:
+    import numpy.typing as npt
 
     class PriorDict(TypedDict):
         key: str
@@ -53,6 +59,10 @@ class GenKwConfig(BaseCClass):
         "double_vector_ref gen_kw_config_iget_function_parameter_values(gen_kw_config, int)"  # noqa
     )
 
+    _transform = ResPrototype(
+        "double gen_kw_config_transform(gen_kw_config, int, double)"  # noqa
+    )
+
     def __init__(
         self, key: str, template_file: str, parameter_file: str, tag_fmt: str = "<%s>"
     ):
@@ -74,7 +84,7 @@ class GenKwConfig(BaseCClass):
         self._set_template_file(template_file)
         self.__str__ = self.__repr__
 
-    def getTemplateFile(self):
+    def getTemplateFile(self) -> os.PathLike[str]:
         path = self._get_template_file()
         return None if path is None else os.path.abspath(path)
 
@@ -146,3 +156,51 @@ class GenKwConfig(BaseCClass):
                 }
             )
         return priors
+
+    def transform(self, index: int, value: float) -> float:
+        return self._transform(index, value)
+
+    @staticmethod
+    def values_from_files(
+        realizations: List[int], name_format: str, keys: List[str]
+    ) -> npt.NDArray[np.double]:
+        df_values = pd.DataFrame()
+        for iens in realizations:
+            df = pd.read_csv(
+                name_format % iens,
+                delim_whitespace=True,
+                header=None,
+            )
+            # This means we have a key: value mapping in the
+            # file otherwise it is just a list of values
+            if df.shape[1] == 2:
+                # We need to sort the user input keys by the
+                # internal order of sub-parameters:
+                df = df.set_index(df.columns[0])
+                values = df.reindex(keys).values.flatten()
+            else:
+                values = df.values.flatten()
+            df_values[f"{iens}"] = values
+        return df_values.values
+
+    @staticmethod
+    def sample_values(
+        parameter_group_name: str,
+        keys: List[str],
+        global_seed: str,
+        active_realizations: List[int],
+        nr_samples: int,
+    ) -> npt.NDArray[np.double]:
+        parameter_values = []
+        for key in keys:
+            key_hash = sha256(
+                global_seed.encode("utf-8")
+                + f"{parameter_group_name}:{key}".encode("utf-8")
+            )
+            seed = np.frombuffer(key_hash.digest(), dtype="uint32")
+            rng = np.random.default_rng(seed)
+            values = rng.standard_normal(nr_samples)
+            if len(active_realizations) != nr_samples:
+                values = values[active_realizations]
+            parameter_values.append(values)
+        return np.array(parameter_values)

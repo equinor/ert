@@ -61,6 +61,7 @@ def test_failed_realizations(initials, completed, any_failed, failures):
     assert brm.has_failed_realizations() == any_failed
 
 
+@pytest.mark.usefixtures("use_tmpdir")
 def test_run_ensemble_evaluator():
     run_arg = MagicMock()
     run_arg.run_status = RunStatusType.JOB_LOAD_FAILURE
@@ -133,7 +134,7 @@ def test_validation():
     ert = MagicMock(
         _ensemble_size=100,
         storage_manager=MagicMock(
-            __get_item__=lambda _: MagicMock(getStateMap=lambda _: list(range(10))),
+            __get_item__=lambda _: MagicMock(state_map=list(range(10))),
             __contains__=lambda _, __: True,
         ),
     )

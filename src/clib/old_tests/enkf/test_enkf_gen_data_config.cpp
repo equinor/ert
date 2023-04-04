@@ -4,8 +4,7 @@
 #include <string>
 #include <vector>
 
-#include <ert/enkf/enkf_fs.hpp>
-#include <ert/enkf/gen_data.hpp>
+#include <ert/enkf/gen_data_config.hpp>
 #include <ert/util/test_util.h>
 #include <ert/util/test_work_area.hpp>
 
@@ -39,48 +38,6 @@ void test_report_steps() {
     }
 
     gen_data_config_free(config);
-}
-
-void test_gendata_fload() {
-    ecl::util::TestArea ta("gendata_fload");
-    {
-        std::vector<std::string> v{"-1", "100.0", "123.5", "-1"};
-        std::ofstream out_file("RFT_FILE");
-        for (const auto &e : v)
-            out_file << e << std::endl;
-    }
-    gen_data_config_type *config =
-        gen_data_config_alloc_GEN_DATA_result("KEY", ASCII);
-    gen_data_type *gen_data = gen_data_alloc(config);
-
-    const char *cwd = ta.original_cwd().c_str();
-    enkf_fs_type *write_fs =
-        enkf_fs_create_fs(cwd, BLOCK_FS_DRIVER_ID, 1, true);
-    gen_data_forward_load(gen_data, "RFT_FILE", 0, write_fs);
-    int data_size = gen_data_config_get_data_size(config, 0);
-    test_assert_int_equal(data_size, 4);
-
-    gen_data_free(gen_data);
-    gen_data_config_free(config);
-    enkf_fs_umount(write_fs);
-}
-
-void test_gendata_fload_empty_file() {
-    ecl::util::TestArea ta("fload_empty");
-    std::ofstream output("EMPTY_FILE");
-    gen_data_config_type *config =
-        gen_data_config_alloc_GEN_DATA_result("KEY", ASCII);
-    gen_data_type *gen_data = gen_data_alloc(config);
-    const char *cwd = ta.original_cwd().c_str();
-    enkf_fs_type *write_fs =
-        enkf_fs_create_fs(cwd, BLOCK_FS_DRIVER_ID, 1, true);
-    gen_data_forward_load(gen_data, "EMPTY_FILE", 0, write_fs);
-    int data_size = gen_data_config_get_data_size(config, 0);
-    test_assert_true(data_size == 0);
-
-    gen_data_free(gen_data);
-    gen_data_config_free(config);
-    enkf_fs_umount(write_fs);
 }
 
 void test_result_format() {
@@ -125,8 +82,6 @@ int main(int argc, char **argv) {
     test_result_format();
     test_set_invalid_format();
     test_format_check();
-    test_gendata_fload();
-    test_gendata_fload_empty_file();
 
     exit(0);
 }

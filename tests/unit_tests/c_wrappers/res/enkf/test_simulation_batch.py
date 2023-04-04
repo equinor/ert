@@ -1,6 +1,6 @@
 import pytest
 
-from ert._c_wrappers.enkf import EnkfConfigNode, EnKFMain, EnkfNode, NodeId
+from ert._c_wrappers.enkf import EnkfConfigNode, EnKFMain
 from ert._c_wrappers.enkf.enums import RealizationStateEnum
 from ert.simulator.simulation_context import _run_forward_model
 
@@ -27,27 +27,22 @@ def test_run_simulation_batch(setup_case):
     ens_config.addNode(order_result)
     ens_config.addNode(injection_result)
 
-    order_node = EnkfNode(order_control)
-    order_node_ext = order_node.as_ext_param()
-    injection_node = EnkfNode(injection_control)
-    injection_node_ext = injection_node.as_ext_param()
-
     fs_manager = ert.storage_manager
     sim_fs = fs_manager.add_case("sim_fs")
-    state_map = sim_fs.getStateMap()
-    batch_size = ens_size
-    for iens in range(batch_size):
-        node_id = NodeId(0, iens)
 
+    batch_size = ens_size
+    order_node_ext = {}
+    injection_node_ext = {}
+    for iens in range(batch_size):
         order_node_ext["W1"] = iens
         order_node_ext["W2"] = iens * 10
         order_node_ext["W3"] = iens * 100
-        order_node.save(sim_fs, node_id)
+        sim_fs.save_ext_param("WELL_ORDER", iens, order_node_ext)
 
         injection_node_ext["W1"] = iens + 1
         injection_node_ext["W4"] = 3 * (iens + 1)
-        injection_node.save(sim_fs, node_id)
-        state_map[iens] = RealizationStateEnum.STATE_INITIALIZED
+        sim_fs.save_ext_param("WELL_INJECTION", iens, injection_node_ext)
+        sim_fs.state_map[iens] = RealizationStateEnum.STATE_INITIALIZED
 
     mask = [True] * batch_size
     run_context = ert.load_ensemble_context(sim_fs.case_name, mask, iteration=0)
@@ -58,15 +53,11 @@ def test_run_simulation_batch(setup_case):
     num = _run_forward_model(ert, job_queue, run_context)
     assert num == batch_size
 
-    order_result = EnkfNode(ens_config["ORDER"])
-    injection_result = EnkfNode(ens_config["INJECTION"])
-
     for iens in range(batch_size):
-        node_id = NodeId(0, iens)
-        order_result.load(sim_fs, node_id)
-        data = order_result.asGenData()
+        data, _ = sim_fs.load_gen_data("ORDER@0", [iens])
+        data = data.flatten()
 
-        order_node.load(sim_fs, node_id)
+        order_node_ext = sim_fs.load_ext_param("WELL_ORDER", iens)
         assert order_node_ext["W1"] == data[0]
         assert order_node_ext["W2"] == data[1]
         assert order_node_ext["W3"] == data[2]

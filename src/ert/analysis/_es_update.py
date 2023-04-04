@@ -1,18 +1,21 @@
 from __future__ import annotations
 
 import logging
+from collections import defaultdict
 from dataclasses import dataclass, field
+from math import sqrt
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
 
 import iterative_ensemble_smoother as ies
 import numpy as np
+import pandas
 from iterative_ensemble_smoother.experimental import (
     ensemble_smoother_update_step_row_scaling,
 )
+from pandas import DataFrame
 
-from ert._c_wrappers.enkf import ActiveMode
-from ert._c_wrappers.enkf.enums import RealizationStateEnum
+from ert._c_wrappers.enkf.enums import ActiveMode, ErtImplType, RealizationStateEnum
 from ert._c_wrappers.enkf.row_scaling import RowScaling
 from ert._clib import update
 
@@ -26,13 +29,22 @@ if TYPE_CHECKING:
     from ert._c_wrappers.enkf.enkf_fs import EnkfFs
     from ert._c_wrappers.enkf.enkf_obs import EnkfObs
     from ert._c_wrappers.enkf.ensemble_config import EnsembleConfig
-    from ert._clib.enkf_analysis import UpdateSnapshot
 
 logger = logging.getLogger(__name__)
 
 
 class ErtAnalysisError(Exception):
     pass
+
+
+@dataclass
+class UpdateSnapshot:
+    obs_name: List[str]
+    obs_value: List[float]
+    obs_std: List[float]
+    obs_status: List[str]
+    response_mean: List[float]
+    response_std: List[float]
 
 
 @dataclass
@@ -143,12 +155,24 @@ def _save_temporary_storage_to_disk(
 ) -> None:
     for key, matrix in temporary_storage.items():
         config_node = ensemble_config.getNode(key)
-        target_fs.save_parameters(
-            config_node=config_node,
-            iens_active_index=iens_active_index,
-            parameter=update.Parameter(key),
-            values=matrix,
-        )
+        if config_node.getImplementationType() == ErtImplType.GEN_KW:
+            gen_kw_config = config_node.getKeywordModelConfig()
+            parameter_keys = list(gen_kw_config)
+            for i, realization in enumerate(iens_active_index):
+                target_fs.save_gen_kw(key, parameter_keys, realization, matrix[:, i])
+        elif config_node.getImplementationType() == ErtImplType.SURFACE:
+            surface_config = config_node.getSurfaceModelConfig()
+            for i, realization in enumerate(iens_active_index):
+                target_fs.save_surface_data(
+                    key, realization, surface_config.base_surface_path, matrix[:, i]
+                )
+        elif config_node.getImplementationType() == ErtImplType.FIELD:
+            for i, realization in enumerate(iens_active_index):
+                target_fs.save_field_data(key, realization, matrix[:, i])
+        else:
+            raise NotImplementedError(
+                f"{config_node.getImplementationType()} is not supported"
+            )
 
 
 def _create_temporary_parameter_storage(
@@ -159,13 +183,158 @@ def _create_temporary_parameter_storage(
     temporary_storage = {}
     for key in ensemble_config.parameters:
         config_node = ensemble_config.getNode(key)
-        matrix = source_fs.load_parameter(
-            config_node=config_node,
-            iens_active_index=iens_active_index,
-            parameter=update.Parameter(key),
-        )
+        if config_node.getImplementationType() == ErtImplType.GEN_KW:
+            matrix = source_fs.load_gen_kw(key, iens_active_index)
+        elif config_node.getImplementationType() == ErtImplType.SURFACE:
+            matrix = source_fs.load_surface_data(key, iens_active_index)
+        elif config_node.getImplementationType() == ErtImplType.FIELD:
+            matrix = source_fs.load_field(key, iens_active_index)
+        else:
+            raise NotImplementedError(
+                f"{config_node.getImplementationType()} is not supported"
+            )
         temporary_storage[key] = matrix
     return temporary_storage
+
+
+def _get_obs_and_measure_data(
+    obs: "EnkfObs",
+    source_fs: "EnkfFs",
+    selected_observations: List[Tuple[str, List[int]]],
+    ens_active_list: List[int],
+) -> Tuple[DataFrame, DataFrame]:
+    data_keys = defaultdict(set)
+    obs_data = []
+    for obs_key, active_list in selected_observations:
+        obs_vector = obs[obs_key]
+
+        try:
+            data_key = obs_vector.getDataKey()
+        except KeyError:
+            raise KeyError(f"No data key for obs key: {obs_key}")
+        imp_type = obs_vector.getImplementationType().name
+        if imp_type == "GEN_OBS":
+            obs_data.append(obs_vector.get_gen_obs_data(active_list))
+            data_key = f"{data_key}@{obs_vector.activeStep()}"
+        elif imp_type == "SUMMARY_OBS":
+            obs_data.append(obs_vector.get_summary_obs_data(obs, active_list))
+
+        data_keys[imp_type].add(data_key)
+
+    measured_data = []
+    for imp_type, keys in data_keys.items():
+        if imp_type == "SUMMARY_OBS":
+            measured_data.append(
+                source_fs.load_summary_data_as_df(list(keys), ens_active_list)
+            )
+
+        if imp_type == "GEN_OBS":
+            measured_data.append(
+                source_fs.load_gen_data_as_df(list(keys), ens_active_list)
+            )
+
+    return pandas.concat(measured_data), pandas.concat(obs_data)
+
+
+def _deactivate_outliers(
+    meas_data: DataFrame, std_cutoff: float, alpha: float
+) -> pandas.Index:
+    """
+    Extracts indices for which outliers that are to be extracted
+    """
+    filter_std = _filter_ensemble_std(meas_data, std_cutoff)
+    filter_mean_obs = _filter_ensemble_mean_obs(meas_data, alpha)
+    return filter_std.index.union(filter_mean_obs.index)
+
+
+def _filter_ensemble_std(data: DataFrame, std_cutoff: float) -> pandas.Series:
+    """
+    Filters on ensemble variation versus a user defined standard
+    deviation cutoff. If there is not enough variation in the measurements
+    the data point is removed.
+    """
+    S = data.loc[:, ~data.columns.isin(["OBS", "STD"])]
+    ens_std = S.std(axis=1, ddof=0)
+    std_filter = ens_std <= std_cutoff
+    return std_filter[std_filter]
+
+
+def _filter_ensemble_mean_obs(data: DataFrame, alpha: float) -> pandas.Series:
+    """
+    Filters on distance between the observed data and the ensemble mean
+    based on variation and a user defined alpha.
+    """
+    S = data.loc[:, ~data.columns.isin(["OBS", "STD"])]
+    ens_mean = S.mean(axis=1)
+    ens_std = S.std(axis=1, ddof=0)
+    obs_values = data.loc[:, "OBS"]
+    obs_std = data.loc[:, "STD"]
+
+    mean_filter = abs(obs_values - ens_mean) > alpha * (ens_std + obs_std)
+    return mean_filter[mean_filter]
+
+
+def _create_update_snapshot(data: DataFrame, obs_mask: List[bool]) -> UpdateSnapshot:
+    observation_values = data.loc[:, "OBS"].to_numpy()
+    observation_errors = data.loc[:, "STD"].to_numpy()
+    S = data.loc[:, ~data.columns.isin(["OBS", "STD"])]
+
+    return UpdateSnapshot(
+        obs_name=[obs_key for (obs_key, _, _) in data.index.to_list()],
+        obs_value=observation_values,
+        obs_std=observation_errors,
+        obs_status=["ACTIVE" if v else "DEACTIVATED" for v in obs_mask],
+        response_mean=S.mean(axis=1),
+        response_std=S.std(axis=1, ddof=0),
+    )
+
+
+def _load_observations_and_responses(
+    source_fs: "EnkfFs",
+    obs: "EnkfObs",
+    alpha: float,
+    std_cutoff: float,
+    global_std_scaling: float,
+    ens_mask: List[bool],
+    selected_observations: List[Tuple[str, List[int]]],
+) -> Any:
+    ens_active_list = [i for i, b in enumerate(ens_mask) if b]
+    measured_data, obs_data = _get_obs_and_measure_data(
+        obs, source_fs, selected_observations, ens_active_list
+    )
+
+    joined = obs_data.join(measured_data, on=["data_key", "axis"], how="inner")
+    if len(obs_data) > len(joined):
+        missing_indices = set(obs_data.index) - set(joined.index)
+        error_msg = []
+        for i in missing_indices:
+            error_msg.append(
+                f"Observation: {i[0]} attached to response: {i[1]} "
+                f"at: {i[2]} has no response"
+            )
+        raise IndexError("\n".join(error_msg))
+
+    obs_filter = _deactivate_outliers(joined, std_cutoff, alpha)
+    obs_mask = [True if i not in obs_filter else False for i in joined.index]
+    update_snapshot = _create_update_snapshot(joined, obs_mask)
+
+    joined.drop(index=obs_filter, inplace=True)
+    observation_values = joined.loc[:, "OBS"].to_numpy()
+    observation_errors = joined.loc[:, "STD"].to_numpy()
+    S = joined.loc[:, ~joined.columns.isin(["OBS", "STD"])]
+
+    # Inflating measurement errors by a factor sqrt(global_std_scaling) as shown
+    # in for example evensen2018 - Analysis of iterative ensemble smoothers for
+    # solving inverse problems.
+    # `global_std_scaling` is 1.0 for ES.
+    observation_errors *= sqrt(global_std_scaling)
+
+    return S.to_numpy(), (
+        observation_values,
+        observation_errors,
+        obs_mask,
+        update_snapshot,
+    )
 
 
 def analysis_ES(
@@ -196,7 +365,12 @@ def analysis_ES(
     # Looping over local analysis update_step
     for update_step in updatestep:
         try:
-            S, observation_handle = update.load_observations_and_responses(
+            S, (
+                observation_values,
+                observation_errors,
+                _,
+                update_snapshot,
+            ) = _load_observations_and_responses(
                 source_fs,
                 obs,
                 alpha,
@@ -209,11 +383,7 @@ def analysis_ES(
             raise ErtAnalysisError(e) from e
 
         # pylint: disable=unsupported-assignment-operation
-        smoother_snapshot.update_step_snapshots[
-            update_step.name
-        ] = observation_handle.update_snapshot
-        observation_values = observation_handle.observation_values
-        observation_errors = observation_handle.observation_errors
+        smoother_snapshot.update_step_snapshots[update_step.name] = update_snapshot
         if len(observation_values) == 0:
             raise ErtAnalysisError(
                 f"No active observations for update step: {update_step.name}."
@@ -287,7 +457,12 @@ def analysis_IES(
     # Looping over local analysis update_step
     for update_step in updatestep:
         try:
-            S, observation_handle = update.load_observations_and_responses(
+            S, (
+                observation_values,
+                observation_errors,
+                observation_mask,
+                update_snapshot,
+            ) = _load_observations_and_responses(
                 source_fs,
                 obs,
                 alpha,
@@ -299,11 +474,7 @@ def analysis_IES(
         except IndexError as e:
             raise ErtAnalysisError(e)
         # pylint: disable=unsupported-assignment-operation
-        smoother_snapshot.update_step_snapshots[
-            update_step.name
-        ] = observation_handle.update_snapshot
-        observation_values = observation_handle.observation_values
-        observation_errors = observation_handle.observation_errors
+        smoother_snapshot.update_step_snapshots[update_step.name] = update_snapshot
         if len(observation_values) == 0:
             raise ErtAnalysisError(
                 f"No active observations for update step: {update_step.name}."
@@ -409,8 +580,9 @@ class ESUpdate:
         alpha = analysis_config.get_enkf_alpha()
         std_cutoff = analysis_config.get_std_cutoff()
         global_scaling = analysis_config.get_global_std_scaling()
-        source_state_map = prior_storage.getStateMap()
-        ens_mask = source_state_map.selectMatching(RealizationStateEnum.STATE_HAS_DATA)
+        ens_mask = prior_storage.get_realization_mask_from_state(
+            [RealizationStateEnum.STATE_HAS_DATA]
+        )
         _assert_has_enough_realizations(ens_mask, analysis_config)
 
         smoother_snapshot = _create_smoother_snapshot(
@@ -459,8 +631,9 @@ class ESUpdate:
         alpha = analysis_config.get_enkf_alpha()
         std_cutoff = analysis_config.get_std_cutoff()
         global_scaling = analysis_config.get_global_std_scaling()
-        source_state_map = prior_storage.getStateMap()
-        ens_mask = source_state_map.selectMatching(RealizationStateEnum.STATE_HAS_DATA)
+        ens_mask = prior_storage.get_realization_mask_from_state(
+            [RealizationStateEnum.STATE_HAS_DATA]
+        )
 
         _assert_has_enough_realizations(ens_mask, analysis_config)
 

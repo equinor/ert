@@ -45,8 +45,6 @@ class EnsembleSmoother(BaseRunModel):
         self._checkMinimumActiveRealizations(len(prior_context.active_realizations))
         self.setPhase(0, "Running simulations...", indeterminate=False)
 
-        # self.setAnalysisModule(arguments["analysis_module"])
-
         self.setPhaseName("Pre processing...", indeterminate=True)
         self.ert().sample_prior(prior_context.sim_fs, prior_context.active_realizations)
         self.ert().createRunPath(prior_context)
@@ -73,14 +71,14 @@ class EnsembleSmoother(BaseRunModel):
         self.setPhaseName("Analyzing...")
         self.ert().runWorkflows(HookRuntime.PRE_FIRST_UPDATE)
         self.ert().runWorkflows(HookRuntime.PRE_UPDATE)
-        state = (
-            RealizationStateEnum.STATE_HAS_DATA  # type: ignore
-            | RealizationStateEnum.STATE_INITIALIZED
-        )
+        states = [
+            RealizationStateEnum.STATE_HAS_DATA,  # type: ignore
+            RealizationStateEnum.STATE_INITIALIZED,
+        ]
         target_case_format = self._simulation_arguments["target_case"]
         posterior_context = self.ert().create_ensemble_context(
             target_case_format,
-            prior_context.sim_fs.getStateMap().createMask(state),
+            prior_context.sim_fs.get_realization_mask_from_state(states),
             iteration=1,
         )
 

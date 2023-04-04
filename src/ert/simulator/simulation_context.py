@@ -81,7 +81,7 @@ def _run_forward_model(
             else:
                 totalOk += 1
 
-    run_context.sim_fs.fsync()  # type: ignore
+    run_context.sim_fs.sync()
 
     return totalOk
 
@@ -117,9 +117,10 @@ class SimulationContext:
             iteration=itr,
         )
 
-        state_map = self._run_context.sim_fs.getStateMap()
         for realization_nr in self._run_context.active_realizations:
-            state_map[realization_nr] = RealizationStateEnum.STATE_INITIALIZED
+            self._run_context.sim_fs.state_map[
+                realization_nr
+            ] = RealizationStateEnum.STATE_INITIALIZED
         self._ert.createRunPath(self._run_context)
         self._ert.runWorkflows(HookRuntime.PRE_SIMULATION)
         self._sim_thread = self._run_simulations_simple_step()

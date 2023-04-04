@@ -25,9 +25,7 @@ def test_hook_call_order_ensemble_smoother(monkeypatch):
     """
     ert_mock = MagicMock(
         _ensemble_size=0,
-        storage_manager=MagicMock(
-            __get_item__=lambda x: MagicMock(getStateMap=lambda y: [])
-        ),
+        storage_manager=MagicMock(__get_item__=lambda x: MagicMock(state_map=[])),
     )
     minimum_args = {
         "current_case": "default",
@@ -87,7 +85,7 @@ def test_hook_call_order_iterative_ensemble_smoother(monkeypatch):
     ert_mock = MagicMock(
         _ensemble_size=10,
         storage_manager=MagicMock(
-            __get_item__=lambda x: MagicMock(getStateMap=lambda y: list(range(10)))
+            __get_item__=lambda x: MagicMock(state_map=list(range(10)))
         ),
     )
     minimum_args = {
