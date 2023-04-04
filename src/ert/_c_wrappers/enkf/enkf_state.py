@@ -16,13 +16,12 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-def _internalize_GEN_DATA(
-    ensemble_config: "EnsembleConfig", run_arg: "RunArg", last_report: int
-):
+def _internalize_GEN_DATA(ensemble_config: "EnsembleConfig", run_arg: "RunArg"):
     keys = ensemble_config.getKeylistFromImplType(ErtImplType.GEN_DATA)
 
     run_path = Path(run_arg.runpath)
     errors = []
+    all_data = {}
     for key in keys:
         config_node = ensemble_config[key]
         filename_fmt = config_node.get_enkf_infile()
@@ -34,9 +33,9 @@ def _internalize_GEN_DATA(
 
             with open(run_path / filename, "r", encoding="utf-8") as f:
                 data = [float(v.strip()) for v in f.readlines()]
+            all_data[f"{key}@{i}"] = np.array(data)
 
-            run_arg.ensemble_storage.save_gen_data(f"{key}-{i}", data, run_arg.iens)
-
+    run_arg.ensemble_storage.save_gen_data(all_data, run_arg.iens)
     if errors:
         return (LoadStatus.LOAD_FAILURE, "\n".join(errors))
     return (LoadStatus.LOAD_SUCCESSFUL, "")
@@ -80,10 +79,10 @@ def _internalize_SUMMARY_DATA(ens_config: "EnsembleConfig", run_arg: "RunArg"):
             logger.warning(
                 f"Realization: {run_arg.iens}, load warning: {len(missing)} "
                 "inconsistencies in time map, first: "
-                f"Time mismatch for step: 1, response time: {missing[0][0]}, reference "
-                f"case: {missing[0][1]}, last: Time mismatch for step: "
-                f"{missing[-1][2]}, response time: {missing[-1][0]}, reference "
-                f"case: {missing[-1][1]} from: {run_arg.runpath}/"
+                f"Time mismatch for step: {missing[0][2]}, response time: "
+                f"{missing[0][0]}, reference case: {missing[0][1]}, last: Time "
+                f"mismatch for step: {missing[-1][2]}, response time: {missing[-1][0]}"
+                f", reference case: {missing[-1][1]} from: {run_arg.runpath}/"
                 f"{run_arg.job_name}.UNSMRY"
             )
 
@@ -106,16 +105,13 @@ def _internalize_SUMMARY_DATA(ens_config: "EnsembleConfig", run_arg: "RunArg"):
 
 
 def _internalize_results(
-    ens_config: "EnsembleConfig", num_reports: int, run_arg: "RunArg"
+    ens_config: "EnsembleConfig", run_arg: "RunArg"
 ) -> Tuple[LoadStatus, str]:
     status = _internalize_SUMMARY_DATA(ens_config, run_arg)
     if status[0] != LoadStatus.LOAD_SUCCESSFUL:
         return status
 
-    num_timestamps = len(run_arg.ensemble_storage.getTimeMap())
-    if num_timestamps > 0:
-        num_reports = num_timestamps
-    result = _internalize_GEN_DATA(ens_config, run_arg, num_reports)
+    result = _internalize_GEN_DATA(ens_config, run_arg)
 
     if result[0] == LoadStatus.LOAD_FAILURE:
         return (LoadStatus.LOAD_FAILURE, "Failed to internalize GEN_DATA")

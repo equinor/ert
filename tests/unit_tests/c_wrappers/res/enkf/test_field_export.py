@@ -2,9 +2,7 @@ import os
 
 import pytest
 
-from ert._c_wrappers.enkf import NodeId
 from ert._c_wrappers.enkf.config import FieldTypeEnum
-from ert._c_wrappers.enkf.data import EnkfNode
 
 
 def test_field_type_enum(snake_oil_field_example):
@@ -30,33 +28,84 @@ def test_field_basics(snake_oil_field_example):
     assert fc.get_output_transform_name() is None
 
 
-def test_field_export(snake_oil_field_example):
+def test_field_export_many(snake_oil_field_example, prior_ensemble):
     ert = snake_oil_field_example
-    fs_manager = ert.storage_manager
+
+    prior = ert.ensemble_context(prior_ensemble, [True, True, True, True, True], 0)
+    ert.sample_prior(prior.sim_fs, prior.active_realizations)
+    ert.createRunPath(prior)
     ens_config = ert.ensembleConfig()
     config_node = ens_config["PERMX"]
-    data_node = EnkfNode(config_node)
-    node_id = NodeId(0, 0)
-    fs = fs_manager.current_case
-    data_node.tryLoad(fs, node_id)
+    fs = prior.sim_fs
 
-    data_node.export("export/with/path/PERMX.grdecl")
-    assert os.path.isfile("export/with/path/PERMX.grdecl")
-
-
-def test_field_export_many(snake_oil_field_example):
-    ert = snake_oil_field_example
-    fs_manager = ert.storage_manager
-    ens_config = ert.ensembleConfig()
-    config_node = ens_config["PERMX"]
-
-    fs = fs_manager.current_case
-    ert.sample_prior(fs, list(range(ert.getEnsembleSize())))
-    # Filename without embedded %d - TypeError
-    with pytest.raises(TypeError):
-        EnkfNode.exportMany(config_node, "export/with/path/PERMX.grdecl", fs, [0, 2, 4])
-
-    EnkfNode.exportMany(config_node, "export/with/path/PERMX_%d.grdecl", fs, [0, 2, 4])
+    fs.export_field_many(
+        config_node.getFieldModelConfig().get_key(),
+        [0, 2, 4],
+        "export/with/path/PERMX_%d.grdecl",
+        fformat="grdecl",
+    )
     assert os.path.isfile("export/with/path/PERMX_0.grdecl")
+    assert not os.path.isfile("export/with/path/PERMX_1.grdecl")
     assert os.path.isfile("export/with/path/PERMX_2.grdecl")
+    assert not os.path.isfile("export/with/path/PERMX_3.grdecl")
     assert os.path.isfile("export/with/path/PERMX_4.grdecl")
+
+
+def test_field_export(snake_oil_field_example, prior_ensemble):
+    ert = snake_oil_field_example
+
+    prior = ert.ensemble_context(prior_ensemble, [True, False, False, True, True], 0)
+    ert.sample_prior(prior.sim_fs, prior.active_realizations)
+    ert.createRunPath(prior)
+    ens_config = ert.ensembleConfig()
+    config_node = ens_config["PERMX"]
+
+    fs = prior_ensemble
+    fs.export_field(
+        config_node.getFieldModelConfig().get_key(),
+        0,
+        "export/with/path/PERMX_0.grdecl",
+        fformat="grdecl",
+    )
+    assert os.path.isfile("export/with/path/PERMX_0.grdecl")
+    assert os.path.getsize("export/with/path/PERMX_0.grdecl") > 0
+
+    with pytest.raises(
+        KeyError, match="Unable to load FIELD for key: PERMX, realization: 1"
+    ):
+        fs.export_field(
+            config_node.getFieldModelConfig().get_key(),
+            1,
+            "export/with/path/PERMX_1.grdecl",
+            fformat="grdecl",
+        )
+    assert not os.path.isfile("export/with/path/PERMX_1.grdecl")
+
+    with pytest.raises(
+        KeyError, match="Unable to load FIELD for key: PERMX, realization: 2"
+    ):
+        fs.export_field(
+            config_node.getFieldModelConfig().get_key(),
+            2,
+            "export/with/path/PERMX_2.grdecl",
+            fformat="grdecl",
+        )
+    assert not os.path.isfile("export/with/path/PERMX_2.grdecl")
+
+    fs.export_field(
+        config_node.getFieldModelConfig().get_key(),
+        3,
+        "export/with/path/PERMX_3.grdecl",
+        fformat="grdecl",
+    )
+    assert os.path.isfile("export/with/path/PERMX_3.grdecl")
+    assert os.path.getsize("export/with/path/PERMX_3.grdecl") > 0
+
+    fs.export_field(
+        config_node.getFieldModelConfig().get_key(),
+        4,
+        "export/with/path/PERMX_4.grdecl",
+        fformat="grdecl",
+    )
+    assert os.path.isfile("export/with/path/PERMX_4.grdecl")
+    assert os.path.getsize("export/with/path/PERMX_4.grdecl") > 0

@@ -8,6 +8,7 @@ import sys
 from argparse import ArgumentParser, ArgumentTypeError
 from contextlib import contextmanager
 from typing import Any, Dict, Generator, Optional, Sequence, Union
+from uuid import UUID
 
 import yaml
 from ecl import set_abort_handler
@@ -27,7 +28,7 @@ from ert.cli.main import ErtCliError, ErtTimeoutError, run_cli
 from ert.logging import LOGGING_CONFIG
 from ert.logging._log_util_abort import _log_util_abort
 from ert.namespace import Namespace
-from ert.services import Storage, WebvizErt
+from ert.services import StorageService, WebvizErt
 from ert.shared.feature_toggling import FeatureToggling
 from ert.shared.ide.keywords.data.validation_status import ValidationStatus
 from ert.shared.ide.keywords.definitions import (
@@ -48,7 +49,7 @@ def run_ert_storage(args: Namespace) -> None:
     if args.database_url is not None:
         kwargs["database_url"] = args.database_url
 
-    with Storage.start_server(**kwargs) as server:
+    with StorageService.start_server(**kwargs) as server:
         server.wait()
 
 
@@ -75,7 +76,7 @@ def run_webviz_ert(args: Namespace) -> None:
     if args.database_url is not None:
         kwargs["database_url"] = args.database_url
 
-    with Storage.init_service(**kwargs) as storage:
+    with StorageService.init_service(**kwargs) as storage:
         storage.wait_until_ready()
         print(
             """
@@ -140,6 +141,12 @@ def valid_name(user_input: str) -> str:
     if validated.failed():
         strip_error_message_and_raise_exception(validated)
     return user_input
+
+
+def valid_case(user_input: str) -> Union[str, UUID]:
+    if user_input.startswith("UUID="):
+        return UUID(user_input[5:])
+    return valid_name(user_input)
 
 
 def valid_iter_num(user_input: str) -> str:
@@ -221,6 +228,12 @@ def get_ert_parser(parser: Optional[ArgumentParser] = None) -> ArgumentParser:
         help="Directory where ERT will store the logs. Default is ./logs",
     )
 
+    parser.add_argument(
+        "--read-only",
+        action="store_true",
+        help="Start ERT in read-only mode",
+    )
+
     subparsers = parser.add_subparsers(
         title="Available user entries",
         description="ERT can be accessed through a GUI or CLI interface. Include "
@@ -274,6 +287,13 @@ def get_ert_parser(parser: Optional[ArgumentParser] = None) -> ArgumentParser:
     test_run_parser = subparsers.add_parser(
         TEST_RUN_MODE, help=test_run_description, description=test_run_description
     )
+    test_run_parser.add_argument(
+        "--current-case",
+        type=valid_name,
+        default="default",
+        help="Name of the case where the results for the simulation "
+        "using the prior parameters will be stored.",
+    )
 
     # ensemble_experiment_parser
     ensemble_experiment_description = (
@@ -294,8 +314,8 @@ def get_ert_parser(parser: Optional[ArgumentParser] = None) -> ArgumentParser:
     )
     ensemble_experiment_parser.add_argument(
         "--current-case",
-        type=valid_name,
-        required=False,
+        type=valid_case,
+        default="default",
         help="Name of the case where the results for the simulation "
         "using the prior parameters will be stored.",
     )
@@ -337,7 +357,7 @@ def get_ert_parser(parser: Optional[ArgumentParser] = None) -> ArgumentParser:
     ensemble_smoother_parser.add_argument(
         "--current-case",
         type=valid_name,
-        required=False,
+        default="default",
         help="Name of the case where the results for the simulation "
         "using the prior parameters will be stored.",
     )
@@ -372,7 +392,7 @@ def get_ert_parser(parser: Optional[ArgumentParser] = None) -> ArgumentParser:
     iterative_ensemble_smoother_parser.add_argument(
         "--current-case",
         type=valid_name,
-        required=False,
+        default="default",
         help="Name of the case where the results for the simulation "
         "using the prior parameters will be stored.",
     )
@@ -413,19 +433,12 @@ def get_ert_parser(parser: Optional[ArgumentParser] = None) -> ArgumentParser:
         "observation errors from one iteration to the next across 4 iterations.",
     )
     es_mda_parser.add_argument(
-        "--current-case",
+        "--restart-case",
         type=valid_name,
-        required=False,
+        default=None,
         help="Name of the case where the results for the simulation "
-        "using the prior parameters will be stored.",
-    )
-    es_mda_parser.add_argument(
-        "--start-iteration",
-        default="0",
-        type=valid_iter_num,
-        required=False,
-        help="Which iteration the evaluation should start from. "
-        "Requires cases previous to the specified iteration to exist.",
+        "using the prior parameters will be stored. Iteration number is read "
+        "from this case. If provided this will be a restart a run",
     )
 
     workflow_description = "Executes the workflow given"
@@ -483,7 +496,7 @@ def start_ert_server(mode: str) -> Generator[None, None, None]:
         yield
         return
 
-    with Storage.start_server():
+    with StorageService.start_server():
         yield
 
 

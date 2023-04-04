@@ -33,7 +33,7 @@ def test_that_the_manual_analysis_tool_works(
 
         # Source case is "iter-0"
         case_selector = run_panel.source_case_selector
-        assert case_selector.currentText() == "iter-0"
+        assert case_selector.currentText().startswith("iter-0")
 
         # Click on "Run" and click ok on the message box
         def handle_dialog():
@@ -61,7 +61,7 @@ def test_that_the_manual_analysis_tool_works(
         assert current_tab.objectName() == "create_new_case_tab"
         case_list = current_tab.findChild(CaseList)
         assert isinstance(case_list, CaseList)
-        assert len(case_list._list.findItems("iter-1", Qt.MatchFlag.MatchExactly)) == 1
+        assert len(case_list._list.findItems("iter-1", Qt.MatchFlag.MatchContains)) == 1
         dialog.close()
 
     QTimer.singleShot(1000, handle_manage_dialog)
@@ -124,8 +124,9 @@ def test_that_the_manual_analysis_tool_works(
     qtbot.mouseClick(start_simulation, Qt.LeftButton)
 
     facade = simulation_panel.facade
-    df_prior = facade.load_all_gen_kw_data("iter-0")
-    df_posterior = facade.load_all_gen_kw_data("iter-1")
+    storage = gui.notifier.storage
+    df_prior = facade.load_all_gen_kw_data(storage.get_ensemble_by_name("iter-0"))
+    df_posterior = facade.load_all_gen_kw_data(storage.get_ensemble_by_name("iter-1"))
 
     # We expect that ERT's update step lowers the
     # generalized variance for the parameters.

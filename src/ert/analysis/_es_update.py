@@ -13,9 +13,9 @@ import pandas
 from iterative_ensemble_smoother.experimental import (
     ensemble_smoother_update_step_row_scaling,
 )
-from pandas import DataFrame, MultiIndex
+from pandas import DataFrame
 
-from ert._c_wrappers.enkf.enums import ActiveMode, RealizationStateEnum
+from ert._c_wrappers.enkf.enums import ActiveMode, ErtImplType, RealizationStateEnum
 from ert._c_wrappers.enkf.row_scaling import RowScaling
 from ert._clib import update
 
@@ -26,11 +26,9 @@ if TYPE_CHECKING:
     from ert._c_wrappers.analysis.configuration import UpdateConfiguration
     from ert._c_wrappers.enkf import EnKFMain
     from ert._c_wrappers.enkf.analysis_config import AnalysisConfig
-    from ert._c_wrappers.enkf.enkf_fs import EnkfFs
     from ert._c_wrappers.enkf.enkf_obs import EnkfObs
     from ert._c_wrappers.enkf.ensemble_config import EnsembleConfig
-    from ert._c_wrappers.enkf.observations import ObsVector
-    from ert._c_wrappers.enkf.observations.summary_observation import SummaryObservation
+    from ert.storage import EnsembleAccessor, EnsembleReader
 
 logger = logging.getLogger(__name__)
 
@@ -150,41 +148,77 @@ def _save_to_temporary_storage(
 
 
 def _save_temporary_storage_to_disk(
-    target_fs: "EnkfFs",
+    target_fs: EnsembleAccessor,
     ensemble_config: "EnsembleConfig",
     temporary_storage: Dict[str, "npt.NDArray[np.double]"],
     iens_active_index: List[int],
 ) -> None:
     for key, matrix in temporary_storage.items():
         config_node = ensemble_config.getNode(key)
-        target_fs.save_parameters(
-            config_node=config_node,
-            iens_active_index=iens_active_index,
-            parameter=update.Parameter(key),
-            values=matrix,
-        )
+        if config_node.getImplementationType() == ErtImplType.GEN_KW:
+            gen_kw_config = config_node.getKeywordModelConfig()
+            parameter_keys = list(gen_kw_config)
+            target_fs.save_gen_kw(
+                key,
+                parameter_keys,
+                gen_kw_config.get_priors(),
+                iens_active_index,
+                matrix,
+            )
+        elif config_node.getImplementationType() == ErtImplType.SURFACE:
+            surface_config = config_node.getSurfaceModelConfig()
+            for i, realization in enumerate(iens_active_index):
+                target_fs.save_surface_data(
+                    key, realization, surface_config.base_surface_path, matrix[:, i]
+                )
+        elif config_node.getImplementationType() == ErtImplType.FIELD:
+            if not target_fs.field_has_info(key):
+                field_config = config_node.getFieldModelConfig()
+                target_fs.save_field_info(
+                    key,
+                    ensemble_config.grid_file,
+                    Path(config_node.get_enkf_outfile()).suffix[1:],
+                    field_config.get_output_transform_name(),
+                    field_config.get_truncation_mode(),
+                    field_config.get_truncation_min(),
+                    field_config.get_truncation_max(),
+                    field_config.get_nx(),
+                    field_config.get_ny(),
+                    field_config.get_nz(),
+                )
+            for i, realization in enumerate(iens_active_index):
+                target_fs.save_field_data(key, realization, matrix[:, i])
+        else:
+            raise NotImplementedError(
+                f"{config_node.getImplementationType()} is not supported"
+            )
 
 
 def _create_temporary_parameter_storage(
-    source_fs: "EnkfFs",
+    source_fs: EnsembleReader,
     ensemble_config: "EnsembleConfig",
     iens_active_index: List[int],
 ) -> Dict[str, "npt.NDArray[np.double]"]:
     temporary_storage = {}
     for key in ensemble_config.parameters:
         config_node = ensemble_config.getNode(key)
-        matrix = source_fs.load_parameter(
-            config_node=config_node,
-            iens_active_index=iens_active_index,
-            parameter=update.Parameter(key),
-        )
+        if config_node.getImplementationType() == ErtImplType.GEN_KW:
+            matrix = source_fs.load_gen_kw(key, iens_active_index)
+        elif config_node.getImplementationType() == ErtImplType.SURFACE:
+            matrix = source_fs.load_surface_data(key, iens_active_index)
+        elif config_node.getImplementationType() == ErtImplType.FIELD:
+            matrix = source_fs.load_field(key, iens_active_index)
+        else:
+            raise NotImplementedError(
+                f"{config_node.getImplementationType()} is not supported"
+            )
         temporary_storage[key] = matrix
     return temporary_storage
 
 
 def _get_obs_and_measure_data(
     obs: "EnkfObs",
-    source_fs: "EnkfFs",
+    source_fs: EnsembleReader,
     selected_observations: List[Tuple[str, List[int]]],
     ens_active_list: List[int],
 ) -> Tuple[DataFrame, DataFrame]:
@@ -200,45 +234,23 @@ def _get_obs_and_measure_data(
         imp_type = obs_vector.getImplementationType().name
         if imp_type == "GEN_OBS":
             obs_data.append(obs_vector.get_gen_obs_data(active_list))
-            data_key = f"{data_key}-{obs_vector.activeStep()}"
+            data_key = f"{data_key}@{obs_vector.activeStep()}"
         elif imp_type == "SUMMARY_OBS":
             obs_data.append(obs_vector.get_summary_obs_data(obs, active_list))
 
-        data_keys[imp_type].add((data_key, obs_vector.getObsKey()))
+        data_keys[imp_type].add(data_key)
 
     measured_data = []
     for imp_type, keys in data_keys.items():
         if imp_type == "SUMMARY_OBS":
-            datas = [v[0] for v in keys]
-            data, x_axis, realizations = source_fs.load_summary_data(
-                datas, ens_active_list
-            )
-            time_axis = x_axis
-            multi_index = MultiIndex.from_product(
-                [datas, time_axis], names=["data_key", "axis"]
-            )
             measured_data.append(
-                DataFrame(
-                    data=data.reshape(len(time_axis) * len(keys), len(realizations)),
-                    index=multi_index,
-                    columns=realizations,
-                )
+                source_fs.load_summary_data_as_df(list(keys), ens_active_list)
             )
 
         if imp_type == "GEN_OBS":
-            for d_key, o_key in keys:
-                data, realizations = source_fs.load_gen_data(d_key, ens_active_list)
-                x_axis = [*range(data.shape[0])]
-                multi_index = MultiIndex.from_product(
-                    [[d_key], x_axis], names=["data_key", "axis"]
-                )
-                measured_data.append(
-                    DataFrame(
-                        data=data.reshape(len(x_axis), len(realizations)),
-                        index=multi_index,
-                        columns=realizations,
-                    )
-                )
+            measured_data.append(
+                source_fs.load_gen_data_as_df(list(keys), ens_active_list)
+            )
 
     return pandas.concat(measured_data), pandas.concat(obs_data)
 
@@ -297,7 +309,7 @@ def _create_update_snapshot(data: DataFrame, obs_mask: List[bool]) -> UpdateSnap
 
 
 def _load_observations_and_responses(
-    source_fs: "EnkfFs",
+    source_fs: EnsembleReader,
     obs: "EnkfObs",
     alpha: float,
     std_cutoff: float,
@@ -310,9 +322,10 @@ def _load_observations_and_responses(
         obs, source_fs, selected_observations, ens_active_list
     )
 
-    joined = obs_data.join(
-        measured_data, on=["data_key", "axis"], how="inner"
-    ).drop_duplicates()
+    joined = obs_data.join(measured_data, on=["data_key", "axis"], how="inner")
+
+    if joined.isna().any().any():
+        raise ErtAnalysisError("Missing response for observations")
     if len(obs_data) > len(joined):
         missing_indices = set(obs_data.index) - set(joined.index)
         error_msg = []
@@ -322,6 +335,7 @@ def _load_observations_and_responses(
                 f"at: {i[2]} has no response"
             )
         raise IndexError("\n".join(error_msg))
+
     obs_filter = _deactivate_outliers(joined, std_cutoff, alpha)
     obs_mask = [True if i not in obs_filter else False for i in joined.index]
     update_snapshot = _create_update_snapshot(joined, obs_mask)
@@ -356,8 +370,8 @@ def analysis_ES(
     smoother_snapshot: SmootherSnapshot,
     ens_mask: List[bool],
     ensemble_config: "EnsembleConfig",
-    source_fs: "EnkfFs",
-    target_fs: "EnkfFs",
+    source_fs: EnsembleReader,
+    target_fs: EnsembleAccessor,
 ) -> None:
     iens_active_index = [i for i in range(len(ens_mask)) if ens_mask[i]]
 
@@ -447,8 +461,8 @@ def analysis_IES(
     smoother_snapshot: SmootherSnapshot,
     ens_mask: List[bool],
     ensemble_config: "EnsembleConfig",
-    source_fs: "EnkfFs",
-    target_fs: "EnkfFs",
+    source_fs: EnsembleReader,
+    target_fs: EnsembleAccessor,
     iterative_ensemble_smoother: ies.SIES,
 ) -> None:
     iens_active_index = [i for i in range(len(ens_mask)) if ens_mask[i]]
@@ -576,7 +590,10 @@ class ESUpdate:
         self.update_snapshots: Dict[str, SmootherSnapshot] = {}
 
     def smootherUpdate(
-        self, prior_storage: "EnkfFs", posterior_storage: "EnkfFs", run_id: str
+        self,
+        prior_storage: EnsembleReader,
+        posterior_storage: EnsembleAccessor,
+        run_id: str,
     ) -> None:
         updatestep = self.ert.getLocalConfig()
 
@@ -588,12 +605,13 @@ class ESUpdate:
         alpha = analysis_config.get_enkf_alpha()
         std_cutoff = analysis_config.get_std_cutoff()
         global_scaling = analysis_config.get_global_std_scaling()
-        source_state_map = prior_storage.getStateMap()
-        ens_mask = source_state_map.selectMatching(RealizationStateEnum.STATE_HAS_DATA)
+        ens_mask = prior_storage.get_realization_mask_from_state(
+            [RealizationStateEnum.STATE_HAS_DATA]
+        )
         _assert_has_enough_realizations(ens_mask, analysis_config)
 
         smoother_snapshot = _create_smoother_snapshot(
-            prior_storage.case_name, posterior_storage.case_name, analysis_config
+            prior_storage.name, posterior_storage.name, analysis_config
         )
 
         analysis_ES(
@@ -619,8 +637,8 @@ class ESUpdate:
 
     def iterative_smoother_update(
         self,
-        prior_storage: "EnkfFs",
-        posterior_storage: "EnkfFs",
+        prior_storage: EnsembleReader,
+        posterior_storage: EnsembleAccessor,
         w_container: ies.SIES,
         run_id: str,
     ) -> None:
@@ -638,13 +656,14 @@ class ESUpdate:
         alpha = analysis_config.get_enkf_alpha()
         std_cutoff = analysis_config.get_std_cutoff()
         global_scaling = analysis_config.get_global_std_scaling()
-        source_state_map = prior_storage.getStateMap()
-        ens_mask = source_state_map.selectMatching(RealizationStateEnum.STATE_HAS_DATA)
+        ens_mask = prior_storage.get_realization_mask_from_state(
+            [RealizationStateEnum.STATE_HAS_DATA]
+        )
 
         _assert_has_enough_realizations(ens_mask, analysis_config)
 
         smoother_snapshot = _create_smoother_snapshot(
-            prior_storage.case_name, posterior_storage.case_name, analysis_config
+            prior_storage.name, posterior_storage.name, analysis_config
         )
 
         analysis_IES(

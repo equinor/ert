@@ -1,11 +1,11 @@
+from __future__ import annotations
+
 import logging
 import time
 from collections import namedtuple
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
 
 import numpy as np
-
-from ert._c_wrappers.enkf import NodeId
 
 from .simulation_context import SimulationContext
 
@@ -14,7 +14,8 @@ if TYPE_CHECKING:
 
     import numpy.typing as npt
 
-    from ert._c_wrappers.enkf import EnkfFs, EnKFMain
+    from ert._c_wrappers.enkf import EnKFMain
+    from ert.storage import EnsembleAccessor
 
 Status = namedtuple("Status", "waiting pending running complete failed")
 
@@ -24,7 +25,7 @@ class BatchContext(SimulationContext):
         self,
         result_keys: "Iterable[str]",
         ert: "EnKFMain",
-        fs: "EnkfFs",
+        fs: EnsembleAccessor,
         mask: List[bool],
         itr: int,
         case_data: List[Tuple[Any, Any]],
@@ -95,14 +96,13 @@ class BatchContext(SimulationContext):
 
         res: List[Optional[Dict[str, "npt.NDArray[np.float64]"]]] = []
         for sim_id in range(len(self)):
-            node_id = NodeId(0, sim_id)
             if not self.didRealizationSucceed(sim_id):
-                logging.error(f"Simulation {sim_id} (node {str(node_id)}) failed.")
+                logging.error(f"Simulation {sim_id} failed.")
                 res.append(None)
                 continue
             d = {}
             for key in self.result_keys:
-                data, _ = self.get_sim_fs().load_gen_data(f"{key}-0", [sim_id])
+                data, _ = self.get_sim_fs().load_gen_data(f"{key}@0", [sim_id])
                 d[key] = data.flatten()
             res.append(d)
 

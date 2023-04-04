@@ -1,14 +1,19 @@
+from __future__ import annotations
+
 import logging
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
+from uuid import UUID
 
 from ert._c_wrappers.enkf.enkf_main import EnKFMain, QueueConfig
 from ert._c_wrappers.enkf.enums import HookRuntime, RealizationStateEnum
 from ert.analysis import ErtAnalysisError
 from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.shared.models import BaseRunModel, ErtRunError
+from ert.storage import LocalEnsembleAccessor
 
 if TYPE_CHECKING:
     from ert._c_wrappers.enkf import RunContext
+    from ert.storage import EnsembleAccessor, StorageAccessor
 
 logger = logging.getLogger(__file__)
 
@@ -24,11 +29,21 @@ class MultipleDataAssimilation(BaseRunModel):
         self,
         simulation_arguments: Dict[str, Any],
         ert: EnKFMain,
+        storage: StorageAccessor,
         queue_config: QueueConfig,
-        id_: str,
+        experiment_id: UUID,
+        prior_ensemble: Optional[EnsembleAccessor],
     ):
-        super().__init__(simulation_arguments, ert, queue_config, id_, phase_count=2)
+        super().__init__(
+            simulation_arguments,
+            ert,
+            storage,
+            queue_config,
+            experiment_id,
+            phase_count=2,
+        )
         self.weights = MultipleDataAssimilation.default_weights
+        self.prior_ensemble = prior_ensemble
 
     def setAnalysisModule(self, module_name: str) -> None:
         module_load_success = self.ert().analysisConfig().select_module(module_name)
@@ -67,39 +82,41 @@ class MultipleDataAssimilation(BaseRunModel):
         )
         self.setPhaseName(phase_string, indeterminate=True)
 
-        update_id = None
         enumerated_weights = list(enumerate(weights))
-        starting_iteration = self._simulation_arguments["start_iteration"]
         restart_run = self._simulation_arguments["restart_run"]
         case_format = self._simulation_arguments["target_case"]
         prior_ensemble = self._simulation_arguments["prior_ensemble"]
-        storage_manager = self.ert().storage_manager
+
         if restart_run:
-            assert starting_iteration > 0
-            if prior_ensemble not in storage_manager:
-                raise ErtRunError(
-                    f"Prior ensemble: {prior_ensemble} does not exists in"
-                    f" {storage_manager.cases}."
+            try:
+                prior_fs = self._storage.get_ensemble_by_name(prior_ensemble)
+                assert isinstance(prior_fs, LocalEnsembleAccessor)
+                prior_context = self.ert().ensemble_context(
+                    prior_fs,
+                    self._simulation_arguments["active_realizations"],
+                    iteration=prior_fs.iteration,
                 )
-            prior_context = self.ert().load_ensemble_context(
-                prior_ensemble,
-                self._simulation_arguments["active_realizations"],
-                iteration=starting_iteration - 1,
-            )
-            ensemble_id = "prior_ensemble"
+            except KeyError as err:
+                raise ErtRunError(
+                    f"Prior ensemble: {prior_ensemble} does not exists"
+                ) from err
         else:
-            prior_context = self.ert().create_ensemble_context(
-                case_format % 0,
-                self._simulation_arguments["active_realizations"],
+            prior_fs = self._storage.create_ensemble(
+                self._experiment_id,
+                ensemble_size=self._ert.getEnsembleSize(),
                 iteration=0,
+                name=case_format % 0,
+            )
+            prior_context = self.ert().ensemble_context(
+                prior_fs,
+                self._simulation_arguments["active_realizations"],
+                iteration=prior_fs.iteration,
             )
             self.ert().sample_prior(
                 prior_context.sim_fs, prior_context.active_realizations
             )
-            _, ensemble_id = self._simulateAndPostProcess(
-                prior_context, evaluator_server_config, update_id=update_id
-            )
-
+            self._simulateAndPostProcess(prior_context, evaluator_server_config)
+        starting_iteration = prior_fs.iteration + 1
         weights_to_run = enumerated_weights[max(starting_iteration - 1, 0) :]
 
         for iteration, weight in weights_to_run:
@@ -107,25 +124,27 @@ class MultipleDataAssimilation(BaseRunModel):
             if is_first_iteration:
                 self.ert().runWorkflows(HookRuntime.PRE_FIRST_UPDATE)
             self.ert().runWorkflows(HookRuntime.PRE_UPDATE)
-            state = (
-                RealizationStateEnum.STATE_HAS_DATA  # type: ignore
-                | RealizationStateEnum.STATE_INITIALIZED
-            )
-            posterior_context = self.ert().create_ensemble_context(
-                case_format % (iteration + 1),
-                prior_context.sim_fs.getStateMap().createMask(state),
+            states = [
+                RealizationStateEnum.STATE_HAS_DATA,  # type: ignore
+                RealizationStateEnum.STATE_INITIALIZED,
+            ]
+            posterior_context = self.ert().ensemble_context(
+                self._storage.create_ensemble(
+                    self._experiment_id,
+                    name=case_format % (iteration + 1),
+                    ensemble_size=self._ert.getEnsembleSize(),
+                    prior_ensemble=prior_context.sim_fs,
+                ),
+                prior_context.sim_fs.get_realization_mask_from_state(states),
                 iteration=iteration + 1,
             )
-            update_id = self.update(
+            self.update(
                 prior_context,
                 posterior_context,
                 weight=weight,
-                ensemble_id=ensemble_id,
             )
             self.ert().runWorkflows(HookRuntime.POST_UPDATE)
-            _, ensemble_id = self._simulateAndPostProcess(
-                posterior_context, evaluator_server_config, update_id=update_id
-            )
+            self._simulateAndPostProcess(posterior_context, evaluator_server_config)
             prior_context = posterior_context
 
         self.setPhaseName("Post processing...", indeterminate=True)
@@ -142,8 +161,7 @@ class MultipleDataAssimilation(BaseRunModel):
         prior_context: "RunContext",
         posterior_context: "RunContext",
         weight: float,
-        ensemble_id: str,
-    ) -> str:
+    ) -> None:
         next_iteration = prior_context.iteration + 1
 
         phase_string = f"Analyzing iteration: {next_iteration} with weight {weight}"
@@ -161,20 +179,12 @@ class MultipleDataAssimilation(BaseRunModel):
                 "Analysis of simulation failed for iteration:"
                 f"{next_iteration}. The following error occured {e}"
             ) from e
-        # Push update data to new storage
-        analysis_module_name = self.ert().analysisConfig().active_module_name()
-        update_id = self._post_update_data(
-            parent_ensemble_id=ensemble_id, algorithm=analysis_module_name
-        )
-
-        return update_id
 
     def _simulateAndPostProcess(
         self,
         run_context: "RunContext",
         evaluator_server_config: EvaluatorServerConfig,
-        update_id: Optional[str] = None,
-    ) -> Tuple[int, str]:
+    ) -> int:
         iteration = run_context.iteration
 
         phase_string = f"Running simulation for iteration: {iteration}"
@@ -185,20 +195,12 @@ class MultipleDataAssimilation(BaseRunModel):
         self.setPhaseName(phase_string)
         self.ert().runWorkflows(HookRuntime.PRE_SIMULATION)
 
-        # Push ensemble, parameters, observations to new storage
-        new_ensemble_id = self._post_ensemble_data(
-            run_context.sim_fs.case_name, update_id=update_id
-        )
-
         phase_string = f"Running forecast for iteration: {iteration}"
         self.setPhaseName(phase_string, indeterminate=False)
 
         num_successful_realizations = self.run_ensemble_evaluator(
             run_context, evaluator_server_config
         )
-
-        # Push simulation results to storage
-        self._post_ensemble_results(run_context.sim_fs.case_name, new_ensemble_id)
 
         num_successful_realizations += self._simulation_arguments.get(
             "prev_successful_realizations", 0
@@ -209,7 +211,7 @@ class MultipleDataAssimilation(BaseRunModel):
         self.setPhaseName(phase_string, indeterminate=True)
         self.ert().runWorkflows(HookRuntime.POST_SIMULATION)
 
-        return num_successful_realizations, new_ensemble_id
+        return num_successful_realizations
 
     @staticmethod
     def normalizeWeights(weights: List[float]) -> List[float]:

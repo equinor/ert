@@ -18,9 +18,7 @@ class RunAnalysisPanel(QWidget):
             help_link="config/analysis/analysis_module",
         )
         self.target_case_text = QLineEdit()
-        self.source_case_selector = CaseSelector(
-            LibresFacade(self.ert), notifier, update_ert=False
-        )
+        self.source_case_selector = CaseSelector(notifier, update_ert=False)
 
         layout = QFormLayout()
         layout.addRow("Analysis", self.analysis_module)
@@ -32,4 +30,4 @@ class RunAnalysisPanel(QWidget):
         return str(self.target_case_text.text())
 
     def source_case(self):
-        return str(self.source_case_selector.currentText())
+        return self.source_case_selector.currentData()

@@ -1,16 +1,13 @@
 pybind11_add_module(
   _clib
   SHARED
-  res_util/memory.cpp
   res_util/file_utils.cpp
   res_util/subst_list.cpp
   res_util/path_fmt.cpp
   res_util/res_env.cpp
-  res_util/block_fs.cpp
   python/init.cpp
   python/logging.cpp
   python/ensemble_config.cpp
-  python/enkf_fs_keyword_data.cpp
   python/model_callbacks.cpp
   config/conf_util.cpp
   config/conf.cpp
@@ -23,11 +20,6 @@ pybind11_add_module(
   config/config_path_elm.cpp
   config/config_schema_item.cpp
   config/config_keywords.cpp
-  rms/rms_file.cpp
-  rms/rms_tag.cpp
-  rms/rms_tagkey.cpp
-  rms/rms_type.cpp
-  rms/rms_util.cpp
   analysis/update.cpp
   job_queue/job_status.cpp
   job_queue/job_list.cpp
@@ -43,35 +35,22 @@ pybind11_add_module(
   ${lsb}
   enkf/active_list.cpp
   enkf/time_map.cpp
-  enkf/block_fs_driver.cpp
   enkf/config_keys.cpp
   enkf/enkf_config_node.cpp
-  enkf/enkf_fs.cpp
-  enkf/enkf_node.cpp
   enkf/enkf_obs.cpp
-  enkf/enkf_serialize.cpp
-  enkf/enkf_state.cpp
   enkf/enkf_types.cpp
   enkf/ensemble_config.cpp
-  enkf/ext_param.cpp
   enkf/ext_param_config.cpp
-  enkf/field.cpp
   enkf/field_config.cpp
   enkf/field_trans.cpp
-  enkf/fs_driver.cpp
-  enkf/fs_types.cpp
   enkf/gen_common.cpp
   enkf/gen_data_config.cpp
-  enkf/gen_kw.cpp
   enkf/gen_kw_config.cpp
   enkf/gen_obs.cpp
   enkf/obs_vector.cpp
   enkf/row_scaling.cpp
-  enkf/state_map.cpp
-  enkf/state_map.cpp
   enkf/summary_config.cpp
   enkf/summary_obs.cpp
-  enkf/surface.cpp
   enkf/surface_config.cpp
   enkf/trans_func.cpp)
 

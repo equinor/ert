@@ -105,8 +105,8 @@ def test_load_history_data(api):
 def test_plot_api_request_errors(api, mocker):
     # Mock the experiment name to be something unexpected
     mocker.patch(
-        "ert.gui.tools.plot.plot_api.PlotApi._get_experiment",
-        return_value={"id": "mocked"},
+        "ert.gui.tools.plot.plot_api.PlotApi._get_experiments",
+        return_value=[{"id": "mocked"}],
     )
     with pytest.raises(httpx.RequestError):
         api.all_data_type_keys()

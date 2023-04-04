@@ -1,5 +1,6 @@
 import os
 from unittest.mock import MagicMock
+from uuid import UUID
 
 import pytest
 
@@ -10,7 +11,7 @@ from ert.shared.models import BaseRunModel
 
 def test_base_run_model_supports_restart(setup_case):
     ert = EnKFMain(setup_case("simple_config/", "minimum_config"))
-    brm = BaseRunModel(None, ert, ert.get_queue_config(), "experiment_id")
+    brm = BaseRunModel(None, ert, None, ert.get_queue_config(), UUID(int=0))
     assert brm.support_restart
 
 
@@ -31,7 +32,7 @@ class MockJob:
     ],
 )
 def test_active_realizations(initials, expected):
-    brm = BaseRunModel(None, None, None, None)
+    brm = BaseRunModel(None, None, None, None, None)
     brm._initial_realizations_mask = initials
     assert brm._active_realizations == expected
     assert brm._ensemble_size == len(initials)
@@ -51,7 +52,7 @@ def test_active_realizations(initials, expected):
     ],
 )
 def test_failed_realizations(initials, completed, any_failed, failures):
-    brm = BaseRunModel(None, None, None, None)
+    brm = BaseRunModel(None, None, None, None, None)
     brm._initial_realizations_mask = initials
     brm._completed_realizations_mask = completed
 
@@ -115,7 +116,7 @@ def test_check_if_runpath_exists(
             return [f"out/realization-{r}/iter-{iteration}" for r in realizations]
         return [f"out/realization-{r}" for r in realizations]
 
-    brm = BaseRunModel(simulation_arguments, None, None, None)
+    brm = BaseRunModel(simulation_arguments, None, None, None, None)
     brm.facade = MagicMock(
         run_path=run_path,
         number_of_iterations=number_of_iterations,
@@ -123,20 +124,3 @@ def test_check_if_runpath_exists(
     )
 
     assert brm.check_if_runpath_exists() == expected
-
-
-def test_validation():
-    simulation_arguments = {
-        "start_iteration": 0,
-        "active_realizations": list(range(50)),
-        "current_case": "something",
-    }
-    ert = MagicMock(
-        _ensemble_size=100,
-        storage_manager=MagicMock(
-            __get_item__=lambda _: MagicMock(getStateMap=lambda _: list(range(10))),
-            __contains__=lambda _, __: True,
-        ),
-    )
-    with pytest.raises(ValueError):
-        BaseRunModel(simulation_arguments, ert, None, None, None)

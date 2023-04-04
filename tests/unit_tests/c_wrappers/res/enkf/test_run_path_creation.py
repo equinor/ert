@@ -9,7 +9,7 @@ from ert._c_wrappers.enkf import EnKFMain, ErtConfig
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_that_run_template_replace_symlink_does_not_write_to_source():
+def test_that_run_template_replace_symlink_does_not_write_to_source(prior_ensemble):
     """This test is meant to test that we can have a symlinked file in the
     run path before we do replacement on a target file with the same name,
     the described behavior is:
@@ -30,7 +30,7 @@ def test_that_run_template_replace_symlink_does_not_write_to_source():
     Path("config.ert").write_text(config_text, encoding="utf-8")
     ert_config = ErtConfig.from_file("config.ert")
     ert = EnKFMain(ert_config)
-    run_context = ert.create_ensemble_context("prior", [True], iteration=0)
+    run_context = ert.ensemble_context(prior_ensemble, [True], iteration=0)
     run_path = Path(run_context[0].runpath)
     os.makedirs(run_path)
     # Write a file that will be symlinked into the run run path with the
@@ -51,7 +51,7 @@ def test_that_run_template_replace_symlink_does_not_write_to_source():
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_run_template_replace_in_file_with_custom_define():
+def test_run_template_replace_in_file_with_custom_define(prior_ensemble):
     """
     This test checks that we are able to magically replace custom magic
     strings using the DEFINE keyword
@@ -69,7 +69,7 @@ def test_run_template_replace_in_file_with_custom_define():
 
     ert_config = ErtConfig.from_file("config.ert")
     ert = EnKFMain(ert_config)
-    run_context = ert.create_ensemble_context("prior", [True], iteration=0)
+    run_context = ert.ensemble_context(prior_ensemble, [True], iteration=0)
     ert.createRunPath(run_context)
     assert (
         Path(run_context[0].runpath) / "result.txt"
@@ -84,15 +84,15 @@ def test_run_template_replace_in_file_with_custom_define():
         ("<NUM_CPU>", "1"),
         ("<CONFIG_FILE_BASE>", "config"),
         ("<CONFIG_FILE>", "config.ert"),
-        ("<ERT-CASE>", "default"),
-        ("<ERTCASE>", "default"),
+        ("<ERT-CASE>", "prior"),
+        ("<ERTCASE>", "prior"),
         ("<ECL_BASE>", "my_case0"),
         ("<ECLBASE>", "my_case0"),
         ("<IENS>", "0"),
         ("<ITER>", "0"),
     ],
 )
-def test_run_template_replace_in_file(key, expected):
+def test_run_template_replace_in_file(key, expected, prior_ensemble):
     config_text = dedent(
         """
         NUM_REALIZATIONS 1
@@ -105,7 +105,7 @@ def test_run_template_replace_in_file(key, expected):
 
     ert_config = ErtConfig.from_file("config.ert")
     ert = EnKFMain(ert_config)
-    run_context = ert.create_ensemble_context("prior", [True], iteration=0)
+    run_context = ert.ensemble_context(prior_ensemble, [True], iteration=0)
     ert.createRunPath(run_context)
     assert (Path(run_context[0].runpath) / "result.txt").read_text(
         encoding="utf-8"
@@ -122,7 +122,7 @@ def test_run_template_replace_in_file(key, expected):
         ("MY_ECL_BASE<IENS>", "MY_ECL_BASE0.DATA"),
     ),
 )
-def test_run_template_replace_in_ecl(ecl_base, expected_file):
+def test_run_template_replace_in_ecl(ecl_base, expected_file, prior_ensemble):
     config_text = dedent(
         f"""
         NUM_REALIZATIONS 1
@@ -137,7 +137,7 @@ def test_run_template_replace_in_ecl(ecl_base, expected_file):
 
     ert_config = ErtConfig.from_file("config.ert")
     ert = EnKFMain(ert_config)
-    run_context = ert.create_ensemble_context("prior", [True], iteration=0)
+    run_context = ert.ensemble_context(prior_ensemble, [True], iteration=0)
     ert.createRunPath(run_context)
     assert (
         Path(run_context[0].runpath) / expected_file
@@ -152,15 +152,15 @@ def test_run_template_replace_in_ecl(ecl_base, expected_file):
         ("<NUM_CPU>", "1"),
         ("<CONFIG_FILE_BASE>", "config"),
         ("<CONFIG_FILE>", "config.ert"),
-        ("<ERT-CASE>", "default"),
-        ("<ERTCASE>", "default"),
+        ("<ERT-CASE>", "prior"),
+        ("<ERTCASE>", "prior"),
         ("<ECL_BASE>", "ECL_CASE0"),
         ("<ECLBASE>", "ECL_CASE0"),
         ("<IENS>", "0"),
         ("<ITER>", "0"),
     ],
 )
-def test_run_template_replace_in_ecl_data_file(key, expected):
+def test_run_template_replace_in_ecl_data_file(key, expected, prior_ensemble):
     """
     This test that we copy the DATA_FILE into the runpath,
     do substitutions and rename it from the DATA_FILE name
@@ -178,7 +178,7 @@ def test_run_template_replace_in_ecl_data_file(key, expected):
 
     ert_config = ErtConfig.from_file("config.ert")
     ert = EnKFMain(ert_config)
-    run_context = ert.create_ensemble_context("prior", [True], iteration=0)
+    run_context = ert.ensemble_context(prior_ensemble, [True], iteration=0)
     ert.createRunPath(run_context)
     assert (Path(run_context[0].runpath) / "ECL_CASE0.DATA").read_text(
         encoding="utf-8"
@@ -186,7 +186,7 @@ def test_run_template_replace_in_ecl_data_file(key, expected):
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_run_template_replace_in_file_name():
+def test_run_template_replace_in_file_name(prior_ensemble):
     """
     This test checks that we are able to magically replace custom magic
     strings using the DEFINE keyword
@@ -206,7 +206,7 @@ def test_run_template_replace_in_file_name():
 
     ert_config = ErtConfig.from_file("config.ert")
     ert = EnKFMain(ert_config)
-    run_context = ert.create_ensemble_context("prior", [True], iteration=0)
+    run_context = ert.ensemble_context(prior_ensemble, [True], iteration=0)
     ert.createRunPath(run_context)
     assert (
         Path(run_context[0].runpath) / "result.txt"
@@ -214,7 +214,7 @@ def test_run_template_replace_in_file_name():
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_that_sampling_prior_makes_initialized_fs():
+def test_that_sampling_prior_makes_initialized_fs(prior_ensemble):
     """
     This checks that creating the run path initializes the selected case,
     for that parameters are needed, so add a simple GEN_KW.
@@ -236,11 +236,10 @@ def test_that_sampling_prior_makes_initialized_fs():
         fh.writelines("MY_KEYWORD NORMAL 0 1")
     ert_config = ErtConfig.from_file("config.ert")
     ert = EnKFMain(ert_config)
-    run_context = ert.create_ensemble_context("prior", [True], iteration=0)
-    storage_manager = ert.storage_manager
-    assert not storage_manager["prior"].is_initalized
+    run_context = ert.ensemble_context(prior_ensemble, [True], iteration=0)
+    assert not prior_ensemble.is_initalized
     ert.sample_prior(run_context.sim_fs, run_context.active_realizations)
-    assert storage_manager["prior"].is_initalized
+    assert prior_ensemble.is_initalized
 
 
 @pytest.mark.parametrize(
@@ -283,7 +282,7 @@ def test_that_data_file_sets_num_cpu(eclipse_data, expected_cpus):
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_that_runpath_substitution_remain_valid():
+def test_that_runpath_substitution_remain_valid(prior_ensemble):
     """
     This checks that runpath substitution remain intact.
     """
@@ -300,7 +299,7 @@ def test_that_runpath_substitution_remain_valid():
     ert_config = ErtConfig.from_file("config.ert")
     ert = EnKFMain(ert_config)
 
-    run_context = ert.create_ensemble_context("prior", [True, True], iteration=0)
+    run_context = ert.ensemble_context(prior_ensemble, [True, True], iteration=0)
     ert.createRunPath(run_context)
 
     for i, realization in enumerate(run_context):

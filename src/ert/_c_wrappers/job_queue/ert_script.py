@@ -1,23 +1,34 @@
+from __future__ import annotations
+
 import importlib.util
 import inspect
 import logging
 import sys
 import traceback
-from typing import TYPE_CHECKING, Any, Callable, List, Type
+from typing import TYPE_CHECKING, Any, Callable, List, Optional, Type
 
 if TYPE_CHECKING:
     from ert._c_wrappers.enkf import EnKFMain
+    from ert.storage import EnsembleAccessor, StorageAccessor
 
 logger = logging.getLogger(__name__)
 
 
 class ErtScript:
-    def __init__(self, ert: "EnKFMain"):
+    def __init__(
+        self,
+        ert: EnKFMain,
+        storage: StorageAccessor,
+        *,
+        ensemble: Optional[EnsembleAccessor] = None,
+    ) -> None:
         if not hasattr(self, "run"):
             raise UserWarning(
                 "ErtScript implementations must provide a method run(self, ert, ...)"
             )
         self.__ert = ert
+        self.__storage = storage
+        self.__ensemble = ensemble
 
         self.__is_cancelled = False
         self.__failed = False
@@ -39,6 +50,15 @@ class ErtScript:
     def ert(self) -> "EnKFMain":
         logger.info(f"Accessing EnKFMain from workflow: {self.__class__.__name__}")
         return self.__ert
+
+    @property
+    def storage(self) -> StorageAccessor:
+        return self.__storage
+
+    @property
+    def ensemble(self) -> EnsembleAccessor:
+        assert self.__ensemble is not None
+        return self.__ensemble
 
     def isCancelled(self) -> bool:
         return self.__is_cancelled
@@ -102,7 +122,9 @@ class ErtScript:
         self.__failed = True
 
     @staticmethod
-    def loadScriptFromFile(path) -> Callable[["EnKFMain"], "ErtScript"]:
+    def loadScriptFromFile(
+        path,
+    ) -> Callable[["EnKFMain", "StorageAccessor"], "ErtScript"]:
         module_name = f"ErtScriptModule_{ErtScript.__module_count}"
         ErtScript.__module_count += 1
 
@@ -121,7 +143,9 @@ class ErtScript:
         return ErtScript.__findErtScriptImplementations(module)
 
     @staticmethod
-    def __findErtScriptImplementations(module) -> Callable[["EnKFMain"], "ErtScript"]:
+    def __findErtScriptImplementations(
+        module,
+    ) -> Callable[["EnKFMain", "StorageAccessor"], "ErtScript"]:
         result = []
         for _, member in inspect.getmembers(
             module,

@@ -1,8 +1,11 @@
+from __future__ import annotations
+
 import asyncio
 import logging
 import pickle
 from contextlib import contextmanager
 from typing import TYPE_CHECKING, Iterator, Set, Union
+from uuid import UUID
 
 from cloudevents.exceptions import DataUnmarshallerError
 from cloudevents.http import CloudEvent, from_json
@@ -33,7 +36,7 @@ class ExperimentServer:
     workers can connect.
     """
 
-    def __init__(self, ee_config: "EvaluatorServerConfig") -> None:
+    def __init__(self, ee_config: EvaluatorServerConfig) -> None:
         self._config = ee_config
         self._registry = _Registry()
         self._clients: Set[WebSocketServerProtocol] = set()
@@ -124,11 +127,11 @@ class ExperimentServer:
         except Exception:  # pylint: disable=broad-except
             logger.exception("crash/burn")
 
-    def add_experiment(self, experiment: Experiment) -> str:
+    def add_experiment(self, experiment: Experiment) -> UUID:
         self._registry.add_experiment(experiment)
-        return experiment.id_
+        return experiment.id
 
-    async def run_experiment(self, experiment_id: str) -> None:
+    async def run_experiment(self, experiment_id: UUID) -> None:
         """Run the experiment with the given experiment_id.
 
         This is a helper method for use by the CLI, where only one experiment

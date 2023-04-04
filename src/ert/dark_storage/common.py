@@ -5,6 +5,7 @@ import pandas as pd
 from ert._c_wrappers.enkf import EnkfObservationImplementationType
 from ert.data import MeasuredData, loader
 from ert.libres_facade import LibresFacade
+from ert.storage import EnsembleReader
 
 
 def ensemble_parameter_names(res: LibresFacade) -> List[str]:
@@ -13,14 +14,13 @@ def ensemble_parameter_names(res: LibresFacade) -> List[str]:
 
 def ensemble_parameters(res: LibresFacade) -> List[dict]:
     return [
-        dict(name=key, userdata=dict(data_origin="GEN_KW"), labels=[])
+        {"name": key, "userdata": {"data_origin": "GEN_KW"}, "labels": []}
         for key in ensemble_parameter_names(res)
     ]
 
 
-def get_response_names(res: LibresFacade, case_name) -> List[str]:
-    storage = res._enkf_main.storage_manager[case_name]
-    result = storage.getSummaryKeySet()
+def get_response_names(res: LibresFacade, ensemble: EnsembleReader) -> List[str]:
+    result = ensemble.getSummaryKeySet()
     result.extend(res.get_gen_data_keys().copy())
     return result
 
@@ -46,11 +46,12 @@ def data_for_key(res: LibresFacade, case, key, realization_index=None) -> pd.Dat
 
     if key.startswith("LOG10_"):
         key = key[6:]
-    storage = res._enkf_main.storage_manager[case]
-    if key in storage.getSummaryKeySet():
+    if key in case.getSummaryKeySet():
         data = res.gather_summary_data(case, key, realization_index).T
     elif res.is_gen_kw_key(key):
         data = res.gather_gen_kw_data(case, key, realization_index)
+        if data.empty:
+            return data
         data.columns = pd.Index([0])
     elif res.is_gen_data_key(key):
         data = res.gather_gen_data_data(case, key, realization_index).T
@@ -71,7 +72,7 @@ def observations_for_obs_keys(res: LibresFacade, case, obs_keys):
     to, and obs_index is the index for the observation itself"""
 
     try:
-        measured_data = MeasuredData(res, obs_keys, case_name=case, load_data=False)
+        measured_data = MeasuredData(res, case, obs_keys, load_data=False)
         data = measured_data.data
     except loader.ObservationError:
         data = pd.DataFrame()
@@ -124,12 +125,12 @@ def observations_for_obs_keys(res: LibresFacade, case, obs_keys):
 
 
 def _get_obs_data(key, obs) -> dict:
-    return dict(
-        name=key,
-        x_axis=obs.columns.get_level_values(0).to_list(),
-        values=obs.loc["OBS"].to_list(),
-        errors=obs.loc["STD"].to_list(),
-    )
+    return {
+        "name": key,
+        "x_axis": obs.columns.get_level_values(0).to_list(),
+        "values": obs.loc["OBS"].to_list(),
+        "errors": obs.loc["STD"].to_list(),
+    }
 
 
 def _prepare_x_axis(x_axis: List[Union[int, float, str, pd.Timestamp]]) -> List[str]:

@@ -320,6 +320,8 @@ ERT_CLIB_SUBMODULE("time_map", m) {
         .def(py::self == py::self)
         .def(py::self != py::self)
         .def("read_text", &TimeMap::read_text, "path"_a)
+        .def("read", &TimeMap::read_binary, "path"_a)
+        .def("write", &TimeMap::write_binary, "path"_a)
         .def(
             "summary_update",
             [](TimeMap &self, Cwrap<ecl_sum_type> summary) {

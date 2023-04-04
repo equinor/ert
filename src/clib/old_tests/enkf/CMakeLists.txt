@@ -18,12 +18,10 @@ foreach(
   enkf_active_list
   enkf_config_node
   enkf_ensemble
-  enkf_fs
   enkf_gen_data_config
   enkf_obs_invalid_path
   enkf_obs
   enkf_obs_vector
-  enkf_state_map
   obs_vector
   row_scaling
   trans_func)

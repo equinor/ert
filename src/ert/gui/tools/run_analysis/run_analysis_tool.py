@@ -2,11 +2,7 @@ import uuid
 
 from qtpy.QtWidgets import QMessageBox
 
-from ert._clib.state_map import (
-    STATE_LOAD_FAILURE,
-    STATE_PARENT_FAILURE,
-    STATE_UNDEFINED,
-)
+from ert._c_wrappers.enkf.enums.realization_state_enum import RealizationStateEnum
 from ert.analysis import ErtAnalysisError, ESUpdate
 from ert.gui.ertwidgets import resourceIcon
 from ert.gui.ertwidgets.closabledialog import ClosableDialog
@@ -14,19 +10,22 @@ from ert.gui.tools import Tool
 from ert.gui.tools.run_analysis import RunAnalysisPanel
 
 
-def analyse(ert, target, source):
+def analyse(ert, target_fs, source_fs):
     """Runs analysis using target and source cases. Returns whether or not
     the analysis was successful."""
-    fs_manager = ert.storage_manager
     es_update = ESUpdate(ert)
 
-    target_fs = fs_manager.add_case(target)
-    source_fs = fs_manager[source]
-    for iens in source_fs.getStateMap().realizationList(
-        STATE_LOAD_FAILURE | STATE_UNDEFINED
+    for iens in (
+        i
+        for i, s in enumerate(source_fs.state_map)
+        if s
+        in (
+            RealizationStateEnum.STATE_LOAD_FAILURE,
+            RealizationStateEnum.STATE_UNDEFINED,
+        )
     ):
-        target_fs.getStateMap()[iens] = STATE_PARENT_FAILURE
-    es_update.smootherUpdate(source_fs, target_fs, uuid.uuid4())
+        target_fs.state_map[iens] = RealizationStateEnum.STATE_PARENT_FAILURE
+    es_update.smootherUpdate(source_fs, target_fs, str(uuid.uuid4()))
 
 
 class RunAnalysisTool(Tool):
@@ -49,14 +48,22 @@ class RunAnalysisTool(Tool):
 
     def run(self):
         target = self._run_widget.target_case()
-        source = self._run_widget.source_case()
+        source_fs = self._run_widget.source_case()
+
+        target_fs = self.notifier.storage.create_ensemble(
+            source_fs.experiment_id,
+            name=target,
+            ensemble_size=source_fs.ensemble_size,
+            iteration=source_fs.iteration + 1,
+            prior_ensemble=source_fs,
+        )
 
         if len(target) == 0:
             self._report_empty_target()
             return
 
         try:
-            analyse(self.ert, target, source)
+            analyse(self.ert, target_fs, source_fs)
             error = None
         except ErtAnalysisError as e:
             error = str(e)
@@ -69,12 +76,12 @@ class RunAnalysisTool(Tool):
 
         if not error:
             msg.setIcon(QMessageBox.Information)
-            msg.setText(f"Successfully ran analysis for case '{source}'.")
+            msg.setText(f"Successfully ran analysis for case '{source_fs.name}'.")
             msg.exec_()
         else:
             msg.setIcon(QMessageBox.Warning)
             msg.setText(
-                f"Unable to run analysis for case '{source}'.\n"
+                f"Unable to run analysis for case '{source_fs.name}'.\n"
                 f"The following error occured: {error}"
             )
             msg.exec_()

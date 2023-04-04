@@ -49,7 +49,7 @@ class PluginRunner:
 
     def __runWorkflowJob(self, plugin, arguments):
         workflow_job = plugin.getWorkflowJob()
-        self.__result = workflow_job.run(plugin.ert(), arguments)
+        self.__result = workflow_job.run(plugin.ert(), plugin.storage, arguments)
 
     def __pollRunner(self, plugin, dialog):
         self.wait()

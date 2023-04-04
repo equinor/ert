@@ -1,4 +1,5 @@
 #include <filesystem>
+#include <fstream>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -657,15 +658,23 @@ config_parse(config_parser_type *config, const char *filename,
         hash_iter_free(keys);
     }
 
-    if (util_file_readable(filename)) {
+    bool file_readable_check_succeeded = true;
+    try {
+        std::ifstream file_handler;
+        file_handler.exceptions(std::ifstream::failbit | std::ifstream::badbit);
+        file_handler.open(filename);
+    } catch (std::ios_base::failure &err) {
+        file_readable_check_succeeded = false;
+        auto error_message = fmt::format(
+            "could not open file `{}` for parsing - {}", filename, err.what());
+        content->parse_errors.push_back(error_message);
+    }
+
+    if (file_readable_check_succeeded) {
         path_stack_type *path_stack = path_stack_alloc();
         config_parse__(config, content, path_stack, filename, comment_string,
                        include_kw, define_kw, unrecognized_behaviour, validate);
         path_stack_free(path_stack);
-    } else {
-        std::string error_message =
-            util_alloc_sprintf("Could not open file:%s for parsing", filename);
-        content->parse_errors.push_back(error_message);
     }
 
     if (content->parse_errors.size() == 0)

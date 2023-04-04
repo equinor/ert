@@ -39,9 +39,6 @@ class ObsVector(BaseCClass):
     _get_next_active_step = ResPrototype(
         "int   obs_vector_get_next_active_step(obs_vector, int)"
     )
-    _has_data = ResPrototype(
-        "bool  obs_vector_has_data(obs_vector , bool_vector , enkf_fs)"
-    )
     _get_config_node = ResPrototype(
         "enkf_config_node_ref obs_vector_get_config_node(obs_vector)"
     )
@@ -141,9 +138,6 @@ class ObsVector(BaseCClass):
     def getConfigNode(self) -> EnkfConfigNode:
         return self._get_config_node().setParent(self)
 
-    def hasData(self, active_mask, fs) -> bool:
-        return self._has_data(active_mask, fs)
-
     def free(self):
         self._free()
 
@@ -164,7 +158,7 @@ class ObsVector(BaseCClass):
 
             index_list = [node.getIndex(nr) for nr in range(len(node))]
             index = MultiIndex.from_product(
-                [[self.getKey()], [f"{data_key}-{time_step}"], index_list],
+                [[self.getKey()], [f"{data_key}@{time_step}"], index_list],
                 names=["key", "data_key", "axis"],
             )
             values = node.get_data_points()

@@ -10,12 +10,9 @@
 #include <ert/ecl/ecl_kw.h>
 #include <ert/ecl/ecl_type.h>
 
-#include <ert/rms/rms_file.hpp>
-
 #include <ert/enkf/active_list.hpp>
 #include <ert/enkf/enkf_macros.hpp>
 #include <ert/enkf/enkf_types.hpp>
-#include <ert/enkf/enkf_util.hpp>
 #include <ert/enkf/field_common.hpp>
 #include <ert/enkf/field_trans.hpp>
 
@@ -91,7 +88,6 @@ extern "C" field_config_type *field_config_alloc_empty(const char *ecl_kw_name,
                                                        bool global_size);
 
 C_USED const char *field_config_default_extension(field_file_format_type, bool);
-extern "C" field_file_format_type field_config_guess_file_type(const char *);
 void field_config_get_dims(const field_config_type *, int *, int *, int *);
 extern "C" PY_USED int field_config_get_nx(const field_config_type *config);
 extern "C" PY_USED int field_config_get_ny(const field_config_type *config);
@@ -112,7 +108,7 @@ field_config_get_export_format(const field_config_type *);
 void field_config_set_key(field_config_type *, const char *);
 void field_config_enkf_OFF(field_config_type *);
 bool field_config_enkf_mode(const field_config_type *config);
-const char *field_config_get_key(const field_config_type *);
+extern "C" const char *field_config_get_key(const field_config_type *);
 bool field_config_keep_inactive_cells(const field_config_type *);
 field_func_type *field_config_get_init_transform(const field_config_type *);
 field_func_type *field_config_get_output_transform(const field_config_type *);

@@ -1,4 +1,3 @@
-import uuid
 from collections import OrderedDict
 
 from qtpy.QtCore import QSize, Qt
@@ -133,10 +132,9 @@ class SimulationPanel(QWidget):
         return args
 
     def runSimulation(self):
-        case_name = self.facade.get_current_case_name()
         message = (
-            f"Are you sure you want to use case '{case_name}' for initialization of "
-            "the initial ensemble when running the simulations?"
+            f"Are you sure you want to use case '{self.notifier.current_case_name}' "
+            "for initialization of the initial ensemble when running the simulations?"
         )
         if (
             QMessageBox.question(
@@ -148,10 +146,9 @@ class SimulationPanel(QWidget):
             try:
                 model = create_model(
                     self.ert,
-                    self.facade.get_ensemble_size(),
-                    self.facade.get_current_case_name(),
+                    self.notifier.storage,
                     self.getSimulationArguments(),
-                    str(uuid.uuid4()),
+                    self.notifier.storage.create_experiment(),
                 )
             except ValueError as e:
                 QMessageBox.warning(
@@ -189,6 +186,7 @@ class SimulationPanel(QWidget):
                 def exit_handler():
                     self.run_button.setText("Start simulation")
                     self.run_button.setDisabled(False)
+                    self.notifier.emitErtChange()
 
                 dialog.finished.connect(exit_handler)
 

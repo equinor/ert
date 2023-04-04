@@ -15,7 +15,7 @@ from ert.gui.main import GUILogHandler, _setup_main_window, run_gui
 from ert.gui.simulation.run_dialog import RunDialog
 from ert.gui.tools.event_viewer import add_gui_log_handler
 from ert.gui.tools.plot.plot_window import PlotWindow
-from ert.services import Storage
+from ert.services import StorageService
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -50,7 +50,7 @@ def test_gui_full(monkeypatch, tmp_path, qapp, mock_start_server, source_root):
         os.path.join(tmp_path, "poly_example"),
     )
 
-    args = argparse.Namespace(config="poly_example/poly.ert")
+    args = argparse.Namespace(config="poly_example/poly.ert", read_only=True)
 
     monkeypatch.chdir(tmp_path)
 
@@ -58,12 +58,13 @@ def test_gui_full(monkeypatch, tmp_path, qapp, mock_start_server, source_root):
     monkeypatch.setattr(ert.gui.main, "QApplication", Mock(return_value=qapp))
     run_gui(args)
     mock_start_server.assert_called_once_with(
-        project=str(tmp_path / "poly_example" / "storage"), ert_config="poly.ert"
+        project=str(tmp_path / "poly_example" / "storage"),
+        ert_config="poly.ert",
     )
 
 
 @pytest.mark.requires_window_manager
-def test_that_loading_gui_creates_a_single_storage_folder(
+def test_that_loading_gui_creates_no_storage_in_read_only_mode(
     monkeypatch, tmp_path, qapp, source_root
 ):
     shutil.copytree(
@@ -73,13 +74,13 @@ def test_that_loading_gui_creates_a_single_storage_folder(
 
     monkeypatch.chdir(tmp_path)
 
-    args = argparse.Namespace(config="poly_example/poly.ert")
+    args = argparse.Namespace(config="poly_example/poly.ert", read_only=True)
 
     qapp.exec_ = lambda: None  # exec_ starts the event loop, and will stall the test.
     monkeypatch.setattr(ert.gui.main, "QApplication", Mock(return_value=qapp))
     monkeypatch.setattr(ert.gui.main.LibresFacade, "enspath", tmp_path)
     run_gui(args)
-    assert [p.stem for p in tmp_path.glob("**/*")].count("storage") == 1
+    assert [p.stem for p in tmp_path.glob("**/*")].count("storage") == 0
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -132,7 +133,7 @@ def test_that_gui_gives_suggestions_when_you_have_umask_in_config(qapp, tmp_path
     args = Mock()
     args.config = str(config_file)
     with add_gui_log_handler() as log_handler:
-        gui, _ = ert.gui.main._start_initial_gui_window(args, log_handler)
+        gui, _, _ = ert.gui.main._start_initial_gui_window(args, log_handler)
         assert gui.windowTitle() == "Some problems detected"
 
 
@@ -143,7 +144,7 @@ def test_that_errors_are_shown_in_the_suggester_window_when_present(qapp, tmp_pa
     args = Mock()
     args.config = str(config_file)
     with add_gui_log_handler() as log_handler:
-        gui, _ = ert.gui.main._start_initial_gui_window(args, log_handler)
+        gui, _, _ = ert.gui.main._start_initial_gui_window(args, log_handler)
         assert gui.windowTitle() == "Some problems detected"
 
 
@@ -152,7 +153,7 @@ def test_that_the_ui_show_no_warnings_when_observations_found(qapp):
     args = Mock()
     args.config = "poly.ert"
     with add_gui_log_handler() as log_handler:
-        gui, _ = ert.gui.main._start_initial_gui_window(args, log_handler)
+        gui, _, _ = ert.gui.main._start_initial_gui_window(args, log_handler)
         combo_box = gui.findChild(QComboBox, name="Simulation_mode")
         assert combo_box.count() == 5
 
@@ -169,7 +170,7 @@ def test_that_the_ui_show_warnings_when_there_are_no_observations(qapp, tmp_path
     args = Mock()
     args.config = str(config_file)
     with add_gui_log_handler() as log_handler:
-        gui, _ = ert.gui.main._start_initial_gui_window(args, log_handler)
+        gui, _, _ = ert.gui.main._start_initial_gui_window(args, log_handler)
         combo_box = gui.findChild(QComboBox, name="Simulation_mode")
         assert combo_box.count() == 5
 
@@ -193,7 +194,7 @@ def test_that_the_ui_show_warnings_when_parameters_are_missing(qapp, tmp_path):
 
     args.config = "poly-no-gen-kw.ert"
     with add_gui_log_handler() as log_handler:
-        gui, _ = ert.gui.main._start_initial_gui_window(args, log_handler)
+        gui, _, _ = ert.gui.main._start_initial_gui_window(args, log_handler)
         combo_box = gui.findChild(QComboBox, name="Simulation_mode")
         assert combo_box.count() == 5
 
@@ -210,12 +211,12 @@ def test_that_ert_starts_when_there_are_no_problems(qapp):
     args = Mock()
     args.config = "poly.ert"
     with add_gui_log_handler() as log_handler:
-        gui, _ = ert.gui.main._start_initial_gui_window(args, log_handler)
+        gui, _, _ = ert.gui.main._start_initial_gui_window(args, log_handler)
         assert gui.windowTitle() == "ERT - poly.ert"
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_that_run_dialog_can_be_closed_after_used_to_open_plots(qtbot):
+def test_that_run_dialog_can_be_closed_after_used_to_open_plots(qtbot, storage):
     """
     This is a regression test for a bug where the plot window opened from run dialog
     would have run dialog as parent. Because of that it would be destroyed when
@@ -225,18 +226,21 @@ def test_that_run_dialog_can_be_closed_after_used_to_open_plots(qtbot):
     but simulations cannot be clicked from the main window while the run dialog is open.
     """
     config_file = Path("config.ert")
-    config_file.write_text("NUM_REALIZATIONS 1\n", encoding="utf-8")
+    config_file.write_text(
+        f"NUM_REALIZATIONS 1\nENSPATH {storage.path}\n", encoding="utf-8"
+    )
 
     args_mock = Mock()
     args_mock.config = str(config_file)
 
     ert_config = ErtConfig.from_file(str(config_file))
     enkf_main = EnKFMain(ert_config)
-    with Storage.init_service(
+    with StorageService.init_service(
         ert_config=str(config_file),
         project=os.path.abspath(ert_config.ens_path),
     ):
         gui = _setup_main_window(enkf_main, args_mock, GUILogHandler())
+        gui.notifier.set_storage(storage)
         qtbot.addWidget(gui)
 
         start_simulation = gui.findChild(QToolButton, name="start_simulation")
@@ -296,7 +300,7 @@ def test_help_buttons_in_suggester_dialog(tmp_path, qtbot):
     args = Mock()
     args.config = str(config_file)
     with add_gui_log_handler() as log_handler:
-        gui, _ = ert.gui.main._start_initial_gui_window(args, log_handler)
+        gui, _, _ = ert.gui.main._start_initial_gui_window(args, log_handler)
         assert gui.windowTitle() == "Some problems detected"
 
         about_button = gui.findChild(QWidget, name="about_button")
@@ -320,7 +324,7 @@ def test_that_run_workflow_component_disabled_when_no_workflows(qapp):
     args = Mock()
     args.config = "poly.ert"
     with add_gui_log_handler() as log_handler:
-        gui, _ = ert.gui.main._start_initial_gui_window(args, log_handler)
+        gui, _, _ = ert.gui.main._start_initial_gui_window(args, log_handler)
         assert gui.windowTitle() == "ERT - poly.ert"
         run_workflow_button = gui.tools["Run workflow"]
         assert not run_workflow_button.isEnabled()
@@ -345,7 +349,7 @@ def test_that_run_workflow_component_enabled_when_workflows(qapp, tmp_path):
     args.config = str(config_file)
 
     with add_gui_log_handler() as log_handler:
-        gui, _ = ert.gui.main._start_initial_gui_window(args, log_handler)
+        gui, _, _ = ert.gui.main._start_initial_gui_window(args, log_handler)
         assert gui.windowTitle() == "ERT - config.ert"
         run_workflow_button = gui.tools["Run workflow"]
         assert run_workflow_button.isEnabled()
@@ -356,7 +360,7 @@ def test_that_es_mda_disabled_when_invalid_weights(qtbot):
     args = Mock()
     args.config = "poly.ert"
     with add_gui_log_handler() as log_handler:
-        gui, _ = ert.gui.main._start_initial_gui_window(args, log_handler)
+        gui, _, _ = ert.gui.main._start_initial_gui_window(args, log_handler)
         assert gui.windowTitle() == "ERT - poly.ert"
 
         combo_box = gui.findChild(QComboBox, name="Simulation_mode")

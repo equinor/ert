@@ -31,14 +31,14 @@ def test_data_loader_factory_fails():
         loader.data_loader_factory("BAD_TYPE")
 
 
-def test_load_general_response(facade, monkeypatch):
+def test_load_general_response(facade, new_ensemble):
     facade.load_gen_data.return_value = pd.DataFrame(data=[10.0, 10.0, 10.0, 10.0])
     facade.all_data_type_keys.return_value = ["some_key@1"]
     facade.is_gen_data_key.return_value = True
 
-    result = loader._load_general_response(facade, "some_key", "test_case")
+    result = loader._load_general_response(facade, new_ensemble, "some_key")
 
-    facade.load_gen_data.assert_called_once_with("test_case", "some_key", 1)
+    facade.load_gen_data.assert_called_once_with(new_ensemble, "some_key", 1)
 
     assert result.equals(
         pd.DataFrame(
@@ -63,7 +63,7 @@ def test_load_general_obs(facade, monkeypatch):
     facade.load_gen_data.return_value = pd.DataFrame(data=[9.9, 19.9, 29.9, 39.9])
     facade.get_observations()["some_key"].getNode.return_value = mock_node
 
-    result = loader._load_general_obs(facade, ["some_key"], "a_random_name")
+    result = loader._load_general_obs(facade, Mock(), ["some_key"])
 
     mock_node.get_data_points.assert_called_once_with()
     mock_node.get_std.assert_called_once_with()
@@ -98,7 +98,7 @@ def test_load_summary_data(facade, monkeypatch, func):
     )
     facade.get_impl_type_name_for_obs_key.return_value = "SUMMARY_OBS"
 
-    result = func(facade, "some_key", "a_random_name")
+    result = func(facade, Mock(), "some_key")
 
     assert result.columns.to_list() == [
         ("some_key", "2010-01-10", 0),
@@ -120,7 +120,7 @@ def test_load_summary_obs(facade, monkeypatch):
         }
     )
 
-    result = loader._load_summary_obs(facade, ["some_key"], "a_random_name")
+    result = loader._load_summary_obs(facade, Mock(), ["some_key"])
 
     assert result.columns.to_list() == [
         ("some_key", "2010-01-10", 0),
@@ -155,8 +155,8 @@ def test_no_obs_error(facade, monkeypatch):
     with pytest.raises(loader.ObservationError):
         loader._extract_data(
             facade,
+            Mock(),
             "some_key",
-            "a_random_name",
             response_loader,
             obs_loader,
             "SUMMARY_OBS",
@@ -178,8 +178,8 @@ def test_that_its_not_possible_to_load_multiple_different_obs_types(facade):
     ):
         loader._extract_data(
             facade,
+            Mock(),
             ["some_summary_key", "block_key"],
-            "a_random_name",
             Mock(),
             Mock(),
             "SUMMARY_OBS",
@@ -199,6 +199,7 @@ def test_different_data_key(facade):
     ):
         loader._extract_data(
             facade,
+            Mock(),
             ["obs_1", "obs_2", "obs_3"],
             "a_random_name",
             Mock(),

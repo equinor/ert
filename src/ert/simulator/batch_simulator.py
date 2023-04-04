@@ -1,13 +1,14 @@
+from __future__ import annotations
+
 from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Tuple, Union
 
-from ert._c_wrappers.enkf import EnKFMain, ErtConfig, NodeId
-from ert._c_wrappers.enkf.config import EnkfConfigNode
-from ert._c_wrappers.enkf.data import EnkfNode
+from ert._c_wrappers.enkf import EnKFMain, ErtConfig
+from ert._c_wrappers.enkf.config import EnkfConfigNode, ExtParamConfig
 
 from .batch_simulator_context import BatchContext
 
 if TYPE_CHECKING:
-    from ert._c_wrappers.enkf import EnkfFs, ExtParam
+    from ert.storage import EnsembleAccessor
 
 
 def _slug(entity: str) -> str:
@@ -104,49 +105,63 @@ class BatchSimulator:
             ens_config.addNode(EnkfConfigNode.create_gen_data(key, f"{key}_%d"))
 
     def _setup_sim(
-        self, sim_id: int, controls: Dict[str, Dict[str, Any]], file_system: "EnkfFs"
+        self,
+        sim_id: int,
+        controls: Dict[str, Dict[str, Any]],
+        file_system: EnsembleAccessor,
     ) -> None:
-        def _set_ext_param(
-            ext_node: "ExtParam",
+        def _check_suffix(
+            ext_config: "ExtParamConfig",
             key: Union[str, int],
             assignment: Union[Dict[str, Any], Tuple[str, str], str, int],
         ) -> None:
+            if key not in ext_config:
+                raise KeyError(f"No such key: {key}")
             if isinstance(assignment, dict):  # handle suffixes
-                suffixes = ext_node.config[key]
+                suffixes = ext_config[key]
                 if len(assignment) != len(suffixes):
                     missingsuffixes = set(suffixes).difference(set(assignment.keys()))
                     raise KeyError(
                         f"Key {key} is missing values for "
                         f"these suffixes: {missingsuffixes}"
                     )
-                for suffix, value in assignment.items():
-                    ext_node[key, suffix] = value
-            else:  # assume assignment is a single numerical value
-                ext_node[key] = assignment
+                for suffix in assignment:
+                    if suffix not in suffixes:
+                        raise KeyError(
+                            f"Key {key} has suffixes {suffixes}. "
+                            f"Can't find the requested suffix {suffix}"
+                        )
+            else:
+                suffixes = ext_config[key]
+                if suffixes:
+                    raise KeyError(
+                        f"Key {key} has suffixes, a suffix must be specified"
+                    )
 
-        node_id = NodeId(0, sim_id)
         if set(controls.keys()) != self.control_keys:
             err_msg = "Mismatch between initialized and provided control names."
             raise KeyError(err_msg)
 
         for control_name, control in controls.items():
             ens_config = self.ert_config.ensemble_config
-            node = EnkfNode(ens_config[control_name])
-            ext_node = node.as_ext_param()
-            if len(ext_node) != len(control.keys()):
+            ext_config = ens_config[control_name].getModelConfig()
+            if len(ext_config) != len(control.keys()):
                 raise KeyError(
                     (
-                        f"Expected {len(ext_node)} variables for "
+                        f"Expected {len(ext_config)} variables for "
                         f"control {control_name}, "
                         f"received {len(control.keys())}."
                     )
                 )
             for var_name, var_setting in control.items():
-                _set_ext_param(ext_node, var_name, var_setting)
-            node.save(file_system, node_id)
+                _check_suffix(ext_config, var_name, var_setting)
+
+            file_system.save_ext_param(control_name, sim_id, control)
 
     def start(
-        self, case_name: str, case_data: List[Tuple[int, Dict[str, Dict[str, Any]]]]
+        self,
+        ensemble: EnsembleAccessor,
+        case_data: List[Tuple[int, Dict[str, Dict[str, Any]]]],
     ) -> BatchContext:
         """Start batch simulation, return a simulation context
 
@@ -206,11 +221,10 @@ class BatchSimulator:
         batch complete before you start a new batch.
         """
 
-        self.ert.addDataKW("<CASE_NAME>", _slug(case_name))
-        file_system = self.ert.storage_manager.add_case(case_name)
+        self.ert.addDataKW("<CASE_NAME>", _slug(ensemble.name))
         for sim_id, (geo_id, controls) in enumerate(case_data):
             assert isinstance(geo_id, int)
-            self._setup_sim(sim_id, controls, file_system)
+            self._setup_sim(sim_id, controls, ensemble)
 
         # The input should be validated before we instantiate the BatchContext
         # object, at that stage a job_queue object with multiple threads is
@@ -219,7 +233,7 @@ class BatchSimulator:
         itr = 0
         mask = [True] * len(case_data)
         sim_context = BatchContext(
-            self.result_keys, self.ert, file_system, mask, itr, case_data
+            self.result_keys, self.ert, ensemble, mask, itr, case_data
         )
 
         if self.callback:

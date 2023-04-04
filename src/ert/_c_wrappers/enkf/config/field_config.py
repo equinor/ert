@@ -1,8 +1,10 @@
+from __future__ import annotations
+
 from cwrap import BaseCClass
 from ecl.grid import EclGrid
 
 from ert._c_wrappers import ResPrototype
-from ert._c_wrappers.enkf.enums import EnkfFieldFileFormatEnum
+from ert._c_wrappers.enkf.enums import EnkfFieldFileFormatEnum, EnkfTruncationType
 
 from .field_type_enum import FieldTypeEnum
 
@@ -44,16 +46,15 @@ class FieldConfig(BaseCClass):
         "enkf_field_file_format_enum field_config_default_export_format(char*)",
         bind=False,
     )
-    _guess_filetype = ResPrototype(
-        "enkf_field_file_format_enum field_config_guess_file_type(char*)", bind=False
-    )
 
-    def __init__(self, kw, grid):
+    _get_key = ResPrototype("char* field_config_get_key(field_config)")
+
+    def __init__(self, kw, grid) -> None:
         c_ptr = self._alloc(kw, grid, False)
         super().__init__(c_ptr)
 
     @classmethod
-    def exportFormat(cls, filename):
+    def exportFormat(cls, filename) -> EnkfFieldFileFormatEnum:
         export_format = cls._export_format(filename)
         if export_format in [
             EnkfFieldFileFormatEnum.ECL_GRDECL_FILE,
@@ -65,35 +66,34 @@ class FieldConfig(BaseCClass):
                 f"Could not determine grdecl / roff format from:{filename}"
             )
 
-    @classmethod
-    def guessFiletype(cls, filename):
-        return cls._guess_filetype(filename)
+    def get_key(self) -> str:
+        return self._get_key()
 
     def get_type(self) -> FieldTypeEnum:
         return self._get_type()
 
-    def get_truncation_mode(self):
+    def get_truncation_mode(self) -> EnkfTruncationType:
         return self._get_truncation_mode()
 
-    def get_truncation_min(self):
+    def get_truncation_min(self) -> float:
         return self._get_truncation_min()
 
-    def get_init_transform_name(self):
+    def get_init_transform_name(self) -> str:
         return self._get_init_transform_name()
 
-    def get_output_transform_name(self):
+    def get_output_transform_name(self) -> str:
         return self._get_output_transform_name()
 
-    def get_truncation_max(self):
+    def get_truncation_max(self) -> float:
         return self._get_truncation_max()
 
-    def get_nx(self):
+    def get_nx(self) -> int:
         return self._get_nx()
 
-    def get_ny(self):
+    def get_ny(self) -> int:
         return self._get_ny()
 
-    def get_nz(self):
+    def get_nz(self) -> int:
         return self._get_nz()
 
     def get_data_size(self) -> int:
@@ -102,13 +102,13 @@ class FieldConfig(BaseCClass):
     def get_grid(self) -> EclGrid:
         return self._get_grid()
 
-    def ijk_active(self, i, j, k):
+    def ijk_active(self, i, j, k) -> bool:
         return self._ijk_active(i, j, k)
 
-    def free(self):
+    def free(self) -> None:
         self._free()
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return self._create_repr(
             f"type = {self.get_type()}, "
             f"nx = {self.get_nx()}, ny = {self.get_ny()}, nz = {self.get_nz()}"

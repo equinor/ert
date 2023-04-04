@@ -1,3 +1,4 @@
+import os
 from typing import Iterator, List, Optional, Union
 
 from cwrap import BaseCClass
@@ -91,11 +92,7 @@ class EnkfObs(BaseCClass):
         """
         key_list = self._alloc_matching_keylist(pattern)
         if obs_type:
-            new_key_list = []
-            for key in key_list:
-                if self.obsType(key) == obs_type:
-                    new_key_list.append(key)
-            return new_key_list
+            return [key for key in key_list if self.obsType(key) == obs_type]
         else:
             return key_list
 
@@ -115,7 +112,12 @@ class EnkfObs(BaseCClass):
     def free(self):
         self._free()
 
-    def load(self, config_file, std_cutoff):
+    def load(self, config_file: str, std_cutoff: float) -> None:
+        if not os.access(config_file, os.R_OK):
+            raise RuntimeError(
+                "Do not have permission to open observation "
+                f"config file {config_file!r}"
+            )
         _clib.enkf_obs.load(self, config_file, std_cutoff)
 
     @property
