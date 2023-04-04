@@ -1,3 +1,4 @@
+import contextlib
 import copy
 import fileinput
 import os.path
@@ -139,10 +140,8 @@ def run_experiment(request, opened_main_window):
     def func(experiment_mode):
         qtbot = QtBot(request)
         gui = opened_main_window
-        try:
+        with contextlib.suppress(FileNotFoundError):
             shutil.rmtree("poly_out")
-        except FileNotFoundError:
-            pass
         # Select correct experiment in the simulation panel
         simulation_panel = gui.findChild(SimulationPanel)
         assert isinstance(simulation_panel, SimulationPanel)
