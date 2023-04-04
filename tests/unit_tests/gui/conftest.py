@@ -178,8 +178,8 @@ def run_experiment(request, opened_main_window):
 
             qtbot.mouseClick(run_dialog.done_button, Qt.LeftButton)
 
-        QTimer.singleShot(1000, use_rundialog)
         qtbot.mouseClick(start_simulation, Qt.LeftButton)
+        use_rundialog()
 
     return func
 
