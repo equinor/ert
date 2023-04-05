@@ -4,7 +4,8 @@ import stat
 
 import pytest
 
-from ert._c_wrappers.config import ConfigValidationError, ContentTypeEnum
+from ert._c_wrappers.config import ContentTypeEnum
+from ert.parsing import ConfigValidationError
 from ert._c_wrappers.job_queue.ext_job import ExtJob
 
 

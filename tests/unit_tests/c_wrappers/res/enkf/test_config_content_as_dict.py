@@ -3,13 +3,14 @@ from pathlib import Path
 
 import pytest
 
-from ert._c_wrappers.config import ConfigParser, ConfigValidationError, ContentTypeEnum
+from ert._c_wrappers.config import ConfigParser, ContentTypeEnum
+from ert.parsing import ConfigValidationError
 from ert._c_wrappers.enkf import ConfigKeys
 from ert._c_wrappers.enkf._config_content_as_dict import (
     SINGLE_OCCURRENCE_SINGLE_ARG_KEYS,
     config_content_as_dict,
 )
-from ert._c_wrappers.enkf.lark_parser import parse
+from ert.parsing.lark_parser import parse
 from ert._clib.config_keywords import init_user_config_parser
 
 

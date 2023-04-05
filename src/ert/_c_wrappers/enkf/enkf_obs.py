@@ -6,7 +6,7 @@ from ecl.util.util import CTime, StringList
 
 from ert import _clib
 from ert._c_wrappers import ResPrototype
-from ert._c_wrappers.config.config_parser import ConfigValidationError
+from ert.parsing import ConfigValidationError
 from ert._c_wrappers.enkf.enums import EnkfObservationImplementationType
 from ert._c_wrappers.enkf.observations import ObsVector
 

@@ -2,7 +2,7 @@ import hypothesis.strategies as st
 import pytest
 from hypothesis import given
 
-from ert._c_wrappers.config.config_parser import ConfigValidationError
+from ert.parsing import ConfigValidationError
 from ert._c_wrappers.enkf import ErtConfig
 
 

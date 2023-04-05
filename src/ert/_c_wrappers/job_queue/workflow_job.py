@@ -5,7 +5,8 @@ from collections import defaultdict
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, List, Optional, Type, Union
 
-from ert._c_wrappers.config import ConfigParser, ConfigValidationError, ContentTypeEnum
+from ert._c_wrappers.config import ConfigParser, ContentTypeEnum
+from ...parsing import ConfigValidationError
 from ert._c_wrappers.job_queue import ErtScript, ExternalErtScript, FunctionErtScript
 from ert._clib.job_kw import type_from_kw
 

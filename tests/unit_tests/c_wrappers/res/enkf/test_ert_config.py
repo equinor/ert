@@ -10,7 +10,7 @@ from unittest.mock import MagicMock, mock_open, patch
 import pytest
 from ecl.util.enums import RngAlgTypeEnum
 
-from ert._c_wrappers.config.config_parser import ConfigValidationError
+from ert.parsing import ConfigValidationError
 from ert._c_wrappers.enkf import AnalysisConfig, ConfigKeys, ErtConfig, HookRuntime
 from ert._c_wrappers.enkf._config_content_as_dict import parse_signature_job
 from ert._c_wrappers.enkf.ert_config import site_config_location

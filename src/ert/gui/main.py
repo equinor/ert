@@ -18,8 +18,7 @@ from PyQt5.QtWidgets import (
 from qtpy.QtCore import QLocale, QSize, Qt
 from qtpy.QtWidgets import QApplication
 
-from ert._c_wrappers.config import ConfigWarning
-from ert._c_wrappers.config.config_parser import ConfigValidationError
+from ert.parsing import ConfigWarning, ConfigValidationError
 from ert._c_wrappers.enkf import EnKFMain, ErtConfig
 from ert._c_wrappers.enkf.ensemble_config import ParameterConfiguration
 from ert.gui.about_dialog import AboutDialog

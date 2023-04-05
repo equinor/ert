@@ -4,7 +4,7 @@ from os.path import realpath
 from typing import Dict, List, Optional
 
 from ert._c_wrappers.analysis import AnalysisMode, AnalysisModule
-from ert._c_wrappers.config.config_parser import ConfigValidationError
+from ert.parsing import ConfigValidationError
 from ert._c_wrappers.enkf.analysis_iter_config import AnalysisIterConfig
 from ert._c_wrappers.enkf.config_keys import ConfigKeys
 

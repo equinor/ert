@@ -15,7 +15,7 @@ import pytest
 import ert.shared
 from ert import LibresFacade, ensemble_evaluator
 from ert.__main__ import ert_parser
-from ert._c_wrappers.config.config_parser import ConfigValidationError
+from ert.parsing import ConfigValidationError
 from ert._c_wrappers.enkf import EnKFMain, ErtConfig
 from ert.cli import (
     ENSEMBLE_EXPERIMENT_MODE,

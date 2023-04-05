@@ -7,15 +7,15 @@ from typing import Any, Dict, List, Mapping, Optional, Union
 
 from lark import Discard, Lark, Token, Transformer, Tree, UnexpectedCharacters
 
-from ert._c_wrappers.config import ConfigValidationError, ConfigWarning
-from ert._c_wrappers.enkf.config_keywords import (
+from ert.parsing import ConfigWarning, ConfigValidationError
+from ert.parsing.config_keywords import (
     SchemaItem,
     check_required,
     define_keyword,
     init_site_config,
     init_user_config,
 )
-from ert._c_wrappers.enkf.lark_parser_common import (
+from ert.parsing.lark_parser_common import (
     Defines,
     FileContextToken,
     Instruction,

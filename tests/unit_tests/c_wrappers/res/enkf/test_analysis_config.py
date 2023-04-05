@@ -1,6 +1,6 @@
 import pytest
 
-from ert._c_wrappers.config.config_parser import ConfigValidationError
+from ert.parsing import ConfigValidationError
 from ert._c_wrappers.enkf import AnalysisConfig, ConfigKeys
 
 
