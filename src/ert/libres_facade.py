@@ -8,6 +8,7 @@ from pandas import DataFrame, Series
 
 from ert._c_wrappers.enkf import EnKFMain, EnsembleConfig, ErtConfig, ErtImplType
 from ert._c_wrappers.enkf.config import GenKwConfig
+from ert._c_wrappers.enkf.config.field_config import Field
 from ert._c_wrappers.enkf.enums import (
     EnkfObservationImplementationType,
     RealizationStateEnum,
@@ -96,7 +97,9 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
 
     def get_field_parameters(self) -> List[str]:
         return list(
-            self._enkf_main.ensembleConfig().getKeylistFromImplType(ErtImplType.FIELD)
+            val.name
+            for val in self._enkf_main.ensembleConfig().py_nodes.values()
+            if isinstance(val, Field)
         )
 
     def get_gen_kw(self) -> List[str]:
@@ -145,11 +148,7 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
 
     @property
     def have_smoother_parameters(self) -> bool:
-        return bool(
-            self.get_surface_parameters()
-            or self.get_gen_kw()
-            or self.get_field_parameters()
-        )
+        return bool(self._enkf_main.ensembleConfig().parameters)
 
     @property
     def have_observations(self) -> bool:

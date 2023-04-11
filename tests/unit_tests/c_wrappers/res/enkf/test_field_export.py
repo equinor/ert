@@ -1,31 +1,21 @@
 import os
 
 import pytest
-
-from ert._c_wrappers.enkf.config import FieldTypeEnum
-
-
-def test_field_type_enum(snake_oil_field_example):
-    ert = snake_oil_field_example
-    ens_config = ert.ensembleConfig()
-    fc = ens_config["PERMX"].getFieldModelConfig()
-    assert fc.get_type() == FieldTypeEnum.ECLIPSE_PARAMETER
+from ecl.grid import EclGrid
 
 
 def test_field_basics(snake_oil_field_example):
     ert = snake_oil_field_example
     ens_config = ert.ensembleConfig()
-    fc = ens_config["PERMX"].getFieldModelConfig()
-    grid = fc.get_grid()
+    fc = ens_config["PERMX"]
+    grid = EclGrid(fc.grid_file)
 
-    assert repr(fc).startswith("FieldConfig(type")
-    assert (fc.get_nx(), fc.get_ny(), fc.get_nz()) == (10, 10, 5)
-    assert (grid.getNX(), grid.getNY(), grid.getNZ()) == (10, 10, 5)
-    assert fc.get_truncation_mode() == 0
-    assert fc.get_truncation_min() == -1.0
-    assert fc.get_truncation_max() == -1.0
-    assert fc.get_init_transform_name() is None
-    assert fc.get_output_transform_name() is None
+    assert (fc.nx, fc.ny, fc.nz) == (10, 10, 5)
+    assert (grid.nx, grid.ny, grid.nz) == (10, 10, 5)
+    assert fc.truncation_min is None
+    assert fc.truncation_max is None
+    assert fc.input_transformation is None
+    assert fc.output_transformation is None
 
 
 def test_field_export(snake_oil_field_example, storage):
@@ -45,7 +35,7 @@ def test_field_export(snake_oil_field_example, storage):
 
     fs = prior_ensemble
     fs.export_field(
-        config_node.getFieldModelConfig().get_key(),
+        config_node.name,
         0,
         "export/with/path/PERMX_0.grdecl",
         fformat="grdecl",
@@ -57,7 +47,7 @@ def test_field_export(snake_oil_field_example, storage):
         KeyError, match="Unable to load FIELD for key: PERMX, realization: 1"
     ):
         fs.export_field(
-            config_node.getFieldModelConfig().get_key(),
+            config_node.name,
             1,
             "export/with/path/PERMX_1.grdecl",
             fformat="grdecl",
@@ -68,7 +58,7 @@ def test_field_export(snake_oil_field_example, storage):
         KeyError, match="Unable to load FIELD for key: PERMX, realization: 2"
     ):
         fs.export_field(
-            config_node.getFieldModelConfig().get_key(),
+            config_node.name,
             2,
             "export/with/path/PERMX_2.grdecl",
             fformat="grdecl",
@@ -76,7 +66,7 @@ def test_field_export(snake_oil_field_example, storage):
     assert not os.path.isfile("export/with/path/PERMX_2.grdecl")
 
     fs.export_field(
-        config_node.getFieldModelConfig().get_key(),
+        config_node.name,
         3,
         "export/with/path/PERMX_3.grdecl",
         fformat="grdecl",
@@ -85,7 +75,7 @@ def test_field_export(snake_oil_field_example, storage):
     assert os.path.getsize("export/with/path/PERMX_3.grdecl") > 0
 
     fs.export_field(
-        config_node.getFieldModelConfig().get_key(),
+        config_node.name,
         4,
         "export/with/path/PERMX_4.grdecl",
         fformat="grdecl",

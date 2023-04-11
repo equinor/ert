@@ -1,22 +1,14 @@
 import logging
 import os
-from typing import TYPE_CHECKING, Dict, Final, List, Tuple, Union
+from typing import TYPE_CHECKING, Dict, List, Tuple, Union
 
 from cwrap import BaseCClass
 from ecl.util.util import IntVector, StringList
 
 from ert._c_wrappers import ResPrototype
-from ert._c_wrappers.enkf.config_keys import ConfigKeys
-from ert._c_wrappers.enkf.enums import (
-    EnkfTruncationType,
-    ErtImplType,
-    FieldFileFormatType,
-    LoadFailTypeEnum,
-)
-from ert.parsing import ConfigValidationError
+from ert._c_wrappers.enkf.enums import ErtImplType, LoadFailTypeEnum
 
 from .ext_param_config import ExtParamConfig
-from .field_config import FieldConfig
 from .gen_data_config import GenDataConfig
 from .gen_kw_config import GenKwConfig
 from .summary_config import SummaryConfig
@@ -26,18 +18,6 @@ if TYPE_CHECKING:
     from collections.abc import Iterable
 
 logger = logging.getLogger(__name__)
-
-
-FIELD_FUNCTION_NAMES: Final = [
-    "LN",
-    "LOG10",
-    "EXP0",
-    "LOG",
-    "EXP",
-    "TRUNC_POW10",
-    "LN0",
-    "POW10",
-]
 
 
 class EnkfConfigNode(BaseCClass):
@@ -56,11 +36,6 @@ class EnkfConfigNode(BaseCClass):
     )
     _alloc_summary_node = ResPrototype(
         "enkf_config_node_obj enkf_config_node_alloc_summary(char*, load_fail_type)",
-        bind=False,
-    )
-    _alloc_field_node = ResPrototype(
-        "enkf_config_node_obj enkf_config_node_alloc_field(char*, \
-                                                           ecl_grid)",
         bind=False,
     )
     _get_ref = ResPrototype(
@@ -95,20 +70,6 @@ class EnkfConfigNode(BaseCClass):
                                                                   char*)",
         bind=False,
     )
-
-    _update_field = ResPrototype(
-        "void enkf_config_node_update_field(enkf_config_node, \
-                                                      field_file_format_type_enum, \
-                                                      enkf_truncation_type_enum, \
-                                                      double, \
-                                                      double, \
-                                                      char*, \
-                                                      char*, \
-                                                      char*, \
-                                                      char*)",
-        bind=True,
-    )
-
     def __init__(self):
         raise NotImplementedError("Class can not be instantiated directly!")
 
@@ -117,9 +78,6 @@ class EnkfConfigNode(BaseCClass):
 
     def getPointerReference(self):
         return self._get_ref()
-
-    def getFieldModelConfig(self) -> FieldConfig:
-        return FieldConfig.createCReference(self._get_ref(), parent=self)
 
     def getSurfaceModelConfig(self) -> SurfaceConfig:
         return SurfaceConfig.createCReference(self._get_ref(), parent=self)
@@ -274,67 +232,6 @@ class EnkfConfigNode(BaseCClass):
 
         return config_node
 
-    # FIELD FULL creation
-    @classmethod
-    def create_field(
-        cls,
-        key,
-        var_type_string,
-        grid,
-        ecl_file,
-        init_transform,
-        output_transform,
-        input_transform,
-        min_key,
-        max_key,
-    ):
-        # pylint: disable=unsupported-binary-operation
-        # (false positive from the cwrap class BaseCEnum)
-        truncation = EnkfTruncationType.TRUNCATE_NONE
-        value_min = -1
-        value_max = -1
-        if min_key is not None:
-            if isinstance(min_key, str):
-                min_key = float(min_key)
-            value_min = min_key
-            truncation = truncation | EnkfTruncationType.TRUNCATE_MIN
-        if max_key is not None:
-            if isinstance(max_key, str):
-                max_key = float(max_key)
-            value_max = max_key
-            truncation = truncation | EnkfTruncationType.TRUNCATE_MAX
-
-        config_node = cls._alloc_field_node(key, grid)
-
-        cls.verifyValidFieldName(init_transform, "INIT_TRANSFORM")
-        cls.verifyValidFieldName(input_transform, "INPUT_TRANSFORM")
-        cls.verifyValidFieldName(output_transform, "OUTPUT_TRANSFORM")
-
-        file_format_enum = (
-            FieldFileFormatType.ECL_KW_FILE_ALL_CELLS
-            if ecl_file
-            else FieldFileFormatType.FILE_FORMAT_NULL
-        )
-
-        if ecl_file.upper().endswith("GRDECL"):
-            file_format_enum = FieldFileFormatType.ECL_GRDECL_FILE
-        elif ecl_file.upper().endswith("ROFF"):
-            file_format_enum = FieldFileFormatType.RMS_ROFF_FILE
-
-        if var_type_string == ConfigKeys.PARAMETER_KEY:
-            config_node._update_field(
-                file_format_enum,
-                truncation,
-                value_min,
-                value_max,
-                init_transform,
-                input_transform,
-                output_transform,
-                ecl_file,
-            )
-
-        return config_node
-
     def free(self):
         self._free()
 
@@ -344,18 +241,12 @@ class EnkfConfigNode(BaseCClass):
             f"implementation = {self.getImplementationType()}"
         )
 
-    def verifyValidFieldName(func_name: str, field_name: str):
-        if func_name and func_name not in FIELD_FUNCTION_NAMES:
-            raise ValueError(f"FIELD {field_name}:{func_name} is an invalid function")
-
     def getModelConfig(
         self,
-    ) -> Union[FieldConfig, GenDataConfig, GenKwConfig, SummaryConfig, ExtParamConfig]:
+    ) -> Union[GenDataConfig, GenKwConfig, SummaryConfig, ExtParamConfig]:
         implementation_type = self.getImplementationType()
 
-        if implementation_type == ErtImplType.FIELD:
-            return self.getFieldModelConfig()
-        elif implementation_type == ErtImplType.GEN_DATA:
+        if implementation_type == ErtImplType.GEN_DATA:
             return self.getDataModelConfig()
         elif implementation_type == ErtImplType.GEN_KW:
             return self.getKeywordModelConfig()
@@ -396,8 +287,6 @@ class EnkfConfigNode(BaseCClass):
                 and self.getKeywordModelConfig() != other.getKeywordModelConfig(),
                 self.getImplementationType() == ErtImplType.SUMMARY
                 and self.getSummaryModelConfig() != other.getSummaryModelConfig(),
-                self.getImplementationType() == ErtImplType.FIELD
-                and self.getFieldModelConfig() != other.getFieldModelConfig(),
             ]
         ):
             return False

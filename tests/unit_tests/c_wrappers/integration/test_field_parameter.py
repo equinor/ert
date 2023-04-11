@@ -18,8 +18,7 @@ from ecl.grid import EclGrid
 from ecl.util.geometry import Surface
 
 from ert.__main__ import ert_parser
-from ert._c_wrappers.enkf import EnKFMain, ErtConfig
-from ert._c_wrappers.enkf.enums import EnkfVarType
+from ert._c_wrappers.enkf import EnKFMain, EnkfVarType, ErtConfig
 from ert.cli import ENSEMBLE_SMOOTHER_MODE
 from ert.cli.main import run_cli
 from ert.libres_facade import LibresFacade
@@ -917,7 +916,7 @@ def test_config_node_meta_information(storage, tmpdir):
         NUM_REALIZATIONS 1
         GRID MY_EGRID.EGRID
         SURFACE TOP     OUTPUT_FILE:surf.irap   INIT_FILES:Surfaces/surf%d.irap   BASE_SURFACE:Surfaces/surf0.irap
-        SURFACE BOTTOM  OUTPUT_FILE:surf.wrap   INIT_FILES:Surfaces/surf%d.wrap   BASE_SURFACE:Surfaces/surf0.wrap  FORWARD_INIT:True
+        SURFACE BOTTOM  OUTPUT_FILE:surf.wrap   INIT_FILES:surf.wrap   BASE_SURFACE:Surfaces/surf0.wrap  FORWARD_INIT:True
 
         GEN_DATA ABC  RESULT_FILE:SimulatedABC_%d.txt  INPUT_FORMAT:ASCII   REPORT_STEPS:0
         GEN_DATA DEF  RESULT_FILE:SimulatedDEF_%d.txt  INPUT_FORMAT:ASCII   REPORT_STEPS:0
@@ -967,41 +966,33 @@ def test_config_node_meta_information(storage, tmpdir):
 
         # invalid object
         assert ensemble_config.getUseForwardInit("X") is False
-        assert ensemble_config.get_enkf_infile("X") == ""
-        assert ensemble_config.get_enkf_outfile("X") == ""
-        assert ensemble_config.get_init_file_fmt("X") == ""
+        with pytest.raises(KeyError, match="The key:X is not in"):
+            ensemble_config["X"]  # pylint: disable=pointless-statement
         assert ensemble_config.get_var_type("X") == EnkfVarType.INVALID_VAR
 
         # surface
         assert ensemble_config.getUseForwardInit("TOP") is False
-        assert ensemble_config.get_enkf_infile("TOP") == ""
-        assert ensemble_config.get_enkf_outfile("TOP") == "surf.irap"
-        assert ensemble_config.get_init_file_fmt("TOP") == "Surfaces/surf%d.irap"
+        assert str(ensemble_config["TOP"].forward_init_file) == "Surfaces/surf%d.irap"
+        assert str(ensemble_config["TOP"].output_file) == "surf.irap"
         assert ensemble_config.get_var_type("TOP") == EnkfVarType.PARAMETER
 
         assert ensemble_config.getUseForwardInit("BOTTOM") is True
 
         # gen_data
         assert ensemble_config.getUseForwardInit("ABC") is False
-        assert ensemble_config.get_enkf_infile("ABC") == "SimulatedABC_%d.txt"
-        assert ensemble_config.get_enkf_outfile("ABC") == ""
-        assert ensemble_config.get_init_file_fmt("ABC") == ""
+        assert ensemble_config["ABC"].input_file == "SimulatedABC_%d.txt"
         assert ensemble_config.get_var_type("ABC") == EnkfVarType.DYNAMIC_RESULT
 
-        # gen_kw - should have had forward_init possibility?
+        # gen_kw
         assert ensemble_config.getUseForwardInit("KW_NAME") is False
-        assert ensemble_config.get_enkf_infile("KW_NAME") == ""
-        assert ensemble_config.get_enkf_outfile("KW_NAME") == "kw.txt"
-        assert ensemble_config.get_init_file_fmt("KW_NAME") == os.path.abspath(
-            "custom_param%d.txt"
+        assert ensemble_config["KW_NAME"].forward_init_file == str(
+            Path().cwd() / "custom_param%d.txt"
         )
+        assert ensemble_config["KW_NAME"].output_file == "kw.txt"
         assert ensemble_config.get_var_type("KW_NAME") == EnkfVarType.PARAMETER
 
         # summary
         assert ensemble_config.getUseForwardInit("WOPR:MY_WELL") is False
-        assert ensemble_config.get_enkf_infile("WOPR:MY_WELL") == ""
-        assert ensemble_config.get_enkf_outfile("WOPR:MY_WELL") == ""
-        assert ensemble_config.get_init_file_fmt("WOPR:MY_WELL") == ""
         assert (
             ensemble_config.get_var_type("WOPR:MY_WELL") == EnkfVarType.DYNAMIC_RESULT
         )
@@ -1010,7 +1001,6 @@ def test_config_node_meta_information(storage, tmpdir):
         assert ensemble_config.getUseForwardInit("MY_PARAM2") is True
 
         assert ensemble_config.getUseForwardInit("MY_PARAM") is False
-        assert ensemble_config.get_enkf_infile("MY_PARAM") == ""
-        assert ensemble_config.get_enkf_outfile("MY_PARAM") == "my_param.grdecl"
-        assert ensemble_config.get_init_file_fmt("MY_PARAM") == "my_param_%d.grdecl"
+        assert ensemble_config["MY_PARAM"].forward_init_file == "my_param_%d.grdecl"
+        assert ensemble_config["MY_PARAM"].output_file == Path("my_param.grdecl")
         assert ensemble_config.get_var_type("MY_PARAM") == EnkfVarType.PARAMETER

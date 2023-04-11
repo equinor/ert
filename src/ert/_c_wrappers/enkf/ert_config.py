@@ -306,8 +306,8 @@ class ErtConfig:
                         "is not supported."
                     ],
                 )
-
-            init_file_fmt = ensemble_config.get_init_file_fmt(key)
+            node = ensemble_config[key]
+            init_file_fmt = node.forward_init_file
             if init_file_fmt and "%" not in init_file_fmt:
                 raise ConfigValidationError(
                     config_file=config_path,

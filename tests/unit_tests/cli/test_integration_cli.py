@@ -600,7 +600,7 @@ def test_field_init_file_not_readable(copy_case, monkeypatch):
     try:
         run_ert_test_run(config_file_name)
     except ErtCliError as err:
-        assert "Failed to open init file for parameter 'PERMX'" in str(err)
+        assert "Failed to open init file for parameter PERMX" in str(err)
 
 
 def test_surface_init_fails_during_forward_model_callback(copy_case):

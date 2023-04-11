@@ -22,9 +22,9 @@ from ecl.grid import EclGrid
 from numpy import ma
 from pydantic import BaseModel
 
-from ert._c_wrappers.enkf.enkf_main import field_transform, trans_func
+from ert._c_wrappers.enkf.config.field_config import field_transform
+from ert._c_wrappers.enkf.enkf_main import trans_func
 from ert._c_wrappers.enkf.enums import RealizationStateEnum
-from ert._c_wrappers.enkf.enums.enkf_truncation_type import EnkfTruncationType
 from ert._c_wrappers.enkf.model_callbacks import LoadStatus
 from ert._c_wrappers.enkf.time_map import TimeMap
 from ert.callbacks import forward_model_ok
@@ -80,20 +80,15 @@ PRIOR_FUNCTIONS = {
 }
 
 
-def _field_truncate(
-    data: npt.ArrayLike, truncation_mode: EnkfTruncationType, min_: float, max_: float
-) -> Any:
-    if truncation_mode == EnkfTruncationType.TRUNCATE_MIN:
+def _field_truncate(data: npt.ArrayLike, min_: float, max_: float) -> Any:
+    if min_ is not None and max_ is not None:
+        vfunc = np.vectorize(lambda x: max(min(x, max_), min_))
+        return vfunc(data)
+    elif min_ is not None:
         vfunc = np.vectorize(lambda x: max(x, min_))
         return vfunc(data)
-    if truncation_mode == EnkfTruncationType.TRUNCATE_MAX:
+    elif max_ is not None:
         vfunc = np.vectorize(lambda x: min(x, max_))
-        return vfunc(data)
-    if (
-        truncation_mode
-        == EnkfTruncationType.TRUNCATE_MAX | EnkfTruncationType.TRUNCATE_MIN
-    ):
-        vfunc = np.vectorize(lambda x: max(min(x, max_), min_))
         return vfunc(data)
     return data
 
@@ -388,10 +383,14 @@ class LocalEnsembleReader:
         info: Any,
     ) -> None:
         data = np.load(data_path / f"{key}.npy")
-        data_transformed = field_transform(data, transform_name=info["transfer_out"])
+        transform_name = info["transfer_out"]
+        data_transformed = (
+            field_transform(data, transform_name=transform_name)
+            if transform_name
+            else data
+        )
         data_truncated = _field_truncate(
             data_transformed,
-            info["truncation_mode"],
             info["truncation_min"],
             info["truncation_max"],
         )
@@ -425,10 +424,14 @@ class LocalEnsembleReader:
         info: Any,
     ) -> None:
         data = np.load(data_path / f"{key}.npy")
-        data_transformed = field_transform(data, transform_name=info["transfer_out"])
+        transform_name = info["transfer_out"]
+        data_transformed = (
+            field_transform(data, transform_name=transform_name)
+            if transform_name
+            else data
+        )
         data_truncated = _field_truncate(
             data_transformed,
-            info["truncation_mode"],
             info["truncation_min"],
             info["truncation_max"],
         )
