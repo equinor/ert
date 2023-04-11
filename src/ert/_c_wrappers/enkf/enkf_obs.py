@@ -58,6 +58,10 @@ class EnkfObs(BaseCClass):
         refcase: Optional["EclSum"],
         ensemble_config: "EnsembleConfig",
     ):
+        # The c object holds on to ensemble_config, so we
+        # need to hold onto a reference to it here so it does not
+        # get destructed
+        self._ensemble_config = ensemble_config
         c_ptr = _clib.enkf_obs.alloc(
             int(history_type), time_map, refcase, ensemble_config
         )
