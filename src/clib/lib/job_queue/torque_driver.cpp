@@ -79,8 +79,8 @@ void *torque_driver_alloc() {
     torque_driver_set_option(torque_driver, TORQUE_NUM_NODES, "1");
     torque_driver_set_option(torque_driver, TORQUE_SUBMIT_SLEEP,
                              TORQUE_DEFAULT_SUBMIT_SLEEP);
-    torque_driver_set_option(torque_driver, TORQUE_TIMEOUT,
-                             TORQUE_DEFAULT_TIMEOUT);
+    torque_driver_set_option(torque_driver, TORQUE_QUEUE_QUERY_TIMEOUT,
+                             TORQUE_DEFAULT_QUEUE_QUERY_TIMEOUT);
 
     return torque_driver;
 }
@@ -227,7 +227,7 @@ bool torque_driver_set_option(void *__driver, const char *option_key,
             torque_driver_set_debug_output(driver, value);
         else if (strcmp(TORQUE_SUBMIT_SLEEP, option_key) == 0)
             option_set = torque_driver_set_submit_sleep(driver, value);
-        else if (strcmp(TORQUE_TIMEOUT, option_key) == 0)
+        else if (strcmp(TORQUE_QUEUE_QUERY_TIMEOUT, option_key) == 0)
             option_set = torque_driver_set_timeout(driver, value);
         else
             option_set = false;
@@ -259,7 +259,7 @@ const void *torque_driver_get_option(const void *__driver,
             return driver->cluster_label;
         else if (strcmp(TORQUE_JOB_PREFIX_KEY, option_key) == 0)
             return driver->job_prefix;
-        else if (strcmp(TORQUE_TIMEOUT, option_key) == 0)
+        else if (strcmp(TORQUE_QUEUE_QUERY_TIMEOUT, option_key) == 0)
             return driver->timeout_char;
         else {
             util_abort("%s: option_id:%s not recognized for TORQUE driver \n",
@@ -280,7 +280,7 @@ void torque_driver_init_option_list(stringlist_type *option_list) {
     stringlist_append_copy(option_list, TORQUE_KEEP_QSUB_OUTPUT);
     stringlist_append_copy(option_list, TORQUE_CLUSTER_LABEL);
     stringlist_append_copy(option_list, TORQUE_JOB_PREFIX_KEY);
-    stringlist_append_copy(option_list, TORQUE_TIMEOUT);
+    stringlist_append_copy(option_list, TORQUE_QUEUE_QUERY_TIMEOUT);
 }
 
 torque_job_type *torque_job_alloc() {
