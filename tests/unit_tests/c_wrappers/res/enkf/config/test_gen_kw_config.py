@@ -4,8 +4,8 @@ from textwrap import dedent
 
 import pytest
 
-from ert.parsing import ConfigValidationError
 from ert._c_wrappers.enkf import EnKFMain, ErtConfig, GenKwConfig
+from ert.parsing import ConfigValidationError
 
 
 @pytest.mark.usefixtures("use_tmpdir")

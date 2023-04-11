@@ -1,8 +1,8 @@
 import pytest
 
-from ert.parsing import ConfigValidationError
 from ert._c_wrappers.job_queue import Workflow, WorkflowJob
 from ert._c_wrappers.util.substitution_list import SubstitutionList
+from ert.parsing import ConfigValidationError
 
 from .workflow_common import WorkflowCommon
 

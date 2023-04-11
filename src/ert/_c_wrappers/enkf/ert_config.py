@@ -11,7 +11,6 @@ from typing import Any, ClassVar, Dict, List, Mapping
 import pkg_resources
 
 from ert._c_wrappers.config import ConfigParser
-from ...parsing import ConfigWarning, ConfigValidationError
 from ert._c_wrappers.enkf.analysis_config import AnalysisConfig
 from ert._c_wrappers.enkf.config_keys import ConfigKeys
 from ert._c_wrappers.enkf.ensemble_config import EnsembleConfig
@@ -28,10 +27,11 @@ from ert._c_wrappers.job_queue import (
 from ert._c_wrappers.util import SubstitutionList
 from ert._clib import job_kw
 from ert._clib.config_keywords import init_site_config_parser, init_user_config_parser
+from ert.parsing.lark_parser import parse as lark_parse
 
+from ...parsing import ConfigValidationError, ConfigWarning
 from ._config_content_as_dict import config_content_as_dict
 from ._deprecation_migration_suggester import DeprecationMigrationSuggester
-from ert.parsing.lark_parser import parse as lark_parse
 
 logger = logging.getLogger(__name__)
 

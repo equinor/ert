@@ -14,13 +14,13 @@ from ecl.util.util import StringList
 
 from ert import _clib
 from ert._c_wrappers import ResPrototype
-from ert.parsing import ConfigWarning, ConfigValidationError
 from ert._c_wrappers.config.rangestring import rangestring_to_list
 from ert._c_wrappers.enkf import FieldConfig, GenKwConfig
 from ert._c_wrappers.enkf.config import EnkfConfigNode
 from ert._c_wrappers.enkf.config.surface_config import SurfaceConfig
 from ert._c_wrappers.enkf.config_keys import ConfigKeys
 from ert._c_wrappers.enkf.enums import EnkfVarType, ErtImplType, GenDataFileType
+from ert.parsing import ConfigValidationError, ConfigWarning
 
 logger = logging.getLogger(__name__)
 

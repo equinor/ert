@@ -2,8 +2,8 @@ import logging
 from typing import Any, Dict, Optional, Tuple
 
 from ert._c_wrappers.config import ConfigContent
-from ert.parsing import ConfigValidationError
 from ert._c_wrappers.enkf.config_keys import ConfigKeys
+from ert.parsing import ConfigValidationError
 
 logger = logging.getLogger(__name__)
 

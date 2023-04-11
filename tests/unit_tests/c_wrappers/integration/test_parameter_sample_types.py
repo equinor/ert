@@ -14,11 +14,11 @@ import xtgeo
 from ecl.util.geometry import Surface
 
 from ert.__main__ import ert_parser
-from ert.parsing import ConfigValidationError
 from ert._c_wrappers.enkf import EnKFMain, ErtConfig
 from ert.cli import ENSEMBLE_SMOOTHER_MODE
 from ert.cli.main import run_cli
 from ert.libres_facade import LibresFacade
+from ert.parsing import ConfigValidationError
 from ert.storage import EnsembleAccessor, open_storage
 
 

@@ -1,7 +1,7 @@
 import pytest
 
-from ert.parsing import ConfigValidationError
 from ert._c_wrappers.enkf import ErtConfig
+from ert.parsing import ConfigValidationError
 
 
 @pytest.mark.parametrize(

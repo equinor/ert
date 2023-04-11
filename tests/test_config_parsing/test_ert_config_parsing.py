@@ -9,9 +9,9 @@ from textwrap import dedent
 import pytest
 from hypothesis import assume, given
 
-from ert.parsing import ConfigWarning, ConfigValidationError
 from ert._c_wrappers.enkf import ErtConfig
 from ert._c_wrappers.enkf.config_keys import ConfigKeys
+from ert.parsing import ConfigValidationError, ConfigWarning
 
 from .config_dict_generator import config_generators
 

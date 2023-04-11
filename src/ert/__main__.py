@@ -14,7 +14,6 @@ import yaml
 from ecl import set_abort_handler
 
 import ert.shared
-from ert.parsing import ConfigValidationError
 from ert._c_wrappers.enkf import ErtConfig
 from ert.cli import (
     ENSEMBLE_EXPERIMENT_MODE,
@@ -28,6 +27,7 @@ from ert.cli.main import ErtCliError, ErtTimeoutError, run_cli
 from ert.logging import LOGGING_CONFIG
 from ert.logging._log_util_abort import _log_util_abort
 from ert.namespace import Namespace
+from ert.parsing import ConfigValidationError
 from ert.services import StorageService, WebvizErt
 from ert.shared.feature_toggling import FeatureToggling
 from ert.shared.ide.keywords.data.validation_status import ValidationStatus

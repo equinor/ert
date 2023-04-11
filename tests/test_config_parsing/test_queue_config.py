@@ -2,8 +2,8 @@ import hypothesis.strategies as st
 import pytest
 from hypothesis import given
 
-from ert.parsing import ConfigValidationError
 from ert._c_wrappers.enkf import ErtConfig
+from ert.parsing import ConfigValidationError
 
 
 @pytest.mark.usefixtures("use_tmpdir", "set_site_config")

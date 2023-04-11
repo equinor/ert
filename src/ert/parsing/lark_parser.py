@@ -7,18 +7,19 @@ from typing import Any, Dict, List, Mapping, Optional, Union
 
 from lark import Discard, Lark, Token, Transformer, Tree, UnexpectedCharacters
 
-from ert.parsing import ConfigWarning, ConfigValidationError
+from ert.parsing import (
+    ConfigValidationError,
+    ConfigWarning,
+    Defines,
+    FileContextToken,
+    Instruction,
+)
 from ert.parsing.config_keywords import (
     SchemaItem,
     check_required,
     define_keyword,
     init_site_config,
     init_user_config,
-)
-from ert.parsing.lark_parser_common import (
-    Defines,
-    FileContextToken,
-    Instruction,
 )
 
 grammar = r"""

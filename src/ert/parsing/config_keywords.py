@@ -5,8 +5,7 @@ from typing import Any, List, Mapping, Optional, Union
 
 from pydantic import BaseModel
 
-from ert.parsing import ConfigValidationError
-from ert.parsing.lark_parser_common import FileContextToken, Instruction
+from ert.parsing import ConfigValidationError, FileContextToken, Instruction
 
 # These keys are used as options in KEY:VALUE statements
 BASE_SURFACE_KEY = "BASE_SURFACE"
