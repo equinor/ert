@@ -370,20 +370,37 @@ class EnsembleConfig(BaseCClass):
         )
 
     @staticmethod
-    def get_surface_node(surface: List[str]) -> EnkfConfigNode:
+    def get_surface_node(surface: List[str]) -> SurfaceConfig:
         options = _option_dict(surface, 1)
         name = surface[0]
         init_file = options.get(ConfigKeys.INIT_FILES)
         out_file = options.get("OUTPUT_FILE")
         base_surface = options.get(ConfigKeys.BASE_SURFACE_KEY)
         forward_init = _str_to_bool(options.get(ConfigKeys.FORWARD_INIT, "FALSE"))
+        errors = []
+        if not out_file:
+            errors.append("Missing required OUTPUT_FILE")
+        if not init_file:
+            errors.append("Missing required INIT_FILES")
+        elif not forward_init:
+            if "%d" not in init_file:
+                errors.append("Must give file name with %d with FORWARD_INIT:FALSE")
+        if not base_surface:
+            errors.append("Missing required BASE_SURFACE")
+        elif not Path(base_surface).exists():
+            errors.append(f"BASE_SURFACE:{base_surface} not found")
+        if errors:
+            errors = "\n".join(errors)
+            raise ConfigValidationError(
+                f"SURFACE {name} incorrectly configured: {errors}"
+            )
 
-        return EnkfConfigNode.create_surface(
-            name,
-            init_file,
-            out_file,
-            base_surface,
-            forward_init,
+        return SurfaceConfig(
+            name=name,
+            forward_init=forward_init,
+            forward_init_file=init_file,
+            output_file=Path(out_file),
+            base_surface_path=base_surface,
         )
 
     @staticmethod
@@ -654,16 +671,9 @@ class EnsembleConfig(BaseCClass):
         parameter_configs = []
         for parameter in self.parameters:
             config_node = self.getNode(parameter)
-            elif config_node.getImplementationType() == ErtImplType.SURFACE:
-                parameter_configs.append(config_node.getSurfaceModelConfig())
             config_type = config_node.getImplementationType()
             if config_type == ErtImplType.GEN_KW:
                 node = config_node.getKeywordModelConfig()
-                node.forward_init_file = self._config_node_meta[parameter].init_file
-                node.forward_init = self._config_node_meta[parameter].forward_init
-                node.output_file = self._config_node_meta[parameter].output_file
-                parameter_configs.append(node)
-            elif config_type == ErtImplType.SURFACE:
                 node.forward_init_file = self._config_node_meta[parameter].init_file
                 node.forward_init = self._config_node_meta[parameter].forward_init
                 node.output_file = self._config_node_meta[parameter].output_file

@@ -39,20 +39,6 @@ def forward_model_ok(
                     error_msg += str(err)
                     result = (LoadStatus.LOAD_FAILURE, error_msg)
                 continue
-            if config_node.getImplementationType() == SURFACE:
-                if file_path.exists():
-                    run_arg.ensemble_storage.save_surface_file(
-                        config_node.getKey(), run_arg.iens, str(file_path)
-                    )
-                else:
-                    error_msg += (
-                        "Failed to initialize parameter "
-                        f"'{config_node.getKey()}' in file {file_name}: "
-                        "File not found\n"
-                    )
-                    result = (LoadStatus.LOAD_FAILURE, error_msg)
-
-                continue
         # We only read parameters after the prior, after that, ERT
         # handles parameters
         if run_arg.itr == 0:

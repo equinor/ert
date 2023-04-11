@@ -9,7 +9,7 @@ GEN_DATA SNAKE_OIL_GPR_DIFF INPUT_FORMAT:ASCII RESULT_FILE:snake_oil_gpr_diff_%d
 
 GEN_KW MULTFLT FAULT_TEMPLATE MULTFLT.INC MULTFLT.TXT
 
-SURFACE TOP INIT_FILES:surface/small.irap OUTPUT_FILE:surface/small_out.irap BASE_SURFACE:surface/small.irap
+SURFACE TOP INIT_FILES:surface/small_%d.irap OUTPUT_FILE:surface/small_out.irap BASE_SURFACE:surface/small.irap
 
 GRID grid/CASE.EGRID
 

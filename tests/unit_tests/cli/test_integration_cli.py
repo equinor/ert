@@ -615,7 +615,7 @@ def test_surface_init_fails_during_forward_model_callback(copy_case):
             if line.startswith(f"SURFACE {parameter_name}")
         ][0]
         line_with_surface_top = content_lines[index_line_with_surface_top]
-        breaking_line_with_surface_top = line_with_surface_top + " FORWARD_INIT:True"
+        breaking_line_with_surface_top = line_with_surface_top
         content_lines[index_line_with_surface_top] = breaking_line_with_surface_top
         config_file_handler.seek(0)
         config_file_handler.write("\n".join(content_lines))

@@ -257,7 +257,7 @@ def test_extensive_config(setup_case):
     )
     assert (
         Path(snake_oil_structure_config["SIGMA"]["RESULT"]).resolve()
-        == Path(ensemble_config.get_enkf_outfile("SIGMA")).resolve()
+        == Path(ensemble_config["SIGMA"].output_file).resolve()
     )
 
     assert len(snake_oil_structure_config["LOAD_WORKFLOW"]) == len(

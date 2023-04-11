@@ -12,7 +12,6 @@ from .ext_param_config import ExtParamConfig
 from .gen_data_config import GenDataConfig
 from .gen_kw_config import GenKwConfig
 from .summary_config import SummaryConfig
-from .surface_config import SurfaceConfig
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
@@ -65,11 +64,6 @@ class EnkfConfigNode(BaseCClass):
         bind=False,
     )
 
-    _alloc_surface_full = ResPrototype(
-        "enkf_config_node_obj enkf_config_node_alloc_SURFACE_full(char*, \
-                                                                  char*)",
-        bind=False,
-    )
     def __init__(self):
         raise NotImplementedError("Class can not be instantiated directly!")
 
@@ -78,9 +72,6 @@ class EnkfConfigNode(BaseCClass):
 
     def getPointerReference(self):
         return self._get_ref()
-
-    def getSurfaceModelConfig(self) -> SurfaceConfig:
-        return SurfaceConfig.createCReference(self._get_ref(), parent=self)
 
     def getDataModelConfig(self) -> GenDataConfig:
         return GenDataConfig.createCReference(self._get_ref(), parent=self)
@@ -180,54 +171,6 @@ class EnkfConfigNode(BaseCClass):
             gen_kw_format,
             template_file,
             parameter_file,
-        )
-
-        return config_node
-
-    # SURFACE FULL creation
-    @classmethod
-    def create_surface(
-        cls,
-        key,
-        init_file_fmt,
-        output_file,
-        base_surface_file,
-        forward_init=False,
-    ):
-        msg = f"Following issues found for SURFACE node {key!r}:\n"
-        valid = True
-        if init_file_fmt is None:
-            msg = msg + f"Missing {ConfigKeys.INIT_FILES}:/path/to/input/files\n"
-            valid = False
-        elif (
-            not forward_init
-            and "%d" not in init_file_fmt
-            and not os.path.exists(os.path.realpath(init_file_fmt))
-        ):
-            msg += f"{ConfigKeys.INIT_FILES}:{init_file_fmt!r} File not found "
-            valid = False
-        if output_file is None:
-            msg = msg + "Missing OUTPUT_FILE:/path/to/output_file\n"
-            valid = False
-        if base_surface_file is None:
-            valid = False
-            msg = (
-                msg
-                + f"Missing {ConfigKeys.BASE_SURFACE_KEY}:/path/to/base_surface_file\n"
-            )
-        elif not os.path.exists(os.path.realpath(base_surface_file)):
-            msg += (
-                f"{ConfigKeys.BASE_SURFACE_KEY}:{base_surface_file!r} File not found "
-            )
-            valid = False
-        if not valid:
-            logger.error(msg)
-            raise ConfigValidationError(msg)
-
-        base_surface_file = os.path.realpath(base_surface_file)
-        config_node = cls._alloc_surface_full(
-            key,
-            base_surface_file,
         )
 
         return config_node

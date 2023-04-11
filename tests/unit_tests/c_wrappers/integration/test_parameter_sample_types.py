@@ -297,7 +297,7 @@ def test_surface_param(
 @pytest.mark.parametrize(
     "config_str",
     [
-        "SURFACE MY_PARAM OUTPUT_FILE:surf.irap   INIT_FILES:surf.irap   BASE_SURFACE:surf0.irap",  # noqa
+        "SURFACE MY_PARAM OUTPUT_FILE:surf.irap   INIT_FILES:surf%d.irap   BASE_SURFACE:surf0.irap",  # noqa
     ],
 )
 def test_copy_case(
@@ -319,7 +319,8 @@ def test_copy_case(
         for i in range(4):
             expect_surface[i] = float(i)
         expect_surface.write("surf.irap")
-        expect_surface.write("surf0.irap")
+        for i in range(10):
+            expect_surface.write(f"surf{i}.irap")
 
         with open("config.ert", "w", encoding="utf-8") as fh:
             fh.writelines(config)
