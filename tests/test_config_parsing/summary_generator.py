@@ -4,7 +4,6 @@ Implements a hypothesis strategy for unified summary files
 See https://opm-project.org/?page_id=955
 """
 from dataclasses import astuple, dataclass
-from datetime import datetime
 from enum import Enum, unique
 from typing import Any, List, Tuple
 
@@ -43,7 +42,7 @@ def summary_variables(draw):
         )
     elif kind == 3:
         dimension = draw(st.sampled_from("XYZRT"))
-        direction = draw(st.sampled_from(" -"))
+        direction = draw(st.sampled_from(["", "-"]))
         return draw(st.sampled_from(["GKR", "OKR", "WKR"])) + dimension + direction
     else:
         second_character = draw(st.sampled_from("OWGVLPT"))
@@ -141,7 +140,7 @@ class Smspec:
                     dtype=np.int32,
                 ),
             ),
-            ("KEYWORDS", self.keywords),
+            ("KEYWORDS", [kw.ljust(8) for kw in self.keywords]),
             ("WGNAMES ", self.well_names),
             ("NUMS    ", self.region_numbers),
             ("UNITS   ", self.units),
@@ -161,27 +160,26 @@ small_ints = st.integers(min_value=1, max_value=10)
 @st.composite
 def smspecs(
     draw,
-    num_keywords,
+    sum_keys,
     start_date,
 ):
     """
     Strategy for smspec that ensures that the TIME parameter, as required by
     ert, is in the parameters list.
     """
-    n = draw(num_keywords)
+    sum_keys = draw(sum_keys)
+    n = len(sum_keys) + 1
     nx = draw(small_ints)
     ny = draw(small_ints)
     nz = draw(small_ints)
-    keywords = ["TIME    "] + draw(
-        st.lists(summary_variables(), min_size=n - 1, max_size=n - 1)
-    )
+    keywords = ["TIME    "] + sum_keys
     units = ["DAYS    "] + draw(st.lists(unit_names, min_size=n - 1, max_size=n - 1))
     well_names = [":+:+:+:+"] + draw(st.lists(names, min_size=n - 1, max_size=n - 1))
     region_numbers = [-32676] + draw(
         st.lists(
-            st.integers(min_value=0, max_value=nx * ny * nz),
-            min_size=n - 1,
-            max_size=n - 1,
+            st.integers(min_value=0, max_value=10),
+            min_size=len(sum_keys),
+            max_size=len(sum_keys),
         )
     )
     return draw(
@@ -256,7 +254,7 @@ def unsmrys(
     Simplified strategy for unsmrys that will generate a summary file
     with one ministep per report step.
     """
-    n = num_params - 1
+    n = num_params
     rs = sorted(draw(report_steps))
     ms = sorted(draw(mini_steps), reverse=True)
     ds = sorted(draw(days), reverse=True)
@@ -270,40 +268,3 @@ def unsmrys(
         ]
         steps.append(SummaryStep(r, minis))
     return Unsmry(steps)
-
-
-@st.composite
-def summaries(draw, dates):
-    """
-    Strategy for tuples of Smspec and Unsrmy that have the given
-    dates as report steps.
-    """
-    num_params = draw(small_ints)
-    ds = sorted(draw(dates))
-    fd: datetime = ds[0]
-    smspec = draw(
-        smspecs(
-            num_keywords=st.just(num_params),
-            start_date=st.just(
-                Date(
-                    year=fd.year,
-                    month=fd.month,
-                    day=fd.day,
-                    hour=fd.hour,
-                    minutes=fd.minute,
-                    micro_seconds=fd.second * 10**6 + fd.microsecond,
-                )
-            ),
-        )
-    )
-    time_diffs = [d - fd for d in ds]
-    time_diff_floats = [diff.total_seconds() / (3600 * 24) for diff in time_diffs]
-    unsmry = draw(
-        unsmrys(
-            num_params,
-            report_steps=st.just(list(range(1, len(ds) + 1))),
-            mini_steps=st.just(list(range(len(ds) + 1))),
-            days=st.just(time_diff_floats),
-        )
-    )
-    return smspec, unsmry
