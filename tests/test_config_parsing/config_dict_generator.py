@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any, List, Literal, Tuple, Union
 
 import hypothesis.strategies as st
+from ecl.summary import EclSum, EclSumVarType
 from hypothesis import assume, note
 from py import path as py_path
 from pydantic import PositiveInt
@@ -18,7 +19,7 @@ from ert._c_wrappers.job_queue import QueueDriverEnum
 
 from .egrid_generator import EGrid, egrids
 from .observations_generator import Observation, observations
-from .summary_generator import Smspec, Unsmry, summaries
+from .summary_generator import Date, Smspec, Unsmry, smspecs, summary_variables, unsmrys
 
 words = st.text(
     min_size=4, max_size=8, alphabet=st.characters(min_codepoint=65, max_codepoint=90)
@@ -48,6 +49,10 @@ def report_steps(draw):
     rep_steps = draw(
         st.lists(st.integers(min_value=0, max_value=100), min_size=4, unique=True)
     )
+    # We generate report_steps so that it always contains 0,
+    # this is so that there is always a report_step we can match
+    if 0 not in rep_steps:
+        rep_steps.append(0)
     return ",".join(str(step) for step in sorted(rep_steps))
 
 
@@ -262,7 +267,8 @@ class ErtConfigValues:
     random_seed: str
     setenv: List[Tuple[str, str]]
     observations: List[Observation]
-    refcase_summaries: Tuple[Smspec, Unsmry]
+    refcase_smspec: Smspec
+    refcase_unsmry: Unsmry
     egrid: EGrid
 
     def to_config_dict(self, config_file, cwd, all_defines=True):
@@ -340,6 +346,47 @@ class ErtConfigValues:
         return result
 
 
+def composite_keys(smspec: Smspec) -> st.SearchStrategy[str]:
+    """
+    The History observation format uses the EclSum "composit keys"
+    format to identify values (See ecl.summary.EclSum documentation)
+    """
+
+    generators = []
+    for index in range(1, len(smspec.keywords)):  # assume index 0 is time
+        summary_key = smspec.keywords[index]
+        var_type = EclSum.var_type(summary_key)
+        if var_type in [
+            EclSumVarType.ECL_SMSPEC_FIELD_VAR,
+            EclSumVarType.ECL_SMSPEC_MISC_VAR,
+        ]:
+            generators.append(st.just(summary_key))
+        if var_type in [
+            EclSumVarType.ECL_SMSPEC_COMPLETION_VAR,
+            EclSumVarType.ECL_SMSPEC_SEGMENT_VAR,
+        ]:
+            generators.append(
+                st.just(
+                    f"{summary_key}:"
+                    f"{smspec.well_names[index]}:"
+                    f"{smspec.region_numbers[index]}"
+                )
+            )
+        if var_type in [
+            EclSumVarType.ECL_SMSPEC_GROUP_VAR,
+            EclSumVarType.ECL_SMSPEC_WELL_VAR,
+        ]:
+            generators.append(st.just(f"{summary_key}:{smspec.well_names[index]}"))
+        if var_type in [
+            EclSumVarType.ECL_SMSPEC_AQUIFER_VAR,
+            EclSumVarType.ECL_SMSPEC_REGION_VAR,
+            EclSumVarType.ECL_SMSPEC_BLOCK_VAR,
+        ]:
+            generators.append(st.just(f"{summary_key}:{smspec.region_numbers[index]}"))
+
+    return st.one_of(generators)
+
+
 @st.composite
 def ert_config_values(draw):
     queue_system = draw(queue_systems)
@@ -357,9 +404,40 @@ def ert_config_values(draw):
             unique_by=lambda tup: tup[0],
         )
     )
-    obs = draw(observations([g[0] for g in gen_data]))
-    dates = _observation_dates(obs, datetime.datetime.strptime("1999-1-1", "%Y-%m-%d"))
-    refcase_summaries = draw(summaries(dates=st.just(dates)))
+    sum_keys = draw(small_list(summary_variables(), min_size=1))
+    first_date = datetime.datetime.strptime("1999-1-1", "%Y-%m-%d")
+    smspec = draw(
+        smspecs(
+            sum_keys=st.just(sum_keys),
+            start_date=st.just(
+                Date(
+                    year=first_date.year,
+                    month=first_date.month,
+                    day=first_date.day,
+                    hour=first_date.hour,
+                    minutes=first_date.minute,
+                    micro_seconds=first_date.second * 10**6 + first_date.microsecond,
+                )
+            ),
+        )
+    )
+    obs = draw(
+        observations(
+            st.sampled_from([g[0] for g in gen_data]) if gen_data else None,
+            composite_keys(smspec) if len(smspec.keywords) > 1 else None,
+        )
+    )
+    dates = _observation_dates(obs, first_date)
+    time_diffs = [d - first_date for d in dates]
+    time_diff_floats = [diff.total_seconds() / (3600 * 24) for diff in time_diffs]
+    unsmry = draw(
+        unsmrys(
+            len(sum_keys),
+            report_steps=st.just(list(range(1, len(dates) + 1))),
+            mini_steps=st.just(list(range(len(dates) + 1))),
+            days=st.just(time_diff_floats),
+        )
+    )
     return draw(
         st.builds(
             ErtConfigValues,
@@ -436,7 +514,8 @@ def ert_config_values(draw):
             random_seed=words,
             setenv=small_list(st.tuples(words, words)),
             observations=st.just(obs),
-            refcase_summaries=st.just(refcase_summaries),
+            refcase_smspec=st.just(smspec),
+            refcase_unsmry=st.just(unsmry),
             egrid=egrids,
         )
     )
@@ -471,9 +550,17 @@ def _observation_dates(
     restart_obs = [
         o for o in observations if hasattr(o, "restart") and o.restart is not None
     ]
-    max_restart = max(o.restart for o in restart_obs) if restart_obs else 0
+    segments = [
+        s for o in observations if hasattr(o, "segment") for s in getattr(o, "segment")
+    ]
+    restart_indecies = (
+        [o.restart for o in restart_obs]
+        + [s.start for s in segments]
+        + [s.stop for s in segments]
+    )
+    min_restart = max(restart_indecies) if restart_indecies else 2
     i = 0
-    while len(dates) <= max(max_restart, 2):
+    while len(dates) <= max(min_restart, 2):
         dates.append(start_date + datetime.timedelta(days=i))
         dates = list(set(dates))
         i += 1
@@ -576,9 +663,8 @@ def config_generators(draw):
             )[0]
             with contextlib.suppress(FileExistsError):
                 os.mkdir("./refcase")
-            ref_smspec, ref_unsmry = config_values.refcase_summaries
-            ref_smspec.to_file(f"./refcase/{summary_basename}.SMSPEC")
-            ref_unsmry.to_file(f"./refcase/{summary_basename}.UNSMRY")
+            config_values.refcase_smspec.to_file(f"./refcase/{summary_basename}.SMSPEC")
+            config_values.refcase_unsmry.to_file(f"./refcase/{summary_basename}.UNSMRY")
 
             config_values.egrid.to_file(config_values.grid_file)
 

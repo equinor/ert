@@ -5,6 +5,7 @@ from enum import Enum, auto
 from typing import List, Optional
 
 import hypothesis.strategies as st
+from hypothesis import assume
 from pydantic import PositiveFloat
 
 
@@ -134,24 +135,18 @@ def general_observations(draw, ensemble_keys):
     kws["name"] = draw(names)
     kws["error"] = draw(st.floats(min_value=0.0))
     val_type = draw(st.sampled_from(["value", "obs_file"]))
-    time_type = draw(st.sampled_from(["date", "days", "restart", "hours"]))
     if val_type == "value":
         kws["value"] = draw(st.floats())
     if val_type == "obs_file":
         kws["obs_file"] = draw(names)
         kws["error"] = None
-    if time_type == "date":
-        date = draw(
-            st.datetimes(
-                max_value=datetime.datetime(year=2037, month=1, day=1),
-                min_value=datetime.datetime(year=1999, month=1, day=2),
-            )
-        )
-        kws["date"] = date.strftime("%Y-%m-%d")
-    if time_type in ["days", "hours"]:
-        kws[time_type] = draw(st.floats(min_value=1.0, max_value=10000))
-    if time_type == "restart":
-        kws[time_type] = draw(st.integers(min_value=1, max_value=10))
+
+    # We only generate restart=0 and no other time type
+    # ("date", "days", "restart", "hours") because it
+    # needs to match with a GEN_DATA report_step field
+    # which we also generate so that 0 is always a
+    # report_step
+    kws["restart"] = 0
     return GeneralObservation(**kws)
 
 
@@ -159,10 +154,10 @@ positive_floats = st.floats(min_value=0.1, allow_nan=False, allow_infinity=False
 
 
 @st.composite
-def summary_observations(draw):
+def summary_observations(draw, summary_keys):
     kws = {}
     kws["name"] = draw(names)
-    kws["key"] = draw(names)
+    kws["key"] = draw(summary_keys)
     kws["error"] = draw(positive_floats)
     kws["error_min"] = draw(positive_floats)
     kws["error_mode"] = draw(st.sampled_from(ErrorMode))
@@ -183,31 +178,33 @@ def summary_observations(draw):
     return SummaryObservation(**kws)
 
 
-def observations(ensemble_keys):
-    if ensemble_keys:
-        return st.lists(
-            st.one_of(
-                summary_observations(),
-                general_observations(st.sampled_from(ensemble_keys)),
-                st.builds(
-                    HistoryObservation,
-                    segment=st.lists(st.builds(Segment, name=names), max_size=2),
-                    name=names,
+@st.composite
+def observations(draw, ensemble_keys, summary_keys):
+    assume(ensemble_keys is not None or summary_keys is not None)
+    observation_generators = []
+    if ensemble_keys is not None:
+        observation_generators.append(general_observations(ensemble_keys))
+    if summary_keys is not None:
+        observation_generators.append(summary_observations(summary_keys))
+        observation_generators.append(
+            st.builds(
+                HistoryObservation,
+                segment=st.lists(
+                    st.builds(
+                        Segment,
+                        name=names,
+                        start=st.integers(min_value=1, max_value=10),
+                        stop=st.integers(min_value=1, max_value=10),
+                    ),
+                    max_size=2,
                 ),
+                name=summary_keys,
             ),
+        )
+    return draw(
+        st.lists(
+            st.one_of(*observation_generators),
             min_size=1,
             max_size=5,
         )
-    else:
-        return st.lists(
-            st.one_of(
-                summary_observations(),
-                st.builds(
-                    HistoryObservation,
-                    segment=st.lists(st.builds(Segment, name=names), max_size=2),
-                    name=names,
-                ),
-            ),
-            min_size=1,
-            max_size=5,
-        )
+    )
