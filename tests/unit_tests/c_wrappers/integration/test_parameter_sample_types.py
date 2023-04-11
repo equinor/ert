@@ -28,7 +28,12 @@ def write_file(fname, contents):
 
 
 def create_runpath(
-    storage, config, active_mask=None, *, ensemble: Optional[EnsembleAccessor] = None
+    storage,
+    config,
+    active_mask=None,
+    *,
+    ensemble: Optional[EnsembleAccessor] = None,
+    iteration=0,
 ):
     active_mask = [True] if active_mask is None else active_mask
     ert_config = ErtConfig.from_file(config)
@@ -45,7 +50,7 @@ def create_runpath(
     prior = ert.ensemble_context(
         ensemble,
         active_mask,
-        0,
+        iteration=iteration,
     )
 
     ert.sample_prior(prior.sim_fs, prior.active_realizations)
@@ -280,9 +285,11 @@ def test_surface_param(
 
                 # Once data has been internalised, ERT will generate the
                 # parameter files
-                create_runpath(storage, "config.ert", ensemble=fs)
-
-            actual_surface = Surface("simulations/realization-0/iter-0/surf.irap")
+                create_runpath(storage, "config.ert", ensemble=fs, iteration=1)
+            expected_iter = 1 if expect_forward_init else 0
+            actual_surface = Surface(
+                f"simulations/realization-0/iter-{expected_iter}/surf.irap"
+            )
             assert actual_surface == expect_surface
 
         # Assert that the data has been internalised to storage

@@ -26,7 +26,12 @@ from ert.storage import EnsembleAccessor, open_storage
 
 
 def create_runpath(
-    storage, config, active_mask=None, *, ensemble: Optional[EnsembleAccessor] = None
+    storage,
+    config,
+    active_mask=None,
+    *,
+    ensemble: Optional[EnsembleAccessor] = None,
+    iteration=0,
 ):
     active_mask = [True] if active_mask is None else active_mask
     res_config = ErtConfig.from_file(config)
@@ -43,7 +48,7 @@ def create_runpath(
     prior = ert.ensemble_context(
         ensemble,
         active_mask,
-        0,
+        iteration=iteration,
     )
 
     ert.sample_prior(prior.sim_fs, prior.active_realizations)
@@ -51,10 +56,10 @@ def create_runpath(
     return ert, ensemble
 
 
-def load_from_forward_model(ert, ensemble):
+def load_from_forward_model(ert, ensemble, iteration=0):
     facade = LibresFacade(ert)
     realizations = [True] * facade.get_ensemble_size()
-    return facade.load_from_forward_model(ensemble, realizations, 0)
+    return facade.load_from_forward_model(ensemble, realizations, iteration=iteration)
 
 
 def write_grid_property(name, grid, filename, file_format, shape, buffer):
@@ -94,7 +99,7 @@ def test_unknown_file_extension(storage, tmpdir):
         load_from_forward_model(ert, ensemble)
 
         with pytest.raises(ValueError, match="Cannot export, invalid fformat: wrong"):
-            create_runpath(storage, "config.ert", ensemble=ensemble)
+            create_runpath(storage, "config.ert", ensemble=ensemble, iteration=1)
 
 
 def test_load_two_parameters_forward_init(storage, tmpdir):
@@ -120,7 +125,7 @@ def test_load_two_parameters_forward_init(storage, tmpdir):
             "PARAM_B", grid, "param_b.grdecl", "grdecl", (10, 10, 1), np.full((100), 77)
         )
 
-        ert, fs = create_runpath(storage, "config.ert")
+        ert, fs = create_runpath(storage, "config.ert", iteration=0)
         assert ert.ensembleConfig().getUseForwardInit("PARAM_A")
         assert ert.ensembleConfig().getUseForwardInit("PARAM_B")
         assert not Path("simulations/realization-0/iter-0/param_a.grdecl").exists()
@@ -133,19 +138,19 @@ def test_load_two_parameters_forward_init(storage, tmpdir):
         with pytest.raises(KeyError, match="Unable to load FIELD for key: PARAM_B"):
             fs.load_field("PARAM_B", [0])
 
-        assert load_from_forward_model(ert, fs) == 1
+        assert load_from_forward_model(ert, fs, 0) == 1
 
-        create_runpath(storage, "config.ert", ensemble=fs)
+        create_runpath(storage, "config.ert", ensemble=fs, iteration=1)
 
         prop_a = xtgeo.gridproperty_from_file(
-            pfile="simulations/realization-0/iter-0/param_a.grdecl",
+            pfile="simulations/realization-0/iter-1/param_a.grdecl",
             name="PARAM_A",
             grid=grid,
         )
         numpy.testing.assert_equal(prop_a.values.data, param_a)
 
         prop_b = xtgeo.gridproperty_from_file(
-            pfile="simulations/realization-0/iter-0/param_b.grdecl",
+            pfile="simulations/realization-0/iter-1/param_b.grdecl",
             name="PARAM_B",
             grid=grid,
         )
@@ -444,10 +449,10 @@ def test_forward_init(storage, tmpdir, config_str, expect_forward_init):
 
             # Once data has been internalised, ERT will generate the
             # parameter files
-            create_runpath(storage, "config.ert", ensemble=fs)
-
+            create_runpath(storage, "config.ert", ensemble=fs, iteration=1)
+        expected_iter = 1 if expect_forward_init else 0
         prop = xtgeo.gridproperty_from_file(
-            pfile="simulations/realization-0/iter-0/my_param.grdecl",
+            pfile=f"simulations/realization-0/iter-{expected_iter}/my_param.grdecl",
             name="MY_PARAM",
             grid=grid,
         )

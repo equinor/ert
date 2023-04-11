@@ -7,13 +7,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, List, Mapping, Optional, Sequence, Union
 
-import cwrap
 import numpy as np
-import xtgeo
-from ecl.eclfile import EclKW
-from ecl.grid import EclGrid
 from jinja2 import Template
-from numpy import ma
 
 from ert._c_wrappers.analysis.configuration import UpdateConfiguration
 from ert._c_wrappers.enkf.analysis_config import AnalysisConfig
@@ -21,7 +16,6 @@ from ert._c_wrappers.enkf.config.parameter_config import ParameterConfig
 from ert._c_wrappers.enkf.enkf_obs import EnkfObs
 from ert._c_wrappers.enkf.ensemble_config import EnsembleConfig
 from ert._c_wrappers.enkf.enums import RealizationStateEnum
-from ert._c_wrappers.enkf.enums.enkf_var_type_enum import EnkfVarType
 from ert._c_wrappers.enkf.enums.ert_impl_type_enum import ErtImplType
 from ert._c_wrappers.enkf.ert_run_context import RunContext
 from ert._c_wrappers.enkf.model_config import ModelConfig
@@ -31,8 +25,6 @@ from ert._c_wrappers.util.substitution_list import SubstitutionList
 from ert._clib import trans_func  # noqa: no_type_check
 
 if TYPE_CHECKING:
-    import numpy.typing as npt
-
     from ert._c_wrappers.enkf import ErtConfig
     from ert._c_wrappers.enkf.config import GenKwConfig
     from ert.storage import EnsembleAccessor, EnsembleReader, StorageAccessor
@@ -149,6 +141,7 @@ def _generate_parameter_files(
     run_path: str,
     iens: int,
     fs: EnsembleReader,
+    iteration: int,
 ) -> None:
     """
     Generate parameter files that are placed in each runtime directory for
@@ -457,6 +450,7 @@ class EnKFMain:
                     run_arg.runpath,
                     run_arg.iens,
                     run_context.sim_fs,
+                    run_context.iteration,
                 )
 
                 with open(
