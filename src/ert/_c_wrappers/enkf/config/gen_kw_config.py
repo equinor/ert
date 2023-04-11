@@ -26,18 +26,7 @@ class GenKwConfig(BaseCClass):
     TYPE_NAME = "gen_kw_config"
 
     _free = ResPrototype("void  gen_kw_config_free( gen_kw_config )")
-    _alloc_empty = ResPrototype(
-        "void* gen_kw_config_alloc_empty( char*, char* )", bind=False
-    )
-    _get_template_file = ResPrototype(
-        "char* gen_kw_config_get_template_file(gen_kw_config)"
-    )
-    _set_template_file = ResPrototype(
-        "void  gen_kw_config_set_template_file(gen_kw_config , char*)"
-    )
-    _get_parameter_file = ResPrototype(
-        "char* gen_kw_config_get_parameter_file(gen_kw_config)"
-    )
+    _alloc_empty = ResPrototype("void* gen_kw_config_alloc_empty()", bind=False)
     _set_parameter_file = ResPrototype(
         "void  gen_kw_config_set_parameter_file(gen_kw_config, char*)"
     )
@@ -47,8 +36,6 @@ class GenKwConfig(BaseCClass):
     _should_use_log_scale = ResPrototype(
         "bool  gen_kw_config_should_use_log_scale(gen_kw_config, int)"
     )
-    _get_key = ResPrototype("char* gen_kw_config_get_key(gen_kw_config)")
-    _get_tag_fmt = ResPrototype("char* gen_kw_config_get_tag_fmt(gen_kw_config)")
     _size = ResPrototype("int   gen_kw_config_get_data_size(gen_kw_config)")
     _iget_name = ResPrototype("char* gen_kw_config_iget_name(gen_kw_config, int)")
     _get_function_type = ResPrototype(
@@ -71,7 +58,7 @@ class GenKwConfig(BaseCClass):
         if not os.path.isfile(parameter_file):
             raise IOError(f"No such file:{parameter_file}")
 
-        c_ptr = self._alloc_empty(key, tag_fmt)
+        c_ptr = self._alloc_empty()
         if c_ptr:
             super().__init__(c_ptr)
         else:
@@ -79,16 +66,24 @@ class GenKwConfig(BaseCClass):
                 "Could not instantiate GenKwConfig with "
                 f'key="{key}" and tag_fmt="{tag_fmt}"'
             )
+
+        self._key = key
+        self.name = key
+        self._parameter_file = parameter_file
+        self._template_file = template_file
+        self._tag_format = tag_fmt
+
+        # this triggers a series of low-level events
         self._set_parameter_file(parameter_file)
-        self._set_template_file(template_file)
+
         self.__str__ = self.__repr__
 
     def getTemplateFile(self) -> os.PathLike[str]:
-        path = self._get_template_file()
+        path = self._template_file
         return None if path is None else os.path.abspath(path)
 
     def getParameterFile(self):
-        path = self._get_parameter_file()
+        path = self._parameter_file
         return None if path is None else os.path.abspath(path)
 
     def getKeyWords(self) -> StringList:
@@ -107,11 +102,11 @@ class GenKwConfig(BaseCClass):
         )
 
     def getKey(self) -> str:
-        return self._get_key()
+        return self._key
 
     @property
     def tag_fmt(self):
-        return self._get_tag_fmt()
+        return self._tag_format
 
     def __len__(self):
         return self._size()

@@ -11,15 +11,8 @@
 
 typedef struct gen_kw_config_struct gen_kw_config_type;
 
-extern "C" const char *
-gen_kw_config_get_tag_fmt(const gen_kw_config_type *config);
 extern "C" void gen_kw_config_set_parameter_file(gen_kw_config_type *config,
                                                  const char *parameter_file);
-extern "C" PY_USED const char *
-gen_kw_config_get_parameter_file(const gen_kw_config_type *config);
-extern "C" const char *gen_kw_config_get_key(const gen_kw_config_type *config);
-extern "C" const char *
-gen_kw_config_get_template_file(const gen_kw_config_type *);
 extern "C" void gen_kw_config_free(gen_kw_config_type *);
 extern "C" PY_USED double gen_kw_config_transform(const gen_kw_config_type *,
                                                   int index, double x);
@@ -29,14 +22,7 @@ extern "C" int gen_kw_config_get_data_size(const gen_kw_config_type *);
 extern "C" const char *gen_kw_config_iget_name(const gen_kw_config_type *, int);
 extern "C" stringlist_type *
 gen_kw_config_alloc_name_list(const gen_kw_config_type *config);
-extern "C" void gen_kw_config_set_template_file(gen_kw_config_type *config,
-                                                const char *template_file);
-extern "C" gen_kw_config_type *gen_kw_config_alloc_empty(const char *key,
-                                                         const char *tag_fmt);
-void gen_kw_config_update(gen_kw_config_type *config, const char *template_file,
-                          const char *parameter_file);
-void gen_kw_config_update_tag_format(gen_kw_config_type *config,
-                                     const char *tag_format);
+extern "C" gen_kw_config_type *gen_kw_config_alloc_empty();
 extern "C" PY_USED const char *
 gen_kw_config_iget_function_type(const gen_kw_config_type *config, int index);
 

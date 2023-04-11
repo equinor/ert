@@ -181,8 +181,7 @@ def test_gen_kw_is_log_or_not(
         ert_config = ErtConfig.from_file("config.ert")
         ert = EnKFMain(ert_config)
 
-        node = ert.ensembleConfig().getNode("KW_NAME")
-        gen_kw_config = node.getModelConfig()
+        gen_kw_config = ert.ensembleConfig().get_keyword_model_config("KW_NAME")
         assert isinstance(gen_kw_config, GenKwConfig)
         assert gen_kw_config.shouldUseLogScale(0) is expect_log
         experiment_id = storage.create_experiment(
