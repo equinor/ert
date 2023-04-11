@@ -163,7 +163,7 @@ def _substitute(
     # replace from env
     if expand_env:
         for key, val in os.environ.items():
-            current = current.replace(f"${key}", val)
+            current = current.replace_value(f"${key}", val)
     if not defines:
         return current
 
@@ -174,7 +174,7 @@ def _substitute(
         n = n + 1
         for key, val in defines:
             prev = current
-            current = current.replace(key, str(val))
+            current = current.replace_value(key, str(val))
 
     if n >= 100:
         logger.warning(

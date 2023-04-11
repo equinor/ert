@@ -1,4 +1,4 @@
-from typing import List, Optional, Tuple, Union
+from typing import List, Optional, Tuple, Union, cast
 
 from lark import Token
 
@@ -11,7 +11,7 @@ class FileContextToken(Token):
     filename: str
 
     # pylint: disable=signature-differs
-    def __new__(cls, token, filename):
+    def __new__(cls, token: Token, filename: str) -> "FileContextToken":
         inst = super(FileContextToken, cls).__new__(
             cls,
             token.type,
@@ -23,18 +23,20 @@ class FileContextToken(Token):
             token.end_column,
             token.end_pos,
         )
-        inst.filename = filename
-        return inst
 
-    def __repr__(self):
+        inst_fct = cast(FileContextToken, inst)
+        inst_fct.filename = filename
+        return inst_fct
+
+    def __repr__(self) -> str:
         return f"{self.value!r}"
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.value
 
     @classmethod
     def join_tokens(
-        cls, tokens: List["FileContextToken"], separator=" "
+        cls, tokens: List["FileContextToken"], separator: str = " "
     ) -> "FileContextToken":
         first = tokens[0]
         min_start_pos = min(x.start_pos for x in tokens if x.start_pos is not None)
@@ -64,7 +66,7 @@ class FileContextToken(Token):
             filename=first.filename,
         )
 
-    def replace(self, old: str, new: str, count=-1):
+    def replace_value(self, old: str, new: str, count: int = -1) -> "FileContextToken":
         replaced = self.value.replace(old, new, count)
         return FileContextToken(self.update(value=replaced), filename=self.filename)
 
