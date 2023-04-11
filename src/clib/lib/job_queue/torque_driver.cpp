@@ -471,7 +471,8 @@ static int torque_driver_submit_shell_job(torque_driver_type *driver,
         torque_debug(driver, "Setting up submit stderr target '%s' for '%s'",
                      tmp_err_file, script_filename);
         torque_job_create_submit_script(script_filename, submit_cmd, job_argc,
-             Will return 
+                                        job_argv);
+        {
             int p_units_from_driver =
                 driver->num_cpus_per_node * driver->num_nodes;
             if (num_cpu > p_units_from_driver) {
