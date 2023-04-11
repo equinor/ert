@@ -342,11 +342,11 @@ stringlist_type *torque_driver_alloc_cmd(torque_driver_type *driver,
 
     if (driver->max_runtime != 0) {
         stringlist_append_copy(argv, "-l");
-        char *walltime_string;
-        walltime_string =
+        char *walltime_seconds_string;
+        walltime_seconds_string =
             util_alloc_sprintf("walltime=%d", driver->max_runtime);
-        stringlist_append_copy(argv, walltime_string);
-        free(walltime_string);
+        stringlist_append_copy(argv, walltime_seconds_string);
+        free(walltime_seconds_string);
     }
 
     if (driver->queue_name != NULL) {
@@ -475,7 +475,7 @@ static int torque_driver_submit_shell_job(torque_driver_type *driver,
                      tmp_err_file, script_filename);
         torque_job_create_submit_script(script_filename, submit_cmd, job_argc,
                                         job_argv);
-        {
+        {        
             int p_units_from_driver =
                 driver->num_cpus_per_node * driver->num_nodes;
             if (num_cpu > p_units_from_driver) {
