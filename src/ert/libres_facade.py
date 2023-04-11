@@ -8,6 +8,7 @@ from pandas import DataFrame, Series
 
 from ert._c_wrappers.enkf import EnKFMain, EnsembleConfig, ErtConfig, ErtImplType
 from ert._c_wrappers.enkf.config import GenKwConfig
+from ert._c_wrappers.enkf.config.enkf_config_node import EnkfConfigNode
 from ert._c_wrappers.enkf.config.field_config import Field
 from ert._c_wrappers.enkf.config.surface_config import SurfaceConfig
 from ert._c_wrappers.enkf.enums import (
@@ -106,9 +107,7 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
         )
 
     def get_gen_kw(self) -> List[str]:
-        return list(
-            self._enkf_main.ensembleConfig().getKeylistFromImplType(ErtImplType.GEN_KW)
-        )
+        return self._enkf_main.ensembleConfig().get_keylist_gen_kw()
 
     @property
     def grid_file(self) -> Optional[str]:
@@ -220,9 +219,7 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
             [
                 key
                 for key in self.get_summary_keys()
-                if len(
-                    self._enkf_main.ensembleConfig().getNode(key).getObservationKeys()
-                )
+                if len(self._enkf_main.ensembleConfig().get_node_observation_keys(key))
                 > 0
             ],
             key=lambda k: k.lower(),
@@ -236,7 +233,7 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
         df = DataFrame(index=dates, columns=columns + std_columns)
         for key in summary_keys:
             observation_keys = (
-                self._enkf_main.ensembleConfig().getNode(key).getObservationKeys()
+                self._enkf_main.ensembleConfig().get_node_observation_keys(key)
             )
             for obs_key in observation_keys:
                 observation_data = observations[obs_key]
@@ -265,9 +262,7 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
             [
                 key
                 for key in self.get_summary_keys()
-                if len(
-                    self._enkf_main.ensembleConfig().getNode(key).getObservationKeys()
-                )
+                if len(self._enkf_main.ensembleConfig().get_node_observation_keys(key))
                 > 0
             ],
             key=lambda k: k.lower(),
@@ -299,9 +294,7 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
         elif self.is_summary_key(key):
             return [
                 str(k)
-                for k in self._enkf_main.ensembleConfig()
-                .getNode(key)
-                .getObservationKeys()
+                for k in self._enkf_main.ensembleConfig().get_node_observation_keys(key)
             ]
         else:
             return []
@@ -508,8 +501,9 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
 
         gen_kw_list = []
         for key in gen_kw_keys:
-            enkf_config_node = self._enkf_main.ensembleConfig().getNode(key)
-            gen_kw_config = enkf_config_node.getModelConfig()
+            gen_kw_config = self._enkf_main.ensembleConfig().get_keyword_model_config(
+                key
+            )
             assert isinstance(gen_kw_config, GenKwConfig)
 
             for keyword_index, keyword in enumerate(gen_kw_config):
@@ -530,10 +524,11 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
         gen_data_list = []
         for key in gen_data_keys:
             enkf_config_node = self._enkf_main.ensembleConfig().getNode(key)
-            gen_data_config = enkf_config_node.getDataModelConfig()
+            if isinstance(enkf_config_node, EnkfConfigNode):
+                gen_data_config = enkf_config_node.getDataModelConfig()
 
-            for report_step in gen_data_config.getReportSteps():
-                gen_data_list.append(f"{key}@{report_step}")
+                for report_step in gen_data_config.getReportSteps():
+                    gen_data_list.append(f"{key}@{report_step}")
 
         return sorted(gen_data_list, key=lambda k: k.lower())
 
@@ -541,9 +536,11 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
         gen_kw_keys = self.get_gen_kw()
         all_gen_kw_priors = {}
         for key in gen_kw_keys:
-            enkf_config_node = self._enkf_main.ensembleConfig().getNode(key)
-            gen_kw_config = enkf_config_node.getModelConfig()
-            all_gen_kw_priors[key] = gen_kw_config.get_priors()
+            gen_kw_config = self._enkf_main.ensembleConfig().get_keyword_model_config(
+                key
+            )
+            if gen_kw_config:
+                all_gen_kw_priors[key] = gen_kw_config.get_priors()
 
         return all_gen_kw_priors
 

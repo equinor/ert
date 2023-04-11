@@ -43,8 +43,7 @@ ensemble_config_alloc_keylist(const ensemble_config_type *);
 extern "C" stringlist_type *
 ensemble_config_alloc_keylist_from_impl_type(const ensemble_config_type *,
                                              ert_impl_type);
-extern "C" PY_USED ensemble_config_type *
-ensemble_config_alloc_full(const char *gen_kw_format_string);
+extern "C" PY_USED ensemble_config_type *ensemble_config_alloc_full();
 extern "C" void ensemble_config_init_SUMMARY_full(ensemble_config_type *,
                                                   const char *,
                                                   const ecl_sum_type *);

@@ -143,18 +143,4 @@ enkf_config_node_alloc_GEN_DATA_full(const char *node_key,
     return config_node;
 }
 
-enkf_config_node_type *enkf_config_node_alloc_GEN_KW_full(
-    const char *node_key, const char *gen_kw_format, const char *template_file,
-    const char *parameter_file) {
-
-    enkf_config_node_type *config_node =
-        enkf_config_node_alloc__(GEN_KW, node_key);
-    config_node->data = gen_kw_config_alloc_empty(node_key, gen_kw_format);
-
-    /* 1: Update the low level gen_kw_config stuff. */
-    gen_kw_config_update((gen_kw_config_type *)config_node->data, template_file,
-                         parameter_file);
-    return config_node;
-}
-
 VOID_FREE(enkf_config_node)

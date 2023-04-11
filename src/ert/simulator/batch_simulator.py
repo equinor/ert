@@ -155,20 +155,22 @@ class BatchSimulator:
             raise KeyError(err_msg)
 
         for control_name, control in controls.items():
-            ens_config = self.ert_config.ensemble_config
-            ext_config = ens_config[control_name].getModelConfig()
-            if len(ext_config) != len(control.keys()):
-                raise KeyError(
-                    (
-                        f"Expected {len(ext_config)} variables for "
-                        f"control {control_name}, "
-                        f"received {len(control.keys())}."
-                    )
-                )
-            for var_name, var_setting in control.items():
-                _check_suffix(ext_config, var_name, var_setting)
+            enkf_node = self.ert_config.ensemble_config[control_name]
+            if isinstance(enkf_node, EnkfConfigNode):
+                ext_config = enkf_node.getModelConfig()
+                if isinstance(ext_config, ExtParamConfig):
+                    if len(ext_config) != len(control.keys()):
+                        raise KeyError(
+                            (
+                                f"Expected {len(ext_config)} variables for "
+                                f"control {control_name}, "
+                                f"received {len(control.keys())}."
+                            )
+                        )
+                    for var_name, var_setting in control.items():
+                        _check_suffix(ext_config, var_name, var_setting)
 
-            file_system.save_ext_param(control_name, sim_id, control)
+                    file_system.save_ext_param(control_name, sim_id, control)
 
     def start(
         self,

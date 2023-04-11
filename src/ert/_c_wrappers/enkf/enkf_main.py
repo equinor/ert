@@ -12,6 +12,8 @@ from jinja2 import Template
 
 from ert._c_wrappers.analysis.configuration import UpdateConfiguration
 from ert._c_wrappers.enkf.analysis_config import AnalysisConfig
+from ert._c_wrappers.enkf.config.enkf_config_node import EnkfConfigNode
+from ert._c_wrappers.enkf.config.gen_kw_config import GenKwConfig
 from ert._c_wrappers.enkf.config.parameter_config import ParameterConfig
 from ert._c_wrappers.enkf.enkf_obs import EnkfObs
 from ert._c_wrappers.enkf.ensemble_config import EnsembleConfig
@@ -26,7 +28,6 @@ from ert._clib import trans_func  # noqa: no_type_check
 
 if TYPE_CHECKING:
     from ert._c_wrappers.enkf import ErtConfig
-    from ert._c_wrappers.enkf.config import GenKwConfig
     from ert.storage import EnsembleAccessor, EnsembleReader, StorageAccessor
 
 logger = logging.getLogger(__name__)
@@ -157,26 +158,29 @@ def _generate_parameter_files(
         fs: EnsembleReader from which to load parameter data
     """
     exports: Dict[str, Dict[str, float]] = {}
+
     for key in ens_config.parameters:
         node = ens_config[key]
-        type_ = node.getImplementationType()
-        outfile = node.output_file
 
-        if type_ == ErtImplType.GEN_KW:
-            _generate_gen_kw_parameter_file(
-                fs,
-                iens,
-                node.getKeywordModelConfig(),
-                outfile,
-                Path(run_path),
-                exports,
-            )
+        if key in ens_config.get_keylist_gen_kw():
+            if isinstance(node, GenKwConfig):
+                _generate_gen_kw_parameter_file(
+                    fs,
+                    iens,
+                    node,
+                    node.output_file,
+                    Path(run_path),
+                    exports,
+                )
             continue
 
+        type_ = node.getImplementationType()
+
         if type_ == ErtImplType.EXT_PARAM:
-            _generate_ext_parameter_file(
-                fs, iens, node.getKey(), outfile, Path(run_path)
-            )
+            if isinstance(node, EnkfConfigNode):
+                _generate_ext_parameter_file(
+                    fs, iens, node.getKey(), node.output_file, Path(run_path)
+                )
             continue
         if isinstance(node, ParameterConfig):
             # For the first iteration we do not write the parameter
@@ -359,19 +363,17 @@ class EnKFMain:
         if parameters is None:
             parameters = self._parameter_keys
 
-        for parameter in parameters:
-            config_node = self.ensembleConfig().getNode(parameter)
+        keylist_gen_kw = self.ensembleConfig().get_keylist_gen_kw()
+
+        for parameter in keylist_gen_kw:
             if self.ensembleConfig().getUseForwardInit(parameter):
                 continue
-            impl_type = config_node.getImplementationType()
-            if isinstance(config_node, ParameterConfig):
-                for _, realization_nr in enumerate(active_realizations):
-                    config_node.load(Path(), realization_nr, ensemble)
 
-            elif impl_type == ErtImplType.GEN_KW:
-                gen_kw_config = config_node.getKeywordModelConfig()
+            gen_kw_config = self.ensembleConfig()[parameter]
+            if isinstance(gen_kw_config, GenKwConfig):
                 keys = list(gen_kw_config)
-                init_file = self.ensembleConfig()[parameter].forward_init_file
+                init_file = gen_kw_config.forward_init_file
+
                 if init_file:
                     logging.info(
                         f"Reading from init file {init_file}" + f" for {parameter}"
@@ -397,6 +399,19 @@ class EnKFMain:
                     realizations=active_realizations,
                     data=parameter_values,
                 )
+
+        for parameter in parameters:
+            if parameter in keylist_gen_kw:
+                continue
+
+            config_node = self.ensembleConfig().getNode(parameter)
+            if self.ensembleConfig().getUseForwardInit(parameter):
+                continue
+            impl_type = config_node.getImplementationType()
+            if isinstance(config_node, ParameterConfig):
+                for _, realization_nr in enumerate(active_realizations):
+                    config_node.load(Path(), realization_nr, ensemble)
+
             elif impl_type == ErtImplType.EXT_PARAM:
                 pass
             else:
