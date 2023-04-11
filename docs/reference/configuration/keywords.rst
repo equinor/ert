@@ -1855,7 +1855,7 @@ bjobs.
         flakyness.
 
         ::
-                QUEUE_OPTION TORQUE TIMEOUT 126
+                QUEUE_OPTION TORQUE QUEUE_QUERY_TIMEOUT 126
 
 .. _configuring_the_slurm_queue:
 

@@ -18,14 +18,14 @@
 #define TORQUE_JOB_PREFIX_KEY "JOB_PREFIX"
 #define TORQUE_SUBMIT_SLEEP "SUBMIT_SLEEP"
 #define TORQUE_DEBUG_OUTPUT "DEBUG_OUTPUT"
-#define TORQUE_TIMEOUT "TIMEOUT"
+#define TORQUE_QUEUE_QUERY_TIMEOUT "QUEUE_QUERY_TIMEOUT"
 
 #define TORQUE_DEFAULT_QSUB_CMD "qsub"
 #define TORQUE_DEFAULT_QSTAT_CMD "qstat_proxy.sh"
 #define TORQUE_DEFAULT_QSTAT_OPTIONS "-x"
 #define TORQUE_DEFAULT_QDEL_CMD "qdel"
 #define TORQUE_DEFAULT_SUBMIT_SLEEP "0"
-#define TORQUE_DEFAULT_TIMEOUT "62"
+#define TORQUE_DEFAULT_QUEUE_QUERY_TIMEOUT "62"
 
 typedef struct torque_driver_struct torque_driver_type;
 typedef struct torque_job_struct torque_job_type;
