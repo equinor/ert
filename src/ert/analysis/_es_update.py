@@ -16,6 +16,8 @@ from ert._c_wrappers.enkf.enums import RealizationStateEnum
 from ert._c_wrappers.enkf.row_scaling import RowScaling
 from ert._clib import update
 
+from tqdm import tqdm
+
 if TYPE_CHECKING:
     import numpy.typing as npt
 
@@ -168,6 +170,10 @@ def _create_temporary_parameter_storage(
     return temporary_storage
 
 
+def _split_by_batchsize(arr, batch_size):
+    return np.array_split(arr, (arr.shape[0] / batch_size) + 1)
+
+
 def analysis_ES(
     updatestep: "UpdateConfiguration",
     obs: "EnkfObs",
@@ -194,9 +200,11 @@ def analysis_ES(
     )
 
     # Looping over local analysis update_step
+    smoother = ies.ES()
+    truncation = module.get_truncation()
     for update_step in updatestep:
         try:
-            S, observation_handle = update.load_observations_and_responses(
+            Y, observation_handle = update.load_observations_and_responses(
                 source_fs,
                 obs,
                 alpha,
@@ -214,33 +222,81 @@ def analysis_ES(
         ] = observation_handle.update_snapshot
         observation_values = observation_handle.observation_values
         observation_errors = observation_handle.observation_errors
-        if len(observation_values) == 0:
+
+        num_obs = len(observation_values)
+        if num_obs == 0:
             raise ErtAnalysisError(
                 f"No active observations for update step: {update_step.name}."
             )
 
-        A = _get_A_matrix(temp_storage, update_step.parameters)
+        noise = rng.standard_normal(size=(len(observation_values), Y.shape[1]))
+
+        Y_prime = Y - Y.mean(axis=1, keepdims=True)
+        C_YY = Y_prime @ Y_prime.T / (ensemble_size - 1)
+        Sigma_Y = np.diag(np.sqrt(np.diag(C_YY)))
+        batch_size = 1000
+        for parameter in update_step.parameters:
+            num_params = temp_storage[parameter.name].shape[0]
+            # correlation_threshold = module.localization_correlation_threshold(
+            #     ensemble_size
+            # )
+            correlation_threshold = 3 / np.sqrt(ensemble_size)
+
+            print(
+                (
+                    f"Running localization on {num_params} parameters,",
+                    f"{num_obs} responses and {ensemble_size} realizations...",
+                )
+            )
+
+            print(f"Correlation threshold is set to: {correlation_threshold}")
+            
+            batches = _split_by_batchsize(np.arange(0, num_params), batch_size)
+            for param_batch_idx in tqdm(batches):
+                X_local = temp_storage[parameter.name][param_batch_idx, :]
+                A = X_local - X_local.mean(axis=1, keepdims=True)
+                C_AA = A @ A.T / (ensemble_size - 1)
+
+                # State-measurement covariance matrix
+                C_AY = A @ Y_prime.T / (ensemble_size - 1)
+                Sigma_A = np.diag(np.sqrt(np.diag(C_AA)))
+
+                # State-measurement correlation matrix
+                c_AY = np.abs(np.linalg.inv(Sigma_A) @ C_AY @ np.linalg.inv(Sigma_Y))
+                c_bool = c_AY > correlation_threshold
+                # Some parameters might be significantly correlated to the exact same
+                # responses, making up what we cann a parameter group.
+                # We want to call the update only once per such parameter group
+                # to speed up computation.
+                param_groups = np.unique(c_bool, axis=0)
+
+                for grp in param_groups:
+                    if grp.sum() > 0:
+                        param_idx = np.where((c_bool == grp).all(axis=1))[0]
+                        X_chunk = temp_storage[parameter.name][param_batch_idx, :][
+                            param_idx, :
+                        ]
+                        Y_chunk = Y[grp, :]
+                        observation_errors_loc = observation_errors[grp]
+                        observation_values_loc = observation_values[grp]
+                        smoother.fit(
+                            Y_chunk,
+                            observation_errors_loc,
+                            observation_values_loc,
+                            noise=noise[grp],
+                            truncation=truncation,
+                            inversion=ies.InversionType(module.inversion),
+                            param_ensemble=param_ensemble,
+                        )
+                        temp_storage[parameter.name][
+                            param_batch_idx[param_idx], :
+                        ] = smoother.update(X_chunk)
         A_with_rowscaling = _get_row_scaling_A_matrices(
             temp_storage, update_step.row_scaling_parameters
         )
-        noise = rng.standard_normal(size=(len(observation_values), S.shape[1]))
-
-        if A is not None:
-            smoother = ies.ES()
-            smoother.fit(
-                S,
-                observation_errors,
-                observation_values,
-                noise=noise,
-                truncation=module.get_truncation(),
-                inversion=ies.InversionType(module.inversion),
-                param_ensemble=param_ensemble,
-            )
-            A = smoother.update(A)
-            _save_to_temporary_storage(temp_storage, update_step.parameters, A)
         if A_with_rowscaling:
             A_with_rowscaling = ensemble_smoother_update_step_row_scaling(
-                S,
+                Y,
                 A_with_rowscaling,
                 observation_errors,
                 observation_values,
