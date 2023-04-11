@@ -201,30 +201,25 @@ def test_gen_data_node_input_format(input_format):
 def test_get_surface_node(setup_case):
     _ = setup_case("configuration_tests", "ensemble_config.ert")
     surface_str = "TOP"
-    with pytest.raises(
-        ConfigValidationError, match="Missing INIT_FILES:/path/to/input/files"
-    ):
+    with pytest.raises(ConfigValidationError, match="Missing required OUTPUT_FILE"):
         EnsembleConfig.get_surface_node(surface_str.split(" "))
 
-    surface_in = "surface/small.irap"
+    surface_in = "surface/small_%d.irap"
+    base_surface = "surface/small.irap"
     surface_out = "surface/small_out.irap"
     # add init file
     surface_str += f" INIT_FILES:{surface_in}"
 
-    with pytest.raises(
-        ConfigValidationError, match="Missing OUTPUT_FILE:/path/to/output_file"
-    ):
+    with pytest.raises(ConfigValidationError, match="Missing required OUTPUT_FILE"):
         EnsembleConfig.get_surface_node(surface_str.split(" "))
 
     # add output file
     surface_str += f" OUTPUT_FILE:{surface_out}"
-    with pytest.raises(
-        ConfigValidationError, match="Missing BASE_SURFACE:/path/to/base_surface_file"
-    ):
+    with pytest.raises(ConfigValidationError, match="Missing required BASE_SURFACE"):
         EnsembleConfig.get_surface_node(surface_str.split(" "))
 
     # add base surface
-    surface_str += f" BASE_SURFACE:{surface_in}"
+    surface_str += f" BASE_SURFACE:{base_surface}"
 
     surface_node = EnsembleConfig.get_surface_node(surface_str.split(" "))
 
@@ -236,16 +231,17 @@ def test_get_surface_node(setup_case):
 
 def test_surface_bad_init_values(setup_case):
     _ = setup_case("configuration_tests", "ensemble_config.ert")
-    surface_in = "path/42"
+    surface_in = "path/surf.irap"
+    base_surface = "path/not_surface"
     surface_out = "surface/small_out.irap"
     surface_str = (
         f"TOP INIT_FILES:{surface_in}"
         f" OUTPUT_FILE:{surface_out}"
-        f" BASE_SURFACE:{surface_in}"
+        f" BASE_SURFACE:{base_surface}"
     )
     error = (
-        f"INIT_FILES:{surface_in!r} File not found"
-        f" BASE_SURFACE:{surface_in!r} File not found "
+        "Must give file name with %d with FORWARD_INIT:FALSE\n"
+        f"BASE_SURFACE:{base_surface} not found"
     )
     with pytest.raises(ConfigValidationError, match=error):
         EnsembleConfig.get_surface_node(surface_str.split(" "))

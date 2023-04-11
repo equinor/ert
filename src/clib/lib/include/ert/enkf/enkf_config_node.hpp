@@ -74,9 +74,5 @@ extern "C" PY_USED enkf_config_node_type *enkf_config_node_alloc_GEN_KW_full(
     const char *node_key, const char *gen_kw_format, const char *template_file,
     const char *parameter_file);
 
-extern "C" PY_USED enkf_config_node_type *
-enkf_config_node_alloc_SURFACE_full(const char *node_key,
-                                    const char *base_surface);
-
 VOID_FREE_HEADER(enkf_config_node);
 #endif

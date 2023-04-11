@@ -143,19 +143,6 @@ def _generate_ext_parameter_file(
         json.dump(data, f)
 
 
-def _generate_surface_file(
-    fs: EnsembleReader,
-    realization: int,
-    key: str,
-    target_file: str,
-    run_path: Path,
-) -> None:
-    file_path = run_path / target_file
-    Path.mkdir(file_path.parent, exist_ok=True, parents=True)
-    surf = fs.load_surface_file(key, realization)
-    surf.to_file(run_path / target_file, fformat="irap_ascii")
-
-
 def _generate_parameter_files(
     ens_config: "EnsembleConfig",
     export_base_name: str,
@@ -417,14 +404,8 @@ class EnKFMain:
                     realizations=active_realizations,
                     data=parameter_values,
                 )
-            elif impl_type == ErtImplType.SURFACE:
-                for realization_nr in active_realizations:
-                    init_file = self.ensembleConfig().get_init_file_fmt(parameter)
-                    if init_file and "%d" in init_file:
-                        init_file = init_file % realization_nr
-                    ensemble.save_surface_file(
-                        config_node.getKey(), realization_nr, init_file
-                    )
+            elif impl_type == ErtImplType.EXT_PARAM:
+                pass
             else:
                 raise NotImplementedError(f"{impl_type} is not supported")
         for realization_nr in active_realizations:

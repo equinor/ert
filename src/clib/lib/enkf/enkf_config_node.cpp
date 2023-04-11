@@ -12,7 +12,6 @@
 #include <ert/enkf/gen_data_config.hpp>
 #include <ert/enkf/gen_kw_config.hpp>
 #include <ert/enkf/gen_obs.hpp>
-#include <ert/enkf/surface_config.hpp>
 #include <ert/python.hpp>
 #include <ert/res_util/path_fmt.hpp>
 #include <ert/util/string_util.h>
@@ -44,11 +43,6 @@ static enkf_config_node_type *enkf_config_node_alloc__(ert_impl_type impl_type,
         break;
     case (GEN_DATA):
         node->freef = gen_data_config_free__;
-        node->get_data_size = NULL;
-        break;
-    case (SURFACE):
-        node->freef =
-            reinterpret_cast<config_free_ftype *>(surface_config_free);
         node->get_data_size = NULL;
         break;
     case (EXT_PARAM):
@@ -163,14 +157,4 @@ enkf_config_node_type *enkf_config_node_alloc_GEN_KW_full(
     return config_node;
 }
 
-enkf_config_node_type *
-enkf_config_node_alloc_SURFACE_full(const char *node_key,
-                                    const char *base_surface) {
-
-    enkf_config_node_type *config_node =
-        enkf_config_node_alloc__(SURFACE, node_key);
-    config_node->data = surface_config_alloc(node_key, base_surface);
-
-    return config_node;
-}
 VOID_FREE(enkf_config_node)
