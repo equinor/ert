@@ -49,7 +49,7 @@ obs_vector_alloc_from_GENERAL_OBSERVATION(const conf_instance_type *,
                                           enkf_config_node_type *);
 void obs_vector_load_from_SUMMARY_OBSERVATION(
     obs_vector_type *obs_vector, const conf_instance_type *,
-    const std::vector<time_t> &obs_time, ensemble_config_type *);
+    const std::vector<time_t> &obs_time);
 bool obs_vector_load_from_HISTORY_OBSERVATION(
     obs_vector_type *obs_vector, const conf_instance_type *,
     const std::vector<time_t> &obs_time, const history_source_type history,

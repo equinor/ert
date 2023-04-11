@@ -378,8 +378,7 @@ static void handle_summary_observation(enkf_obs_type *enkf_obs,
             break;
 
         obs_vector_load_from_SUMMARY_OBSERVATION(obs_vector, sum_obs_conf,
-                                                 enkf_obs->obs_time,
-                                                 enkf_obs->ensemble_config);
+                                                 enkf_obs->obs_time);
         enkf_obs_add_obs_vector(enkf_obs, obs_vector);
     }
 }

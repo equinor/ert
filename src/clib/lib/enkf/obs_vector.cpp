@@ -281,8 +281,7 @@ int obs_vector_get_next_active_step(const obs_vector_type *obs_vector,
 */
 void obs_vector_load_from_SUMMARY_OBSERVATION(
     obs_vector_type *obs_vector, const conf_instance_type *conf_instance,
-    const std::vector<time_t> &obs_time,
-    ensemble_config_type *ensemble_config) {
+    const std::vector<time_t> &obs_time) {
     if (!conf_instance_is_of_class(conf_instance, "SUMMARY_OBSERVATION"))
         util_abort("%s: internal error. expected \"SUMMARY_OBSERVATION\" "
                    "instance, got \"%s\".\n",
