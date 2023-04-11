@@ -39,7 +39,7 @@ class Observation(ABC):
             elif isinstance(val, Observation):
                 result += str(val)
             elif isinstance(val, list):
-                result += f"{f.name.upper()} = {','.join([str(v) for v in val])}; "
+                result += f"{' '.join([str(v) for v in val])}"
             else:
                 assert False
         result += " };"
