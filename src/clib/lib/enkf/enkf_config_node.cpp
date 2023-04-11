@@ -9,7 +9,6 @@
 #include <ert/enkf/enkf_macros.hpp>
 #include <ert/enkf/enkf_obs.hpp>
 #include <ert/enkf/ext_param_config.hpp>
-#include <ert/enkf/field_config.hpp>
 #include <ert/enkf/gen_data_config.hpp>
 #include <ert/enkf/gen_kw_config.hpp>
 #include <ert/enkf/gen_obs.hpp>
@@ -35,10 +34,6 @@ static enkf_config_node_type *enkf_config_node_alloc__(ert_impl_type impl_type,
     node->freef = NULL;
 
     switch (impl_type) {
-    case (FIELD):
-        node->freef = field_config_free__;
-        node->get_data_size = field_config_get_data_size__;
-        break;
     case (GEN_KW):
         node->freef = gen_kw_config_free__;
         node->get_data_size = gen_kw_config_get_data_size__;
@@ -107,32 +102,6 @@ enkf_config_node_alloc_GEN_DATA_result(const char *key,
     config_node->data =
         gen_data_config_alloc_GEN_DATA_result(key, input_format);
     return config_node;
-}
-
-/**
-   This will create a new gen_kw_config instance which is NOT yet
-   valid. Mainly support code for the GUI.
-*/
-enkf_config_node_type *enkf_config_node_alloc_field(const char *key,
-                                                    ecl_grid_type *ecl_grid) {
-
-    enkf_config_node_type *config_node = enkf_config_node_alloc__(FIELD, key);
-    config_node->data = field_config_alloc_empty(key, ecl_grid, false);
-    return config_node;
-}
-
-void enkf_config_node_update_field(enkf_config_node_type *config_node,
-                                   field_file_format_type export_format,
-                                   int truncation, double value_min,
-                                   double value_max, const char *init_transform,
-                                   const char *input_transform,
-                                   const char *output_transform,
-                                   char *enkf_outfile_fmt) {
-
-    field_config_update_field((field_config_type *)config_node->data,
-                              truncation, value_min, value_max, export_format,
-                              init_transform, input_transform, output_transform,
-                              enkf_outfile_fmt);
 }
 
 void enkf_config_node_free(enkf_config_node_type *node) {

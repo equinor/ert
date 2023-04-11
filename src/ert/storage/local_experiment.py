@@ -9,7 +9,7 @@ from uuid import UUID
 import xtgeo
 from ecl.grid import EclGrid
 
-from ert._c_wrappers.enkf import EnkfTruncationType, FieldConfig
+from ert._c_wrappers.enkf.config.field_config import Field
 from ert._c_wrappers.enkf.config.gen_kw_config import GenKwConfig, PriorDict
 from ert._c_wrappers.enkf.config.surface_config import SurfaceConfig
 
@@ -105,18 +105,17 @@ class LocalExperimentAccessor(LocalExperimentReader):
                     parameter.name,
                     parameter.base_surface_path,
                 )
-            elif isinstance(parameter, FieldConfig):
+            elif isinstance(parameter, Field):
                 self.save_field_info(
-                    parameter.get_key(),
-                    parameter.get_grid_name(),
-                    Path(parameter.export_file).suffix[1:],
-                    parameter.get_output_transform_name(),
-                    parameter.get_truncation_mode(),
-                    parameter.get_truncation_min(),
-                    parameter.get_truncation_max(),
-                    parameter.get_nx(),
-                    parameter.get_ny(),
-                    parameter.get_nz(),
+                    parameter.name,
+                    parameter.grid_file,
+                    parameter.file_format,
+                    parameter.output_transformation,
+                    parameter.truncation_min,
+                    parameter.truncation_max,
+                    parameter.nx,
+                    parameter.ny,
+                    parameter.nz,
                 )
             else:
                 raise NotImplementedError("Unknown parameter type")
@@ -147,9 +146,8 @@ class LocalExperimentAccessor(LocalExperimentReader):
         grid_file: str,
         file_format: str,
         transfer_out: str,
-        truncation_mode: EnkfTruncationType,
-        trunc_min: float,
-        trunc_max: float,
+        trunc_min: Optional[float],
+        trunc_max: Optional[float],
         nx: int,
         ny: int,
         nz: int,
@@ -160,7 +158,6 @@ class LocalExperimentAccessor(LocalExperimentReader):
             "nz": nz,
             "file_format": file_format,
             "transfer_out": transfer_out,
-            "truncation_mode": truncation_mode,
             "truncation_min": trunc_min,
             "truncation_max": trunc_max,
         }

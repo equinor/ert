@@ -15,6 +15,8 @@ from iterative_ensemble_smoother.experimental import (
 )
 from pandas import DataFrame
 
+from ert._c_wrappers.enkf.config.field_config import Field
+from ert._c_wrappers.enkf.config.surface_config import SurfaceConfig
 from ert._c_wrappers.enkf.enums import ActiveMode, ErtImplType, RealizationStateEnum
 from ert._c_wrappers.enkf.row_scaling import RowScaling
 from ert._clib import update
@@ -167,7 +169,7 @@ def _save_temporary_storage_to_disk(
         elif config_node.getImplementationType() == ErtImplType.SURFACE:
             for i, realization in enumerate(iens_active_index):
                 target_fs.save_surface_data(key, realization, matrix[:, i])
-        elif config_node.getImplementationType() == ErtImplType.FIELD:
+        elif isinstance(config_node, Field):
             for i, realization in enumerate(iens_active_index):
                 target_fs.save_field(key, realization, matrix[:, i], unmasked=True)
         else:
@@ -188,7 +190,7 @@ def _create_temporary_parameter_storage(
             matrix = source_fs.load_gen_kw(key, iens_active_index)
         elif config_node.getImplementationType() == ErtImplType.SURFACE:
             matrix = source_fs.load_surface_data(key, iens_active_index)
-        elif config_node.getImplementationType() == ErtImplType.FIELD:
+        elif isinstance(config_node, Field):
             matrix = source_fs.load_field(key, iens_active_index)
         else:
             raise NotImplementedError(

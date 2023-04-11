@@ -14,7 +14,7 @@ from py import path as py_path
 from pydantic import PositiveInt
 
 from ert._c_wrappers.enkf import ConfigKeys
-from ert._c_wrappers.enkf.config.enkf_config_node import FIELD_FUNCTION_NAMES
+from ert._c_wrappers.enkf.config.field_config import VALID_TRANSFORMATIONS
 from ert._c_wrappers.job_queue import QueueDriverEnum
 
 from .egrid_generator import EGrid, egrids
@@ -56,7 +56,7 @@ def report_steps(draw):
     return ",".join(str(step) for step in sorted(rep_steps))
 
 
-transforms = st.sampled_from(FIELD_FUNCTION_NAMES)
+transforms = st.sampled_from(VALID_TRANSFORMATIONS)
 small_floats = st.floats(min_value=1.0, max_value=10.0, allow_nan=False)
 positives = st.integers(min_value=1, max_value=10000)
 queue_systems = st.sampled_from(["LSF", "LOCAL", "TORQUE", "SLURM"])

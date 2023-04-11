@@ -40,8 +40,6 @@ pybind11_add_module(
   enkf/enkf_types.cpp
   enkf/ensemble_config.cpp
   enkf/ext_param_config.cpp
-  enkf/field_config.cpp
-  enkf/field_trans.cpp
   enkf/gen_common.cpp
   enkf/gen_data_config.cpp
   enkf/gen_kw_config.cpp

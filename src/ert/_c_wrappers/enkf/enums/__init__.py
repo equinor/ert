@@ -1,7 +1,6 @@
 from .active_mode_enum import ActiveMode
 from .enkf_field_file_format_enum import EnkfFieldFileFormatEnum
 from .enkf_obs_impl_type_enum import EnkfObservationImplementationType
-from .enkf_truncation_type import EnkfTruncationType
 from .enkf_var_type_enum import EnkfVarType
 from .ert_impl_type_enum import ErtImplType
 from .field_file_format_type_enum import FieldFileFormatType
@@ -18,7 +17,6 @@ __all__ = [
     "ErtImplType",
     "FieldFileFormatType",
     "RealizationStateEnum",
-    "EnkfTruncationType",
     "GenDataFileType",
     "ActiveMode",
     "HookRuntime",

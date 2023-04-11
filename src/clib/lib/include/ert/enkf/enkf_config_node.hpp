@@ -10,8 +10,6 @@
 
 #include <ert/enkf/enkf_macros.hpp>
 #include <ert/enkf/enkf_types.hpp>
-#include <ert/enkf/field_config.hpp>
-#include <ert/enkf/field_trans.hpp>
 #include <ert/enkf/gen_data_config.hpp>
 #include <ert/enkf/summary_config.hpp>
 #include <ert/res_util/path_fmt.hpp>
@@ -46,12 +44,6 @@ extern "C" enkf_config_node_type *enkf_config_node_alloc(ert_impl_type,
 
 extern "C" enkf_config_node_type *
 enkf_config_node_alloc_summary(const char *key, load_fail_type load_fail);
-
-extern "C" void enkf_config_node_update_field(
-    enkf_config_node_type *config_node, field_file_format_type export_format,
-    int truncation, double value_min, double value_max,
-    const char *init_transform, const char *input_transform,
-    const char *output_transform, char *enkf_outfile_fmt);
 
 extern "C" enkf_config_node_type *
 enkf_config_node_alloc_GEN_DATA_everest(const char *key,

@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import json
 import logging
-import math
 import os
 from datetime import datetime
 from pathlib import Path
@@ -18,6 +17,7 @@ from numpy import ma
 
 from ert._c_wrappers.analysis.configuration import UpdateConfiguration
 from ert._c_wrappers.enkf.analysis_config import AnalysisConfig
+from ert._c_wrappers.enkf.config.parameter_config import ParameterConfig
 from ert._c_wrappers.enkf.enkf_obs import EnkfObs
 from ert._c_wrappers.enkf.ensemble_config import EnsembleConfig
 from ert._c_wrappers.enkf.enums import RealizationStateEnum
@@ -156,19 +156,6 @@ def _generate_surface_file(
     surf.to_file(run_path / target_file, fformat="irap_ascii")
 
 
-def _generate_field_parameter_file(
-    fs: EnsembleReader,
-    realization: int,
-    key: str,
-    target_file: Path,
-    run_path: Path,
-) -> None:
-    file_out = run_path.joinpath(target_file)
-    if os.path.islink(file_out):
-        os.unlink(file_out)
-    fs.export_field(key, realization, file_out)
-
-
 def _generate_parameter_files(
     ens_config: "EnsembleConfig",
     export_base_name: str,
@@ -190,24 +177,10 @@ def _generate_parameter_files(
         fs: EnsembleReader from which to load parameter data
     """
     exports: Dict[str, Dict[str, float]] = {}
-    for key in ens_config.getKeylistFromVarType(
-        EnkfVarType.PARAMETER + EnkfVarType.EXT_PARAMETER  # type: ignore
-    ):
+    for key in ens_config.parameters:
         node = ens_config[key]
         type_ = node.getImplementationType()
-        outfile = ens_config.get_enkf_outfile(key)
-
-        if type_ == ErtImplType.FIELD:
-            if ens_config.getUseForwardInit(key) and not fs.field_has_data(key, iens):
-                continue
-            _generate_field_parameter_file(
-                fs,
-                iens,
-                key,
-                Path(outfile),
-                Path(run_path),
-            )
-            continue
+        outfile = node.output_file
 
         if type_ == ErtImplType.GEN_KW:
             _generate_gen_kw_parameter_file(
@@ -225,44 +198,19 @@ def _generate_parameter_files(
                 fs, iens, node.getKey(), outfile, Path(run_path)
             )
             continue
-        if type_ == ErtImplType.SURFACE:
-            if ens_config.getUseForwardInit(key) and not fs.has_surface(
-                node.getKey(), iens
-            ):
+        if isinstance(node, ParameterConfig):
+            # For the first iteration we do not write the parameter
+            # to run path, as we expect to read if after the forward
+            # model has completed.
+            if node.forward_init and iteration == 0:
                 continue
-            _generate_surface_file(fs, iens, node.getKey(), outfile, Path(run_path))
+            node.save(Path(run_path), iens, fs)
             continue
 
         raise NotImplementedError
 
     _value_export_txt(run_path, export_base_name, exports)
     _value_export_json(run_path, export_base_name, exports)
-
-
-def field_transform(data: npt.ArrayLike, transform_name: str) -> Any:
-    if not transform_name:
-        return data
-
-    def f(x: float) -> float:  # pylint: disable=too-many-return-statements
-        if transform_name in ("LN", "LOG"):
-            return math.log(x, math.e)
-        if transform_name == "LN0":
-            return math.log(x, math.e) + 0.000001
-        if transform_name == "LOG10":
-            return math.log(x, 10)
-        if transform_name == "EXP":
-            return math.exp(x)
-        if transform_name == "EXP0":
-            return math.exp(x) + 0.000001
-        if transform_name == "POW10":
-            return math.pow(x, 10)
-        if transform_name == "TRUNC_POW10":
-            return math.pow(max(x, 0.001), 10)
-        return x
-
-    vfunc = np.vectorize(f)
-
-    return vfunc(data)
 
 
 class EnKFMain:
@@ -436,45 +384,14 @@ class EnKFMain:
             if self.ensembleConfig().getUseForwardInit(parameter):
                 continue
             impl_type = config_node.getImplementationType()
-            if impl_type == ErtImplType.FIELD:
+            if isinstance(config_node, ParameterConfig):
                 for _, realization_nr in enumerate(active_realizations):
-                    init_file = self.ensembleConfig().get_init_file_fmt(parameter)
-                    if "%d" in init_file:
-                        init_file = init_file % realization_nr
-
-                    grid = ensemble.experiment.grid
-                    if isinstance(grid, xtgeo.Grid):
-                        try:
-                            props = xtgeo.gridproperty_from_file(
-                                init_file,
-                                name=parameter,
-                                grid=grid,
-                            )
-                            data = props.get_npvalues1d(order="C", fill_value=np.nan)
-                        except PermissionError as err:
-                            context_message = (
-                                f"Failed to open init file for parameter {parameter!r}"
-                            )
-                            raise RuntimeError(context_message) from err
-                    elif isinstance(grid, EclGrid):
-                        with cwrap.open(init_file, "rb") as f:
-                            param = EclKW.read_grdecl(f, parameter)
-
-                        mask = [not e for e in grid.export_actnum()]
-                        masked_array = ma.MaskedArray(
-                            data=param.numpy_view(), mask=mask, fill_value=np.nan
-                        )  # type: ignore
-                        data = masked_array.filled()  # type: ignore
-
-                    field_config = config_node.getFieldModelConfig()
-                    trans = field_config.get_init_transform_name()
-                    data_transformed = field_transform(data, trans)
-                    ensemble.save_field(parameter, realization_nr, data_transformed)
+                    config_node.load(Path(), realization_nr, ensemble)
 
             elif impl_type == ErtImplType.GEN_KW:
                 gen_kw_config = config_node.getKeywordModelConfig()
                 keys = list(gen_kw_config)
-                init_file = self.ensembleConfig().get_init_file_fmt(parameter)
+                init_file = self.ensembleConfig()[parameter].forward_init_file
                 if init_file:
                     logging.info(
                         f"Reading from init file {init_file}" + f" for {parameter}"
