@@ -230,7 +230,7 @@ class SchemaItem(BaseModel):
         if val_type == SchemaType.CONFIG_EXECUTABLE:
             path = str(token)
             if not os.path.isabs(token) and not os.path.exists(token):
-                path: Optional[str] = shutil.which(token)
+                path = shutil.which(token)
                 if path is None:
                     raise ConfigValidationError(
                         f"Could not find executable {token.value!r}",

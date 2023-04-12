@@ -9,7 +9,7 @@ from ert._c_wrappers.config import ConfigParser, ContentTypeEnum
 from ert._c_wrappers.job_queue import ErtScript, ExternalErtScript, FunctionErtScript
 from ert._clib.job_kw import type_from_kw
 
-from ...parsing import ConfigValidationError
+from ert.parsing import ConfigValidationError
 from .ert_plugin import ErtPlugin
 
 if TYPE_CHECKING:

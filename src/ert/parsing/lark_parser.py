@@ -117,7 +117,7 @@ class FileContextTransformer(Transformer):
     """Adds filename to each token,
     to ensure we have enough context for error messages"""
 
-    def __init__(self, filename: str) -> "FileContextTransformer":
+    def __init__(self, filename: str) -> None:
         self.filename = filename
         super().__init__(visit_tokens=True)
 
