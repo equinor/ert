@@ -55,15 +55,15 @@ def create_observations(ert) -> List[Mapping[str, dict]]:
             else:
                 obs_data["name"] = data_key
                 grouped_obs[data_key] = obs_data
-    for key, obs in grouped_obs.items():
+    for obs in grouped_obs.values():
         x_axis, values, error = (
             list(t)
             for t in zip(*sorted(zip(obs["x_axis"], obs["values"], obs["errors"])))
         )
         x_axis = _prepare_x_axis(x_axis)
-        grouped_obs[key]["x_axis"] = x_axis
-        grouped_obs[key]["values"] = values
-        grouped_obs[key]["errors"] = error
+        obs["x_axis"] = x_axis
+        obs["values"] = values
+        obs["errors"] = error
     return list(grouped_obs.values())
 
 

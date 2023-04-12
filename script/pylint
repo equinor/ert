@@ -83,6 +83,7 @@ CHECKS = [
     "ungrouped-imports",
     "unidiomatic-typecheck",
     "unnecessary-comprehension",
+    "unnecessary-dict-index-lookup",
     "unnecessary-dunder-call",
     "unnecessary-lambda",
     "unnecessary-lambda-assignment",
