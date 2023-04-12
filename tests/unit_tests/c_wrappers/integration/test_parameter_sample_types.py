@@ -336,7 +336,7 @@ def test_copy_case(
         fs.copy_from_case(
             new_fs,
             ["MY_PARAM"],
-            [True if x in range(5) else False for x in range(10)],
+            [x in range(5) for x in range(10)],
         )
         arr_old = fs.load_surface_data("MY_PARAM", [0, 2, 3])
 
