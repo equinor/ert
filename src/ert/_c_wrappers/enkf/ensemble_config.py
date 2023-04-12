@@ -174,10 +174,6 @@ class EnsembleConfig(BaseCClass):
 
     @staticmethod
     def _load_refcase(refcase_file: Optional[str]) -> Optional[EclSum]:
-        """
-        If the user has not given a refcase_file it will be
-        impossible to use wildcards when expanding summary variables.
-        """
         if refcase_file is None:
             return None
 
