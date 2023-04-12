@@ -1,7 +1,12 @@
+import os
+import shutil
 from enum import Enum
-from typing import List, Mapping, Optional
+from typing import Any, List, Mapping, Optional, Union
 
 from pydantic import BaseModel
+
+from ert._c_wrappers.config import ConfigValidationError
+from ert._c_wrappers.enkf.lark_parser_common import FileContextToken, Instruction
 
 # These keys are used as options in KEY:VALUE statements
 BASE_SURFACE_KEY = "BASE_SURFACE"
@@ -152,12 +157,136 @@ class SchemaItem(BaseModel):
     # overwrite any previous value set
     multi_occurrence: bool = False
     expand_envvar: bool = True
+    # Index of tokens to do substitution from until end,
+    # 0 means no substitution, as keyword is never substituted
+    substitute_from: int = 1
     required_set: bool = False
     required_children_value: Mapping[str, List[str]] = {}
     # Allowed values for arguments, if empty, all values allowed
     common_selection_set: List[str] = []
     # Allowed values for specific arguments, if no entry, all values allowed
     indexed_selection_set: Mapping[int, List[str]] = {}
+
+    def check_valid(self, val: "FileContextToken", index: int):
+        if (
+            index in self.indexed_selection_set
+            and val not in self.indexed_selection_set[index]
+        ):
+            raise ConfigValidationError(
+                f"{self.kw!r} argument {index!r} must be one of"
+                f" {self.indexed_selection_set[index]!r} was {val.value!r}",
+                config_file=val.filename,
+            )
+
+    def convert(
+        self, token: FileContextToken, index: int
+    ) -> Optional[Union[str, int, float]]:
+        self.check_valid(token, index)
+        if not len(self.type_map) > index:
+            return token
+        val_type = self.type_map[index]
+        if val_type is None:
+            return token
+        if val_type == SchemaType.CONFIG_BOOL:
+            if token.lower() == "true":
+                return True
+            elif token.lower() == "false":
+                return False
+            else:
+                raise ConfigValidationError(
+                    f"{self.kw!r} must have a boolean value"
+                    f" as argument {index + 1!r}",
+                    config_file=token.filename,
+                ) from None
+        if val_type == SchemaType.CONFIG_INT:
+            try:
+                return int(token)
+            except ValueError:
+                raise ConfigValidationError(
+                    f"{self.kw!r} must have an integer value"
+                    f" as argument {index + 1!r}",
+                    config_file=token.filename,
+                ) from None
+        if val_type == SchemaType.CONFIG_FLOAT:
+            try:
+                return float(token)
+            except ValueError:
+                raise ConfigValidationError(
+                    f"{self.kw!r} must have a number as argument {index + 1!r}",
+                    config_file=token.filename,
+                ) from None
+        if val_type in [SchemaType.CONFIG_PATH, SchemaType.CONFIG_EXISTING_PATH]:
+            path = str(token)
+            if not os.path.isabs(token):
+                path = os.path.normpath(
+                    os.path.join(os.path.dirname(token.filename), token)
+                )
+            if val_type == SchemaType.CONFIG_EXISTING_PATH and not os.path.exists(path):
+                err = f'Cannot find file or directory "{token.value}" \n'
+                if path != token:
+                    err += f"The configured value was {path!r} "
+                raise ConfigValidationError(err, config_file=token.filename)
+            return path
+        if val_type == SchemaType.CONFIG_EXECUTABLE:
+            path = str(token)
+            if not os.path.isabs(token) and not os.path.exists(token):
+                path = shutil.which(token)
+                if path is None:
+                    raise ConfigValidationError(
+                        f"Could not find executable {token.value!r}",
+                        config_file=token.filename,
+                    )
+            if not os.access(path, os.X_OK):
+                context = (
+                    f"{token.value!r} which was resolved to {path!r}"
+                    if token.value != path
+                    else f"{token.value!r}"
+                )
+                raise ConfigValidationError(
+                    f"File not executable: {context}",
+                    config_file=token.filename,
+                )
+            return path
+        return str(token)
+
+    def apply_constraints(self, args: List[Any]) -> Union[List[Any], Any]:
+        args = [
+            self.convert(x, i) if isinstance(x, FileContextToken) else x
+            for i, x in enumerate(args)
+        ]
+        if self.argc_min != -1 and len(args) < self.argc_min:
+            raise ConfigValidationError(
+                f"{self.kw} must have at least {self.argc_min} arguments"
+            )
+        if self.argc_max != -1 and len(args) > self.argc_max:
+            raise ConfigValidationError(
+                f"{self.kw} must have maximum {self.argc_max} arguments"
+            )
+        if self.argc_max == 1 and self.argc_min == 1:
+            return args[0]
+        return args
+
+    def join_args(self, line: List[Any]) -> List[Any]:
+        n = self.join_after
+        if 0 < n < len(line):
+            joined = FileContextToken.join_tokens(line[n:], " ")
+            new_line = line[0:n]
+            if len(joined) > 0:
+                new_line.append(joined)
+            return new_line
+        return line
+
+
+def check_required(
+    schema: Mapping[str, SchemaItem],
+    config_dict: Mapping[str, Instruction],
+    filename: str,
+):
+    for constraints in schema.values():
+        if constraints.required_set and constraints.kw not in config_dict:
+            raise ConfigValidationError(
+                f"{constraints.kw} must be set.", config_file=filename
+            )
 
 
 def float_keyword(keyword):
@@ -170,10 +299,6 @@ def int_keyword(keyword):
 
 def string_keyword(keyword):
     return SchemaItem(kw=keyword, type_map=[SchemaType.CONFIG_STRING])
-
-
-def bool_keyword(keyword):
-    return SchemaItem(kw=keyword, type_map=[SchemaType.CONFIG_BOOL])
 
 
 def path_keyword(keyword):
@@ -214,6 +339,7 @@ def forward_model_keyword():
         argc_min=0,
         argc_max=CONFIG_DEFAULT_ARG_MAX,
         multi_occurrence=True,
+        substitute_from=0,
     )
 
 
@@ -227,7 +353,25 @@ def simulation_job_keyword():
 
 
 def data_kw_keyword():
-    return SchemaItem(kw=DATA_KW_KEY, required_set=False, argc_min=2, argc_max=2)
+    return SchemaItem(
+        kw=DATA_KW_KEY,
+        required_set=False,
+        argc_min=2,
+        argc_max=2,
+        multi_occurrence=True,
+        substitute_from=2,
+    )
+
+
+def define_keyword():
+    return SchemaItem(
+        kw=DEFINE_KEY,
+        required_set=False,
+        argc_min=2,
+        argc_max=2,
+        multi_occurrence=True,
+        substitute_from=2,
+    )
 
 
 def history_source_keyword():
@@ -523,6 +667,7 @@ def init_user_config():
         forward_model_keyword(),
         simulation_job_keyword(),
         data_kw_keyword(),
+        define_keyword(),
         existing_path_keyword(OBS_CONFIG_KEY),
         existing_path_keyword(TIME_MAP_KEY),
         single_arg_keyword(GEN_KW_EXPORT_NAME_KEY),
