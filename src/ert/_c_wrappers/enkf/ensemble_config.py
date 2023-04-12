@@ -490,15 +490,6 @@ class EnsembleConfig(BaseCClass):
 
         return ens_config
 
-    def check_forward_init_nodes(self) -> List[EnkfConfigNode]:
-        forward_init_nodes = []
-        for config_key in self.alloc_keylist():
-            config_node = self[config_key]
-            if self.getUseForwardInit(config_key):
-                forward_init_nodes.append(config_node)
-
-        return forward_init_nodes
-
     def _node_info(self, node: str) -> str:
         impl_type = ErtImplType.from_string(node)
         key_list = self.getKeylistFromImplType(impl_type)
