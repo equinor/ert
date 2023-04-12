@@ -180,6 +180,7 @@ class SchemaItem(BaseModel):
     def convert(
         self, token: FileContextToken, index: int
     ) -> Optional[Union[str, int, float]]:
+        # pylint: disable=too-many-branches, too-many-return-statements
         self.check_valid(token, index)
         if not len(self.type_map) > index:
             return token
