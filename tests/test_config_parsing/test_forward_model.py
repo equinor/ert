@@ -10,7 +10,6 @@ import pytest
 from hypothesis import given
 
 from ert._c_wrappers.enkf import ErtConfig
-from ert._c_wrappers.enkf.config_keys import ConfigKeys
 from ert.parsing import ConfigValidationError, ConfigWarning
 
 from .config_dict_generator import config_generators, to_config_file
