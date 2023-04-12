@@ -69,6 +69,7 @@ CHECKS = [
     "redundant-unittest-assert",
     "reimported",
     "signature-differs",
+    "simplifiable-if-expression",
     "simplifiable-if-statement",
     "subprocess-run-check",
     "super-with-arguments",

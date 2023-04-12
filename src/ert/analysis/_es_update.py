@@ -321,7 +321,7 @@ def _load_observations_and_responses(
         raise IndexError("\n".join(error_msg))
 
     obs_filter = _deactivate_outliers(joined, std_cutoff, alpha, global_std_scaling)
-    obs_mask = [True if i not in obs_filter else False for i in joined.index]
+    obs_mask = [i not in obs_filter for i in joined.index]
 
     # Inflating measurement errors by a factor sqrt(global_std_scaling) as shown
     # in for example evensen2018 - Analysis of iterative ensemble smoothers for
