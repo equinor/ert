@@ -11,7 +11,8 @@
  * Write conf-file with given keywords, then parse it.
  * Returns pointer to the parsed configuration
  */
-conf_instance_type *write_conf(std::vector<std::string> keyword_lines) {
+std::shared_ptr<conf_instance_type>
+write_conf(std::vector<std::string> keyword_lines) {
     std::string buf("GENERAL_OBSERVATION WPR_DIFF_1 {\n");
     buf += "   DATA       = SNAKE_OIL_WPR_DIFF;\n";
     buf += "   INDEX_LIST = 400,800,1200,1800;\n";
@@ -24,7 +25,7 @@ conf_instance_type *write_conf(std::vector<std::string> keyword_lines) {
     stream.write(buf.data(), buf.size());
     stream.close(); // close before reading in next step!
 
-    conf_class_type *enkf_conf_class = enkf_obs_get_obs_conf_class();
+    auto enkf_conf_class = enkf_obs_get_obs_conf_class();
     return conf_instance_alloc_from_file(enkf_conf_class, "enkf_conf",
                                          "obs_path/conf.txt");
 }
@@ -32,7 +33,7 @@ conf_instance_type *write_conf(std::vector<std::string> keyword_lines) {
 /*
  * Just a convenient wrapper from char* to std::string
  */
-std::string get_path_error(conf_instance_type *enkf_conf) {
+std::string get_path_error(std::shared_ptr<conf_instance_type> enkf_conf) {
     char *errors = conf_instance_get_path_error(enkf_conf);
     if (errors) {
         std::string s(errors);
@@ -66,18 +67,16 @@ TEST_CASE("Test parsing keywords in configuration", "[unittest]") {
         std::filesystem::create_directory("obs_path");
 
         GIVEN("A conf file with no relevant keywords") {
-            conf_instance_type *enkf_conf = write_conf({});
+            auto enkf_conf = write_conf({});
             THEN("There are no errors") {
                 std::string errors = get_path_error(enkf_conf);
                 REQUIRE(!contains(errors, "OBS_FILE"));
                 REQUIRE(!contains(errors, "INDEX_FILE"));
             }
-            conf_instance_free(enkf_conf);
         }
 
         GIVEN("A conf file with OBS_FILE keyword in it") {
-            conf_instance_type *enkf_conf =
-                write_conf({"OBS_FILE   = obs.txt;"});
+            auto enkf_conf = write_conf({"OBS_FILE   = obs.txt;"});
             WHEN("There is no OBS_FILE present") {
                 THEN("Error refers to missing file") {
                     std::string errors = get_path_error(enkf_conf);
@@ -96,12 +95,10 @@ TEST_CASE("Test parsing keywords in configuration", "[unittest]") {
                     REQUIRE(!contains(errors, "INDEX_FILE"));
                 }
             }
-            conf_instance_free(enkf_conf);
         }
 
         GIVEN("A conf file with OBS_FILE in subdir obs_path") {
-            conf_instance_type *enkf_conf =
-                write_conf({"OBS_FILE   = obs_path/obs.txt;"});
+            auto enkf_conf = write_conf({"OBS_FILE   = obs_path/obs.txt;"});
 
             WHEN("The OBS_FILE is in the wrong location") {
                 touch_file("obs_path/obs.txt");
@@ -123,13 +120,11 @@ TEST_CASE("Test parsing keywords in configuration", "[unittest]") {
                     REQUIRE(!contains(errors, "INDEX_FILE"));
                 }
             }
-            conf_instance_free(enkf_conf);
         }
 
         GIVEN("A conf file with OBS_FILE and INDEX_FILE keywords") {
-            conf_instance_type *enkf_conf =
-                write_conf({"OBS_FILE    = obs.txt;"
-                            "INDEX_FILE  = index.txt;"});
+            auto enkf_conf = write_conf({"OBS_FILE    = obs.txt;"
+                                         "INDEX_FILE  = index.txt;"});
 
             WHEN("Only OBS_FILE exists") {
                 touch_file("obs_path/obs.txt");
@@ -151,7 +146,6 @@ TEST_CASE("Test parsing keywords in configuration", "[unittest]") {
                     REQUIRE(!contains(errors, "INDEX_FILE"));
                 }
             }
-            conf_instance_free(enkf_conf);
         }
     }
 }

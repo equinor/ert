@@ -65,10 +65,9 @@ static int find_nearest_time_index(std::vector<time_t> time_map,
     return nearest_index;
 }
 
-static int
-__conf_instance_get_restart_nr(const conf_instance_type *conf_instance,
-                               const char *obs_key,
-                               const std::vector<time_t> &time_map) {
+static int __conf_instance_get_restart_nr(
+    std::shared_ptr<conf_instance_type> conf_instance, const char *obs_key,
+    const std::vector<time_t> &time_map) {
     int obs_restart_nr = -1;
 
     if (conf_instance_has_item(conf_instance, "RESTART")) {
@@ -280,7 +279,8 @@ int obs_vector_get_next_active_step(const obs_vector_type *obs_vector,
    hash table.
 */
 void obs_vector_load_from_SUMMARY_OBSERVATION(
-    obs_vector_type *obs_vector, const conf_instance_type *conf_instance,
+    obs_vector_type *obs_vector,
+    std::shared_ptr<conf_instance_type> conf_instance,
     const std::vector<time_t> &obs_time) {
     if (!conf_instance_is_of_class(conf_instance, "SUMMARY_OBSERVATION"))
         util_abort("%s: internal error. expected \"SUMMARY_OBSERVATION\" "
@@ -327,7 +327,7 @@ void obs_vector_load_from_SUMMARY_OBSERVATION(
 }
 
 obs_vector_type *obs_vector_alloc_from_GENERAL_OBSERVATION(
-    const conf_instance_type *conf_instance,
+    std::shared_ptr<conf_instance_type> conf_instance,
     const std::vector<time_t> &obs_time, enkf_config_node_type *config_node) {
     if (!conf_instance_is_of_class(conf_instance, "GENERAL_OBSERVATION"))
         util_abort("%s: internal error. expected \"GENERAL_OBSERVATION\" "
@@ -469,7 +469,8 @@ static bool read_history_from_ecl_summary(const history_source_type history,
 // Should check the refcase for key - if it is != NULL.
 
 bool obs_vector_load_from_HISTORY_OBSERVATION(
-    obs_vector_type *obs_vector, const conf_instance_type *conf_instance,
+    obs_vector_type *obs_vector,
+    std::shared_ptr<conf_instance_type> conf_instance,
     const std::vector<time_t> &obs_time, const history_source_type history,
     double std_cutoff, const ecl_sum_type *refcase) {
 
@@ -531,9 +532,8 @@ bool obs_vector_load_from_HISTORY_OBSERVATION(
                      segment_nr++) {
                     const char *segment_name =
                         stringlist_iget(segment_keys, segment_nr);
-                    const conf_instance_type *segment_conf =
-                        conf_instance_get_sub_instance_ref(conf_instance,
-                                                           segment_name);
+                    auto segment_conf = conf_instance_get_sub_instance_ref(
+                        conf_instance, segment_name);
 
                     int start =
                         conf_instance_get_item_value_int(segment_conf, "START");

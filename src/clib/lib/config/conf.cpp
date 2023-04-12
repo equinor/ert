@@ -1,6 +1,5 @@
 #include <filesystem>
 #include <iostream>
-#include <vector>
 
 #include <cassert>
 #include <cstring>
@@ -15,53 +14,40 @@ namespace fs = std::filesystem;
 
 static auto logger = ert::get_logger("config");
 
-void conf_class_free(conf_class_type *conf_class) {
+static void conf_class_free(conf_class_type *conf_class) {
     free(conf_class->class_name);
     free(conf_class->help);
-    hash_free(conf_class->sub_classes);
-    hash_free(conf_class->item_specs);
-    vector_free(conf_class->item_mutexes);
-    free(conf_class);
+    delete conf_class;
 }
 
-void conf_class_free__(void *conf_class) {
-    conf_class_free((conf_class_type *)conf_class);
-}
-
-conf_class_type *conf_class_alloc_empty(const char *class_name,
-                                        bool require_instance, bool singleton,
-                                        const char *help) {
+std::shared_ptr<conf_class_type> make_conf_class(const char *class_name,
+                                                 bool require_instance,
+                                                 bool singleton,
+                                                 const char *help) {
     assert(class_name != NULL);
 
-    conf_class_type *conf_class =
-        (conf_class_type *)util_malloc(sizeof *conf_class);
+    auto conf_class = new conf_class_type;
 
-    conf_class->super_class = NULL;
+    conf_class->super_class = nullptr;
     conf_class->class_name = util_alloc_string_copy(class_name);
-    conf_class->help = NULL;
+    conf_class->help = nullptr;
     conf_class->require_instance = require_instance;
     conf_class->singleton = singleton;
-    conf_class->sub_classes = hash_alloc();
-    conf_class->item_specs = hash_alloc();
-    conf_class->item_mutexes = vector_alloc_new();
 
-    conf_class_set_help(conf_class, help);
-    return conf_class;
+    std::shared_ptr<conf_class_type> result(conf_class, conf_class_free);
+    conf_class_set_help(result, help);
+    return result;
 }
 
 void conf_item_free(conf_item_type *conf_item) {
     free(conf_item->value);
-    free(conf_item);
+    delete conf_item;
 }
 
-void conf_item_free__(void *conf_item) {
-    conf_item_free((conf_item_type *)conf_item);
-}
-
-conf_item_type *conf_item_alloc(const conf_item_spec_type *conf_item_spec,
-                                const char *value) {
-    conf_item_type *conf_item =
-        (conf_item_type *)util_malloc(sizeof *conf_item);
+std::shared_ptr<conf_item_type>
+make_conf_item(std::shared_ptr<conf_item_spec_type> conf_item_spec,
+               const char *value) {
+    auto conf_item = new conf_item_type;
 
     assert(conf_item_spec != NULL);
     assert(value != NULL);
@@ -72,75 +58,55 @@ conf_item_type *conf_item_alloc(const conf_item_spec_type *conf_item_spec,
     else
         conf_item->value = util_alloc_string_copy(value);
 
-    return conf_item;
+    std::shared_ptr<conf_item_type> result(conf_item, conf_item_free);
+    return result;
 }
 
 void conf_instance_free(conf_instance_type *conf_instance) {
     free(conf_instance->name);
-    hash_free(conf_instance->sub_instances);
-    hash_free(conf_instance->items);
-    free(conf_instance);
+    delete conf_instance;
 }
 
-void conf_instance_free__(void *conf_instance) {
-    conf_instance_free((conf_instance_type *)conf_instance);
-}
-
-static void conf_instance_insert_owned_item(conf_instance_type *conf_instance,
-                                            conf_item_type *conf_item) {
+static void
+conf_instance_insert_item(std::shared_ptr<conf_instance_type> conf_instance,
+                          std::shared_ptr<conf_item_type> conf_item) {
     assert(conf_instance != NULL);
     assert(conf_item != NULL);
 
     const char *item_name = conf_item->conf_item_spec->name;
 
     /* Check that the inserted item is of known type. */
-    {
-        const hash_type *item_spec_hash = conf_instance->conf_class->item_specs;
-        const conf_item_spec_type *conf_item_spec =
-            (const conf_item_spec_type *)hash_get(item_spec_hash, item_name);
-        if (conf_item_spec != conf_item->conf_item_spec)
-            util_abort("%s: Internal error.\n", __func__);
-    }
+    if (conf_instance->conf_class->item_specs[item_name] !=
+        conf_item->conf_item_spec)
+        util_abort("%s: Internal error.\n", __func__);
 
-    hash_insert_hash_owned_ref(conf_instance->items, item_name, conf_item,
-                               conf_item_free__);
+    conf_instance->items[item_name] = conf_item;
 }
 
-static conf_instance_type *
-conf_instance_alloc_default(const conf_class_type *conf_class,
+static std::shared_ptr<conf_instance_type>
+conf_instance_alloc_default(std::shared_ptr<conf_class_type> conf_class,
                             const char *name) {
     assert(conf_class != NULL);
     assert(name != NULL);
 
-    conf_instance_type *conf_instance =
-        (conf_instance_type *)util_malloc(sizeof *conf_instance);
+    auto conf_instance = new conf_instance_type;
 
     conf_instance->conf_class = conf_class;
     conf_instance->name = util_alloc_string_copy(name);
-    conf_instance->sub_instances = hash_alloc();
-    conf_instance->items = hash_alloc();
-    {
-        /* Insert items that have a default value in their specs. */
-        int num_item_specs = hash_get_size(conf_class->item_specs);
-        char **item_spec_keys = hash_alloc_keylist(conf_class->item_specs);
 
-        for (int item_spec_nr = 0; item_spec_nr < num_item_specs;
-             item_spec_nr++) {
-            const char *item_spec_name = item_spec_keys[item_spec_nr];
-            const conf_item_spec_type *conf_item_spec =
-                (const conf_item_spec_type *)hash_get(conf_class->item_specs,
-                                                      item_spec_name);
-            if (conf_item_spec->default_value != NULL) {
-                conf_item_type *conf_item = conf_item_alloc(
-                    conf_item_spec, conf_item_spec->default_value);
-                conf_instance_insert_owned_item(conf_instance, conf_item);
-            }
+    std::shared_ptr<conf_instance_type> result(conf_instance,
+                                               conf_instance_free);
+
+    /* Insert items that have a default value in their specs. */
+    for (auto &[item_spec_name, conf_item_spec] : conf_class->item_specs) {
+        if (conf_item_spec->default_value != nullptr) {
+            auto conf_item =
+                make_conf_item(conf_item_spec, conf_item_spec->default_value);
+            conf_instance_insert_item(result, conf_item);
         }
-
-        util_free_stringlist(item_spec_keys, num_item_specs);
     }
 
-    return conf_instance;
+    return result;
 }
 
 void conf_item_spec_free(conf_item_spec_type *conf_item_spec) {
@@ -148,61 +114,56 @@ void conf_item_spec_free(conf_item_spec_type *conf_item_spec) {
     free(conf_item_spec->default_value);
     free(conf_item_spec->help);
     delete conf_item_spec->restriction;
-    free(conf_item_spec);
+    delete conf_item_spec;
 }
 
-void conf_item_spec_free__(void *conf_item_spec) {
-    conf_item_spec_free((conf_item_spec_type *)conf_item_spec);
-}
-
-conf_item_spec_type *conf_item_spec_alloc(const char *name, bool required_set,
-                                          dt_enum dt, const char *help) {
+std::shared_ptr<conf_item_spec_type> make_conf_item_spec(const char *name,
+                                                         bool required_set,
+                                                         dt_enum dt,
+                                                         const char *help) {
     assert(name != NULL);
 
-    conf_item_spec_type *conf_item_spec =
-        (conf_item_spec_type *)util_malloc(sizeof *conf_item_spec);
+    auto conf_item_spec = new conf_item_spec_type;
 
-    conf_item_spec->super_class = NULL;
+    conf_item_spec->super_class = nullptr;
     conf_item_spec->name = util_alloc_string_copy(name);
     conf_item_spec->required_set = required_set;
     conf_item_spec->dt = dt;
-    conf_item_spec->default_value = NULL;
-    conf_item_spec->help = NULL;
+    conf_item_spec->default_value = nullptr;
+    conf_item_spec->help = nullptr;
     conf_item_spec->help = util_realloc_string_copy(conf_item_spec->help, help);
 
     conf_item_spec->restriction = new std::set<std::string>();
-    return conf_item_spec;
+    std::shared_ptr<conf_item_spec_type> result(conf_item_spec,
+                                                conf_item_spec_free);
+    return result;
 }
 
 void conf_item_mutex_free(conf_item_mutex_type *conf_item_mutex) {
-    hash_free(conf_item_mutex->item_spec_refs);
-    free(conf_item_mutex);
+    delete conf_item_mutex;
 }
 
-void conf_item_mutex_free__(void *conf_item_mutex) {
-    conf_item_mutex_free((conf_item_mutex_type *)conf_item_mutex);
-}
-
-static conf_item_mutex_type *
-conf_item_mutex_alloc(const conf_class_type *super_class, bool require_one,
-                      bool inverse) {
-    conf_item_mutex_type *conf_item_mutex =
-        (conf_item_mutex_type *)util_malloc(sizeof *conf_item_mutex);
+static std::shared_ptr<conf_item_mutex_type>
+conf_item_mutex_alloc(const std::shared_ptr<conf_class_type> super_class,
+                      bool require_one, bool inverse) {
+    auto conf_item_mutex = new conf_item_mutex_type;
 
     conf_item_mutex->super_class = super_class;
     conf_item_mutex->require_one = require_one;
     conf_item_mutex->inverse = inverse;
-    conf_item_mutex->item_spec_refs = hash_alloc();
 
-    return conf_item_mutex;
+    std::shared_ptr<conf_item_mutex_type> result(conf_item_mutex,
+                                                 conf_item_mutex_free);
+    return result;
 }
 
-static bool conf_class_has_super_class(const conf_class_type *conf_class,
-                                       const conf_class_type *super_class) {
+static bool
+conf_class_has_super_class(std::shared_ptr<conf_class_type> conf_class,
+                           std::shared_ptr<conf_class_type> super_class) {
     assert(conf_class != NULL);
     assert(super_class != NULL);
 
-    const conf_class_type *parent = conf_class->super_class;
+    auto parent = conf_class->super_class;
 
     while (parent != NULL) {
         if (parent == super_class)
@@ -213,13 +174,14 @@ static bool conf_class_has_super_class(const conf_class_type *conf_class,
     return false;
 }
 
-void conf_class_insert_owned_sub_class(conf_class_type *conf_class,
-                                       conf_class_type *sub_conf_class) {
+void conf_class_insert_sub_class(
+    std::shared_ptr<conf_class_type> conf_class,
+    std::shared_ptr<conf_class_type> sub_conf_class) {
     assert(conf_class != NULL);
     assert(sub_conf_class != NULL);
 
     /* Abort if conf_class already has an item with the same name. */
-    if (hash_has_key(conf_class->item_specs, sub_conf_class->class_name))
+    if (conf_class->item_specs.count(sub_conf_class->class_name))
         util_abort("%s: Internal error. conf class already has an item with "
                    "name \"%s\".\n",
                    __func__, sub_conf_class->class_name);
@@ -242,15 +204,13 @@ void conf_class_insert_owned_sub_class(conf_class_type *conf_class,
             "%s: Internal error. Inserted class already has a super class.\n",
             __func__);
 
-    hash_insert_hash_owned_ref(conf_class->sub_classes,
-                               sub_conf_class->class_name, sub_conf_class,
-                               conf_class_free__);
-
+    conf_class->sub_classes[sub_conf_class->class_name] = sub_conf_class;
     sub_conf_class->super_class = conf_class;
 }
 
-void conf_class_insert_owned_item_spec(conf_class_type *conf_class,
-                                       conf_item_spec_type *item_spec) {
+void conf_class_insert_item_spec(
+    std::shared_ptr<conf_class_type> conf_class,
+    std::shared_ptr<conf_item_spec_type> item_spec) {
     assert(conf_class != NULL);
     assert(item_spec != NULL);
 
@@ -261,53 +221,43 @@ void conf_class_insert_owned_item_spec(conf_class_type *conf_class,
             __func__);
 
     /* Abort if the class has a sub class with the same name.. */
-    if (hash_has_key(conf_class->sub_classes, item_spec->name))
+    if (conf_class->sub_classes.count(item_spec->name))
         util_abort("%s: Internal error. conf class already has a sub class "
                    "with name \"%s\".\n",
                    __func__, item_spec->name);
 
-    hash_insert_hash_owned_ref(conf_class->item_specs, item_spec->name,
-                               item_spec, conf_item_spec_free__);
+    conf_class->item_specs[item_spec->name] = item_spec;
 
     item_spec->super_class = conf_class;
 }
 
-conf_item_mutex_type *conf_class_new_item_mutex(conf_class_type *conf_class,
-                                                bool require_one,
-                                                bool inverse) {
+std::shared_ptr<conf_item_mutex_type>
+conf_class_new_item_mutex(std::shared_ptr<conf_class_type> conf_class,
+                          bool require_one, bool inverse) {
     assert(conf_class != NULL);
-    conf_item_mutex_type *mutex =
-        conf_item_mutex_alloc(conf_class, require_one, inverse);
-    vector_append_owned_ref(conf_class->item_mutexes, mutex,
-                            conf_item_mutex_free__);
+    auto mutex = conf_item_mutex_alloc(conf_class, require_one, inverse);
+    conf_class->item_mutexes.push_back(mutex);
     return mutex;
 }
 
-stringlist_type *conf_instance_alloc_list_of_sub_instances_of_class(
-    const conf_instance_type *conf_instance,
-    const conf_class_type *conf_class) {
+static stringlist_type *conf_instance_alloc_list_of_sub_instances_of_class(
+    std::shared_ptr<conf_instance_type> conf_instance,
+    std::shared_ptr<conf_class_type> conf_class) {
     stringlist_type *instances = stringlist_alloc_new();
-    int num_sub_instances = hash_get_size(conf_instance->sub_instances);
-    char **sub_instance_keys = hash_alloc_keylist(conf_instance->sub_instances);
 
-    for (int key_nr = 0; key_nr < num_sub_instances; key_nr++) {
-        const conf_instance_type *sub_instance =
-            (const conf_instance_type *)hash_get(conf_instance->sub_instances,
-                                                 sub_instance_keys[key_nr]);
-
-        const conf_class_type *sub_instance_class = sub_instance->conf_class;
-
+    for (auto &[sub_instance_name, sub_instance] :
+         conf_instance->sub_instances) {
+        auto sub_instance_class = sub_instance->conf_class;
         if (sub_instance_class == conf_class)
-            stringlist_append_copy(instances, sub_instance_keys[key_nr]);
+            stringlist_append_copy(instances, sub_instance_name.c_str());
     }
-
-    util_free_stringlist(sub_instance_keys, num_sub_instances);
 
     return instances;
 }
 
-void conf_instance_insert_owned_sub_instance(
-    conf_instance_type *conf_instance, conf_instance_type *sub_conf_instance) {
+void conf_instance_insert_sub_instance(
+    std::shared_ptr<conf_instance_type> conf_instance,
+    std::shared_ptr<conf_instance_type> sub_conf_instance) {
     assert(conf_instance != NULL);
     assert(sub_conf_instance != NULL);
 
@@ -330,14 +280,14 @@ void conf_instance_insert_owned_sub_instance(
                    "instance \"%s\" with \"%s\".\n",
                    sub_conf_instance->conf_class->class_name, key,
                    sub_conf_instance->name);
-            hash_del(conf_instance->sub_instances, key);
+            conf_instance->sub_instances.erase(key);
         }
 
         stringlist_free(instances);
     }
 
     /* Warn if the sub_instance already exists and is overwritten. */
-    if (hash_has_key(conf_instance->sub_instances, sub_conf_instance->name)) {
+    if (conf_instance->sub_instances.count(sub_conf_instance->name)) {
         printf("WARNING: Overwriting instance \"%s\" of class \"%s\" in "
                "instance \"%s\" of class \"%s\"\n",
                sub_conf_instance->name,
@@ -346,56 +296,42 @@ void conf_instance_insert_owned_sub_instance(
                conf_instance_get_class_name_ref(conf_instance));
     }
 
-    hash_insert_hash_owned_ref(conf_instance->sub_instances,
-                               sub_conf_instance->name, sub_conf_instance,
-                               conf_instance_free__);
+    conf_instance->sub_instances[sub_conf_instance->name] = sub_conf_instance;
 }
 
-const conf_item_spec_type *
-conf_class_get_item_spec_ref(const conf_class_type *conf_class,
-                             const char *item_name) {
-    if (!hash_has_key(conf_class->item_specs, item_name))
-        util_abort("%s: Internal error.\n", __func__);
-
-    return (const conf_item_spec_type *)hash_get(conf_class->item_specs,
-                                                 item_name);
-}
-
-void conf_instance_insert_item(conf_instance_type *conf_instance,
-                               const char *item_name, const char *value) {
+void conf_instance_insert_item(
+    std::shared_ptr<conf_instance_type> conf_instance, const char *item_name,
+    const char *value) {
     assert(conf_instance != NULL);
     assert(item_name != NULL);
     assert(value != NULL);
 
-    conf_item_type *conf_item;
-    const conf_class_type *conf_class = conf_instance->conf_class;
-    const conf_item_spec_type *conf_item_spec;
+    auto conf_class = conf_instance->conf_class;
 
     if (!conf_class_has_item_spec(conf_class, item_name))
         util_abort("%s: Internal error. Unkown item \"%s\" in class \"%s\".\n",
                    __func__, item_name, conf_instance->conf_class->class_name);
 
-    conf_item_spec = conf_class_get_item_spec_ref(conf_class, item_name);
+    auto conf_item_spec = conf_class->item_specs[item_name];
 
-    conf_item = conf_item_alloc(conf_item_spec, value);
-    conf_instance_insert_owned_item(conf_instance, conf_item);
+    auto conf_item = make_conf_item(conf_item_spec, value);
+    conf_instance_insert_item(conf_instance, conf_item);
 }
 
-void conf_item_mutex_add_item_spec(conf_item_mutex_type *conf_item_mutex,
-                                   const conf_item_spec_type *conf_item_spec) {
+void conf_item_mutex_add_item_spec(
+    std::shared_ptr<conf_item_mutex_type> conf_item_mutex,
+    std::shared_ptr<conf_item_spec_type> conf_item_spec) {
 
     if (conf_item_mutex->super_class != NULL) {
-        const conf_class_type *conf_class = conf_item_mutex->super_class;
+        auto conf_class = conf_item_mutex->super_class;
         const char *item_key = conf_item_spec->name;
 
-        if (!hash_has_key(conf_class->item_specs, item_key)) {
+        if (!conf_class->item_specs.count(item_key)) {
             util_abort("%s: Internal error. Trying to insert a mutex on item "
                        "\"%s\", which class \"%s\" does not have.\n",
                        __func__, item_key, conf_class->class_name);
         } else {
-            const conf_item_spec_type *conf_item_spec_class =
-                (const conf_item_spec_type *)hash_get(conf_class->item_specs,
-                                                      item_key);
+            auto conf_item_spec_class = conf_class->item_specs[item_key];
             if (conf_item_spec_class != conf_item_spec) {
                 util_abort(
                     "Internal error. Trying to insert a mutex on item \"%s\", "
@@ -410,21 +346,23 @@ void conf_item_mutex_add_item_spec(conf_item_mutex_type *conf_item_mutex,
                    "required set!\n",
                    __func__, conf_item_spec->name);
 
-    hash_insert_ref(conf_item_mutex->item_spec_refs, conf_item_spec->name,
-                    conf_item_spec);
+    conf_item_mutex->item_spec_refs[conf_item_spec->name] = conf_item_spec;
 }
 
-void conf_class_set_help(conf_class_type *conf_class, const char *help) {
+void conf_class_set_help(std::shared_ptr<conf_class_type> conf_class,
+                         const char *help) {
     conf_class->help = util_realloc_string_copy(conf_class->help, help);
 }
 
-void conf_item_spec_add_restriction(conf_item_spec_type *conf_item_spec,
-                                    const char *restriction) {
+void conf_item_spec_add_restriction(
+    std::shared_ptr<conf_item_spec_type> conf_item_spec,
+    const char *restriction) {
     conf_item_spec->restriction->insert(restriction);
 }
 
-void conf_item_spec_set_default_value(conf_item_spec_type *conf_item_spec,
-                                      const char *default_value) {
+void conf_item_spec_set_default_value(
+    std::shared_ptr<conf_item_spec_type> conf_item_spec,
+    const char *default_value) {
     if (conf_item_spec->default_value != NULL)
         free(conf_item_spec->default_value);
     if (default_value != NULL)
@@ -433,156 +371,140 @@ void conf_item_spec_set_default_value(conf_item_spec_type *conf_item_spec,
         conf_item_spec->default_value = NULL;
 }
 
-bool conf_class_has_item_spec(const conf_class_type *conf_class,
+bool conf_class_has_item_spec(std::shared_ptr<conf_class_type> conf_class,
                               const char *item_name) {
-    if (!hash_has_key(conf_class->item_specs, item_name))
+    if (!conf_class->item_specs.count(item_name))
         return false;
     else
         return true;
 }
 
-bool conf_class_has_sub_class(const conf_class_type *conf_class,
+bool conf_class_has_sub_class(std::shared_ptr<conf_class_type> conf_class,
                               const char *sub_class_name) {
-    if (!hash_has_key(conf_class->sub_classes, sub_class_name))
+    if (!conf_class->sub_classes.count(sub_class_name))
         return false;
     else
         return true;
 }
 
-const conf_class_type *
-conf_class_get_sub_class_ref(const conf_class_type *conf_class,
+std::shared_ptr<conf_class_type>
+conf_class_get_sub_class_ref(std::shared_ptr<conf_class_type> conf_class,
                              const char *sub_class_name) {
-    if (!hash_has_key(conf_class->sub_classes, sub_class_name))
+    if (!conf_class->sub_classes.count(sub_class_name))
         util_abort("%s: Internal error.\n", __func__);
 
-    return (const conf_class_type *)hash_get(conf_class->sub_classes,
-                                             sub_class_name);
+    return conf_class->sub_classes[sub_class_name];
 }
 
 const char *
-conf_instance_get_name_ref(const conf_instance_type *conf_instance) {
+conf_instance_get_name_ref(std::shared_ptr<conf_instance_type> conf_instance) {
     return conf_instance->name;
 }
 
-bool conf_instance_is_of_class(const conf_instance_type *conf_instance,
-                               const char *class_name) {
+bool conf_instance_is_of_class(
+    std::shared_ptr<conf_instance_type> conf_instance, const char *class_name) {
     if (strcmp(conf_instance->conf_class->class_name, class_name) == 0)
         return true;
     else
         return false;
 }
 
-bool conf_instance_has_item(const conf_instance_type *conf_instance,
-                            const char *item_name) {
-    if (!hash_has_key(conf_instance->items, item_name))
+bool conf_instance_has_item(std::shared_ptr<conf_instance_type> conf_instance,
+                            std::string item_name) {
+    if (!conf_instance->items.count(item_name))
         return false;
     else
         return true;
 }
 
-const conf_instance_type *
-conf_instance_get_sub_instance_ref(const conf_instance_type *conf_instance,
-                                   const char *sub_instance_name) {
-    if (!hash_has_key(conf_instance->sub_instances, sub_instance_name)) {
+std::shared_ptr<conf_instance_type> conf_instance_get_sub_instance_ref(
+    std::shared_ptr<conf_instance_type> conf_instance,
+    const char *sub_instance_name) {
+    if (!conf_instance->sub_instances.count(sub_instance_name)) {
         util_abort("%s: Instance %s of type %s has no sub instance named %s.\n",
                    __func__, conf_instance->name,
                    conf_instance->conf_class->class_name, sub_instance_name);
     }
-    return (const conf_instance_type *)hash_get(conf_instance->sub_instances,
-                                                sub_instance_name);
+    return conf_instance->sub_instances[sub_instance_name];
 }
 
 stringlist_type *conf_instance_alloc_list_of_sub_instances_of_class_by_name(
-    const conf_instance_type *conf_instance, const char *sub_class_name) {
+    std::shared_ptr<conf_instance_type> conf_instance,
+    const char *sub_class_name) {
     if (!conf_class_has_sub_class(conf_instance->conf_class, sub_class_name))
         util_abort("%s: Instance \"%s\" is of class \"%s\" which has no sub "
                    "class with name \"%s\"\n",
                    conf_instance->name, conf_instance->conf_class->class_name,
                    sub_class_name);
 
-    const conf_class_type *conf_class =
+    auto conf_class =
         conf_class_get_sub_class_ref(conf_instance->conf_class, sub_class_name);
 
     return conf_instance_alloc_list_of_sub_instances_of_class(conf_instance,
                                                               conf_class);
 }
 
-const char *
-conf_instance_get_class_name_ref(const conf_instance_type *conf_instance) {
+const char *conf_instance_get_class_name_ref(
+    std::shared_ptr<conf_instance_type> conf_instance) {
     return conf_instance->conf_class->class_name;
 }
 
-const char *
-conf_instance_get_item_value_ref(const conf_instance_type *conf_instance,
-                                 const char *item_name) {
-    if (!hash_has_key(conf_instance->items, item_name)) {
+const char *conf_instance_get_item_value_ref(
+    std::shared_ptr<conf_instance_type> conf_instance, std::string item_name) {
+    if (conf_instance->items.count(item_name) == 0) {
         util_abort("%s: Instance %s of type %s has no item %s.\n", __func__,
                    conf_instance->name, conf_instance->conf_class->class_name,
-                   item_name);
+                   item_name.c_str());
     }
-    const conf_item_type *conf_item =
-        (const conf_item_type *)hash_get(conf_instance->items, item_name);
-    return conf_item->value;
+    return conf_instance->items[item_name]->value;
 }
-
 /** If the dt supports it, this function shall return the item value as an int.
     If the dt does not support it, the function will abort.
 */
-int conf_instance_get_item_value_int(const conf_instance_type *conf_instance,
-                                     const char *item_name) {
-    if (!hash_has_key(conf_instance->items, item_name))
+int conf_instance_get_item_value_int(
+    std::shared_ptr<conf_instance_type> conf_instance, std::string item_name) {
+    if (!conf_instance->items.count(item_name))
         util_abort("%s: Instance %s of type %s has no item %s.\n", __func__,
                    conf_instance->name, conf_instance->conf_class->class_name,
-                   item_name);
+                   item_name.c_str());
 
-    const conf_item_type *conf_item =
-        (const conf_item_type *)hash_get(conf_instance->items, item_name);
-    const conf_item_spec_type *conf_item_spec = conf_item->conf_item_spec;
-
-    return conf_data_get_int_from_string(conf_item_spec->dt, conf_item->value);
+    auto conf_item = conf_instance->items[item_name];
+    return conf_data_get_int_from_string(conf_item->conf_item_spec->dt,
+                                         conf_item->value);
 }
 
 /** If the dt supports it, this function shall return the item value as a double.
     If the dt does not support it, the function will abort.
 */
-double
-conf_instance_get_item_value_double(const conf_instance_type *conf_instance,
-                                    const char *item_name) {
-    if (!hash_has_key(conf_instance->items, item_name))
+double conf_instance_get_item_value_double(
+    std::shared_ptr<conf_instance_type> conf_instance, std::string item_name) {
+    if (!conf_instance->items.count(item_name))
         util_abort("%s: Instance %s of type %s has no item %s.\n", __func__,
                    conf_instance->name, conf_instance->conf_class->class_name,
-                   item_name);
+                   item_name.c_str());
 
-    const conf_item_type *conf_item =
-        (const conf_item_type *)hash_get(conf_instance->items, item_name);
-    const conf_item_spec_type *conf_item_spec =
-        (const conf_item_spec_type *)conf_item->conf_item_spec;
-
-    return conf_data_get_double_from_string(conf_item_spec->dt,
+    auto conf_item = conf_instance->items[item_name];
+    return conf_data_get_double_from_string(conf_item->conf_item_spec->dt,
                                             conf_item->value);
 }
 
 /** If the dt supports it, this function shall return the item value as a time_t.
     If the dt does not support it, the function will abort.
 */
-time_t
-conf_instance_get_item_value_time_t(const conf_instance_type *conf_instance,
-                                    const char *item_name) {
-    if (!hash_has_key(conf_instance->items, item_name))
+time_t conf_instance_get_item_value_time_t(
+    std::shared_ptr<conf_instance_type> conf_instance, std::string item_name) {
+    if (!conf_instance->items.count(item_name))
         util_abort("%s: Instance %s of type %s has no item %s.\n", __func__,
                    conf_instance->name, conf_instance->conf_class->class_name,
-                   item_name);
+                   item_name.c_str());
 
-    const conf_item_type *conf_item =
-        (const conf_item_type *)hash_get(conf_instance->items, item_name);
-    const conf_item_spec_type *conf_item_spec = conf_item->conf_item_spec;
-
-    return conf_data_get_time_t_from_string(conf_item_spec->dt,
+    auto conf_item = conf_instance->items[item_name];
+    return conf_data_get_time_t_from_string(conf_item->conf_item_spec->dt,
                                             conf_item->value);
 }
 
-static void
-conf_item_spec_printf_help(const conf_item_spec_type *conf_item_spec) {
+static void conf_item_spec_printf_help(
+    std::shared_ptr<conf_item_spec_type> conf_item_spec) {
     assert(conf_item_spec->super_class != NULL);
     int num_restrictions = conf_item_spec->restriction->size();
 
@@ -607,7 +529,8 @@ conf_item_spec_printf_help(const conf_item_spec_type *conf_item_spec) {
     printf("\n");
 }
 
-static void conf_class_printf_help(const conf_class_type *conf_class) {
+static void
+conf_class_printf_help(std::shared_ptr<conf_class_type> conf_class) {
     /* TODO Should print info on the required sub classes and items. */
 
     if (conf_class->help != NULL) {
@@ -623,13 +546,12 @@ static void conf_class_printf_help(const conf_class_type *conf_class) {
     printf("\n");
 }
 
-static bool conf_item_validate(const conf_item_type *conf_item) {
+static bool conf_item_validate(std::shared_ptr<conf_item_type> conf_item) {
     assert(conf_item != NULL);
 
     bool ok = true;
-    const conf_item_spec_type *conf_item_spec = conf_item->conf_item_spec;
+    auto conf_item_spec = conf_item->conf_item_spec;
     int num_restrictions = conf_item_spec->restriction->size();
-    ;
 
     if (!conf_data_validate_string_as_dt_value(conf_item_spec->dt,
                                                conf_item->value)) {
@@ -673,72 +595,51 @@ static bool conf_item_validate(const conf_item_type *conf_item) {
     return ok;
 }
 
-static bool
-conf_instance_has_required_items(const conf_instance_type *conf_instance) {
+static bool conf_instance_has_required_items(
+    std::shared_ptr<conf_instance_type> conf_instance) {
     bool ok = true;
-    const conf_class_type *conf_class = conf_instance->conf_class;
+    auto conf_class = conf_instance->conf_class.get();
 
-    int num_item_specs = hash_get_size(conf_class->item_specs);
-    char **item_spec_keys = hash_alloc_keylist(conf_class->item_specs);
-
-    for (int item_spec_nr = 0; item_spec_nr < num_item_specs; item_spec_nr++) {
-        const char *item_spec_name = item_spec_keys[item_spec_nr];
-        const conf_item_spec_type *conf_item_spec =
-            (const conf_item_spec_type *)hash_get(conf_class->item_specs,
-                                                  item_spec_name);
+    for (auto &[item_spec_name, conf_item_spec] : conf_class->item_specs) {
         if (conf_item_spec->required_set) {
-            if (!hash_has_key(conf_instance->items, item_spec_name)) {
+            if (!conf_instance->items[item_spec_name]) {
                 ok = false;
                 printf("ERROR: Missing item \"%s\" in instance \"%s\" of class "
                        "\"%s\"\n",
-                       item_spec_name, conf_instance->name,
+                       item_spec_name.c_str(), conf_instance->name,
                        conf_instance->conf_class->class_name);
                 conf_item_spec_printf_help(conf_item_spec);
             }
         }
     }
-
-    util_free_stringlist(item_spec_keys, num_item_specs);
-
     return ok;
 }
 
-static bool
-conf_instance_has_valid_items(const conf_instance_type *conf_instance) {
+static bool conf_instance_has_valid_items(
+    std::shared_ptr<conf_instance_type> conf_instance) {
     bool ok = true;
 
-    int num_items = hash_get_size(conf_instance->items);
-    char **item_keys = hash_alloc_keylist(conf_instance->items);
-
-    for (int item_nr = 0; item_nr < num_items; item_nr++) {
-        const conf_item_type *conf_item = (const conf_item_type *)hash_get(
-            conf_instance->items, item_keys[item_nr]);
+    for (auto &[item_name, conf_item] : conf_instance->items) {
         if (!conf_item_validate(conf_item))
             ok = false;
     }
-
-    util_free_stringlist(item_keys, num_items);
-
     return ok;
 }
 
-static bool
-conf_instance_check_item_mutex(const conf_instance_type *conf_instance,
-                               const conf_item_mutex_type *conf_item_mutex) {
+static bool conf_instance_check_item_mutex(
+    std::shared_ptr<conf_instance_type> conf_instance,
+    std::shared_ptr<conf_item_mutex_type> conf_item_mutex) {
     std::set<std::string> items_set;
     bool ok = true;
-    int num_items_set = 0;
-    int num_items = hash_get_size(conf_item_mutex->item_spec_refs);
-    char **item_keys = hash_alloc_keylist(conf_item_mutex->item_spec_refs);
 
-    for (int item_nr = 0; item_nr < num_items; item_nr++) {
-        const char *item_key = item_keys[item_nr];
+    for (auto &[item_key, item_spec] : conf_item_mutex->item_spec_refs) {
         if (conf_instance_has_item(conf_instance, item_key)) {
             items_set.insert(item_key);
         }
     }
 
-    num_items_set = items_set.size();
+    int num_items_set = items_set.size();
+    int num_items = conf_item_mutex->item_spec_refs.size();
 
     if (conf_item_mutex->inverse) {
         /* This is an inverse mutex - all (or none) items should be set. */
@@ -754,8 +655,8 @@ conf_instance_check_item_mutex(const conf_instance_type *conf_instance,
             printf("       When using one or more of the following items, all "
                    "must be set:\n");
 
-            for (int item_nr = 0; item_nr < num_items; item_nr++)
-                printf("       %i : %s\n", item_nr, item_keys[item_nr]);
+            for (auto &[item_key, item_spec] : conf_item_mutex->item_spec_refs)
+                printf("       %s\n", item_key.c_str());
 
             printf("\n");
             printf("       However, only the following items were set:\n");
@@ -780,8 +681,8 @@ conf_instance_check_item_mutex(const conf_instance_type *conf_instance,
                    "class \"%s\".\n\n",
                    conf_instance->name, conf_instance->conf_class->class_name);
             printf("       Only one of the following items may be set:\n");
-            for (int item_nr = 0; item_nr < num_items; item_nr++)
-                printf("       %i : %s\n", item_nr, item_keys[item_nr]);
+            for (auto &[item_key, item_spec] : conf_item_mutex->item_spec_refs)
+                printf("       %s\n", item_key.c_str());
 
             printf("\n");
             printf("       However, all the following items were set:\n");
@@ -798,119 +699,74 @@ conf_instance_check_item_mutex(const conf_instance_type *conf_instance,
                "\"%s\".\n\n",
                conf_instance->name, conf_instance->conf_class->class_name);
         printf("       One of the following items MUST be set:\n");
-        for (int item_nr = 0; item_nr < num_items; item_nr++)
-            printf("       %i : %s\n", item_nr, item_keys[item_nr]);
+        for (auto &[item_key, item_spec] : conf_item_mutex->item_spec_refs)
+            printf("       %s\n", item_key.c_str());
         printf("\n");
     }
-
-    util_free_stringlist(item_keys, num_items);
     return ok;
 }
 
-static bool
-conf_instance_has_valid_mutexes(const conf_instance_type *conf_instance) {
+static bool conf_instance_has_valid_mutexes(
+    std::shared_ptr<conf_instance_type> conf_instance) {
     bool ok = true;
-    const conf_class_type *conf_class = conf_instance->conf_class;
-    const vector_type *item_mutexes = conf_class->item_mutexes;
-    int num_mutexes = vector_get_size(item_mutexes);
+    auto conf_class = conf_instance->conf_class.get();
 
-    for (int mutex_nr = 0; mutex_nr < num_mutexes; mutex_nr++) {
-        const conf_item_mutex_type *conf_item_mutex =
-            (const conf_item_mutex_type *)vector_iget(item_mutexes, mutex_nr);
-        if (!conf_instance_check_item_mutex(conf_instance, conf_item_mutex))
+    for (auto &mutex : conf_class->item_mutexes) {
+        if (!conf_instance_check_item_mutex(conf_instance, mutex))
             ok = false;
     }
 
     return ok;
 }
 
-static bool
-instance_has_sub_instance_of_type(const conf_class_type *conf_class,
-                                  int num_sub_instances,
-                                  conf_class_type **class_signatures) {
-    for (int sub_instance_nr = 0; sub_instance_nr < num_sub_instances;
-         sub_instance_nr++) {
-        if (class_signatures[sub_instance_nr] == conf_class)
+static bool instance_has_sub_instance_of_type(
+    std::shared_ptr<conf_class_type> conf_class,
+    std::vector<std::shared_ptr<conf_class_type>> &class_signatures) {
+    for (auto &class_signature : class_signatures) {
+        if (class_signature == conf_class)
             return true;
     }
     return false;
 }
 
 static bool conf_instance_has_required_sub_instances(
-    const conf_instance_type *conf_instance) {
+    std::shared_ptr<conf_instance_type> conf_instance) {
     bool ok = true;
 
-    /* This first part is just concerned with creating the function instance_has_sub_instance_of_type. */
-    int num_sub_instances = hash_get_size(conf_instance->sub_instances);
-    conf_class_type **class_signatures = (conf_class_type **)util_calloc(
-        num_sub_instances, sizeof *class_signatures);
-    {
-        char **sub_instance_keys =
-            hash_alloc_keylist(conf_instance->sub_instances);
-        for (int sub_instance_nr = 0; sub_instance_nr < num_sub_instances;
-             sub_instance_nr++) {
-            const char *sub_instance_name = sub_instance_keys[sub_instance_nr];
-            const conf_instance_type *sub_conf_instance =
-                (const conf_instance_type *)hash_get(
-                    conf_instance->sub_instances, sub_instance_name);
-            class_signatures[sub_instance_nr] =
-                (conf_class_type *)sub_conf_instance->conf_class;
-        }
-        util_free_stringlist(sub_instance_keys, num_sub_instances);
+    /* This first part is just concerned with creating the function __instance_has_sub_instance_of_type. */
+    std::vector<std::shared_ptr<conf_class_type>> class_signatures;
+    for (auto &[sub_instance_name, sub_conf_instance] :
+         conf_instance->sub_instances) {
+        class_signatures.push_back(sub_conf_instance->conf_class);
     }
 
     /* OK, we now check that the sub classes that have require_instance true have at least one instance. */
-    {
-        const conf_class_type *conf_class = conf_instance->conf_class;
-        int num_sub_classes = hash_get_size(conf_class->sub_classes);
-        char **sub_class_keys = hash_alloc_keylist(conf_class->sub_classes);
-
-        for (int sub_class_nr = 0; sub_class_nr < num_sub_classes;
-             sub_class_nr++) {
-            const char *sub_class_name = sub_class_keys[sub_class_nr];
-            const conf_class_type *sub_conf_class =
-                (const conf_class_type *)hash_get(conf_class->sub_classes,
-                                                  sub_class_name);
-            if (sub_conf_class->require_instance) {
-                if (!instance_has_sub_instance_of_type(
-                        sub_conf_class, num_sub_instances, class_signatures)) {
-                    printf("ERROR: Missing required instance of sub class "
-                           "\"%s\" in instance \"%s\" of class \"%s\".\n",
-                           sub_conf_class->class_name, conf_instance->name,
-                           conf_instance->conf_class->class_name);
-                    conf_class_printf_help(sub_conf_class);
-                    ok = false;
-                }
+    auto conf_class = conf_instance->conf_class;
+    for (auto &[sub_class_name, sub_conf_class] : conf_class->sub_classes) {
+        if (sub_conf_class->require_instance) {
+            if (!instance_has_sub_instance_of_type(sub_conf_class,
+                                                   class_signatures)) {
+                printf("ERROR: Missing required instance of sub class "
+                       "\"%s\" in instance \"%s\" of class \"%s\".\n",
+                       sub_conf_class->class_name, conf_instance->name,
+                       conf_instance->conf_class->class_name);
+                conf_class_printf_help(sub_conf_class);
+                ok = false;
             }
         }
-
-        util_free_stringlist(sub_class_keys, num_sub_classes);
     }
-
-    free(class_signatures);
-
     return ok;
 }
 
-static bool
-conf_instance_validate_sub_instances(const conf_instance_type *conf_instance) {
+static bool conf_instance_validate_sub_instances(
+    std::shared_ptr<conf_instance_type> conf_instance) {
     bool ok = true;
 
-    int num_sub_instances = hash_get_size(conf_instance->sub_instances);
-    char **sub_instance_keys = hash_alloc_keylist(conf_instance->sub_instances);
-
-    for (int sub_instance_nr = 0; sub_instance_nr < num_sub_instances;
-         sub_instance_nr++) {
-        const char *sub_instances_key = sub_instance_keys[sub_instance_nr];
-        const conf_instance_type *sub_conf_instance =
-            (const conf_instance_type *)hash_get(conf_instance->sub_instances,
-                                                 sub_instances_key);
+    for (auto &[sub_instances_key, sub_conf_instance] :
+         conf_instance->sub_instances) {
         if (!conf_instance_validate(sub_conf_instance))
             ok = false;
     }
-
-    util_free_stringlist(sub_instance_keys, num_sub_instances);
-
     return ok;
 }
 
@@ -930,42 +786,20 @@ conf_instance_validate_sub_instances(const conf_instance_type *conf_instance) {
  *
  */
 static std::set<std::string>
-get_path_errors(const conf_instance_type *conf_instance) {
+get_path_errors(std::shared_ptr<conf_instance_type> conf_instance) {
     std::set<std::string> path_errors;
-    {
-        int num_items = hash_get_size(conf_instance->items);
-        char **item_keys = hash_alloc_keylist(conf_instance->items);
-
-        for (int item_nr = 0; item_nr < num_items; item_nr++) {
-            const conf_item_type *conf_item = (const conf_item_type *)hash_get(
-                conf_instance->items, item_keys[item_nr]);
-            const conf_item_spec_type *conf_item_spec =
-                conf_item->conf_item_spec;
-            if (conf_item_spec->dt == DT_FILE) {
-                if (!fs::exists(conf_item->value))
-                    path_errors.insert(std::string(conf_item_spec->name) +
-                                       "=>" + std::string(conf_item->value));
-            }
+    for (auto &[conf_item_name, conf_item] : conf_instance->items) {
+        auto conf_item_spec = conf_item->conf_item_spec;
+        if (conf_item_spec->dt == DT_FILE) {
+            if (!fs::exists(conf_item->value))
+                path_errors.insert(std::string(conf_item_spec->name) + "=>" +
+                                   std::string(conf_item->value));
         }
-        util_free_stringlist(item_keys, num_items);
     }
-
-    {
-        int num_sub_instances = hash_get_size(conf_instance->sub_instances);
-        char **sub_instance_keys =
-            hash_alloc_keylist(conf_instance->sub_instances);
-
-        for (int sub_instance_nr = 0; sub_instance_nr < num_sub_instances;
-             sub_instance_nr++) {
-            const char *sub_instances_key = sub_instance_keys[sub_instance_nr];
-            const conf_instance_type *sub_conf_instance =
-                (const conf_instance_type *)hash_get(
-                    conf_instance->sub_instances, sub_instances_key);
-            std::set<std::string> sub = get_path_errors(sub_conf_instance);
-            path_errors.insert(sub.begin(), sub.end());
-        }
-
-        util_free_stringlist(sub_instance_keys, num_sub_instances);
+    for (auto &[sub_instance_key, sub_conf_instance] :
+         conf_instance->sub_instances) {
+        std::set<std::string> sub = get_path_errors(sub_conf_instance);
+        path_errors.insert(sub.begin(), sub.end());
     }
 
     return path_errors;
@@ -980,7 +814,8 @@ get_path_errors(const conf_instance_type *conf_instance) {
  *
  * Note newlines - this string is intended for printing.
  */
-char *conf_instance_get_path_error(const conf_instance_type *conf_instance) {
+char *conf_instance_get_path_error(
+    std::shared_ptr<conf_instance_type> conf_instance) {
     std::set<std::string> errors = get_path_errors(conf_instance);
 
     if (errors.size() == 0)
@@ -994,7 +829,7 @@ char *conf_instance_get_path_error(const conf_instance_type *conf_instance) {
     return strdup(retval.data());
 }
 
-bool conf_instance_validate(const conf_instance_type *conf_instance) {
+bool conf_instance_validate(std::shared_ptr<conf_instance_type> conf_instance) {
     return conf_instance && conf_instance_has_required_items(conf_instance) &&
            conf_instance_has_valid_mutexes(conf_instance) &&
            conf_instance_has_valid_items(conf_instance) &&
@@ -1002,9 +837,9 @@ bool conf_instance_validate(const conf_instance_type *conf_instance) {
            conf_instance_validate_sub_instances(conf_instance);
 }
 
-static void conf_instance_parser_add_item(conf_instance_type *conf_instance,
-                                          const char *item_name,
-                                          char **buffer_pos) {
+static void
+conf_instance_parser_add_item(std::shared_ptr<conf_instance_type> conf_instance,
+                              const char *item_name, char **buffer_pos) {
     char *token_assign;
     char *token_value;
     char *token_end;
@@ -1082,9 +917,9 @@ static void conf_instance_parser_skip_unknown_class(char **buffer_pos) {
 }
 
 static void conf_instance_add_data_from_token_buffer(
-    conf_instance_type *conf_instance, char **buffer_pos, bool allow_inclusion,
-    bool is_root, const char *current_file_name) {
-    const conf_class_type *conf_class = conf_instance->conf_class;
+    std::shared_ptr<conf_instance_type> conf_instance, char **buffer_pos,
+    bool allow_inclusion, bool is_root, const char *current_file_name) {
+    std::shared_ptr<conf_class_type> conf_class = conf_instance->conf_class;
     char *token = conf_util_alloc_next_token(buffer_pos);
 
     bool scope_start_set = false;
@@ -1097,14 +932,14 @@ static void conf_instance_add_data_from_token_buffer(
         else if (conf_class_has_sub_class(conf_class, token) &&
                  (scope_start_set || is_root)) {
             char *name = conf_util_alloc_next_token(buffer_pos);
-            const conf_class_type *sub_conf_class =
+            auto sub_conf_class =
                 conf_class_get_sub_class_ref(conf_class, token);
             if (name != NULL) {
-                conf_instance_type *sub_conf_instance =
+                auto sub_conf_instance =
                     conf_instance_alloc_default(sub_conf_class, name);
                 free(name);
-                conf_instance_insert_owned_sub_instance(conf_instance,
-                                                        sub_conf_instance);
+                conf_instance_insert_sub_instance(conf_instance,
+                                                  sub_conf_instance);
                 conf_instance_add_data_from_token_buffer(
                     sub_conf_instance, buffer_pos, allow_inclusion, false,
                     current_file_name);
@@ -1215,11 +1050,10 @@ static void conf_instance_add_data_from_token_buffer(
     }
 }
 
-conf_instance_type *
-conf_instance_alloc_from_file(const conf_class_type *conf_class,
+std::shared_ptr<conf_instance_type>
+conf_instance_alloc_from_file(std::shared_ptr<conf_class_type> conf_class,
                               const char *name, const char *file_name) {
-    conf_instance_type *conf_instance =
-        conf_instance_alloc_default(conf_class, name);
+    auto conf_instance = conf_instance_alloc_default(conf_class, name);
     path_stack_type *path_stack = path_stack_alloc();
     char *file_arg = util_split_alloc_filename(file_name);
     path_stack_push_cwd(path_stack);
