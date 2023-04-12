@@ -3,7 +3,7 @@ import logging
 import os
 import os.path
 import warnings
-from typing import Any, Dict, List, Mapping, Optional, Union
+from typing import Any, Dict, List, Mapping, Optional, Tuple, Union
 
 from lark import Discard, Lark, Token, Transformer, Tree, UnexpectedCharacters
 
@@ -98,13 +98,13 @@ class ArgumentToStringTransformer(Transformer):
     """Flattens all argument types to just tokens or
     relevant python datastructures"""
 
-    def arg(self, rule: List) -> Token:
+    def arg(self, rule: List[FileContextToken]) -> FileContextToken:
         return rule[0]
 
-    def kw_val(self, rule: List):
+    def kw_val(self, rule: List[FileContextToken]) -> FileContextToken:
         return rule[0]
 
-    def kw_list(self, kw_list):
+    def kw_list(self, kw_list) -> List[Tuple[FileContextToken, FileContextToken]]:
         args = []
         for kw_pair in kw_list:
             if kw_pair is not None:
@@ -117,7 +117,7 @@ class FileContextTransformer(Transformer):
     """Adds filename to each token,
     to ensure we have enough context for error messages"""
 
-    def __init__(self, filename):
+    def __init__(self, filename: str) -> "FileContextTransformer":
         self.filename = filename
         super().__init__(visit_tokens=True)
 
@@ -255,6 +255,7 @@ def _handle_includes(
 
     config_dir = os.path.dirname(config_file)
     to_include = []
+
     for i, node in enumerate(tree.children):
         kw, *args = node
         if kw == "DEFINE":
@@ -311,11 +312,11 @@ def _parse_file(
     except FileNotFoundError:
         if error_context_string == "INCLUDE":
             raise ConfigValidationError(
-                f"{error_context_string} file: {file} not found"
+                f"{error_context_string} file: {str(file)} not found"
             )
-        raise IOError(f"{error_context_string} file: {file} not found")
+        raise IOError(f"{error_context_string} file: {str(file)} not found")
     except UnexpectedCharacters as e:
-        raise ConfigValidationError(str(e), config_file=file) from e
+        raise ConfigValidationError(str(e), config_file=str(file)) from e
     except UnicodeDecodeError as e:
         error_words = str(e).split(" ")
         hex_str = error_words[error_words.index("byte") + 1]
@@ -326,7 +327,7 @@ def _parse_file(
         raise ConfigValidationError(
             f"Unsupported non UTF-8 character {unknown_char!r} "
             f"found in file: {file!r}",
-            config_file=file,
+            config_file=str(file),
         )
 
 

@@ -1,7 +1,7 @@
 import os
 import shutil
 from enum import Enum
-from typing import Any, List, Mapping, Optional, Union, Dict
+from typing import Any, Dict, List, Mapping, Optional, Union
 
 from pydantic import BaseModel
 
@@ -229,8 +229,8 @@ class SchemaItem(BaseModel):
         if val_type == SchemaType.CONFIG_EXECUTABLE:
             path = str(token)
             if not os.path.isabs(token) and not os.path.exists(token):
-                path_from_which: Optional[str] = shutil.which(token)
-                if path_from_which is None:
+                path: Optional[str] = shutil.which(token)
+                if path is None:
                     raise ConfigValidationError(
                         f"Could not find executable {token.value!r}",
                         config_file=token.filename,
