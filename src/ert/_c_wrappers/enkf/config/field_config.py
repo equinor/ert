@@ -4,7 +4,7 @@ import math
 import os
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Optional
 
 import cwrap
 import numpy as np
@@ -74,36 +74,20 @@ class Field(ParameterConfig):
         ensemble.export_field(self.name, real_nr, file_out)
 
 
-VALID_TRANSFORMATIONS = [
-    "LN",
-    "LOG",
-    "LN0",
-    "LOG10",
-    "EXP",
-    "EXP0",
-    "POW10",
-    "TRUNC_POW10",
-]
+# pylint: disable=unnecessary-lambda
+_TRANSFORM_FUNCTIONS = {
+    "LN": lambda x: math.log(x, math.e),
+    "LOG": lambda x: math.log(x, math.e),
+    "LN0": lambda x: math.log(x + 0.000001, math.e),
+    "LOG10": lambda x: math.log(x, 10),
+    "EXP": lambda x: math.exp(x),
+    "EXP0": lambda x: math.exp(x) - 0.000001,
+    "POW10": lambda x: math.log(x, math.e),
+    "TRUNC_POW10": lambda x: math.pow(max(x, 0.001), 10),
+}
+
+TRANSFORM_FUNCTIONS = {k: np.vectorize(v) for k, v in _TRANSFORM_FUNCTIONS.items()}
 
 
-def field_transform(data: npt.ArrayLike, transform_name: VALID_TRANSFORMATIONS) -> Any:
-    def f(x: float) -> float:  # pylint: disable=too-many-return-statements
-        if transform_name in ("LN", "LOG"):
-            return math.log(x, math.e)
-        if transform_name == "LN0":
-            return math.log(x + 0.000001, math.e)
-        if transform_name == "LOG10":
-            return math.log(x, 10)
-        if transform_name == "EXP":
-            return math.exp(x)
-        if transform_name == "EXP0":
-            return math.exp(x) - 0.000001
-        if transform_name == "POW10":
-            return math.pow(x, 10)
-        if transform_name == "TRUNC_POW10":
-            return math.pow(max(x, 0.001), 10)
-        return x
-
-    vfunc = np.vectorize(f)
-
-    return vfunc(data)
+def field_transform(data: npt.ArrayLike, transform_name: str) -> npt.ArrayLike:
+    return TRANSFORM_FUNCTIONS[transform_name](data)
