@@ -17,7 +17,7 @@ from ert._c_wrappers import ResPrototype
 from ert._c_wrappers.config.rangestring import rangestring_to_list
 from ert._c_wrappers.enkf import GenKwConfig
 from ert._c_wrappers.enkf.config import EnkfConfigNode
-from ert._c_wrappers.enkf.config.field_config import VALID_TRANSFORMATIONS, Field
+from ert._c_wrappers.enkf.config.field_config import TRANSFORM_FUNCTIONS, Field
 from ert._c_wrappers.enkf.config.parameter_config import ParameterConfig
 from ert._c_wrappers.enkf.config.surface_config import SurfaceConfig
 from ert._c_wrappers.enkf.config_keys import ConfigKeys
@@ -422,11 +422,11 @@ class EnsembleConfig(BaseCClass):
                 f"this has no effect and can be removed",
                 category=ConfigWarning,
             )
-        if init_transform and init_transform not in VALID_TRANSFORMATIONS:
+        if init_transform and init_transform not in TRANSFORM_FUNCTIONS:
             raise ValueError(
                 f"FIELD INIT_TRANSFORM:{init_transform} is an invalid function"
             )
-        if output_transform and output_transform not in VALID_TRANSFORMATIONS:
+        if output_transform and output_transform not in TRANSFORM_FUNCTIONS:
             raise ValueError(
                 f"FIELD OUTPUT_TRANSFORM:{output_transform} is an invalid function"
             )
