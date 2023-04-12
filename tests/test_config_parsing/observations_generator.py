@@ -1,5 +1,5 @@
 import datetime
-from abc import ABC, abstractproperty
+from abc import ABC, abstractmethod
 from dataclasses import dataclass, field, fields
 from enum import Enum, auto
 from typing import List, Optional
@@ -20,7 +20,8 @@ class Observation(ABC):
     name: str
     error: PositiveFloat
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def class_name(self):
         pass
 

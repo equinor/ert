@@ -43,6 +43,7 @@ CHECKS = [
     "consider-using-set-comprehension",
     "consider-using-with",
     "dangerous-default-value",
+    "deprecated-decorator",
     "deprecated-method",
     "duplicate-key",
     "empty-docstring",
