@@ -91,7 +91,7 @@ class EnsembleSmootherPanel(SimulationConfigPanel):
     def getSimulationArguments(self):
         arguments = Arguments(
             mode="ensemble_smoother",
-            current_case="gui",
+            current_case=f"{self.notifier.current_case_name}_prior",
             target_case=self._target_case_model.getValue(),
             realizations=self._active_realizations_field.text(),
         )
