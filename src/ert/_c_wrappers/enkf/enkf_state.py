@@ -104,7 +104,7 @@ def _internalize_SUMMARY_DATA(ens_config: "EnsembleConfig", run_arg: "RunArg"):
     return (LoadStatus.LOAD_SUCCESSFUL, "")
 
 
-def _internalize_results(
+def _read_responses(
     ens_config: "EnsembleConfig", run_arg: "RunArg"
 ) -> Tuple[LoadStatus, str]:
     status = _internalize_SUMMARY_DATA(ens_config, run_arg)
@@ -118,4 +118,4 @@ def _internalize_results(
     return (LoadStatus.LOAD_SUCCESSFUL, "Results loaded successfully.")
 
 
-__all__ = ["_internalize_results"]
+__all__ = ["_read_responses"]
