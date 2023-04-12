@@ -39,11 +39,11 @@ def forward_model_ok(
         if result[0] == LoadStatus.LOAD_SUCCESSFUL:
             result = _read_responses(ens_conf, run_arg)
 
-    except Exception:
+    except Exception as err:
         logging.exception("Unhandled exception in callback for forward_model")
         result = (
             LoadStatus.LOAD_FAILURE,
-            "Unhandled exception in callback for forward_model",
+            f"Unhandled exception in callback for forward_model {err}",
         )
     run_arg.ensemble_storage.state_map[run_arg.iens] = (
         RealizationStateEnum.STATE_HAS_DATA
