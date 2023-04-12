@@ -11,7 +11,6 @@ from cwrap import BaseCClass
 from ecl.ecl_util import EclFileEnum, get_file_type
 from ecl.grid import EclGrid
 from ecl.summary import EclSum
-from ecl.util.util import StringList
 
 from ert import _clib
 from ert._c_wrappers import ResPrototype
@@ -24,6 +23,9 @@ from ert._c_wrappers.enkf.config.surface_config import SurfaceConfig
 from ert._c_wrappers.enkf.config_keys import ConfigKeys
 from ert._c_wrappers.enkf.enums import EnkfVarType, ErtImplType, GenDataFileType
 from ert.parsing import ConfigValidationError, ConfigWarning
+
+if TYPE_CHECKING:
+    from ecl.util.util import StringList
 
 logger = logging.getLogger(__name__)
 
