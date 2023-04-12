@@ -2,16 +2,9 @@ import logging
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Tuple
 
-import cwrap
-import numpy as np
-import xtgeo
-from ecl.eclfile import EclKW
-from ecl.grid import EclGrid
-from numpy import ma
-
-from ert._c_wrappers.enkf.enkf_main import field_transform
-from ert._c_wrappers.enkf.enkf_state import _internalize_results
-from ert._c_wrappers.enkf.enums import ErtImplType, RealizationStateEnum
+from ert._c_wrappers.enkf.config.parameter_config import ParameterConfig
+from ert._c_wrappers.enkf.enkf_state import _read_responses
+from ert._c_wrappers.enkf.enums import RealizationStateEnum
 from ert._c_wrappers.enkf.model_callbacks import LoadStatus
 
 if TYPE_CHECKING:
@@ -44,7 +37,7 @@ def forward_model_ok(
         if run_arg.itr == 0:
             result = _read_parameters(run_arg, ens_conf.parameter_configuration)
         if result[0] == LoadStatus.LOAD_SUCCESSFUL:
-            result = _internalize_results(ens_conf, run_arg)
+            result = _read_responses(ens_conf, run_arg)
 
     except Exception:
         logging.exception("Unhandled exception in callback for forward_model")
