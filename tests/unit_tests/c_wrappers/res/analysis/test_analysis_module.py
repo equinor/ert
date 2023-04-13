@@ -9,7 +9,7 @@ from ert._c_wrappers.analysis.analysis_module import (
     DEFAULT_IES_MIN_STEPLENGTH,
     get_mode_variables,
 )
-from ert._c_wrappers.config.config_parser import ConfigValidationError
+from ert.parsing import ConfigValidationError
 
 
 def test_analysis_module_default_values():

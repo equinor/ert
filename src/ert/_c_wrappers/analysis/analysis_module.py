@@ -2,7 +2,7 @@ import logging
 from enum import Enum
 from typing import TYPE_CHECKING, Dict, List, Type, TypedDict, Union
 
-from ert._c_wrappers.config.config_parser import ConfigValidationError
+from ert.parsing import ConfigValidationError
 
 logger = logging.getLogger(__name__)
 

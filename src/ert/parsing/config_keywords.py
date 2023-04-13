@@ -1,12 +1,12 @@
 import os
 import shutil
 from enum import Enum
-from typing import Any, List, Mapping, Optional, Union
+from typing import Any, Dict, List, Mapping, Optional, Union
 
 from pydantic import BaseModel
 
-from ert._c_wrappers.config import ConfigValidationError
-from ert._c_wrappers.enkf.lark_parser_common import FileContextToken, Instruction
+from .config_errors import ConfigValidationError
+from .lark_parser_types import FileContextToken, Instruction
 
 # These keys are used as options in KEY:VALUE statements
 BASE_SURFACE_KEY = "BASE_SURFACE"
@@ -167,7 +167,7 @@ class SchemaItem(BaseModel):
     # Allowed values for specific arguments, if no entry, all values allowed
     indexed_selection_set: Mapping[int, List[str]] = {}
 
-    def check_valid(self, val: "FileContextToken", index: int):
+    def check_valid(self, val: "FileContextToken", index: int) -> None:
         if (
             index in self.indexed_selection_set
             and val not in self.indexed_selection_set[index]
@@ -181,6 +181,7 @@ class SchemaItem(BaseModel):
     def convert(
         self, token: FileContextToken, index: int
     ) -> Optional[Union[str, int, float]]:
+        # pylint: disable=too-many-branches, too-many-return-statements
         self.check_valid(token, index)
         if not len(self.type_map) > index:
             return token
@@ -281,7 +282,7 @@ def check_required(
     schema: Mapping[str, SchemaItem],
     config_dict: Mapping[str, Instruction],
     filename: str,
-):
+) -> None:
     for constraints in schema.values():
         if constraints.required_set and constraints.kw not in config_dict:
             raise ConfigValidationError(
@@ -289,31 +290,31 @@ def check_required(
             )
 
 
-def float_keyword(keyword):
+def float_keyword(keyword: str) -> SchemaItem:
     return SchemaItem(kw=keyword, type_map=[SchemaType.CONFIG_FLOAT])
 
 
-def int_keyword(keyword):
+def int_keyword(keyword: str) -> SchemaItem:
     return SchemaItem(kw=keyword, type_map=[SchemaType.CONFIG_INT])
 
 
-def string_keyword(keyword):
+def string_keyword(keyword: str) -> SchemaItem:
     return SchemaItem(kw=keyword, type_map=[SchemaType.CONFIG_STRING])
 
 
-def path_keyword(keyword):
+def path_keyword(keyword: str) -> SchemaItem:
     return SchemaItem(kw=keyword, type_map=[SchemaType.CONFIG_PATH])
 
 
-def existing_path_keyword(keyword):
+def existing_path_keyword(keyword: str) -> SchemaItem:
     return SchemaItem(kw=keyword, type_map=[SchemaType.CONFIG_EXISTING_PATH])
 
 
-def single_arg_keyword(keyword):
+def single_arg_keyword(keyword: str) -> SchemaItem:
     return SchemaItem(kw=keyword, argc_max=1, argc_min=1)
 
 
-def num_realizations_keyword():
+def num_realizations_keyword() -> SchemaItem:
     return SchemaItem(
         kw=NUM_REALIZATIONS_KEY,
         required_set=True,
@@ -323,7 +324,7 @@ def num_realizations_keyword():
     )
 
 
-def run_template_keyword():
+def run_template_keyword() -> SchemaItem:
     return SchemaItem(
         kw=RUN_TEMPLATE_KEY,
         argc_min=2,
@@ -333,7 +334,7 @@ def run_template_keyword():
     )
 
 
-def forward_model_keyword():
+def forward_model_keyword() -> SchemaItem:
     return SchemaItem(
         kw=FORWARD_MODEL_KEY,
         argc_min=0,
@@ -343,7 +344,7 @@ def forward_model_keyword():
     )
 
 
-def simulation_job_keyword():
+def simulation_job_keyword() -> SchemaItem:
     return SchemaItem(
         kw=SIMULATION_JOB_KEY,
         argc_min=1,
@@ -352,7 +353,7 @@ def simulation_job_keyword():
     )
 
 
-def data_kw_keyword():
+def data_kw_keyword() -> SchemaItem:
     return SchemaItem(
         kw=DATA_KW_KEY,
         required_set=False,
@@ -363,7 +364,7 @@ def data_kw_keyword():
     )
 
 
-def define_keyword():
+def define_keyword() -> SchemaItem:
     return SchemaItem(
         kw=DEFINE_KEY,
         required_set=False,
@@ -375,7 +376,7 @@ def define_keyword():
     )
 
 
-def history_source_keyword():
+def history_source_keyword() -> SchemaItem:
     return SchemaItem(
         kw=HISTORY_SOURCE_KEY,
         argc_max=1,
@@ -388,7 +389,7 @@ def history_source_keyword():
     )
 
 
-def stop_long_running_keyword():
+def stop_long_running_keyword() -> SchemaItem:
     return SchemaItem(
         kw=STOP_LONG_RUNNING_KEY,
         type_map=[SchemaType.CONFIG_BOOL],
@@ -396,17 +397,17 @@ def stop_long_running_keyword():
     )
 
 
-def analysis_copy_keyword():
+def analysis_copy_keyword() -> SchemaItem:
     return SchemaItem(
         kw=ANALYSIS_COPY_KEY, argc_min=2, argc_max=2, multi_occurrence=True
     )
 
 
-def update_setting_keyword():
+def update_setting_keyword() -> SchemaItem:
     return SchemaItem(kw=UPDATE_SETTING_KEY, argc_min=2, argc_max=2)
 
 
-def analysis_set_var_keyword():
+def analysis_set_var_keyword() -> SchemaItem:
     return SchemaItem(
         kw=ANALYSIS_SET_VAR_KEY,
         argc_min=3,
@@ -415,7 +416,7 @@ def analysis_set_var_keyword():
     )
 
 
-def hook_workflow_keyword():
+def hook_workflow_keyword() -> SchemaItem:
     return SchemaItem(
         kw=HOOK_WORKFLOW_KEY,
         argc_min=2,
@@ -434,7 +435,7 @@ def hook_workflow_keyword():
     )
 
 
-def set_env_keyword():
+def set_env_keyword() -> SchemaItem:
     # You can set environment variables which will be applied to the run-time
     # environment. Can unfortunately not use constructions like
     # PATH=$PATH:/some/new/path, use the UPDATE_PATH function instead.
@@ -447,7 +448,7 @@ def set_env_keyword():
     )
 
 
-def update_path_keyword():
+def update_path_keyword() -> SchemaItem:
     # UPDATE_PATH   LD_LIBRARY_PATH   /path/to/some/funky/lib
     # Will prepend "/path/to/some/funky/lib" at the front of LD_LIBRARY_PATH.
     return SchemaItem(
@@ -459,7 +460,7 @@ def update_path_keyword():
     )
 
 
-def install_job_keyword():
+def install_job_keyword() -> SchemaItem:
     return SchemaItem(
         kw=INSTALL_JOB_KEY,
         argc_min=2,
@@ -469,7 +470,7 @@ def install_job_keyword():
     )
 
 
-def load_workflow_keyword():
+def load_workflow_keyword() -> SchemaItem:
     return SchemaItem(
         kw=LOAD_WORKFLOW_KEY,
         argc_min=1,
@@ -479,7 +480,7 @@ def load_workflow_keyword():
     )
 
 
-def load_workflow_job_keyword():
+def load_workflow_job_keyword() -> SchemaItem:
     return SchemaItem(
         kw=LOAD_WORKFLOW_JOB_KEY,
         argc_min=1,
@@ -489,13 +490,13 @@ def load_workflow_job_keyword():
     )
 
 
-def queue_system_keyword(required):
+def queue_system_keyword(required: bool) -> SchemaItem:
     return SchemaItem(
         kw=QUEUE_SYSTEM_KEY, required_set=required, argc_min=1, argc_max=1
     )
 
 
-def queue_option_keyword():
+def queue_option_keyword() -> SchemaItem:
     return SchemaItem(
         kw=QUEUE_OPTION_KEY,
         argc_min=2,
@@ -506,7 +507,7 @@ def queue_option_keyword():
     )
 
 
-def job_script_keyword():
+def job_script_keyword() -> SchemaItem:
     return SchemaItem(
         kw=JOB_SCRIPT_KEY,
         argc_max=1,
@@ -515,7 +516,7 @@ def job_script_keyword():
     )
 
 
-def gen_kw_keyword():
+def gen_kw_keyword() -> SchemaItem:
     return SchemaItem(
         kw=GEN_KW_KEY,
         argc_min=4,
@@ -530,7 +531,7 @@ def gen_kw_keyword():
     )
 
 
-def schedule_prediction_file_keyword():
+def schedule_prediction_file_keyword() -> SchemaItem:
     return SchemaItem(
         kw=SCHEDULE_PREDICTION_FILE_KEY,
         required_set=False,
@@ -542,7 +543,7 @@ def schedule_prediction_file_keyword():
     )
 
 
-def summary_keyword():
+def summary_keyword() -> SchemaItem:
     # can have several summary keys on each line.
     return SchemaItem(
         kw=SUMMARY_KEY,
@@ -553,7 +554,7 @@ def summary_keyword():
     )
 
 
-def surface_keyword():
+def surface_keyword() -> SchemaItem:
     return SchemaItem(
         kw=SURFACE_KEY,
         required_set=False,
@@ -563,7 +564,7 @@ def surface_keyword():
     )
 
 
-def field_keyword():
+def field_keyword() -> SchemaItem:
     # the way config info is entered for fields is unfortunate because
     # it is difficult/impossible to let the config system handle run
     # time validation of the input.
@@ -577,7 +578,7 @@ def field_keyword():
     )
 
 
-def gen_data_keyword():
+def gen_data_keyword() -> SchemaItem:
     return SchemaItem(
         kw=GEN_DATA_KEY,
         argc_min=1,
@@ -586,7 +587,7 @@ def gen_data_keyword():
     )
 
 
-def workflow_job_directory_keyword():
+def workflow_job_directory_keyword() -> SchemaItem:
     return SchemaItem(
         kw=WORKFLOW_JOB_DIRECTORY_KEY,
         type_map=[SchemaType.CONFIG_PATH],
@@ -594,7 +595,7 @@ def workflow_job_directory_keyword():
     )
 
 
-def install_job_directory_keyword():
+def install_job_directory_keyword() -> SchemaItem:
     return SchemaItem(
         kw=INSTALL_JOB_DIRECTORY_KEY,
         type_map=[SchemaType.CONFIG_PATH],
@@ -602,7 +603,7 @@ def install_job_directory_keyword():
     )
 
 
-def init_site_config():
+def init_site_config() -> Dict[str, SchemaItem]:
     schema = {}
     for item in [
         int_keyword(MAX_SUBMIT_KEY),
@@ -626,7 +627,7 @@ def init_site_config():
     return schema
 
 
-def init_user_config():
+def init_user_config() -> Dict[str, SchemaItem]:
     schema = {}
     for item in [
         workflow_job_directory_keyword(),
