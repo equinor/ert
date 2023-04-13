@@ -162,9 +162,6 @@ void conf_class_free(conf_class_type *conf_class);
 
 void conf_class_free__(void *conf_class);
 
-conf_instance_type *
-conf_instance_copyc(const conf_instance_type *conf_instance);
-
 void conf_instance_free(conf_instance_type *conf_instance);
 
 void conf_instance_free__(void *conf_instance);
@@ -178,8 +175,6 @@ void conf_item_spec_free__(void *conf_item_spec);
 
 conf_item_type *conf_item_alloc(const conf_item_spec_type *conf_item_spec,
                                 const char *value);
-
-conf_item_type *conf_item_copyc(const conf_item_type *conf_item);
 
 void conf_item_free(conf_item_type *conf_item);
 

@@ -86,60 +86,6 @@ conf_instance_alloc_default(const conf_class_type *conf_class,
     return conf_instance;
 }
 
-static void
-conf_instance_copy_items(conf_instance_type *conf_instance_target,
-                         const conf_instance_type *conf_instance_source) {
-    int num_items = hash_get_size(conf_instance_source->items);
-    char **item_keys = hash_alloc_keylist(conf_instance_source->items);
-
-    for (int item_nr = 0; item_nr < num_items; item_nr++) {
-        const char *item_name = item_keys[item_nr];
-        const conf_item_type *conf_item = (const conf_item_type *)hash_get(
-            conf_instance_source->items, item_name);
-        conf_item_type *conf_item_copy = conf_item_copyc(conf_item);
-        conf_instance_insert_owned_item(conf_instance_target, conf_item_copy);
-    }
-
-    util_free_stringlist(item_keys, num_items);
-}
-
-static void conf_instance_copy_sub_instances(
-    conf_instance_type *conf_instance_target,
-    const conf_instance_type *conf_instance_source) {
-    int num_sub_instances = hash_get_size(conf_instance_source->sub_instances);
-    char **sub_instance_keys =
-        hash_alloc_keylist(conf_instance_source->sub_instances);
-
-    for (int sub_nr = 0; sub_nr < num_sub_instances; sub_nr++) {
-        const char *sub_name = sub_instance_keys[sub_nr];
-        const conf_instance_type *sub_conf_instance =
-            (const conf_instance_type *)hash_get(
-                conf_instance_source->sub_instances, sub_name);
-        conf_instance_type *sub_conf_instance_copy =
-            conf_instance_copyc(sub_conf_instance);
-        conf_instance_insert_owned_sub_instance(conf_instance_target,
-                                                sub_conf_instance_copy);
-    }
-
-    util_free_stringlist(sub_instance_keys, num_sub_instances);
-}
-
-conf_instance_type *
-conf_instance_copyc(const conf_instance_type *conf_instance) {
-    conf_instance_type *conf_instance_copy =
-        (conf_instance_type *)util_malloc(sizeof *conf_instance_copy);
-
-    conf_instance_copy->conf_class = conf_instance->conf_class;
-    conf_instance_copy->name = util_alloc_string_copy(conf_instance->name);
-    conf_instance_copy->sub_instances = hash_alloc();
-    conf_instance_copy->items = hash_alloc();
-
-    conf_instance_copy_items(conf_instance_copy, conf_instance);
-    conf_instance_copy_sub_instances(conf_instance_copy, conf_instance);
-
-    return conf_instance_copy;
-}
-
 void conf_instance_free(conf_instance_type *conf_instance) {
     free(conf_instance->name);
     hash_free(conf_instance->sub_instances);
@@ -197,10 +143,6 @@ conf_item_type *conf_item_alloc(const conf_item_spec_type *conf_item_spec,
         conf_item->value = util_alloc_string_copy(value);
 
     return conf_item;
-}
-
-conf_item_type *conf_item_copyc(const conf_item_type *conf_item) {
-    return conf_item_alloc(conf_item->conf_item_spec, conf_item->value);
 }
 
 void conf_item_free(conf_item_type *conf_item) {
