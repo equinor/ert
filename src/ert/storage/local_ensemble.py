@@ -558,7 +558,6 @@ class LocalEnsembleAccessor(LocalEnsembleReader):
         output_path = self.mount_point / f"realization-{realization}"
         Path.mkdir(output_path, exist_ok=True)
         surf = self.experiment.get_surface(key)
-        surf.set_values1d(data, order="F")
         surf.to_file(output_path / f"{key}.irap", fformat="irap_ascii")
         self.update_realization_state(
             realization,
