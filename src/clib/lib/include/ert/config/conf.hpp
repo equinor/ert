@@ -91,11 +91,11 @@
 
 #include <ert/config/conf_data.hpp>
 
-typedef struct conf_class_struct conf_class_type;
-typedef struct conf_instance_struct conf_instance_type;
-typedef struct conf_item_spec_struct conf_item_spec_type;
-typedef struct conf_item_struct conf_item_type;
-typedef struct conf_item_mutex_struct conf_item_mutex_type;
+using conf_class_type = struct conf_class_struct;
+using conf_instance_type = struct conf_instance_struct;
+using conf_item_spec_type = struct conf_item_spec_struct;
+using conf_item_type = struct conf_item_struct;
+using conf_item_mutex_type = struct conf_item_mutex_struct;
 
 struct conf_class_struct {
     /** Can be NULL */
