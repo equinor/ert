@@ -8,7 +8,7 @@ from typing import Any, Dict, List, Mapping, Optional, Tuple, Union
 
 from lark import Discard, Lark, Token, Transformer, Tree, UnexpectedCharacters
 
-from . import ConfigValidationError, ConfigWarning
+from .config_errors import ConfigValidationError, ConfigWarning
 from .config_keywords import (
     SchemaItem,
     check_required,
