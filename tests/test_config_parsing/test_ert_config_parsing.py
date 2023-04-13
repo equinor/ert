@@ -12,6 +12,7 @@ from hypothesis import assume, given
 from ert._c_wrappers.enkf import ErtConfig
 from ert._c_wrappers.enkf.config_keys import ConfigKeys
 from ert.parsing import ConfigValidationError, ConfigWarning
+from ert._c_wrappers.util import SubstitutionList
 
 from .config_dict_generator import config_generators
 
@@ -155,7 +156,7 @@ def test_that_queue_config_content_negative_value_invalid():
         fh.write(test_config_contents)
     with pytest.raises(
         expected_exception=ConfigValidationError,
-        match="QUEUE_OPTION MAX_RUNNING is negative",
+        match="QUEUE_OPTION LOCAL MAX_RUNNING is negative",
     ):
         ErtConfig.from_file(test_config_file_name)
 
@@ -170,11 +171,11 @@ def test_that_queue_config_dict_negative_value_invalid(
             ["LSF", "MAX_RUNNING", "-6"],
         )
 
-    with pytest.raises(
-        expected_exception=ConfigValidationError,
-        match="QUEUE_OPTION MAX_RUNNING is negative",
-    ):
-        ErtConfig.from_dict(config_dict)
+        with pytest.raises(
+            expected_exception=ConfigValidationError,
+            match="QUEUE_OPTION LSF MAX_RUNNING is negative",
+        ):
+            ErtConfig.from_dict(config_dict)
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -393,9 +394,31 @@ def test_that_unknown_hooked_job_gives_config_validation_error():
 
     with pytest.raises(
         ConfigValidationError,
-        match="Cannot setup hook for non-existing job name 'NO_SUCH_JOB'",
+        match=r".* non-existing workflow .* 'NO_SUCH_JOB'",
     ):
-        _ = ErtConfig.from_file(test_config_file_name)
+        ErtConfig.from_file(test_config_file_name)
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_unknown_run_mode_gives_config_validation_error():
+    content_dict = {
+        "HOOK_WORKFLOW": [["MAKE_DIRECTORY", "PRE_SIMULATIONnn"]],
+    }
+
+    substitution_list = SubstitutionList.from_dict({})
+
+    with pytest.raises(
+        ConfigValidationError,
+        match="Run mode .* not supported for Hook Workflow",
+    ):
+        collected_errors = []
+        _ = ErtConfig._workflows_from_dict(
+            content_dict,
+            substitution_list,
+            config_file="test.ert",
+            collected_errors=collected_errors,
+        )
+        ConfigValidationError.raise_from_collected(collected_errors)
 
 
 @pytest.mark.usefixtures("set_site_config")

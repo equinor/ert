@@ -16,7 +16,7 @@ from .config_keywords import (
     init_site_config,
     init_user_config,
 )
-from .lark_parser_types import Defines, FileContextToken, Instruction
+from .lark_parser_types import Defines, FileContextToken, Instruction, ErrorInfo
 
 grammar = r"""
 WHITESPACE: (" "|"\t")+
@@ -187,6 +187,7 @@ def _tree_to_dict(
     config_file: str,
     pre_defines: Defines,
     tree: Tree[Instruction],
+    collected_errors: List[ErrorInfo],
     site_config: Optional[Dict[str, Any]] = None,
 ) -> Mapping[str, Instruction]:
     schema: Mapping[str, SchemaItem] = (
@@ -207,7 +208,7 @@ def _tree_to_dict(
 
             args = constraints.join_args(args)
             args = _substitute_args(args, constraints, defines)
-            args = constraints.apply_constraints(args)
+            args = constraints.apply_constraints(args, kw)
 
             if constraints.multi_occurrence:
                 arglist = config_dict.get(kw, [])
@@ -217,10 +218,13 @@ def _tree_to_dict(
                 config_dict[kw] = args
         except ConfigValidationError as e:
             token: Token = kw
-            raise ConfigValidationError(
-                f"{e.errors}\nWas used in {token.value} at line {token.line}",
-                config_file=token.filename,
-            ) from e
+            collected_errors.append(
+                ErrorInfo(
+                    message=f"{e.errors}\nWas used in {token.value} "
+                    f"at line {token.line}",
+                    filename=token.filename,
+                )
+            )
 
     check_required(schema, config_dict, filename=config_file)
 
@@ -244,6 +248,7 @@ def _handle_includes(
     tree: Tree[Instruction],
     defines: Defines,
     config_file: str,
+    collected_errors: List[ErrorInfo] = None,
     already_included_files: List[str] = None,
 ):
     if already_included_files is None:
@@ -261,9 +266,11 @@ def _handle_includes(
             defines.append(args)
         if kw == "INCLUDE":
             if len(args) > 1:
-                raise ConfigValidationError(
-                    "Keyword:INCLUDE must have exactly one argument",
-                    config_file=node[0].filename,
+                collected_errors.append(
+                    ErrorInfo(
+                        message="Keyword:INCLUDE must have exactly one argument",
+                        filename=node[0].filename,
+                    )
                 )
             file_to_include = _substitute(defines, args[0])
             if not os.path.isabs(file_to_include):
@@ -272,17 +279,27 @@ def _handle_includes(
                 )
 
             if file_to_include in already_included_files:
-                raise ConfigValidationError(
-                    f"Cyclical import detected, {file_to_include} is already included"
+                collected_errors.append(
+                    ErrorInfo(
+                        message=f"Cyclical import detected, {file_to_include} "
+                        f"is already included",
+                        filename="TODO",
+                    )
                 )
+                continue
 
-            sub_tree = _parse_file(file_to_include, "INCLUDE")
+            sub_tree = _parse_file(
+                file=file_to_include,
+                collected_errors=collected_errors,
+                error_context_string="INCLUDE",
+            )
 
             _handle_includes(
-                sub_tree,
-                defines,
-                file_to_include,
-                [*already_included_files, file_to_include],
+                tree=sub_tree,
+                defines=defines,
+                config_file=file_to_include,
+                collected_errors=collected_errors,
+                already_included_files=[*already_included_files, file_to_include],
             )
 
             to_include.append((sub_tree, i))
@@ -293,7 +310,9 @@ def _handle_includes(
 
 
 def _parse_file(
-    file: Union[str, bytes, os.PathLike], error_context_string: str = ""
+    file: Union[str, bytes, os.PathLike],
+    collected_errors: List[ErrorInfo],
+    error_context_string: str = "",
 ) -> Tree[Instruction]:
     try:
         with open(file, encoding="utf-8") as f:
@@ -307,12 +326,14 @@ def _parse_file(
         ).transform(tree)
     except FileNotFoundError:
         if error_context_string == "INCLUDE":
-            raise ConfigValidationError(
-                f"{error_context_string} file: {str(file)} not found"
+            collected_errors.append(
+                ErrorInfo(
+                    message=f"{error_context_string} file: {file} not found",
+                    filename=file,
+                )
             )
-        raise IOError(f"{error_context_string} file: {str(file)} not found")
     except UnexpectedCharacters as e:
-        raise ConfigValidationError(str(e), config_file=str(file)) from e
+        collected_errors.append(ErrorInfo(message=str(e), filename=file))
     except UnicodeDecodeError as e:
         error_words = str(e).split(" ")
         hex_str = error_words[error_words.index("byte") + 1]
@@ -320,19 +341,34 @@ def _parse_file(
             unknown_char = chr(int(hex_str, 16))
         except ValueError:
             unknown_char = f"hex:{hex_str}"
-        raise ConfigValidationError(
-            f"Unsupported non UTF-8 character {unknown_char!r} "
-            f"found in file: {file!r}",
-            config_file=str(file),
+        collected_errors.append(
+            ErrorInfo(
+                message=f"Unsupported non UTF-8 character {unknown_char!r} "
+                f"found in file: {file!r}",
+                filename=file,
+            )
         )
 
 
 def parse(
     file: str,
+    collected_errors: List[ErrorInfo] = None,
     site_config: Optional[Mapping[str, Instruction]] = None,
 ) -> Mapping[str, Instruction]:
+    do_raise_errors = False
+    if collected_errors is None:
+        collected_errors = []
+        do_raise_errors = True
+
     filepath = os.path.normpath(os.path.abspath(file))
-    tree = _parse_file(filepath)
+    tree = _parse_file(file=filepath, collected_errors=collected_errors)
+
+    if tree is None:  # File parse failed, raising makes sense here
+        if do_raise_errors:
+            ConfigValidationError.raise_from_collected(collected_errors)
+
+        return None
+
     config_dir = os.path.dirname(filepath)
     config_file_name = os.path.basename(file)
     config_file_base = config_file_name.split(".")[0]
@@ -345,11 +381,22 @@ def parse(
     ]
     # need to copy pre_defines because _handle_includes will
     # add to this list
-    _handle_includes(tree, pre_defines.copy(), filepath)
+    _handle_includes(
+        tree=tree,
+        defines=pre_defines.copy(),
+        config_file=filepath,
+        collected_errors=collected_errors,
+    )
 
-    return _tree_to_dict(
+    as_dict = _tree_to_dict(
         config_file=file,
         pre_defines=pre_defines,
         tree=tree,
         site_config=site_config,
+        collected_errors=collected_errors,
     )
+
+    if do_raise_errors:
+        ConfigValidationError.raise_from_collected(collected_errors)
+
+    return as_dict

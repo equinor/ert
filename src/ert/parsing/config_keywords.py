@@ -1,12 +1,20 @@
 import os
 import shutil
 from enum import Enum
-from typing import Any, Dict, List, Mapping, Optional, Union
+from typing import Any, List, Mapping, Optional, Protocol, Union, Dict
 
 from pydantic import BaseModel
 
 from .config_errors import ConfigValidationError
-from .lark_parser_types import FileContextToken, Instruction
+from .lark_parser_types import (
+    FileContextToken,
+    Instruction,
+    PrimitiveWithContext,
+    FloatToken,
+    StringToken,
+    BoolToken,
+    IntToken,
+)
 
 # These keys are used as options in KEY:VALUE statements
 BASE_SURFACE_KEY = "BASE_SURFACE"
@@ -178,21 +186,31 @@ class SchemaItem(BaseModel):
                 config_file=val.filename,
             )
 
-    def convert(
-        self, token: FileContextToken, index: int
-    ) -> Optional[Union[str, int, float]]:
+    def token_to_value_with_context(
+        self, token: FileContextToken, index: int, keyword: FileContextToken
+    ) -> Optional[PrimitiveWithContext]:
         # pylint: disable=too-many-branches, too-many-return-statements
+        """
+        Converts a FileContextToken to a typed primitive that
+        behaves like a primitive, but also contains its location in the file,
+        as well the keyword it pertains to and its location in the file.
+
+        :param token: the token to be converted
+        :param index: the index of the token
+        :param keyword: the keyword it pertains to
+        :return: The token as a primitive with context of itself and its keyword
+        """
         self.check_valid(token, index)
         if not len(self.type_map) > index:
-            return token
+            return StringToken(str(token), token, keyword)
         val_type = self.type_map[index]
         if val_type is None:
-            return token
+            return StringToken(str(token), token, keyword)
         if val_type == SchemaType.CONFIG_BOOL:
             if token.lower() == "true":
-                return True
+                return BoolToken(True, token, keyword)
             elif token.lower() == "false":
-                return False
+                return BoolToken(False, token, keyword)
             else:
                 raise ConfigValidationError(
                     f"{self.kw!r} must have a boolean value"
@@ -201,7 +219,7 @@ class SchemaItem(BaseModel):
                 ) from None
         if val_type == SchemaType.CONFIG_INT:
             try:
-                return int(token)
+                return IntToken(int(token), token, keyword)
             except ValueError:
                 raise ConfigValidationError(
                     f"{self.kw!r} must have an integer value"
@@ -210,7 +228,7 @@ class SchemaItem(BaseModel):
                 ) from None
         if val_type == SchemaType.CONFIG_FLOAT:
             try:
-                return float(token)
+                return FloatToken(float(token), token, keyword)
             except ValueError:
                 raise ConfigValidationError(
                     f"{self.kw!r} must have a number as argument {index + 1!r}",
@@ -227,7 +245,7 @@ class SchemaItem(BaseModel):
                 if path != token:
                     err += f"The configured value was {path!r} "
                 raise ConfigValidationError(err, config_file=token.filename)
-            return path
+            return StringToken(path, token, keyword)
         if val_type == SchemaType.CONFIG_EXECUTABLE:
             path = str(token)
             if not os.path.isabs(token) and not os.path.exists(token):
@@ -247,12 +265,16 @@ class SchemaItem(BaseModel):
                     f"File not executable: {context}",
                     config_file=token.filename,
                 )
-            return path
-        return str(token)
+            return StringToken(path, token, keyword)
+        return StringToken(str(token), token, keyword)
 
-    def apply_constraints(self, args: List[Any]) -> Union[List[Any], Any]:
+    def apply_constraints(
+        self, args: List[Any], keyword: FileContextToken
+    ) -> Union[List[Any], Any]:
         args = [
-            self.convert(x, i) if isinstance(x, FileContextToken) else x
+            self.token_to_value_with_context(x, i, keyword)
+            if isinstance(x, FileContextToken)
+            else x
             for i, x in enumerate(args)
         ]
         if self.argc_min != -1 and len(args) < self.argc_min:

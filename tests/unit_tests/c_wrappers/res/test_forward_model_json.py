@@ -336,7 +336,7 @@ def test_transfer_arg_types():
         f.write("ENV KEY1 VALUE2\n")
         f.write("ENV KEY2 VALUE2\n")
 
-    job = ExtJob.from_config_file("FWD_MODEL")
+    job = ExtJob.from_config_file("FWD_MODEL", collected_errors=[])
     forward_model_list = [job]
     run_id = "test_no_jobs_id"
 

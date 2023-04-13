@@ -169,7 +169,9 @@ assert exec_env["TEST_ENV"] == "123"
         f.write("EXECUTABLE exec_env.py\n")
         f.write("EXEC_ENV TEST_ENV 123\n")
 
-    ext_job = ExtJob.from_config_file(name=None, config_file="EXEC_ENV")
+    ext_job = ExtJob.from_config_file(
+        name=None, config_file="EXEC_ENV", collected_errors=[]
+    )
     forward_model = [ext_job]
 
     with open("jobs.json", mode="w", encoding="utf-8") as fptr:

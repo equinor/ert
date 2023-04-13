@@ -1,4 +1,6 @@
 import os.path
+from dataclasses import InitVar, dataclass
+from typing import List, Optional, Protocol
 
 from cwrap import BaseCClass
 from ecl.util.util import StringHash
