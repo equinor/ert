@@ -217,9 +217,6 @@ void conf_item_spec_add_restriction(conf_item_spec_type *conf_item_spec,
 void conf_item_spec_set_default_value(conf_item_spec_type *conf_item_spec,
                                       const char *default_value);
 
-void conf_item_spec_set_help(conf_item_spec_type *conf_item_spec,
-                             const char *help);
-
 /** A C C E S S O R S */
 
 bool conf_class_has_item_spec(const conf_class_type *conf_class,

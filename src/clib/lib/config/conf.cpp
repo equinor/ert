@@ -110,7 +110,7 @@ conf_item_spec_type *conf_item_spec_alloc(const char *name, bool required_set,
     conf_item_spec->dt = dt;
     conf_item_spec->default_value = NULL;
     conf_item_spec->help = NULL;
-    conf_item_spec_set_help(conf_item_spec, help);
+    conf_item_spec->help = util_realloc_string_copy(conf_item_spec->help, help);
 
     conf_item_spec->restriction = new std::set<std::string>();
     return conf_item_spec;
@@ -398,11 +398,6 @@ void conf_item_spec_set_default_value(conf_item_spec_type *conf_item_spec,
         conf_item_spec->default_value = util_alloc_string_copy(default_value);
     else
         conf_item_spec->default_value = NULL;
-}
-
-void conf_item_spec_set_help(conf_item_spec_type *conf_item_spec,
-                             const char *help) {
-    conf_item_spec->help = util_realloc_string_copy(conf_item_spec->help, help);
 }
 
 bool conf_class_has_item_spec(const conf_class_type *conf_class,
