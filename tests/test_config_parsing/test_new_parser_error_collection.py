@@ -2,8 +2,8 @@ import os
 
 import pytest
 
-from ert.parsing import ConfigValidationError
 from ert._c_wrappers.enkf import ErtConfig
+from ert.parsing import ConfigValidationError
 
 test_config_file_base = "test"
 test_config_filename = f"{test_config_file_base}.ert"
@@ -265,5 +265,5 @@ INSTALL_JOB test THE_JOB_FILE
         expected_column=18,
         expected_end_column=30,
         other_files={"THE_JOB_FILE": "EXECUTABLE /tmp\n"},
-        match="set to directory",
+        match="executable set to directory",
     )

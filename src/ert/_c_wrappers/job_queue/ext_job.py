@@ -11,8 +11,7 @@ from typing import Dict, List, Optional, Tuple
 from ert._c_wrappers.config import ConfigParser, ContentTypeEnum
 from ert._c_wrappers.util import SubstitutionList
 from ert._clib.job_kw import type_from_kw
-from ert.parsing import ConfigValidationError
-from ert.parsing.lark_parser_types import ErrorInfo
+from ert.parsing import ConfigValidationError, ErrorInfo
 
 _SUBSTITUTED_AT_EXECUTION_TIME: List[str] = ["<ITER>", "<IENS>"]
 

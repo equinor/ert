@@ -1,20 +1,20 @@
 import os
 import shutil
 from enum import Enum
-from typing import Any, List, Mapping, Optional, Protocol, Union, Dict
+from typing import Any, Dict, List, Mapping, Optional, Union
 
 from pydantic import BaseModel
 
-from .config_errors import ConfigValidationError
-from .lark_parser_types import (
-    FileContextToken,
-    Instruction,
-    PrimitiveWithContext,
-    FloatToken,
-    StringToken,
+from .lark_parser_error_info import ErrorInfo
+from .lark_parser_file_context_token import FileContextToken
+from .lark_parser_primitive_tokens import (
     BoolToken,
+    FloatToken,
     IntToken,
+    PrimitiveWithContext,
+    StringToken,
 )
+from .lark_parser_types import Instruction
 
 # These keys are used as options in KEY:VALUE statements
 BASE_SURFACE_KEY = "BASE_SURFACE"
@@ -175,16 +175,13 @@ class SchemaItem(BaseModel):
     # Allowed values for specific arguments, if no entry, all values allowed
     indexed_selection_set: Mapping[int, List[str]] = {}
 
-    def check_valid(self, val: "FileContextToken", index: int) -> None:
-        if (
+    def _is_in_allowed_values_for_kw(
+        self, token: "FileContextToken", index: int
+    ) -> None:
+        return not (
             index in self.indexed_selection_set
-            and val not in self.indexed_selection_set[index]
-        ):
-            raise ConfigValidationError(
-                f"{self.kw!r} argument {index!r} must be one of"
-                f" {self.indexed_selection_set[index]!r} was {val.value!r}",
-                config_file=val.filename,
-            )
+            and token not in self.indexed_selection_set[index]
+        )
 
     def token_to_value_with_context(
         self,
@@ -204,13 +201,14 @@ class SchemaItem(BaseModel):
         :param collected_errors: list of errors
         :return: The token as a primitive with context of itself and its keyword
         """
-
-        try:
-            self.check_valid(token, index)
-        except ConfigValidationError as err:
+        # pylint: disable=too-many-return-statements, too-many-branches
+        if not self._is_in_allowed_values_for_kw(token, index):
             collected_errors.append(
                 ErrorInfo(
-                    message=str(err), filename=err.config_file, originates_from=token
+                    message=f"{self.kw!r} argument {index!r} must be one of"
+                    f" {self.indexed_selection_set[index]!r} was {token.value!r}",
+                    filename=token.filename,
+                    originates_from=token,
                 )
             )
 
@@ -225,28 +223,38 @@ class SchemaItem(BaseModel):
             elif token.lower() == "false":
                 return BoolToken(False, token, keyword)
             else:
-                raise ConfigValidationError(
-                    f"{self.kw!r} must have a boolean value"
-                    f" as argument {index + 1!r}",
-                    config_file=token.filename,
-                ) from None
+                collected_errors.append(
+                    ErrorInfo(
+                        message=f"{self.kw!r} must have a boolean value"
+                        f" as argument {index + 1!r}",
+                        filename=token.filename,
+                        originates_from=token,
+                    )
+                )
         if val_type == SchemaType.CONFIG_INT:
             try:
                 return IntToken(int(token), token, keyword)
             except ValueError:
-                raise ConfigValidationError(
-                    f"{self.kw!r} must have an integer value"
-                    f" as argument {index + 1!r}",
-                    config_file=token.filename,
-                ) from None
+                collected_errors.append(
+                    ErrorInfo(
+                        message=f"{self.kw!r} must have an integer value"
+                        f" as argument {index + 1!r}",
+                        filename=token.filename,
+                        originates_from=token,
+                    )
+                )
         if val_type == SchemaType.CONFIG_FLOAT:
             try:
                 return FloatToken(float(token), token, keyword)
             except ValueError:
-                raise ConfigValidationError(
-                    f"{self.kw!r} must have a number as argument {index + 1!r}",
-                    config_file=token.filename,
-                ) from None
+                collected_errors.append(
+                    ErrorInfo(
+                        message=f"{self.kw!r} must have a number "
+                        f"as argument {index + 1!r}",
+                        filename=token.filename,
+                        originates_from=token,
+                    )
+                )
         if val_type in [SchemaType.CONFIG_PATH, SchemaType.CONFIG_EXISTING_PATH]:
             path = str(token)
             if not os.path.isabs(token):
@@ -257,26 +265,37 @@ class SchemaItem(BaseModel):
                 err = f'Cannot find file or directory "{token.value}" \n'
                 if path != token:
                     err += f"The configured value was {path!r} "
-                raise ConfigValidationError(err, config_file=token.filename)
+                collected_errors.append(
+                    ErrorInfo(
+                        message=err, filename=token.filename, originates_from=token
+                    )
+                )
             return StringToken(path, token, keyword)
         if val_type == SchemaType.CONFIG_EXECUTABLE:
             path = str(token)
             if not os.path.isabs(token) and not os.path.exists(token):
                 path = shutil.which(token)
-                if path is None:
-                    raise ConfigValidationError(
-                        f"Could not find executable {token.value!r}",
-                        config_file=token.filename,
+
+            if path is None:
+                collected_errors.append(
+                    ErrorInfo(
+                        message=f"Could not find executable {token.value!r}",
+                        filename=token.filename,
+                        originates_from=token,
                     )
-            if not os.access(path, os.X_OK):
+                )
+            elif not os.access(path, os.X_OK):
                 context = (
                     f"{token.value!r} which was resolved to {path!r}"
                     if token.value != path
                     else f"{token.value!r}"
                 )
-                raise ConfigValidationError(
-                    f"File not executable: {context}",
-                    config_file=token.filename,
+                collected_errors.append(
+                    ErrorInfo(
+                        message=f"File not executable: {context}",
+                        filename=token.filename,
+                        originates_from=token,
+                    )
                 )
             return StringToken(path, token, keyword)
         return StringToken(str(token), token, keyword)
@@ -293,16 +312,27 @@ class SchemaItem(BaseModel):
             else x
             for i, x in enumerate(args)
         ]
+
         if self.argc_min != -1 and len(args) < self.argc_min:
-            raise ConfigValidationError(
-                f"{self.kw} must have at least {self.argc_min} arguments"
+            collected_errors.append(
+                ErrorInfo(
+                    message=f"{self.kw} must have at least {self.argc_min} arguments",
+                    filename=keyword.filename,
+                    originates_from=StringToken.from_token(keyword),
+                )
             )
-        if self.argc_max != -1 and len(args) > self.argc_max:
-            raise ConfigValidationError(
-                f"{self.kw} must have maximum {self.argc_max} arguments"
+        elif self.argc_max != -1 and len(args) > self.argc_max:
+            collected_errors.append(
+                ErrorInfo(
+                    message=f"{self.kw} must have maximum {self.argc_max} arguments",
+                    filename=keyword.filename,
+                    originates_from=StringToken.from_token(keyword),
+                )
             )
-        if self.argc_max == 1 and self.argc_min == 1:
+
+        elif self.argc_max == 1 and self.argc_min == 1:
             return args[0]
+
         return args
 
     def join_args(self, line: List[Any]) -> List[Any]:
@@ -320,11 +350,15 @@ def check_required(
     schema: Mapping[str, SchemaItem],
     config_dict: Mapping[str, Instruction],
     filename: str,
+    collected_errors: List[ErrorInfo],
 ) -> None:
     for constraints in schema.values():
         if constraints.required_set and constraints.kw not in config_dict:
-            raise ConfigValidationError(
-                f"{constraints.kw} must be set.", config_file=filename
+            collected_errors.append(
+                ErrorInfo(
+                    message=f"{constraints.kw} must be set.",
+                    filename=filename,
+                )
             )
 
 

@@ -30,11 +30,10 @@ from ert._clib.config_keywords import init_site_config_parser, init_user_config_
 from ert.parsing import (
     ConfigValidationError,
     ConfigWarning,
-    lark_parse,
     ErrorInfo,
     MaybeWithToken,
+    lark_parse,
 )
-
 
 from ._config_content_as_dict import config_content_as_dict
 from ._deprecation_migration_suggester import DeprecationMigrationSuggester
@@ -170,6 +169,8 @@ class ErtConfig:
             collected_errors=collected_errors,
         )
 
+        queue_config = QueueConfig.from_dict(config_dict, collected_errors)
+
         if do_raise_errors:
             ConfigValidationError.raise_from_collected(collected_errors)
 
@@ -180,7 +181,7 @@ class ErtConfig:
             env_vars=env_vars,
             random_seed=config_dict.get(ConfigKeys.RANDOM_SEED, None),
             analysis_config=AnalysisConfig.from_dict(config_dict=config_dict),
-            queue_config=QueueConfig.from_dict(config_dict),
+            queue_config=queue_config,
             workflow_jobs=workflow_jobs,
             workflows=workflows,
             hooked_workflows=hooked_workflows,
@@ -407,7 +408,7 @@ class ErtConfig:
 
             return init_files_arg
 
-        kwlist = list(set([x[0] for x in config_dict.get("GEN_KW", [])]))
+        kwlist = list({x[0] for x in config_dict.get("GEN_KW", [])})
 
         for key in kwlist:
             use_fwd_init_token = find_arg(key, "FORWARD_INIT:TRUE")
@@ -652,6 +653,15 @@ class ErtConfig:
                     f" It will not be loaded.",
                     category=ConfigWarning,
                 )
+            except ConfigValidationError as err:
+                collected_errors.append(
+                    ErrorInfo(
+                        message=str(err),
+                        filename=config_file,
+                        originates_from=workflow_job[0],
+                    )
+                )
+                continue
 
         for job_path in workflow_job_dir_info:
             if not os.path.isdir(job_path):
@@ -708,6 +718,8 @@ class ErtConfig:
 
             try:
                 workflow = workflows[hook_name]
+                hooked_workflows[run_mode].append(workflow)
+
             except KeyError:
                 collected_errors.append(
                     ErrorInfo(
@@ -717,8 +729,6 @@ class ErtConfig:
                         originates_from=hook_name,
                     )
                 )
-
-            hooked_workflows[run_mode].append(workflow)
 
         return workflow_jobs, workflows, hooked_workflows
 

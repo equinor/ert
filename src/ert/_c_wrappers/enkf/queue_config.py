@@ -6,7 +6,7 @@ from dataclasses import dataclass, field
 from typing import Dict, List, Tuple, Union
 
 from ert._c_wrappers.job_queue import Driver, JobQueue, QueueDriverEnum
-from ert.parsing import ConfigValidationError
+from ert.parsing import ConfigValidationError, ErrorInfo
 
 
 @dataclass
@@ -19,7 +19,7 @@ class QueueConfig:
     )
 
     @classmethod
-    def from_dict(cls, config_dict) -> QueueConfig:
+    def from_dict(cls, config_dict, collected_errors: List[ErrorInfo]) -> QueueConfig:
         queue_system = config_dict.get("QUEUE_SYSTEM", "LOCAL")
 
         valid_queue_systems = []
@@ -40,7 +40,19 @@ class QueueConfig:
         max_submit = config_dict.get("MAX_SUBMIT", 2)
         queue_options = defaultdict(list)
         for driver, option_name, *values in config_dict.get("QUEUE_OPTION", []):
-            queue_driver_type = QueueDriverEnum.from_string(driver + "_DRIVER")
+            try:
+                queue_driver_type = QueueDriverEnum.from_string(driver + "_DRIVER")
+            except ValueError as err:
+                collected_errors.append(
+                    ErrorInfo(
+                        message=str(err),
+                        originates_from=driver,
+                        filename=driver.token.filename
+                        if hasattr(driver, "token")
+                        else "",
+                    )
+                )
+                continue
             if values:
                 queue_options[queue_driver_type].append((option_name, values[0]))
             else:

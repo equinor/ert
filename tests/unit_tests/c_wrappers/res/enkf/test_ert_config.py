@@ -113,7 +113,7 @@ expand_config_defs(config_defines, snake_oil_structure_config)
 
 
 def test_invalid_user_config():
-    with pytest.raises(IOError):
+    with pytest.raises(ConfigValidationError):
         ErtConfig.from_file("this/is/not/a/file")
 
 

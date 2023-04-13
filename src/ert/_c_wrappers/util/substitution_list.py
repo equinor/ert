@@ -38,14 +38,14 @@ class SubstitutionList(BaseCClass):
     def from_dict(cls, config_dict) -> SubstitutionList:
         subst_list = SubstitutionList()
 
-        for key, val in config_dict.get("DEFINE", []):
-            subst_list.addItem(key, val)
+        for define_info in config_dict.get("DEFINE", []):
+            if len(define_info) > 1:
+                key, val = define_info
+                subst_list.addItem(key, val)
 
         if "<CONFIG_PATH>" not in subst_list:
             config_dir = config_dict.get("CONFIG_DIRECTORY", os.getcwd())
             subst_list.addItem("<CONFIG_PATH>", config_dir)
-        else:
-            config_dir = subst_list["<CONFIG_PATH>"]
 
         subst_list.addItem("<RUNPATH_FILE>", config_dict.get("RUNPATH_FILE"))
 

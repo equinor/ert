@@ -11,6 +11,7 @@ from hypothesis import assume, given
 
 from ert._c_wrappers.enkf import ErtConfig
 from ert._c_wrappers.enkf.config_keys import ConfigKeys
+from ert._c_wrappers.util import SubstitutionList
 from ert.parsing import ConfigValidationError, ConfigWarning
 
 from .config_dict_generator import config_generators
@@ -576,7 +577,7 @@ def test_that_giving_non_int_values_give_config_validation_error():
         fh.write(test_config_contents)
 
     with pytest.raises(ConfigValidationError, match="integer"):
-        _ = ErtConfig.from_file(test_config_file_name)
+        _ = ErtConfig.from_file(test_config_file_name, use_new_parser=True)
 
 
 @pytest.mark.usefixtures("use_tmpdir")

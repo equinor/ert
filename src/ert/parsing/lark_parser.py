@@ -4,11 +4,10 @@ import logging
 import os
 import os.path
 import warnings
-from typing import Any, Dict, List, Mapping, Optional, Union
+from typing import Any, Dict, List, Mapping, Optional, Tuple, Union
 
 from lark import Discard, Lark, Token, Transformer, Tree, UnexpectedCharacters
 
-from ert._c_wrappers.config import ConfigWarning
 from .config_errors import ConfigValidationError, ConfigWarning
 from .config_keywords import (
     SchemaItem,
@@ -17,7 +16,9 @@ from .config_keywords import (
     init_site_config,
     init_user_config,
 )
-from .lark_parser_types import Defines, FileContextToken, Instruction, ErrorInfo
+from .lark_parser_error_info import ErrorInfo
+from .lark_parser_file_context_token import FileContextToken
+from .lark_parser_types import Defines, Instruction
 
 grammar = r"""
 WHITESPACE: (" "|"\t")+
@@ -227,7 +228,9 @@ def _tree_to_dict(
                 )
             )
 
-    check_required(schema, config_dict, filename=config_file)
+    check_required(
+        schema, config_dict, filename=config_file, collected_errors=collected_errors
+    )
 
     return config_dict
 
@@ -270,7 +273,7 @@ def _handle_includes(
                 collected_errors.append(
                     ErrorInfo(
                         message="Keyword:INCLUDE must have exactly one argument",
-                        filename=node[0].filename,
+                        filename=kw.filename,
                     )
                 )
             file_to_include = _substitute(defines, args[0])
@@ -284,7 +287,7 @@ def _handle_includes(
                     ErrorInfo(
                         message=f"Cyclical import detected, {file_to_include} "
                         f"is already included",
-                        filename="TODO",
+                        filename=kw.filename,
                     )
                 )
                 continue
@@ -295,15 +298,16 @@ def _handle_includes(
                 error_context_string="INCLUDE",
             )
 
-            _handle_includes(
-                tree=sub_tree,
-                defines=defines,
-                config_file=file_to_include,
-                collected_errors=collected_errors,
-                already_included_files=[*already_included_files, file_to_include],
-            )
+            if sub_tree is not None:
+                _handle_includes(
+                    tree=sub_tree,
+                    defines=defines,
+                    config_file=file_to_include,
+                    collected_errors=collected_errors,
+                    already_included_files=[*already_included_files, file_to_include],
+                )
 
-            to_include.append((sub_tree, i))
+                to_include.append((sub_tree, i))
 
     for sub_tree, i in reversed(to_include):
         tree.children.pop(i)
@@ -314,7 +318,7 @@ def _parse_file(
     file: Union[str, bytes, os.PathLike],
     collected_errors: List[ErrorInfo],
     error_context_string: str = "",
-) -> Tree[Instruction]:
+) -> Optional[Tree[Instruction]]:
     try:
         with open(file, encoding="utf-8") as f:
             content = f.read()
@@ -326,13 +330,12 @@ def _parse_file(
             * InstructionTransformer()
         ).transform(tree)
     except FileNotFoundError:
-        if error_context_string == "INCLUDE":
-            collected_errors.append(
-                ErrorInfo(
-                    message=f"{error_context_string} file: {file} not found",
-                    filename=file,
-                )
+        collected_errors.append(
+            ErrorInfo(
+                message=f"{error_context_string} file: {file} not found",
+                filename=file,
             )
+        )
     except UnexpectedCharacters as e:
         collected_errors.append(ErrorInfo(message=str(e), filename=file))
     except UnicodeDecodeError as e:
@@ -349,6 +352,8 @@ def _parse_file(
                 filename=file,
             )
         )
+
+    return None
 
 
 def parse(
