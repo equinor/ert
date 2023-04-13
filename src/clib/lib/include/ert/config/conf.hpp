@@ -81,8 +81,8 @@
  *
  */
 
+#include <cstdbool>
 #include <set>
-#include <stdbool.h>
 #include <string>
 
 #include <ert/util/hash.hpp>

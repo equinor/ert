@@ -2,8 +2,8 @@
 #include <iostream>
 #include <vector>
 
-#include <assert.h>
-#include <string.h>
+#include <cassert>
+#include <cstring>
 
 #include <ert/logging.hpp>
 #include <ert/util/path_stack.hpp>
