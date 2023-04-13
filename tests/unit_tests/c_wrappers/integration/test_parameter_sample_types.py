@@ -637,8 +637,12 @@ TIME_MAP time_map
         """  # pylint: disable=line-too-long  # noqa: E501
         )
         expect_surface = Surface(
-            nx=1, ny=3, xinc=1, yinc=1, xstart=1, ystart=1, angle=0
+            nx=2, ny=2, xinc=1, yinc=1, xstart=1, ystart=1, angle=0
         )
+        expect_surface[0] = 0.1
+        expect_surface[1] = 0.1
+        expect_surface[2] = 1.1
+        expect_surface[3] = 1.1
         expect_surface.write("surf.irap")
 
         with open("forward_model", "w", encoding="utf-8") as f:
@@ -651,12 +655,12 @@ import os
 
 if __name__ == "__main__":
     if not os.path.exists("surf.irap"):
-        surf = Surface(nx=1, ny=3, xinc=1, yinc=1, xstart=1, ystart=1, angle=0)
+        surf = Surface(nx=2, ny=2, xinc=1, yinc=1, xstart=1, ystart=1, angle=0)
         values = np.random.standard_normal(surf.getNX() * surf.getNY())
         for i, value in enumerate(values):
             surf[i] = value
             surf.write(f"surf.irap")
-    a, b, c = list(Surface(filename="surf.irap"))
+    a, b, c,_ = list(Surface(filename="surf.irap"))
     output = [a * x**2 + b * x + c for x in range(10)]
     with open("gen_data_0.out", "w", encoding="utf-8") as f:
         f.write("\\n".join(map(str, output)))
@@ -727,6 +731,14 @@ if __name__ == "__main__":
             assert np.linalg.det(np.cov(prior_param)) > np.linalg.det(
                 np.cov(posterior_param)
             )
+
+        # Pick a random surface in the runpath and check against the expected values
+        surface = xtgeo.surface_from_file(
+            "simulations/realization-1/iter-1/surf.irap", fformat="irap_ascii"
+        )
+        surface_data = surface.get_values1d(order="F")
+        for i, e in enumerate(surface_data):
+            np.testing.assert_almost_equal(e, expect_surface[i], decimal=5)
 
 
 @pytest.mark.integration_test
