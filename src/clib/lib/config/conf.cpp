@@ -15,6 +15,19 @@ namespace fs = std::filesystem;
 
 static auto logger = ert::get_logger("config");
 
+void conf_class_free(conf_class_type *conf_class) {
+    free(conf_class->class_name);
+    free(conf_class->help);
+    hash_free(conf_class->sub_classes);
+    hash_free(conf_class->item_specs);
+    vector_free(conf_class->item_mutexes);
+    free(conf_class);
+}
+
+void conf_class_free__(void *conf_class) {
+    conf_class_free((conf_class_type *)conf_class);
+}
+
 conf_class_type *conf_class_alloc_empty(const char *class_name,
                                         bool require_instance, bool singleton,
                                         const char *help) {
@@ -36,17 +49,61 @@ conf_class_type *conf_class_alloc_empty(const char *class_name,
     return conf_class;
 }
 
-void conf_class_free(conf_class_type *conf_class) {
-    free(conf_class->class_name);
-    free(conf_class->help);
-    hash_free(conf_class->sub_classes);
-    hash_free(conf_class->item_specs);
-    vector_free(conf_class->item_mutexes);
-    free(conf_class);
+void conf_item_free(conf_item_type *conf_item) {
+    free(conf_item->value);
+    free(conf_item);
 }
 
-void conf_class_free__(void *conf_class) {
-    conf_class_free((conf_class_type *)conf_class);
+void conf_item_free__(void *conf_item) {
+    conf_item_free((conf_item_type *)conf_item);
+}
+
+conf_item_type *conf_item_alloc(const conf_item_spec_type *conf_item_spec,
+                                const char *value) {
+    conf_item_type *conf_item =
+        (conf_item_type *)util_malloc(sizeof *conf_item);
+
+    assert(conf_item_spec != NULL);
+    assert(value != NULL);
+
+    conf_item->conf_item_spec = conf_item_spec;
+    if (conf_item_spec->dt == DT_FILE)
+        conf_item->value = util_alloc_abs_path(value);
+    else
+        conf_item->value = util_alloc_string_copy(value);
+
+    return conf_item;
+}
+
+void conf_instance_free(conf_instance_type *conf_instance) {
+    free(conf_instance->name);
+    hash_free(conf_instance->sub_instances);
+    hash_free(conf_instance->items);
+    free(conf_instance);
+}
+
+void conf_instance_free__(void *conf_instance) {
+    conf_instance_free((conf_instance_type *)conf_instance);
+}
+
+static void conf_instance_insert_owned_item(conf_instance_type *conf_instance,
+                                            conf_item_type *conf_item) {
+    assert(conf_instance != NULL);
+    assert(conf_item != NULL);
+
+    const char *item_name = conf_item->conf_item_spec->name;
+
+    /* Check that the inserted item is of known type. */
+    {
+        const hash_type *item_spec_hash = conf_instance->conf_class->item_specs;
+        const conf_item_spec_type *conf_item_spec =
+            (const conf_item_spec_type *)hash_get(item_spec_hash, item_name);
+        if (conf_item_spec != conf_item->conf_item_spec)
+            util_abort("%s: Internal error.\n", __func__);
+    }
+
+    hash_insert_hash_owned_ref(conf_instance->items, item_name, conf_item,
+                               conf_item_free__);
 }
 
 static conf_instance_type *
@@ -86,15 +143,16 @@ conf_instance_alloc_default(const conf_class_type *conf_class,
     return conf_instance;
 }
 
-void conf_instance_free(conf_instance_type *conf_instance) {
-    free(conf_instance->name);
-    hash_free(conf_instance->sub_instances);
-    hash_free(conf_instance->items);
-    free(conf_instance);
+void conf_item_spec_free(conf_item_spec_type *conf_item_spec) {
+    free(conf_item_spec->name);
+    free(conf_item_spec->default_value);
+    free(conf_item_spec->help);
+    delete conf_item_spec->restriction;
+    free(conf_item_spec);
 }
 
-void conf_instance_free__(void *conf_instance) {
-    conf_instance_free((conf_instance_type *)conf_instance);
+void conf_item_spec_free__(void *conf_item_spec) {
+    conf_item_spec_free((conf_item_spec_type *)conf_item_spec);
 }
 
 conf_item_spec_type *conf_item_spec_alloc(const char *name, bool required_set,
@@ -116,42 +174,13 @@ conf_item_spec_type *conf_item_spec_alloc(const char *name, bool required_set,
     return conf_item_spec;
 }
 
-void conf_item_spec_free(conf_item_spec_type *conf_item_spec) {
-    free(conf_item_spec->name);
-    free(conf_item_spec->default_value);
-    free(conf_item_spec->help);
-    delete conf_item_spec->restriction;
-    free(conf_item_spec);
+void conf_item_mutex_free(conf_item_mutex_type *conf_item_mutex) {
+    hash_free(conf_item_mutex->item_spec_refs);
+    free(conf_item_mutex);
 }
 
-void conf_item_spec_free__(void *conf_item_spec) {
-    conf_item_spec_free((conf_item_spec_type *)conf_item_spec);
-}
-
-conf_item_type *conf_item_alloc(const conf_item_spec_type *conf_item_spec,
-                                const char *value) {
-    conf_item_type *conf_item =
-        (conf_item_type *)util_malloc(sizeof *conf_item);
-
-    assert(conf_item_spec != NULL);
-    assert(value != NULL);
-
-    conf_item->conf_item_spec = conf_item_spec;
-    if (conf_item_spec->dt == DT_FILE)
-        conf_item->value = util_alloc_abs_path(value);
-    else
-        conf_item->value = util_alloc_string_copy(value);
-
-    return conf_item;
-}
-
-void conf_item_free(conf_item_type *conf_item) {
-    free(conf_item->value);
-    free(conf_item);
-}
-
-void conf_item_free__(void *conf_item) {
-    conf_item_free((conf_item_type *)conf_item);
+void conf_item_mutex_free__(void *conf_item_mutex) {
+    conf_item_mutex_free((conf_item_mutex_type *)conf_item_mutex);
 }
 
 static conf_item_mutex_type *
@@ -166,15 +195,6 @@ conf_item_mutex_alloc(const conf_class_type *super_class, bool require_one,
     conf_item_mutex->item_spec_refs = hash_alloc();
 
     return conf_item_mutex;
-}
-
-void conf_item_mutex_free(conf_item_mutex_type *conf_item_mutex) {
-    hash_free(conf_item_mutex->item_spec_refs);
-    free(conf_item_mutex);
-}
-
-void conf_item_mutex_free__(void *conf_item_mutex) {
-    conf_item_mutex_free((conf_item_mutex_type *)conf_item_mutex);
 }
 
 static bool conf_class_has_super_class(const conf_class_type *conf_class,
@@ -263,6 +283,29 @@ conf_item_mutex_type *conf_class_new_item_mutex(conf_class_type *conf_class,
     return mutex;
 }
 
+stringlist_type *conf_instance_alloc_list_of_sub_instances_of_class(
+    const conf_instance_type *conf_instance,
+    const conf_class_type *conf_class) {
+    stringlist_type *instances = stringlist_alloc_new();
+    int num_sub_instances = hash_get_size(conf_instance->sub_instances);
+    char **sub_instance_keys = hash_alloc_keylist(conf_instance->sub_instances);
+
+    for (int key_nr = 0; key_nr < num_sub_instances; key_nr++) {
+        const conf_instance_type *sub_instance =
+            (const conf_instance_type *)hash_get(conf_instance->sub_instances,
+                                                 sub_instance_keys[key_nr]);
+
+        const conf_class_type *sub_instance_class = sub_instance->conf_class;
+
+        if (sub_instance_class == conf_class)
+            stringlist_append_copy(instances, sub_instance_keys[key_nr]);
+    }
+
+    util_free_stringlist(sub_instance_keys, num_sub_instances);
+
+    return instances;
+}
+
 void conf_instance_insert_owned_sub_instance(
     conf_instance_type *conf_instance, conf_instance_type *sub_conf_instance) {
     assert(conf_instance != NULL);
@@ -308,24 +351,14 @@ void conf_instance_insert_owned_sub_instance(
                                conf_instance_free__);
 }
 
-void conf_instance_insert_owned_item(conf_instance_type *conf_instance,
-                                     conf_item_type *conf_item) {
-    assert(conf_instance != NULL);
-    assert(conf_item != NULL);
+const conf_item_spec_type *
+conf_class_get_item_spec_ref(const conf_class_type *conf_class,
+                             const char *item_name) {
+    if (!hash_has_key(conf_class->item_specs, item_name))
+        util_abort("%s: Internal error.\n", __func__);
 
-    const char *item_name = conf_item->conf_item_spec->name;
-
-    /* Check that the inserted item is of known type. */
-    {
-        const hash_type *item_spec_hash = conf_instance->conf_class->item_specs;
-        const conf_item_spec_type *conf_item_spec =
-            (const conf_item_spec_type *)hash_get(item_spec_hash, item_name);
-        if (conf_item_spec != conf_item->conf_item_spec)
-            util_abort("%s: Internal error.\n", __func__);
-    }
-
-    hash_insert_hash_owned_ref(conf_instance->items, item_name, conf_item,
-                               conf_item_free__);
+    return (const conf_item_spec_type *)hash_get(conf_class->item_specs,
+                                                 item_name);
 }
 
 void conf_instance_insert_item(conf_instance_type *conf_instance,
@@ -416,16 +449,6 @@ bool conf_class_has_sub_class(const conf_class_type *conf_class,
         return true;
 }
 
-const conf_item_spec_type *
-conf_class_get_item_spec_ref(const conf_class_type *conf_class,
-                             const char *item_name) {
-    if (!hash_has_key(conf_class->item_specs, item_name))
-        util_abort("%s: Internal error.\n", __func__);
-
-    return (const conf_item_spec_type *)hash_get(conf_class->item_specs,
-                                                 item_name);
-}
-
 const conf_class_type *
 conf_class_get_sub_class_ref(const conf_class_type *conf_class,
                              const char *sub_class_name) {
@@ -467,29 +490,6 @@ conf_instance_get_sub_instance_ref(const conf_instance_type *conf_instance,
     }
     return (const conf_instance_type *)hash_get(conf_instance->sub_instances,
                                                 sub_instance_name);
-}
-
-stringlist_type *conf_instance_alloc_list_of_sub_instances_of_class(
-    const conf_instance_type *conf_instance,
-    const conf_class_type *conf_class) {
-    stringlist_type *instances = stringlist_alloc_new();
-    int num_sub_instances = hash_get_size(conf_instance->sub_instances);
-    char **sub_instance_keys = hash_alloc_keylist(conf_instance->sub_instances);
-
-    for (int key_nr = 0; key_nr < num_sub_instances; key_nr++) {
-        const conf_instance_type *sub_instance =
-            (const conf_instance_type *)hash_get(conf_instance->sub_instances,
-                                                 sub_instance_keys[key_nr]);
-
-        const conf_class_type *sub_instance_class = sub_instance->conf_class;
-
-        if (sub_instance_class == conf_class)
-            stringlist_append_copy(instances, sub_instance_keys[key_nr]);
-    }
-
-    util_free_stringlist(sub_instance_keys, num_sub_instances);
-
-    return instances;
 }
 
 stringlist_type *conf_instance_alloc_list_of_sub_instances_of_class_by_name(
@@ -825,12 +825,12 @@ conf_instance_has_valid_mutexes(const conf_instance_type *conf_instance) {
 }
 
 static bool
-__instance_has_sub_instance_of_type(const conf_class_type *__conf_class,
-                                    int num_sub_instances,
-                                    conf_class_type **class_signatures) {
+instance_has_sub_instance_of_type(const conf_class_type *conf_class,
+                                  int num_sub_instances,
+                                  conf_class_type **class_signatures) {
     for (int sub_instance_nr = 0; sub_instance_nr < num_sub_instances;
          sub_instance_nr++) {
-        if (class_signatures[sub_instance_nr] == __conf_class)
+        if (class_signatures[sub_instance_nr] == conf_class)
             return true;
     }
     return false;
@@ -840,7 +840,7 @@ static bool conf_instance_has_required_sub_instances(
     const conf_instance_type *conf_instance) {
     bool ok = true;
 
-    /* This first part is just concerned with creating the function __instance_has_sub_instance_of_type. */
+    /* This first part is just concerned with creating the function instance_has_sub_instance_of_type. */
     int num_sub_instances = hash_get_size(conf_instance->sub_instances);
     conf_class_type **class_signatures = (conf_class_type **)util_calloc(
         num_sub_instances, sizeof *class_signatures);
@@ -872,7 +872,7 @@ static bool conf_instance_has_required_sub_instances(
                 (const conf_class_type *)hash_get(conf_class->sub_classes,
                                                   sub_class_name);
             if (sub_conf_class->require_instance) {
-                if (!__instance_has_sub_instance_of_type(
+                if (!instance_has_sub_instance_of_type(
                         sub_conf_class, num_sub_instances, class_signatures)) {
                     printf("ERROR: Missing required instance of sub class "
                            "\"%s\" in instance \"%s\" of class \"%s\".\n",

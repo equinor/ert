@@ -195,9 +195,6 @@ void conf_class_insert_owned_item_spec(conf_class_type *conf_class,
 void conf_instance_insert_owned_sub_instance(
     conf_instance_type *conf_instance, conf_instance_type *sub_conf_instance);
 
-void conf_instance_insert_owned_item(conf_instance_type *conf_instance,
-                                     conf_item_type *conf_item);
-
 void conf_instance_insert_item(conf_instance_type *conf_instance,
                                const char *item_name, const char *value);
 
@@ -225,10 +222,6 @@ bool conf_class_has_item_spec(const conf_class_type *conf_class,
 bool conf_class_has_sub_class(const conf_class_type *conf_class,
                               const char *sub_class_name);
 
-const conf_item_spec_type *
-conf_class_get_item_spec_ref(const conf_class_type *conf_class,
-                             const char *item_name);
-
 const conf_class_type *
 conf_class_get_sub_class_ref(const conf_class_type *conf_class,
                              const char *sub_class_name);
@@ -244,9 +237,6 @@ bool conf_instance_has_item(const conf_instance_type *conf_instance,
 const conf_instance_type *
 conf_instance_get_sub_instance_ref(const conf_instance_type *conf_instance,
                                    const char *sub_instance_name);
-
-stringlist_type *conf_instance_alloc_list_of_sub_instances_of_class(
-    const conf_instance_type *conf_instance, const conf_class_type *conf_class);
 
 stringlist_type *conf_instance_alloc_list_of_sub_instances_of_class_by_name(
     const conf_instance_type *conf_instance, const char *sub_class_name);
