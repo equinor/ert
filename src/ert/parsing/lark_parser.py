@@ -8,20 +8,15 @@ from typing import Any, Dict, List, Mapping, Optional, Tuple, Union
 
 from lark import Discard, Lark, Token, Transformer, Tree, UnexpectedCharacters
 
-from ert.parsing import (
-    ConfigValidationError,
-    ConfigWarning,
-    Defines,
-    FileContextToken,
-    Instruction,
-)
-from ert.parsing.config_keywords import (
+from . import ConfigValidationError, ConfigWarning
+from .config_keywords import (
     SchemaItem,
     check_required,
     define_keyword,
     init_site_config,
     init_user_config,
 )
+from .lark_parser_types import Defines, FileContextToken, Instruction
 
 grammar = r"""
 WHITESPACE: (" "|"\t")+

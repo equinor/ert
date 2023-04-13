@@ -28,7 +28,7 @@ from ert._c_wrappers.util import SubstitutionList
 from ert._clib import job_kw
 from ert._clib.config_keywords import init_site_config_parser, init_user_config_parser
 from ert.parsing import ConfigValidationError, ConfigWarning
-from ert.parsing.lark_parser import parse as lark_parse
+from ert.parsing import _lark_parse as lark_parse
 
 from ._config_content_as_dict import config_content_as_dict
 from ._deprecation_migration_suggester import DeprecationMigrationSuggester
