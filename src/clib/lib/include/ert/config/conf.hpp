@@ -81,9 +81,13 @@
  *
  */
 
+#include <set>
 #include <stdbool.h>
+#include <string>
 
+#include <ert/util/hash.hpp>
 #include <ert/util/stringlist.hpp>
+#include <ert/util/vector.hpp>
 
 #include <ert/config/conf_data.hpp>
 
@@ -92,6 +96,61 @@ typedef struct conf_instance_struct conf_instance_type;
 typedef struct conf_item_spec_struct conf_item_spec_type;
 typedef struct conf_item_struct conf_item_type;
 typedef struct conf_item_mutex_struct conf_item_mutex_type;
+
+struct conf_class_struct {
+    /** Can be NULL */
+    const conf_class_type *super_class;
+    char *class_name;
+    /** Can be NULL if not given */
+    char *help;
+    bool require_instance;
+    bool singleton;
+
+    /** conf_class_types */
+    hash_type *sub_classes;
+    /** conf_item_spec_types */
+    hash_type *item_specs;
+    /** item_mutex_types */
+    vector_type *item_mutexes;
+};
+
+struct conf_instance_struct {
+    const conf_class_type *conf_class;
+    char *name;
+
+    /** conf_instance_types */
+    hash_type *sub_instances;
+    /** conf_item_types */
+    hash_type *items;
+};
+
+struct conf_item_spec_struct {
+    /** NULL if not inserted into a class */
+    const conf_class_type *super_class;
+    char *name;
+    /** Require the item to take a valid value */
+    bool required_set;
+    /** Can be NULL if not given */
+    char *default_value;
+    /** Data type. See conf_data */
+    dt_enum dt;
+    std::set<std::string> *restriction;
+    /** Can be NULL if not given */
+    char *help;
+};
+
+struct conf_item_struct {
+    const conf_item_spec_type *conf_item_spec;
+    char *value;
+};
+
+struct conf_item_mutex_struct {
+    const conf_class_type *super_class;
+    bool require_one;
+    /** if inverse == true the 'mutex' implements: if A then ALSO B, C and D */
+    bool inverse;
+    hash_type *item_spec_refs;
+};
 
 /** D E F A U L T   A L L O C / F R E E    F U N C T I O N S */
 
