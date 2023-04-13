@@ -27,7 +27,14 @@ from ert._c_wrappers.job_queue import (
 from ert._c_wrappers.util import SubstitutionList
 from ert._clib import job_kw
 from ert._clib.config_keywords import init_site_config_parser, init_user_config_parser
-from ert.parsing import ConfigValidationError, ConfigWarning, lark_parse, ErrorInfo
+from ert.parsing import (
+    ConfigValidationError,
+    ConfigWarning,
+    lark_parse,
+    ErrorInfo,
+    MaybeWithToken,
+)
+
 
 from ._config_content_as_dict import config_content_as_dict
 from ._deprecation_migration_suggester import DeprecationMigrationSuggester
@@ -360,9 +367,7 @@ class ErtConfig:
             )
 
         if ConfigKeys.SUMMARY in config_dict and ConfigKeys.ECLBASE not in config_dict:
-            summary_arglists: List[PrimitiveWithContext] = config_dict[
-                ConfigKeys.SUMMARY
-            ]
+            summary_arglists: List[MaybeWithToken] = config_dict[ConfigKeys.SUMMARY]
             first_summary_arglist = summary_arglists[0]
             collected_errors.append(
                 ErrorInfo(
@@ -441,10 +446,10 @@ class ErtConfig:
 
         for job_as_list in config_dict.get(ConfigKeys.FORWARD_MODEL, []):
             if len(job_as_list) > 1:
-                unsubstituted_job_name: PrimitiveWithContext = job_as_list[0]
+                unsubstituted_job_name: MaybeWithToken = job_as_list[0]
                 args = job_as_list[1]
             else:
-                unsubstituted_job_name: PrimitiveWithContext = job_as_list[0]
+                unsubstituted_job_name: MaybeWithToken = job_as_list[0]
                 args = []
 
             job_name = substitution_list.substitute(unsubstituted_job_name)

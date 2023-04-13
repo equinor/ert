@@ -187,9 +187,12 @@ class SchemaItem(BaseModel):
             )
 
     def token_to_value_with_context(
-        self, token: FileContextToken, index: int, keyword: FileContextToken
+        self,
+        token: FileContextToken,
+        index: int,
+        keyword: FileContextToken,
+        collected_errors: List[ErrorInfo],
     ) -> Optional[PrimitiveWithContext]:
-        # pylint: disable=too-many-branches, too-many-return-statements
         """
         Converts a FileContextToken to a typed primitive that
         behaves like a primitive, but also contains its location in the file,
@@ -198,9 +201,19 @@ class SchemaItem(BaseModel):
         :param token: the token to be converted
         :param index: the index of the token
         :param keyword: the keyword it pertains to
+        :param collected_errors: list of errors
         :return: The token as a primitive with context of itself and its keyword
         """
-        self.check_valid(token, index)
+
+        try:
+            self.check_valid(token, index)
+        except ConfigValidationError as err:
+            collected_errors.append(
+                ErrorInfo(
+                    message=str(err), filename=err.config_file, originates_from=token
+                )
+            )
+
         if not len(self.type_map) > index:
             return StringToken(str(token), token, keyword)
         val_type = self.type_map[index]
@@ -269,10 +282,13 @@ class SchemaItem(BaseModel):
         return StringToken(str(token), token, keyword)
 
     def apply_constraints(
-        self, args: List[Any], keyword: FileContextToken
+        self,
+        args: List[Any],
+        keyword: FileContextToken,
+        collected_errors: List[ErrorInfo],
     ) -> Union[List[Any], Any]:
         args = [
-            self.token_to_value_with_context(x, i, keyword)
+            self.token_to_value_with_context(x, i, keyword, collected_errors)
             if isinstance(x, FileContextToken)
             else x
             for i, x in enumerate(args)

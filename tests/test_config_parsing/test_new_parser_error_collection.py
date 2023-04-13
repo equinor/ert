@@ -2,7 +2,7 @@ import os
 
 import pytest
 
-from ert._c_wrappers.config import ConfigValidationError
+from ert.parsing import ConfigValidationError
 from ert._c_wrappers.enkf import ErtConfig
 
 test_config_file_base = "test"
@@ -33,7 +33,7 @@ def assert_error_from_config_with(
     )
 
     for error in collected_errors:
-        assert error.filename == expected_filename
+        assert expected_filename in error.filename
 
     error_locations = [(x.line, x.column, x.end_column) for x in collected_errors]
     expected_error_loc = (expected_line, expected_column, expected_end_column)
@@ -141,6 +141,21 @@ FORWARD_MODEL RMS <IENS>
         expected_line=3,
         expected_column=15,
         expected_end_column=25,
+    )
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_info_unknown_run_mode_gives_error():
+    assert_error_from_config_with(
+        contents="""
+NUM_REALIZATIONS  1
+FORWARD_MODEL RMS <IENS>
+HOOK_WORKFLOW MAKE_DIRECTORY PRE_SIMULATIONnn
+""",
+        expected_line=4,
+        expected_column=30,
+        expected_end_column=46,
+        match="Run mode .* not supported.*",
     )
 
 

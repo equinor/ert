@@ -4,10 +4,11 @@ import logging
 import os
 import os.path
 import warnings
-from typing import Any, Dict, List, Mapping, Optional, Tuple, Union
+from typing import Any, Dict, List, Mapping, Optional, Union
 
 from lark import Discard, Lark, Token, Transformer, Tree, UnexpectedCharacters
 
+from ert._c_wrappers.config import ConfigWarning
 from .config_errors import ConfigValidationError, ConfigWarning
 from .config_keywords import (
     SchemaItem,
@@ -208,7 +209,7 @@ def _tree_to_dict(
 
             args = constraints.join_args(args)
             args = _substitute_args(args, constraints, defines)
-            args = constraints.apply_constraints(args, kw)
+            args = constraints.apply_constraints(args, kw, collected_errors)
 
             if constraints.multi_occurrence:
                 arglist = config_dict.get(kw, [])
