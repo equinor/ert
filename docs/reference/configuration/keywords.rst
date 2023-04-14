@@ -1080,7 +1080,7 @@ and/or history matching project.
 
         **Initializing from the FORWARD MODEL**
 
-        All the parameter types like FIELD, GEN_KW and SURFACE can be
+        Parameter types like FIELD and SURFACE (not GEN_KW) can be
         initialized from the forward model. To achieve this you just add the setting
         FORWARD_INIT:True to the configuration. When using forward init the
         initialization will work like this:
