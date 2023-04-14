@@ -221,7 +221,8 @@ std::shared_ptr<conf_instance_type> conf_instance_get_sub_instance_ref(
     std::shared_ptr<conf_instance_type> conf_instance,
     const char *sub_instance_name);
 
-stringlist_type *conf_instance_alloc_list_of_sub_instances_of_class_by_name(
+std::vector<std::string>
+conf_instance_alloc_list_of_sub_instances_of_class_by_name(
     std::shared_ptr<conf_instance_type> conf_instance,
     const char *sub_class_name);
 

@@ -521,19 +521,18 @@ bool obs_vector_load_from_HISTORY_OBSERVATION(
 
             // Handle SEGMENTs which can be used to customize the observation error. */
             {
-                stringlist_type *segment_keys =
+                std::vector<std::string> segment_keys =
                     conf_instance_alloc_list_of_sub_instances_of_class_by_name(
                         conf_instance, "SEGMENT");
-                stringlist_sort(segment_keys, NULL);
+                std::sort(segment_keys.begin(), segment_keys.end());
 
-                int num_segments = stringlist_get_size(segment_keys);
+                int num_segments = segment_keys.size();
 
                 for (int segment_nr = 0; segment_nr < num_segments;
                      segment_nr++) {
-                    const char *segment_name =
-                        stringlist_iget(segment_keys, segment_nr);
+                    std::string segment_name = segment_keys[segment_nr];
                     auto segment_conf = conf_instance_get_sub_instance_ref(
-                        conf_instance, segment_name);
+                        conf_instance, segment_name.c_str());
 
                     int start =
                         conf_instance_get_item_value_int(segment_conf, "START");
@@ -595,7 +594,6 @@ bool obs_vector_load_from_HISTORY_OBSERVATION(
                             "%s: Internal error. Unknown error mode \"%s\"\n",
                             __func__, error_mode);
                 }
-                stringlist_free(segment_keys);
             }
 
             /*

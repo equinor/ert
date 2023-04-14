@@ -240,16 +240,17 @@ conf_class_new_item_mutex(std::shared_ptr<conf_class_type> conf_class,
     return mutex;
 }
 
-static stringlist_type *conf_instance_alloc_list_of_sub_instances_of_class(
+static std::vector<std::string>
+conf_instance_alloc_list_of_sub_instances_of_class(
     std::shared_ptr<conf_instance_type> conf_instance,
     std::shared_ptr<conf_class_type> conf_class) {
-    stringlist_type *instances = stringlist_alloc_new();
+    std::vector<std::string> instances;
 
     for (auto &[sub_instance_name, sub_instance] :
          conf_instance->sub_instances) {
         auto sub_instance_class = sub_instance->conf_class;
         if (sub_instance_class == conf_class)
-            stringlist_append_copy(instances, sub_instance_name.c_str());
+            instances.push_back(sub_instance_name);
     }
 
     return instances;
@@ -269,21 +270,19 @@ void conf_instance_insert_sub_instance(
 
     /* Check if the instance's class is singleton. If so, remove the old instance. */
     if (sub_conf_instance->conf_class->singleton) {
-        stringlist_type *instances =
+        std::vector<std::string> instances =
             conf_instance_alloc_list_of_sub_instances_of_class(
                 conf_instance, sub_conf_instance->conf_class);
-        int num_instances = stringlist_get_size(instances);
+        int num_instances = instances.size();
 
         for (int i = 0; i < num_instances; i++) {
-            const char *key = stringlist_iget(instances, i);
+            const std::string key = instances[i];
             printf("WARNING: Class \"%s\" is of singleton type. Overwriting "
                    "instance \"%s\" with \"%s\".\n",
-                   sub_conf_instance->conf_class->class_name, key,
+                   sub_conf_instance->conf_class->class_name, key.c_str(),
                    sub_conf_instance->name);
             conf_instance->sub_instances.erase(key);
         }
-
-        stringlist_free(instances);
     }
 
     /* Warn if the sub_instance already exists and is overwritten. */
@@ -428,7 +427,8 @@ std::shared_ptr<conf_instance_type> conf_instance_get_sub_instance_ref(
     return conf_instance->sub_instances[sub_instance_name];
 }
 
-stringlist_type *conf_instance_alloc_list_of_sub_instances_of_class_by_name(
+std::vector<std::string>
+conf_instance_alloc_list_of_sub_instances_of_class_by_name(
     std::shared_ptr<conf_instance_type> conf_instance,
     const char *sub_class_name) {
     if (!conf_class_has_sub_class(conf_instance->conf_class, sub_class_name))
