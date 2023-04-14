@@ -13,8 +13,8 @@ from ecl.util.enums import RngAlgTypeEnum
 from ert._c_wrappers.enkf import AnalysisConfig, ConfigKeys, ErtConfig, HookRuntime
 from ert._c_wrappers.enkf._config_content_as_dict import parse_signature_job
 from ert._c_wrappers.enkf.ert_config import (
-    site_config_location,
     USE_NEW_PARSER_BY_DEFAULT,
+    site_config_location,
 )
 from ert._c_wrappers.job_queue import QueueDriverEnum
 from ert._c_wrappers.sched import HistorySourceEnum
