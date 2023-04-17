@@ -1,5 +1,5 @@
 import os
-from typing import Union, Literal, Optional
+from typing import Callable, Optional, TextIO
 
 import pytest
 
@@ -19,9 +19,13 @@ def assert_error_from_config_with(
     filename: str = "test.ert",
     other_files: dict = None,
     match: str = None,
+    write_after: Callable[[TextIO], None] = None,
 ):
     with open(filename, "w", encoding="utf-8") as fh:
         fh.write(contents)
+
+        if write_after:
+            write_after(fh)
 
     if other_files is not None:
         for other_filename, content in other_files.items():
@@ -320,4 +324,23 @@ LOAD_WORKFLOW_JOB non_existing workflow_job_name
         expected_line=2,
         expected_column=1,
         expected_end_column=None,
+    )
+
+
+def write_dirty_bytes(fh: TextIO):
+    with open(fh.name, mode="wb") as bfile:
+        bfile.seek(0)
+        bfile.write(b'\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff')
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_info_unicode_decode_error(tmp_path):
+    assert_error_from_config_with(
+        contents="""
+""",
+        expected_line=None,
+        expected_column=None,
+        expected_end_column=None,
+        write_after=write_dirty_bytes,
+        match="Unsupported non UTF",
     )
