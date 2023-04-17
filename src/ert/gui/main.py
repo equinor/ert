@@ -149,12 +149,13 @@ def _start_initial_gui_window(args, log_handler):
 
 
 def _log_difference_with_new_parser(args, ert_config):
+    logger = logging.getLogger(__name__)
     try:
         with warnings.catch_warnings(record=True) as silenced_warnings:
             ert_config_new = ErtConfig.from_file(args.config, use_new_parser=True)
 
             for w in silenced_warnings:
-                logging.info(f"New Parser warning: {w.message}")
+                logger.info(f"New Parser warning: {w.message}")
 
         if ert_config != ert_config_new:
             fields = dataclasses.fields(ert_config)
@@ -165,13 +166,13 @@ def _log_difference_with_new_parser(args, ert_config):
                 if getattr(ert_config, field.name)
                 != getattr(ert_config_new, field.name)
             ]
-            logging.info(
+            logger.info(
                 f"New parser gave different result.\n" f" Difference: {difference!r}"
             )
         else:
-            logging.info("New parser gave equal result.")
+            logger.info("New parser gave equal result.")
     except Exception:
-        logging.exception("The new parser failed")
+        logger.exception("The new parser failed")
 
 
 def _check_locale():
