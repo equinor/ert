@@ -653,7 +653,7 @@ class EnsembleConfig(BaseCClass):
         return metaInfo.var_type if metaInfo else EnkfVarType.INVALID_VAR
 
     def get_summary_keys(self) -> List[str]:
-        return _clib.ensemble_config.get_summary_keys(self)
+        return sorted(_clib.ensemble_config.get_summary_keys(self))
 
     @property
     def parameter_configuration(self) -> ParameterConfiguration:

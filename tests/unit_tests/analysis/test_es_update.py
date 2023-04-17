@@ -47,31 +47,31 @@ def test_update_report(
         (
             "IES_ENKF",
             [
-                0.1964238785703465,
-                -0.7864807076941146,
-                -0.5807896159251078,
-                -0.22435575683095582,
-                -0.2021017211719207,
-                0.07367941192265133,
-                -1.4227423506253276,
-                0.2571096893111238,
-                -0.4974944985473074,
-                0.7081334216380905,
+                0.515356585450388,
+                -0.7997450173495089,
+                -0.673803314701884,
+                -0.12006348287921552,
+                0.12835309068473374,
+                0.056452419575246444,
+                -1.5161257610231536,
+                0.2401457090342254,
+                -0.7985453300893501,
+                0.7764022070573613,
             ],
         ),
         (
             "STD_ENKF",
             [
-                -0.06567898910532588,
-                0.10504962902545388,
-                -1.1178608572124271,
-                -0.8782242339761734,
-                -0.4806540171009489,
-                0.28335043153842926,
-                -1.6082225555080574,
-                1.1182967700344797,
-                -0.7117711294872316,
-                1.161381139836552,
+                0.4658755223614102,
+                0.08294244626646294,
+                -1.2728836885070545,
+                -0.7044037773899394,
+                0.0701040026601418,
+                0.25463877762608783,
+                -1.7638615728377676,
+                1.0900234695729822,
+                -1.2135225153906364,
+                1.27516244886867,
             ],
         ),
     ],
@@ -267,7 +267,7 @@ def test_localization(
         (1, ["ACTIVE", "DEACTIVATED", "DEACTIVATED"]),
         (2, ["ACTIVE", "DEACTIVATED", "DEACTIVATED"]),
         (3, ["ACTIVE", "DEACTIVATED", "DEACTIVATED"]),
-        (10, ["ACTIVE", "DEACTIVATED", "ACTIVE"]),
+        (10, ["ACTIVE", "ACTIVE", "DEACTIVATED"]),
         (100, ["ACTIVE", "ACTIVE", "ACTIVE"]),
     ],
 )
@@ -315,6 +315,17 @@ SUMMARY_OBSERVATION EXTREMELY_HIGH_STD
     es_update.iterative_smoother_update(sim_fs, new_ensemble, w_container, "id")
     result_snapshot = es_update.update_snapshots["id"]
     assert result_snapshot.alpha == alpha
+    assert result_snapshot.update_step_snapshots["ALL_ACTIVE"].obs_name == [
+        o
+        for i, o in enumerate(
+            [
+                "EXTREMELY_HIGH_STD",
+                "HIGH_STD",
+                "LOW_STD",
+            ]
+        )
+        if expected[i] == "ACTIVE"
+    ]
     assert result_snapshot.update_step_snapshots["ALL_ACTIVE"].obs_status == expected
 
 

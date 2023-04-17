@@ -152,11 +152,11 @@ def test_observation_keys(facade):
         "FOPR": ["FOPR"],
         "WOPR:OP1": [
             "WOPR_OP1_108",
-            "WOPR_OP1_190",
             "WOPR_OP1_144",
-            "WOPR_OP1_9",
-            "WOPR_OP1_72",
+            "WOPR_OP1_190",
             "WOPR_OP1_36",
+            "WOPR_OP1_72",
+            "WOPR_OP1_9",
         ],
         "SNAKE_OIL_WPR_DIFF@199": ["WPR_DIFF_1"],
     }

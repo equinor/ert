@@ -271,6 +271,9 @@ static void enkf_obs_update_keys(enkf_obs_type *enkf_obs) {
 
         obs_key = hash_iter_get_next_key(iter);
     }
+    for (auto &[kw, node] : enkf_obs->ensemble_config->config_nodes) {
+        stringlist_sort(node->obs_keys, NULL);
+    }
     hash_iter_free(iter);
     hash_free(map);
 }
@@ -282,6 +285,7 @@ static void handle_history_observation(enkf_obs_type *enkf_obs,
     stringlist_type *hist_obs_keys =
         conf_instance_alloc_list_of_sub_instances_of_class_by_name(
             enkf_conf, "HISTORY_OBSERVATION");
+    stringlist_sort(hist_obs_keys, NULL);
     int num_hist_obs = stringlist_get_size(hist_obs_keys);
 
     if (num_hist_obs > 0 && enkf_obs->refcase == NULL) {
@@ -346,6 +350,7 @@ static void handle_summary_observation(enkf_obs_type *enkf_obs,
         sum_obs_keys(conf_instance_alloc_list_of_sub_instances_of_class_by_name(
                          enkf_conf, "SUMMARY_OBSERVATION"),
                      stringlist_free);
+    stringlist_sort(sum_obs_keys.get(), NULL);
     const int num_sum_obs = stringlist_get_size(sum_obs_keys.get());
 
     for (int i = 0; i < num_sum_obs; i++) {
@@ -389,6 +394,7 @@ static void handle_general_observation(enkf_obs_type *enkf_obs,
     stringlist_type *obs_keys =
         conf_instance_alloc_list_of_sub_instances_of_class_by_name(
             enkf_conf, "GENERAL_OBSERVATION");
+    stringlist_sort(obs_keys, NULL);
     int num_obs = stringlist_get_size(obs_keys);
 
     for (int i = 0; i < num_obs; i++) {
@@ -799,6 +805,8 @@ stringlist_type *enkf_obs_alloc_matching_keylist(const enkf_obs_type *enkf_obs,
                            stringlist_append_copy(matching_keys, obs_key);
                    }
                });
+
+    stringlist_sort(matching_keys, nullptr);
 
     return matching_keys;
 }
