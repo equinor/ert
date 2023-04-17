@@ -661,7 +661,7 @@ Keywords controlling the simulations
         The MAX_RUNTIME key is optional.
 
         Note that if you are using a Slurm queue, then you need to pass the option
-        explcitly as a queue option. See :ref:`Slurm's options <slurm_smax_runtime>`.
+        explicitly as a queue option. See :ref:`Slurm's options <slurm_smax_runtime>`.
 
 
 Parameterization keywords
