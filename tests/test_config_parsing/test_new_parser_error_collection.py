@@ -32,20 +32,40 @@ def assert_error_from_config_with(
         filename, use_new_parser=True, collected_errors=collected_errors
     )
 
-    for error in collected_errors:
-        assert expected_filename in error.filename
+    # Find errors in matching file
+    errors_matching_filename = (
+        [err for err in collected_errors if expected_filename in err.filename]
+        if expected_filename is not None
+        else collected_errors
+    )
 
-    error_locations = [(x.line, x.column, x.end_column) for x in collected_errors]
-    expected_error_loc = (expected_line, expected_column, expected_end_column)
+    if expected_filename is not None:
+        assert (
+            len(errors_matching_filename) > 0
+        ), f"Expected minimum 1 error matching filename {expected_filename}, got 0"
+    else:
+        assert (
+            len(errors_matching_filename) > 0
+        ), "Expected minimum 1 collected error, got 0"
 
-    assert expected_error_loc in error_locations, (
-        f"Expected error location {expected_error_loc} to be found in list of"
-        f"error locations: {error_locations}"
+    # Find errors matching location in file
+    errors_matching_location = [
+        x
+        for x in errors_matching_filename
+        if (True if expected_line is None else (x.line == expected_line))
+        and x.column == expected_column
+        and x.end_column == expected_end_column
+    ]
+
+    assert len(errors_matching_location) > 0, (
+        f"Expected to find at least 1 error matching location"
+        f"(line={'any' if expected_line is None else expected_line},"
+        f"column={expected_column}, end_column{expected_end_column})"
     )
 
     if match is not None:
         with pytest.raises(ConfigValidationError, match=match):
-            ConfigValidationError.raise_from_collected(collected_errors)
+            ConfigValidationError.raise_from_collected(errors_matching_location)
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -266,4 +286,19 @@ INSTALL_JOB test THE_JOB_FILE
         expected_end_column=30,
         other_files={"THE_JOB_FILE": "EXECUTABLE /tmp\n"},
         match="executable set to directory",
+    )
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_info_workflow_job_not_found(tmp_path):
+    assert_error_from_config_with(
+        contents="""
+JOBNAME my_name%d
+NUM_REALIZATIONS 1
+LOAD_WORKFLOW_JOB non_existing workflow_job_name
+""",
+        expected_line=4,
+        expected_column=19,
+        expected_end_column=31,
+        match="Could not open",
     )
