@@ -584,7 +584,7 @@ def main() -> None:
         logger.exception(str(err))
         sys.exit(str(err))
     except ConfigValidationError as err:
-        errMsg = f"Error(s) in configuration file {err.config_file}: {err.errors}"
+        errMsg = err.get_cli_message()
         logger.exception(errMsg)
         sys.exit(errMsg)
     except BaseException as err:  # pylint: disable=broad-except

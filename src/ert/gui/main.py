@@ -131,7 +131,7 @@ def _start_initial_gui_window(
             config_warnings = [
                 str(w.message) for w in all_warnings if w.category == ConfigWarning
             ]
-            error_messages.append(str(error))
+            error_messages += error.get_error_messages()
             logger.info("Error in config file shown in gui: '%s'", str(error))
             return (
                 _setup_suggester(

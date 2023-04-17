@@ -71,24 +71,20 @@ class ExtJob:
         if resolved is None:
             raise ConfigValidationError(
                 config_file=config_file_location,
-                errors=[f"Could not find executable {executable!r} for job {name!r}"],
+                errors=f"Could not find executable {executable!r} for job {name!r}",
             )
 
         if not os.access(resolved, os.X_OK):  # is not executable
             raise ConfigValidationError(
                 config_file=config_file_location,
-                errors=[
-                    f"ExtJob {name!r} with executable"
-                    f" {resolved!r} does not have execute permissions"
-                ],
+                errors=f"ExtJob {name!r} with executable"
+                f" {resolved!r} does not have execute permissions",
             )
 
         if os.path.isdir(resolved):
             raise ConfigValidationError(
                 config_file=config_file_location,
-                errors=[
-                    f"ExtJob {name!r} has executable set to directory {resolved!r}"
-                ],
+                errors=f"ExtJob {name!r} has executable set to directory {resolved!r}",
             )
 
         return resolved
@@ -186,21 +182,17 @@ class ExtJob:
         try:
             config_content = cls._parse_config_file(config_file)
         except ConfigValidationError as conf_err:
-            err_msg = "Item:EXECUTABLE must be set - parsing"
-            err_index = next(
-                (i_err for i_err, err in enumerate(conf_err.errors) if err_msg in err),
-                None,
-            )
-            if err_index is None:
-                raise conf_err from None
             with open(config_file, encoding="utf-8") as f:
                 if "PORTABLE_EXE " in f.read():
-                    conf_err.errors[err_index] = conf_err.errors[err_index].replace(
-                        err_msg,
-                        '"PORTABLE_EXE" key is deprecated, '
-                        'please replace with "EXECUTABLE" in',
+                    err_msg = (
+                        '"PORTABLE_EXE" key is deprecated,'
+                        ' please replace with "EXECUTABLE" in'
                     )
-            raise ConfigValidationError(conf_err.errors, conf_err.config_file) from None
+                    raise ConfigValidationError.from_collected(
+                        [conf_err, ConfigValidationError(err_msg, config_file)]
+                    ) from None
+            raise conf_err from None
+
         except IOError as err:
             raise ConfigValidationError(
                 config_file=config_file,
