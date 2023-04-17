@@ -938,3 +938,33 @@ def test_that_defines_in_included_files_has_immediate_effect():
 
     ert_config = ErtConfig.from_file(test_config_file_name, use_new_parser=True)
     assert "baz-<ITER>-<IENS>" in ert_config.model_config.runpath_format_string
+
+
+@pytest.mark.usefixtures("use_tmpdir", "set_site_config")
+def test_that_multiple_errors_is_shown_for_forward_model():
+    test_config_file_name = "test.ert"
+    test_config_contents = dedent(
+        """
+        NUM_REALIZATIONS  1
+        FORWARD_MODEL does_not_exist
+        FORWARD_MODEL does_not_exist2
+        """
+    )
+    with open(test_config_file_name, "w", encoding="utf-8") as fh:
+        fh.write(test_config_contents)
+
+    with pytest.raises(ConfigValidationError) as err:
+        _ = ErtConfig.from_file(test_config_file_name)
+    assert (
+        err.value.get_cli_message() == f"Parsing config file `{test_config_file_name}` "
+        "resulted in the errors: \n"
+        "  * Could not find job 'does_not_exist' in list of installed jobs: []\n"
+        "  * Could not find job 'does_not_exist2' in list of installed jobs: []"
+    )
+
+    assert err.value.get_error_messages() == [
+        f"Parsing config file `{test_config_file_name}` resulted in the errors: "
+        "Could not find job 'does_not_exist' in list of installed jobs: []",
+        f"Parsing config file `{test_config_file_name}` resulted in the errors: "
+        "Could not find job 'does_not_exist2' in list of installed jobs: []",
+    ]

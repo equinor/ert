@@ -123,7 +123,7 @@ class ConfigParser(BaseCClass):
 
         if validate and not config_content.isValid():
             raise ConfigValidationError(
-                config_file=config_file, errors=config_content.getErrors()
+                errors=[(config_file, e) for e in config_content.getErrors()]
             )
 
         return config_content
