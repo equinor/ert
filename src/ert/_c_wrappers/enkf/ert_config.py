@@ -93,13 +93,13 @@ class ErtConfig:
             use_new_parser=use_new_parser,
         )
 
-        config_dir = os.path.abspath(os.path.dirname(user_config_file))
-        ErtConfig._log_config_file(user_config_file)
-
         if not user_config_dict:
             if do_raise_errors:
                 ConfigValidationError.raise_from_collected(collected_errors)
             return None
+
+        config_dir = os.path.abspath(os.path.dirname(user_config_file))
+        ErtConfig._log_config_file(user_config_file)
 
         ErtConfig._log_config_dict(user_config_dict)
         ErtConfig.apply_config_content_defaults(user_config_dict, config_dir)
