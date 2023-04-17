@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, List, Optional, Type, Union
 
 from ert._c_wrappers.config import ConfigParser, ContentTypeEnum
-from ert._c_wrappers.job_queue import ErtScript, ExternalErtScript, FunctionErtScript
+from ert._c_wrappers.job_queue import ErtScript, ExternalErtScript
 from ert._clib.job_kw import type_from_kw
 from ert.parsing import ConfigValidationError
 
@@ -27,7 +27,6 @@ def _workflow_job_config_parser() -> ConfigParser:
         "EXECUTABLE", value_type=ContentTypeEnum.CONFIG_EXECUTABLE
     ).set_argc_minmax(1, 1)
     parser.add("SCRIPT", value_type=ContentTypeEnum.CONFIG_PATH).set_argc_minmax(1, 1)
-    parser.add("FUNCTION").set_argc_minmax(1, 1)
     parser.add("INTERNAL", value_type=ContentTypeEnum.CONFIG_BOOL).set_argc_minmax(1, 1)
     item = parser.add("ARG_TYPE")
     item.set_argc_minmax(2, 2)
@@ -52,7 +51,6 @@ class WorkflowJob:
     arg_types: List[ContentTypeEnum]
     executable: Optional[str]
     script: Optional[str]
-    function: Optional[str]
 
     def __post_init__(self):
         self.__running = False
@@ -108,7 +106,6 @@ class WorkflowJob:
                 cls._make_arg_types_list(content, max_arg),
                 optional_get("EXECUTABLE"),
                 optional_get("SCRIPT"),
-                optional_get("FUNCTION"),
             )
         else:
             raise ConfigValidationError(f"Could not open config_file:{config_file!r}")
@@ -162,14 +159,6 @@ class WorkflowJob:
 
         if self._ert_script is not None:
             self.__script = self._ert_script(ert, storage, ensemble)
-        elif self.internal and self.function is not None:
-            self.__script = FunctionErtScript(
-                ert,
-                storage,
-                self.function,
-                self.argumentTypes(),
-                argument_count=len(arguments),
-            )
         elif not self.internal:
             self.__script = ExternalErtScript(ert, storage, self.executable)
         else:

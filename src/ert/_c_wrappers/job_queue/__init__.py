@@ -64,7 +64,6 @@ from .ert_plugin import CancelPluginException, ErtPlugin  # noqa
 from .ert_script import ErtScript  # noqa
 from .ext_job import ExtJob, ExtJobInvalidArgsException  # noqa
 from .external_ert_script import ExternalErtScript  # noqa
-from .function_ert_script import FunctionErtScript  # noqa
 from .job import Job  # noqa
 from .job_queue_manager import JobQueueManager  # noqa
 from .job_queue_node import JobQueueNode  # noqa
@@ -99,7 +98,6 @@ __all__ = [
     "ErtScriptLoadFailure",
     "ErtPlugin",
     "CancelPluginException",
-    "FunctionErtScript",
     "ExternalErtScript",
     "WorkflowJob",
     "Workflow",

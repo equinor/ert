@@ -7,7 +7,6 @@ from .workflow_common import WorkflowCommon
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_read_internal_function():
-    WorkflowCommon.createInternalFunctionJob()
     WorkflowCommon.createErtScriptsJob()
 
     workflow_job = WorkflowJob.fromFile(
@@ -16,14 +15,12 @@ def test_read_internal_function():
     )
     assert workflow_job.name == "SUBTRACT"
     assert workflow_job.internal
-    assert workflow_job.function is None
 
     assert workflow_job.script.endswith("subtract_script.py")
 
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_arguments():
-    WorkflowCommon.createInternalFunctionJob()
     WorkflowCommon.createErtScriptsJob()
 
     job = WorkflowJob.fromFile(
