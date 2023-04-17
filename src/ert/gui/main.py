@@ -43,8 +43,6 @@ from ert.services import StorageService
 from ert.shared.plugins.plugin_manager import ErtPluginManager
 from ert.storage import EnsembleAccessor, StorageReader, open_storage
 
-logger = logging.getLogger(__name__)
-
 
 def run_gui(args: Namespace, plugin_manager: Optional[ErtPluginManager] = None):
     app = QApplication([])  # Early so that QT is initialized before other imports
@@ -80,6 +78,7 @@ def run_gui(args: Namespace, plugin_manager: Optional[ErtPluginManager] = None):
 
 
 def _log_difference_with_new_parser(args, ert_config):
+    logger = logging.getLogger(__name__)
     try:
         with warnings.catch_warnings(record=True) as silenced_warnings:
             ert_config_new = ErtConfig.from_file(args.config, use_new_parser=True)
@@ -110,6 +109,7 @@ def _start_initial_gui_window(
 ):
     # Create logger inside function to make sure all handlers have been added to
     # the root-logger.
+    logger = logging.getLogger(__name__)
     suggestions = []
     error_messages = []
     all_warnings = []
@@ -214,11 +214,13 @@ decimalpoint.\n"""  # noqa
 
 
 def _clicked_help_button(menu_label: str, link: str):
+    logger = logging.getLogger(__name__)
     logger.info(f"Pressed help button {menu_label}")
     webbrowser.open(link)
 
 
 def _clicked_about_button(about_dialog):
+    logger = logging.getLogger(__name__)
     logger.info("Pressed help button About")
     about_dialog.show()
 
