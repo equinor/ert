@@ -337,7 +337,14 @@ def _parse_file(
             )
         )
     except UnexpectedCharacters as e:
-        collected_errors.append(ErrorInfo(message=str(e), filename=file))
+        collected_errors.append(
+            ErrorInfo(
+                message=str(e),
+                filename=file,
+                line=e.line,
+                column=e.column,
+            ),
+        )
     except UnicodeDecodeError as e:
         error_words = str(e).split(" ")
         hex_str = error_words[error_words.index("byte") + 1]

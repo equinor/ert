@@ -1,4 +1,5 @@
 import os
+from typing import Union, Literal, Optional
 
 import pytest
 
@@ -11,9 +12,9 @@ test_config_filename = f"{test_config_file_base}.ert"
 
 def assert_error_from_config_with(
     contents: str,
-    expected_line: int,
-    expected_column: int,
-    expected_end_column: int,
+    expected_line: Optional[int],
+    expected_column: Optional[int],
+    expected_end_column: Optional[int],
     expected_filename: str = "test.ert",
     filename: str = "test.ert",
     other_files: dict = None,
@@ -48,19 +49,23 @@ def assert_error_from_config_with(
             len(errors_matching_filename) > 0
         ), "Expected minimum 1 collected error, got 0"
 
+    def equals_or_expected_any(actual, expected):
+        return True if expected is None else actual == expected
+
     # Find errors matching location in file
     errors_matching_location = [
         x
         for x in errors_matching_filename
-        if (True if expected_line is None else (x.line == expected_line))
-        and x.column == expected_column
-        and x.end_column == expected_end_column
+        if equals_or_expected_any(x.line, expected_line)
+        and equals_or_expected_any(x.column, expected_column)
+        and equals_or_expected_any(x.end_column, expected_end_column)
     ]
 
     assert len(errors_matching_location) > 0, (
         f"Expected to find at least 1 error matching location"
-        f"(line={'any' if expected_line is None else expected_line},"
-        f"column={expected_column}, end_column{expected_end_column})"
+        f"(line={'*' if expected_line is None else expected_line},"
+        f"column={'*' if expected_column is None else expected_column},"
+        f"end_column{'*' if expected_end_column is None else expected_end_column})"
     )
 
     if match is not None:
@@ -301,4 +306,18 @@ LOAD_WORKFLOW_JOB non_existing workflow_job_name
         expected_column=19,
         expected_end_column=31,
         match="Could not open",
+    )
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_info_unexpected_characters(tmp_path):
+    assert_error_from_config_with(
+        contents="""
+$$#{{}$#JOBNAME my_name%d
+NUM_REALIZATIONS 1
+LOAD_WORKFLOW_JOB non_existing workflow_job_name
+""",
+        expected_line=2,
+        expected_column=1,
+        expected_end_column=None,
     )
