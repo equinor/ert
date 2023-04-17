@@ -50,7 +50,7 @@ def create_observations(ert) -> List[Mapping[str, dict]]:
         else:
             response_observation_link[data_key] = data_key
             if data_key in grouped_obs:
-                for el in filter(lambda x: not x == "name", obs_data):
+                for el in filter(lambda x: x != "name", obs_data):
                     grouped_obs[data_key][el] += obs_data[el]
             else:
                 obs_data["name"] = data_key
