@@ -18,8 +18,8 @@ In this workflow we create plots of the nodes
 have created in this example is general, if we limited
 ourselves to ECLIPSE summary variables we could get wildcard
 support. Then we invoke the ECL_HIST example job to create a
-histogram. See below for documentation of <RUNPATH_FILE> and
-<ERTCASE>.
+histogram. See documentation of :ref:`RUNPATH_FILE <ms_runpath_file>`. and
+:ref:`ERTCASE <ms_ertcase>`.
 
 Loading workflows
 -----------------

@@ -52,6 +52,7 @@ List of keywords
 
    * :ref:`ECLBASE/ECL_BASE <ms_eclbase>`
    * :ref:`RUNPATH <ms_runpath>`
+   * :ref:`ERTCASE <ms_ertcase>`
 
 
 
@@ -246,3 +247,23 @@ Experiment dependent variables
    ::
 
       FORWARD_MODEL JOB_NAME(<ARG0>="/your/run/path/realization-4/iter-1")
+
+
+.. _ms_ertcase:
+.. topic:: ERTCASE
+
+   Will be replaced with the current case name defined when starting the experiment.
+
+
+   *Example:*
+
+   ::
+
+      RUNPATH output/<ERTCASE>/realization-<IENS>/iter-<ITER>
+
+   In this example when running the experiment and given that the user does not change the `default` case name
+   the output folder created for realization 10 iteration 4 will be the following:
+
+   ::
+
+      output/default/realization-10/iter-4
