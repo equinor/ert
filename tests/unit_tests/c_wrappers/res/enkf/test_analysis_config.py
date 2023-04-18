@@ -98,6 +98,18 @@ def test_analysis_config_min_realizations(
     assert analysis_config.minimum_required_realizations == expected_min_real
 
 
+def test_invalid_min_realization():
+    config_dict = {
+        ConfigKeys.NUM_REALIZATIONS: 1,
+        ConfigKeys.MIN_REALIZATIONS: "1s",
+    }
+
+    with pytest.raises(
+        ConfigValidationError, match="MIN_REALIZATIONS value is not integer"
+    ):
+        AnalysisConfig.from_dict(config_dict)
+
+
 def test_analysis_config_stop_long_running():
     config_dict = {
         ConfigKeys.NUM_REALIZATIONS: 10,
