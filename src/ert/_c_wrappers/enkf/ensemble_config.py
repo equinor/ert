@@ -1,6 +1,7 @@
 import logging
 import os
 import warnings
+from pathlib import Path
 from typing import Dict, List, Optional, Union
 
 from cwrap import BaseCClass
@@ -158,6 +159,9 @@ class EnsembleConfig(BaseCClass):
         """
         if refcase_file is None:
             return None
+
+        refcase_filepath = Path(refcase_file)
+        refcase_file = str(refcase_filepath.parent / refcase_filepath.stem)
 
         if not os.path.exists(refcase_file + ".UNSMRY"):
             raise ConfigValidationError(
