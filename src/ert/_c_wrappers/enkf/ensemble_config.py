@@ -179,6 +179,9 @@ class EnsembleConfig(BaseCClass):
         if refcase_file is None:
             return None
 
+        refcase_filepath = Path(refcase_file)
+        refcase_file = str(refcase_filepath.parent / refcase_filepath.stem)
+
         if not os.path.exists(refcase_file + ".UNSMRY"):
             raise ConfigValidationError(
                 f"Cannot find UNSMRY file for refcase provided! {refcase_file}.UNSMRY"
