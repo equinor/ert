@@ -1,8 +1,6 @@
-from typing import List, Tuple, Union, cast
+from typing import List, cast
 
 from lark import Token
-
-from ert.parsing.lark_parser_primitive_tokens import PrimitiveWithContext
 
 
 class FileContextToken(Token):
@@ -71,19 +69,3 @@ class FileContextToken(Token):
     def replace_value(self, old: str, new: str, count: int = -1) -> "FileContextToken":
         replaced = self.value.replace(old, new, count)
         return FileContextToken(self.update(value=replaced), filename=self.filename)
-
-
-# The type of the leaf nodes in the Tree after transformation is done
-Instruction = List[
-    List[Union[FileContextToken, List[Tuple[FileContextToken, FileContextToken]]]]
-]
-
-Defines = List[List[str]]
-
-Primitives = Union[float, bool, str, int]
-
-# Old config parser gives primitives (which are without any context)
-# while the new config parser gives primitives WITH context.
-# Thus, we need a type to represent a union of these two as both
-# parsers are in use.
-MaybeWithContext = Union[PrimitiveWithContext, Primitives]

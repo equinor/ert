@@ -2,6 +2,8 @@ from collections import defaultdict
 from textwrap import indent
 from typing import List, Optional, Tuple, Union
 
+from ert.parsing.lark_parser_error_info import ErrorInfo
+
 
 class ConfigWarning(UserWarning):
     pass
@@ -10,34 +12,34 @@ class ConfigWarning(UserWarning):
 class ConfigValidationError(ValueError):
     def __init__(
         self,
-        errors: Union[str, List[Tuple[Optional[str], str]]],
+        errors: Union[str, List[Union[ErrorInfo, Tuple[Optional[str], str]]]],
         config_file: Optional[str] = None,
     ) -> None:
-        self.errors: List[Tuple[Optional[str], str]] = []
+        self.errors: List[ErrorInfo] = []
         if isinstance(errors, list):
             for err in errors:
                 if isinstance(err, str):
-                    self.errors.append((config_file, err))
+                    self.errors.append(ErrorInfo(message=err, filename=config_file))
+                elif isinstance(err, ErrorInfo):
+                    self.errors.append(err)
                 else:
                     filename, error = err
-                    self.errors.append((filename, error))
+                    self.errors.append(ErrorInfo(message=err, filename=filename))
         else:
-            self.errors.append((config_file, errors))
+            self.errors.append(ErrorInfo(message=errors, filename=config_file))
         super().__init__(
-            ";".join(
-                [
-                    self._get_error_message(config_file, errors)
-                    for config_file, errors in self.errors
-                ]
-            )
+            ";".join([self._get_error_message(error) for error in self.errors])
         )
 
     @classmethod
-    def _get_error_message(cls, config_file: Optional[str], error: str) -> str:
+    def _get_error_message(cls, info: ErrorInfo) -> str:
         return (
-            (f"Parsing config file `{config_file}` " f"resulted in the errors: {error}")
-            if config_file is not None
-            else error
+            (
+                f"Parsing config file `{info.filename}` "
+                f"resulted in the error: {info.message}"
+            )
+            if info.filename is not None
+            else info.message
         )
 
     def get_error_messages(self):
@@ -61,10 +63,4 @@ class ConfigValidationError(ValueError):
 
     @classmethod
     def from_collected(cls, errors: List["ConfigValidationError"]):
-        return cls(
-            [
-                (config_file, message)
-                for error in errors
-                for config_file, message in error.errors
-            ]
-        )
+        return cls([error_info for error in errors for error_info in error.errors])

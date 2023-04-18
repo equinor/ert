@@ -5,8 +5,17 @@ from typing import Any, Dict, List, Mapping, Optional, Union
 
 from pydantic import BaseModel
 
-from .config_errors import ConfigValidationError
-from .lark_parser_types import FileContextToken, Instruction
+from . import ConfigValidationError
+from .lark_parser_error_info import ErrorInfo
+from .lark_parser_file_context_token import FileContextToken
+from .lark_parser_primitive_tokens import (
+    BoolToken,
+    FloatToken,
+    IntToken,
+    PrimitiveWithContext,
+    StringToken,
+)
+from .lark_parser_types import Instruction
 
 # These keys are used as options in KEY:VALUE statements
 BASE_SURFACE_KEY = "BASE_SURFACE"
@@ -167,55 +176,84 @@ class SchemaItem(BaseModel):
     # Allowed values for specific arguments, if no entry, all values allowed
     indexed_selection_set: Mapping[int, List[str]] = {}
 
-    def check_valid(self, val: "FileContextToken", index: int) -> None:
-        if (
+    def _is_in_allowed_values_for_kw(
+        self, token: "FileContextToken", index: int
+    ) -> None:
+        return not (
             index in self.indexed_selection_set
-            and val not in self.indexed_selection_set[index]
-        ):
-            raise ConfigValidationError(
-                f"{self.kw!r} argument {index!r} must be one of"
-                f" {self.indexed_selection_set[index]!r} was {val.value!r}",
-                config_file=val.filename,
+            and token not in self.indexed_selection_set[index]
+        )
+
+    def token_to_value_with_context(
+        self, token: FileContextToken, index: int, keyword: FileContextToken
+    ) -> Optional[PrimitiveWithContext]:
+        """
+        Converts a FileContextToken to a typed primitive that
+        behaves like a primitive, but also contains its location in the file,
+        as well the keyword it pertains to and its location in the file.
+
+        :param token: the token to be converted
+        :param index: the index of the token
+        :param keyword: the keyword it pertains to
+
+        :return: The token as a primitive with context of itself and its keyword
+        """
+        # pylint: disable=too-many-return-statements, too-many-branches
+
+        errors = []
+        if not self._is_in_allowed_values_for_kw(token, index):
+            errors.append(
+                ErrorInfo(
+                    message=f"{self.kw!r} argument {index!r} must be one of"
+                    f" {self.indexed_selection_set[index]!r} was {token.value!r}",
+                    filename=token.filename,
+                    originates_from=token,
+                )
             )
 
-    def convert(
-        self, token: FileContextToken, index: int
-    ) -> Optional[Union[str, int, float]]:
-        # pylint: disable=too-many-branches, too-many-return-statements
-        self.check_valid(token, index)
         if not len(self.type_map) > index:
-            return token
+            return StringToken(str(token), token, keyword)
         val_type = self.type_map[index]
         if val_type is None:
-            return token
+            return StringToken(str(token), token, keyword)
         if val_type == SchemaType.CONFIG_BOOL:
             if token.lower() == "true":
-                return True
+                return BoolToken(True, token, keyword)
             elif token.lower() == "false":
-                return False
+                return BoolToken(False, token, keyword)
             else:
-                raise ConfigValidationError(
-                    f"{self.kw!r} must have a boolean value"
-                    f" as argument {index + 1!r}",
-                    config_file=token.filename,
-                ) from None
+                errors.append(
+                    ErrorInfo(
+                        message=f"{self.kw!r} must have a boolean value"
+                        f" as argument {index + 1!r}",
+                        filename=token.filename,
+                        originates_from=token,
+                    )
+                )
         if val_type == SchemaType.CONFIG_INT:
             try:
-                return int(token)
+                return IntToken(int(token), token, keyword)
             except ValueError:
-                raise ConfigValidationError(
-                    f"{self.kw!r} must have an integer value"
-                    f" as argument {index + 1!r}",
-                    config_file=token.filename,
-                ) from None
+                errors.append(
+                    ErrorInfo(
+                        message=f"{self.kw!r} must have an integer value"
+                        f" as argument {index + 1!r}",
+                        filename=token.filename,
+                        originates_from=token,
+                    )
+                )
         if val_type == SchemaType.CONFIG_FLOAT:
             try:
-                return float(token)
+                return FloatToken(float(token), token, keyword)
             except ValueError:
-                raise ConfigValidationError(
-                    f"{self.kw!r} must have a number as argument {index + 1!r}",
-                    config_file=token.filename,
-                ) from None
+                errors.append(
+                    ErrorInfo(
+                        message=f"{self.kw!r} must have a number "
+                        f"as argument {index + 1!r}",
+                        filename=token.filename,
+                        originates_from=token,
+                    )
+                )
         if val_type in [SchemaType.CONFIG_PATH, SchemaType.CONFIG_EXISTING_PATH]:
             path = str(token)
             if not os.path.isabs(token):
@@ -226,45 +264,74 @@ class SchemaItem(BaseModel):
                 err = f'Cannot find file or directory "{token.value}" \n'
                 if path != token:
                     err += f"The configured value was {path!r} "
-                raise ConfigValidationError(err, config_file=token.filename)
-            return path
+                errors.append(
+                    ErrorInfo(
+                        message=err, filename=token.filename, originates_from=token
+                    )
+                )
+            return StringToken(path, token, keyword)
         if val_type == SchemaType.CONFIG_EXECUTABLE:
             path = str(token)
             if not os.path.isabs(token) and not os.path.exists(token):
                 path = shutil.which(token)
-                if path is None:
-                    raise ConfigValidationError(
-                        f"Could not find executable {token.value!r}",
-                        config_file=token.filename,
+
+            if path is None:
+                errors.append(
+                    ErrorInfo(
+                        message=f"Could not find executable {token.value!r}",
+                        filename=token.filename,
+                        originates_from=token,
                     )
-            if not os.access(path, os.X_OK):
+                )
+            elif not os.access(path, os.X_OK):
                 context = (
                     f"{token.value!r} which was resolved to {path!r}"
                     if token.value != path
                     else f"{token.value!r}"
                 )
-                raise ConfigValidationError(
-                    f"File not executable: {context}",
-                    config_file=token.filename,
+                errors.append(
+                    ErrorInfo(
+                        message=f"File not executable: {context}",
+                        filename=token.filename,
+                        originates_from=token,
+                    )
                 )
-            return path
-        return str(token)
+            return StringToken(path, token, keyword)
+        return StringToken(str(token), token, keyword)
 
-    def apply_constraints(self, args: List[Any]) -> Union[List[Any], Any]:
+    def apply_constraints(
+        self,
+        args: List[Any],
+        keyword: FileContextToken,
+    ) -> Union[List[Any], Any]:
+        errors = []
         args = [
-            self.convert(x, i) if isinstance(x, FileContextToken) else x
+            self.token_to_value_with_context(x, i, keyword)
+            if isinstance(x, FileContextToken)
+            else x
             for i, x in enumerate(args)
         ]
+
         if self.argc_min != -1 and len(args) < self.argc_min:
-            raise ConfigValidationError(
-                f"{self.kw} must have at least {self.argc_min} arguments"
+            errors.append(
+                ErrorInfo(
+                    message=f"{self.kw} must have at least {self.argc_min} arguments",
+                    filename=keyword.filename,
+                    originates_from=StringToken.from_token(keyword),
+                )
             )
-        if self.argc_max != -1 and len(args) > self.argc_max:
-            raise ConfigValidationError(
-                f"{self.kw} must have maximum {self.argc_max} arguments"
+        elif self.argc_max != -1 and len(args) > self.argc_max:
+            errors.append(
+                ErrorInfo(
+                    message=f"{self.kw} must have maximum {self.argc_max} arguments",
+                    filename=keyword.filename,
+                    originates_from=StringToken.from_token(keyword),
+                )
             )
-        if self.argc_max == 1 and self.argc_min == 1:
+
+        elif self.argc_max == 1 and self.argc_min == 1:
             return args[0]
+
         return args
 
     def join_args(self, line: List[Any]) -> List[Any]:
@@ -283,11 +350,19 @@ def check_required(
     config_dict: Mapping[str, Instruction],
     filename: str,
 ) -> None:
+    errors = []
+
     for constraints in schema.values():
         if constraints.required_set and constraints.kw not in config_dict:
-            raise ConfigValidationError(
-                f"{constraints.kw} must be set.", config_file=filename
+            errors.append(
+                ErrorInfo(
+                    message=f"{constraints.kw} must be set.",
+                    filename=filename,
+                )
             )
+
+    if len(errors) > 0:
+        raise ConfigValidationError(errors=errors)
 
 
 def float_keyword(keyword: str) -> SchemaItem:

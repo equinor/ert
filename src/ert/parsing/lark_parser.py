@@ -207,7 +207,7 @@ def _tree_to_dict(
 
             args = constraints.join_args(args)
             args = _substitute_args(args, constraints, defines)
-            args = constraints.apply_constraints(args)
+            args = constraints.apply_constraints(args, kw)
 
             if constraints.multi_occurrence:
                 arglist = config_dict.get(kw, [])
