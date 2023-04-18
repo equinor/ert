@@ -138,25 +138,36 @@ ENSPATH storage
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_that_queue_config_content_negative_value_invalid():
+@pytest.mark.parametrize(
+    "max_running_value, expected_error",
+    [
+        (100, None),  # positive integer
+        (-1, "QUEUE_OPTION MAX_RUNNING is negative"),  # negative integer
+        ("not_an_integer", "QUEUE_OPTION MAX_RUNNING is not an integer"),  # non-integer
+    ],
+)
+def test_queue_config_max_running_invalid_values(max_running_value, expected_error):
     test_config_file_base = "test"
     test_config_file_name = f"{test_config_file_base}.ert"
     test_config_contents = dedent(
-        """
+        f"""
         NUM_REALIZATIONS  1
         DEFINE <STORAGE> storage/<CONFIG_FILE_BASE>-<DATE>
         RUNPATH <STORAGE>/runpath/realization-<IENS>/iter-<ITER>
         ENSPATH <STORAGE>/ensemble
         QUEUE_SYSTEM LOCAL
-        QUEUE_OPTION LOCAL MAX_RUNNING -4
+        QUEUE_OPTION LOCAL MAX_RUNNING {max_running_value}
         """
     )
     with open(test_config_file_name, "w", encoding="utf-8") as fh:
         fh.write(test_config_contents)
-    with pytest.raises(
-        expected_exception=ConfigValidationError,
-        match="QUEUE_OPTION MAX_RUNNING is negative",
-    ):
+    if expected_error:
+        with pytest.raises(
+            expected_exception=ConfigValidationError,
+            match=expected_error,
+        ):
+            ErtConfig.from_file(test_config_file_name)
+    else:
         ErtConfig.from_file(test_config_file_name)
 
 
@@ -169,7 +180,6 @@ def test_that_queue_config_dict_negative_value_invalid(
         config_dict[ConfigKeys.QUEUE_OPTION].append(
             ["LSF", "MAX_RUNNING", "-6"],
         )
-
     with pytest.raises(
         expected_exception=ConfigValidationError,
         match="QUEUE_OPTION MAX_RUNNING is negative",
