@@ -32,32 +32,33 @@ class ConfigValidationError(ValueError):
         )
 
     @classmethod
+    def from_info(cls, info: ErrorInfo):
+        return cls([info])
+
+    @classmethod
     def _get_error_message(cls, info: ErrorInfo) -> str:
         return (
             (
                 f"Parsing config file `{info.filename}` "
-                f"resulted in the error: {info.message}"
+                f"resulted in the errors: {info.message}"
             )
             if info.filename is not None
             else info.message
         )
 
     def get_error_messages(self):
-        return [
-            self._get_error_message(config_file, errors)
-            for config_file, errors in self.errors
-        ]
+        return [self._get_error_message(error) for error in self.errors]
 
     def get_cli_message(self):
         by_filename = defaultdict(list)
-        for filename, error in self.errors:
-            by_filename[filename].append(error)
+        for error in self.errors:
+            by_filename[error.filename].append(error)
+
         return ";".join(
             [
-                self._get_error_message(
-                    config_file, "\n" + indent("\n".join(errors), "  * ")
-                )
-                for config_file, errors in by_filename.items()
+                f"Parsing config file `{filename}` resulted in the errors: \n"
+                + indent("\n".join([err.message for err in errors]), "  * ")
+                for filename, errors in by_filename.items()
             ]
         )
 

@@ -200,9 +200,8 @@ class SchemaItem(BaseModel):
         """
         # pylint: disable=too-many-return-statements, too-many-branches
 
-        errors = []
         if not self._is_in_allowed_values_for_kw(token, index):
-            errors.append(
+            raise ConfigValidationError.from_info(
                 ErrorInfo(
                     message=f"{self.kw!r} argument {index!r} must be one of"
                     f" {self.indexed_selection_set[index]!r} was {token.value!r}",
@@ -222,19 +221,17 @@ class SchemaItem(BaseModel):
             elif token.lower() == "false":
                 return BoolToken(False, token, keyword)
             else:
-                errors.append(
-                    ErrorInfo(
-                        message=f"{self.kw!r} must have a boolean value"
-                        f" as argument {index + 1!r}",
-                        filename=token.filename,
-                        originates_from=token,
-                    )
+                raise ConfigValidationError.from_info(
+                    message=f"{self.kw!r} must have a boolean value"
+                    f" as argument {index + 1!r}",
+                    filename=token.filename,
+                    originates_from=token,
                 )
         if val_type == SchemaType.CONFIG_INT:
             try:
                 return IntToken(int(token), token, keyword)
             except ValueError:
-                errors.append(
+                raise ConfigValidationError.from_info(
                     ErrorInfo(
                         message=f"{self.kw!r} must have an integer value"
                         f" as argument {index + 1!r}",
@@ -246,7 +243,7 @@ class SchemaItem(BaseModel):
             try:
                 return FloatToken(float(token), token, keyword)
             except ValueError:
-                errors.append(
+                raise ConfigValidationError.from_info(
                     ErrorInfo(
                         message=f"{self.kw!r} must have a number "
                         f"as argument {index + 1!r}",
@@ -264,7 +261,7 @@ class SchemaItem(BaseModel):
                 err = f'Cannot find file or directory "{token.value}" \n'
                 if path != token:
                     err += f"The configured value was {path!r} "
-                errors.append(
+                raise ConfigValidationError.from_info(
                     ErrorInfo(
                         message=err, filename=token.filename, originates_from=token
                     )
@@ -276,7 +273,7 @@ class SchemaItem(BaseModel):
                 path = shutil.which(token)
 
             if path is None:
-                errors.append(
+                raise ConfigValidationError.from_info(
                     ErrorInfo(
                         message=f"Could not find executable {token.value!r}",
                         filename=token.filename,
@@ -289,7 +286,7 @@ class SchemaItem(BaseModel):
                     if token.value != path
                     else f"{token.value!r}"
                 )
-                errors.append(
+                raise ConfigValidationError.from_info(
                     ErrorInfo(
                         message=f"File not executable: {context}",
                         filename=token.filename,
@@ -305,12 +302,20 @@ class SchemaItem(BaseModel):
         keyword: FileContextToken,
     ) -> Union[List[Any], Any]:
         errors = []
-        args = [
-            self.token_to_value_with_context(x, i, keyword)
-            if isinstance(x, FileContextToken)
-            else x
-            for i, x in enumerate(args)
-        ]
+
+        args_with_context = []
+        for i, x in enumerate(args):
+            if isinstance(x, FileContextToken):
+                try:
+                    value_with_context = self.token_to_value_with_context(x, i, keyword)
+                    args_with_context.append(value_with_context)
+                except ConfigValidationError as err:
+                    errors.append(err)
+                    continue
+            else:
+                args_with_context.append(x)
+
+        args = args_with_context
 
         if self.argc_min != -1 and len(args) < self.argc_min:
             errors.append(
@@ -331,6 +336,9 @@ class SchemaItem(BaseModel):
 
         elif self.argc_max == 1 and self.argc_min == 1:
             return args[0]
+
+        if len(errors) > 0:
+            raise ConfigValidationError.from_collected(errors)
 
         return args
 

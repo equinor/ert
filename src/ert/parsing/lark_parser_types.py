@@ -1,6 +1,5 @@
-from typing import List, Tuple, Union, cast
+from typing import List, Tuple, Union
 
-from lark import Token
 
 from ert.parsing.lark_parser_file_context_token import FileContextToken
 from ert.parsing.lark_parser_primitive_tokens import PrimitiveWithContext
