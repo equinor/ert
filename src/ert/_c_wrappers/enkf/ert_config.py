@@ -14,7 +14,7 @@ from ert._c_wrappers.config import ConfigParser
 from ert._c_wrappers.enkf.analysis_config import AnalysisConfig
 from ert._c_wrappers.enkf.config_keys import ConfigKeys
 from ert._c_wrappers.enkf.ensemble_config import EnsembleConfig
-from ert._c_wrappers.enkf.enums import ErtImplType, HookRuntime
+from ert._c_wrappers.enkf.enums import HookRuntime
 from ert._c_wrappers.enkf.model_config import ModelConfig
 from ert._c_wrappers.enkf.queue_config import QueueConfig
 from ert._c_wrappers.job_queue import (
@@ -98,7 +98,7 @@ class ErtConfig:
 
         ErtConfig._validate_dict(config_dict, config_file)
         ensemble_config = EnsembleConfig.from_dict(config_dict=config_dict)
-        ErtConfig._validate_ensemble_config(ensemble_config, config_file)
+        ErtConfig._validate_ensemble_config(config_file, config_dict)
         model_config = ModelConfig.from_dict(ensemble_config.refcase, config_dict)
         runpath = model_config.runpath_format_string
         jobname = model_config.jobname_format_string
@@ -296,22 +296,43 @@ class ErtConfig:
         cls._validate_queue_option_max_running(config_file, config_dict)
 
     @classmethod
-    def _validate_ensemble_config(cls, ensemble_config, config_path):
-        for key in ensemble_config.getKeylistFromImplType(ErtImplType.GEN_KW):
-            if ensemble_config.getUseForwardInit(key):
+    def _validate_ensemble_config(cls, config_file, config_dict):
+        def find_first_gen_kw_arg(kw_id: str, matching: str):
+            all_arglists = [
+                arglist for arglist in config_dict["GEN_KW"] if arglist[0] == kw_id
+            ]
+
+            # Example all_arglists:
+            # [["SIGMA", "sigma.tmpl", "coarse.sigma", "sigma.dist"]]
+            # It is expected to be of length 1
+            if len(all_arglists) > 1:
+                raise ConfigValidationError(f"Found two GEN_KW {kw_id} declarations")
+
+            return next(
+                (arg for arg in all_arglists[0] if matching.lower() in arg.lower()),
+                None,
+            )
+
+        gen_kw_id_list = list({x[0] for x in config_dict.get("GEN_KW", [])})
+
+        for kw_id in gen_kw_id_list:
+            use_fwd_init_token = find_first_gen_kw_arg(kw_id, "FORWARD_INIT:TRUE")
+
+            if use_fwd_init_token is not None:
                 raise ConfigValidationError(
-                    config_file=config_path,
+                    config_file=config_file,
                     errors=[
-                        "Loading GEN_KW from files created by the forward model "
-                        "is not supported."
+                        "Loading GEN_KW from files created by the forward "
+                        "model is not supported."
                     ],
                 )
-            node = ensemble_config[key]
-            init_file_fmt = node.forward_init_file
-            if init_file_fmt and "%" not in init_file_fmt:
+
+            init_files_token = find_first_gen_kw_arg(kw_id, "INIT_FILES:")
+
+            if init_files_token is not None and "%" not in init_files_token:
                 raise ConfigValidationError(
-                    config_file=config_path,
-                    errors=["Loading GEN_KW from files requires %d in file format"],
+                    config_file=config_file,
+                    errors="Loading GEN_KW from files requires %d in file format",
                 )
 
     @classmethod
