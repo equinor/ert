@@ -297,28 +297,26 @@ class ErtConfig:
 
     @classmethod
     def _validate_ensemble_config(cls, config_file, config_dict):
-        def find_arg(key: str, startswith: str):
-            all_arglists = [x for x in config_dict["GEN_KW"] if x[0] == key]
+        def find_first_gen_kw_arg(kw_id: str, matching: str):
+            all_arglists = [
+                arglist for arglist in config_dict["GEN_KW"] if arglist[0] == kw_id
+            ]
 
+            # Example all_arglists:
+            # [["SIGMA", "sigma.tmpl", "coarse.sigma", "sigma.dist"]]
+            # It is expected to be of length 1
             if len(all_arglists) > 1:
-                raise ConfigValidationError(f"Found two GEN_KW {key} declarations")
+                raise ConfigValidationError(f"Found two GEN_KW {kw_id} declarations")
 
-            first_arglist = all_arglists[0]
-            init_files_arg = next(
-                (
-                    x
-                    for x in first_arglist
-                    if x.strip().lower().startswith(startswith.lower())
-                ),
+            return next(
+                (arg for arg in all_arglists[0] if matching.lower() in arg.lower()),
                 None,
             )
 
-            return init_files_arg
+        gen_kw_id_list = list({x[0] for x in config_dict.get("GEN_KW", [])})
 
-        kwlist = list({x[0] for x in config_dict.get("GEN_KW", [])})
-
-        for key in kwlist:
-            use_fwd_init_token = find_arg(key, "FORWARD_INIT:TRUE")
+        for kw_id in gen_kw_id_list:
+            use_fwd_init_token = find_first_gen_kw_arg(kw_id, "FORWARD_INIT:TRUE")
 
             if use_fwd_init_token is not None:
                 raise ConfigValidationError(
@@ -329,7 +327,7 @@ class ErtConfig:
                     ],
                 )
 
-            init_files_token = find_arg(key, "INIT_FILES:")
+            init_files_token = find_first_gen_kw_arg(kw_id, "INIT_FILES:")
 
             if init_files_token is not None and "%" not in init_files_token:
                 raise ConfigValidationError(
