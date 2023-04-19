@@ -1,134 +1,93 @@
-from cwrap import BaseCClass
+from __future__ import annotations
+
+import math
+import os
+from dataclasses import dataclass
+from pathlib import Path
+from typing import TYPE_CHECKING, Optional
+
+import cwrap
+import numpy as np
+import xtgeo
+from ecl.eclfile import EclKW
 from ecl.grid import EclGrid
+from numpy import ma
 
-from ert._c_wrappers import ResPrototype
-from ert._c_wrappers.enkf.enums import EnkfFieldFileFormatEnum
+from ert._c_wrappers.enkf.config.parameter_config import ParameterConfig
 
-from .field_type_enum import FieldTypeEnum
+if TYPE_CHECKING:
+    import numpy.typing as npt
+
+    from ert.storage import EnsembleAccessor, EnsembleReader
 
 
-class FieldConfig(BaseCClass):
-    TYPE_NAME = "field_config"
+@dataclass
+class Field(ParameterConfig):
+    nx: int
+    ny: int
+    nz: int
+    file_format: str
+    output_transformation: str
+    input_transformation: str
+    truncation_min: Optional[float]
+    truncation_max: Optional[float]
+    forward_init_file: str
+    output_file: Path
+    grid_file: str
 
-    _alloc = ResPrototype(
-        "void*  field_config_alloc_empty(char* , ecl_grid , bool)", bind=False
-    )
-    _free = ResPrototype("void   field_config_free( field_config )")
-    _get_type = ResPrototype("field_type_enum field_config_get_type(field_config)")
-    _get_truncation_mode = ResPrototype(
-        "int    field_config_get_truncation_mode(field_config)"
-    )
-    _get_truncation_min = ResPrototype(
-        "double field_config_get_truncation_min(field_config)"
-    )
-    _get_truncation_max = ResPrototype(
-        "double field_config_get_truncation_max(field_config)"
-    )
-    _get_init_transform_name = ResPrototype(
-        "char*  field_config_get_init_transform_name(field_config)"
-    )
-    _get_output_transform_name = ResPrototype(
-        "char*  field_config_get_output_transform_name(field_config)"
-    )
-    _ijk_active = ResPrototype(
-        "bool   field_config_ijk_active(field_config, int, int, int)"
-    )
-    _get_nx = ResPrototype("int    field_config_get_nx(field_config)")
-    _get_ny = ResPrototype("int    field_config_get_ny(field_config)")
-    _get_nz = ResPrototype("int    field_config_get_nz(field_config)")
-    _get_grid = ResPrototype("ecl_grid_ref field_config_get_grid(field_config)")
-    _get_data_size = ResPrototype(
-        "int field_config_get_data_size_from_grid(field_config)"
-    )
-    _export_format = ResPrototype(
-        "enkf_field_file_format_enum field_config_default_export_format(char*)",
-        bind=False,
-    )
-    _guess_filetype = ResPrototype(
-        "enkf_field_file_format_enum field_config_guess_file_type(char*)", bind=False
-    )
+    def load(self, run_path: Path, real_nr: int, ensemble: EnsembleAccessor):
+        file_name = self.forward_init_file
+        if "%d" in file_name:
+            file_name = file_name % real_nr
+        file_path = run_path / file_name
 
-    def __init__(self, kw, grid):
-        c_ptr = self._alloc(kw, grid, False)
-        super().__init__(c_ptr)
-
-    @classmethod
-    def exportFormat(cls, filename):
-        export_format = cls._export_format(filename)
-        if export_format in [
-            EnkfFieldFileFormatEnum.ECL_GRDECL_FILE,
-            EnkfFieldFileFormatEnum.RMS_ROFF_FILE,
-        ]:
-            return export_format
-        else:
-            raise ValueError(
-                f"Could not determine grdecl / roff format from:{filename}"
+        key = self.name
+        grid = ensemble.experiment.grid
+        if isinstance(grid, xtgeo.Grid):
+            try:
+                props = xtgeo.gridproperty_from_file(
+                    pfile=file_path,
+                    name=key,
+                    grid=grid,
+                )
+                data = props.get_npvalues1d(order="C", fill_value=np.nan)
+            except PermissionError as err:
+                msg = f"Failed to open init file for parameter {key}"
+                raise RuntimeError(msg) from err
+        elif isinstance(grid, EclGrid):
+            with cwrap.open(str(file_path), "rb") as f:
+                param = EclKW.read_grdecl(f, self.name)
+            mask = [not e for e in grid.export_actnum()]
+            masked_array = ma.MaskedArray(
+                data=param.numpy_view(), mask=mask, fill_value=np.nan
             )
+            data = masked_array.filled()
 
-    @classmethod
-    def guessFiletype(cls, filename):
-        return cls._guess_filetype(filename)
+        trans = self.input_transformation
+        data_transformed = field_transform(data, trans) if trans else data
+        ensemble.save_field(key, real_nr, data_transformed)
 
-    def get_type(self) -> FieldTypeEnum:
-        return self._get_type()
+    def save(self, run_path: Path, real_nr: int, ensemble: EnsembleReader):
+        file_out = run_path.joinpath(self.output_file)
+        if os.path.islink(file_out):
+            os.unlink(file_out)
+        ensemble.export_field(self.name, real_nr, file_out)
 
-    def get_truncation_mode(self):
-        return self._get_truncation_mode()
 
-    def get_truncation_min(self):
-        return self._get_truncation_min()
+# pylint: disable=unnecessary-lambda
+_TRANSFORM_FUNCTIONS = {
+    "LN": lambda x: math.log(x, math.e),
+    "LOG": lambda x: math.log(x, math.e),
+    "LN0": lambda x: math.log(x + 0.000001, math.e),
+    "LOG10": lambda x: math.log(x, 10),
+    "EXP": lambda x: math.exp(x),
+    "EXP0": lambda x: math.exp(x) - 0.000001,
+    "POW10": lambda x: math.log(x, math.e),
+    "TRUNC_POW10": lambda x: math.pow(max(x, 0.001), 10),
+}
 
-    def get_init_transform_name(self):
-        return self._get_init_transform_name()
+TRANSFORM_FUNCTIONS = {k: np.vectorize(v) for k, v in _TRANSFORM_FUNCTIONS.items()}
 
-    def get_output_transform_name(self):
-        return self._get_output_transform_name()
 
-    def get_truncation_max(self):
-        return self._get_truncation_max()
-
-    def get_nx(self):
-        return self._get_nx()
-
-    def get_ny(self):
-        return self._get_ny()
-
-    def get_nz(self):
-        return self._get_nz()
-
-    def get_data_size(self) -> int:
-        return self._get_data_size()
-
-    def get_grid(self) -> EclGrid:
-        return self._get_grid()
-
-    def ijk_active(self, i, j, k):
-        return self._ijk_active(i, j, k)
-
-    def free(self):
-        self._free()
-
-    def __repr__(self):
-        return self._create_repr(
-            f"type = {self.get_type()}, "
-            f"nx = {self.get_nx()}, ny = {self.get_ny()}, nz = {self.get_nz()}"
-        )
-
-    def __ne__(self, other) -> bool:
-        return not self == other
-
-    def __eq__(self, other) -> bool:
-        if self.get_init_transform_name() != other.get_init_transform_name():
-            return False
-        if self.get_output_transform_name() != other.get_output_transform_name():
-            return False
-        if self.get_truncation_max() != other.get_truncation_max():
-            return False
-        if self.get_truncation_min() != other.get_truncation_min():
-            return False
-        if self.get_truncation_mode() != other.get_truncation_mode():
-            return False
-        if self.get_type() != other.get_type():
-            return False
-
-        return True
+def field_transform(data: npt.ArrayLike, transform_name: str) -> npt.ArrayLike:
+    return TRANSFORM_FUNCTIONS[transform_name](data)

@@ -1,5 +1,6 @@
+from __future__ import annotations
+
 import os
-import uuid
 from typing import Optional
 
 from ert_storage.security import security
@@ -7,17 +8,18 @@ from fastapi import Depends
 
 from ert._c_wrappers.enkf import EnKFMain, ErtConfig
 from ert.libres_facade import LibresFacade
+from ert.storage import StorageReader, open_storage
 
-__all__ = ["LibresFacade", "get_res"]
+__all__ = ["LibresFacade", "get_res", "get_storage"]
 
 
 _libres_facade: Optional[LibresFacade] = None
 _ert: Optional[EnKFMain] = None
 _config: Optional[ErtConfig] = None
-ids = {}
+_storage: Optional[StorageReader] = None
 
 
-def init_facade() -> None:
+def init_facade() -> LibresFacade:
     # pylint: disable=global-statement
     global _libres_facade
     global _ert
@@ -29,29 +31,22 @@ def init_facade() -> None:
     os.chdir(_config.config_path)
     _ert = EnKFMain(_config, read_only=True)
     _libres_facade = LibresFacade(_ert)
-
-
-def get_id(type_key, name):
-    if type_key not in ids:
-        ids[type_key] = {}
-    if name not in ids[type_key]:
-        ids[type_key][name] = uuid.uuid4()
-    return ids[type_key][name]
-
-
-def get_name(type_key, type_uuid):
-    if type_key not in ids:
-        ids[type_key] = {}
-    for name, name_id in ids[type_key].items():
-        if str(name_id) == str(type_uuid):
-            return name
-    raise ValueError(f"No such uuid for type {type_key}")
+    return _libres_facade
 
 
 def get_res(*, _: None = Depends(security)) -> LibresFacade:
     if _libres_facade is None:
-        init_facade()
+        return init_facade()
     return _libres_facade
+
+
+def get_storage(*, res: LibresFacade = Depends(get_res)) -> StorageReader:
+    # pylint: disable=global-statement
+    global _storage
+    if _storage is None:
+        return (_storage := open_storage(res.enspath))
+    _storage.refresh()
+    return _storage
 
 
 def reset_res(*, _: None = Depends(security)) -> None:

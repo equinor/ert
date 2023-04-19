@@ -1,23 +1,35 @@
+from __future__ import annotations
+
 import logging
 import os
 import warnings
-from typing import Dict, List, Optional, Union
+from dataclasses import dataclass
+from pathlib import Path
+from typing import TYPE_CHECKING, Dict, List, Optional, Union
 
 from cwrap import BaseCClass
 from ecl.ecl_util import EclFileEnum, get_file_type
 from ecl.grid import EclGrid
 from ecl.summary import EclSum
-from ecl.util.util import StringList
 
 from ert import _clib
 from ert._c_wrappers import ResPrototype
-from ert._c_wrappers.config.config_parser import ConfigValidationError, ConfigWarning
 from ert._c_wrappers.config.rangestring import rangestring_to_list
+from ert._c_wrappers.enkf import GenKwConfig
 from ert._c_wrappers.enkf.config import EnkfConfigNode
+from ert._c_wrappers.enkf.config.field_config import TRANSFORM_FUNCTIONS, Field
+from ert._c_wrappers.enkf.config.parameter_config import ParameterConfig
+from ert._c_wrappers.enkf.config.surface_config import SurfaceConfig
 from ert._c_wrappers.enkf.config_keys import ConfigKeys
 from ert._c_wrappers.enkf.enums import EnkfVarType, ErtImplType, GenDataFileType
+from ert.parsing import ConfigValidationError, ConfigWarning
+
+if TYPE_CHECKING:
+    from ecl.util.util import StringList
 
 logger = logging.getLogger(__name__)
+
+ParameterConfiguration = List[Union[Field, SurfaceConfig, GenKwConfig]]
 
 
 def _get_abs_path(file):
@@ -116,6 +128,18 @@ def _str_to_bool(txt: str) -> bool:
         return False
 
 
+@dataclass
+class ConfigNodeMeta:
+    """Metadata Dataclass for EnkfConfigNode contained in EnsembleConfig"""
+
+    key: str = ""
+    forward_init: bool = False
+    init_file: str = ""
+    input_file: str = ""
+    output_file: str = ""
+    var_type: EnkfVarType = EnkfVarType.INVALID_VAR
+
+
 class EnsembleConfig(BaseCClass):
     TYPE_NAME = "ens_config"
     _alloc_full = ResPrototype("void* ensemble_config_alloc_full(char*)", bind=False)
@@ -152,19 +176,29 @@ class EnsembleConfig(BaseCClass):
 
     @staticmethod
     def _load_refcase(refcase_file: Optional[str]) -> Optional[EclSum]:
-        """
-        If the user has not given a refcase_file it will be
-        impossible to use wildcards when expanding summary variables.
-        """
         if refcase_file is None:
             return None
+
+        refcase_filepath = Path(refcase_file)
+        refcase_file = str(refcase_filepath.parent / refcase_filepath.stem)
+
+        if not os.path.exists(refcase_file + ".UNSMRY"):
+            raise ConfigValidationError(
+                f"Cannot find UNSMRY file for refcase provided! {refcase_file}.UNSMRY"
+            )
+
+        if not os.path.exists(refcase_file + ".SMSPEC"):
+            raise ConfigValidationError(
+                f"Cannot find SMSPEC file for refcase provided! {refcase_file}.SMSPEC"
+            )
+
         # defaults for loading refcase - necessary for using the function
         # exposed in python part of ecl
         refcase_load_args = {
             "load_case": refcase_file,
             "join_string": ":",
             "include_restart": True,
-            "lazy_load": True,
+            "lazy_load": False,
             "file_options": 0,
         }
         return EclSum(**refcase_load_args)
@@ -194,6 +228,9 @@ class EnsembleConfig(BaseCClass):
         self.refcase: Optional[EclSum] = self._load_refcase(ref_case_file)
         self._gen_kw_tag_format = tag_format
         c_ptr = self._alloc_full(self._gen_kw_tag_format)
+        self.py_nodes = {}
+
+        self._config_node_meta: Dict[str, ConfigNodeMeta] = {}
 
         if c_ptr is None:
             raise ValueError("Failed to construct EnsembleConfig instance")
@@ -202,14 +239,21 @@ class EnsembleConfig(BaseCClass):
         for gene_data in gen_data_list:
             node = self.gen_data_node(gene_data)
             if node is not None:
+                self._create_node_metainfo(gene_data, 1, EnkfVarType.DYNAMIC_RESULT)
                 self.addNode(node)
 
         for gen_kw in gen_kw_list:
             gen_kw_node = self.gen_kw_node(gen_kw, tag_format)
+            self._create_node_metainfo(gen_kw, 4, EnkfVarType.PARAMETER)
+            self._config_node_meta[gen_kw[0]].output_file = gen_kw[2]
+            init_file = self._config_node_meta[gen_kw[0]].init_file
+            if init_file:
+                self._config_node_meta[gen_kw[0]].init_file = os.path.abspath(init_file)
             self.addNode(gen_kw_node)
 
         for surface in surface_list:
             surface_node = self.get_surface_node(surface)
+            self._create_node_metainfo(surface, 1, EnkfVarType.PARAMETER)
             self.addNode(surface_node)
 
         for key in summary_list:
@@ -224,11 +268,19 @@ class EnsembleConfig(BaseCClass):
                 raise ConfigValidationError(
                     "In order to use the FIELD keyword, a GRID must be supplied."
                 )
-            field_node = self.get_field_node(field, self.grid)
+            field_node = self.get_field_node(field, self.grid, grid_file)
+            self._create_node_metainfo(field, 2)
+            self._storeFieldMetaInfo(field)
             self.addNode(field_node)
+
         if schedule_file:
             schedule_file_node = self._get_schedule_file_node(
                 schedule_file, self._gen_kw_tag_format
+            )
+            self._config_node_meta[ConfigKeys.PRED_KEY] = ConfigNodeMeta(
+                key=ConfigKeys.PRED_KEY,
+                var_type=EnkfVarType.PARAMETER,
+                output_file=_get_filename(_get_abs_path(schedule_file[0])),
             )
             self.addNode(schedule_file_node)
 
@@ -258,71 +310,148 @@ class EnsembleConfig(BaseCClass):
             report_steps,
         )
 
+    def add_config_node_meta(
+        self,
+        key: str = "",
+        forward_init: bool = False,
+        init_file: str = "",
+        input_file: str = "",
+        output_file: str = "",
+        var_type: Optional[EnkfVarType] = EnkfVarType.INVALID_VAR,
+    ):
+        metaInfo = ConfigNodeMeta(
+            key, forward_init, init_file, input_file, output_file, var_type
+        )
+        self._config_node_meta[key] = metaInfo
+
+    def _create_node_metainfo(
+        self,
+        keywords: Union[dict, list],
+        offset: int,
+        var_type: EnkfVarType = EnkfVarType.INVALID_VAR,
+    ):
+        options = _option_dict(keywords, offset)
+        key = keywords[0]
+        forward_init = _str_to_bool(options.get(ConfigKeys.FORWARD_INIT, "FALSE"))
+        init_file = options.get(ConfigKeys.INIT_FILES, "")
+        input_file = options.get(ConfigKeys.RESULT_FILE, "")
+        output_file = options.get("OUTPUT_FILE", "")
+
+        self.add_config_node_meta(
+            key=key,
+            forward_init=forward_init,
+            init_file=init_file,
+            input_file=input_file,
+            output_file=output_file,
+            var_type=var_type,
+        )
+
+    def _storeFieldMetaInfo(self, node_kw: Union[dict, list]):
+        name = node_kw[0]
+        var_type_string = node_kw[1]
+        out_file = node_kw[2]
+        var_type = EnkfVarType.INVALID_VAR
+
+        if var_type_string == ConfigKeys.PARAMETER_KEY:
+            var_type = EnkfVarType.PARAMETER
+
+        self._config_node_meta[name].output_file = out_file
+        self._config_node_meta[name].var_type = var_type
+
     @staticmethod
     def gen_kw_node(gen_kw: List[str], tag_format: str) -> EnkfConfigNode:
-        options = _option_dict(gen_kw, 4)
         name = gen_kw[0]
         tmpl_path = _get_abs_path(gen_kw[1])
-        out_file = gen_kw[2]
         param_file_path = _get_abs_path(gen_kw[3])
-        forward_init = _str_to_bool(options.get(ConfigKeys.FORWARD_INIT, "FALSE"))
-        init_files = _get_abs_path(options.get(ConfigKeys.INIT_FILES))
         return EnkfConfigNode.create_gen_kw(
             name,
             tmpl_path,
-            out_file,
             param_file_path,
-            forward_init,
-            init_files,
             tag_format,
         )
 
     @staticmethod
-    def get_surface_node(surface: List[str]) -> EnkfConfigNode:
+    def get_surface_node(surface: List[str]) -> SurfaceConfig:
         options = _option_dict(surface, 1)
         name = surface[0]
         init_file = options.get(ConfigKeys.INIT_FILES)
         out_file = options.get("OUTPUT_FILE")
         base_surface = options.get(ConfigKeys.BASE_SURFACE_KEY)
         forward_init = _str_to_bool(options.get(ConfigKeys.FORWARD_INIT, "FALSE"))
+        errors = []
+        if not out_file:
+            errors.append("Missing required OUTPUT_FILE")
+        if not init_file:
+            errors.append("Missing required INIT_FILES")
+        elif not forward_init:
+            if "%d" not in init_file:
+                errors.append("Must give file name with %d with FORWARD_INIT:FALSE")
+        if not base_surface:
+            errors.append("Missing required BASE_SURFACE")
+        elif not Path(base_surface).exists():
+            errors.append(f"BASE_SURFACE:{base_surface} not found")
+        if errors:
+            errors = "\n".join(errors)
+            raise ConfigValidationError(
+                f"SURFACE {name} incorrectly configured: {errors}"
+            )
 
-        return EnkfConfigNode.create_surface(
-            name,
-            init_file,
-            out_file,
-            base_surface,
-            forward_init,
+        return SurfaceConfig(
+            name=name,
+            forward_init=forward_init,
+            forward_init_file=init_file,
+            output_file=Path(out_file),
+            base_surface_path=base_surface,
         )
 
     @staticmethod
-    def get_field_node(field: Union[dict, list], grid: EclGrid) -> EnkfConfigNode:
+    def get_field_node(
+        field: Union[dict, list], grid: EclGrid, grid_file: str
+    ) -> Field:
         name = field[0]
-        var_type = field[1]
-        out_file = field[2]
-        enkf_infile = None
+        out_file = Path(field[2])
         options = _option_dict(field, 2)
-        if var_type == ConfigKeys.GENERAL_KEY:
-            enkf_infile = field[3]
-        forward_init = _str_to_bool(options.get(ConfigKeys.FORWARD_INIT, "FALSE"))
         init_transform = options.get(ConfigKeys.INIT_TRANSFORM)
+        forward_init = _str_to_bool(options.get(ConfigKeys.FORWARD_INIT, "FALSE"))
         output_transform = options.get(ConfigKeys.OUTPUT_TRANSFORM)
         input_transform = options.get(ConfigKeys.INPUT_TRANSFORM)
         min_ = options.get(ConfigKeys.MIN_KEY)
         max_ = options.get(ConfigKeys.MAX_KEY)
         init_files = options.get(ConfigKeys.INIT_FILES)
-        return EnkfConfigNode.create_field(
-            name,
-            var_type,
-            grid,
-            out_file,
-            enkf_infile,
-            forward_init,
-            init_transform,
-            output_transform,
-            input_transform,
-            min_,
-            max_,
-            init_files,
+
+        if input_transform:
+            warnings.warn(
+                f"Got INPUT_TRANSFORM for FIELD: {name}, "
+                f"this has no effect and can be removed",
+                category=ConfigWarning,
+            )
+        if init_transform and init_transform not in TRANSFORM_FUNCTIONS:
+            raise ValueError(
+                f"FIELD INIT_TRANSFORM:{init_transform} is an invalid function"
+            )
+        if output_transform and output_transform not in TRANSFORM_FUNCTIONS:
+            raise ValueError(
+                f"FIELD OUTPUT_TRANSFORM:{output_transform} is an invalid function"
+            )
+
+        if min_ is not None and not isinstance(min_, float):
+            min_ = float(min_)
+        if max_ is not None and not isinstance(max_, float):
+            max_ = float(max_)
+        return Field(
+            name=name,
+            nx=grid.nx,
+            ny=grid.ny,
+            nz=grid.nz,
+            file_format=out_file.suffix[1:],
+            output_transformation=output_transform,
+            input_transformation=init_transform,
+            truncation_max=max_,
+            truncation_min=min_,
+            forward_init=forward_init,
+            forward_init_file=init_files,
+            output_file=out_file,
+            grid_file=grid_file,
         )
 
     @staticmethod
@@ -330,23 +459,18 @@ class EnsembleConfig(BaseCClass):
         schedule_file: Union[dict, list], tag_format: str
     ) -> EnkfConfigNode:
         file_path = _get_abs_path(schedule_file[0])
-        file_name = _get_filename(file_path)
         options = _option_dict(schedule_file, 1)
         parameter = options.get(ConfigKeys.PARAMETER_KEY)
-        init_files = options.get(ConfigKeys.INIT_FILES)
 
         return EnkfConfigNode.create_gen_kw(
             ConfigKeys.PRED_KEY,
             file_path,
-            file_name,
             parameter,
-            False,
-            init_files,
             tag_format,
         )
 
     @classmethod
-    def from_dict(cls, config_dict):
+    def from_dict(cls, config_dict) -> EnsembleConfig:
         grid_file_path = _get_abs_path(config_dict.get(ConfigKeys.GRID))
         refcase_file_path = _get_abs_path(config_dict.get(ConfigKeys.REFCASE))
         tag_format = config_dict.get(ConfigKeys.GEN_KW_TAG_FORMAT, "<%s>")
@@ -371,15 +495,6 @@ class EnsembleConfig(BaseCClass):
 
         return ens_config
 
-    def check_forward_init_nodes(self) -> List[EnkfConfigNode]:
-        forward_init_nodes = []
-        for config_key in self.alloc_keylist():
-            config_node = self[config_key]
-            if config_node.getUseForwardInit():
-                forward_init_nodes.append(config_node)
-
-        return forward_init_nodes
-
     def _node_info(self, node: str) -> str:
         impl_type = ErtImplType.from_string(node)
         key_list = self.getKeylistFromImplType(impl_type)
@@ -402,7 +517,19 @@ class EnsembleConfig(BaseCClass):
 
     def __getitem__(self, key: str) -> EnkfConfigNode:
         if key in self:
-            return self._get_node(key).setParent(self)
+            node = self._get_node(key).setParent(self)
+            if node.getImplementationType() == ErtImplType.GEN_DATA:
+                node.input_file = self._config_node_meta[key].input_file
+            elif node.getImplementationType() == ErtImplType.SUMMARY:
+                pass
+            else:
+                node.forward_init_file = self._config_node_meta[key].init_file
+                node.forward_init = self._config_node_meta[key].forward_init
+                node.output_file = self._config_node_meta[key].output_file
+
+            return node
+        elif key in self.py_nodes:
+            return self.py_nodes[key]
         else:
             raise KeyError(f"The key:{key} is not in the ensemble configuration")
 
@@ -413,24 +540,59 @@ class EnsembleConfig(BaseCClass):
         return self._alloc_keylist()
 
     def add_summary_full(self, key, refcase) -> EnkfConfigNode:
+        self._create_node_metainfo([key], 0, EnkfVarType.DYNAMIC_RESULT)
         return self._add_summary_full(key, refcase)
 
-    def addNode(self, config_node: EnkfConfigNode):
-        assert isinstance(config_node, EnkfConfigNode)
+    def _check_config_node(self, node: EnkfConfigNode):
+        mode_config = node.getModelConfig()
+        errors = []
+
+        def _check_non_negative_parameter(param: str) -> Optional[str]:
+            key = prior["key"]
+            dist = prior["function"]
+            param_val = prior["parameters"][param]
+            if param_val < 0:
+                errors.append(
+                    f"Negative {param} {param_val!r}"
+                    f" for {dist} distributed parameter {key!r}"
+                )
+
+        for prior in mode_config.get_priors():
+            if prior["function"] == "LOGNORMAL":
+                _check_non_negative_parameter("MEAN")
+                _check_non_negative_parameter("STD")
+            elif prior["function"] in ["NORMAL", "TRUNCATED_NORMAL"]:
+                _check_non_negative_parameter("STD")
+        if errors:
+            raise ConfigValidationError(
+                config_file=mode_config.getParameterFile(),
+                errors=errors,
+            )
+
+    def addNode(self, config_node: Union[EnkfConfigNode, Field]):
         assert config_node is not None
         key = config_node.getKey()
         if key in self:
             raise ConfigValidationError(
                 f"Enkf config node with key {key!r} already present in ensemble config"
             )
-        self._add_node(config_node)
-        config_node.convertToCReference(self)
+        if isinstance(config_node, EnkfConfigNode):
+            if config_node.getImplementationType() == ErtImplType.GEN_KW:
+                self._check_config_node(config_node)
+            self._add_node(config_node)
+            config_node.convertToCReference(self)
+        else:
+            self.py_nodes[config_node.name] = config_node
 
     def getKeylistFromVarType(self, var_mask: EnkfVarType) -> List[str]:
         assert isinstance(var_mask, EnkfVarType)
-        return _clib.ensemble_config.ensemble_config_keylist_from_var_type(
-            self, int(var_mask)
-        )
+
+        keylist = []
+        for k, v in self._config_node_meta.items():
+            if int(v.var_type) & int(var_mask):
+                keylist.append(k)
+
+        return keylist
 
     def getKeylistFromImplType(self, ert_impl_type) -> List[str]:
         assert isinstance(ert_impl_type, ErtImplType)
@@ -446,7 +608,9 @@ class EnsembleConfig(BaseCClass):
 
     @property
     def parameters(self) -> List[str]:
-        return self.getKeylistFromVarType(EnkfVarType.PARAMETER)
+        return self.getKeylistFromVarType(
+            EnkfVarType.PARAMETER + EnkfVarType.EXT_PARAMETER
+        )
 
     def __contains__(self, key):
         return self._has_key(key)
@@ -478,5 +642,39 @@ class EnsembleConfig(BaseCClass):
     def __ne__(self, other):
         return not self == other
 
-    def have_forward_init(self) -> bool:
-        return _clib.ensemble_config.have_forward_init(self)
+    def getMetaInfo(self, key: str) -> Optional[ConfigNodeMeta]:
+        if key in self._config_node_meta:
+            return self._config_node_meta[key]
+        return None
+
+    def getUseForwardInit(self, key) -> bool:
+        metaInfo = self.getMetaInfo(key)
+        return metaInfo.forward_init if metaInfo else False
+
+    def get_var_type(self, key) -> EnkfVarType:
+        metaInfo = self.getMetaInfo(key)
+        return metaInfo.var_type if metaInfo else EnkfVarType.INVALID_VAR
+
+    def get_summary_keys(self) -> List[str]:
+        return _clib.ensemble_config.get_summary_keys(self)
+
+    @property
+    def parameter_configuration(self) -> ParameterConfiguration:
+        parameter_configs = []
+        for parameter in self.parameters:
+            config_node = self.getNode(parameter)
+            config_type = config_node.getImplementationType()
+            if config_type == ErtImplType.GEN_KW:
+                node = config_node.getKeywordModelConfig()
+                node.forward_init_file = self._config_node_meta[parameter].init_file
+                node.forward_init = self._config_node_meta[parameter].forward_init
+                node.output_file = self._config_node_meta[parameter].output_file
+                parameter_configs.append(node)
+            elif isinstance(config_node, ParameterConfig):
+                parameter_configs.append(config_node)
+            elif config_type == ErtImplType.EXT_PARAM:
+                node = config_node.getModelConfig()
+                node.forward_init = self._config_node_meta[parameter].init_file
+                parameter_configs.append(node)
+
+        return parameter_configs

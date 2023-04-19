@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import argparse
-from typing import Callable
+from typing import Callable, Optional
+
+from ert.shared.plugins.plugin_manager import ErtPluginManager
 
 
 class Namespace(argparse.Namespace):
@@ -15,4 +17,4 @@ class Namespace(argparse.Namespace):
     verbose: bool
     experimental_mode: bool
     logdir: str
-    func: Callable[[Namespace], None]
+    func: Callable[[Namespace, Optional[ErtPluginManager]], None]

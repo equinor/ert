@@ -14,6 +14,7 @@ import numpy as np
 import pandas as pd
 
 from ert.data import loader
+from ert.storage import EnsembleReader
 
 if TYPE_CHECKING:
     import numpy.typing as npt
@@ -24,22 +25,21 @@ if TYPE_CHECKING:
 class MeasuredData:
     def __init__(
         self,
-        facade: "LibresFacade",
+        facade: LibresFacade,
+        ensemble: Optional[EnsembleReader],
         keys: List[str],
         index_lists: Optional[List[List[int]]] = None,
         load_data: bool = True,
-        case_name: Optional[str] = None,
     ):
         self._facade = facade
-
+        if load_data:
+            assert ensemble is not None
         if not keys:
             raise loader.ObservationError("No observation keys provided")
-        if case_name is None:
-            case_name = self._facade.get_current_case_name()
         if index_lists is not None and len(index_lists) != len(keys):
             raise ValueError("index list must be same length as observations keys")
 
-        self._set_data(self._get_data(keys, load_data, case_name))
+        self._set_data(self._get_data(ensemble, keys, load_data))
         self._set_data(self.filter_on_column_index(keys, index_lists))
 
     @property
@@ -88,7 +88,10 @@ class MeasuredData:
         return bool(self.data.empty)
 
     def _get_data(
-        self, observation_keys: List[str], load_data: bool, case_name: str
+        self,
+        ensemble: Optional[EnsembleReader],
+        observation_keys: List[str],
+        load_data: bool,
     ) -> pd.DataFrame:
         """
         Adds simulated and observed data and returns a dataframe where ensemble
@@ -118,9 +121,7 @@ class MeasuredData:
             ), f"\nMore than one observation type found for obs keys: {obs_keys}"
             observation_type = obs_types[0]
             data_loader = loader.data_loader_factory(observation_type)
-            data = data_loader(
-                self._facade, obs_keys, case_name, include_data=load_data
-            )
+            data = data_loader(self._facade, ensemble, obs_keys, include_data=load_data)
             if data.empty:
                 raise loader.ObservationError(f"No observations loaded for {obs_keys}")
             measured_data.append(data)

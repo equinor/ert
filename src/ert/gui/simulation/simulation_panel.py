@@ -1,4 +1,3 @@
-import uuid
 from collections import OrderedDict
 
 from qtpy.QtCore import QSize, Qt
@@ -84,16 +83,20 @@ class SimulationPanel(QWidget):
         """ :type: OrderedDict[BaseRunModel,SimulationConfigPanel]"""
         self.addSimulationConfigPanel(SingleTestRunPanel(ert, notifier), True)
         self.addSimulationConfigPanel(EnsembleExperimentPanel(ert, notifier), True)
+
+        simulation_mode_valid = (
+            self.facade.have_smoother_parameters and self.facade.have_observations
+        )
+
         self.addSimulationConfigPanel(
-            EnsembleSmootherPanel(ert, notifier), self.facade.have_observations
+            EnsembleSmootherPanel(ert, notifier), simulation_mode_valid
         )
         self.addSimulationConfigPanel(
-            MultipleDataAssimilationPanel(self.facade, notifier),
-            self.facade.have_observations,
+            MultipleDataAssimilationPanel(self.facade, notifier), simulation_mode_valid
         )
         self.addSimulationConfigPanel(
             IteratedEnsembleSmootherPanel(self.facade, notifier),
-            self.facade.have_observations,
+            simulation_mode_valid,
         )
 
         self.setLayout(layout)
@@ -109,7 +112,7 @@ class SimulationPanel(QWidget):
             item_count = self._simulation_mode_combo.count() - 1
             sim_item = self._simulation_mode_combo.model().item(item_count)
             sim_item.setEnabled(False)
-            sim_item.setToolTip("Disabled due to no observations")
+            sim_item.setToolTip("Both observations and parameters must be defined")
             sim_item.setIcon(self.style().standardIcon(QStyle.SP_MessageBoxWarning))
 
         panel.simulationConfigurationChanged.connect(self.validationStatusChanged)
@@ -129,10 +132,9 @@ class SimulationPanel(QWidget):
         return args
 
     def runSimulation(self):
-        case_name = self.facade.get_current_case_name()
         message = (
-            f"Are you sure you want to use case '{case_name}' for initialization of "
-            "the initial ensemble when running the simulations?"
+            f"Are you sure you want to use case '{self.notifier.current_case_name}' "
+            "for initialization of the initial ensemble when running the simulations?"
         )
         if (
             QMessageBox.question(
@@ -144,10 +146,11 @@ class SimulationPanel(QWidget):
             try:
                 model = create_model(
                     self.ert,
-                    self.facade.get_ensemble_size(),
-                    self.facade.get_current_case_name(),
+                    self.notifier.storage,
                     self.getSimulationArguments(),
-                    str(uuid.uuid4()),
+                    self.notifier.storage.create_experiment(
+                        parameters=self.ert.ensembleConfig().parameter_configuration
+                    ),
                 )
             except ValueError as e:
                 QMessageBox.warning(
@@ -185,6 +188,7 @@ class SimulationPanel(QWidget):
                 def exit_handler():
                     self.run_button.setText("Start simulation")
                     self.run_button.setDisabled(False)
+                    self.notifier.emitErtChange()
 
                 dialog.finished.connect(exit_handler)
 

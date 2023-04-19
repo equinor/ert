@@ -1,5 +1,6 @@
 import functools
 import webbrowser
+from typing import Optional
 
 from qtpy.QtCore import QSettings, Qt, Signal
 from qtpy.QtWidgets import (
@@ -12,19 +13,22 @@ from qtpy.QtWidgets import (
 )
 
 from ert.gui.about_dialog import AboutDialog
+from ert.gui.ertnotifier import ErtNotifier
 from ert.shared.plugins import ErtPluginManager
 
 
 class ErtMainWindow(QMainWindow):
     close_signal = Signal()
 
-    def __init__(self, config_file):
+    def __init__(self, config_file, plugin_manager: Optional[ErtPluginManager] = None):
         QMainWindow.__init__(self)
+        self.notifier = ErtNotifier(config_file)
         self.tools = {}
 
         self.resize(300, 700)
         self.setWindowTitle(f"ERT - {config_file}")
 
+        self.plugin_manager = plugin_manager
         self.__main_widget = None
 
         self.central_widget = QWidget()
@@ -78,8 +82,7 @@ class ErtMainWindow(QMainWindow):
         self.__view_menu = self.menuBar().addMenu("&View")
         self.__help_menu = self.menuBar().addMenu("&Help")
 
-        pm = ErtPluginManager()
-        help_links = pm.get_help_links()
+        help_links = self.plugin_manager.get_help_links() if self.plugin_manager else {}
 
         for menu_label, link in help_links.items():
             help_link_item = self.__help_menu.addAction(menu_label)

@@ -1,4 +1,7 @@
+import os
 from pathlib import Path
+
+import pytest
 
 from ert._c_wrappers.config import ConfigParser, ContentTypeEnum
 from ert._c_wrappers.enkf import ConfigKeys
@@ -7,6 +10,8 @@ from ert._c_wrappers.enkf._config_content_as_dict import (
     config_content_as_dict,
 )
 from ert._clib.config_keywords import init_user_config_parser
+from ert.parsing import ConfigValidationError
+from ert.parsing.lark_parser import parse
 
 
 def test_config_content_as_dict(tmpdir):
@@ -66,7 +71,7 @@ SINGLE_OCCURRENCE_KEY_TYPES = {
     ConfigKeys.ITER_COUNT: "int",
     ConfigKeys.ITER_RETRY_COUNT: "int",
     ConfigKeys.JOBNAME: "str",
-    ConfigKeys.JOB_SCRIPT: "file_path",
+    ConfigKeys.JOB_SCRIPT: "executable_file_path",
     ConfigKeys.LICENSE_PATH: "file_path",
     ConfigKeys.MAX_RUNTIME: "int",
     ConfigKeys.MAX_SUBMIT: "int",
@@ -91,13 +96,17 @@ def test_config_content_as_dict_single_value_keys(tmpdir):
         conf = ConfigParser()
         existing_file_1 = "test_1.t"
         existing_file_2 = "test_2.t"
+        executable_existing_file = "script.py"
         Path(existing_file_2).write_text("something", encoding="utf-8")
         Path(existing_file_1).write_text("not important", encoding="utf-8")
+        Path(executable_existing_file).write_text("import gravity", encoding="utf-8")
+        os.chmod(executable_existing_file, 0x755)
         init_user_config_parser(conf)
         type_value_map = {
             "str": "abc",
             "path": tmpdir,
             "file_path": existing_file_1,
+            "executable_file_path": executable_existing_file,
             "bool": "TRUE",
             "float": 4.2,
             "int": 2,
@@ -133,3 +142,29 @@ def test_that_as_dict_joins_queue_option_values():
         },
         {},
     ) == {ConfigKeys.QUEUE_OPTION: [["queue_type", "opt", "rest of the values"]]}
+
+
+def test_check_non_utf_characters(tmpdir):
+    with tmpdir.as_cwd():
+        config_file = "test.ert"
+        with open(config_file, "ab") as f:
+            f.write(b"\xff")
+        with pytest.raises(
+            ConfigValidationError,
+            match="Unsupported non UTF-8 character "
+            f"'ÿ' found in file: {config_file!r}",
+        ):
+            ConfigParser.check_non_utf_chars(config_file)
+
+
+def test_check_non_utf_characters_lark_parser(tmpdir):
+    with tmpdir.as_cwd():
+        config_file = "test.ert"
+        with open(config_file, "ab") as f:
+            f.write(b"\xff")
+        with pytest.raises(
+            ConfigValidationError,
+            match="Unsupported non UTF-8 character "
+            f"'ÿ' found in file: .*{config_file}",
+        ):
+            parse(config_file)

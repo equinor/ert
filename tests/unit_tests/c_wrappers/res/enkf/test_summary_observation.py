@@ -1,4 +1,3 @@
-import os
 from contextlib import ExitStack as does_not_raise
 from datetime import datetime
 from textwrap import dedent
@@ -6,13 +5,8 @@ from textwrap import dedent
 import pytest
 from ecl.summary import EclSum
 
-from ert._c_wrappers.enkf import (
-    ActiveList,
-    EnKFMain,
-    ErtConfig,
-    ObservationConfigError,
-    SummaryObservation,
-)
+from ert import LibresFacade
+from ert._c_wrappers.enkf import ActiveList, ObservationConfigError, SummaryObservation
 
 
 def test_create():
@@ -98,8 +92,6 @@ def test_that_loading_summary_obs_with_days_is_within_tolerance(
         # We create a reference case
         run_sim(datetime(2014, 9, 10))
 
-        ert_config = ErtConfig.from_file("config.ert")
-        os.chdir(ert_config.config_path)
         with expectation:
-            ert = EnKFMain(ert_config)
-            assert ert.getObservations().hasKey("FOPR_1")
+            facade = LibresFacade.from_config_file("config.ert")
+            assert facade.get_observations().hasKey("FOPR_1")

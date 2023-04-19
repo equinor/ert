@@ -71,10 +71,7 @@ class GenDataConfig(BaseCClass):
         self._free()
 
     def __repr__(self):
-        return (
-            f"GenDataConfig(name = {self.name()}, "
-            f"initial_size = {self.get_initial_size()}) {self._ad_str()}"
-        )
+        return f"GenDataConfig(key={self.name()}, input_format={self.getInputFormat()})"
 
     def hasReportStep(self, report_step) -> bool:
         return self._has_report_step(report_step)

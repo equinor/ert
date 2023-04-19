@@ -5,10 +5,16 @@ import pytest
 from ert._c_wrappers.enkf import EnKFMain, ErtConfig
 
 
-def test_adding_priors(poly_case):
+def test_adding_priors(poly_case, storage):
     m = poly_case
-    prior = m.create_ensemble_context(
-        "prior",
+    experiment_id = storage.create_experiment(
+        parameters=m.ensembleConfig().parameter_configuration
+    )
+    prior_ensemble = storage.create_ensemble(
+        experiment_id, name="prior", ensemble_size=10
+    )
+    prior = m.ensemble_context(
+        prior_ensemble,
         [True] * 10,
         iteration=0,
     )
@@ -21,8 +27,8 @@ def test_adding_priors(poly_case):
         f.write("COEFF_D UNIFORM 0 5\n")
     m = EnKFMain(ErtConfig.from_file("poly.ert"))
 
-    prior = m.load_ensemble_context(
-        "prior",
+    prior = m.ensemble_context(
+        prior.sim_fs,
         [True] * 10,
         iteration=0,
     )

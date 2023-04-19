@@ -3,26 +3,40 @@ from pathlib import Path
 
 import numpy as np
 import pytest
-from iterative_ensemble_smoother import IterativeEnsembleSmoother
+from iterative_ensemble_smoother import SIES
 
 from ert import LibresFacade
 from ert.__main__ import ert_parser
-from ert._c_wrappers.enkf import EnKFMain, EnkfNode, ErtConfig, NodeId
+from ert._c_wrappers.enkf import EnKFMain, ErtConfig
 from ert.analysis import ErtAnalysisError, ESUpdate
 from ert.analysis._es_update import _create_temporary_parameter_storage
 from ert.cli import ENSEMBLE_EXPERIMENT_MODE, ENSEMBLE_SMOOTHER_MODE
 from ert.cli.main import run_cli
+from ert.storage import open_storage
 
 
-def test_update_report(snake_oil_case_storage, snapshot):
+@pytest.fixture()
+def minimal_config(use_tmpdir):
+    with open("config_file.ert", "w", encoding="utf-8") as fout:
+        fout.write("NUM_REALIZATIONS 1")
+    ert_config = ErtConfig.from_file("config_file.ert")
+    yield ert_config
+
+
+def test_update_report(
+    snake_oil_case_storage, snake_oil_storage, new_ensemble, snapshot
+):
     """
     Note that this is now a snapshot test, so there is no guarantee that the
     snapshots are correct, they are just documenting the current behavior.
     """
     ert = snake_oil_case_storage
     es_update = ESUpdate(ert)
-    fsm = ert.storage_manager
-    es_update.smootherUpdate(fsm["default_0"], fsm.add_case("target"), "id")
+    es_update.smootherUpdate(
+        snake_oil_storage.get_ensemble_by_name("default_0"),
+        new_ensemble,
+        "id",
+    )
     log_file = Path(ert.analysisConfig().get_log_path()) / "deprecated"
     snapshot.assert_match(log_file.read_text("utf-8"), "update_log")
 
@@ -62,7 +76,13 @@ def test_update_report(snake_oil_case_storage, snapshot):
         ),
     ],
 )
-def test_update_snapshot(snake_oil_case_storage, module, expected_gen_kw):
+def test_update_snapshot(
+    snake_oil_case_storage,
+    snake_oil_default_storage,
+    module,
+    expected_gen_kw,
+    new_ensemble,
+):
     """
     Note that this is now a snapshot test, so there is no guarantee that the
     snapshots are correct, they are just documenting the current behavior.
@@ -70,26 +90,17 @@ def test_update_snapshot(snake_oil_case_storage, module, expected_gen_kw):
     ert = snake_oil_case_storage
     es_update = ESUpdate(ert)
     ert.analysisConfig().select_module(module)
-    fsm = ert.storage_manager
-    sim_fs = fsm["default_0"]
-    target_fs = fsm.add_case("target")
+    sim_fs = snake_oil_default_storage
 
     if module == "IES_ENKF":
-        w_container = IterativeEnsembleSmoother(ert.getEnsembleSize())
-        es_update.iterative_smoother_update(sim_fs, target_fs, w_container, "id")
+        w_container = SIES(ert.getEnsembleSize())
+        es_update.iterative_smoother_update(sim_fs, new_ensemble, w_container, "id")
     else:
-        es_update.smootherUpdate(sim_fs, target_fs, "id")
+        es_update.smootherUpdate(sim_fs, new_ensemble, "id")
 
-    conf = ert.ensembleConfig()["SNAKE_OIL_PARAM"]
-    sim_node = EnkfNode(conf)
-    target_node = EnkfNode(conf)
+    sim_gen_kw = list(sim_fs.load_gen_kw("SNAKE_OIL_PARAM", [0]).flatten())
 
-    node_id = NodeId(0, 0)
-    sim_node.load(sim_fs, node_id)
-    target_node.load(target_fs, node_id)
-
-    sim_gen_kw = list(sim_node.asGenKw())
-    target_gen_kw = list(target_node.asGenKw())
+    target_gen_kw = list(new_ensemble.load_gen_kw("SNAKE_OIL_PARAM", [0]).flatten())
 
     assert sim_gen_kw != target_gen_kw
 
@@ -134,8 +145,11 @@ def test_that_posterior_has_lower_variance_than_prior(copy_case):
 
     run_cli(parsed)
     facade = LibresFacade.from_config_file("poly.ert")
-    df_default = facade.load_all_gen_kw_data("default")
-    df_target = facade.load_all_gen_kw_data("target")
+    with open_storage(facade.enspath) as storage:
+        default_fs = storage.get_ensemble_by_name("default")
+        df_default = facade.load_all_gen_kw_data(default_fs)
+        target_fs = storage.get_ensemble_by_name("target")
+        df_target = facade.load_all_gen_kw_data(target_fs)
 
     # We expect that ERT's update step lowers the
     # generalized variance for the parameters.
@@ -152,8 +166,8 @@ def test_that_posterior_has_lower_variance_than_prior(copy_case):
         (
             [
                 0.5895781800838542,
-                -0.732401196722254,
-                -1.0913320833716744,
+                -1.6225405348397028,
+                -0.24931876604132294,
                 0.7564469588868706,
                 0.21572672272162152,
                 -0.24082711750101563,
@@ -172,9 +186,9 @@ def test_that_posterior_has_lower_variance_than_prior(copy_case):
         ),
         (
             [
-                -1.5836182533774308,
-                -0.732401196722254,
-                -0.8951194275529923,
+                -0.6692568481556169,
+                -1.6225405348397028,
+                -0.22247423865074156,
                 0.7564469588868706,
                 0.21572672272162152,
                 -0.24082711750101563,
@@ -198,7 +212,13 @@ def test_that_posterior_has_lower_variance_than_prior(copy_case):
         ),
     ],
 )
-def test_localization(snake_oil_case_storage, expected_target_gen_kw, update_step):
+def test_localization(
+    snake_oil_case_storage,
+    snake_oil_storage,
+    expected_target_gen_kw,
+    update_step,
+    new_ensemble,
+):
     """
     Note that this is now a snapshot test, so there is no guarantee that the
     snapshots are correct, they are just documenting the current behavior.
@@ -209,24 +229,21 @@ def test_localization(snake_oil_case_storage, expected_target_gen_kw, update_ste
 
     ert.update_configuration = update_step
 
-    prior = ert.load_ensemble_context(
-        "default_0", [True] * ert.getEnsembleSize(), iteration=0
+    prior = ert.ensemble_context(
+        snake_oil_storage.get_ensemble_by_name("default_0"),
+        [True] * ert.getEnsembleSize(),
+        iteration=0,
     )
-    posterior = ert.create_ensemble_context(
-        "target", [True] * ert.getEnsembleSize(), iteration=1
+    posterior = ert.ensemble_context(
+        new_ensemble,
+        [True] * ert.getEnsembleSize(),
+        iteration=1,
     )
     es_update.smootherUpdate(prior.sim_fs, posterior.sim_fs, prior.run_id)
 
-    conf = ert.ensembleConfig()["SNAKE_OIL_PARAM"]
-    sim_node = EnkfNode(conf)
-    target_node = EnkfNode(conf)
+    sim_gen_kw = list(prior.sim_fs.load_gen_kw("SNAKE_OIL_PARAM", [0]).flatten())
 
-    node_id = NodeId(0, 0)
-    sim_node.load(prior.sim_fs, node_id)
-    target_node.load(posterior.sim_fs, node_id)
-
-    sim_gen_kw = list(sim_node.asGenKw())
-    target_gen_kw = list(target_node.asGenKw())
+    target_gen_kw = list(posterior.sim_fs.load_gen_kw("SNAKE_OIL_PARAM", [0]).flatten())
 
     # Test that the localized values has been updated
     assert sim_gen_kw[1:3] != target_gen_kw[1:3]
@@ -254,7 +271,7 @@ def test_localization(snake_oil_case_storage, expected_target_gen_kw, update_ste
         (100, ["ACTIVE", "ACTIVE", "ACTIVE"]),
     ],
 )
-def test_snapshot_alpha(alpha, expected):
+def test_snapshot_alpha(alpha, expected, snake_oil_storage, new_ensemble):
     """
     Note that this is now a snapshot test, so there is no guarantee that the
     snapshots are correct, they are just documenting the current behavior.
@@ -292,19 +309,17 @@ SUMMARY_OBSERVATION EXTREMELY_HIGH_STD
     ert = EnKFMain(ert_config)
     es_update = ESUpdate(ert)
     ert.analysisConfig().select_module("IES_ENKF")
-    fsm = ert.storage_manager
-    sim_fs = fsm["default_0"]
-    target_fs = fsm.add_case("target")
+    sim_fs = snake_oil_storage.get_ensemble_by_name("default_0")
     ert.analysisConfig().set_enkf_alpha(alpha)
-    w_container = IterativeEnsembleSmoother(ert.getEnsembleSize())
-    es_update.iterative_smoother_update(sim_fs, target_fs, w_container, "id")
+    w_container = SIES(ert.getEnsembleSize())
+    es_update.iterative_smoother_update(sim_fs, new_ensemble, w_container, "id")
     result_snapshot = es_update.update_snapshots["id"]
     assert result_snapshot.alpha == alpha
     assert result_snapshot.update_step_snapshots["ALL_ACTIVE"].obs_status == expected
 
 
 @pytest.mark.integration_test
-def test_update_multiple_param(copy_case):
+def test_update_multiple_param(copy_case, new_ensemble):
     """
     Note that this is now a snapshot test, so there is no guarantee that the
     snapshots are correct, they are just documenting the current behavior.
@@ -325,17 +340,17 @@ def test_update_multiple_param(copy_case):
     ert_config = ErtConfig.from_file("snake_oil.ert")
     ert = EnKFMain(ert_config)
     es_update = ESUpdate(ert)
-    fsm = ert.storage_manager
-    sim_fs = fsm["default"]
-    target_fs = fsm.add_case("target")
 
-    es_update.smootherUpdate(sim_fs, target_fs, "an id")
+    storage = open_storage(ert_config.ens_path)
+    sim_fs = storage.get_ensemble_by_name("default")
+
+    es_update.smootherUpdate(sim_fs, new_ensemble, "an id")
 
     prior = _create_temporary_parameter_storage(
         sim_fs, ert.ensembleConfig(), list(range(10))
     )
     posterior = _create_temporary_parameter_storage(
-        target_fs, ert.ensembleConfig(), list(range(10))
+        new_ensemble, ert.ensembleConfig(), list(range(10))
     )
 
     # We expect that ERT's update step lowers the
@@ -359,11 +374,18 @@ def test_gen_data_obs_data_mismatch(snake_oil_case_storage):
     ert_config = ErtConfig.from_file("snake_oil.ert")
     ert = EnKFMain(ert_config)
     es_update = ESUpdate(ert)
-    fsm = ert.storage_manager
-    sim_fs = fsm["default_0"]
-    target_fs = fsm.add_case("smooth")
-    with pytest.raises(
-        ErtAnalysisError,
-        match="WPR_DIFF_1, index 2400 is not in GEN_DATA: SNAKE_OIL_WPR_DIFF",
-    ):
-        es_update.smootherUpdate(sim_fs, target_fs, "an id")
+
+    with open_storage(ert.ert_config.ens_path, mode="w") as storage:
+        sim_fs = storage.get_ensemble_by_name("default_0")
+        target_fs = storage.create_ensemble(
+            sim_fs.experiment_id,
+            name="smooth",
+            ensemble_size=ert.getEnsembleSize(),
+            prior_ensemble=sim_fs,
+        )
+
+        with pytest.raises(
+            ErtAnalysisError,
+            match="Observation: WPR_DIFF_1 attached to response: SNAKE_OIL_WPR_DIFF",
+        ):
+            es_update.smootherUpdate(sim_fs, target_fs, "an id")

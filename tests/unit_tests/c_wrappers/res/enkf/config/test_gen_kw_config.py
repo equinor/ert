@@ -5,6 +5,7 @@ from textwrap import dedent
 import pytest
 
 from ert._c_wrappers.enkf import EnKFMain, ErtConfig, GenKwConfig
+from ert.parsing import ConfigValidationError
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -159,7 +160,9 @@ number_regex = r"[-+]?(?:\d*\.\d+|\d+)"
         ("TRIANGULAR 0 0.5 1", False, r"KW_NAME:MY_KEYWORD " + number_regex),
     ],
 )
-def test_gen_kw_is_log_or_not(tmpdir, distribution, expect_log, parameters_regex):
+def test_gen_kw_is_log_or_not(
+    tmpdir, storage, distribution, expect_log, parameters_regex
+):
     with tmpdir.as_cwd():
         config = dedent(
             """
@@ -182,7 +185,13 @@ def test_gen_kw_is_log_or_not(tmpdir, distribution, expect_log, parameters_regex
         gen_kw_config = node.getModelConfig()
         assert isinstance(gen_kw_config, GenKwConfig)
         assert gen_kw_config.shouldUseLogScale(0) is expect_log
-        prior = ert.create_ensemble_context("prior", [True], 0)
+        experiment_id = storage.create_experiment(
+            parameters=ert_config.ensemble_config.parameter_configuration
+        )
+        prior_ensemble = storage.create_ensemble(
+            experiment_id, name="prior", ensemble_size=1
+        )
+        prior = ert.ensemble_context(prior_ensemble, [True], 0)
         ert.sample_prior(prior.sim_fs, prior.active_realizations)
         ert.createRunPath(prior)
         assert re.match(
@@ -191,3 +200,48 @@ def test_gen_kw_is_log_or_not(tmpdir, distribution, expect_log, parameters_regex
                 encoding="utf-8"
             ),
         )
+
+
+@pytest.mark.parametrize(
+    "distribution, mean, std, error",
+    [
+        ("LOGNORMAL", "0", "1", None),
+        ("LOGNORMAL", "-1", "1", ["MEAN"]),
+        ("LOGNORMAL", "0", "-1", ["STD"]),
+        ("LOGNORMAL", "-1", "-1", ["MEAN", "STD"]),
+        ("NORMAL", "0", "1", None),
+        ("NORMAL", "-1", "1", None),
+        ("NORMAL", "0", "-1", ["STD"]),
+        ("TRUNCATED_NORMAL", "-1", "1", None),
+        ("TRUNCATED_NORMAL", "0", "1", None),
+        ("TRUNCATED_NORMAL", "0", "-1", ["STD"]),
+    ],
+)
+def test_gen_kw_distribution_errors(tmpdir, distribution, mean, std, error):
+    with tmpdir.as_cwd():
+        config = dedent(
+            """
+        JOBNAME my_name%d
+        NUM_REALIZATIONS 1
+        GEN_KW KW_NAME template.txt kw.txt prior.txt
+        """
+        )
+        with open("config.ert", "w", encoding="utf-8") as fh:
+            fh.writelines(config)
+        with open("template.txt", "w", encoding="utf-8") as fh:
+            fh.writelines("MY_KEYWORD <MY_KEYWORD>")
+        with open("prior.txt", "w", encoding="utf-8") as fh:
+            if distribution == "TRUNCATED_NORMAL":
+                fh.writelines(f"MY_KEYWORD {distribution} {mean} {std} -1 1")
+            else:
+                fh.writelines(f"MY_KEYWORD {distribution} {mean} {std}")
+
+        if error:
+            for e in error:
+                with pytest.raises(
+                    ConfigValidationError,
+                    match=f"Negative {e} {mean if e == 'MEAN' else std}",
+                ):
+                    ErtConfig.from_file("config.ert")
+        else:
+            ErtConfig.from_file("config.ert")

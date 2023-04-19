@@ -247,6 +247,8 @@ std::vector<int> TimeMap::indices(const ecl_sum_type *ecl_sum) const {
 
     int sum_index = ecl_sum_get_first_report_step(ecl_sum);
     int time_map_index = ecl_sum_get_first_report_step(ecl_sum);
+
+    indices.resize(time_map_index, -1);
     for (; time_map_index < size(); ++time_map_index) {
         time_t map_time = (*this)[time_map_index];
         if (map_time == DEFAULT_TIME) {
@@ -318,6 +320,8 @@ ERT_CLIB_SUBMODULE("time_map", m) {
         .def(py::self == py::self)
         .def(py::self != py::self)
         .def("read_text", &TimeMap::read_text, "path"_a)
+        .def("read", &TimeMap::read_binary, "path"_a)
+        .def("write", &TimeMap::write_binary, "path"_a)
         .def(
             "summary_update",
             [](TimeMap &self, Cwrap<ecl_sum_type> summary) {

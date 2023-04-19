@@ -100,9 +100,14 @@ def render_dynamic_values(s, itr, iens, geo_id):
 
 
 @pytest.mark.parametrize("itr", [0, 1, 2, 17])
-def test_write_snakeoil_runpath_file(snake_oil_case, itr):
+def test_write_snakeoil_runpath_file(snake_oil_case, storage, itr):
     ert = snake_oil_case
-    fsm = ert.storage_manager
+    experiment_id = storage.create_experiment(
+        parameters=ert.ensembleConfig().parameter_configuration
+    )
+    prior_ensemble = storage.create_ensemble(
+        experiment_id, name="prior", ensemble_size=25
+    )
 
     num_realizations = 25
     mask = [True] * num_realizations
@@ -117,7 +122,7 @@ def test_write_snakeoil_runpath_file(snake_oil_case, itr):
         global_substitutions[f"<GEO_ID_{i}_{itr}>"] = str(10 * i)
 
     run_context = RunContext(
-        sim_fs=fsm.add_case("sim_fs"),
+        sim_fs=prior_ensemble,
         path_format=jobname_fmt,
         format_string=runpath_fmt,
         runpath_file=Path("a_file_name"),
@@ -154,7 +159,7 @@ def test_write_snakeoil_runpath_file(snake_oil_case, itr):
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_assert_export():
+def test_assert_export(prior_ensemble):
     # Write a minimal config file with env
     with open("config_file.ert", "w", encoding="utf-8") as fout:
         fout.write(
@@ -171,8 +176,8 @@ def test_assert_export():
     runpath_list_file = ert.runpath_list_filename
     assert not runpath_list_file.exists()
 
-    run_context = ert.create_ensemble_context(
-        "prior",
+    run_context = ert.ensemble_context(
+        prior_ensemble,
         [True] * ert.getEnsembleSize(),
         iteration=0,
     )

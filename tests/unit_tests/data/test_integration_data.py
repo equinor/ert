@@ -6,9 +6,9 @@ import time
 import numpy as np
 import pytest
 
-from ert._c_wrappers.enkf import EnKFMain, ErtConfig
 from ert.data import MeasuredData, loader
 from ert.libres_facade import LibresFacade
+from ert.storage import open_storage
 
 
 @pytest.fixture()
@@ -16,8 +16,27 @@ def facade_snake_oil(snake_oil_case_storage):
     yield LibresFacade(snake_oil_case_storage)
 
 
-def test_history_obs(facade_snake_oil):
-    fopr = MeasuredData(facade_snake_oil, ["FOPR"])
+@pytest.fixture
+def default_ensemble(snake_oil_case_storage):
+    with open_storage(snake_oil_case_storage.ert_config.ens_path) as storage:
+        yield storage.get_ensemble_by_name("default_0")
+
+
+@pytest.fixture
+def create_measured_data(snake_oil_case_storage, snake_oil_default_storage):
+    def func(*args, **kwargs):
+        return MeasuredData(
+            LibresFacade(snake_oil_case_storage),
+            snake_oil_default_storage,
+            *args,
+            **kwargs,
+        )
+
+    return func
+
+
+def test_history_obs(create_measured_data):
+    fopr = create_measured_data(["FOPR"])
     fopr.remove_inactive_observations()
 
     assert all(
@@ -25,8 +44,8 @@ def test_history_obs(facade_snake_oil):
     )
 
 
-def test_summary_obs(facade_snake_oil):
-    summary_obs = MeasuredData(facade_snake_oil, ["WOPR_OP1_72"])
+def test_summary_obs(create_measured_data):
+    summary_obs = create_measured_data(["WOPR_OP1_72"])
     summary_obs.remove_inactive_observations()
     assert all(summary_obs.data.columns.get_level_values("data_index").values == [71])
     # Only one observation, we check the key_index is what we expect:
@@ -40,7 +59,7 @@ def test_summary_obs(facade_snake_oil):
 )
 @pytest.mark.usefixtures("copy_snake_oil_case_storage")
 @pytest.mark.integration_test
-def test_summary_obs_runtime():
+def test_summary_obs_runtime(create_measured_data):
     """
     This is mostly a regression test, as reading SUMMARY_OBS was very slow when using
     SUMMARY_OBSERVATION and not HISTORY_OBSERVATION where multiple observations
@@ -54,17 +73,18 @@ def test_summary_obs_runtime():
     with obs_file.open(mode="a") as fin:
         fin.write(create_summary_observation())
 
-    ert_config = ErtConfig.from_file("snake_oil.ert")
-    ert = EnKFMain(ert_config)
+    facade = LibresFacade.from_config_file("snake_oil.ert")
 
-    facade = LibresFacade(ert)
-
+    storage = open_storage(facade.enspath)
+    ensemble = storage.get_ensemble_by_name("default_0")
     start_time = time.time()
-    foprh = MeasuredData(facade, [f"FOPR_{restart}" for restart in range(1, 201)])
+    foprh = MeasuredData(
+        facade, ensemble, [f"FOPR_{restart}" for restart in range(1, 201)]
+    )
     summary_obs_time = time.time() - start_time
 
     start_time = time.time()
-    fopr = MeasuredData(facade, ["FOPR"])
+    fopr = MeasuredData(facade, ensemble, ["FOPR"])
     history_obs_time = time.time() - start_time
 
     assert (
@@ -93,37 +113,37 @@ def test_summary_obs_last_entry(formatted_date):
             "};\n"
         )
 
-    ert_config = ErtConfig.from_file("snake_oil.ert")
-    ert = EnKFMain(ert_config)
+    facade = LibresFacade.from_config_file("snake_oil.ert")
+    storage = open_storage(facade.enspath)
+    ensemble = storage.get_ensemble_by_name("default_0")
 
-    facade = LibresFacade(ert)
+    foprh = MeasuredData(facade, ensemble, ["LAST_DATE"])
 
-    foprh = MeasuredData(facade, ["LAST_DATE"])
     assert foprh.data.loc[["OBS", "STD"]].values.flatten().tolist() == [10.0, 0.1]
     assert list(foprh.data.columns.get_level_values("key_index").values) == [
         np.datetime64("2015-06-23")
     ]
 
 
-@pytest.mark.usefixtures("copy_snake_oil_case_storage")
 @pytest.mark.integration_test
-def test_gen_obs_runtime(snapshot):
+def test_gen_obs_runtime(snapshot, create_measured_data):
     obs_file = pathlib.Path.cwd() / "observations" / "observations.txt"
     with obs_file.open(mode="a") as fin:
         fin.write(create_general_observation())
 
-    ert_config = ErtConfig.from_file("snake_oil.ert")
-    ert = EnKFMain(ert_config)
+    facade = LibresFacade.from_config_file("snake_oil.ert")
+    storage = open_storage(facade.enspath)
+    ensemble = storage.get_ensemble_by_name("default_0")
 
-    facade = LibresFacade(ert)
-
-    df = MeasuredData(facade, [f"CUSTOM_DIFF_{restart}" for restart in range(500)])
+    df = MeasuredData(
+        facade, ensemble, [f"CUSTOM_DIFF_{restart}" for restart in range(500)]
+    )
 
     snapshot.assert_match(df.data.to_csv(), "snake_oil_gendata_output.csv")
 
 
-def test_gen_obs(facade_snake_oil):
-    df = MeasuredData(facade_snake_oil, ["WPR_DIFF_1"])
+def test_gen_obs(create_measured_data):
+    df = create_measured_data(["WPR_DIFF_1"])
     df.remove_inactive_observations()
 
     assert all(
@@ -134,8 +154,8 @@ def test_gen_obs(facade_snake_oil):
     )
 
 
-def test_gen_obs_and_summary(facade_snake_oil):
-    df = MeasuredData(facade_snake_oil, ["WPR_DIFF_1", "WOPR_OP1_9"])
+def test_gen_obs_and_summary(create_measured_data):
+    df = create_measured_data(["WPR_DIFF_1", "WOPR_OP1_9"])
     df.remove_inactive_observations()
 
     assert df.data.columns.get_level_values(0).to_list() == [
@@ -154,8 +174,8 @@ def test_gen_obs_and_summary(facade_snake_oil):
     ]
 
 
-def test_gen_obs_and_summary_index_range(facade_snake_oil):
-    df = MeasuredData(facade_snake_oil, ["WPR_DIFF_1", "FOPR"], [[800], [10]])
+def test_gen_obs_and_summary_index_range(create_measured_data):
+    df = create_measured_data(["WPR_DIFF_1", "FOPR"], [[800], [10]])
     df.remove_inactive_observations()
 
     assert df.data.columns.get_level_values(0).to_list() == [
@@ -177,28 +197,22 @@ def test_gen_obs_and_summary_index_range(facade_snake_oil):
         ("WPR_DIFF_1", "No response loaded for observation key: WPR_DIFF_1"),
     ],
 )
-@pytest.mark.usefixtures("copy_snake_oil_case")
-def test_no_storage(obs_key, expected_msg):
-    ert_config = ErtConfig.from_file("snake_oil.ert")
-    ert = EnKFMain(ert_config)
+def test_no_storage(obs_key, expected_msg, facade_snake_oil, storage):
+    ensemble = storage.create_experiment().create_ensemble(
+        name="empty", ensemble_size=facade_snake_oil.get_ensemble_size()
+    )
 
-    facade = LibresFacade(ert)
     with pytest.raises(
         loader.ResponseError,
         match=expected_msg,
     ):
-        MeasuredData(facade, [obs_key])
+        MeasuredData(facade_snake_oil, ensemble, [obs_key])
 
 
 @pytest.mark.parametrize("obs_key", ["FOPR", "WPR_DIFF_1"])
-@pytest.mark.usefixtures("copy_snake_oil_case_storage")
-def test_no_storage_obs_only(obs_key):
+def test_no_storage_obs_only(obs_key, create_measured_data):
     shutil.rmtree("storage")
-    ert_config = ErtConfig.from_file("snake_oil.ert")
-    ert = EnKFMain(ert_config)
-
-    facade = LibresFacade(ert)
-    md = MeasuredData(facade, [obs_key], load_data=False)
+    md = create_measured_data([obs_key], load_data=False)
     assert set(md.data.columns.get_level_values(0)) == {obs_key}
 
 
@@ -237,19 +251,18 @@ def create_general_observation():
     return observations
 
 
-def test_all_measured_snapshot(snapshot, facade_snake_oil):
+def test_all_measured_snapshot(snapshot, facade_snake_oil, create_measured_data):
     """
     While there is no guarantee that this snapshot is 100% correct, it does represent
     the current state of loading from storage for the snake_oil case.
     """
     obs_keys = facade_snake_oil.get_matching_wildcards()("*").strings
-    measured_data = MeasuredData(facade_snake_oil, obs_keys)
+    measured_data = create_measured_data(obs_keys)
     snapshot.assert_match(measured_data.data.to_csv(), "snake_oil_measured_output.csv")
 
 
-def test_active_realizations(facade_snake_oil):
-    current_case_name = facade_snake_oil.get_current_case_name()
-    active_realizations = facade_snake_oil.get_active_realizations(current_case_name)
+def test_active_realizations(facade_snake_oil, default_ensemble):
+    active_realizations = facade_snake_oil.get_active_realizations(default_ensemble)
     assert len(active_realizations) == 5
     assert active_realizations == list(range(5))
 

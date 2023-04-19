@@ -1,18 +1,22 @@
+from __future__ import annotations
+
 import logging
 import os
 import time
 from tempfile import mkdtemp
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
 
-from ert._c_wrappers.config import ConfigParser, ConfigValidationError, UnrecognizedEnum
+from ert._c_wrappers.config import ConfigParser, UnrecognizedEnum
+from ert.parsing import ConfigValidationError
 
 if TYPE_CHECKING:
     from ert._c_wrappers.enkf import EnKFMain
     from ert._c_wrappers.job_queue import WorkflowJob
     from ert._c_wrappers.util import SubstitutionList
+    from ert.storage import EnsembleAccessor, StorageAccessor
 
 
-def _workflow_parser(workflow_jobs: Dict[str, "WorkflowJob"]) -> ConfigParser:
+def _workflow_parser(workflow_jobs: Dict[str, WorkflowJob]) -> ConfigParser:
     parser = ConfigParser()
     for name, job in workflow_jobs.items():
         item = parser.add(name)
@@ -26,7 +30,7 @@ class Workflow:
     def __init__(
         self,
         src_file: str,
-        cmd_list: List["WorkflowJob"],
+        cmd_list: List[WorkflowJob],
     ):
         self.__running = False
         self.__cancelled = False
@@ -38,7 +42,7 @@ class Workflow:
     def __len__(self):
         return len(self.cmd_list)
 
-    def __getitem__(self, index: int) -> Tuple["WorkflowJob", Any]:
+    def __getitem__(self, index: int) -> Tuple[WorkflowJob, Any]:
         return self.cmd_list[index]
 
     def __iter__(self):
@@ -48,8 +52,8 @@ class Workflow:
     def from_file(
         cls,
         src_file: str,
-        context: Optional["SubstitutionList"],
-        job_list: Dict[str, "WorkflowJob"],
+        context: Optional[SubstitutionList],
+        job_list: Dict[str, WorkflowJob],
     ):
         to_compile = src_file
         if not os.path.exists(src_file):
@@ -81,7 +85,12 @@ class Workflow:
 
         return cls(src_file, cmd_list)
 
-    def run(self, ert: "EnKFMain") -> bool:
+    def run(
+        self,
+        ert: EnKFMain,
+        storage: StorageAccessor,
+        ensemble: Optional[EnsembleAccessor] = None,
+    ) -> bool:
         logger = logging.getLogger(__name__)
 
         # Reset status
@@ -92,7 +101,7 @@ class Workflow:
             self.__current_job = job
             if not self.__cancelled:
                 logger.info(f"Workflow job {job.name} starting")
-                job.run(ert, args)
+                job.run(ert, storage, ensemble, args)
                 self.__status[job.name] = {
                     "stdout": job.stdoutdata(),
                     "stderr": job.stderrdata(),

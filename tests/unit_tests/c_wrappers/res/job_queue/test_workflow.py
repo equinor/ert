@@ -1,8 +1,8 @@
 import pytest
 
-from ert._c_wrappers.config.config_parser import ConfigValidationError
 from ert._c_wrappers.job_queue import Workflow, WorkflowJob
 from ert._c_wrappers.util.substitution_list import SubstitutionList
+from ert.parsing import ConfigValidationError
 
 from .workflow_common import WorkflowCommon
 
@@ -41,7 +41,7 @@ def test_workflow_run():
 
     assert len(workflow) == 2
 
-    assert workflow.run(None)
+    assert workflow.run(None, None, None)
 
     with open("dump1", "r", encoding="utf-8") as f:
         assert f.read() == "dump_text_1"
@@ -54,7 +54,7 @@ def test_workflow_run():
 def test_failing_workflow_run():
     with pytest.raises(ConfigValidationError, match="does not exist") as err:
         _ = Workflow.from_file("undefined", None, {})
-    assert err.value.config_file == "undefined"
+    assert err.value.errors[0][0] == "undefined"
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -65,4 +65,4 @@ def test_that_failure_in_parsing_workflow_gives_config_validation_error():
         ConfigValidationError, match="DEFINE must have two or more arguments"
     ) as err:
         _ = Workflow.from_file("workflow", None, {})
-    assert err.value.config_file == "workflow"
+    assert err.value.errors[0][0] == "workflow"

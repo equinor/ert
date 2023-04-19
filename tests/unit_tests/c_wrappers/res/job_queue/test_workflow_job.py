@@ -7,7 +7,6 @@ from .workflow_common import WorkflowCommon
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_read_internal_function():
-    WorkflowCommon.createInternalFunctionJob()
     WorkflowCommon.createErtScriptsJob()
 
     workflow_job = WorkflowJob.fromFile(
@@ -16,14 +15,12 @@ def test_read_internal_function():
     )
     assert workflow_job.name == "SUBTRACT"
     assert workflow_job.internal
-    assert workflow_job.function is None
 
     assert workflow_job.script.endswith("subtract_script.py")
 
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_arguments():
-    WorkflowCommon.createInternalFunctionJob()
     WorkflowCommon.createErtScriptsJob()
 
     job = WorkflowJob.fromFile(
@@ -35,13 +32,13 @@ def test_arguments():
     assert job.max_args == 2
     assert job.argumentTypes() == [float, float]
 
-    assert job.run(None, [1, 2.5])
+    assert job.run(None, None, None, [1, 2.5])
 
     with pytest.raises(ValueError, match="requires at least 2 arguments"):
-        job.run(None, [1])
+        job.run(None, None, None, [1])
 
     with pytest.raises(ValueError, match="can only have 2 arguments"):
-        job.run(None, ["x %d %f %d %s", 1, 2.5, True, "y", "nada"])
+        job.run(None, None, None, ["x %d %f %d %s", 1, 2.5, True, "y", "nada"])
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -56,7 +53,7 @@ def test_run_external_job():
     assert not job.internal
     argTypes = job.argumentTypes()
     assert argTypes == [str, str]
-    assert job.run(None, ["test", "text"]) is None
+    assert job.run(None, None, None, ["test", "text"]) is None
     assert job.stdoutdata() == "Hello World\n"
 
     with open("test", "r", encoding="utf-8") as f:
@@ -74,7 +71,7 @@ def test_error_handling_external_job():
 
     assert not job.internal
     job.argumentTypes()
-    assert job.run(None, []) is None
+    assert job.run(None, None, None, []) is None
     assert job.stderrdata().startswith("Traceback")
 
 
@@ -87,6 +84,6 @@ def test_run_internal_script():
         config_file="subtract_script_job",
     )
 
-    result = job.run(None, ["1", "2"])
+    result = job.run(None, None, None, ["1", "2"])
 
     assert result == -1

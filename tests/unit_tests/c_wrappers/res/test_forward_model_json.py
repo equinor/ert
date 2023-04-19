@@ -11,6 +11,7 @@ import pytest
 
 from ert._c_wrappers.enkf import ErtConfig
 from ert._c_wrappers.job_queue.ext_job import ExtJob
+from ert._c_wrappers.util import SubstitutionList
 from ert.simulator.forward_model_status import ForwardModelStatus
 
 
@@ -80,8 +81,9 @@ joblist = [
         "max_running": 14,
     },
 ]
-
-#
+for job in joblist:
+    job["environment"].update(ExtJob.default_env)
+context = SubstitutionList.from_dict({"DEFINE": [["<RUNPATH>", "./"]]})
 # Keywords for the ext_job initialization file
 #
 ext_job_keywords = [
@@ -139,11 +141,6 @@ def _generate_job(
     max_running,
 ):
     config_file = DEFAULT_NAME if name is None else name
-    environment = (
-        None
-        if environment is None
-        else list(environment.keys()) + list(environment.values())
-    )
 
     values = [
         str_none_sensitive(max_running),
@@ -155,13 +152,16 @@ def _generate_job(
         error_file,
         start_file,
         None if arglist is None else " ".join(arglist),
-        None if environment is None else " ".join(environment),
+        environment,
         str_none_sensitive(max_running_minutes),
     ]
 
     with open(config_file, "w", encoding="utf-8") as conf:
         for key, val in zip(ext_job_keywords, values):
-            if val is not None:
+            if key == "ENV" and val:
+                for k, v in val.items():
+                    conf.write(f"{key} {k} {v}\n")
+            elif val is not None:
                 conf.write(f"{key} {val}\n")
 
     with open(executable, "w", encoding="utf-8"):
@@ -221,7 +221,7 @@ def validate_ext_job(ext_job, ext_job_config):
     assert ext_job.max_running == ext_job_config["max_running"]
     assert ext_job.arglist == empty_list_if_none(ext_job_config["argList"])
     if ext_job_config["environment"] is None:
-        assert len(ext_job.environment.keys()) == 0
+        assert ext_job.environment == ExtJob.default_env
     else:
         assert ext_job.environment.keys() == ext_job_config["environment"].keys()
         for key in ext_job_config["environment"].keys():
@@ -262,7 +262,11 @@ def set_up_forward_model(selected_jobs=None) -> List[ExtJob]:
 def verify_json_dump(selected_jobs, run_id):
     assert os.path.isfile(JOBS_JSON_FILE)
     config = load_configs(JOBS_JSON_FILE)
-
+    expected_default_env = {
+        "_ERT_ITERATION_NUMBER": "0",
+        "_ERT_REALIZATION_NUMBER": "0",
+        "_ERT_RUNPATH": "./",
+    }
     assert run_id == config["run_id"]
     assert len(selected_jobs) == len(config["jobList"])
 
@@ -286,6 +290,15 @@ def verify_json_dump(selected_jobs, run_id):
                 )
             elif key == "executable":
                 assert job[key] in loaded_job[key]
+            elif key == "environment" and job[key] is None:
+                assert loaded_job[key] == expected_default_env
+            elif key == "environment" and job[key] is not None:
+                for k in job[key]:
+                    if k not in ExtJob.default_env:
+                        assert job[key][k] == loaded_job[key][k]
+                    else:
+                        assert job[key][k] == ExtJob.default_env[k]
+                        assert loaded_job[key][k] == expected_default_env[k]
             else:
                 assert job[key] == loaded_job[key]
 
@@ -299,7 +312,10 @@ def test_no_jobs():
     run_id = "test_no_jobs_id"
 
     write_jobs_json(
-        ".", ErtConfig.forward_model_data_to_json(forward_model_list, run_id)
+        ".",
+        ErtConfig.forward_model_data_to_json(
+            forward_model_list, run_id, context=context
+        ),
     )
 
     verify_json_dump([], run_id)
@@ -325,7 +341,10 @@ def test_transfer_arg_types():
     run_id = "test_no_jobs_id"
 
     write_jobs_json(
-        ".", ErtConfig.forward_model_data_to_json(forward_model_list, run_id)
+        ".",
+        ErtConfig.forward_model_data_to_json(
+            forward_model_list, run_id, context=context
+        ),
     )
 
     config = load_configs(JOBS_JSON_FILE)
@@ -349,7 +368,10 @@ def test_one_job():
         run_id = "test_one_job"
 
         write_jobs_json(
-            ".", ErtConfig.forward_model_data_to_json(forward_model, run_id)
+            ".",
+            ErtConfig.forward_model_data_to_json(
+                forward_model, run_id, context=context
+            ),
         )
         verify_json_dump([i], run_id)
 
@@ -359,7 +381,10 @@ def run_all():
     run_id = "run_all"
 
     write_jobs_json(
-        ".", ErtConfig.forward_model_data_to_json(forward_model_list, run_id)
+        ".",
+        ErtConfig.forward_model_data_to_json(
+            forward_model_list, run_id, context=context
+        ),
     )
 
     verify_json_dump(range(len(joblist)), run_id)
@@ -406,7 +431,10 @@ def test_status_file():
     run_id = "test_no_jobs_id"
 
     write_jobs_json(
-        ".", ErtConfig.forward_model_data_to_json(forward_model_list, run_id)
+        ".",
+        ErtConfig.forward_model_data_to_json(
+            forward_model_list, run_id, context=context
+        ),
     )
 
     with open("status.json", "w", encoding="utf-8") as f:
@@ -442,7 +470,10 @@ def test_that_values_with_brackets_are_ommitted(tmp_path, caplog):
     run_id = "test_no_jobs_id"
 
     write_jobs_json(
-        tmp_path, ErtConfig.forward_model_data_to_json(forward_model_list, run_id)
+        tmp_path,
+        ErtConfig.forward_model_data_to_json(
+            forward_model_list, run_id, context=context
+        ),
     )
 
     assert "Environment variable ENV_VAR skipped due to" in caplog.text

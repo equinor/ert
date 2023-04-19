@@ -9,7 +9,9 @@ import pytest
 from ecl.summary import EclSum
 
 from ert._c_wrappers.enkf import EnKFMain, ErtConfig
+from ert._c_wrappers.enkf.enums import RealizationStateEnum
 from ert.libres_facade import LibresFacade
+from ert.storage import open_storage
 
 
 def run_simulator(time_step_count, start_date) -> EclSum:
@@ -49,13 +51,12 @@ def test_load_inconsistent_time_map_summary(caplog):
                 continue
             print(line, end="")
 
-    ert_config = ErtConfig.from_file("snake_oil.ert")
-    ert = EnKFMain(ert_config)
-    facade = LibresFacade(ert)
+    facade = LibresFacade.from_config_file("snake_oil.ert")
     realisation_number = 0
+    storage = open_storage(facade.enspath, mode="w")
+    ensemble = storage.get_ensemble_by_name("default_0")
     assert (
-        facade.get_current_fs().getStateMap()[realisation_number].name
-        == "STATE_HAS_DATA"
+        ensemble.state_map[realisation_number] == RealizationStateEnum.STATE_HAS_DATA
     )  # Check prior state
 
     # Create a result that is incompatible with the refcase
@@ -67,24 +68,20 @@ def test_load_inconsistent_time_map_summary(caplog):
 
     realizations = [False] * facade.get_ensemble_size()
     realizations[realisation_number] = True
-    with caplog.at_level(logging.ERROR):
-        loaded = facade.load_from_forward_model("default_0", realizations, 0)
+    with caplog.at_level(logging.WARNING):
+        loaded = facade.load_from_forward_model(ensemble, realizations, 0)
     assert (
-        "Realization: 0, load failure: 2 inconsistencies in time_map, first: "
-        "Time mismatch for step: 0, response time: 2000-01-01, reference case: "
-        "2010-01-01, last: Time mismatch for step: 1, response time: 2000-01-10, "
-        f"reference case: 2010-01-10 from: {run_path.absolute()}"
-        "/SNAKE_OIL_FIELD.UNSMRY"
+        "Realization: 0, load warning: 1 inconsistencies in time map, first: "
+        "Time mismatch for step: 1, response time: 2000-01-10 00:00:00, "
+        "reference case: 2010-01-10 00:00:00, last: Time mismatch for step: "
+        "1, response time: 2000-01-10 00:00:00, reference case: 2010-01-10 "
+        f"00:00:00 from: {run_path.absolute()}/SNAKE_OIL_FIELD.UNSMRY"
     ) in caplog.messages
-    assert loaded == 0
-    assert (
-        facade.get_current_fs().getStateMap()[realisation_number].name
-        == "STATE_LOAD_FAILURE"
-    )  # Check that status is as expected
+    assert loaded == 1
 
 
 @pytest.mark.usefixtures("copy_snake_oil_case_storage")
-def test_load_forward_model():
+def test_load_forward_model(snake_oil_default_storage):
     """
     Checking that we are able to load from forward model
     """
@@ -95,19 +92,22 @@ def test_load_forward_model():
                 continue
             print(line, end="")
 
-    ert_config = ErtConfig.from_file("snake_oil.ert")
-    ert = EnKFMain(ert_config)
-    facade = LibresFacade(ert)
+    facade = LibresFacade.from_config_file("snake_oil.ert")
     realisation_number = 0
 
     realizations = [False] * facade.get_ensemble_size()
     realizations[realisation_number] = True
-    loaded = facade.load_from_forward_model("default_0", realizations, 0)
-    assert loaded == 1
-    assert (
-        facade.get_current_fs().getStateMap()[realisation_number].name
-        == "STATE_HAS_DATA"
-    )  # Check that status is as expected
+
+    with open_storage(facade.enspath, mode="w") as storage:
+        # 'load_from_forward_model' requires the ensemble to be writeable...
+        default = storage.get_ensemble_by_name("default_0")
+
+        loaded = facade.load_from_forward_model(default, realizations, 0)
+        assert loaded == 1
+        assert (
+            snake_oil_default_storage.state_map[realisation_number]
+            == RealizationStateEnum.STATE_HAS_DATA
+        )  # Check that status is as expected
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -134,7 +134,9 @@ def test_load_forward_model():
         ),
     ],
 )
-def test_load_forward_model_summary(summary_configuration, expected, caplog):
+def test_load_forward_model_summary(
+    summary_configuration, prior_ensemble, expected, caplog
+):
     config_text = dedent(
         """
         NUM_REALIZATIONS 1
@@ -151,11 +153,12 @@ def test_load_forward_model_summary(summary_configuration, expected, caplog):
 
     ert_config = ErtConfig.from_file("config.ert")
     ert = EnKFMain(ert_config)
-    run_context = ert.create_ensemble_context("prior", [True], iteration=0)
+
+    run_context = ert.ensemble_context(prior_ensemble, [True], iteration=0)
     ert.createRunPath(run_context)
     facade = LibresFacade(ert)
     with caplog.at_level(logging.ERROR):
-        loaded = facade.load_from_forward_model("prior", [True], 0)
+        loaded = facade.load_from_forward_model(prior_ensemble, [True], 0)
     expected_loaded, expected_log_message = expected
     assert loaded == expected_loaded
     if expected_log_message:

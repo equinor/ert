@@ -6,24 +6,7 @@ from ecl.util.util import StringHash
 from ert._c_wrappers import ResPrototype
 from ert._c_wrappers.config.config_content import ConfigContent
 from ert._c_wrappers.config.unrecognized_enum import UnrecognizedEnum
-
-
-class ConfigWarning(UserWarning):
-    pass
-
-
-class ConfigValidationError(ValueError):
-    def __init__(self, errors, config_file=None):
-        self.config_file = config_file
-        self.errors = errors
-        super().__init__(
-            (
-                f"Parsing config file `{self.config_file}` "
-                f"resulted in the errors: {self.errors}"
-            )
-            if self.config_file
-            else f"{self.errors}"
-        )
+from ert.parsing import ConfigValidationError
 
 
 class ConfigParser(BaseCClass):
@@ -87,6 +70,24 @@ class ConfigParser(BaseCClass):
         else:
             raise KeyError(f"Config parser does not have item:{keyword}")
 
+    @staticmethod
+    def check_non_utf_chars(file_path):
+        try:
+            with open(file_path, "r", encoding="utf-8") as f:
+                f.read()
+        except UnicodeDecodeError as e:
+            error_words = str(e).split(" ")
+            hex_str = error_words[error_words.index("byte") + 1]
+            try:
+                unknown_char = chr(int(hex_str, 16))
+            except ValueError:
+                unknown_char = f"hex:{hex_str}"
+            raise ConfigValidationError(
+                f"Unsupported non UTF-8 character {unknown_char!r} "
+                f"found in file: {file_path!r}",
+                config_file=file_path,
+            )
+
     def parse(
         self,
         config_file,
@@ -108,6 +109,7 @@ class ConfigParser(BaseCClass):
             raise IOError(f"File: {config_file} does not exists")
         if not os.access(config_file, os.R_OK):
             raise IOError(f"We do not have read permissions for file: {config_file}")
+        self.check_non_utf_chars(config_file)
         config_content = self._parse(
             config_file,
             comment_string,
@@ -121,7 +123,7 @@ class ConfigParser(BaseCClass):
 
         if validate and not config_content.isValid():
             raise ConfigValidationError(
-                config_file=config_file, errors=config_content.getErrors()
+                errors=[(config_file, e) for e in config_content.getErrors()]
             )
 
         return config_content

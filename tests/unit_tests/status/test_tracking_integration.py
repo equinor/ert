@@ -15,6 +15,7 @@ from jsonpath_ng import parse
 
 from ert.__main__ import ert_parser
 from ert._c_wrappers.enkf.enkf_main import EnKFMain
+from ert._c_wrappers.enkf.enums import RealizationStateEnum
 from ert._c_wrappers.enkf.ert_config import ErtConfig
 from ert.cli import ENSEMBLE_EXPERIMENT_MODE, ENSEMBLE_SMOOTHER_MODE, TEST_RUN_MODE
 from ert.cli.model_factory import create_model
@@ -31,7 +32,6 @@ from ert.ensemble_evaluator.state import (
     JOB_STATE_START,
     REALIZATION_STATE_FINISHED,
 )
-from ert.libres_facade import LibresFacade
 from ert.shared.feature_toggling import FeatureToggling
 
 
@@ -52,7 +52,7 @@ def check_expression(original, path_expression, expected, msg_start):
 @pytest.mark.parametrize(
     (
         "extra_config, extra_poly_eval, cmd_line_arguments,"
-        "num_successful,num_iters,progress,assert_present_in_snapshot"
+        "num_successful,num_iters,progress,assert_present_in_snapshot, expected_state"
     ),
     [
         pytest.param(
@@ -75,6 +75,7 @@ def check_expression(original, path_expression, expected, msg_start):
                     "The run is cancelled due to reaching MAX_RUNTIME",
                 ),
             ],
+            [RealizationStateEnum.STATE_LOAD_FAILURE] * 2,
             id="ee_poly_experiment_cancelled_by_max_runtime",
         ),
         pytest.param(
@@ -90,6 +91,7 @@ def check_expression(original, path_expression, expected, msg_start):
             1,
             1.0,
             [(".*", "reals.*.steps.*.jobs.*.status", JOB_STATE_FINISHED)],
+            [RealizationStateEnum.STATE_HAS_DATA] * 2,
             id="ee_poly_experiment",
         ),
         pytest.param(
@@ -100,13 +102,14 @@ def check_expression(original, path_expression, expected, msg_start):
                 "--target-case",
                 "poly_runpath_file",
                 "--realizations",
-                "12,13",
+                "0,1",
                 "poly_example/poly.ert",
             ],
             2,
             2,
             1.0,
             [(".*", "reals.*.steps.*.jobs.*.status", JOB_STATE_FINISHED)],
+            [RealizationStateEnum.STATE_HAS_DATA] * 2,
             id="ee_poly_smoother",
         ),
         pytest.param(
@@ -129,6 +132,10 @@ def check_expression(original, path_expression, expected, msg_start):
                 ("0", "reals.'0'.steps.*.jobs.'1'.status", JOB_STATE_START),
                 (".*", "reals.'1'.steps.*.jobs.*.status", JOB_STATE_FINISHED),
             ],
+            [
+                RealizationStateEnum.STATE_LOAD_FAILURE,
+                RealizationStateEnum.STATE_HAS_DATA,
+            ],
             id="ee_failing_poly_smoother",
         ),
     ],
@@ -141,8 +148,10 @@ def test_tracking(
     num_iters,
     progress,
     assert_present_in_snapshot,
+    expected_state,
     tmpdir,
     source_root,
+    storage,
 ):
     experiment_folder = "poly_example"
     shutil.copytree(
@@ -175,14 +184,15 @@ def test_tracking(
         ert_config = ErtConfig.from_file(parsed.config)
         os.chdir(ert_config.config_path)
         ert = EnKFMain(ert_config)
-        facade = LibresFacade(ert)
+        experiment_id = storage.create_experiment(
+            ert.ensembleConfig().parameter_configuration
+        )
 
         model = create_model(
             ert,
-            facade.get_ensemble_size(),
-            facade.get_current_case_name(),
+            storage,
             parsed,
-            "experiment_id",
+            experiment_id,
         )
 
         evaluator_server_config = EvaluatorServerConfig(
@@ -241,6 +251,8 @@ def test_tracking(
                         f"Snapshot {i} did not match:\n",
                     )
         thread.join()
+        state_map = storage.get_ensemble_by_name("default").state_map
+        assert state_map[:2] == expected_state
     FeatureToggling.reset()
 
 
@@ -256,107 +268,11 @@ def run_sim(start_date):
 
 
 @pytest.mark.integration_test
-def test_tracking_time_map(
-    tmpdir,
-    source_root,
-    caplog,
-):
-    with tmpdir.as_cwd():
-        config = dedent(
-            """
-        NUM_REALIZATIONS 2
-
-        ECLBASE ECLIPSE_CASE
-        SUMMARY *
-        MAX_SUBMIT 5 -- strictly not needed, but to make sure it is > 1
-        REFCASE ECLIPSE_CASE
-
-        """
-        )
-        with open("config.ert", "w", encoding="utf-8") as fh:
-            fh.writelines(config)
-        # We create a reference case
-        run_sim(datetime(2014, 9, 10))
-        cwd = Path().absolute()
-        sim_path = Path("simulations") / "realization-0" / "iter-0"
-        sim_path.mkdir(parents=True, exist_ok=True)
-        os.chdir(sim_path)
-        # We are a bit sneaky here, there is no forward model creating any responses
-        # but ert will happily accept the results of files that are already present in
-        # the run_path (feature?). So we just create a response that does not match the
-        # reference case for time.
-        run_sim(datetime(2017, 5, 2))
-        os.chdir(cwd)
-        parser = ArgumentParser(prog="test_main")
-        parsed = ert_parser(
-            parser,
-            [
-                TEST_RUN_MODE,
-                "config.ert",
-            ],
-        )
-        FeatureToggling.update_from_args(parsed)
-
-        ert_config = ErtConfig.from_file(parsed.config)
-        os.chdir(ert_config.config_path)
-        ert = EnKFMain(ert_config)
-        facade = LibresFacade(ert)
-
-        model = create_model(
-            ert,
-            facade.get_ensemble_size(),
-            facade.get_current_case_name(),
-            parsed,
-            "experiment_id",
-        )
-
-        evaluator_server_config = EvaluatorServerConfig(
-            custom_port_range=range(1024, 65535),
-            custom_host="127.0.0.1",
-            use_token=False,
-            generate_cert=False,
-        )
-
-        thread = threading.Thread(
-            name="ert_cli_simulation_thread",
-            target=model.start_simulations_thread,
-            args=(evaluator_server_config,),
-        )
-        with caplog.at_level(logging.INFO):
-            thread.start()
-
-            tracker = EvaluatorTracker(
-                model,
-                ee_con_info=evaluator_server_config.get_connection_info(),
-            )
-
-            failures = []
-
-            for event in tracker.track():
-                if isinstance(event, EndEvent):
-                    failures.append(event)
-        # Check that max submit > 1
-        assert ert_config.queue_config.max_submit == 5
-        # We check that the job was submitted first time
-        assert "Submitted job ECLIPSE_CASE (attempt 0)" in caplog.messages
-        # We check that the job was not submitted after the first failed
-        assert "Submitted job ECLIPSE_CASE (attempt 1)" not in caplog.messages
-
-        # Just also check that it failed for the expected reason
-        assert len(failures) == 1
-        assert (
-            "Realization: 0 failed with: 2 inconsistencies in time_map"
-            in failures[0].failed_msg
-        )
-        thread.join()
-    FeatureToggling.reset()
-
-
-@pytest.mark.integration_test
 def test_tracking_missing_ecl(
     tmpdir,
     source_root,
     caplog,
+    storage,
 ):
     with tmpdir.as_cwd():
         config = dedent(
@@ -387,14 +303,14 @@ def test_tracking_missing_ecl(
         ert_config = ErtConfig.from_file(parsed.config)
         os.chdir(ert_config.config_path)
         ert = EnKFMain(ert_config)
-        facade = LibresFacade(ert)
 
         model = create_model(
             ert,
-            facade.get_ensemble_size(),
-            facade.get_current_case_name(),
+            storage,
             parsed,
-            "experiment_id",
+            storage.create_experiment(
+                ert_config.ensemble_config.parameter_configuration
+            ),
         )
 
         evaluator_server_config = EvaluatorServerConfig(

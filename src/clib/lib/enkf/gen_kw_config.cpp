@@ -1,22 +1,25 @@
 #include <filesystem>
+#include <numeric>
 
 #include <stdlib.h>
 #include <string.h>
 
+#include <ert/python.hpp>
 #include <ert/util/hash.h>
 #include <ert/util/util.h>
 #include <ert/util/vector.h>
 
 #include <ert/config/config_parser.hpp>
+#include <ert/logging.hpp>
 
 #include <ert/enkf/config_keys.hpp>
 #include <ert/enkf/enkf_defaults.hpp>
 #include <ert/enkf/enkf_macros.hpp>
-#include <ert/enkf/gen_kw_common.hpp>
 #include <ert/enkf/gen_kw_config.hpp>
 #include <ert/enkf/trans_func.hpp>
 
 namespace fs = std::filesystem;
+static auto logger = ert::get_logger("gen_kw_config");
 
 typedef struct {
     char *name;
@@ -102,6 +105,19 @@ void gen_kw_config_set_parameter_file(gen_kw_config_type *config,
         config_content_type *content =
             config_parse(parser, parameter_file, "--", NULL, NULL, NULL,
                          CONFIG_UNRECOGNIZED_ADD, false);
+        if (!content->valid) {
+            auto header = fmt::format(
+                "encountered errors while parsing GEN_KW parameter file {}",
+                parameter_file);
+            std::string errors;
+            for (auto &error : content->parse_errors) {
+                errors += error;
+            }
+            logger->warning("{}\n{}", header, errors);
+        }
+        for (auto parse_error : content->parse_errors) {
+            logger->warning(parse_error);
+        }
         for (int item_index = 0; item_index < config_content_get_size(content);
              item_index++) {
             const config_content_node_type *node =
@@ -276,13 +292,6 @@ int gen_kw_config_get_index(const gen_kw_config_type *config, const char *key) {
         return -1;
 }
 
-void gen_kw_config_fprintf_config(const gen_kw_config_type *config,
-                                  const char *outfile, FILE *stream) {
-    fprintf(stream, CONFIG_VALUE_FORMAT, config->template_file);
-    fprintf(stream, CONFIG_VALUE_FORMAT, outfile);
-    fprintf(stream, CONFIG_VALUE_FORMAT, config->parameter_file);
-}
-
 const char *gen_kw_config_iget_function_type(const gen_kw_config_type *config,
                                              int index) {
     const gen_kw_parameter_type *parameter =
@@ -300,7 +309,7 @@ gen_kw_config_iget_function_parameter_names(const gen_kw_config_type *config,
     return trans_func_get_param_names(parameter->trans_func);
 }
 
-double_vector_type *
+std::vector<double>
 gen_kw_config_iget_function_parameter_values(const gen_kw_config_type *config,
                                              int index) {
     const gen_kw_parameter_type *parameter =
@@ -311,3 +320,12 @@ gen_kw_config_iget_function_parameter_values(const gen_kw_config_type *config,
 
 VOID_FREE(gen_kw_config)
 VOID_GET_DATA_SIZE(gen_kw)
+
+ERT_CLIB_SUBMODULE("gen_kw_config", m) {
+    m.def(
+        "get_function_parameter_values",
+        [](Cwrap<gen_kw_config_type> self, int index) {
+            return gen_kw_config_iget_function_parameter_values(self, index);
+        },
+        py::arg("self"), py::arg("index"));
+}

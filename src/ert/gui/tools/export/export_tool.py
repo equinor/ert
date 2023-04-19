@@ -3,6 +3,8 @@ from weakref import ref
 
 from qtpy.QtWidgets import QMessageBox
 
+from ert._c_wrappers.enkf.enkf_main import EnKFMain
+from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets import resourceIcon
 from ert.gui.ertwidgets.closabledialog import ClosableDialog
 from ert.gui.tools import Tool
@@ -11,11 +13,11 @@ from ert.shared.exporter import Exporter
 
 
 class ExportTool(Tool):
-    def __init__(self, ert):
+    def __init__(self, ert: EnKFMain, notifier: ErtNotifier):
         super().__init__("Export data", "tools/export", resourceIcon("share.svg"))
         self.__export_widget = None
         self.__dialog = None
-        self.__exporter = Exporter(ert)
+        self.__exporter = Exporter(ert, notifier)
         self.setEnabled(self.__exporter.is_valid())
 
     def trigger(self):

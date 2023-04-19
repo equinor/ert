@@ -5,9 +5,9 @@ import pytest
 from ecl.grid.ecl_grid import EclGrid
 from ecl.summary import EclSum
 
-from ert._c_wrappers.config import ConfigValidationError, ConfigWarning
 from ert._c_wrappers.enkf import ConfigKeys, EnsembleConfig, ErtConfig
-from ert._c_wrappers.enkf.enums import EnkfVarType, ErtImplType, GenDataFileType
+from ert._c_wrappers.enkf.enums import ErtImplType, GenDataFileType
+from ert.parsing import ConfigValidationError, ConfigWarning
 
 
 def test_create():
@@ -17,7 +17,7 @@ def test_create():
     assert empty_ens_conf == conf_from_dict
     assert conf_from_dict.get_refcase_file is None
     assert conf_from_dict.grid_file is None
-    assert conf_from_dict.parameters == []
+    assert not conf_from_dict.parameters
 
     assert "XYZ" not in conf_from_dict
 
@@ -36,7 +36,9 @@ _________________________________________     _____    ____________________
  |____|_  /_______  / \\___  /    \\______  /\\____|__  /_______  //_______  /
         \\/        \\/      \\/            \\/         \\/        \\/         \\/
 """
-    with open(refcase_file, "w+", encoding="utf-8") as refcase_file_handler:
+    with open(refcase_file + ".UNSMRY", "w+", encoding="utf-8") as refcase_file_handler:
+        refcase_file_handler.write(refcase_file_content)
+    with open(refcase_file + ".SMSPEC", "w+", encoding="utf-8") as refcase_file_handler:
         refcase_file_handler.write(refcase_file_content)
     with pytest.raises(expected_exception=IOError, match=refcase_file):
         config_dict = {ConfigKeys.REFCASE: refcase_file}
@@ -99,6 +101,39 @@ def test_that_refcase_gets_correct_name(tmpdir):
 
 
 @pytest.mark.parametrize(
+    "existing_suffix, expected_suffix",
+    [
+        pytest.param(
+            "UNSMRY",
+            "SMSPEC",
+        ),
+        pytest.param(
+            "SMSPEC",
+            "UNSMRY",
+        ),
+    ],
+)
+def test_that_files_for_refcase_exists(setup_case, existing_suffix, expected_suffix):
+    setup_case("configuration_tests", "ensemble_config.ert")
+    refcase_file = "missing_refcase_file"
+
+    with open(
+        refcase_file + "." + existing_suffix, "w+", encoding="utf-8"
+    ) as refcase_writer:
+        refcase_writer.write("")
+
+    with pytest.raises(
+        ConfigValidationError,
+        match="Cannot find " + expected_suffix + " file for refcase provided!",
+    ):
+        _ = EnsembleConfig.from_dict(
+            config_dict={
+                ConfigKeys.REFCASE: refcase_file,
+            },
+        )
+
+
+@pytest.mark.parametrize(
     "gen_data_str, expected",
     [
         pytest.param(
@@ -124,15 +159,12 @@ def test_gen_data_node(gen_data_str, expected):
         assert node == expected
     else:
         assert node is not None
-        assert node.getVariableType() == EnkfVarType.DYNAMIC_RESULT
         assert node.getImplementationType() == ErtImplType.GEN_DATA
         assert node.getDataModelConfig().getNumReportStep() == 3
         assert node.getDataModelConfig().hasReportStep(10)
         assert node.getDataModelConfig().hasReportStep(20)
         assert node.getDataModelConfig().hasReportStep(30)
         assert not node.getDataModelConfig().hasReportStep(32)
-        assert node.get_init_file_fmt() is None
-        assert node.get_enkf_outfile() is None
         assert node.getDataModelConfig().getInputFormat() == GenDataFileType.ASCII
 
 
@@ -162,7 +194,6 @@ def test_gen_data_node_input_format(input_format):
     ):
         node = EnsembleConfig.gen_data_node(gen_data_str.split(" "))
         assert node is not None
-        assert node.getVariableType() == EnkfVarType.DYNAMIC_RESULT
         assert node.getImplementationType() == ErtImplType.GEN_DATA
         assert node.getDataModelConfig().getNumReportStep() == 3
 
@@ -170,56 +201,47 @@ def test_gen_data_node_input_format(input_format):
 def test_get_surface_node(setup_case):
     _ = setup_case("configuration_tests", "ensemble_config.ert")
     surface_str = "TOP"
-    with pytest.raises(
-        ConfigValidationError, match="Missing INIT_FILES:/path/to/input/files"
-    ):
+    with pytest.raises(ConfigValidationError, match="Missing required OUTPUT_FILE"):
         EnsembleConfig.get_surface_node(surface_str.split(" "))
 
-    surface_in = "surface/small.irap"
+    surface_in = "surface/small_%d.irap"
+    base_surface = "surface/small.irap"
     surface_out = "surface/small_out.irap"
     # add init file
     surface_str += f" INIT_FILES:{surface_in}"
 
-    with pytest.raises(
-        ConfigValidationError, match="Missing OUTPUT_FILE:/path/to/output_file"
-    ):
+    with pytest.raises(ConfigValidationError, match="Missing required OUTPUT_FILE"):
         EnsembleConfig.get_surface_node(surface_str.split(" "))
 
     # add output file
     surface_str += f" OUTPUT_FILE:{surface_out}"
-    with pytest.raises(
-        ConfigValidationError, match="Missing BASE_SURFACE:/path/to/base_surface_file"
-    ):
+    with pytest.raises(ConfigValidationError, match="Missing required BASE_SURFACE"):
         EnsembleConfig.get_surface_node(surface_str.split(" "))
 
     # add base surface
-    surface_str += f" BASE_SURFACE:{surface_in}"
+    surface_str += f" BASE_SURFACE:{base_surface}"
 
     surface_node = EnsembleConfig.get_surface_node(surface_str.split(" "))
 
     assert surface_node is not None
 
-    assert surface_node.get_init_file_fmt() == surface_in
-    assert surface_node.get_enkf_outfile() == surface_out
-    assert not surface_node.getUseForwardInit()
-
     surface_str += " FORWARD_INIT:TRUE"
     surface_node = EnsembleConfig.get_surface_node(surface_str.split(" "))
-    assert surface_node.getUseForwardInit()
 
 
 def test_surface_bad_init_values(setup_case):
     _ = setup_case("configuration_tests", "ensemble_config.ert")
-    surface_in = "path/42"
+    surface_in = "path/surf.irap"
+    base_surface = "path/not_surface"
     surface_out = "surface/small_out.irap"
     surface_str = (
         f"TOP INIT_FILES:{surface_in}"
         f" OUTPUT_FILE:{surface_out}"
-        f" BASE_SURFACE:{surface_in}"
+        f" BASE_SURFACE:{base_surface}"
     )
     error = (
-        f"INIT_FILES:{surface_in!r} File not found"
-        f" BASE_SURFACE:{surface_in!r} File not found "
+        "Must give file name with %d with FORWARD_INIT:FALSE\n"
+        f"BASE_SURFACE:{base_surface} not found"
     )
     with pytest.raises(ConfigValidationError, match=error):
         EnsembleConfig.get_surface_node(surface_str.split(" "))

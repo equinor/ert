@@ -1,3 +1,4 @@
+#include <filesystem>
 #include <string>
 #include <vector>
 
@@ -9,6 +10,8 @@
 #include <ert/res_util/string.hpp>
 #include <ert/util/buffer.hpp>
 #include <ert/util/util.hpp>
+
+namespace fs = std::filesystem;
 
 void res_env_unsetenv(const char *variable) { unsetenv(variable); }
 
@@ -66,6 +69,11 @@ char *res_env_alloc_PATH_executable(const char *executable) {
         int ipath = 0;
 
         for (auto path : path_list) {
+            try {
+                auto dir_iter = fs::directory_iterator(fs::path(path));
+            } catch (fs::filesystem_error &err) {
+                continue;
+            }
             char *current_attempt =
                 util_alloc_filename(path.c_str(), executable, NULL);
 

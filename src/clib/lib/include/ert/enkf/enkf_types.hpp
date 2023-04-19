@@ -82,16 +82,6 @@ typedef enum {
 } fw_load_status;
 
 /**
-      These are 2^n bitmasks.
-  */
-
-typedef enum {
-    TRUNCATE_NONE = 0,
-    TRUNCATE_MIN = 1,
-    TRUNCATE_MAX = 2
-} truncation_type;
-
-/**
    This enum is used to differentiate between different types of
    run. The point is that depending on this mode we can be more or
    less restrictive on the amount of input we require from the user.

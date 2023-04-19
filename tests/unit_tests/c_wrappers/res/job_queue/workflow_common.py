@@ -41,27 +41,6 @@ class WorkflowCommon:
             f.write("DUMP dump2 dump_<PARAM>_2\n")
 
     @staticmethod
-    def createInternalFunctionJob():
-        with open("printf_job", "w", encoding="utf-8") as f:
-            f.write("INTERNAL True\n")
-            f.write("FUNCTION printf\n")
-            f.write("MIN_ARG 4\n")
-            f.write("MAX_ARG 5\n")
-            f.write("ARG_TYPE 0 STRING\n")
-            f.write("ARG_TYPE 1 INT\n")
-            f.write("ARG_TYPE 2 FLOAT\n")
-            f.write("ARG_TYPE 3 BOOL\n")
-            f.write("ARG_TYPE 4 STRING\n")
-
-        with open("compare_job", "w", encoding="utf-8") as f:
-            f.write("INTERNAL True\n")
-            f.write("FUNCTION strcmp\n")
-            f.write("MIN_ARG 2\n")
-            f.write("MAX_ARG 2\n")
-            f.write("ARG_TYPE 0 STRING\n")
-            f.write("ARG_TYPE 1 STRING\n")
-
-    @staticmethod
     def createErtScriptsJob():
         with open("subtract_script.py", "w", encoding="utf-8") as f:
             f.write("from ert._c_wrappers.job_queue import ErtScript\n")

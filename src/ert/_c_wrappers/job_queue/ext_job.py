@@ -8,9 +8,10 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
-from ert._c_wrappers.config import ConfigParser, ConfigValidationError, ContentTypeEnum
+from ert._c_wrappers.config import ConfigParser, ContentTypeEnum
 from ert._c_wrappers.util import SubstitutionList
 from ert._clib.job_kw import type_from_kw
+from ert.parsing import ConfigValidationError
 
 _SUBSTITUTED_AT_EXECUTION_TIME: List[str] = ["<ITER>", "<IENS>"]
 
@@ -41,7 +42,6 @@ class ExtJob:
     exec_env: Dict[str, str] = field(default_factory=dict)
     default_mapping: Dict[str, str] = field(default_factory=dict)
     private_args: SubstitutionList = field(default_factory=SubstitutionList)
-    define_args: SubstitutionList = field(default_factory=SubstitutionList)
     help_text: str = ""
 
     @staticmethod
@@ -71,24 +71,20 @@ class ExtJob:
         if resolved is None:
             raise ConfigValidationError(
                 config_file=config_file_location,
-                errors=[f"Could not find executable {executable!r} for job {name!r}"],
+                errors=f"Could not find executable {executable!r} for job {name!r}",
             )
 
         if not os.access(resolved, os.X_OK):  # is not executable
             raise ConfigValidationError(
                 config_file=config_file_location,
-                errors=[
-                    f"ExtJob {name!r} with executable"
-                    f" {resolved!r} does not have execute permissions"
-                ],
+                errors=f"ExtJob {name!r} with executable"
+                f" {resolved!r} does not have execute permissions",
             )
 
         if os.path.isdir(resolved):
             raise ConfigValidationError(
                 config_file=config_file_location,
-                errors=[
-                    f"ExtJob {name!r} has executable set to directory {resolved!r}"
-                ],
+                errors=f"ExtJob {name!r} has executable set to directory {resolved!r}",
             )
 
         return resolved
@@ -103,6 +99,11 @@ class ExtJob:
         "ERROR_FILE",
         "START_FILE",
     ]
+    default_env = {
+        "_ERT_ITERATION_NUMBER": "<ITER>",
+        "_ERT_REALIZATION_NUMBER": "<IENS>",
+        "_ERT_RUNPATH": "<RUNPATH>",
+    }
 
     @classmethod
     def _parse_config_file(cls, config_file: str):
@@ -115,8 +116,8 @@ class ExtJob:
             parser.add(path_key).set_argc_minmax(1, 1)
 
         parser.add("EXECUTABLE", required=True).set_argc_minmax(1, 1)
-        parser.add("ENV").set_argc_minmax(1, 2)
-        parser.add("EXEC_ENV").set_argc_minmax(1, 2)
+        parser.add("ENV").set_argc_minmax(2, 2)
+        parser.add("EXEC_ENV").set_argc_minmax(2, 2)
         parser.add("DEFAULT").set_argc_minmax(2, 2)
         parser.add("ARGLIST").set_argc_minmax(1, -1)
         arg_type_schema = parser.add("ARG_TYPE")
@@ -181,21 +182,17 @@ class ExtJob:
         try:
             config_content = cls._parse_config_file(config_file)
         except ConfigValidationError as conf_err:
-            err_msg = "Item:EXECUTABLE must be set - parsing"
-            err_index = next(
-                (i_err for i_err, err in enumerate(conf_err.errors) if err_msg in err),
-                None,
-            )
-            if err_index is None:
-                raise conf_err from None
             with open(config_file, encoding="utf-8") as f:
                 if "PORTABLE_EXE " in f.read():
-                    conf_err.errors[err_index] = conf_err.errors[err_index].replace(
-                        err_msg,
-                        '"PORTABLE_EXE" key is deprecated, '
-                        'please replace with "EXECUTABLE" in',
+                    err_msg = (
+                        '"PORTABLE_EXE" key is deprecated,'
+                        ' please replace with "EXECUTABLE" in'
                     )
-            raise ConfigValidationError(conf_err.errors, conf_err.config_file) from None
+                    raise ConfigValidationError.from_collected(
+                        [conf_err, ConfigValidationError(err_msg, config_file)]
+                    ) from None
+            raise conf_err from None
+
         except IOError as err:
             raise ConfigValidationError(
                 config_file=config_file,
@@ -239,6 +236,8 @@ class ExtJob:
 
         set_env("environment", "ENV")
         set_env("exec_env", "EXEC_ENV")
+        # Add default run information to job environment vars
+        content_dict["environment"].update(cls.default_env)
 
         content_dict["default_mapping"] = {}
         if config_content.hasKey("DEFAULT"):
@@ -272,7 +271,7 @@ class ExtJob:
         relevant_private_args_keys = [
             key
             for key in self.private_args.keys()
-            if key not in _SUBSTITUTED_AT_EXECUTION_TIME
+            if key not in _SUBSTITUTED_AT_EXECUTION_TIME and key not in self.exec_env
         ]
         unused_private_args_keys = list(
             filter(

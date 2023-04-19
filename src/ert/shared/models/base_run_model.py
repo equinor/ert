@@ -15,6 +15,7 @@ import _ert_com_protocol
 from ert._c_wrappers.enkf import EnKFMain, QueueConfig
 from ert._c_wrappers.enkf.ert_run_context import RunContext
 from ert._c_wrappers.job_queue import RunStatusType
+from ert.callbacks import forward_model_exit, forward_model_ok
 from ert.ensemble_evaluator import (
     Ensemble,
     EnsembleBuilder,
@@ -23,16 +24,9 @@ from ert.ensemble_evaluator import (
     LegacyJobBuilder,
     RealizationBuilder,
     StepBuilder,
-    forward_model_exit,
-    forward_model_ok,
 )
 from ert.libres_facade import LibresFacade
-from ert.shared.feature_toggling import feature_enabled
-from ert.shared.storage.extraction import (
-    post_ensemble_data,
-    post_ensemble_results,
-    post_update_data,
-)
+from ert.storage import StorageAccessor
 
 event_logger = logging.getLogger("ert.event_log")
 experiment_logger = logging.getLogger("ert.experiment_server.base_run_model")
@@ -71,8 +65,9 @@ class BaseRunModel:
         self,
         simulation_arguments: Dict[str, Any],
         ert: EnKFMain,
+        storage: StorageAccessor,
         queue_config: QueueConfig,
-        id_: str,
+        experiment_id: uuid.UUID,
         phase_count: int = 1,
     ):
         """
@@ -101,8 +96,9 @@ class BaseRunModel:
         self.support_restart: bool = True
         self._ert = ert
         self.facade = LibresFacade(ert)
+        self._storage = storage
         self._simulation_arguments = simulation_arguments
-        self._id: str = id_
+        self._experiment_id = experiment_id
         self.reset()
 
         # experiment-server
@@ -311,7 +307,7 @@ class BaseRunModel:
 
         self.deactivate_failed_jobs(run_context)
 
-        run_context.sim_fs.fsync()
+        run_context.sim_fs.sync()
         return totalOk
 
     @staticmethod
@@ -354,7 +350,6 @@ class BaseRunModel:
                     (
                         run_arg,
                         self.ert().resConfig().ensemble_config,
-                        self.ert().resConfig().model_config.get_history_num_steps(),
                     )
                 ).set_done_callback(
                     lambda x: forward_model_ok(*x)
@@ -390,7 +385,7 @@ class BaseRunModel:
         )
 
         with concurrent.futures.ThreadPoolExecutor() as pool:
-            await ensemble.evaluate_async(ee_config, self.id_)
+            await ensemble.evaluate_async(ee_config, str(self.id))
 
             await ensemble_listener
 
@@ -403,7 +398,7 @@ class BaseRunModel:
 
             await loop.run_in_executor(
                 pool,
-                run_context.sim_fs.fsync,
+                run_context.sim_fs.sync,
             )
 
     @abstractmethod
@@ -421,7 +416,7 @@ class BaseRunModel:
         executor: concurrent.futures.Executor,
     ) -> None:
         event = _ert_com_protocol.node_status_builder(
-            status="EXPERIMENT_HOOK_STARTED", experiment_id=self.id_
+            status="EXPERIMENT_HOOK_STARTED", experiment_id=str(self.id)
         )
         event.experiment.message = str(hook)
         await self.dispatch(event)
@@ -433,22 +428,14 @@ class BaseRunModel:
         )
 
         event = _ert_com_protocol.node_status_builder(
-            status="EXPERIMENT_HOOK_ENDED", experiment_id=self.id_
+            status="EXPERIMENT_HOOK_ENDED", experiment_id=str(self.id)
         )
         event.experiment.message = str(hook)
         await self.dispatch(event)
 
     @property
-    def id_(self) -> str:
-        if not self._id:
-            raise RuntimeError(f"{self} does not have an ID")
-        return self._id
-
-    @id_.setter
-    def id_(self, value: str) -> None:
-        if self._id is not None:
-            raise ValueError("experiment id can only be set once")
-        self._id = value
+    def id(self) -> uuid.UUID:
+        return self._experiment_id
 
     async def _ensemble_listener(self, ensemble: Ensemble, iter_: int) -> None:
         """Redirect events emitted by the ensemble to this experiment."""
@@ -471,45 +458,11 @@ class BaseRunModel:
 
     @dispatch.register
     async def _(self, event: CloudEvent) -> None:
-        event_logger.debug(f"dispatch cloudevent: {event} (experiment: {self.id_})")
+        event_logger.debug(f"dispatch cloudevent: {event} (experiment: {self.id})")
 
     @dispatch.register
     async def _(self, event: _ert_com_protocol.DispatcherMessage) -> None:
         await self._state_machine.update(event)
-
-    @feature_enabled("new-storage")
-    def _post_ensemble_data(
-        self, case_name: str, update_id: Optional[str] = None
-    ) -> str:
-        self.setPhaseName("Uploading data...")
-        ensemble_id = post_ensemble_data(
-            ert=self.facade,
-            case_name=case_name,
-            ensemble_size=self._ensemble_size,
-            update_id=update_id,
-            active_realizations=self._active_realizations,
-        )
-        self.setPhaseName("Uploading done")
-        return ensemble_id
-
-    @feature_enabled("new-storage")
-    def _post_ensemble_results(self, case_name: str, ensemble_id: str) -> None:
-        self.setPhaseName("Uploading results...")
-        post_ensemble_results(
-            ert=self.facade, case_name=case_name, ensemble_id=ensemble_id
-        )
-        self.setPhaseName("Uploading done")
-
-    @feature_enabled("new-storage")
-    def _post_update_data(self, parent_ensemble_id: str, algorithm: str) -> str:
-        self.setPhaseName("Uploading update...")
-        update_id = post_update_data(
-            ert=self.facade,
-            parent_ensemble_id=parent_ensemble_id,
-            algorithm=algorithm,
-        )
-        self.setPhaseName("Uploading done")
-        return update_id
 
     def check_if_runpath_exists(self) -> bool:
         """
@@ -535,20 +488,43 @@ class BaseRunModel:
             return
         errors = []
 
+        active_mask = self._simulation_arguments.get("active_realizations", [])
+        active_realizations_count = len(
+            [i for i in range(len(active_mask)) if active_mask[i]]
+        )
+
+        min_realization_count: int = 0
+
+        if self._ert:
+            min_realization_count = (
+                self.ert().analysisConfig().minimum_required_realizations
+            )
+
+        if (
+            "SingleTestRun" not in str(type(self))
+            and active_realizations_count < min_realization_count
+        ):
+            raise ValueError(
+                f"Number of active realizations ({active_realizations_count}) is less "
+                f"than the specified MIN_REALIZATIONS in the config file "
+                f"({min_realization_count})"
+            )
+
         current_case = self._simulation_arguments.get("current_case", None)
         target_case = self._simulation_arguments.get("target_case", None)
 
-        if current_case is not None and current_case in self._ert.storage_manager:
-            if (
-                len(self._ert.storage_manager[current_case].getStateMap())
-                < self._ert._ensemble_size
-            ):
-                errors.append(
-                    f"- Existing case: {current_case} was created with ensemble "
-                    f"size smaller than specified in the ert configuration file ("
-                    f"{len(self._ert.storage_manager[current_case].getStateMap())} "
-                    f" < {self._ert._ensemble_size})"
-                )
+        if current_case is not None:
+            try:
+                case = self._storage.get_ensemble_by_name(current_case)
+                if case.ensemble_size != self._ert.getEnsembleSize():
+                    errors.append(
+                        f"- Existing case: {current_case} was created with ensemble "
+                        f"size smaller than specified in the ert configuration file ("
+                        f"{case.ensemble_size} "
+                        f" < {self._ert.getEnsembleSize()})"
+                    )
+            except KeyError:
+                pass
         if target_case is not None:
             if target_case == current_case:
                 errors.append(
@@ -559,11 +535,16 @@ class BaseRunModel:
             if "%d" in target_case:
                 num_iterations = self._simulation_arguments["num_iterations"]
                 for i in range(num_iterations):
-                    if target_case % i in self._ert.storage_manager:
+                    try:
+                        self._storage.get_ensemble_by_name(target_case % i)
                         errors.append(f"- Target case: {target_case % i} exists")
-
-            elif target_case in self._ert.storage_manager:
-                errors.append(f"- Target case: {target_case} exists")
-
+                    except KeyError:
+                        pass
+            else:
+                try:
+                    self._storage.get_ensemble_by_name(target_case)
+                    errors.append(f"- Target case: {target_case} exists")
+                except KeyError:
+                    pass
         if errors:
             raise ValueError("\n".join(errors))

@@ -8,12 +8,12 @@ import sys
 from argparse import ArgumentParser, ArgumentTypeError
 from contextlib import contextmanager
 from typing import Any, Dict, Generator, Optional, Sequence, Union
+from uuid import UUID
 
 import yaml
 from ecl import set_abort_handler
 
 import ert.shared
-from ert._c_wrappers.config.config_parser import ConfigValidationError
 from ert._c_wrappers.enkf import ErtConfig
 from ert.cli import (
     ENSEMBLE_EXPERIMENT_MODE,
@@ -27,7 +27,8 @@ from ert.cli.main import ErtCliError, ErtTimeoutError, run_cli
 from ert.logging import LOGGING_CONFIG
 from ert.logging._log_util_abort import _log_util_abort
 from ert.namespace import Namespace
-from ert.services import Storage, WebvizErt
+from ert.parsing import ConfigValidationError
+from ert.services import StorageService, WebvizErt
 from ert.shared.feature_toggling import FeatureToggling
 from ert.shared.ide.keywords.data.validation_status import ValidationStatus
 from ert.shared.ide.keywords.definitions import (
@@ -38,21 +39,21 @@ from ert.shared.ide.keywords.definitions import (
     RangeStringArgument,
 )
 from ert.shared.models.multiple_data_assimilation import MultipleDataAssimilation
-from ert.shared.plugins.plugin_manager import ErtPluginContext
+from ert.shared.plugins.plugin_manager import ErtPluginContext, ErtPluginManager
 from ert.shared.storage.command import add_parser_options as ert_api_add_parser_options
 
 
-def run_ert_storage(args: Namespace) -> None:
+def run_ert_storage(args: Namespace, _: Optional[ErtPluginManager] = None) -> None:
     kwargs = {"ert_config": args.config, "verbose": True}
 
     if args.database_url is not None:
         kwargs["database_url"] = args.database_url
 
-    with Storage.start_server(**kwargs) as server:
+    with StorageService.start_server(**kwargs) as server:
         server.wait()
 
 
-def run_webviz_ert(args: Namespace) -> None:
+def run_webviz_ert(args: Namespace, _: Optional[ErtPluginManager] = None) -> None:
     try:
         # pylint: disable=unused-import,import-outside-toplevel
         import webviz_ert  # type: ignore  # noqa
@@ -75,7 +76,7 @@ def run_webviz_ert(args: Namespace) -> None:
     if args.database_url is not None:
         kwargs["database_url"] = args.database_url
 
-    with Storage.init_service(**kwargs) as storage:
+    with StorageService.init_service(**kwargs) as storage:
         storage.wait_until_ready()
         print(
             """
@@ -142,6 +143,12 @@ def valid_name(user_input: str) -> str:
     return user_input
 
 
+def valid_case(user_input: str) -> Union[str, UUID]:
+    if user_input.startswith("UUID="):
+        return UUID(user_input[5:])
+    return valid_name(user_input)
+
+
 def valid_iter_num(user_input: str) -> str:
     validator = IntegerArgument(from_value=0)
     validated = validator.validate(user_input)
@@ -195,11 +202,11 @@ def range_limited_int(user_input: str) -> int:
     raise ArgumentTypeError("Range must be in range 1 - 99")
 
 
-def run_gui_wrapper(args: Namespace) -> None:
+def run_gui_wrapper(args: Namespace, ert_plugin_manager: ErtPluginManager) -> None:
     # pylint: disable=import-outside-toplevel
     from ert.gui.main import run_gui
 
-    run_gui(args)
+    run_gui(args, ert_plugin_manager)
 
 
 # pylint: disable=too-many-statements
@@ -219,6 +226,12 @@ def get_ert_parser(parser: Optional[ArgumentParser] = None) -> ArgumentParser:
         type=str,
         default="./logs",
         help="Directory where ERT will store the logs. Default is ./logs",
+    )
+
+    parser.add_argument(
+        "--read-only",
+        action="store_true",
+        help="Start ERT in read-only mode",
     )
 
     subparsers = parser.add_subparsers(
@@ -274,6 +287,13 @@ def get_ert_parser(parser: Optional[ArgumentParser] = None) -> ArgumentParser:
     test_run_parser = subparsers.add_parser(
         TEST_RUN_MODE, help=test_run_description, description=test_run_description
     )
+    test_run_parser.add_argument(
+        "--current-case",
+        type=valid_name,
+        default="default",
+        help="Name of the case where the results for the simulation "
+        "using the prior parameters will be stored.",
+    )
 
     # ensemble_experiment_parser
     ensemble_experiment_description = (
@@ -294,8 +314,8 @@ def get_ert_parser(parser: Optional[ArgumentParser] = None) -> ArgumentParser:
     )
     ensemble_experiment_parser.add_argument(
         "--current-case",
-        type=valid_name,
-        required=False,
+        type=valid_case,
+        default="default",
         help="Name of the case where the results for the simulation "
         "using the prior parameters will be stored.",
     )
@@ -337,7 +357,7 @@ def get_ert_parser(parser: Optional[ArgumentParser] = None) -> ArgumentParser:
     ensemble_smoother_parser.add_argument(
         "--current-case",
         type=valid_name,
-        required=False,
+        default="default",
         help="Name of the case where the results for the simulation "
         "using the prior parameters will be stored.",
     )
@@ -372,7 +392,7 @@ def get_ert_parser(parser: Optional[ArgumentParser] = None) -> ArgumentParser:
     iterative_ensemble_smoother_parser.add_argument(
         "--current-case",
         type=valid_name,
-        required=False,
+        default="default",
         help="Name of the case where the results for the simulation "
         "using the prior parameters will be stored.",
     )
@@ -413,19 +433,12 @@ def get_ert_parser(parser: Optional[ArgumentParser] = None) -> ArgumentParser:
         "observation errors from one iteration to the next across 4 iterations.",
     )
     es_mda_parser.add_argument(
-        "--current-case",
+        "--restart-case",
         type=valid_name,
-        required=False,
+        default=None,
         help="Name of the case where the results for the simulation "
-        "using the prior parameters will be stored.",
-    )
-    es_mda_parser.add_argument(
-        "--start-iteration",
-        default="0",
-        type=valid_iter_num,
-        required=False,
-        help="Which iteration the evaluation should start from. "
-        "Requires cases previous to the specified iteration to exist.",
+        "using the prior parameters will be stored. Iteration number is read "
+        "from this case. If provided this will be a restart a run",
     )
 
     workflow_description = "Executes the workflow given"
@@ -433,6 +446,9 @@ def get_ert_parser(parser: Optional[ArgumentParser] = None) -> ArgumentParser:
         WORKFLOW_MODE, help=workflow_description, description=workflow_description
     )
     workflow_parser.add_argument(help="Name of workflow", dest="name")
+    workflow_parser.add_argument(
+        "--ensemble", help="Which ensemble to use", default=None
+    )
 
     # Common arguments/defaults for all non-gui modes
     for cli_parser in [
@@ -457,7 +473,9 @@ def get_ert_parser(parser: Optional[ArgumentParser] = None) -> ArgumentParser:
         cli_parser.add_argument(
             "--disable-monitoring",
             action="store_true",
-            help="Disable monitoring.",
+            help="Monitoring will continuously print the status of the realisations"
+            + " classified into Waiting, Pending, Running, Failed, Finished"
+            + " and Unknown.",
             default=False,
         )
         cli_parser.add_argument(
@@ -483,7 +501,7 @@ def start_ert_server(mode: str) -> Generator[None, None, None]:
         yield
         return
 
-    with Storage.start_server():
+    with StorageService.start_server():
         yield
 
 
@@ -561,12 +579,12 @@ def main() -> None:
                     raise NotImplementedError(
                         f"experiment-server can only run '{ENSEMBLE_EXPERIMENT_MODE}'"
                     )
-            args.func(args)
+            args.func(args, context.plugin_manager)
     except (ErtCliError, ErtTimeoutError) as err:
         logger.exception(str(err))
         sys.exit(str(err))
     except ConfigValidationError as err:
-        errMsg = f"Error(s) in configuration file {err.config_file}: {err.errors}"
+        errMsg = err.get_cli_message()
         logger.exception(errMsg)
         sys.exit(errMsg)
     except BaseException as err:  # pylint: disable=broad-except

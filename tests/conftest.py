@@ -13,8 +13,9 @@ from ert.__main__ import ert_parser
 from ert._c_wrappers.enkf import EnKFMain, ErtConfig
 from ert.cli import ENSEMBLE_EXPERIMENT_MODE
 from ert.cli.main import run_cli
-from ert.services import Storage
+from ert.services import StorageService
 from ert.shared.feature_toggling import FeatureToggling
+from ert.storage import open_storage
 
 from .utils import SOURCE_DIR
 
@@ -41,7 +42,12 @@ def class_source_root(request, source_root):
 
 @pytest.fixture(autouse=True)
 def env_save():
-    exceptions = ["PYTEST_CURRENT_TEST", "KMP_DUPLICATE_LIB_OK", "KMP_INIT_AT_FORK"]
+    exceptions = [
+        "PYTEST_CURRENT_TEST",
+        "KMP_DUPLICATE_LIB_OK",
+        "KMP_INIT_AT_FORK",
+        "QT_API",
+    ]
     environment_pre = [
         (key, val) for key, val in os.environ.items() if key not in exceptions
     ]
@@ -137,14 +143,14 @@ def use_tmpdir(tmp_path, monkeypatch):
 @pytest.fixture()
 def mock_start_server(monkeypatch):
     start_server = MagicMock()
-    monkeypatch.setattr(Storage, "start_server", start_server)
+    monkeypatch.setattr(StorageService, "start_server", start_server)
     yield start_server
 
 
 @pytest.fixture()
 def mock_connect(monkeypatch):
     connect = MagicMock()
-    monkeypatch.setattr(Storage, "connect", connect)
+    monkeypatch.setattr(StorageService, "connect", connect)
     yield connect
 
 
@@ -234,3 +240,29 @@ def _shared_snake_oil_case(request, monkeypatch, source_root):
         monkeypatch.chdir("test_data")
 
     yield os.getcwd()
+
+
+@pytest.fixture
+def storage(tmp_path):
+    with open_storage(tmp_path, mode="w") as storage:
+        yield storage
+
+
+@pytest.fixture
+def new_ensemble(storage):
+    experiment_id = storage.create_experiment()
+    return storage.create_ensemble(
+        experiment_id, name="new_ensemble", ensemble_size=100
+    )
+
+
+@pytest.fixture
+def snake_oil_storage(snake_oil_case_storage):
+    with open_storage(snake_oil_case_storage.ert_config.ens_path, mode="w") as storage:
+        yield storage
+
+
+@pytest.fixture
+def snake_oil_default_storage(snake_oil_case_storage):
+    with open_storage(snake_oil_case_storage.resConfig().ens_path) as storage:
+        yield storage.get_ensemble_by_name("default_0")

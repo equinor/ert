@@ -1,16 +1,20 @@
+from __future__ import annotations
+
 import os
 from collections import defaultdict
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, List, Optional, Type, Union
 
-from ert._c_wrappers.config import ConfigParser, ConfigValidationError, ContentTypeEnum
-from ert._c_wrappers.job_queue import ErtScript, ExternalErtScript, FunctionErtScript
+from ert._c_wrappers.config import ConfigParser, ContentTypeEnum
+from ert._c_wrappers.job_queue import ErtScript, ExternalErtScript
 from ert._clib.job_kw import type_from_kw
+from ert.parsing import ConfigValidationError
 
 from .ert_plugin import ErtPlugin
 
 if TYPE_CHECKING:
     from ert._c_wrappers.enkf import EnKFMain
+    from ert.storage import EnsembleAccessor, StorageAccessor
 
     ContentTypes = Union[Type[int], Type[bool], Type[float], Type[str]]
 
@@ -23,7 +27,6 @@ def _workflow_job_config_parser() -> ConfigParser:
         "EXECUTABLE", value_type=ContentTypeEnum.CONFIG_EXECUTABLE
     ).set_argc_minmax(1, 1)
     parser.add("SCRIPT", value_type=ContentTypeEnum.CONFIG_PATH).set_argc_minmax(1, 1)
-    parser.add("FUNCTION").set_argc_minmax(1, 1)
     parser.add("INTERNAL", value_type=ContentTypeEnum.CONFIG_BOOL).set_argc_minmax(1, 1)
     item = parser.add("ARG_TYPE")
     item.set_argc_minmax(2, 2)
@@ -48,11 +51,11 @@ class WorkflowJob:
     arg_types: List[ContentTypeEnum]
     executable: Optional[str]
     script: Optional[str]
-    function: Optional[str]
 
     def __post_init__(self):
         self.__running = False
         self._ert_script: Optional[type] = None
+        self.__script: Optional[type] = None
         if self.script is not None and self.internal:
             try:
                 self._ert_script = ErtScript.loadScriptFromFile(
@@ -103,7 +106,6 @@ class WorkflowJob:
                 cls._make_arg_types_list(content, max_arg),
                 optional_get("EXECUTABLE"),
                 optional_get("SCRIPT"),
-                optional_get("FUNCTION"),
             )
         else:
             raise ConfigValidationError(f"Could not open config_file:{config_file!r}")
@@ -135,7 +137,13 @@ class WorkflowJob:
             return "internal C"
         return "external"
 
-    def run(self, ert: "EnKFMain", arguments: List[Any]) -> Any:
+    def run(
+        self,
+        ert: EnKFMain,
+        storage: StorageAccessor,
+        ensemble: EnsembleAccessor,
+        arguments: List[Any],
+    ) -> Any:
         self.__running = True
         if self.min_args and len(arguments) < self.min_args:
             raise ValueError(
@@ -150,16 +158,9 @@ class WorkflowJob:
             )
 
         if self._ert_script is not None:
-            self.__script = self._ert_script(ert)
-        elif self.internal and self.function is not None:
-            self.__script = FunctionErtScript(
-                ert,
-                self.function,
-                self.argumentTypes(),
-                argument_count=len(arguments),
-            )
+            self.__script = self._ert_script(ert, storage, ensemble)
         elif not self.internal:
-            self.__script = ExternalErtScript(ert, self.executable)
+            self.__script = ExternalErtScript(ert, storage, self.executable)
         else:
             raise UserWarning("Unknown script type!")
         result = self.__script.initializeAndRun(self.argumentTypes(), arguments)

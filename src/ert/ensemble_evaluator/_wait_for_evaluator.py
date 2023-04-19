@@ -8,6 +8,8 @@ import aiohttp
 
 logger = logging.getLogger(__name__)
 
+WAIT_FOR_EVALUATOR_TIMEOUT = 60
+
 
 def get_ssl_context(cert: Optional[Union[str, bytes]]) -> Optional[ssl.SSLContext]:
     if cert is None:
@@ -41,9 +43,11 @@ async def wait_for_evaluator(  # pylint: disable=too-many-arguments
     token: Optional[str] = None,
     cert: Optional[Union[str, bytes]] = None,
     healthcheck_endpoint: str = "/healthcheck",
-    timeout: float = 60,
+    timeout: Optional[float] = None,
     connection_timeout: float = 2,
 ) -> None:
+    if timeout is None:
+        timeout = WAIT_FOR_EVALUATOR_TIMEOUT
     healthcheck_url = base_url + healthcheck_endpoint
     start = time.time()
     sleep_time = 0.2

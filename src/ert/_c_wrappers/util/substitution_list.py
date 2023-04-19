@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import copy
 import os
 
@@ -33,12 +35,10 @@ class SubstitutionList(BaseCClass):
             raise ValueError("Failed to construct subst_list instance.")
 
     @classmethod
-    def from_dict(cls, config_dict):
+    def from_dict(cls, config_dict) -> SubstitutionList:
         subst_list = SubstitutionList()
 
         for key, val in config_dict.get("DEFINE", []):
-            subst_list.addItem(key, val)
-        for key, val in config_dict.get("DATA_KW", []):
             subst_list.addItem(key, val)
 
         if "<CONFIG_PATH>" not in subst_list:
@@ -56,12 +56,15 @@ class SubstitutionList(BaseCClass):
             num_cpus = 1
         subst_list.addItem("<NUM_CPU>", str(num_cpus))
 
+        for key, val in config_dict.get("DATA_KW", []):
+            subst_list.addItem(key, val)
+
         return subst_list
 
     def __len__(self):
         return self._size()
 
-    def addItem(self, key, value):
+    def addItem(self, key: str, value: str):
         self._append_copy(key, value)
 
     def keys(self):

@@ -4,9 +4,9 @@ from os.path import realpath
 from typing import Dict, List, Optional
 
 from ert._c_wrappers.analysis import AnalysisMode, AnalysisModule
-from ert._c_wrappers.config.config_parser import ConfigValidationError
 from ert._c_wrappers.enkf.analysis_iter_config import AnalysisIterConfig
 from ert._c_wrappers.enkf.config_keys import ConfigKeys
+from ert.parsing import ConfigValidationError
 
 logger = logging.getLogger(__name__)
 
@@ -195,16 +195,16 @@ class AnalysisConfig:
     def __repr__(self):
         return (
             "AnalysisConfig("
-            f"alpha={self._alpha}"
-            f"std_cutoff={self._std_cutoff}"
-            f"stop_long_running={self._stop_long_running}"
-            f"global_std_scaling={self._global_std_scaling}"
-            f"max_runtime={self._max_runtime}"
-            f"min_realization={self._min_realization}"
-            f"update_log_path={self._update_log_path}"
-            f"analysis_iter_config={self._analysis_iter_config}"
-            f"analysis_copy={self._analysis_copy}"
-            f"analysis_set_var={self._analysis_set_var}"
+            f"alpha={self._alpha}, "
+            f"std_cutoff={self._std_cutoff}, "
+            f"stop_long_running={self._stop_long_running}, "
+            f"global_std_scaling={self._global_std_scaling}, "
+            f"max_runtime={self._max_runtime}, "
+            f"min_realization={self._min_realization}, "
+            f"update_log_path={self._update_log_path}, "
+            f"analysis_iter_config={self._analysis_iter_config}, "
+            f"analysis_copy={self._analysis_copy}, "
+            f"analysis_set_var={self._analysis_set_var}, "
             f"analysis_select={self._active_module})"
         )
 

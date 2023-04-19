@@ -1,43 +1,55 @@
-from ert.storage._storage import (
-    StorageRecordTransmitter,
-    add_record,
-    add_record_metadata,
-    assert_storage_initialized,
-    delete_experiment,
-    get_ensemble_record,
-    get_ensemble_record_names,
-    get_experiment_names,
-    get_experiment_parameters,
-    get_experiment_responses,
-    get_record_metadata,
-    get_record_storage_transmitters,
-    get_records_url,
-    get_records_url_async,
-    init,
-    init_experiment,
-    load_record,
-    transmit_awaitable_record_collection,
-    transmit_record_collection,
-)
+from __future__ import annotations
+
+import os
+from typing import Literal, Union, overload
+
+from ert.storage.local_ensemble import LocalEnsembleAccessor, LocalEnsembleReader
+from ert.storage.local_experiment import LocalExperimentAccessor, LocalExperimentReader
+from ert.storage.local_storage import LocalStorageAccessor, LocalStorageReader
+
+# Alias types. The Local* variants are meant to co-exist with Remote* classes
+# that connect to a remote ERT Storage Server, as well as an in-memory Memory*
+# variant for testing. The `open_storage` factory is to return the correct type.
+# However, currently there is only one implementation, so to keep things simple
+# we simply alias these types. In the future these will probably be subclasses
+# of typing.Protocol
+StorageReader = LocalStorageReader
+StorageAccessor = LocalStorageAccessor
+ExperimentReader = LocalExperimentReader
+ExperimentAccessor = LocalExperimentAccessor
+EnsembleReader = LocalEnsembleReader
+EnsembleAccessor = LocalEnsembleAccessor
+
+
+@overload
+def open_storage(
+    path: Union[str, os.PathLike[str]], mode: Literal["r"] = "r"
+) -> StorageReader:
+    ...
+
+
+@overload
+def open_storage(
+    path: Union[str, os.PathLike[str]], mode: Literal["w"]
+) -> StorageAccessor:
+    ...
+
+
+def open_storage(
+    path: Union[str, os.PathLike[str]], mode: Literal["r", "w"] = "r"
+) -> Union[StorageReader, StorageAccessor]:
+    if mode == "r":
+        return LocalStorageReader(path)
+    else:
+        return LocalStorageAccessor(path)
+
 
 __all__ = [
-    "init",
-    "init_experiment",
-    "get_experiment_names",
-    "get_ensemble_record",
-    "get_ensemble_record_names",
-    "get_experiment_parameters",
-    "get_experiment_responses",
-    "delete_experiment",
-    "get_records_url",
-    "get_records_url_async",
-    "add_record",
-    "load_record",
-    "StorageRecordTransmitter",
-    "get_record_metadata",
-    "add_record_metadata",
-    "get_record_storage_transmitters",
-    "transmit_awaitable_record_collection",
-    "transmit_record_collection",
-    "assert_storage_initialized",
+    "EnsembleReader",
+    "EnsembleAccessor",
+    "ExperimentReader",
+    "ExperimentAccessor",
+    "StorageReader",
+    "StorageAccessor",
+    "open_storage",
 ]

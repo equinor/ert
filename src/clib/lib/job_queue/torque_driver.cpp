@@ -1,7 +1,9 @@
 #include <filesystem>
 
 #include <array>
+#include <chrono>
 #include <fstream>
+#include <iomanip>
 #include <iostream>
 #include <sstream>
 #include <stdio.h>
@@ -77,8 +79,8 @@ void *torque_driver_alloc() {
     torque_driver_set_option(torque_driver, TORQUE_NUM_NODES, "1");
     torque_driver_set_option(torque_driver, TORQUE_SUBMIT_SLEEP,
                              TORQUE_DEFAULT_SUBMIT_SLEEP);
-    torque_driver_set_option(torque_driver, TORQUE_TIMEOUT,
-                             TORQUE_DEFAULT_TIMEOUT);
+    torque_driver_set_option(torque_driver, TORQUE_QUEUE_QUERY_TIMEOUT,
+                             TORQUE_DEFAULT_QUEUE_QUERY_TIMEOUT);
 
     return torque_driver;
 }
@@ -225,7 +227,7 @@ bool torque_driver_set_option(void *__driver, const char *option_key,
             torque_driver_set_debug_output(driver, value);
         else if (strcmp(TORQUE_SUBMIT_SLEEP, option_key) == 0)
             option_set = torque_driver_set_submit_sleep(driver, value);
-        else if (strcmp(TORQUE_TIMEOUT, option_key) == 0)
+        else if (strcmp(TORQUE_QUEUE_QUERY_TIMEOUT, option_key) == 0)
             option_set = torque_driver_set_timeout(driver, value);
         else
             option_set = false;
@@ -257,7 +259,7 @@ const void *torque_driver_get_option(const void *__driver,
             return driver->cluster_label;
         else if (strcmp(TORQUE_JOB_PREFIX_KEY, option_key) == 0)
             return driver->job_prefix;
-        else if (strcmp(TORQUE_TIMEOUT, option_key) == 0)
+        else if (strcmp(TORQUE_QUEUE_QUERY_TIMEOUT, option_key) == 0)
             return driver->timeout_char;
         else {
             util_abort("%s: option_id:%s not recognized for TORQUE driver \n",
@@ -278,7 +280,7 @@ void torque_driver_init_option_list(stringlist_type *option_list) {
     stringlist_append_copy(option_list, TORQUE_KEEP_QSUB_OUTPUT);
     stringlist_append_copy(option_list, TORQUE_CLUSTER_LABEL);
     stringlist_append_copy(option_list, TORQUE_JOB_PREFIX_KEY);
-    stringlist_append_copy(option_list, TORQUE_TIMEOUT);
+    stringlist_append_copy(option_list, TORQUE_QUEUE_QUERY_TIMEOUT);
 }
 
 torque_job_type *torque_job_alloc() {
@@ -297,6 +299,8 @@ stringlist_type *torque_driver_alloc_cmd(torque_driver_type *driver,
     stringlist_type *argv = stringlist_alloc_new();
 
     if (driver->keep_qsub_output) {
+        // Retain both standard output and standard error streams on the
+        // execution host:
         stringlist_append_copy(argv, "-k");
         stringlist_append_copy(argv, "oe");
     }
@@ -327,6 +331,10 @@ stringlist_type *torque_driver_alloc_cmd(torque_driver_type *driver,
         stringlist_append_copy(argv, job_name);
     }
 
+    // Declare the job as not rerunnable
+    stringlist_append_copy(argv, "-r");
+    stringlist_append_copy(argv, "n");
+
     stringlist_append_copy(argv, submit_script);
 
     return argv;
@@ -334,17 +342,32 @@ stringlist_type *torque_driver_alloc_cmd(torque_driver_type *driver,
 
 static void torque_debug(const torque_driver_type *driver, const char *fmt,
                          ...) {
-    if (driver->debug_stream) {
-        {
-            va_list ap;
-            va_start(ap, fmt);
-            vfprintf(driver->debug_stream, fmt, ap);
-            va_end(ap);
-        }
-        fprintf(driver->debug_stream, "\n");
-        fsync(fileno(driver->debug_stream));
-        fflush(driver->debug_stream);
+    if (!driver->debug_stream) {
+        return;
     }
+    auto now = std::chrono::system_clock::now();
+
+    // Separate the time_point into time_t (seconds) and the remaining microseconds
+    auto now_t = std::chrono::system_clock::to_time_t(now);
+    auto now_us = std::chrono::duration_cast<std::chrono::microseconds>(
+                      now.time_since_epoch()) %
+                  1000000;
+
+    // Convert the time_t to a tm structure in UTC (gmtime)
+    std::tm *now_tm = std::gmtime(&now_t);
+
+    // Format the time string using put_time and a stringstream
+    std::ostringstream ss;
+    ss << std::put_time(now_tm, "%FT%T") << '.' << std::setfill('0')
+       << std::setw(6) << now_us.count() << "Z";
+    fprintf(driver->debug_stream, "%s ", ss.str().c_str());
+    va_list ap;
+    va_start(ap, fmt);
+    vfprintf(driver->debug_stream, fmt, ap);
+    va_end(ap);
+    fprintf(driver->debug_stream, "\n");
+    fsync(fileno(driver->debug_stream));
+    fflush(driver->debug_stream);
 }
 
 static int torque_job_parse_qsub_stdout(const torque_driver_type *driver,
@@ -477,6 +500,9 @@ static int torque_driver_submit_shell_job(torque_driver_type *driver,
                                          "%d seconds",
                                          job_name, retry_interval);
                             sleep(retry_interval);
+                            // Sleep some more at random, to avoid
+                            // synchronized retries from all threads:
+                            usleep(rand() % 2000000); // max 2 seconds
                             slept_time += retry_interval;
                             retry_interval *= 2;
                         } else {
@@ -751,6 +777,10 @@ job_status_type torque_driver_parse_status(const char *qstat_file,
     }
 
     if (exit_status != 0) {
+        fprintf(stderr,
+                "** Warning: Exit code %d from queue system on job: "
+                "%s, job_state: %s\n",
+                exit_status, jobnr_char, job_state.c_str());
         status = JOB_QUEUE_EXIT;
     }
 

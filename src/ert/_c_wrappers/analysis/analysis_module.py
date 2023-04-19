@@ -2,7 +2,7 @@ import logging
 from enum import Enum
 from typing import TYPE_CHECKING, Dict, List, Type, TypedDict, Union
 
-from ert._c_wrappers.config.config_parser import ConfigValidationError
+from ert.parsing import ConfigValidationError
 
 logger = logging.getLogger(__name__)
 
@@ -196,24 +196,6 @@ class AnalysisModule:
 
     def get_truncation(self) -> float:
         return self.get_variable_value("ENKF_TRUNCATION")
-
-    def get_steplength(self, iteration_nr: int) -> float:
-        """
-        This is an implementation of Eq. (49), which calculates a suitable
-        step length for the update step, from the book:
-        Geir Evensen, Formulating the history matching problem with
-        consistent error statistics, Computational Geosciences (2021) 25:945 –970
-
-        Function not really used moved from C to keep the class interface consistent
-        should be investigated for possible removal.
-        """
-        min_step_length = self.get_variable_value("IES_MIN_STEPLENGTH")
-        max_step_length = self.get_variable_value("IES_MAX_STEPLENGTH")
-        dec_step_length = self.get_variable_value("IES_DEC_STEPLENGTH")
-        step_length = min_step_length + (max_step_length - min_step_length) * pow(
-            2, -(iteration_nr - 1) / (dec_step_length - 1)
-        )
-        return step_length
 
     def __repr__(self):
         return f"AnalysisModule(name = {self.name})"

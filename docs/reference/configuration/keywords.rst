@@ -44,6 +44,7 @@ Keyword name                                                            Required
 :ref:`GRID <grid>`                                                      NO                                                                      Provide an ECLIPSE grid for the reservoir model
 :ref:`HISTORY_SOURCE <history_source>`                                  NO                                      REFCASE_HISTORY                 Source used for historical values
 :ref:`HOOK_WORKFLOW <hook_workflow>`                                    NO                                                                      Install a workflow to be run automatically
+:ref:`INCLUDE <include>`                                                NO                                                                      Include contents from another ert config
 :ref:`INSTALL_JOB <install_job>`                                        NO                                                                      Install a job for use in a forward model
 :ref:`ITER_CASE <iter_Case>`                                            NO                                      IES%d                           Case name format - iterated ensemble smoother
 :ref:`ITER_COUNT <iter_count>`                                          NO                                      4                               Number of iterations - iterated ensemble smoother
@@ -54,7 +55,7 @@ Keyword name                                                            Required
 :ref:`LOAD_WORKFLOW_JOB <load_workflow_job>`                            NO                                                                      Load a workflow job into ERT
 :ref:`LICENSE_PATH <license_path>`                                      NO                                                                      A path where ert-licenses to e.g. RMS are stored
 :ref:`MAX_RUNTIME <max_runtime>`                                        NO                                      0                               Set the maximum runtime in seconds for a realization (0 means no runtime limit)
-:ref:`MAX_SUBMIT <max_submit>`                                          NO                                      2                               How many times should the queue system retry a simulation
+:ref:`MAX_SUBMIT <max_submit>`                                          NO                                      2                               How many times the queue system should retry a simulation
 :ref:`MIN_REALIZATIONS <min_realizations>`                              NO                                      0                               Set the number of minimum realizations that has to succeed in order for the run to continue (0 means identical to NUM_REALIZATIONS - all must pass).
 :ref:`NUM_CPU <num_cpu>`                                                NO                                      1                               Set the number of CPUs. Intepretation varies depending on context
 :ref:`NUM_REALIZATIONS <num_realizations>`                              YES                                                                     Set the number of reservoir realizations to use
@@ -416,6 +417,18 @@ Commonly used keywords
         flexible. It is documented in Customizing the simulation workflow in ERT.
 
         The INSTALL_JOB keyword is optional.
+
+.. _include:
+.. topic:: INCLUDE
+
+        The INCLUDE keyword is used to include the contents from another ERT workflow.
+
+        *Example:*
+
+        ::
+
+                INCLUDE other_config.ert
+
 
 .. _obs_config:
 .. topic:: OBS_CONFIG
@@ -1067,7 +1080,7 @@ and/or history matching project.
 
         **Initializing from the FORWARD MODEL**
 
-        All the parameter types like FIELD, GEN_KW and SURFACE can be
+        Parameter types like FIELD and SURFACE (not GEN_KW) can be
         initialized from the forward model. To achieve this you just add the setting
         FORWARD_INIT:True to the configuration. When using forward init the
         initialization will work like this:
@@ -1356,7 +1369,7 @@ to load, select and modify the analysis modules are documented here.
 .. _max_submit:
 .. topic:: MAX_SUBMIT
 
-        How many times should the queue system retry a simulation.
+        How many times the queue system should retry a simulation.
                 Default is 2.
 
 
@@ -1842,7 +1855,7 @@ bjobs.
         flakyness.
 
         ::
-                QUEUE_OPTION TORQUE TIMEOUT 126
+                QUEUE_OPTION TORQUE QUEUE_QUERY_TIMEOUT 126
 
 .. _configuring_the_slurm_queue:
 

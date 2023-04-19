@@ -1,7 +1,6 @@
 from os import path
-from threading import Timer
 
-from qtpy.QtCore import Qt
+from qtpy.QtCore import Qt, QTimer
 from qtpy.QtGui import QIcon
 from qtpy.QtWidgets import QApplication, QHBoxLayout, QLabel, QPushButton, QSizePolicy
 
@@ -57,29 +56,29 @@ class CopyableLabel(QHBoxLayout):
 
         self.copy_button = QPushButton("")
         self.copy_button.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
-        self.copy_button.setStyleSheet(
-            "QPushButton { padding: 8px; max-width: 150px; min-width: 30px; }"
-        )
         icon_path = path.join(current_dir, "..", "resources", "gui", "img", "copy.svg")
         icon_path_check = path.join(
             current_dir, "..", "resources", "gui", "img", "check.svg"
         )
         self.copy_button.setIcon(QIcon(icon_path))
+        self.restore_timer = QTimer(self)
+
+        def restore_text():
+            self.copy_button.setIcon(QIcon(icon_path))
+
+        self.restore_timer.timeout.connect(restore_text)
 
         def copy_text() -> None:
             text = unescape_string(self.label.text())
             QApplication.clipboard().setText(text)
             self.copy_button.setIcon(QIcon(icon_path_check))
 
-            def restore_text():
-                self.copy_button.setIcon(QIcon(icon_path))
-
-            Timer(1.0, restore_text).start()
+            self.restore_timer.start(1000)
 
         self.copy_button.clicked.connect(copy_text)
 
         self.addWidget(self.label)
-        self.addWidget(self.copy_button)
+        self.addWidget(self.copy_button, alignment=Qt.AlignLeft)
 
         if executeAddHelpToWidget:
             addHelpToWidget(self.label, "")

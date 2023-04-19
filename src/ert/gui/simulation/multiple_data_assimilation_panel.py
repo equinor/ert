@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import List
 
-from qtpy.QtWidgets import QFormLayout, QLabel
+from qtpy.QtWidgets import QCheckBox, QFormLayout, QLabel
 
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets import (
@@ -12,13 +12,11 @@ from ert.gui.ertwidgets import (
 )
 from ert.gui.ertwidgets.copyablelabel import CopyableLabel
 from ert.gui.ertwidgets.models.activerealizationsmodel import ActiveRealizationsModel
-from ert.gui.ertwidgets.models.init_iter_value import IterValueModel
 from ert.gui.ertwidgets.models.targetcasemodel import TargetCaseModel
 from ert.gui.ertwidgets.models.valuemodel import ValueModel
 from ert.gui.ertwidgets.stringbox import StringBox
 from ert.libres_facade import LibresFacade
 from ert.shared.ide.keywords.definitions import (
-    IntegerArgument,
     NumberListStringArgument,
     ProperNameFormatArgument,
     RangeStringArgument,
@@ -34,17 +32,17 @@ class Arguments:
     target_case: str
     realizations: str
     weights: List[float]
-    start_iteration: int
+    restart_run: bool
+    prior_ensemble: str
 
 
 class MultipleDataAssimilationPanel(SimulationConfigPanel):
     def __init__(self, facade: LibresFacade, notifier: ErtNotifier):
         SimulationConfigPanel.__init__(self, MultipleDataAssimilation)
+        self.notifier = notifier
 
         layout = QFormLayout()
-
-        case_selector = CaseSelector(facade, notifier)
-        layout.addRow("Current case:", case_selector)
+        self.setObjectName("ES_MDA_panel")
 
         runpath_label = CopyableLabel(text=facade.run_path)
         layout.addRow("Runpath:", runpath_label)
@@ -65,16 +63,8 @@ class MultipleDataAssimilationPanel(SimulationConfigPanel):
         layout.addRow("Target case format:", self._target_case_format_field)
 
         self.weights = MultipleDataAssimilation.default_weights
+        self.weights_valid = True
         self._createInputForWeights(layout)
-
-        self._iter_field = StringBox(
-            IterValueModel(notifier),
-            "config/simulation/iter_num",
-        )
-        self._iter_field.setValidator(
-            IntegerArgument(from_value=0),
-        )
-        layout.addRow("Start iteration:", self._iter_field)
 
         self._analysis_module_edit = AnalysisModuleEdit(
             facade,
@@ -92,6 +82,14 @@ class MultipleDataAssimilationPanel(SimulationConfigPanel):
         )
         layout.addRow("Active realizations:", self._active_realizations_field)
 
+        self._restart_box = QCheckBox("")
+        self._restart_box.toggled.connect(self.restart_run)
+        layout.addRow("Restart run:", self._restart_box)
+
+        self._case_selector = CaseSelector(notifier)
+        layout.addRow("Restart from:", self._case_selector)
+        self._case_selector.setDisabled(True)
+
         self._target_case_format_field.getValidationSupport().validationChanged.connect(  # noqa
             self.simulationConfigurationChanged
         )
@@ -103,6 +101,12 @@ class MultipleDataAssimilationPanel(SimulationConfigPanel):
         )
 
         self.setLayout(layout)
+
+    def restart_run(self):
+        if self._restart_box.isChecked():
+            self._case_selector.setEnabled(True)
+        else:
+            self._case_selector.setEnabled(False)
 
     def _createInputForWeights(self, layout):
         relative_iteration_weights_model = ValueModel(self.weights)
@@ -123,6 +127,8 @@ class MultipleDataAssimilationPanel(SimulationConfigPanel):
         layout.addRow("Normalized weights:", normalized_weights_widget)
 
         def updateVisualizationOfNormalizedWeights():
+            self.weights_valid = False
+
             if self._relative_iteration_weights_box.isValid():
                 weights = MultipleDataAssimilation.parseWeights(
                     relative_iteration_weights_model.getValue()
@@ -131,6 +137,11 @@ class MultipleDataAssimilationPanel(SimulationConfigPanel):
                 normalized_weights_model.setValue(
                     ", ".join(f"{x:.2f}" for x in normalized_weights)
                 )
+
+                if not weights:
+                    normalized_weights_model.setValue("The weights are invalid!")
+                else:
+                    self.weights_valid = True
             else:
                 normalized_weights_model.setValue("The weights are invalid!")
 
@@ -145,6 +156,7 @@ class MultipleDataAssimilationPanel(SimulationConfigPanel):
             self._target_case_format_field.isValid()
             and self._active_realizations_field.isValid()
             and self._relative_iteration_weights_box.isValid()
+            and self.weights_valid
         )
 
     def getSimulationArguments(self):
@@ -153,10 +165,9 @@ class MultipleDataAssimilationPanel(SimulationConfigPanel):
             target_case=self._target_case_format_model.getValue(),
             realizations=self._active_realizations_field.text(),
             weights=self.weights,
-            start_iteration=int(self._iter_field.model.getValue()),
+            restart_run=self._restart_box.isChecked(),
+            prior_ensemble=self._case_selector.currentText(),
         )
 
     def setWeights(self, weights):
-        str_weights = str(weights)
-        print(f"Weights changed: {str_weights}")
-        self.weights = str_weights
+        self.weights = str(weights)

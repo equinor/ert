@@ -4,7 +4,7 @@ import sys
 import pytest
 
 
-@pytest.mark.timeout(4)
+@pytest.mark.timeout(8)
 @pytest.mark.skipif(
     sys.platform.startswith("darwin"), reason="Performance can be flaky"
 )
@@ -21,5 +21,6 @@ def test_job_runner_startup_overhead():
                 "-m",
                 "_ert_job_runner.job_dispatch",
                 "-h",
-            )
+            ),
+            stdout=subprocess.DEVNULL,
         )

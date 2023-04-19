@@ -125,9 +125,6 @@ class ModelConfig:
             ]
         )
 
-    def __ne__(self, other):
-        return self != other
-
 
 def replace_runpath_format(format_string: Optional[str]) -> Optional[str]:
     if format_string is None:

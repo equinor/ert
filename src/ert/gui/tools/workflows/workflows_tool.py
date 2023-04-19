@@ -8,7 +8,7 @@ class WorkflowsTool(Tool):
     def __init__(self, ert, notifier):
         self.notifier = notifier
         self.ert = ert
-        enabled = len(ert.resConfig().workflow_jobs) > 0
+        enabled = len(ert.resConfig().workflows) > 0
         super().__init__(
             "Run workflow",
             "tools/workflows",
@@ -17,7 +17,7 @@ class WorkflowsTool(Tool):
         )
 
     def trigger(self):
-        run_workflow_widget = RunWorkflowWidget(self.ert)
+        run_workflow_widget = RunWorkflowWidget(self.ert, self.notifier)
         dialog = ClosableDialog("Run workflow", run_workflow_widget, self.parent())
         dialog.exec_()
         self.notifier.emitErtChange()  # workflow may have added new cases.

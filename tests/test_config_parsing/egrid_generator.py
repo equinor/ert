@@ -14,7 +14,7 @@ class Units(Enum):
     CM = auto()
     FEET = auto()
 
-    def to_egrid(self):
+    def to_ecl(self):
         return self.name.ljust(8)
 
 
@@ -30,7 +30,7 @@ class GridRelative(Enum):
     MAP = auto()
     ORIGIN = auto()
 
-    def to_grdecl(self) -> str:
+    def to_ecl(self) -> str:
         if self == GridRelative.MAP:
             return "MAP".ljust(8)
         else:
@@ -53,14 +53,14 @@ class GrdeclKeyword:
     ...     field1: A
     ...     field2: B
 
-    will have a to_grdecl method that will be similar to
+    will have a to_ecl method that will be similar to
 
-    >>> def to_egrid(self):
-    ...     return [self.field1.to_egrid(), self.field2.to_egrid]
+    >>> def to_ecl(self):
+    ...     return [self.field1.to_ecl(), self.field2.to_ecl]
     """
 
-    def to_egrid(self) -> List[Any]:
-        return [value.to_egrid() for value in astuple(self)]
+    def to_ecl(self) -> List[Any]:
+        return [value.to_ecl() for value in astuple(self)]
 
 
 @dataclass
@@ -88,7 +88,7 @@ class CoordinateType(Enum):
     CARTESIAN = auto()
     CYLINDRICAL = auto()
 
-    def to_egrid(self) -> int:
+    def to_ecl(self) -> int:
         if self == CoordinateType.CARTESIAN:
             return 0
         else:
@@ -163,7 +163,7 @@ class Filehead:
     rock_model: RockModel
     grid_format: GridFormat
 
-    def to_egrid(self) -> np.ndarray:
+    def to_ecl(self) -> np.ndarray:
         """
         Returns:
             List of values, as layed out after the FILEHEAD keyword for
@@ -200,7 +200,7 @@ class GridHead:
     lgr_start: Tuple[int, int, int]
     lgr_end: Tuple[int, int, int]
 
-    def to_egrid(self) -> np.ndarray:
+    def to_ecl(self) -> np.ndarray:
         # The data is expected to consist of
         # 100 integers, but only a subset is used.
         result = np.zeros((100,), dtype=np.int32)
@@ -211,7 +211,7 @@ class GridHead:
         result[4] = self.grid_reference_number
         result[24] = self.numres
         result[25] = self.nseg
-        result[26] = self.coordinate_type.to_egrid()
+        result[26] = self.coordinate_type.to_ecl()
         result[[27, 28, 29]] = np.array(self.lgr_start)
         result[[30, 31, 32]] = np.array(self.lgr_end)
         return result
@@ -240,9 +240,9 @@ class GlobalGrid:
             and np.array_equal(self.zcorn, other.zcorn)
         )
 
-    def to_egrid(self) -> List[Tuple[str, Any]]:
+    def to_ecl(self) -> List[Tuple[str, Any]]:
         result = [
-            ("GRIDHEAD", self.grid_head.to_egrid()),
+            ("GRIDHEAD", self.grid_head.to_ecl()),
             ("COORD   ", self.coord.astype(np.float32)),
             ("ZCORN   ", self.zcorn.astype(np.float32)),
         ]
@@ -278,8 +278,8 @@ class EGrid:
             file_format (ecl_data_io.Format): The format of the file.
         """
         contents = []
-        contents.append(("FILEHEAD", self.file_head.to_egrid()))
-        contents += self.global_grid.to_egrid()
+        contents.append(("FILEHEAD", self.file_head.to_ecl()))
+        contents += self.global_grid.to_ecl()
         eclio.write(filelike, contents)
 
 

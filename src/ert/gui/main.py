@@ -1,11 +1,11 @@
+import dataclasses
 import functools
 import logging
 import os
 import warnings
 import webbrowser
-from pathlib import Path
+from typing import Optional
 
-import filelock
 from PyQt5.QtWidgets import (
     QFrame,
     QHBoxLayout,
@@ -18,12 +18,9 @@ from PyQt5.QtWidgets import (
 from qtpy.QtCore import QLocale, QSize, Qt
 from qtpy.QtWidgets import QApplication
 
-from ert._c_wrappers.config import ConfigWarning
-from ert._c_wrappers.config.config_parser import ConfigValidationError
 from ert._c_wrappers.enkf import EnKFMain, ErtConfig
-from ert.cli.main import ErtTimeoutError
+from ert._c_wrappers.enkf.ensemble_config import ParameterConfiguration
 from ert.gui.about_dialog import AboutDialog
-from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets import SuggestorMessage, SummaryPanel, resourceIcon
 from ert.gui.main_window import ErtMainWindow
 from ert.gui.simulation import SimulationPanel
@@ -41,15 +38,19 @@ from ert.gui.tools.run_analysis import RunAnalysisTool
 from ert.gui.tools.workflows import WorkflowsTool
 from ert.libres_facade import LibresFacade
 from ert.namespace import Namespace
-from ert.services import Storage
+from ert.parsing import ConfigValidationError, ConfigWarning
+from ert.services import StorageService
 from ert.shared.plugins.plugin_manager import ErtPluginManager
+from ert.storage import EnsembleAccessor, StorageReader, open_storage
 
 
-def run_gui(args: Namespace):
+def run_gui(args: Namespace, plugin_manager: Optional[ErtPluginManager] = None):
     app = QApplication([])  # Early so that QT is initialized before other imports
     app.setWindowIcon(resourceIcon("application/window_icon_cutout"))
     with add_gui_log_handler() as log_handler:
-        window, ens_path = _start_initial_gui_window(args, log_handler)
+        window, ens_path, ensemble_size, parameter_config = _start_initial_gui_window(
+            args, log_handler, plugin_manager
+        )
 
         def show_window():
             window.show()
@@ -63,68 +64,135 @@ def run_gui(args: Namespace):
         if ens_path is None:
             return show_window()
 
-        storage_lock = filelock.FileLock(
-            Path(ens_path) / (Path(ens_path).stem + ".lock")
-        )
-        try:
-            storage_lock.acquire(timeout=5)
-            with Storage.init_service(
-                ert_config=args.config,
-                project=os.path.abspath(ens_path),
-            ):
-                return show_window()
-        except filelock.Timeout:
-            raise ErtTimeoutError(
-                f"Not able to acquire lock for: {ens_path}. You may already be running"
-                f" ert, or another user is using the same ENSPATH."
+        mode = "r" if args.read_only else "w"
+        with StorageService.init_service(
+            ert_config=args.config, project=os.path.abspath(ens_path)
+        ), open_storage(ens_path, mode=mode) as storage:
+            if hasattr(window, "notifier"):
+                default_case = _get_or_create_default_case(
+                    storage, ensemble_size, parameter_config
+                )
+                window.notifier.set_storage(storage)
+                window.notifier.set_current_case(default_case)
+            return show_window()
+
+
+def _log_difference_with_new_parser(args, ert_config):
+    logger = logging.getLogger(__name__)
+    try:
+        with warnings.catch_warnings(record=True) as silenced_warnings:
+            ert_config_new = ErtConfig.from_file(args.config, use_new_parser=True)
+
+            for w in silenced_warnings:
+                logger.info(f"New Parser warning: {w.message}")
+
+        if ert_config != ert_config_new:
+            fields = dataclasses.fields(ert_config)
+            difference = [
+                f"{getattr(ert_config, field.name)} !="
+                f" {getattr(ert_config_new, field.name)}"
+                for field in fields
+                if getattr(ert_config, field.name)
+                != getattr(ert_config_new, field.name)
+            ]
+            logger.info(
+                f"New parser gave different result.\n" f" Difference: {difference!r}"
             )
-        finally:
-            if storage_lock.is_locked:
-                storage_lock.release()
-                os.remove(storage_lock.lock_file)
+        else:
+            logger.info("New parser gave equal result.")
+    except Exception:
+        logger.exception("The new parser failed")
 
 
-def _start_initial_gui_window(args, log_handler):
+def _start_initial_gui_window(
+    args, log_handler, plugin_manager: Optional[ErtPluginManager] = None
+):
     # Create logger inside function to make sure all handlers have been added to
     # the root-logger.
     logger = logging.getLogger(__name__)
     suggestions = []
     error_messages = []
-    warning_msgs = []
+    all_warnings = []
+    config_warnings = []
     ert_config = None
-    try:
-        with warnings.catch_warnings(record=True) as warning_messages:
+
+    with warnings.catch_warnings(record=True) as all_warnings:
+        try:
             _check_locale()
-            suggestions += ErtConfig.make_suggestion_list(args.config)
             ert_config = ErtConfig.from_file(args.config)
-        os.chdir(ert_config.config_path)
-        # Changing current working directory means we need to update the config file to
-        # be the base name of the original config
-        args.config = os.path.basename(args.config)
-        ert = EnKFMain(ert_config)
-        warning_msgs = warning_messages
-
-    except ConfigValidationError as error:
-        error_messages.append(str(error))
-        logger.info("Error in config file shown in gui: '%s'", str(error))
-        return _setup_suggester(error_messages, warning_messages, suggestions), None
-
+            suggestions += ErtConfig.make_suggestion_list(args.config)
+            _log_difference_with_new_parser(args, ert_config)
+            os.chdir(ert_config.config_path)
+            # Changing current working directory means we need to update
+            # the config file to be the base name of the original config
+            args.config = os.path.basename(args.config)
+            ert = EnKFMain(ert_config)
+        except ConfigValidationError as error:
+            config_warnings = [
+                str(w.message) for w in all_warnings if w.category == ConfigWarning
+            ]
+            error_messages += error.get_error_messages()
+            logger.info("Error in config file shown in gui: '%s'", str(error))
+            return (
+                _setup_suggester(
+                    error_messages,
+                    config_warnings,
+                    suggestions,
+                    plugin_manager=plugin_manager,
+                ),
+                None,
+                None,
+                None,
+            )
+    config_warnings = [
+        str(w.message) for w in all_warnings if w.category == ConfigWarning
+    ]
     for job in ert_config.forward_model_list:
         logger.info("Config contains forward model job %s", job.name)
 
-    for wm in warning_msgs:
+    for wm in all_warnings:
         if wm.category != ConfigWarning:
             logger.warning(str(wm.message))
     for msg in suggestions:
         logger.info("Suggestion shown in gui '%s'", msg)
+    for msg in config_warnings:
+        logger.info("Warning shown in gui '%s'", msg)
     _main_window = _setup_main_window(ert, args, log_handler)
-    if suggestions or warning_msgs:
+    if suggestions or config_warnings:
         return (
-            _setup_suggester(error_messages, warning_msgs, suggestions, _main_window),
+            _setup_suggester(
+                error_messages,
+                config_warnings,
+                suggestions,
+                _main_window,
+                plugin_manager=plugin_manager,
+            ),
             ert_config.ens_path,
+            ert_config.model_config.num_realizations,
+            ert_config.ensemble_config.parameter_configuration,
         )
     else:
-        return _main_window, ert_config.ens_path
+        return (
+            _main_window,
+            ert_config.ens_path,
+            ert_config.model_config.num_realizations,
+            ert_config.ensemble_config.parameter_configuration,
+        )
+
+
+def _get_or_create_default_case(
+    storage: StorageReader, ensemble_size: int, parameter_config: ParameterConfiguration
+) -> Optional[EnsembleAccessor]:
+    try:
+        storage_accessor = storage.to_accessor()
+        try:
+            return storage_accessor.get_ensemble_by_name("default")
+        except KeyError:
+            return storage_accessor.create_experiment(
+                parameters=parameter_config
+            ).create_ensemble(name="default", ensemble_size=ensemble_size)
+    except TypeError:
+        return None
 
 
 def _check_locale():
@@ -135,14 +203,14 @@ def _check_locale():
     current_locale = QLocale()
     decimal_point = str(current_locale.decimalPoint())
     if decimal_point != ".":
-        msg = f"""
-** WARNING: You are using a locale with decimalpoint: '{decimal_point}' - the ert application is
-written with the assumption that '.' is  used as decimalpoint, and chances
-are that something will break if you continue with this locale. It is highly
-recommended that you set the decimalpoint to '.' using one of the environment
-variables 'LANG', LC_ALL', or 'LC_NUMERIC' to either the 'C' locale or
-alternatively a locale which uses '.' as decimalpoint.\n"""  # noqa
-        warnings.warn(msg, category=UserWarning)
+        msg = f"""You are using a locale with decimalpoint: '{decimal_point}'
+the ert application is written with the assumption that '.' is  used as
+decimalpoint, and chances are that something will break if you continue with
+this locale. It is highly recommended that you set the decimalpoint to '.'
+using one of the environment variables 'LANG', LC_ALL', or 'LC_NUMERIC' to
+either the 'C' locale or alternatively a locale which uses '.' as
+decimalpoint.\n"""  # noqa
+        warnings.warn(msg, category=ConfigWarning)
 
 
 def _clicked_help_button(menu_label: str, link: str):
@@ -157,8 +225,16 @@ def _clicked_about_button(about_dialog):
     about_dialog.show()
 
 
-def _setup_suggester(errors, warning_msgs, suggestions, ert_window=None):
+def _setup_suggester(
+    errors,
+    warning_msgs,
+    suggestions,
+    ert_window=None,
+    plugin_manager: Optional[ErtPluginManager] = None,
+):
     container = QWidget()
+    if ert_window is not None:
+        container.notifier = ert_window.notifier
     container.setWindowTitle("Some problems detected")
     container_layout = QVBoxLayout()
 
@@ -171,8 +247,7 @@ def _setup_suggester(errors, warning_msgs, suggestions, ert_window=None):
 
     help_label = QLabel("Help:")
     help_buttons_layout.addWidget(help_label)
-    pm = ErtPluginManager()
-    help_links = pm.get_help_links()
+    help_links = plugin_manager.get_help_links() if plugin_manager else {}
 
     for menu_label, link in help_links.items():
         button = QPushButton(menu_label)
@@ -213,7 +288,6 @@ def _setup_suggester(errors, warning_msgs, suggestions, ert_window=None):
         text += msg + "\n"
         suggest_layout.addWidget(SuggestorMessage.error_msg(msg))
     for msg in warning_msgs:
-        msg = str(msg.message)
         text += msg + "\n"
         suggest_layout.addWidget(SuggestorMessage.warning_msg(msg))
     for msg in suggestions:
@@ -237,7 +311,7 @@ def _setup_suggester(errors, warning_msgs, suggestions, ert_window=None):
         ert_window.raise_()
         container.close()
 
-    run = QPushButton("Run ert")
+    run = QPushButton("Open ERT")
     give_up = QPushButton("Exit")
     copy = QPushButton("Copy messages")
 
@@ -264,15 +338,16 @@ def _setup_main_window(
     ert: EnKFMain,
     args: Namespace,
     log_handler: GUILogHandler,
+    plugin_manager: Optional[ErtPluginManager] = None,
 ):
     # window reference must be kept until app.exec returns:
     facade = LibresFacade(ert)
     config_file = args.config
-    notifier = ErtNotifier(config_file)
-    window = ErtMainWindow(config_file)
-    window.setWidget(SimulationPanel(ert, notifier, config_file))
+    window = ErtMainWindow(config_file, plugin_manager)
+    window.setWidget(SimulationPanel(ert, window.notifier, config_file))
     plugin_handler = PluginHandler(
         ert,
+        window.notifier,
         [wfj for wfj in ert.resConfig().workflow_jobs.values() if wfj.isPlugin()],
         window,
     )
@@ -281,12 +356,12 @@ def _setup_main_window(
         "Configuration summary", SummaryPanel(ert), area=Qt.BottomDockWidgetArea
     )
     window.addTool(PlotTool(config_file, window))
-    window.addTool(ExportTool(ert))
-    window.addTool(WorkflowsTool(ert, notifier))
-    window.addTool(ManageCasesTool(ert, notifier))
-    window.addTool(PluginsTool(plugin_handler, notifier))
-    window.addTool(RunAnalysisTool(ert, notifier))
-    window.addTool(LoadResultsTool(facade))
+    window.addTool(ExportTool(ert, window.notifier))
+    window.addTool(WorkflowsTool(ert, window.notifier))
+    window.addTool(ManageCasesTool(ert, window.notifier))
+    window.addTool(PluginsTool(plugin_handler, window.notifier))
+    window.addTool(RunAnalysisTool(ert, window.notifier))
+    window.addTool(LoadResultsTool(facade, window.notifier))
     event_viewer = EventViewerTool(log_handler)
     window.addTool(event_viewer)
     window.close_signal.connect(event_viewer.close_wnd)

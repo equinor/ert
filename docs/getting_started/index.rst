@@ -3,7 +3,6 @@
    :hidden:
 
    setup
-   key_concepts
    configuration/poly_new/guide
    launch
    gui/gui

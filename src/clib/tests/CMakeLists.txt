@@ -7,16 +7,8 @@ include(Catch)
 
 add_executable(
   ert_test_suite
-  ${TESTS_EXCLUDE_FROM_ALL}
-  tmpdir.cpp
-  enkf/enkf_obs_paths_detailed.cpp
-  enkf/test_enkf_fs.cpp
-  enkf/test_meas_data.cpp
-  enkf/test_obs_data.cpp
-  enkf/test_time_map.cpp
-  res_util/test_memory.cpp
-  res_util/test_string.cpp
-  res_util/test_metric.cpp
+  ${TESTS_EXCLUDE_FROM_ALL} tmpdir.cpp enkf/enkf_obs_paths_detailed.cpp
+  res_util/test_string.cpp res_util/test_metric.cpp
   job_queue/test_lsf_driver.cpp)
 
 target_compile_definitions(

@@ -14,17 +14,19 @@ from .simulation_config_panel import SimulationConfigPanel
 @dataclass
 class Arguments:
     mode: str
+    current_case: str
 
 
 class SingleTestRunPanel(SimulationConfigPanel):
     def __init__(self, ert, notifier):
         self.ert = ert
+        self.notifier = notifier
         facade = LibresFacade(ert)
         SimulationConfigPanel.__init__(self, SingleTestRun)
         self.setObjectName("Single_test_run_panel")
         layout = QFormLayout()
 
-        case_selector = CaseSelector(facade, notifier)
+        case_selector = CaseSelector(notifier)
         layout.addRow("Current case:", case_selector)
 
         runpath_label = CopyableLabel(text=facade.run_path)
@@ -35,4 +37,4 @@ class SingleTestRunPanel(SimulationConfigPanel):
         self.setLayout(layout)
 
     def getSimulationArguments(self):
-        return Arguments("test_run")
+        return Arguments("test_run", self.notifier.current_case_name)
