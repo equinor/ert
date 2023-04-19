@@ -244,3 +244,36 @@ def test_gen_kw_distribution_errors(tmpdir, distribution, mean, std, error):
                     ErtConfig.from_file("config.ert")
         else:
             ErtConfig.from_file("config.ert")
+
+
+@pytest.mark.parametrize(
+    "params, error",
+    [
+        ("MYNAME NORMAL 0 1", None),
+        ("MYNAME LOGNORMAL 0 1", None),
+        ("MYNAME TRUNCATED_NORMAL 0 1 2 3", None),
+        ("MYNAME TRIANGULAR 0 1 2", None),
+        ("MYNAME UNIFORM 0 1", None),
+        ("MYNAME DUNIF 0 1 2", None),
+        ("MYNAME ERRF 0 1 2 3", None),
+        ("MYNAME DERRF 0 1 2 3 4", None),
+        ("MYNAME LOGUNIF 0 1", None),
+        ("MYNAME CONST 0", None),
+        ("MYNAME RAW", None),
+        ("MYNAME UNIFORM 0 1 2", "Incorrect number of values provided"),
+        ("MYNAME", "Too few instructions provided in"),
+        ("MYNAME RANDOM 0 1", "Unknown transfer function provided"),
+        ("MYNAME DERRF -0 1.12345 -2.3 3.14 10E-5", None),
+        ("MYNAME DERRF -0 -14 -2.544545 10E5 10E+5", None),
+        ("MYNAME CONST no-number", "Unable to convert float number"),
+        ("MYNAME      CONST    0", None),  # spaces
+        ("MYNAME\t\t\tCONST\t\t0", None),  # tabs
+    ],
+)
+def test_gen_kw_params_parsing(tmpdir, params, error):
+    with tmpdir.as_cwd():
+        if error:
+            with pytest.raises(ConfigValidationError, match=error):
+                GenKwConfig.parse_transfer_function_parameters(params)
+        else:
+            GenKwConfig.parse_transfer_function_parameters(params)
