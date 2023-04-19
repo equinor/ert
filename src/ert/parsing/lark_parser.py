@@ -221,9 +221,8 @@ def _tree_to_dict(
             errors.append(e)
 
     try:
-        pass
-    except ConfigValidationError as e:
         check_required(schema, config_dict, filename=config_file)
+    except ConfigValidationError as e:
         errors.append(e)
 
     if len(errors) > 0:
