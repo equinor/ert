@@ -197,6 +197,8 @@ def _tree_to_dict(
     defines = pre_defines.copy()
     config_dict["DEFINE"] = defines
 
+    errors = []
+
     for node in tree.children:
         try:
             kw, *args = node
@@ -205,7 +207,7 @@ def _tree_to_dict(
                 continue
             constraints = schema[kw]
 
-            args = constraints.join_args(args)
+            args = constraints.join_args(args)  # no errors
             args = _substitute_args(args, constraints, defines)
             args = constraints.apply_constraints(args, kw)
 
@@ -216,13 +218,16 @@ def _tree_to_dict(
             else:
                 config_dict[kw] = args
         except ConfigValidationError as e:
-            token: Token = kw
-            raise ConfigValidationError(
-                f"{e.errors}\nWas used in {token.value} at line {token.line}",
-                config_file=token.filename,
-            ) from e
+            errors.append(e)
 
-    check_required(schema, config_dict, filename=config_file)
+    try:
+        pass
+    except ConfigValidationError as e:
+        check_required(schema, config_dict, filename=config_file)
+        errors.append(e)
+
+    if len(errors) > 0:
+        raise ConfigValidationError.from_collected(errors)
 
     return config_dict
 
