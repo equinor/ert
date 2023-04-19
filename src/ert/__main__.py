@@ -271,7 +271,8 @@ def get_ert_parser(parser: Optional[ArgumentParser] = None) -> ArgumentParser:
     # lint_parser
     lint_parser = subparsers.add_parser(
         "lint",
-        description="Find and print errors in existing .ert configuration",
+        description="Find and print errors in existing .ert configuration, including "
+        "errors related to files used in the ert config.",
     )
     lint_parser.set_defaults(func=run_lint_wrapper)
     lint_parser.add_argument("config", type=valid_file, help=config_help)
