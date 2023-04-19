@@ -2,6 +2,7 @@ import itertools
 import os
 import stat
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Callable, Dict, List, Optional, TextIO, Union
 
 import pytest
@@ -19,20 +20,14 @@ class FileDetail:
     is_executable: bool = False
 
 
-def write_files(files: Union[dict, FileDetail] = None):
+def write_files(files: Optional[Dict[str, FileDetail]] = None):
     if files is not None:
         for other_filename, content in files.items():
-            if isinstance(content, str):
-                with open(other_filename, mode="w", encoding="utf-8") as fh:
-                    fh.writelines(content)
+            with open(other_filename, mode="w", encoding="utf-8") as fh:
+                fh.writelines(content.contents)
 
-            else:
-                content: FileDetail
-                with open(other_filename, mode="w", encoding="utf-8") as fh:
-                    fh.writelines(content.contents)
-
-                if not content.is_executable:
-                    os.chmod(other_filename, stat.S_IREAD)
+            if not content.is_executable:
+                os.chmod(other_filename, stat.S_IREAD)
 
 
 def assert_that_config_leads_to_error(
@@ -42,10 +37,10 @@ def assert_that_config_leads_to_error(
     expected_end_column: Optional[int],
     expected_filename: str = "test.ert",
     filename: str = "test.ert",
-    other_files: Union[dict, FileDetail] = None,
+    other_files: Optional[Dict[str, FileDetail]] = None,
     match: str = None,
 ):
-    write_files(files={filename: config_file_contents})
+    Path(filename).write_text(config_file_contents)
     write_files(files=other_files)
 
     try:
@@ -100,7 +95,7 @@ class ExpectedErrorInfo:
     expected_end_column: Optional[int] = None
     expected_filename: str = "test.ert"
     filename: str = "test.ert"
-    other_files: Dict[str, Union[str, FileDetail]] = None
+    other_files: Optional[Dict[str, FileDetail]] = None
     match: Optional[str] = None
 
 
