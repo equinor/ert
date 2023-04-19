@@ -4,7 +4,7 @@ from ert.parsing import ConfigValidationError
 
 def lint_file(file: str):
     try:
-        ErtConfig.from_file(file)
+        ErtConfig.from_file(file, use_new_parser=True)
         print("Found no errors")
 
     except ConfigValidationError as err:
