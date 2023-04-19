@@ -55,7 +55,9 @@ class ConfigValidationError(ValueError):
         return ";".join(
             [
                 f"Parsing config file `{filename}` resulted in the errors: \n"
-                + indent("\n".join([err.message for err in info_list]), "  * ")
+                + indent(
+                    "\n".join([err.message_with_location for err in info_list]), "  * "
+                )
                 for filename, info_list in by_filename.items()
             ]
         )

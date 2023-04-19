@@ -58,6 +58,13 @@ class ErrorInfo:
             self.attach_to_token(token)
         pass
 
+    @property
+    def message_with_location(self):
+        return (
+            self.message
+            + f" at line {self.line}, column {self.column}-{self.end_column}"
+        )
+
     @classmethod
     def attached_to_token(cls, token, *args, **kwargs):
         instance = cls(*args, **kwargs)

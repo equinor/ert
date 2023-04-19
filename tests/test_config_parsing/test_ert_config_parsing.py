@@ -2,6 +2,7 @@
 import logging
 import os
 import os.path
+import re
 from datetime import date
 from pathlib import Path
 from textwrap import dedent
@@ -955,16 +956,22 @@ def test_that_multiple_errors_is_shown_for_forward_model():
 
     with pytest.raises(ConfigValidationError) as err:
         _ = ErtConfig.from_file(test_config_file_name)
-    assert (
-        err.value.get_cli_message() == f"Parsing config file `{test_config_file_name}` "
-        "resulted in the errors: \n"
-        "  * Could not find job 'does_not_exist' in list of installed jobs: []\n"
-        "  * Could not find job 'does_not_exist2' in list of installed jobs: []"
-    )
 
-    assert err.value.get_error_messages() == [
-        f"Parsing config file `{test_config_file_name}` resulted in the errors: "
-        "Could not find job 'does_not_exist' in list of installed jobs: []",
-        f"Parsing config file `{test_config_file_name}` resulted in the errors: "
-        "Could not find job 'does_not_exist2' in list of installed jobs: []",
-    ]
+        re1 = re.compile(
+            f"Parsing config file `{test_config_file_name}` "
+            "resulted in the errors: \n"
+            "  * Could not find job 'does_not_exist' in list of installed jobs: [] .*"
+            "  * Could not find job 'does_not_exist2' in list of installed jobs: [] .*"
+        )
+
+        assert re.match(err.value.get_cli_message(), re1)
+
+        re2 = re.compile(
+            f"Parsing config file `{test_config_file_name}` resulted in the "
+            f"errors: "
+            "Could not find job 'does_not_exist' in list of installed jobs: [] .*",
+            f"Parsing config file `{test_config_file_name}` resulted in the "
+            f"errors: "
+            "Could not find job 'does_not_exist2' in list of installed jobs: [] .*",
+        )
+        assert re.match(err.value.get_error_messages(), re2)
