@@ -1,9 +1,7 @@
 from typing import List, Tuple, Union
 
-
 from ert.parsing.lark_parser_file_context_token import FileContextToken
 from ert.parsing.lark_parser_primitive_tokens import PrimitiveWithContext
-
 
 # The type of the leaf nodes in the Tree after transformation is done
 Instruction = List[

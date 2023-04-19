@@ -222,10 +222,12 @@ class SchemaItem(BaseModel):
                 return BoolToken(False, token, keyword)
             else:
                 raise ConfigValidationError.from_info(
-                    message=f"{self.kw!r} must have a boolean value"
-                    f" as argument {index + 1!r}",
-                    filename=token.filename,
-                    originates_from=token,
+                    ErrorInfo(
+                        message=f"{self.kw!r} must have a boolean value"
+                        f" as argument {index + 1!r}",
+                        filename=token.filename,
+                        originates_from=token,
+                    )
                 )
         if val_type == SchemaType.CONFIG_INT:
             try:
@@ -280,7 +282,8 @@ class SchemaItem(BaseModel):
                         originates_from=token,
                     )
                 )
-            elif not os.access(path, os.X_OK):
+
+            if not os.access(path, os.X_OK):
                 context = (
                     f"{token.value!r} which was resolved to {path!r}"
                     if token.value != path

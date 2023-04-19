@@ -23,8 +23,8 @@ class ConfigValidationError(ValueError):
                 elif isinstance(err, ErrorInfo):
                     self.errors.append(err)
                 else:
-                    filename, error = err
-                    self.errors.append(ErrorInfo(message=err, filename=filename))
+                    filename, message = err
+                    self.errors.append(ErrorInfo(message=message, filename=filename))
         else:
             self.errors.append(ErrorInfo(message=errors, filename=config_file))
         super().__init__(
@@ -57,8 +57,8 @@ class ConfigValidationError(ValueError):
         return ";".join(
             [
                 f"Parsing config file `{filename}` resulted in the errors: \n"
-                + indent("\n".join([err.message for err in errors]), "  * ")
-                for filename, errors in by_filename.items()
+                + indent("\n".join([err.message for err in info_list]), "  * ")
+                for filename, info_list in by_filename.items()
             ]
         )
 
