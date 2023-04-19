@@ -54,7 +54,7 @@ def test_workflow_run():
 def test_failing_workflow_run():
     with pytest.raises(ConfigValidationError, match="does not exist") as err:
         _ = Workflow.from_file("undefined", None, {})
-    assert err.value.errors[0][0] == "undefined"
+    assert err.value.errors[0].filename == "undefined"
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -65,4 +65,4 @@ def test_that_failure_in_parsing_workflow_gives_config_validation_error():
         ConfigValidationError, match="DEFINE must have two or more arguments"
     ) as err:
         _ = Workflow.from_file("workflow", None, {})
-    assert err.value.errors[0][0] == "workflow"
+    assert err.value.errors[0].filename == "workflow"

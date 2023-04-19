@@ -209,7 +209,7 @@ def run_gui_wrapper(args: Namespace, ert_plugin_manager: ErtPluginManager) -> No
     run_gui(args, ert_plugin_manager)
 
 
-def run_lint_wrapper(args: Namespace, _) -> None:
+def run_lint_wrapper(args: Namespace, _: ErtPluginManager) -> None:
     # pylint: disable=import-outside-toplevel
     from ert.parsing import config_linting
 
@@ -604,9 +604,9 @@ def main() -> None:
         logger.exception(str(err))
         sys.exit(str(err))
     except ConfigValidationError as err:
-        errMsg = err.get_cli_message()
-        logger.exception(errMsg)
-        sys.exit(errMsg)
+        err_msg = err.get_cli_message()
+        logger.exception(err_msg)
+        sys.exit(err_msg)
     except BaseException as err:  # pylint: disable=broad-except
         logger.exception(f'ERT crashed unexpectedly with "{err}"')
 

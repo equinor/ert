@@ -30,7 +30,7 @@ class ConfigValidationError(ValueError):
         )
 
     @classmethod
-    def from_info(cls, info: ErrorInfo):
+    def from_info(cls, info: ErrorInfo) -> "ConfigValidationError":
         return cls([info])
 
     @classmethod
@@ -44,10 +44,10 @@ class ConfigValidationError(ValueError):
             else info.message
         )
 
-    def get_error_messages(self):
+    def get_error_messages(self) -> List[str]:
         return [self._get_error_message(error) for error in self.errors]
 
-    def get_cli_message(self):
+    def get_cli_message(self) -> str:
         by_filename = defaultdict(list)
         for error in self.errors:
             by_filename[error.filename].append(error)
@@ -63,7 +63,9 @@ class ConfigValidationError(ValueError):
         )
 
     @classmethod
-    def from_collected(cls, errors: List[Union[ErrorInfo, "ConfigValidationError"]]):
+    def from_collected(
+        cls, errors: List[Union[ErrorInfo, "ConfigValidationError"]]
+    ) -> "ConfigValidationError":
         # Turn into list of only ConfigValidationErrors
         as_errors_only: List[ConfigValidationError] = [
             (ConfigValidationError([e]) if isinstance(e, ErrorInfo) else e)

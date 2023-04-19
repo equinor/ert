@@ -38,6 +38,8 @@ class ErrorInfo:
             elif hasattr(origin, attr):
                 return getattr(origin, attr)
 
+            return None
+
         if originates_from_keyword is not None:
             token = take(origin=originates_from_keyword, attr="keyword_token")
 
