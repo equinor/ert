@@ -61,5 +61,13 @@ class ConfigValidationError(ValueError):
         )
 
     @classmethod
-    def from_collected(cls, errors: List["ConfigValidationError"]):
-        return cls([error_info for error in errors for error_info in error.errors])
+    def from_collected(cls, errors: List[Union[ErrorInfo, "ConfigValidationError"]]):
+        # Turn into list of only ConfigValidationErrors
+        as_errors_only: List[ConfigValidationError] = [
+            (ConfigValidationError([e]) if isinstance(e, ErrorInfo) else e)
+            for e in errors
+        ]
+
+        return cls(
+            [error_info for error in as_errors_only for error_info in error.errors]
+        )
