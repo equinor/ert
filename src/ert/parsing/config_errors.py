@@ -40,13 +40,13 @@ class ConfigValidationError(ValueError):
             else error
         )
 
-    def get_error_messages(self) -> List[str]:
+    def get_error_messages(self):
         return [
             self._get_error_message(config_file, errors)
             for config_file, errors in self.errors
         ]
 
-    def get_cli_message(self) -> str:
+    def get_cli_message(self):
         by_filename = defaultdict(list)
         for filename, error in self.errors:
             by_filename[filename].append(error)
@@ -60,9 +60,7 @@ class ConfigValidationError(ValueError):
         )
 
     @classmethod
-    def from_collected(
-        cls, errors: List["ConfigValidationError"]
-    ) -> "ConfigValidationError":
+    def from_collected(cls, errors: List["ConfigValidationError"]):
         return cls(
             [
                 (config_file, message)
