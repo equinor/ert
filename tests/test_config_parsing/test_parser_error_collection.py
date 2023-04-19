@@ -1,3 +1,4 @@
+import itertools
 import os
 import stat
 from dataclasses import dataclass
@@ -18,17 +19,13 @@ class FileDetail:
     is_executable: bool = False
 
 
-def write_files(
-    files: Union[dict, FileDetail], write_after: Callable[[TextIO], None] = None
-):
+def write_files(files: Union[dict, FileDetail] = None):
     if files is not None:
         for other_filename, content in files.items():
             if isinstance(content, str):
                 with open(other_filename, mode="w", encoding="utf-8") as fh:
                     fh.writelines(content)
 
-                    if write_after:
-                        write_after(fh)
             else:
                 content: FileDetail
                 with open(other_filename, mode="w", encoding="utf-8") as fh:
@@ -47,10 +44,9 @@ def assert_that_config_leads_to_error(
     filename: str = "test.ert",
     other_files: Union[dict, FileDetail] = None,
     match: str = None,
-    write_after: Callable[[TextIO], None] = None,
 ):
-    write_files(files={filename: config_file_contents}, write_after=write_after)
-    write_files(files=other_files, write_after=write_after)
+    write_files(files={filename: config_file_contents})
+    write_files(files=other_files)
 
     try:
         ErtConfig.from_file(filename, use_new_parser=True)
@@ -111,7 +107,6 @@ class ExpectedErrorInfo:
 def assert_multiple_errors_from_config_with(
     contents: str,
     expected_errors: List[ExpectedErrorInfo],
-    write_after: Callable[[TextIO], None] = None,
 ):
     for info in expected_errors:
         assert_that_config_leads_to_error(
@@ -123,7 +118,6 @@ def assert_multiple_errors_from_config_with(
             filename=info.filename,
             other_files=info.other_files,
             match=info.match,
-            write_after=write_after,
         )
 
 
@@ -141,9 +135,11 @@ QUEUE_OPTION DOCAL MAX_RUNNING 4
     )
 
 
-@pytest.mark.usefixtures("use_tmpdir")
-def test_that_multiple_keyword_specific_tokens_are_located():
-    contents = """
+@pytest.mark.parametrize(
+    "contents, expected_errors",
+    [
+        (
+            """
 QUEUE_OPTION DOCAL MAX_RUNNING 4
 STOP_LONG_RUNNING flase
 NUM_REALIZATIONS not_int
@@ -153,69 +149,124 @@ JOB_SCRIPT dnsjklajdlksaljd/dhs7sh/qhwhe
 JOB_SCRIPT non_executable_file
 NUM_REALIZATIONS 1 2 3 4 5
 NUM_REALIZATIONS
-        """
-
-    expected_errors = [
-        ExpectedErrorInfo(
-            expected_line=2,
-            expected_column=14,
-            expected_end_column=19,
-            match="argument .* must be one of",
-        ),
-        ExpectedErrorInfo(
-            expected_line=3,
-            expected_column=19,
-            expected_end_column=24,
-            match="must have a boolean value",
-        ),
-        ExpectedErrorInfo(
-            expected_line=4,
-            expected_column=18,
-            expected_end_column=25,
-            match="must have an integer value",
-        ),
-        ExpectedErrorInfo(
-            expected_line=5,
-            expected_column=12,
-            expected_end_column=21,
-            match="must have a number",
-        ),
-        ExpectedErrorInfo(
-            expected_line=6,
-            expected_column=14,
-            expected_end_column=46,
-            match="Cannot find file or directory",
-        ),
-        ExpectedErrorInfo(
-            expected_line=7,
-            expected_column=12,
-            expected_end_column=41,
-            match="Could not find executable",
-        ),
-        ExpectedErrorInfo(
-            other_files={
-                "non_executable_file": FileDetail(contents="", is_executable=False)
-            },
-            expected_line=8,
-            expected_column=12,
-            expected_end_column=31,
-            match="File not executable",
-        ),
-        ExpectedErrorInfo(
-            expected_line=9,
-            expected_column=1,
-            expected_end_column=17,
-            match="must have maximum",
-        ),
-        ExpectedErrorInfo(
-            expected_line=10,
-            expected_column=1,
-            expected_end_column=17,
-            match="must have at least",
-        ),
-    ]
-
+""",
+            [
+                ExpectedErrorInfo(
+                    expected_line=2,
+                    expected_column=14,
+                    expected_end_column=19,
+                    match="argument .* must be one of",
+                ),
+                ExpectedErrorInfo(
+                    expected_line=3,
+                    expected_column=19,
+                    expected_end_column=24,
+                    match="must have a boolean value",
+                ),
+                ExpectedErrorInfo(
+                    expected_line=4,
+                    expected_column=18,
+                    expected_end_column=25,
+                    match="must have an integer value",
+                ),
+                ExpectedErrorInfo(
+                    expected_line=5,
+                    expected_column=12,
+                    expected_end_column=21,
+                    match="must have a number",
+                ),
+                ExpectedErrorInfo(
+                    expected_line=6,
+                    expected_column=14,
+                    expected_end_column=46,
+                    match="Cannot find file or directory",
+                ),
+                ExpectedErrorInfo(
+                    expected_line=7,
+                    expected_column=12,
+                    expected_end_column=41,
+                    match="Could not find executable",
+                ),
+                ExpectedErrorInfo(
+                    other_files={
+                        "non_executable_file": FileDetail(
+                            contents="", is_executable=False
+                        )
+                    },
+                    expected_line=8,
+                    expected_column=12,
+                    expected_end_column=31,
+                    match="File not executable",
+                ),
+                ExpectedErrorInfo(
+                    expected_line=9,
+                    expected_column=1,
+                    expected_end_column=17,
+                    match="must have maximum",
+                ),
+                ExpectedErrorInfo(
+                    expected_line=10,
+                    expected_column=1,
+                    expected_end_column=17,
+                    match="must have at least",
+                ),
+            ],
+        )
+    ],
+)
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_multiple_keyword_specific_tokens_are_located(contents, expected_errors):
     assert_multiple_errors_from_config_with(
         contents=contents,
         expected_errors=expected_errors,
     )
+
+
+@pytest.mark.parametrize(
+    "lines, num_permutations",
+    [
+        (
+            [
+                ("QUEUE_OPTION DOCAL MAX_RUNNING 4", {"column": 14, "end_column": 19}),
+                ("STOP_LONG_RUNNING flase", {"column": 19, "end_column": 24}),
+                ("NUM_REALIZATIONS not_int", {"column": 18, "end_column": 25}),
+                ("ENKF_ALPHA not_float", {"column": 12, "end_column": 21}),
+                (
+                    "RUN_TEMPLATE dsajldkald/sdjkahsjka/wqehwqhdsa",
+                    {"column": 14, "end_column": 46},
+                ),
+                (
+                    "JOB_SCRIPT dnsjklajdlksaljd/dhs7sh/qhwhe",
+                    {"column": 12, "end_column": 41},
+                ),
+                ("NUM_REALIZATIONS 1 2 3 4 5", {"column": 1, "end_column": 17}),
+                ("NUM_REALIZATIONS", {"column": 1, "end_column": 17}),
+            ],
+            30,
+        )
+    ],
+)
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_multiple_keyword_specific_tokens_are_located_shuffle(
+    lines, num_permutations
+):
+    def run_permutation(permutation):
+        contents = "\n".join([line[0] for line in permutation])
+        expected_errors = [
+            ExpectedErrorInfo(
+                expected_line=(i + 1),
+                expected_column=line[1]["column"],
+                expected_end_column=line[1]["end_column"],
+            )
+            for i, line in enumerate(permutation)
+        ]
+
+        assert_multiple_errors_from_config_with(
+            contents=contents,
+            expected_errors=expected_errors,
+        )
+
+    perms = itertools.islice(itertools.permutations(lines), num_permutations)
+
+    for line_perm in perms:
+        run_permutation(line_perm)
