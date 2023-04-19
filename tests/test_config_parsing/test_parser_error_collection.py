@@ -18,8 +18,28 @@ class FileDetail:
     is_executable: bool = False
 
 
-def assert_error_from_config_with(
-    contents: str,
+def write_files(
+    files: Union[dict, FileDetail], write_after: Callable[[TextIO], None] = None
+):
+    if files is not None:
+        for other_filename, content in files.items():
+            if isinstance(content, str):
+                with open(other_filename, mode="w", encoding="utf-8") as fh:
+                    fh.writelines(content)
+
+                    if write_after:
+                        write_after(fh)
+            else:
+                content: FileDetail
+                with open(other_filename, mode="w", encoding="utf-8") as fh:
+                    fh.writelines(content.contents)
+
+                if not content.is_executable:
+                    os.chmod(other_filename, stat.S_IREAD)
+
+
+def assert_that_config_leads_to_error(
+    config_file_contents: str,
     expected_line: Optional[int],
     expected_column: Optional[int],
     expected_end_column: Optional[int],
@@ -29,24 +49,8 @@ def assert_error_from_config_with(
     match: str = None,
     write_after: Callable[[TextIO], None] = None,
 ):
-    with open(filename, "w", encoding="utf-8") as fh:
-        fh.write(contents)
-
-        if write_after:
-            write_after(fh)
-
-    if other_files is not None:
-        for other_filename, content in other_files.items():
-            if isinstance(content, str):
-                with open(other_filename, mode="w", encoding="utf-8") as fh:
-                    fh.writelines(content)
-            else:
-                content: FileDetail
-                with open(other_filename, mode="w", encoding="utf-8") as fh:
-                    fh.writelines(content.contents)
-
-                if not content.is_executable:
-                    os.chmod(other_filename, stat.S_IREAD)
+    write_files(files={filename: config_file_contents}, write_after=write_after)
+    write_files(files=other_files, write_after=write_after)
 
     try:
         ErtConfig.from_file(filename, use_new_parser=True)
@@ -110,8 +114,8 @@ def assert_multiple_errors_from_config_with(
     write_after: Callable[[TextIO], None] = None,
 ):
     for info in expected_errors:
-        assert_error_from_config_with(
-            contents=contents,
+        assert_that_config_leads_to_error(
+            config_file_contents=contents,
             expected_line=info.expected_line,
             expected_column=info.expected_column,
             expected_end_column=info.expected_end_column,
@@ -125,9 +129,9 @@ def assert_multiple_errors_from_config_with(
 
 # "-4 -5" is parsed as the final arg, intended behavior?...
 @pytest.mark.usefixtures("use_tmpdir")
-def test_info_disallowed_kw():
-    assert_error_from_config_with(
-        contents="""
+def test_that_disallowed_argument_is_located():
+    assert_that_config_leads_to_error(
+        config_file_contents="""
 QUEUE_OPTION DOCAL MAX_RUNNING 4
         """,
         expected_line=2,
@@ -138,9 +142,8 @@ QUEUE_OPTION DOCAL MAX_RUNNING 4
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_info_from_allow_constraints():
-    assert_multiple_errors_from_config_with(
-        contents="""
+def test_that_multiple_keyword_specific_tokens_are_located():
+    contents = """
 QUEUE_OPTION DOCAL MAX_RUNNING 4
 STOP_LONG_RUNNING flase
 NUM_REALIZATIONS not_int
@@ -150,65 +153,69 @@ JOB_SCRIPT dnsjklajdlksaljd/dhs7sh/qhwhe
 JOB_SCRIPT non_executable_file
 NUM_REALIZATIONS 1 2 3 4 5
 NUM_REALIZATIONS
+        """
 
-        """,
-        expected_errors=[
-            ExpectedErrorInfo(
-                expected_line=2,
-                expected_column=14,
-                expected_end_column=19,
-                match="argument .* must be one of",
-            ),
-            ExpectedErrorInfo(
-                expected_line=3,
-                expected_column=19,
-                expected_end_column=24,
-                match="must have a boolean value",
-            ),
-            ExpectedErrorInfo(
-                expected_line=4,
-                expected_column=18,
-                expected_end_column=25,
-                match="must have an integer value",
-            ),
-            ExpectedErrorInfo(
-                expected_line=5,
-                expected_column=12,
-                expected_end_column=21,
-                match="must have a number",
-            ),
-            ExpectedErrorInfo(
-                expected_line=6,
-                expected_column=14,
-                expected_end_column=46,
-                match="Cannot find file or directory",
-            ),
-            ExpectedErrorInfo(
-                expected_line=7,
-                expected_column=12,
-                expected_end_column=41,
-                match="Could not find executable",
-            ),
-            ExpectedErrorInfo(
-                other_files={
-                    "non_executable_file": FileDetail(contents="", is_executable=False)
-                },
-                expected_line=8,
-                expected_column=12,
-                expected_end_column=31,
-                match="File not executable",
-            ),
-            ExpectedErrorInfo(
-                expected_line=9,
-                expected_column=1,
-                expected_end_column=17,
-                match="must have maximum",
-            ),
-            ExpectedErrorInfo(
-                expected_line=10,
-                expected_column=1,
-                expected_end_column=17,
-                match="must have at least",
-            ),
-        ],
+    expected_errors = [
+        ExpectedErrorInfo(
+            expected_line=2,
+            expected_column=14,
+            expected_end_column=19,
+            match="argument .* must be one of",
+        ),
+        ExpectedErrorInfo(
+            expected_line=3,
+            expected_column=19,
+            expected_end_column=24,
+            match="must have a boolean value",
+        ),
+        ExpectedErrorInfo(
+            expected_line=4,
+            expected_column=18,
+            expected_end_column=25,
+            match="must have an integer value",
+        ),
+        ExpectedErrorInfo(
+            expected_line=5,
+            expected_column=12,
+            expected_end_column=21,
+            match="must have a number",
+        ),
+        ExpectedErrorInfo(
+            expected_line=6,
+            expected_column=14,
+            expected_end_column=46,
+            match="Cannot find file or directory",
+        ),
+        ExpectedErrorInfo(
+            expected_line=7,
+            expected_column=12,
+            expected_end_column=41,
+            match="Could not find executable",
+        ),
+        ExpectedErrorInfo(
+            other_files={
+                "non_executable_file": FileDetail(contents="", is_executable=False)
+            },
+            expected_line=8,
+            expected_column=12,
+            expected_end_column=31,
+            match="File not executable",
+        ),
+        ExpectedErrorInfo(
+            expected_line=9,
+            expected_column=1,
+            expected_end_column=17,
+            match="must have maximum",
+        ),
+        ExpectedErrorInfo(
+            expected_line=10,
+            expected_column=1,
+            expected_end_column=17,
+            match="must have at least",
+        ),
+    ]
+
+    assert_multiple_errors_from_config_with(
+        contents=contents,
+        expected_errors=expected_errors,
     )
