@@ -12,7 +12,7 @@ class ConfigWarning(UserWarning):
 class ConfigValidationError(ValueError):
     def __init__(
         self,
-        errors: Union[str, List[Union[ErrorInfo, Tuple[Optional[str], str]]]],
+        errors: Union[str, List[Union[ErrorInfo, str, Tuple[Optional[str], str]]]],
         config_file: Optional[str] = None,
     ) -> None:
         self.errors: List[ErrorInfo] = []
@@ -20,6 +20,8 @@ class ConfigValidationError(ValueError):
             for err in errors:
                 if isinstance(err, ErrorInfo):
                     self.errors.append(err)
+                elif isinstance(err, str):
+                    self.errors.append(ErrorInfo(message=err, filename=config_file))
                 else:
                     filename, message = err
                     self.errors.append(ErrorInfo(message=message, filename=filename))
