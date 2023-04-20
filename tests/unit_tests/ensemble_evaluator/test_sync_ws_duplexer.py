@@ -36,6 +36,7 @@ def ws(event_loop: asyncio.AbstractEventLoop):
             websockets.server.serve(
                 handler,
                 **kwargs,
+                open_timeout=10,
             ),
         )
 

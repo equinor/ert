@@ -27,7 +27,7 @@ def _mock_ws(host, port, messages, delay_startup=0):
     async def _run_server():
         await asyncio.sleep(delay_startup)
         async with websockets.server.serve(
-            _handler, host, port, ping_timeout=1, ping_interval=1
+            _handler, host, port, ping_timeout=1, ping_interval=1, open_timeout=10
         ):
             await done
 

@@ -120,6 +120,7 @@ class ExperimentServer:
                 self._handler,
                 sock=self._config.get_socket(),
                 ssl=self._config.get_server_ssl_context(),
+                open_timeout=10,
             ):
                 logger.debug("Running experiment server")
                 await self._server_done
