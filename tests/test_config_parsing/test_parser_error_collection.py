@@ -3,7 +3,7 @@ import os
 import stat
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Callable, Dict, List, Optional, TextIO, Union
+from typing import Dict, List, Optional
 
 import pytest
 
