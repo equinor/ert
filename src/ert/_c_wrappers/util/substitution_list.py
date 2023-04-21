@@ -129,9 +129,6 @@ class SubstitutionList(BaseCClass):
                 return False
         return True
 
-    def __ne__(self, other):
-        return not self == other
-
     def free(self):
         self._free()
 

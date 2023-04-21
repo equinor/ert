@@ -193,9 +193,6 @@ class AnalysisConfig:
     def set_num_iterations(self, num_iterations: int):
         self._analysis_iter_config.iter_count = num_iterations
 
-    def __ne__(self, other):
-        return not self == other
-
     def __repr__(self):
         return (
             "AnalysisConfig("

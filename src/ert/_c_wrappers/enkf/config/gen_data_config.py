@@ -85,9 +85,6 @@ class GenDataConfig(BaseCClass):
     def getReportSteps(self) -> List[int]:
         return [self.getReportStep(index) for index in range(self.getNumReportStep())]
 
-    def __ne__(self, other):
-        return not self == other
-
     def __eq__(self, other) -> bool:
         if self.getName() != other.getName():
             return False

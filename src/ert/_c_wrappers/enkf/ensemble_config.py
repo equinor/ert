@@ -639,9 +639,6 @@ class EnsembleConfig(BaseCClass):
 
         return True
 
-    def __ne__(self, other):
-        return not self == other
-
     def getMetaInfo(self, key: str) -> Optional[ConfigNodeMeta]:
         if key in self._config_node_meta:
             return self._config_node_meta[key]

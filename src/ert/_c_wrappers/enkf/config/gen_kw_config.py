@@ -125,9 +125,6 @@ class GenKwConfig(BaseCClass):
             yield self[index]
             index += 1
 
-    def __ne__(self, other):
-        return not self == other
-
     def __eq__(self, other) -> bool:
         if self.getTemplateFile() != other.getTemplateFile():
             return False
