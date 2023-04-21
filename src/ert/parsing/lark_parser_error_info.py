@@ -1,5 +1,5 @@
 from dataclasses import InitVar, dataclass
-from typing import List, Optional, Union
+from typing import List, Optional
 
 from .lark_parser_file_context_token import FileContextToken
 from .lark_parser_types import MaybeWithContext
@@ -16,23 +16,19 @@ class ErrorInfo:
     end_line: Optional[int] = None
     end_column: Optional[int] = None
     end_pos: Optional[int] = None
-    originates_from: InitVar[Union[MaybeWithContext, FileContextToken]] = None
-    originates_from_these: InitVar[
-        List[Union[MaybeWithContext, FileContextToken]]
-    ] = None
-    originates_from_keyword: InitVar[Union[MaybeWithContext, FileContextToken]] = None
+    originates_from: InitVar[MaybeWithContext] = None
+    originates_from_these: InitVar[List[MaybeWithContext]] = None
+    originates_from_keyword: InitVar[MaybeWithContext] = None
 
     def __post_init__(
         self,
-        originates_from: Optional[Union[MaybeWithContext, FileContextToken]],
-        originates_from_these: Optional[
-            List[Union[MaybeWithContext, FileContextToken]]
-        ],
-        originates_from_keyword: Optional[Union[MaybeWithContext, FileContextToken]],
+        originates_from: Optional[MaybeWithContext],
+        originates_from_these: Optional[List[MaybeWithContext]],
+        originates_from_keyword: Optional[MaybeWithContext],
     ):
         token = None
 
-        def take(origin: Union[MaybeWithContext, FileContextToken], attr: str):
+        def take(origin: MaybeWithContext, attr: str):
             if isinstance(origin, FileContextToken):
                 return origin
             elif hasattr(origin, attr):

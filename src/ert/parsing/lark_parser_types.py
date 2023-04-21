@@ -16,4 +16,4 @@ Primitives = Union[float, bool, str, int]
 # while the new config parser gives primitives WITH context.
 # Thus, we need a type to represent a union of these two as both
 # parsers are in use.
-MaybeWithContext = Union[PrimitiveWithContext, Primitives]
+MaybeWithContext = Union[PrimitiveWithContext, Primitives, FileContextToken]
