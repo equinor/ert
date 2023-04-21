@@ -178,7 +178,7 @@ class SchemaItem(BaseModel):
 
     def _is_in_allowed_values_for_kw(
         self, token: "FileContextToken", index: int
-    ) -> None:
+    ) -> bool:
         return not (
             index in self.indexed_selection_set
             and token not in self.indexed_selection_set[index]

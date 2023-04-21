@@ -1,23 +1,6 @@
-from typing import Protocol
+from typing import Union
 
 from .lark_parser_file_context_token import FileContextToken
-
-
-class PrimitiveWithContext(Protocol):
-    token: FileContextToken
-    keyword_token: FileContextToken
-
-    @classmethod
-    def __subclasshook__(cls, subclass):
-        allowed_subclasses = (IntToken, FloatToken, StringToken, BoolToken)
-        allowed_attrs = ["token", "keyword_token"]
-
-        if all(hasattr(subclass, x) for x in allowed_attrs) and isinstance(
-            subclass, allowed_subclasses
-        ):
-            return True
-
-        return NotImplemented
 
 
 class BoolToken:
@@ -88,3 +71,6 @@ class StringToken(str):
         new_instance = StringToken(str(self), self.token, self.keyword_token)
         memo[id(self)] = new_instance
         return new_instance
+
+
+PrimitiveWithContext = Union[StringToken, FloatToken, IntToken, BoolToken]
