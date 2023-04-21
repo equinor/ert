@@ -113,27 +113,26 @@ def assert_that_config_leads_to_error(
         {config_filename: config_file_contents, **(expected_error.other_files or {})}
     )
 
-    try:
-        ErtConfig.from_file(expected_error.filename, use_new_parser=True)
-        assert False, "Parsing did not result in any errors"
-    except ConfigValidationError as err:
-        collected_errors = err.errors
+    with pytest.raises(ConfigValidationError) as caught_error:
+        ErtConfig.from_file(config_filename, use_new_parser=True)
 
-        # Find errors in matching file
-        errors_matching_filename = find_and_assert_errors_matching_filename(
-            errors=collected_errors, filename=expected_error.filename
-        )
+    collected_errors = caught_error.value.errors
 
-        errors_matching_location = find_and_assert_errors_matching_location(
-            errors=errors_matching_filename,
-            line=expected_error.line,
-            column=expected_error.column,
-            end_column=expected_error.end_column,
-        )
+    # Find errors in matching file
+    errors_matching_filename = find_and_assert_errors_matching_filename(
+        errors=collected_errors, filename=expected_error.filename
+    )
 
-        find_and_assert_errors_matching_message(
-            errors=errors_matching_location, match=expected_error.match
-        )
+    errors_matching_location = find_and_assert_errors_matching_location(
+        errors=errors_matching_filename,
+        line=expected_error.line,
+        column=expected_error.column,
+        end_column=expected_error.end_column,
+    )
+
+    find_and_assert_errors_matching_message(
+        errors=errors_matching_location, match=expected_error.match
+    )
 
 
 @pytest.mark.usefixtures("use_tmpdir")
