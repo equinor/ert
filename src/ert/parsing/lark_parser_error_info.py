@@ -8,8 +8,8 @@ from .lark_parser_types import MaybeWithContext
 @dataclass
 # pylint: disable=too-many-instance-attributes
 class ErrorInfo:
-    filename: str
     message: str
+    filename: Optional[str]
     start_pos: Optional[int] = None
     line: Optional[int] = None
     column: Optional[int] = None
