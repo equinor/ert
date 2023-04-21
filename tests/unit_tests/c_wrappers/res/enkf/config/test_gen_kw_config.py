@@ -274,6 +274,6 @@ def test_gen_kw_params_parsing(tmpdir, params, error):
     with tmpdir.as_cwd():
         if error:
             with pytest.raises(ConfigValidationError, match=error):
-                GenKwConfig.parse_transfer_function_parameters(params)
+                GenKwConfig.parse_transfer_function(params)
         else:
-            GenKwConfig.parse_transfer_function_parameters(params)
+            GenKwConfig.parse_transfer_function(params)

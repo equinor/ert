@@ -199,10 +199,10 @@ class GenKwConfig(BaseCClass):
         return np.array(parameter_values)
 
     @staticmethod
-    def parse_transfer_function_parameters(param_string: str):
+    def parse_transfer_function(param_string: str) -> TransferFunction:
         param_args = param_string.split()
 
-        TRANS_FUNC_ARRAY: Final = {
+        TRANS_FUNC_ARGS: Final = {
             "NORMAL": ["MEAN", "STD"],
             "LOGNORMAL": ["MEAN", "STD"],
             "TRUNCATED_NORMAL": ["MEAN", "STD", "MIN", "MAX"],
@@ -216,16 +216,33 @@ class GenKwConfig(BaseCClass):
             "RAW": [],
         }
 
+        TRANS_FUNC_MAPPING: Final = {
+            "NORMAL": TransferFunction.trans_normal,
+            "LOGNORMAL": TransferFunction.trans_lognormal,
+            "TRUNCATED_NORMAL": TransferFunction.trans_truncated_normal,
+            "TRIANGULAR": TransferFunction.trans_triangular,
+            "UNIFORM": TransferFunction.trans_unif,
+            "DUNIF": TransferFunction.trans_dunif,
+            "ERRF": TransferFunction.trans_errf,
+            "DERRF": TransferFunction.trans_derrf,
+            "LOGUNIF": TransferFunction.trans_logunif,
+            "CONST": TransferFunction.trans_const,
+            "RAW": TransferFunction.trans_raw,
+        }
+
         if len(param_args) > 1:
             func_name = param_args[0]
             param_func_name = param_args[1]
 
-            if param_func_name not in TRANS_FUNC_ARRAY:
+            if (
+                param_func_name not in TRANS_FUNC_ARGS
+                or param_func_name not in TRANS_FUNC_MAPPING
+            ):
                 raise ConfigValidationError(
                     f"Unknown transfer function provided: {param_func_name}"
                 )
 
-            param_names = TRANS_FUNC_ARRAY[param_func_name]
+            param_names = TRANS_FUNC_ARGS[param_func_name]
 
             if len(param_args) - 2 != len(param_names):
                 raise ConfigValidationError(
@@ -241,12 +258,9 @@ class GenKwConfig(BaseCClass):
 
             params = dict(zip(param_names, param_floats))
 
-            tf = TransferFunction(
-                func_name, param_func_name, params, TransferFunction.trans_unif
+            return TransferFunction(
+                func_name, param_func_name, params, TRANS_FUNC_MAPPING[param_func_name]
             )
-
-            # just test
-            print(tf.calculate(4))
 
         else:
             raise ConfigValidationError(
@@ -293,17 +307,16 @@ class TransferFunction:
         if transfer_function_name in ["LOGNORMAL", "LOGUNIF"]:
             self._use_log = True
 
-    """
-    Width  = 1 => uniform
-    Width  > 1 => unimodal peaked
-    Width  < 1 => bimoal peaks
-    Skewness < 0 => shifts towards the left
-    Skewness = 0 => symmetric
-    Skewness > 0 => Shifts towards the right
-    The width is a relavant scale for the value of skewness.
-    """
-
     def trans_errf(self, x: float) -> float:
+        """
+        Width  = 1 => uniform
+        Width  > 1 => unimodal peaked
+        Width  < 1 => bimoal peaks
+        Skewness < 0 => shifts towards the left
+        Skewness = 0 => symmetric
+        Skewness > 0 => Shifts towards the right
+        The width is a relavant scale for the value of skewness.
+        """
         y = 0.5 * (1 + math.erf((x + self._skewness) / (self._width * math.sqrt(2.0))))
         return self._min + y * (self._max - self._min)
 
@@ -313,9 +326,8 @@ class TransferFunction:
     def trans_raw(self, x: float) -> float:
         return x
 
-    '''Observe that the argument of the shift should be "+"'''
-
     def trans_derrf(self, x: float) -> float:
+        '''Observe that the argument of the shift should be \"+\"'''
         y = math.floor(
             self._steps
             * 0.5
