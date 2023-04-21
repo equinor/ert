@@ -210,9 +210,6 @@ class EnkfConfigNode(BaseCClass):
     def getKey(self) -> str:
         return self._get_key()
 
-    def __ne__(self, other):
-        return not self == other
-
     def __eq__(self, other) -> bool:
         if any(
             (

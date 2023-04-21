@@ -147,8 +147,5 @@ class Workflow:
     def getJobsReport(self) -> Dict[str, Any]:
         return self.__status
 
-    def __ne__(self, other):
-        return not self == other
-
     def __eq__(self, other):
         return os.path.realpath(self.src_file) == os.path.realpath(other.src_file)

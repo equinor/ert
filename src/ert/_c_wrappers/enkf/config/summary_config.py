@@ -26,11 +26,7 @@ class SummaryConfig(BaseCClass):
     def key(self):
         return self._get_var()
 
-    def __ne__(self, other):
-        return not self == other
-
-    def __eq__(self, other):
-        """@rtype: bool"""
+    def __eq__(self, other) -> bool:
         if self.key != other.key:
             return False
 

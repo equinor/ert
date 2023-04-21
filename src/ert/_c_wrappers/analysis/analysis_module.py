@@ -200,9 +200,6 @@ class AnalysisModule:
     def __repr__(self):
         return f"AnalysisModule(name = {self.name})"
 
-    def __ne__(self, other):
-        return not self == other
-
     def __eq__(self, other):
         if self.name != other.name:
             return False
