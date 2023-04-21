@@ -206,8 +206,7 @@ class SchemaItem(BaseModel):
                     message=f"{self.kw!r} argument {index!r} must be one of"
                     f" {self.indexed_selection_set[index]!r} was {token.value!r}",
                     filename=token.filename,
-                    originates_from=token,
-                )
+                ).set_context(token)
             )
 
         if not len(self.type_map) > index:
@@ -226,8 +225,7 @@ class SchemaItem(BaseModel):
                         message=f"{self.kw!r} must have a boolean value"
                         f" as argument {index + 1!r}",
                         filename=token.filename,
-                        originates_from=token,
-                    )
+                    ).set_context(token)
                 )
         if val_type == SchemaType.CONFIG_INT:
             try:
@@ -238,8 +236,7 @@ class SchemaItem(BaseModel):
                         message=f"{self.kw!r} must have an integer value"
                         f" as argument {index + 1!r}",
                         filename=token.filename,
-                        originates_from=token,
-                    )
+                    ).set_context(token)
                 )
         if val_type == SchemaType.CONFIG_FLOAT:
             try:
@@ -250,8 +247,7 @@ class SchemaItem(BaseModel):
                         message=f"{self.kw!r} must have a number "
                         f"as argument {index + 1!r}",
                         filename=token.filename,
-                        originates_from=token,
-                    )
+                    ).set_context(token)
                 )
         if val_type in [SchemaType.CONFIG_PATH, SchemaType.CONFIG_EXISTING_PATH]:
             path = str(token)
@@ -264,9 +260,7 @@ class SchemaItem(BaseModel):
                 if path != token:
                     err += f"The configured value was {path!r} "
                 raise ConfigValidationError.from_info(
-                    ErrorInfo(
-                        message=err, filename=token.filename, originates_from=token
-                    )
+                    ErrorInfo(message=err, filename=token.filename).set_context(token)
                 )
             return StringToken(path, token, keyword)
         if val_type == SchemaType.CONFIG_EXECUTABLE:
@@ -279,8 +273,7 @@ class SchemaItem(BaseModel):
                     ErrorInfo(
                         message=f"Could not find executable {token.value!r}",
                         filename=token.filename,
-                        originates_from=token,
-                    )
+                    ).set_context(token)
                 )
 
             if not os.access(path, os.X_OK):
@@ -293,8 +286,7 @@ class SchemaItem(BaseModel):
                     ErrorInfo(
                         message=f"File not executable: {context}",
                         filename=token.filename,
-                        originates_from=token,
-                    )
+                    ).set_context(token)
                 )
             return StringToken(path, token, keyword)
         return StringToken(str(token), token, keyword)
@@ -325,16 +317,14 @@ class SchemaItem(BaseModel):
                 ErrorInfo(
                     message=f"{self.kw} must have at least {self.argc_min} arguments",
                     filename=keyword.filename,
-                    originates_from=StringToken.from_token(keyword),
-                )
+                ).set_context(StringToken.from_token(keyword))
             )
         elif self.argc_max != -1 and len(args) > self.argc_max:
             errors.append(
                 ErrorInfo(
                     message=f"{self.kw} must have maximum {self.argc_max} arguments",
                     filename=keyword.filename,
-                    originates_from=StringToken.from_token(keyword),
-                )
+                ).set_context(StringToken.from_token(keyword))
             )
 
         elif self.argc_max == 1 and self.argc_min == 1:

@@ -1,6 +1,8 @@
 from dataclasses import InitVar, dataclass
 from typing import List, Optional
 
+from typing_extensions import Self
+
 from .lark_parser_file_context_token import FileContextToken
 from .lark_parser_types import MaybeWithContext
 
@@ -17,44 +19,36 @@ class ErrorInfo:
     end_column: Optional[int] = None
     end_pos: Optional[int] = None
     originates_from: InitVar[MaybeWithContext] = None
-    originates_from_these: InitVar[List[MaybeWithContext]] = None
-    originates_from_keyword: InitVar[MaybeWithContext] = None
 
-    def __post_init__(
-        self,
-        originates_from: Optional[MaybeWithContext],
-        originates_from_these: Optional[List[MaybeWithContext]],
-        originates_from_keyword: Optional[MaybeWithContext],
-    ):
-        token = None
+    @classmethod
+    def _take(cls, context: MaybeWithContext, attr: str):
+        if isinstance(context, FileContextToken):
+            return context
+        elif hasattr(context, attr):
+            return getattr(context, attr)
 
-        def take(origin: MaybeWithContext, attr: str):
-            if isinstance(origin, FileContextToken):
-                return origin
-            elif hasattr(origin, attr):
-                return getattr(origin, attr)
+        return None
 
-            return None
+    def set_context(self, context: MaybeWithContext) -> Self:
+        self._attach_to_context(self._take(context, "token"))
+        return self
 
-        if originates_from_keyword is not None:
-            token = take(origin=originates_from_keyword, attr="keyword_token")
+    def set_context_keyword(self, context: MaybeWithContext) -> Self:
+        self._attach_to_context(self._take(context, "keyword_token"))
+        return self
 
-        elif originates_from is not None:
-            token = take(origin=originates_from, attr="token")
+    def set_context_list(self, context_list: List[MaybeWithContext]) -> Self:
+        parsed_context_list = []
+        for context in context_list:
+            the_context = self._take(context, attr="token")
+            if the_context is not None:
+                parsed_context_list.append(the_context)
 
-        elif originates_from_these is not None:
-            tokens = []
-            for origin_token in originates_from_these:
-                the_token = take(origin=origin_token, attr="token")
-                if the_token is not None:
-                    tokens.append(the_token)
+        if len(parsed_context_list) > 0:
+            context = FileContextToken.join_tokens(parsed_context_list)
+            self._attach_to_context(context)
 
-            if len(tokens) > 0:
-                token = FileContextToken.join_tokens(tokens)
-
-        if token is not None:
-            self.attach_to_token(token)
-        pass
+        return self
 
     @property
     def message_with_location(self):
@@ -64,16 +58,17 @@ class ErrorInfo:
         )
 
     @classmethod
-    def attached_to_token(cls, token, *args, **kwargs):
+    def attached_to_context(cls, token, *args, **kwargs):
         instance = cls(*args, **kwargs)
-        instance.attach_to_token(token)
+        instance._attach_to_context(token)
         return instance
 
-    def attach_to_token(self, token: FileContextToken):
-        self.originates_from = token
-        self.start_pos = token.start_pos
-        self.line = token.line
-        self.column = token.column
-        self.end_line = token.end_line
-        self.end_column = token.end_column
-        self.end_pos = token.end_pos
+    def _attach_to_context(self, token: Optional[FileContextToken]):
+        if token is not None:
+            self.originates_from = token
+            self.start_pos = token.start_pos
+            self.line = token.line
+            self.column = token.column
+            self.end_line = token.end_line
+            self.end_column = token.end_column
+            self.end_pos = token.end_pos
