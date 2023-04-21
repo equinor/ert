@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, List
 
 from ert._c_wrappers.job_queue import ErtScript
 
@@ -14,9 +14,6 @@ class Plugin:
     def __init__(
         self, ert: "EnKFMain", notifier: "ErtNotifier", workflow_job: "WorkflowJob"
     ):
-        """
-        @type workflow_job: WorkflowJob
-        """
         self.__ert = ert
         self.__notifier = notifier
         self.__workflow_job = workflow_job
@@ -39,11 +36,11 @@ class Plugin:
     def getDescription(self) -> str:
         return self.__description
 
-    def getArguments(self):
+    def getArguments(self) -> List[Any]:
         """
-         Returns a list of arguments. Either from GUI or from arbitrary code.
-         If the user for example cancels in the GUI a CancelPluginException is raised.
-        @rtype: list"""
+        Returns a list of arguments. Either from GUI or from arbitrary code.
+        If the user for example cancels in the GUI a CancelPluginException is raised.
+        """
         script = self.__loadPlugin()
         return script.getArguments(self.__parent_window)
 
