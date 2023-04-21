@@ -4,12 +4,11 @@ from qtpy.QtCore import QObject, Signal, Slot
 class ValueModel(QObject):
     valueChanged = Signal(str)
 
-    def __init__(self, value=""):
+    def __init__(self, value: str = ""):
         super().__init__()
         self._value = value
 
-    def getValue(self):
-        """@rtype: str"""
+    def getValue(self) -> str:
         return self._value
 
     @Slot(str)

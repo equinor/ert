@@ -95,11 +95,10 @@ class PlotConfig:
         self._legend_items.append(item)
         self._legend_labels.append(label)
 
-    def title(self):
-        """:rtype: str"""
+    def title(self) -> str:
         return self._title if self._title is not None else "Unnamed"
 
-    def setTitle(self, title):
+    def setTitle(self, title: str):
         self._title = title
 
     def isUnnamed(self):

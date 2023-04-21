@@ -1,3 +1,5 @@
+from typing import Any, List
+
 from .ert_script import ErtScript
 
 
@@ -6,8 +8,7 @@ class CancelPluginException(Exception):
 
 
 class ErtPlugin(ErtScript):
-    def getArguments(self, parent=None):
-        """@rtype: list"""
+    def getArguments(self, parent=None) -> List[Any]:
         return []
 
     def getName(self) -> str:

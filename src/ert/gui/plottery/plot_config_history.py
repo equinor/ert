@@ -39,6 +39,5 @@ class PlotConfigHistory:
             self._undo_history.append(self._current)
             self._current = self._redo_history.pop()
 
-    def getPlotConfig(self):
-        """@rtype: PlotConfig"""
+    def getPlotConfig(self) -> PlotConfig:
         return PlotConfig.createCopy(self._current)
