@@ -79,8 +79,12 @@ class AnalysisConfig:
                 min_realization = ceil(
                     num_realization * float(min_realization.strip("%")) / 100
                 )
-            else:
+            elif min_realization.isdigit():
                 min_realization = int(min_realization)
+            else:
+                raise ConfigValidationError(
+                    f"MIN_REALIZATIONS value is not integer {min_realization!r}"
+                )
         # Make sure min_realization is not greater than num_realization
         if min_realization == 0:
             min_realization = num_realization

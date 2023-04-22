@@ -281,14 +281,24 @@ class ErtConfig:
     def _validate_queue_option_max_running(cls, config_path, config_dict):
         errors = []
         for _, option_name, *values in config_dict.get("QUEUE_OPTION", []):
-            if option_name == "MAX_RUNNING" and int(*values) < 0:
-                errors.append(
-                    ConfigValidationError(
-                        errors="QUEUE_OPTION MAX_RUNNING is negative: "
-                        + repr(str(*values)),
-                        config_file=config_path,
+            if option_name == "MAX_RUNNING":
+                err_msg = "QUEUE_OPTION MAX_RUNNING is"
+                try:
+                    int_val = int(*values)
+                except ValueError:
+                    errors.append(
+                        ConfigValidationError(
+                            config_file=config_path,
+                            errors=f"{err_msg} not an integer: {str(*values)!r}",
+                        )
                     )
-                )
+                if int_val < 0:
+                    errors.append(
+                        ConfigValidationError(
+                            config_file=config_path,
+                            errors=f"{err_msg} negative: {str(*values)!r}",
+                        )
+                    )
         return errors
 
     @classmethod
