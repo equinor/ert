@@ -296,7 +296,7 @@ class SchemaItem(BaseModel):
         args: List[Any],
         keyword: FileContextToken,
     ) -> Union[List[Any], Any]:
-        errors = []
+        errors: List[Union[ErrorInfo, ConfigValidationError]] = []
 
         args_with_context = []
         for i, x in enumerate(args):
@@ -327,11 +327,11 @@ class SchemaItem(BaseModel):
                 ).set_context(ContextString.from_token(keyword))
             )
 
-        elif self.argc_max == 1 and self.argc_min == 1:
-            return args[0]
-
         if len(errors) > 0:
             raise ConfigValidationError.from_collected(errors)
+
+        if self.argc_max == 1 and self.argc_min == 1:
+            return args[0]
 
         return args
 
