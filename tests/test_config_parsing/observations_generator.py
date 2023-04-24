@@ -130,11 +130,13 @@ names = st.text(
 
 
 @st.composite
-def general_observations(draw, ensemble_keys):
+def general_observations(draw, ensemble_keys, std_cutoff):
     kws = {}
     kws["data"] = draw(ensemble_keys)
     kws["name"] = draw(names)
-    kws["error"] = draw(st.floats(min_value=0.0))
+    kws["error"] = draw(
+        st.floats(min_value=std_cutoff, allow_nan=False, allow_infinity=False)
+    )
     val_type = draw(st.sampled_from(["value", "obs_file"]))
     if val_type == "value":
         kws["value"] = draw(st.floats())
@@ -155,11 +157,13 @@ positive_floats = st.floats(min_value=0.1, allow_nan=False, allow_infinity=False
 
 
 @st.composite
-def summary_observations(draw, summary_keys):
+def summary_observations(draw, summary_keys, std_cutoff):
     kws = {}
     kws["name"] = draw(names)
     kws["key"] = draw(summary_keys)
-    kws["error"] = draw(positive_floats)
+    kws["error"] = draw(
+        st.floats(min_value=std_cutoff, allow_nan=False, allow_infinity=False)
+    )
     kws["error_min"] = draw(positive_floats)
     kws["error_mode"] = draw(st.sampled_from(ErrorMode))
     kws["value"] = draw(positive_floats)
@@ -173,23 +177,26 @@ def summary_observations(draw, summary_keys):
         )
         kws["date"] = date.strftime("%Y-%m-%d")
     if time_type in ["days", "hours"]:
-        kws[time_type] = draw(st.floats(min_value=1, max_value=10000))
+        kws[time_type] = draw(st.floats(min_value=1, max_value=3000))
     if time_type == "restart":
         kws[time_type] = draw(st.integers(min_value=1, max_value=10))
     return SummaryObservation(**kws)
 
 
 @st.composite
-def observations(draw, ensemble_keys, summary_keys):
+def observations(draw, ensemble_keys, summary_keys, std_cutoff):
     assume(ensemble_keys is not None or summary_keys is not None)
     observation_generators = []
     if ensemble_keys is not None:
-        observation_generators.append(general_observations(ensemble_keys))
+        observation_generators.append(general_observations(ensemble_keys, std_cutoff))
     if summary_keys is not None:
-        observation_generators.append(summary_observations(summary_keys))
+        observation_generators.append(summary_observations(summary_keys, std_cutoff))
         observation_generators.append(
             st.builds(
                 HistoryObservation,
+                error=st.floats(
+                    min_value=std_cutoff, allow_nan=False, allow_infinity=False
+                ),
                 segment=st.lists(
                     st.builds(
                         Segment,
