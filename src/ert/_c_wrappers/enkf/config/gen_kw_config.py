@@ -30,8 +30,6 @@ class GenKwConfig(BaseCClass):
     _set_parameter_file = ResPrototype(
         "void  gen_kw_config_set_parameter_file(gen_kw_config, char*)"
     )
-    _size = ResPrototype("int   gen_kw_config_get_data_size(gen_kw_config)")
-    _iget_name = ResPrototype("char* gen_kw_config_iget_name(gen_kw_config, int)")
     _transform = ResPrototype(
         "double gen_kw_config_transform(gen_kw_config, int, double)"  # noqa
     )
@@ -102,10 +100,10 @@ class GenKwConfig(BaseCClass):
         return self._tag_format
 
     def __len__(self):
-        return self._size()
+        return len(self._transfer_functions)
 
     def __getitem__(self, index: int) -> str:
-        return self._iget_name(index)
+        return self._transfer_functions[index].name
 
     def __iter__(self):
         index = 0

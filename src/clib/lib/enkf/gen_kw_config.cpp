@@ -124,16 +124,4 @@ void gen_kw_config_free(gen_kw_config_type *gen_kw_config) {
     free(gen_kw_config);
 }
 
-int gen_kw_config_get_data_size(const gen_kw_config_type *gen_kw_config) {
-    return vector_get_size(gen_kw_config->parameters);
-}
-
-const char *gen_kw_config_iget_name(const gen_kw_config_type *config,
-                                    int kw_nr) {
-    const gen_kw_parameter_type *parameter =
-        (const gen_kw_parameter_type *)vector_iget(config->parameters, kw_nr);
-    return parameter->name;
-}
-
 VOID_FREE(gen_kw_config)
-VOID_GET_DATA_SIZE(gen_kw)
