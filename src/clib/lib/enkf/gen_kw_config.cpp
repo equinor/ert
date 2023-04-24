@@ -47,6 +47,10 @@ static void gen_kw_parameter_free(gen_kw_parameter_type *parameter) {
     free(parameter);
 }
 
+int gen_kw_config_get_data_size(const gen_kw_config_type *gen_kw_config) {
+    return vector_get_size(gen_kw_config->parameters);
+}
+
 static void gen_kw_parameter_free__(void *__parameter) {
     auto parameter = static_cast<gen_kw_parameter_type *>(__parameter);
     gen_kw_parameter_free(parameter);
@@ -125,3 +129,4 @@ void gen_kw_config_free(gen_kw_config_type *gen_kw_config) {
 }
 
 VOID_FREE(gen_kw_config)
+VOID_GET_DATA_SIZE(gen_kw)

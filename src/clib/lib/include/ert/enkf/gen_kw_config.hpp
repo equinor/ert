@@ -16,6 +16,7 @@ extern "C" void gen_kw_config_set_parameter_file(gen_kw_config_type *config,
 extern "C" void gen_kw_config_free(gen_kw_config_type *);
 extern "C" PY_USED double gen_kw_config_transform(const gen_kw_config_type *,
                                                   int index, double x);
+extern "C" int gen_kw_config_get_data_size(const gen_kw_config_type *);
 extern "C" gen_kw_config_type *gen_kw_config_alloc_empty();
 
 VOID_FREE_HEADER(gen_kw_config);
