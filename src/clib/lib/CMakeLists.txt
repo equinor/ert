@@ -46,8 +46,7 @@ pybind11_add_module(
   enkf/obs_vector.cpp
   enkf/row_scaling.cpp
   enkf/summary_config.cpp
-  enkf/summary_obs.cpp
-  enkf/trans_func.cpp)
+  enkf/summary_obs.cpp)
 
 # -----------------------------------------------------------------
 # Target: Python C Extension 'ert._clib'
