@@ -30,9 +30,6 @@ class GenKwConfig(BaseCClass):
     _set_parameter_file = ResPrototype(
         "void  gen_kw_config_set_parameter_file(gen_kw_config, char*)"
     )
-    _transform = ResPrototype(
-        "double gen_kw_config_transform(gen_kw_config, int, double)"  # noqa
-    )
 
     def __init__(
         self, key: str, template_file: str, parameter_file: str, tag_fmt: str = "<%s>"
@@ -135,9 +132,6 @@ class GenKwConfig(BaseCClass):
             )
 
         return priors
-
-    def transform(self, index: int, value: float) -> float:
-        return self._transform(index, value)
 
     @staticmethod
     def values_from_files(
