@@ -38,6 +38,9 @@ class GenKwConfig:
         self._template_file = template_file
         self._tag_format = tag_fmt
         self._transfer_functions = []
+        self.forward_init = ""
+        self.output_file = ""
+        self.forward_init_file = ""
 
         with open(parameter_file, "r", encoding="utf-8") as file:
             for item in file:
