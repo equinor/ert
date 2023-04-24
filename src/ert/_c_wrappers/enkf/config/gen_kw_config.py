@@ -178,27 +178,13 @@ class GenKwConfig:
             "RAW": [],
         }
 
-        TRANS_FUNC_MAPPING: Final = {
-            "NORMAL": TransferFunction.trans_normal,
-            "LOGNORMAL": TransferFunction.trans_lognormal,
-            "TRUNCATED_NORMAL": TransferFunction.trans_truncated_normal,
-            "TRIANGULAR": TransferFunction.trans_triangular,
-            "UNIFORM": TransferFunction.trans_unif,
-            "DUNIF": TransferFunction.trans_dunif,
-            "ERRF": TransferFunction.trans_errf,
-            "DERRF": TransferFunction.trans_derrf,
-            "LOGUNIF": TransferFunction.trans_logunif,
-            "CONST": TransferFunction.trans_const,
-            "RAW": TransferFunction.trans_raw,
-        }
-
         if len(param_args) > 1:
             func_name = param_args[0]
             param_func_name = param_args[1]
 
             if (
                 param_func_name not in TRANS_FUNC_ARGS
-                or param_func_name not in TRANS_FUNC_MAPPING
+                or param_func_name not in PRIOR_FUNCTIONS
             ):
                 raise ConfigValidationError(
                     f"Unknown transfer function provided: {param_func_name}"
@@ -221,7 +207,7 @@ class GenKwConfig:
             params = dict(zip(param_names, param_floats))
 
             return TransferFunction(
-                func_name, param_func_name, params, TRANS_FUNC_MAPPING[param_func_name]
+                func_name, param_func_name, params, PRIOR_FUNCTIONS[param_func_name]
             )
 
         else:
@@ -235,18 +221,6 @@ class TransferFunction:
     transfer_function_name: str
     param_list: List[(str, float)]
     calc_func: object
-
-    _min: float = 0
-    _max: float = 0
-    _width: float = 0
-    _skewness: float = 0
-    _mean: float = 0
-    _std: float = 0
-    _xmin: float = 0
-    _xmode: float = 0
-    _xmax: float = 0
-    _value: float = 0
-    _steps: int = 0
     _use_log: bool = False
 
     def __init__(self, name, transfer_function_name, param_list, calc_func) -> None:
@@ -255,89 +229,108 @@ class TransferFunction:
         self.calc_func = calc_func
         self.parameter_list = param_list
 
-        self._min = param_list.get("MIN", 0)
-        self._max = param_list.get("MAX", 0)
-        self._width = param_list.get("WIDTH", 0)
-        self._skewness = param_list.get("SKEWNESS", 0)
-        self._mean = param_list.get("MEAN", 0)
-        self._std = param_list.get("STD", 0)
-        self._xmin = param_list.get("XMIN", 0)
-        self._xmode = param_list.get("XMODE", 0)
-        self._xmax = param_list.get("XMAX", 0)
-        self._value = param_list.get("VALUE", 0)
-        self._steps = int(param_list.get("STEPS", 0))
-
         if transfer_function_name in ["LOGNORMAL", "LOGUNIF"]:
             self._use_log = True
 
-    def trans_errf(self, x: float) -> float:
+    @staticmethod
+    def trans_errf(x, arg: List[float]) -> float:
         """
         Width  = 1 => uniform
         Width  > 1 => unimodal peaked
-        Width  < 1 => bimoal peaks
+        Width  < 1 => bimodal peaks
         Skewness < 0 => shifts towards the left
         Skewness = 0 => symmetric
         Skewness > 0 => Shifts towards the right
         The width is a relavant scale for the value of skewness.
         """
-        y = 0.5 * (1 + math.erf((x + self._skewness) / (self._width * math.sqrt(2.0))))
-        return self._min + y * (self._max - self._min)
+        _min, _max, _skew, _width = arg[0], arg[1], arg[2], arg[3]
+        y = 0.5 * (1 + math.erf((x + _skew) / (_width * math.sqrt(2.0))))
+        return _min + y * (_max - _min)
 
-    def trans_const(self, _: float) -> float:
-        return self._value
+    @staticmethod
+    def trans_const(_: float, arg: List[float]) -> float:
+        return arg[0]
 
-    def trans_raw(self, x: float) -> float:
+    @staticmethod
+    def trans_raw(x: float, _: List[float]) -> float:
         return x
 
-    def trans_derrf(self, x: float) -> float:
+    @staticmethod
+    def trans_derrf(x: float, arg: List[float]) -> float:
         '''Observe that the argument of the shift should be \"+\"'''
+        _steps, _min, _max, _skew, _width = int(arg[0]), arg[1], arg[2], arg[3], arg[4]
         y = math.floor(
-            self._steps
+            _steps
             * 0.5
-            * (1 + math.erf((x + self._skewness) / (self._width * math.sqrt(2.0))))
-            / (self._steps - 1)
+            * (1 + math.erf((x + _skew) / (_width * math.sqrt(2.0))))
+            / (_steps - 1)
         )
-        return self._min + y * (self._max - self._min)
+        return _min + y * (_max - _min)
 
-    def trans_unif(self, x: float) -> float:
+    @staticmethod
+    def trans_unif(x: float, arg: List[float]) -> float:
+        _min, _max = arg[0], arg[1]
         y = 0.5 * (1 + math.erf(x / math.sqrt(2.0)))  # 0 - 1
-        return y * (self._max - self._min) + self._min
+        return y * (_max - _min) + _min
 
-    def trans_dunif(self, x: float) -> float:
+    @staticmethod
+    def trans_dunif(x: float, arg: List[float]) -> float:
+        _steps, _min, _max = int(arg[0]), arg[1], arg[2]
         y = 0.5 * (1 + math.erf(x / math.sqrt(2.0)))  # 0 - 1
-        return (math.floor(y * self._steps) / (self._steps - 1)) * (
-            self._max - self._min
-        ) + self._min
+        return (math.floor(y * _steps) / (_steps - 1)) * (_max - _min) + _min
 
-    def trans_normal(self, x: float) -> float:
-        return x * self._std + self._mean
+    @staticmethod
+    def trans_normal(x: float, arg: List[float]) -> float:
+        _mean, _std = arg[0], arg[1]
+        return x * _std + _mean
 
-    def trans_truncated_normal(self, x: float) -> float:
-        y = x * self._std + self._mean
-        max(min(y, self._max), self._min)  # clamp
+    @staticmethod
+    def trans_truncated_normal(x: float, arg: List[float]) -> float:
+        _mean, _std, _min, _max = arg[0], arg[1], arg[2], arg[3]
+        y = x * _std + _mean
+        max(min(y, _max), _min)  # clamp
         return y
 
-    def trans_lognormal(self, x: float) -> float:
+    @staticmethod
+    def trans_lognormal(x: float, arg: List[float]) -> float:
         # mean is the expectation of log( y )
-        return math.exp(x * self._std + self._mean)
+        _mean, _std = arg[0], arg[1]
+        return math.exp(x * _std + _mean)
 
-    def trans_logunif(self, x: float) -> float:
+    @staticmethod
+    def trans_logunif(x: float, arg: List[float]) -> float:
+        _log_min, _log_max = arg[0], arg[1]
         tmp = 0.5 * (1 + math.erf(x / math.sqrt(2.0)))  # 0 - 1
-        log_y = self._min + tmp * (
-            self._max - self._min
-        )  # Shift according to max / min
+        log_y = _log_min + tmp * (_log_max - _log_min)  # Shift according to max / min
         return math.exp(log_y)
 
-    def trans_triangular(self, x: float) -> float:
-        inv_norm_left = (self._xmax - self._xmin) * (self._xmode - self._xmin)
-        inv_norm_right = (self._xmax - self._xmin) * (self._xmax - self._xmode)
-        ymode = (self._xmode - self._xmin) / (self._xmax - self._xmin)
+    @staticmethod
+    def trans_triangular(x: float, arg: List[float]) -> float:
+        _xmin, _xmode, _xmax = arg[0], arg[1], arg[2]
+        inv_norm_left = (_xmax - _xmin) * (_xmode - _xmin)
+        inv_norm_right = (_xmax - _xmin) * (_xmax - _xmode)
+        ymode = (_xmode - _xmin) / (_xmax - _xmin)
         y = 0.5 * (1 + math.erf(x / math.sqrt(2.0)))  # 0 - 1
 
         if y < ymode:
-            return self._xmin + math.sqrt(y * inv_norm_left)
+            return _xmin + math.sqrt(y * inv_norm_left)
         else:
-            return self._xmax - math.sqrt((1 - y) * inv_norm_right)
+            return _xmax - math.sqrt((1 - y) * inv_norm_right)
 
-    def calculate(self, x) -> float:
-        return self.calc_func(self, x)
+    def calculate(self, x: float, arg: List[float]) -> float:
+        return self.calc_func(self, x, arg)
+
+
+PRIOR_FUNCTIONS: Final = {
+    "NORMAL": TransferFunction.trans_normal,
+    "LOGNORMAL": TransferFunction.trans_lognormal,
+    "TRUNCATED_NORMAL": TransferFunction.trans_truncated_normal,
+    "TRIANGULAR": TransferFunction.trans_triangular,
+    "UNIFORM": TransferFunction.trans_unif,
+    "DUNIF": TransferFunction.trans_dunif,
+    "ERRF": TransferFunction.trans_errf,
+    "DERRF": TransferFunction.trans_derrf,
+    "LOGUNIF": TransferFunction.trans_logunif,
+    "CONST": TransferFunction.trans_const,
+    "RAW": TransferFunction.trans_raw,
+}

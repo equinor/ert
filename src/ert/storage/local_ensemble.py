@@ -16,6 +16,7 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 import xtgeo
+from _c_wrappers.enkf.config.gen_kw_config import PRIOR_FUNCTIONS
 from ecl import EclDataType
 from ecl.eclfile import EclKW
 from ecl.grid import EclGrid
@@ -23,7 +24,6 @@ from numpy import ma
 from pydantic import BaseModel
 
 from ert._c_wrappers.enkf.config.field_config import field_transform
-from ert._c_wrappers.enkf.enkf_main import trans_func
 from ert._c_wrappers.enkf.enums import RealizationStateEnum
 from ert._c_wrappers.enkf.model_callbacks import LoadStatus
 from ert._c_wrappers.enkf.time_map import TimeMap
@@ -63,21 +63,6 @@ def _load_realization(
         else RealizationStateEnum.STATE_LOAD_FAILURE
     )
     return status, realisation
-
-
-PRIOR_FUNCTIONS = {
-    "NORMAL": trans_func.normal,
-    "LOGNORMAL": trans_func.log_normal,
-    "TRUNCATED_NORMAL": trans_func.truncated_normal,
-    "TRIANGULAR": trans_func.triangular,
-    "UNIFORM": trans_func.uniform,
-    "DUNIF": trans_func.dunform,
-    "ERRF": trans_func.errf,
-    "DERRF": trans_func.derrf,
-    "LOGUNIF": trans_func.log_uniform,
-    "CONST": trans_func.const,
-    "RAW": trans_func.raw,
-}
 
 
 def _field_truncate(data: npt.ArrayLike, min_: float, max_: float) -> Any:
