@@ -61,6 +61,8 @@ class GenKwConfig(BaseCClass):
 
         with open(parameter_file, "r", encoding="utf-8") as file:
             for item in file:
+                item = item.rsplit("--")[0]  # remove comments
+
                 if item.strip():  # only lines with content
                     self._transfer_functions.append(self.parse_transfer_function(item))
 
