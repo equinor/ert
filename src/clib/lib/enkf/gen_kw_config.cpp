@@ -137,15 +137,3 @@ const char *gen_kw_config_iget_name(const gen_kw_config_type *config,
 
 VOID_FREE(gen_kw_config)
 VOID_GET_DATA_SIZE(gen_kw)
-
-ERT_CLIB_SUBMODULE("gen_kw_config", m) {
-    m.def(
-        "get_function_parameter_values",
-        [](Cwrap<gen_kw_config_type> self, int index) {
-            const gen_kw_parameter_type *parameter =
-                (const gen_kw_parameter_type *)vector_iget_const(
-                    self->parameters, index);
-            return trans_func_get_params(parameter->trans_func);
-        },
-        py::arg("self"), py::arg("index"));
-}
