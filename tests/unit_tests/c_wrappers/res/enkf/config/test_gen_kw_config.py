@@ -277,3 +277,18 @@ def test_gen_kw_params_parsing(tmpdir, params, error):
                 GenKwConfig.parse_transfer_function(params)
         else:
             GenKwConfig.parse_transfer_function(params)
+
+
+@pytest.mark.parametrize(
+    "params, xinput, expected",
+    [
+        ("MYNAME TRIANGULAR 0 0.5 1.0", 0.0, 0.50),
+        ("MYNAME TRIANGULAR 0 1.0 4.0", -1.0, 0.7966310411513150456286),
+        ("MYNAME TRIANGULAR 0 1.0 4.0", 1.1, 2.72407181575270778882286),
+        ("MYNAME UNIFORM 0 1", 0.0, 0.50),
+    ],
+)
+def test_gen_kw_trans_func(tmpdir, params, xinput, expected):
+    with tmpdir.as_cwd():
+        tf = GenKwConfig.parse_transfer_function(params)
+        assert abs(tf.calculate(xinput) - expected) < 10**-15
