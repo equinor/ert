@@ -71,11 +71,11 @@ class GenKwConfig(BaseCClass):
 
         self.__str__ = self.__repr__
 
-    def getTemplateFile(self) -> os.PathLike[str]:
+    def getTemplateFile(self) -> str:
         path = self._template_file
         return None if path is None else os.path.abspath(path)
 
-    def getParameterFile(self):
+    def getParameterFile(self) -> str:
         path = self._parameter_file
         return None if path is None else os.path.abspath(path)
 
