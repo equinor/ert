@@ -10,7 +10,6 @@
 #include <ert/enkf/enkf_obs.hpp>
 #include <ert/enkf/ext_param_config.hpp>
 #include <ert/enkf/gen_data_config.hpp>
-#include <ert/enkf/gen_kw_config.hpp>
 #include <ert/enkf/gen_obs.hpp>
 #include <ert/python.hpp>
 #include <ert/res_util/path_fmt.hpp>
@@ -33,10 +32,6 @@ static enkf_config_node_type *enkf_config_node_alloc__(ert_impl_type impl_type,
     node->freef = NULL;
 
     switch (impl_type) {
-    case (GEN_KW):
-        node->freef = gen_kw_config_free__;
-        node->get_data_size = gen_kw_config_get_data_size__;
-        break;
     case (SUMMARY):
         node->freef = summary_config_free__;
         node->get_data_size = summary_config_get_data_size__;

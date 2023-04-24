@@ -7,9 +7,7 @@ from typing import TYPE_CHECKING, Dict, Final, List, TypedDict
 
 import numpy as np
 import pandas as pd
-from cwrap import BaseCClass
 
-from ert._c_wrappers import ResPrototype
 from ert.parsing.config_errors import ConfigValidationError
 
 if TYPE_CHECKING:
@@ -22,11 +20,8 @@ class PriorDict(TypedDict):
     parameters: Dict[str, float]
 
 
-class GenKwConfig(BaseCClass):
+class GenKwConfig:
     TYPE_NAME = "gen_kw_config"
-
-    _free = ResPrototype("void  gen_kw_config_free( gen_kw_config )")
-    _alloc_empty = ResPrototype("void* gen_kw_config_alloc_empty()", bind=False)
 
     def __init__(
         self, key: str, template_file: str, parameter_file: str, tag_fmt: str = "<%s>"
@@ -36,15 +31,6 @@ class GenKwConfig(BaseCClass):
 
         if not os.path.isfile(parameter_file):
             raise IOError(f"No such file:{parameter_file}")
-
-        c_ptr = self._alloc_empty()
-        if c_ptr:
-            super().__init__(c_ptr)
-        else:
-            raise ValueError(
-                "Could not instantiate GenKwConfig with "
-                f'key="{key}" and tag_fmt="{tag_fmt}"'
-            )
 
         self._key = key
         self.name = key
@@ -76,14 +62,8 @@ class GenKwConfig(BaseCClass):
                 return tf._use_log
         return False
 
-    def free(self):
-        self._free()
-
     def __repr__(self):
-        return (
-            f'GenKwConfig(key = "{self.getKey()}", '
-            f'tag_fmt = "{self.tag_fmt}") at 0x{self._address():x}'
-        )
+        return f'GenKwConfig(key = "{self.getKey()}", ' f'tag_fmt = "{self.tag_fmt}")'
 
     def getKey(self) -> str:
         return self._key

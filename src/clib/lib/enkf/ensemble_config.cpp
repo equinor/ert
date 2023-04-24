@@ -15,7 +15,6 @@
 #include <ert/enkf/enkf_defaults.hpp>
 #include <ert/enkf/enkf_obs.hpp>
 #include <ert/enkf/ensemble_config.hpp>
-#include <ert/enkf/gen_kw_config.hpp>
 #include <ert/logging.hpp>
 
 namespace fs = std::filesystem;

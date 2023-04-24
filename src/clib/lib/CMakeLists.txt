@@ -42,7 +42,6 @@ pybind11_add_module(
   enkf/ext_param_config.cpp
   enkf/gen_common.cpp
   enkf/gen_data_config.cpp
-  enkf/gen_kw_config.cpp
   enkf/gen_obs.cpp
   enkf/obs_vector.cpp
   enkf/row_scaling.cpp
