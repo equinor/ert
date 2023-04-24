@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-import math
 import os
 import time
 from dataclasses import dataclass
@@ -83,18 +82,16 @@ class Field(ParameterConfig):
 
 
 # pylint: disable=unnecessary-lambda
-_TRANSFORM_FUNCTIONS = {
-    "LN": lambda x: math.log(x, math.e),
-    "LOG": lambda x: math.log(x, math.e),
-    "LN0": lambda x: math.log(x + 0.000001, math.e),
-    "LOG10": lambda x: math.log(x, 10),
-    "EXP": lambda x: math.exp(x),
-    "EXP0": lambda x: math.exp(x) - 0.000001,
-    "POW10": lambda x: math.log(x, math.e),
-    "TRUNC_POW10": lambda x: math.pow(max(x, 0.001), 10),
+TRANSFORM_FUNCTIONS = {
+    "LN": np.log,
+    "LOG": np.log,
+    "LN0": lambda v: np.log(v + 0.000001),
+    "LOG10": np.log10,
+    "EXP": np.exp,
+    "EXP0": lambda v: np.exp(v) - 0.000001,
+    "POW10": lambda v: np.power(10.0, v),
+    "TRUNC_POW10": lambda v: np.maximum(np.power(10, v), 0.001),
 }
-
-TRANSFORM_FUNCTIONS = {k: np.vectorize(v) for k, v in _TRANSFORM_FUNCTIONS.items()}
 
 
 def field_transform(data: npt.ArrayLike, transform_name: str) -> npt.ArrayLike:
