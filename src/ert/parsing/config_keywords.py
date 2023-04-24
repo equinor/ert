@@ -1,7 +1,7 @@
 import os
 import shutil
 from enum import Enum
-from typing import Any, Dict, List, Mapping, Optional, Union
+from typing import Any, Dict, List, Mapping, Optional, Set, Union
 
 from pydantic import BaseModel
 
@@ -15,7 +15,6 @@ from .context_values import (
 )
 from .error_info import ErrorInfo
 from .file_context_token import FileContextToken
-from .types import Instruction
 
 # These keys are used as options in KEY:VALUE statements
 BASE_SURFACE_KEY = "BASE_SURFACE"
@@ -310,8 +309,6 @@ class SchemaItem(BaseModel):
             else:
                 args_with_context.append(x)
 
-        args = args_with_context
-
         if self.argc_min != -1 and len(args) < self.argc_min:
             errors.append(
                 ErrorInfo(
@@ -331,9 +328,9 @@ class SchemaItem(BaseModel):
             raise ConfigValidationError.from_collected(errors)
 
         if self.argc_max == 1 and self.argc_min == 1:
-            return args[0]
+            return args_with_context[0]
 
-        return args
+        return args_with_context
 
     def join_args(self, line: List[Any]) -> List[Any]:
         n = self.join_after
@@ -348,13 +345,13 @@ class SchemaItem(BaseModel):
 
 def check_required(
     schema: Mapping[str, SchemaItem],
-    config_dict: Mapping[str, Instruction],
+    declared_kws: Set[str],
     filename: str,
 ) -> None:
     errors = []
 
     for constraints in schema.values():
-        if constraints.required_set and constraints.kw not in config_dict:
+        if constraints.required_set and constraints.kw not in declared_kws:
             errors.append(
                 ErrorInfo(
                     message=f"{constraints.kw} must be set.",

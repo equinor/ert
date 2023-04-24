@@ -4,7 +4,7 @@ import logging
 import os
 import os.path
 import warnings
-from typing import Any, Dict, List, Mapping, Optional, Tuple, Union
+from typing import Any, Dict, List, Mapping, Optional, Set, Tuple, Union
 
 from lark import Discard, Lark, Token, Transformer, Tree, UnexpectedCharacters
 
@@ -198,10 +198,13 @@ def _tree_to_dict(
     config_dict["DEFINE"] = defines
 
     errors = []
+    declared_kws: Set[str] = set()
 
     for node in tree.children:
         try:
             kw, *args = node
+
+            declared_kws.add(kw)
             if kw not in schema:
                 warnings.warn(f"Unknown keyword {kw!r}", category=ConfigWarning)
                 continue
@@ -221,7 +224,7 @@ def _tree_to_dict(
             errors.append(e)
 
     try:
-        check_required(schema, config_dict, filename=config_file)
+        check_required(schema, declared_kws, filename=config_file)
     except ConfigValidationError as e:
         errors.append(e)
 
