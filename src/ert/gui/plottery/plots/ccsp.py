@@ -41,7 +41,7 @@ def plotCrossCaseStatistics(figure, plot_context, case_to_data_map, _observation
         "p67": {},
         "p90": {},
     }
-    for case_index, (case, data) in enumerate(case_to_data_map.items()):
+    for case_index, data in enumerate(case_to_data_map.values()):
         case_indexes.append(case_index)
         std_dev_factor = config.getStandardDeviationFactor()
 

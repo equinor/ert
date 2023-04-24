@@ -76,10 +76,10 @@ class Monitor:
 
     def _print_job_errors(self):
         failed_jobs = {}
-        for snapshot_id, snapshot in self._snapshots.items():
-            for real_id, real in snapshot.reals.items():
-                for step_id, step in real.steps.items():
-                    for job_id, job in step.jobs.items():
+        for snapshot in self._snapshots.values():
+            for real in snapshot.reals.values():
+                for step in real.steps.values():
+                    for job in step.jobs.values():
                         if job.status == JOB_STATE_FAILURE:
                             result = failed_jobs.get(job.error, 0)
                             failed_jobs[job.error] = result + 1

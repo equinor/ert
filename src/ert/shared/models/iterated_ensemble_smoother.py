@@ -155,7 +155,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
                 iteration=current_iter,
             )
             update_success = False
-            for iteration in range(analysis_config.num_retries_per_iter):
+            for _iteration in range(analysis_config.num_retries_per_iter):
                 self.analyzeStep(
                     prior_context.sim_fs,
                     posterior_context.sim_fs,
