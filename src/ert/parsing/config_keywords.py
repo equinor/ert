@@ -5,7 +5,7 @@ from typing import Any, Dict, List, Mapping, Optional, Union
 
 from pydantic import BaseModel
 
-from . import ConfigValidationError
+from .config_errors import ConfigValidationError
 from .context_values import (
     ContextBool,
     ContextFloat,
