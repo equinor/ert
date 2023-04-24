@@ -56,7 +56,7 @@ def get_observations(ert, storage, ensemble_id1, keyword: str, poly_ran):
         else:
             assert len(obs) == 0
     else:
-        assert False, f"should never get here, keyword is {keyword}"
+        raise AssertionError(f"should never get here, keyword is {keyword}")
 
 
 def get_single_record_parquet(ert, storage, ensemble_id1, keyword, poly_ran):

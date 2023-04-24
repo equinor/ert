@@ -43,7 +43,7 @@ class Observation(ABC):
             elif isinstance(val, list):
                 result += f"{' '.join([str(v) for v in val])}"
             else:
-                assert False
+                raise AssertionError
         result += " };"
         return result
 
