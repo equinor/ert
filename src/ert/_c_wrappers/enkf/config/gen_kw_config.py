@@ -68,6 +68,9 @@ class GenKwConfig:
     def getKey(self) -> str:
         return self._key
 
+    def getImplementationType(self) -> str:
+        return self.TYPE_NAME
+
     @property
     def tag_fmt(self):
         return self._tag_format

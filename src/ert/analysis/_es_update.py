@@ -16,6 +16,7 @@ from iterative_ensemble_smoother.experimental import (
 from pandas import DataFrame
 
 from ert._c_wrappers.enkf.config.field_config import Field
+from ert._c_wrappers.enkf.config.gen_kw_config import GenKwConfig
 from ert._c_wrappers.enkf.config.surface_config import SurfaceConfig
 from ert._c_wrappers.enkf.enums import ActiveMode, RealizationStateEnum
 from ert._c_wrappers.enkf.row_scaling import RowScaling
@@ -155,10 +156,10 @@ def _save_temporary_storage_to_disk(
     temporary_storage: Dict[str, "npt.NDArray[np.double]"],
     iens_active_index: List[int],
 ) -> None:
-    gen_kw_keys = ensemble_config.get_keylist_gen_kw()
-
     for key, matrix in temporary_storage.items():
-        if key in gen_kw_keys:
+        config_node = ensemble_config.getNode(key)
+
+        if isinstance(config_node, GenKwConfig):
             parameter_keys = list(ensemble_config.get_keyword_model_config(key))
             target_fs.save_gen_kw(
                 key,
@@ -166,10 +167,10 @@ def _save_temporary_storage_to_disk(
                 iens_active_index,
                 matrix,
             )
-        elif isinstance(ensemble_config.getNode(key), SurfaceConfig):
+        elif isinstance(config_node, SurfaceConfig):
             for i, realization in enumerate(iens_active_index):
                 target_fs.save_surface_data(key, realization, matrix[:, i])
-        elif isinstance(ensemble_config.getNode(key), Field):
+        elif isinstance(config_node, Field):
             for i, realization in enumerate(iens_active_index):
                 target_fs.save_field(key, realization, matrix[:, i], unmasked=True)
         else:
@@ -186,18 +187,17 @@ def _create_temporary_parameter_storage(
 ) -> Dict[str, "npt.NDArray[np.double]"]:
     temporary_storage = {}
     for key in ensemble_config.parameters:
-        if key in ensemble_config.get_keylist_gen_kw():
+        config_node = ensemble_config.getNode(key)
+        if isinstance(config_node, GenKwConfig):
             matrix = source_fs.load_gen_kw(key, iens_active_index)
+        elif isinstance(config_node, SurfaceConfig):
+            matrix = source_fs.load_surface_data(key, iens_active_index)
+        elif isinstance(config_node, Field):
+            matrix = source_fs.load_field(key, iens_active_index)
         else:
-            config_node = ensemble_config.getNode(key)
-            if isinstance(config_node, SurfaceConfig):
-                matrix = source_fs.load_surface_data(key, iens_active_index)
-            elif isinstance(config_node, Field):
-                matrix = source_fs.load_field(key, iens_active_index)
-            else:
-                raise NotImplementedError(
-                    f"{config_node.getImplementationType()} is not supported"
-                )
+            raise NotImplementedError(
+                f"{config_node.getImplementationType()} is not supported"
+            )
         temporary_storage[key] = matrix
     return temporary_storage
 
