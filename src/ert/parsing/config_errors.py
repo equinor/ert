@@ -18,7 +18,8 @@ class ConfigValidationError(ValueError):
         self.errors: List[ErrorInfo] = []
         if isinstance(errors, list):
             for err in errors:
-                self.errors.append(err)
+                if isinstance(err, ErrorInfo):
+                    self.errors.append(err)
         else:
             self.errors.append(ErrorInfo(message=errors, filename=config_file))
         super().__init__(
