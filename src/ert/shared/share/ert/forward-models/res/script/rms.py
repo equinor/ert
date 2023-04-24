@@ -113,7 +113,7 @@ class RMSRun:
     def init_seed(self, iens):
         if "RMS_SEED" in os.environ:
             seed = int(os.getenv("RMS_SEED"))
-            for x in range(iens):
+            for _ in range(iens):
                 seed *= RMSRun._seed_factor
         else:
             single_seed_file = os.path.join(self.run_path, RMSRun._single_seed_file)

@@ -147,7 +147,7 @@ class GenDataRFTCSVExportJob(ErtPlugin):
             cases = ["default"]
 
         data_frame = pandas.DataFrame()
-        for index, case in enumerate(cases):
+        for case in cases:
             case = case.strip()
             case_frame = pandas.DataFrame()
 

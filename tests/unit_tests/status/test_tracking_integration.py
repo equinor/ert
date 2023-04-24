@@ -228,7 +228,7 @@ def test_tracking(
         assert tracker._progress() == progress
 
         assert len(snapshots) == num_iters
-        for iter_, snapshot in snapshots.items():
+        for snapshot in snapshots.values():
             successful_reals = list(
                 filter(
                     lambda item: item[1].status == REALIZATION_STATE_FINISHED,
