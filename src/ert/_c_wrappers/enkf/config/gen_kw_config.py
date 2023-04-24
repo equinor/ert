@@ -27,9 +27,6 @@ class GenKwConfig(BaseCClass):
 
     _free = ResPrototype("void  gen_kw_config_free( gen_kw_config )")
     _alloc_empty = ResPrototype("void* gen_kw_config_alloc_empty()", bind=False)
-    _set_parameter_file = ResPrototype(
-        "void  gen_kw_config_set_parameter_file(gen_kw_config, char*)"
-    )
 
     def __init__(
         self, key: str, template_file: str, parameter_file: str, tag_fmt: str = "<%s>"
@@ -54,9 +51,6 @@ class GenKwConfig(BaseCClass):
         self._parameter_file = parameter_file
         self._template_file = template_file
         self._tag_format = tag_fmt
-
-        # this triggers a series of low-level events
-        self._set_parameter_file(parameter_file)
         self._transfer_functions = []
 
         with open(parameter_file, "r", encoding="utf-8") as file:

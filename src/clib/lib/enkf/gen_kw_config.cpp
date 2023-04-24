@@ -63,50 +63,6 @@ static void gen_kw_parameter_set_trans_func(gen_kw_parameter_type *parameter,
     parameter->trans_func = trans_func;
 }
 
-void gen_kw_config_set_parameter_file(gen_kw_config_type *config,
-                                      const char *parameter_file) {
-    vector_clear(config->parameters);
-    if (parameter_file != NULL) {
-        config_parser_type *parser = config_alloc();
-        config_content_type *content =
-            config_parse(parser, parameter_file, "--", NULL, NULL, NULL,
-                         CONFIG_UNRECOGNIZED_ADD, false);
-        if (!content->valid) {
-            auto header = fmt::format(
-                "encountered errors while parsing GEN_KW parameter file {}",
-                parameter_file);
-            std::string errors;
-            for (auto &error : content->parse_errors) {
-                errors += error;
-            }
-            logger->warning("{}\n{}", header, errors);
-        }
-        for (auto parse_error : content->parse_errors) {
-            logger->warning(parse_error);
-        }
-        for (int item_index = 0; item_index < config_content_get_size(content);
-             item_index++) {
-            const config_content_node_type *node =
-                config_content_iget_node(content, item_index);
-            const char *parameter_name = config_content_node_get_kw(node);
-            gen_kw_parameter_type *parameter =
-                gen_kw_parameter_alloc(parameter_name);
-            trans_func_type *trans_func =
-                trans_func_alloc(config_content_node_get_stringlist(node));
-            if (trans_func) {
-                gen_kw_parameter_set_trans_func(parameter, trans_func);
-                vector_append_owned_ref(config->parameters, parameter,
-                                        gen_kw_parameter_free__);
-            } else
-                util_abort(
-                    "%s: failed to create tranformation function for %s\n",
-                    __func__, parameter_name);
-        }
-        config_content_free(content);
-        config_free(parser);
-    }
-}
-
 gen_kw_config_type *gen_kw_config_alloc_empty() {
     gen_kw_config_type *gen_kw_config =
         (gen_kw_config_type *)util_malloc(sizeof *gen_kw_config);
