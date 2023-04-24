@@ -13,6 +13,8 @@ from ert.dark_storage.enkf import LibresFacade, get_res, get_storage
 from ert.storage import StorageReader
 
 router = APIRouter(tags=["misfits"])
+DEFAULT_LIBRESFACADE = Depends(get_res)
+DEFAULT_STORAGEREADER = Depends(get_storage)
 
 
 @router.get(
@@ -25,8 +27,8 @@ router = APIRouter(tags=["misfits"])
 )
 async def get_response_misfits(
     *,
-    res: LibresFacade = Depends(get_res),
-    db: StorageReader = Depends(get_storage),
+    res: LibresFacade = DEFAULT_LIBRESFACADE,
+    db: StorageReader = DEFAULT_STORAGEREADER,
     ensemble_id: UUID,
     response_name: str,
     realization_index: Optional[int] = None,

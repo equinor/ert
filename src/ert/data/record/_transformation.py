@@ -17,6 +17,8 @@ from ert.serialization import get_serializer, has_serializer
 
 _BIN_FOLDER = "bin"
 
+DEFAULT_ROOT_PATH = Path()
+
 
 class TransformationDirection(Flag):
     """Defines how transformations map from files to records, and/or the inverse."""
@@ -119,11 +121,13 @@ class RecordTransformation(ABC):
         self.direction = direction
 
     @abstractmethod
-    async def from_record(self, record: Record, root_path: Path = Path()) -> None:
+    async def from_record(
+        self, record: Record, root_path: Path = DEFAULT_ROOT_PATH
+    ) -> None:
         pass
 
     @abstractmethod
-    async def to_record(self, root_path: Path = Path()) -> Record:
+    async def to_record(self, root_path: Path = DEFAULT_ROOT_PATH) -> Record:
         pass
 
     @property
@@ -161,10 +165,12 @@ class FileTransformation(RecordTransformation):
         self.location = location
         self._type = self._infer_record_type()
 
-    async def from_record(self, record: Record, root_path: Path = Path()) -> None:
+    async def from_record(
+        self, record: Record, root_path: Path = DEFAULT_ROOT_PATH
+    ) -> None:
         raise NotImplementedError("not implemented")
 
-    async def to_record(self, root_path: Path = Path()) -> Record:
+    async def to_record(self, root_path: Path = DEFAULT_ROOT_PATH) -> Record:
         raise NotImplementedError("not implemented")
 
     def _infer_record_type(self) -> TransformationType:
@@ -211,7 +217,9 @@ class CopyTransformation(FileTransformation):
                 + "instead"
             )
 
-    async def from_record(self, record: Record, root_path: Path = Path()) -> None:
+    async def from_record(
+        self, record: Record, root_path: Path = DEFAULT_ROOT_PATH
+    ) -> None:
         """Copies a Record to disk based on the location associated with this
         transformation, location rooted to ``root_path`` if supplied.
 
@@ -226,7 +234,7 @@ class CopyTransformation(FileTransformation):
         _prepare_location(root_path, self.location)
         await _save_record_to_file(record, root_path / self.location, self.MIME)
 
-    async def to_record(self, root_path: Path = Path()) -> Record:
+    async def to_record(self, root_path: Path = DEFAULT_ROOT_PATH) -> Record:
         """Copies the location associated with this transformation to a record.
 
         Args:
@@ -259,7 +267,9 @@ class SerializationTransformation(FileTransformation):
     DIRECTION = TransformationDirection.BIDIRECTIONAL
     """This transformation can by default transform bidirectionally."""
 
-    async def from_record(self, record: Record, root_path: Path = Path()) -> None:
+    async def from_record(
+        self, record: Record, root_path: Path = DEFAULT_ROOT_PATH
+    ) -> None:
         """Transforms a Record to disk based on the location and MIME type associated
         with this transformation, location rooted to ``root_path`` if supplied.
 
@@ -274,7 +284,7 @@ class SerializationTransformation(FileTransformation):
         _prepare_location(root_path, self.location)
         await _save_record_to_file(record, root_path / self.location, self.mime)
 
-    async def to_record(self, root_path: Path = Path()) -> Record:
+    async def to_record(self, root_path: Path = DEFAULT_ROOT_PATH) -> Record:
         """Transforms the location associated with this transformation to a record.
 
         Args:
@@ -300,7 +310,9 @@ class TarTransformation(FileTransformation):
     DIRECTION = TransformationDirection.BIDIRECTIONAL
     """This transformation can by default transform bidirectionally."""
 
-    async def from_record(self, record: Record, root_path: Path = Path()) -> None:
+    async def from_record(
+        self, record: Record, root_path: Path = DEFAULT_ROOT_PATH
+    ) -> None:
         """Transforms BlobRecord (tar object) to disk, ie. extracting tar object
         on the given location.
 
@@ -321,7 +333,7 @@ class TarTransformation(FileTransformation):
             _prepare_location(root_path, self.location)
             tar.extractall(root_path / self.location)
 
-    async def to_record(self, root_path: Path = Path()) -> Record:
+    async def to_record(self, root_path: Path = DEFAULT_ROOT_PATH) -> Record:
         """Transfroms directory from the given location into a :class:`BlobRecord`
         object.
 
@@ -345,7 +357,9 @@ class ExecutableTransformation(SerializationTransformation):
     DIRECTION = TransformationDirection.BIDIRECTIONAL
     """This transformation can by default transform bidirectionally."""
 
-    async def from_record(self, record: Record, root_path: Path = Path()) -> None:
+    async def from_record(
+        self, record: Record, root_path: Path = DEFAULT_ROOT_PATH
+    ) -> None:
         """Transforms a Record to the location associated with this transformation,
         with ``root_path / "bin"`` serving as location root if supplied. Additionally,
         this transformation sets the executable bit on the file on disk.
@@ -371,7 +385,7 @@ class ExecutableTransformation(SerializationTransformation):
         st = path.stat()
         path.chmod(st.st_mode | stat.S_IEXEC)
 
-    async def to_record(self, root_path: Path = Path()) -> Record:
+    async def to_record(self, root_path: Path = DEFAULT_ROOT_PATH) -> Record:
         """Transforms an executable file from the location associated with this
         transformation, to a record.
 
@@ -429,7 +443,9 @@ class TreeSerializationTransformation(SerializationTransformation):
             raise NotImplementedError("Extracting sub-trees not implemented")
         super().__init__(location, mime, direction)
 
-    async def from_record(self, record: Record, root_path: Path = Path()) -> None:
+    async def from_record(
+        self, record: Record, root_path: Path = DEFAULT_ROOT_PATH
+    ) -> None:
         if not isinstance(record, NumericalRecordTree):
             raise TypeError("Only NumericalRecordTrees can be transformed.")
         for key, leaf_record in record.flat_record_dict.items():
@@ -439,7 +455,7 @@ class TreeSerializationTransformation(SerializationTransformation):
                 raise FileExistsException(f"writing tree to file failed: {path} exists")
             await get_serializer(self.mime).encode_to_path(leaf_record.data, path=path)
 
-    async def to_record(self, root_path: Path = Path()) -> Record:
+    async def to_record(self, root_path: Path = DEFAULT_ROOT_PATH) -> Record:
         raise NotImplementedError
 
 
@@ -470,7 +486,7 @@ class EclSumTransformation(FileTransformation):
             raise ValueError("smry_keys must be non-empty")
         self._smry_keys = smry_keys
 
-    async def to_record(self, root_path: Path = Path()) -> Record:
+    async def to_record(self, root_path: Path = DEFAULT_ROOT_PATH) -> Record:
         executor = futures.ThreadPoolExecutor()
         record_dict = await get_event_loop().run_in_executor(
             executor,

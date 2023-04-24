@@ -9,11 +9,17 @@ from ert.dark_storage.enkf import LibresFacade, get_res, get_size, get_storage
 from ert.storage import StorageAccessor
 
 router = APIRouter(tags=["ensemble"])
+DEFAULT_LIBRESFACADE = Depends(get_res)
+DEFAULT_STORAGE = Depends(get_storage)
+DEFAULT_BODY = Body(...)
 
 
 @router.post("/experiments/{experiment_id}/ensembles", response_model=js.EnsembleOut)
 def post_ensemble(
-    *, res: LibresFacade = Depends(get_res), ens_in: js.EnsembleIn, experiment_id: UUID
+    *,
+    res: LibresFacade = DEFAULT_LIBRESFACADE,
+    ens_in: js.EnsembleIn,
+    experiment_id: UUID,
 ) -> js.EnsembleOut:
     raise NotImplementedError
 
@@ -21,8 +27,8 @@ def post_ensemble(
 @router.get("/ensembles/{ensemble_id}", response_model=js.EnsembleOut)
 def get_ensemble(
     *,
-    res: LibresFacade = Depends(get_res),
-    db: StorageAccessor = Depends(get_storage),
+    res: LibresFacade = DEFAULT_LIBRESFACADE,
+    db: StorageAccessor = DEFAULT_STORAGE,
     ensemble_id: UUID,
 ) -> js.EnsembleOut:
     ens = db.get_ensemble(ensemble_id)
@@ -42,9 +48,9 @@ def get_ensemble(
 @router.put("/ensembles/{ensemble_id}/userdata")
 async def replace_ensemble_userdata(
     *,
-    res: LibresFacade = Depends(get_res),
+    res: LibresFacade = DEFAULT_LIBRESFACADE,
     ensemble_id: UUID,
-    body: Any = Body(...),
+    body: Any = DEFAULT_BODY,
 ) -> None:
     raise NotImplementedError
 
@@ -52,9 +58,9 @@ async def replace_ensemble_userdata(
 @router.patch("/ensembles/{ensemble_id}/userdata")
 async def patch_ensemble_userdata(
     *,
-    res: LibresFacade = Depends(get_res),
+    res: LibresFacade = DEFAULT_LIBRESFACADE,
     ensemble_id: UUID,
-    body: Any = Body(...),
+    body: Any = DEFAULT_BODY,
 ) -> None:
     raise NotImplementedError
 
@@ -62,7 +68,7 @@ async def patch_ensemble_userdata(
 @router.get("/ensembles/{ensemble_id}/userdata", response_model=Mapping[str, Any])
 async def get_ensemble_userdata(
     *,
-    res: LibresFacade = Depends(get_res),
+    res: LibresFacade = DEFAULT_LIBRESFACADE,
     ensemble_id: UUID,
 ) -> Mapping[str, Any]:
     raise NotImplementedError

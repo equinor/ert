@@ -18,6 +18,8 @@ _ert: Optional[EnKFMain] = None
 _config: Optional[ErtConfig] = None
 _storage: Optional[StorageReader] = None
 
+DEFAULT_SECURITY = Depends(security)
+
 
 def init_facade() -> LibresFacade:
     # pylint: disable=global-statement
@@ -34,13 +36,16 @@ def init_facade() -> LibresFacade:
     return _libres_facade
 
 
-def get_res(*, _: None = Depends(security)) -> LibresFacade:
+def get_res(*, _: None = DEFAULT_SECURITY) -> LibresFacade:
     if _libres_facade is None:
         return init_facade()
     return _libres_facade
 
 
-def get_storage(*, res: LibresFacade = Depends(get_res)) -> StorageReader:
+DEFAULT_LIBRESFACADE = Depends(get_res)
+
+
+def get_storage(*, res: LibresFacade = DEFAULT_LIBRESFACADE) -> StorageReader:
     # pylint: disable=global-statement
     global _storage
     if _storage is None:
@@ -49,7 +54,7 @@ def get_storage(*, res: LibresFacade = Depends(get_res)) -> StorageReader:
     return _storage
 
 
-def reset_res(*, _: None = Depends(security)) -> None:
+def reset_res(*, _: None = DEFAULT_SECURITY) -> None:
     # pylint: disable=global-statement
     global _libres_facade
     if _libres_facade is not None:
