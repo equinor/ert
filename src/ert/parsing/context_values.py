@@ -1,9 +1,9 @@
 from typing import Union
 
-from .lark_parser_file_context_token import FileContextToken
+from .file_context_token import FileContextToken
 
 
-class BoolToken:
+class ContextBool:
     def __init__(self, val: bool, token: str, keyword_token: FileContextToken):
         self.val = val
         self.token = token
@@ -19,12 +19,12 @@ class BoolToken:
         return bool(self) == bool(other)
 
     def __deepcopy__(self, memo):
-        new_instance = BoolToken(bool(self), self.token, self.keyword_token)
+        new_instance = ContextBool(bool(self), self.token, self.keyword_token)
         memo[id(self)] = new_instance
         return new_instance
 
 
-class IntToken(int):
+class ContextInt(int):
     def __new__(
         cls, val: int, token: FileContextToken, keyword_token: FileContextToken
     ):
@@ -34,12 +34,12 @@ class IntToken(int):
         return obj
 
     def __deepcopy__(self, memo):
-        new_instance = IntToken(int(self), self.token, self.keyword_token)
+        new_instance = ContextInt(int(self), self.token, self.keyword_token)
         memo[id(self)] = new_instance
         return new_instance
 
 
-class FloatToken(float):
+class ContextFloat(float):
     def __new__(
         cls, val: float, token: FileContextToken, keyword_token: FileContextToken
     ):
@@ -49,12 +49,12 @@ class FloatToken(float):
         return obj
 
     def __deepcopy__(self, memo):
-        new_instance = FloatToken(float(self), self.token, self.keyword_token)
+        new_instance = ContextFloat(float(self), self.token, self.keyword_token)
         memo[id(self)] = new_instance
         return new_instance
 
 
-class StringToken(str):
+class ContextString(str):
     @classmethod
     def from_token(cls, token: FileContextToken):
         return cls(val=str(token), token=token, keyword_token=token)
@@ -68,9 +68,9 @@ class StringToken(str):
         return obj
 
     def __deepcopy__(self, memo):
-        new_instance = StringToken(str(self), self.token, self.keyword_token)
+        new_instance = ContextString(str(self), self.token, self.keyword_token)
         memo[id(self)] = new_instance
         return new_instance
 
 
-PrimitiveWithContext = Union[StringToken, FloatToken, IntToken, BoolToken]
+ContextValue = Union[ContextString, ContextFloat, ContextInt, ContextBool]

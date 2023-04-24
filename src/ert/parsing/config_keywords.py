@@ -6,16 +6,16 @@ from typing import Any, Dict, List, Mapping, Optional, Union
 from pydantic import BaseModel
 
 from . import ConfigValidationError
-from .lark_parser_error_info import ErrorInfo
-from .lark_parser_file_context_token import FileContextToken
-from .lark_parser_primitive_tokens import (
-    BoolToken,
-    FloatToken,
-    IntToken,
-    PrimitiveWithContext,
-    StringToken,
+from .context_values import (
+    ContextBool,
+    ContextFloat,
+    ContextInt,
+    ContextString,
+    ContextValue,
 )
-from .lark_parser_types import Instruction
+from .error_info import ErrorInfo
+from .file_context_token import FileContextToken
+from .types import Instruction
 
 # These keys are used as options in KEY:VALUE statements
 BASE_SURFACE_KEY = "BASE_SURFACE"
@@ -186,7 +186,7 @@ class SchemaItem(BaseModel):
 
     def token_to_value_with_context(
         self, token: FileContextToken, index: int, keyword: FileContextToken
-    ) -> Optional[PrimitiveWithContext]:
+    ) -> Optional[ContextValue]:
         """
         Converts a FileContextToken to a typed primitive that
         behaves like a primitive, but also contains its location in the file,
@@ -210,15 +210,15 @@ class SchemaItem(BaseModel):
             )
 
         if not len(self.type_map) > index:
-            return StringToken(str(token), token, keyword)
+            return ContextString(str(token), token, keyword)
         val_type = self.type_map[index]
         if val_type is None:
-            return StringToken(str(token), token, keyword)
+            return ContextString(str(token), token, keyword)
         if val_type == SchemaType.CONFIG_BOOL:
             if token.lower() == "true":
-                return BoolToken(True, token, keyword)
+                return ContextBool(True, token, keyword)
             elif token.lower() == "false":
-                return BoolToken(False, token, keyword)
+                return ContextBool(False, token, keyword)
             else:
                 raise ConfigValidationError.from_info(
                     ErrorInfo(
@@ -229,7 +229,7 @@ class SchemaItem(BaseModel):
                 )
         if val_type == SchemaType.CONFIG_INT:
             try:
-                return IntToken(int(token), token, keyword)
+                return ContextInt(int(token), token, keyword)
             except ValueError:
                 raise ConfigValidationError.from_info(
                     ErrorInfo(
@@ -240,7 +240,7 @@ class SchemaItem(BaseModel):
                 )
         if val_type == SchemaType.CONFIG_FLOAT:
             try:
-                return FloatToken(float(token), token, keyword)
+                return ContextFloat(float(token), token, keyword)
             except ValueError:
                 raise ConfigValidationError.from_info(
                     ErrorInfo(
@@ -262,7 +262,7 @@ class SchemaItem(BaseModel):
                 raise ConfigValidationError.from_info(
                     ErrorInfo(message=err, filename=token.filename).set_context(token)
                 )
-            return StringToken(path, token, keyword)
+            return ContextString(path, token, keyword)
         if val_type == SchemaType.CONFIG_EXECUTABLE:
             path = str(token)
             if not os.path.isabs(token) and not os.path.exists(token):
@@ -288,8 +288,8 @@ class SchemaItem(BaseModel):
                         filename=token.filename,
                     ).set_context(token)
                 )
-            return StringToken(path, token, keyword)
-        return StringToken(str(token), token, keyword)
+            return ContextString(path, token, keyword)
+        return ContextString(str(token), token, keyword)
 
     def apply_constraints(
         self,
@@ -317,14 +317,14 @@ class SchemaItem(BaseModel):
                 ErrorInfo(
                     message=f"{self.kw} must have at least {self.argc_min} arguments",
                     filename=keyword.filename,
-                ).set_context(StringToken.from_token(keyword))
+                ).set_context(ContextString.from_token(keyword))
             )
         elif self.argc_max != -1 and len(args) > self.argc_max:
             errors.append(
                 ErrorInfo(
                     message=f"{self.kw} must have maximum {self.argc_max} arguments",
                     filename=keyword.filename,
-                ).set_context(StringToken.from_token(keyword))
+                ).set_context(ContextString.from_token(keyword))
             )
 
         elif self.argc_max == 1 and self.argc_min == 1:

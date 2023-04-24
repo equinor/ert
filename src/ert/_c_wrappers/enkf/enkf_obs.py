@@ -9,7 +9,7 @@ from ert._c_wrappers import ResPrototype
 from ert._c_wrappers.enkf.enums import EnkfObservationImplementationType
 from ert._c_wrappers.enkf.observations import ObsVector
 from ert.parsing import ConfigValidationError
-from ert.parsing.lark_parser_error_info import ErrorInfo
+from ert.parsing.error_info import ErrorInfo
 
 if TYPE_CHECKING:
     from ecl.summary import EclSum

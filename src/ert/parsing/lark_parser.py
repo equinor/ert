@@ -16,7 +16,7 @@ from .config_keywords import (
     init_site_config,
     init_user_config,
 )
-from .lark_parser_types import Defines, FileContextToken, Instruction
+from .types import Defines, FileContextToken, Instruction
 
 grammar = r"""
 WHITESPACE: (" "|"\t")+

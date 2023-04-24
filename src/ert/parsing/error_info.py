@@ -3,8 +3,8 @@ from typing import List, Optional
 
 from typing_extensions import Self
 
-from .lark_parser_file_context_token import FileContextToken
-from .lark_parser_types import MaybeWithContext
+from .file_context_token import FileContextToken
+from .types import MaybeWithContext
 
 
 @dataclass

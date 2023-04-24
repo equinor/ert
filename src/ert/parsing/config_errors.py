@@ -2,7 +2,7 @@ from collections import defaultdict
 from textwrap import indent
 from typing import List, Optional, Tuple, Union
 
-from ert.parsing.lark_parser_error_info import ErrorInfo
+from ert.parsing.error_info import ErrorInfo
 
 
 class ConfigWarning(UserWarning):
