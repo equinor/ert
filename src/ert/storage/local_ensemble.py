@@ -16,7 +16,6 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 import xtgeo
-from _c_wrappers.enkf.config.gen_kw_config import PRIOR_FUNCTIONS
 from ecl import EclDataType
 from ecl.eclfile import EclKW
 from ecl.grid import EclGrid
@@ -24,6 +23,7 @@ from numpy import ma
 from pydantic import BaseModel
 
 from ert._c_wrappers.enkf.config.field_config import field_transform
+from ert._c_wrappers.enkf.config.gen_kw_config import PRIOR_FUNCTIONS
 from ert._c_wrappers.enkf.enums import RealizationStateEnum
 from ert._c_wrappers.enkf.model_callbacks import LoadStatus
 from ert._c_wrappers.enkf.time_map import TimeMap

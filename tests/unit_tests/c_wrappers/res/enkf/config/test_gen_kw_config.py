@@ -289,6 +289,11 @@ def test_gen_kw_params_parsing(tmpdir, params, error):
     ],
 )
 def test_gen_kw_trans_func(tmpdir, params, xinput, expected):
+    args = params.split()[2:]
+    float_args = []
+    for a in args:
+        float_args.append(float(a))
+
     with tmpdir.as_cwd():
         tf = GenKwConfig.parse_transfer_function(params)
-        assert abs(tf.calculate(xinput) - expected) < 10**-15
+        assert abs(tf.calculate(xinput, float_args) - expected) < 10**-15

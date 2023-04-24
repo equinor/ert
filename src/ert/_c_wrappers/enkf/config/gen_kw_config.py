@@ -318,7 +318,7 @@ class TransferFunction:
             return _xmax - math.sqrt((1 - y) * inv_norm_right)
 
     def calculate(self, x: float, arg: List[float]) -> float:
-        return self.calc_func(self, x, arg)
+        return self.calc_func(x, arg)
 
 
 PRIOR_FUNCTIONS: Final = {

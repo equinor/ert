@@ -25,7 +25,6 @@ from ert._c_wrappers.enkf.queue_config import QueueConfig
 from ert._c_wrappers.enkf.runpaths import Runpaths
 from ert._c_wrappers.job_queue import WorkflowRunner
 from ert._c_wrappers.util.substitution_list import SubstitutionList
-from ert._clib import trans_func  # noqa: no_type_check
 
 if TYPE_CHECKING:
     from ert._c_wrappers.enkf import ErtConfig
@@ -495,6 +494,3 @@ class EnKFMain:
     ) -> None:
         for workflow in self.ert_config.hooked_workflows[runtime]:
             WorkflowRunner(workflow, self, storage, ensemble).run_blocking()
-
-
-__all__ = ["trans_func"]
