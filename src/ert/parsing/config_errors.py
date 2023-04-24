@@ -1,6 +1,6 @@
 from collections import defaultdict
 from textwrap import indent
-from typing import List, Optional, Tuple, Union
+from typing import List, Optional, Union
 
 from ert.parsing.error_info import ErrorInfo
 
@@ -12,19 +12,13 @@ class ConfigWarning(UserWarning):
 class ConfigValidationError(ValueError):
     def __init__(
         self,
-        errors: Union[str, List[Union[ErrorInfo, str, Tuple[Optional[str], str]]]],
+        errors: Union[str, List[ErrorInfo]],
         config_file: Optional[str] = None,
     ) -> None:
         self.errors: List[ErrorInfo] = []
         if isinstance(errors, list):
             for err in errors:
-                if isinstance(err, ErrorInfo):
-                    self.errors.append(err)
-                elif isinstance(err, str):
-                    self.errors.append(ErrorInfo(message=err, filename=config_file))
-                else:
-                    filename, message = err
-                    self.errors.append(ErrorInfo(message=message, filename=filename))
+                self.errors.append(err)
         else:
             self.errors.append(ErrorInfo(message=errors, filename=config_file))
         super().__init__(
@@ -61,6 +55,23 @@ class ConfigValidationError(ValueError):
                     "\n".join([err.message_with_location for err in info_list]), "  * "
                 )
                 for filename, info_list in by_filename.items()
+            ]
+        )
+
+    def get_cli_message_for_problem_matcher(self) -> str:
+        return ";;;".join(
+            [
+                ":::".join(
+                    [
+                        err.filename,
+                        err.message,
+                        str(err.line),
+                        str(err.end_line),
+                        str(err.column),
+                        str(err.end_column),
+                    ]
+                )
+                for err in self.errors
             ]
         )
 

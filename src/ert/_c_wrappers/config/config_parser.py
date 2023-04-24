@@ -7,6 +7,7 @@ from ert._c_wrappers import ResPrototype
 from ert._c_wrappers.config.config_content import ConfigContent
 from ert._c_wrappers.config.unrecognized_enum import UnrecognizedEnum
 from ert.parsing import ConfigValidationError
+from ert.parsing.error_info import ErrorInfo
 
 
 class ConfigParser(BaseCClass):
@@ -123,7 +124,10 @@ class ConfigParser(BaseCClass):
 
         if validate and not config_content.isValid():
             raise ConfigValidationError(
-                errors=[(config_file, e) for e in config_content.getErrors()]
+                errors=[
+                    ErrorInfo(filename=config_file, message=str(e))
+                    for e in config_content.getErrors()
+                ]
             )
 
         return config_content
