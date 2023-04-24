@@ -109,9 +109,9 @@ def test_dispatchers_can_connect_and_monitor_can_shut_down_evaluator(evaluator):
 
             for e in [events, events2]:
                 for undexpected_event in e:
-                    assert (
-                        False
-                    ), f"got unexpected event {undexpected_event} from monitor"
+                    raise AssertionError(
+                        f"got unexpected event {undexpected_event} from monitor"
+                    )
 
 
 def test_ensure_multi_level_events_in_order(evaluator):
