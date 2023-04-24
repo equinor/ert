@@ -5,7 +5,7 @@ import os.path
 import stat
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, List, Literal, Tuple, Union
+from typing import Any, List, Literal, Optional, Tuple, Union
 
 import hypothesis.strategies as st
 from ecl.summary import EclSum, EclSumVarType
@@ -225,7 +225,7 @@ def random_ext_job_names(draw, some_words, some_file_names):
 @dataclass
 class ErtConfigValues:
     num_realizations: PositiveInt
-    eclbase: str
+    eclbase: Optional[str]
     runpath_file: str
     run_template: List[str]
     enkf_alpha: float
@@ -244,7 +244,7 @@ class ErtConfigValues:
     data_file: str
     grid_file: str
     job_script: str
-    jobname: str
+    jobname: Optional[str]
     runpath: str
     enspath: str
     time_map: str
@@ -272,11 +272,10 @@ class ErtConfigValues:
     egrid: EGrid
 
     def to_config_dict(self, config_file, cwd, all_defines=True):
-        return {
+        result = {
             ConfigKeys.FORWARD_MODEL: self.forward_model,
             ConfigKeys.SIMULATION_JOB: self.simulation_job,
             ConfigKeys.NUM_REALIZATIONS: self.num_realizations,
-            ConfigKeys.ECLBASE: self.eclbase,
             ConfigKeys.RUNPATH_FILE: self.runpath_file,
             ConfigKeys.RUN_TEMPLATE: self.run_template,
             ConfigKeys.ALPHA_KEY: self.enkf_alpha,
@@ -295,7 +294,6 @@ class ErtConfigValues:
             ConfigKeys.DATA_FILE: self.data_file,
             ConfigKeys.GRID: self.grid_file,
             ConfigKeys.JOB_SCRIPT: self.job_script,
-            ConfigKeys.JOBNAME: self.jobname,
             ConfigKeys.RUNPATH: self.runpath,
             ConfigKeys.ENSPATH: self.enspath,
             ConfigKeys.TIME_MAP: self.time_map,
@@ -318,6 +316,11 @@ class ErtConfigValues:
             ConfigKeys.RANDOM_SEED: self.random_seed,
             ConfigKeys.SETENV: self.setenv,
         }
+        if self.eclbase is not None:
+            result[ConfigKeys.ECLBASE] = self.eclbase
+        if self.jobname is not None:
+            result[ConfigKeys.JOBNAME] = self.jobname
+        return result
 
     def all_defines(self, config_file, cwd):
         """
@@ -389,6 +392,7 @@ def composite_keys(smspec: Smspec) -> st.SearchStrategy[str]:
 
 @st.composite
 def ert_config_values(draw):
+    use_eclbase = draw(st.booleans())
     queue_system = draw(queue_systems)
     install_jobs = draw(small_list(random_ext_job_names(words, file_names)))
     forward_model = draw(small_list(job(install_jobs))) if install_jobs else []
@@ -421,10 +425,12 @@ def ert_config_values(draw):
             ),
         )
     )
+    std_cutoff = draw(small_floats)
     obs = draw(
         observations(
             st.sampled_from([g[0] for g in gen_data]) if gen_data else None,
             composite_keys(smspec) if len(smspec.keywords) > 1 else None,
+            std_cutoff=std_cutoff,
         )
     )
     dates = _observation_dates(obs, first_date)
@@ -444,17 +450,17 @@ def ert_config_values(draw):
             forward_model=st.just(forward_model),
             simulation_job=st.just(simulation_job),
             num_realizations=positives,
-            eclbase=st.just(draw(words) + "%d"),
+            eclbase=st.just(draw(words) + "%d") if use_eclbase else st.just(None),
             runpath_file=st.just(draw(file_names) + "runpath"),
             run_template=small_list(
                 st.builds(lambda fil: [fil + ".templ", fil], file_names)
             ),
+            std_cutoff=st.just(std_cutoff),
             enkf_alpha=small_floats,
             iter_case=words,
             iter_count=positives,
             iter_retry_count=positives,
             update_log_path=directory_names(),
-            std_cutoff=small_floats,
             max_runtime=positives,
             min_realizations=positives,
             define=small_list(
@@ -467,7 +473,9 @@ def ert_config_values(draw):
             data_file=st.just(draw(file_names) + ".DATA"),
             grid_file=st.just(draw(words) + ".EGRID"),
             job_script=st.just(draw(file_names) + "job_script"),
-            jobname=st.just("JOBNAME-" + draw(words)),
+            jobname=st.just("JOBNAME-" + draw(words))
+            if not use_eclbase
+            else st.just(None),
             runpath=st.just("runpath-" + draw(format_file_names)),
             enspath=st.just(draw(words) + ".enspath"),
             time_map=st.just(draw(file_names) + ".timemap"),
@@ -504,7 +512,7 @@ def ert_config_values(draw):
                 st.tuples(
                     st.just("STD_ENKF"),
                     st.just("ENKF_NCOMP"),
-                    st.integers(),
+                    st.floats(min_value=-2.0, max_value=1.0),
                 )
             ),
             analysis_select=st.sampled_from(["STD_ENKF", "IES_ENKF"]),
