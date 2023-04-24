@@ -64,7 +64,7 @@ class GenKwConfig(BaseCClass):
         self._set_parameter_file(parameter_file)
         self._transfer_functions = []
 
-        with open(parameter_file) as file:
+        with open(parameter_file, "r", encoding="utf-8") as file:
             for item in file:
                 if item.strip():  # only lines with content
                     self._transfer_functions.append(self.parse_transfer_function(item))
