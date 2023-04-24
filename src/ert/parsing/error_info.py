@@ -1,4 +1,4 @@
-from dataclasses import InitVar, dataclass
+from dataclasses import dataclass
 from typing import List, Optional
 
 from typing_extensions import Self
@@ -18,7 +18,7 @@ class ErrorInfo:
     end_line: Optional[int] = None
     end_column: Optional[int] = None
     end_pos: Optional[int] = None
-    originates_from: InitVar[MaybeWithContext] = None
+    originates_from: Optional[MaybeWithContext] = None
 
     @classmethod
     def _take(cls, context: MaybeWithContext, attr: str):
