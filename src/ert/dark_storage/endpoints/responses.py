@@ -9,12 +9,15 @@ from ert.storage import StorageReader
 
 router = APIRouter(tags=["response"])
 
+DEFAULT_LIBRESFACADE = Depends(get_res)
+DEFAULT_STORAGE = Depends(get_storage)
+
 
 @router.get("/ensembles/{ensemble_id}/responses/{response_name}/data")
 async def get_ensemble_response_dataframe(
     *,
-    res: LibresFacade = Depends(get_res),
-    db: StorageReader = Depends(get_storage),
+    res: LibresFacade = DEFAULT_LIBRESFACADE,
+    db: StorageReader = DEFAULT_STORAGE,
     ensemble_id: UUID,
     response_name: str
 ) -> Response:

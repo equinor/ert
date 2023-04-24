@@ -17,15 +17,21 @@ from ert.storage import StorageReader
 
 router = APIRouter(tags=["record"])
 
+DEFAULT_LIBRESFACADE = Depends(get_res)
+DEFAULT_STORAGE = Depends(get_storage)
+DEFAULT_BODY = Body(...)
+DEFAULT_FILE = File(...)
+DEFAULT_HEADER = Header("application/json")
+
 
 @router.post("/ensembles/{ensemble_id}/records/{name}/file")
 async def post_ensemble_record_file(
     *,
-    res: LibresFacade = Depends(get_res),
+    res: LibresFacade = DEFAULT_LIBRESFACADE,
     name: str,
     ensemble_id: UUID,
     realization_index: Optional[int] = None,
-    file: UploadFile = File(...),
+    file: UploadFile = DEFAULT_FILE,
 ) -> None:
     raise NotImplementedError
 
@@ -33,7 +39,7 @@ async def post_ensemble_record_file(
 @router.put("/ensembles/{ensemble_id}/records/{name}/blob")
 async def add_block(
     *,
-    res: LibresFacade = Depends(get_res),
+    res: LibresFacade = DEFAULT_LIBRESFACADE,
     name: str,
     ensemble_id: UUID,
     block_index: int,
@@ -46,7 +52,7 @@ async def add_block(
 @router.post("/ensembles/{ensemble_id}/records/{name}/blob")
 async def create_blob(
     *,
-    res: LibresFacade = Depends(get_res),
+    res: LibresFacade = DEFAULT_LIBRESFACADE,
     name: str,
     ensemble_id: UUID,
     realization_index: Optional[int] = None,
@@ -57,7 +63,7 @@ async def create_blob(
 @router.patch("/ensembles/{ensemble_id}/records/{name}/blob")
 async def finalize_blob(
     *,
-    res: LibresFacade = Depends(get_res),
+    res: LibresFacade = DEFAULT_LIBRESFACADE,
     name: str,
     ensemble_id: UUID,
     realization_index: Optional[int] = None,
@@ -70,12 +76,12 @@ async def finalize_blob(
 )
 async def post_ensemble_record_matrix(
     *,
-    res: LibresFacade = Depends(get_res),
+    res: LibresFacade = DEFAULT_LIBRESFACADE,
     ensemble_id: UUID,
     name: str,
     prior: Optional[str] = None,
     realization_index: Optional[int] = None,
-    content_type: str = Header("application/json"),
+    content_type: str = DEFAULT_HEADER,
     request: Request,
 ) -> js.RecordOut:
     raise NotImplementedError
@@ -84,11 +90,11 @@ async def post_ensemble_record_matrix(
 @router.put("/ensembles/{ensemble_id}/records/{name}/userdata")
 async def replace_record_userdata(
     *,
-    res: LibresFacade = Depends(get_res),
+    res: LibresFacade = DEFAULT_LIBRESFACADE,
     ensemble_id: UUID,
     name: str,
     realization_index: Optional[int] = None,
-    body: Any = Body(...),
+    body: Any = DEFAULT_BODY,
 ) -> None:
     raise NotImplementedError
 
@@ -96,11 +102,11 @@ async def replace_record_userdata(
 @router.patch("/ensembles/{ensemble_id}/records/{name}/userdata")
 async def patch_record_userdata(
     *,
-    res: LibresFacade = Depends(get_res),
+    res: LibresFacade = DEFAULT_LIBRESFACADE,
     ensemble_id: UUID,
     name: str,
     realization_index: Optional[int] = None,
-    body: Any = Body(...),
+    body: Any = DEFAULT_BODY,
 ) -> None:
     raise NotImplementedError
 
@@ -110,7 +116,7 @@ async def patch_record_userdata(
 )
 async def get_record_userdata(
     *,
-    res: LibresFacade = Depends(get_res),
+    res: LibresFacade = DEFAULT_LIBRESFACADE,
     ensemble_id: UUID,
     name: str,
     realization_index: Optional[int] = None,
@@ -121,11 +127,11 @@ async def get_record_userdata(
 @router.post("/ensembles/{ensemble_id}/records/{name}/observations")
 async def post_record_observations(
     *,
-    res: LibresFacade = Depends(get_res),
+    res: LibresFacade = DEFAULT_LIBRESFACADE,
     ensemble_id: UUID,
     name: str,
     realization_index: Optional[int] = None,
-    observation_ids: List[UUID] = Body(...),
+    observation_ids: List[UUID] = DEFAULT_BODY,
 ) -> None:
     raise NotImplementedError
 
@@ -133,8 +139,8 @@ async def post_record_observations(
 @router.get("/ensembles/{ensemble_id}/records/{name}/observations")
 async def get_record_observations(
     *,
-    res: LibresFacade = Depends(get_res),
-    db: StorageReader = Depends(get_storage),
+    res: LibresFacade = DEFAULT_LIBRESFACADE,
+    db: StorageReader = DEFAULT_STORAGE,
     ensemble_id: UUID,
     name: str,
     realization_index: Optional[int] = None,
@@ -168,11 +174,11 @@ async def get_record_observations(
 )
 async def get_ensemble_record(
     *,
-    res: LibresFacade = Depends(get_res),
-    db: StorageReader = Depends(get_storage),
+    res: LibresFacade = DEFAULT_LIBRESFACADE,
+    db: StorageReader = DEFAULT_STORAGE,
     name: str,
     ensemble_id: UUID,
-    accept: str = Header("application/json"),
+    accept: str = DEFAULT_HEADER,
     realization_index: Optional[int] = None,
     label: Optional[str] = None,
 ) -> Any:
@@ -203,7 +209,7 @@ async def get_ensemble_record(
 @router.get("/ensembles/{ensemble_id}/records/{name}/labels", response_model=List[str])
 async def get_record_labels(
     *,
-    res: LibresFacade = Depends(get_res),
+    res: LibresFacade = DEFAULT_LIBRESFACADE,
     ensemble_id: UUID,
     name: str,
 ) -> List[str]:
@@ -212,7 +218,7 @@ async def get_record_labels(
 
 @router.get("/ensembles/{ensemble_id}/parameters", response_model=List[dict])
 async def get_ensemble_parameters(
-    *, res: LibresFacade = Depends(get_res), ensemble_id: UUID
+    *, res: LibresFacade = DEFAULT_LIBRESFACADE, ensemble_id: UUID
 ) -> List[dict]:
     return ensemble_parameters(res)
 
@@ -221,14 +227,14 @@ async def get_ensemble_parameters(
     "/ensembles/{ensemble_id}/records", response_model=Mapping[str, js.RecordOut]
 )
 async def get_ensemble_records(
-    *, res: LibresFacade = Depends(get_res), ensemble_id: UUID
+    *, res: LibresFacade = DEFAULT_LIBRESFACADE, ensemble_id: UUID
 ) -> Mapping[str, js.RecordOut]:
     raise NotImplementedError
 
 
 @router.get("/records/{record_id}", response_model=js.RecordOut)
 async def get_record(
-    *, res: LibresFacade = Depends(get_res), record_id: UUID
+    *, res: LibresFacade = DEFAULT_LIBRESFACADE, record_id: UUID
 ) -> js.RecordOut:
     raise NotImplementedError
 
@@ -236,9 +242,9 @@ async def get_record(
 @router.get("/records/{record_id}/data")
 async def get_record_data(
     *,
-    res: LibresFacade = Depends(get_res),
+    res: LibresFacade = DEFAULT_LIBRESFACADE,
     record_id: UUID,
-    accept: Optional[str] = Header(default="application/json"),
+    accept: Optional[str] = DEFAULT_HEADER,
 ) -> Any:
     raise NotImplementedError
 
@@ -248,8 +254,8 @@ async def get_record_data(
 )
 def get_ensemble_responses(
     *,
-    res: LibresFacade = Depends(get_res),
-    db: StorageReader = Depends(get_storage),
+    res: LibresFacade = DEFAULT_LIBRESFACADE,
+    db: StorageReader = DEFAULT_STORAGE,
     ensemble_id: UUID,
 ) -> Mapping[str, js.RecordOut]:
     response_map: Mapping[str, js.RecordOut] = {}
