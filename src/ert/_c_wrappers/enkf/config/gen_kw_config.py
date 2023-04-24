@@ -8,10 +8,8 @@ from typing import TYPE_CHECKING, Dict, Final, List, TypedDict
 import numpy as np
 import pandas as pd
 from cwrap import BaseCClass
-from ecl.util.util import StringList
 
 from ert._c_wrappers import ResPrototype
-from ert._clib import gen_kw_config
 from ert.parsing.config_errors import ConfigValidationError
 
 if TYPE_CHECKING:
@@ -32,21 +30,8 @@ class GenKwConfig(BaseCClass):
     _set_parameter_file = ResPrototype(
         "void  gen_kw_config_set_parameter_file(gen_kw_config, char*)"
     )
-    _alloc_name_list = ResPrototype(
-        "stringlist_obj gen_kw_config_alloc_name_list(gen_kw_config)"
-    )
-    _should_use_log_scale = ResPrototype(
-        "bool  gen_kw_config_should_use_log_scale(gen_kw_config, int)"
-    )
     _size = ResPrototype("int   gen_kw_config_get_data_size(gen_kw_config)")
     _iget_name = ResPrototype("char* gen_kw_config_iget_name(gen_kw_config, int)")
-    _get_function_type = ResPrototype(
-        "char* gen_kw_config_iget_function_type(gen_kw_config, int)"
-    )
-    _get_function_parameter_names = ResPrototype(
-        "stringlist_ref gen_kw_config_iget_function_parameter_names(gen_kw_config, int)"
-    )
-
     _transform = ResPrototype(
         "double gen_kw_config_transform(gen_kw_config, int, double)"  # noqa
     )
@@ -77,6 +62,12 @@ class GenKwConfig(BaseCClass):
 
         # this triggers a series of low-level events
         self._set_parameter_file(parameter_file)
+        self._transfer_functions = []
+
+        with open(parameter_file) as file:
+            for item in file:
+                if item.strip():  # only lines with content
+                    self._transfer_functions.append(self.parse_transfer_function(item))
 
         self.__str__ = self.__repr__
 
@@ -88,11 +79,11 @@ class GenKwConfig(BaseCClass):
         path = self._parameter_file
         return None if path is None else os.path.abspath(path)
 
-    def getKeyWords(self) -> StringList:
-        return self._alloc_name_list()
-
-    def shouldUseLogScale(self, index: int) -> bool:
-        return self._should_use_log_scale(index)
+    def shouldUseLogScale(self, keyword: str) -> bool:
+        for tf in self._transfer_functions:
+            if tf.name == keyword:
+                return tf._use_log
+        return False
 
     def free(self):
         self._free()
@@ -136,18 +127,15 @@ class GenKwConfig(BaseCClass):
 
     def get_priors(self) -> List["PriorDict"]:
         priors: List["PriorDict"] = []
-        keys = self.getKeyWords()
-        for i, key in enumerate(keys):
-            function_type = self._get_function_type(i)
-            parameter_names = self._get_function_parameter_names(i)
-            parameter_values = gen_kw_config.get_function_parameter_values(self, i)
+        for tf in self._transfer_functions:
             priors.append(
                 {
-                    "key": key,
-                    "function": function_type,
-                    "parameters": dict(zip(parameter_names, parameter_values)),
+                    "key": tf.name,
+                    "function": tf.transfer_function_name,
+                    "parameters": tf.parameter_list,
                 }
             )
+
         return priors
 
     def transform(self, index: int, value: float) -> float:
@@ -291,6 +279,7 @@ class TransferFunction:
         self.name = name
         self.transfer_function_name = transfer_function_name
         self.calc_func = calc_func
+        self.parameter_list = param_list
 
         self._min = param_list.get("MIN", 0)
         self._max = param_list.get("MAX", 0)

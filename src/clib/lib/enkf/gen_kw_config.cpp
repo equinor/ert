@@ -119,14 +119,6 @@ double gen_kw_config_transform(const gen_kw_config_type *config, int index,
     return trans_func_eval(parameter->trans_func, x);
 }
 
-bool gen_kw_config_should_use_log_scale(const gen_kw_config_type *config,
-                                        int index) {
-    const gen_kw_parameter_type *parameter =
-        (const gen_kw_parameter_type *)vector_iget_const(config->parameters,
-                                                         index);
-    return trans_func_use_log_scale(parameter->trans_func);
-}
-
 void gen_kw_config_free(gen_kw_config_type *gen_kw_config) {
     vector_free(gen_kw_config->parameters);
     free(gen_kw_config);
@@ -141,41 +133,6 @@ const char *gen_kw_config_iget_name(const gen_kw_config_type *config,
     const gen_kw_parameter_type *parameter =
         (const gen_kw_parameter_type *)vector_iget(config->parameters, kw_nr);
     return parameter->name;
-}
-
-stringlist_type *
-gen_kw_config_alloc_name_list(const gen_kw_config_type *config) {
-
-    stringlist_type *name_list = stringlist_alloc_new();
-    int i;
-    for (i = 0; i < vector_get_size(config->parameters); i++) {
-        const gen_kw_parameter_type *parameter =
-            (const gen_kw_parameter_type *)vector_iget_const(config->parameters,
-                                                             i);
-        stringlist_append_copy(
-            name_list,
-            parameter
-                ->name); /* If the underlying parameter goes out scope - whom bang .. */
-    }
-
-    return name_list;
-}
-
-const char *gen_kw_config_iget_function_type(const gen_kw_config_type *config,
-                                             int index) {
-    const gen_kw_parameter_type *parameter =
-        (const gen_kw_parameter_type *)vector_iget_const(config->parameters,
-                                                         index);
-    return trans_func_get_name(parameter->trans_func);
-}
-
-stringlist_type *
-gen_kw_config_iget_function_parameter_names(const gen_kw_config_type *config,
-                                            int index) {
-    const gen_kw_parameter_type *parameter =
-        (const gen_kw_parameter_type *)vector_iget_const(config->parameters,
-                                                         index);
-    return trans_func_get_param_names(parameter->trans_func);
 }
 
 VOID_FREE(gen_kw_config)

@@ -503,10 +503,10 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
             )
             assert isinstance(gen_kw_config, GenKwConfig)
 
-            for keyword_index, keyword in enumerate(gen_kw_config):
+            for keyword in gen_kw_config:
                 gen_kw_list.append(f"{key}:{keyword}")
 
-                if gen_kw_config.shouldUseLogScale(keyword_index):
+                if gen_kw_config.shouldUseLogScale(keyword):
                     gen_kw_list.append(f"LOG10_{key}:{keyword}")
 
         return sorted(gen_kw_list, key=lambda k: k.lower())
