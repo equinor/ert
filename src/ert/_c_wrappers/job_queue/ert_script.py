@@ -55,7 +55,7 @@ class ErtScript:
         return self.__storage
 
     @property
-    def ensemble(self) -> EnsembleAccessor:
+    def ensemble(self) -> Optional[EnsembleAccessor]:
         return self.__ensemble
 
     @ensemble.setter

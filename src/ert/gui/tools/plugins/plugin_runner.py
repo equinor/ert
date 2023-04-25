@@ -2,6 +2,7 @@ import time
 from functools import partial
 from threading import Thread
 
+from ert._c_wrappers.job_queue import WorkflowJobRunner
 from ert._c_wrappers.job_queue.ert_plugin import CancelPluginException
 
 from .process_job_dialog import ProcessJobDialog
@@ -19,6 +20,7 @@ class PluginRunner:
         self.__plugin_finished_callback = lambda: None
 
         self.__result = None
+        self._runner = WorkflowJobRunner(plugin.getWorkflowJob())
 
     def run(self):
         try:
@@ -36,7 +38,7 @@ class PluginRunner:
             workflow_job_thread.run = run_function
             workflow_job_thread.start()
 
-            poll_function = partial(self.__pollRunner, plugin, dialog)
+            poll_function = partial(self.__pollRunner, dialog)
 
             poll_thread = Thread(name="ert_gui_workflow_job_poll_thread")
             poll_thread.daemon = True
@@ -48,36 +50,35 @@ class PluginRunner:
             print("Plugin cancelled before execution!")
 
     def __runWorkflowJob(self, plugin, arguments):
-        workflow_job = plugin.getWorkflowJob()
-        self.__result = workflow_job.run(
+        self.__result = self._runner.run(
             plugin.ert(), plugin.storage, plugin.ensemble, arguments
         )
 
-    def __pollRunner(self, plugin, dialog):
+    def __pollRunner(self, dialog):
         self.wait()
 
         details = ""
         if self.__result is not None:
             details = str(self.__result)
 
-        if plugin.getWorkflowJob().hasFailed():
+        if self._runner.hasFailed():
             dialog.presentError.emit(
                 "Job failed!",
-                f"The job '{plugin.getName()}' has failed while running!",
+                f"The job '{self.__plugin.getName()}' has failed while running!",
                 details,
             )
             dialog.disposeDialog.emit()
-        elif plugin.getWorkflowJob().isCancelled():
+        elif self._runner.isCancelled():
             dialog.presentInformation.emit(
                 "Job cancelled!",
-                f"The job '{plugin.getName()}' was cancelled successfully!",
+                f"The job '{self.__plugin.getName()}' was cancelled successfully!",
                 details,
             )
             dialog.disposeDialog.emit()
         else:
             dialog.presentInformation.emit(
                 "Job completed!",
-                f"The job '{plugin.getName()}' was completed successfully!",
+                f"The job '{self.__plugin.getName()}' was completed successfully!",
                 details,
             )
             dialog.disposeDialog.emit()
@@ -85,14 +86,14 @@ class PluginRunner:
         self.__plugin_finished_callback()
 
     def isRunning(self) -> bool:
-        return self.__plugin.getWorkflowJob().isRunning()
+        return self._runner.isRunning()
 
     def isCancelled(self) -> bool:
-        return self.__plugin.getWorkflowJob().isCancelled()
+        return self._runner.isCancelled()
 
     def cancel(self):
         if self.isRunning():
-            self.__plugin.getWorkflowJob().cancel()
+            self._runner.cancel()
 
     def wait(self):
         while self.isRunning():

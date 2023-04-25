@@ -1,6 +1,7 @@
 import logging
 
 from ert._c_wrappers.enkf.enkf_main import EnKFMain
+from ert._c_wrappers.job_queue import WorkflowJobRunner
 from ert.gui.ertnotifier import ErtNotifier
 from ert.libres_facade import LibresFacade
 
@@ -34,8 +35,8 @@ class Exporter:
         return True
 
     def run_export(self, parameters):
-        export_job = self.facade.get_workflow_job(self._export_job)
-        runpath_job = self.facade.get_workflow_job(self._runpath_job)
+        export_job = WorkflowJobRunner(self.facade.get_workflow_job(self._export_job))
+        runpath_job = WorkflowJobRunner(self.facade.get_workflow_job(self._runpath_job))
 
         runpath_job.run(ert=self.ert, storage=self._notifier.storage, arguments=[])
         if runpath_job.hasFailed():

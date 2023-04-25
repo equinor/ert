@@ -74,7 +74,7 @@ from .run_status_type_enum import RunStatusType  # noqa
 from .thread_status_type_enum import ThreadStatus  # noqa
 from .workflow import Workflow  # noqa
 from .workflow_job import ErtScriptLoadFailure, WorkflowJob  # noqa
-from .workflow_runner import WorkflowRunner  # noqa
+from .workflow_runner import WorkflowJobRunner, WorkflowRunner  # noqa
 
 __all__ = [
     "Prototype",
@@ -102,4 +102,5 @@ __all__ = [
     "WorkflowJob",
     "Workflow",
     "WorkflowRunner",
+    "WorkflowJobRunner",
 ]

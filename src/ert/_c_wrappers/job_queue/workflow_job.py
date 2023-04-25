@@ -3,20 +3,16 @@ from __future__ import annotations
 import os
 from collections import defaultdict
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, List, Optional, Type, Union
+from typing import List, Optional, Type, Union
 
 from ert._c_wrappers.config import ConfigParser, ContentTypeEnum
-from ert._c_wrappers.job_queue import ErtScript, ExternalErtScript
 from ert._clib.job_kw import type_from_kw
 from ert.parsing import ConfigValidationError
 
 from .ert_plugin import ErtPlugin
+from .ert_script import ErtScript
 
-if TYPE_CHECKING:
-    from ert._c_wrappers.enkf import EnKFMain
-    from ert.storage import EnsembleAccessor, StorageAccessor
-
-    ContentTypes = Union[Type[int], Type[bool], Type[float], Type[str]]
+ContentTypes = Union[Type[int], Type[bool], Type[float], Type[str]]
 
 
 def _workflow_job_config_parser() -> ConfigParser:
@@ -53,12 +49,10 @@ class WorkflowJob:
     script: Optional[str]
 
     def __post_init__(self):
-        self.__running = False
-        self._ert_script: Optional[type] = None
-        self.__script: Optional[type] = None
+        self.ert_script: Optional[type] = None
         if self.script is not None and self.internal:
             try:
-                self._ert_script = ErtScript.loadScriptFromFile(
+                self.ert_script = ErtScript.loadScriptFromFile(
                     self.script,
                 )  # type: ignore
             # Bare Exception here as we have no control
@@ -111,8 +105,8 @@ class WorkflowJob:
             raise ConfigValidationError(f"Could not open config_file:{config_file!r}")
 
     def isPlugin(self) -> bool:
-        if self._ert_script is not None:
-            return issubclass(self._ert_script, ErtPlugin)
+        if self.ert_script is not None:
+            return issubclass(self.ert_script, ErtPlugin)
         return False
 
     def argumentTypes(self) -> List["ContentTypes"]:
@@ -128,68 +122,3 @@ class WorkflowJob:
             raise ValueError(f"Unknown job type {c} in {self}")
 
         return list(map(content_to_type, self.arg_types))
-
-    @property
-    def execution_type(self):
-        if self.internal and self.script is not None:
-            return "internal python"
-        elif self.internal:
-            return "internal C"
-        return "external"
-
-    def run(
-        self,
-        ert: EnKFMain,
-        storage: StorageAccessor,
-        ensemble: EnsembleAccessor,
-        arguments: List[Any],
-    ) -> Any:
-        self.__running = True
-        if self.min_args and len(arguments) < self.min_args:
-            raise ValueError(
-                f"The job: {self.name} requires at least "
-                f"{self.min_args} arguments, {len(arguments)} given."
-            )
-
-        if self.max_args and self.max_args < len(arguments):
-            raise ValueError(
-                f"The job: {self.name} can only have "
-                f"{self.max_args} arguments, {len(arguments)} given."
-            )
-
-        if self._ert_script is not None:
-            self.__script = self._ert_script(ert, storage, ensemble)
-        elif not self.internal:
-            self.__script = ExternalErtScript(ert, storage, self.executable)
-        else:
-            raise UserWarning("Unknown script type!")
-        result = self.__script.initializeAndRun(self.argumentTypes(), arguments)
-        self.__running = False
-        return result
-
-    def cancel(self) -> None:
-        if self.__script is not None:
-            self.__script.cancel()
-
-    def isRunning(self) -> bool:
-        return self.__running
-
-    def isCancelled(self) -> bool:
-        if self.__script is None:
-            raise ValueError("The job must be run before calling isCancelled")
-        return self.__script.isCancelled()
-
-    def hasFailed(self) -> bool:
-        if self.__script is None:
-            raise ValueError("The job must be run before calling hasFailed")
-        return self.__script.hasFailed()
-
-    def stdoutdata(self) -> str:
-        if self.__script is None:
-            raise ValueError("The job must be run before getting stdoutdata")
-        return self.__script.stdoutdata
-
-    def stderrdata(self) -> str:
-        if self.__script is None:
-            raise ValueError("The job must be run before getting stderrdata")
-        return self.__script.stderrdata

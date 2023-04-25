@@ -2,13 +2,93 @@ from __future__ import annotations
 
 import logging
 from concurrent import futures
-from typing import TYPE_CHECKING, Any, Dict, Optional
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
-from ert._c_wrappers.job_queue import Workflow
+from ert._c_wrappers.job_queue import ExternalErtScript, Workflow, WorkflowJob
+
+from .ert_script import ErtScript
 
 if TYPE_CHECKING:
     from ert._c_wrappers.enkf import EnKFMain
     from ert.storage import EnsembleAccessor, StorageAccessor
+
+
+class WorkflowJobRunner:
+    def __init__(self, workflow_job: WorkflowJob):
+        self.job = workflow_job
+        self.__running = False
+        self.__script: Optional[ErtScript] = None
+
+    def run(
+        self,
+        ert: EnKFMain,
+        storage: StorageAccessor,
+        ensemble: Optional[EnsembleAccessor] = None,
+        arguments: Optional[List[Any]] = None,
+    ) -> Any:
+        if arguments is None:
+            arguments = []
+        self.__running = True
+        if self.job.min_args and len(arguments) < self.job.min_args:
+            raise ValueError(
+                f"The job: {self.job.name} requires at least "
+                f"{self.job.min_args} arguments, {len(arguments)} given."
+            )
+
+        if self.job.max_args and self.job.max_args < len(arguments):
+            raise ValueError(
+                f"The job: {self.job.name} can only have "
+                f"{self.job.max_args} arguments, {len(arguments)} given."
+            )
+
+        if self.job.ert_script is not None:
+            self.__script = self.job.ert_script(ert, storage, ensemble)
+        elif not self.job.internal:
+            self.__script = ExternalErtScript(ert, storage, self.job.executable)
+        else:
+            raise UserWarning("Unknown script type!")
+        result = self.__script.initializeAndRun(self.job.argumentTypes(), arguments)
+        self.__running = False
+        return result
+
+    @property
+    def name(self):
+        return self.job.name
+
+    @property
+    def execution_type(self):
+        if self.job.internal and self.job.script is not None:
+            return "internal python"
+        elif self.job.internal:
+            return "internal C"
+        return "external"
+
+    def cancel(self) -> None:
+        if self.__script is not None:
+            self.__script.cancel()
+
+    def isRunning(self) -> bool:
+        return self.__running
+
+    def isCancelled(self) -> bool:
+        if self.__script is None:
+            raise ValueError("The job must be run before calling isCancelled")
+        return self.__script.isCancelled()
+
+    def hasFailed(self) -> bool:
+        if self.__script is None:
+            raise ValueError("The job must be run before calling hasFailed")
+        return self.__script.hasFailed()
+
+    def stdoutdata(self) -> str:
+        if self.__script is None:
+            raise ValueError("The job must be run before getting stdoutdata")
+        return self.__script.stdoutdata
+
+    def stderrdata(self) -> str:
+        if self.__script is None:
+            raise ValueError("The job must be run before getting stderrdata")
+        return self.__script.stderrdata
 
 
 class WorkflowRunner:
@@ -54,6 +134,7 @@ class WorkflowRunner:
         self.__running = True
 
         for job, args in self.__workflow:
+            job = WorkflowJobRunner(job)
             self.__current_job = job
             if not self.__cancelled:
                 logger.info(f"Workflow job {job.name} starting")
