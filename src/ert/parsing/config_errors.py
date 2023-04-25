@@ -64,11 +64,12 @@ class ConfigValidationError(ValueError):
         cls, errors: List[Union[ErrorInfo, "ConfigValidationError"]]
     ) -> "ConfigValidationError":
         # Turn into list of only ConfigValidationErrors
-        as_errors_only: List[ConfigValidationError] = [
-            (ConfigValidationError([e]) if isinstance(e, ErrorInfo) else e)
-            for e in errors
-        ]
+        all_error_infos = []
 
-        return cls(
-            [error_info for error in as_errors_only for error_info in error.errors]
-        )
+        for e in errors:
+            if isinstance(e, ConfigValidationError):
+                all_error_infos += e.errors
+            else:
+                all_error_infos.append(e)
+
+        return cls(all_error_infos)

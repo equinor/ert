@@ -175,7 +175,7 @@ class SchemaItem(BaseModel):
     # Allowed values for specific arguments, if no entry, all values allowed
     indexed_selection_set: Mapping[int, List[str]] = {}
 
-    def _is_in_allowed_values_for_kw(
+    def _is_in_allowed_values_for_arg_at_index(
         self, token: "FileContextToken", index: int
     ) -> bool:
         return not (
@@ -187,19 +187,19 @@ class SchemaItem(BaseModel):
         self, token: FileContextToken, index: int, keyword: FileContextToken
     ) -> Optional[ContextValue]:
         """
-        Converts a FileContextToken to a typed primitive that
-        behaves like a primitive, but also contains its location in the file,
+        Converts a FileContextToken to a value with context that
+        behaves like a value, but also contains its location in the file,
         as well the keyword it pertains to and its location in the file.
 
         :param token: the token to be converted
         :param index: the index of the token
         :param keyword: the keyword it pertains to
 
-        :return: The token as a primitive with context of itself and its keyword
+        :return: The token as a value with context of itself and its keyword
         """
         # pylint: disable=too-many-return-statements, too-many-branches
 
-        if not self._is_in_allowed_values_for_kw(token, index):
+        if not self._is_in_allowed_values_for_arg_at_index(token, index):
             raise ConfigValidationError.from_info(
                 ErrorInfo(
                     message=f"{self.kw!r} argument {index!r} must be one of"

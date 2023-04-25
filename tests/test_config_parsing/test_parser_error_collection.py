@@ -299,6 +299,7 @@ def test_that_multiple_keyword_specific_tokens_are_located_shuffle(error_lines):
         )
 
 
+@pytest.mark.usefixtures("use_tmpdir")
 def test_not_declared_num_realizations_leads_to_only_one_error():
     assert_that_config_leads_to_error(
         config_file_contents="",
@@ -306,6 +307,7 @@ def test_not_declared_num_realizations_leads_to_only_one_error():
     )
 
 
+@pytest.mark.usefixtures("use_tmpdir")
 def test_invalid_num_realizations_does_not_lead_to_unset_error():
     assert_that_config_does_not_lead_to_error(
         config_file_contents="NUM_REALIZATIONS ert",
