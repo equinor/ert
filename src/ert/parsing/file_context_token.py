@@ -1,4 +1,4 @@
-from typing import List, Tuple, Union, cast
+from typing import List, cast
 
 from lark import Token
 
@@ -69,11 +69,3 @@ class FileContextToken(Token):
     def replace_value(self, old: str, new: str, count: int = -1) -> "FileContextToken":
         replaced = self.value.replace(old, new, count)
         return FileContextToken(self.update(value=replaced), filename=self.filename)
-
-
-# The type of the leaf nodes in the Tree after transformation is done
-Instruction = List[
-    List[Union[FileContextToken, List[Tuple[FileContextToken, FileContextToken]]]]
-]
-
-Defines = List[List[str]]

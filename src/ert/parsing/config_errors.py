@@ -1,6 +1,8 @@
 from collections import defaultdict
 from textwrap import indent
-from typing import List, Optional, Tuple, Union
+from typing import List, Optional, Union
+
+from ert.parsing.error_info import ErrorInfo
 
 
 class ConfigWarning(UserWarning):
@@ -10,63 +12,64 @@ class ConfigWarning(UserWarning):
 class ConfigValidationError(ValueError):
     def __init__(
         self,
-        errors: Union[str, List[Tuple[Optional[str], str]]],
+        errors: Union[str, List[ErrorInfo]],
         config_file: Optional[str] = None,
     ) -> None:
-        self.errors: List[Tuple[Optional[str], str]] = []
+        self.errors: List[ErrorInfo] = []
         if isinstance(errors, list):
             for err in errors:
-                if isinstance(err, str):
-                    self.errors.append((config_file, err))
-                else:
-                    filename, error = err
-                    self.errors.append((filename, error))
+                if isinstance(err, ErrorInfo):
+                    self.errors.append(err)
         else:
-            self.errors.append((config_file, errors))
+            self.errors.append(ErrorInfo(message=errors, filename=config_file))
         super().__init__(
-            ";".join(
-                [
-                    self._get_error_message(config_file, errors)
-                    for config_file, errors in self.errors
-                ]
-            )
+            ";".join([self._get_error_message(error) for error in self.errors])
         )
 
     @classmethod
-    def _get_error_message(cls, config_file: Optional[str], error: str) -> str:
+    def from_info(cls, info: ErrorInfo) -> "ConfigValidationError":
+        return cls([info])
+
+    @classmethod
+    def _get_error_message(cls, info: ErrorInfo) -> str:
         return (
-            (f"Parsing config file `{config_file}` " f"resulted in the errors: {error}")
-            if config_file is not None
-            else error
+            (
+                f"Parsing config file `{info.filename}` "
+                f"resulted in the errors: {info.message}"
+            )
+            if info.filename is not None
+            else info.message
         )
 
     def get_error_messages(self) -> List[str]:
-        return [
-            self._get_error_message(config_file, errors)
-            for config_file, errors in self.errors
-        ]
+        return [self._get_error_message(error) for error in self.errors]
 
     def get_cli_message(self) -> str:
         by_filename = defaultdict(list)
-        for filename, error in self.errors:
-            by_filename[filename].append(error)
+        for error in self.errors:
+            by_filename[error.filename].append(error)
+
         return ";".join(
             [
-                self._get_error_message(
-                    config_file, "\n" + indent("\n".join(errors), "  * ")
+                f"Parsing config file `{filename}` resulted in the errors: \n"
+                + indent(
+                    "\n".join([err.message_with_location for err in info_list]), "  * "
                 )
-                for config_file, errors in by_filename.items()
+                for filename, info_list in by_filename.items()
             ]
         )
 
     @classmethod
     def from_collected(
-        cls, errors: List["ConfigValidationError"]
+        cls, errors: List[Union[ErrorInfo, "ConfigValidationError"]]
     ) -> "ConfigValidationError":
-        return cls(
-            [
-                (config_file, message)
-                for error in errors
-                for config_file, message in error.errors
-            ]
-        )
+        # Turn into list of only ConfigValidationErrors
+        all_error_infos = []
+
+        for e in errors:
+            if isinstance(e, ConfigValidationError):
+                all_error_infos += e.errors
+            else:
+                all_error_infos.append(e)
+
+        return cls(all_error_infos)

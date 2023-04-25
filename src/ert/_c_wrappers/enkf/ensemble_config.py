@@ -23,6 +23,7 @@ from ert._c_wrappers.enkf.config.surface_config import SurfaceConfig
 from ert._c_wrappers.enkf.config_keys import ConfigKeys
 from ert._c_wrappers.enkf.enums import EnkfVarType, ErtImplType, GenDataFileType
 from ert.parsing import ConfigValidationError, ConfigWarning
+from ert.parsing.error_info import ErrorInfo
 
 if TYPE_CHECKING:
     from ecl.util.util import StringList
@@ -566,7 +567,10 @@ class EnsembleConfig(BaseCClass):
         if errors:
             raise ConfigValidationError(
                 config_file=mode_config.getParameterFile(),
-                errors=errors,
+                errors=[
+                    ErrorInfo(message=str(e), filename=mode_config.getParameterFile())
+                    for e in errors
+                ],
             )
 
     def addNode(self, config_node: Union[EnkfConfigNode, Field]):

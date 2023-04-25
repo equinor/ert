@@ -4,7 +4,7 @@ import logging
 import os
 import os.path
 import warnings
-from typing import Any, Dict, List, Mapping, Optional, Tuple, Union
+from typing import Any, Dict, List, Mapping, Optional, Set, Tuple, Union
 
 from lark import Discard, Lark, Token, Transformer, Tree, UnexpectedCharacters
 
@@ -16,7 +16,7 @@ from .config_keywords import (
     init_site_config,
     init_user_config,
 )
-from .lark_parser_types import Defines, FileContextToken, Instruction
+from .types import Defines, FileContextToken, Instruction
 
 grammar = r"""
 WHITESPACE: (" "|"\t")+
@@ -197,17 +197,22 @@ def _tree_to_dict(
     defines = pre_defines.copy()
     config_dict["DEFINE"] = defines
 
+    errors = []
+    declared_kws: Set[str] = set()
+
     for node in tree.children:
         try:
             kw, *args = node
+
+            declared_kws.add(kw)
             if kw not in schema:
                 warnings.warn(f"Unknown keyword {kw!r}", category=ConfigWarning)
                 continue
             constraints = schema[kw]
 
-            args = constraints.join_args(args)
+            args = constraints.join_args(args)  # no errors
             args = _substitute_args(args, constraints, defines)
-            args = constraints.apply_constraints(args)
+            args = constraints.apply_constraints(args, kw)
 
             if constraints.multi_occurrence:
                 arglist = config_dict.get(kw, [])
@@ -216,13 +221,15 @@ def _tree_to_dict(
             else:
                 config_dict[kw] = args
         except ConfigValidationError as e:
-            token: Token = kw
-            raise ConfigValidationError(
-                f"{e.errors}\nWas used in {token.value} at line {token.line}",
-                config_file=token.filename,
-            ) from e
+            errors.append(e)
 
-    check_required(schema, config_dict, filename=config_file)
+    try:
+        check_required(schema, declared_kws, filename=config_file)
+    except ConfigValidationError as e:
+        errors.append(e)
+
+    if len(errors) > 0:
+        raise ConfigValidationError.from_collected(errors)
 
     return config_dict
 

@@ -9,6 +9,7 @@ from ert._c_wrappers import ResPrototype
 from ert._c_wrappers.enkf.enums import EnkfObservationImplementationType
 from ert._c_wrappers.enkf.observations import ObsVector
 from ert.parsing import ConfigValidationError
+from ert.parsing.error_info import ErrorInfo
 
 if TYPE_CHECKING:
     from ecl.summary import EclSum
@@ -20,14 +21,14 @@ if TYPE_CHECKING:
 
 class ObservationConfigError(ConfigValidationError):
     @classmethod
-    def _get_error_message(cls, config_file: Optional[str], error: str) -> str:
+    def _get_error_message(cls, info: ErrorInfo) -> str:
         return (
             (
-                f"Parsing observations config file `{config_file}` "
-                f"resulted in the errors: {error}"
+                f"Parsing observations config file `{info.filename}` "
+                f"resulted in the errors: {info.message}"
             )
-            if config_file is not None
-            else error
+            if info.filename is not None
+            else info.message
         )
 
 
