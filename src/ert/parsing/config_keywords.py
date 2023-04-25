@@ -263,7 +263,7 @@ class SchemaItem(BaseModel):
                 )
             return ContextString(path, token, keyword)
         if val_type == SchemaType.CONFIG_EXECUTABLE:
-            path = str(token)
+            path: Optional[str] = str(token)
             if not os.path.isabs(token) and not os.path.exists(token):
                 path = shutil.which(token)
 
@@ -350,7 +350,22 @@ def check_required(
 ) -> None:
     errors = []
 
+    # schema.values()
+    # can return duplicate values due to aliases
+    # so we need to run this keyed by the keyword itself
+    # Ex: there is an alias for NUM_REALIZATIONS
+    # NUM_REALISATIONS
+    # both with the same value
+    # which causes .values() to return the NUM_REALIZATIONS keyword twice
+    # which again leads to duplicate collection of errors related to this
+    visited: Set[str] = set()
+
     for constraints in schema.values():
+        if constraints.kw in visited:
+            continue
+
+        visited.add(constraints.kw)
+
         if constraints.required_set and constraints.kw not in declared_kws:
             errors.append(
                 ErrorInfo(

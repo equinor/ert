@@ -29,6 +29,7 @@ class ExpectedErrorInfo:
     end_column: Optional[int] = None
     other_files: Optional[Dict[str, FileDetail]] = None
     match: Optional[str] = None
+    count: Optional[int] = None
 
 
 def write_files(files: Optional[Dict[str, Union[str, FileDetail]]] = None):
@@ -130,9 +131,28 @@ def assert_that_config_leads_to_error(
         end_column=expected_error.end_column,
     )
 
-    find_and_assert_errors_matching_message(
+    errors_matching_message = find_and_assert_errors_matching_message(
         errors=errors_matching_location, match=expected_error.match
     )
+
+    if expected_error.count is not None:
+        assert len(errors_matching_message) == expected_error.count, (
+            f"Expected to find exactly {expected_error.count} errors, "
+            f"found {len(errors_matching_message)}."
+        )
+
+
+def assert_that_config_does_not_lead_to_error(
+    config_file_contents: str,
+    unexpected_error: ExpectedErrorInfo,
+    config_filename: str = "test.ert",
+):
+    with pytest.raises(AssertionError):
+        assert_that_config_leads_to_error(
+            config_file_contents,
+            expected_error=unexpected_error,
+            config_filename=config_filename,
+        )
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -277,3 +297,27 @@ def test_that_multiple_keyword_specific_tokens_are_located_shuffle(error_lines):
         assert_that_config_leads_to_error(
             config_file_contents=contents, expected_error=err
         )
+
+
+def test_not_declared_num_realizations_leads_to_only_one_error():
+    assert_that_config_leads_to_error(
+        config_file_contents="",
+        expected_error=ExpectedErrorInfo(match=".* must be set", count=1),
+    )
+
+
+def test_invalid_num_realizations_does_not_lead_to_unset_error():
+    assert_that_config_does_not_lead_to_error(
+        config_file_contents="NUM_REALIZATIONS ert",
+        unexpected_error=ExpectedErrorInfo(match=".* must be set", count=1),
+    )
+
+    assert_that_config_leads_to_error(
+        config_file_contents="NUM_REALIZATIONS ert",
+        expected_error=ExpectedErrorInfo(
+            line=1,
+            column=18,
+            end_column=21,
+            match="must have an integer value",
+        ),
+    )
