@@ -1,19 +1,15 @@
 from __future__ import annotations
 
-import logging
 import os
-import time
 from tempfile import mkdtemp
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Dict, Iterator, List, Optional, Tuple
 
 from ert._c_wrappers.config import ConfigParser, UnrecognizedEnum
 from ert.parsing import ConfigValidationError
 
 if TYPE_CHECKING:
-    from ert._c_wrappers.enkf import EnKFMain
     from ert._c_wrappers.job_queue import WorkflowJob
     from ert._c_wrappers.util import SubstitutionList
-    from ert.storage import EnsembleAccessor, StorageAccessor
 
 
 def _workflow_parser(workflow_jobs: Dict[str, WorkflowJob]) -> ConfigParser:
@@ -30,12 +26,8 @@ class Workflow:
     def __init__(
         self,
         src_file: str,
-        cmd_list: List[WorkflowJob],
+        cmd_list: List[Tuple[WorkflowJob, Any]],
     ):
-        self.__running = False
-        self.__cancelled = False
-        self.__current_job = None
-        self.__status: Dict[str, Any] = {}
         self.src_file = src_file
         self.cmd_list = cmd_list
 
@@ -45,7 +37,7 @@ class Workflow:
     def __getitem__(self, index: int) -> Tuple[WorkflowJob, Any]:
         return self.cmd_list[index]
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[Tuple[WorkflowJob, Any]]:
         return iter(self.cmd_list)
 
     @classmethod
@@ -84,68 +76,6 @@ class Workflow:
             )
 
         return cls(src_file, cmd_list)
-
-    def run(
-        self,
-        ert: EnKFMain,
-        storage: StorageAccessor,
-        ensemble: Optional[EnsembleAccessor] = None,
-    ) -> bool:
-        logger = logging.getLogger(__name__)
-
-        # Reset status
-        self.__status = {}
-        self.__running = True
-
-        for job, args in self:
-            self.__current_job = job
-            if not self.__cancelled:
-                logger.info(f"Workflow job {job.name} starting")
-                job.run(ert, storage, ensemble, args)
-                self.__status[job.name] = {
-                    "stdout": job.stdoutdata(),
-                    "stderr": job.stderrdata(),
-                    "completed": not job.hasFailed(),
-                }
-
-                info = {
-                    "class": "WORKFLOW_JOB",
-                    "job_name": job.name,
-                    "arguments": " ".join(args),
-                    "stdout": job.stdoutdata(),
-                    "stderr": job.stderrdata(),
-                    "execution_type": job.execution_type,
-                }
-
-                if job.hasFailed():
-                    logger.error(f"Workflow job {job.name} failed", extra=info)
-                else:
-                    logger.info(
-                        f"Workflow job {job.name} completed successfully", extra=info
-                    )
-
-        self.__current_job = None
-        self.__running = False
-        return True
-
-    def isRunning(self):
-        return self.__running
-
-    def cancel(self):
-        if self.__current_job is not None:
-            self.__current_job.cancel()
-
-        self.__cancelled = True
-
-    def isCancelled(self):
-        return self.__cancelled
-
-    def wait(self):
-        while self.isRunning():
-            time.sleep(1)
-
-    def getJobsReport(self) -> Dict[str, Any]:
-        return self.__status
 
     def __eq__(self, other):
         return os.path.realpath(self.src_file) == os.path.realpath(other.src_file)

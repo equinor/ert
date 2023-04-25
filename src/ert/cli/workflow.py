@@ -1,5 +1,7 @@
 import logging
 
+from ert._c_wrappers.job_queue import WorkflowRunner
+
 
 def execute_workflow(ert, storage, workflow_name):
     logger = logging.getLogger(__name__)
@@ -9,6 +11,7 @@ def execute_workflow(ert, storage, workflow_name):
         msg = "Workflow {} is not in the list of available workflows"
         logger.error(msg.format(workflow_name))
         return
-    workflow.run(ert=ert, storage=storage)
-    if not all(v["completed"] for v in workflow.getJobsReport().values()):
+    runner = WorkflowRunner(workflow, ert, storage)
+    runner.run_blocking()
+    if not all(v["completed"] for v in runner.workflowReport().values()):
         logger.error(f"Workflow {workflow_name} failed!")

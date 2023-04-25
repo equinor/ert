@@ -13,7 +13,7 @@ from ert._c_wrappers.enkf.enums import HookRuntime, RealizationStateEnum
 from ert.analysis import ErtAnalysisError
 from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.shared.models import BaseRunModel, ErtRunError
-from ert.storage import EnsembleAccessor, EnsembleReader, StorageAccessor
+from ert.storage import EnsembleAccessor, StorageAccessor
 
 experiment_logger = logging.getLogger("ert.experiment_server.ensemble_experiment")
 
@@ -87,7 +87,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
 
     def analyzeStep(
         self,
-        prior_storage: EnsembleReader,
+        prior_storage: EnsembleAccessor,
         posterior_storage: EnsembleAccessor,
         ensemble_id: str,
     ) -> None:
