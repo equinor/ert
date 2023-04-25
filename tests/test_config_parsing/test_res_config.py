@@ -255,6 +255,23 @@ def test_that_job_definition_file_with_unexecutable_script_gives_validation_erro
         _ = ErtConfig.from_file(test_config_file_name)
 
 
+@pytest.mark.parametrize("c", ["\\", "?", "+", ":", "*"])
+@pytest.mark.usefixtures("use_tmpdir")
+def test_char_in_unquoted_is_allowed(c):
+    test_config_file_name = "test.ert"
+    test_config_contents = dedent(
+        f"""
+        NUM_REALIZATIONS 1
+        RUNPATH path{c}a/b
+        """
+    )
+    with open(test_config_file_name, "w", encoding="utf-8") as fh:
+        fh.write(test_config_contents)
+
+    ert_config = ErtConfig.from_file(test_config_file_name)
+    assert f"path{c}a/b" in ert_config.model_config.runpath_format_string
+
+
 @pytest.mark.usefixtures("use_tmpdir")
 def test_that_a_config_warning_is_given_when_eclbase_and_jobname_is_given():
     test_config_file_base = "test"
