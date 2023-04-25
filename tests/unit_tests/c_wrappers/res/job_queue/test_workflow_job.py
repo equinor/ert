@@ -1,6 +1,6 @@
 import pytest
 
-from ert._c_wrappers.job_queue import WorkflowJob
+from ert._c_wrappers.job_queue import WorkflowJob, WorkflowJobRunner
 
 from .workflow_common import WorkflowCommon
 
@@ -32,13 +32,15 @@ def test_arguments():
     assert job.max_args == 2
     assert job.argumentTypes() == [float, float]
 
-    assert job.run(None, None, None, [1, 2.5])
+    assert WorkflowJobRunner(job).run(None, None, None, [1, 2.5])
 
     with pytest.raises(ValueError, match="requires at least 2 arguments"):
-        job.run(None, None, None, [1])
+        WorkflowJobRunner(job).run(None, None, None, [1])
 
     with pytest.raises(ValueError, match="can only have 2 arguments"):
-        job.run(None, None, None, ["x %d %f %d %s", 1, 2.5, True, "y", "nada"])
+        WorkflowJobRunner(job).run(
+            None, None, None, ["x %d %f %d %s", 1, 2.5, True, "y", "nada"]
+        )
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -53,8 +55,9 @@ def test_run_external_job():
     assert not job.internal
     argTypes = job.argumentTypes()
     assert argTypes == [str, str]
-    assert job.run(None, None, None, ["test", "text"]) is None
-    assert job.stdoutdata() == "Hello World\n"
+    runner = WorkflowJobRunner(job)
+    assert runner.run(None, None, None, ["test", "text"]) is None
+    assert runner.stdoutdata() == "Hello World\n"
 
     with open("test", "r", encoding="utf-8") as f:
         assert f.read() == "text"
@@ -71,8 +74,9 @@ def test_error_handling_external_job():
 
     assert not job.internal
     job.argumentTypes()
-    assert job.run(None, None, None, []) is None
-    assert job.stderrdata().startswith("Traceback")
+    runner = WorkflowJobRunner(job)
+    assert runner.run(None, None, None, []) is None
+    assert runner.stderrdata().startswith("Traceback")
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -84,6 +88,6 @@ def test_run_internal_script():
         config_file="subtract_script_job",
     )
 
-    result = job.run(None, None, None, ["1", "2"])
+    result = WorkflowJobRunner(job).run(None, None, None, ["1", "2"])
 
     assert result == -1
