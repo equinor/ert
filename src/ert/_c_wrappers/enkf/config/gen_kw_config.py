@@ -299,7 +299,7 @@ class TransferFunction:
 
     @staticmethod
     def trans_logunif(x: float, arg: List[float]) -> float:
-        _log_min, _log_max = arg[0], arg[1]
+        _log_min, _log_max = math.log(arg[0]), math.log(arg[1])
         tmp = 0.5 * (1 + math.erf(x / math.sqrt(2.0)))  # 0 - 1
         log_y = _log_min + tmp * (_log_max - _log_min)  # Shift according to max / min
         return math.exp(log_y)
