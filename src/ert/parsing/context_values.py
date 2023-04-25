@@ -4,7 +4,13 @@ from .file_context_token import FileContextToken
 
 
 class ContextBool:
-    def __init__(self, val: bool, token: str, keyword_token: FileContextToken):
+    val: bool
+    token: FileContextToken
+    keyword_token: FileContextToken
+
+    def __init__(
+        self, val: bool, token: FileContextToken, keyword_token: FileContextToken
+    ):
         self.val = val
         self.token = token
         self.keyword_token = keyword_token
@@ -25,6 +31,9 @@ class ContextBool:
 
 
 class ContextInt(int):
+    token: FileContextToken
+    keyword_token: FileContextToken
+
     def __new__(
         cls, val: int, token: FileContextToken, keyword_token: FileContextToken
     ):
@@ -40,6 +49,9 @@ class ContextInt(int):
 
 
 class ContextFloat(float):
+    token: FileContextToken
+    keyword_token: FileContextToken
+
     def __new__(
         cls, val: float, token: FileContextToken, keyword_token: FileContextToken
     ):
@@ -55,6 +67,9 @@ class ContextFloat(float):
 
 
 class ContextString(str):
+    token: FileContextToken
+    keyword_token: FileContextToken
+
     @classmethod
     def from_token(cls, token: FileContextToken):
         return cls(val=str(token), token=token, keyword_token=token)
