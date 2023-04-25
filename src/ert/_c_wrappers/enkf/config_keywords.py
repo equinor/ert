@@ -369,6 +369,7 @@ def define_keyword():
         required_set=False,
         argc_min=2,
         argc_max=2,
+        join_after=1,
         multi_occurrence=True,
         substitute_from=2,
     )

@@ -273,6 +273,31 @@ def test_that_a_config_warning_is_given_when_eclbase_and_jobname_is_given():
 
 
 @pytest.mark.usefixtures("use_tmpdir")
+def test_that_define_statements_with_more_than_one_argument():
+    test_config_file_name = "test.ert"
+    test_config_contents = dedent(
+        """
+        NUM_REALIZATIONS  1
+        DEFINE <TEST1> 111 222 333
+        DEFINE <TEST2> <TEST1> 444 555
+        """
+    )
+    with open(test_config_file_name, "w", encoding="utf-8") as fh:
+        fh.write(test_config_contents)
+
+    ert_config = ErtConfig.from_file(test_config_file_name, use_new_parser=False)
+    assert ert_config.substitution_list.get("<TEST1>") == "111 222 333"
+    assert ert_config.substitution_list.get("<TEST2>") == "111 222 333 444 555"
+    new_parser_ert_config = ErtConfig.from_file(
+        test_config_file_name, use_new_parser=True
+    )
+    assert new_parser_ert_config.substitution_list.get("<TEST1>") == "111 222 333"
+    assert (
+        new_parser_ert_config.substitution_list.get("<TEST2>") == "111 222 333 444 555"
+    )
+
+
+@pytest.mark.usefixtures("use_tmpdir")
 def test_that_magic_strings_get_substituted_in_workflow():
     script_file_contents = dedent(
         """
