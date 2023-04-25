@@ -184,6 +184,7 @@ def test_gen_kw_is_log_or_not(
         gen_kw_config = ert.ensembleConfig().get_keyword_model_config("KW_NAME")
         assert isinstance(gen_kw_config, GenKwConfig)
         assert gen_kw_config.shouldUseLogScale("MY_KEYWORD") is expect_log
+        assert gen_kw_config.shouldUseLogScale("Non-existent-keyword") is False
         experiment_id = storage.create_experiment(
             parameters=ert_config.ensemble_config.parameter_configuration
         )
@@ -354,3 +355,29 @@ def test_gen_kw_trans_func(tmpdir, params, xinput, expected):
     with tmpdir.as_cwd():
         tf = GenKwConfig.parse_transfer_function(params)
         assert abs(tf.calculate(xinput, float_args) - expected) < 10**-15
+
+
+def test_gen_kw_objects_equal(tmpdir):
+    with tmpdir.as_cwd():
+        config = dedent(
+            """
+        JOBNAME my_name%d
+        NUM_REALIZATIONS 1
+        GEN_KW KW_NAME template.txt kw.txt prior.txt
+        """
+        )
+        with open("config.ert", "w", encoding="utf-8") as fh:
+            fh.writelines(config)
+        with open("template.txt", "w", encoding="utf-8") as fh:
+            fh.writelines("MY_KEYWORD <MY_KEYWORD>")
+        with open("prior.txt", "w", encoding="utf-8") as fh:
+            fh.writelines("MY_KEYWORD UNIFORM 1 2")
+
+        ert_config = ErtConfig.from_file("config.ert")
+        ert = EnKFMain(ert_config)
+
+        g1 = ert.ensembleConfig()["KW_NAME"]
+        g2 = GenKwConfig("KW_NAME", "template.txt", "prior.txt")
+        g3 = GenKwConfig("KW_NAME_2", "template.txt", "prior.txt")
+        assert g1 == g2
+        assert g1 != g3
