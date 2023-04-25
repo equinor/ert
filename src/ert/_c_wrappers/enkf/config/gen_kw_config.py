@@ -102,6 +102,9 @@ class GenKwConfig:
 
         return True
 
+    def getKeyWords(self) -> List[str]:
+        return [tf.name for tf in self._transfer_functions]
+
     def get_priors(self) -> List["PriorDict"]:
         priors: List["PriorDict"] = []
         for tf in self._transfer_functions:

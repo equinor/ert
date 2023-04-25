@@ -372,6 +372,8 @@ def test_gen_kw_objects_equal(tmpdir):
             fh.writelines("MY_KEYWORD <MY_KEYWORD>")
         with open("prior.txt", "w", encoding="utf-8") as fh:
             fh.writelines("MY_KEYWORD UNIFORM 1 2")
+        with open("empty.txt", "w", encoding="utf-8") as fh:
+            fh.writelines("")
 
         ert_config = ErtConfig.from_file("config.ert")
         ert = EnKFMain(ert_config)
@@ -379,5 +381,10 @@ def test_gen_kw_objects_equal(tmpdir):
         g1 = ert.ensembleConfig()["KW_NAME"]
         g2 = GenKwConfig("KW_NAME", "template.txt", "prior.txt")
         g3 = GenKwConfig("KW_NAME_2", "template.txt", "prior.txt")
+        g4 = GenKwConfig("KW_NAME", "empty.txt", "prior.txt")
+        g5 = GenKwConfig("KW_NAME", "template.txt", "empty.txt")
         assert g1 == g2
         assert g1 != g3
+        assert g1 != g4
+        assert g1 != g5
+        assert g1.getKeyWords() == ["MY_KEYWORD"]
