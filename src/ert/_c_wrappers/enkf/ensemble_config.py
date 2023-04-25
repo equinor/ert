@@ -572,9 +572,9 @@ class EnsembleConfig(BaseCClass):
                 _check_non_negative_parameter("STD")
         if errors:
             raise ConfigValidationError(
-                config_file=mode_config.getParameterFile(),
+                config_file=node.getParameterFile(),
                 errors=[
-                    ErrorInfo(message=str(e), filename=mode_config.getParameterFile())
+                    ErrorInfo(message=str(e), filename=node.getParameterFile())
                     for e in errors
                 ],
             )
