@@ -248,22 +248,26 @@ class SchemaItem(BaseModel):
                         filename=token.filename,
                     ).set_context(token)
                 )
+
+        path: Optional[str] = str(token)
         if val_type in [SchemaType.CONFIG_PATH, SchemaType.CONFIG_EXISTING_PATH]:
-            path = str(token)
             if not os.path.isabs(token):
                 path = os.path.normpath(
                     os.path.join(os.path.dirname(token.filename), token)
                 )
-            if val_type == SchemaType.CONFIG_EXISTING_PATH and not os.path.exists(path):
+            if val_type == SchemaType.CONFIG_EXISTING_PATH and not os.path.exists(
+                str(path)
+            ):
                 err = f'Cannot find file or directory "{token.value}" \n'
                 if path != token:
                     err += f"The configured value was {path!r} "
                 raise ConfigValidationError.from_info(
                     ErrorInfo(message=err, filename=token.filename).set_context(token)
                 )
+
+            assert isinstance(path, str)
             return ContextString(path, token, keyword)
         if val_type == SchemaType.CONFIG_EXECUTABLE:
-            path: Optional[str] = str(token)
             if not os.path.isabs(token) and not os.path.exists(token):
                 path = shutil.which(token)
 

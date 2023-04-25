@@ -49,7 +49,7 @@ def find_and_assert_errors_matching_filename(
     errors: List[ErrorInfo], filename: Optional[str]
 ):
     matching_errors = (
-        [err for err in errors if filename in err.filename]
+        [err for err in errors if err.filename is not None and filename in err.filename]
         if filename is not None
         else errors
     )
