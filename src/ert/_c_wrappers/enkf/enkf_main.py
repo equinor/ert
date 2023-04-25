@@ -21,6 +21,7 @@ from ert._c_wrappers.enkf.ert_run_context import RunContext
 from ert._c_wrappers.enkf.model_config import ModelConfig
 from ert._c_wrappers.enkf.queue_config import QueueConfig
 from ert._c_wrappers.enkf.runpaths import Runpaths
+from ert._c_wrappers.job_queue import WorkflowRunner
 from ert._c_wrappers.util.substitution_list import SubstitutionList
 from ert._clib import trans_func  # noqa: no_type_check
 
@@ -475,10 +476,10 @@ class EnKFMain:
         self,
         runtime: int,
         storage: Optional[StorageAccessor] = None,
-        ensemble: Optional[EnsembleReader] = None,
+        ensemble: Optional[EnsembleAccessor] = None,
     ) -> None:
         for workflow in self.ert_config.hooked_workflows[runtime]:
-            workflow.run(self, storage, ensemble)
+            WorkflowRunner(workflow, self, storage, ensemble).run_blocking()
 
 
 __all__ = ["trans_func"]

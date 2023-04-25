@@ -1,6 +1,6 @@
 import pytest
 
-from ert._c_wrappers.job_queue import Workflow, WorkflowJob
+from ert._c_wrappers.job_queue import Workflow, WorkflowJob, WorkflowRunner
 from ert._c_wrappers.util.substitution_list import SubstitutionList
 from ert.parsing import ConfigValidationError
 
@@ -41,7 +41,7 @@ def test_workflow_run():
 
     assert len(workflow) == 2
 
-    assert workflow.run(None, None, None)
+    WorkflowRunner(workflow).run_blocking()
 
     with open("dump1", "r", encoding="utf-8") as f:
         assert f.read() == "dump_text_1"
