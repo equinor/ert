@@ -172,13 +172,16 @@ def _substitute(
             prev = current
             current = current.replace_value(key, str(val))
 
-    if n >= 100:
-        logger.warning(
-            "reached max iterations while"
-            " trying to resolve defines in file '%s'. Matched to '%s'",
-            token.filename,
-            token,
-        )
+    for key, val in defines:
+        if key in current:
+            warnings.warn(
+                f"Gave up replacing in {token}.\n"
+                f"After replacing the value is now: {current}.\n"
+                f"This still contains the replacement value: {key}, "
+                f"which would be replaced by {val}. "
+                f"Probably this causes a loop.",
+                category=ConfigWarning,
+            )
 
     return current
 

@@ -230,6 +230,54 @@ def test_that_empty_job_directory_gives_warning():
 
 
 @pytest.mark.usefixtures("use_tmpdir")
+def test_that_recursive_define_warns_when_early_liveness_detection_mechanism_triggers():
+    test_config_file_base = "test"
+    test_config_file_name = f"{test_config_file_base}.ert"
+    test_config_contents = dedent(
+        """
+        NUM_REALIZATIONS  1
+        DEFINE <A> <A>
+        RUNPATH runpath/realization-<IENS>/iter-<ITER>/<A>
+        """
+    )
+    with open(test_config_file_name, "w", encoding="utf-8") as fh:
+        fh.write(test_config_contents)
+    with pytest.warns(
+        ConfigWarning,
+        match="Gave up replacing in runpath/realization-<IENS>/iter-<ITER>/<A>."
+        "\nAfter replacing the value is now: "
+        "runpath/realization-<IENS>/iter-<ITER>/<A>.\n"
+        "This still contains the replacement value: <A>, "
+        "which would be replaced by <A>. Probably this causes a loop.",
+    ):
+        _ = ErtConfig.from_file(test_config_file_name, use_new_parser=True)
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_recursive_define_warns_when_reached_max_iterations():
+    test_config_file_base = "test"
+    test_config_file_name = f"{test_config_file_base}.ert"
+    test_config_contents = dedent(
+        """
+        NUM_REALIZATIONS  1
+        DEFINE <A> a/<A>
+        RUNPATH runpath/realization-<IENS>/iter-<ITER>/<A>
+        """
+    )
+    with open(test_config_file_name, "w", encoding="utf-8") as fh:
+        fh.write(test_config_contents)
+    with pytest.warns(
+        ConfigWarning,
+        match="Gave up replacing in runpath/realization-<IENS>/iter-<ITER>/<A>.\n"
+        "After replacing the value is now: "
+        "runpath/realization-<IENS>/iter-<ITER>/(a/){100}<A>.\n"
+        "This still contains the replacement value: <A>, "
+        "which would be replaced by a/<A>. Probably this causes a loop.",
+    ):
+        _ = ErtConfig.from_file(test_config_file_name, use_new_parser=True)
+
+
+@pytest.mark.usefixtures("use_tmpdir")
 def test_that_loading_non_existant_workflow_gives_validation_error():
     test_config_file_base = "test"
     test_config_file_name = f"{test_config_file_base}.ert"
@@ -721,7 +769,7 @@ def test_that_recursive_defines_fails_gracefully_and_logs(caplog):
     with pytest.raises(ConfigValidationError, match="integer"), caplog.at_level(
         logging.WARNING
     ):
-        _ = ErtConfig.from_file(test_config_file_name)
+        _ = ErtConfig.from_file(test_config_file_name, use_new_parser=False)
     assert len(caplog.records) == 1
     assert "max iterations" in caplog.records[0].msg
 
