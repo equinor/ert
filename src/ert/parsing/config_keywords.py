@@ -348,7 +348,7 @@ def check_required(
     declared_kws: Set[str],
     filename: str,
 ) -> None:
-    errors = []
+    errors: List[ErrorInfo] = []
 
     # schema.values()
     # can return duplicate values due to aliases
