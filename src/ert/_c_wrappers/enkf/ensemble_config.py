@@ -658,11 +658,6 @@ class EnsembleConfig(BaseCClass):
 
         return True
 
-    def getMetaInfo(self, key: str) -> Optional[ConfigNodeMeta]:
-        if key in self._config_node_meta:
-            return self._config_node_meta[key]
-        return None
-
     def getUseForwardInit(self, key) -> bool:
         return (
             False
