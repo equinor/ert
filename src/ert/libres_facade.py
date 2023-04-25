@@ -413,11 +413,8 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
 
     def load_all_misfit_data(self, ensemble: EnsembleReader) -> DataFrame:
         realizations = self.get_active_realizations(ensemble)
-        misfit_keys = []
-        observations = self._enkf_main.getObservations()
-        for obs_vector in observations:
-            misfit_keys.append(f"MISFIT:{obs_vector.getObservationKey()}")
 
+        observations = self._enkf_main.getObservations()
         all_observations = [(n.getObsKey(), n.getStepList()) for n in observations]
         measured_data, obs_data = _get_obs_and_measure_data(
             observations, ensemble, all_observations, realizations
@@ -427,7 +424,7 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
         for col in measured_data:
             misfit[col] = ((joined["OBS"] - joined[col]) / joined["STD"]) ** 2
         misfit = misfit.groupby("key").sum().T
-        misfit.columns = misfit_keys
+        misfit.columns = [f"MISFIT:{key}" for key in misfit.columns]
         misfit["MISFIT:TOTAL"] = misfit.sum(axis=1)
         misfit.index.name = "Realization"
 
