@@ -363,29 +363,30 @@ class EnKFMain:
         if parameters is None:
             parameters = self._parameter_keys
 
-        keylist_gen_kw = self.ensembleConfig().get_keylist_gen_kw()
-
-        for parameter in keylist_gen_kw:
+        for parameter in parameters:
+            config_node = self.ensembleConfig().getNode(parameter)
             if self.ensembleConfig().getUseForwardInit(parameter):
                 continue
-
-            gen_kw_config = self.ensembleConfig()[parameter]
-            if isinstance(gen_kw_config, GenKwConfig):
-                keys = list(gen_kw_config)
-                init_file = gen_kw_config.forward_init_file
+            impl_type = config_node.getImplementationType()
+            if isinstance(config_node, ParameterConfig):
+                for _, realization_nr in enumerate(active_realizations):
+                    config_node.load(Path(), realization_nr, ensemble)
+            elif isinstance(config_node, GenKwConfig):
+                keys = list(config_node)
+                init_file = config_node.forward_init_file
 
                 if init_file:
                     logging.info(
                         f"Reading from init file {init_file}" + f" for {parameter}"
                     )
-                    parameter_values = gen_kw_config.values_from_files(
+                    parameter_values = config_node.values_from_files(
                         active_realizations,
                         init_file,
                         keys,
                     )
                 else:
                     logging.info(f"Sampling parameter {parameter}")
-                    parameter_values = gen_kw_config.sample_values(
+                    parameter_values = config_node.sample_values(
                         parameter,
                         keys,
                         str(self._global_seed.entropy),
@@ -399,19 +400,6 @@ class EnKFMain:
                     realizations=active_realizations,
                     data=parameter_values,
                 )
-
-        for parameter in parameters:
-            if parameter in keylist_gen_kw:
-                continue
-
-            config_node = self.ensembleConfig().getNode(parameter)
-            if self.ensembleConfig().getUseForwardInit(parameter):
-                continue
-            impl_type = config_node.getImplementationType()
-            if isinstance(config_node, ParameterConfig):
-                for _, realization_nr in enumerate(active_realizations):
-                    config_node.load(Path(), realization_nr, ensemble)
-
             elif impl_type == ErtImplType.EXT_PARAM:
                 pass
             else:
