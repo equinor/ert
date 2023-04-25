@@ -2,12 +2,10 @@ from typing import Union
 
 from .file_context_token import FileContextToken
 
+# mypy: disable-error-code="attr-defined"
+
 
 class ContextBool:
-    val: bool
-    token: FileContextToken
-    keyword_token: FileContextToken
-
     def __init__(
         self, val: bool, token: FileContextToken, keyword_token: FileContextToken
     ):
@@ -31,9 +29,6 @@ class ContextBool:
 
 
 class ContextInt(int):
-    token: FileContextToken
-    keyword_token: FileContextToken
-
     def __new__(
         cls, val: int, token: FileContextToken, keyword_token: FileContextToken
     ):
@@ -49,9 +44,6 @@ class ContextInt(int):
 
 
 class ContextFloat(float):
-    token: FileContextToken
-    keyword_token: FileContextToken
-
     def __new__(
         cls, val: float, token: FileContextToken, keyword_token: FileContextToken
     ):
@@ -67,9 +59,6 @@ class ContextFloat(float):
 
 
 class ContextString(str):
-    token: FileContextToken
-    keyword_token: FileContextToken
-
     @classmethod
     def from_token(cls, token: FileContextToken):
         return cls(val=str(token), token=token, keyword_token=token)
