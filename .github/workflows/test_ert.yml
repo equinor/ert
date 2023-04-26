@@ -52,7 +52,7 @@ jobs:
         DISPLAY: ':99.0'
       run: |
         ci/github/start_herbstluftwm.sh &
-        sleep 5
+        sleep 15
         pytest tests -sv --hypothesis-profile=ci -m "requires_window_manager" --benchmark-disable
 
     - name: Unit Test
