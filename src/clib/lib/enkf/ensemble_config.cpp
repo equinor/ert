@@ -118,12 +118,11 @@ void ensemble_config_init_SUMMARY_full(ensemble_config_type *ensemble_config,
             int k;
             for (k = 0; k < stringlist_get_size(keys); k++)
                 ensemble_config_add_summary(ensemble_config,
-                                            stringlist_iget(keys, k),
-                                            LOAD_FAIL_SILENT);
+                                            stringlist_iget(keys, k));
             stringlist_free(keys);
         }
     } else {
-        ensemble_config_add_summary(ensemble_config, key, LOAD_FAIL_SILENT);
+        ensemble_config_add_summary(ensemble_config, key);
     }
 }
 
@@ -160,7 +159,7 @@ ensemble_config_alloc_keylist_from_impl_type(const ensemble_config_type *config,
 */
 enkf_config_node_type *
 ensemble_config_add_summary(ensemble_config_type *ensemble_config,
-                            const char *key, load_fail_type load_fail) {
+                            const char *key) {
     enkf_config_node_type *config_node = NULL;
 
     const auto node_it = ensemble_config->config_nodes.find(key);
@@ -174,10 +173,9 @@ ensemble_config_add_summary(ensemble_config_type *ensemble_config,
 
         summary_config_type *summary_config =
             (summary_config_type *)enkf_config_node_get_ref(config_node);
-        summary_config_update_load_fail_mode(summary_config, load_fail);
 
     } else {
-        config_node = enkf_config_node_alloc_summary(key, load_fail);
+        config_node = enkf_config_node_alloc_summary(key);
         ensemble_config_add_node(ensemble_config, config_node);
     }
 

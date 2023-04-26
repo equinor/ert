@@ -308,7 +308,7 @@ handle_history_observation(Cwrap<enkf_obs_type> enkf_obs,
             conf_instance_get_sub_instance_ref(enkf_conf, obs_key.c_str());
 
         enkf_config_node_type *config_node = ensemble_config_add_summary(
-            enkf_obs->ensemble_config, obs_key.c_str(), LOAD_FAIL_WARN);
+            enkf_obs->ensemble_config, obs_key.c_str());
 
         enkf_obs->ensemble_config->summary_keys.push_back(obs_key);
 
@@ -360,8 +360,8 @@ handle_summary_observation(Cwrap<enkf_obs_type> enkf_obs,
             conf_instance_get_item_value_ref(sum_obs_conf, "KEY");
 
         /* check if have sum_key exists */
-        enkf_config_node_type *config_node = ensemble_config_add_summary(
-            enkf_obs->ensemble_config, sum_key, LOAD_FAIL_WARN);
+        enkf_config_node_type *config_node =
+            ensemble_config_add_summary(enkf_obs->ensemble_config, sum_key);
 
         enkf_obs->ensemble_config->summary_keys.push_back(sum_key);
 

@@ -43,7 +43,7 @@ extern "C" enkf_config_node_type *enkf_config_node_alloc(ert_impl_type,
                                                          const char *, void *);
 
 extern "C" enkf_config_node_type *
-enkf_config_node_alloc_summary(const char *key, load_fail_type load_fail);
+enkf_config_node_alloc_summary(const char *key);
 
 extern "C" enkf_config_node_type *
 enkf_config_node_alloc_GEN_DATA_everest(const char *key,

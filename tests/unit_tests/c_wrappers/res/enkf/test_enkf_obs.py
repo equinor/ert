@@ -7,10 +7,7 @@ from ecl.summary import EclSum
 
 from ert._c_wrappers.enkf import EnkfObs, ErtConfig, ObsVector
 from ert._c_wrappers.enkf.config import EnkfConfigNode
-from ert._c_wrappers.enkf.enums import (
-    EnkfObservationImplementationType,
-    LoadFailTypeEnum,
-)
+from ert._c_wrappers.enkf.enums import EnkfObservationImplementationType
 from ert._c_wrappers.enkf.observations.summary_observation import SummaryObservation
 
 
@@ -132,9 +129,7 @@ def test_observations(setup_case):
     count = 10
     summary_key = "test_key"
     observation_key = "test_obs_key"
-    summary_observation_node = EnkfConfigNode.createSummaryConfigNode(
-        summary_key, LoadFailTypeEnum.LOAD_FAIL_EXIT
-    )
+    summary_observation_node = EnkfConfigNode.createSummaryConfigNode(summary_key)
     observation_vector = ObsVector(
         EnkfObservationImplementationType.SUMMARY_OBS,
         observation_key,
