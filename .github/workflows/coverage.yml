@@ -47,7 +47,7 @@ jobs:
         DISPLAY: ':99.0'
       run: |
         ci/github/start_herbstluftwm.sh &
-        sleep 5
+        sleep 15
         pytest tests/ --cov=ert --hypothesis-profile=ci -m "requires_window_manager" --cov-report=xml:cov.xml
 
     - name: Test Integration
