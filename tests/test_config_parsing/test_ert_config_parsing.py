@@ -2,7 +2,6 @@
 import logging
 import os
 import os.path
-import re
 from datetime import date
 from pathlib import Path
 from textwrap import dedent
@@ -13,6 +12,7 @@ from hypothesis import assume, given
 from ert._c_wrappers.enkf import ErtConfig
 from ert._c_wrappers.enkf.config_keys import ConfigKeys
 from ert.parsing import ConfigValidationError, ConfigWarning
+from ert.parsing.error_info import ErrorInfo
 
 from .config_dict_generator import config_generators
 
@@ -984,21 +984,57 @@ def test_that_multiple_errors_is_shown_for_forward_model():
     with pytest.raises(ConfigValidationError) as err:
         _ = ErtConfig.from_file(test_config_file_name)
 
-        re1 = re.compile(
-            f"Parsing config file `{test_config_file_name}` "
-            "resulted in the errors: \n"
-            "  * Could not find job 'does_not_exist' in list of installed jobs: [] .*"
-            "  * Could not find job 'does_not_exist2' in list of installed jobs: [] .*"
-        )
+    expected_cli_message = (
+        "Parsing config file `test.ert` "
+        "resulted in the errors: \n"
+        "  * Could not find job 'does_not_exist' in list of "
+        "installed jobs: [] at line None, column None-None\n"
+        "  * Could not find job 'does_not_exist2' in list of "
+        "installed jobs: [] at line None, column None-None"
+    )
 
-        assert re.match(err.value.get_cli_message(), re1)
+    cli_message = err.value.get_cli_message()
+    error_messages_list = err.value.get_error_messages()
 
-        re2 = re.compile(
-            f"Parsing config file `{test_config_file_name}` resulted in the "
-            f"errors: "
-            "Could not find job 'does_not_exist' in list of installed jobs: [] .*",
-            f"Parsing config file `{test_config_file_name}` resulted in the "
-            f"errors: "
-            "Could not find job 'does_not_exist2' in list of installed jobs: [] .*",
-        )
-        assert re.match(err.value.get_error_messages(), re2)
+    assert expected_cli_message == cli_message
+
+    expected_messages_list = [
+        "Parsing config file `test.ert` resulted in the errors: Could not find job "
+        "'does_not_exist' in list of installed jobs: []",
+        "Parsing config file `test.ert` resulted in the errors: Could not find job "
+        "'does_not_exist2' in list of installed jobs: []",
+    ]
+
+    assert error_messages_list == expected_messages_list
+
+
+@pytest.mark.usefixtures("use_tmpdir", "set_site_config")
+def test_that_multiline_errors_are_indented_properly():
+    dummy_info = ErrorInfo(
+        message='Cannot find file or directory "coeffs.tmpl" \n'
+        "The configured value was '/test-data/poly_example/coeffs.tmpl' ",
+        filename="/test-data/poly_example/poly.ert",
+        start_pos=230,
+        line=14,
+        column=15,
+        end_line=14,
+        end_column=26,
+        end_pos=241,
+        originates_from="coeffs.tmpl",
+    )
+
+    dummy_error = ConfigValidationError([dummy_info, dummy_info])
+
+    cli_message = dummy_error.get_cli_message()
+    expected_cli_message = (
+        "Parsing config file `/test-data/poly_example/poly.ert`"
+        " resulted in the errors: \n"
+        '  * Cannot find file or directory "coeffs.tmpl" \n'
+        "    The configured value was '/test-data/poly_example/coeffs.tmpl'"
+        "  at line 14, column 15-26\n"
+        '  * Cannot find file or directory "coeffs.tmpl" \n'
+        "    The configured value was '/test-data/poly_example/coeffs.tmpl'"
+        "  at line 14, column 15-26"
+    )
+
+    assert cli_message == expected_cli_message

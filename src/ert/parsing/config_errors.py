@@ -1,5 +1,4 @@
 from collections import defaultdict
-from textwrap import indent
 from typing import List, Optional, Union
 
 from ert.parsing.error_info import ErrorInfo
@@ -49,15 +48,28 @@ class ConfigValidationError(ValueError):
         for error in self.errors:
             by_filename[error.filename].append(error)
 
-        return ";".join(
+        def indent_only_first_line(message: str, prefix="  * "):
+            lines = message.splitlines()
+            blank_prefix = " " * len(prefix)
+
+            return "\n".join(
+                [prefix + lines[0], *[(blank_prefix + line) for line in lines[1:]]]
+            )
+
+        result = ";".join(
             [
                 f"Parsing config file `{filename}` resulted in the errors: \n"
-                + indent(
-                    "\n".join([err.message_with_location for err in info_list]), "  * "
+                + "\n".join(
+                    [
+                        indent_only_first_line(err.message_with_location, "  * ")
+                        for err in info_list
+                    ]
                 )
                 for filename, info_list in by_filename.items()
             ]
         )
+
+        return result
 
     @classmethod
     def from_collected(
