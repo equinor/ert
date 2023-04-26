@@ -213,7 +213,7 @@ def run_lint_wrapper(args: Namespace, _: ErtPluginManager) -> None:
     # pylint: disable=import-outside-toplevel
     from ert.parsing import config_linting
 
-    config_linting.lint_file(args.config)
+    config_linting.lint_file(args.config, is_for_problem_matcher=args.problem_matcher)
 
 
 # pylint: disable=too-many-statements
@@ -278,6 +278,12 @@ def get_ert_parser(parser: Optional[ArgumentParser] = None) -> ArgumentParser:
     lint_parser.add_argument("config", type=valid_file, help=config_help)
     lint_parser.add_argument(
         "--verbose", action="store_true", help="Show verbose output.", default=False
+    )
+    lint_parser.add_argument(
+        "--problem-matcher",
+        action="store_true",
+        help="Format lint for problem matcher",
+        default=False,
     )
     # FeatureToggling.add_feature_toggling_args(lint_parser)
 

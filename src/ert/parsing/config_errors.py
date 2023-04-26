@@ -71,6 +71,23 @@ class ConfigValidationError(ValueError):
 
         return result
 
+    def get_cli_message_for_problem_matcher(self) -> str:
+        return ";@;#;".join(
+            [
+                ":@:#:".join(
+                    [
+                        str(err.filename),
+                        str(err.message),
+                        str(err.line),
+                        str(err.end_line),
+                        str(err.column),
+                        str(err.end_column),
+                    ]
+                )
+                for err in self.errors
+            ]
+        )
+
     @classmethod
     def from_collected(
         cls, errors: List[Union[ErrorInfo, "ConfigValidationError"]]
