@@ -1847,7 +1847,7 @@ bjobs.
         intermittently not respond and give error messages when submitting jobs
         or asking for job statuses. The timeout (in seconds) determines how long
         ERT will wait before it will give up. Applies to job submission (qsub)
-        and job status queries (qstat). Default is 62 seconds.
+        and job status queries (qstat). Default is 126 seconds.
 
         ERT will do exponential sleeps, starting at 2 seconds, and the provided
         timeout is a maximum. Let the timeout be sums of series like 2+4+8+16+32+64
@@ -1855,7 +1855,7 @@ bjobs.
         flakyness.
 
         ::
-                QUEUE_OPTION TORQUE QUEUE_QUERY_TIMEOUT 126
+                QUEUE_OPTION TORQUE QUEUE_QUERY_TIMEOUT 254
 
 .. _configuring_the_slurm_queue:
 

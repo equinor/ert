@@ -25,7 +25,7 @@
 #define TORQUE_DEFAULT_QSTAT_OPTIONS "-x"
 #define TORQUE_DEFAULT_QDEL_CMD "qdel"
 #define TORQUE_DEFAULT_SUBMIT_SLEEP "0"
-#define TORQUE_DEFAULT_QUEUE_QUERY_TIMEOUT "62"
+#define TORQUE_DEFAULT_QUEUE_QUERY_TIMEOUT "126"
 
 typedef struct torque_driver_struct torque_driver_type;
 typedef struct torque_job_struct torque_job_type;
