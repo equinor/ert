@@ -4,6 +4,7 @@ import numpy as np
 from qtpy.QtCore import Qt, QTimer
 from qtpy.QtWidgets import QApplication, QComboBox, QMessageBox, QPushButton, QWidget
 
+from ert._c_wrappers.config.rangestring import rangestring_to_mask
 from ert.gui.ertwidgets.caselist import CaseList
 from ert.gui.simulation.ensemble_experiment_panel import EnsembleExperimentPanel
 from ert.gui.simulation.run_dialog import RunDialog
@@ -81,8 +82,9 @@ def test_that_the_manual_analysis_tool_works(
         current_select += 1
         simulation_settings._case_selector.setCurrentIndex(current_select)
 
-    active_reals_string_len = len(
-        simulation_panel.getSimulationArguments().realizations
+    active_reals = rangestring_to_mask(
+        simulation_panel.getSimulationArguments().realizations,
+        analysis_tool.ert.getEnsembleSize(),
     )
     current_select = 0
     simulation_settings._case_selector.setCurrentIndex(current_select)
@@ -90,13 +92,17 @@ def test_that_the_manual_analysis_tool_works(
         current_select += 1
         simulation_settings._case_selector.setCurrentIndex(current_select)
 
-    # We have selected the updated case and because some realizations failed in the
-    # parent ensemble we expect the active realizations string to be longer as it
-    # needs to account for the missing realizations.
-    assert (
-        len(simulation_panel.getSimulationArguments().realizations)
-        > active_reals_string_len
-    )
+    # Assert that some realizations failed
+    assert len(
+        [
+            r
+            for r in rangestring_to_mask(
+                simulation_panel.getSimulationArguments().realizations,
+                analysis_tool.ert.getEnsembleSize(),
+            )
+            if r
+        ]
+    ) < len([r for r in active_reals if r])
 
     # Click start simulation and agree to the message
     start_simulation = simulation_panel.findChild(QWidget, name="start_simulation")
