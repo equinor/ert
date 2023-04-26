@@ -31,7 +31,7 @@ extern "C" void ensemble_config_add_node(ensemble_config_type *ensemble_config,
                                          enkf_config_node_type *node);
 extern "C" enkf_config_node_type *
 ensemble_config_add_summary(ensemble_config_type *ensemble_config,
-                            const char *key, load_fail_type load_fail);
+                            const char *key);
 extern "C" void ensemble_config_free(ensemble_config_type *);
 extern "C" bool ensemble_config_has_key(const ensemble_config_type *,
                                         const char *);

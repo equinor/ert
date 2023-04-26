@@ -6,12 +6,10 @@ from .ert_impl_type_enum import ErtImplType
 from .field_file_format_type_enum import FieldFileFormatType
 from .gen_data_file_type_enum import GenDataFileType
 from .hook_runtime_enum import HookRuntime
-from .load_fail_type_enum import LoadFailTypeEnum
 from .realization_state_enum import RealizationStateEnum
 
 __all__ = [
     "EnkfFieldFileFormatEnum",
-    "LoadFailTypeEnum",
     "EnkfVarType",
     "EnkfObservationImplementationType",
     "ErtImplType",

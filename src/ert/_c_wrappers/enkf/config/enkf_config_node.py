@@ -6,7 +6,7 @@ from cwrap import BaseCClass
 from ecl.util.util import IntVector, StringList
 
 from ert._c_wrappers import ResPrototype
-from ert._c_wrappers.enkf.enums import ErtImplType, LoadFailTypeEnum
+from ert._c_wrappers.enkf.enums import ErtImplType
 
 from .ext_param_config import ExtParamConfig
 from .gen_data_config import GenDataConfig
@@ -34,7 +34,7 @@ class EnkfConfigNode(BaseCClass):
         bind=False,
     )
     _alloc_summary_node = ResPrototype(
-        "enkf_config_node_obj enkf_config_node_alloc_summary(char*, load_fail_type)",
+        "enkf_config_node_obj enkf_config_node_alloc_summary(char*)",
         bind=False,
     )
     _get_ref = ResPrototype(
@@ -86,11 +86,8 @@ class EnkfConfigNode(BaseCClass):
         return self._get_obs_keys().setParent(self)
 
     @classmethod
-    def createSummaryConfigNode(
-        cls, key: str, load_fail_type: LoadFailTypeEnum
-    ) -> "EnkfConfigNode":
-        assert isinstance(load_fail_type, LoadFailTypeEnum)
-        return cls._alloc_summary_node(key, load_fail_type)
+    def createSummaryConfigNode(cls, key: str) -> "EnkfConfigNode":
+        return cls._alloc_summary_node(key)
 
     @classmethod
     def create_ext_param(

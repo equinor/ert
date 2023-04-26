@@ -58,8 +58,7 @@ void test_create(enkf_config_node_type *config_node) {
 }
 
 int main(int argc, char **argv) {
-    enkf_config_node_type *config_node =
-        enkf_config_node_alloc_summary("FOPR", LOAD_FAIL_EXIT);
+    enkf_config_node_type *config_node = enkf_config_node_alloc_summary("FOPR");
     { test_create(config_node); }
     enkf_config_node_free(config_node);
 }

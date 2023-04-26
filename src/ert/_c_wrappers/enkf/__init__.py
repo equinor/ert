@@ -21,7 +21,6 @@ from .enums import (
     ErtImplType,
     GenDataFileType,
     HookRuntime,
-    LoadFailTypeEnum,
     RealizationStateEnum,
 )
 from .ert_config import ErtConfig
@@ -47,7 +46,6 @@ __all__ = [
     "RowScaling",
     "ActiveList",
     "EnkfFieldFileFormatEnum",
-    "LoadFailTypeEnum",
     "EnkfVarType",
     "EnkfObservationImplementationType",
     "ErtImplType",
