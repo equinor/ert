@@ -100,7 +100,7 @@ def run_cli(args, _=None):
     storage = open_storage(ert_config.ens_path, "w")
 
     if args.mode == WORKFLOW_MODE:
-        execute_workflow(ert, storage, args.name, ensemble=args.ensemble)
+        execute_workflow(ert, storage, args.name)
         return
 
     evaluator_server_config = EvaluatorServerConfig(custom_port_range=args.port_range)
