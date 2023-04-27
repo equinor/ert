@@ -323,3 +323,19 @@ def test_invalid_num_realizations_does_not_lead_to_unset_error():
             match="must have an integer value",
         ),
     )
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_summary_without_eclbase():
+    assert_that_config_leads_to_error(
+        config_file_contents="""
+NUM_REALIZATIONS 1
+SUMMARY summary
+""",
+        expected_error=ExpectedErrorInfo(
+            line=3,
+            column=1,
+            end_column=8,
+            match="When using SUMMARY keyword, the config must also specify ECLBASE",
+        ),
+    )
