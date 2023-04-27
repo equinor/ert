@@ -49,8 +49,6 @@ class GenKwConfig:
                 if item.strip():  # only lines with content
                     self._transfer_functions.append(self.parse_transfer_function(item))
 
-        self.__str__ = self.__repr__
-
     def getTemplateFile(self) -> str:
         path = self._template_file
         return None if path is None else os.path.abspath(path)
