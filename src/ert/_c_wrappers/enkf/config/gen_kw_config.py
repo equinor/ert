@@ -198,11 +198,11 @@ class GenKwConfig:
                 )
 
             param_floats = []
-            try:
-                for p in param_args[2:]:
+            for p in param_args[2:]:
+                try:
                     param_floats.append(float(p))
-            except ValueError:
-                raise ConfigValidationError(f"Unable to convert float number: {p}")
+                except ValueError:
+                    raise ConfigValidationError(f"Unable to convert float number: {p}")
 
             params = dict(zip(param_names, param_floats))
 
