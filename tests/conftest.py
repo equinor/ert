@@ -154,6 +154,20 @@ def mock_connect(monkeypatch):
     yield connect
 
 
+@pytest.fixture(scope="session", autouse=True)
+def hide_window(request):
+    if request.config.getoption("--show-gui"):
+        return
+
+    old_value = os.environ.get("QT_QPA_PLATFORM")
+    os.environ["QT_QPA_PLATFORM"] = "offscreen"
+    yield
+    if old_value is None:
+        del os.environ["QT_QPA_PLATFORM"]
+    else:
+        os.environ["QT_QPA_PLATFORM"] = old_value
+
+
 def pytest_addoption(parser):
     parser.addoption(
         "--runslow", action="store_true", default=False, help="run slow tests"
@@ -164,6 +178,7 @@ def pytest_addoption(parser):
         default=False,
         help="Defaults to not running tests that require eclipse.",
     )
+    parser.addoption("--show-gui", action="store_true", default=False)
 
 
 def pytest_collection_modifyitems(config, items):
