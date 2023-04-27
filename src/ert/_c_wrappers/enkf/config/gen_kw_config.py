@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING, Callable, Dict, List, Optional, Tuple, TypedDi
 
 import numpy as np
 import pandas as pd
+import xarray as xr
 from jinja2 import Template
 
 from ert._c_wrappers.enkf.config.parameter_config import ParameterConfig
@@ -51,7 +52,7 @@ class GenKwConfig(ParameterConfig):
         if errors:
             raise ConfigValidationError.from_collected(errors)
 
-        self._transfer_functions = []
+        self._transfer_functions: List[TransferFunction] = []
 
         with open(self.parameter_file, "r", encoding="utf-8") as file:
             for item in file:
@@ -81,41 +82,49 @@ class GenKwConfig(ParameterConfig):
                 ensemble.ensemble_size,
             )
 
-        ensemble.save_gen_kw(
-            parameter_name=self.name,
-            parameter_keys=keys,
-            realization=real_nr,
-            data=parameter_value,
+        dataset = xr.Dataset(
+            {
+                "values": ("names", parameter_value),
+                "transformed_values": ("names", self.transform(parameter_value)),
+                "names": keys,
+            }
         )
+        ensemble.save_parameters(self.name, real_nr, dataset)
 
     def save(
         self, run_path: Path, real_nr: int, ensemble: EnsembleReader
     ) -> Dict[str, Dict[str, float]]:
-        gen_kw_dict = ensemble.load_gen_kw_as_dict(self.name, real_nr)
-        transformed = gen_kw_dict[self.name]
-        if not len(transformed) == len(self):
+        array = ensemble.load_parameters(self.name, real_nr, var="transformed_values")
+        if not array.size == len(self):
             raise ValueError(
                 f"The configuration of GEN_KW parameter {self.name}"
-                f" is of size {len(self)}, expected {len(transformed)}"
+                f" is of size {len(self)}, expected {array.size}"
             )
 
         with open(self.template_file, "r", encoding="utf-8") as f:
             template = Template(
                 f.read(), variable_start_string="<", variable_end_string=">"
             )
+        data = dict(zip(array["names"].values.tolist(), array.values.tolist()))
+        log10_data = {
+            tf.name: math.log(data[tf.name], 10)
+            for tf in self._transfer_functions
+            if tf._use_log
+        }
 
         target_file = self.output_file
         if self.output_file.startswith("/"):
             target_file = self.output_file[1:]
 
-        Path.mkdir(Path(run_path / target_file).parent, exist_ok=True, parents=True)
+        (run_path / target_file).parent.mkdir(exist_ok=True, parents=True)
         with open(run_path / target_file, "w", encoding="utf-8") as f:
             f.write(
-                template.render(
-                    {key: f"{value:.6g}" for key, value in transformed.items()}
-                )
+                template.render({key: f"{value:.6g}" for key, value in data.items()})
             )
-        return gen_kw_dict
+        if log10_data:
+            return {self.name: data, f"LOG10_{self.name}": log10_data}
+        else:
+            return {self.name: data}
 
     def getTemplateFile(self) -> str:
         return self.template_file
@@ -164,6 +173,20 @@ class GenKwConfig(ParameterConfig):
             )
 
         return priors
+
+    def transform(self, array: npt.ArrayLike[np.float64]) -> npt.NDArray[np.float64]:
+        """Transform the input array in accordance with priors
+
+        Parameters:
+            array: An array of standard normal values
+
+        Returns: Transformed array, where each element has been transformed from
+            a standard normal distribution to the distribution set by the user
+        """
+        array = np.array(array)
+        for index, tf in enumerate(self._transfer_functions):
+            array[index] = tf.calc_func(array[index], list(tf.parameter_list.values()))
+        return array
 
     @staticmethod
     def values_from_file(

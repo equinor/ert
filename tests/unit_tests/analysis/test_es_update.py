@@ -98,9 +98,11 @@ def test_update_snapshot(
     else:
         es_update.smootherUpdate(sim_fs, new_ensemble, "id")
 
-    sim_gen_kw = list(sim_fs.load_gen_kw("SNAKE_OIL_PARAM", [0]).flatten())
+    sim_gen_kw = list(sim_fs.load_parameters("SNAKE_OIL_PARAM", 0).values.flatten())
 
-    target_gen_kw = list(new_ensemble.load_gen_kw("SNAKE_OIL_PARAM", [0]).flatten())
+    target_gen_kw = list(
+        new_ensemble.load_parameters("SNAKE_OIL_PARAM", 0).values.flatten()
+    )
 
     assert sim_gen_kw != target_gen_kw
 
@@ -241,9 +243,13 @@ def test_localization(
     )
     es_update.smootherUpdate(prior.sim_fs, posterior.sim_fs, prior.run_id)
 
-    sim_gen_kw = list(prior.sim_fs.load_gen_kw("SNAKE_OIL_PARAM", [0]).flatten())
+    sim_gen_kw = list(
+        prior.sim_fs.load_parameters("SNAKE_OIL_PARAM", 0).values.flatten()
+    )
 
-    target_gen_kw = list(posterior.sim_fs.load_gen_kw("SNAKE_OIL_PARAM", [0]).flatten())
+    target_gen_kw = list(
+        posterior.sim_fs.load_parameters("SNAKE_OIL_PARAM", 0).values.flatten()
+    )
 
     # Test that the localized values has been updated
     assert sim_gen_kw[1:3] != target_gen_kw[1:3]

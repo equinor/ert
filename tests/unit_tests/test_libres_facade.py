@@ -55,7 +55,7 @@ def test_keyword_type_checks_missing_key(facade):
 def test_data_fetching_missing_key(facade, empty_case):
     data = [
         facade.gather_summary_data(empty_case, "nokey"),
-        facade.gather_gen_kw_data(empty_case, "nokey"),
+        facade.gather_gen_kw_data(empty_case, "nokey", None),
     ]
 
     for dataframe in data:
@@ -313,8 +313,8 @@ def test_gen_kw_collector(snake_oil_case_storage, snake_oil_default_storage, sna
 
     data = facade.load_all_gen_kw_data(
         snake_oil_default_storage,
-        ["SNAKE_OIL_PARAM:OP1_PERSISTENCE", "SNAKE_OIL_PARAM:OP1_OFFSET"],
-    )
+        "SNAKE_OIL_PARAM",
+    )[["SNAKE_OIL_PARAM:OP1_PERSISTENCE", "SNAKE_OIL_PARAM:OP1_OFFSET"]]
     snapshot.assert_match(data.round(6).to_csv(), "gen_kw_collector_2.csv")
 
     with pytest.raises(KeyError):
@@ -323,18 +323,18 @@ def test_gen_kw_collector(snake_oil_case_storage, snake_oil_default_storage, sna
     realization_index = 3
     data = facade.load_all_gen_kw_data(
         snake_oil_default_storage,
-        ["SNAKE_OIL_PARAM:OP1_PERSISTENCE"],
+        "SNAKE_OIL_PARAM",
         realization_index=realization_index,
-    )
+    )["SNAKE_OIL_PARAM:OP1_PERSISTENCE"]
     snapshot.assert_match(data.round(6).to_csv(), "gen_kw_collector_3.csv")
 
     non_existing_realization_index = 150
-    with pytest.raises(IndexError):
-        facade.load_all_gen_kw_data(
+    with pytest.raises(KeyError):
+        _ = facade.load_all_gen_kw_data(
             snake_oil_default_storage,
-            ["SNAKE_OIL_PARAM:OP1_PERSISTENCE"],
+            "SNAKE_OIL_PARAM",
             realization_index=non_existing_realization_index,
-        )
+        )["SNAKE_OIL_PARAM:OP1_PERSISTENCE"]
 
 
 @pytest.mark.usefixtures("use_tmpdir")
