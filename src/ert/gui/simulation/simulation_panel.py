@@ -1,4 +1,5 @@
 from collections import OrderedDict
+from typing import Any, Dict
 
 from qtpy.QtCore import QSize, Qt
 from qtpy.QtWidgets import (
@@ -125,8 +126,7 @@ class SimulationPanel(QWidget):
             self._simulation_mode_combo.currentIndex(), Qt.UserRole
         )
 
-    def getSimulationArguments(self):
-        """@rtype: dict[str,object]"""
+    def getSimulationArguments(self) -> Dict[str, Any]:
         simulation_widget = self._simulation_widgets[self.getCurrentSimulationModel()]
         args = simulation_widget.getSimulationArguments()
         return args

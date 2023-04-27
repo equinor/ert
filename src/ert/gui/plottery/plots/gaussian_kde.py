@@ -1,7 +1,15 @@
+from typing import TYPE_CHECKING
+
 import numpy
 from scipy.stats import gaussian_kde
 
 from .plot_tools import PlotTools
+
+if TYPE_CHECKING:
+    from matplotlib.axes import Axes
+    from pandas import DataFrame
+
+    from ert.gui.plottery import PlotConfig, PlotContext
 
 
 class GaussianKDEPlot:
@@ -12,10 +20,9 @@ class GaussianKDEPlot:
         plotGaussianKDE(figure, plot_context, case_to_data_map, _observation_data)
 
 
-def plotGaussianKDE(figure, plot_context, case_to_data_map, _observation_data):
-    """
-    @type plot_context: ert.gui.plottery.PlotContext
-    """
+def plotGaussianKDE(
+    figure, plot_context: "PlotContext", case_to_data_map, _observation_data
+):
     config = plot_context.plotConfig()
     axes = figure.add_subplot(111)
 
@@ -39,14 +46,9 @@ def plotGaussianKDE(figure, plot_context, case_to_data_map, _observation_data):
     )
 
 
-def _plotGaussianKDE(axes, plot_config, data, label):
-    """
-    @type axes: matplotlib.axes.Axes
-    @type plot_config: PlotConfig
-    @type data: DataFrame
-    @type label: Str
-    """
-
+def _plotGaussianKDE(
+    axes: "Axes", plot_config: "PlotConfig", data: "DataFrame", label: str
+):
     style = plot_config.histogramStyle()
 
     sample_range = data.max() - data.min()

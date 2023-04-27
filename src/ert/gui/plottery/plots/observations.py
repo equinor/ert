@@ -1,4 +1,11 @@
 import math
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from matplotlib.axes import Axes
+    from pandas import DataFrame
+
+    from ert.gui.plottery import PlotConfig
 
 
 def plotObservations(observation_data, plot_context, axes):
@@ -15,18 +22,15 @@ def plotObservations(observation_data, plot_context, axes):
         _plotObservations(axes, config, observation_data, value_column=key)
 
 
-def _plotObservations(axes, plot_config, data, value_column):
+def _plotObservations(
+    axes: "Axes", plot_config: "PlotConfig", data: "DataFrame", value_column: str
+):
     """
     Observations are always plotted on top. z-order set to 1000
 
     Since it is not possible to apply different linestyles to the errorbar, the
     line_style / fmt is used to toggle visibility of the solid errorbar, by
     using the elinewidth parameter.
-
-    @type axes: matplotlib.axes.Axes
-    @type plot_config: PlotConfig
-    @type data: DataFrame
-    @type value_column: Str
     """
 
     style = plot_config.observationsStyle()

@@ -194,12 +194,7 @@ class PlotConfig:
     def setGridEnabled(self, enabled):
         self._grid_enabled = enabled
 
-    def setStatisticsStyle(self, statistic, style):
-        """
-        @type statistic: str
-        @type style: PlotStyle
-        """
-
+    def setStatisticsStyle(self, statistic: str, style: PlotStyle):
         statistics_style = self._statistics_style[statistic]
         statistics_style.line_style = style.line_style
         statistics_style.marker = style.marker

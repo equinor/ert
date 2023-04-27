@@ -1,17 +1,18 @@
 import time
 from functools import partial
 from threading import Thread
+from typing import TYPE_CHECKING
 
 from ert._c_wrappers.job_queue.ert_plugin import CancelPluginException
 
 from .process_job_dialog import ProcessJobDialog
 
+if TYPE_CHECKING:
+    from .plugin import Plugin
+
 
 class PluginRunner:
-    def __init__(self, plugin):
-        """
-        @type plugin: Plugin
-        """
+    def __init__(self, plugin: "Plugin"):
         super().__init__()
 
         self.__plugin = plugin

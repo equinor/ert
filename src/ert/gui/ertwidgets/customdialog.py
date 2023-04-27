@@ -74,10 +74,7 @@ class CustomDialog(QDialog):
         space_widget = self.createSpace(size)
         self.layout.addRow("", space_widget)
 
-    def addLabeledOption(self, label, option_widget):
-        """
-        @type option_widget: QWidget
-        """
+    def addLabeledOption(self, label, option_widget: QWidget):
         self._option_list.append(option_widget)
 
         if hasattr(option_widget, "validationChanged"):

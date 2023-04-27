@@ -1,8 +1,32 @@
+from typing import TYPE_CHECKING, Dict, List, TypedDict
+
 import pandas as pd
 from matplotlib.lines import Line2D
 from matplotlib.patches import Rectangle
 
 from .plot_tools import PlotTools
+
+if TYPE_CHECKING:
+    from matplotlib.axes import Axes
+
+    from ert.gui.plottery import PlotConfig, PlotContext
+
+
+CcsData = TypedDict(
+    "CcsData",
+    {
+        "index": List[int],
+        "mean": Dict[int, float],
+        "min": Dict[int, float],
+        "max": Dict[int, float],
+        "p10": Dict[int, float],
+        "p33": Dict[int, float],
+        "p50": Dict[int, float],
+        "p67": Dict[int, float],
+        "p90": Dict[int, float],
+        "std": Dict[int, float],
+    },
+)
 
 
 class CrossCaseStatisticsPlot:
@@ -15,8 +39,9 @@ class CrossCaseStatisticsPlot:
         )
 
 
-def plotCrossCaseStatistics(figure, plot_context, case_to_data_map, _observation_data):
-    """@type plot_context: ert.gui.plottery.PlotContext"""
+def plotCrossCaseStatistics(
+    figure, plot_context: "PlotContext", case_to_data_map, _observation_data
+):
     config = plot_context.plotConfig()
     axes = figure.add_subplot(111)
 
@@ -29,7 +54,7 @@ def plotCrossCaseStatistics(figure, plot_context, case_to_data_map, _observation
 
     case_list = plot_context.cases()
     case_indexes = []
-    ccs = {
+    ccs: CcsData = {
         "index": [],
         "mean": {},
         "min": {},
@@ -123,14 +148,9 @@ def _assertNumeric(data):
     return data
 
 
-def _plotCrossCaseStatistics(axes, plot_config, data, index):
-    """
-    @type axes: matplotlib.axes.Axes
-    @type plot_config: PlotConfig
-    @type data: DataFrame
-    @type index: int
-    """
-
+def _plotCrossCaseStatistics(
+    axes: "Axes", plot_config: "PlotConfig", data: CcsData, index: int
+):
     axes.set_xlabel(plot_config.xLabel())
     axes.set_ylabel(plot_config.yLabel())
 
@@ -243,12 +263,11 @@ def _plotCrossCaseStatistics(axes, plot_config, data, index):
         )
 
 
-def _plotConnectionLines(axes, plot_config, ccs):
-    """
-    @type axes: matplotlib.axes.Axes
-    @type plot_config: PlotConfig
-    @type ccs: dict[str, dict[int, float]]
-    """
+def _plotConnectionLines(
+    axes: "Axes",
+    plot_config: "PlotConfig",
+    ccs: CcsData,
+):
     line_style = plot_config.distributionLineStyle()
     index_list = ccs["index"]
     for index in range(len(index_list) - 1):

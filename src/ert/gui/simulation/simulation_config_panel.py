@@ -1,3 +1,5 @@
+from typing import Any, Dict
+
 from qtpy.QtCore import Signal
 from qtpy.QtWidgets import QWidget
 
@@ -24,6 +26,5 @@ class SimulationConfigPanel(QWidget):
     def toggleAdvancedOptions(self, show_advanced):
         raise NotImplementedError("toggleAdvancedOptions must be implemented!")
 
-    def getSimulationArguments(self):
-        """ " @rtype: dict[str, object]"""
+    def getSimulationArguments(self) -> Dict[str, Any]:
         return {}

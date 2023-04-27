@@ -1,3 +1,9 @@
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from ert.gui.plottery import PlotContext
+
+
 class PlotTools:
     @staticmethod
     def showGrid(axes, plot_context):
@@ -12,8 +18,7 @@ class PlotTools:
             axes.legend(config.legendItems(), config.legendLabels(), numpoints=1)
 
     @staticmethod
-    def _getXAxisLimits(plot_context):
-        """@type plot_context: ert.gui.plottery.PlotContext"""
+    def _getXAxisLimits(plot_context: "PlotContext"):
         limits = plot_context.plotConfig().limits
         axis_name = plot_context.x_axis
 
@@ -34,8 +39,7 @@ class PlotTools:
         return None  # No limits set
 
     @staticmethod
-    def _getYAxisLimits(plot_context):
-        """@type plot_context: ert.gui.plottery.PlotContext"""
+    def _getYAxisLimits(plot_context: "PlotContext"):
         limits = plot_context.plotConfig().limits
         axis_name = plot_context.y_axis
 
@@ -57,15 +61,12 @@ class PlotTools:
 
     @staticmethod
     def finalizePlot(
-        plot_context, figure, axes, default_x_label="Unnamed", default_y_label="Unnamed"
+        plot_context: "PlotContext",
+        figure,
+        axes,
+        default_x_label="Unnamed",
+        default_y_label="Unnamed",
     ):
-        """
-        @type plot_context: ert.gui.plottery.PlotContext
-        @type axes:
-        @type default_x_label:
-        @type default_y_label:
-        """
-
         PlotTools.showLegend(axes, plot_context)
         PlotTools.showGrid(axes, plot_context)
 

@@ -1,19 +1,26 @@
+from typing import TYPE_CHECKING
+
 from matplotlib.lines import Line2D
 from matplotlib.patches import Rectangle
 from pandas import DataFrame
 
+from ert.gui.plottery import PlotConfig, PlotContext
 from ert.gui.plottery.plots.history import plotHistory
 
 from .observations import plotObservations
 from .plot_tools import PlotTools
+
+if TYPE_CHECKING:
+    from matplotlib.axes import Axes
 
 
 class StatisticsPlot:
     def __init__(self):
         self.dimensionality = 2
 
-    def plot(self, figure, plot_context, case_to_data_map, _observation_data):
-        """@type plot_context: ert.gui.plottery.PlotContext"""
+    def plot(
+        self, figure, plot_context: PlotContext, case_to_data_map, _observation_data
+    ):
         config = plot_context.plotConfig()
         axes = figure.add_subplot(111)
 
@@ -97,13 +104,9 @@ def _addStatisticsLegend(plot_config, style_name, alpha_multiplier=1.0):
             plot_config.addLegendItem(style.name, line)
 
 
-def _plotPercentiles(axes, plot_config, data, ensemble_label):
-    """
-    @type axes: matplotlib.axes.Axes
-    @type plot_config: ert.gui.plottery.PlotConfig
-    @type data: DataFrame
-    @type ensemble_label: Str
-    """
+def _plotPercentiles(
+    axes: "Axes", plot_config: PlotConfig, data: DataFrame, ensemble_label: str
+):
     style = plot_config.getStatisticsStyle("mean")
     if style.isVisible():
         axes.plot(

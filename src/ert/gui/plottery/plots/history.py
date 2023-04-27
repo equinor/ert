@@ -1,8 +1,12 @@
-def plotHistory(plot_context, axes):
-    """
-    @type axes: matplotlib.axes.Axes
-    @type plot_config: PlotConfig
-    """
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from matplotlib.axes import Axes
+
+    from ert.gui.plottery import PlotContext
+
+
+def plotHistory(plot_context: "PlotContext", axes: "Axes"):
     plot_config = plot_context.plotConfig()
 
     if (

@@ -95,7 +95,6 @@ class PlotLimits:
     datetime.datetime|datetime.date] """
 
     def __eq__(self, other):
-        """@type other: PlotLimits"""
         equality = self.value_limits == other.value_limits
         equality = equality and self.index_limits == other.index_limits
         equality = equality and self.count_limits == other.count_limits
@@ -105,8 +104,7 @@ class PlotLimits:
 
         return equality
 
-    def copyLimitsFrom(self, other):
-        """@type other: PlotLimits"""
+    def copyLimitsFrom(self, other: "PlotLimits"):
         self.value_limits = other.value_limits
         self.density_limits = other.density_limits
         self.depth_limits = other.depth_limits
