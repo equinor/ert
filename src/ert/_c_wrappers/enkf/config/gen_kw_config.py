@@ -32,7 +32,6 @@ class GenKwConfig:
         if not os.path.isfile(parameter_file):
             raise IOError(f"No such file:{parameter_file}")
 
-        self._key = key
         self.name = key
         self._parameter_file = parameter_file
         self._template_file = template_file
@@ -67,7 +66,7 @@ class GenKwConfig:
         return f'GenKwConfig(key = "{self.getKey()}", ' f'tag_fmt = "{self.tag_fmt}")'
 
     def getKey(self) -> str:
-        return self._key
+        return self.name
 
     def getImplementationType(self):
         return self
