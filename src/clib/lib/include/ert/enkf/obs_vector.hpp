@@ -63,8 +63,6 @@ extern "C" obs_vector_type *obs_vector_alloc(obs_impl_type obs_type,
 extern "C" void obs_vector_install_node(obs_vector_type *obs_vector,
                                         int obs_index, void *node);
 
-extern "C" enkf_config_node_type *
-obs_vector_get_config_node(const obs_vector_type *);
 extern "C" const char *
 obs_vector_get_obs_key(const obs_vector_type *obs_vector);
 
