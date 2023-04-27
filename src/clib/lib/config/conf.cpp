@@ -372,18 +372,12 @@ void conf_item_spec_set_default_value(
 
 bool conf_class_has_item_spec(std::shared_ptr<conf_class_type> conf_class,
                               const char *item_name) {
-    if (!conf_class->item_specs.count(item_name))
-        return false;
-    else
-        return true;
+    return conf_class->item_specs.count(item_name);
 }
 
 bool conf_class_has_sub_class(std::shared_ptr<conf_class_type> conf_class,
                               const char *sub_class_name) {
-    if (!conf_class->sub_classes.count(sub_class_name))
-        return false;
-    else
-        return true;
+    return conf_class->sub_classes.count(sub_class_name);
 }
 
 std::shared_ptr<conf_class_type>
@@ -402,18 +396,12 @@ conf_instance_get_name_ref(std::shared_ptr<conf_instance_type> conf_instance) {
 
 bool conf_instance_is_of_class(
     std::shared_ptr<conf_instance_type> conf_instance, const char *class_name) {
-    if (strcmp(conf_instance->conf_class->class_name, class_name) == 0)
-        return true;
-    else
-        return false;
+    return strcmp(conf_instance->conf_class->class_name, class_name) == 0;
 }
 
 bool conf_instance_has_item(std::shared_ptr<conf_instance_type> conf_instance,
                             std::string item_name) {
-    if (!conf_instance->items.count(item_name))
-        return false;
-    else
-        return true;
+    return conf_instance->items.count(item_name);
 }
 
 std::shared_ptr<conf_instance_type> conf_instance_get_sub_instance_ref(
