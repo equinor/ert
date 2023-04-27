@@ -47,6 +47,6 @@ enkf_obs_alloc_matching_keylist(const enkf_obs_type *enkf_obs,
                                 const char *input_string);
 extern "C" time_t enkf_obs_iget_obs_time(const enkf_obs_type *enkf_obs,
                                          int report_step);
-conf_class_type *enkf_obs_get_obs_conf_class();
+std::shared_ptr<conf_class_type> enkf_obs_get_obs_conf_class();
 
 #endif

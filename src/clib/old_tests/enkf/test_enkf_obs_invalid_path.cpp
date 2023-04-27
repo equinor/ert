@@ -24,13 +24,11 @@ void test_invalid_path() {
         fclose(stream);
     }
 
-    conf_class_type *enkf_conf_class = enkf_obs_get_obs_conf_class();
-    conf_instance_type *enkf_conf = conf_instance_alloc_from_file(
-        enkf_conf_class, "enkf_conf", "obs_path/conf.txt");
+    auto enkf_conf_class = enkf_obs_get_obs_conf_class();
+    auto enkf_conf = conf_instance_alloc_from_file(enkf_conf_class, "enkf_conf",
+                                                   "obs_path/conf.txt");
     test_assert_true(conf_instance_get_path_error(enkf_conf));
     test_assert_false(conf_instance_validate(enkf_conf));
-
-    conf_instance_free(enkf_conf);
 }
 
 void test_valid_path() {
@@ -51,14 +49,12 @@ void test_valid_path() {
         fclose(stream);
     }
 
-    conf_class_type *enkf_conf_class = enkf_obs_get_obs_conf_class();
-    conf_instance_type *enkf_conf = conf_instance_alloc_from_file(
-        enkf_conf_class, "enkf_conf", "obs_path/conf.txt");
+    auto enkf_conf_class = enkf_obs_get_obs_conf_class();
+    auto enkf_conf = conf_instance_alloc_from_file(enkf_conf_class, "enkf_conf",
+                                                   "obs_path/conf.txt");
 
     test_assert_false(conf_instance_get_path_error(enkf_conf));
     test_assert_true(conf_instance_validate(enkf_conf));
-
-    conf_instance_free(enkf_conf);
 }
 
 int main(int argc, char **argv) {

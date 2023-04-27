@@ -249,7 +249,7 @@ int enkf_obs_get_size(const enkf_obs_type *obs) {
    Adding inverse observation keys to the enkf_nodes; can be called
    several times.
 */
-static void enkf_obs_update_keys(enkf_obs_type *enkf_obs) {
+static void enkf_obs_update_keys(Cwrap<enkf_obs_type> enkf_obs) {
     /* First clear all existing observation keys. */
     for (auto &config_pair : enkf_obs->ensemble_config->config_nodes) {
         enkf_config_node_type *config_node = config_pair.second;
@@ -279,36 +279,36 @@ static void enkf_obs_update_keys(enkf_obs_type *enkf_obs) {
 }
 
 /** Handle HISTORY_OBSERVATION instances. */
-static void handle_history_observation(enkf_obs_type *enkf_obs,
-                                       conf_instance_type *enkf_conf,
-                                       size_t num_reports, double std_cutoff) {
-    stringlist_type *hist_obs_keys =
+static void
+handle_history_observation(Cwrap<enkf_obs_type> enkf_obs,
+                           std::shared_ptr<conf_instance_type> enkf_conf,
+                           double std_cutoff) {
+    auto num_reports = enkf_obs->obs_time.size();
+    std::vector<std::string> hist_obs_keys =
         conf_instance_alloc_list_of_sub_instances_of_class_by_name(
             enkf_conf, "HISTORY_OBSERVATION");
-    stringlist_sort(hist_obs_keys, NULL);
-    int num_hist_obs = stringlist_get_size(hist_obs_keys);
+    int num_hist_obs = hist_obs_keys.size();
 
     if (num_hist_obs > 0 && enkf_obs->refcase == NULL) {
-        stringlist_free(hist_obs_keys);
         throw exc::invalid_argument(
             "REFCASE is required for HISTORY_OBSERVATION");
     }
 
     for (int i = 0; i < num_hist_obs; i++) {
-        const char *obs_key = stringlist_iget(hist_obs_keys, i);
+        std::string obs_key = hist_obs_keys[i];
 
         if (!enkf_obs->history) {
             fprintf(stderr,
                     "** Warning: no history object registered - observation:%s "
                     "is ignored\n",
-                    obs_key);
+                    obs_key.c_str());
             break;
         }
-        const conf_instance_type *hist_obs_conf =
-            conf_instance_get_sub_instance_ref(enkf_conf, obs_key);
+        auto hist_obs_conf =
+            conf_instance_get_sub_instance_ref(enkf_conf, obs_key.c_str());
 
         enkf_config_node_type *config_node = ensemble_config_add_summary(
-            enkf_obs->ensemble_config, obs_key, LOAD_FAIL_WARN);
+            enkf_obs->ensemble_config, obs_key.c_str(), LOAD_FAIL_WARN);
 
         enkf_obs->ensemble_config->summary_keys.push_back(obs_key);
 
@@ -316,14 +316,15 @@ static void handle_history_observation(enkf_obs_type *enkf_obs,
             fprintf(stderr,
                     "** Warning: summary:%s does not exist - observation:%s "
                     "not added.\n",
-                    obs_key, obs_key);
+                    obs_key.c_str(), obs_key.c_str());
             break;
         }
 
-        obs_vector_type *obs_vector = obs_vector_alloc(
-            SUMMARY_OBS, obs_key,
-            ensemble_config_get_node(enkf_obs->ensemble_config, obs_key),
-            num_reports);
+        obs_vector_type *obs_vector =
+            obs_vector_alloc(SUMMARY_OBS, obs_key.c_str(),
+                             ensemble_config_get_node(enkf_obs->ensemble_config,
+                                                      obs_key.c_str()),
+                             num_reports);
         if (obs_vector != NULL) {
             if (obs_vector_load_from_HISTORY_OBSERVATION(
                     obs_vector, hist_obs_conf, enkf_obs->obs_time,
@@ -333,30 +334,28 @@ static void handle_history_observation(enkf_obs_type *enkf_obs,
                 fprintf(stderr,
                         "** Could not load historical data for observation:%s "
                         "- ignored\n",
-                        obs_key);
+                        obs_key.c_str());
 
                 obs_vector_free(obs_vector);
             }
         }
     }
-    stringlist_free(hist_obs_keys);
 }
 
 /** Handle SUMMARY_OBSERVATION instances. */
-static void handle_summary_observation(enkf_obs_type *enkf_obs,
-                                       conf_instance_type *enkf_conf,
-                                       size_t num_reports) {
-    const std::unique_ptr<stringlist_type, void (*)(stringlist_type *)>
-        sum_obs_keys(conf_instance_alloc_list_of_sub_instances_of_class_by_name(
-                         enkf_conf, "SUMMARY_OBSERVATION"),
-                     stringlist_free);
-    stringlist_sort(sum_obs_keys.get(), NULL);
-    const int num_sum_obs = stringlist_get_size(sum_obs_keys.get());
+static void
+handle_summary_observation(Cwrap<enkf_obs_type> enkf_obs,
+                           std::shared_ptr<conf_instance_type> enkf_conf) {
+    auto num_reports = enkf_obs->obs_time.size();
+    std::vector<std::string> sum_obs_keys =
+        conf_instance_alloc_list_of_sub_instances_of_class_by_name(
+            enkf_conf, "SUMMARY_OBSERVATION");
+    const int num_sum_obs = sum_obs_keys.size();
 
     for (int i = 0; i < num_sum_obs; i++) {
-        const char *obs_key = stringlist_iget(sum_obs_keys.get(), i);
-        const conf_instance_type *sum_obs_conf =
-            conf_instance_get_sub_instance_ref(enkf_conf, obs_key);
+        std::string obs_key = sum_obs_keys[i];
+        auto sum_obs_conf =
+            conf_instance_get_sub_instance_ref(enkf_conf, obs_key.c_str());
         const char *sum_key =
             conf_instance_get_item_value_ref(sum_obs_conf, "KEY");
 
@@ -370,13 +369,13 @@ static void handle_summary_observation(enkf_obs_type *enkf_obs,
             fprintf(stderr,
                     "** Warning: summary key:%s does not exist - observation "
                     "key:%s not added.\n",
-                    sum_key, obs_key);
+                    sum_key, obs_key.c_str());
             break;
         }
 
         /* Check if obs_vector is alloc'd */
         obs_vector_type *obs_vector = obs_vector_alloc(
-            SUMMARY_OBS, obs_key,
+            SUMMARY_OBS, obs_key.c_str(),
             ensemble_config_get_node(enkf_obs->ensemble_config, sum_key),
             num_reports);
         if (obs_vector == NULL)
@@ -389,18 +388,17 @@ static void handle_summary_observation(enkf_obs_type *enkf_obs,
 }
 
 /** Handle GENERAL_OBSERVATION instances. */
-static void handle_general_observation(enkf_obs_type *enkf_obs,
-                                       conf_instance_type *enkf_conf) {
-    stringlist_type *obs_keys =
-        conf_instance_alloc_list_of_sub_instances_of_class_by_name(
-            enkf_conf, "GENERAL_OBSERVATION");
-    stringlist_sort(obs_keys, NULL);
-    int num_obs = stringlist_get_size(obs_keys);
+static void
+handle_general_observation(Cwrap<enkf_obs_type> enkf_obs,
+                           std::shared_ptr<conf_instance_type> enkf_conf) {
+    auto obs_keys = conf_instance_alloc_list_of_sub_instances_of_class_by_name(
+        enkf_conf, "GENERAL_OBSERVATION");
+    int num_obs = obs_keys.size();
 
     for (int i = 0; i < num_obs; i++) {
-        const char *obs_key = stringlist_iget(obs_keys, i);
-        const conf_instance_type *gen_obs_conf =
-            conf_instance_get_sub_instance_ref(enkf_conf, obs_key);
+        std::string obs_key = obs_keys[i];
+        auto gen_obs_conf =
+            conf_instance_get_sub_instance_ref(enkf_conf, obs_key.c_str());
 
         const char *state_kw =
             conf_instance_get_item_value_ref(gen_obs_conf, "DATA");
@@ -410,7 +408,7 @@ static void handle_general_observation(enkf_obs_type *enkf_obs,
             fprintf(stderr,
                     "** Warning the ensemble key:%s does not exist - "
                     "observation:%s not added \n",
-                    state_kw, obs_key);
+                    state_kw, obs_key.c_str());
         } else {
             enkf_config_node_type *config_node =
                 ensemble_config_get_node(enkf_obs->ensemble_config, state_kw);
@@ -420,15 +418,14 @@ static void handle_general_observation(enkf_obs_type *enkf_obs,
         if (obs_vector != NULL)
             enkf_obs_add_obs_vector(enkf_obs, obs_vector);
     }
-    stringlist_free(obs_keys);
 }
 
-conf_class_type *enkf_obs_get_obs_conf_class(void) {
+std::shared_ptr<conf_class_type> enkf_obs_get_obs_conf_class() {
     const char *enkf_conf_help =
         "An instance of the class ENKF_CONFIG shall contain neccessary "
         "infomation to run the enkf.";
-    conf_class_type *enkf_conf_class =
-        conf_class_alloc_empty("ENKF_CONFIG", true, false, enkf_conf_help);
+    auto enkf_conf_class =
+        make_conf_class("ENKF_CONFIG", true, false, enkf_conf_help);
     conf_class_set_help(enkf_conf_class, enkf_conf_help);
 
     /* Create and insert HISTORY_OBSERVATION class. */
@@ -442,20 +439,20 @@ conf_class_type *enkf_obs_get_obs_conf_class(void) {
             "instance "
             "with name GOPR:P4 conditions on GOPR for group P4.";
 
-        conf_class_type *history_observation_class =
-            conf_class_alloc_empty("HISTORY_OBSERVATION", false, false,
-                                   help_class_history_observation);
+        auto history_observation_class =
+            make_conf_class("HISTORY_OBSERVATION", false, false,
+                            help_class_history_observation);
 
-        conf_item_spec_type *item_spec_error_mode =
-            conf_item_spec_alloc("ERROR_MODE", true, DT_STR,
-                                 "The string ERROR_MODE gives the error "
-                                 "mode for the observation.");
+        auto item_spec_error_mode =
+            make_conf_item_spec("ERROR_MODE", true, DT_STR,
+                                "The string ERROR_MODE gives the error "
+                                "mode for the observation.");
         conf_item_spec_add_restriction(item_spec_error_mode, "REL");
         conf_item_spec_add_restriction(item_spec_error_mode, "ABS");
         conf_item_spec_add_restriction(item_spec_error_mode, "RELMIN");
         conf_item_spec_set_default_value(item_spec_error_mode, "RELMIN");
 
-        conf_item_spec_type *item_spec_error = conf_item_spec_alloc(
+        auto item_spec_error = make_conf_item_spec(
             "ERROR", true, DT_POSFLOAT,
             "The positive floating number ERROR gives the standard "
             "deviation "
@@ -463,38 +460,37 @@ conf_class_type *enkf_obs_get_obs_conf_class(void) {
             "observations.");
         conf_item_spec_set_default_value(item_spec_error, "0.10");
 
-        conf_item_spec_type *item_spec_error_min =
-            conf_item_spec_alloc("ERROR_MIN", true, DT_POSFLOAT,
-                                 "The positive floating point number "
-                                 "ERROR_MIN gives the minimum "
-                                 "value for the standard deviation of the "
-                                 "observation when RELMIN "
-                                 "is used.");
+        auto item_spec_error_min =
+            make_conf_item_spec("ERROR_MIN", true, DT_POSFLOAT,
+                                "The positive floating point number "
+                                "ERROR_MIN gives the minimum "
+                                "value for the standard deviation of the "
+                                "observation when RELMIN "
+                                "is used.");
         conf_item_spec_set_default_value(item_spec_error_min, "0.10");
 
-        conf_class_insert_owned_item_spec(history_observation_class,
-                                          item_spec_error_mode);
-        conf_class_insert_owned_item_spec(history_observation_class,
-                                          item_spec_error);
-        conf_class_insert_owned_item_spec(history_observation_class,
-                                          item_spec_error_min);
+        conf_class_insert_item_spec(history_observation_class,
+                                    item_spec_error_mode);
+        conf_class_insert_item_spec(history_observation_class, item_spec_error);
+        conf_class_insert_item_spec(history_observation_class,
+                                    item_spec_error_min);
 
         /* Sub class segment. */
         {
             const char *help_class_segment =
                 "The class SEGMENT is used to fine tune the error model.";
-            conf_class_type *segment_class = conf_class_alloc_empty(
-                "SEGMENT", false, false, help_class_segment);
+            auto segment_class =
+                make_conf_class("SEGMENT", false, false, help_class_segment);
 
-            conf_item_spec_type *item_spec_start_segment = conf_item_spec_alloc(
+            auto item_spec_start_segment = make_conf_item_spec(
                 "START", true, DT_INT, "The first restart in the segment.");
-            conf_item_spec_type *item_spec_stop_segment = conf_item_spec_alloc(
+            auto item_spec_stop_segment = make_conf_item_spec(
                 "STOP", true, DT_INT, "The last restart in the segment.");
 
-            conf_item_spec_type *item_spec_error_mode_segment =
-                conf_item_spec_alloc("ERROR_MODE", true, DT_STR,
-                                     "The string ERROR_MODE gives the error "
-                                     "mode for the observation.");
+            auto item_spec_error_mode_segment =
+                make_conf_item_spec("ERROR_MODE", true, DT_STR,
+                                    "The string ERROR_MODE gives the error "
+                                    "mode for the observation.");
             conf_item_spec_add_restriction(item_spec_error_mode_segment, "REL");
             conf_item_spec_add_restriction(item_spec_error_mode_segment, "ABS");
             conf_item_spec_add_restriction(item_spec_error_mode_segment,
@@ -502,7 +498,7 @@ conf_class_type *enkf_obs_get_obs_conf_class(void) {
             conf_item_spec_set_default_value(item_spec_error_mode_segment,
                                              "RELMIN");
 
-            conf_item_spec_type *item_spec_error_segment = conf_item_spec_alloc(
+            auto item_spec_error_segment = make_conf_item_spec(
                 "ERROR", true, DT_POSFLOAT,
                 "The positive floating number ERROR gives the standard "
                 "deviation (ABS) or the relative uncertainty "
@@ -510,33 +506,28 @@ conf_class_type *enkf_obs_get_obs_conf_class(void) {
                 "the observations.");
             conf_item_spec_set_default_value(item_spec_error_segment, "0.10");
 
-            conf_item_spec_type *item_spec_error_min_segment =
-                conf_item_spec_alloc(
-                    "ERROR_MIN", true, DT_POSFLOAT,
-                    "The positive floating point number ERROR_MIN gives "
-                    "the "
-                    "minimum value for the standard deviation of the "
-                    "observation when RELMIN is used.");
+            auto item_spec_error_min_segment = make_conf_item_spec(
+                "ERROR_MIN", true, DT_POSFLOAT,
+                "The positive floating point number ERROR_MIN gives "
+                "the "
+                "minimum value for the standard deviation of the "
+                "observation when RELMIN is used.");
             conf_item_spec_set_default_value(item_spec_error_min_segment,
                                              "0.10");
 
-            conf_class_insert_owned_item_spec(segment_class,
-                                              item_spec_start_segment);
-            conf_class_insert_owned_item_spec(segment_class,
-                                              item_spec_stop_segment);
-            conf_class_insert_owned_item_spec(segment_class,
-                                              item_spec_error_mode_segment);
-            conf_class_insert_owned_item_spec(segment_class,
-                                              item_spec_error_segment);
-            conf_class_insert_owned_item_spec(segment_class,
-                                              item_spec_error_min_segment);
+            conf_class_insert_item_spec(segment_class, item_spec_start_segment);
+            conf_class_insert_item_spec(segment_class, item_spec_stop_segment);
+            conf_class_insert_item_spec(segment_class,
+                                        item_spec_error_mode_segment);
+            conf_class_insert_item_spec(segment_class, item_spec_error_segment);
+            conf_class_insert_item_spec(segment_class,
+                                        item_spec_error_min_segment);
 
-            conf_class_insert_owned_sub_class(history_observation_class,
-                                              segment_class);
+            conf_class_insert_sub_class(history_observation_class,
+                                        segment_class);
         }
 
-        conf_class_insert_owned_sub_class(enkf_conf_class,
-                                          history_observation_class);
+        conf_class_insert_sub_class(enkf_conf_class, history_observation_class);
     }
 
     /* Create and insert SUMMARY_OBSERVATION class. */
@@ -545,44 +536,44 @@ conf_class_type *enkf_obs_get_obs_conf_class(void) {
             "The class SUMMARY_OBSERVATION can be used to condition on any "
             "observation whos simulated value is written to the summary "
             "file.";
-        conf_class_type *summary_observation_class =
-            conf_class_alloc_empty("SUMMARY_OBSERVATION", false, false,
-                                   help_class_summary_observation);
+        auto summary_observation_class =
+            make_conf_class("SUMMARY_OBSERVATION", false, false,
+                            help_class_summary_observation);
 
         const char *help_item_spec_value =
             "The floating point number VALUE gives the observed value.";
-        conf_item_spec_type *item_spec_value =
-            conf_item_spec_alloc("VALUE", true, DT_FLOAT, help_item_spec_value);
+        auto item_spec_value =
+            make_conf_item_spec("VALUE", true, DT_FLOAT, help_item_spec_value);
 
         const char *help_item_spec_error =
             "The positive floating point number ERROR is the standard "
             "deviation of the observed value.";
-        conf_item_spec_type *item_spec_error = conf_item_spec_alloc(
-            "ERROR", true, DT_POSFLOAT, help_item_spec_error);
+        auto item_spec_error = make_conf_item_spec("ERROR", true, DT_POSFLOAT,
+                                                   help_item_spec_error);
 
         const char *help_item_spec_date =
             "The DATE item gives the observation time as the date date it "
             "occured. Format is YYYY-MM-DD.";
-        conf_item_spec_type *item_spec_date =
-            conf_item_spec_alloc("DATE", false, DT_DATE, help_item_spec_date);
+        auto item_spec_date =
+            make_conf_item_spec("DATE", false, DT_DATE, help_item_spec_date);
 
         const char *help_item_spec_days =
             "The DAYS item gives the observation time as days after "
             "simulation "
             "start.";
-        conf_item_spec_type *item_spec_days = conf_item_spec_alloc(
-            "DAYS", false, DT_POSFLOAT, help_item_spec_days);
+        auto item_spec_days = make_conf_item_spec("DAYS", false, DT_POSFLOAT,
+                                                  help_item_spec_days);
 
         const char *help_item_spec_hours =
             "The HOURS item gives the observation time as hours after "
             "simulation start.";
-        conf_item_spec_type *item_spec_hours = conf_item_spec_alloc(
-            "HOURS", false, DT_POSFLOAT, help_item_spec_hours);
+        auto item_spec_hours = make_conf_item_spec("HOURS", false, DT_POSFLOAT,
+                                                   help_item_spec_hours);
 
         const char *help_item_spec_restart =
             "The RESTART item gives the observation time as the ECLIPSE "
             "restart nr.";
-        conf_item_spec_type *item_spec_restart = conf_item_spec_alloc(
+        auto item_spec_restart = make_conf_item_spec(
             "RESTART", false, DT_POSINT, help_item_spec_restart);
 
         const char *help_item_spec_sumkey =
@@ -590,20 +581,20 @@ conf_class_type *enkf_obs_get_obs_conf_class(void) {
             "in "
             "the summary file. It has the same format as the summary.x "
             "program, e.g. WOPR:P4";
-        conf_item_spec_type *item_spec_sumkey =
-            conf_item_spec_alloc("KEY", true, DT_STR, help_item_spec_sumkey);
+        auto item_spec_sumkey =
+            make_conf_item_spec("KEY", true, DT_STR, help_item_spec_sumkey);
 
-        conf_item_spec_type *item_spec_error_min =
-            conf_item_spec_alloc("ERROR_MIN", true, DT_POSFLOAT,
-                                 "The positive floating point number "
-                                 "ERROR_MIN gives the minimum "
-                                 "value for the standard deviation of the "
-                                 "observation when RELMIN "
-                                 "is used.");
-        conf_item_spec_type *item_spec_error_mode =
-            conf_item_spec_alloc("ERROR_MODE", true, DT_STR,
-                                 "The string ERROR_MODE gives the error "
-                                 "mode for the observation.");
+        auto item_spec_error_min =
+            make_conf_item_spec("ERROR_MIN", true, DT_POSFLOAT,
+                                "The positive floating point number "
+                                "ERROR_MIN gives the minimum "
+                                "value for the standard deviation of the "
+                                "observation when RELMIN "
+                                "is used.");
+        auto item_spec_error_mode =
+            make_conf_item_spec("ERROR_MODE", true, DT_STR,
+                                "The string ERROR_MODE gives the error "
+                                "mode for the observation.");
 
         conf_item_spec_add_restriction(item_spec_error_mode, "REL");
         conf_item_spec_add_restriction(item_spec_error_mode, "ABS");
@@ -611,27 +602,22 @@ conf_class_type *enkf_obs_get_obs_conf_class(void) {
         conf_item_spec_set_default_value(item_spec_error_mode, "ABS");
         conf_item_spec_set_default_value(item_spec_error_min, "0.10");
 
-        conf_class_insert_owned_item_spec(summary_observation_class,
-                                          item_spec_value);
-        conf_class_insert_owned_item_spec(summary_observation_class,
-                                          item_spec_error);
-        conf_class_insert_owned_item_spec(summary_observation_class,
-                                          item_spec_date);
-        conf_class_insert_owned_item_spec(summary_observation_class,
-                                          item_spec_days);
-        conf_class_insert_owned_item_spec(summary_observation_class,
-                                          item_spec_hours);
-        conf_class_insert_owned_item_spec(summary_observation_class,
-                                          item_spec_restart);
-        conf_class_insert_owned_item_spec(summary_observation_class,
-                                          item_spec_sumkey);
-        conf_class_insert_owned_item_spec(summary_observation_class,
-                                          item_spec_error_mode);
-        conf_class_insert_owned_item_spec(summary_observation_class,
-                                          item_spec_error_min);
+        conf_class_insert_item_spec(summary_observation_class, item_spec_value);
+        conf_class_insert_item_spec(summary_observation_class, item_spec_error);
+        conf_class_insert_item_spec(summary_observation_class, item_spec_date);
+        conf_class_insert_item_spec(summary_observation_class, item_spec_days);
+        conf_class_insert_item_spec(summary_observation_class, item_spec_hours);
+        conf_class_insert_item_spec(summary_observation_class,
+                                    item_spec_restart);
+        conf_class_insert_item_spec(summary_observation_class,
+                                    item_spec_sumkey);
+        conf_class_insert_item_spec(summary_observation_class,
+                                    item_spec_error_mode);
+        conf_class_insert_item_spec(summary_observation_class,
+                                    item_spec_error_min);
 
         /* Create a mutex on DATE, DAYS and RESTART. */
-        conf_item_mutex_type *time_mutex =
+        auto time_mutex =
             conf_class_new_item_mutex(summary_observation_class, true, false);
 
         conf_item_mutex_add_item_spec(time_mutex, item_spec_date);
@@ -640,8 +626,7 @@ conf_class_type *enkf_obs_get_obs_conf_class(void) {
         conf_item_mutex_add_item_spec(time_mutex, item_spec_restart);
         conf_item_mutex_add_item_spec(time_mutex, item_spec_days);
 
-        conf_class_insert_owned_sub_class(enkf_conf_class,
-                                          summary_observation_class);
+        conf_class_insert_sub_class(enkf_conf_class, summary_observation_class);
     }
 
     /* Create and insert class for general observations. */
@@ -662,30 +647,30 @@ conf_class_type *enkf_obs_get_obs_conf_class(void) {
             "The HOURS item gives the observation time as hours after "
             "simulation start.";
 
-        conf_class_type *gen_obs_class =
-            conf_class_alloc_empty("GENERAL_OBSERVATION", false, false,
-                                   "The class general_observation is used "
-                                   "for general observations");
+        auto gen_obs_class =
+            make_conf_class("GENERAL_OBSERVATION", false, false,
+                            "The class general_observation is used "
+                            "for general observations");
 
-        conf_item_spec_type *item_spec_field =
-            conf_item_spec_alloc("DATA", true, DT_STR, help_item_spec_field);
-        conf_item_spec_type *item_spec_date =
-            conf_item_spec_alloc("DATE", false, DT_DATE, help_item_spec_date);
-        conf_item_spec_type *item_spec_days = conf_item_spec_alloc(
-            "DAYS", false, DT_POSFLOAT, help_item_spec_days);
-        conf_item_spec_type *item_spec_hours = conf_item_spec_alloc(
-            "HOURS", false, DT_POSFLOAT, help_item_spec_hours);
-        conf_item_spec_type *item_spec_restart = conf_item_spec_alloc(
-            "RESTART", false, DT_INT, help_item_spec_restart);
+        auto item_spec_field =
+            make_conf_item_spec("DATA", true, DT_STR, help_item_spec_field);
+        auto item_spec_date =
+            make_conf_item_spec("DATE", false, DT_DATE, help_item_spec_date);
+        auto item_spec_days = make_conf_item_spec("DAYS", false, DT_POSFLOAT,
+                                                  help_item_spec_days);
+        auto item_spec_hours = make_conf_item_spec("HOURS", false, DT_POSFLOAT,
+                                                   help_item_spec_hours);
+        auto item_spec_restart = make_conf_item_spec("RESTART", false, DT_INT,
+                                                     help_item_spec_restart);
 
-        conf_class_insert_owned_item_spec(gen_obs_class, item_spec_field);
-        conf_class_insert_owned_item_spec(gen_obs_class, item_spec_date);
-        conf_class_insert_owned_item_spec(gen_obs_class, item_spec_days);
-        conf_class_insert_owned_item_spec(gen_obs_class, item_spec_hours);
-        conf_class_insert_owned_item_spec(gen_obs_class, item_spec_restart);
+        conf_class_insert_item_spec(gen_obs_class, item_spec_field);
+        conf_class_insert_item_spec(gen_obs_class, item_spec_date);
+        conf_class_insert_item_spec(gen_obs_class, item_spec_days);
+        conf_class_insert_item_spec(gen_obs_class, item_spec_hours);
+        conf_class_insert_item_spec(gen_obs_class, item_spec_restart);
         /* Create a mutex on DATE, DAYS and RESTART. */
         {
-            conf_item_mutex_type *time_mutex =
+            auto time_mutex =
                 conf_class_new_item_mutex(gen_obs_class, true, false);
 
             conf_item_mutex_add_item_spec(time_mutex, item_spec_date);
@@ -695,22 +680,21 @@ conf_class_type *enkf_obs_get_obs_conf_class(void) {
         }
 
         {
-            conf_item_spec_type *item_spec_obs_file = conf_item_spec_alloc(
+            auto item_spec_obs_file = make_conf_item_spec(
                 "OBS_FILE", false, DT_FILE,
                 "The name of an (ascii) file with observation values.");
-            conf_item_spec_type *item_spec_value = conf_item_spec_alloc(
+            auto item_spec_value = make_conf_item_spec(
                 "VALUE", false, DT_FLOAT, "One scalar observation value.");
-            conf_item_spec_type *item_spec_error = conf_item_spec_alloc(
+            auto item_spec_error = make_conf_item_spec(
                 "ERROR", false, DT_FLOAT, "One scalar observation error.");
-            conf_item_mutex_type *value_mutex =
+            auto value_mutex =
                 conf_class_new_item_mutex(gen_obs_class, true, false);
-            conf_item_mutex_type *value_error_mutex =
+            auto value_error_mutex =
                 conf_class_new_item_mutex(gen_obs_class, false, true);
 
-            conf_class_insert_owned_item_spec(gen_obs_class,
-                                              item_spec_obs_file);
-            conf_class_insert_owned_item_spec(gen_obs_class, item_spec_value);
-            conf_class_insert_owned_item_spec(gen_obs_class, item_spec_error);
+            conf_class_insert_item_spec(gen_obs_class, item_spec_obs_file);
+            conf_class_insert_item_spec(gen_obs_class, item_spec_value);
+            conf_class_insert_item_spec(gen_obs_class, item_spec_error);
 
             /* If the observation is in terms of VALUE - we must also have ERROR.
          The conf system does not (currently ??) enforce this dependency. */
@@ -728,28 +712,26 @@ conf_class_type *enkf_obs_get_obs_conf_class(void) {
        INDEX_LIST or INDEX_FILE keywords.
     */
         {
-            conf_item_spec_type *item_spec_index_list =
-                conf_item_spec_alloc("INDEX_LIST", false, DT_STR,
-                                     "A list of indicies - possibly with "
-                                     "ranges which should be "
-                                     "observed in the target field.");
-            conf_item_spec_type *item_spec_index_file =
-                conf_item_spec_alloc("INDEX_FILE", false, DT_FILE,
-                                     "An ASCII file containing a list of "
-                                     "indices which should be "
-                                     "observed in the target field.");
-            conf_item_mutex_type *index_mutex =
+            auto item_spec_index_list =
+                make_conf_item_spec("INDEX_LIST", false, DT_STR,
+                                    "A list of indicies - possibly with "
+                                    "ranges which should be "
+                                    "observed in the target field.");
+            auto item_spec_index_file =
+                make_conf_item_spec("INDEX_FILE", false, DT_FILE,
+                                    "An ASCII file containing a list of "
+                                    "indices which should be "
+                                    "observed in the target field.");
+            auto index_mutex =
                 conf_class_new_item_mutex(gen_obs_class, false, false);
 
-            conf_class_insert_owned_item_spec(gen_obs_class,
-                                              item_spec_index_list);
-            conf_class_insert_owned_item_spec(gen_obs_class,
-                                              item_spec_index_file);
+            conf_class_insert_item_spec(gen_obs_class, item_spec_index_list);
+            conf_class_insert_item_spec(gen_obs_class, item_spec_index_file);
             conf_item_mutex_add_item_spec(index_mutex, item_spec_index_list);
             conf_item_mutex_add_item_spec(index_mutex, item_spec_index_file);
         }
 
-        conf_class_insert_owned_sub_class(enkf_conf_class, gen_obs_class);
+        conf_class_insert_sub_class(enkf_conf_class, gen_obs_class);
     }
 
     return enkf_conf_class;
@@ -866,66 +848,40 @@ py::handle pybind_alloc(int history_,
         enkf_obs_alloc(history, external_time_map, refcase, ensemble_config);
     return PyLong_FromVoidPtr(ptr);
 }
-/**
- This function will load an observation configuration from the
-   observation file @config_file.
-
-   If called several times during one invocation the function will
-   start by clearing the current content.
-*/
-void enkf_obs_load(Cwrap<enkf_obs_type> enkf_obs, const char *config_file,
-                   double std_cutoff) {
-
-    const std::unique_ptr<conf_class_type, void (*)(conf_class_type *)>
-        enkf_conf_class(enkf_obs_get_obs_conf_class(), conf_class_free);
-    const std::unique_ptr<conf_instance_type, void (*)(conf_instance_type *)>
-        enkf_conf(conf_instance_alloc_from_file(enkf_conf_class.get(),
-                                                "enkf_conf", config_file),
-                  conf_instance_free);
-
-    const char *errors = conf_instance_get_path_error(enkf_conf.get());
-    if (errors) {
-        throw exc::invalid_argument{
-            "The following keywords in your configuration did not resolve to a "
-            "valid path:\n {}",
-            errors};
-    }
-
-    if (!conf_instance_validate(enkf_conf.get()))
-        throw exc::runtime_error("Error in configuration file: {}",
-                                 config_file);
-
-    handle_history_observation(enkf_obs, enkf_conf.get(),
-                               enkf_obs->obs_time.size(), std_cutoff);
-    try {
-        handle_summary_observation(enkf_obs, enkf_conf.get(),
-                                   enkf_obs->obs_time.size());
-        handle_general_observation(enkf_obs, enkf_conf.get());
-    } catch (exc::out_of_range err) {
-        if (enkf_obs->refcase) {
-            throw exc::out_of_range(
-                "{} The time map is set from the REFCASE keyword.\n Either "
-                "the REFCASE has an incorrect/missing date, or the observation "
-                "is given an incorrect date.",
-                err.what());
-        } else {
-            throw exc::out_of_range(
-                "{} The time map is set from the TIME_MAP keyword.\n Either "
-                "the time map file has an incorrect/missing date, or the "
-                "observation is given an incorrect date.",
-                err.what());
-        }
-    }
-
-    enkf_obs_update_keys(enkf_obs);
-}
 
 } // namespace
 
 ERT_CLIB_SUBMODULE("enkf_obs", m) {
     using namespace py::literals;
 
+    py::class_<conf_instance_type, std::shared_ptr<conf_instance_type>>(
+        m, "ConfInstance")
+        .def(py::init([](std::string config_file) {
+                 auto enkf_conf_class = enkf_obs_get_obs_conf_class();
+                 auto enkf_conf = conf_instance_alloc_from_file(
+                     enkf_conf_class, "enkf_conf", config_file.c_str());
+                 return enkf_conf;
+             }),
+             "config_file"_a)
+        .def("get_errors", [](std::shared_ptr<conf_instance_type> self) {
+            auto errors = conf_instance_get_path_error(self);
+            if (errors) {
+                return std::string(
+                           "The following keywords in your configuration did "
+                           "not resolve to a valid path:\n ") +
+                       errors;
+            }
+            if (!conf_instance_validate(self))
+                return std::string("Error in observations configuration file");
+            return std::string("");
+        });
     m.def("alloc", pybind_alloc, "history"_a, "time_map"_a, "refcase"_a,
           "ensemble_config"_a);
-    m.def("load", enkf_obs_load, "obs"_a, "config_file"_a, "std_cutoff"_a);
+    m.def("handle_history_observation", handle_history_observation,
+          py::arg("self"), py::arg("conf_instance"), py::arg("std_cutoff"));
+    m.def("handle_summary_observation", handle_summary_observation,
+          py::arg("self"), py::arg("conf_instance"));
+    m.def("handle_general_observation", handle_general_observation,
+          py::arg("self"), py::arg("conf_instance"));
+    m.def("update_keys", enkf_obs_update_keys, py::arg("self"));
 }

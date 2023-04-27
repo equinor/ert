@@ -150,7 +150,14 @@ class EnkfObs(BaseCClass):
                 "Do not have permission to open observation "
                 f"config file {config_file!r}"
             )
-        _clib.enkf_obs.load(self, config_file, std_cutoff)
+        conf_instance = _clib.enkf_obs.ConfInstance(config_file)
+        errors = conf_instance.get_errors()
+        if errors != "":
+            raise ValueError(f"{errors} in configuration file {config_file}")
+        _clib.enkf_obs.handle_history_observation(self, conf_instance, std_cutoff)
+        _clib.enkf_obs.handle_summary_observation(self, conf_instance)
+        _clib.enkf_obs.handle_general_observation(self, conf_instance)
+        _clib.enkf_obs.update_keys(self)
 
     @property
     def error(self) -> str:
@@ -189,7 +196,23 @@ class EnkfObs(BaseCClass):
                     config.model_config.obs_config_file,
                     config.analysis_config.get_std_cutoff(),
                 )
-            except (ValueError, IndexError) as err:
+            except IndexError as err:
+                if config.ensemble_config.refcase is not None:
+                    raise ObservationConfigError(
+                        f"{err} The time map is set from the REFCASE keyword.\n Either "
+                        "the REFCASE has an incorrect/missing date, or the observation "
+                        "is given an incorrect date.",
+                        config_file=config.model_config.obs_config_file,
+                    ) from err
+                raise ObservationConfigError(
+                    f"{err} The time map is set from the TIME_MAP"
+                    "keyword.\n Either the time map file has an"
+                    "incorrect/missing date, or the  observation is given an"
+                    "incorrect date.",
+                    config_file=config.model_config.obs_config_file,
+                ) from err
+
+            except ValueError as err:
                 raise ObservationConfigError(
                     str(err),
                     config_file=config.model_config.obs_config_file,
