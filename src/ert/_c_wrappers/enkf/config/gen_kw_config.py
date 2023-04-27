@@ -3,7 +3,7 @@ from __future__ import annotations
 import math
 import os
 from hashlib import sha256
-from typing import TYPE_CHECKING, Dict, Final, List, TypedDict
+from typing import TYPE_CHECKING, Callable, Dict, List, Tuple, TypedDict
 
 import numpy as np
 import pandas as pd
@@ -219,8 +219,8 @@ class GenKwConfig:
 class TransferFunction:
     name: str
     transfer_function_name: str
-    param_list: List[(str, float)]
-    calc_func: object
+    param_list: List[Tuple[str, float]]
+    calc_func: Callable[[float, List[float]], float]
     _use_log: bool = False
 
     def __init__(self, name, transfer_function_name, param_list, calc_func) -> None:
@@ -321,7 +321,7 @@ class TransferFunction:
         return self.calc_func(x, arg)
 
 
-PRIOR_FUNCTIONS: Final = {
+PRIOR_FUNCTIONS: dict[str, Callable[[float, List[float]], float]] = {
     "NORMAL": TransferFunction.trans_normal,
     "LOGNORMAL": TransferFunction.trans_lognormal,
     "TRUNCATED_NORMAL": TransferFunction.trans_truncated_normal,
