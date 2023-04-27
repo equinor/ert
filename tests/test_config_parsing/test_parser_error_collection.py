@@ -339,3 +339,37 @@ SUMMARY summary
             match="When using SUMMARY keyword, the config must also specify ECLBASE",
         ),
     )
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_queue_option_max_running_non_int():
+    assert_that_config_leads_to_error(
+        config_file_contents="""
+NUM_REALIZATIONS 1
+QUEUE_SYSTEM LOCAL
+QUEUE_OPTION LOCAL MAX_RUNNING ert
+""",
+        expected_error=ExpectedErrorInfo(
+            line=4,
+            column=32,
+            end_column=35,
+            match="not an integer",
+        ),
+    )
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_queue_option_max_running_negative():
+    assert_that_config_leads_to_error(
+        config_file_contents="""
+NUM_REALIZATIONS 1
+QUEUE_SYSTEM LOCAL
+QUEUE_OPTION LOCAL MAX_RUNNING -1
+""",
+        expected_error=ExpectedErrorInfo(
+            line=4,
+            column=32,
+            end_column=34,
+            match="negative",
+        ),
+    )
