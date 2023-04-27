@@ -691,9 +691,9 @@ class EnsembleConfig(BaseCClass):
         for parameter in self.parameters:
             config_node = self.getNode(parameter)
 
-            if isinstance(config_node, ParameterConfig):
-                parameter_configs.append(config_node)
-            elif isinstance(config_node, GenKwConfig):
+            if isinstance(config_node, ParameterConfig) or isinstance(
+                config_node, GenKwConfig
+            ):
                 parameter_configs.append(config_node)
             elif config_node.getImplementationType() == ErtImplType.EXT_PARAM:
                 node = config_node.getModelConfig()
