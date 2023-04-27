@@ -26,11 +26,20 @@ class GenKwConfig:
     def __init__(
         self, key: str, template_file: str, parameter_file: str, tag_fmt: str = "<%s>"
     ):
+        errors = []
+
         if not os.path.isfile(template_file):
-            raise IOError(f"No such file:{template_file}")
+            errors.append(
+                ConfigValidationError(f"No such template file: {template_file}")
+            )
 
         if not os.path.isfile(parameter_file):
-            raise IOError(f"No such file:{parameter_file}")
+            errors.append(
+                ConfigValidationError(f"No such parameter file: {template_file}")
+            )
+
+        if errors:
+            raise ConfigValidationError.from_collected(errors)
 
         self.name = key
         self._parameter_file = parameter_file

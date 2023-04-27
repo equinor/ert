@@ -26,10 +26,10 @@ def test_gen_kw_config():
     template_file = "template.txt"
     parameter_file = "parameters.txt"
     parameter_file_comments = "parameters_with_comments.txt"
-    with pytest.raises(IOError):
+    with pytest.raises(ConfigValidationError):
         conf = GenKwConfig("KEY", template_file, "does_not_exist")
 
-    with pytest.raises(IOError):
+    with pytest.raises(ConfigValidationError):
         conf = GenKwConfig("Key", "does_not_exist", parameter_file)
 
     conf = GenKwConfig("KEY", template_file, parameter_file)
