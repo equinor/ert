@@ -4,7 +4,9 @@ import logging
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Union
 
+import numpy as np
 import pandas as pd
+import xarray as xr
 from deprecation import deprecated
 from ecl.grid import EclGrid
 from pandas import DataFrame, Series
@@ -272,24 +274,17 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
 
     def load_all_gen_kw_data(
         self,
-        fs: EnsembleReader,
-        keys: Optional[List[str]] = None,
+        ensemble: EnsembleReader,
+        group: Optional[str] = None,
         realization_index: Optional[int] = None,
-    ) -> DataFrame:
+    ) -> pd.DataFrame:
         """Loads all GEN_KW data into a DataFrame.
 
-        This function retrieves GEN_KW data from the given ensemble reader. It
-        filters the data according to the provided keys and/or realization
+        This function retrieves GEN_KW data from the given ensemble reader.
         index and returns it in a pandas DataFrame.
 
         Args:
-            fs: The ensemble reader from which to load the GEN_KW data.
-            keys: If provided, only data corresponding to these keys will be
-                loaded. If not provided, data for all available keys will be
-                loaded. Keys are expected in the format 'group:key'.
-            realization_index (Optional[int]): If provided, only data from the
-                specified realization index will be loaded. If not provided, data
-                from all realizations will be loaded.
+            ensemble: The ensemble reader from which to load the GEN_KW data.
 
         Returns:
             DataFrame: A pandas DataFrame containing the GEN_KW data.
@@ -300,57 +295,55 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
         Note:
             Any provided keys that are not gen_kw will be ignored.
         """
-        ens_mask = fs.get_realization_mask_from_state(
+        ens_mask = ensemble.get_realization_mask_from_state(
             [
                 RealizationStateEnum.STATE_INITIALIZED,
                 RealizationStateEnum.STATE_HAS_DATA,
             ]
         )
-        realizations = [index for index, active in enumerate(ens_mask) if active]
+        realizations = (
+            [realization_index]
+            if realization_index is not None
+            else [index for index, active in enumerate(ens_mask) if active]
+        )
 
-        if realization_index is not None:
-            if realization_index not in realizations:
-                raise IndexError(f"No such realization ({realization_index})")
-            realizations = [realization_index]
+        datasets = []
+        keys = [group] if group is not None else self.get_gen_kw()
+        for key in keys:
+            try:
+                ds = ensemble.load_parameters(
+                    key, realizations, var="transformed_values"
+                )
+                ds["names"] = np.char.add(f"{key}:", ds["names"].astype(np.str_))
+                datasets.append(ds)
+            except KeyError:
+                pass
+        if not datasets:
+            return pd.DataFrame()
 
-        all_data = {}
+        # Format the DataFrame in a way that old code expects it
+        dataframe = xr.combine_by_coords(datasets).to_dataframe()
+        dataframe = dataframe.swaplevel().unstack()
+        dataframe.columns = dataframe.columns.droplevel()
+        dataframe.columns.name = None
+        dataframe.index.name = "Realization"
 
-        def _flatten(_gen_kw_dict: Dict[str, Any]) -> Dict[str, float]:
-            result = {}
-            for group, parameters in _gen_kw_dict.items():
-                for key, value in parameters.items():
-                    combined = f"{group}:{key}"
-                    if keys is not None and combined not in keys:
-                        continue
-                    result[f"{group}:{key}"] = value
-            return result
-
-        for realization in realizations:
-            realization_data = {}
-            for key in self.get_gen_kw():
-                gen_kw_dict = fs.load_gen_kw_as_dict(key, realization)
-                realization_data.update(gen_kw_dict)
-            all_data[realization] = _flatten(realization_data)
-        gen_kw_df = DataFrame(all_data).T
-
-        gen_kw_df.index.name = "Realization"
-
-        return gen_kw_df
+        return dataframe
 
     def gather_gen_kw_data(
         self,
         ensemble: EnsembleReader,
         key: str,
-        realization_index: Optional[int] = None,
+        realization_index: Optional[int],
     ) -> DataFrame:
-        data = self.load_all_gen_kw_data(
-            ensemble,
-            [key],
-            realization_index=realization_index,
-        )
-        if key in data:
+        try:
+            data = self.load_all_gen_kw_data(
+                ensemble,
+                key.split(":")[0],
+                realization_index,
+            )
             return data[key].to_frame().dropna()
-        else:
+        except KeyError:
             return DataFrame()
 
     def load_all_summary_data(

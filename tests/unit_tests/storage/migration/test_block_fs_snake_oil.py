@@ -67,10 +67,10 @@ def test_migrate_gen_kw(data, ensemble, parameter, ens_config):
     for param in ens_config.parameters:
         expect_names = list(data[f"{group_root}/{param}"]["name"])
         expect_array = np.array(data[f"{group_root}/{param}"]["standard_normal"])
-        actual_array, actual_names = ensemble.load_gen_kw_realization(param, 0)
+        actual = ensemble.load_parameters(param, 0)
 
-        assert expect_names == actual_names, param
-        assert (expect_array == actual_array).all(), param
+        assert expect_names == list(actual["names"]), param
+        assert (expect_array == actual).all(), param
 
 
 def test_migrate_summary(data, ensemble, forecast, time_map):
@@ -124,10 +124,10 @@ def test_migrate_case(data, storage, enspath, ens_config):
         for param in ens_config.parameters:
             expect_names = list(var[f"GEN_KW/{param}"]["name"])
             expect_array = np.array(var[f"GEN_KW/{param}"]["standard_normal"])
-            actual_array, actual_names = ensemble.load_gen_kw_realization(param, index)
+            actual = ensemble.load_parameters(param, index)
 
-            assert expect_names == actual_names, param
-            assert (expect_array == actual_array).all(), param
+            assert expect_names == list(actual["names"]), param
+            assert (expect_array == actual).all(), param
 
         # Compare GEN_DATAs
         for key in set(var["GEN_DATA"].variables) - set(var["GEN_DATA"].dimensions):

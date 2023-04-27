@@ -299,10 +299,12 @@ def _migrate_gen_kw(
         assert isinstance(config, GenKwConfig)
 
         priors = config.get_priors()
-        data = data_file.load(block, len(priors))
-        ensemble.save_gen_kw(
-            block.name,
-            [x["key"] for x in priors],
-            block.realization_index,
-            data,
+        array = data_file.load(block, len(priors))
+        dataset = xr.Dataset(
+            {
+                "values": ("names", array),
+                "transformed_values": ("names", config.transform(array)),
+                "names": [x["key"] for x in priors],
+            }
         )
+        ensemble.save_parameters(block.name, block.realization_index, dataset)

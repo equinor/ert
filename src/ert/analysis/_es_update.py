@@ -221,14 +221,18 @@ def _save_temp_storage_to_disk(
         config_node = ensemble_config.parameter_configs[key]
         for i, realization in enumerate(iens_active_index):
             if isinstance(config_node, GenKwConfig):
-                parameter_keys = list(config_node)
                 assert isinstance(matrix, np.ndarray)
-                target_fs.save_gen_kw(
-                    key,
-                    parameter_keys,
-                    realization,
-                    matrix[:, i],
+                dataset = xr.Dataset(
+                    {
+                        "values": ("names", matrix[:, i]),
+                        "transformed_values": (
+                            "names",
+                            config_node.transform(matrix[:, i]),
+                        ),
+                        "names": list(config_node),
+                    }
                 )
+                target_fs.save_parameters(key, realization, dataset)
             elif isinstance(config_node, SurfaceConfig):
                 _matrix = temp_storage.get_xr_array(key, i)
                 assert isinstance(_matrix, xr.DataArray)
@@ -255,7 +259,7 @@ def _create_temporary_parameter_storage(
         matrix: Union[npt.NDArray[np.double], xr.DataArray]
         if isinstance(config_node, GenKwConfig):
             t = time.perf_counter()
-            matrix = source_fs.load_gen_kw(key, iens_active_index)
+            matrix = source_fs.load_parameters(key, iens_active_index).values.T
             t_genkw += time.perf_counter() - t
         elif isinstance(config_node, SurfaceConfig):
             t = time.perf_counter()

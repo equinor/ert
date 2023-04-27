@@ -35,7 +35,7 @@ def create_runpath(
     *,
     ensemble: Optional[EnsembleAccessor] = None,
     iteration=0,
-):
+) -> Tuple[EnKFMain, EnsembleAccessor]:
     active_mask = [True] if active_mask is None else active_mask
     ert_config = ErtConfig.from_file(config)
     ert = EnKFMain(ert_config)
@@ -304,57 +304,6 @@ def test_surface_param(
                 fs.load_parameters("MY_PARAM", 0)
 
 
-@pytest.mark.parametrize(
-    "config_str",
-    [
-        "SURFACE MY_PARAM OUTPUT_FILE:surf.irap   INIT_FILES:surf%d.irap   BASE_SURFACE:surf0.irap",  # noqa
-    ],
-)
-def test_copy_case(
-    tmpdir,
-    storage,
-    config_str,
-):
-    with tmpdir.as_cwd():
-        config = dedent(
-            """
-        JOBNAME my_name%d
-        NUM_REALIZATIONS 10
-        """
-        )
-        config += config_str
-        expect_surface = Surface(
-            nx=2, ny=2, xinc=1, yinc=1, xstart=1, ystart=1, angle=0
-        )
-        for i in range(4):
-            expect_surface[i] = float(i)
-        expect_surface.write("surf.irap")
-        for i in range(10):
-            expect_surface.write(f"surf{i}.irap")
-
-        with open("config.ert", "w", encoding="utf-8") as fh:
-            fh.writelines(config)
-        ert, fs = create_runpath(
-            storage, "config.ert", active_mask=[True for _ in range(10)]
-        )
-
-        # Assert that the data has been internalised to storage
-        new_fs = storage.create_ensemble(
-            storage.create_experiment(),
-            name="copy",
-            ensemble_size=ert.getEnsembleSize(),
-        )
-        fs.copy_from_case(
-            new_fs,
-            ["MY_PARAM"],
-            [x in range(5) for x in range(10)],
-        )
-        arr_old = fs.load_parameters("MY_PARAM", [0, 2, 3]).values
-
-        arr_new = new_fs.load_parameters("MY_PARAM", [0, 2, 3]).values
-        assert np.array_equal(arr_old, arr_new)
-
-
 @pytest.mark.integration_test
 @pytest.mark.parametrize("load_forward_init", [True, False])
 def test_gen_kw_forward_init(tmpdir, storage, load_forward_init):
@@ -387,11 +336,10 @@ def test_gen_kw_forward_init(tmpdir, storage, load_forward_init):
             ):
                 create_runpath(storage, "config.ert")
         else:
-            ert, fs = create_runpath(storage, "config.ert")
+            _, fs = create_runpath(storage, "config.ert")
             assert Path("simulations/realization-0/iter-0/kw.txt").exists()
-            facade = LibresFacade(ert)
-            df = facade.load_all_gen_kw_data(fs)
-            assert df["KW_NAME:MY_KEYWORD"][0] == 1.31
+            value = fs.load_parameters("KW_NAME", 0).sel(names="MY_KEYWORD").values
+            assert value == 1.31
 
 
 @pytest.mark.parametrize(
@@ -478,9 +426,9 @@ def test_that_first_three_parameters_sampled_snapshot(tmpdir, storage):
         with open("prior.txt", mode="w", encoding="utf-8") as fh:
             fh.writelines("MY_KEYWORD NORMAL 0 1")
         _, fs = create_runpath(storage, "config.ert", [True] * 3)
-        prior = fs.load_gen_kw("KW_NAME", list(range(3)))
-        expected = [-0.8814228, 1.5847818, 1.009956]
-        np.testing.assert_almost_equal(prior, np.array([expected]))
+        prior = fs.load_parameters("KW_NAME", range(3)).values.ravel()
+        expected = np.array([-0.8814228, 1.5847818, 1.009956])
+        np.testing.assert_almost_equal(prior, expected)
 
 
 @pytest.mark.parametrize(
@@ -546,9 +494,9 @@ def test_that_sampling_is_fixed_from_name(
         key_hash = sha256(b"1234" + b"KW_NAME:MY_KEYWORD")
         seed = np.frombuffer(key_hash.digest(), dtype="uint32")
         expected = np.random.default_rng(seed).standard_normal(num_realisations)
-        assert LibresFacade(ert).gather_gen_kw_data(
-            fs, "KW_NAME:MY_KEYWORD"
-        ).values.flatten().tolist() == list(expected)
+        assert fs.load_parameters("KW_NAME").sel(
+            names="MY_KEYWORD"
+        ).values.ravel().tolist() == list(expected)
 
 
 @pytest.mark.parametrize(
@@ -597,7 +545,6 @@ def test_that_sub_sample_maintains_order(tmpdir, storage, mask, expected):
 
         ert_config = ErtConfig.from_file("config.ert")
         ert = EnKFMain(ert_config)
-        facade = LibresFacade(ert)
 
         fs = storage.create_ensemble(
             storage.create_experiment(
@@ -614,8 +561,9 @@ def test_that_sub_sample_maintains_order(tmpdir, storage, mask, expected):
         ert.sample_prior(run_context.sim_fs, run_context.active_realizations)
 
         assert (
-            facade.gather_gen_kw_data(fs, "KW_NAME:MY_KEYWORD")
-            .values.flatten()
+            fs.load_parameters("KW_NAME")
+            .sel(names="MY_KEYWORD")
+            .values.ravel()
             .tolist()
             == expected
         )

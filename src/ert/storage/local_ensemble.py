@@ -2,23 +2,11 @@ from __future__ import annotations
 
 import json
 import logging
-import math
-import shutil
 from datetime import datetime
 from functools import lru_cache
 from multiprocessing.pool import ThreadPool
 from pathlib import Path
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Dict,
-    List,
-    Literal,
-    Optional,
-    Sequence,
-    Tuple,
-    Union,
-)
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Sequence, Tuple, Union
 from uuid import UUID
 
 import numpy as np
@@ -26,7 +14,6 @@ import xarray as xr
 from pydantic import BaseModel
 
 from ert._c_wrappers.enkf.config.field_config import field_transform
-from ert._c_wrappers.enkf.config.gen_kw_config import PRIOR_FUNCTIONS
 from ert._c_wrappers.enkf.enums import RealizationStateEnum
 from ert._c_wrappers.enkf.time_map import TimeMap
 from ert.callbacks import forward_model_ok
@@ -175,7 +162,7 @@ class LocalEnsembleReader:
 
     @property
     def is_initalized(self) -> bool:
-        return self.has_parameters()
+        return RealizationStateEnum.STATE_INITIALIZED in self.state_map or self.has_data
 
     @property
     def has_data(self) -> bool:
@@ -205,37 +192,6 @@ class LocalEnsembleReader:
         """
         return [i for i, s in enumerate(self._state_map) if s == state]
 
-    def load_gen_kw_as_dict(
-        self, key: str, realization: int
-    ) -> Dict[str, Dict[str, float]]:
-        data, keys = self.load_gen_kw_realization(key, realization)
-        priors = {p["key"]: p for p in self.experiment.gen_kw_info[key]}
-
-        transformed = {
-            parameter_key: PRIOR_FUNCTIONS[priors[parameter_key]["function"]](
-                value, list(priors[parameter_key]["parameters"].values())
-            )
-            for parameter_key, value in zip(keys, data)
-        }
-
-        result = {key: transformed}
-
-        log10 = {
-            parameter_key: math.log(value, 10)
-            for parameter_key, value in transformed.items()
-            if "LOG" in priors[parameter_key]["function"]
-        }
-        if log10:
-            result.update({f"LOG10_{key}": log10})
-        return result
-
-    def load_gen_kw(self, key: str, realizations: List[int]) -> npt.NDArray[np.double]:
-        result = []
-        for realization in realizations:
-            data, _ = self.load_gen_kw_realization(key, realization)
-            result.append(data)
-        return np.stack(result).T
-
     def load_ext_param(self, key: str, realization: int) -> Any:
         input_path = self.mount_point / f"realization-{realization}" / f"{key}.json"
         if not input_path.exists():
@@ -262,39 +218,30 @@ class LocalEnsembleReader:
     def _load_dataset(
         self,
         group: str,
-        realizations: Union[int, Sequence[int]],
+        realizations: Union[int, Sequence[int], None],
     ) -> xr.Dataset:
         if isinstance(realizations, int):
-            return self._load_single_dataset(group, realizations)
+            return self._load_single_dataset(group, realizations).isel(
+                realizations=0, drop=True
+            )
 
-        datasets = [self._load_single_dataset(group, i) for i in realizations]
+        if realizations is None:
+            datasets = [
+                xr.open_dataset(p, engine="scipy")
+                for p in sorted(self.mount_point.glob(f"realization-*/{group}"))
+            ]
+        else:
+            datasets = [self._load_single_dataset(group, i) for i in realizations]
         return xr.combine_nested(datasets, "realizations")
 
     def load_parameters(
-        self, group: str, realizations: Union[int, Sequence[int]]
+        self,
+        group: str,
+        realizations: Union[int, Sequence[int], None] = None,
+        *,
+        var: str = "values",
     ) -> xr.DataArray:
-        return self._load_dataset(group, realizations)["values"]
-
-    def has_parameters(self) -> bool:
-        """
-        Checks if a parameter file has been created
-        """
-        realization_folders = list(self.mount_point.glob("realization-*"))
-        if not realization_folders:
-            return False
-        return (realization_folders[0] / "gen-kw.nc").exists()
-
-    def load_gen_kw_realization(
-        self, key: str, realization: int
-    ) -> Tuple[npt.NDArray[np.double], List[str]]:
-        input_file = self.mount_point / f"realization-{realization}" / "gen-kw.nc"
-        if not input_file.exists():
-            raise KeyError(f"Unable to load GEN_KW for key: {key}")
-        with xr.open_dataset(input_file, engine="scipy") as ds_disk:
-            np_data = ds_disk[key].to_numpy()
-            keys = list(ds_disk[key][f"{key}_keys"].values)
-
-        return np_data, keys
+        return self._load_dataset(group, realizations)[var]
 
     @lru_cache
     def load_response(self, key: str, realizations: Tuple[int, ...]) -> xr.Dataset:
@@ -443,72 +390,6 @@ class LocalEnsembleAccessor(LocalEnsembleReader):
         with open(output_path / f"{key}.json", "w", encoding="utf-8") as f:
             json.dump(data, f)
 
-    def save_parameters(
-        self, group: str, realization: int, dataset: xr.DataArray
-    ) -> None:
-        output_path = self.mount_point / f"realization-{realization}" / group
-        output_path.parent.mkdir(exist_ok=True)
-        dataset.expand_dims(realizations=[realization]).to_netcdf(
-            output_path,
-            engine="scipy",
-        )
-        self.update_realization_state(
-            realization,
-            [RealizationStateEnum.STATE_UNDEFINED],
-            RealizationStateEnum.STATE_INITIALIZED,
-        )
-
-    def copy_from_case(
-        self, other: LocalEnsembleAccessor, nodes: List[str], active: List[bool]
-    ) -> None:
-        """
-        This copies parameters from self into other, checking if nodes exists
-        in self before performing copy.
-        """
-        self._copy_parameter_files(other, nodes, [i for i, b in enumerate(active) if b])
-
-    def _copy_parameter_files(
-        self,
-        to: LocalEnsembleAccessor,
-        parameter_keys: List[str],
-        realizations: List[int],
-    ) -> None:
-        """
-        Copies selected parameter files from one storage to another.
-        Filters on realization and parameter keys
-        """
-
-        for f in ["gen-kw-priors.json"]:
-            if not (self.mount_point / f).exists():
-                continue
-            shutil.copy(
-                src=self.mount_point / f,
-                dst=to.mount_point / f,
-            )
-
-        for realization_folder in self.mount_point.glob("realization-*"):
-            files_to_copy = []
-            realization = int(str(realization_folder).rsplit("-", maxsplit=1)[-1])
-            if realization in realizations:
-                for parameter_file in realization_folder.iterdir():
-                    base_name = str(parameter_file.stem)
-                    if (
-                        base_name in parameter_keys
-                        or parameter_file.name == "gen-kw.nc"
-                        or parameter_file.name == "parameters.nc"
-                    ):
-                        files_to_copy.append(parameter_file.name)
-
-            if not files_to_copy:
-                continue
-
-            Path.mkdir(to.mount_point / realization_folder.stem)
-            for f in files_to_copy:
-                shutil.copy(
-                    src=self.mount_point / realization_folder.stem / f,
-                    dst=to.mount_point / realization_folder.stem / f,
-                )
-
     def load_from_run_path(
         self,
         ensemble_size: int,
@@ -540,24 +421,39 @@ class LocalEnsembleAccessor(LocalEnsembleReader):
 
         return loaded
 
-    def save_gen_kw(
-        self,
-        parameter_name: str,
-        parameter_keys: List[str],
-        realization: int,
-        data: npt.NDArray[np.double],
+    def save_parameters(
+        self, group: str, realization: int, dataset: Union[xr.DataArray, xr.Dataset]
     ) -> None:
-        ds = xr.Dataset(
-            {parameter_name: ((f"{parameter_name}_keys"), data)},
-            coords={f"{parameter_name}_keys": parameter_keys},
-        )
-        output_path = self.mount_point / f"realization-{realization}"
-        Path.mkdir(output_path, exist_ok=True)
-        mode: Literal["a", "w"] = "a" if Path.exists(output_path / "gen-kw.nc") else "w"
-        ds.to_netcdf(output_path / "gen-kw.nc", mode=mode, engine="scipy")
+        """Create a parameter group
+
+        Args:
+            name: Name of the parameter group
+
+            realization_index: Which realization index this group belongs to
+
+            dataset: Dataset to save. One of the variables must be named
+                'value'. This will be used when flattening out the parameters
+                into a 1d-vector.
+
+        """
+        if isinstance(dataset, xr.DataArray):
+            dataset = dataset.to_dataset()
+
+        if "values" not in dataset.variables:
+            raise ValueError(
+                f"Dataset for parameter group '{group}' "
+                f"must contain a 'values' variable"
+            )
+
+        path = self.mount_point / f"realization-{realization}" / group
+        path.parent.mkdir(exist_ok=True)
+        dataset.expand_dims(realizations=[realization]).to_netcdf(path, engine="scipy")
         self.update_realization_state(
             realization,
-            [RealizationStateEnum.STATE_UNDEFINED],
+            [
+                RealizationStateEnum.STATE_UNDEFINED,
+                RealizationStateEnum.STATE_LOAD_FAILURE,
+            ],
             RealizationStateEnum.STATE_INITIALIZED,
         )
 

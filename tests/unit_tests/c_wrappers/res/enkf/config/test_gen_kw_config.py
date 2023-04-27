@@ -229,7 +229,7 @@ def test_gen_kw_is_log_or_not(
             Path("simulations/realization-0/iter-0/parameters.txt").read_text(
                 encoding="utf-8"
             ),
-        )
+        ), distribution
 
 
 @pytest.mark.parametrize(
