@@ -164,7 +164,7 @@ class GenKwConfig:
     def parse_transfer_function(param_string: str) -> TransferFunction:
         param_args = param_string.split()
 
-        TRANS_FUNC_ARGS: Final = {
+        TRANS_FUNC_ARGS: dict[str, List[str]] = {
             "NORMAL": ["MEAN", "STD"],
             "LOGNORMAL": ["MEAN", "STD"],
             "TRUNCATED_NORMAL": ["MEAN", "STD", "MIN", "MAX"],
