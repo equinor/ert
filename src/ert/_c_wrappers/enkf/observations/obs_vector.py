@@ -39,9 +39,6 @@ class ObsVector(BaseCClass):
     _get_next_active_step = ResPrototype(
         "int   obs_vector_get_next_active_step(obs_vector, int)"
     )
-    _get_config_node = ResPrototype(
-        "enkf_config_node_ref obs_vector_get_config_node(obs_vector)"
-    )
     _get_obs_key = ResPrototype("char*  obs_vector_get_obs_key(obs_vector)")
 
     def __init__(
@@ -134,9 +131,6 @@ class ObsVector(BaseCClass):
         assert isinstance(node, SummaryObservation)
         node.convertToCReference(self)
         self._install_node(index, node.from_param(node))
-
-    def getConfigNode(self) -> EnkfConfigNode:
-        return self._get_config_node().setParent(self)
 
     def free(self):
         self._free()
