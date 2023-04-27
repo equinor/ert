@@ -15,7 +15,6 @@
 #include <ert/enkf/enkf_defaults.hpp>
 #include <ert/enkf/enkf_obs.hpp>
 #include <ert/enkf/ensemble_config.hpp>
-#include <ert/enkf/gen_kw_config.hpp>
 #include <ert/logging.hpp>
 
 namespace fs = std::filesystem;
@@ -49,24 +48,8 @@ namespace fs = std::filesystem;
 
 */
 
-ensemble_config_type *
-ensemble_config_alloc_full(const char *gen_kw_format_string) {
+ensemble_config_type *ensemble_config_alloc_full() {
     ensemble_config_type *ensemble_config = new ensemble_config_type();
-
-    if (strcmp(gen_kw_format_string, DEFAULT_GEN_KW_TAG_FORMAT) != 0) {
-        stringlist_type *gen_kw_keys =
-            ensemble_config_alloc_keylist_from_impl_type(ensemble_config,
-                                                         GEN_KW);
-        for (int i = 0; i < stringlist_get_size(gen_kw_keys); i++) {
-            enkf_config_node_type *config_node = ensemble_config_get_node(
-                ensemble_config, stringlist_iget(gen_kw_keys, i));
-            gen_kw_config_update_tag_format(
-                (gen_kw_config_type *)enkf_config_node_get_ref(config_node),
-                gen_kw_format_string); // CXX_CAST_ERROR
-        }
-        stringlist_free(gen_kw_keys);
-    }
-
     return ensemble_config;
 }
 

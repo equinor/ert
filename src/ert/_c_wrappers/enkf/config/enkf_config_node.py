@@ -10,7 +10,6 @@ from ert._c_wrappers.enkf.enums import ErtImplType
 
 from .ext_param_config import ExtParamConfig
 from .gen_data_config import GenDataConfig
-from .gen_kw_config import GenKwConfig
 from .summary_config import SummaryConfig
 
 if TYPE_CHECKING:
@@ -56,14 +55,6 @@ class EnkfConfigNode(BaseCClass):
         bind=False,
     )
 
-    _alloc_gen_kw_full = ResPrototype(
-        "enkf_config_node_obj enkf_config_node_alloc_GEN_KW_full(char*, \
-                                                                 char*, \
-                                                                 char*, \
-                                                                 char*)",
-        bind=False,
-    )
-
     def __init__(self):
         raise NotImplementedError("Class can not be instantiated directly!")
 
@@ -75,9 +66,6 @@ class EnkfConfigNode(BaseCClass):
 
     def getDataModelConfig(self) -> GenDataConfig:
         return GenDataConfig.createCReference(self._get_ref(), parent=self)
-
-    def getKeywordModelConfig(self) -> GenKwConfig:
-        return GenKwConfig.createCReference(self._get_ref(), parent=self)
 
     def getSummaryModelConfig(self) -> SummaryConfig:
         return SummaryConfig.createCReference(self._get_ref(), parent=self)
@@ -154,24 +142,6 @@ class EnkfConfigNode(BaseCClass):
 
         return config_node
 
-    # GEN KW FULL creation
-    @classmethod
-    def create_gen_kw(
-        cls,
-        key,
-        template_file,
-        parameter_file,
-        gen_kw_format,
-    ):
-        config_node = cls._alloc_gen_kw_full(
-            key,
-            gen_kw_format,
-            template_file,
-            parameter_file,
-        )
-
-        return config_node
-
     def free(self):
         self._free()
 
@@ -183,13 +153,11 @@ class EnkfConfigNode(BaseCClass):
 
     def getModelConfig(
         self,
-    ) -> Union[GenDataConfig, GenKwConfig, SummaryConfig, ExtParamConfig]:
+    ) -> Union[GenDataConfig, SummaryConfig, ExtParamConfig]:
         implementation_type = self.getImplementationType()
 
         if implementation_type == ErtImplType.GEN_DATA:
             return self.getDataModelConfig()
-        elif implementation_type == ErtImplType.GEN_KW:
-            return self.getKeywordModelConfig()
         elif implementation_type == ErtImplType.SUMMARY:
             return SummaryConfig.createCReference(
                 self.getPointerReference(), parent=self
@@ -220,8 +188,6 @@ class EnkfConfigNode(BaseCClass):
             [
                 self.getImplementationType() == ErtImplType.GEN_DATA
                 and self.getDataModelConfig() != other.getDataModelConfig(),
-                self.getImplementationType() == ErtImplType.GEN_KW
-                and self.getKeywordModelConfig() != other.getKeywordModelConfig(),
                 self.getImplementationType() == ErtImplType.SUMMARY
                 and self.getSummaryModelConfig() != other.getSummaryModelConfig(),
             ]

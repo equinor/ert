@@ -12,6 +12,8 @@ from jinja2 import Template
 
 from ert._c_wrappers.analysis.configuration import UpdateConfiguration
 from ert._c_wrappers.enkf.analysis_config import AnalysisConfig
+from ert._c_wrappers.enkf.config.enkf_config_node import EnkfConfigNode
+from ert._c_wrappers.enkf.config.gen_kw_config import GenKwConfig
 from ert._c_wrappers.enkf.config.parameter_config import ParameterConfig
 from ert._c_wrappers.enkf.enkf_obs import EnkfObs
 from ert._c_wrappers.enkf.ensemble_config import EnsembleConfig
@@ -23,11 +25,9 @@ from ert._c_wrappers.enkf.queue_config import QueueConfig
 from ert._c_wrappers.enkf.runpaths import Runpaths
 from ert._c_wrappers.job_queue import WorkflowRunner
 from ert._c_wrappers.util.substitution_list import SubstitutionList
-from ert._clib import trans_func  # noqa: no_type_check
 
 if TYPE_CHECKING:
     from ert._c_wrappers.enkf import ErtConfig
-    from ert._c_wrappers.enkf.config import GenKwConfig
     from ert.storage import EnsembleAccessor, EnsembleReader, StorageAccessor
 
 logger = logging.getLogger(__name__)
@@ -158,26 +158,29 @@ def _generate_parameter_files(
         fs: EnsembleReader from which to load parameter data
     """
     exports: Dict[str, Dict[str, float]] = {}
+
     for key in ens_config.parameters:
         node = ens_config[key]
-        type_ = node.getImplementationType()
-        outfile = node.output_file
 
-        if type_ == ErtImplType.GEN_KW:
-            _generate_gen_kw_parameter_file(
-                fs,
-                iens,
-                node.getKeywordModelConfig(),
-                outfile,
-                Path(run_path),
-                exports,
-            )
+        if key in ens_config.get_keylist_gen_kw():
+            if isinstance(node, GenKwConfig):
+                _generate_gen_kw_parameter_file(
+                    fs,
+                    iens,
+                    node,
+                    node.output_file,
+                    Path(run_path),
+                    exports,
+                )
             continue
 
+        type_ = node.getImplementationType()
+
         if type_ == ErtImplType.EXT_PARAM:
-            _generate_ext_parameter_file(
-                fs, iens, node.getKey(), outfile, Path(run_path)
-            )
+            if isinstance(node, EnkfConfigNode):
+                _generate_ext_parameter_file(
+                    fs, iens, node.getKey(), node.output_file, Path(run_path)
+                )
             continue
         if isinstance(node, ParameterConfig):
             # For the first iteration we do not write the parameter
@@ -368,23 +371,22 @@ class EnKFMain:
             if isinstance(config_node, ParameterConfig):
                 for _, realization_nr in enumerate(active_realizations):
                     config_node.load(Path(), realization_nr, ensemble)
+            elif isinstance(config_node, GenKwConfig):
+                keys = list(config_node)
+                init_file = config_node.forward_init_file
 
-            elif impl_type == ErtImplType.GEN_KW:
-                gen_kw_config = config_node.getKeywordModelConfig()
-                keys = list(gen_kw_config)
-                init_file = self.ensembleConfig()[parameter].forward_init_file
                 if init_file:
                     logging.info(
                         f"Reading from init file {init_file}" + f" for {parameter}"
                     )
-                    parameter_values = gen_kw_config.values_from_files(
+                    parameter_values = config_node.values_from_files(
                         active_realizations,
                         init_file,
                         keys,
                     )
                 else:
                     logging.info(f"Sampling parameter {parameter}")
-                    parameter_values = gen_kw_config.sample_values(
+                    parameter_values = config_node.sample_values(
                         parameter,
                         keys,
                         str(self._global_seed.entropy),
@@ -480,6 +482,3 @@ class EnKFMain:
     ) -> None:
         for workflow in self.ert_config.hooked_workflows[runtime]:
             WorkflowRunner(workflow, self, storage, ensemble).run_blocking()
-
-
-__all__ = ["trans_func"]

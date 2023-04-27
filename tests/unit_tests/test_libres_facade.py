@@ -237,6 +237,26 @@ def test_gen_kw_keys(facade):
     assert "SNAKE_OIL_PARAM:BPR_555_PERSISTENCE" in facade.gen_kw_keys()
 
 
+@pytest.mark.usefixtures("use_tmpdir")
+def test_gen_kw_log_appended_extra():
+    with open("config_file.ert", "w", encoding="utf-8") as fout:
+        fout.write(
+            dedent(
+                """
+        NUM_REALIZATIONS 1
+        GEN_KW KW_NAME template.txt kw.txt prior.txt
+        """
+            )
+        )
+    with open("template.txt", "w", encoding="utf-8") as fh:
+        fh.writelines("MY_KEYWORD <MY_KEYWORD>")
+    with open("prior.txt", "w", encoding="utf-8") as fh:
+        fh.writelines("MY_KEYWORD LOGNORMAL 1 2")
+
+    facade = LibresFacade.from_config_file("config_file.ert")
+    assert len(facade.gen_kw_keys()) == 2
+
+
 def test_gen_kw_priors(facade):
     priors = facade.gen_kw_priors()
     assert len(priors["SNAKE_OIL_PARAM"]) == 10

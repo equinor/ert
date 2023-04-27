@@ -1,16 +1,14 @@
 from __future__ import annotations
 
+import math
 import os
 from hashlib import sha256
-from typing import TYPE_CHECKING, Dict, List, TypedDict
+from typing import TYPE_CHECKING, Callable, Dict, List, Tuple, TypedDict
 
 import numpy as np
 import pandas as pd
-from cwrap import BaseCClass
-from ecl.util.util import StringList
 
-from ert._c_wrappers import ResPrototype
-from ert._clib import gen_kw_config
+from ert.parsing.config_errors import ConfigValidationError
 
 if TYPE_CHECKING:
     import numpy.typing as npt
@@ -22,102 +20,75 @@ class PriorDict(TypedDict):
     parameters: Dict[str, float]
 
 
-class GenKwConfig(BaseCClass):
+class GenKwConfig:
     TYPE_NAME = "gen_kw_config"
-
-    _free = ResPrototype("void  gen_kw_config_free( gen_kw_config )")
-    _alloc_empty = ResPrototype(
-        "void* gen_kw_config_alloc_empty( char*, char* )", bind=False
-    )
-    _get_template_file = ResPrototype(
-        "char* gen_kw_config_get_template_file(gen_kw_config)"
-    )
-    _set_template_file = ResPrototype(
-        "void  gen_kw_config_set_template_file(gen_kw_config , char*)"
-    )
-    _get_parameter_file = ResPrototype(
-        "char* gen_kw_config_get_parameter_file(gen_kw_config)"
-    )
-    _set_parameter_file = ResPrototype(
-        "void  gen_kw_config_set_parameter_file(gen_kw_config, char*)"
-    )
-    _alloc_name_list = ResPrototype(
-        "stringlist_obj gen_kw_config_alloc_name_list(gen_kw_config)"
-    )
-    _should_use_log_scale = ResPrototype(
-        "bool  gen_kw_config_should_use_log_scale(gen_kw_config, int)"
-    )
-    _get_key = ResPrototype("char* gen_kw_config_get_key(gen_kw_config)")
-    _get_tag_fmt = ResPrototype("char* gen_kw_config_get_tag_fmt(gen_kw_config)")
-    _size = ResPrototype("int   gen_kw_config_get_data_size(gen_kw_config)")
-    _iget_name = ResPrototype("char* gen_kw_config_iget_name(gen_kw_config, int)")
-    _get_function_type = ResPrototype(
-        "char* gen_kw_config_iget_function_type(gen_kw_config, int)"
-    )
-    _get_function_parameter_names = ResPrototype(
-        "stringlist_ref gen_kw_config_iget_function_parameter_names(gen_kw_config, int)"
-    )
-
-    _transform = ResPrototype(
-        "double gen_kw_config_transform(gen_kw_config, int, double)"  # noqa
-    )
 
     def __init__(
         self, key: str, template_file: str, parameter_file: str, tag_fmt: str = "<%s>"
     ):
+        errors = []
+
         if not os.path.isfile(template_file):
-            raise IOError(f"No such file:{template_file}")
+            errors.append(
+                ConfigValidationError(f"No such template file: {template_file}")
+            )
 
         if not os.path.isfile(parameter_file):
-            raise IOError(f"No such file:{parameter_file}")
-
-        c_ptr = self._alloc_empty(key, tag_fmt)
-        if c_ptr:
-            super().__init__(c_ptr)
-        else:
-            raise ValueError(
-                "Could not instantiate GenKwConfig with "
-                f'key="{key}" and tag_fmt="{tag_fmt}"'
+            errors.append(
+                ConfigValidationError(f"No such parameter file: {template_file}")
             )
-        self._set_parameter_file(parameter_file)
-        self._set_template_file(template_file)
-        self.__str__ = self.__repr__
 
-    def getTemplateFile(self) -> os.PathLike[str]:
-        path = self._get_template_file()
+        if errors:
+            raise ConfigValidationError.from_collected(errors)
+
+        self.name = key
+        self._parameter_file = parameter_file
+        self._template_file = template_file
+        self._tag_format = tag_fmt
+        self._transfer_functions = []
+        self.forward_init = ""
+        self.output_file = ""
+        self.forward_init_file = ""
+
+        with open(parameter_file, "r", encoding="utf-8") as file:
+            for item in file:
+                item = item.rsplit("--")[0]  # remove comments
+
+                if item.strip():  # only lines with content
+                    self._transfer_functions.append(self.parse_transfer_function(item))
+
+    def getTemplateFile(self) -> str:
+        path = self._template_file
         return None if path is None else os.path.abspath(path)
 
-    def getParameterFile(self):
-        path = self._get_parameter_file()
+    def getParameterFile(self) -> str:
+        path = self._parameter_file
         return None if path is None else os.path.abspath(path)
 
-    def getKeyWords(self) -> StringList:
-        return self._alloc_name_list()
-
-    def shouldUseLogScale(self, index: int) -> bool:
-        return self._should_use_log_scale(index)
-
-    def free(self):
-        self._free()
+    def shouldUseLogScale(self, keyword: str) -> bool:
+        for tf in self._transfer_functions:
+            if tf.name == keyword:
+                return tf._use_log
+        return False
 
     def __repr__(self):
-        return (
-            f'GenKwConfig(key = "{self.getKey()}", '
-            f'tag_fmt = "{self.tag_fmt}") at 0x{self._address():x}'
-        )
+        return f'GenKwConfig(key = "{self.getKey()}", ' f'tag_fmt = "{self.tag_fmt}")'
 
     def getKey(self) -> str:
-        return self._get_key()
+        return self.name
+
+    def getImplementationType(self):
+        return self
 
     @property
     def tag_fmt(self):
-        return self._get_tag_fmt()
+        return self._tag_format
 
     def __len__(self):
-        return self._size()
+        return len(self._transfer_functions)
 
     def __getitem__(self, index: int) -> str:
-        return self._iget_name(index)
+        return self._transfer_functions[index].name
 
     def __iter__(self):
         index = 0
@@ -137,24 +108,21 @@ class GenKwConfig(BaseCClass):
 
         return True
 
+    def getKeyWords(self) -> List[str]:
+        return [tf.name for tf in self._transfer_functions]
+
     def get_priors(self) -> List["PriorDict"]:
         priors: List["PriorDict"] = []
-        keys = self.getKeyWords()
-        for i, key in enumerate(keys):
-            function_type = self._get_function_type(i)
-            parameter_names = self._get_function_parameter_names(i)
-            parameter_values = gen_kw_config.get_function_parameter_values(self, i)
+        for tf in self._transfer_functions:
             priors.append(
                 {
-                    "key": key,
-                    "function": function_type,
-                    "parameters": dict(zip(parameter_names, parameter_values)),
+                    "key": tf.name,
+                    "function": tf.transfer_function_name,
+                    "parameters": tf.parameter_list,
                 }
             )
-        return priors
 
-    def transform(self, index: int, value: float) -> float:
-        return self._transform(index, value)
+        return priors
 
     @staticmethod
     def values_from_files(
@@ -200,3 +168,178 @@ class GenKwConfig(BaseCClass):
                 values = values[active_realizations]
             parameter_values.append(values)
         return np.array(parameter_values)
+
+    @staticmethod
+    def parse_transfer_function(param_string: str) -> TransferFunction:
+        param_args = param_string.split()
+
+        TRANS_FUNC_ARGS: dict[str, List[str]] = {
+            "NORMAL": ["MEAN", "STD"],
+            "LOGNORMAL": ["MEAN", "STD"],
+            "TRUNCATED_NORMAL": ["MEAN", "STD", "MIN", "MAX"],
+            "TRIANGULAR": ["XMIN", "XMODE", "XMAX"],
+            "UNIFORM": ["MIN", "MAX"],
+            "DUNIF": ["STEPS", "MIN", "MAX"],
+            "ERRF": ["MIN", "MAX", "SKEWNESS", "WIDTH"],
+            "DERRF": ["STEPS", "MIN", "MAX", "SKEWNESS", "WIDTH"],
+            "LOGUNIF": ["MIN", "MAX"],
+            "CONST": ["VALUE"],
+            "RAW": [],
+        }
+
+        if len(param_args) > 1:
+            func_name = param_args[0]
+            param_func_name = param_args[1]
+
+            if (
+                param_func_name not in TRANS_FUNC_ARGS
+                or param_func_name not in PRIOR_FUNCTIONS
+            ):
+                raise ConfigValidationError(
+                    f"Unknown transfer function provided: {param_func_name}"
+                )
+
+            param_names = TRANS_FUNC_ARGS[param_func_name]
+
+            if len(param_args) - 2 != len(param_names):
+                raise ConfigValidationError(
+                    f"Incorrect number of values provided: {param_string}"
+                )
+
+            param_floats = []
+            for p in param_args[2:]:
+                try:
+                    param_floats.append(float(p))
+                except ValueError:
+                    raise ConfigValidationError(f"Unable to convert float number: {p}")
+
+            params = dict(zip(param_names, param_floats))
+
+            return TransferFunction(
+                func_name, param_func_name, params, PRIOR_FUNCTIONS[param_func_name]
+            )
+
+        else:
+            raise ConfigValidationError(
+                f"Too few instructions provided in: {param_string}"
+            )
+
+
+class TransferFunction:
+    name: str
+    transfer_function_name: str
+    param_list: List[Tuple[str, float]]
+    calc_func: Callable[[float, List[float]], float]
+    _use_log: bool = False
+
+    def __init__(self, name, transfer_function_name, param_list, calc_func) -> None:
+        self.name = name
+        self.transfer_function_name = transfer_function_name
+        self.calc_func = calc_func
+        self.parameter_list = param_list
+
+        if transfer_function_name in ["LOGNORMAL", "LOGUNIF"]:
+            self._use_log = True
+
+    @staticmethod
+    def trans_errf(x, arg: List[float]) -> float:
+        """
+        Width  = 1 => uniform
+        Width  > 1 => unimodal peaked
+        Width  < 1 => bimodal peaks
+        Skewness < 0 => shifts towards the left
+        Skewness = 0 => symmetric
+        Skewness > 0 => Shifts towards the right
+        The width is a relavant scale for the value of skewness.
+        """
+        _min, _max, _skew, _width = arg[0], arg[1], arg[2], arg[3]
+        y = 0.5 * (1 + math.erf((x + _skew) / (_width * math.sqrt(2.0))))
+        return _min + y * (_max - _min)
+
+    @staticmethod
+    def trans_const(_: float, arg: List[float]) -> float:
+        return arg[0]
+
+    @staticmethod
+    def trans_raw(x: float, _: List[float]) -> float:
+        return x
+
+    @staticmethod
+    def trans_derrf(x: float, arg: List[float]) -> float:
+        '''Observe that the argument of the shift should be \"+\"'''
+        _steps, _min, _max, _skew, _width = int(arg[0]), arg[1], arg[2], arg[3], arg[4]
+        y = math.floor(
+            _steps
+            * 0.5
+            * (1 + math.erf((x + _skew) / (_width * math.sqrt(2.0))))
+            / (_steps - 1)
+        )
+        return _min + y * (_max - _min)
+
+    @staticmethod
+    def trans_unif(x: float, arg: List[float]) -> float:
+        _min, _max = arg[0], arg[1]
+        y = 0.5 * (1 + math.erf(x / math.sqrt(2.0)))  # 0 - 1
+        return y * (_max - _min) + _min
+
+    @staticmethod
+    def trans_dunif(x: float, arg: List[float]) -> float:
+        _steps, _min, _max = int(arg[0]), arg[1], arg[2]
+        y = 0.5 * (1 + math.erf(x / math.sqrt(2.0)))  # 0 - 1
+        return (math.floor(y * _steps) / (_steps - 1)) * (_max - _min) + _min
+
+    @staticmethod
+    def trans_normal(x: float, arg: List[float]) -> float:
+        _mean, _std = arg[0], arg[1]
+        return x * _std + _mean
+
+    @staticmethod
+    def trans_truncated_normal(x: float, arg: List[float]) -> float:
+        _mean, _std, _min, _max = arg[0], arg[1], arg[2], arg[3]
+        y = x * _std + _mean
+        max(min(y, _max), _min)  # clamp
+        return y
+
+    @staticmethod
+    def trans_lognormal(x: float, arg: List[float]) -> float:
+        # mean is the expectation of log( y )
+        _mean, _std = arg[0], arg[1]
+        return math.exp(x * _std + _mean)
+
+    @staticmethod
+    def trans_logunif(x: float, arg: List[float]) -> float:
+        _log_min, _log_max = math.log(arg[0]), math.log(arg[1])
+        tmp = 0.5 * (1 + math.erf(x / math.sqrt(2.0)))  # 0 - 1
+        log_y = _log_min + tmp * (_log_max - _log_min)  # Shift according to max / min
+        return math.exp(log_y)
+
+    @staticmethod
+    def trans_triangular(x: float, arg: List[float]) -> float:
+        _xmin, _xmode, _xmax = arg[0], arg[1], arg[2]
+        inv_norm_left = (_xmax - _xmin) * (_xmode - _xmin)
+        inv_norm_right = (_xmax - _xmin) * (_xmax - _xmode)
+        ymode = (_xmode - _xmin) / (_xmax - _xmin)
+        y = 0.5 * (1 + math.erf(x / math.sqrt(2.0)))  # 0 - 1
+
+        if y < ymode:
+            return _xmin + math.sqrt(y * inv_norm_left)
+        else:
+            return _xmax - math.sqrt((1 - y) * inv_norm_right)
+
+    def calculate(self, x: float, arg: List[float]) -> float:
+        return self.calc_func(x, arg)
+
+
+PRIOR_FUNCTIONS: dict[str, Callable[[float, List[float]], float]] = {
+    "NORMAL": TransferFunction.trans_normal,
+    "LOGNORMAL": TransferFunction.trans_lognormal,
+    "TRUNCATED_NORMAL": TransferFunction.trans_truncated_normal,
+    "TRIANGULAR": TransferFunction.trans_triangular,
+    "UNIFORM": TransferFunction.trans_unif,
+    "DUNIF": TransferFunction.trans_dunif,
+    "ERRF": TransferFunction.trans_errf,
+    "DERRF": TransferFunction.trans_derrf,
+    "LOGUNIF": TransferFunction.trans_logunif,
+    "CONST": TransferFunction.trans_const,
+    "RAW": TransferFunction.trans_raw,
+}

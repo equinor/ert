@@ -16,8 +16,9 @@ from iterative_ensemble_smoother.experimental import (
 from pandas import DataFrame
 
 from ert._c_wrappers.enkf.config.field_config import Field
+from ert._c_wrappers.enkf.config.gen_kw_config import GenKwConfig
 from ert._c_wrappers.enkf.config.surface_config import SurfaceConfig
-from ert._c_wrappers.enkf.enums import ActiveMode, ErtImplType, RealizationStateEnum
+from ert._c_wrappers.enkf.enums import ActiveMode, RealizationStateEnum
 from ert._c_wrappers.enkf.row_scaling import RowScaling
 from ert._clib import update
 
@@ -157,9 +158,9 @@ def _save_temporary_storage_to_disk(
 ) -> None:
     for key, matrix in temporary_storage.items():
         config_node = ensemble_config.getNode(key)
-        if config_node.getImplementationType() == ErtImplType.GEN_KW:
-            gen_kw_config = config_node.getKeywordModelConfig()
-            parameter_keys = list(gen_kw_config)
+
+        if isinstance(config_node, GenKwConfig):
+            parameter_keys = list(ensemble_config.get_keyword_model_config(key))
             target_fs.save_gen_kw(
                 key,
                 parameter_keys,
@@ -174,7 +175,8 @@ def _save_temporary_storage_to_disk(
                 target_fs.save_field(key, realization, matrix[:, i], unmasked=True)
         else:
             raise NotImplementedError(
-                f"{config_node.getImplementationType()} is not supported"
+                f"{ensemble_config.getNode(key).getImplementationType()}"
+                " is not supported"
             )
 
 
@@ -186,7 +188,7 @@ def _create_temporary_parameter_storage(
     temporary_storage = {}
     for key in ensemble_config.parameters:
         config_node = ensemble_config.getNode(key)
-        if config_node.getImplementationType() == ErtImplType.GEN_KW:
+        if isinstance(config_node, GenKwConfig):
             matrix = source_fs.load_gen_kw(key, iens_active_index)
         elif isinstance(config_node, SurfaceConfig):
             matrix = source_fs.load_surface_data(key, iens_active_index)

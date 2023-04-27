@@ -26,10 +26,10 @@ def test_gen_kw_config():
     template_file = "template.txt"
     parameter_file = "parameters.txt"
     parameter_file_comments = "parameters_with_comments.txt"
-    with pytest.raises(IOError):
+    with pytest.raises(ConfigValidationError):
         conf = GenKwConfig("KEY", template_file, "does_not_exist")
 
-    with pytest.raises(IOError):
+    with pytest.raises(ConfigValidationError):
         conf = GenKwConfig("Key", "does_not_exist", parameter_file)
 
     conf = GenKwConfig("KEY", template_file, parameter_file)
@@ -181,10 +181,10 @@ def test_gen_kw_is_log_or_not(
         ert_config = ErtConfig.from_file("config.ert")
         ert = EnKFMain(ert_config)
 
-        node = ert.ensembleConfig().getNode("KW_NAME")
-        gen_kw_config = node.getModelConfig()
+        gen_kw_config = ert.ensembleConfig().get_keyword_model_config("KW_NAME")
         assert isinstance(gen_kw_config, GenKwConfig)
-        assert gen_kw_config.shouldUseLogScale(0) is expect_log
+        assert gen_kw_config.shouldUseLogScale("MY_KEYWORD") is expect_log
+        assert gen_kw_config.shouldUseLogScale("Non-existent-keyword") is False
         experiment_id = storage.create_experiment(
             parameters=ert_config.ensemble_config.parameter_configuration
         )
@@ -245,3 +245,146 @@ def test_gen_kw_distribution_errors(tmpdir, distribution, mean, std, error):
                     ErtConfig.from_file("config.ert")
         else:
             ErtConfig.from_file("config.ert")
+
+
+@pytest.mark.parametrize(
+    "params, error",
+    [
+        ("MYNAME NORMAL 0 1", None),
+        ("MYNAME LOGNORMAL 0 1", None),
+        ("MYNAME TRUNCATED_NORMAL 0 1 2 3", None),
+        ("MYNAME TRIANGULAR 0 1 2", None),
+        ("MYNAME UNIFORM 0 1", None),
+        ("MYNAME DUNIF 0 1 2", None),
+        ("MYNAME ERRF 0 1 2 3", None),
+        ("MYNAME DERRF 0 1 2 3 4", None),
+        ("MYNAME LOGUNIF 0 1", None),
+        ("MYNAME CONST 0", None),
+        ("MYNAME RAW", None),
+        ("MYNAME UNIFORM 0 1 2", "Incorrect number of values provided"),
+        ("MYNAME", "Too few instructions provided in"),
+        ("MYNAME RANDOM 0 1", "Unknown transfer function provided"),
+        ("MYNAME DERRF -0 1.12345 -2.3 3.14 10E-5", None),
+        ("MYNAME DERRF -0 -14 -2.544545 10E5 10E+5", None),
+        ("MYNAME CONST no-number", "Unable to convert float number"),
+        ("MYNAME      CONST    0", None),  # spaces
+        ("MYNAME\t\t\tCONST\t\t0", None),  # tabs
+    ],
+)
+def test_gen_kw_params_parsing(tmpdir, params, error):
+    with tmpdir.as_cwd():
+        if error:
+            with pytest.raises(ConfigValidationError, match=error):
+                GenKwConfig.parse_transfer_function(params)
+        else:
+            GenKwConfig.parse_transfer_function(params)
+
+
+@pytest.mark.parametrize(
+    "params, xinput, expected",
+    [
+        ("MYNAME TRIANGULAR 0 0.5 1.0", -1.0, 0.28165160565089725209),
+        ("MYNAME TRIANGULAR 0 0.5 1.0", 0.0, 0.50000000000000000000),
+        ("MYNAME TRIANGULAR 0 0.5 1.0", 0.3, 0.56291386557621880815),
+        ("MYNAME TRIANGULAR 0 0.5 1.0", 0.7, 0.65217558149040699700),
+        ("MYNAME TRIANGULAR 0 0.5 1.0", 1.0, 0.71834839434910269240),
+        ("MYNAME TRIANGULAR 0 1.0 4.0", -1.0, 0.7966310411513150456286),
+        ("MYNAME TRIANGULAR 0 1.0 4.0", 1.1, 2.72407181575270778882286),
+        ("MYNAME UNIFORM 0 1", -1.0, 0.15865525393145707422),
+        ("MYNAME UNIFORM 0 1", 0.0, 0.50000000000000000000),
+        ("MYNAME UNIFORM 0 1", 0.3, 0.61791142218895256377),
+        ("MYNAME UNIFORM 0 1", 0.7, 0.75803634777692696645),
+        ("MYNAME UNIFORM 0 1", 1.0, 0.84134474606854292578),
+        ("MYNAME DUNIF 5 1 5", -1.0, 1.00000000000000000000),
+        ("MYNAME DUNIF 5 1 5", 0.0, 3.00000000000000000000),
+        ("MYNAME DUNIF 5 1 5", 0.3, 4.00000000000000000000),
+        ("MYNAME DUNIF 5 1 5", 0.7, 4.00000000000000000000),
+        ("MYNAME DUNIF 5 1 5", 1.0, 5.00000000000000000000),
+        ("MYNAME CONST 5", -1.0, 5.00000000000000000000),
+        ("MYNAME CONST 5", 0.0, 5.00000000000000000000),
+        ("MYNAME CONST 5", 0.3, 5.00000000000000000000),
+        ("MYNAME CONST 5", 0.7, 5.00000000000000000000),
+        ("MYNAME CONST 5", 1.0, 5.00000000000000000000),
+        ("MYNAME RAW", -1.0, -1.00000000000000000000),
+        ("MYNAME RAW", 0.0, 0.00000000000000000000),
+        ("MYNAME RAW", 0.3, 0.29999999999999998890),
+        ("MYNAME RAW", 0.7, 0.69999999999999995559),
+        ("MYNAME RAW", 1.0, 1.00000000000000000000),
+        ("MYNAME LOGUNIF 0.00001 1", -1.0, 0.00006212641160264609),
+        ("MYNAME LOGUNIF 0.00001 1", 0.0, 0.00316227766016837896),
+        ("MYNAME LOGUNIF 0.00001 1", 0.3, 0.01229014794851427186),
+        ("MYNAME LOGUNIF 0.00001 1", 0.7, 0.06168530819028691242),
+        ("MYNAME LOGUNIF 0.00001 1", 1.0, 0.16096213739108147789),
+        ("MYNAME NORMAL 0 1", -1.0, -1.00000000000000000000),
+        ("MYNAME NORMAL 0 1", 0.0, 0.00000000000000000000),
+        ("MYNAME NORMAL 0 1", 0.3, 0.29999999999999998890),
+        ("MYNAME NORMAL 0 1", 0.7, 0.69999999999999995559),
+        ("MYNAME NORMAL 0 1", 1.0, 1.00000000000000000000),
+        ("MYNAME LOGNORMAL 0 1", -1.0, 0.36787944117144233402),
+        ("MYNAME LOGNORMAL 0 1", 0.0, 1.00000000000000000000),
+        ("MYNAME LOGNORMAL 0 1", 0.3, 1.34985880757600318347),
+        ("MYNAME LOGNORMAL 0 1", 0.7, 2.01375270747047663278),
+        ("MYNAME LOGNORMAL 0 1", 1.0, 2.71828182845904509080),
+        ("MYNAME TRUNCATED_NORMAL 1 0.25 0 10", -1.0, 0.75000000000000000000),
+        ("MYNAME TRUNCATED_NORMAL 1 0.25 0 10", 0.0, 1.00000000000000000000),
+        ("MYNAME TRUNCATED_NORMAL 1 0.25 0 10", 0.3, 1.07499999999999995559),
+        ("MYNAME TRUNCATED_NORMAL 1 0.25 0 10", 0.7, 1.17500000000000004441),
+        ("MYNAME TRUNCATED_NORMAL 1 0.25 0 10", 1.0, 1.25000000000000000000),
+        ("MYNAME ERRF 1 2 0.1 0.1", -1.0, 1.00000000000000000000),
+        ("MYNAME ERRF 1 2 0.1 0.1", 0.0, 1.84134474606854281475),
+        ("MYNAME ERRF 1 2 0.1 0.1", 0.3, 1.99996832875816688002),
+        ("MYNAME ERRF 1 2 0.1 0.1", 0.7, 1.99999999999999933387),
+        ("MYNAME ERRF 1 2 0.1 0.1", 1.0, 2.00000000000000000000),
+        ("MYNAME DERRF 10 1 2 0.1 0.1", -1.0, 1.00000000000000000000),
+        ("MYNAME DERRF 10 1 2 0.1 0.1", 0.0, 1.00000000000000000000),
+        ("MYNAME DERRF 10 1 2 0.1 0.1", 0.3, 2.00000000000000000000),
+        ("MYNAME DERRF 10 1 2 0.1 0.1", 0.7, 2.00000000000000000000),
+        ("MYNAME DERRF 10 1 2 0.1 0.1", 1.0, 2.00000000000000000000),
+    ],
+)
+def test_gen_kw_trans_func(tmpdir, params, xinput, expected):
+    """
+    This test data was generated using c++ transfer functions, and is used solely
+    to verify that implementation in python is equal to c++.
+    """
+    args = params.split()[2:]
+    float_args = []
+    for a in args:
+        float_args.append(float(a))
+
+    with tmpdir.as_cwd():
+        tf = GenKwConfig.parse_transfer_function(params)
+        assert abs(tf.calculate(xinput, float_args) - expected) < 10**-15
+
+
+def test_gen_kw_objects_equal(tmpdir):
+    with tmpdir.as_cwd():
+        config = dedent(
+            """
+        JOBNAME my_name%d
+        NUM_REALIZATIONS 1
+        GEN_KW KW_NAME template.txt kw.txt prior.txt
+        """
+        )
+        with open("config.ert", "w", encoding="utf-8") as fh:
+            fh.writelines(config)
+        with open("template.txt", "w", encoding="utf-8") as fh:
+            fh.writelines("MY_KEYWORD <MY_KEYWORD>")
+        with open("prior.txt", "w", encoding="utf-8") as fh:
+            fh.writelines("MY_KEYWORD UNIFORM 1 2")
+        with open("empty.txt", "w", encoding="utf-8") as fh:
+            fh.writelines("")
+
+        ert_config = ErtConfig.from_file("config.ert")
+        ert = EnKFMain(ert_config)
+
+        g1 = ert.ensembleConfig()["KW_NAME"]
+        g2 = GenKwConfig("KW_NAME", "template.txt", "prior.txt")
+        g3 = GenKwConfig("KW_NAME_2", "template.txt", "prior.txt")
+        g4 = GenKwConfig("KW_NAME", "empty.txt", "prior.txt")
+        g5 = GenKwConfig("KW_NAME", "template.txt", "empty.txt")
+        assert g1 == g2
+        assert g1 != g3
+        assert g1 != g4
+        assert g1 != g5
+        assert g1.getKeyWords() == ["MY_KEYWORD"]

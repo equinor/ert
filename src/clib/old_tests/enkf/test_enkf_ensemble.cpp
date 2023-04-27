@@ -8,8 +8,7 @@
 #include <ert/enkf/ensemble_config.hpp>
 
 int main(int argc, char **argv) {
-    ensemble_config_type *ensemble =
-        ensemble_config_alloc_full(DEFAULT_GEN_KW_TAG_FORMAT);
+    ensemble_config_type *ensemble = ensemble_config_alloc_full();
     ensemble_config_free(ensemble);
     exit(0);
 }

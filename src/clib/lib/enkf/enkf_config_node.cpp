@@ -10,7 +10,6 @@
 #include <ert/enkf/enkf_obs.hpp>
 #include <ert/enkf/ext_param_config.hpp>
 #include <ert/enkf/gen_data_config.hpp>
-#include <ert/enkf/gen_kw_config.hpp>
 #include <ert/enkf/gen_obs.hpp>
 #include <ert/python.hpp>
 #include <ert/res_util/path_fmt.hpp>
@@ -33,10 +32,6 @@ static enkf_config_node_type *enkf_config_node_alloc__(ert_impl_type impl_type,
     node->freef = NULL;
 
     switch (impl_type) {
-    case (GEN_KW):
-        node->freef = gen_kw_config_free__;
-        node->get_data_size = gen_kw_config_get_data_size__;
-        break;
     case (SUMMARY):
         node->freef = summary_config_free__;
         node->get_data_size = summary_config_get_data_size__;
@@ -139,20 +134,6 @@ enkf_config_node_alloc_GEN_DATA_full(const char *node_key,
         gen_data_config_add_report_step(gen_data_config, report_step);
     }
 
-    return config_node;
-}
-
-enkf_config_node_type *enkf_config_node_alloc_GEN_KW_full(
-    const char *node_key, const char *gen_kw_format, const char *template_file,
-    const char *parameter_file) {
-
-    enkf_config_node_type *config_node =
-        enkf_config_node_alloc__(GEN_KW, node_key);
-    config_node->data = gen_kw_config_alloc_empty(node_key, gen_kw_format);
-
-    /* 1: Update the low level gen_kw_config stuff. */
-    gen_kw_config_update((gen_kw_config_type *)config_node->data, template_file,
-                         parameter_file);
     return config_node;
 }
 

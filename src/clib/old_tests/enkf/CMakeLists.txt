@@ -23,8 +23,7 @@ foreach(
   enkf_obs
   enkf_obs_vector
   obs_vector
-  row_scaling
-  trans_func)
+  row_scaling)
   add_executable(${test} ${TESTS_EXCLUDE_FROM_ALL} test_${test}.cpp)
   target_link_libraries(${test} ert)
   fix_install_names(${test})

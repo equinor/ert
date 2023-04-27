@@ -241,18 +241,18 @@ def test_extensive_config(setup_case):
         snake_oil_structure_config["SUMMARY"]
         + snake_oil_structure_config["GEN_KW"]
         + snake_oil_structure_config["GEN_DATA"]
-    ) == set(ensemble_config.alloc_keylist())
+    ) == set(ensemble_config.alloc_keylist() + ensemble_config.get_keylist_gen_kw())
 
     assert (
         Path(snake_oil_structure_config["SIGMA"]["TEMPLATE"]).resolve()
         == Path(
-            ensemble_config["SIGMA"].getKeywordModelConfig().getTemplateFile()
+            ensemble_config.get_keyword_model_config("SIGMA").getTemplateFile()
         ).resolve()
     )
     assert (
         Path(snake_oil_structure_config["SIGMA"]["PARAMETER"]).resolve()
         == Path(
-            ensemble_config["SIGMA"].getKeywordModelConfig().getParameterFile()
+            ensemble_config.get_keyword_model_config("SIGMA").getParameterFile()
         ).resolve()
     )
     assert (

@@ -70,9 +70,5 @@ enkf_config_node_alloc_GEN_DATA_full(const char *node_key,
                                      gen_data_file_format_type input_format,
                                      const int_vector_type *report_steps);
 
-extern "C" PY_USED enkf_config_node_type *enkf_config_node_alloc_GEN_KW_full(
-    const char *node_key, const char *gen_kw_format, const char *template_file,
-    const char *parameter_file);
-
 VOID_FREE_HEADER(enkf_config_node);
 #endif
