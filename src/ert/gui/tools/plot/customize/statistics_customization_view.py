@@ -1,8 +1,13 @@
+from typing import TYPE_CHECKING
+
 from qtpy.QtWidgets import QComboBox, QHBoxLayout
 
 from ert.gui.tools.plot import style_chooser as sc
 
 from .customization_view import CustomizationView, WidgetProperty
+
+if TYPE_CHECKING:
+    from ert.gui.plottery import PlotConfig
 
 
 class StatisticsCustomizationView(CustomizationView):
@@ -120,10 +125,7 @@ class StatisticsCustomizationView(CustomizationView):
         style.marker = marker_style
         setattr(self, attribute_name, style)
 
-    def applyCustomization(self, plot_config):
-        """
-        @type plot_config: ert.gui.plottery.PlotConfig
-        """
+    def applyCustomization(self, plot_config: "PlotConfig"):
         plot_config.setStatisticsStyle("mean", self.mean_style)
         plot_config.setStatisticsStyle("p50", self.p50_style)
         plot_config.setStatisticsStyle("std", self.std_style)
@@ -134,10 +136,7 @@ class StatisticsCustomizationView(CustomizationView):
         plot_config.setStandardDeviationFactor(self.std_dev_factor)
         plot_config.setDistributionLineEnabled(self.distribution_lines)
 
-    def revertCustomization(self, plot_config):
-        """
-        @type plot_config: ert.gui.plottery.PlotConfig
-        """
+    def revertCustomization(self, plot_config: "PlotConfig"):
         self.mean_style = plot_config.getStatisticsStyle("mean")
         self.p50_style = plot_config.getStatisticsStyle("p50")
         self.std_style = plot_config.getStatisticsStyle("std")

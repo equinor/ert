@@ -1,3 +1,5 @@
+from typing import TYPE_CHECKING
+
 from qtpy.QtGui import QColor
 from qtpy.QtWidgets import QHBoxLayout
 
@@ -5,6 +7,9 @@ from ert.gui.tools.plot import ColorBox
 from ert.gui.tools.plot import style_chooser as sc
 
 from .customization_view import CustomizationView, WidgetProperty
+
+if TYPE_CHECKING:
+    from ert.gui.plottery import PlotConfig
 
 
 class StyleCustomizationView(CustomizationView):
@@ -84,20 +89,14 @@ class StyleCustomizationView(CustomizationView):
                 color_box = self._color_boxes[index]
                 color_box.color = color
 
-    def applyCustomization(self, plot_config):
-        """
-        @type plot_config: ert.gui.plottery.PlotConfig
-        """
+    def applyCustomization(self, plot_config: "PlotConfig"):
         plot_config.setDefaultStyle(self.default_style)
         plot_config.setHistoryStyle(self.history_style)
         plot_config.setObservationsStyle(self.observs_style)
         plot_config.setObservationsColor(self.observs_color)
         plot_config.setLineColorCycle(self.color_cycle)
 
-    def revertCustomization(self, plot_config):
-        """
-        @type plot_config: ert.gui.plottery.PlotConfig
-        """
+    def revertCustomization(self, plot_config: "PlotConfig"):
         self.default_style = plot_config.defaultStyle()
         self.history_style = plot_config.historyStyle()
         self.observs_style = plot_config.observationsStyle()

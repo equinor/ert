@@ -1,3 +1,5 @@
+from typing import TYPE_CHECKING
+
 from qtpy.QtGui import QDoubleValidator, QIntValidator
 from qtpy.QtWidgets import QLabel, QStackedWidget
 
@@ -7,6 +9,9 @@ from ert.gui.tools.plot.widgets.clearable_line_edit import ClearableLineEdit
 from ert.gui.tools.plot.widgets.custom_date_edit import CustomDateEdit
 
 from .customization_view import CustomizationView
+
+if TYPE_CHECKING:
+    from ert.gui.plottery import PlotConfig
 
 
 class StackedInput(QStackedWidget):
@@ -248,10 +253,8 @@ class LimitsCustomizationView(CustomizationView):
         self._limits_widget.switchInputOnX(x_axis_type)
         self._limits_widget.switchInputOnY(y_axis_type)
 
-    def revertCustomization(self, plot_config):
-        """@type plot_config: ert.gui.plottery.PlotConfig"""
+    def revertCustomization(self, plot_config: "PlotConfig"):
         self._limits_widget.limits = plot_config.limits
 
-    def applyCustomization(self, plot_config):
-        """@type plot_config: ert.gui.plottery.PlotConfig"""
+    def applyCustomization(self, plot_config: "PlotConfig"):
         plot_config.limits = self._limits_widget.limits

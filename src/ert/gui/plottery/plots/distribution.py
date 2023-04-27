@@ -1,6 +1,13 @@
+from typing import TYPE_CHECKING
+
 import pandas as pd
 
 from .plot_tools import PlotTools
+
+if TYPE_CHECKING:
+    from matplotlib.axes import Axes
+
+    from ert.gui.plottery import PlotConfig, PlotContext
 
 
 class DistributionPlot:
@@ -11,8 +18,9 @@ class DistributionPlot:
         plotDistribution(figure, plot_context, case_to_data_map, _observation_data)
 
 
-def plotDistribution(figure, plot_context, case_to_data_map, _observation_data):
-    """@type plot_context: ert.gui.plottery.PlotContext"""
+def plotDistribution(
+    figure, plot_context: "PlotContext", case_to_data_map, _observation_data
+):
     config = plot_context.plotConfig()
     axes = figure.add_subplot(111)
 
@@ -50,14 +58,14 @@ def plotDistribution(figure, plot_context, case_to_data_map, _observation_data):
     )
 
 
-def _plotDistribution(axes, plot_config, data, label, index, previous_data):
-    """
-    @type axes: matplotlib.axes.Axes
-    @type plot_config: PlotConfig
-    @type data: DataFrame
-    @type label: Str
-    """
-
+def _plotDistribution(
+    axes: "Axes",
+    plot_config: "PlotConfig",
+    data: pd.DataFrame,
+    label: str,
+    index,
+    previous_data,
+):
     if data.empty:
         data = pd.Series(dtype="float64")
     else:

@@ -1,4 +1,9 @@
+from typing import TYPE_CHECKING
+
 from .customization_view import CustomizationView, WidgetProperty
+
+if TYPE_CHECKING:
+    from ert.gui.plottery import PlotConfig
 
 
 class DefaultCustomizationView(CustomizationView):
@@ -50,10 +55,7 @@ class DefaultCustomizationView(CustomizationView):
             "observations", "Observations", "Toggle observations visibility."
         )
 
-    def applyCustomization(self, plot_config):
-        """
-        @type plot_config: ert.gui.plottery.PlotConfig
-        """
+    def applyCustomization(self, plot_config: "PlotConfig"):
         plot_config.setTitle(self.title)
 
         plot_config.setXLabel(self.x_label)
@@ -64,10 +66,7 @@ class DefaultCustomizationView(CustomizationView):
         plot_config.setHistoryEnabled(self.history)
         plot_config.setObservationsEnabled(self.observations)
 
-    def revertCustomization(self, plot_config):
-        """
-        @type plot_config: ert.gui.plottery.PlotConfig
-        """
+    def revertCustomization(self, plot_config: "PlotConfig"):
         if not plot_config.isUnnamed():
             self.title = plot_config.title()
         else:

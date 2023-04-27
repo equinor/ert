@@ -7,6 +7,7 @@ from .plot_tools import PlotTools
 
 if TYPE_CHECKING:
     import pandas as pd
+    from matplotlib.axes import Axes
 
     from ert.gui.plottery import PlotConfig, PlotContext
 
@@ -51,16 +52,12 @@ class EnsemblePlot:
 
     def _plotLines(
         self,
-        axes,
+        axes: "Axes",
         plot_config: "PlotConfig",
         data: "pd.DataFrame",
         ensemble_label: str,
         is_date_supported,
     ):
-        """
-        @type axes: matplotlib.axes.Axes
-        """
-
         style = plot_config.defaultStyle()
 
         if len(data) == 1 and style.marker == "":

@@ -15,7 +15,9 @@ from ert.gui.ertwidgets import SearchBox, addHelpToWidget, resourceIcon
 
 
 class CheckList(QWidget):
-    def __init__(self, model, label="", help_link="", custom_filter_button=None):
+    def __init__(
+        self, model, label: str = "", help_link: str = "", custom_filter_button=None
+    ):
         """
         :param custom_filter_button:  if needed, add a button that opens a
         custom filter menu. Useful when search alone isn't enough to filter the
@@ -88,8 +90,7 @@ class CheckList(QWidget):
         self._uncheckAllButton.setAutoRaise(True)
         self._uncheckAllButton.setToolTip("Unselect all")
 
-    def itemChanged(self, item):
-        """@type item: QListWidgetItem"""
+    def itemChanged(self, item: QListWidgetItem):
         if item.checkState() == Qt.Checked:
             self._model.selectValue(str(item.text()))
         elif item.checkState() == Qt.Unchecked:
