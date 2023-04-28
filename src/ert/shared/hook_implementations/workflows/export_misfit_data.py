@@ -22,7 +22,7 @@ class ExportMisfitDataJob(ErtScript):
 
         if target_file is None:
             target_file = "misfit.hdf"
-        realizations = self.ensemble.realizationList(
+        realizations = self.ensemble.realization_list(
             RealizationStateEnum.STATE_HAS_DATA
         )
 

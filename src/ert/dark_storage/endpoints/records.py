@@ -261,7 +261,7 @@ def get_ensemble_responses(
     response_map: Mapping[str, js.RecordOut] = {}
 
     ens = db.get_ensemble(ensemble_id)
-    for name in ens.getSummaryKeySet():
+    for name in ens.get_summary_keyset():
         obs_keys = res.observation_keys(name)
         response_map[str(name)] = js.RecordOut(
             id=UUID(int=0),

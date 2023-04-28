@@ -140,7 +140,7 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
         return self._enkf_main.getEnsembleSize()
 
     def get_active_realizations(self, ensemble: EnsembleReader) -> List[int]:
-        return ensemble.realizationList(RealizationStateEnum.STATE_HAS_DATA)
+        return ensemble.realization_list(RealizationStateEnum.STATE_HAS_DATA)
 
     def get_queue_config(self) -> "QueueConfig":
         return self._enkf_main.get_queue_config()
@@ -196,7 +196,7 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
         report_step: int,
         realization_index: Optional[int] = None,
     ) -> DataFrame:
-        realizations = ensemble.realizationList(RealizationStateEnum.STATE_HAS_DATA)
+        realizations = ensemble.realization_list(RealizationStateEnum.STATE_HAS_DATA)
         if realization_index is not None:
             if realization_index not in realizations:
                 raise IndexError(f"No such realization {realization_index}")
@@ -371,7 +371,7 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
                 raise IndexError(f"No such realization {realization_index}")
             realizations = [realization_index]
 
-        summary_keys = ensemble.getSummaryKeySet()
+        summary_keys = ensemble.get_summary_keyset()
         if keys:
             summary_keys = [
                 key for key in keys if key in summary_keys
@@ -443,7 +443,7 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
         if ensemble is None:
             return self.refcase_data(key)
 
-        if key not in ensemble.getSummaryKeySet():
+        if key not in ensemble.get_summary_keyset():
             return DataFrame()
 
         data = self.gather_summary_data(ensemble, key)
