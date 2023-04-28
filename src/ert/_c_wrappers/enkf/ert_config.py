@@ -288,17 +288,17 @@ class ErtConfig:
                     int_val = int(*values)
                 except ValueError:
                     errors.append(
-                        ConfigValidationError(
-                            config_file=config_path,
-                            errors=f"{err_msg} not an integer: {str(*values)!r}",
-                        )
+                        ErrorInfo(
+                            filename=config_path,
+                            message=f"{err_msg} not an integer: {str(*values)!r}",
+                        ).set_context_list(values)
                     )
                 if int_val < 0:
                     errors.append(
-                        ConfigValidationError(
-                            config_file=config_path,
-                            errors=f"{err_msg} negative: {str(*values)!r}",
-                        )
+                        ErrorInfo(
+                            filename=config_path,
+                            message=f"{err_msg} negative: {str(*values)!r}",
+                        ).set_context_list(values)
                     )
         return errors
 
