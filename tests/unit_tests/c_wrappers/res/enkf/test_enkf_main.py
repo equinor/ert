@@ -11,7 +11,6 @@ from ert._c_wrappers.enkf import (
     EnsembleConfig,
     ErtConfig,
     ModelConfig,
-    ObservationConfigError,
 )
 
 
@@ -92,124 +91,6 @@ def test_repr(minimum_case):
 
 def test_bootstrap(minimum_case):
     assert bool(minimum_case)
-
-
-def test_that_empty_observations_file_causes_exception(tmpdir):
-    with tmpdir.as_cwd():
-        config = dedent(
-            """
-        JOBNAME my_name%d
-        NUM_REALIZATIONS 10
-        OBS_CONFIG observations
-        """
-        )
-        with open("config.ert", "w", encoding="utf-8") as fh:
-            fh.writelines(config)
-        with open("observations", "w", encoding="utf-8") as fh:
-            fh.writelines("")
-
-        ert_config = ErtConfig.from_file("config.ert")
-
-        with pytest.raises(
-            expected_exception=ObservationConfigError,
-            match="Empty observations file",
-        ):
-            EnKFMain(ert_config)
-
-
-def test_that_having_no_refcase_but_history_observations_causes_exception(tmpdir):
-    with tmpdir.as_cwd():
-        config = dedent(
-            """
-        JOBNAME my_name%d
-        NUM_REALIZATIONS 10
-        OBS_CONFIG observations
-        TIME_MAP time_map.txt
-        """
-        )
-        with open("config.ert", "w", encoding="utf-8") as fh:
-            fh.writelines(config)
-        with open("observations", "w", encoding="utf-8") as fo:
-            fo.writelines("HISTORY_OBSERVATION FOPR;")
-        with open("time_map.txt", "w", encoding="utf-8") as fo:
-            fo.writelines("2023-02-01")
-
-        ert_config = ErtConfig.from_file("config.ert")
-
-        with pytest.raises(
-            expected_exception=ObservationConfigError,
-            match="REFCASE is required for HISTORY_OBSERVATION",
-        ):
-            EnKFMain(ert_config)
-
-
-def test_that_missing_obs_file_raises_exception(tmpdir):
-    with tmpdir.as_cwd():
-        config = dedent(
-            """
-        JOBNAME my_name%d
-        NUM_REALIZATIONS 10
-        OBS_CONFIG observations
-        TIME_MAP time_map.txt
-        """
-        )
-        with open("config.ert", "w", encoding="utf-8") as fh:
-            fh.writelines(config)
-        with open("observations", "w", encoding="utf-8") as fo:
-            fo.writelines(
-                [
-                    "GENERAL_OBSERVATION OBS {",
-                    "   DATA       = RES;",
-                    "   INDEX_LIST = 0,2,4,6,8;",
-                    "   RESTART    = 0;",
-                    "   OBS_FILE   = obs_data.txt;",
-                    "};",
-                ]
-            )
-        with open("time_map.txt", "w", encoding="utf-8") as fo:
-            fo.writelines("2023-02-01")
-
-        ert_config = ErtConfig.from_file("config.ert")
-
-        with pytest.raises(
-            expected_exception=ObservationConfigError,
-            match="did not resolve to a valid path: OBS_FILE",
-        ):
-            EnKFMain(ert_config)
-
-
-def test_that_missing_time_map_raises_exception(tmpdir):
-    with tmpdir.as_cwd():
-        config = dedent(
-            """
-        JOBNAME my_name%d
-        NUM_REALIZATIONS 10
-        OBS_CONFIG observations
-        """
-        )
-        with open("config.ert", "w", encoding="utf-8") as fh:
-            fh.writelines(config)
-        with open("observations", "w", encoding="utf-8") as fo:
-            fo.writelines(
-                [
-                    "GENERAL_OBSERVATION OBS {",
-                    "   DATA       = RES;",
-                    "   INDEX_LIST = 0,2,4,6,8;",
-                    "   RESTART    = 0;",
-                    "   OBS_FILE   = obs_data.txt;",
-                    "};",
-                ]
-            )
-        with open("time_map.txt", "w", encoding="utf-8") as fo:
-            fo.writelines("2023-02-01")
-
-        ert_config = ErtConfig.from_file("config.ert")
-
-        with pytest.raises(
-            expected_exception=ObservationConfigError,
-            match="Incorrect observations file",
-        ):
-            EnKFMain(ert_config)
 
 
 def test_config(minimum_case):

@@ -89,6 +89,14 @@ class ObsVector(BaseCClass):
         """
         return _clib.obs_vector_get_step_list(self)
 
+    def add_summary_obs(self, summary_obs: SummaryObservation, index: int) -> None:
+        summary_obs.convertToCReference(self)
+        return _clib.obs_vector.add_summary_obs(self, summary_obs, index)
+
+    def add_general_obs(self, gen_obs: GenObservation, index: int) -> None:
+        gen_obs.convertToCReference(self)
+        return _clib.obs_vector.add_general_obs(self, gen_obs, index)
+
     def activeStep(self) -> List[int]:
         """Assuming the observation is only active for one report step, this
         method will return that report step - if it is active for more

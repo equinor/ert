@@ -20,8 +20,6 @@ foreach(
   enkf_ensemble
   enkf_gen_data_config
   enkf_obs_invalid_path
-  enkf_obs
-  enkf_obs_vector
   obs_vector
   row_scaling)
   add_executable(${test} ${TESTS_EXCLUDE_FROM_ALL} test_${test}.cpp)

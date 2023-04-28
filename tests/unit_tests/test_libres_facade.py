@@ -1,8 +1,10 @@
 # pylint: disable=pointless-statement
 import logging
+from datetime import datetime, timedelta
 from textwrap import dedent
 
 import pytest
+from ecl.summary import EclSum
 from pandas.core.base import PandasObject
 
 from ert.libres_facade import LibresFacade
@@ -439,3 +441,42 @@ def test_gen_data_collector(
             199,
             realization_index=realization_index,
         )
+
+
+def test_get_observations(tmpdir):
+    date = datetime(2014, 9, 10)
+    with tmpdir.as_cwd():
+        config = dedent(
+            """
+        NUM_REALIZATIONS 2
+
+        ECLBASE ECLIPSE_CASE
+        REFCASE ECLIPSE_CASE
+        OBS_CONFIG observations
+        """
+        )
+        observations = dedent(
+            f"""
+        SUMMARY_OBSERVATION FOPR_1
+        {{
+        VALUE   = 0.1;
+        ERROR   = 0.05;
+        DATE    = {(date + timedelta(days=1)).isoformat()};
+        KEY     = FOPR;
+        }};
+        """
+        )
+
+        with open("config.ert", "w", encoding="utf-8") as fh:
+            fh.writelines(config)
+        with open("observations", "w", encoding="utf-8") as fh:
+            fh.writelines(observations)
+
+        ecl_sum = EclSum.writer("ECLIPSE_CASE", date, 3, 3, 3)
+        ecl_sum.addVariable("FOPR", unit="SM3/DAY")
+        t_step = ecl_sum.addTStep(1, sim_days=1)
+        t_step["FOPR"] = 1
+        ecl_sum.fwrite()
+
+        facade = LibresFacade.from_config_file("config.ert")
+        assert facade.get_observations().hasKey("FOPR_1")
