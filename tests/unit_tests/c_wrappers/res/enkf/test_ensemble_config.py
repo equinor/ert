@@ -317,3 +317,19 @@ def test_malformed_or_missing_gen_data_result_file(setup_case, result_file, fail
             ErtConfig.from_file("poly.ert")
     else:
         ErtConfig.from_file("poly.ert")
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_gen_kw_pred_special_suggested_removal():
+    with open("empty_file.txt", "a", encoding="utf-8") as f:
+        f.write("")
+    with open("config.ert", "a", encoding="utf-8") as f:
+        f.write(
+            "NUM_REALIZATIONS 1\n"
+            "GEN_KW PRED empty_file.txt empty_file.txt empty_file.txt\n"
+        )
+    with pytest.warns(
+        ConfigWarning,
+        match="GEN_KW PRED used to hold a special meaning and be excluded",
+    ):
+        ErtConfig.from_file("config.ert")

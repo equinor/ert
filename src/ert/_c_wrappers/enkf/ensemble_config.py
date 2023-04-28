@@ -213,14 +213,12 @@ class EnsembleConfig(BaseCClass):
         gen_kw_list: Optional[List] = None,
         surface_list: Optional[List] = None,
         summary_list: Optional[List] = None,
-        schedule_file: Optional[List] = None,
         field_list=None,
     ):
         gen_kw_list = [] if gen_kw_list is None else gen_kw_list
         gen_data_list = [] if gen_data_list is None else gen_data_list
         surface_list = [] if surface_list is None else surface_list
         summary_list = [] if summary_list is None else summary_list
-        schedule_file = [] if schedule_file is None else schedule_file
         field_list = [] if field_list is None else field_list
 
         self._grid_file = grid_file
@@ -244,8 +242,19 @@ class EnsembleConfig(BaseCClass):
                 self.addNode(node)
 
         for gen_kw in gen_kw_list:
-            self._create_node_metainfo(gen_kw, 4, EnkfVarType.PARAMETER)
             gen_kw_key = gen_kw[0]
+
+            if gen_kw_key == "PRED":
+                warnings.warn(
+                    "GEN_KW PRED used to hold a special meaning and be excluded from "
+                    "being updated.\n"
+                    "If the intention was to exclude this from updates, please "
+                    "use the DisableParametersUpdate workflow instead.\n"
+                    f"Ref. GEN_KW {gen_kw[0]} {gen_kw[1]} {gen_kw[2]} {gen_kw[3]}",
+                    category=ConfigWarning,
+                )
+
+            self._create_node_metainfo(gen_kw, 4, EnkfVarType.PARAMETER)
             self._config_node_meta[gen_kw_key].output_file = gen_kw[2]
             init_file = self._config_node_meta[gen_kw_key].init_file
             if init_file:
@@ -284,27 +293,6 @@ class EnsembleConfig(BaseCClass):
             self._create_node_metainfo(field, 2)
             self._storeFieldMetaInfo(field)
             self.addNode(field_node)
-
-        if schedule_file:
-            self._config_node_meta[ConfigKeys.PRED_KEY] = ConfigNodeMeta(
-                key=ConfigKeys.PRED_KEY,
-                var_type=EnkfVarType.PARAMETER,
-                output_file=_get_filename(_get_abs_path(schedule_file[0])),
-            )
-
-            options = _option_dict(schedule_file, 1)
-            file_path = _get_abs_path(schedule_file[0])
-            parameter = options.get(ConfigKeys.PARAMETER_KEY)
-
-            surface_node = GenKwConfig(
-                key=ConfigKeys.PRED_KEY,
-                template_file=file_path,
-                parameter_file=parameter,
-                tag_fmt=tag_format,
-            )
-
-            self._check_config_node(surface_node)
-            self.add_gen_kw_node(surface_node)
 
     @staticmethod
     def gen_data_node(gen_data: List[str]) -> Optional[EnkfConfigNode]:
@@ -473,7 +461,6 @@ class EnsembleConfig(BaseCClass):
         gen_kw_list = config_dict.get(ConfigKeys.GEN_KW, [])
         surface_list = config_dict.get(ConfigKeys.SURFACE_KEY, [])
         summary_list = config_dict.get(ConfigKeys.SUMMARY, [])
-        schedule_file = config_dict.get(ConfigKeys.SCHEDULE_PREDICTION_FILE, [])
         field_list = config_dict.get(ConfigKeys.FIELD_KEY, [])
 
         ens_config = cls(
@@ -484,7 +471,6 @@ class EnsembleConfig(BaseCClass):
             gen_kw_list=gen_kw_list,
             surface_list=surface_list,
             summary_list=summary_list,
-            schedule_file=schedule_file,
             field_list=field_list,
         )
 

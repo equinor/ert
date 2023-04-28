@@ -67,7 +67,6 @@ Keyword name                                                            Required
 :ref:`RUNPATH <runpath>`                                                NO                                      realization-<IENS>/iter-<ITER>  Directory to run simulations; simulations/realization-<IENS>/iter-<ITER>
 :ref:`RUNPATH_FILE <runpath_file>`                                      NO                                      .ert_runpath_list               Name of file with path for all forward models that ERT has run. To be used by user defined scripts to find the realizations
 :ref:`RUN_TEMPLATE <run_template>`                                      NO                                                                      Install arbitrary files in the runpath directory
-:ref:`SCHEDULE_PREDICTION_FILE <schedule_prediction_file>`              NO                                                                      Deprecated: Schedule prediction file
 :ref:`SETENV <setenv>`                                                  NO                                                                      You can modify the UNIX environment with SETENV calls
 :ref:`SIMULATION_JOB <simulation_job>`                                  NO                                                                      Experimental alternative to FORWARD_MODEL
 :ref:`STOP_LONG_RUNNING <stop_long_running>`                            NO                                      FALSE                           Stop long running realizations after minimum number of realizations (MIN_REALIZATIONS) have run
@@ -1408,16 +1407,6 @@ but required when installing ERT at a new site.
                 2000-07-01
                 2001-01-01
                 2001-07-01
-
-
-
-.. _schedule_prediction_file:
-.. topic:: SCHEDULE_PREDICTION_FILE
-
-        This keyword is deprecated and will be removed.
-        This is the name of a schedule prediction file. It can contain %d to get
-        different files for different members. Observe that the ECLIPSE datafile
-        should include only one schedule file, even if you are doing predictions.
 
 
 .. _license_path:

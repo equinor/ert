@@ -70,7 +70,6 @@ ERT_CLIB_SUBMODULE("config_keys", m) {
     cls.attr("PARAMETER_FILE") = "PARAMETER_FILE";
     cls.attr("PARAMETER_KEY") = PARAMETER_KEY;
     cls.attr("PATH") = "PATH";
-    cls.attr("PRED_KEY") = PRED_KEY;
     cls.attr("QUEUE_OPTION") = QUEUE_OPTION_KEY;
     cls.attr("QUEUE_SYSTEM") = QUEUE_SYSTEM_KEY;
     cls.attr("RANDOM_SEED") = RANDOM_SEED_KEY;
@@ -81,7 +80,6 @@ ERT_CLIB_SUBMODULE("config_keys", m) {
     cls.attr("RUNPATH") = RUNPATH_KEY;
     cls.attr("RUNPATH_FILE") = RUNPATH_FILE_KEY;
     cls.attr("RUN_TEMPLATE") = RUN_TEMPLATE_KEY;
-    cls.attr("SCHEDULE_PREDICTION_FILE") = SCHEDULE_PREDICTION_FILE_KEY;
     cls.attr("SEED") = "SEED";
     cls.attr("SETENV") = SETENV_KEY;
     cls.attr("SIMULATION") = "SIMULATION";

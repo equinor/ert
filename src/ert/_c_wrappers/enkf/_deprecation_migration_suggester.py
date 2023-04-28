@@ -22,7 +22,6 @@ class DeprecationMigrationSuggester:
         "MULTZ",
         "EQUIL",
         "GEN_PARAM",
-        "SCHEDULE_PREDICTION_FILE",
         "MULTFLT",
     ]
     JUST_REMOVE_KEYWORDS = [
@@ -57,6 +56,7 @@ class DeprecationMigrationSuggester:
         self._parser.add("RERUN_START")
         self._parser.add("DELETE_RUNPATH")
         self._parser.add("UPDATE_PATH")
+        self._parser.add("SCHEDULE_PREDICTION_FILE")
 
     def suggest_migrations(self, filename: str):
         suggestions = []
@@ -94,7 +94,7 @@ class DeprecationMigrationSuggester:
                 kw,
                 f"The {kw} keyword was replaced by the GEN_KW keyword."
                 "Please see https://ert.readthedocs.io/en/latest/"
-                "reference/configuration/keywords.html#gen-kw"
+                "reference/configuration/keywords.html#gen-kw "
                 "to see how to migrate from MULTFLT to GEN_KW.",
             )
         for kw in self.JUST_REMOVE_KEYWORDS:
@@ -179,6 +179,11 @@ class DeprecationMigrationSuggester:
             "forward model. This should no longer be necessary."
             "\n\n"
             "If your setup is not longer working, do not hesitate to contact us.",
+        )
+        add_suggestion(
+            "SCHEDULE_PREDICTION_FILE",
+            "The SCHEDULE_PREDICTION_FILE keyword has been removed and no longer"
+            " has any effect.",
         )
 
         return suggestions
