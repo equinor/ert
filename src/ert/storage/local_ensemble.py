@@ -179,11 +179,11 @@ class LocalEnsembleReader:
 
     def realizations_initialized(self, realizations: List[int]) -> bool:
         initialized_realizations = set(
-            self.realizationList(RealizationStateEnum.STATE_INITIALIZED)
+            self.realization_list(RealizationStateEnum.STATE_INITIALIZED)
         )
         return all(real in initialized_realizations for real in realizations)
 
-    def getSummaryKeySet(self) -> List[str]:
+    def get_summary_keyset(self) -> List[str]:
         realization_folders = list(self.mount_point.glob("realization-*"))
         if not realization_folders:
             return []
@@ -194,7 +194,7 @@ class LocalEnsembleReader:
             keys = sorted(ds_disk["data_key"].values)
         return keys
 
-    def realizationList(self, state: RealizationStateEnum) -> List[int]:
+    def realization_list(self, state: RealizationStateEnum) -> List[int]:
         """
         Will return list of realizations with state == the specified state.
         """

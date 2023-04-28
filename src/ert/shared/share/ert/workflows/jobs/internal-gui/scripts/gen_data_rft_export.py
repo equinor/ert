@@ -169,7 +169,7 @@ class GenDataRFTCSVExportJob(ErtPlugin):
 
                 rft_data = facade.load_gen_data(case, data_key, report_step)
                 fs = self.storage.get_ensemble_by_name(case)
-                realizations = fs.realizationList(RealizationStateEnum.STATE_HAS_DATA)
+                realizations = fs.realization_list(RealizationStateEnum.STATE_HAS_DATA)
 
                 # Trajectory
                 trajectory_file = os.path.join(trajectory_path, f"{well}.txt" % well)

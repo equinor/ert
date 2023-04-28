@@ -20,7 +20,7 @@ def ensemble_parameters(res: LibresFacade) -> List[dict]:
 
 
 def get_response_names(res: LibresFacade, ensemble: EnsembleReader) -> List[str]:
-    result = ensemble.getSummaryKeySet()
+    result = ensemble.get_summary_keyset()
     result.extend(res.get_gen_data_keys().copy())
     return result
 
@@ -36,25 +36,27 @@ def get_responses(res: LibresFacade, ensemble_name: str):
     return responses
 
 
-def data_for_key(res: LibresFacade, case, key, realization_index=None) -> pd.DataFrame:
+def data_for_key(
+    res: LibresFacade, ensemble: EnsembleReader, key, realization_index=None
+) -> pd.DataFrame:
     """Returns a pandas DataFrame with the datapoints for a given key for a
     given case. The row index is the realization number, and the columns are an
     index over the indexes/dates"""
 
     if key.split(":")[0][-1] == "H":
-        return res.history_data(key, case).T
+        return res.history_data(key, ensemble).T
 
     if key.startswith("LOG10_"):
         key = key[6:]
-    if key in case.getSummaryKeySet():
-        data = res.gather_summary_data(case, key, realization_index).T
+    if key in ensemble.get_summary_keyset():
+        data = res.gather_summary_data(ensemble, key, realization_index).T
     elif res.is_gen_kw_key(key):
-        data = res.gather_gen_kw_data(case, key, realization_index)
+        data = res.gather_gen_kw_data(ensemble, key, realization_index)
         if data.empty:
             return data
         data.columns = pd.Index([0])
     elif res.is_gen_data_key(key):
-        data = res.gather_gen_data_data(case, key, realization_index).T
+        data = res.gather_gen_data_data(ensemble, key, realization_index).T
     else:
         return pd.DataFrame()
 
