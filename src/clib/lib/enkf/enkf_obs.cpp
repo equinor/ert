@@ -1,5 +1,6 @@
 #include <cmath>
 #include <cppitertools/enumerate.hpp>
+#include <utility>
 
 #include <ert/config/conf.hpp>
 #include <ert/ecl/ecl_grid.h>
@@ -153,20 +154,17 @@ struct enkf_obs_struct {
 
     std::string error;
     /* Several shared resources - can generally be NULL*/
-    history_source_type history;
     const ecl_sum_type *refcase;
     ensemble_config_type *ensemble_config;
 };
 
-enkf_obs_type *enkf_obs_alloc(const history_source_type history,
-                              std::shared_ptr<TimeMap> external_time_map,
+enkf_obs_type *enkf_obs_alloc(std::shared_ptr<TimeMap> external_time_map,
                               const ecl_sum_type *refcase,
                               ensemble_config_type *ensemble_config) {
     auto enkf_obs = new enkf_obs_type;
     enkf_obs->obs_hash = hash_alloc();
     enkf_obs->obs_vector = vector_alloc_new();
 
-    enkf_obs->history = history;
     enkf_obs->refcase = refcase;
     enkf_obs->ensemble_config = ensemble_config;
     enkf_obs->error = "";
@@ -276,148 +274,6 @@ static void enkf_obs_update_keys(Cwrap<enkf_obs_type> enkf_obs) {
     }
     hash_iter_free(iter);
     hash_free(map);
-}
-
-/** Handle HISTORY_OBSERVATION instances. */
-static void
-handle_history_observation(Cwrap<enkf_obs_type> enkf_obs,
-                           std::shared_ptr<conf_instance_type> enkf_conf,
-                           double std_cutoff) {
-    auto num_reports = enkf_obs->obs_time.size();
-    std::vector<std::string> hist_obs_keys =
-        conf_instance_alloc_list_of_sub_instances_of_class_by_name(
-            enkf_conf, "HISTORY_OBSERVATION");
-    int num_hist_obs = hist_obs_keys.size();
-
-    if (num_hist_obs > 0 && enkf_obs->refcase == NULL) {
-        throw exc::invalid_argument(
-            "REFCASE is required for HISTORY_OBSERVATION");
-    }
-
-    for (int i = 0; i < num_hist_obs; i++) {
-        std::string obs_key = hist_obs_keys[i];
-
-        if (!enkf_obs->history) {
-            fprintf(stderr,
-                    "** Warning: no history object registered - observation:%s "
-                    "is ignored\n",
-                    obs_key.c_str());
-            break;
-        }
-        auto hist_obs_conf =
-            conf_instance_get_sub_instance_ref(enkf_conf, obs_key.c_str());
-
-        enkf_config_node_type *config_node = ensemble_config_add_summary(
-            enkf_obs->ensemble_config, obs_key.c_str());
-
-        enkf_obs->ensemble_config->summary_keys.push_back(obs_key);
-
-        if (config_node == NULL) {
-            fprintf(stderr,
-                    "** Warning: summary:%s does not exist - observation:%s "
-                    "not added.\n",
-                    obs_key.c_str(), obs_key.c_str());
-            break;
-        }
-
-        obs_vector_type *obs_vector =
-            obs_vector_alloc(SUMMARY_OBS, obs_key.c_str(),
-                             ensemble_config_get_node(enkf_obs->ensemble_config,
-                                                      obs_key.c_str()),
-                             num_reports);
-        if (obs_vector != NULL) {
-            if (obs_vector_load_from_HISTORY_OBSERVATION(
-                    obs_vector, hist_obs_conf, enkf_obs->obs_time,
-                    enkf_obs->history, std_cutoff, enkf_obs->refcase)) {
-                enkf_obs_add_obs_vector(enkf_obs, obs_vector);
-            } else {
-                fprintf(stderr,
-                        "** Could not load historical data for observation:%s "
-                        "- ignored\n",
-                        obs_key.c_str());
-
-                obs_vector_free(obs_vector);
-            }
-        }
-    }
-}
-
-/** Handle SUMMARY_OBSERVATION instances. */
-static void
-handle_summary_observation(Cwrap<enkf_obs_type> enkf_obs,
-                           std::shared_ptr<conf_instance_type> enkf_conf) {
-    auto num_reports = enkf_obs->obs_time.size();
-    std::vector<std::string> sum_obs_keys =
-        conf_instance_alloc_list_of_sub_instances_of_class_by_name(
-            enkf_conf, "SUMMARY_OBSERVATION");
-    const int num_sum_obs = sum_obs_keys.size();
-
-    for (int i = 0; i < num_sum_obs; i++) {
-        std::string obs_key = sum_obs_keys[i];
-        auto sum_obs_conf =
-            conf_instance_get_sub_instance_ref(enkf_conf, obs_key.c_str());
-        const char *sum_key =
-            conf_instance_get_item_value_ref(sum_obs_conf, "KEY");
-
-        /* check if have sum_key exists */
-        enkf_config_node_type *config_node =
-            ensemble_config_add_summary(enkf_obs->ensemble_config, sum_key);
-
-        enkf_obs->ensemble_config->summary_keys.push_back(sum_key);
-
-        if (config_node == NULL) {
-            fprintf(stderr,
-                    "** Warning: summary key:%s does not exist - observation "
-                    "key:%s not added.\n",
-                    sum_key, obs_key.c_str());
-            break;
-        }
-
-        /* Check if obs_vector is alloc'd */
-        obs_vector_type *obs_vector = obs_vector_alloc(
-            SUMMARY_OBS, obs_key.c_str(),
-            ensemble_config_get_node(enkf_obs->ensemble_config, sum_key),
-            num_reports);
-        if (obs_vector == NULL)
-            break;
-
-        obs_vector_load_from_SUMMARY_OBSERVATION(obs_vector, sum_obs_conf,
-                                                 enkf_obs->obs_time);
-        enkf_obs_add_obs_vector(enkf_obs, obs_vector);
-    }
-}
-
-/** Handle GENERAL_OBSERVATION instances. */
-static void
-handle_general_observation(Cwrap<enkf_obs_type> enkf_obs,
-                           std::shared_ptr<conf_instance_type> enkf_conf) {
-    auto obs_keys = conf_instance_alloc_list_of_sub_instances_of_class_by_name(
-        enkf_conf, "GENERAL_OBSERVATION");
-    int num_obs = obs_keys.size();
-
-    for (int i = 0; i < num_obs; i++) {
-        std::string obs_key = obs_keys[i];
-        auto gen_obs_conf =
-            conf_instance_get_sub_instance_ref(enkf_conf, obs_key.c_str());
-
-        const char *state_kw =
-            conf_instance_get_item_value_ref(gen_obs_conf, "DATA");
-        obs_vector_type *obs_vector = NULL;
-        if (!ensemble_config_has_key(enkf_obs->ensemble_config, state_kw)) {
-
-            fprintf(stderr,
-                    "** Warning the ensemble key:%s does not exist - "
-                    "observation:%s not added \n",
-                    state_kw, obs_key.c_str());
-        } else {
-            enkf_config_node_type *config_node =
-                ensemble_config_get_node(enkf_obs->ensemble_config, state_kw);
-            obs_vector = obs_vector_alloc_from_GENERAL_OBSERVATION(
-                gen_obs_conf, enkf_obs->obs_time, config_node);
-        }
-        if (obs_vector != NULL)
-            enkf_obs_add_obs_vector(enkf_obs, obs_vector);
-    }
 }
 
 std::shared_ptr<conf_class_type> enkf_obs_get_obs_conf_class() {
@@ -834,18 +690,11 @@ hash_type *enkf_obs_alloc_data_map(enkf_obs_type *enkf_obs) {
     return map;
 }
 
-hash_iter_type *enkf_obs_alloc_iter(const enkf_obs_type *enkf_obs) {
-    return hash_iter_alloc(enkf_obs->obs_hash);
-}
-
 namespace {
-py::handle pybind_alloc(int history_,
-                        std::shared_ptr<TimeMap> external_time_map,
+py::handle pybind_alloc(std::shared_ptr<TimeMap> external_time_map,
                         Cwrap<ecl_sum_type> refcase,
                         Cwrap<ensemble_config_type> ensemble_config) {
-    auto history = static_cast<history_source_type>(history_);
-    auto ptr =
-        enkf_obs_alloc(history, external_time_map, refcase, ensemble_config);
+    auto ptr = enkf_obs_alloc(external_time_map, refcase, ensemble_config);
     return PyLong_FromVoidPtr(ptr);
 }
 
@@ -863,6 +712,29 @@ ERT_CLIB_SUBMODULE("enkf_obs", m) {
                  return enkf_conf;
              }),
              "config_file"_a)
+        .def("get_sub_instances",
+             [](std::shared_ptr<conf_instance_type> self, std::string name) {
+                 auto keys =
+                     conf_instance_alloc_list_of_sub_instances_of_class_by_name(
+                         self, name.c_str());
+                 std::vector<std::shared_ptr<conf_instance_type>> sub_instances;
+                 for (auto &key : keys) {
+                     sub_instances.push_back(
+                         conf_instance_get_sub_instance_ref(self, key.c_str()));
+                 }
+                 return sub_instances;
+             })
+        .def("has_value",
+             [](std::shared_ptr<conf_instance_type> self, std::string name) {
+                 return conf_instance_has_item(self, name.c_str());
+             })
+        .def("get_value",
+             [](std::shared_ptr<conf_instance_type> self, std::string name) {
+                 return conf_instance_get_item_value_ref(self, name.c_str());
+             })
+        .def_property_readonly(
+            "name",
+            [](std::shared_ptr<conf_instance_type> self) { return self->name; })
         .def("get_errors", [](std::shared_ptr<conf_instance_type> self) {
             auto errors = conf_instance_get_path_error(self);
             if (errors) {
@@ -875,13 +747,26 @@ ERT_CLIB_SUBMODULE("enkf_obs", m) {
                 return std::string("Error in observations configuration file");
             return std::string("");
         });
-    m.def("alloc", pybind_alloc, "history"_a, "time_map"_a, "refcase"_a,
+    m.def("obs_time", [](Cwrap<enkf_obs_type> self) { return self->obs_time; });
+    m.def("alloc", pybind_alloc, "time_map"_a, "refcase"_a,
           "ensemble_config"_a);
-    m.def("handle_history_observation", handle_history_observation,
-          py::arg("self"), py::arg("conf_instance"), py::arg("std_cutoff"));
-    m.def("handle_summary_observation", handle_summary_observation,
-          py::arg("self"), py::arg("conf_instance"));
-    m.def("handle_general_observation", handle_general_observation,
-          py::arg("self"), py::arg("conf_instance"));
     m.def("update_keys", enkf_obs_update_keys, py::arg("self"));
+    m.def("read_from_refcase",
+          [](Cwrap<ecl_sum_type> refcase, std::string local_key) {
+              int num_steps = ecl_sum_get_last_report_step(refcase);
+              std::vector<bool> valid(num_steps + 1);
+              std::vector<double> value(num_steps + 1);
+              for (int tstep = 0; tstep <= num_steps; tstep++) {
+                  if (ecl_sum_has_report_step(refcase, tstep)) {
+                      int time_index = ecl_sum_iget_report_end(refcase, tstep);
+                      value[tstep] = ecl_sum_get_general_var(
+                          refcase, time_index, local_key.c_str());
+                      valid[tstep] = true;
+                  } else {
+                      valid[tstep] = false;
+                  }
+              }
+
+              return std::make_pair(valid, value);
+          });
 }

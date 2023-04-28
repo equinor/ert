@@ -9,6 +9,7 @@ from ert._c_wrappers.enkf import EnkfObs, ErtConfig, ObsVector
 from ert._c_wrappers.enkf.config import EnkfConfigNode
 from ert._c_wrappers.enkf.enums import EnkfObservationImplementationType
 from ert._c_wrappers.enkf.observations.summary_observation import SummaryObservation
+from ert.parsing import ConfigWarning
 
 
 def run_simulator():
@@ -63,30 +64,21 @@ def test_that_correct_key_observation_is_loaded(extra_config, expected):
     Path("config.ert").write_text(config_text + extra_config, encoding="utf-8")
     run_simulator()
     ert_config = ErtConfig.from_file("config.ert")
-    observations = EnkfObs(
-        ert_config.model_config.history_source,
-        ert_config.model_config.time_map,
-        ert_config.ensemble_config.refcase,
-        ert_config.ensemble_config,
-    )
-    observations.load(
-        ert_config.model_config.obs_config_file,
-        ert_config.analysis_config.get_std_cutoff(),
-    )
+    observations = EnkfObs.from_ert_config(ert_config)
     assert [obs.getValue() for obs in observations["FOPR"]] == [expected]
 
 
 @pytest.mark.parametrize(
-    "datestring, deprecated",
+    "datestring, errors",
     [
-        pytest.param("20.01.2000", True, id="dd.mm.yyyy gives warning"),
-        pytest.param("20.1.2000", True, id="dd.m.yyyy gives warning"),
-        pytest.param("20-01-2000", True, id="dd-mm-yyyy gives warning"),
-        pytest.param("2000-01-20", False, id="YYYY-MM-DD does not give_warning"),
+        pytest.param("20.01.2000", True),
+        pytest.param("20.1.2000", True),
+        pytest.param("20-01-2000", True),
+        pytest.param("20/01/2000", False),
     ],
 )
 @pytest.mark.usefixtures("use_tmpdir")
-def test_date_parsing_in_observations(datestring, deprecated, capfd):
+def test_date_parsing_in_observations(datestring, errors):
     config_text = dedent(
         """
         NUM_REALIZATIONS 1
@@ -103,23 +95,12 @@ def test_date_parsing_in_observations(datestring, deprecated, capfd):
     Path("config.ert").write_text(config_text, encoding="utf-8")
     run_simulator()
     ert_config = ErtConfig.from_file("config.ert")
-    observations = EnkfObs(
-        ert_config.model_config.history_source,
-        ert_config.model_config.time_map,
-        ert_config.ensemble_config.refcase,
-        ert_config.ensemble_config,
-    )
-    observations.load(
-        ert_config.model_config.obs_config_file,
-        ert_config.analysis_config.get_std_cutoff(),
-    )
-    captured = capfd.readouterr()
-    if deprecated:
-        assert "is deprecated" in captured.err
-        assert "Please use ISO date format" in captured.err
+    if errors:
+        with pytest.raises(ValueError, match="Please use ISO date format"):
+            _ = EnkfObs.from_ert_config(ert_config)
     else:
-        assert "deprecat" not in captured.err.lower()
-        assert "deprecat" not in captured.out.lower()
+        with pytest.warns(ConfigWarning, match="Please use ISO date format"):
+            _ = EnkfObs.from_ert_config(ert_config)
 
 
 def test_observations(setup_case):

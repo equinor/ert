@@ -43,18 +43,6 @@ void obs_vector_user_get(const obs_vector_type *obs_vector,
                          double *std, bool *valid);
 extern "C" int obs_vector_get_next_active_step(const obs_vector_type *, int);
 extern "C" void *obs_vector_iget_node(const obs_vector_type *, int);
-obs_vector_type *
-obs_vector_alloc_from_GENERAL_OBSERVATION(std::shared_ptr<conf_instance_type>,
-                                          const std::vector<time_t> &obs_time,
-                                          enkf_config_node_type *);
-void obs_vector_load_from_SUMMARY_OBSERVATION(
-    obs_vector_type *obs_vector, std::shared_ptr<conf_instance_type>,
-    const std::vector<time_t> &obs_time);
-bool obs_vector_load_from_HISTORY_OBSERVATION(
-    obs_vector_type *obs_vector,
-    std::shared_ptr<conf_instance_type> conf_instance,
-    const std::vector<time_t> &obs_time, const history_source_type history,
-    double std_cutoff, const ecl_sum_type *refcase);
 extern "C" obs_vector_type *obs_vector_alloc(obs_impl_type obs_type,
                                              const char *obs_key,
                                              enkf_config_node_type *config_node,
