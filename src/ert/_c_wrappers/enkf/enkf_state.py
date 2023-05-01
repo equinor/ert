@@ -4,13 +4,14 @@ import ctypes
 import logging
 from fnmatch import fnmatch
 from pathlib import Path
-from typing import TYPE_CHECKING, Tuple
+from typing import TYPE_CHECKING
 
 import numpy as np
 from ecl.summary import EclSum
 
 from ert._c_wrappers.enkf.enums.ert_impl_type_enum import ErtImplType
 from ert._c_wrappers.enkf.model_callbacks import LoadStatus
+from ert.shared.status import LoadResult
 
 if TYPE_CHECKING:
     from ert._c_wrappers.enkf import EnsembleConfig, RunArg
@@ -18,7 +19,9 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-def _internalize_GEN_DATA(ensemble_config: "EnsembleConfig", run_arg: "RunArg"):
+def _internalize_GEN_DATA(
+    ensemble_config: "EnsembleConfig", run_arg: "RunArg"
+) -> LoadResult:
     keys = ensemble_config.getKeylistFromImplType(ErtImplType.GEN_DATA)
 
     run_path = Path(run_arg.runpath)
@@ -39,8 +42,8 @@ def _internalize_GEN_DATA(ensemble_config: "EnsembleConfig", run_arg: "RunArg"):
 
     run_arg.ensemble_storage.save_gen_data(all_data, run_arg.iens)
     if errors:
-        return (LoadStatus.LOAD_FAILURE, "\n".join(errors))
-    return (LoadStatus.LOAD_SUCCESSFUL, "")
+        return LoadResult(LoadStatus.LOAD_FAILURE, "\n".join(errors))
+    return LoadResult(LoadStatus.LOAD_SUCCESSFUL, "")
 
 
 def _should_load_summary_key(data_key, user_set_keys):
@@ -62,7 +65,7 @@ def _load_summary_data(run_path: str, job_name: str) -> EclSum:
 
 def _internalize_SUMMARY_DATA(
     ens_config: EnsembleConfig, run_arg: RunArg, summary: EclSum
-):
+) -> LoadResult:
     data = []
     keys = []
     time_map = summary.alloc_time_vector(True)
@@ -103,20 +106,20 @@ def _internalize_SUMMARY_DATA(
         data.append(np_vector)
     total = np.stack(data, axis=0)
     run_arg.ensemble_storage.save_summary_data(total, keys, axis, run_arg.iens)
-    return (LoadStatus.LOAD_SUCCESSFUL, "")
+    return LoadResult(LoadStatus.LOAD_SUCCESSFUL, "")
 
 
 def _write_summary_data_to_storage(
     ens_config: EnsembleConfig, run_arg: RunArg
-) -> Tuple[LoadStatus, str]:
+) -> LoadResult:
     user_summary_keys = ens_config.get_summary_keys()
     if not user_summary_keys:
-        return (LoadStatus.LOAD_SUCCESSFUL, "")
+        return LoadResult(LoadStatus.LOAD_SUCCESSFUL, "")
 
     try:
         summary = _load_summary_data(run_arg.runpath, run_arg.job_name)
     except IOError:
-        return (
+        return LoadResult(
             LoadStatus.LOAD_FAILURE,
             "Could not find SUMMARY file or using non unified SUMMARY "
             f"file from: {run_arg.runpath}/{run_arg.job_name}.UNSMRY",
@@ -127,12 +130,12 @@ def _write_summary_data_to_storage(
 
 def _write_gen_data_to_storage(
     ens_config: "EnsembleConfig", run_arg: "RunArg"
-) -> Tuple[LoadStatus, str]:
+) -> LoadResult:
     result = _internalize_GEN_DATA(ens_config, run_arg)
 
-    if result[0] == LoadStatus.LOAD_FAILURE:
-        return (LoadStatus.LOAD_FAILURE, "Failed to internalize GEN_DATA")
-    return (LoadStatus.LOAD_SUCCESSFUL, "Results loaded successfully.")
+    if result.status == LoadStatus.LOAD_FAILURE:
+        return LoadResult(LoadStatus.LOAD_FAILURE, "Failed to internalize GEN_DATA")
+    return LoadResult(LoadStatus.LOAD_SUCCESSFUL, "Results loaded successfully.")
 
 
 __all__ = ["_write_summary_data_to_storage", "_write_gen_data_to_storage"]

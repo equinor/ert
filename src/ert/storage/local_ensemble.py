@@ -56,13 +56,13 @@ def _load_realization(
         [RealizationStateEnum.STATE_UNDEFINED],
         RealizationStateEnum.STATE_INITIALIZED,
     )
-    status = forward_model_ok(run_args[realisation], ensemble_config)
+    result = forward_model_ok(run_args[realisation], ensemble_config)
     sim_fs.state_map[realisation] = (
         RealizationStateEnum.STATE_HAS_DATA
-        if status[0] == LoadStatus.LOAD_SUCCESSFUL
+        if result.status == LoadStatus.LOAD_SUCCESSFUL
         else RealizationStateEnum.STATE_LOAD_FAILURE
     )
-    return status, realisation
+    return result, realisation
 
 
 def _field_truncate(data: npt.ArrayLike, min_: float, max_: float) -> Any:
