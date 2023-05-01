@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 
 
 def _internalize_GEN_DATA(
-    ensemble_config: "EnsembleConfig", run_arg: "RunArg"
+    ensemble_config: EnsembleConfig, run_arg: RunArg
 ) -> LoadResult:
     keys = ensemble_config.getKeylistFromImplType(ErtImplType.GEN_DATA)
 
@@ -129,7 +129,7 @@ def _write_summary_data_to_storage(
 
 
 def _write_gen_data_to_storage(
-    ens_config: "EnsembleConfig", run_arg: "RunArg"
+    ens_config: EnsembleConfig, run_arg: RunArg
 ) -> LoadResult:
     result = _internalize_GEN_DATA(ens_config, run_arg)
 

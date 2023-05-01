@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Tuple
@@ -13,11 +15,14 @@ from ert.shared.status import LoadResult
 
 if TYPE_CHECKING:
     from ert._c_wrappers.enkf import EnsembleConfig, RunArg
+    from ert._c_wrappers.enkf.ensemble_config import ParameterConfiguration
 
 logger = logging.getLogger(__name__)
 
 
-def _read_parameters(run_arg, parameter_configuration) -> LoadResult:
+def _read_parameters(
+    run_arg: RunArg, parameter_configuration: ParameterConfiguration
+) -> LoadResult:
     result = LoadResult(LoadStatus.LOAD_SUCCESSFUL, "")
     error_msg = ""
     for config_node in parameter_configuration:
@@ -35,8 +40,8 @@ def _read_parameters(run_arg, parameter_configuration) -> LoadResult:
 
 
 def forward_model_ok(
-    run_arg: "RunArg",
-    ens_conf: "EnsembleConfig",
+    run_arg: RunArg,
+    ens_conf: EnsembleConfig,
 ) -> LoadResult:
     parameters_result = LoadResult(LoadStatus.LOAD_SUCCESSFUL, "")
     summary_result = LoadResult(LoadStatus.LOAD_SUCCESSFUL, "")
@@ -75,7 +80,7 @@ def forward_model_ok(
     return final_result
 
 
-def forward_model_exit(run_arg: "RunArg", *_: Tuple[Any]) -> LoadResult:
+def forward_model_exit(run_arg: RunArg, *_: Tuple[Any]) -> LoadResult:
     run_arg.ensemble_storage.state_map[
         run_arg.iens
     ] = RealizationStateEnum.STATE_LOAD_FAILURE
