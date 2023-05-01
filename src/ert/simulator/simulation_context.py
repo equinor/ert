@@ -10,13 +10,14 @@ from ert._c_wrappers.enkf import RunContext
 from ert._c_wrappers.enkf.enums import HookRuntime, RealizationStateEnum
 from ert._c_wrappers.job_queue import JobQueueManager, RunStatusType
 from ert.callbacks import forward_model_exit, forward_model_ok
+
 from .forward_model_status import ForwardModelStatus
 
 if TYPE_CHECKING:
     from ert._c_wrappers.enkf import EnKFMain, ErtConfig, RunArg
     from ert._c_wrappers.job_queue import JobQueue, JobStatusType
-    from ert.storage import EnsembleAccessor
     from ert.shared.status import LoadResult
+    from ert.storage import EnsembleAccessor
 
 
 def done_callback(args: Tuple["RunArg", "ErtConfig"]) -> LoadResult:
