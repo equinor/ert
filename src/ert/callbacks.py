@@ -46,7 +46,7 @@ def forward_model_ok(
     parameters_result = LoadResult(LoadStatus.LOAD_SUCCESSFUL, "")
     summary_result = LoadResult(LoadStatus.LOAD_SUCCESSFUL, "")
     gen_data_result = LoadResult(LoadStatus.LOAD_SUCCESSFUL, "")
-    try:  # pylint: disable=R1702
+    try:
         # We only read parameters after the prior, after that, ERT
         # handles parameters
         if run_arg.itr == 0:
