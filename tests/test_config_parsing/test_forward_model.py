@@ -353,7 +353,7 @@ def test_that_positional_forward_model_args_gives_config_validation_error():
     test_config_contents = dedent(
         """
         NUM_REALIZATIONS  1
-        FORWARD_MODEL RMS(<IENS>)
+        FORWARD_MODEL RMS <IENS>
         """
     )
     with open(test_config_file_name, "w", encoding="utf-8") as fh:
