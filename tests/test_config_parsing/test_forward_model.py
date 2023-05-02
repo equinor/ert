@@ -360,7 +360,10 @@ def test_that_positional_forward_model_args_gives_config_validation_error():
         fh.write(test_config_contents)
 
     with pytest.raises(ConfigValidationError, match="FORWARD_MODEL RMS"):
-        _ = ErtConfig.from_file(test_config_file_name)
+        _ = ErtConfig.from_file(test_config_file_name, use_new_parser=True)
+
+    with pytest.raises(ConfigValidationError, match="Could not find job 'RMS<IENS>'"):
+        _ = ErtConfig.from_file(test_config_file_name, use_new_parser=False)
 
 
 @pytest.mark.usefixtures("use_tmpdir")
