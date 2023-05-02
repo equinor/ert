@@ -322,7 +322,13 @@ def _parse_file(
             )
         raise IOError(f"{error_context_string} file: {str(file)} not found")
     except UnexpectedCharacters as e:
-        raise ConfigValidationError(str(e), config_file=str(file)) from e
+        unexpected_char = e.char
+        allowed_chars = e.allowed
+        message = (
+            f'Did not expect character: {unexpected_char}. '
+            f'Expected one of {allowed_chars}'
+        )
+        raise ConfigValidationError(message, config_file=file)
     except UnicodeDecodeError as e:
         error_words = str(e).split(" ")
         hex_str = error_words[error_words.index("byte") + 1]
