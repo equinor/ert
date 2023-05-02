@@ -4,8 +4,7 @@ from typing import Any
 from fastapi import Depends
 from sqlalchemy import create_engine
 from sqlalchemy.exc import DBAPIError
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import declarative_base, sessionmaker
 from sqlalchemy.sql import text
 
 from ert_storage.security import security
