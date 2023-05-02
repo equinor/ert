@@ -1,0 +1,104 @@
+#!/usr/bin/env python
+
+import datetime
+import json
+import os
+
+import ecl_data_io as eclio
+import numpy as np
+from ecl.summary import EclSum
+
+
+def _load_coeffs(filename):
+    with open(filename) as f:
+        return json.load(f)
+
+
+def _evaluate(coeffs, x):
+    return coeffs["c0"] * x**2 + coeffs["c1"] * x + coeffs["c2"]
+
+
+def write_summary_spec(file, restarts, keywords):
+    content = [
+        ("INTEHEAD", [1, 100]),
+        ("RESTART ", [b"        "] * 8),
+        ("DIMENS  ", [1 + len(keywords), 10, 10, 10, 0, -1]),
+        ("KEYWORDS", [f"{x: <8}" for x in ["TIME"] + keywords]),
+        ("WGNAMES ", [b":+:+:+:+"] * (len(keywords) + 1)),
+        ("NUMS    ", [-32676] + ([0] * len(keywords))),
+        ("UNITS   ", [f"{x: <8}" for x in ["DAYS"] + ["None"] * len(keywords)]),
+        ("STARTDAT", [1, 1, 2010, 0, 0, 0]),
+    ]
+    eclio.write(file, content)
+
+
+def write_summary_data(file, x_size, keywords, coeffs, update_steps):
+    num_keys = len(keywords)
+
+    def content_generator():
+        for x in range(x_size):
+            yield "SEQHDR  ", [0]
+            for m in range(update_steps):
+                step = x * update_steps + m
+                day = float(step + 1)
+                values = [
+                    _evaluate(coeffs[key % len(coeffs)], step)
+                    for key in range(num_keys)
+                ]
+                yield "MINISTEP", [step]
+                yield "PARAMS  ", np.array([day] + values, dtype=np.float32)
+
+    eclio.write(file, content_generator())
+
+
+def make_summary(count, x_size, coeffs, update_steps):
+    if count <= 0:
+        return
+
+    if not os.path.exists("summary"):
+        os.mkdir("summary")
+
+    use_ecl_data_io = True
+
+    if use_ecl_data_io:
+        keywords = [f"PSUM{s}" for s in range(count)]
+        write_summary_spec("summary/POLY_SUMMARY.SMSPEC", x_size, keywords)
+        write_summary_data(
+            "summary/POLY_SUMMARY.UNSMRY", x_size, keywords, coeffs, update_steps
+        )
+
+    else:
+        ecl_sum = EclSum.writer(
+            "summary/POLY_SUMMARY", datetime.datetime(2010, 1, 1), 10, 10, 10
+        )
+        for s in range(count):
+            ecl_sum.addVariable(f"PSUM{s}")
+
+        for x in range(x_size * update_steps):
+            t_step = ecl_sum.addTStep(x // update_steps + 1, sim_days=x + 1)
+            for s in range(count):
+                t_step[f"PSUM{s}"] = _evaluate(coeffs[s % len(coeffs)], x)
+
+        for key in ecl_sum.keys():
+            ecl_sum.export_csv("csv.csv")
+
+        ecl_sum.fwrite()
+
+
+def make_gen_data(results, x_size, coeffs):
+    for n in range(results):
+        output = []
+        with open(f"poly_{n}_0.out", "w") as f:
+            f.writelines(
+                str(_evaluate(coeffs[n % len(coeffs)], x)) + "\n" for x in range(x_size)
+            )
+
+
+if __name__ == "__main__":
+    coeffs = {}
+    for s in range({{parameter_count}}):
+        coeffs[s] = _load_coeffs(f"coeffs_{s}.json")
+    make_summary(
+        {{summary_data_count}}, {{summary_data_entries}}, coeffs, {{update_steps}}
+    )
+    make_gen_data({{gen_data_count}}, {{gen_data_entries}}, coeffs)
