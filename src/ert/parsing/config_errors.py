@@ -22,7 +22,9 @@ class ConfigValidationError(ValueError):
         else:
             self.errors.append(ErrorInfo(message=errors, filename=config_file))
         super().__init__(
-            ";".join([self._get_error_message(error) for error in self.errors])
+            ";".join(
+                [self._get_old_style_error_message(error) for error in self.errors]
+            )
         )
 
     @classmethod
@@ -30,7 +32,7 @@ class ConfigValidationError(ValueError):
         return cls([info])
 
     @classmethod
-    def _get_error_message(cls, info: ErrorInfo) -> str:
+    def _get_old_style_error_message(cls, info: ErrorInfo) -> str:
         return (
             (
                 f"Parsing config file `{info.filename}` "
@@ -40,36 +42,25 @@ class ConfigValidationError(ValueError):
             else info.message
         )
 
-    def get_error_messages(self) -> List[str]:
-        return [self._get_error_message(error) for error in self.errors]
+    def get_cli_message(self) -> List[str]:
+        return "\n".join(self.get_error_messages())
 
-    def get_cli_message(self) -> str:
+    def get_error_messages(self) -> str:
         by_filename = defaultdict(list)
         for error in self.errors:
             by_filename[error.filename].append(error)
 
-        def indent_only_first_line(message: str, prefix="  * "):
-            lines = message.splitlines()
-            blank_prefix = " " * len(prefix)
-
-            return "\n".join(
-                [prefix + lines[0], *[(blank_prefix + line) for line in lines[1:]]]
-            )
-
-        result = ";".join(
-            [
-                f"Parsing config file `{filename}` resulted in the errors: \n"
-                + "\n".join(
-                    [
-                        indent_only_first_line(err.message_with_location, "  * ")
-                        for err in info_list
-                    ]
+        nice_messages = []
+        for filename, info_list in by_filename.items():
+            for info in info_list:
+                nice_messages.append(
+                    f"{filename}:"
+                    f"{info.line}:"
+                    f"{info.column}:{info.end_column}:"
+                    f"{info.message}"
                 )
-                for filename, info_list in by_filename.items()
-            ]
-        )
 
-        return result
+        return nice_messages
 
     @classmethod
     def from_collected(
