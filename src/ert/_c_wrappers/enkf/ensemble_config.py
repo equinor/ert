@@ -389,7 +389,7 @@ class EnsembleConfig(BaseCClass):
         elif not Path(base_surface).exists():
             errors.append(f"BASE_SURFACE:{base_surface} not found")
         if errors:
-            errors = "\n".join(errors)
+            errors = ". ".join(errors)
             raise ConfigValidationError(
                 f"SURFACE {name} incorrectly configured: {errors}"
             )

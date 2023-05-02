@@ -240,7 +240,7 @@ def test_surface_bad_init_values(setup_case):
         f" BASE_SURFACE:{base_surface}"
     )
     error = (
-        "Must give file name with %d with FORWARD_INIT:FALSE\n"
+        "Must give file name with %d with FORWARD_INIT:FALSE. "
         f"BASE_SURFACE:{base_surface} not found"
     )
     with pytest.raises(ConfigValidationError, match=error):

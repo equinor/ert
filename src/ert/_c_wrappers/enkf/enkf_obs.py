@@ -199,22 +199,22 @@ class EnkfObs(BaseCClass):
             except IndexError as err:
                 if config.ensemble_config.refcase is not None:
                     raise ObservationConfigError(
-                        f"{err} The time map is set from the REFCASE keyword.\n Either "
+                        f"{err} The time map is set from the REFCASE keyword. Either "
                         "the REFCASE has an incorrect/missing date, or the observation "
                         "is given an incorrect date.",
                         config_file=config.model_config.obs_config_file,
                     ) from err
                 raise ObservationConfigError(
                     f"{err} The time map is set from the TIME_MAP"
-                    "keyword.\n Either the time map file has an"
-                    "incorrect/missing date, or the  observation is given an"
+                    "keyword. Either the time map file has an"
+                    "incorrect/missing date, or the observation is given an"
                     "incorrect date.",
                     config_file=config.model_config.obs_config_file,
                 ) from err
 
             except ValueError as err:
                 raise ObservationConfigError(
-                    str(err),
+                    str(err).replace("\n", " ").replace("  ", " "),
                     config_file=config.model_config.obs_config_file,
                 ) from err
         return ret
