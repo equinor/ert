@@ -1,16 +1,13 @@
 import logging
 from collections import defaultdict
 from graphlib import TopologicalSorter
-from typing import TYPE_CHECKING, Iterator, List, Optional, Sequence, Tuple
+from typing import Iterator, List, Optional, Sequence, Tuple
 
 from typing_extensions import Self
 
 from ._step import Step, StepBuilder
 
 SOURCE_TEMPLATE_REAL = "/real/{iens}"
-if TYPE_CHECKING:
-    from ._stage import StageBuilder
-
 
 logger = logging.getLogger(__name__)
 
@@ -94,7 +91,6 @@ class Realization:
 class RealizationBuilder:
     def __init__(self) -> None:
         self._steps: List[StepBuilder] = []
-        self._stages: List["StageBuilder"] = []
         self._active: Optional[bool] = None
         self._iens: Optional[int] = None
         self._parent_source: Optional[str] = None
@@ -105,10 +101,6 @@ class RealizationBuilder:
 
     def add_step(self, step: StepBuilder) -> Self:
         self._steps.append(step)
-        return self
-
-    def add_stage(self, stage: "StageBuilder") -> Self:
-        self._stages.append(stage)
         return self
 
     def set_iens(self, iens: int) -> Self:
