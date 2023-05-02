@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+import time
 from datetime import datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, List, Mapping, Optional, Sequence, Union
@@ -275,6 +276,7 @@ class EnKFMain:
         self, realization: List[bool], iteration: int, fs: EnsembleAccessor
     ) -> int:
         """Returns the number of loaded realizations"""
+        t = time.perf_counter()
         run_context = self.ensemble_context(fs, realization, iteration)
         nr_loaded = fs.load_from_run_path(
             self.getEnsembleSize(),
@@ -283,6 +285,9 @@ class EnKFMain:
             run_context.mask,
         )
         fs.sync()
+        logger.debug(
+            f"loadFromForwardModel() time_used {(time.perf_counter() - t):.4f}s"
+        )
         return nr_loaded
 
     def ensemble_context(
@@ -360,6 +365,8 @@ class EnKFMain:
         """
         # pylint: disable=too-many-nested-blocks
         # (this is a real code smell that we mute for now)
+        t = time.perf_counter()
+
         if parameters is None:
             parameters = self._parameter_keys
 
@@ -415,12 +422,14 @@ class EnKFMain:
             )
 
         ensemble.sync()
+        logger.debug(f"sample_prior() time_used {(time.perf_counter() - t):.4f}s")
 
     def rng(self) -> np.random.Generator:
         "Will return the random number generator used for updates."
         return self._shared_rng
 
     def createRunPath(self, run_context: RunContext) -> None:
+        t = time.perf_counter()
         for iens, run_arg in enumerate(run_context):
             if run_context.is_active(iens):
                 os.makedirs(
@@ -473,6 +482,8 @@ class EnKFMain:
         run_context.runpaths.write_runpath_list(
             [run_context.iteration], run_context.active_realizations
         )
+
+        logger.debug(f"createRunPath() time_used {(time.perf_counter() - t):.4f}s")
 
     def runWorkflows(
         self,
