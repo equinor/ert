@@ -1,0 +1,336 @@
+
+-- QUEUE_SYSTEM LSF
+
+QUEUE_SYSTEM LOCAL
+QUEUE_OPTION LOCAL MAX_RUNNING 14
+
+RUNPATH /scratch/johan_sverdrup/vkra/big_poly_test/realization-<IENS>/iter-<ITER>
+
+OBS_CONFIG observations
+
+NUM_REALIZATIONS 200
+MIN_REALIZATIONS 1
+
+SUMMARY *
+REFCASE refcase/REFCASE
+ECLBASE summary/POLY_SUMMARY
+
+
+
+GEN_DATA POLY_RES_0 RESULT_FILE:poly_0_%d.out REPORT_STEPS:0 INPUT_FORMAT:ASCII
+
+GEN_DATA POLY_RES_1 RESULT_FILE:poly_1_%d.out REPORT_STEPS:0 INPUT_FORMAT:ASCII
+
+GEN_DATA POLY_RES_2 RESULT_FILE:poly_2_%d.out REPORT_STEPS:0 INPUT_FORMAT:ASCII
+
+GEN_DATA POLY_RES_3 RESULT_FILE:poly_3_%d.out REPORT_STEPS:0 INPUT_FORMAT:ASCII
+
+GEN_DATA POLY_RES_4 RESULT_FILE:poly_4_%d.out REPORT_STEPS:0 INPUT_FORMAT:ASCII
+
+GEN_DATA POLY_RES_5 RESULT_FILE:poly_5_%d.out REPORT_STEPS:0 INPUT_FORMAT:ASCII
+
+GEN_DATA POLY_RES_6 RESULT_FILE:poly_6_%d.out REPORT_STEPS:0 INPUT_FORMAT:ASCII
+
+GEN_DATA POLY_RES_7 RESULT_FILE:poly_7_%d.out REPORT_STEPS:0 INPUT_FORMAT:ASCII
+
+GEN_DATA POLY_RES_8 RESULT_FILE:poly_8_%d.out REPORT_STEPS:0 INPUT_FORMAT:ASCII
+
+GEN_DATA POLY_RES_9 RESULT_FILE:poly_9_%d.out REPORT_STEPS:0 INPUT_FORMAT:ASCII
+
+GEN_DATA POLY_RES_10 RESULT_FILE:poly_10_%d.out REPORT_STEPS:0 INPUT_FORMAT:ASCII
+
+GEN_DATA POLY_RES_11 RESULT_FILE:poly_11_%d.out REPORT_STEPS:0 INPUT_FORMAT:ASCII
+
+GEN_DATA POLY_RES_12 RESULT_FILE:poly_12_%d.out REPORT_STEPS:0 INPUT_FORMAT:ASCII
+
+GEN_DATA POLY_RES_13 RESULT_FILE:poly_13_%d.out REPORT_STEPS:0 INPUT_FORMAT:ASCII
+
+GEN_DATA POLY_RES_14 RESULT_FILE:poly_14_%d.out REPORT_STEPS:0 INPUT_FORMAT:ASCII
+
+GEN_DATA POLY_RES_15 RESULT_FILE:poly_15_%d.out REPORT_STEPS:0 INPUT_FORMAT:ASCII
+
+GEN_DATA POLY_RES_16 RESULT_FILE:poly_16_%d.out REPORT_STEPS:0 INPUT_FORMAT:ASCII
+
+GEN_DATA POLY_RES_17 RESULT_FILE:poly_17_%d.out REPORT_STEPS:0 INPUT_FORMAT:ASCII
+
+GEN_DATA POLY_RES_18 RESULT_FILE:poly_18_%d.out REPORT_STEPS:0 INPUT_FORMAT:ASCII
+
+GEN_DATA POLY_RES_19 RESULT_FILE:poly_19_%d.out REPORT_STEPS:0 INPUT_FORMAT:ASCII
+
+GEN_DATA POLY_RES_20 RESULT_FILE:poly_20_%d.out REPORT_STEPS:0 INPUT_FORMAT:ASCII
+
+GEN_DATA POLY_RES_21 RESULT_FILE:poly_21_%d.out REPORT_STEPS:0 INPUT_FORMAT:ASCII
+
+GEN_DATA POLY_RES_22 RESULT_FILE:poly_22_%d.out REPORT_STEPS:0 INPUT_FORMAT:ASCII
+
+GEN_DATA POLY_RES_23 RESULT_FILE:poly_23_%d.out REPORT_STEPS:0 INPUT_FORMAT:ASCII
+
+GEN_DATA POLY_RES_24 RESULT_FILE:poly_24_%d.out REPORT_STEPS:0 INPUT_FORMAT:ASCII
+
+GEN_DATA POLY_RES_25 RESULT_FILE:poly_25_%d.out REPORT_STEPS:0 INPUT_FORMAT:ASCII
+
+GEN_DATA POLY_RES_26 RESULT_FILE:poly_26_%d.out REPORT_STEPS:0 INPUT_FORMAT:ASCII
+
+GEN_DATA POLY_RES_27 RESULT_FILE:poly_27_%d.out REPORT_STEPS:0 INPUT_FORMAT:ASCII
+
+GEN_DATA POLY_RES_28 RESULT_FILE:poly_28_%d.out REPORT_STEPS:0 INPUT_FORMAT:ASCII
+
+GEN_DATA POLY_RES_29 RESULT_FILE:poly_29_%d.out REPORT_STEPS:0 INPUT_FORMAT:ASCII
+
+GEN_DATA POLY_RES_30 RESULT_FILE:poly_30_%d.out REPORT_STEPS:0 INPUT_FORMAT:ASCII
+
+GEN_DATA POLY_RES_31 RESULT_FILE:poly_31_%d.out REPORT_STEPS:0 INPUT_FORMAT:ASCII
+
+GEN_DATA POLY_RES_32 RESULT_FILE:poly_32_%d.out REPORT_STEPS:0 INPUT_FORMAT:ASCII
+
+GEN_DATA POLY_RES_33 RESULT_FILE:poly_33_%d.out REPORT_STEPS:0 INPUT_FORMAT:ASCII
+
+
+
+GEN_KW COEFFS_0 coeff.tmpl coeffs_0.json coeff_priors
+
+GEN_KW COEFFS_1 coeff.tmpl coeffs_1.json coeff_priors
+
+GEN_KW COEFFS_2 coeff.tmpl coeffs_2.json coeff_priors
+
+GEN_KW COEFFS_3 coeff.tmpl coeffs_3.json coeff_priors
+
+GEN_KW COEFFS_4 coeff.tmpl coeffs_4.json coeff_priors
+
+GEN_KW COEFFS_5 coeff.tmpl coeffs_5.json coeff_priors
+
+GEN_KW COEFFS_6 coeff.tmpl coeffs_6.json coeff_priors
+
+GEN_KW COEFFS_7 coeff.tmpl coeffs_7.json coeff_priors
+
+
+INSTALL_JOB poly_eval POLY_EVAL
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+SIMULATION_JOB poly_eval
