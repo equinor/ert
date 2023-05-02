@@ -72,7 +72,9 @@ class IteratedEnsembleSmoother(BaseRunModel):
         self.setPhaseName("Analyzing...", indeterminate=True)
 
         self.setPhaseName("Pre processing update...", indeterminate=True)
+        self.ert().switchFileSystem(prior_storage.case_name)
         self.ert().runWorkflows(HookRuntime.PRE_UPDATE)
+        self.ert().switchFileSystem(posterior_storage.case_name)
 
         try:
             self.facade.iterative_smoother_update(
