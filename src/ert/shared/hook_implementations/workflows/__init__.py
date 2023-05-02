@@ -20,4 +20,5 @@ def legacy_ertscript_workflow(config):
     # like to replace it with a better solution, see:
     # https://github.com/equinor/ert/issues/3859, if this is not done
     # use the doc string of the class as documentation
-    config.add_workflow(DisableParametersUpdate, "DISABLE_PARAMETERS")
+    workflow = config.add_workflow(DisableParametersUpdate, "DISABLE_PARAMETERS")
+    workflow.description = DisableParametersUpdate.__doc__

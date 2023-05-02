@@ -2,7 +2,6 @@ ECLBASE                         input/<ECLIPSE_NAME>-%d
 DATA_FILE                       input/SPE1.DATA
 REFCASE                         input/refcase/SNAKE_OIL_FIELD
 GRID                            input/CASE.EGRID
-SCHEDULE_PREDICTION_FILE        input/schedule.sch
 
 RUNPATH /tmp/simulations/realization-<IENS>/iter-<ITER>
 NUM_REALIZATIONS 10

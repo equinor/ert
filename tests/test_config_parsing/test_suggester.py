@@ -161,3 +161,13 @@ def test_suggester_does_not_report_non_existent_path_due_to_missing_pre_defines(
         "NUM_REALIZATIONS 1\nLOAD_WORKFLOW <CONFIG_PATH>/workflow\n"
     )
     assert suggester.suggest_migrations(str(tmp_path / "config.ert")) == []
+
+
+def test_that_suggester_gives_schedule_prediciton_migration(suggester, tmp_path):
+    (tmp_path / "config.ert").write_text(
+        "NUM_REALIZATIONS 1\nSCHEDULE_PREDICTION_FILE no no no\n"
+    )
+    suggestions = suggester.suggest_migrations(str(tmp_path / "config.ert"))
+
+    assert len(suggestions) == 1
+    assert "The SCHEDULE_PREDICTION_FILE keyword has been removed" in suggestions[0]

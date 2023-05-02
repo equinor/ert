@@ -49,13 +49,6 @@ SINGLE_OCCURRENCE_SINGLE_ARG_KEYS = [
     ConfigKeys.UPDATE_LOG_PATH,
 ]
 
-# Like SINGLE_OCCURRENCE_SINGLE_ARG_KEYS but
-# the keyword can take more than one argument, ie.
-# SCHEDULE_PREDICTION_FILE filename  <parameters:> <init_files:>
-SINGLE_OCCURRENCE_MULTI_ARG_KEYS = [
-    ConfigKeys.SCHEDULE_PREDICTION_FILE,
-]
-
 # Keywords that can occur more than once, but
 # the number of arguments is always one.
 MULTI_OCCURRENCE_SINGLE_ARG_KEYS = [
@@ -87,9 +80,6 @@ def config_content_as_dict(
         for item in items:
             if key in SINGLE_OCCURRENCE_SINGLE_ARG_KEYS:
                 content_dict[key] = item.getValue()
-            elif key in SINGLE_OCCURRENCE_MULTI_ARG_KEYS:
-                for node in item:
-                    content_dict[key] = list(node)
             elif key in MULTI_OCCURRENCE_SINGLE_ARG_KEYS:
                 if key not in content_dict:
                     content_dict[key] = []

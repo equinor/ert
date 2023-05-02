@@ -200,17 +200,6 @@ static void add_gen_kw_keyword(config_parser_type *config_parser) {
     config_schema_item_iset_type(item, 3, CONFIG_EXISTING_PATH);
 }
 
-static void
-add_schedule_prediction_file_keyword(config_parser_type *config_parser) {
-    auto item = config_add_schema_item(config_parser,
-                                       SCHEDULE_PREDICTION_FILE_KEY, false);
-    /* scedhule_prediction_file   filename  <parameters:> <init_files:> */
-    config_schema_item_set_argc_minmax(item, 1, 3);
-    config_schema_item_iset_type(item, 0, CONFIG_EXISTING_PATH);
-    config_schema_item_set_deprecated(
-        item, "The SCHEDULE_PREDICTION_FILE config key is deprecated.");
-}
-
 static void add_summary_keyword(config_parser_type *config_parser) {
     auto item = config_add_schema_item(config_parser, SUMMARY_KEY, false);
     /* can have several summary keys on each line. */
@@ -284,7 +273,6 @@ ERT_CLIB_SUBMODULE("config_keywords", m) {
             // the two fault types are just added to the config object only to
             // be able to print suitable messages before exiting.
             add_gen_kw_keyword(config_parser);
-            add_schedule_prediction_file_keyword(config_parser);
             add_string_keyword(config_parser, GEN_KW_TAG_FORMAT_KEY);
             add_gen_data_keyword(config_parser);
             add_summary_keyword(config_parser);

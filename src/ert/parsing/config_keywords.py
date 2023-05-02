@@ -34,8 +34,6 @@ PARAMETER_KEY = "PARAMETER"
 REPORT_STEPS_KEY = "REPORT_STEPS"
 RESULT_FILE_KEY = "RESULT_FILE"
 TEMPLATE_KEY = "TEMPLATE"
-PRED_KEY = "PRED_KEY"
-
 ANALYSIS_COPY_KEY = "ANALYSIS_COPY"
 ANALYSIS_SET_VAR_KEY = "ANALYSIS_SET_VAR"
 ANALYSIS_SELECT_KEY = "ANALYSIS_SELECT"
@@ -629,9 +627,9 @@ def schedule_prediction_file_keyword() -> SchemaItem:
         required_set=False,
         argc_min=1,
         argc_max=3,
-        type_map=[SchemaType.CONFIG_EXISTING_PATH],
+        type_map=[SchemaType.CONFIG_STRING],
         deprecated=True,
-        deprecate_msg="The SCHEDULE_PREDICTION_FILE config KEY = is deprecated.",
+        deprecate_msg="The SCHEDULE_PREDICTION_FILE config KEY has been removed.",
     )
 
 
