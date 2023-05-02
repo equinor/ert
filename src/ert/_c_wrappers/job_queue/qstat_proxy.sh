@@ -82,7 +82,7 @@ if [ $proxyage_seconds -gt $CACHE_TIMEOUT ]; then
     flock --nonblock \
         --conflict-exit-code 0 \
         $proxyfile \
-        --command "$QSTAT $QSTAT_OPTIONS > $proxyfile.tmp; mv $proxyfile.tmp $proxyfile"
+        --command "$QSTAT $QSTAT_OPTIONS > $proxyfile.tmp && mv $proxyfile.tmp $proxyfile"
 fi
 
 # The file is potentially updated:
