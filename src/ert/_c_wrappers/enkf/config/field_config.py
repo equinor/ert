@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import logging
 import math
 import os
+import time
 from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING, Optional
@@ -20,6 +22,8 @@ if TYPE_CHECKING:
 
     from ert.storage import EnsembleAccessor, EnsembleReader
 
+_logger = logging.getLogger(__name__)
+
 
 @dataclass
 class Field(ParameterConfig):
@@ -36,6 +40,7 @@ class Field(ParameterConfig):
     grid_file: str
 
     def load(self, run_path: Path, real_nr: int, ensemble: EnsembleAccessor):
+        t = time.perf_counter()
         file_name = self.forward_init_file
         if "%d" in file_name:
             file_name = file_name % real_nr
@@ -66,12 +71,15 @@ class Field(ParameterConfig):
         trans = self.input_transformation
         data_transformed = field_transform(data, trans) if trans else data
         ensemble.save_field(key, real_nr, data_transformed)
+        _logger.debug(f"load() time_used {(time.perf_counter() - t):.4f}s")
 
     def save(self, run_path: Path, real_nr: int, ensemble: EnsembleReader):
+        t = time.perf_counter()
         file_out = run_path.joinpath(self.output_file)
         if os.path.islink(file_out):
             os.unlink(file_out)
         ensemble.export_field(self.name, real_nr, file_out)
+        _logger.debug(f"save() time_used {(time.perf_counter() - t):.4f}s")
 
 
 # pylint: disable=unnecessary-lambda

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import time
 from collections import defaultdict
 from dataclasses import dataclass, field
 from math import sqrt
@@ -33,7 +34,7 @@ if TYPE_CHECKING:
     from ert._c_wrappers.enkf.ensemble_config import EnsembleConfig
     from ert.storage import EnsembleAccessor, EnsembleReader
 
-logger = logging.getLogger(__name__)
+_logger = logging.getLogger(__name__)
 
 
 class ErtAnalysisError(Exception):
@@ -186,19 +187,33 @@ def _create_temporary_parameter_storage(
     iens_active_index: List[int],
 ) -> Dict[str, "npt.NDArray[np.double]"]:
     temporary_storage = {}
+    t_genkw = 0.0
+    t_surface = 0.0
+    t_field = 0.0
+    _logger.debug("_create_temporary_parameter_storage() - start")
     for key in ensemble_config.parameters:
         config_node = ensemble_config.getNode(key)
         if isinstance(config_node, GenKwConfig):
+            t = time.perf_counter()
             matrix = source_fs.load_gen_kw(key, iens_active_index)
+            t_genkw += time.perf_counter() - t
         elif isinstance(config_node, SurfaceConfig):
+            t = time.perf_counter()
             matrix = source_fs.load_surface_data(key, iens_active_index)
+            t_surface += time.perf_counter() - t
         elif isinstance(config_node, Field):
+            t = time.perf_counter()
             matrix = source_fs.load_field(key, iens_active_index)
+            t_field += time.perf_counter() - t
         else:
             raise NotImplementedError(
                 f"{config_node.getImplementationType()} is not supported"
             )
         temporary_storage[key] = matrix
+        _logger.debug(
+            f"_create_temporary_parameter_storage() time_used gen_kw={t_genkw:.4f}s, \
+                  surface={t_surface:.4f}s, field={t_field:.4f}s"
+        )
     return temporary_storage
 
 
@@ -210,9 +225,11 @@ def _get_obs_and_measure_data(
 ) -> Tuple[DataFrame, DataFrame]:
     data_keys = defaultdict(set)
     obs_data = []
+    t_summary = 0.0
+    t_gendata = 0.0
+    _logger.debug("_get_obs_and_measure_data() - start")
     for obs_key, active_list in selected_observations:
         obs_vector = obs[obs_key]
-
         try:
             data_key = obs_vector.getDataKey()
         except KeyError:
@@ -229,15 +246,22 @@ def _get_obs_and_measure_data(
     measured_data = []
     for imp_type, keys in data_keys.items():
         if imp_type == "SUMMARY_OBS":
+            t = time.perf_counter()
             measured_data.append(
                 source_fs.load_summary_data_as_df(list(keys), ens_active_list)
             )
-
+            t_summary += time.perf_counter() - t
         if imp_type == "GEN_OBS":
+            t = time.perf_counter()
             measured_data.append(
                 source_fs.load_gen_data_as_df(list(keys), ens_active_list)
             )
+            t_gendata += time.perf_counter() - t
 
+    _logger.debug(
+        f"_get_obs_and_measure_data() time_used gen_data={t_gendata:.4f}s, \
+            summary={t_summary:.4f}s"
+    )
     return pandas.concat(measured_data), pandas.concat(obs_data)
 
 
