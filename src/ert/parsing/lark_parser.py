@@ -325,8 +325,8 @@ def _parse_file(
         unexpected_char = e.char
         allowed_chars = e.allowed
         message = (
-            f'Did not expect character: {unexpected_char}. '
-            f'Expected one of {allowed_chars}'
+            f"Did not expect character: {unexpected_char}. "
+            f"Expected one of {allowed_chars}"
         )
         raise ConfigValidationError(message, config_file=file)
     except UnicodeDecodeError as e:
