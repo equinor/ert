@@ -291,7 +291,7 @@ class EnKFMain:
     ) -> RunContext:
         """This creates a new case in storage
         and returns the run information for that case"""
-        return RunContext(
+        run_context = RunContext(
             sim_fs=self.storage_manager.add_case(case_name),
             path_format=self.getModelConfig().jobname_format_string,
             format_string=self.getModelConfig().runpath_format_string,
@@ -300,12 +300,15 @@ class EnKFMain:
             global_substitutions=dict(self.get_context()),
             iteration=iteration,
         )
+        self.switchFileSystem(case_name)
+        return run_context
 
     def load_ensemble_context(
         self, case_name, active_realizations, iteration
     ) -> RunContext:
         """This loads an existing case from storage
         and creates run information for that case"""
+        self.switchFileSystem(case_name)
         return RunContext(
             sim_fs=self.storage_manager[case_name],
             path_format=self.getModelConfig().jobname_format_string,
