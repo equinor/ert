@@ -46,6 +46,7 @@ UNQUOTED: CHAR+
 
 CHAR_NO_EQ: /[+.\*a-zæøåA-ZÆØÅ10-9_%:\<\>\/-]/
 UNQUOTED_NO_EQ: /(?!([ ]))/ CHAR_NO_EQ+
+STR_NO_EQ_COM_PARN: /(?!([ ]))[^=,)(]+/
 
 CHAR_KW: /[a-zæøåA-ZÆØÅ10-9_:-]/
 UNQUOTED_KW: CHAR_KW+
@@ -54,7 +55,7 @@ ENV_STRING: "$" UNQUOTED_NO_EQ
 arg: STRING | UNQUOTED
 
 kw_list: "(" [ kw_pair ("," kw_pair)*] ")"
-kw_val: UNQUOTED_NO_EQ | STRING | ENV_STRING
+kw_val: UNQUOTED_NO_EQ | STRING | ENV_STRING | STR_NO_EQ_COM_PARN
 kw_pair: KW_NAME "=" kw_val
 KW_NAME_STRICT: "<" UNQUOTED_KW ">"
 KW_NAME: UNQUOTED_KW | "<" KEYWORD_NAME ">"
@@ -80,16 +81,12 @@ class StringQuotationTransformer(Transformer):
     """Strips quotation marks from strings"""
 
     def STRING(self, token: Token) -> Token:
-        return Token(
-            token.type,
-            token.value[1 : len(token.value) - 1],
-            token.start_pos,
-            token.line,
-            token.column,
-            token.end_line,
-            token.end_column,
-            token.end_pos,
-        )
+        token.value = token.value[1 : len(token.value) - 1]
+        return token
+
+    def STR_NO_EQ_COM_PARN(self, token: Token) -> Token:
+        token.value = token.value.replace('"', "")
+        return token
 
 
 class ArgumentToStringTransformer(Transformer):
@@ -124,7 +121,7 @@ class FileContextTransformer(Transformer):
 
 
 class InstructionTransformer(Transformer):
-    """Removes all unneccessary levels from the tree,
+    """Removes all unnecessary levels from the tree,
     resulting in a Tree where each child is one
     instruction from the file, as a list of tokens or
     in the case of job arguments, a list of tuples of

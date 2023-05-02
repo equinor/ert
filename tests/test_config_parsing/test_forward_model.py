@@ -92,11 +92,12 @@ def test_parsing_forward_model_with_quotes_does_not_introduce_spaces():
     comment interpretation, quotation marks are used"""
 
     test_config_file_name = "test.ert"
+    str_with_quotes = """smt/<foo>"/bar"/xx/"t--s.s"/yy/"z/z"/oo"""
     test_config_contents = dedent(
-        """
+        f"""
         NUM_REALIZATIONS  1
         JOBNAME job_%d
-        FORWARD_MODEL COPY_FILE(<FROM>=foo,<TO>=something/"hello--there.txt")
+        FORWARD_MODEL COPY_FILE(<FROM>=foo,<TO>={str_with_quotes})
         """
     )
     with open(test_config_file_name, "w", encoding="utf-8") as fh:
@@ -105,6 +106,11 @@ def test_parsing_forward_model_with_quotes_does_not_introduce_spaces():
     ert_config = ErtConfig.from_file(test_config_file_name, use_new_parser=False)
     for _, value in ert_config.forward_model_list[0].private_args:
         assert " " not in value
+        assert '"' not in value
+    ert_config = ErtConfig.from_file(test_config_file_name, use_new_parser=True)
+    for _, value in ert_config.forward_model_list[0].private_args:
+        assert " " not in value
+        assert '"' not in value
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -165,23 +171,6 @@ def test_that_quotations_in_forward_model_arglist_are_handled_correctly():
     assert res_config.forward_model_list[2].private_args["<FROM>"] == "some, thing"
     assert res_config.forward_model_list[2].private_args["<TO>"] == "some stuff"
     assert res_config.forward_model_list[2].private_args["<FILE>"] == "file.txt"
-
-
-@pytest.mark.usefixtures("use_tmpdir")
-def test_parsing_forward_model_with_quotes_in_unquoted_string_fails():
-    test_config_file_name = "test.ert"
-    test_config_contents = dedent(
-        """
-        NUM_REALIZATIONS  1
-        JOBNAME job_%d
-        FORWARD_MODEL COPY_FILE(<FROM>=foo,<TO>=something/"hello--there.txt")
-        """
-    )
-    with open(test_config_file_name, "w", encoding="utf-8") as fh:
-        fh.write(test_config_contents)
-
-    with pytest.raises(ConfigValidationError, match="Expected one of"):
-        _ = ErtConfig.from_file(test_config_file_name, use_new_parser=True)
 
 
 @pytest.mark.usefixtures("use_tmpdir")
