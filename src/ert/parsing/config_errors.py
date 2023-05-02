@@ -42,10 +42,10 @@ class ConfigValidationError(ValueError):
             else info.message
         )
 
-    def get_cli_message(self) -> List[str]:
+    def get_cli_message(self) -> str:
         return "\n".join(self.get_error_messages())
 
-    def get_error_messages(self) -> str:
+    def get_error_messages(self) -> List[str]:
         by_filename = defaultdict(list)
         for error in self.errors:
             by_filename[error.filename].append(error)
