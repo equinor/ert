@@ -1,0 +1,31 @@
+
+QUEUE_SYSTEM LOCAL
+QUEUE_OPTION LOCAL MAX_RUNNING 50
+
+RUNPATH poly_out/realization-<IENS>/iter-<ITER>
+
+OBS_CONFIG observations
+
+RANDOM_SEED 1
+
+NUM_REALIZATIONS {{reals}}
+MIN_REALIZATIONS 1
+{% if summary_data_count > 0 %}
+SUMMARY *
+REFCASE refcase/REFCASE
+ECLBASE summary/POLY_SUMMARY
+{% else %}
+JOBNAME poly_%d
+TIME_MAP time_map
+{% endif %}
+
+{% for n in range(gen_data_count) %}
+GEN_DATA POLY_RES_{{n}} RESULT_FILE:poly_{{n}}_%d.out REPORT_STEPS:0 INPUT_FORMAT:ASCII
+{% endfor %}
+
+{% for n in range(parameter_count) %}
+GEN_KW COEFFS_{{n}} coeff.tmpl coeffs_{{n}}.json coeff_priors
+{% endfor %}
+
+INSTALL_JOB poly_eval POLY_EVAL
+SIMULATION_JOB poly_eval
