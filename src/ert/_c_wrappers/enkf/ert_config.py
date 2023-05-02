@@ -427,7 +427,7 @@ class ErtConfig:
                 except ValueError as err:
                     errors.append(
                         ConfigValidationError(
-                            errors=f"{err}: 'FORWARD_MODEL {job_name}({args})'\n",
+                            errors=f"{err}: 'FORWARD_MODEL {job_name}({args})'",
                             config_file=config_file,
                         )
                     )
