@@ -1,10 +1,10 @@
 import pathlib
-import shutil
 
 import numpy as np
 import pytest
 
-from ert.data import MeasuredData, loader
+from ert.data import MeasuredData
+from ert.data._measured_data import ResponseError
 from ert.libres_facade import LibresFacade
 from ert.storage import open_storage
 
@@ -149,7 +149,7 @@ def test_gen_obs_and_summary_index_range(create_measured_data):
 @pytest.mark.parametrize(
     "obs_key, expected_msg",
     [
-        ("FOPR", r"No response loaded for observation keys: \['FOPR'\]"),
+        ("FOPR", r"No response loaded for observation key: FOPR"),
         ("WPR_DIFF_1", "No response loaded for observation key: WPR_DIFF_1"),
     ],
 )
@@ -159,17 +159,10 @@ def test_no_storage(obs_key, expected_msg, facade_snake_oil, storage):
     )
 
     with pytest.raises(
-        loader.ResponseError,
+        ResponseError,
         match=expected_msg,
     ):
         MeasuredData(facade_snake_oil, ensemble, [obs_key])
-
-
-@pytest.mark.parametrize("obs_key", ["FOPR", "WPR_DIFF_1"])
-def test_no_storage_obs_only(obs_key, create_measured_data):
-    shutil.rmtree("storage")
-    md = create_measured_data([obs_key], load_data=False)
-    assert set(md.data.columns.get_level_values(0)) == {obs_key}
 
 
 def create_summary_observation():

@@ -146,7 +146,7 @@ async def get_record_observations(
     realization_index: Optional[int] = None,
 ) -> List[js.ObservationOut]:
     obs_keys = res.observation_keys(name)
-    obss = observations_for_obs_keys(res, db.get_ensemble(ensemble_id), obs_keys)
+    obss = observations_for_obs_keys(res, obs_keys)
     return [
         js.ObservationOut(
             id=uuid4(),

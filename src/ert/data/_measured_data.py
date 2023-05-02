@@ -7,13 +7,11 @@ The API is typically meant used as part of workflows.
 """
 from __future__ import annotations
 
-from collections import defaultdict
 from typing import TYPE_CHECKING, List, Optional
 
 import numpy as np
 import pandas as pd
 
-from ert.data import loader
 from ert.storage import EnsembleReader
 
 if TYPE_CHECKING:
@@ -22,24 +20,25 @@ if TYPE_CHECKING:
     from ert.libres_facade import LibresFacade
 
 
+class ResponseError(Exception):
+    pass
+
+
 class MeasuredData:
     def __init__(
         self,
         facade: LibresFacade,
-        ensemble: Optional[EnsembleReader],
+        ensemble: EnsembleReader,
         keys: List[str],
         index_lists: Optional[List[List[int]]] = None,
-        load_data: bool = True,
     ):
         self._facade = facade
-        if load_data:
-            assert ensemble is not None
         if not keys:
-            raise loader.ObservationError("No observation keys provided")
+            raise ObservationError("No observation keys provided")
         if index_lists is not None and len(index_lists) != len(keys):
             raise ValueError("index list must be same length as observations keys")
 
-        self._set_data(self._get_data(ensemble, keys, load_data))
+        self._set_data(self._get_data(ensemble, keys))
         self._set_data(self.filter_on_column_index(keys, index_lists))
 
     @property
@@ -89,9 +88,8 @@ class MeasuredData:
 
     def _get_data(
         self,
-        ensemble: Optional[EnsembleReader],
+        ensemble: EnsembleReader,
         observation_keys: List[str],
-        load_data: bool,
     ) -> pd.DataFrame:
         """
         Adds simulated and observed data and returns a dataframe where ensemble
@@ -99,33 +97,55 @@ class MeasuredData:
         observed standard deviation will be named STD.
         """
 
-        # Because several observations can be linked to the same response we create
-        # a grouping to avoid reading the same response for each of the corresponding
-        # observations, as that is quite slow.
-        key_map = defaultdict(list)
-        for key in observation_keys:
-            try:
-                data_key = self._facade.get_data_key_for_obs_key(key)
-            except KeyError:
-                raise loader.ObservationError(f"No data key for obs key: {key}")
-            key_map[data_key].append(key)
-
         measured_data = []
-
-        for obs_keys in key_map.values():
-            obs_types = [
-                self._facade.get_impl_type_name_for_obs_key(key) for key in obs_keys
+        observations = self._facade.get_observations()
+        for key in observation_keys:
+            group, obs = observations.get_dataset(key)
+            try:
+                response = ensemble.load_response(
+                    group, range(self._facade.get_ensemble_size())
+                )
+            except KeyError:
+                raise ResponseError(f"No response loaded for observation key: {key}")
+            ds = obs.merge(
+                response,
+                join="left",
+            )
+            data = np.vstack(
+                [
+                    ds.observations.values.ravel(),
+                    ds["std"].values.ravel(),
+                    ds["values"].values.reshape(len(ds.realization), -1),
+                ]
+            )
+            index = ("OBS", "STD") + tuple(ds.realization.values)
+            if "time" in ds.coords:
+                ds = ds.rename(time="key_index")
+                ds = ds.assign_coords({"name": [key]})
+                data_index = [
+                    response.indexes["time"].get_loc(date) for date in obs.time.values
+                ]
+                index_vals = ds.observations.coords.to_index(
+                    ["name", "key_index"]
+                ).values
+            else:
+                ds = ds.expand_dims({"name": [key]})
+                ds = ds.rename(index="key_index")
+                data_index = ds.key_index.values
+                index_vals = ds.observations.coords.to_index().droplevel("report_step")
+            index_vals = [
+                (name, data_i, i) for i, (name, data_i) in zip(data_index, index_vals)
             ]
-            assert (
-                len(set(obs_types)) == 1
-            ), f"\nMore than one observation type found for obs keys: {obs_keys}"
-            observation_type = obs_types[0]
-            data_loader = loader.data_loader_factory(observation_type)
-            data = data_loader(self._facade, ensemble, obs_keys, include_data=load_data)
-            if data.empty:
-                raise loader.ObservationError(f"No observations loaded for {obs_keys}")
-            measured_data.append(data)
-
+            measured_data.append(
+                pd.DataFrame(
+                    data,
+                    index=index,
+                    columns=pd.MultiIndex.from_tuples(
+                        index_vals,
+                        names=[None, "key_index", "data_index"],
+                    ),
+                )
+            )
         return pd.concat(measured_data, axis=1)
 
     def filter_ensemble_std(self, std_cutoff: float) -> None:
@@ -176,3 +196,7 @@ class MeasuredData:
                 index_cond = np.logical_or.reduce(index_cond)
                 conditions.append(np.logical_and(index_cond, (names == obs_key)))
         return np.logical_or.reduce(conditions)  # type: ignore
+
+
+class ObservationError(Exception):
+    pass

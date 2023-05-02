@@ -102,8 +102,8 @@ class BatchContext(SimulationContext):
                 continue
             d = {}
             for key in self.result_keys:
-                data, _ = self.get_sim_fs().load_gen_data(f"{key}@0", [sim_id])
-                d[key] = data.flatten()
+                data = self.get_sim_fs().load_response(key, [sim_id])
+                d[key] = data["values"].values.flatten()
             res.append(d)
 
         return res

@@ -1,13 +1,14 @@
 import tempfile
 import uuid
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import List
 from unittest.mock import Mock
 from uuid import uuid4
 
 import numpy as np
 import py
 import pytest
+import xarray as xr
 
 from ert._c_wrappers.enkf import (
     EnKFMain,
@@ -85,20 +86,19 @@ def make_source_accessor(path: Path, ert: EnKFMain) -> EnsembleReader:
         EnkfObservationImplementationType.GEN_OBS
     )
     observations = ert.getObservations()
-    gen_data_input = []
-    for obs_key in obs_keys:
-        obs = observations[obs_key]
-        obs_vec = obs.observations[0]  # Ignores all other time points for now
-        obs_highest_index_used = obs_vec.getDataIndex(len(obs_vec) - 1)
-        gen_data_input.append((obs.data_key, obs_highest_index_used + 1))
 
     obs_data_keys = ens_config.getKeylistFromImplType(SummaryConfig)
     for real in range(realisations):
-        source.save_gen_data(make_gen_data(gen_data_input), real)
-        source.save_summary_data(
-            make_summary_data(len(obs_data_keys), len(ens_config.refcase.numpy_dates)),
-            obs_data_keys,
-            ens_config.refcase.numpy_dates,
+        for obs_key in obs_keys:
+            obs = observations[obs_key]
+            obs_vec = obs.observations[0]  # Ignores all other time points for now
+            obs_highest_index_used = obs_vec.getDataIndex(len(obs_vec) - 1)
+            source.save_response(
+                obs.getDataKey(), make_gen_data(obs_highest_index_used + 1), real
+            )
+        source.save_response(
+            "summary",
+            make_summary_data(obs_data_keys, ens_config.refcase.numpy_dates),
             real,
         )
         source.state_map[real] = RealizationStateEnum.STATE_HAS_DATA
@@ -108,23 +108,24 @@ def make_source_accessor(path: Path, ert: EnKFMain) -> EnsembleReader:
     return source
 
 
-def make_gen_data(
-    observation_list: List[Tuple[str, int]], min_val: float = 0, max_val: float = 5
-) -> Dict[str, List[float]]:
-    gen_data: Dict[str, List[float]] = {}
-    for obs in observation_list:
-        gen_data[f"{obs[0]}@0"] = list(
-            np.random.default_rng().uniform(min_val, max_val, obs[1])
-        )
-    return gen_data
+def make_gen_data(obs: int, min_val: float = 0, max_val: float = 5) -> xr.Dataset:
+    data = np.random.default_rng().uniform(min_val, max_val, obs)
+    return xr.Dataset(
+        {"values": (["report_step", "index"], [data])},
+        coords={"index": range(len(data)), "report_step": [0]},
+    )
 
 
 def make_summary_data(
-    summary_data_count: int,
-    summary_data_entries: int,
+    obs_keys: List[str],
+    dates,
     min_val: float = 0,
     max_val: float = 5,
-):
-    return np.random.default_rng().uniform(
-        min_val, max_val, (summary_data_count, summary_data_entries)
+) -> xr.Dataset:
+    data = np.random.default_rng().uniform(
+        min_val, max_val, (len(obs_keys), len(dates))
+    )
+    return xr.Dataset(
+        {"values": (["name", "time"], data)},
+        coords={"time": dates, "name": obs_keys},
     )

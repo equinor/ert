@@ -5,7 +5,7 @@ from ert_storage import json_schema as js
 from fastapi import APIRouter, Body, Depends
 
 from ert.dark_storage.common import ensemble_parameter_names, get_response_names
-from ert.dark_storage.enkf import LibresFacade, get_res, get_size, get_storage
+from ert.dark_storage.enkf import LibresFacade, get_res, get_storage
 from ert.storage import StorageAccessor
 
 router = APIRouter(tags=["ensemble"])
@@ -38,7 +38,7 @@ def get_ensemble(
         parent=None,
         experiment_id=ens.experiment_id,
         userdata={"name": ens.name},
-        size=get_size(res),
+        size=ens.ensemble_size,
         parameter_names=ensemble_parameter_names(res),
         response_names=get_response_names(res, ens),
         child_ensemble_ids=[],

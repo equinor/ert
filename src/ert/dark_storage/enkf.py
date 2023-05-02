@@ -62,9 +62,5 @@ def reset_res(*, _: None = DEFAULT_SECURITY) -> None:
     return _libres_facade
 
 
-def get_size(res: LibresFacade):
-    return res.get_ensemble_size()
-
-
 def get_active_realizations(res: LibresFacade, ensemble_name):
     return res.get_active_realizations(ensemble_name)
