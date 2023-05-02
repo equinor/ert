@@ -80,7 +80,11 @@ def test_migrate_summary(data, ensemble, forecast, time_map):
 
     for key in ensemble.get_summary_keyset():
         expect = np.array(data[group][key])
-        actual = ensemble.load_summary_data_as_df([key], [0]).values.flatten()
+        actual = (
+            ensemble.load_response("summary", (0,))
+            .sel(name=key)["values"]
+            .data.flatten()
+        )
         assert list(expect) == list(actual), key
 
 
@@ -90,7 +94,7 @@ def test_migrate_gen_data(data, ensemble, forecast):
 
     for key in set(data[group].variables) - set(data[group].dimensions):
         expect = np.array(data[group][key]).flatten()
-        actual = ensemble.load_gen_data(f"{key}@199", [0])[0].flatten()
+        actual = ensemble.load_response(key, (0,))["values"].data.flatten()
         assert list(expect) == list(actual), key
 
 
@@ -107,7 +111,11 @@ def test_migrate_case(data, storage, enspath, ens_config):
         # Compare SUMMARYs
         for key in ensemble.get_summary_keyset():
             expect = np.array(var["SUMMARY"][key])
-            actual = ensemble.load_summary_data_as_df([key], [index]).values.flatten()
+            actual = (
+                ensemble.load_response("summary", (index,))
+                .sel(name=key)["values"]
+                .data.flatten()
+            )
             assert list(expect) == list(actual), key
 
         # Compare GEN_KWs
@@ -122,5 +130,5 @@ def test_migrate_case(data, storage, enspath, ens_config):
         # Compare GEN_DATAs
         for key in set(var["GEN_DATA"].variables) - set(var["GEN_DATA"].dimensions):
             expect = np.array(var["GEN_DATA"][key]).flatten()
-            actual = ensemble.load_gen_data(f"{key}@199", [index])[0].flatten()
+            actual = ensemble.load_response(key, (index,))["values"].data.flatten()
             assert list(expect) == list(actual), key

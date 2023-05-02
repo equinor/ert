@@ -315,18 +315,14 @@ SUMMARY_OBSERVATION EXTREMELY_HIGH_STD
     es_update.iterative_smoother_update(sim_fs, new_ensemble, w_container, "id")
     result_snapshot = es_update.update_snapshots["id"]
     assert result_snapshot.alpha == alpha
-    assert result_snapshot.update_step_snapshots["ALL_ACTIVE"].obs_name == [
-        o
-        for i, o in enumerate(
-            [
-                "EXTREMELY_HIGH_STD",
-                "HIGH_STD",
-                "LOW_STD",
-            ]
-        )
-        if expected[i] == "ACTIVE"
+    assert list(result_snapshot.update_step_snapshots["ALL_ACTIVE"].obs_name) == [
+        "EXTREMELY_HIGH_STD",
+        "HIGH_STD",
+        "LOW_STD",
     ]
-    assert result_snapshot.update_step_snapshots["ALL_ACTIVE"].obs_status == expected
+    assert (
+        list(result_snapshot.update_step_snapshots["ALL_ACTIVE"].obs_status) == expected
+    )
 
 
 @pytest.mark.integration_test
@@ -397,6 +393,34 @@ def test_gen_data_obs_data_mismatch(snake_oil_case_storage):
 
         with pytest.raises(
             ErtAnalysisError,
-            match="Observation: WPR_DIFF_1 attached to response: SNAKE_OIL_WPR_DIFF",
+            match="WPR_DIFF_1 is missing one or more responses",
         ):
             es_update.smootherUpdate(sim_fs, target_fs, "an id")
+
+
+def test_update_only_using_subset_observations(
+    snake_oil_case_storage, snake_oil_storage, new_ensemble, snapshot
+):
+    """
+    Note that this is now a snapshot test, so there is no guarantee that the
+    snapshots are correct, they are just documenting the current behavior.
+    """
+    ert = snake_oil_case_storage
+    ert.update_configuration = [
+        {
+            "name": "DISABLED_OBSERVATIONS",
+            "observations": [
+                {"name": "FOPR", "index_list": [1]},
+                {"name": "WPR_DIFF_1"},
+            ],
+            "parameters": ert._parameter_keys,
+        }
+    ]
+    es_update = ESUpdate(ert)
+    es_update.smootherUpdate(
+        snake_oil_storage.get_ensemble_by_name("default_0"),
+        new_ensemble,
+        "id",
+    )
+    log_file = Path(ert.analysisConfig().get_log_path()) / "deprecated"
+    snapshot.assert_match(log_file.read_text("utf-8"), "update_log")

@@ -4,7 +4,7 @@ from uuid import UUID
 from ert_storage import json_schema as js
 from fastapi import APIRouter, Body, Depends
 
-from ert.dark_storage.enkf import LibresFacade, get_res, get_size, get_storage
+from ert.dark_storage.enkf import LibresFacade, get_res, get_storage
 from ert.shared.storage.extraction import create_priors
 from ert.storage import StorageReader
 
@@ -75,7 +75,7 @@ def get_experiment_ensembles(
             parent=None,
             experiment_id=ens.experiment_id,
             userdata={"name": ens.name},
-            size=get_size(res),
+            size=ens.ensemble_size,
             parameter_names=[],
             response_names=[],
             child_ensemble_ids=[],

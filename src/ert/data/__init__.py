@@ -10,7 +10,6 @@ from ert.data.record._record import (
     record_data,
 )
 
-from . import loader
 from ._measured_data import MeasuredData
 from .record._transformation import (
     CopyTransformation,
@@ -40,7 +39,6 @@ __all__ = (
     "ExecutableTransformation",
     "FileTransformation",
     "InMemoryRecordTransmitter",
-    "loader",
     "MeasuredData",
     "NumericalRecord",
     "NumericalRecordTree",

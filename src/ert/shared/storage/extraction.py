@@ -1,10 +1,9 @@
 import logging
-from typing import Any, List, Mapping, Union
+from typing import List, Mapping, Union
 
 import pandas as pd
 
-from ert._c_wrappers.enkf.enums import EnkfObservationImplementationType
-from ert.data import MeasuredData
+from ert.dark_storage.common import observations_for_obs_keys
 
 logger = logging.getLogger()
 
@@ -16,55 +15,9 @@ def _prepare_x_axis(x_axis: List[Union[int, float, str, pd.Timestamp]]) -> List[
     return [str(x) for x in x_axis]
 
 
-def _get_obs_data(key, obs) -> Mapping[str, Any]:
-    return {
-        "name": key,
-        "x_axis": obs.columns.get_level_values(0).to_list(),
-        "values": obs.loc["OBS"].to_list(),
-        "errors": obs.loc["STD"].to_list(),
-    }
-
-
 def create_observations(ert) -> List[Mapping[str, dict]]:
-    observations = ert.get_observations()
-    keys = list(observations.obs_vectors.keys())
-    summary_obs_keys = observations.getTypedKeylist(
-        EnkfObservationImplementationType.SUMMARY_OBS
-    )
-    if not keys:
-        return []
-
-    data = MeasuredData(ert, None, keys, load_data=False)
-    observations_data = data.data.loc[["OBS", "STD"]]
-    grouped_obs = {}
-    response_observation_link = {}
-
-    for obs_key in observations_data.columns.get_level_values(0).unique():
-        obs_vec = observations[obs_key]
-        data_key = obs_vec.data_key
-        obs_data = _get_obs_data(obs_key, observations_data[obs_key])
-
-        if obs_key not in summary_obs_keys:
-            grouped_obs[obs_key] = obs_data
-            response_observation_link[data_key] = obs_key
-        else:
-            response_observation_link[data_key] = data_key
-            if data_key in grouped_obs:
-                for el in filter(lambda x: x != "name", obs_data):
-                    grouped_obs[data_key][el] += obs_data[el]
-            else:
-                obs_data["name"] = data_key
-                grouped_obs[data_key] = obs_data
-    for obs in grouped_obs.values():
-        x_axis, values, error = (
-            list(t)
-            for t in zip(*sorted(zip(obs["x_axis"], obs["values"], obs["errors"])))
-        )
-        x_axis = _prepare_x_axis(x_axis)
-        obs["x_axis"] = x_axis
-        obs["values"] = values
-        obs["errors"] = error
-    return list(grouped_obs.values())
+    keys = [i.observation_key for i in ert.get_observations()]
+    return observations_for_obs_keys(ert, keys)
 
 
 _PRIOR_NAME_MAP = {

@@ -1,8 +1,5 @@
-import pandas as pd
-
+from ert import ErtScript
 from ert._c_wrappers.enkf.enums import RealizationStateEnum
-from ert._c_wrappers.job_queue import ErtScript
-from ert.analysis._es_update import _get_obs_and_measure_data
 from ert.exceptions import StorageError
 
 
@@ -28,13 +25,10 @@ class ExportMisfitDataJob(ErtScript):
 
         if not realizations:
             raise StorageError("No responses loaded")
+        from ert import LibresFacade
 
-        all_observations = [(n.observation_key, []) for n in ert.getObservations()]
-        measured_data, obs_data = _get_obs_and_measure_data(
-            ert.getObservations(), self.ensemble, all_observations, realizations
-        )
-        joined = obs_data.join(measured_data, on=["data_key", "axis"], how="inner")
-        misfit = pd.DataFrame(index=joined.index)
-        for col in measured_data:
-            misfit[col] = ((joined["OBS"] - joined[col]) / joined["STD"]) ** 2
-        misfit.groupby("key").sum().T.to_hdf(target_file, key="misfit", mode="w")
+        facade = LibresFacade(ert)
+        misfit = facade.load_all_misfit_data(self.ensemble)
+        misfit.columns = [val.split(":")[1] for val in misfit.columns]
+        misfit = misfit.drop("TOTAL", axis=1)
+        misfit.to_hdf(target_file, key="misfit", mode="w")

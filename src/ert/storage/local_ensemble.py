@@ -7,11 +7,10 @@ import shutil
 from datetime import datetime
 from multiprocessing.pool import ThreadPool
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, List, Literal, Optional, Set, Tuple, Union
+from typing import TYPE_CHECKING, Any, Dict, List, Literal, Optional, Tuple, Union
 from uuid import UUID
 
 import numpy as np
-import pandas as pd
 import xarray as xr
 import xtgeo
 from pydantic import BaseModel
@@ -183,11 +182,12 @@ class LocalEnsembleReader:
         realization_folders = list(self.mount_point.glob("realization-*"))
         if not realization_folders:
             return []
-        summary_path = realization_folders[0] / "summary-data.nc"
+        summary_path = realization_folders[0] / "summary.nc"
         if not summary_path.exists():
             return []
-        with xr.open_dataset(summary_path, engine="scipy") as ds_disk:
-            keys = sorted(ds_disk["data_key"].values)
+        realization_nr = int(str(realization_folders[0])[-1])
+        response = self.load_response("summary", [realization_nr])
+        keys = sorted(response["name"].values)
         return keys
 
     def realization_list(self, state: RealizationStateEnum) -> List[int]:
@@ -275,67 +275,17 @@ class LocalEnsembleReader:
 
         return np_data, keys
 
-    def load_summary_data_as_df(
-        self, summary_keys: List[str], realizations: List[int]
-    ) -> pd.DataFrame:
-        result = []
-        key_set: Set[str] = set()
-        for realization in realizations:
-            input_path = (
-                self.mount_point / f"realization-{realization}" / "summary-data.nc"
-            )
-            if not input_path.exists():
-                continue
-            with xr.open_dataset(input_path, engine="scipy") as ds_disk:
-                result.append(ds_disk)
-                if not key_set:
-                    key_set = set(sorted(ds_disk["data_key"].values))
-        if not result:
-            raise KeyError(f"Unable to load SUMMARY_DATA for keys: {summary_keys}")
-        df = xr.merge(result).to_dataframe(dim_order=["data_key", "axis"])
-        # realization nr is stored as str in netcdf
-        dropped_keys = key_set - set(summary_keys)
-        if len(dropped_keys) > 0:
-            df.drop(dropped_keys, level="data_key", inplace=True)
-        df.columns = [int(x) for x in df.columns]
-        return df
-
-    def load_gen_data(
-        self, key: str, realizations: List[int]
-    ) -> Tuple[npt.NDArray[np.double], List[int]]:
-        result = []
+    def load_response(self, key: str, realizations: List[int]) -> xr.Dataset:
         loaded = []
         for realization in realizations:
-            input_path = self.mount_point / f"realization-{realization}"
+            input_path = self.mount_point / f"realization-{realization}" / f"{key}.nc"
             if not input_path.exists():
-                continue
-
-            with xr.open_dataset(input_path / "gen-data.nc", engine="scipy") as ds_disk:
-                np_data = ds_disk[key].as_numpy()
-                result.append(np_data)
-                loaded.append(realization)
-        if not result:
-            raise KeyError(f"Unable to load GEN_DATA for key: {key}")
-        return np.stack(result).T, loaded
-
-    def load_gen_data_as_df(
-        self, keys: List[str], realizations: List[int]
-    ) -> pd.DataFrame:
-        dfs = []
-        for key in keys:
-            data, realizations = self.load_gen_data(key, realizations)
-            x_axis = [*range(data.shape[0])]
-            multi_index = pd.MultiIndex.from_product(
-                [[key], x_axis], names=["data_key", "axis"]
-            )
-            dfs.append(
-                pd.DataFrame(
-                    data=data,
-                    index=multi_index,
-                    columns=realizations,
-                )
-            )
-        return pd.concat(dfs)
+                raise KeyError(f"No response for key {key}, realization: {realization}")
+            ds = xr.open_dataset(input_path, engine="scipy")
+            loaded.append(ds)
+        response = xr.combine_by_coords(loaded)
+        assert isinstance(response, xr.Dataset)
+        return response
 
     def load_field(self, key: str, realizations: List[int]) -> npt.NDArray[np.double]:
         result: Optional[npt.NDArray[np.double]] = None
@@ -611,38 +561,12 @@ class LocalEnsembleAccessor(LocalEnsembleReader):
             RealizationStateEnum.STATE_INITIALIZED,
         )
 
-    def save_summary_data(
-        self,
-        data: npt.NDArray[np.float64],
-        keys: List[str],
-        axis: npt.ArrayLike,
-        realization: int,
-    ) -> None:
+    def save_response(self, group: str, data: xr.Dataset, realization: int) -> None:
+        data = data.expand_dims({"realization": [realization]})
         output_path = self.mount_point / f"realization-{realization}"
-        Path.mkdir(output_path, exist_ok=True)
+        Path.mkdir(output_path, parents=True, exist_ok=True)
 
-        ds = xr.Dataset(
-            {str(realization): (("data_key", "axis"), data)},
-            coords={
-                "data_key": keys,
-                "axis": axis,
-            },
-        )
-
-        ds.to_netcdf(output_path / "summary-data.nc", engine="scipy")
-
-    def save_gen_data(
-        self, data: Dict[str, npt.NDArray[np.float64]], realization: int
-    ) -> None:
-        output_path = self.mount_point / f"realization-{realization}/gen-data.nc"
-        Path.mkdir(output_path.parent, exist_ok=True)
-        ds = xr.Dataset(
-            data,
-        )
-
-        ds.to_netcdf(
-            output_path, mode="a" if output_path.exists() else "w", engine="scipy"
-        )
+        data.to_netcdf(output_path / f"{group}.nc", engine="scipy")
 
     def save_field(
         self,

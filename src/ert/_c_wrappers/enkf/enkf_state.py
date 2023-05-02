@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 import numpy as np
+import xarray as xr
 from ecl.summary import EclSum
 
 from ert.load_status import LoadResult, LoadStatus
@@ -23,19 +24,32 @@ def _internalize_GEN_DATA(
 ) -> LoadResult:
     run_path = Path(run_arg.runpath)
     errors = []
-    all_data = {}
     for key in ensemble_config.get_keylist_gen_data():
+        datasets = []
         config_node: GenDataConfig = ensemble_config.response_configs[key]
         filename_fmt = config_node.input_file
-        for i in config_node.getReportSteps():
-            filename = filename_fmt % i
+        for report_step in config_node.getReportSteps():
+            filename = filename_fmt % report_step
             if not Path.exists(run_path / filename):
-                errors.append(f"{key} report step {i} missing")
+                errors.append(f"{key} report step {report_step} missing")
                 continue
 
-            all_data[f"{key}@{i}"] = np.loadtxt(run_path / filename)
-
-    run_arg.ensemble_storage.save_gen_data(all_data, run_arg.iens)
+            data = np.loadtxt(run_path / filename)
+            active_information_file = run_path / (filename + "_active")
+            if active_information_file.exists():
+                index_list = np.flatnonzero(np.loadtxt(active_information_file))
+                data = data[index_list]
+            else:
+                index_list = np.arange(len(data))
+            datasets.append(
+                xr.Dataset(
+                    {"values": (["report_step", "index"], [data])},
+                    coords={"index": index_list, "report_step": [report_step]},
+                )
+            )
+        run_arg.ensemble_storage.save_response(
+            key, xr.combine_by_coords(datasets), run_arg.iens
+        )
     if errors:
         return LoadResult(LoadStatus.LOAD_FAILURE, "\n".join(errors))
     return LoadResult(LoadStatus.LOAD_SUCCESSFUL, "")
@@ -97,10 +111,14 @@ def _internalize_SUMMARY_DATA(
             time_map,
             np_vector.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
         )
-
         data.append(np_vector)
-    total = np.stack(data, axis=0)
-    run_arg.ensemble_storage.save_summary_data(total, keys, axis, run_arg.iens)
+
+    ds = xr.Dataset(
+        {"values": (["name", "time"], data)},
+        coords={"time": axis, "name": keys},
+    )
+    run_arg.ensemble_storage.save_response("summary", ds, run_arg.iens)
+
     return LoadResult(LoadStatus.LOAD_SUCCESSFUL, "")
 
 

@@ -52,26 +52,8 @@ def test_keyword_type_checks_missing_key(facade):
     assert not facade.is_gen_kw_key("nokey")
 
 
-def test_data_fetching(snake_oil_case_storage, snake_oil_default_storage):
-    facade = LibresFacade(snake_oil_case_storage)
-    data = [
-        facade.gather_gen_data_data(
-            snake_oil_default_storage, "SNAKE_OIL_GPR_DIFF@199"
-        ),
-        facade.gather_summary_data(snake_oil_default_storage, "BPR:1,3,8"),
-        facade.gather_gen_kw_data(
-            snake_oil_default_storage, "SNAKE_OIL_PARAM:BPR_138_PERSISTENCE"
-        ),
-    ]
-
-    for dataframe in data:
-        assert isinstance(dataframe, PandasObject)
-        assert not dataframe.empty
-
-
 def test_data_fetching_missing_key(facade, empty_case):
     data = [
-        facade.gather_gen_data_data(empty_case, "nokey"),
         facade.gather_summary_data(empty_case, "nokey"),
         facade.gather_gen_kw_data(empty_case, "nokey"),
     ]
@@ -277,7 +259,7 @@ def test_summary_collector(
 
     data = facade.load_all_summary_data(snake_oil_default_storage)
     snapshot.assert_match(
-        data.iloc[:4].round(4).to_csv(index_label=[0, 1, 2, 3, 4]),
+        data.iloc[:4].round(4).to_csv(),
         "summary_collector_1.csv",
     )
     assert data.shape == (1000, 46)

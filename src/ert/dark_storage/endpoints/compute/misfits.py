@@ -45,7 +45,7 @@ async def get_response_misfits(
         response_dict[index] = data_df
 
     obs_keys = res.observation_keys(response_name)
-    obs = observations_for_obs_keys(res, ensemble, obs_keys)
+    obs = observations_for_obs_keys(res, obs_keys)
 
     if not obs_keys:
         raise ValueError(f"No observations for key {response_name}")

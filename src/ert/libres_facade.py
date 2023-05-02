@@ -4,6 +4,7 @@ import logging
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Union
 
+import pandas as pd
 from deprecation import deprecated
 from ecl.grid import EclGrid
 from pandas import DataFrame, Series
@@ -17,9 +18,11 @@ from ert._c_wrappers.enkf.enums import (
     RealizationStateEnum,
 )
 from ert.analysis import ESUpdate, SmootherSnapshot
-from ert.analysis._es_update import ProgressCallback, _get_obs_and_measure_data
+from ert.analysis._es_update import ProgressCallback
 from ert.data import MeasuredData
+from ert.data._measured_data import ResponseError
 from ert.shared.version import __version__
+from ert.storage import EnsembleReader
 
 _logger = logging.getLogger(__name__)
 
@@ -32,7 +35,7 @@ if TYPE_CHECKING:
     from ert._c_wrappers.enkf.config.gen_kw_config import PriorDict
     from ert._c_wrappers.enkf.enkf_obs import EnkfObs
     from ert._c_wrappers.job_queue import WorkflowJob
-    from ert.storage import EnsembleAccessor, EnsembleReader, StorageAccessor
+    from ert.storage import EnsembleAccessor, StorageAccessor
 
 
 class LibresFacade:  # pylint: disable=too-many-public-methods
@@ -147,10 +150,10 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
         self,
         keys: List[str],
         index_lists: Optional[List[List[int]]] = None,
-        load_data: bool = True,
         ensemble: Optional[EnsembleReader] = None,
     ) -> MeasuredData:
-        return MeasuredData(self, ensemble, keys, index_lists, load_data)
+        assert isinstance(ensemble, EnsembleReader)
+        return MeasuredData(self, ensemble, keys, index_lists)
 
     def get_analysis_config(self) -> "AnalysisConfig":
         return self._enkf_main.analysisConfig()
@@ -216,70 +219,18 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
             if realization_index not in realizations:
                 raise IndexError(f"No such realization {realization_index}")
             realizations = [realization_index]
-
-        return ensemble.load_gen_data_as_df(
-            [f"{key}@{report_step}"], realizations
-        ).droplevel("data_key")
-
-    def load_observation_data(
-        self, ensemble: EnsembleReader, keys: Optional[List[str]] = None
-    ) -> DataFrame:
-        """Loads observation data into a DataFrame.
-
-        Gets observation data from the ensemble and arranges it into a pandas
-        DataFrame. The DataFrame's index is observation times and its columns
-        consist of summary keys and their corresponding standard deviations.
-        The observation values and standard deviations are assigned to their
-        respective keys and times in the DataFrame.
-
-        Args:
-            ensemble: The ensemble reader from which to load the observation data.
-            keys: If provided, only data corresponding to these keys will be
-                loaded. If not provided, data for all available keys will be
-                loaded.
-
-        Returns:
-            DataFrame: A pandas DataFrame containing the observation data. The
-                DataFrame is indexed by observation times, with columns for
-                each summary key and its corresponding standard deviation.
-
-        Note:
-            Any key that is not a summary key will be ignored
-        """
-        observations = self._enkf_main.getObservations()
-        history_length = self._enkf_main.getHistoryLength()
-        dates = [
-            observations.getObservationTime(index) for index in range(1, history_length)
-        ]
-        summary_keys = sorted(
-            [
-                key
-                for key in self.get_summary_keys()
-                if len(self._enkf_main.ensembleConfig().get_node_observation_keys(key))
-                > 0
-            ],
-            key=lambda k: k.lower(),
-        )
-        if keys is not None:
-            summary_keys = [
-                key for key in keys if key in summary_keys
-            ]  # ignore keys that doesn't exist
-        columns = summary_keys
-        std_columns = [f"STD_{key}" for key in summary_keys]
-        df = DataFrame(index=dates, columns=columns + std_columns)
-        for key in summary_keys:
-            observation_keys = (
-                self._enkf_main.ensembleConfig().get_node_observation_keys(key)
+        try:
+            vals = ensemble.load_response(key, realizations).sel(
+                report_step=report_step, drop=True
             )
-            for obs_key in observation_keys:
-                observation_data = observations[obs_key]
-                for index in range(0, history_length + 1):
-                    if index in observation_data.observations:
-                        obs_time = observations.getObservationTime(index)
-                        node = observation_data.observations[index]
-                        df[key][obs_time] = node.value  # type: ignore
-                        df[f"STD_{key}"][obs_time] = node.std  # type: ignore
-        return df
+        except KeyError:
+            raise KeyError(f"Missing response: {key}")
+        index = pd.Index(vals.index.values, name="axis")
+        return pd.DataFrame(
+            data=vals["values"].values.reshape(len(vals.realization), -1).T,
+            index=index,
+            columns=realizations,
+        )
 
     def all_data_type_keys(self) -> List[str]:
         return self.get_summary_keys() + self.gen_kw_keys() + self.get_gen_data_keys()
@@ -429,17 +380,21 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
             realizations = [realization_index]
 
         summary_keys = ensemble.get_summary_keyset()
+
+        try:
+            df = ensemble.load_response("summary", realizations).to_dataframe()
+        except (ValueError, KeyError):
+            return pd.DataFrame()
+        df = df.unstack(level="name")
+        df.columns = [col[1] for col in df.columns.values]
+        df.index = df.index.rename(
+            {"time": "Date", "realization": "Realization"}
+        ).reorder_levels(["Realization", "Date"])
         if keys:
             summary_keys = [
                 key for key in keys if key in summary_keys
             ]  # ignore keys that doesn't exist
-
-        try:
-            df = ensemble.load_summary_data_as_df(summary_keys, realizations)
-        except KeyError:
-            return DataFrame()
-        df = df.stack().unstack(level=0).swaplevel()
-        df.index.names = ["Realization", "Date"]
+            return df[summary_keys]
         return df
 
     def gather_summary_data(
@@ -449,17 +404,17 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
         realization_index: Optional[int] = None,
     ) -> Union[DataFrame, Series]:
         data = self.load_all_summary_data(ensemble, [key], realization_index)
-        if not data.empty:
-            idx = data.index.duplicated()
-            if idx.any():
-                data = data[~idx]
-                _logger.warning(
-                    "The simulation data contains duplicate "
-                    "timestamps. A possible explanation is that your "
-                    "simulation timestep is less than a second."
-                )
-            data = data.unstack(level="Realization").droplevel("data_key", axis=1)
-        return data
+        if data.empty:
+            return data
+        idx = data.index.duplicated()
+        if idx.any():
+            data = data[~idx]
+            _logger.warning(
+                "The simulation data contains duplicate "
+                "timestamps. A possible explanation is that your "
+                "simulation timestep is less than a second."
+            )
+        return data.unstack(level="Realization")
 
     def load_all_misfit_data(self, ensemble: EnsembleReader) -> DataFrame:
         """Loads all misfit data for a given ensemble.
@@ -487,21 +442,22 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
                 to a realization. The "MISFIT:TOTAL" column contains the total
                 misfit for each realization.
         """
-        realizations = self.get_active_realizations(ensemble)
-
-        observations = self._enkf_main.getObservations()
-        all_observations = [
-            (n.observation_key, list(n.observations.keys())) for n in observations
-        ]
-        measured_data, obs_data = _get_obs_and_measure_data(
-            observations, ensemble, all_observations, realizations
-        )
-        joined = obs_data.join(measured_data, on=["data_key", "axis"], how="inner")
-        misfit = DataFrame(index=joined.index)
-        for col in measured_data:
-            misfit[col] = ((joined["OBS"] - joined[col]) / joined["STD"]) ** 2
-        misfit = misfit.groupby("key").sum().T
-        misfit.columns = [f"MISFIT:{key}" for key in misfit.columns]
+        try:
+            measured_data = self.get_measured_data(
+                self._enkf_main._observation_keys, ensemble=ensemble
+            )
+        except ResponseError:
+            return DataFrame()
+        misfit = DataFrame()
+        for name in measured_data.data.columns.unique(0):
+            df = (
+                (
+                    measured_data.data[name].loc["OBS"]
+                    - measured_data.get_simulated_data()[name]
+                )
+                / measured_data.data[name].loc["STD"]
+            ) ** 2
+            misfit[f"MISFIT:{name}"] = df.sum(axis=1)
         misfit["MISFIT:TOTAL"] = misfit.sum(axis=1)
         misfit.index.name = "Realization"
 
@@ -535,31 +491,6 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
             data = self.refcase_data(key)
 
         return data
-
-    def gather_gen_data_data(
-        self,
-        ensemble: EnsembleReader,
-        key: str,
-        realization_index: Optional[int] = None,
-    ) -> DataFrame:
-        key_parts = key.split("@")
-        key = key_parts[0]
-        if len(key_parts) > 1:
-            report_step = int(key_parts[1])
-        else:
-            report_step = 0
-
-        try:
-            data = self.load_gen_data(
-                ensemble,
-                key,
-                report_step,
-                realization_index,
-            )
-        except (ValueError, KeyError):
-            data = DataFrame()
-
-        return data.dropna()
 
     def is_summary_key(self, key: str) -> bool:
         return key in self.get_summary_keys()

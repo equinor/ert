@@ -109,7 +109,7 @@ def test_that_mismatched_responses_give_error(
     es_update = ESUpdate(ert)
 
     with pytest.raises(
-        ErtAnalysisError, match=re.escape("['FOPR'] is missing one or more responses")
+        ErtAnalysisError, match=re.escape("FOPR_1 is missing one or more responses")
     ):
         es_update.smootherUpdate(prior_ensemble, target_ensemble, "an id")
 

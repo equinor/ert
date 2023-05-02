@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Dict, List, Sequence, Tuple
 
 import numpy as np
+import xarray as xr
 import xtgeo
 import xtgeo.surface
 
@@ -25,7 +26,6 @@ from ert.storage.migration._block_fs_native import (  # pylint: disable=E0401
 )
 
 logger = logging.getLogger(__name__)
-
 
 if TYPE_CHECKING:
     import numpy.typing as npt
@@ -223,18 +223,38 @@ def _migrate_summary(
         keys.append(block.name)
 
     for realization_index, (array, keys) in data.items():
-        ensemble.save_summary_data(np.array(array), keys, time_map, realization_index)
+        ds = xr.Dataset(
+            {"values": (["name", "time"], array)},
+            coords={"time": time_map, "name": keys},
+        )
+        ensemble.save_response("summary", ds, realization_index)
 
 
 def _migrate_gen_data(
     ensemble: EnsembleAccessor,
     data_file: DataFile,
 ) -> None:
+    realizations = defaultdict(lambda: defaultdict(list))  # type: ignore
     for block in data_file.blocks(Kind.GEN_DATA):
-        ensemble.save_gen_data(
-            {f"{block.name}@{block.report_step}": data_file.load(block, 0)},
-            block.realization_index,
+        realizations[block.realization_index][block.name].append(
+            {"values": data_file.load(block, 0), "report_step": block.report_step}
         )
+    for iens, gen_data in realizations.items():
+        for name, values in gen_data.items():
+            datasets = []
+            for value in values:
+                datasets.append(
+                    xr.Dataset(
+                        {"values": (["report_step", "index"], [value["values"]])},
+                        coords={
+                            "index": range(len(value["values"])),
+                            "report_step": [value["report_step"]],
+                        },
+                    )
+                )
+            ensemble.save_response(
+                name, xr.combine_by_coords(datasets), iens  # type: ignore
+            )
 
 
 def _migrate_gen_kw_info(
