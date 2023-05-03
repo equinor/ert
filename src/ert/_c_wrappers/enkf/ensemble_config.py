@@ -277,12 +277,9 @@ class EnsembleConfig(BaseCClass):
             self._create_node_metainfo(surface, 1, EnkfVarType.PARAMETER)
             self.addNode(surface_node)
 
-        for key in summary_list:
-            if isinstance(key, list):
-                for kkey in key:
-                    self.add_summary_full(kkey, self.refcase)
-            else:
-                self.add_summary_full(key, self.refcase)
+        for key_list in summary_list:
+            for s_key in key_list:
+                self.add_summary_full(s_key, self.refcase)
 
         for field in field_list:
             if self.grid is None:
@@ -381,9 +378,8 @@ class EnsembleConfig(BaseCClass):
             errors.append("Missing required OUTPUT_FILE")
         if not init_file:
             errors.append("Missing required INIT_FILES")
-        elif not forward_init:
-            if "%d" not in init_file:
-                errors.append("Must give file name with %d with FORWARD_INIT:FALSE")
+        elif not forward_init and "%d" not in init_file:
+            errors.append("Must give file name with %d with FORWARD_INIT:FALSE")
         if not base_surface:
             errors.append("Missing required BASE_SURFACE")
         elif not Path(base_surface).exists():
@@ -677,9 +673,7 @@ class EnsembleConfig(BaseCClass):
         for parameter in self.parameters:
             config_node = self.getNode(parameter)
 
-            if isinstance(config_node, ParameterConfig) or isinstance(
-                config_node, GenKwConfig
-            ):
+            if isinstance(config_node, (ParameterConfig, GenKwConfig)):
                 parameter_configs.append(config_node)
             elif config_node.getImplementationType() == ErtImplType.EXT_PARAM:
                 node = config_node.getModelConfig()
