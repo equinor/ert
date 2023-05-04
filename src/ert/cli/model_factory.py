@@ -7,6 +7,13 @@ from uuid import UUID
 
 from ert._c_wrappers.config.active_range import ActiveRange
 from ert._c_wrappers.enkf.enkf_main import EnKFMain
+from ert.cli import (
+    ENSEMBLE_EXPERIMENT_MODE,
+    ENSEMBLE_SMOOTHER_MODE,
+    ES_MDA_MODE,
+    ITERATIVE_ENSEMBLE_SMOOTHER_MODE,
+    TEST_RUN_MODE,
+)
 from ert.parsing.config_errors import ConfigWarning
 from ert.shared.models.ensemble_experiment import EnsembleExperiment
 from ert.shared.models.ensemble_smoother import EnsembleSmoother
@@ -33,15 +40,15 @@ def create_model(
         },
     )
 
-    if args.mode == "test_run":
+    if args.mode == TEST_RUN_MODE:
         return _setup_single_test_run(ert, storage, args, experiment_id)
-    elif args.mode == "ensemble_experiment":
+    elif args.mode == ENSEMBLE_EXPERIMENT_MODE:
         return _setup_ensemble_experiment(ert, storage, args, experiment_id)
-    elif args.mode == "ensemble_smoother":
+    elif args.mode == ENSEMBLE_SMOOTHER_MODE:
         return _setup_ensemble_smoother(ert, storage, args, experiment_id)
-    elif args.mode == "es_mda":
+    elif args.mode == ES_MDA_MODE:
         return _setup_multiple_data_assimilation(ert, storage, args, experiment_id)
-    elif args.mode == "iterative_ensemble_smoother":
+    elif args.mode == ITERATIVE_ENSEMBLE_SMOOTHER_MODE:
         return _setup_iterative_ensemble_smoother(ert, storage, args, experiment_id)
 
     else:

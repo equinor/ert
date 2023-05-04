@@ -125,6 +125,7 @@ class EnsembleExperiment(BaseRunModel):
                 ensemble_size=self._ert.getEnsembleSize(),
                 iteration=self._simulation_arguments.get("item_num", 0),
             )
+        self.set_env_key("_ERT_ENSEMBLE_ID", str(ensemble.id))
 
         prior_context = self._ert.ensemble_context(
             ensemble,

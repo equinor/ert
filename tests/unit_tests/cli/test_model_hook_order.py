@@ -101,6 +101,7 @@ def test_hook_call_order_iterative_ensemble_smoother(storage):
         analysisConfig=lambda: MagicMock(minimum_required_realizations=0),
     )
     ert_mock.ensemble_context.return_value.sim_fs.id = UUID(int=0)
+    ert_mock.ensemble_context.return_value.iteration = 1
     minimum_args = {
         "num_iterations": 1,
         "active_realizations": [True],
@@ -113,7 +114,6 @@ def test_hook_call_order_iterative_ensemble_smoother(storage):
     )
     test_class.run_ensemble_evaluator = MagicMock(return_value=1)
 
-    test_class.setPhase = MagicMock()
     test_class.facade.get_number_of_iterations = MagicMock(return_value=1)
     test_class.facade._es_update = MockEsUpdate()
     test_class._w_container = MockWContainer()

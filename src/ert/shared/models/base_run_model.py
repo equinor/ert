@@ -1,6 +1,7 @@
 import asyncio
 import concurrent
 import logging
+import os
 import time
 import uuid
 from abc import abstractmethod
@@ -17,6 +18,7 @@ from ert._c_wrappers.enkf.enums import HookRuntime
 from ert._c_wrappers.enkf.ert_run_context import RunContext
 from ert._c_wrappers.job_queue import RunStatusType
 from ert.callbacks import forward_model_exit, forward_model_ok
+from ert.cli import MODULE_MODE
 from ert.ensemble_evaluator import (
     Ensemble,
     EnsembleBuilder,
@@ -101,12 +103,12 @@ class BaseRunModel:
         self._simulation_arguments = simulation_arguments
         self._experiment_id = experiment_id
         self.reset()
-
         # experiment-server
         self._state_machine = _ert_com_protocol.ExperimentStateMachine()
         # mapping from iteration number to ensemble id
         self._iter_map: Dict[int, str] = {}
         self.validate()
+        self._context_env_keys: List[str] = []
 
     def ert(self) -> EnKFMain:
         return self._ert
@@ -158,11 +160,36 @@ class BaseRunModel:
 
     def _count_successful_realizations(self) -> int:
         """
-        Counts the realizations completed in the prevoius ensemble run
+        Counts the realizations completed in the previous ensemble run
         :return:
         """
         completed = self._completed_realizations_mask
         return completed.count(True)
+
+    def set_env_key(self, key: str, value: str) -> None:
+        """
+        Will set an environment variable that will be available until the
+        model run ends.
+        """
+        self._context_env_keys.append(key)
+        os.environ[key] = value
+
+    def _set_default_env_context(self) -> None:
+        """
+        Set some default environment variables that need to be
+        available while the model is running
+        """
+        simulation_mode = MODULE_MODE.get(type(self).__name__, "")
+        self.set_env_key("_ERT_SIMULATION_MODE", simulation_mode)
+        self.set_env_key("_ERT_EXPERIMENT_ID", str(self._experiment_id))
+
+    def _clean_env_context(self) -> None:
+        """
+        Clean all previously environment variables set using set_env_key
+        """
+        for key in self._context_env_keys:
+            os.environ.pop(key, None)
+        self._context_env_keys = []
 
     def start_simulations_thread(
         self, evaluator_server_config: EvaluatorServerConfig
@@ -176,6 +203,7 @@ class BaseRunModel:
         logs: _LogAggregration = _LogAggregration()
         try:
             with captured_logs() as logs:
+                self._set_default_env_context()
                 self._initial_realizations_mask = self._simulation_arguments[
                     "active_realizations"
                 ]
@@ -235,6 +263,7 @@ class BaseRunModel:
         return self._fail_message
 
     def _simulationEnded(self) -> None:
+        self._clean_env_context()
         self._job_stop_time = int(time.time())
 
     def setPhase(

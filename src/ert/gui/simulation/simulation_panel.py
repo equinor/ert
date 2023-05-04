@@ -144,10 +144,11 @@ class SimulationPanel(QWidget):
         ):
             abort = False
             try:
+                args = self.getSimulationArguments()
                 model = create_model(
                     self.ert,
                     self.notifier.storage,
-                    self.getSimulationArguments(),
+                    args,
                     self.notifier.storage.create_experiment(
                         parameters=self.ert.ensembleConfig().parameter_configuration
                     ),

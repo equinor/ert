@@ -52,6 +52,7 @@ class EnsembleSmoother(BaseRunModel):
             name=prior_name,
             ensemble_size=self._ert.getEnsembleSize(),
         )
+        self.set_env_key("_ERT_ENSEMBLE_ID", str(prior_fs.id))
         prior_context = self._ert.ensemble_context(
             prior_fs,
             self._simulation_arguments["active_realizations"],
