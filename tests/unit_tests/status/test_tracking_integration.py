@@ -256,6 +256,101 @@ def test_tracking(
     FeatureToggling.reset()
 
 
+@pytest.mark.integration_test
+@pytest.mark.parametrize(
+    ("mode, cmd_line_arguments"),
+    [
+        pytest.param(
+            TEST_RUN_MODE,
+            [
+                "poly_example/poly.ert",
+            ],
+            id="test_run",
+        ),
+        pytest.param(
+            ENSEMBLE_EXPERIMENT_MODE,
+            [
+                "--realizations",
+                "0,1",
+                "poly_example/poly.ert",
+            ],
+            id="ensemble_experiment",
+        ),
+    ],
+)
+def test_setting_env_context_during_run(
+    mode,
+    cmd_line_arguments,
+    tmpdir,
+    source_root,
+    storage,
+):
+    experiment_folder = "poly_example"
+    shutil.copytree(
+        os.path.join(source_root, "test-data", f"{experiment_folder}"),
+        os.path.join(str(tmpdir), f"{experiment_folder}"),
+    )
+
+    with tmpdir.as_cwd():
+        parser = ArgumentParser(prog="test_main")
+        cmd_line_arguments = [mode] + cmd_line_arguments
+        parsed = ert_parser(
+            parser,
+            cmd_line_arguments,
+        )
+        FeatureToggling.update_from_args(parsed)
+
+        ert_config = ErtConfig.from_file(parsed.config)
+        os.chdir(ert_config.config_path)
+        ert = EnKFMain(ert_config)
+        experiment_id = storage.create_experiment(
+            ert.ensembleConfig().parameter_configuration
+        )
+
+        model = create_model(
+            ert,
+            storage,
+            parsed,
+            experiment_id,
+        )
+
+        evaluator_server_config = EvaluatorServerConfig(
+            custom_port_range=range(1024, 65535),
+            custom_host="127.0.0.1",
+            use_token=False,
+            generate_cert=False,
+        )
+
+        thread = threading.Thread(
+            name="ert_cli_simulation_thread",
+            target=model.start_simulations_thread,
+            args=(evaluator_server_config,),
+        )
+        thread.start()
+
+        tracker = EvaluatorTracker(
+            model,
+            ee_con_info=evaluator_server_config.get_connection_info(),
+        )
+
+        expected = ["_ERT_SIMULATION_MODE", "_ERT_EXPERIMENT_ID", "_ERT_ENSEMBLE_ID"]
+        for event in tracker.track():
+            if isinstance(event, (FullSnapshotEvent, SnapshotUpdateEvent)):
+                assert model._context_env_keys == expected
+                for key in expected:
+                    assert key in os.environ
+                assert os.environ.get("_ERT_SIMULATION_MODE") == mode
+            if isinstance(event, EndEvent):
+                pass
+        thread.join()
+
+        # Check environment is clean after the model run ends.
+        assert not model._context_env_keys
+        for key in expected:
+            assert key not in os.environ
+    FeatureToggling.reset()
+
+
 def run_sim(start_date):
     """
     Create a summary file, the contents of which are not important

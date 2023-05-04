@@ -124,6 +124,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
             name=target_case_format % 0,
             ensemble_size=self._ert.getEnsembleSize(),
         )
+        self.set_env_key("_ERT_ENSEMBLE_ID", str(prior.id))
         prior_context = self.ert().ensemble_context(
             prior,
             self._simulation_arguments["active_realizations"],
@@ -171,7 +172,6 @@ class IteratedEnsembleSmoother(BaseRunModel):
                 self._runAndPostProcess(prior_context, evaluator_server_config)
             if update_success:
                 self._runAndPostProcess(posterior_context, evaluator_server_config)
-                self.setPhase(phase_count, "Simulations completed.")
             else:
                 raise ErtRunError(
                     (
@@ -182,6 +182,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
                     )
                 )
             prior_context = posterior_context
+        self.setPhase(phase_count, "Simulations completed.")
 
         return posterior_context
 
