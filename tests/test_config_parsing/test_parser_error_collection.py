@@ -2,6 +2,7 @@ import os
 import re
 import stat
 from dataclasses import dataclass
+from textwrap import dedent
 from typing import Dict, List, Optional, Union
 
 import pytest
@@ -373,3 +374,143 @@ QUEUE_OPTION LOCAL MAX_RUNNING -1
             match="negative",
         ),
     )
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_unicode_decode_error_is_localized_first_line():
+    with open("test.ert", "ab") as f:
+        f.write(b"\xff")
+        f.write(
+            bytes(
+                dedent(
+                    """
+                    QUEUE_OPTION DOCAL MAX_RUNNING 4
+                    STOP_LONG_RUNNING flase
+                    NUM_REALIZATIONS not_int
+                    ENKF_ALPHA not_float
+                    RUN_TEMPLATE dsajldkald/sdjkahsjka/wqehwqhdsa
+                    JOB_SCRIPT dnsjklajdlksaljd/dhs7sh/qhwhe
+                    JOB_SCRIPT non_executable_file
+                    NUM_REALIZATIONS 1 2 3 4 5
+                    NUM_REALIZATIONS
+                """
+                ),
+                "utf-8",
+            )
+        )
+
+    with pytest.raises(
+        ConfigValidationError,
+        match="Unsupported non UTF-8 character 'ÿ' found in file: .*test.ert",
+    ) as caught_error:
+        ErtConfig.from_file("test.ert", use_new_parser=True)
+
+    collected_errors = caught_error.value.errors
+
+    # Expect parsing to stop from this invalid character
+    assert len(collected_errors) == 1
+    assert collected_errors[0].line == 1
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_unicode_decode_error_is_localized_random_line_single_insert():
+    lines = """
+        QUEUE_OPTION DOCAL MAX_RUNNING 4
+        STOP_LONG_RUNNING flase
+        NUM_REALIZATIONS not_int
+        ENKF_ALPHA not_float
+        RUN_TEMPLATE dsajldkald/sdjkahsjka/wqehwqhdsa
+        JOB_SCRIPT dnsjklajdlksaljd/dhs7sh/qhwhe
+        JOB_SCRIPT non_executable_file
+        NUM_REALIZATIONS 1 2 3 4 5
+        NUM_REALIZATIONS
+    """.splitlines()
+
+    for insertion_index in range(1, len(lines)):
+        before = lines[0:insertion_index]
+        after = lines[insertion_index : len(lines)]
+
+        with open("test.ert", "w", encoding="utf-8") as f:
+            f.write("\n".join(before) + "\n")
+
+        with open("test.ert", "ab") as f:
+            f.write(b"\xff")
+
+        with open("test.ert", "a", encoding="utf-8") as f:
+            f.write("\n" + "\n".join(after))
+
+        with pytest.raises(
+            ConfigValidationError,
+            match="Unsupported non UTF-8 character " "'ÿ' found in file: .*test.ert",
+        ) as caught_error:
+            ErtConfig.from_file("test.ert", use_new_parser=True)
+
+        collected_errors = caught_error.value.errors
+
+        # Expect parsing to stop from this invalid character
+        assert len(collected_errors) == 1
+
+        assert collected_errors[0].line == insertion_index + 1
+        assert collected_errors[0].end_line == insertion_index + 1
+        assert collected_errors[0].column == 0
+        assert collected_errors[0].end_column == -1
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+@given(
+    lines=strategies.lists(
+        strategies.sampled_from(
+            [
+                "QUEUE_OPTION DOCAL MAX_RUNNING 4",
+                "STOP_LONG_RUNNING flase",
+                "NUM_REALIZATIONS not_int",
+                "ENKF_ALPHA not_float",
+                "RUN_TEMPLATE dsajldkald/sdjkahsjka/wqehwqhdsa",
+                "JOB_SCRIPT dnsjklajdlksaljd/dhs7sh/qhwhe",
+                "JOB_SCRIPT non_executable_file",
+                "NUM_REALIZATIONS 1 2 3 4 5",
+                "NUM_REALIZATIONS",
+            ]
+        ),
+        min_size=5,
+        max_size=10,
+    ),
+    insertion_indices=strategies.lists(
+        strategies.sampled_from(range(4)), min_size=2, max_size=5
+    ),
+)
+def test_that_unicode_decode_error_is_localized_multiple_random_inserts(
+    lines, insertion_indices
+):
+    write_infos = [{"type": "utf-8", "content": x} for x in lines]
+
+    for offset, index in enumerate(sorted(insertion_indices)):
+        write_infos.insert(index + offset, {"type": "bytes", "content": b"\xff"})
+
+    for i, info in enumerate(write_infos):
+        if info["type"] == "utf-8":
+            with open("test.ert", "w" if i == 0 else "a", encoding="utf-8") as f:
+                f.write(info["content"])
+        elif info["type"] == "bytes":
+            with open("test.ert", "wb" if i == 0 else "ab") as f:
+                f.write(info["content"])
+
+        if i < (len(write_infos) - 1):
+            with open("test.ert", "a", encoding="utf-8") as f:
+                f.write("\n")
+
+    with pytest.raises(
+        ConfigValidationError,
+        match="Unsupported non UTF-8 character 'ÿ' found in file: .*test.ert",
+    ) as caught_error:
+        ErtConfig.from_file("test.ert", use_new_parser=True)
+
+    collected_errors = caught_error.value.errors
+
+    # Expect parsing to stop from this invalid character
+    assert len(collected_errors) == len(insertion_indices)
+
+    for line, _ in [(i, x) for i, x in enumerate(write_infos) if x["type"] == "bytes"]:
+        # Expect there to be an error on the line
+        expected_error = next(x for x in collected_errors if x.line == line + 1)
+        assert expected_error is not None, f"Expected to find error on line {line + 1}"
