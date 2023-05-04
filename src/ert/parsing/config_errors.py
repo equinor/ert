@@ -50,17 +50,17 @@ class ConfigValidationError(ValueError):
         for error in self.errors:
             by_filename[error.filename].append(error)
 
-        nice_messages = []
+        messages = []
         for filename, info_list in by_filename.items():
             for info in info_list:
-                nice_messages.append(
+                messages.append(
                     f"{filename}:"
                     f"{info.line}:"
                     f"{info.column}:{info.end_column}:"
                     f"{info.message}"
                 )
 
-        return nice_messages
+        return messages
 
     @classmethod
     def from_collected(
