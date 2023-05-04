@@ -256,7 +256,7 @@ class SchemaItem(BaseModel):
             if val_type == SchemaType.CONFIG_EXISTING_PATH and not os.path.exists(
                 str(path)
             ):
-                err = f'Cannot find file or directory "{token.value}" \n'
+                err = f'Cannot find file or directory "{token.value}". '
                 if path != token:
                     err += f"The configured value was {path!r} "
                 raise ConfigValidationError.from_info(

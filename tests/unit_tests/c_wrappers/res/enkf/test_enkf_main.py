@@ -173,7 +173,7 @@ def test_that_missing_obs_file_raises_exception(tmpdir):
 
         with pytest.raises(
             expected_exception=ObservationConfigError,
-            match="did not resolve to a valid path:\n OBS_FILE",
+            match="did not resolve to a valid path: OBS_FILE",
         ):
             EnKFMain(ert_config)
 
