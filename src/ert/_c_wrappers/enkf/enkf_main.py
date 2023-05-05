@@ -95,8 +95,7 @@ def _generate_gen_kw_parameter_file(
     config: "GenKwConfig",
     target_file: str,
     run_path: Path,
-    exports: Dict[str, Dict[str, float]],
-) -> None:
+) -> Dict[str, Dict[str, float]]:
     key = config.getKey()
     gen_kw_dict = fs.load_gen_kw_as_dict(key, realization)
     transformed = gen_kw_dict[key]
@@ -120,7 +119,7 @@ def _generate_gen_kw_parameter_file(
             template.render({key: f"{value:.6g}" for key, value in transformed.items()})
         )
 
-    exports.update(gen_kw_dict)
+    return gen_kw_dict
 
 
 def _generate_ext_parameter_file(
@@ -165,14 +164,14 @@ def _generate_parameter_files(
 
         if key in ens_config.get_keylist_gen_kw():
             if isinstance(node, GenKwConfig):
-                _generate_gen_kw_parameter_file(
+                gen_kw_dict = _generate_gen_kw_parameter_file(
                     fs,
                     iens,
                     node,
                     node.output_file,
                     Path(run_path),
-                    exports,
                 )
+                exports.update(gen_kw_dict)
             continue
 
         type_ = node.getImplementationType()
