@@ -20,6 +20,7 @@ test_config_filename = f"{test_config_file_base}.ert"
 class FileDetail:
     contents: str
     is_executable: bool = False
+    is_readable: bool = True
 
 
 @dataclass
@@ -42,6 +43,9 @@ def write_files(files: Optional[Dict[str, Union[str, FileDetail]]] = None):
 
                     if not content.is_executable:
                         os.chmod(other_filename, stat.S_IREAD)
+
+                    if not content.is_readable:
+                        os.chmod(other_filename, ~0o400)
                 else:
                     fh.write(content)
 
@@ -762,3 +766,82 @@ def test_that_unicode_decode_error_is_localized_multiple_random_inserts(
         # Expect there to be an error on the line
         expected_error = next(x for x in collected_errors if x.line == line + 1)
         assert expected_error is not None, f"Expected to find error on line {line + 1}"
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_non_existing_workflow_is_localized():
+    assert_that_config_leads_to_error(
+        config_file_contents=dedent(
+            """
+                NUM_REALIZATIONS  1
+                LOAD_WORKFLOW does_not_exist
+            """
+        ),
+        expected_error=ExpectedErrorInfo(
+            line=3,
+            column=15,
+            end_column=29,
+        ),
+    )
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_non_readable_workflow_job_is_localized():
+    assert_that_config_leads_to_error(
+        config_file_contents=dedent(
+            """
+                NUM_REALIZATIONS  1
+LOAD_WORKFLOW_JOB exists_but_not_runnable
+            """
+        ),
+        expected_error=ExpectedErrorInfo(
+            line=3,
+            column=19,
+            end_column=42,
+            filename="exists_but_not_runnable",
+            other_files={
+                "exists_but_not_runnable": FileDetail(is_readable=False, contents="")
+            },
+        ),
+    )
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_non_readable_workflow_job_in_directory_is_localized():
+    os.mkdir("hello")
+    assert_that_config_leads_to_error(
+        config_file_contents=dedent(
+            """
+NUM_REALIZATIONS  1
+WORKFLOW_JOB_DIRECTORY hello
+            """
+        ),
+        expected_error=ExpectedErrorInfo(
+            filename="exists_but_not_runnable",
+            line=3,
+            column=24,
+            end_column=29,
+            other_files={
+                "hello/exists_but_not_runnable": FileDetail(
+                    is_readable=False, contents=""
+                )
+            },
+        ),
+    )
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_hook_workflow_without_existing_job_error_is_located():
+    assert_that_config_leads_to_error(
+        config_file_contents=dedent(
+            """
+NUM_REALIZATIONS  1
+HOOK_WORKFLOW NO_SUCH_JOB POST_SIMULATION
+            """
+        ),
+        expected_error=ExpectedErrorInfo(
+            line=3,
+            column=15,
+            end_column=26,
+        ),
+    )
