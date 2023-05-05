@@ -252,9 +252,9 @@ def _substitute_args(
     ]
 
 
-class IncludeNode:
-    def __init__(self, parent: "IncludeNode", filename: str):
-        self.parent = parent
+class IncludedFile:
+    def __init__(self, included_from: "IncludedFile", filename: str):
+        self.included_from = included_from
         self.filename = filename
         self.context = None
 
@@ -262,17 +262,17 @@ class IncludeNode:
         if filename == self.filename:
             return True
 
-        if self.parent is None:
+        if self.included_from is None:
             return False
 
-        return filename in self.parent
+        return filename in self.included_from
 
     @property
     def root(self):
-        if self.parent is None:
+        if self.included_from is None:
             return self
 
-        return self.parent.root
+        return self.included_from.root
 
     @property
     def path_from_root(self):
@@ -280,10 +280,10 @@ class IncludeNode:
 
     @property
     def path_to_root(self):
-        if self.parent is None:
+        if self.included_from is None:
             return [self.filename]
 
-        return [self.filename, *self.parent.path_to_root]
+        return [self.filename, *self.included_from.path_to_root]
 
     def set_context(self, context: MaybeWithContext) -> Self:
         self.context = context
@@ -294,10 +294,10 @@ def _handle_includes(
     tree: Tree[Instruction],
     defines: Defines,
     config_file: str,
-    current_include_node: IncludeNode = None,
+    current_included_file: IncludedFile = None,
 ):
-    if current_include_node is None:
-        current_include_node = IncludeNode(parent=None, filename=config_file)
+    if current_included_file is None:
+        current_included_file = IncludedFile(included_from=None, filename=config_file)
 
     config_dir = os.path.dirname(config_file)
     to_include = []
@@ -317,14 +317,14 @@ def _handle_includes(
 
                 error_context = (
                     superfluous
-                    if current_include_node.parent is None
-                    else current_include_node.context
+                    if current_included_file.included_from is None
+                    else current_included_file.context
                 )
 
                 errors.append(
                     ErrorInfo(
                         message="Keyword:INCLUDE must have exactly one argument "
-                        f"at ({current_include_node.filename} line {superfluous.line})",
+                        f"at ({current_included_file.filename} line {superfluous.line})",
                         filename=config_file,
                     ).set_context(error_context)
                 )
@@ -337,11 +337,11 @@ def _handle_includes(
                     os.path.join(config_dir, file_to_include)
                 )
 
-            if file_to_include in current_include_node:
-                # Note that: The "original" file is in current_include_node[0]
+            if file_to_include in current_included_file:
+                # Note that: The "original" file is in current_included_file[0]
                 # This is where the error will be shown/linted, so this is also
                 # the filename even though "technically" it originates from elsewhere
-                master_ert_file = current_include_node.root.filename
+                master_ert_file = current_included_file.root.filename
 
                 # The cycle comes from the "current file" config_file, trying to
                 # include file_to_include, this is the info user needs to know
@@ -349,14 +349,14 @@ def _handle_includes(
 
                 import_trace = [
                     os.path.basename(f)
-                    for f in [*current_include_node.path_from_root, file_to_include]
+                    for f in [*current_included_file.path_from_root, file_to_include]
                 ]
 
                 errors.append(
                     ErrorInfo(
                         message=f"Cyclical import detected, {'->'.join(import_trace)}",
                         filename=os.path.basename(master_ert_file),
-                    ).set_context(current_include_node.context)
+                    ).set_context(current_included_file.context)
                 )
                 continue
 
@@ -371,18 +371,21 @@ def _handle_includes(
                 )
                 continue
 
-            child_include_node = IncludeNode(
-                parent=current_include_node, filename=args[0]
-            ).set_context(current_include_node.context or args[0])
+            child_included_file = IncludedFile(
+                included_from=current_included_file, filename=args[0]
+            ).set_context(current_included_file.context or args[0])
 
-            _handle_includes(
-                sub_tree,
-                defines,
-                file_to_include,
-                current_include_node=child_include_node,
-            )
+            try:
+                _handle_includes(
+                    sub_tree,
+                    defines,
+                    file_to_include,
+                    current_included_file=child_included_file,
+                )
 
-            to_include.append((sub_tree, i))
+                to_include.append((sub_tree, i))
+            except ConfigValidationError as err:
+                errors += err.errors
 
     for sub_tree, i in reversed(to_include):
         tree.children.pop(i)
