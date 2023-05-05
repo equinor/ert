@@ -422,7 +422,16 @@ def _parse_file(
             f"Did not expect character: {unexpected_char}. "
             f"Expected one of {allowed_chars}"
         )
-        raise ConfigValidationError(message, config_file=file)
+        raise ConfigValidationError.from_info(
+            ErrorInfo(
+                message=message,
+                line=e.line,
+                end_line=e.line + 1,
+                column=e.column,
+                end_column=e.column + 1,
+                filename=file,
+            )
+        )
     except UnicodeDecodeError as e:
         error_words = str(e).split(" ")
         hex_str = error_words[error_words.index("byte") + 1]
@@ -430,10 +439,38 @@ def _parse_file(
             unknown_char = chr(int(hex_str, 16))
         except ValueError:
             unknown_char = f"hex:{hex_str}"
+
+        # Find the first line in the file with decode error
+        bad_byte_lines: List[int] = []
+        with open(file, "rb") as f:
+            all_lines = []
+            for line in f:
+                all_lines.append(line)
+
+        for i, line in enumerate(all_lines):
+            try:
+                line.decode("utf-8")
+            except UnicodeDecodeError:
+                # The error occurs on this line, so make this entire line red
+                # (Figuring column if it is not 0 is tricky and prob not necessary)
+                # Use 1-indexed lines like lark and for errors in ert
+                bad_byte_lines.append(i + 1)
+
+        assert len(bad_byte_lines) != -1
+
         raise ConfigValidationError(
-            f"Unsupported non UTF-8 character {unknown_char!r} "
-            f"found in file: {file!r}",
-            config_file=str(file),
+            [
+                ErrorInfo(
+                    message=f"Unsupported non UTF-8 character {unknown_char!r} "
+                    f"found in file: {file!r}",
+                    filename=str(file),
+                    column=0,
+                    line=bad_line,
+                    end_column=-1,
+                    end_line=bad_line,
+                )
+                for bad_line in bad_byte_lines
+            ]
         )
 
 
