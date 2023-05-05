@@ -189,6 +189,9 @@ class AnalysisConfig:
     def set_num_iterations(self, num_iterations: int):
         self._analysis_iter_config.iter_count = num_iterations
 
+    def set_min_realizations(self, min_realizations: int):
+        self._min_realization = min_realizations
+
     def __ne__(self, other):
         return not self == other
 
