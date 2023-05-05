@@ -502,11 +502,12 @@ def test_that_prior_is_not_overwritten_in_ensemble_experiment(
 )
 @pytest.mark.usefixtures("copy_poly_case")
 def test_that_the_cli_raises_exceptions_when_parameters_are_missing(mode):
-    with open("poly.ert", "r", encoding="utf-8") as fin:
-        with open("poly-no-gen-kw.ert", "w", encoding="utf-8") as fout:
-            for line in fin:
-                if "GEN_KW" not in line:
-                    fout.write(line)
+    with open("poly.ert", "r", encoding="utf-8") as fin, open(
+        "poly-no-gen-kw.ert", "w", encoding="utf-8"
+    ) as fout:
+        for line in fin:
+            if "GEN_KW" not in line:
+                fout.write(line)
 
     args = Mock()
     args.config = "poly-no-gen-kw.ert"
@@ -665,13 +666,14 @@ def test_that_the_model_raises_exception_if_active_less_than_minimum_realization
     Omit testing of SingleTestRun because that executes with 1 active realization
     regardless of configuration.
     """
-    with open("poly.ert", "r", encoding="utf-8") as fin:
-        with open("poly_high_min_reals.ert", "w", encoding="utf-8") as fout:
-            for line in fin:
-                if "MIN_REALIZATIONS" in line:
-                    fout.write("MIN_REALIZATIONS 100")
-                else:
-                    fout.write(line)
+    with open("poly.ert", "r", encoding="utf-8") as fin, open(
+        "poly_high_min_reals.ert", "w", encoding="utf-8"
+    ) as fout:
+        for line in fin:
+            if "MIN_REALIZATIONS" in line:
+                fout.write("MIN_REALIZATIONS 100")
+            else:
+                fout.write(line)
 
     args = Mock()
     args.config = "poly_high_min_reals.ert"
@@ -707,13 +709,14 @@ def test_that_the_model_warns_when_active_realizations_less_min_realizations():
     NUM_REALIZATIONS when running ensemble_experiment.
     A warning is issued when NUM_REALIZATIONS is higher than active_realizations.
     """
-    with open("poly.ert", "r", encoding="utf-8") as fin:
-        with open("poly_lower_active_reals.ert", "w", encoding="utf-8") as fout:
-            for line in fin:
-                if "MIN_REALIZATIONS" in line:
-                    fout.write("MIN_REALIZATIONS 100")
-                else:
-                    fout.write(line)
+    with open("poly.ert", "r", encoding="utf-8") as fin, open(
+        "poly_lower_active_reals.ert", "w", encoding="utf-8"
+    ) as fout:
+        for line in fin:
+            if "MIN_REALIZATIONS" in line:
+                fout.write("MIN_REALIZATIONS 100")
+            else:
+                fout.write(line)
 
     args = Mock()
     args.config = "poly_lower_active_reals.ert"
