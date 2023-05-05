@@ -20,29 +20,17 @@ gen_data_file_format_type;
 
 typedef struct gen_data_config_struct gen_data_config_type;
 
-bool gen_data_config_valid_result_format(const char *result_file_fmt);
-
 extern "C" gen_data_config_type *
 gen_data_config_alloc_GEN_DATA_result(const char *key,
                                       gen_data_file_format_type input_format);
-void gen_data_config_set_ens_size(gen_data_config_type *config, int ens_size);
 extern "C" gen_data_file_format_type
 gen_data_config_get_input_format(const gen_data_config_type *);
 extern "C" void gen_data_config_free(gen_data_config_type *);
-extern "C" PY_USED int
-gen_data_config_get_initial_size(const gen_data_config_type *config);
-void gen_data_config_assert_size(gen_data_config_type *, int, int);
-extern "C" const bool_vector_type *
-gen_data_config_get_active_mask(const gen_data_config_type *config);
 extern "C" const char *
 gen_data_config_get_key(const gen_data_config_type *config);
 int gen_data_config_get_data_size(const gen_data_config_type *config,
                                   int report_step);
-gen_data_file_format_type
-gen_data_config_check_format(const char *format_string);
 
-const int_vector_type *
-gen_data_config_get_active_report_steps(const gen_data_config_type *config);
 extern "C" int
 gen_data_config_iget_report_step(const gen_data_config_type *config, int index);
 void gen_data_config_add_report_step(gen_data_config_type *config,

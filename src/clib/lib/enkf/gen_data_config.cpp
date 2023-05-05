@@ -38,14 +38,10 @@ struct gen_data_config_struct {
     int_vector_type *data_size_vector;
     /** The report steps where we expect to load data for this instance. */
     int_vector_type *active_report_steps;
-    pthread_mutex_t update_lock;
     /* All the fields below this line are related to the capability of the
      * forward model to deactivate elements in a gen_data instance. See
      * documentation above. */
-    int ens_size;
-    bool mask_modified;
     bool_vector_type *active_mask;
-    int active_report_step;
 };
 
 gen_data_file_format_type
@@ -73,14 +69,6 @@ int gen_data_config_get_data_size(const gen_data_config_type *config,
     return current_size;
 }
 
-int gen_data_config_get_initial_size(const gen_data_config_type *config) {
-    int initial_size = int_vector_safe_iget(config->data_size_vector, 0);
-    if (initial_size < 0)
-        initial_size = 0;
-
-    return initial_size;
-}
-
 static gen_data_config_type *gen_data_config_alloc(const char *key) {
     gen_data_config_type *config =
         (gen_data_config_type *)util_malloc(sizeof *config);
@@ -94,9 +82,6 @@ static gen_data_config_type *gen_data_config_alloc(const char *key) {
     config->active_mask = bool_vector_alloc(
         0,
         true); /* Elements are explicitly set to FALSE - this MUST default to true. */
-    config->active_report_step = -1;
-    config->ens_size = -1;
-    pthread_mutex_init(&config->update_lock, NULL);
 
     return config;
 }
@@ -118,50 +103,6 @@ gen_data_config_alloc_GEN_DATA_result(const char *key,
     return config;
 }
 
-const bool_vector_type *
-gen_data_config_get_active_mask(const gen_data_config_type *config) {
-    return config->active_mask;
-}
-
-/**
- * @brief parses format string as a gen_data_file_format_type
-
-   This function takes a string representation of one of the
-   gen_data_file_format_type values, and returns the corresponding
-   gen_data_file_format value. The recognized strings are
-
-   * "ASCII"
-   * "ASCII_TEMPLATE"
-
-   Its the inverse action of gen_data_config_format_name
-
-   @see gen_data_config_format_name
-   @param format_string The file format string, ie. "ASCII"
-   @return GEN_DATA_UNDEFINED if the string is not recognized or NULL, otherwise
-      the corresponding gen_data_file_format_type, ie. ASCII.
-*/
-gen_data_file_format_type
-gen_data_config_check_format(const char *format_string) {
-    gen_data_file_format_type type = GEN_DATA_UNDEFINED;
-
-    if (format_string != NULL) {
-
-        if (strcmp(format_string, "ASCII") == 0)
-            type = ASCII;
-        else if (strcmp(format_string, "ASCII_TEMPLATE") == 0)
-            type = ASCII_TEMPLATE;
-    }
-
-    return type;
-}
-
-/**
-   The valid options are:
-
-   INPUT_FORMAT:(ASCII|ASCII_TEMPLATE)
-   RESULT_FILE:<filename to read EnKF <== Forward model>
-
-*/
 void gen_data_config_free(gen_data_config_type *config) {
     int_vector_free(config->data_size_vector);
     int_vector_free(config->active_report_steps);
@@ -170,39 +111,6 @@ void gen_data_config_free(gen_data_config_type *config) {
     bool_vector_free(config->active_mask);
 
     free(config);
-}
-
-/**
-   This function gets a size (from a gen_data) instance, and verifies
-   that the size agrees with the currently stored size and
-   report_step. If the report_step is new we just record the new info,
-   otherwise it will break hard.
-
-   Does not work properly with:
-
-   1. keep_run_path - the load_file will be left hanging around - and loaded again and again.
-   2. Doing forward several steps - how to (time)index the files?
-
-*/
-void gen_data_config_assert_size(gen_data_config_type *config, int data_size,
-                                 int report_step) {
-    pthread_mutex_lock(&config->update_lock);
-    {
-        int current_size =
-            int_vector_safe_iget(config->data_size_vector, report_step);
-        if (current_size < 0) {
-            int_vector_iset(config->data_size_vector, report_step, data_size);
-            current_size = data_size;
-        }
-
-        if (current_size != data_size) {
-            util_abort("%s: Size mismatch when loading:%s from file - got %d "
-                       "elements - expected:%d [report_step:%d] \n",
-                       __func__, gen_data_config_get_key(config), data_size,
-                       current_size, report_step);
-        }
-    }
-    pthread_mutex_unlock(&config->update_lock);
 }
 
 int gen_data_config_num_report_step(const gen_data_config_type *config) {
@@ -227,58 +135,8 @@ int gen_data_config_iget_report_step(const gen_data_config_type *config,
     return int_vector_iget(config->active_report_steps, index);
 }
 
-const int_vector_type *
-gen_data_config_get_active_report_steps(const gen_data_config_type *config) {
-    return config->active_report_steps;
-}
-
-void gen_data_config_set_ens_size(gen_data_config_type *config, int ens_size) {
-    config->ens_size = ens_size;
-}
-
-bool gen_data_config_valid_result_format(const char *result_file_fmt) {
-    if (result_file_fmt) {
-        if (util_is_abs_path(result_file_fmt))
-            return false;
-        else {
-            if (util_int_format_count(result_file_fmt) == 1)
-                return true;
-            else
-                return false;
-        }
-    } else
-        return false;
-}
-
 const char *gen_data_config_get_key(const gen_data_config_type *config) {
     return config->key;
-}
-
-/**
- * @brief returns the format string correspondng to the gen_data_file_format_type.
-
-   This function takes a gen_data_file_format_type and returns its string representation.
-
-   Its the inverse action of gen_data_config_check_format
-
-   @see gen_data_config_check_format
-   @param format_string The file format string, ie. "ASCII"
-   @return GEN_DATA_UNDEFINED if the string is not recognized or NULL, otherwise
-      the corresponding gen_data_file_format_type, ie. ASCII.
-*/
-static const char *
-gen_data_config_format_name(gen_data_file_format_type format_type) {
-    switch (format_type) {
-    case GEN_DATA_UNDEFINED:
-        return "UNDEFINED";
-    case ASCII:
-        return "ASCII";
-    case ASCII_TEMPLATE:
-        return "ASCII_TEMPLATE";
-    default:
-        util_abort("%s: What the f.. \n", __func__);
-        return NULL;
-    }
 }
 
 VOID_FREE(gen_data_config)
