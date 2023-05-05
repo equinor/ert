@@ -577,8 +577,12 @@ class ErtConfig:
         hooked_workflows = defaultdict(list)
 
         errors = []
+
         for workflow_job in workflow_job_info:
             try:
+                # WorkflowJob.fromFile only throws error if a
+                # non-readable file is provided.
+                # Non-existing files are caught by the new parser
                 new_job = WorkflowJob.fromFile(
                     config_file=workflow_job[0],
                     name=None if len(workflow_job) == 1 else workflow_job[1],
@@ -591,7 +595,12 @@ class ErtConfig:
                     category=ConfigWarning,
                 )
             except ConfigValidationError as err:
-                errors.append(err)
+                errors.append(
+                    ErrorInfo(
+                        message=str(err).replace("\n", ";"),
+                        filename=workflow_job[0],
+                    ).set_context(workflow_job[0])
+                )
 
         for job_path in workflow_job_dir_info:
             if not os.path.isdir(job_path):
@@ -613,7 +622,12 @@ class ErtConfig:
                         category=ConfigWarning,
                     )
                 except ConfigValidationError as err:
-                    errors.append(err)
+                    errors.append(
+                        ErrorInfo(
+                            message=str(err),
+                            filename=full_path,
+                        ).set_context(job_path)
+                    )
         if errors:
             raise ConfigValidationError.from_collected(errors)
 
@@ -639,6 +653,9 @@ class ErtConfig:
         errors = []
         for hook_name, mode_name in hook_workflow_info:
             if mode_name not in [runtime.name for runtime in HookRuntime.enums()]:
+                # This is only hit by the old parser
+                # new parser will catch and localize this before it ever gets here
+                # so no need to localize
                 errors.append(
                     ConfigValidationError(
                         errors=f"Run mode {mode_name!r} not supported for Hook Workflow"
@@ -648,10 +665,13 @@ class ErtConfig:
 
             if hook_name not in workflows:
                 errors.append(
-                    ConfigValidationError(
-                        errors="Cannot setup hook for non-existing"
-                        f" job name {hook_name!r}"
-                    )
+                    ErrorInfo(
+                        message="Cannot setup hook for non-existing"
+                        f" job name {hook_name!r}",
+                        filename=hook_name.token.filename
+                        if hasattr(hook_name, "token")
+                        else "",
+                    ).set_context(hook_name)
                 )
                 continue
 
