@@ -27,6 +27,7 @@ from ert.cli import (
 )
 from ert.cli.main import ErtCliError, run_cli
 from ert.parsing import ConfigValidationError
+from ert.parsing.config_errors import ConfigWarning
 from ert.shared.feature_toggling import FeatureToggling
 from ert.storage import open_storage
 
@@ -501,11 +502,12 @@ def test_that_prior_is_not_overwritten_in_ensemble_experiment(
 )
 @pytest.mark.usefixtures("copy_poly_case")
 def test_that_the_cli_raises_exceptions_when_parameters_are_missing(mode):
-    with open("poly.ert", "r", encoding="utf-8") as fin:
-        with open("poly-no-gen-kw.ert", "w", encoding="utf-8") as fout:
-            for line in fin:
-                if "GEN_KW" not in line:
-                    fout.write(line)
+    with open("poly.ert", "r", encoding="utf-8") as fin, open(
+        "poly-no-gen-kw.ert", "w", encoding="utf-8"
+    ) as fout:
+        for line in fin:
+            if "GEN_KW" not in line:
+                fout.write(line)
 
     args = Mock()
     args.config = "poly-no-gen-kw.ert"
@@ -655,7 +657,6 @@ def run_ert_test_run(config_file: str) -> None:
         pytest.param(ENSEMBLE_SMOOTHER_MODE),
         pytest.param(ITERATIVE_ENSEMBLE_SMOOTHER_MODE),
         pytest.param(ES_MDA_MODE),
-        pytest.param(ENSEMBLE_EXPERIMENT_MODE),
     ],
 )
 @pytest.mark.usefixtures("copy_poly_case")
@@ -665,13 +666,14 @@ def test_that_the_model_raises_exception_if_active_less_than_minimum_realization
     Omit testing of SingleTestRun because that executes with 1 active realization
     regardless of configuration.
     """
-    with open("poly.ert", "r", encoding="utf-8") as fin:
-        with open("poly_high_min_reals.ert", "w", encoding="utf-8") as fout:
-            for line in fin:
-                if "MIN_REALIZATIONS" in line:
-                    fout.write("MIN_REALIZATIONS 100")
-                else:
-                    fout.write(line)
+    with open("poly.ert", "r", encoding="utf-8") as fin, open(
+        "poly_high_min_reals.ert", "w", encoding="utf-8"
+    ) as fout:
+        for line in fin:
+            if "MIN_REALIZATIONS" in line:
+                fout.write("MIN_REALIZATIONS 100")
+            else:
+                fout.write(line)
 
     args = Mock()
     args.config = "poly_high_min_reals.ert"
@@ -684,12 +686,9 @@ def test_that_the_model_raises_exception_if_active_less_than_minimum_realization
         "1024-65535",
         "--realizations",
         "0-19",
+        "--target-case",
     ]
-
-    if mode is not ENSEMBLE_EXPERIMENT_MODE:
-        ert_args.append("--target-case")
-        testcase = "testcase" if mode is ENSEMBLE_SMOOTHER_MODE else "testcase-%d"
-        ert_args.append(testcase)
+    ert_args.append("testcase" if mode is ENSEMBLE_SMOOTHER_MODE else "testcase-%d")
 
     parsed = ert_parser(
         parser,
@@ -699,5 +698,46 @@ def test_that_the_model_raises_exception_if_active_less_than_minimum_realization
     with pytest.raises(
         ErtCliError,
         match="Number of active realizations",
+    ):
+        run_cli(parsed)
+
+
+@pytest.mark.usefixtures("copy_poly_case")
+def test_that_the_model_warns_when_active_realizations_less_min_realizations():
+    """
+    Verify that the run model checks that active realizations is equal or higher than
+    NUM_REALIZATIONS when running ensemble_experiment.
+    A warning is issued when NUM_REALIZATIONS is higher than active_realizations.
+    """
+    with open("poly.ert", "r", encoding="utf-8") as fin, open(
+        "poly_lower_active_reals.ert", "w", encoding="utf-8"
+    ) as fout:
+        for line in fin:
+            if "MIN_REALIZATIONS" in line:
+                fout.write("MIN_REALIZATIONS 100")
+            else:
+                fout.write(line)
+
+    args = Mock()
+    args.config = "poly_lower_active_reals.ert"
+    parser = ArgumentParser(prog="test_main")
+
+    ert_args = [
+        "ensemble_experiment",
+        "poly_lower_active_reals.ert",
+        "--port-range",
+        "1024-65535",
+        "--realizations",
+        "0-4",
+    ]
+
+    parsed = ert_parser(
+        parser,
+        ert_args,
+    )
+
+    with pytest.warns(
+        ConfigWarning,
+        match="Due to active_realizations 5 is lower than MIN_REALIZATIONS",
     ):
         run_cli(parsed)

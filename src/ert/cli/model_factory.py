@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 import logging
+import warnings
 from typing import TYPE_CHECKING, List
 from uuid import UUID
 
 from ert._c_wrappers.config.active_range import ActiveRange
 from ert._c_wrappers.enkf.enkf_main import EnKFMain
+from ert.parsing.config_errors import ConfigWarning
 from ert.shared.models.ensemble_experiment import EnsembleExperiment
 from ert.shared.models.ensemble_smoother import EnsembleSmoother
 from ert.shared.models.iterated_ensemble_smoother import IteratedEnsembleSmoother
@@ -56,8 +58,23 @@ def _setup_single_test_run(ert, storage, args, experiment_id):
 
 
 def _setup_ensemble_experiment(ert, storage, args, experiment_id):
+    min_realizations_count = ert.analysisConfig().minimum_required_realizations
+    active_realizations = _realizations(args, ert.getEnsembleSize())
+    active_realizations_count = len(
+        [i for i in range(len(active_realizations)) if active_realizations[i]]
+    )
+
+    if active_realizations_count < min_realizations_count:
+        ert.analysisConfig().set_min_realizations(active_realizations_count)
+        warnings.warn(
+            f"Due to active_realizations {active_realizations_count} is lower than "
+            f"MIN_REALIZATIONS {min_realizations_count}, MIN_REALIZATIONS has been "
+            f"set to match active_realizations.",
+            category=ConfigWarning,
+        )
+
     simulations_argument = {
-        "active_realizations": _realizations(args, ert.getEnsembleSize()),
+        "active_realizations": active_realizations,
         "iter_num": int(args.iter_num),
         "current_case": args.current_case,
     }
