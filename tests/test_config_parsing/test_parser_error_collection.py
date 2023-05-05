@@ -345,7 +345,7 @@ def test_summary_without_eclbase():
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_include_non_existing_file_is_located(tmpdir):
+def test_that_include_non_existing_file_errors_with_location(tmpdir):
     assert_that_config_leads_to_error(
         config_file_contents=dedent(
             """
@@ -364,7 +364,7 @@ def test_include_non_existing_file_is_located(tmpdir):
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_that_include_with_too_many_args_error_is_located(tmpdir):
+def test_that_include_with_too_many_args_errors_with_location(tmpdir):
     assert_that_config_leads_to_error(
         config_file_contents=dedent(
             """
@@ -382,7 +382,7 @@ def test_that_include_with_too_many_args_error_is_located(tmpdir):
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_that_include_with_too_many_args_error_is_located_indirect(tmpdir):
+def test_include_with_too_many_args_error_is_located_indirect(tmpdir):
     assert_that_config_leads_to_error(
         config_file_contents=dedent(
             """

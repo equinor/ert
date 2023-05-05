@@ -324,7 +324,8 @@ def _handle_includes(
                 errors.append(
                     ErrorInfo(
                         message="Keyword:INCLUDE must have exactly one argument "
-                        f"at ({current_included_file.filename} line {superfluous.line})",
+                        f"at ({current_included_file.filename} "
+                        f"line {superfluous.line})",
                         filename=config_file,
                     ).set_context(error_context)
                 )
