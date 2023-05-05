@@ -7,6 +7,7 @@ import warnings
 from typing import Any, Dict, List, Mapping, Optional, Set, Tuple, Union
 
 from lark import Discard, Lark, Token, Transformer, Tree, UnexpectedCharacters
+from typing_extensions import Self
 
 from .config_errors import ConfigValidationError, ConfigWarning
 from .config_keywords import (
@@ -16,7 +17,8 @@ from .config_keywords import (
     init_site_config,
     init_user_config,
 )
-from .types import Defines, FileContextToken, Instruction
+from .error_info import ErrorInfo
+from .types import Defines, FileContextToken, Instruction, MaybeWithContext
 
 grammar = r"""
 WHITESPACE: (" "|"\t")+
@@ -250,18 +252,57 @@ def _substitute_args(
     ]
 
 
+class IncludeNode:
+    def __init__(self, parent: "IncludeNode", filename: str):
+        self.parent = parent
+        self.filename = filename
+        self.context = None
+
+    def __contains__(self, filename: str):
+        if filename == self.filename:
+            return True
+
+        if self.parent is None:
+            return False
+
+        return filename in self.parent
+
+    @property
+    def root(self):
+        if self.parent is None:
+            return self
+
+        return self.parent.root
+
+    @property
+    def path_from_root(self):
+        return reversed(self.path_to_root)
+
+    @property
+    def path_to_root(self):
+        if self.parent is None:
+            return [self.filename]
+
+        return [self.filename, *self.parent.path_to_root]
+
+    def set_context(self, context: MaybeWithContext) -> Self:
+        self.context = context
+        return self
+
+
 def _handle_includes(
     tree: Tree[Instruction],
     defines: Defines,
     config_file: str,
-    already_included_files: List[str] = None,
+    current_include_node: IncludeNode = None,
 ):
-    if already_included_files is None:
-        already_included_files = [config_file]
+    if current_include_node is None:
+        current_include_node = IncludeNode(parent=None, filename=config_file)
 
     config_dir = os.path.dirname(config_file)
     to_include = []
 
+    errors = []
     for i, node in enumerate(tree.children):
         kw, *args = node
         if kw == "DEFINE":
@@ -271,28 +312,74 @@ def _handle_includes(
             defines.append(args)
         if kw == "INCLUDE":
             if len(args) > 1:
-                raise ConfigValidationError(
-                    "Keyword:INCLUDE must have exactly one argument",
-                    config_file=node[0].filename,
+                superfluous_tokens: [FileContextToken] = args[1:]
+                superfluous = FileContextToken.join_tokens(superfluous_tokens)
+
+                error_context = (
+                    superfluous
+                    if current_include_node.parent is None
+                    else current_include_node.context
                 )
+
+                errors.append(
+                    ErrorInfo(
+                        message="Keyword:INCLUDE must have exactly one argument "
+                        f"at ({current_include_node.filename} line {superfluous.line})",
+                        filename=config_file,
+                    ).set_context(error_context)
+                )
+                continue
+
             file_to_include = _substitute(defines, args[0])
+
             if not os.path.isabs(file_to_include):
                 file_to_include = os.path.normpath(
                     os.path.join(config_dir, file_to_include)
                 )
 
-            if file_to_include in already_included_files:
-                raise ConfigValidationError(
-                    f"Cyclical import detected, {file_to_include} is already included"
-                )
+            if file_to_include in current_include_node:
+                # Note that: The "original" file is in current_include_node[0]
+                # This is where the error will be shown/linted, so this is also
+                # the filename even though "technically" it originates from elsewhere
+                master_ert_file = current_include_node.root.filename
 
-            sub_tree = _parse_file(file_to_include, "INCLUDE")
+                # The cycle comes from the "current file" config_file, trying to
+                # include file_to_include, this is the info user needs to know
+                # We need the chain of imports, fak
+
+                import_trace = [
+                    os.path.basename(f)
+                    for f in [*current_include_node.path_from_root, file_to_include]
+                ]
+
+                errors.append(
+                    ErrorInfo(
+                        message=f"Cyclical import detected, {'->'.join(import_trace)}",
+                        filename=os.path.basename(master_ert_file),
+                    ).set_context(current_include_node.context)
+                )
+                continue
+
+            try:
+                sub_tree = _parse_file(file_to_include, "INCLUDE")
+            except ConfigValidationError as err:
+                errors.append(
+                    ErrorInfo(
+                        message=str(err),
+                        filename=config_file,
+                    ).set_context(args[0])
+                )
+                continue
+
+            child_include_node = IncludeNode(
+                parent=current_include_node, filename=args[0]
+            ).set_context(current_include_node.context or args[0])
 
             _handle_includes(
                 sub_tree,
                 defines,
                 file_to_include,
-                [*already_included_files, file_to_include],
+                current_include_node=child_include_node,
             )
 
             to_include.append((sub_tree, i))
@@ -300,6 +387,9 @@ def _handle_includes(
     for sub_tree, i in reversed(to_include):
         tree.children.pop(i)
         tree.children[i:i] = sub_tree.children
+
+    if len(errors) > 0:
+        raise ConfigValidationError.from_collected(errors)
 
 
 def _parse_file(

@@ -2,6 +2,7 @@ import os
 import re
 import stat
 from dataclasses import dataclass
+from textwrap import dedent
 from typing import Dict, List, Optional, Union
 
 import pytest
@@ -85,7 +86,7 @@ def find_and_assert_errors_matching_location(
         "Expected to find at least 1 error matching location"
         f"(line={none_to_star(line)},"
         f"column={none_to_star(column)},"
-        f"end_column{none_to_star(end_column)})"
+        f"end_column={none_to_star(end_column)})"
     )
 
     return matching_errors
@@ -158,11 +159,9 @@ def assert_that_config_does_not_lead_to_error(
 @pytest.mark.usefixtures("use_tmpdir")
 def test_that_disallowed_argument_is_located_1fn():
     assert_that_config_leads_to_error(
-        config_file_contents="""
-QUEUE_OPTION DOCAL MAX_RUNNING 4
-""",
+        config_file_contents="QUEUE_OPTION DOCAL MAX_RUNNING 4",
         expected_error=ExpectedErrorInfo(
-            line=2,
+            line=1,
             column=14,
             end_column=19,
             match="argument .* must be one of",
@@ -174,17 +173,19 @@ QUEUE_OPTION DOCAL MAX_RUNNING 4
     "contents, expected_errors",
     [
         (
-            """
-QUEUE_OPTION DOCAL MAX_RUNNING 4
-STOP_LONG_RUNNING flase
-NUM_REALIZATIONS not_int
-ENKF_ALPHA not_float
-RUN_TEMPLATE dsajldkald/sdjkahsjka/wqehwqhdsa
-JOB_SCRIPT dnsjklajdlksaljd/dhs7sh/qhwhe
-JOB_SCRIPT non_executable_file
-NUM_REALIZATIONS 1 2 3 4 5
-NUM_REALIZATIONS
-""",
+            dedent(
+                """
+                QUEUE_OPTION DOCAL MAX_RUNNING 4
+                STOP_LONG_RUNNING flase
+                NUM_REALIZATIONS not_int
+                ENKF_ALPHA not_float
+                RUN_TEMPLATE dsajldkald/sdjkahsjka/wqehwqhdsa
+                JOB_SCRIPT dnsjklajdlksaljd/dhs7sh/qhwhe
+                JOB_SCRIPT non_executable_file
+                NUM_REALIZATIONS 1 2 3 4 5
+                NUM_REALIZATIONS
+                """
+            ),
             [
                 ExpectedErrorInfo(
                     line=2,
@@ -328,10 +329,12 @@ def test_invalid_num_realizations_does_not_lead_to_unset_error():
 @pytest.mark.usefixtures("use_tmpdir")
 def test_summary_without_eclbase():
     assert_that_config_leads_to_error(
-        config_file_contents="""
-NUM_REALIZATIONS 1
-SUMMARY summary
-""",
+        config_file_contents=dedent(
+            """
+            NUM_REALIZATIONS 1
+            SUMMARY summary
+            """
+        ),
         expected_error=ExpectedErrorInfo(
             line=3,
             column=1,
@@ -342,13 +345,78 @@ SUMMARY summary
 
 
 @pytest.mark.usefixtures("use_tmpdir")
+def test_include_non_existing_file_is_located(tmpdir):
+    assert_that_config_leads_to_error(
+        config_file_contents=dedent(
+            """
+            JOBNAME my_name%d
+            NUM_REALIZATIONS 1
+            INCLUDE does_not_exists
+            """
+        ),
+        expected_error=ExpectedErrorInfo(
+            line=4,
+            column=9,
+            end_column=24,
+            match=r"INCLUDE file:.*does_not_exists not found",
+        ),
+    )
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_include_with_too_many_args_error_is_located(tmpdir):
+    assert_that_config_leads_to_error(
+        config_file_contents=dedent(
+            """
+            JOBNAME my_name%d
+            INCLUDE something arg1 arg2 dot dotdot argn
+            """
+        ),
+        expected_error=ExpectedErrorInfo(
+            line=3,
+            column=19,
+            end_column=44,
+            match=r"Keyword:INCLUDE must have exactly one argument",
+        ),
+    )
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_include_with_too_many_args_error_is_located_indirect(tmpdir):
+    assert_that_config_leads_to_error(
+        config_file_contents=dedent(
+            """
+            JOBNAME my_name%d
+            INCLUDE something.ert
+            """
+        ),
+        expected_error=ExpectedErrorInfo(
+            filename="something.ert",
+            line=3,
+            column=9,
+            end_column=22,
+            match=r"Keyword:INCLUDE must have exactly one argument",
+            other_files={
+                "something.ert": FileDetail(
+                    contents="""
+INCLUDE arg1 arg2 arg3 dot dotdot argN
+"""
+                )
+            },
+        ),
+    )
+
+
+@pytest.mark.usefixtures("use_tmpdir")
 def test_queue_option_max_running_non_int():
     assert_that_config_leads_to_error(
-        config_file_contents="""
-NUM_REALIZATIONS 1
-QUEUE_SYSTEM LOCAL
-QUEUE_OPTION LOCAL MAX_RUNNING ert
-""",
+        config_file_contents=dedent(
+            """
+            NUM_REALIZATIONS 1
+            QUEUE_SYSTEM LOCAL
+            QUEUE_OPTION LOCAL MAX_RUNNING ert
+            """
+        ),
         expected_error=ExpectedErrorInfo(
             line=4,
             column=32,
@@ -358,14 +426,195 @@ QUEUE_OPTION LOCAL MAX_RUNNING ert
     )
 
 
+@pytest.mark.parametrize(
+    "contents, expected_errors",
+    [
+        (
+            dedent(
+                """
+                INCLUDE does_not_exist0
+                NUM_REALIZATIONS 1
+                INCLUDE does_not_exist1
+                INCLUDE does_not_exist2
+                INCLUDE does_not_exist3
+                JOBNAME my_name%d
+                INCLUDE does_not_exist4
+                INCLUDE does_not_exist5
+                INCLUDE does_not_exist6
+                INCLUDE does_not_exist7
+                """
+            ),
+            [
+                *[
+                    ExpectedErrorInfo(
+                        line=line,
+                        column=9,
+                        end_column=24,
+                        match=f"INCLUDE file:.*does_not_exist{i} not found",
+                    )
+                    for i, line in enumerate([2, 4, 5, 6, 8, 9, 10, 11])
+                ],
+            ],
+        )
+    ],
+)
+@pytest.mark.usefixtures("use_tmpdir")
+def test_multiple_include_non_existing_files_are_located(contents, expected_errors):
+    for expected_error in expected_errors:
+        assert_that_config_leads_to_error(
+            config_file_contents=contents, expected_error=expected_error
+        )
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_cyclical_import_error_is_located():
+    assert_that_config_leads_to_error(
+        config_file_contents="""
+NUM_REALIZATIONS  1
+INCLUDE include.ert
+""",
+        expected_error=ExpectedErrorInfo(
+            other_files={
+                "include.ert": FileDetail(
+                    contents=dedent(
+                        """
+                        JOBNAME included
+                        INCLUDE test.ert
+                        """
+                    )
+                )
+            },
+            line=3,
+            column=9,
+            end_column=20,
+            filename="test.ert",
+            match="Cyclical import detected, test.ert->include.ert->test.ert",
+        ),
+    )
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_cyclical_import_error_is_located_branch():
+    assert_that_config_leads_to_error(
+        config_file_contents=dedent(
+            """
+            NUM_REALIZATIONS  1
+            INCLUDE include1.ert
+            """
+        ),
+        expected_error=ExpectedErrorInfo(
+            other_files={
+                "include1.ert": FileDetail(
+                    contents=dedent(
+                        """
+                        JOBNAME included
+                        INCLUDE include2.ert
+                        """
+                    )
+                ),
+                "include2.ert": FileDetail(
+                    contents=dedent(
+                        """
+                        JOBNAME included
+                        INCLUDE include3.ert
+                        """
+                    )
+                ),
+                "include3.ert": FileDetail(
+                    contents=dedent(
+                        """
+                        JOBNAME included
+                        INCLUDE include4.ert
+                        """
+                    )
+                ),
+                "include4.ert": FileDetail(
+                    contents=dedent(
+                        """
+                        JOBNAME included
+                        INCLUDE include5.ert
+                        """
+                    )
+                ),
+                "include5.ert": FileDetail(
+                    contents=dedent(
+                        """
+                        JOBNAME included
+                        INCLUDE test.ert
+                        """
+                    )
+                ),
+            },
+            line=3,
+            column=9,
+            end_column=21,
+            filename="test.ert",
+            match="Cyclical import detected, "
+            "test.ert->include1.ert->include2.ert->include3.ert"
+            "->include4.ert->include5.ert->test.ert",
+        ),
+    )
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.parametrize("n", range(1, 10))
+def test_that_cyclical_import_error_is_located_stop_early(n):
+    other_include_files = {
+        f"include{i}.ert": FileDetail(
+            contents=dedent(
+                f"""
+                JOBNAME include{i}
+                INCLUDE include{i+1}.ert
+                """
+            )
+        )
+        for i in range(n)
+    }
+
+    expected_match = (
+        f"test.ert->{'->'.join([f'include{i}.ert' for i in range(n+1)])}->test.ert"
+    )
+
+    expected_error = ExpectedErrorInfo(
+        other_files={
+            **other_include_files,
+            f"include{n}.ert": FileDetail(
+                contents=dedent(
+                    f"""
+                    JOBNAME include{n+1}
+                    INCLUDE test.ert
+                    """
+                )
+            ),
+        },
+        line=3,
+        column=9,
+        end_column=21,
+        filename="test.ert",
+        match=expected_match,
+    )
+
+    assert_that_config_leads_to_error(
+        config_file_contents=dedent(
+            """
+            NUM_REALIZATIONS 1
+            INCLUDE include0.ert
+            """
+        ),
+        expected_error=expected_error,
+    )
+
+
 @pytest.mark.usefixtures("use_tmpdir")
 def test_queue_option_max_running_negative():
     assert_that_config_leads_to_error(
-        config_file_contents="""
-NUM_REALIZATIONS 1
-QUEUE_SYSTEM LOCAL
-QUEUE_OPTION LOCAL MAX_RUNNING -1
-""",
+        config_file_contents=dedent(
+            """
+            NUM_REALIZATIONS 1
+            QUEUE_SYSTEM LOCAL
+            QUEUE_OPTION LOCAL MAX_RUNNING -1
+            """
+        ),
         expected_error=ExpectedErrorInfo(
             line=4,
             column=32,
