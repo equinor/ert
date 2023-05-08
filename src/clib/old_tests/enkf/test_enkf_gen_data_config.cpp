@@ -9,8 +9,7 @@
 #include <ert/util/test_work_area.hpp>
 
 void test_report_steps() {
-    gen_data_config_type *config =
-        gen_data_config_alloc_GEN_DATA_result("KEY", ASCII);
+    gen_data_config_type *config = gen_data_config_alloc_GEN_DATA_result("KEY");
     test_assert_int_equal(0, gen_data_config_num_report_step(config));
     test_assert_false(gen_data_config_has_report_step(config, 0));
 
@@ -32,24 +31,12 @@ void test_report_steps() {
     gen_data_config_free(config);
 }
 
-void alloc_invalid_io_format1(void *arg) {
-    gen_data_config_type *config =
-        gen_data_config_alloc_GEN_DATA_result("KEY", ASCII_TEMPLATE);
-    gen_data_config_free(config);
-}
-
-void test_set_invalid_format() {
-    test_assert_util_abort("gen_data_config_alloc_GEN_DATA_result",
-                           alloc_invalid_io_format1, NULL);
-}
-
 int main(int argc, char **argv) {
 
     const char *gendata_file = argv[1];
     const char *gendata_file_empty = argv[2];
     util_install_signals();
     test_report_steps();
-    test_set_invalid_format();
 
     exit(0);
 }

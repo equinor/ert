@@ -35,9 +35,7 @@ struct enkf_config_node_struct {
     config_free_ftype *freef;
 };
 
-enkf_config_node_type *
-enkf_config_node_alloc_GEN_DATA_result(const char *key,
-                                       gen_data_file_format_type input_format);
+enkf_config_node_type *enkf_config_node_alloc_GEN_DATA_result(const char *key);
 
 extern "C" enkf_config_node_type *enkf_config_node_alloc(ert_impl_type,
                                                          const char *, void *);
@@ -65,7 +63,6 @@ extern "C" const char *enkf_config_node_get_key(const enkf_config_node_type *);
 
 extern "C" PY_USED enkf_config_node_type *
 enkf_config_node_alloc_GEN_DATA_full(const char *node_key,
-                                     gen_data_file_format_type input_format,
                                      const int_vector_type *report_steps);
 
 VOID_FREE_HEADER(enkf_config_node);

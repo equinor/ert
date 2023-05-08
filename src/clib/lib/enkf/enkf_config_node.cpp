@@ -69,7 +69,7 @@ enkf_config_node_type *
 enkf_config_node_alloc_GEN_DATA_everest(const char *key,
                                         const int_vector_type *report_steps) {
     enkf_config_node_type *config_node =
-        enkf_config_node_alloc_GEN_DATA_result(key, ASCII);
+        enkf_config_node_alloc_GEN_DATA_result(key);
     gen_data_config_type *gen_data_config =
         (gen_data_config_type *)enkf_config_node_get_ref(config_node);
 
@@ -81,14 +81,11 @@ enkf_config_node_alloc_GEN_DATA_everest(const char *key,
     return config_node;
 }
 
-enkf_config_node_type *
-enkf_config_node_alloc_GEN_DATA_result(const char *key,
-                                       gen_data_file_format_type input_format) {
+enkf_config_node_type *enkf_config_node_alloc_GEN_DATA_result(const char *key) {
 
     enkf_config_node_type *config_node =
         enkf_config_node_alloc__(GEN_DATA, key);
-    config_node->data =
-        gen_data_config_alloc_GEN_DATA_result(key, input_format);
+    config_node->data = gen_data_config_alloc_GEN_DATA_result(key);
     return config_node;
 }
 
@@ -122,10 +119,9 @@ enkf_config_node_get_obs_keys(const enkf_config_node_type *config_node) {
 
 enkf_config_node_type *
 enkf_config_node_alloc_GEN_DATA_full(const char *node_key,
-                                     gen_data_file_format_type input_format,
                                      const int_vector_type *report_steps) {
     enkf_config_node_type *config_node =
-        enkf_config_node_alloc_GEN_DATA_result(node_key, input_format);
+        enkf_config_node_alloc_GEN_DATA_result(node_key);
     gen_data_config_type *gen_data_config =
         (gen_data_config_type *)enkf_config_node_get_ref(config_node);
 

@@ -20,7 +20,7 @@ from ert._c_wrappers.enkf.config.field_config import TRANSFORM_FUNCTIONS, Field
 from ert._c_wrappers.enkf.config.parameter_config import ParameterConfig
 from ert._c_wrappers.enkf.config.surface_config import SurfaceConfig
 from ert._c_wrappers.enkf.config_keys import ConfigKeys
-from ert._c_wrappers.enkf.enums import EnkfVarType, ErtImplType, GenDataFileType
+from ert._c_wrappers.enkf.enums import EnkfVarType, ErtImplType
 from ert.parsing import ConfigValidationError, ConfigWarning
 from ert.parsing.error_info import ErrorInfo
 from ert.storage.field_utils.field_utils import Shape, get_shape
@@ -288,8 +288,7 @@ class EnsembleConfig(BaseCClass):
             raise ConfigValidationError(
                 f"Missing or unsupported RESULT_FILE for GEN_DATA key {name!r}"
             )
-        input_format_str = options.get(ConfigKeys.INPUT_FORMAT)
-        if input_format_str != "ASCII":
+        if options.get(ConfigKeys.INPUT_FORMAT) != "ASCII":
             warnings.warn(
                 f"Missing or unsupported GEN_DATA INPUT_FORMAT for key {name!r}. "
                 f"Assuming INPUT_FORMAT is ASCII.",
@@ -301,7 +300,6 @@ class EnsembleConfig(BaseCClass):
         return EnkfConfigNode.create_gen_data_full(
             name,
             res_file,
-            GenDataFileType.ASCII,
             report_steps,
         )
 

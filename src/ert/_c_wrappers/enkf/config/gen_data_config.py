@@ -10,13 +10,10 @@ class GenDataConfig(BaseCClass):
     TYPE_NAME = "gen_data_config"
 
     _alloc = ResPrototype(
-        "void* gen_data_config_alloc_GEN_DATA_result( char* , gen_data_file_format_type)",  # noqa
+        "void* gen_data_config_alloc_GEN_DATA_result( char*)",  # noqa
         bind=False,
     )
     _free = ResPrototype("void  gen_data_config_free( gen_data_config )")
-    _get_input_format = ResPrototype(
-        "gen_data_file_format_type gen_data_config_get_input_format(gen_data_config)"
-    )
     _has_report_step = ResPrototype(
         "bool  gen_data_config_has_report_step(gen_data_config, int)"
     )
@@ -31,10 +28,10 @@ class GenDataConfig(BaseCClass):
         "int   gen_data_config_iget_report_step(gen_data_config, int)"
     )
 
-    def __init__(self, key, input_format=GenDataFileType.ASCII):
+    def __init__(self, key):
         # Can currently only create GEN_DATA instances which should be used
         # as result variables.
-        c_pointer = self._alloc(key, input_format)
+        c_pointer = self._alloc(key)
         super().__init__(c_pointer)
 
     def getName(self):
@@ -44,7 +41,7 @@ class GenDataConfig(BaseCClass):
         return self._get_key()
 
     def getInputFormat(self):
-        return self._get_input_format()
+        return GenDataFileType.ASCII
 
     def free(self):
         self._free()

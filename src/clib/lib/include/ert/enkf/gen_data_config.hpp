@@ -21,10 +21,7 @@ gen_data_file_format_type;
 typedef struct gen_data_config_struct gen_data_config_type;
 
 extern "C" gen_data_config_type *
-gen_data_config_alloc_GEN_DATA_result(const char *key,
-                                      gen_data_file_format_type input_format);
-extern "C" gen_data_file_format_type
-gen_data_config_get_input_format(const gen_data_config_type *);
+gen_data_config_alloc_GEN_DATA_result(const char *key);
 extern "C" void gen_data_config_free(gen_data_config_type *);
 extern "C" const char *
 gen_data_config_get_key(const gen_data_config_type *config);

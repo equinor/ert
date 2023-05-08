@@ -31,19 +31,11 @@ static auto logger = ert::get_logger("enkf");
 struct gen_data_config_struct {
     /** The key this gen_data instance is known under - needed for debugging. */
     char *key;
-    /** The format used for loading gen_data instances when the forward model
-     * has completed *AND* for loading the initial files.*/
-    gen_data_file_format_type input_format;
     /** Data size, i.e. number of elements , indexed with report_step */
     int_vector_type *data_size_vector;
     /** The report steps where we expect to load data for this instance. */
     int_vector_type *active_report_steps;
 };
-
-gen_data_file_format_type
-gen_data_config_get_input_format(const gen_data_config_type *config) {
-    return config->input_format;
-}
 
 /*
    If current_size as queried from config->data_size_vector == -1
@@ -62,8 +54,6 @@ static gen_data_config_type *gen_data_config_alloc(const char *key) {
         (gen_data_config_type *)util_malloc(sizeof *config);
 
     config->key = util_alloc_string_copy(key);
-
-    config->input_format = GEN_DATA_UNDEFINED;
     config->data_size_vector = int_vector_alloc(
         0, -1); /* The default value: -1 - indicates "NOT SET" */
     config->active_report_steps = int_vector_alloc(0, 0);
@@ -71,20 +61,8 @@ static gen_data_config_type *gen_data_config_alloc(const char *key) {
     return config;
 }
 
-gen_data_config_type *
-gen_data_config_alloc_GEN_DATA_result(const char *key,
-                                      gen_data_file_format_type input_format) {
+gen_data_config_type *gen_data_config_alloc_GEN_DATA_result(const char *key) {
     gen_data_config_type *config = gen_data_config_alloc(key);
-
-    if (input_format == ASCII_TEMPLATE)
-        util_abort("%s: Sorry can not use INPUT_FORMAT:ASCII_TEMPLATE\n",
-                   __func__);
-
-    if (input_format == GEN_DATA_UNDEFINED)
-        util_abort("%s: Sorry must specify valid values for input format.\n",
-                   __func__);
-
-    config->input_format = input_format;
     return config;
 }
 

@@ -50,7 +50,6 @@ class EnkfConfigNode(BaseCClass):
 
     _alloc_gen_data_full = ResPrototype(
         "enkf_config_node_obj enkf_config_node_alloc_GEN_DATA_full(char*, \
-                                                                   gen_data_file_format_type, \
                                                                    int_vector)",  # noqa
         bind=False,
     )
@@ -112,7 +111,6 @@ class EnkfConfigNode(BaseCClass):
         cls,
         key,
         result_file,
-        input_format,
         report_steps,
     ):
         if os.path.isabs(result_file) or "%d" not in result_file:
@@ -136,7 +134,6 @@ class EnkfConfigNode(BaseCClass):
 
         config_node = cls._alloc_gen_data_full(
             key,
-            input_format,
             active_steps,
         )
 
