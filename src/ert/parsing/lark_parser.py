@@ -46,7 +46,7 @@ UNQUOTED: CHAR+
 
 CHAR_NO_EQ: /[+.\*a-zæøåA-ZÆØÅ10-9_%:\<\>\/-]/
 UNQUOTED_NO_EQ: /(?!([ ]))/ CHAR_NO_EQ+
-STR_NO_EQ_COM_PARN: /(?!([ ]))[^=,)(]+/
+STR_NO_EQ_COM_PARN: /[^=,)( ]+/
 
 CHAR_KW: /[a-zæøåA-ZÆØÅ10-9_:-]/
 UNQUOTED_KW: CHAR_KW+
