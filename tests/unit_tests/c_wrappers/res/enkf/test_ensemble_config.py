@@ -5,7 +5,7 @@ import pytest
 from ecl.summary import EclSum
 
 from ert._c_wrappers.enkf import ConfigKeys, EnsembleConfig, ErtConfig
-from ert._c_wrappers.enkf.enums import ErtImplType, GenDataFileType
+from ert._c_wrappers.enkf.enums import ErtImplType
 from ert.parsing import ConfigValidationError, ConfigWarning
 
 
@@ -145,7 +145,6 @@ def test_gen_data_node(gen_data_str, expected):
         assert node.getDataModelConfig().hasReportStep(20)
         assert node.getDataModelConfig().hasReportStep(30)
         assert not node.getDataModelConfig().hasReportStep(32)
-        assert node.getDataModelConfig().getInputFormat() == GenDataFileType.ASCII
 
 
 @pytest.mark.parametrize(

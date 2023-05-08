@@ -9,15 +9,6 @@
 #include <ert/enkf/enkf_macros.hpp>
 #include <ert/enkf/enkf_types.hpp>
 
-typedef enum {
-    GEN_DATA_UNDEFINED = 0,
-    /** The file is ASCII file with a vector of numbers formatted with "%g".*/
-    ASCII = 1,
-    /** The data is inserted into a user defined template file. */
-    ASCII_TEMPLATE = 2,
-} /*   The data is in a binary file with floats. */
-gen_data_file_format_type;
-
 typedef struct gen_data_config_struct gen_data_config_type;
 
 extern "C" gen_data_config_type *

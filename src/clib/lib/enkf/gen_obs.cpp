@@ -53,7 +53,6 @@ struct gen_obs_struct {
     /** The key this observation is held by - in the enkf_obs structur (only
      * for debug messages). */
     char *obs_key;
-    gen_data_file_format_type obs_format;
     gen_data_config_type *data_config;
 };
 
@@ -102,7 +101,7 @@ static void gen_obs_set_data(gen_obs_type *gen_obs, int buffer_size,
 }
 
 void gen_obs_load_observation(gen_obs_type *gen_obs, const char *obs_file) {
-    auto vec = gen_common_fload_alloc(obs_file, gen_obs->obs_format);
+    auto vec = gen_common_fload_alloc(obs_file);
     gen_obs_set_data(gen_obs, vec.size(), vec.data());
 }
 
@@ -158,7 +157,6 @@ gen_obs_type *gen_obs_alloc__(const gen_data_config_type *data_config,
     obs->obs_data = NULL;
     obs->obs_std = NULL;
     obs->std_scaling = NULL;
-    obs->obs_format = ASCII; /* Hardcoded for now. */
     obs->obs_key = util_alloc_string_copy(obs_key);
     obs->data_config =
         (gen_data_config_type *)data_config; // casting away the const ...

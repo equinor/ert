@@ -3,7 +3,6 @@ from typing import List
 from cwrap import BaseCClass
 
 from ert._c_wrappers import ResPrototype
-from ert._c_wrappers.enkf.enums import GenDataFileType
 
 
 class GenDataConfig(BaseCClass):
@@ -40,14 +39,11 @@ class GenDataConfig(BaseCClass):
     def name(self):
         return self._get_key()
 
-    def getInputFormat(self):
-        return GenDataFileType.ASCII
-
     def free(self):
         self._free()
 
     def __repr__(self):
-        return f"GenDataConfig(key={self.name()}, input_format={self.getInputFormat()})"
+        return f"GenDataConfig(key={self.name()})"
 
     def hasReportStep(self, report_step) -> bool:
         return self._has_report_step(report_step)
@@ -63,9 +59,6 @@ class GenDataConfig(BaseCClass):
 
     def __eq__(self, other) -> bool:
         if self.getName() != other.getName():
-            return False
-
-        if self.getInputFormat() != other.getInputFormat():
             return False
 
         if self.getReportSteps() != other.getReportSteps():
