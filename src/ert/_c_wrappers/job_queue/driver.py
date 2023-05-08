@@ -4,8 +4,6 @@ from cwrap import BaseCClass, BaseCEnum
 
 from ert._c_wrappers import ResPrototype
 
-from .job import Job
-
 
 class QueueDriverEnum(BaseCEnum):
     TYPE_NAME = "queue_driver_enum"
@@ -35,11 +33,6 @@ class Driver(BaseCClass):
     _set_option = ResPrototype("void queue_driver_set_option( driver , char* , char*)")
     _unset_option = ResPrototype("void queue_driver_unset_option( driver , char*)")
     _get_option = ResPrototype("char* queue_driver_get_option(driver, char*)")
-    _free_job = ResPrototype("void   queue_driver_free_job( driver , job )")
-    _get_status = ResPrototype(
-        "job_status_type_enum queue_driver_get_status(driver, job)"
-    )
-    _kill_job = ResPrototype("void queue_driver_kill_job( driver , job )")
     _get_max_running = ResPrototype("int queue_driver_get_max_running( driver )")
     _set_max_running = ResPrototype("void queue_driver_set_max_running( driver , int)")
     _get_name = ResPrototype("char* queue_driver_get_name( driver )")
@@ -70,15 +63,6 @@ class Driver(BaseCClass):
     def is_driver_instance(self):
         return True
 
-    def free_job(self, job: Job):
-        self._free_job(job)
-
-    def get_status(self, job):
-        return self._get_status(job)
-
-    def kill_job(self, job):
-        self._kill_job(job)
-
     def get_max_running(self):
         return self._get_max_running()
 
@@ -93,24 +77,3 @@ class Driver(BaseCClass):
 
     def free(self):
         self._free()
-
-
-class LSFDriver(Driver):
-    def __init__(
-        self, max_running, lsf_server=None, queue="normal", resource_request=None
-    ):
-        # The strings should match the available keys given in the
-        # lsf_driver.h header file.
-        options = [
-            ("LSF_QUEUE", queue),
-            ("LSF_SERVER", lsf_server),
-            ("LSF_RESOURCE", resource_request),
-        ]
-        Driver.__init__(
-            self, QueueDriverEnum.LSF_DRIVER, max_running=max_running, options=options
-        )
-
-
-class LocalDriver(Driver):
-    def __init__(self, max_running):
-        Driver.__init__(self, QueueDriverEnum.LOCAL_DRIVER, max_running, options=[])
