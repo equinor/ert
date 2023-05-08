@@ -38,13 +38,11 @@ void *queue_driver_submit_job(queue_driver_type *driver, const char *run_cmd,
                               int num_cpu, const char *run_path,
                               const char *job_name, int argc,
                               const char **argv);
-extern "C" void queue_driver_free_job(queue_driver_type *driver,
-                                      void *job_data);
+void queue_driver_free_job(queue_driver_type *driver, void *job_data);
 void queue_driver_blacklist_node(queue_driver_type *driver, void *job_data);
-extern "C" void queue_driver_kill_job(queue_driver_type *driver,
-                                      void *job_data);
-extern "C" job_status_type queue_driver_get_status(queue_driver_type *driver,
-                                                   void *job_data);
+void queue_driver_kill_job(queue_driver_type *driver, void *job_data);
+job_status_type queue_driver_get_status(queue_driver_type *driver,
+                                        void *job_data);
 
 extern "C" PY_USED const char *
 queue_driver_get_name(const queue_driver_type *driver);

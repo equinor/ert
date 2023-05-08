@@ -59,12 +59,11 @@ if LSF_HOME:
     setenv("LSF_SERVERDIR", f"{LSF_HOME}/etc")
     setenv("LSF_ENVDIR", f"{LSF_HOME}/conf")  # This is wrong: Equinor: /prog/LSF/conf
 
-from .driver import Driver, LocalDriver, LSFDriver, QueueDriverEnum  # noqa
+from .driver import Driver, QueueDriverEnum  # noqa
 from .ert_plugin import CancelPluginException, ErtPlugin  # noqa
 from .ert_script import ErtScript  # noqa
 from .ext_job import ExtJob, ExtJobInvalidArgsException  # noqa
 from .external_ert_script import ExternalErtScript  # noqa
-from .job import Job  # noqa
 from .job_queue_manager import JobQueueManager  # noqa
 from .job_queue_node import JobQueueNode  # noqa
 from .job_status_type_enum import JobStatusType  # noqa
@@ -82,7 +81,6 @@ __all__ = [
     "RunStatusType",
     "ThreadStatus",
     "JobSubmitStatusType",
-    "Job",
     "Driver",
     "QueueDriverEnum",
     "JobQueueNode",
@@ -90,8 +88,6 @@ __all__ = [
     "JobQueueManager",
     "QueueDriverEnum",
     "Driver",
-    "LSFDriver",
-    "LocalDriver",
     "ExtJob",
     "ExtJobInvalidArgsException",
     "ErtScript",
