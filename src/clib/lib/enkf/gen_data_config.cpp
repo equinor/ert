@@ -38,10 +38,6 @@ struct gen_data_config_struct {
     int_vector_type *data_size_vector;
     /** The report steps where we expect to load data for this instance. */
     int_vector_type *active_report_steps;
-    /* All the fields below this line are related to the capability of the
-     * forward model to deactivate elements in a gen_data instance. See
-     * documentation above. */
-    bool_vector_type *active_mask;
 };
 
 gen_data_file_format_type
@@ -61,14 +57,6 @@ int gen_data_config_get_data_size__(const gen_data_config_type *config,
     return current_size;
 }
 
-int gen_data_config_get_data_size(const gen_data_config_type *config,
-                                  int report_step) {
-    int current_size = gen_data_config_get_data_size__(config, report_step);
-    if (current_size < 0)
-        throw pybind11::value_error("No data has been loaded for report step");
-    return current_size;
-}
-
 static gen_data_config_type *gen_data_config_alloc(const char *key) {
     gen_data_config_type *config =
         (gen_data_config_type *)util_malloc(sizeof *config);
@@ -79,9 +67,6 @@ static gen_data_config_type *gen_data_config_alloc(const char *key) {
     config->data_size_vector = int_vector_alloc(
         0, -1); /* The default value: -1 - indicates "NOT SET" */
     config->active_report_steps = int_vector_alloc(0, 0);
-    config->active_mask = bool_vector_alloc(
-        0,
-        true); /* Elements are explicitly set to FALSE - this MUST default to true. */
 
     return config;
 }
@@ -108,8 +93,6 @@ void gen_data_config_free(gen_data_config_type *config) {
     int_vector_free(config->active_report_steps);
 
     free(config->key);
-    bool_vector_free(config->active_mask);
-
     free(config);
 }
 

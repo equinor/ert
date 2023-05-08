@@ -37,15 +37,6 @@ class GenDataConfig(BaseCClass):
         c_pointer = self._alloc(key, input_format)
         super().__init__(c_pointer)
 
-    def getDataSize(self, report_step):
-        data_size = self._get_data_size(report_step)
-        if data_size < 0:
-            raise ValueError(
-                f"No data has been loaded for {self.getName()} "
-                f"at report step:{report_step} "
-            )
-        return data_size
-
     def getName(self):
         return self.name()
 

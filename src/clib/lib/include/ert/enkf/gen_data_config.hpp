@@ -28,8 +28,6 @@ gen_data_config_get_input_format(const gen_data_config_type *);
 extern "C" void gen_data_config_free(gen_data_config_type *);
 extern "C" const char *
 gen_data_config_get_key(const gen_data_config_type *config);
-int gen_data_config_get_data_size(const gen_data_config_type *config,
-                                  int report_step);
 
 extern "C" int
 gen_data_config_iget_report_step(const gen_data_config_type *config, int index);
