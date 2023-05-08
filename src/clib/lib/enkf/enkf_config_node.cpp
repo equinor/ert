@@ -85,7 +85,7 @@ enkf_config_node_type *enkf_config_node_alloc_GEN_DATA_result(const char *key) {
 
     enkf_config_node_type *config_node =
         enkf_config_node_alloc__(GEN_DATA, key);
-    config_node->data = gen_data_config_alloc_GEN_DATA_result(key);
+    config_node->data = gen_data_config_alloc_GEN_DATA_result();
     return config_node;
 }
 

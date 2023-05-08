@@ -9,14 +9,13 @@ class GenDataConfig(BaseCClass):
     TYPE_NAME = "gen_data_config"
 
     _alloc = ResPrototype(
-        "void* gen_data_config_alloc_GEN_DATA_result( char*)",  # noqa
+        "void* gen_data_config_alloc_GEN_DATA_result()",  # noqa
         bind=False,
     )
     _free = ResPrototype("void  gen_data_config_free( gen_data_config )")
     _has_report_step = ResPrototype(
         "bool  gen_data_config_has_report_step(gen_data_config, int)"
     )
-    _get_key = ResPrototype("char* gen_data_config_get_key(gen_data_config)")
     _get_num_report_step = ResPrototype(
         "int   gen_data_config_num_report_step(gen_data_config)"
     )
@@ -25,22 +24,18 @@ class GenDataConfig(BaseCClass):
     )
 
     def __init__(self, key):
-        # Can currently only create GEN_DATA instances which should be used
-        # as result variables.
-        c_pointer = self._alloc(key)
+        c_pointer = self._alloc()
+        self.key = key
         super().__init__(c_pointer)
 
-    def getName(self):
-        return self.name()
-
-    def name(self):
-        return self._get_key()
+    def getKey(self):
+        return self.key
 
     def free(self):
         self._free()
 
     def __repr__(self):
-        return f"GenDataConfig(key={self.name()})"
+        return f"GenDataConfig(key={self.key})"
 
     def hasReportStep(self, report_step) -> bool:
         return self._has_report_step(report_step)
@@ -55,7 +50,7 @@ class GenDataConfig(BaseCClass):
         return [self.getReportStep(index) for index in range(self.getNumReportStep())]
 
     def __eq__(self, other) -> bool:
-        if self.getName() != other.getName():
+        if self.getKey() != other.getKey():
             return False
 
         if self.getReportSteps() != other.getReportSteps():

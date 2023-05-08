@@ -9,7 +9,7 @@
 #include <ert/util/test_work_area.hpp>
 
 void test_report_steps() {
-    gen_data_config_type *config = gen_data_config_alloc_GEN_DATA_result("KEY");
+    gen_data_config_type *config = gen_data_config_alloc_GEN_DATA_result();
     test_assert_int_equal(0, gen_data_config_num_report_step(config));
     test_assert_false(gen_data_config_has_report_step(config, 0));
 

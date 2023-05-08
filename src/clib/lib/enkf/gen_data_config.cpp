@@ -10,7 +10,6 @@
 #include <ert/util/util.h>
 #include <pybind11/stl.h>
 
-#include <ert/enkf/config_keys.hpp>
 #include <ert/enkf/enkf_defaults.hpp>
 #include <ert/enkf/enkf_macros.hpp>
 #include <ert/enkf/gen_data_config.hpp>
@@ -29,31 +28,26 @@ static auto logger = ert::get_logger("enkf");
 */
 
 struct gen_data_config_struct {
-    /** The key this gen_data instance is known under - needed for debugging. */
-    char *key;
     /** The report steps where we expect to load data for this instance. */
     int_vector_type *active_report_steps;
 };
 
-static gen_data_config_type *gen_data_config_alloc(const char *key) {
+static gen_data_config_type *gen_data_config_alloc() {
     gen_data_config_type *config =
         (gen_data_config_type *)util_malloc(sizeof *config);
 
-    config->key = util_alloc_string_copy(key);
     config->active_report_steps = int_vector_alloc(0, 0);
 
     return config;
 }
 
-gen_data_config_type *gen_data_config_alloc_GEN_DATA_result(const char *key) {
-    gen_data_config_type *config = gen_data_config_alloc(key);
+gen_data_config_type *gen_data_config_alloc_GEN_DATA_result() {
+    gen_data_config_type *config = gen_data_config_alloc();
     return config;
 }
 
 void gen_data_config_free(gen_data_config_type *config) {
     int_vector_free(config->active_report_steps);
-
-    free(config->key);
     free(config);
 }
 
@@ -77,10 +71,6 @@ void gen_data_config_add_report_step(gen_data_config_type *config,
 int gen_data_config_iget_report_step(const gen_data_config_type *config,
                                      int index) {
     return int_vector_iget(config->active_report_steps, index);
-}
-
-const char *gen_data_config_get_key(const gen_data_config_type *config) {
-    return config->key;
 }
 
 VOID_FREE(gen_data_config)

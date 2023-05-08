@@ -11,11 +11,8 @@
 
 typedef struct gen_data_config_struct gen_data_config_type;
 
-extern "C" gen_data_config_type *
-gen_data_config_alloc_GEN_DATA_result(const char *key);
+extern "C" gen_data_config_type *gen_data_config_alloc_GEN_DATA_result();
 extern "C" void gen_data_config_free(gen_data_config_type *);
-extern "C" const char *
-gen_data_config_get_key(const gen_data_config_type *config);
 
 extern "C" int
 gen_data_config_iget_report_step(const gen_data_config_type *config, int index);
