@@ -16,9 +16,6 @@ class GenDataConfig(BaseCClass):
     _has_report_step = ResPrototype(
         "bool  gen_data_config_has_report_step(gen_data_config, int)"
     )
-    _get_data_size = ResPrototype(
-        "int   gen_data_config_get_data_size__(gen_data_config , int)"
-    )
     _get_key = ResPrototype("char* gen_data_config_get_key(gen_data_config)")
     _get_num_report_step = ResPrototype(
         "int   gen_data_config_num_report_step(gen_data_config)"

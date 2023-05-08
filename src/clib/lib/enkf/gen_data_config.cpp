@@ -31,31 +31,15 @@ static auto logger = ert::get_logger("enkf");
 struct gen_data_config_struct {
     /** The key this gen_data instance is known under - needed for debugging. */
     char *key;
-    /** Data size, i.e. number of elements , indexed with report_step */
-    int_vector_type *data_size_vector;
     /** The report steps where we expect to load data for this instance. */
     int_vector_type *active_report_steps;
 };
-
-/*
-   If current_size as queried from config->data_size_vector == -1
-   (i.e. not set); we seek through
-*/
-
-int gen_data_config_get_data_size__(const gen_data_config_type *config,
-                                    int report_step) {
-    int current_size =
-        int_vector_safe_iget(config->data_size_vector, report_step);
-    return current_size;
-}
 
 static gen_data_config_type *gen_data_config_alloc(const char *key) {
     gen_data_config_type *config =
         (gen_data_config_type *)util_malloc(sizeof *config);
 
     config->key = util_alloc_string_copy(key);
-    config->data_size_vector = int_vector_alloc(
-        0, -1); /* The default value: -1 - indicates "NOT SET" */
     config->active_report_steps = int_vector_alloc(0, 0);
 
     return config;
@@ -67,7 +51,6 @@ gen_data_config_type *gen_data_config_alloc_GEN_DATA_result(const char *key) {
 }
 
 void gen_data_config_free(gen_data_config_type *config) {
-    int_vector_free(config->data_size_vector);
     int_vector_free(config->active_report_steps);
 
     free(config->key);

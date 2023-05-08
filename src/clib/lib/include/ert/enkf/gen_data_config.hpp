@@ -26,9 +26,6 @@ gen_data_config_has_report_step(const gen_data_config_type *config,
                                 int report_step);
 extern "C" int
 gen_data_config_num_report_step(const gen_data_config_type *config);
-extern "C" int
-gen_data_config_get_data_size__(const gen_data_config_type *config,
-                                int report_step);
 
 VOID_FREE_HEADER(gen_data_config)
 
