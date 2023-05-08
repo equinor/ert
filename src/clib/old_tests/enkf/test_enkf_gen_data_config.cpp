@@ -32,11 +32,6 @@ void test_report_steps() {
 }
 
 int main(int argc, char **argv) {
-
-    const char *gendata_file = argv[1];
-    const char *gendata_file_empty = argv[2];
-    util_install_signals();
     test_report_steps();
-
     exit(0);
 }
