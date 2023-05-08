@@ -14,12 +14,10 @@ from typing import (
     Tuple,
     TypeVar,
     Union,
-    cast,
 )
 
 from beartype import beartype
 from beartype.roar import BeartypeDecorHintPepDeprecationWarning, BeartypeException
-from pydantic import PositiveInt
 
 # Mute PEP-585 warnings from Python 3.9:
 warnings.simplefilter(action="ignore", category=BeartypeDecorHintPepDeprecationWarning)
@@ -383,93 +381,3 @@ class NumericalRecordTree(RecordTree[NumericalRecord]):
     def record_type(self) -> RecordType:
         """Returns :class:`RecordType` set to :class:`RecordType.NUMERICAL_TREE`."""
         return RecordType.NUMERICAL_TREE
-
-
-class RecordCollectionType(str, Enum):
-    NON_UNIFORM = "NON_UNIFORM"
-    UNIFORM = "UNIFORM"
-
-
-_RecordTupleType = Union[Tuple[NumericalRecord, ...], Tuple[BlobRecord, ...]]
-
-
-class RecordCollection:
-    """Storage container for records of the same record-type, always non-empty.
-
-    If the collection type is uniform, all records are identical. The typical
-    use case for a uniform collection is a record that is constant over an
-    ensemble.
-    """
-
-    def __init__(
-        self,
-        records: Tuple[Record, ...],
-        length: Optional[PositiveInt] = None,
-        collection_type: RecordCollectionType = RecordCollectionType.NON_UNIFORM,
-    ):
-        """Create RecordCollection instance from the given tuple of records.
-        In case of UNIFORM collections the length must be provided.
-
-        Args:
-            records: Input tuple of records
-            length: The size of collection, which defaults to None
-            collection_type: Type of collection, which
-                defaults to :py:class:`RecordCollectionType.NON_UNIFORM`
-
-        Raises:
-            ValueError: Raises value error in case when: 1) there are no records
-                provided, 2) multiple records are given or length is missing when
-                type is :class:`RecordCollectionType.UNIFORM`, 3) length of record
-                list does not match the length provided in case of
-                :class:`RecordCollectionType.NON_UNIFORM` collection,
-                4) the record type varies within collection.
-        """
-        if len(records) < 1:
-            raise ValueError("At least one record must be provided")
-        if collection_type == RecordCollectionType.UNIFORM:
-            if len(records) > 1:
-                raise ValueError("Multiple records provided for a uniform record")
-            if length is None:
-                raise ValueError("Length missing for uniform record")
-            self._records = cast(_RecordTupleType, records * length)
-            self._length = length
-        else:
-            if length is not None and length != len(records):
-                raise ValueError(
-                    f"Requested length ({length}) does not match "
-                    f"the record count ({len(records)})"
-                )
-            for record in records:
-                if record.record_type != records[0].record_type:
-                    raise ValueError(
-                        "Record collections must have a uniform record type"
-                    )
-            self._records = cast(_RecordTupleType, records)
-            self._length = len(self._records)
-        self._collection_type = collection_type
-
-    def __eq__(self, other: object) -> bool:
-        if isinstance(other, type(self)):
-            return self.__dict__ == other.__dict__
-        return False
-
-    def __len__(self) -> int:
-        return self._length
-
-    @property
-    def records(self) -> _RecordTupleType:
-        return self._records
-
-    @property
-    def record_type(self) -> RecordType:
-        """Returns the type of the record(s) within the collection."""
-        assert self._records[0].record_type is not None  # mypy needs this
-        return self._records[0].record_type
-
-    @property
-    def collection_type(self) -> RecordCollectionType:
-        """Returns the collection type, which is either
-        :class:`RecordCollectionType.NON_UNIFORM` or
-        :class:`RecordCollectionType.UNIFORM`.
-        """
-        return self._collection_type
