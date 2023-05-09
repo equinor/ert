@@ -10,8 +10,7 @@ import numpy as np
 from ecl.summary import EclSum
 
 from ert._c_wrappers.enkf.enums.ert_impl_type_enum import ErtImplType
-from ert._c_wrappers.enkf.model_callbacks import LoadStatus
-from ert.shared.status import LoadResult
+from ert.load_status import LoadResult, LoadStatus
 
 if TYPE_CHECKING:
     from ert._c_wrappers.enkf import EnsembleConfig, RunArg

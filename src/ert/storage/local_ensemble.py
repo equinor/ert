@@ -25,9 +25,9 @@ from pydantic import BaseModel
 from ert._c_wrappers.enkf.config.field_config import field_transform
 from ert._c_wrappers.enkf.config.gen_kw_config import PRIOR_FUNCTIONS
 from ert._c_wrappers.enkf.enums import RealizationStateEnum
-from ert._c_wrappers.enkf.model_callbacks import LoadStatus
 from ert._c_wrappers.enkf.time_map import TimeMap
 from ert.callbacks import forward_model_ok
+from ert.load_status import LoadResult, LoadStatus
 
 if TYPE_CHECKING:
     import numpy.typing as npt
@@ -50,7 +50,7 @@ def _load_realization(
     realisation: int,
     ensemble_config: EnsembleConfig,
     run_args: List[RunArg],
-) -> Tuple[LoadStatus, int]:
+) -> Tuple[LoadResult, int]:
     sim_fs.update_realization_state(
         realisation,
         [RealizationStateEnum.STATE_UNDEFINED],
