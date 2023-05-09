@@ -61,7 +61,7 @@ class ErtConfig:
     queue_config: QueueConfig = field(default_factory=QueueConfig)
     workflow_jobs: Dict[str, WorkflowJob] = field(default_factory=dict)
     workflows: Dict[str, Workflow] = field(default_factory=dict)
-    hooked_workflows: Dict[int, List[Workflow]] = field(default_factory=dict)
+    hooked_workflows: Dict[HookRuntime, List[Workflow]] = field(default_factory=dict)
     runpath_file: Path = Path(DEFAULT_RUNPATH_FILE)
     ert_templates: List[List[str]] = field(default_factory=list)
     installed_jobs: Dict[str, ExtJob] = field(default_factory=dict)
@@ -652,7 +652,7 @@ class ErtConfig:
 
         errors = []
         for hook_name, mode_name in hook_workflow_info:
-            if mode_name not in [runtime.name for runtime in HookRuntime.enums()]:
+            if not hasattr(HookRuntime, mode_name):
                 # This is only hit by the old parser
                 # new parser will catch and localize this before it ever gets here
                 # so no need to localize
@@ -675,7 +675,7 @@ class ErtConfig:
                 )
                 continue
 
-            hooked_workflows[HookRuntime.from_string(mode_name)].append(
+            hooked_workflows[getattr(HookRuntime, mode_name)].append(
                 workflows[hook_name]
             )
 
