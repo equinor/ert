@@ -13,6 +13,7 @@ from cloudevents.http import CloudEvent
 
 import _ert_com_protocol
 from ert._c_wrappers.enkf import EnKFMain, QueueConfig
+from ert._c_wrappers.enkf.enums import HookRuntime
 from ert._c_wrappers.enkf.ert_run_context import RunContext
 from ert._c_wrappers.job_queue import RunStatusType
 from ert.callbacks import forward_model_exit, forward_model_ok
@@ -410,7 +411,7 @@ class BaseRunModel:
 
     async def _run_hook(
         self,
-        hook: int,  # HookRuntime
+        hook: HookRuntime,
         iter_: int,
         loop: asyncio.AbstractEventLoop,
         executor: concurrent.futures.Executor,

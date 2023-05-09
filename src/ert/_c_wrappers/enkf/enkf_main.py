@@ -29,6 +29,8 @@ from ert._c_wrappers.util.substitution_list import SubstitutionList
 
 if TYPE_CHECKING:
     from ert._c_wrappers.enkf import ErtConfig
+    from ert._c_wrappers.enkf.enums import HookRuntime
+    from ert._c_wrappers.enkf.queue_config import QueueConfig
     from ert.storage import EnsembleAccessor, EnsembleReader, StorageAccessor
 
 logger = logging.getLogger(__name__)
@@ -486,7 +488,7 @@ class EnKFMain:
 
     def runWorkflows(
         self,
-        runtime: int,
+        runtime: HookRuntime,
         storage: Optional[StorageAccessor] = None,
         ensemble: Optional[EnsembleAccessor] = None,
     ) -> None:

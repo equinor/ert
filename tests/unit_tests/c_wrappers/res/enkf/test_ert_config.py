@@ -385,7 +385,7 @@ def test_that_workflow_run_modes_can_be_selected(tmp_path, run_mode):
         "JOBNAME  Job%d\nRUNPATH /tmp/simulations/realization-<IENS>/iter-<ITER>\n"
         "NUM_REALIZATIONS 10\n"
         f"LOAD_WORKFLOW {my_script} SCRIPT\n"
-        f"HOOK_WORKFLOW SCRIPT {run_mode}\n"
+        f"HOOK_WORKFLOW SCRIPT {run_mode.name}\n"
     )
     ert_config = ErtConfig.from_file(str(test_user_config))
     assert len(list(ert_config.hooked_workflows[run_mode])) == 1
