@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Tuple, Un
 
 from ert._c_wrappers.enkf import EnKFMain, ErtConfig
 from ert._c_wrappers.enkf.config import EnkfConfigNode, ExtParamConfig
+from ert._c_wrappers.enkf.config.gen_data_config import GenDataConfig
 from ert._c_wrappers.enkf.enums import EnkfVarType
 from ert.storage import open_storage
 
@@ -109,7 +110,7 @@ class BatchSimulator:
             )
 
         for key in results:
-            ens_config.addNode(EnkfConfigNode.create_gen_data(key))
+            ens_config.addNode(GenDataConfig(key))
             ens_config.add_config_node_meta(
                 key=key,
                 input_file=f"{key}_%d",

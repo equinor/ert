@@ -140,41 +140,11 @@ def test_gen_data_node(gen_data_str, expected):
     else:
         assert node is not None
         assert node.getImplementationType() == ErtImplType.GEN_DATA
-        assert node.getDataModelConfig().getNumReportStep() == 3
-        assert node.getDataModelConfig().hasReportStep(10)
-        assert node.getDataModelConfig().hasReportStep(20)
-        assert node.getDataModelConfig().hasReportStep(30)
-        assert not node.getDataModelConfig().hasReportStep(32)
-
-
-@pytest.mark.parametrize(
-    "input_format",
-    [
-        pytest.param(
-            "INPUT_FORMAT:ASCIIX",
-            id="Unsupported INPUT_FORMAT",
-        ),
-        pytest.param(
-            "INPUT_FORMAT:",
-            id="Missing INPUT_FORMAT no format",
-        ),
-        pytest.param(
-            "",
-            id="Missing INPUT_FORMAT no key and format",
-        ),
-    ],
-)
-def test_gen_data_node_input_format(input_format):
-    gen_data_str = f"GDK RESULT_FILE:Results%d {input_format} REPORT_STEPS:10,20,30"
-
-    with pytest.warns(
-        ConfigWarning,
-        match="Missing or unsupported GEN_DATA INPUT_FORMAT for key 'GDK'.",
-    ):
-        node = EnsembleConfig.gen_data_node(gen_data_str.split(" "))
-        assert node is not None
-        assert node.getImplementationType() == ErtImplType.GEN_DATA
-        assert node.getDataModelConfig().getNumReportStep() == 3
+        assert node.getNumReportStep() == 3
+        assert node.hasReportStep(10)
+        assert node.hasReportStep(20)
+        assert node.hasReportStep(30)
+        assert not node.hasReportStep(32)
 
 
 def test_get_surface_node(setup_case):

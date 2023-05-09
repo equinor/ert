@@ -9,7 +9,6 @@
 #include <ert/enkf/enkf_macros.hpp>
 #include <ert/enkf/enkf_obs.hpp>
 #include <ert/enkf/ext_param_config.hpp>
-#include <ert/enkf/gen_data_config.hpp>
 #include <ert/enkf/gen_obs.hpp>
 #include <ert/python.hpp>
 #include <ert/res_util/path_fmt.hpp>
@@ -36,10 +35,6 @@ static enkf_config_node_type *enkf_config_node_alloc__(ert_impl_type impl_type,
         node->freef = summary_config_free__;
         node->get_data_size = summary_config_get_data_size__;
         break;
-    case (GEN_DATA):
-        node->freef = gen_data_config_free__;
-        node->get_data_size = NULL;
-        break;
     case (EXT_PARAM):
         node->freef = ext_param_config_free__;
         node->get_data_size = ext_param_config_get_data_size__;
@@ -62,30 +57,6 @@ enkf_config_node_type *enkf_config_node_alloc(ert_impl_type impl_type,
 enkf_config_node_type *enkf_config_node_alloc_summary(const char *key) {
     enkf_config_node_type *config_node = enkf_config_node_alloc__(SUMMARY, key);
     config_node->data = summary_config_alloc(key);
-    return config_node;
-}
-
-enkf_config_node_type *
-enkf_config_node_alloc_GEN_DATA_everest(const char *key,
-                                        const int_vector_type *report_steps) {
-    enkf_config_node_type *config_node =
-        enkf_config_node_alloc_GEN_DATA_result(key);
-    gen_data_config_type *gen_data_config =
-        (gen_data_config_type *)enkf_config_node_get_ref(config_node);
-
-    for (int i = 0; i < int_vector_size(report_steps); i++) {
-        int report_step = int_vector_iget(report_steps, i);
-        gen_data_config_add_report_step(gen_data_config, report_step);
-    }
-
-    return config_node;
-}
-
-enkf_config_node_type *enkf_config_node_alloc_GEN_DATA_result(const char *key) {
-
-    enkf_config_node_type *config_node =
-        enkf_config_node_alloc__(GEN_DATA, key);
-    config_node->data = gen_data_config_alloc_GEN_DATA_result();
     return config_node;
 }
 
@@ -115,22 +86,6 @@ const char *enkf_config_node_get_key(const enkf_config_node_type *config_node) {
 const stringlist_type *
 enkf_config_node_get_obs_keys(const enkf_config_node_type *config_node) {
     return config_node->obs_keys;
-}
-
-enkf_config_node_type *
-enkf_config_node_alloc_GEN_DATA_full(const char *node_key,
-                                     const int_vector_type *report_steps) {
-    enkf_config_node_type *config_node =
-        enkf_config_node_alloc_GEN_DATA_result(node_key);
-    gen_data_config_type *gen_data_config =
-        (gen_data_config_type *)enkf_config_node_get_ref(config_node);
-
-    for (int i = 0; i < int_vector_size(report_steps); i++) {
-        int report_step = int_vector_iget(report_steps, i);
-        gen_data_config_add_report_step(gen_data_config, report_step);
-    }
-
-    return config_node;
 }
 
 VOID_FREE(enkf_config_node)

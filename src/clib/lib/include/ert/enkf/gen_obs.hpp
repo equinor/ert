@@ -3,16 +3,13 @@
 
 #include <ert/enkf/active_list.hpp>
 #include <ert/enkf/enkf_macros.hpp>
-#include <ert/enkf/gen_data_config.hpp>
 
 typedef struct gen_obs_struct gen_obs_type;
 
-gen_obs_type *gen_obs_alloc(const gen_data_config_type *config,
-                            const char *obs_key, const char *, double, double,
+gen_obs_type *gen_obs_alloc(const char *obs_key, const char *, double, double,
                             const char *, const char *);
 extern "C" gen_obs_type *
-gen_obs_alloc__(const gen_data_config_type *data_config,
-                const char *obs_key); // for python bindings
+gen_obs_alloc__(const char *obs_key); // for python bindings
 void gen_obs_user_get_with_data_index(const gen_obs_type *gen_obs,
                                       const char *index_key, double *value,
                                       double *std, bool *valid);

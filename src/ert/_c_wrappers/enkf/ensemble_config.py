@@ -15,7 +15,7 @@ from ert import _clib
 from ert._c_wrappers import ResPrototype
 from ert._c_wrappers.config.rangestring import rangestring_to_list
 from ert._c_wrappers.enkf import GenKwConfig
-from ert._c_wrappers.enkf.config import EnkfConfigNode
+from ert._c_wrappers.enkf.config import EnkfConfigNode, GenDataConfig
 from ert._c_wrappers.enkf.config.field_config import TRANSFORM_FUNCTIONS, Field
 from ert._c_wrappers.enkf.config.parameter_config import ParameterConfig
 from ert._c_wrappers.enkf.config.surface_config import SurfaceConfig
@@ -217,16 +217,17 @@ class EnsembleConfig(BaseCClass):
 
         self._config_node_meta: Dict[str, ConfigNodeMeta] = {}
         self._gen_kw_node: Dict[str, GenKwConfig] = {}
+        self._gen_data_config: Dict[str, GenDataConfig] = {}
 
         if c_ptr is None:
             raise ValueError("Failed to construct EnsembleConfig instance")
         super().__init__(c_ptr)
 
         for gene_data in gen_data_list:
-            node = self.gen_data_node(gene_data)
-            if node is not None:
-                self._create_node_metainfo(gene_data, 1, EnkfVarType.DYNAMIC_RESULT)
-                self.addNode(node)
+            gdc = self.gen_data_node(gene_data)
+            self.addNode(gdc)
+            self._gen_data_config[gdc.getKey()] = gdc
+            self._create_node_metainfo(gene_data, 1, EnkfVarType.DYNAMIC_RESULT)
 
         for gen_kw in gen_kw_list:
             gen_kw_key = gen_kw[0]
@@ -279,30 +280,6 @@ class EnsembleConfig(BaseCClass):
             self._storeFieldMetaInfo(field)
             self.addNode(field_node)
 
-    @staticmethod
-    def gen_data_node(gen_data: List[str]) -> Optional[EnkfConfigNode]:
-        options = _option_dict(gen_data, 1)
-        name = gen_data[0]
-        res_file = options.get(ConfigKeys.RESULT_FILE)
-        if res_file is None:
-            raise ConfigValidationError(
-                f"Missing or unsupported RESULT_FILE for GEN_DATA key {name!r}"
-            )
-        if options.get(ConfigKeys.INPUT_FORMAT) != "ASCII":
-            warnings.warn(
-                f"Missing or unsupported GEN_DATA INPUT_FORMAT for key {name!r}. "
-                f"Assuming INPUT_FORMAT is ASCII.",
-                category=ConfigWarning,
-            )
-        report_steps_str = options.get(ConfigKeys.REPORT_STEPS, "")
-        report_steps = rangestring_to_list(report_steps_str)
-
-        return EnkfConfigNode.create_gen_data_full(
-            name,
-            res_file,
-            report_steps,
-        )
-
     def add_config_node_meta(
         self,
         key: str = "",
@@ -350,6 +327,36 @@ class EnsembleConfig(BaseCClass):
 
         self._config_node_meta[name].output_file = out_file
         self._config_node_meta[name].var_type = var_type
+
+    @staticmethod
+    def gen_data_node(gen_data: List[str]) -> Optional[GenDataConfig]:
+        options = _option_dict(gen_data, 1)
+        name = gen_data[0]
+        res_file = options.get(ConfigKeys.RESULT_FILE)
+
+        if res_file is None:
+            raise ConfigValidationError(
+                f"Missing or unsupported RESULT_FILE for GEN_DATA key {name!r}"
+            )
+
+        report_steps = rangestring_to_list(options.get(ConfigKeys.REPORT_STEPS, ""))
+
+        if os.path.isabs(res_file) or "%d" not in res_file:
+            msg = (
+                f"The RESULT_FILE:{res_file} setting for {name} is invalid - "
+                "must have an embedded %d - and be a relative path"
+            )
+            logger.error(msg)
+        elif not report_steps:
+            msg = (
+                "The GEN_DATA keywords must have a REPORT_STEPS:xxxx defined"
+                "Several report steps separated with ',' and ranges with '-'"
+                "can be listed"
+            )
+            logger.error(msg)
+        else:
+            gdc = GenDataConfig(key=name, report_steps=report_steps)
+            return gdc
 
     @staticmethod
     def get_surface_node(surface: List[str]) -> SurfaceConfig:
@@ -492,12 +499,10 @@ class EnsembleConfig(BaseCClass):
 
     def __getitem__(
         self, key: str
-    ) -> Union[EnkfConfigNode, ParameterConfig, GenKwConfig]:
+    ) -> Union[EnkfConfigNode, ParameterConfig, GenKwConfig, GenDataConfig]:
         if key in self:
             node = self._get_node(key).setParent(self)
-            if node.getImplementationType() == ErtImplType.GEN_DATA:
-                node.input_file = self._config_node_meta[key].input_file
-            elif node.getImplementationType() == ErtImplType.SUMMARY:
+            if node.getImplementationType() == ErtImplType.SUMMARY:
                 pass
             else:
                 node.forward_init_file = self._config_node_meta[key].init_file
@@ -512,12 +517,22 @@ class EnsembleConfig(BaseCClass):
                 node.forward_init_file = self._config_node_meta[key].init_file
                 node.forward_init = self._config_node_meta[key].forward_init
                 node.output_file = self._config_node_meta[key].output_file
+            elif isinstance(node, GenDataConfig):
+                node.input_file = self._config_node_meta[key].input_file
 
             return node
         else:
             raise KeyError(f"The key:{key} is not in the ensemble configuration")
 
-    def getNode(self, key: str) -> Union[EnkfConfigNode, ParameterConfig, GenKwConfig]:
+    def getNodeGenData(self, key: str) -> GenDataConfig:
+        return self._gen_data_config[key]
+
+    def hasNodeGenData(self, key: str) -> bool:
+        return key in self._gen_data_config
+
+    def getNode(
+        self, key: str
+    ) -> Union[EnkfConfigNode, ParameterConfig, GenKwConfig, GenDataConfig]:
         return self[key]
 
     def alloc_keylist(self) -> StringList:
@@ -567,7 +582,7 @@ class EnsembleConfig(BaseCClass):
         self.addNode(node)
 
     def addNode(
-        self, config_node: Union[EnkfConfigNode, Field, GenKwConfig, SurfaceConfig]
+        self, config_node: Union[EnkfConfigNode, Field, GenKwConfig, GenDataConfig, SurfaceConfig]
     ):
         assert config_node is not None
         self.check_unique_node(config_node.getKey())

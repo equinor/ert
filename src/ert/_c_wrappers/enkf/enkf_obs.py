@@ -379,14 +379,14 @@ class EnkfObs(BaseCClass):
         time_map = [datetime.utcfromtimestamp(t) for t in _clib.enkf_obs.obs_time(self)]
         for instance in conf_instance.get_sub_instances("GENERAL_OBSERVATION"):
             state_kw = instance.get_value("DATA")
-            if state_kw not in self._ensemble_config:
+            if not self._ensemble_config.hasNodeGenData(state_kw):
                 warnings.warn(
                     f"Ensemble key {state_kw} does not exist"
                     f" - ignoring observation {instance.name}",
                     category=ConfigWarning,
                 )
                 continue
-            config_node = self._ensemble_config[state_kw]
+            config_node = self._ensemble_config.getNode(state_kw)
             obs_key = instance.name
             obs_vector = ObsVector(
                 EnkfObservationImplementationType.GEN_OBS,  # type: ignore
@@ -409,8 +409,7 @@ class EnkfObs(BaseCClass):
                     category=ConfigWarning,
                 )
                 continue
-            data_config = config_node.getDataModelConfig()
-            if not data_config.hasReportStep(restart):
+            if not config_node.hasReportStep(restart):
                 warnings.warn(
                     f"The GEN_DATA node:{state_kw} is not configured "
                     f"to load from report step:{restart} for the observation:{obs_key}"
@@ -422,7 +421,7 @@ class EnkfObs(BaseCClass):
             obs_vector.add_general_obs(
                 GenObservation(
                     obs_key,
-                    data_config,
+                    config_node,
                     (
                         float(instance.get_value("VALUE")),
                         float(instance.get_value("ERROR")),

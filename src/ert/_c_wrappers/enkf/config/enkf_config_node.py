@@ -1,19 +1,14 @@
 import logging
-import os
-from typing import TYPE_CHECKING, Dict, List, Tuple, Union
+from typing import Dict, List, Tuple, Union
 
 from cwrap import BaseCClass
-from ecl.util.util import IntVector, StringList
+from ecl.util.util import StringList
 
 from ert._c_wrappers import ResPrototype
 from ert._c_wrappers.enkf.enums import ErtImplType
 
 from .ext_param_config import ExtParamConfig
-from .gen_data_config import GenDataConfig
 from .summary_config import SummaryConfig
-
-if TYPE_CHECKING:
-    from collections.abc import Iterable
 
 logger = logging.getLogger(__name__)
 
@@ -25,11 +20,6 @@ class EnkfConfigNode(BaseCClass):
         "enkf_config_node_obj enkf_config_node_alloc(ert_impl_type_enum, \
                                                      char*, \
                                                      void*)",
-        bind=False,
-    )
-    _alloc_gen_data_everest = ResPrototype(
-        "enkf_config_node_obj enkf_config_node_alloc_GEN_DATA_everest(char*, \
-                                                                      int_vector)",
         bind=False,
     )
     _alloc_summary_node = ResPrototype(
@@ -48,12 +38,6 @@ class EnkfConfigNode(BaseCClass):
     )
     _free = ResPrototype("void enkf_config_node_free(enkf_config_node)")
 
-    _alloc_gen_data_full = ResPrototype(
-        "enkf_config_node_obj enkf_config_node_alloc_GEN_DATA_full(char*, \
-                                                                   int_vector)",  # noqa
-        bind=False,
-    )
-
     def __init__(self):
         raise NotImplementedError("Class can not be instantiated directly!")
 
@@ -62,9 +46,6 @@ class EnkfConfigNode(BaseCClass):
 
     def getPointerReference(self):
         return self._get_ref()
-
-    def getDataModelConfig(self) -> GenDataConfig:
-        return GenDataConfig.createCReference(self._get_ref(), parent=self)
 
     def getSummaryModelConfig(self) -> SummaryConfig:
         return SummaryConfig.createCReference(self._get_ref(), parent=self)
@@ -91,53 +72,9 @@ class EnkfConfigNode(BaseCClass):
         config.convertToCReference(node)  # config gets freed when node dies
         return node
 
-    # This method only exposes the details relevant for Everest usage.
-    @classmethod
-    def create_gen_data(cls, key: str, report_steps: "Iterable[int]" = (0,)):
-        active_steps = IntVector()
-        for step in report_steps:
-            active_steps.append(step)
-
-        config_node = cls._alloc_gen_data_everest(key, active_steps)
-        return config_node
-
     @staticmethod
     def validate_gen_data_format(formatted_file: str = "") -> bool:
         return formatted_file.count("%d") == 1
-
-    # GEN DATA FULL creation
-    @classmethod
-    def create_gen_data_full(
-        cls,
-        key,
-        result_file,
-        report_steps,
-    ):
-        if os.path.isabs(result_file) or "%d" not in result_file:
-            msg = (
-                f"The RESULT_FILE:{result_file} setting for {key} is invalid - "
-                "must have an embedded %d - and be a relative path"
-            )
-            logger.error(msg)
-            return None
-        if not report_steps:
-            msg = (
-                "The GEN_DATA keywords must have a REPORT_STEPS:xxxx defined"
-                "Several report steps separated with ',' and ranges with '-'"
-                "can be listed"
-            )
-            logger.error(msg)
-            return None
-        active_steps = IntVector()
-        for step in report_steps:
-            active_steps.append(step)
-
-        config_node = cls._alloc_gen_data_full(
-            key,
-            active_steps,
-        )
-
-        return config_node
 
     def free(self):
         self._free()
@@ -150,12 +87,10 @@ class EnkfConfigNode(BaseCClass):
 
     def getModelConfig(
         self,
-    ) -> Union[GenDataConfig, SummaryConfig, ExtParamConfig]:
+    ) -> Union[SummaryConfig, ExtParamConfig]:
         implementation_type = self.getImplementationType()
 
-        if implementation_type == ErtImplType.GEN_DATA:
-            return self.getDataModelConfig()
-        elif implementation_type == ErtImplType.SUMMARY:
+        if implementation_type == ErtImplType.SUMMARY:
             return SummaryConfig.createCReference(
                 self.getPointerReference(), parent=self
             )
@@ -183,8 +118,6 @@ class EnkfConfigNode(BaseCClass):
 
         if any(
             [
-                self.getImplementationType() == ErtImplType.GEN_DATA
-                and self.getDataModelConfig() != other.getDataModelConfig(),
                 self.getImplementationType() == ErtImplType.SUMMARY
                 and self.getSummaryModelConfig() != other.getSummaryModelConfig(),
             ]
