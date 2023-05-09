@@ -4,7 +4,6 @@ import logging
 from typing import TYPE_CHECKING, Any, Dict, List, Optional
 from uuid import UUID
 
-from ert._c_wrappers.enkf.enkf_main import EnKFMain, QueueConfig
 from ert._c_wrappers.enkf.enums import HookRuntime, RealizationStateEnum
 from ert.analysis import ErtAnalysisError
 from ert.ensemble_evaluator import EvaluatorServerConfig
@@ -12,7 +11,7 @@ from ert.shared.models import BaseRunModel, ErtRunError
 from ert.storage import LocalEnsembleAccessor
 
 if TYPE_CHECKING:
-    from ert._c_wrappers.enkf import RunContext
+    from ert._c_wrappers.enkf import EnKFMain, QueueConfig, RunContext
     from ert.storage import EnsembleAccessor, StorageAccessor
 
 logger = logging.getLogger(__file__)

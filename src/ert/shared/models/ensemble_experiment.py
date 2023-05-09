@@ -1,17 +1,22 @@
+from __future__ import annotations
+
 import asyncio
 import concurrent
 import logging
-from typing import Any, Dict
+from typing import TYPE_CHECKING, Any, Dict
 from uuid import UUID
 
 import _ert_com_protocol
 from ert._c_wrappers.enkf import RunContext
-from ert._c_wrappers.enkf.enkf_main import EnKFMain, QueueConfig
 from ert._c_wrappers.enkf.enums import HookRuntime, RealizationStateEnum
 from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.shared.models import BaseRunModel
 from ert.shared.models.base_run_model import ErtRunError
 from ert.storage import EnsembleAccessor, StorageAccessor
+
+if TYPE_CHECKING:
+    from ert._c_wrappers.enkf import EnKFMain, QueueConfig
+
 
 experiment_logger = logging.getLogger("ert.experiment_server.ensemble_experiment")
 
