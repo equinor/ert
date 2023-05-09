@@ -26,7 +26,7 @@ def test_bad_user_config_file_error_message(tmp_path):
 
     rconfig = None
     with pytest.raises(
-        ConfigValidationError, match=r"Parsing.*resulted in the errors:"
+        ConfigValidationError, match=r"Parsing.*resulted in the following errors:"
     ):
         rconfig = ErtConfig.from_file(str(tmp_path / "test.ert"), use_new_parser=False)
 
@@ -1033,12 +1033,12 @@ def test_that_multiple_errors_are_shown_for_forward_model():
 
     expected_nice_messages_list = [
         (
-            "test.ert:None:None:None:"
+            "test.ert:"
             "Could not find job 'does_not_exist' "
             "in list of installed jobs: []"
         ),
         (
-            "test.ert:None:None:None:"
+            "test.ert:"
             "Could not find job 'does_not_exist2' "
             "in list of installed jobs: []"
         ),
