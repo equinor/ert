@@ -10,7 +10,7 @@ from lark import Discard, Lark, Token, Transformer, Tree, UnexpectedCharacters
 from typing_extensions import Self
 
 from .config_errors import ConfigValidationError, ConfigWarning
-from .config_keywords import (
+from .config_schema import (
     SchemaItem,
     check_required,
     define_keyword,
