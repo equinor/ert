@@ -23,6 +23,7 @@ class LocalExperimentReader:
         self._storage: Union[LocalStorageReader, LocalStorageAccessor] = storage
         self._id = uuid
         self._path = path
+        self._parameter_file = Path("parameter.json")
 
     @property
     def ensembles(self) -> Generator[LocalEnsembleReader, None, None]:
@@ -59,11 +60,11 @@ class LocalExperimentReader:
         return priors
 
     @property
-    def field_info(self) -> Dict[str, Any]:
+    def parameter_info(self) -> Dict[str, Any]:
         info: Dict[str, Any]
-        path = self.mount_point / "field-info.json"
+        path = self.mount_point / self._parameter_file
         if not path.exists():
-            raise ValueError("No field info exists")
+            raise ValueError(f"{str(self._parameter_file)} does not exist")
         with open(path, encoding="utf-8", mode="r") as f:
             info = json.load(f)
         return info
@@ -88,10 +89,11 @@ class LocalExperimentAccessor(LocalExperimentReader):
         parameters: Optional[ParameterConfiguration] = None,
     ) -> None:
         self._storage: LocalStorageAccessor = storage
-
         self._id = uuid
         self._path = path
+        self._parameter_file = Path("parameter.json")
 
+        parameter_data = {}
         parameters = [] if parameters is None else parameters
         for parameter in parameters:
             if isinstance(parameter, GenKwConfig):
@@ -102,19 +104,20 @@ class LocalExperimentAccessor(LocalExperimentReader):
                     parameter.base_surface_path,
                 )
             elif isinstance(parameter, Field):
-                self.save_field_info(
-                    parameter.name,
-                    parameter.grid_file,
-                    parameter.file_format,
-                    parameter.output_transformation,
-                    parameter.truncation_min,
-                    parameter.truncation_max,
-                    parameter.nx,
-                    parameter.ny,
-                    parameter.nz,
-                )
+                parameter_data[parameter.name] = parameter.to_dict()
+
+                # Grid file is shared between all FIELD keywords, so we can avoid
+                # copying for each FIELD keyword.
+                if parameter.grid_file is not None:
+                    grid_filename = "grid" + Path(parameter.grid_file).suffix.upper()
+                    if not (self._path / grid_filename).exists():
+                        shutil.copy(parameter.grid_file, self._path / grid_filename)
+
             else:
                 raise NotImplementedError("Unknown parameter type")
+
+        with open(self.mount_point / self._parameter_file, "w", encoding="utf-8") as f:
+            json.dump(parameter_data, f)
 
     @property
     def ensembles(self) -> Generator[LocalEnsembleAccessor, None, None]:
@@ -135,43 +138,6 @@ class LocalExperimentAccessor(LocalExperimentReader):
             name=name,
             prior_ensemble=prior_ensemble,
         )
-
-    def save_field_info(  # pylint: disable=too-many-arguments
-        self,
-        name: str,
-        grid_file: str,
-        file_format: str,
-        transfer_out: str,
-        trunc_min: Optional[float],
-        trunc_max: Optional[float],
-        nx: int,
-        ny: int,
-        nz: int,
-    ) -> None:
-        info = {
-            "nx": nx,
-            "ny": ny,
-            "nz": nz,
-            "file_format": file_format,
-            "transfer_out": transfer_out,
-            "truncation_min": trunc_min,
-            "truncation_max": trunc_max,
-        }
-        # Grid file is shared between all FIELD keywords, so we can avoid
-        # copying for each FIELD keyword.
-        if grid_file is not None:
-            grid_filename = "grid" + Path(grid_file).suffix.upper()
-            if not (self._path / grid_filename).exists():
-                shutil.copy(grid_file, self._path / grid_filename)
-
-        field_info_path = self._path / "field-info.json"
-        field_info = {}
-        if field_info_path.exists():
-            with open(field_info_path, encoding="utf-8") as f:
-                field_info = json.load(f)
-        field_info.update({name: info})
-        with open(field_info_path, encoding="utf-8", mode="w") as f:
-            json.dump(field_info, f)
 
     def save_surface_info(self, name: str, base_surface: str) -> None:
         surf = xtgeo.surface_from_file(base_surface, fformat="irap_ascii")
