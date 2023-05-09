@@ -744,7 +744,9 @@ ERT_CLIB_SUBMODULE("enkf_obs", m) {
                        errors;
             }
             if (!conf_instance_validate(self))
-                return std::string("Error in observations configuration file");
+                return std::string(
+                    "The observations file failed to validate. "
+                    "See output in terminal for more information");
             return std::string("");
         });
     m.def("obs_time", [](Cwrap<enkf_obs_type> self) { return self->obs_time; });

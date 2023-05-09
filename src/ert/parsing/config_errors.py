@@ -22,9 +22,7 @@ class ConfigValidationError(ValueError):
         else:
             self.errors.append(ErrorInfo(message=errors, filename=config_file))
         super().__init__(
-            ";".join(
-                [self._get_old_style_error_message(error) for error in self.errors]
-            )
+            ";".join([self.get_value_error_message(error) for error in self.errors])
         )
 
     @classmethod
@@ -32,11 +30,15 @@ class ConfigValidationError(ValueError):
         return cls([info])
 
     @classmethod
-    def _get_old_style_error_message(cls, info: ErrorInfo) -> str:
+    def get_value_error_message(cls, info: ErrorInfo) -> str:
+        """
+        :returns: The error message as used by cls as a ValueError.
+        Can be overridden.
+        """
         return (
             (
                 f"Parsing config file `{info.filename}` "
-                f"resulted in the errors: {info.message}"
+                f"resulted in the following errors: {info.message}"
             )
             if info.filename is not None
             else info.message
@@ -54,10 +56,19 @@ class ConfigValidationError(ValueError):
         for filename, info_list in by_filename.items():
             for info in info_list:
                 messages.append(
-                    f"{filename}:"
-                    f"{info.line}:"
-                    f"{info.column}:{info.end_column}:"
-                    f"{info.message}"
+                    ":".join(
+                        [
+                            str(k)
+                            for k in [
+                                filename,
+                                info.line,
+                                info.column,
+                                info.end_column,
+                                info.message,
+                            ]
+                            if k is not None
+                        ]
+                    )
                 )
 
         return messages

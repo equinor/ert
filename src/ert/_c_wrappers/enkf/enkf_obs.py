@@ -30,11 +30,11 @@ DEFAULT_TIME_DELTA = timedelta(seconds=30)
 
 class ObservationConfigError(ConfigValidationError):
     @classmethod
-    def _get_error_message(cls, info: ErrorInfo) -> str:
+    def get_value_error_message(cls, info: ErrorInfo) -> str:
         return (
             (
                 f"Parsing observations config file `{info.filename}` "
-                f"resulted in the errors: {info.message}"
+                f"resulted in the following errors: {info.message}"
             )
             if info.filename is not None
             else info.message
@@ -452,7 +452,7 @@ class EnkfObs(BaseCClass):
         conf_instance = _clib.enkf_obs.ConfInstance(config_file)
         errors = conf_instance.get_errors()
         if errors != "":
-            raise ValueError(f"{errors} in configuration file {config_file}")
+            raise ValueError(errors)
         self._handle_history_observation(conf_instance, std_cutoff, history)
         self._handle_summary_observation(conf_instance)
         self._handle_general_observation(conf_instance)
