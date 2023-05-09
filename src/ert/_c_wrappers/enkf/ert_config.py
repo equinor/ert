@@ -35,10 +35,10 @@ from ._deprecation_migration_suggester import DeprecationMigrationSuggester
 
 logger = logging.getLogger(__name__)
 
-USE_NEW_PARSER_BY_DEFAULT = False
+USE_NEW_PARSER_BY_DEFAULT = True
 
-if "USE_NEW_ERT_PARSER" in os.environ and os.environ["USE_NEW_ERT_PARSER"] == "YES":
-    USE_NEW_PARSER_BY_DEFAULT = True
+if "USE_OLD_ERT_PARSER" in os.environ and os.environ["USE_OLD_ERT_PARSER"] == "YES":
+    USE_NEW_PARSER_BY_DEFAULT = False
 
 
 def site_config_location():

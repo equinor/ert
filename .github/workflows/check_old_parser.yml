@@ -1,4 +1,4 @@
-name: Test new parser
+name: Test old parser
 on:
  push:
    branches:
@@ -15,11 +15,11 @@ concurrency:
 env:
   ERT_SHOW_BACKTRACE: 1
   ECL_SKIP_SIGNAL: 1
-  USE_NEW_ERT_PARSER: "YES"
+  USE_OLD_ERT_PARSER: "YES"
 
 jobs:
   python-test-coverage-lark:
-    name: Test new Parser
+    name: Test old Parser
     timeout-minutes: 40
     runs-on: ubuntu-latest
     strategy:
