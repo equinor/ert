@@ -16,7 +16,7 @@ from .forward_model_status import ForwardModelStatus
 if TYPE_CHECKING:
     from ert._c_wrappers.enkf import EnKFMain, ErtConfig, RunArg
     from ert._c_wrappers.job_queue import JobQueue, JobStatusType
-    from ert.shared.status import LoadResult
+    from ert.load_status import LoadResult
     from ert.storage import EnsembleAccessor
 
 

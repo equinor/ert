@@ -69,18 +69,6 @@ typedef enum {
     EXT_PARAM = 116
 } ert_impl_type;
 
-/*
-   Should update the functions enkf_types_get_impl_name() and
-   enkf_types_get_impl_type__() when this enum is updated.
-   In addition to enkf_config_add_type().
-*/
-
-typedef enum {
-    LOAD_SUCCESSFUL = 0,
-    LOAD_FAILURE = 2,
-    TIME_MAP_FAILURE = 3
-} fw_load_status;
-
 /**
    This enum is used to differentiate between different types of
    run. The point is that depending on this mode we can be more or

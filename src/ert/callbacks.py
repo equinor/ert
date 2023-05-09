@@ -10,8 +10,8 @@ from ert._c_wrappers.enkf.enkf_state import (
     _write_summary_data_to_storage,
 )
 from ert._c_wrappers.enkf.enums import RealizationStateEnum
-from ert._c_wrappers.enkf.model_callbacks import LoadStatus
-from ert.shared.status import LoadResult
+
+from .load_status import LoadResult, LoadStatus
 
 if TYPE_CHECKING:
     from ert._c_wrappers.enkf import EnsembleConfig, RunArg

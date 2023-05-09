@@ -18,7 +18,7 @@ from ert._c_wrappers.job_queue import (
     JobStatusType,
     QueueDriverEnum,
 )
-from ert._clib.model_callbacks import LoadStatus
+from ert.load_status import LoadStatus
 
 
 def wait_for(
