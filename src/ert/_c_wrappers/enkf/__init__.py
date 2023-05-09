@@ -4,7 +4,6 @@ from .analysis_iter_config import AnalysisIterConfig
 from .config import (
     EnkfConfigNode,
     ExtParamConfig,
-    FieldTypeEnum,
     GenDataConfig,
     GenKwConfig,
     SummaryConfig,
@@ -35,7 +34,6 @@ __all__ = [
     "SummaryObservation",
     "GenObservation",
     "ObsVector",
-    "FieldTypeEnum",
     "GenKwConfig",
     "GenDataConfig",
     "EnkfConfigNode",
