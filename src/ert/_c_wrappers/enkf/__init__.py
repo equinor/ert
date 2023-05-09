@@ -15,7 +15,6 @@ from .enkf_obs import EnkfObs, ObservationConfigError
 from .ensemble_config import EnsembleConfig
 from .enums import (
     ActiveMode,
-    EnkfFieldFileFormatEnum,
     EnkfObservationImplementationType,
     EnkfVarType,
     ErtImplType,
@@ -45,7 +44,6 @@ __all__ = [
     "TimeMap",
     "RowScaling",
     "ActiveList",
-    "EnkfFieldFileFormatEnum",
     "EnkfVarType",
     "EnkfObservationImplementationType",
     "ErtImplType",
