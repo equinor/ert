@@ -366,7 +366,7 @@ class LocalEnsembleReader:
         return path.exists()
 
     def field_has_info(self, key: str) -> bool:
-        return key in self.experiment.field_info
+        return key in self.experiment.parameter_info
 
     def export_field(
         self,
@@ -375,7 +375,7 @@ class LocalEnsembleReader:
         output_path: Path,
         fformat: Optional[str] = None,
     ) -> None:
-        info = self.experiment.field_info[key]
+        info = self.experiment.parameter_info[key]
         if fformat is None:
             fformat = info["file_format"]
 
@@ -386,7 +386,7 @@ class LocalEnsembleReader:
                 f"Unable to load FIELD for key: {key}, realization: {realization} "
             )
         data = np.load(data_path / f"{key}.npy")
-        data = field_transform(data, transform_name=info["transfer_out"])
+        data = field_transform(data, transform_name=info["output_transformation"])
         data = _field_truncate(
             data,
             info["truncation_min"],
