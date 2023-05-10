@@ -110,7 +110,7 @@ def test_that_missing_obs_file_raises_exception(tmpdir):
 
         with pytest.raises(
             expected_exception=ObservationConfigError,
-            match="did not resolve to a valid path: OBS_FILE",
+            match="did not resolve to a valid path:\n OBS_FILE",
         ):
             _ = EnkfObs.from_ert_config(ert_config)
 
@@ -617,3 +617,246 @@ def test_that_std_cutoff_is_applied(tmpdir):
 
         assert observations[1].getKey() == "FOPR"
         assert len(observations[1]) == 0
+
+
+@pytest.mark.parametrize("obs_type", ["HISTORY_OBSERVATION", "SUMMARY_OBSERVATION"])
+@pytest.mark.parametrize(
+    "obs_content, match",
+    [
+        (
+            "ERROR = -1;",
+            'Failed to validate "-1"',
+        ),
+        (
+            "ERROR_MODE=RELMIN; ERROR_MIN = -1; ERROR=1.0;",
+            'Failed to validate "-1"',
+        ),
+        (
+            "ERROR_MODE = NOT_ABS; ERROR=1.0;",
+            'Failed to validate "NOT_ABS"',
+        ),
+    ],
+)
+def test_that_common_observation_error_validation_is_handled(
+    tmpdir, obs_type, obs_content, match
+):
+    with tmpdir.as_cwd():
+        config = dedent(
+            """
+        NUM_REALIZATIONS 2
+
+        ECLBASE ECLIPSE_CASE
+        REFCASE ECLIPSE_CASE
+        OBS_CONFIG observations
+        """
+        )
+        with open("config.ert", "w", encoding="utf-8") as fh:
+            fh.writelines(config)
+        with open("observations", "w", encoding="utf-8") as fo:
+            additional = (
+                ""
+                if obs_type == "HISTORY_OBSERVATION"
+                else "RESTART = 1; VALUE=1.0; KEY = FOPR;"
+            )
+            fo.writelines(
+                f"""
+                    {obs_type}  FOPR
+                    {{
+                        {obs_content}
+                        {additional}
+                    }};
+            """
+            )
+        with open("time_map.txt", "w", encoding="utf-8") as fo:
+            fo.writelines("2023-02-01")
+        run_sim(
+            datetime(2014, 9, 10),
+            [("FOPR", "SM3/DAY", None), ("FOPRH", "SM3/DAY", None)],
+        )
+
+        ert_config = ErtConfig.from_file("config.ert")
+        with pytest.raises(ObservationConfigError, match=match):
+            _ = EnkfObs.from_ert_config(ert_config)
+
+
+@pytest.mark.parametrize(
+    "obs_content, match",
+    [
+        (
+            dedent(
+                """
+                    SUMMARY_OBSERVATION  FOPR
+                    {
+                       DAYS       = -1;
+                    };
+                    """
+            ),
+            'Failed to validate "-1"',
+        ),
+        (
+            dedent(
+                """
+                    SUMMARY_OBSERVATION  FOPR
+                    {
+                       VALUE       = exactly_1;
+                    };
+                    """
+            ),
+            'Failed to validate "exactly_1"',
+        ),
+        (
+            dedent(
+                """
+                    SUMMARY_OBSERVATION  FOPR
+                    {
+                       DAYS       = 1;
+                    };
+                    """
+            ),
+            'Missing item "VALUE"',
+        ),
+        (
+            dedent(
+                """
+                    SUMMARY_OBSERVATION  FOPR
+                    {
+                       KEY        = FOPR;
+                       VALUE      = 2.0;
+                       DAYS       = 1;
+                    };
+                    """
+            ),
+            'Missing item "ERROR"',
+        ),
+        (
+            dedent(
+                """
+                    SUMMARY_OBSERVATION  FOPR
+                    {
+                       KEY        = FOPR;
+                       VALUE      = 2.0;
+                       DAYS       = 1;
+                    };
+                    """
+            ),
+            'Missing item "ERROR"',
+        ),
+        (
+            dedent(
+                """
+                    HISTORY_OBSERVATION  FOPR
+                    {
+                       ERROR      = 0.1;
+
+                       SEGMENT SEG
+                       {
+                          START = 0;
+                          STOP  = 3.2;
+                          ERROR = 0.50;
+                       };
+                    };
+                    """
+            ),
+            'Failed to validate "3.2"',
+        ),
+        (
+            dedent(
+                """
+                    HISTORY_OBSERVATION  FOPR
+                    {
+                       ERROR      = 0.1;
+
+                       SEGMENT SEG
+                       {
+                          START = 1.1;
+                          STOP  = 0;
+                          ERROR = 0.50;
+                       };
+                    };
+                    """
+            ),
+            'Failed to validate "1.1"',
+        ),
+        (
+            dedent(
+                """
+                    HISTORY_OBSERVATION  FOPR
+                    {
+                       ERROR      = 0.1;
+
+                       SEGMENT SEG
+                       {
+                          START = 1;
+                          STOP  = 0;
+                          ERROR = -1;
+                       };
+                    };
+                    """
+            ),
+            'Failed to validate "-1"',
+        ),
+        (
+            dedent(
+                """
+                    HISTORY_OBSERVATION  FOPR
+                    {
+                       ERROR      = 0.1;
+
+                       SEGMENT SEG
+                       {
+                          START = 1;
+                          STOP  = 0;
+                          ERROR = 0.1
+                          ERROR_MIN = -1;
+                       };
+                    };
+                    """
+            ),
+            'Failed to validate "-1"',
+        ),
+        (
+            dedent(
+                """
+                    HISTORY_OBSERVATION  FOPR
+                    {
+                       ERROR      = 0.1;
+
+                       SEGMENT SEG
+                       {
+                          START = 1;
+                          STOP  = 0;
+                          ERROR = 0.1;
+                          ERROR_MODE = NOT_ABS;
+                       };
+                    };
+                    """
+            ),
+            'Failed to validate "NOT_ABS"',
+        ),
+    ],
+)
+def test_that_summary_observation_validation_is_handled(tmpdir, obs_content, match):
+    with tmpdir.as_cwd():
+        config = dedent(
+            """
+        NUM_REALIZATIONS 2
+
+        ECLBASE ECLIPSE_CASE
+        REFCASE ECLIPSE_CASE
+        OBS_CONFIG observations
+        """
+        )
+        with open("config.ert", "w", encoding="utf-8") as fh:
+            fh.writelines(config)
+        with open("observations", "w", encoding="utf-8") as fo:
+            fo.writelines(obs_content)
+        with open("time_map.txt", "w", encoding="utf-8") as fo:
+            fo.writelines("2023-02-01")
+        run_sim(
+            datetime(2014, 9, 10),
+            [("FOPR", "SM3/DAY", None), ("FOPRH", "SM3/DAY", None)],
+        )
+
+        ert_config = ErtConfig.from_file("config.ert")
+        with pytest.raises(ObservationConfigError, match=match):
+            _ = EnkfObs.from_ert_config(ert_config)

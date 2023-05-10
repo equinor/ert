@@ -20,9 +20,6 @@ class ErrorInfo:
     end_pos: Optional[int] = None
     originates_from: Optional[MaybeWithContext] = None
 
-    def __post_init__(self):
-        assert "\n" not in self.message, "newlines are not allowed in error messages."
-
     @classmethod
     def _take(cls, context: MaybeWithContext, attr: str):
         if isinstance(context, FileContextToken):

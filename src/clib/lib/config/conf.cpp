@@ -491,65 +491,71 @@ time_t conf_instance_get_item_value_time_t(
                                             conf_item->value);
 }
 
-static void conf_item_spec_printf_help(
-    std::shared_ptr<conf_item_spec_type> conf_item_spec) {
+static std::string
+conf_item_spec_help(std::shared_ptr<conf_item_spec_type> conf_item_spec) {
+    std::string help;
     assert(conf_item_spec->super_class != NULL);
     int num_restrictions = conf_item_spec->restriction->size();
 
-    printf("\n       Help on item \"%s\" in class \"%s\":\n\n",
-           conf_item_spec->name, conf_item_spec->super_class->class_name);
-    printf("       - Data type    : %s\n\n",
-           conf_data_get_dt_name_ref(conf_item_spec->dt));
+    help += fmt::format(
+        "\nHelp on item \"{}\" in class \"{}\":", conf_item_spec->name,
+        conf_item_spec->super_class->class_name);
+    help += fmt::format("\n       - Data type    : {}",
+                        conf_data_get_dt_name_ref(conf_item_spec->dt));
     if (conf_item_spec->default_value != NULL)
-        printf("       - Default value: %s\n\n", conf_item_spec->default_value);
+        help += fmt::format("\n       - Default value: {}",
+                            conf_item_spec->default_value);
     if (conf_item_spec->help != NULL)
-        printf("       - %s\n", conf_item_spec->help);
+        help += fmt::format("\n       - {}", conf_item_spec->help);
 
     if (num_restrictions > 0) {
-        printf("\n       The item \"%s\" is restricted to the following "
-               "values:\n\n",
-               conf_item_spec->name);
+        help += fmt::format(
+            "\n       The item \"{}\" is restricted to the following "
+            "values:",
+            conf_item_spec->name);
         int i = 0;
         for (auto iter = conf_item_spec->restriction->begin();
              iter != conf_item_spec->restriction->end(); ++iter, ++i)
-            printf("    %i.  %s\n", i + 1, iter->c_str());
+            help += fmt::format("\n    {}.  {}", i + 1, *iter);
     }
-    printf("\n");
+    return help;
 }
 
-static void
-conf_class_printf_help(std::shared_ptr<conf_class_type> conf_class) {
+static std::string
+conf_class_help(std::shared_ptr<conf_class_type> conf_class) {
     /* TODO Should print info on the required sub classes and items. */
 
+    std::string help;
     if (conf_class->help != NULL) {
         if (conf_class->super_class != NULL)
-            printf("\n       Help on class \"%s\" with super class \"%s\":\n\n",
-                   conf_class->class_name, conf_class->super_class->class_name);
+            help += fmt::format(
+                "\nHelp on class \"{}\" with super class \"{}\":",
+                conf_class->class_name, conf_class->super_class->class_name);
         else
-            printf("\n       Help on class \"%s\":\n\n",
-                   conf_class->class_name);
+            help += fmt::format("\n       Help on class \"{}\":",
+                                conf_class->class_name);
 
-        printf("       %s\n", conf_class->help);
+        help += fmt::format("\n       {}", conf_class->help);
     }
-    printf("\n");
+    return help;
 }
 
-static bool conf_item_validate(std::shared_ptr<conf_item_type> conf_item) {
+static std::vector<std::string>
+conf_item_validate(std::shared_ptr<conf_item_type> conf_item) {
     assert(conf_item != NULL);
-
-    bool ok = true;
     auto conf_item_spec = conf_item->conf_item_spec;
     int num_restrictions = conf_item_spec->restriction->size();
 
+    std::vector<std::string> errors;
     if (!conf_data_validate_string_as_dt_value(conf_item_spec->dt,
                                                conf_item->value)) {
-        ok = false;
-        printf("ERROR: Failed to validate \"%s\" as a %s for item \"%s\".\n",
-               conf_item->value, conf_data_get_dt_name_ref(conf_item_spec->dt),
-               conf_item_spec->name);
+        errors.push_back(fmt::format(
+            "Failed to validate \"{}\" as a {} for item \"{}\". {}\n",
+            conf_item->value, conf_data_get_dt_name_ref(conf_item_spec->dt),
+            conf_item_spec->name, conf_item_spec_help(conf_item_spec)));
     }
 
-    if (num_restrictions > 0 && ok) {
+    if (num_restrictions > 0) {
         std::vector<std::string> restriction_keys;
         for (auto iter = conf_item_spec->restriction->begin();
              iter != conf_item_spec->restriction->end(); ++iter)
@@ -569,56 +575,52 @@ static bool conf_item_validate(std::shared_ptr<conf_item_type> conf_item) {
             }
 
             if (valid == false) {
-                ok = false;
-                printf("ERROR: Failed to validate \"%s\" as a valid value for "
-                       "item \"%s\".\n",
-                       conf_item->value, conf_item_spec->name);
+                errors.push_back(fmt::format(
+                    "Failed to validate \"{}\" as a valid value for "
+                    "item \"{}\".\n",
+                    conf_item->value, conf_item_spec->name));
             }
         }
     }
 
-    if (!ok)
-        conf_item_spec_printf_help(conf_item_spec);
-
-    return ok;
+    return errors;
 }
 
-static bool conf_instance_has_required_items(
+static std::vector<std::string> conf_instance_has_required_items(
     std::shared_ptr<conf_instance_type> conf_instance) {
-    bool ok = true;
     auto conf_class = conf_instance->conf_class.get();
 
+    std::vector<std::string> errors;
     for (auto &[item_spec_name, conf_item_spec] : conf_class->item_specs) {
         if (conf_item_spec->required_set) {
             if (conf_instance->items.count(item_spec_name) == 0) {
-                ok = false;
-                printf("ERROR: Missing item \"%s\" in instance \"%s\" of class "
-                       "\"%s\"\n",
-                       item_spec_name.c_str(), conf_instance->name,
-                       conf_instance->conf_class->class_name);
-                conf_item_spec_printf_help(conf_item_spec);
+                errors.push_back(fmt::format(
+                    "Missing item \"{}\" in instance \"{}\" of class "
+                    "\"{}\"\n",
+                    item_spec_name, conf_instance->name,
+                    conf_instance->conf_class->class_name,
+                    conf_item_spec_help(conf_item_spec)));
             }
         }
     }
-    return ok;
+    return errors;
 }
 
-static bool conf_instance_has_valid_items(
+static std::vector<std::string> conf_instance_has_valid_items(
     std::shared_ptr<conf_instance_type> conf_instance) {
-    bool ok = true;
-
+    std::vector<std::string> errors;
     for (auto &[item_name, conf_item] : conf_instance->items) {
-        if (!conf_item_validate(conf_item))
-            ok = false;
+        auto item_errors = conf_item_validate(conf_item);
+        errors.insert(errors.end(), item_errors.begin(), item_errors.end());
     }
-    return ok;
+    return errors;
 }
 
-static bool conf_instance_check_item_mutex(
+static std::vector<std::string> conf_instance_check_item_mutex(
     std::shared_ptr<conf_instance_type> conf_instance,
     std::shared_ptr<conf_item_mutex_type> conf_item_mutex) {
     std::set<std::string> items_set;
-    bool ok = true;
+    std::vector<std::string> errors;
 
     for (auto &[item_key, item_spec] : conf_item_mutex->item_spec_refs) {
         if (conf_instance_has_item(conf_instance, item_key)) {
@@ -633,78 +635,77 @@ static bool conf_instance_check_item_mutex(
         /* This is an inverse mutex - all (or none) items should be set. */
         if (!((num_items_set == 0) || (num_items_set == num_items))) {
             std::vector<std::string> items_set_keys;
-            ok = false;
             for (const auto &key : items_set)
                 items_set_keys.push_back(key);
 
-            printf("ERROR: Failed to validate mutal inclusion in instance "
-                   "\"%s\" of class \"%s\".\n\n",
-                   conf_instance->name, conf_instance->conf_class->class_name);
-            printf("       When using one or more of the following items, all "
-                   "must be set:\n");
+            std::string error;
+            error += fmt::format(
+                "Failed to validate mutal inclusion in instance "
+                "\"{}\" of class \"{}\".\n",
+                conf_instance->name, conf_instance->conf_class->class_name);
+            error += "       When using one or more of the following items, "
+                     "all must be set:\n";
 
             for (auto &[item_key, item_spec] : conf_item_mutex->item_spec_refs)
-                printf("       %s\n", item_key.c_str());
+                error += fmt::format("       {}\n", item_key.c_str());
 
-            printf("\n");
-            printf("       However, only the following items were set:\n");
+            error += "       However, only the following items were set:\n";
 
             for (int item_nr = 0; item_nr < num_items_set; item_nr++)
-                printf("       %i : %s\n", item_nr,
-                       items_set_keys[item_nr].c_str());
-
-            printf("\n");
+                error += fmt::format("       {} : {}\n", item_nr,
+                                     items_set_keys[item_nr]);
+            errors.push_back(error);
         }
     } else {
         if (num_items_set > 1) {
             std::vector<std::string> items_set_keys;
-            ok = false;
             for (const auto &key : items_set)
                 items_set_keys.push_back(key);
 
-            printf("ERROR: Failed to validate mutal inclusion in instance "
-                   "\"%s\" of class \"%s\".\n\n",
-                   conf_instance->name, conf_instance->conf_class->class_name);
-            printf("ERROR: Failed to validate mutex in instance \"%s\" of "
-                   "class \"%s\".\n\n",
-                   conf_instance->name, conf_instance->conf_class->class_name);
-            printf("       Only one of the following items may be set:\n");
+            std::string error;
+            error += fmt::format(
+                "Failed to validate mutex in instance \"{}\" of "
+                "class \"{}\".\n",
+                conf_instance->name, conf_instance->conf_class->class_name);
+            error += "       Only one of the following items may be set:\n";
             for (auto &[item_key, item_spec] : conf_item_mutex->item_spec_refs)
-                printf("       %s\n", item_key.c_str());
+                error += fmt::format("       {}\n", item_key);
 
-            printf("\n");
-            printf("       However, all the following items were set:\n");
+            error += "       However, all the following items were set:\n";
             for (int item_nr = 0; item_nr < num_items_set; item_nr++)
-                printf("       %i : %s\n", item_nr,
-                       items_set_keys[item_nr].c_str());
-            printf("\n");
+                error += fmt::format("       {} : {}\n", item_nr,
+                                     items_set_keys[item_nr]);
+            errors.push_back(error);
         }
     }
 
     if (num_items_set == 0 && conf_item_mutex->require_one && num_items > 0) {
-        ok = false;
-        printf("ERROR: Failed to validate mutex in instance \"%s\" of class "
-               "\"%s\".\n\n",
-               conf_instance->name, conf_instance->conf_class->class_name);
-        printf("       One of the following items MUST be set:\n");
+        std::string error;
+        error += fmt::format(
+            "Failed to validate mutex in instance \"{}\" of class "
+            "\"{}\".\n",
+            conf_instance->name, conf_instance->conf_class->class_name);
+        error += "       One of the following items MUST be set:\n";
         for (auto &[item_key, item_spec] : conf_item_mutex->item_spec_refs)
-            printf("       %s\n", item_key.c_str());
-        printf("\n");
+            error += fmt::format("       {}\n", item_key);
+        errors.push_back(error);
     }
-    return ok;
+    return errors;
 }
 
-static bool conf_instance_has_valid_mutexes(
+static std::vector<std::string> conf_instance_has_valid_mutexes(
     std::shared_ptr<conf_instance_type> conf_instance) {
-    bool ok = true;
+    std::vector<std::string> errors;
     auto conf_class = conf_instance->conf_class.get();
 
     for (auto &mutex : conf_class->item_mutexes) {
-        if (!conf_instance_check_item_mutex(conf_instance, mutex))
-            ok = false;
+        auto instance_errors =
+            conf_instance_check_item_mutex(conf_instance, mutex);
+        errors.insert(errors.end(), instance_errors.begin(),
+                      instance_errors.end());
     }
 
-    return ok;
+    return errors;
 }
 
 static bool instance_has_sub_instance_of_type(
@@ -717,9 +718,8 @@ static bool instance_has_sub_instance_of_type(
     return false;
 }
 
-static bool conf_instance_has_required_sub_instances(
+static std::vector<std::string> conf_instance_has_required_sub_instances(
     std::shared_ptr<conf_instance_type> conf_instance) {
-    bool ok = true;
 
     /* This first part is just concerned with creating the function __instance_has_sub_instance_of_type. */
     std::vector<std::shared_ptr<conf_class_type>> class_signatures;
@@ -727,6 +727,7 @@ static bool conf_instance_has_required_sub_instances(
          conf_instance->sub_instances) {
         class_signatures.push_back(sub_conf_instance->conf_class);
     }
+    std::vector<std::string> errors;
 
     /* OK, we now check that the sub classes that have require_instance true have at least one instance. */
     auto conf_class = conf_instance->conf_class;
@@ -734,28 +735,27 @@ static bool conf_instance_has_required_sub_instances(
         if (sub_conf_class->require_instance) {
             if (!instance_has_sub_instance_of_type(sub_conf_class,
                                                    class_signatures)) {
-                printf("ERROR: Missing required instance of sub class "
-                       "\"%s\" in instance \"%s\" of class \"%s\".\n",
-                       sub_conf_class->class_name, conf_instance->name,
-                       conf_instance->conf_class->class_name);
-                conf_class_printf_help(sub_conf_class);
-                ok = false;
+                errors.push_back(fmt::format(
+                    "Missing required instance of sub class "
+                    "\"{}\" in instance \"{}\" of class \"{}\".\n{}",
+                    sub_conf_class->class_name, conf_instance->name,
+                    conf_instance->conf_class->class_name,
+                    conf_class_help(sub_conf_class)));
             }
         }
     }
-    return ok;
+    return errors;
 }
 
-static bool conf_instance_validate_sub_instances(
+static std::vector<std::string> conf_instance_validate_sub_instances(
     std::shared_ptr<conf_instance_type> conf_instance) {
-    bool ok = true;
-
+    std::vector<std::string> errors;
     for (auto &[sub_instances_key, sub_conf_instance] :
          conf_instance->sub_instances) {
-        if (!conf_instance_validate(sub_conf_instance))
-            ok = false;
+        auto sub_errors = conf_instance_validate(sub_conf_instance);
+        errors.insert(errors.end(), sub_errors.begin(), sub_errors.end());
     }
-    return ok;
+    return errors;
 }
 
 /**
@@ -792,9 +792,8 @@ get_path_errors(std::shared_ptr<conf_instance_type> conf_instance) {
 
     return path_errors;
 }
-
 /**
- * This method returns a single C-style string (zero-terminated char *)
+ * This method returns a single string 
  * describing keywords and paths to which these resolve, and which does
  * not exist. For example
  *
@@ -802,27 +801,42 @@ get_path_errors(std::shared_ptr<conf_instance_type> conf_instance) {
  *
  * Note newlines - this string is intended for printing.
  */
-char *conf_instance_get_path_error(
+std::string conf_instance_get_path_error(
     std::shared_ptr<conf_instance_type> conf_instance) {
     std::set<std::string> errors = get_path_errors(conf_instance);
 
     if (errors.size() == 0)
-        return NULL;
+        return "";
 
-    std::string retval;
+    std::string retval = "The following keywords in your configuration did "
+                         "not resolve to a valid path:\n ";
     for (std::string s : errors) {
         retval.append(s);
         retval.append("\n");
     }
-    return strdup(retval.data());
+    return retval;
 }
 
-bool conf_instance_validate(std::shared_ptr<conf_instance_type> conf_instance) {
-    return conf_instance && conf_instance_has_required_items(conf_instance) &&
-           conf_instance_has_valid_mutexes(conf_instance) &&
-           conf_instance_has_valid_items(conf_instance) &&
-           conf_instance_has_required_sub_instances(conf_instance) &&
-           conf_instance_validate_sub_instances(conf_instance);
+std::vector<std::string>
+conf_instance_validate(std::shared_ptr<conf_instance_type> conf_instance) {
+    std::vector<std::string> errors;
+    std::string path_error = conf_instance_get_path_error(conf_instance);
+    if (path_error != "") {
+        errors.push_back(path_error);
+    }
+    auto required_errors = conf_instance_has_required_items(conf_instance);
+    errors.insert(errors.end(), required_errors.begin(), required_errors.end());
+    auto mutex_errors = conf_instance_has_valid_mutexes(conf_instance);
+    errors.insert(errors.end(), mutex_errors.begin(), mutex_errors.end());
+    auto item_errors = conf_instance_has_valid_items(conf_instance);
+    errors.insert(errors.end(), item_errors.begin(), item_errors.end());
+    auto required_sub_errors =
+        conf_instance_has_required_sub_instances(conf_instance);
+    errors.insert(errors.end(), required_sub_errors.begin(),
+                  required_sub_errors.end());
+    auto sub_errors = conf_instance_validate_sub_instances(conf_instance);
+    errors.insert(errors.end(), sub_errors.begin(), sub_errors.end());
+    return errors;
 }
 
 static void
