@@ -410,3 +410,29 @@ def test_that_spaces_in_forward_model_args_are_dropped():
     assert len(ert_config.forward_model_list) == 1
     job = ert_config.forward_model_list[0]
     assert job.private_args.get("<VERSION>") == "smersion"
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_forward_model_with_different_token_kinds_are_added():
+    """
+    This is a regression tests for a problem where the parser had different
+    token kinds which ended up in separate keys in the input dictionary, and were
+    therefore not added
+    """
+    test_config_file_name = "test.ert"
+    Path("job").write_text("EXECUTABLE echo\n", encoding="utf-8")
+    test_config_contents = dedent(
+        """
+        NUM_REALIZATIONS 1
+        INSTALL_JOB job job
+        FORWARD_MODEL job
+        FORWARD_MODEL job(<MESSAGE>=HELLO)
+        """
+    )
+    with open(test_config_file_name, "w", encoding="utf-8") as fh:
+        fh.write(test_config_contents)
+
+    assert [
+        (j.name, len(j.private_args))
+        for j in ErtConfig.from_file(test_config_file_name).forward_model_list
+    ] == [("job", 0), ("job", 1)]

@@ -34,6 +34,17 @@ class FileContextToken(Token):
     def __str__(self) -> str:
         return self.value
 
+    def __eq__(self, other) -> bool:
+        if isinstance(other, str):
+            return self.value == other
+        if isinstance(other, Token):
+            return self.value == other.value
+        else:
+            return False
+
+    def __hash__(self):
+        return hash(self.value)
+
     @classmethod
     def join_tokens(
         cls, tokens: List["FileContextToken"], separator: str = " "
