@@ -190,7 +190,7 @@ class EnkfObs(BaseCClass):
             obs_vector = ObsVector(
                 EnkfObservationImplementationType.SUMMARY_OBS,
                 summary_key,
-                self._ensemble_config.getNode(summary_key),
+                self._ensemble_config.getNode(summary_key).getKey(),
                 time_len,
             )
             error = float(instance.get_value("ERROR"))
@@ -352,7 +352,7 @@ class EnkfObs(BaseCClass):
             obs_vector = ObsVector(
                 EnkfObservationImplementationType.SUMMARY_OBS,  # type: ignore
                 obs_key,
-                self._ensemble_config.getNode(summary_key),
+                self._ensemble_config.getNode(summary_key).getKey(),
                 len(time_map),
             )
             value, std_dev = self._make_value_and_std_dev(instance)
@@ -391,7 +391,7 @@ class EnkfObs(BaseCClass):
             obs_vector = ObsVector(
                 EnkfObservationImplementationType.GEN_OBS,  # type: ignore
                 obs_key,
-                config_node,
+                config_node.getKey(),
                 len(time_map),
             )
             try:

@@ -114,7 +114,7 @@ def test_observations(setup_case):
     observation_vector = ObsVector(
         EnkfObservationImplementationType.SUMMARY_OBS,
         observation_key,
-        summary_observation_node,
+        summary_observation_node.getKey(),
         count,
     )
 

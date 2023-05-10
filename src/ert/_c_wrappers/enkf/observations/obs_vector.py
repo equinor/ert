@@ -8,7 +8,6 @@ from pandas import DataFrame, MultiIndex
 
 from ert import _clib
 from ert._c_wrappers import ResPrototype
-from ert._c_wrappers.enkf.config import EnkfConfigNode
 from ert._c_wrappers.enkf.enums import EnkfObservationImplementationType
 from ert._c_wrappers.enkf.observations.gen_observation import GenObservation
 from ert._c_wrappers.enkf.observations.summary_observation import SummaryObservation
@@ -21,7 +20,7 @@ class ObsVector(BaseCClass):
     TYPE_NAME = "obs_vector"
 
     _alloc = ResPrototype(
-        "void* obs_vector_alloc(enkf_obs_impl_type, char*, enkf_config_node, int)",
+        "void* obs_vector_alloc(enkf_obs_impl_type, char*, char*, int)",
         bind=False,
     )
     _free = ResPrototype("void  obs_vector_free( obs_vector )")
@@ -45,14 +44,16 @@ class ObsVector(BaseCClass):
         self,
         observation_type: EnkfObservationImplementationType,
         observation_key: str,
-        config_node: EnkfConfigNode,
+        config_node_key: str,
         num_reports: int,
     ):
         assert isinstance(observation_type, EnkfObservationImplementationType)
         assert isinstance(observation_key, str)
-        assert isinstance(config_node, EnkfConfigNode)
+        assert isinstance(config_node_key, str)
         assert isinstance(num_reports, int)
-        c_ptr = self._alloc(observation_type, observation_key, config_node, num_reports)
+        c_ptr = self._alloc(
+            observation_type, observation_key, config_node_key, num_reports
+        )
         super().__init__(c_ptr)
 
     def getDataKey(self) -> str:
