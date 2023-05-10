@@ -1,6 +1,6 @@
 import numpy
 import xtgeo
-from ecl.grid import EclGrid
+from ecl.grid import EclGridGenerator
 
 from ert.storage import open_storage
 
@@ -43,7 +43,7 @@ def test_save_field_ecl(tmp_path):
         assert ensemble_dir.exists()
 
         mask = [True] * 3 + [False] * 16 + [True]
-        grid = EclGrid.create_rectangular((4, 5, 1), (1, 1, 1), actnum=mask)
+        grid = EclGridGenerator.create_rectangular((4, 5, 1), (1, 1, 1), actnum=mask)
         grid.save_GRID(f"{experiment.mount_point}/grid.GRID")
 
         data = [1.2, 1.1, 4.3, 3.1]
