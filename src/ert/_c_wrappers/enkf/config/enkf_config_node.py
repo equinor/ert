@@ -2,7 +2,6 @@ import logging
 from typing import Dict, List, Tuple, Union
 
 from cwrap import BaseCClass
-from ecl.util.util import StringList
 
 from ert._c_wrappers import ResPrototype
 from ert._c_wrappers.enkf.enums import ErtImplType
@@ -33,9 +32,6 @@ class EnkfConfigNode(BaseCClass):
         "ert_impl_type_enum enkf_config_node_get_impl_type(enkf_config_node)"
     )
     _get_key = ResPrototype("char* enkf_config_node_get_key(enkf_config_node)")
-    _get_obs_keys = ResPrototype(
-        "stringlist_ref enkf_config_node_get_obs_keys(enkf_config_node)"
-    )
     _free = ResPrototype("void enkf_config_node_free(enkf_config_node)")
 
     def __init__(self):
@@ -49,9 +45,6 @@ class EnkfConfigNode(BaseCClass):
 
     def getSummaryModelConfig(self) -> SummaryConfig:
         return SummaryConfig.createCReference(self._get_ref(), parent=self)
-
-    def getObservationKeys(self) -> StringList:
-        return self._get_obs_keys().setParent(self)
 
     @classmethod
     def createSummaryConfigNode(cls, key: str) -> "EnkfConfigNode":

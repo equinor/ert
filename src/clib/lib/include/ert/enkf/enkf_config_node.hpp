@@ -22,8 +22,6 @@ typedef struct enkf_config_node_struct enkf_config_node_type;
 struct enkf_config_node_struct {
     ert_impl_type impl_type;
 
-    /** Keys of observations which observe this node. */
-    stringlist_type *obs_keys;
     char *key;
     /** This points to the config object of the actual implementation. */
     void *data;
@@ -40,8 +38,6 @@ extern "C" enkf_config_node_type *enkf_config_node_alloc(ert_impl_type,
 extern "C" enkf_config_node_type *
 enkf_config_node_alloc_summary(const char *key);
 
-extern "C" const stringlist_type *
-enkf_config_node_get_obs_keys(const enkf_config_node_type *);
 extern "C" void enkf_config_node_free(enkf_config_node_type *);
 extern "C" ert_impl_type
 enkf_config_node_get_impl_type(const enkf_config_node_type *);

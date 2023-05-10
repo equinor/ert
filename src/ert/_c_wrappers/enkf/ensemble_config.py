@@ -482,12 +482,16 @@ class EnsembleConfig(BaseCClass):
         key_list = self.get_keylist_gen_kw()
         return "GEN_KW: " f"{[self[key] for key in key_list]}, "
 
+    def _gen_data_info(self) -> str:
+        key_list = list(self._gen_data_config.keys())
+        return "GEN_DATA: " f"{[self[key] for key in key_list]}, "
+
     def __repr__(self):
         if not self._address():
             return "<EnsembleConfig()>"
         return (
             "EnsembleConfig(config_dict={"
-            + self._node_info(ConfigKeys.GEN_DATA)
+            + self._gen_data_info()
             + self._gen_kw_info()
             + self._node_info(ConfigKeys.SURFACE_KEY)
             + self._node_info(ConfigKeys.SUMMARY)
@@ -674,7 +678,7 @@ class EnsembleConfig(BaseCClass):
     def get_node_observation_keys(self, key) -> List[str]:
         node = self[key]
         keylist = []
-        if isinstance(node, EnkfConfigNode):
+        if isinstance(node, GenDataConfig):
             keylist = node.getObservationKeys()
         return keylist
 

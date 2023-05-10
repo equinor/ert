@@ -9,6 +9,7 @@ class GenDataConfig:
     def __init__(self, key: str, report_steps: Optional[List[int]] = None):
         self.name = key
         self._active_report_steps: List[int] = []
+        self._observation_list: List[str] = []
         if report_steps:
             self.add_report_steps(report_steps)
 
@@ -21,13 +22,21 @@ class GenDataConfig:
             self._active_report_steps.append(step)
             self._active_report_steps.sort()
 
+    def update_observation_keys(self, observations: List[str]):
+        self._observation_list = observations
+        self._observation_list.sort()
+
+    def getObservationKeys(self) -> List[str]:
+        return self._observation_list
+
     def getKey(self) -> str:
         return self.name
 
     def __repr__(self):
         return (
             f"GenDataConfig(key={self.name}, "
-            f"active_report_steps={self._active_report_steps})"
+            f"active_report_steps={self._active_report_steps}, "
+            f"observation_keys={self._observation_list})"
         )
 
     def hasReportStep(self, report_step: int) -> bool:
@@ -53,6 +62,9 @@ class GenDataConfig:
             return False
 
         if self.getReportSteps() != other.getReportSteps():
+            return False
+
+        if self._observation_list != other._observation_list:
             return False
 
         return True

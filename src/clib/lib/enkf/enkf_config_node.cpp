@@ -26,7 +26,6 @@ static enkf_config_node_type *enkf_config_node_alloc__(ert_impl_type impl_type,
     node->impl_type = impl_type;
     node->key = util_alloc_string_copy(key);
     node->data = NULL;
-    node->obs_keys = stringlist_alloc_new();
 
     node->get_data_size = NULL;
     node->freef = NULL;
@@ -66,7 +65,6 @@ void enkf_config_node_free(enkf_config_node_type *node) {
     if (node->freef != NULL)
         node->freef(node->data);
     free(node->key);
-    stringlist_free(node->obs_keys);
     free(node);
 }
 
@@ -82,30 +80,6 @@ enkf_config_node_get_impl_type(const enkf_config_node_type *config_node) {
 
 const char *enkf_config_node_get_key(const enkf_config_node_type *config_node) {
     return config_node->key;
-}
-
-const stringlist_type *
-enkf_config_node_get_obs_keys(const enkf_config_node_type *config_node) {
-    return config_node->obs_keys;
-}
-
-void enkf_config_node_update_obs_keys(enkf_config_node_type *config_node,
-                                      std::list<std::string> obs_key_list) {
-
-    stringlist_clear(config_node->obs_keys);
-
-    for (auto const &obs_key : obs_key_list) {
-        stringlist_append_copy(config_node->obs_keys, obs_key.c_str());
-    }
-}
-
-ERT_CLIB_SUBMODULE("enkf_config_node", m) {
-    using namespace py::literals;
-
-    m.def("update_obs_keys", [](Cwrap<enkf_config_node_type> node,
-                                std::list<std::string> obs_key_list) {
-        enkf_config_node_update_obs_keys(node, obs_key_list);
-    });
 }
 
 VOID_FREE(enkf_config_node)

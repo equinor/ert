@@ -463,7 +463,7 @@ class EnkfObs(BaseCClass):
             obs_keys.sort()
             node = ensemble_config.getNode(state_kw)
             if node is not None:
-                _clib.enkf_config_node.update_obs_keys(node, obs_keys)
+                node.update_observation_keys(obs_keys)
 
     @property
     def error(self) -> str:
