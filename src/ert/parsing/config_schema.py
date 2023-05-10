@@ -1,22 +1,15 @@
-from typing import Dict
-
-
-from .config_keywords import (
-    ConfigKeys,
-    RunModes,
-    QueueOptions,
-)
-from .schema_dict import SchemaItemDict
-from .schema_item_type import SchemaItemType
+from .config_keywords import ConfigKeys, QueueOptions, RunModes
 from .config_schema_item import (
     SchemaItem,
     existing_path_keyword,
-    single_arg_keyword,
-    path_keyword,
-    string_keyword,
-    int_keyword,
     float_keyword,
+    int_keyword,
+    path_keyword,
+    single_arg_keyword,
+    string_keyword,
 )
+from .schema_dict import SchemaItemDict
+from .schema_item_type import SchemaItemType
 
 CONFIG_DEFAULT_ARG_MAX = -1
 CONFIG_DEFAULT_ARG_MIN = -1

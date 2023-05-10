@@ -1,20 +1,20 @@
 import os
 import shutil
-from typing import List, Optional, Mapping, Any, Union, Set
+from typing import Any, List, Mapping, Optional, Set, Union
 
 from pydantic import BaseModel
 
 from ert.parsing import ConfigValidationError
-from ert.parsing.schema_item_type import SchemaItemType
 from ert.parsing.context_values import (
-    ContextString,
     ContextBool,
     ContextFloat,
     ContextInt,
+    ContextString,
     ContextValue,
 )
 from ert.parsing.error_info import ErrorInfo
 from ert.parsing.file_context_token import FileContextToken
+from ert.parsing.schema_item_type import SchemaItemType
 
 
 class SchemaItem(BaseModel):
@@ -149,7 +149,7 @@ class SchemaItem(BaseModel):
             if not os.path.isabs(token):
                 # Try relative
                 absolute_path = os.path.abspath(os.path.join(cwd, token))
-            if not os.path.exists(absolute_path):
+            if absolute_path is None or not os.path.exists(absolute_path):
                 absolute_path = shutil.which(token)
 
             if absolute_path is None:

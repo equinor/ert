@@ -1,8 +1,8 @@
 from typing import Dict, Set
 
+from .config_schema_item import SchemaItem
 from .schema_dict import SchemaItemDict
 from .schema_item_type import SchemaItemType
-from .config_schema_item import SchemaItem
 from .workflow_job_keywords import WorkflowJobKeys
 
 

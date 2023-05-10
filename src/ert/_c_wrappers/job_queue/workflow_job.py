@@ -3,18 +3,18 @@ from __future__ import annotations
 import os
 from collections import defaultdict
 from dataclasses import dataclass
-from typing import List, Optional, Type, Union, Mapping
+from typing import List, Mapping, Optional, Type, Union
 
 from ert._c_wrappers.config import ConfigParser, ContentTypeEnum
 from ert._clib.job_kw import type_from_kw
 from ert.parsing import ConfigValidationError, lark_parse
 
-from .ert_plugin import ErtPlugin
-from .ert_script import ErtScript
 from ...parsing.schema_item_type import SchemaItemType
 from ...parsing.types import Instruction
 from ...parsing.workflow_job_keywords import WorkflowJobKeys
 from ...parsing.workflow_job_schema import init_workflow_schema
+from .ert_plugin import ErtPlugin
+from .ert_script import ErtScript
 
 ContentTypes = Union[Type[int], Type[bool], Type[float], Type[str]]
 
@@ -126,40 +126,42 @@ class WorkflowJob:
             if name is None:
                 name = os.path.basename(config_file)
 
-            old_content = _config_parser.parse(config_file)
+            if not USE_NEW_PARSER_BY_DEFAULT:
+                old_content = _config_parser.parse(config_file)
 
-            def optional_get(key):
-                return old_content.getValue(key) if old_content.hasKey(key) else None
+                def optional_get(key):
+                    return (
+                        old_content.getValue(key) if old_content.hasKey(key) else None
+                    )
 
-            max_arg = optional_get("MAX_ARG")
+                max_arg = optional_get("MAX_ARG")
 
-            old_arg_types_list = cls._make_arg_types_list(old_content, max_arg)
-            old_job = cls(
-                name,
-                optional_get("INTERNAL"),
-                optional_get("MIN_ARG"),
-                max_arg,
-                old_arg_types_list,
-                optional_get("EXECUTABLE"),
-                optional_get("SCRIPT"),
-            )
+                old_arg_types_list = cls._make_arg_types_list(old_content, max_arg)
+                return cls(
+                    name,
+                    optional_get("INTERNAL"),
+                    optional_get("MIN_ARG"),
+                    max_arg,
+                    old_arg_types_list,
+                    optional_get("EXECUTABLE"),
+                    optional_get("SCRIPT"),
+                )
 
-            new_content_dict = supreme_parser(config_file)
+            else:
+                new_content_dict = supreme_parser(config_file)
 
-            new_types_list, new_max_argc = cls._make_arg_types_list_new(
-                new_content_dict
-            )
-            new_job = cls(
-                name,
-                new_content_dict.get("INTERNAL", None),
-                new_content_dict.get("MIN_ARG", None),
-                new_max_argc,
-                new_types_list,
-                new_content_dict.get("EXECUTABLE", None),
-                new_content_dict.get("SCRIPT", None),
-            )
-
-            return new_job
+                new_types_list, new_max_argc = cls._make_arg_types_list_new(
+                    new_content_dict
+                )
+                return cls(
+                    name,
+                    new_content_dict.get("INTERNAL", None),
+                    new_content_dict.get("MIN_ARG", None),
+                    new_max_argc,
+                    new_types_list,
+                    new_content_dict.get("EXECUTABLE", None),
+                    new_content_dict.get("SCRIPT", None),
+                )
         else:
             raise ConfigValidationError(f"Could not open config_file:{config_file!r}")
 
@@ -179,7 +181,7 @@ class WorkflowJob:
         if string == "BOOL":
             return ContentTypeEnum.CONFIG_BOOL
 
-        raise ValueError(f"Unknown content type")
+        raise ValueError("Unrecognized content type")
 
     def argumentTypes(self) -> List["ContentTypes"]:
         def content_to_type(c: Optional[ContentTypeEnum]):

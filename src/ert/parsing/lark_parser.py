@@ -16,7 +16,6 @@ from .config_schema import (
     init_site_config,
     init_user_config,
 )
-from .config_schema_item import check_required
 from .error_info import ErrorInfo
 from .types import Defines, FileContextToken, Instruction, MaybeWithContext
 

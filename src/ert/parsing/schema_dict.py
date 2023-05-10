@@ -1,8 +1,6 @@
-from abc import abstractmethod
 from typing import List, Set
 
 from ert.parsing import ConfigValidationError
-from ert.parsing.config_schema_item import SchemaItem
 from ert.parsing.error_info import ErrorInfo
 
 
