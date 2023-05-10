@@ -534,7 +534,11 @@ def test_that_workflows_with_errors_are_not_loaded():
     with open(test_config_file_name, "w", encoding="utf-8") as fh:
         fh.write(test_config_contents)
 
-    with pytest.warns(ConfigWarning, match="Encountered error.*while reading workflow"):
+    with pytest.warns(
+        ConfigWarning,
+        match=r"Encountered the following error\(s\) while reading workflow 'wf'."
+        " It will not be loaded: .*WFJAB is not recognized",
+    ):
         ert_config = ErtConfig.from_file(test_config_file_name)
         assert "wf" not in ert_config.workflows
 
