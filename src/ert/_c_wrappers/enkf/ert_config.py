@@ -6,7 +6,7 @@ from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import date
 from pathlib import Path
-from typing import Any, ClassVar, Dict, List, Mapping
+from typing import Any, ClassVar, Dict, List, Mapping, Optional
 
 import pkg_resources
 
@@ -382,6 +382,7 @@ class ErtConfig:
     def forward_model_data_to_json(
         forward_model_list: List[ExtJob],
         run_id: str,
+        config_file_path: Optional[Path] = None,
         iens: int = 0,
         itr: int = 0,
         context: "SubstitutionList" = None,
@@ -446,9 +447,12 @@ class ErtConfig:
                         f"Private arg '{key}':'{val}' chosen over"
                         f" global '{context[key]}' in forward model {job.name}"
                     )
-
+        config_path = str(config_file_path.parent) if config_file_path else ""
+        config_file = str(config_file_path.name) if config_file_path else ""
         return {
             "global_environment": env_varlist,
+            "config_path": config_path,
+            "config_file": config_file,
             "jobList": [
                 {
                     "name": substitute(job, job.name),
