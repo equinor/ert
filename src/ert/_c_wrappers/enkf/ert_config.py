@@ -645,8 +645,9 @@ class ErtConfig:
                     )
             except ConfigValidationError as err:
                 warnings.warn(
-                    f"Encountered error(s) {err.errors!r} while"
-                    f" reading workflow {filename!r}. It will not be loaded.",
+                    f"Encountered the following error(s) while "
+                    f"reading workflow {filename!r}. It will not be loaded: "
+                    + err.get_cli_message(),
                     category=ConfigWarning,
                 )
 
