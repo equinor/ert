@@ -10,12 +10,7 @@ from lark import Discard, Lark, Token, Transformer, Tree, UnexpectedCharacters
 from typing_extensions import Self
 
 from .config_errors import ConfigValidationError, ConfigWarning
-from .config_schema import (
-    SchemaItem,
-    define_keyword,
-    init_site_config_schema,
-    init_user_config_schema,
-)
+from .config_schema import SchemaItem, define_keyword
 from .error_info import ErrorInfo
 from .types import Defines, FileContextToken, Instruction, MaybeWithContext
 

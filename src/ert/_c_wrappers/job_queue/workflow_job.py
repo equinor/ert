@@ -5,13 +5,11 @@ from collections import defaultdict
 from dataclasses import dataclass
 from typing import List, Mapping, Optional, Type, Union
 
-from ert._c_wrappers.enkf.ert_config import USE_NEW_PARSER_BY_DEFAULT
 from ert._c_wrappers.config import ConfigParser, ContentTypeEnum
 from ert._clib.job_kw import type_from_kw
 from ert.parsing import (
     ConfigValidationError,
     Instruction,
-    SchemaItemType,
     WorkflowJobKeys,
     init_workflow_schema,
     lark_parse,
@@ -21,6 +19,12 @@ from .ert_plugin import ErtPlugin
 from .ert_script import ErtScript
 
 ContentTypes = Union[Type[int], Type[bool], Type[float], Type[str]]
+
+
+USE_NEW_PARSER_BY_DEFAULT = False
+
+if "USE_OLD_ERT_PARSER" in os.environ and os.environ["USE_OLD_ERT_PARSER"] == "YES":
+    USE_NEW_PARSER_BY_DEFAULT = False
 
 
 def _workflow_job_config_parser() -> ConfigParser:
