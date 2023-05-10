@@ -226,7 +226,7 @@ def _tree_to_dict(
             errors.append(e)
 
     try:
-        check_required(schema, declared_kws, filename=config_file)
+        schema.check_required(declared_kws, filename=config_file)
     except ConfigValidationError as e:
         errors.append(e)
 

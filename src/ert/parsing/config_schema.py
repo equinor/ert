@@ -6,6 +6,7 @@ from .config_keywords import (
     RunModes,
     QueueOptions,
 )
+from .schema_dict import SchemaItemDict
 from .schema_item_type import SchemaItemType
 from .config_schema_item import (
     SchemaItem,
@@ -303,8 +304,12 @@ def install_job_directory_keyword() -> SchemaItem:
     )
 
 
-def init_site_config() -> Dict[str, SchemaItem]:
-    schema = {}
+class ConfigSchemaDict(SchemaItemDict):
+    pass
+
+
+def init_site_config() -> SchemaItemDict:
+    schema = SchemaItemDict()
     for item in [
         int_keyword(ConfigKeys.MAX_SUBMIT_KEY),
         int_keyword(ConfigKeys.NUM_CPU_KEY),
@@ -324,11 +329,12 @@ def init_site_config() -> Dict[str, SchemaItem]:
         if item.kw in ConfigAliases:
             for name in ConfigAliases[item.kw]:
                 schema[name] = item
+
     return schema
 
 
-def init_user_config() -> Dict[str, SchemaItem]:
-    schema = {}
+def init_user_config() -> SchemaItemDict:
+    schema = SchemaItemDict()
     for item in [
         workflow_job_directory_keyword(),
         load_workflow_keyword(),
@@ -393,4 +399,5 @@ def init_user_config() -> Dict[str, SchemaItem]:
         if item.kw in ConfigAliases:
             for name in ConfigAliases[item.kw]:
                 schema[name] = item
+
     return schema
