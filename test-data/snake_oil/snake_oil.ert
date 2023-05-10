@@ -33,10 +33,3 @@ GEN_KW SNAKE_OIL_PARAM templates/snake_oil_template.txt snake_oil_params.txt par
 GEN_DATA SNAKE_OIL_OPR_DIFF INPUT_FORMAT:ASCII RESULT_FILE:snake_oil_opr_diff_%d.txt REPORT_STEPS:199
 GEN_DATA SNAKE_OIL_WPR_DIFF INPUT_FORMAT:ASCII RESULT_FILE:snake_oil_wpr_diff_%d.txt REPORT_STEPS:199
 GEN_DATA SNAKE_OIL_GPR_DIFF INPUT_FORMAT:ASCII RESULT_FILE:snake_oil_gpr_diff_%d.txt REPORT_STEPS:199
-
-UPDATE_LOG_PATH log/update
-
-SETENV SILLY_VAR silly-valye
-SETENV OPTIONAL_VAR optional-value
-
-LICENSE_PATH some/random/path
