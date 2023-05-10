@@ -13,6 +13,9 @@ from ert.parsing import ConfigValidationError, ConfigWarning
 from .config_dict_generator import config_generators
 
 
+@pytest.mark.filterwarnings("ignore::UserWarning")
+@pytest.mark.filterwarnings("ignore::RuntimeWarning")
+@pytest.mark.filterwarnings("ignore::ert.parsing.ConfigWarning")
 @pytest.mark.usefixtures("set_site_config")
 @given(config_generators())
 def test_that_enkf_obs_keys_are_ordered(tmp_path_factory, config_generator):
@@ -565,6 +568,7 @@ def test_that_history_observation_errors_are_calculated_correctly(tmpdir):
         assert observations[2].getNode(1).getStandardDeviation() == 10000
 
 
+@pytest.mark.filterwarnings("ignore::ert.parsing.ConfigWarning")
 def test_that_std_cutoff_is_applied(tmpdir):
     with tmpdir.as_cwd():
         config = dedent(

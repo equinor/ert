@@ -97,6 +97,7 @@ def test_summary_obs_runtime(create_measured_data):
     assert summary_obs_time < 10 * history_obs_time
 
 
+@pytest.mark.filterwarnings("ignore::ert.parsing.ConfigWarning")
 @pytest.mark.usefixtures("copy_snake_oil_case_storage")
 @pytest.mark.parametrize("formatted_date", ["2015-06-23", "23/06/2015"])
 def test_summary_obs_last_entry(formatted_date):

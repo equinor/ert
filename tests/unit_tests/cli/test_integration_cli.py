@@ -395,6 +395,7 @@ def test_experiment_server_ensemble_experiment(tmpdir, source_root, capsys):
     FeatureToggling.reset()
 
 
+@pytest.mark.filterwarnings("ignore::ert.parsing.config_errors.ConfigWarning")
 def test_bad_config_error_message(tmp_path):
     (tmp_path / "test.ert").write_text("NUM_REL 10\n")
     parser = ArgumentParser(prog="test_main")
