@@ -175,9 +175,7 @@ assert exec_env["NOT_SET"] is None
     forward_model = [ext_job]
 
     with open("jobs.json", mode="w", encoding="utf-8") as fptr:
-        json.dump(
-            ErtConfig.forward_model_data_to_json(forward_model, "run_id", "."), fptr
-        )
+        json.dump(ErtConfig.forward_model_data_to_json(forward_model, "run_id"), fptr)
 
     with open("jobs.json", "r", encoding="utf-8") as f:
         jobs_json = json.load(f)
