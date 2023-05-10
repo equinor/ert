@@ -36,7 +36,7 @@ jobs:
       run: |
         sudo apt-get update -y
         sudo apt-get install -y valgrind
-    
+
     - uses: actions/cache@v3
       with:
         path: ~/.conan/
@@ -83,7 +83,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: [ '3.8', '3.9', '3.10' ]
+        python-version: [ '3.8', '3.10' ]
     uses: ./.github/workflows/build-wheels-linux.yml
     with:
       python-version: ${{ matrix.python-version }}
@@ -92,7 +92,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: [ '3.8', '3.9', '3.10' ]
+        python-version: [ '3.10' ]
     uses: ./.github/workflows/build-wheels-macos.yml
     with:
       python-version: ${{ matrix.python-version }}
@@ -102,13 +102,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: [ '3.8', '3.9', '3.10' ]
+        python-version: [ '3.8', '3.10' ]
         os: [ ubuntu-latest ]
         test-type: [ 'integration-tests', 'unit-tests', 'gui-test' ]
         exclude:
-          - os: ubuntu-latest
-            python-version: '3.9'
-            test-type: 'gui-test'
           - os: ubuntu-latest
             python-version: '3.10'
             test-type: 'gui-test'
@@ -123,16 +120,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: [ '3.8', '3.9', '3.10' ]
+        python-version: [ '3.10' ]
         os: [ macos-latest ]
         test-type: [ 'integration-tests', 'unit-tests', 'gui-test' ]
         exclude:
           - os: macos-latest
-            python-version: '3.9'
-          - os: macos-latest
             test-type: 'gui-test'
-          - os: macos-latest
-            python-version: '3.10'
     uses: ./.github/workflows/test_ert.yml
     with:
       os: ${{ matrix.os }}
