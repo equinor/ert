@@ -91,3 +91,17 @@ def test_run_internal_script():
     result = WorkflowJobRunner(job).run(None, None, None, ["1", "2"])
 
     assert result == -1
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_superior_parser():
+    WorkflowCommon.createErtScriptsJob()
+
+    job = WorkflowJob.fromFile(
+        name="SUBTRACT",
+        config_file="subtract_script_job",
+    )
+
+    result = WorkflowJobRunner(job).run(None, None, None, ["1", "2"])
+
+    assert result == -1

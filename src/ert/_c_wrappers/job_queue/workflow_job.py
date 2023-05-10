@@ -7,12 +7,18 @@ from typing import List, Optional, Type, Union
 
 from ert._c_wrappers.config import ConfigParser, ContentTypeEnum
 from ert._clib.job_kw import type_from_kw
-from ert.parsing import ConfigValidationError
+from ert.parsing import ConfigValidationError, lark_parse
 
 from .ert_plugin import ErtPlugin
 from .ert_script import ErtScript
+from ...parsing.workflow_schema import init_workflow_schema
 
 ContentTypes = Union[Type[int], Type[bool], Type[float], Type[str]]
+
+USE_NEW_PARSER_BY_DEFAULT = True
+
+if "USE_NEW_ERT_PARSER" in os.environ and os.environ["USE_NEW_ERT_PARSER"] == "YES":
+    USE_NEW_PARSER_BY_DEFAULT = True
 
 
 def _workflow_job_config_parser() -> ConfigParser:
@@ -32,6 +38,11 @@ def _workflow_job_config_parser() -> ConfigParser:
 
 
 _config_parser = _workflow_job_config_parser()
+
+
+def superior_parser(file: str):
+    best_schema = init_workflow_schema()
+    return lark_parse(file, schema=best_schema)
 
 
 class ErtScriptLoadFailure(ValueError):

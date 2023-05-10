@@ -12,11 +12,11 @@ from typing_extensions import Self
 from .config_errors import ConfigValidationError, ConfigWarning
 from .config_schema import (
     SchemaItem,
-    check_required,
     define_keyword,
     init_site_config,
     init_user_config,
 )
+from .config_schema_item import check_required
 from .error_info import ErrorInfo
 from .types import Defines, FileContextToken, Instruction, MaybeWithContext
 
@@ -190,10 +190,10 @@ def _tree_to_dict(
     pre_defines: Defines,
     tree: Tree[Instruction],
     site_config: Optional[Dict[str, Any]] = None,
+    schema: Optional[Mapping[str, SchemaItem]] = None,
 ) -> Mapping[str, Instruction]:
-    schema: Mapping[str, SchemaItem] = (
-        init_user_config() if site_config is not None else init_site_config()
-    )
+    if schema is None:
+        schema = init_user_config() if site_config is not None else init_site_config()
 
     config_dict = site_config if site_config else {}
     defines = pre_defines.copy()
@@ -474,6 +474,7 @@ def _parse_file(
 def parse(
     file: str,
     site_config: Optional[Mapping[str, Instruction]] = None,
+    schema: Optional[Mapping[str, SchemaItem]] = None,
 ) -> Mapping[str, Instruction]:
     filepath = os.path.normpath(os.path.abspath(file))
     tree = _parse_file(filepath)
@@ -496,4 +497,5 @@ def parse(
         pre_defines=pre_defines,
         tree=tree,
         site_config=site_config,
+        schema=schema,
     )
