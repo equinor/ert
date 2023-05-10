@@ -85,13 +85,6 @@ def test_load_forward_model(snake_oil_default_storage):
     """
     Checking that we are able to load from forward model
     """
-    # Get rid of GEN_DATA it causes a failure to load from forward model
-    with fileinput.input("snake_oil.ert", inplace=True) as fin:
-        for line in fin:
-            if line.startswith("GEN_DATA"):
-                continue
-            print(line, end="")
-
     facade = LibresFacade.from_config_file("snake_oil.ert")
     realisation_number = 0
 
