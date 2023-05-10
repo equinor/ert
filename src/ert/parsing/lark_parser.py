@@ -191,13 +191,6 @@ def _tree_to_dict(
     schema: Mapping[str, SchemaItem],
     site_config: Optional[Dict[str, Any]] = None,
 ) -> Mapping[str, Instruction]:
-    if schema is None:
-        schema = (
-            init_user_config_schema()
-            if site_config is not None
-            else init_site_config_schema()
-        )
-
     config_dict = site_config if site_config else {}
     defines = pre_defines.copy()
     config_dict["DEFINE"] = defines

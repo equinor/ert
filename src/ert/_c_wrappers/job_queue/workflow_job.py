@@ -5,6 +5,7 @@ from collections import defaultdict
 from dataclasses import dataclass
 from typing import List, Mapping, Optional, Type, Union
 
+from ert._c_wrappers.enkf.ert_config import USE_NEW_PARSER_BY_DEFAULT
 from ert._c_wrappers.config import ConfigParser, ContentTypeEnum
 from ert._clib.job_kw import type_from_kw
 from ert.parsing import (
@@ -20,11 +21,6 @@ from .ert_plugin import ErtPlugin
 from .ert_script import ErtScript
 
 ContentTypes = Union[Type[int], Type[bool], Type[float], Type[str]]
-
-USE_NEW_PARSER_BY_DEFAULT = True
-
-if "USE_NEW_ERT_PARSER" in os.environ and os.environ["USE_NEW_ERT_PARSER"] == "YES":
-    USE_NEW_PARSER_BY_DEFAULT = True
 
 
 def _workflow_job_config_parser() -> ConfigParser:
@@ -61,7 +57,7 @@ class WorkflowJob:
     internal: bool
     min_args: Optional[int]
     max_args: Optional[int]
-    arg_types: List[SchemaItemType]
+    arg_types: List[ContentTypeEnum]
     executable: Optional[str]
     script: Optional[str]
 
@@ -174,7 +170,7 @@ class WorkflowJob:
         return False
 
     @classmethod
-    def stringToType(cls, string: str):
+    def stringToType(cls, string: str) -> ContentTypeEnum:
         if string == "STRING":
             return ContentTypeEnum.CONFIG_STRING
         if string == "FLOAT":
