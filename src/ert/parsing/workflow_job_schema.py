@@ -1,5 +1,6 @@
 from typing import Dict, Set
 
+from . import ConfigValidationError
 from .config_schema_item import SchemaItem
 from .schema_dict import SchemaItemDict
 from .schema_item_type import SchemaItemType
@@ -78,6 +79,18 @@ def internal_keyword() -> SchemaItem:
 class WorkflowJobSchemaDict(SchemaItemDict):
     def check_required(self, declared_kws: Set[str], filename: str):
         super().check_required(declared_kws, filename)
+
+        if "MIN_ARG" in declared_kws and "MAX_ARG" in declared_kws:
+            min_arg = declared_kws["MIN_ARG"]
+            max_arg = declared_kws["MAX_ARG"]
+
+            if max_arg < 0:
+                raise ConfigValidationError("specified MAX_ARG must be at least 0.")
+
+            if min_arg > max_arg:
+                raise ConfigValidationError(
+                    f"MIN_ARG ({min_arg}) must be lesser than MAX_ARG ({max_arg})"
+                )
 
 
 def init_workflow_schema() -> Dict[str, SchemaItem]:
