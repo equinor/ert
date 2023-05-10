@@ -35,9 +35,7 @@ def _internalize_GEN_DATA(
                 errors.append(f"{key} report step {i} missing")
                 continue
 
-            with open(run_path / filename, "r", encoding="utf-8") as f:
-                data = [float(v.strip()) for v in f.readlines()]
-            all_data[f"{key}@{i}"] = np.array(data)
+            all_data[f"{key}@{i}"] = np.loadtxt(run_path / filename)
 
     run_arg.ensemble_storage.save_gen_data(all_data, run_arg.iens)
     if errors:
