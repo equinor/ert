@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 from collections import defaultdict
 from dataclasses import dataclass
-from typing import List, Optional, Type, Union
+from typing import List, Optional, Type, Union, Mapping
 
 from ert._c_wrappers.config import ConfigParser, ContentTypeEnum
 from ert._clib.job_kw import type_from_kw
@@ -11,7 +11,10 @@ from ert.parsing import ConfigValidationError, lark_parse
 
 from .ert_plugin import ErtPlugin
 from .ert_script import ErtScript
-from ...parsing.workflow_schema import init_workflow_schema
+from ...parsing.schema_item_type import SchemaItemType
+from ...parsing.types import Instruction
+from ...parsing.workflow_job_keywords import WorkflowJobKeys
+from ...parsing.workflow_job_schema import init_workflow_schema
 
 ContentTypes = Union[Type[int], Type[bool], Type[float], Type[str]]
 
@@ -40,7 +43,7 @@ def _workflow_job_config_parser() -> ConfigParser:
 _config_parser = _workflow_job_config_parser()
 
 
-def superior_parser(file: str):
+def supreme_parser(file: str):
     best_schema = init_workflow_schema()
     return lark_parse(file, schema=best_schema)
 
@@ -55,7 +58,7 @@ class WorkflowJob:
     internal: bool
     min_args: Optional[int]
     max_args: Optional[int]
-    arg_types: List[ContentTypeEnum]
+    arg_types: List[SchemaItemType]
     executable: Optional[str]
     script: Optional[str]
 
@@ -72,6 +75,33 @@ class WorkflowJob:
                 raise ErtScriptLoadFailure(
                     f"Failed to load {self.name}: {err}"
                 ) from err
+
+    @staticmethod
+    def _make_arg_types_list_new(content_dict: Mapping[str, Instruction]):
+        arg_types_dict = defaultdict(lambda _: "STRING")
+        args_spec = content_dict.get(WorkflowJobKeys.ARG_TYPE, [])
+
+        if len(args_spec) == 0:
+            return [], 0
+
+        for i, type_as_string in args_spec:
+            # make old tests pass temporarily, will use
+            # SchemaItemType
+            arg_types_dict[i] = WorkflowJob.stringToType(type_as_string)
+
+        types_list = [arg_types_dict[i] for i in range(max(arg_types_dict.keys()) + 1)]
+        max_argc_from_type_list = len(types_list)
+        max_argc_from_dict = content_dict.get(
+            WorkflowJobKeys.MAX_ARG, max_argc_from_type_list
+        )
+
+        if max_argc_from_dict < max_argc_from_type_list:
+            raise ConfigValidationError(
+                f"Argument number {max_argc_from_type_list - 1} exceeds specified "
+                f"max number of arguments ({max_argc_from_dict})"
+            )
+
+        return types_list, max_argc_from_dict
 
     @staticmethod
     def _make_arg_types_list(
@@ -96,22 +126,40 @@ class WorkflowJob:
             if name is None:
                 name = os.path.basename(config_file)
 
-            content = _config_parser.parse(config_file)
+            old_content = _config_parser.parse(config_file)
 
             def optional_get(key):
-                return content.getValue(key) if content.hasKey(key) else None
+                return old_content.getValue(key) if old_content.hasKey(key) else None
 
             max_arg = optional_get("MAX_ARG")
 
-            return cls(
+            old_arg_types_list = cls._make_arg_types_list(old_content, max_arg)
+            old_job = cls(
                 name,
                 optional_get("INTERNAL"),
                 optional_get("MIN_ARG"),
                 max_arg,
-                cls._make_arg_types_list(content, max_arg),
+                old_arg_types_list,
                 optional_get("EXECUTABLE"),
                 optional_get("SCRIPT"),
             )
+
+            new_content_dict = supreme_parser(config_file)
+
+            new_types_list, new_max_argc = cls._make_arg_types_list_new(
+                new_content_dict
+            )
+            new_job = cls(
+                name,
+                new_content_dict.get("INTERNAL", None),
+                new_content_dict.get("MIN_ARG", None),
+                new_max_argc,
+                new_types_list,
+                new_content_dict.get("EXECUTABLE", None),
+                new_content_dict.get("SCRIPT", None),
+            )
+
+            return new_job
         else:
             raise ConfigValidationError(f"Could not open config_file:{config_file!r}")
 
@@ -119,6 +167,19 @@ class WorkflowJob:
         if self.ert_script is not None:
             return issubclass(self.ert_script, ErtPlugin)
         return False
+
+    @classmethod
+    def stringToType(cls, string: str):
+        if string == "STRING":
+            return ContentTypeEnum.CONFIG_STRING
+        if string == "FLOAT":
+            return ContentTypeEnum.CONFIG_FLOAT
+        if string == "INT":
+            return ContentTypeEnum.CONFIG_INT
+        if string == "BOOL":
+            return ContentTypeEnum.CONFIG_BOOL
+
+        raise ValueError(f"Unknown content type")
 
     def argumentTypes(self) -> List["ContentTypes"]:
         def content_to_type(c: Optional[ContentTypeEnum]):

@@ -202,6 +202,8 @@ def _tree_to_dict(
     errors = []
     declared_kws: Set[str] = set()
 
+    cwd = os.path.dirname(os.path.abspath(config_file))
+
     for node in tree.children:
         try:
             kw, *args = node
@@ -214,7 +216,7 @@ def _tree_to_dict(
 
             args = constraints.join_args(args)  # no errors
             args = _substitute_args(args, constraints, defines)
-            args = constraints.apply_constraints(args, kw)
+            args = constraints.apply_constraints(args, kw, cwd)
 
             if constraints.multi_occurrence:
                 arglist = config_dict.get(kw, [])

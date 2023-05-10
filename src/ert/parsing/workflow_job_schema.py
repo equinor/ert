@@ -1,31 +1,18 @@
-from typing import Dict
+from typing import Dict, Set
 
-
-from .config_keywords import (
-    ConfigKeys,
-    RunModes,
-    QueueOptions,
-)
+from .schema_dict import SchemaItemDict
 from .schema_item_type import SchemaItemType
-from .config_schema_item import (
-    SchemaItem,
-    existing_path_keyword,
-    single_arg_keyword,
-    path_keyword,
-    string_keyword,
-    int_keyword,
-    float_keyword,
-)
-from .workflow_keywords import WorkflowJobKeys
+from .config_schema_item import SchemaItem
+from .workflow_job_keywords import WorkflowJobKeys
 
 
 def min_arg_keyword() -> SchemaItem:
     return SchemaItem(
         kw=WorkflowJobKeys.MIN_ARG,
-        required_set=True,
+        required_set=False,
         argc_min=1,
         argc_max=1,
-        type_map=[SchemaItemType.CONFIG_INT],
+        type_map=[SchemaItemType.INT],
     )
 
 
@@ -35,7 +22,7 @@ def max_arg_keyword() -> SchemaItem:
         required_set=False,
         argc_min=1,
         argc_max=1,
-        type_map=[SchemaItemType.CONFIG_INT],
+        type_map=[SchemaItemType.INT],
     )
 
 
@@ -45,7 +32,7 @@ def arg_type_keyword() -> SchemaItem:
         required_set=False,
         argc_min=2,
         argc_max=2,
-        type_map=[SchemaItemType.CONFIG_INT, SchemaItemType.CONFIG_STRING],
+        type_map=[SchemaItemType.INT, SchemaItemType.STRING],
         multi_occurrence=True,
     )
 
@@ -66,7 +53,7 @@ def executable_keyword() -> SchemaItem:
         required_set=False,
         argc_min=1,
         argc_max=1,
-        type_map=[SchemaItemType.CONFIG_EXECUTABLE],
+        type_map=[SchemaItemType.EXECUTABLE],
     )
 
 
@@ -76,7 +63,7 @@ def script_keyword() -> SchemaItem:
         required_set=False,
         argc_min=1,
         argc_max=1,
-        type_map=[SchemaItemType.CONFIG_PATH],
+        type_map=[SchemaItemType.PATH],
     )
 
 
@@ -84,12 +71,17 @@ def internal_keyword() -> SchemaItem:
     return SchemaItem(
         kw=WorkflowJobKeys.INTERNAL,
         required_set=False,
-        type_map=[SchemaItemType.CONFIG_BOOL],
+        type_map=[SchemaItemType.BOOL],
     )
 
 
+class WorkflowJobSchemaDict(SchemaItemDict):
+    def check_required(self, declared_kws: Set[str], filename: str):
+        super().check_required(declared_kws, filename)
+
+
 def init_workflow_schema() -> Dict[str, SchemaItem]:
-    schema = {}
+    schema = WorkflowJobSchemaDict()
     for item in [
         executable_keyword(),
         arglist_keyword(),

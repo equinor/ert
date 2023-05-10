@@ -58,7 +58,7 @@ class SchemaItem(BaseModel):
         )
 
     def token_to_value_with_context(
-        self, token: FileContextToken, index: int, keyword: FileContextToken
+        self, token: FileContextToken, index: int, keyword: FileContextToken, cwd: str
     ) -> Optional[ContextValue]:
         """
         Converts a FileContextToken to a value with context that
@@ -87,7 +87,7 @@ class SchemaItem(BaseModel):
         val_type = self.type_map[index]
         if val_type is None:
             return ContextString(str(token), token, keyword)
-        if val_type == SchemaItemType.CONFIG_BOOL:
+        if val_type == SchemaItemType.BOOL:
             if token.lower() == "true":
                 return ContextBool(True, token, keyword)
             elif token.lower() == "false":
@@ -100,7 +100,7 @@ class SchemaItem(BaseModel):
                         filename=token.filename,
                     ).set_context(token)
                 )
-        if val_type == SchemaItemType.CONFIG_INT:
+        if val_type == SchemaItemType.INT:
             try:
                 return ContextInt(int(token), token, keyword)
             except ValueError:
@@ -111,7 +111,7 @@ class SchemaItem(BaseModel):
                         filename=token.filename,
                     ).set_context(token)
                 )
-        if val_type == SchemaItemType.CONFIG_FLOAT:
+        if val_type == SchemaItemType.FLOAT:
             try:
                 return ContextFloat(float(token), token, keyword)
             except ValueError:
@@ -125,14 +125,14 @@ class SchemaItem(BaseModel):
 
         path: Optional[str] = str(token)
         if val_type in [
-            SchemaItemType.CONFIG_PATH,
-            SchemaItemType.CONFIG_EXISTING_PATH,
+            SchemaItemType.PATH,
+            SchemaItemType.EXISTING_PATH,
         ]:
             if not os.path.isabs(token):
                 path = os.path.normpath(
                     os.path.join(os.path.dirname(token.filename), token)
                 )
-            if val_type == SchemaItemType.CONFIG_EXISTING_PATH and not os.path.exists(
+            if val_type == SchemaItemType.EXISTING_PATH and not os.path.exists(
                 str(path)
             ):
                 err = f'Cannot find file or directory "{token.value}". '
@@ -144,11 +144,15 @@ class SchemaItem(BaseModel):
 
             assert isinstance(path, str)
             return ContextString(path, token, keyword)
-        if val_type == SchemaItemType.CONFIG_EXECUTABLE:
-            if not os.path.isabs(token) and not os.path.exists(token):
-                path = shutil.which(token)
+        if val_type == SchemaItemType.EXECUTABLE:
+            absolute_path: str = None
+            if not os.path.isabs(token):
+                # Try relative
+                absolute_path = os.path.abspath(os.path.join(cwd, token))
+            if not os.path.exists(absolute_path):
+                absolute_path = shutil.which(token)
 
-            if path is None:
+            if absolute_path is None:
                 raise ConfigValidationError.from_info(
                     ErrorInfo(
                         message=f"Could not find executable {token.value!r}",
@@ -156,10 +160,10 @@ class SchemaItem(BaseModel):
                     ).set_context(token)
                 )
 
-            if not os.access(path, os.X_OK):
+            if not os.access(absolute_path, os.X_OK):
                 context = (
-                    f"{token.value!r} which was resolved to {path!r}"
-                    if token.value != path
+                    f"{token.value!r} which was resolved to {absolute_path!r}"
+                    if token.value != absolute_path
                     else f"{token.value!r}"
                 )
                 raise ConfigValidationError.from_info(
@@ -168,13 +172,14 @@ class SchemaItem(BaseModel):
                         filename=token.filename,
                     ).set_context(token)
                 )
-            return ContextString(path, token, keyword)
+            return ContextString(absolute_path, token, keyword)
         return ContextString(str(token), token, keyword)
 
     def apply_constraints(
         self,
         args: List[Any],
         keyword: FileContextToken,
+        cwd: str,
     ) -> Union[List[Any], Any]:
         errors: List[Union[ErrorInfo, ConfigValidationError]] = []
 
@@ -182,7 +187,9 @@ class SchemaItem(BaseModel):
         for i, x in enumerate(args):
             if isinstance(x, FileContextToken):
                 try:
-                    value_with_context = self.token_to_value_with_context(x, i, keyword)
+                    value_with_context = self.token_to_value_with_context(
+                        x, i, keyword, cwd
+                    )
                     args_with_context.append(value_with_context)
                 except ConfigValidationError as err:
                     errors.append(err)
@@ -260,23 +267,23 @@ def check_required(
 
 
 def float_keyword(keyword: str) -> SchemaItem:
-    return SchemaItem(kw=keyword, type_map=[SchemaItemType.CONFIG_FLOAT])
+    return SchemaItem(kw=keyword, type_map=[SchemaItemType.FLOAT])
 
 
 def int_keyword(keyword: str) -> SchemaItem:
-    return SchemaItem(kw=keyword, type_map=[SchemaItemType.CONFIG_INT])
+    return SchemaItem(kw=keyword, type_map=[SchemaItemType.INT])
 
 
 def string_keyword(keyword: str) -> SchemaItem:
-    return SchemaItem(kw=keyword, type_map=[SchemaItemType.CONFIG_STRING])
+    return SchemaItem(kw=keyword, type_map=[SchemaItemType.STRING])
 
 
 def path_keyword(keyword: str) -> SchemaItem:
-    return SchemaItem(kw=keyword, type_map=[SchemaItemType.CONFIG_PATH])
+    return SchemaItem(kw=keyword, type_map=[SchemaItemType.PATH])
 
 
 def existing_path_keyword(keyword: str) -> SchemaItem:
-    return SchemaItem(kw=keyword, type_map=[SchemaItemType.CONFIG_EXISTING_PATH])
+    return SchemaItem(kw=keyword, type_map=[SchemaItemType.EXISTING_PATH])
 
 
 def single_arg_keyword(keyword: str) -> SchemaItem:

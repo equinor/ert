@@ -29,7 +29,7 @@ def num_realizations_keyword() -> SchemaItem:
         required_set=True,
         argc_min=1,
         argc_max=1,
-        type_map=[SchemaItemType.CONFIG_INT],
+        type_map=[SchemaItemType.INT],
     )
 
 
@@ -38,7 +38,7 @@ def run_template_keyword() -> SchemaItem:
         kw=ConfigKeys.RUN_TEMPLATE_KEY,
         argc_min=2,
         argc_max=CONFIG_DEFAULT_ARG_MAX,
-        type_map=[SchemaItemType.CONFIG_EXISTING_PATH],
+        type_map=[SchemaItemType.EXISTING_PATH],
         multi_occurrence=True,
     )
 
@@ -101,7 +101,7 @@ def history_source_keyword() -> SchemaItem:
 def stop_long_running_keyword() -> SchemaItem:
     return SchemaItem(
         kw=ConfigKeys.STOP_LONG_RUNNING_KEY,
-        type_map=[SchemaItemType.CONFIG_BOOL],
+        type_map=[SchemaItemType.BOOL],
         required_children_value={"TRUE": [ConfigKeys.MIN_REALIZATIONS_KEY]},
     )
 
@@ -130,7 +130,7 @@ def hook_workflow_keyword() -> SchemaItem:
         kw=ConfigKeys.HOOK_WORKFLOW_KEY,
         argc_min=2,
         argc_max=2,
-        type_map=[SchemaItemType.CONFIG_STRING, SchemaItemType.CONFIG_STRING],
+        type_map=[SchemaItemType.STRING, SchemaItemType.STRING],
         indexed_selection_set={1: list(RunModes)},
         multi_occurrence=True,
     )
@@ -167,7 +167,7 @@ def install_job_keyword() -> SchemaItem:
         argc_min=2,
         argc_max=2,
         multi_occurrence=True,
-        type_map=[None, SchemaItemType.CONFIG_EXISTING_PATH],
+        type_map=[None, SchemaItemType.EXISTING_PATH],
     )
 
 
@@ -177,7 +177,7 @@ def load_workflow_keyword() -> SchemaItem:
         argc_min=1,
         argc_max=2,
         multi_occurrence=True,
-        type_map=[SchemaItemType.CONFIG_EXISTING_PATH],
+        type_map=[SchemaItemType.EXISTING_PATH],
     )
 
 
@@ -187,7 +187,7 @@ def load_workflow_job_keyword() -> SchemaItem:
         argc_min=1,
         argc_max=2,
         multi_occurrence=True,
-        type_map=[SchemaItemType.CONFIG_EXISTING_PATH],
+        type_map=[SchemaItemType.EXISTING_PATH],
     )
 
 
@@ -213,7 +213,7 @@ def job_script_keyword() -> SchemaItem:
         kw=ConfigKeys.JOB_SCRIPT_KEY,
         argc_max=1,
         argc_min=1,
-        type_map=[SchemaItemType.CONFIG_EXECUTABLE],
+        type_map=[SchemaItemType.EXECUTABLE],
     )
 
 
@@ -224,9 +224,9 @@ def gen_kw_keyword() -> SchemaItem:
         argc_max=6,
         type_map=[
             None,
-            SchemaItemType.CONFIG_EXISTING_PATH,
-            SchemaItemType.CONFIG_STRING,
-            SchemaItemType.CONFIG_EXISTING_PATH,
+            SchemaItemType.EXISTING_PATH,
+            SchemaItemType.STRING,
+            SchemaItemType.EXISTING_PATH,
         ],
         multi_occurrence=True,
     )
@@ -238,7 +238,7 @@ def schedule_prediction_file_keyword() -> SchemaItem:
         required_set=False,
         argc_min=1,
         argc_max=3,
-        type_map=[SchemaItemType.CONFIG_STRING],
+        type_map=[SchemaItemType.STRING],
         deprecated=True,
         deprecate_msg="The SCHEDULE_PREDICTION_FILE config KEY has been removed.",
     )
@@ -291,7 +291,7 @@ def gen_data_keyword() -> SchemaItem:
 def workflow_job_directory_keyword() -> SchemaItem:
     return SchemaItem(
         kw=ConfigKeys.WORKFLOW_JOB_DIRECTORY_KEY,
-        type_map=[SchemaItemType.CONFIG_PATH],
+        type_map=[SchemaItemType.PATH],
         multi_occurrence=True,
     )
 
@@ -299,7 +299,7 @@ def workflow_job_directory_keyword() -> SchemaItem:
 def install_job_directory_keyword() -> SchemaItem:
     return SchemaItem(
         kw=ConfigKeys.INSTALL_JOB_DIRECTORY_KEY,
-        type_map=[SchemaItemType.CONFIG_PATH],
+        type_map=[SchemaItemType.PATH],
         multi_occurrence=True,
     )
 

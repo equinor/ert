@@ -611,6 +611,9 @@ class ErtConfig:
 
             files = os.listdir(job_path)
             for file_name in files:
+                if file_name.startswith("."):
+                    continue
+
                 full_path = os.path.join(job_path, file_name)
                 try:
                     new_job = WorkflowJob.fromFile(config_file=full_path)
