@@ -4,6 +4,7 @@ from ert._c_wrappers.enkf import ErtConfig
 from ert.parsing import ConfigValidationError
 
 
+@pytest.mark.filterwarnings("ignore::ert.parsing.config_errors.ConfigWarning")
 @pytest.mark.parametrize(
     "extra_config, expected",
     [
