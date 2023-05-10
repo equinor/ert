@@ -88,6 +88,30 @@ void ensemble_config_add_node(ensemble_config_type *ensemble_config,
             "** Warning: Invalid node passed to ensemble_config_add_node\n");
 }
 
+std::list<std::string>
+ensemble_config_get_summary_key_list(ensemble_config_type *ensemble_config,
+                                     const char *key,
+                                     const ecl_sum_type *refcase) {
+    std::list<std::string> keylist;
+    if (util_string_has_wildcard(key)) {
+        if (refcase != NULL) {
+            stringlist_type *keys = stringlist_alloc_new();
+            ecl_sum_select_matching_general_var_list(
+                refcase, key,
+                keys); /* expanding the wildcard notation with help of the refcase. */
+            int k;
+            for (k = 0; k < stringlist_get_size(keys); k++) {
+                keylist.push_back((std::string)stringlist_iget(keys, k));
+            }
+            stringlist_free(keys);
+        }
+    } else {
+        keylist.push_back((std::string)key);
+    }
+
+    return keylist;
+}
+
 void ensemble_config_init_SUMMARY_full(ensemble_config_type *ensemble_config,
                                        const char *key,
                                        const ecl_sum_type *refcase) {
@@ -168,4 +192,10 @@ ensemble_config_add_summary(ensemble_config_type *ensemble_config,
 ERT_CLIB_SUBMODULE("ensemble_config", m) {
     m.def("get_summary_keys",
           [](Cwrap<ensemble_config_type> self) { return self->summary_keys; });
+
+    m.def("get_summary_key_list",
+          [](Cwrap<ensemble_config_type> self, const char *key,
+             Cwrap<ecl_sum_type> refcase) {
+              return ensemble_config_get_summary_key_list(self, key, refcase);
+          });
 }

@@ -18,6 +18,7 @@ from ert._c_wrappers.enkf import GenKwConfig
 from ert._c_wrappers.enkf.config import EnkfConfigNode, GenDataConfig
 from ert._c_wrappers.enkf.config.field_config import TRANSFORM_FUNCTIONS, Field
 from ert._c_wrappers.enkf.config.parameter_config import ParameterConfig
+from ert._c_wrappers.enkf.config.summary_config import SummaryConfig
 from ert._c_wrappers.enkf.config.surface_config import SurfaceConfig
 from ert._c_wrappers.enkf.config_keys import ConfigKeys
 from ert._c_wrappers.enkf.enums import EnkfVarType, ErtImplType
@@ -218,6 +219,7 @@ class EnsembleConfig(BaseCClass):
         self._config_node_meta: Dict[str, ConfigNodeMeta] = {}
         self._gen_kw_node: Dict[str, GenKwConfig] = {}
         self._gen_data_config: Dict[str, GenDataConfig] = {}
+        self._summary_keys: Dict[str, str] = {}  # only holds a single key
 
         if c_ptr is None:
             raise ValueError("Failed to construct EnsembleConfig instance")
@@ -503,27 +505,24 @@ class EnsembleConfig(BaseCClass):
 
     def __getitem__(
         self, key: str
-    ) -> Union[EnkfConfigNode, ParameterConfig, GenKwConfig, GenDataConfig]:
+    ) -> Union[
+        EnkfConfigNode, ParameterConfig, GenKwConfig, GenDataConfig, SummaryConfig
+    ]:
         if key in self:
             node = self._get_node(key).setParent(self)
-            if node.getImplementationType() == ErtImplType.SUMMARY:
-                pass
-            else:
-                node.forward_init_file = self._config_node_meta[key].init_file
-                node.forward_init = self._config_node_meta[key].forward_init
-                node.output_file = self._config_node_meta[key].output_file
+            node.forward_init_file = self._config_node_meta[key].init_file
+            node.forward_init = self._config_node_meta[key].forward_init
+            node.output_file = self._config_node_meta[key].output_file
 
             return node
         elif key in self.py_nodes:
             node = self.py_nodes[key]
-
             if isinstance(node, GenKwConfig):
                 node.forward_init_file = self._config_node_meta[key].init_file
                 node.forward_init = self._config_node_meta[key].forward_init
                 node.output_file = self._config_node_meta[key].output_file
             elif isinstance(node, GenDataConfig):
                 node.input_file = self._config_node_meta[key].input_file
-
             return node
         else:
             raise KeyError(f"The key:{key} is not in the ensemble configuration")
@@ -536,15 +535,20 @@ class EnsembleConfig(BaseCClass):
 
     def getNode(
         self, key: str
-    ) -> Union[EnkfConfigNode, ParameterConfig, GenKwConfig, GenDataConfig]:
+    ) -> Union[
+        EnkfConfigNode, ParameterConfig, GenKwConfig, GenDataConfig, SummaryConfig
+    ]:
         return self[key]
 
     def alloc_keylist(self) -> StringList:
         return self._alloc_keylist()
 
-    def add_summary_full(self, key, refcase) -> EnkfConfigNode:
+    def add_summary_full(self, key, refcase) -> SummaryConfig:
         self._create_node_metainfo([key], 0, EnkfVarType.DYNAMIC_RESULT)
-        return self._add_summary_full(key, refcase)
+        keylist = _clib.ensemble_config.get_summary_key_list(self, key, refcase)
+        for k in keylist:
+            summary_config_node = SummaryConfig(k)
+            self.addNode(summary_config_node)
 
     def _check_config_node(self, node: GenKwConfig):
         errors = []
@@ -670,7 +674,7 @@ class EnsembleConfig(BaseCClass):
         )
 
     def get_summary_keys(self) -> List[str]:
-        return sorted(_clib.ensemble_config.get_summary_keys(self))
+        return sorted(self._summary_keys.values())
 
     def get_keyword_model_config(self, key: str) -> GenKwConfig:
         return self._gen_kw_node[key]

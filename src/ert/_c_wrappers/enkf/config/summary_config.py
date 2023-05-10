@@ -1,19 +1,30 @@
-from cwrap import BaseCClass
+from typing import List
 
-from ert._c_wrappers import ResPrototype
+from ert._c_wrappers.enkf.enums.ert_impl_type_enum import ErtImplType
 
 
-class SummaryConfig(BaseCClass):
+class SummaryConfig:
     TYPE_NAME = "summary_config"
-    _alloc = ResPrototype("void* summary_config_alloc(char*)", bind=False)
-    _free = ResPrototype("void  summary_config_free(summary_config)")
 
     def __init__(self, key):
-        c_ptr = self._alloc(key)
-        super().__init__(c_ptr)
+        self.name = key
+        self._observation_list: List[str] = []
+
+    def update_observation_keys(self, observations: List[str]):
+        self._observation_list = observations
+        self._observation_list.sort()
+
+    def getObservationKeys(self) -> List[str]:
+        return self._observation_list
+
+    def getImplementationType(self) -> ErtImplType:
+        return ErtImplType.SUMMARY
+
+    def getKey(self):
+        return self.name
 
     def __repr__(self):
-        return f"SummaryConfig() {self._ad_str()}"
-
-    def free(self):
-        self._free()
+        return (
+            f"SummaryConfig(key={self.name}, "
+            f"observation_keys={self._observation_list})"
+        )
