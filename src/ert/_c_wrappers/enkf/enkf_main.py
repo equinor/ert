@@ -471,6 +471,7 @@ class EnKFMain:
                     forward_model_output = ert_config.forward_model_data_to_json(
                         ert_config.forward_model_list,
                         run_arg.get_run_id(),
+                        Path(ert_config.user_config_file),
                         run_arg.iens,
                         run_context.iteration,
                         run_context.substituter,

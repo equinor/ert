@@ -267,6 +267,8 @@ def verify_json_dump(selected_jobs, run_id):
         "_ERT_REALIZATION_NUMBER": "0",
         "_ERT_RUNPATH": "./",
     }
+    assert "config_path" in config
+    assert "config_file" in config
     assert run_id == config["run_id"]
     assert len(selected_jobs) == len(config["jobList"])
 
@@ -304,6 +306,27 @@ def verify_json_dump(selected_jobs, run_id):
 
         job["argList"] = arg_list_back_up
         job["name"] = name_back_up
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_config_path_and_file():
+    forward_model_list = set_up_forward_model([])
+    run_id = "test_config_path_and_file_in_jobs_json"
+
+    write_jobs_json(
+        ".",
+        ErtConfig.forward_model_data_to_json(
+            forward_model_list,
+            run_id,
+            Path("path_to_config_file/config.ert"),
+            context=context,
+        ),
+    )
+    jobs_json = load_configs(JOBS_JSON_FILE)
+    assert "config_path" in jobs_json
+    assert "config_file" in jobs_json
+    assert jobs_json["config_path"] == "path_to_config_file"
+    assert jobs_json["config_file"] == "config.ert"
 
 
 @pytest.mark.usefixtures("use_tmpdir")
