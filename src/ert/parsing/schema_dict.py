@@ -1,7 +1,7 @@
 from typing import List, Set
 
-from ert.parsing import ConfigValidationError
-from ert.parsing.error_info import ErrorInfo
+from .config_errors import ConfigValidationError
+from .error_info import ErrorInfo
 
 
 class SchemaItemDict(dict):

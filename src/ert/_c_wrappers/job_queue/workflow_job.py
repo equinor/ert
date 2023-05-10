@@ -7,12 +7,15 @@ from typing import List, Mapping, Optional, Type, Union
 
 from ert._c_wrappers.config import ConfigParser, ContentTypeEnum
 from ert._clib.job_kw import type_from_kw
-from ert.parsing import ConfigValidationError, lark_parse
+from ert.parsing import (
+    ConfigValidationError,
+    Instruction,
+    SchemaItemType,
+    WorkflowJobKeys,
+    init_workflow_schema,
+    lark_parse,
+)
 
-from ...parsing.schema_item_type import SchemaItemType
-from ...parsing.types import Instruction
-from ...parsing.workflow_job_keywords import WorkflowJobKeys
-from ...parsing.workflow_job_schema import init_workflow_schema
 from .ert_plugin import ErtPlugin
 from .ert_script import ErtScript
 
@@ -43,9 +46,9 @@ def _workflow_job_config_parser() -> ConfigParser:
 _config_parser = _workflow_job_config_parser()
 
 
-def supreme_parser(file: str):
-    best_schema = init_workflow_schema()
-    return lark_parse(file, schema=best_schema)
+def new_workflow_job_parser(file: str):
+    schema = init_workflow_schema()
+    return lark_parse(file, schema=schema)
 
 
 class ErtScriptLoadFailure(ValueError):
@@ -148,7 +151,7 @@ class WorkflowJob:
                 )
 
             else:
-                new_content_dict = supreme_parser(config_file)
+                new_content_dict = new_workflow_job_parser(config_file)
 
                 new_types_list, new_max_argc = cls._make_arg_types_list_new(
                     new_content_dict

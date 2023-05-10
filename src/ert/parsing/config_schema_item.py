@@ -1,6 +1,6 @@
 import os
 import shutil
-from typing import Any, List, Mapping, Optional, Set, Union
+from typing import Any, List, Mapping, Optional, Union
 
 from pydantic import BaseModel
 
@@ -229,41 +229,6 @@ class SchemaItem(BaseModel):
                 new_line.append(joined)
             return new_line
         return line
-
-
-def check_required(
-    schema: Mapping[str, SchemaItem],
-    declared_kws: Set[str],
-    filename: str,
-) -> None:
-    errors: List[ErrorInfo] = []
-
-    # schema.values()
-    # can return duplicate values due to aliases
-    # so we need to run this keyed by the keyword itself
-    # Ex: there is an alias for NUM_REALIZATIONS
-    # NUM_REALISATIONS
-    # both with the same value
-    # which causes .values() to return the NUM_REALIZATIONS keyword twice
-    # which again leads to duplicate collection of errors related to this
-    visited: Set[str] = set()
-
-    for constraints in schema.values():
-        if constraints.kw in visited:
-            continue
-
-        visited.add(constraints.kw)
-
-        if constraints.required_set and constraints.kw not in declared_kws:
-            errors.append(
-                ErrorInfo(
-                    message=f"{constraints.kw} must be set.",
-                    filename=filename,
-                )
-            )
-
-    if len(errors) > 0:
-        raise ConfigValidationError(errors=errors)
 
 
 def float_keyword(keyword: str) -> SchemaItem:

@@ -27,7 +27,13 @@ from ert._c_wrappers.job_queue import (
 from ert._c_wrappers.util import SubstitutionList
 from ert._clib import job_kw
 from ert._clib.config_keywords import init_site_config_parser, init_user_config_parser
-from ert.parsing import ConfigValidationError, ConfigWarning, lark_parse
+from ert.parsing import (
+    ConfigValidationError,
+    ConfigWarning,
+    init_site_config_schema,
+    init_user_config_schema,
+    lark_parse,
+)
 from ert.parsing.error_info import ErrorInfo
 
 from ._config_content_as_dict import config_content_as_dict
@@ -256,7 +262,9 @@ class ErtConfig:
     @classmethod
     def read_site_config(cls, use_new_parser: bool = USE_NEW_PARSER_BY_DEFAULT):
         if use_new_parser:
-            return lark_parse(site_config_location())
+            return lark_parse(
+                file=site_config_location(), schema=init_site_config_schema()
+            )
         else:
             site_config_parser = ConfigParser()
             init_site_config_parser(site_config_parser)
@@ -269,7 +277,11 @@ class ErtConfig:
     ):
         site_config = cls.read_site_config(use_new_parser=use_new_parser)
         if use_new_parser:
-            return lark_parse(user_config_file, site_config)
+            return lark_parse(
+                file=user_config_file,
+                schema=init_user_config_schema(),
+                site_config=site_config,
+            )
         else:
             user_config_parser = ErtConfig._create_user_config_parser()
             user_config_content = user_config_parser.parse(
@@ -611,9 +623,6 @@ class ErtConfig:
 
             files = os.listdir(job_path)
             for file_name in files:
-                if file_name.startswith("."):
-                    continue
-
                 full_path = os.path.join(job_path, file_name)
                 try:
                     new_job = WorkflowJob.fromFile(config_file=full_path)
