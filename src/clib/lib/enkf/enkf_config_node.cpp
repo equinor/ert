@@ -15,6 +15,7 @@
 #include <ert/util/string_util.h>
 #include <ert/util/stringlist.h>
 #include <ert/util/vector.h>
+#include <list>
 
 namespace fs = std::filesystem;
 
@@ -86,6 +87,25 @@ const char *enkf_config_node_get_key(const enkf_config_node_type *config_node) {
 const stringlist_type *
 enkf_config_node_get_obs_keys(const enkf_config_node_type *config_node) {
     return config_node->obs_keys;
+}
+
+void enkf_config_node_update_obs_keys(enkf_config_node_type *config_node,
+                                      std::list<std::string> obs_key_list) {
+
+    stringlist_clear(config_node->obs_keys);
+
+    for (auto const &obs_key : obs_key_list) {
+        stringlist_append_copy(config_node->obs_keys, obs_key.c_str());
+    }
+}
+
+ERT_CLIB_SUBMODULE("enkf_config_node", m) {
+    using namespace py::literals;
+
+    m.def("update_obs_keys", [](Cwrap<enkf_config_node_type> node,
+                                std::list<std::string> obs_key_list) {
+        enkf_config_node_update_obs_keys(node, obs_key_list);
+    });
 }
 
 VOID_FREE(enkf_config_node)

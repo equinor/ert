@@ -40,7 +40,6 @@ extern "C" enkf_config_node_type *enkf_config_node_alloc(ert_impl_type,
 extern "C" enkf_config_node_type *
 enkf_config_node_alloc_summary(const char *key);
 
-extern "C" enkf_config_node_type *
 extern "C" const stringlist_type *
 enkf_config_node_get_obs_keys(const enkf_config_node_type *);
 extern "C" void enkf_config_node_free(enkf_config_node_type *);

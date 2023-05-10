@@ -21,6 +21,7 @@
 #include <ert/util/hash.h>
 #include <ert/util/type_vector_functions.h>
 #include <ert/util/vector.h>
+#include <map>
 
 /**
 
@@ -155,18 +156,15 @@ struct enkf_obs_struct {
     std::string error;
     /* Several shared resources - can generally be NULL*/
     const ecl_sum_type *refcase;
-    ensemble_config_type *ensemble_config;
 };
 
 enkf_obs_type *enkf_obs_alloc(std::shared_ptr<TimeMap> external_time_map,
-                              const ecl_sum_type *refcase,
-                              ensemble_config_type *ensemble_config) {
+                              const ecl_sum_type *refcase) {
     auto enkf_obs = new enkf_obs_type;
     enkf_obs->obs_hash = hash_alloc();
     enkf_obs->obs_vector = vector_alloc_new();
 
     enkf_obs->refcase = refcase;
-    enkf_obs->ensemble_config = ensemble_config;
     enkf_obs->error = "";
 
     /* Initialize obs time: */
@@ -243,37 +241,23 @@ int enkf_obs_get_size(const enkf_obs_type *obs) {
     return vector_get_size(obs->obs_vector);
 }
 
-/**
-   Adding inverse observation keys to the enkf_nodes; can be called
-   several times.
-*/
-static void enkf_obs_update_keys(Cwrap<enkf_obs_type> enkf_obs) {
-    /* First clear all existing observation keys. */
-    for (auto &config_pair : enkf_obs->ensemble_config->config_nodes) {
-        enkf_config_node_type *config_node = config_pair.second;
-        stringlist_clear(config_node->obs_keys);
-    }
+static std::map<std::string, std::string>
+enkf_obs_get_time_map(Cwrap<enkf_obs_type> enkf_obs) {
+    std::map<std::string, std::string> data_map =
+        std::map<std::string, std::string>();
 
-    /* Add new observation keys. */
     hash_type *map = enkf_obs_alloc_data_map(enkf_obs);
     hash_iter_type *iter = hash_iter_alloc(map);
     const char *obs_key = hash_iter_get_next_key(iter);
     while (obs_key != NULL) {
         const char *state_kw = (const char *)hash_get(map, obs_key);
-
-        enkf_config_node_type *node =
-            enkf_obs->ensemble_config->config_nodes.at(state_kw);
-
-        if (!stringlist_contains(node->obs_keys, obs_key))
-            stringlist_append_copy(node->obs_keys, obs_key);
-
+        data_map[(std::string)obs_key] = (std::string)state_kw;
         obs_key = hash_iter_get_next_key(iter);
-    }
-    for (auto &[kw, node] : enkf_obs->ensemble_config->config_nodes) {
-        stringlist_sort(node->obs_keys, NULL);
     }
     hash_iter_free(iter);
     hash_free(map);
+
+    return data_map;
 }
 
 std::shared_ptr<conf_class_type> enkf_obs_get_obs_conf_class() {
@@ -692,9 +676,8 @@ hash_type *enkf_obs_alloc_data_map(enkf_obs_type *enkf_obs) {
 
 namespace {
 py::handle pybind_alloc(std::shared_ptr<TimeMap> external_time_map,
-                        Cwrap<ecl_sum_type> refcase,
-                        Cwrap<ensemble_config_type> ensemble_config) {
-    auto ptr = enkf_obs_alloc(external_time_map, refcase, ensemble_config);
+                        Cwrap<ecl_sum_type> refcase) {
+    auto ptr = enkf_obs_alloc(external_time_map, refcase);
     return PyLong_FromVoidPtr(ptr);
 }
 
@@ -739,9 +722,7 @@ ERT_CLIB_SUBMODULE("enkf_obs", m) {
             return conf_instance_validate(self);
         });
     m.def("obs_time", [](Cwrap<enkf_obs_type> self) { return self->obs_time; });
-    m.def("alloc", pybind_alloc, "time_map"_a, "refcase"_a,
-          "ensemble_config"_a);
-    m.def("update_keys", enkf_obs_update_keys, py::arg("self"));
+    m.def("alloc", pybind_alloc, "time_map"_a, "refcase"_a);
     m.def("read_from_refcase",
           [](Cwrap<ecl_sum_type> refcase, std::string local_key) {
               int num_steps = ecl_sum_get_last_report_step(refcase);
@@ -760,4 +741,5 @@ ERT_CLIB_SUBMODULE("enkf_obs", m) {
 
               return std::make_pair(valid, value);
           });
+    m.def("get_time_map", enkf_obs_get_time_map, py::arg("self"));
 }
