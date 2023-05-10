@@ -630,13 +630,12 @@ def test_unopenable_observation_config_fails_gracefully(copy_case):
     observation_config_abs_path = os.path.join(os.getcwd(), observation_config_rel_path)
     os.chmod(observation_config_abs_path, 0x0)
 
-    try:
+    with pytest.raises(
+        ValueError,
+        match="Do not have permission to open observation config file "
+        f"{observation_config_abs_path!r}",
+    ):
         run_ert_test_run(config_file_name)
-    except RuntimeError as err:
-        assert (
-            "Do not have permission to open observation config file "
-            f"{observation_config_abs_path!r}" in str(err)
-        )
 
 
 def run_ert_test_run(config_file: str) -> None:

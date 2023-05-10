@@ -247,14 +247,8 @@ double conf_instance_get_item_value_double(
 time_t conf_instance_get_item_value_time_t(
     std::shared_ptr<conf_instance_type> conf_instance, std::string item_name);
 
-char *
-conf_instance_get_path_error(std::shared_ptr<conf_instance_type> conf_instance);
-
-/** V A L I D A T O R S */
-
-bool conf_instance_validate(std::shared_ptr<conf_instance_type> conf_instance);
-
-/** A L L O C   F R O M   F I L E */
+std::vector<std::string>
+conf_instance_validate(std::shared_ptr<conf_instance_type> conf_instance);
 
 std::shared_ptr<conf_instance_type>
 conf_instance_alloc_from_file(std::shared_ptr<conf_class_type> conf_class,

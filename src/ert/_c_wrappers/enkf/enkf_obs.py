@@ -442,17 +442,11 @@ class EnkfObs(BaseCClass):
             self.addObservationVector(obs_vector)
 
     def load(
-        self, history: Optional[HistorySourceEnum], config_file: str, std_cutoff: float
+        self,
+        history: Optional[HistorySourceEnum],
+        conf_instance: _clib.enkf_obs.ConfInstance,
+        std_cutoff: float,
     ) -> None:
-        if not os.access(config_file, os.R_OK):
-            raise RuntimeError(
-                "Do not have permission to open observation "
-                f"config file {config_file!r}"
-            )
-        conf_instance = _clib.enkf_obs.ConfInstance(config_file)
-        errors = conf_instance.get_errors()
-        if errors != "":
-            raise ValueError(errors)
         self._handle_history_observation(conf_instance, std_cutoff, history)
         self._handle_summary_observation(conf_instance)
         self._handle_general_observation(conf_instance)
@@ -472,25 +466,48 @@ class EnkfObs(BaseCClass):
             config.ensemble_config.refcase,
             config.ensemble_config,
         )
-        if config.model_config.obs_config_file:
+        obs_config_file = config.model_config.obs_config_file
+        if obs_config_file:
             if (
-                os.path.isfile(config.model_config.obs_config_file)
-                and os.path.getsize(config.model_config.obs_config_file) == 0
+                os.path.isfile(obs_config_file)
+                and os.path.getsize(obs_config_file) == 0
             ):
                 raise ObservationConfigError(
-                    f"Empty observations file: "
-                    f"{config.model_config.obs_config_file}"
+                    [
+                        ErrorInfo(
+                            message=f"Empty observations file: {obs_config_file}",
+                            filename=config.user_config_file,
+                        ).set_context(obs_config_file)
+                    ]
                 )
 
             if ret.error:
                 raise ObservationConfigError(
                     f"{ret.error}",
-                    config_file=config.model_config.obs_config_file,
+                    config_file=obs_config_file,
+                )
+            if not os.access(obs_config_file, os.R_OK):
+                raise ObservationConfigError(
+                    [
+                        ErrorInfo(
+                            message="Do not have permission to open observation"
+                            f" config file {obs_config_file!r}",
+                            filename=config.user_config_file,
+                        ).set_context(obs_config_file)
+                    ]
+                )
+            conf_instance = _clib.enkf_obs.ConfInstance(obs_config_file)
+            errors = conf_instance.get_errors()
+            if errors != []:
+                raise ObservationConfigError(
+                    errors=[
+                        ErrorInfo(filename=obs_config_file, message=e) for e in errors
+                    ]
                 )
             try:
                 ret.load(
                     config.model_config.history_source,
-                    config.model_config.obs_config_file,
+                    conf_instance,
                     config.analysis_config.get_std_cutoff(),
                 )
             except IndexError as err:
@@ -499,19 +516,19 @@ class EnkfObs(BaseCClass):
                         f"{err}. The time map is set from the REFCASE keyword. Either "
                         "the REFCASE has an incorrect/missing date, or the observation "
                         "is given an incorrect date.",
-                        config_file=config.model_config.obs_config_file,
+                        config_file=obs_config_file,
                     ) from err
                 raise ObservationConfigError(
                     f"{err}. The time map is set from the TIME_MAP"
                     "keyword. Either the time map file has an"
                     "incorrect/missing date, or the  observation is given an"
                     "incorrect date.",
-                    config_file=config.model_config.obs_config_file,
+                    config_file=obs_config_file,
                 ) from err
 
             except ValueError as err:
                 raise ObservationConfigError(
-                    str(err).replace("\n", " ").replace("  ", " "),
-                    config_file=config.model_config.obs_config_file,
+                    str(err),
+                    config_file=obs_config_file,
                 ) from err
         return ret
