@@ -164,6 +164,7 @@ def test_forward_model_job(job, forward_model, expected_args):
         ert_config.forward_model_data_to_json(
             forward_model,
             "",
+            None,
             0,
             0,
             ert_config.substitution_list,
@@ -260,7 +261,7 @@ def test_simulation_job(job, forward_model, expected_args):
     forward_model_list = ert.resConfig().forward_model_list
     forward_model_job = forward_model_list[0]
     job_data = ErtConfig.forward_model_data_to_json(
-        forward_model_list, "", 0, 0, ert.get_context(), ert_config.env_vars
+        forward_model_list, "", None, 0, 0, ert.get_context(), ert_config.env_vars
     )["jobList"][0]
     assert len(forward_model_list) == 1
     assert job_data["argList"] == expected_args
@@ -293,7 +294,7 @@ def test_that_private_over_global_args_gives_logging_message(caplog):
 
     forward_model_list = ert.resConfig().forward_model_list
     job_data = ErtConfig.forward_model_data_to_json(
-        forward_model_list, "", 0, 0, ert.get_context(), ert_config.env_vars
+        forward_model_list, "", None, 0, 0, ert.get_context(), ert_config.env_vars
     )["jobList"][0]
     assert len(forward_model_list) == 1
     assert job_data["argList"] == ["B"]
@@ -328,7 +329,7 @@ def test_that_private_over_global_args_does_not_give_logging_message_for_argpass
 
     forward_model_list = ert.resConfig().forward_model_list
     job_data = ErtConfig.forward_model_data_to_json(
-        forward_model_list, "", 0, 0, ert.get_context(), ert_config.env_vars
+        forward_model_list, "", None, 0, 0, ert.get_context(), ert_config.env_vars
     )["jobList"][0]
     assert len(forward_model_list) == 1
     assert job_data["argList"] == ["A"]
@@ -379,6 +380,7 @@ def test_that_environment_variables_are_set_in_forward_model(
         ert_config.forward_model_data_to_json(
             forward_model_list,
             "",
+            None,
             0,
             0,
             ert_config.substitution_list,
