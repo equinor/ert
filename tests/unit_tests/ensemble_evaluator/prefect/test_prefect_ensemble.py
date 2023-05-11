@@ -105,6 +105,7 @@ def dummy_get_flow(*args, **kwargs):
     sys.platform.startswith("darwin"),
     reason="On darwin patching is unreliable since processes may use 'spawn'.",
 )
+@pytest.mark.filterwarnings("ignore::pytest.PytestUnhandledThreadExceptionWarning")
 def test_run_prefect_ensemble_exception(evaluator_config, poly_ensemble):
     """Test prefect on flow with runtime-error"""
     poly_ensemble.get_flow = dummy_get_flow
@@ -164,6 +165,7 @@ def test_prefect_retries(
 
 
 @pytest.mark.timeout(60)
+@pytest.mark.filterwarnings("ignore::pytest.PytestUnhandledThreadExceptionWarning")
 def test_prefect_no_retries(
     evaluator_config, function_ensemble_builder_factory, tmpdir
 ):
