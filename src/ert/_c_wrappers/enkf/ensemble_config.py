@@ -544,8 +544,9 @@ class EnsembleConfig(BaseCClass):
         self._create_node_metainfo([key], 0, EnkfVarType.DYNAMIC_RESULT)
         keylist = _clib.ensemble_config.get_summary_key_list(self, key, refcase)
         for k in keylist:
-            summary_config_node = SummaryConfig(k)
-            self.addNode(summary_config_node)
+            if k not in self.get_node_keylist():
+                summary_config_node = SummaryConfig(k)
+                self.addNode(summary_config_node)
 
     def _check_config_node(self, node: GenKwConfig):
         errors = []
