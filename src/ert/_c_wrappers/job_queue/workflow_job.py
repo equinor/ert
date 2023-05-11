@@ -92,7 +92,14 @@ class WorkflowJob:
             # SchemaItemType
             arg_types_dict[i] = WorkflowJob.stringToType(type_as_string)
 
-        types_list = [arg_types_dict[i] for i in range(max(arg_types_dict.keys()) + 1)]
+        num_args_from_dict = max(arg_types_dict.keys()) + 1
+        num_args_from_config = content_dict.get("MAX_ARG", 0)
+        num_args = max(num_args_from_dict, num_args_from_config)
+
+        types_list = [
+            arg_types_dict.get(i, ContentTypeEnum.CONFIG_STRING)
+            for i in range(num_args)
+        ]
         max_argc_from_type_list = len(types_list)
         max_argc_from_dict = content_dict.get(
             WorkflowJobKeys.MAX_ARG, max_argc_from_type_list
