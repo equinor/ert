@@ -82,7 +82,7 @@ class EnkfConfigNode(BaseCClass):
         cls,
         key: str,
         input_keys: Union[List[str], Dict[str, List[Tuple[str, str]]]],
-    ) -> ExtParamConfig:
+    ) -> "EnkfConfigNode":
         config = ExtParamConfig(key, input_keys)
         node = cls._alloc(
             ErtImplType.EXT_PARAM,
