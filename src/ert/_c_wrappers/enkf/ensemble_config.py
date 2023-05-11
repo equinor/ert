@@ -559,7 +559,9 @@ class EnsembleConfig(BaseCClass):
         self._gen_kw_node[key] = node
         self.addNode(node)
 
-    def addNode(self, config_node: Union[EnkfConfigNode, Field, GenKwConfig]):
+    def addNode(
+        self, config_node: Union[EnkfConfigNode, Field, GenKwConfig, SurfaceConfig]
+    ):
         assert config_node is not None
         self.check_unique_node(config_node.getKey())
 
