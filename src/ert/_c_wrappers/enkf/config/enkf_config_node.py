@@ -7,7 +7,6 @@ from ert._c_wrappers import ResPrototype
 from ert._c_wrappers.enkf.enums import ErtImplType
 
 from .ext_param_config import ExtParamConfig
-from .summary_config import SummaryConfig
 
 logger = logging.getLogger(__name__)
 
@@ -19,10 +18,6 @@ class EnkfConfigNode(BaseCClass):
         "enkf_config_node_obj enkf_config_node_alloc(ert_impl_type_enum, \
                                                      char*, \
                                                      void*)",
-        bind=False,
-    )
-    _alloc_summary_node = ResPrototype(
-        "enkf_config_node_obj enkf_config_node_alloc_summary(char*)",
         bind=False,
     )
     _get_ref = ResPrototype(
@@ -42,13 +37,6 @@ class EnkfConfigNode(BaseCClass):
 
     def getPointerReference(self):
         return self._get_ref()
-
-    def getSummaryModelConfig(self) -> SummaryConfig:
-        return SummaryConfig.createCReference(self._get_ref(), parent=self)
-
-    @classmethod
-    def createSummaryConfigNode(cls, key: str) -> "EnkfConfigNode":
-        return cls._alloc_summary_node(key)
 
     @classmethod
     def create_ext_param(
@@ -80,14 +68,10 @@ class EnkfConfigNode(BaseCClass):
 
     def getModelConfig(
         self,
-    ) -> Union[SummaryConfig, ExtParamConfig]:
+    ) -> ExtParamConfig:
         implementation_type = self.getImplementationType()
 
-        if implementation_type == ErtImplType.SUMMARY:
-            return SummaryConfig.createCReference(
-                self.getPointerReference(), parent=self
-            )
-        elif implementation_type == ErtImplType.EXT_PARAM:
+        if implementation_type == ErtImplType.EXT_PARAM:
             return ExtParamConfig.createCReference(
                 self.getPointerReference(), parent=self
             )
@@ -106,14 +90,6 @@ class EnkfConfigNode(BaseCClass):
                 self.getImplementationType() != other.getImplementationType(),
                 self.getKey() != other.getKey(),
             )
-        ):
-            return False
-
-        if any(
-            [
-                self.getImplementationType() == ErtImplType.SUMMARY
-                and self.getSummaryModelConfig() != other.getSummaryModelConfig(),
-            ]
         ):
             return False
 

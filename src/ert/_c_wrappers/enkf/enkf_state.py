@@ -9,7 +9,6 @@ from typing import TYPE_CHECKING
 import numpy as np
 from ecl.summary import EclSum
 
-from ert._c_wrappers.enkf.enums.ert_impl_type_enum import ErtImplType
 from ert.load_status import LoadResult, LoadStatus
 
 if TYPE_CHECKING:
@@ -21,15 +20,13 @@ logger = logging.getLogger(__name__)
 def _internalize_GEN_DATA(
     ensemble_config: EnsembleConfig, run_arg: RunArg
 ) -> LoadResult:
-    keys = ensemble_config.getKeylistFromImplType(ErtImplType.GEN_DATA)
-
     run_path = Path(run_arg.runpath)
     errors = []
     all_data = {}
-    for key in keys:
-        config_node = ensemble_config[key]
+    for key in ensemble_config.get_keylist_gen_data():
+        config_node = ensemble_config.getNode(key)
         filename_fmt = config_node.input_file
-        for i in config_node.getModelConfig().getReportSteps():
+        for i in config_node.getReportSteps():
             filename = filename_fmt % i
             if not Path.exists(run_path / filename):
                 errors.append(f"{key} report step {i} missing")

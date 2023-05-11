@@ -8,7 +8,7 @@ from deprecation import deprecated
 from ecl.grid import EclGrid
 from pandas import DataFrame, Series
 
-from ert._c_wrappers.enkf import EnKFMain, EnsembleConfig, ErtConfig, ErtImplType
+from ert._c_wrappers.enkf import EnKFMain, EnsembleConfig, ErtConfig
 from ert._c_wrappers.enkf.config import GenKwConfig
 from ert._c_wrappers.enkf.config.field_config import Field
 from ert._c_wrappers.enkf.config.gen_data_config import GenDataConfig
@@ -502,14 +502,7 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
         return key in self.get_summary_keys()
 
     def get_summary_keys(self) -> List[str]:
-        return sorted(
-            list(
-                self._enkf_main.ensembleConfig().getKeylistFromImplType(
-                    ErtImplType.SUMMARY
-                )
-            ),
-            key=lambda k: k.lower(),
-        )
+        return self._enkf_main.ensembleConfig().get_summary_keys()
 
     def is_gen_kw_key(self, key: str) -> bool:
         return key in self.gen_kw_keys()
@@ -536,9 +529,7 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
         return key in self.get_gen_data_keys()
 
     def get_gen_data_keys(self) -> List[str]:
-        gen_data_keys = self._enkf_main.ensembleConfig().getKeylistFromImplType(
-            ErtImplType.GEN_DATA
-        )
+        gen_data_keys = self._enkf_main.ensembleConfig().get_keylist_gen_data()
         gen_data_list = []
         for key in gen_data_keys:
             gen_data_config = self._enkf_main.ensembleConfig().getNodeGenData(key)

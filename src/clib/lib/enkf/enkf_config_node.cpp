@@ -31,10 +31,6 @@ static enkf_config_node_type *enkf_config_node_alloc__(ert_impl_type impl_type,
     node->freef = NULL;
 
     switch (impl_type) {
-    case (SUMMARY):
-        node->freef = summary_config_free__;
-        node->get_data_size = summary_config_get_data_size__;
-        break;
     case (EXT_PARAM):
         node->freef = ext_param_config_free__;
         node->get_data_size = ext_param_config_get_data_size__;
@@ -52,12 +48,6 @@ enkf_config_node_type *enkf_config_node_alloc(ert_impl_type impl_type,
     enkf_config_node_type *node = enkf_config_node_alloc__(impl_type, key);
     node->data = data;
     return node;
-}
-
-enkf_config_node_type *enkf_config_node_alloc_summary(const char *key) {
-    enkf_config_node_type *config_node = enkf_config_node_alloc__(SUMMARY, key);
-    config_node->data = summary_config_alloc(key);
-    return config_node;
 }
 
 void enkf_config_node_free(enkf_config_node_type *node) {

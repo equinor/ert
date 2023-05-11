@@ -160,9 +160,6 @@ class EnsembleConfig(BaseCClass):
     _add_node = ResPrototype(
         "void ensemble_config_add_node( ens_config , enkf_config_node )"
     )
-    _add_summary_full = ResPrototype(
-        "void ensemble_config_init_SUMMARY_full(ens_config, char*, ecl_sum)"
-    )
 
     @staticmethod
     def _load_refcase(refcase_file: Optional[str]) -> Optional[EclSum]:
@@ -495,8 +492,8 @@ class EnsembleConfig(BaseCClass):
             "EnsembleConfig(config_dict={"
             + self._gen_data_info()
             + self._gen_kw_info()
-            + self._node_info(ConfigKeys.SURFACE_KEY)
-            + self._node_info(ConfigKeys.SUMMARY)
+            + self._node_info(ConfigKeys.SURFACE_KEY)  # ael
+            # + self._node_info(ConfigKeys.SUMMARY) ael
             + self._node_info(ConfigKeys.FIELD_KEY)
             + f"{ConfigKeys.GRID}: {self._grid_file},"
             + f"{ConfigKeys.REFCASE}: {self._refcase_file}"
@@ -617,6 +614,9 @@ class EnsembleConfig(BaseCClass):
 
     def get_keylist_gen_kw(self) -> List[str]:
         return list(self._gen_kw_node.keys())
+
+    def get_keylist_gen_data(self) -> List[str]:
+        return list(self._gen_data_config.keys())
 
     @property
     def grid_file(self) -> Optional[str]:

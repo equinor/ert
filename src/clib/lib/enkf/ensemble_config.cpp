@@ -112,27 +112,6 @@ ensemble_config_get_summary_key_list(ensemble_config_type *ensemble_config,
     return keylist;
 }
 
-void ensemble_config_init_SUMMARY_full(ensemble_config_type *ensemble_config,
-                                       const char *key,
-                                       const ecl_sum_type *refcase) {
-    ensemble_config->summary_keys.push_back(std::string(key));
-    if (util_string_has_wildcard(key)) {
-        if (refcase != NULL) {
-            stringlist_type *keys = stringlist_alloc_new();
-            ecl_sum_select_matching_general_var_list(
-                refcase, key,
-                keys); /* expanding the wildcard notation with help of the refcase. */
-            int k;
-            for (k = 0; k < stringlist_get_size(keys); k++)
-                ensemble_config_add_summary(ensemble_config,
-                                            stringlist_iget(keys, k));
-            stringlist_free(keys);
-        }
-    } else {
-        ensemble_config_add_summary(ensemble_config, key);
-    }
-}
-
 stringlist_type *
 ensemble_config_alloc_keylist(const ensemble_config_type *config) {
     stringlist_type *s = stringlist_alloc_new();
@@ -155,44 +134,7 @@ ensemble_config_alloc_keylist_from_impl_type(const ensemble_config_type *config,
     return key_list;
 }
 
-/**
-   this function ensures that object contains a node with 'key' and
-   type == summary.
-
-   if the @refcase pointer is different from NULL the key will be
-   validated. keys which do not exist in the refcase will be ignored,
-   a warning will be printed on stderr and the function will return
-   NULL.
-*/
-enkf_config_node_type *
-ensemble_config_add_summary(ensemble_config_type *ensemble_config,
-                            const char *key) {
-    enkf_config_node_type *config_node = NULL;
-
-    const auto node_it = ensemble_config->config_nodes.find(key);
-    if (node_it != ensemble_config->config_nodes.end()) {
-        config_node = node_it->second;
-        if (enkf_config_node_get_impl_type(config_node) != SUMMARY) {
-            util_abort("%s: ensemble key:%s already exists - but it is not of "
-                       "summary type\n",
-                       __func__, key);
-        }
-
-        summary_config_type *summary_config =
-            (summary_config_type *)enkf_config_node_get_ref(config_node);
-
-    } else {
-        config_node = enkf_config_node_alloc_summary(key);
-        ensemble_config_add_node(ensemble_config, config_node);
-    }
-
-    return config_node;
-}
-
 ERT_CLIB_SUBMODULE("ensemble_config", m) {
-    m.def("get_summary_keys",
-          [](Cwrap<ensemble_config_type> self) { return self->summary_keys; });
-
     m.def("get_summary_key_list",
           [](Cwrap<ensemble_config_type> self, const char *key,
              Cwrap<ecl_sum_type> refcase) {

@@ -10,7 +10,6 @@
 
 #include <ert/enkf/enkf_macros.hpp>
 #include <ert/enkf/enkf_types.hpp>
-#include <ert/enkf/summary_config.hpp>
 #include <ert/res_util/path_fmt.hpp>
 
 typedef void(config_free_ftype)(void *);
@@ -34,9 +33,6 @@ struct enkf_config_node_struct {
 
 extern "C" enkf_config_node_type *enkf_config_node_alloc(ert_impl_type,
                                                          const char *, void *);
-
-extern "C" enkf_config_node_type *
-enkf_config_node_alloc_summary(const char *key);
 
 extern "C" void enkf_config_node_free(enkf_config_node_type *);
 extern "C" ert_impl_type
