@@ -28,7 +28,7 @@ std::shared_ptr<conf_class_type> make_conf_class(const char *class_name,
 
     auto conf_class = new conf_class_type;
 
-    conf_class->super_class = nullptr;
+    conf_class->super_class = std::shared_ptr<conf_class_type>(nullptr);
     conf_class->class_name = util_alloc_string_copy(class_name);
     conf_class->help = nullptr;
     conf_class->require_instance = require_instance;
@@ -125,7 +125,7 @@ std::shared_ptr<conf_item_spec_type> make_conf_item_spec(const char *name,
 
     auto conf_item_spec = new conf_item_spec_type;
 
-    conf_item_spec->super_class = nullptr;
+    conf_item_spec->super_class = std::shared_ptr<conf_class_type>(nullptr);
     conf_item_spec->name = util_alloc_string_copy(name);
     conf_item_spec->required_set = required_set;
     conf_item_spec->dt = dt;
@@ -163,13 +163,13 @@ conf_class_has_super_class(std::shared_ptr<conf_class_type> conf_class,
     assert(conf_class != NULL);
     assert(super_class != NULL);
 
-    auto parent = conf_class->super_class;
+    auto parent = conf_class->super_class.lock();
 
-    while (parent != NULL) {
+    while (parent != nullptr) {
         if (parent == super_class)
             return true;
         else
-            parent = parent->super_class;
+            parent = parent->super_class.lock();
     }
     return false;
 }
@@ -199,7 +199,7 @@ void conf_class_insert_sub_class(
                    __func__);
 
     /* Abort if sub_conf_class already has a super class. */
-    if (sub_conf_class->super_class != NULL)
+    if (sub_conf_class->super_class.lock())
         util_abort(
             "%s: Internal error. Inserted class already has a super class.\n",
             __func__);
@@ -215,7 +215,7 @@ void conf_class_insert_item_spec(
     assert(item_spec != NULL);
 
     /* Abort if item_spec already has a super class. */
-    if (item_spec->super_class != NULL)
+    if (item_spec->super_class.lock())
         util_abort(
             "%s: Internal error: item is already assigned to another class.\n",
             __func__);
@@ -263,7 +263,8 @@ void conf_instance_insert_sub_instance(
     assert(sub_conf_instance != NULL);
 
     /* Abort if the instance is of unknown type. */
-    if (sub_conf_instance->conf_class->super_class != conf_instance->conf_class)
+    if (sub_conf_instance->conf_class->super_class.lock() !=
+        conf_instance->conf_class)
         util_abort(
             "%s: Internal error. Trying to insert instance of unknown type.\n",
             __func__);
@@ -321,8 +322,7 @@ void conf_item_mutex_add_item_spec(
     std::shared_ptr<conf_item_mutex_type> conf_item_mutex,
     std::shared_ptr<conf_item_spec_type> conf_item_spec) {
 
-    if (conf_item_mutex->super_class != NULL) {
-        auto conf_class = conf_item_mutex->super_class;
+    if (auto conf_class = conf_item_mutex->super_class.lock()) {
         const char *item_key = conf_item_spec->name;
 
         if (!conf_class->item_specs.count(item_key)) {
@@ -494,12 +494,14 @@ time_t conf_instance_get_item_value_time_t(
 static std::string
 conf_item_spec_help(std::shared_ptr<conf_item_spec_type> conf_item_spec) {
     std::string help;
-    assert(conf_item_spec->super_class != NULL);
     int num_restrictions = conf_item_spec->restriction->size();
 
-    help += fmt::format(
-        "\nHelp on item \"{}\" in class \"{}\":", conf_item_spec->name,
-        conf_item_spec->super_class->class_name);
+    if (auto conf_class = conf_item_spec->super_class.lock()) {
+        help += fmt::format("\nHelp on item \"{}\" in class \"{}\":",
+                            conf_item_spec->name, conf_class->class_name);
+    } else {
+        help += fmt::format("\nHelp on item \"{}\":", conf_item_spec->name);
+    }
     help += fmt::format("\n       - Data type    : {}",
                         conf_data_get_dt_name_ref(conf_item_spec->dt));
     if (conf_item_spec->default_value != NULL)
@@ -527,10 +529,10 @@ conf_class_help(std::shared_ptr<conf_class_type> conf_class) {
 
     std::string help;
     if (conf_class->help != NULL) {
-        if (conf_class->super_class != NULL)
-            help += fmt::format(
-                "\nHelp on class \"{}\" with super class \"{}\":",
-                conf_class->class_name, conf_class->super_class->class_name);
+        if (auto super_class = conf_class->super_class.lock())
+            help +=
+                fmt::format("\nHelp on class \"{}\" with super class \"{}\":",
+                            conf_class->class_name, super_class->class_name);
         else
             help += fmt::format("\n       Help on class \"{}\":",
                                 conf_class->class_name);

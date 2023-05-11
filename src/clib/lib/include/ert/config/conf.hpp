@@ -100,7 +100,7 @@ using conf_item_mutex_type = struct conf_item_mutex_struct;
 
 struct conf_class_struct {
     /** Can be NULL */
-    std::shared_ptr<conf_class_type> super_class;
+    std::weak_ptr<conf_class_type> super_class;
     char *class_name;
     /** Can be NULL if not given */
     char *help;
@@ -122,7 +122,7 @@ struct conf_instance_struct {
 
 struct conf_item_spec_struct {
     /** NULL if not inserted into a class */
-    std::shared_ptr<conf_class_type> super_class;
+    std::weak_ptr<conf_class_type> super_class;
     char *name;
     /** Require the item to take a valid value */
     bool required_set;
@@ -141,7 +141,7 @@ struct conf_item_struct {
 };
 
 struct conf_item_mutex_struct {
-    std::shared_ptr<conf_class_type> super_class;
+    std::weak_ptr<conf_class_type> super_class;
     bool require_one;
     /** if inverse == true the 'mutex' implements: if A then ALSO B, C and D */
     bool inverse;
