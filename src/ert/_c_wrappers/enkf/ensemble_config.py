@@ -576,7 +576,7 @@ class EnsembleConfig(BaseCClass):
             )
 
     def check_unique_node(self, key: str):
-        if key in self:
+        if key in self or key in self.py_nodes:
             raise ConfigValidationError(
                 f"Config node with key {key!r} already present in ensemble config"
             )
@@ -587,7 +587,7 @@ class EnsembleConfig(BaseCClass):
         self.addNode(node)
 
     def addNode(
-        self, config_node: Union[EnkfConfigNode, Field, GenKwConfig, GenDataConfig, SurfaceConfig]
+        self, config_node: Union[EnkfConfigNode, Field, GenKwConfig, GenDataConfig, SurfaceConfig, SummaryConfig]
     ):
         assert config_node is not None
         self.check_unique_node(config_node.getKey())
