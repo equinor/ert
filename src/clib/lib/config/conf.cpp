@@ -76,7 +76,7 @@ conf_instance_insert_item(std::shared_ptr<conf_instance_type> conf_instance,
     const char *item_name = conf_item->conf_item_spec->name;
 
     /* Check that the inserted item is of known type. */
-    if (conf_instance->conf_class->item_specs[item_name] !=
+    if (conf_instance->conf_class->item_specs.at(item_name) !=
         conf_item->conf_item_spec)
         util_abort("%s: Internal error.\n", __func__);
 
@@ -590,7 +590,7 @@ static bool conf_instance_has_required_items(
 
     for (auto &[item_spec_name, conf_item_spec] : conf_class->item_specs) {
         if (conf_item_spec->required_set) {
-            if (!conf_instance->items[item_spec_name]) {
+            if (conf_instance->items.count(item_spec_name) == 0) {
                 ok = false;
                 printf("ERROR: Missing item \"%s\" in instance \"%s\" of class "
                        "\"%s\"\n",
