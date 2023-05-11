@@ -587,7 +587,15 @@ class EnsembleConfig(BaseCClass):
         self.addNode(node)
 
     def addNode(
-        self, config_node: Union[EnkfConfigNode, Field, GenKwConfig, GenDataConfig, SurfaceConfig, SummaryConfig]
+        self,
+        config_node: Union[
+            EnkfConfigNode,
+            Field,
+            GenKwConfig,
+            GenDataConfig,
+            SurfaceConfig,
+            SummaryConfig,
+        ],
     ):
         assert config_node is not None
         self.check_unique_node(config_node.getKey())
@@ -638,9 +646,12 @@ class EnsembleConfig(BaseCClass):
     def free(self):
         self._free()
 
+    def get_node_keylist(self) -> List[str]:
+        return set(self.alloc_keylist() + self.py_nodes.keys())
+
     def __eq__(self, other):
-        self_param_list = set(self.alloc_keylist() + self.get_keylist_gen_kw())
-        other_param_list = set(other.alloc_keylist() + other.get_keylist_gen_kw())
+        self_param_list = self.get_node_keylist()
+        other_param_list = other.get_node_keylist()
         if self_param_list != other_param_list:
             return False
 
