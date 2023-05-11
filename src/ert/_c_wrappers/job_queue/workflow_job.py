@@ -142,7 +142,7 @@ class WorkflowJob:
                     new_max_argc,
                     new_types_list,
                     new_content_dict.get("EXECUTABLE"),
-                    new_content_dict.get("SCRIPT"),
+                    str(new_content_dict.get("SCRIPT")),
                 )
             else:
                 old_content = _config_parser.parse(config_file)
