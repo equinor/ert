@@ -1,4 +1,4 @@
-from typing import Dict, Set, Any
+from typing import Any, Dict
 
 from . import ConfigValidationError
 from .config_schema_item import SchemaItem

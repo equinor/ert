@@ -1,4 +1,4 @@
-from typing import List, Set, Dict, Any
+from typing import Any, Dict, List, Set
 
 from .config_errors import ConfigValidationError
 from .error_info import ErrorInfo
