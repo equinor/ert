@@ -3,6 +3,7 @@ from pathlib import Path
 import pytest
 
 from ert._c_wrappers.enkf import RunContext
+from ert._c_wrappers.enkf.runpaths import Runpaths
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -15,9 +16,12 @@ def test_create(storage):
         storage.create_experiment().create_ensemble(
             name="test", ensemble_size=len(realizations)
         ),
-        "path/to/sim%d",
-        "job%d",
-        Path("runpath_file_name"),
+        Runpaths(
+            "path/to/sim%d",
+            "job%d",
+            "eclbase%d",
+            Path("runpath_file_name"),
+        ),
         mask,
         iteration=itr,
     )
@@ -34,9 +38,12 @@ def test_create(storage):
         storage.create_experiment().create_ensemble(
             name="test", ensemble_size=len(realizations)
         ),
-        "path/to/sim%d",
-        "job%d",
-        Path("runpath_file_name"),
+        Runpaths(
+            "path/to/sim%d",
+            "job%d",
+            "eclbase%d",
+            Path("runpath_file_name"),
+        ),
         mask,
         iteration=itr,
     )

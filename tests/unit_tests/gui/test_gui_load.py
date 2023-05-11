@@ -152,10 +152,12 @@ def test_that_errors_are_shown_in_the_suggester_window_when_present(qapp, tmp_pa
 
 def test_that_both_errors_are_warnings_are_shown(qapp, tmp_path):
     config_file = tmp_path / "config.ert"
+    job_file = tmp_path / "job"
+    job_file.write_text("EXECUTABLE echo\n")
     config_file.write_text(
         "NUM_REALIZATIONS 1\n"
-        "JOBNAME something\n"
-        "ECLBASE something\n"
+        f"INSTALL_JOB job {job_file}\n"
+        f"INSTALL_JOB job {job_file}\n"
         "FORWARD_MODEL not_installed\n"
     )
 

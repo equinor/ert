@@ -30,10 +30,17 @@ def enkf_main_fixture(tmp_path, monkeypatch):
     yield EnKFMain(ErtConfig.from_file("test.ert"))
 
 
-def test_create_run_context(monkeypatch, enkf_main, prior_ensemble):
+@pytest.mark.parametrize(
+    "config_dict",
+    [
+        {"ECLBASE": "name<IENS>"},
+        {"JOBNAME": "name<IENS>"},
+    ],
+)
+def test_create_run_context(monkeypatch, enkf_main, prior_ensemble, config_dict):
     iteration = 0
     ensemble_size = 10
-    enkf_main = EnKFMain(ErtConfig.from_dict({"JOBNAME": "name%d"}))
+    enkf_main = EnKFMain(ErtConfig.from_dict(config_dict))
 
     run_context = enkf_main.ensemble_context(
         prior_ensemble, [True] * ensemble_size, iteration=iteration
@@ -47,11 +54,45 @@ def test_create_run_context(monkeypatch, enkf_main, prior_ensemble):
     assert [real.job_name for real in run_context] == [
         f"name{i}" for i in range(ensemble_size)
     ]
+    assert [real.eclbase for real in run_context] == [
+        f"name{i}" for i in range(ensemble_size)
+    ]
 
-    substitutions = run_context.substituter
+    substitutions = enkf_main.get_context()
     assert "<RUNPATH>" in substitutions
     assert substitutions.get("<ECL_BASE>") == "name<IENS>"
     assert substitutions.get("<ECLBASE>") == "name<IENS>"
+
+
+def test_create_run_context_separate_base_and_name(
+    monkeypatch, enkf_main, prior_ensemble
+):
+    iteration = 0
+    ensemble_size = 10
+    enkf_main = EnKFMain(
+        ErtConfig.from_dict({"JOBNAME": "name<IENS>", "ECLBASE": "base<IENS>"})
+    )
+
+    run_context = enkf_main.ensemble_context(
+        prior_ensemble, [True] * ensemble_size, iteration=iteration
+    )
+    assert run_context.sim_fs.name == "prior"
+    assert run_context.mask == [True] * ensemble_size
+    assert [real.runpath for real in run_context] == [
+        f"{Path().absolute()}/simulations/realization-{i}/iter-0"
+        for i in range(ensemble_size)
+    ]
+    assert [real.job_name for real in run_context] == [
+        f"name{i}" for i in range(ensemble_size)
+    ]
+    assert [real.eclbase for real in run_context] == [
+        f"base{i}" for i in range(ensemble_size)
+    ]
+
+    substitutions = enkf_main.get_context()
+    assert "<RUNPATH>" in substitutions
+    assert substitutions.get("<ECL_BASE>") == "base<IENS>"
+    assert substitutions.get("<ECLBASE>") == "base<IENS>"
 
 
 def test_assert_symlink_deleted(snake_oil_field_example, storage):

@@ -356,23 +356,6 @@ def test_char_in_unquoted_is_allowed(c):
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_that_a_config_warning_is_given_when_eclbase_and_jobname_is_given():
-    test_config_file_base = "test"
-    test_config_file_name = f"{test_config_file_base}.ert"
-    test_config_contents = dedent(
-        """
-        NUM_REALIZATIONS  1
-        JOBNAME job_%d
-        ECLBASE base_%d
-        """
-    )
-    with open(test_config_file_name, "w", encoding="utf-8") as fh:
-        fh.write(test_config_contents)
-    with pytest.warns(ConfigWarning):
-        ErtConfig.from_file(test_config_file_name)
-
-
-@pytest.mark.usefixtures("use_tmpdir")
 def test_that_magic_strings_get_substituted_in_workflow():
     script_file_contents = dedent(
         """
@@ -434,23 +417,6 @@ def test_that_unknown_job_gives_config_validation_error():
         fh.write(test_config_contents)
 
     with pytest.raises(ConfigValidationError, match="Could not find job 'NO_SUCH_JOB'"):
-        _ = ErtConfig.from_file(test_config_file_name)
-
-
-@pytest.mark.usefixtures("use_tmpdir")
-def test_that_giving_both_jobname_and_eclbase_gives_warning():
-    test_config_file_name = "test.ert"
-    test_config_contents = dedent(
-        """
-        NUM_REALIZATIONS  1
-        JOBNAME job1
-        ECLBASE job2
-        """
-    )
-    with open(test_config_file_name, "w", encoding="utf-8") as fh:
-        fh.write(test_config_contents)
-
-    with pytest.warns(ConfigWarning, match="Can not have both JOBNAME and ECLBASE"):
         _ = ErtConfig.from_file(test_config_file_name)
 
 

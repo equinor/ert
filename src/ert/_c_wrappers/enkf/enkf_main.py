@@ -208,6 +208,7 @@ class EnKFMain:
         self._ensemble_size = self.ert_config.model_config.num_realizations
         self._runpaths = Runpaths(
             jobname_format=self.getModelConfig().jobname_format_string,
+            eclbase_format=self.getModelConfig().eclbase_format_string,
             runpath_format=self.getModelConfig().runpath_format_string,
             filename=self.getModelConfig().runpath_file,
             substitute=self.get_context().substitute_real_iter,
@@ -299,11 +300,8 @@ class EnKFMain:
         self.addDataKW("<ERTCASE>", case.name)
         return RunContext(
             sim_fs=case,
-            path_format=self.getModelConfig().jobname_format_string,
-            format_string=self.getModelConfig().runpath_format_string,
-            runpath_file=Path(self.getModelConfig().runpath_file),
+            runpaths=self._runpaths,
             initial_mask=active_realizations,
-            global_substitutions=dict(self.get_context()),
             iteration=iteration,
         )
 
@@ -438,10 +436,10 @@ class EnKFMain:
                 )
 
                 for source_file, target_file in self.ert_config.ert_templates:
-                    target_file = run_context.substituter.substitute_real_iter(
+                    target_file = self.get_context().substitute_real_iter(
                         target_file, run_arg.iens, run_context.iteration
                     )
-                    result = run_context.substituter.substitute_real_iter(
+                    result = self.get_context().substitute_real_iter(
                         Path(source_file).read_text("utf-8"),
                         run_arg.iens,
                         run_context.iteration,
@@ -474,7 +472,7 @@ class EnKFMain:
                         Path(ert_config.user_config_file),
                         run_arg.iens,
                         run_context.iteration,
-                        run_context.substituter,
+                        self.get_context(),
                         ert_config.env_vars,
                     )
 
