@@ -81,37 +81,32 @@ class WorkflowJob:
 
     @staticmethod
     def _make_arg_types_list_new(content_dict: Mapping[str, Instruction]):
-        arg_types_dict = defaultdict(lambda _: "STRING")
+        # First find the number of args
         args_spec = content_dict.get(WorkflowJobKeys.ARG_TYPE, [])
+        specified_highest_arg_index = (
+            max([index for index, _ in args_spec]) if len(args_spec) > 0 else -1
+        )
+        specified_max_args = content_dict.get("MAX_ARG")
+        specified_min_args = content_dict.get("MIN_ARG")
 
-        if len(args_spec) == 0:
-            return []
+        num_args = max(
+            specified_highest_arg_index + 1,
+            specified_max_args or 0,
+            specified_min_args or 0,
+        )
+
+        arg_types_dict = dict()
 
         for i, type_as_string in args_spec:
             # make old tests pass temporarily, will use
             # SchemaItemType
             arg_types_dict[i] = WorkflowJob.stringToType(type_as_string)
 
-        num_args_from_dict = max(arg_types_dict.keys()) + 1
-        num_args_from_config = content_dict.get("MAX_ARG", 0)
-        num_args = max(num_args_from_dict, num_args_from_config)
-
-        types_list = [
+        arg_types_list = [
             arg_types_dict.get(i, ContentTypeEnum.CONFIG_STRING)
             for i in range(num_args)
         ]
-        max_argc_from_type_list = len(types_list)
-        max_argc_from_dict = content_dict.get(
-            WorkflowJobKeys.MAX_ARG, max_argc_from_type_list
-        )
-
-        if max_argc_from_dict < max_argc_from_type_list:
-            raise ConfigValidationError(
-                f"Argument number {max_argc_from_type_list - 1} exceeds specified "
-                f"max number of arguments ({max_argc_from_dict})"
-            )
-
-        return types_list
+        return arg_types_list
 
     @staticmethod
     def _make_arg_types_list(

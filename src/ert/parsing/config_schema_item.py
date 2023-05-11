@@ -145,7 +145,7 @@ class SchemaItem(BaseModel):
             assert isinstance(path, str)
             return ContextString(path, token, keyword)
         if val_type == SchemaItemType.EXECUTABLE:
-            absolute_path: str = None
+            absolute_path: Optional[str] = None
             if not os.path.isabs(token):
                 # Try relative
                 absolute_path = os.path.abspath(os.path.join(cwd, token))
