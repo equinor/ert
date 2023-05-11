@@ -38,56 +38,48 @@ def _get_abs_path(file):
     return file
 
 
-def _get_filename(file):
-    if file is not None:
-        file = os.path.basename(file)
-    return file
+def _parse_options(option_list: List[str], offset: int) -> Dict[str, str]:
+    """Converts a list of options given to keywords such as GEN_DATA into a dictionary.
 
+    Args:
+        option_list: The list of options. Each option should be a string
+            formatted as 'KEY:VALUE'.
+        offset: The index in the list from where to start parsing the options.
 
-def _option_dict(option_list: List[str], offset: int) -> Dict[str, str]:
-    """Gets the list of options given to a keywords such as GEN_DATA.
+    Returns:
+        A dictionary where the keys are the options and the values
+        are the arguments for those options.
 
-    The first step of parsing will separate a line such as
-
-      GEN_DATA NAME INPUT_FORMAT:ASCII RESULT_FILE:file.txt REPORT_STEPS:3
-
-    into
-
-    >>> opts = ["NAME", "INPUT_FORMAT:ASCII", "RESULT_FILE:file.txt", "REPORT_STEPS:3"]
-
-    From there, _option_dict can be used to get a dictionary of the options:
-
-    >>> _option_dict(opts, 1)
-    {'INPUT_FORMAT': 'ASCII', 'RESULT_FILE': 'file.txt', 'REPORT_STEPS': '3'}
-
-    Errors are reported to the log, and erroring fields ignored:
-
-    >>> import sys
-    >>> logger.addHandler(logging.StreamHandler(sys.stdout))
-    >>> _option_dict(opts + [":T"], 1)
-    Ignoring argument :T not properly formatted should be of type ARG:VAL
+    >>> options = ["NAME","INPUT_FORMAT:ASCII","RESULT_FILE:file.txt","REPORT_STEPS:3"]
+    >>> _parse_options(options, 1)
     {'INPUT_FORMAT': 'ASCII', 'RESULT_FILE': 'file.txt', 'REPORT_STEPS': '3'}
 
     """
-    option_dict = {}
-    for option_pair in option_list[offset:]:
-        if not isinstance(option_pair, str):
-            logger.warning(
-                f"Ignoring unsupported option pair{option_pair} "
-                f"of type {type(option_pair)}"
+    options_dict = {}
+
+    for option in option_list[offset:]:
+        try:
+            key, value = option.split(":")
+
+        except ValueError:
+            warnings.warn(
+                f"Error parsing option: '{option}'. " "Expected format: 'ARG:VALUE'.",
+                category=ConfigWarning,
             )
+
             continue
 
-        if len(option_pair.split(":")) == 2:
-            key, val = option_pair.split(":")
-            if val != "" and key != "":
-                option_dict[key] = val
-            else:
-                logger.warning(
-                    f"Ignoring argument {option_pair}"
-                    " not properly formatted should be of type ARG:VAL"
-                )
-    return option_dict
+        if not key or not value:
+            warnings.warn(
+                f"Ignoring ill-formated option: '{option}'. "
+                "Expected format: 'ARG:VALUE'.",
+                category=ConfigWarning,
+            )
+
+        else:
+            options_dict[key] = value
+
+    return options_dict
 
 
 def _str_to_bool(txt: str) -> bool:
@@ -116,7 +108,6 @@ def _str_to_bool(txt: str) -> bool:
     with a failure message written to the log:
 
     >>> _str_to_bool("fail")
-    Failed to parse fail as bool! Using FORWARD_INIT:FALSE
     False
     """
     if txt.lower() == "true":
@@ -274,13 +265,13 @@ class EnsembleConfig(BaseCClass):
                 )
             dims = get_shape(grid_file)
             field_node = self.get_field_node(field, grid_file, dims)
-            self._create_node_metainfo(field, 2)
+            self._create_node_metainfo(field, 3)
             self._storeFieldMetaInfo(field)
             self.addNode(field_node)
 
     @staticmethod
     def gen_data_node(gen_data: List[str]) -> Optional[EnkfConfigNode]:
-        options = _option_dict(gen_data, 1)
+        options = _parse_options(gen_data, 1)
         name = gen_data[0]
         res_file = options.get(ConfigKeys.RESULT_FILE)
         if res_file is None:
@@ -324,7 +315,7 @@ class EnsembleConfig(BaseCClass):
         offset: int,
         var_type: EnkfVarType = EnkfVarType.INVALID_VAR,
     ):
-        options = _option_dict(keywords, offset)
+        options = _parse_options(keywords, offset)
         key = keywords[0]
         forward_init = _str_to_bool(options.get(ConfigKeys.FORWARD_INIT, "FALSE"))
         init_file = options.get(ConfigKeys.INIT_FILES, "")
@@ -354,7 +345,7 @@ class EnsembleConfig(BaseCClass):
 
     @staticmethod
     def get_surface_node(surface: List[str]) -> SurfaceConfig:
-        options = _option_dict(surface, 1)
+        options = _parse_options(surface, 1)
         name = surface[0]
         init_file = options.get(ConfigKeys.INIT_FILES)
         out_file = options.get("OUTPUT_FILE")
@@ -391,7 +382,7 @@ class EnsembleConfig(BaseCClass):
     ) -> Field:
         name = field[0]
         out_file = Path(field[2])
-        options = _option_dict(field, 2)
+        options = _parse_options(field, 3)
         init_transform = options.get(ConfigKeys.INIT_TRANSFORM)
         forward_init = _str_to_bool(options.get(ConfigKeys.FORWARD_INIT, "FALSE"))
         output_transform = options.get(ConfigKeys.OUTPUT_TRANSFORM)

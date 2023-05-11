@@ -22,6 +22,7 @@ from ert._c_wrappers.enkf import EnKFMain, EnkfVarType, ErtConfig
 from ert.cli import ENSEMBLE_SMOOTHER_MODE
 from ert.cli.main import run_cli
 from ert.libres_facade import LibresFacade
+from ert.parsing import ConfigWarning
 from ert.storage import EnsembleAccessor, open_storage
 
 
@@ -994,3 +995,40 @@ def test_config_node_meta_information(storage, tmpdir):
         assert ensemble_config["MY_PARAM"].forward_init_file == "my_param_%d.grdecl"
         assert ensemble_config["MY_PARAM"].output_file == Path("my_param.grdecl")
         assert ensemble_config.get_var_type("MY_PARAM") == EnkfVarType.PARAMETER
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.parametrize(
+    "bad_option, match",
+    [
+        (
+            "FORWARD_INIT:True:A",
+            "Error parsing option: 'FORWARD_INIT:True:A'. "
+            + "Expected format: 'ARG:VALUE'.",
+        ),
+        (
+            "not_an_opt",
+            "Error parsing option: 'not_an_opt'. " + "Expected format: 'ARG:VALUE'.",
+        ),
+    ],
+)
+def test_that_incorrect_options_in_field_warns(bad_option, match):
+    test_config_file_name = "test.ert"
+    test_config_contents = dedent(
+        f"""
+NUM_REALIZATIONS 1
+FIELD PARAM_A PARAMETER param_a.grdecl INIT_FILES:../../../param_a.grdecl {bad_option}
+GRID MY_EGRID.EGRID
+"""
+    )
+    with open(test_config_file_name, "w", encoding="utf-8") as fh:
+        fh.write(test_config_contents)
+
+    grid = xtgeo.create_box_grid(dimension=(10, 10, 1))
+    grid.to_file("MY_EGRID.EGRID", "egrid")
+    _ = write_grid_property(
+        "PARAM_A", grid, "param_a.grdecl", "grdecl", (1, 1, 1), np.full((1), 22)
+    )
+
+    with pytest.warns(ConfigWarning, match=match):
+        _ = ErtConfig.from_file(test_config_file_name)
