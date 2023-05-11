@@ -22,6 +22,7 @@ class ModelConfig:
         history_source: Optional[HistorySourceEnum] = None,
         runpath_format_string: Optional[str] = None,
         jobname_format_string: Optional[str] = None,
+        eclbase_format_string: Optional[str] = None,
         runpath_file: str = ".ert_runpath_list",
         gen_kw_export_name: Optional[str] = None,
         obs_config_file: Optional[str] = None,
@@ -36,6 +37,9 @@ class ModelConfig:
         )
         self.jobname_format_string = (
             replace_runpath_format(jobname_format_string) or "JOB<IENS>"
+        )
+        self.eclbase_format_string = (
+            replace_runpath_format(eclbase_format_string) or "ECLBASE<IENS>"
         )
         self.runpath_format_string = (
             replace_runpath_format(runpath_format_string) or self.DEFAULT_RUNPATH
@@ -81,7 +85,10 @@ class ModelConfig:
             else None,
             runpath_format_string=config_dict.get(ConfigKeys.RUNPATH),
             jobname_format_string=config_dict.get(
-                ConfigKeys.JOBNAME, config_dict.get(ConfigKeys.ECLBASE, None)
+                ConfigKeys.JOBNAME, config_dict.get(ConfigKeys.ECLBASE)
+            ),
+            eclbase_format_string=config_dict.get(
+                ConfigKeys.ECLBASE, config_dict.get(ConfigKeys.JOBNAME)
             ),
             runpath_file=config_dict.get(ConfigKeys.RUNPATH_FILE, ".ert_runpath_list"),
             gen_kw_export_name=config_dict.get(ConfigKeys.GEN_KW_EXPORT_NAME),
@@ -106,6 +113,7 @@ class ModelConfig:
             f"history_source: {self.history_source},\n"
             f"runpath_format_string: {self.runpath_format_string},\n"
             f"jobname_format_string: {self.jobname_format_string},\n"
+            f"eclbase_format_string: {self.eclbase_format_string},\n"
             f"gen_kw_export_name: {self.gen_kw_export_name},\n"
             f"obs_config_file: {self.obs_config_file},\n"
             f"time_map_file: {self._time_map_file}"
@@ -118,6 +126,7 @@ class ModelConfig:
                 self.history_source == other.history_source,
                 self.runpath_format_string == other.runpath_format_string,
                 self.jobname_format_string == other.jobname_format_string,
+                self.eclbase_format_string == other.eclbase_format_string,
                 self.gen_kw_export_name == other.gen_kw_export_name,
                 self.obs_config_file == other.obs_config_file,
                 self._time_map_file == other._time_map_file,

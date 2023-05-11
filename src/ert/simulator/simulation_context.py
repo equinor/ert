@@ -1,13 +1,13 @@
 from __future__ import annotations
 
 from functools import partial
-from pathlib import Path
 from threading import Thread
 from time import sleep
 from typing import TYPE_CHECKING, Any, List, Optional, Tuple
 
 from ert._c_wrappers.enkf import RunContext
 from ert._c_wrappers.enkf.enums import HookRuntime, RealizationStateEnum
+from ert._c_wrappers.enkf.runpaths import Runpaths
 from ert._c_wrappers.job_queue import JobQueueManager, RunStatusType
 from ert.callbacks import forward_model_exit, forward_model_ok
 
@@ -105,17 +105,20 @@ class SimulationContext:
         job_queue.set_max_job_duration(max_runtime)
         self._queue_manager = JobQueueManager(job_queue)
         # fill in the missing geo_id data
-        global_substitutions = dict(ert.get_context())
+        global_substitutions = ert.get_context()
         for sim_id, (geo_id, _) in enumerate(case_data):
             if mask[sim_id]:
-                global_substitutions[f"<GEO_ID_{sim_id}_{itr}>"] = str(geo_id)
+                global_substitutions.addItem(f"<GEO_ID_{sim_id}_{itr}>", str(geo_id))
         self._run_context = RunContext(
             sim_fs=sim_fs,
-            path_format=ert.getModelConfig().jobname_format_string,
-            format_string=ert.getModelConfig().runpath_format_string,
-            runpath_file=Path(ert.getModelConfig().runpath_file),
+            runpaths=Runpaths(
+                jobname_format=ert.getModelConfig().jobname_format_string,
+                eclbase_format=ert.getModelConfig().eclbase_format_string,
+                runpath_format=ert.getModelConfig().runpath_format_string,
+                filename=ert.getModelConfig().runpath_file,
+                substitute=global_substitutions.substitute_real_iter,
+            ),
             initial_mask=mask,
-            global_substitutions=global_substitutions,
             iteration=itr,
         )
 

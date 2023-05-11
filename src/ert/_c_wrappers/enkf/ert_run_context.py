@@ -1,13 +1,11 @@
 from __future__ import annotations
 
 import uuid
-from dataclasses import InitVar, dataclass, field
-from pathlib import Path
-from typing import TYPE_CHECKING, Dict, Iterator, List
+from dataclasses import dataclass, field
+from typing import TYPE_CHECKING, Iterator, List
 
 from ert._c_wrappers.enkf.run_arg import RunArg
 from ert._c_wrappers.enkf.runpaths import Runpaths
-from ert._c_wrappers.util import SubstitutionList
 
 if TYPE_CHECKING:
     from ert.storage import EnsembleAccessor
@@ -16,25 +14,11 @@ if TYPE_CHECKING:
 @dataclass
 class RunContext:
     sim_fs: EnsembleAccessor
-    path_format: str
-    format_string: str
-    runpath_file: Path
+    runpaths: Runpaths
     initial_mask: List[bool] = field(default_factory=list)
     iteration: int = 0
-    global_substitutions: InitVar[Dict[str, str]] = None
 
-    def __post_init__(self, global_substitutions):
-        subst_list = SubstitutionList()
-        if global_substitutions:
-            for k, v in global_substitutions.items():
-                subst_list.addItem(k, v)
-        self.substituter = subst_list
-        self.runpaths = Runpaths(
-            self.path_format,
-            self.format_string,
-            self.runpath_file,
-            self.substituter.substitute_real_iter,
-        )
+    def __post_init__(self):
         self.run_id = uuid.uuid4()
         self.run_args = []
         paths = self.runpaths.get_paths(
@@ -43,9 +27,12 @@ class RunContext:
         job_names = self.runpaths.get_jobnames(
             list(range(len(self.initial_mask))), self.iteration
         )
+        eclbases = self.runpaths.get_eclbases(
+            list(range(len(self.initial_mask))), self.iteration
+        )
 
-        for iens, (run_path, job_name, active) in enumerate(
-            zip(paths, job_names, self.initial_mask)
+        for iens, (run_path, job_name, active, eclbase) in enumerate(
+            zip(paths, job_names, self.initial_mask, eclbases)
         ):
             self.run_args.append(
                 RunArg(
@@ -55,6 +42,7 @@ class RunContext:
                     self.iteration,
                     run_path,
                     job_name,
+                    eclbase,
                     active,
                 )
             )

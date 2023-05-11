@@ -1,5 +1,4 @@
 import os
-from pathlib import Path
 from textwrap import dedent
 
 import pytest
@@ -60,7 +59,11 @@ def test_runpath_file(tmp_path, job_format, runpath_format, expected_contents):
     assert not runpath_file.exists()
     context = SubstitutionList()
     runpaths = Runpaths(
-        job_format, runpath_format, runpath_file, context.substitute_real_iter
+        job_format,
+        job_format,
+        runpath_format,
+        runpath_file,
+        context.substitute_real_iter,
     )
     runpaths.write_runpath_list([0, 1], [3, 4])
 
@@ -74,6 +77,7 @@ def test_runpath_file_writer_substitution(tmp_path):
     context.addItem("<casename>", "my_case")
     runpaths = Runpaths(
         "<casename>_job",
+        "<casename>",
         "/path/<casename>/ensemble-<IENS>/iteration<ITER>",
         runpath_file,
         context.substitute_real_iter,
@@ -117,17 +121,20 @@ def test_write_snakeoil_runpath_file(snake_oil_case, storage, itr):
         "magic-real-<IENS>/magic-iter-<ITER>"
     )
     jobname_fmt = "SNAKE_OIL_%d"
-    global_substitutions = dict(ert.get_context())
+    global_substitutions = ert.get_context()
     for i in range(num_realizations):
-        global_substitutions[f"<GEO_ID_{i}_{itr}>"] = str(10 * i)
+        global_substitutions.addItem(f"<GEO_ID_{i}_{itr}>", str(10 * i))
 
     run_context = RunContext(
         sim_fs=prior_ensemble,
-        path_format=jobname_fmt,
-        format_string=runpath_fmt,
-        runpath_file=Path("a_file_name"),
+        runpaths=Runpaths(
+            jobname_fmt,
+            jobname_fmt,
+            runpath_fmt,
+            "a_file_name",
+            global_substitutions.substitute_real_iter,
+        ),
         initial_mask=mask,
-        global_substitutions=global_substitutions,
         iteration=itr,
     )
 

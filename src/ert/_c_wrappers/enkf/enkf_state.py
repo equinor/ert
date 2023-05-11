@@ -84,7 +84,7 @@ def _internalize_SUMMARY_DATA(
                 f"{missing[0][0]}, reference case: {missing[0][1]}, last: Time "
                 f"mismatch for step: {missing[-1][2]}, response time: {missing[-1][0]}"
                 f", reference case: {missing[-1][1]} from: {run_arg.runpath}/"
-                f"{run_arg.job_name}.UNSMRY"
+                f"{run_arg.eclbase}.UNSMRY"
             )
 
     user_summary_keys = ens_config.get_summary_keys()
@@ -114,12 +114,12 @@ def _write_summary_data_to_storage(
         return LoadResult(LoadStatus.LOAD_SUCCESSFUL, "")
 
     try:
-        summary = _load_summary_data(run_arg.runpath, run_arg.job_name)
+        summary = _load_summary_data(run_arg.runpath, run_arg.eclbase)
     except IOError:
         return LoadResult(
             LoadStatus.LOAD_FAILURE,
             "Could not find SUMMARY file or using non unified SUMMARY "
-            f"file from: {run_arg.runpath}/{run_arg.job_name}.UNSMRY",
+            f"file from: {run_arg.runpath}/{run_arg.eclbase}.UNSMRY",
         )
 
     return _internalize_SUMMARY_DATA(ens_config, run_arg, summary)

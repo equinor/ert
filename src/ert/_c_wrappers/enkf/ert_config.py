@@ -115,10 +115,10 @@ class ErtConfig:
         try:
             model_config = ModelConfig.from_dict(ensemble_config.refcase, config_dict)
             runpath = model_config.runpath_format_string
-            jobname = model_config.jobname_format_string
+            eclbase = model_config.eclbase_format_string
             substitution_list.addItem("<RUNPATH>", runpath)
-            substitution_list.addItem("<ECL_BASE>", jobname)
-            substitution_list.addItem("<ECLBASE>", jobname)
+            substitution_list.addItem("<ECL_BASE>", eclbase)
+            substitution_list.addItem("<ECLBASE>", eclbase)
         except ConfigValidationError as e:
             errors.append(e)
 
@@ -323,13 +323,6 @@ class ErtConfig:
     @classmethod
     def _validate_dict(cls, config_dict, config_file):
         errors = []
-        if ConfigKeys.JOBNAME in config_dict and ConfigKeys.ECLBASE in config_dict:
-            warnings.warn(
-                "Can not have both JOBNAME and ECLBASE keywords. "
-                "ECLBASE ignored, using JOBNAME with value "
-                f"`{config_dict[ConfigKeys.JOBNAME]}` instead",
-                category=ConfigWarning,
-            )
 
         if ConfigKeys.SUMMARY in config_dict and ConfigKeys.ECLBASE not in config_dict:
             errors.append(
@@ -757,6 +750,3 @@ class ErtConfig:
 
     def preferred_num_cpu(self) -> int:
         return int(self.substitution_list.get(f"<{ConfigKeys.NUM_CPU}>", 1))
-
-    def jobname_format_string(self) -> str:
-        return self.model_config.jobname_format_string

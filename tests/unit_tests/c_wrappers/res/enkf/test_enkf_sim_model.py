@@ -135,7 +135,7 @@ def valid_args(arg_types, arg_list: List[str], runtime: bool = False):
             """
             ),
             "FORWARD_MODEL job_name(<ECLBASE>=A/<ECLBASE>)",
-            ["A/JOB0"],
+            ["A/ECLBASE0"],
             id="The NOSIM job takes <ECLBASE> as args. Expect no infinite loop.",
         ),
     ],
