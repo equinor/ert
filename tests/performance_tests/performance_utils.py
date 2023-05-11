@@ -17,14 +17,14 @@ from ert.dark_storage import enkf
 
 def write_summary_spec(file, keywords):
     content = [
-        ("INTEHEAD", [1, 100]),
+        ("INTEHEAD", array([1, 100], dtype=numpy.int32)),
         ("RESTART ", [b"        "] * 8),
-        ("DIMENS  ", [1 + len(keywords), 10, 10, 10, 0, -1]),
+        ("DIMENS  ", array([1 + len(keywords), 10, 10, 10, 0, -1], dtype=numpy.int32)),
         ("KEYWORDS", [f"{x: <8}" for x in ["TIME"] + keywords]),
         ("WGNAMES ", [b":+:+:+:+"] * (len(keywords) + 1)),
-        ("NUMS    ", [-32676] + ([0] * len(keywords))),
+        ("NUMS    ", array([-32676] + ([0] * len(keywords)), dtype=numpy.int32)),
         ("UNITS   ", [f"{x: <8}" for x in ["DAYS"] + ["None"] * len(keywords)]),
-        ("STARTDAT", [1, 1, 2010, 0, 0, 0]),
+        ("STARTDAT", array([1, 1, 2010, 0, 0, 0], dtype=numpy.int32)),
     ]
     eclio.write(file, content)
 
@@ -34,12 +34,12 @@ def write_summary_data(file, x_size, keywords, update_steps):
 
     def content_generator():
         for x in range(x_size):
-            yield "SEQHDR  ", [0]
+            yield "SEQHDR  ", array([0], dtype=numpy.int32)
             for m in range(update_steps):
                 step = x * update_steps + m
                 day = float(step + 1)
                 values = [5.0] * num_keys
-                yield "MINISTEP", [step]
+                yield "MINISTEP", array([step], dtype=numpy.int32)
                 yield "PARAMS  ", array([day] + values, dtype=numpy.float32)
 
     eclio.write(file, content_generator())

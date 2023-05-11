@@ -578,6 +578,7 @@ def test_ert_config_parser_fails_gracefully_on_unreadable_config_file(
         ErtConfig.from_file(config_file_name)
 
 
+@pytest.mark.filterwarnings("ignore::pytest.PytestUnhandledThreadExceptionWarning")
 def test_field_init_file_not_readable(copy_case, monkeypatch):
     monkeypatch.setattr(
         ensemble_evaluator._wait_for_evaluator, "WAIT_FOR_EVALUATOR_TIMEOUT", 5

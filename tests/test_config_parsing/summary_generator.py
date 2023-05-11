@@ -10,6 +10,7 @@ from typing import Any, List, Tuple
 import ecl_data_io
 import hypothesis.strategies as st
 import numpy as np
+from hypothesis.extra.numpy import from_dtype
 from pydantic import PositiveInt, conint
 
 from .egrid_generator import GrdeclKeyword
@@ -124,7 +125,7 @@ class Smspec:
         restart = self.restart.ljust(72, " ")
         restart_list = [restart[i * 8 : i * 8 + 8] for i in range(9)]
         return [
-            ("INTEHEAD", self.intehead.to_ecl()),
+            ("INTEHEAD", np.array(self.intehead.to_ecl(), dtype=np.int32)),
             ("RESTART ", restart_list),
             (
                 "DIMENS  ",
@@ -142,9 +143,9 @@ class Smspec:
             ),
             ("KEYWORDS", [kw.ljust(8) for kw in self.keywords]),
             ("WGNAMES ", self.well_names),
-            ("NUMS    ", self.region_numbers),
+            ("NUMS    ", np.array(self.region_numbers, dtype=np.int32)),
             ("UNITS   ", self.units),
-            ("STARTDAT", self.start_date.to_ecl()),
+            ("STARTDAT", np.array(self.start_date.to_ecl(), dtype=np.int32)),
         ]
 
     def to_file(
@@ -153,8 +154,8 @@ class Smspec:
         ecl_data_io.write(filelike, self.to_ecl(), file_format)
 
 
-positives = st.integers(min_value=1, max_value=10000)
-small_ints = st.integers(min_value=1, max_value=10)
+positives = from_dtype(np.dtype(np.int32), min_value=1, max_value=10000)
+small_ints = from_dtype(np.dtype(np.int32), min_value=1, max_value=10)
 
 
 @st.composite
@@ -177,7 +178,7 @@ def smspecs(
     well_names = [":+:+:+:+"] + draw(st.lists(names, min_size=n - 1, max_size=n - 1))
     region_numbers = [-32676] + draw(
         st.lists(
-            st.integers(min_value=0, max_value=10),
+            from_dtype(np.dtype(np.int32), min_value=0, max_value=10),
             min_size=len(sum_keys),
             max_size=len(sum_keys),
         )
@@ -210,7 +211,7 @@ class SummaryMiniStep:
 
     def to_ecl(self):
         return [
-            ("MINISTEP", [self.mini_step]),
+            ("MINISTEP", np.array([self.mini_step], dtype=np.int32)),
             ("PARAMS  ", np.array(self.params, dtype=np.float32)),
         ]
 
@@ -221,7 +222,7 @@ class SummaryStep:
     ministeps: List[SummaryMiniStep]
 
     def to_ecl(self):
-        return [("SEQHDR  ", [self.seqnum])] + [
+        return [("SEQHDR  ", np.array([self.seqnum], dtype=np.int32))] + [
             i for ms in self.ministeps for i in ms.to_ecl()
         ]
 
@@ -231,7 +232,8 @@ class Unsmry:
     steps: List[SummaryStep]
 
     def to_ecl(self):
-        return [i for step in self.steps for i in step.to_ecl()]
+        a = [i for step in self.steps for i in step.to_ecl()]
+        return a
 
     def to_file(
         self, filelike, file_format: ecl_data_io.Format = ecl_data_io.Format.UNFORMATTED
@@ -239,7 +241,12 @@ class Unsmry:
         ecl_data_io.write(filelike, self.to_ecl(), file_format)
 
 
-positive_floats = st.floats(min_value=0.1, allow_nan=False, allow_infinity=False)
+positive_floats = from_dtype(
+    np.dtype(np.float32),
+    min_value=np.float32(0.1),
+    allow_nan=False,
+    allow_infinity=False,
+)
 
 
 @st.composite
