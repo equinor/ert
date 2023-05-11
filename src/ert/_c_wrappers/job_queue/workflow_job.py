@@ -84,7 +84,7 @@ class WorkflowJob:
         # First find the number of args
         args_spec = content_dict.get(WorkflowJobKeys.ARG_TYPE, [])
         specified_highest_arg_index = (
-            max([index for index, _ in args_spec]) if len(args_spec) > 0 else -1
+            max(index for index, _ in args_spec) if len(args_spec) > 0 else -1
         )
         specified_max_args = content_dict.get("MAX_ARG")
         specified_min_args = content_dict.get("MIN_ARG")
