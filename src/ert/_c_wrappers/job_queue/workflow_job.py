@@ -170,7 +170,15 @@ class WorkflowJob:
             new = cls._file_to_workflow_args(config_file, name, use_new_parser=True)
             old = cls._file_to_workflow_args(config_file, name, use_new_parser=False)
 
-            if new != old:
+            if new[4] != old[4]:
+                # typelists differ in a few cases
+                # as the new parser infers one from
+                # set min args / max args, but old
+                # parser leaves it as blank
+                # Test case: MIN_ARG = 1 and unspecified MAX_ARG
+                # and ARG_TYPE
+                pass
+            elif new != old:
                 raise ConfigValidationError("Old and new parser gave different results")
 
             return cls(*(new if USE_NEW_PARSER_BY_DEFAULT else old))
