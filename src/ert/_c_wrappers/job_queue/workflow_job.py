@@ -21,7 +21,7 @@ from .ert_script import ErtScript
 ContentTypes = Union[Type[int], Type[bool], Type[float], Type[str]]
 
 
-USE_NEW_PARSER_BY_DEFAULT = False
+USE_NEW_PARSER_BY_DEFAULT = True
 
 if "USE_OLD_ERT_PARSER" in os.environ and os.environ["USE_OLD_ERT_PARSER"] == "YES":
     USE_NEW_PARSER_BY_DEFAULT = False
@@ -129,7 +129,22 @@ class WorkflowJob:
             if name is None:
                 name = os.path.basename(config_file)
 
-            if not USE_NEW_PARSER_BY_DEFAULT:
+            if USE_NEW_PARSER_BY_DEFAULT:
+                new_content_dict = new_workflow_job_parser(config_file)
+
+                new_types_list, new_max_argc = cls._make_arg_types_list_new(
+                    new_content_dict
+                )
+                return cls(
+                    name,
+                    new_content_dict.get("INTERNAL"),
+                    new_content_dict.get("MIN_ARG"),
+                    new_max_argc,
+                    new_types_list,
+                    new_content_dict.get("EXECUTABLE"),
+                    new_content_dict.get("SCRIPT"),
+                )
+            else:
                 old_content = _config_parser.parse(config_file)
 
                 def optional_get(key):
@@ -150,21 +165,6 @@ class WorkflowJob:
                     optional_get("SCRIPT"),
                 )
 
-            else:
-                new_content_dict = new_workflow_job_parser(config_file)
-
-                new_types_list, new_max_argc = cls._make_arg_types_list_new(
-                    new_content_dict
-                )
-                return cls(
-                    name,
-                    new_content_dict.get("INTERNAL", None),
-                    new_content_dict.get("MIN_ARG", None),
-                    new_max_argc,
-                    new_types_list,
-                    new_content_dict.get("EXECUTABLE", None),
-                    new_content_dict.get("SCRIPT", None),
-                )
         else:
             raise ConfigValidationError(f"Could not open config_file:{config_file!r}")
 

@@ -186,7 +186,7 @@ def _tree_to_dict(
     schema: Mapping[str, SchemaItem],
     site_config: Optional[Dict[str, Any]] = None,
 ) -> Mapping[str, Instruction]:
-    config_dict = site_config if site_config else {}
+    config_dict: Dict[str, Any] = site_config if site_config else {}
     defines = pre_defines.copy()
     config_dict["DEFINE"] = defines
 
@@ -219,7 +219,7 @@ def _tree_to_dict(
             errors.append(e)
 
     try:
-        schema.check_required(declared_kws, filename=config_file)
+        schema.check_required(config_dict, filename=config_file)
     except ConfigValidationError as e:
         errors.append(e)
 

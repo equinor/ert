@@ -1,4 +1,4 @@
-from typing import List, Set
+from typing import List, Set, Dict, Any
 
 from .config_errors import ConfigValidationError
 from .error_info import ErrorInfo
@@ -10,7 +10,7 @@ class SchemaItemDict(dict):
 
     def check_required(
         self,
-        declared_kws: Set[str],
+        config_dict: Dict[str, Any],
         filename: str,
     ) -> None:
         errors: List[ErrorInfo] = []
@@ -31,7 +31,7 @@ class SchemaItemDict(dict):
 
             visited.add(constraints.kw)
 
-            if constraints.required_set and constraints.kw not in declared_kws:
+            if constraints.required_set and constraints.kw not in config_dict:
                 errors.append(
                     ErrorInfo(
                         message=f"{constraints.kw} must be set.",

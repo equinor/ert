@@ -320,7 +320,7 @@ def init_site_config_schema() -> SchemaItemDict:
     ]:
         schema[item.kw] = item
         if item.kw in ConfigAliases:
-            for name in ConfigAliases[item.kw]:
+            for name in ConfigAliases[ConfigKeys(item.kw)]:
                 schema[name] = item
 
     return schema

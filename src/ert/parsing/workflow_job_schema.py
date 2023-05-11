@@ -1,4 +1,4 @@
-from typing import Dict, Set
+from typing import Dict, Set, Any
 
 from . import ConfigValidationError
 from .config_schema_item import SchemaItem
@@ -77,12 +77,15 @@ def internal_keyword() -> SchemaItem:
 
 
 class WorkflowJobSchemaDict(SchemaItemDict):
-    def check_required(self, declared_kws: Set[str], filename: str):
-        super().check_required(declared_kws, filename)
+    def check_required(self, config_dict: Dict[str, Any], filename: str):
+        super().check_required(config_dict, filename)
 
-        if "MIN_ARG" in declared_kws and "MAX_ARG" in declared_kws:
-            min_arg = declared_kws["MIN_ARG"]
-            max_arg = declared_kws["MAX_ARG"]
+        if "MIN_ARG" in config_dict and "MAX_ARG" in config_dict:
+            min_arg: int = config_dict["MIN_ARG"]
+            max_arg: int = config_dict["MAX_ARG"]
+
+            assert isinstance(min_arg, int)
+            assert isinstance(max_arg, int)
 
             if max_arg < 0:
                 raise ConfigValidationError("specified MAX_ARG must be at least 0.")
