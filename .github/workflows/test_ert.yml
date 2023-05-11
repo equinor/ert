@@ -58,7 +58,7 @@ jobs:
     - name: Unit Test
       if: inputs.test-type == 'unit-tests'
       run: |
-        pytest tests -n4 --show-capture=stderr -sv --hypothesis-profile=ci -m "not integration_test and not requires_window_manager" --benchmark-disable
+        pytest tests -n4 --show-capture=stderr -sv --hypothesis-profile=ci -m "not integration_test and not requires_window_manager" --benchmark-disable --dist loadgroup
 
     - name: Integration Test
       if: inputs.test-type == 'integration-tests'
