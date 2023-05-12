@@ -11,10 +11,10 @@ from .workflow_common import WorkflowCommon
 def test_workflow():
     WorkflowCommon.createExternalDumpJob()
 
-    dump_job = WorkflowJob.fromFile("dump_job", name="DUMP")
+    dump_job = WorkflowJob.from_file("dump_job", name="DUMP")
 
     with pytest.raises(ConfigValidationError, match="Could not open config_file"):
-        _ = WorkflowJob.fromFile("knock_job", name="KNOCK")
+        _ = WorkflowJob.from_file("knock_job", name="KNOCK")
 
     workflow = Workflow.from_file("dump_workflow", None, {"DUMP": dump_job})
 
@@ -32,7 +32,7 @@ def test_workflow():
 def test_workflow_run():
     WorkflowCommon.createExternalDumpJob()
 
-    dump_job = WorkflowJob.fromFile("dump_job", name="DUMP")
+    dump_job = WorkflowJob.from_file("dump_job", name="DUMP")
 
     context = SubstitutionList()
     context.addItem("<PARAM>", "text")

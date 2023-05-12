@@ -595,7 +595,7 @@ class ErtConfig:
                 # WorkflowJob.fromFile only throws error if a
                 # non-readable file is provided.
                 # Non-existing files are caught by the new parser
-                new_job = WorkflowJob.fromFile(
+                new_job = WorkflowJob.from_file(
                     config_file=workflow_job[0],
                     name=None if len(workflow_job) == 1 else workflow_job[1],
                 )
@@ -625,7 +625,7 @@ class ErtConfig:
             for file_name in files:
                 full_path = os.path.join(job_path, file_name)
                 try:
-                    new_job = WorkflowJob.fromFile(config_file=full_path)
+                    new_job = WorkflowJob.from_file(config_file=full_path)
                     workflow_jobs[new_job.name] = new_job
                 except ErtScriptLoadFailure as err:
                     warnings.warn(

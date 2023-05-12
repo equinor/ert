@@ -14,7 +14,7 @@ from .workflow_common import WorkflowCommon
 def test_workflow_thread_cancel_ert_script():
     WorkflowCommon.createWaitJob()
 
-    wait_job = WorkflowJob.fromFile("wait_job", name="WAIT")
+    wait_job = WorkflowJob.from_file("wait_job", name="WAIT")
 
     workflow = Workflow.from_file(
         "wait_workflow", SubstitutionList(), {"WAIT": wait_job}
@@ -52,7 +52,7 @@ def test_workflow_thread_cancel_ert_script():
 def test_workflow_thread_cancel_external():
     WorkflowCommon.createWaitJob()
 
-    wait_job = WorkflowJob.fromFile(
+    wait_job = WorkflowJob.from_file(
         name="WAIT",
         config_file="wait_job",
     )
@@ -84,7 +84,7 @@ def test_workflow_thread_cancel_external():
 def test_workflow_failed_job():
     WorkflowCommon.createExternalDumpJob()
 
-    dump_job = WorkflowJob.fromFile(
+    dump_job = WorkflowJob.from_file(
         name="DUMP",
         config_file="dump_job",
     )
@@ -107,10 +107,10 @@ def test_workflow_failed_job():
 def test_workflow_success():
     WorkflowCommon.createWaitJob()
 
-    external_job = WorkflowJob.fromFile(
+    external_job = WorkflowJob.from_file(
         name="EXTERNAL_WAIT", config_file="external_wait_job"
     )
-    wait_job = WorkflowJob.fromFile(
+    wait_job = WorkflowJob.from_file(
         name="WAIT",
         config_file="wait_job",
     )

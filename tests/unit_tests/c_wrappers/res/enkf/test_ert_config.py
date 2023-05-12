@@ -622,8 +622,8 @@ def test_that_get_plugin_jobs_fetches_exactly_ert_plugins():
 
     ert_config = ErtConfig.from_file("config.ert")
 
-    assert ert_config.workflow_jobs["plugin"].isPlugin()
-    assert not ert_config.workflow_jobs["script"].isPlugin()
+    assert ert_config.workflow_jobs["plugin"].is_plugin()
+    assert not ert_config.workflow_jobs["script"].is_plugin()
 
 
 def test_data_file_with_non_utf_8_character_gives_error_message(tmpdir):

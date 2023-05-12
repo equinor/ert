@@ -110,7 +110,7 @@ class WorkflowJob:
         for i, type_as_string in args_spec:
             # make old tests pass temporarily, will use
             # SchemaItemType
-            arg_types_dict[i] = WorkflowJob.stringToType(type_as_string)
+            arg_types_dict[i] = WorkflowJob.string_to_type(type_as_string)
 
         arg_types_list = [
             arg_types_dict.get(i, ContentTypeEnum.CONFIG_STRING)
@@ -175,58 +175,61 @@ class WorkflowJob:
             )
 
     @classmethod
-    def fromFile(cls, config_file, name=None):
+    def _compare_parsing_output(cls, new, old):
+        if new != old:
+            def to_tuple_set(workflow_job_args, origin: str):
+                (
+                    workflow_name,
+                    internal,
+                    min_arg,
+                    max_arg,
+                    arg_types_list,
+                    executable,
+                    script,
+                ) = workflow_job_args
+
+                return set(
+                    [
+                        TupleWithOrigin(("name", workflow_name), origin),
+                        TupleWithOrigin(("internal", str(internal)), origin),
+                        TupleWithOrigin(("min_arg", min_arg), origin),
+                        TupleWithOrigin(("max_arg", max_arg), origin),
+                        TupleWithOrigin(
+                            ("arg_types_list", map(str, arg_types_list)), origin
+                        ),
+                        TupleWithOrigin(("executable", executable), origin),
+                        TupleWithOrigin(("script", script), origin),
+                    ]
+                )
+
+            diff = to_tuple_set(new, "new") ^ to_tuple_set(old, "old")
+            diff_formatted = [f"{x.origin}: {x}" for x in diff]
+
+            logger.info(
+                "Old and new workflow job parser gave "
+                f"different results. {diff_formatted}"
+            )
+
+    @classmethod
+    def from_file(cls, config_file, name=None):
         if os.path.isfile(config_file) and os.access(config_file, os.R_OK):
             new = cls._file_to_workflow_args(config_file, name, use_new_parser=True)
             old = cls._file_to_workflow_args(config_file, name, use_new_parser=False)
 
-            if new != old:
-
-                def to_tuple_set(workflow_job_args, origin: str):
-                    (
-                        workflow_name,
-                        internal,
-                        min_arg,
-                        max_arg,
-                        arg_types_list,
-                        executable,
-                        script,
-                    ) = workflow_job_args
-
-                    return set(
-                        [
-                            TupleWithOrigin(("name", workflow_name), origin),
-                            TupleWithOrigin(("internal", str(internal)), origin),
-                            TupleWithOrigin(("min_arg", min_arg), origin),
-                            TupleWithOrigin(("max_arg", max_arg), origin),
-                            TupleWithOrigin(
-                                ("arg_types_list", map(str, arg_types_list)), origin
-                            ),
-                            TupleWithOrigin(("executable", executable), origin),
-                            TupleWithOrigin(("script", script), origin),
-                        ]
-                    )
-
-                diff = to_tuple_set(new, "new") ^ to_tuple_set(old, "old")
-                diff_formatted = [f"{x.origin}: {x}" for x in diff]
-
-                logger.info(
-                    "Old and new workflow job parser gave "
-                    f"different results. {diff_formatted}"
-                )
+            cls._compare_parsing_output(new, old)
 
             return cls(*(new if USE_NEW_PARSER_BY_DEFAULT else old))
 
         else:
             raise ConfigValidationError(f"Could not open config_file:{config_file!r}")
 
-    def isPlugin(self) -> bool:
+    def is_plugin(self) -> bool:
         if self.ert_script is not None:
             return issubclass(self.ert_script, ErtPlugin)
         return False
 
     @classmethod
-    def stringToType(cls, string: str) -> ContentTypeEnum:
+    def string_to_type(cls, string: str) -> ContentTypeEnum:
         if string == "STRING":
             return ContentTypeEnum.CONFIG_STRING
         if string == "FLOAT":
@@ -238,7 +241,7 @@ class WorkflowJob:
 
         raise ValueError("Unrecognized content type")
 
-    def argumentTypes(self) -> List["ContentTypes"]:
+    def argument_types(self) -> List["ContentTypes"]:
         def content_to_type(c: Optional[ContentTypeEnum]):
             if c == ContentTypeEnum.CONFIG_BOOL:
                 return bool
