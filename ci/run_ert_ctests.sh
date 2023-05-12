@@ -1,24 +1,24 @@
 #!/bin/bash
 set -x
-# This script is designed to be able to run in stages in the Jenkins pipline
+# This script is designed to be run by a self-hosted Github action runner
+# from komodo-releases.
 #
 # You can also run it locally. Note that only the committed code is tested,
 # not changes in your working directory.
 #
 # If you want to run the whole build in one go:
-#   sh testjenkins.sh build_and_test
+#   bash run_ert_ctests.sh build_and_test
 #
 # If you want to run the build in separate stages:
-#   sh testjenkins.sh setup
-#   sh testjenkins.sh build_elc
+#   sh run_ert_ctests.sh setup
+#   sh run_ert_ctests.sh build_ert_clib
 #   etc...
 #
-# By default it will try to build everything inside a folder 'jenkinsbuild'
-# You can override this with the env variable WORKING_DIR e.g.:
-#   WORKING_DIR=$(mktemp -d) sh testjenkins.sh build_and_test
+# By default it will try to build everything inside a folder 'build'
 #
-# After https://github.com/equinor/ert/issues/1634 the ERT_SOURCE_ROOT needs to
-# point at the ert source root (where .git is).
+# Current working directory must contain a checked out ert repository
+#
+# When running manually you might have to delete the folder _skbuild
 
 build_and_test () {
 	setup
@@ -36,7 +36,6 @@ enable_environment () {
 	cmake --version
 
 	export ERT_SHOW_BACKTRACE=Y
-	export RMS_SITE_CONFIG=/prog/res/komodo/bleeding-py38-rhel7/root/lib/python3.8/site-packages/ert_configurations/resources/rms_config.yml
 
 	# Conan v1 bundles its own certs due to legacy reasons, so we point it
 	# to the system's certs instead.
