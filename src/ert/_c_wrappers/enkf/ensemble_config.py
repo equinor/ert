@@ -477,23 +477,15 @@ class EnsembleConfig(BaseCClass):
         key_list = self.getKeylistFromImplType(impl_type)
         return f"{node}: " f"{[self.getNode(key) for key in key_list]}, "
 
-    def _gen_kw_info(self) -> str:
-        key_list = self.get_keylist_gen_kw()
-        return "GEN_KW: " f"{[self[key] for key in key_list]}, "
-
-    def _gen_data_info(self) -> str:
-        key_list = list(self._gen_data_config.keys())
-        return "GEN_DATA: " f"{[self[key] for key in key_list]}, "
-
     def __repr__(self):
         if not self._address():
             return "<EnsembleConfig()>"
         return (
             "EnsembleConfig(config_dict={"
-            + self._gen_data_info()
-            + self._gen_kw_info()
-            + self._node_info(ConfigKeys.SURFACE_KEY)  # ael
-            # + self._node_info(ConfigKeys.SUMMARY) ael
+            + self._node_info(ConfigKeys.GEN_DATA)
+            + self._node_info(ConfigKeys.GEN_KW)
+            + self._node_info(ConfigKeys.SURFACE_KEY)
+            + self._node_info(ConfigKeys.SUMMARY)
             + self._node_info(ConfigKeys.FIELD_KEY)
             + f"{ConfigKeys.GRID}: {self._grid_file},"
             + f"{ConfigKeys.REFCASE}: {self._refcase_file}"
@@ -619,7 +611,17 @@ class EnsembleConfig(BaseCClass):
 
     def getKeylistFromImplType(self, ert_impl_type) -> List[str]:
         assert isinstance(ert_impl_type, ErtImplType)
-        return list(self._alloc_keylist_from_impl_type(ert_impl_type))
+
+        if ert_impl_type == ErtImplType.EXT_PARAM:
+            return list(self._alloc_keylist_from_impl_type(ert_impl_type))
+        else:
+            mylist = []
+
+            for v in self.py_nodes:
+                if self.getNode(v).getImplementationType() == ert_impl_type:
+                    mylist.append(self.getNode(v).getKey())
+
+            return mylist
 
     def get_keylist_gen_kw(self) -> List[str]:
         return list(self._gen_kw_node.keys())
@@ -656,9 +658,11 @@ class EnsembleConfig(BaseCClass):
         if self_param_list != other_param_list:
             return False
 
-        for a in self_param_list:
-            if a in self and a in other:
-                if self.getNode(a) != other.getNode(a):
+        for par in self_param_list:
+            if (par in self and par in other) or (
+                par in self.py_nodes and par in other.py_nodes
+            ):
+                if self.getNode(par) != other.getNode(par):
                     return False
             else:
                 return False
