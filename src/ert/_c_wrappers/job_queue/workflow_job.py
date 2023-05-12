@@ -176,7 +176,7 @@ class WorkflowJob:
                     optional_get("EXECUTABLE"),
                     optional_get("SCRIPT"),
                 ), None
-        except ConfigValidationError as err:
+        except Exception as err:
             return None, err
 
     @classmethod
@@ -232,9 +232,16 @@ class WorkflowJob:
         )
 
         if USE_NEW_PARSER_BY_DEFAULT:
+            if error_from_old_parser:
+                logger.info(f"Old parser gave the error: {error_from_old_parser}")
+
             if error_from_new_parser:
                 raise error_from_new_parser
+
         else:
+            if error_from_new_parser:
+                logger.info(f"New parser gave the error: {error_from_new_parser}")
+
             if error_from_old_parser:
                 raise error_from_old_parser
 
