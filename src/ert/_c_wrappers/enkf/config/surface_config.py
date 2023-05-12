@@ -16,6 +16,14 @@ _logger = logging.getLogger(__name__)
 
 @dataclass
 class SurfaceConfig(ParameterConfig):
+    ncol: int
+    nrow: int
+    xori: int
+    yori: int
+    xinc: int
+    yinc: int
+    rotation: int
+    yflip: int
     forward_init_file: str
     output_file: Path
     base_surface_path: str
