@@ -96,7 +96,7 @@ class WorkflowJobSchemaDict(SchemaItemDict):
                 )
 
 
-def init_workflow_schema() -> Dict[str, SchemaItem]:
+def init_workflow_schema() -> SchemaItemDict:
     schema = WorkflowJobSchemaDict()
     for item in [
         executable_keyword(),

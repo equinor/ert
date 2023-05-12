@@ -1,6 +1,6 @@
 import os
 import shutil
-from typing import Any, List, Mapping, Optional, Union
+from typing import List, Mapping, Optional, TypeVar, Union
 
 from pydantic import BaseModel
 
@@ -15,6 +15,8 @@ from ert.parsing.context_values import (
 from ert.parsing.error_info import ErrorInfo
 from ert.parsing.file_context_token import FileContextToken
 from ert.parsing.schema_item_type import SchemaItemType
+
+T = TypeVar("T")
 
 
 class SchemaItem(BaseModel):
@@ -177,10 +179,10 @@ class SchemaItem(BaseModel):
 
     def apply_constraints(
         self,
-        args: List[Any],
+        args: List[T],
         keyword: FileContextToken,
         cwd: str,
-    ) -> Union[List[Any], Any]:
+    ) -> List[Union[T, ContextValue]]:
         errors: List[Union[ErrorInfo, ConfigValidationError]] = []
 
         args_with_context = []
@@ -220,7 +222,7 @@ class SchemaItem(BaseModel):
 
         return args_with_context
 
-    def join_args(self, line: List[Any]) -> List[Any]:
+    def join_args(self, line: List[FileContextToken]) -> List[FileContextToken]:
         n = self.join_after
         if 0 < n < len(line):
             joined = FileContextToken.join_tokens(line[n:], " ")

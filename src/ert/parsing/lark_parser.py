@@ -12,7 +12,8 @@ from typing_extensions import Self
 from .config_errors import ConfigValidationError, ConfigWarning
 from .config_schema import SchemaItem, define_keyword
 from .error_info import ErrorInfo
-from .types import Defines, FileContextToken, Instruction, MaybeWithContext
+from .schema_dict import SchemaItemDict
+from .types import ConfigDict, Defines, FileContextToken, Instruction, MaybeWithContext
 
 grammar = r"""
 WHITESPACE: (" "|"\t")+
@@ -183,12 +184,12 @@ def _tree_to_dict(
     config_file: str,
     pre_defines: Defines,
     tree: Tree[Instruction],
-    schema: Mapping[str, SchemaItem],
-    site_config: Optional[Dict[str, Any]] = None,
-) -> Mapping[str, Instruction]:
-    config_dict: Dict[str, Any] = site_config if site_config else {}
+    schema: SchemaItemDict,
+    site_config: Optional[ConfigDict] = None,
+) -> ConfigDict:
+    config_dict: ConfigDict = site_config if site_config else {}
     defines = pre_defines.copy()
-    config_dict["DEFINE"] = defines
+    config_dict["DEFINE"] = defines  # type: ignore
 
     errors = []
 
@@ -196,23 +197,25 @@ def _tree_to_dict(
 
     for node in tree.children:
         try:
-            kw, *args = node
+            args: List[FileContextToken]
+            kw: FileContextToken
+            kw, *args = node  # type: ignore
 
             if kw not in schema:
                 warnings.warn(f"Unknown keyword {kw!r}", category=ConfigWarning)
                 continue
             constraints = schema[kw]
 
-            args = constraints.join_args(args)  # no errors
+            args = constraints.join_args(args)
             args = _substitute_args(args, constraints, defines)
-            args = constraints.apply_constraints(args, kw, cwd)
+            value_list = constraints.apply_constraints(args, kw, cwd)
 
             if constraints.multi_occurrence:
                 arglist = config_dict.get(kw, [])
-                arglist.append(args)
+                arglist.append(value_list)  # type: ignore
                 config_dict[kw] = arglist
             else:
-                config_dict[kw] = args
+                config_dict[kw] = value_list
         except ConfigValidationError as e:
             config_dict[kw] = None
             errors.append(e)
@@ -283,7 +286,7 @@ def _handle_includes(
     tree: Tree[Instruction],
     defines: Defines,
     config_file: str,
-    current_included_file: IncludedFile = None,
+    current_included_file: Optional[IncludedFile] = None,
 ):
     if current_included_file is None:
         current_included_file = IncludedFile(included_from=None, filename=config_file)
@@ -293,15 +296,17 @@ def _handle_includes(
 
     errors = []
     for i, node in enumerate(tree.children):
-        kw, *args = node
+        args: List[FileContextToken]
+        kw: FileContextToken
+        kw, *args = node  # type: ignore
         if kw == "DEFINE":
             constraints = define_keyword()
             args = constraints.join_args(args)
             args = _substitute_args(args, constraints, defines)
-            defines.append(args)
+            defines.append(args)  # type: ignore
         if kw == "INCLUDE":
             if len(args) > 1:
-                superfluous_tokens: [FileContextToken] = args[1:]
+                superfluous_tokens: List[FileContextToken] = args[1:]
                 superfluous = FileContextToken.join_tokens(superfluous_tokens)
 
                 error_context = (
@@ -385,9 +390,7 @@ def _handle_includes(
         raise ConfigValidationError.from_collected(errors)
 
 
-def _parse_file(
-    file: Union[str, bytes, os.PathLike], error_context_string: str = ""
-) -> Tree[Instruction]:
+def _parse_file(file: str, error_context_string: str = "") -> Tree[Instruction]:
     try:
         with open(file, encoding="utf-8") as f:
             content = f.read()
@@ -465,9 +468,9 @@ def _parse_file(
 
 def parse(
     file: str,
-    schema: Mapping[str, SchemaItem],
-    site_config: Optional[Mapping[str, Instruction]] = None,
-) -> Mapping[str, Instruction]:
+    schema: SchemaItemDict,
+    site_config: Optional[ConfigDict] = None,
+) -> ConfigDict:
     filepath = os.path.normpath(os.path.abspath(file))
     tree = _parse_file(filepath)
     config_dir = os.path.dirname(filepath)

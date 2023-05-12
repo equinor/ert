@@ -4,13 +4,13 @@ import logging
 import os
 from collections import defaultdict
 from dataclasses import dataclass
-from typing import List, Mapping, Optional, Type, Union
+from typing import Dict, List, Optional, Tuple, Type, Union
 
 from ert._c_wrappers.config import ConfigParser, ContentTypeEnum
 from ert._clib.job_kw import type_from_kw
 from ert.parsing import (
+    ConfigDict,
     ConfigValidationError,
-    Instruction,
     WorkflowJobKeys,
     init_workflow_schema,
     lark_parse,

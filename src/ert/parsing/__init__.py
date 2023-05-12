@@ -6,7 +6,7 @@ from .config_schema import (
     init_user_config_schema,
 )
 from .lark_parser import parse as lark_parse
-from .types import Instruction
+from .types import ConfigDict
 from .workflow_job_keywords import WorkflowJobKeys
 from .workflow_job_schema import init_workflow_schema
 
@@ -20,5 +20,5 @@ __all__ = [
     "SchemaItemType",
     "init_site_config_schema",
     "init_user_config_schema",
-    "Instruction",
+    "ConfigDict",
 ]
