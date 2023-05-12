@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING, Dict, List, Optional, Union
 
+import xtgeo
 from cwrap import BaseCClass
 from ecl.summary import EclSum
 
@@ -376,8 +377,16 @@ class EnsembleConfig(BaseCClass):
             raise ConfigValidationError(
                 f"SURFACE {name} incorrectly configured: {errors}"
             )
-
+        surf = xtgeo.surface_from_file(base_surface, fformat="irap_ascii")
         return SurfaceConfig(
+            ncol=surf.ncol,
+            nrow=surf.nrow,
+            xori=surf.xori,
+            yori=surf.yori,
+            xinc=surf.xinc,
+            yinc=surf.yinc,
+            rotation=surf.rotation,
+            yflip=surf.yflip,
             name=name,
             forward_init=forward_init,
             forward_init_file=init_file,
