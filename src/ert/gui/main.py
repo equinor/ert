@@ -77,11 +77,11 @@ def run_gui(args: Namespace, plugin_manager: Optional[ErtPluginManager] = None):
             return show_window()
 
 
-def _log_difference_with_new_parser(args, ert_config):
+def _log_difference_with_old_parser(args, ert_config):
     logger = logging.getLogger(__name__)
     try:
         with warnings.catch_warnings(record=True) as silenced_warnings:
-            ert_config_new = ErtConfig.from_file(args.config, use_new_parser=True)
+            ert_config_new = ErtConfig.from_file(args.config, use_new_parser=False)
 
             for w in silenced_warnings:
                 logger.info(f"New Parser warning: {w.message}")
@@ -121,7 +121,7 @@ def _start_initial_gui_window(
             _check_locale()
             ert_config = ErtConfig.from_file(args.config)
             suggestions += ErtConfig.make_suggestion_list(args.config)
-            _log_difference_with_new_parser(args, ert_config)
+            _log_difference_with_old_parser(args, ert_config)
             os.chdir(ert_config.config_path)
             # Changing current working directory means we need to update
             # the config file to be the base name of the original config
