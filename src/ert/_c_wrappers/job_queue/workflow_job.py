@@ -137,46 +137,52 @@ class WorkflowJob:
 
     @classmethod
     def _file_to_workflow_args(cls, config_file, name=None, use_new_parser=True):
-        if not name:
-            name = os.path.basename(config_file)
+        try:
+            if not name:
+                name = os.path.basename(config_file)
 
-        if use_new_parser:
-            new_content_dict = new_workflow_job_parser(config_file)
+            if use_new_parser:
+                new_content_dict = new_workflow_job_parser(config_file)
 
-            new_types_list = cls._make_arg_types_list_new(new_content_dict)
-            return (
-                name,
-                new_content_dict.get("INTERNAL"),
-                new_content_dict.get("MIN_ARG"),
-                new_content_dict.get("MAX_ARG"),
-                new_types_list,
-                new_content_dict.get("EXECUTABLE"),
-                str(new_content_dict.get("SCRIPT"))
-                if "SCRIPT" in new_content_dict
-                else None,
-            )
-        else:
-            old_content = _config_parser.parse(config_file)
+                new_types_list = cls._make_arg_types_list_new(new_content_dict)
+                return (
+                    name,
+                    new_content_dict.get("INTERNAL"),
+                    new_content_dict.get("MIN_ARG"),
+                    new_content_dict.get("MAX_ARG"),
+                    new_types_list,
+                    new_content_dict.get("EXECUTABLE"),
+                    str(new_content_dict.get("SCRIPT"))
+                    if "SCRIPT" in new_content_dict
+                    else None,
+                ), None
+            else:
+                old_content = _config_parser.parse(config_file)
 
-            def optional_get(key):
-                return old_content.getValue(key) if old_content.hasKey(key) else None
+                def optional_get(key):
+                    return (
+                        old_content.getValue(key) if old_content.hasKey(key) else None
+                    )
 
-            max_arg = optional_get("MAX_ARG")
+                max_arg = optional_get("MAX_ARG")
 
-            old_arg_types_list = cls._make_arg_types_list(old_content, max_arg)
-            return (
-                name,
-                optional_get("INTERNAL"),
-                optional_get("MIN_ARG"),
-                max_arg,
-                old_arg_types_list,
-                optional_get("EXECUTABLE"),
-                optional_get("SCRIPT"),
-            )
+                old_arg_types_list = cls._make_arg_types_list(old_content, max_arg)
+                return (
+                    name,
+                    optional_get("INTERNAL"),
+                    optional_get("MIN_ARG"),
+                    max_arg,
+                    old_arg_types_list,
+                    optional_get("EXECUTABLE"),
+                    optional_get("SCRIPT"),
+                ), None
+        except ConfigValidationError as err:
+            return None, err
 
     @classmethod
-    def _compare_parsing_output(cls, new, old):
-        if new != old:
+    def _compare_parsing_output(cls, args_from_new_parser, args_from_old_parser):
+        if args_from_new_parser != args_from_old_parser:
+
             def to_tuple_set(workflow_job_args, origin: str):
                 (
                     workflow_name,
@@ -202,7 +208,9 @@ class WorkflowJob:
                     ]
                 )
 
-            diff = to_tuple_set(new, "new") ^ to_tuple_set(old, "old")
+            diff = to_tuple_set(args_from_new_parser, "new") ^ to_tuple_set(
+                args_from_old_parser, "old"
+            )
             diff_formatted = [f"{x.origin}: {x}" for x in diff]
 
             logger.info(
@@ -212,16 +220,33 @@ class WorkflowJob:
 
     @classmethod
     def from_file(cls, config_file, name=None):
-        if os.path.isfile(config_file) and os.access(config_file, os.R_OK):
-            new = cls._file_to_workflow_args(config_file, name, use_new_parser=True)
-            old = cls._file_to_workflow_args(config_file, name, use_new_parser=False)
-
-            cls._compare_parsing_output(new, old)
-
-            return cls(*(new if USE_NEW_PARSER_BY_DEFAULT else old))
-
-        else:
+        if not (os.path.isfile(config_file) and os.access(config_file, os.R_OK)):
             raise ConfigValidationError(f"Could not open config_file:{config_file!r}")
+
+        args_from_new_parser, error_from_new_parser = cls._file_to_workflow_args(
+            config_file, name, use_new_parser=True
+        )
+
+        args_from_old_parser, error_from_old_parser = cls._file_to_workflow_args(
+            config_file, name, use_new_parser=False
+        )
+
+        if USE_NEW_PARSER_BY_DEFAULT:
+            if error_from_new_parser:
+                raise error_from_new_parser
+        else:
+            if error_from_old_parser:
+                raise error_from_old_parser
+
+        cls._compare_parsing_output(args_from_new_parser, args_from_old_parser)
+
+        return cls(
+            *(
+                args_from_new_parser
+                if USE_NEW_PARSER_BY_DEFAULT
+                else args_from_old_parser
+            )
+        )
 
     def is_plugin(self) -> bool:
         if self.ert_script is not None:
