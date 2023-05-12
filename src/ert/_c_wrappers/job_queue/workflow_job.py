@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import os
 from collections import defaultdict
 from dataclasses import dataclass
@@ -17,6 +18,8 @@ from ert.parsing import (
 
 from .ert_plugin import ErtPlugin
 from .ert_script import ErtScript
+
+logger = logging.getLogger(__name__)
 
 ContentTypes = Union[Type[int], Type[bool], Type[float], Type[str]]
 
@@ -53,6 +56,13 @@ def new_workflow_job_parser(file: str):
 
 class ErtScriptLoadFailure(ValueError):
     pass
+
+
+class TupleWithOrigin(tuple):
+    def __new__(cls, values, origin: str):
+        obj = super().__new__(cls, values)
+        obj.origin = origin
+        return obj
 
 
 @dataclass
@@ -170,16 +180,40 @@ class WorkflowJob:
             new = cls._file_to_workflow_args(config_file, name, use_new_parser=True)
             old = cls._file_to_workflow_args(config_file, name, use_new_parser=False)
 
-            if new[4] != old[4]:
-                # typelists differ in a few cases
-                # as the new parser infers one from
-                # set min args / max args, but old
-                # parser leaves it as blank
-                # Test case: MIN_ARG = 1 and unspecified MAX_ARG
-                # and ARG_TYPE
-                pass
-            elif new != old:
-                raise ConfigValidationError("Old and new parser gave different results")
+            if new != old:
+
+                def to_tuple_set(workflow_job_args, origin: str):
+                    (
+                        workflow_name,
+                        internal,
+                        min_arg,
+                        max_arg,
+                        arg_types_list,
+                        executable,
+                        script,
+                    ) = workflow_job_args
+
+                    return set(
+                        [
+                            TupleWithOrigin(("name", workflow_name), origin),
+                            TupleWithOrigin(("internal", str(internal)), origin),
+                            TupleWithOrigin(("min_arg", min_arg), origin),
+                            TupleWithOrigin(("max_arg", max_arg), origin),
+                            TupleWithOrigin(
+                                ("arg_types_list", map(str, arg_types_list)), origin
+                            ),
+                            TupleWithOrigin(("executable", executable), origin),
+                            TupleWithOrigin(("script", script), origin),
+                        ]
+                    )
+
+                diff = to_tuple_set(new, "new") ^ to_tuple_set(old, "old")
+                diff_formatted = [f"{x.origin}: {x}" for x in diff]
+
+                logger.info(
+                    "Old and new workflow job parser gave "
+                    f"different results. {diff_formatted}"
+                )
 
             return cls(*(new if USE_NEW_PARSER_BY_DEFAULT else old))
 
