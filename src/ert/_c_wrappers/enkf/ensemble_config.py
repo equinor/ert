@@ -698,7 +698,8 @@ class EnsembleConfig(BaseCClass):
     def get_node_observation_keys(self, key) -> List[str]:
         node = self[key]
         keylist = []
-        if isinstance(node, GenDataConfig):
+
+        if isinstance(node, SummaryConfig):
             keylist = node.getObservationKeys()
         return keylist
 
