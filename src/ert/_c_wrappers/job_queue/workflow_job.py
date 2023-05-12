@@ -24,12 +24,6 @@ logger = logging.getLogger(__name__)
 ContentTypes = Union[Type[int], Type[bool], Type[float], Type[str]]
 
 
-USE_NEW_PARSER_BY_DEFAULT = True
-
-if "USE_OLD_ERT_PARSER" in os.environ and os.environ["USE_OLD_ERT_PARSER"] == "YES":
-    USE_NEW_PARSER_BY_DEFAULT = False
-
-
 def _workflow_job_config_parser() -> ConfigParser:
     parser = ConfigParser()
     parser.add("MIN_ARG", value_type=ContentTypeEnum.CONFIG_INT).set_argc_minmax(1, 1)
@@ -58,13 +52,6 @@ class ErtScriptLoadFailure(ValueError):
     pass
 
 
-class TupleWithOrigin(tuple):
-    def __new__(cls, values, origin: str):
-        obj = super().__new__(cls, values)
-        obj.origin = origin
-        return obj
-
-
 @dataclass
 class WorkflowJob:
     name: str
@@ -90,39 +77,41 @@ class WorkflowJob:
                 ) from err
 
     @staticmethod
-    def _make_arg_types_list_new(content_dict: Mapping[str, Instruction]):
+    def _make_arg_types_list_new(content_dict: ConfigDict) -> List[ContentTypeEnum]:
         # First find the number of args
-        args_spec = content_dict.get(WorkflowJobKeys.ARG_TYPE, [])
+        args_spec: List[Tuple[int, str]] = content_dict.get(WorkflowJobKeys.ARG_TYPE, [])  # type: ignore
         specified_highest_arg_index = (
             max(index for index, _ in args_spec) if len(args_spec) > 0 else -1
         )
-        specified_max_args = content_dict.get("MAX_ARG")
-        specified_min_args = content_dict.get("MIN_ARG")
+        specified_max_args: int = content_dict.get("MAX_ARG", 0)  # type: ignore
+        specified_min_args: int = content_dict.get("MIN_ARG", 0)  # type: ignore
 
         num_args = max(
             specified_highest_arg_index + 1,
-            specified_max_args or 0,
-            specified_min_args or 0,
+            specified_max_args,
+            specified_min_args,
         )
 
-        arg_types_dict = dict()
+        arg_types_dict: Dict[int, ContentTypeEnum] = dict()
 
         for i, type_as_string in args_spec:
             # make old tests pass temporarily, will use
             # SchemaItemType
             arg_types_dict[i] = WorkflowJob.string_to_type(type_as_string)
 
-        arg_types_list = [
+        arg_types_list: List[ContentTypeEnum] = [
             arg_types_dict.get(i, ContentTypeEnum.CONFIG_STRING)
             for i in range(num_args)
-        ]
+        ]  # type: ignore
         return arg_types_list
 
     @staticmethod
     def _make_arg_types_list(
         config_content, max_arg: Optional[int]
     ) -> List[ContentTypeEnum]:
-        arg_types_dict = defaultdict(lambda: ContentTypeEnum.CONFIG_STRING)
+        arg_types_dict: Dict[int, ContentTypeEnum] = defaultdict(
+            lambda: ContentTypeEnum.CONFIG_STRING
+        )
         if max_arg is not None:
             arg_types_dict[max_arg - 1] = ContentTypeEnum.CONFIG_STRING
         for arg in config_content["ARG_TYPE"]:
@@ -136,124 +125,41 @@ class WorkflowJob:
             return []
 
     @classmethod
-    def _file_to_workflow_args(cls, config_file, name=None, use_new_parser=True):
-        try:
-            if not name:
-                name = os.path.basename(config_file)
-
-            if use_new_parser:
-                new_content_dict = new_workflow_job_parser(config_file)
-
-                new_types_list = cls._make_arg_types_list_new(new_content_dict)
-                return (
-                    name,
-                    new_content_dict.get("INTERNAL"),
-                    new_content_dict.get("MIN_ARG"),
-                    new_content_dict.get("MAX_ARG"),
-                    new_types_list,
-                    new_content_dict.get("EXECUTABLE"),
-                    str(new_content_dict.get("SCRIPT"))
-                    if "SCRIPT" in new_content_dict
-                    else None,
-                ), None
-            else:
-                old_content = _config_parser.parse(config_file)
-
-                def optional_get(key):
-                    return (
-                        old_content.getValue(key) if old_content.hasKey(key) else None
-                    )
-
-                max_arg = optional_get("MAX_ARG")
-
-                old_arg_types_list = cls._make_arg_types_list(old_content, max_arg)
-                return (
-                    name,
-                    optional_get("INTERNAL"),
-                    optional_get("MIN_ARG"),
-                    max_arg,
-                    old_arg_types_list,
-                    optional_get("EXECUTABLE"),
-                    optional_get("SCRIPT"),
-                ), None
-        except Exception as err:
-            return None, err
-
-    @classmethod
-    def _compare_parsing_output(cls, args_from_new_parser, args_from_old_parser):
-        if args_from_new_parser != args_from_old_parser:
-
-            def to_tuple_set(workflow_job_args, origin: str):
-                (
-                    workflow_name,
-                    internal,
-                    min_arg,
-                    max_arg,
-                    arg_types_list,
-                    executable,
-                    script,
-                ) = workflow_job_args
-
-                return set(
-                    [
-                        TupleWithOrigin(("name", workflow_name), origin),
-                        TupleWithOrigin(("internal", str(internal)), origin),
-                        TupleWithOrigin(("min_arg", min_arg), origin),
-                        TupleWithOrigin(("max_arg", max_arg), origin),
-                        TupleWithOrigin(
-                            ("arg_types_list", map(str, arg_types_list)), origin
-                        ),
-                        TupleWithOrigin(("executable", executable), origin),
-                        TupleWithOrigin(("script", script), origin),
-                    ]
-                )
-
-            diff = to_tuple_set(args_from_new_parser, "new") ^ to_tuple_set(
-                args_from_old_parser, "old"
-            )
-            diff_formatted = [f"{x.origin}: {x}" for x in diff]
-
-            logger.info(
-                "Old and new workflow job parser gave "
-                f"different results. {diff_formatted}"
-            )
-
-    @classmethod
-    def from_file(cls, config_file, name=None):
+    def from_file(cls, config_file, name=None, use_new_parser=True):
         if not (os.path.isfile(config_file) and os.access(config_file, os.R_OK)):
             raise ConfigValidationError(f"Could not open config_file:{config_file!r}")
+        if not name:
+            name = os.path.basename(config_file)
 
-        args_from_new_parser, error_from_new_parser = cls._file_to_workflow_args(
-            config_file, name, use_new_parser=True
-        )
-
-        args_from_old_parser, error_from_old_parser = cls._file_to_workflow_args(
-            config_file, name, use_new_parser=False
-        )
-
-        if USE_NEW_PARSER_BY_DEFAULT:
-            if error_from_old_parser:
-                logger.info(f"Old parser gave the error: {error_from_old_parser}")
-
-            if error_from_new_parser:
-                raise error_from_new_parser
-
-        else:
-            if error_from_new_parser:
-                logger.info(f"New parser gave the error: {error_from_new_parser}")
-
-            if error_from_old_parser:
-                raise error_from_old_parser
-
-        cls._compare_parsing_output(args_from_new_parser, args_from_old_parser)
-
-        return cls(
-            *(
-                args_from_new_parser
-                if USE_NEW_PARSER_BY_DEFAULT
-                else args_from_old_parser
+        if use_new_parser:
+            content_dict = new_workflow_job_parser(config_file)
+            arg_types_list = cls._make_arg_types_list_new(content_dict)
+            return cls(
+                name,
+                content_dict.get("INTERNAL"),  # type: ignore
+                content_dict.get("MIN_ARG"),  # type: ignore
+                content_dict.get("MAX_ARG"),  # type: ignore
+                arg_types_list,
+                content_dict.get("EXECUTABLE"),  # type: ignore
+                str(content_dict.get("SCRIPT")) if "SCRIPT" in content_dict else None,
             )
-        )
+        else:
+            old_content = _config_parser.parse(config_file)
+
+            def optional_get(key, default=None):
+                return old_content.getValue(key) if old_content.hasKey(key) else default
+
+            max_arg = optional_get("MAX_ARG")
+            arg_types_list = cls._make_arg_types_list(old_content, max_arg)
+            return cls(
+                name,
+                optional_get("INTERNAL", False),
+                optional_get("MIN_ARG"),
+                max_arg,
+                arg_types_list,
+                optional_get("EXECUTABLE"),
+                optional_get("SCRIPT"),
+            )
 
     def is_plugin(self) -> bool:
         if self.ert_script is not None:

@@ -94,10 +94,12 @@ class ErtConfig:
         ErtConfig._log_config_file(user_config_file)
         ErtConfig._log_config_dict(user_config_dict)
         ErtConfig.apply_config_content_defaults(user_config_dict, config_dir)
-        return ErtConfig.from_dict(user_config_dict)
+        return ErtConfig.from_dict(user_config_dict, use_new_parser)
 
     @classmethod
-    def from_dict(cls, config_dict) -> "ErtConfig":
+    def from_dict(
+        cls, config_dict, use_new_parser: bool = USE_NEW_PARSER_BY_DEFAULT
+    ) -> "ErtConfig":
         substitution_list = SubstitutionList.from_dict(config_dict=config_dict)
         config_dir = substitution_list.get("<CONFIG_PATH>", "")
         config_file = substitution_list.get("<CONFIG_FILE>", "no_config")
@@ -130,7 +132,7 @@ class ErtConfig:
 
         try:
             workflow_jobs, workflows, hooked_workflows = cls._workflows_from_dict(
-                config_dict, substitution_list
+                config_dict, substitution_list, use_new_parser=use_new_parser
             )
         except ConfigValidationError as e:
             errors.append(e)
@@ -578,7 +580,9 @@ class ErtConfig:
         }
 
     @classmethod
-    def _workflows_from_dict(cls, content_dict, substitution_list):
+    def _workflows_from_dict(
+        cls, content_dict, substitution_list, use_new_parser: bool
+    ):
         workflow_job_info = content_dict.get(ConfigKeys.LOAD_WORKFLOW_JOB, [])
         workflow_job_dir_info = content_dict.get(ConfigKeys.WORKFLOW_JOB_DIRECTORY, [])
         hook_workflow_info = content_dict.get(ConfigKeys.HOOK_WORKFLOW_KEY, [])
@@ -648,7 +652,10 @@ class ErtConfig:
             try:
                 existed = filename in workflows
                 workflows[filename] = Workflow.from_file(
-                    work[0], substitution_list, workflow_jobs
+                    work[0],
+                    substitution_list,
+                    workflow_jobs,
+                    use_new_parser=use_new_parser,
                 )
                 if existed:
                     warnings.warn(
