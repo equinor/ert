@@ -690,7 +690,7 @@ class EnsembleConfig(BaseCClass):
         )
 
     def get_summary_keys(self) -> List[str]:
-        return sorted(self._summary_keys.values())
+        return sorted(self.getKeylistFromImplType(ErtImplType.SUMMARY))
 
     def get_keyword_model_config(self, key: str) -> GenKwConfig:
         return self._gen_kw_node[key]
