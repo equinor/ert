@@ -7,14 +7,13 @@
 #include "../tmpdir.hpp"
 #include <ert/enkf/enkf_obs.hpp>
 
-std::string
-conf_instance_get_path_error(std::shared_ptr<conf_instance_type> conf_instance);
+std::shared_ptr<conf_class> enkf_obs_get_obs_conf_class();
 
 /*
  * Write conf-file with given keywords, then parse it.
  * Returns pointer to the parsed configuration
  */
-std::shared_ptr<conf_instance_type>
+std::shared_ptr<conf_instance>
 write_conf(std::vector<std::string> keyword_lines) {
     std::string buf("GENERAL_OBSERVATION WPR_DIFF_1 {\n");
     buf += "   DATA       = SNAKE_OIL_WPR_DIFF;\n";
@@ -29,8 +28,8 @@ write_conf(std::vector<std::string> keyword_lines) {
     stream.close(); // close before reading in next step!
 
     auto enkf_conf_class = enkf_obs_get_obs_conf_class();
-    return conf_instance_alloc_from_file(enkf_conf_class, "enkf_conf",
-                                         "obs_path/conf.txt");
+    return conf_instance::from_file(enkf_conf_class, "enkf_conf",
+                                    "obs_path/conf.txt");
 }
 
 /*

@@ -1,5 +1,4 @@
-#ifndef ERT_CONF_H
-#define ERT_CONF_H
+#pragma once
 
 /* libconfig: lightweight configuration parser
  *
@@ -88,170 +87,121 @@
 #include <ert/util/vector.hpp>
 #include <map>
 #include <memory>
+#include <optional>
 #include <set>
 #include <string>
 #include <vector>
 
-using conf_class_type = struct conf_class_struct;
-using conf_instance_type = struct conf_instance_struct;
-using conf_item_spec_type = struct conf_item_spec_struct;
-using conf_item_type = struct conf_item_struct;
-using conf_item_mutex_type = struct conf_item_mutex_struct;
+struct conf_item_spec;
+struct conf_item_mutex;
+struct conf_item_type;
+struct conf_item;
 
-struct conf_class_struct {
+class conf_class : public std::enable_shared_from_this<conf_class> {
+private:
     /** Can be NULL */
-    std::weak_ptr<conf_class_type> super_class;
-    char *class_name;
-    /** Can be NULL if not given */
-    char *help;
+    std::weak_ptr<conf_class> super_class;
+    std::string class_name;
+    std::optional<std::string> help;
     bool require_instance;
     bool singleton;
+    std::map<std::string, std::shared_ptr<conf_class>> sub_classes;
+    std::map<std::string, std::shared_ptr<conf_item_spec>> item_specs;
+    std::vector<std::shared_ptr<conf_item_mutex>> item_mutexes;
 
-    std::map<std::string, std::shared_ptr<conf_class_type>> sub_classes;
-    std::map<std::string, std::shared_ptr<conf_item_spec_type>> item_specs;
-    std::vector<std::shared_ptr<conf_item_mutex_type>> item_mutexes;
+    bool has_super_class(std::shared_ptr<conf_class>);
+    std::string get_help();
+
+    friend class conf_instance;
+    friend class conf_item_mutex;
+    friend class conf_item_spec;
+
+public:
+    conf_class(std::string class_name, bool require_instance, bool singleton,
+               std::optional<std::string> help)
+        : class_name(class_name), require_instance(require_instance),
+          singleton(singleton), help(help){};
+
+    void insert_sub_class(std::shared_ptr<conf_class>);
+    void insert_item_spec(std::shared_ptr<conf_item_spec>);
+    std::shared_ptr<conf_item_mutex> new_item_mutex(bool require_one,
+                                                    bool inverse);
 };
 
-struct conf_instance_struct {
-    std::shared_ptr<conf_class_type> conf_class;
-    char *name;
+class conf_instance : public std::enable_shared_from_this<conf_instance> {
+private:
+    std::shared_ptr<conf_class> cls;
+    std::map<std::string, std::shared_ptr<conf_instance>> sub_instances;
+    std::map<std::string, std::shared_ptr<conf_item>> items;
 
-    std::map<std::string, std::shared_ptr<conf_instance_type>> sub_instances;
-    std::map<std::string, std::shared_ptr<conf_item_type>> items;
+    std::vector<std::string> has_required_items();
+    std::vector<std::string> has_valid_items();
+    std::vector<std::string> check_item_mutex(std::shared_ptr<conf_item_mutex>);
+    std::vector<std::string> has_valid_mutexes();
+    std::vector<std::string> has_required_sub_instances();
+    std::vector<std::string> validate_sub_instances();
+    std::set<std::string> get_path_errors();
+    void add_data_from_token_buffer(char **buffer_pos, bool allow_inclusion,
+                                    bool is_root,
+                                    std::string current_file_name);
+
+public:
+    std::string name;
+    conf_instance(std::shared_ptr<conf_class> cls, std::string name);
+    bool has_value(std::string name) { return items.count(name); };
+    std::string get_value(std::string);
+    std::vector<std::shared_ptr<conf_instance>>
+    get_sub_instances(std::string sub_class_name);
+    std::vector<std::string> validate();
+    void insert_item(std::string item_name, std::string value);
+    void insert_sub_instance(std::shared_ptr<conf_instance>);
+    std::string get_path_error();
+
+    static std::shared_ptr<conf_instance> from_file(std::shared_ptr<conf_class>,
+                                                    std::string name,
+                                                    std::string file_name);
 };
 
-struct conf_item_spec_struct {
+struct conf_item_spec {
     /** NULL if not inserted into a class */
-    std::weak_ptr<conf_class_type> super_class;
-    char *name;
+    std::weak_ptr<conf_class> super_class;
+    std::string name;
     /** Require the item to take a valid value */
     bool required_set;
-    /** Can be NULL if not given */
-    char *default_value;
+    std::optional<std::string> default_value;
     /** Data type. See conf_data */
     dt_enum dt;
-    std::set<std::string> *restriction;
-    /** Can be NULL if not given */
-    char *help;
+    std::set<std::string> restriction;
+    std::optional<std::string> help;
+    conf_item_spec(std::string name, bool required_set, dt_enum dt,
+                   std::string help)
+        : name(name), required_set(required_set), dt(dt), help(help),
+          restriction(), default_value(), super_class(){};
+    void add_restriction(std::string restriction) {
+        this->restriction.insert(restriction);
+    };
+    std::string get_help();
 };
 
-struct conf_item_struct {
-    std::shared_ptr<conf_item_spec_type> conf_item_spec;
-    char *value;
+struct conf_item {
+    std::shared_ptr<conf_item_spec> spec;
+    std::string value;
+    conf_item(std::shared_ptr<conf_item_spec> spec, std::string value)
+        : spec(spec), value(value){};
+    std::vector<std::string> validate();
 };
 
-struct conf_item_mutex_struct {
-    std::weak_ptr<conf_class_type> super_class;
+struct conf_item_mutex {
+    std::weak_ptr<conf_class> super_class;
     bool require_one;
     /** if inverse == true the 'mutex' implements: if A then ALSO B, C and D */
     bool inverse;
-    std::map<std::string, std::shared_ptr<conf_item_spec_type>> item_spec_refs;
+    std::map<std::string, std::shared_ptr<conf_item_spec>> item_spec_refs;
+
+    void add_item_spec(std::shared_ptr<conf_item_spec>);
+
+    conf_item_mutex(const std::shared_ptr<conf_class> super_class,
+                    bool require_one, bool inverse)
+        : super_class(super_class), require_one(require_one), inverse(inverse),
+          item_spec_refs(){};
 };
-
-/** D E F A U L T   A L L O C / F R E E    F U N C T I O N S */
-
-std::shared_ptr<conf_class_type> make_conf_class(const char *class_name,
-                                                 bool require_instance,
-                                                 bool singleton,
-                                                 const char *help);
-std::shared_ptr<conf_item_spec_type> make_conf_item_spec(const char *name,
-                                                         bool required_set,
-                                                         dt_enum dt,
-                                                         const char *help);
-/** M A N I P U L A T O R S ,   I N S E R T I O N */
-
-void conf_class_insert_sub_class(
-    std::shared_ptr<conf_class_type> conf_class,
-    std::shared_ptr<conf_class_type> sub_conf_class);
-
-void conf_class_insert_item_spec(
-    std::shared_ptr<conf_class_type> conf_class,
-    std::shared_ptr<conf_item_spec_type> item_spec);
-
-void conf_instance_insert_sub_instance(
-    std::shared_ptr<conf_instance_type> conf_instance,
-    std::shared_ptr<conf_instance_type> sub_conf_instance);
-
-void conf_instance_insert_item(conf_instance_type *conf_instance,
-                               const char *item_name, const char *value);
-
-std::shared_ptr<conf_item_mutex_type>
-conf_class_new_item_mutex(std::shared_ptr<conf_class_type> conf_class,
-                          bool require_one, bool inverse);
-
-void conf_item_mutex_add_item_spec(
-    std::shared_ptr<conf_item_mutex_type> conf_item_mutex,
-    std::shared_ptr<conf_item_spec_type> conf_item_spec);
-
-/** M A N I P U L A T O R S ,   C L A S S   A N D   I T E M   S P E C I F I C A T I O N */
-
-void conf_class_set_help(std::shared_ptr<conf_class_type> conf_class,
-                         const char *help);
-
-void conf_item_spec_add_restriction(
-    std::shared_ptr<conf_item_spec_type> conf_item_spec,
-    const char *restriction);
-
-void conf_item_spec_set_default_value(
-    std::shared_ptr<conf_item_spec_type> conf_item_spec,
-    const char *default_value);
-
-/** A C C E S S O R S */
-
-bool conf_class_has_item_spec(std::shared_ptr<conf_class_type> conf_class,
-                              const char *item_name);
-
-bool conf_class_has_sub_class(std::shared_ptr<conf_class_type> conf_class,
-                              const char *sub_class_name);
-
-std::shared_ptr<conf_class_type>
-conf_class_get_sub_class_ref(std::shared_ptr<conf_class_type> conf_class,
-                             const char *sub_class_name);
-
-const char *
-conf_instance_get_name_ref(std::shared_ptr<conf_instance_type> conf_instance);
-
-bool conf_instance_is_of_class(
-    std::shared_ptr<conf_instance_type> conf_instance, const char *class_name);
-
-bool conf_instance_has_item(std::shared_ptr<conf_instance_type> conf_instance,
-                            std::string item_name);
-
-std::shared_ptr<conf_instance_type> conf_instance_get_sub_instance_ref(
-    std::shared_ptr<conf_instance_type> conf_instance,
-    const char *sub_instance_name);
-
-std::vector<std::string>
-conf_instance_alloc_list_of_sub_instances_of_class_by_name(
-    std::shared_ptr<conf_instance_type> conf_instance,
-    const char *sub_class_name);
-
-const char *conf_instance_get_class_name_ref(
-    std::shared_ptr<conf_instance_type> conf_instance);
-
-const char *conf_instance_get_item_value_ref(
-    std::shared_ptr<conf_instance_type> conf_instance, std::string item_name);
-
-/** If the dt supports it, these functions will parse the item
-    value to the requested types.
-
-    NOTE:
-    If the dt does not support it, or the conf_instance
-    does not have the item, the functions will abort your program.
-*/
-int conf_instance_get_item_value_int(
-    std::shared_ptr<conf_instance_type> conf_instance, std::string item_name);
-double conf_instance_get_item_value_double(
-    std::shared_ptr<conf_instance_type> conf_instance, std::string item_name);
-
-time_t conf_instance_get_item_value_time_t(
-    std::shared_ptr<conf_instance_type> conf_instance, std::string item_name);
-
-std::vector<std::string>
-conf_instance_validate(std::shared_ptr<conf_instance_type> conf_instance);
-
-std::shared_ptr<conf_instance_type>
-conf_instance_alloc_from_file(std::shared_ptr<conf_class_type> conf_class,
-                              const char *name, const char *file_name);
-
-#endif
