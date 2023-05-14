@@ -9,7 +9,6 @@ from ert._c_wrappers.enkf import GenDataConfig
     "key, active_list",
     [
         ("ORDERED_RESULTS", [1, 2, 3, 4]),
-        ("NO_RESULTS", []),
         ("UNORDERED_RESULTS", [5, 2, 3, 7, 1]),
     ],
 )
@@ -23,6 +22,19 @@ def test_gen_data_config(key: str, active_list: List[int]):
         assert gdc.hasReportStep(i)
 
     assert not gdc.hasReportStep(200)
+
+    gen_data_default_step = GenDataConfig(key=key)
+    assert gen_data_default_step.getNumReportStep() == 1
+    assert gen_data_default_step.getReportStep(0) == 0
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_empty_gen_data_config():
+    gdc = GenDataConfig(key="key")
+    assert gdc.getNumReportStep() == 1
+    assert gdc.hasReportStep(0)
+    assert not gdc.hasReportStep(1)
+    assert gdc.getReportStep(0) == 0
 
 
 @pytest.mark.usefixtures("use_tmpdir")

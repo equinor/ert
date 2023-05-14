@@ -12,6 +12,8 @@ class GenDataConfig:
         self._observation_list: List[str] = []
         if report_steps:
             self.add_report_steps(report_steps)
+        else:
+            self.add_report_step(0)
 
     def add_report_steps(self, steps: List[int]):
         for step in steps:
