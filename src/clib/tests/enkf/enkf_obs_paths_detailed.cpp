@@ -7,14 +7,13 @@
 #include "../tmpdir.hpp"
 #include <ert/enkf/enkf_obs.hpp>
 
-std::string
-conf_instance_get_path_error(std::shared_ptr<conf_instance_type> conf_instance);
+std::shared_ptr<conf_class> enkf_obs_get_obs_conf_class();
 
 /*
  * Write conf-file with given keywords, then parse it.
  * Returns pointer to the parsed configuration
  */
-std::shared_ptr<conf_instance_type>
+std::shared_ptr<conf_instance>
 write_conf(std::vector<std::string> keyword_lines) {
     std::string buf("GENERAL_OBSERVATION WPR_DIFF_1 {\n");
     buf += "   DATA       = SNAKE_OIL_WPR_DIFF;\n";
@@ -29,8 +28,8 @@ write_conf(std::vector<std::string> keyword_lines) {
     stream.close(); // close before reading in next step!
 
     auto enkf_conf_class = enkf_obs_get_obs_conf_class();
-    return conf_instance_alloc_from_file(enkf_conf_class, "enkf_conf",
-                                         "obs_path/conf.txt");
+    return conf_instance::from_file(enkf_conf_class, "enkf_conf",
+                                    "obs_path/conf.txt");
 }
 
 /*
@@ -59,7 +58,7 @@ TEST_CASE("Test parsing keywords in configuration", "[unittest]") {
         GIVEN("A conf file with no relevant keywords") {
             auto enkf_conf = write_conf({});
             THEN("There are no errors") {
-                std::string errors = conf_instance_get_path_error(enkf_conf);
+                std::string errors = enkf_conf->get_path_error();
                 REQUIRE(!contains(errors, "OBS_FILE"));
                 REQUIRE(!contains(errors, "INDEX_FILE"));
             }
@@ -69,8 +68,7 @@ TEST_CASE("Test parsing keywords in configuration", "[unittest]") {
             auto enkf_conf = write_conf({"OBS_FILE   = obs.txt;"});
             WHEN("There is no OBS_FILE present") {
                 THEN("Error refers to missing file") {
-                    std::string errors =
-                        conf_instance_get_path_error(enkf_conf);
+                    std::string errors = enkf_conf->get_path_error();
                     REQUIRE(contains(
                         errors, "OBS_FILE=>" +
                                     std::filesystem::current_path().native() +
@@ -81,8 +79,7 @@ TEST_CASE("Test parsing keywords in configuration", "[unittest]") {
             WHEN("The obs file is present") {
                 touch_file("obs_path/obs.txt");
                 THEN("There are no errors") {
-                    std::string errors =
-                        conf_instance_get_path_error(enkf_conf);
+                    std::string errors = enkf_conf->get_path_error();
                     REQUIRE(!contains(errors, "OBS_FILE"));
                     REQUIRE(!contains(errors, "INDEX_FILE"));
                 }
@@ -95,8 +92,7 @@ TEST_CASE("Test parsing keywords in configuration", "[unittest]") {
             WHEN("The OBS_FILE is in the wrong location") {
                 touch_file("obs_path/obs.txt");
                 THEN("Error refers to missing file") {
-                    std::string errors =
-                        conf_instance_get_path_error(enkf_conf);
+                    std::string errors = enkf_conf->get_path_error();
                     REQUIRE(contains(
                         errors, "OBS_FILE=>" +
                                     std::filesystem::current_path().native() +
@@ -108,8 +104,7 @@ TEST_CASE("Test parsing keywords in configuration", "[unittest]") {
                 util_make_path("obs_path/obs_path");
                 touch_file("obs_path/obs_path/obs.txt");
                 THEN("There are no errors") {
-                    std::string errors =
-                        conf_instance_get_path_error(enkf_conf);
+                    std::string errors = enkf_conf->get_path_error();
                     REQUIRE(!contains(errors, "OBS_FILE"));
                     REQUIRE(!contains(errors, "INDEX_FILE"));
                 }
@@ -123,8 +118,7 @@ TEST_CASE("Test parsing keywords in configuration", "[unittest]") {
             WHEN("Only OBS_FILE exists") {
                 touch_file("obs_path/obs.txt");
                 THEN("Error refer to missing index file") {
-                    std::string errors =
-                        conf_instance_get_path_error(enkf_conf);
+                    std::string errors = enkf_conf->get_path_error();
                     REQUIRE(!contains(errors, "OBS_FILE"));
                     REQUIRE(contains(
                         errors, "INDEX_FILE=>" +
@@ -136,8 +130,7 @@ TEST_CASE("Test parsing keywords in configuration", "[unittest]") {
                 touch_file("obs_path/obs.txt");
                 touch_file("obs_path/index.txt");
                 THEN("There are no errors") {
-                    std::string errors =
-                        conf_instance_get_path_error(enkf_conf);
+                    std::string errors = enkf_conf->get_path_error();
                     REQUIRE(!contains(errors, "OBS_FILE"));
                     REQUIRE(!contains(errors, "INDEX_FILE"));
                 }
