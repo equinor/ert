@@ -216,7 +216,6 @@ class EnsembleConfig(BaseCClass):
         self._config_node_meta: Dict[str, ConfigNodeMeta] = {}
         self._gen_kw_node: Dict[str, GenKwConfig] = {}
         self._gen_data_config: Dict[str, GenDataConfig] = {}
-        self._summary_keys: Dict[str, str] = {}  # only holds a single key
 
         if c_ptr is None:
             raise ValueError("Failed to construct EnsembleConfig instance")
@@ -256,7 +255,7 @@ class EnsembleConfig(BaseCClass):
             )
 
             self._check_config_node(kw_node)
-            self.add_gen_kw_node(kw_node)
+            self.addNode(kw_node)
 
         for surface in surface_list:
             surface_node = self.get_surface_node(surface)
@@ -573,11 +572,6 @@ class EnsembleConfig(BaseCClass):
                 f"Config node with key {key!r} already present in ensemble config"
             )
 
-    def add_gen_kw_node(self, node: GenKwConfig):
-        key = node.getKey()
-        self._gen_kw_node[key] = node
-        self.addNode(node)
-
     def addNode(
         self,
         config_node: Union[
@@ -598,6 +592,8 @@ class EnsembleConfig(BaseCClass):
         else:
             if isinstance(config_node, GenDataConfig):
                 self._gen_data_config[config_node.getKey()] = config_node
+            elif isinstance(config_node, GenKwConfig):
+                self._gen_kw_node[config_node.getKey()] = config_node
 
             self.py_nodes[config_node.name] = config_node
 
