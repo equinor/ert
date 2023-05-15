@@ -129,6 +129,7 @@ sys.exit(2)
 """
 )
 def test_not_respond(server, caplog):
+    server._timeout = 1
     with pytest.raises(TimeoutError):
         with caplog.at_level(logging.CRITICAL):
             server.fetch_conn_info()
