@@ -6,7 +6,7 @@ from ert.gui.ertwidgets.caseselector import CaseSelector
 from ert.gui.ertwidgets.copyablelabel import CopyableLabel
 from ert.gui.ertwidgets.models.activerealizationsmodel import ActiveRealizationsModel
 from ert.libres_facade import LibresFacade
-from ert.shared.models import SingleTestRun
+from ert.run_models import SingleTestRun
 
 from .simulation_config_panel import SimulationConfigPanel
 

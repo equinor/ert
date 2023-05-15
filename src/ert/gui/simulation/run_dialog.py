@@ -32,7 +32,7 @@ from ert.gui.model.progress_proxy import ProgressProxyModel
 from ert.gui.model.snapshot import FileRole, RealIens, SnapshotModel
 from ert.gui.tools.file import FileDialog
 from ert.gui.tools.plot.plot_tool import PlotTool
-from ert.shared.models import BaseRunModel
+from ert.run_models import BaseRunModel
 from ert.shared.status.utils import format_running_time
 
 from .tracker_worker import TrackerWorker

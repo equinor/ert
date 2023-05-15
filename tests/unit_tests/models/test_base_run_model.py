@@ -6,7 +6,7 @@ import pytest
 
 from ert._c_wrappers.enkf import EnKFMain
 from ert._c_wrappers.job_queue import RunStatusType
-from ert.shared.models import BaseRunModel
+from ert.run_models import BaseRunModel
 
 
 def test_base_run_model_supports_restart(setup_case):

@@ -7,8 +7,9 @@ from uuid import UUID
 from ert._c_wrappers.enkf.enums import HookRuntime, RealizationStateEnum
 from ert.analysis import ErtAnalysisError
 from ert.ensemble_evaluator import EvaluatorServerConfig
-from ert.shared.models import BaseRunModel, ErtRunError
 from ert.storage import EnsembleAccessor, StorageAccessor
+
+from .base_run_model import BaseRunModel, ErtRunError
 
 if TYPE_CHECKING:
     from ert._c_wrappers.enkf import EnKFMain, QueueConfig, RunContext

@@ -4,7 +4,7 @@ from uuid import UUID
 from ert._c_wrappers.enkf.enkf_main import EnKFMain
 from ert._c_wrappers.enkf.ert_run_context import RunContext
 from ert.ensemble_evaluator import EvaluatorServerConfig
-from ert.shared.models import EnsembleExperiment, ErtRunError
+from ert.run_models import EnsembleExperiment, ErtRunError
 from ert.storage import StorageAccessor
 
 

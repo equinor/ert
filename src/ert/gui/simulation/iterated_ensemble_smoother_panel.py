@@ -9,11 +9,11 @@ from ert.gui.ertwidgets.models.activerealizationsmodel import ActiveRealizations
 from ert.gui.ertwidgets.models.targetcasemodel import TargetCaseModel
 from ert.gui.ertwidgets.stringbox import StringBox
 from ert.libres_facade import LibresFacade
+from ert.run_models import IteratedEnsembleSmoother
 from ert.shared.ide.keywords.definitions import (
     ProperNameFormatArgument,
     RangeStringArgument,
 )
-from ert.shared.models import IteratedEnsembleSmoother
 
 from .simulation_config_panel import SimulationConfigPanel
 

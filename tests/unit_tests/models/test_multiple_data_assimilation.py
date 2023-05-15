@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from ert.shared.models import MultipleDataAssimilation as mda
+from ert.run_models import MultipleDataAssimilation as mda
 
 
 def test_normalized_weights():

@@ -9,7 +9,7 @@ from ert.gui.ertwidgets.caselist import CaseList
 from ert.gui.simulation.ensemble_experiment_panel import EnsembleExperimentPanel
 from ert.gui.simulation.run_dialog import RunDialog
 from ert.gui.simulation.simulation_panel import SimulationPanel
-from ert.shared.models import EnsembleExperiment
+from ert.run_models import EnsembleExperiment
 
 from .conftest import find_cases_dialog_and_panel
 
