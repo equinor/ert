@@ -51,7 +51,7 @@ snake_oil_structure_config = {
     ],
     "GEN_KW": ["SIGMA"],
     "GEN_DATA": ["super_data"],
-    "ECLBASE": "eclipse/model/<ECLIPSE_NAME>-%d",
+    "ECLBASE": "eclipse/model/<ECLIPSE_NAME>-<IENS>",
     "ENSPATH": "ert/output/storage/<CASE_DIR>",
     "PLOT_PATH": "ert/output/results/plot/<CASE_DIR>",
     "UPDATE_LOG_PATH": "../output/update_log/<CASE_DIR>",
@@ -439,7 +439,7 @@ DEFINE  <ECLIPSE_NAME>  XYZ
 DATA_FILE           ../../eclipse/model/SNAKE_OIL.DATA
 GRID                ../../eclipse/include/grid/CASE.EGRID
 RUNPATH             <SCRATCH>/<USER>/<CASE_DIR>/realization-<IENS>/iter-<ITER>
-ECLBASE             eclipse/model/<ECLIPSE_NAME>-%d
+ECLBASE             eclipse/model/<ECLIPSE_NAME>-<IENS>
 ENSPATH             ../output/storage/<CASE_DIR>
 RUNPATH_FILE        ../output/run_path_file/.ert-runpath-list_<CASE_DIR>
 REFCASE             ../input/refcase/SNAKE_OIL_FIELD

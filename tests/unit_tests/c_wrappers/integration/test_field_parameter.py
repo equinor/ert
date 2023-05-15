@@ -913,7 +913,7 @@ def test_config_node_meta_information(storage, tmpdir):
 
         GEN_KW KW_NAME  template.txt kw.txt prior.txt INIT_FILES:custom_param%d.txt
 
-        ECLBASE eclipse/model/MY_VERY_OWN_OIL_FIELD-%d
+        ECLBASE eclipse/model/MY_VERY_OWN_OIL_FIELD-<IENS>
         SUMMARY WOPR:MY_WELL
         SUMMARY WOPR:MY_BASIN
 

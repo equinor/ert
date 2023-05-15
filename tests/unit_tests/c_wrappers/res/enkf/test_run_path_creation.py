@@ -169,7 +169,7 @@ def test_run_template_replace_in_ecl_data_file(key, expected, prior_ensemble):
     config_text = dedent(
         """
         NUM_REALIZATIONS 1
-        ECLBASE ECL_CASE%d
+        ECLBASE ECL_CASE<IENS>
         DATA_FILE MY_DATA_FILE.DATA
         """
     )

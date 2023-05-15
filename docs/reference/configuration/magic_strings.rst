@@ -222,7 +222,7 @@ Experiment dependent variables
 
       FORWARD_MODEL JOB_NAME(<ARG0>=<ECLBASE>)
 
-   Given that the ECLBASE has been specified using `ECLBASE eclipse/model/OIL_FIELD-%d`
+   Given that the ECLBASE has been specified using `ECLBASE eclipse/model/OIL_FIELD-<IENS>`
    in the config file, this will be replaced with the following in the second iteration:
 
    ::

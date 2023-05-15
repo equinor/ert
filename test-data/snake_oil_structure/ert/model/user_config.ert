@@ -20,7 +20,7 @@ DEFINE  <ECLIPSE_NAME>  XYZ
 DATA_FILE           ../../eclipse/model/SNAKE_OIL.DATA                    -- Location of the Eclipse .DATA-file
 GRID                ../../eclipse/include/grid/CASE.EGRID                 -- Name of the Eclipse .GRID-file
 RUNPATH             <SCRATCH>/<USER>/<CASE_DIR>/realization-<IENS>/iter-<ITER>    -- Runpath for simulations (<IENS> will be replaced with realization number, <ITER> with iteration number)
-ECLBASE             eclipse/model/<ECLIPSE_NAME>-%d                       -- Name used for the ECLIPSE simulations (%d will be replaced with the realization number)
+ECLBASE             eclipse/model/<ECLIPSE_NAME>-<IENS>                           -- Name used for the ECLIPSE simulations (<IENS> will be replaced with the realization number)
 ENSPATH             ../output/storage/<CASE_DIR>                          -- Storage of internal ert data
 RUNPATH_FILE        ../output/run_path_file/.ert-runpath-list_<CASE_DIR>  -- Ert runpath file for workflows
 
