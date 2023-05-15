@@ -6,7 +6,17 @@ import os
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, List, Mapping, Optional, Sequence, Union
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Dict,
+    List,
+    Mapping,
+    Optional,
+    Sequence,
+    Tuple,
+    Union,
+)
 
 import numpy as np
 from jinja2 import Template
@@ -198,6 +208,28 @@ def _generate_parameter_files(
     _value_export_json(run_path, export_base_name, exports)
 
 
+def _setup_rng(
+    config_seed: Union[str, None]
+) -> Tuple[np.random.SeedSequence, np.random.Generator]:
+    if config_seed is None:
+        seed_seq = np.random.SeedSequence()
+        logger.info(
+            "To repeat this experiment, "
+            "add the following random seed to your config file:"
+        )
+        logger.info(f"RANDOM_SEED {seed_seq.entropy}")
+    else:
+        seed: Union[int, Sequence[int]]
+        try:
+            seed = int(config_seed)
+        except ValueError:
+            seed = [ord(x) for x in config_seed]
+        seed_seq = np.random.SeedSequence(seed)
+
+    rng = np.random.default_rng(seed_seq)
+    return seed_seq, rng
+
+
 class EnKFMain:
     def __init__(self, config: "ErtConfig", read_only: bool = False) -> None:
         self.ert_config = config
@@ -214,24 +246,11 @@ class EnKFMain:
             substitute=self.get_context().substitute_real_iter,
         )
 
-        # Set up RNG
         config_seed = self.resConfig().random_seed
-        if config_seed is None:
-            seed_seq = np.random.SeedSequence()
-            logger.info(
-                "To repeat this experiment, "
-                "add the following random seed to your config file:"
-            )
-            logger.info(f"RANDOM_SEED {seed_seq.entropy}")
-        else:
-            seed: Union[int, Sequence[int]]
-            try:
-                seed = int(config_seed)
-            except ValueError:
-                seed = [ord(x) for x in config_seed]
-            seed_seq = np.random.SeedSequence(seed)
+
+        seed_seq, shared_rng = _setup_rng(config_seed)
         self._global_seed = seed_seq
-        self._shared_rng = np.random.default_rng(seed_seq)
+        self._shared_rng = shared_rng
 
     @property
     def update_configuration(self) -> UpdateConfiguration:
