@@ -1,17 +1,21 @@
 from pathlib import Path
-from typing import Callable, List
+from typing import Callable, List, TextIO
 
 
 class Runpaths:
     """The Runpaths are the ensemble workspace directories.
 
-    Generally the is one runpath for each realization and iteration, although
+    Generally there is one runpath for each realization and iteration, although
     depending on the given format string for the paths they may coincide. There
     is one job name for each of the runpaths.
 
-    :param jobname_format: The format of the job name, e.g., "job_%d"
+    :param jobname_format: The format of the job name, e.g., "job_<IENS>"
+    :param eclbase_format: The format for the ECLIPSE simulation file.
+        e.g., NAME-<IENS>
     :param runpath_format: The format of the runpath, e.g.
-        "/path/<case>/ensemble-%d/iteration-%d"
+        "/path/<case>/ensemble-<IENS>/iteration-<ITER>"
+    :param filename: The filename of the runpath list file. Defaults to
+        ".ert_runpath_list".
     :param substitute: Function called to perform arbitrary substitution on
         jobname and runpath, e.g., transforms
         "/path/<case>/ensemble-1/iteration-2/" to
@@ -62,7 +66,7 @@ class Runpaths:
         self,
         iteration_numbers: List[int],
         realization_numbers: List[int],
-    ):
+    ) -> None:
         """Writes the runpath_list_file, which lists jobs and runpaths.
 
         The runpath list file is parsed by some workflows in order to find
@@ -95,6 +99,6 @@ class Runpaths:
                         f"{realization:03d}  {runpath}  {job_name}  {iteration:03d}\n"
                     )
 
-    def _create_and_open_file(self, mode="w"):
+    def _create_and_open_file(self) -> TextIO:
         Path(self.runpath_list_filename).parent.mkdir(parents=True, exist_ok=True)
-        return open(self.runpath_list_filename, mode, encoding="utf-8")
+        return open(self.runpath_list_filename, "w", encoding="utf-8")

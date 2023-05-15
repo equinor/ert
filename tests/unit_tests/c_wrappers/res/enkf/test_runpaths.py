@@ -4,8 +4,8 @@ from textwrap import dedent
 import pytest
 
 from ert._c_wrappers.enkf import EnKFMain, ErtConfig, RunContext
-from ert._c_wrappers.enkf.runpaths import Runpaths
 from ert._c_wrappers.util.substitution_list import SubstitutionList
+from ert.shared.runpaths import Runpaths
 
 
 @pytest.mark.parametrize(
