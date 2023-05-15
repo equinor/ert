@@ -602,6 +602,7 @@ class ErtConfig:
                 new_job = WorkflowJob.from_file(
                     config_file=workflow_job[0],
                     name=None if len(workflow_job) == 1 else workflow_job[1],
+                    use_new_parser=use_new_parser,
                 )
                 workflow_jobs[new_job.name] = new_job
             except ErtScriptLoadFailure as err:

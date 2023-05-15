@@ -97,8 +97,6 @@ class WorkflowJob:
         arg_types_dict: Dict[int, ContentTypeEnum] = dict()
 
         for i, type_as_string in args_spec:
-            # make old tests pass temporarily, will use
-            # SchemaItemType
             arg_types_dict[i] = WorkflowJob.string_to_type(type_as_string)
 
         arg_types_list: List[ContentTypeEnum] = [
