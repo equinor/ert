@@ -624,9 +624,10 @@ def test_surface_param_update(tmpdir):
     """Full update with a surface parameter, it mirrors the poly example,
     except it uses SURFACE instead of GEN_KW.
     """
+    ensemble_size = 5
     with tmpdir.as_cwd():
-        config = """
-NUM_REALIZATIONS 5
+        config = f"""
+NUM_REALIZATIONS {ensemble_size}
 QUEUE_OPTION LOCAL MAX_RUNNING 5
 OBS_CONFIG observations
 SURFACE MY_PARAM OUTPUT_FILE:surf.irap INIT_FILES:surf.irap BASE_SURFACE:surf.irap FORWARD_INIT:True
@@ -635,31 +636,44 @@ INSTALL_JOB poly_eval POLY_EVAL
 SIMULATION_JOB poly_eval
 TIME_MAP time_map
 """  # pylint: disable=line-too-long  # noqa: E501
-        expect_surface = Surface(
-            nx=2, ny=2, xinc=1, yinc=1, xstart=1, ystart=1, angle=0
+        base_surface = xtgeo.RegularSurface(
+            ncol=2,
+            nrow=2,
+            xinc=1,
+            yinc=1,
+            xori=1,
+            yori=1,
+            yflip=1,
+            rotation=1,
         )
-        expect_surface[0] = 0.1
-        expect_surface[1] = 0.1
-        expect_surface[2] = 1.1
-        expect_surface[3] = 1.1
-        expect_surface.write("surf.irap")
+        base_surface.to_file("surf.irap", fformat="irap_ascii")
 
         with open("forward_model", "w", encoding="utf-8") as f:
             f.write(
                 """#!/usr/bin/env python
-from ecl.util.geometry import Surface
-import numpy as np
 import os
+
+import xtgeo
+import numpy as np
 
 if __name__ == "__main__":
     if not os.path.exists("surf.irap"):
-        surf = Surface(nx=2, ny=2, xinc=1, yinc=1, xstart=1, ystart=1, angle=0)
-        values = np.random.standard_normal(surf.getNX() * surf.getNY())
-        for i, value in enumerate(values):
-            surf[i] = value
-            surf.write(f"surf.irap")
-    a, b, c,_ = list(Surface(filename="surf.irap"))
+        nx = 2
+        ny = 2
+        values = np.random.standard_normal(nx * ny)
+        surf = xtgeo.RegularSurface(ncol=nx,
+                                    nrow=ny,
+                                    xinc=1,
+                                    yinc=1,
+                                    rotation=0,
+                                    values=values)
+        surf.to_file("surf.irap", fformat="irap_ascii")
+
+    surf_fs = xtgeo.surface_from_file("surf.irap", fformat="irap_ascii")
+    a, b, c, _ = surf_fs.values.data.ravel()
+
     output = [a * x**2 + b * x + c for x in range(10)]
+
     with open("gen_data_0.out", "w", encoding="utf-8") as f:
         f.write("\\n".join(map(str, output)))
         """
@@ -723,19 +737,39 @@ if __name__ == "__main__":
         with open_storage(tmpdir / "storage") as storage:
             prior = storage.get_ensemble_by_name("prior")
             posterior = storage.get_ensemble_by_name("smoother_update")
-            prior_param = prior.load_surface_data("MY_PARAM", list(range(5)))
-            posterior_param = posterior.load_surface_data("MY_PARAM", list(range(5)))
+            prior_param = prior.load_surface_data(
+                "MY_PARAM", list(range(ensemble_size))
+            )
+            posterior_param = posterior.load_surface_data(
+                "MY_PARAM", list(range(ensemble_size))
+            )
             assert np.linalg.det(np.cov(prior_param)) > np.linalg.det(
                 np.cov(posterior_param)
             )
 
-        # Pick a random surface in the runpath and check against the expected values
-        surface = xtgeo.surface_from_file(
-            "simulations/realization-1/iter-1/surf.irap", fformat="irap_ascii"
+        realizations_to_test = np.random.choice(
+            range(ensemble_size), size=2, replace=False
         )
-        surface_data = surface.get_values1d(order="F")
-        for i, e in enumerate(surface_data):
-            np.testing.assert_almost_equal(e, expect_surface[i], decimal=5)
+        surf = xtgeo.surface_from_file(
+            f"simulations/realization-{realizations_to_test[0]}/iter-1/surf.irap",
+            fformat="irap_ascii",
+        )
+
+        assert base_surface.ncol == surf.ncol
+        assert base_surface.nrow == surf.nrow
+        assert base_surface.xinc == surf.xinc
+        assert base_surface.yinc == surf.yinc
+        assert base_surface.xori == surf.xori
+        assert base_surface.yori == surf.yori
+        assert base_surface.yflip == surf.yflip
+        assert base_surface.rotation == surf.yflip
+
+        surf2 = xtgeo.surface_from_file(
+            f"simulations/realization-{realizations_to_test[1]}/iter-1/surf.irap",
+            fformat="irap_ascii",
+        )
+
+        assert not (surf.values == surf2.values).any()
 
 
 @pytest.mark.integration_test

@@ -26,7 +26,6 @@ class SurfaceConfig(ParameterConfig):
     yflip: int
     forward_init_file: str
     output_file: Path
-    base_surface_path: str
 
     def load(self, run_path: Path, real_nr: int, ensemble: EnsembleAccessor):
         t = time.perf_counter()

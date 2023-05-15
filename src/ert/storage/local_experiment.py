@@ -99,10 +99,7 @@ class LocalExperimentAccessor(LocalExperimentReader):
             if isinstance(parameter, GenKwConfig):
                 self.save_gen_kw_info(parameter.getKey(), parameter.get_priors())
             elif isinstance(parameter, SurfaceConfig):
-                self.save_surface_info(
-                    parameter.name,
-                    parameter.base_surface_path,
-                )
+                parameter_data[parameter.name] = parameter.to_dict()
             elif isinstance(parameter, Field):
                 parameter_data[parameter.name] = parameter.to_dict()
 
@@ -138,10 +135,6 @@ class LocalExperimentAccessor(LocalExperimentReader):
             name=name,
             prior_ensemble=prior_ensemble,
         )
-
-    def save_surface_info(self, name: str, base_surface: str) -> None:
-        surf = xtgeo.surface_from_file(base_surface, fformat="irap_ascii")
-        surf.to_file(self.mount_point / f"{name}.irap", fformat="irap_ascii")
 
     def save_gen_kw_info(
         self, name: str, parameter_transfer_functions: List["PriorDict"]
