@@ -67,5 +67,5 @@ class RunContext:
     def __iter__(self) -> Iterator["RunArg"]:
         yield from self.run_args
 
-    def deactivate_realization(self, realization_nr):
+    def deactivate_realization(self, realization_nr: int) -> str:
         self[realization_nr].active = False

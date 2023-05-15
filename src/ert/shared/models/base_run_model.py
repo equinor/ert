@@ -63,6 +63,7 @@ def captured_logs(level: int = logging.ERROR) -> Iterator[_LogAggregration]:
 
 
 # pylint: disable=too-many-instance-attributes,too-many-public-methods
+# pylint: disable=too-many-arguments
 class BaseRunModel:
     def __init__(
         self,
@@ -433,7 +434,7 @@ class BaseRunModel:
 
     @abstractmethod
     async def run(self, evaluator_server_config: EvaluatorServerConfig) -> None:
-        raise NotImplementedError
+        raise NotImplementedError()
 
     async def successful_realizations(self, iter_: int) -> int:
         return self._state_machine.successful_realizations(self._iter_map[iter_])
@@ -484,7 +485,7 @@ class BaseRunModel:
         self,
         event: Union[CloudEvent, _ert_com_protocol.DispatcherMessage],
     ) -> None:
-        raise NotImplementedError("Not implemented")
+        ...
 
     @dispatch.register
     async def _(self, event: CloudEvent) -> None:
@@ -513,6 +514,7 @@ class BaseRunModel:
                     return True
         return False
 
+    # pylint: disable=too-many-branches
     def validate(self) -> None:
         if self._simulation_arguments is None:
             return

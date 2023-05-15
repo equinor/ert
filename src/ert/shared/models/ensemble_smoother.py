@@ -17,6 +17,7 @@ if TYPE_CHECKING:
 experiment_logger = logging.getLogger("ert.experiment_server.ensemble_experiment")
 
 
+# pylint: disable=too-many-arguments
 class EnsembleSmoother(BaseRunModel):
     def __init__(
         self,
@@ -36,6 +37,9 @@ class EnsembleSmoother(BaseRunModel):
         )
         self._current_case_name: str = simulation_arguments["current_case"]
         self.support_restart = False
+
+    async def run(self, _: EvaluatorServerConfig) -> None:
+        raise NotImplementedError()
 
     def setAnalysisModule(self, module_name: str) -> None:
         module_load_success = self.ert().analysisConfig().select_module(module_name)
@@ -91,7 +95,7 @@ class EnsembleSmoother(BaseRunModel):
             HookRuntime.PRE_UPDATE, self._storage, prior_context.sim_fs
         )
         states = [
-            RealizationStateEnum.STATE_HAS_DATA,  # type: ignore
+            RealizationStateEnum.STATE_HAS_DATA,
             RealizationStateEnum.STATE_INITIALIZED,
         ]
         target_case_format = self._simulation_arguments["target_case"]
@@ -111,7 +115,7 @@ class EnsembleSmoother(BaseRunModel):
             self.facade.smoother_update(
                 prior_context.sim_fs,
                 posterior_context.sim_fs,
-                prior_context.run_id,
+                prior_context.run_id,  # type: ignore
             )
         except ErtAnalysisError as e:
             raise ErtRunError(

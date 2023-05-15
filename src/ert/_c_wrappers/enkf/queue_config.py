@@ -61,7 +61,7 @@ class QueueConfig:
         queue = JobQueue(self.create_driver(), max_submit=self.max_submit)
         return queue
 
-    def create_local_copy(self):
+    def create_local_copy(self) -> QueueConfig:
         return QueueConfig(
             self.job_script,
             self.max_submit,

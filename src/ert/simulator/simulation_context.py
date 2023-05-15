@@ -79,7 +79,7 @@ def _run_forward_model(
                 RunStatusType.JOB_LOAD_FAILURE,
                 RunStatusType.JOB_RUN_FAILURE,
             ):
-                run_context.deactivate_realization(index)  # type: ignore
+                run_context.deactivate_realization(index)
             else:
                 totalOk += 1
 
