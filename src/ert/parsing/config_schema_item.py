@@ -70,6 +70,7 @@ class SchemaItem(BaseModel):
         :param token: the token to be converted
         :param index: the index of the token
         :param keyword: the keyword it pertains to
+        :param cwd: the current working directory of the file being parsed
 
         :return: The token as a value with context of itself and its keyword
         """
