@@ -1,6 +1,4 @@
-from ert.shared.ide.keywords.definitions.range_string_argument import (
-    RangeStringArgument,
-)
+from ert.validation import RangeStringArgument
 
 
 def test_proper_name_argument():

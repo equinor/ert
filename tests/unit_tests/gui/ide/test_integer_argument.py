@@ -1,4 +1,4 @@
-from ert.shared.ide.keywords.definitions import IntegerArgument
+from ert.validation import IntegerArgument
 
 
 def test_default_integer_argument():

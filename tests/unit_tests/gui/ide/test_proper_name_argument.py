@@ -1,4 +1,4 @@
-from ert.shared.ide.keywords.definitions import ProperNameArgument
+from ert.validation import ProperNameArgument
 
 
 def test_proper_name_argument():

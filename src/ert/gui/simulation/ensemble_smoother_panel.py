@@ -13,7 +13,7 @@ from ert.gui.ertwidgets.models.targetcasemodel import TargetCaseModel
 from ert.gui.ertwidgets.stringbox import StringBox
 from ert.libres_facade import LibresFacade
 from ert.run_models import EnsembleSmoother
-from ert.shared.ide.keywords.definitions import ProperNameArgument, RangeStringArgument
+from ert.validation import ProperNameArgument, RangeStringArgument
 
 from .simulation_config_panel import SimulationConfigPanel
 
