@@ -490,7 +490,18 @@ class LocalEnsembleAccessor(LocalEnsembleReader):
     ) -> None:
         output_path = self.mount_point / f"realization-{realization}"
         Path.mkdir(output_path, exist_ok=True)
-        surf = self.experiment.get_surface(key)
+        param_info = self.experiment.parameter_info[key]
+        surf = xtgeo.RegularSurface(
+            ncol=param_info["ncol"],
+            nrow=param_info["nrow"],
+            xinc=param_info["xinc"],
+            yinc=param_info["yinc"],
+            xori=param_info["xori"],
+            yori=param_info["yori"],
+            yflip=param_info["yflip"],
+            rotation=param_info["rotation"],
+            values=data,
+        )
         surf.to_file(output_path / f"{key}.irap", fformat="irap_ascii")
         self.update_realization_state(
             realization,

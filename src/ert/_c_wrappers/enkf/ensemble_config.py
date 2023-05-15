@@ -359,7 +359,6 @@ class EnsembleConfig:
             forward_init=forward_init,
             forward_init_file=init_file,
             output_file=Path(out_file),
-            base_surface_path=base_surface,
         )
 
     @staticmethod
