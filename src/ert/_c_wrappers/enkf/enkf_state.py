@@ -84,7 +84,7 @@ def _internalize_SUMMARY_DATA(
                 f"{run_arg.eclbase}.UNSMRY"
             )
 
-    user_summary_keys = ens_config.get_summary_keys()
+    user_summary_keys = ens_config.get_user_summary_keys()
     for key in summary:
         if not _should_load_summary_key(key, user_summary_keys):
             continue
@@ -106,7 +106,7 @@ def _internalize_SUMMARY_DATA(
 def _write_summary_data_to_storage(
     ens_config: EnsembleConfig, run_arg: RunArg
 ) -> LoadResult:
-    user_summary_keys = ens_config.get_summary_keys()
+    user_summary_keys = ens_config.get_user_summary_keys()
     if not user_summary_keys:
         return LoadResult(LoadStatus.LOAD_SUCCESSFUL, "")
 

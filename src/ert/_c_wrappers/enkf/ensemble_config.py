@@ -216,6 +216,7 @@ class EnsembleConfig(BaseCClass):
         self._config_node_meta: Dict[str, ConfigNodeMeta] = {}
         self._gen_kw_node: Dict[str, GenKwConfig] = {}
         self._gen_data_config: Dict[str, GenDataConfig] = {}
+        self._user_summary_keys: List[str] = []
 
         if c_ptr is None:
             raise ValueError("Failed to construct EnsembleConfig instance")
@@ -532,6 +533,12 @@ class EnsembleConfig(BaseCClass):
 
     def add_summary_full(self, key, refcase) -> SummaryConfig:
         self._create_node_metainfo([key], 0, EnkfVarType.DYNAMIC_RESULT)
+
+        if key not in self._user_summary_keys:
+            self._user_summary_keys.append(key)
+        else:
+            raise ConfigValidationError("Duplicate summary key provided")
+
         keylist = _clib.ensemble_config.get_summary_key_list(self, key, refcase)
         for k in keylist:
             if k not in self.get_node_keylist():
@@ -692,6 +699,9 @@ class EnsembleConfig(BaseCClass):
 
     def get_keyword_model_config(self, key: str) -> GenKwConfig:
         return self._gen_kw_node[key]
+
+    def get_user_summary_keys(self):
+        return self._user_summary_keys
 
     def get_node_observation_keys(self, key) -> List[str]:
         node = self[key]
