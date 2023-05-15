@@ -32,7 +32,7 @@ from .snapshot import PartialSnapshot, Snapshot
 if TYPE_CHECKING:
     from cloudevents.http.event import CloudEvent
 
-    from ert.shared.models.base_run_model import BaseRunModel
+    from ert.run_models import BaseRunModel
 
 
 class OutOfOrderSnapshotUpdateException(ValueError):

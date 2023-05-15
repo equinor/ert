@@ -41,8 +41,8 @@ from ert.gui.simulation.view import RealizationWidget
 from ert.gui.tools.manage_cases.case_init_configuration import (
     CaseInitializationConfigurationPanel,
 )
+from ert.run_models import EnsembleExperiment, MultipleDataAssimilation
 from ert.services import StorageService
-from ert.shared.models import EnsembleExperiment, MultipleDataAssimilation
 from ert.storage import open_storage
 
 

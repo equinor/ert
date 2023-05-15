@@ -5,7 +5,7 @@ import pytest
 
 from ert.cli import model_factory
 from ert.libres_facade import LibresFacade
-from ert.shared.models import (
+from ert.run_models import (
     EnsembleExperiment,
     EnsembleSmoother,
     IteratedEnsembleSmoother,

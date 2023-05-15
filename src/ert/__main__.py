@@ -28,6 +28,7 @@ from ert.logging import LOGGING_CONFIG
 from ert.logging._log_util_abort import _log_util_abort
 from ert.namespace import Namespace
 from ert.parsing import ConfigValidationError
+from ert.run_models.multiple_data_assimilation import MultipleDataAssimilation
 from ert.services import StorageService, WebvizErt
 from ert.shared.feature_toggling import FeatureToggling
 from ert.shared.ide.keywords.data.validation_status import ValidationStatus
@@ -38,7 +39,6 @@ from ert.shared.ide.keywords.definitions import (
     ProperNameFormatArgument,
     RangeStringArgument,
 )
-from ert.shared.models.multiple_data_assimilation import MultipleDataAssimilation
 from ert.shared.plugins.plugin_manager import ErtPluginContext, ErtPluginManager
 from ert.shared.storage.command import add_parser_options as ert_api_add_parser_options
 

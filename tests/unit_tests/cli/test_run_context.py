@@ -1,7 +1,7 @@
 from unittest.mock import MagicMock
 from uuid import UUID
 
-from ert.shared.models import MultipleDataAssimilation
+from ert.run_models import MultipleDataAssimilation
 from ert.storage import EnsembleAccessor
 
 

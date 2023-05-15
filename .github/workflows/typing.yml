@@ -40,7 +40,7 @@ jobs:
         python -m grpc_tools.protoc -I src/_ert_com_protocol --mypy_out=src/_ert_com_protocol src/_ert_com_protocol/_schema.proto
     - name: Run mypy
       run: |
-        mypy --disallow-untyped-defs --ignore-missing-imports src/ert/shared/models
+        mypy --disallow-untyped-defs --ignore-missing-imports src/ert/run_models
     - name: Run strict mypy
       run: |
         mypy src/ert --config-file .mypy-strict.ini

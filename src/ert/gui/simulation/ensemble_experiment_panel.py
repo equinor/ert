@@ -12,8 +12,8 @@ from ert.gui.ertwidgets.models.ertmodel import get_runnable_realizations_mask
 from ert.gui.ertwidgets.models.init_iter_value import IterValueModel
 from ert.gui.ertwidgets.stringbox import StringBox
 from ert.libres_facade import LibresFacade
+from ert.run_models import EnsembleExperiment
 from ert.shared.ide.keywords.definitions import IntegerArgument, RangeStringArgument
-from ert.shared.models import EnsembleExperiment
 
 from .simulation_config_panel import SimulationConfigPanel
 
