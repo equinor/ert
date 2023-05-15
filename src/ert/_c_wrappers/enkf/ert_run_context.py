@@ -5,7 +5,7 @@ from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Iterator, List
 
 from ert._c_wrappers.enkf.run_arg import RunArg
-from ert._c_wrappers.enkf.runpaths import Runpaths
+from ert.shared.runpaths import Runpaths
 
 if TYPE_CHECKING:
     from ert.storage import EnsembleAccessor

@@ -3,7 +3,7 @@ from pathlib import Path
 import pytest
 
 from ert._c_wrappers.enkf import RunContext
-from ert._c_wrappers.enkf.runpaths import Runpaths
+from ert.shared.runpaths import Runpaths
 
 
 @pytest.mark.usefixtures("use_tmpdir")
