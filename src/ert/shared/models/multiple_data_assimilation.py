@@ -8,15 +8,15 @@ from ert._c_wrappers.enkf.enums import HookRuntime, RealizationStateEnum
 from ert.analysis import ErtAnalysisError
 from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.shared.models import BaseRunModel, ErtRunError
-from ert.storage import LocalEnsembleAccessor
+from ert.storage import EnsembleAccessor, StorageAccessor
 
 if TYPE_CHECKING:
     from ert._c_wrappers.enkf import EnKFMain, QueueConfig, RunContext
-    from ert.storage import EnsembleAccessor, StorageAccessor
 
 logger = logging.getLogger(__file__)
 
 
+# pylint: disable=too-many-arguments
 class MultipleDataAssimilation(BaseRunModel):
     """
     Run multiple data assimilation (MDA) ensemble smoother with custom weights.
@@ -43,6 +43,9 @@ class MultipleDataAssimilation(BaseRunModel):
         )
         self.weights = MultipleDataAssimilation.default_weights
         self.prior_ensemble = prior_ensemble
+
+    async def run(self, _: EvaluatorServerConfig) -> None:
+        raise NotImplementedError()
 
     def setAnalysisModule(self, module_name: str) -> None:
         module_load_success = self.ert().analysisConfig().select_module(module_name)
@@ -90,7 +93,7 @@ class MultipleDataAssimilation(BaseRunModel):
             try:
                 prior_fs = self._storage.get_ensemble_by_name(prior_ensemble)
                 self.set_env_key("_ERT_ENSEMBLE_ID", str(prior_fs.id))
-                assert isinstance(prior_fs, LocalEnsembleAccessor)
+                assert isinstance(prior_fs, EnsembleAccessor)
                 prior_context = self.ert().ensemble_context(
                     prior_fs,
                     self._simulation_arguments["active_realizations"],
@@ -128,7 +131,7 @@ class MultipleDataAssimilation(BaseRunModel):
                 )
             self.ert().runWorkflows(HookRuntime.PRE_UPDATE, self._storage, prior_fs)
             states = [
-                RealizationStateEnum.STATE_HAS_DATA,  # type: ignore
+                RealizationStateEnum.STATE_HAS_DATA,
                 RealizationStateEnum.STATE_INITIALIZED,
             ]
             posterior_context = self.ert().ensemble_context(
@@ -177,7 +180,7 @@ class MultipleDataAssimilation(BaseRunModel):
             self.facade.smoother_update(
                 prior_context.sim_fs,
                 posterior_context.sim_fs,
-                prior_context.run_id,
+                prior_context.run_id,  # type: ignore
             )
         except ErtAnalysisError as e:
             raise ErtRunError(
@@ -237,7 +240,7 @@ class MultipleDataAssimilation(BaseRunModel):
         return [x * length for x in weights]
 
     @staticmethod
-    def parseWeights(weights: str) -> List:
+    def parseWeights(weights: str) -> List[float]:
         if not weights:
             return []
 

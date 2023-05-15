@@ -20,6 +20,7 @@ if TYPE_CHECKING:
 experiment_logger = logging.getLogger("ert.experiment_server.ensemble_experiment")
 
 
+# pylint: disable=too-many-arguments
 class IteratedEnsembleSmoother(BaseRunModel):
     def __init__(
         self,
@@ -50,6 +51,9 @@ class IteratedEnsembleSmoother(BaseRunModel):
         self._w_container = SIES(
             len(simulation_arguments["active_realizations"]), **kwargs
         )
+
+    async def run(self, _: EvaluatorServerConfig) -> None:
+        raise NotImplementedError()
 
     def setAnalysisModule(self, module_name: str) -> AnalysisModule:
         module_load_success = self.ert().analysisConfig().select_module(module_name)
@@ -142,7 +146,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
         )
         for current_iter in range(1, self.facade.get_number_of_iterations() + 1):
             states = [
-                RealizationStateEnum.STATE_HAS_DATA,  # type: ignore
+                RealizationStateEnum.STATE_HAS_DATA,
                 RealizationStateEnum.STATE_INITIALIZED,
             ]
             posterior = self._storage.create_ensemble(

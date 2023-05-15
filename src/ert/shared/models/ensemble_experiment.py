@@ -21,6 +21,7 @@ if TYPE_CHECKING:
 experiment_logger = logging.getLogger("ert.experiment_server.ensemble_experiment")
 
 
+# pylint: disable=too-many-arguments
 class EnsembleExperiment(BaseRunModel):
     def __init__(
         self,
