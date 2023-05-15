@@ -20,7 +20,6 @@ from ert._c_wrappers.enkf.queue_config import QueueConfig
 from ert._c_wrappers.job_queue import (
     ErtScriptLoadFailure,
     ExtJob,
-    ExtJobInvalidArgsException,
     Workflow,
     WorkflowJob,
 )
@@ -425,11 +424,6 @@ class ErtConfig:
                         )
                     )
                     continue
-
-            try:
-                job.validate_args(substitution_list)
-            except ExtJobInvalidArgsException as err:
-                logger.warning(str(err))
             jobs.append(job)
         for job_description in config_dict.get(ConfigKeys.SIMULATION_JOB, []):
             try:

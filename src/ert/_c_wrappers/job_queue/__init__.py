@@ -62,7 +62,7 @@ if LSF_HOME:
 from .driver import Driver, QueueDriverEnum  # noqa
 from .ert_plugin import CancelPluginException, ErtPlugin  # noqa
 from .ert_script import ErtScript  # noqa
-from .ext_job import ExtJob, ExtJobInvalidArgsException  # noqa
+from .ext_job import ExtJob  # noqa
 from .external_ert_script import ExternalErtScript  # noqa
 from .job_queue_manager import JobQueueManager  # noqa
 from .job_queue_node import JobQueueNode  # noqa
@@ -89,7 +89,6 @@ __all__ = [
     "QueueDriverEnum",
     "Driver",
     "ExtJob",
-    "ExtJobInvalidArgsException",
     "ErtScript",
     "ErtScriptLoadFailure",
     "ErtPlugin",

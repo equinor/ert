@@ -1,25 +1,18 @@
 import logging
 import os
 import os.path
-import re
 import shutil
 from collections import defaultdict
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional
 
 from ert._c_wrappers.config import ConfigParser, ContentTypeEnum
 from ert._c_wrappers.util import SubstitutionList
 from ert._clib.job_kw import type_from_kw
 from ert.parsing import ConfigValidationError
 
-_SUBSTITUTED_AT_EXECUTION_TIME: List[str] = ["<ITER>", "<IENS>"]
-
 logger = logging.getLogger(__name__)
-
-
-class ExtJobInvalidArgsException(BaseException):
-    pass
 
 
 @dataclass
@@ -258,77 +251,3 @@ class ExtJob:
             name,
             **content_dict,
         )
-
-    def validate_args(self, context: SubstitutionList) -> None:
-        self._validate_all_passed_private_args_have_an_effect()
-        self._validate_all_magic_string_in_arglist_get_resolved(context)
-
-    def _validate_all_passed_private_args_have_an_effect(self) -> None:
-        """raises InvalidArgsException if validation fails"""
-        # private args are always applied first, so we can grab the keys of the private
-        # args list, and for every key, check if it matches on a substring of any
-        # argument from the argument list
-        relevant_private_args_keys = [
-            key
-            for key in self.private_args.keys()
-            if key not in _SUBSTITUTED_AT_EXECUTION_TIME and key not in self.exec_env
-        ]
-        unused_private_args_keys = list(
-            filter(
-                lambda private_arg_key: all(
-                    private_arg_key not in arg for arg in self.arglist
-                ),
-                relevant_private_args_keys,
-            )
-        )
-        if unused_private_args_keys:
-            unused_private_args_representation = [
-                f"{key}={self.private_args[key]}" for key in unused_private_args_keys
-            ]
-            raise ExtJobInvalidArgsException(
-                f"following arguments to job {self.name!r} were not found in the"
-                f" argument list: {','.join(unused_private_args_representation)}"
-            )
-
-    def _validate_all_magic_string_in_arglist_get_resolved(
-        self, context: SubstitutionList
-    ) -> None:
-        """raises InvalidArgsException if validation fails"""
-        args_substituted_with_private_list = [
-            (arg, self.private_args.substitute(arg, "", 1)) for arg in self.arglist
-        ]
-        args_substituted_with_context_and_private_list = [
-            (orig_arg, context.substitute(modified_arg))
-            for orig_arg, modified_arg in args_substituted_with_private_list
-        ]
-        defaulted_and_substituted_args = [
-            (orig_arg, self.default_mapping.get(modified_arg, modified_arg))
-            for orig_arg, modified_arg in args_substituted_with_context_and_private_list
-        ]
-
-        def arg_has_unresolved_substring(arg_tuple: Tuple[str, str]) -> bool:
-            _, arg = arg_tuple
-            unresolved_substrings = re.findall(r"<.*?>", arg)
-            relevant_unresolved_substrings = list(
-                filter(
-                    lambda substr: substr not in _SUBSTITUTED_AT_EXECUTION_TIME,
-                    unresolved_substrings,
-                )
-            )
-            return bool(relevant_unresolved_substrings)
-
-        args_with_unresolved_substrings = list(
-            filter(
-                arg_has_unresolved_substring,
-                defaulted_and_substituted_args,
-            )
-        )
-        if args_with_unresolved_substrings:
-            unresolved_args_representation = [
-                repr(orig_arg) for orig_arg, _ in args_with_unresolved_substrings
-            ]
-            raise ExtJobInvalidArgsException(
-                f"Job {self.name!r} has unresolved arguments after "
-                "applying argument substitutions: "
-                f"{', '.join(unresolved_args_representation)}"
-            )
