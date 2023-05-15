@@ -225,7 +225,6 @@ class EnsembleConfig(BaseCClass):
         for gene_data in gen_data_list:
             gdc = self.gen_data_node(gene_data)
             self.addNode(gdc)
-            self._gen_data_config[gdc.getKey()] = gdc
             self._create_node_metainfo(gene_data, 1, EnkfVarType.DYNAMIC_RESULT)
 
         for gen_kw in gen_kw_list:
@@ -597,6 +596,9 @@ class EnsembleConfig(BaseCClass):
             self._add_node(config_node)
             config_node.convertToCReference(self)
         else:
+            if isinstance(config_node, GenDataConfig):
+                self._gen_data_config[config_node.getKey()] = config_node
+
             self.py_nodes[config_node.name] = config_node
 
     def getKeylistFromVarType(self, var_mask: EnkfVarType) -> List[str]:
