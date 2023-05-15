@@ -14,7 +14,7 @@ class ValidationStatus:
     def failed(self) -> bool:
         return self.__fail
 
-    def addToMessage(self, message: str):
+    def addToMessage(self, message: str) -> None:
         self.__message += message + "\n"
 
     def message(self) -> str:

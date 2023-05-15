@@ -1,13 +1,13 @@
 import re
 
-from ert.shared.ide.keywords.data import ValidationStatus
-from ert.shared.ide.keywords.definitions import ArgumentDefinition
+from .argument_definition import ArgumentDefinition
+from .validation_status import ValidationStatus
 
 
-class ProperNameArgument(ArgumentDefinition):
-    NOT_A_VALID_NAME = (
-        "The argument must be a valid string "
-        "containing only characters of these types: "
+class ProperNameFormatArgument(ArgumentDefinition):
+    NOT_A_VALID_NAME_FORMAT = (
+        "The argument must be a valid string containing a "
+        "%d and only characters of these types: "
         "Letters: A-Z and a-z, "
         "numbers: 0-9, "
         "underscore: _, "
@@ -16,7 +16,7 @@ class ProperNameArgument(ArgumentDefinition):
         "brackets: > < "
     )
 
-    PATTERN = re.compile(r"^[A-Za-z0-9_\-.<>]+$")
+    PATTERN = re.compile(r"^[A-Za-z0-9_\-.<>]*(%d)[A-Za-z0-9_\-.<>]*$")
 
     def __init__(self, **kwargs: bool) -> None:
         super().__init__(**kwargs)
@@ -27,11 +27,13 @@ class ProperNameArgument(ArgumentDefinition):
         if not validation_status:
             return validation_status
         else:
-            match = ProperNameArgument.PATTERN.match(token)
+            match = ProperNameFormatArgument.PATTERN.match(token)
 
             if match is None:
                 validation_status.setFailed()
-                validation_status.addToMessage(ProperNameArgument.NOT_A_VALID_NAME)
+                validation_status.addToMessage(
+                    ProperNameFormatArgument.NOT_A_VALID_NAME_FORMAT
+                )
             else:
                 if not validation_status.failed():
                     validation_status.setValue(token)

@@ -4,6 +4,7 @@ from .number_list_string_argument import NumberListStringArgument
 from .proper_name_argument import ProperNameArgument
 from .proper_name_format_argument import ProperNameFormatArgument
 from .range_string_argument import RangeStringArgument
+from .validation_status import ValidationStatus
 
 __all__ = [
     "ArgumentDefinition",
@@ -12,4 +13,5 @@ __all__ = [
     "ProperNameArgument",
     "ProperNameFormatArgument",
     "RangeStringArgument",
+    "ValidationStatus",
 ]

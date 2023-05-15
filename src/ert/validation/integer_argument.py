@@ -1,8 +1,8 @@
 import re
 from typing import Optional
 
-from ert.shared.ide.keywords.data import ValidationStatus
-from ert.shared.ide.keywords.definitions import ArgumentDefinition
+from .argument_definition import ArgumentDefinition
+from .validation_status import ValidationStatus
 
 
 class IntegerArgument(ArgumentDefinition):

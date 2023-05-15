@@ -1,4 +1,4 @@
-from ert.shared.ide.keywords.data import ValidationStatus
+from .validation_status import ValidationStatus
 
 
 class ArgumentDefinition:

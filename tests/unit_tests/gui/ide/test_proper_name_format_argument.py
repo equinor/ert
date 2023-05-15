@@ -1,4 +1,4 @@
-from ert.shared.ide.keywords.definitions import ProperNameFormatArgument
+from ert.validation import ProperNameFormatArgument
 
 
 def test_proper_name_format_argument():
