@@ -79,7 +79,9 @@ class WorkflowJob:
     @staticmethod
     def _make_arg_types_list_new(content_dict: ConfigDict) -> List[ContentTypeEnum]:
         # First find the number of args
-        args_spec: List[Tuple[int, str]] = content_dict.get(WorkflowJobKeys.ARG_TYPE, [])  # type: ignore
+        args_spec: List[Tuple[int, str]] = content_dict.get(
+            WorkflowJobKeys.ARG_TYPE, []
+        )  # type: ignore
         specified_highest_arg_index = (
             max(index for index, _ in args_spec) if len(args_spec) > 0 else -1
         )
