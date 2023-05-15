@@ -25,8 +25,6 @@ class Runpaths:
             def default_substitute(to_replace:str, realization:int, iteration:int):
                 return to_replace
 
-    :param filename: The filename of the runpath list file. Defaults to
-        ".ert_runpath_list".
 
     """
 

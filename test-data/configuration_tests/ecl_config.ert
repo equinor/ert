@@ -1,4 +1,4 @@
-ECLBASE                         input/<ECLIPSE_NAME>-%d
+ECLBASE                         input/<ECLIPSE_NAME>-<IENS>
 DATA_FILE                       input/SPE1.DATA
 REFCASE                         input/refcase/SNAKE_OIL_FIELD
 GRID                            input/CASE.EGRID
