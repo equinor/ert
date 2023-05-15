@@ -13,6 +13,7 @@ from ert.load_status import LoadResult, LoadStatus
 
 if TYPE_CHECKING:
     from ert._c_wrappers.enkf import EnsembleConfig, RunArg
+    from ert._c_wrappers.enkf.config.gen_data_config import GenDataConfig
 
 logger = logging.getLogger(__name__)
 
@@ -24,7 +25,7 @@ def _internalize_GEN_DATA(
     errors = []
     all_data = {}
     for key in ensemble_config.get_keylist_gen_data():
-        config_node = ensemble_config.getNode(key)
+        config_node: GenDataConfig = ensemble_config.getNode(key)  # type: ignore
         filename_fmt = config_node.input_file
         for i in config_node.getReportSteps():
             filename = filename_fmt % i

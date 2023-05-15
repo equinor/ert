@@ -89,24 +89,22 @@ void ensemble_config_add_node(ensemble_config_type *ensemble_config,
 }
 
 std::list<std::string>
-ensemble_config_get_summary_key_list(ensemble_config_type *ensemble_config,
-                                     const char *key,
+ensemble_config_get_summary_key_list(const char *key,
                                      const ecl_sum_type *refcase) {
     std::list<std::string> keylist;
     if (util_string_has_wildcard(key)) {
-        if (refcase != NULL) {
+        if (refcase != nullptr) {
             stringlist_type *keys = stringlist_alloc_new();
             ecl_sum_select_matching_general_var_list(
                 refcase, key,
                 keys); /* expanding the wildcard notation with help of the refcase. */
-            int k;
-            for (k = 0; k < stringlist_get_size(keys); k++) {
+            for (int k = 0; k < stringlist_get_size(keys); k++) {
                 keylist.push_back((std::string)stringlist_iget(keys, k));
             }
             stringlist_free(keys);
         }
     } else {
-        keylist.push_back((std::string)key);
+        keylist.push_back(std::string(key));
     }
 
     return keylist;
@@ -136,8 +134,7 @@ ensemble_config_alloc_keylist_from_impl_type(const ensemble_config_type *config,
 
 ERT_CLIB_SUBMODULE("ensemble_config", m) {
     m.def("get_summary_key_list",
-          [](Cwrap<ensemble_config_type> self, const char *key,
-             Cwrap<ecl_sum_type> refcase) {
-              return ensemble_config_get_summary_key_list(self, key, refcase);
+          [](const char *key, Cwrap<ecl_sum_type> refcase) {
+              return ensemble_config_get_summary_key_list(key, refcase);
           });
 }

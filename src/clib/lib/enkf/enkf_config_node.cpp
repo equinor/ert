@@ -15,7 +15,6 @@
 #include <ert/util/string_util.h>
 #include <ert/util/stringlist.h>
 #include <ert/util/vector.h>
-#include <list>
 
 namespace fs = std::filesystem;
 

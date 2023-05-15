@@ -536,10 +536,8 @@ class EnsembleConfig(BaseCClass):
 
         if key not in self._user_summary_keys:
             self._user_summary_keys.append(key)
-        else:
-            raise ConfigValidationError("Duplicate summary key provided")
 
-        keylist = _clib.ensemble_config.get_summary_key_list(self, key, refcase)
+        keylist = _clib.ensemble_config.get_summary_key_list(key, refcase)
         for k in keylist:
             if k not in self.get_node_keylist():
                 summary_config_node = SummaryConfig(k)

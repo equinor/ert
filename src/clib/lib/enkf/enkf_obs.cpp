@@ -243,15 +243,14 @@ int enkf_obs_get_size(const enkf_obs_type *obs) {
 
 static std::map<std::string, std::string>
 enkf_obs_get_time_map(Cwrap<enkf_obs_type> enkf_obs) {
-    std::map<std::string, std::string> data_map =
-        std::map<std::string, std::string>();
+    std::map<std::string, std::string> data_map;
 
     hash_type *map = enkf_obs_alloc_data_map(enkf_obs);
     hash_iter_type *iter = hash_iter_alloc(map);
     const char *obs_key = hash_iter_get_next_key(iter);
     while (obs_key != NULL) {
         const char *state_kw = (const char *)hash_get(map, obs_key);
-        data_map[(std::string)obs_key] = (std::string)state_kw;
+        data_map[std::string(obs_key)] = std::string(state_kw);
         obs_key = hash_iter_get_next_key(iter);
     }
     hash_iter_free(iter);
