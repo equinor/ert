@@ -201,14 +201,11 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
         node = self._enkf_main.ensembleConfig().getNode(name)
         return node.getImplementationType().name  # type: ignore
 
-    def get_data_key_for_obs_key(self, observation_key: Union[str, int]) -> str:
+    def get_data_key_for_obs_key(self, observation_key: str) -> str:
         return self._enkf_main.getObservations()[observation_key].getDataKey()
 
     def get_matching_wildcards(self) -> Callable[[str], List[str]]:
         return self._enkf_main.getObservations().getMatchingKeys
-
-    def get_observation_key(self, index: Union[str, int]) -> str:
-        return self._enkf_main.getObservations()[index].getKey()
 
     def load_gen_data(
         self,
@@ -233,8 +230,7 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
         observations = self._enkf_main.getObservations()
         history_length = self._enkf_main.getHistoryLength()
         dates = [
-            observations.getObservationTime(index).datetime()
-            for index in range(1, history_length)
+            observations.getObservationTime(index) for index in range(1, history_length)
         ]
         summary_keys = sorted(
             [
@@ -260,7 +256,7 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
                 observation_data = observations[obs_key]
                 for index in range(0, history_length + 1):
                     if observation_data.isActive(index):
-                        obs_time = observations.getObservationTime(index).datetime()
+                        obs_time = observations.getObservationTime(index)
                         node = observation_data.getNode(index)
                         value = node.getValue()  # type: ignore
                         std = node.getStandardDeviation()  # type: ignore

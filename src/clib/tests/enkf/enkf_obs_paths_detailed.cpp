@@ -5,7 +5,8 @@
 #include <catch2/catch.hpp>
 
 #include "../tmpdir.hpp"
-#include <ert/enkf/enkf_obs.hpp>
+#include "ert/config/conf.hpp"
+#include <ert/util/util.hpp>
 
 std::shared_ptr<conf_class> enkf_obs_get_obs_conf_class();
 

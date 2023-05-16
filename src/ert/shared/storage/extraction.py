@@ -27,7 +27,7 @@ def _get_obs_data(key, obs) -> Mapping[str, Any]:
 
 def create_observations(ert) -> List[Mapping[str, dict]]:
     observation_vectors = ert.get_observations()
-    keys = [ert.get_observation_key(i) for i, _ in enumerate(observation_vectors)]
+    keys = [o.getKey() for o in observation_vectors]
     summary_obs_keys = observation_vectors.getTypedKeylist(
         EnkfObservationImplementationType.SUMMARY_OBS
     )

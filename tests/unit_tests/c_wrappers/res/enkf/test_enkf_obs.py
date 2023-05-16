@@ -117,7 +117,7 @@ def test_observations(setup_case):
         count,
     )
 
-    observations.addObservationVector(observation_vector)
+    observations.obs_vectors[observation_key] = observation_vector
 
     values = []
     for index in range(0, count):

@@ -1,15 +1,14 @@
 import os
 import warnings
 from datetime import datetime, timedelta
-from typing import TYPE_CHECKING, Iterator, List, Literal, Optional, Tuple, Union
+from fnmatch import fnmatch
+from typing import TYPE_CHECKING, Dict, Iterator, List, Literal, Optional, Tuple
 
 import numpy as np
-from cwrap import BaseCClass
 from ecl.summary import EclSumVarType
-from ecl.util.util import CTime, StringList
+from ecl.util.util import CTime
 
 from ert import _clib
-from ert._c_wrappers import ResPrototype
 from ert._c_wrappers.enkf.enums import EnkfObservationImplementationType, ErtImplType
 from ert._c_wrappers.enkf.observations import ObsVector
 from ert._c_wrappers.enkf.observations.gen_observation import GenObservation
@@ -20,10 +19,8 @@ from ert.parsing.error_info import ErrorInfo
 
 if TYPE_CHECKING:
     import numpy.typing as npt
-    from ecl.summary import EclSum
 
     from ert._c_wrappers.enkf import EnsembleConfig, ErtConfig
-    from ert._c_wrappers.enkf.time_map import TimeMap
 
 DEFAULT_TIME_DELTA = timedelta(seconds=30)
 
@@ -41,83 +38,34 @@ class ObservationConfigError(ConfigValidationError):
         )
 
 
-class EnkfObs(BaseCClass):
-    TYPE_NAME = "enkf_obs"
-
-    _free = ResPrototype("void enkf_obs_free(enkf_obs)")
-    _get_size = ResPrototype("int enkf_obs_get_size( enkf_obs )")
-    _error = ResPrototype("char* enkf_obs_get_error(enkf_obs)")
-    _alloc_typed_keylist = ResPrototype(
-        "stringlist_obj enkf_obs_alloc_typed_keylist(enkf_obs, enkf_obs_impl_type)"
-    )
-    _alloc_matching_keylist = ResPrototype(
-        "stringlist_obj enkf_obs_alloc_matching_keylist(enkf_obs, char*)"
-    )
-    _has_key = ResPrototype("bool enkf_obs_has_key(enkf_obs, char*)")
-    _obs_type = ResPrototype("enkf_obs_impl_type enkf_obs_get_type(enkf_obs, char*)")
-    _get_vector = ResPrototype("obs_vector_ref enkf_obs_get_vector(enkf_obs, char*)")
-    _iget_vector = ResPrototype("obs_vector_ref enkf_obs_iget_vector(enkf_obs, int)")
-    _iget_obs_time = ResPrototype("time_t enkf_obs_iget_obs_time(enkf_obs, int)")
-    _add_obs_vector = ResPrototype("void enkf_obs_add_obs_vector(enkf_obs, obs_vector)")
-
-    def __init__(
-        self,
-        time_map: Optional["TimeMap"],
-        refcase: Optional["EclSum"],
-    ):
-        # The c object holds on to ensemble_config, so we
-        # need to hold onto a reference to it here so it does not
-        # get destructed
-        c_ptr = _clib.enkf_obs.alloc(time_map, refcase)
-        if c_ptr:
-            super().__init__(c_ptr)
-        else:
-            raise ValueError("Failed to construct EnkfObs")
+class EnkfObs:
+    def __init__(self, obs_vectors: Dict[str, ObsVector], obs_time: List[datetime]):
+        self.obs_vectors = obs_vectors
+        self.obs_time = obs_time
 
     def __len__(self) -> int:
-        return self._get_size()
+        return len(self.obs_vectors)
 
     def __contains__(self, key: str) -> bool:
-        return self._has_key(key)
+        return key in self.obs_vectors
 
     def __iter__(self) -> Iterator[ObsVector]:
-        iobs = 0
-        while iobs < len(self):
-            vector = self[iobs]
-            yield vector
-            iobs += 1
+        return iter(self.obs_vectors.values())
 
-    def __getitem__(self, key_or_index: Union[str, int]) -> ObsVector:
-        if isinstance(key_or_index, str):
-            if self.hasKey(key_or_index):
-                return self._get_vector(key_or_index).setParent(self)
-            else:
-                raise KeyError(f"Unknown key: {key_or_index}")
-        elif isinstance(key_or_index, int):
-            idx = key_or_index
-            if idx < 0:
-                idx += len(self)
-            if 0 <= idx < len(self):
-                return self._iget_vector(idx).setParent(self)
-            else:
-                raise IndexError(
-                    f"Invalid index: {key_or_index}.  Valid range is [0, {len(self)})."
-                )
-        else:
-            raise TypeError(
-                f"Key or index must be of type str or int, not {type(key_or_index)}."
-            )
+    def __getitem__(self, key: str) -> ObsVector:
+        return self.obs_vectors[key]
 
     def getTypedKeylist(
         self, observation_implementation_type: EnkfObservationImplementationType
-    ) -> StringList:
-        return self._alloc_typed_keylist(observation_implementation_type)
+    ) -> List[str]:
+        return [
+            key
+            for key, obs in self.obs_vectors.items()
+            if observation_implementation_type == obs.getImplementationType()
+        ]
 
     def obsType(self, key: str) -> EnkfObservationImplementationType:
-        if key in self:
-            return self._obs_type(key)
-        else:
-            raise KeyError(f"Unknown observation key: {key}")
+        self.obs_vectors[key].getImplementationType()
 
     def getMatchingKeys(
         self, pattern: str, obs_type: Optional[EnkfObservationImplementationType] = None
@@ -126,7 +74,11 @@ class EnkfObs(BaseCClass):
         Will return a list of all the observation keys matching the input
         pattern. The matching is based on fnmatch().
         """
-        key_list = self._alloc_matching_keylist(pattern)
+        key_list = sorted(
+            key
+            for key in self.obs_vectors
+            if any(fnmatch(key, p) for p in pattern.split())
+        )
         if obs_type:
             return [key for key in key_list if self.obsType(key) == obs_type]
         else:
@@ -135,18 +87,8 @@ class EnkfObs(BaseCClass):
     def hasKey(self, key: str) -> bool:
         return key in self
 
-    def getObservationTime(self, index: int) -> CTime:
-        return self._iget_obs_time(index)
-
-    def addObservationVector(self, observation_vector: ObsVector) -> None:
-        assert isinstance(observation_vector, ObsVector)
-
-        observation_vector.convertToCReference(self)
-
-        self._add_obs_vector(observation_vector)
-
-    def free(self):
-        self._free()
+    def getObservationTime(self, index: int) -> datetime:
+        return self.obs_time[index]
 
     @staticmethod
     def _handle_error_mode(
@@ -164,17 +106,20 @@ class EnkfObs(BaseCClass):
             return np.maximum(np.abs(values) * error, np.full(values.shape, error_min))
         raise ValueError(f"Unknown error mode {error_mode}")
 
+    @classmethod
     def _handle_history_observation(
-        self,
+        cls,
         ensemble_config: "EnsembleConfig",
         conf_instance,
         std_cutoff: float,
         history_type: Optional[HistorySourceEnum],
-    ):
+        time_len: int,
+    ) -> Dict[str, ObsVector]:
+        obs_vectors = {}
         sub_instances = conf_instance.get_sub_instances("HISTORY_OBSERVATION")
 
         if sub_instances == []:
-            return
+            return obs_vectors
 
         refcase = ensemble_config.refcase
         if refcase is None:
@@ -184,7 +129,6 @@ class EnkfObs(BaseCClass):
 
         for instance in sub_instances:
             summary_key = instance.name
-            time_len = len(_clib.enkf_obs.obs_time(self))
             ensemble_config.add_summary_full(summary_key, refcase)
             obs_vector = ObsVector(
                 EnkfObservationImplementationType.SUMMARY_OBS,
@@ -212,7 +156,7 @@ class EnkfObs(BaseCClass):
                 local_key = summary_key
             if local_key is not None and local_key in refcase:
                 valid, values = _clib.enkf_obs.read_from_refcase(refcase, local_key)
-                std_dev = self._handle_error_mode(values, error, error_min, error_mode)
+                std_dev = cls._handle_error_mode(values, error, error_min, error_mode)
                 for segment_instance in instance.get_sub_instances("SEGMENT"):
                     start = int(segment_instance.get_value("START"))
                     stop = int(segment_instance.get_value("STOP"))
@@ -244,7 +188,7 @@ class EnkfObs(BaseCClass):
                             "time map.",
                             category=ConfigWarning,
                         )
-                    std_dev[start:stop] = self._handle_error_mode(
+                    std_dev[start:stop] = cls._handle_error_mode(
                         values[start:stop],
                         float(segment_instance.get_value("ERROR")),
                         float(segment_instance.get_value("ERROR_MIN")),
@@ -264,7 +208,8 @@ class EnkfObs(BaseCClass):
                             i,
                         )
 
-            self.addObservationVector(obs_vector)
+                obs_vectors[obs_vector.getKey()] = obs_vector
+        return obs_vectors
 
     @staticmethod
     def _get_time(conf_instance, start_time: datetime) -> Tuple[datetime, str]:
@@ -341,10 +286,11 @@ class EnkfObs(BaseCClass):
             ),
         )
 
+    @classmethod
     def _handle_summary_observation(
-        self, ensemble_config: "EnsembleConfig", conf_instance
-    ):
-        time_map = [datetime.utcfromtimestamp(t) for t in _clib.enkf_obs.obs_time(self)]
+        cls, ensemble_config: "EnsembleConfig", conf_instance, time_map
+    ) -> Dict[str, ObsVector]:
+        obs_vectors = {}
         for instance in conf_instance.get_sub_instances("SUMMARY_OBSERVATION"):
             summary_key = instance.get_value("KEY")
             obs_key = instance.name
@@ -356,9 +302,9 @@ class EnkfObs(BaseCClass):
                 ensemble_config.getNode(summary_key).getKey(),
                 len(time_map),
             )
-            value, std_dev = self._make_value_and_std_dev(instance)
+            value, std_dev = cls._make_value_and_std_dev(instance)
             try:
-                restart = self._get_restart(instance, time_map)
+                restart = cls._get_restart(instance, time_map)
             except ValueError as err:
                 raise ValueError(
                     f"Problem with date in summary observation {obs_key}: " + str(err)
@@ -369,17 +315,19 @@ class EnkfObs(BaseCClass):
                     "It is unfortunately not possible to use summary "
                     "observations from the start of the simulation. "
                     f"Problem with observation {obs_key} at "
-                    f"{self._get_time(instance, time_map[0])}"
+                    f"{cls._get_time(instance, time_map[0])}"
                 )
             obs_vector.add_summary_obs(
                 SummaryObservation(summary_key, obs_key, value, std_dev), restart
             )
-            self.addObservationVector(obs_vector)
+            obs_vectors[obs_key] = obs_vector
+        return obs_vectors
 
+    @classmethod
     def _handle_general_observation(
-        self, ensemble_config: "EnsembleConfig", conf_instance
-    ):
-        time_map = [datetime.utcfromtimestamp(t) for t in _clib.enkf_obs.obs_time(self)]
+        cls, ensemble_config: "EnsembleConfig", conf_instance, time_map
+    ) -> Dict[str, ObsVector]:
+        obs_vectors = {}
         for instance in conf_instance.get_sub_instances("GENERAL_OBSERVATION"):
             state_kw = instance.get_value("DATA")
             if not ensemble_config.hasNodeGenData(state_kw):
@@ -398,7 +346,7 @@ class EnkfObs(BaseCClass):
                 len(time_map),
             )
             try:
-                restart = self._get_restart(instance, time_map)
+                restart = cls._get_restart(instance, time_map)
             except ValueError as err:
                 raise ValueError(
                     f"Problem with date in summary observation {obs_key}: " + str(err)
@@ -441,44 +389,24 @@ class EnkfObs(BaseCClass):
                 restart,
             )
 
-            self.addObservationVector(obs_vector)
-
-    def load(
-        self,
-        history: Optional[HistorySourceEnum],
-        conf_instance: _clib.enkf_obs.ConfInstance,
-        std_cutoff: float,
-        ensemble_config: "EnsembleConfig",
-    ) -> None:
-        self._handle_history_observation(
-            ensemble_config, conf_instance, std_cutoff, history
-        )
-        self._handle_summary_observation(ensemble_config, conf_instance)
-        self._handle_general_observation(ensemble_config, conf_instance)
-
-        obs_time_map = _clib.enkf_obs.get_time_map(self)
-
-        for state_kw in set(obs_time_map.values()):
-            obs_keys = [k for k, v in obs_time_map.items() if v == state_kw]
-            obs_keys.sort()
-            node = ensemble_config.getNode(state_kw)
-            if node is not None:
-                node.update_observation_keys(obs_keys)
-
-    @property
-    def error(self) -> str:
-        return self._error()
+            obs_vectors[obs_key] = obs_vector
+        return obs_vectors
 
     def __repr__(self) -> str:
-        return self._create_repr(f"{self.error}, len={len(self)}")
+        return f"EnkfObs({self.obs_vectors}, {self.obs_time})"
 
     @classmethod
     def from_ert_config(cls, config: "ErtConfig") -> "EnkfObs":
-        ret = cls(
-            config.model_config.time_map,
-            config.ensemble_config.refcase,
-        )
         obs_config_file = config.model_config.obs_config_file
+        obs_time_list: List[datetime] = []
+        if config.model_config.refcase is not None:
+            refcase = config.model_config.refcase
+            obs_time_list = [refcase.get_start_time()] + [
+                CTime(t).datetime() for t in refcase.alloc_time_vector(True)
+            ]
+        elif config.model_config.time_map is not None:
+            time_map = config.model_config.time_map
+            obs_time_list = [time_map[i] for i in range(len(time_map))]
         if obs_config_file:
             if (
                 os.path.isfile(obs_config_file)
@@ -493,11 +421,6 @@ class EnkfObs(BaseCClass):
                     ]
                 )
 
-            if ret.error:
-                raise ObservationConfigError(
-                    f"{ret.error}",
-                    config_file=obs_config_file,
-                )
             if not os.access(obs_config_file, os.R_OK):
                 raise ObservationConfigError(
                     [
@@ -508,6 +431,8 @@ class EnkfObs(BaseCClass):
                         ).set_context(obs_config_file)
                     ]
                 )
+            if obs_time_list == []:
+                raise ObservationConfigError("Missing refcase or TIMEMAP")
             conf_instance = _clib.enkf_obs.ConfInstance(obs_config_file)
             errors = conf_instance.get_errors()
             if errors != []:
@@ -517,12 +442,30 @@ class EnkfObs(BaseCClass):
                     ]
                 )
             try:
-                ret.load(
-                    config.model_config.history_source,
-                    conf_instance,
-                    config.analysis_config.get_std_cutoff(),
-                    config.ensemble_config,
+                history = config.model_config.history_source
+                std_cutoff = config.analysis_config.get_std_cutoff()
+                time_len = len(obs_time_list)
+                ensemble_config = config.ensemble_config
+                obs_vectors = dict(
+                    **cls._handle_history_observation(
+                        ensemble_config, conf_instance, std_cutoff, history, time_len
+                    ),
+                    **cls._handle_summary_observation(
+                        ensemble_config, conf_instance, obs_time_list
+                    ),
+                    **cls._handle_general_observation(
+                        ensemble_config, conf_instance, obs_time_list
+                    ),
                 )
+
+                for state_kw in set(o.getDataKey() for o in obs_vectors.values()):
+                    obs_keys = sorted(
+                        k for k, o in obs_vectors.items() if o.getDataKey() == state_kw
+                    )
+                    node = ensemble_config.getNode(state_kw)
+                    if node is not None:
+                        node.update_observation_keys(obs_keys)
+                return EnkfObs(obs_vectors, obs_time_list)
             except IndexError as err:
                 if config.ensemble_config.refcase is not None:
                     raise ObservationConfigError(
@@ -544,4 +487,4 @@ class EnkfObs(BaseCClass):
                     str(err),
                     config_file=obs_config_file,
                 ) from err
-        return ret
+        return EnkfObs({}, obs_time_list)

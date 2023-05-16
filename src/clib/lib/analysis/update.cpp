@@ -10,7 +10,6 @@
 #include <ert/analysis/update.hpp>
 
 #include <ert/enkf/enkf_config_node.hpp>
-#include <ert/enkf/enkf_obs.hpp>
 #include <ert/except.hpp>
 #include <ert/python.hpp>
 #include <ert/res_util/memory.hpp>

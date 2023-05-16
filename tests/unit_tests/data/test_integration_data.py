@@ -257,7 +257,7 @@ def test_all_measured_snapshot(snapshot, facade_snake_oil, create_measured_data)
     While there is no guarantee that this snapshot is 100% correct, it does represent
     the current state of loading from storage for the snake_oil case.
     """
-    obs_keys = facade_snake_oil.get_matching_wildcards()("*").strings
+    obs_keys = facade_snake_oil.get_matching_wildcards()("*")
     measured_data = create_measured_data(obs_keys)
     snapshot.assert_match(measured_data.data.to_csv(), "snake_oil_measured_output.csv")
 
