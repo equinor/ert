@@ -11,7 +11,6 @@
 #include <ert/enkf/ext_param_config.hpp>
 #include <ert/enkf/gen_obs.hpp>
 #include <ert/python.hpp>
-#include <ert/res_util/path_fmt.hpp>
 #include <ert/util/string_util.h>
 #include <ert/util/stringlist.h>
 #include <ert/util/vector.h>
