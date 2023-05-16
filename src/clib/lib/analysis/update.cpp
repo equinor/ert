@@ -1,4 +1,3 @@
-#include "ert/enkf/ensemble_config.hpp"
 #include <Eigen/Dense>
 #include <cerrno>
 #include <fmt/format.h>
@@ -8,8 +7,6 @@
 #include <vector>
 
 #include <ert/analysis/update.hpp>
-
-#include <ert/enkf/enkf_config_node.hpp>
 #include <ert/except.hpp>
 #include <ert/python.hpp>
 #include <ert/res_util/memory.hpp>

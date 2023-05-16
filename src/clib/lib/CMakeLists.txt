@@ -33,11 +33,9 @@ pybind11_add_module(
   enkf/active_list.cpp
   enkf/time_map.cpp
   enkf/config_keys.cpp
-  enkf/enkf_config_node.cpp
   enkf/enkf_obs.cpp
   enkf/enkf_types.cpp
   enkf/ensemble_config.cpp
-  enkf/ext_param_config.cpp
   enkf/gen_obs.cpp
   enkf/obs_vector.cpp
   enkf/row_scaling.cpp

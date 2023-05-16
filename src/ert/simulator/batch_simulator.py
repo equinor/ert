@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Tuple, Union
 
 from ert._c_wrappers.enkf import EnKFMain, ErtConfig
-from ert._c_wrappers.enkf.config import EnkfConfigNode, ExtParamConfig
+from ert._c_wrappers.enkf.config import ExtParamConfig
 from ert._c_wrappers.enkf.config.gen_data_config import GenDataConfig
 from ert._c_wrappers.enkf.enums import EnkfVarType
 from ert.storage import open_storage
@@ -102,7 +102,11 @@ class BatchSimulator:
 
         ens_config = self.ert_config.ensemble_config
         for control_name, variables in controls.items():
-            ens_config.addNode(EnkfConfigNode.create_ext_param(control_name, variables))
+            ens_config.addNode(
+                ExtParamConfig(
+                    control_name, variables, output_file=control_name + ".json"
+                )
+            )
             ens_config.add_config_node_meta(
                 key=control_name,
                 output_file=control_name + ".json",
@@ -156,22 +160,20 @@ class BatchSimulator:
             raise KeyError(err_msg)
 
         for control_name, control in controls.items():
-            enkf_node = self.ert_config.ensemble_config[control_name]
-            if isinstance(enkf_node, EnkfConfigNode):
-                ext_config = enkf_node.getModelConfig()
-                if isinstance(ext_config, ExtParamConfig):
-                    if len(ext_config) != len(control.keys()):
-                        raise KeyError(
-                            (
-                                f"Expected {len(ext_config)} variables for "
-                                f"control {control_name}, "
-                                f"received {len(control.keys())}."
-                            )
+            ext_config = self.ert_config.ensemble_config[control_name]
+            if isinstance(ext_config, ExtParamConfig):
+                if len(ext_config) != len(control.keys()):
+                    raise KeyError(
+                        (
+                            f"Expected {len(ext_config)} variables for "
+                            f"control {control_name}, "
+                            f"received {len(control.keys())}."
                         )
-                    for var_name, var_setting in control.items():
-                        _check_suffix(ext_config, var_name, var_setting)
+                    )
+                for var_name, var_setting in control.items():
+                    _check_suffix(ext_config, var_name, var_setting)
 
-                    file_system.save_ext_param(control_name, sim_id, control)
+                file_system.save_ext_param(control_name, sim_id, control)
 
     def start(
         self,

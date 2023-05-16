@@ -1,6 +1,5 @@
 #pragma once
-
-#include <ert/enkf/ensemble_config.hpp>
+#include <ert/enkf/active_list.hpp>
 #include <ert/enkf/row_scaling.hpp>
 #include <iterator>
 #include <stdexcept>

@@ -3,7 +3,6 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
-#include <ert/enkf/ensemble_config.hpp>
 #include <ert/enkf/obs_vector.hpp>
 #include <ert/python.hpp>
 #include <ert/res_util/string.hpp>

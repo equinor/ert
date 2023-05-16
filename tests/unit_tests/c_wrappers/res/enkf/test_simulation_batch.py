@@ -1,6 +1,7 @@
 import pytest
 
-from ert._c_wrappers.enkf import EnkfConfigNode, EnKFMain
+from ert._c_wrappers.enkf import EnKFMain
+from ert._c_wrappers.enkf.config.ext_param_config import ExtParamConfig
 from ert._c_wrappers.enkf.config.gen_data_config import GenDataConfig
 from ert._c_wrappers.enkf.enums import EnkfVarType, RealizationStateEnum
 from ert.simulator.simulation_context import _run_forward_model
@@ -17,13 +18,17 @@ def test_run_simulation_batch(setup_case, prior_ensemble):
     # between this test, the config file and the forward model.
 
     # Add control nodes
-    order_control = EnkfConfigNode.create_ext_param("WELL_ORDER", ["W1", "W2", "W3"])
+    order_control = ExtParamConfig(
+        "WELL_ORDER", ["W1", "W2", "W3"], output_file="WELL_ORDER.json"
+    )
     ens_config.add_config_node_meta(
         key="WELL_ORDER",
         output_file="WELL_ORDER.json",
         var_type=EnkfVarType.EXT_PARAMETER,
     )
-    injection_control = EnkfConfigNode.create_ext_param("WELL_INJECTION", ["W1", "W4"])
+    injection_control = ExtParamConfig(
+        "WELL_INJECTION", ["W1", "W4"], output_file="WELL_INJECTION.json"
+    )
     ens_config.add_config_node_meta(
         key="WELL_INJECTION",
         output_file="WELL_INJECTION.json",

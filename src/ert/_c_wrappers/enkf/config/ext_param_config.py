@@ -1,36 +1,17 @@
-from cwrap import BaseCClass
-from ecl.util.util import StringList
+from typing import Dict, List, Tuple, Union
 
-from ert._c_wrappers import ResPrototype
+from ert._c_wrappers.enkf.enums.ert_impl_type_enum import ErtImplType
 
 
-class ExtParamConfig(BaseCClass):
-    TYPE_NAME = "ext_param_config"
-    _alloc = ResPrototype(
-        "void*   ext_param_config_alloc( char*, stringlist )", bind=False
-    )
-    _size = ResPrototype("int     ext_param_config_get_data_size( ext_param_config )")
-    _iget_key = ResPrototype(
-        "char*   ext_param_config_iget_key( ext_param_config , int)"
-    )
-    _free = ResPrototype("void    ext_param_config_free( ext_param_config )")
-    _has_key = ResPrototype(
-        "bool    ext_param_config_has_key( ext_param_config , char* )"
-    )
-    _key_index = ResPrototype(
-        "int     ext_param_config_get_key_index(ext_param_config, char*)"
-    )
-    _ikey_get_suffix_count = ResPrototype(
-        "int   ext_param_config_ikey_get_suffix_count(ext_param_config, int)"
-    )
-    _ikey_iget_suffix = ResPrototype(
-        "char* ext_param_config_ikey_iget_suffix(ext_param_config, int, int)"
-    )
-    _ikey_set_suffixes = ResPrototype(
-        "void ext_param_config_ikey_set_suffixes(ext_param_config, int, stringlist)"
-    )
-
-    def __init__(self, key, input_keys):
+class ExtParamConfig:
+    def __init__(
+        self,
+        key,
+        input_keys: Union[List[str], Dict[str, List[Tuple[str, str]]]],
+        output_file: str = "",
+        forward_init: bool = False,
+        init_file: str = "",
+    ):
         """Create an ExtParamConfig for @key with the given @input_keys
 
         @input_keys can be either a list of keys as strings or a dict with
@@ -47,12 +28,18 @@ class ExtParamConfig(BaseCClass):
         if len(keys) != len(set(keys)):
             raise ValueError(f"Duplicate keys for key '{key}' - keys: {keys}")
 
-        keys = StringList(initial=input_keys)
-        c_ptr = self._alloc(key, keys)
-        super().__init__(c_ptr)
+        self.name = key
+        self._key_list: List[str] = list(keys)
+        self._suffix_list: List[List[str]] = []
+
+        self.output_file: str = output_file
+        self.forward_init: bool = forward_init
+        self.forward_init_file: str = init_file
 
         for k, suffixes in suffixmap:
-            suffixlist = StringList(initial=suffixes)
+            if not isinstance(suffixes, list):
+                raise TypeError(f"Invalid type {type(suffixes)} for suffix: {suffixes}")
+
             if len(suffixes) == 0:
                 raise ValueError(
                     f"No suffixes for key '{key}/{k}' - suffixes: {suffixes}"
@@ -66,25 +53,34 @@ class ExtParamConfig(BaseCClass):
                     f"Empty suffix encountered for key '{key}/{k}' "
                     f"- suffixes: {suffixes}"
                 )
-            self._ikey_set_suffixes(self._key_index(k), suffixlist)
+
+            self._suffix_list.append(suffixes)
 
     def __len__(self):
-        return self._size()
+        return len(self._key_list)
 
     def __contains__(self, key):
         """Check if the @key is present in the configuration
 
         @key can be a single string or a tuple (key, suffix)
         """
+
         if isinstance(key, tuple):
-            key, sfx = key
-            kidx = self._key_index(key)
-            if kidx < 0:
+            key, suffix = key
+            if self._key_list.count(key):
+                key_index = self._get_key_index(key)
+                return suffix in self._suffix_list[key_index]
+            else:
                 return False
-            return sfx in self._get_suffixes(kidx)
 
         # assume key is just a string
-        return self._has_key(key)
+        return self._key_list.count(key) > 0
+
+    def __repr__(self):
+        return (
+            f"SummaryConfig(keylist={self._key_list}), "
+            f"suffixlist={self._suffix_list})"
+        )
 
     def __getitem__(self, index):
         """Retrieve an item from the configuration
@@ -95,36 +91,51 @@ class ExtParamConfig(BaseCClass):
         that index
         An IndexError is raised if the item is not found
         """
+        suffixes = []
+
         if isinstance(index, str):
-            i = self._key_index(index)
-            if i < 0:
-                raise IndexError(f'Key "{index}" not found')
-            return self._get_suffixes(i)
+            suffix_index = self._get_key_index(index)
+            if self._suffix_list_contains_index(suffix_index):
+                suffixes = self._key_suffix_value(suffix_index)
+            return suffixes
 
         # assume index is an integer
-        if index < 0:
-            return index + len(self)
-        if index >= len(self):
-            raise IndexError(
-                f"Invalid key index {index}. Valid range is [0, {len(self)})"
-            )
-        key = self._iget_key(index)
-        suffixes = self._get_suffixes(index)
+        if self._suffix_list_contains_index(index):
+            suffixes = self._key_suffix_value(index)
+        key = self._key_list[index]
+
         return key, suffixes
 
-    def _get_suffixes(self, kidx):
-        suffix_count = self._ikey_get_suffix_count(kidx)
-        return [self._ikey_iget_suffix(kidx, s) for s in range(suffix_count)]
+    def _get_key_index(self, key: str) -> int:
+        if self._key_list.count(key) == 0:
+            raise IndexError(
+                f"Requested index not found: {key}, " f"Keylist: {self._key_list}"
+            )
+        return self._key_list.index(key)
+
+    def _suffix_list_contains_index(self, index: int) -> bool:
+        return 0 <= index < len(self._suffix_list)
+
+    def _key_suffix_value(self, index: int) -> List[str]:
+        if not self._suffix_list_contains_index(index):
+            raise IndexError(
+                f"Requested index is out of bounds: {index}, "
+                f"Suffixlist: {self._suffix_list}"
+            )
+        return self._suffix_list[index]
+
+    def getKey(self) -> str:
+        return self.name
+
+    def getImplementationType(self) -> ErtImplType:  # type: ignore
+        return ErtImplType.EXT_PARAM
 
     def items(self):
         index = 0
-        while index < len(self):
+        while index < len(self._key_list):
             yield self[index]
             index += 1
 
     def keys(self):
         for k, _ in self.items():
             yield k
-
-    def free(self):
-        self._free()

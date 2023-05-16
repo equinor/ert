@@ -1,9 +1,10 @@
 import pytest
 
-from ert._c_wrappers.enkf.config import ExtParamConfig
+from ert._c_wrappers.enkf import ExtParamConfig
 
 
-def test_config():
+@pytest.mark.usefixtures("use_tmpdir")
+def test_ext_param_config():
     input_keys = ["key1", "key2", "key3"]
     config = ExtParamConfig("Key", input_keys)
     assert len(config) == 3
@@ -17,12 +18,12 @@ def test_config():
     keys = []
     for key in config.keys():
         keys.append(key)
-    assert keys == input_keys
 
+    assert keys == input_keys
     assert "key1" in config
 
 
-def test_config_with_suffixes():
+def test_ext_param_config_suffixes():
     input_suffixes = [
         ["a", "b", "c"],
         ["2"],

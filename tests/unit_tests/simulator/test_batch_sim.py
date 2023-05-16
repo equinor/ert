@@ -218,7 +218,7 @@ def test_batch_simulation(batch_simulator):
         (None, TypeError),
         (range(3), TypeError),
         ([], ValueError),
-        ({}, ValueError),
+        ({}, TypeError),
         ([""], ValueError),
         (["a", "a"], ValueError),
     ),
