@@ -52,6 +52,6 @@ class IntegerArgument(ArgumentDefinition):
                 )
 
             if not validation_status.failed():
-                validation_status.setValue(value)
+                validation_status.setValue(token)
 
         return validation_status
