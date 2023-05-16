@@ -530,7 +530,7 @@ class EnsembleConfig(BaseCClass):
         return self._alloc_keylist()
 
     def add_summary_full(self, key, refcase) -> SummaryConfig:
-        self._create_node_metainfo([key], 0, EnkfVarType.DYNAMIC_RESULT)
+        self.add_config_node_meta(key=key, var_type=EnkfVarType.DYNAMIC_RESULT)
 
         if key not in self._user_summary_keys:
             self._user_summary_keys.append(key)
