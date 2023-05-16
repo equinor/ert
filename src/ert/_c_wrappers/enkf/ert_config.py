@@ -6,7 +6,7 @@ from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import date
 from pathlib import Path
-from typing import Any, ClassVar, Dict, List, Mapping, Optional
+from typing import Any, ClassVar, Dict, List, Mapping, Optional, Tuple
 
 import pkg_resources
 
@@ -36,6 +36,53 @@ from ._deprecation_migration_suggester import DeprecationMigrationSuggester
 logger = logging.getLogger(__name__)
 
 USE_NEW_PARSER_BY_DEFAULT = True
+
+
+class ConfigDict(Dict):
+    def __init__(self, config_dict):
+        super().__init__(config_dict)
+
+        defines = self.get("DEFINE")
+
+        if not defines:
+            self["DEFINE"] = []
+
+        if not self.has_define("<CONFIG_PATH>"):
+            config_dir = self.get("CONFIG_DIRECTORY", os.getcwd())
+            self.set_define("<CONFIG_PATH>", config_dir)
+
+        if not self.has_define("<CONFIG_FILE>"):
+            self.set_define("<CONFIG_FILE>", "no_config")
+
+    def validate(self):
+        if ConfigKeys.SUMMARY in self and ConfigKeys.ECLBASE not in self:
+            return [
+                ErrorInfo(
+                    message="When using SUMMARY keyword, "
+                    "the config must also specify ECLBASE",
+                    filename=self.get_define("<CONFIG_FILE>"),
+                ).set_context_keyword(self[ConfigKeys.SUMMARY][0][0])
+            ]
+
+    def _get_define_tuple(self, define_kw: str) -> Optional[Tuple[str]]:
+        defines = self.get("DEFINE", [])
+        return next((kv for kv in defines if kv[0] == define_kw), None)
+
+    def get_define(self, define_kw: str) -> Optional[str]:
+        define_tuple = self._get_define_tuple(define_kw)
+        return None if define_tuple is None else define_tuple[1]
+
+    def has_define(self, define_kw: str):
+        return self._get_define_tuple(define_kw) is not None
+
+    def set_define(self, define_kw: str, value: str) -> None:
+        existing_define = self._get_define_tuple(define_kw)
+
+        if existing_define:
+            existing_define[1] = value
+        else:
+            self.get("DEFINE").append([define_kw, value])
+
 
 if "USE_OLD_ERT_PARSER" in os.environ and os.environ["USE_OLD_ERT_PARSER"] == "YES":
     USE_NEW_PARSER_BY_DEFAULT = False
@@ -92,13 +139,18 @@ class ErtConfig:
 
     @classmethod
     def from_dict(cls, config_dict) -> "ErtConfig":
-        substitution_list = SubstitutionList.from_dict(config_dict=config_dict)
-        config_dir = substitution_list.get("<CONFIG_PATH>", "")
-        config_file = substitution_list.get("<CONFIG_FILE>", "no_config")
+        config_dict = ConfigDict(config_dict)
+        config_dir = config_dict.get_define("<CONFIG_PATH>")
+        config_file = config_dict.get_define("<CONFIG_FILE>")
+
         config_file_path = os.path.join(config_dir, config_file)
 
-        errors = cls._validate_dict(config_dict, config_file)
-        errors += cls._validate_queue_option_max_running(config_file, config_dict)
+        errors = config_dict.validate() or []
+
+        try:
+            queue_config = QueueConfig.from_dict(config_dict)
+        except ConfigValidationError as err:
+            errors += err.errors
 
         if errors:
             raise ConfigValidationError.from_collected(errors)
@@ -112,6 +164,7 @@ class ErtConfig:
         installed_jobs = []
         model_config = None
 
+        substitution_list = SubstitutionList.from_dict(config_dict=config_dict)
         try:
             model_config = ModelConfig.from_dict(ensemble_config.refcase, config_dict)
             runpath = model_config.runpath_format_string
@@ -148,7 +201,7 @@ class ErtConfig:
             env_vars=env_vars,
             random_seed=config_dict.get(ConfigKeys.RANDOM_SEED, None),
             analysis_config=AnalysisConfig.from_dict(config_dict=config_dict),
-            queue_config=QueueConfig.from_dict(config_dict),
+            queue_config=queue_config,
             workflow_jobs=workflow_jobs,
             workflows=workflows,
             hooked_workflows=hooked_workflows,
@@ -279,30 +332,6 @@ class ErtConfig:
             return config_content_as_dict(user_config_content, site_config)
 
     @classmethod
-    def _validate_queue_option_max_running(cls, config_path, config_dict):
-        errors = []
-        for _, option_name, *values in config_dict.get("QUEUE_OPTION", []):
-            if option_name == "MAX_RUNNING":
-                err_msg = "QUEUE_OPTION MAX_RUNNING is"
-                try:
-                    int_val = int(*values)
-                    if int_val < 0:
-                        errors.append(
-                            ErrorInfo(
-                                filename=config_path,
-                                message=f"{err_msg} negative: {str(*values)!r}",
-                            ).set_context_list(values)
-                        )
-                except ValueError:
-                    errors.append(
-                        ErrorInfo(
-                            filename=config_path,
-                            message=f"{err_msg} not an integer: {str(*values)!r}",
-                        ).set_context_list(values)
-                    )
-        return errors
-
-    @classmethod
     def _read_templates(cls, config_dict):
         templates = []
         if ConfigKeys.DATA_FILE in config_dict and ConfigKeys.ECLBASE in config_dict:
@@ -319,20 +348,6 @@ class ErtConfig:
         for template in config_dict.get(ConfigKeys.RUN_TEMPLATE, []):
             templates.append(template)
         return templates
-
-    @classmethod
-    def _validate_dict(cls, config_dict, config_file):
-        errors = []
-
-        if ConfigKeys.SUMMARY in config_dict and ConfigKeys.ECLBASE not in config_dict:
-            errors.append(
-                ErrorInfo(
-                    message="When using SUMMARY keyword, "
-                    "the config must also specify ECLBASE",
-                    filename=config_file,
-                ).set_context_keyword(config_dict[ConfigKeys.SUMMARY][0][0])
-            )
-        return errors
 
     @classmethod
     def _validate_ensemble_config(cls, config_file, config_dict):
