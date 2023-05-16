@@ -1,3 +1,5 @@
+from typing import Optional
+
 from ert._c_wrappers.config.active_range import ActiveRange
 from ert.shared.ide.keywords.data import ValidationStatus
 from ert.shared.ide.keywords.definitions import ArgumentDefinition
@@ -11,7 +13,7 @@ class RangeStringArgument(ArgumentDefinition):
     )
     VALUE_NOT_IN_RANGE = "A value must be in the range from 0 to %d."
 
-    def __init__(self, max_value=None, **kwargs) -> None:
+    def __init__(self, max_value: Optional[int] = None, **kwargs: bool) -> None:
         super().__init__(**kwargs)
         self.__max_value = max_value
 

@@ -1,4 +1,5 @@
 import re
+from typing import Optional
 
 from ert.shared.ide.keywords.data import ValidationStatus
 from ert.shared.ide.keywords.definitions import ArgumentDefinition
@@ -10,12 +11,17 @@ class IntegerArgument(ArgumentDefinition):
 
     pattern = re.compile("^-?[0-9]+$")
 
-    def __init__(self, from_value=None, to_value=None, **kwargs) -> None:
+    def __init__(
+        self,
+        from_value: Optional[int] = None,
+        to_value: Optional[int] = None,
+        **kwargs: bool,
+    ) -> None:
         super().__init__(**kwargs)
         self.from_value = from_value
         self.to_value = to_value
 
-    def validate(self, token) -> ValidationStatus:
+    def validate(self, token: str) -> ValidationStatus:
         validation_status = super().validate(token)
 
         match = IntegerArgument.pattern.match(token)
