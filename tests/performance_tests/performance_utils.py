@@ -89,7 +89,6 @@ def make_poly_example(folder, source, **kwargs):
 
     if use_ecl_data_io:
         keywords = [f"PSUM{s}" for s in range(summary_count)]
-        print(keywords)
         write_summary_spec(str(folder) + "/refcase/REFCASE.SMSPEC", keywords)
         write_summary_data(
             str(folder) + "/refcase/REFCASE.UNSMRY",
