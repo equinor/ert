@@ -27,11 +27,6 @@ jobs:
       with:
         fetch-depth: 0
 
-    - uses: './.github/actions/install_dependencies'
-      if: matrix.test-type == 'gui-tests'
-      with:
-        os: ubuntu-latest
-
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
@@ -44,11 +39,7 @@ jobs:
 
     - name: Test GUI
       if: matrix.test-type == 'gui-tests'
-      env:
-        DISPLAY: ':99.0'
       run: |
-        ci/github/start_herbstluftwm.sh &
-        sleep 15
         pytest tests/ --cov=ert --hypothesis-profile=ci -m "requires_window_manager" --cov-report=xml:cov.xml
 
     - name: Test Integration

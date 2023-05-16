@@ -165,7 +165,7 @@ def hide_window(request):
         return
 
     old_value = os.environ.get("QT_QPA_PLATFORM")
-    os.environ["QT_QPA_PLATFORM"] = "offscreen"
+    os.environ["QT_QPA_PLATFORM"] = "minimal"
     yield
     if old_value is None:
         del os.environ["QT_QPA_PLATFORM"]

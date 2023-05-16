@@ -19,11 +19,6 @@ jobs:
       with:
         fetch-depth: 0
 
-    - uses: './.github/actions/install_dependencies'
-      if: inputs.test-type == 'gui-test'
-      with:
-        os: ${{ inputs.os }}
-
     - uses: actions/setup-python@v4
       id: setup_python
       with:
@@ -48,11 +43,7 @@ jobs:
 
     - name: Test GUI
       if: inputs.test-type == 'gui-test'
-      env:
-        DISPLAY: ':99.0'
       run: |
-        ci/github/start_herbstluftwm.sh &
-        sleep 15
         pytest tests -sv --hypothesis-profile=ci -m "requires_window_manager" --benchmark-disable
 
     - name: Unit Test
