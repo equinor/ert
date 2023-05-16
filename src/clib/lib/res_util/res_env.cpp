@@ -24,7 +24,7 @@ void res_env_setenv(const char *variable, const char *value) {
    Will return a NULL terminated list char ** of the paths in the PATH
    variable.
 */
-std::vector<std::string> res_env_alloc_PATH_list() {
+static std::vector<std::string> res_env_alloc_PATH_list() {
     char *path_env = getenv("PATH");
     if (path_env != NULL) {
         return ert::split(path_env, ':');
@@ -88,73 +88,6 @@ char *res_env_alloc_PATH_executable(const char *executable) {
         }
 
         return full_path;
-    }
-}
-
-/**
-   This function will take a string as input, and then replace all if
-   $VAR expressions with the corresponding environment variable. If
-   the environament variable VAR is not set, the string literal $VAR
-   is retained. The return value is a newly allocated string.
-
-   If the input value is NULL - the function will just return NULL;
-*/
-char *res_env_alloc_envvar(const char *value) {
-    if (value == NULL)
-        return NULL;
-    else {
-        // Start by filling up a buffer instance with the current content of @value.
-        buffer_type *buffer = buffer_alloc(1024);
-        buffer_fwrite_char_ptr(buffer, value);
-        buffer_rewind(buffer);
-
-        while (true) {
-            if (buffer_strchr(buffer, '$')) {
-                const char *data = (const char *)buffer_get_data(buffer);
-                // offset points at the first character following the '$'
-                int offset = buffer_get_offset(buffer) + 1;
-                int var_length = 0;
-
-                /* Find the length of the variable name */
-                while (true) {
-                    char c;
-                    c = data[offset + var_length];
-                    if (!(isalnum(c) || c == '_'))
-                        // Any character which is NOT in the set [a-Z,0-9_]
-                        // marks the end of the variable.
-                        break;
-
-                    if (c == '\0') /* The end of the string. */
-                        break;
-
-                    var_length += 1;
-                }
-
-                {
-                    char *var_name = util_alloc_substring_copy(
-                        data, offset - 1,
-                        var_length + 1); /* Include the leading $ */
-                    const char *var_value = getenv(&var_name[1]);
-
-                    if (var_value != NULL)
-                        // The actual string replacement:
-                        buffer_search_replace(buffer, var_name, var_value);
-                    else
-                        // The variable is not defined, and we leave the $name.
-                        buffer_fseek(buffer, var_length, SEEK_CUR);
-
-                    free(var_name);
-                }
-            } else
-                break; /* No more $ to replace */
-        }
-
-        buffer_shrink_to_fit(buffer);
-        {
-            char *expanded_value = (char *)buffer_get_data(buffer);
-            buffer_free_container(buffer);
-            return expanded_value;
-        }
     }
 }
 
