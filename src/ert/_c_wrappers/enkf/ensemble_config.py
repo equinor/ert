@@ -340,18 +340,16 @@ class EnsembleConfig(BaseCClass):
         report_steps = rangestring_to_list(options.get(ConfigKeys.REPORT_STEPS, ""))
 
         if os.path.isabs(res_file) or "%d" not in res_file:
-            msg = (
+            logger.error(
                 f"The RESULT_FILE:{res_file} setting for {name} is invalid - "
                 "must have an embedded %d - and be a relative path"
             )
-            logger.error(msg)
         elif not report_steps:
-            msg = (
+            logger.error(
                 "The GEN_DATA keywords must have a REPORT_STEPS:xxxx defined"
                 "Several report steps separated with ',' and ranges with '-'"
                 "can be listed"
             )
-            logger.error(msg)
         else:
             gdc = GenDataConfig(key=name, report_steps=report_steps)
             return gdc
