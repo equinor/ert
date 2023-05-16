@@ -158,7 +158,7 @@ class PlotApi:
             df = pd.read_parquet(stream)
 
             try:
-                df.columns = pd.to_datetime(df.columns, format="mixed")
+                df.columns = pd.to_datetime(df.columns)
             except (ParserError, ValueError):
                 df.columns = [int(s) for s in df.columns]
 
