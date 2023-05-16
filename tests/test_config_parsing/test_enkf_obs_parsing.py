@@ -23,7 +23,6 @@ def test_that_enkf_obs_keys_are_ordered(tmp_path_factory, config_generator):
     with config_generator(tmp_path_factory, filename) as config_values:
         ert_config = ErtConfig.from_file(filename)
         observations = EnkfObs.from_ert_config(ert_config)
-        assert observations.error == ""
         for o in config_values.observations:
             assert observations.hasKey(o.name)
         assert sorted(set(o.name for o in config_values.observations)) == list(
@@ -390,8 +389,8 @@ def test_that_history_observations_are_loaded(tmpdir, keys):
 
         observations = EnkfObs.from_ert_config(ert_config)
         assert [o.getKey() for o in observations] == [local_name]
-        assert observations[0].getNode(1).getValue() == 1.0
-        assert observations[0].getNode(1).getStandardDeviation() == 100.0
+        assert observations[local_name].getNode(1).getValue() == 1.0
+        assert observations[local_name].getNode(1).getStandardDeviation() == 100.0
 
 
 def test_that_missing_time_map_raises_exception(tmpdir):
@@ -555,17 +554,17 @@ def test_that_history_observation_errors_are_calculated_correctly(tmpdir):
 
         observations = EnkfObs.from_ert_config(ert_config)
 
-        assert observations[0].getKey() == "FGPR"
-        assert observations[0].getNode(1).getValue() == 15.0
-        assert observations[0].getNode(1).getStandardDeviation() == 1.5
+        assert observations["FGPR"].getKey() == "FGPR"
+        assert observations["FGPR"].getNode(1).getValue() == 15.0
+        assert observations["FGPR"].getNode(1).getStandardDeviation() == 1.5
 
-        assert observations[1].getKey() == "FOPR"
-        assert observations[1].getNode(1).getValue() == 20.0
-        assert observations[1].getNode(1).getStandardDeviation() == 0.2
+        assert observations["FOPR"].getKey() == "FOPR"
+        assert observations["FOPR"].getNode(1).getValue() == 20.0
+        assert observations["FOPR"].getNode(1).getStandardDeviation() == 0.2
 
-        assert observations[2].getKey() == "FWPR"
-        assert observations[2].getNode(1).getValue() == 25.0
-        assert observations[2].getNode(1).getStandardDeviation() == 10000
+        assert observations["FWPR"].getKey() == "FWPR"
+        assert observations["FWPR"].getNode(1).getValue() == 25.0
+        assert observations["FWPR"].getNode(1).getStandardDeviation() == 10000
 
 
 @pytest.mark.filterwarnings("ignore::ert.parsing.ConfigWarning")
@@ -611,12 +610,12 @@ def test_that_std_cutoff_is_applied(tmpdir):
         ert_config = ErtConfig.from_file("config.ert")
 
         observations = EnkfObs.from_ert_config(ert_config)
-        assert observations[0].getKey() == "FGPR"
-        assert observations[0].getNode(1).getValue() == 15.0
-        assert observations[0].getNode(1).getStandardDeviation() == 1.5
+        assert observations["FGPR"].getKey() == "FGPR"
+        assert observations["FGPR"].getNode(1).getValue() == 15.0
+        assert observations["FGPR"].getNode(1).getStandardDeviation() == 1.5
 
-        assert observations[1].getKey() == "FOPR"
-        assert len(observations[1]) == 0
+        assert observations["FOPR"].getKey() == "FOPR"
+        assert len(observations["FOPR"]) == 0
 
 
 @pytest.mark.parametrize("obs_type", ["HISTORY_OBSERVATION", "SUMMARY_OBSERVATION"])

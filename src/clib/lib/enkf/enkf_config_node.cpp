@@ -5,9 +5,9 @@
 
 #include <ert/ecl/ecl_grid.h>
 #include <ert/enkf/config_keys.hpp>
+#include <ert/enkf/enkf_config_node.hpp>
 #include <ert/enkf/enkf_defaults.hpp>
 #include <ert/enkf/enkf_macros.hpp>
-#include <ert/enkf/enkf_obs.hpp>
 #include <ert/enkf/ext_param_config.hpp>
 #include <ert/enkf/gen_obs.hpp>
 #include <ert/python.hpp>
