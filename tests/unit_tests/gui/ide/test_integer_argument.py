@@ -7,13 +7,13 @@ def test_default_integer_argument():
     validation_status = integer.validate("45")
 
     assert validation_status
-    assert validation_status.value() == 45
+    assert validation_status.value() == "45"
     assert validation_status.message() == ""
 
     validation_status = integer.validate("-45")
 
     assert validation_status
-    assert validation_status.value() == -45
+    assert validation_status.value() == "-45"
 
     validation_status = integer.validate("45 ")
 
