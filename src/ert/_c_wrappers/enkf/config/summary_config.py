@@ -4,8 +4,6 @@ from ert._c_wrappers.enkf.enums.ert_impl_type_enum import ErtImplType
 
 
 class SummaryConfig:
-    TYPE_NAME = "summary_config"
-
     def __init__(self, key):
         self.name = key
         self._observation_list: List[str] = []
@@ -14,7 +12,7 @@ class SummaryConfig:
         self._observation_list = observations
         self._observation_list.sort()
 
-    def getObservationKeys(self) -> List[str]:
+    def get_observation_keys(self) -> List[str]:
         return self._observation_list
 
     def getImplementationType(self) -> ErtImplType:

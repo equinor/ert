@@ -706,7 +706,7 @@ class EnsembleConfig(BaseCClass):
         keylist = []
 
         if isinstance(node, SummaryConfig):
-            keylist = node.getObservationKeys()
+            keylist = node.get_observation_keys()
         return keylist
 
     @property
