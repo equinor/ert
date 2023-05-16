@@ -44,7 +44,14 @@ def test_gen_data_eq_config():
     alt3 = GenDataConfig(key="ALT1", report_steps=[3])
     alt4 = GenDataConfig(key="ALT4", report_steps=[3])
     alt5 = GenDataConfig(key="ALT4", report_steps=[4])
+    alt6 = GenDataConfig(key="ALT4", report_steps=[4])
+
+    obs_list = ["DEF", "ABC", "GHI"]
+    alt6.update_observation_keys(obs_list)
+    assert alt6.get_observation_keys() == sorted(obs_list)
+
     assert alt1 == alt2  # name and ordered steps ok
     assert alt1 != alt3  # amount steps differ
     assert alt3 != alt4  # name differ
     assert alt4 != alt5  # steps differ
+    assert alt5 != alt6  # obs list differ
