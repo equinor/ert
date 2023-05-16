@@ -286,18 +286,18 @@ class ErtConfig:
                 err_msg = "QUEUE_OPTION MAX_RUNNING is"
                 try:
                     int_val = int(*values)
+                    if int_val < 0:
+                        errors.append(
+                            ErrorInfo(
+                                filename=config_path,
+                                message=f"{err_msg} negative: {str(*values)!r}",
+                            ).set_context_list(values)
+                        )
                 except ValueError:
                     errors.append(
                         ErrorInfo(
                             filename=config_path,
                             message=f"{err_msg} not an integer: {str(*values)!r}",
-                        ).set_context_list(values)
-                    )
-                if int_val < 0:
-                    errors.append(
-                        ErrorInfo(
-                            filename=config_path,
-                            message=f"{err_msg} negative: {str(*values)!r}",
                         ).set_context_list(values)
                     )
         return errors

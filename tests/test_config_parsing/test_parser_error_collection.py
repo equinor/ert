@@ -845,3 +845,19 @@ HOOK_WORKFLOW NO_SUCH_JOB POST_SIMULATION
             end_column=26,
         ),
     )
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_non_int_followed_by_negative_wont_re_trigger_negative_error():
+    assert_that_config_does_not_lead_to_error(
+        config_file_contents=dedent(
+            """
+NUM_REALIZATIONS  1
+QUEUE_OPTION LOCAL MAX_RUNNING -1
+QUEUE_OPTION LOCAL MAX_RUNNING ert
+            """
+        ),
+        unexpected_error=ExpectedErrorInfo(
+            match="is negative: 'ert'",
+        ),
+    )
