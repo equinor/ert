@@ -10,7 +10,6 @@
 
 #include <ert/enkf/enkf_macros.hpp>
 #include <ert/enkf/enkf_types.hpp>
-#include <ert/res_util/path_fmt.hpp>
 
 typedef void(config_free_ftype)(void *);
 typedef int(get_data_size_ftype)(const void *);

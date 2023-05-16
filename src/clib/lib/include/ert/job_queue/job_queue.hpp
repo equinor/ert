@@ -4,8 +4,6 @@
 #include <stdbool.h>
 #include <time.h>
 
-#include <ert/res_util/path_fmt.hpp>
-
 #include <ert/job_queue/job_node.hpp>
 #include <ert/job_queue/queue_driver.hpp>
 
