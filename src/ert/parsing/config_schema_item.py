@@ -186,7 +186,7 @@ class SchemaItem(BaseModel):
     ) -> List[Union[T, ContextValue]]:
         errors: List[Union[ErrorInfo, ConfigValidationError]] = []
 
-        args_with_context = []
+        args_with_context: List[Union[T, ContextValue]] = []
         for i, x in enumerate(args):
             if isinstance(x, FileContextToken):
                 try:
