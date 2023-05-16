@@ -88,10 +88,10 @@ void ensemble_config_add_node(ensemble_config_type *ensemble_config,
             "** Warning: Invalid node passed to ensemble_config_add_node\n");
 }
 
-std::list<std::string>
+std::vector<std::string>
 ensemble_config_get_summary_key_list(const char *key,
                                      const ecl_sum_type *refcase) {
-    std::list<std::string> keylist;
+    std::vector<std::string> keylist;
     if (util_string_has_wildcard(key)) {
         if (refcase != nullptr) {
             stringlist_type *keys = stringlist_alloc_new();
