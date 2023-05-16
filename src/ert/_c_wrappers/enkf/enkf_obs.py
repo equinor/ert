@@ -64,13 +64,11 @@ class EnkfObs(BaseCClass):
         self,
         time_map: Optional["TimeMap"],
         refcase: Optional["EclSum"],
-        ensemble_config: "EnsembleConfig",
     ):
         # The c object holds on to ensemble_config, so we
         # need to hold onto a reference to it here so it does not
         # get destructed
-        self._ensemble_config = ensemble_config
-        c_ptr = _clib.enkf_obs.alloc(time_map, refcase, ensemble_config)
+        c_ptr = _clib.enkf_obs.alloc(time_map, refcase)
         if c_ptr:
             super().__init__(c_ptr)
         else:
@@ -168,6 +166,7 @@ class EnkfObs(BaseCClass):
 
     def _handle_history_observation(
         self,
+        ensemble_config: "EnsembleConfig",
         conf_instance,
         std_cutoff: float,
         history_type: Optional[HistorySourceEnum],
@@ -177,7 +176,7 @@ class EnkfObs(BaseCClass):
         if sub_instances == []:
             return
 
-        refcase = self._ensemble_config.refcase
+        refcase = ensemble_config.refcase
         if refcase is None:
             raise ObservationConfigError("REFCASE is required for HISTORY_OBSERVATION")
         if history_type is None:
@@ -186,11 +185,11 @@ class EnkfObs(BaseCClass):
         for instance in sub_instances:
             summary_key = instance.name
             time_len = len(_clib.enkf_obs.obs_time(self))
-            self._ensemble_config.add_summary_full(summary_key, refcase)
+            ensemble_config.add_summary_full(summary_key, refcase)
             obs_vector = ObsVector(
                 EnkfObservationImplementationType.SUMMARY_OBS,
                 summary_key,
-                self._ensemble_config.getNode(summary_key),
+                ensemble_config.getNode(summary_key).getKey(),
                 time_len,
             )
             error = float(instance.get_value("ERROR"))
@@ -342,17 +341,19 @@ class EnkfObs(BaseCClass):
             ),
         )
 
-    def _handle_summary_observation(self, conf_instance):
+    def _handle_summary_observation(
+        self, ensemble_config: "EnsembleConfig", conf_instance
+    ):
         time_map = [datetime.utcfromtimestamp(t) for t in _clib.enkf_obs.obs_time(self)]
         for instance in conf_instance.get_sub_instances("SUMMARY_OBSERVATION"):
             summary_key = instance.get_value("KEY")
             obs_key = instance.name
-            refcase = self._ensemble_config.refcase
-            self._ensemble_config.add_summary_full(summary_key, refcase)
+            refcase = ensemble_config.refcase
+            ensemble_config.add_summary_full(summary_key, refcase)
             obs_vector = ObsVector(
                 EnkfObservationImplementationType.SUMMARY_OBS,  # type: ignore
                 obs_key,
-                self._ensemble_config.getNode(summary_key),
+                ensemble_config.getNode(summary_key).getKey(),
                 len(time_map),
             )
             value, std_dev = self._make_value_and_std_dev(instance)
@@ -375,23 +376,25 @@ class EnkfObs(BaseCClass):
             )
             self.addObservationVector(obs_vector)
 
-    def _handle_general_observation(self, conf_instance):
+    def _handle_general_observation(
+        self, ensemble_config: "EnsembleConfig", conf_instance
+    ):
         time_map = [datetime.utcfromtimestamp(t) for t in _clib.enkf_obs.obs_time(self)]
         for instance in conf_instance.get_sub_instances("GENERAL_OBSERVATION"):
             state_kw = instance.get_value("DATA")
-            if state_kw not in self._ensemble_config:
+            if not ensemble_config.hasNodeGenData(state_kw):
                 warnings.warn(
                     f"Ensemble key {state_kw} does not exist"
                     f" - ignoring observation {instance.name}",
                     category=ConfigWarning,
                 )
                 continue
-            config_node = self._ensemble_config[state_kw]
+            config_node = ensemble_config.getNode(state_kw)
             obs_key = instance.name
             obs_vector = ObsVector(
                 EnkfObservationImplementationType.GEN_OBS,  # type: ignore
                 obs_key,
-                config_node,
+                config_node.getKey(),
                 len(time_map),
             )
             try:
@@ -409,8 +412,7 @@ class EnkfObs(BaseCClass):
                     category=ConfigWarning,
                 )
                 continue
-            data_config = config_node.getDataModelConfig()
-            if not data_config.hasReportStep(restart):
+            if not config_node.hasReportStep(restart):
                 warnings.warn(
                     f"The GEN_DATA node:{state_kw} is not configured "
                     f"to load from report step:{restart} for the observation:{obs_key}"
@@ -422,7 +424,7 @@ class EnkfObs(BaseCClass):
             obs_vector.add_general_obs(
                 GenObservation(
                     obs_key,
-                    data_config,
+                    config_node,
                     (
                         float(instance.get_value("VALUE")),
                         float(instance.get_value("ERROR")),
@@ -446,11 +448,22 @@ class EnkfObs(BaseCClass):
         history: Optional[HistorySourceEnum],
         conf_instance: _clib.enkf_obs.ConfInstance,
         std_cutoff: float,
+        ensemble_config: "EnsembleConfig",
     ) -> None:
-        self._handle_history_observation(conf_instance, std_cutoff, history)
-        self._handle_summary_observation(conf_instance)
-        self._handle_general_observation(conf_instance)
-        _clib.enkf_obs.update_keys(self)
+        self._handle_history_observation(
+            ensemble_config, conf_instance, std_cutoff, history
+        )
+        self._handle_summary_observation(ensemble_config, conf_instance)
+        self._handle_general_observation(ensemble_config, conf_instance)
+
+        obs_time_map = _clib.enkf_obs.get_time_map(self)
+
+        for state_kw in set(obs_time_map.values()):
+            obs_keys = [k for k, v in obs_time_map.items() if v == state_kw]
+            obs_keys.sort()
+            node = ensemble_config.getNode(state_kw)
+            if node is not None:
+                node.update_observation_keys(obs_keys)
 
     @property
     def error(self) -> str:
@@ -464,7 +477,6 @@ class EnkfObs(BaseCClass):
         ret = cls(
             config.model_config.time_map,
             config.ensemble_config.refcase,
-            config.ensemble_config,
         )
         obs_config_file = config.model_config.obs_config_file
         if obs_config_file:
@@ -509,6 +521,7 @@ class EnkfObs(BaseCClass):
                     config.model_config.history_source,
                     conf_instance,
                     config.analysis_config.get_std_cutoff(),
+                    config.ensemble_config,
                 )
             except IndexError as err:
                 if config.ensemble_config.refcase is not None:

@@ -17,7 +17,6 @@ from .enums import (
     EnkfObservationImplementationType,
     EnkfVarType,
     ErtImplType,
-    GenDataFileType,
     HookRuntime,
     RealizationStateEnum,
 )
@@ -46,7 +45,6 @@ __all__ = [
     "EnkfObservationImplementationType",
     "ErtImplType",
     "RealizationStateEnum",
-    "GenDataFileType",
     "ActiveMode",
     "HookRuntime",
     "AnalysisIterConfig",

@@ -8,10 +8,10 @@ from deprecation import deprecated
 from ecl.grid import EclGrid
 from pandas import DataFrame, Series
 
-from ert._c_wrappers.enkf import EnKFMain, EnsembleConfig, ErtConfig, ErtImplType
+from ert._c_wrappers.enkf import EnKFMain, EnsembleConfig, ErtConfig
 from ert._c_wrappers.enkf.config import GenKwConfig
-from ert._c_wrappers.enkf.config.enkf_config_node import EnkfConfigNode
 from ert._c_wrappers.enkf.config.field_config import Field
+from ert._c_wrappers.enkf.config.gen_data_config import GenDataConfig
 from ert._c_wrappers.enkf.config.surface_config import SurfaceConfig
 from ert._c_wrappers.enkf.enums import (
     EnkfObservationImplementationType,
@@ -502,14 +502,7 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
         return key in self.get_summary_keys()
 
     def get_summary_keys(self) -> List[str]:
-        return sorted(
-            list(
-                self._enkf_main.ensembleConfig().getKeylistFromImplType(
-                    ErtImplType.SUMMARY
-                )
-            ),
-            key=lambda k: k.lower(),
-        )
+        return self._enkf_main.ensembleConfig().get_summary_keys()
 
     def is_gen_kw_key(self, key: str) -> bool:
         return key in self.gen_kw_keys()
@@ -536,15 +529,11 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
         return key in self.get_gen_data_keys()
 
     def get_gen_data_keys(self) -> List[str]:
-        gen_data_keys = self._enkf_main.ensembleConfig().getKeylistFromImplType(
-            ErtImplType.GEN_DATA
-        )
+        gen_data_keys = self._enkf_main.ensembleConfig().get_keylist_gen_data()
         gen_data_list = []
         for key in gen_data_keys:
-            enkf_config_node = self._enkf_main.ensembleConfig().getNode(key)
-            if isinstance(enkf_config_node, EnkfConfigNode):
-                gen_data_config = enkf_config_node.getDataModelConfig()
-
+            gen_data_config = self._enkf_main.ensembleConfig().getNodeGenData(key)
+            if isinstance(gen_data_config, GenDataConfig):
                 for report_step in gen_data_config.getReportSteps():
                     gen_data_list.append(f"{key}@{report_step}")
 

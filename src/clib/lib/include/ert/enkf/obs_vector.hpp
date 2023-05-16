@@ -45,7 +45,7 @@ extern "C" int obs_vector_get_next_active_step(const obs_vector_type *, int);
 extern "C" void *obs_vector_iget_node(const obs_vector_type *, int);
 extern "C" obs_vector_type *obs_vector_alloc(obs_impl_type obs_type,
                                              const char *obs_key,
-                                             enkf_config_node_type *config_node,
+                                             const char *config_node_key,
                                              size_t num_reports);
 
 extern "C" void obs_vector_install_node(obs_vector_type *obs_vector,

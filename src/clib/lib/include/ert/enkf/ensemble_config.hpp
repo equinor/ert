@@ -17,21 +17,16 @@
 
 #include <ert/enkf/enkf_config_node.hpp>
 #include <ert/enkf/enkf_types.hpp>
-#include <ert/enkf/summary_config.hpp>
 
 typedef struct ensemble_config_struct ensemble_config_type;
 
 struct ensemble_config_struct {
     std::map<std::string, enkf_config_node_type *>
         config_nodes; /* a hash of enkf_config_node instances - which again contain pointers to e.g. field_config objects.  */
-    std::vector<std::string> summary_keys;
 };
 
 extern "C" void ensemble_config_add_node(ensemble_config_type *ensemble_config,
                                          enkf_config_node_type *node);
-extern "C" enkf_config_node_type *
-ensemble_config_add_summary(ensemble_config_type *ensemble_config,
-                            const char *key);
 extern "C" void ensemble_config_free(ensemble_config_type *);
 extern "C" bool ensemble_config_has_key(const ensemble_config_type *,
                                         const char *);
@@ -44,8 +39,4 @@ extern "C" stringlist_type *
 ensemble_config_alloc_keylist_from_impl_type(const ensemble_config_type *,
                                              ert_impl_type);
 extern "C" PY_USED ensemble_config_type *ensemble_config_alloc_full();
-extern "C" void ensemble_config_init_SUMMARY_full(ensemble_config_type *,
-                                                  const char *,
-                                                  const ecl_sum_type *);
-
 #endif

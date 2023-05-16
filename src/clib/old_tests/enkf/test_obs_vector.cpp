@@ -87,7 +87,7 @@ bool scale_std_gen_withdata_no_errors() {
     gen_obs_type *observations[num_observations];
     for (int i = 0; i < num_observations; i++) {
         gen_obs_type *gen_obs =
-            gen_obs_alloc(NULL, "WWCT-GEN", NULL, value, std_dev, NULL, NULL);
+            gen_obs_alloc("WWCT-GEN", NULL, value, std_dev, NULL, NULL);
         obs_vector_install_node(obs_vector, i, gen_obs);
         observations[i] = gen_obs;
     }

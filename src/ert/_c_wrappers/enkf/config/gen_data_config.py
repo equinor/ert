@@ -1,98 +1,70 @@
-from typing import List
+from typing import List, Optional
 
-from cwrap import BaseCClass
-
-from ert._c_wrappers import ResPrototype
-from ert._c_wrappers.enkf.enums import GenDataFileType
+from ert._c_wrappers.enkf.enums.ert_impl_type_enum import ErtImplType
 
 
-class GenDataConfig(BaseCClass):
-    TYPE_NAME = "gen_data_config"
+class GenDataConfig:
+    def __init__(self, key: str, report_steps: Optional[List[int]] = None):
+        self.name = key
+        self._active_report_steps: List[int] = []
+        self._observation_list: List[str] = []
+        if report_steps:
+            self.add_report_steps(report_steps)
+        else:
+            self.add_report_step(0)
 
-    _alloc = ResPrototype(
-        "void* gen_data_config_alloc_GEN_DATA_result( char* , gen_data_file_format_type)",  # noqa
-        bind=False,
-    )
-    _free = ResPrototype("void  gen_data_config_free( gen_data_config )")
-    _get_input_format = ResPrototype(
-        "gen_data_file_format_type gen_data_config_get_input_format(gen_data_config)"
-    )
-    _get_initial_size = ResPrototype(
-        "int   gen_data_config_get_initial_size(gen_data_config)"
-    )
-    _has_report_step = ResPrototype(
-        "bool  gen_data_config_has_report_step(gen_data_config, int)"
-    )
-    _get_data_size = ResPrototype(
-        "int   gen_data_config_get_data_size__(gen_data_config , int)"
-    )
-    _get_key = ResPrototype("char* gen_data_config_get_key(gen_data_config)")
-    _get_active_mask = ResPrototype(
-        "bool_vector_ref gen_data_config_get_active_mask(gen_data_config)"
-    )
-    _get_num_report_step = ResPrototype(
-        "int   gen_data_config_num_report_step(gen_data_config)"
-    )
-    _iget_report_step = ResPrototype(
-        "int   gen_data_config_iget_report_step(gen_data_config, int)"
-    )
+    def add_report_steps(self, steps: List[int]):
+        for step in steps:
+            self.add_report_step(step)
 
-    def __init__(self, key, input_format=GenDataFileType.ASCII):
-        # Can currently only create GEN_DATA instances which should be used
-        # as result variables.
-        c_pointer = self._alloc(key, input_format)
-        super().__init__(c_pointer)
+    def add_report_step(self, step: int):
+        if not self.hasReportStep(step):
+            self._active_report_steps.append(step)
+            self._active_report_steps.sort()
 
-    def getDataSize(self, report_step):
-        data_size = self._get_data_size(report_step)
-        if data_size < 0:
-            raise ValueError(
-                f"No data has been loaded for {self.getName()} "
-                f"at report step:{report_step} "
-            )
-        return data_size
+    def update_observation_keys(self, observations: List[str]):
+        self._observation_list = observations
+        self._observation_list.sort()
 
-    def getActiveMask(self):
-        return self._get_active_mask()
+    def get_observation_keys(self) -> List[str]:
+        return self._observation_list
 
-    def getName(self):
-        return self.name()
-
-    def name(self):
-        return self._get_key()
-
-    def get_initial_size(self) -> int:
-        return self._get_initial_size()
-
-    def getInputFormat(self):
-        return self._get_input_format()
-
-    def free(self):
-        self._free()
+    def getKey(self) -> str:
+        return self.name
 
     def __repr__(self):
-        return f"GenDataConfig(key={self.name()}, input_format={self.getInputFormat()})"
+        return (
+            f"GenDataConfig(key={self.name}, "
+            f"active_report_steps={self._active_report_steps}, "
+            f"observation_keys={self._observation_list})"
+        )
 
-    def hasReportStep(self, report_step) -> bool:
-        return self._has_report_step(report_step)
+    def hasReportStep(self, report_step: int) -> bool:
+        return report_step in self._active_report_steps
 
     def getNumReportStep(self) -> int:
-        return self._get_num_report_step()
+        return len(self._active_report_steps)
 
-    def getReportStep(self, index) -> int:
-        return self._iget_report_step(index)
+    def getImplementationType(self) -> ErtImplType:
+        return ErtImplType.GEN_DATA
+
+    def getReportStep(self, index: int) -> int:
+        return self._active_report_steps[index]
 
     def getReportSteps(self) -> List[int]:
         return [self.getReportStep(index) for index in range(self.getNumReportStep())]
 
     def __eq__(self, other) -> bool:
-        if self.getName() != other.getName():
+        if self.getKey() != other.getKey():
             return False
 
-        if self.getInputFormat() != other.getInputFormat():
+        if self.getNumReportStep() != other.getNumReportStep():
             return False
 
         if self.getReportSteps() != other.getReportSteps():
+            return False
+
+        if self._observation_list != other._observation_list:
             return False
 
         return True

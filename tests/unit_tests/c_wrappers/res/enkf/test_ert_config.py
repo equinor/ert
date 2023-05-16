@@ -241,7 +241,7 @@ def test_extensive_config(setup_case):
         snake_oil_structure_config["SUMMARY"]
         + snake_oil_structure_config["GEN_KW"]
         + snake_oil_structure_config["GEN_DATA"]
-    ) == set(ensemble_config.alloc_keylist() + ensemble_config.get_keylist_gen_kw())
+    ) == set(ensemble_config.get_node_keylist())
 
     assert (
         Path(snake_oil_structure_config["SIGMA"]["TEMPLATE"]).resolve()

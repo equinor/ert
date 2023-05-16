@@ -40,8 +40,8 @@ struct obs_vector_struct {
     vector_type *nodes;
     /** The key this observation vector has in the enkf_obs layer. */
     char *obs_key;
-    /** The config_node of the node type we are observing - shared reference */
-    enkf_config_node_type *config_node;
+    /** The config_node of the node type we are observing */
+    char *config_node_key;
     obs_impl_type obs_type;
     /** The total number of timesteps where this observation is active (i.e.
      * nodes[ ] != NULL) */
@@ -57,7 +57,7 @@ static void obs_vector_resize(obs_vector_type *vector, int new_size) {
 }
 
 obs_vector_type *obs_vector_alloc(obs_impl_type obs_type, const char *obs_key,
-                                  enkf_config_node_type *config_node,
+                                  const char *config_node_key,
                                   size_t num_reports) {
     auto vector = new obs_vector_type;
 
@@ -82,7 +82,7 @@ obs_vector_type *obs_vector_alloc(obs_impl_type obs_type, const char *obs_key,
     }
 
     vector->obs_type = obs_type;
-    vector->config_node = config_node;
+    vector->config_node_key = util_alloc_string_copy(config_node_key);
     vector->obs_key = util_alloc_string_copy(obs_key);
     vector->num_active = 0;
     vector->nodes = vector_alloc_new();
@@ -101,21 +101,17 @@ obs_impl_type obs_vector_get_impl_type(const obs_vector_type *obs_vector) {
    measurement, this function will return "PRESSURE".
 */
 const char *obs_vector_get_state_kw(const obs_vector_type *obs_vector) {
-    return enkf_config_node_get_key(obs_vector->config_node);
+    return obs_vector->config_node_key;
 }
 
 const char *obs_vector_get_key(const obs_vector_type *obs_vector) {
     return obs_vector->obs_key;
 }
 
-enkf_config_node_type *
-obs_vector_get_config_node(const obs_vector_type *obs_vector) {
-    return obs_vector->config_node;
-}
-
 void obs_vector_free(obs_vector_type *obs_vector) {
     vector_free(obs_vector->nodes);
     free(obs_vector->obs_key);
+    free(obs_vector->config_node_key);
     delete obs_vector;
 }
 

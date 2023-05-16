@@ -53,8 +53,6 @@ struct gen_obs_struct {
     /** The key this observation is held by - in the enkf_obs structur (only
      * for debug messages). */
     char *obs_key;
-    gen_data_file_format_type obs_format;
-    gen_data_config_type *data_config;
 };
 
 void gen_obs_free(gen_obs_type *gen_obs) {
@@ -102,7 +100,7 @@ static void gen_obs_set_data(gen_obs_type *gen_obs, int buffer_size,
 }
 
 void gen_obs_load_observation(gen_obs_type *gen_obs, const char *obs_file) {
-    auto vec = gen_common_fload_alloc(obs_file, gen_obs->obs_format);
+    auto vec = gen_common_fload_alloc(obs_file);
     gen_obs_set_data(gen_obs, vec.size(), vec.data());
 }
 
@@ -152,16 +150,12 @@ void gen_obs_parse_data_index(gen_obs_type *obs,
     int_vector_free(index_list);
 }
 
-gen_obs_type *gen_obs_alloc__(const gen_data_config_type *data_config,
-                              const char *obs_key) {
+gen_obs_type *gen_obs_alloc__(const char *obs_key) {
     auto obs = new gen_obs_type;
     obs->obs_data = NULL;
     obs->obs_std = NULL;
     obs->std_scaling = NULL;
-    obs->obs_format = ASCII; /* Hardcoded for now. */
     obs->obs_key = util_alloc_string_copy(obs_key);
-    obs->data_config =
-        (gen_data_config_type *)data_config; // casting away the const ...
     obs->observe_all_data = true;
     return obs;
 }
@@ -173,12 +167,11 @@ gen_obs_type *gen_obs_alloc__(const gen_data_config_type *data_config,
    != NULL. If both are NULL it is assumed that all the indices of the
    gen_data instance should be observed.
 */
-gen_obs_type *gen_obs_alloc(const gen_data_config_type *data_config,
-                            const char *obs_key, const char *obs_file,
+gen_obs_type *gen_obs_alloc(const char *obs_key, const char *obs_file,
                             double scalar_value, double scalar_error,
                             const char *data_index_file,
                             const char *data_index_string) {
-    gen_obs_type *obs = gen_obs_alloc__(data_config, obs_key);
+    gen_obs_type *obs = gen_obs_alloc__(obs_key);
     if (obs_file)
         gen_obs_load_observation(
             obs,

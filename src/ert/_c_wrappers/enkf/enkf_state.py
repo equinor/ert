@@ -9,11 +9,11 @@ from typing import TYPE_CHECKING
 import numpy as np
 from ecl.summary import EclSum
 
-from ert._c_wrappers.enkf.enums.ert_impl_type_enum import ErtImplType
 from ert.load_status import LoadResult, LoadStatus
 
 if TYPE_CHECKING:
     from ert._c_wrappers.enkf import EnsembleConfig, RunArg
+    from ert._c_wrappers.enkf.config.gen_data_config import GenDataConfig
 
 logger = logging.getLogger(__name__)
 
@@ -21,15 +21,13 @@ logger = logging.getLogger(__name__)
 def _internalize_GEN_DATA(
     ensemble_config: EnsembleConfig, run_arg: RunArg
 ) -> LoadResult:
-    keys = ensemble_config.getKeylistFromImplType(ErtImplType.GEN_DATA)
-
     run_path = Path(run_arg.runpath)
     errors = []
     all_data = {}
-    for key in keys:
-        config_node = ensemble_config[key]
+    for key in ensemble_config.get_keylist_gen_data():
+        config_node: GenDataConfig = ensemble_config.getNode(key)  # type: ignore
         filename_fmt = config_node.input_file
-        for i in config_node.getModelConfig().getReportSteps():
+        for i in config_node.getReportSteps():
             filename = filename_fmt % i
             if not Path.exists(run_path / filename):
                 errors.append(f"{key} report step {i} missing")
@@ -87,7 +85,7 @@ def _internalize_SUMMARY_DATA(
                 f"{run_arg.eclbase}.UNSMRY"
             )
 
-    user_summary_keys = ens_config.get_summary_keys()
+    user_summary_keys = ens_config.get_user_summary_keys()
     for key in summary:
         if not _should_load_summary_key(key, user_summary_keys):
             continue
@@ -109,7 +107,7 @@ def _internalize_SUMMARY_DATA(
 def _write_summary_data_to_storage(
     ens_config: EnsembleConfig, run_arg: RunArg
 ) -> LoadResult:
-    user_summary_keys = ens_config.get_summary_keys()
+    user_summary_keys = ens_config.get_user_summary_keys()
     if not user_summary_keys:
         return LoadResult(LoadStatus.LOAD_SUCCESSFUL, "")
 

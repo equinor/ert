@@ -1,6 +1,7 @@
 import pytest
 
 from ert._c_wrappers.enkf import EnkfConfigNode, EnKFMain
+from ert._c_wrappers.enkf.config.gen_data_config import GenDataConfig
 from ert._c_wrappers.enkf.enums import EnkfVarType, RealizationStateEnum
 from ert.simulator.simulation_context import _run_forward_model
 
@@ -32,8 +33,8 @@ def test_run_simulation_batch(setup_case, prior_ensemble):
     ens_config.addNode(injection_control)
 
     # Add result nodes
-    order_result = EnkfConfigNode.create_gen_data("ORDER")
-    injection_result = EnkfConfigNode.create_gen_data("INJECTION")
+    order_result = GenDataConfig("ORDER")
+    injection_result = GenDataConfig("INJECTION")
     ens_config.add_config_node_meta(
         key="ORDER",
         input_file="order_%d",

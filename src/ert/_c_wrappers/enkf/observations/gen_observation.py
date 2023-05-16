@@ -14,7 +14,7 @@ from ert._c_wrappers.enkf.config import GenDataConfig
 class GenObservation(BaseCClass):
     TYPE_NAME = "gen_obs"
 
-    _alloc = ResPrototype("void*  gen_obs_alloc__(gen_data_config , char*)", bind=False)
+    _alloc = ResPrototype("void*  gen_obs_alloc__(char*)", bind=False)
     _free = ResPrototype("void   gen_obs_free(gen_obs)")
     _load = ResPrototype("void   gen_obs_load_observation(gen_obs , char*)")
     _scalar_set = ResPrototype("void   gen_obs_set_scalar(gen_obs , double , double)")
@@ -40,7 +40,7 @@ class GenObservation(BaseCClass):
         obs_file=None,
         data_index=None,
     ):
-        c_ptr = self._alloc(data_config, obs_key)
+        c_ptr = self._alloc(obs_key)
         if c_ptr:
             super().__init__(c_ptr)
         else:

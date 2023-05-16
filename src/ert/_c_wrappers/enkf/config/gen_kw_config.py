@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING, Callable, Dict, List, Tuple, TypedDict
 import numpy as np
 import pandas as pd
 
+from ert._c_wrappers.enkf.enums.ert_impl_type_enum import ErtImplType
 from ert.parsing.config_errors import ConfigValidationError
 
 if TYPE_CHECKING:
@@ -78,7 +79,7 @@ class GenKwConfig:
         return self.name
 
     def getImplementationType(self):
-        return self
+        return ErtImplType.GEN_KW
 
     @property
     def tag_fmt(self):
