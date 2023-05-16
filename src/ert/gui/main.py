@@ -348,7 +348,7 @@ def _setup_main_window(
     plugin_handler = PluginHandler(
         ert,
         window.notifier,
-        [wfj for wfj in ert.resConfig().workflow_jobs.values() if wfj.isPlugin()],
+        [wfj for wfj in ert.resConfig().workflow_jobs.values() if wfj.is_plugin()],
         window,
     )
 

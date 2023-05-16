@@ -9,7 +9,7 @@ from .workflow_common import WorkflowCommon
 def test_read_internal_function():
     WorkflowCommon.createErtScriptsJob()
 
-    workflow_job = WorkflowJob.fromFile(
+    workflow_job = WorkflowJob.from_file(
         name="SUBTRACT",
         config_file="subtract_script_job",
     )
@@ -23,14 +23,14 @@ def test_read_internal_function():
 def test_arguments():
     WorkflowCommon.createErtScriptsJob()
 
-    job = WorkflowJob.fromFile(
+    job = WorkflowJob.from_file(
         name="SUBTRACT",
         config_file="subtract_script_job",
     )
 
     assert job.min_args == 2
     assert job.max_args == 2
-    assert job.argumentTypes() == [float, float]
+    assert job.argument_types() == [float, float]
 
     assert WorkflowJobRunner(job).run(None, None, None, [1, 2.5])
 
@@ -47,13 +47,13 @@ def test_arguments():
 def test_run_external_job():
     WorkflowCommon.createExternalDumpJob()
 
-    job = WorkflowJob.fromFile(
+    job = WorkflowJob.from_file(
         name="DUMP",
         config_file="dump_job",
     )
 
     assert not job.internal
-    argTypes = job.argumentTypes()
+    argTypes = job.argument_types()
     assert argTypes == [str, str]
     runner = WorkflowJobRunner(job)
     assert runner.run(None, None, None, ["test", "text"]) is None
@@ -67,13 +67,13 @@ def test_run_external_job():
 def test_error_handling_external_job():
     WorkflowCommon.createExternalDumpJob()
 
-    job = WorkflowJob.fromFile(
+    job = WorkflowJob.from_file(
         name="DUMP",
         config_file="dump_failing_job",
     )
 
     assert not job.internal
-    job.argumentTypes()
+    job.argument_types()
     runner = WorkflowJobRunner(job)
     assert runner.run(None, None, None, []) is None
     assert runner.stderrdata().startswith("Traceback")
@@ -83,7 +83,7 @@ def test_error_handling_external_job():
 def test_run_internal_script():
     WorkflowCommon.createErtScriptsJob()
 
-    job = WorkflowJob.fromFile(
+    job = WorkflowJob.from_file(
         name="SUBTRACT",
         config_file="subtract_script_job",
     )

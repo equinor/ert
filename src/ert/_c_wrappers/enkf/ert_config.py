@@ -26,7 +26,13 @@ from ert._c_wrappers.job_queue import (
 from ert._c_wrappers.util import SubstitutionList
 from ert._clib import job_kw
 from ert._clib.config_keywords import init_site_config_parser, init_user_config_parser
-from ert.parsing import ConfigValidationError, ConfigWarning, lark_parse
+from ert.parsing import (
+    ConfigValidationError,
+    ConfigWarning,
+    init_site_config_schema,
+    init_user_config_schema,
+    lark_parse,
+)
 from ert.parsing.error_info import ErrorInfo
 
 from ._config_content_as_dict import config_content_as_dict
@@ -87,10 +93,12 @@ class ErtConfig:
         ErtConfig._log_config_file(user_config_file)
         ErtConfig._log_config_dict(user_config_dict)
         ErtConfig.apply_config_content_defaults(user_config_dict, config_dir)
-        return ErtConfig.from_dict(user_config_dict)
+        return ErtConfig.from_dict(user_config_dict, use_new_parser)
 
     @classmethod
-    def from_dict(cls, config_dict) -> "ErtConfig":
+    def from_dict(
+        cls, config_dict, use_new_parser: bool = USE_NEW_PARSER_BY_DEFAULT
+    ) -> "ErtConfig":
         substitution_list = SubstitutionList.from_dict(config_dict=config_dict)
         config_dir = substitution_list.get("<CONFIG_PATH>", "")
         config_file = substitution_list.get("<CONFIG_FILE>", "no_config")
@@ -123,7 +131,7 @@ class ErtConfig:
 
         try:
             workflow_jobs, workflows, hooked_workflows = cls._workflows_from_dict(
-                config_dict, substitution_list
+                config_dict, substitution_list, use_new_parser=use_new_parser
             )
         except ConfigValidationError as e:
             errors.append(e)
@@ -255,7 +263,9 @@ class ErtConfig:
     @classmethod
     def read_site_config(cls, use_new_parser: bool = USE_NEW_PARSER_BY_DEFAULT):
         if use_new_parser:
-            return lark_parse(site_config_location())
+            return lark_parse(
+                file=site_config_location(), schema=init_site_config_schema()
+            )
         else:
             site_config_parser = ConfigParser()
             init_site_config_parser(site_config_parser)
@@ -268,7 +278,11 @@ class ErtConfig:
     ):
         site_config = cls.read_site_config(use_new_parser=use_new_parser)
         if use_new_parser:
-            return lark_parse(user_config_file, site_config)
+            return lark_parse(
+                file=user_config_file,
+                schema=init_user_config_schema(),
+                site_config=site_config,
+            )
         else:
             user_config_parser = ErtConfig._create_user_config_parser()
             user_config_content = user_config_parser.parse(
@@ -557,7 +571,9 @@ class ErtConfig:
         }
 
     @classmethod
-    def _workflows_from_dict(cls, content_dict, substitution_list):
+    def _workflows_from_dict(
+        cls, content_dict, substitution_list, use_new_parser: bool
+    ):
         workflow_job_info = content_dict.get(ConfigKeys.LOAD_WORKFLOW_JOB, [])
         workflow_job_dir_info = content_dict.get(ConfigKeys.WORKFLOW_JOB_DIRECTORY, [])
         hook_workflow_info = content_dict.get(ConfigKeys.HOOK_WORKFLOW_KEY, [])
@@ -574,9 +590,10 @@ class ErtConfig:
                 # WorkflowJob.fromFile only throws error if a
                 # non-readable file is provided.
                 # Non-existing files are caught by the new parser
-                new_job = WorkflowJob.fromFile(
+                new_job = WorkflowJob.from_file(
                     config_file=workflow_job[0],
                     name=None if len(workflow_job) == 1 else workflow_job[1],
+                    use_new_parser=use_new_parser,
                 )
                 workflow_jobs[new_job.name] = new_job
             except ErtScriptLoadFailure as err:
@@ -604,7 +621,7 @@ class ErtConfig:
             for file_name in files:
                 full_path = os.path.join(job_path, file_name)
                 try:
-                    new_job = WorkflowJob.fromFile(config_file=full_path)
+                    new_job = WorkflowJob.from_file(config_file=full_path)
                     workflow_jobs[new_job.name] = new_job
                 except ErtScriptLoadFailure as err:
                     warnings.warn(
@@ -627,7 +644,9 @@ class ErtConfig:
             try:
                 existed = filename in workflows
                 workflows[filename] = Workflow.from_file(
-                    work[0], substitution_list, workflow_jobs
+                    work[0],
+                    substitution_list,
+                    workflow_jobs,
                 )
                 if existed:
                     warnings.warn(

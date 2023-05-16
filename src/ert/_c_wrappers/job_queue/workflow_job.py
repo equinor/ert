@@ -1,16 +1,25 @@
 from __future__ import annotations
 
+import logging
 import os
 from collections import defaultdict
 from dataclasses import dataclass
-from typing import List, Optional, Type, Union
+from typing import Dict, List, Optional, Tuple, Type, Union
 
 from ert._c_wrappers.config import ConfigParser, ContentTypeEnum
 from ert._clib.job_kw import type_from_kw
-from ert.parsing import ConfigValidationError
+from ert.parsing import (
+    ConfigDict,
+    ConfigValidationError,
+    WorkflowJobKeys,
+    init_workflow_schema,
+    lark_parse,
+)
 
 from .ert_plugin import ErtPlugin
 from .ert_script import ErtScript
+
+logger = logging.getLogger(__name__)
 
 ContentTypes = Union[Type[int], Type[bool], Type[float], Type[str]]
 
@@ -32,6 +41,11 @@ def _workflow_job_config_parser() -> ConfigParser:
 
 
 _config_parser = _workflow_job_config_parser()
+
+
+def new_workflow_job_parser(file: str):
+    schema = init_workflow_schema()
+    return lark_parse(file, schema=schema)
 
 
 class ErtScriptLoadFailure(ValueError):
@@ -63,10 +77,41 @@ class WorkflowJob:
                 ) from err
 
     @staticmethod
+    def _make_arg_types_list_new(content_dict: ConfigDict) -> List[ContentTypeEnum]:
+        # First find the number of args
+        args_spec: List[Tuple[int, str]] = content_dict.get(
+            WorkflowJobKeys.ARG_TYPE, []
+        )  # type: ignore
+        specified_highest_arg_index = (
+            max(index for index, _ in args_spec) if len(args_spec) > 0 else -1
+        )
+        specified_max_args: int = content_dict.get("MAX_ARG", 0)  # type: ignore
+        specified_min_args: int = content_dict.get("MIN_ARG", 0)  # type: ignore
+
+        num_args = max(
+            specified_highest_arg_index + 1,
+            specified_max_args,
+            specified_min_args,
+        )
+
+        arg_types_dict: Dict[int, ContentTypeEnum] = dict()
+
+        for i, type_as_string in args_spec:
+            arg_types_dict[i] = WorkflowJob.string_to_type(type_as_string)
+
+        arg_types_list: List[ContentTypeEnum] = [
+            arg_types_dict.get(i, ContentTypeEnum.CONFIG_STRING)
+            for i in range(num_args)
+        ]  # type: ignore
+        return arg_types_list
+
+    @staticmethod
     def _make_arg_types_list(
         config_content, max_arg: Optional[int]
     ) -> List[ContentTypeEnum]:
-        arg_types_dict = defaultdict(lambda: ContentTypeEnum.CONFIG_STRING)
+        arg_types_dict: Dict[int, ContentTypeEnum] = defaultdict(
+            lambda: ContentTypeEnum.CONFIG_STRING
+        )
         if max_arg is not None:
             arg_types_dict[max_arg - 1] = ContentTypeEnum.CONFIG_STRING
         for arg in config_content["ARG_TYPE"]:
@@ -80,36 +125,61 @@ class WorkflowJob:
             return []
 
     @classmethod
-    def fromFile(cls, config_file, name=None):
-        if os.path.isfile(config_file) and os.access(config_file, os.R_OK):
-            if name is None:
-                name = os.path.basename(config_file)
+    def from_file(cls, config_file, name=None, use_new_parser=True):
+        if not (os.path.isfile(config_file) and os.access(config_file, os.R_OK)):
+            raise ConfigValidationError(f"Could not open config_file:{config_file!r}")
+        if not name:
+            name = os.path.basename(config_file)
 
-            content = _config_parser.parse(config_file)
-
-            def optional_get(key):
-                return content.getValue(key) if content.hasKey(key) else None
-
-            max_arg = optional_get("MAX_ARG")
-
+        if use_new_parser:
+            content_dict = new_workflow_job_parser(config_file)
+            arg_types_list = cls._make_arg_types_list_new(content_dict)
             return cls(
                 name,
-                optional_get("INTERNAL"),
+                content_dict.get("INTERNAL"),  # type: ignore
+                content_dict.get("MIN_ARG"),  # type: ignore
+                content_dict.get("MAX_ARG"),  # type: ignore
+                arg_types_list,
+                content_dict.get("EXECUTABLE"),  # type: ignore
+                str(content_dict.get("SCRIPT")) if "SCRIPT" in content_dict else None,
+            )
+        else:
+            old_content = _config_parser.parse(config_file)
+
+            def optional_get(key, default=None):
+                return old_content.getValue(key) if old_content.hasKey(key) else default
+
+            max_arg = optional_get("MAX_ARG")
+            arg_types_list = cls._make_arg_types_list(old_content, max_arg)
+            return cls(
+                name,
+                optional_get("INTERNAL", False),
                 optional_get("MIN_ARG"),
                 max_arg,
-                cls._make_arg_types_list(content, max_arg),
+                arg_types_list,
                 optional_get("EXECUTABLE"),
                 optional_get("SCRIPT"),
             )
-        else:
-            raise ConfigValidationError(f"Could not open config_file:{config_file!r}")
 
-    def isPlugin(self) -> bool:
+    def is_plugin(self) -> bool:
         if self.ert_script is not None:
             return issubclass(self.ert_script, ErtPlugin)
         return False
 
-    def argumentTypes(self) -> List["ContentTypes"]:
+    @classmethod
+    def string_to_type(cls, string: str) -> ContentTypeEnum:
+        if string == "STRING":
+            return ContentTypeEnum.CONFIG_STRING
+        if string == "FLOAT":
+            return ContentTypeEnum.CONFIG_FLOAT
+        if string == "INT":
+            return ContentTypeEnum.CONFIG_INT
+        if string == "BOOL":
+            return ContentTypeEnum.CONFIG_BOOL
+
+        raise ValueError("Unrecognized content type")
+
+    def argument_types(self) -> List["ContentTypes"]:
         def content_to_type(c: Optional[ContentTypeEnum]):
             if c == ContentTypeEnum.CONFIG_BOOL:
                 return bool

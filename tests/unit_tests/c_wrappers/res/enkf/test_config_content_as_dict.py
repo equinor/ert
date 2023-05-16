@@ -10,7 +10,7 @@ from ert._c_wrappers.enkf._config_content_as_dict import (
     config_content_as_dict,
 )
 from ert._clib.config_keywords import init_user_config_parser
-from ert.parsing import ConfigValidationError
+from ert.parsing import ConfigValidationError, init_user_config_schema
 from ert.parsing.lark_parser import parse
 
 
@@ -167,4 +167,4 @@ def test_check_non_utf_characters_lark_parser(tmpdir):
             match="Unsupported non UTF-8 character "
             f"'ÿ' found in file: .*{config_file}",
         ):
-            parse(config_file)
+            parse(config_file, init_user_config_schema())

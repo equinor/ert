@@ -13,9 +13,6 @@ class ContextBool:
         self.token = token
         self.keyword_token = keyword_token
 
-    def __str__(self):
-        return bool(self.val)
-
     def __bool__(self):
         return bool(self.val)
 
