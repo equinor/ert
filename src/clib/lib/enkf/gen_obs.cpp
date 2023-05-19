@@ -64,10 +64,6 @@ void gen_obs_free(gen_obs_type *gen_obs) {
     delete gen_obs;
 }
 
-static double IGET_SCALED_STD(const gen_obs_type *gen_obs, int index) {
-    return gen_obs->obs_std[index] * gen_obs->std_scaling[index];
-}
-
 /**
    This function loads the actual observations from disk, and
    initializes the obs_data and obs_std pointers with the
@@ -140,16 +136,6 @@ void gen_obs_load_data_index(gen_obs_type *obs, const char *data_index_file) {
     obs->observe_all_data = false;
 }
 
-void gen_obs_parse_data_index(gen_obs_type *obs,
-                              const char *data_index_string) {
-    /* Parsing a string of the type "1,3,5,9-100,200,202,300-1000" */
-    int_vector_type *index_list =
-        string_util_alloc_active_list(data_index_string);
-    int_vector_shrink(index_list);
-    gen_obs_attach_data_index(obs, index_list);
-    int_vector_free(index_list);
-}
-
 gen_obs_type *gen_obs_alloc__(const char *obs_key) {
     auto obs = new gen_obs_type;
     obs->obs_data = NULL;
@@ -157,33 +143,6 @@ gen_obs_type *gen_obs_alloc__(const char *obs_key) {
     obs->std_scaling = NULL;
     obs->obs_key = util_alloc_string_copy(obs_key);
     obs->observe_all_data = true;
-    return obs;
-}
-
-/**
-   data_index_file is the name of a file with indices which should be
-   observed, data_inde_string is the same, in the form of a
-   "1,2,3,4-10, 17,19,22-100" string. Only one of these items can be
-   != NULL. If both are NULL it is assumed that all the indices of the
-   gen_data instance should be observed.
-*/
-gen_obs_type *gen_obs_alloc(const char *obs_key, const char *obs_file,
-                            double scalar_value, double scalar_error,
-                            const char *data_index_file,
-                            const char *data_index_string) {
-    gen_obs_type *obs = gen_obs_alloc__(obs_key);
-    if (obs_file)
-        gen_obs_load_observation(
-            obs,
-            obs_file); /* The observation data is loaded - and internalized at boot time - even though it might not be needed for a long time. */
-    else
-        gen_obs_set_scalar(obs, scalar_value, scalar_error);
-
-    if (data_index_file)
-        gen_obs_load_data_index(obs, data_index_file);
-    else if (data_index_string)
-        gen_obs_parse_data_index(obs, data_index_string);
-
     return obs;
 }
 
