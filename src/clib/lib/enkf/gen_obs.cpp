@@ -6,14 +6,13 @@
 #include <fstream>
 #include <vector>
 
-#include <ert/util/string_util.h>
-#include <ert/util/util.h>
-
 #include <ert/enkf/enkf_macros.hpp>
-#include <ert/enkf/gen_common.hpp>
 #include <ert/enkf/gen_obs.hpp>
 #include <ert/except.hpp>
 #include <ert/python.hpp>
+#include <ert/util/string_util.h>
+#include <ert/util/util.h>
+#include <filesystem>
 
 /**
    This file implemenets a structure for general observations. A
@@ -73,8 +72,6 @@ void gen_obs_free(gen_obs_type *gen_obs) {
    The file with observations should be a long vector of 2N elements,
    where the first N elements are data values, and the last N values
    are the corresponding standard deviations.
-
-   The file is loaded with the gen_common_fload_alloc() function.
 */
 static void gen_obs_set_data(gen_obs_type *gen_obs, int buffer_size,
                              const double *buffer) {
@@ -96,7 +93,23 @@ static void gen_obs_set_data(gen_obs_type *gen_obs, int buffer_size,
 }
 
 void gen_obs_load_observation(gen_obs_type *gen_obs, const char *obs_file) {
-    auto vec = gen_common_fload_alloc(obs_file);
+    const std::filesystem::path &path = obs_file;
+    std::ifstream stream{path};
+    stream.imbue(std::locale::classic());
+
+    std::vector<double> data;
+    for (;;) {
+        double value;
+        if (!(stream >> value))
+            break;
+        data.emplace_back(value);
+        stream >> std::ws;
+    }
+    if (!stream.eof())
+        throw exc::runtime_error{
+                "Could not parse contents of {} as a sequence of numbers", path};
+
+    auto vec = data;
     gen_obs_set_data(gen_obs, vec.size(), vec.data());
 }
 
