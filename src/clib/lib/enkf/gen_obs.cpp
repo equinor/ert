@@ -73,9 +73,9 @@ void gen_obs_free(gen_obs_type *gen_obs) {
    where the first N elements are data values, and the last N values
    are the corresponding standard deviations.
 */
-static void gen_obs_set_data(gen_obs_type *gen_obs, int buffer_size,
-                             const double *buffer) {
-    gen_obs->obs_size = buffer_size / 2;
+static void gen_obs_set_data(gen_obs_type *gen_obs,
+                             const std::vector<double> &vec) {
+    gen_obs->obs_size = vec.size() / 2;
     gen_obs->obs_data = (double *)util_realloc(
         gen_obs->obs_data, gen_obs->obs_size * sizeof *gen_obs->obs_data);
     gen_obs->obs_std = (double *)util_realloc(
@@ -85,8 +85,8 @@ static void gen_obs_set_data(gen_obs_type *gen_obs, int buffer_size,
     gen_obs->data_index_list.resize(gen_obs->obs_size);
 
     for (int iobs = 0; iobs < gen_obs->obs_size; iobs++) {
-        gen_obs->obs_data[iobs] = buffer[2 * iobs];
-        gen_obs->obs_std[iobs] = buffer[2 * iobs + 1];
+        gen_obs->obs_data[iobs] = vec[2 * iobs];
+        gen_obs->obs_std[iobs] = vec[2 * iobs + 1];
         gen_obs->std_scaling[iobs] = 1.0;
         gen_obs->data_index_list[iobs] = iobs;
     }
@@ -107,16 +107,16 @@ void gen_obs_load_observation(gen_obs_type *gen_obs, const char *obs_file) {
     }
     if (!stream.eof())
         throw exc::runtime_error{
-                "Could not parse contents of {} as a sequence of numbers", path};
+            "Could not parse contents of {} as a sequence of numbers", path};
 
     auto vec = data;
-    gen_obs_set_data(gen_obs, vec.size(), vec.data());
+    gen_obs_set_data(gen_obs, vec);
 }
 
 void gen_obs_set_scalar(gen_obs_type *gen_obs, double scalar_value,
                         double scalar_std) {
-    double buffer[2] = {scalar_value, scalar_std};
-    gen_obs_set_data(gen_obs, 2, buffer);
+    std::vector<double> vec = {scalar_value, scalar_std};
+    gen_obs_set_data(gen_obs, vec);
 }
 
 void gen_obs_attach_data_index(gen_obs_type *obs,
