@@ -93,23 +93,20 @@ static void gen_obs_set_data(gen_obs_type *gen_obs,
 }
 
 void gen_obs_load_observation(gen_obs_type *gen_obs, const char *obs_file) {
-    const std::filesystem::path &path = obs_file;
+    std::filesystem::path path = obs_file;
     std::ifstream stream{path};
     stream.imbue(std::locale::classic());
 
-    std::vector<double> data;
-    for (;;) {
-        double value;
-        if (!(stream >> value))
-            break;
-        data.emplace_back(value);
-        stream >> std::ws;
+    double value = 0.0;
+    std::vector<double> vec = {};
+    while (stream >> value && stream >> std::ws) {
+        vec.emplace_back(value);
     }
+
     if (!stream.eof())
         throw exc::runtime_error{
             "Could not parse contents of {} as a sequence of numbers", path};
 
-    auto vec = data;
     gen_obs_set_data(gen_obs, vec);
 }
 
