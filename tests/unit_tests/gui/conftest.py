@@ -157,29 +157,26 @@ def run_experiment(request, opened_main_window):
             qtbot.mouseClick(message_box.buttons()[0], Qt.LeftButton)
 
         QTimer.singleShot(500, handle_dialog)
+        qtbot.mouseClick(start_simulation, Qt.LeftButton)
 
         # The Run dialog opens, click show details and wait until done appears
         # then click it
-        def use_rundialog():
-            qtbot.waitUntil(lambda: gui.findChild(RunDialog) is not None)
-            run_dialog = gui.findChild(RunDialog)
+        qtbot.waitUntil(lambda: gui.findChild(RunDialog) is not None)
+        run_dialog = gui.findChild(RunDialog)
 
-            qtbot.mouseClick(run_dialog.show_details_button, Qt.LeftButton)
+        qtbot.mouseClick(run_dialog.show_details_button, Qt.LeftButton)
 
-            qtbot.waitUntil(run_dialog.done_button.isVisible, timeout=100000)
-            qtbot.waitUntil(lambda: run_dialog._tab_widget.currentWidget() is not None)
+        qtbot.waitUntil(run_dialog.done_button.isVisible, timeout=100000)
+        qtbot.waitUntil(lambda: run_dialog._tab_widget.currentWidget() is not None)
 
-            # Assert that the number of boxes in the detailed view is
-            # equal to the number of realizations
-            realization_widget = run_dialog._tab_widget.currentWidget()
-            assert isinstance(realization_widget, RealizationWidget)
-            list_model = realization_widget._real_view.model()
-            assert list_model.rowCount() == simulation_panel.ert.getEnsembleSize()
+        # Assert that the number of boxes in the detailed view is
+        # equal to the number of realizations
+        realization_widget = run_dialog._tab_widget.currentWidget()
+        assert isinstance(realization_widget, RealizationWidget)
+        list_model = realization_widget._real_view.model()
+        assert list_model.rowCount() == simulation_panel.ert.getEnsembleSize()
 
-            qtbot.mouseClick(run_dialog.done_button, Qt.LeftButton)
-
-        qtbot.mouseClick(start_simulation, Qt.LeftButton)
-        use_rundialog()
+        qtbot.mouseClick(run_dialog.done_button, Qt.LeftButton)
 
     return func
 
