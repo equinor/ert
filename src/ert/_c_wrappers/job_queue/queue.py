@@ -383,36 +383,14 @@ class JobQueue(BaseCClass):
             ]
         )
 
-        retries = 0
-        while True:
+        async for websocket in connect(ws_uri, ssl=ssl_context, extra_headers=headers):
             try:
-                async with connect(
-                    ws_uri, ssl=ssl_context, extra_headers=headers
-                ) as websocket:
-                    while events:
-                        await asyncio.wait_for(websocket.send(to_json(events[0])), 60)
-                        events.popleft()
-                    return
-            except (ConnectionClosedError, asyncio.TimeoutError) as e:
-                if retries >= 10:
-                    logger.exception(
-                        "Connection to websocket %s failed, unable to publish changes",
-                        ws_uri,
-                    )
-                    raise
-
-                # websockets for python > 3.6 comes with builtin backoff, implement a
-                # crude one here
-                retries += 1
-                backoff = max(3, min(60, 2**retries))
-                logger.info(
-                    "Connection to websocket %s was closed, retry in %d seconds.",
-                    ws_uri,
-                    backoff,
-                    exc_info=e,
-                )
-
-                await asyncio.sleep(backoff)
+                while events:
+                    await asyncio.wait_for(websocket.send(to_json(events[0])), 60)
+                    events.popleft()
+                return
+            except (ConnectionClosedError) as e:
+                continue
 
     async def execute_queue_via_websockets(  # pylint: disable=too-many-arguments
         self,
