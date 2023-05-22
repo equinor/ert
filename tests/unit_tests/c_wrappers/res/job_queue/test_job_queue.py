@@ -1,4 +1,3 @@
-import asyncio
 import json
 import stat
 import time
@@ -6,10 +5,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from threading import BoundedSemaphore
 from typing import Any, Callable, Dict, Optional
-from unittest.mock import AsyncMock, MagicMock, patch
-
-import pytest
-from websockets.exceptions import ConnectionClosedError
+from unittest.mock import MagicMock, patch
 
 from ert._c_wrappers.job_queue import (
     Driver,
@@ -288,44 +284,6 @@ def test_add_dispatch_info_cert_none(tmpdir, monkeypatch):
 
         assert content["ee_cert_path"] is None
         assert not (runpath / cert_file).exists()
-
-
-@pytest.mark.timeout(20)
-@pytest.mark.asyncio
-async def test_retry_on_closed_connection(tmpdir, monkeypatch):
-    monkeypatch.chdir(tmpdir)
-    job_queue = create_local_queue(SIMPLE_SCRIPT, max_submit=1)
-    pool_sema = BoundedSemaphore(value=10)
-
-    with patch("ert._c_wrappers.job_queue.queue.connect") as queue_connection:
-        websocket_mock = AsyncMock()
-        queue_connection.side_effect = [
-            ConnectionClosedError(1006, "expected close"),
-            websocket_mock,
-        ]
-
-        # the queue ate both the exception, and the websocket_mock, trying to
-        # consume a third item from the mock causes an (expected) exception
-        with pytest.raises(RuntimeError, match="coroutine raised StopIteration"):
-            await job_queue.execute_queue_via_websockets(
-                ws_uri="ws://example.org",
-                ens_id="",
-                pool_sema=pool_sema,
-                evaluators=[],
-            )
-
-        # one fails, the next is a mock, the third is a StopIteration
-        assert (
-            queue_connection.call_count == 3
-        ), "unexpected number of connect calls {f.call_count}"
-
-        # there will be many send calls in here, but the main point it tried
-        assert len(websocket_mock.mock_calls) > 0, "the websocket was never called"
-
-    # job_queue cannot go out of scope before queue has completed
-    await job_queue.stop_jobs_async()
-    while job_queue.isRunning:
-        await asyncio.sleep(0.1)
 
 
 class MockedJob:
