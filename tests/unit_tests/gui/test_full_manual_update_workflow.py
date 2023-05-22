@@ -112,22 +112,15 @@ def test_that_the_manual_analysis_tool_works(
         qtbot.mouseClick(message_box.buttons()[0], Qt.LeftButton)
 
     QTimer.singleShot(500, handle_dialog)
-
+    qtbot.mouseClick(start_simulation, Qt.LeftButton)
     # The Run dialog opens, click show details and wait until done appears
     # then click it
-    def use_rundialog():
-        qtbot.waitUntil(lambda: gui.findChild(RunDialog) is not None)
-        run_dialog = gui.findChild(RunDialog)
-
-        qtbot.mouseClick(run_dialog.show_details_button, Qt.LeftButton)
-
-        qtbot.waitUntil(run_dialog.done_button.isVisible, timeout=100000)
-        qtbot.waitUntil(lambda: run_dialog._tab_widget.currentWidget() is not None)
-
-        qtbot.mouseClick(run_dialog.done_button, Qt.LeftButton)
-
-    QTimer.singleShot(1000, use_rundialog)
-    qtbot.mouseClick(start_simulation, Qt.LeftButton)
+    qtbot.waitUntil(lambda: gui.findChild(RunDialog) is not None)
+    run_dialog = gui.findChild(RunDialog)
+    qtbot.mouseClick(run_dialog.show_details_button, Qt.LeftButton)
+    qtbot.waitUntil(run_dialog.done_button.isVisible, timeout=100000)
+    qtbot.waitUntil(lambda: run_dialog._tab_widget.currentWidget() is not None)
+    qtbot.mouseClick(run_dialog.done_button, Qt.LeftButton)
 
     facade = simulation_panel.facade
     storage = gui.notifier.storage

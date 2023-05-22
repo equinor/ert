@@ -274,31 +274,28 @@ def test_that_run_dialog_can_be_closed_after_used_to_open_plots(qtbot, storage):
             qtbot.mouseClick(message_box.button(QMessageBox.Yes), Qt.LeftButton)
 
         QTimer.singleShot(500, handle_dialog)
-
-        def use_rundialog():
-            qtbot.waitUntil(lambda: gui.findChild(RunDialog) is not None)
-
-            # Ensure that once the run dialog is opened
-            # another simulation cannot be started
-            assert not start_simulation.isEnabled()
-
-            run_dialog = gui.findChild(RunDialog)
-            assert isinstance(run_dialog, RunDialog)
-
-            # The user expects to be able to open e.g. the even viewer
-            # while the run dialog is open
-            assert not run_dialog.isModal()
-
-            qtbot.mouseClick(run_dialog.plot_button, Qt.LeftButton)
-            qtbot.waitUntil(run_dialog.done_button.isVisible, timeout=20000)
-            qtbot.mouseClick(run_dialog.done_button, Qt.LeftButton)
-
-            # Ensure that once the run dialog is closed
-            # another simulation can be started
-            assert start_simulation.isEnabled()
-
-        QTimer.singleShot(1000, use_rundialog)
         qtbot.mouseClick(start_simulation, Qt.LeftButton)
+
+        qtbot.waitUntil(lambda: gui.findChild(RunDialog) is not None)
+
+        # Ensure that once the run dialog is opened
+        # another simulation cannot be started
+        assert not start_simulation.isEnabled()
+
+        run_dialog = gui.findChild(RunDialog)
+        assert isinstance(run_dialog, RunDialog)
+
+        # The user expects to be able to open e.g. the even viewer
+        # while the run dialog is open
+        assert not run_dialog.isModal()
+
+        qtbot.mouseClick(run_dialog.plot_button, Qt.LeftButton)
+        qtbot.waitUntil(run_dialog.done_button.isVisible, timeout=20000)
+        qtbot.mouseClick(run_dialog.done_button, Qt.LeftButton)
+
+        # Ensure that once the run dialog is closed
+        # another simulation can be started
+        assert start_simulation.isEnabled()
 
         qtbot.waitUntil(lambda: gui.findChild(PlotWindow) is not None)
 
