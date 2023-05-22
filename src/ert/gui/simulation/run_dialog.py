@@ -297,6 +297,10 @@ class RunDialog(QDialog):
         self._worker = worker
         self._worker_thread = worker_thread
         worker_thread.started.connect(worker.consume_and_emit)
+        # _worker_thread is finished once everything has stopped. We wait to
+        # show the done button to this point to avoid destroying the QThread
+        # while it is running (which would sigabrt)
+        self._worker_thread.finished.connect(self._show_done_button)
         self._worker_thread.start()
 
     def killJobs(self):
@@ -316,7 +320,6 @@ class RunDialog(QDialog):
     def _on_simulation_done(self, failed, failed_msg):
         self.processing_animation.hide()
         self.kill_button.setHidden(True)
-        self.done_button.setHidden(False)
         self.restart_button.setVisible(self._run_model.has_failed_realizations())
         self.restart_button.setEnabled(self._run_model.support_restart)
         self._total_progress_bar.setValue(100)
@@ -329,6 +332,9 @@ class RunDialog(QDialog):
         if failed:
             msg = ErtMessageBox("ERT simulation failed!", failed_msg)
             msg.exec_()
+
+    def _show_done_button(self):
+        self.done_button.setHidden(False)
 
     @Slot()
     def _on_ticker(self):
