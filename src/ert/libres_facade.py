@@ -11,7 +11,6 @@ from pandas import DataFrame, Series
 from ert._c_wrappers.enkf import EnKFMain, EnsembleConfig, ErtConfig
 from ert._c_wrappers.enkf.config import GenKwConfig
 from ert._c_wrappers.enkf.config.field_config import Field
-from ert._c_wrappers.enkf.config.gen_data_config import GenDataConfig
 from ert._c_wrappers.enkf.config.surface_config import SurfaceConfig
 from ert._c_wrappers.enkf.enums import (
     EnkfObservationImplementationType,
@@ -529,9 +528,8 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
         gen_data_list = []
         for key in gen_data_keys:
             gen_data_config = self._enkf_main.ensembleConfig().getNodeGenData(key)
-            if isinstance(gen_data_config, GenDataConfig):
-                for report_step in gen_data_config.getReportSteps():
-                    gen_data_list.append(f"{key}@{report_step}")
+            for report_step in gen_data_config.getReportSteps():
+                gen_data_list.append(f"{key}@{report_step}")
 
         return sorted(gen_data_list, key=lambda k: k.lower())
 

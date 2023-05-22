@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from ert._c_wrappers.enkf.config.parameter_config import ParameterConfig
+from ert._c_wrappers.enkf.enums.enkf_var_type_enum import EnkfVarType
 
 if TYPE_CHECKING:
     from ert.storage import EnsembleAccessor, EnsembleReader
@@ -27,6 +28,7 @@ class SurfaceConfig(ParameterConfig):
     forward_init_file: str
     output_file: Path
     base_surface_path: str
+    var_type: EnkfVarType = EnkfVarType.PARAMETER
 
     def load(self, run_path: Path, real_nr: int, ensemble: EnsembleAccessor):
         t = time.perf_counter()

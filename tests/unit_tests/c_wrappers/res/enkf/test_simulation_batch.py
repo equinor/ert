@@ -3,7 +3,7 @@ import pytest
 from ert._c_wrappers.enkf import EnKFMain
 from ert._c_wrappers.enkf.config.ext_param_config import ExtParamConfig
 from ert._c_wrappers.enkf.config.gen_data_config import GenDataConfig
-from ert._c_wrappers.enkf.enums import EnkfVarType, RealizationStateEnum
+from ert._c_wrappers.enkf.enums import RealizationStateEnum
 from ert.simulator.simulation_context import _run_forward_model
 
 
@@ -21,34 +21,20 @@ def test_run_simulation_batch(setup_case, prior_ensemble):
     order_control = ExtParamConfig(
         "WELL_ORDER", ["W1", "W2", "W3"], output_file="WELL_ORDER.json"
     )
-    ens_config.add_config_node_meta(
-        key="WELL_ORDER",
-        output_file="WELL_ORDER.json",
-        var_type=EnkfVarType.EXT_PARAMETER,
-    )
     injection_control = ExtParamConfig(
         "WELL_INJECTION", ["W1", "W4"], output_file="WELL_INJECTION.json"
-    )
-    ens_config.add_config_node_meta(
-        key="WELL_INJECTION",
-        output_file="WELL_INJECTION.json",
-        var_type=EnkfVarType.EXT_PARAMETER,
     )
     ens_config.addNode(order_control)
     ens_config.addNode(injection_control)
 
     # Add result nodes
-    order_result = GenDataConfig("ORDER")
-    injection_result = GenDataConfig("INJECTION")
-    ens_config.add_config_node_meta(
+    order_result = GenDataConfig(
         key="ORDER",
         input_file="order_%d",
-        var_type=EnkfVarType.DYNAMIC_RESULT,
     )
-    ens_config.add_config_node_meta(
+    injection_result = GenDataConfig(
         key="INJECTION",
         input_file="injection_%d",
-        var_type=EnkfVarType.DYNAMIC_RESULT,
     )
     ens_config.addNode(order_result)
     ens_config.addNode(injection_result)
