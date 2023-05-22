@@ -6,8 +6,6 @@
 
 typedef struct gen_obs_struct gen_obs_type;
 
-gen_obs_type *gen_obs_alloc(const char *obs_key, const char *, double, double,
-                            const char *, const char *);
 extern "C" gen_obs_type *
 gen_obs_alloc__(const char *obs_key); // for python bindings
 void gen_obs_user_get_with_data_index(const gen_obs_type *gen_obs,
@@ -35,7 +33,6 @@ extern "C" void gen_obs_attach_data_index(gen_obs_type *gen_obs,
                                           const int_vector_type *data_index);
 extern "C" void gen_obs_load_data_index(gen_obs_type *obs,
                                         const char *data_index_file);
-void gen_obs_parse_data_index(gen_obs_type *obs, const char *data_index_string);
 extern "C" void gen_obs_free(gen_obs_type *gen_obs);
 
 VOID_FREE_HEADER(gen_obs);

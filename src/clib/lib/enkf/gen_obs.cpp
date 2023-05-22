@@ -6,14 +6,13 @@
 #include <fstream>
 #include <vector>
 
-#include <ert/util/string_util.h>
-#include <ert/util/util.h>
-
 #include <ert/enkf/enkf_macros.hpp>
-#include <ert/enkf/gen_common.hpp>
 #include <ert/enkf/gen_obs.hpp>
 #include <ert/except.hpp>
 #include <ert/python.hpp>
+#include <ert/util/string_util.h>
+#include <ert/util/util.h>
+#include <filesystem>
 
 /**
    This file implemenets a structure for general observations. A
@@ -64,10 +63,6 @@ void gen_obs_free(gen_obs_type *gen_obs) {
     delete gen_obs;
 }
 
-static double IGET_SCALED_STD(const gen_obs_type *gen_obs, int index) {
-    return gen_obs->obs_std[index] * gen_obs->std_scaling[index];
-}
-
 /**
    This function loads the actual observations from disk, and
    initializes the obs_data and obs_std pointers with the
@@ -77,12 +72,10 @@ static double IGET_SCALED_STD(const gen_obs_type *gen_obs, int index) {
    The file with observations should be a long vector of 2N elements,
    where the first N elements are data values, and the last N values
    are the corresponding standard deviations.
-
-   The file is loaded with the gen_common_fload_alloc() function.
 */
-static void gen_obs_set_data(gen_obs_type *gen_obs, int buffer_size,
-                             const double *buffer) {
-    gen_obs->obs_size = buffer_size / 2;
+static void gen_obs_set_data(gen_obs_type *gen_obs,
+                             const std::vector<double> &vec) {
+    gen_obs->obs_size = vec.size() / 2;
     gen_obs->obs_data = (double *)util_realloc(
         gen_obs->obs_data, gen_obs->obs_size * sizeof *gen_obs->obs_data);
     gen_obs->obs_std = (double *)util_realloc(
@@ -92,22 +85,35 @@ static void gen_obs_set_data(gen_obs_type *gen_obs, int buffer_size,
     gen_obs->data_index_list.resize(gen_obs->obs_size);
 
     for (int iobs = 0; iobs < gen_obs->obs_size; iobs++) {
-        gen_obs->obs_data[iobs] = buffer[2 * iobs];
-        gen_obs->obs_std[iobs] = buffer[2 * iobs + 1];
+        gen_obs->obs_data[iobs] = vec[2 * iobs];
+        gen_obs->obs_std[iobs] = vec[2 * iobs + 1];
         gen_obs->std_scaling[iobs] = 1.0;
         gen_obs->data_index_list[iobs] = iobs;
     }
 }
 
 void gen_obs_load_observation(gen_obs_type *gen_obs, const char *obs_file) {
-    auto vec = gen_common_fload_alloc(obs_file);
-    gen_obs_set_data(gen_obs, vec.size(), vec.data());
+    std::filesystem::path path = obs_file;
+    std::ifstream stream{path};
+    stream.imbue(std::locale::classic());
+
+    double value = 0.0;
+    std::vector<double> vec = {};
+    while (stream >> value && stream >> std::ws) {
+        vec.emplace_back(value);
+    }
+
+    if (!stream.eof())
+        throw exc::runtime_error{
+            "Could not parse contents of {} as a sequence of numbers", path};
+
+    gen_obs_set_data(gen_obs, vec);
 }
 
 void gen_obs_set_scalar(gen_obs_type *gen_obs, double scalar_value,
                         double scalar_std) {
-    double buffer[2] = {scalar_value, scalar_std};
-    gen_obs_set_data(gen_obs, 2, buffer);
+    std::vector<double> vec = {scalar_value, scalar_std};
+    gen_obs_set_data(gen_obs, vec);
 }
 
 void gen_obs_attach_data_index(gen_obs_type *obs,
@@ -140,16 +146,6 @@ void gen_obs_load_data_index(gen_obs_type *obs, const char *data_index_file) {
     obs->observe_all_data = false;
 }
 
-void gen_obs_parse_data_index(gen_obs_type *obs,
-                              const char *data_index_string) {
-    /* Parsing a string of the type "1,3,5,9-100,200,202,300-1000" */
-    int_vector_type *index_list =
-        string_util_alloc_active_list(data_index_string);
-    int_vector_shrink(index_list);
-    gen_obs_attach_data_index(obs, index_list);
-    int_vector_free(index_list);
-}
-
 gen_obs_type *gen_obs_alloc__(const char *obs_key) {
     auto obs = new gen_obs_type;
     obs->obs_data = NULL;
@@ -157,33 +153,6 @@ gen_obs_type *gen_obs_alloc__(const char *obs_key) {
     obs->std_scaling = NULL;
     obs->obs_key = util_alloc_string_copy(obs_key);
     obs->observe_all_data = true;
-    return obs;
-}
-
-/**
-   data_index_file is the name of a file with indices which should be
-   observed, data_inde_string is the same, in the form of a
-   "1,2,3,4-10, 17,19,22-100" string. Only one of these items can be
-   != NULL. If both are NULL it is assumed that all the indices of the
-   gen_data instance should be observed.
-*/
-gen_obs_type *gen_obs_alloc(const char *obs_key, const char *obs_file,
-                            double scalar_value, double scalar_error,
-                            const char *data_index_file,
-                            const char *data_index_string) {
-    gen_obs_type *obs = gen_obs_alloc__(obs_key);
-    if (obs_file)
-        gen_obs_load_observation(
-            obs,
-            obs_file); /* The observation data is loaded - and internalized at boot time - even though it might not be needed for a long time. */
-    else
-        gen_obs_set_scalar(obs, scalar_value, scalar_error);
-
-    if (data_index_file)
-        gen_obs_load_data_index(obs, data_index_file);
-    else if (data_index_string)
-        gen_obs_parse_data_index(obs, data_index_string);
-
     return obs;
 }
 
