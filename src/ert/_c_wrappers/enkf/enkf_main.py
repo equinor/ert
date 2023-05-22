@@ -13,7 +13,7 @@ from jinja2 import Template
 
 from ert._c_wrappers.analysis.configuration import UpdateConfiguration
 from ert._c_wrappers.enkf.analysis_config import AnalysisConfig
-from ert._c_wrappers.enkf.config.enkf_config_node import EnkfConfigNode
+from ert._c_wrappers.enkf.config.ext_param_config import ExtParamConfig
 from ert._c_wrappers.enkf.config.gen_kw_config import GenKwConfig
 from ert._c_wrappers.enkf.config.parameter_config import ParameterConfig
 from ert._c_wrappers.enkf.enkf_obs import EnkfObs
@@ -178,7 +178,7 @@ def _generate_parameter_files(
         type_ = node.getImplementationType()
 
         if type_ == ErtImplType.EXT_PARAM:
-            if isinstance(node, EnkfConfigNode):
+            if isinstance(node, ExtParamConfig):
                 _generate_ext_parameter_file(
                     fs, iens, node.getKey(), node.output_file, Path(run_path)
                 )

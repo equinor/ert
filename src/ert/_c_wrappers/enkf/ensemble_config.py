@@ -5,18 +5,17 @@ import os
 import warnings
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING, Dict, List, Optional, Union
+from typing import Dict, List, Optional, Union
 
 import xtgeo
-from cwrap import BaseCClass
 from ecl.summary import EclSum
 
 from ert import _clib
-from ert._c_wrappers import ResPrototype
 from ert._c_wrappers.config.rangestring import rangestring_to_list
 from ert._c_wrappers.enkf import GenKwConfig
-from ert._c_wrappers.enkf.config import EnkfConfigNode, GenDataConfig
+from ert._c_wrappers.enkf.config.ext_param_config import ExtParamConfig
 from ert._c_wrappers.enkf.config.field_config import TRANSFORM_FUNCTIONS, Field
+from ert._c_wrappers.enkf.config.gen_data_config import GenDataConfig
 from ert._c_wrappers.enkf.config.parameter_config import ParameterConfig
 from ert._c_wrappers.enkf.config.summary_config import SummaryConfig
 from ert._c_wrappers.enkf.config.surface_config import SurfaceConfig
@@ -26,9 +25,6 @@ from ert.parsing import ConfigValidationError, ConfigWarning
 from ert.parsing.error_info import ErrorInfo
 from ert.storage.field_utils.field_utils import Shape, get_shape
 
-if TYPE_CHECKING:
-    from ecl.util.util import StringList
-
 logger = logging.getLogger(__name__)
 
 ParameterConfiguration = List[Union[Field, SurfaceConfig, GenKwConfig]]
@@ -37,12 +33,6 @@ ParameterConfiguration = List[Union[Field, SurfaceConfig, GenKwConfig]]
 def _get_abs_path(file):
     if file is not None:
         file = os.path.realpath(file)
-    return file
-
-
-def _get_filename(file):
-    if file is not None:
-        file = os.path.basename(file)
     return file
 
 
@@ -132,7 +122,7 @@ def _str_to_bool(txt: str) -> bool:
 
 @dataclass
 class ConfigNodeMeta:
-    """Metadata Dataclass for EnkfConfigNode contained in EnsembleConfig"""
+    """Metadata Dataclass for Nodes contained in EnsembleConfig"""
 
     key: str = ""
     forward_init: bool = False
@@ -142,25 +132,7 @@ class ConfigNodeMeta:
     var_type: EnkfVarType = EnkfVarType.INVALID_VAR
 
 
-class EnsembleConfig(BaseCClass):
-    TYPE_NAME = "ens_config"
-    _alloc_full = ResPrototype("void* ensemble_config_alloc_full()", bind=False)
-    _free = ResPrototype("void ensemble_config_free( ens_config )")
-    _has_key = ResPrototype("bool ensemble_config_has_key( ens_config , char* )")
-    _get_node = ResPrototype(
-        "enkf_config_node_ref ensemble_config_get_node( ens_config , char*)"
-    )
-    _alloc_keylist = ResPrototype(
-        "stringlist_obj ensemble_config_alloc_keylist( ens_config )"
-    )
-    _alloc_keylist_from_impl_type = ResPrototype(
-        "stringlist_obj ensemble_config_alloc_keylist_from_impl_type(ens_config, \
-                                                                     ert_impl_type_enum)"  # noqa
-    )
-    _add_node = ResPrototype(
-        "void ensemble_config_add_node( ens_config , enkf_config_node )"
-    )
-
+class EnsembleConfig:
     @staticmethod
     def _load_refcase(refcase_file: Optional[str]) -> Optional[EclSum]:
         if refcase_file is None:
@@ -210,17 +182,12 @@ class EnsembleConfig(BaseCClass):
         self._grid_file = grid_file
         self._refcase_file = ref_case_file
         self.refcase: Optional[EclSum] = self._load_refcase(ref_case_file)
-        c_ptr = self._alloc_full()
         self.py_nodes = {}
 
         self._config_node_meta: Dict[str, ConfigNodeMeta] = {}
         self._gen_kw_node: Dict[str, GenKwConfig] = {}
         self._gen_data_config: Dict[str, GenDataConfig] = {}
         self._user_summary_keys: List[str] = []
-
-        if c_ptr is None:
-            raise ValueError("Failed to construct EnsembleConfig instance")
-        super().__init__(c_ptr)
 
         for gene_data in gen_data_list:
             gdc = self.gen_data_node(gene_data)
@@ -475,8 +442,6 @@ class EnsembleConfig(BaseCClass):
         return f"{node}: " f"{[self.getNode(key) for key in key_list]}, "
 
     def __repr__(self):
-        if not self._address():
-            return "<EnsembleConfig()>"
         return (
             "EnsembleConfig(config_dict={"
             + self._node_info(ConfigKeys.GEN_DATA)
@@ -492,16 +457,13 @@ class EnsembleConfig(BaseCClass):
     def __getitem__(
         self, key: str
     ) -> Union[
-        EnkfConfigNode, ParameterConfig, GenKwConfig, GenDataConfig, SummaryConfig
+        ParameterConfig,
+        GenKwConfig,
+        GenDataConfig,
+        SummaryConfig,
+        ExtParamConfig,
     ]:
-        if key in self:
-            node = self._get_node(key).setParent(self)
-            node.forward_init_file = self._config_node_meta[key].init_file
-            node.forward_init = self._config_node_meta[key].forward_init
-            node.output_file = self._config_node_meta[key].output_file
-
-            return node
-        elif key in self.py_nodes:
+        if key in self.py_nodes:
             node = self.py_nodes[key]
             if isinstance(node, GenKwConfig):
                 node.forward_init_file = self._config_node_meta[key].init_file
@@ -522,12 +484,13 @@ class EnsembleConfig(BaseCClass):
     def getNode(
         self, key: str
     ) -> Union[
-        EnkfConfigNode, ParameterConfig, GenKwConfig, GenDataConfig, SummaryConfig
+        ParameterConfig,
+        GenKwConfig,
+        GenDataConfig,
+        SummaryConfig,
+        ExtParamConfig,
     ]:
         return self[key]
-
-    def alloc_keylist(self) -> StringList:
-        return self._alloc_keylist()
 
     def add_summary_full(self, key, refcase) -> SummaryConfig:
         self.add_config_node_meta(key=key, var_type=EnkfVarType.DYNAMIC_RESULT)
@@ -578,27 +541,23 @@ class EnsembleConfig(BaseCClass):
     def addNode(
         self,
         config_node: Union[
-            EnkfConfigNode,
             Field,
             GenKwConfig,
             GenDataConfig,
             SurfaceConfig,
             SummaryConfig,
+            ExtParamConfig,
         ],
     ):
         assert config_node is not None
         self.check_unique_node(config_node.getKey())
 
-        if isinstance(config_node, EnkfConfigNode):
-            self._add_node(config_node)
-            config_node.convertToCReference(self)
-        else:
-            if isinstance(config_node, GenDataConfig):
-                self._gen_data_config[config_node.getKey()] = config_node
-            elif isinstance(config_node, GenKwConfig):
-                self._gen_kw_node[config_node.getKey()] = config_node
+        if isinstance(config_node, GenDataConfig):
+            self._gen_data_config[config_node.getKey()] = config_node
+        elif isinstance(config_node, GenKwConfig):
+            self._gen_kw_node[config_node.getKey()] = config_node
 
-            self.py_nodes[config_node.name] = config_node
+        self.py_nodes[config_node.name] = config_node
 
     def getKeylistFromVarType(self, var_mask: EnkfVarType) -> List[str]:
         assert isinstance(var_mask, EnkfVarType)
@@ -612,17 +571,13 @@ class EnsembleConfig(BaseCClass):
 
     def getKeylistFromImplType(self, ert_impl_type) -> List[str]:
         assert isinstance(ert_impl_type, ErtImplType)
+        mylist = []
 
-        if ert_impl_type == ErtImplType.EXT_PARAM:
-            return list(self._alloc_keylist_from_impl_type(ert_impl_type))
-        else:
-            mylist = []
+        for v in self.py_nodes:
+            if self.getNode(v).getImplementationType() == ert_impl_type:
+                mylist.append(self.getNode(v).getKey())
 
-            for v in self.py_nodes:
-                if self.getNode(v).getImplementationType() == ert_impl_type:
-                    mylist.append(self.getNode(v).getKey())
-
-            return mylist
+        return mylist
 
     def get_keylist_gen_kw(self) -> List[str]:
         return list(self._gen_kw_node.keys())
@@ -645,13 +600,10 @@ class EnsembleConfig(BaseCClass):
         )
 
     def __contains__(self, key):
-        return self._has_key(key)
-
-    def free(self):
-        self._free()
+        return key in self.py_nodes
 
     def get_node_keylist(self) -> List[str]:
-        return set(self.alloc_keylist() + self.py_nodes.keys())
+        return set(self.py_nodes.keys())
 
     def __eq__(self, other):
         self_param_list = self.get_node_keylist()
@@ -660,9 +612,7 @@ class EnsembleConfig(BaseCClass):
             return False
 
         for par in self_param_list:
-            if (par in self and par in other) or (
-                par in self.py_nodes and par in other.py_nodes
-            ):
+            if par in self.py_nodes and par in other.py_nodes:
                 if self.getNode(par) != other.getNode(par):
                     return False
             else:
@@ -715,9 +665,8 @@ class EnsembleConfig(BaseCClass):
 
             if isinstance(config_node, (ParameterConfig, GenKwConfig)):
                 parameter_configs.append(config_node)
-            elif config_node.getImplementationType() == ErtImplType.EXT_PARAM:
-                node = config_node.getModelConfig()
-                node.forward_init = self._config_node_meta[parameter].init_file
-                parameter_configs.append(node)
+            elif isinstance(config_node, ExtParamConfig):
+                config_node.forward_init = self._config_node_meta[parameter].init_file
+                parameter_configs.append(config_node)
 
         return parameter_configs
