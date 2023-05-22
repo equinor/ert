@@ -4,12 +4,13 @@ from typing import List
 
 import pytest
 
+from ert._c_wrappers.config.content_type_enum import ContentTypeEnum
 from ert._c_wrappers.enkf import EnKFMain, ErtConfig
 
 
 def valid_args(arg_types, arg_list: List[str], runtime: bool = False):
     return all(
-        arg_type.valid_string(arg, runtime)
+        ContentTypeEnum.from_schema_type(arg_type).valid_string(arg, runtime)
         for arg, arg_type in zip(arg_list, arg_types)
     )
 

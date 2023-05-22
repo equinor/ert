@@ -4,9 +4,8 @@ import stat
 
 import pytest
 
-from ert._c_wrappers.config import ContentTypeEnum
 from ert._c_wrappers.job_queue.ext_job import ExtJob
-from ert.parsing import ConfigValidationError
+from ert.parsing import ConfigValidationError, SchemaItemType
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -68,13 +67,13 @@ def test_load_forward_model_upgraded():
     assert job.max_arg == 7
     argTypes = job.arg_types
     assert argTypes == [
-        ContentTypeEnum.CONFIG_INT,
-        ContentTypeEnum.CONFIG_FLOAT,
-        ContentTypeEnum.CONFIG_STRING,
-        ContentTypeEnum.CONFIG_BOOL,
-        ContentTypeEnum.CONFIG_RUNTIME_FILE,
-        ContentTypeEnum.CONFIG_RUNTIME_INT,
-        ContentTypeEnum.CONFIG_STRING,
+        SchemaItemType.INT,
+        SchemaItemType.FLOAT,
+        SchemaItemType.STRING,
+        SchemaItemType.BOOL,
+        SchemaItemType.RUNTIME_FILE,
+        SchemaItemType.RUNTIME_INT,
+        SchemaItemType.STRING,
     ]
 
 

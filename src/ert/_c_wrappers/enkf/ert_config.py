@@ -24,7 +24,6 @@ from ert._c_wrappers.job_queue import (
     WorkflowJob,
 )
 from ert._c_wrappers.util import SubstitutionList
-from ert._clib import job_kw
 from ert._clib.config_keywords import init_site_config_parser, init_user_config_parser
 from ert.parsing import (
     ConfigValidationError,
@@ -559,9 +558,7 @@ class ErtConfig:
                     "max_running_minutes": job.max_running_minutes,
                     "max_running": job.max_running,
                     "min_arg": job.min_arg,
-                    "arg_types": [
-                        job_kw.kw_from_type(int(typ)) for typ in job.arg_types
-                    ],
+                    "arg_types": job.arg_types,
                     "max_arg": job.max_arg,
                 }
                 for idx, job in enumerate(forward_model_list)

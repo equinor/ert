@@ -7,10 +7,10 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Dict, List, Optional
 
-from ert._c_wrappers.config import ConfigParser, ContentTypeEnum
+from ert._c_wrappers.config import ConfigParser
 from ert._c_wrappers.util import SubstitutionList
 from ert._clib.job_kw import type_from_kw
-from ert.parsing import ConfigValidationError
+from ert.parsing import ConfigValidationError, SchemaItemType
 
 logger = logging.getLogger(__name__)
 
@@ -30,7 +30,7 @@ class ExtJob:
     min_arg: Optional[int] = None
     max_arg: Optional[int] = None
     arglist: List[str] = field(default_factory=list)
-    arg_types: List[ContentTypeEnum] = field(default_factory=list)
+    arg_types: List[SchemaItemType] = field(default_factory=list)
     environment: Dict[str, str] = field(default_factory=dict)
     exec_env: Dict[str, str] = field(default_factory=dict)
     default_mapping: Dict[str, str] = field(default_factory=dict)
@@ -102,9 +102,7 @@ class ExtJob:
     def _parse_config_file(cls, config_file: str):
         parser = ConfigParser()
         for int_key in cls._int_keywords:
-            parser.add(int_key, value_type=ContentTypeEnum.CONFIG_INT).set_argc_minmax(
-                1, 1
-            )
+            parser.add(int_key, value_type=SchemaItemType.INT).set_argc_minmax(1, 1)
         for path_key in cls._str_keywords:
             parser.add(path_key).set_argc_minmax(1, 1)
 
@@ -115,7 +113,7 @@ class ExtJob:
         parser.add("ARGLIST").set_argc_minmax(1, -1)
         arg_type_schema = parser.add("ARG_TYPE")
         arg_type_schema.set_argc_minmax(2, 2)
-        arg_type_schema.iset_type(0, ContentTypeEnum.CONFIG_INT)
+        arg_type_schema.iset_type(0, SchemaItemType.INT)
 
         return parser.parse(
             config_file,
@@ -154,12 +152,14 @@ class ExtJob:
     @staticmethod
     def _make_arg_types_list(
         config_content, max_arg: Optional[int]
-    ) -> List[ContentTypeEnum]:
-        arg_types_dict = defaultdict(lambda: ContentTypeEnum.CONFIG_STRING)
+    ) -> List[SchemaItemType]:
+        arg_types_dict = defaultdict(lambda: SchemaItemType.STRING)
         if max_arg is not None:
-            arg_types_dict[max_arg - 1] = ContentTypeEnum.CONFIG_STRING
+            arg_types_dict[max_arg - 1] = SchemaItemType.STRING
         for arg in config_content["ARG_TYPE"]:
-            arg_types_dict[arg[0]] = ContentTypeEnum(type_from_kw(arg[1]))
+            arg_types_dict[arg[0]] = SchemaItemType.from_content_type_enum(
+                type_from_kw(arg[1])
+            )
         if arg_types_dict:
             return [
                 arg_types_dict[j]

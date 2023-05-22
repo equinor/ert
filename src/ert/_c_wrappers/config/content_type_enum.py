@@ -4,6 +4,7 @@ from cwrap import BaseCEnum
 from ecl import EclPrototype
 
 from ert._c_wrappers import ResPrototype
+from ert.parsing import SchemaItemType
 
 
 class ContentTypeEnum(BaseCEnum):
@@ -29,6 +30,10 @@ class ContentTypeEnum(BaseCEnum):
 
     def valid_string(self, string, runtime=False):
         return self._valid_string(string, runtime)
+
+    @classmethod
+    def from_schema_type(cls, schema_type: SchemaItemType):
+        return cls.from_string("CONFIG_" + schema_type)
 
     def convert_string(self, string):
         if not self.valid_string(string, runtime=True):

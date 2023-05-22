@@ -2,12 +2,12 @@ from ecl.util.util import StringList
 
 from ert._c_wrappers.config.config_content import ConfigContent
 from ert._c_wrappers.config.config_parser import ConfigParser
-from ert._c_wrappers.config.content_type_enum import ContentTypeEnum
+from ert.parsing import SchemaItemType
 
 
 def test_get_executable_list(tmpdir):
     parser = ConfigParser()
-    parser.add("MYKEYWORD", value_type=ContentTypeEnum.CONFIG_EXECUTABLE)
+    parser.add("MYKEYWORD", value_type=SchemaItemType.EXECUTABLE)
 
     content = ConfigContent(None)
     path_elm = content.create_path_elm(str(tmpdir))

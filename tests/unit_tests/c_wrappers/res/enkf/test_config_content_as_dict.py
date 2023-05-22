@@ -3,14 +3,14 @@ from pathlib import Path
 
 import pytest
 
-from ert._c_wrappers.config import ConfigParser, ContentTypeEnum
+from ert._c_wrappers.config import ConfigParser
 from ert._c_wrappers.enkf import ConfigKeys
 from ert._c_wrappers.enkf._config_content_as_dict import (
     SINGLE_OCCURRENCE_SINGLE_ARG_KEYS,
     config_content_as_dict,
 )
 from ert._clib.config_keywords import init_user_config_parser
-from ert.parsing import ConfigValidationError, init_user_config_schema
+from ert.parsing import ConfigValidationError, SchemaItemType, init_user_config_schema
 from ert.parsing.lark_parser import parse
 
 
@@ -24,10 +24,10 @@ def test_config_content_as_dict(tmpdir):
         init_user_config_parser(conf)
 
         schema_item = conf.add("MULTIPLE_KEY_VALUE", False)
-        schema_item.iset_type(0, ContentTypeEnum.CONFIG_INT)
+        schema_item.iset_type(0, SchemaItemType.INT)
 
         schema_item = conf.add("KEY", False)
-        schema_item.iset_type(2, ContentTypeEnum.CONFIG_INT)
+        schema_item.iset_type(2, SchemaItemType.INT)
 
         with open("config", "w", encoding="utf-8") as fileH:
             fileH.write(f"{ConfigKeys.NUM_REALIZATIONS} 42\n")

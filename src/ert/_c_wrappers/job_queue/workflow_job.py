@@ -6,11 +6,12 @@ from collections import defaultdict
 from dataclasses import dataclass
 from typing import Dict, List, Optional, Tuple, Type, Union
 
-from ert._c_wrappers.config import ConfigParser, ContentTypeEnum
+from ert._c_wrappers.config import ConfigParser
 from ert._clib.job_kw import type_from_kw
 from ert.parsing import (
     ConfigDict,
     ConfigValidationError,
+    SchemaItemType,
     WorkflowJobKeys,
     init_workflow_schema,
     lark_parse,
@@ -26,16 +27,14 @@ ContentTypes = Union[Type[int], Type[bool], Type[float], Type[str]]
 
 def _workflow_job_config_parser() -> ConfigParser:
     parser = ConfigParser()
-    parser.add("MIN_ARG", value_type=ContentTypeEnum.CONFIG_INT).set_argc_minmax(1, 1)
-    parser.add("MAX_ARG", value_type=ContentTypeEnum.CONFIG_INT).set_argc_minmax(1, 1)
-    parser.add(
-        "EXECUTABLE", value_type=ContentTypeEnum.CONFIG_EXECUTABLE
-    ).set_argc_minmax(1, 1)
-    parser.add("SCRIPT", value_type=ContentTypeEnum.CONFIG_PATH).set_argc_minmax(1, 1)
-    parser.add("INTERNAL", value_type=ContentTypeEnum.CONFIG_BOOL).set_argc_minmax(1, 1)
+    parser.add("MIN_ARG", value_type=SchemaItemType.INT).set_argc_minmax(1, 1)
+    parser.add("MAX_ARG", value_type=SchemaItemType.INT).set_argc_minmax(1, 1)
+    parser.add("EXECUTABLE", value_type=SchemaItemType.EXECUTABLE).set_argc_minmax(1, 1)
+    parser.add("SCRIPT", value_type=SchemaItemType.PATH).set_argc_minmax(1, 1)
+    parser.add("INTERNAL", value_type=SchemaItemType.BOOL).set_argc_minmax(1, 1)
     item = parser.add("ARG_TYPE")
     item.set_argc_minmax(2, 2)
-    item.iset_type(0, ContentTypeEnum.CONFIG_INT)
+    item.iset_type(0, SchemaItemType.INT)
     item.initSelection(1, ["STRING", "INT", "FLOAT", "BOOL"])
     return parser
 
@@ -58,7 +57,7 @@ class WorkflowJob:
     internal: bool
     min_args: Optional[int]
     max_args: Optional[int]
-    arg_types: List[ContentTypeEnum]
+    arg_types: List[SchemaItemType]
     executable: Optional[str]
     script: Optional[str]
 
@@ -77,7 +76,7 @@ class WorkflowJob:
                 ) from err
 
     @staticmethod
-    def _make_arg_types_list_new(content_dict: ConfigDict) -> List[ContentTypeEnum]:
+    def _make_arg_types_list_new(content_dict: ConfigDict) -> List[SchemaItemType]:
         # First find the number of args
         args_spec: List[Tuple[int, str]] = content_dict.get(
             WorkflowJobKeys.ARG_TYPE, []
@@ -94,28 +93,29 @@ class WorkflowJob:
             specified_min_args,
         )
 
-        arg_types_dict: Dict[int, ContentTypeEnum] = dict()
+        arg_types_dict: Dict[int, SchemaItemType] = dict()
 
         for i, type_as_string in args_spec:
             arg_types_dict[i] = WorkflowJob.string_to_type(type_as_string)
 
-        arg_types_list: List[ContentTypeEnum] = [
-            arg_types_dict.get(i, ContentTypeEnum.CONFIG_STRING)
-            for i in range(num_args)
+        arg_types_list: List[SchemaItemType] = [
+            arg_types_dict.get(i, SchemaItemType.STRING) for i in range(num_args)
         ]  # type: ignore
         return arg_types_list
 
     @staticmethod
     def _make_arg_types_list(
         config_content, max_arg: Optional[int]
-    ) -> List[ContentTypeEnum]:
-        arg_types_dict: Dict[int, ContentTypeEnum] = defaultdict(
-            lambda: ContentTypeEnum.CONFIG_STRING
+    ) -> List[SchemaItemType]:
+        arg_types_dict: Dict[int, SchemaItemType] = defaultdict(
+            lambda: SchemaItemType.STRING
         )
         if max_arg is not None:
-            arg_types_dict[max_arg - 1] = ContentTypeEnum.CONFIG_STRING
+            arg_types_dict[max_arg - 1] = SchemaItemType.STRING
         for arg in config_content["ARG_TYPE"]:
-            arg_types_dict[arg[0]] = ContentTypeEnum(type_from_kw(arg[1]))
+            arg_types_dict[arg[0]] = SchemaItemType.from_content_type_enum(
+                type_from_kw(arg[1])
+            )
         if arg_types_dict:
             return [
                 arg_types_dict[j]
@@ -167,27 +167,27 @@ class WorkflowJob:
         return False
 
     @classmethod
-    def string_to_type(cls, string: str) -> ContentTypeEnum:
+    def string_to_type(cls, string: str) -> SchemaItemType:
         if string == "STRING":
-            return ContentTypeEnum.CONFIG_STRING
+            return SchemaItemType.STRING
         if string == "FLOAT":
-            return ContentTypeEnum.CONFIG_FLOAT
+            return SchemaItemType.FLOAT
         if string == "INT":
-            return ContentTypeEnum.CONFIG_INT
+            return SchemaItemType.INT
         if string == "BOOL":
-            return ContentTypeEnum.CONFIG_BOOL
+            return SchemaItemType.BOOL
 
         raise ValueError("Unrecognized content type")
 
     def argument_types(self) -> List["ContentTypes"]:
-        def content_to_type(c: Optional[ContentTypeEnum]):
-            if c == ContentTypeEnum.CONFIG_BOOL:
+        def content_to_type(c: Optional[SchemaItemType]):
+            if c == SchemaItemType.BOOL:
                 return bool
-            if c == ContentTypeEnum.CONFIG_FLOAT:
+            if c == SchemaItemType.FLOAT:
                 return float
-            if c == ContentTypeEnum.CONFIG_INT:
+            if c == SchemaItemType.INT:
                 return int
-            if c == ContentTypeEnum.CONFIG_STRING:
+            if c == SchemaItemType.STRING:
                 return str
             raise ValueError(f"Unknown job type {c} in {self}")
 

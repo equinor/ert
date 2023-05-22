@@ -4,6 +4,7 @@ from cwrap import BaseCClass
 
 from ert._c_wrappers import ResPrototype
 from ert._c_wrappers.config.content_type_enum import ContentTypeEnum
+from ert.parsing import SchemaItemType
 
 
 class SchemaItem(BaseCClass):
@@ -31,12 +32,12 @@ class SchemaItem(BaseCClass):
         c_ptr = self._alloc(keyword, required)
         super().__init__(c_ptr)
 
-    def iget_type(self, index) -> ContentTypeEnum:
-        return self._iget_type(index)
+    def iget_type(self, index) -> SchemaItemType:
+        return SchemaItemType.from_content_type_enum(self._iget_type(index))
 
-    def iset_type(self, index, schema_type: ContentTypeEnum) -> None:
-        assert isinstance(schema_type, ContentTypeEnum)
-        self._iset_type(index, schema_type)
+    def iset_type(self, index, schema_type: SchemaItemType) -> None:
+        assert isinstance(schema_type, SchemaItemType)
+        self._iset_type(index, ContentTypeEnum.from_schema_type(schema_type))
 
     def set_argc_minmax(self, minimum: Optional[int], maximum: Optional[int]):
         self._set_argc_minmax(
