@@ -49,7 +49,7 @@ Keyword name                                                            Required
 :ref:`ITER_CASE <iter_Case>`                                            NO                                      IES%d                           Case name format - iterated ensemble smoother
 :ref:`ITER_COUNT <iter_count>`                                          NO                                      4                               Number of iterations - iterated ensemble smoother
 :ref:`ITER_RETRY_COUNT <iter_retry_count>`                              NO                                      4                               Number of retries for a iteration - iterated ensemble smoother
-:ref:`JOBNAME <jobname>`                                                NO                                                                      Name used for simulation files.
+:ref:`JOBNAME <jobname>`                                                NO                                      <CONFIG_FILE>-<IENS>            Name used for simulation files.
 :ref:`JOB_SCRIPT <job_script>`                                          NO                                                                      Python script managing the forward model
 :ref:`LOAD_WORKFLOW <load_workflow>`                                    NO                                                                      Load a workflow into ERT
 :ref:`LOAD_WORKFLOW_JOB <load_workflow_job>`                            NO                                                                      Load a workflow job into ERT
@@ -193,13 +193,13 @@ Commonly used keywords
                 ECLBASE eclipse/model/MY_VERY_OWN_OIL_FIELD-<IENS>
 
         If not supplied, ECLBASE will default to JOBNAME, and if JOBNAME is not set,
-        it will default to "ECLBASE<IENS>".
+        it will default to "<CONFIG_FILE>-<IENS>".
 
 .. _jobname:
 .. topic::  JOBNAME
 
         Sets the name of the job submitted to the queue system. Will default to
-        ECLBASE If that is set, otherwise it defaults to "JOB<IENS>". If JOBNAME
+        ECLBASE If that is set, otherwise it defaults to "<CONFIG_FILE>-<IENS>". If JOBNAME
         is set, and not ECLBASE, it will also be used as the value for ECLBASE.
 
 .. _grid:

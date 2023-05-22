@@ -23,6 +23,11 @@ from ert.parsing import ConfigValidationError
             "JOBNAME<IENS>",
             id="JOBNAME is used when no ECLBASE is present",
         ),
+        pytest.param(
+            {},
+            "<CONFIG_FILE>-<IENS>",
+            id="JOBNAME defaults to <CONFIG_FILE>-<IENS>",
+        ),
     ],
 )
 def test_model_config_jobname_and_eclbase(extra_config, expected):
