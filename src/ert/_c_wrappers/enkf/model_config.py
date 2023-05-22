@@ -36,7 +36,7 @@ class ModelConfig:
             else self.DEFAULT_HISTORY_SOURCE
         )
         self.jobname_format_string = (
-            replace_runpath_format(jobname_format_string) or "JOB<IENS>"
+            replace_runpath_format(jobname_format_string) or "<CONFIG_FILE>-<IENS>"
         )
         self.eclbase_format_string = (
             replace_runpath_format(eclbase_format_string) or "ECLBASE<IENS>"

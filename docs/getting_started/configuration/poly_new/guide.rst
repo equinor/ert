@@ -25,9 +25,8 @@ Then create a file ``poly.ert`` inside the folder with the following content:
     .. literalinclude:: minimal/poly.ert
 
 :ref:`JOBNAME <jobname>`
-    Specifies the name for each simulation. The ``%d``
-    will be replaced with the simulation number, so that the jobs will be
-    called ``poly_0``, ``poly_1``, etc.
+    Specifies the name for each simulation. If not defined it will default to
+    ``<CONFIG_FILE>-<IENS>``
 :ref:`NUM_REALIZATIONS <num_realizations>`
     We have to specify how many simulations we want to run.
 :ref:`QUEUE_SYSTEM <QUEUE_SYSTEM>`
