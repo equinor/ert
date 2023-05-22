@@ -5,12 +5,19 @@ import shutil
 from collections import defaultdict
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 
 from ert._c_wrappers.config import ConfigParser
 from ert._c_wrappers.util import SubstitutionList
 from ert._clib.job_kw import type_from_kw
-from ert.parsing import ConfigValidationError, SchemaItemType
+from ert.parsing import (
+    ConfigValidationError,
+    ExtJobKeys,
+    SchemaItemType,
+    init_ext_job_schema,
+    lark_parse,
+    parse_arg_types_list,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -169,9 +176,66 @@ class ExtJob:
             return []
 
     @classmethod
-    def from_config_file(cls, config_file: str, name: Optional[str] = None):
-        if name is None:
-            name = os.path.basename(config_file)
+    def from_config_file_with_new_parser(
+        cls, config_file: str, name: Optional[str] = None
+    ):
+        schema = init_ext_job_schema()
+        content_dict = lark_parse(file=config_file, schema=schema)
+
+        specified_arg_types: List[Tuple[int, str]] = content_dict.get(
+            ExtJobKeys.ARG_TYPE, []
+        )  # type: ignore
+
+        specified_max_args: int = content_dict.get("MAX_ARG", 0)  # type: ignore
+        specified_min_args: int = content_dict.get("MIN_ARG", 0)  # type: ignore
+
+        arg_types_list = parse_arg_types_list(
+            specified_arg_types, specified_max_args, specified_min_args
+        )
+
+        # We unescape backslash here to keep backwards compatability ie. If
+        # the arglist contains a '\n' we interpret it as a newline.
+        arglist = [
+            s.encode("utf-8", "backslashreplace").decode("unicode_escape")
+            for s in content_dict.get("ARGLIST", [])
+        ]
+
+        environment = {k: v for [k, v] in content_dict.get("ENV", [])}
+        exec_env = {k: v for [k, v] in content_dict.get("EXEC_ENV", [])}
+        default_mapping = {k: v for [k, v] in content_dict.get("DEFAULT", [])}
+
+        for handle in ["STDOUT", "STDERR", "STDIN"]:
+            if content_dict.get(handle, None) == "null":
+                content_dict[handle] = None
+
+        stdout_file = content_dict.get("STDOUT", f"{name}.stdout")
+        stderr_file = content_dict.get("STDERR", f"{name}.stderr")
+
+        return cls(
+            name=name,
+            executable=content_dict.get("EXECUTABLE"),
+            stdin_file=content_dict.get("STDIN", None),
+            stdout_file=stdout_file,
+            stderr_file=stderr_file,
+            start_file=content_dict.get("START_FILE", None),
+            target_file=content_dict.get("TARGET_FILE", None),
+            error_file=content_dict.get("ERROR_FILE", None),
+            max_running=content_dict.get("MAX_RUNNING", None),
+            max_running_minutes=content_dict.get("MAX_RUNNING_MINUTES", None),
+            min_arg=content_dict.get("MIN_ARG", None),
+            max_arg=content_dict.get("MAX_ARG", None),
+            arglist=arglist,
+            arg_types=arg_types_list,
+            environment=environment,
+            exec_env=exec_env,
+            default_mapping=default_mapping,
+            help_text=content_dict.get("HELP_TEXT", None),
+        )
+
+    @classmethod
+    def from_config_file_with_old_parser(
+        cls, config_file: str, name: Optional[str] = None
+    ):
         try:
             config_content = cls._parse_config_file(config_file)
         except ConfigValidationError as conf_err:
@@ -251,3 +315,15 @@ class ExtJob:
             name,
             **content_dict,
         )
+
+    @classmethod
+    def from_config_file(
+        cls, config_file: str, name: Optional[str] = None, use_new_parser: bool = True
+    ):
+        if name is None:
+            name = os.path.basename(config_file)
+
+        if use_new_parser:
+            return cls.from_config_file_with_new_parser(config_file, name)
+        else:
+            return cls.from_config_file_with_old_parser(config_file, name)

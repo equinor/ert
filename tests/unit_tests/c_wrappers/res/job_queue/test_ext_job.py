@@ -1,6 +1,7 @@
 import os
 import os.path
 import stat
+from textwrap import dedent
 
 import pytest
 
@@ -13,7 +14,10 @@ def test_load_forward_model_raises_on_missing():
     with pytest.raises(
         ConfigValidationError, match="Could not open job config file 'CONFIG_FILE'"
     ):
-        _ = ExtJob.from_config_file("CONFIG_FILE")
+        _ = ExtJob.from_config_file("CONFIG_FILE", use_new_parser=False)
+
+    with pytest.raises(IOError, match="file(.+?)not found"):
+        _ = ExtJob.from_config_file("CONFIG_FILE", use_new_parser=True)
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -118,19 +122,23 @@ def test_load_forward_model_execu_missing_raises():
 def test_load_forward_model_is_directory_raises():
     with open("CONFIG", "w", encoding="utf-8") as f:
         f.write("EXECUTABLE /tmp\n")
-    with pytest.raises(ConfigValidationError, match="set to directory"):
+    with pytest.raises(ConfigValidationError, match="directory"):
         _ = ExtJob.from_config_file("CONFIG")
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_load_forward_model_foriegn_raises():
+def test_load_forward_model_foreign_raises():
     with open("CONFIG", "w", encoding="utf-8") as f:
         f.write("EXECUTABLE /etc/passwd\n")
     with pytest.raises(ConfigValidationError, match="execute permissions"):
-        _ = ExtJob.from_config_file("CONFIG")
+        _ = ExtJob.from_config_file("CONFIG", use_new_parser=False)
+    with pytest.raises(ConfigValidationError, match="File not executable"):
+        _ = ExtJob.from_config_file("CONFIG", use_new_parser=True)
 
 
-def test_ext_job_optionals(tmp_path):
+def test_ext_job_optionals(
+    tmp_path,
+):
     executable = tmp_path / "exec"
     executable.write_text("")
     st = os.stat(executable)
@@ -139,3 +147,81 @@ def test_ext_job_optionals(tmp_path):
     config_file.write_text("EXECUTABLE exec\n")
     ext_job = ExtJob.from_config_file(str(config_file))
     assert ext_job.name == "config_file"
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_ext_job_env_and_exec_env_is_set():
+    with open("exec", "w", encoding="utf-8") as f:
+        pass
+
+    os.chmod("exec", stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
+
+    with open("CONFIG", "w", encoding="utf-8") as f:
+        f.write(
+            dedent(
+                """
+        EXECUTABLE exec
+        ENV a b
+        ENV c d
+        EXEC_ENV a1 b1
+        EXEC_ENV c1 d1
+        """
+            )
+        )
+    ext_job = ExtJob.from_config_file("CONFIG")
+
+    assert ext_job.environment["a"] == "b"
+    assert ext_job.environment["c"] == "d"
+
+    assert ext_job.exec_env["a1"] == "b1"
+    assert ext_job.exec_env["c1"] == "d1"
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_ext_job_stdout_stderr_defaults_to_filename():
+    with open("exec", "w", encoding="utf-8") as f:
+        pass
+
+    os.chmod("exec", stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
+
+    with open("CONFIG", "w", encoding="utf-8") as f:
+        f.write(
+            dedent(
+                """
+        EXECUTABLE exec
+        """
+            )
+        )
+
+    ext_job = ExtJob.from_config_file("CONFIG")
+
+    assert ext_job.name == "CONFIG"
+    assert ext_job.stdout_file == "CONFIG.stdout"
+    assert ext_job.stderr_file == "CONFIG.stderr"
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_ext_job_stdout_stderr_null_results_in_none():
+    with open("exec", "w", encoding="utf-8") as f:
+        pass
+
+    os.chmod("exec", stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
+
+    with open("CONFIG", "w", encoding="utf-8") as f:
+        f.write(
+            dedent(
+                """
+        EXECUTABLE exec
+        STDIN null
+        STDOUT null
+        STDERR null
+        """
+            )
+        )
+
+    ext_job = ExtJob.from_config_file("CONFIG")
+
+    assert ext_job.name == "CONFIG"
+    assert ext_job.stdin_file is None
+    assert ext_job.stdout_file is None
+    assert ext_job.stderr_file is None

@@ -233,7 +233,7 @@ def schedule_prediction_file_keyword() -> SchemaItem:
         argc_max=3,
         type_map=[SchemaItemType.STRING],
         deprecated=True,
-        deprecate_msg="The SCHEDULE_PREDICTION_FILE config KEY has been removed.",
+        deprecate_msg="The 'SCHEDULE_PREDICTION_FILE' config keyword has been removed.",
     )
 
 

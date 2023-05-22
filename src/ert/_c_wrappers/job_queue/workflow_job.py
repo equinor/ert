@@ -15,6 +15,7 @@ from ert.parsing import (
     WorkflowJobKeys,
     init_workflow_schema,
     lark_parse,
+    parse_arg_types_list,
 )
 
 from .ert_plugin import ErtPlugin
@@ -78,30 +79,16 @@ class WorkflowJob:
     @staticmethod
     def _make_arg_types_list_new(content_dict: ConfigDict) -> List[SchemaItemType]:
         # First find the number of args
-        args_spec: List[Tuple[int, str]] = content_dict.get(
+        specified_arg_types: List[Tuple[int, str]] = content_dict.get(
             WorkflowJobKeys.ARG_TYPE, []
         )  # type: ignore
-        specified_highest_arg_index = (
-            max(index for index, _ in args_spec) if len(args_spec) > 0 else -1
-        )
+
         specified_max_args: int = content_dict.get("MAX_ARG", 0)  # type: ignore
         specified_min_args: int = content_dict.get("MIN_ARG", 0)  # type: ignore
 
-        num_args = max(
-            specified_highest_arg_index + 1,
-            specified_max_args,
-            specified_min_args,
+        return parse_arg_types_list(
+            specified_arg_types, specified_min_args, specified_max_args
         )
-
-        arg_types_dict: Dict[int, SchemaItemType] = dict()
-
-        for i, type_as_string in args_spec:
-            arg_types_dict[i] = WorkflowJob.string_to_type(type_as_string)
-
-        arg_types_list: List[SchemaItemType] = [
-            arg_types_dict.get(i, SchemaItemType.STRING) for i in range(num_args)
-        ]  # type: ignore
-        return arg_types_list
 
     @staticmethod
     def _make_arg_types_list(

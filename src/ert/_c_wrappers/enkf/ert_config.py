@@ -702,6 +702,7 @@ class ErtConfig:
                 new_job = ExtJob.from_config_file(
                     name=name,
                     config_file=job_config_file,
+                    use_new_parser=USE_NEW_PARSER_BY_DEFAULT,
                 )
             except ConfigValidationError as e:
                 errors.append(e)
@@ -741,7 +742,9 @@ class ErtConfig:
                 if not os.path.isfile(full_path):
                     continue
                 try:
-                    new_job = ExtJob.from_config_file(config_file=full_path)
+                    new_job = ExtJob.from_config_file(
+                        config_file=full_path, use_new_parser=USE_NEW_PARSER_BY_DEFAULT
+                    )
                 except ConfigValidationError as e:
                     errors.append(e)
                     continue
