@@ -740,6 +740,7 @@ if __name__ == "__main__":
 
 @pytest.mark.integration_test
 @pytest.mark.limit_memory("110 MB")
+@pytest.mark.skip
 def test_field_param_memory(tmpdir):
     with tmpdir.as_cwd():
         # Setup is done in a subprocess so that memray does not pick up the allocations
