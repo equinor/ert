@@ -8,7 +8,6 @@ from typing import TYPE_CHECKING, Callable, Dict, List, Tuple, TypedDict
 import numpy as np
 import pandas as pd
 
-from ert._c_wrappers.enkf.enums.enkf_var_type_enum import EnkfVarType
 from ert._c_wrappers.enkf.enums.ert_impl_type_enum import ErtImplType
 from ert.parsing.config_errors import ConfigValidationError
 
@@ -89,10 +88,6 @@ class GenKwConfig:
     @property
     def tag_fmt(self):
         return self._tag_format
-
-    @property
-    def var_type(self):
-        return EnkfVarType.PARAMETER
 
     def __len__(self):
         return len(self._transfer_functions)

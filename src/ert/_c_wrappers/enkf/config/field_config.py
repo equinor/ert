@@ -10,7 +10,6 @@ from typing import TYPE_CHECKING, Optional
 import numpy as np
 
 from ert._c_wrappers.enkf.config.parameter_config import ParameterConfig
-from ert._c_wrappers.enkf.enums.enkf_var_type_enum import EnkfVarType
 from ert.storage.field_utils.field_utils import get_masked_field
 
 if TYPE_CHECKING:
@@ -34,7 +33,6 @@ class Field(ParameterConfig):
     forward_init_file: str
     output_file: Path
     grid_file: str
-    var_type: EnkfVarType = EnkfVarType.PARAMETER
 
     def load(self, run_path: Path, real_nr: int, ensemble: EnsembleAccessor):
         t = time.perf_counter()

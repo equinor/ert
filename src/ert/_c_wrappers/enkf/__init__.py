@@ -9,7 +9,6 @@ from .ensemble_config import EnsembleConfig
 from .enums import (
     ActiveMode,
     EnkfObservationImplementationType,
-    EnkfVarType,
     ErtImplType,
     HookRuntime,
     RealizationStateEnum,
@@ -34,7 +33,6 @@ __all__ = [
     "TimeMap",
     "RowScaling",
     "ActiveList",
-    "EnkfVarType",
     "EnkfObservationImplementationType",
     "ErtImplType",
     "RealizationStateEnum",

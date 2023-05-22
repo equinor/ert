@@ -19,7 +19,7 @@ from ert._c_wrappers.enkf.config.parameter_config import ParameterConfig
 from ert._c_wrappers.enkf.config.summary_config import SummaryConfig
 from ert._c_wrappers.enkf.config.surface_config import SurfaceConfig
 from ert._c_wrappers.enkf.config_keys import ConfigKeys
-from ert._c_wrappers.enkf.enums import EnkfVarType, ErtImplType
+from ert._c_wrappers.enkf.enums import ErtImplType
 from ert.parsing import ConfigValidationError, ConfigWarning
 from ert.parsing.error_info import ErrorInfo
 from ert.storage.field_utils.field_utils import Shape, get_shape
@@ -475,16 +475,6 @@ class EnsembleConfig:
         self.check_unique_node(config_node.getKey())
         self.py_nodes[config_node.name] = config_node
 
-    def getKeylistFromVarType(self, var_mask: EnkfVarType) -> List[str]:
-        assert isinstance(var_mask, EnkfVarType)
-
-        keylist = []
-        for k, v in self.py_nodes.items():
-            if int(v.var_type) & int(var_mask):
-                keylist.append(k)
-
-        return keylist
-
     def getKeylistFromImplType(self, ert_impl_type) -> List[str]:
         assert isinstance(ert_impl_type, ErtImplType)
         mylist = []
@@ -511,9 +501,13 @@ class EnsembleConfig:
 
     @property
     def parameters(self) -> List[str]:
-        return self.getKeylistFromVarType(
-            EnkfVarType.PARAMETER + EnkfVarType.EXT_PARAMETER
-        )
+        keylist = []
+        for k, v in self.py_nodes.items():
+            if isinstance(
+                v, (ParameterConfig, ExtParamConfig, GenKwConfig, SurfaceConfig)
+            ):
+                keylist.append(k)
+        return keylist
 
     def __contains__(self, key):
         return key in self.py_nodes
@@ -544,9 +538,6 @@ class EnsembleConfig:
 
     def getUseForwardInit(self, key) -> bool:
         return False if key not in self.parameters else self.py_nodes[key].forward_init
-
-    def get_var_type(self, key) -> EnkfVarType:
-        return self[key].var_type
 
     def get_summary_keys(self) -> List[str]:
         return sorted(self.getKeylistFromImplType(ErtImplType.SUMMARY))

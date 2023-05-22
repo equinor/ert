@@ -1,6 +1,5 @@
 from typing import Dict, List, Tuple, Union
 
-from ert._c_wrappers.enkf.enums.enkf_var_type_enum import EnkfVarType
 from ert._c_wrappers.enkf.enums.ert_impl_type_enum import ErtImplType
 
 
@@ -56,10 +55,6 @@ class ExtParamConfig:
                 )
 
             self._suffix_list.append(suffixes)
-
-    @property
-    def var_type(self):
-        return EnkfVarType.EXT_PARAMETER
 
     def __len__(self):
         return len(self._key_list)

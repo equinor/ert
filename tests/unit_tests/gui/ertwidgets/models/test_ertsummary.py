@@ -14,7 +14,7 @@ def mock_ert(monkeypatch):
         "forward_model_2",
     ]
 
-    ert_mock.ensembleConfig.return_value.getKeylistFromVarType.return_value = [
+    ert_mock.ensembleConfig.return_value.parameters = [
         "param_1",
         "param_2",
     ]
