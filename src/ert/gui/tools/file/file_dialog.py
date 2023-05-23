@@ -1,6 +1,6 @@
 from math import floor
 
-from qtpy.QtCore import QSize, Qt, QThread, Slot
+from qtpy.QtCore import QSize, Qt, QThread
 from qtpy.QtGui import QClipboard, QFontDatabase, QTextCursor, QTextOption
 from qtpy.QtWidgets import (
     QApplication,
@@ -58,11 +58,10 @@ class FileDialog(QDialog):
 
         self.show()
 
-    @Slot()
     def _quit_thread(self):
-        self._file.close()
         self._thread.quit()
         self._thread.wait()
+        self._file.close()
 
     def _calculate_font_based_width(self):
         font_metrics = self._view.fontMetrics()

@@ -16,7 +16,8 @@ class FileUpdateWorker(QObject):
     @Slot()
     def stop(self):
         self._file.close()
-        self._timer.stop()
+        if self._timer is not None:
+            self._timer.stop()
 
     @Slot()
     def setup(self):
