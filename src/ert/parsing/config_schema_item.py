@@ -1,6 +1,6 @@
 import os
 import shutil
-from typing import Any, List, Mapping, Optional, TypeVar, Union
+from typing import List, Mapping, Optional, TypeVar, Union
 
 from pydantic import BaseModel
 
@@ -28,7 +28,7 @@ class SchemaItem(BaseModel):
     # The maximum number of arguments: -1 means no upper limit
     argc_max: int = 1
     # A list of types for the items. Set along with argc_minmax()
-    type_map: List[Optional[Any]] = []
+    type_map: List[Optional[SchemaItemType]] = []
     # A list of item's which must also be set (if this item is set). (can be NULL)
     required_children: List[str] = []
     # children that are required if certain values occur as argument to the item
