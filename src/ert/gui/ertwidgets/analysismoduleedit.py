@@ -1,6 +1,7 @@
+from typing import Literal
+
 from qtpy.QtCore import QMargins, Qt
 from qtpy.QtWidgets import QHBoxLayout, QToolButton, QWidget
-from typing_extensions import Literal
 
 from ert.gui.ertwidgets import ClosableDialog, addHelpToWidget, resourceIcon
 from ert.gui.ertwidgets.analysismodulevariablespanel import AnalysisModuleVariablesPanel
