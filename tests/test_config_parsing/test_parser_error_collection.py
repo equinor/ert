@@ -861,3 +861,22 @@ QUEUE_OPTION LOCAL MAX_RUNNING ert
             match="is negative: 'ert'",
         ),
     )
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_deprecated_kw_errors_from_lark():
+    assert_that_config_leads_to_error(
+        config_file_contents=dedent(
+            """
+NUM_REALIZATIONS  1
+SCHEDULE_PREDICTION_FILE A B C.txt
+
+            """
+        ),
+        expected_error=ExpectedErrorInfo(
+            match="The SCHEDULE_PREDICTION_FILE config KEY has been removed.",
+            line=3,
+            column=1,
+            end_column=25,
+        ),
+    )

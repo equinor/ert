@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import List, Optional
+from typing import List, Optional, Union
 
 from typing_extensions import Self
 
@@ -21,9 +21,11 @@ class ErrorInfo:
     originates_from: Optional[MaybeWithContext] = None
 
     @classmethod
-    def _take(cls, context: MaybeWithContext, attr: str):
+    def _take(cls, context: Union[MaybeWithContext, List[MaybeWithContext]], attr: str):
         if isinstance(context, FileContextToken):
             return context
+        elif isinstance(context, List):
+            return cls._take(context[0], attr)
         elif hasattr(context, attr):
             return getattr(context, attr)
 
