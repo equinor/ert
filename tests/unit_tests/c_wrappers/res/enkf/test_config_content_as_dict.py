@@ -80,7 +80,7 @@ SINGLE_OCCURRENCE_KEY_TYPES = {
     ConfigKeys.NUM_REALIZATIONS: "int",
     ConfigKeys.OBS_CONFIG: "file_path",
     ConfigKeys.QUEUE_SYSTEM: "str",
-    ConfigKeys.RANDOM_SEED: "str",
+    ConfigKeys.RANDOM_SEED: "int",
     ConfigKeys.REFCASE: "file_path",
     ConfigKeys.RUNPATH: "path",
     ConfigKeys.RUNPATH_FILE: "file_path",

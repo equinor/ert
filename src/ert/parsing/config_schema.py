@@ -358,7 +358,7 @@ def init_user_config_schema() -> SchemaItemDict:
         existing_path_keyword(ConfigKeys.DATA_FILE),
         existing_path_keyword(ConfigKeys.GRID),
         path_keyword(ConfigKeys.REFCASE),
-        string_keyword(ConfigKeys.RANDOM_SEED),
+        int_keyword(ConfigKeys.RANDOM_SEED),
         num_realizations_keyword(),
         run_template_keyword(),
         path_keyword(ConfigKeys.RUNPATH),

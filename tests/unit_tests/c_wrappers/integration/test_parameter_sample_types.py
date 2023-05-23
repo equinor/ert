@@ -392,23 +392,7 @@ def test_gen_kw_forward_init(tmpdir, storage, load_forward_init):
             assert df["KW_NAME:MY_KEYWORD"][0] == 1.31
 
 
-@pytest.mark.parametrize(
-    "check_random_seed, expectation",
-    [
-        pytest.param(
-            True,
-            does_not_raise(),
-            id=(
-                "The second initialization we extract the random seed from the first "
-                "case and set that in the second case to make sure the sampling can "
-                "be reproduced"
-            ),
-        ),
-    ],
-)
-def test_initialize_random_seed(
-    tmpdir, storage, caplog, check_random_seed, expectation
-):
+def test_initialize_random_seed(tmpdir, storage, caplog):
     """
     This test initializes a case twice, the first time without a random
     seed.
@@ -438,8 +422,9 @@ def test_initialize_random_seed(
         random_seed = next(
             message for message in caplog.messages if message.startswith("RANDOM_SEED")
         ).split()[1]
-        if check_random_seed:
-            config += f"RANDOM_SEED {random_seed}"
+
+        config += f"RANDOM_SEED {random_seed}"
+
         with open("config_2.ert", mode="w", encoding="utf-8") as fh:
             fh.writelines(config)
         with open("template.txt", mode="w", encoding="utf-8") as fh:
@@ -448,11 +433,10 @@ def test_initialize_random_seed(
             fh.writelines("MY_KEYWORD NORMAL 0 1")
 
         create_runpath(storage, "config_2.ert")
-        with expectation:
-            assert (
-                Path("simulations/realization-0/iter-0/kw.txt").read_text("utf-8")
-                == expected
-            )
+        assert (
+            Path("simulations/realization-0/iter-0/kw.txt").read_text("utf-8")
+            == expected
+        )
 
 
 def test_that_first_three_parameters_sampled_snapshot(tmpdir, storage):

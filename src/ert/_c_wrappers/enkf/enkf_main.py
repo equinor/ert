@@ -6,17 +6,7 @@ import os
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Dict,
-    List,
-    Mapping,
-    Optional,
-    Sequence,
-    Tuple,
-    Union,
-)
+from typing import TYPE_CHECKING, Any, Dict, List, Mapping, Optional, Tuple, Union
 
 import numpy as np
 from jinja2 import Template
@@ -209,7 +199,7 @@ def _generate_parameter_files(
 
 
 def _setup_rng(
-    config_seed: Union[str, None]
+    config_seed: Union[int, None]
 ) -> Tuple[np.random.SeedSequence, np.random.Generator]:
     if config_seed is None:
         seed_seq = np.random.SeedSequence()
@@ -219,11 +209,7 @@ def _setup_rng(
         )
         logger.info(f"RANDOM_SEED {seed_seq.entropy}")
     else:
-        seed: Union[int, Sequence[int]]
-        try:
-            seed = int(config_seed)
-        except ValueError:
-            seed = [ord(x) for x in config_seed]
+        seed = config_seed
         seed_seq = np.random.SeedSequence(seed)
 
     rng = np.random.default_rng(seed_seq)

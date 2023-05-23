@@ -141,7 +141,7 @@ def test_config(minimum_case):
 
 
 @pytest.mark.parametrize(
-    "random_seed", ["0", "1234", "123ABC", "123456789ABCDEFGHIJKLMNOPGRST", "123456"]
+    "random_seed", [0, 1234, 1234567891011121314151617181920, 123456]
 )
 def test_random_seed_initialization_of_rngs(random_seed, tmpdir):
     """
@@ -161,7 +161,7 @@ def test_random_seed_initialization_of_rngs(random_seed, tmpdir):
 
         ert_config = ErtConfig.from_file("config.ert")
         EnKFMain(ert_config)
-        assert ert_config.random_seed == str(random_seed)
+        assert ert_config.random_seed == random_seed
 
 
 @pytest.mark.usefixtures("use_tmpdir")

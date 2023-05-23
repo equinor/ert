@@ -283,7 +283,10 @@ Commonly used keywords
 .. _random_seed:
 .. topic:: RANDOM_SEED
 
-        Set specific seed for reproducibility.
+        A random seed is the initial value used to generate a sequence of pseudorandom numbers.
+        It determines the entire sequence, enabling reproducibility in simulations analyses.
+
+        The RANDOM_SEED keyword is optional and its value must be an integer.
 
 .. _enspath:
 .. topic:: ENSPATH
