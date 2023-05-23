@@ -15,6 +15,7 @@ from ert.gui.ertwidgets import SuggestorMessage
 from ert.gui.main import GUILogHandler, _setup_main_window, run_gui
 from ert.gui.simulation.run_dialog import RunDialog
 from ert.gui.tools.event_viewer import add_gui_log_handler
+from ert.gui.tools.plot.data_type_keys_widget import DataTypeKeysWidget
 from ert.gui.tools.plot.plot_window import PlotWindow
 from ert.services import StorageService
 from ert.shared.plugins.plugin_manager import ErtPluginManager
@@ -299,10 +300,17 @@ def test_that_run_dialog_can_be_closed_after_used_to_open_plots(qtbot, storage):
 
         qtbot.waitUntil(lambda: gui.findChild(PlotWindow) is not None)
 
-        # Cycle through showing all the tabs
+        # Cycle through showing all the tabs for all keys
         plot_window = gui.findChild(PlotWindow)
-        for tab in plot_window._plot_widgets:
-            plot_window._central_tab.setCurrentWidget(tab)
+        data_types = plot_window.findChild(DataTypeKeysWidget).data_type_keys_widget
+        for i in range(data_types.model().rowCount()):
+            qtbot.mouseClick(
+                data_types,
+                Qt.LeftButton,
+                pos=data_types.visualRect(data_types.model().index(i, 0)).center(),
+            )
+            for tab in plot_window._plot_widgets:
+                plot_window._central_tab.setCurrentWidget(tab)
 
 
 def test_help_buttons_in_suggester_dialog(tmp_path, qtbot):
