@@ -6,10 +6,11 @@ from ert._c_wrappers.config import (
     ConfigParser,
     ContentItem,
     ContentNode,
-    ContentTypeEnum,
     SchemaItem,
     UnrecognizedEnum,
 )
+from ert._c_wrappers.config.content_type_enum import ContentTypeEnum
+from ert.parsing import SchemaItemType
 
 
 def test_item_types(tmp_path):
@@ -19,11 +20,11 @@ def test_item_types(tmp_path):
     conf = ConfigParser()
     assert len(conf) == 0
     schema_item = conf.add("TYPE_ITEM", False)
-    schema_item.iset_type(0, ContentTypeEnum.CONFIG_INT)
-    schema_item.iset_type(1, ContentTypeEnum.CONFIG_FLOAT)
-    schema_item.iset_type(2, ContentTypeEnum.CONFIG_BOOL)
-    schema_item.iset_type(3, ContentTypeEnum.CONFIG_STRING)
-    schema_item.iset_type(4, ContentTypeEnum.CONFIG_PATH)
+    schema_item.iset_type(0, SchemaItemType.INT)
+    schema_item.iset_type(1, SchemaItemType.FLOAT)
+    schema_item.iset_type(2, SchemaItemType.BOOL)
+    schema_item.iset_type(3, SchemaItemType.STRING)
+    schema_item.iset_type(4, SchemaItemType.PATH)
     assert len(conf) == 1
     assert "TYPE_XX" not in conf
     assert "TYPE_ITEM" in conf
@@ -100,7 +101,7 @@ FIELD    RV            DYNAMIC   MIN:0.0034"""
 @pytest.mark.usefixtures("use_tmpdir")
 def test_parse_invalid():
     conf = ConfigParser()
-    conf.add("INT", value_type=ContentTypeEnum.CONFIG_INT)
+    conf.add("INT", value_type=SchemaItemType.INT)
     with open("config", "w", encoding="utf-8") as fileH:
         fileH.write("INT xx\n")
 
@@ -115,7 +116,7 @@ def test_parse_invalid():
 @pytest.mark.usefixtures("use_tmpdir")
 def test_parse_deprecated():
     conf = ConfigParser()
-    item = conf.add("INT", value_type=ContentTypeEnum.CONFIG_INT)
+    item = conf.add("INT", value_type=SchemaItemType.INT)
     msg = "ITEM INT IS DEPRECATED"
     item.setDeprecated(msg)
     with open("config", "w", encoding="utf-8") as fileH:
@@ -133,7 +134,7 @@ def test_parse_deprecated():
 def test_parse_dotdot_relative(monkeypatch):
     conf = ConfigParser()
     schema_item = conf.add("EXECUTABLE", False)
-    schema_item.iset_type(0, ContentTypeEnum.CONFIG_PATH)
+    schema_item.iset_type(0, SchemaItemType.PATH)
 
     os.makedirs("cwd/jobs")
     os.makedirs("eclipse/bin")
@@ -157,10 +158,10 @@ def test_parser_content():
     conf = ConfigParser()
     conf.add("KEY2", False)
     schema_item = conf.add("KEY", False)
-    schema_item.iset_type(2, ContentTypeEnum.CONFIG_INT)
-    schema_item.iset_type(3, ContentTypeEnum.CONFIG_BOOL)
-    schema_item.iset_type(4, ContentTypeEnum.CONFIG_FLOAT)
-    schema_item.iset_type(5, ContentTypeEnum.CONFIG_PATH)
+    schema_item.iset_type(2, SchemaItemType.INT)
+    schema_item.iset_type(3, SchemaItemType.BOOL)
+    schema_item.iset_type(4, SchemaItemType.FLOAT)
+    schema_item.iset_type(5, SchemaItemType.PATH)
     schema_item = conf.add("NOT_IN_CONTENT", False)
 
     with open("config", "w", encoding="utf-8") as fileH:
@@ -241,9 +242,9 @@ def test_parser_content():
 def test_schema():
     schema_item = SchemaItem("TestItem")
     assert isinstance(schema_item, SchemaItem)
-    assert schema_item.iget_type(6) == ContentTypeEnum.CONFIG_STRING
-    schema_item.iset_type(0, ContentTypeEnum.CONFIG_INT)
-    assert schema_item.iget_type(0) == ContentTypeEnum.CONFIG_INT
+    assert schema_item.iget_type(6) == SchemaItemType.STRING
+    schema_item.iset_type(0, SchemaItemType.INT)
+    assert schema_item.iget_type(0) == SchemaItemType.INT
     schema_item.set_argc_minmax(3, 6)
 
     del schema_item
