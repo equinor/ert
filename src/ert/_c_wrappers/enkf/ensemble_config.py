@@ -19,7 +19,6 @@ from ert._c_wrappers.enkf.config.parameter_config import ParameterConfig
 from ert._c_wrappers.enkf.config.summary_config import SummaryConfig
 from ert._c_wrappers.enkf.config.surface_config import SurfaceConfig
 from ert._c_wrappers.enkf.config_keys import ConfigKeys
-from ert._c_wrappers.enkf.enums import ErtImplType
 from ert.parsing import ConfigValidationError, ConfigWarning
 from ert.parsing.error_info import ErrorInfo
 from ert.storage.field_utils.field_utils import Shape, get_shape
@@ -365,19 +364,18 @@ class EnsembleConfig:
 
         return ens_config
 
-    def _node_info(self, node: str) -> str:
-        impl_type = ErtImplType.from_string(node)
-        key_list = self.getKeylistFromImplType(impl_type)
-        return f"{node}: " f"{[self.getNode(key) for key in key_list]}, "
+    def _node_info(self, object_type: object) -> str:
+        key_list = self.getKeylistFromImplType(object_type)
+        return f"{object_type}: " f"{[self.getNode(key) for key in key_list]}, "
 
     def __repr__(self):
         return (
             "EnsembleConfig(config_dict={"
-            + self._node_info(ConfigKeys.GEN_DATA)
-            + self._node_info(ConfigKeys.GEN_KW)
-            + self._node_info(ConfigKeys.SURFACE_KEY)
-            + self._node_info(ConfigKeys.SUMMARY)
-            + self._node_info(ConfigKeys.FIELD_KEY)
+            + self._node_info(GenDataConfig)
+            + self._node_info(GenKwConfig)
+            + self._node_info(SurfaceConfig)
+            + self._node_info(SummaryConfig)
+            + self._node_info(Field)
             + f"{ConfigKeys.GRID}: {self._grid_file},"
             + f"{ConfigKeys.REFCASE}: {self._refcase_file}"
             + "}"
@@ -475,21 +473,20 @@ class EnsembleConfig:
         self.check_unique_node(config_node.getKey())
         self.py_nodes[config_node.name] = config_node
 
-    def getKeylistFromImplType(self, ert_impl_type) -> List[str]:
-        assert isinstance(ert_impl_type, ErtImplType)
+    def getKeylistFromImplType(self, node_type: object):
         mylist = []
 
         for v in self.py_nodes:
-            if self.getNode(v).getImplementationType() == ert_impl_type:
+            if isinstance(self.getNode(v), node_type):
                 mylist.append(self.getNode(v).getKey())
 
         return mylist
 
     def get_keylist_gen_kw(self) -> List[str]:
-        return self.getKeylistFromImplType(ErtImplType.GEN_KW)
+        return self.getKeylistFromImplType(GenKwConfig)
 
     def get_keylist_gen_data(self) -> List[str]:
-        return self.getKeylistFromImplType(ErtImplType.GEN_DATA)
+        return self.getKeylistFromImplType(GenDataConfig)
 
     @property
     def grid_file(self) -> Optional[str]:
@@ -540,7 +537,7 @@ class EnsembleConfig:
         return False if key not in self.parameters else self.py_nodes[key].forward_init
 
     def get_summary_keys(self) -> List[str]:
-        return sorted(self.getKeylistFromImplType(ErtImplType.SUMMARY))
+        return sorted(self.getKeylistFromImplType(SummaryConfig))
 
     def get_keyword_model_config(self, key: str) -> GenKwConfig:
         return self[key]

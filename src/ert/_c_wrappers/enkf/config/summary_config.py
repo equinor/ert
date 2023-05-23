@@ -1,7 +1,5 @@
 from typing import List
 
-from ert._c_wrappers.enkf.enums.ert_impl_type_enum import ErtImplType
-
 
 class SummaryConfig:
     def __init__(self, key):
@@ -14,9 +12,6 @@ class SummaryConfig:
 
     def get_observation_keys(self) -> List[str]:
         return self._observation_list
-
-    def getImplementationType(self) -> ErtImplType:
-        return ErtImplType.SUMMARY
 
     def getKey(self):
         return self.name

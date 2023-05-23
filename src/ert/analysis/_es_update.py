@@ -208,8 +208,7 @@ def _save_temporary_storage_to_disk(
                 target_fs.save_field(key, realization, matrix[:, i])
         else:
             raise NotImplementedError(
-                f"{ensemble_config.getNode(key).getImplementationType()}"
-                " is not supported"
+                f"{type(ensemble_config.getNode(key))}" " is not supported"
             )
 
 
@@ -239,7 +238,7 @@ def _create_temporary_parameter_storage(
             t_field += time.perf_counter() - t
         else:
             raise NotImplementedError(
-                f"{config_node.getImplementationType()} is not supported"
+                f"{type(ensemble_config.getNode(key))} is not supported"
             )
         temporary_storage[key] = matrix
         _logger.debug(

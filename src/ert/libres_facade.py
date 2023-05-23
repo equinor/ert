@@ -196,10 +196,6 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
         observation = self._enkf_main.getObservations()[key]
         return observation.getImplementationType().name  # type: ignore
 
-    def get_impl_type_name_for_ensemble_config_node(self, name: str) -> str:
-        node = self._enkf_main.ensembleConfig().getNode(name)
-        return node.getImplementationType().name  # type: ignore
-
     def get_data_key_for_obs_key(self, observation_key: str) -> str:
         return self._enkf_main.getObservations()[observation_key].getDataKey()
 

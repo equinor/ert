@@ -9,7 +9,8 @@ from ecl.summary import EclSumVarType
 from ecl.util.util import CTime
 
 from ert import _clib
-from ert._c_wrappers.enkf.enums import EnkfObservationImplementationType, ErtImplType
+from ert._c_wrappers.enkf.config.gen_data_config import GenDataConfig
+from ert._c_wrappers.enkf.enums import EnkfObservationImplementationType
 from ert._c_wrappers.enkf.observations import ObsVector
 from ert._c_wrappers.enkf.observations.gen_observation import GenObservation
 from ert._c_wrappers.enkf.observations.summary_observation import SummaryObservation
@@ -351,10 +352,10 @@ class EnkfObs:
                 raise ValueError(
                     f"Problem with date in summary observation {obs_key}: " + str(err)
                 ) from err
-            if config_node.getImplementationType() != ErtImplType.GEN_DATA:
+            if not isinstance(config_node, GenDataConfig):
                 warnings.warn(
                     f"{state_kw} has implementation type:"
-                    f"'{config_node.getImplementationType()}' - "
+                    f"'{type(config_node)}' - "
                     f"expected:'GEN_DATA' in observation:{obs_key}."
                     "The observation will be ignored",
                     category=ConfigWarning,

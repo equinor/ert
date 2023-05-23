@@ -1,6 +1,6 @@
 import pytest
 
-from ert._c_wrappers.enkf import ErtImplType, SummaryConfig
+from ert._c_wrappers.enkf import SummaryConfig
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -10,4 +10,3 @@ def test_summary_config():
     assert summary_config.get_observation_keys() == []
     summary_config.update_observation_keys(obs_list)
     assert summary_config.get_observation_keys() == sorted(obs_list)
-    assert summary_config.getImplementationType() == ErtImplType.SUMMARY
