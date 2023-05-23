@@ -15,6 +15,18 @@ class SchemaItemDict(dict):
     ) -> None:
         errors: List[ErrorInfo] = []
 
+        deprecated_keyword_usages = [
+            schema_item
+            for schema_item in self.values()
+            if schema_item.deprecated and schema_item.kw in config_dict
+        ]
+        for schema_item in deprecated_keyword_usages:
+            errors.append(
+                ErrorInfo(
+                    filename=filename, message=schema_item.deprecate_msg
+                ).set_context_keyword(config_dict[schema_item.kw])
+            )
+
         # schema.values()
         # can return duplicate values due to aliases
         # so we need to run this keyed by the keyword itself

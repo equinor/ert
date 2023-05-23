@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import List, Optional
+from typing import List, Optional, Union
 
 from typing_extensions import Self
 
@@ -21,7 +21,7 @@ class ErrorInfo:
     originates_from: Optional[MaybeWithContext] = None
 
     @classmethod
-    def _take(cls, context: MaybeWithContext, attr: str):
+    def _take(cls, context: MaybeWithContext, attr: str) -> Optional[FileContextToken]:
         if isinstance(context, FileContextToken):
             return context
         elif hasattr(context, attr):
@@ -33,8 +33,20 @@ class ErrorInfo:
         self._attach_to_context(self._take(context, "token"))
         return self
 
-    def set_context_keyword(self, context: MaybeWithContext) -> Self:
-        self._attach_to_context(self._take(context, "keyword_token"))
+    def set_context_keyword(
+        self, context: Union[MaybeWithContext, List[MaybeWithContext]]
+    ) -> Self:
+        if isinstance(context, List):
+            # If it is a list, each item is an argument
+            # pertaining to the same keyword token written in an ert config.
+            # Thus, it is ok to take the first item only.
+            first_item = context[0]
+            keyword_token = self._take(first_item, "keyword_token")
+
+            self._attach_to_context(keyword_token)
+        else:
+            self._attach_to_context(self._take(context, "keyword_token"))
+
         return self
 
     def set_context_list(self, context_list: List[MaybeWithContext]) -> Self:
