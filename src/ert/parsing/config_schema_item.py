@@ -163,6 +163,15 @@ class SchemaItem(BaseModel):
                     ).set_context(token)
                 )
 
+            if os.path.isdir(absolute_path):
+                raise ConfigValidationError.from_info(
+                    ErrorInfo(
+                        message=f"Expected executable file, "
+                        f"but {token.value!r} is a directory.",
+                        filename=token.filename,
+                    ).set_context(token)
+                )
+
             if not os.access(absolute_path, os.X_OK):
                 context = (
                     f"{token.value!r} which was resolved to {absolute_path!r}"

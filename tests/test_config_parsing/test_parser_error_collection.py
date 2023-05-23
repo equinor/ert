@@ -880,3 +880,23 @@ SCHEDULE_PREDICTION_FILE A B C.txt
             end_column=25,
         ),
     )
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_executable_directory_errors():
+    os.mkdir("the_dir")
+    assert_that_config_leads_to_error(
+        config_file_contents=dedent(
+            """
+NUM_REALIZATIONS  1
+JOB_SCRIPT the_dir
+
+            """
+        ),
+        expected_error=ExpectedErrorInfo(
+            match="is a directory",
+            line=3,
+            column=12,
+            end_column=19,
+        ),
+    )
