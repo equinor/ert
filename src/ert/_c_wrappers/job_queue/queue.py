@@ -389,7 +389,7 @@ class JobQueue(BaseCClass):
                     await asyncio.wait_for(websocket.send(to_json(events[0])), 60)
                     events.popleft()
                 return
-            except (ConnectionClosedError) as e:
+            except ConnectionClosedError:
                 continue
 
     async def execute_queue_via_websockets(  # pylint: disable=too-many-arguments
