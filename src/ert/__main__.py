@@ -192,16 +192,6 @@ def valid_port_range(user_input: str) -> range:
     return range(port_a, port_b + 1)
 
 
-def range_limited_int(user_input: str) -> int:
-    try:
-        i = int(user_input)
-    except ValueError:
-        raise ArgumentTypeError("Must be a int")
-    if 0 < i < 100:
-        return i
-    raise ArgumentTypeError("Range must be in range 1 - 99")
-
-
 def run_gui_wrapper(args: Namespace, ert_plugin_manager: ErtPluginManager) -> None:
     # pylint: disable=import-outside-toplevel
     from ert.gui.main import run_gui
