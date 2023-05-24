@@ -65,3 +65,8 @@ def test_that_all_snake_oil_visualisations_matches_snapshot(
                                 == tab._plotter.dimensionality
                             )
                             return tab._figure
+                        else:
+                            assert (
+                                selected_key["dimensionality"]
+                                != tab._plotter.dimensionality
+                            )
