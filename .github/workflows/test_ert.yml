@@ -44,7 +44,7 @@ jobs:
     - name: Test GUI
       if: inputs.test-type == 'gui-test'
       run: |
-        pytest tests -sv --hypothesis-profile=ci -m "requires_window_manager" --benchmark-disable
+        pytest tests -sv --mpl --hypothesis-profile=ci -m "requires_window_manager" --benchmark-disable
 
     - name: Unit Test
       if: inputs.test-type == 'unit-tests'

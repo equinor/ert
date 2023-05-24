@@ -45,7 +45,7 @@ jobs:
       if: matrix.test-type == 'gui-tests'
       timeout-minutes: 10
       run: |
-        pytest tests/ --cov=ert --hypothesis-profile=ci -m "requires_window_manager" --cov-report=xml:cov.xml
+        pytest tests/ --cov=ert --mpl --hypothesis-profile=ci -m "requires_window_manager" --cov-report=xml:cov.xml
 
     - name: Test Integration
       if: matrix.test-type == 'integration-tests'
