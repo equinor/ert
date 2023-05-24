@@ -54,6 +54,11 @@ jobs:
 
     - name: Upload python coverage to Codecov
       uses: codecov/codecov-action@v3
+      # codecov upload endpoint fails intermittently, but works
+      # fine when retried
+      max_attempts: 3
+      retry_on: error
+      retry_wait_seconds: 10
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
         fail_ci_if_error: true
