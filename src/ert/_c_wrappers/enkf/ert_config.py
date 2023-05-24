@@ -152,7 +152,7 @@ class ErtConfig:
             ensemble_config=ensemble_config,
             ens_path=config_dict.get(ConfigKeys.ENSPATH, ErtConfig.DEFAULT_ENSPATH),
             env_vars=env_vars,
-            random_seed=config_dict.get(ConfigKeys.RANDOM_SEED, None),
+            random_seed=config_dict.get(ConfigKeys.RANDOM_SEED),
             analysis_config=AnalysisConfig.from_dict(config_dict=config_dict),
             queue_config=QueueConfig.from_dict(config_dict),
             workflow_jobs=workflow_jobs,

@@ -225,3 +225,45 @@ def test_ext_job_stdout_stderr_null_results_in_none():
     assert ext_job.stdin_file is None
     assert ext_job.stdout_file is None
     assert ext_job.stderr_file is None
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_arglist_is_parsed_correctly():
+    with open("exec", "w", encoding="utf-8") as f:
+        pass
+
+    os.chmod("exec", stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
+
+    with open("CONFIG", "w", encoding="utf-8") as f:
+        f.write(
+            dedent(
+                """
+        EXECUTABLE exec
+        ARGLIST <A> B <C> <D> <E>
+        """
+            )
+        )
+
+    ext_job = ExtJob.from_config_file("CONFIG")
+
+    assert ext_job.arglist == ["<A>", "B", "<C>", "<D>", "<E>"]
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_default_env_is_set():
+    with open("exec", "w", encoding="utf-8") as f:
+        pass
+
+    os.chmod("exec", stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
+
+    with open("CONFIG", "w", encoding="utf-8") as f:
+        f.write(
+            dedent(
+                """
+        EXECUTABLE exec
+        """
+            )
+        )
+
+    ext_job = ExtJob.from_config_file("CONFIG")
+    assert ext_job.environment == ext_job.default_env

@@ -111,7 +111,6 @@ def arglist_keyword() -> SchemaItem:
         kw=ExtJobKeys.ARGLIST,
         argc_min=1,
         argc_max=-1,
-        join_after=1,
     )
 
 

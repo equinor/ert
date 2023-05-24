@@ -18,8 +18,8 @@ from ert.parsing import (
     lark_parse,
 )
 
-from .parse_arg_types_list import parse_arg_types_list
 from ...parsing.error_info import ErrorInfo
+from .parse_arg_types_list import parse_arg_types_list
 
 logger = logging.getLogger(__name__)
 
@@ -207,6 +207,8 @@ class ExtJob:
             environment = {k: v for [k, v] in content_dict.get("ENV", [])}
             exec_env = {k: v for [k, v] in content_dict.get("EXEC_ENV", [])}
             default_mapping = {k: v for [k, v] in content_dict.get("DEFAULT", [])}
+
+            environment.update(cls.default_env)
 
             for handle in ["STDOUT", "STDERR", "STDIN"]:
                 if content_dict.get(handle) == "null":
