@@ -6,8 +6,10 @@ import warnings
 from pathlib import Path
 from typing import Dict, List, Optional, Union
 
+import numpy as np
 import xtgeo
 from ecl.summary import EclSum
+from numpy.random import SeedSequence
 
 from ert import _clib
 from ert._c_wrappers.config.rangestring import rangestring_to_list
@@ -119,6 +121,24 @@ def _str_to_bool(txt: str) -> bool:
         return False
 
 
+def _seed_sequence(seed: Optional[str]) -> SeedSequence:
+    # Set up RNG
+    if seed is None:
+        seed = np.random.SeedSequence()
+        logger.info(
+            "To repeat this experiment, "
+            "add the following random seed to your config file:"
+        )
+        logger.info(f"RANDOM_SEED {seed.entropy}")
+        return seed
+
+    try:
+        seed = int(seed)
+    except ValueError:
+        seed = [ord(x) for x in seed]
+    return np.random.SeedSequence(seed)
+
+
 class EnsembleConfig:
     @staticmethod
     def _load_refcase(refcase_file: Optional[str]) -> Optional[EclSum]:
@@ -159,6 +179,7 @@ class EnsembleConfig:
         surface_list: Optional[List] = None,
         summary_list: Optional[List] = None,
         field_list=None,
+        random_seed: Optional[str] = None,
     ):
         gen_kw_list = [] if gen_kw_list is None else gen_kw_list
         gen_data_list = [] if gen_data_list is None else gen_data_list
@@ -171,6 +192,7 @@ class EnsembleConfig:
         self.refcase: Optional[EclSum] = self._load_refcase(ref_case_file)
         self.py_nodes = {}
         self._user_summary_keys: List[str] = []
+        self.random_seed = _seed_sequence(random_seed)
 
         for gene_data in gen_data_list:
             self.addNode(self.gen_data_node(gene_data))
@@ -189,17 +211,20 @@ class EnsembleConfig:
                 )
 
             options = _option_dict(gen_kw, 4)
-            forward_init_file = options.get(ConfigKeys.INIT_FILES, "")
-            if forward_init_file:
-                forward_init_file = _get_abs_path(forward_init_file)
+            forward_init = _str_to_bool(options.get(ConfigKeys.FORWARD_INIT, "FALSE"))
+            init_file = options.get(ConfigKeys.INIT_FILES, None)
+            if init_file is not None:
+                init_file = os.path.abspath(init_file)
 
             kw_node = GenKwConfig(
-                key=gen_kw_key,
+                name=gen_kw_key,
+                forward_init=forward_init,
                 template_file=_get_abs_path(gen_kw[1]),
-                output_file=gen_kw[2],
-                forward_init_file=forward_init_file,
                 parameter_file=_get_abs_path(gen_kw[3]),
+                output_file=gen_kw[2],
+                forward_init_file=init_file,
                 tag_fmt=tag_format,
+                random_seed=self.random_seed,
             )
 
             self._check_config_node(kw_node)
@@ -350,6 +375,7 @@ class EnsembleConfig:
         surface_list = config_dict.get(ConfigKeys.SURFACE_KEY, [])
         summary_list = config_dict.get(ConfigKeys.SUMMARY, [])
         field_list = config_dict.get(ConfigKeys.FIELD_KEY, [])
+        random_seed = config_dict.get(ConfigKeys.RANDOM_SEED, None)
 
         ens_config = cls(
             grid_file=grid_file_path,
@@ -360,6 +386,7 @@ class EnsembleConfig:
             surface_list=surface_list,
             summary_list=summary_list,
             field_list=field_list,
+            random_seed=random_seed,
         )
 
         return ens_config
@@ -383,7 +410,7 @@ class EnsembleConfig:
 
     def __getitem__(
         self, key: str
-    ) -> Union[ParameterConfig, GenKwConfig, ResponseConfig, ExtParamConfig,]:
+    ) -> Union[ParameterConfig,EnsembleConfig,]:
         if key in self.py_nodes:
             return self.py_nodes[key]
         else:
@@ -399,7 +426,7 @@ class EnsembleConfig:
 
     def getNode(
         self, key: str
-    ) -> Union[ParameterConfig, GenKwConfig, ResponseConfig, ExtParamConfig,]:
+    ) -> Union[ParameterConfig, EnsembleConfig,]:
         return self[key]
 
     def add_summary_full(self, key, refcase) -> SummaryConfig:
@@ -412,10 +439,11 @@ class EnsembleConfig:
                 summary_config_node = SummaryConfig(k)
                 self.addNode(summary_config_node)
 
-    def _check_config_node(self, node: GenKwConfig):
+    @staticmethod
+    def _check_config_node(node: GenKwConfig):
         errors = []
 
-        def _check_non_negative_parameter(param: str) -> Optional[str]:
+        def _check_non_negative_parameter(param: str):
             key = prior["key"]
             dist = prior["function"]
             param_val = prior["parameters"][param]
@@ -485,19 +513,13 @@ class EnsembleConfig:
 
     @property
     def parameters(self) -> List[str]:
-        keylist = []
-        for k, v in self.py_nodes.items():
-            if isinstance(
-                v, (ParameterConfig, ExtParamConfig, GenKwConfig, SurfaceConfig)
-            ):
-                keylist.append(k)
-        return keylist
+        return self.getKeylistFromImplType(ParameterConfig)
 
     def __contains__(self, key):
         return key in self.py_nodes
 
     def get_node_keylist(self) -> List[str]:
-        return set(self.py_nodes.keys())
+        return list(set(self.py_nodes.keys()))
 
     def __eq__(self, other):
         self_param_list = self.get_node_keylist()

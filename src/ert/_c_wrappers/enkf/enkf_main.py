@@ -6,7 +6,7 @@ import os
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, List, Mapping, Optional, Sequence, Union
+from typing import TYPE_CHECKING, Any, Dict, List, Mapping, Optional, Union
 
 import numpy as np
 from jinja2 import Template
@@ -162,16 +162,9 @@ def _generate_parameter_files(
     for key in ens_config.parameters:
         node = ens_config[key]
 
-        if key in ens_config.get_keylist_gen_kw():
-            if isinstance(node, GenKwConfig):
-                gen_kw_dict = _generate_gen_kw_parameter_file(
-                    fs,
-                    iens,
-                    node,
-                    node.output_file,
-                    Path(run_path),
-                )
-                exports.update(gen_kw_dict)
+        if isinstance(node, GenKwConfig):
+            gen_kw_dict = node.save(Path(run_path), iens, fs)
+            exports.update(gen_kw_dict)
             continue
 
         if isinstance(node, ExtParamConfig):
@@ -210,24 +203,8 @@ class EnKFMain:
             substitute=self.get_context().substitute_real_iter,
         )
 
-        # Set up RNG
-        config_seed = self.resConfig().random_seed
-        if config_seed is None:
-            seed_seq = np.random.SeedSequence()
-            logger.info(
-                "To repeat this experiment, "
-                "add the following random seed to your config file:"
-            )
-            logger.info(f"RANDOM_SEED {seed_seq.entropy}")
-        else:
-            seed: Union[int, Sequence[int]]
-            try:
-                seed = int(config_seed)
-            except ValueError:
-                seed = [ord(x) for x in config_seed]
-            seed_seq = np.random.SeedSequence(seed)
-        self._global_seed = seed_seq
-        self._shared_rng = np.random.default_rng(seed_seq)
+        self._global_seed = self.ert_config.ensemble_config.random_seed
+        self._shared_rng = np.random.default_rng(self._global_seed)
 
     @property
     def update_configuration(self) -> UpdateConfiguration:
@@ -368,40 +345,11 @@ class EnKFMain:
             config_node = self.ensembleConfig().getNode(parameter)
             if self.ensembleConfig().getUseForwardInit(parameter):
                 continue
+            if isinstance(config_node, ExtParamConfig):
+                continue
             if isinstance(config_node, ParameterConfig):
                 for _, realization_nr in enumerate(active_realizations):
                     config_node.load(Path(), realization_nr, ensemble)
-            elif isinstance(config_node, GenKwConfig):
-                keys = list(config_node)
-                init_file = config_node.forward_init_file
-
-                if init_file:
-                    logging.info(
-                        f"Reading from init file {init_file}" + f" for {parameter}"
-                    )
-                    parameter_values = config_node.values_from_files(
-                        active_realizations,
-                        init_file,
-                        keys,
-                    )
-                else:
-                    logging.info(f"Sampling parameter {parameter}")
-                    parameter_values = config_node.sample_values(
-                        parameter,
-                        keys,
-                        str(self._global_seed.entropy),
-                        active_realizations,
-                        self.getEnsembleSize(),
-                    )
-
-                ensemble.save_gen_kw(
-                    parameter_name=parameter,
-                    parameter_keys=keys,
-                    realizations=active_realizations,
-                    data=parameter_values,
-                )
-            elif isinstance(config_node, ExtParamConfig):
-                pass
             else:
                 raise NotImplementedError(f"{type(config_node)} is not supported")
         for realization_nr in active_realizations:

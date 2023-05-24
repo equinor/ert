@@ -26,15 +26,38 @@ def test_gen_kw_config():
     template_file = "template.txt"
     parameter_file = "parameters.txt"
     parameter_file_comments = "parameters_with_comments.txt"
-    out_file = "out.txt"
     with pytest.raises(ConfigValidationError):
-        conf = GenKwConfig("KEY", template_file, out_file, "does_not_exist")
+        GenKwConfig(
+            name="KEY",
+            forward_init=False,
+            template_file=template_file,
+            parameter_file="does_not_exist.txt",
+            output_file="kw.txt",
+        )
 
     with pytest.raises(ConfigValidationError):
-        conf = GenKwConfig("Key", "does_not_exist", out_file, parameter_file)
+        GenKwConfig(
+            name="KEY",
+            forward_init=False,
+            template_file=template_file,
+            parameter_file="does_not_exist.txt",
+            output_file="kw.txt",
+        )
 
-    conf = GenKwConfig("KEY", template_file, out_file, parameter_file)
-    conf = GenKwConfig("KEY", template_file, out_file, parameter_file_comments)
+    GenKwConfig(
+        name="KEY",
+        forward_init=False,
+        template_file=template_file,
+        parameter_file=parameter_file,
+        output_file="kw.txt",
+    )
+    conf = GenKwConfig(
+        name="KEY",
+        forward_init=False,
+        template_file=template_file,
+        parameter_file=parameter_file_comments,
+        output_file="kw.txt",
+    )
     assert len(conf) == 3
 
 
@@ -58,7 +81,13 @@ def test_gen_kw_config_get_priors():
         f.write("KEY9  LOGUNIF 0 1\n")
         f.write("KEY10  CONST 10\n")
 
-    conf = GenKwConfig("KEY", template_file, "out_file", parameter_file)
+    conf = GenKwConfig(
+        name="KW_NAME",
+        forward_init=False,
+        template_file=template_file,
+        parameter_file=parameter_file,
+        output_file="param.txt",
+    )
     priors = conf.get_priors()
     assert len(conf) == 10
 
@@ -380,12 +409,44 @@ def test_gen_kw_objects_equal(tmpdir):
         ert = EnKFMain(ert_config)
 
         g1 = ert.ensembleConfig()["KW_NAME"]
-        g2 = GenKwConfig("KW_NAME", "template.txt", "out.txt", "prior.txt")
-        g3 = GenKwConfig("KW_NAME_2", "template.txt", "out.txt", "prior.txt")
-        g4 = GenKwConfig("KW_NAME", "empty.txt", "out.txt", "prior.txt")
-        g5 = GenKwConfig("KW_NAME", "template.txt", "out.txt", "empty.txt")
+        g2 = GenKwConfig(
+            name="KW_NAME",
+            forward_init=False,
+            template_file="template.txt",
+            parameter_file="prior.txt",
+            output_file="kw.txt",
+        )
+        g3 = GenKwConfig(
+            name="KW_NAME2",
+            forward_init=False,
+            template_file="template.txt",
+            parameter_file="prior.txt",
+            output_file="kw.txt",
+        )
+        g4 = GenKwConfig(
+            name="KW_NAME",
+            forward_init=False,
+            template_file="empty.txt",
+            parameter_file="prior.txt",
+            output_file="kw.txt",
+        )
+        g5 = GenKwConfig(
+            name="KW_NAME",
+            forward_init=False,
+            template_file="template.txt",
+            parameter_file="empty.txt",
+            output_file="kw.txt",
+        )
+        g6 = GenKwConfig(
+            name="KW_NAME",
+            forward_init=False,
+            template_file="template.txt",
+            parameter_file="prior.txt",
+            output_file="empty.txt",
+        )
         assert g1 == g2
         assert g1 != g3
         assert g1 != g4
         assert g1 != g5
+        assert g1 != g6
         assert g1.getKeyWords() == ["MY_KEYWORD"]
