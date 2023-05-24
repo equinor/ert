@@ -594,25 +594,22 @@ class LocalEnsembleAccessor(LocalEnsembleReader):
         self,
         parameter_name: str,
         parameter_keys: List[str],
-        realizations: List[int],
+        realization: int,
         data: npt.NDArray[np.double],
     ) -> None:
-        for index, realization in enumerate(realizations):
-            ds = xr.Dataset(
-                {parameter_name: ((f"{parameter_name}_keys"), data[:, index])},
-                coords={f"{parameter_name}_keys": parameter_keys},
-            )
-            output_path = self.mount_point / f"realization-{realization}"
-            Path.mkdir(output_path, exist_ok=True)
-            mode: Literal["a", "w"] = (
-                "a" if Path.exists(output_path / "gen-kw.nc") else "w"
-            )
-            ds.to_netcdf(output_path / "gen-kw.nc", mode=mode, engine="scipy")
-            self.update_realization_state(
-                realization,
-                [RealizationStateEnum.STATE_UNDEFINED],
-                RealizationStateEnum.STATE_INITIALIZED,
-            )
+        ds = xr.Dataset(
+            {parameter_name: ((f"{parameter_name}_keys"), data)},
+            coords={f"{parameter_name}_keys": parameter_keys},
+        )
+        output_path = self.mount_point / f"realization-{realization}"
+        Path.mkdir(output_path, exist_ok=True)
+        mode: Literal["a", "w"] = "a" if Path.exists(output_path / "gen-kw.nc") else "w"
+        ds.to_netcdf(output_path / "gen-kw.nc", mode=mode, engine="scipy")
+        self.update_realization_state(
+            realization,
+            [RealizationStateEnum.STATE_UNDEFINED],
+            RealizationStateEnum.STATE_INITIALIZED,
+        )
 
     def save_summary_data(
         self,

@@ -191,25 +191,16 @@ def _save_temporary_storage_to_disk(
 ) -> None:
     for key, matrix in temporary_storage.items():
         config_node = ensemble_config.getNode(key)
-
-        if isinstance(config_node, GenKwConfig):
-            parameter_keys = list(ensemble_config.get_keyword_model_config(key))
-            target_fs.save_gen_kw(
-                key,
-                parameter_keys,
-                iens_active_index,
-                matrix,
-            )
-        elif isinstance(config_node, SurfaceConfig):
-            for i, realization in enumerate(iens_active_index):
+        for i, realization in enumerate(iens_active_index):
+            if isinstance(config_node, GenKwConfig):
+                parameter_keys = list(ensemble_config.get_keyword_model_config(key))
+                target_fs.save_gen_kw(key, parameter_keys, realization, matrix[:, i])
+            elif isinstance(config_node, SurfaceConfig):
                 target_fs.save_surface_data(key, realization, matrix[:, i])
-        elif isinstance(config_node, Field):
-            for i, realization in enumerate(iens_active_index):
+            elif isinstance(config_node, Field):
                 target_fs.save_field(key, realization, matrix[:, i])
-        else:
-            raise NotImplementedError(
-                f"{type(ensemble_config.getNode(key))}" " is not supported"
-            )
+            else:
+                raise NotImplementedError(f"{type(config_node)} is not supported" )
 
 
 def _create_temporary_parameter_storage(
@@ -238,7 +229,7 @@ def _create_temporary_parameter_storage(
             t_field += time.perf_counter() - t
         else:
             raise NotImplementedError(
-                f"{type(ensemble_config.getNode(key))} is not supported"
+                f"{type(config_node)} is not supported"
             )
         temporary_storage[key] = matrix
         _logger.debug(

@@ -1,17 +1,25 @@
 from __future__ import annotations
 
+import logging
 import math
 import os
+from dataclasses import dataclass
 from hashlib import sha256
-from typing import TYPE_CHECKING, Callable, Dict, List, Tuple, TypedDict
+from pathlib import Path
+from typing import TYPE_CHECKING, Callable, Dict, List, Optional, Tuple, TypedDict
 
 import numpy as np
 import pandas as pd
+from jinja2 import Template
 
+from ert._c_wrappers.enkf.config.parameter_config import ParameterConfig
 from ert.parsing.config_errors import ConfigValidationError
 
 if TYPE_CHECKING:
     import numpy.typing as npt
+    from numpy.random import SeedSequence
+
+    from ert.storage import EnsembleAccessor, EnsembleReader
 
 
 class PriorDict(TypedDict):
@@ -20,54 +28,101 @@ class PriorDict(TypedDict):
     parameters: Dict[str, float]
 
 
-class GenKwConfig:
-    def __init__(
-        self,
-        key: str,
-        template_file: str = "",
-        output_file: str = "",
-        parameter_file: str = "",
-        forward_init_file: str = "",
-        tag_fmt: str = "<%s>",
-    ):
-        errors = []
+@dataclass
+class GenKwConfig(ParameterConfig):
+    template_file: Optional[str]
+    parameter_file: Optional[str]
+    output_file: str
+    forward_init_file: Optional[str] = None
+    tag_fmt: str = "<%s>"
+    random_seed: Optional[SeedSequence] = np.random.SeedSequence()
 
-        if not os.path.isfile(template_file):
+    def __post_init__(self):
+        errors = []
+        if not os.path.isfile(self.template_file):
             errors.append(
-                ConfigValidationError(f"No such template file: {template_file}")
+                ConfigValidationError(f"No such template file: {self.template_file}")
             )
 
-        if not os.path.isfile(parameter_file):
+        if not os.path.isfile(self.parameter_file):
             errors.append(
-                ConfigValidationError(f"No such parameter file: {parameter_file}")
+                ConfigValidationError(f"No such parameter file: {self.parameter_file}")
             )
 
         if errors:
             raise ConfigValidationError.from_collected(errors)
 
-        self.name = key
-        self._parameter_file = parameter_file
-        self._template_file = template_file
-        self._tag_format = tag_fmt
         self._transfer_functions = []
-        self.output_file = output_file
-        self.forward_init = False  # not supported
-        self.forward_init_file = forward_init_file
 
-        with open(parameter_file, "r", encoding="utf-8") as file:
+        with open(self.parameter_file, "r", encoding="utf-8") as file:
             for item in file:
                 item = item.rsplit("--")[0]  # remove comments
 
                 if item.strip():  # only lines with content
                     self._transfer_functions.append(self.parse_transfer_function(item))
 
+    def load(self, run_path: Path, real_nr: int, ensemble: EnsembleAccessor, **kwargs):
+        keys = list(self)
+        if self.forward_init_file:
+            logging.info(
+                f"Reading from init file {self.forward_init_file} for {self.name}"
+            )
+            parameter_value = self.values_from_file(
+                real_nr,
+                self.forward_init_file,
+                keys,
+            )
+        else:
+            logging.info(f"Sampling parameter {self.name} for realization {real_nr}")
+            parameter_value = self.sample_value(
+                self.name,
+                keys,
+                str(self.random_seed.entropy),
+                real_nr,
+                ensemble.ensemble_size,
+            )
+
+        ensemble.save_gen_kw(
+            parameter_name=self.name,
+            parameter_keys=keys,
+            realization=real_nr,
+            data=parameter_value,
+        )
+
+    def save(
+        self, run_path: Path, real_nr: int, ensemble: EnsembleReader
+    ) -> Dict[str, Dict[str, float]]:
+        gen_kw_dict = ensemble.load_gen_kw_as_dict(self.name, real_nr)
+        transformed = gen_kw_dict[self.name]
+        if not len(transformed) == len(self):
+            raise ValueError(
+                f"The configuration of GEN_KW parameter {self.name}"
+                f" is of size {len(self)}, expected {len(transformed)}"
+            )
+
+        with open(self.template_file, "r", encoding="utf-8") as f:
+            template = Template(
+                f.read(), variable_start_string="<", variable_end_string=">"
+            )
+
+        target_file = self.output_file
+        if self.output_file.startswith("/"):
+            target_file = self.output_file[1:]
+
+        Path.mkdir(Path(run_path / target_file).parent, exist_ok=True, parents=True)
+        with open(run_path / target_file, "w", encoding="utf-8") as f:
+            f.write(
+                template.render(
+                    {key: f"{value:.6g}" for key, value in transformed.items()}
+                )
+            )
+        return gen_kw_dict
+
     def getTemplateFile(self) -> str:
-        path = self._template_file
-        return None if path is None else os.path.abspath(path)
+        return self.template_file
 
     def getParameterFile(self) -> str:
-        path = self._parameter_file
-        return None if path is None else os.path.abspath(path)
+        return self.parameter_file
 
     def shouldUseLogScale(self, keyword: str) -> bool:
         for tf in self._transfer_functions:
@@ -80,10 +135,6 @@ class GenKwConfig:
 
     def getKey(self) -> str:
         return self.name
-
-    @property
-    def tag_fmt(self):
-        return self._tag_format
 
     def __len__(self):
         return len(self._transfer_functions)
@@ -98,13 +149,17 @@ class GenKwConfig:
             index += 1
 
     def __eq__(self, other) -> bool:
-        if self.getTemplateFile() != other.getTemplateFile():
+        if self.name != other.name:
             return False
-
-        if self.getParameterFile() != other.getParameterFile():
+        if self.template_file != os.path.abspath(other.template_file):
             return False
-
-        if self.getKey() != other.getKey():
+        if self.parameter_file != os.path.abspath(other.parameter_file):
+            return False
+        if self.output_file != other.output_file:
+            return False
+        if self.tag_fmt != other.tag_fmt:
+            return False
+        if self.forward_init_file != other.forward_init_file:
             return False
 
         return True
@@ -126,34 +181,26 @@ class GenKwConfig:
         return priors
 
     @staticmethod
-    def values_from_files(
-        realizations: List[int], name_format: str, keys: List[str]
+    def values_from_file(
+        realization: int, name_format: str, keys: List[str]
     ) -> npt.NDArray[np.double]:
-        df_values = pd.DataFrame()
-        for iens in realizations:
-            df = pd.read_csv(
-                name_format % iens,
-                delim_whitespace=True,
-                header=None,
-            )
-            # This means we have a key: value mapping in the
-            # file otherwise it is just a list of values
-            if df.shape[1] == 2:
-                # We need to sort the user input keys by the
-                # internal order of sub-parameters:
-                df = df.set_index(df.columns[0])
-                values = df.reindex(keys).values.flatten()
-            else:
-                values = df.values.flatten()
-            df_values[f"{iens}"] = values
-        return df_values.values
+        file_name = name_format % realization
+        df = pd.read_csv(file_name, delim_whitespace=True, header=None)
+        # This means we have a key: value mapping in the
+        # file otherwise it is just a list of values
+        if df.shape[1] == 2:
+            # We need to sort the user input keys by the
+            # internal order of sub-parameters:
+            df = df.set_index(df.columns[0])
+            return df.reindex(keys).values.flatten()
+        return df.values.flatten()
 
     @staticmethod
-    def sample_values(
+    def sample_value(
         parameter_group_name: str,
         keys: List[str],
         global_seed: str,
-        active_realizations: List[int],
+        realization: int,
         nr_samples: int,
     ) -> npt.NDArray[np.double]:
         parameter_values = []
@@ -165,9 +212,7 @@ class GenKwConfig:
             seed = np.frombuffer(key_hash.digest(), dtype="uint32")
             rng = np.random.default_rng(seed)
             values = rng.standard_normal(nr_samples)
-            if len(active_realizations) != nr_samples:
-                values = values[active_realizations]
-            parameter_values.append(values)
+            parameter_values.append(values[realization])
         return np.array(parameter_values)
 
     @staticmethod
