@@ -55,13 +55,9 @@ def test_load_general_obs(facade, monkeypatch):
     mock_node.get_std.return_value = [1.0, 2.0, 3.0]
     mock_node.getIndex.side_effect = mocked_obs_node_get_index_nr
 
-    obs_mock = Mock()
-    obs_mock.getDataKey.return_value = "test_data_key"
-    obs_mock.getStepList.return_value = [1]
-    facade.get_observations.return_value = {"some_key": obs_mock}
+    facade.get_observations.return_value = {"some_key": [mock_node]}
 
     facade.load_gen_data.return_value = pd.DataFrame(data=[9.9, 19.9, 29.9, 39.9])
-    facade.get_observations()["some_key"].getNode.return_value = mock_node
 
     result = loader._load_general_obs(facade, Mock(), ["some_key"])
 

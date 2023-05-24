@@ -3,7 +3,6 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
-#include <ert/enkf/obs_vector.hpp>
 #include <ert/python.hpp>
 #include <ert/res_util/string.hpp>
 #include <pyerrors.h>
@@ -47,11 +46,4 @@ PYBIND11_MODULE(_clib, m) {
 
         submodule->init(node);
     }
-
-    m.def(
-        "obs_vector_get_step_list",
-        [](Cwrap<obs_vector_type> self) {
-            return obs_vector_get_step_list(self);
-        },
-        py::arg("self"));
 }

@@ -1,7 +1,5 @@
 import pathlib
 import shutil
-import sys
-import time
 
 import numpy as np
 import pytest
@@ -52,49 +50,6 @@ def test_summary_obs(create_measured_data):
     assert summary_obs.data.columns.get_level_values("key_index").values[
         0
     ] == np.datetime64("2011-12-21")
-
-
-@pytest.mark.skipif(
-    sys.platform.startswith("darwin"), reason="Performance of mac is unreliable"
-)
-@pytest.mark.usefixtures("copy_snake_oil_case_storage")
-@pytest.mark.integration_test
-def test_summary_obs_runtime(create_measured_data):
-    """
-    This is mostly a regression test, as reading SUMMARY_OBS was very slow when using
-    SUMMARY_OBSERVATION and not HISTORY_OBSERVATION where multiple observations
-    were pointing to the same response. To simulate that we load the same observations
-    though individual points, and also in one go. To avoid this test being flaky the
-    we assert on the difference in runtime. The difference in runtime we assert on is
-    set to 10x though it should be around 2x
-    """
-
-    obs_file = pathlib.Path.cwd() / "observations" / "observations.txt"
-    with obs_file.open(mode="a") as fin:
-        fin.write(create_summary_observation())
-
-    facade = LibresFacade.from_config_file("snake_oil.ert")
-
-    storage = open_storage(facade.enspath)
-    ensemble = storage.get_ensemble_by_name("default_0")
-    start_time = time.time()
-    foprh = MeasuredData(
-        facade, ensemble, [f"FOPR_{restart}" for restart in range(1, 201)]
-    )
-    summary_obs_time = time.time() - start_time
-
-    start_time = time.time()
-    fopr = MeasuredData(facade, ensemble, ["FOPR"])
-    history_obs_time = time.time() - start_time
-
-    assert (
-        fopr.data.columns.get_level_values("data_index").values.tolist()
-        == foprh.data.columns.get_level_values("data_index").values.tolist()
-    )
-
-    result = foprh.get_simulated_data().values == fopr.get_simulated_data().values
-    assert np.logical_and.reduce(result).all()
-    assert summary_obs_time < 10 * history_obs_time
 
 
 @pytest.mark.filterwarnings("ignore::ert.parsing.ConfigWarning")

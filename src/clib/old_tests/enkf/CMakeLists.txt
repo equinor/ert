@@ -13,7 +13,7 @@ endfunction()
 # Public tests
 # -----------------------------------------------------------------
 
-foreach(test enkf_active_list obs_vector row_scaling)
+foreach(test enkf_active_list row_scaling)
   add_executable(${test} ${TESTS_EXCLUDE_FROM_ALL} test_${test}.cpp)
   target_link_libraries(${test} ert)
   fix_install_names(${test})

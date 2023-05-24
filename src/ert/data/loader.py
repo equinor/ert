@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, Callable, List, Optional, Protocol, Sequence
 import pandas as pd
 
 if TYPE_CHECKING:
+    from ert._c_wrappers.enkf import GenObservation
     from ert.libres_facade import LibresFacade
     from ert.storage import EnsembleReader
 
@@ -136,7 +137,8 @@ def _load_general_obs(
     for observation_key in observation_keys:
         obs_vector = facade.get_observations()[observation_key]
         data = []
-        for time_step in obs_vector.getStepList():
+        node: GenObservation
+        for node in iter(obs_vector):  # type: ignore
             # Observations and its standard deviation are a subset of the
             # simulation data The index_list refers to indices in the simulation
             # data. In order to join these data in a DataFrame, pandas inserts
@@ -146,7 +148,6 @@ def _load_general_obs(
             #      0   1   2
             # OBS  NaN NaN 42
             # STD  NaN NaN 4.2
-            node = obs_vector.getNode(time_step)
             index_list = [node.getIndex(nr) for nr in range(len(node))]
             index = _create_multi_index(index_list, index_list)
 
