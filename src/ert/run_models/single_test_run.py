@@ -1,14 +1,17 @@
-from typing import Any, Dict
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Any, Dict
 from uuid import UUID
 
-from ert._c_wrappers.enkf.enkf_main import EnKFMain
-from ert._c_wrappers.enkf.ert_run_context import RunContext
-from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.run_models import EnsembleExperiment, ErtRunError
-from ert.storage import StorageAccessor
+
+if TYPE_CHECKING:
+    from ert._c_wrappers.enkf.enkf_main import EnKFMain
+    from ert._c_wrappers.enkf.ert_run_context import RunContext
+    from ert.ensemble_evaluator import EvaluatorServerConfig
+    from ert.storage import StorageAccessor
 
 
-# pylint: disable=abstract-method
 class SingleTestRun(EnsembleExperiment):
     def __init__(
         self,
@@ -16,17 +19,13 @@ class SingleTestRun(EnsembleExperiment):
         ert: EnKFMain,
         storage: StorageAccessor,
         id_: UUID,
-        *_: Any
     ):
         local_queue_config = ert.get_queue_config().create_local_copy()
         super().__init__(simulation_arguments, ert, storage, local_queue_config, id_)
 
-    async def run(self, _: EvaluatorServerConfig) -> None:
-        raise NotImplementedError()
-
     def checkHaveSufficientRealizations(self, num_successful_realizations: int) -> None:
         # Should only have one successful realization
-        if num_successful_realizations == 0:
+        if num_successful_realizations != 1:
             raise ErtRunError("Simulation failed!")
 
     def runSimulations(
