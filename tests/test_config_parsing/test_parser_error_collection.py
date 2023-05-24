@@ -882,14 +882,15 @@ SCHEDULE_PREDICTION_FILE A B C.txt
     )
 
 
+@pytest.mark.parametrize("dirname", ["the_dir", "/tmp"])
 @pytest.mark.usefixtures("use_tmpdir")
-def test_that_executable_directory_errors():
+def test_that_executable_directory_errors(dirname):
     os.mkdir("the_dir")
     assert_that_config_leads_to_error(
         config_file_contents=dedent(
-            """
+            f"""
 NUM_REALIZATIONS  1
-JOB_SCRIPT the_dir
+JOB_SCRIPT {dirname}
 
             """
         ),
@@ -897,6 +898,6 @@ JOB_SCRIPT the_dir
             match="is a directory",
             line=3,
             column=12,
-            end_column=19,
+            end_column=12 + len(dirname),
         ),
     )
