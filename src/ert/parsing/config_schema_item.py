@@ -152,7 +152,9 @@ class SchemaItem(BaseModel):
             if not os.path.isabs(token):
                 # Try relative
                 absolute_path = os.path.abspath(os.path.join(cwd, token))
-            if absolute_path is None or not os.path.exists(absolute_path):
+            else:
+                absolute_path = token
+            if not os.path.exists(absolute_path):
                 absolute_path = shutil.which(token)
 
             if absolute_path is None:
