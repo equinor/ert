@@ -15,11 +15,11 @@ from ert.parsing import (
     WorkflowJobKeys,
     init_workflow_schema,
     lark_parse,
-    parse_arg_types_list,
 )
 
 from .ert_plugin import ErtPlugin
 from .ert_script import ErtScript
+from .parse_arg_types_list import parse_arg_types_list
 
 logger = logging.getLogger(__name__)
 

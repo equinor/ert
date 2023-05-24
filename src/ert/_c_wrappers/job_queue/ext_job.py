@@ -16,8 +16,9 @@ from ert.parsing import (
     SchemaItemType,
     init_ext_job_schema,
     lark_parse,
-    parse_arg_types_list,
 )
+
+from .parse_arg_types_list import parse_arg_types_list
 
 logger = logging.getLogger(__name__)
 
