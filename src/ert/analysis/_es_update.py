@@ -248,6 +248,7 @@ def _get_obs_and_measure_data(
     npt.NDArray[np.float_],
     npt.NDArray[np.str_],
 ]:
+    ens_active_list = tuple(ens_active_list)
     measured_data = []
     observation_keys = []
     observation_values = []
@@ -279,6 +280,7 @@ def _get_obs_and_measure_data(
             .transpose(..., "realization")
             .values.reshape((-1, len(filtered_ds.realization)))
         )
+    source_fs.load_response.cache_clear()
     return (
         np.concatenate(measured_data, axis=0),
         np.concatenate(observation_values),

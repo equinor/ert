@@ -103,7 +103,7 @@ class MeasuredData:
             group, obs = observations.get_dataset(key)
             try:
                 response = ensemble.load_response(
-                    group, range(self._facade.get_ensemble_size())
+                    group, tuple(range(self._facade.get_ensemble_size()))
                 )
             except KeyError:
                 raise ResponseError(f"No response loaded for observation key: {key}")

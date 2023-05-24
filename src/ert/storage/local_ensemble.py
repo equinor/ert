@@ -5,6 +5,7 @@ import logging
 import math
 import shutil
 from datetime import datetime
+from functools import lru_cache
 from multiprocessing.pool import ThreadPool
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, List, Literal, Optional, Tuple, Union
@@ -186,7 +187,7 @@ class LocalEnsembleReader:
         if not summary_path.exists():
             return []
         realization_nr = int(str(realization_folders[0])[-1])
-        response = self.load_response("summary", [realization_nr])
+        response = self.load_response("summary", (realization_nr,))
         keys = sorted(response["name"].values)
         return keys
 
@@ -275,7 +276,8 @@ class LocalEnsembleReader:
 
         return np_data, keys
 
-    def load_response(self, key: str, realizations: List[int]) -> xr.Dataset:
+    @lru_cache
+    def load_response(self, key: str, realizations: Tuple[int, ...]) -> xr.Dataset:
         loaded = []
         for realization in realizations:
             input_path = self.mount_point / f"realization-{realization}" / f"{key}.nc"
