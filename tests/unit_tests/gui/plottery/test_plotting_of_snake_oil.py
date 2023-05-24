@@ -1,13 +1,35 @@
 from unittest.mock import Mock
 
+import pytest
+
 from ert.gui.main import GUILogHandler, _setup_main_window
 from ert.gui.tools.plot.data_type_keys_widget import DataTypeKeysWidget
-from ert.gui.tools.plot.plot_window import PlotWindow
+from ert.gui.tools.plot.plot_window import (
+    CROSS_CASE_STATISTICS,
+    DISTRIBUTION,
+    ENSEMBLE,
+    GAUSSIAN_KDE,
+    HISTOGRAM,
+    STATISTICS,
+    PlotWindow,
+)
 from ert.services import StorageService
 
 
-def test_that_all_snake_oil_visualisations_can_be_shown(
-    qtbot, snake_oil_case_storage, storage
+@pytest.mark.parametrize(
+    "key, plot_name",
+    [
+        ("FOPR", STATISTICS),
+        ("FOPR", ENSEMBLE),
+        ("SNAKE_OIL_PARAM:OP1_OCTAVES", CROSS_CASE_STATISTICS),
+        ("SNAKE_OIL_PARAM:OP1_OCTAVES", DISTRIBUTION),
+        ("SNAKE_OIL_PARAM:OP1_OCTAVES", GAUSSIAN_KDE),
+        ("SNAKE_OIL_PARAM:OP1_OCTAVES", HISTOGRAM),
+    ],
+)
+@pytest.mark.mpl_image_compare(tolerance=10)
+def test_that_all_snake_oil_visualisations_matches_snapshot(
+    qtbot, snake_oil_case_storage, storage, plot_name, key
 ):
     args_mock = Mock()
     args_mock.config = "snake_oil.ert"
@@ -33,9 +55,13 @@ def test_that_all_snake_oil_visualisations_can_be_shown(
         for i in range(key_list.model().rowCount()):
             key_list.setCurrentIndex(key_list.model().index(i, 0))
             selected_key = data_types.getSelectedItem()
-            for i, tab in enumerate(plot_window._plot_widgets):
-                if central_tab.isTabEnabled(i):
-                    central_tab.setCurrentWidget(tab)
-                    assert selected_key["dimensionality"] == tab._plotter.dimensionality
-                else:
-                    assert selected_key["dimensionality"] != tab._plotter.dimensionality
+            if selected_key["key"] == key:
+                for i, tab in enumerate(plot_window._plot_widgets):
+                    if tab.name == plot_name:
+                        if central_tab.isTabEnabled(i):
+                            central_tab.setCurrentWidget(tab)
+                            assert (
+                                selected_key["dimensionality"]
+                                == tab._plotter.dimensionality
+                            )
+                            return tab._figure

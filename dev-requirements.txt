@@ -16,6 +16,7 @@ pytest-benchmark
 pytest-cov
 pytest-memray
 pytest-mock
+pytest-mpl
 pytest-qt
 pytest-raises
 pytest-snapshot
