@@ -262,7 +262,7 @@ def test_localization(
             0.1,
             [],
             id="Low alpha, no active observations",
-            marks=pytest.mark.xfail(raises=ErtAnalysisError),
+            marks=pytest.mark.xfail(raises=ErtAnalysisError, strict=True),
         ),
         (1, ["ACTIVE", "DEACTIVATED", "DEACTIVATED"]),
         (2, ["ACTIVE", "DEACTIVATED", "DEACTIVATED"]),
