@@ -16,7 +16,7 @@ def test_load_forward_model_raises_on_missing():
     ):
         _ = ExtJob.from_config_file("CONFIG_FILE", use_new_parser=False)
 
-    with pytest.raises(IOError, match="file(.+?)not found"):
+    with pytest.raises(ConfigValidationError, match="file(.+?)not found"):
         _ = ExtJob.from_config_file("CONFIG_FILE", use_new_parser=True)
 
 

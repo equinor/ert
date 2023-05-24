@@ -19,6 +19,7 @@ from ert.parsing import (
 )
 
 from .parse_arg_types_list import parse_arg_types_list
+from ...parsing.error_info import ErrorInfo
 
 logger = logging.getLogger(__name__)
 
@@ -181,57 +182,63 @@ class ExtJob:
         cls, config_file: str, name: Optional[str] = None
     ):
         schema = init_ext_job_schema()
-        content_dict = lark_parse(file=config_file, schema=schema)
 
-        specified_arg_types: List[Tuple[int, str]] = content_dict.get(
-            ExtJobKeys.ARG_TYPE, []
-        )  # type: ignore
+        try:
+            content_dict = lark_parse(file=config_file, schema=schema)
 
-        specified_max_args: int = content_dict.get("MAX_ARG", 0)  # type: ignore
-        specified_min_args: int = content_dict.get("MIN_ARG", 0)  # type: ignore
+            specified_arg_types: List[Tuple[int, str]] = content_dict.get(
+                ExtJobKeys.ARG_TYPE, []
+            )  # type: ignore
 
-        arg_types_list = parse_arg_types_list(
-            specified_arg_types, specified_max_args, specified_min_args
-        )
+            specified_max_args: int = content_dict.get("MAX_ARG", 0)  # type: ignore
+            specified_min_args: int = content_dict.get("MIN_ARG", 0)  # type: ignore
 
-        # We unescape backslash here to keep backwards compatability ie. If
-        # the arglist contains a '\n' we interpret it as a newline.
-        arglist = [
-            s.encode("utf-8", "backslashreplace").decode("unicode_escape")
-            for s in content_dict.get("ARGLIST", [])
-        ]
+            arg_types_list = parse_arg_types_list(
+                specified_arg_types, specified_max_args, specified_min_args
+            )
 
-        environment = {k: v for [k, v] in content_dict.get("ENV", [])}
-        exec_env = {k: v for [k, v] in content_dict.get("EXEC_ENV", [])}
-        default_mapping = {k: v for [k, v] in content_dict.get("DEFAULT", [])}
+            # We unescape backslash here to keep backwards compatability ie. If
+            # the arglist contains a '\n' we interpret it as a newline.
+            arglist = [
+                s.encode("utf-8", "backslashreplace").decode("unicode_escape")
+                for s in content_dict.get("ARGLIST", [])
+            ]
 
-        for handle in ["STDOUT", "STDERR", "STDIN"]:
-            if content_dict.get(handle, None) == "null":
-                content_dict[handle] = None
+            environment = {k: v for [k, v] in content_dict.get("ENV", [])}
+            exec_env = {k: v for [k, v] in content_dict.get("EXEC_ENV", [])}
+            default_mapping = {k: v for [k, v] in content_dict.get("DEFAULT", [])}
 
-        stdout_file = content_dict.get("STDOUT", f"{name}.stdout")
-        stderr_file = content_dict.get("STDERR", f"{name}.stderr")
+            for handle in ["STDOUT", "STDERR", "STDIN"]:
+                if content_dict.get(handle) == "null":
+                    content_dict[handle] = None
 
-        return cls(
-            name=name,
-            executable=content_dict.get("EXECUTABLE"),
-            stdin_file=content_dict.get("STDIN", None),
-            stdout_file=stdout_file,
-            stderr_file=stderr_file,
-            start_file=content_dict.get("START_FILE", None),
-            target_file=content_dict.get("TARGET_FILE", None),
-            error_file=content_dict.get("ERROR_FILE", None),
-            max_running=content_dict.get("MAX_RUNNING", None),
-            max_running_minutes=content_dict.get("MAX_RUNNING_MINUTES", None),
-            min_arg=content_dict.get("MIN_ARG", None),
-            max_arg=content_dict.get("MAX_ARG", None),
-            arglist=arglist,
-            arg_types=arg_types_list,
-            environment=environment,
-            exec_env=exec_env,
-            default_mapping=default_mapping,
-            help_text=content_dict.get("HELP_TEXT", None),
-        )
+            stdout_file = content_dict.get("STDOUT", f"{name}.stdout")
+            stderr_file = content_dict.get("STDERR", f"{name}.stderr")
+
+            return cls(
+                name=name,
+                executable=content_dict.get("EXECUTABLE"),
+                stdin_file=content_dict.get("STDIN"),
+                stdout_file=stdout_file,
+                stderr_file=stderr_file,
+                start_file=content_dict.get("START_FILE"),
+                target_file=content_dict.get("TARGET_FILE"),
+                error_file=content_dict.get("ERROR_FILE"),
+                max_running=content_dict.get("MAX_RUNNING"),
+                max_running_minutes=content_dict.get("MAX_RUNNING_MINUTES"),
+                min_arg=content_dict.get("MIN_ARG"),
+                max_arg=content_dict.get("MAX_ARG"),
+                arglist=arglist,
+                arg_types=arg_types_list,
+                environment=environment,
+                exec_env=exec_env,
+                default_mapping=default_mapping,
+                help_text=content_dict.get("HELP_TEXT"),
+            )
+        except IOError as err:
+            raise ConfigValidationError.from_info(
+                ErrorInfo(message=str(err), filename=name)
+            )
 
     @classmethod
     def from_config_file_with_old_parser(
