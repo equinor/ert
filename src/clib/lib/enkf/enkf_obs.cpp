@@ -12,7 +12,6 @@
 #include <ert/config/conf.hpp>
 #include <ert/ecl/ecl_grid.h>
 #include <ert/ecl/ecl_sum.h>
-#include <ert/enkf/obs_vector.hpp>
 #include <ert/enkf/summary_obs.hpp>
 #include <ert/except.hpp>
 #include <ert/python.hpp>

@@ -126,7 +126,7 @@ def test_observations(setup_case):
         summary_observation_node = SummaryObservation(
             summary_key, observation_key, value, std
         )
-        observation_vector.installNode(index, summary_observation_node)
+        observation_vector.add_summary_obs(summary_observation_node, index)
         assert observation_vector.getNode(index) == summary_observation_node
         assert summary_observation_node.getValue() == value
         values.append((index, value, std))

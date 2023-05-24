@@ -1,11 +1,6 @@
-from cwrap import BaseCEnum
+from enum import Enum, auto
 
 
-class EnkfObservationImplementationType(BaseCEnum):
-    TYPE_NAME = "enkf_obs_impl_type"
-    GEN_OBS = None
-    SUMMARY_OBS = None
-
-
-EnkfObservationImplementationType.addEnum("GEN_OBS", 1)
-EnkfObservationImplementationType.addEnum("SUMMARY_OBS", 2)
+class EnkfObservationImplementationType(Enum):
+    GEN_OBS = auto()
+    SUMMARY_OBS = auto()

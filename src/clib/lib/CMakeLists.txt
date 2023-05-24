@@ -37,7 +37,6 @@ pybind11_add_module(
   enkf/enkf_types.cpp
   enkf/ensemble_config.cpp
   enkf/gen_obs.cpp
-  enkf/obs_vector.cpp
   enkf/row_scaling.cpp
   enkf/summary_obs.cpp)
 

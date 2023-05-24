@@ -1,13 +1,11 @@
 from datetime import datetime
-from typing import TYPE_CHECKING, List, Union
+from typing import TYPE_CHECKING, Iterable, List, Optional, Union
 
 import numpy as np
 import pandas as pd
-from cwrap import BaseCClass
 from pandas import DataFrame, MultiIndex
+from sortedcontainers import SortedList
 
-from ert import _clib
-from ert._c_wrappers import ResPrototype
 from ert._c_wrappers.enkf.enums import EnkfObservationImplementationType
 from ert._c_wrappers.enkf.observations.gen_observation import GenObservation
 from ert._c_wrappers.enkf.observations.summary_observation import SummaryObservation
@@ -16,89 +14,58 @@ if TYPE_CHECKING:
     from ert._c_wrappers.enkf.enkf_obs import EnkfObs
 
 
-class ObsVector(BaseCClass):
-    TYPE_NAME = "obs_vector"
-
-    _alloc = ResPrototype(
-        "void* obs_vector_alloc(enkf_obs_impl_type, char*, char*, int)",
-        bind=False,
-    )
-    _free = ResPrototype("void  obs_vector_free( obs_vector )")
-    _get_state_kw = ResPrototype("char* obs_vector_get_state_kw( obs_vector )")
-    _get_key = ResPrototype("char* obs_vector_get_key( obs_vector )")
-    _iget_node = ResPrototype("void* obs_vector_iget_node( obs_vector, int)")
-    _get_num_active = ResPrototype("int   obs_vector_get_num_active( obs_vector )")
-    _iget_active = ResPrototype("bool  obs_vector_iget_active( obs_vector, int)")
-    _get_impl_type = ResPrototype(
-        "enkf_obs_impl_type obs_vector_get_impl_type( obs_vector)"
-    )
-    _install_node = ResPrototype(
-        "void  obs_vector_install_node(obs_vector, int, void*)"
-    )
-    _get_next_active_step = ResPrototype(
-        "int   obs_vector_get_next_active_step(obs_vector, int)"
-    )
-    _get_obs_key = ResPrototype("char*  obs_vector_get_obs_key(obs_vector)")
-
+class ObsVector:
     def __init__(
         self,
         observation_type: EnkfObservationImplementationType,
         observation_key: str,
         config_node_key: str,
-        num_reports: int,
+        num_steps: int,
     ):
-        assert isinstance(observation_type, EnkfObservationImplementationType)
-        assert isinstance(observation_key, str)
-        assert isinstance(config_node_key, str)
-        assert isinstance(num_reports, int)
-        c_ptr = self._alloc(
-            observation_type, observation_key, config_node_key, num_reports
-        )
-        super().__init__(c_ptr)
+        self.observation_type = observation_type
+        self.observation_key = observation_key
+        self.config_node_key = config_node_key
+        self.nodes: List[Optional[Union[SummaryObservation, GenObservation]]] = [
+            None
+        ] * num_steps
+        self._steps = SortedList()
 
     def getDataKey(self) -> str:
-        return self._get_state_kw()
+        return self.config_node_key
 
     def getObservationKey(self) -> str:
-        return self.getKey()
+        return self.observation_key
 
     def getKey(self) -> str:
-        return self._get_key()
+        return self.observation_key
 
     def getObsKey(self) -> str:
-        return self._get_obs_key()
+        return self.observation_key
 
-    def getNode(self, index: int) -> Union[SummaryObservation, GenObservation]:
-        pointer = self._iget_node(index)
+    def getNode(
+        self, index: int
+    ) -> Optional[Union[SummaryObservation, GenObservation]]:
+        return self.nodes[index]
 
-        node_type = self.getImplementationType()
-        if node_type == EnkfObservationImplementationType.SUMMARY_OBS:
-            return SummaryObservation.createCReference(pointer, self)
-        elif node_type == EnkfObservationImplementationType.GEN_OBS:
-            return GenObservation.createCReference(pointer, self)
-        else:
-            raise AssertionError(f"Node type '{node_type}' currently not supported!")
-
-    def __iter__(self):
+    def __iter__(self) -> Iterable[Union[SummaryObservation, GenObservation]]:
         """Iterate over active report steps; return node"""
-        for step in self.getStepList():
-            yield self.getNode(step)
+        return (self.nodes[i] for i in self.getStepList())  # type:ignore
 
     def getStepList(self) -> List[int]:
         """
         Will return an IntVector with the active report steps.
         """
-        return _clib.obs_vector_get_step_list(self)
+        return list(self._steps)
 
     def add_summary_obs(self, summary_obs: SummaryObservation, index: int) -> None:
-        summary_obs.convertToCReference(self)
-        return _clib.obs_vector.add_summary_obs(self, summary_obs, index)
+        self.nodes[index] = summary_obs
+        self._steps.add(index)
 
     def add_general_obs(self, gen_obs: GenObservation, index: int) -> None:
-        gen_obs.convertToCReference(self)
-        return _clib.obs_vector.add_general_obs(self, gen_obs, index)
+        self.nodes[index] = gen_obs
+        self._steps.add(index)
 
-    def activeStep(self) -> List[int]:
+    def activeStep(self) -> int:
         """Assuming the observation is only active for one report step, this
         method will return that report step - if it is active for more
         than one report step the method will raise an exception.
@@ -125,30 +92,20 @@ class ObsVector(BaseCClass):
         return len(self)
 
     def __len__(self):
-        return self._get_num_active()
+        return len(self._steps)
 
     def isActive(self, index: int) -> bool:
-        return self._iget_active(index)
-
-    def getNextActiveStep(self, previous_step: int = -1) -> int:
-        return self._get_next_active_step(previous_step)
+        return index in self._steps
 
     def getImplementationType(self) -> EnkfObservationImplementationType:
-        return self._get_impl_type()
-
-    def installNode(self, index, node):
-        assert isinstance(node, SummaryObservation)
-        node.convertToCReference(self)
-        self._install_node(index, node.from_param(node))
-
-    def free(self):
-        self._free()
+        return self.observation_type
 
     def __repr__(self):
         return (
-            f"ObsVector(data_key = {self.getDataKey()}, "
-            f"key = {self.getKey()}, obs_key = {self.getObsKey()}, "
-            f"num_active = {len(self)}) {self._ad_str()}"
+            f"ObsVector(observation_type={self.observation_type}, "
+            f"observation_key={self.observation_key}, "
+            f"config_node_key={self.config_node_key}, "
+            f"num_steps = {len(self.nodes)})"
         )
 
     def get_gen_obs_data(self, active_list: List[int]) -> DataFrame:

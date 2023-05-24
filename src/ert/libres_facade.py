@@ -195,7 +195,7 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
 
     def get_impl_type_name_for_obs_key(self, key: str) -> str:
         observation = self._enkf_main.getObservations()[key]
-        return observation.getImplementationType().name  # type: ignore
+        return observation.getImplementationType().name
 
     def get_impl_type_name_for_ensemble_config_node(self, name: str) -> str:
         node = self._enkf_main.ensembleConfig().getNode(name)
@@ -270,7 +270,7 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
     def get_all_gen_data_observation_keys(self) -> List[str]:
         return list(
             self._enkf_main.getObservations().getTypedKeylist(
-                EnkfObservationImplementationType.GEN_OBS  # type: ignore
+                EnkfObservationImplementationType.GEN_OBS
             )
         )
 
