@@ -220,7 +220,7 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
                 raise IndexError(f"No such realization {realization_index}")
             realizations = [realization_index]
         try:
-            vals = ensemble.load_response(key, realizations).sel(
+            vals = ensemble.load_response(key, tuple(realizations)).sel(
                 report_step=report_step, drop=True
             )
         except KeyError:
@@ -382,7 +382,7 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
         summary_keys = ensemble.get_summary_keyset()
 
         try:
-            df = ensemble.load_response("summary", realizations).to_dataframe()
+            df = ensemble.load_response("summary", tuple(realizations)).to_dataframe()
         except (ValueError, KeyError):
             return pd.DataFrame()
         df = df.unstack(level="name")
