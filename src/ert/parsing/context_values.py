@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from typing import Union
 
 from .file_context_token import FileContextToken
@@ -72,6 +73,15 @@ class ContextString(str):
         new_instance = ContextString(str(self), self.token, self.keyword_token)
         memo[id(self)] = new_instance
         return new_instance
+
+
+@dataclass
+class ContextList(list):
+    keyword_token: FileContextToken
+
+    def __init__(self, token: FileContextToken):
+        super().__init__()
+        self.keyword_token = token
 
 
 ContextValue = Union[ContextString, ContextFloat, ContextInt, ContextBool]

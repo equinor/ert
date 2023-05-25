@@ -5,7 +5,8 @@ from tempfile import mkdtemp
 from typing import TYPE_CHECKING, Any, Dict, Iterator, List, Optional, Tuple
 
 from ert._c_wrappers.config import ConfigParser, UnrecognizedEnum
-from ert.parsing import ConfigValidationError
+from ert.parsing import ConfigValidationError, init_workflow_schema, lark_parse
+from ert.parsing.error_info import ErrorInfo
 
 if TYPE_CHECKING:
     from ert._c_wrappers.job_queue import WorkflowJob
@@ -41,11 +42,79 @@ class Workflow:
         return iter(self.cmd_list)
 
     @classmethod
+    def _parse_command_list_with_old_parser(
+        cls, src_file: str, job_dict: Dict[str, WorkflowJob]
+    ):
+        parser = _workflow_parser(job_dict)
+        try:
+            content = parser.parse(
+                src_file, unrecognized=UnrecognizedEnum.CONFIG_UNRECOGNIZED_ERROR
+            )
+        except ConfigValidationError as err:
+            err.config_file = src_file
+            raise err from None
+
+        cmd_list = []
+        for line in content:
+            cmd_list.append(
+                (
+                    job_dict[line.get_kw()],
+                    [line.igetString(i) for i in range(len(line))],
+                )
+            )
+
+        return cmd_list
+
+    @classmethod
+    def _parse_command_list_with_new_parser(
+        cls, src_file: str, job_dict: Dict[str, WorkflowJob]
+    ):
+        schema = init_workflow_schema()
+        parsed = lark_parse(src_file, schema, pre_defines=[])
+
+        workflow_names = parsed.keys() - {"DEFINE"}
+
+        all_workflows = []
+        errors = []
+
+        for name in workflow_names:
+            for args in parsed[name]:
+                workflow_job_name = args.keyword_token
+
+                if workflow_job_name not in job_dict:
+                    errors.append(
+                        ErrorInfo(
+                            filename=src_file,
+                            message=f"Job with name: {workflow_job_name}"
+                            f" is not recognized",
+                        ).set_context(workflow_job_name)
+                    )
+                    continue
+
+                all_workflows.append((workflow_job_name, args))
+
+        if errors:
+            raise ConfigValidationError.from_collected(errors)
+
+        # Order matters, so we need to sort it
+        # by the line attached to the context token
+        all_workflows.sort(key=lambda x: x[0].line)
+
+        def insert_job(workflow: Tuple[str, List[str]]):
+            my_name, my_args = workflow
+            return job_dict[my_name], my_args
+
+        command_list = list(map(insert_job, all_workflows))
+
+        return command_list
+
+    @classmethod
     def from_file(
         cls,
         src_file: str,
         context: Optional[SubstitutionList],
-        job_list: Dict[str, WorkflowJob],
+        job_dict: Dict[str, WorkflowJob],
+        use_new_parser: bool = True,
     ):
         to_compile = src_file
         if not os.path.exists(src_file):
@@ -57,23 +126,15 @@ class Workflow:
             to_compile = os.path.join(tmpdir, "ert-workflow")
             context.substitute_file(src_file, to_compile)
 
-        cmd_list = []
-        parser = _workflow_parser(job_list)
-        try:
-            content = parser.parse(
-                to_compile, unrecognized=UnrecognizedEnum.CONFIG_UNRECOGNIZED_ERROR
+        cmd_list = (
+            cls._parse_command_list_with_new_parser(
+                src_file=to_compile, job_dict=job_dict
             )
-        except ConfigValidationError as err:
-            err.config_file = src_file
-            raise err from None
-
-        for line in content:
-            cmd_list.append(
-                (
-                    job_list[line.get_kw()],
-                    [line.igetString(i) for i in range(len(line))],
-                )
+            if use_new_parser
+            else cls._parse_command_list_with_old_parser(
+                src_file=to_compile, job_dict=job_dict
             )
+        )
 
         return cls(src_file, cmd_list)
 
