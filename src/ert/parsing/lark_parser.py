@@ -4,7 +4,7 @@ import logging
 import os
 import os.path
 import warnings
-from typing import Any, List, Optional, Tuple
+from typing import Any, List, Optional, Tuple, Union
 
 from lark import Discard, Lark, Token, Transformer, Tree, UnexpectedCharacters
 from typing_extensions import Self
@@ -145,9 +145,14 @@ logger = logging.getLogger(__name__)
 
 def _substitute(
     defines: Defines,
-    token: FileContextToken,
+    token: Union[
+        FileContextToken, List[Tuple[FileContextToken]], Tuple[FileContextToken]
+    ],
     expand_env: bool = True,
 ) -> str:
+    if isinstance(token, (list, tuple)):
+        return [_substitute(defines, t, expand_env) for t in token]
+
     current: FileContextToken = token
 
     # replace from env
@@ -192,7 +197,6 @@ def _tree_to_dict(
     config_dict["DEFINE"] = defines  # type: ignore
 
     errors = []
-
     cwd = os.path.dirname(os.path.abspath(config_file))
 
     for node in tree.children:
@@ -210,9 +214,19 @@ def _tree_to_dict(
             args = _substitute_args(args, constraints, defines)
             value_list = constraints.apply_constraints(args, kw, cwd)
 
-            if constraints.multi_occurrence:
-                arglist = config_dict.get(kw, [])
-                arglist.append(value_list)  # type: ignore
+            arglist = config_dict.get(kw, [])
+            if kw == "DEFINE":
+                define_key, *define_args = value_list
+                existing_define = next(
+                    (define for define in arglist if define[0] == define_key), None
+                )
+                if existing_define:
+                    existing_define[1:] = define_args
+                else:
+                    arglist.append(value_list)
+            elif constraints.multi_occurrence:
+                arglist.append(value_list)
+
                 config_dict[kw] = arglist
             else:
                 config_dict[kw] = value_list
@@ -236,9 +250,11 @@ def _substitute_args(
 ) -> List[Any]:
     if constraints.substitute_from < 1:
         return args
+
     return [
         _substitute(defines, x, constraints.expand_envvar)
-        if i + 1 >= constraints.substitute_from and isinstance(x, FileContextToken)
+        if i + 1 >= constraints.substitute_from
+        and isinstance(x, (FileContextToken, list))
         else x
         for i, x in enumerate(args)
     ]

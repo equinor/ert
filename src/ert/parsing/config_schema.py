@@ -42,7 +42,7 @@ def forward_model_keyword() -> SchemaItem:
         argc_min=0,
         argc_max=CONFIG_DEFAULT_ARG_MAX,
         multi_occurrence=True,
-        substitute_from=0,
+        substitute_from=2,
     )
 
 
