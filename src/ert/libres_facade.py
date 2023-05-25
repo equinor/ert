@@ -253,10 +253,8 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
                     if observation_data.isActive(index):
                         obs_time = observations.getObservationTime(index)
                         node = observation_data.getNode(index)
-                        value = node.getValue()  # type: ignore
-                        std = node.getStandardDeviation()  # type: ignore
-                        df[key][obs_time] = value
-                        df[f"STD_{key}"][obs_time] = std
+                        df[key][obs_time] = node.value  # type: ignore
+                        df[f"STD_{key}"][obs_time] = node.std  # type: ignore
         return df
 
     def all_data_type_keys(self) -> List[str]:
