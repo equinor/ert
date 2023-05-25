@@ -1,8 +1,10 @@
 from unittest.mock import MagicMock, Mock
 
+import numpy as np
 import pandas as pd
 import pytest
 
+from ert._c_wrappers.enkf import GenObservation
 from ert.data import loader
 
 
@@ -10,10 +12,6 @@ def create_summary_get_observations():
     return pd.DataFrame(
         [[10.0, None, 10.0, 10.0], [1.0, None, 1.0, 1.0]], index=["OBS", "STD"]
     )
-
-
-def mocked_obs_node_get_index_nr(nr):
-    return {0: 0, 1: 2, 2: 3}[nr]
 
 
 @pytest.mark.parametrize(
@@ -48,21 +46,21 @@ def test_load_general_response(facade, new_ensemble):
     )
 
 
-def test_load_general_obs(facade, monkeypatch):
-    mock_node = MagicMock()
-    mock_node.__len__.return_value = 3
-    mock_node.get_data_points.return_value = [10.0, 20.0, 30.0]
-    mock_node.get_std.return_value = [1.0, 2.0, 3.0]
-    mock_node.getIndex.side_effect = mocked_obs_node_get_index_nr
-
-    facade.get_observations.return_value = {"some_key": [mock_node]}
+def test_load_general_obs(facade):
+    facade.get_observations.return_value = {
+        "some_key": [
+            GenObservation(
+                np.array([10.0, 20.0, 30.0]),
+                np.array([1.0, 2.0, 3.0]),
+                np.array([0, 2, 3]),
+                np.full(3, 1.0),
+            )
+        ]
+    }
 
     facade.load_gen_data.return_value = pd.DataFrame(data=[9.9, 19.9, 29.9, 39.9])
 
     result = loader._load_general_obs(facade, Mock(), ["some_key"])
-
-    mock_node.get_data_points.assert_called_once_with()
-    mock_node.get_std.assert_called_once_with()
 
     assert result.columns.to_list() == [
         ("some_key", 0, 0),
