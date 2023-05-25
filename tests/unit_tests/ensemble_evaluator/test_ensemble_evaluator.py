@@ -82,7 +82,6 @@ def test_dispatchers_can_connect_and_monitor_can_shut_down_evaluator(evaluator):
                 {identifiers.ERROR_MSG: "error"},
             )
             evt = next(events)
-            print(evt)
             snapshot = Snapshot(evt.data)
             assert snapshot.get_job("1", "0", "0").status == JOB_STATE_FINISHED
             assert snapshot.get_job("0", "0", "0").status == JOB_STATE_RUNNING
