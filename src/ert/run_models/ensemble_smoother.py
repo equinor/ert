@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import logging
 from typing import TYPE_CHECKING, Any, Dict
 from uuid import UUID
 
@@ -14,8 +13,6 @@ from .base_run_model import BaseRunModel, ErtRunError
 
 if TYPE_CHECKING:
     from ert._c_wrappers.enkf import EnKFMain, QueueConfig
-
-experiment_logger = logging.getLogger("ert.experiment_server.ensemble_experiment")
 
 
 # pylint: disable=too-many-arguments
@@ -38,9 +35,6 @@ class EnsembleSmoother(BaseRunModel):
         )
         self._current_case_name: str = simulation_arguments["current_case"]
         self.support_restart = False
-
-    async def run(self, _: EvaluatorServerConfig) -> None:
-        raise NotImplementedError()
 
     def setAnalysisModule(self, module_name: str) -> None:
         module_load_success = self.ert().analysisConfig().select_module(module_name)

@@ -432,10 +432,6 @@ class BaseRunModel:
                 run_context.sim_fs.sync,
             )
 
-    @abstractmethod
-    async def run(self, evaluator_server_config: EvaluatorServerConfig) -> None:
-        raise NotImplementedError()
-
     async def successful_realizations(self, iter_: int) -> int:
         return self._state_machine.successful_realizations(self._iter_map[iter_])
 
