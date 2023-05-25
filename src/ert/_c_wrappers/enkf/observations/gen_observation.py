@@ -1,5 +1,6 @@
 import ctypes
 import os.path
+from typing import TYPE_CHECKING
 
 import numpy as np
 from cwrap import BaseCClass
@@ -9,6 +10,9 @@ from ert import _clib
 from ert._c_wrappers import ResPrototype
 from ert._c_wrappers.enkf import ActiveList
 from ert._c_wrappers.enkf.config import GenDataConfig
+
+if TYPE_CHECKING:
+    import numpy.typing as npt
 
 
 class GenObservation(BaseCClass):
@@ -99,14 +103,14 @@ class GenObservation(BaseCClass):
     def updateStdScaling(self, factor, active_list: ActiveList):
         _clib.local.gen_obs.update_std_scaling(self, factor, active_list)
 
-    def get_data_points(self):
+    def get_data_points(self) -> "npt.NDArray[np.double]":
         np_vector = np.zeros(len(self))
         self._get_value_vector(
             len(self), np_vector.ctypes.data_as(ctypes.POINTER(ctypes.c_double))
         )
         return np_vector
 
-    def get_std(self):
+    def get_std(self) -> "npt.NDArray[np.double]":
         np_vector = np.zeros(len(self))
         self._get_std_vector(
             len(self), np_vector.ctypes.data_as(ctypes.POINTER(ctypes.c_double))
