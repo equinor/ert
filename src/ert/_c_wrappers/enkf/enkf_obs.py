@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Dict, Iterator, List, Literal, Optional, Tuple
 
 import numpy as np
 from ecl.summary import EclSumVarType
-from ecl.util.util import CTime
+from ecl.util.util import CTime, IntVector
 
 from ert import _clib
 from ert._c_wrappers.enkf.config.gen_data_config import GenDataConfig
@@ -325,6 +325,48 @@ class EnkfObs:
         return obs_vectors
 
     @classmethod
+    def _create_gen_obs(
+        cls,
+        scalar_value=None,
+        obs_file: Optional[str] = None,
+        data_index: Optional[str] = None,
+    ):
+        if scalar_value is None and obs_file is None:
+            raise ValueError(
+                "Exactly one the scalar_value and obs_file arguments must be present"
+            )
+
+        if scalar_value is not None and obs_file is not None:
+            raise ValueError(
+                "Exactly one the scalar_value and obs_file arguments must be present"
+            )
+
+        if obs_file is not None:
+            file_values = np.loadtxt(obs_file, delimiter=None).ravel()
+            if len(file_values) % 2 != 0:
+                raise ValueError(
+                    "Expected even number of values in GENERAL_OBSERVATION"
+                )
+            values = file_values[::2]
+            stds = file_values[1::2]
+
+        else:
+            obs_value, obs_std = scalar_value
+            values = np.array([obs_value])
+            stds = np.array([obs_std])
+
+        if data_index is not None:
+            indices = np.array([])
+            if os.path.isfile(data_index):
+                indices = np.loadtxt(data_index, delimiter=None).ravel()
+            else:
+                indices = np.array(IntVector.active_list(data_index), dtype=np.int32)
+        else:
+            indices = np.arange(len(values))
+        std_scaling = np.full(len(values), 1.0)
+        return GenObservation(values, stds, indices, std_scaling)
+
+    @classmethod
     def _handle_general_observation(
         cls, ensemble_config: "EnsembleConfig", conf_instance, time_map
     ) -> Dict[str, ObsVector]:
@@ -371,7 +413,7 @@ class EnkfObs:
                 continue
 
             obs_vector.add_general_obs(
-                GenObservation(
+                cls._create_gen_obs(
                     (
                         float(instance.get_value("VALUE")),
                         float(instance.get_value("ERROR")),

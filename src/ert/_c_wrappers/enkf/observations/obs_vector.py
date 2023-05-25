@@ -116,17 +116,13 @@ class ObsVector:
                 continue
             node = self.getNode(time_step)
 
-            index_list = [node.getIndex(nr) for nr in range(len(node))]
             index = MultiIndex.from_product(
-                [[self.getKey()], [f"{data_key}@{time_step}"], index_list],
+                [[self.getKey()], [f"{data_key}@{time_step}"], node.indices],
                 names=["key", "data_key", "axis"],
             )
-            values = node.get_data_points()
-            errors = node.get_std()
-
             data.append(
                 DataFrame(
-                    data=np.array([values, errors]).T,
+                    data=np.array([node.values, node.stds]).T,
                     index=index,
                     columns=["OBS", "STD"],
                 )

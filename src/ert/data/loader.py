@@ -140,21 +140,17 @@ def _load_general_obs(
         node: GenObservation
         for node in iter(obs_vector):  # type: ignore
             # Observations and its standard deviation are a subset of the
-            # simulation data The index_list refers to indices in the simulation
-            # data. In order to join these data in a DataFrame, pandas inserts
-            # the obs/std data into the columns representing said indices.
-            # You then get something like:
+            # simulation data. In order to join these data in a DataFrame,
+            # pandas inserts the obs/std data into the columns representing
+            # said indices. You then get something like:
             #      observation_key
             #      0   1   2
             # OBS  NaN NaN 42
             # STD  NaN NaN 4.2
-            index_list = [node.getIndex(nr) for nr in range(len(node))]
-            index = _create_multi_index(index_list, index_list)
+            index = _create_multi_index(iter(node.indices), iter(node.indices))
 
-            df_obs = pd.DataFrame(
-                [node.get_data_points()], columns=index, index=["OBS"]
-            )
-            df_std = pd.DataFrame([node.get_std()], columns=index, index=["STD"])
+            df_obs = pd.DataFrame([node.values], columns=index, index=["OBS"])
+            df_std = pd.DataFrame([node.stds], columns=index, index=["STD"])
             data.append(pd.concat([df_obs, df_std]))
         data = pd.concat(data, axis=1)
         data = pd.concat({observation_key: data}, axis=1)
