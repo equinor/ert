@@ -134,18 +134,6 @@ const char *config_content_iget(const config_content_type *content,
     return config_content_item_iget(item, occurence, index);
 }
 
-int config_content_iget_as_int(const config_content_type *content,
-                               const char *key, int occurence, int index) {
-    config_content_item_type *item = config_content_get_item(content, key);
-    return config_content_item_iget_as_int(item, occurence, index);
-}
-
-bool config_content_iget_as_bool(const config_content_type *content,
-                                 const char *key, int occurence, int index) {
-    config_content_item_type *item = config_content_get_item(content, key);
-    return config_content_item_iget_as_bool(item, occurence, index);
-}
-
 /**
    Return the number of times a keyword has been set - dies on unknown
    'kw'. If the append_arg attribute has been set to false the
@@ -205,34 +193,6 @@ config_content_get_value_node(const config_content_type *content,
     return node;
 }
 
-bool config_content_get_value_as_bool(const config_content_type *config,
-                                      const char *kw) {
-    config_content_node_type *node =
-        config_content_get_value_node__(config, kw);
-    return config_content_node_iget_as_bool(node, 0);
-}
-
-int config_content_get_value_as_int(const config_content_type *config,
-                                    const char *kw) {
-    config_content_node_type *node =
-        config_content_get_value_node__(config, kw);
-    return config_content_node_iget_as_int(node, 0);
-}
-
-double config_content_get_value_as_double(const config_content_type *config,
-                                          const char *kw) {
-    config_content_node_type *node =
-        config_content_get_value_node__(config, kw);
-    return config_content_node_iget_as_double(node, 0);
-}
-
-const char *config_content_get_value_as_path(const config_content_type *config,
-                                             const char *kw) {
-    config_content_node_type *node =
-        config_content_get_value_node__(config, kw);
-    return config_content_node_iget_as_path(node, 0);
-}
-
 const char *
 config_content_get_value_as_abspath(const config_content_type *config,
                                     const char *kw) {
@@ -241,27 +201,11 @@ config_content_get_value_as_abspath(const config_content_type *config,
     return config_content_node_iget_as_abspath(node, 0);
 }
 
-const char *
-config_content_get_value_as_executable(const config_content_type *config,
-                                       const char *kw) {
-    config_content_node_type *node =
-        config_content_get_value_node__(config, kw);
-    return config_content_node_iget_as_executable(node, 0);
-}
-
 const char *config_content_get_value(const config_content_type *config,
                                      const char *kw) {
     config_content_node_type *node =
         config_content_get_value_node__(config, kw);
     return config_content_node_iget(node, 0);
-}
-
-const stringlist_type *
-config_content_iget_stringlist_ref(const config_content_type *content,
-                                   const char *kw, int occurence) {
-    config_content_item_type *item = config_content_get_item(content, kw);
-
-    return config_content_item_iget_stringlist_ref(item, occurence);
 }
 
 void config_content_add_define(config_content_type *content, const char *key,

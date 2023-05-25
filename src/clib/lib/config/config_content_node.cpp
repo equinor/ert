@@ -44,12 +44,6 @@ void config_content_node_set(config_content_node_type *node,
                                       stringlist_iget(token_list, iarg + 1));
 }
 
-char *
-config_content_node_alloc_joined_string(const config_content_node_type *node,
-                                        const char *sep) {
-    return stringlist_alloc_joined_string(node->stringlist, sep);
-}
-
 void config_content_node_free(config_content_node_type *node) {
     stringlist_free(node->stringlist);
     if (node->string_storage != NULL)

@@ -32,7 +32,6 @@ extern "C" bool config_has_schema_item(const config_parser_type *config,
 extern "C" config_schema_item_type *
 config_get_schema_item(const config_parser_type *, const char *);
 void config_add_alias(config_parser_type *, const char *, const char *);
-void config_install_message(config_parser_type *, const char *, const char *);
 
 extern "C" config_schema_item_type *
 config_add_schema_item(config_parser_type *config, const char *kw,

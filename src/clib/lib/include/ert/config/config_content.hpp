@@ -54,33 +54,13 @@ void config_content_add_node(config_content_type *content,
 
 const char *config_content_iget(const config_content_type *content,
                                 const char *key, int occurence, int index);
-extern "C" int config_content_iget_as_int(const config_content_type *content,
-                                          const char *key, int occurence,
-                                          int index);
-bool config_content_iget_as_bool(const config_content_type *content,
-                                 const char *key, int occurence, int index);
 int config_content_get_occurences(const config_content_type *content,
                                   const char *kw);
-
-bool config_content_get_value_as_bool(const config_content_type *config,
-                                      const char *kw);
-int config_content_get_value_as_int(const config_content_type *config,
-                                    const char *kw);
-double config_content_get_value_as_double(const config_content_type *config,
-                                          const char *kw);
-const char *config_content_get_value_as_path(const config_content_type *config,
-                                             const char *kw);
 const char *
 config_content_get_value_as_abspath(const config_content_type *config,
                                     const char *kw);
-const char *
-config_content_get_value_as_executable(const config_content_type *config,
-                                       const char *kw);
 const char *config_content_get_value(const config_content_type *config,
                                      const char *kw);
-const stringlist_type *
-config_content_iget_stringlist_ref(const config_content_type *content,
-                                   const char *kw, int occurence);
 config_content_node_type *
 config_content_get_value_node(const config_content_type *content,
                               const char *kw);

@@ -33,72 +33,12 @@ config_content_item_iget_node(const config_content_item_type *item, int index) {
     return (config_content_node_type *)vector_iget(item->nodes, index);
 }
 
-const stringlist_type *
-config_content_item_iget_stringlist_ref(const config_content_item_type *item,
-                                        int occurence) {
-    const config_content_node_type *node =
-        config_content_item_iget_node(item, occurence);
-    return config_content_node_get_stringlist(node);
-}
-
-/**
-   If copy == false - the hash will break down when/if the
-   config object is freed - your call.
-*/
-hash_type *config_content_item_alloc_hash(const config_content_item_type *item,
-                                          bool copy) {
-    hash_type *hash = hash_alloc();
-    if (item != NULL) {
-        int inode;
-        for (inode = 0; inode < vector_get_size(item->nodes); inode++) {
-            const config_content_node_type *node =
-                config_content_item_iget_node(item, inode);
-            const stringlist_type *src_list =
-                config_content_node_get_stringlist(node);
-            const char *key = stringlist_iget(src_list, 0);
-            const char *value = stringlist_iget(src_list, 1);
-
-            if (copy) {
-                hash_insert_hash_owned_ref(hash, key,
-                                           util_alloc_string_copy(value), free);
-            } else
-                hash_insert_ref(hash, key, value);
-        }
-    }
-    return hash;
-}
-
 const char *config_content_item_iget(const config_content_item_type *item,
                                      int occurence, int index) {
     const config_content_node_type *node =
         config_content_item_iget_node(item, occurence);
     const stringlist_type *src_list = config_content_node_get_stringlist(node);
     return stringlist_iget(src_list, index);
-}
-
-bool config_content_item_iget_as_bool(const config_content_item_type *item,
-                                      int occurence, int index) {
-    bool value;
-    config_schema_item_assure_type(item->schema, index, CONFIG_BOOL);
-    util_sscanf_bool(config_content_item_iget(item, occurence, index), &value);
-    return value;
-}
-
-int config_content_item_iget_as_int(const config_content_item_type *item,
-                                    int occurence, int index) {
-    int value;
-    config_schema_item_assure_type(item->schema, index, CONFIG_INT);
-    util_sscanf_int(config_content_item_iget(item, occurence, index), &value);
-    return value;
-}
-
-double config_content_item_iget_as_double(const config_content_item_type *item,
-                                          int occurence, int index) {
-    double value;
-    config_schema_item_assure_type(item->schema, index, CONFIG_FLOAT);
-    util_sscanf_double(config_content_item_iget(item, occurence, index),
-                       &value);
-    return value;
 }
 
 /**
