@@ -140,7 +140,7 @@ class ObsVector:
 
         for time_step in active_steps:
             n: "SummaryObservation" = self.getNode(time_step)
-            observations.append([n.getValue(), n.getStandardDeviation()])
+            observations.append([n.value, n.std])
         data_key = self.getDataKey()
         time_axis = [
             datetime.strptime(str(obs.getObservationTime(i)), "%Y-%m-%d %H:%M:%S")

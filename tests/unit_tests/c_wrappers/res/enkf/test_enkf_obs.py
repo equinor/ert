@@ -64,7 +64,7 @@ def test_that_correct_key_observation_is_loaded(extra_config, expected):
     run_simulator()
     ert_config = ErtConfig.from_file("config.ert")
     observations = EnkfObs.from_ert_config(ert_config)
-    assert [obs.getValue() for obs in observations["FOPR"]] == [expected]
+    assert [obs.value for obs in observations["FOPR"]] == [expected]
 
 
 @pytest.mark.parametrize(
@@ -128,14 +128,14 @@ def test_observations(setup_case):
         )
         observation_vector.add_summary_obs(summary_observation_node, index)
         assert observation_vector.getNode(index) == summary_observation_node
-        assert summary_observation_node.getValue() == value
+        assert summary_observation_node.value == value
         values.append((index, value, std))
 
     test_vector = observations[observation_key]
     index = 0
     for node in test_vector:
         assert isinstance(node, SummaryObservation)
-        assert node.getValue() == index * 10.5
+        assert node.value == index * 10.5
         index += 1
 
     assert observation_vector == test_vector
@@ -144,6 +144,6 @@ def test_observations(setup_case):
 
         summary_observation_node = test_vector.getNode(index)
 
-        assert summary_observation_node.getValue() == value
-        assert summary_observation_node.getStandardDeviation() == std
-        assert summary_observation_node.getSummaryKey() == summary_key
+        assert summary_observation_node.value == value
+        assert summary_observation_node.std == std
+        assert summary_observation_node.summary_key == summary_key
