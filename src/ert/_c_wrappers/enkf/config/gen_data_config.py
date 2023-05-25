@@ -1,13 +1,14 @@
 from typing import List, Optional
 
-from ert._c_wrappers.enkf.enums.ert_impl_type_enum import ErtImplType
-
 
 class GenDataConfig:
-    def __init__(self, key: str, report_steps: Optional[List[int]] = None):
+    def __init__(
+        self, key: str, input_file: str = "", report_steps: Optional[List[int]] = None
+    ):
         self.name = key
         self._active_report_steps: List[int] = []
         self._observation_list: List[str] = []
+        self.input_file = input_file
         if report_steps:
             self.add_report_steps(report_steps)
         else:
@@ -44,9 +45,6 @@ class GenDataConfig:
 
     def getNumReportStep(self) -> int:
         return len(self._active_report_steps)
-
-    def getImplementationType(self) -> ErtImplType:
-        return ErtImplType.GEN_DATA
 
     def getReportStep(self, index: int) -> int:
         return self._active_report_steps[index]

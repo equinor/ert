@@ -1,7 +1,5 @@
 from typing import Dict, List, Tuple, Union
 
-from ert._c_wrappers.enkf.enums.ert_impl_type_enum import ErtImplType
-
 
 class ExtParamConfig:
     def __init__(
@@ -126,9 +124,6 @@ class ExtParamConfig:
 
     def getKey(self) -> str:
         return self.name
-
-    def getImplementationType(self) -> ErtImplType:  # type: ignore
-        return ErtImplType.EXT_PARAM
 
     def items(self):
         index = 0

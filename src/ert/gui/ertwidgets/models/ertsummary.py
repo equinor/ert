@@ -4,7 +4,6 @@ from ert._c_wrappers.enkf import EnKFMain
 from ert._c_wrappers.enkf.enums.enkf_obs_impl_type_enum import (
     EnkfObservationImplementationType,
 )
-from ert._c_wrappers.enkf.enums.enkf_var_type_enum import EnkfVarType
 
 
 class ErtSummary:
@@ -15,10 +14,7 @@ class ErtSummary:
         return self.ert.resConfig().forward_model_job_name_list()
 
     def getParameters(self) -> List[str]:
-        parameters = self.ert.ensembleConfig().getKeylistFromVarType(
-            EnkfVarType.PARAMETER
-        )
-        return sorted(parameters, key=lambda k: k.lower())
+        return sorted(self.ert.ensembleConfig().parameters, key=lambda k: k.lower())
 
     def getObservations(self) -> List[str]:
         gen_obs = self.ert.getObservations().getTypedKeylist(

@@ -39,8 +39,5 @@ class ParameterConfig(ABC):
     def getKey(self):
         return self.name
 
-    def getImplementationType(self):
-        return self
-
     def to_dict(self) -> Dict[str, Any]:
         return dataclasses.asdict(self, dict_factory=CustomDict)

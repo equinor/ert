@@ -18,7 +18,7 @@ from ecl.grid import EclGrid
 from ecl.util.geometry import Surface
 
 from ert.__main__ import ert_parser
-from ert._c_wrappers.enkf import EnKFMain, EnkfVarType, ErtConfig
+from ert._c_wrappers.enkf import EnKFMain, ErtConfig
 from ert.cli import ENSEMBLE_SMOOTHER_MODE
 from ert.cli.main import run_cli
 from ert.libres_facade import LibresFacade
@@ -958,20 +958,17 @@ def test_config_node_meta_information(storage, tmpdir):
         assert ensemble_config.getUseForwardInit("X") is False
         with pytest.raises(KeyError, match="The key:X is not in"):
             ensemble_config["X"]  # pylint: disable=pointless-statement
-        assert ensemble_config.get_var_type("X") == EnkfVarType.INVALID_VAR
 
         # surface
         assert ensemble_config.getUseForwardInit("TOP") is False
         assert str(ensemble_config["TOP"].forward_init_file) == "Surfaces/surf%d.irap"
         assert str(ensemble_config["TOP"].output_file) == "surf.irap"
-        assert ensemble_config.get_var_type("TOP") == EnkfVarType.PARAMETER
 
         assert ensemble_config.getUseForwardInit("BOTTOM") is True
 
         # gen_data
         assert ensemble_config.getUseForwardInit("ABC") is False
         assert ensemble_config["ABC"].input_file == "SimulatedABC_%d.txt"
-        assert ensemble_config.get_var_type("ABC") == EnkfVarType.DYNAMIC_RESULT
 
         # gen_kw
         assert ensemble_config.getUseForwardInit("KW_NAME") is False
@@ -979,13 +976,9 @@ def test_config_node_meta_information(storage, tmpdir):
             Path().cwd() / "custom_param%d.txt"
         )
         assert ensemble_config["KW_NAME"].output_file == "kw.txt"
-        assert ensemble_config.get_var_type("KW_NAME") == EnkfVarType.PARAMETER
 
         # summary
         assert ensemble_config.getUseForwardInit("WOPR:MY_WELL") is False
-        assert (
-            ensemble_config.get_var_type("WOPR:MY_WELL") == EnkfVarType.DYNAMIC_RESULT
-        )
 
         # field
         assert ensemble_config.getUseForwardInit("MY_PARAM2") is True
@@ -993,4 +986,3 @@ def test_config_node_meta_information(storage, tmpdir):
         assert ensemble_config.getUseForwardInit("MY_PARAM") is False
         assert ensemble_config["MY_PARAM"].forward_init_file == "my_param_%d.grdecl"
         assert ensemble_config["MY_PARAM"].output_file == Path("my_param.grdecl")
-        assert ensemble_config.get_var_type("MY_PARAM") == EnkfVarType.PARAMETER

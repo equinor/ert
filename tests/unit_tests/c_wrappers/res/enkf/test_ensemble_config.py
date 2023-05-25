@@ -5,7 +5,7 @@ import pytest
 from ecl.summary import EclSum
 
 from ert._c_wrappers.enkf import ConfigKeys, EnsembleConfig, ErtConfig
-from ert._c_wrappers.enkf.enums import ErtImplType
+from ert._c_wrappers.enkf.config.gen_data_config import GenDataConfig
 from ert.parsing import ConfigValidationError, ConfigWarning
 
 
@@ -139,7 +139,7 @@ def test_gen_data_node(gen_data_str, expected):
         assert node == expected
     else:
         assert node is not None
-        assert node.getImplementationType() == ErtImplType.GEN_DATA
+        assert isinstance(node, GenDataConfig)
         assert node.getNumReportStep() == 3
         assert node.hasReportStep(10)
         assert node.hasReportStep(20)

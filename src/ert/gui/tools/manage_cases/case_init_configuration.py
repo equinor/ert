@@ -11,7 +11,6 @@ from qtpy.QtWidgets import (
     QWidget,
 )
 
-from ert._c_wrappers.enkf import EnkfVarType
 from ert.gui.ertwidgets import addHelpToWidget, showWaitCursorWhileWaiting
 from ert.gui.ertwidgets.caselist import CaseList
 from ert.gui.ertwidgets.caseselector import CaseSelector
@@ -24,7 +23,7 @@ def createCheckLists(ert):
     parameter_model = SelectableListModel([])
 
     def getParameterList():
-        return ert.ensembleConfig().getKeylistFromVarType(EnkfVarType.PARAMETER)
+        return ert.ensembleConfig().parameters
 
     parameter_model.getList = getParameterList
     parameter_check_list = CheckList(

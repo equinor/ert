@@ -13,9 +13,9 @@ from ert._c_wrappers.enkf import (
     EnKFMain,
     EnkfObservationImplementationType,
     ErtConfig,
-    ErtImplType,
     RealizationStateEnum,
 )
+from ert._c_wrappers.enkf.config.summary_config import SummaryConfig
 from ert.analysis import ESUpdate
 from ert.storage import EnsembleAccessor, EnsembleReader
 from ert.storage.local_ensemble import LocalEnsembleAccessor
@@ -92,7 +92,7 @@ def make_source_accessor(path: Path, ert: EnKFMain) -> EnsembleReader:
         obs_highest_index_used = obs_vec.getDataIndex(len(obs_vec) - 1)
         gen_data_input.append((obs.getDataKey(), obs_highest_index_used + 1))
 
-    obs_data_keys = ens_config.getKeylistFromImplType(ErtImplType.SUMMARY)
+    obs_data_keys = ens_config.getKeylistFromImplType(SummaryConfig)
     for real in range(realisations):
         source.save_gen_data(make_gen_data(gen_data_input), real)
         source.save_summary_data(

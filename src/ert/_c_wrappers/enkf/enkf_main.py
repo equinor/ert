@@ -19,7 +19,6 @@ from ert._c_wrappers.enkf.config.parameter_config import ParameterConfig
 from ert._c_wrappers.enkf.enkf_obs import EnkfObs
 from ert._c_wrappers.enkf.ensemble_config import EnsembleConfig
 from ert._c_wrappers.enkf.enums import RealizationStateEnum
-from ert._c_wrappers.enkf.enums.ert_impl_type_enum import ErtImplType
 from ert._c_wrappers.enkf.ert_run_context import RunContext
 from ert._c_wrappers.enkf.model_config import ModelConfig
 from ert._c_wrappers.job_queue import WorkflowRunner
@@ -175,13 +174,10 @@ def _generate_parameter_files(
                 exports.update(gen_kw_dict)
             continue
 
-        type_ = node.getImplementationType()
-
-        if type_ == ErtImplType.EXT_PARAM:
-            if isinstance(node, ExtParamConfig):
-                _generate_ext_parameter_file(
-                    fs, iens, node.getKey(), node.output_file, Path(run_path)
-                )
+        if isinstance(node, ExtParamConfig):
+            _generate_ext_parameter_file(
+                fs, iens, node.getKey(), node.output_file, Path(run_path)
+            )
             continue
         if isinstance(node, ParameterConfig):
             # For the first iteration we do not write the parameter
@@ -372,7 +368,6 @@ class EnKFMain:
             config_node = self.ensembleConfig().getNode(parameter)
             if self.ensembleConfig().getUseForwardInit(parameter):
                 continue
-            impl_type = config_node.getImplementationType()
             if isinstance(config_node, ParameterConfig):
                 for _, realization_nr in enumerate(active_realizations):
                     config_node.load(Path(), realization_nr, ensemble)
@@ -405,10 +400,10 @@ class EnKFMain:
                     realizations=active_realizations,
                     data=parameter_values,
                 )
-            elif impl_type == ErtImplType.EXT_PARAM:
+            elif isinstance(config_node, ExtParamConfig):
                 pass
             else:
-                raise NotImplementedError(f"{impl_type} is not supported")
+                raise NotImplementedError(f"{type(config_node)} is not supported")
         for realization_nr in active_realizations:
             ensemble.update_realization_state(
                 realization_nr,

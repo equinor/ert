@@ -8,7 +8,6 @@ from typing import TYPE_CHECKING, Callable, Dict, List, Tuple, TypedDict
 import numpy as np
 import pandas as pd
 
-from ert._c_wrappers.enkf.enums.ert_impl_type_enum import ErtImplType
 from ert.parsing.config_errors import ConfigValidationError
 
 if TYPE_CHECKING:
@@ -22,10 +21,14 @@ class PriorDict(TypedDict):
 
 
 class GenKwConfig:
-    TYPE_NAME = "gen_kw_config"
-
     def __init__(
-        self, key: str, template_file: str, parameter_file: str, tag_fmt: str = "<%s>"
+        self,
+        key: str,
+        template_file: str = "",
+        output_file: str = "",
+        parameter_file: str = "",
+        forward_init_file: str = "",
+        tag_fmt: str = "<%s>",
     ):
         errors = []
 
@@ -36,7 +39,7 @@ class GenKwConfig:
 
         if not os.path.isfile(parameter_file):
             errors.append(
-                ConfigValidationError(f"No such parameter file: {template_file}")
+                ConfigValidationError(f"No such parameter file: {parameter_file}")
             )
 
         if errors:
@@ -47,9 +50,9 @@ class GenKwConfig:
         self._template_file = template_file
         self._tag_format = tag_fmt
         self._transfer_functions = []
-        self.forward_init = ""
-        self.output_file = ""
-        self.forward_init_file = ""
+        self.output_file = output_file
+        self.forward_init = False  # not supported
+        self.forward_init_file = forward_init_file
 
         with open(parameter_file, "r", encoding="utf-8") as file:
             for item in file:
@@ -77,9 +80,6 @@ class GenKwConfig:
 
     def getKey(self) -> str:
         return self.name
-
-    def getImplementationType(self):
-        return ErtImplType.GEN_KW
 
     @property
     def tag_fmt(self):
