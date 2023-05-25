@@ -1,23 +1,16 @@
+from dataclasses import dataclass
 from typing import Optional, Union
 
 
+@dataclass
 class EvaluatorConnectionInfo:
     """Read only server-info"""
 
-    def __init__(
-        self,
-        host: str,
-        port: int,
-        url: str,
-        cert: Optional[Union[str, bytes]] = None,
-        token: Optional[str] = None,
-    ) -> None:
-        # pylint: disable=too-many-arguments
-        self.host = host
-        self.port = port
-        self.cert = cert
-        self.token = token
-        self.url = url
+    host: str
+    port: int
+    url: str
+    cert: Optional[Union[str, bytes]] = None
+    token: Optional[str] = None
 
     @property
     def dispatch_uri(self) -> str:
