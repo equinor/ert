@@ -874,7 +874,7 @@ SCHEDULE_PREDICTION_FILE A B C.txt
             """
         ),
         expected_error=ExpectedErrorInfo(
-            match="The SCHEDULE_PREDICTION_FILE config KEY has been removed.",
+            match="The 'SCHEDULE_PREDICTION_FILE' config keyword has been removed.",
             line=3,
             column=1,
             end_column=25,

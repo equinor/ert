@@ -152,7 +152,7 @@ class ErtConfig:
             ensemble_config=ensemble_config,
             ens_path=config_dict.get(ConfigKeys.ENSPATH, ErtConfig.DEFAULT_ENSPATH),
             env_vars=env_vars,
-            random_seed=config_dict.get(ConfigKeys.RANDOM_SEED, None),
+            random_seed=config_dict.get(ConfigKeys.RANDOM_SEED),
             analysis_config=AnalysisConfig.from_dict(config_dict=config_dict),
             queue_config=QueueConfig.from_dict(config_dict),
             workflow_jobs=workflow_jobs,
@@ -702,6 +702,7 @@ class ErtConfig:
                 new_job = ExtJob.from_config_file(
                     name=name,
                     config_file=job_config_file,
+                    use_new_parser=USE_NEW_PARSER_BY_DEFAULT,
                 )
             except ConfigValidationError as e:
                 errors.append(e)
@@ -741,7 +742,9 @@ class ErtConfig:
                 if not os.path.isfile(full_path):
                     continue
                 try:
-                    new_job = ExtJob.from_config_file(config_file=full_path)
+                    new_job = ExtJob.from_config_file(
+                        config_file=full_path, use_new_parser=USE_NEW_PARSER_BY_DEFAULT
+                    )
                 except ConfigValidationError as e:
                     errors.append(e)
                     continue
