@@ -36,7 +36,7 @@ UCASE_LETTER: "A".."Z"
 LETTER: UCASE_LETTER | LCASE_LETTER
 WORD: LETTER+
 
-CHAR: /[&$\[\]=,.\*a-zæøåA-ZÆØÅ10-9_%:\<\>\/\\?+-]/
+CHAR: /[&$\[\]=,.\*a-zæøåA-ZÆØÅ10-9_%:\<\>\/\\?+-\^]/
 UNQUOTED: CHAR+
 
 CHAR_NO_EQ: /[+.\*a-zæøåA-ZÆØÅ10-9_%:\<\>\/-]/
