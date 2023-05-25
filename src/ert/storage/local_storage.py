@@ -9,6 +9,7 @@ from typing import (
     Any,
     Dict,
     Generator,
+    List,
     Optional,
     Type,
     Union,
@@ -30,7 +31,7 @@ else:
 if TYPE_CHECKING:
     from ecl.summary import EclSum
 
-    from ert._c_wrappers.enkf.ensemble_config import ParameterConfiguration
+    from ert._c_wrappers.enkf.config.parameter_config import ParameterConfig
 
 
 class LocalStorageReader:
@@ -163,7 +164,7 @@ class LocalStorageAccessor(LocalStorageReader):
         return self
 
     def create_experiment(
-        self, parameters: Optional[ParameterConfiguration] = None
+        self, parameters: Optional[List[ParameterConfig]] = None
     ) -> LocalExperimentAccessor:
         exp_id = uuid4()
         path = self._experiment_path(exp_id)

@@ -1,83 +1,87 @@
-from typing import Dict, List, Tuple, Union
+import json
+from dataclasses import dataclass, field
+from pathlib import Path
+from typing import TYPE_CHECKING, Dict, List, Tuple, Union
+
+from ert._c_wrappers.enkf.config.parameter_config import ParameterConfig
+
+if TYPE_CHECKING:
+    from ert.storage import EnsembleAccessor, EnsembleReader
 
 
-class ExtParamConfig:
-    def __init__(
-        self,
-        key,
-        input_keys: Union[List[str], Dict[str, List[Tuple[str, str]]]],
-        output_file: str = "",
-        forward_init: bool = False,
-        init_file: str = "",
-    ):
-        """Create an ExtParamConfig for @key with the given @input_keys
+@dataclass
+class ExtParamConfig(ParameterConfig):
+    """Create an ExtParamConfig for @key with the given @input_keys
 
-        @input_keys can be either a list of keys as strings or a dict with
-        keys as strings and a list of suffixes for each key.
-        If a list of strings is given, the order is preserved.
-        """
-        try:
-            keys = input_keys.keys()  # extract keys if suffixes are also given
-            suffixmap = input_keys.items()
-        except AttributeError:
-            keys = input_keys  # assume list of keys
-            suffixmap = {}
+    @input_keys can be either a list of keys as strings or a dict with
+    keys as strings and a list of suffixes for each key.
+    If a list of strings is given, the order is preserved.
+    """
 
-        if len(keys) != len(set(keys)):
-            raise ValueError(f"Duplicate keys for key '{key}' - keys: {keys}")
+    input_keys: Union[List[str], Dict[str, List[Tuple[str, str]]]] = field(
+        default_factory=list
+    )
+    forward_init: bool = False
+    output_file: str = ""
+    forward_init_file: str = ""
 
-        self.name = key
-        self._key_list: List[str] = list(keys)
-        self._suffix_list: List[List[str]] = []
+    def __post_init__(self):
+        if isinstance(self.input_keys, dict):
+            for k, suffixes in self.input_keys.items():
+                if not isinstance(suffixes, list):
+                    raise TypeError(
+                        f"Invalid type {type(suffixes)} for suffix: {suffixes}"
+                    )
 
-        self.output_file: str = output_file
-        self.forward_init: bool = forward_init
-        self.forward_init_file: str = init_file
-
-        for k, suffixes in suffixmap:
-            if not isinstance(suffixes, list):
-                raise TypeError(f"Invalid type {type(suffixes)} for suffix: {suffixes}")
-
-            if len(suffixes) == 0:
+                if len(suffixes) == 0:
+                    raise ValueError(
+                        f"No suffixes for key '{self.name}/{k}' - suffixes: {suffixes}"
+                    )
+                if len(suffixes) != len(set(suffixes)):
+                    raise ValueError(
+                        f"Duplicate suffixes for key '{self.name}/{k}' - "
+                        f"suffixes: {suffixes}"
+                    )
+                if any(len(s) == 0 for s in suffixes):
+                    raise ValueError(
+                        f"Empty suffix encountered for key '{self.name}/{k}' "
+                        f"- suffixes: {suffixes}"
+                    )
+        else:
+            if isinstance(self.input_keys, tuple):
+                self.input_keys = list(self.input_keys)
+            if len(self.input_keys) != len(set(self.input_keys)):
                 raise ValueError(
-                    f"No suffixes for key '{key}/{k}' - suffixes: {suffixes}"
-                )
-            if len(suffixes) != len(set(suffixes)):
-                raise ValueError(
-                    f"Duplicate suffixes for key '{key}/{k}' - " f"suffixes: {suffixes}"
-                )
-            if any(len(s) == 0 for s in suffixes):
-                raise ValueError(
-                    f"Empty suffix encountered for key '{key}/{k}' "
-                    f"- suffixes: {suffixes}"
+                    f"Duplicate keys for key '{self.name}' - keys: {self.input_keys}"
                 )
 
-            self._suffix_list.append(suffixes)
+    def load(self, run_path: Path, real_nr: int, ensemble: "EnsembleAccessor"):
+        pass
+
+    def save(self, run_path: Path, real_nr: int, ensemble: "EnsembleReader"):
+        file_path = run_path / self.output_file
+        Path.mkdir(file_path.parent, exist_ok=True, parents=True)
+        data = ensemble.load_ext_param(self.name, real_nr)
+        with open(file_path, "w", encoding="utf-8") as f:
+            json.dump(data, f)
 
     def __len__(self):
-        return len(self._key_list)
+        return len(self.input_keys)
 
     def __contains__(self, key):
         """Check if the @key is present in the configuration
-
         @key can be a single string or a tuple (key, suffix)
         """
-
-        if isinstance(key, tuple):
+        if isinstance(self.input_keys, dict) and isinstance(key, tuple):
             key, suffix = key
-            if self._key_list.count(key):
-                key_index = self._get_key_index(key)
-                return suffix in self._suffix_list[key_index]
-            else:
-                return False
-
-        # assume key is just a string
-        return self._key_list.count(key) > 0
+            return key in self.input_keys and suffix in self.input_keys[key]
+        else:
+            return key in self.input_keys
 
     def __repr__(self):
         return (
-            f"SummaryConfig(keylist={self._key_list}), "
-            f"suffixlist={self._suffix_list})"
+            f"SummaryConfig(keylist={list(self.input_keys.keys())}), "
+            f"suffixlist={list(self.input_keys.items())})"
         )
 
     def __getitem__(self, index):
@@ -89,45 +93,30 @@ class ExtParamConfig:
         that index
         An IndexError is raised if the item is not found
         """
-        suffixes = []
-
-        if isinstance(index, str):
-            suffix_index = self._get_key_index(index)
-            if self._suffix_list_contains_index(suffix_index):
-                suffixes = self._key_suffix_value(suffix_index)
-            return suffixes
-
-        # assume index is an integer
-        if self._suffix_list_contains_index(index):
-            suffixes = self._key_suffix_value(index)
-        key = self._key_list[index]
-
-        return key, suffixes
-
-    def _get_key_index(self, key: str) -> int:
-        if self._key_list.count(key) == 0:
+        if isinstance(self.input_keys, dict) and isinstance(index, str):
+            if index in self.input_keys:
+                return self.input_keys[index]
+            else:
+                raise IndexError(
+                    f"Requested index not found: {index},"
+                    f"Keylist: {list(self.input_keys.keys())}"
+                )
+        elif isinstance(self.input_keys, dict) and isinstance(index, int):
+            return list(self.input_keys.items())[index]
+        elif isinstance(self.input_keys, list) and isinstance(index, int):
+            return self.input_keys[index], []
+        elif isinstance(self.input_keys, list) and isinstance(index, str):
+            if index in self.input_keys:
+                return []
+            raise IndexError(f"Requested index not found: {index}")
+        else:
             raise IndexError(
-                f"Requested index not found: {key}, " f"Keylist: {self._key_list}"
+                f"Unexpected index of type {type(index)} for Keylist: {self.input_keys}"
             )
-        return self._key_list.index(key)
-
-    def _suffix_list_contains_index(self, index: int) -> bool:
-        return 0 <= index < len(self._suffix_list)
-
-    def _key_suffix_value(self, index: int) -> List[str]:
-        if not self._suffix_list_contains_index(index):
-            raise IndexError(
-                f"Requested index is out of bounds: {index}, "
-                f"Suffixlist: {self._suffix_list}"
-            )
-        return self._suffix_list[index]
-
-    def getKey(self) -> str:
-        return self.name
 
     def items(self):
         index = 0
-        while index < len(self._key_list):
+        while index < len(self):
             yield self[index]
             index += 1
 

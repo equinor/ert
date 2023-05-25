@@ -6,7 +6,7 @@ from ert._c_wrappers.enkf import ExtParamConfig
 @pytest.mark.usefixtures("use_tmpdir")
 def test_ext_param_config():
     input_keys = ["key1", "key2", "key3"]
-    config = ExtParamConfig("Key", input_keys)
+    config = ExtParamConfig("Key", input_keys=input_keys)
     assert len(config) == 3
 
     for index, (configkey, _) in enumerate(config):
@@ -34,7 +34,7 @@ def test_ext_param_config_suffixes():
         "key2": input_suffixes[1],
         "key3": input_suffixes[2],
     }
-    config = ExtParamConfig("Key", input_dict)
+    config = ExtParamConfig("Key", input_keys=input_dict)
 
     assert len(config) == 3
     assert "key3" in config

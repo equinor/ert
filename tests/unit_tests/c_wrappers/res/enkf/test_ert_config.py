@@ -245,15 +245,11 @@ def test_extensive_config(setup_case):
 
     assert (
         Path(snake_oil_structure_config["SIGMA"]["TEMPLATE"]).resolve()
-        == Path(
-            ensemble_config.get_keyword_model_config("SIGMA").getTemplateFile()
-        ).resolve()
+        == Path(ensemble_config.getNode("SIGMA").getTemplateFile()).resolve()
     )
     assert (
         Path(snake_oil_structure_config["SIGMA"]["PARAMETER"]).resolve()
-        == Path(
-            ensemble_config.get_keyword_model_config("SIGMA").getParameterFile()
-        ).resolve()
+        == Path(ensemble_config.getNode("SIGMA").getParameterFile()).resolve()
     )
     assert (
         Path(snake_oil_structure_config["SIGMA"]["RESULT"]).resolve()
