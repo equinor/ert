@@ -140,7 +140,7 @@ def test_gen_data_node(gen_data_str, expected):
     else:
         assert node is not None
         assert isinstance(node, GenDataConfig)
-        assert node.getNumReportStep() == 3
+        assert len(node.getReportSteps()) == 3
         assert node.hasReportStep(10)
         assert node.hasReportStep(20)
         assert node.hasReportStep(30)

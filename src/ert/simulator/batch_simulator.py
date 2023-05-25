@@ -108,7 +108,7 @@ class BatchSimulator:
             )
 
         for key in results:
-            ens_config.addNode(GenDataConfig(key=key, input_file=f"{key}_%d"))
+            ens_config.addNode(GenDataConfig(name=key, input_file=f"{key}_%d"))
 
     def _setup_sim(
         self,
