@@ -235,7 +235,7 @@ class ExtJob:
                 environment=environment,
                 exec_env=exec_env,
                 default_mapping=default_mapping,
-                help_text=content_dict.get("HELP_TEXT"),
+                help_text=content_dict.get("HELP_TEXT", ""),
             )
         except IOError as err:
             raise ConfigValidationError.from_info(
