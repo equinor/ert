@@ -103,7 +103,9 @@ class BatchSimulator:
         for control_name, variables in controls.items():
             ens_config.addNode(
                 ExtParamConfig(
-                    control_name, variables, output_file=control_name + ".json"
+                    name=control_name,
+                    input_keys=variables,
+                    output_file=control_name + ".json",
                 )
             )
 

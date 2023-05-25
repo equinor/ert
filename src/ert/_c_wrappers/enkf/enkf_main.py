@@ -9,7 +9,6 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, List, Mapping, Optional, Union
 
 import numpy as np
-from jinja2 import Template
 
 from ert._c_wrappers.analysis.configuration import UpdateConfiguration
 from ert._c_wrappers.enkf.analysis_config import AnalysisConfig
@@ -89,53 +88,6 @@ def _value_export_json(
     )
 
 
-def _generate_gen_kw_parameter_file(
-    fs: EnsembleReader,
-    realization: int,
-    config: "GenKwConfig",
-    target_file: str,
-    run_path: Path,
-) -> Dict[str, Dict[str, float]]:
-    key = config.getKey()
-    gen_kw_dict = fs.load_gen_kw_as_dict(key, realization)
-    transformed = gen_kw_dict[key]
-    if not len(transformed) == len(config):
-        raise ValueError(
-            f"The configuration of GEN_KW parameter {key}"
-            f" is of size {len(config)}, expected {len(transformed)}"
-        )
-
-    with open(config.getTemplateFile(), "r", encoding="utf-8") as f:
-        template = Template(
-            f.read(), variable_start_string="<", variable_end_string=">"
-        )
-
-    if target_file.startswith("/"):
-        target_file = target_file[1:]
-
-    Path.mkdir(Path(run_path / target_file).parent, exist_ok=True, parents=True)
-    with open(run_path / target_file, "w", encoding="utf-8") as f:
-        f.write(
-            template.render({key: f"{value:.6g}" for key, value in transformed.items()})
-        )
-
-    return gen_kw_dict
-
-
-def _generate_ext_parameter_file(
-    fs: EnsembleReader,
-    realization: int,
-    key: str,
-    target_file: str,
-    run_path: Path,
-) -> None:
-    file_path = run_path / target_file
-    Path.mkdir(file_path.parent, exist_ok=True, parents=True)
-    data = fs.load_ext_param(key, realization)
-    with open(file_path, "w", encoding="utf-8") as f:
-        json.dump(data, f)
-
-
 def _generate_parameter_files(
     ens_config: "EnsembleConfig",
     export_base_name: str,
@@ -166,11 +118,8 @@ def _generate_parameter_files(
             gen_kw_dict = node.save(Path(run_path), iens, fs)
             exports.update(gen_kw_dict)
             continue
-
         if isinstance(node, ExtParamConfig):
-            _generate_ext_parameter_file(
-                fs, iens, node.getKey(), node.output_file, Path(run_path)
-            )
+            node.save(Path(run_path), iens, fs)
             continue
         if isinstance(node, ParameterConfig):
             # For the first iteration we do not write the parameter

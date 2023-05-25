@@ -14,7 +14,6 @@ from numpy.random import SeedSequence
 from ert import _clib
 from ert._c_wrappers.config.rangestring import rangestring_to_list
 from ert._c_wrappers.enkf import GenKwConfig
-from ert._c_wrappers.enkf.config.ext_param_config import ExtParamConfig
 from ert._c_wrappers.enkf.config.field_config import TRANSFORM_FUNCTIONS, Field
 from ert._c_wrappers.enkf.config.gen_data_config import GenDataConfig
 from ert._c_wrappers.enkf.config.parameter_config import ParameterConfig
@@ -27,8 +26,6 @@ from ert.parsing.error_info import ErrorInfo
 from ert.storage.field_utils.field_utils import Shape, get_shape
 
 logger = logging.getLogger(__name__)
-
-ParameterConfiguration = List[Union[Field, SurfaceConfig, GenKwConfig]]
 
 
 def _get_abs_path(file):
@@ -410,7 +407,7 @@ class EnsembleConfig:
 
     def __getitem__(
         self, key: str
-    ) -> Union[ParameterConfig,EnsembleConfig,]:
+    ) -> Union[ParameterConfig, EnsembleConfig,]:
         if key in self.py_nodes:
             return self.py_nodes[key]
         else:
@@ -477,11 +474,8 @@ class EnsembleConfig:
     def addNode(
         self,
         config_node: Union[
-            Field,
-            GenKwConfig,
+            ParameterConfig,
             ResponseConfig,
-            SummaryConfig,
-            ExtParamConfig,
         ],
     ):
         assert config_node is not None
@@ -548,14 +542,11 @@ class EnsembleConfig:
     def get_summary_keys(self) -> List[str]:
         return sorted(self.getKeylistFromImplType(SummaryConfig))
 
-    def get_keyword_model_config(self, key: str) -> GenKwConfig:
-        return self[key]
-
     def get_user_summary_keys(self):
         return self._user_summary_keys
 
     def get_node_observation_keys(self, key) -> List[str]:
-        node = self[key]
+        node = self.getNode(key)
         keylist = []
 
         if isinstance(node, SummaryConfig):
@@ -563,11 +554,10 @@ class EnsembleConfig:
         return keylist
 
     @property
-    def parameter_configuration(self) -> ParameterConfiguration:
+    def parameter_configuration(self) -> List[ParameterConfig]:
         parameter_configs = []
         for parameter in self.parameters:
             config_node = self.getNode(parameter)
-
-            if isinstance(config_node, (ParameterConfig, GenKwConfig, ExtParamConfig)):
+            if isinstance(config_node, ParameterConfig):
                 parameter_configs.append(config_node)
         return parameter_configs

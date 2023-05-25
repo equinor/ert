@@ -133,9 +133,6 @@ class GenKwConfig(ParameterConfig):
     def __repr__(self):
         return f'GenKwConfig(key = "{self.getKey()}", ' f'tag_fmt = "{self.tag_fmt}")'
 
-    def getKey(self) -> str:
-        return self.name
-
     def __len__(self):
         return len(self._transfer_functions)
 

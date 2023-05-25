@@ -4,7 +4,7 @@ import logging
 import os
 import warnings
 import webbrowser
-from typing import Optional
+from typing import List, Optional
 
 from PyQt5.QtWidgets import (
     QFrame,
@@ -19,7 +19,7 @@ from qtpy.QtCore import QLocale, QSize, Qt
 from qtpy.QtWidgets import QApplication
 
 from ert._c_wrappers.enkf import EnKFMain, ErtConfig
-from ert._c_wrappers.enkf.ensemble_config import ParameterConfiguration
+from ert._c_wrappers.enkf.config.parameter_config import ParameterConfig
 from ert.gui.about_dialog import AboutDialog
 from ert.gui.ertwidgets import SuggestorMessage, SummaryPanel, resourceIcon
 from ert.gui.main_window import ErtMainWindow
@@ -181,7 +181,7 @@ def _start_initial_gui_window(
 
 
 def _get_or_create_default_case(
-    storage: StorageReader, ensemble_size: int, parameter_config: ParameterConfiguration
+    storage: StorageReader, ensemble_size: int, parameter_config: List[ParameterConfig]
 ) -> Optional[EnsembleAccessor]:
     try:
         storage_accessor = storage.to_accessor()

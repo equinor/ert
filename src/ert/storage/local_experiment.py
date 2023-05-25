@@ -13,7 +13,7 @@ from ert._c_wrappers.enkf.config.gen_kw_config import GenKwConfig, PriorDict
 from ert._c_wrappers.enkf.config.surface_config import SurfaceConfig
 
 if TYPE_CHECKING:
-    from ert._c_wrappers.enkf.ensemble_config import ParameterConfiguration
+    from ert._c_wrappers.enkf.config.parameter_config import ParameterConfig
     from ert.storage.local_ensemble import LocalEnsembleAccessor, LocalEnsembleReader
     from ert.storage.local_storage import LocalStorageAccessor, LocalStorageReader
 
@@ -86,7 +86,7 @@ class LocalExperimentAccessor(LocalExperimentReader):
         storage: LocalStorageAccessor,
         uuid: UUID,
         path: Path,
-        parameters: Optional[ParameterConfiguration] = None,
+        parameters: Optional[List[ParameterConfig]] = None,
     ) -> None:
         self._storage: LocalStorageAccessor = storage
         self._id = uuid

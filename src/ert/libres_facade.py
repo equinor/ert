@@ -503,9 +503,7 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
 
         gen_kw_list = []
         for key in gen_kw_keys:
-            gen_kw_config = self._enkf_main.ensembleConfig().get_keyword_model_config(
-                key
-            )
+            gen_kw_config = self._enkf_main.ensembleConfig().getNode(key)
             assert isinstance(gen_kw_config, GenKwConfig)
 
             for keyword in gen_kw_config:
@@ -533,10 +531,8 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
         gen_kw_keys = self.get_gen_kw()
         all_gen_kw_priors = {}
         for key in gen_kw_keys:
-            gen_kw_config = self._enkf_main.ensembleConfig().get_keyword_model_config(
-                key
-            )
-            if gen_kw_config:
+            gen_kw_config = self._enkf_main.ensembleConfig().getNode(key)
+            if isinstance(gen_kw_config, GenKwConfig):
                 all_gen_kw_priors[key] = gen_kw_config.get_priors()
 
         return all_gen_kw_priors

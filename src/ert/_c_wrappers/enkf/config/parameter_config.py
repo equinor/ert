@@ -36,7 +36,7 @@ class ParameterConfig(ABC):
     def save(self, run_path: Path, real_nr: int, ensemble: EnsembleReader):
         ...
 
-    def getKey(self):
+    def getKey(self) -> str:
         return self.name
 
     def to_dict(self) -> Dict[str, Any]:

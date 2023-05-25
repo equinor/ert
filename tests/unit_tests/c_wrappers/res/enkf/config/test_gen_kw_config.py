@@ -211,7 +211,7 @@ def test_gen_kw_is_log_or_not(
         ert_config = ErtConfig.from_file("config.ert")
         ert = EnKFMain(ert_config)
 
-        gen_kw_config = ert.ensembleConfig().get_keyword_model_config("KW_NAME")
+        gen_kw_config = ert.ensembleConfig().getNode("KW_NAME")
         assert isinstance(gen_kw_config, GenKwConfig)
         assert gen_kw_config.shouldUseLogScale("MY_KEYWORD") is expect_log
         assert gen_kw_config.shouldUseLogScale("Non-existent-keyword") is False
