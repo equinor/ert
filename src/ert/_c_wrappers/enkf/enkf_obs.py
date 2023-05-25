@@ -372,8 +372,6 @@ class EnkfObs:
 
             obs_vector.add_general_obs(
                 GenObservation(
-                    obs_key,
-                    config_node,
                     (
                         float(instance.get_value("VALUE")),
                         float(instance.get_value("ERROR")),

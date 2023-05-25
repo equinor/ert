@@ -1,30 +1,27 @@
 import pytest
 
-from ert._c_wrappers.enkf import ActiveList, GenDataConfig, GenObservation
+from ert._c_wrappers.enkf import ActiveList, GenObservation
 
 
 def test_create(tmp_path):
-    data_config = GenDataConfig("KEY")
     with pytest.raises(ValueError):
-        gen_obs = GenObservation("KEY", data_config)
+        gen_obs = GenObservation()
 
     with open(tmp_path / "obs1.txt", "w", encoding="utf-8") as f:
         f.write("10  5  12 6\n")
 
     with pytest.raises(ValueError):
         gen_obs = GenObservation(
-            "KEY", data_config, scalar_value=(1, 2), obs_file=str(tmp_path / "obs1.txt")
+            scalar_value=(1, 2), obs_file=str(tmp_path / "obs1.txt")
         )
 
     with pytest.raises(TypeError):
-        gen_obs = GenObservation("KEY", data_config, scalar_value=1)
+        gen_obs = GenObservation(scalar_value=1)
 
     with pytest.raises(IOError):
-        gen_obs = GenObservation("KEY", data_config, obs_file="does/not/exist")
+        gen_obs = GenObservation(obs_file="does/not/exist")
 
-    gen_obs = GenObservation(
-        "KEY", data_config, obs_file=str(tmp_path / "obs1.txt"), data_index="10,20"
-    )
+    gen_obs = GenObservation(obs_file=str(tmp_path / "obs1.txt"), data_index="10,20")
     assert len(gen_obs) == 2
     assert gen_obs[0] == (10, 5)
     assert gen_obs[1] == (12, 6)
