@@ -1,6 +1,6 @@
 from typing import Any, Dict
 
-from . import ConfigValidationError
+from .config_errors import ConfigValidationError
 from .config_schema_item import SchemaItem
 from .schema_dict import SchemaItemDict
 from .schema_item_type import SchemaItemType

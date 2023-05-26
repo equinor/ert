@@ -1,5 +1,6 @@
 from ert._c_wrappers.enkf import ErtConfig
-from ert.parsing import ConfigValidationError
+
+from .config_errors import ConfigValidationError
 
 
 def lint_file(file: str):

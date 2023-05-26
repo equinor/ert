@@ -1,7 +1,7 @@
 from typing import Dict, List, Tuple, Union
 
-from ert.parsing.context_values import ContextValue
-from ert.parsing.file_context_token import FileContextToken
+from .context_values import ContextValue
+from .file_context_token import FileContextToken
 
 # The type of the leaf nodes in the Tree after transformation is done
 Instruction = List[
