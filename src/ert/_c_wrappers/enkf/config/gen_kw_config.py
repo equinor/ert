@@ -132,14 +132,8 @@ class GenKwConfig(ParameterConfig):
     def __len__(self):
         return len(self._transfer_functions)
 
-    def __getitem__(self, index: int) -> str:
-        return self._transfer_functions[index].name
-
     def __iter__(self):
-        index = 0
-        while index < len(self):
-            yield self[index]
-            index += 1
+        yield from [func.name for func in self._transfer_functions]
 
     def __eq__(self, other) -> bool:
         if self.name != other.name:
