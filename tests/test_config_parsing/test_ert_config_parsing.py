@@ -5,7 +5,7 @@ import os.path
 from datetime import date
 from pathlib import Path
 from textwrap import dedent
-from typing import Tuple, List
+from typing import List, Tuple
 
 import pytest
 from hypothesis import assume, given
@@ -1071,7 +1071,7 @@ def test_that_redefines_are_applied_correctly_as_forward_model_args():
     assert has_forward_model_with_args(
         [("<U>", "2"), ("<F>", "5"), ("<E>", "<O>"), ("R", "Hello"), ("<R>", "R")]
     )
-    assert has_forward_model_with_args([("<U>", "3"), ("<2>", "2")])
+    assert has_forward_model_with_args([("<U>", "3"), ("<D>", "2")])
 
     config_dict = lark_parse(
         file=test_config_file_name, schema=init_user_config_schema()

@@ -4,7 +4,7 @@ import logging
 import os
 import os.path
 import warnings
-from typing import Any, List, Optional, Tuple, Union
+from typing import List, Optional, Tuple, Union
 
 from lark import Discard, Lark, Token, Transformer, Tree, UnexpectedCharacters
 from typing_extensions import Self
@@ -143,11 +143,9 @@ _parser = Lark(grammar, propagate_positions=True)
 logger = logging.getLogger(__name__)
 
 
-def _substitute(
+def _substitute_token(
     defines: Defines,
-    token: Union[
-        FileContextToken, List[Tuple[FileContextToken]], Tuple[FileContextToken]
-    ],
+    token: FileContextToken,
     expand_env: bool = True,
 ) -> str:
     #    if isinstance(token, (list, tuple)):
@@ -245,26 +243,40 @@ def _tree_to_dict(
     return config_dict
 
 
+ArgPairList = List[Tuple[FileContextToken]]
+ParsedArgList = List[Union[FileContextToken, ArgPairList]]
+
+
 def _substitute_args(
-    args: List[Any], constraints: SchemaItem, defines: Defines
-) -> List[Any]:
+    args: ParsedArgList,
+    constraints: SchemaItem,
+    defines: Defines,
+) -> ParsedArgList:
     if constraints.substitute_from < 1:
         return args
 
-    def substitute_arg(i, arg):
+    def substitute_arg(
+        i,
+        arg: Union[FileContextToken, ArgPairList, Tuple[FileContextToken]],
+    ):
         can_be_substituted = (i + 1) >= constraints.substitute_from
 
         if not can_be_substituted:
             return arg
 
         if isinstance(arg, FileContextToken):
-            return _substitute(defines, arg, constraints.expand_envvar)
+            return _substitute_token(defines, arg, constraints.expand_envvar)
 
         if isinstance(arg, list):
             return [substitute_arg(i, sub_arg) for sub_arg in arg]
 
         if isinstance(arg, tuple):
-            return tuple([substitute_arg(i, sub_arg) for sub_arg in arg])
+            arglist_keyword = arg[0]
+            arglist_args = arg[1:]
+            substituted_arglist_args = [
+                substitute_arg(i, sub_arg) for sub_arg in arglist_args
+            ]
+            return tuple([arglist_keyword, *substituted_arglist_args])
 
     return [substitute_arg(i, arg) for i, arg in enumerate(args)]
 
@@ -350,7 +362,7 @@ def _handle_includes(
                 )
                 continue
 
-            file_to_include = _substitute(defines, args[0])
+            file_to_include = _substitute_token(defines, args[0])
 
             if not os.path.isabs(file_to_include):
                 file_to_include = os.path.normpath(
