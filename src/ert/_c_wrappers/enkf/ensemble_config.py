@@ -186,7 +186,8 @@ class EnsembleConfig:
         self._grid_file = grid_file
         self._refcase_file = ref_case_file
         self.refcase: Optional[EclSum] = self._load_refcase(ref_case_file)
-        self.py_nodes = {}
+        self.parameter_configs = {}
+        self.response_configs = {}
         self._user_summary_keys: List[str] = []
         self.random_seed = _seed_sequence(random_seed)
 
@@ -401,21 +402,23 @@ class EnsembleConfig:
             + "}"
         )
 
-    def __getitem__(
-        self, key: str
-    ) -> Union[ParameterConfig, EnsembleConfig,]:
-        if key in self.py_nodes:
-            return self.py_nodes[key]
+    def __getitem__(self, key: str) -> Union[ParameterConfig, ResponseConfig]:
+        if key in self.parameter_configs:
+            return self.parameter_configs[key]
+        elif key in self.response_configs:
+            return self.response_configs[key]
         else:
             raise KeyError(f"The key:{key} is not in the ensemble configuration")
 
     def getNodeGenData(self, key: str) -> GenDataConfig:
-        gen_node = self.py_nodes[key]
+        gen_node = self.response_configs[key]
         assert isinstance(gen_node, GenDataConfig)
         return gen_node
 
     def hasNodeGenData(self, key: str) -> bool:
-        return key in self.py_nodes and isinstance(self.py_nodes[key], GenDataConfig)
+        return key in self.response_configs and isinstance(
+            self.response_configs[key], GenDataConfig
+        )
 
     def getNode(
         self, key: str
@@ -428,7 +431,7 @@ class EnsembleConfig:
 
         keylist = _clib.ensemble_config.get_summary_key_list(key, refcase)
         for k in keylist:
-            if k not in self.get_node_keylist():
+            if k not in self.keys:
                 summary_config_node = SummaryConfig(k)
                 self.addNode(summary_config_node)
 
@@ -462,7 +465,7 @@ class EnsembleConfig:
             )
 
     def check_unique_node(self, key: str):
-        if key in self or key in self.py_nodes:
+        if key in self:
             raise ConfigValidationError(
                 f"Config node with key {key!r} already present in ensemble config"
             )
@@ -476,14 +479,17 @@ class EnsembleConfig:
     ):
         assert config_node is not None
         self.check_unique_node(config_node.getKey())
-        self.py_nodes[config_node.name] = config_node
+        if isinstance(config_node, ParameterConfig):
+            self.parameter_configs[config_node.name] = config_node
+        else:
+            self.response_configs[config_node.name] = config_node
 
     def getKeylistFromImplType(self, node_type: object):
         mylist = []
 
-        for v in self.py_nodes:
-            if isinstance(self.getNode(v), node_type):
-                mylist.append(self.getNode(v).getKey())
+        for key in self.keys:
+            if isinstance(self[key], node_type):
+                mylist.append(key)
 
         return mylist
 
@@ -503,22 +509,25 @@ class EnsembleConfig:
 
     @property
     def parameters(self) -> List[str]:
-        return self.getKeylistFromImplType(ParameterConfig)
+        return list(self.parameter_configs)
+
+    @property
+    def responses(self) -> List[str]:
+        return list(self.response_configs)
+
+    @property
+    def keys(self):
+        return self.parameters + self.responses
 
     def __contains__(self, key):
-        return key in self.py_nodes
+        return key in self.keys
 
-    def get_node_keylist(self) -> List[str]:
-        return list(set(self.py_nodes.keys()))
-
-    def __eq__(self, other):
-        self_param_list = self.get_node_keylist()
-        other_param_list = other.get_node_keylist()
-        if self_param_list != other_param_list:
+    def __eq__(self, other: EnsembleConfig):
+        if self.keys != other.keys:
             return False
 
-        for par in self_param_list:
-            if par in self.py_nodes and par in other.py_nodes:
+        for par in self.keys:
+            if par in self and par in other:
                 if self.getNode(par) != other.getNode(par):
                     return False
             else:
@@ -533,7 +542,11 @@ class EnsembleConfig:
         return True
 
     def getUseForwardInit(self, key) -> bool:
-        return False if key not in self.parameters else self.py_nodes[key].forward_init
+        return (
+            False
+            if key not in self.parameters
+            else self.parameter_configs[key].forward_init
+        )
 
     def get_summary_keys(self) -> List[str]:
         return sorted(self.getKeylistFromImplType(SummaryConfig))
@@ -551,9 +564,4 @@ class EnsembleConfig:
 
     @property
     def parameter_configuration(self) -> List[ParameterConfig]:
-        parameter_configs = []
-        for parameter in self.parameters:
-            config_node = self.getNode(parameter)
-            if isinstance(config_node, ParameterConfig):
-                parameter_configs.append(config_node)
-        return parameter_configs
+        return list(self.parameter_configs.values())
