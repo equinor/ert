@@ -5,6 +5,7 @@ import os.path
 from datetime import date
 from pathlib import Path
 from textwrap import dedent
+from typing import Tuple, List
 
 import pytest
 from hypothesis import assume, given
@@ -1029,19 +1030,22 @@ def test_that_multiple_errors_are_shown_for_forward_model():
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_that_redefines_are_applied_correctly():
+def test_that_redefines_are_applied_correctly_as_forward_model_args():
     test_config_file_name = "test.ert"
     test_config_contents = dedent(
         """
         NUM_REALIZATIONS  1
         DEFINE <A> 2
-        FORWARD_MODEL MAKE_SYMLINK(<U>=<A>)
+        DEFINE <B> 5
+        FORWARD_MODEL MAKE_SYMLINK(<U>=<A>, <F>=<B>, <E>=<O>, R=Hello, <R>=R)
+        DEFINE <B> 10
         DEFINE B <A>
         DEFINE D <A>
         DEFINE <A> 3
-        FORWARD_MODEL MAKE_SYMLINK(<U>=<A>)
+        FORWARD_MODEL MAKE_SYMLINK(<U>=<A>, <D>=B)
         DEFINE B <A>
         DEFINE C <A>
+
         """
     )
     with open(test_config_file_name, "w", encoding="utf-8") as fh:
@@ -1053,12 +1057,21 @@ def test_that_redefines_are_applied_correctly():
 
     forward_models = ert_config.forward_model_list
 
-    def has_forward_model_with_args(k: str, val: str):
-        result = next((m for m in forward_models if m.private_args[k] == val), None)
+    def has_forward_model_with_args(kvpairs: List[Tuple[str, str]]):
+        result = next(
+            (
+                m
+                for m in forward_models
+                if all(m.private_args[k] == v for (k, v) in kvpairs)
+            ),
+            None,
+        )
         return result is not None
 
-    assert has_forward_model_with_args("<U>", "2")
-    assert has_forward_model_with_args("<U>", "3")
+    assert has_forward_model_with_args(
+        [("<U>", "2"), ("<F>", "5"), ("<E>", "<O>"), ("R", "Hello"), ("<R>", "R")]
+    )
+    assert has_forward_model_with_args([("<U>", "3"), ("<2>", "2")])
 
     config_dict = lark_parse(
         file=test_config_file_name, schema=init_user_config_schema()
