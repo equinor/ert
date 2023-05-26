@@ -34,7 +34,6 @@ class GenKwConfig(ParameterConfig):
     parameter_file: Optional[str]
     output_file: str
     forward_init_file: Optional[str] = None
-    tag_fmt: str = "<%s>"
     random_seed: Optional[SeedSequence] = np.random.SeedSequence()
 
     def __post_init__(self):
@@ -130,9 +129,6 @@ class GenKwConfig(ParameterConfig):
                 return tf._use_log
         return False
 
-    def __repr__(self):
-        return f'GenKwConfig(key = "{self.getKey()}", ' f'tag_fmt = "{self.tag_fmt}")'
-
     def __len__(self):
         return len(self._transfer_functions)
 
@@ -153,8 +149,6 @@ class GenKwConfig(ParameterConfig):
         if self.parameter_file != os.path.abspath(other.parameter_file):
             return False
         if self.output_file != other.output_file:
-            return False
-        if self.tag_fmt != other.tag_fmt:
             return False
         if self.forward_init_file != other.forward_init_file:
             return False

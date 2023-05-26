@@ -273,7 +273,6 @@ ERT_CLIB_SUBMODULE("config_keywords", m) {
             // the two fault types are just added to the config object only to
             // be able to print suitable messages before exiting.
             add_gen_kw_keyword(config_parser);
-            add_string_keyword(config_parser, GEN_KW_TAG_FORMAT_KEY);
             add_gen_data_keyword(config_parser);
             add_summary_keyword(config_parser);
             add_surface_keyword(config_parser);

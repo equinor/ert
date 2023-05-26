@@ -31,7 +31,6 @@ ERT_CLIB_SUBMODULE("config_keys", m) {
     cls.attr("GEN_DATA") = GEN_DATA_KEY;
     cls.attr("GEN_KW") = GEN_KW_KEY;
     cls.attr("GEN_KW_EXPORT_NAME") = GEN_KW_EXPORT_NAME_KEY;
-    cls.attr("GEN_KW_TAG_FORMAT") = GEN_KW_TAG_FORMAT_KEY;
     cls.attr("GLOBAL_STD_SCALING") = "GLOBAL_STD_SCALING";
     cls.attr("GRID") = GRID_KEY;
     cls.attr("HISTORY_SOURCE") = HISTORY_SOURCE_KEY;

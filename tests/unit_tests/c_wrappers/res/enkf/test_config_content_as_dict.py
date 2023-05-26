@@ -64,7 +64,6 @@ SINGLE_OCCURRENCE_KEY_TYPES = {
     ConfigKeys.ECLBASE: "file_path",
     ConfigKeys.ENSPATH: "path",
     ConfigKeys.GEN_KW_EXPORT_NAME: "str",
-    ConfigKeys.GEN_KW_TAG_FORMAT: "str",
     ConfigKeys.GRID: "file_path",
     ConfigKeys.HISTORY_SOURCE: "history_enum",
     ConfigKeys.ITER_CASE: "str",
