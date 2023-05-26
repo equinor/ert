@@ -1,7 +1,8 @@
 import asyncio
+import contextlib
 import logging
 import time
-from collections import OrderedDict, defaultdict
+from collections import OrderedDict, defaultdict, deque
 
 from ert.ensemble_evaluator import identifiers
 
@@ -15,7 +16,7 @@ class BatchingDispatcher:
 
         self._LOOKUP_MAP = defaultdict(list)
         self._running = True
-        self._buffer = []
+        self._buffer = deque()
 
         # Schedule task
         self._task = asyncio.ensure_future(self._job(), loop=loop)
@@ -39,17 +40,21 @@ class BatchingDispatcher:
 
     async def _work(self):
         t0 = time.time()
-        event_buffer, self._buffer = (
-            self._buffer[: self._max_batch],
-            self._buffer[self._max_batch :],
-        )
+        event_buffer = []
+        for _ in range(self._max_batch):
+            try:
+                event_buffer.append(self._buffer.popleft())
+            except IndexError:
+                break
+
         function_to_events_map = OrderedDict()
         for f, event in event_buffer:
             if f not in function_to_events_map:
                 function_to_events_map[f] = []
             function_to_events_map[f].append(event)
         logger.debug(
-            f"processed {len(event_buffer)} events in {(time.time()-t0):.6f}s. {len(self._buffer)} left in queue"  # noqa: E501
+            f"processed {len(event_buffer)} events in {(time.time()-t0):.6f}s. "
+            f"{len(self._buffer)} left in queue"
         )
         for f, events in function_to_events_map.items():
             await f(events)
@@ -64,12 +69,10 @@ class BatchingDispatcher:
 
     async def join(self):
         self._running = False
-        try:
+        # if result is exception it should have been handled by
+        # done-handler, but also avoid killing the caller here
+        with contextlib.suppress(BaseException):
             await self._task
-        except BaseException:
-            # if result is exception it should have been handled by
-            # done-handler, but also avoid killing the caller here
-            pass
 
     def register_event_handler(self, event_types, function, batching=True):
         if not isinstance(event_types, set):
