@@ -349,7 +349,6 @@ def init_user_config_schema() -> SchemaItemDict:
         # be able to print suitable messages before exiting.
         gen_kw_keyword(),
         schedule_prediction_file_keyword(),
-        string_keyword(ConfigKeys.GEN_KW_TAG_FORMAT),
         gen_data_keyword(),
         summary_keyword(),
         surface_keyword(),

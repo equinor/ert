@@ -40,7 +40,6 @@ Keyword name                                                            Required
 :ref:`FORWARD_MODEL <forward_model>`                                    NO                                                                      Add the running of a job to the simulation forward model
 :ref:`GEN_DATA <gen_data>`                                              NO                                                                      Specify a general type of data created/updated by the forward model
 :ref:`GEN_KW <gen_kw>`                                                  NO                                                                      Add a scalar parameter
-:ref:`GEN_KW_TAG_FORMAT <gen_kw_tag_format>`                            NO                                      <%s>                            Format used to add keys in the GEN_KW template files
 :ref:`GRID <grid>`                                                      NO                                                                      Provide an ECLIPSE grid for the reservoir model
 :ref:`HISTORY_SOURCE <history_source>`                                  NO                                      REFCASE_HISTORY                 Source used for historical values
 :ref:`HOOK_WORKFLOW <hook_workflow>`                                    NO                                                                      Install a workflow to be run automatically
@@ -1035,11 +1034,6 @@ and/or history matching project.
                 Footer line1
                 Footer line2
 
-
-.. _gen_kw_tag_format:
-.. topic:: GEN_KW_TAG_FORMAT
-
-        Format used to add keys in the `GEN_KW` template files.
 
 
 .. _surface:

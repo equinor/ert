@@ -23,7 +23,6 @@ SINGLE_OCCURRENCE_SINGLE_ARG_KEYS = [
     ConfigKeys.ECLBASE,
     ConfigKeys.ENSPATH,
     ConfigKeys.GEN_KW_EXPORT_NAME,
-    ConfigKeys.GEN_KW_TAG_FORMAT,
     ConfigKeys.GRID,
     ConfigKeys.HISTORY_SOURCE,
     ConfigKeys.ITER_CASE,

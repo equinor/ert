@@ -170,7 +170,6 @@ class EnsembleConfig:
         self,
         grid_file: Optional[str] = None,
         ref_case_file: Optional[str] = None,
-        tag_format: str = "<%s>",
         gen_data_list: Optional[List] = None,
         gen_kw_list: Optional[List] = None,
         surface_list: Optional[List] = None,
@@ -220,7 +219,6 @@ class EnsembleConfig:
                 parameter_file=_get_abs_path(gen_kw[3]),
                 output_file=gen_kw[2],
                 forward_init_file=init_file,
-                tag_fmt=tag_format,
                 random_seed=self.random_seed,
             )
 
@@ -366,7 +364,6 @@ class EnsembleConfig:
     def from_dict(cls, config_dict) -> EnsembleConfig:
         grid_file_path = _get_abs_path(config_dict.get(ConfigKeys.GRID))
         refcase_file_path = _get_abs_path(config_dict.get(ConfigKeys.REFCASE))
-        tag_format = config_dict.get(ConfigKeys.GEN_KW_TAG_FORMAT, "<%s>")
         gen_data_list = config_dict.get(ConfigKeys.GEN_DATA, [])
         gen_kw_list = config_dict.get(ConfigKeys.GEN_KW, [])
         surface_list = config_dict.get(ConfigKeys.SURFACE_KEY, [])
@@ -377,7 +374,6 @@ class EnsembleConfig:
         ens_config = cls(
             grid_file=grid_file_path,
             ref_case_file=refcase_file_path,
-            tag_format=tag_format,
             gen_data_list=gen_data_list,
             gen_kw_list=gen_kw_list,
             surface_list=surface_list,

@@ -29,6 +29,7 @@ class DeprecationMigrationSuggester:
         "LOG_FILE",
         "LOG_LEVEL",
         "ENKF_RERUN",
+        "GEN_KW_TAG_FORMAT",
     ]
     RSH_KEYWORDS = ["RSH_HOST", "RSH_COMMAND", "MAX_RUNNING_RSH"]
     USE_QUEUE_OPTION = [
