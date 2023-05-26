@@ -255,23 +255,14 @@ def _substitute_args(
     def substitute_arglist_tuple(
         tup: Tuple[FileContextToken],
     ) -> Tuple[FileContextToken]:
-        tuple_kw = tup[0]
-        tuple_args = tup[1:]
-        substituted_tuple_args = [
-            _substitute_token(defines, token, constraints.expand_envvar)
-            for token in tuple_args
-        ]
+        key, value = tup
+        substituted_value = _substitute_token(defines, value, constraints.expand_envvar)
 
-        return tuple([tuple_kw] + substituted_tuple_args)
+        return tuple([key, substituted_value])
 
     def substitute_arg(
-        i, arg: Union[FileContextToken, List[Tuple[FileContextToken]]]
+        arg: Union[FileContextToken, List[Tuple[FileContextToken]]]
     ) -> Union[FileContextToken, List[Tuple[FileContextToken]]]:
-        can_be_substituted = (i + 1) >= constraints.substitute_from
-
-        if not can_be_substituted:
-            return arg
-
         if isinstance(arg, FileContextToken):
             return _substitute_token(defines, arg, constraints.expand_envvar)
 
@@ -285,7 +276,10 @@ def _substitute_args(
             f"got {arg}"
         )
 
-    return [substitute_arg(i, arg) for i, arg in enumerate(args)]
+    return [
+        substitute_arg(arg) if (i + 1) >= constraints.substitute_from else arg
+        for i, arg in enumerate(args)
+    ]
 
 
 class IncludedFile:
