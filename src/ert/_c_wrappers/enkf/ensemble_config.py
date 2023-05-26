@@ -541,13 +541,6 @@ class EnsembleConfig:
 
         return True
 
-    def getUseForwardInit(self, key) -> bool:
-        return (
-            False
-            if key not in self.parameters
-            else self.parameter_configs[key].forward_init
-        )
-
     def get_summary_keys(self) -> List[str]:
         return sorted(self.getKeylistFromImplType(SummaryConfig))
 

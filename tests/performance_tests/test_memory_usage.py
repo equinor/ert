@@ -48,7 +48,7 @@ def poly_template(monkeypatch):
 
 @pytest.mark.limit_memory("130 MB")
 @pytest.mark.integration_test
-@pytest.mark.skip
+@pytest.mark.xfail(reason="Memory usage is variable")
 def test_memory_smoothing(poly_template):
     ert_config = ErtConfig.from_file("poly.ert")
     ert = EnKFMain(ert_config)

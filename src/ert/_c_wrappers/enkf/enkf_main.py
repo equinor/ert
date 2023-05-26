@@ -292,7 +292,7 @@ class EnKFMain:
 
         for parameter in parameters:
             config_node = self.ensembleConfig().getNode(parameter)
-            if self.ensembleConfig().getUseForwardInit(parameter):
+            if config_node.forward_init:
                 continue
             if isinstance(config_node, ExtParamConfig):
                 continue
