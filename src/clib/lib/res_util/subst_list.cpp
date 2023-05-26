@@ -202,10 +202,6 @@ static void subst_list_insert__(subst_list_type *subst_list, const char *key,
        instance. Probably the most natural function to use when used
        with static storage, i.e. typically string literals.
 
-    subst_list_insert_owned_ref: In this case the subst_list takes
-       ownership of the value reference, in the sense that it will
-       free it when it is done.
-
     subst_list_insert_copy: In this case the subst_list takes a copy
        of value and inserts it. Meaning that the substs_list instance
        takes repsonibility of freeing, _AND_ the calling scope is free
@@ -213,18 +209,9 @@ static void subst_list_insert__(subst_list_type *subst_list, const char *key,
 
 */
 
-void subst_list_append_owned_ref(subst_list_type *subst_list, const char *key,
-                                 const char *value) {
-    subst_list_insert__(subst_list, key, value, SUBST_MANAGED_REF);
-}
-
 void subst_list_append_copy(subst_list_type *subst_list, const char *key,
                             const char *value) {
     subst_list_insert__(subst_list, key, value, SUBST_DEEP_COPY);
-}
-
-void subst_list_clear(subst_list_type *subst_list) {
-    vector_clear(subst_list->string_data);
 }
 
 void subst_list_free(subst_list_type *subst_list) {
@@ -454,16 +441,6 @@ const char *subst_list_get_value(const subst_list_type *subst_list,
     const subst_list_string_type *node =
         (const subst_list_string_type *)hash_get(subst_list->map, key);
     return node->value;
-}
-
-void subst_list_fprintf(const subst_list_type *subst_list, FILE *stream) {
-    int index;
-    for (index = 0; index < vector_get_size(subst_list->string_data); index++) {
-        const subst_list_string_type *node =
-            (const subst_list_string_type *)vector_iget_const(
-                subst_list->string_data, index);
-        fprintf(stream, "%s = %s\n", node->key, node->value);
-    }
 }
 
 /**

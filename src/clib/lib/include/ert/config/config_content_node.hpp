@@ -17,9 +17,6 @@ void config_content_node_add_value(config_content_node_type *node,
                                    const char *value);
 void config_content_node_set(config_content_node_type *node,
                              const stringlist_type *token_list);
-char *
-config_content_node_alloc_joined_string(const config_content_node_type *node,
-                                        const char *sep);
 extern "C" void config_content_node_free(config_content_node_type *node);
 void config_content_node_free__(void *arg);
 extern "C" const char *

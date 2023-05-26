@@ -695,9 +695,3 @@ void config_add_alias(config_parser_type *config, const char *src,
     } else
         util_abort("%s: item:%s not recognized \n", __func__, src);
 }
-
-void config_install_message(config_parser_type *config, const char *kw,
-                            const char *message) {
-    hash_insert_hash_owned_ref(config->messages, kw,
-                               util_alloc_string_copy(message), free);
-}

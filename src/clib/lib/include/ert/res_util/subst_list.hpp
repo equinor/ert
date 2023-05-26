@@ -7,14 +7,11 @@
 #include <ert/util/buffer.hpp>
 
 typedef struct subst_list_struct subst_list_type;
-void subst_list_fprintf(const subst_list_type *, FILE *stream);
 extern "C" subst_list_type *subst_list_alloc();
 extern "C" subst_list_type *subst_list_alloc_deep_copy(const subst_list_type *);
 extern "C" void subst_list_free(subst_list_type *);
-void subst_list_clear(subst_list_type *subst_list);
 extern "C" void subst_list_append_copy(subst_list_type *, const char *,
                                        const char *);
-void subst_list_append_owned_ref(subst_list_type *, const char *, const char *);
 
 extern "C" bool subst_list_filter_file(const subst_list_type *, const char *,
                                        const char *);
