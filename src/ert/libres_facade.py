@@ -102,14 +102,14 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
     def get_surface_parameters(self) -> List[str]:
         return list(
             val.name
-            for val in self._enkf_main.ensembleConfig().py_nodes.values()
+            for val in self._enkf_main.ensembleConfig().parameter_configuration
             if isinstance(val, SurfaceConfig)
         )
 
     def get_field_parameters(self) -> List[str]:
         return list(
             val.name
-            for val in self._enkf_main.ensembleConfig().py_nodes.values()
+            for val in self._enkf_main.ensembleConfig().parameter_configuration
             if isinstance(val, Field)
         )
 
