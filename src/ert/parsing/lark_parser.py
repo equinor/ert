@@ -147,10 +147,7 @@ def _substitute_token(
     defines: Defines,
     token: FileContextToken,
     expand_env: bool = True,
-) -> str:
-    #    if isinstance(token, (list, tuple)):
-    #        return [_substitute(defines, t, expand_env) for t in token]
-
+) -> FileContextToken:
     current: FileContextToken = token
 
     # replace from env
@@ -255,10 +252,21 @@ def _substitute_args(
     if constraints.substitute_from < 1:
         return args
 
+    def substitute_arglist_tuple(
+        tup: Tuple[FileContextToken],
+    ) -> Tuple[FileContextToken]:
+        tuple_kw = tup[0]
+        tuple_args = tup[1:]
+        substituted_tuple_args = [
+            _substitute_token(defines, token, constraints.expand_envvar)
+            for token in tuple_args
+        ]
+
+        return tuple([tuple_kw] + substituted_tuple_args)
+
     def substitute_arg(
-        i,
-        arg: Union[FileContextToken, ArgPairList, Tuple[FileContextToken]],
-    ):
+        i, arg: Union[FileContextToken, List[Tuple[FileContextToken]]]
+    ) -> Union[FileContextToken, List[Tuple[FileContextToken]]]:
         can_be_substituted = (i + 1) >= constraints.substitute_from
 
         if not can_be_substituted:
@@ -268,15 +276,14 @@ def _substitute_args(
             return _substitute_token(defines, arg, constraints.expand_envvar)
 
         if isinstance(arg, list):
-            return [substitute_arg(i, sub_arg) for sub_arg in arg]
+            # It is a list of keyword tuples
+            return [substitute_arglist_tuple(x) for x in arg]
 
-        if isinstance(arg, tuple):
-            arglist_keyword = arg[0]
-            arglist_args = arg[1:]
-            substituted_arglist_args = [
-                substitute_arg(i, sub_arg) for sub_arg in arglist_args
-            ]
-            return tuple([arglist_keyword, *substituted_arglist_args])
+        raise ValueError(
+            f"Expected "
+            f"Union[FileContextToken, List[Tuple[FileContextToken]]], "
+            f"got {arg}"
+        )
 
     return [substitute_arg(i, arg) for i, arg in enumerate(args)]
 

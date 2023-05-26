@@ -1084,3 +1084,26 @@ def test_that_redefines_are_applied_correctly_as_forward_model_args():
     assert ["D", "2"] in defines
     assert ["B", "3"] in defines
     assert ["C", "3"] in defines
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_redefines_work_with_setenv():
+    test_config_file_name = "test.ert"
+    test_config_contents = dedent(
+        """
+        NUM_REALIZATIONS 1
+        DEFINE <X> 3
+        SETENV VAR <X>
+        DEFINE <X> 4
+        SETENV VAR2 <X>
+    """
+    )
+    with open(test_config_file_name, "w", encoding="utf-8") as fh:
+        fh.write(test_config_contents)
+
+    ert_config = ErtConfig.from_file(
+        user_config_file=test_config_file_name, use_new_parser=True
+    )
+
+    assert ert_config.env_vars["VAR"] == "3"
+    assert ert_config.env_vars["VAR2"] == "4"
