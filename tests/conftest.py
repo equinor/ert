@@ -119,6 +119,11 @@ def copy_poly_case(copy_case):
 
 
 @pytest.fixture()
+def copy_snake_oil_surface(copy_case):
+    copy_case("snake_oil_field")
+
+
+@pytest.fixture()
 def copy_snake_oil_case(copy_case):
     copy_case("snake_oil")
 

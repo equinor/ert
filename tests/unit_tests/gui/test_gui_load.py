@@ -408,3 +408,19 @@ def test_that_es_mda_is_disabled_when_weights_are_invalid(qtbot):
         es_mda_panel._relative_iteration_weights_box.setText("1")
 
         assert run_sim_button.isEnabled()
+
+
+@pytest.mark.usefixtures("copy_snake_oil_surface")
+def test_that_ert_changes_to_config_directory(qtbot):
+    """
+    This is a regression test that verifies that ert changes directories
+    to the config dir (where .ert is).
+    Failure to do so would in this case result in SURFACE keyword not
+    finding the INIT_FILE provided (surface/small.irap)
+    """
+    args = Mock()
+    os.chdir("..")
+    args.config = "test_data/snake_oil_surface.ert"
+    with add_gui_log_handler() as log_handler:
+        gui, *_ = ert.gui.main._start_initial_gui_window(args, log_handler)
+        assert gui.windowTitle() == "ERT - snake_oil_surface.ert"

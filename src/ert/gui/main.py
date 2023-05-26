@@ -119,13 +119,14 @@ def _start_initial_gui_window(
     with warnings.catch_warnings(record=True) as all_warnings:
         try:
             _check_locale()
-            ert_config = ErtConfig.from_file(args.config)
-            suggestions += ErtConfig.make_suggestion_list(args.config)
-            _log_difference_with_old_parser(args, ert_config)
-            os.chdir(ert_config.config_path)
+            ert_dir = os.path.abspath(os.path.dirname(args.config))
+            os.chdir(ert_dir)
             # Changing current working directory means we need to update
             # the config file to be the base name of the original config
             args.config = os.path.basename(args.config)
+            ert_config = ErtConfig.from_file(args.config)
+            suggestions += ErtConfig.make_suggestion_list(args.config)
+            _log_difference_with_old_parser(args, ert_config)
             ert = EnKFMain(ert_config)
         except ConfigValidationError as error:
             config_warnings = [
