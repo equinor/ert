@@ -79,18 +79,18 @@ illustration in figure :numref:`ensemble`).
 .. figure:: images/bpr.jpg
    :scale: 20%
 
-   Ensemble plots before and after model updating, for one succesfull updating
+   Ensemble plots before and after model updating, for one successful updating
    and one updating which has gone wrong.
 
 
-All the plots show simulations pressure in a cell as a function of time, with measurements. Plots
+All the plots show simulations of pressure in a cell as a function of time, with measurements. Plots
 (1) and (3) show simulations before the model updating (i.e. the *prior*) and plots (2) and (4)
 show the plots after the update process (the *posterior*). The dashed vertical line is meant to
 illustrate the change from history to prediction.
 
 The left case with plots (1) and (2) is a successful history matching project. The simulations
 from the posterior distribution are centered around the observed values, and the spread, i.e.,
-the uncertainty, is of the same order of magnitude as the observation uncertainty. From this
+the uncertainty is of the same order of magnitude as the observation uncertainty. From this
 case, we can reasonably expect that predictions will be unbiased with a reasonable estimate of
 the uncertainty.
 
@@ -111,6 +111,7 @@ uncertainty [#]_.
 
 Ensemble Kalman filter - EnKF
 -----------------------------
+
 ERT was initially created to do model updating of reservoir models with the EnKF algorithm. The
 experience from real-world models was that EnKF was not very suitable for reservoir applications.
 Thus, ERT has since changed to use the Ensemble Smoother (ES), which can be said to be a
@@ -121,19 +122,14 @@ the Kalman Filter and EnKF.
 The Kalman filter
 ~~~~~~~~~~~~~~~~~
 
-
-The Kalman Filter originates in electronics the 60's. The Kalman filter is *widely* used,
+The Kalman Filter originated in electronics in the 60's. The Kalman filter is *widely* used,
 especially in applications where positioning is the goal, e.g., the GPS positioning. The typical
-ingredients where the Kalman filter can be interesting to try include:
+ingredients for problems where the Kalman filter can be interesting to try are:
 
 1. We want to determine the final *state* of the system - this can typically be the position.
-
 2. The starting position is uncertain.
-
-3. There is an *equation of motion* - or *forward model* - which describes how the system evolves
-in time.
-
-4. At a fixed point in time we can *observe* the system, these observations are uncertain.
+3. There is an *equation of motion* - or *forward model* - which describes how the system evolves in time.
+4. At a fixed point in time we can *observe* the system, but these observations are uncertain.
 
 As a straightforward application of the Kalman Filter, assume that we wish to estimate the
 position of a boat as :math:`x(t)`. We know where the boat starts (initial condition), we have an
@@ -182,6 +178,7 @@ be smaller than the forecasted uncertainty: :math:`\sigma_k < \sigma_k^{\ast}`.
 
 Kalman smoothers
 ------------------
+
 We can derive the Kalman filter updating equations starting from Bayes' theorem.  Assume
 that we have a deterministic forward model, :math:`g(x)`, so that the predicted response
 :math:`y` only depend on the model parameterized by the state vector :math:`x`
@@ -211,7 +208,7 @@ to Bayes theorem, can be expressed as
 
    f(x|d) \propto f(x)f(d|g(x)).
 
-We introduce normal priors distributions
+We introduce a multivariate normal prior distribution
 
 .. math::
 
@@ -236,11 +233,12 @@ error covariance for the measurements. We can then write the posterior distribut
 
 The smoother methods in ERT approximately sample the posterior PDF through various routes.
 These are derived exploiting the fact that maximizing f(x|d) is equivalent to minimizing
+the negative log posterior 
 
 .. math::
 
    \begin{align}
-   \mathcal{J}(x) & = -\frac{1}{2}(x-x^f)^T C_{xx}^{-1}(x-x^f) \\
+   \mathcal{J}(x) & = \frac{1}{2}(x-x^f)^T C_{xx}^{-1}(x-x^f) \\
           & + \frac{1}{2}(g(x)-d)^T C_{dd}^{-1}(g(x)-d).
    \end{align}
 
@@ -262,13 +260,14 @@ would result in the minimum variance estimate.
 
 Ensemble smoother (ES)
 ----------------------
+
 Ensemble methods attempt to sample the posterior Bayes's solution, by minimizing the ensemble of
 cost functions
 
 .. math::
 
    \begin{align}
-   \mathcal{J}(x_j) & = -\frac{1}{2}(x_j-x_j^f)^T C_{xx}^{-1}(x_j-x_j^f) \\
+   \mathcal{J}(x_j) & = \frac{1}{2}(x_j-x_j^f)^T C_{xx}^{-1}(x_j-x_j^f) \\
           & + \frac{1}{2}(g(x_j)-d_j)^T C_{dd}^{-1}(g(x_j)-d_j).
    \end{align}
 
@@ -288,7 +287,6 @@ so that the columns consist of the data vector plus a random vector from the nor
 .. math::
 
    f(d|g(x))=f(e)=\mathcal{N}(0,C_{dd}).
-
 
 The Ensemble Smoother algorithm approximately solves the minimization problems
 :math:`\nabla\mathcal{J(x_j)}=0` for each realization.
@@ -313,7 +311,7 @@ estimated from the ensemble and the state vector is updated according to:
    X^a &= X^f + \bar{C}_{xy}(\bar{C}_{xy}^{f}\bar{C}_{xx}^{-1}\bar{C}_{xy}+\bar{C}_{dd})^{-1}(D-Y_f).
    \end{align}
 
-The model responses are then solved indireclty by evaluating the forward model
+The model responses are then solved indirectly by evaluating the forward model
 
 .. math::
    y_j^a = g(x_j^a).
@@ -333,7 +331,8 @@ The pseudo algorithm for ES:
 
 Numerical schemes
 ------------------
-There are several nummerical schemes, i.e. methods to estimate the Kalman gain matrix
+
+There are several numerical schemes, i.e. methods to estimate the Kalman gain matrix
 
 .. math::
    \bar{C}_{xy}(\bar{C}_{xy}^{f}\bar{C}_{xx}^{-1}\bar{C}_{xy}+\bar{C}_{dd})^{-1}
@@ -374,6 +373,7 @@ BOOTSTRAP ENKF
 
 Ensemble smoother - multiple data assimilation (ES MDA)
 -------------------------------------------------------
+
 While the Ensemble smoother attempts to solve the minimization equation in one go, the
 ES MDA iterates by introducing the observations gradually. The posterior distribution
 can be rewritten:
@@ -387,15 +387,14 @@ can be rewritten:
 
 with :math:`\sum_{i=1}^N \frac{1}{\alpha_i} = 1`.
 
-In plain English, the ES MDA consist of several consecutive smoother updates with inflated
+In plain English, the ES MDA consists of several consecutive smoother updates with inflated
 error bars. The ES MDA with one iteration is identical to the Ensemble smoother.
 
 
 Iterative ensemble smoother - Ensemble subspace version
 -------------------------------------------------------
 
-The algorithm implemented is described in the article [Efficient Implementation of an Iterative Ensemble Smoother for Data Assimilation and Reservoir History Matching]( https://www.frontiersin.org/articles/10.3389/fams.2019.00047/full ).
-
+The algorithm implemented is described in the article `Efficient Implementation of an Iterative Ensemble Smoother for Data Assimilation and Reservoir History Matching <https://www.frontiersin.org/articles/10.3389/fams.2019.00047/full>`_.
 
 Kalman posterior properties
 ---------------------------
@@ -448,7 +447,7 @@ The posterior distribution that the posterior sample is conceptually sampled fro
 
 From this, it is seen that when the sample size tends to infinity and estimates converge to the corresponding population quantities,
 then the ensemble variants converge to the standard Kalman filter in the linear Gaussian case.
-This convergence is however of a stochastic nature.
+However, the convergence is of a stochastic nature.
 
 More deterministic properties of the posterior are observed when the belief in measurements :math:`d` is varied.
 Intuitively, when measurements have zero belief, i.e. unbounded variance, then the posterior should equal the prior.
@@ -479,7 +478,7 @@ To summarize:
   a. We become more certain of our estimates as informative data is assimilated, thus :math:`0<\det(\Sigma_{\psi|d})<\det(\Sigma_{\psi})`.
   b. We become increasingly certain in our estimates when increasingly informative data is assimilated: When a sequence of :math:`\sigma_d` decreases strictly, then so will the corresponding sequence of :math:`\det(\Sigma_{\psi|d})`.
   c. The certainty of our estimate does not move from the priors when assimilated data contains no information: When :math:`\sigma_d\to \infty` then :math:`\det(\Sigma_{\psi|d})\to\det(\Sigma_{\psi})` from below.
-  d. If assimilated data is perfect, i.e., without noise, then we are fully certain of the posterior estiamte: When :math:`\sigma_d\to 0` then :math:`\det(\Sigma_{\psi|d})\to 0` from above.
+  d. If assimilated data is perfect, i.e., without noise, then we are fully certain of the posterior estimate: When :math:`\sigma_d\to 0` then :math:`\det(\Sigma_{\psi|d})\to 0` from above.
 
 In ert, the exact moments of the posterior are not calculated but can instead be estimated from the updated ensemble.
 The sample mean from the updated ensemble is guaranteed to equal the exact first moment of the posterior, due to the perturbations of :math:`d` summing to zero.
