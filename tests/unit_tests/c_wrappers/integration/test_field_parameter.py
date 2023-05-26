@@ -18,7 +18,7 @@ from ecl.grid import EclGrid
 from ecl.util.geometry import Surface
 
 from ert.__main__ import ert_parser
-from ert._c_wrappers.enkf import EnKFMain, ErtConfig
+from ert._c_wrappers.enkf import EnKFMain, ErtConfig, SummaryConfig
 from ert.cli import ENSEMBLE_SMOOTHER_MODE
 from ert.cli.main import run_cli
 from ert.libres_facade import LibresFacade
@@ -128,8 +128,8 @@ def test_load_two_parameters_forward_init(storage, tmpdir):
         )
 
         ert, fs = create_runpath(storage, "config.ert", iteration=0)
-        assert ert.ensembleConfig().getUseForwardInit("PARAM_A")
-        assert ert.ensembleConfig().getUseForwardInit("PARAM_B")
+        assert ert.ensembleConfig()["PARAM_A"].forward_init
+        assert ert.ensembleConfig()["PARAM_B"].forward_init
         assert not Path("simulations/realization-0/iter-0/param_a.grdecl").exists()
         assert not Path("simulations/realization-0/iter-0/param_b.grdecl").exists()
 
@@ -192,8 +192,8 @@ def test_load_two_parameters_roff(storage, tmpdir):
         )
 
         ert, fs = create_runpath(storage, "config.ert")
-        assert not ert.ensembleConfig().getUseForwardInit("PARAM_A")
-        assert not ert.ensembleConfig().getUseForwardInit("PARAM_B")
+        assert not ert.ensembleConfig()["PARAM_A"].forward_init
+        assert not ert.ensembleConfig()["PARAM_B"].forward_init
 
         loaded_a = fs.load_field("PARAM_A", [0])
         for e in range(0, loaded_a.shape[0]):
@@ -250,8 +250,8 @@ def test_load_two_parameters(storage, tmpdir):
         )
 
         ert, fs = create_runpath(storage, "config.ert")
-        assert not ert.ensembleConfig().getUseForwardInit("PARAM_A")
-        assert not ert.ensembleConfig().getUseForwardInit("PARAM_B")
+        assert not ert.ensembleConfig()["PARAM_A"].forward_init
+        assert not ert.ensembleConfig()["PARAM_B"].forward_init
 
         loaded_a = fs.load_field("PARAM_A", [0])
         for e in range(0, loaded_a.shape[0]):
@@ -432,7 +432,7 @@ def test_forward_init(storage, tmpdir, config_str, expect_forward_init):
         )
 
         ert, fs = create_runpath(storage, "config.ert")
-        assert ert.ensembleConfig().getUseForwardInit("MY_PARAM") is expect_forward_init
+        assert ert.ensembleConfig()["MY_PARAM"].forward_init is expect_forward_init
 
         # Assert that the data has been written to runpath
         if expect_forward_init:
@@ -955,34 +955,32 @@ def test_config_node_meta_information(storage, tmpdir):
         ensemble_config = ert.ensembleConfig()
 
         # invalid object
-        assert ensemble_config.getUseForwardInit("X") is False
         with pytest.raises(KeyError, match="The key:X is not in"):
             ensemble_config["X"]  # pylint: disable=pointless-statement
 
         # surface
-        assert ensemble_config.getUseForwardInit("TOP") is False
+        assert ensemble_config["TOP"].forward_init is False
         assert str(ensemble_config["TOP"].forward_init_file) == "Surfaces/surf%d.irap"
         assert str(ensemble_config["TOP"].output_file) == "surf.irap"
 
-        assert ensemble_config.getUseForwardInit("BOTTOM") is True
+        assert ensemble_config["BOTTOM"].forward_init is True
 
         # gen_data
-        assert ensemble_config.getUseForwardInit("ABC") is False
         assert ensemble_config["ABC"].input_file == "SimulatedABC_%d.txt"
 
         # gen_kw
-        assert ensemble_config.getUseForwardInit("KW_NAME") is False
+        assert ensemble_config["KW_NAME"].forward_init is False
         assert ensemble_config["KW_NAME"].forward_init_file == str(
             Path().cwd() / "custom_param%d.txt"
         )
         assert ensemble_config["KW_NAME"].output_file == "kw.txt"
 
         # summary
-        assert ensemble_config.getUseForwardInit("WOPR:MY_WELL") is False
+        assert isinstance(ensemble_config["WOPR:MY_WELL"], SummaryConfig)
 
         # field
-        assert ensemble_config.getUseForwardInit("MY_PARAM2") is True
+        assert ensemble_config["MY_PARAM2"].forward_init is True
 
-        assert ensemble_config.getUseForwardInit("MY_PARAM") is False
+        assert ensemble_config["MY_PARAM"].forward_init is False
         assert ensemble_config["MY_PARAM"].forward_init_file == "my_param_%d.grdecl"
         assert ensemble_config["MY_PARAM"].output_file == Path("my_param.grdecl")

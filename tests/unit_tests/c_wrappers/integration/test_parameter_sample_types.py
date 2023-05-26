@@ -271,7 +271,7 @@ def test_surface_param(
         with open("config.ert", mode="w", encoding="utf-8") as fh:
             fh.writelines(config)
         ert, fs = create_runpath(storage, "config.ert")
-        assert ert.ensembleConfig().getUseForwardInit("MY_PARAM") is expect_forward_init
+        assert ert.ensembleConfig()["MY_PARAM"].forward_init is expect_forward_init
         # We try to load the parameters from the forward model, this would fail if
         # forward init was not set correctly
         assert load_from_forward_model(ert, fs) == expect_num_loaded
