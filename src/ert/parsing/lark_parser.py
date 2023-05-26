@@ -150,8 +150,8 @@ def _substitute(
     ],
     expand_env: bool = True,
 ) -> str:
-    if isinstance(token, (list, tuple)):
-        return [_substitute(defines, t, expand_env) for t in token]
+    #    if isinstance(token, (list, tuple)):
+    #        return [_substitute(defines, t, expand_env) for t in token]
 
     current: FileContextToken = token
 
@@ -251,13 +251,22 @@ def _substitute_args(
     if constraints.substitute_from < 1:
         return args
 
-    return [
-        _substitute(defines, x, constraints.expand_envvar)
-        if i + 1 >= constraints.substitute_from
-        and isinstance(x, (FileContextToken, list))
-        else x
-        for i, x in enumerate(args)
-    ]
+    def substitute_arg(i, arg):
+        can_be_substituted = (i + 1) >= constraints.substitute_from
+
+        if not can_be_substituted:
+            return arg
+
+        if isinstance(arg, FileContextToken):
+            return _substitute(defines, arg, constraints.expand_envvar)
+
+        if isinstance(arg, list):
+            return [substitute_arg(i, sub_arg) for sub_arg in arg]
+
+        if isinstance(arg, tuple):
+            return tuple([substitute_arg(i, sub_arg) for sub_arg in arg])
+
+    return [substitute_arg(i, arg) for i, arg in enumerate(args)]
 
 
 class IncludedFile:
