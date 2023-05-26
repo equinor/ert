@@ -289,9 +289,9 @@ class EnKFMain:
 
         if parameters is None:
             parameters = self._parameter_keys
-
+        parameter_configs = self.ensembleConfig().parameter_configs
         for parameter in parameters:
-            config_node = self.ensembleConfig().getNode(parameter)
+            config_node = parameter_configs[parameter]
             if config_node.forward_init:
                 continue
             if isinstance(config_node, ExtParamConfig):
