@@ -38,6 +38,10 @@ class BatchingDispatcher:
         asyncio.gather(*[f([]) for f, _ in funcs])
 
     async def _work(self):
+        if len(self._buffer) == 0:
+            logger.debug("no events to be processed in queue")
+            return
+
         t0 = time.time()
         event_buffer, self._buffer = (
             self._buffer[: self._max_batch],
