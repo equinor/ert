@@ -16,6 +16,7 @@ from ert._c_wrappers.enkf.config.ext_param_config import ExtParamConfig
 from ert._c_wrappers.enkf.config.field_config import TRANSFORM_FUNCTIONS, Field
 from ert._c_wrappers.enkf.config.gen_data_config import GenDataConfig
 from ert._c_wrappers.enkf.config.parameter_config import ParameterConfig
+from ert._c_wrappers.enkf.config.response_config import ResponseConfig
 from ert._c_wrappers.enkf.config.summary_config import SummaryConfig
 from ert._c_wrappers.enkf.config.surface_config import SurfaceConfig
 from ert._c_wrappers.enkf.config_keys import ConfigKeys
@@ -245,7 +246,7 @@ class EnsembleConfig:
             )
         else:
             gdc = GenDataConfig(
-                key=name, input_file=res_file, report_steps=report_steps
+                name=name, input_file=res_file, report_steps=report_steps
             )
             return gdc
 
@@ -382,13 +383,7 @@ class EnsembleConfig:
 
     def __getitem__(
         self, key: str
-    ) -> Union[
-        ParameterConfig,
-        GenKwConfig,
-        GenDataConfig,
-        SummaryConfig,
-        ExtParamConfig,
-    ]:
+    ) -> Union[ParameterConfig, GenKwConfig, ResponseConfig, ExtParamConfig,]:
         if key in self.py_nodes:
             return self.py_nodes[key]
         else:
@@ -404,13 +399,7 @@ class EnsembleConfig:
 
     def getNode(
         self, key: str
-    ) -> Union[
-        ParameterConfig,
-        GenKwConfig,
-        GenDataConfig,
-        SummaryConfig,
-        ExtParamConfig,
-    ]:
+    ) -> Union[ParameterConfig, GenKwConfig, ResponseConfig, ExtParamConfig,]:
         return self[key]
 
     def add_summary_full(self, key, refcase) -> SummaryConfig:
@@ -462,8 +451,7 @@ class EnsembleConfig:
         config_node: Union[
             Field,
             GenKwConfig,
-            GenDataConfig,
-            SurfaceConfig,
+            ResponseConfig,
             SummaryConfig,
             ExtParamConfig,
         ],

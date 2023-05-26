@@ -29,11 +29,11 @@ def test_run_simulation_batch(setup_case, prior_ensemble):
 
     # Add result nodes
     order_result = GenDataConfig(
-        key="ORDER",
+        name="ORDER",
         input_file="order_%d",
     )
     injection_result = GenDataConfig(
-        key="INJECTION",
+        name="INJECTION",
         input_file="injection_%d",
     )
     ens_config.addNode(order_result)

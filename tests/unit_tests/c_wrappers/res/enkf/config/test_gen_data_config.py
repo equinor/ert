@@ -6,45 +6,45 @@ from ert._c_wrappers.enkf import GenDataConfig
 
 
 @pytest.mark.parametrize(
-    "key, active_list",
+    "name, report_steps",
     [
         ("ORDERED_RESULTS", [1, 2, 3, 4]),
         ("UNORDERED_RESULTS", [5, 2, 3, 7, 1]),
     ],
 )
 @pytest.mark.usefixtures("use_tmpdir")
-def test_gen_data_config(key: str, active_list: List[int]):
-    gdc = GenDataConfig(key=key, report_steps=active_list)
-    assert gdc.getKey() == key
-    assert gdc.getNumReportStep() == len(active_list)
-    assert gdc.getReportSteps() == sorted(active_list)
-    for i in active_list:
+def test_gen_data_config(name: str, report_steps: List[int]):
+    gdc = GenDataConfig(name=name, report_steps=report_steps)
+    assert gdc.getKey() == name
+    assert len(gdc.getReportSteps()) == len(report_steps)
+    assert gdc.getReportSteps() == sorted(report_steps)
+    for i in report_steps:
         assert gdc.hasReportStep(i)
 
     assert not gdc.hasReportStep(200)
 
-    gen_data_default_step = GenDataConfig(key=key)
-    assert gen_data_default_step.getNumReportStep() == 1
-    assert gen_data_default_step.getReportStep(0) == 0
+    gen_data_default_step = GenDataConfig(name=name)
+    assert len(gen_data_default_step.getReportSteps()) == 1
+    assert gen_data_default_step.getReportSteps()[0] == 0
 
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_empty_gen_data_config():
-    gdc = GenDataConfig(key="key")
-    assert gdc.getNumReportStep() == 1
+    gdc = GenDataConfig(name="key")
+    assert len(gdc.getReportSteps()) == 1
     assert gdc.hasReportStep(0)
     assert not gdc.hasReportStep(1)
-    assert gdc.getReportStep(0) == 0
+    assert gdc.getReportSteps()[0] == 0
 
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_gen_data_eq_config():
-    alt1 = GenDataConfig(key="ALT1", report_steps=[2, 1, 3])
-    alt2 = GenDataConfig(key="ALT1", report_steps=[2, 3, 1])
-    alt3 = GenDataConfig(key="ALT1", report_steps=[3])
-    alt4 = GenDataConfig(key="ALT4", report_steps=[3])
-    alt5 = GenDataConfig(key="ALT4", report_steps=[4])
-    alt6 = GenDataConfig(key="ALT4", report_steps=[4])
+    alt1 = GenDataConfig(name="ALT1", report_steps=[2, 1, 3])
+    alt2 = GenDataConfig(name="ALT1", report_steps=[2, 3, 1])
+    alt3 = GenDataConfig(name="ALT1", report_steps=[3])
+    alt4 = GenDataConfig(name="ALT4", report_steps=[3])
+    alt5 = GenDataConfig(name="ALT4", report_steps=[4])
+    alt6 = GenDataConfig(name="ALT4", report_steps=[4])
 
     obs_list = ["DEF", "ABC", "GHI"]
     alt6.update_observation_keys(obs_list)
