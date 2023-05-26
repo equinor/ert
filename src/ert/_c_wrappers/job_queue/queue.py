@@ -32,7 +32,10 @@ if TYPE_CHECKING:
     from ert._c_wrappers.enkf.run_arg import RunArg
 
 
+logging.basicConfig(level=logging.DEBUG)
+
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 
 LONG_RUNNING_FACTOR = 1.25
 

@@ -141,6 +141,7 @@ class LegacyEnsemble(Ensemble):
         if not config:
             raise ValueError("no config for evaluator")
         self._config = config
+        logger.info("$$$ we are here. in evaluate.")
         get_event_loop().run_until_complete(
             wait_for_evaluator(
                 base_url=self._config.url,
@@ -148,6 +149,7 @@ class LegacyEnsemble(Ensemble):
                 cert=self._config.cert,
             )
         )
+        logger.info("$$$ evaluate: done waiting for evaluator")
 
         threading.Thread(target=self._evaluate, name="LegacyEnsemble").start()
 
@@ -161,6 +163,7 @@ class LegacyEnsemble(Ensemble):
         asyncio.set_event_loop(asyncio.new_event_loop())
 
         if self._config is None:
+            # TODO should event loop be closed?
             raise ValueError("no config")
 
         # The cloudevent_unary_send only accepts a cloud event, but in order to

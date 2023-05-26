@@ -1,4 +1,5 @@
 import asyncio
+import logging
 import os
 import ssl
 import threading
@@ -12,6 +13,11 @@ from websockets.client import WebSocketClientProtocol  # type: ignore
 from websockets.datastructures import Headers
 
 from ._wait_for_evaluator import wait_for_evaluator
+
+logging.basicConfig(level=logging.DEBUG)
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 
 
 class SyncWebsocketDuplexer:
@@ -59,8 +65,10 @@ class SyncWebsocketDuplexer:
         while not self._connection.done():
             time.sleep(0.1)
         try:
+            logger.debug("trying to connect...")
             self._connection.result()
         except Exception:
+            logger.debug("didn't work!")
             self.stop()
             raise
 
@@ -75,6 +83,7 @@ class SyncWebsocketDuplexer:
             ping_timeout=60,
             ping_interval=60,
             close_timeout=60,
+            logger=logger,
         )
 
         await wait_for_evaluator(

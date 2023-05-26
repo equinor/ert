@@ -6,7 +6,10 @@ from collections import OrderedDict, defaultdict, deque
 
 from ert.ensemble_evaluator import identifiers
 
+logging.basicConfig(level=logging.DEBUG)
+
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 
 
 class BatchingDispatcher:
@@ -51,6 +54,8 @@ class BatchingDispatcher:
         if len(batch_of_events_for_processing) == 0:
             logger.debug("no events to be processed in queue")
             return
+
+        logger.debug(f"about to process {len(batch_of_events_for_processing)} events")
 
         function_to_events_map = OrderedDict()
         for f, event in batch_of_events_for_processing:
