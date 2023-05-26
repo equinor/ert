@@ -190,7 +190,7 @@ def _save_temporary_storage_to_disk(
     iens_active_index: List[int],
 ) -> None:
     for key, matrix in temporary_storage.items():
-        config_node = ensemble_config.getNode(key)
+        config_node = ensemble_config.parameter_configs[key]
         for i, realization in enumerate(iens_active_index):
             if isinstance(config_node, GenKwConfig):
                 parameter_keys = list(config_node)
@@ -214,7 +214,7 @@ def _create_temporary_parameter_storage(
     t_field = 0.0
     _logger.debug("_create_temporary_parameter_storage() - start")
     for key in ensemble_config.parameters:
-        config_node = ensemble_config.getNode(key)
+        config_node = ensemble_config.parameter_configs[key]
         if isinstance(config_node, GenKwConfig):
             t = time.perf_counter()
             matrix = source_fs.load_gen_kw(key, iens_active_index)

@@ -387,7 +387,7 @@ class EnsembleConfig:
 
     def _node_info(self, object_type: object) -> str:
         key_list = self.getKeylistFromImplType(object_type)
-        return f"{object_type}: " f"{[self.getNode(key) for key in key_list]}, "
+        return f"{object_type}: " f"{[self[key] for key in key_list]}, "
 
     def __repr__(self):
         return (
@@ -528,7 +528,7 @@ class EnsembleConfig:
 
         for par in self.keys:
             if par in self and par in other:
-                if self.getNode(par) != other.getNode(par):
+                if self[par] != other[par]:
                     return False
             else:
                 return False
@@ -548,7 +548,7 @@ class EnsembleConfig:
         return self._user_summary_keys
 
     def get_node_observation_keys(self, key) -> List[str]:
-        node = self.getNode(key)
+        node = self[key]
         keylist = []
 
         if isinstance(node, SummaryConfig):

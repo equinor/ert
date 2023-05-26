@@ -25,7 +25,7 @@ def _internalize_GEN_DATA(
     errors = []
     all_data = {}
     for key in ensemble_config.get_keylist_gen_data():
-        config_node: GenDataConfig = ensemble_config.getNode(key)  # type: ignore
+        config_node: GenDataConfig = ensemble_config.response_configs[key]
         filename_fmt = config_node.input_file
         for i in config_node.getReportSteps():
             filename = filename_fmt % i
