@@ -33,26 +33,22 @@ class DataLoader(Protocol):
 
 
 def data_loader_factory(observation_type: str) -> DataLoader:
-    """
-    Currently, the methods returned by this factory differ. They should not.
-    TODO: Remove discrepancies between returned methods.
-        See https://github.com/equinor/libres/issues/808
-    """
-    if observation_type in ["GEN_OBS", "SUMMARY_OBS"]:
-        if observation_type == "GEN_OBS":
-            response_loader = _load_general_response
-            obs_loader = _load_general_obs
-        elif observation_type == "SUMMARY_OBS":
-            response_loader = _load_summary_response
-            obs_loader = _load_summary_obs
-        return partial(
-            _extract_data,
-            expected_obs=observation_type,
-            response_loader=response_loader,
-            obs_loader=obs_loader,
-        )
-    else:
+    loaders = {
+        "GEN_OBS": (_load_general_response, _load_general_obs),
+        "SUMMARY_OBS": (_load_summary_response, _load_summary_obs),
+    }
+
+    if observation_type not in loaders:
         raise TypeError(f"Unknown observation type: {observation_type}")
+
+    response_loader, obs_loader = loaders[observation_type]
+
+    return partial(
+        _extract_data,
+        expected_obs=observation_type,
+        response_loader=response_loader,
+        obs_loader=obs_loader,
+    )
 
 
 def _extract_data(
