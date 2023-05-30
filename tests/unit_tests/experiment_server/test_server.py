@@ -1,10 +1,11 @@
-from typing import AsyncContextManager, Awaitable, Callable
+from typing import AsyncContextManager
 from unittest.mock import AsyncMock
 
 import pytest
 from cloudevents.conversion import to_json
 from cloudevents.http import CloudEvent
-from websockets.client import WebSocketClientProtocol
+from websockets.client import connect
+from websockets.exceptions import ConnectionClosed
 
 import ert.experiment_server
 from ert.experiment_server._experiment_protocol import Experiment
@@ -15,26 +16,25 @@ pytestmark = pytest.mark.asyncio
 
 async def test_receiving_event_from_cluster(
     experiment_server_ctx: AsyncContextManager[ert.experiment_server.ExperimentServer],
-    dispatcher_factory: AsyncContextManager[
-        Callable[
-            [ert.experiment_server.ExperimentServer], Awaitable[WebSocketClientProtocol]
-        ]
-    ],
 ):
     async with experiment_server_ctx as experiment_server:
         experiment = AsyncMock(Experiment)
         experiment_server.add_experiment(experiment)
 
-        async with dispatcher_factory as make_dispatcher:
-            dispatcher = await make_dispatcher(experiment_server)
-
-            event = CloudEvent(
-                {
-                    "type": "test.event",
-                    "source": "test_receiving_event_from_cluster",
-                }
-            )
-            await dispatcher.send(to_json(event).decode())
+        async for dispatcher in connect(
+            experiment_server._config.dispatch_uri, open_timeout=None
+        ):
+            try:
+                event = CloudEvent(
+                    {
+                        "type": "test.event",
+                        "source": "test_receiving_event_from_cluster",
+                    }
+                )
+                await dispatcher.send(to_json(event).decode())
+                break
+            except ConnectionClosed:
+                raise
 
     experiment.dispatch.assert_awaited_once_with(event)
 

@@ -1,9 +1,7 @@
-import asyncio
 from contextlib import asynccontextmanager
-from typing import AsyncGenerator, Awaitable, Callable, Optional
+from typing import AsyncGenerator
 
 import pytest
-from websockets.client import WebSocketClientProtocol, connect
 
 import ert.experiment_server
 from ert.ensemble_evaluator.config import EvaluatorServerConfig
@@ -23,32 +21,3 @@ async def experiment_server_ctx() -> AsyncGenerator[
     server = ert.experiment_server.ExperimentServer(config)
     yield server
     await server.stop()
-
-
-@pytest.fixture
-@asynccontextmanager
-async def dispatcher_factory() -> AsyncGenerator[
-    Callable[
-        [ert.experiment_server.ExperimentServer], Awaitable[WebSocketClientProtocol]
-    ],
-    None,
-]:
-    connection: Optional[WebSocketClientProtocol] = None
-
-    async def _make_dispatcher(
-        server: ert.experiment_server.ExperimentServer,
-    ) -> WebSocketClientProtocol:
-        nonlocal connection
-
-        async def _wait_for_connection() -> WebSocketClientProtocol:
-            async for websocket in connect(server._config.dispatch_uri):
-                return websocket
-            raise RuntimeError
-
-        connection = await asyncio.wait_for(_wait_for_connection(), timeout=60)
-        return connection
-
-    yield _make_dispatcher
-
-    if connection:
-        await connection.close()
