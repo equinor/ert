@@ -163,9 +163,9 @@ class GenDataRFTCSVExportJob(ErtPlugin):
                 well = obs_key.replace("RFT_", "")
                 wells.add(well)
                 obs_vector = enkf_obs[obs_key]
-                data_key = obs_vector.getDataKey()
+                data_key = obs_vector.data_key
                 report_step = obs_vector.activeStep()
-                obs_node = obs_vector.getNode(report_step)
+                obs_node = obs_vector.observations[report_step]
 
                 rft_data = facade.load_gen_data(case, data_key, report_step)
                 fs = self.storage.get_ensemble_by_name(case)

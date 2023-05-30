@@ -29,7 +29,7 @@ class ExportMisfitDataJob(ErtScript):
         if not realizations:
             raise StorageError("No responses loaded")
 
-        all_observations = [(n.getObsKey(), []) for n in ert.getObservations()]
+        all_observations = [(n.observation_key, []) for n in ert.getObservations()]
         measured_data, obs_data = _get_obs_and_measure_data(
             ert.getObservations(), self.ensemble, all_observations, realizations
         )

@@ -114,7 +114,7 @@ def test_observations(setup_case):
         EnkfObservationImplementationType.SUMMARY_OBS,
         observation_key,
         summary_observation_node.getKey(),
-        count,
+        {},
     )
 
     observations.obs_vectors[observation_key] = observation_vector
@@ -123,12 +123,10 @@ def test_observations(setup_case):
     for index in range(0, count):
         value = index * 10.5
         std = index / 10.0
-        summary_observation_node = SummaryObservation(
+        observation_vector.observations[index] = SummaryObservation(
             summary_key, observation_key, value, std
         )
-        observation_vector.add_summary_obs(summary_observation_node, index)
-        assert observation_vector.getNode(index) == summary_observation_node
-        assert summary_observation_node.value == value
+        assert observation_vector.observations[index].value == value
         values.append((index, value, std))
 
     test_vector = observations[observation_key]
@@ -140,9 +138,9 @@ def test_observations(setup_case):
 
     assert observation_vector == test_vector
     for index, value, std in values:
-        assert test_vector.isActive(index)
+        assert index in test_vector.observations
 
-        summary_observation_node = test_vector.getNode(index)
+        summary_observation_node = test_vector.observations[index]
 
         assert summary_observation_node.value == value
         assert summary_observation_node.std == std

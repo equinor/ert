@@ -32,7 +32,7 @@ def assign(self, target_size, func):
         >>> if grid.get_num_active() != field_config.get_data_size():
         ...     raise ValuError(
         ...         "Fatal error - inconsistent field size for: {}".format(
-        ...             config_node.getKey()
+        ...             config_node.observation_key
         ...         )
         ...     )
 

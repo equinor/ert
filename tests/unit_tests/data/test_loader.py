@@ -74,7 +74,7 @@ def test_load_general_obs(facade):
 @pytest.mark.parametrize("func", [loader.data_loader_factory("SUMMARY_OBS")])
 def test_load_summary_data(facade, monkeypatch, func):
     obs_mock = Mock()
-    obs_mock.getStepList.return_value = [1, 2]
+    obs_mock.observations = {1: Mock(), 2: Mock()}
 
     facade.get_observations.return_value = {"some_key": obs_mock}
     facade.load_observation_data.return_value = pd.DataFrame(
@@ -104,7 +104,7 @@ def test_load_summary_data(facade, monkeypatch, func):
 
 def test_load_summary_obs(facade, monkeypatch):
     obs_mock = Mock()
-    obs_mock.getStepList.return_value = [1, 2]
+    obs_mock.observations = {1: Mock(), 2: Mock()}
 
     facade.get_observations.return_value = {"some_key": obs_mock}
     facade.load_observation_data.return_value = pd.DataFrame(
