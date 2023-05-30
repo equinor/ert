@@ -11,13 +11,15 @@ from .ext_job_schema import init_ext_job_schema
 from .lark_parser import parse as lark_parse
 from .types import ConfigDict
 from .workflow_job_keywords import WorkflowJobKeys
-from .workflow_job_schema import init_workflow_schema
+from .workflow_job_schema import init_workflow_job_schema
+from .workflow_schema import init_workflow_schema
 
 __all__ = [
     "lark_parse",
     "ConfigWarning",
     "ConfigValidationError",
     "WorkflowJobKeys",
+    "init_workflow_job_schema",
     "init_workflow_schema",
     "ConfigKeys",
     "SchemaItemType",

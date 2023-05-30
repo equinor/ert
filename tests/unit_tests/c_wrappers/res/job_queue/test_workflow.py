@@ -1,4 +1,5 @@
 import pytest
+from hypothesis import given, strategies
 
 from ert._c_wrappers.job_queue import Workflow, WorkflowJob, WorkflowRunner
 from ert._c_wrappers.util.substitution_list import SubstitutionList
@@ -16,7 +17,9 @@ def test_workflow():
     with pytest.raises(ConfigValidationError, match="Could not open config_file"):
         _ = WorkflowJob.from_file("knock_job", name="KNOCK")
 
-    workflow = Workflow.from_file("dump_workflow", None, {"DUMP": dump_job})
+    workflow = Workflow.from_file(
+        "dump_workflow", None, {"DUMP": dump_job}, use_new_parser=False
+    )
 
     assert len(workflow) == 2
 
@@ -62,7 +65,93 @@ def test_that_failure_in_parsing_workflow_gives_config_validation_error():
     with open("workflow", "w", encoding="utf-8") as f:
         f.write("DEFINE\n")
     with pytest.raises(
-        ConfigValidationError, match="DEFINE must have two or more arguments"
+        ConfigValidationError, match="DEFINE must have .* arguments"
     ) as err:
         _ = Workflow.from_file("workflow", None, {})
-    assert err.value.errors[0].filename == "workflow"
+    assert "workflow" in err.value.errors[0].filename
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+@given(
+    strategies.lists(
+        strategies.sampled_from(
+            [
+                "foo",
+                "bar",
+                "baz",
+            ]
+        ),
+        min_size=1,
+        max_size=20,
+    )
+)
+def test_that_multiple_workflow_jobs_are_ordered_correctly(order):
+    with open("workflow", "w", encoding="utf-8") as f:
+        f.write("\n".join(order))
+
+    wf = Workflow.from_file(
+        src_file="workflow",
+        context=None,
+        job_dict={
+            "foo": "foo",
+            "bar": "bar",
+            "baz": "baz",
+        },
+    )
+
+    assert [x[0] for x in wf.cmd_list] == order
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_multiple_workflow_jobs_with_redefines_are_ordered_correctly():
+    with open("workflow", "w", encoding="utf-8") as f:
+        f.write(
+            "\n".join(
+                [
+                    "DEFINE <A> 1",
+                    "foo <A>",
+                    "bar <A>",
+                    "DEFINE <A> 3",
+                    "foo <A>",
+                    "baz <A>",
+                ]
+            )
+        )
+
+    wf = Workflow.from_file(
+        src_file="workflow",
+        context=None,
+        job_dict={
+            "foo": "foo",
+            "bar": "bar",
+            "baz": "baz",
+        },
+    )
+
+    commands = [(name, args[0]) for (name, args) in wf.cmd_list]
+
+    assert commands == [("foo", "1"), ("bar", "1"), ("foo", "3"), ("baz", "3")]
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_unknown_jobs_gives_error():
+    with open("workflow", "w", encoding="utf-8") as f:
+        f.write(
+            "\n".join(
+                [
+                    "boo <A>",
+                    "kingboo <A>",
+                ]
+            )
+        )
+
+    with pytest.raises(
+        ConfigValidationError, match="Job with name: kingboo is not recognized"
+    ):
+        Workflow.from_file(
+            src_file="workflow",
+            context=None,
+            job_dict={
+                "boo": "boo",
+            },
+        )

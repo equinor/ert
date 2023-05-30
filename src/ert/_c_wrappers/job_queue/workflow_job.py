@@ -13,7 +13,7 @@ from ert.parsing import (
     ConfigValidationError,
     SchemaItemType,
     WorkflowJobKeys,
-    init_workflow_schema,
+    init_workflow_job_schema,
     lark_parse,
 )
 
@@ -44,7 +44,7 @@ _config_parser = _workflow_job_config_parser()
 
 
 def new_workflow_job_parser(file: str):
-    schema = init_workflow_schema()
+    schema = init_workflow_job_schema()
     return lark_parse(file, schema=schema)
 
 

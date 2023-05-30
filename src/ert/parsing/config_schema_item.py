@@ -9,6 +9,7 @@ from ert.parsing.context_values import (
     ContextBool,
     ContextFloat,
     ContextInt,
+    ContextList,
     ContextString,
     ContextValue,
 )
@@ -197,7 +198,9 @@ class SchemaItem(BaseModel):
     ) -> List[Union[T, ContextValue]]:
         errors: List[Union[ErrorInfo, ConfigValidationError]] = []
 
-        args_with_context: List[Union[T, ContextValue]] = []
+        args_with_context: ContextList[Union[T, ContextValue]] = ContextList(
+            token=keyword
+        )
         for i, x in enumerate(args):
             if isinstance(x, FileContextToken):
                 try:

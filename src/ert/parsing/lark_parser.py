@@ -508,19 +508,23 @@ def parse(
     file: str,
     schema: SchemaItemDict,
     site_config: Optional[ConfigDict] = None,
+    pre_defines: Optional[List[Tuple[str, str]]] = None,
 ) -> ConfigDict:
     filepath = os.path.normpath(os.path.abspath(file))
     tree = _parse_file(filepath)
     config_dir = os.path.dirname(filepath)
     config_file_name = os.path.basename(file)
     config_file_base = config_file_name.split(".")[0]
-    pre_defines = [
-        ["<CONFIG_PATH>", config_dir],
-        ["<CONFIG_FILE_BASE>", config_file_base],
-        ["<DATE>", datetime.date.today().isoformat()],
-        ["<CWD>", config_dir],
-        ["<CONFIG_FILE>", os.path.basename(file)],
-    ]
+
+    if not pre_defines:
+        pre_defines = [
+            ["<CONFIG_PATH>", config_dir],
+            ["<CONFIG_FILE_BASE>", config_file_base],
+            ["<DATE>", datetime.date.today().isoformat()],
+            ["<CWD>", config_dir],
+            ["<CONFIG_FILE>", os.path.basename(file)],
+        ]
+
     # need to copy pre_defines because _handle_includes will
     # add to this list
     _handle_includes(tree, pre_defines.copy(), filepath)
