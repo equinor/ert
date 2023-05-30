@@ -8,12 +8,21 @@ from datetime import datetime
 from functools import lru_cache
 from multiprocessing.pool import ThreadPool
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, List, Literal, Optional, Tuple, Union
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Dict,
+    List,
+    Literal,
+    Optional,
+    Sequence,
+    Tuple,
+    Union,
+)
 from uuid import UUID
 
 import numpy as np
 import xarray as xr
-import xtgeo
 from pydantic import BaseModel
 
 from ert._c_wrappers.enkf.config.field_config import field_transform
@@ -28,7 +37,6 @@ from ert.storage.field_utils.field_utils import Shape, read_mask, save_field
 if TYPE_CHECKING:
     import numpy.typing as npt
     from ecl.summary import EclSum
-    from xtgeo import RegularSurface
 
     from ert._c_wrappers.enkf.ensemble_config import EnsembleConfig
     from ert._c_wrappers.enkf.run_arg import RunArg
@@ -237,23 +245,35 @@ class LocalEnsembleReader:
             data = json.load(f)
         return data
 
-    def has_surface(self, key: str, realization: int) -> bool:
-        input_path = self.mount_point / f"realization-{realization}"
-        return (input_path / f"{key}.irap").exists()
+    def _load_single_dataset(
+        self,
+        group: str,
+        realization: int,
+    ) -> xr.Dataset:
+        try:
+            return xr.open_dataset(
+                self.mount_point / f"realization-{realization}" / group, engine="scipy"
+            )
+        except FileNotFoundError:
+            raise KeyError(
+                f"No dataset '{group}' in storage for realization {realization}"
+            )
 
-    def load_surface_file(self, key: str, realization: int) -> RegularSurface:
-        input_path = self.mount_point / f"realization-{realization}" / f"{key}.irap"
-        if not input_path.exists():
-            raise KeyError(f"No parameter: {key} in storage")
-        surf = xtgeo.surface_from_file(input_path, fformat="irap_ascii")
-        return surf
+    def _load_dataset(
+        self,
+        group: str,
+        realizations: Union[int, Sequence[int]],
+    ) -> xr.Dataset:
+        if isinstance(realizations, int):
+            return self._load_single_dataset(group, realizations)
 
-    def load_surface_data(self, key: str, realizations: List[int]) -> Any:
-        result = []
-        for realization in realizations:
-            surf = self.load_surface_file(key, realization)
-            result.append(surf.get_values1d(order="F"))
-        return np.stack(result).T
+        datasets = [self._load_single_dataset(group, i) for i in realizations]
+        return xr.combine_nested(datasets, "realizations")
+
+    def load_parameters(
+        self, group: str, realizations: Union[int, Sequence[int]]
+    ) -> xr.DataArray:
+        return self._load_dataset(group, realizations)["values"]
 
     def has_parameters(self) -> bool:
         """
@@ -423,38 +443,15 @@ class LocalEnsembleAccessor(LocalEnsembleReader):
         with open(output_path / f"{key}.json", "w", encoding="utf-8") as f:
             json.dump(data, f)
 
-    def save_surface_file(self, key: str, realization: int, file_name: str) -> None:
-        output_path = self.mount_point / f"realization-{realization}"
-        Path.mkdir(output_path, exist_ok=True)
-        surf = xtgeo.surface_from_file(file_name, fformat="irap_ascii")
-        surf.to_file(output_path / f"{key}.irap", fformat="irap_ascii")
-        self.update_realization_state(
-            realization,
-            [RealizationStateEnum.STATE_UNDEFINED],
-            RealizationStateEnum.STATE_INITIALIZED,
-        )
-
-    def save_surface_data(
-        self,
-        key: str,
-        realization: int,
-        data: npt.NDArray[np.double],
+    def save_parameters(
+        self, group: str, realization: int, dataset: xr.DataArray
     ) -> None:
-        output_path = self.mount_point / f"realization-{realization}"
-        Path.mkdir(output_path, exist_ok=True)
-        param_info = self.experiment.parameter_info[key]
-        surf = xtgeo.RegularSurface(
-            ncol=param_info["ncol"],
-            nrow=param_info["nrow"],
-            xinc=param_info["xinc"],
-            yinc=param_info["yinc"],
-            xori=param_info["xori"],
-            yori=param_info["yori"],
-            yflip=param_info["yflip"],
-            rotation=param_info["rotation"],
-            values=data,
+        output_path = self.mount_point / f"realization-{realization}" / group
+        output_path.parent.mkdir(exist_ok=True)
+        dataset.expand_dims(realizations=[realization]).to_netcdf(
+            output_path,
+            engine="scipy",
         )
-        surf.to_file(output_path / f"{key}.irap", fformat="irap_ascii")
         self.update_realization_state(
             realization,
             [RealizationStateEnum.STATE_UNDEFINED],
@@ -498,6 +495,7 @@ class LocalEnsembleAccessor(LocalEnsembleReader):
                     if (
                         base_name in parameter_keys
                         or parameter_file.name == "gen-kw.nc"
+                        or parameter_file.name == "parameters.nc"
                     ):
                         files_to_copy.append(parameter_file.name)
 

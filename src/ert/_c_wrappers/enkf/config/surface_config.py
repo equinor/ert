@@ -6,6 +6,9 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+import xarray as xr
+import xtgeo
+
 from ert._c_wrappers.enkf.config.parameter_config import ParameterConfig
 
 if TYPE_CHECKING:
@@ -34,20 +37,40 @@ class SurfaceConfig(ParameterConfig):
         if "%d" in file_name:
             file_name = file_name % real_nr
         file_path = run_path / file_name
-        if file_path.exists():
-            ensemble.save_surface_file(self.name, real_nr, str(file_path))
-        else:
+        if not file_path.exists():
             raise ValueError(
                 "Failed to initialize parameter "
                 f"'{self.name}' in file {file_name}: "
                 "File not found\n"
             )
+        surface = xtgeo.surface_from_file(file_path, fformat="irap_ascii")
+
+        dataset = xr.DataArray(
+            surface.values,
+            name="values",
+            dims=["y", "x"],
+        )
+
+        ensemble.save_parameters(self.name, real_nr, dataset)
         _logger.debug(f"load() time_used {(time.perf_counter() - t):.4f}s")
 
     def save(self, run_path: Path, real_nr: int, ensemble: EnsembleReader):
         t = time.perf_counter()
+        data = ensemble.load_parameters(self.name, real_nr)
+
+        surf = xtgeo.RegularSurface(
+            ncol=self.ncol,
+            nrow=self.nrow,
+            xori=self.xori,
+            yori=self.yori,
+            xinc=self.xori,
+            yinc=self.yori,
+            rotation=self.rotation,
+            yflip=self.yflip,
+            values=data.values,
+        )
+
         file_path = run_path / self.output_file
-        Path.mkdir(file_path.parent, exist_ok=True, parents=True)
-        surf = ensemble.load_surface_file(self.name, real_nr)
+        file_path.parent.mkdir(exist_ok=True, parents=True)
         surf.to_file(file_path, fformat="irap_ascii")
         _logger.debug(f"save() time_used {(time.perf_counter() - t):.4f}s")
