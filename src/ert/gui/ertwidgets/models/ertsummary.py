@@ -29,7 +29,7 @@ class ErtSummary:
         summary_keys_count = {}
         summary_keys = []
         for key in summary_obs:
-            data_key = self.ert.getObservations()[key].getDataKey()
+            data_key = self.ert.getObservations()[key].data_key
 
             if data_key not in summary_keys_count:
                 summary_keys_count[data_key] = 1

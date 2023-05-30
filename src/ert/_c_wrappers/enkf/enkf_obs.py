@@ -62,11 +62,8 @@ class EnkfObs:
         return [
             key
             for key, obs in self.obs_vectors.items()
-            if observation_implementation_type == obs.getImplementationType()
+            if observation_implementation_type == obs.observation_type
         ]
-
-    def obsType(self, key: str) -> EnkfObservationImplementationType:
-        self.obs_vectors[key].getImplementationType()
 
     def getMatchingKeys(
         self, pattern: str, obs_type: Optional[EnkfObservationImplementationType] = None
@@ -81,7 +78,11 @@ class EnkfObs:
             if any(fnmatch(key, p) for p in pattern.split())
         )
         if obs_type:
-            return [key for key in key_list if self.obsType(key) == obs_type]
+            return [
+                key
+                for key in key_list
+                if self.obs_vectors[key].observation_type == obs_type
+            ]
         else:
             return key_list
 
@@ -131,12 +132,6 @@ class EnkfObs:
         for instance in sub_instances:
             summary_key = instance.name
             ensemble_config.add_summary_full(summary_key, refcase)
-            obs_vector = ObsVector(
-                EnkfObservationImplementationType.SUMMARY_OBS,
-                summary_key,
-                ensemble_config.getNode(summary_key).getKey(),
-                time_len,
-            )
             error = float(instance.get_value("ERROR"))
             error_min = float(instance.get_value("ERROR_MIN"))
             error_mode = instance.get_value("ERROR_MODE")
@@ -195,6 +190,7 @@ class EnkfObs:
                         float(segment_instance.get_value("ERROR_MIN")),
                         segment_instance.get_value("ERROR_MODE"),
                     )
+                data = {}
                 for i, (good, error, value) in enumerate(zip(valid, std_dev, values)):
                     if good:
                         if error <= std_cutoff:
@@ -204,12 +200,16 @@ class EnkfObs:
                                 category=ConfigWarning,
                             )
                             continue
-                        obs_vector.add_summary_obs(
-                            SummaryObservation(summary_key, summary_key, value, error),
-                            i,
+                        data[i] = SummaryObservation(
+                            summary_key, summary_key, value, error
                         )
 
-                obs_vectors[obs_vector.getKey()] = obs_vector
+                obs_vectors[summary_key] = ObsVector(
+                    EnkfObservationImplementationType.SUMMARY_OBS,
+                    summary_key,
+                    ensemble_config.getNode(summary_key).getKey(),
+                    data,
+                )
         return obs_vectors
 
     @staticmethod
@@ -297,12 +297,6 @@ class EnkfObs:
             obs_key = instance.name
             refcase = ensemble_config.refcase
             ensemble_config.add_summary_full(summary_key, refcase)
-            obs_vector = ObsVector(
-                EnkfObservationImplementationType.SUMMARY_OBS,  # type: ignore
-                obs_key,
-                ensemble_config.getNode(summary_key).getKey(),
-                len(time_map),
-            )
             value, std_dev = cls._make_value_and_std_dev(instance)
             try:
                 restart = cls._get_restart(instance, time_map)
@@ -318,10 +312,12 @@ class EnkfObs:
                     f"Problem with observation {obs_key} at "
                     f"{cls._get_time(instance, time_map[0])}"
                 )
-            obs_vector.add_summary_obs(
-                SummaryObservation(summary_key, obs_key, value, std_dev), restart
+            obs_vectors[obs_key] = ObsVector(
+                EnkfObservationImplementationType.SUMMARY_OBS,  # type: ignore
+                obs_key,
+                ensemble_config.getNode(summary_key).getKey(),
+                {restart: SummaryObservation(summary_key, obs_key, value, std_dev)},
             )
-            obs_vectors[obs_key] = obs_vector
         return obs_vectors
 
     @classmethod
@@ -382,12 +378,6 @@ class EnkfObs:
                 continue
             config_node = ensemble_config.getNode(state_kw)
             obs_key = instance.name
-            obs_vector = ObsVector(
-                EnkfObservationImplementationType.GEN_OBS,  # type: ignore
-                obs_key,
-                config_node.getKey(),
-                len(time_map),
-            )
             try:
                 restart = cls._get_restart(instance, time_map)
             except ValueError as err:
@@ -412,25 +402,27 @@ class EnkfObs:
                 )
                 continue
 
-            obs_vector.add_general_obs(
-                cls._create_gen_obs(
-                    (
-                        float(instance.get_value("VALUE")),
-                        float(instance.get_value("ERROR")),
-                    )
-                    if instance.has_value("VALUE")
-                    else None,
-                    instance.get_value("OBS_FILE")
-                    if instance.has_value("OBS_FILE")
-                    else None,
-                    instance.get_value("INDEX_LIST")
-                    if instance.has_value("INDEX_LIST")
-                    else None,
-                ),
-                restart,
+            obs_vectors[obs_key] = ObsVector(
+                EnkfObservationImplementationType.GEN_OBS,  # type: ignore
+                obs_key,
+                config_node.getKey(),
+                {
+                    restart: cls._create_gen_obs(
+                        (
+                            float(instance.get_value("VALUE")),
+                            float(instance.get_value("ERROR")),
+                        )
+                        if instance.has_value("VALUE")
+                        else None,
+                        instance.get_value("OBS_FILE")
+                        if instance.has_value("OBS_FILE")
+                        else None,
+                        instance.get_value("INDEX_LIST")
+                        if instance.has_value("INDEX_LIST")
+                        else None,
+                    ),
+                },
             )
-
-            obs_vectors[obs_key] = obs_vector
         return obs_vectors
 
     def __repr__(self) -> str:
@@ -499,9 +491,9 @@ class EnkfObs:
                     ),
                 )
 
-                for state_kw in set(o.getDataKey() for o in obs_vectors.values()):
+                for state_kw in set(o.data_key for o in obs_vectors.values()):
                     obs_keys = sorted(
-                        k for k, o in obs_vectors.items() if o.getDataKey() == state_kw
+                        k for k, o in obs_vectors.items() if o.data_key == state_kw
                     )
                     node = ensemble_config.getNode(state_kw)
                     if node is not None:

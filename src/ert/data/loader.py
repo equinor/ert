@@ -205,9 +205,7 @@ def _remove_inactive_report_steps(
         return data
 
     obs_vector = facade.get_observations()[observation_key]
-    active_indices = []
-    for step in obs_vector.getStepList():
-        active_indices.append(step - 1)
+    active_indices = [i - 1 for i in obs_vector.observations.keys()]
     data = data.iloc[:, active_indices]
     index = _create_multi_index(data.columns.to_list(), active_indices)
     data.columns = index

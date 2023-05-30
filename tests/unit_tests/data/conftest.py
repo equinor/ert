@@ -6,8 +6,7 @@ import pytest
 @pytest.fixture()
 def facade():
     obs_mock = Mock()
-    obs_mock.getDataKey.return_value = "test_data_key"
-    obs_mock.getStepList.return_value = [1]
+    obs_mock.data_key = "test_data_key"
 
     facade = Mock()
     facade.get_impl.return_value = Mock()

@@ -251,13 +251,13 @@ def _get_obs_and_measure_data(
     for obs_key, active_list in selected_observations:
         obs_vector = obs[obs_key]
         try:
-            data_key = obs_vector.getDataKey()
+            data_key = obs_vector.data_key
         except KeyError:
             raise KeyError(f"No data key for obs key: {obs_key}")
-        imp_type = obs_vector.getImplementationType().name
+        imp_type = obs_vector.observation_type.name
         if imp_type == "GEN_OBS":
             obs_data.append(obs_vector.get_gen_obs_data(active_list))
-            data_key = f"{data_key}@{obs_vector.activeStep()}"
+            data_key = f"{data_key}@{list(obs_vector.observations.keys())[0]}"
         elif imp_type == "SUMMARY_OBS":
             obs_data.append(obs_vector.get_summary_obs_data(obs, active_list))
 

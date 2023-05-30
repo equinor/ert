@@ -100,7 +100,7 @@ def observations_for_obs_keys(res: LibresFacade, case, obs_keys):
 
     for obs_key in observations.columns.get_level_values(0).unique():
         obs_vec = observation_vectors[obs_key]
-        data_key = obs_vec.getDataKey()
+        data_key = obs_vec.data_key
         obs_data = _get_obs_data(obs_key, observations[obs_key])
 
         if obs_key not in summary_obs_keys:

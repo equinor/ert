@@ -26,23 +26,23 @@ def _get_obs_data(key, obs) -> Mapping[str, Any]:
 
 
 def create_observations(ert) -> List[Mapping[str, dict]]:
-    observation_vectors = ert.get_observations()
-    keys = [o.getKey() for o in observation_vectors]
-    summary_obs_keys = observation_vectors.getTypedKeylist(
+    observations = ert.get_observations()
+    keys = list(observations.obs_vectors.keys())
+    summary_obs_keys = observations.getTypedKeylist(
         EnkfObservationImplementationType.SUMMARY_OBS
     )
-    if keys == []:
+    if not keys:
         return []
 
     data = MeasuredData(ert, None, keys, load_data=False)
-    observations = data.data.loc[["OBS", "STD"]]
+    observations_data = data.data.loc[["OBS", "STD"]]
     grouped_obs = {}
     response_observation_link = {}
 
-    for obs_key in observations.columns.get_level_values(0).unique():
-        obs_vec = observation_vectors[obs_key]
-        data_key = obs_vec.getDataKey()
-        obs_data = _get_obs_data(obs_key, observations[obs_key])
+    for obs_key in observations_data.columns.get_level_values(0).unique():
+        obs_vec = observations[obs_key]
+        data_key = obs_vec.data_key
+        obs_data = _get_obs_data(obs_key, observations_data[obs_key])
 
         if obs_key not in summary_obs_keys:
             grouped_obs[obs_key] = obs_data

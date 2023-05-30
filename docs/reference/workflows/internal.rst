@@ -66,7 +66,7 @@ of this kind must:
 
                 permutation = misfit.permutationSort( )
 
-                print " #      Realisation     Misfit:%s" % obs.getObservationKey()
+                print " #      Realisation     Misfit:%s" % obs.observation_key
                 print "-----------------------------------"
                 for index in range(len(misfit)):
                     iens = permutation[index]

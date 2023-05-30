@@ -88,9 +88,9 @@ def make_source_accessor(path: Path, ert: EnKFMain) -> EnsembleReader:
     gen_data_input = []
     for obs_key in obs_keys:
         obs = observations[obs_key]
-        obs_vec = obs.getNode(0)  # Ignores all other time points for now
+        obs_vec = obs.observations[0]  # Ignores all other time points for now
         obs_highest_index_used = obs_vec.getDataIndex(len(obs_vec) - 1)
-        gen_data_input.append((obs.getDataKey(), obs_highest_index_used + 1))
+        gen_data_input.append((obs.data_key, obs_highest_index_used + 1))
 
     obs_data_keys = ens_config.getKeylistFromImplType(SummaryConfig)
     for real in range(realisations):

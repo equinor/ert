@@ -194,10 +194,10 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
 
     def get_impl_type_name_for_obs_key(self, key: str) -> str:
         observation = self._enkf_main.getObservations()[key]
-        return observation.getImplementationType().name
+        return observation.observation_type.name
 
     def get_data_key_for_obs_key(self, observation_key: str) -> str:
-        return self._enkf_main.getObservations()[observation_key].getDataKey()
+        return self._enkf_main.getObservations()[observation_key].data_key
 
     def get_matching_wildcards(self) -> Callable[[str], List[str]]:
         return self._enkf_main.getObservations().getMatchingKeys
@@ -250,9 +250,9 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
             for obs_key in observation_keys:
                 observation_data = observations[obs_key]
                 for index in range(0, history_length + 1):
-                    if observation_data.isActive(index):
+                    if index in observation_data.observations:
                         obs_time = observations.getObservationTime(index)
-                        node = observation_data.getNode(index)
+                        node = observation_data.observations[index]
                         df[key][obs_time] = node.value  # type: ignore
                         df[f"STD_{key}"][obs_time] = node.std  # type: ignore
         return df
@@ -292,11 +292,11 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
             enkf_obs = self._enkf_main.getObservations()
             for obs_vector in enkf_obs:
                 if EnkfObservationImplementationType.GEN_OBS:
-                    report_step = obs_vector.firstActiveStep()
-                    key = obs_vector.getDataKey()
+                    report_step = min(obs_vector.observations.keys())
+                    key = obs_vector.data_key
 
                     if key == data_key and report_step == data_report_step:
-                        obs_key = obs_vector.getObservationKey()
+                        obs_key = obs_vector.observation_key
             if obs_key is not None:
                 return [obs_key]
             else:
@@ -418,7 +418,9 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
         realizations = self.get_active_realizations(ensemble)
 
         observations = self._enkf_main.getObservations()
-        all_observations = [(n.getObsKey(), n.getStepList()) for n in observations]
+        all_observations = [
+            (n.observation_key, list(n.observations.keys())) for n in observations
+        ]
         measured_data, obs_data = _get_obs_and_measure_data(
             observations, ensemble, all_observations, realizations
         )
