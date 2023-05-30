@@ -383,7 +383,15 @@ class JobQueue(BaseCClass):
             ]
         )
 
-        async for websocket in connect(ws_uri, ssl=ssl_context, extra_headers=headers):
+        async for websocket in connect(
+            ws_uri,
+            ssl=ssl_context,
+            extra_headers=headers,
+            open_timeout=60,
+            ping_timeout=60,
+            ping_interval=60,
+            close_timeout=60,
+        ):
             try:
                 while events:
                     await asyncio.wait_for(websocket.send(to_json(events[0])), 60)
