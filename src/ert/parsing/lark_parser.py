@@ -4,7 +4,7 @@ import logging
 import os
 import os.path
 import warnings
-from typing import Any, List, Optional, Tuple
+from typing import List, Optional, Tuple, Union
 
 from lark import Discard, Lark, Token, Transformer, Tree, UnexpectedCharacters
 from typing_extensions import Self
@@ -143,11 +143,11 @@ _parser = Lark(grammar, propagate_positions=True)
 logger = logging.getLogger(__name__)
 
 
-def _substitute(
+def _substitute_token(
     defines: Defines,
     token: FileContextToken,
     expand_env: bool = True,
-) -> str:
+) -> FileContextToken:
     current: FileContextToken = token
 
     # replace from env
@@ -192,7 +192,6 @@ def _tree_to_dict(
     config_dict["DEFINE"] = defines  # type: ignore
 
     errors = []
-
     cwd = os.path.dirname(os.path.abspath(config_file))
 
     for node in tree.children:
@@ -210,9 +209,19 @@ def _tree_to_dict(
             args = _substitute_args(args, constraints, defines)
             value_list = constraints.apply_constraints(args, kw, cwd)
 
-            if constraints.multi_occurrence:
-                arglist = config_dict.get(kw, [])
-                arglist.append(value_list)  # type: ignore
+            arglist = config_dict.get(kw, [])
+            if kw == "DEFINE":
+                define_key, *define_args = value_list
+                existing_define = next(
+                    (define for define in arglist if define[0] == define_key), None
+                )
+                if existing_define:
+                    existing_define[1:] = define_args
+                else:
+                    arglist.append(value_list)
+            elif constraints.multi_occurrence:
+                arglist.append(value_list)
+
                 config_dict[kw] = arglist
             else:
                 config_dict[kw] = value_list
@@ -231,16 +240,45 @@ def _tree_to_dict(
     return config_dict
 
 
+ArgPairList = List[Tuple[FileContextToken]]
+ParsedArgList = List[Union[FileContextToken, ArgPairList]]
+
+
 def _substitute_args(
-    args: List[Any], constraints: SchemaItem, defines: Defines
-) -> List[Any]:
+    args: ParsedArgList,
+    constraints: SchemaItem,
+    defines: Defines,
+) -> ParsedArgList:
     if constraints.substitute_from < 1:
         return args
+
+    def substitute_arglist_tuple(
+        tup: Tuple[FileContextToken],
+    ) -> Tuple[FileContextToken]:
+        key, value = tup
+        substituted_value = _substitute_token(defines, value, constraints.expand_envvar)
+
+        return tuple([key, substituted_value])
+
+    def substitute_arg(
+        arg: Union[FileContextToken, List[Tuple[FileContextToken]]]
+    ) -> Union[FileContextToken, List[Tuple[FileContextToken]]]:
+        if isinstance(arg, FileContextToken):
+            return _substitute_token(defines, arg, constraints.expand_envvar)
+
+        if isinstance(arg, list):
+            # It is a list of keyword tuples
+            return [substitute_arglist_tuple(x) for x in arg]
+
+        raise ValueError(
+            f"Expected "
+            f"Union[FileContextToken, List[Tuple[FileContextToken]]], "
+            f"got {arg}"
+        )
+
     return [
-        _substitute(defines, x, constraints.expand_envvar)
-        if i + 1 >= constraints.substitute_from and isinstance(x, FileContextToken)
-        else x
-        for i, x in enumerate(args)
+        substitute_arg(arg) if (i + 1) >= constraints.substitute_from else arg
+        for i, arg in enumerate(args)
     ]
 
 
@@ -325,7 +363,7 @@ def _handle_includes(
                 )
                 continue
 
-            file_to_include = _substitute(defines, args[0])
+            file_to_include = _substitute_token(defines, args[0])
 
             if not os.path.isabs(file_to_include):
                 file_to_include = os.path.normpath(
