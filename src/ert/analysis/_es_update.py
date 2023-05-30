@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Tuple
 
 import iterative_ensemble_smoother as ies
 import numpy as np
+import xarray as xr
 from iterative_ensemble_smoother.experimental import (
     ensemble_smoother_update_step_row_scaling,
 )
@@ -196,7 +197,11 @@ def _save_temporary_storage_to_disk(
                 parameter_keys = list(config_node)
                 target_fs.save_gen_kw(key, parameter_keys, realization, matrix[:, i])
             elif isinstance(config_node, SurfaceConfig):
-                target_fs.save_surface_data(key, realization, matrix[:, i])
+                target_fs.save_parameters(
+                    key,
+                    realization,
+                    xr.DataArray(matrix[:, i], name="values"),
+                )
             elif isinstance(config_node, Field):
                 target_fs.save_field(key, realization, matrix[:, i])
             else:
@@ -221,7 +226,11 @@ def _create_temporary_parameter_storage(
             t_genkw += time.perf_counter() - t
         elif isinstance(config_node, SurfaceConfig):
             t = time.perf_counter()
-            matrix = source_fs.load_surface_data(key, iens_active_index)
+            matrix = (
+                source_fs.load_parameters(key, iens_active_index)
+                .transpose(..., "realizations")
+                .values.reshape(-1, len(iens_active_index))
+            )
             t_surface += time.perf_counter() - t
         elif isinstance(config_node, Field):
             t = time.perf_counter()

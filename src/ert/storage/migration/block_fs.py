@@ -183,7 +183,11 @@ def _migrate_surface(
         array = data_file.load(block, np.prod(surface.dimensions)).reshape(
             surface.dimensions
         )
-        ensemble.save_surface_data(block.name, block.realization_index, array.T)
+        ensemble.save_parameters(
+            block.name,
+            block.realization_index,
+            xr.DataArray(array, name="values"),
+        )
 
 
 def _migrate_field_info(

@@ -71,7 +71,7 @@ def test_migrate_surface(data, storage, parameter, ens_config):
 
     for key, var in data["/REAL_0/SURFACE"].groups.items():
         expect = sorted_surface(var)
-        actual = ensemble.load_surface_data(key, [0]).ravel()
+        actual = ensemble.load_parameters(key, 0).values.ravel()
         assert list(expect) == list(actual), key
 
 
@@ -105,14 +105,10 @@ def test_migrate_case(data, storage, enspath):
             assert list(expect) == list(actual), f"FIELD {key}"
 
         # Compare SURFACEs
-        #
-        # `LocalEnsemble.save_surface_data` is broken and only saves the base
-        # surface. Uncomment when this is fixed.
-        #
-        # for key, data in real_group["SURFACE"].groups.items():
-        #     expect = sorted_surface(data)
-        #     actual = np.array(ensemble.load_surface_data(key, [real_index])).ravel()
-        #     assert list(expect) == list(actual), f"SURFACE {key}"
+        for key, data in real_group["SURFACE"].groups.items():
+            expect = sorted_surface(data)
+            actual = ensemble.load_parameters(key, real_index).values.ravel()
+            assert list(expect) == list(actual), f"SURFACE {key}"
 
 
 def test_migration_failure(storage, enspath, ens_config, caplog, monkeypatch):

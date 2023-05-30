@@ -295,11 +295,13 @@ def test_surface_param(
 
         # Assert that the data has been internalised to storage
         if expect_num_loaded > 0:
-            arr = fs.load_surface_data("MY_PARAM", [0])
+            arr = fs.load_parameters("MY_PARAM", 0).values.T
             assert arr.flatten().tolist() == [0.0, 1.0, 2.0, 3.0]
         else:
-            with pytest.raises(KeyError, match="No parameter: MY_PARAM in storage"):
-                fs.load_surface_data("MY_PARAM", [0])
+            with pytest.raises(
+                KeyError, match="No dataset 'MY_PARAM' in storage for realization 0"
+            ):
+                fs.load_parameters("MY_PARAM", 0)
 
 
 @pytest.mark.parametrize(
@@ -347,9 +349,9 @@ def test_copy_case(
             ["MY_PARAM"],
             [x in range(5) for x in range(10)],
         )
-        arr_old = fs.load_surface_data("MY_PARAM", [0, 2, 3])
+        arr_old = fs.load_parameters("MY_PARAM", [0, 2, 3]).values
 
-        arr_new = new_fs.load_surface_data("MY_PARAM", [0, 2, 3])
+        arr_new = new_fs.load_parameters("MY_PARAM", [0, 2, 3]).values
         assert np.array_equal(arr_old, arr_new)
 
 
@@ -737,11 +739,15 @@ if __name__ == "__main__":
         with open_storage(tmpdir / "storage") as storage:
             prior = storage.get_ensemble_by_name("prior")
             posterior = storage.get_ensemble_by_name("smoother_update")
-            prior_param = prior.load_surface_data(
-                "MY_PARAM", list(range(ensemble_size))
+            prior_param = (
+                prior.load_parameters("MY_PARAM", range(5))
+                .transpose(..., "realizations")
+                .values.reshape(-1, 5)
             )
-            posterior_param = posterior.load_surface_data(
-                "MY_PARAM", list(range(ensemble_size))
+            posterior_param = (
+                posterior.load_parameters("MY_PARAM", range(5))
+                .transpose(..., "realizations")
+                .values.reshape(-1, 5)
             )
             assert np.linalg.det(np.cov(prior_param)) > np.linalg.det(
                 np.cov(posterior_param)
