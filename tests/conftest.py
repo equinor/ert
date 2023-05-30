@@ -162,6 +162,7 @@ def mock_connect(monkeypatch):
 @pytest.fixture(scope="session", autouse=True)
 def hide_window(request):
     if request.config.getoption("--show-gui"):
+        yield
         return
 
     old_value = os.environ.get("QT_QPA_PLATFORM")
