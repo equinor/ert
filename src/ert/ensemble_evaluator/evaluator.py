@@ -289,6 +289,9 @@ class EnsembleEvaluator:
             process_request=self.process_request,
             max_queue=None,
             max_size=2**26,
+            ping_timeout=60,
+            ping_interval=60,
+            close_timeout=60,
         ):
             await self._done
             if self._dispatchers_connected is not None:
