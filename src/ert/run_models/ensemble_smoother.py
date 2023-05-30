@@ -71,7 +71,7 @@ class EnsembleSmoother(BaseRunModel):
         self.ert().sample_prior(prior_context.sim_fs, prior_context.active_realizations)
         self.ert().createRunPath(prior_context)
 
-        self.ert().runWorkflows(
+        self.run_workflows(
             HookRuntime.PRE_SIMULATION, self._storage, prior_context.sim_fs
         )
 
@@ -84,17 +84,15 @@ class EnsembleSmoother(BaseRunModel):
         self.checkHaveSufficientRealizations(num_successful_realizations)
 
         self.setPhaseName("Post processing...", indeterminate=True)
-        self.ert().runWorkflows(
+        self.run_workflows(
             HookRuntime.POST_SIMULATION, self._storage, prior_context.sim_fs
         )
 
         self.setPhaseName("Analyzing...")
-        self.ert().runWorkflows(
+        self.run_workflows(
             HookRuntime.PRE_FIRST_UPDATE, self._storage, prior_context.sim_fs
         )
-        self.ert().runWorkflows(
-            HookRuntime.PRE_UPDATE, self._storage, prior_context.sim_fs
-        )
+        self.run_workflows(HookRuntime.PRE_UPDATE, self._storage, prior_context.sim_fs)
         states = [
             RealizationStateEnum.STATE_HAS_DATA,
             RealizationStateEnum.STATE_INITIALIZED,
@@ -123,7 +121,7 @@ class EnsembleSmoother(BaseRunModel):
                 f"Analysis of simulation failed with the following error: {e}"
             ) from e
 
-        self.ert().runWorkflows(
+        self.run_workflows(
             HookRuntime.POST_UPDATE, self._storage, posterior_context.sim_fs
         )
 
@@ -133,7 +131,7 @@ class EnsembleSmoother(BaseRunModel):
 
         self.ert().createRunPath(posterior_context)
 
-        self.ert().runWorkflows(
+        self.run_workflows(
             HookRuntime.PRE_SIMULATION, self._storage, posterior_context.sim_fs
         )
 
@@ -146,7 +144,7 @@ class EnsembleSmoother(BaseRunModel):
         self.checkHaveSufficientRealizations(num_successful_realizations)
 
         self.setPhaseName("Post processing...", indeterminate=True)
-        self.ert().runWorkflows(
+        self.run_workflows(
             HookRuntime.POST_SIMULATION, self._storage, posterior_context.sim_fs
         )
 

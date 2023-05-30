@@ -69,14 +69,14 @@ def test_hook_call_order_es_mda(storage):
     test_class = MultipleDataAssimilation(
         minimum_args, ert_mock, storage, MagicMock(), UUID(int=0), prior_ensemble=None
     )
-    ert_mock.runWorkflows = MagicMock()
+    test_class.run_workflows = MagicMock()
     test_class.run_ensemble_evaluator = MagicMock(return_value=1)
     test_class.runSimulations(MagicMock())
 
     expected_calls = [
         call(expected_call, ANY, ANY) for expected_call in EXPECTED_CALL_ORDER
     ]
-    assert ert_mock.runWorkflows.mock_calls == expected_calls
+    assert test_class.run_workflows.mock_calls == expected_calls
 
 
 class MockWContainer:
@@ -113,6 +113,7 @@ def test_hook_call_order_iterative_ensemble_smoother(storage):
         minimum_args, ert_mock, storage, MagicMock(), UUID(int=0)
     )
     test_class.run_ensemble_evaluator = MagicMock(return_value=1)
+    test_class.run_workflows = MagicMock()
 
     test_class.facade.get_number_of_iterations = MagicMock(return_value=1)
     test_class.facade._es_update = MockEsUpdate()
@@ -122,4 +123,4 @@ def test_hook_call_order_iterative_ensemble_smoother(storage):
     expected_calls = [
         call(expected_call, ANY, ANY) for expected_call in EXPECTED_CALL_ORDER
     ]
-    assert ert_mock.runWorkflows.mock_calls == expected_calls
+    assert test_class.run_workflows.mock_calls == expected_calls

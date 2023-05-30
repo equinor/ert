@@ -154,7 +154,7 @@ class EnsembleExperiment(BaseRunModel):
                     state_map[realization_nr] = RealizationStateEnum.STATE_INITIALIZED
         self.ert().createRunPath(prior_context)
 
-        self.ert().runWorkflows(
+        self.run_workflows(
             HookRuntime.PRE_SIMULATION, self._storage, prior_context.sim_fs
         )
 
@@ -170,7 +170,7 @@ class EnsembleExperiment(BaseRunModel):
         self.checkHaveSufficientRealizations(num_successful_realizations)
 
         self.setPhaseName("Post processing...", indeterminate=True)
-        self.ert().runWorkflows(
+        self.run_workflows(
             HookRuntime.POST_SIMULATION, self._storage, prior_context.sim_fs
         )
 

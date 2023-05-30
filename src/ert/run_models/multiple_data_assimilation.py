@@ -127,10 +127,10 @@ class MultipleDataAssimilation(BaseRunModel):
         for iteration, weight in weights_to_run:
             is_first_iteration = iteration == 0
             if is_first_iteration:
-                self.ert().runWorkflows(
+                self.run_workflows(
                     HookRuntime.PRE_FIRST_UPDATE, self._storage, prior_fs
                 )
-            self.ert().runWorkflows(HookRuntime.PRE_UPDATE, self._storage, prior_fs)
+            self.run_workflows(HookRuntime.PRE_UPDATE, self._storage, prior_fs)
             states = [
                 RealizationStateEnum.STATE_HAS_DATA,
                 RealizationStateEnum.STATE_INITIALIZED,
@@ -150,7 +150,7 @@ class MultipleDataAssimilation(BaseRunModel):
                 posterior_context,
                 weight=weight,
             )
-            self.ert().runWorkflows(
+            self.run_workflows(
                 HookRuntime.POST_UPDATE, self._storage, posterior_context.sim_fs
             )
             self._simulateAndPostProcess(posterior_context, evaluator_server_config)
@@ -202,7 +202,7 @@ class MultipleDataAssimilation(BaseRunModel):
 
         phase_string = f"Pre processing for iteration: {iteration}"
         self.setPhaseName(phase_string)
-        self.ert().runWorkflows(
+        self.run_workflows(
             HookRuntime.PRE_SIMULATION, self._storage, run_context.sim_fs
         )
 
@@ -220,7 +220,7 @@ class MultipleDataAssimilation(BaseRunModel):
 
         phase_string = f"Post processing for iteration: {iteration}"
         self.setPhaseName(phase_string, indeterminate=True)
-        self.ert().runWorkflows(
+        self.run_workflows(
             HookRuntime.POST_SIMULATION, self._storage, run_context.sim_fs
         )
 

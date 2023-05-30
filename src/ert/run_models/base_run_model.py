@@ -8,7 +8,7 @@ from abc import abstractmethod
 from contextlib import contextmanager
 from functools import singledispatchmethod
 from pathlib import Path
-from typing import Any, Dict, Iterator, List, Optional, Union
+from typing import TYPE_CHECKING, Any, Dict, Iterator, List, Optional, Union
 
 from cloudevents.http import CloudEvent
 
@@ -16,7 +16,7 @@ import _ert_com_protocol
 from ert._c_wrappers.enkf import EnKFMain, QueueConfig
 from ert._c_wrappers.enkf.enums import HookRuntime
 from ert._c_wrappers.enkf.ert_run_context import RunContext
-from ert._c_wrappers.job_queue import RunStatusType
+from ert._c_wrappers.job_queue import RunStatusType, WorkflowRunner
 from ert.callbacks import forward_model_exit, forward_model_ok
 from ert.cli import MODULE_MODE
 from ert.ensemble_evaluator import (
@@ -30,6 +30,9 @@ from ert.ensemble_evaluator import (
 )
 from ert.libres_facade import LibresFacade
 from ert.storage import StorageAccessor
+
+if TYPE_CHECKING:
+    from ert.storage import EnsembleAccessor
 
 event_logger = logging.getLogger("ert.event_log")
 experiment_logger = logging.getLogger("ert.experiment_server.base_run_model")
@@ -230,6 +233,15 @@ class BaseRunModel:
         self, evaluator_server_config: EvaluatorServerConfig
     ) -> RunContext:
         raise NotImplementedError("Method must be implemented by inheritors!")
+
+    def run_workflows(
+        self,
+        runtime: HookRuntime,
+        storage: Optional[StorageAccessor] = None,
+        ensemble: Optional["EnsembleAccessor"] = None,
+    ) -> None:
+        for workflow in self.ert().ert_config.hooked_workflows[runtime]:
+            WorkflowRunner(workflow, self.ert(), storage, ensemble).run_blocking()
 
     def phaseCount(self) -> int:
         return self._phase_count
@@ -454,7 +466,7 @@ class BaseRunModel:
 
         await loop.run_in_executor(
             executor,
-            self.ert().runWorkflows,
+            self.run_workflows,
             hook,
         )
 

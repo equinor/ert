@@ -375,12 +375,3 @@ class EnKFMain:
         )
 
         logger.debug(f"createRunPath() time_used {(time.perf_counter() - t):.4f}s")
-
-    def runWorkflows(
-        self,
-        runtime: HookRuntime,
-        storage: Optional[StorageAccessor] = None,
-        ensemble: Optional[EnsembleAccessor] = None,
-    ) -> None:
-        for workflow in self.ert_config.hooked_workflows[runtime]:
-            WorkflowRunner(workflow, self, storage, ensemble).run_blocking()
