@@ -10,14 +10,14 @@ import ssl
 import threading
 import time
 from collections import deque
-from typing import TYPE_CHECKING, Any, Callable, Dict, List, Mapping, Optional, Union
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Union
 
 from cloudevents.conversion import to_json
 from cloudevents.http import CloudEvent
 from cwrap import BaseCClass
-from websockets.client import connect
+from websockets.client import WebSocketClientProtocol, connect
 from websockets.datastructures import Headers
-from websockets.exceptions import ConnectionClosedError
+from websockets.exceptions import ConnectionClosed
 
 import _ert_com_protocol
 from ert._c_wrappers import ResPrototype
@@ -116,7 +116,9 @@ class JobQueue(BaseCClass):
             "%s, num_running=%d, num_complete=%d, "
             "num_waiting=%d, num_pending=%d, active=%d"
         )
-        return self._create_repr(cnt % (isrun, nrun, ncom, nwait, npend, len(self)))
+        return self._create_repr(
+            cnt % (isrun, nrun, ncom, nwait, npend, len(self))  # noqa: S001
+        )
 
     def __init__(self, driver, max_submit=2, size=0):
         """
@@ -220,14 +222,11 @@ class JobQueue(BaseCClass):
         self._free()
 
     def is_active(self):
-        for job in self.job_list:
-            if job.thread_status in (
-                ThreadStatus.READY,
-                ThreadStatus.RUNNING,
-                ThreadStatus.STOPPING,
-            ):
-                return True
-        return False
+        return any(
+            job.thread_status
+            in (ThreadStatus.READY, ThreadStatus.RUNNING, ThreadStatus.STOPPING)
+            for job in self.job_list
+        )
 
     def fetch_next_waiting(self):
         for job in self.job_list:
@@ -372,9 +371,7 @@ class JobQueue(BaseCClass):
     async def _publish_changes(
         ens_id: str,
         changes,
-        ws_uri: str,
-        ssl_context: ssl.SSLContext,
-        headers: Mapping[str, str],
+        websocket: WebSocketClientProtocol,
     ):
         events = deque(
             [
@@ -382,7 +379,19 @@ class JobQueue(BaseCClass):
                 for real_id, status in changes.items()
             ]
         )
+        while events:
+            await asyncio.wait_for(websocket.send(to_json(events[0])), 60)
+            events.popleft()
 
+    async def _execution_loop_queue_via_websockets(
+        self,
+        ws_uri: str,
+        ens_id: str,
+        pool_sema: threading.BoundedSemaphore,
+        evaluators: List[Callable[..., Any]],
+        ssl_context,
+        headers,
+    ) -> None:
         async for websocket in connect(
             ws_uri,
             ssl=ssl_context,
@@ -392,13 +401,29 @@ class JobQueue(BaseCClass):
             ping_interval=60,
             close_timeout=60,
         ):
-            try:
-                while events:
-                    await asyncio.wait_for(websocket.send(to_json(events[0])), 60)
-                    events.popleft()
-                return
-            except ConnectionClosedError:
-                continue
+            self.launch_jobs(pool_sema)
+
+            await asyncio.sleep(1)
+
+            for func in evaluators:
+                func()
+
+            changes = self.changes_after_transition()
+            # logically not necessary the way publish changes is implemented at the
+            # moment, but highly relevant before, and might be relevant in the
+            # future in case publish changes becomes expensive again
+            if len(changes) > 0:
+                await JobQueue._publish_changes(
+                    ens_id,
+                    changes,
+                    websocket,
+                )
+
+            if self.stopped:
+                raise asyncio.CancelledError
+
+            if not self.is_active():
+                break
 
     async def execute_queue_via_websockets(  # pylint: disable=too-many-arguments
         self,
@@ -421,30 +446,23 @@ class JobQueue(BaseCClass):
             headers["token"] = token
 
         try:
-            await JobQueue._publish_changes(
-                ens_id, self._differ.snapshot(), ws_uri, ssl_context, headers
-            )
-            while True:
-                self.launch_jobs(pool_sema)
-
-                await asyncio.sleep(1)
-
-                for func in evaluators:
-                    func()
-
+            # initial publish
+            async with connect(
+                ws_uri,
+                ssl=ssl_context,
+                extra_headers=headers,
+                open_timeout=60,
+                ping_timeout=60,
+                ping_interval=60,
+                close_timeout=60,
+            ) as websocket:
                 await JobQueue._publish_changes(
-                    ens_id,
-                    self.changes_after_transition(),
-                    ws_uri,
-                    ssl_context,
-                    headers,
+                    ens_id, self._differ.snapshot(), websocket
                 )
-
-                if self.stopped:
-                    raise asyncio.CancelledError
-
-                if not self.is_active():
-                    break
+            # loop
+            await self._execution_loop_queue_via_websockets(
+                ws_uri, ens_id, pool_sema, evaluators, ssl_context, headers
+            )
 
         except asyncio.CancelledError:
             logger.debug("queue cancelled, stopping jobs...")
@@ -463,9 +481,17 @@ class JobQueue(BaseCClass):
 
         self.assert_complete()
         self._differ.transition(self.job_list)
-        await JobQueue._publish_changes(
-            ens_id, self._differ.snapshot(), ws_uri, ssl_context, headers
-        )
+        # final publish
+        async with connect(
+            ws_uri,
+            ssl=ssl_context,
+            extra_headers=headers,
+            open_timeout=60,
+            ping_timeout=60,
+            ping_interval=60,
+            close_timeout=60,
+        ) as websocket:
+            await JobQueue._publish_changes(ens_id, self._differ.snapshot(), websocket)
 
     async def execute_queue_comms_via_bus(  # pylint: disable=too-many-arguments
         self,
