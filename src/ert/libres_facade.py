@@ -222,6 +222,28 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
     def load_observation_data(
         self, ensemble: EnsembleReader, keys: Optional[List[str]] = None
     ) -> DataFrame:
+        """Loads observation data into a DataFrame.
+
+        Gets observation data from the ensemble and arranges it into a pandas
+        DataFrame. The DataFrame's index is observation times and its columns
+        consist of summary keys and their corresponding standard deviations.
+        The observation values and standard deviations are assigned to their
+        respective keys and times in the DataFrame.
+
+        Args:
+            ensemble: The ensemble reader from which to load the observation data.
+            keys: If provided, only data corresponding to these keys will be
+                loaded. If not provided, data for all available keys will be
+                loaded.
+
+        Returns:
+            DataFrame: A pandas DataFrame containing the observation data. The
+                DataFrame is indexed by observation times, with columns for
+                each summary key and its corresponding standard deviation.
+
+        Note:
+            Any key that is not a summary key will be ignored
+        """
         observations = self._enkf_main.getObservations()
         history_length = self._enkf_main.getHistoryLength()
         dates = [
@@ -315,6 +337,30 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
         keys: Optional[List[str]] = None,
         realization_index: Optional[int] = None,
     ) -> DataFrame:
+        """Loads all GEN_KW data into a DataFrame.
+
+        This function retrieves GEN_KW data from the given ensemble reader. It
+        filters the data according to the provided keys and/or realization
+        index and returns it in a pandas DataFrame.
+
+        Args:
+            fs: The ensemble reader from which to load the GEN_KW data.
+            keys: If provided, only data corresponding to these keys will be
+                loaded. If not provided, data for all available keys will be
+                loaded. Keys are expected in the format 'group:key'.
+            realization_index (Optional[int]): If provided, only data from the
+                specified realization index will be loaded. If not provided, data
+                from all realizations will be loaded.
+
+        Returns:
+            DataFrame: A pandas DataFrame containing the GEN_KW data.
+
+        Raises:
+            IndexError: If a non-existent realization index is provided.
+
+        Note:
+            Any provided keys that are not gen_kw will be ignored.
+        """
         ens_mask = fs.get_realization_mask_from_state(
             [
                 RealizationStateEnum.STATE_INITIALIZED,
@@ -328,7 +374,6 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
                 raise IndexError(f"No such realization ({realization_index})")
             realizations = [realization_index]
 
-        gen_kw_keys = self.get_gen_kw()
         all_data = {}
 
         def _flatten(_gen_kw_dict: Dict[str, Any]) -> Dict[str, float]:
@@ -343,7 +388,7 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
 
         for realization in realizations:
             realization_data = {}
-            for key in gen_kw_keys:
+            for key in self.get_gen_kw():
                 gen_kw_dict = fs.load_gen_kw_as_dict(key, realization)
                 realization_data.update(gen_kw_dict)
             all_data[realization] = _flatten(realization_data)
@@ -415,6 +460,31 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
         return data
 
     def load_all_misfit_data(self, ensemble: EnsembleReader) -> DataFrame:
+        """Loads all misfit data for a given ensemble.
+
+        Retrieves all active realizations from the ensemble, and for each
+        realization, it gathers the observations and measured data. The
+        function then calculates the misfit, which is a measure of the
+        discrepancy between observed and simulated values, for each data
+        column. The misfit is calculated as the squared difference between the
+        observed and measured data, normalized by the standard deviation of the
+        observations.
+
+        The misfit data is then grouped by key, summed, and transposed to form
+        a DataFrame. The DataFrame has an additional column "MISFIT:TOTAL",
+        which is the sum of all misfits for each realization. The index of the
+        DataFrame is named "Realization".
+
+        Parameters:
+            ensemble: The ensemble from which to load the misfit data.
+
+        Returns:
+            DataFrame: A DataFrame containing the misfit data for all
+                realizations in the ensemble. Each column (except for "MISFIT:TOTAL")
+                corresponds to a key in the measured data, and each row corresponds
+                to a realization. The "MISFIT:TOTAL" column contains the total
+                misfit for each realization.
+        """
         realizations = self.get_active_realizations(ensemble)
 
         observations = self._enkf_main.getObservations()
