@@ -71,6 +71,10 @@ class SyncWebsocketDuplexer:
             extra_headers=self._extra_headers,
             max_size=2**26,
             max_queue=500,
+            open_timeout=60,
+            ping_timeout=60,
+            ping_interval=60,
+            close_timeout=60,
         )
 
         await wait_for_evaluator(
