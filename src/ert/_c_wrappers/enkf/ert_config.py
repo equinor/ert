@@ -644,7 +644,7 @@ class ErtConfig:
                     work[0],
                     substitution_list,
                     workflow_jobs,
-                    use_new_parser=USE_NEW_PARSER_BY_DEFAULT,
+                    use_new_parser=use_new_parser,
                 )
                 if existed:
                     warnings.warn(

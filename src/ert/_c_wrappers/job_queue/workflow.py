@@ -70,43 +70,37 @@ class Workflow:
         cls, src_file: str, job_dict: Dict[str, WorkflowJob]
     ):
         schema = init_workflow_schema()
-        parsed = lark_parse(src_file, schema, pre_defines=[])
+        config_dict = lark_parse(src_file, schema, pre_defines=[])
 
-        workflow_names = parsed.keys() - {"DEFINE"}
+        parsed_workflow_job_names = config_dict.keys() - {"DEFINE"}
 
-        all_workflows = []
+        all_workflow_jobs = []
         errors = []
 
-        for name in workflow_names:
-            for args in parsed[name]:
-                workflow_job_name = args.keyword_token
-
-                if workflow_job_name not in job_dict:
+        for job_name in parsed_workflow_job_names:
+            for instructions in config_dict[job_name]:
+                job_name_with_context = instructions.keyword_token
+                if job_name not in job_dict:
                     errors.append(
                         ErrorInfo(
                             filename=src_file,
-                            message=f"Job with name: {workflow_job_name}"
-                            f" is not recognized",
-                        ).set_context(workflow_job_name)
+                            message=f"Job with name: {job_name}" f" is not recognized",
+                        ).set_context(job_name_with_context)
                     )
                     continue
 
-                all_workflows.append((workflow_job_name, args))
+                all_workflow_jobs.append((job_name_with_context, instructions))
 
         if errors:
             raise ConfigValidationError.from_collected(errors)
 
         # Order matters, so we need to sort it
         # by the line attached to the context token
-        all_workflows.sort(key=lambda x: x[0].line)
+        all_workflow_jobs.sort(key=lambda x: x[0].line)
 
-        def insert_job(workflow: Tuple[str, List[str]]):
-            my_name, my_args = workflow
-            return job_dict[my_name], my_args
-
-        command_list = list(map(insert_job, all_workflows))
-
-        return command_list
+        return [
+            (job_dict[name], instructions) for (name, instructions) in all_workflow_jobs
+        ]
 
     @classmethod
     def from_file(

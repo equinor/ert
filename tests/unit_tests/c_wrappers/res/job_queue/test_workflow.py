@@ -131,3 +131,27 @@ def test_that_multiple_workflow_jobs_with_redefines_are_ordered_correctly():
     commands = [(name, args[0]) for (name, args) in wf.cmd_list]
 
     assert commands == [("foo", "1"), ("bar", "1"), ("foo", "3"), ("baz", "3")]
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_unknown_jobs_gives_error():
+    with open("workflow", "w", encoding="utf-8") as f:
+        f.write(
+            "\n".join(
+                [
+                    "boo <A>",
+                    "kingboo <A>",
+                ]
+            )
+        )
+
+    with pytest.raises(
+        ConfigValidationError, match="Job with name: kingboo is not recognized"
+    ):
+        Workflow.from_file(
+            src_file="workflow",
+            context=None,
+            job_dict={
+                "boo": "boo",
+            },
+        )

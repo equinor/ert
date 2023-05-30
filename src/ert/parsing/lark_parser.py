@@ -508,7 +508,7 @@ def parse(
     file: str,
     schema: SchemaItemDict,
     site_config: Optional[ConfigDict] = None,
-    pre_defines: Optional[Tuple[str, str]] = None,
+    pre_defines: Optional[List[Tuple[str, str]]] = None,
 ) -> ConfigDict:
     filepath = os.path.normpath(os.path.abspath(file))
     tree = _parse_file(filepath)
