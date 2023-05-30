@@ -302,8 +302,8 @@ class LegacyEnsemble(Ensemble):
                     self.id_,
                     sema,
                     queue_evaluators,  # type: ignore
-                    cert=self._config.cert,
-                    token=self._config.token,
+                    ee_cert=self._config.cert,
+                    ee_token=self._config.token,
                 )
 
         except asyncio.CancelledError:

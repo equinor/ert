@@ -10,14 +10,14 @@ import ssl
 import threading
 import time
 from collections import deque
-from typing import TYPE_CHECKING, Any, Callable, Dict, List, Mapping, Optional, Union
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Union
 
 from cloudevents.conversion import to_json
 from cloudevents.http import CloudEvent
 from cwrap import BaseCClass
-from websockets.client import connect
+from websockets.client import WebSocketClientProtocol, connect
 from websockets.datastructures import Headers
-from websockets.exceptions import ConnectionClosedError
+from websockets.exceptions import ConnectionClosed
 
 import _ert_com_protocol
 from ert._c_wrappers import ResPrototype
@@ -219,15 +219,12 @@ class JobQueue(BaseCClass):
     def free(self):
         self._free()
 
-    def is_active(self):
-        for job in self.job_list:
-            if job.thread_status in (
-                ThreadStatus.READY,
-                ThreadStatus.RUNNING,
-                ThreadStatus.STOPPING,
-            ):
-                return True
-        return False
+    def is_active(self) -> bool:
+        return any(
+            job.thread_status
+            in (ThreadStatus.READY, ThreadStatus.RUNNING, ThreadStatus.STOPPING)
+            for job in self.job_list
+        )
 
     def fetch_next_waiting(self):
         for job in self.job_list:
@@ -371,60 +368,38 @@ class JobQueue(BaseCClass):
     @staticmethod
     async def _publish_changes(
         ens_id: str,
-        changes,
-        ws_uri: str,
-        ssl_context: ssl.SSLContext,
-        headers: Mapping[str, str],
-    ):
+        changes: Dict[int, str],
+        ee_connection: WebSocketClientProtocol,
+    ) -> None:
         events = deque(
             [
                 JobQueue._translate_change_to_cloudevent(ens_id, real_id, status)
                 for real_id, status in changes.items()
             ]
         )
+        while events:
+            await asyncio.wait_for(ee_connection.send(to_json(events[0])), 60)
+            events.popleft()
 
-        async for websocket in connect(
-            ws_uri,
-            ssl=ssl_context,
-            extra_headers=headers,
+    async def _execution_loop_queue_via_websockets(
+        self,
+        ee_uri: str,
+        ens_id: str,
+        pool_sema: threading.BoundedSemaphore,
+        evaluators: List[Callable[..., Any]],
+        ee_ssl_context,
+        ee_headers,
+    ) -> None:
+        async for ee_connection in connect(
+            ee_uri,
+            ssl=ee_ssl_context,
+            extra_headers=ee_headers,
             open_timeout=60,
             ping_timeout=60,
             ping_interval=60,
             close_timeout=60,
         ):
             try:
-                while events:
-                    await asyncio.wait_for(websocket.send(to_json(events[0])), 60)
-                    events.popleft()
-                return
-            except ConnectionClosedError:
-                continue
-
-    async def execute_queue_via_websockets(  # pylint: disable=too-many-arguments
-        self,
-        ws_uri: str,
-        ens_id: str,
-        pool_sema: threading.BoundedSemaphore,
-        evaluators: List[Callable[..., Any]],
-        cert: Optional[Union[str, bytes]] = None,
-        token: Optional[str] = None,
-    ) -> None:
-        if evaluators is None:
-            evaluators = []
-        if cert is not None:
-            ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
-            ssl_context.load_verify_locations(cadata=cert)
-        else:
-            ssl_context = True if ws_uri.startswith("wss") else None
-        headers = Headers()
-        if token is not None:
-            headers["token"] = token
-
-        try:
-            await JobQueue._publish_changes(
-                ens_id, self._differ.snapshot(), ws_uri, ssl_context, headers
-            )
-            while True:
                 self.launch_jobs(pool_sema)
 
                 await asyncio.sleep(1)
@@ -432,19 +407,68 @@ class JobQueue(BaseCClass):
                 for func in evaluators:
                     func()
 
-                await JobQueue._publish_changes(
-                    ens_id,
-                    self.changes_after_transition(),
-                    ws_uri,
-                    ssl_context,
-                    headers,
-                )
+                changes = self.changes_after_transition()
+                # logically not necessary the way publish changes is implemented at the
+                # moment, but highly relevant before, and might be relevant in the
+                # future in case publish changes becomes expensive again
+                if len(changes) > 0:
+                    await JobQueue._publish_changes(
+                        ens_id,
+                        changes,
+                        ee_connection,
+                    )
 
                 if self.stopped:
                     raise asyncio.CancelledError
 
                 if not self.is_active():
                     break
+            except ConnectionClosed:
+                logger.warning(
+                    "job queue dropped connection to ensemble evaulator - "
+                    "going to try and reconnect"
+                )
+                continue
+
+    async def execute_queue_via_websockets(  # pylint: disable=too-many-arguments
+        self,
+        ee_uri: str,
+        ens_id: str,
+        pool_sema: threading.BoundedSemaphore,
+        evaluators: List[Callable[..., Any]],
+        ee_cert: Optional[Union[str, bytes]] = None,
+        ee_token: Optional[str] = None,
+    ) -> None:
+        if evaluators is None:
+            evaluators = []
+        ee_ssl_context: Optional[Union[ssl.SSLContext, bool]]
+        if ee_cert is not None:
+            ee_ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+            ee_ssl_context.load_verify_locations(cadata=ee_cert)
+        else:
+            ee_ssl_context = True if ee_uri.startswith("wss") else None
+        ee_headers = Headers()
+        if ee_token is not None:
+            ee_headers["token"] = ee_token
+
+        try:
+            # initial publish
+            async with connect(
+                ee_uri,
+                ssl=ee_ssl_context,
+                extra_headers=ee_headers,
+                open_timeout=60,
+                ping_timeout=60,
+                ping_interval=60,
+                close_timeout=60,
+            ) as ee_connection:
+                await JobQueue._publish_changes(
+                    ens_id, self._differ.snapshot(), ee_connection
+                )
+            # loop
+            await self._execution_loop_queue_via_websockets(
+                ee_uri, ens_id, pool_sema, evaluators, ee_ssl_context, ee_headers
+            )
 
         except asyncio.CancelledError:
             logger.debug("queue cancelled, stopping jobs...")
@@ -463,9 +487,19 @@ class JobQueue(BaseCClass):
 
         self.assert_complete()
         self._differ.transition(self.job_list)
-        await JobQueue._publish_changes(
-            ens_id, self._differ.snapshot(), ws_uri, ssl_context, headers
-        )
+        # final publish
+        async with connect(
+            ee_uri,
+            ssl=ee_ssl_context,
+            extra_headers=ee_headers,
+            open_timeout=60,
+            ping_timeout=60,
+            ping_interval=60,
+            close_timeout=60,
+        ) as ee_connection:
+            await JobQueue._publish_changes(
+                ens_id, self._differ.snapshot(), ee_connection
+            )
 
     async def execute_queue_comms_via_bus(  # pylint: disable=too-many-arguments
         self,
