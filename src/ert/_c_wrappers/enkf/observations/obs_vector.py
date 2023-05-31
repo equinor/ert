@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Dict, Iterable, List, Union
+from typing import TYPE_CHECKING, Dict, Iterable, List, Tuple, Union
 
 import xarray as xr
 
@@ -25,40 +25,42 @@ class ObsVector:
     def __len__(self):
         return len(self.observations)
 
-    def get_gen_obs_data(self, active_list: List[int]) -> xr.Dataset:
-        datasets = []
-        for time_step, node in self.observations.items():
-            if active_list and time_step not in active_list:
-                continue
-
-            datasets.append(
-                xr.Dataset(
-                    {
-                        "observations": (["report_step", "index"], [node.values]),
-                        "std": (["report_step", "index"], [node.stds]),
-                    },
-                    coords={"index": node.indices, "report_step": [time_step]},
-                )
-            )
-        return xr.combine_by_coords(datasets)
-
-    def get_summary_obs_data(
+    def to_dataset(
         self, obs: "EnkfObs", active_list: List[int]
-    ) -> xr.Dataset:
-        observations = []
-        errors = []
-        active_steps = active_list if active_list else list(self.observations.keys())
+    ) -> Tuple[str, xr.Dataset]:
+        if self.observation_type == EnkfObservationImplementationType.GEN_OBS:
+            datasets = []
+            for time_step, node in self.observations.items():
+                if active_list and time_step not in active_list:
+                    continue
 
-        for time_step in active_steps:
-            n: "SummaryObservation" = self.observations[time_step]
-            observations.append(n.value)
-            errors.append(n.std)
-        data_key = self.data_key
-        time_axis = [obs.obs_time[i] for i in active_steps]
-        return xr.Dataset(
-            {
-                "observations": (["name", "time"], [observations]),
-                "std": (["name", "time"], [errors]),
-            },
-            coords={"time": time_axis, "name": [data_key]},
-        )
+                datasets.append(
+                    xr.Dataset(
+                        {
+                            "observations": (["report_step", "index"], [node.values]),
+                            "std": (["report_step", "index"], [node.stds]),
+                        },
+                        coords={"index": node.indices, "report_step": [time_step]},
+                    )
+                )
+            return self.data_key, xr.combine_by_coords(datasets)
+        elif self.observation_type == EnkfObservationImplementationType.SUMMARY_OBS:
+            observations = []
+            errors = []
+            active_steps = (
+                active_list if active_list else list(self.observations.keys())
+            )
+
+            for time_step in active_steps:
+                n: "SummaryObservation" = self.observations[time_step]
+                observations.append(n.value)
+                errors.append(n.std)
+            data_key = self.data_key
+            time_axis = [obs.obs_time[i] for i in active_steps]
+            return "summary", xr.Dataset(
+                {
+                    "observations": (["name", "time"], [observations]),
+                    "std": (["name", "time"], [errors]),
+                },
+                coords={"time": time_axis, "name": [data_key]},
+            )
