@@ -3,8 +3,8 @@ from typing import List, Optional, Union
 
 from typing_extensions import Self
 
+from .context_values import MaybeWithContext
 from .file_context_token import FileContextToken
-from .types import MaybeWithContext
 
 
 @dataclass

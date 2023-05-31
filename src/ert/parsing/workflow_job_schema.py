@@ -1,6 +1,6 @@
 from typing import Any, Dict
 
-from . import ConfigValidationError
+from .config_errors import ConfigValidationError
 from .config_schema_item import SchemaItem
 from .schema_dict import SchemaItemDict
 from .schema_item_type import SchemaItemType
@@ -45,6 +45,7 @@ def arglist_keyword() -> SchemaItem:
         argc_min=1,
         argc_max=1,
         join_after=1,
+        substitute_from=0,
     )
 
 

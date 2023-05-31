@@ -5,11 +5,10 @@ from .config_schema import (
     init_site_config_schema,
     init_user_config_schema,
 )
-from .context_values import ContextString
+from .context_values import ConfigDict, ContextString
 from .ext_job_keywords import ExtJobKeys
 from .ext_job_schema import init_ext_job_schema
 from .lark_parser import parse as lark_parse
-from .types import ConfigDict
 from .workflow_job_keywords import WorkflowJobKeys
 from .workflow_job_schema import init_workflow_job_schema
 from .workflow_schema import init_workflow_schema

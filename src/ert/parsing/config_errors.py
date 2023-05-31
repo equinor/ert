@@ -1,7 +1,7 @@
 from collections import defaultdict
 from typing import List, Optional, Union
 
-from ert.parsing.error_info import ErrorInfo
+from .error_info import ErrorInfo
 
 
 class ConfigWarning(UserWarning):

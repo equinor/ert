@@ -4,6 +4,7 @@ import logging
 import os
 import os.path
 import warnings
+from copy import deepcopy
 from typing import List, Optional, Tuple, Union
 
 from lark import Discard, Lark, Token, Transformer, Tree, UnexpectedCharacters
@@ -11,9 +12,10 @@ from typing_extensions import Self
 
 from .config_errors import ConfigValidationError, ConfigWarning
 from .config_schema import SchemaItem, define_keyword
+from .context_values import ConfigDict, Defines, Instruction, MaybeWithContext
 from .error_info import ErrorInfo
+from .file_context_token import FileContextToken
 from .schema_dict import SchemaItemDict
-from .types import ConfigDict, Defines, FileContextToken, Instruction, MaybeWithContext
 
 grammar = r"""
 WHITESPACE: (" "|"\t")+
@@ -208,6 +210,11 @@ def _tree_to_dict(
             args = constraints.join_args(args)
             args = _substitute_args(args, constraints, defines)
             value_list = constraints.apply_constraints(args, kw, cwd)
+
+            if kw == "FORWARD_MODEL":
+                # Store the current state of defines, for future substitution
+                current_defines = deepcopy(defines)
+                value_list.attach_defines(current_defines)
 
             arglist = config_dict.get(kw, [])
             if kw == "DEFINE":

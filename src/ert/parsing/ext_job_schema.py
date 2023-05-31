@@ -107,11 +107,7 @@ def max_arg_keyword() -> SchemaItem:
 
 
 def arglist_keyword() -> SchemaItem:
-    return SchemaItem(
-        kw=ExtJobKeys.ARGLIST,
-        argc_min=1,
-        argc_max=-1,
-    )
+    return SchemaItem(kw=ExtJobKeys.ARGLIST, argc_min=1, argc_max=-1, substitute_from=0)
 
 
 def arg_type_keyword() -> SchemaItem:

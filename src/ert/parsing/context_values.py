@@ -1,5 +1,4 @@
-from dataclasses import dataclass
-from typing import Union
+from typing import Dict, List, Optional, Tuple, TypeVar, Union
 
 from .file_context_token import FileContextToken
 
@@ -75,13 +74,39 @@ class ContextString(str):
         return new_instance
 
 
-@dataclass
-class ContextList(list):
+T = TypeVar("T")
+
+
+class ContextList(List[T]):
     keyword_token: FileContextToken
+    defines: Optional["Defines"]
 
     def __init__(self, token: FileContextToken):
         super().__init__()
         self.keyword_token = token
 
+    def attach_defines(self, defines: "Defines"):
+        self.defines = defines
+
 
 ContextValue = Union[ContextString, ContextFloat, ContextInt, ContextBool]
+
+# The type of the leaf nodes in the Tree after transformation is done
+Instruction = List[
+    List[Union[FileContextToken, List[Tuple[FileContextToken, FileContextToken]]]]
+]
+
+Defines = List[List[str]]
+
+Primitives = Union[float, bool, str, int]
+
+# Old config parser gives primitives (which are without any context)
+# while the new config parser gives primitives WITH context.
+# Thus, we need a type to represent a union of these two as both
+# parsers are in use.
+MaybeWithContext = Union[ContextValue, Primitives, FileContextToken]
+
+
+ConfigDict = Dict[
+    str, Union[MaybeWithContext, List[MaybeWithContext], List[List[MaybeWithContext]]]
+]

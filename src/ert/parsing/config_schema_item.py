@@ -195,7 +195,7 @@ class SchemaItem(BaseModel):
         args: List[T],
         keyword: FileContextToken,
         cwd: str,
-    ) -> List[Union[T, ContextValue]]:
+    ) -> ContextList[Union[T, ContextValue]]:
         errors: List[Union[ErrorInfo, ConfigValidationError]] = []
 
         args_with_context: ContextList[Union[T, ContextValue]] = ContextList(

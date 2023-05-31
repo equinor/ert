@@ -34,6 +34,7 @@ from ert.parsing import (
 )
 from ert.parsing.error_info import ErrorInfo
 
+from ...parsing.context_values import ConfigDict, ContextList
 from ._config_content_as_dict import config_content_as_dict
 from ._deprecation_migration_suggester import DeprecationMigrationSuggester
 
@@ -73,12 +74,36 @@ class ErtConfig:
     model_config: ModelConfig = field(default_factory=ModelConfig)
     user_config_file: str = "no_config"
     config_path: str = field(init=False)
+    config_dict: ConfigDict = field(default_factory=dict)
 
     def __post_init__(self):
         self.config_path = (
             os.path.dirname(os.path.abspath(self.user_config_file))
             if self.user_config_file
             else os.getcwd()
+        )
+
+    def __eq__(self, other: "ErtConfig"):
+        return (
+            self.DEFAULT_ENSPATH == other.DEFAULT_ENSPATH
+            and self.DEFAULT_RUNPATH_FILE == other.DEFAULT_RUNPATH_FILE
+            and self.substitution_list == other.substitution_list
+            and self.ensemble_config == other.ensemble_config
+            and self.ens_path == other.ens_path
+            and self.env_vars == other.env_vars
+            and self.random_seed == other.random_seed
+            and self.analysis_config == other.analysis_config
+            and self.queue_config == other.queue_config
+            and self.workflow_jobs == other.workflow_jobs
+            and self.workflows == other.workflows
+            and self.hooked_workflows == other.hooked_workflows
+            and self.runpath_file == other.runpath_file
+            and self.ert_templates == other.ert_templates
+            and self.installed_jobs == other.installed_jobs
+            and self.forward_model_list == other.forward_model_list
+            and self.model_config == other.model_config
+            and self.user_config_file == other.user_config_file
+            and self.config_path == other.config_path
         )
 
     @classmethod
@@ -122,6 +147,14 @@ class ErtConfig:
             model_config = ModelConfig.from_dict(ensemble_config.refcase, config_dict)
             runpath = model_config.runpath_format_string
             eclbase = model_config.eclbase_format_string
+
+            defines = config_dict.get("DEFINE", [])
+            defines += [
+                ("<RUNPATH>", runpath),
+                ("<ECL_BASE>", eclbase),
+                ("<ECLBASE>", eclbase),
+            ]
+
             substitution_list.addItem("<RUNPATH>", runpath)
             substitution_list.addItem("<ECL_BASE>", eclbase)
             substitution_list.addItem("<ECLBASE>", eclbase)
@@ -148,6 +181,7 @@ class ErtConfig:
             env_vars[key] = val
 
         return cls(
+            config_dict=config_dict,
             substitution_list=substitution_list,
             ensemble_config=ensemble_config,
             ens_path=config_dict.get(ConfigKeys.ENSPATH, ErtConfig.DEFAULT_ENSPATH),
@@ -397,12 +431,13 @@ class ErtConfig:
     ):
         errors = []
         jobs = []
-        for job in config_dict.get(ConfigKeys.FORWARD_MODEL, []):
-            if len(job) > 1:
-                unsubstituted_job_name, args = job
+        for job_as_list in config_dict.get(ConfigKeys.FORWARD_MODEL, []):
+            if len(job_as_list) > 1:
+                unsubstituted_job_name, args = job_as_list
             else:
-                unsubstituted_job_name = job[0]
+                unsubstituted_job_name = job_as_list[0]
                 args = []
+
             job_name = substitution_list.substitute(unsubstituted_job_name)
             try:
                 job = copy.deepcopy(installed_jobs[job_name])
@@ -427,7 +462,30 @@ class ErtConfig:
                     else:
                         # this path is for the new parser, which parser the args into
                         # separate keys and values
-                        for key, val in args:
+                        assert isinstance(job_as_list, ContextList)
+                        assert job_as_list.defines is not None
+
+                        user_args_as_dict = {k: v for k, v in args}
+
+                        # look for args not specified by user in forward model call,
+                        # but existing in arglist see if they can be substituted
+                        unspecified_args = {
+                            x for x in job.arglist if x not in user_args_as_dict
+                        }
+
+                        for unspecified_arg in unspecified_args:
+                            user_args_as_dict[unspecified_arg] = unspecified_arg
+
+                        defines_dict = {
+                            **{k: v for k, v in config_dict["DEFINE"]},
+                            **{k: v for k, v in job_as_list.defines},
+                        }
+
+                        for argk, argv in user_args_as_dict.items():
+                            for k, v in defines_dict.items():
+                                user_args_as_dict[argk] = argv = argv.replace(k, v)
+
+                        for key, val in user_args_as_dict.items():
                             job.private_args.addItem(key, val)
                 except ValueError as err:
                     errors.append(

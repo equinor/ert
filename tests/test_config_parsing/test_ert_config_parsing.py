@@ -2,6 +2,7 @@
 import logging
 import os
 import os.path
+import stat
 from datetime import date
 from pathlib import Path
 from textwrap import dedent
@@ -78,6 +79,7 @@ def test_ert_config_parses_date():
 def test_that_creating_ert_config_from_dict_is_same_as_from_file(
     tmp_path_factory, config_generator
 ):
+    pass
     filename = "config.ert"
     with config_generator(tmp_path_factory, filename) as config_values:
         assert ErtConfig.from_dict(
@@ -1107,3 +1109,60 @@ def test_that_redefines_work_with_setenv():
 
     assert ert_config.env_vars["VAR"] == "3"
     assert ert_config.env_vars["VAR2"] == "4"
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_forward_model_postparse_substitution():
+    with open("run", "w", encoding="utf-8"):
+        pass
+
+    os.chmod("run", stat.S_IEXEC)
+
+    with open("the_config", "w", encoding="utf-8") as fh:
+        fh.write(
+            """
+NUM_REALIZATIONS 1
+DEFINE <schedule_file> schedule_file
+DEFINE <planned_wells> planned_wells
+DEFINE <drilled_wells> drilled_wells
+DEFINE <explore_wells> explore_wells
+DEFINE <mode> test
+
+INSTALL_JOB RUNzz the_job
+DEFINE <ACTUAL_CONFIG_PATH> <CONFIG_PATH>
+FORWARD_MODEL RUNzz(<schedule_file> = schedule_file, <planned_wells> = <RUNPATH>/planned_wells.inc, <drilled_wells> = <RUNPATH>/planned_wells.inc_wag, <explore_wells> = <RUNPATH>/explore_wells, <mode>=hist)
+DEFINE <CONFIG_PATH> dddduhrhur
+ """  # noqa
+        )
+
+    with open("the_job", "w", encoding="utf-8") as fh:
+        fh.write(
+            """
+STDERR    POST_PROCESS_SCHEDULE_RMS.stderr
+STDOUT    POST_PROCESS_SCHEDULE_RMS.stdout
+
+TARGET_FILE   POST_PROCESS_SCHEDULE.INC
+
+EXECUTABLE  run
+ARGLIST <schedule_file> <planned_wells> <drilled_wells> <explore_wells> <CONFIG_PATH> <mode>
+
+"""  # noqa
+        )
+
+    ert_config = ErtConfig.from_file(user_config_file="the_config", use_new_parser=True)
+    config_dict = ert_config.config_dict
+    jobzz_args = ert_config.forward_model_list[0].private_args
+
+    expected_job_config_path = next(
+        v for k, v in config_dict["DEFINE"] if k == "<ACTUAL_CONFIG_PATH>"
+    )
+
+    assert jobzz_args["<CONFIG_PATH>"] == expected_job_config_path
+
+    expected_runpath = expected_job_config_path = next(
+        v for k, v in config_dict["DEFINE"] if k == "<RUNPATH>"
+    )
+
+    assert jobzz_args["<planned_wells>"] == f"{expected_runpath}/planned_wells.inc"
+    assert jobzz_args["<drilled_wells>"] == f"{expected_runpath}/planned_wells.inc_wag"
+    assert jobzz_args["<explore_wells>"] == f"{expected_runpath}/explore_wells"
