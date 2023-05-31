@@ -41,15 +41,15 @@ def get_ensemble(storage):
 
 
 def test_keyword_type_checks(facade):
-    assert facade.is_gen_data_key("SNAKE_OIL_GPR_DIFF@199")
-    assert facade.is_summary_key("BPR:1,3,8")
-    assert facade.is_gen_kw_key("SNAKE_OIL_PARAM:BPR_138_PERSISTENCE")
+    assert "SNAKE_OIL_GPR_DIFF@199" in facade.get_gen_data_keys()
+    assert "BPR:1,3,8" in facade.get_summary_keys()
+    assert "SNAKE_OIL_PARAM:BPR_138_PERSISTENCE" in facade.gen_kw_keys()
 
 
 def test_keyword_type_checks_missing_key(facade):
-    assert not facade.is_gen_data_key("nokey")
-    assert not facade.is_summary_key("nokey")
-    assert not facade.is_gen_kw_key("nokey")
+    assert "nokey" not in facade.get_gen_data_keys()
+    assert "nokey" not in facade.get_summary_keys()
+    assert "nokey" not in facade.gen_kw_keys()
 
 
 def test_data_fetching_missing_key(facade, empty_case):
