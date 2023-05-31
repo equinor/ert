@@ -1,6 +1,9 @@
+-- This can't currently be run as there are no .irap files in `snake_oil_field`.
+-- The file is used in tests.
+
 QUEUE_SYSTEM LOCAL
 QUEUE_OPTION LOCAL MAX_RUNNING 10
-NUM_REALIZATIONS 10
+NUM_REALIZATIONS 2
 GRID grid/CASE.EGRID
 
 DEFINE <STORAGE> storage/<CONFIG_FILE_BASE>
@@ -37,12 +40,6 @@ GEN_DATA SNAKE_OIL_OPR_DIFF INPUT_FORMAT:ASCII RESULT_FILE:snake_oil_opr_diff_%d
 GEN_DATA SNAKE_OIL_WPR_DIFF INPUT_FORMAT:ASCII RESULT_FILE:snake_oil_wpr_diff_%d.txt REPORT_STEPS:199
 GEN_DATA SNAKE_OIL_GPR_DIFF INPUT_FORMAT:ASCII RESULT_FILE:snake_oil_gpr_diff_%d.txt REPORT_STEPS:199
 
-
--- Observe that the snake_oil simulator does not really take these
--- surface parameters into account, they are mainly here to create a
--- test case with surface parameters.
-
-SURFACE TOP INIT_FILES:surface/small.irap OUTPUT_FILE:surface/small_out.irap BASE_SURFACE:surface/small.irap FORWARD_INIT:TRUE
-
+SURFACE TOP INIT_FILES:surface/surf_init_%d.irap OUTPUT_FILE:surface/surf_updated.irap BASE_SURFACE:surface/surf_init_0.irap FORWARD_INIT:False
 
 UPDATE_LOG_PATH log/update

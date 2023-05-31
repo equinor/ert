@@ -326,6 +326,91 @@ SUMMARY_OBSERVATION EXTREMELY_HIGH_STD
 
 
 @pytest.mark.integration_test
+def test_that_surfaces_retain_their_order_when_loaded_and_saved_by_ert(copy_case):
+    """This is a regression test to make sure ert does not use the wrong order
+    (row-major / column-major) when working with surfaces.
+    """
+    rng = np.random.default_rng()
+    import xtgeo
+    from scipy.ndimage import gaussian_filter
+
+    def sample_prior(nx, ny):
+        return np.exp(
+            5
+            * gaussian_filter(
+                gaussian_filter(rng.random(size=(nx, ny)), sigma=2.0), sigma=1.0
+            )
+        )
+
+    copy_case("snake_oil_field")
+
+    nx = 5
+    ny = 7
+    ensemble_size = 2
+
+    Path("./surface").mkdir()
+    for i in range(ensemble_size):
+        surf = xtgeo.RegularSurface(
+            ncol=nx, nrow=ny, xinc=1.0, yinc=1.0, values=sample_prior(nx, ny)
+        )
+        surf.to_file(f"surface/surf_init_{i}.irap", fformat="irap_ascii")
+
+    # Single observation with a large ERROR to make sure the udpate is minimal.
+    obs = """
+    SUMMARY_OBSERVATION WOPR_OP1_9
+    {
+        VALUE   = 0.1;
+        ERROR   = 200.0;
+        DATE    = 2010-03-31;
+        KEY     = WOPR:OP1;
+    };
+    """
+
+    with open("observations/observations.txt", "w", encoding="utf-8") as file:
+        file.write(obs)
+
+    parser = ArgumentParser(prog="test_main")
+    parsed = ert_parser(
+        parser,
+        [
+            ENSEMBLE_SMOOTHER_MODE,
+            "snake_oil_surface.ert",
+            "--port-range",
+            "1024-65535",
+            "--target-case",
+            "es_udpate",
+        ],
+    )
+    run_cli(parsed)
+
+    ert_config = ErtConfig.from_file("snake_oil_surface.ert")
+
+    storage = open_storage(ert_config.ens_path)
+
+    ens_prior = storage.get_ensemble_by_name("default")
+    ens_posterior = storage.get_ensemble_by_name("es_udpate")
+
+    # Check that surfaces defined in INIT_FILES are not changed by ERT
+    surf_prior = ens_prior.load_parameters("TOP", list(range(ensemble_size)))
+    for i in range(ensemble_size):
+        _prior_init = xtgeo.surface_from_file(
+            f"surface/surf_init_{i}.irap", fformat="irap_ascii"
+        )
+        np.testing.assert_array_equal(surf_prior[i], _prior_init.values.data)
+
+    surf_posterior = ens_posterior.load_parameters("TOP", list(range(ensemble_size)))
+
+    assert surf_prior.shape == surf_posterior.shape
+
+    for i in range(ensemble_size):
+        with pytest.raises(AssertionError):
+            np.testing.assert_array_equal(surf_prior[i], surf_posterior[i])
+        np.testing.assert_almost_equal(
+            surf_prior[i].values, surf_posterior[i].values, decimal=3
+        )
+
+
+@pytest.mark.integration_test
 def test_update_multiple_param(copy_case, new_ensemble):
     """
     Note that this is now a snapshot test, so there is no guarantee that the
