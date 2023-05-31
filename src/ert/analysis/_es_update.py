@@ -253,10 +253,10 @@ def _get_obs_and_measure_data(
     observation_keys = []
     observation_values = []
     observation_errors = []
-    for obs_key, active_list in selected_observations:
+    for obs_key, obs_active_list in selected_observations:
         group, observation = obs.get_dataset(obs_key)
-        if active_list:
-            index = observation.coords.to_index()[active_list]
+        if obs_active_list:
+            index = observation.coords.to_index()[obs_active_list]
             sub_selection = {
                 name: list(set(index.get_level_values(name))) for name in index.names
             }
