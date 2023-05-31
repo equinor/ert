@@ -24,6 +24,7 @@ class FileDialog(QDialog):
             f"{job_name} # {job_number} "
             f"Realization: {realization} Iteration: {iteration}"
         )
+        self.setObjectName(file_name)
 
         try:
             # pylint: disable=consider-using-with

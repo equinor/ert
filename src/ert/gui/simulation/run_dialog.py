@@ -100,7 +100,6 @@ class RunDialog(QDialog):
         self._job_view.setSelectionBehavior(QAbstractItemView.SelectRows)
         self._job_view.setSelectionMode(QAbstractItemView.SingleSelection)
         self._job_view.clicked.connect(self._job_clicked)
-        self._open_files = {}
         self._job_view.setModel(self._job_model)
 
         self.running_time = QLabel("")
@@ -163,6 +162,7 @@ class RunDialog(QDialog):
 
         self.setMinimumWidth(self._minimum_width)
         self._setSimpleDialog()
+        self.finished.connect(self._on_finished)
 
     def _current_tab_changed(self, index: int):
         # Clear the selection in the other tabs
@@ -206,10 +206,12 @@ class RunDialog(QDialog):
         if not index.isValid():
             return
         selected_file = index.data(FileRole)
-
-        if selected_file and selected_file not in self._open_files:
+        file_dialog = self.findChild(QDialog, name=selected_file)
+        if file_dialog and file_dialog.isVisible():
+            file_dialog.raise_()
+        elif selected_file:
             job_name = index.siblingAtColumn(0).data()
-            viewer = FileDialog(
+            FileDialog(
                 selected_file,
                 job_name,
                 index.row(),
@@ -217,25 +219,6 @@ class RunDialog(QDialog):
                 index.model().get_iter(),
                 self,
             )
-            self._open_files[selected_file] = viewer
-
-            def remove_file():
-                """
-                We have sometimes seen this fail because the selected file is not
-                in open file, without being able to reproduce the exception.
-                """
-                try:
-                    self._open_files.pop(selected_file)
-                except KeyError:
-                    logger = logging.getLogger(__name__)
-                    logger.exception(
-                        f"Failed to pop: {selected_file} from {self._open_files}"
-                    )
-
-            viewer.finished.connect(remove_file)
-
-        elif selected_file in self._open_files:
-            self._open_files[selected_file].raise_()
 
     @Slot(QModelIndex)
     def _select_real(self, index):
@@ -250,18 +233,14 @@ class RunDialog(QDialog):
 
         self._job_view.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
 
-    def reject(self):
-        return
-
     def closeEvent(self, QCloseEvent):
         if self._run_model.isFinished():
             self.simulation_done.emit(
                 self._run_model.hasRunFailed(), self._run_model.getFailMessage()
             )
-        else:
-            # Kill jobs if dialog is closed
-            if self.killJobs() != QMessageBox.Yes:
-                QCloseEvent.ignore()
+            self.accept()
+        elif self.killJobs() != QMessageBox.Yes:
+            QCloseEvent.ignore()
 
     def startSimulation(self):
         self._run_model.reset()
@@ -313,6 +292,7 @@ class RunDialog(QDialog):
             # Normally this slot would be invoked by the signal/slot system,
             # but the worker is busy tracking the evaluation.
             self._tracker.request_termination()
+            self._on_finished()
             self.reject()
         return kill_job
 
@@ -407,3 +387,7 @@ class RunDialog(QDialog):
             self._setDetailedDialog()
 
         self.adjustSize()
+
+    def _on_finished(self):
+        for file_dialog in self.findChildren(FileDialog):
+            file_dialog.close()
