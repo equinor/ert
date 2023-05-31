@@ -49,15 +49,20 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
     ) -> None:
         self._enkf_main.write_runpath_list(iterations, realizations)
 
-    def smoother_update(
+    def smoother_update(  # pylint: disable=too-many-arguments
         self,
         prior_storage: EnsembleReader,
         posterior_storage: EnsembleAccessor,
         run_id: str,
         progress_callback: Optional[ProgressCallback] = None,
+        global_std_scaling: float = 1.0,
     ) -> None:
         self._es_update.smootherUpdate(
-            prior_storage, posterior_storage, run_id, progress_callback
+            prior_storage,
+            posterior_storage,
+            run_id,
+            progress_callback,
+            global_std_scaling,
         )
 
     # pylint: disable-msg=too-many-arguments
@@ -72,9 +77,6 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
         self._es_update.iterative_smoother_update(
             prior_storage, posterior_storage, ies, run_id, progress_callback
         )
-
-    def set_global_std_scaling(self, weight: float) -> None:
-        self._enkf_main.analysisConfig().set_global_std_scaling(weight)
 
     def set_log_path(self, output_path: str) -> None:
         self._enkf_main.analysisConfig().set_log_path(output_path)

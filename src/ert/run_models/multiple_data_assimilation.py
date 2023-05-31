@@ -176,12 +176,12 @@ class MultipleDataAssimilation(BaseRunModel):
         phase_string = f"Analyzing iteration: {next_iteration} with weight {weight}"
         self.setPhase(self.currentPhase() + 1, phase_string, indeterminate=True)
 
-        self.facade.set_global_std_scaling(weight)
         try:
             self.facade.smoother_update(
                 prior_context.sim_fs,
                 posterior_context.sim_fs,
                 prior_context.run_id,  # type: ignore
+                global_std_scaling=weight,
             )
         except ErtAnalysisError as e:
             raise ErtRunError(
