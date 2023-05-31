@@ -254,7 +254,7 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
         )
 
     def observation_keys(self, key: str) -> List[str]:
-        if self.is_gen_data_key(key):
+        if key in self.get_gen_data_keys():
             key_parts = key.split("@")
             data_key = key_parts[0]
             if len(key_parts) > 1:
@@ -276,7 +276,7 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
                 return [obs_key]
             else:
                 return []
-        elif self.is_summary_key(key):
+        elif key in self.get_summary_keys():
             return [
                 str(k)
                 for k in self._enkf_main.ensembleConfig().get_node_observation_keys(key)
@@ -492,14 +492,8 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
 
         return data
 
-    def is_summary_key(self, key: str) -> bool:
-        return key in self.get_summary_keys()
-
     def get_summary_keys(self) -> List[str]:
         return self._enkf_main.ensembleConfig().get_summary_keys()
-
-    def is_gen_kw_key(self, key: str) -> bool:
-        return key in self.gen_kw_keys()
 
     def gen_kw_keys(self) -> List[str]:
         gen_kw_keys = self.get_gen_kw()
@@ -516,9 +510,6 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
                     gen_kw_list.append(f"LOG10_{key}:{keyword}")
 
         return sorted(gen_kw_list, key=lambda k: k.lower())
-
-    def is_gen_data_key(self, key: str) -> bool:
-        return key in self.get_gen_data_keys()
 
     def get_gen_data_keys(self) -> List[str]:
         gen_data_keys = self._enkf_main.ensembleConfig().get_keylist_gen_data()

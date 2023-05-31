@@ -49,12 +49,12 @@ def data_for_key(
     if key in ensemble.get_summary_keyset():
         data = res.load_all_summary_data(ensemble, [key], realization_index)
         data = data[key].unstack(level="Date")
-    elif res.is_gen_kw_key(key):
+    elif key in res.gen_kw_keys():
         data = res.gather_gen_kw_data(ensemble, key, realization_index)
         if data.empty:
             return data
         data.columns = pd.Index([0])
-    elif res.is_gen_data_key(key):
+    elif key in res.get_gen_data_keys():
         key_parts = key.split("@")
         key = key_parts[0]
         if len(key_parts) > 1:
