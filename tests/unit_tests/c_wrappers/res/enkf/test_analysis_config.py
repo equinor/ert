@@ -25,12 +25,6 @@ def test_keywords_for_monitoring_simulation_runtime(analysis_config):
     assert analysis_config.get_stop_long_running()
 
 
-def test_analysis_config_global_std_scaling(analysis_config):
-    assert pytest.approx(analysis_config.get_global_std_scaling()) == 1.0
-    analysis_config.set_global_std_scaling(0.77)
-    assert pytest.approx(analysis_config.get_global_std_scaling()) == 0.77
-
-
 def test_analysis_config_constructor(setup_case):
     ert_config = setup_case("simple_config", "analysis_config")
     assert ert_config.analysis_config == AnalysisConfig.from_dict(
@@ -40,7 +34,6 @@ def test_analysis_config_constructor(setup_case):
             ConfigKeys.UPDATE_LOG_PATH: "update_log",
             ConfigKeys.STD_CUTOFF_KEY: 1e-6,
             ConfigKeys.STOP_LONG_RUNNING: False,
-            ConfigKeys.GLOBAL_STD_SCALING: 1,
             ConfigKeys.MAX_RUNTIME: 0,
             ConfigKeys.MIN_REALIZATIONS: 10,
             ConfigKeys.ANALYSIS_COPY: [

@@ -653,6 +653,7 @@ class ESUpdate:
         posterior_storage: EnsembleAccessor,
         run_id: str,
         progress_callback: Optional[ProgressCallback] = None,
+        global_scaling: float = 1.0,
     ) -> None:
         if not progress_callback:
             progress_callback = noop_progress_callback
@@ -666,7 +667,6 @@ class ESUpdate:
 
         alpha = analysis_config.get_enkf_alpha()
         std_cutoff = analysis_config.get_std_cutoff()
-        global_scaling = analysis_config.get_global_std_scaling()
         ens_mask = prior_storage.get_realization_mask_from_state(
             [RealizationStateEnum.STATE_HAS_DATA]
         )
@@ -722,7 +722,6 @@ class ESUpdate:
 
         alpha = analysis_config.get_enkf_alpha()
         std_cutoff = analysis_config.get_std_cutoff()
-        global_scaling = analysis_config.get_global_std_scaling()
         ens_mask = prior_storage.get_realization_mask_from_state(
             [RealizationStateEnum.STATE_HAS_DATA]
         )
@@ -740,7 +739,7 @@ class ESUpdate:
             analysis_config.get_active_module(),
             alpha,
             std_cutoff,
-            global_scaling,
+            1.0,
             smoother_snapshot,
             ens_mask,
             ensemble_config,

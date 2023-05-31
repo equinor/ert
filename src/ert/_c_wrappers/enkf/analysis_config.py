@@ -17,7 +17,6 @@ class AnalysisConfig:
         alpha=3.0,
         std_cutoff=1e-6,
         stop_long_running=False,
-        global_std_scaling=1.0,
         max_runtime=0,
         min_realization=0,
         update_log_path=None,
@@ -28,7 +27,6 @@ class AnalysisConfig:
     ):
         self._max_runtime = max_runtime
         self._min_realization = min_realization
-        self._global_std_scaling = global_std_scaling
         self._stop_long_running = stop_long_running
         self._alpha = alpha
         self._std_cutoff = std_cutoff
@@ -94,7 +92,6 @@ class AnalysisConfig:
             alpha=config_dict.get(ConfigKeys.ALPHA_KEY, 3.0),
             std_cutoff=config_dict.get(ConfigKeys.STD_CUTOFF_KEY, 1e-6),
             stop_long_running=config_dict.get(ConfigKeys.STOP_LONG_RUNNING, False),
-            global_std_scaling=config_dict.get(ConfigKeys.GLOBAL_STD_SCALING, 1.0),
             max_runtime=config_dict.get(ConfigKeys.MAX_RUNTIME, 0),
             min_realization=min_realization,
             update_log_path=config_dict.get(ConfigKeys.UPDATE_LOG_PATH, "update_log"),
@@ -159,12 +156,6 @@ class AnalysisConfig:
     def get_active_module(self) -> AnalysisModule:
         return self._modules[self._active_module]
 
-    def set_global_std_scaling(self, std_scaling: float):
-        self._global_std_scaling = std_scaling
-
-    def get_global_std_scaling(self) -> float:
-        return self._global_std_scaling
-
     @property
     def minimum_required_realizations(self) -> int:
         return self._min_realization
@@ -202,7 +193,6 @@ class AnalysisConfig:
             f"alpha={self._alpha}, "
             f"std_cutoff={self._std_cutoff}, "
             f"stop_long_running={self._stop_long_running}, "
-            f"global_std_scaling={self._global_std_scaling}, "
             f"max_runtime={self._max_runtime}, "
             f"min_realization={self._min_realization}, "
             f"update_log_path={self._update_log_path}, "
@@ -217,9 +207,6 @@ class AnalysisConfig:
             return False
 
         if self.get_max_runtime() != other.get_max_runtime():
-            return False
-
-        if self.get_global_std_scaling() != other.get_global_std_scaling():
             return False
 
         if self.get_stop_long_running() != other.get_stop_long_running():
