@@ -2,10 +2,11 @@ from __future__ import annotations
 
 import logging
 import time
+from collections import UserDict
 from dataclasses import dataclass, field
 from math import sqrt
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Tuple, Union
 
 import iterative_ensemble_smoother as ies
 import numpy as np
@@ -95,23 +96,47 @@ def noop_progress_callback(_: Progress) -> None:
     pass
 
 
+class TempStorage(UserDict):  # type: ignore
+    def __getitem__(self, key: str) -> npt.NDArray[np.double]:
+        value: Union[npt.NDArray[np.double], xr.DataArray] = super().__getitem__(key)
+        if not isinstance(value, xr.DataArray):
+            return value
+        ensemble_size = value.shape[0]
+        return value.values.reshape(ensemble_size, -1).T
+
+    def __setitem__(
+        self, key: str, value: Union[npt.NDArray[np.double], xr.DataArray]
+    ) -> None:
+        old_value = self.data.get(key, None)
+        if isinstance(old_value, xr.DataArray):
+            old_value.data = value.T.reshape(*old_value.shape)
+            super().__setitem__(key, old_value)
+        else:
+            super().__setitem__(key, value)
+
+    def get_raw(self, key: str) -> Union[npt.NDArray[np.double], xr.DataArray]:
+        _val = super().__getitem__(key)
+        assert isinstance(_val, (np.ndarray, xr.DataArray))
+        return _val
+
+
 def _get_A_matrix(
-    temporary_storage: Dict[str, "npt.NDArray[np.double]"],
+    temp_storage: TempStorage,
     parameters: List[update.Parameter],
 ) -> Optional["npt.NDArray[np.double]"]:
     matrices: List["npt.NDArray[np.double]"] = []
     for p in parameters:
         if p.active_list.getMode() == ActiveMode.ALL_ACTIVE:
-            matrices.append(temporary_storage[p.name])
+            matrices.append(temp_storage[p.name])
         elif p.active_list.getMode() == ActiveMode.PARTLY_ACTIVE:
             matrices.append(
-                temporary_storage[p.name][p.active_list.get_active_index_list(), :]
+                temp_storage[p.name][p.active_list.get_active_index_list(), :]
             )
     return np.vstack(matrices) if matrices else None
 
 
 def _param_ensemble_for_projection(
-    temp_storage: Dict[str, npt.NDArray[np.double]],
+    temp_storage: TempStorage,
     ensemble_size: int,
     updatestep: UpdateConfiguration,
 ) -> Optional[npt.NDArray[np.double]]:
@@ -146,17 +171,17 @@ def _param_ensemble_for_projection(
 
 
 def _get_row_scaling_A_matrices(
-    temporary_storage: Dict[str, "npt.NDArray[np.double]"],
+    temp_storage: TempStorage,
     parameters: List[update.RowScalingParameter],
 ) -> List[Tuple["npt.NDArray[np.double]", RowScaling]]:
     matrices = []
     for p in parameters:
         if p.active_list.getMode() == ActiveMode.ALL_ACTIVE:
-            matrices.append((temporary_storage[p.name], p.row_scaling))
+            matrices.append((temp_storage[p.name], p.row_scaling))
         elif p.active_list.getMode() == ActiveMode.PARTLY_ACTIVE:
             matrices.append(
                 (
-                    temporary_storage[p.name][p.active_list.get_active_index_list(), :],
+                    temp_storage[p.name][p.active_list.get_active_index_list(), :],
                     p.row_scaling,
                 ),
             )
@@ -164,8 +189,8 @@ def _get_row_scaling_A_matrices(
     return matrices
 
 
-def _save_to_temporary_storage(
-    temporary_storage: Dict[str, "npt.NDArray[np.double]"],
+def _save_to_temp_storage(
+    temp_storage: TempStorage,
     parameters: List[update.Parameter],
     A: Optional["npt.NDArray[np.double]"],
 ) -> None:
@@ -174,35 +199,40 @@ def _save_to_temporary_storage(
     offset = 0
     for p in parameters:
         if p.active_list.getMode() == ActiveMode.ALL_ACTIVE:
-            rows = temporary_storage[p.name].shape[0]
-            temporary_storage[p.name] = A[offset : offset + rows, :]
+            rows = temp_storage[p.name].shape[0]
+            temp_storage[p.name] = A[offset : offset + rows, :]
             offset += rows
         elif p.active_list.getMode() == ActiveMode.PARTLY_ACTIVE:
             row_indices = p.active_list.get_active_index_list()
             for i, row in enumerate(row_indices):
-                temporary_storage[p.name][row] = A[offset + i]
+                temp_storage[p.name][row] = A[offset + i]
             offset += len(row_indices)
 
 
-def _save_temporary_storage_to_disk(
+def _save_temp_storage_to_disk(
     target_fs: EnsembleAccessor,
     ensemble_config: "EnsembleConfig",
-    temporary_storage: Dict[str, "npt.NDArray[np.double]"],
+    temp_storage: TempStorage,
     iens_active_index: List[int],
 ) -> None:
-    for key, matrix in temporary_storage.items():
+    for key, matrix in temp_storage.items():
         config_node = ensemble_config.parameter_configs[key]
         for i, realization in enumerate(iens_active_index):
             if isinstance(config_node, GenKwConfig):
                 parameter_keys = list(config_node)
-                target_fs.save_gen_kw(key, parameter_keys, realization, matrix[:, i])
-            elif isinstance(config_node, SurfaceConfig):
-                target_fs.save_parameters(
+                assert isinstance(matrix, np.ndarray)
+                target_fs.save_gen_kw(
                     key,
+                    parameter_keys,
                     realization,
-                    xr.DataArray(matrix[:, i], name="values"),
+                    matrix[:, i],
                 )
+            elif isinstance(config_node, SurfaceConfig):
+                _matrix = temp_storage.get_raw(key)
+                assert isinstance(_matrix, xr.DataArray)
+                target_fs.save_parameters(key, realization, _matrix[i])
             elif isinstance(config_node, Field):
+                assert isinstance(matrix, np.ndarray)
                 target_fs.save_field(key, realization, matrix[:, i])
             else:
                 raise NotImplementedError(f"{type(config_node)} is not supported")
@@ -212,25 +242,22 @@ def _create_temporary_parameter_storage(
     source_fs: EnsembleReader,
     ensemble_config: "EnsembleConfig",
     iens_active_index: List[int],
-) -> Dict[str, "npt.NDArray[np.double]"]:
-    temporary_storage = {}
+) -> TempStorage:
+    temp_storage = TempStorage()
     t_genkw = 0.0
     t_surface = 0.0
     t_field = 0.0
     _logger.debug("_create_temporary_parameter_storage() - start")
     for key in ensemble_config.parameters:
         config_node = ensemble_config.parameter_configs[key]
+        matrix: Union[npt.NDArray[np.double], xr.DataArray]
         if isinstance(config_node, GenKwConfig):
             t = time.perf_counter()
             matrix = source_fs.load_gen_kw(key, iens_active_index)
             t_genkw += time.perf_counter() - t
         elif isinstance(config_node, SurfaceConfig):
             t = time.perf_counter()
-            matrix = (
-                source_fs.load_parameters(key, iens_active_index)
-                .transpose(..., "realizations")
-                .values.reshape(-1, len(iens_active_index))
-            )
+            matrix = source_fs.load_parameters(key, iens_active_index)
             t_surface += time.perf_counter() - t
         elif isinstance(config_node, Field):
             t = time.perf_counter()
@@ -238,12 +265,12 @@ def _create_temporary_parameter_storage(
             t_field += time.perf_counter() - t
         else:
             raise NotImplementedError(f"{type(config_node)} is not supported")
-        temporary_storage[key] = matrix
+        temp_storage[key] = matrix
         _logger.debug(
             f"_create_temporary_parameter_storage() time_used gen_kw={t_genkw:.4f}s, \
                   surface={t_surface:.4f}s, field={t_field:.4f}s"
         )
-    return temporary_storage
+    return temp_storage
 
 
 def _get_obs_and_measure_data(
@@ -374,7 +401,6 @@ def analysis_ES(
     )
 
     progress_callback(Progress(Task("Updating data", 2, 3), None))
-    # Looping over local analysis update_step
     for update_step in updatestep:
         try:
             S, (
@@ -438,10 +464,10 @@ def analysis_ES(
             for parameter, (A, _) in zip(
                 update_step.row_scaling_parameters, A_with_rowscaling
             ):
-                _save_to_temporary_storage(temp_storage, [parameter], A)
+                _save_to_temp_storage(temp_storage, [parameter], A)
 
     progress_callback(Progress(Task("Storing data", 3, 3), None))
-    _save_temporary_storage_to_disk(
+    _save_temp_storage_to_disk(
         target_fs, ensemble_config, temp_storage, iens_active_index
     )
 
@@ -524,7 +550,7 @@ def analysis_IES(
                 )
 
     progress_callback(Progress(Task("Storing data", 3, 3), None))
-    _save_temporary_storage_to_disk(
+    _save_temp_storage_to_disk(
         target_fs, ensemble_config, temp_storage, iens_active_index
     )
 

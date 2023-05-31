@@ -45,13 +45,13 @@ class SurfaceConfig(ParameterConfig):
             )
         surface = xtgeo.surface_from_file(file_path, fformat="irap_ascii")
 
-        dataset = xr.DataArray(
+        da = xr.DataArray(
             surface.values,
             name="values",
             dims=["y", "x"],
         )
 
-        ensemble.save_parameters(self.name, real_nr, dataset)
+        ensemble.save_parameters(self.name, real_nr, da)
         _logger.debug(f"load() time_used {(time.perf_counter() - t):.4f}s")
 
     def save(self, run_path: Path, real_nr: int, ensemble: EnsembleReader):

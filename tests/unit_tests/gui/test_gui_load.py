@@ -418,6 +418,19 @@ def test_that_ert_changes_to_config_directory(qtbot):
     Failure to do so would in this case result in SURFACE keyword not
     finding the INIT_FILE provided (surface/small.irap)
     """
+    import numpy as np
+
+    rng = np.random.default_rng()
+    import xtgeo
+
+    Path("./surface").mkdir()
+    nx = 5
+    ny = 10
+    surf = xtgeo.RegularSurface(
+        ncol=nx, nrow=ny, xinc=1.0, yinc=1.0, values=rng.standard_normal(size=(nx, ny))
+    )
+    surf.to_file("surface/surf_init_0.irap", fformat="irap_ascii")
+
     args = Mock()
     os.chdir("..")
     args.config = "test_data/snake_oil_surface.ert"

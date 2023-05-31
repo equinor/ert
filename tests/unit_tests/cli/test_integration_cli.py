@@ -1,12 +1,11 @@
 import asyncio
 import fileinput
 import logging
-
-# import logging
 import os
 import shutil
 import threading
 from argparse import ArgumentParser
+from pathlib import Path
 from textwrap import dedent
 from unittest.mock import Mock, call
 
@@ -596,6 +595,18 @@ def test_field_init_file_not_readable(copy_case, monkeypatch):
 
 def test_surface_init_fails_during_forward_model_callback(copy_case):
     copy_case("snake_oil_field")
+
+    rng = np.random.default_rng()
+    import xtgeo
+
+    Path("./surface").mkdir()
+    nx = 5
+    ny = 10
+    surf = xtgeo.RegularSurface(
+        ncol=nx, nrow=ny, xinc=1.0, yinc=1.0, values=rng.standard_normal(size=(nx, ny))
+    )
+    surf.to_file("surface/surf_init_0.irap", fformat="irap_ascii")
+
     config_file_name = "snake_oil_surface.ert"
     parameter_name = "TOP"
     with open(config_file_name, mode="r+", encoding="utf-8") as config_file_handler:
