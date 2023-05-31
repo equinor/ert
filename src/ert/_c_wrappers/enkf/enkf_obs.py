@@ -524,8 +524,4 @@ class EnkfObs:
         return EnkfObs({}, obs_time_list)
 
     def get_dataset(self, key: str) -> Tuple[str, xr.Dataset]:
-        obs = self[key]
-        if obs.observation_type == EnkfObservationImplementationType.SUMMARY_OBS:
-            return "summary", obs.get_summary_obs_data(self, [])
-        elif obs.observation_type == EnkfObservationImplementationType.GEN_OBS:
-            return obs.data_key, obs.get_gen_obs_data([])
+        return self[key].to_dataset(self, [])
