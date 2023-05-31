@@ -80,7 +80,7 @@ class ExtParamConfig(ParameterConfig):
 
     def __repr__(self):
         return (
-            f"SummaryConfig(keylist={list(self.input_keys.keys())}), "
+            f"ExtParamConfig(keylist={list(self.input_keys.keys())}), "
             f"suffixlist={list(self.input_keys.items())})"
         )
 
