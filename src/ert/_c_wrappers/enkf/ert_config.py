@@ -6,7 +6,7 @@ from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import date
 from pathlib import Path
-from typing import Any, ClassVar, Dict, List, Mapping, Optional
+from typing import Any, ClassVar, Dict, List, Mapping, Optional, overload
 
 import pkg_resources
 
@@ -468,67 +468,79 @@ class ErtConfig:
         config_file_path: Optional[Path] = None,
         iens: int = 0,
         itr: int = 0,
-        context: "SubstitutionList" = None,
-        env_varlist: Mapping[str, str] = None,
+        context: Optional["SubstitutionList"] = None,
+        env_varlist: Optional[Mapping[str, str]] = None,
     ) -> Dict[str, Any]:
-        def substitute(job, string: str):
-            job_args = ",".join([f"{key}={value}" for key, value in job.private_args])
-            job_description = f"{job.name}({job_args})"
-            substitution_context_hint = (
-                f"parsing forward model job `FORWARD_MODEL {job_description}` - "
-                "reconstructed, with defines applied during parsing"
-            )
-            if string is not None:
-                copy_private_args = SubstitutionList()
-                for key, val in job.private_args:
-                    copy_private_args.addItem(
-                        key, context.substitute_real_iter(val, iens, itr)
-                    )
-                string = copy_private_args.substitute(
-                    string, substitution_context_hint, 1
+        _context: SubstitutionList = context if context else SubstitutionList()
+
+        class Substituter:
+            def __init__(self, job):
+                job_args = ",".join(
+                    [f"{key}={value}" for key, value in job.private_args]
                 )
-                return context.substitute_real_iter(string, iens, itr)
-            else:
-                return string
+                job_description = f"{job.name}({job_args})"
+                self.substitution_context_hint = (
+                    f"parsing forward model job `FORWARD_MODEL {job_description}` - "
+                    "reconstructed, with defines applied during parsing"
+                )
+                self.copy_private_args = SubstitutionList()
+                for key, val in job.private_args:
+                    self.copy_private_args.addItem(
+                        key, _context.substitute_real_iter(val, iens, itr)
+                    )
+
+            @overload
+            def substitute(self, string: str) -> str:
+                ...
+
+            @overload
+            def substitute(self, string: None) -> None:
+                ...
+
+            def substitute(self, string):
+                if string is None:
+                    return string
+                string = self.copy_private_args.substitute(
+                    string, self.substitution_context_hint, 1
+                )
+                return _context.substitute_real_iter(string, iens, itr)
+
+            def filter_env_dict(self, d):
+                result = {}
+                for key, value in d.items():
+                    new_key = self.substitute(key)
+                    new_value = self.substitute(value)
+                    if new_value is None:
+                        result[new_key] = None
+                    elif not (new_value[0] == "<" and new_value[-1] == ">"):
+                        # Remove values containing "<XXX>". These are expected to be
+                        # replaced by substitute, but were not.
+                        result[new_key] = new_value
+                    else:
+                        logger.warning(
+                            "Environment variable %s skipped due to"
+                            " unmatched define %s",
+                            new_key,
+                            new_value,
+                        )
+                # Its expected that empty dicts be replaced with "null"
+                # in jobs.json
+                if not result:
+                    return None
+                return result
 
         def handle_default(job: ExtJob, arg: str) -> str:
             return job.default_mapping.get(arg, arg)
-
-        def filter_env_dict(job, d):
-            result = {}
-            for key, value in d.items():
-                new_key = substitute(job, key)
-                new_value = substitute(job, value)
-                if new_value is None:
-                    result[new_key] = None
-                elif not (new_value[0] == "<" and new_value[-1] == ">"):
-                    # Remove values containing "<XXX>". These are expected to be
-                    # replaced by substitute, but were not.
-                    result[new_key] = new_value
-                else:
-                    logger.warning(
-                        "Environment variable %s skipped due to unmatched define %s",
-                        new_key,
-                        new_value,
-                    )
-            # Its expected that empty dicts be replaced with "null"
-            # in jobs.json
-            if not result:
-                return None
-            return result
-
-        if context is None:
-            context = SubstitutionList()
 
         if env_varlist is None:
             env_varlist = {}
 
         for job in forward_model_list:
             for key, val in job.private_args:
-                if key in context and key != val:
+                if key in _context and key != val:
                     logger.info(
                         f"Private arg '{key}':'{val}' chosen over"
-                        f" global '{context[key]}' in forward model {job.name}"
+                        f" global '{_context[key]}' in forward model {job.name}"
                     )
         config_path = str(config_file_path.parent) if config_file_path else ""
         config_file = str(config_file_path.name) if config_file_path else ""
@@ -538,30 +550,34 @@ class ErtConfig:
             "config_file": config_file,
             "jobList": [
                 {
-                    "name": substitute(job, job.name),
-                    "executable": substitute(job, job.executable),
-                    "target_file": substitute(job, job.target_file),
-                    "error_file": substitute(job, job.error_file),
-                    "start_file": substitute(job, job.start_file),
-                    "stdout": substitute(job, job.stdout_file) + f".{idx}"
+                    "name": substituter.substitute(job.name),
+                    "executable": substituter.substitute(job.executable),
+                    "target_file": substituter.substitute(job.target_file),
+                    "error_file": substituter.substitute(job.error_file),
+                    "start_file": substituter.substitute(job.start_file),
+                    "stdout": substituter.substitute(job.stdout_file) + f".{idx}"
                     if job.stdout_file
                     else None,
-                    "stderr": substitute(job, job.stderr_file) + f".{idx}"
+                    "stderr": substituter.substitute(job.stderr_file) + f".{idx}"
                     if job.stderr_file
                     else None,
-                    "stdin": substitute(job, job.stdin_file),
+                    "stdin": substituter.substitute(job.stdin_file),
                     "argList": [
-                        handle_default(job, substitute(job, arg)) for arg in job.arglist
+                        handle_default(job, substituter.substitute(arg))
+                        for arg in job.arglist
                     ],
-                    "environment": filter_env_dict(job, job.environment),
-                    "exec_env": filter_env_dict(job, job.exec_env),
+                    "environment": substituter.filter_env_dict(job.environment),
+                    "exec_env": substituter.filter_env_dict(job.exec_env),
                     "max_running_minutes": job.max_running_minutes,
                     "max_running": job.max_running,
                     "min_arg": job.min_arg,
                     "arg_types": job.arg_types,
                     "max_arg": job.max_arg,
                 }
-                for idx, job in enumerate(forward_model_list)
+                for idx, job, substituter in [
+                    (idx, job, Substituter(job))
+                    for idx, job in enumerate(forward_model_list)
+                ]
             ],
             "run_id": run_id,
             "ert_pid": str(os.getpid()),
