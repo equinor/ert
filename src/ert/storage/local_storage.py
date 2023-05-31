@@ -120,9 +120,6 @@ class LocalStorageReader:
     def _experiment_path(self, experiment_id: UUID) -> Path:
         return self.path / "experiments" / str(experiment_id)
 
-    def __del__(self) -> None:
-        self.close()
-
     def __enter__(self) -> Self:
         return self
 
