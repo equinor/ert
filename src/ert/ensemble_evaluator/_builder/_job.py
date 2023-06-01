@@ -5,7 +5,7 @@ from typing import Any, Callable, List, Optional, Tuple, Union
 
 from typing_extensions import Self
 
-from ert._c_wrappers.job_queue.ext_job import ExtJob
+from ert.job_queue import ExtJob
 
 SOURCE_TEMPLATE_JOB = "/job/{job_id}/index/{job_index}"
 _callable_or_path = Union[bytes, Path]

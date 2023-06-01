@@ -1,6 +1,6 @@
 import pytest
 
-from ert._c_wrappers.job_queue import ErtScript
+from ert import ErtScript
 
 from .workflow_common import WorkflowCommon
 

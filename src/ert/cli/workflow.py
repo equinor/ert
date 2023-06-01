@@ -1,6 +1,6 @@
 import logging
 
-from ert._c_wrappers.job_queue import WorkflowRunner
+from ert.job_queue import WorkflowRunner
 
 
 def execute_workflow(ert, storage, workflow_name):

@@ -399,7 +399,7 @@ def test_that_magic_strings_get_substituted_in_workflow():
         fh.write(
             dedent(
                 """
-                from ert._c_wrappers.job_queue import ErtScript
+                from ert import ErtScript
                 class Script(ErtScript):
                     def run(self, *args):
                         pass

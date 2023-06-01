@@ -3,8 +3,8 @@ from unittest.mock import patch
 
 import pytest
 
-from ert._c_wrappers.job_queue import Workflow, WorkflowJob, WorkflowRunner
 from ert._c_wrappers.util.substitution_list import SubstitutionList
+from ert.job_queue import Workflow, WorkflowJob, WorkflowRunner
 from tests.utils import wait_until
 
 from .workflow_common import WorkflowCommon

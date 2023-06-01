@@ -9,11 +9,10 @@ import pytest
 
 import ert.ensemble_evaluator
 from ert._c_wrappers.enkf.queue_config import QueueConfig
-from ert._c_wrappers.job_queue.driver import LOCAL_DRIVER
-from ert._c_wrappers.job_queue.ext_job import ExtJob
 from ert.ensemble_evaluator.config import EvaluatorServerConfig
 from ert.ensemble_evaluator.evaluator import EnsembleEvaluator
 from ert.ensemble_evaluator.snapshot import SnapshotBuilder
+from ert.job_queue import ExtJob, QueueDriverEnum
 from ert.load_status import LoadStatus
 
 from .ensemble_evaluator_utils import TestEnsemble
@@ -65,7 +64,7 @@ def queue_config():
     return QueueConfig(
         job_script="job_dispatch.py",
         max_submit=100,
-        queue_system=LOCAL_DRIVER,
+        queue_system=QueueDriverEnum.LOCAL_DRIVER,
         queue_options=[("MAX_RUNNING", "50")],
     )
 

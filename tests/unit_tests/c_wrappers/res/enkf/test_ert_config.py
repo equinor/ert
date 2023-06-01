@@ -13,8 +13,8 @@ from ecl.util.enums import RngAlgTypeEnum
 from ert._c_wrappers.enkf import AnalysisConfig, ConfigKeys, ErtConfig, HookRuntime
 from ert._c_wrappers.enkf._config_content_as_dict import parse_signature_job
 from ert._c_wrappers.enkf.ert_config import site_config_location
-from ert._c_wrappers.job_queue import QueueDriverEnum
 from ert._c_wrappers.sched import HistorySourceEnum
+from ert.job_queue import QueueDriverEnum
 from ert.parsing import ConfigValidationError
 
 config_defines = {
@@ -587,7 +587,7 @@ def test_that_get_plugin_jobs_fetches_exactly_ert_plugins():
         fh.write(
             dedent(
                 """
-                from ert._c_wrappers.job_queue import ErtScript
+                from ert import ErtScript
                 class Script(ErtScript):
                     def run(self, *args):
                         pass
@@ -598,7 +598,7 @@ def test_that_get_plugin_jobs_fetches_exactly_ert_plugins():
         fh.write(
             dedent(
                 """
-                from ert._c_wrappers.job_queue import ErtPlugin
+                from ert.job_queue import ErtPlugin
                 class Plugin(ErtPlugin):
                     def run(self, *args):
                         pass

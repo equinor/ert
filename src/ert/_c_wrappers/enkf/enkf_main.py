@@ -21,8 +21,8 @@ from ert._c_wrappers.enkf.ensemble_config import EnsembleConfig
 from ert._c_wrappers.enkf.enums import RealizationStateEnum
 from ert._c_wrappers.enkf.ert_run_context import RunContext
 from ert._c_wrappers.enkf.model_config import ModelConfig
-from ert._c_wrappers.job_queue import WorkflowRunner
 from ert._c_wrappers.util.substitution_list import SubstitutionList
+from ert.job_queue import WorkflowRunner
 from ert.runpaths import Runpaths
 
 if TYPE_CHECKING:

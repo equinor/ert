@@ -5,7 +5,7 @@ import time
 import pytest
 
 from ert._c_wrappers.enkf import ErtConfig
-from ert._c_wrappers.job_queue import JobStatusType
+from ert.job_queue import JobStatusType
 from ert.simulator import BatchSimulator
 
 

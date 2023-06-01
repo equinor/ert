@@ -5,7 +5,7 @@ from uuid import UUID
 import pytest
 
 from ert._c_wrappers.enkf import EnKFMain
-from ert._c_wrappers.job_queue import RunStatusType
+from ert.job_queue import RunStatusType
 from ert.run_models import BaseRunModel
 
 

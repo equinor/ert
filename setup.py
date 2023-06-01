@@ -96,7 +96,7 @@ args = dict(
             "_c_wrappers/fm/rms/rms_config.yml",
             "_c_wrappers/fm/ecl/ecl300_config.yml",
             "_c_wrappers/fm/ecl/ecl100_config.yml",
-            "_c_wrappers/job_queue/qstat_proxy.sh",
+            "job_queue/qstat_proxy.sh",
         ],
     },
     include_package_data=True,

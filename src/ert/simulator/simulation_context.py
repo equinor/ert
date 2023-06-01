@@ -7,15 +7,15 @@ from typing import TYPE_CHECKING, Any, List, Optional, Tuple
 
 from ert._c_wrappers.enkf import RunContext
 from ert._c_wrappers.enkf.enums import HookRuntime, RealizationStateEnum
-from ert._c_wrappers.job_queue import JobQueueManager, RunStatusType
 from ert.callbacks import forward_model_exit, forward_model_ok
+from ert.job_queue import JobQueueManager, RunStatusType
 from ert.runpaths import Runpaths
 
 from .forward_model_status import ForwardModelStatus
 
 if TYPE_CHECKING:
     from ert._c_wrappers.enkf import EnKFMain, RunArg
-    from ert._c_wrappers.job_queue import JobQueue, JobStatusType
+    from ert.job_queue import JobQueue, JobStatusType
     from ert.storage import EnsembleAccessor
 
 
