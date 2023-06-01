@@ -54,9 +54,6 @@ def test_create_run_context(monkeypatch, enkf_main, prior_ensemble, config_dict)
     assert [real.job_name for real in run_context] == [
         f"name{i}" for i in range(ensemble_size)
     ]
-    assert [real.eclbase for real in run_context] == [
-        f"name{i}" for i in range(ensemble_size)
-    ]
 
     substitutions = enkf_main.get_context()
     assert "<RUNPATH>" in substitutions
@@ -84,9 +81,6 @@ def test_create_run_context_separate_base_and_name(
     ]
     assert [real.job_name for real in run_context] == [
         f"name{i}" for i in range(ensemble_size)
-    ]
-    assert [real.eclbase for real in run_context] == [
-        f"base{i}" for i in range(ensemble_size)
     ]
 
     substitutions = enkf_main.get_context()

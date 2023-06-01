@@ -202,7 +202,11 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
         return observation.observation_type.name
 
     def get_data_key_for_obs_key(self, observation_key: str) -> str:
-        return self._enkf_main.getObservations()[observation_key].data_key
+        obs = self._enkf_main.getObservations()[observation_key]
+        if obs.observation_type == EnkfObservationImplementationType.SUMMARY_OBS:
+            return list(obs.observations.values())[0].summary_key  # type: ignore
+        else:
+            return obs.data_key
 
     def get_matching_wildcards(self) -> Callable[[str], List[str]]:
         return self._enkf_main.getObservations().getMatchingKeys
@@ -259,10 +263,10 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
             else:
                 return []
         elif key in self.get_summary_keys():
-            return [
-                str(k)
-                for k in self._enkf_main.ensembleConfig().get_node_observation_keys(key)
-            ]
+            obs = self.get_observations().getTypedKeylist(
+                EnkfObservationImplementationType.SUMMARY_OBS
+            )
+            return [i for i in obs if self.get_observations()[i].observation_key == key]
         else:
             return []
 
