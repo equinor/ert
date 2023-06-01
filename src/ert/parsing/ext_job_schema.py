@@ -1,10 +1,10 @@
 from typing import List
 
+from .config_dict import ConfigDict
 from .config_schema_item import SchemaItem, SchemaItemType
 from .deprecation_info import DeprecationInfo
 from .ext_job_keywords import ExtJobKeys
 from .schema_dict import SchemaItemDict
-from .types import ConfigDict
 
 
 def executable_keyword() -> SchemaItem:
@@ -182,7 +182,6 @@ ext_job_schema_items: List[SchemaItem] = [
     arg_type_keyword(),
     env_keyword(),
     exec_env_keyword(),
-    # portable_exe_keyword(),
 ]
 
 ext_job_deprecations: List[DeprecationInfo] = [

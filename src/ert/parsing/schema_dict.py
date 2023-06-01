@@ -2,12 +2,12 @@ import abc
 import warnings
 from typing import Any, Dict, List, Set
 
+from .config_dict import ConfigDict
 from .config_errors import ConfigValidationError, ConfigWarning
 from .config_schema_deprecations import DeprecationInfo
 from .config_schema_item import SchemaItem
 from .context_values import ContextList, ContextString
 from .error_info import ErrorInfo, WarningInfo
-from .types import ConfigDict
 
 
 class SchemaItemDict(dict):
@@ -71,7 +71,11 @@ class SchemaItemDict(dict):
             deprecation_info = maybe_deprecated_kws_dict.get(kw)
             if deprecation_info and kw in self:
                 if v is None:
-                    # Edge case:
+                    # Edge case: Happens if
+                    # a keyword is specified in the schema and takes N args
+                    # and is also specified as deprecated,
+                    # and is specified in the config with 0 arguments
+                    # which parses to None for the args
                     continue
 
                 if isinstance(v, ContextString):

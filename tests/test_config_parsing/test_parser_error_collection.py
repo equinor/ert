@@ -5,13 +5,12 @@ import stat
 from dataclasses import dataclass
 from textwrap import dedent
 from typing import Dict, List, Optional, Union, cast
-from warnings import WarningMessage
 
 import pytest
 from hypothesis import given, strategies
 
 from ert._c_wrappers.enkf import ErtConfig
-from ert.parsing import ConfigValidationError, ConfigWarning
+from ert.parsing import ConfigValidationError
 from ert.parsing.error_info import ErrorInfo
 
 test_config_file_base = "test"
@@ -158,18 +157,11 @@ def assert_that_config_leads_to_warning(
         {config_filename: config_file_contents, **(expected_error.other_files or {})}
     )
 
-    with pytest.warns(ConfigWarning) as the_warnings:
-        ErtConfig.from_file(config_filename, use_new_parser=True)
-
-    warning_infos: List[ErrorInfo] = []
-    for x in the_warnings.list:
-        assert isinstance(x, WarningMessage)
-        message = cast(ConfigWarning, x.message)
-        warning_info = message.info
-        warning_infos.append(warning_info)
+    ert_config = ErtConfig.from_file(config_filename, use_new_parser=True)
 
     warnings_matching_filename = find_and_assert_errors_matching_filename(
-        errors=warning_infos, filename=expected_error.filename
+        errors=cast(List[ErrorInfo], ert_config.warning_infos),
+        filename=expected_error.filename,
     )
 
     warnings_matching_location = find_and_assert_errors_matching_location(

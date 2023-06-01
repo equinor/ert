@@ -32,10 +32,9 @@ from ert.parsing import (
     init_user_config_schema,
     lark_parse,
 )
-from ert.parsing.error_info import ErrorInfo
+from ert.parsing.error_info import ErrorInfo, WarningInfo
 
 from ._config_content_as_dict import config_content_as_dict
-from ._deprecation_migration_suggester import DeprecationMigrationSuggester
 
 logger = logging.getLogger(__name__)
 
@@ -73,6 +72,14 @@ class ErtConfig:
     model_config: ModelConfig = field(default_factory=ModelConfig)
     user_config_file: str = "no_config"
     config_path: str = field(init=False)
+    warning_infos: List[WarningInfo] = field(default=list)
+
+    def __eq__(self, other: "ErtConfig"):
+        ignore_attrs = ["warning_infos"]
+        return all(
+            attr in ignore_attrs or getattr(self, attr) == getattr(other, attr)
+            for attr in vars(self)
+        )
 
     def __post_init__(self):
         self.config_path = (
@@ -147,6 +154,10 @@ class ErtConfig:
         for key, val in config_dict.get("SETENV", []):
             env_vars[key] = val
 
+        warning_infos = []
+        if hasattr(config_dict, "warning_infos"):
+            warning_infos = config_dict.warning_infos
+
         return cls(
             substitution_list=substitution_list,
             ensemble_config=ensemble_config,
@@ -168,6 +179,7 @@ class ErtConfig:
             ),
             model_config=model_config,
             user_config_file=config_file_path,
+            warning_infos=warning_infos,
         )
 
     @classmethod
@@ -254,10 +266,8 @@ class ErtConfig:
 
     @classmethod
     def make_suggestion_list(cls, config_file):
-        return DeprecationMigrationSuggester(
-            ErtConfig._create_user_config_parser(),
-            ErtConfig._create_pre_defines(config_file),
-        ).suggest_migrations(config_file)
+        ert_config = ErtConfig.from_file(user_config_file=config_file)
+        return [x.message for x in ert_config.warning_infos]
 
     @classmethod
     def read_site_config(cls, use_new_parser: bool = USE_NEW_PARSER_BY_DEFAULT):

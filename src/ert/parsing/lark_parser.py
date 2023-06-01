@@ -9,11 +9,12 @@ from typing import List, Optional, Tuple, Union
 from lark import Discard, Lark, Token, Transformer, Tree, UnexpectedCharacters
 from typing_extensions import Self
 
+from .config_dict import ConfigDict
 from .config_errors import ConfigValidationError, ConfigWarning
 from .config_schema import SchemaItem, define_keyword
 from .error_info import ErrorInfo
 from .schema_dict import SchemaItemDict
-from .types import ConfigDict, Defines, FileContextToken, Instruction, MaybeWithContext
+from .types import Defines, FileContextToken, Instruction, MaybeWithContext
 
 grammar = r"""
 WHITESPACE: (" "|"\t")+
@@ -187,7 +188,7 @@ def _tree_to_dict(
     schema: SchemaItemDict,
     site_config: Optional[ConfigDict] = None,
 ) -> ConfigDict:
-    config_dict: ConfigDict = site_config if site_config else {}
+    config_dict = ConfigDict(site_config if site_config else {})
     defines = pre_defines.copy()
     config_dict["DEFINE"] = defines  # type: ignore
 
@@ -529,10 +530,20 @@ def parse(
     # add to this list
     _handle_includes(tree, pre_defines.copy(), filepath)
 
-    return _tree_to_dict(
-        config_file=file,
-        pre_defines=pre_defines,
-        tree=tree,
-        site_config=site_config,
-        schema=schema,
-    )
+    with warnings.catch_warnings(record=True) as warnings_list:
+        warnings.simplefilter("always", category=ConfigWarning)
+        config_dict = _tree_to_dict(
+            config_file=file,
+            pre_defines=pre_defines,
+            tree=tree,
+            site_config=site_config,
+            schema=schema,
+        )
+
+    config_warnings: List[ConfigWarning] = [w.message for w in warnings_list]
+    config_dict.warning_infos = [w.info for w in config_warnings]
+
+    for warning in config_warnings:
+        warnings.warn(warning, category=ConfigWarning)
+
+    return config_dict

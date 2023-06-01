@@ -1,3 +1,5 @@
+from functools import partial
+
 from .deprecation_info import DeprecationInfo
 
 REPLACE_WITH_GEN_KW = [
@@ -12,6 +14,7 @@ JUST_REMOVE_KEYWORDS = [
     "LOG_FILE",
     "LOG_LEVEL",
     "ENKF_RERUN",
+    "GEN_KW_TAG_FORMAT",
 ]
 RSH_KEYWORDS = ["RSH_HOST", "RSH_COMMAND", "MAX_RUNNING_RSH"]
 USE_QUEUE_OPTION = [
@@ -21,14 +24,28 @@ USE_QUEUE_OPTION = [
     "MAX_RUNNING_LOCAL",
 ]
 
+
 deprecated_keywords_list = [
     *[
         DeprecationInfo(
             keyword=kw,
-            message=f"Using {kw} with substitution strings"
-            f"that are not of the form '<KEY>' is deprecated."
-            f"Please change to <{kw.replace('<', '').replace('>','')}>",
-            check=lambda line: not DeprecationInfo.is_angle_bracketed(line[0]),
+            message=partial(
+                lambda line, kw=kw: (
+                    f"Using {kw} with substitution strings"
+                    + "that are not of the form '<KEY>' is deprecated. "
+                    + ". ".join(
+                        [
+                            f"Please change {key} to "
+                            f"<{key.replace('<', '').replace('>', '')}>"
+                            for key in line
+                            if not DeprecationInfo.is_angle_bracketed(key)
+                        ]
+                    )
+                ),
+                kw=kw,
+            ),
+            check=lambda line: not DeprecationInfo.is_angle_bracketed(line[0])
+            or not DeprecationInfo.is_angle_bracketed(line[1]),
         )
         for kw in ["DEFINE", "DATA_KW"]
     ],
@@ -140,10 +157,5 @@ deprecated_keywords_list = [
         " It has been used in the past to set different python versions for the "
         "forward model. This should no longer be necessary."
         "If your setup is not longer working, do not hesitate to contact us.",
-    ),
-    DeprecationInfo(
-        keyword="SCHEDULE_PREDICTION_FILE",
-        message="The SCHEDULE_PREDICTION_FILE keyword has been removed and no longer"
-        " has any effect.",
     ),
 ]
