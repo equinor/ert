@@ -15,7 +15,6 @@ from qtpy.QtWidgets import (
     QWidget,
 )
 
-from ert._c_wrappers.job_queue import WorkflowRunner
 from ert.gui.ertwidgets import (
     CaseSelector,
     addHelpToWidget,
@@ -23,6 +22,7 @@ from ert.gui.ertwidgets import (
     resourceMovie,
 )
 from ert.gui.tools.workflows.workflow_dialog import WorkflowDialog
+from ert.job_queue import WorkflowRunner
 
 if TYPE_CHECKING:
     from ert.gui.ertnotifier import ErtNotifier

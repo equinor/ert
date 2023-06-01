@@ -4,7 +4,7 @@ from typing import Optional
 import pytest
 
 from ert import _clib
-from ert._c_wrappers.job_queue.job_status_type_enum import JobStatusType
+from ert.job_queue import JobStatusType
 
 
 def test_job_create_submit_script(use_tmpdir):

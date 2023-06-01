@@ -859,8 +859,7 @@ ERT_CLIB_SUBMODULE("torque_driver", m) {
 
     py::str file = ert.attr("__file__");
     fs::path path = static_cast<std::string>(file);
-    DEFAULT_QSTAT_CMD =
-        path.parent_path() / "_c_wrappers/job_queue/qstat_proxy.sh";
+    DEFAULT_QSTAT_CMD = path.parent_path() / "job_queue/qstat_proxy.sh";
 
     /* Expose for tests */
     auto pathlib = py::module_::import("pathlib");

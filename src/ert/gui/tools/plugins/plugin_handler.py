@@ -4,8 +4,8 @@ from .plugin import Plugin
 
 if TYPE_CHECKING:
     from ert._c_wrappers.enkf import EnKFMain
-    from ert._c_wrappers.job_queue import WorkflowJob
     from ert.gui.ertnotifier import ErtNotifier
+    from ert.job_queue import WorkflowJob
 
 
 class PluginHandler:

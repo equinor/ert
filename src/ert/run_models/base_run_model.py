@@ -16,7 +16,6 @@ import _ert_com_protocol
 from ert._c_wrappers.enkf import EnKFMain, QueueConfig
 from ert._c_wrappers.enkf.enums import HookRuntime
 from ert._c_wrappers.enkf.ert_run_context import RunContext
-from ert._c_wrappers.job_queue import RunStatusType
 from ert.callbacks import forward_model_exit, forward_model_ok
 from ert.cli import MODULE_MODE
 from ert.ensemble_evaluator import (
@@ -28,6 +27,7 @@ from ert.ensemble_evaluator import (
     RealizationBuilder,
     StepBuilder,
 )
+from ert.job_queue import RunStatusType
 from ert.libres_facade import LibresFacade
 from ert.storage import StorageAccessor
 

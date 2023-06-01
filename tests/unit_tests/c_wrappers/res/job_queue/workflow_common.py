@@ -43,7 +43,7 @@ class WorkflowCommon:
     @staticmethod
     def createErtScriptsJob():
         with open("subtract_script.py", "w", encoding="utf-8") as f:
-            f.write("from ert._c_wrappers.job_queue import ErtScript\n")
+            f.write("from ert import ErtScript\n")
             f.write("\n")
             f.write("class SubtractScript(ErtScript):\n")
             f.write("    def run(self, arg1, arg2):\n")
@@ -60,7 +60,7 @@ class WorkflowCommon:
     @staticmethod
     def createWaitJob():
         with open("wait_job.py", "w", encoding="utf-8") as f:
-            f.write("from ert._c_wrappers.job_queue import ErtScript\n")
+            f.write("from ert import ErtScript\n")
             f.write("import time\n")
             f.write("\n")
             f.write("class WaitScript(ErtScript):\n")

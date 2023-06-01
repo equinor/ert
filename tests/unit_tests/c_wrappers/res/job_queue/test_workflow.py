@@ -3,8 +3,8 @@ import os
 import pytest
 from hypothesis import given, strategies
 
-from ert._c_wrappers.job_queue import Workflow, WorkflowJob, WorkflowRunner
 from ert._c_wrappers.util.substitution_list import SubstitutionList
+from ert.job_queue import Workflow, WorkflowJob, WorkflowRunner
 from ert.parsing import ConfigValidationError
 
 from .workflow_common import WorkflowCommon

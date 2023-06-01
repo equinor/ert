@@ -1,13 +1,13 @@
 from typing import TYPE_CHECKING, Any, List
 
-from ert._c_wrappers.job_queue import ErtScript
+from ert import ErtScript
 
 if TYPE_CHECKING:
     from qtpy.QtWidgets import QWidget
 
     from ert._c_wrappers.enkf import EnKFMain
-    from ert._c_wrappers.job_queue import ErtPlugin, WorkflowJob
     from ert.gui.ertnotifier import ErtNotifier
+    from ert.job_queue import ErtPlugin, WorkflowJob
 
 
 class Plugin:

@@ -7,7 +7,7 @@ from typing import Callable, List, TypedDict
 
 import pytest
 
-from ert._c_wrappers.job_queue import (
+from ert.job_queue import (
     Driver,
     JobQueue,
     JobQueueManager,

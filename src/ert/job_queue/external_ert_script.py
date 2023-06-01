@@ -5,7 +5,7 @@ import sys
 from subprocess import PIPE, Popen
 from typing import TYPE_CHECKING, Any, Optional
 
-from ert._c_wrappers.job_queue import ErtScript
+from ert.job_queue import ErtScript
 
 if TYPE_CHECKING:
     from ert._c_wrappers.enkf import EnKFMain

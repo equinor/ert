@@ -17,14 +17,9 @@ from ert._c_wrappers.enkf.ensemble_config import EnsembleConfig
 from ert._c_wrappers.enkf.enums import HookRuntime
 from ert._c_wrappers.enkf.model_config import ModelConfig
 from ert._c_wrappers.enkf.queue_config import QueueConfig
-from ert._c_wrappers.job_queue import (
-    ErtScriptLoadFailure,
-    ExtJob,
-    Workflow,
-    WorkflowJob,
-)
 from ert._c_wrappers.util import SubstitutionList
 from ert._clib.config_keywords import init_site_config_parser, init_user_config_parser
+from ert.job_queue import ErtScriptLoadFailure, ExtJob, Workflow, WorkflowJob
 from ert.parsing import (
     ConfigValidationError,
     ConfigWarning,

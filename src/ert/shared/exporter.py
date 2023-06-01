@@ -1,8 +1,8 @@
 import logging
 
 from ert._c_wrappers.enkf.enkf_main import EnKFMain
-from ert._c_wrappers.job_queue import WorkflowJobRunner
 from ert.gui.ertnotifier import ErtNotifier
+from ert.job_queue import WorkflowJobRunner
 from ert.libres_facade import LibresFacade
 
 logger = logging.getLogger(__name__)

@@ -4,7 +4,7 @@ import stat
 from pathlib import Path
 
 from ert._c_wrappers.enkf import QueueConfig
-from ert._c_wrappers.job_queue import QueueDriverEnum
+from ert.job_queue import QueueDriverEnum
 
 
 def test_get_queue_config(minimum_case):

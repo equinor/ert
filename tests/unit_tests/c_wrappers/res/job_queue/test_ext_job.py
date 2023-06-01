@@ -5,7 +5,7 @@ from textwrap import dedent
 
 import pytest
 
-from ert._c_wrappers.job_queue.ext_job import ExtJob
+from ert.job_queue import ExtJob
 from ert.parsing import ConfigValidationError, ConfigWarning, SchemaItemType
 
 

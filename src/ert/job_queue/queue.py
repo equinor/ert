@@ -23,11 +23,11 @@ from websockets.exceptions import ConnectionClosed
 
 import _ert_com_protocol
 from ert._c_wrappers import ResPrototype
-from ert._c_wrappers.job_queue.job_queue_node import JobQueueNode
-from ert._c_wrappers.job_queue.job_status_type_enum import JobStatusType
-from ert._c_wrappers.job_queue.queue_differ import QueueDiffer
-from ert._c_wrappers.job_queue.thread_status_type_enum import ThreadStatus
 from ert.constant_filenames import CERT_FILE, JOBS_FILE, ERROR_file, STATUS_file
+from ert.job_queue.job_queue_node import JobQueueNode
+from ert.job_queue.job_status_type_enum import JobStatusType
+from ert.job_queue.queue_differ import QueueDiffer
+from ert.job_queue.thread_status_type_enum import ThreadStatus
 
 if TYPE_CHECKING:
     from ert._c_wrappers.enkf.ert_config import ErtConfig

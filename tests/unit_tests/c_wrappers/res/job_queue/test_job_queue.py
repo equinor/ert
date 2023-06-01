@@ -7,13 +7,7 @@ from threading import BoundedSemaphore
 from typing import TYPE_CHECKING, Any, Callable, Dict, Optional
 from unittest.mock import MagicMock, patch
 
-from ert._c_wrappers.job_queue import (
-    Driver,
-    JobQueue,
-    JobQueueNode,
-    JobStatusType,
-    QueueDriverEnum,
-)
+from ert.job_queue import Driver, JobQueue, JobQueueNode, JobStatusType, QueueDriverEnum
 from ert.load_status import LoadStatus
 
 if TYPE_CHECKING:
@@ -332,12 +326,12 @@ def test_stop_long_running():
 
     # The driver is of no consequence, so resolving it in the c layer is
     # uninteresting and mocked out.
-    with patch("ert._c_wrappers.job_queue.JobQueue._set_driver"):
+    with patch("ert.job_queue.JobQueue._set_driver"):
         queue = JobQueue(MagicMock())
 
         # We don't need the c layer call here, we only need it added to
         # the queue's job_list.
-        with patch("ert._c_wrappers.job_queue.JobQueue._add_job") as _add_job:
+        with patch("ert.job_queue.JobQueue._add_job") as _add_job:
             for idx, job in enumerate(job_list):
                 _add_job.return_value = idx
                 queue.add_job(job, idx)

@@ -5,7 +5,7 @@ from collections import defaultdict
 from dataclasses import dataclass, field
 from typing import Dict, List, Tuple, Union
 
-from ert._c_wrappers.job_queue import Driver, JobQueue, QueueDriverEnum
+from ert.job_queue import Driver, JobQueue, QueueDriverEnum
 from ert.parsing import ConfigValidationError
 
 

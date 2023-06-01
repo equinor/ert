@@ -35,7 +35,7 @@ if TYPE_CHECKING:
     from ert._c_wrappers.enkf import AnalysisConfig, QueueConfig
     from ert._c_wrappers.enkf.config.gen_kw_config import PriorDict
     from ert._c_wrappers.enkf.enkf_obs import EnkfObs
-    from ert._c_wrappers.job_queue import WorkflowJob
+    from ert.job_queue import WorkflowJob
     from ert.storage import EnsembleAccessor, StorageAccessor
 
 

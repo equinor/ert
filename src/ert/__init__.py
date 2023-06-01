@@ -1,5 +1,5 @@
-from ._c_wrappers.job_queue import ErtScript
 from .data import MeasuredData
+from .job_queue import ErtScript
 from .libres_facade import LibresFacade
 from .simulator import BatchSimulator
 
