@@ -3,10 +3,8 @@ from qtpy.QtWidgets import (
     QHBoxLayout,
     QLabel,
     QPushButton,
-    QSpinBox,
     QTabWidget,
     QTextEdit,
-    QToolButton,
     QVBoxLayout,
     QWidget,
 )
@@ -67,7 +65,6 @@ class CaseInitializationConfigurationPanel(QTabWidget):
 
         self.addCreateNewCaseTab()
         self.addInitializeFromScratchTab()
-        self.addInitializeFromExistingTab()
         self.addShowCaseInfo()
         self.currentChanged.connect(self.on_tab_changed)
 
@@ -125,92 +122,6 @@ class CaseInitializationConfigurationPanel(QTabWidget):
 
         panel.setLayout(layout)
         self.addTab(panel, "Initialize from scratch")
-
-    def addInitializeFromExistingTab(self):
-        widget = QWidget()
-        widget.setObjectName("intialize_from_existing_panel")
-        layout = QVBoxLayout()
-
-        target_case = CaseSelector(self.notifier)
-        row = createRow(QLabel("Target case:"), target_case)
-        layout.addLayout(row)
-
-        source_case = CaseSelector(
-            self.notifier,
-            update_ert=False,
-            show_only_initialized=True,
-            ignore_current=True,
-        )
-        row = createRow(QLabel("Source case:"), source_case)
-        layout.addLayout(row)
-
-        row, _ = self.createTimeStepRow()
-        layout.addLayout(row)
-
-        layout.addSpacing(10)
-        check_list_layout, parameter_model, members_model = createCheckLists(self.ert)
-        layout.addLayout(check_list_layout)
-        layout.addSpacing(10)
-
-        initialize_button = QPushButton(
-            "Initialize", objectName="initialize_existing_button"
-        )
-        if source_case.currentData() is None or target_case.currentData() is None:
-            initialize_button.setEnabled(False)
-        addHelpToWidget(initialize_button, "init/initialize_from_existing")
-        initialize_button.setMinimumWidth(75)
-        initialize_button.setMaximumWidth(150)
-
-        @showWaitCursorWhileWaiting
-        def initializeFromExisting(_):
-            source_ensemble = source_case.currentData()
-            target_ensemble = target_case.currentData()
-            parameters = parameter_model.getSelectedItems()
-            members = members_model.getSelectedItems()
-            if source_ensemble.is_initalized:
-                member_mask = [False] * self.ert.getEnsembleSize()
-                for member in members:
-                    member_mask[int(member)] = True
-                source_ensemble.copy_from_case(target_ensemble, parameters, member_mask)
-
-        initialize_button.clicked.connect(initializeFromExisting)
-        layout.addWidget(initialize_button, 0, Qt.AlignCenter)
-
-        layout.addSpacing(10)
-
-        layout.addStretch()
-        widget.setLayout(layout)
-        self.addTab(widget, "Initialize from existing")
-
-    def createTimeStepRow(self):
-        history_length_spinner = QSpinBox()
-        addHelpToWidget(history_length_spinner, "config/init/history_length")
-        history_length_spinner.setMinimum(0)
-        history_length_spinner.setMaximum(max(0, self.ert.getHistoryLength()))
-
-        initial = QToolButton()
-        initial.setText("Initial")
-        addHelpToWidget(initial, "config/init/history_length")
-
-        def setToMin():
-            history_length_spinner.setValue(0)
-
-        initial.clicked.connect(setToMin)
-
-        end_of_time = QToolButton()
-        end_of_time.setText("End of time")
-        addHelpToWidget(end_of_time, "config/init/history_length")
-
-        def setToMax():
-            history_length_spinner.setValue(self.ert.getHistoryLength())
-
-        end_of_time.clicked.connect(setToMax)
-
-        row = createRow(
-            QLabel("Timestep:"), history_length_spinner, initial, end_of_time
-        )
-
-        return row, history_length_spinner
 
     def addShowCaseInfo(self):
         case_widget = QWidget()
