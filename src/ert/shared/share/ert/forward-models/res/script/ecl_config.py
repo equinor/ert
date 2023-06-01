@@ -2,6 +2,7 @@ import os
 import re
 import subprocess
 import sys
+from typing import Any, Dict, List, Optional
 
 import yaml
 
@@ -12,12 +13,11 @@ def re_getenv(match_obj):
     return os.getenv(variable, default=match_str)
 
 
-# Small utility function will take a dict as input, and create a new dictionary
-# where all $VARIABLE in the values has been replaced with getenv("VARIABLE").
-# Variables which are not recognized are left unchanged.
-
-
-def _replace_env(env):
+def _replace_env(env: dict) -> dict:
+    """Small utility function will take a dict as input, and create a new
+    dictionary where all $VARIABLE in the values has been replaced with
+    getenv("VARIABLE"). Variables which are not recognized are left
+    unchanged."""
     new_env = {}
     for key, value in env.items():
         new_env[key] = re.sub(r"(\$[A-Z0-9_]+)", re_getenv, value)
@@ -26,37 +26,42 @@ def _replace_env(env):
 
 
 class Keys:
-    default_version = "default_version"
-    default = "default"
-    versions = "versions"
-    env = "env"
-    mpi = "mpi"
-    mpirun = "mpirun"
-    executable = "executable"
-    scalar = "scalar"
+    default_version: str = "default_version"
+    default: str = "default"
+    versions: str = "versions"
+    env: str = "env"
+    mpi: str = "mpi"
+    mpirun: str = "mpirun"
+    executable: str = "executable"
+    scalar: str = "scalar"
 
 
 class Simulator:
     """Small 'struct' with the config information for one simulator."""
 
-    def __init__(self, version, executable, env, mpirun=None):
-        self.version = version
+    def __init__(
+        self,
+        version: str,
+        executable: str,
+        env: Dict[str, str],
+        mpirun: Optional[str] = None,
+    ):
+        self.version: str = version
         if not os.access(executable, os.X_OK):
             raise OSError(f"The executable: '{executable}' can not be executed by user")
 
-        self.executable = executable
-        self.env = env
-        self.mpirun = mpirun
-        self.name = "simulator"
+        self.executable: str = executable
+        self.env: Dict[str, str] = env
+        self.mpirun: Optional[str] = mpirun
+        self.name: str = "simulator"
 
-        if mpirun is not None:
-            if not os.access(mpirun, os.X_OK):
-                raise OSError(
-                    f"The mpirun argument: '{executable}' is not executable by user"
-                )
+        if mpirun is not None and not os.access(mpirun, os.X_OK):
+            raise OSError(
+                f"The mpirun argument: '{executable}' is not executable by user"
+            )
 
-    def __repr__(self):
-        mpistring = ""
+    def __repr__(self) -> str:
+        mpistring: str = ""
         if self.mpirun:
             mpistring = " MPI"
         return (
@@ -76,33 +81,33 @@ class EclConfig:
 
     """
 
-    def __init__(self, config_file, simulator_name="not_set"):
+    def __init__(self, config_file: str, simulator_name: str = "not_set"):
         with open(config_file, encoding="utf-8") as f:
             try:
                 config = yaml.safe_load(f)
             except yaml.YAMLError:
                 raise ValueError(f"Failed parse: {config_file} as yaml")
 
-        self._config = config
-        self._config_file = os.path.abspath(config_file)
-        self.simulator_name = simulator_name
+        self._config: dict = config
+        self._config_file: str = os.path.abspath(config_file)
+        self.simulator_name: str = simulator_name
 
-    def __contains__(self, version):
+    def __contains__(self, version: str) -> bool:
         if version in self._config[Keys.versions]:
             return True
 
         return self.default_version is not None and version in [None, Keys.default]
 
-    def get_eclrun_env(self):
+    def get_eclrun_env(self) -> Optional[Dict[str, str]]:
         if "eclrun_env" in self._config:
             return self._config["eclrun_env"].copy()
         return None
 
     @property
-    def default_version(self):
+    def default_version(self) -> Optional[str]:
         return self._config.get(Keys.default_version)
 
-    def _get_version(self, version_arg):
+    def _get_version(self, version_arg: Optional[str]) -> str:
         if version_arg in [None, Keys.default]:
             version = self.default_version
         else:
@@ -116,41 +121,46 @@ class EclConfig:
 
         return version
 
-    def _get_env(self, version, exe_type):
-        env = {}
+    def _get_env(self, version: str, exe_type: str) -> Dict[str, str]:
+        env: Dict[str, str] = {}
         env.update(self._config.get(Keys.env, {}))
 
-        version = self._get_version(version)
-        mpi_sim = self._config[Keys.versions][version][exe_type]
+        mpi_sim: Dict[str, Any] = self._config[Keys.versions][
+            self._get_version(version)
+        ][exe_type]
         env.update(mpi_sim.get(Keys.env, {}))
+
         return _replace_env(env)
 
-    def _get_sim(self, version, exe_type):
+    def _get_sim(self, version: Optional[str], exe_type: str) -> Simulator:
         version = self._get_version(version)
-        d = self._config[Keys.versions][version][exe_type]
+        binaries: Dict[str, str] = self._config[Keys.versions][version][exe_type]
         if exe_type == Keys.mpi:
-            mpirun = d[Keys.mpirun]
+            mpirun = binaries[Keys.mpirun]
         else:
             mpirun = None
         return Simulator(
-            version, d[Keys.executable], self._get_env(version, exe_type), mpirun=mpirun
+            version,
+            binaries[Keys.executable],
+            self._get_env(version, exe_type),
+            mpirun=mpirun,
         )
 
-    def sim(self, version=None):
-        """Will return a small struct describing the simulator.
+    def sim(self, version: Optional[str] = None) -> Simulator:
+        """Will return an object describing the simulator.
 
-        The struct has attributes 'executable' and 'env'. Observe that the
+        Available attributes are 'executable' and 'env'. Observe that the
         executable path is validated when you instantiate the Simulator object;
         so if the executable key in the config file points to non-existing file
         you will not get the error before this point.
         """
         return self._get_sim(version, Keys.scalar)
 
-    def mpi_sim(self, version=None):
-        """MPI version of method sim()."""
+    def mpi_sim(self, version: Optional[str] = None) -> Simulator:
+        """MPI version of method sim()"""
         return self._get_sim(version, Keys.mpi)
 
-    def simulators(self, strict=True):
+    def simulators(self, strict: bool = True) -> List[Simulator]:
         simulators = []
         for version in self._config[Keys.versions].keys():
             for exe_type in self._config[Keys.versions][version].keys():
@@ -159,9 +169,7 @@ class EclConfig:
                 else:
                     try:
                         sim = self._get_sim(version, exe_type)
-                    # This exception should be more specific after resolving
-                    # https://github.com/equinor/ert/issues/1955
-                    except Exception:
+                    except OSError:
                         sys.stderr.write(
                             "Failed to create simulator object for: "
                             f"version:{version} {exe_type}\n"
@@ -174,7 +182,9 @@ class EclConfig:
 
 
 class Ecl100Config(EclConfig):
-    DEFAULT_CONFIG_FILE = os.path.join(os.path.dirname(__file__), "ecl100_config.yml")
+    DEFAULT_CONFIG_FILE: str = os.path.join(
+        os.path.dirname(__file__), "ecl100_config.yml"
+    )
 
     def __init__(self):
         config_file = os.getenv("ECL100_SITE_CONFIG", default=self.DEFAULT_CONFIG_FILE)
@@ -182,7 +192,9 @@ class Ecl100Config(EclConfig):
 
 
 class Ecl300Config(EclConfig):
-    DEFAULT_CONFIG_FILE = os.path.join(os.path.dirname(__file__), "ecl300_config.yml")
+    DEFAULT_CONFIG_FILE: str = os.path.join(
+        os.path.dirname(__file__), "ecl300_config.yml"
+    )
 
     def __init__(self):
         config_file = os.getenv("ECL300_SITE_CONFIG", default=self.DEFAULT_CONFIG_FILE)
@@ -190,7 +202,9 @@ class Ecl300Config(EclConfig):
 
 
 class FlowConfig(EclConfig):
-    DEFAULT_CONFIG_FILE = os.path.join(os.path.dirname(__file__), "flow_config.yml")
+    DEFAULT_CONFIG_FILE: str = os.path.join(
+        os.path.dirname(__file__), "flow_config.yml"
+    )
 
     def __init__(self):
         config_file = os.getenv("FLOW_SITE_CONFIG", default=self.DEFAULT_CONFIG_FILE)
@@ -203,30 +217,34 @@ class EclrunConfig:
     get the configuration in the ECLX00_SITE_CONFIG files.
     """
 
-    def __init__(self, config, version):
-        self.simulator_name = config.simulator_name
-        self.run_env = self._get_run_env(config.get_eclrun_env())
-        self.version = version
+    def __init__(self, config: EclConfig, version: str):
+        self.simulator_name: str = config.simulator_name
+        self.run_env: Optional[Dict[str, str]] = self._get_run_env(
+            config.get_eclrun_env()
+        )
+        self.version: str = version
 
-    def _get_run_env(self, eclrun_env):
+    def _get_run_env(
+        self, eclrun_env: Optional[Dict[str, str]]
+    ) -> Optional[Dict[str, str]]:
         if eclrun_env is None:
             return None
 
-        env = os.environ.copy()
+        env: dict = os.environ.copy()
         if "PATH" in eclrun_env:
             env["PATH"] = eclrun_env["PATH"] + os.pathsep + env["PATH"]
             eclrun_env.pop("PATH")
 
-        for k, v in eclrun_env.copy().items():
-            if v is None:
-                if k in env:
-                    env.pop(k)
-                eclrun_env.pop(k)
+        for key, value in eclrun_env.copy().items():
+            if value is None:
+                if key in env:
+                    env.pop(key)
+                eclrun_env.pop(key)
 
         env.update(eclrun_env)
         return env
 
-    def _get_available_eclrun_versions(self):
+    def _get_available_eclrun_versions(self) -> List[str]:
         try:
             return (
                 subprocess.check_output(
@@ -240,7 +258,7 @@ class EclrunConfig:
         except subprocess.CalledProcessError:
             return []
 
-    def can_use_eclrun(self):
+    def can_use_eclrun(self) -> bool:
         if self.run_env is None:
             return False
 
