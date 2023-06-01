@@ -5,9 +5,15 @@ from .error_info import ErrorInfo, WarningInfo
 
 
 class ConfigWarning(UserWarning):
+    info: WarningInfo
+
     def __init__(self, info: Union[str, WarningInfo]):
-        super().__init__(info if isinstance(info, str) else info.message)
-        self.info = info
+        if isinstance(info, str):
+            super().__init__(info)
+            self.info = WarningInfo(message=info, filename="")
+        else:
+            super().__init__(info.message)
+            self.info = info
 
 
 class ConfigValidationError(ValueError):

@@ -4,14 +4,15 @@ import re
 import stat
 from dataclasses import dataclass
 from textwrap import dedent
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Optional, Union, cast
+from warnings import WarningMessage
 
 import pytest
 from hypothesis import given, strategies
 
 from ert._c_wrappers.enkf import ErtConfig
 from ert.parsing import ConfigValidationError, ConfigWarning
-from ert.parsing.error_info import ErrorInfo, WarningInfo
+from ert.parsing.error_info import ErrorInfo
 
 test_config_file_base = "test"
 test_config_filename = f"{test_config_file_base}.ert"
@@ -160,25 +161,26 @@ def assert_that_config_leads_to_warning(
     with pytest.warns(ConfigWarning) as the_warnings:
         ErtConfig.from_file(config_filename, use_new_parser=True)
 
-    warning_infos: List[WarningInfo] = []
+    warning_infos: List[ErrorInfo] = []
     for x in the_warnings.list:
-        assert isinstance(x, Warning)
-        warning_info: WarningInfo = x.args[0]
+        assert isinstance(x, WarningMessage)
+        message = cast(ConfigWarning, x.message)
+        warning_info = message.info
         warning_infos.append(warning_info)
 
     warnings_matching_filename = find_and_assert_errors_matching_filename(
-        errors=List[ErrorInfo](warning_infos), filename=expected_error.filename
+        errors=warning_infos, filename=expected_error.filename
     )
 
     warnings_matching_location = find_and_assert_errors_matching_location(
-        errors=List[ErrorInfo](warnings_matching_filename),
+        errors=warnings_matching_filename,
         line=expected_error.line,
         column=expected_error.column,
         end_column=expected_error.end_column,
     )
 
     warnings_matching_message = find_and_assert_errors_matching_message(
-        errors=List[ErrorInfo](warnings_matching_location), match=expected_error.match
+        errors=warnings_matching_location, match=expected_error.match
     )
 
     if expected_error.count is not None:
