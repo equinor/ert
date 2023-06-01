@@ -26,4 +26,5 @@ start_tests () {
     pushd ${CI_TEST_ROOT}/tests
     xvfb-run -s "-screen 0 640x480x24" --auto-servernum python -m \
     pytest -m "not requires_window_manager" --hypothesis-profile=ci
+    popd
 }
