@@ -55,12 +55,11 @@ class ObsVector:
                 n: "SummaryObservation" = self.observations[time_step]
                 observations.append(n.value)
                 errors.append(n.std)
-            data_key = self.data_key
             time_axis = [obs.obs_time[i] for i in active_steps]
             return "summary", xr.Dataset(
                 {
                     "observations": (["name", "time"], [observations]),
                     "std": (["name", "time"], [errors]),
                 },
-                coords={"time": time_axis, "name": [data_key]},
+                coords={"time": time_axis, "name": [self.observation_key]},
             )

@@ -16,7 +16,6 @@ class RunArg:
     itr: int
     runpath: str
     job_name: str
-    eclbase: str
     active: bool = True
     # Below here is legacy related to Everest
     queue_index: Optional[int] = None

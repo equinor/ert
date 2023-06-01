@@ -6,6 +6,7 @@ from textwrap import dedent
 import pytest
 from ecl.summary import EclSum
 from hypothesis import given
+from hypothesis import strategies as st
 
 from ert._c_wrappers.enkf import EnkfObs, ErtConfig, ObservationConfigError
 from ert.parsing import ConfigValidationError, ConfigWarning
@@ -17,7 +18,7 @@ from .config_dict_generator import config_generators
 @pytest.mark.filterwarnings("ignore::RuntimeWarning")
 @pytest.mark.filterwarnings("ignore::ert.parsing.ConfigWarning")
 @pytest.mark.usefixtures("set_site_config")
-@given(config_generators())
+@given(config_generators(use_eclbase=st.just(True)))
 def test_that_enkf_obs_keys_are_ordered(tmp_path_factory, config_generator):
     filename = "config.ert"
     with config_generator(tmp_path_factory, filename) as config_values:
@@ -57,7 +58,7 @@ def test_that_having_no_refcase_but_history_observations_causes_exception(tmpdir
     with tmpdir.as_cwd():
         config = dedent(
             """
-        JOBNAME my_name%d
+        ECLBASE my_name%d
         NUM_REALIZATIONS 10
         OBS_CONFIG observations
         TIME_MAP time_map.txt

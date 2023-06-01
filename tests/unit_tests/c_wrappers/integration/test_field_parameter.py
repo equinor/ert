@@ -976,7 +976,7 @@ def test_config_node_meta_information(storage, tmpdir):
         assert ensemble_config["KW_NAME"].output_file == "kw.txt"
 
         # summary
-        assert isinstance(ensemble_config["WOPR:MY_WELL"], SummaryConfig)
+        assert isinstance(ensemble_config["summary"], SummaryConfig)
 
         # field
         assert ensemble_config["MY_PARAM2"].forward_init is True

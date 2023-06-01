@@ -4,7 +4,7 @@ import logging
 import os
 import warnings
 from pathlib import Path
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import xtgeo
@@ -173,14 +173,13 @@ class EnsembleConfig:
         gen_data_list: Optional[List] = None,
         gen_kw_list: Optional[List] = None,
         surface_list: Optional[List] = None,
-        summary_list: Optional[List] = None,
+        summary_config: Optional[Tuple[str, List]] = None,
         field_list=None,
         random_seed: Optional[str] = None,
     ):
         gen_kw_list = [] if gen_kw_list is None else gen_kw_list
         gen_data_list = [] if gen_data_list is None else gen_data_list
         surface_list = [] if surface_list is None else surface_list
-        summary_list = [] if summary_list is None else summary_list
         field_list = [] if field_list is None else field_list
 
         self._grid_file = grid_file
@@ -188,7 +187,6 @@ class EnsembleConfig:
         self.refcase: Optional[EclSum] = self._load_refcase(ref_case_file)
         self.parameter_configs = {}
         self.response_configs = {}
-        self._user_summary_keys: List[str] = []
         self.random_seed = _seed_sequence(random_seed)
 
         for gene_data in gen_data_list:
@@ -229,9 +227,9 @@ class EnsembleConfig:
         for surface in surface_list:
             self.addNode(self.get_surface_node(surface))
 
-        for key_list in summary_list:
-            for s_key in key_list:
-                self.add_summary_full(s_key, self.refcase)
+        if summary_config:
+            summary_keys = [item for sublist in summary_config[1] for item in sublist]
+            self.add_summary_full(summary_config[0], summary_keys, self.refcase)
 
         for field in field_list:
             if self.grid_file is None:
@@ -369,9 +367,15 @@ class EnsembleConfig:
         gen_data_list = config_dict.get(ConfigKeys.GEN_DATA, [])
         gen_kw_list = config_dict.get(ConfigKeys.GEN_KW, [])
         surface_list = config_dict.get(ConfigKeys.SURFACE_KEY, [])
-        summary_list = config_dict.get(ConfigKeys.SUMMARY, [])
         field_list = config_dict.get(ConfigKeys.FIELD_KEY, [])
         random_seed = config_dict.get(ConfigKeys.RANDOM_SEED, None)
+
+        ecl_base = config_dict.get("ECLBASE")
+        summary_config = (
+            (ecl_base.replace("%d", "<IENS>"), config_dict.get(ConfigKeys.SUMMARY, []))
+            if ecl_base
+            else None
+        )
 
         ens_config = cls(
             grid_file=grid_file_path,
@@ -379,7 +383,7 @@ class EnsembleConfig:
             gen_data_list=gen_data_list,
             gen_kw_list=gen_kw_list,
             surface_list=surface_list,
-            summary_list=summary_list,
+            summary_config=summary_config,
             field_list=field_list,
             random_seed=random_seed,
         )
@@ -426,15 +430,24 @@ class EnsembleConfig:
     ) -> Union[ParameterConfig, EnsembleConfig,]:
         return self[key]
 
-    def add_summary_full(self, key, refcase) -> SummaryConfig:
-        if key not in self._user_summary_keys:
-            self._user_summary_keys.append(key)
-
-        keylist = _clib.ensemble_config.get_summary_key_list(key, refcase)
-        for k in keylist:
-            if k not in self.keys:
-                summary_config_node = SummaryConfig(k)
-                self.addNode(summary_config_node)
+    def add_summary_full(self, input_file, key_list, refcase) -> SummaryConfig:
+        optional_keys = []
+        for key in key_list:
+            keylist = (
+                _clib.ensemble_config.get_summary_key_list(key, refcase)
+                if refcase
+                else key_list
+            )
+            for k in keylist:
+                optional_keys.append(k)
+        self.addNode(
+            SummaryConfig(
+                name="summary",
+                input_file=input_file,
+                keys=optional_keys,
+                refcase=refcase,
+            )
+        )
 
     @staticmethod
     def _check_config_node(node: GenKwConfig):
@@ -543,18 +556,9 @@ class EnsembleConfig:
         return True
 
     def get_summary_keys(self) -> List[str]:
-        return sorted(self.getKeylistFromImplType(SummaryConfig))
-
-    def get_user_summary_keys(self):
-        return self._user_summary_keys
-
-    def get_node_observation_keys(self, key) -> List[str]:
-        node = self[key]
-        keylist = []
-
-        if isinstance(node, SummaryConfig):
-            keylist = node.get_observation_keys()
-        return keylist
+        if "summary" in self and isinstance(self["summary"], SummaryConfig):
+            return sorted(list(set(self["summary"].keys)))
+        return []
 
     @property
     def parameter_configuration(self) -> List[ParameterConfig]:
