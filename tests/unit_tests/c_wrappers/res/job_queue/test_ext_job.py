@@ -283,7 +283,7 @@ def test_ext_job_arglist_with_weird_characters():
 STDERR    insert_nosim.stderr
 STDOUT    insert_nosim.stdout
 EXECUTABLE sed
-ARGLIST   -i s/^RUNSPEC.*/RUNSPEC\\nNOSIM/ <ECLBASE>.DATA
+ARGLIST   -i s/^RUNSPEC.*/|RUNSPEC\\nNOSIM/ <ECLBASE>.DATA
 MIN_ARG 3
 MAX_ARG 3
 ARG_TYPE 0 STRING
@@ -295,3 +295,4 @@ ARG_TYPE 0 STRING
 
     ext_job = ExtJob.from_config_file("CONFIG")
     assert ext_job.environment == ext_job.default_env
+    assert ext_job.arglist == ["-i", "s/^RUNSPEC.*/|RUNSPEC\nNOSIM/", "<ECLBASE>.DATA"]
