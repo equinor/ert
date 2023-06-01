@@ -506,15 +506,17 @@ def test_error_parse(init_ecl100_config, source_root):
     sim = econfig.sim("2014.2")
     erun = ecl_run.EclRun("SPE1.DATA", sim)
 
-    # NB: The ugly white space in the error0 literal is actually part of
-    #     the string we are matching; i.e. it must be retained.
-    error0 = """ @--  ERROR  AT TIME        0.0   DAYS    ( 1-JAN-0):
- @           UNABLE TO OPEN INCLUDED FILE                                    
- @           /private/joaho/ERT/git/Gurbat/XXexample_grid_sim.GRDECL         
- @           SYSTEM ERROR CODE IS       29                                   """  # noqa
+    error0 = (
+        " @--  ERROR  AT TIME        0.0   DAYS    ( 1-JAN-0):\n"
+        " @           UNABLE TO OPEN INCLUDED FILE                                    \n"  # noqa
+        " @           /private/joaho/ERT/git/Gurbat/XXexample_grid_sim.GRDECL         \n"  # noqa
+        " @           SYSTEM ERROR CODE IS       29                                   "
+    )
 
-    error1 = """ @--  ERROR  AT TIME        0.0   DAYS    ( 1-JAN-0):
- @           INCLUDE FILES MISSING.                                          """  # noqa
+    error1 = (
+        " @--  ERROR  AT TIME        0.0   DAYS    ( 1-JAN-0):\n",
+        " @           INCLUDE FILES MISSING.                                          ",
+    )
 
     assert erun.parseErrors() == [error0, error1]
 
