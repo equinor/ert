@@ -3,6 +3,7 @@ import re
 import shutil
 import stat
 from distutils.spawn import find_executable
+from pathlib import Path
 from subprocess import PIPE, Popen
 
 import pytest
@@ -21,16 +22,12 @@ from ._import_from_location import import_from_location
 
 ecl_config = import_from_location(
     "ecl_config",
-    os.path.join(
-        SOURCE_DIR, "src/ert/shared/share/ert/forward-models/res/script/ecl_config.py"
-    ),
+    SOURCE_DIR / "src/ert/shared/share/ert/forward-models/res/script/ecl_config.py",
 )
 
 ecl_run = import_from_location(
     "ecl_run",
-    os.path.join(
-        SOURCE_DIR, "src/ert/shared/share/ert/forward-models/res/script/ecl_run.py"
-    ),
+    SOURCE_DIR / "src/ert/shared/share/ert/forward-models/res/script/ecl_run.py",
 )
 
 
@@ -51,8 +48,8 @@ def find_version(output):
     return re.search(r"flow\s*([\d.]+)", output).group(1)
 
 
-@pytest.fixture()
-def init_ecl100_config(monkeypatch, tmpdir):
+@pytest.fixture(name="init_ecl100_config")
+def fixture_init_ecl100_config(monkeypatch, tmpdir):
     ecl14_prefix = "/prog/ecl/grid/2014.2/bin/linux_x86_64/"
     ecl19_prefix = "/prog/res/ecl/grid/2019.3/bin/linux_x86_64/"
     mpi_prefix = "/prog/ecl/grid/tools/linux_x86_64/intel/mpi/5.0.2.044/"
@@ -92,14 +89,14 @@ def init_ecl100_config(monkeypatch, tmpdir):
         },
     }
     with tmpdir.as_cwd():
-        with open("ecl100_config.yml", "w", encoding="utf-8") as f:
-            f.write(yaml.dump(conf))
+        with open("ecl100_config.yml", "w", encoding="utf-8") as filehandle:
+            filehandle.write(yaml.dump(conf))
         monkeypatch.setenv("ECL100_SITE_CONFIG", "ecl100_config.yml")
         yield
 
 
-@pytest.fixture
-def init_flow_config(monkeypatch, tmpdir):
+@pytest.fixture(name="init_flow_config")
+def fixture_init_flow_config(monkeypatch, tmpdir):
     version = "2018.10"
 
     with Popen(["flow", "--version"], stdin=PIPE, stdout=PIPE, stderr=PIPE) as process:
@@ -138,41 +135,39 @@ def test_ecl_run_make_LSB_MCPU_machine_list():
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_create(monkeypatch):
-    # This test can make do with a mock simulator; - just something executable
-
+def test_mocked_simulator_configuration(monkeypatch):
     conf = {
         "versions": {
-            "2014.2": {
+            "mocked": {
                 "scalar": {"executable": "bin/scalar_exe"},
                 "mpi": {"executable": "bin/mpi_exe", "mpirun": "bin/mpirun"},
             }
         }
     }
-    with open("ecl100_config.yml", "w", encoding="utf-8") as f:
-        f.write(yaml.dump(conf))
+    with open("ecl100_config.yml", "w", encoding="utf-8") as filehandle:
+        filehandle.write(yaml.dump(conf))
 
     os.mkdir("bin")
     monkeypatch.setenv("ECL100_SITE_CONFIG", "ecl100_config.yml")
-    for f in ["scalar_exe", "mpi_exe", "mpirun"]:
-        fname = os.path.join("bin", f)
-        with open(fname, "w", encoding="utf-8") as fh:
-            fh.write("This is an exectable ...")
+    for filename in ["scalar_exe", "mpi_exe", "mpirun"]:
+        fname = os.path.join("bin", filename)
+        with open(fname, "w", encoding="utf-8") as filehandle:
+            filehandle.write("This is an executable ...")
 
         os.chmod(fname, stat.S_IEXEC)
 
-    with open("ECLIPSE.DATA", "w", encoding="utf-8") as f:
-        f.write("Mock eclipse data file")
+    with open("ECLIPSE.DATA", "w", encoding="utf-8") as filehandle:
+        filehandle.write("Mock eclipse data file")
 
     econfig = ecl_config.Ecl100Config()
-    sim = econfig.sim("2014.2")
-    mpi_sim = econfig.mpi_sim("2014.2")
+    sim = econfig.sim("mocked")
+    mpi_sim = econfig.mpi_sim("mocked")
     erun = ecl_run.EclRun("ECLIPSE.DATA", sim)
     assert erun.runPath() == os.getcwd()
 
     os.mkdir("path")
-    with open("path/ECLIPSE.DATA", "w", encoding="utf-8") as f:
-        f.write("Mock eclipse data file")
+    with open("path/ECLIPSE.DATA", "w", encoding="utf-8") as filehandle:
+        filehandle.write("Mock eclipse data file")
 
     erun = ecl_run.EclRun("path/ECLIPSE.DATA", sim)
     assert erun.runPath() == os.path.join(os.getcwd(), "path")
@@ -236,19 +231,19 @@ def test_running_flow_given_env_config_can_still_read_parent_env(monkeypatch):
         },
     }
 
-    with open("flow_config.yml", "w", encoding="utf-8") as f:
-        f.write(yaml.dump(conf))
+    with open("flow_config.yml", "w", encoding="utf-8") as filehandle:
+        filehandle.write(yaml.dump(conf))
 
     # set the environment variable ENV1
     monkeypatch.setenv("ENV1", "VAL1")
     monkeypatch.setenv("FLOW_SITE_CONFIG", "flow_config.yml")
 
-    with open("DUMMY.DATA", "w", encoding="utf-8") as f:
-        f.write("dummy")
+    with open("DUMMY.DATA", "w", encoding="utf-8") as filehandle:
+        filehandle.write("dummy")
 
-    with open("DUMMY.PRT", "w", encoding="utf-8") as f:
-        f.write("Errors 0\n")
-        f.write("Bugs 0\n")
+    with open("DUMMY.PRT", "w", encoding="utf-8") as filehandle:
+        filehandle.write("Errors 0\n")
+        filehandle.write("Bugs 0\n")
 
     # run the script
     flow_config = ecl_config.FlowConfig()
@@ -257,8 +252,8 @@ def test_running_flow_given_env_config_can_still_read_parent_env(monkeypatch):
     flow_run.runEclipse()
 
     # assert that the script was able to read both the variables correctly
-    with open("out.txt", encoding="utf-8") as f:
-        lines = f.readlines()
+    with open("out.txt", encoding="utf-8") as filehandle:
+        lines = filehandle.readlines()
 
     assert lines == ["VAL1\n", "VAL2\n"]
 
@@ -285,20 +280,20 @@ def test_running_flow_given_no_env_config_can_still_read_parent_env(monkeypatch)
         },
     }
 
-    with open("flow_config.yml", "w", encoding="utf-8") as f:
-        f.write(yaml.dump(conf))
+    with open("flow_config.yml", "w", encoding="utf-8") as filehandle:
+        filehandle.write(yaml.dump(conf))
 
     # set the environment variable ENV1
     monkeypatch.setenv("ENV1", "VAL1")
     monkeypatch.setenv("ENV2", "VAL2")
     monkeypatch.setenv("FLOW_SITE_CONFIG", "flow_config.yml")
 
-    with open("DUMMY.DATA", "w", encoding="utf-8") as f:
-        f.write("dummy")
+    with open("DUMMY.DATA", "w", encoding="utf-8") as filehandle:
+        filehandle.write("dummy")
 
-    with open("DUMMY.PRT", "w", encoding="utf-8") as f:
-        f.write("Errors 0\n")
-        f.write("Bugs 0\n")
+    with open("DUMMY.PRT", "w", encoding="utf-8") as filehandle:
+        filehandle.write("Errors 0\n")
+        filehandle.write("Bugs 0\n")
 
     # run the script
     flow_config = ecl_config.FlowConfig()
@@ -307,8 +302,8 @@ def test_running_flow_given_no_env_config_can_still_read_parent_env(monkeypatch)
     flow_run.runEclipse()
 
     # assert that the script was able to read both the variables correctly
-    with open("out.txt", encoding="utf-8") as f:
-        lines = f.readlines()
+    with open("out.txt", encoding="utf-8") as filehandle:
+        lines = filehandle.readlines()
 
     assert lines == ["VAL1\n", "VAL2\n"]
 
@@ -320,10 +315,10 @@ def test_running_flow_given_env_variables_with_same_name_as_parent_env_variables
     version = "1111.11"
 
     # create a script that prints env vars ENV1 and ENV2 to a file
-    with open("flow", "w", encoding="utf-8") as f:
-        f.write("#!/bin/bash\n")
-        f.write("echo $ENV1 > out.txt\n")
-        f.write("echo $ENV2 >> out.txt\n")
+    with open("flow", "w", encoding="utf-8") as filehandle:
+        filehandle.write("#!/bin/bash\n")
+        filehandle.write("echo $ENV1 > out.txt\n")
+        filehandle.write("echo $ENV2 >> out.txt\n")
     executable = os.path.join(os.getcwd(), "flow")
     os.chmod(executable, 0o777)
 
@@ -340,20 +335,20 @@ def test_running_flow_given_env_variables_with_same_name_as_parent_env_variables
         },
     }
 
-    with open("flow_config.yml", "w", encoding="utf-8") as f:
-        f.write(yaml.dump(conf))
+    with open("flow_config.yml", "w", encoding="utf-8") as filehandle:
+        filehandle.write(yaml.dump(conf))
 
     # set the environment variable ENV1
     monkeypatch.setenv("ENV1", "VAL1")
     monkeypatch.setenv("ENV2", "VAL2")
     monkeypatch.setenv("FLOW_SITE_CONFIG", "flow_config.yml")
 
-    with open("DUMMY.DATA", "w", encoding="utf-8") as f:
-        f.write("dummy")
+    with open("DUMMY.DATA", "w", encoding="utf-8") as filehandle:
+        filehandle.write("dummy")
 
-    with open("DUMMY.PRT", "w", encoding="utf-8") as f:
-        f.write("Errors 0\n")
-        f.write("Bugs 0\n")
+    with open("DUMMY.PRT", "w", encoding="utf-8") as filehandle:
+        filehandle.write("Errors 0\n")
+        filehandle.write("Bugs 0\n")
 
     # run the script
     flow_config = ecl_config.FlowConfig()
@@ -362,8 +357,8 @@ def test_running_flow_given_env_variables_with_same_name_as_parent_env_variables
     flow_run.runEclipse()
 
     # assert that the script was able to read both the variables correctly
-    with open("out.txt", encoding="utf-8") as f:
-        lines = f.readlines()
+    with open("out.txt", encoding="utf-8") as filehandle:
+        lines = filehandle.readlines()
 
     assert lines == ["OVERWRITTEN1\n", "OVERWRITTEN2\n"]
 
@@ -375,54 +370,34 @@ def test_run(init_ecl100_config, source_root):
         "SPE1.DATA",
     )
     econfig = ecl_config.Ecl100Config()
-    sim = econfig.sim("2014.2")
-    erun = ecl_run.EclRun("SPE1.DATA", sim)
-    erun.runEclipse()
-
-    ok_path = os.path.join(erun.runPath(), f"{erun.baseName()}.OK")
-    log_path = os.path.join(erun.runPath(), f"{erun.baseName()}.LOG")
-
-    assert os.path.isfile(ok_path)
-    assert os.path.isfile(log_path)
-    assert os.path.getsize(log_path) > 0
-
-    assert not erun.parseErrors()
-
-    # Monkey patching the erun to use an executable which
-    # will fail with exit(1); don't think Eclipse actually
-    # fails with exit(1) - but let us at least be prepared
-    # when/if it does.
-    erun.sim.executable = source_root / "tests/unit_tests/shared/share/ecl_run_fail"
-
-    with pytest.raises(Exception):
-        erun.runEclipse()
-
-
-@pytest.mark.requires_eclipse
-def test_run_new_log_file(init_ecl100_config, source_root):
-    shutil.copy(
-        source_root / "test-data/eclipse/SPE1.DATA",
-        "SPE1.DATA",
-    )
-    econfig = ecl_config.Ecl100Config()
     sim = econfig.sim("2019.3")
     erun = ecl_run.EclRun("SPE1.DATA", sim)
     erun.runEclipse()
 
-    ok_path = os.path.join(erun.runPath(), f"{erun.baseName()}.OK")
-    log_path = os.path.join(erun.runPath(), f"{erun.baseName()}.OUT")
+    ok_filepath = os.path.join(erun.runPath(), f"{erun.baseName()}.OK")
 
-    assert os.path.isfile(ok_path)
-    assert os.path.isfile(log_path)
-    assert os.path.getsize(log_path) > 0
+    # PRT is an Eclipse-specific extension for its "print-file",
+    # essentially a log-file.
+    prt_filepath = os.path.join(erun.runPath(), f"{erun.baseName()}.PRT")
+
+    assert os.path.isfile(ok_filepath)
+    assert os.path.isfile(prt_filepath)
+    assert os.path.getsize(prt_filepath) > 0
 
     assert not erun.parseErrors()
 
-    # Monkey patching the erun to use an executable which
-    # will fail with exit(1); don't think Eclipse actually
-    # fails with exit(1) - but let us at least be prepared
-    # when/if it does.
+
+@pytest.mark.requires_eclipse
+def test_run_nonzero_exit_code(init_ecl100_config, source_root):
+    """Monkey patching the erun to use an executable which will fail with
+    exit(1); don't think Eclipse actually fails with exit(1) - but let us at
+    least be prepared when/if it does."""
+    Path("FOO.DATA").write_text("", encoding="utf-8")
+    econfig = ecl_config.Ecl100Config()
+    sim = econfig.sim("2019.3")
+    erun = ecl_run.EclRun("FOO.DATA", sim)
     erun.sim.executable = source_root / "tests/unit_tests/shared/share/ecl_run_fail"
+
     with pytest.raises(Exception):
         erun.runEclipse()
 
@@ -434,7 +409,7 @@ def test_run_api(init_ecl100_config, source_root):
         "SPE1.DATA",
     )
     econfig = ecl_config.Ecl100Config()
-    ecl_run.run(econfig, ["SPE1.DATA", "--version=2014.2"])
+    ecl_run.run(econfig, ["SPE1.DATA", "--version=2019.3"])
 
     assert os.path.isfile("SPE1.DATA")
 
@@ -446,7 +421,7 @@ def test_failed_run(init_ecl100_config, source_root):
         "SPE1_ERROR.DATA",
     )
     econfig = ecl_config.Ecl100Config()
-    sim = econfig.sim("2014.2")
+    sim = econfig.sim("2019.3")
     erun = ecl_run.EclRun("SPE1_ERROR", sim)
     with pytest.raises(Exception, match="ERROR"):
         erun.runEclipse()
@@ -463,7 +438,7 @@ def test_failed_run_OK(init_ecl100_config, source_root):
 
     # Monkey patching the ecl_run to use an executable which will fail with exit(1),
     # in the nocheck mode that should also be OK.
-    sim = econfig.sim("2014.2")
+    sim = econfig.sim("2019.3")
     erun = ecl_run.EclRun("SPE1_ERROR", sim, check_status=False)
     erun.sim.executable = source_root / "tests/unit_tests/shared/share/ecl_run_fail"
     erun.runEclipse()
@@ -507,18 +482,20 @@ def test_error_parse(init_ecl100_config, source_root):
     shutil.copy(prt_file, "SPE1.PRT")
 
     econfig = ecl_config.Ecl100Config()
-    sim = econfig.sim("2014.2")
+    sim = econfig.sim("2019.3")
     erun = ecl_run.EclRun("SPE1.DATA", sim)
 
-    # NB: The ugly white space in the error0 literal is actually part of
-    #     the string we are matching; i.e. it must be retained.
-    error0 = """ @--  ERROR  AT TIME        0.0   DAYS    ( 1-JAN-0):
- @           UNABLE TO OPEN INCLUDED FILE                                    
- @           /private/joaho/ERT/git/Gurbat/XXexample_grid_sim.GRDECL         
- @           SYSTEM ERROR CODE IS       29                                   """  # noqa
+    error0 = (
+        " @--  ERROR  AT TIME        0.0   DAYS    ( 1-JAN-0):\n"
+        " @           UNABLE TO OPEN INCLUDED FILE                                    \n"  # noqa
+        " @           /private/joaho/ERT/git/Gurbat/XXexample_grid_sim.GRDECL         \n"  # noqa
+        " @           SYSTEM ERROR CODE IS       29                                   "
+    )
 
-    error1 = """ @--  ERROR  AT TIME        0.0   DAYS    ( 1-JAN-0):
- @           INCLUDE FILES MISSING.                                          """  # noqa
+    error1 = (
+        " @--  ERROR  AT TIME        0.0   DAYS    ( 1-JAN-0):\n"
+        " @           INCLUDE FILES MISSING.                                          "
+    )
 
     assert erun.parseErrors() == [error0, error1]
 

@@ -31,7 +31,7 @@ ecl_run = import_from_location(
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_load(monkeypatch):
+def test_loading_of_eclipse_configurations(monkeypatch):
     source_file = inspect.getsourcefile(ecl_config.Ecl100Config)
     assert source_file is not None
     ecl_config_path = os.path.dirname(source_file)
@@ -66,7 +66,7 @@ def test_load(monkeypatch):
     intel_path = "intel"
     monkeypatch.setenv("ENV1", "A")
     monkeypatch.setenv("ENV2", "C")
-    d = {
+    mocked_simulator_config = {
         ecl_config.Keys.env: {"LICENSE_SERVER": "license@company.com"},
         ecl_config.Keys.versions: {
             "2015": {
@@ -99,8 +99,8 @@ def test_load(monkeypatch):
         },
     }
 
-    with open("file.yml", "w", encoding="utf-8") as f:
-        f.write(yaml.dump(d))
+    with open("file.yml", "w", encoding="utf-8") as filehandle:
+        filehandle.write(yaml.dump(mocked_simulator_config))
 
     conf = ecl_config.Ecl100Config()
     # Fails because there is no version 2020
@@ -148,21 +148,21 @@ def test_load(monkeypatch):
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_default(monkeypatch):
+def test_default_version_definitions(monkeypatch):
     os.mkdir("bin")
     scalar_exe = "bin/scalar_exe"
     with open(scalar_exe, "w", encoding="utf-8") as fh:
-        fh.write("This is an exectable ...")
+        fh.write("This is an executable ...")
     os.chmod(scalar_exe, stat.S_IEXEC)
 
-    d0 = {
+    mock_dict_0 = {
         ecl_config.Keys.versions: {
             "2015": {ecl_config.Keys.scalar: {ecl_config.Keys.executable: scalar_exe}},
             "2016": {ecl_config.Keys.scalar: {ecl_config.Keys.executable: scalar_exe}},
         }
     }
 
-    d1 = {
+    mock_dict_1 = {
         ecl_config.Keys.default_version: "2015",
         ecl_config.Keys.versions: {
             "2015": {ecl_config.Keys.scalar: {ecl_config.Keys.executable: scalar_exe}},
@@ -172,7 +172,7 @@ def test_default(monkeypatch):
 
     monkeypatch.setenv("ECL100_SITE_CONFIG", os.path.join("file.yml"))
     with open("file.yml", "w", encoding="utf-8") as f:
-        f.write(yaml.dump(d1))
+        f.write(yaml.dump(mock_dict_1))
 
     conf = ecl_config.Ecl100Config()
     sim = conf.sim()
@@ -185,8 +185,8 @@ def test_default(monkeypatch):
     sim = conf.sim("default")
     assert sim.version == "2015"
 
-    with open("file.yml", "w", encoding="utf-8") as f:
-        f.write(yaml.dump(d0))
+    with open("file.yml", "w", encoding="utf-8") as filehandle:
+        filehandle.write(yaml.dump(mock_dict_0))
 
     conf = ecl_config.Ecl100Config()
     assert ecl_config.Keys.default not in conf
