@@ -238,7 +238,7 @@ def test_extensive_config(setup_case):
 
     ensemble_config = ert_config.ensemble_config
     assert set(
-        snake_oil_structure_config["SUMMARY"]
+        ["summary"]
         + snake_oil_structure_config["GEN_KW"]
         + snake_oil_structure_config["GEN_DATA"]
     ) == set(ensemble_config.keys)

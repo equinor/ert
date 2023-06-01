@@ -10,7 +10,7 @@ from ecl.summary import EclSumVarType
 from ecl.util.util import CTime, IntVector
 
 from ert import _clib
-from ert._c_wrappers.enkf.config.gen_data_config import GenDataConfig
+from ert._c_wrappers.enkf import GenDataConfig, SummaryConfig
 from ert._c_wrappers.enkf.enums import EnkfObservationImplementationType
 from ert._c_wrappers.enkf.observations import ObsVector
 from ert._c_wrappers.enkf.observations.gen_observation import GenObservation
@@ -120,11 +120,14 @@ class EnkfObs:
     ) -> Dict[str, ObsVector]:
         obs_vectors = {}
         sub_instances = conf_instance.get_sub_instances("HISTORY_OBSERVATION")
-
+        if not sub_instances:
+            return obs_vectors
+        response_config = ensemble_config["summary"]
+        assert isinstance(response_config, SummaryConfig)
         if sub_instances == []:
             return obs_vectors
 
-        refcase = ensemble_config.refcase
+        refcase = response_config.refcase
         if refcase is None:
             raise ObservationConfigError("REFCASE is required for HISTORY_OBSERVATION")
         if history_type is None:
@@ -132,7 +135,7 @@ class EnkfObs:
 
         for instance in sub_instances:
             summary_key = instance.name
-            ensemble_config.add_summary_full(summary_key, refcase)
+            response_config.keys.append(summary_key)
             error = float(instance.get_value("ERROR"))
             error_min = float(instance.get_value("ERROR_MIN"))
             error_mode = instance.get_value("ERROR_MODE")
@@ -208,7 +211,7 @@ class EnkfObs:
                 obs_vectors[summary_key] = ObsVector(
                     EnkfObservationImplementationType.SUMMARY_OBS,
                     summary_key,
-                    ensemble_config.getNode(summary_key).getKey(),
+                    "summary",
                     data,
                 )
         return obs_vectors
@@ -296,8 +299,7 @@ class EnkfObs:
         for instance in conf_instance.get_sub_instances("SUMMARY_OBSERVATION"):
             summary_key = instance.get_value("KEY")
             obs_key = instance.name
-            refcase = ensemble_config.refcase
-            ensemble_config.add_summary_full(summary_key, refcase)
+            ensemble_config["summary"].keys.append(summary_key)
             value, std_dev = cls._make_value_and_std_dev(instance)
             try:
                 restart = cls._get_restart(instance, time_map)
@@ -315,8 +317,8 @@ class EnkfObs:
                 )
             obs_vectors[obs_key] = ObsVector(
                 EnkfObservationImplementationType.SUMMARY_OBS,  # type: ignore
-                obs_key,
-                ensemble_config.getNode(summary_key).getKey(),
+                summary_key,
+                "summary",
                 {restart: SummaryObservation(summary_key, obs_key, value, std_dev)},
             )
         return obs_vectors
@@ -493,12 +495,7 @@ class EnkfObs:
                 )
 
                 for state_kw in set(o.data_key for o in obs_vectors.values()):
-                    obs_keys = sorted(
-                        k for k, o in obs_vectors.items() if o.data_key == state_kw
-                    )
-                    node = ensemble_config.getNode(state_kw)
-                    if node is not None:
-                        node.update_observation_keys(obs_keys)
+                    assert state_kw in ensemble_config.response_configs
                 return EnkfObs(obs_vectors, obs_time_list)
             except IndexError as err:
                 if config.ensemble_config.refcase is not None:

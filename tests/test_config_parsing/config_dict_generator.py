@@ -391,8 +391,8 @@ def composite_keys(smspec: Smspec) -> st.SearchStrategy[str]:
 
 
 @st.composite
-def ert_config_values(draw):
-    use_eclbase = draw(st.booleans())
+def ert_config_values(draw, use_eclbase=st.booleans()):
+    use_eclbase = draw(use_eclbase)
     queue_system = draw(queue_systems)
     install_jobs = draw(small_list(random_ext_job_names(words, file_names)))
     forward_model = draw(small_list(job(install_jobs))) if install_jobs else []
@@ -576,8 +576,8 @@ def _observation_dates(
 
 
 @st.composite
-def config_generators(draw):
-    config_values = draw(ert_config_values())
+def config_generators(draw, use_eclbase=st.booleans()):
+    config_values = draw(ert_config_values(use_eclbase=use_eclbase))
 
     should_exist_files = [job_path for _, job_path in config_values.install_job]
     should_exist_files.extend(

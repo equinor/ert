@@ -10,6 +10,7 @@ import numpy as np
 import xarray as xr
 from ecl.summary import EclSum
 
+from ert._c_wrappers.enkf import SummaryConfig
 from ert.load_status import LoadResult, LoadStatus
 
 if TYPE_CHECKING:
@@ -73,14 +74,13 @@ def _load_summary_data(run_path: str, job_name: str) -> EclSum:
 
 
 def _internalize_SUMMARY_DATA(
-    ens_config: EnsembleConfig, run_arg: RunArg, summary: EclSum
+    ens_config: EnsembleConfig, run_arg: RunArg, summary: EclSum, config: SummaryConfig
 ) -> LoadResult:
     data = []
     keys = []
     time_map = summary.alloc_time_vector(True)
     axis = [t.datetime() for t in time_map]
-
-    if ens_config.refcase:
+    if config.refcase:
         existing_time_map = ens_config.refcase.alloc_time_vector(True)
         missing = []
         for step, (response_t, reference_t) in enumerate(
@@ -96,10 +96,10 @@ def _internalize_SUMMARY_DATA(
                 f"{missing[0][0]}, reference case: {missing[0][1]}, last: Time "
                 f"mismatch for step: {missing[-1][2]}, response time: {missing[-1][0]}"
                 f", reference case: {missing[-1][1]} from: {run_arg.runpath}/"
-                f"{run_arg.eclbase}.UNSMRY"
+                f"{config.input_file}.UNSMRY"
             )
 
-    user_summary_keys = ens_config.get_user_summary_keys()
+    user_summary_keys = set(config.keys)
     for key in summary:
         if not _should_load_summary_key(key, user_summary_keys):
             continue
@@ -125,20 +125,22 @@ def _internalize_SUMMARY_DATA(
 def _write_summary_data_to_storage(
     ens_config: EnsembleConfig, run_arg: RunArg
 ) -> LoadResult:
-    user_summary_keys = ens_config.get_user_summary_keys()
+    user_summary_keys = ens_config.get_summary_keys()
     if not user_summary_keys:
         return LoadResult(LoadStatus.LOAD_SUCCESSFUL, "")
-
+    config = ens_config["summary"]
+    assert isinstance(config, SummaryConfig)
+    filename = config.input_file.replace("<IENS>", str(run_arg.iens))
     try:
-        summary = _load_summary_data(run_arg.runpath, run_arg.eclbase)
+        summary = _load_summary_data(run_arg.runpath, filename)
     except IOError:
         return LoadResult(
             LoadStatus.LOAD_FAILURE,
             "Could not find SUMMARY file or using non unified SUMMARY "
-            f"file from: {run_arg.runpath}/{run_arg.eclbase}.UNSMRY",
+            f"file from: {run_arg.runpath}/{filename}.UNSMRY",
         )
 
-    return _internalize_SUMMARY_DATA(ens_config, run_arg, summary)
+    return _internalize_SUMMARY_DATA(ens_config, run_arg, summary, config)
 
 
 def _write_gen_data_to_storage(

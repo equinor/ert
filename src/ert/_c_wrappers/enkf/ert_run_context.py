@@ -27,12 +27,9 @@ class RunContext:
         job_names = self.runpaths.get_jobnames(
             list(range(len(self.initial_mask))), self.iteration
         )
-        eclbases = self.runpaths.get_eclbases(
-            list(range(len(self.initial_mask))), self.iteration
-        )
 
-        for iens, (run_path, job_name, active, eclbase) in enumerate(
-            zip(paths, job_names, self.initial_mask, eclbases)
+        for iens, (run_path, job_name, active) in enumerate(
+            zip(paths, job_names, self.initial_mask)
         ):
             self.run_args.append(
                 RunArg(
@@ -42,7 +39,6 @@ class RunContext:
                     self.iteration,
                     run_path,
                     job_name,
-                    eclbase,
                     active,
                 )
             )
