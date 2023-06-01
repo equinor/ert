@@ -10,7 +10,7 @@ import websockets.server
 from _ert_job_runner.client import Client
 
 
-def source_dir():
+def source_dir() -> Path:
     src = Path("@CMAKE_CURRENT_SOURCE_DIR@/../..")
     if src.is_dir():
         return src.relative_to(Path.cwd())
@@ -25,7 +25,7 @@ def source_dir():
     raise RuntimeError("Cannot find the source folder")
 
 
-SOURCE_DIR = source_dir()
+SOURCE_DIR: Path = source_dir()
 
 
 def wait_until(func, interval=0.5, timeout=30):
