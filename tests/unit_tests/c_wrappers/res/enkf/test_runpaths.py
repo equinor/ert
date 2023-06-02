@@ -5,7 +5,7 @@ import pytest
 
 from ert._c_wrappers.enkf import EnKFMain, ErtConfig, RunContext
 from ert._c_wrappers.util.substitution_list import SubstitutionList
-from ert.shared.runpaths import Runpaths
+from ert.runpaths import Runpaths
 
 
 @pytest.mark.parametrize(

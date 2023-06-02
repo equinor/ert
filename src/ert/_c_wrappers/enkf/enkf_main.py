@@ -23,7 +23,7 @@ from ert._c_wrappers.enkf.ert_run_context import RunContext
 from ert._c_wrappers.enkf.model_config import ModelConfig
 from ert._c_wrappers.job_queue import WorkflowRunner
 from ert._c_wrappers.util.substitution_list import SubstitutionList
-from ert.shared.runpaths import Runpaths
+from ert.runpaths import Runpaths
 
 if TYPE_CHECKING:
     from ert._c_wrappers.enkf import ErtConfig
