@@ -9,7 +9,7 @@ from ert._c_wrappers.enkf import RunContext
 from ert._c_wrappers.enkf.enums import HookRuntime, RealizationStateEnum
 from ert._c_wrappers.job_queue import JobQueueManager, RunStatusType
 from ert.callbacks import forward_model_exit, forward_model_ok
-from ert.shared.runpaths import Runpaths
+from ert.runpaths import Runpaths
 
 from .forward_model_status import ForwardModelStatus
 

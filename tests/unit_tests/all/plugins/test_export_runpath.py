@@ -4,9 +4,9 @@ from unittest.mock import Mock, patch
 import pytest
 
 from ert._c_wrappers.enkf import EnKFMain
+from ert.runpaths import Runpaths
 from ert.shared.hook_implementations.workflows.export_runpath import ExportRunpathJob
 from ert.shared.plugins import ErtPluginManager
-from ert.shared.runpaths import Runpaths
 from ert.storage import open_storage
 
 
