@@ -24,28 +24,18 @@ USE_QUEUE_OPTION = [
     "MAX_RUNNING_LOCAL",
 ]
 
-
 deprecated_keywords_list = [
     *[
         DeprecationInfo(
             keyword=kw,
             message=partial(
-                lambda line, kw=kw: (
-                    f"Using {kw} with substitution strings"
-                    + "that are not of the form '<KEY>' is deprecated. "
-                    + ". ".join(
-                        [
-                            f"Please change {key} to "
-                            f"<{key.replace('<', '').replace('>', '')}>"
-                            for key in line
-                            if not DeprecationInfo.is_angle_bracketed(key)
-                        ]
-                    )
-                ),
+                lambda line, kw: f"Using {kw} with substitution strings "
+                + "that are not of the form '<KEY>' is deprecated. "
+                + f". Please change {line[0]} to "
+                + f"<{line[0].replace('<', '').replace('>', '')}>",
                 kw=kw,
             ),
-            check=lambda line: not DeprecationInfo.is_angle_bracketed(line[0])
-            or not DeprecationInfo.is_angle_bracketed(line[1]),
+            check=lambda line: not DeprecationInfo.is_angle_bracketed(line[0]),
         )
         for kw in ["DEFINE", "DATA_KW"]
     ],

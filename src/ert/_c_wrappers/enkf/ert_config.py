@@ -266,7 +266,9 @@ class ErtConfig:
 
     @classmethod
     def make_suggestion_list(cls, config_file):
-        ert_config = ErtConfig.from_file(user_config_file=config_file)
+        ert_config = ErtConfig.from_file(
+            user_config_file=config_file, use_new_parser=True
+        )
         return [x.message for x in ert_config.warning_infos]
 
     @classmethod
