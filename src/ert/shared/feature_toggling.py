@@ -72,16 +72,3 @@ class FeatureToggling:
     @staticmethod
     def reset():
         FeatureToggling._conf = deepcopy(FeatureToggling._conf_original)
-
-
-def feature_enabled(feature_name):
-    def decorator(func):
-        def wrapper(*args, **kwargs):
-            if FeatureToggling.is_enabled(feature_name):
-                return func(*args, **kwargs)
-            else:
-                return None
-
-        return wrapper
-
-    return decorator
