@@ -5,6 +5,7 @@ import inspect
 import logging
 import sys
 import traceback
+from types import ModuleType
 from typing import TYPE_CHECKING, Any, Callable, List, Optional, Type
 
 if TYPE_CHECKING:
@@ -68,10 +69,10 @@ class ErtScript:
     def hasFailed(self) -> bool:
         return self.__failed
 
-    def cancel(self):
+    def cancel(self) -> None:
         self.__is_cancelled = True
 
-    def cleanup(self):
+    def cleanup(self) -> None:
         """
         Override to perform cleanup after a run.
         """
@@ -81,7 +82,7 @@ class ErtScript:
         self,
         argument_types: List[Type[Any]],
         argument_values: List[str],
-    ):
+    ) -> Any:
         arguments = []
         for index, arg_value in enumerate(argument_values):
             if index < len(argument_types):
@@ -115,7 +116,7 @@ class ErtScript:
     # Need to have unique modules in case of identical object naming in scripts
     __module_count = 0
 
-    def output_stack_trace(self, error: str = ""):
+    def output_stack_trace(self, error: str = "") -> None:
         stack_trace = error or "".join(traceback.format_exception(*sys.exc_info()))
         sys.stderr.write(
             f"The script '{self.__class__.__name__}' caused an "
@@ -125,7 +126,7 @@ class ErtScript:
 
     @staticmethod
     def loadScriptFromFile(
-        path,
+        path: str,
     ) -> Callable[["EnKFMain", "StorageAccessor"], "ErtScript"]:
         module_name = f"ErtScriptModule_{ErtScript.__module_count}"
         ErtScript.__module_count += 1
@@ -146,7 +147,7 @@ class ErtScript:
 
     @staticmethod
     def __findErtScriptImplementations(
-        module,
+        module: ModuleType,
     ) -> Callable[["EnKFMain", "StorageAccessor"], "ErtScript"]:
         result = []
         for _, member in inspect.getmembers(

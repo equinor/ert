@@ -1,4 +1,4 @@
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 
 from cwrap import BaseCClass, BaseCEnum
 
@@ -41,7 +41,7 @@ class Driver(BaseCClass):
         self,
         driver_type: QueueDriverEnum,
         max_running: int = 0,
-        options: List[Tuple[str, str]] = None,
+        options: Optional[List[Tuple[str, str]]] = None,
     ):
         c_ptr = self._alloc(driver_type)
         super().__init__(c_ptr)
@@ -54,26 +54,23 @@ class Driver(BaseCClass):
         """Set a driver option to a specific value, return False if unknown option."""
         return self._set_option(option, str(value))
 
-    def unset_option(self, option):
+    def unset_option(self, option: str) -> None:
         return self._unset_option(option)
 
-    def get_option(self, option_key):
+    def get_option(self, option_key: str) -> str:
         return self._get_option(option_key)
 
-    def is_driver_instance(self):
-        return True
-
-    def get_max_running(self):
+    def get_max_running(self) -> int:
         return self._get_max_running()
 
-    def set_max_running(self, max_running):
+    def set_max_running(self, max_running: int) -> None:
         self._set_max_running(max_running)
 
     max_running = property(get_max_running, set_max_running)
 
     @property
-    def name(self):
+    def name(self) -> str:
         return self._get_name()
 
-    def free(self):
+    def free(self) -> None:
         self._free()

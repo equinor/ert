@@ -1,18 +1,25 @@
+from __future__ import annotations
+
 import codecs
 import sys
 from subprocess import PIPE, Popen
+from typing import TYPE_CHECKING, Any, Optional
 
 from ert._c_wrappers.job_queue import ErtScript
 
+if TYPE_CHECKING:
+    from ert._c_wrappers.enkf import EnKFMain
+    from ert.storage import StorageAccessor
+
 
 class ExternalErtScript(ErtScript):
-    def __init__(self, ert, storage, executable):
+    def __init__(self, ert: EnKFMain, storage: StorageAccessor, executable: str):
         super().__init__(ert, storage, None)
 
         self.__executable = executable
-        self.__job = None
+        self.__job: Optional[Popen[bytes]] = None
 
-    def run(self, *args) -> None:
+    def run(self, *args: Any) -> None:
         command = [self.__executable]
         command.extend([str(arg) for arg in args])
 
@@ -31,7 +38,7 @@ class ExternalErtScript(ErtScript):
         if self.__job.returncode != 0:
             raise Exception(self._stderrdata)
 
-    def cancel(self):
+    def cancel(self) -> Any:
         super().cancel()
         if self.__job is not None:
             self.__job.terminate()

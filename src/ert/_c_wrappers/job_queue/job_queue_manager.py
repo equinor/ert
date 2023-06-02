@@ -17,7 +17,7 @@ CONCURRENT_INTERNALIZATION = 1
 # TODO: there's no need for this class, all the behavior belongs in the queue
 # class proper.
 class JobQueueManager:
-    def __init__(self, queue: "JobQueue", queue_evaluators: Any = None):
+    def __init__(self, queue: "JobQueue", queue_evaluators: Any = None) -> None:
         self._queue = queue
         self._queue_evaluators = queue_evaluators
         self._pool_sema = BoundedSemaphore(value=CONCURRENT_INTERNALIZATION)
@@ -80,5 +80,5 @@ class JobQueueManager:
             ")"
         )
 
-    def execute_queue(self):
+    def execute_queue(self) -> None:
         self._queue.execute_queue(self._pool_sema, self._queue_evaluators)

@@ -33,7 +33,7 @@ class JobStatusType(BaseCEnum):
     JOB_QUEUE_UNKNOWN = None
 
     @classmethod
-    def from_string(cls, name):
+    def from_string(cls, name: str) -> "JobStatusType":
         return super().from_string(name)
 
 

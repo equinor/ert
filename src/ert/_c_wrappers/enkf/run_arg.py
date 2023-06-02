@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Optional
 
 if TYPE_CHECKING:
+    from ert.job_queue import RunStatusType
     from ert.storage import EnsembleAccessor
 
 
@@ -20,9 +21,9 @@ class RunArg:
     # Below here is legacy related to Everest
     queue_index: Optional[int] = None
     submitted: bool = False
-    run_status: str = ""
+    run_status: Optional["RunStatusType"] = None
 
-    def set_queue_index(self, index):
+    def set_queue_index(self, index: int) -> None:
         self.queue_index = index
 
     def getQueueIndex(self) -> int:

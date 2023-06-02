@@ -1,15 +1,20 @@
 import logging
 import time
-from threading import Lock, Thread
+from threading import Lock, Semaphore, Thread
+from typing import TYPE_CHECKING, Optional
 
 from cwrap import BaseCClass
 from ecl.util.util import StringList
 
 from ert._c_wrappers import ResPrototype
-from ert._c_wrappers.job_queue.job_status_type_enum import JobStatusType
-from ert._c_wrappers.job_queue.job_submit_status_type_enum import JobSubmitStatusType
-from ert._c_wrappers.job_queue.thread_status_type_enum import ThreadStatus
 from ert.load_status import LoadStatus
+
+from .job_status_type_enum import JobStatusType
+from .job_submit_status_type_enum import JobSubmitStatusType
+from .thread_status_type_enum import ThreadStatus
+
+if TYPE_CHECKING:
+    from .driver import Driver
 
 logger = logging.getLogger(__name__)
 
@@ -51,16 +56,16 @@ class JobQueueNode(BaseCClass):
 
     def __init__(
         self,
-        job_script,
-        job_name,
-        run_path,
-        num_cpu,
-        status_file,
-        exit_file,
+        job_script: str,
+        job_name: str,
+        run_path: str,
+        num_cpu: int,
+        status_file: str,
+        exit_file: str,
         done_callback_function,
         exit_callback_function,
         callback_arguments,
-        max_runtime=None,
+        max_runtime: Optional[int] = None,
         callback_timeout=None,
     ):
         self.done_callback_function = done_callback_function
@@ -71,15 +76,15 @@ class JobQueueNode(BaseCClass):
         argv = StringList()
         argv.append(run_path)
 
-        self._thread_status = ThreadStatus.READY
-        self._thread = None
+        self._thread_status: ThreadStatus = ThreadStatus.READY
+        self._thread: Optional[Thread] = None
         self._mutex = Lock()
         self._tried_killing = 0
 
         self.run_path = run_path
         self._max_runtime = max_runtime
-        self._start_time = None
-        self._end_time = None
+        self._start_time: Optional[float] = None
+        self._end_time: Optional[float] = None
         self._timed_out = False
         self._status_msg = ""
         c_ptr = self._alloc(
@@ -102,30 +107,30 @@ class JobQueueNode(BaseCClass):
         else:
             raise ValueError("Unable to create job node object")
 
-    def free(self):
+    def free(self) -> None:
         self._free()
 
     @property
-    def timed_out(self):
+    def timed_out(self) -> bool:
         with self._mutex:
             return self._timed_out
 
     @property
-    def submit_attempt(self):
+    def submit_attempt(self) -> int:
         return self._get_submit_attempt()
 
-    def refresh_status(self, driver):
+    def refresh_status(self, driver: "Driver") -> JobStatusType:
         return self._refresh_status(driver)
 
     @property
-    def status(self):
+    def status(self) -> JobStatusType:
         return self._get_status()
 
     @property
-    def thread_status(self):
+    def thread_status(self) -> ThreadStatus:
         return self._thread_status
 
-    def submit(self, driver):
+    def submit(self, driver: "Driver") -> JobSubmitStatusType:
         return self._submit(driver)
 
     def run_done_callback(self):
@@ -144,7 +149,7 @@ class JobQueueNode(BaseCClass):
     def run_exit_callback(self):
         return self.exit_callback_function(self.callback_arguments)
 
-    def is_running(self, given_status=None):
+    def is_running(self, given_status: Optional[JobStatusType] = None) -> bool:
         status = given_status or self.status
         return status in (
             JobStatusType.JOB_QUEUE_PENDING,
@@ -154,7 +159,7 @@ class JobQueueNode(BaseCClass):
         )  # dont stop monitoring if LSF commands are unavailable
 
     @property
-    def runtime(self):
+    def runtime(self) -> float:
         if self._start_time is None:
             return 0
 
@@ -163,7 +168,9 @@ class JobQueueNode(BaseCClass):
 
         return self._end_time - self._start_time
 
-    def _job_monitor(self, driver, pool_sema, max_submit):
+    def _job_monitor(
+        self, driver: "Driver", pool_sema: Semaphore, max_submit: int
+    ) -> None:
         submit_status = self.submit(driver)
         if submit_status is not JobSubmitStatusType.SUBMIT_OK:
             self._set_status(JobStatusType.JOB_QUEUE_DONE)
@@ -253,11 +260,11 @@ class JobQueueNode(BaseCClass):
 
             self._set_thread_status(ThreadStatus.DONE)
 
-    def _kill(self, driver):
+    def _kill(self, driver: "Driver") -> None:
         self._run_kill(driver)
         self._tried_killing += 1
 
-    def run(self, driver, pool_sema, max_submit=2):
+    def run(self, driver: "Driver", pool_sema: Semaphore, max_submit: int = 2) -> None:
         # Prevent multiple threads working on the same object
         self.wait_for()
         # Do not start if already kill signal is sent
@@ -272,7 +279,7 @@ class JobQueueNode(BaseCClass):
         )
         self._thread.start()
 
-    def stop(self):
+    def stop(self) -> None:
         with self._mutex:
             if self.thread_status == ThreadStatus.RUNNING:
                 self._set_thread_status(ThreadStatus.STOPPING)
@@ -287,9 +294,9 @@ class JobQueueNode(BaseCClass):
                 ThreadStatus.FAILED,
             ]
 
-    def wait_for(self):
+    def wait_for(self) -> None:
         if self._thread is not None and self._thread.is_alive():
             self._thread.join()
 
-    def _set_thread_status(self, new_status):
+    def _set_thread_status(self, new_status: ThreadStatus) -> None:
         self._thread_status = new_status

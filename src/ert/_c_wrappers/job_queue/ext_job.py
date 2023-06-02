@@ -5,9 +5,9 @@ import shutil
 from collections import defaultdict
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
-from ert._c_wrappers.config import ConfigParser
+from ert._c_wrappers.config import ConfigContent, ConfigParser
 from ert._c_wrappers.util import SubstitutionList
 from ert._clib.job_kw import type_from_kw
 from ert.parsing import (
@@ -47,7 +47,9 @@ class ExtJob:
     help_text: str = ""
 
     @staticmethod
-    def _resolve_executable(executable, name, config_file_location):
+    def _resolve_executable(
+        executable: str, name: str, config_file_location: str
+    ) -> str:
         """
         :returns: The resolved path to the executable
 
@@ -108,7 +110,7 @@ class ExtJob:
     }
 
     @classmethod
-    def _parse_config_file(cls, config_file: str):
+    def _parse_config_file(cls, config_file: str) -> ConfigContent:
         parser = ConfigParser()
         for int_key in cls._int_keywords:
             parser.add(int_key, value_type=SchemaItemType.INT).set_argc_minmax(1, 1)
@@ -129,11 +131,13 @@ class ExtJob:
         )
 
     @classmethod
-    def _read_str_keywords(cls, config_content):
-        result = {}
+    def _read_str_keywords(
+        cls, config_content: ConfigContent
+    ) -> Dict[str, Optional[str]]:
+        result: Dict[str, Optional[str]] = {}
 
-        def might_set_value_none(keyword, key):
-            value = config_content.getValue(keyword)
+        def might_set_value_none(keyword: str, key: str) -> None:
+            value: Optional[str] = config_content.getValue(keyword)  # type: ignore
             if value == "null":
                 value = None
             result[key] = value
@@ -147,11 +151,11 @@ class ExtJob:
         return result
 
     @classmethod
-    def _read_int_keywords(cls, config_content):
-        result = {}
+    def _read_int_keywords(cls, config_content: ConfigContent) -> Dict[str, int]:
+        result: Dict[str, int] = {}
         for key in cls._int_keywords:
             if config_content.hasKey(key):
-                value = config_content.getValue(key)
+                value: int = config_content.getValue(key)  # type: ignore
                 if value > 0:
                     # less than or equal to 0 in the config is equivalent to
                     # setting None (backwards compatability)
@@ -160,7 +164,7 @@ class ExtJob:
 
     @staticmethod
     def _make_arg_types_list(
-        config_content, max_arg: Optional[int]
+        config_content: ConfigContent, max_arg: Optional[int]
     ) -> List[SchemaItemType]:
         arg_types_dict = defaultdict(lambda: SchemaItemType.STRING)
         if max_arg is not None:
@@ -178,9 +182,7 @@ class ExtJob:
             return []
 
     @classmethod
-    def from_config_file_with_new_parser(
-        cls, config_file: str, name: Optional[str] = None
-    ):
+    def from_config_file_with_new_parser(cls, config_file: str, name: str) -> "ExtJob":
         schema = init_ext_job_schema()
 
         try:
@@ -243,9 +245,7 @@ class ExtJob:
             )
 
     @classmethod
-    def from_config_file_with_old_parser(
-        cls, config_file: str, name: Optional[str] = None
-    ):
+    def from_config_file_with_old_parser(cls, config_file: str, name: str) -> "ExtJob":
         try:
             config_content = cls._parse_config_file(config_file)
         except ConfigValidationError as conf_err:
@@ -271,7 +271,7 @@ class ExtJob:
             name,
             Path(config_file).read_text(encoding="utf-8"),
         )
-        content_dict = {}
+        content_dict: Dict[str, Any] = {}
 
         content_dict.update(**cls._read_str_keywords(config_content))
         content_dict.update(**cls._read_int_keywords(config_content))
@@ -292,7 +292,7 @@ class ExtJob:
             else None,
         )
 
-        def set_env(key, keyword):
+        def set_env(key: str, keyword: str) -> None:
             content_dict[key] = {}
             if config_content.hasKey(keyword):
                 for env in config_content[keyword]:
@@ -329,11 +329,14 @@ class ExtJob:
     @classmethod
     def from_config_file(
         cls, config_file: str, name: Optional[str] = None, use_new_parser: bool = True
-    ):
+    ) -> "ExtJob":
         if name is None:
             name = os.path.basename(config_file)
 
         if use_new_parser:
-            return cls.from_config_file_with_new_parser(config_file, name)
+            return cls.from_config_file_with_new_parser(  # type: ignore
+                config_file,
+                name,
+            )
         else:
             return cls.from_config_file_with_old_parser(config_file, name)

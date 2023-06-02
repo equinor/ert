@@ -10,7 +10,19 @@ import ssl
 import threading
 import time
 from collections import deque
-from typing import TYPE_CHECKING, Any, Callable, Dict, List, Mapping, Optional, Union
+from threading import Semaphore
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    Dict,
+    Iterable,
+    List,
+    Mapping,
+    Optional,
+    Tuple,
+    Union,
+)
 
 from cloudevents.conversion import to_json
 from cloudevents.http import CloudEvent
@@ -30,6 +42,10 @@ from ert.constant_filenames import CERT_FILE, JOBS_FILE, ERROR_file, STATUS_file
 if TYPE_CHECKING:
     from ert._c_wrappers.enkf.ert_config import ErtConfig
     from ert._c_wrappers.enkf.run_arg import RunArg
+    from ert.ensemble_evaluator import LegacyStep
+    from ert.load_status import LoadResult
+
+    from .driver import Driver
 
 
 logger = logging.getLogger(__name__)
@@ -65,7 +81,7 @@ _queue_state_to_event_type_map = {
 }
 
 
-def _queue_state_event_type(state: JobStatusType) -> str:
+def _queue_state_event_type(state: str) -> str:
     return _queue_state_to_event_type_map[state]
 
 
@@ -104,21 +120,20 @@ class JobQueue(BaseCClass):
     _get_status_file = ResPrototype("char* job_queue_get_status_file(job_queue)")
     _add_job = ResPrototype("int job_queue_add_job_node(job_queue, job_queue_node)")
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         nrun, ncom, nwait, npend = (
-            self._num_running(),
-            self._num_complete(),
-            self._num_waiting(),
-            self._num_pending(),
+            self.num_running,
+            self.num_complete,
+            self.num_waiting,
+            self.num_pending,
         )
         isrun = "running" if self.isRunning else "not running"
-        cnt = (
-            "%s, num_running=%d, num_complete=%d, "
-            "num_waiting=%d, num_pending=%d, active=%d"
+        return self._create_repr(
+            f"{isrun}, num_running={nrun}, num_complete={ncom}, "
+            f"num_waiting={nwait}, num_pending={npend}"
         )
-        return self._create_repr(cnt % (isrun, nrun, ncom, nwait, npend, len(self)))
 
-    def __init__(self, driver, max_submit=2, size=0):
+    def __init__(self, driver: "Driver", max_submit: int = 2, size: int = 0):
         """
         Short doc...
         The @max_submit argument says how many times the job should be submitted
@@ -139,7 +154,7 @@ class JobQueue(BaseCClass):
                 in this case.
         """
 
-        self.job_list = []
+        self.job_list: List[JobQueueNode] = []
         self._stopped = False
         c_ptr = self._alloc(max_submit, STATUS_file, ERROR_file)
         super().__init__(c_ptr)
@@ -149,13 +164,13 @@ class JobQueue(BaseCClass):
         self._set_driver(driver.from_param(driver))
         self._differ = QueueDiffer()
 
-    def kill_job(self, queue_index):
+    def kill_job(self, queue_index: int) -> None:
         """
         Will kill job nr @index.
         """
         self._kill_job(queue_index)
 
-    def submit_complete(self):
+    def submit_complete(self) -> None:
         """
         Method to inform the queue that all jobs have been submitted.
 
@@ -172,42 +187,42 @@ class JobQueue(BaseCClass):
         self._submit_complete()
 
     @property
-    def isRunning(self):
+    def isRunning(self) -> bool:
         return self._is_running()
 
     @property
-    def num_running(self):
+    def num_running(self) -> int:
         return self._num_running()
 
     @property
-    def num_pending(self):
+    def num_pending(self) -> int:
         return self._num_pending()
 
     @property
-    def num_waiting(self):
+    def num_waiting(self) -> int:
         return self._num_waiting()
 
     @property
-    def num_complete(self):
+    def num_complete(self) -> int:
         return self._num_complete()
 
-    def get_max_running(self):
+    def get_max_running(self) -> int:
         return self.driver.get_max_running()
 
-    def set_max_running(self, max_running):
+    def set_max_running(self, max_running: int) -> None:
         self.driver.set_max_running(max_running)
 
     def set_max_job_duration(self, max_duration: int) -> None:
         self._set_max_job_duration(max_duration)
 
     @property
-    def max_submit(self):
+    def max_submit(self) -> int:
         return self._get_max_submit()
 
-    def free(self):
+    def free(self) -> None:
         self._free()
 
-    def is_active(self):
+    def is_active(self) -> bool:
         for job in self.job_list:
             if job.thread_status in (
                 ThreadStatus.READY,
@@ -217,66 +232,66 @@ class JobQueue(BaseCClass):
                 return True
         return False
 
-    def fetch_next_waiting(self):
+    def fetch_next_waiting(self) -> Optional[JobQueueNode]:
         for job in self.job_list:
             if job.thread_status == ThreadStatus.READY:
                 return job
         return None
 
-    def count_status(self, status):
+    def count_status(self, status: JobStatusType) -> int:
         return len([job for job in self.job_list if job.status == status])
 
     @property
-    def stopped(self):
+    def stopped(self) -> bool:
         return self._stopped
 
     def kill_all_jobs(self) -> None:
         self._stopped = True
 
     @property
-    def queue_size(self):
+    def queue_size(self) -> int:
         return len(self.job_list)
 
     @property
-    def exit_file(self):
+    def exit_file(self) -> str:
         return self._get_exit_file()
 
     @property
-    def status_file(self):
+    def status_file(self) -> str:
         return self._get_status_file()
 
-    def add_job(self, job, iens):
+    def add_job(self, job: JobQueueNode, iens: int) -> int:
         job.convertToCReference(None)
-        queue_index = self._add_job(job)
+        queue_index: int = self._add_job(job)
         self.job_list.append(job)
         self._differ.add_state(queue_index, iens, job.status.value)
         return queue_index
 
-    def count_running(self):
+    def count_running(self) -> int:
         return sum(job.thread_status == ThreadStatus.RUNNING for job in self.job_list)
 
-    def max_running(self):
+    def max_running(self) -> int:
         if self.get_max_running() == 0:
             return len(self.job_list)
         else:
             return self.get_max_running()
 
-    def available_capacity(self):
+    def available_capacity(self) -> bool:
         return not self.stopped and self.count_running() < self.max_running()
 
-    def stop_jobs(self):
+    def stop_jobs(self) -> None:
         for job in self.job_list:
             job.stop()
         while self.is_active():
             time.sleep(1)
 
-    async def stop_jobs_async(self):
+    async def stop_jobs_async(self) -> None:
         for job in self.job_list:
             job.stop()
         while self.is_active():
             await asyncio.sleep(1)
 
-    def assert_complete(self):
+    def assert_complete(self) -> None:
         for job in self.job_list:
             if job.thread_status != ThreadStatus.DONE:
                 msg = (
@@ -285,7 +300,7 @@ class JobQueue(BaseCClass):
                 )
                 raise AssertionError(msg.format(job.status, job.thread_status))
 
-    def launch_jobs(self, pool_sema):
+    def launch_jobs(self, pool_sema: Semaphore) -> None:
         # Start waiting jobs
         while self.available_capacity():
             job = self.fetch_next_waiting()
@@ -297,7 +312,9 @@ class JobQueue(BaseCClass):
                 max_submit=self.max_submit,
             )
 
-    def execute_queue(self, pool_sema, evaluators):
+    def execute_queue(
+        self, pool_sema: Semaphore, evaluators: Optional[Iterable[Callable[[], None]]]
+    ) -> None:
         while self.is_active() and not self.stopped:
             self.launch_jobs(pool_sema)
 
@@ -314,7 +331,7 @@ class JobQueue(BaseCClass):
 
     @staticmethod
     def _translate_change_to_cloudevent(
-        ens_id: str, real_id: str, status: JobStatusType
+        ens_id: str, real_id: int, status: str
     ) -> CloudEvent:
         return CloudEvent(
             {
@@ -329,7 +346,7 @@ class JobQueue(BaseCClass):
 
     @staticmethod
     def _translate_change_to_protobuf(
-        experiment_id: str, ens_id: str, real_id: str, status: JobStatusType
+        experiment_id: str, ens_id: str, real_id: int, status: str
     ) -> _ert_com_protocol.DispatcherMessage:
         return _ert_com_protocol.node_status_builder(
             status=_ert_com_protocol.queue_state_to_pbuf_type(status),
@@ -343,9 +360,9 @@ class JobQueue(BaseCClass):
     async def _queue_changes(
         experiment_id: str,
         ens_id: str,
-        changes,
+        changes: Dict[int, str],
         output_bus: "asyncio.Queue[_ert_com_protocol.DispatcherMessage]",
-    ):
+    ) -> None:
         events = [
             JobQueue._translate_change_to_protobuf(
                 experiment_id, ens_id, real_id, status
@@ -359,11 +376,11 @@ class JobQueue(BaseCClass):
     @staticmethod
     async def _publish_changes(
         ens_id: str,
-        changes,
+        changes: Dict[int, str],
         ws_uri: str,
-        ssl_context: ssl.SSLContext,
+        ssl_context: Optional[Union[bool, ssl.SSLContext]],
         headers: Mapping[str, str],
-    ):
+    ) -> None:
         events = deque(
             [
                 JobQueue._translate_change_to_cloudevent(ens_id, real_id, status)
@@ -413,6 +430,7 @@ class JobQueue(BaseCClass):
     ) -> None:
         if evaluators is None:
             evaluators = []
+        ssl_context: Optional[Union[ssl.SSLContext, bool]]
         if cert is not None:
             ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
             ssl_context.load_verify_locations(cadata=cert)
@@ -529,8 +547,8 @@ class JobQueue(BaseCClass):
         run_arg: "RunArg",
         ert_config: "ErtConfig",
         max_runtime: Optional[int],
-        ok_cb: Callable[..., Any],
-        exit_cb: Callable[..., Any],
+        ok_cb: Callable[[Tuple["RunArg", "ErtConfig"]], "LoadResult"],
+        exit_cb: Callable[[Tuple["RunArg", "ErtConfig"]], None],
         num_cpu: int,
     ) -> None:
         job_name = run_arg.job_name
@@ -546,7 +564,7 @@ class JobQueue(BaseCClass):
             exit_file=self.exit_file,
             done_callback_function=ok_cb,
             exit_callback_function=exit_cb,
-            callback_arguments=[run_arg, ert_config],
+            callback_arguments=(run_arg, ert_config),
             max_runtime=max_runtime,
         )
 
@@ -554,7 +572,13 @@ class JobQueue(BaseCClass):
             return
         run_arg.set_queue_index(self.add_job(job, run_arg.iens))
 
-    def add_ee_stage(self, stage, callback_timeout=None):
+    def add_ee_stage(
+        self,
+        stage: "LegacyStep",
+        callback_timeout: Optional[
+            Callable[[Tuple["RunArg", "ErtConfig"]], None]
+        ] = None,
+    ) -> None:
         job = JobQueueNode(
             job_script=stage.job_script,
             job_name=stage.job_name,
@@ -575,7 +599,9 @@ class JobQueue(BaseCClass):
         stage.run_arg.set_queue_index(self.add_job(job, iens))
 
     def stop_long_running_jobs(self, minimum_required_realizations: int) -> None:
-        finished_realizations = self.count_status(JobStatusType.JOB_QUEUE_DONE)
+        finished_realizations = self.count_status(
+            JobStatusType.JOB_QUEUE_DONE,  # type: ignore
+        )
         if finished_realizations < minimum_required_realizations:
             return
 
@@ -602,13 +628,13 @@ class JobQueue(BaseCClass):
         self,
         ens_id: str,
         dispatch_url: str,
-        cert: Optional[Union[str, bytes]],
+        cert: Optional[str],
         token: Optional[str],
         experiment_id: Optional[str] = None,
     ) -> None:
         for q_index, q_node in enumerate(self.job_list):
+            cert_path = f"{q_node.run_path}/{CERT_FILE}"
             if cert is not None:
-                cert_path = f"{q_node.run_path}/{CERT_FILE}"
                 with open(cert_path, "w", encoding="utf-8") as cert_file:
                     cert_file.write(cert)
             with open(

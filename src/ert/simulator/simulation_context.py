@@ -55,7 +55,7 @@ def _run_forward_model(
             ert.get_num_cpu(),
         )
 
-    job_queue.submit_complete()  # type: ignore
+    job_queue.submit_complete()
     queue_evaluators = None
     if (
         ert.analysisConfig().get_stop_long_running()
@@ -69,7 +69,7 @@ def _run_forward_model(
         ]
 
     jqm = JobQueueManager(job_queue, queue_evaluators)
-    jqm.execute_queue()  # type: ignore
+    jqm.execute_queue()
 
     # deactivate failed realizations
     totalOk = 0

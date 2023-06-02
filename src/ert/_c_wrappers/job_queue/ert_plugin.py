@@ -8,7 +8,7 @@ class CancelPluginException(Exception):
 
 
 class ErtPlugin(ErtScript):
-    def getArguments(self, parent=None) -> List[Any]:
+    def getArguments(self, parent: Any = None) -> List[Any]:
         return []
 
     def getName(self) -> str:
