@@ -1,12 +1,6 @@
-from cwrap import BaseCEnum
+from enum import Enum
 
 
-class RunStatusType(BaseCEnum):
-    TYPE_NAME = "run_status_type_enum"
-
-    JOB_LOAD_FAILURE = None
-    JOB_RUN_FAILURE = None
-
-
-RunStatusType.addEnum("JOB_RUN_FAILURE", 2)
-RunStatusType.addEnum("JOB_LOAD_FAILURE", 3)
+class RunStatusType(Enum):
+    JOB_LOAD_FAILURE = 2
+    JOB_RUN_FAILURE = 3

@@ -1,6 +1,7 @@
-from typing import TYPE_CHECKING, Iterator, List
+from typing import TYPE_CHECKING, Iterator, List, Union
 
 from cwrap import BaseCClass
+from ecl.util.util import CTime
 
 from ert import _clib
 from ert._c_wrappers import ResPrototype
@@ -11,6 +12,8 @@ from ert._c_wrappers.util.substitution_list import SubstitutionList
 
 if TYPE_CHECKING:
     from ert._c_wrappers.config.config_parser import ConfigParser
+
+ValueType = Union[str, float, int, CTime]
 
 
 class ContentNode(BaseCClass):
@@ -86,7 +89,7 @@ class ContentNode(BaseCClass):
         else:
             raise TypeError(f"Invalid argument type: {index}")
 
-    def __getitem__(self, index):
+    def __getitem__(self, index: int) -> ValueType:
         index = self.__assertIndex(index)
 
         content_type = self._iget_type(index)
@@ -155,7 +158,7 @@ class ContentItem(BaseCClass):
     def last(self):
         return self[-1]
 
-    def getValue(self, item_index=-1, node_index=0):
+    def getValue(self, item_index: int = -1, node_index: int = 0) -> ValueType:
         node = self[item_index]
         return node[node_index]
 
@@ -239,14 +242,16 @@ class ConfigContent(BaseCClass):
             else:
                 raise KeyError("No such key: {key}")
 
-    def hasKey(self, key):
+    def hasKey(self, key: str) -> bool:
         return key in self
 
-    def getValue(self, key, item_index=-1, node_index=0):
+    def getValue(
+        self, key: str, item_index: int = -1, node_index: int = 0
+    ) -> ValueType:
         item = self[key]
         return item.getValue(item_index, node_index)
 
-    def get_line(self, index):
+    def get_line(self, index: int) -> ContentNode:
         return self._get_line(index)
 
     def isValid(self):

@@ -6,7 +6,7 @@ from collections import defaultdict
 from dataclasses import dataclass
 from typing import Dict, List, Optional, Tuple, Type, Union
 
-from ert._c_wrappers.config import ConfigParser
+from ert._c_wrappers.config import ConfigContent, ConfigParser
 from ert._clib.job_kw import type_from_kw
 from ert.parsing import (
     ConfigDict,
@@ -43,7 +43,7 @@ def _workflow_job_config_parser() -> ConfigParser:
 _config_parser = _workflow_job_config_parser()
 
 
-def new_workflow_job_parser(file: str):
+def new_workflow_job_parser(file: str) -> ConfigDict:
     schema = init_workflow_job_schema()
     return lark_parse(file, schema=schema)
 
@@ -62,7 +62,7 @@ class WorkflowJob:
     executable: Optional[str]
     script: Optional[str]
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         self.ert_script: Optional[type] = None
         if self.script is not None and self.internal:
             try:
@@ -92,7 +92,7 @@ class WorkflowJob:
 
     @staticmethod
     def _make_arg_types_list(
-        config_content, max_arg: Optional[int]
+        config_content: ConfigContent, max_arg: Optional[int]
     ) -> List[SchemaItemType]:
         arg_types_dict: Dict[int, SchemaItemType] = defaultdict(
             lambda: SchemaItemType.STRING
@@ -112,7 +112,9 @@ class WorkflowJob:
             return []
 
     @classmethod
-    def from_file(cls, config_file, name=None, use_new_parser=True):
+    def from_file(
+        cls, config_file: str, name: Optional[str] = None, use_new_parser: bool = True
+    ) -> "WorkflowJob":
         if not (os.path.isfile(config_file) and os.access(config_file, os.R_OK)):
             raise ConfigValidationError(f"Could not open config_file:{config_file!r}")
         if not name:
@@ -133,7 +135,7 @@ class WorkflowJob:
         else:
             old_content = _config_parser.parse(config_file)
 
-            def optional_get(key, default=None):
+            def optional_get(key: str, default=None):
                 return old_content.getValue(key) if old_content.hasKey(key) else default
 
             max_arg = optional_get("MAX_ARG")
@@ -167,7 +169,7 @@ class WorkflowJob:
         raise ValueError("Unrecognized content type")
 
     def argument_types(self) -> List["ContentTypes"]:
-        def content_to_type(c: Optional[SchemaItemType]):
+        def content_to_type(c: Optional[SchemaItemType]) -> ContentTypes:
             if c == SchemaItemType.BOOL:
                 return bool
             if c == SchemaItemType.FLOAT:

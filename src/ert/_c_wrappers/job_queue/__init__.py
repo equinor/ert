@@ -45,7 +45,7 @@ from cwrap import Prototype
 import ert._c_wrappers  # noqa
 
 
-def setenv(var, value):
+def setenv(var: str, value: str) -> None:
     if not os.getenv(var):
         os.environ[var] = value
 
