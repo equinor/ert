@@ -191,18 +191,6 @@ class JobQueue(BaseCClass):
     def num_complete(self):
         return self._num_complete()
 
-    def __getitem__(self, index):
-        idx = index
-        ls = len(self)
-        if idx < 0:
-            idx += ls
-        if 0 <= idx < ls:
-            return self._iget_driver_data(idx)
-        raise IndexError(f"index out of range, was: {index} should be in [0, {ls})")
-
-    def exists(self, index):
-        return self[index]
-
     def get_max_running(self):
         return self.driver.get_max_running()
 
