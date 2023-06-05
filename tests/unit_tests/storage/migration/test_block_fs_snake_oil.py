@@ -1,9 +1,11 @@
+import logging
 import re
 
 import netCDF4
 import numpy as np
 import pytest
 
+import ert.storage
 import ert.storage.migration._block_fs_native as bfn
 import ert.storage.migration.block_fs as bf
 from ert._c_wrappers.enkf import ErtConfig
@@ -124,3 +126,28 @@ def test_migrate_case(data, storage, enspath, ens_config):
             expect = np.array(var["GEN_DATA"][key]).flatten()
             actual = ensemble.load_gen_data(f"{key}@199", [index])[0].flatten()
             assert list(expect) == list(actual), key
+
+
+def test_migration_failure(storage, enspath, ens_config, caplog, monkeypatch):
+    """Run migration but fail due to missing config data. Expected behaviour is
+    for the error to be logged but no exception be propagated.
+
+    """
+    monkeypatch.setattr(ens_config, "parameter_configs", {})
+    monkeypatch.setattr(ert.storage, "open_storage", lambda: storage)
+
+    # Sanity check: no ensembles are created before migration
+    assert list(storage.ensembles) == []
+
+    with caplog.at_level(logging.WARNING, logger="ert.storage.migration.block_fs"):
+        bf._migrate_case_ignoring_exceptions(storage, enspath / "default_0")
+
+    # No ensembles were created due to failure
+    assert list(storage.ensembles) == []
+
+    # Warnings are in caplog
+    assert len(caplog.records) == 1
+    assert caplog.records[0].message == (
+        "Exception occurred during migration of BlockFs case 'default_0': "
+        "'The key:SNAKE_OIL_PARAM is not in the ensemble configuration'"
+    )
