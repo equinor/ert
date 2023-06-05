@@ -22,7 +22,9 @@ class ErrorInfo:
     originates_from: Optional[MaybeWithContext] = None
 
     @classmethod
-    def _take(cls, context: MaybeWithContext, attr: str) -> Optional[FileContextToken]:
+    def _take(
+        cls, context: Union[MaybeWithContext, ContextList], attr: str
+    ) -> Optional[FileContextToken]:
         if isinstance(context, FileContextToken):
             return context
         elif hasattr(context, attr):

@@ -86,7 +86,7 @@ class ContextList(List[T]):
 
     @classmethod
     def with_values(cls, token: FileContextToken, values: List["ContextValue"]):
-        the_list = ContextList(token)
+        the_list: ContextList["ContextValue"] = ContextList(token)
         the_list += values
         return the_list
 

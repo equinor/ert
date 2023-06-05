@@ -1,12 +1,14 @@
 from dataclasses import dataclass
 from typing import Callable, List, Optional, Union
 
+from .context_values import ContextValue
+
 
 @dataclass
 class DeprecationInfo:
     keyword: str
     message: Union[str, Callable[[List[str]], str]]
-    check: Optional[Callable[[List[str]], bool]] = None
+    check: Optional[Callable[[List[ContextValue]], bool]] = None
 
     def resolve_message(self, line: List[str]):
         if callable(self.message):

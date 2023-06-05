@@ -205,10 +205,10 @@ class SchemaItem(BaseModel):
         args: List[T],
         keyword: FileContextToken,
         cwd: str,
-    ) -> ContextList[Union[T, ContextValue]]:
+    ) -> Union[T, ContextValue, None, ContextList[Union[T, ContextValue, None]]]:
         errors: List[Union[ErrorInfo, ConfigValidationError]] = []
 
-        args_with_context: ContextList[Union[T, ContextValue]] = ContextList(
+        args_with_context: ContextList[Union[T, ContextValue, None]] = ContextList(
             token=keyword
         )
         for i, x in enumerate(args):
