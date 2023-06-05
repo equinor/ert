@@ -30,19 +30,19 @@ class JobQueueManager:
         self.queue.kill_all_jobs()
 
     def getNumRunning(self) -> int:
-        return self.queue.count_status(JobStatusType.JOB_QUEUE_RUNNING)
+        return self.queue.count_status(JobStatusType.JOB_QUEUE_RUNNING)  # type: ignore
 
     def getNumWaiting(self) -> int:
-        return self.queue.count_status(JobStatusType.JOB_QUEUE_WAITING)
+        return self.queue.count_status(JobStatusType.JOB_QUEUE_WAITING)  # type: ignore
 
     def getNumPending(self) -> int:
-        return self.queue.count_status(JobStatusType.JOB_QUEUE_PENDING)
+        return self.queue.count_status(JobStatusType.JOB_QUEUE_PENDING)  # type: ignore
 
     def getNumSuccess(self) -> int:
-        return self.queue.count_status(JobStatusType.JOB_QUEUE_SUCCESS)
+        return self.queue.count_status(JobStatusType.JOB_QUEUE_SUCCESS)  # type: ignore
 
     def getNumFailed(self) -> int:
-        return self.queue.count_status(JobStatusType.JOB_QUEUE_FAILED)
+        return self.queue.count_status(JobStatusType.JOB_QUEUE_FAILED)  # type: ignore
 
     def isRunning(self) -> bool:
         return self.queue.is_active()

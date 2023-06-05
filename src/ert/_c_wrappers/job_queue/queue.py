@@ -75,7 +75,7 @@ def _queue_state_event_type(state: str) -> str:
     return _queue_state_to_event_type_map[state]
 
 
-class JobQueue(BaseCClass):
+class JobQueue(BaseCClass):  # type: ignore
     # If the queue is created with size == 0 that means that it will
     # just grow as needed; for the queue layer to know when to exit
     # you must call the function submit_complete() when you have no
@@ -118,7 +118,7 @@ class JobQueue(BaseCClass):
             self.num_pending,
         )
         isrun = "running" if self.isRunning else "not running"
-        return self._create_repr(
+        return self._create_repr(  # type: ignore
             f"{isrun}, num_running={nrun}, num_complete={ncom}, "
             f"num_waiting={nwait}, num_pending={npend}"
         )
@@ -186,23 +186,23 @@ class JobQueue(BaseCClass):
 
     @property
     def isRunning(self) -> bool:
-        return self._is_running()
+        return self._is_running()  # type: ignore
 
     @property
     def num_running(self) -> int:
-        return self._num_running()
+        return self._num_running()  # type: ignore
 
     @property
     def num_pending(self) -> int:
-        return self._num_pending()
+        return self._num_pending()  # type: ignore
 
     @property
     def num_waiting(self) -> int:
-        return self._num_waiting()
+        return self._num_waiting()  # type: ignore
 
     @property
     def num_complete(self) -> int:
-        return self._num_complete()
+        return self._num_complete()  # type: ignore
 
     def get_max_running(self) -> int:
         return self.driver.get_max_running()
@@ -215,7 +215,7 @@ class JobQueue(BaseCClass):
 
     @property
     def max_submit(self) -> int:
-        return self._get_max_submit()
+        return self._get_max_submit()  # type: ignore
 
     def free(self) -> None:
         self._free()
@@ -249,11 +249,11 @@ class JobQueue(BaseCClass):
 
     @property
     def exit_file(self) -> str:
-        return self._get_exit_file()
+        return self._get_exit_file()  # type: ignore
 
     @property
     def status_file(self) -> str:
-        return self._get_status_file()
+        return self._get_status_file()  # type: ignore
 
     def add_job(self, job: JobQueueNode, iens: int) -> int:
         job.convertToCReference(None)

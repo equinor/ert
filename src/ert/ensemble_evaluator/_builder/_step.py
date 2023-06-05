@@ -86,7 +86,7 @@ class LegacyStep(Step):  # pylint: disable=too-many-instance-attributes
         callback_arguments: CallbackArgs,
         done_callback: Callback,
         exit_callback: Callback,
-        num_cpu: Optional[int],
+        num_cpu: int,
         run_path: Path,
         job_script: str,
         job_name: str,

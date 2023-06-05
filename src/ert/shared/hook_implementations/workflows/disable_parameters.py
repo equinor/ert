@@ -17,7 +17,7 @@ class DisableParametersUpdate(ErtScript):
     This workflow is recommended to be run as a PRE_FIRST_UPDATE hook
     """
 
-    def run(self, disable_parameters):
+    def run(self, disable_parameters):  # pylint: disable=arguments-differ
         ert = self.ert()
         disable_parameters = disable_parameters.split(",")
         disable_parameters = [val.strip() for val in disable_parameters]

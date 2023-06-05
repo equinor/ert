@@ -1,7 +1,7 @@
 from cwrap import BaseCEnum
 
 
-class JobSubmitStatusType(BaseCEnum):
+class JobSubmitStatusType(BaseCEnum):  # type: ignore
     TYPE_NAME = "job_submit_status_type_enum"
     SUBMIT_OK = None
     SUBMIT_JOB_FAIL = None
@@ -10,7 +10,7 @@ class JobSubmitStatusType(BaseCEnum):
 
     @classmethod
     def from_string(cls, name: str) -> "JobSubmitStatusType":
-        return super().from_string(name)
+        return super().from_string(name)  # type: ignore
 
 
 JobSubmitStatusType.addEnum("SUBMIT_OK", 0)

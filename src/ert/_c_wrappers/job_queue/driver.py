@@ -5,7 +5,7 @@ from cwrap import BaseCClass, BaseCEnum
 from ert._c_wrappers import ResPrototype
 
 
-class QueueDriverEnum(BaseCEnum):
+class QueueDriverEnum(BaseCEnum):  # type: ignore
     TYPE_NAME = "queue_driver_enum"
     NULL_DRIVER = None
     LSF_DRIVER = None
@@ -26,7 +26,7 @@ LOCAL_DRIVER = QueueDriverEnum.LOCAL_DRIVER
 SLURM_DRIVER = QueueDriverEnum.SLURM_DRIVER
 
 
-class Driver(BaseCClass):
+class Driver(BaseCClass):  # type: ignore
     TYPE_NAME = "driver"
     _alloc = ResPrototype("void* queue_driver_alloc( queue_driver_enum )", bind=False)
     _free = ResPrototype("void queue_driver_free( driver )")
@@ -52,16 +52,16 @@ class Driver(BaseCClass):
 
     def set_option(self, option: str, value: str) -> bool:
         """Set a driver option to a specific value, return False if unknown option."""
-        return self._set_option(option, str(value))
+        return self._set_option(option, str(value))  # type: ignore
 
     def unset_option(self, option: str) -> None:
-        return self._unset_option(option)
+        return self._unset_option(option)  # type: ignore
 
     def get_option(self, option_key: str) -> str:
-        return self._get_option(option_key)
+        return self._get_option(option_key)  # type: ignore
 
     def get_max_running(self) -> int:
-        return self._get_max_running()
+        return self._get_max_running()  # type: ignore
 
     def set_max_running(self, max_running: int) -> None:
         self._set_max_running(max_running)
@@ -70,7 +70,7 @@ class Driver(BaseCClass):
 
     @property
     def name(self) -> str:
-        return self._get_name()
+        return self._get_name()  # type: ignore
 
     def free(self) -> None:
         self._free()
