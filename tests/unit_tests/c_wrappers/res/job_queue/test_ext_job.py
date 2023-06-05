@@ -6,7 +6,7 @@ from textwrap import dedent
 import pytest
 
 from ert._c_wrappers.job_queue.ext_job import ExtJob
-from ert.parsing import ConfigValidationError, SchemaItemType
+from ert.parsing import ConfigValidationError, ConfigWarning, SchemaItemType
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -99,7 +99,12 @@ def test_portable_exe_error_message():
         ConfigValidationError,
         match='"PORTABLE_EXE" key is deprecated, please replace with "EXECUTABLE"',
     ):
-        _ = ExtJob.from_config_file("CONFIG")
+        _ = ExtJob.from_config_file("CONFIG", use_new_parser=False)
+
+    with pytest.raises(
+        ConfigValidationError, match="EXECUTABLE must be set"
+    ), pytest.warns(ConfigWarning, match='"PORTABLE_EXE" key is deprecated'):
+        _ = ExtJob.from_config_file("CONFIG", use_new_parser=True)
 
 
 @pytest.mark.usefixtures("use_tmpdir")

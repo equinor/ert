@@ -1,11 +1,19 @@
 from collections import defaultdict
 from typing import List, Optional, Union
 
-from ert.parsing.error_info import ErrorInfo
+from .error_info import ErrorInfo, WarningInfo
 
 
 class ConfigWarning(UserWarning):
-    pass
+    info: WarningInfo
+
+    def __init__(self, info: Union[str, WarningInfo]):
+        if isinstance(info, str):
+            super().__init__(info)
+            self.info = WarningInfo(message=info, filename="")
+        else:
+            super().__init__(info.message)
+            self.info = info
 
 
 class ConfigValidationError(ValueError):

@@ -1,9 +1,10 @@
+# pylint: disable=C0302
 import os
 import re
 import stat
 from dataclasses import dataclass
 from textwrap import dedent
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Optional, Union, cast
 
 import pytest
 from hypothesis import given, strategies
@@ -144,6 +145,40 @@ def assert_that_config_leads_to_error(
         assert len(errors_matching_message) == expected_error.count, (
             f"Expected to find exactly {expected_error.count} errors, "
             f"found {len(errors_matching_message)}."
+        )
+
+
+def assert_that_config_leads_to_warning(
+    config_file_contents: str,
+    expected_error: ExpectedErrorInfo,
+    config_filename: str = "test.ert",
+):
+    write_files(
+        {config_filename: config_file_contents, **(expected_error.other_files or {})}
+    )
+
+    ert_config = ErtConfig.from_file(config_filename, use_new_parser=True)
+
+    warnings_matching_filename = find_and_assert_errors_matching_filename(
+        errors=cast(List[ErrorInfo], ert_config.warning_infos),
+        filename=expected_error.filename,
+    )
+
+    warnings_matching_location = find_and_assert_errors_matching_location(
+        errors=warnings_matching_filename,
+        line=expected_error.line,
+        column=expected_error.column,
+        end_column=expected_error.end_column,
+    )
+
+    warnings_matching_message = find_and_assert_errors_matching_message(
+        errors=warnings_matching_location, match=expected_error.match
+    )
+
+    if expected_error.count is not None:
+        assert len(warnings_matching_message) == expected_error.count, (
+            f"Expected to find exactly {expected_error.count} errors, "
+            f"found {len(warnings_matching_message)}."
         )
 
 
@@ -863,25 +898,6 @@ QUEUE_OPTION LOCAL MAX_RUNNING ert
     )
 
 
-@pytest.mark.usefixtures("use_tmpdir")
-def test_that_deprecated_kw_errors_from_lark():
-    assert_that_config_leads_to_error(
-        config_file_contents=dedent(
-            """
-NUM_REALIZATIONS  1
-SCHEDULE_PREDICTION_FILE A B C.txt
-
-            """
-        ),
-        expected_error=ExpectedErrorInfo(
-            match="The 'SCHEDULE_PREDICTION_FILE' config keyword has been removed.",
-            line=3,
-            column=1,
-            end_column=25,
-        ),
-    )
-
-
 @pytest.mark.parametrize("dirname", ["the_dir", "/tmp"])
 @pytest.mark.usefixtures("use_tmpdir")
 def test_that_executable_directory_errors(dirname):
@@ -901,3 +917,146 @@ JOB_SCRIPT {dirname}
             end_column=12 + len(dirname),
         ),
     )
+
+
+@pytest.mark.parametrize(
+    "contents, expected_errors",
+    [
+        (
+            """
+NUM_REALIZATIONS  1
+RUNPATH %d
+
+RELPERM
+MULTZ Hehe 2 l 1 2
+EQUIL Hehe 2 l 1 2
+GEN_PARAM Hehe 2 l 1 2
+MULTFLT Hehe 2 l 1 2
+
+UMASK 1 2 3 4 111
+LOG_FILE 1 2 3 4 111
+LOG_LEVEL 1 2 3 4 111
+ENKF_RERUN 1 2 3 4 111
+
+RSH_HOST boq
+RSH_COMMAND qqqwe
+MAX_RUNNING_RSH assadsa 3 12w qwsa
+
+LSF_SERVER
+LSF_QUEUE
+MAX_RUNNING_LSF
+MAX_RUNNING_LOCAL
+
+SCHEDULE_PREDICTION_FILE
+HAVANA_FAULT
+REFCASE_LIST
+RFTPATH
+END_DATE
+CASE_TABLE
+RERUN_START
+DELETE_RUNPATH
+PLOT_SETTINGS
+UPDATE_PATH A B
+
+DEFINE A <2>
+""",
+            [
+                ExpectedErrorInfo(
+                    line=3,
+                    column=1,
+                    end_column=8,
+                    match="RUNPATH keyword contains deprecated value placeholders:",
+                ),
+                *[
+                    ExpectedErrorInfo(
+                        line=5 + i,
+                        column=1,
+                        end_column=1 + len(kw),
+                        match=f"{kw} .* replaced by the GEN_KW",
+                    )
+                    for i, kw in enumerate(
+                        ["RELPERM", "MULTZ", "EQUIL", "GEN_PARAM", "MULTFLT"]
+                    )
+                ],
+                *[
+                    ExpectedErrorInfo(
+                        line=11 + i,
+                        column=1,
+                        end_column=1 + len(kw),
+                        match=f"The keyword {kw} no longer has any effect",
+                    )
+                    for i, kw in enumerate(
+                        [
+                            "UMASK",
+                            "LOG_FILE",
+                            "LOG_LEVEL",
+                            "ENKF_RERUN",
+                        ]
+                    )
+                ],
+                *[
+                    ExpectedErrorInfo(
+                        line=16 + i,
+                        column=1,
+                        end_column=1 + len(kw),
+                        match=f"The {kw} was used for the deprecated "
+                        "and removed support for RSH queues",
+                    )
+                    for i, kw in enumerate(
+                        ["RSH_HOST", "RSH_COMMAND", "MAX_RUNNING_RSH"]
+                    )
+                ],
+                *[
+                    ExpectedErrorInfo(
+                        line=20 + i,
+                        column=1,
+                        end_column=1 + len(kw),
+                        match=f"The {kw} keyword has been removed",
+                    )
+                    for i, kw in enumerate(
+                        [
+                            "LSF_SERVER",
+                            "LSF_QUEUE",
+                            "MAX_RUNNING_LSF",
+                            "MAX_RUNNING_LOCAL",
+                        ]
+                    )
+                ],
+                *[
+                    ExpectedErrorInfo(
+                        line=25 + i,
+                        column=1,
+                        end_column=1 + len(kw),
+                        match=f"{kw}",
+                    )
+                    for i, kw in enumerate(
+                        [
+                            "SCHEDULE_PREDICTION_FILE",
+                            "HAVANA_FAULT",
+                            "REFCASE_LIST",
+                            "RFTPATH",
+                            "END_DATE",
+                            "CASE_TABLE",
+                            "RERUN_START",
+                            "DELETE_RUNPATH",
+                            "PLOT_SETTINGS",
+                            "UPDATE_PATH",
+                        ]
+                    )
+                ],
+                ExpectedErrorInfo(
+                    line=34,
+                    column=1,
+                    end_column=12,
+                    match="UPDATE_PATH keyword has been removed",
+                ),
+            ],
+        )
+    ],
+)
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_deprecations_are_handled(contents, expected_errors):
+    for expected_error in expected_errors:
+        assert_that_config_leads_to_warning(
+            config_file_contents=contents, expected_error=expected_error
+        )

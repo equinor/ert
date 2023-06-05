@@ -390,7 +390,7 @@ def test_experiment_server_ensemble_experiment(tmpdir, source_root, capsys):
         captured = capsys.readouterr()
         with pytest.raises(RuntimeError):
             asyncio.get_running_loop()
-        assert captured.out == "Successful realizations: 5\n"
+        assert "Successful realizations: 5\n" in captured.out
 
     FeatureToggling.reset()
 

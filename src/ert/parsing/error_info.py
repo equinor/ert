@@ -3,6 +3,7 @@ from typing import List, Optional, Union
 
 from typing_extensions import Self
 
+from .context_values import ContextList
 from .file_context_token import FileContextToken
 from .types import MaybeWithContext
 
@@ -21,7 +22,9 @@ class ErrorInfo:
     originates_from: Optional[MaybeWithContext] = None
 
     @classmethod
-    def _take(cls, context: MaybeWithContext, attr: str) -> Optional[FileContextToken]:
+    def _take(
+        cls, context: Union[MaybeWithContext, ContextList], attr: str
+    ) -> Optional[FileContextToken]:
         if isinstance(context, FileContextToken):
             return context
         elif hasattr(context, attr):
@@ -34,19 +37,9 @@ class ErrorInfo:
         return self
 
     def set_context_keyword(
-        self, context: Union[MaybeWithContext, List[MaybeWithContext]]
+        self, context: Union[MaybeWithContext, ContextList]
     ) -> Self:
-        if isinstance(context, List):
-            # If it is a list, each item is an argument
-            # pertaining to the same keyword token written in an ert config.
-            # Thus, it is ok to take the first item only.
-            first_item = context[0]
-            keyword_token = self._take(first_item, "keyword_token")
-
-            self._attach_to_context(keyword_token)
-        else:
-            self._attach_to_context(self._take(context, "keyword_token"))
-
+        self._attach_to_context(self._take(context, "keyword_token"))
         return self
 
     def set_context_list(self, context_list: List[MaybeWithContext]) -> Self:
@@ -84,3 +77,8 @@ class ErrorInfo:
             self.end_line = token.end_line
             self.end_column = token.end_column
             self.end_pos = token.end_pos
+
+
+@dataclass()
+class WarningInfo(ErrorInfo):
+    is_deprecation: bool = False

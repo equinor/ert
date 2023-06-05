@@ -4,8 +4,8 @@ from typing import List, Mapping, Optional, TypeVar, Union
 
 from pydantic import BaseModel
 
-from ert.parsing import ConfigValidationError
-from ert.parsing.context_values import (
+from .config_errors import ConfigValidationError
+from .context_values import (
     ContextBool,
     ContextFloat,
     ContextInt,
@@ -13,9 +13,9 @@ from ert.parsing.context_values import (
     ContextString,
     ContextValue,
 )
-from ert.parsing.error_info import ErrorInfo
-from ert.parsing.file_context_token import FileContextToken
-from ert.parsing.schema_item_type import SchemaItemType
+from .error_info import ErrorInfo
+from .file_context_token import FileContextToken
+from .schema_item_type import SchemaItemType
 
 T = TypeVar("T")
 
@@ -58,6 +58,16 @@ class SchemaItem(BaseModel):
         return not (
             index in self.indexed_selection_set
             and token not in self.indexed_selection_set[index]
+        )
+
+    @classmethod
+    def deprecated_dummy_keyword(cls, kw: str) -> "SchemaItem":
+        return SchemaItem(
+            kw=kw,
+            deprecated=True,
+            required_set=False,
+            argc_min=0,
+            argc_max=-1,
         )
 
     def token_to_value_with_context(
@@ -195,10 +205,10 @@ class SchemaItem(BaseModel):
         args: List[T],
         keyword: FileContextToken,
         cwd: str,
-    ) -> List[Union[T, ContextValue]]:
+    ) -> Union[T, ContextValue, None, ContextList[Union[T, ContextValue, None]]]:
         errors: List[Union[ErrorInfo, ConfigValidationError]] = []
 
-        args_with_context: ContextList[Union[T, ContextValue]] = ContextList(
+        args_with_context: ContextList[Union[T, ContextValue, None]] = ContextList(
             token=keyword
         )
         for i, x in enumerate(args):

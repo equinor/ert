@@ -1,5 +1,4 @@
-from dataclasses import dataclass
-from typing import Union
+from typing import List, TypeVar, Union
 
 from .file_context_token import FileContextToken
 
@@ -75,13 +74,21 @@ class ContextString(str):
         return new_instance
 
 
-@dataclass
-class ContextList(list):
+T = TypeVar("T")
+
+
+class ContextList(List[T]):
     keyword_token: FileContextToken
 
     def __init__(self, token: FileContextToken):
         super().__init__()
         self.keyword_token = token
+
+    @classmethod
+    def with_values(cls, token: FileContextToken, values: List["ContextValue"]):
+        the_list: ContextList["ContextValue"] = ContextList(token)
+        the_list += values
+        return the_list
 
 
 ContextValue = Union[ContextString, ContextFloat, ContextInt, ContextBool]

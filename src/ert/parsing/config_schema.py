@@ -1,4 +1,7 @@
+from typing import Any, Dict
+
 from .config_keywords import ConfigKeys, QueueOptions, RunModes
+from .config_schema_deprecations import deprecated_keywords_list
 from .config_schema_item import (
     SchemaItem,
     existing_path_keyword,
@@ -225,18 +228,6 @@ def gen_kw_keyword() -> SchemaItem:
     )
 
 
-def schedule_prediction_file_keyword() -> SchemaItem:
-    return SchemaItem(
-        kw=ConfigKeys.SCHEDULE_PREDICTION_FILE,
-        required_set=False,
-        argc_min=1,
-        argc_max=3,
-        type_map=[SchemaItemType.STRING],
-        deprecated=True,
-        deprecate_msg="The 'SCHEDULE_PREDICTION_FILE' config keyword has been removed.",
-    )
-
-
 def summary_keyword() -> SchemaItem:
     # can have several summary keys on each line.
     return SchemaItem(
@@ -298,11 +289,23 @@ def install_job_directory_keyword() -> SchemaItem:
 
 
 class ConfigSchemaDict(SchemaItemDict):
-    pass
+    def check_required(
+        self,
+        config_dict: Dict[str, Any],
+        filename: str,
+    ) -> None:
+        self.search_for_deprecated_keyword_usages(
+            config_dict=config_dict,
+            filename=filename,
+            deprecated_keywords_list=deprecated_keywords_list,
+        )
+        self.search_for_unset_required_keywords(
+            config_dict=config_dict, filename=filename
+        )
 
 
-def init_site_config_schema() -> SchemaItemDict:
-    schema = SchemaItemDict()
+def init_site_config_schema() -> ConfigSchemaDict:
+    schema = ConfigSchemaDict()
     for item in [
         int_keyword(ConfigKeys.MAX_SUBMIT),
         int_keyword(ConfigKeys.NUM_CPU),
@@ -326,8 +329,8 @@ def init_site_config_schema() -> SchemaItemDict:
     return schema
 
 
-def init_user_config_schema() -> SchemaItemDict:
-    schema = SchemaItemDict()
+def init_user_config_schema() -> ConfigSchemaDict:
+    schema = ConfigSchemaDict()
     for item in [
         workflow_job_directory_keyword(),
         load_workflow_keyword(),
@@ -348,7 +351,6 @@ def init_user_config_schema() -> SchemaItemDict:
         # the two fault types are just added to the config object only to
         # be able to print suitable messages before exiting.
         gen_kw_keyword(),
-        schedule_prediction_file_keyword(),
         gen_data_keyword(),
         summary_keyword(),
         surface_keyword(),
@@ -391,5 +393,7 @@ def init_user_config_schema() -> SchemaItemDict:
         if item.kw in ConfigAliases:
             for name in ConfigAliases[ConfigKeys(item.kw)]:
                 schema[name] = item
+
+        schema.add_deprecations(deprecated_keywords_list)
 
     return schema

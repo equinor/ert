@@ -1,6 +1,8 @@
 from typing import List
 
+from .config_dict import ConfigDict
 from .config_schema_item import SchemaItem, SchemaItemType
+from .deprecation_info import DeprecationInfo
 from .ext_job_keywords import ExtJobKeys
 from .schema_dict import SchemaItemDict
 
@@ -180,14 +182,37 @@ ext_job_schema_items: List[SchemaItem] = [
     arg_type_keyword(),
     env_keyword(),
     exec_env_keyword(),
-    portable_exe_keyword(),
+]
+
+ext_job_deprecations: List[DeprecationInfo] = [
+    DeprecationInfo(
+        keyword="PORTABLE_EXE",
+        message='"PORTABLE_EXE" key is deprecated, please replace with "EXECUTABLE"',
+    )
 ]
 
 
-def init_ext_job_schema() -> SchemaItemDict:
-    schema = SchemaItemDict()
+class ExtJobSchemaItemDict(SchemaItemDict):
+    def check_required(
+        self,
+        config_dict: ConfigDict,
+        filename: str,
+    ) -> None:
+        self.search_for_deprecated_keyword_usages(
+            config_dict=config_dict,
+            filename=filename,
+            deprecated_keywords_list=ext_job_deprecations,
+        )
+        self.search_for_unset_required_keywords(
+            config_dict=config_dict, filename=filename
+        )
+
+
+def init_ext_job_schema() -> ExtJobSchemaItemDict:
+    schema = ExtJobSchemaItemDict()
 
     for item in ext_job_schema_items:
         schema[item.kw] = item
 
+    schema.add_deprecations(ext_job_deprecations)
     return schema
