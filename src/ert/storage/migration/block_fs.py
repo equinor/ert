@@ -38,7 +38,20 @@ def migrate(path: Path) -> None:
     with LocalStorageAccessor(path, ignore_migration_check=True) as storage:
         for casedir in block_storage_path.iterdir():
             if (casedir / "ert_fstab").is_file():
-                migrate_case(storage, casedir)
+                _migrate_case_ignoring_exceptions(storage, casedir)
+
+
+def _migrate_case_ignoring_exceptions(storage: StorageAccessor, casedir: Path) -> None:
+    try:
+        migrate_case(storage, casedir)
+    except Exception as exc:  # pylint: disable=broad-except
+        logger.warning(
+            (
+                "Exception occurred during migration of BlockFs case "
+                f"'{casedir.name}': {exc}"
+            ),
+            exc_info=exc,
+        )
 
 
 def migrate_case(storage: StorageAccessor, path: Path) -> None:
