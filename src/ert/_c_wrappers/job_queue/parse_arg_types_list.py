@@ -28,7 +28,7 @@ def parse_arg_types_list(
 
     arg_types_list: List[SchemaItemType] = [
         arg_types_dict.get(i, SchemaItemType.STRING) for i in range(num_args)
-    ]  # type: ignore
+    ]
     return arg_types_list
 
 

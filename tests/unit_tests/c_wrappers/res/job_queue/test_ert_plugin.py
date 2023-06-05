@@ -4,7 +4,7 @@ from ert._c_wrappers.job_queue import CancelPluginException, ErtPlugin
 
 
 class SimplePlugin(ErtPlugin):
-    def run(self, parameter1, parameter2):
+    def run(self, parameter1, parameter2):  # pylint: disable=arguments-differ
         assert parameter1 == "one"
         assert parameter2 == 2
 
@@ -19,7 +19,7 @@ class FullPlugin(ErtPlugin):
     def getDescription(self):
         return "Fully described!"
 
-    def run(self, arg1, arg2, arg3=None):
+    def run(self, arg1, arg2, arg3=None):  # pylint: disable=arguments-differ
         assert arg1 == 5
         assert arg2 == "No"
         assert arg3 is None
@@ -29,7 +29,7 @@ class FullPlugin(ErtPlugin):
 
 
 class CanceledPlugin(ErtPlugin):
-    def run(self, arg1):
+    def run(self, arg1):  # pylint: disable=arguments-differ
         pass
 
     def getArguments(self, parent=None):

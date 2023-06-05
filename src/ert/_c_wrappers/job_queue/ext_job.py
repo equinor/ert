@@ -5,7 +5,7 @@ import shutil
 from collections import defaultdict
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, no_type_check
 
 from ert._c_wrappers.config import ConfigContent, ConfigParser
 from ert._c_wrappers.util import SubstitutionList
@@ -137,7 +137,8 @@ class ExtJob:
         result: Dict[str, Optional[str]] = {}
 
         def might_set_value_none(keyword: str, key: str) -> None:
-            value: Optional[str] = config_content.getValue(keyword)  # type: ignore
+            value: Optional[str]
+            value = config_content.getValue(keyword)  # type: ignore
             if value == "null":
                 value = None
             result[key] = value
@@ -170,7 +171,8 @@ class ExtJob:
         if max_arg is not None:
             arg_types_dict[max_arg - 1] = SchemaItemType.STRING
         for arg in config_content["ARG_TYPE"]:
-            arg_types_dict[arg[0]] = SchemaItemType.from_content_type_enum(
+            idx: int = arg[0]  # type: ignore
+            arg_types_dict[idx] = SchemaItemType.from_content_type_enum(
                 type_from_kw(arg[1])
             )
         if arg_types_dict:
@@ -181,6 +183,7 @@ class ExtJob:
         else:
             return []
 
+    @no_type_check
     @classmethod
     def from_config_file_with_new_parser(cls, config_file: str, name: str) -> "ExtJob":
         schema = init_ext_job_schema()
@@ -190,10 +193,10 @@ class ExtJob:
 
             specified_arg_types: List[Tuple[int, str]] = content_dict.get(
                 ExtJobKeys.ARG_TYPE, []
-            )  # type: ignore
+            )
 
-            specified_max_args: int = content_dict.get("MAX_ARG", 0)  # type: ignore
-            specified_min_args: int = content_dict.get("MIN_ARG", 0)  # type: ignore
+            specified_max_args: int = content_dict.get("MAX_ARG", 0)
+            specified_min_args: int = content_dict.get("MIN_ARG", 0)
 
             arg_types_list = parse_arg_types_list(
                 specified_arg_types, specified_min_args, specified_max_args

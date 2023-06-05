@@ -6,22 +6,17 @@ from .workflow_common import WorkflowCommon
 
 
 class ReturnErtScript(ErtScript):
-    def run(self):
+    def run(self):  # pylint: disable=arguments-differ
         return self.ert()
 
 
 class AddScript(ErtScript):
-    def run(self, arg1, arg2):
+    def run(self, arg1, arg2):  # pylint: disable=arguments-differ
         return arg1 + arg2
 
 
-class FailScript(ErtScript):
-    def rum(self):
-        pass
-
-
 class NoneScript(ErtScript):
-    def run(self, arg):
+    def run(self, arg):  # pylint: disable=arguments-differ
         assert arg is None
 
 
@@ -40,11 +35,6 @@ def test_ert_script_add():
 
     with pytest.raises(ValueError):
         result = script.initializeAndRun([int, int], ["5", "4.6"])
-
-
-def test_ert_script_failed_implementation():
-    with pytest.raises(UserWarning):
-        FailScript("ert", storage=None)
 
 
 @pytest.mark.usefixtures("use_tmpdir")

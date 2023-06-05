@@ -4,7 +4,7 @@ import logging
 import os
 from collections import defaultdict
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Tuple, Type, Union
+from typing import Any, Dict, List, Optional, Tuple, Type, Union
 
 from ert._c_wrappers.config import ConfigContent, ConfigParser
 from ert._clib.job_kw import type_from_kw
@@ -36,7 +36,7 @@ def _workflow_job_config_parser() -> ConfigParser:
     item = parser.add("ARG_TYPE")
     item.set_argc_minmax(2, 2)
     item.iset_type(0, SchemaItemType.INT)
-    item.initSelection(1, ["STRING", "INT", "FLOAT", "BOOL"])
+    item.initSelection(1, ["STRING", "INT", "FLOAT", "BOOL"])  # type: ignore
     return parser
 
 
@@ -100,7 +100,8 @@ class WorkflowJob:
         if max_arg is not None:
             arg_types_dict[max_arg - 1] = SchemaItemType.STRING
         for arg in config_content["ARG_TYPE"]:
-            arg_types_dict[arg[0]] = SchemaItemType.from_content_type_enum(
+            arg_index: int = arg[0]  # type: ignore
+            arg_types_dict[arg_index] = SchemaItemType.from_content_type_enum(
                 type_from_kw(arg[1])
             )
         if arg_types_dict:
@@ -130,15 +131,17 @@ class WorkflowJob:
                 content_dict.get("MAX_ARG"),  # type: ignore
                 arg_types_list,
                 content_dict.get("EXECUTABLE"),  # type: ignore
-                str(content_dict.get("SCRIPT")) if "SCRIPT" in content_dict else None,
+                str(content_dict.get("SCRIPT"))  # type: ignore
+                if "SCRIPT" in content_dict
+                else None,
             )
         else:
             old_content = _config_parser.parse(config_file)
 
-            def optional_get(key: str, default=None):
+            def optional_get(key: str, default: Any = None) -> Any:
                 return old_content.getValue(key) if old_content.hasKey(key) else default
 
-            max_arg = optional_get("MAX_ARG")
+            max_arg: Optional[int] = optional_get("MAX_ARG")
             arg_types_list = cls._make_arg_types_list(old_content, max_arg)
             return cls(
                 name,

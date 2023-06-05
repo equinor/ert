@@ -27,7 +27,7 @@ class ExportRunpathJob(ErtScript):
     file.
     """
 
-    def run(self, *args):
+    def run(self, *args):  # pylint: disable=arguments-differ
         args = " ".join(args).split()  # Make sure args is a list of words
         self.ert().write_runpath_list(*self.get_ranges(args))
 

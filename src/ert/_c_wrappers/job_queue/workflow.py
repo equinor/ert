@@ -83,8 +83,8 @@ class Workflow:
         errors = []
 
         for job_name in parsed_workflow_job_names:
-            for instructions in config_dict[job_name]:
-                job_name_with_context = instructions.keyword_token
+            for instructions in config_dict[job_name]:  # type: ignore
+                job_name_with_context = instructions.keyword_token  # type: ignore
                 if job_name not in job_dict:
                     errors.append(
                         ErrorInfo(
@@ -101,7 +101,7 @@ class Workflow:
 
         # Order matters, so we need to sort it
         # by the line attached to the context token
-        all_workflow_jobs.sort(key=lambda x: x[0].line)
+        all_workflow_jobs.sort(key=lambda x: x[0].line)  # type: ignore
 
         return [
             (job_dict[name], instructions) for (name, instructions) in all_workflow_jobs

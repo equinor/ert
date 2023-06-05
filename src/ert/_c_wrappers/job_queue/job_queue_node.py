@@ -24,7 +24,7 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-class JobQueueNode(BaseCClass):
+class JobQueueNode(BaseCClass):  # type: ignore
     TYPE_NAME = "job_queue_node"
 
     _alloc = ResPrototype(
@@ -130,23 +130,23 @@ class JobQueueNode(BaseCClass):
 
     @property
     def submit_attempt(self) -> int:
-        return self._get_submit_attempt()
+        return self._get_submit_attempt()  # type: ignore
 
     def refresh_status(self, driver: "Driver") -> JobStatusType:
-        return self._refresh_status(driver)
+        return self._refresh_status(driver)  # type: ignore
 
     @property
     def status(self) -> JobStatusType:
-        return self._get_status()
+        return self._get_status()  # type: ignore
 
     @property
     def thread_status(self) -> ThreadStatus:
         return self._thread_status
 
     def submit(self, driver: "Driver") -> JobSubmitStatusType:
-        return self._submit(driver)
+        return self._submit(driver)  # type: ignore
 
-    def run_done_callback(self):
+    def run_done_callback(self) -> Optional[LoadStatus]:
         callback_status, status_msg = self.done_callback_function(
             *self.callback_arguments
         )
@@ -159,8 +159,8 @@ class JobQueueNode(BaseCClass):
         self._status_msg = status_msg
         return callback_status
 
-    def run_exit_callback(self):
-        return self.exit_callback_function(*self.callback_arguments)
+    def run_exit_callback(self) -> None:
+        self.exit_callback_function(*self.callback_arguments)
 
     def is_running(self, given_status: Optional[JobStatusType] = None) -> bool:
         status = given_status or self.status

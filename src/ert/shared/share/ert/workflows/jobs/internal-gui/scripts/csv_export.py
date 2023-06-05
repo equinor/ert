@@ -80,7 +80,7 @@ class CSVExportJob(ErtPlugin):
             return int(match.group(1))
         return 0
 
-    def run(
+    def run(  # pylint: disable=arguments-differ
         self,
         output_file,
         case_list=None,

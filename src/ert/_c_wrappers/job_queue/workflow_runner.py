@@ -48,10 +48,17 @@ class WorkflowJobRunner:
         if self.job.ert_script is not None:
             self.__script = self.job.ert_script(ert, storage, ensemble)
         elif not self.job.internal:
-            self.__script = ExternalErtScript(ert, storage, self.job.executable)
+            self.__script = ExternalErtScript(
+                ert,  # type: ignore
+                storage,  # type: ignore
+                self.job.executable,  # type: ignore
+            )
         else:
             raise UserWarning("Unknown script type!")
-        result = self.__script.initializeAndRun(self.job.argument_types(), arguments)
+        result = self.__script.initializeAndRun(  # type: ignore
+            self.job.argument_types(),
+            arguments,
+        )
         self.__running = False
         return result
 

@@ -1,7 +1,7 @@
 from cwrap import BaseCEnum
 
 
-class JobStatusType(BaseCEnum):
+class JobStatusType(BaseCEnum):  # type: ignore
     TYPE_NAME = "job_status_type_enum"
     # This value is used in external query routines - for jobs which are
     # (currently) not active.
@@ -34,7 +34,7 @@ class JobStatusType(BaseCEnum):
 
     @classmethod
     def from_string(cls, name: str) -> "JobStatusType":
-        return super().from_string(name)
+        return super().from_string(name)  # type: ignore
 
 
 JobStatusType.addEnum("JOB_QUEUE_NOT_ACTIVE", 1)

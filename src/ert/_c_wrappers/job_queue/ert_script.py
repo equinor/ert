@@ -5,6 +5,7 @@ import inspect
 import logging
 import sys
 import traceback
+from abc import abstractmethod
 from types import ModuleType
 from typing import TYPE_CHECKING, Any, Callable, List, Optional, Type
 
@@ -22,10 +23,6 @@ class ErtScript:
         storage: StorageAccessor,
         ensemble: Optional[EnsembleAccessor] = None,
     ) -> None:
-        if not hasattr(self, "run"):
-            raise UserWarning(
-                "ErtScript implementations must provide a method run(self, ert, ...)"
-            )
         self.__ert = ert
         self.__storage = storage
         self.__ensemble = ensemble
@@ -34,6 +31,10 @@ class ErtScript:
         self.__failed = False
         self._stdoutdata = ""
         self._stderrdata = ""
+
+    @abstractmethod
+    def run(self, *arg: Any, **kwarg: Any) -> Any:
+        pass
 
     @property
     def stdoutdata(self) -> str:
@@ -165,4 +166,4 @@ class ErtScript:
                 f"Module {module.__name__} contains more than one ErtScript"
             )
 
-        return result[0]
+        return result[0]  # type: ignore
