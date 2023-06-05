@@ -1820,8 +1820,8 @@ bjobs.
 
                 QUEUE_OPTION TORQUE DEBUG_OUTPUT torque_log.txt
 
-.. _torque_timeout:
-.. topic:: TIMEOUT
+.. _torque_queue_query_timeout:
+.. topic:: QUEUE_QUERY_TIMEOUT
 
         The driver allows the backend Torque system to be flaky, i.e. it may
         intermittently not respond and give error messages when submitting jobs
@@ -1835,12 +1835,13 @@ bjobs.
         flakyness.
 
         ::
+
                 QUEUE_OPTION TORQUE QUEUE_QUERY_TIMEOUT 254
 
 .. _configuring_the_slurm_queue:
 
 Configuring the SLURM queue
---------------------------------------
+---------------------------
 
         The slurm queue managing tool has a very fine grained control. In ERT only the options that
         are the most necessary have been added.
