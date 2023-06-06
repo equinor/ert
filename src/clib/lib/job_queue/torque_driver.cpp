@@ -615,16 +615,22 @@ torque_driver_get_qstat_status(torque_driver_type *driver,
            retry a couple of times with exponential sleep. ERT pings qstat
            every second for every realization, thus the initial sleep time
            is 2 seconds. */
+        int return_value = -1;
         bool qstat_succeeded = false;
         int retry_interval = 2; /* seconds */
         int slept_time = 0;
         while ((!qstat_succeeded) && (slept_time <= driver->timeout)) {
-            util_spawn_blocking(driver->qstat_cmd, argv.size(), argv.data(),
-                                tmp_std_file, tmp_err_file);
-            if (fs::exists(tmp_std_file) && (fs::file_size(tmp_std_file) > 0)) {
-                // A non-existing or zero length output from qstat is interpreted
-                // as a failure. ERT never calls qstat unless it has already submitted
-                // something.
+            return_value =
+                util_spawn_blocking(driver->qstat_cmd, argv.size(), argv.data(),
+                                    tmp_std_file, tmp_err_file);
+            // A non-zero return value is trusted, but a zero return-value
+            // is not trusted unless the output has nonzero length.
+            // ERT never calls qstat unless it has already submitted something, and
+            // can therefore assume that qstat results about Unknown Job Id are
+            // failures (these have nonzero output length, but return value != 0)
+            // that should trigger retries.
+            if (std::error_code ec; fs::file_size(tmp_std_file, ec) > 0 && ec &&
+                                    return_value == 0) {
                 qstat_succeeded = true;
             }
 
