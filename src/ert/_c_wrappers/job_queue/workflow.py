@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import os
-from tempfile import mkdtemp
 from typing import TYPE_CHECKING, Any, Dict, Iterator, List, Optional, Tuple
 
 from ert._c_wrappers.config import ConfigParser, UnrecognizedEnum
@@ -9,8 +8,9 @@ from ert.parsing import ConfigValidationError, init_workflow_schema, lark_parse
 from ert.parsing.error_info import ErrorInfo
 
 if TYPE_CHECKING:
-    from ert._c_wrappers.job_queue import WorkflowJob
     from ert._c_wrappers.util import SubstitutionList
+
+    from .workflow_job import WorkflowJob
 
 
 def _workflow_parser(workflow_jobs: Dict[str, WorkflowJob]) -> ConfigParser:
@@ -32,7 +32,7 @@ class Workflow:
         self.src_file = src_file
         self.cmd_list = cmd_list
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.cmd_list)
 
     def __getitem__(self, index: int) -> Tuple[WorkflowJob, Any]:
@@ -43,16 +43,14 @@ class Workflow:
 
     @classmethod
     def _parse_command_list_with_old_parser(
-        cls, src_file: str, job_dict: Dict[str, WorkflowJob]
-    ):
+        cls, src_file: str, context: Dict[str, str], job_dict: Dict[str, WorkflowJob]
+    ) -> List[Tuple[WorkflowJob, Any]]:
         parser = _workflow_parser(job_dict)
-        try:
-            content = parser.parse(
-                src_file, unrecognized=UnrecognizedEnum.CONFIG_UNRECOGNIZED_ERROR
-            )
-        except ConfigValidationError as err:
-            err.config_file = src_file
-            raise err from None
+        content = parser.parse(
+            src_file,
+            pre_defined_kw_map=context,
+            unrecognized=UnrecognizedEnum.CONFIG_UNRECOGNIZED_ERROR,
+        )
 
         cmd_list = []
         for line in content:
@@ -67,10 +65,13 @@ class Workflow:
 
     @classmethod
     def _parse_command_list_with_new_parser(
-        cls, src_file: str, job_dict: Dict[str, WorkflowJob]
-    ):
+        cls,
+        src_file: str,
+        context: List[Tuple[str, str]],
+        job_dict: Dict[str, WorkflowJob],
+    ) -> List[Tuple[WorkflowJob, Any]]:
         schema = init_workflow_schema()
-        config_dict = lark_parse(src_file, schema, pre_defines=[])
+        config_dict = lark_parse(src_file, schema, pre_defines=context)
 
         parsed_workflow_job_names = config_dict.keys() - {"DEFINE"}
 
@@ -109,28 +110,28 @@ class Workflow:
         context: Optional[SubstitutionList],
         job_dict: Dict[str, WorkflowJob],
         use_new_parser: bool = True,
-    ):
-        to_compile = src_file
+    ) -> "Workflow":
         if not os.path.exists(src_file):
             raise ConfigValidationError(
                 f"Workflow file {src_file} does not exist", config_file=src_file
             )
-        if context is not None:
-            tmpdir = mkdtemp("ert_workflow")
-            to_compile = os.path.join(tmpdir, "ert-workflow")
-            context.substitute_file(src_file, to_compile)
-
         cmd_list = (
             cls._parse_command_list_with_new_parser(
-                src_file=to_compile, job_dict=job_dict
+                src_file=src_file,
+                context=list(iter(context)) if context else [],
+                job_dict=job_dict,
             )
             if use_new_parser
             else cls._parse_command_list_with_old_parser(
-                src_file=to_compile, job_dict=job_dict
+                src_file=src_file,
+                context=dict(iter(context)) if context else {},
+                job_dict=job_dict,
             )
         )
 
         return cls(src_file, cmd_list)
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, type(self)):
+            return False
         return os.path.realpath(self.src_file) == os.path.realpath(other.src_file)

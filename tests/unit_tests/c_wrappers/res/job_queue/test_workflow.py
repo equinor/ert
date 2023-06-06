@@ -1,3 +1,5 @@
+import os
+
 import pytest
 from hypothesis import given, strategies
 
@@ -68,7 +70,31 @@ def test_that_failure_in_parsing_workflow_gives_config_validation_error():
         ConfigValidationError, match="DEFINE must have .* arguments"
     ) as err:
         _ = Workflow.from_file("workflow", None, {})
-    assert "workflow" in err.value.errors[0].filename
+    assert os.path.abspath(err.value.errors[0].filename) == os.path.abspath("workflow")
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_substitution_happens_in_workflow():
+    with open("workflow", "w", encoding="utf-8") as f:
+        f.write("JOB <A> <B>\n")
+    substlist = SubstitutionList()
+    substlist.addItem("<A>", "a")
+    substlist.addItem("<B>", "b")
+    job = WorkflowJob(
+        name="JOB",
+        internal=False,
+        min_args=None,
+        max_args=None,
+        arg_types=[],
+        executable="echo",
+        script=None,
+    )
+    wf = Workflow.from_file(
+        "workflow",
+        substlist,
+        {"JOB": job},
+    )
+    assert wf.cmd_list == [(job, ["a", "b"])]
 
 
 @pytest.mark.usefixtures("use_tmpdir")
