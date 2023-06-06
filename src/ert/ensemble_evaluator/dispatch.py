@@ -40,27 +40,27 @@ class BatchingDispatcher:
 
     async def _work(self):
         t0 = time.time()
-        event_buffer = []
+        batch_of_events_for_processing = []
         for _ in range(self._max_batch):
             try:
-                event_buffer.append(self._buffer.popleft())
+                batch_of_events_for_processing.append(self._buffer.popleft())
             except IndexError:
                 break
         left_in_queue = len(self._buffer)
 
-        if len(event_buffer) == 0:
+        if len(batch_of_events_for_processing) == 0:
             logger.debug("no events to be processed in queue")
             return
 
         function_to_events_map = OrderedDict()
-        for f, event in event_buffer:
+        for f, event in batch_of_events_for_processing:
             if f not in function_to_events_map:
                 function_to_events_map[f] = []
             function_to_events_map[f].append(event)
 
         def done_logger(_):
             logger.debug(
-                f"processed {len(event_buffer)} events in "
+                f"processed {len(batch_of_events_for_processing)} events in "
                 f"{(time.time()-t0):.6f}s. "
                 f"{left_in_queue} left in queue"
             )
