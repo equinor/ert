@@ -10,8 +10,6 @@ class Runpaths:
     is one job name for each of the runpaths.
 
     :param jobname_format: The format of the job name, e.g., "job_<IENS>"
-    :param eclbase_format: The format for the ECLIPSE simulation file.
-        e.g., NAME-<IENS>
     :param runpath_format: The format of the runpath, e.g.
         "/path/<case>/ensemble-<IENS>/iteration-<ITER>"
     :param filename: The filename of the runpath list file. Defaults to
@@ -31,13 +29,11 @@ class Runpaths:
     def __init__(
         self,
         jobname_format: str,
-        eclbase_format: str,
         runpath_format: str,
         filename: str = ".ert_runpath_list",
         substitute: Callable[[str, int, int], str] = lambda x, *_: x,
     ):
         self._jobname_format = jobname_format
-        self._eclbase_format = eclbase_format
         self.runpath_list_filename = Path(filename)
         self._runpath_format = str(Path(runpath_format).resolve())
         self._substitute = substitute
@@ -51,12 +47,6 @@ class Runpaths:
     def get_jobnames(self, realizations: List[int], iteration: int) -> List[str]:
         return [
             self._substitute(self._jobname_format, realization, iteration)
-            for realization in realizations
-        ]
-
-    def get_eclbases(self, realizations: List[int], iteration: int) -> List[str]:
-        return [
-            self._substitute(self._eclbase_format, realization, iteration)
             for realization in realizations
         ]
 
