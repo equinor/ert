@@ -19,7 +19,6 @@ def test_create(storage):
         Runpaths(
             "path/to/sim%d",
             "job%d",
-            "eclbase%d",
             Path("runpath_file_name"),
         ),
         mask,
@@ -41,7 +40,6 @@ def test_create(storage):
         Runpaths(
             "path/to/sim%d",
             "job%d",
-            "eclbase%d",
             Path("runpath_file_name"),
         ),
         mask,
