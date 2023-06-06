@@ -60,7 +60,6 @@ def test_runpath_file(tmp_path, job_format, runpath_format, expected_contents):
     context = SubstitutionList()
     runpaths = Runpaths(
         job_format,
-        job_format,
         runpath_format,
         runpath_file,
         context.substitute_real_iter,
@@ -77,7 +76,6 @@ def test_runpath_file_writer_substitution(tmp_path):
     context.addItem("<casename>", "my_case")
     runpaths = Runpaths(
         "<casename>_job",
-        "<casename>",
         "/path/<casename>/ensemble-<IENS>/iteration<ITER>",
         runpath_file,
         context.substitute_real_iter,
@@ -128,7 +126,6 @@ def test_write_snakeoil_runpath_file(snake_oil_case, storage, itr):
     run_context = RunContext(
         sim_fs=prior_ensemble,
         runpaths=Runpaths(
-            jobname_fmt,
             jobname_fmt,
             runpath_fmt,
             "a_file_name",

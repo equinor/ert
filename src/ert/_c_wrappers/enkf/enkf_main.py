@@ -146,7 +146,6 @@ class EnKFMain:
         self._ensemble_size = self.ert_config.model_config.num_realizations
         self._runpaths = Runpaths(
             jobname_format=self.getModelConfig().jobname_format_string,
-            eclbase_format=self.getModelConfig().eclbase_format_string,
             runpath_format=self.getModelConfig().runpath_format_string,
             filename=str(self.ert_config.runpath_file),
             substitute=self.get_context().substitute_real_iter,
