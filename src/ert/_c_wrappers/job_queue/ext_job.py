@@ -194,7 +194,7 @@ class ExtJob:
             specified_min_args: int = content_dict.get("MIN_ARG", 0)  # type: ignore
 
             arg_types_list = parse_arg_types_list(
-                specified_arg_types, specified_max_args, specified_min_args
+                specified_arg_types, specified_min_args, specified_max_args
             )
 
             # We unescape backslash here to keep backwards compatability ie. If
