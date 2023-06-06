@@ -6,7 +6,7 @@ from typing_extensions import Self
 from ert.data import TransformationDirection
 
 if TYPE_CHECKING:
-    import ert
+    from ert.data import RecordTransformation, transmitter_factory
 
 
 logger = logging.getLogger(__name__)
@@ -16,7 +16,7 @@ class IO:
     def __init__(
         self,
         name: str,
-        transformation: Optional["ert.data.RecordTransformation"] = None,
+        transformation: Optional["RecordTransformation"] = None,
     ):
         self.transformation = transformation
         self.name = name
@@ -41,16 +41,14 @@ class IOBuilder:
 
     def __init__(self) -> None:
         self._name: Optional[str] = None
-        self._transformation: Optional["ert.data.RecordTransformation"] = None
-        self._transmitter_factories: Dict[int, "ert.data.transmitter_factory"] = {}
+        self._transformation: Optional["RecordTransformation"] = None
+        self._transmitter_factories: Dict[int, "transmitter_factory"] = {}
 
     def set_name(self, name: str) -> Self:
         self._name = name
         return self
 
-    def set_transformation(
-        self, transformation: "ert.data.RecordTransformation"
-    ) -> Self:
+    def set_transformation(self, transformation: "RecordTransformation") -> Self:
         # Validate that a transformation can transform in the required direction.
         # The constraints are in tuple form: (IO type, required direction).
         constraints = (
@@ -70,7 +68,7 @@ class IOBuilder:
         return self
 
     def set_transmitter_factory(
-        self, factory: "ert.data.transmitter_factory", index: Optional[int] = None
+        self, factory: "transmitter_factory", index: Optional[int] = None
     ) -> Self:
         """Fix the transmitter factory for this IO to index if index is >= 0. If the
         index is omitted or is < 0, it the factory will be called for all indices not
@@ -84,7 +82,7 @@ class IOBuilder:
 
     def transmitter_factory(
         self, index: Optional[int] = None
-    ) -> Optional["ert.data.transmitter_factory"]:
+    ) -> Optional["transmitter_factory"]:
         """Return a fixed transmitter factory for index, a ensemble-wide transmitter
         if index is -1, or None.
         """

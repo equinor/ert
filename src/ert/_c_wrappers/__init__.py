@@ -32,7 +32,7 @@ def _load_lib():
 class ResPrototype(Prototype):
     lib = _load_lib()
 
-    def __init__(self, prototype, bind=True):
+    def __init__(self, prototype: str, bind: bool = True) -> None:
         super().__init__(ResPrototype.lib, prototype, bind=bind)
 
 

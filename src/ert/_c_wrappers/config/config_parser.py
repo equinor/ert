@@ -9,6 +9,8 @@ from ert._c_wrappers.config.unrecognized_enum import UnrecognizedEnum
 from ert.parsing import ConfigValidationError
 from ert.parsing.error_info import ErrorInfo
 
+from .schema_item import SchemaItem
+
 
 class ConfigParser(BaseCClass):
     TYPE_NAME = "config_parser"
@@ -44,7 +46,7 @@ class ConfigParser(BaseCClass):
     )
     _validate = ResPrototype("void config_validate(config_parser, config_content)")
 
-    def __init__(self):
+    def __init__(self) -> None:
         c_ptr = self._alloc()
         super().__init__(c_ptr)
 
@@ -57,7 +59,7 @@ class ConfigParser(BaseCClass):
     def __repr__(self):
         return self._create_repr(f"size={len(self)}")
 
-    def add(self, keyword, required=False, value_type=None):
+    def add(self, keyword: str, required: bool = False, value_type=None) -> SchemaItem:
         item = self._add(keyword, required).setParent(self)
         if value_type:
             item.iset_type(0, value_type)

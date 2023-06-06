@@ -20,7 +20,7 @@ class SchemaItemType(str, Enum):
     RUNTIME_FILE = "RUNTIME_FILE"
 
     @classmethod
-    def from_content_type_enum(cls, old: int):
+    def from_content_type_enum(cls, old: int) -> "SchemaItemType":
         if old not in _old_to_new:
             raise ValueError("Invalid old enum value")
 
