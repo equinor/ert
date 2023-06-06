@@ -392,6 +392,8 @@ class JobQueue(BaseCClass):
         ssl_context,
         headers,
     ) -> None:
+        reconnects = 0
+        max_reconnects = 10
         async for websocket in connect(
             ws_uri,
             ssl=ssl_context,
@@ -401,29 +403,35 @@ class JobQueue(BaseCClass):
             ping_interval=60,
             close_timeout=60,
         ):
-            self.launch_jobs(pool_sema)
+            try:
+                self.launch_jobs(pool_sema)
 
-            await asyncio.sleep(1)
+                await asyncio.sleep(1)
 
-            for func in evaluators:
-                func()
+                for func in evaluators:
+                    func()
 
-            changes = self.changes_after_transition()
-            # logically not necessary the way publish changes is implemented at the
-            # moment, but highly relevant before, and might be relevant in the
-            # future in case publish changes becomes expensive again
-            if len(changes) > 0:
-                await JobQueue._publish_changes(
-                    ens_id,
-                    changes,
-                    websocket,
-                )
+                changes = self.changes_after_transition()
+                # logically not necessary the way publish changes is implemented at the
+                # moment, but highly relevant before, and might be relevant in the
+                # future in case publish changes becomes expensive again
+                if len(changes) > 0:
+                    await JobQueue._publish_changes(
+                        ens_id,
+                        changes,
+                        websocket,
+                    )
 
-            if self.stopped:
-                raise asyncio.CancelledError
+                if self.stopped:
+                    raise asyncio.CancelledError
 
-            if not self.is_active():
-                break
+                if not self.is_active():
+                    break
+            except ConnectionClosed as error:
+                reconnects += 1
+                if reconnects < max_reconnects:
+                    continue
+                raise RuntimeError("Too many reconnects in job queue") from error
 
     async def execute_queue_via_websockets(  # pylint: disable=too-many-arguments
         self,
