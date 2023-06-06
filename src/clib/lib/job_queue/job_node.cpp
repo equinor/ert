@@ -402,35 +402,6 @@ bool job_queue_node_status_transition(job_queue_node_type *node,
     return status_change;
 }
 
-bool job_queue_node_kill(job_queue_node_type *node,
-                         job_queue_status_type *status,
-                         queue_driver_type *driver) {
-    bool result = false;
-    pthread_mutex_lock(&node->data_mutex);
-
-    job_status_type current_status = job_queue_node_get_status(node);
-    if (current_status & JOB_QUEUE_CAN_KILL) {
-        // If the job is killed before it is even started no driver specific
-        // job data has been assigned; we therefore must check the
-        // node->job_data pointer before entering.
-        if (node->job_data) {
-            queue_driver_kill_job(driver, node->job_data);
-            queue_driver_free_job(driver, node->job_data);
-            node->job_data = NULL;
-        }
-        job_queue_status_transition(status, current_status,
-                                    JOB_QUEUE_IS_KILLED);
-        job_queue_node_set_status(node, JOB_QUEUE_IS_KILLED);
-        logger->info("Job {} set to killed", node->job_name);
-        result = true;
-    } else {
-        logger->warning("node_kill called but cannot kill {}", node->job_name);
-    }
-
-    pthread_mutex_unlock(&node->data_mutex);
-    return result;
-}
-
 bool job_queue_node_kill_simple(job_queue_node_type *node,
                                 queue_driver_type *driver) {
     bool result = false;
