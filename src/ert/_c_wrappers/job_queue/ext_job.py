@@ -9,7 +9,7 @@ from typing import Any, Dict, List, Optional, Tuple, no_type_check
 
 from ert._c_wrappers.config import ConfigContent, ConfigParser
 from ert._c_wrappers.util import SubstitutionList
-from ert._clib.job_kw import type_from_kw
+from ert._clib.job_kw import type_from_kw  # pylint: disable=import-error
 from ert.parsing import (
     ConfigValidationError,
     ErrorInfo,
@@ -24,6 +24,7 @@ from .parse_arg_types_list import parse_arg_types_list
 logger = logging.getLogger(__name__)
 
 
+# pylint: disable=too-many-instance-attributes
 @dataclass
 class ExtJob:
     name: str

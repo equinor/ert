@@ -24,6 +24,7 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
+# pylint: disable=too-many-instance-attributes
 class JobQueueNode(BaseCClass):  # type: ignore
     TYPE_NAME = "job_queue_node"
 
@@ -59,6 +60,7 @@ class JobQueueNode(BaseCClass):  # type: ignore
         "int job_queue_node_get_submit_attempt(job_queue_node)"
     )
 
+    # pylint: disable=too-many-arguments
     def __init__(
         self,
         job_script: str,
@@ -181,6 +183,7 @@ class JobQueueNode(BaseCClass):  # type: ignore
 
         return self._end_time - self._start_time
 
+    # pylint: disable=too-many-branches, too-many-statements
     def _job_monitor(
         self, driver: "Driver", pool_sema: Semaphore, max_submit: int
     ) -> None:

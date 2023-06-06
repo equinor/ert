@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Tuple, Type, Union
 
 from ert._c_wrappers.config import ConfigContent, ConfigParser
-from ert._clib.job_kw import type_from_kw
+from ert._clib.job_kw import type_from_kw  # pylint: disable=import-error
 from ert.parsing import (
     ConfigDict,
     ConfigValidationError,
@@ -52,6 +52,7 @@ class ErtScriptLoadFailure(ValueError):
     pass
 
 
+# pylint: disable=too-many-instance-attributes
 @dataclass
 class WorkflowJob:
     name: str
