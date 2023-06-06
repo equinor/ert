@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 from itertools import chain
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Callable, List, Optional, Sequence, Tuple, Union
+from typing import TYPE_CHECKING, Any, List, Optional, Sequence, Union
 
 from ._function_task import FunctionTask
 from ._io_ import IO, DummyIO, DummyIOBuilder, InputBuilder, IOBuilder, OutputBuilder
@@ -12,8 +14,7 @@ from ._unix_task import UnixTask
 SOURCE_TEMPLATE_STEP = "/step/{step_id}"
 if TYPE_CHECKING:
     from ert._c_wrappers.enkf import RunArg
-
-callback = Callable[[List[Any]], Union[bool, Tuple[Any, str]]]
+    from ert.callbacks import Callback, CallbackArgs
 
 
 class Step(Stage):
@@ -82,9 +83,9 @@ class LegacyStep(Step):  # pylint: disable=too-many-instance-attributes
         ee_url: str,
         source: str,
         max_runtime: Optional[int],
-        callback_arguments: Optional[Sequence[Any]],
-        done_callback: callback,
-        exit_callback: callback,
+        callback_arguments: CallbackArgs,
+        done_callback: Callback,
+        exit_callback: Callback,
         num_cpu: Optional[int],
         run_path: Path,
         job_script: str,
@@ -114,9 +115,9 @@ class StepBuilder(StageBuilder):  # pylint: disable=too-many-instance-attributes
 
         # legacy parts
         self._max_runtime: Optional[int] = None
-        self._callback_arguments: Optional[Sequence[Any]] = None
-        self._done_callback: Optional[callback] = None
-        self._exit_callback: Optional[callback] = None
+        self._callback_arguments: Optional[CallbackArgs] = None
+        self._done_callback: Optional[Callback] = None
+        self._exit_callback: Optional[Callback] = None
         self._num_cpu: Optional[int] = None
         self._run_path: Optional[Path] = None
         self._job_script: Optional[str] = None
@@ -160,17 +161,15 @@ class StepBuilder(StageBuilder):  # pylint: disable=too-many-instance-attributes
             self._max_runtime = max_runtime
         return self
 
-    def set_callback_arguments(
-        self, callback_arguments: Sequence[Any]
-    ) -> "StepBuilder":
+    def set_callback_arguments(self, callback_arguments: CallbackArgs) -> "StepBuilder":
         self._callback_arguments = callback_arguments
         return self
 
-    def set_done_callback(self, done_callback: callback) -> "StepBuilder":
+    def set_done_callback(self, done_callback: Callback) -> "StepBuilder":
         self._done_callback = done_callback
         return self
 
-    def set_exit_callback(self, exit_callback: callback) -> "StepBuilder":
+    def set_exit_callback(self, exit_callback: Callback) -> "StepBuilder":
         self._exit_callback = exit_callback
         return self
 

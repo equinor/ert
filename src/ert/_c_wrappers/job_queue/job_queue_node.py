@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 import time
 from threading import Lock, Semaphore, Thread
@@ -14,6 +16,8 @@ from .job_submit_status_type_enum import JobSubmitStatusType
 from .thread_status_type_enum import ThreadStatus
 
 if TYPE_CHECKING:
+    from ert.callbacks import Callback, CallbackArgs
+
     from .driver import Driver
 
 logger = logging.getLogger(__name__)
@@ -62,11 +66,11 @@ class JobQueueNode(BaseCClass):
         num_cpu: int,
         status_file: str,
         exit_file: str,
-        done_callback_function,
-        exit_callback_function,
-        callback_arguments,
+        done_callback_function: Callback,
+        exit_callback_function: Callback,
+        callback_arguments: CallbackArgs,
         max_runtime: Optional[int] = None,
-        callback_timeout=None,
+        callback_timeout: Optional[Callback] = None,
     ):
         self.done_callback_function = done_callback_function
         self.exit_callback_function = exit_callback_function
@@ -143,7 +147,7 @@ class JobQueueNode(BaseCClass):
 
     def run_done_callback(self):
         callback_status, status_msg = self.done_callback_function(
-            self.callback_arguments
+            *self.callback_arguments
         )
         if callback_status == LoadStatus.LOAD_SUCCESSFUL:
             self._set_status(JobStatusType.JOB_QUEUE_SUCCESS)
@@ -155,7 +159,7 @@ class JobQueueNode(BaseCClass):
         return callback_status
 
     def run_exit_callback(self):
-        return self.exit_callback_function(self.callback_arguments)
+        return self.exit_callback_function(*self.callback_arguments)
 
     def is_running(self, given_status: Optional[JobStatusType] = None) -> bool:
         status = given_status or self.status
@@ -208,7 +212,7 @@ class JobQueueNode(BaseCClass):
                         f"times without success in {self.run_path}"
                     )
                 if self.callback_timeout:
-                    self.callback_timeout(self.callback_arguments)
+                    self.callback_timeout(*self.callback_arguments)
                 with self._mutex:
                     self._timed_out = True
 

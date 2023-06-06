@@ -2,6 +2,7 @@
 Module implementing a queue for managing external jobs.
 
 """
+from __future__ import annotations
 
 import asyncio
 import json
@@ -20,7 +21,6 @@ from typing import (
     List,
     Mapping,
     Optional,
-    Tuple,
     Union,
 )
 
@@ -42,8 +42,8 @@ from ert.constant_filenames import CERT_FILE, JOBS_FILE, ERROR_file, STATUS_file
 if TYPE_CHECKING:
     from ert._c_wrappers.enkf.ert_config import ErtConfig
     from ert._c_wrappers.enkf.run_arg import RunArg
+    from ert.callbacks import Callback
     from ert.ensemble_evaluator import LegacyStep
-    from ert.load_status import LoadResult
 
     from .driver import Driver
 
@@ -555,8 +555,8 @@ class JobQueue(BaseCClass):
         run_arg: "RunArg",
         ert_config: "ErtConfig",
         max_runtime: Optional[int],
-        ok_cb: Callable[[Tuple["RunArg", "ErtConfig"]], "LoadResult"],
-        exit_cb: Callable[[Tuple["RunArg", "ErtConfig"]], None],
+        ok_cb: Callback,
+        exit_cb: Callback,
         num_cpu: int,
     ) -> None:
         job_name = run_arg.job_name
@@ -572,7 +572,7 @@ class JobQueue(BaseCClass):
             exit_file=self.exit_file,
             done_callback_function=ok_cb,
             exit_callback_function=exit_cb,
-            callback_arguments=(run_arg, ert_config),
+            callback_arguments=(run_arg, ert_config.ensemble_config),
             max_runtime=max_runtime,
         )
 
@@ -583,9 +583,7 @@ class JobQueue(BaseCClass):
     def add_ee_stage(
         self,
         stage: "LegacyStep",
-        callback_timeout: Optional[
-            Callable[[Tuple["RunArg", "ErtConfig"]], None]
-        ] = None,
+        callback_timeout: Optional[Callback] = None,
     ) -> None:
         job = JobQueueNode(
             job_script=stage.job_script,
