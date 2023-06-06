@@ -59,6 +59,7 @@ if LSF_HOME:
     setenv("LSF_SERVERDIR", f"{LSF_HOME}/etc")
     setenv("LSF_ENVDIR", f"{LSF_HOME}/conf")  # This is wrong: Equinor: /prog/LSF/conf
 
+# pylint: disable=wrong-import-position
 from .driver import Driver, QueueDriverEnum  # noqa
 from .ert_plugin import CancelPluginException, ErtPlugin  # noqa
 from .ert_script import ErtScript  # noqa

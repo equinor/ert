@@ -19,6 +19,7 @@ class ExternalErtScript(ErtScript):
         self.__executable = executable
         self.__job: Optional[Popen[bytes]] = None
 
+    # pylint: disable=arguments-differ
     def run(self, *args: Any) -> None:
         command = [self.__executable]
         command.extend([str(arg) for arg in args])
@@ -36,6 +37,7 @@ class ExternalErtScript(ErtScript):
         sys.stdout.write(self._stdoutdata)
 
         if self.__job.returncode != 0:
+            # pylint: disable=broad-exception-raised
             raise Exception(self._stderrdata)
 
     def cancel(self) -> Any:

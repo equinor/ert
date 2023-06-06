@@ -75,6 +75,7 @@ def _queue_state_event_type(state: str) -> str:
     return _queue_state_to_event_type_map[state]
 
 
+# pylint: disable=too-many-public-methods
 class JobQueue(BaseCClass):  # type: ignore
     # If the queue is created with size == 0 that means that it will
     # just grow as needed; for the queue layer to know when to exit
@@ -384,6 +385,7 @@ class JobQueue(BaseCClass):  # type: ignore
             await asyncio.wait_for(ee_connection.send(to_json(events[0])), 60)
             events.popleft()
 
+    # pylint: disable=too-many-arguments
     async def _execution_loop_queue_via_websockets(
         self,
         ee_connection: WebSocketClientProtocol,

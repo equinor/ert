@@ -14,7 +14,7 @@ class ExportMisfitDataJob(ErtScript):
     ((response_value - observation_data) / observation_std)**2
     """
 
-    def run(self, target_file=None):
+    def run(self, target_file=None):  # pylint: disable=arguments-differ
         ert = self.ert()
 
         if target_file is None:
