@@ -82,7 +82,6 @@ class JobQueue(BaseCClass):  # type: ignore
     _alloc = ResPrototype("void* job_queue_alloc()", bind=False)
     _free = ResPrototype("void job_queue_free( job_queue )")
     _set_driver = ResPrototype("void job_queue_set_driver( job_queue , void* )")
-    _kill_job = ResPrototype("bool job_queue_kill_job( job_queue , int )")
     _iget_driver_data = ResPrototype(
         "void* job_queue_iget_driver_data( job_queue , int)"
     )
@@ -133,12 +132,6 @@ class JobQueue(BaseCClass):  # type: ignore
         self._differ = QueueDiffer()
         self._max_job_duration = 0
         self._max_submit = max_submit
-
-    def kill_job(self, queue_index: int) -> None:
-        """
-        Will kill job nr @index.
-        """
-        self._kill_job(queue_index)
 
     @property
     def num_running(self) -> int:

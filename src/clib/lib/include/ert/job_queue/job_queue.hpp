@@ -16,7 +16,6 @@ extern "C" void job_queue_free(job_queue_type *);
 int job_queue_iget_status_summary(const job_queue_type *queue,
                                   job_status_type status);
 
-extern "C" bool job_queue_kill_job(job_queue_type *queue, int job_index);
 extern "C" int job_queue_get_num_running(const job_queue_type *queue);
 extern "C" int job_queue_get_num_pending(const job_queue_type *queue);
 extern "C" int job_queue_get_num_waiting(const job_queue_type *queue);

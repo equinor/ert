@@ -40,31 +40,6 @@ int job_queue_get_num_complete(const job_queue_type *queue) {
     return job_queue_iget_status_summary(queue, JOB_QUEUE_SUCCESS);
 }
 
-/**
-   Observe that jobs with status JOB_QUEUE_WAITING can also be killed; for those
-   jobs the kill should be interpreted as "Forget about this job for now and set
-   the status JOB_QUEUE_IS_KILLED", however it is important that we not call
-   the driver->kill() function on it because the job slot will have no data
-   (i.e. LSF jobnr), and the driver->kill() function will fail if presented with
-   such a job.
-
-   Only jobs which have a status matching "JOB_QUEUE_CAN_KILL" can be
-   killed; if the job is not in a killable state the function will do
-   nothing. This includes trying to kill a job which is not even
-   found.
-
-   Observe that jobs (slots) with status JOB_QUEUE_NOT_ACTIVE can NOT be
-   meaningfully killed; that is because these jobs have not yet been submitted
-   to the queue system, and there is not yet established a mapping between
-   external id and queue_index.
-
-   Must hold on to joblist:read lock.
-*/
-static bool job_queue_kill_job_node(job_queue_type *queue,
-                                    job_queue_node_type *node) {
-    return job_queue_node_kill(node, queue->status, queue->driver);
-}
-
 class JobListReadLock {
     /* This is just a trick to make sure list is unlocked when exiting scope,
  * also when exiting due to exceptions */
@@ -85,12 +60,6 @@ private:
             job_list_iget_job(queue->job_list, job_index);                     \
         var = func(__VA_ARGS__);                                               \
     }
-
-bool job_queue_kill_job(job_queue_type *queue, int job_index) {
-    bool result;
-    ASSIGN_LOCKED_ATTRIBUTE(result, job_queue_kill_job_node, queue, node);
-    return result;
-}
 
 /**
   This returns a pointer to a very internal datastructure; used by the

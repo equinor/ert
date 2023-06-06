@@ -40,9 +40,6 @@ job_queue_node_alloc(const char *job_name, const char *run_path,
                      const stringlist_type *arguments, int num_cpu,
                      const char *status_file, const char *exit_file);
 
-bool job_queue_node_kill(job_queue_node_type *node,
-                         job_queue_status_type *status,
-                         queue_driver_type *driver);
 extern "C" PY_USED bool job_queue_node_kill_simple(job_queue_node_type *node,
                                                    queue_driver_type *driver);
 extern "C" void job_queue_node_free(job_queue_node_type *node);
