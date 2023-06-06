@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import copy
 import os
+from typing import Iterable, Tuple
 
 from cwrap import BaseCClass
 from ecl.ecl_util import get_num_cpu as get_num_cpu_from_data_file
@@ -76,7 +77,7 @@ class SubstitutionList(BaseCClass):
     def __deepcopy__(self, memo):
         return self._deep_copy()
 
-    def __iter__(self):
+    def __iter__(self) -> Iterable[Tuple[str, str]]:
         index = 0
         keys = self.keys()
         for index in range(len(self)):
