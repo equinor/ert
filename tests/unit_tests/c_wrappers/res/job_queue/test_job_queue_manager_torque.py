@@ -50,12 +50,12 @@ class JobConfig(TypedDict):
     exit_callback: Callable
 
 
-def dummy_ok_callback(args):
-    (Path(args[1]) / "OK").write_text("success", encoding="utf-8")
+def dummy_ok_callback(runargs, path):
+    (Path(path) / "OK").write_text("success", encoding="utf-8")
     return (LoadStatus.LOAD_SUCCESSFUL, "")
 
 
-def dummy_exit_callback(_args):
+def dummy_exit_callback(*_args):
     Path("ERROR").write_text("failure", encoding="utf-8")
 
 

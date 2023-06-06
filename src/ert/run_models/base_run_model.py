@@ -383,9 +383,9 @@ class BaseRunModel:
                         self.ert().resConfig().ensemble_config,
                     )
                 ).set_done_callback(
-                    lambda x: forward_model_ok(*x)
+                    forward_model_ok
                 ).set_exit_callback(
-                    lambda x: forward_model_exit(*x)
+                    forward_model_exit
                 ).set_num_cpu(
                     self.ert().get_num_cpu()
                 ).set_run_path(

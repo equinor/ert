@@ -5,7 +5,7 @@ import time
 from dataclasses import dataclass
 from pathlib import Path
 from threading import BoundedSemaphore
-from typing import Any, Callable, Dict, Optional
+from typing import TYPE_CHECKING, Any, Callable, Dict, Optional
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -19,6 +19,9 @@ from ert._c_wrappers.job_queue import (
     QueueDriverEnum,
 )
 from ert.load_status import LoadStatus
+
+if TYPE_CHECKING:
+    from ert.callbacks import Callback
 
 
 def wait_for(
@@ -36,7 +39,7 @@ def wait_for(
             )
 
 
-def dummy_exit_callback(args):
+def dummy_exit_callback(*args):
     print(args)
 
 
@@ -45,7 +48,7 @@ DUMMY_CONFIG: Dict[str, Any] = {
     "num_cpu": 1,
     "job_name": "dummy_job_{}",
     "run_path": "dummy_path_{}",
-    "ok_callback": lambda _: (LoadStatus.LOAD_SUCCESSFUL, ""),
+    "ok_callback": lambda _, _b: (LoadStatus.LOAD_SUCCESSFUL, ""),
     "exit_callback": dummy_exit_callback,
 }
 
@@ -74,7 +77,7 @@ def create_local_queue(
     executable_script: str,
     max_submit: int = 1,
     max_runtime: Optional[int] = None,
-    callback_timeout: Optional[int] = None,
+    callback_timeout: Optional["Callback"] = None,
 ):
     driver = Driver(driver_type=QueueDriverEnum.LOCAL_DRIVER, max_running=5)
     job_queue = JobQueue(driver, max_submit=max_submit)
@@ -94,7 +97,7 @@ def create_local_queue(
             exit_file=job_queue.exit_file,
             done_callback_function=DUMMY_CONFIG["ok_callback"],
             exit_callback_function=DUMMY_CONFIG["exit_callback"],
-            callback_arguments=[RunArg(iens)],
+            callback_arguments=(RunArg(iens), None),
             max_runtime=max_runtime,
             callback_timeout=callback_timeout,
         )
@@ -192,9 +195,9 @@ def test_timeout_jobs(tmpdir, monkeypatch):
     monkeypatch.chdir(tmpdir)
     job_numbers = set()
 
-    def callback(arg):
+    def callback(runarg, _):
         nonlocal job_numbers
-        job_numbers.add(arg[0].iens)
+        job_numbers.add(runarg.iens)
 
     job_queue = create_local_queue(
         NEVER_ENDING_SCRIPT,

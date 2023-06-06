@@ -14,21 +14,9 @@ from ert.shared.runpaths import Runpaths
 from .forward_model_status import ForwardModelStatus
 
 if TYPE_CHECKING:
-    from ert._c_wrappers.enkf import EnKFMain, ErtConfig, RunArg
+    from ert._c_wrappers.enkf import EnKFMain, RunArg
     from ert._c_wrappers.job_queue import JobQueue, JobStatusType
-    from ert.load_status import LoadResult
     from ert.storage import EnsembleAccessor
-
-
-def done_callback(args: Tuple["RunArg", "ErtConfig"]) -> LoadResult:
-    return forward_model_ok(
-        args[0],
-        args[1].ensemble_config,
-    )
-
-
-def exit_callback(args: Tuple["RunArg", Any]) -> None:
-    forward_model_exit(args[0])
 
 
 def _run_forward_model(
@@ -50,8 +38,8 @@ def _run_forward_model(
             run_arg,
             ert.resConfig(),
             max_runtime,
-            done_callback,
-            exit_callback,
+            forward_model_ok,
+            forward_model_exit,
             ert.get_num_cpu(),
         )
 

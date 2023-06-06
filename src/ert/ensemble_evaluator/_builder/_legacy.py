@@ -11,7 +11,6 @@ from typing import (
     Dict,
     List,
     Optional,
-    Sequence,
     Tuple,
     Union,
 )
@@ -21,12 +20,14 @@ from cloudevents.http.event import CloudEvent
 import _ert_com_protocol
 from ert.async_utils import get_event_loop
 from ert.ensemble_evaluator import identifiers
+from ert.load_status import LoadResult
 
 from .._wait_for_evaluator import wait_for_evaluator
 from ._ensemble import Ensemble
 
 if TYPE_CHECKING:
-    from ert._c_wrappers.enkf import AnalysisConfig, QueueConfig, RunArg
+    from ert._c_wrappers.enkf import AnalysisConfig, EnsembleConfig, QueueConfig, RunArg
+    from ert.callbacks import Callback
 
     from ._realization import Realization
     from .config import EvaluatorServerConfig
@@ -118,12 +119,12 @@ class LegacyEnsemble(Ensemble):
         event_generator: Callable[
             [str, Optional[int]], Union[CloudEvent, _ert_com_protocol.DispatcherMessage]
         ],
-    ) -> Tuple[Callable[[List[Any]], Any], "asyncio.Task[None]"]:
-        def on_timeout(callback_args: Sequence[Any]) -> None:
-            run_args: "RunArg" = callback_args[0]
+    ) -> Tuple["Callback", "asyncio.Task[None]"]:
+        def on_timeout(run_args: "RunArg", _: "EnsembleConfig") -> LoadResult:
             timeout_queue.put_nowait(
                 event_generator(identifiers.EVTYPE_FM_STEP_TIMEOUT, run_args.iens)
             )
+            return LoadResult(None, "timed out")
 
         async def send_timeout_message() -> None:
             while True:
@@ -245,9 +246,7 @@ class LegacyEnsemble(Ensemble):
 
             # Submit all jobs to queue and inform queue when done
             for real in self.active_reals:
-                self._job_queue.add_ee_stage(  # type: ignore
-                    real.steps[0], callback_timeout=on_timeout
-                )
+                self._job_queue.add_ee_stage(real.steps[0], callback_timeout=on_timeout)
             self._job_queue.submit_complete()  # type: ignore
 
             # TODO: this is sort of a callback being preemptively called.

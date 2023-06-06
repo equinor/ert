@@ -2,16 +2,16 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, List, Tuple
+from typing import Callable, List, Tuple
 
-from ert._c_wrappers.enkf import SummaryConfig
+from ert._c_wrappers.enkf import EnsembleConfig, RunArg, SummaryConfig
 from ert._c_wrappers.enkf.config.parameter_config import ParameterConfig
 from ert._c_wrappers.enkf.enums import RealizationStateEnum
 
 from .load_status import LoadResult, LoadStatus
 
-if TYPE_CHECKING:
-    from ert._c_wrappers.enkf import EnsembleConfig, RunArg
+CallbackArgs = Tuple[RunArg, EnsembleConfig]
+Callback = Callable[[RunArg, EnsembleConfig], LoadResult]
 
 logger = logging.getLogger(__name__)
 
@@ -91,7 +91,7 @@ def forward_model_ok(
     return final_result
 
 
-def forward_model_exit(run_arg: RunArg, *_: Tuple[Any]) -> LoadResult:
+def forward_model_exit(run_arg: RunArg, _: EnsembleConfig) -> LoadResult:
     run_arg.ensemble_storage.state_map[
         run_arg.iens
     ] = RealizationStateEnum.STATE_LOAD_FAILURE

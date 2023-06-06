@@ -32,14 +32,14 @@ class Config(TypedDict):
     exit_callback: Callable
 
 
-def dummy_ok_callback(args):
-    print(f"success {args[1]}")
-    (Path(args[1]) / "OK").write_text("success", encoding="utf-8")
+def dummy_ok_callback(runarg, path):
+    print(f"success {runarg}, {path}")
+    (Path(path) / "OK").write_text("success", encoding="utf-8")
     return (LoadStatus.LOAD_SUCCESSFUL, "")
 
 
-def dummy_exit_callback(args):
-    print(f"failure {args}")
+def dummy_exit_callback(runarg, path):
+    print(f"failure {runarg} {path}")
     Path("ERROR").write_text("failure", encoding="utf-8")
 
 
