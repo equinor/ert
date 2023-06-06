@@ -28,8 +28,6 @@ can be of two fundamentally different types - *external* and *internal*.
    :caption: Workflows
 
    external
-   internal
    configuring_jobs
    complete_workflows
-   built_in
    added_workflow_jobs
