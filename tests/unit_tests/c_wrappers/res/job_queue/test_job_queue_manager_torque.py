@@ -135,10 +135,6 @@ exit 1
 """
 )
 
-# A qstat command that has no output but return code 0 on first invocation
-# and nonzero output and return code 0 on second invocation:
-LYING_QSTAT = FLAKY_QSTAT.replace("exit 1", "exit 0")
-
 
 def _deploy_script(scriptname: Path, scripttext: str):
     script = Path(scriptname)
@@ -179,7 +175,6 @@ def _build_jobqueuenode(dummy_config: JobConfig, job_id=0):
         pytest.param(FLAKY_QSUB, MOCK_QSTAT, id="flaky_qsub"),
         pytest.param(MOCK_QSUB, FLAKY_QSTAT, id="flaky_qstat"),
         pytest.param(FLAKY_QSUB, FLAKY_QSTAT, id="all_flaky"),
-        pytest.param(MOCK_QSUB, LYING_QSTAT, id="lying_qstat"),
     ],
 )
 def test_run_torque_job(

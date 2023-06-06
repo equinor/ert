@@ -615,20 +615,14 @@ torque_driver_get_qstat_status(torque_driver_type *driver,
            retry a couple of times with exponential sleep. ERT pings qstat
            every second for every realization, thus the initial sleep time
            is 2 seconds. */
-        bool qstat_succeeded = false;
+        int return_value = -1;
         int retry_interval = 2; /* seconds */
         int slept_time = 0;
-        while ((!qstat_succeeded) && (slept_time <= driver->timeout)) {
-            util_spawn_blocking(driver->qstat_cmd, argv.size(), argv.data(),
-                                tmp_std_file, tmp_err_file);
-            if (fs::exists(tmp_std_file) && (fs::file_size(tmp_std_file) > 0)) {
-                // A non-existing or zero length output from qstat is interpreted
-                // as a failure. ERT never calls qstat unless it has already submitted
-                // something.
-                qstat_succeeded = true;
-            }
-
-            if (!qstat_succeeded) {
+        while ((return_value != 0) && (slept_time <= driver->timeout)) {
+            return_value =
+                util_spawn_blocking(driver->qstat_cmd, argv.size(), argv.data(),
+                                    tmp_std_file, tmp_err_file);
+            if (return_value != 0) {
                 if (slept_time + retry_interval <= driver->timeout) {
                     torque_debug(
                         driver,
