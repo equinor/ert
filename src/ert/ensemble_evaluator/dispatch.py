@@ -43,21 +43,21 @@ class BatchingDispatcher:
             return
 
         t0 = time.time()
-        event_buffer, self._buffer = (
+        batch_of_events_for_processing, self._buffer = (
             self._buffer[: self._max_batch],
             self._buffer[self._max_batch :],
         )
         left_in_queue = len(self._buffer)
 
         function_to_events_map = OrderedDict()
-        for f, event in event_buffer:
+        for f, event in batch_of_events_for_processing:
             if f not in function_to_events_map:
                 function_to_events_map[f] = []
             function_to_events_map[f].append(event)
 
         def done_logger(_):
             logger.debug(
-                f"processed {len(event_buffer)} events in "
+                f"processed {len(batch_of_events_for_processing)} events in "
                 f"{(time.time()-t0):.6f}s. "
                 f"{left_in_queue} left in queue"
             )
