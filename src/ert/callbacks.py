@@ -6,8 +6,7 @@ from typing import TYPE_CHECKING, Any, List, Tuple
 
 from ert._c_wrappers.enkf.config.parameter_config import ParameterConfig
 from ert._c_wrappers.enkf.enkf_state import (
-    _write_gen_data_to_storage,
-    _write_summary_data_to_storage,
+    _write_responses_to_storage,
 )
 from ert._c_wrappers.enkf.enums import RealizationStateEnum
 
@@ -42,8 +41,7 @@ def forward_model_ok(
     ens_conf: EnsembleConfig,
 ) -> LoadResult:
     parameters_result = LoadResult(LoadStatus.LOAD_SUCCESSFUL, "")
-    summary_result = LoadResult(LoadStatus.LOAD_SUCCESSFUL, "")
-    gen_data_result = LoadResult(LoadStatus.LOAD_SUCCESSFUL, "")
+    response_result = LoadResult(LoadStatus.LOAD_SUCCESSFUL, "")
     try:
         # We only read parameters after the prior, after that, ERT
         # handles parameters
@@ -53,8 +51,7 @@ def forward_model_ok(
             )
 
         if parameters_result.status == LoadStatus.LOAD_SUCCESSFUL:
-            summary_result = _write_summary_data_to_storage(ens_conf, run_arg)
-            gen_data_result = _write_gen_data_to_storage(ens_conf, run_arg)
+            response_result = _write_responses_to_storage(ens_conf, run_arg)
 
     except Exception as err:
         logging.exception("Unhandled exception in callback for forward_model")
@@ -64,10 +61,8 @@ def forward_model_ok(
         )
 
     final_result = parameters_result
-    if summary_result.status != LoadStatus.LOAD_SUCCESSFUL:
-        final_result = summary_result
-    elif gen_data_result.status != LoadStatus.LOAD_SUCCESSFUL:
-        final_result = gen_data_result
+    if response_result.status != LoadStatus.LOAD_SUCCESSFUL:
+        final_result = response_result
 
     run_arg.ensemble_storage.state_map[run_arg.iens] = (
         RealizationStateEnum.STATE_HAS_DATA
