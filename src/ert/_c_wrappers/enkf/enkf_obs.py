@@ -408,7 +408,7 @@ class EnkfObs:
             obs_vectors[obs_key] = ObsVector(
                 EnkfObservationImplementationType.GEN_OBS,  # type: ignore
                 obs_key,
-                config_node.getKey(),
+                config_node.name,
                 {
                     restart: cls._create_gen_obs(
                         (

@@ -486,7 +486,7 @@ class EnsembleConfig:
         ],
     ):
         assert config_node is not None
-        self.check_unique_node(config_node.getKey())
+        self.check_unique_node(config_node.name)
         if isinstance(config_node, ParameterConfig):
             self.parameter_configs[config_node.name] = config_node
         else:

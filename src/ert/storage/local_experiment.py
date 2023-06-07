@@ -97,7 +97,7 @@ class LocalExperimentAccessor(LocalExperimentReader):
         parameters = [] if parameters is None else parameters
         for parameter in parameters:
             if isinstance(parameter, GenKwConfig):
-                self.save_gen_kw_info(parameter.getKey(), parameter.get_priors())
+                self.save_gen_kw_info(parameter.name, parameter.get_priors())
             elif isinstance(parameter, SurfaceConfig):
                 parameter_data[parameter.name] = parameter.to_dict()
             elif isinstance(parameter, Field):
