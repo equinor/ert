@@ -133,6 +133,14 @@ class JobQueue(BaseCClass):
             f"num_waiting={nwait}, num_pending={npend}"
         )
 
+    def __str__(self) -> str:
+        isrun = "running" if self.isRunning else "not running"
+        return (
+            f"JobQueue running: {isrun}, num_running={self.num_running}, "
+            f"num_complete={self.num_complete}, num_waiting={self.num_waiting}, "
+            f"num_pending={self.num_pending}"
+        )
+
     def __init__(self, driver: "Driver", max_submit: int = 2, size: int = 0):
         """
         Short doc...
@@ -599,17 +607,26 @@ class JobQueue(BaseCClass):
         stage.run_arg.set_queue_index(self.add_job(job, iens))
 
     def stop_long_running_jobs(self, minimum_required_realizations: int) -> None:
-        finished_realizations = self.count_status(
-            JobStatusType.JOB_QUEUE_DONE,  # type: ignore
-        )
-        if finished_realizations < minimum_required_realizations:
-            return
-
         completed_jobs = [
             job for job in self.job_list if job.status == JobStatusType.JOB_QUEUE_DONE
         ]
-        average_runtime = sum(job.runtime for job in completed_jobs) / len(
-            completed_jobs
+        finished_realizations = len(completed_jobs)
+
+        if not finished_realizations:
+            job_nodes_status = ""
+            for job in self.job_list:
+                job_nodes_status += str(job)
+            logger.error(
+                f"Attempted to stop finished jobs when none was found in queue"
+                f"{str(self)}, {job_nodes_status}"
+            )
+            return
+
+        if finished_realizations < minimum_required_realizations:
+            return
+
+        average_runtime = (
+            sum(job.runtime for job in completed_jobs) / finished_realizations
         )
 
         for job in self.job_list:

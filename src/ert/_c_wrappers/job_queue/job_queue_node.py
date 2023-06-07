@@ -87,6 +87,7 @@ class JobQueueNode(BaseCClass):
         self._end_time: Optional[float] = None
         self._timed_out = False
         self._status_msg = ""
+        self._job_name = job_name
         c_ptr = self._alloc(
             job_name,
             run_path,
@@ -109,6 +110,13 @@ class JobQueueNode(BaseCClass):
 
     def free(self) -> None:
         self._free()
+
+    def __str__(self) -> str:
+        return (
+            f"JobNode: Name:{self._job_name}, Status: {self.status}, "
+            f"Timed_out: {self.timed_out}, "
+            f"Submit_attempt: {self.submit_attempt}"
+        )
 
     @property
     def timed_out(self) -> bool:
