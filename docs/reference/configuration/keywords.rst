@@ -1779,7 +1779,7 @@ bjobs.
 .. _torque_nodes_cpus:
 .. topic:: NUM_NODES, NUM_CPUS_PER_NODE
 
-        When using TORQUE, you must specify how many nodes a single job should
+        When using TORQUE, you can specify how many nodes a single job should
         use, and how many CPUs per node. The default setup in ERT will use one node and
         one CPU. These options are called NUM_NODES and NUM_CPUS_PER_NODE.
 
@@ -1799,6 +1799,30 @@ bjobs.
                 -- units to be used by eg. ECLIPSE
                 QUEUE_OPTION TORQUE NUM_NODES 3
                 QUEUE_OPTION TORQUE NUM_CPUS_PER_NODE 8
+
+.. _torque_memory_per_job:
+.. topic:: MEMORY_PER_JOB
+
+
+        You can specify the amount of memory you will need for running your
+        job. This will ensure that not too many jobs will run on a single
+        shared memory node at once, possibly crashing the compute node if it
+        goes out of memory.
+
+        You can get an indication of the memory requirement by watching the
+        course of a local run using the `htop` utility. Whether you should set
+        the peak memory usage as your requirement or a lower figure depends on
+        how simultaneously each job will run.
+
+        The option to be supplied will be used as a string in the `qsub`
+        argument, meaning you must specify the unit, either `gb` or `mb` as in
+        the example:
+
+        By default, this value is not set.
+
+        ::
+
+                QUEUE_OPTION TORQUE MEMORY_PER_JOB 16gb
 
 .. _torque_keep_qsub_output:
 .. topic:: KEEP_QSUB_OUTPUT

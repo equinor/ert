@@ -57,3 +57,42 @@ def test_parse_status(
     if qstat_output is not None:
         Path("qstat.out").write_text(qstat_output, encoding="utf-8")
     assert _clib.torque_driver.parse_status("qstat.out", jobnr) == expected_status
+
+
+@pytest.mark.parametrize(
+    "num_nodes, cluster_label, num_cpus_per_node, "
+    "memory_per_job, expected_resource_string",
+    [
+        pytest.param(1, "", 1, "", "nodes=1:ppn=1", id="defaults"),
+        pytest.param(
+            1, "fancynodes", 2, "", "nodes=1:fancynodes:ppn=2", id="clusterlabel"
+        ),
+        pytest.param(1, "", 2, "32gb", "nodes=1:ppn=2:mem=32gb", id="memory_per_job"),
+        pytest.param(
+            1, "", 2, "32pb", "nodes=1:ppn=2:mem=32pb", id="outrageous_memory_per_job"
+        ),
+        pytest.param(
+            1,
+            "bignodes",
+            2,
+            "32pb",
+            "nodes=1:bignodes:ppn=2:mem=32pb",
+            id="label_and_memory",
+        ),
+        # ERTs config parser will give ConfigValidationError on
+        # memory strings not adhering to <integer><mb|gb>.
+    ],
+)
+def test_build_resource_string(
+    num_nodes,
+    cluster_label,
+    num_cpus_per_node,
+    memory_per_job,
+    expected_resource_string,
+):
+    assert (
+        _clib.torque_driver.build_resource_string(
+            num_nodes, cluster_label, num_cpus_per_node, memory_per_job
+        )
+        == expected_resource_string
+    )

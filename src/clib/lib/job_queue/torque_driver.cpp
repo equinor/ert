@@ -29,6 +29,7 @@ struct torque_driver_struct {
     char *qstat_opts;
     char *qdel_cmd;
     char *num_cpus_per_node_char;
+    char *memory_per_job;
     char *job_prefix;
     char *num_nodes_char;
     char *timeout_char;
@@ -56,6 +57,7 @@ void *torque_driver_alloc() {
     torque_driver->qstat_opts = NULL;
     torque_driver->qdel_cmd = NULL;
     torque_driver->num_cpus_per_node_char = NULL;
+    torque_driver->memory_per_job = NULL;
     torque_driver->num_nodes_char = NULL;
     torque_driver->keep_qsub_output = false;
     torque_driver->num_cpus_per_node = 1;
@@ -190,6 +192,13 @@ torque_driver_set_num_cpus_per_node(torque_driver_type *driver,
     }
 }
 
+static bool torque_driver_set_memory_per_job(torque_driver_type *driver,
+                                             const char *memory_per_job) {
+    driver->memory_per_job =
+        util_realloc_string_copy(driver->memory_per_job, memory_per_job);
+    return true;
+}
+
 static bool torque_driver_set_timeout(torque_driver_type *driver,
                                       const char *timeout_char) {
     int timeout = 0;
@@ -220,6 +229,8 @@ bool torque_driver_set_option(void *__driver, const char *option_key,
             torque_driver_set_queue_name(driver, value);
         else if (strcmp(TORQUE_NUM_CPUS_PER_NODE, option_key) == 0)
             option_set = torque_driver_set_num_cpus_per_node(driver, value);
+        else if (strcmp(TORQUE_MEMORY_PER_JOB, option_key) == 0)
+            option_set = torque_driver_set_memory_per_job(driver, value);
         else if (strcmp(TORQUE_NUM_NODES, option_key) == 0)
             option_set = torque_driver_set_num_nodes(driver, value);
         else if (strcmp(TORQUE_KEEP_QSUB_OUTPUT, option_key) == 0)
@@ -256,6 +267,8 @@ const void *torque_driver_get_option(const void *__driver,
             return driver->queue_name;
         else if (strcmp(TORQUE_NUM_CPUS_PER_NODE, option_key) == 0)
             return driver->num_cpus_per_node_char;
+        else if (strcmp(TORQUE_MEMORY_PER_JOB, option_key) == 0)
+            return driver->memory_per_job;
         else if (strcmp(TORQUE_NUM_NODES, option_key) == 0)
             return driver->num_nodes_char;
         else if (strcmp(TORQUE_KEEP_QSUB_OUTPUT, option_key) == 0)
@@ -289,6 +302,22 @@ torque_job_type *torque_job_alloc() {
     return job;
 }
 
+std::string build_resource_string(int num_nodes, std::string cluster_label,
+                                  int num_cpus_per_node,
+                                  std::string memory_per_job) {
+    std::string resource_string = "nodes=" + std::to_string(num_nodes);
+
+    if (!cluster_label.empty())
+        resource_string.append(":" + cluster_label);
+
+    resource_string.append(":ppn=" + std::to_string(num_cpus_per_node));
+
+    if (!memory_per_job.empty())
+        resource_string.append(":mem=" + memory_per_job);
+
+    return resource_string;
+}
+
 stringlist_type *torque_driver_alloc_cmd(torque_driver_type *driver,
                                          const char *job_name,
                                          const char *submit_script) {
@@ -303,19 +332,24 @@ stringlist_type *torque_driver_alloc_cmd(torque_driver_type *driver,
     }
 
     {
-        char *resource_string;
-        if (driver->cluster_label)
-            resource_string = util_alloc_sprintf(
-                "nodes=%d:%s:ppn=%d", driver->num_nodes, driver->cluster_label,
-                driver->num_cpus_per_node);
-        else
-            resource_string =
-                util_alloc_sprintf("nodes=%d:ppn=%d", driver->num_nodes,
-                                   driver->num_cpus_per_node);
-
         stringlist_append_copy(argv, "-l");
-        stringlist_append_copy(argv, resource_string);
-        free(resource_string);
+        std::string cluster_label;
+        if (driver->cluster_label == NULL) {
+            cluster_label = std::string("");
+        } else {
+            cluster_label = std::string(driver->cluster_label);
+        }
+        std::string memory_per_job;
+        if (driver->memory_per_job == NULL) {
+            memory_per_job = std::string("");
+        } else {
+            memory_per_job = std::string(driver->memory_per_job);
+        }
+        stringlist_append_copy(
+            argv,
+            build_resource_string(driver->num_nodes, cluster_label,
+                                  driver->num_cpus_per_node, memory_per_job)
+                .c_str());
     }
 
     if (driver->queue_name != NULL) {
@@ -885,4 +919,14 @@ ERT_CLIB_SUBMODULE("torque_driver", m) {
             return torque_driver_parse_status(qstat_file, jobnr_char);
         },
         "qstat_file"_a, "jobnr_char"_a);
+    m.def(
+        "build_resource_string",
+        [](int num_nodes, const char *cluster_label, int num_cpus_per_node,
+           const char *memory_per_job) {
+            return build_resource_string(num_nodes, std::string(cluster_label),
+                                         num_cpus_per_node,
+                                         std::string(memory_per_job));
+        },
+        "num_nodes"_a, "cluster_label"_a, "num_cpus_per_node"_a,
+        "memory_per_job"_a);
 }

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 import shutil
 from collections import defaultdict
 from dataclasses import dataclass, field
@@ -76,6 +77,10 @@ class QueueConfig:
                 queue_options[queue_driver_type].append((option_name, values[0]))
             else:
                 queue_options[queue_driver_type].append(option_name)
+
+        if queue_system == QueueSystem.TORQUE and queue_options[QueueSystem.TORQUE]:
+            _validate_torque_options(queue_options[QueueSystem.TORQUE])
+
         return QueueConfig(job_script, max_submit, queue_system, queue_options)
 
     def create_local_copy(self) -> QueueConfig:
@@ -85,3 +90,20 @@ class QueueConfig:
             QueueSystem.LOCAL,  # type: ignore
             self.queue_options,
         )
+
+
+def _validate_torque_options(torque_options: List[Tuple[str, str]]) -> None:
+    for option_strings in torque_options:
+        if isinstance(option_strings, tuple):
+            option_name = option_strings[0]
+            option_value = option_strings[1]
+            if (
+                option_value != ""  # This is equivalent to the option not being set
+                and option_name == "MEMORY_PER_JOB"
+                and re.match("[0-9]+[mg]b", option_value) is None
+            ):
+                raise ConfigValidationError(
+                    f"The value '{option_value}' is not valid for the Torque option "
+                    "MEMORY_PER_JOB, it must be of "
+                    "the format '<integer>mb' or '<integer>gb'."
+                )
