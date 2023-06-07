@@ -13,8 +13,6 @@ extern "C" void subst_list_free(subst_list_type *);
 extern "C" void subst_list_append_copy(subst_list_type *, const char *,
                                        const char *);
 
-extern "C" bool subst_list_filter_file(const subst_list_type *, const char *,
-                                       const char *);
 extern "C" char *subst_list_alloc_filtered_string(const subst_list_type *,
                                                   const char *, const char *,
                                                   const int);
