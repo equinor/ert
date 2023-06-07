@@ -34,7 +34,7 @@ class SummaryConfig(ResponseConfig):
             return False
         return True
 
-    def read_from_file(self, run_path, iens):
+    def read_from_file(self, run_path: str, iens: int) -> xr.Dataset:
         filename = self.input_file.replace("<IENS>", str(iens))
         try:
             summary = EclSum(
