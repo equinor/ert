@@ -48,8 +48,6 @@ class SubstitutionList(BaseCClass):
         else:
             config_dir = subst_list["<CONFIG_PATH>"]
 
-        subst_list.addItem("<RUNPATH_FILE>", config_dict.get("RUNPATH_FILE"))
-
         num_cpus = config_dict.get("NUM_CPU")
         if num_cpus is None and "DATA_FILE" in config_dict:
             num_cpus = get_num_cpu_from_data_file(config_dict.get("DATA_FILE"))
@@ -121,7 +119,7 @@ class SubstitutionList(BaseCClass):
         return copy_substituter.substitute(to_substitute)
 
     def __eq__(self, other):
-        if self.keys() != other.keys():
+        if set(self.keys()) != set(other.keys()):
             return False
         for key in self.keys():
             oneValue = self.get(key)

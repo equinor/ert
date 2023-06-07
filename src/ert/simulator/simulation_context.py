@@ -115,7 +115,7 @@ class SimulationContext:
                 jobname_format=ert.getModelConfig().jobname_format_string,
                 eclbase_format=ert.getModelConfig().eclbase_format_string,
                 runpath_format=ert.getModelConfig().runpath_format_string,
-                filename=ert.getModelConfig().runpath_file,
+                filename=str(ert.resConfig().runpath_file),
                 substitute=global_substitutions.substitute_real_iter,
             ),
             initial_mask=mask,

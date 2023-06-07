@@ -148,7 +148,7 @@ class EnKFMain:
             jobname_format=self.getModelConfig().jobname_format_string,
             eclbase_format=self.getModelConfig().eclbase_format_string,
             runpath_format=self.getModelConfig().runpath_format_string,
-            filename=self.getModelConfig().runpath_file,
+            filename=str(self.ert_config.runpath_file),
             substitute=self.get_context().substitute_real_iter,
         )
 
