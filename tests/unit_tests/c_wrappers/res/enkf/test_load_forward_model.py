@@ -185,3 +185,31 @@ def test_load_forward_model_gen_data(prior_ensemble):
     assert list(
         facade.load_gen_data(prior_ensemble, "RESPONSE", 0).dropna().values.flatten()
     ) == [1.0, 3.0]
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_single_valued_gen_data_with_active_info_is_loaded(prior_ensemble):
+    config_text = dedent(
+        """
+    NUM_REALIZATIONS 1
+    GEN_DATA RESPONSE RESULT_FILE:response_%d.out REPORT_STEPS:0 INPUT_FORMAT:ASCII
+        """
+    )
+    Path("config.ert").write_text(config_text, encoding="utf-8")
+
+    ert_config = ErtConfig.from_file("config.ert")
+    ert = EnKFMain(ert_config)
+
+    run_context = ert.ensemble_context(prior_ensemble, [True], iteration=0)
+    ert.createRunPath(run_context)
+    run_path = Path("simulations/realization-0/iter-0/")
+    with open(run_path / "response_0.out", "w", encoding="utf-8") as fout:
+        fout.write("\n".join(["1"]))
+    with open(run_path / "response_0.out_active", "w", encoding="utf-8") as fout:
+        fout.write("\n".join(["1"]))
+
+    facade = LibresFacade(ert)
+    facade.load_from_forward_model(prior_ensemble, [True], 0)
+    assert list(
+        facade.load_gen_data(prior_ensemble, "RESPONSE", 0).values.flatten()
+    ) == [1.0]

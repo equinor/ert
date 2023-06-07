@@ -34,7 +34,7 @@ def _internalize_GEN_DATA(
                 errors.append(f"{key} report step {report_step} missing")
                 continue
 
-            data = np.loadtxt(run_path / filename)
+            data = np.loadtxt(run_path / filename, ndmin=1)
             active_information_file = run_path / (filename + "_active")
             if active_information_file.exists():
                 index_list = np.flatnonzero(np.loadtxt(active_information_file))
