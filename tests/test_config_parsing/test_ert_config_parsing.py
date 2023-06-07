@@ -73,6 +73,19 @@ def test_ert_config_parses_date():
     assert ert_config.model_config.runpath_format_string == expected_run_path
 
 
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_subst_list_is_given_default_runpath_file():
+    test_config_file_base = "test"
+    test_config_file_name = f"{test_config_file_base}.ert"
+    test_config_contents = "NUM_REALIZATIONS 1"
+    with open(test_config_file_name, "w", encoding="utf-8") as fh:
+        fh.write(test_config_contents)
+    ert_config = ErtConfig.from_file(test_config_file_name)
+    assert ert_config.substitution_list["<RUNPATH_FILE>"] == os.path.abspath(
+        ErtConfig.DEFAULT_RUNPATH_FILE
+    )
+
+
 @pytest.mark.usefixtures("set_site_config")
 @given(config_generators())
 def test_that_creating_ert_config_from_dict_is_same_as_from_file(

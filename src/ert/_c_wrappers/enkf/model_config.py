@@ -23,7 +23,6 @@ class ModelConfig:
         runpath_format_string: Optional[str] = None,
         jobname_format_string: Optional[str] = None,
         eclbase_format_string: Optional[str] = None,
-        runpath_file: str = ".ert_runpath_list",
         gen_kw_export_name: Optional[str] = None,
         obs_config_file: Optional[str] = None,
         time_map_file: Optional[str] = None,
@@ -44,7 +43,6 @@ class ModelConfig:
         self.runpath_format_string = (
             replace_runpath_format(runpath_format_string) or self.DEFAULT_RUNPATH
         )
-        self.runpath_file = runpath_file
 
         if self.runpath_format_string is not None and not any(
             x in self.runpath_format_string for x in ["<ITER>", "<IENS>"]
@@ -90,7 +88,6 @@ class ModelConfig:
             eclbase_format_string=config_dict.get(
                 ConfigKeys.ECLBASE, config_dict.get(ConfigKeys.JOBNAME)
             ),
-            runpath_file=config_dict.get(ConfigKeys.RUNPATH_FILE, ".ert_runpath_list"),
             gen_kw_export_name=config_dict.get(ConfigKeys.GEN_KW_EXPORT_NAME),
             obs_config_file=config_dict.get(ConfigKeys.OBS_CONFIG),
             time_map_file=config_dict.get(ConfigKeys.TIME_MAP),

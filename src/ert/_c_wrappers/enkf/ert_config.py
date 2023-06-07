@@ -106,6 +106,10 @@ class ErtConfig:
         cls, config_dict, use_new_parser: bool = USE_NEW_PARSER_BY_DEFAULT
     ) -> "ErtConfig":
         substitution_list = SubstitutionList.from_dict(config_dict=config_dict)
+        runpath_file = config_dict.get(
+            ConfigKeys.RUNPATH_FILE, ErtConfig.DEFAULT_RUNPATH_FILE
+        )
+        substitution_list.addItem("<RUNPATH_FILE>", runpath_file)
         config_dir = substitution_list.get("<CONFIG_PATH>", "")
         config_file = substitution_list.get("<CONFIG_FILE>", "no_config")
         config_file_path = os.path.join(config_dir, config_file)
@@ -169,9 +173,7 @@ class ErtConfig:
             workflow_jobs=workflow_jobs,
             workflows=workflows,
             hooked_workflows=hooked_workflows,
-            runpath_file=Path(
-                config_dict.get(ConfigKeys.RUNPATH_FILE, ErtConfig.DEFAULT_RUNPATH_FILE)
-            ),
+            runpath_file=Path(runpath_file),
             ert_templates=cls._read_templates(config_dict),
             installed_jobs=installed_jobs,
             forward_model_list=cls.read_forward_model(
