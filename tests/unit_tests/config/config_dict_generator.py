@@ -72,6 +72,14 @@ transforms = st.sampled_from(list(TRANSFORM_FUNCTIONS))
 small_floats = st.floats(min_value=1.0, max_value=10.0, allow_nan=False)
 positives = st.integers(min_value=1, max_value=10000)
 queue_systems = st.sampled_from(["LSF", "LOCAL", "TORQUE", "SLURM"])
+memory_unit = st.sampled_from(["gb", "mb"])
+
+
+@st.composite
+def memory_with_unit(draw):
+    memory_value = draw(positives)
+    unit = draw(memory_unit)
+    return f"{memory_value}{unit}"
 
 
 def valid_queue_options(queue_system: str):
@@ -111,6 +119,7 @@ def valid_queue_options(queue_system: str):
             "QSTAT_CMD",
             "QDEL_CMD",
             "QUEUE",
+            "MEMORY_PER_JOB",
             "NUM_CPUS_PER_NODE",
             "NUM_NODES",
             "KEEP_QSUB_OUTPUT",
@@ -157,6 +166,8 @@ def valid_queue_values(option_name):
         "SQUEUE_TIMEOUT",
     ]:
         return st.builds(str, small_floats)
+    if option_name in ["MEMORY_PER_JOB"]:
+        return st.builds(str, memory_with_unit())
     if option_name in [
         "NUM_CPUS_PER_NODE",
         "NUM_NODES",

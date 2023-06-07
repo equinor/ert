@@ -11,6 +11,13 @@ from ert.config import ConfigValidationError, ErtConfig, QueueConfig, QueueSyste
 from ert.job_queue import Driver
 
 
+@st.composite
+def memory_with_unit(draw):
+    memory_value = draw(st.integers(min_value=1, max_value=10000))
+    unit = draw(st.sampled_from(["gb", "mb"]))
+    return f"{memory_value}{unit}"
+
+
 def test_get_queue_config(minimum_case):
     queue_config = minimum_case.resConfig().queue_config
     queue_config_copy = queue_config.create_local_copy()
@@ -78,3 +85,27 @@ def test_queue_config_invalid_queue_system_provided(num_real):
         match="Invalid QUEUE_SYSTEM provided: 'VOID'",
     ):
         _ = ErtConfig.from_file(filename)
+
+
+@pytest.mark.usefixtures("use_tmpdir", "set_site_config")
+@given(memory_with_unit())
+def test_torque_queue_config_memory_pr_job(memory_with_unit_str):
+    filename = "config.ert"
+    with open(filename, "w", encoding="utf-8") as f:
+        f.write("NUM_REALIZATIONS 1\n")
+        f.write("QUEUE_SYSTEM TORQUE\n")
+        f.write(f"QUEUE_OPTION TORQUE MEMORY_PER_JOB {memory_with_unit_str}")
+
+    ErtConfig.from_file(filename)
+
+
+@pytest.mark.usefixtures("use_tmpdir", "set_site_config")
+@pytest.mark.parametrize("memory_with_unit_str", ["1", "gb", "mb", "1 gb", "1kb"])
+def test_torque_queue_config_invalid_memory_pr_job(memory_with_unit_str):
+    filename = "config.ert"
+    with open(filename, "w", encoding="utf-8") as f:
+        f.write("NUM_REALIZATIONS 1\n")
+        f.write("QUEUE_SYSTEM TORQUE\n")
+        f.write(f"QUEUE_OPTION TORQUE MEMORY_PER_JOB {memory_with_unit_str}")
+    with pytest.raises(ConfigValidationError):
+        ErtConfig.from_file(filename)
