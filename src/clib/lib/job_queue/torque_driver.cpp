@@ -629,17 +629,17 @@ torque_driver_get_qstat_status(torque_driver_type *driver,
             // can therefore assume that qstat results about Unknown Job Id are
             // failures (these have nonzero output length, but return value != 0)
             // that should trigger retries.
-            if (std::error_code ec; fs::file_size(tmp_std_file, ec) > 0 && ec &&
-                                    return_value == 0) {
+            if (std::error_code ec; fs::file_size(tmp_std_file, ec) > 0 &&
+                                    !ec && return_value == 0) {
                 qstat_succeeded = true;
             }
 
             if (!qstat_succeeded) {
                 if (slept_time + retry_interval <= driver->timeout) {
-                    torque_debug(
-                        driver,
-                        "qstat failed for job %s, retrying in %d seconds",
-                        jobnr_char, retry_interval);
+                    torque_debug(driver,
+                                 "qstat failed for job %s with exit code "
+                                 "%d, retrying in %d seconds",
+                                 jobnr_char, return_value, retry_interval);
                     sleep(retry_interval);
                     slept_time += retry_interval;
                     retry_interval *= 2;
