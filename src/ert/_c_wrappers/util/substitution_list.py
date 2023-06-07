@@ -24,7 +24,6 @@ class SubstitutionList(BaseCClass):
     _alloc_filtered_string = ResPrototype(
         "char* subst_list_alloc_filtered_string(subst_list, char*, char*, int)"
     )
-    _filter_file = ResPrototype("bool subst_list_filter_file(subst_list, char*,char*)")
     _deep_copy = ResPrototype("subst_list_obj subst_list_alloc_deep_copy(subst_list)")
 
     def __init__(self):
@@ -103,9 +102,6 @@ class SubstitutionList(BaseCClass):
         self, to_substitute: str, context: str = "", max_iterations: int = 1000
     ) -> str:
         return self._alloc_filtered_string(to_substitute, context, max_iterations)
-
-    def substitute_file(self, to_substitute: str, tmp_file: str):
-        self._filter_file(to_substitute, tmp_file)
 
     def substitute_real_iter(
         self, to_substitute: str, realization: int, iteration: int

@@ -25,9 +25,9 @@ namespace fs = std::filesystem;
    This file implements a small support struct for search-replace
    operations, along with wrapped calls to util_string_replace_inplace().
 
-   Substitutions can be carried out on files and string in memory (char *
+   Substitutions can be carried out on string in memory (char *
    with \0 termination); and the operations can be carried out inplace, or
-   in a filtering mode where a new file/string is created.
+   in a filtering mode where a new string is created.
 
 
    Usage
@@ -43,9 +43,8 @@ namespace fs = std::filesystem;
        The difference between these functions is who is owning the memory
        pointed to by the value pointer.
 
-    3. Do the actual search-replace operation on a file or memory buffer:
+    3. Do the actual search-replace operation:
 
-       * subst_list_filter_file()   : Does search-replace on a file.
        * subst_list_update_string() : Does search-replace on a buffer.
 
     4. Free the subst_list and go home.
@@ -255,74 +254,6 @@ subst_list_replace_strings(const subst_list_type *subst_list,
         }
     }
     return matches;
-}
-
-/**
-   This function reads the content of a file, and writes a new file
-   where all substitutions in subst_list have been performed. Observe
-   that target_file and src_file *CAN* point to the same file, in
-   which case this will amount to an inplace update. In that case a
-   backup file is written, and held, during the execution of the
-   function.
-
-   Observe that @target_file can contain a path component, that
-   component will be created if it does not exist.
-*/
-bool subst_list_filter_file(const subst_list_type *subst_list,
-                            const char *src_file, const char *target_file) {
-    char *backup_file = NULL;
-    buffer_type *buffer = buffer_fread_alloc(src_file);
-    // Ensure that the buffer is a \0 terminated string:
-    buffer_fseek(buffer, 0, SEEK_END);
-    buffer_fwrite_char(buffer, '\0');
-
-    if (util_same_file(src_file, target_file)) {
-        char *backup_prefix = util_alloc_sprintf("%s-%s", src_file, __func__);
-        backup_file = util_alloc_tmp_file("/tmp", backup_prefix, false);
-        free(backup_prefix);
-    }
-
-    /* Writing backup file */
-    if (backup_file != NULL) {
-        FILE *stream = util_fopen(backup_file, "w");
-        buffer_stream_fwrite_n(buffer, 0, -1,
-                               stream); /* -1: Do not write the trailing \0. */
-        fclose(stream);
-    }
-
-    /* Doing the actual update */
-    bool matched_at_least_once = false;
-    std::vector<std::string> matches = {"ANY"};
-    const int max_iterations = 10000;
-    int iterations = 1;
-    while (matches.size() > 0 && iterations++ < max_iterations) {
-        matches = subst_list_replace_strings(subst_list, buffer);
-        matched_at_least_once |= matches.size() > 0;
-    }
-
-    if (iterations >= max_iterations) {
-        logger->warning(
-            fmt::format("Reached max iterations while trying to resolve "
-                        "defines in file '{}'. Matched to '{}'",
-                        src_file, fmt::join(matches, ", ")));
-    }
-
-    /* Writing updated file */
-    {
-        auto stream = mkdir_fopen(fs::path(target_file), "w");
-
-        buffer_stream_fwrite_n(buffer, 0, -1,
-                               stream); /* -1: Do not write the trailing \0. */
-        fclose(stream);
-    }
-
-    /* OK - all went hunka dory - unlink the backup file and leave the building. */
-    if (backup_file != NULL) {
-        remove(backup_file);
-        free(backup_file);
-    }
-    buffer_free(buffer);
-    return matched_at_least_once;
 }
 
 /**
