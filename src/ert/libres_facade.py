@@ -235,24 +235,6 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
     def all_data_type_keys(self) -> List[str]:
         return self.get_summary_keys() + self.gen_kw_keys() + self.get_gen_data_keys()
 
-    def get_all_gen_data_observation_keys(self) -> List[str]:
-        return list(
-            self._enkf_main.getObservations().getTypedKeylist(
-                EnkfObservationImplementationType.GEN_OBS
-            )
-        )
-
-    def get_all_summary_observation_keys(self) -> List[str]:
-        return sorted(
-            [
-                key
-                for key in self.get_summary_keys()
-                if len(self._enkf_main.ensembleConfig().get_node_observation_keys(key))
-                > 0
-            ],
-            key=lambda k: k.lower(),
-        )
-
     def observation_keys(self, key: str) -> List[str]:
         if key in self.get_gen_data_keys():
             key_parts = key.split("@")
