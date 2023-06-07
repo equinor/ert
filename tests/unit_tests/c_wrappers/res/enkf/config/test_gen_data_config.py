@@ -15,26 +15,13 @@ from ert._c_wrappers.enkf import GenDataConfig
 @pytest.mark.usefixtures("use_tmpdir")
 def test_gen_data_config(name: str, report_steps: List[int]):
     gdc = GenDataConfig(name=name, report_steps=report_steps)
-    assert gdc.getKey() == name
-    assert len(gdc.getReportSteps()) == len(report_steps)
-    assert gdc.getReportSteps() == sorted(report_steps)
-    for i in report_steps:
-        assert gdc.hasReportStep(i)
-
-    assert not gdc.hasReportStep(200)
-
-    gen_data_default_step = GenDataConfig(name=name)
-    assert len(gen_data_default_step.getReportSteps()) == 1
-    assert gen_data_default_step.getReportSteps()[0] == 0
+    assert gdc.name == name
+    assert gdc.report_steps == sorted(report_steps)
 
 
-@pytest.mark.usefixtures("use_tmpdir")
-def test_empty_gen_data_config():
-    gdc = GenDataConfig(name="key")
-    assert len(gdc.getReportSteps()) == 1
-    assert gdc.hasReportStep(0)
-    assert not gdc.hasReportStep(1)
-    assert gdc.getReportSteps()[0] == 0
+def test_gen_data_default_report_step():
+    gen_data_default_step = GenDataConfig(name="name")
+    assert gen_data_default_step.report_steps == [0]
 
 
 @pytest.mark.usefixtures("use_tmpdir")

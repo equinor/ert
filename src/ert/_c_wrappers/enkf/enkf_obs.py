@@ -396,7 +396,7 @@ class EnkfObs:
                     category=ConfigWarning,
                 )
                 continue
-            if not config_node.hasReportStep(restart):
+            if restart not in config_node.report_steps:
                 warnings.warn(
                     f"The GEN_DATA node:{state_kw} is not configured "
                     f"to load from report step:{restart} for the observation:{obs_key}"

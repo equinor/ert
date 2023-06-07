@@ -1,6 +1,5 @@
 from dataclasses import dataclass
 from pathlib import Path
-from typing import List
 
 import numpy as np
 import xarray as xr
@@ -20,12 +19,6 @@ class GenDataConfig(ResponseConfig):
             if not self.report_steps
             else SortedList(set(self.report_steps))
         )
-
-    def hasReportStep(self, report_step: int) -> bool:
-        return report_step in self.report_steps
-
-    def getReportSteps(self) -> List[int]:
-        return self.report_steps
 
     def read_from_file(self, run_path: str, _: int):
         errors = []

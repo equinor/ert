@@ -140,11 +140,7 @@ def test_gen_data_node(gen_data_str, expected):
     else:
         assert node is not None
         assert isinstance(node, GenDataConfig)
-        assert len(node.getReportSteps()) == 3
-        assert node.hasReportStep(10)
-        assert node.hasReportStep(20)
-        assert node.hasReportStep(30)
-        assert not node.hasReportStep(32)
+        assert node.report_steps == [10, 20, 30]
 
 
 def test_get_surface_node(setup_case):
