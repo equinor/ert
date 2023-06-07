@@ -599,17 +599,19 @@ class JobQueue(BaseCClass):
         stage.run_arg.set_queue_index(self.add_job(job, iens))
 
     def stop_long_running_jobs(self, minimum_required_realizations: int) -> None:
-        finished_realizations = self.count_status(
-            JobStatusType.JOB_QUEUE_DONE,  # type: ignore
-        )
-        if finished_realizations < minimum_required_realizations:
-            return
-
         completed_jobs = [
             job for job in self.job_list if job.status == JobStatusType.JOB_QUEUE_DONE
         ]
-        average_runtime = sum(job.runtime for job in completed_jobs) / len(
-            completed_jobs
+        finished_realizations = len(completed_jobs)
+
+        if (
+            finished_realizations < minimum_required_realizations
+            or not finished_realizations
+        ):
+            return
+
+        average_runtime = (
+            sum(job.runtime for job in completed_jobs) / finished_realizations
         )
 
         for job in self.job_list:
