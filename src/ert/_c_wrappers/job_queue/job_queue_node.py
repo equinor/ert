@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import random
 import time
 from threading import Lock, Semaphore, Thread
 from typing import TYPE_CHECKING, Optional
@@ -189,13 +190,30 @@ class JobQueueNode(BaseCClass):
 
         current_status = self.refresh_status(driver)
 
+        # in the following loop, we increase the sleep time between loop iterations as
+        # long running realizations do not change state often, and too frequent querying
+        # with many realizations starves other threads for resources.
+        initial_sleep_seconds = 1
+        time_sleep_seconds = initial_sleep_seconds
+        max_sleep_seconds = 30
+        time_until_longer_sleep_seconds = 30
+        use_random_sleep_offset = False
         while self.is_running(current_status):
             if (
                 self._start_time is None
                 and current_status == JobStatusType.JOB_QUEUE_RUNNING
             ):
                 self._start_time = time.time()
-            time.sleep(1)
+            if (
+                self._start_time is not None
+                and time_sleep_seconds != max_sleep_seconds
+                and time.time() - self._start_time > time_until_longer_sleep_seconds
+            ):
+                time_sleep_seconds = max_sleep_seconds
+                use_random_sleep_offset = True
+            time.sleep(
+                time_sleep_seconds + use_random_sleep_offset * random.randint(-5, 5)
+            )
             if self._max_runtime is not None and self.runtime >= self._max_runtime:
                 self._kill(driver)
                 # We sometimes end up in a state where we are not able to kill it,
