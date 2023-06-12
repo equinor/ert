@@ -6,8 +6,7 @@ from ecl.util.util import StringHash
 from ert._c_wrappers import ResPrototype
 from ert._c_wrappers.config.config_content import ConfigContent
 from ert._c_wrappers.config.unrecognized_enum import UnrecognizedEnum
-from ert.parsing import ConfigValidationError
-from ert.parsing.error_info import ErrorInfo
+from ert.parsing import ConfigValidationError, ErrorInfo
 
 from .schema_item import SchemaItem
 

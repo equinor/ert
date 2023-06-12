@@ -4,8 +4,12 @@ import os
 from typing import TYPE_CHECKING, Any, Dict, Iterator, List, Optional, Tuple
 
 from ert._c_wrappers.config import ConfigParser, UnrecognizedEnum
-from ert.parsing import ConfigValidationError, init_workflow_schema, lark_parse
-from ert.parsing.error_info import ErrorInfo
+from ert.parsing import (
+    ConfigValidationError,
+    ErrorInfo,
+    init_workflow_schema,
+    lark_parse,
+)
 
 if TYPE_CHECKING:
     from ert._c_wrappers.util import SubstitutionList

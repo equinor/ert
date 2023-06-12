@@ -21,8 +21,7 @@ from ert._c_wrappers.enkf.config.response_config import ResponseConfig
 from ert._c_wrappers.enkf.config.summary_config import SummaryConfig
 from ert._c_wrappers.enkf.config.surface_config import SurfaceConfig
 from ert._c_wrappers.enkf.config_keys import ConfigKeys
-from ert.parsing import ConfigValidationError, ConfigWarning
-from ert.parsing.error_info import ErrorInfo
+from ert.parsing import ConfigValidationError, ConfigWarning, ErrorInfo
 from ert.storage.field_utils.field_utils import Shape, get_shape
 
 logger = logging.getLogger(__name__)

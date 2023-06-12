@@ -7,6 +7,7 @@ from .config_schema import (
     init_user_config_schema,
 )
 from .context_values import ContextString
+from .error_info import ErrorInfo, WarningInfo
 from .ext_job_keywords import ExtJobKeys
 from .ext_job_schema import init_ext_job_schema
 from .lark_parser import parse as lark_parse
@@ -27,6 +28,8 @@ __all__ = [
     "init_user_config_schema",
     "ConfigDict",
     "ExtJobKeys",
+    "ErrorInfo",
+    "WarningInfo",
     "init_ext_job_schema",
     "ContextString",
 ]
