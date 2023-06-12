@@ -806,13 +806,35 @@ def test_that_common_observation_error_validation_is_handled(
                        {
                           START = 1;
                           STOP  = 0;
-                          ERROR = 0.1
+                          ERROR = 0.1;
                           ERROR_MIN = -1;
                        };
                     };
                     """
             ),
             'Failed to validate "-1"',
+        ),
+        (
+            dedent(
+                """
+                    SUMMARY_OBSERVATION  FOPR
+                    {
+                       RESTART = -1;
+                    };
+                    """
+            ),
+            'Failed to validate "-1"',
+        ),
+        (
+            dedent(
+                """
+                    SUMMARY_OBSERVATION  FOPR
+                    {
+                       RESTART = minus_one;
+                    };
+                    """
+            ),
+            'Failed to validate "minus_one"',
         ),
         (
             dedent(
@@ -860,3 +882,34 @@ def test_that_summary_observation_validation_is_handled(tmpdir, obs_content, mat
         ert_config = ErtConfig.from_file("config.ert")
         with pytest.raises(ObservationConfigError, match=match):
             _ = EnkfObs.from_ert_config(ert_config)
+
+
+@pytest.mark.parametrize(
+    "observation_type",
+    ["HISTORY_OBSERVATION", "SUMMARY_OBSERVATION", "GENERAL_OBSERVATION"],
+)
+def test_that_unknown_key_in_is_handled(tmpdir, observation_type):
+    with tmpdir.as_cwd():
+        config = dedent(
+            """
+        NUM_REALIZATIONS 2
+
+        ECLBASE ECLIPSE_CASE
+        REFCASE ECLIPSE_CASE
+        OBS_CONFIG observations
+        """
+        )
+        with open("config.ert", "w", encoding="utf-8") as fh:
+            fh.writelines(config)
+        with open("observations", "w", encoding="utf-8") as fo:
+            fo.writelines(f"{observation_type} FOPR {{SMERROR=0.1;DATA=key;}};")
+        with open("time_map.txt", "w", encoding="utf-8") as fo:
+            fo.writelines("2023-02-01")
+        run_sim(
+            datetime(2014, 9, 10),
+            [("FOPR", "SM3/DAY", None), ("FOPRH", "SM3/DAY", None)],
+        )
+
+        ert_config = ErtConfig.from_file("config.ert")
+        with pytest.raises(ObservationConfigError, match="Unknown SMERROR"):
+            _ = EnkfObs.from_ert_config(ert_config, new_parser=True)

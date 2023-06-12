@@ -16,6 +16,7 @@ env:
   ERT_SHOW_BACKTRACE: 1
   ECL_SKIP_SIGNAL: 1
   USE_OLD_ERT_PARSER: "YES"
+  USE_OLD_ERT_OBS_PARSER: "YES"
 
 jobs:
   python-test-coverage-lark:

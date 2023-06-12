@@ -1,9 +1,9 @@
-from ert.parsing.new_observations_parser import ObservationType, parse
+from ert.parsing.new_observations_parser import ObservationType, _parse_content
 
 
 def test_parse():
     assert (
-        parse(
+        _parse_content(
             """
         HISTORY_OBSERVATION FOPR;
 
@@ -33,7 +33,8 @@ def test_parse():
               ERROR = -1;
            };
         };
-    """
+    """,
+            "",
         )
         == [
             (ObservationType.HISTORY, "FOPR"),
@@ -60,7 +61,10 @@ def test_parse():
             (
                 ObservationType.HISTORY,
                 "FOPR",
-                {"ERROR": "0.1", "SEG": {"START": "1", "STOP": "0", "ERROR": "-1"}},
+                {
+                    "ERROR": "0.1",
+                    "SEGMENT": ("SEG", {"START": "1", "STOP": "0", "ERROR": "-1"}),
+                },
             ),
         ]
     )
