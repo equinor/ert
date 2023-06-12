@@ -805,7 +805,7 @@ def test_that_common_observation_error_validation_is_handled(
                        {
                           START = 1;
                           STOP  = 0;
-                          ERROR = 0.1
+                          ERROR = 0.1;
                           ERROR_MIN = -1;
                        };
                     };
