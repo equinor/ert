@@ -28,11 +28,12 @@ from ert._clib.config_keywords import init_site_config_parser, init_user_config_
 from ert.parsing import (
     ConfigValidationError,
     ConfigWarning,
+    ErrorInfo,
+    WarningInfo,
     init_site_config_schema,
     init_user_config_schema,
     lark_parse,
 )
-from ert.parsing.error_info import ErrorInfo, WarningInfo
 
 from ._config_content_as_dict import config_content_as_dict
 

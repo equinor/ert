@@ -16,8 +16,8 @@ from ert._c_wrappers.enkf.observations import ObsVector
 from ert._c_wrappers.enkf.observations.gen_observation import GenObservation
 from ert._c_wrappers.enkf.observations.summary_observation import SummaryObservation
 from ert._c_wrappers.sched import HistorySourceEnum
-from ert.parsing import ConfigValidationError, ConfigWarning
-from ert.parsing.error_info import ErrorInfo
+from ert._clib.enkf_obs import ConfInstance
+from ert.parsing import ConfigWarning, ErrorInfo
 
 if TYPE_CHECKING:
     import numpy.typing as npt

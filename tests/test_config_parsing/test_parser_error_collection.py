@@ -10,8 +10,7 @@ import pytest
 from hypothesis import given, strategies
 
 from ert._c_wrappers.enkf import ErtConfig
-from ert.parsing import ConfigValidationError
-from ert.parsing.error_info import ErrorInfo
+from ert.parsing import ConfigValidationError, ErrorInfo
 
 test_config_file_base = "test"
 test_config_filename = f"{test_config_file_base}.ert"

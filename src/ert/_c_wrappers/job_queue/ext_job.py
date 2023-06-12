@@ -12,13 +12,13 @@ from ert._c_wrappers.util import SubstitutionList
 from ert._clib.job_kw import type_from_kw
 from ert.parsing import (
     ConfigValidationError,
+    ErrorInfo,
     ExtJobKeys,
     SchemaItemType,
     init_ext_job_schema,
     lark_parse,
 )
 
-from ...parsing.error_info import ErrorInfo
 from .parse_arg_types_list import parse_arg_types_list
 
 logger = logging.getLogger(__name__)
