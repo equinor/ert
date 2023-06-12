@@ -2,7 +2,17 @@ import os
 import warnings
 from datetime import datetime, timedelta
 from fnmatch import fnmatch
-from typing import TYPE_CHECKING, Dict, Iterator, List, Literal, Optional, Tuple
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Dict,
+    Iterator,
+    List,
+    Literal,
+    Mapping,
+    Optional,
+    Tuple,
+)
 
 import numpy as np
 import xarray as xr
@@ -133,9 +143,9 @@ class EnkfObs:
         for instance in sub_instances:
             summary_key = instance.name
             ensemble_config.add_summary_full(summary_key, refcase)
-            error = float(instance.get_value("ERROR"))
-            error_min = float(instance.get_value("ERROR_MIN"))
-            error_mode = instance.get_value("ERROR_MODE")
+            error = float(instance["ERROR"])
+            error_min = float(instance["ERROR_MIN"])
+            error_mode = instance["ERROR_MODE"]
 
             if history_type == HistorySourceEnum.REFCASE_HISTORY:
                 var_type = refcase.var_type(summary_key)
@@ -155,8 +165,8 @@ class EnkfObs:
                 valid, values = _clib.enkf_obs.read_from_refcase(refcase, local_key)
                 std_dev = cls._handle_error_mode(values, error, error_min, error_mode)
                 for segment_instance in instance.get_sub_instances("SEGMENT"):
-                    start = int(segment_instance.get_value("START"))
-                    stop = int(segment_instance.get_value("STOP"))
+                    start = int(segment_instance["START"])
+                    stop = int(segment_instance["STOP"])
                     if start < 0:
                         warnings.warn(
                             "Segment out of bounds. Truncating start of segment to 0.",
@@ -187,9 +197,9 @@ class EnkfObs:
                         )
                     std_dev[start:stop] = cls._handle_error_mode(
                         values[start:stop],
-                        float(segment_instance.get_value("ERROR")),
-                        float(segment_instance.get_value("ERROR_MIN")),
-                        segment_instance.get_value("ERROR_MODE"),
+                        float(segment_instance["ERROR"]),
+                        float(segment_instance["ERROR_MIN"]),
+                        segment_instance["ERROR_MODE"],
                     )
                 data = {}
                 for i, (good, error, value) in enumerate(zip(valid, std_dev, values)):
@@ -214,9 +224,11 @@ class EnkfObs:
         return obs_vectors
 
     @staticmethod
-    def _get_time(conf_instance, start_time: datetime) -> Tuple[datetime, str]:
-        if conf_instance.has_value("DATE"):
-            date_str = conf_instance.get_value("DATE")
+    def _get_time(
+        conf_instance: Mapping[str, Any], start_time: datetime
+    ) -> Tuple[datetime, str]:
+        if "DATE" in conf_instance:
+            date_str = conf_instance["DATE"]
             try:
                 return datetime.fromisoformat(date_str), f"DATE={date_str}"
             except ValueError:
@@ -234,11 +246,11 @@ class EnkfObs:
                         " Please use ISO date format"
                     ) from err
 
-        if conf_instance.has_value("DAYS"):
-            days = float(conf_instance.get_value("DAYS"))
+        if "DAYS" in conf_instance:
+            days = float(conf_instance["DAYS"])
             return start_time + timedelta(days=days), f"DAYS={days}"
-        if conf_instance.has_value("HOURS"):
-            hours = float(conf_instance.get_value("HOURS"))
+        if "HOURS" in conf_instance:
+            hours = float(conf_instance["HOURS"])
             return start_time + timedelta(hours=hours), f"HOURS={hours}"
         raise ValueError("Missing time specifier")
 
@@ -261,9 +273,9 @@ class EnkfObs:
         return nearest_index
 
     @staticmethod
-    def _get_restart(conf_instance, time_map: List[datetime]) -> int:
-        if conf_instance.has_value("RESTART"):
-            return int(conf_instance.get_value("RESTART"))
+    def _get_restart(conf_instance: Mapping[str, Any], time_map: List[datetime]) -> int:
+        if "RESTART" in conf_instance:
+            return int(conf_instance["RESTART"])
         time, date_str = EnkfObs._get_time(conf_instance, time_map[0])
         try:
             return EnkfObs._find_nearest(time_map, time)
@@ -274,16 +286,18 @@ class EnkfObs:
             ) from err
 
     @staticmethod
-    def _make_value_and_std_dev(conf_instance) -> Tuple[float, float]:
-        value = float(conf_instance.get_value("VALUE"))
+    def _make_value_and_std_dev(
+        conf_instance: Mapping[str, Any]
+    ) -> Tuple[float, float]:
+        value = float(conf_instance["VALUE"])
         return (
             value,
             float(
                 EnkfObs._handle_error_mode(
                     np.array(value),
-                    float(conf_instance.get_value("ERROR")),
-                    float(conf_instance.get_value("ERROR_MIN")),
-                    conf_instance.get_value("ERROR_MODE"),
+                    float(conf_instance["ERROR"]),
+                    float(conf_instance["ERROR_MIN"]),
+                    conf_instance["ERROR_MODE"],
                 )
             ),
         )
@@ -294,7 +308,7 @@ class EnkfObs:
     ) -> Dict[str, ObsVector]:
         obs_vectors = {}
         for instance in conf_instance.get_sub_instances("SUMMARY_OBSERVATION"):
-            summary_key = instance.get_value("KEY")
+            summary_key = instance["KEY"]
             obs_key = instance.name
             refcase = ensemble_config.refcase
             ensemble_config.add_summary_full(summary_key, refcase)
@@ -369,7 +383,7 @@ class EnkfObs:
     ) -> Dict[str, ObsVector]:
         obs_vectors = {}
         for instance in conf_instance.get_sub_instances("GENERAL_OBSERVATION"):
-            state_kw = instance.get_value("DATA")
+            state_kw = instance["DATA"]
             if not ensemble_config.hasNodeGenData(state_kw):
                 warnings.warn(
                     f"Ensemble key {state_kw} does not exist"
@@ -410,17 +424,13 @@ class EnkfObs:
                 {
                     restart: cls._create_gen_obs(
                         (
-                            float(instance.get_value("VALUE")),
-                            float(instance.get_value("ERROR")),
+                            float(instance["VALUE"]),
+                            float(instance["ERROR"]),
                         )
-                        if instance.has_value("VALUE")
+                        if "VALUE" in instance
                         else None,
-                        instance.get_value("OBS_FILE")
-                        if instance.has_value("OBS_FILE")
-                        else None,
-                        instance.get_value("INDEX_LIST")
-                        if instance.has_value("INDEX_LIST")
-                        else None,
+                        instance["OBS_FILE"] if "OBS_FILE" in instance else None,
+                        instance["INDEX_LIST"] if "INDEX_LIST" in instance else None,
                     ),
                 },
             )

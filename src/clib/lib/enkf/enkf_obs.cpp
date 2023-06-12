@@ -332,11 +332,11 @@ ERT_CLIB_SUBMODULE("enkf_obs", m) {
              [](std::shared_ptr<conf_instance> self, std::string name) {
                  return self->get_sub_instances(name);
              })
-        .def("has_value",
+        .def("__contains__",
              [](std::shared_ptr<conf_instance> self, std::string name) {
                  return self->has_value(name);
              })
-        .def("get_value",
+        .def("__getitem__",
              [](std::shared_ptr<conf_instance> self, std::string name) {
                  return self->get_value(name);
              })
