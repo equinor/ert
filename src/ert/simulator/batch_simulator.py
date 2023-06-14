@@ -230,26 +230,28 @@ class BatchSimulator:
         time, so when you have called the 'start' method you need to let that
         batch complete before you start a new batch.
         """
-        with open_storage(self.ert_config.ens_path, "w") as storage:
-            experiment = storage.create_experiment()
-            ensemble = storage.create_ensemble(
-                experiment.id, name=case_name, ensemble_size=self.ert.getEnsembleSize()
-            )
-            self.ert.addDataKW("<CASE_NAME>", _slug(ensemble.name))
-            for sim_id, (geo_id, controls) in enumerate(case_data):
-                assert isinstance(geo_id, int)
-                self._setup_sim(sim_id, controls, ensemble)
+        storage = open_storage(self.ert_config.ens_path, "w")
+        experiment = storage.create_experiment(
+            self.ert_config.ensemble_config.parameter_configuration
+        )
+        ensemble = storage.create_ensemble(
+            experiment.id, name=case_name, ensemble_size=self.ert.getEnsembleSize()
+        )
+        self.ert.addDataKW("<CASE_NAME>", _slug(ensemble.name))
+        for sim_id, (geo_id, controls) in enumerate(case_data):
+            assert isinstance(geo_id, int)
+            self._setup_sim(sim_id, controls, ensemble)
 
-            # The input should be validated before we instantiate the BatchContext
-            # object, at that stage a job_queue object with multiple threads is
-            # started, and things will typically be in a quite sorry state if an
-            # exception occurs.
-            itr = 0
-            mask = [True] * len(case_data)
-            sim_context = BatchContext(
-                self.result_keys, self.ert, ensemble, mask, itr, case_data
-            )
+        # The input should be validated before we instantiate the BatchContext
+        # object, at that stage a job_queue object with multiple threads is
+        # started, and things will typically be in a quite sorry state if an
+        # exception occurs.
+        itr = 0
+        mask = [True] * len(case_data)
+        sim_context = BatchContext(
+            self.result_keys, self.ert, ensemble, mask, itr, case_data
+        )
 
-            if self.callback:
-                self.callback(sim_context)
-            return sim_context
+        if self.callback:
+            self.callback(sim_context)
+        return sim_context

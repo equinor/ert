@@ -121,10 +121,7 @@ class ExtParamConfig(ParameterConfig):
             return key in self.input_keys
 
     def __repr__(self):
-        return (
-            f"ExtParamConfig(keylist={list(self.input_keys.keys())}), "
-            f"suffixlist={list(self.input_keys.items())})"
-        )
+        return f"ExtParamConfig(keys={self.input_keys})"
 
     def __getitem__(self, index):
         """Retrieve an item from the configuration

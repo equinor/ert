@@ -65,7 +65,7 @@ def forward_model_ok(
         # handles parameters
         if run_arg.itr == 0:
             parameters_result = _read_parameters(
-                run_arg, ens_conf.parameter_configuration
+                run_arg, run_arg.ensemble_storage.experiment.parameter_configuration
             )
 
         if parameters_result.status == LoadStatus.LOAD_SUCCESSFUL:

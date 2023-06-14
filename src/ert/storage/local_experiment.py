@@ -8,12 +8,20 @@ from uuid import UUID
 
 import xtgeo
 
-from ert._c_wrappers.enkf.config.field_config import Field
+from ert._c_wrappers.enkf import ExtParamConfig, Field, GenKwConfig, SurfaceConfig
 
 if TYPE_CHECKING:
     from ert._c_wrappers.enkf.config.parameter_config import ParameterConfig
     from ert.storage.local_ensemble import LocalEnsembleAccessor, LocalEnsembleReader
     from ert.storage.local_storage import LocalStorageAccessor, LocalStorageReader
+
+
+_KNOWN_PARAMETER_TYPES = {
+    GenKwConfig.__name__: GenKwConfig,
+    SurfaceConfig.__name__: SurfaceConfig,
+    Field.__name__: Field,
+    ExtParamConfig.__name__: ExtParamConfig,
+}
 
 
 class LocalExperimentReader:
@@ -99,9 +107,21 @@ class LocalExperimentAccessor(LocalExperimentReader):
                 grid_filename = "grid" + Path(parameter.grid_file).suffix.upper()
                 if not (self._path / grid_filename).exists():
                     shutil.copy(parameter.grid_file, self._path / grid_filename)
+            elif isinstance(parameter, ExtParamConfig):
+                parameter_data[parameter.name] = parameter.to_dict()
+            else:
+                raise NotImplementedError("Unknown parameter type")
 
         with open(self.mount_point / self._parameter_file, "w", encoding="utf-8") as f:
             json.dump(parameter_data, f)
+
+    @property
+    def parameter_configuration(self) -> List[ParameterConfig]:
+        params = []
+        for data in self.parameter_info.values():
+            param_type = data.pop("_ert_kind")
+            params.append(_KNOWN_PARAMETER_TYPES[param_type](**data))
+        return params
 
     @property
     def ensembles(self) -> Generator[LocalEnsembleAccessor, None, None]:
