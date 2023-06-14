@@ -98,7 +98,7 @@ def noop_progress_callback(_: Progress) -> None:
 
 class TempStorage(UserDict):  # type: ignore
     def __getitem__(self, key: str) -> npt.NDArray[np.double]:
-        value: Union[npt.NDArray[np.double], xr.DataArray] = super().__getitem__(key)
+        value: Union[npt.NDArray[np.double], xr.DataArray] = self.data[key]
         if not isinstance(value, xr.DataArray):
             return value
         ensemble_size = value.shape[0]
@@ -110,14 +110,14 @@ class TempStorage(UserDict):  # type: ignore
         old_value = self.data.get(key, None)
         if isinstance(old_value, xr.DataArray):
             old_value.data = value.T.reshape(*old_value.shape)
-            super().__setitem__(key, old_value)
+            self.data[key] = old_value
         else:
-            super().__setitem__(key, value)
+            self.data[key] = value
 
     def get_raw(self, key: str) -> Union[npt.NDArray[np.double], xr.DataArray]:
-        _val = super().__getitem__(key)
-        assert isinstance(_val, (np.ndarray, xr.DataArray))
-        return _val
+        value = self.data[key]
+        assert isinstance(value, (np.ndarray, xr.DataArray))
+        return value
 
 
 def _get_A_matrix(
