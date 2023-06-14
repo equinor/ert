@@ -11,7 +11,16 @@ def surface():
     nrow = 3
     ncol = 5
     data = rng.standard_normal(size=(nrow, ncol))
-    return xtgeo.RegularSurface(ncol=ncol, nrow=nrow, xinc=0.0, yinc=0.0, values=data)
+    return xtgeo.RegularSurface(
+        ncol=ncol,
+        nrow=nrow,
+        xinc=1.0,
+        yinc=2.0,
+        xori=3.0,
+        yori=4.0,
+        rotation=10,
+        values=data,
+    )
 
 
 def test_runpath_roundtrip(tmp_path, storage, surface):
@@ -47,3 +56,18 @@ def test_runpath_roundtrip(tmp_path, storage, surface):
     np.testing.assert_allclose(
         actual_surface.values, surface.values, rtol=0, atol=1e-06
     )
+
+    # Compare header, set all properties to different values to assert
+    for prop, val in (
+        ("ncol", 5),
+        ("nrow", 3),
+        ("xori", 3),
+        ("yori", 4),
+        ("xinc", 1),
+        ("yinc", 2),
+        ("yflip", 1.0),
+        ("rotation", 10),
+    ):
+        assert (
+            getattr(config, prop) == getattr(actual_surface, prop) == val
+        ), f"Failed for: {prop}"
