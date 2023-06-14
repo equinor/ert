@@ -101,7 +101,7 @@ class TempStorage(UserDict):  # type: ignore
         value: Union[npt.NDArray[np.double], xr.DataArray] = self.data[key]
         if not isinstance(value, xr.DataArray):
             return value
-        ensemble_size = value.shape[0]
+        ensemble_size = len(value.realizations)
         return value.values.reshape(ensemble_size, -1).T
 
     def __setitem__(
@@ -114,10 +114,12 @@ class TempStorage(UserDict):  # type: ignore
         else:
             self.data[key] = value
 
-    def get_raw(self, key: str) -> Union[npt.NDArray[np.double], xr.DataArray]:
+    def get_xr_array(self, key: str, real: int) -> xr.DataArray:
         value = self.data[key]
-        assert isinstance(value, (np.ndarray, xr.DataArray))
-        return value
+        if isinstance(value, xr.DataArray):
+            return value[real]
+        else:
+            raise ValueError(f"TempStorage has no xarray DataFrame with key={key}")
 
 
 def _get_A_matrix(
@@ -228,9 +230,9 @@ def _save_temp_storage_to_disk(
                     matrix[:, i],
                 )
             elif isinstance(config_node, SurfaceConfig):
-                _matrix = temp_storage.get_raw(key)
+                _matrix = temp_storage.get_xr_array(key, i)
                 assert isinstance(_matrix, xr.DataArray)
-                target_fs.save_parameters(key, realization, _matrix[i])
+                target_fs.save_parameters(key, realization, _matrix)
             elif isinstance(config_node, Field):
                 assert isinstance(matrix, np.ndarray)
                 target_fs.save_field(key, realization, matrix[:, i])
