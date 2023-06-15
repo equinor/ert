@@ -6,7 +6,7 @@ import os
 from dataclasses import dataclass
 from hashlib import sha256
 from pathlib import Path
-from typing import TYPE_CHECKING, Callable, Dict, List, Optional, Tuple, TypedDict
+from typing import TYPE_CHECKING, Callable, Dict, List, Optional, TypedDict
 
 import numpy as np
 import pandas as pd
@@ -270,7 +270,10 @@ class GenKwConfig(ParameterConfig):
             params = dict(zip(param_names, param_floats))
 
             return TransferFunction(
-                func_name, param_func_name, params, PRIOR_FUNCTIONS[param_func_name]
+                name=func_name,
+                transfer_function_name=param_func_name,
+                parameter_list=params,
+                calc_func=PRIOR_FUNCTIONS[param_func_name],
             )
 
         else:
@@ -279,20 +282,16 @@ class GenKwConfig(ParameterConfig):
             )
 
 
+@dataclass
 class TransferFunction:
     name: str
     transfer_function_name: str
-    param_list: List[Tuple[str, float]]
+    parameter_list: Dict[str, float]
     calc_func: Callable[[float, List[float]], float]
     _use_log: bool = False
 
-    def __init__(self, name, transfer_function_name, param_list, calc_func) -> None:
-        self.name = name
-        self.transfer_function_name = transfer_function_name
-        self.calc_func = calc_func
-        self.parameter_list = param_list
-
-        if transfer_function_name in ["LOGNORMAL", "LOGUNIF"]:
+    def __post_init__(self) -> None:
+        if self.transfer_function_name in ["LOGNORMAL", "LOGUNIF"]:
             self._use_log = True
 
     @staticmethod
