@@ -9,16 +9,12 @@
 #include <ert/python.hpp>
 #include <ert/util/util.hpp>
 
-namespace {
-
 void scaleX(Eigen::MatrixXd &X, const Eigen::MatrixXd &X0, double alpha) {
     X = X0;
     X *= alpha;
     for (int i = 0; i < X.rows(); i++)
         X(i, i) = (1 - alpha) + X(i, i);
 }
-
-} // namespace
 
 size_t RowScaling::size() const { return m_data.size(); }
 

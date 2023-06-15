@@ -24,13 +24,6 @@ void test_create() {
     test_assert_double_equal(row_scaling[9], 0.25);
 }
 
-void scaleX(Eigen::MatrixXd &X, const Eigen::MatrixXd &X0, double alpha) {
-    X = X0;
-    X *= alpha;
-    for (int i = 0; i < X.rows(); i++)
-        X(i, i) = (1 - alpha) + X(i, i);
-}
-
 void row_scaling_multiply2(const RowScaling &row_scaling, Eigen::MatrixXd &A,
                            const Eigen::MatrixXd &X0) {
     Eigen::MatrixXd X = Eigen::MatrixXd::Zero(X0.rows(), X0.cols());
