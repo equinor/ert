@@ -3,31 +3,25 @@
 Data types
 ==========
 
-Briefly, the purpose of ERT is to pass uncertain parameter values to a simulator [#]_
-and save the responses.
-ERT must therefore be able to read and write data in a format understood by the simulator.
+In essence, the purpose of ERT is to pass uncertain parameter values to a forward model 
+and then store the resulting outputs.
+Forward models include all necessary pre-processing and post-processing steps,
+as well as the computational model (e.g., a physics simulator like ECLIPSE)
+that produces the predictions.
+Consequently, ERT must be able to read and write data in a format compatible with the
+forward model.
 
-Data managed by ERT are organized in different *data types* described in
-this chapter. Configuring the data used in the conditioning project is an
-important part of setting up an ERT configuration file - in practical terms this
-is how you configure which uncertainty parameters should be studied. The data
-types in ERT can be categorized in two ways:
+Data managed by ERT are organized into distinct *data types*,
+each of which will be detailed in this chapter.
+The data types in ERT can be classified based on two main criteria:
 
-1. How the data type behaves dynamically: is it a static parameter like porosity
-   or permeability - i.e. does it serve as *input* to the simulator, or
-   is it a quantity which is generated as a result from the simulation. When
-   understanding the model updating algorithm and process it is important to
-   understand this difference properly.
+1. Dynamic behaviour: whether the data type is a static input to the simulator,
+   such as porosity or permeability, or an output of the simulation.
+2. Implementation: this includes the type of files it can read
+   and write, how it is configured, and so forth.
 
-2. How the data type is implemented, what type of files does it read and write,
-   how it is configured and so on.
-
-NB: All datatypes have a common namespace; i.e. a globally unique keyword.
-
-
-.. [#] *Simulator* in this context includes both pre,- and post-processing steps,
-       as well as a physics simulator such as ECLIPSE or Flow.
-
+Note: All data types share a common namespace, meaning that each keyword must
+be globally unique.
 
 Parameters
 ----------
