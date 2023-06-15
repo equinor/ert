@@ -9,17 +9,6 @@
 #include <ert/python.hpp>
 #include <ert/util/util.hpp>
 
-/*
-  The values in the row_scaling container are distributed among
-  ROW_SCALING_RESOLUTION discreete values. The reason for this lumping is to be
-  able to reuse the scaled update matrix:
-
-      X(a) = a*X0 + (1 - a)*I
-
-  for several rows. This grouping is utilized in the row_scaling_multiply()
-  function.
-*/
-
 namespace {
 
 void scaleX(Eigen::MatrixXd &X, const Eigen::MatrixXd &X0, double alpha) {
@@ -35,6 +24,15 @@ size_t RowScaling::size() const { return m_data.size(); }
 
 double RowScaling::operator[](size_t index) const { return m_data.at(index); }
 
+/**
+  The values in the row_scaling container are distributed among
+  `m_resolution` discrete values. The reason for this lumping is to be
+  able to reuse the scaled update matrix:
+
+      X(alpha) = alpha*X0 + (1 - alpha)*I
+
+  for several rows.
+*/
 double RowScaling::clamp(double value) const {
     return floor(value * this->m_resolution) / this->m_resolution;
 }
