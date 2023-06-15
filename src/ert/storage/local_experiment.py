@@ -9,8 +9,6 @@ from uuid import UUID
 import xtgeo
 
 from ert._c_wrappers.enkf.config.field_config import Field
-from ert._c_wrappers.enkf.config.gen_kw_config import GenKwConfig, PriorDict
-from ert._c_wrappers.enkf.config.surface_config import SurfaceConfig
 
 if TYPE_CHECKING:
     from ert._c_wrappers.enkf.config.parameter_config import ParameterConfig
@@ -49,15 +47,11 @@ class LocalExperimentReader:
 
     @property
     def gen_kw_info(self) -> Dict[str, Any]:
-        priors: Dict[str, Any]
-        if Path.exists(self.mount_point / "gen-kw-priors.json"):
-            with open(
-                self.mount_point / "gen-kw-priors.json", "r", encoding="utf-8"
-            ) as f:
-                priors = json.load(f)
-        else:
-            raise ValueError("No GEN_KW in experiment")
-        return priors
+        return {
+            k: v["priors"]
+            for (k, v) in self.parameter_info.items()
+            if v["type_name"] == "GenKwConfig"
+        }
 
     @property
     def parameter_info(self) -> Dict[str, Any]:
@@ -68,11 +62,6 @@ class LocalExperimentReader:
         with open(path, encoding="utf-8", mode="r") as f:
             info = json.load(f)
         return info
-
-    def load_gen_kw_priors(self) -> Dict[str, List[PriorDict]]:
-        with open(self.mount_point / "gen-kw-priors.json", "r", encoding="utf-8") as f:
-            priors: Dict[str, List[PriorDict]] = json.load(f)
-        return priors
 
     def get_surface(self, name: str) -> xtgeo.RegularSurface:
         return xtgeo.surface_from_file(
@@ -95,23 +84,21 @@ class LocalExperimentAccessor(LocalExperimentReader):
 
         parameter_data = {}
         parameters = [] if parameters is None else parameters
-        for parameter in parameters:
-            if isinstance(parameter, GenKwConfig):
-                self.save_gen_kw_info(parameter.name, parameter.get_priors())
-            elif isinstance(parameter, SurfaceConfig):
-                parameter_data[parameter.name] = parameter.to_dict()
-            elif isinstance(parameter, Field):
-                parameter_data[parameter.name] = parameter.to_dict()
+        parameter_file_path = Path(self.mount_point / self._parameter_file)
 
+        if Path.exists(parameter_file_path):
+            with open(parameter_file_path, "r", encoding="utf-8") as f:
+                parameter_data = json.load(f)
+
+        for parameter in parameters:
+            parameter_data.update({parameter.name: parameter.to_dict()})
+
+            if isinstance(parameter, Field) and parameter.grid_file is not None:
                 # Grid file is shared between all FIELD keywords, so we can avoid
                 # copying for each FIELD keyword.
-                if parameter.grid_file is not None:
-                    grid_filename = "grid" + Path(parameter.grid_file).suffix.upper()
-                    if not (self._path / grid_filename).exists():
-                        shutil.copy(parameter.grid_file, self._path / grid_filename)
-
-            else:
-                raise NotImplementedError("Unknown parameter type")
+                grid_filename = "grid" + Path(parameter.grid_file).suffix.upper()
+                if not (self._path / grid_filename).exists():
+                    shutil.copy(parameter.grid_file, self._path / grid_filename)
 
         with open(self.mount_point / self._parameter_file, "w", encoding="utf-8") as f:
             json.dump(parameter_data, f)
@@ -135,16 +122,3 @@ class LocalExperimentAccessor(LocalExperimentReader):
             name=name,
             prior_ensemble=prior_ensemble,
         )
-
-    def save_gen_kw_info(
-        self, name: str, parameter_transfer_functions: List["PriorDict"]
-    ) -> None:
-        priors = {}
-        if Path.exists(self.mount_point / "gen-kw-priors.json"):
-            with open(
-                self.mount_point / "gen-kw-priors.json", "r", encoding="utf-8"
-            ) as f:
-                priors = json.load(f)
-        priors.update({name: parameter_transfer_functions})
-        with open(self.mount_point / "gen-kw-priors.json", "w", encoding="utf-8") as f:
-            json.dump(priors, f)
