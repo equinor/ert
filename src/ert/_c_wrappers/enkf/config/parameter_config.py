@@ -37,4 +37,6 @@ class ParameterConfig(ABC):
         ...
 
     def to_dict(self) -> Dict[str, Any]:
-        return dataclasses.asdict(self, dict_factory=CustomDict)
+        dict_ = dataclasses.asdict(self, dict_factory=CustomDict)
+        dict_["type_name"] = type(self).__name__
+        return dict_

@@ -6,7 +6,7 @@ import os
 from dataclasses import dataclass
 from hashlib import sha256
 from pathlib import Path
-from typing import TYPE_CHECKING, Callable, Dict, List, Optional, TypedDict
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, TypedDict
 
 import numpy as np
 import pandas as pd
@@ -187,6 +187,9 @@ class GenKwConfig(ParameterConfig):
         for index, tf in enumerate(self._transfer_functions):
             array[index] = tf.calc_func(array[index], list(tf.parameter_list.values()))
         return array
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {"priors": self.get_priors(), "type_name": type(self).__name__}
 
     @staticmethod
     def values_from_file(
