@@ -20,3 +20,5 @@ public:
     void assign_vector(const float *data, size_t size);
     void assign_vector(const double *data, size_t size);
 };
+
+void scaleX(Eigen::MatrixXd &X, const Eigen::MatrixXd &X0, double alpha);
