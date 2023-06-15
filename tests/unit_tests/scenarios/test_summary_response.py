@@ -29,7 +29,7 @@ def setup_configuration(tmpdir):
         config = dedent(
             """
         NUM_REALIZATIONS 3
-        ECLBASE ECLIPSE_CASE
+        ECLBASE ECLIPSE_CASE_%d
         REFCASE ECLIPSE_CASE
         OBS_CONFIG observations
         GEN_KW KW_NAME template.txt kw.txt prior.txt
@@ -70,7 +70,7 @@ def create_responses(ert, prior_ensemble, response_times):
         sim_path = cwd / "simulations" / f"realization-{i}" / "iter-0"
         sim_path.mkdir(parents=True, exist_ok=True)
         os.chdir(sim_path)
-        run_sim(response_time, rng.standard_normal())
+        run_sim(response_time, rng.standard_normal(), fname=f"ECLIPSE_CASE_{i}")
     os.chdir(cwd)
     facade = LibresFacade(ert)
     facade.load_from_forward_model(
@@ -135,12 +135,12 @@ def test_that_different_length_is_ok_as_long_as_observation_time_exists(
     es_update.smootherUpdate(prior_ensemble, target_ensemble, "an id")
 
 
-def run_sim(dates, value):
+def run_sim(dates, value, fname="ECLIPSE_CASE"):
     """
     Create a summary file, the contents of which are not important
     """
     start_date = dates[0]
-    ecl_sum = EclSum.writer("ECLIPSE_CASE", start_date, 3, 3, 3)
+    ecl_sum = EclSum.writer(fname, start_date, 3, 3, 3)
     ecl_sum.addVariable("FOPR", unit="SM3/DAY")
     for report_step, date in enumerate(dates):
         t_step = ecl_sum.addTStep(

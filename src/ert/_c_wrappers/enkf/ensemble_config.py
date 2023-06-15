@@ -229,6 +229,7 @@ class EnsembleConfig:
             self.addNode(self.get_surface_node(surface))
 
         if ecl_base:
+            ecl_base = ecl_base.replace("%d", "<IENS>")
             summary_keys = [item for sublist in summary_list for item in sublist]
             self.add_summary_full(ecl_base, summary_keys, self.refcase)
 
