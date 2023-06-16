@@ -1,4 +1,5 @@
 import logging
+import os
 from textwrap import dedent
 from typing import List
 
@@ -173,6 +174,38 @@ def test_forward_model_job(job, forward_model, expected_args):
         )["jobList"][0]["argList"]
         == expected_args
     )
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_config_path_is_the_directory_of_the_main_ert_config():
+    os.mkdir("jobdir")
+    with open("jobdir/job_file", "w", encoding="utf-8") as fout:
+        fout.write(
+            dedent(
+                """
+            EXECUTABLE echo
+            ARGLIST <CONFIG_PATH>
+            """
+            )
+        )
+
+    with open("config_file.ert", "w", encoding="utf-8") as fout:
+        # Write a minimal config file
+        fout.write("NUM_REALIZATIONS 1\n")
+        fout.write("INSTALL_JOB job_name jobdir/job_file\n")
+        fout.write("FORWARD_MODEL job_name")
+
+    ert_config = ErtConfig.from_file("config_file.ert")
+
+    assert ert_config.forward_model_data_to_json(
+        ert_config.forward_model_list,
+        "",
+        None,
+        0,
+        0,
+        ert_config.substitution_list,
+        ert_config.env_vars,
+    )["jobList"][0]["argList"] == [os.getcwd()]
 
 
 @pytest.mark.usefixtures("use_tmpdir")
