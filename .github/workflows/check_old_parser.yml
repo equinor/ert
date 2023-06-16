@@ -46,17 +46,17 @@ jobs:
       if: matrix.test-type == 'gui-tests'
       timeout-minutes: 10
       run: |
-        pytest tests/ --cov=ert --mpl --hypothesis-profile=ci -m "requires_window_manager" --cov-report=xml:cov.xml
+        pytest tests/ --cov=ert --mpl -m "requires_window_manager" --cov-report=xml:cov.xml
 
     - name: Test Integration
       if: matrix.test-type == 'integration-tests'
       run: |
-        pytest tests/ --cov=ert --hypothesis-profile=ci -m "integration_test" --cov-report=xml:cov.xml
+        pytest tests/ --cov=ert -m "integration_test" --cov-report=xml:cov.xml
 
     - name: Test units
       if: matrix.test-type == 'unit-tests'
       run: |
-        pytest tests/ --cov=ert --hypothesis-profile=ci -m "not integration_test and not requires_window_manager" --cov-report=xml:cov.xml
+        pytest tests/ --cov=ert -m "not integration_test and not requires_window_manager" --cov-report=xml:cov.xml
 
     - name: Upload python coverage to Codecov
       uses: codecov/codecov-action@v3
