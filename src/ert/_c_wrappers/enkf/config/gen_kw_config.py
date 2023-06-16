@@ -60,26 +60,49 @@ class GenKwConfig(ParameterConfig):
                 if item.strip():  # only lines with content
                     self._transfer_functions.append(self.parse_transfer_function(item))
 
-    def load(self, run_path: Path, real_nr: int, ensemble: EnsembleAccessor, **kwargs):
-        keys = list(self)
+    def sample_or_load(
+        self,
+        real_nr: int,
+        ensemble: EnsembleAccessor,
+        random_seed: SeedSequence,
+    ):
         if self.forward_init_file:
-            logging.info(
-                f"Reading from init file {self.forward_init_file} for {self.name}"
-            )
-            parameter_value = self.values_from_file(
-                real_nr,
-                self.forward_init_file,
-                keys,
-            )
-        else:
-            logging.info(f"Sampling parameter {self.name} for realization {real_nr}")
-            parameter_value = self.sample_value(
-                self.name,
-                keys,
-                str(self.random_seed.entropy),
-                real_nr,
-                ensemble.ensemble_size,
-            )
+            return self.load(Path(), real_nr, ensemble)
+
+        logging.info(f"Sampling parameter {self.name} for realization {real_nr}")
+        keys = list(self)
+        parameter_value = self.sample_value(
+            self.name,
+            keys,
+            str(random_seed.entropy),
+            real_nr,
+            ensemble.ensemble_size,
+        )
+
+        dataset = xr.Dataset(
+            {
+                "values": ("names", parameter_value),
+                "transformed_values": ("names", self.transform(parameter_value)),
+                "names": keys,
+            }
+        )
+        ensemble.save_parameters(self.name, real_nr, dataset)
+
+    def load(
+        self,
+        run_path: Path,
+        real_nr: int,
+        ensemble: EnsembleAccessor,
+    ):
+        keys = list(self)
+        if not self.forward_init_file:
+            raise ValueError("loading gen_kw values requires forward_init_file")
+
+        parameter_value = self.values_from_file(
+            real_nr,
+            self.forward_init_file,
+            keys,
+        )
 
         dataset = xr.Dataset(
             {

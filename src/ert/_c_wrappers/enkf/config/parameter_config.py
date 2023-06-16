@@ -8,6 +8,8 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from typing import Any, Dict
 
+    from numpy.random import SeedSequence
+
     from ert.storage import EnsembleAccessor, EnsembleReader
 
 
@@ -28,8 +30,21 @@ class ParameterConfig(ABC):
     name: str
     forward_init: bool
 
+    def sample_or_load(
+        self,
+        real_nr: int,
+        ensemble: EnsembleAccessor,
+        random_seed: SeedSequence,
+    ):
+        return self.load(Path(), real_nr, ensemble)
+
     @abstractmethod
-    def load(self, run_path: Path, real_nr: int, ensemble: EnsembleAccessor):
+    def load(
+        self,
+        run_path: Path,
+        real_nr: int,
+        ensemble: EnsembleAccessor,
+    ):
         ...
 
     @abstractmethod
