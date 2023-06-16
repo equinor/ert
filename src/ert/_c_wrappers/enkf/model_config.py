@@ -72,7 +72,7 @@ class ModelConfig:
                 logger.warning(f"failed to load timemap - {err}")
 
     @classmethod
-    def from_dict(cls, refcase: EclSum, config_dict: dict) -> "ModelConfig":
+    def from_dict(cls, refcase: Optional[EclSum], config_dict: dict) -> "ModelConfig":
         return cls(
             num_realizations=config_dict.get(ConfigKeys.NUM_REALIZATIONS, 1),
             refcase=refcase,
