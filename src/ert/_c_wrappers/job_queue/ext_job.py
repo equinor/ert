@@ -186,7 +186,7 @@ class ExtJob:
         schema = init_ext_job_schema()
 
         try:
-            content_dict = lark_parse(file=config_file, schema=schema)
+            content_dict = lark_parse(file=config_file, schema=schema, pre_defines=[])
 
             specified_arg_types: List[Tuple[int, str]] = content_dict.get(
                 ExtJobKeys.ARG_TYPE, []

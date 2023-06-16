@@ -148,7 +148,7 @@ class ErtConfig:
             errors.append(e)
 
         try:
-            installed_jobs = cls._installed_jobs_from_dict(config_dict)
+            installed_jobs = cls._installed_jobs_from_dict(config_dict, use_new_parser)
         except ConfigValidationError as e:
             errors.append(e)
 
@@ -724,7 +724,7 @@ class ErtConfig:
         return workflow_jobs, workflows, hooked_workflows
 
     @classmethod
-    def _installed_jobs_from_dict(cls, config_dict):
+    def _installed_jobs_from_dict(cls, config_dict, use_new_parser):
         errors = []
         jobs = {}
         for job in config_dict.get(ConfigKeys.INSTALL_JOB, []):
@@ -734,7 +734,7 @@ class ErtConfig:
                 new_job = ExtJob.from_config_file(
                     name=name,
                     config_file=job_config_file,
-                    use_new_parser=USE_NEW_PARSER_BY_DEFAULT,
+                    use_new_parser=use_new_parser,
                 )
             except ConfigValidationError as e:
                 errors.append(e)

@@ -517,7 +517,7 @@ def parse(
     config_file_name = os.path.basename(file)
     config_file_base = config_file_name.split(".")[0]
 
-    if not pre_defines:
+    if pre_defines is None:
         pre_defines = [
             ["<CONFIG_PATH>", config_dir],
             ["<CONFIG_FILE_BASE>", config_file_base],
