@@ -2,9 +2,7 @@ import os
 import re
 import shutil
 import stat
-from distutils.spawn import find_executable
 from pathlib import Path
-from subprocess import PIPE, Popen
 
 import pytest
 import yaml
@@ -31,17 +29,21 @@ ecl_run = import_from_location(
 )
 
 
-def flow_install():
-    try:
-        # pylint: disable=consider-using-with
-        Popen(["flow"])
-        return True
-    except OSError:
-        pass
-    return False
+def locate_flow_binary() -> str:
+    """Locate the path for a flow executable.
+
+    Returns the empty string if there is nothing to be found in $PATH."""
+    candidates = ["flow", "/project/res/x86_64_RH_7/bin/flowdaily"]
+    for candidate in candidates:
+        foundpath = shutil.which(candidate)
+        if foundpath is not None:
+            return foundpath
+    return ""
 
 
-flow_installed = pytest.mark.skipif(not flow_install(), reason="Requires flow")
+flow_installed = pytest.mark.skipif(
+    not locate_flow_binary(), reason="Requires flow to be installed in $PATH"
+)
 
 
 def find_version(output):
@@ -97,28 +99,14 @@ def fixture_init_ecl100_config(monkeypatch, tmpdir):
 
 @pytest.fixture(name="init_flow_config")
 def fixture_init_flow_config(monkeypatch, tmpdir):
-    version = "2018.10"
-
-    with Popen(["flow", "--version"], stdin=PIPE, stdout=PIPE, stderr=PIPE) as process:
-        output, _ = process.communicate()
-        rc = process.returncode
-        if rc == 0:
-            version = find_version(output)
-        path_to_exe = find_executable("flow")
-
-        conf = {
-            "default_version": version,
-            "versions": {
-                version: {
-                    "scalar": {"executable": path_to_exe},
-                }
-            },
-        }
-        with tmpdir.as_cwd():
-            with open("flow_config.yml", "w", encoding="utf-8") as filehandle:
-                filehandle.write(yaml.dump(conf))
-            monkeypatch.setenv("FLOW_SITE_CONFIG", "flow_config.yml")
-            yield
+    conf = {
+        "default_version": "default",
+        "versions": {"default": {"scalar": {"executable": locate_flow_binary()}}},
+    }
+    with tmpdir.as_cwd():
+        Path("flow_config.yml").write_text(yaml.dump(conf), encoding="utf-8")
+        monkeypatch.setenv("FLOW_SITE_CONFIG", "flow_config.yml")
+        yield
 
 
 def test_ecl_run_make_LSB_MCPU_machine_list():
@@ -186,11 +174,10 @@ def test_mocked_simulator_configuration(monkeypatch):
         ecl_run.EclRun("DOES/NOT/EXIST", mpi_sim, num_cpu="10")
 
 
-@pytest.mark.xfail(reason="Finding a version on Komodo of flow that is not OPM-flow")
 @flow_installed
 def test_flow(init_flow_config, source_root):
     shutil.copy(source_root / "test-data/eclipse/SPE1.DATA", "SPE1.DATA")
-    shutil.copy(source_root / "eclipse/SPE1_ERROR.DATA", "SPE1_ERROR.DATA")
+    shutil.copy(source_root / "test-data/eclipse/SPE1_ERROR.DATA", "SPE1_ERROR.DATA")
     flow_config = ecl_config.FlowConfig()
     sim = flow_config.sim()
     flow_run = ecl_run.EclRun("SPE1.DATA", sim)
@@ -214,11 +201,11 @@ def test_running_flow_given_env_config_can_still_read_parent_env(monkeypatch):
     version = "1111.11"
 
     # create a script that prints env vars ENV1 and ENV2 to a file
-    with open("flow", "w", encoding="utf-8") as f:
+    with open("mocked_flow", "w", encoding="utf-8") as f:
         f.write("#!/bin/bash\n")
         f.write("echo $ENV1 > out.txt\n")
         f.write("echo $ENV2 >> out.txt\n")
-    executable = os.path.join(os.getcwd(), "flow")
+    executable = os.path.join(os.getcwd(), "mocked_flow")
     os.chmod(executable, 0o777)
 
     # create a flow_config.yml with environment extension ENV2
