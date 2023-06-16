@@ -6,9 +6,10 @@ import os
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, List, Mapping, Optional, Union
+from typing import TYPE_CHECKING, Any, Dict, List, Mapping, Optional, Sequence, Union
 
 import numpy as np
+from numpy.random import SeedSequence
 
 from ert._c_wrappers.analysis.configuration import UpdateConfiguration
 from ert._c_wrappers.enkf.analysis_config import AnalysisConfig
@@ -136,6 +137,25 @@ def _generate_parameter_files(
     _value_export_json(run_path, export_base_name, exports)
 
 
+def _seed_sequence(seed: Optional[str]) -> SeedSequence:
+    # Set up RNG
+    if seed is None:
+        sequence = SeedSequence()
+        logger.info(
+            "To repeat this experiment, "
+            "add the following random seed to your config file:"
+        )
+        logger.info(f"RANDOM_SEED {sequence.entropy}")
+        return sequence
+
+    int_seed: Optional[Union[int, Sequence[int]]] = None
+    try:
+        int_seed = int(seed)
+    except ValueError:
+        int_seed = [ord(x) for x in seed]
+    return SeedSequence(int_seed)
+
+
 class EnKFMain:
     def __init__(self, config: "ErtConfig", read_only: bool = False) -> None:
         self.ert_config = config
@@ -151,7 +171,7 @@ class EnKFMain:
             substitute=self.get_context().substitute_real_iter,
         )
 
-        self._global_seed = self.ert_config.ensemble_config.random_seed
+        self._global_seed = _seed_sequence(self.ert_config.random_seed)
         self._shared_rng = np.random.default_rng(self._global_seed)
 
     @property
@@ -297,7 +317,9 @@ class EnKFMain:
                 continue
             if isinstance(config_node, ParameterConfig):
                 for _, realization_nr in enumerate(active_realizations):
-                    config_node.load(Path(), realization_nr, ensemble)
+                    config_node.sample_or_load(
+                        realization_nr, ensemble, random_seed=self._global_seed
+                    )
             else:
                 raise NotImplementedError(f"{type(config_node)} is not supported")
         for realization_nr in active_realizations:

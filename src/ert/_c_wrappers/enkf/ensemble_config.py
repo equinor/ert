@@ -6,10 +6,8 @@ import warnings
 from pathlib import Path
 from typing import Dict, List, Optional, Union
 
-import numpy as np
 import xtgeo
 from ecl.summary import EclSum
-from numpy.random import SeedSequence
 
 from ert import _clib
 from ert._c_wrappers.config.rangestring import rangestring_to_list
@@ -117,24 +115,6 @@ def _str_to_bool(txt: str) -> bool:
         return False
 
 
-def _seed_sequence(seed: Optional[str]) -> SeedSequence:
-    # Set up RNG
-    if seed is None:
-        seed = np.random.SeedSequence()
-        logger.info(
-            "To repeat this experiment, "
-            "add the following random seed to your config file:"
-        )
-        logger.info(f"RANDOM_SEED {seed.entropy}")
-        return seed
-
-    try:
-        seed = int(seed)
-    except ValueError:
-        seed = [ord(x) for x in seed]
-    return np.random.SeedSequence(seed)
-
-
 class EnsembleConfig:
     @staticmethod
     def _load_refcase(refcase_file: Optional[str]) -> Optional[EclSum]:
@@ -174,7 +154,6 @@ class EnsembleConfig:
         surface_list: Optional[List] = None,
         summary_list: Optional[List] = None,
         field_list=None,
-        random_seed: Optional[str] = None,
         ecl_base: Optional[str] = None,
     ):
         gen_kw_list = [] if gen_kw_list is None else gen_kw_list
@@ -187,7 +166,6 @@ class EnsembleConfig:
         self.refcase: Optional[EclSum] = self._load_refcase(ref_case_file)
         self.parameter_configs = {}
         self.response_configs = {}
-        self.random_seed = _seed_sequence(random_seed)
 
         for gene_data in gen_data_list:
             self.addNode(self.gen_data_node(gene_data))
@@ -218,7 +196,6 @@ class EnsembleConfig:
                 parameter_file=_get_abs_path(gen_kw[3]),
                 output_file=gen_kw[2],
                 forward_init_file=init_file,
-                random_seed=self.random_seed,
             )
 
             self._check_config_node(kw_node)
@@ -370,7 +347,6 @@ class EnsembleConfig:
         surface_list = config_dict.get(ConfigKeys.SURFACE_KEY, [])
         summary_list = config_dict.get(ConfigKeys.SUMMARY, [])
         field_list = config_dict.get(ConfigKeys.FIELD_KEY, [])
-        random_seed = config_dict.get(ConfigKeys.RANDOM_SEED, None)
 
         ens_config = cls(
             grid_file=grid_file_path,
@@ -380,7 +356,6 @@ class EnsembleConfig:
             surface_list=surface_list,
             summary_list=summary_list,
             field_list=field_list,
-            random_seed=random_seed,
             ecl_base=config_dict.get("ECLBASE"),
         )
 

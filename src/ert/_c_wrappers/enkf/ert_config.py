@@ -6,7 +6,7 @@ from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import date
 from pathlib import Path
-from typing import Any, ClassVar, Dict, List, overload
+from typing import Any, ClassVar, Dict, List, Optional, overload
 
 import pkg_resources
 
