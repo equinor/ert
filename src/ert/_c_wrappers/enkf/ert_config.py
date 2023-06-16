@@ -124,10 +124,10 @@ class ErtConfig:
         ensemble_config = EnsembleConfig.from_dict(config_dict=config_dict)
         errors += cls._validate_ensemble_config(config_file, config_dict)
 
-        workflow_jobs = []
-        workflows = []
-        hooked_workflows = None
-        installed_jobs = []
+        workflow_jobs = {}
+        workflows = {}
+        hooked_workflows = {}
+        installed_jobs = {}
         model_config = None
 
         try:
