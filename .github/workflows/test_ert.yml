@@ -46,17 +46,17 @@ jobs:
     - name: Test GUI
       if: inputs.test-type == 'gui-test'
       run: |
-        pytest tests -sv --mpl --hypothesis-profile=ci -m "requires_window_manager" --benchmark-disable
+        pytest tests -sv --mpl -m "requires_window_manager" --benchmark-disable
 
     - name: Unit Test
       if: inputs.test-type == 'unit-tests'
       run: |
-        pytest tests -n4 --show-capture=stderr -sv --hypothesis-profile=ci -m "not integration_test and not requires_window_manager" --benchmark-disable --dist loadgroup
+        pytest tests -n4 --show-capture=stderr -sv -m "not integration_test and not requires_window_manager" --benchmark-disable --dist loadgroup
 
     - name: Integration Test
       if: inputs.test-type == 'integration-tests'
       run: |
-        pytest tests -n4 --show-capture=stderr -sv --hypothesis-profile=ci -m "integration_test and not requires_window_manager" --benchmark-disable
+        pytest tests -n4 --show-capture=stderr -sv -m "integration_test and not requires_window_manager" --benchmark-disable
 
     - name: Test for a clean repository
       run: |

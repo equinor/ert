@@ -25,7 +25,7 @@ run_flaky_tests(){
     # A test on the internal CI is activated by writing a comment with "test flaky please"
     # Requires that the user is allowed to run the tests.
     xvfb-run -s "-screen 0 640x480x24" --auto-servernum python -m \
-    pytest tests/ -m "not requires_window_manager" --hypothesis-profile=ci
+    pytest tests/ -m "not requires_window_manager"
 }
 
 start_tests () {

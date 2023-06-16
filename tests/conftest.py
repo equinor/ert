@@ -19,12 +19,14 @@ from ert.storage import open_storage
 
 from .utils import SOURCE_DIR
 
-# CI runners produce unreliable test timings
-# so too_slow healthcheck and deadline has to
-# be supressed to avoid flaky behavior
+# Timeout settings are unreliable both on CI and
+# when running pytest with xdist so we disable it
 settings.register_profile(
-    "ci", max_examples=10, deadline=None, suppress_health_check=[HealthCheck.too_slow]
+    "no_timeouts",
+    deadline=None,
+    suppress_health_check=[HealthCheck.too_slow],
 )
+settings.load_profile("no_timeouts")
 
 
 @pytest.fixture(scope="session", name="source_root")

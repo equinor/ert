@@ -22,6 +22,6 @@ install_package () {
 start_tests () {
     export NO_PROXY=localhost,127.0.0.1
 
-    pytest --hypothesis-profile=ci -m "not requires_window_manager" tests/
+    pytest -m "not requires_window_manager" tests/
     popd
 }
