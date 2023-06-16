@@ -188,11 +188,6 @@ class SimulationContext:
         # job, etc) that is not an explicit success.
         return not self.didRealizationSucceed(iens)
 
-    def isRealizationQueued(self, iens: int) -> bool:
-        # an exception will be raised if it's not queued
-        self.get_run_args(iens)
-        return True
-
     def isRealizationFinished(self, iens: int) -> bool:
         run_arg = self.get_run_args(iens)
 
