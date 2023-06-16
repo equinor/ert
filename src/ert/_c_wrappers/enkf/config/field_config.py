@@ -8,9 +8,10 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Optional
 
 import numpy as np
+import xarray as xr
 
 from ert._c_wrappers.enkf.config.parameter_config import ParameterConfig
-from ert.storage.field_utils.field_utils import get_masked_field
+from ert.storage.field_utils.field_utils import Shape, get_masked_field, save_field
 
 if TYPE_CHECKING:
     import numpy.typing as npt
@@ -41,25 +42,44 @@ class Field(ParameterConfig):
             file_name = file_name % real_nr
         file_path = run_path / file_name
 
-        key = self.name
         grid_path = ensemble.experiment.grid_path
-        data = get_masked_field(file_path, key, grid_path)
-
-        trans = self.input_transformation
-        data_transformed = field_transform(data, trans)
-        ensemble.save_field(key, real_nr, data_transformed)
+        assert grid_path is not None
+        data = get_masked_field(file_path, self.name, grid_path)
+        data = field_transform(data, self.input_transformation)
+        ensemble.save_parameters(self.name, real_nr, data)
         _logger.debug(f"load() time_used {(time.perf_counter() - t):.4f}s")
 
     def save(self, run_path: Path, real_nr: int, ensemble: EnsembleReader):
         t = time.perf_counter()
-        file_out = run_path.joinpath(self.output_file)
-        if os.path.islink(file_out):
-            os.unlink(file_out)
-        ensemble.export_field(self.name, real_nr, file_out)
+        output_path = run_path.joinpath(self.output_file)
+        if os.path.islink(output_path):
+            os.unlink(output_path)
+
+        fformat = self.file_format
+        dataset = ensemble.load_parameters(self.name, real_nr)
+        data = field_transform(dataset, self.output_transformation)
+        data = self._truncate(data)
+
+        save_field(
+            data,
+            self.name,
+            ensemble.experiment.grid_path,
+            Shape(self.nx, self.ny, self.nz),
+            output_path,
+            fformat,
+        )
+
         _logger.debug(f"save() time_used {(time.perf_counter() - t):.4f}s")
 
+    def _truncate(self, data: npt.ArrayLike) -> npt.NDArray[np.float32]:
+        data = np.asarray(data)
+        if self.truncation_min is not None:
+            data = np.minimum(data, self.truncation_min)
+        if self.truncation_max is not None:
+            data = np.maximum(data, self.truncation_max)
+        return data
 
-# pylint: disable=unnecessary-lambda
+
 TRANSFORM_FUNCTIONS = {
     "LN": np.log,
     "LOG": np.log,
@@ -75,6 +95,7 @@ TRANSFORM_FUNCTIONS = {
 def field_transform(
     data: npt.ArrayLike, transform_name: Optional[str]
 ) -> npt.ArrayLike:
+    data = np.asarray(data)
     if transform_name is None:
         return data
     return TRANSFORM_FUNCTIONS[transform_name](data)

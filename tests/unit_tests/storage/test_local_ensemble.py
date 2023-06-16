@@ -19,11 +19,7 @@ def test_save_field_xtgeo(tmp_path):
         grid.to_file(f"{experiment.mount_point}/grid.EGRID", "egrid")
 
         data = [1.2, 1.1, 4.3, 3.1]
-        ensemble.save_field(
-            parameter_name="MY_PARAM",
-            realization=1,
-            data=data,
-        )
+        ensemble.save_parameters("MY_PARAM", 1, data)
 
         saved_file = ensemble_dir / "realization-1" / "MY_PARAM.npy"
         assert saved_file.exists()
@@ -47,11 +43,7 @@ def test_save_field_ecl(tmp_path):
         grid.save_GRID(f"{experiment.mount_point}/grid.GRID")
 
         data = [1.2, 1.1, 4.3, 3.1]
-        ensemble.save_field(
-            parameter_name="MY_PARAM",
-            realization=1,
-            data=data,
-        )
+        ensemble.save_parameters("MY_PARAM", 1, data)
 
         saved_file = ensemble_dir / "realization-1" / "MY_PARAM.npy"
         assert saved_file.exists()

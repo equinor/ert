@@ -94,7 +94,7 @@ def get_masked_field(
     field_name: str,
     grid_path: _PathLike,
     shape: Optional[Shape] = None,
-) -> Optional[npt.NDArray[np.double]]:
+) -> npt.NDArray[np.double]:
     mask, shape = get_mask(grid_path, shape)
     return read_field(field_path, field_name, mask, shape)
 

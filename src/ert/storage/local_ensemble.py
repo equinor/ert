@@ -9,17 +9,13 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Sequence, Tuple, Union
 from uuid import UUID
 
-import numpy as np
 import xarray as xr
 from pydantic import BaseModel
 
-from ert._c_wrappers.enkf.config.field_config import field_transform
 from ert._c_wrappers.enkf.enums import RealizationStateEnum
 from ert._c_wrappers.enkf.time_map import TimeMap
 from ert.callbacks import forward_model_ok
 from ert.load_status import LoadResult, LoadStatus
-from ert.parsing import ConfigValidationError
-from ert.storage.field_utils.field_utils import Shape, read_mask, save_field
 
 if TYPE_CHECKING:
     import numpy.typing as npt
@@ -54,19 +50,6 @@ def _load_realization(
         else RealizationStateEnum.STATE_LOAD_FAILURE
     )
     return result, realisation
-
-
-def _field_truncate(data: npt.ArrayLike, min_: float, max_: float) -> Any:
-    if min_ is not None and max_ is not None:
-        vfunc = np.vectorize(lambda x: max(min(x, max_), min_))
-        return vfunc(data)
-    elif min_ is not None:
-        vfunc = np.vectorize(lambda x: max(x, min_))
-        return vfunc(data)
-    elif max_ is not None:
-        vfunc = np.vectorize(lambda x: min(x, max_))
-        return vfunc(data)
-    return data
 
 
 class _Index(BaseModel):
@@ -256,71 +239,6 @@ class LocalEnsembleReader:
         assert isinstance(response, xr.Dataset)
         return response
 
-    def load_field(self, key: str, realizations: List[int]) -> npt.NDArray[np.double]:
-        result: Optional[npt.NDArray[np.double]] = None
-        for index, realization in enumerate(realizations):
-            input_path = self.mount_point / f"realization-{realization}"
-            if not input_path.exists():
-                raise KeyError(
-                    f"Unable to load FIELD for key: {key}, realization: {realization}"
-                )
-            data = np.load(input_path / f"{key}.npy", mmap_mode="r")
-            data = data[np.isfinite(data)]
-
-            if result is None:
-                result = np.empty((len(realizations), data.size), dtype=np.double)
-            elif data.size != result.shape[1]:
-                raise ValueError(f"Data size mismatch for realization {realization}")
-
-            result[index] = data
-
-        if result is None:
-            raise ConfigValidationError(
-                "No realizations found when trying to load field"
-            )
-        return result.T
-
-    def field_has_data(self, key: str, realization: int) -> bool:
-        path = self.mount_point / f"realization-{realization}/{key}.npy"
-        return path.exists()
-
-    def field_has_info(self, key: str) -> bool:
-        return key in self.experiment.parameter_info
-
-    def export_field(
-        self,
-        key: str,
-        realization: int,
-        output_path: Path,
-        fformat: Optional[str] = None,
-    ) -> None:
-        info = self.experiment.parameter_info[key]
-        if fformat is None:
-            fformat = info["file_format"]
-
-        data_path = self.mount_point / f"realization-{realization}"
-
-        if not data_path.exists():
-            raise KeyError(
-                f"Unable to load FIELD for key: {key}, realization: {realization} "
-            )
-        data = np.load(data_path / f"{key}.npy")
-        data = field_transform(data, transform_name=info["output_transformation"])
-        data = _field_truncate(
-            data,
-            info["truncation_min"],
-            info["truncation_max"],
-        )
-
-        save_field(
-            data,
-            key,
-            self.experiment.grid_path,
-            Shape(info["nx"], info["ny"], info["nz"]),
-            output_path,
-            fformat,
-        )
-
 
 class LocalEnsembleAccessor(LocalEnsembleReader):
     def __init__(
@@ -422,7 +340,10 @@ class LocalEnsembleAccessor(LocalEnsembleReader):
         return loaded
 
     def save_parameters(
-        self, group: str, realization: int, dataset: Union[xr.DataArray, xr.Dataset]
+        self,
+        group: str,
+        realization: int,
+        dataset: Union[xr.DataArray, xr.Dataset, npt.ArrayLike],
     ) -> None:
         """Create a parameter group
 
@@ -438,6 +359,8 @@ class LocalEnsembleAccessor(LocalEnsembleReader):
         """
         if isinstance(dataset, xr.DataArray):
             dataset = dataset.to_dataset()
+        if not isinstance(dataset, xr.Dataset):  # npt.Arraylike
+            dataset = xr.Dataset({"values": dataset})
 
         if "values" not in dataset.variables:
             raise ValueError(
@@ -463,36 +386,3 @@ class LocalEnsembleAccessor(LocalEnsembleReader):
         Path.mkdir(output_path, parents=True, exist_ok=True)
 
         data.to_netcdf(output_path / f"{group}.nc", engine="scipy")
-
-    def save_field(
-        self,
-        parameter_name: str,
-        realization: int,
-        data: Union[
-            npt.NDArray[np.double], np.ma.MaskedArray[Any, np.dtype[np.double]]
-        ],
-    ) -> None:
-        output_path = self.mount_point / f"realization-{realization}"
-        Path.mkdir(output_path, exist_ok=True)
-        if not np.ma.isMaskedArray(data):  # type: ignore
-            grid_path = self.experiment.grid_path
-            if grid_path is None:
-                raise ConfigValidationError(
-                    f"Missing path to grid file for realization-{realization}"
-                )
-            mask, shape = read_mask(grid_path)
-            if mask is not None:
-                data_full = np.full_like(mask, np.nan, dtype=np.double)
-                np.place(data_full, np.logical_not(mask), data)
-                data = np.ma.MaskedArray(
-                    data_full, mask, fill_value=np.nan
-                )  # type: ignore
-            else:
-                data = np.ma.MaskedArray(data.reshape(shape))  # type: ignore
-
-        np.save(f"{output_path}/{parameter_name}", data.filled(np.nan))  # type: ignore
-        self.update_realization_state(
-            realization,
-            [RealizationStateEnum.STATE_UNDEFINED],
-            RealizationStateEnum.STATE_INITIALIZED,
-        )

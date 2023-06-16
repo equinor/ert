@@ -220,7 +220,7 @@ def _migrate_field(
         data = data_file.load_field(block, int(data_size))
         if config.output_transformation:
             data = field_transform(data, config.output_transformation)  # type: ignore
-        ensemble.save_field(block.name, block.realization_index, data)
+        ensemble.save_parameters(block.name, block.realization_index, data)
 
 
 def _migrate_summary(
