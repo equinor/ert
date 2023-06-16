@@ -31,11 +31,10 @@ class PriorDict(TypedDict):
 
 @dataclass
 class GenKwConfig(ParameterConfig):
-    template_file: Optional[str]
-    parameter_file: Optional[str]
+    template_file: str
+    parameter_file: str
     output_file: str
     forward_init_file: Optional[str] = None
-    random_seed: Optional[SeedSequence] = np.random.SeedSequence()
 
     def __post_init__(self):
         errors = []
