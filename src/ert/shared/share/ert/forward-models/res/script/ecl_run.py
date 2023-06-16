@@ -8,7 +8,7 @@ import sys
 import time
 from argparse import ArgumentParser
 from collections import namedtuple
-from contextlib import contextmanager
+from contextlib import contextmanager, suppress
 
 from ecl.summary import EclSum
 from ecl_config import EclrunConfig
@@ -312,11 +312,11 @@ class EclRun:
             self.sim.version if eclrun_config is None else eclrun_config.version
         )
 
-        return (
-            f"{self.base_name}.OUT"
-            if version.parse(eclipse_version) >= version.parse("2019.3")
-            else f"{self.base_name}.LOG"
-        )
+        logname_extension = "OUT"
+        with suppress(version.InvalidVersion):
+            if version.parse(eclipse_version) < version.parse("2019.3"):
+                logname_extension = "LOG"
+        return f"{self.base_name}.{logname_extension}"
 
     def execEclipse(self, eclrun_config=None):
         use_eclrun = eclrun_config is not None
