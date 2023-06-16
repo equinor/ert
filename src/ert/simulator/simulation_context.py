@@ -199,9 +199,6 @@ class SimulationContext:
     def get_sim_fs(self) -> EnsembleAccessor:
         return self._run_context.sim_fs
 
-    def get_run_context(self) -> "RunContext":
-        return self._run_context
-
     def stop(self) -> None:
         self._queue_manager.stop_queue()
         self._sim_thread.join()
