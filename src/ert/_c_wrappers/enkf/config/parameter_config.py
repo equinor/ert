@@ -54,5 +54,4 @@ class ParameterConfig(ABC):
     def to_dict(self) -> Dict[str, Any]:
         data = dataclasses.asdict(self, dict_factory=CustomDict)
         data["_ert_kind"] = self.__class__.__name__
-        data["type_name"] = type(self).__name__
         return data

@@ -211,7 +211,7 @@ class GenKwConfig(ParameterConfig):
         return array
 
     def to_dict(self) -> Dict[str, Any]:
-        return {"priors": self.get_priors(), "type_name": type(self).__name__}
+        return {"priors": self.get_priors(), "_ert_kind": type(self).__name__}
 
     @staticmethod
     def values_from_file(

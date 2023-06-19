@@ -110,9 +110,7 @@ def _generate_parameter_files(
     """
     exports: Dict[str, Dict[str, float]] = {}
 
-    for key in ens_config.parameters:
-        node = ens_config[key]
-
+    for node in ens_config.parameter_configs.values():
         if isinstance(node, ParameterConfig):
             # For the first iteration we do not write the parameter
             # to run path, as we expect to read if after the forward
