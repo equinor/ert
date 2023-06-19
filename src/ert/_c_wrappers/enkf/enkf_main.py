@@ -292,8 +292,6 @@ class EnKFMain:
         is set the state is set to INITIALIZED, but no parameters are saved to storage
         until after the forward model has completed.
         """
-        # pylint: disable=too-many-nested-blocks
-        # (this is a real code smell that we mute for now)
         t = time.perf_counter()
 
         if parameters is None:
