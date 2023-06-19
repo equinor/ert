@@ -172,10 +172,10 @@ def _param_ensemble_for_projection(
     return None
 
 
-def _get_row_scaling_A_matrices(
+def _get_params_with_row_scaling(
     temp_storage: TempStorage,
     parameters: List[update.RowScalingParameter],
-) -> List[Tuple["npt.NDArray[np.double]", RowScaling]]:
+) -> List[Tuple[npt.NDArray[np.double], RowScaling]]:
     matrices = []
     for p in parameters:
         if p.active_list.getMode() == ActiveMode.ALL_ACTIVE:
@@ -454,12 +454,12 @@ def analysis_ES(
                     temp_storage[parameter.name]
                 )
 
-        if A_with_rowscaling := _get_row_scaling_A_matrices(
+        if params_with_row_scaling := _get_params_with_row_scaling(
             temp_storage, update_step.row_scaling_parameters
         ):
-            A_with_rowscaling = ensemble_smoother_update_step_row_scaling(
+            params_with_row_scaling = ensemble_smoother_update_step_row_scaling(
                 S,
-                A_with_rowscaling,
+                params_with_row_scaling,
                 observation_errors,
                 observation_values,
                 noise,
@@ -467,7 +467,7 @@ def analysis_ES(
                 ies.InversionType(module.inversion),
             )
             for parameter, (A, _) in zip(
-                update_step.row_scaling_parameters, A_with_rowscaling
+                update_step.row_scaling_parameters, params_with_row_scaling
             ):
                 _save_to_temp_storage(temp_storage, [parameter], A)
 
