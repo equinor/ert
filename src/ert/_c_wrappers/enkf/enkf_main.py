@@ -13,8 +13,6 @@ from numpy.random import SeedSequence
 
 from ert._c_wrappers.analysis.configuration import UpdateConfiguration
 from ert._c_wrappers.enkf.analysis_config import AnalysisConfig
-from ert._c_wrappers.enkf.config.ext_param_config import ExtParamConfig
-from ert._c_wrappers.enkf.config.gen_kw_config import GenKwConfig
 from ert._c_wrappers.enkf.config.parameter_config import ParameterConfig
 from ert._c_wrappers.enkf.enkf_obs import EnkfObs
 from ert._c_wrappers.enkf.ensemble_config import EnsembleConfig
@@ -115,22 +113,16 @@ def _generate_parameter_files(
     for key in ens_config.parameters:
         node = ens_config[key]
 
-        if isinstance(node, GenKwConfig):
-            gen_kw_dict = node.save(run_path, iens, fs)
-            exports.update(gen_kw_dict)
-            continue
-        if isinstance(node, ExtParamConfig):
-            node.save(run_path, iens, fs)
-            continue
         if isinstance(node, ParameterConfig):
             # For the first iteration we do not write the parameter
             # to run path, as we expect to read if after the forward
             # model has completed.
             if node.forward_init and iteration == 0:
                 continue
-            node.save(run_path, iens, fs)
+            export_values = node.save(Path(run_path), iens, fs)
+            if export_values:
+                exports.update(export_values)
             continue
-
         raise NotImplementedError
 
     _value_export_txt(run_path, export_base_name, exports)
