@@ -303,8 +303,6 @@ class EnKFMain:
             config_node = parameter_configs[parameter]
             if config_node.forward_init:
                 continue
-            if isinstance(config_node, ExtParamConfig):
-                continue
             if isinstance(config_node, ParameterConfig):
                 for _, realization_nr in enumerate(active_realizations):
                     config_node.sample_or_load(
