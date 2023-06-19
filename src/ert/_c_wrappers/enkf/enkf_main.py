@@ -303,13 +303,10 @@ class EnKFMain:
             config_node = parameter_configs[parameter]
             if config_node.forward_init:
                 continue
-            if isinstance(config_node, ParameterConfig):
-                for _, realization_nr in enumerate(active_realizations):
-                    config_node.sample_or_load(
-                        realization_nr, ensemble, random_seed=self._global_seed
-                    )
-            else:
-                raise NotImplementedError(f"{type(config_node)} is not supported")
+            for realization_nr in active_realizations:
+                config_node.sample_or_load(
+                    realization_nr, ensemble, random_seed=self._global_seed
+                )
         for realization_nr in active_realizations:
             ensemble.update_realization_state(
                 realization_nr,
