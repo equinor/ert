@@ -297,7 +297,7 @@ class EnKFMain:
         t = time.perf_counter()
 
         if parameters is None:
-            parameters = self._parameter_keys
+            parameters = self.ensembleConfig().parameters
         parameter_configs = self.ensembleConfig().parameter_configs
         for parameter in parameters:
             config_node = parameter_configs[parameter]
