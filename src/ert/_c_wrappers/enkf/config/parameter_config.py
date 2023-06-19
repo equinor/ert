@@ -3,7 +3,7 @@ from __future__ import annotations
 import dataclasses
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 if TYPE_CHECKING:
     from typing import Any, Dict
@@ -48,7 +48,9 @@ class ParameterConfig(ABC):
         ...
 
     @abstractmethod
-    def save(self, run_path: Path, real_nr: int, ensemble: EnsembleReader):
+    def save(
+        self, run_path: Path, real_nr: int, ensemble: EnsembleReader
+    ) -> Optional[Dict[str, Dict[str, float]]]:
         ...
 
     def to_dict(self) -> Dict[str, Any]:
