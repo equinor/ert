@@ -5,7 +5,7 @@ from ecl.grid import EclGridGenerator
 from ert.storage import open_storage
 
 
-def test_save_field_xtgeo(tmp_path):
+def test_that_egrid_files_are_saved_and_loaded_correctly(tmp_path):
     with open_storage(tmp_path, mode="w") as storage:
         experiment = storage.create_experiment()
         ensemble = storage.create_ensemble(experiment, name="foo", ensemble_size=2)
@@ -35,7 +35,7 @@ def test_save_field_xtgeo(tmp_path):
         numpy.testing.assert_array_equal(loaded_data, expected_data)
 
 
-def test_save_field_ecl(tmp_path):
+def test_that_grid_files_are_saved_and_loaded_correctly(tmp_path):
     with open_storage(tmp_path, mode="w") as storage:
         experiment = storage.create_experiment()
         ensemble = storage.create_ensemble(experiment, name="foo", ensemble_size=2)
