@@ -432,9 +432,6 @@ def analysis_ES(
                 f"No active observations for update step: {update_step.name}."
             )
 
-        A_with_rowscaling = _get_row_scaling_A_matrices(
-            temp_storage, update_step.row_scaling_parameters
-        )
         noise = rng.standard_normal(size=(len(observation_values), S.shape[1]))
 
         smoother = ies.ES()
@@ -457,7 +454,9 @@ def analysis_ES(
                     temp_storage[parameter.name]
                 )
 
-        if A_with_rowscaling:
+        if A_with_rowscaling := _get_row_scaling_A_matrices(
+            temp_storage, update_step.row_scaling_parameters
+        ):
             A_with_rowscaling = ensemble_smoother_update_step_row_scaling(
                 S,
                 A_with_rowscaling,
