@@ -58,7 +58,7 @@ class LocalExperimentReader:
         return {
             k: v["priors"]
             for (k, v) in self.parameter_info.items()
-            if v["type_name"] == "GenKwConfig"
+            if v["_ert_kind"] == "GenKwConfig"
         }
 
     @property
@@ -107,10 +107,6 @@ class LocalExperimentAccessor(LocalExperimentReader):
                 grid_filename = "grid" + Path(parameter.grid_file).suffix.upper()
                 if not (self._path / grid_filename).exists():
                     shutil.copy(parameter.grid_file, self._path / grid_filename)
-            elif isinstance(parameter, ExtParamConfig):
-                parameter_data[parameter.name] = parameter.to_dict()
-            else:
-                raise NotImplementedError("Unknown parameter type")
 
         with open(self.mount_point / self._parameter_file, "w", encoding="utf-8") as f:
             json.dump(parameter_data, f)
@@ -120,6 +116,8 @@ class LocalExperimentAccessor(LocalExperimentReader):
         params = []
         for data in self.parameter_info.values():
             param_type = data.pop("_ert_kind")
+            if param_type == "GenKwConfig":
+                continue
             params.append(_KNOWN_PARAMETER_TYPES[param_type](**data))
         return params
 
