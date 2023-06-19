@@ -1,4 +1,6 @@
 import numpy
+import pytest
+import xarray as xr
 import xtgeo
 from ecl.grid import EclGridGenerator
 
@@ -61,3 +63,15 @@ def test_save_field_ecl(tmp_path):
         expected_data = numpy.asarray(expected_data)
         expected_data = expected_data.reshape(4, 5, 1, order="F")
         numpy.testing.assert_array_equal(loaded_data, expected_data)
+
+
+def test_finalize(storage):
+    ensemble = storage.create_experiment().create_ensemble(
+        name="final", ensemble_size=5
+    )
+
+    for i in range(ensemble.ensemble_size):
+        ensemble.save_parameters("TEST", i, xr.DataArray(i, name="values"))
+
+    ensemble.finalize()
+    ensemble.load_parameters("TEST")

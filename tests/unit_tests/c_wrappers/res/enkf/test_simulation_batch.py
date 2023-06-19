@@ -63,8 +63,8 @@ def test_run_simulation_batch(setup_case, prior_ensemble):
     assert num == batch_size
 
     for iens in range(batch_size):
-        data = prior_ensemble.load_response("ORDER", (iens,))
-        data = data["values"].values.ravel()
+        data = prior_ensemble.load_responses("ORDER", iens)
+        data = data.values.ravel()
 
         order_node_ext = prior_ensemble.load_ext_param("WELL_ORDER", iens)
         assert order_node_ext["W1"] == data[0]

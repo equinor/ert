@@ -226,14 +226,14 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
                 raise IndexError(f"No such realization {realization_index}")
             realizations = [realization_index]
         try:
-            vals = ensemble.load_response(key, tuple(realizations)).sel(
+            vals = ensemble.load_responses(key, realizations).sel(
                 report_step=report_step, drop=True
             )
         except KeyError:
             raise KeyError(f"Missing response: {key}")
         index = pd.Index(vals.index.values, name="axis")
         return pd.DataFrame(
-            data=vals["values"].values.reshape(len(vals.realization), -1).T,
+            data=vals.values.reshape(len(vals.realizations), -1).T,
             index=index,
             columns=realizations,
         )
@@ -322,8 +322,10 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
             return pd.DataFrame()
 
         # Format the DataFrame in a way that old code expects it
-        dataframe = xr.combine_by_coords(datasets).to_dataframe()
-        dataframe = dataframe.swaplevel().unstack()
+        dataframe = xr.combine_by_coords(datasets).to_dataframe(
+            ["realizations", "names"]
+        )
+        dataframe = dataframe.unstack()
         dataframe.columns = dataframe.columns.droplevel()
         dataframe.columns.name = None
         dataframe.index.name = "Realization"
@@ -361,7 +363,7 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
         summary_keys = ensemble.get_summary_keyset()
 
         try:
-            df = ensemble.load_response("summary", tuple(realizations)).to_dataframe()
+            df = ensemble.load_responses("summary", tuple(realizations)).to_dataframe()
         except (ValueError, KeyError):
             return pd.DataFrame()
         df = df.unstack(level="name")

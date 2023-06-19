@@ -170,11 +170,12 @@ class EnsembleExperiment(BaseRunModel):
         self.checkHaveSufficientRealizations(num_successful_realizations)
 
         self.setPhaseName("Post processing...", indeterminate=True)
+        prior_context.sim_fs.finalize()
         self.ert().runWorkflows(
             HookRuntime.POST_SIMULATION, self._storage, prior_context.sim_fs
         )
 
-        self.setPhase(1, "Simulations completed.")  # done...
+        self.setPhase(1, "Simulations completed.")
 
         return prior_context
 

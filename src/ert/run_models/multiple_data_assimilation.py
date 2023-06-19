@@ -220,6 +220,7 @@ class MultipleDataAssimilation(BaseRunModel):
 
         phase_string = f"Post processing for iteration: {iteration}"
         self.setPhaseName(phase_string, indeterminate=True)
+        run_context.sim_fs.finalize()
         self.ert().runWorkflows(
             HookRuntime.POST_SIMULATION, self._storage, run_context.sim_fs
         )

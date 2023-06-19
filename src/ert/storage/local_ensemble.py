@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import json
 import logging
+import shutil
+from contextlib import ExitStack
 from datetime import datetime
 from functools import lru_cache
 from multiprocessing.pool import ThreadPool
@@ -77,6 +79,7 @@ class _Index(BaseModel):
     name: str
     prior_ensemble_id: Optional[UUID]
     started_at: datetime
+    stopped_at: Optional[datetime]
 
 
 # pylint: disable=R0904
@@ -121,6 +124,10 @@ class LocalEnsembleReader:
     @property
     def started_at(self) -> datetime:
         return self._index.started_at
+
+    @property
+    def stopped_at(self) -> Optional[datetime]:
+        return self._index.stopped_at
 
     @property
     def iteration(self) -> int:
@@ -182,7 +189,7 @@ class LocalEnsembleReader:
         if not summary_path.exists():
             return []
         realization_nr = int(str(realization_folders[0])[-1])
-        response = self.load_response("summary", (realization_nr,))
+        response = self.load_responses("summary", realization_nr)
         keys = sorted(response["name"].values)
         return keys
 
@@ -215,24 +222,43 @@ class LocalEnsembleReader:
                 f"No dataset '{group}' in storage for realization {realization}"
             )
 
+    @lru_cache
+    def _load_final_dataset(self, group) -> xr.Dataset:
+        return xr.open_dataset(self.mount_point / "final" / group, engine="scipy")
+
     def _load_dataset(
         self,
         group: str,
         realizations: Union[int, Sequence[int], None],
     ) -> xr.Dataset:
-        if isinstance(realizations, int):
-            return self._load_single_dataset(group, realizations).isel(
-                realizations=0, drop=True
-            )
+        if self.stopped_at is None:
+            if isinstance(realizations, int):
+                return self._load_single_dataset(group, realizations).isel(
+                    realizations=0, drop=True
+                )
 
-        if realizations is None:
-            datasets = [
-                xr.open_dataset(p, engine="scipy")
-                for p in sorted(self.mount_point.glob(f"realization-*/{group}"))
-            ]
+            if realizations is None:
+                datasets = [
+                    xr.open_dataset(p, engine="scipy")
+                    for p in sorted(self.mount_point.glob(f"realization-*/{group}"))
+                ]
+            else:
+                datasets = [self._load_single_dataset(group, i) for i in realizations]
+            return xr.combine_nested(datasets, "realizations")
         else:
-            datasets = [self._load_single_dataset(group, i) for i in realizations]
-        return xr.combine_nested(datasets, "realizations")
+            dataset = self._load_final_dataset(group)
+            if isinstance(realizations, int):
+                return dataset.sel(realizations=realizations, drop=True)
+            elif realizations is None:
+                return dataset
+            if not (
+                set(realizations)
+                <= set(dataset["realizations"].values.ravel().tolist())
+            ):
+                raise RuntimeError(
+                    f"{set(realizations)} not in {set(dataset['realizations'].values.ravel().tolist())}"
+                )
+            return dataset.sel(realizations=list(realizations))
 
     def load_parameters(
         self,
@@ -243,18 +269,10 @@ class LocalEnsembleReader:
     ) -> xr.DataArray:
         return self._load_dataset(group, realizations)[var]
 
-    @lru_cache
-    def load_response(self, key: str, realizations: Tuple[int, ...]) -> xr.Dataset:
-        loaded = []
-        for realization in realizations:
-            input_path = self.mount_point / f"realization-{realization}" / f"{key}.nc"
-            if not input_path.exists():
-                raise KeyError(f"No response for key {key}, realization: {realization}")
-            ds = xr.open_dataset(input_path, engine="scipy")
-            loaded.append(ds)
-        response = xr.combine_by_coords(loaded)
-        assert isinstance(response, xr.Dataset)
-        return response
+    def load_responses(
+        self, group: str, realizations: Union[int, Sequence[int], None] = None
+    ) -> xr.DataArray:
+        return self._load_dataset(group, realizations)["values"]
 
     def load_field(self, key: str, realizations: List[int]) -> npt.NDArray[np.double]:
         result: Optional[npt.NDArray[np.double]] = None
@@ -375,6 +393,7 @@ class LocalEnsembleAccessor(LocalEnsembleReader):
         old_states: List[RealizationStateEnum],
         new_state: RealizationStateEnum,
     ) -> None:
+        assert self.stopped_at is None
         if self._state_map[realization] in old_states:
             self._state_map[realization] = new_state
 
@@ -385,6 +404,7 @@ class LocalEnsembleAccessor(LocalEnsembleReader):
     def save_ext_param(
         self, key: str, realization: int, data: Dict[str, Dict[str, Any]]
     ) -> None:
+        assert self.stopped_at is None
         output_path = self.mount_point / f"realization-{realization}"
         Path.mkdir(output_path, exist_ok=True)
         with open(output_path / f"{key}.json", "w", encoding="utf-8") as f:
@@ -397,6 +417,7 @@ class LocalEnsembleAccessor(LocalEnsembleReader):
         run_args: List[RunArg],
         active_realizations: List[bool],
     ) -> int:
+        assert self.stopped_at is None
         """Returns the number of loaded realizations"""
         pool = ThreadPool(processes=8)
 
@@ -424,6 +445,7 @@ class LocalEnsembleAccessor(LocalEnsembleReader):
     def save_parameters(
         self, group: str, realization: int, dataset: Union[xr.DataArray, xr.Dataset]
     ) -> None:
+        assert self.stopped_at is None
         """Create a parameter group
 
         Args:
@@ -457,12 +479,20 @@ class LocalEnsembleAccessor(LocalEnsembleReader):
             RealizationStateEnum.STATE_INITIALIZED,
         )
 
-    def save_response(self, group: str, data: xr.Dataset, realization: int) -> None:
-        data = data.expand_dims({"realization": [realization]})
-        output_path = self.mount_point / f"realization-{realization}"
-        Path.mkdir(output_path, parents=True, exist_ok=True)
-
-        data.to_netcdf(output_path / f"{group}.nc", engine="scipy")
+    def save_responses(self, group: str, realization: int, data: xr.Dataset) -> None:
+        assert self.stopped_at is None
+        path = self.mount_point / f"realization-{realization}" / group
+        path.parent.mkdir(exist_ok=True)
+        data.expand_dims(realizations=[realization]).to_netcdf(path, engine="scipy")
+        self.update_realization_state(
+            realization,
+            [
+                RealizationStateEnum.STATE_UNDEFINED,
+                RealizationStateEnum.STATE_INITIALIZED,
+                RealizationStateEnum.STATE_LOAD_FAILURE,
+            ],
+            RealizationStateEnum.STATE_HAS_DATA,
+        )
 
     def save_field(
         self,
@@ -472,6 +502,7 @@ class LocalEnsembleAccessor(LocalEnsembleReader):
             npt.NDArray[np.double], np.ma.MaskedArray[Any, np.dtype[np.double]]
         ],
     ) -> None:
+        assert self.stopped_at is None
         output_path = self.mount_point / f"realization-{realization}"
         Path.mkdir(output_path, exist_ok=True)
         if not np.ma.isMaskedArray(data):  # type: ignore
@@ -496,3 +527,23 @@ class LocalEnsembleAccessor(LocalEnsembleReader):
             [RealizationStateEnum.STATE_UNDEFINED],
             RealizationStateEnum.STATE_INITIALIZED,
         )
+
+    def finalize(self) -> None:
+        """Finalize the ensemble evaluation."""
+        assert self.stopped_at is None
+        self._index.stopped_at = datetime.now()
+        with open(self.mount_point / "index.json", mode="w", encoding="utf-8") as f:
+            print(self._index.json(), file=f)
+
+        (self.mount_point / "final").mkdir()
+        for name in {path.name for path in self.mount_point.glob("realization-*/*")}:
+            with ExitStack() as stack:
+                datasets = [
+                    stack.enter_context(xr.open_dataset(x, engine="scipy"))
+                    for x in sorted(self.mount_point.glob(f"realization-*/{name}"))
+                ]
+                dataset = xr.combine_nested(datasets, "realizations")
+                dataset.to_netcdf(self.mount_point / "final" / name, engine="scipy")
+
+        for path in self.mount_point.glob("realization-*"):
+            shutil.rmtree(path)

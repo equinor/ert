@@ -46,7 +46,7 @@ def _write_responses_to_storage(
                 continue
         try:
             ds = config.read_from_file(run_arg.runpath, run_arg.iens)
-            run_arg.ensemble_storage.save_response(config.name, ds, run_arg.iens)
+            run_arg.ensemble_storage.save_responses(config.name, run_arg.iens, ds)
         except ValueError as err:
             errors.append(str(err))
     if errors:

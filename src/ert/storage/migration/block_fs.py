@@ -239,12 +239,12 @@ def _migrate_summary(
         array.append(data_file.load(block, 0))
         keys.append(block.name)
 
-    for realization_index, (array, keys) in data.items():
+    for index, (array, keys) in data.items():
         ds = xr.Dataset(
             {"values": (["name", "time"], array)},
             coords={"time": time_map, "name": keys},
         )
-        ensemble.save_response("summary", ds, realization_index)
+        ensemble.save_responses("summary", index, ds)
 
 
 def _migrate_gen_data(
@@ -269,8 +269,8 @@ def _migrate_gen_data(
                         },
                     )
                 )
-            ensemble.save_response(
-                name, xr.combine_by_coords(datasets), iens  # type: ignore
+            ensemble.save_responses(
+                name, iens, xr.combine_by_coords(datasets)  # type: ignore
             )
 
 

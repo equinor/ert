@@ -303,7 +303,7 @@ def _get_obs_and_measure_data(
                 name: list(set(index.get_level_values(name))) for name in index.names
             }
             observation = observation.sel(sub_selection)
-        ds = source_fs.load_response(group, ens_active_list)
+        ds = source_fs.load_responses(group, ens_active_list)
         try:
             filtered_ds = observation.merge(ds, join="left")
         except KeyError:
@@ -319,10 +319,9 @@ def _get_obs_and_measure_data(
         observation_errors.append(filtered_ds["std"].data.ravel())
         measured_data.append(
             filtered_ds["values"]
-            .transpose(..., "realization")
-            .values.reshape((-1, len(filtered_ds.realization)))
+            .transpose(..., "realizations")
+            .values.reshape((-1, len(filtered_ds.realizations)))
         )
-    source_fs.load_response.cache_clear()
     return (
         np.concatenate(measured_data, axis=0),
         np.concatenate(observation_values),

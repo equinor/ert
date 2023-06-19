@@ -93,13 +93,13 @@ def make_source_accessor(path: Path, ert: EnKFMain) -> EnsembleReader:
             obs = observations[obs_key]
             obs_vec = obs.observations[0]  # Ignores all other time points for now
             obs_highest_index_used = obs_vec.getDataIndex(len(obs_vec) - 1)
-            source.save_response(
-                obs.getDataKey(), make_gen_data(obs_highest_index_used + 1), real
+            source.save_responses(
+                obs.getDataKey(), real, make_gen_data(obs_highest_index_used + 1)
             )
-        source.save_response(
+        source.save_responses(
             "summary",
-            make_summary_data(obs_data_keys, ens_config.refcase.numpy_dates),
             real,
+            make_summary_data(obs_data_keys, ens_config.refcase.numpy_dates),
         )
         source.state_map[real] = RealizationStateEnum.STATE_HAS_DATA
 
