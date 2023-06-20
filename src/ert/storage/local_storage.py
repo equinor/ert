@@ -167,6 +167,13 @@ class LocalStorageAccessor(LocalStorageReader):
 
         self.path.mkdir(parents=True, exist_ok=True)
 
+        # ERT 4 checks that this file exists and if it exists tells the user
+        # that their ERT storage is incompatible
+        try:
+            (self.path / ".fs_version").symlink_to("index.json")
+        except FileExistsError:
+            pass
+
         self._lock = FileLock(self.path / "storage.lock")
         try:
             self._lock.acquire(timeout=self.LOCK_TIMEOUT)
