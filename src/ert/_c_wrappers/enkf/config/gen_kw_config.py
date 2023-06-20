@@ -109,7 +109,7 @@ class GenKwConfig(ParameterConfig):
         log10_data = {
             tf.name: math.log(data[tf.name], 10)
             for tf in self._transfer_functions
-            if tf._use_log
+            if tf.use_log
         }
 
         target_file = self.output_file
@@ -135,7 +135,7 @@ class GenKwConfig(ParameterConfig):
     def shouldUseLogScale(self, keyword: str) -> bool:
         for tf in self._transfer_functions:
             if tf.name == keyword:
-                return tf._use_log
+                return tf.use_log
         return False
 
     def __len__(self):
@@ -288,11 +288,11 @@ class TransferFunction:
     transfer_function_name: str
     parameter_list: Dict[str, float]
     calc_func: Callable[[float, List[float]], float]
-    _use_log: bool = False
+    use_log: bool = False
 
     def __post_init__(self) -> None:
         if self.transfer_function_name in ["LOGNORMAL", "LOGUNIF"]:
-            self._use_log = True
+            self.use_log = True
 
     @staticmethod
     def trans_errf(x, arg: List[float]) -> float:
