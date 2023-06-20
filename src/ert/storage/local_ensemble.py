@@ -360,7 +360,7 @@ class LocalEnsembleAccessor(LocalEnsembleReader):
         if isinstance(dataset, xr.DataArray):
             dataset = dataset.to_dataset()
         if not isinstance(dataset, xr.Dataset):  # npt.Arraylike
-            dataset = xr.Dataset({"values": dataset})
+            dataset = xr.DataArray(dataset, name="values").to_dataset()
 
         if "values" not in dataset.variables:
             raise ValueError(

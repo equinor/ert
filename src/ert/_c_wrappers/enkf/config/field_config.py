@@ -8,7 +8,6 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Optional
 
 import numpy as np
-import xarray as xr
 
 from ert._c_wrappers.enkf.config.parameter_config import ParameterConfig
 from ert.storage.field_utils.field_utils import Shape, get_masked_field, save_field
