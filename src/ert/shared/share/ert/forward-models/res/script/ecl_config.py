@@ -113,7 +113,7 @@ class EclConfig:
 
         if version is None:
             raise ValueError(
-                "The default version has not not been "
+                "The default version has not been "
                 f"set in the config file:{self._config_file}"
             )
 

@@ -195,11 +195,11 @@ def test_default_version_definitions(monkeypatch):
     assert conf.default_version is None
 
     with pytest.raises(
-        ValueError, match="The default version has not not been set in the config file"
+        ValueError, match="The default version has not been set in the config file"
     ):
         sim = conf.sim()
 
     with pytest.raises(
-        ValueError, match="The default version has not not been set in the config file"
+        ValueError, match="The default version has not been set in the config file"
     ):
         sim = conf.sim(ecl_config.Keys.default)

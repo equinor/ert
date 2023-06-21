@@ -97,7 +97,7 @@ def _expand_SLURM_task_count(task_count_string):
 
         return [count] * mult
     else:
-        raise Exception(f"Failed to parse SLURM_TASKS_PER_NODE: {task_count_string}")
+        raise ValueError(f"Failed to parse SLURM_TASKS_PER_NODE: {task_count_string}")
 
 
 # The list of available machines/nodes and how many tasks each node should get
@@ -255,7 +255,7 @@ class EclRun:
             elif len(LSB_machine_list) == self.num_cpu:
                 machine_list = LSB_machine_list
             else:
-                raise Exception(
+                raise RuntimeError(
                     "LSF / MPI problems. "
                     f"Asked for:{self.num_cpu} cpu. "
                     f'LSB_MCPU_HOSTS: "{LSB_MCPU_HOSTS}"  LSB_HOSTS: "{LSB_HOSTS}"'
@@ -265,7 +265,7 @@ class EclRun:
                 os.getenv("SLURM_JOB_NODELIST"), os.getenv("SLURM_TASKS_PER_NODE")
             )
             if len(machine_list) != self.num_cpu:
-                raise Exception(
+                raise RuntimeError(
                     f"SLURM / MPI problems - asked for {self.num_cpu} - "
                     f"got {len(machine_list)} nodes"
                 )
@@ -353,9 +353,7 @@ class EclRun:
                 f.write("ECLIPSE simulation complete - NOT checked for errors.")
         else:
             if return_code != 0:
-                raise Exception(
-                    f"The eclipse executable exited with error status: {return_code:d}"
-                )
+                raise subprocess.CalledProcessError(return_code, self.sim.executable)
 
             self.assertECLEND()
             if self.num_cpu > 1:
@@ -401,13 +399,13 @@ class EclRun:
             error_list = self.parseErrors()
             sep = "\n\n...\n\n"
             error_msg = sep.join(error_list)
-            raise Exception(
+            raise RuntimeError(
                 "Eclipse simulation failed with:"
                 f"{result.errors:d} errors:\n\n{error_msg}"
             )
 
         if result.bugs > 0:
-            raise Exception(f"Eclipse simulation failed with:{result.bugs:d} bugs")
+            raise RuntimeError(f"Eclipse simulation failed with:{result.bugs:d} bugs")
 
     def readECLEND(self):
         error_regexp = re.compile(r"^\s*Errors\s+(\d+)\s*$")
