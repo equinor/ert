@@ -17,10 +17,6 @@ jobs:
       with:
         fetch-depth: 0
 
-    - uses: actions/setup-python@v4
-      with:
-        python-version: ${{ inputs.python-version }}
-
     - name: Build Linux Wheel
       uses: docker://quay.io/pypa/manylinux2014_x86_64
       with:
