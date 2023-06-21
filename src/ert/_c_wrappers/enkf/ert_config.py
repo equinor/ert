@@ -6,7 +6,7 @@ from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import date
 from pathlib import Path
-from typing import Any, ClassVar, Dict, List, Mapping, Optional, overload
+from typing import Any, ClassVar, Dict, List, overload
 
 import pkg_resources
 
@@ -476,17 +476,13 @@ class ErtConfig:
     def forward_model_job_name_list(self) -> List[str]:
         return [j.name for j in self.forward_model_list]
 
-    @staticmethod
     def forward_model_data_to_json(
-        forward_model_list: List[ExtJob],
+        self,
         run_id: str,
-        config_file_path: Optional[Path] = None,
         iens: int = 0,
         itr: int = 0,
-        context: Optional["SubstitutionList"] = None,
-        env_varlist: Optional[Mapping[str, str]] = None,
     ) -> Dict[str, Any]:
-        _context: SubstitutionList = context if context else SubstitutionList()
+        context = self.substitution_list
 
         class Substituter:
             def __init__(self, job):
@@ -501,7 +497,7 @@ class ErtConfig:
                 self.copy_private_args = SubstitutionList()
                 for key, val in job.private_args:
                     self.copy_private_args.addItem(
-                        key, _context.substitute_real_iter(val, iens, itr)
+                        key, context.substitute_real_iter(val, iens, itr)
                     )
 
             @overload
@@ -518,7 +514,7 @@ class ErtConfig:
                 string = self.copy_private_args.substitute(
                     string, self.substitution_context_hint, 1
                 )
-                return _context.substitute_real_iter(string, iens, itr)
+                return context.substitute_real_iter(string, iens, itr)
 
             def filter_env_dict(self, d):
                 result = {}
@@ -547,20 +543,20 @@ class ErtConfig:
         def handle_default(job: ExtJob, arg: str) -> str:
             return job.default_mapping.get(arg, arg)
 
-        if env_varlist is None:
-            env_varlist = {}
-
-        for job in forward_model_list:
-            for key, val in job.private_args:
-                if key in _context and key != val:
+        for job in self.forward_model_list:
+            for key, val in iter(job.private_args):
+                if key in context and key != val:
                     logger.info(
                         f"Private arg '{key}':'{val}' chosen over"
-                        f" global '{_context[key]}' in forward model {job.name}"
+                        f" global '{context[key]}' in forward model {job.name}"
                     )
+        config_file_path = (
+            Path(self.user_config_file) if self.user_config_file is not None else None
+        )
         config_path = str(config_file_path.parent) if config_file_path else ""
         config_file = str(config_file_path.name) if config_file_path else ""
         return {
-            "global_environment": env_varlist,
+            "global_environment": self.env_vars,
             "config_path": config_path,
             "config_file": config_file,
             "jobList": [
@@ -591,7 +587,7 @@ class ErtConfig:
                 }
                 for idx, job, substituter in [
                     (idx, job, Substituter(job))
-                    for idx, job in enumerate(forward_model_list)
+                    for idx, job in enumerate(self.forward_model_list)
                 ]
             ],
             "run_id": run_id,

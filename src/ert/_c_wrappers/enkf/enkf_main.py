@@ -358,13 +358,9 @@ class EnKFMain:
                     Path(run_arg.runpath) / "jobs.json", mode="w", encoding="utf-8"
                 ) as fptr:
                     forward_model_output = ert_config.forward_model_data_to_json(
-                        ert_config.forward_model_list,
                         run_arg.get_run_id(),
-                        Path(ert_config.user_config_file),
                         run_arg.iens,
                         run_context.iteration,
-                        self.get_context(),
-                        ert_config.env_vars,
                     )
 
                     json.dump(forward_model_output, fptr)
