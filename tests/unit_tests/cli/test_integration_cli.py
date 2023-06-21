@@ -133,8 +133,6 @@ def test_es_mda(tmpdir, source_root, snapshot):
                 "poly_example/poly.ert",
                 "--port-range",
                 "1024-65535",
-                "--weights",
-                "1",
             ],
         )
         FeatureToggling.update_from_args(parsed)
@@ -145,7 +143,12 @@ def test_es_mda(tmpdir, source_root, snapshot):
         with open_storage("storage", "r") as storage:
             iter_0 = facade.load_all_gen_kw_data(storage.get_ensemble_by_name("iter-0"))
             iter_1 = facade.load_all_gen_kw_data(storage.get_ensemble_by_name("iter-1"))
-        result = pd.concat([iter_0, iter_1], keys=["iter-0", "iter-1"])
+            iter_2 = facade.load_all_gen_kw_data(storage.get_ensemble_by_name("iter-2"))
+            iter_3 = facade.load_all_gen_kw_data(storage.get_ensemble_by_name("iter-3"))
+        result = pd.concat(
+            [iter_0, iter_1, iter_2, iter_3],
+            keys=["iter-0", "iter-1", "iter-2", "iter-3"],
+        )
         snapshot.assert_match(
             result.to_csv(float_format="%.12g"), "es_mda_integration_snapshot"
         )
