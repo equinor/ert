@@ -109,7 +109,7 @@ with open("env.json", "w") as f:
 @pytest.mark.requires_eclipse
 def test_run(source_root):
     shutil.copy(
-        os.path.join(source_root, "test-data/eclipse/SPE1.DATA"),
+        os.path.join(source_root, "test-data/spe1/SPE1.DATA"),
         "SPE1.DATA",
     )
     econfig = ecl_config.Ecl100Config()
@@ -132,7 +132,7 @@ def test_run(source_root):
 @pytest.mark.requires_eclipse
 def test_run_new_log_file(source_root):
     shutil.copy(
-        os.path.join(source_root, "test-data/eclipse/SPE1.DATA"),
+        os.path.join(source_root, "test-data/spe1/SPE1.DATA"),
         "SPE1.DATA",
     )
     econfig = ecl_config.Ecl100Config()
@@ -155,7 +155,7 @@ def test_run_new_log_file(source_root):
 @pytest.mark.usefixtures("use_tmpdir", "init_eclrun_config")
 def test_run_api(source_root):
     shutil.copy(
-        os.path.join(source_root, "test-data/eclipse/SPE1.DATA"),
+        os.path.join(source_root, "test-data/spe1/SPE1.DATA"),
         "SPE1.DATA",
     )
     econfig = ecl_config.Ecl100Config()
@@ -168,7 +168,7 @@ def test_run_api(source_root):
 @pytest.mark.usefixtures("use_tmpdir", "init_eclrun_config")
 def test_failed_run(source_root):
     shutil.copy(
-        os.path.join(source_root, "test-data/eclipse/SPE1_ERROR.DATA"),
+        os.path.join(source_root, "test-data/spe1/SPE1_ERROR.DATA"),
         "SPE1_ERROR.DATA",
     )
     econfig = ecl_config.Ecl100Config()
@@ -182,7 +182,7 @@ def test_failed_run(source_root):
 @pytest.mark.usefixtures("use_tmpdir", "init_eclrun_config")
 def test_failed_run_OK(source_root):
     shutil.copy(
-        os.path.join(source_root, "test-data/eclipse/SPE1_ERROR.DATA"),
+        os.path.join(source_root, "test-data/spe1/SPE1_ERROR.DATA"),
         "SPE1_ERROR.DATA",
     )
     econfig = ecl_config.Ecl100Config()
@@ -193,7 +193,7 @@ def test_failed_run_OK(source_root):
 @pytest.mark.usefixtures("use_tmpdir", "init_eclrun_config")
 def test_no_hdf5_output_by_default_with_ecl100(source_root):
     shutil.copy(
-        os.path.join(source_root, "test-data/eclipse/SPE1.DATA"),
+        os.path.join(source_root, "test-data/spe1/SPE1.DATA"),
         "SPE1.DATA",
     )
     econfig = ecl_config.Ecl100Config()
@@ -206,7 +206,7 @@ def test_no_hdf5_output_by_default_with_ecl100(source_root):
 @pytest.mark.usefixtures("use_tmpdir", "init_eclrun_config")
 def test_flag_to_produce_hdf5_output_with_ecl100(source_root):
     shutil.copy(
-        os.path.join(source_root, "test-data/eclipse/SPE1.DATA"),
+        os.path.join(source_root, "test-data/spe1/SPE1.DATA"),
         "SPE1.DATA",
     )
     econfig = ecl_config.Ecl100Config()
@@ -219,7 +219,7 @@ def test_flag_to_produce_hdf5_output_with_ecl100(source_root):
 @pytest.mark.usefixtures("use_tmpdir", "init_eclrun_config")
 def test_mpi_run(source_root):
     shutil.copy(
-        os.path.join(source_root, "test-data/eclipse/SPE1_PARALLEL.DATA"),
+        os.path.join(source_root, "test-data/spe1/SPE1_PARALLEL.DATA"),
         "SPE1_PARALLEL.DATA",
     )
     econfig = ecl_config.Ecl100Config()
@@ -232,7 +232,7 @@ def test_mpi_run(source_root):
 @pytest.mark.usefixtures("use_tmpdir", "init_eclrun_config")
 def test_summary_block(source_root):
     shutil.copy(
-        os.path.join(source_root, "test-data/eclipse/SPE1.DATA"),
+        os.path.join(source_root, "test-data/spe1/SPE1.DATA"),
         "SPE1.DATA",
     )
     econfig = ecl_config.Ecl100Config()
