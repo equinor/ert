@@ -3,6 +3,7 @@ import re
 import shutil
 import stat
 from pathlib import Path
+from subprocess import CalledProcessError
 
 import pytest
 import yaml
@@ -188,9 +189,7 @@ def test_flow(init_flow_config, source_root):
     ecl_run.run(flow_config, ["SPE1.DATA"])
 
     flow_run = ecl_run.EclRun("SPE1_ERROR.DATA", sim)
-    with pytest.raises(
-        Exception, match="The eclipse executable exited with error status"
-    ):
+    with pytest.raises(CalledProcessError, match="returned non-zero exit status 1"):
         flow_run.runEclipse()
 
     ecl_run.run(flow_config, ["SPE1_ERROR.DATA", "--ignore-errors"])
@@ -403,9 +402,7 @@ def test_run_nonzero_exit_code(init_ecl100_config, source_root):
     erun = ecl_run.EclRun("FOO.DATA", sim)
     erun.sim.executable = source_root / "tests/unit_tests/shared/share/ecl_run_fail"
 
-    with pytest.raises(
-        Exception, match="The eclipse executable exited with error status"
-    ):
+    with pytest.raises(CalledProcessError):
         erun.runEclipse()
 
 
@@ -430,7 +427,7 @@ def test_failed_run(init_ecl100_config, source_root):
     econfig = ecl_config.Ecl100Config()
     sim = econfig.sim("2019.3")
     erun = ecl_run.EclRun("SPE1_ERROR", sim)
-    with pytest.raises(Exception, match="ERROR"):
+    with pytest.raises(CalledProcessError, match="ERROR"):
         erun.runEclipse()
 
 
