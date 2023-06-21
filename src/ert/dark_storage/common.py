@@ -2,6 +2,7 @@ from typing import List, Union
 
 import pandas as pd
 
+from ert._c_wrappers.enkf.enums import EnkfObservationImplementationType
 from ert.libres_facade import LibresFacade
 from ert.storage import EnsembleReader
 
@@ -80,7 +81,7 @@ def data_for_key(
         return data
 
 
-def observations_for_obs_keys(res: LibresFacade, obs_keys):
+def observations_for_obs_keys(res: LibresFacade, obs_keys: List[str]):
     """Returns a pandas DataFrame with the datapoints for a given observation
     key for a given case. The row index is the realization number, and the
     column index is a multi-index with (obs_key, index/date, obs_index), where
@@ -104,13 +105,15 @@ def observations_for_obs_keys(res: LibresFacade, obs_keys):
     return observations
 
 
-def _get_obs_data(key, obs) -> dict:
-    return {
-        "name": key,
-        "x_axis": obs.columns.get_level_values(0).to_list(),
-        "values": obs.loc["OBS"].to_list(),
-        "errors": obs.loc["STD"].to_list(),
-    }
+def get_observation_name(res: LibresFacade, obs_keys: List[str]) -> str:
+    summary_obs = res.get_observations().getTypedKeylist(
+        EnkfObservationImplementationType.SUMMARY_OBS
+    )
+    for key in obs_keys:
+        _, observation = res.get_observations().get_dataset(key)
+        if key in summary_obs:
+            return observation.name.values.flatten()[0]
+        return key
 
 
 def _prepare_x_axis(x_axis: List[Union[int, float, str, pd.Timestamp]]) -> List[str]:
