@@ -253,23 +253,24 @@ class LocalEnsembleReader:
             input_path = self.mount_point / f"realization-{realization}"
             if not input_path.exists():
                 raise KeyError(
-                    f"Unable to load FIELD for key: {key}, realization: {realization}"
+                    f"Unable to load FIELD for key: {key} - "
+                    f"realization: {realization} not found"
                 )
             data = np.load(input_path / f"{key}.npy", mmap_mode="r")
             data = data[np.isfinite(data)]
 
             if result is None:
-                result = np.empty((len(realizations), data.size), dtype=np.double)
-            elif data.size != result.shape[1]:
+                result = np.empty((data.size, len(realizations)), dtype=np.double)
+            elif data.size != result.shape[0]:
                 raise ValueError(f"Data size mismatch for realization {realization}")
 
-            result[index] = data
+            result[:, index] = data
 
         if result is None:
             raise ConfigValidationError(
                 "No realizations found when trying to load field"
             )
-        return result.T
+        return result
 
     def field_has_data(self, key: str, realization: int) -> bool:
         path = self.mount_point / f"realization-{realization}/{key}.npy"
