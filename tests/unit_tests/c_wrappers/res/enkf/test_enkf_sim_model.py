@@ -6,7 +6,7 @@ from typing import List
 import pytest
 
 from ert._c_wrappers.config.content_type_enum import ContentTypeEnum
-from ert._c_wrappers.enkf import EnKFMain, ErtConfig
+from ert._c_wrappers.enkf import ErtConfig
 
 
 def valid_args(arg_types, arg_list: List[str], runtime: bool = False):
@@ -164,14 +164,12 @@ def test_forward_model_job(job, forward_model, expected_args):
     assert len(forward_model) == 1
     assert (
         ert_config.forward_model_data_to_json(
-            forward_model,
             "",
-            None,
             0,
             0,
-            ert_config.substitution_list,
-            ert_config.env_vars,
-        )["jobList"][0]["argList"]
+        )["jobList"][
+            0
+        ]["argList"]
         == expected_args
     )
 
@@ -198,14 +196,14 @@ def test_that_config_path_is_the_directory_of_the_main_ert_config():
     ert_config = ErtConfig.from_file("config_file.ert")
 
     assert ert_config.forward_model_data_to_json(
-        ert_config.forward_model_list,
         "",
-        None,
         0,
         0,
-        ert_config.substitution_list,
-        ert_config.env_vars,
-    )["jobList"][0]["argList"] == [os.getcwd()]
+    )[
+        "jobList"
+    ][0][
+        "argList"
+    ] == [os.getcwd()]
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -290,16 +288,16 @@ def test_simulation_job(job, forward_model, expected_args):
         fout.write(forward_model)
 
     ert_config = ErtConfig.from_file("config_file.ert")
-    ert = EnKFMain(ert_config)
-
-    forward_model_list = ert.resConfig().forward_model_list
-    forward_model_job = forward_model_list[0]
-    job_data = ErtConfig.forward_model_data_to_json(
-        forward_model_list, "", None, 0, 0, ert.get_context(), ert_config.env_vars
-    )["jobList"][0]
-    assert len(forward_model_list) == 1
+    assert len(ert_config.forward_model_list) == 1
+    job_data = ert_config.forward_model_data_to_json(
+        "",
+        0,
+        0,
+    )[
+        "jobList"
+    ][0]
     assert job_data["argList"] == expected_args
-    assert valid_args(forward_model_job.arg_types, job_data["argList"])
+    assert valid_args(ert_config.forward_model_list[0].arg_types, job_data["argList"])
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -324,13 +322,8 @@ def test_that_private_over_global_args_gives_logging_message(caplog):
         fout.write("FORWARD_MODEL job_name(<ARG>=B)")
 
     ert_config = ErtConfig.from_file("config_file.ert")
-    ert = EnKFMain(ert_config)
-
-    forward_model_list = ert.resConfig().forward_model_list
-    job_data = ErtConfig.forward_model_data_to_json(
-        forward_model_list, "", None, 0, 0, ert.get_context(), ert_config.env_vars
-    )["jobList"][0]
-    assert len(forward_model_list) == 1
+    job_data = ert_config.forward_model_data_to_json("", 0, 0)["jobList"][0]
+    assert len(ert_config.forward_model_list) == 1
     assert job_data["argList"] == ["B"]
     assert "Private arg '<ARG>':'B' chosen over global 'A'" in caplog.text
 
@@ -359,13 +352,9 @@ def test_that_private_over_global_args_does_not_give_logging_message_for_argpass
         fout.write("FORWARD_MODEL job_name(<ARG>=<ARG>)")
 
     ert_config = ErtConfig.from_file("config_file.ert")
-    ert = EnKFMain(ert_config)
 
-    forward_model_list = ert.resConfig().forward_model_list
-    job_data = ErtConfig.forward_model_data_to_json(
-        forward_model_list, "", None, 0, 0, ert.get_context(), ert_config.env_vars
-    )["jobList"][0]
-    assert len(forward_model_list) == 1
+    job_data = ert_config.forward_model_data_to_json("", 0, 0)["jobList"][0]
+    assert len(ert_config.forward_model_list) == 1
     assert job_data["argList"] == ["A"]
     assert "Private arg '<ARG>':'<ARG>' chosen over global 'A'" not in caplog.text
 
@@ -412,13 +401,11 @@ def test_that_environment_variables_are_set_in_forward_model(
     assert len(forward_model_list) == 1
     assert (
         ert_config.forward_model_data_to_json(
-            forward_model_list,
             "",
-            None,
             0,
             0,
-            ert_config.substitution_list,
-            ert_config.env_vars,
-        )["jobList"][0]["argList"]
+        )["jobList"][
+            0
+        ]["argList"]
         == expected_args
     )

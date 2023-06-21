@@ -170,10 +170,14 @@ assert exec_env["TEST_ENV"] == "123"
         f.write("EXEC_ENV TEST_ENV 123\n")
 
     ext_job = ExtJob.from_config_file(name=None, config_file="EXEC_ENV")
-    forward_model = [ext_job]
 
     with open("jobs.json", mode="w", encoding="utf-8") as fptr:
-        json.dump(ErtConfig.forward_model_data_to_json(forward_model, "run_id"), fptr)
+        json.dump(
+            ErtConfig(forward_model_list=[ext_job]).forward_model_data_to_json(
+                "run_id"
+            ),
+            fptr,
+        )
 
     with open("jobs.json", "r", encoding="utf-8") as f:
         jobs_json = json.load(f)
@@ -203,10 +207,11 @@ assert os.environ["TEST_ENV"] == "123"
         f.write("ENV TEST_ENV 123\n")
 
     job = ExtJob.from_config_file(name=None, config_file="RUN_ENV")
-    forward_model = [job]
-
     with open("jobs.json", mode="w", encoding="utf-8") as fptr:
-        json.dump(ErtConfig.forward_model_data_to_json(forward_model, "run_id"), fptr)
+        json.dump(
+            ErtConfig(forward_model_list=[job]).forward_model_data_to_json("run_id"),
+            fptr,
+        )
 
     with open("jobs.json", "r", encoding="utf-8") as f:
         jobs_json = json.load(f)
@@ -239,14 +244,15 @@ assert os.environ["_ERT_RUNPATH"] == "./"
         f.write("EXECUTABLE run_me.py\n")
 
     job = ExtJob.from_config_file(name=None, config_file="RUN_ENV")
-    forward_model = [job]
-
     with open("jobs.json", mode="w", encoding="utf-8") as fptr:
         json.dump(
-            ErtConfig.forward_model_data_to_json(
-                forward_model,
+            ErtConfig(
+                forward_model_list=[job],
+                substitution_list=SubstitutionList.from_dict(
+                    {"DEFINE": [["<RUNPATH>", "./"]]}
+                ),
+            ).forward_model_data_to_json(
                 "run_id",
-                context=SubstitutionList.from_dict({"DEFINE": [["<RUNPATH>", "./"]]}),
             ),
             fptr,
         )
