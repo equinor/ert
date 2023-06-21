@@ -38,10 +38,13 @@ def get_observations(ert, storage, ensemble_id1, keyword: str, poly_ran):
         n = int(keyword[4:])
         if n < poly_ran["sum_obs_count"]:
             count = poly_ran["summary_data_entries"] // poly_ran["sum_obs_every"]
-            assert len(obs) == count
-            assert obs[0].errors == [0.1]
-            assert obs[0].x_axis == ["2010-01-02T00:00:00.000000000"]
-            assert obs[0].values == [2.6357]
+            assert len(obs) == 1
+            assert obs[0].errors[0] == 0.1
+            assert obs[0].x_axis[0] == "2010-01-02T00:00:00.000000000"
+            assert obs[0].values[0] == 2.6357
+            assert len(obs[0].errors) == count
+            assert len(obs[0].x_axis) == count
+            assert len(obs[0].values) == count
         else:
             assert len(obs) == 0
 

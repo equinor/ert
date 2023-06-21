@@ -1,4 +1,5 @@
 import io
+from itertools import chain
 from typing import Any, List, Mapping, Optional
 from uuid import UUID, uuid4
 
@@ -10,6 +11,7 @@ from fastapi.responses import Response
 from ert.dark_storage.common import (
     data_for_key,
     ensemble_parameters,
+    get_observation_name,
     observations_for_obs_keys,
 )
 from ert.dark_storage.enkf import LibresFacade, get_res, get_storage
@@ -147,16 +149,18 @@ async def get_record_observations(
 ) -> List[js.ObservationOut]:
     obs_keys = res.observation_keys(name)
     obss = observations_for_obs_keys(res, obs_keys)
+    if not obss:
+        return []
+
     return [
         js.ObservationOut(
             id=uuid4(),
             userData=[],
-            errors=obs["errors"],
-            values=obs["values"],
-            x_axis=obs["x_axis"],
-            name=obs["name"],
+            errors=list(chain.from_iterable([obs["errors"] for obs in obss])),
+            values=list(chain.from_iterable([obs["values"] for obs in obss])),
+            x_axis=list(chain.from_iterable([obs["x_axis"] for obs in obss])),
+            name=get_observation_name(res, obs_keys),
         )
-        for obs in obss
     ]
 
 
