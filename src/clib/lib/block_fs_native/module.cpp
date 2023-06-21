@@ -209,7 +209,6 @@ public:
 
                 case Kind::surface:
                 case Kind::gen_kw:
-                case Kind::ext_param:
                     // The count is given in the config and not available in the
                     // data file, but we can make an informed guess by looking
                     // at the size of the whole data section
@@ -219,6 +218,10 @@ public:
                 case Kind::field:
                     // The count is given in the config
                     break;
+
+                case Kind::ext_param:
+                    throw std::runtime_error(
+                        "Migrating EXT_PARAM is not supported");
 
                 default:
                     continue;
