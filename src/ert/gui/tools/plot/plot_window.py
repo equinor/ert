@@ -43,6 +43,7 @@ class PlotWindow(QMainWindow):
         QMainWindow.__init__(self, parent)
 
         logger.info("PlotWindow __init__")
+        storage = parent.notifier.storage
 
         self.setMinimumWidth(850)
         self.setMinimumHeight(650)
@@ -86,21 +87,10 @@ class PlotWindow(QMainWindow):
         self._central_tab.currentChanged.connect(self.currentPlotChanged)
         self._prev_tab_widget = None
 
-        try:
-            cases = self._api.get_all_cases_not_running()
-        except (RequestError, TimeoutError) as e:
-            logger.exception(e)
-            msg = f"{e}"
-
-            QMessageBox.critical(self, "Request Failed", msg)
-            cases = []
-
-        case_names = [case["name"] for case in cases if not case["hidden"]]
-
         self._data_type_keys_widget = DataTypeKeysWidget(self._key_definitions)
         self._data_type_keys_widget.dataTypeKeySelected.connect(self.keySelected)
         self.addDock("Data types", self._data_type_keys_widget)
-        self._case_selection_widget = CaseSelectionWidget(case_names)
+        self._case_selection_widget = CaseSelectionWidget([x.name for x in storage.ensembles])
         self._case_selection_widget.caseSelectionChanged.connect(self.keySelected)
         self.addDock("Plot case", self._case_selection_widget)
 
@@ -124,23 +114,11 @@ class PlotWindow(QMainWindow):
                 cases = self._case_selection_widget.getPlotCaseNames()
                 case_to_data_map = {}
                 for case in cases:
-                    try:
-                        case_to_data_map[case] = self._api.data_for_key(case, key)
-                    except (RequestError, TimeoutError) as e:
-                        logger.exception(e)
-                        msg = f"{e}"
-
-                        QMessageBox.critical(self, "Request Failed", msg)
+                    case_to_data_map[case] = self._api.data_for_key(case, key)
 
                 observations = None
                 if key_def["observations"] and cases:
-                    try:
-                        observations = self._api.observations_for_key(cases[0], key)
-                    except (RequestError, TimeoutError) as e:
-                        logger.exception(e)
-                        msg = f"{e}"
-
-                        QMessageBox.critical(self, "Request Failed", msg)
+                    observations = self._api.observations_for_key(cases[0], key)
 
                 plot_config = PlotConfig.createCopy(
                     self._plot_customizer.getPlotConfig()

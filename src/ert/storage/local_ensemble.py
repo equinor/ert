@@ -74,10 +74,12 @@ def _field_truncate(data: npt.ArrayLike, min_: float, max_: float) -> Any:
 class _Index(BaseModel):
     id: UUID
     experiment_id: UUID
+    prior_ensemble_id: Optional[UUID]
+    based_on_ensemble_id: Optional[UUID]
+    dirty: bool = True
     ensemble_size: int
     iteration: int
     name: str
-    prior_ensemble_id: Optional[UUID]
     started_at: datetime
     stopped_at: Optional[datetime]
 
@@ -132,6 +134,10 @@ class LocalEnsembleReader:
     @property
     def iteration(self) -> int:
         return self._index.iteration
+
+    @property
+    def dirty(self) -> bool:
+        return self._index.dirty
 
     @property
     def time_map(self) -> TimeMap:
@@ -231,11 +237,16 @@ class LocalEnsembleReader:
         group: str,
         realizations: Union[int, Sequence[int], None],
     ) -> xr.Dataset:
-        if self.stopped_at is None:
+        if self.dirty:
             if isinstance(realizations, int):
                 return self._load_single_dataset(group, realizations).isel(
                     realizations=0, drop=True
                 )
+
+            try:
+                dataset = self._load_final_dataset(group)
+            except KeyError:
+                dataset = xr.Dataset()
 
             if realizations is None:
                 datasets = [
@@ -362,6 +373,7 @@ class LocalEnsembleAccessor(LocalEnsembleReader):
         iteration: int = 0,
         name: str,
         prior_ensemble_id: Optional[UUID],
+        based_on_ensemble_id: Optional[UUID],
         refcase: Optional[EclSum],
     ) -> LocalEnsembleAccessor:
         (path / "experiment").mkdir(parents=True, exist_ok=False)
@@ -370,9 +382,10 @@ class LocalEnsembleAccessor(LocalEnsembleReader):
             id=uuid,
             ensemble_size=ensemble_size,
             experiment_id=experiment_id,
+            prior_ensemble_id=prior_ensemble_id,
+            based_on_ensemble_id=based_on_ensemble_id,
             iteration=iteration,
             name=name,
-            prior_ensemble_id=prior_ensemble_id,
             started_at=datetime.now(),
         )
 
@@ -532,8 +545,7 @@ class LocalEnsembleAccessor(LocalEnsembleReader):
         """Finalize the ensemble evaluation."""
         assert self.stopped_at is None
         self._index.stopped_at = datetime.now()
-        with open(self.mount_point / "index.json", mode="w", encoding="utf-8") as f:
-            print(self._index.json(), file=f)
+        self._save_index()
 
         (self.mount_point / "final").mkdir()
         for name in {path.name for path in self.mount_point.glob("realization-*/*")}:
@@ -547,3 +559,13 @@ class LocalEnsembleAccessor(LocalEnsembleReader):
 
         for path in self.mount_point.glob("realization-*"):
             shutil.rmtree(path)
+
+    def ensure_dirty_set(self, dirty: bool) -> None:
+        if self._index.dirty == dirty:
+            return
+        self._index.dirty = dirty
+        self._save_index()
+
+    def _save_index(self) -> None:
+        with open(self.mount_point / "index.json", mode="w", encoding="utf-8") as f:
+            print(self._index.json(), file=f)

@@ -1,64 +1,40 @@
+from __future__ import annotations
+
 import io
 import logging
 from itertools import combinations as combi
 from json.decoder import JSONDecodeError
-from typing import List, Optional
+from typing import List, Optional, TYPE_CHECKING
 
 import httpx
 import pandas as pd
 import requests
 from pandas.errors import ParserError
 
-from ert.services import StorageService
+if TYPE_CHECKING:
+    from ert.storage import StorageReader, EnsembleReader
 
 logger = logging.getLogger(__name__)
 
 
 class PlotApi:
-    def __init__(self):
-        self._all_cases: List[dict] = None
+    def __init__(self, storage: StorageReader):
+        self._all_cases: List[EnsembleReader] = []
         self._timeout = 120
         self._reset_storage_facade()
+        self._storage = storage
 
     def _reset_storage_facade(self):
-        with StorageService.session() as client:
-            client.post("/updates/facade", timeout=self._timeout)
-
-    def _get_case(self, name: str) -> Optional[dict]:
-        for e in self._get_all_cases():
-            if e["name"] == name:
-                return e
-        return None
+        self._storage.refresh()
 
     def _get_all_cases(self) -> List[dict]:
         if self._all_cases is not None:
             return self._all_cases
 
-        self._all_cases = []
-        with StorageService.session() as client:
-            try:
-                response = client.get("/experiments", timeout=self._timeout)
-                self._check_response(response)
-                experiments = response.json()
-                for experiment in experiments:
-                    for ensemble_id in experiment["ensemble_ids"]:
-                        response = client.get(
-                            f"/ensembles/{ensemble_id}", timeout=self._timeout
-                        )
-                        self._check_response(response)
-                        response_json = response.json()
-                        case_name = response_json["userdata"]["name"]
-                        self._all_cases.append(
-                            {
-                                "name": case_name,
-                                "id": ensemble_id,
-                                "hidden": case_name.startswith("."),
-                            }
-                        )
-                return self._all_cases
-            except IndexError as exc:
-                logging.exception(exc)
-                raise exc
+        self._all_cases = [
+            {"name": x.name, "id": x.id, "hidden": False}
+            for x in self._storage.ensembles
+        ]
 
     @staticmethod
     def _check_response(response: requests.Response):
@@ -67,23 +43,6 @@ class PlotApi:
                 f" Please report this error and try restarting the application."
                 f"{response.text} from url: {response.url}."
             )
-
-    def _get_experiments(self) -> dict:
-        with StorageService.session() as client:
-            response: requests.Response = client.get(
-                "/experiments", timeout=self._timeout
-            )
-            self._check_response(response)
-            return response.json()
-
-    def _get_ensembles(self, experiement_id) -> List:
-        with StorageService.session() as client:
-            response: requests.Response = client.get(
-                f"/experiments/{experiement_id}/ensembles", timeout=self._timeout
-            )
-            self._check_response(response)
-            response_json = response.json()
-            return response_json
 
     def all_data_type_keys(self) -> List:
         """Returns a list of all the keys except observation keys.
@@ -144,7 +103,8 @@ class PlotApi:
         if key.startswith("LOG10_"):
             key = key[6:]
 
-        case = self._get_case(case_name)
+        ensemble = self._storage.get_ensemble_by_name(case_name)
+        return LibresFacade
 
         with StorageService.session() as client:
             response: requests.Response = client.get(
@@ -174,7 +134,7 @@ class PlotApi:
         used to relate the observation to the data point it relates to, and obs_index
         is the index for the observation itself"""
 
-        case = self._get_case(case_name)
+        ensemble = self._storage.get_ensemble_by_name(case_name)
 
         with StorageService.session() as client:
             response = client.get(

@@ -303,7 +303,7 @@ def _get_obs_and_measure_data(
                 name: list(set(index.get_level_values(name))) for name in index.names
             }
             observation = observation.sel(sub_selection)
-        ds = source_fs.load_responses(group, ens_active_list)
+        ds = source_fs.load_responses(group, ens_active_list).to_dataset()
         try:
             filtered_ds = observation.merge(ds, join="left")
         except KeyError:

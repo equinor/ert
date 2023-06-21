@@ -124,7 +124,7 @@ def test_es_mda(tmpdir, source_root, snapshot):
         parser = ArgumentParser(prog="test_main")
         parsed = ert_parser(
             parser,
-            [
+
                 ES_MDA_MODE,
                 "--target-case",
                 "iter-%d",
