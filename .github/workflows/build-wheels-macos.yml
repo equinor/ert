@@ -21,15 +21,9 @@ jobs:
       id: setup_python
       with:
         python-version: ${{ inputs.python-version }}
-
-    - uses: actions/cache@v3
-      with:
-        path: ./.venv/
-        key: ${{ runner.os }}-${{ inputs.python-version }}-build-venv-${{ hashFiles('setup.py', 'pyproject.toml') }}
-    - run:  if [ -d .venv ]; then echo "cache hit"; else python -m venv ./.venv && source ./.venv/bin/activate && pip install toml && python -c 'import toml; c = toml.load("pyproject.toml"); print("\n".join(c["build-system"]["requires"]))' | pip install -r /dev/stdin ; fi
+        
     - name: Build macOS Wheel
-      run: source ./.venv/bin/activate && python -m pip wheel . --no-deps --no-build-isolation -w dist
-
+      run: python -m pip wheel . --no-deps --no-build-isolation -w dist
 
     - name: Upload wheel as artifact
       uses: actions/upload-artifact@v3
