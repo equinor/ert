@@ -42,9 +42,9 @@ def _backup_if_existing(path: Path) -> None:
 
 
 def _value_export_txt(
-    run_path: str, export_base_name: str, values: Mapping[str, Mapping[str, float]]
+    run_path: Path, export_base_name: str, values: Mapping[str, Mapping[str, float]]
 ) -> None:
-    path = Path(run_path) / f"{export_base_name}.txt"
+    path = run_path / f"{export_base_name}.txt"
     _backup_if_existing(path)
 
     if len(values) == 0:
@@ -57,9 +57,9 @@ def _value_export_txt(
 
 
 def _value_export_json(
-    run_path: str, export_base_name: str, values: Mapping[str, Mapping[str, float]]
+    run_path: Path, export_base_name: str, values: Mapping[str, Mapping[str, float]]
 ) -> None:
-    path = Path(run_path) / f"{export_base_name}.json"
+    path = run_path / f"{export_base_name}.json"
     _backup_if_existing(path)
 
     if len(values) == 0:
@@ -89,9 +89,9 @@ def _value_export_json(
 
 
 def _generate_parameter_files(
-    ens_config: "EnsembleConfig",
+    ens_config: EnsembleConfig,
     export_base_name: str,
-    run_path: str,
+    run_path: Path,
     iens: int,
     fs: EnsembleReader,
     iteration: int,
@@ -115,11 +115,11 @@ def _generate_parameter_files(
         node = ens_config[key]
 
         if isinstance(node, GenKwConfig):
-            gen_kw_dict = node.save(Path(run_path), iens, fs)
+            gen_kw_dict = node.save(run_path, iens, fs)
             exports.update(gen_kw_dict)
             continue
         if isinstance(node, ExtParamConfig):
-            node.save(Path(run_path), iens, fs)
+            node.save(run_path, iens, fs)
             continue
         if isinstance(node, ParameterConfig):
             # For the first iteration we do not write the parameter
@@ -127,7 +127,7 @@ def _generate_parameter_files(
             # model has completed.
             if node.forward_init and iteration == 0:
                 continue
-            node.save(Path(run_path), iens, fs)
+            node.save(run_path, iens, fs)
             continue
 
         raise NotImplementedError
@@ -348,7 +348,7 @@ class EnKFMain:
                 _generate_parameter_files(
                     ert_config.ensemble_config,
                     model_config.gen_kw_export_name,
-                    run_arg.runpath,
+                    Path(run_arg.runpath),
                     run_arg.iens,
                     run_context.sim_fs,
                     run_context.iteration,
