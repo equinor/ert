@@ -17,7 +17,7 @@ from _ert_com_protocol import DispatcherMessage
 from ert.serialization import evaluator_unmarshaller
 
 from ._experiment_protocol import Experiment
-from ._registry import _Registry
+from ._registry import Registry
 
 if TYPE_CHECKING:
     from ert.ensemble_evaluator.config import EvaluatorServerConfig
@@ -38,7 +38,7 @@ class ExperimentServer:
 
     def __init__(self, ee_config: EvaluatorServerConfig) -> None:
         self._config = ee_config
-        self._registry = _Registry()
+        self._registry = Registry()
         self._clients: Set[WebSocketServerProtocol] = set()
         self._server_done = asyncio.get_running_loop().create_future()
         self._server_task = asyncio.create_task(self._server())

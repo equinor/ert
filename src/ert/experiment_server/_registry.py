@@ -4,8 +4,8 @@ from uuid import UUID
 from ._experiment_protocol import Experiment
 
 
-class _Registry:
-    """:class:`_Registry` is a registry for registering experiments to be run
+class Registry:
+    """:class:`Registry` is a registry for registering experiments to be run
     or managed by the :class:`ert.experiment_server._server.ExperimentServer`.
     The registry should be manageable, but also be queryable by the
     :class:`ert.experiment_server._server.ExperimentServer`. The class's
