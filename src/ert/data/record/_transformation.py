@@ -33,15 +33,15 @@ class TransformationDirection(Flag):
     """Transformation is able to transform in both directions."""
 
     def __str__(self) -> str:
-        if self == self.__class__.FROM_RECORD:
+        if self == TransformationDirection.FROM_RECORD:
             return "from_record"
-        elif self == self.__class__.TO_RECORD:
+        elif self == TransformationDirection.TO_RECORD:
             return "to_record"
-        elif self == self.__class__.BIDIRECTIONAL:
+        elif self == TransformationDirection.BIDIRECTIONAL:
             return "bidirectional"
-        elif self == self.__class__.NONE:
+        elif self == TransformationDirection.NONE:
             return "none"
-        raise ValueError
+        raise ValueError()
 
 
 def _prepare_location(root_path: Path, location: Path) -> None:
