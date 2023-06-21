@@ -320,11 +320,9 @@ class EnKFMain:
     def createRunPath(self, run_context: RunContext) -> None:
         t = time.perf_counter()
         for iens, run_arg in enumerate(run_context):
+            run_path = Path(run_arg.runpath)
             if run_context.is_active(iens):
-                os.makedirs(
-                    run_arg.runpath,
-                    exist_ok=True,
-                )
+                run_path.mkdir(parents=True, exist_ok=True)
 
                 for source_file, target_file in self.ert_config.ert_templates:
                     target_file = self.get_context().substitute_real_iter(
@@ -335,7 +333,7 @@ class EnKFMain:
                         run_arg.iens,
                         run_context.iteration,
                     )
-                    target = Path(run_arg.runpath) / target_file
+                    target = run_path / target_file
                     if not target.parent.exists():
                         os.makedirs(
                             target.parent,
@@ -348,15 +346,13 @@ class EnKFMain:
                 _generate_parameter_files(
                     ert_config.ensemble_config,
                     model_config.gen_kw_export_name,
-                    Path(run_arg.runpath),
+                    run_path,
                     run_arg.iens,
                     run_context.sim_fs,
                     run_context.iteration,
                 )
 
-                with open(
-                    Path(run_arg.runpath) / "jobs.json", mode="w", encoding="utf-8"
-                ) as fptr:
+                with open(run_path / "jobs.json", mode="w", encoding="utf-8") as fptr:
                     forward_model_output = ert_config.forward_model_data_to_json(
                         run_arg.get_run_id(),
                         run_arg.iens,
