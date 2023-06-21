@@ -66,10 +66,7 @@ class ExperimentServer:
     async def handle_dispatch(
         self, websocket: WebSocketServerProtocol, path: str
     ) -> None:
-        """handle_dispatch(self, websocket, path: str)
-        Handle incoming "dispatch" connections, which refers to remote workers.
-        websocket is a https://websockets.readthedocs.io/en/stable/reference/server.html#websockets.server.WebSocketServerProtocol  # pylint: disable=line-too-long
-        """
+        """Handle incoming "dispatch" connections, which refers to remote workers."""
         event: Union[CloudEvent, DispatcherMessage]
         async for msg in websocket:
             if isinstance(msg, bytes):
@@ -91,8 +88,7 @@ class ExperimentServer:
 
     @contextmanager
     def store_client(self, websocket: WebSocketServerProtocol) -> Iterator[None]:
-        """store_client(self, websocket)
-        Context manager for a client connection handler, allowing to know how
+        """Context manager for a client connection handler, allowing to know how
         many clients are connected."""
         logger.debug("client %s connected", websocket)
         self._clients.add(websocket)
@@ -103,10 +99,7 @@ class ExperimentServer:
     async def handle_client(
         self, websocket: WebSocketServerProtocol, path: str
     ) -> None:
-        """handle_client(self, websocket, path: str)
-
-        Handle incoming client connections. websocket is a https://websockets.readthedocs.io/en/stable/reference/server.html#websockets.server.WebSocketServerProtocol  # pylint: disable=line-too-long
-        """
+        """Handle incoming client connections."""
         with self.store_client(websocket):
             async for message in websocket:
                 client_event = from_json(
