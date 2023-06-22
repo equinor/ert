@@ -1,7 +1,9 @@
 import datetime
 import logging
 import queue
+import random
 import threading
+import time
 from pathlib import Path
 from typing import Any, Dict
 
@@ -81,6 +83,7 @@ class Event(Reporter):
 
     def _event_publisher(self):
         logger.debug("Publishing event.")
+        time_sleep_seconds = 0.5
         with Client(
             url=self._evaluator_url,
             token=self._token,
@@ -104,6 +107,9 @@ class Event(Reporter):
                 try:
                     client.send(to_json(event).decode())
                     event = None
+                    # sleep between (0.25, 0.75) seconds to slow down
+                    # reporting from ultra fast jobs
+                    time.sleep(time_sleep_seconds + random.random() / 2.0 - 0.25)
                 except ClientConnectionError as exception:
                     # Possible intermittent failure, we retry sending the event
                     logger.debug(str(exception))
