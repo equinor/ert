@@ -1,4 +1,5 @@
 import os
+from collections import Counter
 from enum import Enum, auto
 from typing import Any, Dict, List, Literal, Tuple, TypedDict, Union
 
@@ -158,7 +159,7 @@ def _validate_conf_content(
             Tuple[ObservationType, FileContextToken, Dict[FileContextToken, Any]],
         ]
     ],
-):
+) -> ConfContent:
     result = []
     for decl in inp:
         if decl[0] == ObservationType.HISTORY:
@@ -186,7 +187,22 @@ def _validate_conf_content(
             )
         else:
             raise _unknown_declaration_error(decl)
+    _validate_unique_names(result)
     return result
+
+
+def _validate_unique_names(conf_content: ConfContent) -> None:
+    names_counter = Counter(n for _, n, *_ in conf_content)
+    duplicate_names = [n for n, c in names_counter.items() if c > 1]
+    errors = [
+        ErrorInfo(
+            f"Duplicate observation name {n}",
+            n.filename,
+        ).set_context(n)
+        for n in duplicate_names
+    ]
+    if errors:
+        raise ObservationConfigError.from_collected(errors)
 
 
 def _validate_history_values(
