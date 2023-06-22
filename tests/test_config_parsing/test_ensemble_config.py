@@ -1,17 +1,18 @@
+import os
+
 import pytest
 from hypothesis import assume, given
 
 from ert._c_wrappers.enkf import ErtConfig
 
-from .config_dict_generator import config_generators, to_config_file
+from .config_dict_generator import config_generators
 
 
 @given(config_generators())
 def test_ensemble_config_errors_on_unknown_function_in_field(
     tmp_path_factory, config_generator
 ):
-    filename = "config.ert"
-    with config_generator(tmp_path_factory, filename) as config_values:
+    with config_generator(tmp_path_factory) as config_values:
         assume(len(config_values.field) > 0)
 
         silly_function_name = "NORMALIZE_EGGS"
@@ -29,9 +30,10 @@ def test_ensemble_config_errors_on_unknown_function_in_field(
 
         config_values.field = mylist
 
-        to_config_file(filename, config_values)
         with pytest.raises(
             expected_exception=ValueError,
             match=f"FIELD INIT_TRANSFORM:{silly_function_name} is an invalid function",
         ):
-            ErtConfig.from_file(filename)
+            _ = ErtConfig.from_dict(
+                config_values.to_config_dict("test.ert", os.getcwd())
+            )

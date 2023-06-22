@@ -10,14 +10,13 @@ from hypothesis import given
 from ert._c_wrappers.enkf import ErtConfig
 from ert.parsing import ConfigValidationError, ConfigWarning
 
-from .config_dict_generator import config_generators, to_config_file
+from .config_dict_generator import config_generators
 
 
 @given(config_generators())
 def test_ert_config_throws_on_missing_forward_model_job(
     tmp_path_factory, config_generator
 ):
-    filename = "config.ert"
     with config_generator(tmp_path_factory) as config_values:
         config_values.install_job = []
         config_values.install_job_directory = []
@@ -25,10 +24,10 @@ def test_ert_config_throws_on_missing_forward_model_job(
             ["this-is-not-the-job-you-are-looking-for", "<WAVE-HAND>=casually"]
         )
 
-        to_config_file(filename, config_values)
-
         with pytest.raises(expected_exception=ValueError, match="Could not find job"):
-            ErtConfig.from_file(filename)
+            _ = ErtConfig.from_dict(
+                config_values.to_config_dict("test.ert", os.getcwd())
+            )
 
 
 @pytest.mark.usefixtures("use_tmpdir")
