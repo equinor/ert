@@ -46,11 +46,15 @@ def test_run_simulation_batch(setup_case, prior_ensemble):
         order_node_ext["W1"] = iens
         order_node_ext["W2"] = iens * 10
         order_node_ext["W3"] = iens * 100
-        prior_ensemble.save_ext_param("WELL_ORDER", iens, order_node_ext)
+        prior_ensemble.save_parameters(
+            "WELL_ORDER", iens, ExtParamConfig.to_dataset(order_node_ext)
+        )
 
         injection_node_ext["W1"] = iens + 1
         injection_node_ext["W4"] = 3 * (iens + 1)
-        prior_ensemble.save_ext_param("WELL_INJECTION", iens, injection_node_ext)
+        prior_ensemble.save_parameters(
+            "WELL_INJECTION", iens, ExtParamConfig.to_dataset(injection_node_ext)
+        )
         prior_ensemble.state_map[iens] = RealizationStateEnum.STATE_INITIALIZED
 
     mask = [True] * batch_size
@@ -66,7 +70,7 @@ def test_run_simulation_batch(setup_case, prior_ensemble):
         data = prior_ensemble.load_response("ORDER", (iens,))
         data = data["values"].values.ravel()
 
-        order_node_ext = prior_ensemble.load_ext_param("WELL_ORDER", iens)
-        assert order_node_ext["W1"] == data[0]
-        assert order_node_ext["W2"] == data[1]
-        assert order_node_ext["W3"] == data[2]
+        order_node_ext = prior_ensemble.load_parameters("WELL_ORDER", iens)
+        assert order_node_ext.sel(names="W1") == data[0]
+        assert order_node_ext.sel(names="W2") == data[1]
+        assert order_node_ext.sel(names="W3") == data[2]

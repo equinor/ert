@@ -1,12 +1,21 @@
+from __future__ import annotations
+
 import json
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import TYPE_CHECKING, Dict, List, Tuple, Union
+from typing import TYPE_CHECKING, Dict, List, Mapping, MutableMapping, Tuple, Union
+
+import numpy as np
+import xarray as xr
 
 from ert._c_wrappers.enkf.config.parameter_config import ParameterConfig
 
 if TYPE_CHECKING:
     from ert.storage import EnsembleAccessor, EnsembleReader
+
+    Number = Union[int, float]
+    DataType = Mapping[str, Union[Number, Mapping[str, Number]]]
+    MutableDataType = MutableMapping[str, Union[Number, MutableMapping[str, Number]]]
 
 
 @dataclass
@@ -61,9 +70,42 @@ class ExtParamConfig(ParameterConfig):
     def save(self, run_path: Path, real_nr: int, ensemble: "EnsembleReader"):
         file_path = run_path / self.output_file
         Path.mkdir(file_path.parent, exist_ok=True, parents=True)
-        data = ensemble.load_ext_param(self.name, real_nr)
+
+        data: MutableDataType = {}
+        for da in ensemble.load_parameters(self.name, real_nr):
+            name = str(da.names.values)
+            try:
+                outer, inner = name.split("\0")
+
+                if outer not in data:
+                    data[outer] = {}
+                data[outer][inner] = float(da)
+            except ValueError:
+                data[name] = float(da)
+
         with open(file_path, "w", encoding="utf-8") as f:
             json.dump(data, f)
+
+    @staticmethod
+    def to_dataset(data: DataType) -> xr.Dataset:
+        """Flattens data to fit inside a dataset"""
+        names: List[str] = []
+        values: List[float] = []
+        for outer_key, outer_val in data.items():
+            if isinstance(outer_val, (int, float)):
+                names.append(outer_key)
+                values.append(float(outer_val))
+                continue
+            for inner_key, inner_val in outer_val.items():
+                names.append(f"{outer_key}\0{inner_key}")
+                values.append(float(inner_val))
+
+        return xr.Dataset(
+            {
+                "values": ("names", np.array(values, dtype=np.float64)),
+                "names": names,
+            }
+        )
 
     def __len__(self):
         return len(self.input_keys)
