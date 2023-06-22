@@ -78,5 +78,7 @@ class FileContextToken(Token):
         )
 
     def replace_value(self, old: str, new: str, count: int = -1) -> "FileContextToken":
-        replaced = self.value.replace(old, new, count)
-        return FileContextToken(self.update(value=replaced), filename=self.filename)
+        if old in self.value:
+            replaced = self.value.replace(old, new, count)
+            return FileContextToken(self.update(value=replaced), filename=self.filename)
+        return self
