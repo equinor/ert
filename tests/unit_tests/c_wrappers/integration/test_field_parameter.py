@@ -14,7 +14,7 @@ import pytest
 import xtgeo
 from ecl import EclDataType
 from ecl.eclfile import EclKW
-from ecl.grid import EclGrid
+from ecl.grid import EclGridGenerator
 from ecl.util.geometry import Surface
 
 from ert.__main__ import ert_parser
@@ -766,7 +766,7 @@ def test_inactive_grdecl_ecl(tmpdir, storage, actnum):
             float(i) if mask else missing_value for (i, mask) in enumerate(actnum)
         ]
 
-        grid = EclGrid.create_rectangular((4, 3, 2), (1, 1, 1), actnum=actnum)
+        grid = EclGridGenerator.create_rectangular((4, 3, 2), (1, 1, 1), actnum=actnum)
         grid.save_GRID("MY_GRID.GRID")
 
         expect_param = EclKW("MY_PARAM", grid.get_global_size(), EclDataType.ECL_FLOAT)
