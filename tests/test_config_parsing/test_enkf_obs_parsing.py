@@ -913,3 +913,43 @@ def test_that_unknown_key_in_is_handled(tmpdir, observation_type):
         ert_config = ErtConfig.from_file("config.ert")
         with pytest.raises(ObservationConfigError, match="Unknown SMERROR"):
             _ = EnkfObs.from_ert_config(ert_config, new_parser=True)
+
+
+def test_validation_of_duplicate_names(
+    tmpdir,
+):
+    with tmpdir.as_cwd():
+        config = dedent(
+            """
+        NUM_REALIZATIONS 2
+
+        ECLBASE ECLIPSE_CASE
+        REFCASE ECLIPSE_CASE
+        OBS_CONFIG observations
+        """
+        )
+        with open("config.ert", "w", encoding="utf-8") as fh:
+            fh.writelines(config)
+        with open("observations", "w", encoding="utf-8") as fo:
+            fo.writelines(
+                """SUMMARY_OBSERVATION FOPR {
+                       KEY     = FOPR;
+                       RESTART = 1;
+                       VALUE   = 1.0;
+                       ERROR   = 0.1;
+                    };
+                    HISTORY_OBSERVATION FOPR;
+            """
+            )
+        with open("time_map.txt", "w", encoding="utf-8") as fo:
+            fo.writelines("2023-02-01")
+        run_sim(
+            datetime(2014, 9, 10),
+            [("FOPR", "SM3/DAY", None), ("FOPRH", "SM3/DAY", None)],
+        )
+
+        ert_config = ErtConfig.from_file("config.ert")
+        with pytest.raises(
+            ObservationConfigError, match="Duplicate observation name FOPR"
+        ):
+            _ = EnkfObs.from_ert_config(ert_config, new_parser=True)
