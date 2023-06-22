@@ -164,7 +164,9 @@ class BatchSimulator:
                 for var_name, var_setting in control.items():
                     _check_suffix(ext_config, var_name, var_setting)
 
-                file_system.save_ext_param(control_name, sim_id, control)
+                file_system.save_parameters(
+                    control_name, sim_id, ExtParamConfig.to_dataset(control)
+                )
 
     def start(
         self,
