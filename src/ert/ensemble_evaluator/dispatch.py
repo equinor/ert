@@ -55,18 +55,13 @@ class BatchingDispatcher:
                 function_to_events_map[f] = []
             function_to_events_map[f].append(event)
 
-        def done_logger(_):
-            logger.debug(
-                f"processed {len(batch_of_events_for_processing)} events in "
-                f"{(time.time()-t0):.6f}s. "
-                f"{left_in_queue} left in queue"
-            )
-
-        events_handling = asyncio.gather(
-            *[f(events) for f, events in function_to_events_map.items()]
+        for f, events in function_to_events_map.items():
+            await f(events)
+        logger.debug(
+            f"processed {len(batch_of_events_for_processing)} events in "
+            f"{(time.time()-t0):.6f}s. "
+            f"{left_in_queue} left in queue"
         )
-        events_handling.add_done_callback(done_logger)
-        await events_handling
 
     async def _job(self):
         while self._running:
