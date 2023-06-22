@@ -1,3 +1,4 @@
+import os
 from contextlib import ExitStack as does_not_raise
 from datetime import datetime
 from pathlib import Path
@@ -17,12 +18,12 @@ from .config_dict_generator import config_generators
 @pytest.mark.filterwarnings("ignore::UserWarning")
 @pytest.mark.filterwarnings("ignore::RuntimeWarning")
 @pytest.mark.filterwarnings("ignore::ert.parsing.ConfigWarning")
-@pytest.mark.usefixtures("set_site_config")
 @given(config_generators(use_eclbase=st.just(True)))
 def test_that_enkf_obs_keys_are_ordered(tmp_path_factory, config_generator):
-    filename = "config.ert"
-    with config_generator(tmp_path_factory, filename) as config_values:
-        ert_config = ErtConfig.from_file(filename)
+    with config_generator(tmp_path_factory) as config_values:
+        ert_config = ErtConfig.from_dict(
+            config_values.to_config_dict("test.ert", os.getcwd())
+        )
         observations = EnkfObs.from_ert_config(ert_config)
         for o in config_values.observations:
             assert observations.hasKey(o.name)
