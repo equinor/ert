@@ -6,7 +6,7 @@ from datetime import datetime
 from functools import lru_cache
 from multiprocessing.pool import ThreadPool
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Sequence, Tuple, Union
+from typing import TYPE_CHECKING, Any, List, Optional, Sequence, Tuple, Union
 from uuid import UUID
 
 import numpy as np
@@ -192,15 +192,6 @@ class LocalEnsembleReader:
         """
         return [i for i, s in enumerate(self._state_map) if s == state]
 
-    def load_ext_param(self, key: str, realization: int) -> Any:
-        input_path = self.mount_point / f"realization-{realization}" / f"{key}.json"
-        if not input_path.exists():
-            raise KeyError(f"No parameter: {key} in storage")
-
-        with open(input_path, "r", encoding="utf-8") as f:
-            data = json.load(f)
-        return data
-
     def _load_single_dataset(
         self,
         group: str,
@@ -381,14 +372,6 @@ class LocalEnsembleAccessor(LocalEnsembleReader):
     def sync(self) -> None:
         self._save_state_map()
         self.time_map.write(str(self._experiment_path / "time_map"))
-
-    def save_ext_param(
-        self, key: str, realization: int, data: Dict[str, Dict[str, Any]]
-    ) -> None:
-        output_path = self.mount_point / f"realization-{realization}"
-        Path.mkdir(output_path, exist_ok=True)
-        with open(output_path / f"{key}.json", "w", encoding="utf-8") as f:
-            json.dump(data, f)
 
     def load_from_run_path(
         self,
