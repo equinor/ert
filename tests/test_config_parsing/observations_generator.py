@@ -124,13 +124,8 @@ class GeneralObservation(Observation):
         return "GENERAL_OBSERVATION"
 
 
-names = st.text(
-    min_size=1, max_size=8, alphabet=st.characters(min_codepoint=65, max_codepoint=90)
-)
-
-
 @st.composite
-def general_observations(draw, ensemble_keys, std_cutoff):
+def general_observations(draw, ensemble_keys, std_cutoff, names):
     kws = {}
     kws["data"] = draw(ensemble_keys)
     kws["name"] = draw(names)
@@ -157,7 +152,7 @@ positive_floats = st.floats(min_value=0.1, allow_nan=False, allow_infinity=False
 
 
 @st.composite
-def summary_observations(draw, summary_keys, std_cutoff):
+def summary_observations(draw, summary_keys, std_cutoff, names):
     kws = {}
     kws["name"] = draw(names)
     kws["key"] = draw(summary_keys)
@@ -186,11 +181,25 @@ def summary_observations(draw, summary_keys, std_cutoff):
 @st.composite
 def observations(draw, ensemble_keys, summary_keys, std_cutoff):
     assume(ensemble_keys is not None or summary_keys is not None)
+    names = st.text(
+        min_size=1,
+        max_size=8,
+        alphabet=st.characters(min_codepoint=65, max_codepoint=90),
+    )
+    seen = set()
+    unique_names = names.filter(lambda x: x not in seen).map(lambda x: seen.add(x) or x)
+    unique_summary_names = summary_keys.filter(lambda x: x not in seen).map(
+        lambda x: seen.add(x) or x
+    )
     observation_generators = []
     if ensemble_keys is not None:
-        observation_generators.append(general_observations(ensemble_keys, std_cutoff))
+        observation_generators.append(
+            general_observations(ensemble_keys, std_cutoff, unique_names)
+        )
     if summary_keys is not None:
-        observation_generators.append(summary_observations(summary_keys, std_cutoff))
+        observation_generators.append(
+            summary_observations(summary_keys, std_cutoff, unique_names)
+        )
         observation_generators.append(
             st.builds(
                 HistoryObservation,
@@ -206,7 +215,7 @@ def observations(draw, ensemble_keys, summary_keys, std_cutoff):
                     ),
                     max_size=2,
                 ),
-                name=summary_keys,
+                name=unique_summary_names,
             ),
         )
     return draw(
