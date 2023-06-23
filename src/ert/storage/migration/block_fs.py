@@ -33,17 +33,27 @@ if TYPE_CHECKING:
 
 
 def migrate(path: Path) -> None:
+    logger.info(f"Outdated storage detected at '{path}'. Migrating...")
     block_storage_path = _backup(path)
 
+    statuses: List[bool] = []
     with LocalStorageAccessor(path, ignore_migration_check=True) as storage:
         for casedir in block_storage_path.iterdir():
             if (casedir / "ert_fstab").is_file():
-                _migrate_case_ignoring_exceptions(storage, casedir)
+                statuses.append(_migrate_case_ignoring_exceptions(storage, casedir))
+    failures = len(statuses) - sum(statuses)
+    logger.info(f"Migration from BlockFs completed with {failures} failure(s)")
+    logger.info(
+        "Note: ERT 4 and lower is not compatible with the migrated storage. "
+        "To restore your old data, copy the contents of "
+        f"'{block_storage_path}' to '{path}'."
+    )
 
 
-def _migrate_case_ignoring_exceptions(storage: StorageAccessor, casedir: Path) -> None:
+def _migrate_case_ignoring_exceptions(storage: StorageAccessor, casedir: Path) -> bool:
     try:
         migrate_case(storage, casedir)
+        return True
     except Exception as exc:  # pylint: disable=broad-except
         logger.warning(
             (
@@ -52,9 +62,11 @@ def _migrate_case_ignoring_exceptions(storage: StorageAccessor, casedir: Path) -
             ),
             exc_info=exc,
         )
+        return False
 
 
 def migrate_case(storage: StorageAccessor, path: Path) -> None:
+    logger.info(f"Migrating case '{path.name}'")
     time_map = _load_timestamps(path / "files/time-map")
     state_map = _load_states(path / "files/state-map")
 
