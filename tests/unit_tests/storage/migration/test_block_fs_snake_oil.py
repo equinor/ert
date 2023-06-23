@@ -1,5 +1,6 @@
 import logging
 import re
+import shutil
 
 import netCDF4
 import numpy as np
@@ -159,3 +160,34 @@ def test_migration_failure(storage, enspath, ens_config, caplog, monkeypatch):
         "Exception occurred during migration of BlockFs case 'default_0': "
         "'The key:SNAKE_OIL_PARAM is not in the ensemble configuration'"
     )
+
+
+@pytest.mark.parametrize("should_fail", [False, True])
+def test_full_migration_logging(
+    tmp_path, enspath, caplog, monkeypatch, should_fail, ens_config
+):
+    if should_fail:
+        monkeypatch.setattr(ens_config, "parameter_configs", {})
+
+    caplog.set_level(logging.INFO)
+    shutil.copytree(enspath, tmp_path / "storage")
+
+    with ert.storage.open_storage(tmp_path / "storage", mode="w"):
+        pass
+
+    msgs = [r.message for r in caplog.records]
+    assert "Outdated storage detected at" in msgs.pop(0)
+    assert "Backing up BlockFs storage" in msgs.pop(0)
+    assert msgs.pop(0) == "Migrating case 'default'"
+    assert msgs.pop(0) == "Migrating case 'default_0'"
+
+    if should_fail:
+        assert msgs.pop(0) == (
+            "Exception occurred during migration of BlockFs case 'default_0': "
+            "'The key:SNAKE_OIL_PARAM is not in the ensemble configuration'"
+        )
+        assert msgs.pop(0) == "Migration from BlockFs completed with 1 failure(s)"
+    else:
+        assert msgs.pop(0) == "Migration from BlockFs completed with 0 failure(s)"
+
+    assert "Note: ERT 4 and lower is not compatible" in msgs.pop(0)
