@@ -4,6 +4,7 @@ decorator
 ecl_data_io
 flake8
 flake8-bugbear
+furo
 grpcio-tools
 hypothesis
 isort
@@ -28,10 +29,10 @@ requests
 scikit-build
 setuptools_scm
 sortedcontainers
-sphinx<6
+sphinx
 sphinx-argparse
 sphinx-autoapi
-sphinx_rtd_theme
+sphinx-copybutton
 sphinxcontrib-plantuml
 sphinxcontrib.datatemplates
 testpath
