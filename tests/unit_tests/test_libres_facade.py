@@ -7,6 +7,7 @@ import pytest
 from ecl.summary import EclSum
 from pandas.core.base import PandasObject
 
+from ert._c_wrappers.enkf import EnKFMain, ErtConfig
 from ert.libres_facade import LibresFacade
 from ert.storage import open_storage
 
@@ -462,3 +463,43 @@ def test_get_observations(tmpdir):
 
         facade = LibresFacade.from_config_file("config.ert")
         assert facade.get_observations().hasKey("FOPR_1")
+
+
+def test_load_gen_kw_not_sorted(storage, tmpdir, snapshot):
+    with tmpdir.as_cwd():
+        config = dedent(
+            """
+        NUM_REALIZATIONS 10
+        GEN_KW PARAM_2 template.txt kw.txt prior.txt
+        GEN_KW PARAM_1 template.txt kw.txt prior.txt
+        RANDOM_SEED 1234
+        """
+        )
+        with open("config.ert", mode="w", encoding="utf-8") as fh:
+            fh.writelines(config)
+        with open("template.txt", mode="w", encoding="utf-8") as fh:
+            fh.writelines("MY_KEYWORD <MY_KEYWORD>")
+        with open("prior.txt", mode="w", encoding="utf-8") as fh:
+            fh.writelines("MY_KEYWORD NORMAL 0 1")
+
+        ert_config = ErtConfig.from_file("config.ert")
+        ert = EnKFMain(ert_config)
+
+        experiment_id = storage.create_experiment(
+            ert_config.ensemble_config.parameter_configuration
+        )
+        ensemble = storage.create_ensemble(
+            experiment_id, name="default", ensemble_size=ert.getEnsembleSize()
+        )
+
+        prior = ert.ensemble_context(
+            ensemble,
+            [True] * 10,
+            iteration=0,
+        )
+
+        ert.sample_prior(prior.sim_fs, prior.active_realizations)
+
+        facade = LibresFacade(ert)
+        data = facade.load_all_gen_kw_data(ensemble)
+        snapshot.assert_match(data.to_csv(), "gen_kw_unsorted")
