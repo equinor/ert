@@ -42,11 +42,11 @@ class LocalExperimentReader:
         return self._id
 
     @property
-    def grid_path(self) -> Optional[str]:
+    def grid_path(self) -> Optional[Path]:
         if (self._path / "grid.EGRID").exists():
-            return str(self._path / "grid.EGRID")
+            return self._path / "grid.EGRID"
         if (self._path / "grid.GRID").exists():
-            return str(self._path / "grid.GRID")
+            return self._path / "grid.GRID"
         return None
 
     @property
