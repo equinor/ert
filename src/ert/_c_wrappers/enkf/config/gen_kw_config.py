@@ -34,31 +34,13 @@ class GenKwConfig(ParameterConfig):
     template_file: str
     parameter_file: str
     output_file: str
+    transfer_function_definitions: List[str]
     forward_init_file: Optional[str] = None
 
     def __post_init__(self):
-        errors = []
-        if not os.path.isfile(self.template_file):
-            errors.append(
-                ConfigValidationError(f"No such template file: {self.template_file}")
-            )
-
-        if not os.path.isfile(self.parameter_file):
-            errors.append(
-                ConfigValidationError(f"No such parameter file: {self.parameter_file}")
-            )
-
-        if errors:
-            raise ConfigValidationError.from_collected(errors)
-
         self._transfer_functions: List[TransferFunction] = []
-
-        with open(self.parameter_file, "r", encoding="utf-8") as file:
-            for item in file:
-                item = item.rsplit("--")[0]  # remove comments
-
-                if item.strip():  # only lines with content
-                    self._transfer_functions.append(self.parse_transfer_function(item))
+        for e in self.transfer_function_definitions:
+            self._transfer_functions.append(self.parse_transfer_function(e))
 
     def sample_or_load(
         self,

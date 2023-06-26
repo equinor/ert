@@ -278,3 +278,73 @@ def test_gen_kw_pred_special_suggested_removal():
         match="GEN_KW PRED used to hold a special meaning and be excluded",
     ):
         ErtConfig.from_file("config.ert")
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_gen_kw_config():
+    with open("template.txt", "w", encoding="utf-8") as f:
+        f.write("Hello")
+
+    with open("parameters.txt", "w", encoding="utf-8") as f:
+        f.write("KEY  UNIFORM 0 1 \n")
+
+    with open("parameters_with_comments.txt", "w", encoding="utf-8") as f:
+        f.write("KEY1  UNIFORM 0 1 -- COMMENT\n")
+        f.write("\n\n")  # Two blank lines
+        f.write("KEY2  UNIFORM 0 1\n")
+        f.write("--KEY3  \n")
+        f.write("KEY3  UNIFORM 0 1\n")
+
+    EnsembleConfig.from_dict(
+        config_dict={
+            ConfigKeys.GEN_KW: [
+                [
+                    "KEY",
+                    "template.txt",
+                    "nothing_here.txt",
+                    "parameters.txt",
+                ]
+            ],
+        }
+    )
+
+    EnsembleConfig.from_dict(
+        config_dict={
+            ConfigKeys.GEN_KW: [
+                [
+                    "KEY",
+                    "template.txt",
+                    "nothing_here.txt",
+                    "parameters_with_comments.txt",
+                ]
+            ],
+        }
+    )
+
+    with pytest.raises(ConfigValidationError):
+        EnsembleConfig.from_dict(
+            config_dict={
+                ConfigKeys.GEN_KW: [
+                    [
+                        "KEY",
+                        "no_template_here.txt",
+                        "nothing_here.txt",
+                        "parameters.txt",
+                    ]
+                ],
+            }
+        )
+
+    with pytest.raises(ConfigValidationError):
+        EnsembleConfig.from_dict(
+            config_dict={
+                ConfigKeys.GEN_KW: [
+                    [
+                        "KEY",
+                        "template.txt",
+                        "nothing_here.txt",
+                        "no_parameter_here.txt",
+                    ]
+                ],
+            }
+        )
