@@ -189,13 +189,29 @@ class EnsembleConfig:
             if init_file is not None:
                 init_file = os.path.abspath(init_file)
 
+            parameter_file = _get_abs_path(gen_kw[3])
+            if not os.path.isfile(parameter_file):
+                raise ConfigValidationError(f"No such parameter file: {parameter_file}")
+
+            template_file = _get_abs_path(gen_kw[1])
+            if not os.path.isfile(template_file):
+                raise ConfigValidationError(f"No such template file: {template_file}")
+
+            transfer_function_definitions: List[str] = []
+            with open(parameter_file, "r", encoding="utf-8") as file:
+                for item in file:
+                    item = item.rsplit("--")[0]  # remove comments
+                    if item.strip():  # only lines with content
+                        transfer_function_definitions.append(item)
+
             kw_node = GenKwConfig(
                 name=gen_kw_key,
                 forward_init=forward_init,
-                template_file=_get_abs_path(gen_kw[1]),
-                parameter_file=_get_abs_path(gen_kw[3]),
+                template_file=template_file,
                 output_file=gen_kw[2],
+                parameter_file=parameter_file,
                 forward_init_file=init_file,
+                transfer_function_definitions=transfer_function_definitions,
             )
 
             self._check_config_node(kw_node)

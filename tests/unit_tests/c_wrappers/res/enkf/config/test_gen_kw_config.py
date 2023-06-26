@@ -10,52 +10,24 @@ from ert.parsing import ConfigValidationError
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_gen_kw_config():
-    with open("template.txt", "w", encoding="utf-8") as f:
-        f.write("Hello")
-
-    with open("parameters.txt", "w", encoding="utf-8") as f:
-        f.write("KEY  UNIFORM 0 1 \n")
-
-    with open("parameters_with_comments.txt", "w", encoding="utf-8") as f:
-        f.write("KEY1  UNIFORM 0 1 -- COMMENT\n")
-        f.write("\n\n")  # Two blank lines
-        f.write("KEY2  UNIFORM 0 1\n")
-        f.write("--KEY3  \n")
-        f.write("KEY3  UNIFORM 0 1\n")
-
-    template_file = "template.txt"
-    parameter_file = "parameters.txt"
-    parameter_file_comments = "parameters_with_comments.txt"
-    with pytest.raises(ConfigValidationError):
-        GenKwConfig(
-            name="KEY",
-            forward_init=False,
-            template_file=template_file,
-            parameter_file="does_not_exist.txt",
-            output_file="kw.txt",
-        )
-
-    with pytest.raises(ConfigValidationError):
-        GenKwConfig(
-            name="KEY",
-            forward_init=False,
-            template_file=template_file,
-            parameter_file="does_not_exist.txt",
-            output_file="kw.txt",
-        )
-
     GenKwConfig(
         name="KEY",
         forward_init=False,
-        template_file=template_file,
-        parameter_file=parameter_file,
+        template_file="",
+        parameter_file="",
+        transfer_function_definitions=["KEY  UNIFORM 0 1"],
         output_file="kw.txt",
     )
     conf = GenKwConfig(
         name="KEY",
         forward_init=False,
-        template_file=template_file,
-        parameter_file=parameter_file_comments,
+        template_file="",
+        parameter_file="",
+        transfer_function_definitions=[
+            "KEY1  UNIFORM 0 1",
+            "KEY2 UNIFORM 0 1",
+            "KEY3 UNIFORM 0 1",
+        ],
         output_file="kw.txt",
     )
     assert len(conf) == 3
@@ -81,11 +53,17 @@ def test_gen_kw_config_get_priors():
         f.write("KEY9  LOGUNIF 0 1\n")
         f.write("KEY10  CONST 10\n")
 
+    transfer_function_definitions = []
+    with open(parameter_file, "r", encoding="utf-8") as file:
+        for item in file:
+            transfer_function_definitions.append(item)
+
     conf = GenKwConfig(
         name="KW_NAME",
         forward_init=False,
         template_file=template_file,
         parameter_file=parameter_file,
+        transfer_function_definitions=transfer_function_definitions,
         output_file="param.txt",
     )
     priors = conf.get_priors()
@@ -413,6 +391,7 @@ def test_gen_kw_objects_equal(tmpdir):
             name="KW_NAME",
             forward_init=False,
             template_file="template.txt",
+            transfer_function_definitions=["MY_KEYWORD UNIFORM 1 2\n"],
             parameter_file="prior.txt",
             output_file="kw.txt",
         )
@@ -420,6 +399,7 @@ def test_gen_kw_objects_equal(tmpdir):
             name="KW_NAME2",
             forward_init=False,
             template_file="template.txt",
+            transfer_function_definitions=["MY_KEYWORD UNIFORM 1 2\n"],
             parameter_file="prior.txt",
             output_file="kw.txt",
         )
@@ -427,6 +407,7 @@ def test_gen_kw_objects_equal(tmpdir):
             name="KW_NAME",
             forward_init=False,
             template_file="empty.txt",
+            transfer_function_definitions=["MY_KEYWORD UNIFORM 1 2\n"],
             parameter_file="prior.txt",
             output_file="kw.txt",
         )
@@ -434,6 +415,7 @@ def test_gen_kw_objects_equal(tmpdir):
             name="KW_NAME",
             forward_init=False,
             template_file="template.txt",
+            transfer_function_definitions=[],
             parameter_file="empty.txt",
             output_file="kw.txt",
         )
@@ -442,6 +424,7 @@ def test_gen_kw_objects_equal(tmpdir):
             forward_init=False,
             template_file="template.txt",
             parameter_file="prior.txt",
+            transfer_function_definitions=[],
             output_file="empty.txt",
         )
         assert g1 == g2
