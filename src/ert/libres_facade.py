@@ -6,7 +6,6 @@ from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Union
 
 import numpy as np
 import pandas as pd
-import xarray as xr
 from deprecation import deprecated
 from ecl.grid import EclGrid
 from pandas import DataFrame, Series
@@ -307,7 +306,7 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
             else [index for index, active in enumerate(ens_mask) if active]
         )
 
-        datasets = []
+        dataframes = []
         keys = [group] if group is not None else self.get_gen_kw()
         for key in keys:
             try:
@@ -315,15 +314,14 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
                     key, realizations, var="transformed_values"
                 )
                 ds["names"] = np.char.add(f"{key}:", ds["names"].astype(np.str_))
-                datasets.append(ds)
+                dataframes.append(ds.to_dataframe().unstack(level="names"))
             except KeyError:
                 pass
-        if not datasets:
+        if not dataframes:
             return pd.DataFrame()
 
         # Format the DataFrame in a way that old code expects it
-        dataframe = xr.combine_by_coords(datasets).to_dataframe()
-        dataframe = dataframe.swaplevel().unstack()
+        dataframe = pd.concat(dataframes, axis=1)
         dataframe.columns = dataframe.columns.droplevel()
         dataframe.columns.name = None
         dataframe.index.name = "Realization"
