@@ -18,8 +18,7 @@ from ert._c_wrappers.enkf.enums import RealizationStateEnum
 from ert._c_wrappers.enkf.time_map import TimeMap
 from ert.callbacks import forward_model_ok
 from ert.load_status import LoadResult, LoadStatus
-from ert.parsing import ConfigValidationError
-from ert.storage.field_utils.field_utils import Shape, read_mask, save_field
+from ert.storage.field_utils import field_utils
 
 if TYPE_CHECKING:
     import numpy.typing as npt
@@ -247,33 +246,8 @@ class LocalEnsembleReader:
         assert isinstance(response, xr.Dataset)
         return response
 
-    def load_field(self, key: str, realizations: List[int]) -> npt.NDArray[np.double]:
-        result: Optional[npt.NDArray[np.double]] = None
-        for index, realization in enumerate(realizations):
-            input_path = self.mount_point / f"realization-{realization}"
-            if not input_path.exists():
-                raise KeyError(
-                    f"Unable to load FIELD for key: {key} - "
-                    f"realization: {realization} not found"
-                )
-            data = np.load(input_path / f"{key}.npy", mmap_mode="r")
-            data = data[np.isfinite(data)]
-
-            if result is None:
-                result = np.empty((data.size, len(realizations)), dtype=np.double)
-            elif data.size != result.shape[0]:
-                raise ValueError(f"Data size mismatch for realization {realization}")
-
-            result[:, index] = data
-
-        if result is None:
-            raise ConfigValidationError(
-                "No realizations found when trying to load field"
-            )
-        return result
-
     def field_has_data(self, key: str, realization: int) -> bool:
-        path = self.mount_point / f"realization-{realization}/{key}.npy"
+        path = self.mount_point / f"realization-{realization}/{key}"
         return path.exists()
 
     def field_has_info(self, key: str) -> bool:
@@ -296,7 +270,9 @@ class LocalEnsembleReader:
             raise KeyError(
                 f"Unable to load FIELD for key: {key}, realization: {realization} "
             )
-        data = np.load(data_path / f"{key}.npy")
+        da = xr.open_dataarray(data_path / f"{key}")
+        # Squeeze to get rid of realization-dimension
+        data: npt.NDArray[np.double] = da.values.squeeze(axis=0)
         data = field_transform(data, transform_name=info["output_transformation"])
         data = _field_truncate(
             data,
@@ -304,11 +280,11 @@ class LocalEnsembleReader:
             info["truncation_max"],
         )
 
-        save_field(
+        field_utils.save_field(
             data,
             key,
             self.experiment.grid_path,
-            Shape(info["nx"], info["ny"], info["nz"]),
+            field_utils.Shape(info["nx"], info["ny"], info["nz"]),
             output_path,
             fformat,
         )
@@ -443,36 +419,3 @@ class LocalEnsembleAccessor(LocalEnsembleReader):
         Path.mkdir(output_path, parents=True, exist_ok=True)
 
         data.to_netcdf(output_path / f"{group}.nc", engine="scipy")
-
-    def save_field(
-        self,
-        parameter_name: str,
-        realization: int,
-        data: Union[
-            npt.NDArray[np.double], np.ma.MaskedArray[Any, np.dtype[np.double]]
-        ],
-    ) -> None:
-        output_path = self.mount_point / f"realization-{realization}"
-        Path.mkdir(output_path, exist_ok=True)
-        if not np.ma.isMaskedArray(data):  # type: ignore
-            grid_path = self.experiment.grid_path
-            if grid_path is None:
-                raise ConfigValidationError(
-                    f"Missing path to grid file for realization-{realization}"
-                )
-            mask, shape = read_mask(grid_path)
-            if mask is not None:
-                data_full = np.full_like(mask, np.nan, dtype=np.double)
-                np.place(data_full, np.logical_not(mask), data)
-                data = np.ma.MaskedArray(
-                    data_full, mask, fill_value=np.nan
-                )  # type: ignore
-            else:
-                data = np.ma.MaskedArray(data.reshape(shape))  # type: ignore
-
-        np.save(f"{output_path}/{parameter_name}", data.filled(np.nan))  # type: ignore
-        self.update_realization_state(
-            realization,
-            [RealizationStateEnum.STATE_UNDEFINED],
-            RealizationStateEnum.STATE_INITIALIZED,
-        )

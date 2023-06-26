@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING, Optional
 import numpy as np
 
 from ert._c_wrappers.enkf.config.parameter_config import ParameterConfig
-from ert.storage.field_utils.field_utils import get_masked_field
+from ert.storage.field_utils import field_utils
 
 if TYPE_CHECKING:
     import numpy.typing as npt
@@ -43,11 +43,12 @@ class Field(ParameterConfig):
 
         key = self.name
         grid_path = ensemble.experiment.grid_path
-        data = get_masked_field(file_path, key, grid_path)
+        data = field_utils.get_masked_field(file_path, key, grid_path)
 
         trans = self.input_transformation
         data_transformed = field_transform(data, trans)
-        ensemble.save_field(key, real_nr, data_transformed)
+        ds = field_utils.create_field_dataset(grid_path, data_transformed)
+        ensemble.save_parameters(key, real_nr, ds)
         _logger.debug(f"load() time_used {(time.perf_counter() - t):.4f}s")
 
     def save(self, run_path: Path, real_nr: int, ensemble: EnsembleReader):
@@ -73,8 +74,8 @@ TRANSFORM_FUNCTIONS = {
 
 
 def field_transform(
-    data: npt.ArrayLike, transform_name: Optional[str]
-) -> npt.ArrayLike:
+    data: npt.NDArray[np.double], transform_name: Optional[str]
+) -> npt.NDArray[np.double]:
     if transform_name is None:
         return data
     return TRANSFORM_FUNCTIONS[transform_name](data)
