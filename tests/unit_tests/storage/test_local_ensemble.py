@@ -1,8 +1,10 @@
-import numpy
+import numpy as np
+import xarray as xr
 import xtgeo
 from ecl.grid import EclGridGenerator
 
 from ert.storage import open_storage
+from ert.storage.field_utils import field_utils
 
 
 def test_that_egrid_files_are_saved_and_loaded_correctly(tmp_path):
@@ -19,20 +21,19 @@ def test_that_egrid_files_are_saved_and_loaded_correctly(tmp_path):
         grid.to_file(f"{experiment.mount_point}/grid.EGRID", "egrid")
 
         data = [1.2, 1.1, 4.3, 3.1]
-        ensemble.save_field(
-            parameter_name="MY_PARAM",
-            realization=1,
+        ds = field_utils.create_field_dataset(
+            ensemble.experiment.grid_path,
             data=data,
         )
-
-        saved_file = ensemble_dir / "realization-1" / "MY_PARAM.npy"
+        ensemble.save_parameters("MY_PARAM", 1, ds)
+        saved_file = ensemble_dir / "realization-1" / "MY_PARAM"
         assert saved_file.exists()
 
-        loaded_data = numpy.load(saved_file)
-        expected_data = data[:-1] + [numpy.nan] * 16 + [data[3]]
-        expected_data = numpy.asarray(expected_data)
+        loaded_data = xr.open_dataarray(saved_file).values
+        expected_data = data[:-1] + [np.nan] * 16 + [data[3]]
+        expected_data = np.asarray(expected_data)
         expected_data = expected_data.reshape(4, 5, 1)
-        numpy.testing.assert_array_equal(loaded_data, expected_data)
+        np.testing.assert_array_equal(loaded_data.squeeze(axis=0), expected_data)
 
 
 def test_that_grid_files_are_saved_and_loaded_correctly(tmp_path):
@@ -47,17 +48,17 @@ def test_that_grid_files_are_saved_and_loaded_correctly(tmp_path):
         grid.save_GRID(f"{experiment.mount_point}/grid.GRID")
 
         data = [1.2, 1.1, 4.3, 3.1]
-        ensemble.save_field(
-            parameter_name="MY_PARAM",
-            realization=1,
+        ds = field_utils.create_field_dataset(
+            ensemble.experiment.grid_path,
             data=data,
         )
+        ensemble.save_parameters("MY_PARAM", 1, ds)
 
-        saved_file = ensemble_dir / "realization-1" / "MY_PARAM.npy"
+        saved_file = ensemble_dir / "realization-1" / "MY_PARAM"
         assert saved_file.exists()
 
-        loaded_data = numpy.load(saved_file)
-        expected_data = data[:-1] + [numpy.nan] * 16 + [data[3]]
-        expected_data = numpy.asarray(expected_data)
+        loaded_data = xr.open_dataarray(saved_file).values
+        expected_data = data[:-1] + [np.nan] * 16 + [data[3]]
+        expected_data = np.asarray(expected_data)
         expected_data = expected_data.reshape(4, 5, 1, order="F")
-        numpy.testing.assert_array_equal(loaded_data, expected_data)
+        np.testing.assert_array_equal(loaded_data.squeeze(axis=0), expected_data)

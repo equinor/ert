@@ -134,11 +134,15 @@ def test_load_two_parameters_forward_init(storage, tmpdir):
         assert not Path("simulations/realization-0/iter-0/param_b.grdecl").exists()
 
         # should not be loaded yet
-        with pytest.raises(KeyError, match="Unable to load FIELD for key: PARAM_A"):
-            fs.load_field("PARAM_A", [0])
+        with pytest.raises(
+            KeyError, match="No dataset 'PARAM_A' in storage for realization 0"
+        ):
+            fs.load_parameters("PARAM_A", [0])
 
-        with pytest.raises(KeyError, match="Unable to load FIELD for key: PARAM_B"):
-            fs.load_field("PARAM_B", [0])
+        with pytest.raises(
+            KeyError, match="No dataset 'PARAM_B' in storage for realization 0"
+        ):
+            fs.load_parameters("PARAM_B", [0])
 
         assert load_from_forward_model(ert, fs, 0) == 1
 
@@ -159,13 +163,11 @@ def test_load_two_parameters_forward_init(storage, tmpdir):
         numpy.testing.assert_equal(prop_b.values.data, param_b)
 
         # should be loaded now
-        loaded_a = fs.load_field("PARAM_A", [0])
-        for e in range(0, loaded_a.shape[0]):
-            assert loaded_a[e][0] == 22
+        loaded_a = fs.load_parameters("PARAM_A", [0])
+        assert (loaded_a.values == 22).all()
 
-        loaded_b = fs.load_field("PARAM_B", [0])
-        for e in range(0, loaded_b.shape[0]):
-            assert loaded_b[e][0] == 77
+        loaded_b = fs.load_parameters("PARAM_B", [0])
+        assert (loaded_b.values == 77).all()
 
 
 def test_load_two_parameters_roff(storage, tmpdir):
@@ -195,13 +197,11 @@ def test_load_two_parameters_roff(storage, tmpdir):
         assert not ert.ensembleConfig()["PARAM_A"].forward_init
         assert not ert.ensembleConfig()["PARAM_B"].forward_init
 
-        loaded_a = fs.load_field("PARAM_A", [0])
-        for e in range(0, loaded_a.shape[0]):
-            assert loaded_a[e][0] == 22
+        loaded_a = fs.load_parameters("PARAM_A", [0])
+        assert (loaded_a.values == 22).all()
 
-        loaded_b = fs.load_field("PARAM_B", [0])
-        for e in range(0, loaded_b.shape[0]):
-            assert loaded_b[e][0] == 77
+        loaded_b = fs.load_parameters("PARAM_B", [0])
+        assert (loaded_b.values == 77).all()
 
         prop_a = xtgeo.gridproperty_from_file(
             pfile="simulations/realization-0/iter-0/param_a.roff",
@@ -253,13 +253,11 @@ def test_load_two_parameters(storage, tmpdir):
         assert not ert.ensembleConfig()["PARAM_A"].forward_init
         assert not ert.ensembleConfig()["PARAM_B"].forward_init
 
-        loaded_a = fs.load_field("PARAM_A", [0])
-        for e in range(0, loaded_a.shape[0]):
-            assert loaded_a[e][0] == 22
+        loaded_a = fs.load_parameters("PARAM_A", [0])
+        assert (loaded_a.values == 22).all()
 
-        loaded_b = fs.load_field("PARAM_B", [0])
-        for e in range(0, loaded_b.shape[0]):
-            assert loaded_b[e][0] == 77
+        loaded_b = fs.load_parameters("PARAM_B", [0])
+        assert (loaded_b.values == 77).all()
 
         prop_a = xtgeo.gridproperty_from_file(
             pfile="simulations/realization-0/iter-0/param_a.grdecl",
@@ -373,10 +371,9 @@ def test_transformation(storage, tmpdir):
         _, fs = create_runpath(storage, "config.ert", [True, True])
 
         # stored internally as 2.5, 1.5
-        loaded_a = fs.load_field("PARAM_A", [0, 1])
-        for e in range(0, loaded_a.shape[0]):
-            assert loaded_a[e][0] == pytest.approx(2.5)
-            assert loaded_a[e][1] == pytest.approx(1.5)
+        loaded_a = fs.load_parameters("PARAM_A", [0, 1])
+        assert np.isclose(loaded_a.values[0], 2.5).all()
+        assert np.isclose(loaded_a.values[1], 1.5).all()
 
         prop_a_1 = xtgeo.gridproperty_from_file(
             pfile="simulations/realization-0/iter-0/param_a.grdecl",
@@ -441,9 +438,9 @@ def test_forward_init(storage, tmpdir, config_str, expect_forward_init):
             assert not Path("simulations/realization-0/iter-0/my_param.grdecl").exists()
 
             with pytest.raises(
-                KeyError, match="Unable to load FIELD for key: MY_PARAM"
+                KeyError, match="No dataset 'MY_PARAM' in storage for realization 0"
             ):
-                fs.load_field("MY_PARAM", [0])
+                fs.load_parameters("MY_PARAM", [0])
 
             # We try to load the parameters from the forward model, this would fail if
             # forward init was not set correctly
@@ -461,8 +458,8 @@ def test_forward_init(storage, tmpdir, config_str, expect_forward_init):
         numpy.testing.assert_equal(prop.values.data, expect_param)
 
         if expect_forward_init:
-            arr = fs.load_field("MY_PARAM", [0])
-            assert len(arr) == 16
+            arr = fs.load_parameters("MY_PARAM", [0])
+            assert len(arr.values.ravel()) == 16
 
 
 @pytest.mark.integration_test
@@ -488,7 +485,10 @@ def test_field_param_update(tmpdir):
         with open("config.ert", "w", encoding="utf-8") as fh:
             fh.writelines(config)
 
-        grid = xtgeo.create_box_grid(dimension=(4, 4, 1))
+        NCOL = 4
+        NROW = 4
+        NLAY = 1
+        grid = xtgeo.create_box_grid(dimension=(NCOL, NROW, NLAY))
         grid.to_file("MY_EGRID.EGRID", "egrid")
 
         with open("forward_model", "w", encoding="utf-8") as f:
@@ -574,12 +574,14 @@ if __name__ == "__main__":
             prior = storage.get_ensemble_by_name("prior")
             posterior = storage.get_ensemble_by_name("smoother_update")
 
-        prior_result = prior.load_field("MY_PARAM", list(range(5)))
-        posterior_result = posterior.load_field("MY_PARAM", list(range(5)))
+        prior_result = prior.load_parameters("MY_PARAM", list(range(5)))
+        posterior_result = posterior.load_parameters("MY_PARAM", list(range(5)))
         # Only assert on the first three rows, as there are only three parameters,
         # a, b and c, the rest have no correlation to the results.
-        assert np.linalg.det(np.cov(prior_result[:3])) > np.linalg.det(
-            np.cov(posterior_result[:3])
+        assert np.linalg.det(
+            np.cov(prior_result.values.reshape(5, NCOL * NROW * NLAY).T[:3])
+        ) > np.linalg.det(
+            np.cov(posterior_result.values.reshape(5, NCOL * NROW * NLAY).T[:3])
         )
         # This checks that the fields in the runpath are different between iterations
         assert Path("simulations/realization-0/iter-0/my_param.grdecl").read_text(
@@ -610,7 +612,10 @@ def test_parameter_update_with_inactive_cells_xtgeo_grdecl(tmpdir):
         with open("config.ert", "w", encoding="utf-8") as fh:
             fh.writelines(config)
 
-        grid = xtgeo.create_box_grid(dimension=(4, 4, 1))
+        NCOL = 4
+        NROW = 4
+        NLAY = 1
+        grid = xtgeo.create_box_grid(dimension=(NCOL, NROW, NLAY))
         mask = grid.get_actnum()
         mask_list = [True] * 3 + [False] * 12 + [True]
         mask.values = mask_list
@@ -698,17 +703,19 @@ if __name__ == "__main__":
             prior = storage.get_ensemble_by_name("prior")
             posterior = storage.get_ensemble_by_name("smoother_update")
 
-            prior_result = prior.load_field("MY_PARAM", list(range(5)))
-            posterior_result = posterior.load_field("MY_PARAM", list(range(5)))
+            prior_result = prior.load_parameters("MY_PARAM", list(range(5)))
+            posterior_result = posterior.load_parameters("MY_PARAM", list(range(5)))
 
             # check the shape of internal data used in the update
-            assert prior_result.shape == (4, 5)
-            assert posterior_result.shape == (4, 5)
+            assert prior_result.shape == (5, NCOL, NROW, NLAY)
+            assert posterior_result.shape == (5, NCOL, NROW, NLAY)
 
             # Only assert on the first three rows, as there are only three parameters,
             # a, b and c, the rest have no correlation to the results.
-            assert np.linalg.det(np.cov(prior_result[:3])) > np.linalg.det(
-                np.cov(posterior_result[:3])
+            assert np.linalg.det(
+                np.cov(prior_result.values.reshape(5, NCOL * NROW * NLAY).T[:3])
+            ) > np.linalg.det(
+                np.cov(posterior_result.values.reshape(5, NCOL * NROW * NLAY).T[:3])
             )
 
             # This checks that the fields in the runpath

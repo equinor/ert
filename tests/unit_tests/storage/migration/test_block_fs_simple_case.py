@@ -84,7 +84,7 @@ def test_migrate_field(data, storage, parameter, ens_config):
 
     for key, var in data["/REAL_0/FIELD"].groups.items():
         expect = np.array(var["VALUES"]).ravel()
-        actual = ensemble.load_field(key, [0]).ravel()
+        actual = ensemble.load_parameters(key, [0]).values.ravel()
         assert list(expect) == list(actual), key
 
 
@@ -101,8 +101,8 @@ def test_migrate_case(data, storage, enspath):
         # Compare FIELDs
         for key, data in real_group["FIELD"].groups.items():
             expect = np.array(data["VALUES"]).ravel()
-            actual = ensemble.load_field(key, [real_index]).ravel()
-            assert list(expect) == list(actual), f"FIELD {key}"
+            actual = ensemble.load_parameters(key, [real_index])
+            assert list(expect) == list(actual.values.ravel()), f"FIELD {key}"
 
         # Compare SURFACEs
         for key, data in real_group["SURFACE"].groups.items():
