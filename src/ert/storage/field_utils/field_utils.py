@@ -7,8 +7,10 @@ from typing import TYPE_CHECKING, Any, List, NamedTuple, Optional, Tuple, Union
 
 import ecl_data_io
 import numpy as np
+import xarray as xr
 from xtgeo.grid3d._gridprop_import_roff import import_roff
 
+from ert.parsing import ConfigValidationError
 from ert.storage.field_utils.grdecl_io import (
     export_grdecl,
     import_bgrdecl,
@@ -180,3 +182,24 @@ def _mask_data(
 ) -> np.ma.MaskedArray[Any, np.dtype[np.double]]:
     actnum, shape = get_mask(grid_path, shape)
     return np.ma.MaskedArray(data=data, mask=actnum, fill_value=np.nan)  # type: ignore
+
+
+def create_field_dataset(
+    grid_path: Optional[Path],
+    data: Union[npt.NDArray[np.double], np.ma.MaskedArray[Any, np.dtype[np.double]]],
+) -> xr.Dataset:
+    if not np.ma.isMaskedArray(data):  # type: ignore
+        if grid_path is None:
+            raise ConfigValidationError("Missing path to grid file")
+        mask, shape = read_mask(grid_path)
+        if mask is not None:
+            data_full = np.full_like(mask, np.nan, dtype=np.double)
+            np.place(data_full, np.logical_not(mask), data)
+            data = np.ma.MaskedArray(data_full, mask, fill_value=np.nan)  # type: ignore
+        else:
+            data = np.ma.MaskedArray(data.reshape(shape))  # type: ignore
+
+    assert isinstance(data, np.ma.MaskedArray)
+
+    da = xr.DataArray(data.filled(np.nan))  # type: ignore
+    return da.to_dataset(name="values")

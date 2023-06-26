@@ -233,13 +233,10 @@ def _save_temp_storage_to_disk(
                     }
                 )
                 target_fs.save_parameters(key, realization, dataset)
-            elif isinstance(config_node, SurfaceConfig):
+            elif isinstance(config_node, (Field, SurfaceConfig)):
                 _matrix = temp_storage.get_xr_array(key, i)
                 assert isinstance(_matrix, xr.DataArray)
-                target_fs.save_parameters(key, realization, _matrix)
-            elif isinstance(config_node, Field):
-                assert isinstance(matrix, np.ndarray)
-                target_fs.save_field(key, realization, matrix[:, i])
+                target_fs.save_parameters(key, realization, _matrix.to_dataset())
             else:
                 raise NotImplementedError(f"{type(config_node)} is not supported")
 
@@ -267,7 +264,7 @@ def _create_temporary_parameter_storage(
             t_surface += time.perf_counter() - t
         elif isinstance(config_node, Field):
             t = time.perf_counter()
-            matrix = source_fs.load_field(key, iens_active_index)
+            matrix = source_fs.load_parameters(key, iens_active_index)
             t_field += time.perf_counter() - t
         else:
             raise NotImplementedError(f"{type(config_node)} is not supported")
