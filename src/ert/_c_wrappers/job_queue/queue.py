@@ -386,52 +386,35 @@ class JobQueue(BaseCClass):
 
     async def _execution_loop_queue_via_websockets(
         self,
-        ee_uri: str,
+        ee_connection: WebSocketClientProtocol,
         ens_id: str,
         pool_sema: threading.BoundedSemaphore,
         evaluators: List[Callable[..., Any]],
-        ee_ssl_context,
-        ee_headers,
     ) -> None:
-        async for ee_connection in connect(
-            ee_uri,
-            ssl=ee_ssl_context,
-            extra_headers=ee_headers,
-            open_timeout=60,
-            ping_timeout=60,
-            ping_interval=60,
-            close_timeout=60,
-        ):
-            try:
-                self.launch_jobs(pool_sema)
+        while True:
+            self.launch_jobs(pool_sema)
 
-                await asyncio.sleep(1)
+            await asyncio.sleep(1)
 
-                for func in evaluators:
-                    func()
+            for func in evaluators:
+                func()
 
-                changes = self.changes_after_transition()
-                # logically not necessary the way publish changes is implemented at the
-                # moment, but highly relevant before, and might be relevant in the
-                # future in case publish changes becomes expensive again
-                if len(changes) > 0:
-                    await JobQueue._publish_changes(
-                        ens_id,
-                        changes,
-                        ee_connection,
-                    )
-
-                if self.stopped:
-                    raise asyncio.CancelledError
-
-                if not self.is_active():
-                    break
-            except ConnectionClosed:
-                logger.warning(
-                    "job queue dropped connection to ensemble evaulator - "
-                    "going to try and reconnect"
+            changes = self.changes_after_transition()
+            # logically not necessary the way publish changes is implemented at the
+            # moment, but highly relevant before, and might be relevant in the
+            # future in case publish changes becomes expensive again
+            if len(changes) > 0:
+                await JobQueue._publish_changes(
+                    ens_id,
+                    changes,
+                    ee_connection,
                 )
-                continue
+
+            if self.stopped:
+                raise asyncio.CancelledError
+
+            if not self.is_active():
+                break
 
     async def execute_queue_via_websockets(  # pylint: disable=too-many-arguments
         self,
@@ -469,9 +452,27 @@ class JobQueue(BaseCClass):
                     ens_id, self._differ.snapshot(), ee_connection
                 )
             # loop
-            await self._execution_loop_queue_via_websockets(
-                ee_uri, ens_id, pool_sema, evaluators, ee_ssl_context, ee_headers
-            )
+            async for ee_connection in connect(
+                ee_uri,
+                ssl=ee_ssl_context,
+                extra_headers=ee_headers,
+                open_timeout=60,
+                ping_timeout=60,
+                ping_interval=60,
+                close_timeout=60,
+            ):
+                try:
+                    await self._execution_loop_queue_via_websockets(
+                        ee_connection, ens_id, pool_sema, evaluators
+                    )
+                except ConnectionClosed:
+                    logger.warning(
+                        "job queue dropped connection to ensemble evaulator - "
+                        "going to try and reconnect"
+                    )
+                    continue
+                if not self.is_active():
+                    break
 
         except asyncio.CancelledError:
             logger.debug("queue cancelled, stopping jobs...")
