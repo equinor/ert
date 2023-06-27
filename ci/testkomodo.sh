@@ -40,6 +40,7 @@ EOF
             cat realization-0/iter-0/FLOW.stdout.0 || true
             cat logs/ert-log* || true
         )
+    popd
 }
 
 start_tests () {
