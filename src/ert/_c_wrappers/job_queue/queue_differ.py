@@ -52,7 +52,7 @@ class QueueDiffer:
                 snapshot[self._qindex_to_iens[q_index]] = st
             except KeyError as e:
                 logger.debug(f"differ could produce no snapshot due to {e}")
-                return None
+                raise e from None
         return snapshot
 
     def qindex_to_iens(self, queue_index: int) -> int:
