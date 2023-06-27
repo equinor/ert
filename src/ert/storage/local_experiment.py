@@ -116,8 +116,6 @@ class LocalExperimentAccessor(LocalExperimentReader):
         params = []
         for data in self.parameter_info.values():
             param_type = data.pop("_ert_kind")
-            if param_type == "GenKwConfig":
-                continue
             params.append(_KNOWN_PARAMETER_TYPES[param_type](**data))
         return params
 

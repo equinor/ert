@@ -214,7 +214,7 @@ class EnsembleConfig:
                 transfer_function_definitions=transfer_function_definitions,
             )
 
-            self._check_config_node(kw_node)
+            self._check_config_node(kw_node, parameter_file)
             self.addNode(kw_node)
 
         for surface in surface_list:
@@ -435,7 +435,7 @@ class EnsembleConfig:
         )
 
     @staticmethod
-    def _check_config_node(node: GenKwConfig):
+    def _check_config_node(node: GenKwConfig, parameter_file: str):
         errors = []
 
         def _check_non_negative_parameter(param: str):
@@ -456,10 +456,9 @@ class EnsembleConfig:
                 _check_non_negative_parameter("STD")
         if errors:
             raise ConfigValidationError(
-                config_file=node.getParameterFile(),
+                config_file=parameter_file,
                 errors=[
-                    ErrorInfo(message=str(e), filename=node.getParameterFile())
-                    for e in errors
+                    ErrorInfo(message=str(e), filename=parameter_file) for e in errors
                 ],
             )
 
