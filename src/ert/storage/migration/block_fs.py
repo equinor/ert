@@ -198,7 +198,7 @@ def _migrate_surface(
         ensemble.save_parameters(
             block.name,
             block.realization_index,
-            xr.DataArray(array, name="values"),
+            xr.DataArray(array, name="values").to_dataset(),
         )
 
 

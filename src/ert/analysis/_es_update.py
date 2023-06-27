@@ -236,7 +236,7 @@ def _save_temp_storage_to_disk(
             elif isinstance(config_node, SurfaceConfig):
                 _matrix = temp_storage.get_xr_array(key, i)
                 assert isinstance(_matrix, xr.DataArray)
-                target_fs.save_parameters(key, realization, _matrix)
+                target_fs.save_parameters(key, realization, _matrix.to_dataset())
             elif isinstance(config_node, Field):
                 assert isinstance(matrix, np.ndarray)
                 target_fs.save_field(key, realization, matrix[:, i])

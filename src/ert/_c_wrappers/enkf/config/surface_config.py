@@ -51,7 +51,7 @@ class SurfaceConfig(ParameterConfig):
             dims=["y", "x"],
         )
 
-        ensemble.save_parameters(self.name, real_nr, da)
+        ensemble.save_parameters(self.name, real_nr, da.to_dataset())
         _logger.debug(f"load() time_used {(time.perf_counter() - t):.4f}s")
 
     def save(self, run_path: Path, real_nr: int, ensemble: EnsembleReader):
