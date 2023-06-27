@@ -405,23 +405,19 @@ class LocalEnsembleAccessor(LocalEnsembleReader):
         return loaded
 
     def save_parameters(
-        self, group: str, realization: int, dataset: Union[xr.DataArray, xr.Dataset]
+        self, group: str, realization: int, dataset: xr.Dataset
     ) -> None:
-        """Create a parameter group
+        """Saves the provided dataset under a parameter group and realization index
 
         Args:
-            name: Name of the parameter group
+            group: Name of the parameter group under which the dataset is to be saved
 
-            realization_index: Which realization index this group belongs to
+            realization: Which realization index this group belongs to
 
-            dataset: Dataset to save. One of the variables must be named
-                'value'. This will be used when flattening out the parameters
-                into a 1d-vector.
-
+            dataset: Dataset to save. It must contain a variable named
+                    'values' which will be used when flattening out the
+                    parameters into a 1d-vector.
         """
-        if isinstance(dataset, xr.DataArray):
-            dataset = dataset.to_dataset()
-
         if "values" not in dataset.variables:
             raise ValueError(
                 f"Dataset for parameter group '{group}' "
