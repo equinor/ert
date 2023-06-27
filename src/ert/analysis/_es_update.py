@@ -229,7 +229,7 @@ def _save_temp_storage_to_disk(
                             "names",
                             config_node.transform(matrix[:, i]),
                         ),
-                        "names": list(config_node),
+                        "names": [e.name for e in config_node.transfer_functions],
                     }
                 )
                 target_fs.save_parameters(key, realization, dataset)

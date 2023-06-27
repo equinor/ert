@@ -2,11 +2,10 @@ from __future__ import annotations
 
 import logging
 import math
-import os
 from dataclasses import dataclass
 from hashlib import sha256
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, TypedDict
+from typing import TYPE_CHECKING, Callable, Dict, List, Optional, TypedDict
 
 import numpy as np
 import pandas as pd
@@ -38,9 +37,9 @@ class GenKwConfig(ParameterConfig):
     forward_init_file: Optional[str] = None
 
     def __post_init__(self):
-        self._transfer_functions: List[TransferFunction] = []
+        self.transfer_functions: List[TransferFunction] = []
         for e in self.transfer_function_definitions:
-            self._transfer_functions.append(self.parse_transfer_function(e))
+            self.transfer_functions.append(self._parse_transfer_function(e))
 
     def sample_or_load(
         self,
@@ -52,8 +51,8 @@ class GenKwConfig(ParameterConfig):
             return self.read_from_runpath(Path(), real_nr, ensemble)
 
         logging.info(f"Sampling parameter {self.name} for realization {real_nr}")
-        keys = list(self)
-        parameter_value = self.sample_value(
+        keys = [e.name for e in self.transfer_functions]
+        parameter_value = self._sample_value(
             self.name,
             keys,
             str(random_seed.entropy),
@@ -76,11 +75,11 @@ class GenKwConfig(ParameterConfig):
         real_nr: int,
         ensemble: EnsembleAccessor,
     ):
-        keys = list(self)
+        keys = [e.name for e in self.transfer_functions]
         if not self.forward_init_file:
             raise ValueError("loading gen_kw values requires forward_init_file")
 
-        parameter_value = self.values_from_file(
+        parameter_value = self._values_from_file(
             real_nr,
             self.forward_init_file,
             keys,
@@ -99,10 +98,10 @@ class GenKwConfig(ParameterConfig):
         self, run_path: Path, real_nr: int, ensemble: EnsembleReader
     ) -> Dict[str, Dict[str, float]]:
         array = ensemble.load_parameters(self.name, real_nr, var="transformed_values")
-        if not array.size == len(self):
+        if not array.size == len(self.transfer_functions):
             raise ValueError(
                 f"The configuration of GEN_KW parameter {self.name}"
-                f" is of size {len(self)}, expected {array.size}"
+                f" is of size {len(self.transfer_functions)}, expected {array.size}"
             )
 
         with open(self.template_file, "r", encoding="utf-8") as f:
@@ -112,7 +111,7 @@ class GenKwConfig(ParameterConfig):
         data = dict(zip(array["names"].values.tolist(), array.values.tolist()))
         log10_data = {
             tf.name: math.log(data[tf.name], 10)
-            for tf in self._transfer_functions
+            for tf in self.transfer_functions
             if tf.use_log
         }
 
@@ -130,44 +129,18 @@ class GenKwConfig(ParameterConfig):
         else:
             return {self.name: data}
 
-    def getTemplateFile(self) -> str:
-        return self.template_file
-
-    def getParameterFile(self) -> str:
-        return self.parameter_file
-
     def shouldUseLogScale(self, keyword: str) -> bool:
-        for tf in self._transfer_functions:
+        for tf in self.transfer_functions:
             if tf.name == keyword:
                 return tf.use_log
         return False
 
-    def __len__(self):
-        return len(self._transfer_functions)
-
-    def __iter__(self):
-        yield from [func.name for func in self._transfer_functions]
-
-    def __eq__(self, other) -> bool:
-        if self.name != other.name:
-            return False
-        if self.template_file != os.path.abspath(other.template_file):
-            return False
-        if self.parameter_file != os.path.abspath(other.parameter_file):
-            return False
-        if self.output_file != other.output_file:
-            return False
-        if self.forward_init_file != other.forward_init_file:
-            return False
-
-        return True
-
     def getKeyWords(self) -> List[str]:
-        return [tf.name for tf in self._transfer_functions]
+        return [tf.name for tf in self.transfer_functions]
 
     def get_priors(self) -> List["PriorDict"]:
         priors: List["PriorDict"] = []
-        for tf in self._transfer_functions:
+        for tf in self.transfer_functions:
             priors.append(
                 {
                     "key": tf.name,
@@ -188,15 +161,12 @@ class GenKwConfig(ParameterConfig):
             a standard normal distribution to the distribution set by the user
         """
         array = np.array(array)
-        for index, tf in enumerate(self._transfer_functions):
+        for index, tf in enumerate(self.transfer_functions):
             array[index] = tf.calc_func(array[index], list(tf.parameter_list.values()))
         return array
 
-    def to_dict(self) -> Dict[str, Any]:
-        return {"priors": self.get_priors(), "_ert_kind": type(self).__name__}
-
     @staticmethod
-    def values_from_file(
+    def _values_from_file(
         realization: int, name_format: str, keys: List[str]
     ) -> npt.NDArray[np.double]:
         file_name = name_format % realization
@@ -211,7 +181,7 @@ class GenKwConfig(ParameterConfig):
         return df.values.flatten()
 
     @staticmethod
-    def sample_value(
+    def _sample_value(
         parameter_group_name: str,
         keys: List[str],
         global_seed: str,
@@ -231,7 +201,7 @@ class GenKwConfig(ParameterConfig):
         return np.array(parameter_values)
 
     @staticmethod
-    def parse_transfer_function(param_string: str) -> TransferFunction:
+    def _parse_transfer_function(param_string: str) -> TransferFunction:
         param_args = param_string.split()
 
         TRANS_FUNC_ARGS: dict[str, List[str]] = {

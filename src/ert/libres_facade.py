@@ -490,7 +490,7 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
             gen_kw_config = self._enkf_main.ensembleConfig().parameter_configs[key]
             assert isinstance(gen_kw_config, GenKwConfig)
 
-            for keyword in gen_kw_config:
+            for keyword in [e.name for e in gen_kw_config.transfer_functions]:
                 gen_kw_list.append(f"{key}:{keyword}")
 
                 if gen_kw_config.shouldUseLogScale(keyword):

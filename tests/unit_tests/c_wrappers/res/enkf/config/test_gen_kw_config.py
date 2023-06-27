@@ -1,3 +1,4 @@
+import os
 import re
 from pathlib import Path
 from textwrap import dedent
@@ -30,7 +31,7 @@ def test_gen_kw_config():
         ],
         output_file="kw.txt",
     )
-    assert len(conf) == 3
+    assert len(conf.transfer_functions) == 3
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -67,7 +68,7 @@ def test_gen_kw_config_get_priors():
         output_file="param.txt",
     )
     priors = conf.get_priors()
-    assert len(conf) == 10
+    assert len(conf.transfer_functions) == 10
 
     assert {
         "key": "KEY1",
@@ -283,9 +284,9 @@ def test_gen_kw_params_parsing(tmpdir, params, error):
     with tmpdir.as_cwd():
         if error:
             with pytest.raises(ConfigValidationError, match=error):
-                GenKwConfig.parse_transfer_function(params)
+                GenKwConfig._parse_transfer_function(params)
         else:
-            GenKwConfig.parse_transfer_function(params)
+            GenKwConfig._parse_transfer_function(params)
 
 
 @pytest.mark.parametrize(
@@ -361,7 +362,7 @@ def test_gen_kw_trans_func(tmpdir, params, xinput, expected):
         float_args.append(float(a))
 
     with tmpdir.as_cwd():
-        tf = GenKwConfig.parse_transfer_function(params)
+        tf = GenKwConfig._parse_transfer_function(params)
         assert abs(tf.calculate(xinput, float_args) - expected) < 10**-15
 
 
@@ -387,6 +388,8 @@ def test_gen_kw_objects_equal(tmpdir):
         ert = EnKFMain(ert_config)
 
         g1 = ert.ensembleConfig()["KW_NAME"]
+        assert g1.transfer_functions[0].name == "MY_KEYWORD"
+
         g2 = GenKwConfig(
             name="KW_NAME",
             forward_init=False,
@@ -395,6 +398,12 @@ def test_gen_kw_objects_equal(tmpdir):
             parameter_file="prior.txt",
             output_file="kw.txt",
         )
+        assert g1.name == g2.name
+        assert os.path.abspath(g1.template_file) == os.path.abspath(g2.template_file)
+        assert os.path.abspath(g1.parameter_file) == os.path.abspath(g2.parameter_file)
+        assert g1.output_file == g2.output_file
+        assert g1.forward_init_file == g2.forward_init_file
+
         g3 = GenKwConfig(
             name="KW_NAME2",
             forward_init=False,
@@ -427,9 +436,8 @@ def test_gen_kw_objects_equal(tmpdir):
             transfer_function_definitions=[],
             output_file="empty.txt",
         )
-        assert g1 == g2
+
         assert g1 != g3
         assert g1 != g4
         assert g1 != g5
         assert g1 != g6
-        assert g1.getKeyWords() == ["MY_KEYWORD"]
