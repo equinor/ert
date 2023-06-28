@@ -431,57 +431,6 @@ static void job_queue_node_update_timestamp(job_queue_node_type *node) {
         node->progress_timestamp = mtime;
 }
 
-/**
-if status = running, and current_time > sim_start + max_confirm_wait
-(usually 2 min), check if job is confirmed running (status_file exists).
-If not confirmed, set job to JOB_QUEUE_FAILED.
-*/
-bool job_queue_node_update_status(job_queue_node_type *node,
-                                  job_queue_status_type *status,
-                                  queue_driver_type *driver) {
-    bool status_change = false;
-    pthread_mutex_lock(&node->data_mutex);
-
-    job_status_type current_status;
-    bool confirmed;
-
-    if (!node->job_data)
-        goto cleanup;
-
-    current_status = job_queue_node_get_status(node);
-
-    confirmed = job_queue_node_status_update_confirmed_running__(node);
-
-    if ((current_status & JOB_QUEUE_RUNNING) && !confirmed) {
-        // it's running, but not confirmed running.
-        double runtime = job_queue_node_time_since_sim_start(node);
-        if (runtime >= node->max_confirm_wait) {
-            logger->info("max_confirm_wait ({}) has passed since sim_start"
-                         "without success; {} is dead (attempt {})",
-                         node->max_confirm_wait, node->job_name,
-                         node->submit_attempt);
-            job_status_type new_status = JOB_QUEUE_DO_KILL_NODE_FAILURE;
-            status_change =
-                job_queue_status_transition(status, current_status, new_status);
-            job_queue_node_set_status(node, new_status);
-        }
-    }
-
-    current_status = job_queue_node_get_status(node);
-    if (current_status & JOB_QUEUE_CAN_UPDATE_STATUS) {
-        job_status_type new_status =
-            queue_driver_get_status(driver, node->job_data);
-        status_change =
-            job_queue_status_transition(status, current_status, new_status);
-        job_queue_node_set_status(node, new_status);
-    }
-
-cleanup:
-    job_queue_node_update_timestamp(node);
-    pthread_mutex_unlock(&node->data_mutex);
-    return status_change;
-}
-
 job_status_type job_queue_node_refresh_status(job_queue_node_type *node,
                                               queue_driver_type *driver) {
     pthread_mutex_lock(&node->data_mutex);

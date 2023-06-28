@@ -63,9 +63,6 @@ extern "C" PY_USED bool job_queue_node_kill_simple(job_queue_node_type *node,
 extern "C" void job_queue_node_free(job_queue_node_type *node);
 extern "C" job_status_type
 job_queue_node_get_status(const job_queue_node_type *node);
-PY_USED bool job_queue_node_update_status(job_queue_node_type *node,
-                                          job_queue_status_type *status,
-                                          queue_driver_type *driver);
 extern "C" PY_USED job_status_type job_queue_node_refresh_status(
     job_queue_node_type *node, queue_driver_type *driver);
 extern "C" int
