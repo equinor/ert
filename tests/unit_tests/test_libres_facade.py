@@ -466,6 +466,10 @@ def test_get_observations(tmpdir):
 
 
 def test_load_gen_kw_not_sorted(storage, tmpdir, snapshot):
+    """
+    This test checks two things, loading multiple parameters and
+    loading log parameters.
+    """
     with tmpdir.as_cwd():
         config = dedent(
             """
@@ -480,7 +484,7 @@ def test_load_gen_kw_not_sorted(storage, tmpdir, snapshot):
         with open("template.txt", mode="w", encoding="utf-8") as fh:
             fh.writelines("MY_KEYWORD <MY_KEYWORD>")
         with open("prior.txt", mode="w", encoding="utf-8") as fh:
-            fh.writelines("MY_KEYWORD NORMAL 0 1")
+            fh.writelines("MY_KEYWORD LOGUNIF 0.1 1")
 
         ert_config = ErtConfig.from_file("config.ert")
         ert = EnKFMain(ert_config)
@@ -502,4 +506,4 @@ def test_load_gen_kw_not_sorted(storage, tmpdir, snapshot):
 
         facade = LibresFacade(ert)
         data = facade.load_all_gen_kw_data(ensemble)
-        snapshot.assert_match(data.to_csv(), "gen_kw_unsorted")
+        snapshot.assert_match(data.round(12).to_csv(), "gen_kw_unsorted")
