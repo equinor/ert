@@ -307,14 +307,25 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
         )
 
         dataframes = []
-        keys = [group] if group is not None else self.get_gen_kw()
-        for key in keys:
+        gen_kws = [
+            config
+            for config in self.ensemble_config.parameter_configuration
+            if isinstance(config, GenKwConfig)
+        ]
+        if group:
+            gen_kws = [config for config in gen_kws if config.name == group]
+        for key in gen_kws:
             try:
                 ds = ensemble.load_parameters(
-                    key, realizations, var="transformed_values"
+                    key.name, realizations, var="transformed_values"
                 )
-                ds["names"] = np.char.add(f"{key}:", ds["names"].astype(np.str_))
-                dataframes.append(ds.to_dataframe().unstack(level="names"))
+                ds["names"] = np.char.add(f"{key.name}:", ds["names"].astype(np.str_))
+                df = ds.to_dataframe().unstack(level="names")
+                df.columns = df.columns.droplevel()
+                for parameter in df.columns:
+                    if key.shouldUseLogScale(parameter.split(":")[1]):
+                        df[f"LOG10_{parameter}"] = np.log10(df[parameter])
+                dataframes.append(df)
             except KeyError:
                 pass
         if not dataframes:
@@ -322,11 +333,10 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
 
         # Format the DataFrame in a way that old code expects it
         dataframe = pd.concat(dataframes, axis=1)
-        dataframe.columns = dataframe.columns.droplevel()
         dataframe.columns.name = None
         dataframe.index.name = "Realization"
 
-        return dataframe
+        return dataframe.sort_index(axis=1)
 
     def gather_gen_kw_data(
         self,
