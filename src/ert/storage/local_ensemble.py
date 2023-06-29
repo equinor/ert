@@ -6,22 +6,18 @@ from datetime import datetime
 from functools import lru_cache
 from multiprocessing.pool import ThreadPool
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, List, Optional, Sequence, Tuple, Union
+from typing import TYPE_CHECKING, List, Optional, Sequence, Tuple, Union
 from uuid import UUID
 
-import numpy as np
 import xarray as xr
 from pydantic import BaseModel
 
-from ert._c_wrappers.enkf.config.field_config import field_transform
 from ert._c_wrappers.enkf.enums import RealizationStateEnum
 from ert._c_wrappers.enkf.time_map import TimeMap
 from ert.callbacks import forward_model_ok
 from ert.load_status import LoadResult, LoadStatus
-from ert.storage.field_utils import field_utils
 
 if TYPE_CHECKING:
-    import numpy.typing as npt
     from ecl.summary import EclSum
 
     from ert._c_wrappers.enkf.ensemble_config import EnsembleConfig
@@ -53,19 +49,6 @@ def _load_realization(
         else RealizationStateEnum.STATE_LOAD_FAILURE
     )
     return result, realisation
-
-
-def _field_truncate(data: npt.ArrayLike, min_: float, max_: float) -> Any:
-    if min_ is not None and max_ is not None:
-        vfunc = np.vectorize(lambda x: max(min(x, max_), min_))
-        return vfunc(data)
-    elif min_ is not None:
-        vfunc = np.vectorize(lambda x: max(x, min_))
-        return vfunc(data)
-    elif max_ is not None:
-        vfunc = np.vectorize(lambda x: min(x, max_))
-        return vfunc(data)
-    return data
 
 
 class _Index(BaseModel):
@@ -245,42 +228,6 @@ class LocalEnsembleReader:
         response = xr.combine_by_coords(loaded)
         assert isinstance(response, xr.Dataset)
         return response
-
-    def export_field(
-        self,
-        key: str,
-        realization: int,
-        output_path: Path,
-        fformat: Optional[str] = None,
-    ) -> None:
-        info = self.experiment.parameter_info[key]
-        if fformat is None:
-            fformat = info["file_format"]
-
-        data_path = self.mount_point / f"realization-{realization}"
-
-        if not data_path.exists():
-            raise KeyError(
-                f"Unable to load FIELD for key: {key}, realization: {realization} "
-            )
-        da = xr.open_dataarray(data_path / f"{key}")
-        # Squeeze to get rid of realization-dimension
-        data: npt.NDArray[np.double] = da.values.squeeze(axis=0)
-        data = field_transform(data, transform_name=info["output_transformation"])
-        data = _field_truncate(
-            data,
-            info["truncation_min"],
-            info["truncation_max"],
-        )
-
-        field_utils.save_field(
-            data,
-            key,
-            self.experiment.grid_path,
-            field_utils.Shape(info["nx"], info["ny"], info["nz"]),
-            output_path,
-            fformat,
-        )
 
 
 class LocalEnsembleAccessor(LocalEnsembleReader):
