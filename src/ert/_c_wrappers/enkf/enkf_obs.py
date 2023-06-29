@@ -2,17 +2,7 @@ import os
 import warnings
 from datetime import datetime, timedelta
 from fnmatch import fnmatch
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Dict,
-    Iterator,
-    List,
-    Literal,
-    Mapping,
-    Optional,
-    Tuple,
-)
+from typing import TYPE_CHECKING, Dict, Iterator, List, Literal, Optional, Tuple
 
 import numpy as np
 import xarray as xr
@@ -28,9 +18,12 @@ from ert._c_wrappers.enkf.observations.summary_observation import SummaryObserva
 from ert._c_wrappers.sched import HistorySourceEnum
 from ert.parsing import ConfigWarning, ErrorInfo
 from ert.parsing.new_observations_parser import (
-    ConfContent,
+    DateDict,
+    GenObsValues,
+    HistoryValues,
     ObservationConfigError,
     ObservationType,
+    SummaryValues,
     parse,
 )
 
@@ -40,50 +33,6 @@ if TYPE_CHECKING:
     from ert._c_wrappers.enkf import EnsembleConfig, ErtConfig
 
 DEFAULT_TIME_DELTA = timedelta(seconds=30)
-
-
-class _DictConfInstance:
-    def __init__(self, name: str, values: Mapping[str, Any]):
-        self.name = name
-        self.values = values
-
-    def __contains__(self, name: str) -> bool:
-        return name in self.values
-
-    def __getitem__(self, name: str) -> Any:
-        return self.values[name]
-
-
-class _HistoryConfInstance(_DictConfInstance):
-    def get_sub_instances(self, name: Literal["SEGMENT"]):
-        segments = self.values[name]
-        return [_DictConfInstance(segment[0], segment[1]) for segment in segments]
-
-
-class _NewParserAdapter:
-    def __init__(self, conf_content: ConfContent):
-        self.conf_content = conf_content
-
-    def get_sub_instances(self, name: str):
-        if name == "HISTORY_OBSERVATION":
-            return [
-                _HistoryConfInstance(decl[1], decl[2])
-                for decl in self.conf_content
-                if decl[0] == ObservationType.HISTORY
-            ]
-        if name == "GENERAL_OBSERVATION":
-            return [
-                _DictConfInstance(decl[1], decl[2])
-                for decl in self.conf_content
-                if decl[0] == ObservationType.GENERAL
-            ]
-        if name == "SUMMARY_OBSERVATION":
-            return [
-                _DictConfInstance(decl[1], decl[2])
-                for decl in self.conf_content
-                if decl[0] == ObservationType.SUMMARY
-            ]
-        raise ValueError(f"Unexpected observation type {name}")
 
 
 class EnkfObs:
@@ -161,19 +110,14 @@ class EnkfObs:
     def _handle_history_observation(
         cls,
         ensemble_config: "EnsembleConfig",
-        conf_instance,
+        history_observation: HistoryValues,
+        summary_key: str,
         std_cutoff: float,
         history_type: Optional[HistorySourceEnum],
         time_len: int,
     ) -> Dict[str, ObsVector]:
-        obs_vectors: Dict[str, ObsVector] = {}
-        sub_instances = conf_instance.get_sub_instances("HISTORY_OBSERVATION")
-        if not sub_instances:
-            return obs_vectors
         response_config = ensemble_config["summary"]
         assert isinstance(response_config, SummaryConfig)
-        if sub_instances == []:
-            return obs_vectors
 
         refcase = response_config.refcase
         if refcase is None:
@@ -181,95 +125,93 @@ class EnkfObs:
         if history_type is None:
             raise ValueError("Need a history type in order to use history observations")
 
-        for instance in sub_instances:
-            summary_key = instance.name
-            response_config.keys.append(summary_key)
-            error = float(instance["ERROR"])
-            error_min = float(instance["ERROR_MIN"])
-            error_mode = instance["ERROR_MODE"]
+        response_config.keys.append(summary_key)
+        error = history_observation["ERROR"]
+        error_min = history_observation["ERROR_MIN"]
+        error_mode = history_observation["ERROR_MODE"]
 
-            if history_type == HistorySourceEnum.REFCASE_HISTORY:
-                var_type = refcase.var_type(summary_key)
-                local_key = None
-                if var_type in [
-                    EclSumVarType.ECL_SMSPEC_WELL_VAR,
-                    EclSumVarType.ECL_SMSPEC_GROUP_VAR,
-                ]:
-                    summary_node = refcase.smspec_node(summary_key)
-                    local_key = summary_node.keyword + "H:" + summary_node.wgname
-                elif var_type == EclSumVarType.ECL_SMSPEC_FIELD_VAR:
-                    summary_node = refcase.smspec_node(summary_key)
-                    local_key = summary_node.keyword + "H"
-            else:
-                local_key = summary_key
-            if local_key is not None and local_key in refcase:
-                valid, values = _clib.enkf_obs.read_from_refcase(refcase, local_key)
-                std_dev = cls._handle_error_mode(values, error, error_min, error_mode)
-                for segment_instance in instance.get_sub_instances("SEGMENT"):
-                    start = int(segment_instance["START"])
-                    stop = int(segment_instance["STOP"])
-                    if start < 0:
-                        warnings.warn(
-                            "Segment out of bounds. Truncating start of segment to 0.",
-                            category=ConfigWarning,
-                        )
-                        start = 0
-                    if stop >= time_len:
-                        warnings.warn(
-                            "Segment out of bounds. Truncating"
-                            f" end of segment to {time_len - 1}.",
-                            category=ConfigWarning,
-                        )
-                        stop = time_len - 1
-                    if start > stop:
-                        warnings.warn(
-                            "Segment start after stop. Truncating"
-                            f" end of segment to {start}.",
-                            category=ConfigWarning,
-                        )
-                        stop = start
-                    if np.size(std_dev[start:stop]) == 0:
-                        warnings.warn(
-                            f"Segment {segment_instance.name} does not"
-                            " contain any time steps. The interval "
-                            f"[{start}, {stop}) does not intersect with steps in the"
-                            "time map.",
-                            category=ConfigWarning,
-                        )
-                    std_dev[start:stop] = cls._handle_error_mode(
-                        values[start:stop],
-                        float(segment_instance["ERROR"]),
-                        float(segment_instance["ERROR_MIN"]),
-                        segment_instance["ERROR_MODE"],
-                    )
-                data = {}
-                for i, (good, error, value) in enumerate(zip(valid, std_dev, values)):
-                    if good:
-                        if error <= std_cutoff:
-                            warnings.warn(
-                                "Too small observation error in observation"
-                                f" {summary_key}:{i} - ignored",
-                                category=ConfigWarning,
-                            )
-                            continue
-                        data[i] = SummaryObservation(
-                            summary_key, summary_key, value, error
-                        )
-
-                obs_vectors[summary_key] = ObsVector(
-                    EnkfObservationImplementationType.SUMMARY_OBS,
-                    summary_key,
-                    "summary",
-                    data,
+        if history_type == HistorySourceEnum.REFCASE_HISTORY:
+            var_type = refcase.var_type(summary_key)
+            local_key = None
+            if var_type in [
+                EclSumVarType.ECL_SMSPEC_WELL_VAR,
+                EclSumVarType.ECL_SMSPEC_GROUP_VAR,
+            ]:
+                summary_node = refcase.smspec_node(summary_key)
+                local_key = summary_node.keyword + "H:" + summary_node.wgname
+            elif var_type == EclSumVarType.ECL_SMSPEC_FIELD_VAR:
+                summary_node = refcase.smspec_node(summary_key)
+                local_key = summary_node.keyword + "H"
+        else:
+            local_key = summary_key
+        if local_key is None:
+            return {}
+        if local_key not in refcase:
+            return {}
+        valid, values = _clib.enkf_obs.read_from_refcase(refcase, local_key)
+        std_dev = cls._handle_error_mode(values, error, error_min, error_mode)
+        for segment_name, segment_instance in history_observation["SEGMENT"]:
+            start = segment_instance["START"]
+            stop = segment_instance["STOP"]
+            if start < 0:
+                warnings.warn(
+                    "Segment out of bounds. Truncating start of segment to 0.",
+                    category=ConfigWarning,
                 )
-        return obs_vectors
+                start = 0
+            if stop >= time_len:
+                warnings.warn(
+                    "Segment out of bounds. Truncating"
+                    f" end of segment to {time_len - 1}.",
+                    category=ConfigWarning,
+                )
+                stop = time_len - 1
+            if start > stop:
+                warnings.warn(
+                    "Segment start after stop. Truncating"
+                    f" end of segment to {start}.",
+                    category=ConfigWarning,
+                )
+                stop = start
+            if np.size(std_dev[start:stop]) == 0:
+                warnings.warn(
+                    f"Segment {segment_name} does not"
+                    " contain any time steps. The interval "
+                    f"[{start}, {stop}) does not intersect with steps in the"
+                    "time map.",
+                    category=ConfigWarning,
+                )
+            std_dev[start:stop] = cls._handle_error_mode(
+                values[start:stop],
+                segment_instance["ERROR"],
+                segment_instance["ERROR_MIN"],
+                segment_instance["ERROR_MODE"],
+            )
+        data = {}
+        for i, (good, error, value) in enumerate(zip(valid, std_dev, values)):
+            if good:
+                if error <= std_cutoff:
+                    warnings.warn(
+                        "Too small observation error in observation"
+                        f" {summary_key}:{i} - ignored",
+                        category=ConfigWarning,
+                    )
+                    continue
+                data[i] = SummaryObservation(summary_key, summary_key, value, error)
+
+        return {
+            summary_key: ObsVector(
+                EnkfObservationImplementationType.SUMMARY_OBS,
+                summary_key,
+                "summary",
+                data,
+            )
+        }
 
     @staticmethod
-    def _get_time(
-        conf_instance: Mapping[str, Any], start_time: datetime
-    ) -> Tuple[datetime, str]:
-        if "DATE" in conf_instance:
-            date_str = conf_instance["DATE"]
+    def _get_time(date_dict: DateDict, start_time: datetime) -> Tuple[datetime, str]:
+        if "DATE" in date_dict:
+            date_str = date_dict["DATE"]
             try:
                 return datetime.fromisoformat(date_str), f"DATE={date_str}"
             except ValueError:
@@ -287,11 +229,11 @@ class EnkfObs:
                         " Please use ISO date format"
                     ) from err
 
-        if "DAYS" in conf_instance:
-            days = float(conf_instance["DAYS"])
+        if "DAYS" in date_dict:
+            days = date_dict["DAYS"]
             return start_time + timedelta(days=days), f"DAYS={days}"
-        if "HOURS" in conf_instance:
-            hours = float(conf_instance["HOURS"])
+        if "HOURS" in date_dict:
+            hours = date_dict["HOURS"]
             return start_time + timedelta(hours=hours), f"HOURS={hours}"
         raise ValueError("Missing time specifier")
 
@@ -314,66 +256,70 @@ class EnkfObs:
         return nearest_index
 
     @staticmethod
-    def _get_restart(conf_instance: _DictConfInstance, time_map: List[datetime]) -> int:
-        if "RESTART" in conf_instance:
-            return int(conf_instance["RESTART"])
-        time, date_str = EnkfObs._get_time(conf_instance, time_map[0])
+    def _get_restart(
+        date_dict: DateDict, obs_name: str, time_map: List[datetime]
+    ) -> int:
+        if "RESTART" in date_dict:
+            return date_dict["RESTART"]
+        time, date_str = EnkfObs._get_time(date_dict, time_map[0])
         try:
             return EnkfObs._find_nearest(time_map, time)
         except IndexError as err:
             raise IndexError(
                 f"Could not find {time} ({date_str}) in "
-                f"the time map for observation {conf_instance.name}"
+                f"the time map for observation {obs_name}"
             ) from err
 
     @staticmethod
     def _make_value_and_std_dev(
-        conf_instance: Mapping[str, Any]
+        observation_dict: SummaryValues,
     ) -> Tuple[float, float]:
-        value = float(conf_instance["VALUE"])
+        value = observation_dict["VALUE"]
         return (
             value,
             float(
                 EnkfObs._handle_error_mode(
                     np.array(value),
-                    float(conf_instance["ERROR"]),
-                    float(conf_instance["ERROR_MIN"]),
-                    conf_instance["ERROR_MODE"],
+                    observation_dict["ERROR"],
+                    observation_dict["ERROR_MIN"],
+                    observation_dict["ERROR_MODE"],
                 )
             ),
         )
 
     @classmethod
     def _handle_summary_observation(
-        cls, ensemble_config: "EnsembleConfig", conf_instance, time_map
+        cls,
+        ensemble_config: "EnsembleConfig",
+        summary_dict: SummaryValues,
+        obs_key: str,
+        time_map: List[datetime],
     ) -> Dict[str, ObsVector]:
-        obs_vectors = {}
-        for instance in conf_instance.get_sub_instances("SUMMARY_OBSERVATION"):
-            summary_key = instance["KEY"]
-            obs_key = instance.name
-            ensemble_config["summary"].keys.append(summary_key)  # type: ignore
-            value, std_dev = cls._make_value_and_std_dev(instance)
-            try:
-                restart = cls._get_restart(instance, time_map)
-            except ValueError as err:
-                raise ValueError(
-                    f"Problem with date in summary observation {obs_key}: " + str(err)
-                ) from err
+        summary_key = summary_dict["KEY"]
+        ensemble_config["summary"].keys.append(summary_key)  # type: ignore
+        value, std_dev = cls._make_value_and_std_dev(summary_dict)
+        try:
+            restart = cls._get_restart(summary_dict, obs_key, time_map)
+        except ValueError as err:
+            raise ValueError(
+                f"Problem with date in summary observation {obs_key}: " + str(err)
+            ) from err
 
-            if restart == 0:
-                raise ValueError(
-                    "It is unfortunately not possible to use summary "
-                    "observations from the start of the simulation. "
-                    f"Problem with observation {obs_key} at "
-                    f"{cls._get_time(instance, time_map[0])}"
-                )
-            obs_vectors[obs_key] = ObsVector(
+        if restart == 0:
+            raise ValueError(
+                "It is unfortunately not possible to use summary "
+                "observations from the start of the simulation. "
+                f"Problem with observation {obs_key} at "
+                f"{cls._get_time(summary_dict, time_map[0])}"
+            )
+        return {
+            obs_key: ObsVector(
                 EnkfObservationImplementationType.SUMMARY_OBS,  # type: ignore
                 summary_key,
                 "summary",
                 {restart: SummaryObservation(summary_key, obs_key, value, std_dev)},
             )
-        return obs_vectors
+        }
 
     @classmethod
     def _create_gen_obs(
@@ -419,62 +365,68 @@ class EnkfObs:
 
     @classmethod
     def _handle_general_observation(
-        cls, ensemble_config: "EnsembleConfig", conf_instance, time_map
+        cls,
+        ensemble_config: "EnsembleConfig",
+        general_observation: GenObsValues,
+        obs_key: str,
+        time_map: List[datetime],
     ) -> Dict[str, ObsVector]:
-        obs_vectors = {}
-        for instance in conf_instance.get_sub_instances("GENERAL_OBSERVATION"):
-            state_kw = instance["DATA"]
-            if not ensemble_config.hasNodeGenData(state_kw):
-                warnings.warn(
-                    f"Ensemble key {state_kw} does not exist"
-                    f" - ignoring observation {instance.name}",
-                    category=ConfigWarning,
-                )
-                continue
-            config_node = ensemble_config.getNode(state_kw)
-            obs_key = instance.name
-            try:
-                restart = cls._get_restart(instance, time_map)
-            except ValueError as err:
-                raise ValueError(
-                    f"Problem with date in summary observation {obs_key}: " + str(err)
-                ) from err
-            if not isinstance(config_node, GenDataConfig):
-                warnings.warn(
-                    f"{state_kw} has implementation type:"
-                    f"'{type(config_node)}' - "
-                    f"expected:'GEN_DATA' in observation:{obs_key}."
-                    "The observation will be ignored",
-                    category=ConfigWarning,
-                )
-                continue
-            if restart not in config_node.report_steps:
-                warnings.warn(
-                    f"The GEN_DATA node:{state_kw} is not configured "
-                    f"to load from report step:{restart} for the observation:{obs_key}"
-                    " - The observation will be ignored",
-                    category=ConfigWarning,
-                )
-                continue
+        state_kw = general_observation["DATA"]
+        if not ensemble_config.hasNodeGenData(state_kw):
+            warnings.warn(
+                f"Ensemble key {state_kw} does not exist"
+                f" - ignoring observation {obs_key}",
+                category=ConfigWarning,
+            )
+            return {}
+        config_node = ensemble_config.getNode(state_kw)
+        try:
+            restart = cls._get_restart(general_observation, obs_key, time_map)
+        except ValueError as err:
+            raise ValueError(
+                f"Problem with date in summary observation {obs_key}: " + str(err)
+            ) from err
+        if not isinstance(config_node, GenDataConfig):
+            warnings.warn(
+                f"{state_kw} has implementation type:"
+                f"'{type(config_node)}' - "
+                f"expected:'GEN_DATA' in observation:{obs_key}."
+                "The observation will be ignored",
+                category=ConfigWarning,
+            )
+            return {}
+        if restart not in config_node.report_steps:
+            warnings.warn(
+                f"The GEN_DATA node:{state_kw} is not configured "
+                f"to load from report step:{restart} for the observation:{obs_key}"
+                " - The observation will be ignored",
+                category=ConfigWarning,
+            )
+            return {}
 
-            obs_vectors[obs_key] = ObsVector(
+        return {
+            obs_key: ObsVector(
                 EnkfObservationImplementationType.GEN_OBS,  # type: ignore
                 obs_key,
                 config_node.name,
                 {
                     restart: cls._create_gen_obs(
                         (
-                            float(instance["VALUE"]),
-                            float(instance["ERROR"]),
+                            general_observation["VALUE"],
+                            general_observation["ERROR"],
                         )
-                        if "VALUE" in instance
+                        if "VALUE" in general_observation
                         else None,
-                        instance["OBS_FILE"] if "OBS_FILE" in instance else None,
-                        instance["INDEX_LIST"] if "INDEX_LIST" in instance else None,
+                        general_observation["OBS_FILE"]
+                        if "OBS_FILE" in general_observation
+                        else None,
+                        general_observation["INDEX_LIST"]
+                        if "INDEX_LIST" in general_observation
+                        else None,
                     ),
                 },
             )
-        return obs_vectors
+        }
 
     def __repr__(self) -> str:
         return f"EnkfObs({self.obs_vectors}, {self.obs_time})"
@@ -517,23 +469,39 @@ class EnkfObs:
                 )
             if obs_time_list == []:
                 raise ObservationConfigError("Missing refcase or TIMEMAP")
-            conf_instance = _NewParserAdapter(parse(obs_config_file))
+            obs_config_content = parse(obs_config_file)
             try:
                 history = config.model_config.history_source
                 std_cutoff = config.analysis_config.get_std_cutoff()
                 time_len = len(obs_time_list)
                 ensemble_config = config.ensemble_config
-                obs_vectors = dict(
-                    **cls._handle_history_observation(
-                        ensemble_config, conf_instance, std_cutoff, history, time_len
-                    ),
-                    **cls._handle_summary_observation(
-                        ensemble_config, conf_instance, obs_time_list
-                    ),
-                    **cls._handle_general_observation(
-                        ensemble_config, conf_instance, obs_time_list
-                    ),
-                )
+                obs_vectors = {}
+                for obstype, obs_name, values in obs_config_content:
+                    if obstype == ObservationType.HISTORY:
+                        obs_vectors.update(
+                            **cls._handle_history_observation(
+                                ensemble_config,
+                                values,
+                                obs_name,
+                                std_cutoff,
+                                history,
+                                time_len,
+                            )
+                        )
+                    elif obstype == ObservationType.SUMMARY:
+                        obs_vectors.update(
+                            **cls._handle_summary_observation(
+                                ensemble_config, values, obs_name, obs_time_list
+                            )
+                        )
+                    elif obstype == ObservationType.GENERAL:
+                        obs_vectors.update(
+                            **cls._handle_general_observation(
+                                ensemble_config, values, obs_name, obs_time_list
+                            )
+                        )
+                    else:
+                        raise ValueError(f"Unknown ObservationType {obstype}")
 
                 for state_kw in set(o.data_key for o in obs_vectors.values()):
                     assert state_kw in ensemble_config.response_configs
