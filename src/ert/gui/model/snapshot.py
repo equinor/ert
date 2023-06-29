@@ -103,7 +103,6 @@ class SnapshotModel(QAbstractItemModel):
         # If there are no realizations, there's nothing to prerender.
         if not snapshot.data().get(ids.REALS):
             return None
-
         metadata: Dict[str, Any] = {
             # A mapping from real to job to that job's QColor status representation
             REAL_JOB_STATUS_AGGREGATED: {},
@@ -115,11 +114,12 @@ class SnapshotModel(QAbstractItemModel):
                 snapshot.data()[ids.REALS].keys(), key=int
             )
             metadata[SORTED_JOB_IDS] = {}
-            for real_id, real in snapshot.data()[ids.REALS].items():
+            for real_id in snapshot.reals.keys():
                 metadata[SORTED_JOB_IDS][real_id] = {}
-                for step_id, step in real[ids.STEPS].items():
+                for step_id in snapshot.steps(real_id).keys():
                     indices = [
-                        (job.index, job_id) for job_id, job in step[ids.JOBS].items()
+                        (job.index, job_id)
+                        for job_id, job in snapshot.jobs(real_id, step_id).items()
                     ]
                     metadata[SORTED_JOB_IDS][real_id][step_id] = [
                         index[1]
@@ -147,7 +147,7 @@ class SnapshotModel(QAbstractItemModel):
             snapshot.update_metadata(metadata)
         return snapshot
 
-    # pylint: disable=too-many-branches
+    # pylint: disable=too-many-branches, too-many-statements
     def _add_partial_snapshot(self, partial: PartialSnapshot, iter_: int):
         metadata = partial.data().get(ids.METADATA)
         if not metadata:
@@ -245,8 +245,8 @@ class SnapshotModel(QAbstractItemModel):
 
                         for attr in (ids.CURRENT_MEMORY_USAGE, ids.MAX_MEMORY_USAGE):
                             if job.get(ids.DATA) and attr in job.get(ids.DATA):
-                                job_node.data[ids.DATA] = job_node.data[ids.DATA].set(
-                                    attr, job.get(ids.DATA).get(attr)
+                                job_node.data[ids.DATA][attr] = job.get(ids.DATA).get(
+                                    attr
                                 )
 
                     if jobs_changed:
@@ -295,11 +295,11 @@ class SnapshotModel(QAbstractItemModel):
                 NodeType.REAL,
             )
             snapshot_tree.add_child(real_node)
-            for step_id, step in real[ids.STEPS].items():
-                step_node = Node(step_id, {ids.STATUS: step[ids.STATUS]}, NodeType.STEP)
+            for step_id, step in snapshot.steps(real_id).items():
+                step_node = Node(step_id, {ids.STATUS: step.status}, NodeType.STEP)
                 real_node.add_child(step_node)
                 for job_id in metadata[SORTED_JOB_IDS][real_id][step_id]:
-                    job = step[ids.JOBS][job_id]
+                    job = snapshot.get_job(real_id, step_id, job_id)
                     job_dict = dict(job)
                     job_dict[ids.DATA] = job.data
                     job_node = Node(job_id, job_dict, NodeType.JOB)
