@@ -1,5 +1,6 @@
 from argparse import ArgumentParser
 from pathlib import Path
+from textwrap import dedent
 
 import numpy as np
 import pytest
@@ -460,14 +461,20 @@ def test_update_multiple_param(copy_case, new_ensemble):
 
 @pytest.mark.integration_test
 def test_gen_data_obs_data_mismatch(snake_oil_case_storage):
-    with open("observations/observations.txt", "r", encoding="utf-8") as file:
-        obs_text = file.read()
-    obs_text = obs_text.replace(
-        "INDEX_LIST = 400,800,1200,1800;", "INDEX_LIST = 400,800,1200,1800,2400;"
-    )
     with open("observations/observations.txt", "w", encoding="utf-8") as file:
-        file.write(obs_text)
-    with open("observations/wpr_diff_obs.txt", "a", encoding="utf-8") as file:
+        file.write(
+            dedent(
+                """
+        GENERAL_OBSERVATION WPR_DIFF_1 {
+        DATA       = SNAKE_OIL_WPR_DIFF;
+        INDEX_LIST = 5000; -- outside range
+        DATE       = 2015-06-13;  -- (RESTART = 199)
+        OBS_FILE   = wpr_diff_obs.txt;
+        };
+                          """
+            )
+        )
+    with open("observations/wpr_diff_obs.txt", "w", encoding="utf-8") as file:
         file.write("0.0 0.05\n")
     ert_config = ErtConfig.from_file("snake_oil.ert")
     ert = EnKFMain(ert_config)
@@ -484,7 +491,7 @@ def test_gen_data_obs_data_mismatch(snake_oil_case_storage):
 
         with pytest.raises(
             ErtAnalysisError,
-            match="WPR_DIFF_1 is missing one or more responses",
+            match="No active observations",
         ):
             es_update.smootherUpdate(sim_fs, target_fs, "an id")
 

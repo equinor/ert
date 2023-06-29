@@ -308,8 +308,6 @@ def _get_obs_and_measure_data(
                 f"Mismatched index for: "
                 f"Observation: {obs_key} attached to response: {group}"
             )
-        if filtered_ds["values"].isnull().any():
-            raise ErtAnalysisError(f"{obs_key} is missing one or more responses")
 
         observation_keys.append([obs_key] * len(filtered_ds.observations.data.ravel()))
         observation_values.append(filtered_ds["observations"].data.ravel())

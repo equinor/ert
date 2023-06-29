@@ -48,6 +48,13 @@ def setup_configuration(tmpdir):
                 DATE    = 2014-09-10;
                 KEY     = FOPR;
                 };
+                SUMMARY_OBSERVATION FOPR_2
+                {
+                VALUE   = 1.1;
+                ERROR   = 0.05;
+                DATE    = 2014-09-11;
+                KEY     = FOPR;
+                };
                 """
             )
             fh.writelines(obs_config)
@@ -108,9 +115,7 @@ def test_that_mismatched_responses_give_error(
 
     es_update = ESUpdate(ert)
 
-    with pytest.raises(
-        ErtAnalysisError, match=re.escape("FOPR_1 is missing one or more responses")
-    ):
+    with pytest.raises(ErtAnalysisError, match=re.escape("No active observations")):
         es_update.smootherUpdate(prior_ensemble, target_ensemble, "an id")
 
 
