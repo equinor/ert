@@ -329,48 +329,6 @@ The pseudo algorithm for ES:
 5) Run the forward model :math:`Y_a = g(X_a)` to obtain the posterior simulated responses
 
 
-Numerical schemes
-------------------
-
-There are several numerical schemes, i.e. methods to estimate the Kalman gain matrix
-
-.. math::
-   \bar{C}_{xy}(\bar{C}_{xy}^{f}\bar{C}_{xx}^{-1}\bar{C}_{xy}+\bar{C}_{dd})^{-1}
-
-implemented in ERT.
-
-
-STD EnKF
-~~~~~~~~
-
-The recommended scheme.
-
-
-SQRT EnKF
-~~~~~~~~~
-
-
-
-NULL ENKF
-~~~~~~~~~
-
-
-
-FWD STEP EnKF
-~~~~~~~~~~~~~
-
-
-
-CV ENKF
-~~~~~~~~
-
-
-
-BOOTSTRAP ENKF
-~~~~~~~~~~~~~~
-
-
-
 Ensemble smoother - multiple data assimilation (ES MDA)
 -------------------------------------------------------
 
