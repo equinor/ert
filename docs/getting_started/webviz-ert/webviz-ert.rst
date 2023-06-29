@@ -5,8 +5,7 @@ Webviz-ert
 Introduction
 ------------
 
-Webviz-ert is what we consider the future of visualisation in ERT, and the old
-plotting tool based on PyQt will at some point be deprecated and eventually removed.
+Webviz-ert is an alternative visualisation tool in ERT.
 Our main goal is to provide our users with a more rich interface with the common, yet
 simple visualisations needed. Advanced users / needs would still be pointed in the
 direction of ResInsight or equivalent.
