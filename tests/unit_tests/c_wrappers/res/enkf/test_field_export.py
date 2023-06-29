@@ -2,6 +2,8 @@ import os
 
 import pytest
 
+from ert._c_wrappers.enkf.config.field_config import export_field
+
 
 def test_field_basics(snake_oil_field_example):
     ert = snake_oil_field_example
@@ -30,12 +32,14 @@ def test_field_export(snake_oil_field_example, storage):
     ens_config = ert.ensembleConfig()
     config_node = ens_config["PERMX"]
 
-    fs = prior_ensemble
-    fs.export_field(
+    param_info = prior_ensemble.experiment.parameter_info[config_node.name]
+    export_field(
         config_node.name,
         0,
         "export/with/path/PERMX_0.grdecl",
-        fformat="grdecl",
+        param_info,
+        prior_ensemble.mount_point,
+        prior_ensemble.experiment.grid_path,
     )
     assert os.path.isfile("export/with/path/PERMX_0.grdecl")
     assert os.path.getsize("export/with/path/PERMX_0.grdecl") > 0
@@ -43,39 +47,47 @@ def test_field_export(snake_oil_field_example, storage):
     with pytest.raises(
         KeyError, match="Unable to load FIELD for key: PERMX, realization: 1"
     ):
-        fs.export_field(
+        export_field(
             config_node.name,
             1,
             "export/with/path/PERMX_1.grdecl",
-            fformat="grdecl",
+            param_info,
+            prior_ensemble.mount_point,
+            prior_ensemble.experiment.grid_path,
         )
     assert not os.path.isfile("export/with/path/PERMX_1.grdecl")
 
     with pytest.raises(
         KeyError, match="Unable to load FIELD for key: PERMX, realization: 2"
     ):
-        fs.export_field(
+        export_field(
             config_node.name,
             2,
             "export/with/path/PERMX_2.grdecl",
-            fformat="grdecl",
+            param_info,
+            prior_ensemble.mount_point,
+            prior_ensemble.experiment.grid_path,
         )
     assert not os.path.isfile("export/with/path/PERMX_2.grdecl")
 
-    fs.export_field(
+    export_field(
         config_node.name,
         3,
         "export/with/path/PERMX_3.grdecl",
-        fformat="grdecl",
+        param_info,
+        prior_ensemble.mount_point,
+        prior_ensemble.experiment.grid_path,
     )
     assert os.path.isfile("export/with/path/PERMX_3.grdecl")
     assert os.path.getsize("export/with/path/PERMX_3.grdecl") > 0
 
-    fs.export_field(
+    export_field(
         config_node.name,
         4,
         "export/with/path/PERMX_4.grdecl",
-        fformat="grdecl",
+        param_info,
+        prior_ensemble.mount_point,
+        prior_ensemble.experiment.grid_path,
     )
     assert os.path.isfile("export/with/path/PERMX_4.grdecl")
     assert os.path.getsize("export/with/path/PERMX_4.grdecl") > 0
