@@ -1,15 +1,10 @@
 import logging
 import os
 import os.path
-import shutil
-from collections import defaultdict
 from dataclasses import dataclass, field
-from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, no_type_check
+from typing import Dict, List, Optional, Tuple, no_type_check
 
-from ert._c_wrappers.config import ConfigContent, ConfigParser
 from ert._c_wrappers.util import SubstitutionList
-from ert._clib.job_kw import type_from_kw  # pylint: disable=import-error
 from ert.parsing import (
     ConfigValidationError,
     ErrorInfo,
@@ -47,146 +42,18 @@ class ExtJob:
     private_args: SubstitutionList = field(default_factory=SubstitutionList)
     help_text: str = ""
 
-    @staticmethod
-    def _resolve_executable(
-        executable: str, name: str, config_file_location: str
-    ) -> str:
-        """
-        :returns: The resolved path to the executable
-
-        :raises: ConfigValidationError if the executable cannot be found
-            or we don't have permissions to execute.
-        """
-        # PS: This operation has surprising behavior but is kept this way for
-        # backwards compatability
-        if not os.path.isabs(executable):
-            path_to_executable = os.path.abspath(
-                os.path.join(config_file_location, executable)
-            )
-        else:
-            path_to_executable = executable
-
-        resolved = None
-        if os.path.exists(path_to_executable):
-            resolved = path_to_executable
-        elif not os.path.isabs(executable):
-            # look for system installed executable
-            resolved = shutil.which(executable)
-
-        if resolved is None:
-            raise ConfigValidationError(
-                config_file=config_file_location,
-                errors=f"Could not find executable {executable!r} for job {name!r}",
-            )
-
-        if not os.access(resolved, os.X_OK):  # is not executable
-            raise ConfigValidationError(
-                config_file=config_file_location,
-                errors=f"ExtJob {name!r} with executable"
-                f" {resolved!r} does not have execute permissions",
-            )
-
-        if os.path.isdir(resolved):
-            raise ConfigValidationError(
-                config_file=config_file_location,
-                errors=f"ExtJob {name!r} has executable set to directory {resolved!r}",
-            )
-
-        return resolved
-
-    _int_keywords = ["MAX_RUNNING", "MAX_RUNNING_MINUTES", "MIN_ARG", "MAX_ARG"]
-    _str_keywords = [
-        "STDIN",
-        "STDOUT",
-        "STDERR",
-        "START_FILE",
-        "TARGET_FILE",
-        "ERROR_FILE",
-        "START_FILE",
-    ]
     default_env = {
         "_ERT_ITERATION_NUMBER": "<ITER>",
         "_ERT_REALIZATION_NUMBER": "<IENS>",
         "_ERT_RUNPATH": "<RUNPATH>",
     }
 
-    @classmethod
-    def _parse_config_file(cls, config_file: str) -> ConfigContent:
-        parser = ConfigParser()
-        for int_key in cls._int_keywords:
-            parser.add(int_key, value_type=SchemaItemType.INT).set_argc_minmax(1, 1)
-        for path_key in cls._str_keywords:
-            parser.add(path_key).set_argc_minmax(1, 1)
-
-        parser.add("EXECUTABLE", required=True).set_argc_minmax(1, 1)
-        parser.add("ENV").set_argc_minmax(2, 2)
-        parser.add("EXEC_ENV").set_argc_minmax(2, 2)
-        parser.add("DEFAULT").set_argc_minmax(2, 2)
-        parser.add("ARGLIST").set_argc_minmax(1, -1)
-        arg_type_schema = parser.add("ARG_TYPE")
-        arg_type_schema.set_argc_minmax(2, 2)
-        arg_type_schema.iset_type(0, SchemaItemType.INT)
-
-        return parser.parse(
-            config_file,
-        )
-
-    @classmethod
-    def _read_str_keywords(
-        cls, config_content: ConfigContent
-    ) -> Dict[str, Optional[str]]:
-        result: Dict[str, Optional[str]] = {}
-
-        def might_set_value_none(keyword: str, key: str) -> None:
-            value: Optional[str]
-            value = config_content.getValue(keyword)  # type: ignore
-            if value == "null":
-                value = None
-            result[key] = value
-
-        for key in cls._str_keywords:
-            if config_content.hasKey(key):
-                if key in ("STDIN", "STDOUT", "STDERR"):
-                    might_set_value_none(key, key.lower() + "_file")
-                else:
-                    might_set_value_none(key, key.lower())
-        return result
-
-    @classmethod
-    def _read_int_keywords(cls, config_content: ConfigContent) -> Dict[str, int]:
-        result: Dict[str, int] = {}
-        for key in cls._int_keywords:
-            if config_content.hasKey(key):
-                value: int = config_content.getValue(key)  # type: ignore
-                if value > 0:
-                    # less than or equal to 0 in the config is equivalent to
-                    # setting None (backwards compatability)
-                    result[key.lower()] = value
-        return result
-
-    @staticmethod
-    def _make_arg_types_list(
-        config_content: ConfigContent, max_arg: Optional[int]
-    ) -> List[SchemaItemType]:
-        arg_types_dict = defaultdict(lambda: SchemaItemType.STRING)
-        if max_arg is not None:
-            arg_types_dict[max_arg - 1] = SchemaItemType.STRING
-        for arg in config_content["ARG_TYPE"]:
-            idx: int = arg[0]  # type: ignore
-            arg_types_dict[idx] = SchemaItemType.from_content_type_enum(
-                type_from_kw(arg[1])
-            )
-        if arg_types_dict:
-            return [
-                arg_types_dict[j]
-                for j in range(max(i for i in arg_types_dict.keys()) + 1)
-            ]
-        else:
-            return []
-
     @no_type_check
     @classmethod
-    def from_config_file_with_new_parser(cls, config_file: str, name: str) -> "ExtJob":
+    def from_config_file(cls, config_file: str, name: Optional[str] = None) -> "ExtJob":
+        if name is None:
+            name = os.path.basename(config_file)
+
         schema = init_ext_job_schema()
 
         try:
@@ -247,100 +114,3 @@ class ExtJob:
             raise ConfigValidationError.from_info(
                 ErrorInfo(message=str(err), filename=name)
             )
-
-    @classmethod
-    def from_config_file_with_old_parser(cls, config_file: str, name: str) -> "ExtJob":
-        try:
-            config_content = cls._parse_config_file(config_file)
-        except ConfigValidationError as conf_err:
-            with open(config_file, encoding="utf-8") as f:
-                if "PORTABLE_EXE " in f.read():
-                    err_msg = (
-                        '"PORTABLE_EXE" key is deprecated,'
-                        ' please replace with "EXECUTABLE" in'
-                    )
-                    raise ConfigValidationError.from_collected(
-                        [conf_err, ConfigValidationError(err_msg, config_file)]
-                    ) from None
-            raise conf_err from None
-
-        except IOError as err:
-            raise ConfigValidationError(
-                config_file=config_file,
-                errors=f"Could not open job config file {config_file!r}",
-            ) from err
-
-        logger.info(
-            "Content of job config %s: %s",
-            name,
-            Path(config_file).read_text(encoding="utf-8"),
-        )
-        content_dict: Dict[str, Any] = {}
-
-        content_dict.update(**cls._read_str_keywords(config_content))
-        content_dict.update(**cls._read_int_keywords(config_content))
-
-        content_dict["executable"] = config_content.getValue("EXECUTABLE")
-        if config_content.hasKey("ARGLIST"):
-            # We unescape backslash here to keep backwards compatability ie. If
-            # the arglist contains a '\n' we interpret it as a newline.
-            content_dict["arglist"] = [
-                s.encode("utf-8", "backslashreplace").decode("unicode_escape")
-                for s in config_content["ARGLIST"][-1]
-            ]
-
-        content_dict["arg_types"] = cls._make_arg_types_list(
-            config_content,
-            content_dict["max_arg"]
-            if "max_arg" in content_dict and content_dict["max_arg"] > 0
-            else None,
-        )
-
-        def set_env(key: str, keyword: str) -> None:
-            content_dict[key] = {}
-            if config_content.hasKey(keyword):
-                for env in config_content[keyword]:
-                    if len(env) > 1:
-                        content_dict[key][env[0]] = env[1]
-                    else:
-                        content_dict[key][env[0]] = None
-
-        set_env("environment", "ENV")
-        set_env("exec_env", "EXEC_ENV")
-        # Add default run information to job environment vars
-        content_dict["environment"].update(cls.default_env)
-
-        content_dict["default_mapping"] = {}
-        if config_content.hasKey("DEFAULT"):
-            for key, value in config_content["DEFAULT"]:
-                content_dict["default_mapping"][key] = value
-
-        content_dict["executable"] = ExtJob._resolve_executable(
-            content_dict["executable"], name, os.path.dirname(config_file)
-        )
-
-        # The default for stdout_file and stdin_file is
-        # {name}.std{out/err}
-        for handle in ("stdout", "stderr"):
-            if handle + "_file" not in content_dict:
-                content_dict[handle + "_file"] = name + "." + handle
-
-        return cls(
-            name,
-            **content_dict,
-        )
-
-    @classmethod
-    def from_config_file(
-        cls, config_file: str, name: Optional[str] = None, use_new_parser: bool = True
-    ) -> "ExtJob":
-        if name is None:
-            name = os.path.basename(config_file)
-
-        if use_new_parser:
-            return cls.from_config_file_with_new_parser(  # type: ignore
-                config_file,
-                name,
-            )
-        else:
-            return cls.from_config_file_with_old_parser(config_file, name)

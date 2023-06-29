@@ -10,7 +10,6 @@ import xtgeo
 from ecl.summary import EclSum
 
 from ert import _clib
-from ert._c_wrappers.config.rangestring import rangestring_to_list
 from ert._c_wrappers.enkf import GenKwConfig
 from ert._c_wrappers.enkf.config.field_config import TRANSFORM_FUNCTIONS, Field
 from ert._c_wrappers.enkf.config.gen_data_config import GenDataConfig
@@ -21,6 +20,7 @@ from ert._c_wrappers.enkf.config.surface_config import SurfaceConfig
 from ert._c_wrappers.enkf.config_keys import ConfigKeys
 from ert.parsing import ConfigValidationError, ConfigWarning, ErrorInfo
 from ert.storage.field_utils.field_utils import Shape, get_shape
+from ert.validation import rangestring_to_list
 
 logger = logging.getLogger(__name__)
 

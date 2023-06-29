@@ -19,9 +19,7 @@ def test_workflow():
     with pytest.raises(ConfigValidationError, match="Could not open config_file"):
         _ = WorkflowJob.from_file("knock_job", name="KNOCK")
 
-    workflow = Workflow.from_file(
-        "dump_workflow", None, {"DUMP": dump_job}, use_new_parser=False
-    )
+    workflow = Workflow.from_file("dump_workflow", None, {"DUMP": dump_job})
 
     assert len(workflow) == 2
 

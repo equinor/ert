@@ -25,7 +25,6 @@ set(SHARE_DIR "${CMAKE_SOURCE_DIR}/../ert/shared/share/ert")
 # Subdirectories
 # -----------------------------------------------------------------
 
-add_subdirectory(config)
 add_subdirectory(enkf)
 add_subdirectory(job_queue)
 add_subdirectory(res_util)

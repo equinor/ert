@@ -1,19 +1,10 @@
 import logging
 import os
 from textwrap import dedent
-from typing import List
 
 import pytest
 
-from ert._c_wrappers.config.content_type_enum import ContentTypeEnum
 from ert._c_wrappers.enkf import ErtConfig
-
-
-def valid_args(arg_types, arg_list: List[str], runtime: bool = False):
-    return all(
-        ContentTypeEnum.from_schema_type(arg_type).valid_string(arg, runtime)
-        for arg, arg_type in zip(arg_list, arg_types)
-    )
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -297,7 +288,6 @@ def test_simulation_job(job, forward_model, expected_args):
         "jobList"
     ][0]
     assert job_data["argList"] == expected_args
-    assert valid_args(ert_config.forward_model_list[0].arg_types, job_data["argList"])
 
 
 @pytest.mark.usefixtures("use_tmpdir")

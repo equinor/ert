@@ -1,4 +1,3 @@
-import dataclasses
 import functools
 import logging
 import os
@@ -78,33 +77,6 @@ def run_gui(args: Namespace, plugin_manager: Optional[ErtPluginManager] = None):
             return show_window()
 
 
-def _log_difference_with_old_parser(args, ert_config):
-    logger = logging.getLogger(__name__)
-    try:
-        with warnings.catch_warnings(record=True) as silenced_warnings:
-            ert_config_new = ErtConfig.from_file(args.config, use_new_parser=False)
-
-            for w in silenced_warnings:
-                logger.info(f"New Parser warning: {w.message}")
-
-        if ert_config != ert_config_new:
-            fields = dataclasses.fields(ert_config)
-            difference = [
-                f"{getattr(ert_config, field.name)} !="
-                f" {getattr(ert_config_new, field.name)}"
-                for field in fields
-                if getattr(ert_config, field.name)
-                != getattr(ert_config_new, field.name)
-            ]
-            logger.info(
-                f"New parser gave different result.\n" f" Difference: {difference!r}"
-            )
-        else:
-            logger.info("New parser gave equal result.")
-    except Exception:
-        logger.exception("The new parser failed")
-
-
 def _start_initial_gui_window(
     args, log_handler, plugin_manager: Optional[ErtPluginManager] = None
 ):
@@ -128,7 +100,6 @@ def _start_initial_gui_window(
             ert_config = ErtConfig.from_file(args.config)
             local_storage_set_ert_config(ert_config)
             suggestions += ErtConfig.make_suggestion_list(args.config)
-            _log_difference_with_old_parser(args, ert_config)
             ert = EnKFMain(ert_config)
         except ConfigValidationError as error:
             config_warnings = [

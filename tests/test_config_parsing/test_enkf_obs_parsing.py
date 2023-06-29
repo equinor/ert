@@ -913,7 +913,7 @@ def test_that_unknown_key_in_is_handled(tmpdir, observation_type):
 
         ert_config = ErtConfig.from_file("config.ert")
         with pytest.raises(ObservationConfigError, match="Unknown SMERROR"):
-            _ = EnkfObs.from_ert_config(ert_config, new_parser=True)
+            _ = EnkfObs.from_ert_config(ert_config)
 
 
 def test_validation_of_duplicate_names(
@@ -953,4 +953,4 @@ def test_validation_of_duplicate_names(
         with pytest.raises(
             ObservationConfigError, match="Duplicate observation name FOPR"
         ):
-            _ = EnkfObs.from_ert_config(ert_config, new_parser=True)
+            _ = EnkfObs.from_ert_config(ert_config)

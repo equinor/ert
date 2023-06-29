@@ -26,7 +26,6 @@ from ert._c_wrappers.enkf.observations import ObsVector
 from ert._c_wrappers.enkf.observations.gen_observation import GenObservation
 from ert._c_wrappers.enkf.observations.summary_observation import SummaryObservation
 from ert._c_wrappers.sched import HistorySourceEnum
-from ert._clib.enkf_obs import ConfInstance
 from ert.parsing import ConfigWarning, ErrorInfo
 from ert.parsing.new_observations_parser import (
     ConfContent,
@@ -41,14 +40,6 @@ if TYPE_CHECKING:
     from ert._c_wrappers.enkf import EnsembleConfig, ErtConfig
 
 DEFAULT_TIME_DELTA = timedelta(seconds=30)
-
-USE_NEW_OBS_PARSER_BY_DEFAULT = True
-
-if (
-    "USE_OLD_ERT_OBS_PARSER" in os.environ
-    and os.environ["USE_OLD_ERT_OBS_PARSER"] == "YES"
-):
-    USE_NEW_OBS_PARSER_BY_DEFAULT = False
 
 
 class _DictConfInstance:
@@ -323,7 +314,7 @@ class EnkfObs:
         return nearest_index
 
     @staticmethod
-    def _get_restart(conf_instance: ConfInstance, time_map: List[datetime]) -> int:
+    def _get_restart(conf_instance: _DictConfInstance, time_map: List[datetime]) -> int:
         if "RESTART" in conf_instance:
             return int(conf_instance["RESTART"])
         time, date_str = EnkfObs._get_time(conf_instance, time_map[0])
@@ -489,9 +480,7 @@ class EnkfObs:
         return f"EnkfObs({self.obs_vectors}, {self.obs_time})"
 
     @classmethod
-    def from_ert_config(
-        cls, config: "ErtConfig", new_parser: bool = USE_NEW_OBS_PARSER_BY_DEFAULT
-    ) -> "EnkfObs":
+    def from_ert_config(cls, config: "ErtConfig") -> "EnkfObs":
         obs_config_file = config.model_config.obs_config_file
         obs_time_list: List[datetime] = []
         if config.model_config.refcase is not None:
@@ -528,19 +517,7 @@ class EnkfObs:
                 )
             if obs_time_list == []:
                 raise ObservationConfigError("Missing refcase or TIMEMAP")
-            conf_instance: ConfInstance
-            if new_parser:
-                conf_instance = _NewParserAdapter(parse(obs_config_file))
-            else:
-                conf_instance = ConfInstance(obs_config_file)
-                errors = conf_instance.get_errors()
-                if errors != []:
-                    raise ObservationConfigError(
-                        errors=[
-                            ErrorInfo(filename=obs_config_file, message=e)
-                            for e in errors
-                        ]
-                    )
+            conf_instance = _NewParserAdapter(parse(obs_config_file))
             try:
                 history = config.model_config.history_source
                 std_cutoff = config.analysis_config.get_std_cutoff()

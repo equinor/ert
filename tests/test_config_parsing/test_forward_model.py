@@ -71,7 +71,7 @@ def test_parsing_forward_model_with_double_dash_is_possible():
     with open(test_config_file_name, "w", encoding="utf-8") as fh:
         fh.write(test_config_contents)
 
-    res_config = ErtConfig.from_file(test_config_file_name, use_new_parser=True)
+    res_config = ErtConfig.from_file(test_config_file_name)
     assert res_config.model_config.jobname_format_string == "job_<IENS>--hei"
     assert (
         res_config.forward_model_list[0].private_args["<TO>"]
@@ -100,11 +100,7 @@ def test_parsing_forward_model_with_quotes_does_not_introduce_spaces():
     with open(test_config_file_name, "w", encoding="utf-8") as fh:
         fh.write(test_config_contents)
 
-    ert_config = ErtConfig.from_file(test_config_file_name, use_new_parser=False)
-    for _, value in ert_config.forward_model_list[0].private_args:
-        assert " " not in value
-        assert '"' not in value
-    ert_config = ErtConfig.from_file(test_config_file_name, use_new_parser=True)
+    ert_config = ErtConfig.from_file(test_config_file_name)
     for _, value in ert_config.forward_model_list[0].private_args:
         assert " " not in value
         assert '"' not in value
@@ -129,7 +125,7 @@ def test_that_comments_are_ignored():
     with open(test_config_file_name, "w", encoding="utf-8") as fh:
         fh.write(test_config_contents)
 
-    res_config = ErtConfig.from_file(test_config_file_name, use_new_parser=True)
+    res_config = ErtConfig.from_file(test_config_file_name)
     assert res_config.model_config.jobname_format_string == "job_<IENS>--hei"
     assert (
         res_config.forward_model_list[0].private_args["<TO>"]
@@ -155,7 +151,7 @@ def test_that_quotations_in_forward_model_arglist_are_handled_correctly():
     with open(test_config_file_name, "w", encoding="utf-8") as fh:
         fh.write(test_config_contents)
 
-    res_config = ErtConfig.from_file(test_config_file_name, use_new_parser=True)
+    res_config = ErtConfig.from_file(test_config_file_name)
 
     assert res_config.forward_model_list[0].private_args["<FROM>"] == "some, thing"
     assert res_config.forward_model_list[0].private_args["<TO>"] == "some stuff"
@@ -183,10 +179,7 @@ def test_that_positional_forward_model_args_gives_config_validation_error():
         fh.write(test_config_contents)
 
     with pytest.raises(ConfigValidationError, match="FORWARD_MODEL RMS"):
-        _ = ErtConfig.from_file(test_config_file_name, use_new_parser=True)
-
-    with pytest.raises(ConfigValidationError, match="Could not find job 'RMS<IENS>'"):
-        _ = ErtConfig.from_file(test_config_file_name, use_new_parser=False)
+        _ = ErtConfig.from_file(test_config_file_name)
 
 
 @pytest.mark.usefixtures("use_tmpdir")

@@ -2,12 +2,9 @@ from __future__ import annotations
 
 import logging
 import os
-from collections import defaultdict
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Tuple, Type, Union
+from typing import List, Optional, Tuple, Type, Union
 
-from ert._c_wrappers.config import ConfigContent, ConfigParser
-from ert._clib.job_kw import type_from_kw  # pylint: disable=import-error
 from ert.parsing import (
     ConfigDict,
     ConfigValidationError,
@@ -26,24 +23,7 @@ logger = logging.getLogger(__name__)
 ContentTypes = Union[Type[int], Type[bool], Type[float], Type[str]]
 
 
-def _workflow_job_config_parser() -> ConfigParser:
-    parser = ConfigParser()
-    parser.add("MIN_ARG", value_type=SchemaItemType.INT).set_argc_minmax(1, 1)
-    parser.add("MAX_ARG", value_type=SchemaItemType.INT).set_argc_minmax(1, 1)
-    parser.add("EXECUTABLE", value_type=SchemaItemType.EXECUTABLE).set_argc_minmax(1, 1)
-    parser.add("SCRIPT", value_type=SchemaItemType.PATH).set_argc_minmax(1, 1)
-    parser.add("INTERNAL", value_type=SchemaItemType.BOOL).set_argc_minmax(1, 1)
-    item = parser.add("ARG_TYPE")
-    item.set_argc_minmax(2, 2)
-    item.iset_type(0, SchemaItemType.INT)
-    item.initSelection(1, ["STRING", "INT", "FLOAT", "BOOL"])  # type: ignore
-    return parser
-
-
-_config_parser = _workflow_job_config_parser()
-
-
-def new_workflow_job_parser(file: str) -> ConfigDict:
+def workflow_job_parser(file: str) -> ConfigDict:
     schema = init_workflow_job_schema()
     return lark_parse(file, schema=schema)
 
@@ -78,7 +58,7 @@ class WorkflowJob:
                 ) from err
 
     @staticmethod
-    def _make_arg_types_list_new(content_dict: ConfigDict) -> List[SchemaItemType]:
+    def _make_arg_types_list(content_dict: ConfigDict) -> List[SchemaItemType]:
         # First find the number of args
         specified_arg_types: List[Tuple[int, str]] = content_dict.get(
             WorkflowJobKeys.ARG_TYPE, []
@@ -91,86 +71,31 @@ class WorkflowJob:
             specified_arg_types, specified_min_args, specified_max_args
         )
 
-    @staticmethod
-    def _make_arg_types_list(
-        config_content: ConfigContent, max_arg: Optional[int]
-    ) -> List[SchemaItemType]:
-        arg_types_dict: Dict[int, SchemaItemType] = defaultdict(
-            lambda: SchemaItemType.STRING
-        )
-        if max_arg is not None:
-            arg_types_dict[max_arg - 1] = SchemaItemType.STRING
-        for arg in config_content["ARG_TYPE"]:
-            arg_index: int = arg[0]  # type: ignore
-            arg_types_dict[arg_index] = SchemaItemType.from_content_type_enum(
-                type_from_kw(arg[1])
-            )
-        if arg_types_dict:
-            return [
-                arg_types_dict[j]
-                for j in range(max(i for i in arg_types_dict.keys()) + 1)
-            ]
-        else:
-            return []
-
     @classmethod
-    def from_file(
-        cls, config_file: str, name: Optional[str] = None, use_new_parser: bool = True
-    ) -> "WorkflowJob":
+    def from_file(cls, config_file: str, name: Optional[str] = None) -> "WorkflowJob":
         if not (os.path.isfile(config_file) and os.access(config_file, os.R_OK)):
             raise ConfigValidationError(f"Could not open config_file:{config_file!r}")
         if not name:
             name = os.path.basename(config_file)
 
-        if use_new_parser:
-            content_dict = new_workflow_job_parser(config_file)
-            arg_types_list = cls._make_arg_types_list_new(content_dict)
-            return cls(
-                name,
-                content_dict.get("INTERNAL"),  # type: ignore
-                content_dict.get("MIN_ARG"),  # type: ignore
-                content_dict.get("MAX_ARG"),  # type: ignore
-                arg_types_list,
-                content_dict.get("EXECUTABLE"),  # type: ignore
-                str(content_dict.get("SCRIPT"))  # type: ignore
-                if "SCRIPT" in content_dict
-                else None,
-            )
-        else:
-            old_content = _config_parser.parse(config_file)
-
-            def optional_get(key: str, default: Any = None) -> Any:
-                return old_content.getValue(key) if old_content.hasKey(key) else default
-
-            max_arg: Optional[int] = optional_get("MAX_ARG")
-            arg_types_list = cls._make_arg_types_list(old_content, max_arg)
-            return cls(
-                name,
-                optional_get("INTERNAL", False),
-                optional_get("MIN_ARG"),
-                max_arg,
-                arg_types_list,
-                optional_get("EXECUTABLE"),
-                optional_get("SCRIPT"),
-            )
+        content_dict = workflow_job_parser(config_file)
+        arg_types_list = cls._make_arg_types_list(content_dict)
+        return cls(
+            name,
+            content_dict.get("INTERNAL"),  # type: ignore
+            content_dict.get("MIN_ARG"),  # type: ignore
+            content_dict.get("MAX_ARG"),  # type: ignore
+            arg_types_list,
+            content_dict.get("EXECUTABLE"),  # type: ignore
+            str(content_dict.get("SCRIPT"))  # type: ignore
+            if "SCRIPT" in content_dict
+            else None,
+        )
 
     def is_plugin(self) -> bool:
         if self.ert_script is not None:
             return issubclass(self.ert_script, ErtPlugin)
         return False
-
-    @classmethod
-    def string_to_type(cls, string: str) -> SchemaItemType:
-        if string == "STRING":
-            return SchemaItemType.STRING
-        if string == "FLOAT":
-            return SchemaItemType.FLOAT
-        if string == "INT":
-            return SchemaItemType.INT
-        if string == "BOOL":
-            return SchemaItemType.BOOL
-
-        raise ValueError("Unrecognized content type")
 
     def argument_types(self) -> List["ContentTypes"]:
         def content_to_type(c: Optional[SchemaItemType]) -> ContentTypes:

@@ -6,10 +6,8 @@ find_package(Catch2 REQUIRED)
 include(Catch)
 
 add_executable(
-  ert_test_suite
-  ${TESTS_EXCLUDE_FROM_ALL} tmpdir.cpp enkf/enkf_obs_paths_detailed.cpp
-  res_util/test_string.cpp res_util/test_metric.cpp
-  job_queue/test_lsf_driver.cpp)
+  ert_test_suite ${TESTS_EXCLUDE_FROM_ALL} tmpdir.cpp res_util/test_string.cpp
+                 res_util/test_metric.cpp job_queue/test_lsf_driver.cpp)
 
 target_compile_definitions(
   ert_test_suite

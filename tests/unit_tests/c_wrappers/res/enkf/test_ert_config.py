@@ -11,7 +11,6 @@ import pytest
 from ecl.util.enums import RngAlgTypeEnum
 
 from ert._c_wrappers.enkf import AnalysisConfig, ConfigKeys, ErtConfig, HookRuntime
-from ert._c_wrappers.enkf._config_content_as_dict import parse_signature_job
 from ert._c_wrappers.enkf.ert_config import site_config_location
 from ert._c_wrappers.sched import HistorySourceEnum
 from ert.job_queue import QueueDriverEnum
@@ -335,9 +334,7 @@ def test_that_job_script_can_be_set_in_site_config(monkeypatch, tmp_path):
     assert Path(ert_config.queue_config.job_script).resolve() == my_script
 
 
-def test_that_unknown_queue_option_gives_error_message(
-    caplog, monkeypatch, tmp_path, capsys
-):
+def test_that_unknown_queue_option_gives_error_message(monkeypatch, tmp_path):
     test_site_config = tmp_path / "test_site_config.ert"
     my_script = (tmp_path / "my_script").resolve()
     my_script.write_text("")
@@ -356,9 +353,9 @@ def test_that_unknown_queue_option_gives_error_message(
     )
 
     with pytest.raises(
-        ConfigValidationError, match="UNKNOWN_QUEUE: is not a valid value for item 1"
+        ConfigValidationError, match="'QUEUE_OPTION' argument 0 must be one of"
     ):
-        _ = ErtConfig.from_file(str(test_user_config), use_new_parser=False)
+        _ = ErtConfig.from_file(str(test_user_config))
 
 
 @pytest.mark.parametrize(
@@ -471,25 +468,6 @@ SUMMARY WBHP:INJ
 SUMMARY ROE:1"""  # noqa: E501 pylint: disable=line-too-long
         in caplog.text
     )
-
-
-def test_that_parse_job_signature_passes_through_job_names():
-    assert parse_signature_job("JOB") == ("JOB", None)
-
-
-def test_that_parse_job_signature_correctly_gets_arguments():
-    assert parse_signature_job("JOB(<ARG1>=val1, <ARG2>=val2)") == (
-        "JOB",
-        "<ARG1>=val1, <ARG2>=val2",
-    )
-
-
-def test_that_parse_job_signature_warns_for_extra_parens(caplog):
-    assert parse_signature_job("JOB(<ARG1>=val1, <ARG2>=val2), <ARG3>=val3)") == (
-        "JOB",
-        "<ARG1>=val1, <ARG2>=val2",
-    )
-    assert "Arguments after closing )" in caplog.text
 
 
 @pytest.mark.usefixtures("copy_minimum_case")

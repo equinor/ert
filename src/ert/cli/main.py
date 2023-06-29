@@ -1,13 +1,11 @@
 #!/usr/bin/env python
 import asyncio
 import contextlib
-import dataclasses
 import logging
 import os
 import sys
 import threading
 import uuid
-import warnings
 from typing import Any
 
 from ert._c_wrappers.enkf import EnKFMain, ErtConfig
@@ -45,31 +43,6 @@ def run_cli(args, _=None):
     args.config = os.path.basename(args.config)
     ert_config = ErtConfig.from_file(args.config)
     local_storage_set_ert_config(ert_config)
-    try:
-        with warnings.catch_warnings(record=True) as silenced_warnings:
-            warnings.simplefilter("always")
-
-            ert_config_new = ErtConfig.from_file(args.config, use_new_parser=True)
-
-            for w in silenced_warnings:
-                logging.info(f"Parser warning: {w.message}")
-
-        if ert_config != ert_config_new:
-            fields = dataclasses.fields(ert_config)
-            difference = [
-                f"{getattr(ert_config, field.name)} !="
-                f" {getattr(ert_config_new, field.name)}"
-                for field in fields
-                if getattr(ert_config, field.name)
-                != getattr(ert_config_new, field.name)
-            ]
-            logging.info(
-                f"New parser gave different result.\n" f" Difference: {difference!r}"
-            )
-        else:
-            logging.info("New parser gave equal result.")
-    except Exception:
-        logging.exception("The new parser failed")
 
     # Create logger inside function to make sure all handlers have been added to
     # the root-logger.

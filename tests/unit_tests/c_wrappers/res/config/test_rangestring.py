@@ -1,10 +1,6 @@
 import pytest
 
-from ert._c_wrappers.config.rangestring import (
-    mask_to_rangestring,
-    rangestring_to_list,
-    rangestring_to_mask,
-)
+from ert.validation import mask_to_rangestring, rangestring_to_list, rangestring_to_mask
 
 
 @pytest.mark.parametrize(

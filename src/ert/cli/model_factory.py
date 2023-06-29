@@ -5,7 +5,6 @@ import warnings
 from typing import TYPE_CHECKING, List
 from uuid import UUID
 
-from ert._c_wrappers.config.active_range import ActiveRange
 from ert._c_wrappers.enkf.enkf_main import EnKFMain
 from ert.cli import (
     ENSEMBLE_EXPERIMENT_MODE,
@@ -22,6 +21,7 @@ from ert.run_models import (
     MultipleDataAssimilation,
     SingleTestRun,
 )
+from ert.validation import ActiveRange
 
 if TYPE_CHECKING:
     from ert.storage import StorageAccessor

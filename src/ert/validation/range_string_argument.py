@@ -1,7 +1,6 @@
 from typing import Optional
 
-from ert._c_wrappers.config.active_range import ActiveRange
-
+from .active_range import ActiveRange
 from .argument_definition import ArgumentDefinition
 from .validation_status import ValidationStatus
 
