@@ -287,9 +287,6 @@ class EnKFMain:
     def have_observations(self) -> bool:
         return len(self._observations) > 0
 
-    def getHistoryLength(self) -> int:
-        return self.resConfig().model_config.get_history_num_steps()
-
     def sample_prior(
         self,
         ensemble: EnsembleAccessor,
