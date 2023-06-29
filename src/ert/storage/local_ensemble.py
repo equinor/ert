@@ -250,9 +250,6 @@ class LocalEnsembleReader:
         path = self.mount_point / f"realization-{realization}/{key}"
         return path.exists()
 
-    def field_has_info(self, key: str) -> bool:
-        return key in self.experiment.parameter_info
-
     def export_field(
         self,
         key: str,
