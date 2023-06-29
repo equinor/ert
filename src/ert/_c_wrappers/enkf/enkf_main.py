@@ -116,7 +116,7 @@ def _generate_parameter_files(
         # model has completed.
         if node.forward_init and iteration == 0:
             continue
-        export_values = node.save(Path(run_path), iens, fs)
+        export_values = node.write_to_runpath(Path(run_path), iens, fs)
         if export_values:
             exports.update(export_values)
         continue

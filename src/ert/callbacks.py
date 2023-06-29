@@ -25,7 +25,7 @@ def _read_parameters(
         if not config_node.forward_init:
             continue
         try:
-            config_node.load(
+            config_node.read_from_runpath(
                 Path(run_arg.runpath), run_arg.iens, run_arg.ensemble_storage
             )
         except ValueError as err:

@@ -36,21 +36,30 @@ class ParameterConfig(ABC):
         ensemble: EnsembleAccessor,
         random_seed: SeedSequence,
     ):
-        return self.load(Path(), real_nr, ensemble)
+        return self.read_from_runpath(Path(), real_nr, ensemble)
 
     @abstractmethod
-    def load(
+    def read_from_runpath(
         self,
         run_path: Path,
         real_nr: int,
         ensemble: EnsembleAccessor,
     ):
+        """
+        This function is responsible for converting the parameter
+        from the forward model to the internal ert format
+        """
         ...
 
     @abstractmethod
-    def save(
+    def write_to_runpath(
         self, run_path: Path, real_nr: int, ensemble: EnsembleReader
     ) -> Optional[Dict[str, Dict[str, float]]]:
+        """
+        This function is responsible for converting the parameter
+        from the internal ert format to the format the forward model
+        expects
+        """
         ...
 
     def to_dict(self) -> Dict[str, Any]:

@@ -44,11 +44,11 @@ def test_runpath_roundtrip(tmp_path, storage, surface):
     surface.to_file(tmp_path / "input_0", fformat="irap_ascii")
 
     # run_path -> storage
-    config.load(tmp_path, 0, ensemble)
+    config.read_from_runpath(tmp_path, 0, ensemble)
 
     # storage -> run_path
     config.forward_init_file = "output_%d"
-    config.save(tmp_path, 0, ensemble)
+    config.write_to_runpath(tmp_path, 0, ensemble)
 
     # compare contents
     # Data is saved as 'irap_ascii', which means that we only keep 6 significant digits
