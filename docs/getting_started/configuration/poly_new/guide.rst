@@ -22,7 +22,7 @@ Create a config
 ***************
 Then create a file ``poly.ert`` inside the folder with the following content:
 
-    .. literalinclude:: minimal/poly.ert
+.. literalinclude:: minimal/poly.ert
 
 :ref:`JOBNAME <jobname>`
     Specifies the name for each simulation. If not defined it will default to
@@ -127,8 +127,8 @@ Create script
 *************
 In a file ``poly_eval.py`` put the following:
 
-    .. include:: with_simple_script/poly_eval.py
-        :code:
+.. include:: with_simple_script/poly_eval.py
+    :code:
 
 For now, this script evaluates a polynomial with fixed coefficients. The
 coefficients are stored in a dictionary with keys a, b and c. Later we will see
@@ -149,8 +149,8 @@ The definition of a job is written in a separate file. In our case we only need
 to specify the executable name. Create a file called ``POLY_EVAL`` with the
 following content:
 
-    .. include:: with_simple_script/POLY_EVAL
-        :code:
+.. include:: with_simple_script/POLY_EVAL
+    :code:
 
 Now we must refer to this job definition in the configuration. Add the lines::
 
@@ -164,8 +164,8 @@ the simulation run.
 
 Now the config file should look like this:
 
-    .. include:: with_simple_script/poly.ert
-        :code:
+.. include:: with_simple_script/poly.ert
+    :code:
 
 see :ref:`configure_own_jobs`
 
@@ -177,7 +177,7 @@ Before we run again delete the old output files by running the command::
 
 Start ERT by again running ``ert gui poly.ert``.
 
-    .. image:: with_simple_script/ert.png
+.. image:: with_simple_script/ert.png
 
 You can see in the configuration summary view that there is now a forward model. And
 you can also see that the runpath has changed from the default to what we
@@ -237,8 +237,8 @@ Adding prior distributions
 To define the prior distributions, create a file ``coeff_priors`` with the
 following content:
 
-    .. include:: with_parameters/coeff_priors
-        :code:
+.. include:: with_parameters/coeff_priors
+    :code:
 
 Each parameter is specified on a separate line. The first part of a line is
 the name of the parameter. Following this is the type of distribution we want
@@ -252,8 +252,8 @@ Adding a template
 Then we create a template into which the samples from the distributions will be
 put. Create a file called ``coeff.tmpl`` and add the following:
 
-    .. include:: with_parameters/coeff.tmpl
-        :code:
+.. include:: with_parameters/coeff.tmpl
+    :code:
 
 The text within angle brackets (``<`` and ``>``), will be replaced by the
 samples from the corresponding distribution from the ``coeff_priors`` file. The
@@ -279,7 +279,7 @@ We need to change the simulation script so that it reads the ``coeffs.json``
 file that ERT writes the sampled parameters in to. Change the script
 ``poly_eval.py`` to the following:
 
-    .. literalinclude:: with_parameters/poly_eval.py
+.. literalinclude:: with_parameters/poly_eval.py
 
 Increasing the number of realizations
 *************************************
@@ -296,8 +296,8 @@ specifying a :ref:`queue option <queue_option>` ``MAX_RUNNING`` for the
 After adding these two lines and changing the number of realizations, the
 config should look like this:
 
-    .. include:: with_parameters/poly.ert
-        :code:
+.. include:: with_parameters/poly.ert
+    :code:
 
 Running with sampled parameters
 *******************************
@@ -317,7 +317,7 @@ the name of the specific parameter.
 
 You should see something similar to this:
 
-    .. image:: with_parameters/plots.png
+.. image:: with_parameters/plots.png
 
 Play around and look at the different plots.
 
@@ -376,12 +376,12 @@ INPUT_FORMAT:ASCII
 
 The config file should now look like this:
 
-    .. literalinclude :: with_results/poly.ert
+.. literalinclude :: with_results/poly.ert
 
 If you now run the ensemble experiment again, and then open the plot view, you
 should see a new plot available called ``POLY_RES``:
 
-    .. image :: with_results/poly_plot.png
+.. image :: with_results/poly_plot.png
 
 Adding observations
 -------------------
@@ -396,7 +396,7 @@ with the x values of the polynomial evaluation, but this is incidental. The
 indices say where the observations in the file match the result indices. Put
 the following observations in the file ``poly_obs_data.txt``:
 
-    .. literalinclude:: with_observations/poly_obs_data.txt
+.. literalinclude:: with_observations/poly_obs_data.txt
 
 There is one observation per line, with the first number
 signifying the observed value, and the second number signifying the uncertainty.
@@ -407,7 +407,7 @@ which refers to a file where the ``GENERAL_OBSERVATION`` keyword is used to defi
 First, make a file called ``observations`` in the project folder
 with the following content:
 
-    .. literalinclude:: with_observations/observations
+.. literalinclude:: with_observations/observations
 
 The ``GENERAL_OBSERVATION`` introduces a set of observations, and specifies how
 to relate them to simulation results. It is followed by a name of the observation
