@@ -5,12 +5,11 @@ from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Tuple, Un
 from ert._c_wrappers.enkf import EnKFMain, ErtConfig
 from ert._c_wrappers.enkf.config import ExtParamConfig
 from ert._c_wrappers.enkf.config.gen_data_config import GenDataConfig
-from ert.storage import open_storage
 
 from .batch_simulator_context import BatchContext
 
 if TYPE_CHECKING:
-    from ert.storage import EnsembleAccessor
+    from ert.storage import EnsembleAccessor, StorageAccessor
 
 
 def _slug(entity: str) -> str:
@@ -172,6 +171,7 @@ class BatchSimulator:
         self,
         case_name: str,
         case_data: List[Tuple[int, Dict[str, Dict[str, Any]]]],
+        storage: StorageAccessor,
     ) -> BatchContext:
         """Start batch simulation, return a simulation context
 
@@ -230,7 +230,6 @@ class BatchSimulator:
         time, so when you have called the 'start' method you need to let that
         batch complete before you start a new batch.
         """
-        storage = open_storage(self.ert_config.ens_path, "w")
         experiment = storage.create_experiment(
             self.ert_config.ensemble_config.parameter_configuration
         )
