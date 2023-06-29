@@ -246,10 +246,6 @@ class LocalEnsembleReader:
         assert isinstance(response, xr.Dataset)
         return response
 
-    def field_has_data(self, key: str, realization: int) -> bool:
-        path = self.mount_point / f"realization-{realization}/{key}"
-        return path.exists()
-
     def export_field(
         self,
         key: str,
