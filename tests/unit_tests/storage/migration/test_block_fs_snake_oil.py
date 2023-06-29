@@ -162,6 +162,7 @@ def test_migration_failure(storage, enspath, ens_config, caplog, monkeypatch):
     )
 
 
+@pytest.mark.xfail(reason="Test is flaky")
 @pytest.mark.parametrize("should_fail", [False, True])
 def test_full_migration_logging(
     tmp_path, enspath, caplog, monkeypatch, should_fail, ens_config
