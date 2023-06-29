@@ -64,10 +64,14 @@ class ExtParamConfig(ParameterConfig):
                     f"Duplicate keys for key '{self.name}' - keys: {self.input_keys}"
                 )
 
-    def load(self, run_path: Path, real_nr: int, ensemble: "EnsembleAccessor"):
+    def read_from_runpath(
+        self, run_path: Path, real_nr: int, ensemble: "EnsembleAccessor"
+    ):
         pass
 
-    def save(self, run_path: Path, real_nr: int, ensemble: "EnsembleReader"):
+    def write_to_runpath(
+        self, run_path: Path, real_nr: int, ensemble: "EnsembleReader"
+    ):
         file_path = run_path / self.output_file
         Path.mkdir(file_path.parent, exist_ok=True, parents=True)
 

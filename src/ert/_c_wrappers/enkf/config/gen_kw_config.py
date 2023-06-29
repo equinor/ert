@@ -67,7 +67,7 @@ class GenKwConfig(ParameterConfig):
         random_seed: SeedSequence,
     ):
         if self.forward_init_file:
-            return self.load(Path(), real_nr, ensemble)
+            return self.read_from_runpath(Path(), real_nr, ensemble)
 
         logging.info(f"Sampling parameter {self.name} for realization {real_nr}")
         keys = list(self)
@@ -88,7 +88,7 @@ class GenKwConfig(ParameterConfig):
         )
         ensemble.save_parameters(self.name, real_nr, dataset)
 
-    def load(
+    def read_from_runpath(
         self,
         run_path: Path,
         real_nr: int,
@@ -113,7 +113,7 @@ class GenKwConfig(ParameterConfig):
         )
         ensemble.save_parameters(self.name, real_nr, dataset)
 
-    def save(
+    def write_to_runpath(
         self, run_path: Path, real_nr: int, ensemble: EnsembleReader
     ) -> Dict[str, Dict[str, float]]:
         array = ensemble.load_parameters(self.name, real_nr, var="transformed_values")
