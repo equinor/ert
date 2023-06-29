@@ -88,7 +88,7 @@ def _value_export_json(
 
 
 def _generate_parameter_files(
-    ens_config: EnsembleConfig,
+    parameter_configs: List[ParameterConfig],
     export_base_name: str,
     run_path: Path,
     iens: int,
@@ -100,7 +100,7 @@ def _generate_parameter_files(
     forward-model jobs to consume.
 
     Args:
-        ens_config: Configuration which contains the parameter nodes for this
+        parameter_configs: Configuration which contains the parameter nodes for this
             ensemble run.
         export_base_name: Base name for the GEN_KW parameters file. Ie. the
             `parameters` in `parameters.json`.
@@ -110,18 +110,16 @@ def _generate_parameter_files(
     """
     exports: Dict[str, Dict[str, float]] = {}
 
-    for node in ens_config.parameter_configs.values():
-        if isinstance(node, ParameterConfig):
-            # For the first iteration we do not write the parameter
-            # to run path, as we expect to read if after the forward
-            # model has completed.
-            if node.forward_init and iteration == 0:
-                continue
-            export_values = node.save(Path(run_path), iens, fs)
-            if export_values:
-                exports.update(export_values)
+    for node in parameter_configs:
+        # For the first iteration we do not write the parameter
+        # to run path, as we expect to read if after the forward
+        # model has completed.
+        if node.forward_init and iteration == 0:
             continue
-        raise NotImplementedError
+        export_values = node.save(Path(run_path), iens, fs)
+        if export_values:
+            exports.update(export_values)
+        continue
 
     _value_export_txt(run_path, export_base_name, exports)
     _value_export_json(run_path, export_base_name, exports)
@@ -349,7 +347,7 @@ class EnKFMain:
                 ert_config = self.resConfig()
                 model_config = ert_config.model_config
                 _generate_parameter_files(
-                    ert_config.ensemble_config,
+                    ert_config.ensemble_config.parameter_configuration,
                     model_config.gen_kw_export_name,
                     run_path,
                     run_arg.iens,
