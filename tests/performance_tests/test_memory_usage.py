@@ -60,9 +60,7 @@ def test_memory_smoothing(poly_template):
 
 
 def mock_target_accessor() -> EnsembleAccessor:
-    target = Mock(spec=EnsembleAccessor)
-    target.field_has_info.return_value = True
-    return target
+    return Mock(spec=EnsembleAccessor)
 
 
 def make_source_accessor(path: Path, ert: EnKFMain) -> EnsembleReader:
