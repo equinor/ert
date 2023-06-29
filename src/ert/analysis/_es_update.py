@@ -366,6 +366,8 @@ def _load_observations_and_responses(
         response_mean=ens_mean,
         response_std=ens_std,
     )
+    for missing_obs in obs_keys[~obs_mask]:
+        _logger.warning(f"Deactivating observation: {missing_obs}")
 
     return S[obs_mask], (
         observations[obs_mask],
