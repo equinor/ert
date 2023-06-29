@@ -4,7 +4,7 @@ decorator
 ecl_data_io
 flake8
 flake8-bugbear
-grpcio-tools==1.41.0
+grpcio-tools
 hypothesis
 isort
 jsonpath_ng
