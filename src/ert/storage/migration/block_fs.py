@@ -39,7 +39,7 @@ def migrate(path: Path) -> None:
 
     statuses: List[bool] = []
     with LocalStorageAccessor(path, ignore_migration_check=True) as storage:
-        for casedir in block_storage_path.iterdir():
+        for casedir in sorted(block_storage_path.iterdir()):
             if (casedir / "ert_fstab").is_file():
                 statuses.append(_migrate_case_ignoring_exceptions(storage, casedir))
     failures = len(statuses) - sum(statuses)
