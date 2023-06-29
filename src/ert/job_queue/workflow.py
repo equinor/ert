@@ -3,7 +3,6 @@ from __future__ import annotations
 import os
 from typing import TYPE_CHECKING, Any, Dict, Iterator, List, Optional, Tuple
 
-from ert._c_wrappers.config import ConfigParser, UnrecognizedEnum
 from ert.parsing import (
     ConfigValidationError,
     ErrorInfo,
@@ -15,16 +14,6 @@ if TYPE_CHECKING:
     from ert._c_wrappers.util import SubstitutionList
 
     from .workflow_job import WorkflowJob
-
-
-def _workflow_parser(workflow_jobs: Dict[str, WorkflowJob]) -> ConfigParser:
-    parser = ConfigParser()
-    for name, job in workflow_jobs.items():
-        item = parser.add(name)
-        item.set_argc_minmax(job.min_args, job.max_args)
-        for i, t in enumerate(job.arg_types):
-            item.iset_type(i, t)
-    return parser
 
 
 class Workflow:
@@ -46,29 +35,7 @@ class Workflow:
         return iter(self.cmd_list)
 
     @classmethod
-    def _parse_command_list_with_old_parser(
-        cls, src_file: str, context: Dict[str, str], job_dict: Dict[str, WorkflowJob]
-    ) -> List[Tuple[WorkflowJob, Any]]:
-        parser = _workflow_parser(job_dict)
-        content = parser.parse(
-            src_file,
-            pre_defined_kw_map=context,
-            unrecognized=UnrecognizedEnum.CONFIG_UNRECOGNIZED_ERROR,
-        )
-
-        cmd_list = []
-        for line in content:
-            cmd_list.append(
-                (
-                    job_dict[line.get_kw()],
-                    [line.igetString(i) for i in range(len(line))],
-                )
-            )
-
-        return cmd_list
-
-    @classmethod
-    def _parse_command_list_with_new_parser(
+    def _parse_command_list(
         cls,
         src_file: str,
         context: List[Tuple[str, str]],
@@ -113,24 +80,15 @@ class Workflow:
         src_file: str,
         context: Optional[SubstitutionList],
         job_dict: Dict[str, WorkflowJob],
-        use_new_parser: bool = True,
     ) -> "Workflow":
         if not os.path.exists(src_file):
             raise ConfigValidationError(
                 f"Workflow file {src_file} does not exist", config_file=src_file
             )
-        cmd_list = (
-            cls._parse_command_list_with_new_parser(
-                src_file=src_file,
-                context=list(iter(context)) if context else [],
-                job_dict=job_dict,
-            )
-            if use_new_parser
-            else cls._parse_command_list_with_old_parser(
-                src_file=src_file,
-                context=dict(iter(context)) if context else {},
-                job_dict=job_dict,
-            )
+        cmd_list = cls._parse_command_list(
+            src_file=src_file,
+            context=list(iter(context)) if context else [],
+            job_dict=job_dict,
         )
 
         return cls(src_file, cmd_list)

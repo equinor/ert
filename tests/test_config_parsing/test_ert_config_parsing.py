@@ -1,5 +1,4 @@
 # pylint: disable=too-many-lines
-import logging
 import os
 import os.path
 from datetime import date
@@ -34,7 +33,7 @@ def test_bad_user_config_file_error_message(tmp_path):
     with pytest.raises(
         ConfigValidationError, match=r"Parsing.*resulted in the following errors:"
     ):
-        rconfig = ErtConfig.from_file(str(tmp_path / "test.ert"), use_new_parser=False)
+        rconfig = ErtConfig.from_file(str(tmp_path / "test.ert"))
 
     assert rconfig is None
 
@@ -269,7 +268,7 @@ def test_that_recursive_define_warns_when_early_liveness_detection_mechanism_tri
         "This still contains the replacement value: <A>, "
         "which would be replaced by <A>. Probably this causes a loop.",
     ):
-        _ = ErtConfig.from_file(test_config_file_name, use_new_parser=True)
+        _ = ErtConfig.from_file(test_config_file_name)
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -293,7 +292,7 @@ def test_that_recursive_define_warns_when_reached_max_iterations():
         "This still contains the replacement value: <A>, "
         "which would be replaced by a/<A>. Probably this causes a loop.",
     ):
-        _ = ErtConfig.from_file(test_config_file_name, use_new_parser=True)
+        _ = ErtConfig.from_file(test_config_file_name)
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -594,16 +593,9 @@ def test_that_define_statements_with_more_than_one_argument():
     with open(test_config_file_name, "w", encoding="utf-8") as fh:
         fh.write(test_config_contents)
 
-    ert_config = ErtConfig.from_file(test_config_file_name, use_new_parser=False)
+    ert_config = ErtConfig.from_file(test_config_file_name)
     assert ert_config.substitution_list.get("<TEST1>") == "111 222 333"
     assert ert_config.substitution_list.get("<TEST2>") == "111 222 333 444 555"
-    new_parser_ert_config = ErtConfig.from_file(
-        test_config_file_name, use_new_parser=True
-    )
-    assert new_parser_ert_config.substitution_list.get("<TEST1>") == "111 222 333"
-    assert (
-        new_parser_ert_config.substitution_list.get("<TEST2>") == "111 222 333 444 555"
-    )
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -731,7 +723,7 @@ def test_include_cyclical_raises_error():
         fh.write(test_include_contents)
 
     with pytest.raises(ConfigValidationError, match="Cyclical .*test.ert"):
-        ErtConfig.from_file(test_config_file_name, use_new_parser=True)
+        ErtConfig.from_file(test_config_file_name)
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -758,26 +750,6 @@ def test_that_giving_no_keywords_fails_gracefully():
 
     with pytest.raises(ConfigValidationError, match="must be set"):
         _ = ErtConfig.from_file(test_config_file_name)
-
-
-@pytest.mark.usefixtures("use_tmpdir")
-def test_that_recursive_defines_fails_gracefully_and_logs(caplog):
-    test_config_file_name = "test.ert"
-    test_config_contents = dedent(
-        """
-        DEFINE <A> 1<A>
-        NUM_REALIZATIONS  <A>
-        """
-    )
-    with open(test_config_file_name, "w", encoding="utf-8") as fh:
-        fh.write(test_config_contents)
-
-    with pytest.raises(ConfigValidationError, match="integer"), caplog.at_level(
-        logging.WARNING
-    ):
-        _ = ErtConfig.from_file(test_config_file_name, use_new_parser=False)
-    assert len(caplog.records) == 1
-    assert "max iterations" in caplog.records[0].msg
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -940,7 +912,7 @@ def test_that_include_take_into_account_path():
     with open(test_include_file_name, "w", encoding="utf-8") as fh:
         fh.write(test_include_contents)
 
-    ert_config = ErtConfig.from_file(test_config_file_name, use_new_parser=True)
+    ert_config = ErtConfig.from_file(test_config_file_name)
     assert list(ert_config.installed_jobs.keys()) == [
         "job1",
         "job2",
@@ -970,7 +942,7 @@ def test_that_substitution_happens_for_include():
     with open(test_include_file_name, "w", encoding="utf-8") as fh:
         fh.write(test_include_contents)
 
-    ert_config = ErtConfig.from_file(test_config_file_name, use_new_parser=True)
+    ert_config = ErtConfig.from_file(test_config_file_name)
     assert (
         "my_silly_runpath<ITER>-<IENS>" in ert_config.model_config.runpath_format_string
     )
@@ -1000,7 +972,7 @@ def test_that_defines_in_included_files_has_immediate_effect():
     with open(test_include_file_name, "w", encoding="utf-8") as fh:
         fh.write(test_include_contents)
 
-    ert_config = ErtConfig.from_file(test_config_file_name, use_new_parser=True)
+    ert_config = ErtConfig.from_file(test_config_file_name)
     assert "baz-<ITER>-<IENS>" in ert_config.model_config.runpath_format_string
 
 
@@ -1064,9 +1036,7 @@ def test_that_redefines_are_applied_correctly_as_forward_model_args():
     with open(test_config_file_name, "w", encoding="utf-8") as fh:
         fh.write(test_config_contents)
 
-    ert_config = ErtConfig.from_file(
-        user_config_file=test_config_file_name, use_new_parser=True
-    )
+    ert_config = ErtConfig.from_file(user_config_file=test_config_file_name)
 
     forward_models = ert_config.forward_model_list
 
@@ -1114,9 +1084,7 @@ def test_that_redefines_work_with_setenv():
     with open(test_config_file_name, "w", encoding="utf-8") as fh:
         fh.write(test_config_contents)
 
-    ert_config = ErtConfig.from_file(
-        user_config_file=test_config_file_name, use_new_parser=True
-    )
+    ert_config = ErtConfig.from_file(user_config_file=test_config_file_name)
 
     assert ert_config.env_vars["VAR"] == "3"
     assert ert_config.env_vars["VAR2"] == "4"

@@ -11,13 +11,8 @@ from ert.parsing import ConfigValidationError, ConfigWarning, SchemaItemType
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_load_forward_model_raises_on_missing():
-    with pytest.raises(
-        ConfigValidationError, match="Could not open job config file 'CONFIG_FILE'"
-    ):
-        _ = ExtJob.from_config_file("CONFIG_FILE", use_new_parser=False)
-
     with pytest.raises(ConfigValidationError, match="file(.+?)not found"):
-        _ = ExtJob.from_config_file("CONFIG_FILE", use_new_parser=True)
+        _ = ExtJob.from_config_file("CONFIG_FILE")
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -96,15 +91,9 @@ def test_portable_exe_error_message():
         mode |= stat.S_IXUSR | stat.S_IXGRP
         os.chmod(name, stat.S_IMODE(mode))
     with pytest.raises(
-        ConfigValidationError,
-        match='"PORTABLE_EXE" key is deprecated, please replace with "EXECUTABLE"',
-    ):
-        _ = ExtJob.from_config_file("CONFIG", use_new_parser=False)
-
-    with pytest.raises(
         ConfigValidationError, match="EXECUTABLE must be set"
     ), pytest.warns(ConfigWarning, match='"PORTABLE_EXE" key is deprecated'):
-        _ = ExtJob.from_config_file("CONFIG", use_new_parser=True)
+        _ = ExtJob.from_config_file("CONFIG")
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -135,10 +124,8 @@ def test_load_forward_model_is_directory_raises():
 def test_load_forward_model_foreign_raises():
     with open("CONFIG", "w", encoding="utf-8") as f:
         f.write("EXECUTABLE /etc/passwd\n")
-    with pytest.raises(ConfigValidationError, match="execute permissions"):
-        _ = ExtJob.from_config_file("CONFIG", use_new_parser=False)
     with pytest.raises(ConfigValidationError, match="File not executable"):
-        _ = ExtJob.from_config_file("CONFIG", use_new_parser=True)
+        _ = ExtJob.from_config_file("CONFIG")
 
 
 def test_ext_job_optionals(

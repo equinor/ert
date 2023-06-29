@@ -4,12 +4,12 @@ import numpy as np
 from qtpy.QtCore import Qt, QTimer
 from qtpy.QtWidgets import QApplication, QComboBox, QMessageBox, QPushButton, QWidget
 
-from ert._c_wrappers.config.rangestring import rangestring_to_mask
 from ert.gui.ertwidgets.caselist import CaseList
 from ert.gui.simulation.ensemble_experiment_panel import EnsembleExperimentPanel
 from ert.gui.simulation.run_dialog import RunDialog
 from ert.gui.simulation.simulation_panel import SimulationPanel
 from ert.run_models import EnsembleExperiment
+from ert.validation import rangestring_to_mask
 
 from .conftest import find_cases_dialog_and_panel
 

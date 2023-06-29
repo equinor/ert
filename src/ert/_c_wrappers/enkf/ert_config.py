@@ -4,13 +4,11 @@ import os
 import warnings
 from collections import defaultdict
 from dataclasses import dataclass, field
-from datetime import date
 from pathlib import Path
 from typing import Any, ClassVar, Dict, List, Optional, overload
 
 import pkg_resources
 
-from ert._c_wrappers.config import ConfigParser
 from ert._c_wrappers.enkf.analysis_config import AnalysisConfig
 from ert._c_wrappers.enkf.config_keys import ConfigKeys
 from ert._c_wrappers.enkf.ensemble_config import EnsembleConfig
@@ -18,7 +16,6 @@ from ert._c_wrappers.enkf.enums import HookRuntime
 from ert._c_wrappers.enkf.model_config import ModelConfig
 from ert._c_wrappers.enkf.queue_config import QueueConfig
 from ert._c_wrappers.util import SubstitutionList
-from ert._clib.config_keywords import init_site_config_parser, init_user_config_parser
 from ert.job_queue import ErtScriptLoadFailure, ExtJob, Workflow, WorkflowJob
 from ert.parsing import (
     ConfigValidationError,
@@ -30,14 +27,7 @@ from ert.parsing import (
     lark_parse,
 )
 
-from ._config_content_as_dict import config_content_as_dict
-
 logger = logging.getLogger(__name__)
-
-USE_NEW_PARSER_BY_DEFAULT = True
-
-if "USE_OLD_ERT_PARSER" in os.environ and os.environ["USE_OLD_ERT_PARSER"] == "YES":
-    USE_NEW_PARSER_BY_DEFAULT = False
 
 
 def site_config_location():
@@ -85,22 +75,16 @@ class ErtConfig:
         )
 
     @classmethod
-    def from_file(
-        cls, user_config_file, use_new_parser: bool = USE_NEW_PARSER_BY_DEFAULT
-    ) -> "ErtConfig":
-        user_config_dict = ErtConfig.read_user_config(
-            user_config_file, use_new_parser=use_new_parser
-        )
+    def from_file(cls, user_config_file) -> "ErtConfig":
+        user_config_dict = ErtConfig.read_user_config(user_config_file)
         config_dir = os.path.abspath(os.path.dirname(user_config_file))
         ErtConfig._log_config_file(user_config_file)
         ErtConfig._log_config_dict(user_config_dict)
         ErtConfig.apply_config_content_defaults(user_config_dict, config_dir)
-        return ErtConfig.from_dict(user_config_dict, use_new_parser)
+        return ErtConfig.from_dict(user_config_dict)
 
     @classmethod
-    def from_dict(
-        cls, config_dict, use_new_parser: bool = USE_NEW_PARSER_BY_DEFAULT
-    ) -> "ErtConfig":
+    def from_dict(cls, config_dict) -> "ErtConfig":
         substitution_list = SubstitutionList.from_dict(config_dict=config_dict)
         runpath_file = config_dict.get(
             ConfigKeys.RUNPATH_FILE, ErtConfig.DEFAULT_RUNPATH_FILE
@@ -137,13 +121,13 @@ class ErtConfig:
 
         try:
             workflow_jobs, workflows, hooked_workflows = cls._workflows_from_dict(
-                config_dict, substitution_list, use_new_parser=use_new_parser
+                config_dict, substitution_list
             )
         except ConfigValidationError as e:
             errors.append(e)
 
         try:
-            installed_jobs = cls._installed_jobs_from_dict(config_dict, use_new_parser)
+            installed_jobs = cls._installed_jobs_from_dict(config_dict)
         except ConfigValidationError as e:
             errors.append(e)
 
@@ -226,22 +210,6 @@ class ErtConfig:
         logger.info("Content of the config_dict: %s", tmp_dict)
 
     @staticmethod
-    def _create_pre_defines(
-        config_file_path: str,
-    ) -> Dict[str, str]:
-        date_string = date.today().isoformat()
-        config_file_dir = os.path.abspath(os.path.dirname(config_file_path))
-        config_file_name = os.path.basename(config_file_path)
-        config_file_basename = os.path.splitext(config_file_name)[0]
-        return {
-            "<CONFIG_PATH>": config_file_dir,
-            "<CONFIG_FILE_BASE>": config_file_basename,
-            "<DATE>": date_string,
-            "<CWD>": config_file_dir,
-            "<CONFIG_FILE>": config_file_name,
-        }
-
-    @staticmethod
     def apply_config_content_defaults(content_dict: dict, config_dir: str):
         if ConfigKeys.ENSPATH not in content_dict:
             content_dict[ConfigKeys.ENSPATH] = os.path.join(
@@ -257,48 +225,22 @@ class ErtConfig:
             )
 
     @classmethod
-    def _create_user_config_parser(cls):
-        config_parser = ConfigParser()
-        init_user_config_parser(config_parser)
-        return config_parser
-
-    @classmethod
     def make_suggestion_list(cls, config_file):
-        ert_config = ErtConfig.from_file(
-            user_config_file=config_file, use_new_parser=True
-        )
+        ert_config = ErtConfig.from_file(user_config_file=config_file)
         return [x.message for x in ert_config.warning_infos]
 
     @classmethod
-    def read_site_config(cls, use_new_parser: bool = USE_NEW_PARSER_BY_DEFAULT):
-        if use_new_parser:
-            return lark_parse(
-                file=site_config_location(), schema=init_site_config_schema()
-            )
-        else:
-            site_config_parser = ConfigParser()
-            init_site_config_parser(site_config_parser)
-            site_config_content = site_config_parser.parse(site_config_location())
-            return config_content_as_dict(site_config_content, {})
+    def read_site_config(cls):
+        return lark_parse(file=site_config_location(), schema=init_site_config_schema())
 
     @classmethod
-    def read_user_config(
-        cls, user_config_file, use_new_parser: bool = USE_NEW_PARSER_BY_DEFAULT
-    ):
-        site_config = cls.read_site_config(use_new_parser=use_new_parser)
-        if use_new_parser:
-            return lark_parse(
-                file=user_config_file,
-                schema=init_user_config_schema(),
-                site_config=site_config,
-            )
-        else:
-            user_config_parser = ErtConfig._create_user_config_parser()
-            user_config_content = user_config_parser.parse(
-                user_config_file,
-                pre_defined_kw_map=ErtConfig._create_pre_defines(user_config_file),
-            )
-            return config_content_as_dict(user_config_content, site_config)
+    def read_user_config(cls, user_config_file):
+        site_config = cls.read_site_config()
+        return lark_parse(
+            file=user_config_file,
+            schema=init_user_config_schema(),
+            site_config=site_config,
+        )
 
     @classmethod
     def _validate_queue_option_max_running(cls, config_path, config_dict):
@@ -324,6 +266,24 @@ class ErtConfig:
                     )
         return errors
 
+    @staticmethod
+    def check_non_utf_chars(file_path):
+        try:
+            with open(file_path, "r", encoding="utf-8") as f:
+                f.read()
+        except UnicodeDecodeError as e:
+            error_words = str(e).split(" ")
+            hex_str = error_words[error_words.index("byte") + 1]
+            try:
+                unknown_char = chr(int(hex_str, 16))
+            except ValueError:
+                unknown_char = f"hex:{hex_str}"
+            raise ConfigValidationError(
+                f"Unsupported non UTF-8 character {unknown_char!r} "
+                f"found in file: {file_path!r}",
+                config_file=file_path,
+            )
+
     @classmethod
     def _read_templates(cls, config_dict):
         templates = []
@@ -335,7 +295,7 @@ class ErtConfig:
             target_file = (
                 config_dict[ConfigKeys.ECLBASE].replace("%d", "<IENS>") + ".DATA"
             )
-            ConfigParser.check_non_utf_chars(source_file)
+            cls.check_non_utf_chars(source_file)
             templates.append([source_file, target_file])
 
         for template in config_dict.get(ConfigKeys.RUN_TEMPLATE, []):
@@ -590,9 +550,7 @@ class ErtConfig:
         }
 
     @classmethod
-    def _workflows_from_dict(
-        cls, content_dict, substitution_list, use_new_parser: bool
-    ):
+    def _workflows_from_dict(cls, content_dict, substitution_list):
         workflow_job_info = content_dict.get(ConfigKeys.LOAD_WORKFLOW_JOB, [])
         workflow_job_dir_info = content_dict.get(ConfigKeys.WORKFLOW_JOB_DIRECTORY, [])
         hook_workflow_info = content_dict.get(ConfigKeys.HOOK_WORKFLOW_KEY, [])
@@ -612,7 +570,6 @@ class ErtConfig:
                 new_job = WorkflowJob.from_file(
                     config_file=workflow_job[0],
                     name=None if len(workflow_job) == 1 else workflow_job[1],
-                    use_new_parser=use_new_parser,
                 )
                 workflow_jobs[new_job.name] = new_job
             except ErtScriptLoadFailure as err:
@@ -666,7 +623,6 @@ class ErtConfig:
                     work[0],
                     substitution_list,
                     workflow_jobs,
-                    use_new_parser=use_new_parser,
                 )
                 if existed:
                     warnings.warn(
@@ -715,7 +671,7 @@ class ErtConfig:
         return workflow_jobs, workflows, hooked_workflows
 
     @classmethod
-    def _installed_jobs_from_dict(cls, config_dict, use_new_parser):
+    def _installed_jobs_from_dict(cls, config_dict):
         errors = []
         jobs = {}
         for job in config_dict.get(ConfigKeys.INSTALL_JOB, []):
@@ -725,7 +681,6 @@ class ErtConfig:
                 new_job = ExtJob.from_config_file(
                     name=name,
                     config_file=job_config_file,
-                    use_new_parser=use_new_parser,
                 )
             except ConfigValidationError as e:
                 errors.append(e)
@@ -765,9 +720,7 @@ class ErtConfig:
                 if not os.path.isfile(full_path):
                     continue
                 try:
-                    new_job = ExtJob.from_config_file(
-                        config_file=full_path, use_new_parser=USE_NEW_PARSER_BY_DEFAULT
-                    )
+                    new_job = ExtJob.from_config_file(config_file=full_path)
                 except ConfigValidationError as e:
                     errors.append(e)
                     continue

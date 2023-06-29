@@ -6,17 +6,6 @@ pybind11_add_module(
   res_util/res_env.cpp
   python/init.cpp
   python/logging.cpp
-  config/conf_util.cpp
-  config/conf.cpp
-  config/conf_data.cpp
-  config/config_parser.cpp
-  config/config_content.cpp
-  config/config_path_stack.cpp
-  config/config_content_item.cpp
-  config/config_content_node.cpp
-  config/config_path_elm.cpp
-  config/config_schema_item.cpp
-  config/config_keywords.cpp
   analysis/update.cpp
   job_queue/job_status.cpp
   job_queue/job_list.cpp
@@ -28,7 +17,6 @@ pybind11_add_module(
   job_queue/queue_driver.cpp
   job_queue/slurm_driver.cpp
   job_queue/torque_driver.cpp
-  job_queue/job_kw_definitions.cpp
   ${lsb}
   enkf/active_list.cpp
   enkf/time_map.cpp

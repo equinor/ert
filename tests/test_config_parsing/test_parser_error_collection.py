@@ -120,7 +120,7 @@ def assert_that_config_leads_to_error(
     )
 
     with pytest.raises(ConfigValidationError) as caught_error:
-        ErtConfig.from_file(config_filename, use_new_parser=True)
+        ErtConfig.from_file(config_filename)
 
     collected_errors = caught_error.value.errors
 
@@ -156,7 +156,7 @@ def assert_that_config_leads_to_warning(
         {config_filename: config_file_contents, **(expected_error.other_files or {})}
     )
 
-    ert_config = ErtConfig.from_file(config_filename, use_new_parser=True)
+    ert_config = ErtConfig.from_file(config_filename)
 
     warnings_matching_filename = find_and_assert_errors_matching_filename(
         errors=cast(List[ErrorInfo], ert_config.warning_infos),
@@ -689,7 +689,7 @@ def test_that_unicode_decode_error_is_localized_first_line():
         ConfigValidationError,
         match="Unsupported non UTF-8 character 'ÿ' found in file: .*test.ert",
     ) as caught_error:
-        ErtConfig.from_file("test.ert", use_new_parser=True)
+        ErtConfig.from_file("test.ert")
 
     collected_errors = caught_error.value.errors
 
@@ -729,7 +729,7 @@ def test_that_unicode_decode_error_is_localized_random_line_single_insert():
             ConfigValidationError,
             match="Unsupported non UTF-8 character " "'ÿ' found in file: .*test.ert",
         ) as caught_error:
-            ErtConfig.from_file("test.ert", use_new_parser=True)
+            ErtConfig.from_file("test.ert")
 
         collected_errors = caught_error.value.errors
 
@@ -789,7 +789,7 @@ def test_that_unicode_decode_error_is_localized_multiple_random_inserts(
         ConfigValidationError,
         match="Unsupported non UTF-8 character 'ÿ' found in file: .*test.ert",
     ) as caught_error:
-        ErtConfig.from_file("test.ert", use_new_parser=True)
+        ErtConfig.from_file("test.ert")
 
     collected_errors = caught_error.value.errors
 

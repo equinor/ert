@@ -1,7 +1,7 @@
 from typing import List
 
-from ert._c_wrappers.config.rangestring import rangestring_to_mask
 from ert.job_queue import ErtScript
+from ert.validation import rangestring_to_mask
 
 
 class ExportRunpathJob(ErtScript):
