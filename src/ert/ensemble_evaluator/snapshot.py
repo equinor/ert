@@ -10,11 +10,40 @@ import pyrsistent
 from cloudevents.http import CloudEvent
 from dateutil.parser import parse
 from pydantic import BaseModel
-from pyrsistent import freeze
+from pyrsistent import freeze, pmap
 from pyrsistent.typing import PMap as TPMap
 
 from ert.ensemble_evaluator import identifiers as ids
 from ert.ensemble_evaluator import state
+
+
+def _job_to_pmap(job: "Job") -> TPMap:
+    job_dict = job.dict()
+    job_as_pmap = pmap(job_dict)
+    if "data" in job_dict:
+        data_pmap = pmap(job_dict["data"])
+        job_as_pmap = job_as_pmap.set("data", data_pmap)
+    return job_as_pmap
+
+
+def _job_pmap_to_dict(job: TPMap) -> dict:
+    data_dict = None
+    job_dict = dict(job.items())
+    if "data" in job_dict:
+        data_dict = dict(job.data.items())
+        job_dict["data"] = data_dict
+    return job_dict
+
+
+def _merge_jobs(old_job: TPMap, new_job: "Job") -> "Job":
+    old_job_dict = _job_pmap_to_dict(old_job)
+    new_job_dict = new_job.dict()
+    filtered_new_job_dict = {
+        key: value for key, value in new_job_dict.items() if value is not None
+    }
+    updated_job_dict = {**old_job_dict, **filtered_new_job_dict}
+    updated_job = Job.parse_obj(updated_job_dict)
+    return updated_job
 
 
 def _recursive_update(
@@ -200,6 +229,63 @@ class PartialSnapshot:
         )
         return self
 
+    def _insert_new_job(
+        self,
+        real_id: str,
+        step_id: str,
+        job_id: str,
+        job: "Job",
+    ):
+        job_as_pmap = _job_to_pmap(job)
+        old_jobs_map = self._data.reals[real_id].steps[step_id].jobs
+        new_jobs_map = old_jobs_map.set(job_id, job_as_pmap)
+        self._insert_new_jobs(real_id, step_id, new_jobs_map)
+
+    def _insert_new_jobs(
+        self,
+        real_id: str,
+        step_id: str,
+        new_jobs: TPMap,
+    ):
+        new_step = self._data.reals[real_id].steps[step_id].set("jobs", new_jobs)
+        new_steps = self._data.reals[real_id].steps.set(step_id, new_step)
+        new_real = self._data.reals[real_id].set("steps", new_steps)
+        new_reals = self._data.reals.set(real_id, new_real)
+        self._data = self._data.set("reals", new_reals)
+
+    def update_job_for_fm_event(
+        self,
+        real_id: str,
+        step_id: str,
+        job_id: str,
+        job: "Job",
+    ) -> "PartialSnapshot":
+        # new job
+        if "reals" not in self._data:  # no reals yet
+            jobs = pmap({"jobs": pmap({job_id: _job_to_pmap(job)})})
+            steps = pmap({"steps": pmap({step_id: jobs})})
+            reals = pmap({real_id: steps})
+            self._data = self._data.set("reals", reals)
+            return self
+        if real_id not in self._data.reals:
+            jobs = pmap({"jobs": pmap({job_id: _job_to_pmap(job)})})
+            steps = pmap({"steps": pmap({step_id: jobs})})
+            new_reals = self._data.reals.set(real_id, pmap({"steps": steps}))
+            self._data.set("reals", new_reals)
+            return self
+        if "jobs" not in self._data.reals[real_id].steps[step_id]:  # no jobs yet
+            jobs = pmap({job_id: _job_to_pmap(job)})
+            self._insert_new_jobs(real_id, step_id, jobs)
+            return self
+        if job_id not in self._data.reals[real_id].steps[step_id].jobs:
+            self._insert_new_job(real_id, step_id, job_id, job)
+            return self
+        # update of existing job
+        old_job = self._data.reals[real_id].steps[step_id].jobs[job_id]
+        updated_job = _merge_jobs(old_job, job)
+        self._insert_new_job(real_id, step_id, job_id, updated_job)
+        return self
+
     def to_dict(self) -> Mapping[str, Any]:
         return cast(Mapping[str, Any], pyrsistent.thaw(self._data))
 
@@ -267,7 +353,7 @@ class PartialSnapshot:
             elif e_type in {ids.EVTYPE_FM_JOB_SUCCESS, ids.EVTYPE_FM_JOB_FAILURE}:
                 end_time = convert_iso8601_to_datetime(timestamp)
             job_index = _get_job_index(e_source)
-            self.update_job(
+            self.update_job_for_fm_event(
                 _get_real_id(e_source),
                 _get_step_id(e_source),
                 _get_job_id(e_source),
