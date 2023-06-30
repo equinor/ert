@@ -117,7 +117,7 @@ def export_field(
         raise KeyError(
             f"Unable to load FIELD for key: {key}, realization: {realization} "
         )
-    da = xr.open_dataarray(data_path / f"{key}")
+    da = xr.open_dataarray(data_path / f"{key}.nc", engine="scipy")
     # Squeeze to get rid of realization-dimension
     data: npt.NDArray[np.double] = da.values.squeeze(axis=0)
     data = field_transform(data, transform_name=param_info["output_transformation"])
