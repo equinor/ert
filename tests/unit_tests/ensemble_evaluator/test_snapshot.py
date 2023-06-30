@@ -129,6 +129,8 @@ def apply_and_verify_start_event(
 
     snapshot.from_cloudevent(start_event_fm)
 
+    assert real in snapshot.data().reals
+    assert STEP in snapshot.data().reals[real].steps
     assert fm in snapshot.data().reals[real].steps[STEP].jobs
     fm_start = snapshot.data().reals[real].steps[STEP].jobs[fm]
     assert fm_start.index == fm
@@ -272,79 +274,85 @@ def test_snapshot_from_cloudevent_for_fm_events(snapshot: Snapshot):
     # START FM 0
 
     start_time_stamp = datetime.fromisoformat("1995-06-13")
-    realization = 0
+    realization_0 = 0
+    realization_1 = 1
     forward_model_0 = 0
     forward_model_1 = 1
 
     start_fm0 = apply_and_verify_start_event(
-        mutating_snapshot, realization, forward_model_0, start_time_stamp
+        mutating_snapshot, realization_0, forward_model_0, start_time_stamp
+    )
+
+    # START FM 0 FOR REAL 1
+    apply_and_verify_start_event(
+        mutating_snapshot, realization_1, forward_model_0, start_time_stamp
     )
 
     # START FM 1
 
     start_fm1 = apply_and_verify_start_event(
-        mutating_snapshot, realization, forward_model_1, start_time_stamp
+        mutating_snapshot, realization_0, forward_model_1, start_time_stamp
     )
 
-    verify_fm_unchanged(mutating_snapshot, realization, start_fm0)
+    verify_fm_unchanged(mutating_snapshot, realization_0, start_fm0)
 
     # FM 0 RUNNING
 
     fm0_running = apply_and_verify_running_event(
         mutating_snapshot,
-        realization,
+        realization_0,
         forward_model_0,
         start_time_stamp + timedelta(seconds=1),
         5000,
         5000,
     )
 
-    verify_fm_unchanged(mutating_snapshot, realization, start_fm1)
+    verify_fm_unchanged(mutating_snapshot, realization_0, start_fm1)
 
     # FM 1 RUNNING
     fm1_running = apply_and_verify_running_event(
         mutating_snapshot,
-        realization,
+        realization_0,
         forward_model_1,
         start_time_stamp + timedelta(seconds=2),
         2000,
         3000,
     )
 
-    verify_fm_unchanged(mutating_snapshot, realization, fm0_running)
+    verify_fm_unchanged(mutating_snapshot, realization_0, fm0_running)
 
     # FM 0 RUNNING UPDATE
 
     apply_and_verify_running_event(
         mutating_snapshot,
-        realization,
+        realization_0,
         forward_model_0,
         start_time_stamp + timedelta(seconds=1),
         8000,
         8000,
     )
-    verify_fm_unchanged(mutating_snapshot, realization, fm1_running)
+    verify_fm_unchanged(mutating_snapshot, realization_0, fm1_running)
 
     # FM 0 DONE
 
     fm0_done = apply_and_verify_done_event(
         mutating_snapshot,
-        realization,
+        realization_0,
         forward_model_0,
         start_time_stamp + timedelta(seconds=3),
     )
-    verify_fm_unchanged(mutating_snapshot, realization, fm1_running)
+    verify_fm_unchanged(mutating_snapshot, realization_0, fm1_running)
 
     # FM 1 FAILED
 
     apply_and_verify_failed_event(
         mutating_snapshot,
-        realization,
+        realization_0,
         forward_model_1,
         start_time_stamp + timedelta(seconds=5),
         "we failed",
     )
-    verify_fm_unchanged(mutating_snapshot, realization, fm0_done)
+    verify_fm_unchanged(mutating_snapshot, realization_0, fm0_done)
 
 
 def test_snapshot_merge(snapshot: Snapshot):
